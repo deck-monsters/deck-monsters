@@ -11,13 +11,6 @@ class HitCard extends BaseCard {
 		// TO-DO: fill this in with more complete and realistic actions
 		target.hit(1);
 	}
-
-	toString () {
-		return JSON.stringify({
-			name: HitCard.name,
-			options: this.options
-		});
-	}
 }
 
 HitCard.probability = 80;

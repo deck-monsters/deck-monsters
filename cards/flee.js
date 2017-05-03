@@ -11,13 +11,6 @@ class FleeCard extends BaseCard {
 		// TO-DO: fill this in with more complete and realistic actions
 		player.leaveCombat();
 	}
-
-	toString () {
-		return JSON.stringify({
-			name: FleeCard.name,
-			options: this.options
-		});
-	}
 }
 
 FleeCard.probability = 40;

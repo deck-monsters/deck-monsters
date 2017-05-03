@@ -11,13 +11,6 @@ class HealCard extends BaseCard {
 		// TO-DO: fill this in with more complete and realistic actions
 		player.heal(1);
 	}
-
-	toString () {
-		return JSON.stringify({
-			name: HealCard.name,
-			options: this.options
-		});
-	}
 }
 
 HealCard.probability = 60;
