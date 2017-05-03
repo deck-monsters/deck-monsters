@@ -24,7 +24,7 @@ class HitCard extends BaseCard {
 		// Compare the attack roll to AC
 		if (target.ac <= attackRoll) {
 			// If we hit then do some damage
-			target.hit(damageRoll);
+			target.hit(damageRoll, player);
 		}
 	}
 }
