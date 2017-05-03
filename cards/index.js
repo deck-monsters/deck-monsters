@@ -11,24 +11,32 @@ const all = [
 	FleeCard
 ];
 
-const draw = () => {
+const draw = (options) => {
 	const shuffledDeck = shuffle(all);
 
 	const Card = shuffledDeck.find(isProbable) || draw();
 
-	return new Card();
+	return new Card(options);
 };
 
-const getInitialDeck = () => [
-	new HitCard(),
-	new HitCard(),
-	new HealCard(),
-	new FleeCard(),
-	draw()
+const getInitialDeck = options => [
+	new HitCard(options),
+	new HitCard(options),
+	new HealCard(options),
+	new FleeCard(options),
+	draw(options)
 ];
+
+const hydrateDeck = deckJSON => JSON
+	.parse(deckJSON)
+	.map((cardObj) => {
+		const Card = all.find(({ name }) => name === cardObj.name);
+		return new Card(cardObj.options);
+	});
 
 module.exports = {
 	all,
 	draw,
-	getInitialDeck
+	getInitialDeck,
+	hydrateDeck
 };
