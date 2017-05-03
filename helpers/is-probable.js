@@ -1,3 +1,5 @@
-const isProbable = ({ probability }) => (Math.random() * 100) <= probability;
+const { percent } = require('./chance');
+
+const isProbable = ({ probability }) => percent() <= probability;
 
 module.exports = isProbable;

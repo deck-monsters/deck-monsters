@@ -14,5 +14,6 @@ class HealCard extends BaseCard {
 }
 
 HealCard.probability = 60;
+HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';
 
 module.exports = HealCard;
