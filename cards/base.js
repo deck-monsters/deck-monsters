@@ -1,3 +1,5 @@
+const semaphore = require('../helpers/semaphore');
+
 class BaseCard {
 	constructor (options) {
 		this.options = options;
@@ -17,6 +19,8 @@ class BaseCard {
 
 	set options (options) {
 		this.optionsStore = Object.assign({}, this.options, options);
+
+		semaphore.emit('card.updated', this);
 	}
 
 	toJSON () {
