@@ -1,5 +1,8 @@
+const random = require('lodash.sample');
+
 const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
 const { STARTING_XP, getLevel } = require('../helpers/levels');
+const PRONOUNS = require('../helpers/pronouns');
 
 const DEFAULT_AC = 6;
 const DEFAULT_MAX_HP = 6;
@@ -15,8 +18,12 @@ class BaseCreature {
 			throw new Error('The BaseCreature should not be instantiated directly!');
 		}
 
+		const defaultOptions = {
+			gender: random(Object.keys(PRONOUNS))
+		};
+
 		this.semaphore = new EventEmitter();
-		this.options = options;
+		this.options = Object.assign(defaultOptions, options);
 		this.healingInterval = setInterval(() => {
 			if (this.hp < this.maxHp) this.heal(1);
 		}, TIME_TO_HEAL);
@@ -34,6 +41,22 @@ class BaseCreature {
 		this.optionsStore = Object.assign({}, this.options, options);
 
 		this.emit('updated', this);
+	}
+
+	get givenName () {
+		return this.options.name;
+	}
+
+	get individualDescription () {
+		return this.options.description;
+	}
+
+	get gender () {
+		return this.options.gender;
+	}
+
+	get pronouns () {
+		return PRONOUNS[this.options.gender];
 	}
 
 	get dead () {
@@ -92,10 +115,11 @@ class BaseCreature {
 
 	get damageModifier () {
 		let damageModifier = this.options.damageModifier || '';
+		const numericDamageModifer = Number((damageModifier.match(/^(?:\+|-)([\d]+)$/) || [0, 0])[1]);
 
 		const boost = Math.min(this.level, MAX_DAMAGE_BOOST);
 		if (boost > 0) {
-			damageModifier += `+${boost}`; // +1 per level up to the max
+			damageModifier = `+${boost + numericDamageModifer}${damageModifier}`; // +1 per level up to the max
 		}
 
 		return damageModifier;

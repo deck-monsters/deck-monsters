@@ -1,8 +1,62 @@
 /* eslint-disable max-len */
 
+const random = require('lodash.sample');
+
 const BaseMonster = require('./base');
 
+const DEFAULT_COLOR = 'tan';
+const DEFAULT_NAME = 'Cyris';
+
+const SIZES = [
+	{ adjective: 'slender', weight: '240lbs' },
+	{ adjective: 'powerful', weight: '300lbs' },
+	{ adjective: 'stocky', weight: '320lbs' },
+	{ adjective: 'massive', weight: 'over 400lbs' }
+];
+
+const LOCATIONS = [
+	'forest',
+	'desert',
+	'cave'
+];
+
 class Basilisk extends BaseMonster {
+	constructor (options) {
+		const defaultOptions = {
+			accuracyModifier: '-2',
+			damageModifier: '+1',
+			color: DEFAULT_COLOR,
+			location: random(LOCATIONS),
+			name: DEFAULT_NAME,
+			size: random(SIZES)
+		};
+
+		super(Object.assign(defaultOptions, options));
+
+		if (this.name === BaseMonster.name) {
+			throw new Error('The BaseMonster should not be instantiated directly!');
+		}
+
+		this.options = {
+			description: `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${this.pronouns[2]} gaze. Weighing ${this.size.weight}, in the forest ${this.pronouns[0]} is king, and in the ring ${this.pronouns[0]} is much to be feared. See how ${this.pronouns[0]} rears ${this.pronouns[2]} head, and rolls about ${this.pronouns[2]} dreadful eyes, to drive all virtue out, or look it dead!`
+		};
+	}
+
+	static get creatureType () {
+		return 'Basilisk';
+	}
+
+	get size () {
+		return this.options.size;
+	}
+
+	get color () {
+		return this.options.color;
+	}
+
+	get location () {
+		return this.options.location;
+	}
 }
 
 Basilisk.description =
