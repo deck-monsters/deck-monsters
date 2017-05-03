@@ -1,5 +1,8 @@
 const EventEmitter = require('event-emitter-es6');
 
-const semaphore = new EventEmitter();
+const globalSemaphore = new EventEmitter();
 
-module.exports = semaphore;
+module.exports = {
+	EventEmitter,
+	globalSemaphore
+};

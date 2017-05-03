@@ -1,12 +1,13 @@
-const semaphore = require('../helpers/semaphore');
+const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
 
 class BaseCard {
 	constructor (options) {
-		this.options = options;
-
 		if (this.name === BaseCard.name) {
 			throw new Error('The BaseCard should not be instantiated directly!');
 		}
+
+		this.semaphore = new EventEmitter();
+		this.options = options;
 	}
 
 	get name () {
@@ -20,7 +21,16 @@ class BaseCard {
 	set options (options) {
 		this.optionsStore = Object.assign({}, this.options, options);
 
-		semaphore.emit('card.updated', this);
+		this.emit('updated', this);
+	}
+
+	emit (event, ...args) {
+		this.semaphore.emit(event, this.name, ...args);
+		globalSemaphore.emit(`card.${event}`, this.name, ...args);
+	}
+
+	on (...args) {
+		this.semaphore.on(...args);
 	}
 
 	toJSON () {

@@ -19,6 +19,8 @@ class HitCard extends BaseCard {
 		const attackRoll = roll(this.attackDice + player.accuracyModifier);
 		const damageRoll = roll(this.damageDice + player.damageModifier);
 
+		this.emit('rolled', { attackRoll, damageRoll, player, target });
+
 		// Compare the attack roll to AC
 		if (target.ac <= attackRoll) {
 			// If we hit then do some damage
