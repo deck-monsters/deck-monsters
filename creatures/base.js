@@ -1,5 +1,12 @@
 const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
+const { STARTING_XP, getLevel } = require('../helpers/levels');
 
+const DEFAULT_AC = 6;
+const DEFAULT_MAX_HP = 6;
+const MAX_AC_BOOST = DEFAULT_AC;
+const MAX_ACCURACY_BOOST = 10;
+const MAX_DAMAGE_BOOST = 6;
+const MAX_HP_BOOST = 20;
 const TIME_TO_HEAL = 900000;
 
 class BaseCreature {
@@ -29,8 +36,20 @@ class BaseCreature {
 		this.emit('updated', this);
 	}
 
+	get dead () {
+		return this.options.dead || false;
+	}
+
+	set dead (dead) {
+		this.options = {
+			dead
+		};
+	}
+
 	get hp () {
-		return this.options.hp || 0;
+		if (this.options.hp === undefined) this.hp = this.maxHp;
+
+		return this.options.hp;
 	}
 
 	set hp (hp) {
@@ -40,7 +59,7 @@ class BaseCreature {
 	}
 
 	get xp () {
-		return this.options.xp || 0;
+		return this.options.xp || STARTING_XP;
 	}
 
 	set xp (xp) {
@@ -49,24 +68,44 @@ class BaseCreature {
 		};
 	}
 
+	get level () {
+		return getLevel(this.xp);
+	}
+
 	get ac () {
-		// TO-DO: This should actually calculate based on xp, items, etc
-		return this.options.ac || 0;
+		let ac = this.options.ac || DEFAULT_AC;
+		ac += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
+
+		return ac;
 	}
 
 	get accuracyModifier () {
-		// TO-DO: This should actually calculate based on xp, items, etc
-		return this.options.accuracyModifier || '';
+		let accuracyModifier = this.options.accuracyModifier || '';
+
+		const boost = Math.min(this.level, MAX_ACCURACY_BOOST);
+		if (boost > 0) {
+			accuracyModifier += `+${boost}d4`; // +1d4 per level up to the max
+		}
+
+		return accuracyModifier;
 	}
 
 	get damageModifier () {
-		// TO-DO: This should actually calculate based on xp, items, etc
-		return this.options.damageModifier || '';
+		let damageModifier = this.options.damageModifier || '';
+
+		const boost = Math.min(this.level, MAX_DAMAGE_BOOST);
+		if (boost > 0) {
+			damageModifier += `+${boost}`; // +1 per level up to the max
+		}
+
+		return damageModifier;
 	}
 
 	get maxHp () {
-		// TO-DO: This should actually calculate based on xp, items, etc
-		return this.options.maxHp || 0;
+		let maxHp = this.options.maxHp || DEFAULT_MAX_HP;
+		maxHp += Math.min(this.level * 2, MAX_HP_BOOST); // Gain 2 hp per level up to the max
+
+		return maxHp;
 	}
 
 	emit (event, ...args) {
@@ -81,11 +120,11 @@ class BaseCreature {
 	hit (damage = 0, assailant) {
 		const hp = this.hp - damage;
 
-		this.emit('hit', { assailant, damage, hp, prevHp: this.hp });
+		this.emit('hit', { assailant, creature: this, damage, hp, prevHp: this.hp });
 
 		if (hp <= 0) {
 			this.hp = 0;
-			this.die();
+			this.die(assailant);
 		} else {
 			this.hp = hp;
 		}
@@ -94,7 +133,7 @@ class BaseCreature {
 	heal (amount = 0) {
 		const hp = this.hp + amount;
 
-		this.emit('heal', { amount, hp, prevHp: this.hp });
+		this.emit('heal', { amount, creature: this, hp, prevHp: this.hp });
 
 		if (hp <= 0) {
 			this.hp = 0;
@@ -104,6 +143,13 @@ class BaseCreature {
 		} else {
 			this.hp = hp;
 		}
+	}
+
+	die (assailant) {
+		this.emit('die', { assailant, creature: this });
+
+		this.hp = 0;
+		this.dead = true;
 	}
 
 	toJSON () {
