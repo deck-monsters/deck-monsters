@@ -37,16 +37,16 @@ const announceHit = (monster, Monster, info) => {
 
 const announceMiss = (monster, Monster, info) => {
 	const { attackResult, curseOfLoki, player, target } = info;
-	let action = 'misses';
+	let action = 'is blocked by';
 	let flavor = '';
 	let icon = '🛡';
 
 	if (curseOfLoki) {
+		action = 'misses';
 		flavor = 'horribly';
 		icon = '💨';
 	} else if (attackResult > 5) {
-		action = 'is blocked by';
-		flavor = 'just barely';
+		action = 'is barely blocked by';
 		icon = '⚔️';
 	}
 
