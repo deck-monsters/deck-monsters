@@ -14,7 +14,7 @@ class BasePlayer extends BaseCreature {
 		return this.options.deck || [];
 	}
 
-	set cards (deck) {
+	set deck (deck) {
 		this.options = {
 			deck
 		};

@@ -8,6 +8,18 @@ class BaseMonster extends BaseCreature {
 			throw new Error('The BaseMonster should not be instantiated directly!');
 		}
 	}
+
+	get cards () {
+		if (this.options.cards === undefined) this.cards = [];
+
+		return this.options.cards || [];
+	}
+
+	set cards (cards) {
+		this.options = {
+			cards
+		};
+	}
 }
 
 module.exports = BaseMonster;
