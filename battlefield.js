@@ -27,28 +27,35 @@ console.log('monsterB.hp', monsterB.hp);
 
 const announceHit = (Monster, monster, info) => {
 	const { assailant, damage, hp } = info;
-	console.log(`${assailant.givenName} hits ${monster.givenName} for ${damage}`);
+
+	console.log(`🗡    ${assailant.givenName} hits ${monster.givenName} for ${damage}`);
+
 	if (hp <= 0) {
-		console.log(`${monster.givenName}'s gore paints the floor.`);
+		console.log(`☠️    ${monster.givenName}'s gore paints the floor.`);
 	}
 };
 
 const announceMiss = (Monster, monster, info) => {
 	const { attackResult, curseOfLoki, player, target } = info;
+	let action = 'is blocked by';
 	let flavor = '';
+	let icon = '🛡';
 
 	if (curseOfLoki) {
+		action = 'misses';
 		flavor = 'horribly';
+		icon = '💨';
 	} else if (attackResult > 5) {
-		flavor = 'just barely';
+		action = 'is barely blocked by';
+		icon = '⚔️';
 	}
 
-	console.log(`${player.givenName} misses ${target.givenName} ${flavor}`);
+	console.log(`${icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`);
 };
 
 const announceHeal = (Monster, monster, info) => {
 	const { amount } = info;
-	console.log(`${monster.givenName} heals ${amount} hp`);
+	console.log(`💊    ${monster.givenName} heals ${amount} hp`);
 };
 
 globalSemaphore.on('card.miss', announceMiss);
