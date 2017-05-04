@@ -29,9 +29,9 @@ const draw = (options) => {
 const getInitialDeck = options => [
 	new HitCard(options),
 	new HitCard(options),
-	new HealCard(options),
-	new FleeCard(options),
-	draw(options)
+	// new HealCard(options),
+	// new FleeCard(options),
+	// draw(options)
 ];
 
 const hydrateCard = (cardObj) => {
