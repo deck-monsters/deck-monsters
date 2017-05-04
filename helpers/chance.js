@@ -4,7 +4,7 @@ const dice = new Roll();
 
 const chance = {
 	// Returns an object with a breakdown of the results
-	roll ({ primaryDice, bonusDice, modifier = 0 }) {
+	roll ({ primaryDice, modifier = 0, bonusDice }) {
 		const naturalRoll = dice.roll(primaryDice);
 		const bonusResult = bonusDice ? dice.roll(bonusDice).result : 0;
 

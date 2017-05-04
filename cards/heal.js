@@ -6,7 +6,8 @@ class HealCard extends BaseCard {
 	constructor (options) {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
-			healthDice: '1d4'
+			healthDice: '1d4',
+			modifier: 0
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -22,7 +23,7 @@ class HealCard extends BaseCard {
 
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, game) { // eslint-disable-line no-unused-vars
-		const healRoll = roll({ primaryDice: this.healthDice });
+		const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
 		let healResult = healRoll.result;
 		let strokeOfLuck = false;
 

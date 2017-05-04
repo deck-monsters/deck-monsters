@@ -21,7 +21,7 @@ class BoostCard extends BaseCard {
 	}
 
 	effect (player, target, game) { // eslint-disable-line no-unused-vars
-		const boostRoll = roll(this.boostDice);
+		const boostRoll = roll({ primaryDice: this.boostDice });
 		let boostResult = boostRoll.result;
 		let strokeOfLuck = false;
 		let curseOfLoki = false;

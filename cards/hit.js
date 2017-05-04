@@ -26,8 +26,8 @@ class HitCard extends BaseCard {
 
 	effect (player, target, game) { // eslint-disable-line no-unused-vars
 		// Add any player modifiers and roll the dice
-		const attackRoll = roll({ primaryDice: this.attackDice, bonusDice: player.attackDice, modifier: player.attackModifier });
-		const damageRoll = roll({ primaryDice: this.damageDice, bonusDice: player.damageDice, modifier: player.damageModifier });
+		const attackRoll = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const damageRoll = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
 		let damageResult = damageRoll.result;
