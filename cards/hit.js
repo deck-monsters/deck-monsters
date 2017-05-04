@@ -34,7 +34,8 @@ class HitCard extends BaseCard {
 
 		if (attackRoll.naturalRoll.result === max(this.attackDice)) {
 			strokeOfLuck = true;
-			damageResult = (max(this.damageDice) * 2) + player.damageModifier;
+			// change the natural roll into a max roll
+			damageResult += (max(this.damageDice) * 2) - damageRoll.naturalRoll.result;
 		} else if (attackRoll.naturalRoll.result === 1) {
 			curseOfLoki = true;
 		}
