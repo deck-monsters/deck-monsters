@@ -24,9 +24,12 @@ class BaseCreature {
 
 		this.semaphore = new EventEmitter();
 		this.options = Object.assign(defaultOptions, options);
+
 		this.healingInterval = setInterval(() => {
 			if (this.hp < this.maxHp) this.heal(1);
 		}, TIME_TO_HEAL);
+
+		this.emit('created');
 	}
 
 	get name () {
@@ -40,7 +43,7 @@ class BaseCreature {
 	set options (options) {
 		this.optionsStore = Object.assign({}, this.options, options);
 
-		this.emit('updated', this);
+		this.emit('updated');
 	}
 
 	get givenName () {
@@ -133,18 +136,22 @@ class BaseCreature {
 	}
 
 	emit (event, ...args) {
-		this.semaphore.emit(event, this.name, ...args);
-		globalSemaphore.emit(`creature.${event}`, this.name, ...args);
+		this.semaphore.emit(event, this.name, this, ...args);
+		globalSemaphore.emit(`creature.${event}`, this.name, this, ...args);
 	}
 
 	on (...args) {
 		this.semaphore.on(...args);
 	}
 
+	leaveCombat (assailant) {
+		this.emit('leave', { assailant });
+	}
+
 	hit (damage = 0, assailant) {
 		const hp = this.hp - damage;
 
-		this.emit('hit', { assailant, creature: this, damage, hp, prevHp: this.hp });
+		this.emit('hit', { assailant, damage, hp, prevHp: this.hp });
 
 		if (hp <= 0) {
 			this.hp = 0;
@@ -157,7 +164,7 @@ class BaseCreature {
 	heal (amount = 0) {
 		const hp = this.hp + amount;
 
-		this.emit('heal', { amount, creature: this, hp, prevHp: this.hp });
+		this.emit('heal', { amount, hp, prevHp: this.hp });
 
 		if (hp <= 0) {
 			this.hp = 0;
@@ -170,7 +177,7 @@ class BaseCreature {
 	}
 
 	die (assailant) {
-		this.emit('die', { assailant, creature: this });
+		this.emit('die', { assailant });
 
 		this.hp = 0;
 		this.dead = true;

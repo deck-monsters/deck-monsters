@@ -21,7 +21,9 @@ class FleeCard extends BaseCard {
 		this.emit('rolled', { fleeRoll, player, target });
 
 		if (target.ac <= fleeRoll) {
-			player.leaveCombat();
+			player.leaveCombat(target);
+		} else {
+			this.emit('stay', { fleeRoll, player, target });
 		}
 	}
 }

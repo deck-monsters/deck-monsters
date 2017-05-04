@@ -8,6 +8,8 @@ class BaseCard {
 
 		this.semaphore = new EventEmitter();
 		this.options = options;
+
+		this.emit('created');
 	}
 
 	get name () {
@@ -21,12 +23,12 @@ class BaseCard {
 	set options (options) {
 		this.optionsStore = Object.assign({}, this.options, options);
 
-		this.emit('updated', this);
+		this.emit('updated');
 	}
 
 	emit (event, ...args) {
-		this.semaphore.emit(event, this.name, ...args);
-		globalSemaphore.emit(`card.${event}`, this.name, ...args);
+		this.semaphore.emit(event, this.name, this, ...args);
+		globalSemaphore.emit(`card.${event}`, this.name, this, ...args);
 	}
 
 	on (...args) {
