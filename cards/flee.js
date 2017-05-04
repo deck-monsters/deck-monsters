@@ -6,7 +6,7 @@ class FleeCard extends BaseCard {
 		return 'Chance to run away';
 	}
 
-	effect (player, target, game) { // eslint-disable-line no-unused-vars
+	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		const fleeBonus = target.ac - player.ac;
 		const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
 

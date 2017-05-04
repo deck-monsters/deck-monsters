@@ -2,6 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
 
+const FIGHT_DELAY = 1000;
 const MAX_MONSTERS = 2;
 
 class Ring {
@@ -63,12 +64,61 @@ class Ring {
 	}
 
 	fight () {
+		const ring = this;
 		const contestants = this.contestants;
 
 		this.emit('fight', {
 			contestants,
 			monsters: contestants.map(contestant => contestant.monster)
 		});
+
+		const doAction = ({ currentContestant, currentCard, emptyHanded }) => new Promise((resolve) => {
+			const contestant = contestants[currentContestant];
+			const monster = contestant.monster;
+			const card = monster.cards[currentCard];
+
+			let nextContestant = currentContestant + 1;
+			if (nextContestant >= contestants.length) {
+				nextContestant = 0;
+			}
+
+			let nextCard = currentCard + 1;
+
+			const next = (nextEmptyHanded = false) => resolve(doAction({
+				currentContestant: nextContestant,
+				currentCard: nextCard,
+				emptyHanded: nextEmptyHanded
+			}));
+
+			if (card) {
+				const fightContinues = card.effect(monster, contestants[nextContestant].monster, ring);
+
+				if (fightContinues) {
+					setTimeout(() => next(), FIGHT_DELAY);
+				} else {
+					resolve(contestant);
+				}
+			} else {
+				if (emptyHanded === nextContestant) nextCard = 0;
+				next(emptyHanded === false ? currentContestant : emptyHanded);
+			}
+		});
+
+		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
+			.then(contestant => this.fightConcludes(contestant));
+	}
+
+	fightConcludes (lastContestant) {
+		const contestants = this.contestants;
+
+		this.emit('fightConcludes', {
+			contestants,
+			lastContestant,
+			monsters: contestants.map(contestant => contestant.monster)
+		});
+
+		// TO-DO: Do something to determine winners / losers here
+		// Or should that be in response to events?
 	}
 
 	emit (event, ...args) {

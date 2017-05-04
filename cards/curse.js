@@ -20,7 +20,7 @@ class CurseCard extends BaseCard {
 		return `Curse: ${this.weakenDice}`;
 	}
 
-	effect (player, target, game) { // eslint-disable-line no-unused-vars
+	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		const weakenRoll = roll({ primaryDice: this.weakenDice });
 		let weakenResult = -weakenRoll.result;
 		let strokeOfLuck = false;
