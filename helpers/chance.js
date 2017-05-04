@@ -17,7 +17,7 @@ const chance = {
 	},
 	// Returns the highest possible roll, unmodified
 	max (primaryDice) {
-		const matches = primaryDice.match(/([\d]+d[\d]+)/ig) | [];
+		const matches = primaryDice.match(/([\d]+d[\d]+)/ig) || [];
 		const result = matches.reduce((sum, match) => {
 			const [quantity, sides] = match.split('d');
 			return sum + (quantity * sides);
