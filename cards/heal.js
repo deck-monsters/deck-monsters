@@ -1,5 +1,6 @@
 const BaseCard = require('./base');
-const { roll, percent } = require('../helpers/chance');
+const { roll } = require('../helpers/chance');
+const isProbable = require('../helpers/is-probable');
 
 class HealCard extends BaseCard {
 	constructor (options) {
@@ -26,7 +27,7 @@ class HealCard extends BaseCard {
 		this.emit('rolled', { healRoll, player });
 
 		// Stroke of Luck
-		if (percent() === 100) {
+		if (isProbable({ probability: 1 })) {
 			healRoll = player.maxHp;
 		}
 
