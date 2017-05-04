@@ -4,6 +4,9 @@ const { spawn, equip } = require('../monsters');
 
 const DEFAULT_MONSTER_SLOTS = 2;
 
+const formatMonsters = monsters => monsters
+	.map((monster, index) => `${index}) ${monster.givenName}: ${monster.individualDescription}` + '\n'); // eslint-disable-line no-useless-concat
+
 class BasePlayer extends BaseCreature {
 	// constructor (options) {
 	// 	super(options);
@@ -79,15 +82,12 @@ class BasePlayer extends BaseCreature {
 	}
 
 	equipMonster (channel) {
-		const formatMonsters = monsters => monsters
-			.map((monster, index) => `${index}) ${monster.givenName}: ${monster.individualDescription}` + '\n'); // eslint-disable-line no-useless-concat
-
 		return Promise
 			.resolve(this.monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
 					channel({
-						announce: "You don't have an monsters to equip. Spawn one first!"
+						announce: "You don't have any monsters to equip. Spawn one first!"
 					});
 
 					return Promise.reject();
@@ -117,6 +117,46 @@ Which monster would you like to equip?`,
 				});
 
 				return monster;
+			});
+	}
+
+	sendMonsterToTheRing (ring, channel) {
+		const player = this;
+
+		return Promise
+			.resolve(this.monsters.length)
+			.then((numberOfMonsters) => {
+				if (numberOfMonsters <= 0) {
+					channel({
+						announce: "You don't have any monsters to send into battle. Spawn one first!"
+					});
+
+					return Promise.reject();
+				} else if (numberOfMonsters === 1) {
+					return this.monsters[0];
+				}
+
+				return Promise
+					.resolve()
+					.then(() => channel({
+						question:
+`You have ${numberOfMonsters} monsters:
+${formatMonsters(this.monsters)}
+Which monster would you like to send into battle?`,
+						choices: Object.keys(this.monsters)
+					}))
+					.then(answer => this.monsters[answer]);
+			})
+			.then((monster) => {
+				if (monster.cards.length <= 0) {
+					channel({
+						announce: 'Only an evil master would send their monster into battle without any cards'
+					});
+
+					return Promise.reject();
+				}
+
+				return ring.addMonster(monster, player, channel);
 			});
 	}
 }
