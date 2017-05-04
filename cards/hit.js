@@ -35,7 +35,7 @@ class HitCard extends BaseCard {
 		if (attackRoll.naturalRoll.result === max(this.attackDice)) {
 			strokeOfLuck = true;
 			damageResult += (max(this.damageDice) * 2) - damageRoll.naturalRoll.result;
-		} else if (attackRoll.naturalRoll === 1) {
+		} else if (attackRoll.naturalRoll.result === 1) {
 			curseOfLoki = true;
 		}
 
@@ -51,7 +51,7 @@ class HitCard extends BaseCard {
 		});
 
 		// Compare the attack roll to AC
-		if (strokeOfLuck || (!curseOfLoki && target.ac <= attackRoll)) {
+		if (strokeOfLuck || (!curseOfLoki && target.ac <= attackRoll.result)) {
 			// If we hit then do some damage
 			target.hit(damageRoll, player);
 		} else {
