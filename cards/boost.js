@@ -12,24 +12,34 @@ class BoostCard extends BaseCard {
 		super(Object.assign(defaultOptions, options));
 	}
 
-	// This doesn't have to be static if it needs access to the instance
-	static effect (player, target, game) { // eslint-disable-line no-unused-vars
-		let boostRoll = roll(this.boostDice);
+	get boostDice () {
+		return this.options.boostDice;
+	}
+
+	effect (player, target, game) { // eslint-disable-line no-unused-vars
+		const boostRoll = roll(this.boostDice);
+		let boostResult = boostRoll.result;
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
 
 		// Stroke of Luck
 		if (isProbable({ probability: 1 })) {
-			boostRoll += max(this.boostDice);
+			boostResult += max(this.boostDice);
 			strokeOfLuck = true;
 		} else if (isProbable({ probability: 10 })) {
-			boostRoll = 0;
+			boostResult = 0;
 			curseOfLoki = true;
 		}
 
-		this.emit('rolled', { boostRoll, player, strokeOfLuck, curseOfLoki });
+		this.emit('rolled', {
+			boostResult,
+			boostRoll,
+			curseOfLoki,
+			player,
+			strokeOfLuck
+		});
 
-		player.condition('ac', boostRoll);
+		player.condition('ac', boostResult);
 	}
 }
 
