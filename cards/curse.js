@@ -21,14 +21,14 @@ class CurseCard extends BaseCard {
 	}
 
 	effect (player, target, game) { // eslint-disable-line no-unused-vars
-		const weakenRoll = roll(this.weakenDice);
+		const weakenRoll = roll({ primaryDice: this.weakenDice });
 		let weakenResult = 0 - weakenRoll.result;
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
 
 		// Stroke of Luck
 		if (isProbable({ probability: 1 })) {
-			weakenResult = -6;
+			weakenResult = -max(this.weakenDice);
 			strokeOfLuck = true;
 		} else if (isProbable({ probability: 10 })) {
 			weakenResult = 0;
