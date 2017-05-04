@@ -2,7 +2,7 @@ const BaseCard = require('./base');
 const { roll } = require('../helpers/chance');
 
 class FleeCard extends BaseCard {
-	static get stats () {
+	get stats () { // eslint-disable-line class-methods-use-this
 		return 'Chance to run away';
 	}
 

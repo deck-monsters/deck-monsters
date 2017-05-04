@@ -26,6 +26,14 @@ class BaseCard {
 		this.emit('updated');
 	}
 
+	look (callback) {
+		return Promise
+			.resolve()
+			.then(() => callback({
+				announce: `${this.constructor.cardType}: ${this.constructor.description} Stats: ${this.stats}`
+			}));
+	}
+
 	emit (event, ...args) {
 		this.semaphore.emit(event, this.name, this, ...args);
 		globalSemaphore.emit(`card.${event}`, this.name, this, ...args);
