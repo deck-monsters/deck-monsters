@@ -64,9 +64,12 @@ class BasePlayer extends BaseCreature {
 				.then((monster) => {
 					this.addMonster(monster);
 
-					return callback({
-						announce: `You're now the proud owner of ${monster.givenName}. Before you is ${monster.individualDescription}'`
-					});
+					return Promise
+						.resolve()
+						.then(() => callback({
+							announce: `You're now the proud owner of ${monster.givenName}. Before you is ${monster.individualDescription}'`
+						}))
+						.then(() => monster);
 				});
 		}
 

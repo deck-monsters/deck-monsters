@@ -20,6 +20,14 @@ class BaseMonster extends BaseCreature {
 			cards
 		};
 	}
+
+	look (callback) {
+		return Promise
+			.resolve()
+			.then(() => callback({
+				announce: `You see ${this.individualDescription}'`
+			}));
+	}
 }
 
 module.exports = BaseMonster;
