@@ -56,6 +56,73 @@ const spawn = (callback) => {
 		});
 };
 
+const equip = (deck, monster, callback) => {
+	const cards = [];
+	const cardSlots = monster.cardSlots;
+
+	const formatCards = remainingCards => remainingCards.map((card, index) => `${index}) ${card.cardType}` + '\n'); // eslint-disable-line no-useless-concat
+
+	const addCard = ({ remainingSlots, remainingCards }) => Promise
+		.resolve()
+		.then(() => callback({
+			question:
+`You have ${remainingSlots} of ${cardSlots} remaining, and the following cards:
+${formatCards(remainingCards)}
+Which card would you like to equip in slot ${cardSlots - remainingSlots}?`,
+			choices: Object.keys(remainingCards)
+		}))
+		.then((answer) => {
+			const nowRemainingSlots = remainingSlots - 1;
+			const nowRemainingCards = [...remainingCards];
+			const selectedCard = nowRemainingCards.splice(answer, 1);
+			cards.push(selectedCard);
+
+			callback({
+				announce: `You selected a ${selectedCard.cardType} card.`
+			});
+
+			if (nowRemainingSlots <= 0) {
+				callback({
+					announce:
+`You've filled your slots with the following cards:
+${formatCards(cards)}`
+				});
+
+				return cards;
+			}
+
+			if (nowRemainingCards.length <= 0) {
+				callback({
+					announce:
+`You're out of cards to equip, but you've equiped the following cards:
+${formatCards(cards)}`
+				});
+
+				return cards;
+			}
+
+			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
+		});
+
+	return Promise
+		.resolve()
+		.then(() => {
+			if (cardSlots <= 0) {
+				return callback({
+					announce: 'You have no card slots available!'
+				});
+			}
+
+			if (deck.length <= 0) {
+				return callback({
+					announce: 'Your deck is empty!'
+				});
+			}
+
+			return addCard({ remainingSlots: cardSlots, remainingCards: deck });
+		});
+};
+
 const hydrateMonster = (monsterObj) => {
 	const Monster = all.find(({ name }) => name === monsterObj.name);
 	const options = Object.assign({ cards: [] }, monsterObj.options);
@@ -72,6 +139,7 @@ const hydrateMonsters = monstersJSON => JSON
 module.exports = {
 	all,
 	spawn,
+	equip,
 	hydrateMonster,
 	hydrateMonsters
 };
