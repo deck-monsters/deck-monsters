@@ -35,10 +35,6 @@ class Minotaur extends BaseMonster {
 		};
 	}
 
-	static get creatureType () {
-		return 'Minotaur';
-	}
-
 	get color () {
 		return this.options.color;
 	}
@@ -52,6 +48,7 @@ class Minotaur extends BaseMonster {
 	}
 }
 
+Minotaur.creatureType = 'Minotaur';
 Minotaur.description =
 `
 The bull-folk have many of the same characteristics as the bulls they resemble. Both genders have horned heads covered with shaggy hair. Warriors braid their hair with teeth or other tokens of fallen enemies. The thick hair covering their large bodies varies widely in color, from bright white to medium red-browns to dark brown and black. Many minotaurs shave or dye their fur in patterns signifying their allegiances and beliefs. Other methods of decoration include brands, ritual scars, and gilding or carving their horns.
