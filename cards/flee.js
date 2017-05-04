@@ -6,24 +6,26 @@ class FleeCard extends BaseCard {
 		return 'Chance to run away';
 	}
 
-	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, game) { // eslint-disable-line no-unused-vars
 		const fleeBonus = target.ac - player.ac;
-		const fleeRoll = roll({
-			quantity: 1,
-			sides: 20,
-			transformations: [
-				'sum',
-				['add', fleeBonus]
-			]
+		const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
+
+		this.emit('rolled', {
+			fleeResult: fleeRoll.result,
+			fleeRoll,
+			player,
+			target
 		});
 
-		this.emit('rolled', { fleeRoll, player, target });
-
-		if (target.ac <= fleeRoll) {
+		if (target.ac <= fleeRoll.result) {
 			player.leaveCombat(target);
 		} else {
-			this.emit('stay', { fleeRoll, player, target });
+			this.emit('stay', {
+				fleeResult: fleeRoll.result,
+				fleeRoll,
+				player,
+				target
+			});
 		}
 	}
 }

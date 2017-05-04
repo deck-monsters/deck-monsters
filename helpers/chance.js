@@ -2,20 +2,31 @@ const Roll = require('roll');
 
 const dice = new Roll();
 
-dice.max = () => this.quantity * this.sides;
-
 const chance = {
-	roll (...args) {
-		return dice.roll(...args).result;
+	// Returns an object with a breakdown of the results
+	roll ({ primaryDice, bonusDice, modifier = 0 }) {
+		const naturalRoll = dice.roll(primaryDice);
+		const bonusResult = bonusDice ? dice.roll(bonusDice).result : 0;
+
+		return {
+			result: naturalRoll.result + bonusResult + modifier,
+			naturalRoll,
+			bonusResult,
+			modifier
+		};
 	},
-	rolls (...args) {
-		return dice.roll(...args).rolled;
-	},
-	max () { // Returns the highest possible roll, unmodified
-		return dice.max();
+	// Returns the highest possible roll, unmodified
+	max (primaryDice) {
+		const matches = primaryDice.match(/([\d]+d[\d]+)/ig) | [];
+		const result = matches.reduce((sum, match) => {
+			const [quantity, sides] = match.split('d');
+			return sum + (quantity * sides);
+		}, 0);
+
+		return result;
 	},
 	percent () {
-		return chance.roll('d%');
+		return dice.roll('d%').result;
 	}
 };
 
