@@ -8,8 +8,14 @@ class HealCard extends BaseCard {
 
 	// This doesn't have to be static if it needs access to the instance
 	static effect (player, target, game) { // eslint-disable-line no-unused-vars
-		// TO-DO: fill this in with more complete and realistic actions
-		player.heal(1);
+		let healRoll = roll('1d4');
+
+		const maxBonus = roll('1d100');
+		if (maxBonus === 100) {
+			healRoll = player.maxHp();
+		}
+
+		player.heal(healRoll);
 	}
 }
 

@@ -8,8 +8,14 @@ class FleeCard extends BaseCard {
 
 	// This doesn't have to be static if it needs access to the instance
 	static effect (player, target, game) { // eslint-disable-line no-unused-vars
-		// TO-DO: fill this in with more complete and realistic actions
-		player.leaveCombat();
+
+		const fleeBonus = target.ac - player.ac;
+		const fleeRoll = roll('1d20' + fleeBonus);
+
+		if (target.ac <= fleeRoll) {
+			player.leaveCombat();
+			this.emit('win', { player, target, reason: 'fled combat' });
+		}
 	}
 }
 

@@ -3,11 +3,21 @@ const { roll } = require('../helpers/chance');
 
 class HitCard extends BaseCard {
 	constructor (options) {
-		super(options);
+		// Set defaults for these values that can be overridden by the options passed in
+		const defaultOptions = {
+			attackDice: '1d20',
+			damageDice: '1d6'
+		};
 
-		// For now, we'll say that all hit cards have the same basic properties
-		this.attackDice = '1d20';
-		this.damageDice = '1d6';
+		super(Object.assign(defaultOptions, options));
+	}
+
+	get attackDice () {
+		return this.options.attackDice;
+	}
+
+	get damageDice () {
+		return this.options.damageDice;
 	}
 
 	get stats () {
@@ -25,6 +35,8 @@ class HitCard extends BaseCard {
 		if (target.ac <= attackRoll) {
 			// If we hit then do some damage
 			target.hit(damageRoll, player);
+		} else {
+			this.emit('miss', { attackRoll, player, target });
 		}
 	}
 }
