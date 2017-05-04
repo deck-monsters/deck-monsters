@@ -1,5 +1,7 @@
 const BaseCreature = require('../creatures/base');
 
+const DEFAULT_CARD_SLOTS = 3;
+
 class BaseMonster extends BaseCreature {
 	constructor (options) {
 		super(options);
@@ -18,6 +20,20 @@ class BaseMonster extends BaseCreature {
 	set cards (cards) {
 		this.setOptions({
 			cards
+		});
+	}
+
+	get cardSlots () {
+		if (this.options.cardSlots === undefined) this.cardSlots = DEFAULT_CARD_SLOTS;
+		const cardSlots = this.options.cardSlots || 0;
+		const level = this.level || 0;
+
+		return cardSlots + level;
+	}
+
+	set cardSlots (cardSlots) {
+		this.setOptions({
+			cardSlots
 		});
 	}
 
