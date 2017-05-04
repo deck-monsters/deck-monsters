@@ -108,15 +108,19 @@ ${formatCards(cards)}`
 		.resolve()
 		.then(() => {
 			if (cardSlots <= 0) {
-				return callback({
+				callback({
 					announce: 'You have no card slots available!'
 				});
+
+				return Promise.reject();
 			}
 
 			if (deck.length <= 0) {
-				return callback({
+				callback({
 					announce: 'Your deck is empty!'
 				});
+
+				return Promise.reject();
 			}
 
 			return addCard({ remainingSlots: cardSlots, remainingCards: deck });
