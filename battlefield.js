@@ -46,8 +46,14 @@ const announceMiss = (monster, Monster, info) => {
 	console.log(`${player.name} misses ${target.name} ${flavor}`);
 };
 
+const announceHeal = (monster, Monster, info) => {
+	const { amount } = info;
+	console.log(`${Monster.givenName} heals ${amount} hp`);
+};
+
 globalSemaphore.on('card.miss', announceMiss);
 globalSemaphore.on('creature.hit', announceHit);
+globalSemaphore.on('creature.heal', announceHeal);
 
 // monsterA.on('hit', announceHit);
 // monsterB.on('hit', announceHit);
