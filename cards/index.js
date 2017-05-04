@@ -27,16 +27,19 @@ const getInitialDeck = options => [
 	draw(options)
 ];
 
+const hydrateCard = (cardObj) => {
+	const Card = all.find(({ name }) => name === cardObj.name);
+	return new Card(cardObj.options);
+};
+
 const hydrateDeck = deckJSON => JSON
 	.parse(deckJSON)
-	.map((cardObj) => {
-		const Card = all.find(({ name }) => name === cardObj.name);
-		return new Card(cardObj.options);
-	});
+	.map(hydrateCard);
 
 module.exports = {
 	all,
 	draw,
 	getInitialDeck,
+	hydrateCard,
 	hydrateDeck
 };

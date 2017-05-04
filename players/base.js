@@ -8,15 +8,15 @@ class BasePlayer extends BaseCreature {
 	// 	super(options);
 	// }
 
-	get cards () {
-		if (this.options.cards === undefined) this.cards = getInitialDeck();
+	get deck () {
+		if (this.options.deck === undefined) this.deck = getInitialDeck();
 
-		return this.options.cards || [];
+		return this.options.deck || [];
 	}
 
-	set cards (cards) {
+	set cards (deck) {
 		this.options = {
-			cards
+			deck
 		};
 	}
 
