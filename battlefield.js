@@ -18,7 +18,6 @@ const deckB = cards.getInitialDeck();
 // deckB.forEach((card) => { card.look(({ announce }) => console.log(announce)); });
 
 
-
 console.log('');
 console.log('Let the games begin!');
 console.log('');
@@ -41,7 +40,7 @@ const announceMiss = (monster, Monster, info) => {
 	if (curseOfLoki) {
 		flavor = 'horribly';
 	} else if (attackResult > 5) {
-		flavor = 'just barely'
+		flavor = 'just barely';
 	}
 
 	console.log(`${player.name} misses ${target.name} ${flavor}`);

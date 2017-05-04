@@ -1,6 +1,6 @@
 const BaseCreature = require('../creatures/base');
 const { getInitialDeck } = require('../cards');
-const { spawn } = require('../monsters');
+const { spawn, equip } = require('../monsters');
 
 const DEFAULT_MONSTER_SLOTS = 2;
 
@@ -76,6 +76,48 @@ class BasePlayer extends BaseCreature {
 		return Promise.reject(() => callback({
 			announce: "You're all out space for new monsters!"
 		}));
+	}
+
+	equipMonster (callback) {
+		const formatMonsters = monsters => monsters
+			.map((monster, index) => `${index}) ${monster.givenName}: ${monster.individualDescription}` + '\n'); // eslint-disable-line no-useless-concat
+
+		return Promise
+			.resolve(this.monsters.length)
+			.then((numberOfMonsters) => {
+				if (numberOfMonsters <= 0) {
+					callback({
+						announce: "You don't have an monsters to equip. Spawn one first!"
+					});
+
+					return Promise.reject();
+				} else if (numberOfMonsters === 1) {
+					return this.monsters[0];
+				}
+
+				return Promise
+					.resolve()
+					.then(() => callback({
+						question:
+`You have ${numberOfMonsters} monsters:
+${formatMonsters(this.monsters)}
+Which monster would you like to equip?`,
+						choices: Object.keys(this.monsters)
+					}))
+					.then(answer => this.monsters[answer]);
+			})
+			.then(monster => equip(this.deck, monster, callback)
+				.then((cards) => {
+					monster.cards = cards;
+					return monster;
+				}))
+			.then((monster) => {
+				callback({
+					announce: `${monster.givenName} is good to go!`
+				});
+
+				return monster;
+			});
 	}
 }
 
