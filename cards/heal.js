@@ -1,18 +1,33 @@
 const BaseCard = require('./base');
+const { roll, percent } = require('../helpers/chance');
 
 class HealCard extends BaseCard {
-	// Only needed if you want to do something else in the constructor
-	// constructor (options) {
-	// 	super(options);
-	// }
+	constructor (options) {
+		// Set defaults for these values that can be overridden by the options passed in
+		const defaultOptions = {
+			healthDice: '1d4'
+		};
+
+		super(Object.assign(defaultOptions, options));
+	}
+
+	get healthDice () {
+		return this.options.healthDice;
+	}
+
+	get stats () {
+		return `Health: ${this.healthDice} / Possible Stroke of Luck`;
+	}
 
 	// This doesn't have to be static if it needs access to the instance
-	static effect (player, target, game) { // eslint-disable-line no-unused-vars
-		let healRoll = roll('1d4');
+	effect (player, target, game) { // eslint-disable-line no-unused-vars
+		let healRoll = roll(this.healthDice);
 
-		const maxBonus = roll('1d100');
-		if (maxBonus === 100) {
-			healRoll = player.maxHp();
+		this.emit('rolled', { healRoll, player });
+
+		// Stroke of Luck
+		if (percent() === 100) {
+			healRoll = player.maxHp;
 		}
 
 		player.heal(healRoll);

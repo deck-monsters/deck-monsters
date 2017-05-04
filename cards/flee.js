@@ -1,20 +1,27 @@
 const BaseCard = require('./base');
+const { roll } = require('../helpers/chance');
 
 class FleeCard extends BaseCard {
-	// Only needed if you want to do something else in the constructor
-	// constructor (options) {
-	// 	super(options);
-	// }
+	static get stats () {
+		return 'Chance to run away';
+	}
 
 	// This doesn't have to be static if it needs access to the instance
-	static effect (player, target, game) { // eslint-disable-line no-unused-vars
-
+	effect (player, target, game) { // eslint-disable-line no-unused-vars
 		const fleeBonus = target.ac - player.ac;
-		const fleeRoll = roll('1d20' + fleeBonus);
+		const fleeRoll = roll({
+			quantity: 1,
+			sides: 20,
+			transformations: [
+				'sum',
+				['add', fleeBonus]
+			]
+		});
+
+		this.emit('rolled', { fleeRoll, player, target });
 
 		if (target.ac <= fleeRoll) {
 			player.leaveCombat();
-			this.emit('win', { player, target, reason: 'fled combat' });
 		}
 	}
 }

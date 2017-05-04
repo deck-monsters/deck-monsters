@@ -2,10 +2,12 @@ const HitCard = require('./hit');
 
 class PoundCard extends HitCard {
 	constructor (options) {
-		super(options);
+		// Set defaults for these values that can be overridden by the options passed in
+		const defaultOptions = {
+			damageDice: '2d6' // Lucky you, the pound card does double damage
+		};
 
-		// Lucky you, the pound card does double damage
-		this.damageDice = '2d6';
+		super(Object.assign(defaultOptions, options));
 	}
 }
 
