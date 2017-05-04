@@ -1,7 +1,7 @@
 const cards = require('./cards');
-const monsters = require('./monsters');
+// const monsters = require('./monsters');
 const Basilisk = require('./monsters/basilisk');
-const WeepingAngel = require('./monsters/weeping-angel');
+// const WeepingAngel = require('./monsters/weeping-angel');
 const Minotaur = require('./monsters/minotaur');
 const { globalSemaphore } = require('./helpers/semaphore');
 
@@ -34,7 +34,7 @@ const announceHit = (monster, Monster, info) => {
 };
 
 const announceMiss = (monster, Monster, info) => {
-	const { attackResult, attackRoll, curseOfLoki, damageResult, damageRoll, player, strokeOfLuck, target } = info;
+	const { attackResult, curseOfLoki, player, target } = info;
 	let flavor = '';
 
 	if (curseOfLoki) {
