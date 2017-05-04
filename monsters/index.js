@@ -1,6 +1,9 @@
+const startCase = require('lodash.startcase');
+
 const Basilisk = require('./basilisk');
 const Minotaur = require('./minotaur');
 const WeepingAngel = require('./weeping-angel');
+const PRONOUNS = require('../helpers/pronouns');
 
 const all = [
 	Basilisk,
@@ -26,18 +29,26 @@ const spawn = (callback) => {
 			Monster = all.find(monster => monster.creatureType.toLowerCase() === answer.toLowerCase());
 
 			return callback({
-				question: `What would you like to name your new ${Monster.creatureType}?`
+				question: `What would you like to name your new ${Monster.creatureType.toLowerCase()}?`
 			});
 		})
 		.then((answer) => {
-			options.name = answer;
+			options.name = startCase(answer.toLowerCase());
 
 			return callback({
 				question: `What color should ${options.name} be?`
 			});
 		})
 		.then((answer) => {
-			options.color = answer;
+			options.color = answer.toLowerCase();
+
+			return callback({
+				question: `What gender is ${options.name} the ${options.color} ${Monster.creatureType.toLowerCase()}?`,
+				choices: Object.keys(PRONOUNS)
+			});
+		})
+		.then((answer) => {
+			options.gender = answer.toLowerCase();
 
 			return new Monster(options);
 		});
