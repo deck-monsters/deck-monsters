@@ -16,9 +16,9 @@ class BasePlayer extends BaseCreature {
 	}
 
 	set deck (deck) {
-		this.options = {
+		this.setOptions({
 			deck
-		};
+		});
 	}
 
 	get monsters () {
@@ -26,9 +26,9 @@ class BasePlayer extends BaseCreature {
 	}
 
 	set monsters (monsters) {
-		this.options = {
+		this.setOptions({
 			monsters
-		};
+		});
 	}
 
 	get monsterSlots () {
@@ -38,9 +38,9 @@ class BasePlayer extends BaseCreature {
 	}
 
 	set monsterSlots (monsterSlots) {
-		this.options = {
+		this.setOptions({
 			monsterSlots
-		};
+		});
 	}
 
 	addCard (card) {

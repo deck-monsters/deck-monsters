@@ -31,9 +31,9 @@ class WeepingAngel extends BaseMonster {
 
 		super(Object.assign(defaultOptions, options));
 
-		this.options = {
+		this.setOptions({
 			description: `a ${this.color} weeping angel. On meeting ${this.pronouns[1]} one might form the following three impressions: that ${this.pronouns[0]} was ${this.nationality}, that ${this.pronouns[0]} was intelligent, and that ${this.pronouns[0]} was ${this.descriptor} than a treeful of monkeys on nitrous oxide.`
-		};
+		});
 	}
 
 	get color () {

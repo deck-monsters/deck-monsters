@@ -16,9 +16,9 @@ class BaseMonster extends BaseCreature {
 	}
 
 	set cards (cards) {
-		this.options = {
+		this.setOptions({
 			cards
-		};
+		});
 	}
 
 	look (callback) {

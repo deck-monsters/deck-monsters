@@ -30,9 +30,9 @@ class Minotaur extends BaseMonster {
 
 		super(Object.assign(defaultOptions, options));
 
-		this.options = {
+		this.setOptions({
 			description: `a battle-hardened, ${this.color} minotaur with a ${this.pattern} pattern shaved into ${this.pronouns[2]} thick fur. Make no mistake, despite ${this.pronouns[2]} ${this.descriptor} bulk ${this.pronouns[0]} is a first-class host who has never been put to shame at a dinner party.`
-		};
+		});
 	}
 
 	get color () {

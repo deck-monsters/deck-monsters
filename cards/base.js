@@ -7,7 +7,7 @@ class BaseCard {
 		}
 
 		this.semaphore = new EventEmitter();
-		this.options = options;
+		this.setOptions(options);
 
 		this.emit('created');
 	}
@@ -20,7 +20,7 @@ class BaseCard {
 		return this.optionsStore || {};
 	}
 
-	set options (options) {
+	setOptions (options) {
 		this.optionsStore = Object.assign({}, this.options, options);
 
 		this.emit('updated');
