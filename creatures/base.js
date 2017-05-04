@@ -147,13 +147,20 @@ class BaseCreature {
 	}
 
 	leaveCombat (assailant) {
-		this.emit('leave', { assailant });
+		this.emit('leave', {
+			assailant
+		});
 	}
 
 	hit (damage = 0, assailant) {
 		const hp = this.hp - damage;
 
-		this.emit('hit', { assailant, damage, hp, prevHp: this.hp });
+		this.emit('hit', {
+			assailant,
+			damage,
+			hp,
+			prevHp: this.hp
+		});
 
 		if (hp <= 0) {
 			this.hp = 0;
@@ -166,7 +173,11 @@ class BaseCreature {
 	heal (amount = 0) {
 		const hp = this.hp + amount;
 
-		this.emit('heal', { amount, hp, prevHp: this.hp });
+		this.emit('heal', {
+			amount,
+			hp,
+			prevHp: this.hp
+		});
 
 		if (hp <= 0) {
 			this.hp = 0;
@@ -179,14 +190,20 @@ class BaseCreature {
 	}
 
 	condition (attr = 'ac', amount = 0) {
-		const originalAttr = this[attr];
+		const prevValue = this.conditions[attr];
 		this.conditions[attr] += amount;
 
-		this.emit('condition', { attr, amount, originalAttr, creature: this });
+		this.emit('condition', {
+			amount,
+			attr,
+			prevValue
+		});
 	}
 
 	die (assailant) {
-		this.emit('die', { assailant });
+		this.emit('die', {
+			assailant
+		});
 
 		this.hp = 0;
 		this.dead = true;
