@@ -45,6 +45,8 @@ class CurseCard extends BaseCard {
 		});
 
 		target.setCondition('ac', weakenResult);
+
+		return true;
 	}
 }
 

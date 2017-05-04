@@ -44,6 +44,8 @@ class BoostCard extends BaseCard {
 		});
 
 		player.setCondition('ac', boostResult);
+
+		return true;
 	}
 }
 

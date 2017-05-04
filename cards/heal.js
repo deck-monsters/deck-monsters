@@ -44,7 +44,7 @@ class HealCard extends BaseCard {
 			strokeOfLuck
 		});
 
-		player.heal(healResult);
+		return player.heal(healResult);
 	}
 }
 

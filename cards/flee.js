@@ -18,15 +18,17 @@ class FleeCard extends BaseCard {
 		});
 
 		if (target.ac <= fleeRoll.result) {
-			player.leaveCombat(target);
-		} else {
-			this.emit('stay', {
-				fleeResult: fleeRoll.result,
-				fleeRoll,
-				player,
-				target
-			});
+			return player.leaveCombat(target);
 		}
+
+		this.emit('stay', {
+			fleeResult: fleeRoll.result,
+			fleeRoll,
+			player,
+			target
+		});
+
+		return true;
 	}
 }
 

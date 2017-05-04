@@ -54,19 +54,21 @@ class HitCard extends BaseCard {
 		// Compare the attack roll to AC
 		if (strokeOfLuck || (!curseOfLoki && target.ac <= attackRoll.result)) {
 			// If we hit then do some damage
-			target.hit(damageResult, player);
-		} else {
-			this.emit('miss', {
-				attackResult: attackRoll.result,
-				attackRoll,
-				curseOfLoki,
-				damageResult,
-				damageRoll,
-				player,
-				strokeOfLuck,
-				target
-			});
+			return target.hit(damageResult, player);
 		}
+
+		this.emit('miss', {
+			attackResult: attackRoll.result,
+			attackRoll,
+			curseOfLoki,
+			damageResult,
+			damageRoll,
+			player,
+			strokeOfLuck,
+			target
+		});
+
+		return true;
 	}
 }
 

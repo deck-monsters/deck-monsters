@@ -63,9 +63,11 @@ class Ring {
 	}
 
 	fight () {
+		const contestants = this.contestants;
+
 		this.emit('fight', {
-			contestants: this.contestants,
-			monsters: this.contestants.map(contestant => contestant.monster)
+			contestants,
+			monsters: contestants.map(contestant => contestant.monster)
 		});
 	}
 

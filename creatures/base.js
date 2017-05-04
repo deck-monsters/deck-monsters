@@ -165,6 +165,8 @@ class BaseCreature {
 		this.emit('leave', {
 			assailant
 		});
+
+		return false;
 	}
 
 	hit (damage = 0, assailant) {
@@ -179,10 +181,12 @@ class BaseCreature {
 
 		if (hp <= 0) {
 			this.hp = 0;
-			this.die(assailant);
-		} else {
-			this.hp = hp;
+			return this.die(assailant);
 		}
+
+		this.hp = hp;
+
+		return true;
 	}
 
 	heal (amount = 0) {
@@ -196,12 +200,14 @@ class BaseCreature {
 
 		if (hp <= 0) {
 			this.hp = 0;
-			this.die();
+			return this.die();
 		} else if (hp > this.maxHp) {
 			this.hp = this.maxHp;
 		} else {
 			this.hp = hp;
 		}
+
+		return true;
 	}
 
 	setCondition (attr, amount = 0) {
@@ -226,6 +232,8 @@ class BaseCreature {
 
 		this.hp = 0;
 		this.dead = true;
+
+		return false;
 	}
 
 	toJSON () {
