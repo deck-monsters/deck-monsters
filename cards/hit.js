@@ -26,28 +26,45 @@ class HitCard extends BaseCard {
 
 	effect (player, target, game) { // eslint-disable-line no-unused-vars
 		// Add any player modifiers and roll the dice
-		const attackRoll = roll(this.attackDice + player.accuracyModifier);
-		const damageRoll = roll(this.damageDice + player.damageModifier);
+		const attackRoll = roll({ primaryDice: this.attackDice, bonusDice: player.attackDice, modifier: player.attackModifier });
+		const damageRoll = roll({ primaryDice: this.damageDice, bonusDice: player.damageDice, modifier: player.damageModifier });
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
-		const attackRoll = roll(this.attackDice);
+		let damageResult = damageRoll.result;
 
-		let damageRoll = roll(this.damageDice);
-		if (attackRoll.naturalRoll === max(this.attackDice)) {
+		if (attackRoll.naturalRoll.result === max(this.attackDice)) {
 			strokeOfLuck = true;
-			damageRoll = max(this.damageDice) * 2;
+			damageResult += (max(this.damageDice) * 2) - damageRoll.naturalRoll.result;
 		} else if (attackRoll.naturalRoll === 1) {
 			curseOfLoki = true;
 		}
 
-		this.emit('rolled', { attackRoll, damageRoll, player, target, strokeOfLuck, curseOfLoki });
+		this.emit('rolled', {
+			attackResult: attackRoll.result,
+			attackRoll,
+			curseOfLoki,
+			damageResult,
+			damageRoll,
+			player,
+			strokeOfLuck,
+			target
+		});
 
 		// Compare the attack roll to AC
 		if (strokeOfLuck || (!curseOfLoki && target.ac <= attackRoll)) {
 			// If we hit then do some damage
 			target.hit(damageRoll, player);
 		} else {
-			this.emit('miss', { attackRoll, player, target });
+			this.emit('miss', {
+				attackResult: attackRoll.result,
+				attackRoll,
+				curseOfLoki,
+				damageResult,
+				damageRoll,
+				player,
+				strokeOfLuck,
+				target
+			});
 		}
 	}
 }
