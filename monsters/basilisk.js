@@ -34,7 +34,7 @@ class Basilisk extends BaseMonster {
 		super(Object.assign(defaultOptions, options));
 
 		this.options = {
-			description: `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${this.pronouns[2]} gaze. Weighing ${this.size.weight}, in the forest ${this.pronouns[0]} is king, and in the ring ${this.pronouns[0]} is much to be feared. See how ${this.pronouns[0]} rears ${this.pronouns[2]} head, and rolls about ${this.pronouns[2]} dreadful eyes, to drive all virtue out, or look it dead!`
+			description: `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${this.pronouns[2]} gaze. In the forest ${this.pronouns[0]} is king and (weighing ${this.size.weight}) in the ring ${this.pronouns[0]} is much to be feared. See how ${this.pronouns[0]} rears ${this.pronouns[2]} head, and rolls about ${this.pronouns[2]} dreadful eyes, to drive all virtue out, or look it dead!`
 		};
 	}
 

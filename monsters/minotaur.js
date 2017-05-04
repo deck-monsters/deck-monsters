@@ -1,8 +1,55 @@
 /* eslint-disable max-len */
 
+const random = require('lodash.sample');
+
 const BaseMonster = require('./base');
 
+const DEFAULT_COLOR = 'angry red';
+const DEFAULT_NAME = 'Taurus';
+
+const PATTERNS = [
+	'crescent',
+	'mind-blowingly intricate',
+	'bold'
+];
+
+const DESCRIPTORS = [
+	'tremendous',
+	'awe-inspiring',
+	'fearsome'
+];
+
 class Minotaur extends BaseMonster {
+	constructor (options) {
+		const defaultOptions = {
+			color: DEFAULT_COLOR,
+			name: DEFAULT_NAME,
+			pattern: random(PATTERNS),
+			descriptor: random(DESCRIPTORS)
+		};
+
+		super(Object.assign(defaultOptions, options));
+
+		this.options = {
+			description: `a battle-hardened, ${this.color} minotaur with a ${this.pattern} pattern shaved into ${this.pronouns[2]} thick fur. Make no mistake, despite ${this.pronouns[2]} ${this.descriptor} bulk ${this.pronouns[0]} is a first-class host who has never been put to shame at a dinner party.`
+		};
+	}
+
+	static get creatureType () {
+		return 'Minotaur';
+	}
+
+	get color () {
+		return this.options.color;
+	}
+
+	get pattern () {
+		return this.options.pattern;
+	}
+
+	get descriptor () {
+		return this.options.descriptor;
+	}
 }
 
 Minotaur.description =
