@@ -24,7 +24,7 @@ class HitCard extends BaseCard {
 		return `Attack: ${this.attackDice} / Damage: ${this.damageDice}`;
 	}
 
-	effect (player, target, game) { // eslint-disable-line no-unused-vars
+	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		// Add any player modifiers and roll the dice
 		const attackRoll = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
 		const damageRoll = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });

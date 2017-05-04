@@ -2,6 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
 
+const FIGHT_DELAY = 1000;
 const MAX_MONSTERS = 2;
 
 class Ring {
@@ -63,7 +64,7 @@ class Ring {
 	}
 
 	fight () {
-		const game = this; // TO-DO: This is actually the ring, so we might want to think about it
+		const ring = this;
 		const contestants = this.contestants;
 
 		this.emit('fight', {
@@ -71,13 +72,7 @@ class Ring {
 			monsters: contestants.map(contestant => contestant.monster)
 		});
 
-		let fightContinues;
-		let currentContestant = 0;
-		let currentCard = 0;
-		let emptyHanded = false;
-
-		// TO-DO: Make this async so that we can add a little delay between each step (for more interesting results)
-		do {
+		const doAction = ({ currentContestant, currentCard, emptyHanded }) => new Promise((resolve) => {
 			const contestant = contestants[currentContestant];
 			const monster = contestant.monster;
 			const card = monster.cards[currentCard];
@@ -87,21 +82,43 @@ class Ring {
 				nextContestant = 0;
 			}
 
+			let nextCard = currentCard + 1;
+
+			const next = (nextEmptyHanded = false) => resolve(doAction({
+				currentContestant: nextContestant,
+				currentCard: nextCard,
+				emptyHanded: nextEmptyHanded
+			}));
+
 			if (card) {
-				emptyHanded = false;
-				fightContinues = card.effect(monster, contestants[nextContestant].monster, game);
-			} else if (emptyHanded === false) {
-				emptyHanded = currentContestant;
-			}
+				const fightContinues = card.effect(monster, contestants[nextContestant].monster, ring);
 
-			if (emptyHanded === nextContestant) {
-				currentCard = 0;
+				if (fightContinues) {
+					setTimeout(() => next(), FIGHT_DELAY);
+				} else {
+					resolve(contestant);
+				}
 			} else {
-				currentCard += 1;
+				if (emptyHanded === nextContestant) nextCard = 0;
+				next(emptyHanded === false ? currentContestant : emptyHanded);
 			}
+		});
 
-			currentContestant = nextContestant;
-		} while (fightContinues === true);
+		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
+			.then(contestant => this.fightConcludes(contestant));
+	}
+
+	fightConcludes (lastContestant) {
+		const contestants = this.contestants;
+
+		this.emit('fightConcludes', {
+			contestants,
+			lastContestant,
+			monsters: contestants.map(contestant => contestant.monster)
+		});
+
+		// TO-DO: Do something to determine winners / losers here
+		// Or should that be in response to events?
 	}
 
 	emit (event, ...args) {

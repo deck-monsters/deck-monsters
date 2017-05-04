@@ -26,7 +26,7 @@ class HealCard extends BaseCard {
 	}
 
 	// This doesn't have to be static if it needs access to the instance
-	effect (player, target, game) { // eslint-disable-line no-unused-vars
+	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
 		let healResult = healRoll.result;
 		let strokeOfLuck = false;

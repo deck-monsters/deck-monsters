@@ -20,7 +20,7 @@ class BoostCard extends BaseCard {
 		return `Boost: ${this.boostDice}`;
 	}
 
-	effect (player, target, game) { // eslint-disable-line no-unused-vars
+	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		const boostRoll = roll({ primaryDice: this.boostDice });
 		let boostResult = boostRoll.result;
 		let strokeOfLuck = false;
