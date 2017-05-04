@@ -1,9 +1,10 @@
 const startCase = require('lodash.startcase');
 
+const { hydrateCard } = require('../cards');
+const PRONOUNS = require('../helpers/pronouns');
 const Basilisk = require('./basilisk');
 const Minotaur = require('./minotaur');
 const WeepingAngel = require('./weeping-angel');
-const PRONOUNS = require('../helpers/pronouns');
 
 const all = [
 	Basilisk,
@@ -56,7 +57,11 @@ const spawn = (callback) => {
 
 const hydrateMonster = (monsterObj) => {
 	const Monster = all.find(({ name }) => name === monsterObj.name);
-	return new Monster(monsterObj.options);
+	const options = Object.assign({ cards: [] }, monsterObj.options);
+
+	options.cards = options.cards.map(hydrateCard);
+
+	return new Monster(options);
 };
 
 const hydrateMonsters = monstersJSON => JSON
