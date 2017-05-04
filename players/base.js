@@ -51,34 +51,34 @@ class BasePlayer extends BaseCreature {
 		this.monsters = [...this.monsters, monster];
 	}
 
-	spawnMonster (callback) {
+	spawnMonster (channel) {
 		const remainingSlots = Math.max(this.monsterSlots - this.monsters.length, 0);
 
 		if (remainingSlots > 0) {
 			return Promise
 				.resolve()
-				.then(() => callback({
+				.then(() => channel({
 					announce: `You have ${remainingSlots} of ${this.monsterSlots} monsters left to train.`
 				}))
-				.then(() => spawn(callback))
+				.then(() => spawn(channel))
 				.then((monster) => {
 					this.addMonster(monster);
 
 					return Promise
 						.resolve()
-						.then(() => callback({
+						.then(() => channel({
 							announce: `You're now the proud owner of ${monster.givenName}. Before you is ${monster.individualDescription}'`
 						}))
 						.then(() => monster);
 				});
 		}
 
-		return Promise.reject(() => callback({
+		return Promise.reject(() => channel({
 			announce: "You're all out space for new monsters!"
 		}));
 	}
 
-	equipMonster (callback) {
+	equipMonster (channel) {
 		const formatMonsters = monsters => monsters
 			.map((monster, index) => `${index}) ${monster.givenName}: ${monster.individualDescription}` + '\n'); // eslint-disable-line no-useless-concat
 
@@ -86,7 +86,7 @@ class BasePlayer extends BaseCreature {
 			.resolve(this.monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					callback({
+					channel({
 						announce: "You don't have an monsters to equip. Spawn one first!"
 					});
 
@@ -97,7 +97,7 @@ class BasePlayer extends BaseCreature {
 
 				return Promise
 					.resolve()
-					.then(() => callback({
+					.then(() => channel({
 						question:
 `You have ${numberOfMonsters} monsters:
 ${formatMonsters(this.monsters)}
@@ -106,13 +106,13 @@ Which monster would you like to equip?`,
 					}))
 					.then(answer => this.monsters[answer]);
 			})
-			.then(monster => equip(this.deck, monster, callback)
+			.then(monster => equip(this.deck, monster, channel)
 				.then((cards) => {
 					monster.cards = cards;
 					return monster;
 				}))
 			.then((monster) => {
-				callback({
+				channel({
 					announce: `${monster.givenName} is good to go!`
 				});
 
