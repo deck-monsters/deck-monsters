@@ -16,6 +16,10 @@ class BoostCard extends BaseCard {
 		return this.options.boostDice;
 	}
 
+	get stats () {
+		return `Boost: ${this.boostDice}`;
+	}
+
 	effect (player, target, game) { // eslint-disable-line no-unused-vars
 		const boostRoll = roll(this.boostDice);
 		let boostResult = boostRoll.result;

@@ -23,7 +23,7 @@ class BaseCreature {
 		};
 
 		this.semaphore = new EventEmitter();
-		this.options = Object.assign(defaultOptions, options);
+		this.setOptions(Object.assign(defaultOptions, options));
 		this.conditions = {};// These need to be cleared at the **END** of each battle
 
 		this.healingInterval = setInterval(() => {
@@ -41,7 +41,7 @@ class BaseCreature {
 		return this.optionsStore || {};
 	}
 
-	set options (options) {
+	setOptions (options) {
 		this.optionsStore = Object.assign({}, this.options, options);
 
 		this.emit('updated');
@@ -68,9 +68,9 @@ class BaseCreature {
 	}
 
 	set dead (dead) {
-		this.options = {
+		this.setOptions({
 			dead
-		};
+		});
 	}
 
 	get hp () {
@@ -80,9 +80,9 @@ class BaseCreature {
 	}
 
 	set hp (hp) {
-		this.options = {
+		this.setOptions({
 			hp
-		};
+		});
 	}
 
 	get xp () {
@@ -90,9 +90,9 @@ class BaseCreature {
 	}
 
 	set xp (xp) {
-		this.options = {
+		this.setOptions({
 			xp
-		};
+		});
 	}
 
 	get level () {
