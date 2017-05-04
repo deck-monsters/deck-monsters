@@ -1,14 +1,22 @@
 const shuffle = require('lodash.shuffle');
 
 const isProbable = require('../helpers/is-probable');
+const BoostCard = require('./boost');
+const CurseCard = require('./curse');
+const FleeCard = require('./flee');
 const HitCard = require('./hit');
 const HealCard = require('./heal');
-const FleeCard = require('./flee');
+const PoundCard = require('./pound');
+const ReviveCard = require('./revive');
 
 const all = [
+	BoostCard,
+	CurseCard,
+	FleeCard,
 	HitCard,
 	HealCard,
-	FleeCard
+	PoundCard,
+	ReviveCard
 ];
 
 const draw = (options) => {
