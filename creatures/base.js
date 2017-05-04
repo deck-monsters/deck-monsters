@@ -7,7 +7,7 @@ const PRONOUNS = require('../helpers/pronouns');
 const DEFAULT_AC = 6;
 const DEFAULT_MAX_HP = 6;
 const MAX_AC_BOOST = DEFAULT_AC;
-const MAX_ACCURACY_BOOST = 10;
+const MAX_ATTACK_BOOST = 10;
 const MAX_DAMAGE_BOOST = 6;
 const MAX_HP_BOOST = 20;
 const TIME_TO_HEAL = 900000;
@@ -107,24 +107,30 @@ class BaseCreature {
 		return ac;
 	}
 
-	get accuracyModifier () {
-		let accuracyModifier = this.options.accuracyModifier || '';
-
-		const boost = Math.min(this.level, MAX_ACCURACY_BOOST);
+	get bonusAttackDice () {
+		const boost = Math.min(this.level, MAX_ATTACK_BOOST);
 		if (boost > 0) {
-			accuracyModifier += `+${boost}d4`; // +1d4 per level up to the max
+			return `${boost}d4`; // +1d4 per level up to the max
 		}
 
-		return accuracyModifier;
+		return undefined;
 	}
 
+	get attackModifier () {
+		return this.options.attackModifier || 0;
+	}
+
+	// We don't have this right now
+	// get bonusDamageDice () {
+	// 	return undefined;
+	// }
+
 	get damageModifier () {
-		let damageModifier = this.options.damageModifier || '';
-		const numericDamageModifer = Number((damageModifier.match(/^(?:\+|-)([\d]+)$/) || [0, 0])[1]);
+		let damageModifier = this.options.damageModifier || 0;
 
 		const boost = Math.min(this.level, MAX_DAMAGE_BOOST);
 		if (boost > 0) {
-			damageModifier = `+${boost + numericDamageModifer}${damageModifier}`; // +1 per level up to the max
+			damageModifier += boost; // +1 per level up to the max
 		}
 
 		return damageModifier;

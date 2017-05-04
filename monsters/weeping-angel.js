@@ -21,8 +21,8 @@ const DESCRIPTORS = [
 class WeepingAngel extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
-			accuracyModifier: '+3',
-			damageModifier: '-1',
+			attackModifier: 3,
+			damageModifier: -1,
 			color: DEFAULT_COLOR,
 			name: DEFAULT_NAME,
 			nationality: random(NATIONALITIES),
