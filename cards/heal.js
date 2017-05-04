@@ -17,6 +17,10 @@ class HealCard extends BaseCard {
 		return this.options.healthDice;
 	}
 
+	get modifier () {
+		return this.options.modifier;
+	}
+
 	get stats () {
 		return `Health: ${this.healthDice} / Possible Stroke of Luck`;
 	}
