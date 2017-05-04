@@ -28,7 +28,8 @@ class Basilisk extends BaseMonster {
 			color: DEFAULT_COLOR,
 			location: random(LOCATIONS),
 			name: DEFAULT_NAME,
-			size: random(SIZES)
+			size: random(SIZES),
+			icon: '🐍'
 		};
 
 		super(Object.assign(defaultOptions, options));

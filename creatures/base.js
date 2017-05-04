@@ -32,6 +32,10 @@ class BaseCreature {
 		this.emit('created');
 	}
 
+	get icon () {
+		return this.options.icon;
+	}
+
 	get name () {
 		return this.constructor.name;
 	}
