@@ -5,10 +5,9 @@ const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
 const MAX_MONSTERS = 2;
 
 class Ring {
-	constructor (channel, options) {
+	constructor (options) {
 		this.semaphore = new EventEmitter();
 		this.setOptions(options);
-		this.ringChannel = channel;
 
 		this.emit('initialized');
 	}
@@ -27,21 +26,34 @@ class Ring {
 		this.emit('updated');
 	}
 
-	get monsters () {
-		return this.options.monsters || [];
+	get contestants () {
+		return this.options.contestants || [];
 	}
 
-	addMonster (monster) {
-		if (this.monsters.length < MAX_MONSTERS) {
-			this.options.monsters = shuffle([...this.monsters, monster]);
-		}
+	addMonster (monster, player, channel) {
+		if (this.contestants.length < MAX_MONSTERS) {
+			const contestant = {
+				monster,
+				player
+			};
 
-		this.emit('add', { monster });
+			this.options.contestants = shuffle([...this.contestants, contestant]);
 
-		if (this.monsters.length > MAX_MONSTERS) {
-			this.clearRing();
-		} else if (this.monsters.length === MAX_MONSTERS) {
-			this.fight();
+			this.emit('add', contestant);
+
+			channel({
+				announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`
+			});
+
+			if (this.contestants.length > MAX_MONSTERS) {
+				this.clearRing();
+			} else if (this.contestants.length === MAX_MONSTERS) {
+				this.fight();
+			}
+		} else {
+			channel({
+				announce: 'The ring is full! Wait until the current battle is over and try again.'
+			});
 		}
 	}
 
@@ -51,7 +63,10 @@ class Ring {
 	}
 
 	fight () {
-		this.emit('fight', { monsters: this.monsters });
+		this.emit('fight', {
+			contestants: this.contestants,
+			monsters: this.contestants.map(contestant => contestant.monster)
+		});
 	}
 
 	emit (event, ...args) {
