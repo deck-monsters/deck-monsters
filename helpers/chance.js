@@ -9,7 +9,7 @@ const chance = {
 	rolls (...args) {
 		return dice.roll(...args).rolled;
 	},
-	max (...args) { // Returns the highest possible roll
+	max (...args) { // Returns the highest possible roll, unmodified
 		return dice.max(...args).result;
 	},
 	percent () {
