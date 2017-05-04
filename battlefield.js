@@ -25,17 +25,17 @@ console.log('');
 console.log('monsterA.hp', monsterA.hp);
 console.log('monsterB.hp', monsterB.hp);
 
-const announceHit = (monster, Monster, info) => {
+const announceHit = (Monster, monster, info) => {
 	const { assailant, damage, hp } = info;
 
-	console.log(`🗡    ${assailant.name} hits ${Monster.optionsStore.name} for ${damage}. ${hp}hp left.`);
+	console.log(`🗡    ${assailant.givenName} hits ${monster.givenName} for ${damage}`);
 
 	if (hp <= 0) {
-		console.log(`☠️    ${Monster.optionsStore.name}'s gore paints the floor.`);
+		console.log(`☠️    ${monster.givenName}'s gore paints the floor.`);
 	}
 };
 
-const announceMiss = (monster, Monster, info) => {
+const announceMiss = (Monster, monster, info) => {
 	const { attackResult, curseOfLoki, player, target } = info;
 	let action = 'is blocked by';
 	let flavor = '';
@@ -53,8 +53,14 @@ const announceMiss = (monster, Monster, info) => {
 	console.log(`${icon}    ${player.name} ${action} ${target.name} ${flavor}`);
 };
 
+const announceHeal = (Monster, monster, info) => {
+	const { amount } = info;
+	console.log(`💊    ${monster.givenName} heals ${amount} hp`);
+};
+
 globalSemaphore.on('card.miss', announceMiss);
 globalSemaphore.on('creature.hit', announceHit);
+globalSemaphore.on('creature.heal', announceHeal);
 
 // monsterA.on('hit', announceHit);
 // monsterB.on('hit', announceHit);

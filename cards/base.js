@@ -26,10 +26,10 @@ class BaseCard {
 		this.emit('updated');
 	}
 
-	look (callback) {
+	look (channel) {
 		return Promise
 			.resolve()
-			.then(() => callback({
+			.then(() => channel({
 				announce: `${this.constructor.cardType}: ${this.constructor.description} Stats: ${this.stats}`
 			}));
 	}

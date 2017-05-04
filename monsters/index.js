@@ -12,24 +12,24 @@ const all = [
 	WeepingAngel
 ];
 
-// Callback should be a function that takes a question and an optional array of
+// Channel should be a function that takes a question and an optional array of
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
-const spawn = (callback) => {
+const spawn = (channel) => {
 	const monsterTypes = all.map(monster => monster.creatureType);
 	const options = {};
 	let Monster;
 
 	return Promise
 		.resolve()
-		.then(() => callback({
+		.then(() => channel({
 			question: 'Which type of monster would you like to spawn?',
 			choices: monsterTypes
 		}))
 		.then((answer) => {
 			Monster = all.find(monster => monster.creatureType.toLowerCase() === answer.toLowerCase());
 
-			return callback({
+			return channel({
 				question: `What would you like to name your new ${Monster.creatureType.toLowerCase()}?`
 			});
 		})
@@ -37,14 +37,14 @@ const spawn = (callback) => {
 			options.name = startCase(answer.toLowerCase());
 			// TO-DO: Keep a master list of monsters and ensure that there are no duplicate names
 
-			return callback({
+			return channel({
 				question: `What color should ${options.name} be?`
 			});
 		})
 		.then((answer) => {
 			options.color = answer.toLowerCase();
 
-			return callback({
+			return channel({
 				question: `What gender is ${options.name} the ${options.color} ${Monster.creatureType.toLowerCase()}?`,
 				choices: Object.keys(PRONOUNS)
 			});
@@ -56,7 +56,7 @@ const spawn = (callback) => {
 		});
 };
 
-const equip = (deck, monster, callback) => {
+const equip = (deck, monster, channel) => {
 	const cards = [];
 	const cardSlots = monster.cardSlots;
 
@@ -64,7 +64,7 @@ const equip = (deck, monster, callback) => {
 
 	const addCard = ({ remainingSlots, remainingCards }) => Promise
 		.resolve()
-		.then(() => callback({
+		.then(() => channel({
 			question:
 `You have ${remainingSlots} of ${cardSlots} remaining, and the following cards:
 ${formatCards(remainingCards)}
@@ -77,12 +77,12 @@ Which card would you like to equip in slot ${cardSlots - remainingSlots}?`,
 			const selectedCard = nowRemainingCards.splice(answer, 1);
 			cards.push(selectedCard);
 
-			callback({
+			channel({
 				announce: `You selected a ${selectedCard.cardType} card.`
 			});
 
 			if (nowRemainingSlots <= 0) {
-				callback({
+				channel({
 					announce:
 `You've filled your slots with the following cards:
 ${formatCards(cards)}`
@@ -92,7 +92,7 @@ ${formatCards(cards)}`
 			}
 
 			if (nowRemainingCards.length <= 0) {
-				callback({
+				channel({
 					announce:
 `You're out of cards to equip, but you've equiped the following cards:
 ${formatCards(cards)}`
@@ -108,7 +108,7 @@ ${formatCards(cards)}`
 		.resolve()
 		.then(() => {
 			if (cardSlots <= 0) {
-				callback({
+				channel({
 					announce: 'You have no card slots available!'
 				});
 
@@ -116,7 +116,7 @@ ${formatCards(cards)}`
 			}
 
 			if (deck.length <= 0) {
-				callback({
+				channel({
 					announce: 'Your deck is empty!'
 				});
 

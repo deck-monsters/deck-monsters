@@ -17,6 +17,10 @@ class HealCard extends BaseCard {
 		return this.options.healthDice;
 	}
 
+	get modifier () {
+		return this.options.modifier;
+	}
+
 	get stats () {
 		return `Health: ${this.healthDice} / Possible Stroke of Luck`;
 	}
@@ -40,7 +44,7 @@ class HealCard extends BaseCard {
 			strokeOfLuck
 		});
 
-		player.heal(healRoll);
+		player.heal(healResult);
 	}
 }
 
