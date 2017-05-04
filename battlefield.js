@@ -50,7 +50,7 @@ const announceMiss = (Monster, monster, info) => {
 		icon = '⚔️';
 	}
 
-	console.log(`${icon}    ${player.name} ${action} ${target.name} ${flavor}`);
+	console.log(`${icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`);
 };
 
 const announceHeal = (Monster, monster, info) => {
