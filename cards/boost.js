@@ -43,7 +43,7 @@ class BoostCard extends BaseCard {
 			strokeOfLuck
 		});
 
-		player.condition('ac', boostResult);
+		player.setCondition('ac', boostResult);
 	}
 }
 

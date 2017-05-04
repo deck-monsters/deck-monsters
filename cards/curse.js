@@ -22,7 +22,7 @@ class CurseCard extends BaseCard {
 
 	effect (player, target, game) { // eslint-disable-line no-unused-vars
 		const weakenRoll = roll({ primaryDice: this.weakenDice });
-		let weakenResult = 0 - weakenRoll.result;
+		let weakenResult = -weakenRoll.result;
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
 
@@ -44,7 +44,7 @@ class CurseCard extends BaseCard {
 			weakenRoll
 		});
 
-		target.condition('ac', weakenResult);
+		target.setCondition('ac', weakenResult);
 	}
 }
 

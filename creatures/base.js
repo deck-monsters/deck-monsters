@@ -24,7 +24,6 @@ class BaseCreature {
 
 		this.semaphore = new EventEmitter();
 		this.setOptions(Object.assign(defaultOptions, options));
-		this.conditions = {};// These need to be cleared at the **END** of each battle
 
 		this.healingInterval = setInterval(() => {
 			if (this.hp < this.maxHp) this.heal(1);
@@ -92,6 +91,16 @@ class BaseCreature {
 	set xp (xp) {
 		this.setOptions({
 			xp
+		});
+	}
+
+	get conditions () {
+		return this.options.conditions || {};
+	}
+
+	set conditions (conditions) {
+		this.setOptions({
+			conditions
 		});
 	}
 
@@ -195,9 +204,13 @@ class BaseCreature {
 		}
 	}
 
-	condition (attr = 'ac', amount = 0) {
-		const prevValue = this.conditions[attr];
-		this.conditions[attr] += amount;
+	setCondition (attr, amount = 0) {
+		const prevValue = this.conditions[attr] || 0;
+		const conditions = Object.assign({}, this.conditions, {
+			[attr]: prevValue + amount
+		});
+
+		this.conditions = conditions;
 
 		this.emit('condition', {
 			amount,
