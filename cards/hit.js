@@ -46,7 +46,7 @@ class HitCard extends BaseCard {
 		let damageRoll = roll(this.damageDice);
 		if (attackRoll.naturalRoll === max(this.attackDice)) {
 			strokeOfLuck = true;
-			damageRoll = max(this.damageDice) * 2;
+			damageRoll = roll(this.damageDice).max() * 2;
 		} else if (attackRoll.naturalRoll === 1) {
 			curseOfLoki = true;
 		}

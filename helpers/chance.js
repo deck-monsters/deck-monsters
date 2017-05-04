@@ -2,6 +2,8 @@ const Roll = require('roll');
 
 const dice = new Roll();
 
+dice.max = () => this.quantity * this.sides;
+
 const chance = {
 	roll (...args) {
 		return dice.roll(...args).result;
@@ -9,8 +11,8 @@ const chance = {
 	rolls (...args) {
 		return dice.roll(...args).rolled;
 	},
-	max (...args) { // Returns the highest possible roll, unmodified
-		return dice.max(...args).result;
+	max () { // Returns the highest possible roll, unmodified
+		return dice.max();
 	},
 	percent () {
 		return chance.roll('d%');
