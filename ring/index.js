@@ -130,7 +130,7 @@ class Ring {
 
 	emit (event, ...args) {
 		this.semaphore.emit(event, this.name, this, ...args);
-		globalSemaphore.emit(`card.${event}`, this.name, this, ...args);
+		globalSemaphore.emit(`ring.${event}`, this.name, this, ...args);
 	}
 
 	on (...args) {

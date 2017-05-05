@@ -5,87 +5,82 @@ const { Player } = require('./players');
 
 const { getFlavor } = require('./helpers/flavor');
 
-const announceHit = ({ assailant, channel, damage, hp, monster }) => {
-	let icon = '🤜';
-	if (damage >= 10) {
-		icon = '🔥';
-	} else if (damage >= 5) {
-		icon = '🔪';
-	} else if (damage === 1) {
-		icon = '🏓';
-	}
-
-	/* eslint-disable max-len */
-	channel({
-		announce: `${assailant.icon}  ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`
-	});
-	/* eslint-enable max-len */
-};
-
-const announceMiss = ({ attackResult, channel, curseOfLoki, player, target }) => {
-	let action = 'is blocked by';
-	let flavor = '';
-	let icon = '🛡';
-
-	if (curseOfLoki) {
-		action = 'misses';
-		flavor = 'horribly';
-		icon = '💨';
-	} else if (attackResult > 5) {
-		action = 'is barely blocked by';
-		icon = '⚔️';
-	}
-
-	/* eslint-disable max-len */
-	channel({
-		announce: `${player.icon} ${icon}  ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
-	});
-	/* eslint-enable max-len */
-};
-
-const announceHeal = ({ amount, channel, monster }) => {
-	/* eslint-disable max-len */
-	channel({
-		announce: `${monster.icon} 💊       ${monster.givenName} heals ${amount} hp`
-	});
-	/* eslint-enable max-len */
-};
-
 class Game {
 	constructor (publicChannel) {
 		this.ring = new Ring();
 		this.semaphore = globalSemaphore;
 		this.publicChannel = publicChannel;
 		this.players = {};
+		this.initializeEvents();
 
 		this.emit('initialized');
 	}
 
-	initializeMessaging () {
+	initializeEvents () {
+		// Initialize Messaging
+		// TO-DO: Add messaging for rolls, fleeing, bonus cards, etc
+		this.on('card.miss', this.announceMiss);
+		this.on('creature.hit', this.announceHit);
+		this.on('creature.heal', this.announceHeal);
+
+		// Manage Fights
+		this.on('ring.fightConcludes', this.declareVictor);
+	}
+
+	announceHit (Monster, monster, { assailant, damage }) {
 		const channel = this.publicChannel;
 
-		this.on('card.miss', (Card, card, { attackResult, curseOfLoki, player, target }) => announceMiss({
-			attackResult,
-			channel,
-			curseOfLoki,
-			player,
-			target
-		}));
+		let icon = '🤜';
+		if (damage >= 10) {
+			icon = '🔥';
+		} else if (damage >= 5) {
+			icon = '🔪';
+		} else if (damage === 1) {
+			icon = '🏓';
+		}
 
-		this.on('creature.hit', (Monster, monster, { attackResult, curseOfLoki, player, target }) => announceHit({
-			attackResult,
-			channel,
-			curseOfLoki,
-			monster,
-			player,
-			target
-		}));
+		/* eslint-disable max-len */
+		channel({
+			announce: `${assailant.icon}  ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`
+		});
+		/* eslint-enable max-len */
+	}
 
-		this.on('creature.heal', (Monster, monster, { amount }) => announceHeal({
-			amount,
-			channel,
-			monster
-		}));
+	announceHeal (Monster, monster, { amount }) {
+		const channel = this.publicChannel;
+
+		/* eslint-disable max-len */
+		channel({
+			announce: `${monster.icon} 💊       ${monster.givenName} heals ${amount} hp`
+		});
+		/* eslint-enable max-len */
+	}
+
+	announceMiss (Card, card, { attackResult, curseOfLoki, player, target }) {
+		const channel = this.publicChannel;
+
+		let action = 'is blocked by';
+		let flavor = '';
+		let icon = '🛡';
+
+		if (curseOfLoki) {
+			action = 'misses';
+			flavor = 'horribly';
+			icon = '💨';
+		} else if (attackResult > 5) {
+			action = 'is barely blocked by';
+			icon = '⚔️';
+		}
+
+		/* eslint-disable max-len */
+		channel({
+			announce: `${player.icon} ${icon}  ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
+		});
+		/* eslint-enable max-len */
+	}
+
+	declareVictor (Ring, ring, { contestants, rounds }) {
+		// TO-DO: Figure out the victor, award XP, kick off more events (that could be messaged), save results
 	}
 
 	getPlayer ({ id, name }) {
