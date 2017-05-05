@@ -11,15 +11,26 @@ const { getFlavor } = require('./helpers/flavor');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 class Game extends BaseClass {
-	constructor (publicChannel) {
-		super({}, globalSemaphore);
+	constructor (publicChannel, options) {
+		super(options, globalSemaphore);
 
 		this.ring = new Ring();
 		this.publicChannel = publicChannel;
-		this.players = {};
 		this.initializeEvents();
 
 		this.emit('initialized');
+	}
+
+	get players () {
+		if (this.options.players === undefined) this.players = {};
+
+		return this.options.players || {};
+	}
+
+	set players (players) {
+		this.setOptions({
+			players
+		});
 	}
 
 	initializeEvents () {
