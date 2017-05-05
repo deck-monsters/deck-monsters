@@ -1,7 +1,7 @@
 // A Battlefield
 
 const prompt = require('prompt');
-const Game = require('./index.js');
+const { Game } = require('./index.js');
 
 prompt.start();
 
