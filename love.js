@@ -1,15 +1,45 @@
 // A Battlefield
 
+const prompt = require('prompt');
 const Game = require('./index.js');
 
-const announcer = (what) => {
-	console.log(what.announce);
-};
+prompt.start();
+
+const announcer = what => new Promise((resolve, reject) => {
+	if (what.announce) {
+		console.log(what.announce);
+
+		resolve(what);
+	} else if (what.question) {
+		console.log(what);
+		
+		const question = {
+			message: what.question,
+			required: true
+		};
+
+		if (what.choices) {
+			question.pattern = new RegExp(what.choices.join('|'));
+		}
+
+		prompt.get({ properties: { question } }, (err, result) => {
+			if (err || !result.question) {
+				reject(err);
+			} else {
+				resolve(result.question);
+			}
+		});
+	} else {
+		reject('Invalid arguments supplied to the channel');
+	}
+});
 
 const slackdem = new Game(announcer);
 
 const vlad = slackdem.getPlayer({ id: 1234, name: 'vlad' });
 const char = slackdem.getPlayer({ id: 861, name: 'charlemagne' });
 
-vlad.spawnMonster(announcer);
-char.spawnMonster(announcer);
+Promise
+	.resolve()
+	.then(() => vlad.spawnMonster(announcer))
+	.then(() => char.spawnMonster(announcer));
