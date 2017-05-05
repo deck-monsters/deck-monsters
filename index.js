@@ -120,14 +120,14 @@ class Game {
 		}
 
 		return {
-			spawnMonster (channel) {
-				return player.spawnMonster(channel);
+			spawnMonster (channel, options) {
+				return player.spawnMonster(channel, options || {});
 			},
-			equipMonster (channel) {
-				return player.equipMonster(channel);
+			equipMonster (channel, options) {
+				return player.equipMonster(channel, options || {});
 			},
-			sendMonsterToTheRing (channel) {
-				return player.spawnMonster(this.ring, channel);
+			sendMonsterToTheRing (channel, options) {
+				return player.spawnMonster(this.ring, channel, options || {});
 			}
 		};
 	}
