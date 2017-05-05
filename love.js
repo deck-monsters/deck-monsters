@@ -11,15 +11,13 @@ const announcer = what => new Promise((resolve, reject) => {
 
 		resolve(what);
 	} else if (what.question) {
-		console.log(what);
-		
 		const question = {
-			message: what.question,
+			description: what.question,
 			required: true
 		};
 
 		if (what.choices) {
-			question.pattern = new RegExp(what.choices.join('|'));
+			question.pattern = new RegExp(what.choices.join('|'), 'i');
 		}
 
 		prompt.get({ properties: { question } }, (err, result) => {
