@@ -29,9 +29,10 @@ class Game {
 		this.on('card.miss', this.announceMiss.bind(this));
 		this.on('creature.hit', this.announceHit.bind(this));
 		this.on('creature.heal', this.announceHeal.bind(this));
+		this.on('ring.fight', this.announceFight.bind(this));
+		this.on('game.victory', this.announceVictor.bind(this));
 
 		// Manage Fights
-		this.on('ring.fight', this.announceFight.bind(this));
 		this.on('ring.fightConcludes', this.declareVictor.bind(this));
 	}
 
@@ -97,16 +98,21 @@ class Game {
 		});
 	}
 
-	declareVictor (clasName, ring, { contestants, rounds }) {
+	announceVictor (clasName, game, { contestants, rounds, victor }) {
 		const channel = this.publicChannel;
 		const monsterA = contestants[0].monster;
 		const monsterB = contestants[1].monster;
 
-		// TO-DO: Figure out the victor, award XP, kick off more events (that could be messaged), save results
-
 		channel({
 			announce: `${monsterA.icon}  vs  ${monsterB.icon}    fight concludes`
 		});
+	}
+
+	declareVictor (clasName, ring, { contestants, rounds }) {
+		// TO-DO: Figure out the victor, award XP, kick off more events (that could be messaged), save results
+		const victor = {};
+
+		this.emit('victory', { contestants, rounds, victor })
 	}
 
 	getPlayer ({ id, name }) {
