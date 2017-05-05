@@ -24,6 +24,7 @@ class Game {
 		this.on('creature.heal', this.announceHeal);
 
 		// Manage Fights
+		this.on('ring.fight', this.announceFight);
 		this.on('ring.fightConcludes', this.declareVictor);
 	}
 
@@ -79,7 +80,18 @@ class Game {
 		/* eslint-enable max-len */
 	}
 
+	announceFight (Ring, ring, { contestants, rounds }) {
+		const channel = this.publicChannel;
+		const contestantA = contestants[0];
+		const contestantB = contestants[1];
+
+		channel({
+			announce: `${contestantA.icon}  vs  ${contestantB.icon}`
+		});
+	}
+
 	declareVictor (Ring, ring, { contestants, rounds }) {
+		const channel = this.publicChannel;
 		// TO-DO: Figure out the victor, award XP, kick off more events (that could be messaged), save results
 	}
 
