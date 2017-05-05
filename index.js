@@ -8,6 +8,7 @@ const { all } = require('./monsters');
 const { Player } = require('./players');
 
 const { getFlavor } = require('./helpers/flavor');
+const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 class Game extends BaseClass {
 	constructor (publicChannel) {
@@ -36,7 +37,7 @@ class Game extends BaseClass {
 		this.on('ring.fightConcludes', this.clearRing);
 	}
 
-	announceHit (clasName, monster, { assailant, damage }) {
+	announceHit (className, monster, { assailant, damage }) {
 		const channel = this.publicChannel;
 
 		let icon = '🤜';
@@ -55,7 +56,7 @@ class Game extends BaseClass {
 		/* eslint-enable max-len */
 	}
 
-	announceHeal (clasName, monster, { amount }) {
+	announceHeal (className, monster, { amount }) {
 		const channel = this.publicChannel;
 
 		/* eslint-disable max-len */
@@ -65,7 +66,7 @@ class Game extends BaseClass {
 		/* eslint-enable max-len */
 	}
 
-	announceMiss (clasName, card, { attackResult, curseOfLoki, player, target }) {
+	announceMiss (className, card, { attackResult, curseOfLoki, player, target }) {
 		const channel = this.publicChannel;
 
 		let action = 'is blocked by';
@@ -88,7 +89,7 @@ class Game extends BaseClass {
 		/* eslint-enable max-len */
 	}
 
-	announceFight (clasName, ring, { contestants, rounds }) {
+	announceFight (className, ring, { contestants, rounds }) {
 		const channel = this.publicChannel;
 		const monsterA = contestants[0].monster;
 		const monsterB = contestants[1].monster;
@@ -98,7 +99,7 @@ class Game extends BaseClass {
 		});
 	}
 
-	announceFightConcludes (clasName, game, { contestants, deadContestants, deaths, isDraw, rounds }) {
+	announceFightConcludes (className, game, { contestants, deadContestants, deaths, isDraw, rounds }) {
 		const channel = this.publicChannel;
 		const monsterA = contestants[0].monster;
 		const monsterB = contestants[1].monster;
@@ -108,12 +109,23 @@ class Game extends BaseClass {
 		});
 	}
 
-	handleWinner (clasName, monster, { contestant }) {
+	handleWinner (className, monster, { contestant }) {
 		// Award XP draw a card, maybe kick off more events (that could be messaged)
+
+		// Add XP to both the monster and the player in the case of victory
+		contestant.monster.xp += XP_PER_VICTORY;
+		contestant.player.xp += XP_PER_VICTORY;
+
+		// Also draw a new card for the player
+		const card = this.drawCard();
+		contestant.player.addCard(card);
 	}
 
-	handleLoser (clasName, monster, { contestant }) {
-		// Award XP draw a card, maybe kick off more events (that could be messaged)
+	handleLoser (className, monster, { contestant }) {
+		// Award XP, maybe kick off more events (that could be messaged)
+
+		// The player still earns a small bit of XP in the case of defeat
+		contestant.player.xp += XP_PER_DEFEAT;
 	}
 
 	clearRing () {
