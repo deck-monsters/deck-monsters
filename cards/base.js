@@ -30,7 +30,9 @@ class BaseCard {
 		return Promise
 			.resolve()
 			.then(() => channel({
-				announce: `${this.constructor.cardType}: ${this.constructor.description} Stats: ${this.stats}`
+				announce:
+`${this.constructor.cardType}: ${this.constructor.description}
+Stats: ${this.stats}`
 			}));
 	}
 

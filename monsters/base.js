@@ -41,7 +41,10 @@ class BaseMonster extends BaseCreature {
 		return Promise
 			.resolve()
 			.then(() => channel({
-				announce: `You see ${this.individualDescription}'`
+				announce:
+`You see ${this.individualDescription}'
+
+${this.stats}`
 			}));
 	}
 }
