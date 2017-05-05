@@ -20,6 +20,10 @@ class BaseCard {
 		return this.optionsStore || {};
 	}
 
+	get cardType () {
+		return this.constructor.cardType;
+	}
+
 	setOptions (options) {
 		this.optionsStore = Object.assign({}, this.options, options);
 
