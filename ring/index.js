@@ -1,35 +1,19 @@
 const shuffle = require('lodash.shuffle');
 
-const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
+const BaseClass = require('../baseClass');
 
 const FIGHT_DELAY = 1000;
 const MAX_MONSTERS = 2;
 
-class Ring {
+class Ring extends BaseClass {
 	constructor (options) {
-		this.semaphore = new EventEmitter();
-		this.setOptions(options);
+		super(options);
+
 		this.battles = [];
 
 		this.on('fightConcludes', (className, ring, results) => {
 			ring.battles.push(results);
 		});
-
-		this.emit('initialized');
-	}
-
-	get name () {
-		return this.constructor.name;
-	}
-
-	get options () {
-		return this.optionsStore || {};
-	}
-
-	setOptions (options) {
-		this.optionsStore = Object.assign({}, this.options, options);
-
-		this.emit('updated');
 	}
 
 	get contestants () {
@@ -155,26 +139,8 @@ class Ring {
 			rounds
 		});
 	}
-
-	emit (event, ...args) {
-		this.semaphore.emit(event, this.name, this, ...args);
-		globalSemaphore.emit(`ring.${event}`, this.name, this, ...args);
-	}
-
-	on (...args) {
-		this.semaphore.on(...args);
-	}
-
-	toJSON () {
-		return {
-			name: this.name,
-			options: this.options
-		};
-	}
-
-	toString () {
-		return JSON.stringify(this);
-	}
 }
+
+Ring.eventPrefix = 'ring';
 
 module.exports = Ring;

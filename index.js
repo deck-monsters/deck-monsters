@@ -26,16 +26,16 @@ class Game {
 	initializeEvents () {
 		// Initialize Messaging
 		// TO-DO: Add messaging for rolls, fleeing, bonus cards, etc
-		this.on('card.miss', this.announceMiss.bind(this));
-		this.on('creature.hit', this.announceHit.bind(this));
-		this.on('creature.heal', this.announceHeal.bind(this));
-		this.on('ring.fight', this.announceFight.bind(this));
-		this.on('ring.fightConcludes', this.announceFightConcludes.bind(this));
+		this.on('card.miss', this.announceMiss);
+		this.on('creature.hit', this.announceHit);
+		this.on('creature.heal', this.announceHeal);
+		this.on('ring.fight', this.announceFight);
+		this.on('ring.fightConcludes', this.announceFightConcludes);
 
 		// Manage Fights
-		this.on('creature.win', this.handleWinner.bind(this));
-		this.on('creature.loss', this.handleLoser.bind(this));
-		this.on('ring.fightConcludes', this.clearRing.bind(this));
+		this.on('creature.win', this.handleWinner);
+		this.on('creature.loss', this.handleLoser);
+		this.on('ring.fightConcludes', this.clearRing);
 	}
 
 	announceHit (clasName, monster, { assailant, damage }) {
@@ -178,8 +178,8 @@ class Game {
 		this.semaphore.emit(`game.${event}`, this.name, this, ...args);
 	}
 
-	on (...args) {
-		this.semaphore.on(...args);
+	on (event, func) {
+		this.semaphore.on(event, func.bind(this));
 	}
 }
 

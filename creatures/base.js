@@ -1,6 +1,6 @@
 const random = require('lodash.sample');
 
-const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
+const BaseClass = require('../baseClass');
 const { STARTING_XP, getLevel } = require('../helpers/levels');
 const PRONOUNS = require('../helpers/pronouns');
 
@@ -12,42 +12,25 @@ const MAX_DAMAGE_BOOST = 6;
 const MAX_HP_BOOST = 20;
 const TIME_TO_HEAL = 900000;
 
-class BaseCreature {
+class BaseCreature extends BaseClass {
 	constructor (options) {
-		if (this.name === BaseCreature.name) {
-			throw new Error('The BaseCreature should not be instantiated directly!');
-		}
-
 		const defaultOptions = {
 			gender: random(Object.keys(PRONOUNS))
 		};
 
-		this.semaphore = new EventEmitter();
-		this.setOptions(Object.assign(defaultOptions, options));
+		super(Object.assign(defaultOptions, options));
+
+		if (this.name === BaseCreature.name) {
+			throw new Error('The BaseCreature should not be instantiated directly!');
+		}
 
 		this.healingInterval = setInterval(() => {
 			if (this.hp < this.maxHp) this.heal(1);
 		}, TIME_TO_HEAL);
-
-		this.emit('created');
 	}
 
 	get icon () {
 		return this.options.icon;
-	}
-
-	get name () {
-		return this.constructor.name;
-	}
-
-	get options () {
-		return this.optionsStore || {};
-	}
-
-	setOptions (options) {
-		this.optionsStore = Object.assign({}, this.options, options);
-
-		this.emit('updated');
 	}
 
 	get givenName () {
@@ -279,26 +262,8 @@ Battles won: ${this.battles.wins}`;
 
 		this.battles = battles;
 	}
-
-	emit (event, ...args) {
-		this.semaphore.emit(event, this.name, this, ...args);
-		globalSemaphore.emit(`creature.${event}`, this.name, this, ...args);
-	}
-
-	on (...args) {
-		this.semaphore.on(...args);
-	}
-
-	toJSON () {
-		return {
-			name: this.name,
-			options: this.options
-		};
-	}
-
-	toString () {
-		return JSON.stringify(this);
-	}
 }
+
+BaseCreature.eventPrefix = 'creature';
 
 module.exports = BaseCreature;
