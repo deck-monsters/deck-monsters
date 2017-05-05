@@ -29,7 +29,16 @@ const { getFlavor } = require('./helpers/flavor');
 const announceHit = (Monster, monster, info) => {
 	const { assailant, damage, hp } = info;
 
-	console.log(`${assailant.icon}  🤜 ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`);
+	let icon = '🤜';
+	if (damage >= 10) {
+		icon = '🔥';
+	} else if (damage >= 5) {
+		icon = '🔪';
+	} else if (damage === 1) {
+		icon = '🏓';
+	}
+
+	console.log(`${assailant.icon}  ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`);
 
 	if (hp <= 0) {
 		console.log(`☠️    ${monster.givenName}'s gore paints the floor.`);
