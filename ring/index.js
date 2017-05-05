@@ -72,6 +72,8 @@ class Ring {
 			monsters: contestants.map(contestant => contestant.monster)
 		});
 
+		let round = 1;
+
 		const doAction = ({ currentContestant, currentCard, emptyHanded }) => new Promise((resolve) => {
 			const contestant = contestants[currentContestant];
 			const monster = contestant.monster;
@@ -99,22 +101,27 @@ class Ring {
 					resolve(contestant);
 				}
 			} else {
-				if (emptyHanded === nextContestant) nextCard = 0;
+				if (emptyHanded === nextContestant) {
+					nextCard = 0;
+					round += 1;
+				}
+
 				next(emptyHanded === false ? currentContestant : emptyHanded);
 			}
 		});
 
 		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
-			.then(contestant => this.fightConcludes(contestant));
+			.then(contestant => this.fightConcludes(contestant, round));
 	}
 
-	fightConcludes (lastContestant) {
+	fightConcludes (lastContestant, rounds) {
 		const contestants = this.contestants;
 
 		this.emit('fightConcludes', {
 			contestants,
 			lastContestant,
-			monsters: contestants.map(contestant => contestant.monster)
+			monsters: contestants.map(contestant => contestant.monster),
+			rounds
 		});
 
 		// TO-DO: Do something to determine winners / losers here
