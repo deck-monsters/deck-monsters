@@ -5,7 +5,7 @@ const { spawn, equip } = require('../monsters');
 const DEFAULT_MONSTER_SLOTS = 2;
 
 const formatMonsters = monsters => monsters
-	.map((monster, index) => `${index}) ${monster.givenName}: ${monster.individualDescription}` + '\n'); // eslint-disable-line no-useless-concat
+	.map((monster, index) => `${index}) ${monster.givenName}: ${monster.individualDescription}`); // eslint-disable-line no-useless-concat
 
 class BasePlayer extends BaseCreature {
 	// constructor (options) {
@@ -100,7 +100,8 @@ class BasePlayer extends BaseCreature {
 					.then(() => channel({
 						question:
 `You have ${numberOfMonsters} monsters:
-${formatMonsters(this.monsters)}
+${formatMonsters(this.monsters).join('\n')}
+
 Which monster would you like to equip?`,
 						choices: Object.keys(this.monsters)
 					}))
@@ -141,7 +142,8 @@ Which monster would you like to equip?`,
 					.then(() => channel({
 						question:
 `You have ${numberOfMonsters} monsters:
-${formatMonsters(this.monsters)}
+${formatMonsters(this.monsters).join('\n')}
+
 Which monster would you like to send into battle?`,
 						choices: Object.keys(this.monsters)
 					}))
@@ -150,7 +152,7 @@ Which monster would you like to send into battle?`,
 			.then((monster) => {
 				if (monster.cards.length <= 0) {
 					channel({
-						announce: 'Only an evil master would send their monster into battle without any cards'
+						announce: 'Only an evil master would send their monster into battle without any cards.'
 					});
 
 					return Promise.reject();
