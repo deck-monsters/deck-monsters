@@ -15,27 +15,41 @@ const all = [
 // Channel should be a function that takes a question and an optional array of
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
-const spawn = (channel) => {
+const spawn = (channel, { type, name, color, gender }) => {
 	const monsterTypes = all.map(monster => monster.creatureType);
 	const options = {};
-	let Monster;
 
+	let Monster;
 	return Promise
 		.resolve()
-		.then(() => channel({
-			question: 'Which type of monster would you like to spawn?',
-			choices: monsterTypes
-		}))
+		.then(() => {
+			if (type) {
+				return type;
+			}
+
+			return channel({
+				question: 'Which type of monster would you like to spawn?',
+				choices: monsterTypes
+			});
+		})
 		.then((answer) => {
 			Monster = all.find(monster => monster.creatureType.toLowerCase() === answer.toLowerCase());
+
+			if (name) {
+				return name;
+			}
 
 			return channel({
 				question: `What would you like to name your new ${Monster.creatureType.toLowerCase()}?`
 			});
 		})
 		.then((answer) => {
-			options.name = startCase(answer.toLowerCase());
 			// TO-DO: Keep a master list of monsters and ensure that there are no duplicate names
+			options.name = startCase(answer.toLowerCase());
+
+			if (color) {
+				return color;
+			}
 
 			return channel({
 				question: `What color should ${options.name} be?`
@@ -43,6 +57,10 @@ const spawn = (channel) => {
 		})
 		.then((answer) => {
 			options.color = answer.toLowerCase();
+
+			if (gender) {
+				return gender;
+			}
 
 			return channel({
 				question: `What gender is ${options.name} the ${options.color} ${Monster.creatureType.toLowerCase()}?`,

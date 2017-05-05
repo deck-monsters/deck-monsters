@@ -54,7 +54,7 @@ class BasePlayer extends BaseCreature {
 		this.monsters = [...this.monsters, monster];
 	}
 
-	spawnMonster (channel) {
+	spawnMonster (channel, options) {
 		const remainingSlots = Math.max(this.monsterSlots - this.monsters.length, 0);
 
 		if (remainingSlots > 0) {
@@ -63,7 +63,7 @@ class BasePlayer extends BaseCreature {
 				.then(() => channel({
 					announce: `You have ${remainingSlots} of ${this.monsterSlots} monsters left to train.`
 				}))
-				.then(() => spawn(channel))
+				.then(() => spawn(channel, options))
 				.then((monster) => {
 					this.addMonster(monster);
 
