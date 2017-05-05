@@ -43,8 +43,10 @@ const char = slackdem.getPlayer({ id: 861, name: 'charlemagne' });
 
 Promise
 	.resolve()
-	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'jerry', color: 'gray', gender: 'male' }))
-	.then(() => char.spawnMonster(charAnnouncer, { type: 'minotaur', name: 'tom', color: 'brown', gender: 'male' }))
+//	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'jerry', color: 'gray', gender: 'male' }))
+//	.then(() => char.spawnMonster(charAnnouncer, { type: 'minotaur', name: 'tom', color: 'brown', gender: 'male' }))
+	.then(() => vlad.spawnMonster(vladAnnouncer))
+	.then(() => char.spawnMonster(charAnnouncer))
 	.then(() => vlad.equipMonster(vladAnnouncer))
 	.then(() => char.equipMonster(charAnnouncer))
 	.then(() => vlad.sendMonsterToTheRing(vladAnnouncer))
