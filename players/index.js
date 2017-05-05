@@ -17,5 +17,6 @@ const hydratePlayers = playersJSON => JSON
 
 module.exports = {
 	hydratePlayer,
-	hydratePlayers
+	hydratePlayers,
+	Player
 };
