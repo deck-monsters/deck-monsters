@@ -26,14 +26,16 @@ class Game {
 	initializeEvents () {
 		// Initialize Messaging
 		// TO-DO: Add messaging for rolls, fleeing, bonus cards, etc
-		this.on('card.miss', this.announceMiss.bind(this));
-		this.on('creature.hit', this.announceHit.bind(this));
-		this.on('creature.heal', this.announceHeal.bind(this));
-		this.on('ring.fight', this.announceFight.bind(this));
-		this.on('game.victory', this.announceVictor.bind(this));
+		this.on('card.miss', this.announceMiss);
+		this.on('creature.hit', this.announceHit);
+		this.on('creature.heal', this.announceHeal);
+		this.on('ring.fight', this.announceFight);
+		this.on('ring.fightConcludes', this.announceFightConcludes);
 
 		// Manage Fights
-		this.on('ring.fightConcludes', this.declareVictor.bind(this));
+		this.on('creature.win', this.handleWinner);
+		this.on('creature.loss', this.handleLoser);
+		this.on('ring.fightConcludes', this.clearRing);
 	}
 
 	announceHit (clasName, monster, { assailant, damage }) {
@@ -98,7 +100,7 @@ class Game {
 		});
 	}
 
-	announceVictor (clasName, game, { contestants, rounds, victor }) {
+	announceFightConcludes (clasName, game, { contestants, deadContestants, deaths, isDraw, rounds }) {
 		const channel = this.publicChannel;
 		const monsterA = contestants[0].monster;
 		const monsterB = contestants[1].monster;
@@ -108,11 +110,16 @@ class Game {
 		});
 	}
 
-	declareVictor (clasName, ring, { contestants, rounds }) {
-		// TO-DO: Figure out the victor, award XP, kick off more events (that could be messaged), save results
-		const victor = {};
+	handleWinner (clasName, monster, { contestant }) {
+		// Award XP draw a card, maybe kick off more events (that could be messaged)
+	}
 
-		this.emit('victory', { contestants, rounds, victor })
+	handleLoser (clasName, monster, { contestant }) {
+		// Award XP draw a card, maybe kick off more events (that could be messaged)
+	}
+
+	clearRing () {
+		this.ring.clearRing();
 	}
 
 	getPlayer ({ id, name }) {
@@ -171,8 +178,8 @@ class Game {
 		this.semaphore.emit(`game.${event}`, this.name, this, ...args);
 	}
 
-	on (...args) {
-		this.semaphore.on(...args);
+	on (event, func) {
+		this.semaphore.on(event, func.bind(this));
 	}
 }
 
