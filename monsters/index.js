@@ -78,32 +78,34 @@ const equip = (deck, monster, channel) => {
 	const cards = [];
 	const cardSlots = monster.cardSlots;
 
-	const formatCards = remainingCards => remainingCards.map((card, index) => `${index}) ${card.cardType}` + '\n'); // eslint-disable-line no-useless-concat
+	const formatCards = remainingCards => remainingCards.map((card, index) => `${index}) ${card.cardType}`);
 
 	const addCard = ({ remainingSlots, remainingCards }) => Promise
 		.resolve()
 		.then(() => channel({
 			question:
-`You have ${remainingSlots} of ${cardSlots} remaining, and the following cards:
-${formatCards(remainingCards)}
-Which card would you like to equip in slot ${cardSlots - remainingSlots}?`,
+`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
+${formatCards(remainingCards).join('\n')}
+
+Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`,
 			choices: Object.keys(remainingCards)
 		}))
 		.then((answer) => {
 			const nowRemainingSlots = remainingSlots - 1;
 			const nowRemainingCards = [...remainingCards];
-			const selectedCard = nowRemainingCards.splice(answer, 1);
+			const selectedCard = nowRemainingCards[answer];
+			nowRemainingCards.splice(answer, 1);
 			cards.push(selectedCard);
 
 			channel({
-				announce: `You selected a ${selectedCard.cardType} card.`
+				announce: `You selected a ${selectedCard.cardType.toLowerCase()} card.`
 			});
 
 			if (nowRemainingSlots <= 0) {
 				channel({
 					announce:
 `You've filled your slots with the following cards:
-${formatCards(cards)}`
+${formatCards(cards).join('\n')}`
 				});
 
 				return cards;
@@ -113,7 +115,7 @@ ${formatCards(cards)}`
 				channel({
 					announce:
 `You're out of cards to equip, but you've equiped the following cards:
-${formatCards(cards)}`
+${formatCards(cards).join('\n')}`
 				});
 
 				return cards;

@@ -54,6 +54,13 @@ class BaseCreature {
 		return this.options.name;
 	}
 
+	get stats () {
+		return `Level ${this.level}
+XP: ${this.xp} | HP: ${this.hp} | AC: ${this.ac}
+Battles fought: ${this.battles.total}
+Battles won: ${this.battles.wins}`;
+	}
+
 	get individualDescription () {
 		return this.options.description;
 	}
@@ -64,6 +71,18 @@ class BaseCreature {
 
 	get pronouns () {
 		return PRONOUNS[this.options.gender];
+	}
+
+	get battles () {
+		if (this.options.battles === undefined) this.battles = { wins: 0, losses: 0, total: 0 };
+
+		return this.options.battles || [];
+	}
+
+	set battles (battles) {
+		this.setOptions({
+			battles
+		});
 	}
 
 	get dead () {
@@ -156,15 +175,6 @@ class BaseCreature {
 		return maxHp;
 	}
 
-	emit (event, ...args) {
-		this.semaphore.emit(event, this.name, this, ...args);
-		globalSemaphore.emit(`creature.${event}`, this.name, this, ...args);
-	}
-
-	on (...args) {
-		this.semaphore.on(...args);
-	}
-
 	leaveCombat (assailant) {
 		this.emit('leave', {
 			assailant
@@ -238,6 +248,45 @@ class BaseCreature {
 		this.dead = true;
 
 		return false;
+	}
+
+	addWin () {
+		const battles = {
+			wins: this.battles.wins + 1,
+			losses: this.battles.losses,
+			total: this.battles.total + 1
+		};
+
+		this.battles = battles;
+	}
+
+	addLoss () {
+		const battles = {
+			wins: this.battles.wins,
+			losses: this.battles.losses + 1,
+			total: this.battles.total + 1
+		};
+
+		this.battles = battles;
+	}
+
+	addDraw () {
+		const battles = {
+			wins: this.battles.wins,
+			losses: this.battles.losses,
+			total: this.battles.total + 1
+		};
+
+		this.battles = battles;
+	}
+
+	emit (event, ...args) {
+		this.semaphore.emit(event, this.name, this, ...args);
+		globalSemaphore.emit(`creature.${event}`, this.name, this, ...args);
+	}
+
+	on (...args) {
+		this.semaphore.on(...args);
 	}
 
 	toJSON () {

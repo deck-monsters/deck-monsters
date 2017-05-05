@@ -1,6 +1,9 @@
+const reduce = require('lodash.reduce');
+
 const { globalSemaphore } = require('./helpers/semaphore');
 const Ring = require('./ring');
 const { draw } = require('./cards');
+const { all } = require('./monsters');
 const { Player } = require('./players');
 
 const { getFlavor } = require('./helpers/flavor');
@@ -117,16 +120,33 @@ class Game {
 		}
 
 		return {
-			spawnMonster (channel) {
-				return player.spawnMonster(channel);
+			spawnMonster (channel, options) {
+				return player.spawnMonster(channel, options || {});
 			},
-			equipMonster (channel) {
-				return player.equipMonster(channel);
+			equipMonster (channel, options) {
+				return player.equipMonster(channel, options || {});
 			},
-			sendMonsterToTheRing (channel) {
-				return player.spawnMonster(this.ring, channel);
+			sendMonsterToTheRing (channel, options) {
+				return player.spawnMonster(this.ring, channel, options || {});
 			}
 		};
+	}
+
+	static getMonsterTypes () {
+		return all.reduce((obj, Monster) => {
+			obj[Monster.monsterType] = Monster;
+			return obj;
+		}, {});
+	}
+
+	getAllMonsters () {
+		return reduce(this.players, (obj, player) => {
+			player.monsters.forEach((monster) => {
+				obj[monster.givenName] = monster;
+			});
+
+			return obj;
+		}, {});
 	}
 
 	drawCard (options) {

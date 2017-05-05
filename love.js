@@ -5,14 +5,14 @@ const Game = require('./index.js');
 
 prompt.start();
 
-const announcer = what => new Promise((resolve, reject) => {
+const announcer = (prefix, what) => new Promise((resolve, reject) => {
 	if (what.announce) {
-		console.log(what.announce);
+		console.log(`${prefix} > ${what.announce}`); // eslint-disable-line no-console
 
 		resolve(what);
 	} else if (what.question) {
 		const question = {
-			description: what.question,
+			description: `${prefix} > ${what.question}`,
 			required: true
 		};
 
@@ -32,12 +32,20 @@ const announcer = what => new Promise((resolve, reject) => {
 	}
 });
 
-const slackdem = new Game(announcer);
+const roomAnnouncer = what => announcer('Room', what);
+const slackdem = new Game(roomAnnouncer);
 
+const vladAnnouncer = what => announcer('vlad', what);
 const vlad = slackdem.getPlayer({ id: 1234, name: 'vlad' });
+
+const charAnnouncer = what => announcer('charlemagne', what);
 const char = slackdem.getPlayer({ id: 861, name: 'charlemagne' });
+
+const skipPrompts = { type: 'basilisk', name: 'jerry', color: 'purple', gender: 'male' };
 
 Promise
 	.resolve()
-	.then(() => vlad.spawnMonster(announcer))
-	.then(() => char.spawnMonster(announcer));
+	.then(() => vlad.spawnMonster(vladAnnouncer, skipPrompts))
+	.then(() => char.spawnMonster(charAnnouncer, skipPrompts))
+	.then(() => vlad.equipMonster(vladAnnouncer))
+	.then(() => char.equipMonster(charAnnouncer));

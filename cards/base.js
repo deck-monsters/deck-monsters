@@ -20,6 +20,10 @@ class BaseCard {
 		return this.optionsStore || {};
 	}
 
+	get cardType () {
+		return this.constructor.cardType;
+	}
+
 	setOptions (options) {
 		this.optionsStore = Object.assign({}, this.options, options);
 
@@ -30,7 +34,9 @@ class BaseCard {
 		return Promise
 			.resolve()
 			.then(() => channel({
-				announce: `${this.constructor.cardType}: ${this.constructor.description} Stats: ${this.stats}`
+				announce:
+`${this.constructor.cardType}: ${this.constructor.description}
+Stats: ${this.stats}`
 			}));
 	}
 
