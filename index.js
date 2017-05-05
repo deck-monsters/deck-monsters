@@ -26,13 +26,13 @@ class Game {
 	initializeEvents () {
 		// Initialize Messaging
 		// TO-DO: Add messaging for rolls, fleeing, bonus cards, etc
-		this.on('card.miss', this.announceMiss);
-		this.on('creature.hit', this.announceHit);
-		this.on('creature.heal', this.announceHeal);
+		this.on('card.miss', this.announceMiss.bind(this));
+		this.on('creature.hit', this.announceHit.bind(this));
+		this.on('creature.heal', this.announceHeal.bind(this));
 
 		// Manage Fights
-		this.on('ring.fight', this.announceFight);
-		this.on('ring.fightConcludes', this.declareVictor);
+		this.on('ring.fight', this.announceFight.bind(this));
+		this.on('ring.fightConcludes', this.declareVictor.bind(this));
 	}
 
 	announceHit (Monster, monster, { assailant, damage }) {
@@ -107,6 +107,7 @@ class Game {
 	}
 
 	getPlayer ({ id, name }) {
+		const ring = this.ring;
 		let player = this.players[id];
 
 		if (!player) {
@@ -127,7 +128,7 @@ class Game {
 				return player.equipMonster(channel, options || {});
 			},
 			sendMonsterToTheRing (channel, options) {
-				return player.spawnMonster(this.ring, channel, options || {});
+				return player.sendMonsterToTheRing(ring, channel, options || {});
 			}
 		};
 	}
