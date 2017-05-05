@@ -35,7 +35,7 @@ class Game {
 		this.on('ring.fightConcludes', this.declareVictor.bind(this));
 	}
 
-	announceHit (Monster, monster, { assailant, damage }) {
+	announceHit (clasName, monster, { assailant, damage }) {
 		const channel = this.publicChannel;
 
 		let icon = '🤜';
@@ -54,7 +54,7 @@ class Game {
 		/* eslint-enable max-len */
 	}
 
-	announceHeal (Monster, monster, { amount }) {
+	announceHeal (clasName, monster, { amount }) {
 		const channel = this.publicChannel;
 
 		/* eslint-disable max-len */
@@ -64,7 +64,7 @@ class Game {
 		/* eslint-enable max-len */
 	}
 
-	announceMiss (Card, card, { attackResult, curseOfLoki, player, target }) {
+	announceMiss (clasName, card, { attackResult, curseOfLoki, player, target }) {
 		const channel = this.publicChannel;
 
 		let action = 'is blocked by';
@@ -87,22 +87,25 @@ class Game {
 		/* eslint-enable max-len */
 	}
 
-	announceFight (Ring, ring, { contestants, rounds }) {
+	announceFight (clasName, ring, { contestants, rounds }) {
 		const channel = this.publicChannel;
-		const contestantA = contestants[0];
-		const contestantB = contestants[1];
+		const monsterA = contestants[0].monster;
+		const monsterB = contestants[1].monster;
 
 		channel({
-			announce: `${contestantA.icon}  vs  ${contestantB.icon}`
+			announce: `${monsterA.icon}  vs  ${monsterB.icon}`
 		});
 	}
 
-	declareVictor (Ring, ring, { contestants, rounds }) {
+	declareVictor (clasName, ring, { contestants, rounds }) {
 		const channel = this.publicChannel;
+		const monsterA = contestants[0].monster;
+		const monsterB = contestants[1].monster;
+
 		// TO-DO: Figure out the victor, award XP, kick off more events (that could be messaged), save results
 
 		channel({
-			announce: `${contestantA.icon}  vs  ${contestantB.icon}    fight concludes`
+			announce: `${monsterA.icon}  vs  ${monsterB.icon}    fight concludes`
 		});
 	}
 
