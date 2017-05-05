@@ -21,7 +21,7 @@ const all = [
 const draw = (options) => {
 	const shuffledDeck = shuffle(all);
 
-	const Card = shuffledDeck.find(isProbable) || draw();
+	const Card = shuffledDeck.find(isProbable) || draw(options);
 
 	return new Card(options);
 };

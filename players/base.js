@@ -5,13 +5,11 @@ const { spawn, equip } = require('../monsters');
 const DEFAULT_MONSTER_SLOTS = 2;
 
 const formatMonsters = monsters => monsters
-	.map((monster, index) => `${index}) ${monster.givenName}: ${monster.individualDescription}`); // eslint-disable-line no-useless-concat
+	.map((monster, index) => `
+${index}) ${monster.givenName}: ${monster.individualDescription}
+${monster.stats}`); // eslint-disable-line no-useless-concat
 
 class BasePlayer extends BaseCreature {
-	// constructor (options) {
-	// 	super(options);
-	// }
-
 	get deck () {
 		if (this.options.deck === undefined) this.deck = getInitialDeck();
 
@@ -48,10 +46,14 @@ class BasePlayer extends BaseCreature {
 
 	addCard (card) {
 		this.cards = [...this.cards, card];
+
+		this.emit('cardAdded', { card });
 	}
 
 	addMonster (monster) {
 		this.monsters = [...this.monsters, monster];
+
+		this.emit('monsterAdded', { monster });
 	}
 
 	spawnMonster (channel, options) {
@@ -82,8 +84,10 @@ class BasePlayer extends BaseCreature {
 	}
 
 	equipMonster (channel) {
+		const monsters = this.monsters.filter(monster => !monster.dead);
+
 		return Promise
-			.resolve(this.monsters.length)
+			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
 					channel({
@@ -92,7 +96,7 @@ class BasePlayer extends BaseCreature {
 
 					return Promise.reject();
 				} else if (numberOfMonsters === 1) {
-					return this.monsters[0];
+					return monsters[0];
 				}
 
 				return Promise
@@ -100,12 +104,12 @@ class BasePlayer extends BaseCreature {
 					.then(() => channel({
 						question:
 `You have ${numberOfMonsters} monsters:
-${formatMonsters(this.monsters).join('\n')}
+${formatMonsters(monsters).join('\n')}
 
 Which monster would you like to equip?`,
-						choices: Object.keys(this.monsters)
+						choices: Object.keys(monsters)
 					}))
-					.then(answer => this.monsters[answer]);
+					.then(answer => monsters[answer]);
 			})
 			.then(monster => equip(this.deck, monster, channel)
 				.then((cards) => {
@@ -122,10 +126,11 @@ Which monster would you like to equip?`,
 	}
 
 	sendMonsterToTheRing (ring, channel) {
+		const monsters = this.monsters.filter(monster => !monster.dead);
 		const player = this;
 
 		return Promise
-			.resolve(this.monsters.length)
+			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
 					channel({
@@ -134,7 +139,7 @@ Which monster would you like to equip?`,
 
 					return Promise.reject();
 				} else if (numberOfMonsters === 1) {
-					return this.monsters[0];
+					return monsters[0];
 				}
 
 				return Promise
@@ -142,12 +147,12 @@ Which monster would you like to equip?`,
 					.then(() => channel({
 						question:
 `You have ${numberOfMonsters} monsters:
-${formatMonsters(this.monsters).join('\n')}
+${formatMonsters(monsters).join('\n')}
 
 Which monster would you like to send into battle?`,
-						choices: Object.keys(this.monsters)
+						choices: Object.keys(monsters)
 					}))
-					.then(answer => this.monsters[answer]);
+					.then(answer => monsters[answer]);
 			})
 			.then((monster) => {
 				if (monster.cards.length <= 0) {
