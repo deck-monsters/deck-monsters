@@ -1,95 +1,51 @@
-const cards = require('./cards');
-// const monsters = require('./monsters');
-const Basilisk = require('./monsters/basilisk');
-// const WeepingAngel = require('./monsters/weeping-angel');
-const Minotaur = require('./monsters/minotaur');
-const { globalSemaphore } = require('./helpers/semaphore');
+// A Battlefield
 
-const monsterA = new Basilisk();
-// monsterA.look(({ announce }) => console.log(announce));
-const deckA = cards.getInitialDeck();
-// deckA.forEach((card) => { card.look(({ announce }) => console.log(announce)); });
+const prompt = require('prompt');
+const Game = require('./index.js');
 
-console.log('');
+prompt.start();
 
-const monsterB = new Minotaur();
-// monsterB.look(({ announce }) => console.log(announce));
-const deckB = cards.getInitialDeck();
-// deckB.forEach((card) => { card.look(({ announce }) => console.log(announce)); });
+const announcer = (prefix, what) => new Promise((resolve, reject) => {
+	if (what.announce) {
+		console.log(`${prefix} > ${what.announce}`); // eslint-disable-line no-console
 
+		resolve(what);
+	} else if (what.question) {
+		const question = {
+			description: `${prefix} > ${what.question}`,
+			required: true
+		};
 
-console.log('');
-console.log('Let the games begin!');
-console.log('');
+		if (what.choices) {
+			question.pattern = new RegExp(what.choices.join('|'), 'i');
+		}
 
-console.log(`${monsterA.icon} ${monsterA.givenName} ${monsterA.hp} vs ${monsterB.icon} ${monsterB.givenName} ${monsterB.hp}`);
-
-const { getFlavor } = require('./helpers/flavor');
-
-const announceHit = (Monster, monster, info) => {
-	const { assailant, damage, hp } = info;
-
-	let icon = '🤜';
-	if (damage >= 10) {
-		icon = '🔥';
-	} else if (damage >= 5) {
-		icon = '🔪';
-	} else if (damage === 1) {
-		icon = '🏓';
+		prompt.get({ properties: { question } }, (err, result) => {
+			if (err || !result.question) {
+				reject(err);
+			} else {
+				resolve(result.question);
+			}
+		});
+	} else {
+		reject('Invalid arguments supplied to the channel');
 	}
+});
 
-	console.log(`${assailant.icon}  ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`);
+const roomAnnouncer = what => announcer('Room', what);
+const slackdem = new Game(roomAnnouncer);
 
-	if (hp <= 0) {
-		console.log(`☠️    ${monster.givenName}'s gore paints the floor.`);
-	}
-};
+const vladAnnouncer = what => announcer('vlad', what);
+const vlad = slackdem.getPlayer({ id: 1234, name: 'vlad' });
 
-const announceMiss = (Monster, monster, info) => {
-	const { attackResult, curseOfLoki, player, target } = info;
-	let action = 'is blocked by';
-	let flavor = '';
-	let icon = '🛡';
+const charAnnouncer = what => announcer('charlemagne', what);
+const char = slackdem.getPlayer({ id: 861, name: 'charlemagne' });
 
-	if (curseOfLoki) {
-		action = 'misses';
-		flavor = 'horribly';
-		icon = '💨';
-	} else if (attackResult > 5) {
-		action = 'is barely blocked by';
-		icon = '⚔️';
-	}
-
-	console.log(`${player.icon} ${icon}  ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`);
-};
-
-const announceHeal = (Monster, monster, info) => {
-	const { amount } = info;
-	console.log(`${monster.icon} 💊       ${monster.givenName} heals ${amount} hp`);
-};
-
-globalSemaphore.on('card.miss', announceMiss);
-globalSemaphore.on('creature.hit', announceHit);
-globalSemaphore.on('creature.heal', announceHeal);
-
-
-let cardA = 0;
-let cardB = 0;
-while (monsterA.hp > 0 && monsterB.hp > 0) {
-	deckA[cardA].effect(monsterA, monsterB, 'A');
-
-	if (monsterB.hp > 0) {
-		deckB[cardB].effect(monsterB, monsterA, 'A');
-	}
-
-	cardA++;
-	cardB++;
-
-	if (cardA >= deckA.length) {
-		cardA = 0;
-	}
-
-	if (cardB >= deckB.length) {
-		cardB = 0;
-	}
-}
+Promise
+	.resolve()
+	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'jerry', color: 'gray', gender: 'male' }))
+	.then(() => char.spawnMonster(charAnnouncer, { type: 'minotaur', name: 'tom', color: 'brown', gender: 'male' }))
+	.then(() => vlad.equipMonster(vladAnnouncer))
+	.then(() => char.equipMonster(charAnnouncer))
+	.then(() => vlad.sendMonsterToTheRing(vladAnnouncer))
+	.then(() => char.sendMonsterToTheRing(charAnnouncer));

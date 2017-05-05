@@ -9,6 +9,11 @@ class Ring {
 	constructor (options) {
 		this.semaphore = new EventEmitter();
 		this.setOptions(options);
+		this.battles = [];
+
+		this.on('fightConcludes', (className, ring, results) => {
+			ring.battles.push(results);
+		});
 
 		this.emit('initialized');
 	}
@@ -65,11 +70,10 @@ class Ring {
 
 	fight () {
 		const ring = this;
-		const contestants = this.contestants;
+		const contestants = [...this.contestants];
 
 		this.emit('fight', {
-			contestants,
-			monsters: contestants.map(contestant => contestant.monster)
+			contestants
 		});
 
 		let round = 1;
@@ -117,15 +121,39 @@ class Ring {
 	fightConcludes (lastContestant, rounds) {
 		const contestants = this.contestants;
 
+		const deadContestants = contestants.filter(contestant => !!contestant.monster.dead);
+		const deaths = deadContestants.length;
+
+		if (deaths > 0) {
+			contestants.forEach((contestant) => {
+				if (contestant.monster.dead) {
+					contestant.player.addLoss();
+					contestant.monster.addLoss();
+					contestant.monster.emit('loss', { contestant });
+				} else {
+					contestant.player.addWin();
+					contestant.monster.addWin();
+					contestant.monster.emit('win', { contestant });
+				}
+
+				contestant.monster.dead = false;
+			});
+		} else {
+			contestants.forEach((contestant) => {
+				contestant.player.addDraw();
+				contestant.monster.addDraw();
+				contestant.monster.emit('draw', { contestant });
+			});
+		}
+
 		this.emit('fightConcludes', {
 			contestants,
+			deadContestants,
+			deaths,
+			isDraw: deaths <= 0,
 			lastContestant,
-			monsters: contestants.map(contestant => contestant.monster),
 			rounds
 		});
-
-		// TO-DO: Do something to determine winners / losers here
-		// Or should that be in response to events?
 	}
 
 	emit (event, ...args) {
