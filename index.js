@@ -13,6 +13,10 @@ class Game {
 		this.players = {};
 		this.initializeEvents();
 
+		publicChannel({
+			announce: 'init'
+		});
+
 		this.emit('initialized');
 	}
 
@@ -93,6 +97,10 @@ class Game {
 	declareVictor (Ring, ring, { contestants, rounds }) {
 		const channel = this.publicChannel;
 		// TO-DO: Figure out the victor, award XP, kick off more events (that could be messaged), save results
+
+		channel({
+			announce: `${contestantA.icon}  vs  ${contestantB.icon}    fight concludes`
+		});
 	}
 
 	getPlayer ({ id, name }) {
