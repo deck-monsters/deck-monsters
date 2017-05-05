@@ -1,6 +1,7 @@
 const reduce = require('lodash.reduce');
 
 const { globalSemaphore } = require('./helpers/semaphore');
+const BaseClass = require('./baseClass');
 const Ring = require('./ring');
 const { draw } = require('./cards');
 const { all } = require('./monsters');
@@ -8,17 +9,14 @@ const { Player } = require('./players');
 
 const { getFlavor } = require('./helpers/flavor');
 
-class Game {
+class Game extends BaseClass {
 	constructor (publicChannel) {
+		super({}, globalSemaphore);
+
 		this.ring = new Ring();
-		this.semaphore = globalSemaphore;
 		this.publicChannel = publicChannel;
 		this.players = {};
 		this.initializeEvents();
-
-		publicChannel({
-			announce: 'init'
-		});
 
 		this.emit('initialized');
 	}
@@ -173,14 +171,8 @@ class Game {
 
 		return card;
 	}
-
-	emit (event, ...args) {
-		this.semaphore.emit(`game.${event}`, this.name, this, ...args);
-	}
-
-	on (event, func) {
-		this.semaphore.on(event, func.bind(this));
-	}
 }
+
+Game.eventPrefix = 'game';
 
 module.exports = Game;
