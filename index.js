@@ -1,26 +1,36 @@
 const reduce = require('lodash.reduce');
 
 const { globalSemaphore } = require('./helpers/semaphore');
+const BaseClass = require('./baseClass');
 const Ring = require('./ring');
 const { draw } = require('./cards');
 const { all } = require('./monsters');
 const { Player } = require('./players');
 
 const { getFlavor } = require('./helpers/flavor');
+const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
-class Game {
-	constructor (publicChannel) {
+class Game extends BaseClass {
+	constructor (publicChannel, options) {
+		super(options, globalSemaphore);
+
 		this.ring = new Ring();
-		this.semaphore = globalSemaphore;
 		this.publicChannel = publicChannel;
-		this.players = {};
 		this.initializeEvents();
 
-		publicChannel({
-			announce: 'init'
-		});
-
 		this.emit('initialized');
+	}
+
+	get players () {
+		if (this.options.players === undefined) this.players = {};
+
+		return this.options.players || {};
+	}
+
+	set players (players) {
+		this.setOptions({
+			players
+		});
 	}
 
 	initializeEvents () {
@@ -38,7 +48,7 @@ class Game {
 		this.on('ring.fightConcludes', this.clearRing);
 	}
 
-	announceHit (clasName, monster, { assailant, damage }) {
+	announceHit (className, monster, { assailant, damage }) {
 		const channel = this.publicChannel;
 
 		let icon = '🤜';
@@ -57,7 +67,7 @@ class Game {
 		/* eslint-enable max-len */
 	}
 
-	announceHeal (clasName, monster, { amount }) {
+	announceHeal (className, monster, { amount }) {
 		const channel = this.publicChannel;
 
 		/* eslint-disable max-len */
@@ -67,7 +77,7 @@ class Game {
 		/* eslint-enable max-len */
 	}
 
-	announceMiss (clasName, card, { attackResult, curseOfLoki, player, target }) {
+	announceMiss (className, card, { attackResult, curseOfLoki, player, target }) {
 		const channel = this.publicChannel;
 
 		let action = 'is blocked by';
@@ -90,7 +100,7 @@ class Game {
 		/* eslint-enable max-len */
 	}
 
-	announceFight (clasName, ring, { contestants, rounds }) {
+	announceFight (className, ring, { contestants, rounds }) {
 		const channel = this.publicChannel;
 		const monsterA = contestants[0].monster;
 		const monsterB = contestants[1].monster;
@@ -100,7 +110,7 @@ class Game {
 		});
 	}
 
-	announceFightConcludes (clasName, game, { contestants, deadContestants, deaths, isDraw, rounds }) {
+	announceFightConcludes (className, game, { contestants, deadContestants, deaths, isDraw, rounds }) {
 		const channel = this.publicChannel;
 		const monsterA = contestants[0].monster;
 		const monsterB = contestants[1].monster;
@@ -110,12 +120,23 @@ class Game {
 		});
 	}
 
-	handleWinner (clasName, monster, { contestant }) {
+	handleWinner (className, monster, { contestant }) {
 		// Award XP draw a card, maybe kick off more events (that could be messaged)
+
+		// Add XP to both the monster and the player in the case of victory
+		contestant.monster.xp += XP_PER_VICTORY;
+		contestant.player.xp += XP_PER_VICTORY;
+
+		// Also draw a new card for the player
+		const card = this.drawCard();
+		contestant.player.addCard(card);
 	}
 
-	handleLoser (clasName, monster, { contestant }) {
-		// Award XP draw a card, maybe kick off more events (that could be messaged)
+	handleLoser (className, monster, { contestant }) {
+		// Award XP, maybe kick off more events (that could be messaged)
+
+		// The player still earns a small bit of XP in the case of defeat
+		contestant.player.xp += XP_PER_DEFEAT;
 	}
 
 	clearRing () {
@@ -173,14 +194,8 @@ class Game {
 
 		return card;
 	}
-
-	emit (event, ...args) {
-		this.semaphore.emit(`game.${event}`, this.name, this, ...args);
-	}
-
-	on (event, func) {
-		this.semaphore.on(event, func.bind(this));
-	}
 }
+
+Game.eventPrefix = 'game';
 
 module.exports = Game;

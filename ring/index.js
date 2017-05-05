@@ -11,6 +11,7 @@ class Ring extends BaseClass {
 
 		this.battles = [];
 
+		// Note that we're not saving / hydrating this as of now
 		this.on('fightConcludes', (className, ring, results) => {
 			ring.battles.push(results);
 		});
