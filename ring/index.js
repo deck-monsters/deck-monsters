@@ -82,6 +82,7 @@ class Ring extends BaseClass {
 			}));
 
 			if (card) {
+				this.emit('cardDrawn', { monster, card });
 				const fightContinues = card.effect(monster, contestants[nextContestant].monster, ring);
 
 				if (fightContinues) {

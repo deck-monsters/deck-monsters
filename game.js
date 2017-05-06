@@ -62,7 +62,9 @@ class Game extends BaseClass {
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
+		this.on('ring.cardDrawn', this.announceCard);
 		this.on('ring.fight', this.announceFight);
+		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
 
 		// Manage Fights
@@ -72,6 +74,22 @@ class Game extends BaseClass {
 	}
 
 	/* eslint-disable max-len */
+	announceCard (className, ring, { monster, card }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce: `${monster.icon}  drew ${card.name}`
+		});
+	}
+
+	announceNextRound (className, ring, { contestants, round }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce: `round ${round} complete`
+		});
+	}
+
 	announceDeath (className, monster, { assailant }) {
 		const channel = this.publicChannel;
 

@@ -21,7 +21,7 @@ class HitCard extends BaseCard {
 	}
 
 	get stats () {
-		return `Attack: ${this.attackDice} / Damage: ${this.damageDice}`;
+		return `Hit: ${this.attackDice} / Damage: ${this.damageDice}`;
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
