@@ -94,6 +94,8 @@ class Ring extends BaseClass {
 				// How in the world does this ever resolve to true??? emptyHanded is a boolean, nextContestant is an int
 				if (emptyHanded === nextContestant) {
 					// TODO: set both monster's cards to 0
+					// Do it here, because if one monster has 6 cards, and the other has 3, the first monster needs to
+					// play all 6 before the second monster can re-play its 3
 
 					this.emit('roundComplete', {
 						contestants,
