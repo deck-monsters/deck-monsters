@@ -71,6 +71,7 @@ class Game extends BaseClass {
 		this.on('ring.fightConcludes', this.clearRing);
 	}
 
+	/* eslint-disable max-len */
 	announceDeath (className, monster, { assailant }) {
 		const channel = this.publicChannel;
 
@@ -118,7 +119,7 @@ class Game extends BaseClass {
 					announce: `${player.icon}         Botched it.`
 				});
 			}
-			detail += `${attackRoll.naturalRoll.result} ${signedNumber(attackResult-attackRoll.naturalRoll.result)} vs ${target.ac}, for ${damageRoll.naturalRoll.result} ${signedNumber(damageResult-damageRoll.naturalRoll.result)} damage`;
+			detail += `${attackRoll.naturalRoll.result} ${signedNumber(attackResult - attackRoll.naturalRoll.result)} vs ${target.ac}, for ${damageRoll.naturalRoll.result} ${signedNumber(damageResult - damageRoll.naturalRoll.result)} damage`;
 		}
 
 		channel({
@@ -155,21 +156,17 @@ class Game extends BaseClass {
 			icon = '🏓';
 		}
 
-		/* eslint-disable max-len */
 		channel({
 			announce: `${assailant.icon}  ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`
 		});
-		/* eslint-enable max-len */
 	}
 
 	announceHeal (className, monster, { amount }) {
 		const channel = this.publicChannel;
 
-		/* eslint-disable max-len */
 		channel({
 			announce: `${monster.icon} 💊       ${monster.givenName} heals ${amount} hp`
 		});
-		/* eslint-enable max-len */
 	}
 
 	announceMiss (className, card, { attackResult, curseOfLoki, player, target }) {
@@ -188,11 +185,9 @@ class Game extends BaseClass {
 			icon = '⚔️';
 		}
 
-		/* eslint-disable max-len */
 		channel({
 			announce: `${player.icon} ${icon}  ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
 		});
-		/* eslint-enable max-len */
 	}
 
 	announceFight (className, ring, { contestants, rounds }) {
@@ -214,6 +209,7 @@ class Game extends BaseClass {
 			announce: `${monsterA.icon}  vs  ${monsterB.icon}    fight concludes after ${rounds} rounds.`
 		});
 	}
+	/* eslint-enable max-len */
 
 	handleWinner (className, monster, { contestant }) {
 		// Award XP draw a card, maybe kick off more events (that could be messaged)

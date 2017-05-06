@@ -92,6 +92,12 @@ class Ring extends BaseClass {
 			} else {
 				if (emptyHanded === nextContestant) {
 					nextCard = 0;
+
+					this.emit('roundComplete', {
+						contestants,
+						round
+					});
+
 					round += 1;
 				}
 
