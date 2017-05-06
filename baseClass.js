@@ -1,7 +1,7 @@
 const { EventEmitter, globalSemaphore } = require('./helpers/semaphore');
 
 class BaseClass {
-	constructor (options, semaphore = new EventEmitter()) {
+	constructor (options, semaphore = new EventEmitter({ emitDelay: 0 })) {
 		if (this.name === BaseClass.name) {
 			throw new Error('The BaseClass should not be instantiated directly!');
 		}
@@ -32,6 +32,7 @@ class BaseClass {
 		this.optionsStore = Object.assign({}, this.options, options);
 
 		this.emit('updated');
+		globalSemaphore.emit('stateChange');
 	}
 
 	emit (event, ...args) {
@@ -40,7 +41,15 @@ class BaseClass {
 	}
 
 	on (event, func) {
-		this.semaphore.on(event, func.bind(this));
+		const boundFunc = func.bind(this);
+
+		this.semaphore.on(event, boundFunc);
+
+		return boundFunc; // Useful if you want to be able to call `off` on this event
+	}
+
+	off (event, func) {
+		this.semaphore.off(event, func);
 	}
 
 	toJSON () {

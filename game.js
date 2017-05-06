@@ -10,6 +10,8 @@ const { Player } = require('./players');
 const { getFlavor } = require('./helpers/flavor');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
+const noop = () => {};
+
 class Game extends BaseClass {
 	constructor (publicChannel, options) {
 		super(options, globalSemaphore);
@@ -17,6 +19,9 @@ class Game extends BaseClass {
 		this.ring = new Ring();
 		this.publicChannel = publicChannel;
 		this.initializeEvents();
+
+		const game = this;
+		this.on('stateChange', () => this.saveState(game));
 
 		this.emit('initialized');
 	}
@@ -31,6 +36,18 @@ class Game extends BaseClass {
 		this.setOptions({
 			players
 		});
+	}
+
+	get saveState () {
+		return this.stateSaveFunc || noop;
+	}
+
+	set saveState (stateSaveFunc) {
+		if (stateSaveFunc) {
+			this.stateSaveFunc = game => stateSaveFunc(JSON.stringify(game));
+		} else {
+			this.stateSaveFunc = stateSaveFunc;
+		}
 	}
 
 	initializeEvents () {
