@@ -63,54 +63,104 @@ class Ring extends BaseClass {
 
 		let round = 1;
 
-		const doAction = ({ currentContestant, emptyHanded }) => new Promise((resolve) => {
-			const contestant = contestants[currentContestant];
+		const hasCards = (contestant) => {
 			const monster = contestant.monster;
-			monster.currentCard = monster.currentCard || 0;
-			const card = monster.cards[monster.currentCard];
-			monster.currentCard += 1;
-			console.log(`round ${round} ${monster.icon}  card ${monster.currentCard}`);
+			return monster.cards[monster.currentCardNumber];
+		};
 
-			let nextContestant = currentContestant + 1;
-			if (nextContestant >= contestants.length) {
-				nextContestant = 0;
+		const takeTurn = ({ contestantNumber }) => new Promise((resolve) => {
+			const monster = contestants[contestantNumber].monster;
+			monster.currentCardNumber = monster.currentCardNumber || 0;
+			const card = monster.cards[monster.currentCardNumber];
+			monster.currentCardNumber += 1;
+
+			let nextContestantNumber = contestantNumber + 1;
+			if (nextContestantNumber >= contestants.length) {
+				nextContestantNumber = 0;
 			}
 
-			const next = (nextEmptyHanded = false) => resolve(doAction({
-				currentContestant: nextContestant,
-				emptyHanded: nextEmptyHanded
-			}));
+			console.log('turn', monster.icon, monster.currentCardNumber);
+
+			const nextTurn = () => resolve(takeTurn({ contestantNumber: nextContestantNumber }));
 
 			if (card) {
+				// take turn
 				this.emit('cardDrawn', { monster, card });
-				const fightContinues = card.effect(monster, contestants[nextContestant].monster, ring);
+				const fightContinues = card.effect(monster, contestants[nextContestantNumber].monster, ring);
 
 				if (fightContinues) {
-					setTimeout(() => next(), FIGHT_DELAY);
+					setTimeout(() => nextTurn(), FIGHT_DELAY);
 				} else {
 					resolve(contestant);
 				}
 			} else {
-				// How in the world does this ever resolve to true??? emptyHanded is a boolean, nextContestant is an int
-				if (emptyHanded === nextContestant) {
-					// TODO: set both monster's cards to 0
-					// Do it here, because if one monster has 6 cards, and the other has 3, the first monster needs to
-					// play all 6 before the second monster can re-play its 3
-
+				if (!contestants.some(hasCards)) {
 					this.emit('roundComplete', {
 						contestants,
 						round
 					});
 
 					round += 1;
+
+					contestants.forEach((contestant) => { contestant.monster.currentCardNumber = 0; });
 				}
 
-				next(emptyHanded === false ? currentContestant : emptyHanded);
+				setTimeout(() => nextTurn(), FIGHT_DELAY);
 			}
 		});
 
-		return doAction({ currentContestant: 0, emptyHanded: false })
+		return takeTurn({ contestantNumber: 0 })
 			.then(contestant => this.fightConcludes(contestant, round));
+
+
+		// const doAction = ({ currentContestant, emptyHanded }) => new Promise((resolve) => {
+		// 	const contestant = contestants[currentContestant];
+		// 	const monster = contestant.monster;
+		// 	monster.currentCard = monster.currentCard || 0;
+		// 	const card = monster.cards[monster.currentCard];
+		// 	monster.currentCard += 1;
+		// 	console.log(`round ${round} ${monster.icon}  card ${monster.currentCard}`);
+
+		// 	let nextContestant = currentContestant + 1;
+		// 	if (nextContestant >= contestants.length) {
+		// 		nextContestant = 0;
+		// 	}
+
+		// 	const next = (nextEmptyHanded = false) => resolve(doAction({
+		// 		currentContestant: nextContestant,
+		// 		emptyHanded: nextEmptyHanded
+		// 	}));
+
+		// 	if (card) {
+		// 		this.emit('cardDrawn', { monster, card });
+		// 		const fightContinues = card.effect(monster, contestants[nextContestant].monster, ring);
+
+		// 		if (fightContinues) {
+		// 			setTimeout(() => next(), FIGHT_DELAY);
+		// 		} else {
+		// 			resolve(contestant);
+		// 		}
+		// 	} else {
+		// 		// How in the world does this ever resolve to true??? emptyHanded is a boolean, nextContestant is an int
+		// 		if (emptyHanded === nextContestant) {
+		// 			// TODO: set both monster's cards to 0
+		// 			// Do it here, because if one monster has 6 cards, and the other has 3, the first monster needs to
+		// 			// play all 6 before the second monster can re-play its 3
+
+		// 			this.emit('roundComplete', {
+		// 				contestants,
+		// 				round
+		// 			});
+
+		// 			round += 1;
+		// 		}
+
+		// 		next(emptyHanded === false ? currentContestant : emptyHanded);
+		// 	}
+		// });
+
+		// return doAction({ currentContestant: 0, emptyHanded: false })
+		// 	.then(contestant => this.fightConcludes(contestant, round));
 	}
 
 	fightConcludes (lastContestant, rounds) {
