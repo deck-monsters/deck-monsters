@@ -121,10 +121,12 @@ class Ring extends BaseClass {
 		if (deaths > 0) {
 			contestants.forEach((contestant) => {
 				if (contestant.monster.dead) {
+					contestant.lost = true;
 					contestant.player.addLoss();
 					contestant.monster.addLoss();
 					contestant.monster.emit('loss', { contestant });
 				} else {
+					contestant.won = true;
 					contestant.player.addWin();
 					contestant.monster.addWin();
 					contestant.monster.emit('win', { contestant });
