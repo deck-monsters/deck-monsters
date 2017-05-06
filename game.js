@@ -158,6 +158,7 @@ class Game extends BaseClass {
 		}
 
 		return {
+			player,
 			spawnMonster (channel, options) {
 				return player.spawnMonster(channel, options || {});
 			},

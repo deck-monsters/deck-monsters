@@ -45,7 +45,7 @@ class BasePlayer extends BaseCreature {
 	}
 
 	addCard (card) {
-		this.cards = [...this.cards, card];
+		this.deck = [...this.deck, card];
 
 		this.emit('cardAdded', { card });
 	}

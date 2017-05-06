@@ -15,9 +15,14 @@ const all = [
 // Channel should be a function that takes a question and an optional array of
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
-const spawn = (channel, { type, name, color, gender } = {}) => {
+const spawn = (channel, { type, name, color, gender, cards } = {}) => {
 	const monsterTypes = all.map(monster => monster.creatureType);
 	const options = {};
+
+	if (cards.length > 0) {
+		console.log('seeded cards');
+		options.cards = cards;
+	}
 
 	let Monster;
 	return Promise
@@ -75,10 +80,21 @@ const spawn = (channel, { type, name, color, gender } = {}) => {
 };
 
 const equip = (deck, monster, channel) => {
-	const cards = [];
+	const cards = monster.cards || [];
 	const cardSlots = monster.cardSlots;
 
 	const formatCards = remainingCards => remainingCards.map((card, index) => `${index}) ${card.cardType}`);
+
+
+	if (cards.length === cardSlots) {
+		channel({
+			announce:
+`You've filled your slots with the following cards:
+${formatCards(cards).join('\n')}`
+		});
+		return Promise.resolve().then(() => cards);
+	}
+
 
 	const addCard = ({ remainingSlots, remainingCards }) => Promise
 		.resolve()

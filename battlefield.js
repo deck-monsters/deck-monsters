@@ -37,16 +37,18 @@ const slackdem = new Game(roomAnnouncer);
 
 const vladAnnouncer = what => announcer('vlad', what);
 const vlad = slackdem.getPlayer({ id: 1234, name: 'vlad' });
+const vladCards = [...vlad.player.deck.slice(0, 2), vlad.player.deck[4]];
 
 const charAnnouncer = what => announcer('charlemagne', what);
 const char = slackdem.getPlayer({ id: 861, name: 'charlemagne' });
+const charCards = [...char.player.deck.slice(0, 2), char.player.deck[4]];
 
 Promise
 	.resolve()
-	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'jerry', color: 'gray', gender: 'female' }))
-	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'qed', color: 'gray', gender: 'androgynous' }))
-	.then(() => char.spawnMonster(charAnnouncer, { type: 'minotaur', name: 'tom', color: 'brown', gender: 'male' }))
-	.then(() => char.spawnMonster(charAnnouncer, { type: 'weeping angel', name: 'dbb', color: 'brown', gender: 'male' }))
+	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'jerry', color: 'gray', gender: 'female', cards: vladCards }))
+	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'qed', color: 'gray', gender: 'androgynous', cards: vladCards }))
+	.then(() => char.spawnMonster(charAnnouncer, { type: 'minotaur', name: 'tom', color: 'brown', gender: 'male', cards: charCards }))
+	.then(() => char.spawnMonster(charAnnouncer, { type: 'weeping angel', name: 'dbb', color: 'brown', gender: 'male', cards: charCards }))
 //	.then(() => vlad.spawnMonster(vladAnnouncer))
 //	.then(() => char.spawnMonster(charAnnouncer))
 	.then(() => vlad.equipMonster(vladAnnouncer))
