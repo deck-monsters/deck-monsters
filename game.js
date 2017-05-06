@@ -11,6 +11,7 @@ const { getFlavor } = require('./helpers/flavor');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
+const signedNumber = number => number > 0 ? `+${number}` : number.toString();
 
 class Game extends BaseClass {
 	constructor (publicChannel, options) {
@@ -117,7 +118,7 @@ class Game extends BaseClass {
 					announce: `${player.icon}         Botched it.`
 				});
 			}
-			detail += `${attackRoll.naturalRoll.result}, modified to ${attackResult} vs ${target.ac}, for ${damageResult} damage modified from ${damageRoll.naturalRoll.result}`;
+			detail += `${attackRoll.naturalRoll.result} ${signedNumber(attackResult-attackRoll.naturalRoll.result)} vs ${target.ac}, for ${damageRoll.naturalRoll.result} ${signedNumber(damageResult-damageRoll.naturalRoll.result)} damage`;
 		}
 
 		channel({
