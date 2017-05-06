@@ -64,6 +64,7 @@ class Game extends BaseClass {
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
 		this.on('ring.fight', this.announceFight);
+		this.on('ring.turnBegin', this.announceTurnBegin);
 		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
 
@@ -78,7 +79,15 @@ class Game extends BaseClass {
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monsterWithHp(player)} plays a ${card.cardType.toLowerCase()} card against ${monsterWithHp(target)}`
+			announce: `plays a ${card.cardType.toLowerCase()} card against ${monsterWithHp(target)}`
+		});
+	}
+
+	announceTurnBegin (className, ring, { contestant, round }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce: `${monsterWithHp(contestant.monster)}'s turn`
 		});
 	}
 

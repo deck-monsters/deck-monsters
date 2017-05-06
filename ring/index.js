@@ -2,7 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const BaseClass = require('../baseClass');
 
-const FIGHT_DELAY = 3000;
+const FIGHT_DELAY = 500;
 const MAX_MONSTERS = 2;
 
 class Ring extends BaseClass {
@@ -67,6 +67,11 @@ class Ring extends BaseClass {
 			const contestant = contestants[currentContestant];
 			const monster = contestant.monster;
 			const card = monster.cards[currentCard];
+
+			this.emit('turnBegin', {
+				contestant,
+				round
+			});
 
 			let nextContestant = currentContestant + 1;
 			if (nextContestant >= contestants.length) {
