@@ -2,7 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const BaseClass = require('../baseClass');
 
-const FIGHT_DELAY = 3000;
+const FIGHT_DELAY = 1000;
 const MAX_MONSTERS = 2;
 
 class Ring extends BaseClass {
@@ -63,21 +63,21 @@ class Ring extends BaseClass {
 
 		let round = 1;
 
-		const doAction = ({ currentContestant, currentCard, emptyHanded }) => new Promise((resolve) => {
+		const doAction = ({ currentContestant, emptyHanded }) => new Promise((resolve) => {
 			const contestant = contestants[currentContestant];
 			const monster = contestant.monster;
-			const card = monster.cards[currentCard];
+			monster.currentCard = monster.currentCard || 0;
+			const card = monster.cards[monster.currentCard];
+			monster.currentCard += 1;
+			console.log(`round ${round} ${monster.icon}  card ${monster.currentCard}`);
 
 			let nextContestant = currentContestant + 1;
 			if (nextContestant >= contestants.length) {
 				nextContestant = 0;
 			}
 
-			let nextCard = currentCard + 1;
-
 			const next = (nextEmptyHanded = false) => resolve(doAction({
 				currentContestant: nextContestant,
-				currentCard: nextCard,
 				emptyHanded: nextEmptyHanded
 			}));
 
@@ -91,8 +91,9 @@ class Ring extends BaseClass {
 					resolve(contestant);
 				}
 			} else {
+				// How in the world does this ever resolve to true??? emptyHanded is a boolean, nextContestant is an int
 				if (emptyHanded === nextContestant) {
-					nextCard = 0;
+					// TODO: set both monster's cards to 0
 
 					this.emit('roundComplete', {
 						contestants,
@@ -106,7 +107,7 @@ class Ring extends BaseClass {
 			}
 		});
 
-		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
+		return doAction({ currentContestant: 0, emptyHanded: false })
 			.then(contestant => this.fightConcludes(contestant, round));
 	}
 
