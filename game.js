@@ -36,9 +36,14 @@ class Game extends BaseClass {
 	initializeEvents () {
 		// Initialize Messaging
 		// TO-DO: Add messaging for rolls, fleeing, bonus cards, etc
+		this.on('card.rolled', this.announceRolled);
 		this.on('card.miss', this.announceMiss);
 		this.on('creature.hit', this.announceHit);
 		this.on('creature.heal', this.announceHeal);
+		this.on('creature.condition', this.announceCondition);
+		this.on('creature.die', this.announceDeath);
+		this.on('creature.leave', this.announceLeave);
+		this.on('card.stay', this.announceStay);
 		this.on('ring.fight', this.announceFight);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
 
@@ -46,6 +51,78 @@ class Game extends BaseClass {
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
 		this.on('ring.fightConcludes', this.clearRing);
+	}
+
+	announceDeath (className, monster, { assailant }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce: `${monster.icon}  killed by ${assailant.icon}`
+		});
+	}
+
+	announceLeave (className, monster, { assailant }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce: `${monster.icon}  fled from ${assailant.icon}`
+		});
+	}
+
+	announceStay (className, monster, { fleeResult, fleeRoll, player, target }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce: `${monster.icon}  tried to flee from ${target.icon}, but failed!`
+		});
+	}
+
+	announceRolled (className, monster, {
+		attackResult,
+		attackRoll,
+		curseOfLoki,
+		damageResult,
+		damageRoll,
+		player,
+		strokeOfLuck,
+		target
+	}) {
+		const channel = this.publicChannel;
+
+		let detail = '';
+		if (attackResult) {
+			if (strokeOfLuck) {
+				channel({
+					announce: `${player.icon}         STROKE OF LUCK!!!!`
+				});
+			} else if (curseOfLoki) {
+				channel({
+					announce: `${player.icon}         Botched it.`
+				});
+			}
+			detail += `${attackRoll.naturalRoll.result}, modified to ${attackResult} vs ${target.ac}, for ${damageResult} damage modified from ${damageRoll.naturalRoll.result}`;
+		}
+
+		channel({
+			announce: `${player.icon}         Rolled ${detail}`
+		});
+	}
+
+	announceCondition (className, monster, {
+			amount,
+			attr,
+			prevValue
+		}) {
+		const channel = this.publicChannel;
+
+		let dir = 'increased';
+		if (amount < 0) {
+			dir = 'decreased';
+		}
+
+		channel({
+			announce: `${monster.icon} ${attr} ${dir} by ${amount}`
+		});
 	}
 
 	announceHit (className, monster, { assailant, damage }) {
@@ -116,7 +193,7 @@ class Game extends BaseClass {
 		const monsterB = contestants[1].monster;
 
 		channel({
-			announce: `${monsterA.icon}  vs  ${monsterB.icon}    fight concludes`
+			announce: `${monsterA.icon}  vs  ${monsterB.icon}    fight concludes after ${rounds} rounds.`
 		});
 	}
 
