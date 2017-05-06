@@ -73,7 +73,10 @@ class Ring extends BaseClass {
 				nextContestant = 0;
 			}
 
-			let nextCard = currentCard + 1;
+			let nextCard = currentCard;
+			if (nextContestant === 0) {
+				nextCard += 1;
+			}
 
 			const next = (nextEmptyHanded = false) => resolve(doAction({
 				currentContestant: nextContestant,
