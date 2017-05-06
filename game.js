@@ -11,7 +11,8 @@ const { getFlavor } = require('./helpers/flavor');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
-const signedNumber = number => number > 0 ? `+${number}` : number.toString();
+const signedNumber = number => (number > 0 ? `+${number}` : number.toString());
+const monsterWithHp = monster => `${monster.icon} ${monster.givenName} (${monster.hp} hp)`;
 
 class Game extends BaseClass {
 	constructor (publicChannel, options) {
@@ -53,7 +54,7 @@ class Game extends BaseClass {
 
 	initializeEvents () {
 		// Initialize Messaging
-		// TO-DO: Add messaging for rolls, fleeing, bonus cards, etc
+		this.on('card.played', this.announceCard);
 		this.on('card.rolled', this.announceRolled);
 		this.on('card.miss', this.announceMiss);
 		this.on('creature.hit', this.announceHit);
@@ -73,11 +74,11 @@ class Game extends BaseClass {
 	}
 
 	/* eslint-disable max-len */
-	announceCard (className, ring, { monster, card }) {
+	announceCard (className, card, { player, target }) {
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.icon}  drew ${card.name}`
+			announce: `${monsterWithHp(player)} plays a ${card.cardType.toLowerCase()} card against ${monsterWithHp(target)}`
 		});
 	}
 
@@ -85,7 +86,9 @@ class Game extends BaseClass {
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `round ${round} complete`
+			announce: `
+round ${round} complete
+`
 		});
 	}
 
@@ -93,7 +96,7 @@ class Game extends BaseClass {
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.icon}  killed by ${assailant.icon}`
+			announce: `${monsterWithHp(monster)} is killed by ${monsterWithHp(assailant)}`
 		});
 	}
 
@@ -101,15 +104,15 @@ class Game extends BaseClass {
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.icon}  fled from ${assailant.icon}`
+			announce: `${monsterWithHp(monster)} flees from ${monsterWithHp(assailant)}`
 		});
 	}
 
-	announceStay (className, monster, { fleeResult, fleeRoll, player, target }) {
+	announceStay (className, monster, { player, target }) {
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.icon}  tried to flee from ${target.icon}, but failed!`
+			announce: `${monsterWithHp(player)} tries to flee from ${monsterWithHp(target)}, but failed!`
 		});
 	}
 
@@ -129,25 +132,24 @@ class Game extends BaseClass {
 		if (attackResult) {
 			if (strokeOfLuck) {
 				channel({
-					announce: `${player.icon}         STROKE OF LUCK!!!!`
+					announce: `${player.icon}        STROKE OF LUCK!!!!`
 				});
 			} else if (curseOfLoki) {
 				channel({
-					announce: `${player.icon}         Botched it.`
+					announce: `${player.icon}        Botched it.`
 				});
 			}
 			detail += `${attackRoll.naturalRoll.result} ${signedNumber(attackResult - attackRoll.naturalRoll.result)} vs ${target.ac}, for ${damageRoll.naturalRoll.result} ${signedNumber(damageResult - damageRoll.naturalRoll.result)} damage`;
 		}
 
 		channel({
-			announce: `${player.icon}         Rolled ${detail}`
+			announce: `${player.icon}        Rolled ${detail}`
 		});
 	}
 
 	announceCondition (className, monster, {
 			amount,
-			attr,
-			prevValue
+			attr
 		}) {
 		const channel = this.publicChannel;
 
@@ -157,7 +159,7 @@ class Game extends BaseClass {
 		}
 
 		channel({
-			announce: `${monster.icon} ${attr} ${dir} by ${amount}`
+			announce: `${monster.icon} ${monster.givenName} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`
 		});
 	}
 
@@ -174,7 +176,7 @@ class Game extends BaseClass {
 		}
 
 		channel({
-			announce: `${assailant.icon}  ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`
+			announce: `${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`
 		});
 	}
 
@@ -182,7 +184,7 @@ class Game extends BaseClass {
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.icon} 💊       ${monster.givenName} heals ${amount} hp`
+			announce: `${monster.icon} 💊      ${monster.givenName} heals ${amount} hp`
 		});
 	}
 
@@ -203,27 +205,25 @@ class Game extends BaseClass {
 		}
 
 		channel({
-			announce: `${player.icon} ${icon}  ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
+			announce: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
 		});
 	}
 
-	announceFight (className, ring, { contestants, rounds }) {
+	announceFight (className, ring, { contestants }) {
 		const channel = this.publicChannel;
-		const monsterA = contestants[0].monster;
-		const monsterB = contestants[1].monster;
 
 		channel({
-			announce: `${monsterA.icon}  vs  ${monsterB.icon}`
+			announce: contestants.map(contestant => monsterWithHp(contestant.monster)).join(' vs ')
 		});
 	}
 
 	announceFightConcludes (className, game, { contestants, deadContestants, deaths, isDraw, rounds }) {
 		const channel = this.publicChannel;
-		const monsterA = contestants[0].monster;
-		const monsterB = contestants[1].monster;
 
 		channel({
-			announce: `${monsterA.icon}  vs  ${monsterB.icon}    fight concludes after ${rounds} rounds.`
+			announce: `
+The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} rounds!
+`
 		});
 	}
 	/* eslint-enable max-len */

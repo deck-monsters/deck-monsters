@@ -2,7 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const BaseClass = require('../baseClass');
 
-const FIGHT_DELAY = 3000;
+const FIGHT_DELAY = 500;
 const MAX_MONSTERS = 2;
 
 class Ring extends BaseClass {
@@ -85,7 +85,7 @@ class Ring extends BaseClass {
 			}));
 
 			if (card) {
-				const fightContinues = card.effect(monster, contestants[nextContestant].monster, ring);
+				const fightContinues = card.play(monster, contestants[nextContestant].monster, ring);
 
 				if (fightContinues) {
 					setTimeout(() => next(), FIGHT_DELAY);

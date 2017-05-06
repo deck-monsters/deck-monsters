@@ -13,6 +13,20 @@ class BaseCard extends BaseClass {
 		return this.constructor.cardType;
 	}
 
+	play (player, target, ring) {
+		this.emit('played', {
+			player,
+			target,
+			ring
+		});
+
+		if (this.effect) {
+			return this.effect(player, target, ring);
+		}
+
+		return true;
+	}
+
 	look (channel) {
 		return Promise
 			.resolve()
