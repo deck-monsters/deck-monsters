@@ -8,6 +8,7 @@ const { all } = require('./monsters');
 const { Player } = require('./players');
 
 const { getFlavor } = require('./helpers/flavor');
+const { formatCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
@@ -78,33 +79,12 @@ class Game extends BaseClass {
 	announceCard (className, card, { player, target }) {
 		const channel = this.publicChannel;
 
-		const wordWrap = (description) => {
-			const wrappedDescription = [];
-			let start = 0;
-			while (start < description.length) {
-				wrappedDescription.push(description.slice(start, start + 40));
-				start += 40;
-			}
-			return wrappedDescription.join(`
-| `);
-		};
-
-		const desc = wordWrap(card.description);
-
 		channel({
-			announce: `
-\`\`\`
-===========================================
-| ${card.icon}  ${card.cardType}
--------------------------------------------
-|
-| ${desc}
-|
-| ${card.stats}
-|
-===========================================
-\`\`\`
-`
+			announce: formatCard({
+				title: `${card.icon}  ${card.cardType}`,
+				description: card.description,
+				stats: card.stats
+			})
 		});
 	}
 
