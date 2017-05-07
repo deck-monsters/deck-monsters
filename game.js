@@ -93,6 +93,7 @@ class Game extends BaseClass {
 
 		channel({
 			announce: `
+\`\`\`
 ===========================================
 | ${card.icon}  ${card.cardType}
 -------------------------------------------
@@ -102,6 +103,7 @@ class Game extends BaseClass {
 | ${card.stats}
 |
 ===========================================
+\`\`\`
 `
 		});
 	}
