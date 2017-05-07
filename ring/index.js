@@ -2,7 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const BaseClass = require('../baseClass');
 
-const FIGHT_DELAY = 500;
+const FIGHT_DELAY = 3000;
 const MAX_MONSTERS = 2;
 
 class Ring extends BaseClass {

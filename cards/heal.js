@@ -7,7 +7,8 @@ class HealCard extends BaseCard {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
 			healthDice: '1d4',
-			modifier: 0
+			modifier: 0,
+			icon: '💊'
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -38,10 +39,12 @@ class HealCard extends BaseCard {
 		}
 
 		this.emit('rolled', {
-			healResult,
-			healRoll,
+			card: this,
+			roll: healRoll,
+			strokeOfLuck,
+			curseOfLoki: false,
 			player,
-			strokeOfLuck
+			target
 		});
 
 		return player.heal(healResult);

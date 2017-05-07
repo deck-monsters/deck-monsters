@@ -13,6 +13,14 @@ class BaseCard extends BaseClass {
 		return this.constructor.cardType;
 	}
 
+	get description () {
+		return this.constructor.description;
+	}
+
+	get icon () {
+		return this.options.icon;
+	}
+
 	play (player, target, ring) {
 		this.emit('played', {
 			player,

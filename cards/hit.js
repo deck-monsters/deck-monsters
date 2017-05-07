@@ -6,7 +6,8 @@ class HitCard extends BaseCard {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
 			attackDice: '1d20',
-			damageDice: '1d6'
+			damageDice: '1d6',
+			icon: '🗡'
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -36,18 +37,26 @@ class HitCard extends BaseCard {
 			strokeOfLuck = true;
 			// change the natural roll into a max roll
 			damageResult += (max(this.damageDice) * 2) - damageRoll.naturalRoll.result;
+			damageRoll.result = damageResult;
 		} else if (attackRoll.naturalRoll.result === 1) {
 			curseOfLoki = true;
 		}
 
 		this.emit('rolled', {
-			attackResult: attackRoll.result,
-			attackRoll,
-			curseOfLoki,
-			damageResult,
-			damageRoll,
-			player,
+			card: this,
+			roll: attackRoll,
 			strokeOfLuck,
+			curseOfLoki,
+			player,
+			target
+		});
+
+		this.emit('rolled', {
+			card: this,
+			roll: damageRoll,
+			strokeOfLuck,
+			curseOfLoki,
+			player,
 			target
 		});
 

@@ -12,7 +12,7 @@ const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
 const signedNumber = number => (number > 0 ? `+${number}` : number.toString());
-const monsterWithHp = monster => `${monster.icon} ${monster.givenName} (${monster.hp} hp)`;
+const monsterWithHp = monster => `${monster.icon}  ${monster.givenName} (${monster.hp} hp)`;
 
 class Game extends BaseClass {
 	constructor (publicChannel, options) {
@@ -78,8 +78,31 @@ class Game extends BaseClass {
 	announceCard (className, card, { player, target }) {
 		const channel = this.publicChannel;
 
+		const wordWrap = (description) => {
+			const wrappedDescription = [];
+			let start = 0;
+			while (start < description.length) {
+				wrappedDescription.push(description.slice(start, start + 40));
+				start += 40;
+			}
+			return wrappedDescription.join(`
+| `);
+		};
+
+		const desc = wordWrap(card.description);
+
 		channel({
-			announce: `plays a ${card.cardType.toLowerCase()} card against ${monsterWithHp(target)}`
+			announce: `
+===========================================
+| ${card.icon}  ${card.cardType}
+-------------------------------------------
+|
+| ${desc}
+|
+| ${card.stats}
+|
+===========================================
+`
 		});
 	}
 
@@ -87,7 +110,11 @@ class Game extends BaseClass {
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monsterWithHp(contestant.monster)}'s turn`
+			announce: `
+               * * *
+
+
+${monsterWithHp(contestant.monster)}'s turn`
 		});
 	}
 
@@ -126,33 +153,38 @@ round ${round} complete
 	}
 
 	announceRolled (className, monster, {
-		attackResult,
-		attackRoll,
-		curseOfLoki,
-		damageResult,
-		damageRoll,
-		player,
+		card,
+		roll,
 		strokeOfLuck,
-		target
+		curseOfLoki,
+		player
 	}) {
 		const channel = this.publicChannel;
 
 		let detail = '';
-		if (attackResult) {
+		if (card.result) {
 			if (strokeOfLuck) {
-				channel({
-					announce: `${player.icon}        STROKE OF LUCK!!!!`
-				});
+				detail = `
+STROKE OF LUCK!!!!`;
 			} else if (curseOfLoki) {
-				channel({
-					announce: `${player.icon}        Botched it.`
-				});
+				detail = `
+Botched it.`;
 			}
-			detail += `${attackRoll.naturalRoll.result} ${signedNumber(attackResult - attackRoll.naturalRoll.result)} vs ${target.ac}, for ${damageRoll.naturalRoll.result} ${signedNumber(damageResult - damageRoll.naturalRoll.result)} damage`;
+		}
+
+		let title = roll.primaryDice;
+		if (roll.bonusDice) {
+			title += ` + ${roll.bonusDice}`;
+		}
+		if (roll.modifier) {
+			title += ` + ${roll.modifier}`;
 		}
 
 		channel({
-			announce: `${player.icon}        Rolled ${detail}`
+			announce: `
+🎲  ${title}
+${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}${detail}
+`
 		});
 	}
 

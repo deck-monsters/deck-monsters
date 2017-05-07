@@ -9,6 +9,8 @@ const chance = {
 		const bonusResult = bonusDice ? dice.roll(bonusDice).result : 0;
 
 		return {
+			primaryDice,
+			bonusDice,
 			result: Math.max(naturalRoll.result + bonusResult + modifier, 0),
 			naturalRoll,
 			bonusResult,

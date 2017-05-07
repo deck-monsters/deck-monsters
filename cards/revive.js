@@ -5,7 +5,8 @@ class ReviveCard extends HealCard {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
 			healthDice: '2d4',
-			modifier: 3
+			modifier: 3,
+			icon: '⛑'
 		};
 
 		super(Object.assign(defaultOptions, options));

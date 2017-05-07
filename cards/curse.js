@@ -6,7 +6,8 @@ class CurseCard extends BaseCard {
 	constructor (options) {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
-			weakenDice: '1d4'
+			weakenDice: '1d4',
+			icon: '🤢'
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -36,12 +37,12 @@ class CurseCard extends BaseCard {
 		}
 
 		this.emit('rolled', {
+			card: this,
+			roll: weakenRoll,
+			strokeOfLuck,
 			curseOfLoki,
 			player,
-			strokeOfLuck,
-			target,
-			weakenResult,
-			weakenRoll
+			target
 		});
 
 		target.setCondition('ac', weakenResult);
