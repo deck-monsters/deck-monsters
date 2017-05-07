@@ -233,6 +233,18 @@ Battles won: ${this.battles.wins}`;
 		return false;
 	}
 
+	respawn () {
+		if (!this.respawnTimeout) {
+			// TO-DO: Possibly do some other checks for whether this monster should respawn
+			const creature = this;
+
+			this.respawnTimeout = setTimeout(() => {
+				creature.dead = false;
+				creature.respawnTimeout = undefined;
+			}, this.level * 3600000); // One hour per level
+		}
+	}
+
 	addWin () {
 		const battles = {
 			wins: this.battles.wins + 1,

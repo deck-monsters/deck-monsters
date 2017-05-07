@@ -132,14 +132,14 @@ class Ring extends BaseClass {
 					contestant.player.addLoss();
 					contestant.monster.addLoss();
 					contestant.monster.emit('loss', { contestant });
+
+					contestant.monster.respawn();
 				} else {
 					contestant.won = true;
 					contestant.player.addWin();
 					contestant.monster.addWin();
 					contestant.monster.emit('win', { contestant });
 				}
-
-				contestant.monster.dead = false;
 			});
 		} else {
 			contestants.forEach((contestant) => {
