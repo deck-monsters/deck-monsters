@@ -5,7 +5,7 @@ const { STARTING_XP, getLevel } = require('../helpers/levels');
 const PRONOUNS = require('../helpers/pronouns');
 
 const DEFAULT_AC = 6;
-const DEFAULT_MAX_HP = 30;
+const DEFAULT_MAX_HP = 24;
 const MAX_AC_BOOST = DEFAULT_AC;
 const MAX_ATTACK_BOOST = 10;
 const MAX_DAMAGE_BOOST = 6;

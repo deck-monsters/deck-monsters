@@ -259,7 +259,7 @@ Upon closer inspection you see ${monster.individualDescription}`
 
 		channel({
 			announce: `
-The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} rounds!
+The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
 `
 		});
 	}
