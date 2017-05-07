@@ -1,13 +1,9 @@
 const BaseCreature = require('../creatures/base');
 const { getInitialDeck } = require('../cards');
 const { spawn, equip } = require('../monsters');
+const { getMonsterChoices } = require('../helpers/choices');
 
 const DEFAULT_MONSTER_SLOTS = 2;
-
-const formatMonsters = monsters => monsters
-	.map((monster, index) => `
-${index}) ${monster.givenName}: ${monster.individualDescription}
-${monster.stats}`); // eslint-disable-line no-useless-concat
 
 class BasePlayer extends BaseCreature {
 	get deck () {
@@ -104,8 +100,8 @@ class BasePlayer extends BaseCreature {
 					.then(() => channel({
 						question:
 `You have ${numberOfMonsters} monsters:
-${formatMonsters(monsters).join('\n')}
 
+${getMonsterChoices(monsters)}
 Which monster would you like to equip?`,
 						choices: Object.keys(monsters)
 					}))
@@ -147,8 +143,8 @@ Which monster would you like to equip?`,
 					.then(() => channel({
 						question:
 `You have ${numberOfMonsters} monsters:
-${formatMonsters(monsters).join('\n')}
 
+${getMonsterChoices(monsters)}
 Which monster would you like to send into battle?`,
 						choices: Object.keys(monsters)
 					}))

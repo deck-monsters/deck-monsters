@@ -45,10 +45,10 @@ const charCards = [...char.player.deck.slice(0, 2), char.player.deck[4]];
 
 Promise
 	.resolve()
-	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'jerry', color: 'gray', gender: 'female', cards: vladCards }))
-	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 'basilisk', name: 'qed', color: 'gray', gender: 'androgynous', cards: vladCards }))
-	.then(() => char.spawnMonster(charAnnouncer, { type: 'minotaur', name: 'tom', color: 'brown', gender: 'male', cards: charCards }))
-	.then(() => char.spawnMonster(charAnnouncer, { type: 'weeping angel', name: 'dbb', color: 'brown', gender: 'male', cards: charCards }))
+	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards }))
+	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 0, name: 'qed', color: 'gray', gender: 2, cards: vladCards }))
+	.then(() => char.spawnMonster(charAnnouncer, { type: 1, name: 'tom', color: 'brown', gender: 0, cards: charCards }))
+	.then(() => char.spawnMonster(charAnnouncer, { type: 2, name: 'dbb', color: 'brown', gender: 0, cards: charCards }))
 //	.then(() => vlad.spawnMonster(vladAnnouncer))
 //	.then(() => char.spawnMonster(charAnnouncer))
 	.then(() => vlad.equipMonster(vladAnnouncer))

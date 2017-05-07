@@ -1,10 +1,13 @@
 const startCase = require('lodash.startcase');
 
 const { hydrateCard } = require('../cards');
+const { getChoices, getCardChoices, getMonsterTypeChoices } = require('../helpers/choices');
 const PRONOUNS = require('../helpers/pronouns');
 const Basilisk = require('./basilisk');
 const Minotaur = require('./minotaur');
 const WeepingAngel = require('./weeping-angel');
+
+const genders = Object.keys(PRONOUNS);
 
 const all = [
 	Basilisk,
@@ -16,10 +19,9 @@ const all = [
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
 const spawn = (channel, { type, name, color, gender, cards } = {}) => {
-	const monsterTypes = all.map(monster => monster.creatureType);
 	const options = {};
 
-	if (cards.length > 0) {
+	if (cards && cards.length > 0) {
 		console.log('seeded cards');
 		options.cards = cards;
 	}
@@ -28,19 +30,22 @@ const spawn = (channel, { type, name, color, gender, cards } = {}) => {
 	return Promise
 		.resolve()
 		.then(() => {
-			if (type) {
+			if (type !== undefined) {
 				return type;
 			}
 
 			return channel({
-				question: 'Which type of monster would you like to spawn?',
-				choices: monsterTypes
+				question:
+`Which type of monster would you like to spawn?
+
+${getMonsterTypeChoices(all)}`,
+				choices: Object.keys(all)
 			});
 		})
 		.then((answer) => {
-			Monster = all.find(monster => monster.creatureType.toLowerCase() === answer.toLowerCase());
+			Monster = all[answer];
 
-			if (name) {
+			if (name !== undefined) {
 				return name;
 			}
 
@@ -52,7 +57,7 @@ const spawn = (channel, { type, name, color, gender, cards } = {}) => {
 			// TO-DO: Keep a master list of monsters and ensure that there are no duplicate names
 			options.name = startCase(answer.toLowerCase());
 
-			if (color) {
+			if (color !== undefined) {
 				return color;
 			}
 
@@ -63,17 +68,20 @@ const spawn = (channel, { type, name, color, gender, cards } = {}) => {
 		.then((answer) => {
 			options.color = answer.toLowerCase();
 
-			if (gender) {
+			if (gender !== undefined) {
 				return gender;
 			}
 
 			return channel({
-				question: `What gender is ${options.name} the ${options.color} ${Monster.creatureType.toLowerCase()}?`,
-				choices: Object.keys(PRONOUNS)
+				question:
+`What gender is ${options.name} the ${options.color} ${Monster.creatureType.toLowerCase()}?
+
+${getChoices(genders)}`,
+				choices: Object.keys(genders)
 			});
 		})
 		.then((answer) => {
-			options.gender = answer.toLowerCase();
+			options.gender = genders[answer].toLowerCase();
 
 			return new Monster(options);
 		});
@@ -83,14 +91,12 @@ const equip = (deck, monster, channel) => {
 	const cards = monster.cards || [];
 	const cardSlots = monster.cardSlots;
 
-	const formatCards = remainingCards => remainingCards.map((card, index) => `${index}) ${card.cardType}`);
-
-
 	if (cards.length === cardSlots) {
 		channel({
 			announce:
 `You've filled your slots with the following cards:
-${formatCards(cards).join('\n')}`
+
+${getCardChoices(cards)}`
 		});
 		return Promise.resolve().then(() => cards);
 	}
@@ -101,7 +107,8 @@ ${formatCards(cards).join('\n')}`
 		.then(() => channel({
 			question:
 `You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
-${formatCards(remainingCards).join('\n')}
+
+${getCardChoices(remainingCards)}
 
 Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`,
 			choices: Object.keys(remainingCards)
@@ -121,7 +128,8 @@ Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`
 				channel({
 					announce:
 `You've filled your slots with the following cards:
-${formatCards(cards).join('\n')}`
+
+${getCardChoices(cards)}`
 				});
 
 				return cards;
@@ -131,7 +139,8 @@ ${formatCards(cards).join('\n')}`
 				channel({
 					announce:
 `You're out of cards to equip, but you've equiped the following cards:
-${formatCards(cards).join('\n')}`
+
+${getCardChoices(cards)}`
 				});
 
 				return cards;
