@@ -241,6 +241,8 @@ Battles won: ${this.battles.wins}`;
 			this.respawnTimeout = setTimeout(() => {
 				creature.dead = false;
 				creature.respawnTimeout = undefined;
+
+				creature.emit('respawn');
 			}, this.level * 3600000); // One hour per level
 		}
 	}
