@@ -30,7 +30,9 @@ class Ring extends BaseClass {
 
 			this.options.contestants = shuffle([...this.contestants, contestant]);
 
-			this.emit('add', contestant);
+			this.emit('add', {
+				contestant
+			});
 
 			channel({
 				announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`

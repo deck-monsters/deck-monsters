@@ -64,6 +64,7 @@ class Game extends BaseClass {
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
+		this.on('ring.add', this.announceContestant);
 		this.on('ring.fight', this.announceFight);
 		this.on('ring.turnBegin', this.announceTurnBegin);
 		this.on('ring.roundComplete', this.announceNextRound);
@@ -229,6 +230,19 @@ ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}
 
 		channel({
 			announce: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
+		});
+	}
+
+	announceContestant (className, ring, { contestant }) {
+		const channel = this.publicChannel;
+		const monster = contestant.monster;
+		const player = contestant.player;
+
+		channel({
+			announce: `${monsterWithHp(monster)} has entered the ring at the behest of ${player.givenName}.
+${monster.stats}
+
+Upon closer inspection you see ${monster.individualDescription}`
 		});
 	}
 
