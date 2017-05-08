@@ -1,7 +1,7 @@
 {
   "name": "deck-monsters",
-	"description": "The core deck-monsters code.",
-  "version": "0.0.1",
+  "description": "Spawn monsters, equip them with cards, and send them into the ring to fight.",
+  "version": "0.0.2",
   "contributors": [
     {
       "name": "David Brainer",
