@@ -16,39 +16,41 @@ class FleeCard extends BaseCard {
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		const fleeBonus = target.ac - player.ac;
-		const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
-		let strokeOfLuck = false;
-		let curseOfLoki = false;
+		return new Promise((resolve) => {
+			const fleeBonus = target.ac - player.ac;
+			const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
+			let strokeOfLuck = false;
+			let curseOfLoki = false;
 
-		// Stroke of Luck
-		if (fleeRoll.naturalRoll === 20) {
-			strokeOfLuck = true;
-		} else if (fleeRoll.naturalRoll === 1) {
-			curseOfLoki = true;
-		}
+			// Stroke of Luck
+			if (fleeRoll.naturalRoll === 20) {
+				strokeOfLuck = true;
+			} else if (fleeRoll.naturalRoll === 1) {
+				curseOfLoki = true;
+			}
 
-		this.emit('rolled', {
-			card: this,
-			roll: fleeRoll,
-			strokeOfLuck,
-			curseOfLoki,
-			player,
-			target
+			this.emit('rolled', {
+				card: this,
+				roll: fleeRoll,
+				strokeOfLuck,
+				curseOfLoki,
+				player,
+				target
+			});
+
+			if (!curseOfLoki && (strokeOfLuck || target.ac <= fleeRoll.result)) {
+				return resolve(player.leaveCombat(target));
+			}
+
+			this.emit('stay', {
+				fleeResult: fleeRoll.result,
+				fleeRoll,
+				player,
+				target
+			});
+
+			return resolve(true);
 		});
-
-		if (!curseOfLoki && (strokeOfLuck || target.ac <= fleeRoll.result)) {
-			return player.leaveCombat(target);
-		}
-
-		this.emit('stay', {
-			fleeResult: fleeRoll.result,
-			fleeRoll,
-			player,
-			target
-		});
-
-		return true;
 	}
 }
 

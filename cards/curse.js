@@ -22,32 +22,34 @@ class CurseCard extends BaseCard {
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		const weakenRoll = roll({ primaryDice: this.weakenDice });
-		let weakenResult = -weakenRoll.result;
-		let strokeOfLuck = false;
-		let curseOfLoki = false;
+		return new Promise((resolve) => {
+			const weakenRoll = roll({ primaryDice: this.weakenDice });
+			let weakenResult = -weakenRoll.result;
+			let strokeOfLuck = false;
+			let curseOfLoki = false;
 
-		// Stroke of Luck
-		if (isProbable({ probability: 1 })) {
-			weakenResult = -max(this.weakenDice);
-			strokeOfLuck = true;
-		} else if (isProbable({ probability: 10 })) {
-			weakenResult = 0;
-			curseOfLoki = true;
-		}
+			// Stroke of Luck
+			if (isProbable({ probability: 1 })) {
+				weakenResult = -max(this.weakenDice);
+				strokeOfLuck = true;
+			} else if (isProbable({ probability: 10 })) {
+				weakenResult = 0;
+				curseOfLoki = true;
+			}
 
-		this.emit('rolled', {
-			card: this,
-			roll: weakenRoll,
-			strokeOfLuck,
-			curseOfLoki,
-			player,
-			target
+			this.emit('rolled', {
+				card: this,
+				roll: weakenRoll,
+				strokeOfLuck,
+				curseOfLoki,
+				player,
+				target
+			});
+
+			target.setCondition('ac', weakenResult);
+
+			resolve(true);
 		});
-
-		target.setCondition('ac', weakenResult);
-
-		return true;
 	}
 }
 
