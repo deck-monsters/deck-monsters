@@ -10,7 +10,8 @@ const MAX_AC_BOOST = DEFAULT_AC;
 const MAX_ATTACK_BOOST = 10;
 const MAX_DAMAGE_BOOST = 6;
 const MAX_HP_BOOST = 20;
-const TIME_TO_HEAL = 900000;
+const TIME_TO_HEAL = 300000; // Five minutes per hp
+const TIME_TO_RESURRECT = 1800000; // Half-hour per level
 
 class BaseCreature extends BaseClass {
 	constructor (options) {
@@ -246,7 +247,7 @@ Battles won: ${this.battles.wins}`;
 				creature.respawnTimeout = undefined;
 
 				creature.emit('respawn');
-			}, this.level * 3600000); // One hour per level
+			}, this.level * TIME_TO_RESURRECT);
 		}
 	}
 
