@@ -1,0 +1,6 @@
+.git/
+.imdone/
+node_modules/
+bin/
+config/
+dist/

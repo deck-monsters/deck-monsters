@@ -1,0 +1,27 @@
+{
+  "name": "deck-monsters",
+  "version": "0.0.1",
+  "description": "The core deck-monsters code.",
+  "engines": {
+    "node": "6.10.2"
+  },
+  "scripts": {
+    "tag": "mc-tag",
+    "lint": "eslint --fix \"**/*.{js,jsx}\""
+  },
+  "dependencies": {
+    "escape-string-regexp": "^1.0.5",
+    "event-emitter-es6": "^1.1.5",
+    "lodash.reduce": "^4.6.0",
+    "lodash.sample": "^4.2.1",
+    "lodash.shuffle": "^4.2.0",
+    "lodash.startcase": "^4.4.0",
+    "roll": "^1.2.0",
+    "word-wrap": "^1.2.2"
+  },
+  "devDependencies": {
+    "@salesforce-mc/devscripts": "git+ssh://git@github.exacttarget.com:ApplicationCore/devscripts.git#v0.0.16",
+    "eslint-config-slds": "git+ssh://git@github.com/salesforce-ux/eslint-config-slds.git#v3.0.1",
+    "prompt": "^1.0.0"
+  }
+}

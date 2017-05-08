@@ -1,0 +1,7 @@
+node_modules
+.DS_Store*
+.hubot_history
+config/*
+!config/*default.env
+npm-debug.log
+/test.js
