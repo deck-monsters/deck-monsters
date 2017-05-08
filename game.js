@@ -3,8 +3,8 @@ const reduce = require('lodash.reduce');
 const { globalSemaphore } = require('./helpers/semaphore');
 const BaseClass = require('./baseClass');
 const Ring = require('./ring');
-const { draw } = require('./cards');
-const { all } = require('./monsters');
+const { all: allCards, draw } = require('./cards');
+const { all: allMonsters } = require('./monsters');
 const { Player } = require('./players');
 
 const { getFlavor } = require('./helpers/flavor');
@@ -320,13 +320,24 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 			lookAtMonster (channel, monsterName) {
 				return game.lookAtMonster(channel, monsterName)
 					.catch(err => log(err));
+			},
+			lookAtCard (channel, cardName) {
+				return game.lookAtCard(channel, cardName)
+					.catch(err => log(err));
 			}
 		};
 	}
 
+	static getCardTypes () {
+		return allCards.reduce((obj, Card) => {
+			obj[Card.cardType.toLowerCase()] = Card;
+			return obj;
+		}, {});
+	}
+
 	static getMonsterTypes () {
-		return all.reduce((obj, Monster) => {
-			obj[Monster.monsterType] = Monster;
+		return allMonsters.reduce((obj, Monster) => {
+			obj[Monster.monsterType.toLowerCase()] = Monster;
 			return obj;
 		}, {});
 	}
@@ -351,6 +362,22 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 
 		return Promise.reject(channel({
 			announce: `I can find no monster by the name of ${monsterName}.`
+		}));
+	}
+
+	lookAtCard (channel, cardName) {
+		if (cardName) {
+			const cards = this.constructor.getCardTypes();
+			const Card = cards[cardName.toLowerCase()];
+
+			if (Card) {
+				const card = new Card();
+				return card.look(channel);
+			}
+		}
+
+		return Promise.reject(channel({
+			announce: `Sorry, we don't carry ${cardName} cards here.`
 		}));
 	}
 
