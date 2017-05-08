@@ -6,8 +6,19 @@ const { getMonsterChoices } = require('../helpers/choices');
 const DEFAULT_MONSTER_SLOTS = 2;
 
 class BasePlayer extends BaseCreature {
+	constructor (options) {
+		const defaultOptions = {
+			deck: getInitialDeck(),
+			monsterSlots: DEFAULT_MONSTER_SLOTS
+		};
+
+		super(Object.assign(defaultOptions, options));
+	}
+
 	get deck () {
-		if (this.options.deck === undefined) this.deck = getInitialDeck();
+		if (this.options.deck === undefined || this.options.deck.length <= 0) {
+			this.deck = getInitialDeck();
+		}
 
 		return this.options.deck || [];
 	}
