@@ -7,7 +7,8 @@ class CurseCard extends BaseCard {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
 			weakenDice: '1d4',
-			icon: '🤢'
+			icon: '🤢',
+			cursedProp: 'ac'
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -38,15 +39,17 @@ class CurseCard extends BaseCard {
 			}
 
 			this.emit('rolled', {
+				reason: `to determine how much to weaken opponent's ${this.cursedProp.toUpperCase()} by`,
 				card: this,
 				roll: weakenRoll,
 				strokeOfLuck,
 				curseOfLoki,
 				player,
-				target
+				target,
+				outcome: ''
 			});
 
-			target.setCondition('ac', weakenResult);
+			target.setCondition(this.cursedProp, weakenResult);
 
 			resolve(true);
 		});

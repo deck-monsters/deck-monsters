@@ -40,12 +40,14 @@ class HealCard extends BaseCard {
 			}
 
 			this.emit('rolled', {
+				reason: 'to determine how much to heal',
 				card: this,
 				roll: healRoll,
 				strokeOfLuck,
 				curseOfLoki: false,
 				player,
-				target
+				target,
+				outcome: ''
 			});
 
 			resolve(player.heal(healResult));

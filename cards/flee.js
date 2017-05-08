@@ -29,16 +29,20 @@ class FleeCard extends BaseCard {
 				curseOfLoki = true;
 			}
 
+			const success = !curseOfLoki && (strokeOfLuck || target.ac <= fleeRoll.result);
+
 			this.emit('rolled', {
+				reason: 'to flee',
 				card: this,
 				roll: fleeRoll,
 				strokeOfLuck,
 				curseOfLoki,
 				player,
-				target
+				target,
+				outcome: success ? 'success!' : 'fail!'
 			});
 
-			if (!curseOfLoki && (strokeOfLuck || target.ac <= fleeRoll.result)) {
+			if (success) {
 				return resolve(player.leaveCombat(target));
 			}
 

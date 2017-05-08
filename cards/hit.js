@@ -23,7 +23,7 @@ class HitCard extends BaseCard {
 	}
 
 	get stats () {
-		return `Hit: ${this.attackDice} / Damage: ${this.damageDice}`;
+		return `Hit: ${this.attackDice} vs AC / Damage: ${this.damageDice}`;
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
@@ -45,7 +45,8 @@ class HitCard extends BaseCard {
 			}
 
 			setTimeout(() => {
-				this.emit('rolled', {
+				this.emit('rolling', {
+					reason: `vs AC (${target.ac}) to determine if hit was a success`,
 					card: this,
 					roll: attackRoll,
 					strokeOfLuck,
@@ -55,20 +56,38 @@ class HitCard extends BaseCard {
 				});
 
 				setTimeout(() => {
+					const success = strokeOfLuck || (!curseOfLoki && target.ac < attackRoll.result);
+
 					this.emit('rolled', {
+						reason: `vs AC (${target.ac})`,
 						card: this,
-						roll: damageRoll,
+						roll: attackRoll,
 						strokeOfLuck,
 						curseOfLoki,
 						player,
-						target
+						target,
+						outcome: success ? 'Hit!' : 'Miss!'
 					});
 
 					setTimeout(() => {
 						// Compare the attack roll to AC
-						if (strokeOfLuck || (!curseOfLoki && target.ac < attackRoll.result)) {
+						if (success) {
 							// If we hit then do some damage
-							resolve(target.hit(damageResult, player));
+
+							this.emit('rolled', {
+								reason: 'for damage',
+								card: this,
+								roll: damageRoll,
+								strokeOfLuck,
+								curseOfLoki,
+								player,
+								target,
+								outcome: ''
+							});
+
+							setTimeout(() => {
+								resolve(target.hit(damageResult, player));
+							}, delayTimes.mediumDelay());
 						} else {
 							this.emit('miss', {
 								attackResult: attackRoll.result,
@@ -80,11 +99,13 @@ class HitCard extends BaseCard {
 								strokeOfLuck,
 								target
 							});
-						}
 
-						resolve(true);
-					}, delayTimes.shortDelay());
-				}, delayTimes.mediumDelay());
+							setTimeout(() => {
+								resolve(true);
+							}, delayTimes.shortDelay());
+						}
+					}, delayTimes.mediumDelay());
+				}, delayTimes.longDelay());
 			}, delayTimes.longDelay());
 		});
 	}

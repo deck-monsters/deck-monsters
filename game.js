@@ -56,6 +56,7 @@ class Game extends BaseClass {
 	initializeEvents () {
 		// Initialize Messaging
 		this.on('card.played', this.announceCard);
+		this.on('card.rolling', this.announceRolling);
 		this.on('card.rolled', this.announceRolled);
 		this.on('card.miss', this.announceMiss);
 		this.on('creature.hit', this.announceHit);
@@ -67,6 +68,7 @@ class Game extends BaseClass {
 		this.on('ring.add', this.announceContestant);
 		this.on('ring.fight', this.announceFight);
 		this.on('ring.turnBegin', this.announceTurnBegin);
+		this.on('ring.endOfDeck', this.announceEndOfDeck);
 		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
 
@@ -99,8 +101,8 @@ ${player.givenName} plays card: ${cardPlayed}
 		const monster = contestant.monster;
 
 		const monsterCard = formatCard({
-			title: `${monster.icon}  ${monster.givenName}
-                                     ${monster.maxHp}HP`,
+			title: `${monster.icon}  ${monster.givenName}`,
+			subtitle: `                                     ${monster.maxHp}HP`,
 			description: monster.individualDescription,
 			stats: monster.stats
 		});
@@ -118,12 +120,26 @@ ${monsterCard}`
 		});
 	}
 
+	announceEndOfDeck (className, ring, { contestant, round }) {
+		const channel = this.publicChannel;
+		const monster = contestant.monster;
+
+		channel({
+			announce: `
+
+${monster.givenName} is out of cards.`
+		});
+	}
+
 	announceNextRound (className, ring, { contestants, round }) {
 		const channel = this.publicChannel;
 
 		channel({
 			announce: `
-round ${round} complete
+
+🏁       round ${round} complete
+
+###########################################
 `
 		});
 	}
@@ -152,7 +168,8 @@ round ${round} complete
 		});
 	}
 
-	announceRolled (className, monster, {
+	announceRolling (className, monster, {
+		reason,
 		card,
 		roll,
 		strokeOfLuck,
@@ -161,29 +178,47 @@ round ${round} complete
 	}) {
 		const channel = this.publicChannel;
 
-		let detail = '';
-		if (card.result) {
-			if (strokeOfLuck) {
-				detail = `
-STROKE OF LUCK!!!!`;
-			} else if (curseOfLoki) {
-				detail = `
-Botched it.`;
-			}
-		}
-
 		let title = roll.primaryDice;
 		if (roll.bonusDice) {
-			title += ` + ${roll.bonusDice}`;
+			title += signedNumber(roll.bonusDice);
 		}
 		if (roll.modifier) {
-			title += ` + ${roll.modifier}`;
+			title += signedNumber(roll.modifier);
 		}
 
 		channel({
 			announce: `
-🎲  ${title}
-${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}${detail}
+🎲  ${player.givenName} is rolling ${title} ${reason}
+`
+		});
+	}
+
+	announceRolled (className, monster, {
+		reason,
+		card,
+		roll,
+		strokeOfLuck,
+		curseOfLoki,
+		player,
+		outcome
+	}) {
+		const channel = this.publicChannel;
+
+		let detail = '';
+		if (card.result) {
+			if (strokeOfLuck) {
+				detail = `
+    STROKE OF LUCK!!!!`;
+			} else if (curseOfLoki) {
+				detail = `
+    Botched it.`;
+			}
+		}
+
+		channel({
+			announce: `${detail}
+🎲  ${player.givenName} rolled ${roll.result} (natural ${roll.naturalRoll.result} ${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
+    ${outcome}
 `
 		});
 	}

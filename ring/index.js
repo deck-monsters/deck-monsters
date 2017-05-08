@@ -97,12 +97,17 @@ class Ring extends BaseClass {
 						.play(monster, contestants[nextContestant].monster, ring)
 						.then((fightContinues) => {
 							if (fightContinues) {
-								setTimeout(() => next(), delayTimes.mediumDelay());
+								setTimeout(() => next(), delayTimes.longDelay());
 							} else {
 								resolve(contestant);
 							}
 						});
 				} else {
+					this.emit('endOfDeck', {
+						contestant,
+						round
+					});
+
 					if (emptyHanded === nextContestant) {
 						nextCard = 0;
 
