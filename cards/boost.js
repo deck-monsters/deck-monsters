@@ -22,32 +22,34 @@ class BoostCard extends BaseCard {
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		const boostRoll = roll({ primaryDice: this.boostDice });
-		let boostResult = boostRoll.result;
-		let strokeOfLuck = false;
-		let curseOfLoki = false;
+		return new Promise((resolve) => {
+			const boostRoll = roll({ primaryDice: this.boostDice });
+			let boostResult = boostRoll.result;
+			let strokeOfLuck = false;
+			let curseOfLoki = false;
 
-		// Stroke of Luck
-		if (isProbable({ probability: 1 })) {
-			boostResult += max(this.boostDice);
-			strokeOfLuck = true;
-		} else if (isProbable({ probability: 10 })) {
-			boostResult = 0;
-			curseOfLoki = true;
-		}
+			// Stroke of Luck
+			if (isProbable({ probability: 1 })) {
+				boostResult += max(this.boostDice);
+				strokeOfLuck = true;
+			} else if (isProbable({ probability: 10 })) {
+				boostResult = 0;
+				curseOfLoki = true;
+			}
 
-		this.emit('rolled', {
-			card: this,
-			roll: boostRoll,
-			strokeOfLuck,
-			curseOfLoki,
-			player,
-			target
+			this.emit('rolled', {
+				card: this,
+				roll: boostRoll,
+				strokeOfLuck,
+				curseOfLoki,
+				player,
+				target
+			});
+
+			player.setCondition('ac', boostResult);
+
+			resolve(true);
 		});
-
-		player.setCondition('ac', boostResult);
-
-		return true;
 	}
 }
 

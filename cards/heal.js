@@ -28,26 +28,28 @@ class HealCard extends BaseCard {
 
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
-		let healResult = healRoll.result;
-		let strokeOfLuck = false;
+		return new Promise((resolve) => {
+			const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
+			let healResult = healRoll.result;
+			let strokeOfLuck = false;
 
-		// Stroke of Luck
-		if (isProbable({ probability: 1 })) {
-			healResult = player.maxHp;
-			strokeOfLuck = true;
-		}
+			// Stroke of Luck
+			if (isProbable({ probability: 1 })) {
+				healResult = player.maxHp;
+				strokeOfLuck = true;
+			}
 
-		this.emit('rolled', {
-			card: this,
-			roll: healRoll,
-			strokeOfLuck,
-			curseOfLoki: false,
-			player,
-			target
+			this.emit('rolled', {
+				card: this,
+				roll: healRoll,
+				strokeOfLuck,
+				curseOfLoki: false,
+				player,
+				target
+			});
+
+			resolve(player.heal(healResult));
 		});
-
-		return player.heal(healResult);
 	}
 }
 

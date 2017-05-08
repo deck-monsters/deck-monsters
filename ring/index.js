@@ -1,8 +1,8 @@
 const shuffle = require('lodash.shuffle');
 
 const BaseClass = require('../baseClass');
+const delayTimes = require('../helpers/delay-times.js');
 
-const FIGHT_DELAY = 3000;
 const MAX_MONSTERS = 2;
 
 class Ring extends BaseClass {
@@ -91,36 +91,36 @@ class Ring extends BaseClass {
 				emptyHanded: nextEmptyHanded
 			}));
 
-			if (card) {
-				const fightContinues = card.play(monster, contestants[nextContestant].monster, ring);
-
-				if (fightContinues) {
-					setTimeout(() => next(), FIGHT_DELAY);
+			setTimeout(() => {
+				if (card) {
+					card
+						.play(monster, contestants[nextContestant].monster, ring)
+						.then((fightContinues) => {
+							if (fightContinues) {
+								setTimeout(() => next(), delayTimes.mediumDelay());
+							} else {
+								resolve(contestant);
+							}
+						});
 				} else {
-					resolve(contestant);
+					if (emptyHanded === nextContestant) {
+						nextCard = 0;
+
+						this.emit('roundComplete', {
+							contestants,
+							round
+						});
+
+						round += 1;
+					}
+
+					setTimeout(() => next(emptyHanded === false ? currentContestant : emptyHanded));
 				}
-			} else {
-				if (emptyHanded === nextContestant) {
-					nextCard = 0;
-
-					this.emit('roundComplete', {
-						contestants,
-						round
-					});
-
-					round += 1;
-				}
-
-				next(emptyHanded === false ? currentContestant : emptyHanded);
-			}
+			}, delayTimes.longDelay());
 		});
 
 		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
-			.then(contestant => this.fightConcludes(contestant, round))
-			.catch((err) => {
-				console.error(err); // eslint-disable-line no-console
-				this.fightConcludes(null, round);
-			});
+			.then(contestant => this.fightConcludes(contestant, round));
 	}
 
 	fightConcludes (lastContestant, rounds) {
