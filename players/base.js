@@ -74,7 +74,7 @@ class BasePlayer extends BaseCreature {
 				});
 		}
 
-		return Promise.reject(() => channel({
+		return Promise.reject(channel({
 			announce: "You're all out space for new monsters!"
 		}));
 	}
@@ -86,11 +86,9 @@ class BasePlayer extends BaseCreature {
 			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					channel({
+					return Promise.reject(channel({
 						announce: "You don't have any monsters to equip. Spawn one first!"
-					});
-
-					return Promise.reject();
+					}));
 				} else if (numberOfMonsters === 1) {
 					return monsters[0];
 				}
@@ -129,11 +127,9 @@ Which monster would you like to equip?`,
 			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					channel({
+					return Promise.reject(channel({
 						announce: "You don't have any monsters to send into battle. Spawn one first!"
-					});
-
-					return Promise.reject();
+					}));
 				} else if (numberOfMonsters === 1) {
 					return monsters[0];
 				}
@@ -152,11 +148,9 @@ Which monster would you like to send into battle?`,
 			})
 			.then((monster) => {
 				if (monster.cards.length <= 0) {
-					channel({
+					return Promise.reject(channel({
 						announce: 'Only an evil master would send their monster into battle without any cards.'
-					});
-
-					return Promise.reject();
+					}));
 				}
 
 				return ring.addMonster(monster, player, channel);

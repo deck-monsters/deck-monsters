@@ -289,6 +289,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 	}
 
 	getPlayer ({ id, name }, log = () => {}) {
+		const game = this;
 		const ring = this.ring;
 		let player = this.players[id];
 
@@ -315,6 +316,10 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 			sendMonsterToTheRing (channel, options) {
 				return player.sendMonsterToTheRing(ring, channel, options || {})
 					.catch(err => log(err));
+			},
+			lookAtMonster (channel, monsterName) {
+				return game.lookAtMonster(channel, monsterName)
+					.catch(err => log(err));
 			}
 		};
 	}
@@ -329,11 +334,24 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 	getAllMonsters () {
 		return reduce(this.players, (obj, player) => {
 			player.monsters.forEach((monster) => {
-				obj[monster.givenName] = monster;
+				obj[monster.givenName.toLowerCase()] = monster;
 			});
 
 			return obj;
 		}, {});
+	}
+
+	lookAtMonster (channel, monsterName) {
+		if (monsterName) {
+			const monsters = this.getAllMonsters();
+			const monster = monsters[monsterName.toLowerCase()];
+
+			if (monster) return monster.look(channel);
+		}
+
+		return Promise.reject(channel({
+			announce: `I can find no monster by the name of ${monsterName}.`
+		}));
 	}
 
 	drawCard (options) {

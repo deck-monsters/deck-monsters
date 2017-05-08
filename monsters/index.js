@@ -153,19 +153,15 @@ ${getCardChoices(cards)}`
 		.resolve()
 		.then(() => {
 			if (cardSlots <= 0) {
-				channel({
+				return Promise.reject(channel({
 					announce: 'You have no card slots available!'
-				});
-
-				return Promise.reject();
+				}));
 			}
 
 			if (deck.length <= 0) {
-				channel({
+				return Promise.reject(channel({
 					announce: 'Your deck is empty!'
-				});
-
-				return Promise.reject();
+				}));
 			}
 
 			return addCard({ remainingSlots: cardSlots, remainingCards: deck });

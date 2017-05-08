@@ -42,7 +42,7 @@ class BaseMonster extends BaseCreature {
 			.resolve()
 			.then(() => channel({
 				announce:
-`You see ${this.individualDescription}'
+`You see ${this.individualDescription}
 
 ${this.stats}`
 			}));
