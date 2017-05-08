@@ -46,7 +46,7 @@ class HitCard extends BaseCard {
 
 			setTimeout(() => {
 				this.emit('rolling', {
-					reason: `vs AC (${target.ac}) to determine if hit was a success`,
+					reason: `vs AC (${target.ac}) to determine if the hit was a success`,
 					card: this,
 					roll: attackRoll,
 					strokeOfLuck,

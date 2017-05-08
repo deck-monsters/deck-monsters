@@ -5,11 +5,17 @@ const formatCard = ({ title, description, stats }) => (
 \`\`\`
 ===========================================
 ${wrap(title, { indent: '| ', width: 40 })}
--------------------------------------------
+-------------------------------------------${
+!description ? '' :
+`
 |
-${wrap(description, { indent: '| ', width: 40 })}
+${wrap(description, { indent: '| ', width: 40 })}`
+}${
+!stats ? '' :
+`
 |
-${wrap(stats, { indent: '| ', width: 40 })}
+${wrap(stats, { indent: '| ', width: 40 })}`
+}
 |
 ===========================================
 \`\`\`

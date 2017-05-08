@@ -103,17 +103,18 @@ ${cardPlayed}`
 
 		const monsterCard = formatCard({
 			title: `${monster.icon}  ${monster.givenName}`,
-			subtitle: `                                     ${monster.maxHp}HP`,
-			description: monster.individualDescription,
+			description: contestant.lastMonsterPlayed !== monster && monster.individualDescription,
 			stats: monster.stats
 		});
+
+		contestant.lastMonsterPlayed = monster;
 
 		channel({
 			announce:
 `
 *It's ${startCase(contestant.player.givenName)}'s turn.*
 
-${startCase(contestant.player.pronouns[0])} plays the following monster:
+${startCase(contestant.player.givenName)} plays the following monster:
 ${monsterCard}`
 		});
 	}
@@ -185,7 +186,7 @@ ${startCase(monster.givenName)} is out of cards.
 
 		channel({
 			announce: `
-🎲  ${startCase(player.givenName)} is rolling ${title} ${reason}
+🎲  ${startCase(player.givenName)} rolls ${title} ${reason}
 `
 		});
 	}
