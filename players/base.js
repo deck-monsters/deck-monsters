@@ -131,15 +131,21 @@ Which monster would you like to equip?`,
 	}
 
 	sendMonsterToTheRing (ring, channel) {
-		const monsters = this.monsters.filter(monster => !monster.dead);
 		const player = this;
+		const alreadyInRing = ring.contestants.filter(contestant => contestant.player === player);
+		const monsters = this.monsters.filter(monster => !monster.dead);
 
 		return Promise
 			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
-				if (numberOfMonsters <= 0) {
+				// For now, each player can only have one monster in the ring at a time
+				if (alreadyInRing && alreadyInRing.length > 0) {
 					return Promise.reject(channel({
-						announce: "You don't have any monsters to send into battle. Spawn one first!"
+						announce: 'You already have a monster in the ring!'
+					}));
+				} else if (numberOfMonsters <= 0) {
+					return Promise.reject(channel({
+						announce: "You don't have any living monsters to send into battle. Spawn one first, or wait for your dead monsters to revive." // eslint-disable-line max-len
 					}));
 				} else if (numberOfMonsters === 1) {
 					return monsters[0];

@@ -1,7 +1,16 @@
 {
   "name": "deck-monsters",
+	"description": "The core deck-monsters code.",
   "version": "0.0.1",
-  "description": "The core deck-monsters code.",
+  "contributors": [
+    {
+      "name": "David Brainer",
+      "email": "david@brainermail.com"
+    },
+    {
+      "name": "Christopher McCulloh"
+    }
+  ],
   "engines": {
     "node": "6.10.2"
   },
@@ -9,6 +18,11 @@
     "tag": "mc-tag",
     "lint": "eslint --fix \"**/*.{js,jsx}\""
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:deck-monsters/deck-monsters.git"
+  },
+  "main": "index.js",
   "dependencies": {
     "escape-string-regexp": "^1.0.5",
     "event-emitter-es6": "^1.1.5",
