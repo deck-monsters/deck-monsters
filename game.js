@@ -80,24 +80,41 @@ class Game extends BaseClass {
 	announceCard (className, card, { player, target }) {
 		const channel = this.publicChannel;
 
+		const cardPlayed = formatCard({
+			title: `${card.icon}  ${card.cardType}`,
+			description: card.description,
+			stats: card.stats
+		});
+
 		channel({
-			announce: formatCard({
-				title: `${card.icon}  ${card.cardType}`,
-				description: card.description,
-				stats: card.stats
-			})
+			announce: `
+
+${player.givenName} plays card: ${cardPlayed}
+			`
 		});
 	}
 
 	announceTurnBegin (className, ring, { contestant, round }) {
 		const channel = this.publicChannel;
+		const monster = contestant.monster;
+
+		const monsterCard = formatCard({
+			title: `${monster.icon}  ${monster.givenName}
+                                     ${monster.maxHp}HP`,
+			description: monster.individualDescription,
+			stats: monster.stats
+		});
 
 		channel({
 			announce: `
-               * * *
 
 
-${monsterWithHp(contestant.monster)}'s turn`
+
+                * * *
+${contestant.player.givenName}'s turn.
+
+${contestant.player.givenName} plays the following monster:
+${monsterCard}`
 		});
 	}
 
