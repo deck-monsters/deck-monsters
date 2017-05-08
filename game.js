@@ -288,7 +288,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		this.ring.clearRing();
 	}
 
-	getPlayer ({ id, name }) {
+	getPlayer ({ id, name }, log = () => {}) {
 		const ring = this.ring;
 		let player = this.players[id];
 
@@ -305,13 +305,16 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		return {
 			player,
 			spawnMonster (channel, options) {
-				return player.spawnMonster(channel, options || {});
+				return player.spawnMonster(channel, options || {})
+					.catch(err => log(err));
 			},
 			equipMonster (channel, options) {
-				return player.equipMonster(channel, options || {});
+				return player.equipMonster(channel, options || {})
+					.catch(err => log(err));
 			},
 			sendMonsterToTheRing (channel, options) {
-				return player.sendMonsterToTheRing(ring, channel, options || {});
+				return player.sendMonsterToTheRing(ring, channel, options || {})
+					.catch(err => log(err));
 			}
 		};
 	}

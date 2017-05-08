@@ -116,7 +116,11 @@ class Ring extends BaseClass {
 		});
 
 		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
-			.then(contestant => this.fightConcludes(contestant, round));
+			.then(contestant => this.fightConcludes(contestant, round))
+			.catch((err) => {
+				console.error(err); // eslint-disable-line no-console
+				this.fightConcludes(null, round);
+			});
 	}
 
 	fightConcludes (lastContestant, rounds) {
