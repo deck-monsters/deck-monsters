@@ -68,14 +68,17 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	// TO-DO: We want to save this in the options, but we'll have to create a method for reviving after Slack restarts
 	get dead () {
-		return this.options.dead || false;
+		// return this.options.dead || false;
+		return this.isDead || false;
 	}
 
 	set dead (dead) {
-		this.setOptions({
-			dead
-		});
+		// this.setOptions({
+		// 	dead
+		// });
+		this.isDead = dead;
 	}
 
 	get hp () {
