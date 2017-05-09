@@ -207,7 +207,7 @@ ${monster.identity} is out of cards.
 
 		channel({
 			announce: `${detail}
-🎲  ${player.identity} rolled ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
+🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
     ${outcome}
 `
 		});
