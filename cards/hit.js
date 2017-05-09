@@ -56,6 +56,7 @@ class HitCard extends BaseCard {
 				});
 
 				setTimeout(() => {
+					// results vs AC
 					const success = strokeOfLuck || (!curseOfLoki && target.ac < attackRoll.result);
 
 					this.emit('rolled', {
@@ -70,22 +71,19 @@ class HitCard extends BaseCard {
 					});
 
 					setTimeout(() => {
-						this.emit('rolling', {
-							reason: 'for damage',
-							card: this,
-							roll: damageRoll,
-							strokeOfLuck,
-							curseOfLoki,
-							player,
-							target,
-							outcome: ''
-						});
+						if (success) {
+							this.emit('rolling', {
+								reason: 'for damage',
+								card: this,
+								roll: damageRoll,
+								strokeOfLuck,
+								curseOfLoki,
+								player,
+								target,
+								outcome: ''
+							});
 
-						setTimeout(() => {
-							// Compare the attack roll to AC
-							if (success) {
-								// If we hit then do some damage
-
+							setTimeout(() => {
 								this.emit('rolled', {
 									reason: 'for damage',
 									card: this,
@@ -98,25 +96,26 @@ class HitCard extends BaseCard {
 								});
 
 								setTimeout(() => {
+									// If we hit then do some damage
 									resolve(target.hit(damageResult, player));
 								}, delayTimes.mediumDelay());
-							} else {
-								this.emit('miss', {
-									attackResult: attackRoll.result,
-									attackRoll,
-									curseOfLoki,
-									damageResult,
-									damageRoll,
-									player,
-									strokeOfLuck,
-									target
-								});
+							}, delayTimes.mediumDelay());
+						} else {
+							this.emit('miss', {
+								attackResult: attackRoll.result,
+								attackRoll,
+								curseOfLoki,
+								damageResult,
+								damageRoll,
+								player,
+								strokeOfLuck,
+								target
+							});
 
-								setTimeout(() => {
-									resolve(true);
-								}, delayTimes.shortDelay());
-							}
-						}, delayTimes.mediumDelay());
+							setTimeout(() => {
+								resolve(true);
+							}, delayTimes.shortDelay());
+						}
 					}, delayTimes.mediumDelay());
 				}, delayTimes.longDelay());
 			}, delayTimes.longDelay());
