@@ -22,7 +22,6 @@ const spawn = (channel, { type, name, color, gender, cards } = {}) => {
 	const options = {};
 
 	if (cards && cards.length > 0) {
-		console.log('seeded cards');
 		options.cards = cards;
 	}
 
@@ -88,7 +87,7 @@ ${getChoices(genders)}`,
 };
 
 const equip = (deck, monster, channel) => {
-	const cards = monster.cards || [];
+	const cards = [];
 	const cardSlots = monster.cardSlots;
 
 	if (cards.length === cardSlots) {
