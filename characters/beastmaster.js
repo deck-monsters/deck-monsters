@@ -2,7 +2,7 @@ const BaseCharacter = require('./base');
 const { spawn, equip } = require('../monsters');
 const { getMonsterChoices } = require('../helpers/choices');
 
-const { formatCard } = require('../helpers/card');
+const { monsterCard } = require('../helpers/card');
 
 const DEFAULT_MONSTER_SLOTS = 2;
 
