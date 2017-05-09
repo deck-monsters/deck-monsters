@@ -39,7 +39,7 @@ class BoostCard extends BaseCard {
 			}
 
 			this.emit('rolled', {
-				reason: `to determine how much to boost ${this.boostedProp.toUpperCase()} by`,
+				reason: `to determine how much to boost ${this.options.boostedProp.toUpperCase()} by`,
 				card: this,
 				roll: boostRoll,
 				strokeOfLuck,
@@ -49,7 +49,7 @@ class BoostCard extends BaseCard {
 				outcome: ''
 			});
 
-			player.setCondition(this.boostedProp, boostResult);
+			player.setCondition(this.options.boostedProp, boostResult);
 
 			resolve(true);
 		});

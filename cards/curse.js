@@ -39,7 +39,7 @@ class CurseCard extends BaseCard {
 			}
 
 			this.emit('rolled', {
-				reason: `to determine how much to weaken opponent's ${this.cursedProp.toUpperCase()} by`,
+				reason: `to determine how much to weaken opponent's ${this.options.cursedProp.toUpperCase()} by`,
 				card: this,
 				roll: weakenRoll,
 				strokeOfLuck,
@@ -49,7 +49,7 @@ class CurseCard extends BaseCard {
 				outcome: ''
 			});
 
-			target.setCondition(this.cursedProp, weakenResult);
+			target.setCondition(this.options.cursedProp, weakenResult);
 
 			resolve(true);
 		});
