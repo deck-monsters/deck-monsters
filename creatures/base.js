@@ -191,40 +191,48 @@ Battles won: ${this.battles.wins}`;
 
 	hit (damage = 0, assailant) {
 		const hp = this.hp - damage;
+		const originalHP = this.hp;
+
+		if (hp <= 0) {
+			this.hp = 0;
+		}
+
+		this.hp = hp;
 
 		this.emit('hit', {
 			assailant,
 			damage,
 			hp,
-			prevHp: this.hp
+			prevHp: originalHP
 		});
 
-		if (hp <= 0) {
-			this.hp = 0;
+		if (hp === 0) {
 			return this.die(assailant);
 		}
-
-		this.hp = hp;
 
 		return true;
 	}
 
 	heal (amount = 0) {
 		const hp = this.hp + amount;
-
-		this.emit('heal', {
-			amount,
-			hp,
-			prevHp: this.hp
-		});
+		const originalHP = this.hp;
 
 		if (hp <= 0) {
 			this.hp = 0;
-			return this.die();
 		} else if (hp > this.maxHp) {
 			this.hp = this.maxHp;
 		} else {
 			this.hp = hp;
+		}
+
+		this.emit('heal', {
+			amount,
+			hp,
+			prevHp: originalHP
+		});
+
+		if (hp <= 0) {
+			return this.die();
 		}
 
 		return true;
