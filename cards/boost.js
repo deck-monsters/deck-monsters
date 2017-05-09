@@ -7,7 +7,8 @@ class BoostCard extends BaseCard {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
 			boostDice: '1d4',
-			icon: '🆙'
+			icon: '🆙',
+			boostedProp: 'ac'
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -38,15 +39,17 @@ class BoostCard extends BaseCard {
 			}
 
 			this.emit('rolled', {
+				reason: `to determine how much to boost ${this.boostedProp.toUpperCase()} by`,
 				card: this,
 				roll: boostRoll,
 				strokeOfLuck,
 				curseOfLoki,
 				player,
-				target
+				target,
+				outcome: ''
 			});
 
-			player.setCondition('ac', boostResult);
+			player.setCondition(this.boostedProp, boostResult);
 
 			resolve(true);
 		});

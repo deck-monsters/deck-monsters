@@ -1,4 +1,5 @@
 const reduce = require('lodash.reduce');
+const startCase = require('lodash.startcase');
 
 const { globalSemaphore } = require('./helpers/semaphore');
 const BaseClass = require('./baseClass');
@@ -12,8 +13,8 @@ const { formatCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
-const signedNumber = number => (number > 0 ? `+${number}` : number.toString());
-const monsterWithHp = monster => `${monster.icon}  ${monster.givenName} (${monster.hp} hp)`;
+const signedNumber = number => (number === 0 ? '' : ` ${(number > 0 ? `+${number}` : number.toString())}`);
+const monsterWithHp = monster => `${monster.icon}  ${startCase(monster.givenName)} (${monster.hp} hp)`;
 
 class Game extends BaseClass {
 	constructor (publicChannel, options) {
@@ -56,6 +57,7 @@ class Game extends BaseClass {
 	initializeEvents () {
 		// Initialize Messaging
 		this.on('card.played', this.announceCard);
+		this.on('card.rolling', this.announceRolling);
 		this.on('card.rolled', this.announceRolled);
 		this.on('card.miss', this.announceMiss);
 		this.on('creature.hit', this.announceHit);
@@ -67,6 +69,7 @@ class Game extends BaseClass {
 		this.on('ring.add', this.announceContestant);
 		this.on('ring.fight', this.announceFight);
 		this.on('ring.turnBegin', this.announceTurnBegin);
+		this.on('ring.endOfDeck', this.announceEndOfDeck);
 		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
 
@@ -77,27 +80,54 @@ class Game extends BaseClass {
 	}
 
 	/* eslint-disable max-len */
-	announceCard (className, card, { player, target }) {
+	announceCard (className, card, { player }) { // TO-DO: It's confusing that the "player" here is actually a monster because they are the player of the card
 		const channel = this.publicChannel;
 
+		const cardPlayed = formatCard({
+			title: `${card.icon}  ${card.cardType}`,
+			description: card.description,
+			stats: card.stats
+		});
+
 		channel({
-			announce: formatCard({
-				title: `${card.icon}  ${card.cardType}`,
-				description: card.description,
-				stats: card.stats
-			})
+			announce:
+`
+${startCase(player.givenName)} lays down the following card:
+${cardPlayed}`
 		});
 	}
 
-	announceTurnBegin (className, ring, { contestant, round }) {
+	announceTurnBegin (className, ring, { contestant }) {
 		const channel = this.publicChannel;
+		const monster = contestant.monster;
+
+		const monsterCard = formatCard({
+			title: `${monster.icon}  ${monster.givenName}`,
+			description: contestant.lastMonsterPlayed !== monster && monster.individualDescription,
+			stats: monster.stats
+		});
+
+		contestant.lastMonsterPlayed = monster;
 
 		channel({
-			announce: `
-               * * *
+			announce:
+`
+*It's ${startCase(contestant.player.givenName)}'s turn.*
 
+${startCase(contestant.player.givenName)} plays the following monster:
+${monsterCard}`
+		});
+	}
 
-${monsterWithHp(contestant.monster)}'s turn`
+	announceEndOfDeck (className, ring, { contestant }) {
+		const channel = this.publicChannel;
+		const monster = contestant.monster;
+
+		channel({
+			announce:
+`
+${startCase(monster.givenName)} is out of cards.
+`
 		});
 	}
 
@@ -105,8 +135,12 @@ ${monsterWithHp(contestant.monster)}'s turn`
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `
-round ${round} complete
+			announce:
+`
+
+🏁       round ${round} complete
+
+###########################################
 `
 		});
 	}
@@ -131,16 +165,40 @@ round ${round} complete
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monsterWithHp(player)} tries to flee from ${monsterWithHp(target)}, but failed!`
+			announce: `${monsterWithHp(player)} tries to flee from ${monsterWithHp(target)}, but fails!`
+		});
+	}
+
+	announceRolling (className, monster, {
+		reason,
+		roll,
+		player
+	}) {
+		const channel = this.publicChannel;
+
+		let title = roll.primaryDice;
+		if (roll.bonusDice) {
+			title += signedNumber(roll.bonusDice);
+		}
+		if (roll.modifier) {
+			title += signedNumber(roll.modifier);
+		}
+
+		channel({
+			announce: `
+🎲  ${startCase(player.givenName)} rolls ${title} ${reason}
+`
 		});
 	}
 
 	announceRolled (className, monster, {
+		reason,
 		card,
 		roll,
 		strokeOfLuck,
 		curseOfLoki,
-		player
+		player,
+		outcome
 	}) {
 		const channel = this.publicChannel;
 
@@ -148,25 +206,17 @@ round ${round} complete
 		if (card.result) {
 			if (strokeOfLuck) {
 				detail = `
-STROKE OF LUCK!!!!`;
+    STROKE OF LUCK!!!!`;
 			} else if (curseOfLoki) {
 				detail = `
-Botched it.`;
+    Botched it.`;
 			}
 		}
 
-		let title = roll.primaryDice;
-		if (roll.bonusDice) {
-			title += ` + ${roll.bonusDice}`;
-		}
-		if (roll.modifier) {
-			title += ` + ${roll.modifier}`;
-		}
-
 		channel({
-			announce: `
-🎲  ${title}
-${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}${detail}
+			announce: `${detail}
+🎲  ${startCase(player.givenName)} rolled ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
+    ${outcome}
 `
 		});
 	}
@@ -183,7 +233,7 @@ ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}
 		}
 
 		channel({
-			announce: `${monster.icon} ${monster.givenName} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`
+			announce: `${monster.icon} ${startCase(monster.givenName)} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`
 		});
 	}
 
@@ -200,16 +250,18 @@ ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}
 		}
 
 		channel({
-			announce: `${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`
+			announce: `${assailant.icon} ${icon} ${monster.icon}    ${startCase(assailant.givenName)} ${getFlavor('hits')} ${startCase(monster.givenName)} for ${damage} damage`
 		});
 	}
 
 	announceHeal (className, monster, { amount }) {
 		const channel = this.publicChannel;
 
-		channel({
-			announce: `${monster.icon} 💊      ${monster.givenName} heals ${amount} hp`
-		});
+		if (this.ring.monsterIsInRing(monster)) {
+			channel({
+				announce: `${monster.icon} 💊      ${startCase(monster.givenName)} heals ${amount} hp`
+			});
+		}
 	}
 
 	announceMiss (className, card, { attackResult, curseOfLoki, player, target }) {
@@ -229,7 +281,7 @@ ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}
 		}
 
 		channel({
-			announce: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
+			announce: `${player.icon} ${icon} ${target.icon}    ${startCase(player.givenName)} ${action} ${startCase(target.givenName)} ${flavor}`
 		});
 	}
 
@@ -239,7 +291,7 @@ ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}
 		const player = contestant.player;
 
 		channel({
-			announce: `${monsterWithHp(monster)} has entered the ring at the behest of ${player.givenName}.
+			announce: `${monsterWithHp(monster)} has entered the ring at the behest of ${startCase(player.givenName)}.
 ${monster.stats}
 
 Upon closer inspection you see ${monster.individualDescription}`
@@ -254,7 +306,7 @@ Upon closer inspection you see ${monster.individualDescription}`
 		});
 	}
 
-	announceFightConcludes (className, game, { contestants, deadContestants, deaths, isDraw, rounds }) {
+	announceFightConcludes (className, game, { deaths, isDraw, rounds }) {
 		const channel = this.publicChannel;
 
 		channel({

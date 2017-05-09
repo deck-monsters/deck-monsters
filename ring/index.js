@@ -50,8 +50,13 @@ class Ring extends BaseClass {
 		}
 	}
 
+	monsterIsInRing (monster) {
+		const contestants = this.contestants;
+		return !!contestants.find(contestant => contestant.monster === monster);
+	}
+
 	clearRing () {
-		this.options.monsters = [];
+		this.options.contestants = [];
 		this.emit('clear');
 	}
 
@@ -130,6 +135,11 @@ class Ring extends BaseClass {
 						}
 					});
 			} else {
+				this.emit('endOfDeck', {
+					contestant,
+					round
+				});
+
 				// We didn't have a card, so we can't player
 				// If we've gone an entire round with no plays then the value of emptyHanded is going to equal the index of the nextContestant
 				if (emptyHanded === nextContestant) {
