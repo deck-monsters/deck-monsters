@@ -99,22 +99,16 @@ ${cardPlayed}`
 		const channel = this.publicChannel;
 		const monster = contestant.monster;
 
-		const monsterCard = formatCard({
-			title: monster.identity,
-			description: contestant.lastMonsterPlayed !== monster && monster.individualDescription,
-			stats: monster.stats
-		});
-
-		contestant.lastMonsterPlayed = monster;
-// TODO? contestant.character.icon == user's avatar
 		channel({
 			announce:
 `
 *It's ${contestant.character.givenName}'s turn.*
 
-${contestant.character.icon}  ${startCase(contestant.character.givenName)} plays the following monster:
+${contestant.character.identity} plays the following monster:
 ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
+		
+		contestant.lastMonsterPlayed = monster;
 	}
 
 	announceEndOfDeck (className, ring, { contestant }) {

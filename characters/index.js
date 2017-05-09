@@ -1,3 +1,5 @@
+const emoji = require('node-emoji');
+
 const { hydrateCard } = require('../cards');
 const { hydrateMonster } = require('../monsters');
 const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
@@ -14,7 +16,9 @@ const all = [
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
 const create = (channel, { type, name, gender } = {}) => {
-	const options = {};
+	const options = {
+		icon: emoji.random().emoji // TO-DO: Eventually let users select their own icon
+	};
 
 	let Character;
 	return Promise
