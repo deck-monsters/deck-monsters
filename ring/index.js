@@ -55,7 +55,14 @@ class Ring extends BaseClass {
 		return !!contestants.find(contestant => contestant.monster === monster);
 	}
 
+	setEncounterFlag (value) {
+		this.contestants.forEach((contestant) => {
+			contestant.monster.inEncounter = value;
+		});
+	}
+
 	clearRing () {
+		this.setEncounterFlag(false);
 		this.options.contestants = [];
 		this.emit('clear');
 	}
@@ -63,6 +70,9 @@ class Ring extends BaseClass {
 	fight () {
 		// Save the instance of the ring we are fighting in
 		const ring = this;
+
+		// Set a flag on the contestants that are in the encounter
+		this.setEncounterFlag(true);
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
