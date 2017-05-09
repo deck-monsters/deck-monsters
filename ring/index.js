@@ -61,74 +61,111 @@ class Ring extends BaseClass {
 	}
 
 	fight () {
+		// Save the instance of the ring we are fighting in
 		const ring = this;
+
+		// Make a copy of the contestants array so that it won't be changed after we start using it
+		// Note that the contestants objects and the players / monsters are references to the originals, not copies
 		const contestants = [...this.contestants];
 
+		// Emit an event when the fight begins
 		this.emit('fight', {
 			contestants
 		});
 
+		// And we're off. The round variable is only used for reporting at the end
 		let round = 1;
 
+		// This is the main loop that takes care of the "action" each player performs
+		// It's a promise so it can be chained, async, delayed, etc
+		// currentContestant is the numeric index of player whose turn we're on
+		// currentCard is the numeric index of card we'll play from that player's hand (if they have a card in that position)
+		// emptyHanded is the numeric index of the first player to not have a card in the position specified, and gets reset to "false" whenever a card is successfully played
 		const doAction = ({ currentContestant, currentCard, emptyHanded }) => new Promise((resolve) => {
+			// Find the monster at the current index
 			const contestant = contestants[currentContestant];
 			const monster = contestant.monster;
+
+			// Find the card in that monster's hand at the current index if it exists
 			const card = monster.cards[currentCard];
 
+			// Emit an event when a player's turn begins
+			// Note that as written currently this will emit _even if they don't have a card to play_
 			this.emit('turnBegin', {
 				contestant,
 				round
 			});
 
+			// Get the index of the next contestant, looping at the end of the array
 			let nextContestant = currentContestant + 1;
 			if (nextContestant >= contestants.length) {
 				nextContestant = 0;
 			}
 
+			// We don't actually move to the next card until every player has played the current card
 			let nextCard = currentCard;
 			if (nextContestant === 0) {
 				nextCard += 1;
 			}
 
+			// When this is called (see below) we pass the next contestant and card back into the looping
+			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a player as described above
 			const next = (nextEmptyHanded = false) => resolve(doAction({
 				currentContestant: nextContestant,
 				currentCard: nextCard,
 				emptyHanded: nextEmptyHanded
 			}));
 
-			setTimeout(() => {
-				if (card) {
-					card
-						.play(monster, contestants[nextContestant].monster, ring)
-						.then((fightContinues) => {
-							if (fightContinues) {
-								setTimeout(() => next(), delayTimes.longDelay());
-							} else {
-								resolve(contestant);
-							}
-						});
-				} else {
-					this.emit('endOfDeck', {
-						contestant,
+			// Does the monster have a card at the current position?
+			if (card) {
+				// Play the card. If the fight should continue after the card it will return true, otherwise it will return false
+				card
+					// The current monster always attacks the next monster
+					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
+					.play(monster, contestants[nextContestant].monster, ring)
+					.then((fightContinues) => {
+						if (fightContinues) {
+							// Delay the next turn slighty for more realistic gameplay
+							// Notice that no value is passed in for emptyHanded so it will reset to false (because we played a card)
+							setTimeout(() => next(), delayTimes.longDelay());
+						} else {
+							// The fight is over, let's end this promise chain
+							// Also return the contestant we ended on for bookkeeping purposes
+							resolve(contestant);
+						}
+					});
+			} else {
+				this.emit('endOfDeck', {
+					contestant,
+					round
+				});
+
+				// We didn't have a card, so we can't player
+				// If we've gone an entire round with no plays then the value of emptyHanded is going to equal the index of the nextContestant
+				if (emptyHanded === nextContestant) {
+					// The round is over so we'll go back to the first card in everyone's hand
+					nextCard = 0;
+					// We also want to restart to the first contestant since the round is ending now
+					// In a game where everyone has the same size hand this would happen anyway, but we reset for unbalanced games
+					nextContestant = 0;
+
+					// Emit an event when the round ends
+					this.emit('roundComplete', {
+						contestants,
 						round
 					});
 
-					if (emptyHanded === nextContestant) {
-						nextCard = 0;
-
-						this.emit('roundComplete', {
-							contestants,
-							round
-						});
-
-						round += 1;
-					}
-
-					setTimeout(() => next(emptyHanded === false ? currentContestant : emptyHanded));
+					// Increment the round counter
+					round += 1;
 				}
-			}, delayTimes.longDelay());
+
+				// If we haven't gone an entire round yet we just pass play along to the next player
+				// If we're the first ones to have an empty hand then we'll set the value to our index, otherwise we'll just pass along the existing value (so that we can know when a full round has passed with no plays)
+				setTimeout(() => next(emptyHanded === false ? currentContestant : emptyHanded), delayTimes.shortDelay());
+			}
 		});
 
+		// Kick off the action loop with some initial values. Go to the conclusion method once it resolves
 		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
 			.then(contestant => this.fightConcludes(contestant, round));
 	}
