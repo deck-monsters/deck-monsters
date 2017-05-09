@@ -6,12 +6,14 @@ const { STARTING_XP, getLevel } = require('../helpers/levels');
 const PRONOUNS = require('../helpers/pronouns');
 const { signedNumber } = require('../helpers/signed-number');
 
-const DEFAULT_AC = 6;
-const DEFAULT_MAX_HP = 24;
-const MAX_AC_BOOST = DEFAULT_AC;
+const BASE_AC = 4;
+const AC_VARIANCE = 3;
+const BASE_HP = 20;
+const HP_VARIANCE = 8;
+const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
 const MAX_ATTACK_BOOST = 10;
 const MAX_DAMAGE_BOOST = 6;
-const MAX_HP_BOOST = 20;
+const MAX_HP_BOOST = (BASE_HP * 2) + HP_VARIANCE;
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 1800000; // Half-hour per level
 
@@ -30,6 +32,9 @@ class BaseCreature extends BaseClass {
 		this.healingInterval = setInterval(() => {
 			if (this.hp < this.maxHp) this.heal(1);
 		}, TIME_TO_HEAL);
+
+		this.DEFAULT_HP = Math.ceil(Math.random() * HP_VARIANCE) + BASE_HP;
+		this.DEFAULT_AC = Math.ceil(Math.random() * AC_VARIANCE) + BASE_AC;
 	}
 
 	get icon () {
@@ -133,7 +138,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get ac () {
-		let ac = this.options.ac || DEFAULT_AC;
+		let ac = this.options.ac || this.DEFAULT_AC;
 		ac += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
 		ac += this.conditions.ac || 0;
 
@@ -170,7 +175,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get maxHp () {
-		let maxHp = this.options.maxHp || DEFAULT_MAX_HP;
+		let maxHp = this.options.maxHp || this.DEFAULT_HP;
 		maxHp += Math.min(this.level * 2, MAX_HP_BOOST); // Gain 2 hp per level up to the max
 
 		return maxHp;
