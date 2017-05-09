@@ -70,40 +70,53 @@ class HitCard extends BaseCard {
 					});
 
 					setTimeout(() => {
-						// Compare the attack roll to AC
-						if (success) {
-							// If we hit then do some damage
+						this.emit('rolling', {
+							reason: 'for damage',
+							card: this,
+							roll: damageRoll,
+							strokeOfLuck,
+							curseOfLoki,
+							player,
+							target,
+							outcome: ''
+						});
 
-							this.emit('rolled', {
-								reason: 'for damage',
-								card: this,
-								roll: damageRoll,
-								strokeOfLuck,
-								curseOfLoki,
-								player,
-								target,
-								outcome: ''
-							});
+						setTimeout(() => {
+							// Compare the attack roll to AC
+							if (success) {
+								// If we hit then do some damage
 
-							setTimeout(() => {
-								resolve(target.hit(damageResult, player));
-							}, delayTimes.mediumDelay());
-						} else {
-							this.emit('miss', {
-								attackResult: attackRoll.result,
-								attackRoll,
-								curseOfLoki,
-								damageResult,
-								damageRoll,
-								player,
-								strokeOfLuck,
-								target
-							});
+								this.emit('rolled', {
+									reason: 'for damage',
+									card: this,
+									roll: damageRoll,
+									strokeOfLuck,
+									curseOfLoki,
+									player,
+									target,
+									outcome: ''
+								});
 
-							setTimeout(() => {
-								resolve(true);
-							}, delayTimes.shortDelay());
-						}
+								setTimeout(() => {
+									resolve(target.hit(damageResult, player));
+								}, delayTimes.mediumDelay());
+							} else {
+								this.emit('miss', {
+									attackResult: attackRoll.result,
+									attackRoll,
+									curseOfLoki,
+									damageResult,
+									damageRoll,
+									player,
+									strokeOfLuck,
+									target
+								});
+
+								setTimeout(() => {
+									resolve(true);
+								}, delayTimes.shortDelay());
+							}
+						}, delayTimes.mediumDelay());
 					}, delayTimes.mediumDelay());
 				}, delayTimes.longDelay());
 			}, delayTimes.longDelay());
