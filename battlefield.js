@@ -36,12 +36,12 @@ const roomAnnouncer = what => announcer('Room', what);
 const slackdem = new Game(roomAnnouncer);
 
 const vladAnnouncer = what => announcer('vlad', what);
-const vlad = slackdem.getPlayer({ id: 1234, name: 'vlad' });
-const vladCards = [...vlad.player.deck.slice(0, 2), vlad.player.deck[4]];
+const vlad = slackdem.getCharacter({ id: 1234, name: 'vlad' });
+const vladCards = [...vlad.character.deck.slice(0, 2), vlad.character.deck[4]];
 
 const charAnnouncer = what => announcer('charlemagne', what);
-const char = slackdem.getPlayer({ id: 861, name: 'charlemagne' });
-const charCards = [...char.player.deck.slice(0, 2), char.player.deck[4]];
+const char = slackdem.getCharacter({ id: 861, name: 'charlemagne' });
+const charCards = [...char.character.deck.slice(0, 2), char.character.deck[4]];
 
 Promise
 	.resolve()

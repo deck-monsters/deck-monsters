@@ -1,32 +1,16 @@
-const BaseCreature = require('../creatures/base');
-const { getInitialDeck } = require('../cards');
+const BaseCharacter = require('./base');
 const { spawn, equip } = require('../monsters');
 const { getMonsterChoices } = require('../helpers/choices');
 
 const DEFAULT_MONSTER_SLOTS = 2;
 
-class BasePlayer extends BaseCreature {
+class Beastmaster extends BaseCharacter {
 	constructor (options) {
 		const defaultOptions = {
-			deck: getInitialDeck(),
 			monsterSlots: DEFAULT_MONSTER_SLOTS
 		};
 
 		super(Object.assign(defaultOptions, options));
-	}
-
-	get deck () {
-		if (this.options.deck === undefined || this.options.deck.length <= 0) {
-			this.deck = getInitialDeck();
-		}
-
-		return this.options.deck || [];
-	}
-
-	set deck (deck) {
-		this.setOptions({
-			deck
-		});
 	}
 
 	get monsters () {
@@ -49,12 +33,6 @@ class BasePlayer extends BaseCreature {
 		this.setOptions({
 			monsterSlots
 		});
-	}
-
-	addCard (card) {
-		this.deck = [...this.deck, card];
-
-		this.emit('cardAdded', { card });
 	}
 
 	addMonster (monster) {
@@ -131,14 +109,14 @@ Which monster would you like to equip?`,
 	}
 
 	sendMonsterToTheRing (ring, channel) {
-		const player = this;
-		const alreadyInRing = ring.contestants.filter(contestant => contestant.player === player);
+		const character = this;
+		const alreadyInRing = ring.contestants.filter(contestant => contestant.character === character);
 		const monsters = this.monsters.filter(monster => !monster.dead);
 
 		return Promise
 			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
-				// For now, each player can only have one monster in the ring at a time
+				// For now, each beastmaster can only have one monster in the ring at a time
 				if (alreadyInRing && alreadyInRing.length > 0) {
 					return Promise.reject(channel({
 						announce: 'You already have a monster in the ring!'
@@ -170,9 +148,9 @@ Which monster would you like to send into battle?`,
 					}));
 				}
 
-				return ring.addMonster(monster, player, channel);
+				return ring.addMonster(monster, character, channel);
 			});
 	}
 }
 
-module.exports = BasePlayer;
+module.exports = Beastmaster;

@@ -1,12 +1,11 @@
 const reduce = require('lodash.reduce');
-const startCase = require('lodash.startcase');
 
 const { globalSemaphore } = require('./helpers/semaphore');
 const BaseClass = require('./baseClass');
 const Ring = require('./ring');
 const { all: allCards, draw } = require('./cards');
 const { all: allMonsters } = require('./monsters');
-const { Player } = require('./players');
+const { Beastmaster } = require('./characters');
 
 const { getFlavor } = require('./helpers/flavor');
 const { formatCard } = require('./helpers/card');
@@ -29,15 +28,15 @@ class Game extends BaseClass {
 		this.emit('initialized');
 	}
 
-	get players () {
-		if (this.options.players === undefined) this.players = {};
+	get characters () {
+		if (this.options.characters === undefined) this.characters = {};
 
-		return this.options.players || {};
+		return this.options.characters || {};
 	}
 
-	set players (players) {
+	set characters (characters) {
 		this.setOptions({
-			players
+			characters
 		});
 	}
 
@@ -79,7 +78,7 @@ class Game extends BaseClass {
 	}
 
 	/* eslint-disable max-len */
-	announceCard (className, card, { player }) { // TO-DO: It's confusing that the "player" here is actually a monster because they are the player of the card
+	announceCard (className, card, { player }) {
 		const channel = this.publicChannel;
 
 		const cardPlayed = formatCard({
@@ -107,13 +106,13 @@ ${cardPlayed}`
 		});
 
 		contestant.lastMonsterPlayed = monster;
-// TODO? contestant.player.icon == user's avatar
+// TODO? contestant.character.icon == user's avatar
 		channel({
 			announce:
 `
-*It's ${contestant.player.givenName}'s turn.*
+*It's ${contestant.character.givenName}'s turn.*
 
-${contestant.player.givenName} plays the following monster:
+${contestant.character.givenName} plays the following monster:
 ${monsterCard}`
 		});
 	}
@@ -287,10 +286,10 @@ ${monster.identity} is out of cards.
 	announceContestant (className, ring, { contestant }) {
 		const channel = this.publicChannel;
 		const monster = contestant.monster;
-		const player = contestant.player;
+		const character = contestant.character;
 
 		channel({
-			announce: `${monster.identityWithHp} has entered the ring at the behest of ${player.givenName}.
+			announce: `${monster.identityWithHp} has entered the ring at the behest of ${character.givenName}.
 ${monster.stats}
 
 Upon closer inspection you see ${monster.individualDescription}`
@@ -319,53 +318,53 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 	handleWinner (className, monster, { contestant }) {
 		// Award XP draw a card, maybe kick off more events (that could be messaged)
 
-		// Add XP to both the monster and the player in the case of victory
+		// Add XP to both the monster and the character in the case of victory
 		contestant.monster.xp += XP_PER_VICTORY;
-		contestant.player.xp += XP_PER_VICTORY;
+		contestant.character.xp += XP_PER_VICTORY;
 
 		// Also draw a new card for the player
 		const card = this.drawCard();
-		contestant.player.addCard(card);
+		contestant.character.addCard(card);
 	}
 
 	handleLoser (className, monster, { contestant }) {
 		// Award XP, maybe kick off more events (that could be messaged)
 
-		// The player still earns a small bit of XP in the case of defeat
-		contestant.player.xp += XP_PER_DEFEAT;
+		// The character still earns a small bit of XP in the case of defeat
+		contestant.character.xp += XP_PER_DEFEAT;
 	}
 
 	clearRing () {
 		this.ring.clearRing();
 	}
 
-	getPlayer ({ id, name }, log = () => {}) {
+	getCharacter ({ id, name }, log = () => {}) {
 		const game = this;
 		const ring = this.ring;
-		let player = this.players[id];
+		let character = this.characters[id];
 
-		if (!player) {
-			player = new Player({
+		if (!character) {
+			character = new Beastmaster({
 				name
 			});
 
-			this.players[id] = player;
+			this.characters[id] = character;
 
-			this.emit('playerCreated', { player });
+			this.emit('characterCreated', { character });
 		}
 
 		return {
-			player,
+			character,
 			spawnMonster (channel, options) {
-				return player.spawnMonster(channel, options || {})
+				return character.spawnMonster(channel, options || {})
 					.catch(err => log(err));
 			},
 			equipMonster (channel, options) {
-				return player.equipMonster(channel, options || {})
+				return character.equipMonster(channel, options || {})
 					.catch(err => log(err));
 			},
 			sendMonsterToTheRing (channel, options) {
-				return player.sendMonsterToTheRing(ring, channel, options || {})
+				return character.sendMonsterToTheRing(ring, channel, options || {})
 					.catch(err => log(err));
 			},
 			lookAtMonster (channel, monsterName) {
@@ -394,8 +393,8 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 	}
 
 	getAllMonsters () {
-		return reduce(this.players, (obj, player) => {
-			player.monsters.forEach((monster) => {
+		return reduce(this.characters, (obj, character) => {
+			character.monsters.forEach((monster) => {
 				obj[monster.givenName.toLowerCase()] = monster;
 			});
 
