@@ -283,10 +283,10 @@ ${monster.identity} is out of cards.
 		const character = contestant.character;
 
 		channel({
-			announce: `${monster.identityWithHp} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
-${monster.stats}
+			announce: `A${getFlavor('monsterAdjective')} ${monster.name} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
+${monsterCard(monster)}
 
-Upon closer inspection you see ${monster.individualDescription}`
+`
 		});
 	}
 
