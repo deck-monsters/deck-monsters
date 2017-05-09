@@ -92,7 +92,7 @@ class Game extends BaseClass {
 		channel({
 			announce:
 `
-${startCase(player.givenName)} lays down the following card:
+${player.icon}  ${startCase(player.givenName)} lays down the following card:
 ${cardPlayed}`
 		});
 	}
@@ -108,13 +108,13 @@ ${cardPlayed}`
 		});
 
 		contestant.lastMonsterPlayed = monster;
-
+// TODO? contestant.player.icon == user's avatar
 		channel({
 			announce:
 `
 *It's ${startCase(contestant.player.givenName)}'s turn.*
 
-${startCase(contestant.player.givenName)} plays the following monster:
+${contestant.player.icon}  ${startCase(contestant.player.givenName)} plays the following monster:
 ${monsterCard}`
 		});
 	}
@@ -126,12 +126,12 @@ ${monsterCard}`
 		channel({
 			announce:
 `
-${startCase(monster.givenName)} is out of cards.
+${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 `
 		});
 	}
 
-	announceNextRound (className, ring, { contestants, round }) {
+	announceNextRound (className, ring, { round }) {
 		const channel = this.publicChannel;
 
 		channel({
@@ -186,7 +186,7 @@ ${startCase(monster.givenName)} is out of cards.
 
 		channel({
 			announce: `
-🎲  ${startCase(player.givenName)} rolls ${title} ${reason}
+🎲  ${player.icon}  ${startCase(player.givenName)} rolls ${title} ${reason}
 `
 		});
 	}
@@ -215,7 +215,7 @@ ${startCase(monster.givenName)} is out of cards.
 
 		channel({
 			announce: `${detail}
-🎲  ${startCase(player.givenName)} rolled ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
+🎲  ${player.icon}  ${startCase(player.givenName)} rolled ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
     ${outcome}
 `
 		});
