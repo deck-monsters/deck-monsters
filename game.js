@@ -373,6 +373,10 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 				lookAtCard (channel, cardName) {
 					return game.lookAtCard(channel, cardName)
 						.catch(err => log(err));
+				},
+				lookAt (channel, thing) {
+					return game.lookAt(channel, thing)
+						.catch(err => log(err));
 				}
 			}))
 			.catch(err => log(err));
@@ -428,6 +432,31 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 
 		return Promise.reject(channel({
 			announce: `Sorry, we don't carry ${cardName} cards here.`
+		}));
+	}
+
+	lookAt (channel, thing) {
+		if (thing) {
+			// What is this thing?
+
+			// Is it a monster?
+			const monsters = this.getAllMonsters();
+			const monster = monsters[thing.toLowerCase()];
+
+			if (monster) return monster.look(channel);
+
+			// Is it a card?
+			const cards = this.constructor.getCardTypes();
+			const Card = cards[thing.toLowerCase()];
+
+			if (Card) {
+				const card = new Card();
+				return card.look(channel);
+			}
+		}
+
+		return Promise.reject(channel({
+			announce: `I don't see a ${thing} here.`
 		}));
 	}
 
