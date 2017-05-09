@@ -2,6 +2,8 @@ const BaseCharacter = require('./base');
 const { spawn, equip } = require('../monsters');
 const { getMonsterChoices } = require('../helpers/choices');
 
+const { formatCard } = require('../helpers/card');
+
 const DEFAULT_MONSTER_SLOTS = 2;
 
 class Beastmaster extends BaseCharacter {
@@ -57,7 +59,7 @@ class Beastmaster extends BaseCharacter {
 					return Promise
 						.resolve()
 						.then(() => channel({
-							announce: `You're now the proud owner of ${monster.givenName}. Before you is ${monster.individualDescription}'`
+							announce: `You're now the proud owner of a ${monster.name}. Before you is ${monsterCard(monster)}'`
 						}))
 						.then(() => monster);
 				});
