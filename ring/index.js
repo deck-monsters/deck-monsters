@@ -21,11 +21,11 @@ class Ring extends BaseClass {
 		return this.options.contestants || [];
 	}
 
-	addMonster (monster, player, channel) {
+	addMonster (monster, character, channel) {
 		if (this.contestants.length < MAX_MONSTERS) {
 			const contestant = {
 				monster,
-				player
+				character
 			};
 
 			this.options.contestants = shuffle([...this.contestants, contestant]);
@@ -65,7 +65,7 @@ class Ring extends BaseClass {
 		const ring = this;
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
-		// Note that the contestants objects and the players / monsters are references to the originals, not copies
+		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
 		const contestants = [...this.contestants];
 
 		// Emit an event when the fight begins
@@ -76,11 +76,11 @@ class Ring extends BaseClass {
 		// And we're off. The round variable is only used for reporting at the end
 		let round = 1;
 
-		// This is the main loop that takes care of the "action" each player performs
+		// This is the main loop that takes care of the "action" each character performs
 		// It's a promise so it can be chained, async, delayed, etc
-		// currentContestant is the numeric index of player whose turn we're on
-		// currentCard is the numeric index of card we'll play from that player's hand (if they have a card in that position)
-		// emptyHanded is the numeric index of the first player to not have a card in the position specified, and gets reset to "false" whenever a card is successfully played
+		// currentContestant is the numeric index of character whose turn we're on
+		// currentCard is the numeric index of card we'll play from that character's hand (if they have a card in that position)
+		// emptyHanded is the numeric index of the first character to not have a card in the position specified, and gets reset to "false" whenever a card is successfully played
 		const doAction = ({ currentContestant, currentCard, emptyHanded }) => new Promise((resolve) => {
 			// Find the monster at the current index
 			const contestant = contestants[currentContestant];
@@ -89,7 +89,7 @@ class Ring extends BaseClass {
 			// Find the card in that monster's hand at the current index if it exists
 			const card = monster.cards[currentCard];
 
-			// Emit an event when a player's turn begins
+			// Emit an event when a character's turn begins
 			// Note that as written currently this will emit _even if they don't have a card to play_
 			this.emit('turnBegin', {
 				contestant,
@@ -102,14 +102,14 @@ class Ring extends BaseClass {
 				nextContestant = 0;
 			}
 
-			// We don't actually move to the next card until every player has played the current card
+			// We don't actually move to the next card until every character has played the current card
 			let nextCard = currentCard;
 			if (nextContestant === 0) {
 				nextCard += 1;
 			}
 
 			// When this is called (see below) we pass the next contestant and card back into the looping
-			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a player as described above
+			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a character as described above
 			const next = (nextEmptyHanded = false) => resolve(doAction({
 				currentContestant: nextContestant,
 				currentCard: nextCard,
@@ -140,7 +140,7 @@ class Ring extends BaseClass {
 					round
 				});
 
-				// We didn't have a card, so we can't player
+				// We didn't have a card, so we can't play
 				// If we've gone an entire round with no plays then the value of emptyHanded is going to equal the index of the nextContestant
 				if (emptyHanded === nextContestant) {
 					// The round is over so we'll go back to the first card in everyone's hand
@@ -159,7 +159,7 @@ class Ring extends BaseClass {
 					round += 1;
 				}
 
-				// If we haven't gone an entire round yet we just pass play along to the next player
+				// If we haven't gone an entire round yet we just pass play along to the next character
 				// If we're the first ones to have an empty hand then we'll set the value to our index, otherwise we'll just pass along the existing value (so that we can know when a full round has passed with no plays)
 				setTimeout(() => next(emptyHanded === false ? currentContestant : emptyHanded), delayTimes.shortDelay());
 			}
@@ -180,21 +180,21 @@ class Ring extends BaseClass {
 			contestants.forEach((contestant) => {
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-					contestant.player.addLoss();
+					contestant.character.addLoss();
 					contestant.monster.addLoss();
 					contestant.monster.emit('loss', { contestant });
 
 					contestant.monster.respawn();
 				} else {
 					contestant.won = true;
-					contestant.player.addWin();
+					contestant.character.addWin();
 					contestant.monster.addWin();
 					contestant.monster.emit('win', { contestant });
 				}
 			});
 		} else {
 			contestants.forEach((contestant) => {
-				contestant.player.addDraw();
+				contestant.character.addDraw();
 				contestant.monster.addDraw();
 				contestant.monster.emit('draw', { contestant });
 			});

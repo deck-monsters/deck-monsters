@@ -1,17 +1,17 @@
 const reduce = require('lodash.reduce');
 
 const Game = require('./game');
-const { hydratePlayer } = require('./players');
+const { hydrateCharacter } = require('./characters');
 
 const restoreGame = (publicChannel, gameJSON) => {
 	const gameObj = typeof gameJSON === 'string' ? JSON.parse(gameJSON) : gameJSON;
-	const options = Object.assign({ players: {} }, gameObj.options);
+	const options = Object.assign({ characters: {} }, gameObj.options);
 
-	// Hydrate players
-	options.players = reduce(options.players, (players, player, id) => {
-		players[id] = hydratePlayer(player);
+	// Hydrate characters
+	options.characters = reduce(options.characters, (characters, character, id) => {
+		characters[id] = hydrateCharacter(character);
 
-		return players;
+		return characters;
 	}, {});
 
 	return new Game(publicChannel, options);
