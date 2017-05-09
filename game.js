@@ -207,7 +207,7 @@ ${monster.identity} is out of cards.
 
 		channel({
 			announce: `${detail}
-🎲  ${player.identity} rolled ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
+🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
     ${outcome}
 `
 		});
@@ -242,7 +242,9 @@ ${monster.identity} is out of cards.
 		}
 
 		channel({
-			announce: `${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`
+			announce: `${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
+${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.
+`
 		});
 	}
 
@@ -251,7 +253,8 @@ ${monster.identity} is out of cards.
 
 		if (this.ring.monsterIsInRing(monster)) {
 			channel({
-				announce: `${monster.icon} 💊      ${monster.givenName} heals ${amount} hp`
+				announce: `${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
+${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 			});
 		}
 	}

@@ -44,6 +44,11 @@ class HitCard extends BaseCard {
 				curseOfLoki = true;
 			}
 
+			if (damageResult === 0) {
+				damageResult = 1;
+				damageRoll.result = 1;
+			}
+
 			setTimeout(() => {
 				this.emit('rolling', {
 					reason: `vs AC (${target.ac}) to determine if the hit was a success`,
