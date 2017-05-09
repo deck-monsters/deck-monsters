@@ -50,8 +50,13 @@ class Ring extends BaseClass {
 		}
 	}
 
+	monsterIsInRing (monster) {
+		const contestants = this.contestants;
+		return !!contestants.find(contestant => contestant.monster === monster);
+	}
+
 	clearRing () {
-		this.options.monsters = [];
+		this.options.contestants = [];
 		this.emit('clear');
 	}
 

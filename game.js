@@ -15,7 +15,6 @@ const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 const noop = () => {};
 const signedNumber = number => (number === 0 ? '' : ` ${(number > 0 ? `+${number}` : number.toString())}`);
 const monsterWithHp = monster => `${monster.icon}  ${startCase(monster.givenName)} (${monster.hp} hp)`;
-const monsterIsInRing = (monster, ring) => !!ring.contestants.find(contestant => contestant.monster === monster);
 
 class Game extends BaseClass {
 	constructor (publicChannel, options) {
@@ -258,7 +257,7 @@ ${startCase(monster.givenName)} is out of cards.
 	announceHeal (className, monster, { amount }) {
 		const channel = this.publicChannel;
 
-		if (monsterIsInRing(this.ring, monster)) {
+		if (this.ring.monsterIsInRing(monster)) {
 			channel({
 				announce: `${monster.icon} 💊      ${startCase(monster.givenName)} heals ${amount} hp`
 			});
