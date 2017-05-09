@@ -1,7 +1,7 @@
 const wrap = require('word-wrap');
 const upperFirst = require('lodash.upperfirst');
 
-const formatCard = ({ title, description, stats }) => (
+const formatCard = ({ title, description, stats, rankings }) => (
 `
 \`\`\`
 ===========================================
@@ -16,19 +16,23 @@ ${wrap(description, { indent: '| ', width: 40 })}`
 `
 |
 ${wrap(stats, { indent: '| ', width: 40 })}`
+}${
+!rankings ? '' :
+`
+|
+${wrap(rankings, { indent: '| ', width: 40 })}`
 }
 |
 ===========================================
 \`\`\`
-`
+`.replace(/^\s*[\r\n]/gm, '')
 );
 
 const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.name} > ${monster.givenName}`,
 	description: verbose ? upperFirst(monster.individualDescription) : '',
-	stats: verbose ? `${monster.stats}
-
-${monster.rankings}` : monster.stats
+	stats: monster.stats,
+	rankings: verbose ? monster.rankings : ''
 });
 
 module.exports = { formatCard, monsterCard };

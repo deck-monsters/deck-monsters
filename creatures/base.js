@@ -54,9 +54,16 @@ class BaseCreature extends BaseClass {
 	}
 
 	get stats () {
-		return `Level ${this.level}
-XP: ${this.xp} | HP: ${this.hp}/${this.maxHp} | AC: ${this.ac}
-${signedNumber(this.attackModifier)} to hit | ${signedNumber(this.damageModifier)} to damage`;
+		return `Level: ${this.level} | XP: ${this.xp}
+AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}${
+this.attackModifier === 0 ? '' :
+`
+${signedNumber(this.attackModifier)} to hit`
+}${
+this.damageModifier === 0 ? '' :
+`
+${signedNumber(this.damageModifier)} to damage`
+}`;
 	}
 
 	get rankings () {
