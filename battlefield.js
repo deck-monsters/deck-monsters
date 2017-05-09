@@ -36,15 +36,25 @@ const roomAnnouncer = what => announcer('Room', what);
 const slackdem = new Game(roomAnnouncer);
 
 const vladAnnouncer = what => announcer('vlad', what);
-const vlad = slackdem.getCharacter({ id: 1234, name: 'vlad' });
-const vladCards = [...vlad.character.deck.slice(0, 2), vlad.character.deck[4]];
+let vlad;
+let vladCards;
 
 const charAnnouncer = what => announcer('charlemagne', what);
-const char = slackdem.getCharacter({ id: 861, name: 'charlemagne' });
-const charCards = [...char.character.deck.slice(0, 2), char.character.deck[4]];
+let char;
+let charCards;
 
 Promise
 	.resolve()
+	.then(() => slackdem.getCharacter(vladAnnouncer, { id: 1234, name: 'vlad', type: 0, gender: 1 }))
+	.then((character) => {
+		vlad = character;
+		vladCards = [...vlad.character.deck.slice(0, 2), vlad.character.deck[4]];
+	})
+	.then(() => slackdem.getCharacter(charAnnouncer, { id: 861, name: 'charlemagne', type: 0, gender: 1 }))
+	.then((character) => {
+		char = character;
+		charCards = [...char.character.deck.slice(0, 2), char.character.deck[4]];
+	})
 	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards }))
 	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 0, name: 'qed', color: 'gray', gender: 2, cards: vladCards }))
 	.then(() => char.spawnMonster(charAnnouncer, { type: 1, name: 'tom', color: 'brown', gender: 0, cards: charCards }))

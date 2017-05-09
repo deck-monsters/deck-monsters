@@ -5,7 +5,7 @@ const BaseClass = require('./baseClass');
 const Ring = require('./ring');
 const { all: allCards, draw } = require('./cards');
 const { all: allMonsters } = require('./monsters');
-const { Beastmaster } = require('./characters');
+const { create: createCharacter } = require('./characters');
 
 const { getFlavor } = require('./helpers/flavor');
 const { formatCard } = require('./helpers/card');
@@ -338,44 +338,50 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		this.ring.clearRing();
 	}
 
-	getCharacter ({ id, name }, log = () => {}) {
+	getCharacter (privateChannel, { id, name, type, gender }, log = () => {}) {
 		const game = this;
 		const ring = this.ring;
-		let character = this.characters[id];
 
-		if (!character) {
-			character = new Beastmaster({
-				name
-			});
+		return Promise
+			.resolve(this.characters[id])
+			.then((existingCharacter) => {
+				if (!existingCharacter) {
+					return createCharacter(privateChannel, { name, type, gender })
+						.then((character) => {
+							game.characters[id] = character;
 
-			this.characters[id] = character;
+							game.emit('characterCreated', { character });
 
-			this.emit('characterCreated', { character });
-		}
+							return character;
+						});
+				}
 
-		return {
-			character,
-			spawnMonster (channel, options) {
-				return character.spawnMonster(channel, options || {})
-					.catch(err => log(err));
-			},
-			equipMonster (channel, options) {
-				return character.equipMonster(channel, options || {})
-					.catch(err => log(err));
-			},
-			sendMonsterToTheRing (channel, options) {
-				return character.sendMonsterToTheRing(ring, channel, options || {})
-					.catch(err => log(err));
-			},
-			lookAtMonster (channel, monsterName) {
-				return game.lookAtMonster(channel, monsterName)
-					.catch(err => log(err));
-			},
-			lookAtCard (channel, cardName) {
-				return game.lookAtCard(channel, cardName)
-					.catch(err => log(err));
-			}
-		};
+				return existingCharacter;
+			})
+			.then(character => ({
+				character,
+				spawnMonster (channel, options) {
+					return character.spawnMonster(channel, options || {})
+						.catch(err => log(err));
+				},
+				equipMonster (channel, options) {
+					return character.equipMonster(channel, options || {})
+						.catch(err => log(err));
+				},
+				sendMonsterToTheRing (channel, options) {
+					return character.sendMonsterToTheRing(ring, channel, options || {})
+						.catch(err => log(err));
+				},
+				lookAtMonster (channel, monsterName) {
+					return game.lookAtMonster(channel, monsterName)
+						.catch(err => log(err));
+				},
+				lookAtCard (channel, cardName) {
+					return game.lookAtCard(channel, cardName)
+						.catch(err => log(err));
+				}
+			}))
+			.catch(err => log(err));
 	}
 
 	static getCardTypes () {

@@ -153,4 +153,6 @@ Which monster would you like to send into battle?`,
 	}
 }
 
+Beastmaster.creatureType = 'Beastmaster';
+
 module.exports = Beastmaster;

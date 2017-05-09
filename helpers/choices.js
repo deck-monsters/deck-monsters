@@ -7,11 +7,11 @@ const getMonsterChoices = monsters => getChoices(monsters.map(monster =>
 ${monster.stats}
 `));
 
-const getMonsterTypeChoices = monsters => getChoices(monsters.map(monster => monster.creatureType));
+const getCreatureTypeChoices = creatures => getChoices(creatures.map(creature => creature.creatureType));
 
 module.exports = {
 	getChoices,
 	getCardChoices,
 	getMonsterChoices,
-	getMonsterTypeChoices
+	getCreatureTypeChoices
 };

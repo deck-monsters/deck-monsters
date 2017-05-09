@@ -1,7 +1,5 @@
-const startCase = require('lodash.startcase');
-
 const { hydrateCard } = require('../cards');
-const { getChoices, getCardChoices, getMonsterTypeChoices } = require('../helpers/choices');
+const { getChoices, getCardChoices, getCreatureTypeChoices } = require('../helpers/choices');
 const PRONOUNS = require('../helpers/pronouns');
 const Basilisk = require('./basilisk');
 const Minotaur = require('./minotaur');
@@ -37,7 +35,7 @@ const spawn = (channel, { type, name, color, gender, cards } = {}) => {
 				question:
 `Which type of monster would you like to spawn?
 
-${getMonsterTypeChoices(all)}`,
+${getCreatureTypeChoices(all)}`,
 				choices: Object.keys(all)
 			});
 		})
@@ -54,7 +52,7 @@ ${getMonsterTypeChoices(all)}`,
 		})
 		.then((answer) => {
 			// TO-DO: Keep a master list of monsters and ensure that there are no duplicate names
-			options.name = startCase(answer.toLowerCase());
+			options.name = answer;
 
 			if (color !== undefined) {
 				return color;
