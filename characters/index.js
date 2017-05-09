@@ -88,7 +88,7 @@ ${getChoices(iconChoices)}`,
 		});
 };
 
-const hydrateCharacher = (characterObj) => {
+const hydrateCharacter = (characterObj) => {
 	const Character = all.find(({ name }) => name === characterObj.name);
 	const options = Object.assign({ deck: [], monsters: [] }, characterObj.options);
 
@@ -98,14 +98,14 @@ const hydrateCharacher = (characterObj) => {
 	return new Character(options);
 };
 
-const hydrateCharachers = charactersJSON => JSON
+const hydrateCharacters = charactersJSON => JSON
 	.parse(charactersJSON)
-	.map(hydrateCharacher);
+	.map(hydrateCharacter);
 
 module.exports = {
 	all,
 	create,
-	hydrateCharacher,
-	hydrateCharachers,
+	hydrateCharacter,
+	hydrateCharacters,
 	Beastmaster
 };
