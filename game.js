@@ -14,7 +14,6 @@ const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
 const signedNumber = number => (number === 0 ? '' : ` ${(number > 0 ? `+${number}` : number.toString())}`);
-const monsterWithHp = monster => `${monster.icon}  ${startCase(monster.givenName)} (${monster.hp} hp)`;
 
 class Game extends BaseClass {
 	constructor (publicChannel, options) {
@@ -92,7 +91,7 @@ class Game extends BaseClass {
 		channel({
 			announce:
 `
-${player.icon}  ${startCase(player.givenName)} lays down the following card:
+${player.identity} lays down the following card:
 ${cardPlayed}`
 		});
 	}
@@ -102,7 +101,7 @@ ${cardPlayed}`
 		const monster = contestant.monster;
 
 		const monsterCard = formatCard({
-			title: `${monster.icon}  ${monster.givenName}`,
+			title: monster.identity,
 			description: contestant.lastMonsterPlayed !== monster && monster.individualDescription,
 			stats: monster.stats
 		});
@@ -112,9 +111,9 @@ ${cardPlayed}`
 		channel({
 			announce:
 `
-*It's ${startCase(contestant.player.givenName)}'s turn.*
+*It's ${contestant.player.givenName}'s turn.*
 
-${contestant.player.icon}  ${startCase(contestant.player.givenName)} plays the following monster:
+${contestant.player.givenName} plays the following monster:
 ${monsterCard}`
 		});
 	}
@@ -126,7 +125,7 @@ ${monsterCard}`
 		channel({
 			announce:
 `
-${monster.icon}  ${startCase(monster.givenName)} is out of cards.
+${monster.identity} is out of cards.
 `
 		});
 	}
@@ -149,7 +148,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monsterWithHp(monster)} is killed by ${monsterWithHp(assailant)}`
+			announce: `${monster.identityWithHp} is killed by ${assailant.identityWithHp}`
 		});
 	}
 
@@ -157,7 +156,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monsterWithHp(monster)} flees from ${monsterWithHp(assailant)}`
+			announce: `${monster.identityWithHp} flees from ${assailant.identityWithHp}`
 		});
 	}
 
@@ -165,7 +164,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monsterWithHp(player)} tries to flee from ${monsterWithHp(target)}, but fails!`
+			announce: `${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!`
 		});
 	}
 
@@ -186,7 +185,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 
 		channel({
 			announce: `
-🎲  ${player.icon}  ${startCase(player.givenName)} rolls ${title} ${reason}
+🎲  ${player.identity} rolls ${title} ${reason}
 `
 		});
 	}
@@ -215,7 +214,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 
 		channel({
 			announce: `${detail}
-🎲  ${player.icon}  ${startCase(player.givenName)} rolled ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
+🎲  ${player.identity} rolled ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
     ${outcome}
 `
 		});
@@ -233,7 +232,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 		}
 
 		channel({
-			announce: `${monster.icon} ${startCase(monster.givenName)} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`
+			announce: `${monster.identity} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`
 		});
 	}
 
@@ -250,7 +249,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 		}
 
 		channel({
-			announce: `${assailant.icon} ${icon} ${monster.icon}    ${startCase(assailant.givenName)} ${getFlavor('hits')} ${startCase(monster.givenName)} for ${damage} damage`
+			announce: `${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage`
 		});
 	}
 
@@ -259,7 +258,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 
 		if (this.ring.monsterIsInRing(monster)) {
 			channel({
-				announce: `${monster.icon} 💊      ${startCase(monster.givenName)} heals ${amount} hp`
+				announce: `${monster.icon} 💊      ${monster.givenName} heals ${amount} hp`
 			});
 		}
 	}
@@ -281,7 +280,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 		}
 
 		channel({
-			announce: `${player.icon} ${icon} ${target.icon}    ${startCase(player.givenName)} ${action} ${startCase(target.givenName)} ${flavor}`
+			announce: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
 		});
 	}
 
@@ -291,7 +290,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 		const player = contestant.player;
 
 		channel({
-			announce: `${monsterWithHp(monster)} has entered the ring at the behest of ${startCase(player.givenName)}.
+			announce: `${monster.identityWithHp} has entered the ring at the behest of ${player.givenName}.
 ${monster.stats}
 
 Upon closer inspection you see ${monster.individualDescription}`
@@ -302,7 +301,7 @@ Upon closer inspection you see ${monster.individualDescription}`
 		const channel = this.publicChannel;
 
 		channel({
-			announce: contestants.map(contestant => monsterWithHp(contestant.monster)).join(' vs ')
+			announce: contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')
 		});
 	}
 

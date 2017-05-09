@@ -1,4 +1,5 @@
 const random = require('lodash.sample');
+const startCase = require('lodash.startcase');
 
 const BaseClass = require('../baseClass');
 const { STARTING_XP, getLevel } = require('../helpers/levels');
@@ -35,7 +36,15 @@ class BaseCreature extends BaseClass {
 	}
 
 	get givenName () {
-		return this.options.name;
+		return startCase(this.options.name);
+	}
+
+	get identity () {
+		return `${this.icon}  ${this.givenName}`;
+	}
+
+	get identityWithHp () {
+		return `${this.identity} (${this.hp} hp)`;
 	}
 
 	get stats () {
