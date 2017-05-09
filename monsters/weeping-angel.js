@@ -27,7 +27,7 @@ class WeepingAngel extends BaseMonster {
 			name: DEFAULT_NAME,
 			nationality: random(NATIONALITIES),
 			descriptor: random(DESCRIPTORS),
-			icon: '👼'
+			icon: '🌟'
 		};
 
 		super(Object.assign(defaultOptions, options));

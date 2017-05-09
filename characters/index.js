@@ -15,10 +15,13 @@ const all = [
 // Channel should be a function that takes a question and an optional array of
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
-const create = (channel, { type, name, gender } = {}) => {
-	const options = {
-		icon: emoji.random().emoji // TO-DO: Eventually let users select their own icon
-	};
+const create = (channel, { type, name, gender, icon } = {}) => {
+	const options = {};
+
+	const iconChoices = [];
+	for (let i = 0; i < 7; i++) {
+		iconChoices.push(emoji.random().emoji);
+	}
 
 	let Character;
 	return Promise
@@ -65,6 +68,21 @@ ${getChoices(genders)}`,
 		})
 		.then((answer) => {
 			options.gender = genders[answer].toLowerCase();
+
+			if (icon !== undefined) {
+				return icon;
+			}
+
+			return channel({
+				question:
+`Finally, choose an avatar:
+
+${getChoices(iconChoices)}`,
+				choices: Object.keys(iconChoices)
+			});
+		})
+		.then((answer) => {
+			options.icon = iconChoices[answer];
 
 			return new Character(options);
 		});

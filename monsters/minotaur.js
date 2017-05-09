@@ -26,7 +26,7 @@ class Minotaur extends BaseMonster {
 			name: DEFAULT_NAME,
 			pattern: random(PATTERNS),
 			descriptor: random(DESCRIPTORS),
-			icon: '🐮'
+			icon: '🐗'
 		};
 
 		super(Object.assign(defaultOptions, options));

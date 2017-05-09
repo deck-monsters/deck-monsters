@@ -107,7 +107,7 @@ ${cardPlayed}`
 ${contestant.character.identity} plays the following monster:
 ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
-		
+
 		contestant.lastMonsterPlayed = monster;
 	}
 
@@ -332,7 +332,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		this.ring.clearRing();
 	}
 
-	getCharacter (privateChannel, { id, name, type, gender }, log = () => {}) {
+	getCharacter (privateChannel, { id, name, type, gender, icon }, log = () => {}) {
 		const game = this;
 		const ring = this.ring;
 
@@ -340,7 +340,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 			.resolve(this.characters[id])
 			.then((existingCharacter) => {
 				if (!existingCharacter) {
-					return createCharacter(privateChannel, { name, type, gender })
+					return createCharacter(privateChannel, { name, type, gender, icon })
 						.then((character) => {
 							game.characters[id] = character;
 

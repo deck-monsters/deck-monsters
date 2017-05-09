@@ -45,12 +45,12 @@ let charCards;
 
 Promise
 	.resolve()
-	.then(() => slackdem.getCharacter(vladAnnouncer, { id: 1234, name: 'vlad', type: 0, gender: 1 }))
+	.then(() => slackdem.getCharacter(vladAnnouncer, { id: 1234, name: 'vlad', type: 0, gender: 1, icon: 0 }))
 	.then((character) => {
 		vlad = character;
 		vladCards = [...vlad.character.deck.slice(0, 2), vlad.character.deck[4]];
 	})
-	.then(() => slackdem.getCharacter(charAnnouncer, { id: 861, name: 'charlemagne', type: 0, gender: 1 }))
+	.then(() => slackdem.getCharacter(charAnnouncer, { id: 861, name: 'charlemagne', type: 0, gender: 1, icon: 0 }))
 	.then((character) => {
 		char = character;
 		charCards = [...char.character.deck.slice(0, 2), char.character.deck[4]];
