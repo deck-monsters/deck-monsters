@@ -40,7 +40,7 @@ class BaseCreature extends BaseClass {
 
 	get stats () {
 		return `Level ${this.level}
-XP: ${this.xp} | HP: ${this.hp} | AC: ${this.ac}
+XP: ${this.xp} | HP: ${this.hp}/${this.maxHp} | AC: ${this.ac}
 Battles fought: ${this.battles.total}
 Battles won: ${this.battles.wins}`;
 	}
