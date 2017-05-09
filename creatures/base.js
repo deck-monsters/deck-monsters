@@ -4,6 +4,7 @@ const startCase = require('lodash.startcase');
 const BaseClass = require('../baseClass');
 const { STARTING_XP, getLevel } = require('../helpers/levels');
 const PRONOUNS = require('../helpers/pronouns');
+const { signedNumber } = require('../helpers/signed-number');
 
 const DEFAULT_AC = 6;
 const DEFAULT_MAX_HP = 24;
@@ -50,7 +51,11 @@ class BaseCreature extends BaseClass {
 	get stats () {
 		return `Level ${this.level}
 XP: ${this.xp} | HP: ${this.hp}/${this.maxHp} | AC: ${this.ac}
-Battles fought: ${this.battles.total}
+${signedNumber(this.attackModifier)} to hit | ${signedNumber(this.damageModifier)} to damage`;
+	}
+
+	get rankings () {
+		return `Battles fought: ${this.battles.total}
 Battles won: ${this.battles.wins}`;
 	}
 

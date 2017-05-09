@@ -12,7 +12,7 @@ const { formatCard, monsterCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
-const signedNumber = number => (number === 0 ? '' : ` ${(number > 0 ? `+${number}` : number.toString())}`);
+const { signedNumber } = require('./helpers/signed-number');
 
 class Game extends BaseClass {
 	constructor (publicChannel, options) {

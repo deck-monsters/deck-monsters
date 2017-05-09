@@ -23,10 +23,12 @@ ${wrap(stats, { indent: '| ', width: 40 })}`
 `
 );
 
-const monsterCard = (monster, showDescription = true) => formatCard({
+const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.name} > ${monster.givenName}`,
-	description: showDescription ? upperFirst(monster.individualDescription) : '',
-	stats: monster.stats
+	description: verbose ? upperFirst(monster.individualDescription) : '',
+	stats: verbose ? `${monster.stats}
+
+${monster.rankings}` : monster.stats
 });
 
 module.exports = { formatCard, monsterCard };
