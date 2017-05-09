@@ -55,9 +55,15 @@ class Ring extends BaseClass {
 		return !!contestants.find(contestant => contestant.monster === monster);
 	}
 
+	// TO-DO: This should probably be an encounter start / end method we call on the creature
 	setEncounterFlag (value) {
 		this.contestants.forEach((contestant) => {
 			contestant.monster.inEncounter = value;
+			if (value) {
+				contestant.savedConditions = Object.assign({}, contestant.monster.conditions);
+			} else {
+				contestant.monster.conditions = Object.assign({}, contestant.savedConditions);
+			}
 		});
 	}
 
