@@ -22,4 +22,10 @@ ${wrap(stats, { indent: '| ', width: 40 })}`
 `
 );
 
-module.exports = { formatCard };
+const monsterCard = (monster, showDescription = true) => formatCard({
+	title: `${monster.icon}  ${monster.name} > ${monster.givenName}`,
+	description: showDescription ? monster.individualDescription : '',
+	stats: monster.stats
+});
+
+module.exports = { formatCard, monsterCard };

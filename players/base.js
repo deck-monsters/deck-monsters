@@ -3,6 +3,8 @@ const { getInitialDeck } = require('../cards');
 const { spawn, equip } = require('../monsters');
 const { getMonsterChoices } = require('../helpers/choices');
 
+const { formatCard } = require('../helpers/card');
+
 const DEFAULT_MONSTER_SLOTS = 2;
 
 class BasePlayer extends BaseCreature {
@@ -79,7 +81,7 @@ class BasePlayer extends BaseCreature {
 					return Promise
 						.resolve()
 						.then(() => channel({
-							announce: `You're now the proud owner of ${monster.givenName}. Before you is ${monster.individualDescription}'`
+							announce: `You're now the proud owner of a ${monster.name}. Before you is ${monsterCard(monster)}'`
 						}))
 						.then(() => monster);
 				});

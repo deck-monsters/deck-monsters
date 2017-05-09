@@ -9,7 +9,7 @@ const { all: allMonsters } = require('./monsters');
 const { Player } = require('./players');
 
 const { getFlavor } = require('./helpers/flavor');
-const { formatCard } = require('./helpers/card');
+const { formatCard, monsterCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
@@ -101,12 +101,6 @@ ${cardPlayed}`
 		const channel = this.publicChannel;
 		const monster = contestant.monster;
 
-		const monsterCard = formatCard({
-			title: `${monster.icon}  ${monster.givenName}`,
-			description: contestant.lastMonsterPlayed !== monster && monster.individualDescription,
-			stats: monster.stats
-		});
-
 		contestant.lastMonsterPlayed = monster;
 // TODO? contestant.player.icon == user's avatar
 		channel({
@@ -115,7 +109,7 @@ ${cardPlayed}`
 *It's ${startCase(contestant.player.givenName)}'s turn.*
 
 ${contestant.player.icon}  ${startCase(contestant.player.givenName)} plays the following monster:
-${monsterCard}`
+${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
@@ -291,7 +285,7 @@ ${monster.icon}  ${startCase(monster.givenName)} is out of cards.
 		const player = contestant.player;
 
 		channel({
-			announce: `${monsterWithHp(monster)} has entered the ring at the behest of ${startCase(player.givenName)}.
+			announce: `${monsterWithHp(monster)} has entered the ring at the behest of ${player.icon}  ${startCase(player.givenName)}.
 ${monster.stats}
 
 Upon closer inspection you see ${monster.individualDescription}`
