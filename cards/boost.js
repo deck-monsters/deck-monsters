@@ -2,6 +2,8 @@ const BaseCard = require('./base');
 const { roll, max } = require('../helpers/chance');
 const isProbable = require('../helpers/is-probable');
 
+const delayTimes = require('../helpers/delay-times.js');
+
 class BoostCard extends BaseCard {
 	constructor (options) {
 		// Set defaults for these values that can be overridden by the options passed in
@@ -28,30 +30,50 @@ class BoostCard extends BaseCard {
 			let boostResult = boostRoll.result;
 			let strokeOfLuck = false;
 			let curseOfLoki = false;
+			let outcome = '';
 
 			// Stroke of Luck
 			if (isProbable({ probability: 1 })) {
 				boostResult += max(this.boostDice);
+				boostRoll.result = boostResult;
 				strokeOfLuck = true;
+				outcome = 'BLESSED! Max boost!';
 			} else if (isProbable({ probability: 10 })) {
 				boostResult = 0;
+				boostRoll.result = boostResult;
 				curseOfLoki = true;
+				outcome = 'CURSED! No effect.';
 			}
+			setTimeout(() => {
+				this.emit('rolling', {
+					reason: `for ${this.options.boostedProp.toUpperCase()} boost amount`,
+					card: this,
+					roll: boostRoll,
+					strokeOfLuck,
+					curseOfLoki,
+					player,
+					target
+				});
 
-			this.emit('rolled', {
-				reason: `to determine how much to boost ${this.options.boostedProp.toUpperCase()} by`,
-				card: this,
-				roll: boostRoll,
-				strokeOfLuck,
-				curseOfLoki,
-				player,
-				target,
-				outcome: ''
-			});
+				setTimeout(() => {
+					this.emit('rolled', {
+						reason: `to boost ${this.options.boostedProp.toUpperCase()}`,
+						card: this,
+						roll: boostRoll,
+						strokeOfLuck,
+						curseOfLoki,
+						player,
+						target,
+						outcome
+					});
 
-			player.setCondition(this.options.boostedProp, boostResult);
+					setTimeout(() => {
+						player.setCondition(this.options.boostedProp, boostResult);
 
-			resolve(true);
+						resolve(true);
+					}, delayTimes.mediumDelay());
+				}, delayTimes.longDelay());
+			}, delayTimes.longDelay());
 		});
 	}
 }
