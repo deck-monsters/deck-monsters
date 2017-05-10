@@ -7,6 +7,8 @@ const { all: allCards, draw } = require('./cards');
 const { all: allMonsters } = require('./monsters');
 const { create: createCharacter } = require('./characters');
 
+const Channel = require('./helpers/channel');
+
 const { getFlavor } = require('./helpers/flavor');
 const { formatCard, monsterCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
@@ -19,7 +21,7 @@ class Game extends BaseClass {
 		super(options, globalSemaphore);
 
 		this.ring = new Ring();
-		this.publicChannel = publicChannel;
+		this.publicChannel = Channel(publicChannel);
 		this.initializeEvents();
 
 		const game = this;

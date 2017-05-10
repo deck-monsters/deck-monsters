@@ -1,6 +1,5 @@
 const BaseCard = require('./base');
 const { roll, max } = require('../helpers/chance');
-const delayTimes = require('../helpers/delay-times.js');
 
 class HitCard extends BaseCard {
 	constructor (options) {
@@ -49,81 +48,69 @@ class HitCard extends BaseCard {
 				damageRoll.result = 1;
 			}
 
-			setTimeout(() => {
+			this.emit('rolling', {
+				reason: `vs AC (${target.ac}) to determine if the hit was a success`,
+				card: this,
+				roll: attackRoll,
+				strokeOfLuck,
+				curseOfLoki,
+				player,
+				target
+			});
+
+			// results vs AC
+			const success = strokeOfLuck || (!curseOfLoki && target.ac < attackRoll.result);
+
+			this.emit('rolled', {
+				reason: `vs AC (${target.ac})`,
+				card: this,
+				roll: attackRoll,
+				strokeOfLuck,
+				curseOfLoki,
+				player,
+				target,
+				outcome: success ? 'Hit!' : 'Miss!'
+			});
+
+			if (success) {
 				this.emit('rolling', {
-					reason: `vs AC (${target.ac}) to determine if the hit was a success`,
+					reason: 'for damage',
 					card: this,
-					roll: attackRoll,
+					roll: damageRoll,
 					strokeOfLuck,
 					curseOfLoki,
 					player,
+					target,
+					outcome: ''
+				});
+
+				this.emit('rolled', {
+					reason: 'for damage',
+					card: this,
+					roll: damageRoll,
+					strokeOfLuck,
+					curseOfLoki,
+					player,
+					target,
+					outcome: ''
+				});
+
+				// If we hit then do some damage
+				resolve(target.hit(damageResult, player));
+			} else {
+				this.emit('miss', {
+					attackResult: attackRoll.result,
+					attackRoll,
+					curseOfLoki,
+					damageResult,
+					damageRoll,
+					player,
+					strokeOfLuck,
 					target
 				});
 
-				setTimeout(() => {
-					// results vs AC
-					const success = strokeOfLuck || (!curseOfLoki && target.ac < attackRoll.result);
-
-					this.emit('rolled', {
-						reason: `vs AC (${target.ac})`,
-						card: this,
-						roll: attackRoll,
-						strokeOfLuck,
-						curseOfLoki,
-						player,
-						target,
-						outcome: success ? 'Hit!' : 'Miss!'
-					});
-
-					setTimeout(() => {
-						if (success) {
-							this.emit('rolling', {
-								reason: 'for damage',
-								card: this,
-								roll: damageRoll,
-								strokeOfLuck,
-								curseOfLoki,
-								player,
-								target,
-								outcome: ''
-							});
-
-							setTimeout(() => {
-								this.emit('rolled', {
-									reason: 'for damage',
-									card: this,
-									roll: damageRoll,
-									strokeOfLuck,
-									curseOfLoki,
-									player,
-									target,
-									outcome: ''
-								});
-
-								setTimeout(() => {
-									// If we hit then do some damage
-									resolve(target.hit(damageResult, player));
-								}, delayTimes.mediumDelay());
-							}, delayTimes.mediumDelay());
-						} else {
-							this.emit('miss', {
-								attackResult: attackRoll.result,
-								attackRoll,
-								curseOfLoki,
-								damageResult,
-								damageRoll,
-								player,
-								strokeOfLuck,
-								target
-							});
-
-							setTimeout(() => {
-								resolve(true);
-							}, delayTimes.shortDelay());
-						}
-					}, delayTimes.mediumDelay());
-				}, delayTimes.longDelay());
-			}, delayTimes.longDelay());
+				resolve(true);
+			}
 		});
 	}
 }

@@ -2,8 +2,6 @@ const BaseCard = require('./base');
 const { roll, max } = require('../helpers/chance');
 const isProbable = require('../helpers/is-probable');
 
-const delayTimes = require('../helpers/delay-times.js');
-
 class CurseCard extends BaseCard {
 	constructor (options) {
 		// Set defaults for these values that can be overridden by the options passed in
@@ -44,37 +42,31 @@ class CurseCard extends BaseCard {
 				curseOfLoki = true;
 				outcome = 'CURSED! No effect.';
 			}
-			setTimeout(() => {
-				this.emit('rolling', {
-					reason: `for ${this.options.cursedProp.toUpperCase()} curse amount`,
-					card: this,
-					roll: weakenRoll,
-					strokeOfLuck,
-					curseOfLoki,
-					player,
-					target
-				});
 
-				setTimeout(() => {
-					this.emit('rolled', {
-						reason: `to weaken opponent's ${this.options.cursedProp.toUpperCase()}`,
-						card: this,
-						roll: weakenRoll,
-						strokeOfLuck,
-						curseOfLoki,
-						player,
-						target,
-						outcome
-					});
+			this.emit('rolling', {
+				reason: `for ${this.options.cursedProp.toUpperCase()} curse amount`,
+				card: this,
+				roll: weakenRoll,
+				strokeOfLuck,
+				curseOfLoki,
+				player,
+				target
+			});
 
+			this.emit('rolled', {
+				reason: `to weaken opponent's ${this.options.cursedProp.toUpperCase()}`,
+				card: this,
+				roll: weakenRoll,
+				strokeOfLuck,
+				curseOfLoki,
+				player,
+				target,
+				outcome
+			});
 
-					setTimeout(() => {
-						target.setCondition(this.options.cursedProp, weakenResult);
+			target.setCondition(this.options.cursedProp, weakenResult);
 
-						resolve(true);
-					}, delayTimes.mediumDelay());
-				}, delayTimes.longDelay());
-			}, delayTimes.longDelay());
+			resolve(true);
 		});
 	}
 }
