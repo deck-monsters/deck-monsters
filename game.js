@@ -268,7 +268,7 @@ ${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.
 			channel({
 				announce: `${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
 ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`,
-			delay: 'long'
+				delay: 'long'
 			});
 		}
 	}
@@ -386,6 +386,20 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 				sendMonsterToTheRing (channel, options) {
 					return character.sendMonsterToTheRing(ring, channel, options || {})
 						.catch(err => log(err));
+				},
+				dropMonster (channel, monsterName) {
+					if (monsterName) {
+						const monsters = this.getAllMonsters();
+						const monster = monsters[monsterName.toLowerCase()];
+
+						return character.dropMonster(channel, monster)
+							.catch(err => log(err));
+					}
+
+					return Promise.reject(channel({
+						announce: `I can find no monster by the name of ${monsterName}.`,
+						delay: 'short'
+					}));
 				},
 				lookAtMonster (channel, monsterName) {
 					return game.lookAtMonster(channel, monsterName)

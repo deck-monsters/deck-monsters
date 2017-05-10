@@ -43,6 +43,12 @@ class Beastmaster extends BaseCharacter {
 		this.emit('monsterAdded', { monster });
 	}
 
+	dropMonster (monsterToBeDropped) {
+		this.monsters = this.monsters.filter(monster => monster !== monsterToBeDropped);
+
+		this.emit('monsterDropped', { monsterToBeDropped });
+	}
+
 	spawnMonster (channel, options) {
 		const remainingSlots = Math.max(this.monsterSlots - this.monsters.length, 0);
 

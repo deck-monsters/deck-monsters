@@ -1,30 +1,40 @@
 const delayTimes = require('./delay-times.js');
 
-const Channel = (publicChannel) => {
-	this.publicChannel = publicChannel;
+const Channel = (channel, logger = () => {}) => {
+	this.channel = channel;
 
 	const queue = [];
 
-	const sendMessages = () => {
-		const { announce, delay } = queue.shift() || { announce: undefined, delay: 'long' };
+	const sendMessages = () => Promise
+		.resolve()
+		.then(() => {
+			const item = queue.shift();
 
-		const delayMS = {
-			short: delayTimes.shortDelay(),
-			medium: delayTimes.mediumDelay(),
-			long: delayTimes.longDelay()
-		};
+			if (item) {
+				return this.channel(item)
+					.then(() => ({ delay: item.delay }));
+			}
 
-		if (announce) {
-			this.publicChannel({ announce });
-		}
+			return Promise.resolve();
+		})
+		.then(({ delay = 'medium' } = {}) => {
+			const delayMS = {
+				short: delayTimes.shortDelay(),
+				medium: delayTimes.mediumDelay(),
+				long: delayTimes.longDelay()
+			};
 
-		setTimeout(sendMessages, delayMS[delay]);
-	};
+			return setTimeout(sendMessages, delayMS[delay]);
+		})
+		.catch((err) => {
+			logger(err);
+			sendMessages();
+		});
 
 	sendMessages();
 
-	return ({ announce, delay = 'medium' }) => {
-		queue.push({ announce, delay });
+	return ({ announce, question, choices, delay = 'medium' }) => {
+		queue.push({ announce, question, choices, delay });
 	};
 };
 
