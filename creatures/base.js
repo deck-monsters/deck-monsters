@@ -20,7 +20,9 @@ const TIME_TO_RESURRECT = 1800000; // Half-hour per level
 class BaseCreature extends BaseClass {
 	constructor (options) {
 		const defaultOptions = {
-			gender: random(Object.keys(PRONOUNS))
+			gender: random(Object.keys(PRONOUNS)),
+			DEFAULT_HP: Math.ceil(Math.random() * HP_VARIANCE) + BASE_HP,
+			DEFAULT_AC: Math.ceil(Math.random() * AC_VARIANCE) + BASE_AC
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -30,11 +32,8 @@ class BaseCreature extends BaseClass {
 		}
 
 		this.healingInterval = setInterval(() => {
-			if (this.hp < this.maxHp) this.heal(1);
+			if (this.hp < this.maxHp && !this.inEncounter) this.heal(1);
 		}, TIME_TO_HEAL);
-
-		this.DEFAULT_HP = Math.ceil(Math.random() * HP_VARIANCE) + BASE_HP;
-		this.DEFAULT_AC = Math.ceil(Math.random() * AC_VARIANCE) + BASE_AC;
 	}
 
 	get icon () {
@@ -54,9 +53,16 @@ class BaseCreature extends BaseClass {
 	}
 
 	get stats () {
-		return `Level ${this.level}
-XP: ${this.xp} | HP: ${this.hp}/${this.maxHp} | AC: ${this.ac}
-${signedNumber(this.attackModifier)} to hit | ${signedNumber(this.damageModifier)} to damage`;
+		return `Level: ${this.level} | XP: ${this.xp}
+AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}${
+this.attackModifier === 0 ? '' :
+`
+${signedNumber(this.attackModifier)} to hit`
+}${
+this.damageModifier === 0 ? '' :
+`
+${signedNumber(this.damageModifier)} to damage`
+}`;
 	}
 
 	get rankings () {
@@ -74,6 +80,14 @@ Battles won: ${this.battles.wins}`;
 
 	get pronouns () {
 		return PRONOUNS[this.options.gender];
+	}
+
+	get DEFAULT_HP () {
+		return this.options.DEFAULT_HP;
+	}
+
+	get DEFAULT_AC () {
+		return this.options.DEFAULT_AC;
 	}
 
 	get battles () {

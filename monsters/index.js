@@ -88,17 +88,6 @@ const equip = (deck, monster, channel) => {
 	const cards = [];
 	const cardSlots = monster.cardSlots;
 
-	if (cards.length === cardSlots) {
-		channel({
-			announce:
-`You've filled your slots with the following cards:
-
-${getCardChoices(cards)}`
-		});
-		return Promise.resolve().then(() => cards);
-	}
-
-
 	const addCard = ({ remainingSlots, remainingCards }) => Promise
 		.resolve()
 		.then(() => channel({
@@ -117,33 +106,31 @@ Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`
 			nowRemainingCards.splice(answer, 1);
 			cards.push(selectedCard);
 
-			channel({
+			return channel({
 				announce: `You selected a ${selectedCard.cardType.toLowerCase()} card.`
-			});
-
-			if (nowRemainingSlots <= 0) {
-				channel({
-					announce:
+			})
+			.then(() => {
+				if (nowRemainingSlots <= 0) {
+					return channel({
+						announce:
 `You've filled your slots with the following cards:
 
 ${getCardChoices(cards)}`
-				});
+					});
+				}
 
-				return cards;
-			}
-
-			if (nowRemainingCards.length <= 0) {
-				channel({
-					announce:
+				if (nowRemainingCards.length <= 0) {
+					return channel({
+						announce:
 `You're out of cards to equip, but you've equiped the following cards:
 
 ${getCardChoices(cards)}`
-				});
+					});
+				}
 
-				return cards;
-			}
-
-			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
+				return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
+			})
+			.then(() => cards);
 		});
 
 	return Promise
