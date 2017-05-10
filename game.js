@@ -93,7 +93,8 @@ class Game extends BaseClass {
 			announce:
 `
 ${player.identity} lays down the following card:
-${cardPlayed}`
+${cardPlayed}`,
+			delay: 'long'
 		});
 	}
 
@@ -107,7 +108,8 @@ ${cardPlayed}`
 *It's ${contestant.character.givenName}'s turn.*
 
 ${contestant.character.identity} plays the following monster:
-${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
+${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`,
+			delay: 'long'
 		});
 
 		contestant.lastMonsterPlayed = monster;
@@ -121,7 +123,8 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 			announce:
 `
 ${monster.identity} is out of cards.
-`
+`,
+			delay: 'short'
 		});
 	}
 
@@ -135,7 +138,8 @@ ${monster.identity} is out of cards.
 🏁       round ${round} complete
 
 ###########################################
-`
+`,
+			delay: 'short'
 		});
 	}
 
@@ -143,7 +147,8 @@ ${monster.identity} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.identityWithHp} is killed by ${assailant.identityWithHp}`
+			announce: `${monster.identityWithHp} is killed by ${assailant.identityWithHp}`,
+			delay: 'long'
 		});
 	}
 
@@ -151,7 +156,8 @@ ${monster.identity} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.identityWithHp} flees from ${assailant.identityWithHp}`
+			announce: `${monster.identityWithHp} flees from ${assailant.identityWithHp}`,
+			delay: 'long'
 		});
 	}
 
@@ -159,7 +165,8 @@ ${monster.identity} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!`
+			announce: `${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!`,
+			delay: 'medium'
 		});
 	}
 
@@ -181,7 +188,8 @@ ${monster.identity} is out of cards.
 		channel({
 			announce: `
 🎲  ${player.identity} rolls ${title} ${reason}
-`
+`,
+			delay: 'medium'
 		});
 	}
 
@@ -211,7 +219,8 @@ ${monster.identity} is out of cards.
 			announce: `${detail}
 🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
     ${outcome}
-`
+`,
+			delay: 'long'
 		});
 	}
 
@@ -227,7 +236,8 @@ ${monster.identity} is out of cards.
 		}
 
 		channel({
-			announce: `${monster.identity} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`
+			announce: `${monster.identity} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`,
+			delay: 'medium'
 		});
 	}
 
@@ -246,7 +256,8 @@ ${monster.identity} is out of cards.
 		channel({
 			announce: `${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
 ${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.
-`
+`,
+			delay: 'long'
 		});
 	}
 
@@ -256,7 +267,8 @@ ${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.
 		if (this.ring.monsterIsInRing(monster)) {
 			channel({
 				announce: `${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
-${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
+${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`,
+			delay: 'long'
 			});
 		}
 	}
@@ -278,7 +290,8 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 		}
 
 		channel({
-			announce: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
+			announce: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`,
+			delay: 'short'
 		});
 	}
 
@@ -291,7 +304,8 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 			announce: `A${getFlavor('monsterAdjective')} ${monster.name} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
 ${monsterCard(monster)}
 
-`
+`,
+			delay: 'long'
 		});
 	}
 
@@ -299,7 +313,8 @@ ${monsterCard(monster)}
 		const channel = this.publicChannel;
 
 		channel({
-			announce: contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')
+			announce: contestants.map(contestant => contestant.monster.identityWithHp).join(' vs '),
+			delay: 'short'
 		});
 	}
 
@@ -309,7 +324,8 @@ ${monsterCard(monster)}
 		channel({
 			announce: `
 The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
-`
+`,
+			delay: 'medium'
 		});
 	}
 	/* eslint-enable max-len */
@@ -420,7 +436,8 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		}
 
 		return Promise.reject(channel({
-			announce: `I can find no monster by the name of ${monsterName}.`
+			announce: `I can find no monster by the name of ${monsterName}.`,
+			delay: 'short'
 		}));
 	}
 
@@ -436,7 +453,8 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		}
 
 		return Promise.reject(channel({
-			announce: `Sorry, we don't carry ${cardName} cards here.`
+			announce: `Sorry, we don't carry ${cardName} cards here.`,
+			delay: 'short'
 		}));
 	}
 
@@ -461,7 +479,8 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		}
 
 		return Promise.reject(channel({
-			announce: `I don't see a ${thing} here.`
+			announce: `I don't see a ${thing} here.`,
+			delay: 'short'
 		}));
 	}
 

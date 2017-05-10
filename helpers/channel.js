@@ -6,19 +6,24 @@ const Channel = (publicChannel) => {
 	const queue = [];
 
 	const sendMessages = () => {
-		const { announce, delay } = queue.shift() || { announce: undefined, delay: delayTimes.longDelay() };
+		const { announce, delay } = queue.shift() || { announce: undefined, delay: 'long' };
 
+		const delayMS = {
+			short: delayTimes.shortDelay(),
+			medium: delayTimes.mediumDelay(),
+			long: delayTimes.longDelay()
+		};
 
 		if (announce) {
 			this.publicChannel({ announce });
 		}
 
-		setTimeout(sendMessages, delay);
+		setTimeout(sendMessages, delayMS[delay]);
 	};
 
 	sendMessages();
 
-	return ({ announce, delay = delayTimes.mediumDelay() }) => {
+	return ({ announce, delay = 'medium' }) => {
 		queue.push({ announce, delay });
 	};
 };
