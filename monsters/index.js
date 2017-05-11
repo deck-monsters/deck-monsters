@@ -16,15 +16,19 @@ const all = [
 // Channel should be a function that takes a question and an optional array of
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
-const spawn = (channel, { type, name, color, gender, cards } = {}) => {
+const spawn = (channel, { type, name, color, gender, cards, game } = {}) => {
 	const options = {};
 
 	if (cards && cards.length > 0) {
 		options.cards = cards;
 	}
 
-	let Monster;
-	return Promise
+	let monsterNames = [];
+	if (game) {
+		monsterNames = Object.keys(game.getAllMonsters());
+	}
+
+	const askForCreatureType = () => Promise
 		.resolve()
 		.then(() => {
 			if (type !== undefined) {
@@ -40,20 +44,39 @@ ${getCreatureTypeChoices(all)}`,
 			});
 		})
 		.then((answer) => {
-			Monster = all[answer];
+			const Monster = all[answer];
 
-			if (name !== undefined) {
+			return Monster;
+		});
+
+	const askForName = (Monster, alreadyTaken) => Promise
+		.resolve()
+		.then(() => {
+			if (name !== undefined && !alreadyTaken) {
 				return name;
 			}
 
+			let question = '';
+			if (alreadyTaken) question += 'That name is already taken, please choose a different name. ';
+
+			question += `What would you like to name your new ${Monster.creatureType.toLowerCase()}?`;
+
 			return channel({
-				question: `What would you like to name your new ${Monster.creatureType.toLowerCase()}?`
+				question
 			});
 		})
 		.then((answer) => {
-			// TO-DO: Keep a master list of monsters and ensure that there are no duplicate names
-			options.name = answer;
+			if (monsterNames.includes(answer.toLowerCase())) {
+				return askForName(Monster, true);
+			}
 
+			options.name = answer;
+			return options;
+		});
+
+	const askForColor = () => Promise
+		.resolve()
+		.then(() => {
 			if (color !== undefined) {
 				return color;
 			}
@@ -64,7 +87,12 @@ ${getCreatureTypeChoices(all)}`,
 		})
 		.then((answer) => {
 			options.color = answer.toLowerCase();
+			return options;
+		});
 
+	const askForGender = Monster => Promise
+		.resolve()
+		.then(() => {
 			if (gender !== undefined) {
 				return gender;
 			}
@@ -79,9 +107,22 @@ ${getChoices(genders)}`,
 		})
 		.then((answer) => {
 			options.gender = genders[answer].toLowerCase();
-
-			return new Monster(options);
+			return options;
 		});
+
+	let Monster;
+	return Promise
+		.resolve()
+		.then(askForCreatureType)
+		.then((Type) => {
+			Monster = Type;
+
+			return Monster;
+		})
+		.then(() => askForName(Monster))
+		.then(askForColor)
+		.then(() => askForGender(Monster))
+		.then(() => new Monster(options));
 };
 
 const equip = (deck, monster, channel) => {
