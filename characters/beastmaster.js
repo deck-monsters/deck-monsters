@@ -76,15 +76,25 @@ class Beastmaster extends BaseCharacter {
 		}));
 	}
 
-	equipMonster (channel) {
-		const monsters = this.monsters.filter(monster => !monster.dead);
-
+	chooseMonster ({ channel, monsters = this.monsters, monsterName, action = 'pick' }) {
 		return Promise
 			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
 					return Promise.reject(channel({
-						announce: "You don't have any monsters to equip. Spawn one first!"
+						announce: `You don't have any monsters to ${action}.`
+					}));
+				} else if (monsterName) {
+					const monster = monsters.filter(
+						potentialMonster => potentialMonster.givenName.toLowerCase() === monsterName.toLowerCase()
+					);
+
+					if (monster) {
+						return monster;
+					}
+
+					return Promise.reject(channel({
+						announce: `You don't have a living monster named ${monsterName}.`
 					}));
 				} else if (numberOfMonsters === 1) {
 					return monsters[0];
@@ -97,10 +107,26 @@ class Beastmaster extends BaseCharacter {
 `You have ${numberOfMonsters} monsters:
 
 ${getMonsterChoices(monsters)}
-Which monster would you like to equip?`,
+Which monster would you like to ${action}?`,
 						choices: Object.keys(monsters)
 					}))
 					.then(answer => monsters[answer]);
+			});
+	}
+
+	equipMonster ({ monsterName, channel }) {
+		const monsters = this.monsters.filter(monster => !monster.dead);
+
+		return Promise
+			.resolve(monsters.length)
+			.then((numberOfMonsters) => {
+				if (numberOfMonsters <= 0) {
+					return Promise.reject(channel({
+						announce: "You don't have any living monsters to equip. Spawn one first, or wait for your dead monsters to revive." // eslint-disable-line max-len
+					}));
+				}
+
+				return this.chooseMonster({ channel, monsters, monsterName, action: 'equip' });
 			})
 			.then(monster => equip(this.deck, monster, channel)
 				.then((cards) => {
@@ -113,7 +139,7 @@ Which monster would you like to equip?`,
 				.then(() => monster));
 	}
 
-	sendMonsterToTheRing (ring, channel) {
+	sendMonsterToTheRing ({ monsterName, ring, channel }) {
 		const character = this;
 		const alreadyInRing = ring.contestants.filter(contestant => contestant.character === character);
 		const monsters = this.monsters.filter(monster => !monster.dead);
@@ -130,21 +156,9 @@ Which monster would you like to equip?`,
 					return Promise.reject(channel({
 						announce: "You don't have any living monsters to send into battle. Spawn one first, or wait for your dead monsters to revive." // eslint-disable-line max-len
 					}));
-				} else if (numberOfMonsters === 1) {
-					return monsters[0];
 				}
 
-				return Promise
-					.resolve()
-					.then(() => channel({
-						question:
-`You have ${numberOfMonsters} monsters:
-
-${getMonsterChoices(monsters)}
-Which monster would you like to send into battle?`,
-						choices: Object.keys(monsters)
-					}))
-					.then(answer => monsters[answer]);
+				return this.chooseMonster({ channel, monsters, monsterName, action: 'send into battle' });
 			})
 			.then((monster) => {
 				if (monster.cards.length <= 0) {
@@ -155,6 +169,56 @@ Which monster would you like to send into battle?`,
 
 				return ring.addMonster(monster, character, channel);
 			});
+	}
+
+	dismissMonster ({ monsterName, channel }) {
+		const monsters = this.monsters.filter(monster => monster.dead);
+
+		return Promise
+			.resolve(monsters.length)
+			.then((numberOfMonsters) => {
+				if (numberOfMonsters <= 0) {
+					return Promise.reject(channel({
+						announce: "You don't have any monsters eligible for dismissal." // eslint-disable-line max-len
+					}));
+				}
+
+				return this.chooseMonster({ channel, monsters, monsterName, action: 'dismiss' });
+			})
+			.then((monster) => {
+				this.dropMonster(monster);
+
+				return monster;
+			})
+			.then(monster => channel({
+				announce: `${monster.givenName} has been dismissed from your pack.`
+			})
+				.then(() => monster));
+	}
+
+	reviveMonster ({ monsterName, channel }) {
+		const monsters = this.monsters.filter(monster => monster.dead);
+
+		return Promise
+			.resolve(monsters.length)
+			.then((numberOfMonsters) => {
+				if (numberOfMonsters <= 0) {
+					return Promise.reject(channel({
+						announce: "You don't have any monsters to revive." // eslint-disable-line max-len
+					}));
+				}
+
+				return this.chooseMonster({ channel, monsters, monsterName, action: 'revive' });
+			})
+			.then((monster) => {
+				monster.respawn();
+
+				return monster;
+			})
+			.then(monster => channel({
+				announce: `${monster.givenName} has begun to revive.`
+			})
+				.then(() => monster));
 	}
 }
 

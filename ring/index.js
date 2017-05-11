@@ -199,8 +199,6 @@ class Ring extends BaseClass {
 					contestant.character.addLoss();
 					contestant.monster.addLoss();
 					contestant.monster.emit('loss', { contestant });
-
-					contestant.monster.respawn();
 				} else {
 					contestant.won = true;
 					contestant.character.addWin();

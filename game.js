@@ -379,33 +379,27 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 					return character.spawnMonster(channel, options || {})
 						.catch(err => log(err));
 				},
-				equipMonster (channel, options) {
-					return character.equipMonster(channel, options || {})
+				equipMonster (channel, { monsterName } = {}) {
+					return character.equipMonster({ monsterName, channel })
 						.catch(err => log(err));
 				},
-				sendMonsterToTheRing (channel, options) {
-					return character.sendMonsterToTheRing(ring, channel, options || {})
+				sendMonsterToTheRing (channel, { monsterName } = {}) {
+					return character.sendMonsterToTheRing({ monsterName, ring, channel })
 						.catch(err => log(err));
 				},
-				dropMonster (channel, monsterName) {
-					if (monsterName) {
-						const monsters = this.getAllMonsters();
-						const monster = monsters[monsterName.toLowerCase()];
-
-						return character.dropMonster(channel, monster)
-							.catch(err => log(err));
-					}
-
-					return Promise.reject(channel({
-						announce: `I can find no monster by the name of ${monsterName}.`,
-						delay: 'short'
-					}));
+				dismissMonster (channel, { monsterName } = {}) {
+					return character.dismissMonster({ monsterName, channel })
+						.catch(err => log(err));
 				},
-				lookAtMonster (channel, monsterName) {
+				reviveMonster (channel, { monsterName } = {}) {
+					return character.reviveMonster({ monsterName, channel })
+						.catch(err => log(err));
+				},
+				lookAtMonster (channel, { monsterName } = {}) {
 					return game.lookAtMonster(channel, monsterName)
 						.catch(err => log(err));
 				},
-				lookAtCard (channel, cardName) {
+				lookAtCard (channel, { cardName } = {}) {
 					return game.lookAtCard(channel, cardName)
 						.catch(err => log(err));
 				},

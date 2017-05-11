@@ -11,8 +11,10 @@ const Channel = (channel, logger = () => {}) => {
 			const item = queue.shift();
 
 			if (item) {
-				return this.channel(item)
-					.then(() => ({ delay: item.delay }));
+				const { announce, question, choices, delay } = item;
+
+				return this.channel({ announce, question, choices })
+					.then(() => ({ delay }));
 			}
 
 			return Promise.resolve();
