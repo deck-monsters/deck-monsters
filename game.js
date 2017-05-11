@@ -7,6 +7,8 @@ const { all: allCards, draw } = require('./cards');
 const { all: allMonsters } = require('./monsters');
 const { create: createCharacter } = require('./characters');
 
+const PlayerHandbook = require('./player-handbook');
+
 const Channel = require('./helpers/channel');
 
 const { getFlavor } = require('./helpers/flavor');
@@ -469,6 +471,28 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 	lookAt (channel, thing) {
 		if (thing) {
 			// What is this thing?
+
+			// Is it a player handbook?
+			if (thing === 'player handbook') {
+				const handbook = new PlayerHandbook();
+				return handbook.look(channel);
+			}
+
+			// Is it a monster manual?
+			if (thing === 'monster manual') { // monster manual will talk about the different monsters you can capture and their stats etc
+				return Promise.reject(channel({
+					announce: 'Monster manual coming soon!',
+					delay: 'short'
+				}));
+			}
+
+			// Is it a dungeon master guide?
+			if (thing === 'dungeon master guide') { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
+				return Promise.reject(channel({
+					announce: 'dungeon master guide coming soon!',
+					delay: 'short'
+				}));
+			}
 
 			// Is it a monster?
 			const monsters = this.getAllMonsters();

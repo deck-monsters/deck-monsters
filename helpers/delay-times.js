@@ -1,5 +1,5 @@
-const SHORT_DELAY = 1400;
-const MEDIUM_DELAY = 1800;
+const SHORT_DELAY = 1000;
+const MEDIUM_DELAY = 1600;
 const LONG_DELAY = 2200;
 
 const delayTimes = {

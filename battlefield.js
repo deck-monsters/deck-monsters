@@ -61,10 +61,11 @@ Promise
 	.then(() => char.spawnMonster(charAnnouncer, { type: 2, name: 'dbb', color: 'brown', gender: 0, cards: charCards }))
 	.then(() => vlad.lookAtCard(vladAnnouncer, { cardName: 'hit' }))
 	.then(() => vlad.lookAtMonster(vladAnnouncer, { monsterName: 'jerry' }))
+	.then(() => vlad.lookAt(vladAnnouncer, 'player handbook'))
 //	.then(() => vlad.spawnMonster(vladAnnouncer))
 //	.then(() => char.spawnMonster(charAnnouncer))
 //	.then(() => vlad.equipMonster(vladAnnouncer))
 //	.then(() => char.equipMonster(charAnnouncer))
-	// .then(() => vlad.sendMonsterToTheRing(vladAnnouncer))
-	// .then(() => char.sendMonsterToTheRing(charAnnouncer));
+	.then(() => vlad.sendMonsterToTheRing(vladAnnouncer))
+	.then(() => char.sendMonsterToTheRing(charAnnouncer));
 
