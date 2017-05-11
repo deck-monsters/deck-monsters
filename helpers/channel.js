@@ -1,13 +1,17 @@
 const delayTimes = require('./delay-times.js');
 
+const SECONDS = 1000;
+
 const Channel = (channel, logger = () => {}) => {
 	this.channel = channel;
 
 	const queue = [];
 
 	let lastMsgSent = new Date().getTime();
+	const throttleRate = 5 * SECONDS;
+	// keep announcements from sending faster than N seconds without slowing down the entire game by just grouping throttle messages
 	const enoughTimeElapsed = (item) => {
-		if (new Date().getTime() - lastMsgSent > 5000) {
+		if (new Date().getTime() - lastMsgSent > throttleRate) {
 			return true;
 		}
 

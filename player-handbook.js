@@ -1,3 +1,5 @@
+/* eslint-disable class-methods-use-this, max-len */
+
 const BaseClass = require('./baseClass');
 
 class PlayerHandbook extends BaseClass {
@@ -6,7 +8,7 @@ class PlayerHandbook extends BaseClass {
 			.resolve()
 			.then(() => channel({
 				announce: `
-
+\`\`\`
 	 ____    ___
 	/\\  _\`\\ /\\_ \\
 	\\ \\ \\L\\ \\//\\ \\      __     __  __     __   _ __
@@ -33,6 +35,7 @@ class PlayerHandbook extends BaseClass {
     During battle, your monster will play each card one at a time in the order in which you placed it in the monster's deck. When the monster gets to the end of its deck, it starts back at the beginning of the deck again.
 
     Choose your cards wisely, good luck, and have fun!
+\`\`\`
 `
 			}));
 	}
