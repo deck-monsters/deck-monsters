@@ -6,7 +6,7 @@ class CurseCard extends BaseCard {
 	constructor (options) {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
-			weakenDice: '1d4',
+			curseDice: '1d4',
 			icon: '🤢',
 			cursedProp: 'ac'
 		};
@@ -14,31 +14,31 @@ class CurseCard extends BaseCard {
 		super(Object.assign(defaultOptions, options));
 	}
 
-	get weakenDice () {
-		return this.options.weakenDice;
+	get curseDice () {
+		return this.options.curseDice;
 	}
 
 	get stats () {
-		return `Curse: ${this.weakenDice}`;
+		return `Curse: ${this.curseDice}`;
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
-			const weakenRoll = roll({ primaryDice: this.weakenDice });
-			let weakenResult = -weakenRoll.result;
+			const curseRoll = roll({ primaryDice: this.curseDice });
+			let curseResult = -curseRoll.result;
 			let strokeOfLuck = false;
 			let curseOfLoki = false;
 			let outcome = '';
 
 			// Stroke of Luck
 			if (isProbable({ probability: 1 })) {
-				weakenResult = -max(this.weakenDice);
-				weakenResult.result = weakenResult;
+				curseResult = -max(this.curseDice);
+				curseResult.result = curseResult;
 				strokeOfLuck = true;
-				outcome = 'BLESSED! Max weaken!';
+				outcome = 'BLESSED! Max soften!';
 			} else if (isProbable({ probability: 10 })) {
-				weakenResult = 0;
-				weakenResult.result = weakenResult;
+				curseResult = 0;
+				curseResult.result = curseResult;
 				curseOfLoki = true;
 				outcome = 'CURSED! No effect.';
 			}
@@ -46,7 +46,7 @@ class CurseCard extends BaseCard {
 			this.emit('rolling', {
 				reason: `for ${this.options.cursedProp.toUpperCase()} curse amount`,
 				card: this,
-				roll: weakenRoll,
+				roll: curseRoll,
 				strokeOfLuck,
 				curseOfLoki,
 				player,
@@ -54,9 +54,9 @@ class CurseCard extends BaseCard {
 			});
 
 			this.emit('rolled', {
-				reason: `to weaken opponent's ${this.options.cursedProp.toUpperCase()}`,
+				reason: `to soften opponent's ${this.options.cursedProp.toUpperCase()}`,
 				card: this,
-				roll: weakenRoll,
+				roll: curseRoll,
 				strokeOfLuck,
 				curseOfLoki,
 				player,
@@ -64,14 +64,14 @@ class CurseCard extends BaseCard {
 				outcome
 			});
 
-			target.setCondition(this.options.cursedProp, weakenResult);
+			target.setCondition(this.options.cursedProp, curseResult);
 
 			resolve(true);
 		});
 	}
 }
 
-CurseCard.cardType = 'Weaken';
+CurseCard.cardType = 'Soften';
 CurseCard.probability = 10;
 CurseCard.description = 'Sweep the leg... You have a problem with that? No mercy.';
 
