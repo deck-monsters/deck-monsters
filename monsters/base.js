@@ -42,10 +42,7 @@ class BaseMonster extends BaseCreature {
 	look (channel) {
 		return Promise
 			.resolve()
-			.then(() => channel({
-				announce:
-`${monsterCard(this, true)}`
-			}));
+			.then(() => channel({ announce: monsterCard(this, true) }));
 	}
 }
 
