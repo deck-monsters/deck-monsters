@@ -1,12 +1,10 @@
 const BaseCard = require('./base');
-const { roll, max } = require('../helpers/chance');
-const isProbable = require('../helpers/is-probable');
 
 class BoostCard extends BaseCard {
 	constructor (options) {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
-			boostDice: '1d4',
+			boostAmount: 1,
 			icon: '🆙',
 			boostedProp: 'ac'
 		};
@@ -14,59 +12,21 @@ class BoostCard extends BaseCard {
 		super(Object.assign(defaultOptions, options));
 	}
 
-	get boostDice () {
-		return this.options.boostDice;
+	get boostAmount () {
+		return this.options.boostAmount;
+	}
+
+	get boostedProp () {
+		return this.options.boostedProp;
 	}
 
 	get stats () {
-		return `Boost: ${this.boostDice}`;
+		return `Boost: ${this.boostedProp} +${this.boostAmount}`;
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
-			const boostRoll = roll({ primaryDice: this.boostDice });
-			let boostResult = boostRoll.result;
-			let strokeOfLuck = false;
-			let curseOfLoki = false;
-			let outcome = '';
-
-			// Stroke of Luck
-			if (isProbable({ probability: 1 })) {
-				boostResult += max(this.boostDice);
-				boostRoll.result = boostResult;
-				strokeOfLuck = true;
-				outcome = 'BLESSED! Max boost!';
-			} else if (isProbable({ probability: 10 })) {
-				boostResult = 0;
-				boostRoll.result = boostResult;
-				curseOfLoki = true;
-				outcome = 'CURSED! No effect.';
-			}
-
-			this.emit('rolling', {
-				reason: `for ${this.options.boostedProp.toUpperCase()} boost amount`,
-				card: this,
-				roll: boostRoll,
-				strokeOfLuck,
-				curseOfLoki,
-				player,
-				target
-			});
-
-
-			this.emit('rolled', {
-				reason: `to boost ${this.options.boostedProp.toUpperCase()}`,
-				card: this,
-				roll: boostRoll,
-				strokeOfLuck,
-				curseOfLoki,
-				player,
-				target,
-				outcome
-			});
-
-
-			player.setCondition(this.options.boostedProp, boostResult);
+			player.setCondition(this.boostedProp, this.boostAmount);
 
 			resolve(true);
 		});

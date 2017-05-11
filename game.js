@@ -105,8 +105,8 @@ ${cardPlayed}`,
 		const monster = contestant.monster;
 
 		channel({
-			announce:
-`
+			announce: `
+
 *It's ${contestant.character.givenName}'s turn.*
 
 ${contestant.character.identity} plays the following monster:
@@ -238,7 +238,7 @@ ${monster.identity} is out of cards.
 		}
 
 		channel({
-			announce: `${monster.identity} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`,
+			announce: `${monster.identity}'s ${attr} ${dir} by ${amount}`,
 			delay: 'medium'
 		});
 	}
