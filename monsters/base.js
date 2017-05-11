@@ -1,5 +1,7 @@
 const BaseCreature = require('../creatures/base');
 
+const { monsterCard } = require('../helpers/card');
+
 const DEFAULT_CARD_SLOTS = 3;
 
 class BaseMonster extends BaseCreature {
@@ -42,9 +44,7 @@ class BaseMonster extends BaseCreature {
 			.resolve()
 			.then(() => channel({
 				announce:
-`You see ${this.individualDescription}
-
-${this.stats}`
+`${monsterCard(this, true)}`
 			}));
 	}
 }
