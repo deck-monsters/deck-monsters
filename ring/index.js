@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 const shuffle = require('lodash.shuffle');
 
 const BaseClass = require('../baseClass');
@@ -25,7 +27,8 @@ class Ring extends BaseClass {
 		if (this.contestants.length < MAX_MONSTERS) {
 			const contestant = {
 				monster,
-				character
+				character,
+				channel
 			};
 
 			this.options.contestants = shuffle([...this.contestants, contestant]);
@@ -106,11 +109,13 @@ class Ring extends BaseClass {
 			const card = monster.cards[currentCard];
 
 			// Emit an event when a character's turn begins
-			// Note that as written currently this will emit _even if they don't have a card to play_
-			this.emit('turnBegin', {
-				contestant,
-				round
-			});
+			// Note that as written currently this will emit _only if they have a card to play_
+			if (card) {
+				this.emit('turnBegin', {
+					contestant,
+					round
+				});
+			}
 
 			// Get the index of the next contestant, looping at the end of the array
 			let nextContestant = currentContestant + 1;
@@ -194,16 +199,30 @@ class Ring extends BaseClass {
 
 		if (deaths > 0) {
 			contestants.forEach((contestant) => {
+				const channel = contestant.channel;
+
 				if (contestant.monster.dead) {
 					contestant.lost = true;
 					contestant.character.addLoss();
 					contestant.monster.addLoss();
 					contestant.monster.emit('loss', { contestant });
+
+					if (channel) {
+						channel({
+							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`
+						});
+					}
 				} else {
 					contestant.won = true;
 					contestant.character.addWin();
 					contestant.monster.addWin();
 					contestant.monster.emit('win', { contestant });
+
+					if (channel) {
+						channel({
+							announce: `${contestant.monster.givenName} hath soundly beaten ${contestant.monster.pronouns[2]} opponents!`
+						});
+					}
 				}
 			});
 		} else {

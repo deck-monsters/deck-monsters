@@ -8,7 +8,7 @@ const Channel = (channel, logger = () => {}) => {
 	const queue = [];
 
 	let lastMsgSent = new Date().getTime();
-	const throttleRate = 5 * SECONDS;
+	const throttleRate = 3 * SECONDS;
 	// keep announcements from sending faster than N seconds without slowing down the entire game by just grouping throttle messages
 	const enoughTimeElapsed = (item) => {
 		if (new Date().getTime() - lastMsgSent > throttleRate) {
@@ -16,7 +16,9 @@ const Channel = (channel, logger = () => {}) => {
 		}
 
 		const nextItem = queue.shift();
-		nextItem.announce = `${item.announce}${nextItem.announce}`;
+		nextItem.announce =
+`${item.announce}
+${nextItem.announce}`;
 		queue.unshift(nextItem);
 
 		return false;

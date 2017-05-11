@@ -378,7 +378,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 			.then(character => ({
 				character,
 				spawnMonster (channel, options) {
-					return character.spawnMonster(channel, options || {})
+					return character.spawnMonster(channel, Object.assign({}, options, { game }))
 						.catch(err => log(err));
 				},
 				equipMonster (channel, { monsterName } = {}) {
