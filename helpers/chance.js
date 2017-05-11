@@ -29,6 +29,13 @@ const chance = {
 	},
 	percent () {
 		return dice.roll('d%').result;
+	},
+	nat20 (roll) {
+		if (roll.primaryDice === '1d20' && roll.result === 20) {
+			return true;
+		}
+
+		return false;
 	}
 };
 

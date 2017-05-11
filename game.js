@@ -219,7 +219,7 @@ ${monster.identity} is out of cards.
 
 		channel({
 			announce: `${detail}
-🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
+🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
     ${outcome}
 `,
 			delay: 'long'
