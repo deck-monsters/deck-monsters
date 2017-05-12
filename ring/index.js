@@ -53,7 +53,8 @@ class Ring extends BaseClass {
 			if (this.contestants.length > MAX_MONSTERS) {
 				this.clearRing();
 			} else if (this.contestants.length === MAX_MONSTERS) {
-				this.fight();
+				this.channelManager.sendMessages()
+					.then(() => this.fight());
 			}
 		} else {
 			this.channelManager.queueMessage({
