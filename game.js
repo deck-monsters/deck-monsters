@@ -375,6 +375,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 	getCharacter (channel, channelName, { id, name, type, gender, icon }) {
 		const game = this;
 		const ring = this.ring;
+		const log = this.log;
 
 		return Promise
 			.resolve(this.characters[id])
@@ -396,38 +397,38 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 				character,
 				spawnMonster (options) {
 					return character.spawnMonster(channel, Object.assign({}, options, { game }))
-						.catch(err => this.log(err));
+						.catch(err => log(err));
 				},
 				equipMonster ({ monsterName } = {}) {
 					return character.equipMonster({ monsterName, channel })
-						.catch(err => this.log(err));
+						.catch(err => log(err));
 				},
 				sendMonsterToTheRing ({ monsterName } = {}) {
 					return character.sendMonsterToTheRing({ monsterName, ring, channel, channelName })
-						.catch(err => this.log(err));
+						.catch(err => log(err));
 				},
 				dismissMonster ({ monsterName } = {}) {
 					return character.dismissMonster({ monsterName, channel })
-						.catch(err => this.log(err));
+						.catch(err => log(err));
 				},
 				reviveMonster ({ monsterName } = {}) {
 					return character.reviveMonster({ monsterName, channel })
-						.catch(err => this.log(err));
+						.catch(err => log(err));
 				},
 				lookAtMonster ({ monsterName } = {}) {
 					return game.lookAtMonster(channel, monsterName)
-						.catch(err => this.log(err));
+						.catch(err => log(err));
 				},
 				lookAtCard ({ cardName } = {}) {
 					return game.lookAtCard(channel, cardName)
-						.catch(err => this.log(err));
+						.catch(err => log(err));
 				},
 				lookAt (thing) {
 					return game.lookAt(channel, thing)
-						.catch(err => this.log(err));
+						.catch(err => log(err));
 				}
 			}))
-			.catch(err => this.log(err));
+			.catch(err => log(err));
 	}
 
 	static getCardTypes () {
