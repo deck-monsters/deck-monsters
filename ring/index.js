@@ -19,9 +19,10 @@ class Ring extends BaseClass {
 			ring.battles.push(results);
 		});
 
-		this.on('channel.win', this.handleWinner);
-		this.on('channel.loss', this.handleLoser);
-		this.on('channel.draw', this.handleTied);
+		const ring = this;
+		this.channelManager.on('win', (className, channel, { contestant }) => ring.handleWinner({ contestant }));
+		this.channelManager.on('loss', (className, channel, { contestant }) => this.handleLoser({ contestant }));
+		this.channelManager.on('draw', (className, channel, { contestant }) => this.handleTied({ contestant }));
 	}
 
 	get contestants () {
@@ -221,26 +222,13 @@ class Ring extends BaseClass {
 			}
 		});
 
-		this.channelManager.sendMessages()
-			.then(() => {
-				this.emit('fightConcludes', {
-					contestants,
-					deadContestants,
-					deaths,
-					isDraw: deaths <= 0,
-					lastContestant,
-					rounds
-				});
-
-				this.clearRing();
-			});
-
 		if (deaths > 0) {
 			contestants.forEach((contestant) => {
 				const channel = contestant.channel;
 				const channelName = contestant.channelName;
 
 				if (contestant.monster.dead) {
+					contestant.lost = true;
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`,
 						channel,
@@ -248,6 +236,7 @@ class Ring extends BaseClass {
 						event: { name: 'loss', properties: { contestant } }
 					});
 				} else {
+					contestant.won = true;
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.givenName} hath soundly beaten ${contestant.monster.pronouns[2]} opponents!`,
 						channel,
@@ -269,10 +258,23 @@ class Ring extends BaseClass {
 				});
 			});
 		}
+
+		this.channelManager.sendMessages()
+			.then(() => {
+				this.emit('fightConcludes', {
+					contestants,
+					deadContestants,
+					deaths,
+					isDraw: deaths <= 0,
+					lastContestant,
+					rounds
+				});
+
+				this.clearRing();
+			});
 	}
 
 	handleWinner ({ contestant }) {
-		contestant.won = true;
 		contestant.character.addWin();
 		contestant.monster.addWin();
 		this.emit('win', { contestant });
@@ -280,7 +282,6 @@ class Ring extends BaseClass {
 	}
 
 	handleLoser ({ contestant }) {
-		contestant.lost = true;
 		contestant.character.addLoss();
 		contestant.monster.addLoss();
 		this.emit('loss', { contestant });
