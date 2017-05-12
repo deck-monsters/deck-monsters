@@ -8,27 +8,34 @@ const delayTimes = require('../helpers/delay-times.js');
 const MAX_MONSTERS = 2;
 
 class Ring extends BaseClass {
-	constructor (options) {
+	constructor (channelManager, options) {
 		super(options);
 
+		this.channelManager = channelManager;
 		this.battles = [];
 
 		// Note that we're not saving / hydrating this as of now
 		this.on('fightConcludes', (className, ring, results) => {
 			ring.battles.push(results);
 		});
+
+		this.on('channel.win', this.handleWinner);
+		this.on('channel.loss', this.handleLoser);
+		this.on('channel.draw', this.handleTied);
+		this.on('channel.fightConcludes', this.handleFightConcludes);
 	}
 
 	get contestants () {
 		return this.options.contestants || [];
 	}
 
-	addMonster (monster, character, channel) {
+	addMonster (monster, character, channel, channelName) {
 		if (this.contestants.length < MAX_MONSTERS) {
 			const contestant = {
 				monster,
 				character,
-				channel
+				channel,
+				channelName
 			};
 
 			this.options.contestants = shuffle([...this.contestants, contestant]);
@@ -37,8 +44,10 @@ class Ring extends BaseClass {
 				contestant
 			});
 
-			channel({
-				announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`
+			this.channelManager.queueMessage({
+				announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`,
+				channel,
+				channelName
 			});
 
 			if (this.contestants.length > MAX_MONSTERS) {
@@ -47,8 +56,10 @@ class Ring extends BaseClass {
 				this.fight();
 			}
 		} else {
-			channel({
-				announce: 'The ring is full! Wait until the current battle is over and try again.'
+			this.channelManager.queueMessage({
+				announce: 'The ring is full! Wait until the current battle is over and try again.',
+				channel,
+				channelName
 			});
 		}
 	}
@@ -146,13 +157,13 @@ class Ring extends BaseClass {
 					.play(monster, contestants[nextContestant].monster, ring)
 					.then((fightContinues) => {
 						if (fightContinues) {
-							// Delay the next turn slighty for more realistic gameplay
-							// Notice that no value is passed in for emptyHanded so it will reset to false (because we played a card)
-							setTimeout(() => next(), delayTimes.longDelay());
+							this.channelManager.sendMessages()
+								.then(() => next());
 						} else {
 							// The fight is over, let's end this promise chain
 							// Also return the contestant we ended on for bookkeeping purposes
-							resolve(contestant);
+							this.channelManager.sendMessages()
+								.then(() => resolve(contestant));
 						}
 					});
 			} else {
@@ -197,42 +208,86 @@ class Ring extends BaseClass {
 		const deadContestants = contestants.filter(contestant => !!contestant.monster.dead);
 		const deaths = deadContestants.length;
 
+		this.channelManager.queueMessage({
+			event: {
+				name: 'fightConcludes',
+				properties: {
+					contestants,
+					deadContestants,
+					deaths,
+					lastContestant,
+					rounds
+				}
+			}
+		});
+
 		if (deaths > 0) {
 			contestants.forEach((contestant) => {
 				const channel = contestant.channel;
+				const channelName = contestant.channelName;
 
 				if (contestant.monster.dead) {
-					contestant.lost = true;
-					contestant.character.addLoss();
-					contestant.monster.addLoss();
-					contestant.monster.emit('loss', { contestant });
-
-					if (channel) {
-						channel({
-							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`
-						});
-					}
+					this.channelManager.queueMessage({
+						announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`,
+						channel,
+						channelName,
+						event: { name: 'loss', properties: { contestant } }
+					});
 				} else {
-					contestant.won = true;
-					contestant.character.addWin();
-					contestant.monster.addWin();
-					contestant.monster.emit('win', { contestant });
-
-					if (channel) {
-						channel({
-							announce: `${contestant.monster.givenName} hath soundly beaten ${contestant.monster.pronouns[2]} opponents!`
-						});
-					}
+					this.channelManager.queueMessage({
+						announce: `${contestant.monster.givenName} hath soundly beaten ${contestant.monster.pronouns[2]} opponents!`,
+						channel,
+						channelName,
+						event: { name: 'win', properties: { contestant } }
+					});
 				}
 			});
 		} else {
 			contestants.forEach((contestant) => {
-				contestant.character.addDraw();
-				contestant.monster.addDraw();
-				contestant.monster.emit('draw', { contestant });
+				const channel = contestant.channel;
+				const channelName = contestant.channelName;
+
+				this.channelManager.queueMessage({
+					announce: 'The fight ended in a draw.',
+					channel,
+					channelName,
+					event: { name: 'draw', properties: { contestant } }
+				});
 			});
 		}
+	}
 
+	handleWinner ({ contestant }) {
+		contestant.won = true;
+		contestant.character.addWin();
+		contestant.monster.addWin();
+		this.emit('win', { contestant });
+		contestant.monster.emit('win', { contestant });
+	}
+
+	handleLoser ({ contestant }) {
+		contestant.lost = true;
+		contestant.character.addLoss();
+		contestant.monster.addLoss();
+		this.emit('loss', { contestant });
+		contestant.monster.emit('loss', { contestant });
+	}
+
+	handleTied ({ contestant }) {
+		contestant.character.addDraw();
+		contestant.monster.addDraw();
+		this.emit('draw', { contestant });
+		contestant.monster.emit('draw', { contestant });
+	}
+
+	handleFightConcludes ({
+		contestants,
+		deadContestants,
+		deaths,
+		lastContestant,
+		rounds
+	}) {
+		console.log('here');
 		this.emit('fightConcludes', {
 			contestants,
 			deadContestants,

@@ -9,7 +9,7 @@ const { create: createCharacter } = require('./characters');
 
 const PlayerHandbook = require('./player-handbook');
 
-const Channel = require('./helpers/channel');
+const ChannelManager = require('./channel');
 
 const { getFlavor } = require('./helpers/flavor');
 const { formatCard, monsterCard } = require('./helpers/card');
@@ -18,12 +18,18 @@ const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 const noop = () => {};
 const { signedNumber } = require('./helpers/signed-number');
 
+const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
+
 class Game extends BaseClass {
-	constructor (publicChannel, options) {
+	constructor (publicChannel, options, log = () => {}) {
 		super(options, globalSemaphore);
 
-		this.ring = new Ring();
-		this.publicChannel = Channel(publicChannel);
+		this.log = log;
+		this.channelManager = new ChannelManager({}, this.log);
+		this.channelManager.addChannel({ channel: publicChannel, channelName: PUBLIC_CHANNEL });
+		this.publicChannel = ({ announce }) => this.channelManager.queueMessage({ announce, channelName: PUBLIC_CHANNEL });
+		this.ring = new Ring(this.channelManager);
+
 		this.initializeEvents();
 
 		const game = this;
@@ -95,8 +101,8 @@ class Game extends BaseClass {
 			announce:
 `
 ${player.identity} lays down the following card:
-${cardPlayed}`,
-			delay: 'long'
+${cardPlayed}
+`
 		});
 	}
 
@@ -110,8 +116,8 @@ ${cardPlayed}`,
 *It's ${contestant.character.givenName}'s turn.*
 
 ${contestant.character.identity} plays the following monster:
-${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`,
-			delay: 'long'
+${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}
+`
 		});
 
 		contestant.lastMonsterPlayed = monster;
@@ -125,8 +131,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`,
 			announce:
 `
 ${monster.identity} is out of cards.
-`,
-			delay: 'short'
+`
 		});
 	}
 
@@ -140,8 +145,7 @@ ${monster.identity} is out of cards.
 🏁       round ${round} complete
 
 ###########################################
-`,
-			delay: 'short'
+`
 		});
 	}
 
@@ -149,8 +153,10 @@ ${monster.identity} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.identityWithHp} is killed by ${assailant.identityWithHp}`,
-			delay: 'long'
+			announce:
+`
+${monster.identityWithHp} is killed by ${assailant.identityWithHp}
+`
 		});
 	}
 
@@ -158,8 +164,10 @@ ${monster.identity} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${monster.identityWithHp} flees from ${assailant.identityWithHp}`,
-			delay: 'long'
+			announce:
+`
+${monster.identityWithHp} flees from ${assailant.identityWithHp}
+`
 		});
 	}
 
@@ -167,8 +175,10 @@ ${monster.identity} is out of cards.
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!`,
-			delay: 'medium'
+			announce:
+`
+${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!
+`
 		});
 	}
 
@@ -188,10 +198,10 @@ ${monster.identity} is out of cards.
 		}
 
 		channel({
-			announce: `
+			announce:
+`
 🎲  ${player.identity} rolls ${title} ${reason}
-`,
-			delay: 'medium'
+`
 		});
 	}
 
@@ -218,11 +228,12 @@ ${monster.identity} is out of cards.
 		}
 
 		channel({
-			announce: `${detail}
+			announce:
+`
+${detail}
 🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
     ${outcome}
-`,
-			delay: 'long'
+`
 		});
 	}
 
@@ -238,8 +249,10 @@ ${monster.identity} is out of cards.
 		}
 
 		channel({
-			announce: `${monster.identity} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}`,
-			delay: 'medium'
+			announce:
+`
+${monster.identity} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}
+`
 		});
 	}
 
@@ -256,10 +269,11 @@ ${monster.identity} is out of cards.
 		}
 
 		channel({
-			announce: `${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
+			announce:
+`
+${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
 ${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.
-`,
-			delay: 'long'
+`
 		});
 	}
 
@@ -268,9 +282,11 @@ ${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.
 
 		if (this.ring.monsterIsInRing(monster)) {
 			channel({
-				announce: `${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
-${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`,
-				delay: 'long'
+				announce:
+`
+${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
+${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.
+`
 			});
 		}
 	}
@@ -292,8 +308,10 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`,
 		}
 
 		channel({
-			announce: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`,
-			delay: 'short'
+			announce:
+`
+${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
+`
 		});
 	}
 
@@ -303,11 +321,11 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`,
 		const character = contestant.character;
 
 		channel({
-			announce: `A${getFlavor('monsterAdjective')} ${monster.name} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
+			announce:
+`
+A${getFlavor('monsterAdjective')} ${monster.name} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
 ${monsterCard(monster)}
-
-`,
-			delay: 'long'
+`
 		});
 	}
 
@@ -315,8 +333,7 @@ ${monsterCard(monster)}
 		const channel = this.publicChannel;
 
 		channel({
-			announce: contestants.map(contestant => contestant.monster.identityWithHp).join(' vs '),
-			delay: 'short'
+			announce: contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')
 		});
 	}
 
@@ -324,10 +341,10 @@ ${monsterCard(monster)}
 		const channel = this.publicChannel;
 
 		channel({
-			announce: `
+			announce:
+`
 The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
-`,
-			delay: 'medium'
+`
 		});
 	}
 	/* eslint-enable max-len */
@@ -355,7 +372,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		this.ring.clearRing();
 	}
 
-	getCharacter (privateChannel, { id, name, type, gender, icon }, log = () => {}) {
+	getCharacter (privateChannel, { id, name, type, gender, icon }) {
 		const game = this;
 		const ring = this.ring;
 
@@ -379,38 +396,38 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 				character,
 				spawnMonster (channel, options) {
 					return character.spawnMonster(channel, Object.assign({}, options, { game }))
-						.catch(err => log(err));
+						.catch(err => this.log(err));
 				},
 				equipMonster (channel, { monsterName } = {}) {
 					return character.equipMonster({ monsterName, channel })
-						.catch(err => log(err));
+						.catch(err => this.log(err));
 				},
-				sendMonsterToTheRing (channel, { monsterName } = {}) {
-					return character.sendMonsterToTheRing({ monsterName, ring, channel })
-						.catch(err => log(err));
+				sendMonsterToTheRing (channel, channelName, { monsterName } = {}) {
+					return character.sendMonsterToTheRing({ monsterName, ring, channel, channelName })
+						.catch(err => this.log(err));
 				},
 				dismissMonster (channel, { monsterName } = {}) {
 					return character.dismissMonster({ monsterName, channel })
-						.catch(err => log(err));
+						.catch(err => this.log(err));
 				},
 				reviveMonster (channel, { monsterName } = {}) {
 					return character.reviveMonster({ monsterName, channel })
-						.catch(err => log(err));
+						.catch(err => this.log(err));
 				},
 				lookAtMonster (channel, { monsterName } = {}) {
 					return game.lookAtMonster(channel, monsterName)
-						.catch(err => log(err));
+						.catch(err => this.log(err));
 				},
 				lookAtCard (channel, { cardName } = {}) {
 					return game.lookAtCard(channel, cardName)
-						.catch(err => log(err));
+						.catch(err => this.log(err));
 				},
 				lookAt (channel, thing) {
 					return game.lookAt(channel, thing)
-						.catch(err => log(err));
+						.catch(err => this.log(err));
 				}
 			}))
-			.catch(err => log(err));
+			.catch(err => this.log(err));
 	}
 
 	static getCardTypes () {

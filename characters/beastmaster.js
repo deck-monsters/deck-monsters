@@ -139,7 +139,7 @@ Which monster would you like to ${action}?`,
 				.then(() => monster));
 	}
 
-	sendMonsterToTheRing ({ monsterName, ring, channel }) {
+	sendMonsterToTheRing ({ monsterName, ring, channel, channelName }) {
 		const character = this;
 		const alreadyInRing = ring.contestants.filter(contestant => contestant.character === character);
 		const monsters = this.monsters.filter(monster => !monster.dead);
@@ -167,7 +167,7 @@ Which monster would you like to ${action}?`,
 					}));
 				}
 
-				return ring.addMonster(monster, character, channel);
+				return ring.addMonster(monster, character, channel, channelName);
 			});
 	}
 

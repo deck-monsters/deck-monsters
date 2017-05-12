@@ -35,22 +35,24 @@ const announcer = (prefix, what) => new Promise((resolve, reject) => {
 const roomAnnouncer = what => announcer('Room', what);
 const slackdem = new Game(roomAnnouncer);
 
+const VLAD_ID = 1234;
 const vladAnnouncer = what => announcer('vlad', what);
 let vlad;
 let vladCards;
 
+const CHAR_ID = 861;
 const charAnnouncer = what => announcer('charlemagne', what);
 let char;
 let charCards;
 
 Promise
 	.resolve()
-	.then(() => slackdem.getCharacter(vladAnnouncer, { id: 1234, name: 'vlad', type: 0, gender: 1, icon: 0 }))
+	.then(() => slackdem.getCharacter(vladAnnouncer, { id: VLAD_ID, name: 'vlad', type: 0, gender: 1, icon: 0 }))
 	.then((character) => {
 		vlad = character;
 		vladCards = [...vlad.character.deck.slice(0, 2), vlad.character.deck[4]];
 	})
-	.then(() => slackdem.getCharacter(charAnnouncer, { id: 861, name: 'charlemagne', type: 0, gender: 1, icon: 0 }))
+	.then(() => slackdem.getCharacter(charAnnouncer, { id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0 }))
 	.then((character) => {
 		char = character;
 		charCards = [...char.character.deck.slice(0, 2), char.character.deck[4]];
@@ -60,12 +62,10 @@ Promise
 	.then(() => char.spawnMonster(charAnnouncer, { type: 1, name: 'tom', color: 'brown', gender: 0, cards: charCards }))
 	.then(() => char.spawnMonster(charAnnouncer, { type: 2, name: 'dbb', color: 'brown', gender: 0, cards: charCards }))
 	.then(() => vlad.lookAtCard(vladAnnouncer, { cardName: 'hit' }))
-	.then(() => vlad.lookAtMonster(vladAnnouncer, { monsterName: 'jerry' }))
 	.then(() => vlad.lookAt(vladAnnouncer, 'player handbook'))
 //	.then(() => vlad.spawnMonster(vladAnnouncer))
 //	.then(() => char.spawnMonster(charAnnouncer))
 //	.then(() => vlad.equipMonster(vladAnnouncer))
 //	.then(() => char.equipMonster(charAnnouncer))
-	.then(() => vlad.sendMonsterToTheRing(vladAnnouncer))
-	.then(() => char.sendMonsterToTheRing(charAnnouncer));
-
+	.then(() => vlad.sendMonsterToTheRing(vladAnnouncer, VLAD_ID))
+	.then(() => char.sendMonsterToTheRing(charAnnouncer, CHAR_ID));
