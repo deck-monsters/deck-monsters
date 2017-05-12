@@ -4,7 +4,7 @@ const Game = require('./game');
 const { hydrateCharacter } = require('./characters');
 
 const restoreGame = (publicChannel, gameJSON, log) => {
-	const gameObj = typeof gameJSON === 'string' ? JSON.parse(gameJSON) : gameJSON;
+	const gameObj = typeof gameJSON === 'string' ? JSON.parse(gameJSON) : Object.assign({}, gameJSON);
 	const options = Object.assign({ characters: {} }, gameObj.options);
 
 	// Hydrate characters
