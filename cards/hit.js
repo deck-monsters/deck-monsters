@@ -86,39 +86,42 @@ class HitCard extends BaseCard {
 				outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
 			});
 
-			if (success) {
-				this.emit('rolling', {
-					reason: 'for damage',
-					card: this,
-					roll: damageRoll,
-					player,
-					target,
-					outcome: ''
-				});
+			ring.channelManager.sendMessages()
+				.then(() => {
+					if (success) {
+						this.emit('rolling', {
+							reason: 'for damage',
+							card: this,
+							roll: damageRoll,
+							player,
+							target,
+							outcome: ''
+						});
 
-				this.emit('rolled', {
-					reason: 'for damage',
-					card: this,
-					roll: damageRoll,
-					player,
-					target,
-					outcome: ''
-				});
+						this.emit('rolled', {
+							reason: 'for damage',
+							card: this,
+							roll: damageRoll,
+							player,
+							target,
+							outcome: ''
+						});
 
-				// If we hit then do some damage
-				resolve(target.hit(damageResult, player));
-			} else {
-				this.emit('miss', {
-					attackResult: attackRoll.result,
-					attackRoll,
-					damageResult,
-					damageRoll,
-					player,
-					target
-				});
+						// If we hit then do some damage
+						resolve(target.hit(damageResult, player));
+					} else {
+						this.emit('miss', {
+							attackResult: attackRoll.result,
+							attackRoll,
+							damageResult,
+							damageRoll,
+							player,
+							target
+						});
 
-				resolve(true);
-			}
+						resolve(true);
+					}
+				});
 		});
 	}
 }

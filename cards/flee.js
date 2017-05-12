@@ -42,18 +42,21 @@ class FleeCard extends BaseCard {
 				outcome: success ? 'success!' : 'fail!'
 			});
 
-			if (success) {
-				return resolve(player.leaveCombat(target));
-			}
+			ring.channelManager.sendMessages()
+				.then(() => {
+					if (success) {
+						return resolve(player.leaveCombat(target));
+					}
 
-			this.emit('stay', {
-				fleeResult: fleeRoll.result,
-				fleeRoll,
-				player,
-				target
-			});
+					this.emit('stay', {
+						fleeResult: fleeRoll.result,
+						fleeRoll,
+						player,
+						target
+					});
 
-			return resolve(true);
+					return resolve(true);
+				});
 		});
 	}
 }
