@@ -98,10 +98,8 @@ class Game extends BaseClass {
 
 		channel({
 			announce:
-`
-${player.identity} lays down the following card:
-${cardPlayed}
-`
+`${player.identity} lays down the following card:
+${cardPlayed}`
 		});
 	}
 
@@ -111,12 +109,10 @@ ${cardPlayed}
 
 		channel({
 			announce:
-`
-*It's ${contestant.character.givenName}'s turn.*
+`*It's ${contestant.character.givenName}'s turn.*
 
 ${contestant.character.identity} plays the following monster:
-${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}
-`
+${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 
 		contestant.lastMonsterPlayed = monster;
@@ -128,9 +124,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}
 
 		channel({
 			announce:
-`
-${monster.identity} is out of cards.
-`
+`${monster.identity} is out of cards.`
 		});
 	}
 
@@ -143,8 +137,7 @@ ${monster.identity} is out of cards.
 
 🏁       round ${round} complete
 
-###########################################
-`
+###########################################`
 		});
 	}
 
@@ -153,9 +146,7 @@ ${monster.identity} is out of cards.
 
 		channel({
 			announce:
-`
-${monster.identityWithHp} is killed by ${assailant.identityWithHp}
-`
+`${monster.identityWithHp} is killed by ${assailant.identityWithHp}`
 		});
 	}
 
@@ -164,9 +155,7 @@ ${monster.identityWithHp} is killed by ${assailant.identityWithHp}
 
 		channel({
 			announce:
-`
-${monster.identityWithHp} flees from ${assailant.identityWithHp}
-`
+`${monster.identityWithHp} flees from ${assailant.identityWithHp}`
 		});
 	}
 
@@ -175,9 +164,7 @@ ${monster.identityWithHp} flees from ${assailant.identityWithHp}
 
 		channel({
 			announce:
-`
-${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!
-`
+`${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!`
 		});
 	}
 
@@ -198,9 +185,7 @@ ${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!
 
 		channel({
 			announce:
-`
-🎲  ${player.identity} rolls ${title} ${reason}
-`
+`🎲  ${player.identity} rolls ${title} ${reason}`
 		});
 	}
 
@@ -228,11 +213,9 @@ ${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!
 
 		channel({
 			announce:
-`
-${detail}
+`${detail}
 🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
-    ${outcome}
-`
+    ${outcome}`
 		});
 	}
 
@@ -249,9 +232,7 @@ ${detail}
 
 		channel({
 			announce:
-`
-${monster.identity}'s ${attr} ${dir} by ${amount}
-`
+`${monster.identity}'s ${attr} ${dir} by ${amount}`
 		});
 	}
 
@@ -269,10 +250,8 @@ ${monster.identity}'s ${attr} ${dir} by ${amount}
 
 		channel({
 			announce:
-`
-${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
-${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.
-`
+`${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
+${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.`
 		});
 	}
 
@@ -282,10 +261,8 @@ ${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.
 		if (this.ring.monsterIsInRing(monster)) {
 			channel({
 				announce:
-`
-${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
-${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.
-`
+`${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
+${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 			});
 		}
 	}
@@ -308,9 +285,7 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.
 
 		channel({
 			announce:
-`
-${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
-`
+`${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
 		});
 	}
 
@@ -321,10 +296,8 @@ ${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.
 
 		channel({
 			announce:
-`
-A${getFlavor('monsterAdjective')} ${monster.name} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
-${monsterCard(monster)}
-`
+`A${getFlavor('monsterAdjective')} ${monster.name} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
+${monsterCard(monster)}`
 		});
 	}
 
