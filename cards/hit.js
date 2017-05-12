@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 const BaseCard = require('./base');
 const { roll, max, nat20 } = require('../helpers/chance');
 
@@ -33,7 +35,7 @@ class HitCard extends BaseCard {
 			let strokeOfLuck = false;
 			let curseOfLoki = false;
 			let damageResult = damageRoll.result;
-			let commentary = '';
+			let commentary;
 
 			if (attackRoll.naturalRoll.result === max(this.attackDice)) {
 				strokeOfLuck = true;
@@ -42,13 +44,17 @@ class HitCard extends BaseCard {
 				damageResult = max(this.damageDice) * 2;
 				damageRoll.result = damageResult;
 
+				commentary = 'Nice roll! ';
+
 				if (nat20(attackRoll)) {
-					commentary = 'Natural 20. You do double maximum damage.';
+					commentary = `${player.givenName} rolled a natural 20. `;
 				}
+
+				commentary += `Automatic double max damage. That's ${damageResult}!`;
 			} else if (attackRoll.naturalRoll.result === 1) {
 				curseOfLoki = true;
 
-				commentary = 'You rolled a 1. Even if you would have otherwise hit, you miss.';
+				commentary = `${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
 			}
 
 			if (damageResult === 0) {
@@ -77,7 +83,7 @@ class HitCard extends BaseCard {
 				curseOfLoki,
 				player,
 				target,
-				outcome: success ? `Hit! ${commentary}` : `miss... ${commentary}`
+				outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
 			});
 
 			if (success) {
@@ -85,8 +91,6 @@ class HitCard extends BaseCard {
 					reason: 'for damage',
 					card: this,
 					roll: damageRoll,
-					strokeOfLuck,
-					curseOfLoki,
 					player,
 					target,
 					outcome: ''
@@ -96,8 +100,6 @@ class HitCard extends BaseCard {
 					reason: 'for damage',
 					card: this,
 					roll: damageRoll,
-					strokeOfLuck,
-					curseOfLoki,
 					player,
 					target,
 					outcome: ''
@@ -109,11 +111,9 @@ class HitCard extends BaseCard {
 				this.emit('miss', {
 					attackResult: attackRoll.result,
 					attackRoll,
-					curseOfLoki,
 					damageResult,
 					damageRoll,
 					player,
-					strokeOfLuck,
 					target
 				});
 
