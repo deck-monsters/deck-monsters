@@ -43,12 +43,12 @@ class HitCard extends BaseCard {
 				damageRoll.result = damageResult;
 
 				if (nat20(attackRoll)) {
-					commentary = ':boom: NAT 20!!!! MAX DAMAGE!!!!!!!!!1!11!1!!1111 :asontished:';
+					commentary = 'Natural 20. You do double maximum damage.';
 				}
 			} else if (attackRoll.naturalRoll.result === 1) {
 				curseOfLoki = true;
 
-				commentary = '_womp womp_ You rolled a :one:. :laughing:';
+				commentary = 'You rolled a 1. Even if you would have otherwise hit, you miss.';
 			}
 
 			if (damageResult === 0) {
