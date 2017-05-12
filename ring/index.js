@@ -287,7 +287,6 @@ class Ring extends BaseClass {
 		lastContestant,
 		rounds
 	}) {
-		console.log('here');
 		this.emit('fightConcludes', {
 			contestants,
 			deadContestants,

@@ -231,7 +231,7 @@ ${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!
 			announce:
 `
 ${detail}
-🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.result - roll.naturalRoll.result)}) ${reason}
+🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
     ${outcome}
 `
 		});
@@ -251,7 +251,7 @@ ${detail}
 		channel({
 			announce:
 `
-${monster.identity} ${dir} ${monster.pronouns[2]} ${attr} by ${amount}
+${monster.identity}'s ${attr} ${dir} by ${amount}
 `
 		});
 	}

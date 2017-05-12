@@ -1,5 +1,5 @@
 const BaseCard = require('./base');
-const { roll, max } = require('../helpers/chance');
+const { roll, max, nat20 } = require('../helpers/chance');
 
 class HitCard extends BaseCard {
 	constructor (options) {
@@ -33,20 +33,31 @@ class HitCard extends BaseCard {
 			let strokeOfLuck = false;
 			let curseOfLoki = false;
 			let damageResult = damageRoll.result;
+			let commentary = '';
 
 			if (attackRoll.naturalRoll.result === max(this.attackDice)) {
 				strokeOfLuck = true;
 				// change the natural roll into a max roll
-				damageResult += (max(this.damageDice) * 2) - damageRoll.naturalRoll.result;
+				damageRoll.naturalRoll.result = max(this.damageDice);
+				damageResult = max(this.damageDice) * 2;
 				damageRoll.result = damageResult;
+
+				if (nat20(attackRoll)) {
+					commentary = 'Natural 20. You do double maximum damage.';
+				}
 			} else if (attackRoll.naturalRoll.result === 1) {
 				curseOfLoki = true;
+
+				commentary = 'You rolled a 1. Even if you would have otherwise hit, you miss.';
 			}
 
 			if (damageResult === 0) {
 				damageResult = 1;
 				damageRoll.result = 1;
 			}
+
+			// results vs AC
+			const success = strokeOfLuck || (!curseOfLoki && target.ac < attackRoll.result);
 
 			this.emit('rolling', {
 				reason: `vs AC (${target.ac}) to determine if the hit was a success`,
@@ -58,9 +69,6 @@ class HitCard extends BaseCard {
 				target
 			});
 
-			// results vs AC
-			const success = strokeOfLuck || (!curseOfLoki && target.ac < attackRoll.result);
-
 			this.emit('rolled', {
 				reason: `vs AC (${target.ac})`,
 				card: this,
@@ -69,7 +77,7 @@ class HitCard extends BaseCard {
 				curseOfLoki,
 				player,
 				target,
-				outcome: success ? 'Hit!' : 'Miss!'
+				outcome: success ? `Hit! ${commentary}` : `miss... ${commentary}`
 			});
 
 			if (success) {
