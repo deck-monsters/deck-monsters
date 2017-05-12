@@ -4,7 +4,7 @@ const THROTTLE_RATE = 5000;
 
 const sendMessage = (channel, announce) => new Promise((resolve) => {
 	setTimeout(() => {
-		resolve(channel ? channel({ announce }) : true);
+		resolve(channel ? channel({ announce }) : Promise.resolve());
 	}, THROTTLE_RATE);
 });
 

@@ -47,25 +47,25 @@ let charCards;
 
 Promise
 	.resolve()
-	.then(() => slackdem.getCharacter(vladAnnouncer, { id: VLAD_ID, name: 'vlad', type: 0, gender: 1, icon: 0 }))
+	.then(() => slackdem.getCharacter(vladAnnouncer, VLAD_ID, { id: VLAD_ID, name: 'vlad', type: 0, gender: 1, icon: 0 }))
 	.then((character) => {
 		vlad = character;
 		vladCards = [...vlad.character.deck.slice(0, 2), vlad.character.deck[4]];
 	})
-	.then(() => slackdem.getCharacter(charAnnouncer, { id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0 }))
+	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, { id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0 }))
 	.then((character) => {
 		char = character;
 		charCards = [...char.character.deck.slice(0, 2), char.character.deck[4]];
 	})
-	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards }))
-	.then(() => vlad.spawnMonster(vladAnnouncer, { type: 0, name: 'qed', color: 'gray', gender: 2, cards: vladCards }))
-	.then(() => char.spawnMonster(charAnnouncer, { type: 1, name: 'tom', color: 'brown', gender: 0, cards: charCards }))
-	.then(() => char.spawnMonster(charAnnouncer, { type: 2, name: 'dbb', color: 'brown', gender: 0, cards: charCards }))
-	.then(() => vlad.lookAtCard(vladAnnouncer, { cardName: 'hit' }))
-	.then(() => vlad.lookAt(vladAnnouncer, 'player handbook'))
+	.then(() => vlad.spawnMonster({ type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards }))
+	.then(() => vlad.spawnMonster({ type: 0, name: 'qed', color: 'gray', gender: 2, cards: vladCards }))
+	.then(() => char.spawnMonster({ type: 1, name: 'tom', color: 'brown', gender: 0, cards: charCards }))
+	.then(() => char.spawnMonster({ type: 2, name: 'dbb', color: 'brown', gender: 0, cards: charCards }))
+	.then(() => vlad.lookAtCard({ cardName: 'hit' }))
+	.then(() => vlad.lookAt('player handbook'))
 //	.then(() => vlad.spawnMonster(vladAnnouncer))
 //	.then(() => char.spawnMonster(charAnnouncer))
 //	.then(() => vlad.equipMonster(vladAnnouncer))
 //	.then(() => char.equipMonster(charAnnouncer))
-	.then(() => vlad.sendMonsterToTheRing(vladAnnouncer, VLAD_ID))
-	.then(() => char.sendMonsterToTheRing(charAnnouncer, CHAR_ID));
+	.then(() => vlad.sendMonsterToTheRing())
+	.then(() => char.sendMonsterToTheRing());

@@ -84,7 +84,6 @@ class Game extends BaseClass {
 		// Manage Fights
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
-		this.on('ring.fightConcludes', this.clearRing);
 	}
 
 	/* eslint-disable max-len */
@@ -346,6 +345,8 @@ ${monsterCard(monster)}
 The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
 `
 		});
+
+		this.channelManager.sendMessages();
 	}
 	/* eslint-enable max-len */
 

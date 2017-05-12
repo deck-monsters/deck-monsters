@@ -22,7 +22,6 @@ class Ring extends BaseClass {
 		this.on('channel.win', this.handleWinner);
 		this.on('channel.loss', this.handleLoser);
 		this.on('channel.draw', this.handleTied);
-		this.on('channel.fightConcludes', this.handleFightConcludes);
 	}
 
 	get contestants () {
@@ -222,6 +221,20 @@ class Ring extends BaseClass {
 			}
 		});
 
+		this.channelManager.sendMessages()
+			.then(() => {
+				this.emit('fightConcludes', {
+					contestants,
+					deadContestants,
+					deaths,
+					isDraw: deaths <= 0,
+					lastContestant,
+					rounds
+				});
+
+				this.clearRing();
+			});
+
 		if (deaths > 0) {
 			contestants.forEach((contestant) => {
 				const channel = contestant.channel;
@@ -279,23 +292,6 @@ class Ring extends BaseClass {
 		contestant.monster.addDraw();
 		this.emit('draw', { contestant });
 		contestant.monster.emit('draw', { contestant });
-	}
-
-	handleFightConcludes ({
-		contestants,
-		deadContestants,
-		deaths,
-		lastContestant,
-		rounds
-	}) {
-		this.emit('fightConcludes', {
-			contestants,
-			deadContestants,
-			deaths,
-			isDraw: deaths <= 0,
-			lastContestant,
-			rounds
-		});
 	}
 }
 
