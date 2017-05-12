@@ -372,7 +372,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		this.ring.clearRing();
 	}
 
-	getCharacter (privateChannel, { id, name, type, gender, icon }) {
+	getCharacter (channel, channelName, { id, name, type, gender, icon }) {
 		const game = this;
 		const ring = this.ring;
 
@@ -380,7 +380,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 			.resolve(this.characters[id])
 			.then((existingCharacter) => {
 				if (!existingCharacter) {
-					return createCharacter(privateChannel, { name, type, gender, icon })
+					return createCharacter(channel, { name, type, gender, icon })
 						.then((character) => {
 							game.characters[id] = character;
 
@@ -394,35 +394,35 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 			})
 			.then(character => ({
 				character,
-				spawnMonster (channel, options) {
+				spawnMonster (options) {
 					return character.spawnMonster(channel, Object.assign({}, options, { game }))
 						.catch(err => this.log(err));
 				},
-				equipMonster (channel, { monsterName } = {}) {
+				equipMonster ({ monsterName } = {}) {
 					return character.equipMonster({ monsterName, channel })
 						.catch(err => this.log(err));
 				},
-				sendMonsterToTheRing (channel, channelName, { monsterName } = {}) {
+				sendMonsterToTheRing ({ monsterName } = {}) {
 					return character.sendMonsterToTheRing({ monsterName, ring, channel, channelName })
 						.catch(err => this.log(err));
 				},
-				dismissMonster (channel, { monsterName } = {}) {
+				dismissMonster ({ monsterName } = {}) {
 					return character.dismissMonster({ monsterName, channel })
 						.catch(err => this.log(err));
 				},
-				reviveMonster (channel, { monsterName } = {}) {
+				reviveMonster ({ monsterName } = {}) {
 					return character.reviveMonster({ monsterName, channel })
 						.catch(err => this.log(err));
 				},
-				lookAtMonster (channel, { monsterName } = {}) {
+				lookAtMonster ({ monsterName } = {}) {
 					return game.lookAtMonster(channel, monsterName)
 						.catch(err => this.log(err));
 				},
-				lookAtCard (channel, { cardName } = {}) {
+				lookAtCard ({ cardName } = {}) {
 					return game.lookAtCard(channel, cardName)
 						.catch(err => this.log(err));
 				},
-				lookAt (channel, thing) {
+				lookAt (thing) {
 					return game.lookAt(channel, thing)
 						.catch(err => this.log(err));
 				}
