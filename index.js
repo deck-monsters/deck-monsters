@@ -3,7 +3,7 @@ const reduce = require('lodash.reduce');
 const Game = require('./game');
 const { hydrateCharacter } = require('./characters');
 
-const restoreGame = (publicChannel, gameJSON) => {
+const restoreGame = (publicChannel, gameJSON, log) => {
 	const gameObj = typeof gameJSON === 'string' ? JSON.parse(gameJSON) : gameJSON;
 	const options = Object.assign({ characters: {} }, gameObj.options);
 
@@ -14,7 +14,7 @@ const restoreGame = (publicChannel, gameJSON) => {
 		return characters;
 	}, {});
 
-	return new Game(publicChannel, options);
+	return new Game(publicChannel, options, log);
 };
 
 module.exports = {
