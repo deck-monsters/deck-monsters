@@ -27,7 +27,7 @@ class HitCard extends BaseCard {
 		return `Hit: ${this.attackDice} vs AC / Damage: ${this.damageDice}`;
 	}
 
-	rollForAttack () {
+	rollForAttack (player) {
 		const attackRoll = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
 
 		return attackRoll;
@@ -36,7 +36,7 @@ class HitCard extends BaseCard {
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
 			// Add any player modifiers and roll the dice
-			const attackRoll = this.rollForAttack();
+			const attackRoll = this.rollForAttack(player);
 			const damageRoll = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });
 			let strokeOfLuck = false;
 			let curseOfLoki = false;

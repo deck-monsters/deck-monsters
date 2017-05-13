@@ -13,7 +13,7 @@ class HitCard extends BaseCard {
 		super(Object.assign(defaultOptions, options));
 	}
 
-	rollForAttack () {
+	rollForAttack (player) {
 		const attackRoll1 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
 		const attackRoll2 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
 
