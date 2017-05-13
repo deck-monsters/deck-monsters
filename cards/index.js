@@ -7,6 +7,7 @@ const FleeCard = require('./flee');
 const HitCard = require('./hit');
 const HealCard = require('./heal');
 const PoundCard = require('./pound');
+const LuckyStrike = require('./lucky-strike');
 // const ReviveCard = require('./revive');
 
 const all = [
@@ -15,7 +16,8 @@ const all = [
 	FleeCard,
 	HitCard,
 	HealCard,
-	PoundCard
+	PoundCard,
+	LuckyStrike
 ];
 
 const draw = (options) => {
