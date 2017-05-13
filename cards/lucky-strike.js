@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 
 const HitCard = require('./hit');
-const { roll } = require('../helpers/chance');
 
 class LuckyStrike extends HitCard {
 	constructor (options) {
@@ -14,8 +13,8 @@ class LuckyStrike extends HitCard {
 	}
 
 	rollForAttack (player) {
-		const attackRoll1 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
-		const attackRoll2 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll1 = super.rollForAttack(player);
+		const attackRoll2 = super.rollForAttack(player);
 
 		if (attackRoll2.naturalRoll.result > attackRoll1.naturalRoll.result) {
 			return attackRoll2;
