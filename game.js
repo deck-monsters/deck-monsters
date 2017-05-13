@@ -134,7 +134,6 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		channel({
 			announce:
 `
-
 🏁       round ${round} complete
 
 ###########################################`
@@ -146,7 +145,8 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 		channel({
 			announce:
-`${monster.identityWithHp} is killed by ${assailant.identityWithHp}`
+`${monster.identityWithHp} is killed by ${assailant.identityWithHp}
+`
 		});
 	}
 
@@ -155,7 +155,8 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 		channel({
 			announce:
-`${monster.identityWithHp} flees from ${assailant.identityWithHp}`
+`${monster.identityWithHp} flees from ${assailant.identityWithHp}
+`
 		});
 	}
 
@@ -191,7 +192,6 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 	announceRolled (className, monster, {
 		reason,
-		card,
 		roll,
 		strokeOfLuck,
 		curseOfLoki,
@@ -201,19 +201,15 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		const channel = this.publicChannel;
 
 		let detail = '';
-		if (card.result) {
-			if (strokeOfLuck) {
-				detail = `
-    STROKE OF LUCK!!!!`;
-			} else if (curseOfLoki) {
-				detail = `
-    Botched it.`;
-			}
+		if (strokeOfLuck) {
+			detail = 'STROKE OF LUCK!!!!';
+		} else if (curseOfLoki) {
+			detail = 'Botched it.';
 		}
 
 		channel({
 			announce:
-`${detail}
+`    ${detail}
 🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
     ${outcome}`
 		});
@@ -250,8 +246,10 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 		channel({
 			announce:
-`${assailant.icon} ${icon} ${monster.icon}    ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
-${monster.icon}  ${monster.givenName} has ${monster.hp}HP left.`
+`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
+
+${monster.icon}  *${monster.givenName} has ${monster.hp}HP left.*
+`
 		});
 	}
 
@@ -285,7 +283,8 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 
 		channel({
 			announce:
-`${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}`
+`${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
+`
 		});
 	}
 
@@ -314,8 +313,7 @@ ${monsterCard(monster)}`
 
 		channel({
 			announce:
-`
-The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
+`The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
 `
 		});
 
@@ -335,7 +333,7 @@ The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${round
 		contestant.character.addCard(card);
 	}
 
-	handleLoser (className, monster, { contestant }) {
+	handleLoser (className, monster, { contestant }) { // eslint-disable-line class-methods-use-this
 		// Award XP, maybe kick off more events (that could be messaged)
 
 		// The character still earns a small bit of XP in the case of defeat
