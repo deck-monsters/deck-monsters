@@ -31,7 +31,7 @@ const draw = (options) => {
 };
 
 const getInitialDeck = options => [
-	new HitCard(options),
+	new LuckyStrike(options),
 	new HitCard(options),
 	new HealCard(options),
 	new FleeCard(options),

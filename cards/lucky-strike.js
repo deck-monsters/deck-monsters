@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const BaseCard = require('./base');
-const { roll, max, nat20 } = require('../helpers/chance');
+const { roll } = require('../helpers/chance');
 
 class HitCard extends BaseCard {
 	constructor (options) {
