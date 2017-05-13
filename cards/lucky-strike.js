@@ -1,9 +1,9 @@
 /* eslint-disable max-len */
 
-const BaseCard = require('./base');
+const HitCard = require('./hit');
 const { roll } = require('../helpers/chance');
 
-class HitCard extends BaseCard {
+class LuckyStrike extends HitCard {
 	constructor (options) {
 		// Set defaults for these values that can be overridden by the options passed in
 		const defaultOptions = {
@@ -25,8 +25,8 @@ class HitCard extends BaseCard {
 	}
 }
 
-HitCard.cardType = 'Lucky Strike';
-HitCard.probability = 20;
-HitCard.description = 'Roll for attack twice, use the best roll to see if you hit.';
+LuckyStrike.cardType = 'Lucky Strike';
+LuckyStrike.probability = 20;
+LuckyStrike.description = 'Roll for attack twice, use the best roll to see if you hit.';
 
-module.exports = HitCard;
+module.exports = LuckyStrike;
