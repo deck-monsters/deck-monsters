@@ -6,10 +6,10 @@ const { STARTING_XP, getLevel } = require('../helpers/levels');
 const PRONOUNS = require('../helpers/pronouns');
 const { signedNumber } = require('../helpers/signed-number');
 
-const BASE_AC = 4;
-const AC_VARIANCE = 3;
-const BASE_HP = 20;
-const HP_VARIANCE = 8;
+const BASE_AC = 5;
+const AC_VARIANCE = 2;
+const BASE_HP = 23;
+const HP_VARIANCE = 5;
 const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
 const MAX_ATTACK_BOOST = 10;
 const MAX_DAMAGE_BOOST = 6;
