@@ -13,17 +13,6 @@ class LuckyStrike extends HitCard {
 		super(Object.assign(defaultOptions, options));
 	}
 
-	rollForAttack (player) {
-		const attackRoll1 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
-		const attackRoll2 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
-
-		if (attackRoll2.naturalRoll.result > attackRoll1.naturalRoll.result) {
-			return attackRoll2;
-		}
-
-		return attackRoll1;
-	}
-
 	hitCheck (player, target) {
 		const attackRoll1 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
 		const attackRoll2 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
