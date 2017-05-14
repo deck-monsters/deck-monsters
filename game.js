@@ -200,17 +200,9 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 	}) {
 		const channel = this.publicChannel;
 
-		let detail = '';
-		if (strokeOfLuck) {
-			detail = 'STROKE OF LUCK!!!!';
-		} else if (curseOfLoki) {
-			detail = 'Botched it.';
-		}
-
 		channel({
 			announce:
-`    ${detail}
-🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
+`🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
     ${outcome}`
 		});
 	}
