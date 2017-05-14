@@ -41,7 +41,7 @@ class LuckyStrike extends HitCard {
 				commentary += `${player.givenName} rolled a natural 20. `;
 			}
 
-			commentary += `Automatic double max damage.`;
+			commentary += 'Automatic double max damage.';
 		} else if (betterRoll.naturalRoll.result === 1) {
 			curseOfLoki = true;
 

@@ -193,8 +193,8 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 	announceRolled (className, monster, {
 		reason,
 		roll,
-		strokeOfLuck,
-		curseOfLoki,
+		strokeOfLuck, // eslint-disable-line no-unused-vars
+		curseOfLoki, // eslint-disable-line no-unused-vars
 		player,
 		outcome
 	}) {

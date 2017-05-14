@@ -21,7 +21,7 @@ class HitHarder extends HitCard {
 		const betterRoll = (damageRoll2.naturalRoll.result > damageRoll1.naturalRoll.result) ? damageRoll2 : damageRoll1;
 		const worseRoll = (damageRoll2.naturalRoll.result < damageRoll1.naturalRoll.result) ? damageRoll2 : damageRoll1;
 
-		let commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
+		const commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
 		this.emit('rolling', {
 			reason: 'for damage twice and uses the best roll',

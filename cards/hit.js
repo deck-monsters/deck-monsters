@@ -51,7 +51,7 @@ class HitCard extends BaseCard {
 				commentary = `${player.givenName} rolled a natural 20. `;
 			}
 
-			commentary += `Automatic double max damage.`;
+			commentary += 'Automatic double max damage.';
 		} else if (attackRoll.naturalRoll.result === 1) {
 			curseOfLoki = true;
 
