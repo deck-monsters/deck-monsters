@@ -9,6 +9,7 @@ const HealCard = require('./heal');
 const PoundCard = require('./pound');
 const LuckyStrike = require('./lucky-strike');
 const HitHarderCard = require('./hit-harder');
+const RehitCard = require('./rehit');
 // const ReviveCard = require('./revive');
 
 const all = [
@@ -19,7 +20,8 @@ const all = [
 	HealCard,
 	PoundCard,
 	LuckyStrike,
-	HitHarderCard
+	HitHarderCard,
+	RehitCard
 ];
 
 const draw = (options) => {
@@ -33,7 +35,7 @@ const draw = (options) => {
 };
 
 const getInitialDeck = options => [
-	new HitCard(options),
+	new RehitCard(options),
 	new HitCard(options),
 	new HealCard(options),
 	new FleeCard(options),

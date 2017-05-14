@@ -1,5 +1,9 @@
 /* eslint-disable max-len */
 
+/*
+	Eventually this card will be replaced by whatever LuckyStrike turns into.
+*/
+
 const HitCard = require('./hit');
 const { roll, max } = require('../helpers/chance');
 
@@ -58,5 +62,7 @@ class HitHarder extends HitCard {
 HitHarder.cardType = 'Hit Harder';
 HitHarder.probability = 20;
 HitHarder.description = 'You hit just a little bit harder than the average bear... Roll for damage twice, and use the best result.';
+HitHarder.cost = 6;
+HitHarder.level = 2;
 
 module.exports = HitHarder;

@@ -36,5 +36,7 @@ class BoostCard extends BaseCard {
 BoostCard.cardType = 'Harden';
 BoostCard.probability = 10;
 BoostCard.description = "It's time to put on your big boy pants, and toughen up!";
+BoostCard.cost = 2;
+BoostCard.level = 1;
 
 module.exports = BoostCard;

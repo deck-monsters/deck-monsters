@@ -23,6 +23,14 @@ class BaseCard extends BaseClass {
 		return this.options.icon;
 	}
 
+	get cost () {
+		return this.constructor.cost;
+	}
+
+	get level () {
+		return this.constructor.level;
+	}
+
 	play (player, target, ring) {
 		this.emit('played', {
 			player,

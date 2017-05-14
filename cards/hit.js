@@ -144,5 +144,7 @@ class HitCard extends BaseCard {
 HitCard.cardType = 'Hit';
 HitCard.probability = 80;
 HitCard.description = 'A basic attack, the staple of all good monsters.';
+HitCard.cost = 4;
+HitCard.level = 1;
 
 module.exports = HitCard;

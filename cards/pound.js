@@ -15,5 +15,7 @@ class PoundCard extends HitCard {
 PoundCard.cardType = 'Pound';
 PoundCard.probability = 10;
 PoundCard.description = 'You wield the mighty pound card and can do double the damage.';
+PoundCard.cost = 8;
+PoundCard.level = 3;
 
 module.exports = PoundCard;

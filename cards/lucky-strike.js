@@ -1,5 +1,11 @@
 /* eslint-disable max-len */
 
+/*
+	Eventually this card will become a lower energy card that instead modifies the next card that is played.
+	It will make the next roll be a roll that is rolled twice with the best result being used.
+	The mechanics are not in place for card chaining yet.
+*/
+
 const HitCard = require('./hit');
 const { roll, max, nat20 } = require('../helpers/chance');
 
@@ -74,5 +80,7 @@ class LuckyStrike extends HitCard {
 LuckyStrike.cardType = 'Lucky Strike';
 LuckyStrike.probability = 20;
 LuckyStrike.description = 'Roll for attack twice, use the best roll to see if you hit.';
+LuckyStrike.cost = 6;
+LuckyStrike.level = 2;
 
 module.exports = LuckyStrike;

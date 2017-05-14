@@ -64,5 +64,7 @@ class FleeCard extends BaseCard {
 FleeCard.cardType = 'Flee';
 FleeCard.probability = 40;
 FleeCard.description = 'There is no shame in living to fight another day.';
+FleeCard.cost = 3;
+FleeCard.level = 1;
 
 module.exports = FleeCard;
