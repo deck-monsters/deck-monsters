@@ -321,7 +321,7 @@ ${monsterCard(monster)}`
 		contestant.character.xp += XP_PER_VICTORY;
 
 		// Also draw a new card for the player
-		const card = this.drawCard();
+		const card = this.drawCard({ character: contestant.character });
 		contestant.character.addCard(card);
 	}
 
