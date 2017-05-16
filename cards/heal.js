@@ -31,20 +31,18 @@ class HealCard extends BaseCard {
 		return new Promise((resolve) => {
 			const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
 			let healResult = healRoll.result;
-			let strokeOfLuck = false;
+			let outcome = '';
 
 			// Stroke of Luck
 			if (isProbable({ probability: 1 })) {
 				healResult = player.maxHp / 2;
-				strokeOfLuck = true;
+				outcome = 'Stroke of luck. Heal half max HP.';
 			}
 
 			this.emit('rolled', {
 				reason: 'to determine how much to heal',
 				card: this,
 				roll: healRoll,
-				strokeOfLuck,
-				curseOfLoki: false,
 				player,
 				target,
 				outcome: ''

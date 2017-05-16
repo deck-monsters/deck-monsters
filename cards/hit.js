@@ -38,35 +38,19 @@ class HitCard extends BaseCard {
 			target
 		});
 
-		let strokeOfLuck = false;
-		let curseOfLoki = false;
+		const { success, strokeOfLuck, curseOfLoki } = this.isSuccessful(attackRoll, target.ac);
 		let commentary;
 
-		if (attackRoll.naturalRoll.result === max(this.attackDice)) {
-			strokeOfLuck = true;
-
-			commentary = 'Nice roll! ';
-
-			if (nat20(attackRoll)) {
-				commentary = `${player.givenName} rolled a natural 20. `;
-			}
-
-			commentary += 'Automatic double max damage.';
-		} else if (attackRoll.naturalRoll.result === 1) {
-			curseOfLoki = true;
-
+		if (strokeOfLuck) {
+			commentary = `${player.givenName} rolled a natural 20. Automatic double max damage.`;
+		} else if (curseOfLoki) {
 			commentary = `${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
 		}
-
-		// results vs AC
-		const success = strokeOfLuck || (!curseOfLoki && target.ac < attackRoll.result);
 
 		this.emit('rolled', {
 			reason: `vs AC (${target.ac})`,
 			card: this,
 			roll: attackRoll,
-			strokeOfLuck,
-			curseOfLoki,
 			player,
 			target,
 			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'

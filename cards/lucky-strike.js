@@ -34,35 +34,19 @@ class LuckyStrike extends HitCard {
 			target
 		});
 
-		let strokeOfLuck = false;
-		let curseOfLoki = false;
 		let commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
-		if (betterRoll.naturalRoll.result === max(this.attackDice)) {
-			strokeOfLuck = true;
+		const { success, strokeOfLuck, curseOfLoki } = this.isSuccessful(betterRoll, target.ac);
 
-			commentary += 'Nice roll! ';
-
-			if (nat20(betterRoll)) {
-				commentary += `${player.givenName} rolled a natural 20. `;
-			}
-
-			commentary += 'Automatic double max damage.';
-		} else if (betterRoll.naturalRoll.result === 1) {
-			curseOfLoki = true;
-
-			commentary = `${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
+		if (strokeOfLuck) {
+			commentary += `${player.givenName} rolled a natural 20. Automatic double max damage.`;
+		} else if (curseOfLoki) {
+			commentary += `${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
 		}
-
-		// results vs AC
-		const success = strokeOfLuck || (!curseOfLoki && target.ac < betterRoll.result);
-
 		this.emit('rolled', {
 			reason: `vs AC (${target.ac})`,
 			card: this,
 			roll: betterRoll,
-			strokeOfLuck,
-			curseOfLoki,
 			player,
 			target,
 			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'

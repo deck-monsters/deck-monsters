@@ -19,24 +19,12 @@ class FleeCard extends BaseCard {
 		return new Promise((resolve) => {
 			const fleeBonus = target.ac - player.ac;
 			const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
-			let strokeOfLuck = false;
-			let curseOfLoki = false;
-
-			// Stroke of Luck
-			if (fleeRoll.naturalRoll === 20) {
-				strokeOfLuck = true;
-			} else if (fleeRoll.naturalRoll === 1) {
-				curseOfLoki = true;
-			}
-
-			const success = !curseOfLoki && (strokeOfLuck || target.ac <= fleeRoll.result);
+			const success = this.isSuccessful(fleeRoll, target.ac);
 
 			this.emit('rolled', {
 				reason: 'to flee',
 				card: this,
 				roll: fleeRoll,
-				strokeOfLuck,
-				curseOfLoki,
 				player,
 				target,
 				outcome: success ? 'success!' : 'fail!'
