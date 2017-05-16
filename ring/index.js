@@ -6,6 +6,7 @@ const BaseClass = require('../baseClass');
 const delayTimes = require('../helpers/delay-times.js');
 
 const MAX_MONSTERS = 2;
+const FIGHT_DELAY = 30000;
 
 class Ring extends BaseClass {
 	constructor (channelManager, options) {
@@ -54,6 +55,8 @@ class Ring extends BaseClass {
 			if (this.contestants.length < 1) {
 				this.clearRing();
 			}
+
+			this.startFightTimer(channel, channelName);
 		}
 	}
 
@@ -80,10 +83,9 @@ class Ring extends BaseClass {
 
 			if (this.contestants.length > MAX_MONSTERS) {
 				this.clearRing();
-			} else if (this.contestants.length === MAX_MONSTERS) {
-				this.channelManager.sendMessages()
-					.then(() => this.fight());
 			}
+
+			this.startFightTimer(channel, channelName);
 		} else {
 			this.channelManager.queueMessage({
 				announce: 'The ring is full! Wait until the current battle is over and try again.',
@@ -111,9 +113,37 @@ class Ring extends BaseClass {
 	}
 
 	clearRing () {
+		clearTimeout(this.fightTimer);
 		this.setEncounterFlag(false);
 		this.options.contestants = [];
 		this.emit('clear');
+	}
+
+	startFightTimer (channel, channelName) {
+		clearTimeout(this.fightTimer);
+
+		if (this.contestants.length >= 2) {
+			this.channelManager.queueMessage({
+				announce: `Fight will begin in ${FIGHT_DELAY / 1000} seconds.`,
+				channel,
+				channelName
+			});
+
+			this.fightTimer = setTimeout(() => {
+				if (this.contestants.length >= 2) {
+					this.channelManager.sendMessages()
+						.then(() => this.fight());
+				}
+			}, FIGHT_DELAY);
+		} else {
+			const needed = 2 - this.contestants.length;
+			const monster = needed > 1 ? 'monsters' : 'monster';
+			this.channelManager.queueMessage({
+				announce: `Fight countdown will begin once ${needed} more ${monster} join the ring.`,
+				channel,
+				channelName
+			});
+		}
 	}
 
 	fight () {
