@@ -7,7 +7,7 @@
 */
 
 const HitCard = require('./hit');
-const { roll, max, nat20 } = require('../helpers/chance');
+const { roll } = require('../helpers/chance');
 
 class LuckyStrike extends HitCard {
 	constructor (options) {

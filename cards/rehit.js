@@ -6,7 +6,7 @@
 */
 
 const HitCard = require('./hit');
-const { roll, max, nat20 } = require('../helpers/chance');
+const { roll } = require('../helpers/chance');
 
 class Rehit extends HitCard {
 	constructor (options) {

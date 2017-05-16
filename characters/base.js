@@ -16,7 +16,7 @@ class BaseCharacter extends BaseCreature {
 
 	get deck () {
 		if (this.options.deck === undefined || this.options.deck.length <= 0) {
-			this.deck = getInitialDeck(options);
+			this.deck = getInitialDeck(this.options);
 		}
 
 		return this.options.deck || [];

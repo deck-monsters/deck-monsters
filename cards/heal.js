@@ -45,7 +45,7 @@ class HealCard extends BaseCard {
 				roll: healRoll,
 				player,
 				target,
-				outcome: ''
+				outcome
 			});
 
 			resolve(player.heal(healResult));
