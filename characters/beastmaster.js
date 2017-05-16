@@ -139,6 +139,28 @@ Which monster would you like to ${action}?`,
 				.then(() => monster));
 	}
 
+	callMonsterOutOfTheRing ({ monsterName, ring, channel, channelName }) {
+		const character = this;
+		let monster = monsterName;
+		// If monster is an empty object or string, it means they didn't pass anything through
+		if (!monster || Object.keys(monster).length === 0) {
+			monster = ring.contestants.find(contestant => contestant.character.name === character.name).monster;
+		}
+		const monsterInRing = ring.contestants.filter(contestant => contestant.monster.name === monster.name);
+
+		return Promise
+			.resolve()
+			.then(() => {
+				if (monsterInRing && monsterInRing.length > 0) {
+					return ring.removeMonster(monster, character, channel, channelName);
+				}
+
+				return Promise.reject(channel({
+					announce: "You don't have any monsters in the ring."
+				}));
+			});
+	}
+
 	sendMonsterToTheRing ({ monsterName, ring, channel, channelName }) {
 		const character = this;
 		const alreadyInRing = ring.contestants.filter(contestant => contestant.character === character);

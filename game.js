@@ -75,6 +75,7 @@ class Game extends BaseClass {
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
 		this.on('ring.add', this.announceContestant);
+		this.on('ring.remove', this.announceContestantLeave);
 		this.on('ring.fight', this.announceFight);
 		this.on('ring.turnBegin', this.announceTurnBegin);
 		this.on('ring.endOfDeck', this.announceEndOfDeck);
@@ -290,6 +291,17 @@ ${monsterCard(monster)}`
 		});
 	}
 
+	announceContestantLeave (className, ring, { contestant }) {
+		const channel = this.publicChannel;
+		const monster = contestant.monster;
+		const character = contestant.character;
+
+		channel({
+			announce:
+`${monster.givenName} has left the ring at the behest of ${character.icon}  ${character.givenName}.`
+		});
+	}
+
 	announceFight (className, ring, { contestants }) {
 		const channel = this.publicChannel;
 
@@ -363,6 +375,10 @@ ${monsterCard(monster)}`
 				},
 				equipMonster ({ monsterName } = {}) {
 					return character.equipMonster({ monsterName, channel })
+						.catch(err => log(err));
+				},
+				callMonsterOutOfTheRing ({ monsterName } = {}) {
+					return character.callMonsterOutOfTheRing({ monsterName, ring, channel, channelName })
 						.catch(err => log(err));
 				},
 				sendMonsterToTheRing ({ monsterName } = {}) {

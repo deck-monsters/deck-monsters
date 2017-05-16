@@ -68,4 +68,5 @@ Promise
 //	.then(() => vlad.equipMonster(vladAnnouncer))
 //	.then(() => char.equipMonster(charAnnouncer))
 	.then(() => vlad.sendMonsterToTheRing())
+	// .then(() => vlad.callMonsterOutOfTheRing())
 	.then(() => char.sendMonsterToTheRing());

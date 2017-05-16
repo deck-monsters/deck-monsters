@@ -29,6 +29,34 @@ class Ring extends BaseClass {
 		return this.options.contestants || [];
 	}
 
+	removeMonster (monster, character, channel, channelName) {
+		if (this.contestants.length > 0) {
+			const contestant = {
+				monster,
+				character,
+				channel,
+				channelName
+			};
+
+			const contestantIndex = this.options.contestants.indexOf(contestant);
+			this.options.contestants = this.options.contestants.splice(contestantIndex, 1);
+
+			this.emit('remove', {
+				contestant
+			});
+
+			this.channelManager.queueMessage({
+				announce: `${monster.givenName} has left the ring.`,
+				channel,
+				channelName
+			});
+
+			if (this.contestants.length < 1) {
+				this.clearRing();
+			}
+		}
+	}
+
 	addMonster (monster, character, channel, channelName) {
 		if (this.contestants.length < MAX_MONSTERS) {
 			const contestant = {
