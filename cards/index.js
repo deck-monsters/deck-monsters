@@ -8,6 +8,8 @@ const HitCard = require('./hit');
 const HealCard = require('./heal');
 const PoundCard = require('./pound');
 const LuckyStrike = require('./lucky-strike');
+const HitHarderCard = require('./hit-harder');
+const RehitCard = require('./rehit');
 // const ReviveCard = require('./revive');
 
 const all = [
@@ -17,13 +19,23 @@ const all = [
 	HitCard,
 	HealCard,
 	PoundCard,
-	LuckyStrike
+	LuckyStrike,
+	HitHarderCard,
+	RehitCard
 ];
 
-const draw = (options) => {
-	const shuffledDeck = shuffle(all);
+const draw = (opts) => {
+	const defaultOptions = {
+		character: {
+			level: 1
+		}
+	};
 
-	const Card = shuffledDeck.find(isProbable);
+	const options = Object.assign(defaultOptions, opts);
+	const shuffledDeck = shuffle(all);
+	const filteredDeck = shuffledDeck.filter(card => options.character.level >= card.level);
+
+	const Card = filteredDeck.find(isProbable);
 
 	if (!Card) return draw(options);
 
@@ -31,7 +43,7 @@ const draw = (options) => {
 };
 
 const getInitialDeck = options => [
-	new LuckyStrike(options),
+	new HitCard(options),
 	new HitCard(options),
 	new HealCard(options),
 	new FleeCard(options),

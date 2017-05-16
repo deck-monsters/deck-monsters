@@ -36,5 +36,7 @@ class CurseCard extends BaseCard {
 CurseCard.cardType = 'Soften';
 CurseCard.probability = 10;
 CurseCard.description = 'Sweep the leg... You have a problem with that? No mercy.';
+CurseCard.cost = 2;
+CurseCard.level = 1;
 
 module.exports = CurseCard;

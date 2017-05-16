@@ -1,6 +1,7 @@
 const BaseClass = require('../baseClass');
 
 const { formatCard } = require('../helpers/card');
+const { max } = require('../helpers/chance');
 
 class BaseCard extends BaseClass {
 	constructor (options) {
@@ -21,6 +22,30 @@ class BaseCard extends BaseClass {
 
 	get icon () {
 		return this.options.icon;
+	}
+
+	get cost () {
+		return this.constructor.cost;
+	}
+
+	get level () {
+		return this.constructor.level;
+	}
+
+	static checkSuccess (roll, targetNumber) {
+		let strokeOfLuck = false;
+		let curseOfLoki = false;
+
+		// Stroke of Luck
+		if (roll.naturalRoll.result === max(roll.primaryDice)) {
+			strokeOfLuck = true;
+		} else if (roll.naturalRoll === 1) {
+			curseOfLoki = true;
+		}
+
+		const success = !curseOfLoki && (strokeOfLuck || targetNumber < roll.result);
+
+		return { success, strokeOfLuck, curseOfLoki };
 	}
 
 	play (player, target, ring) {

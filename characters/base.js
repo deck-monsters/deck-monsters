@@ -4,7 +4,7 @@ const { getInitialDeck } = require('../cards');
 class BaseCharacter extends BaseCreature {
 	constructor (options) {
 		const defaultOptions = {
-			deck: getInitialDeck()
+			deck: getInitialDeck(options)
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -16,7 +16,7 @@ class BaseCharacter extends BaseCreature {
 
 	get deck () {
 		if (this.options.deck === undefined || this.options.deck.length <= 0) {
-			this.deck = getInitialDeck();
+			this.deck = getInitialDeck(this.options);
 		}
 
 		return this.options.deck || [];
