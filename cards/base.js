@@ -32,7 +32,7 @@ class BaseCard extends BaseClass {
 		return this.constructor.level;
 	}
 
-	static checkSuccess (roll, targetNumber) {
+	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
 

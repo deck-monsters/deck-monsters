@@ -19,7 +19,7 @@ class FleeCard extends BaseCard {
 		return new Promise((resolve) => {
 			const fleeBonus = target.ac - player.ac;
 			const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
-			const success = this.isSuccessful(fleeRoll, target.ac);
+			const success = this.checkSuccess(fleeRoll, target.ac);
 
 			this.emit('rolled', {
 				reason: 'to flee',
