@@ -56,7 +56,8 @@ class Ring extends BaseClass {
 				this.clearRing();
 			}
 
-			this.startFightTimer(channel, channelName);
+			this.channelManager.sendMessages()
+				.then(() => this.startFightTimer(channel, channelName));
 		}
 	}
 
@@ -85,7 +86,8 @@ class Ring extends BaseClass {
 				this.clearRing();
 			}
 
-			this.startFightTimer(channel, channelName);
+			this.channelManager.sendMessages()
+				.then(() => this.startFightTimer(channel, channelName));
 		} else {
 			this.channelManager.queueMessage({
 				announce: 'The ring is full! Wait until the current battle is over and try again.',

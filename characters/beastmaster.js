@@ -144,15 +144,20 @@ Which monster would you like to ${action}?`,
 		let monster = monsterName;
 		// If monster is an empty object or string, it means they didn't pass anything through
 		if (!monster || Object.keys(monster).length === 0) {
-			monster = ring.contestants.find(contestant => contestant.character.name === character.name).monster;
+			console.log('here');
+			monster = ring.contestants.find(contestant => contestant.character.name.toLowerCase() === character.name.toLowerCase()).monster;
+			console.log('monster gotten', monster);
 		}
-		const monsterInRing = ring.contestants.filter(contestant => contestant.monster.name === monster.name);
+		const monsterInRing = ring.contestants.find((contestant) => {
+			console.log(contestant.monster.givenName.toLowerCase(), monster.toLowerCase());
+			return contestant.monster.givenName.toLowerCase() === monster.toLowerCase();
+		}).monster;
 
 		return Promise
 			.resolve()
 			.then(() => {
-				if (monsterInRing && monsterInRing.length > 0) {
-					return ring.removeMonster(monster, character, channel, channelName);
+				if (monsterInRing && monsterInRing.givenName) {
+					return ring.removeMonster(monsterInRing, character, channel, channelName);
 				}
 
 				return Promise.reject(channel({
