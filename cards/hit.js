@@ -38,7 +38,7 @@ class HitCard extends BaseCard {
 			target
 		});
 
-		const { success, strokeOfLuck, curseOfLoki } = this.isSuccessful(attackRoll, target.ac);
+		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target.ac);
 		let commentary;
 
 		if (strokeOfLuck) {

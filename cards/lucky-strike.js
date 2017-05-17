@@ -36,7 +36,7 @@ class LuckyStrike extends HitCard {
 
 		let commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
-		const { success, strokeOfLuck, curseOfLoki } = this.isSuccessful(betterRoll, target.ac);
+		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(betterRoll, target.ac);
 
 		if (strokeOfLuck) {
 			commentary += `${player.givenName} rolled a natural 20. Automatic double max damage.`;

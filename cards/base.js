@@ -32,7 +32,7 @@ class BaseCard extends BaseClass {
 		return this.constructor.level;
 	}
 
-	static checkSuccess (roll, targetNumber) {
+	checkSuccess (roll, targetNumber) {
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
 
