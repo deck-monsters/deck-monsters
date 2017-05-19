@@ -79,7 +79,7 @@ const flavor = {
 			[' squishy', 12],
 			[' fuzzy', 13],
 			[' sleep deprived', 19],
-			[' motherly... In the way that a mother bear between whom it and its cubs you have just stepped is motherly.', 40],
+			[' motherly --In the way that a mother bear between whom it and its cubs you have just stepped is motherly--', 40],
 			[' not surprisingly, drunken', 20],
 			[' rash-covered', 7],
 			[' freshly bathed', 4],
