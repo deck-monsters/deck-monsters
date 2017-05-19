@@ -82,10 +82,23 @@ class Game extends BaseClass {
 		this.on('ring.fightConcludes', this.announceFightConcludes);
 
 		this.on('cardDrop', this.announceCardDrop);
+		this.on('gainedXP', this.announceXPGain);
 
 		// Manage Fights
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
+	}
+
+	announceXPGain (className, game, { contestant, creature, xpGained }) {
+		const channel = contestant.channel;
+		const channelName = contestant.channelName;
+
+		this.channelManager.queueMessage({
+			announce: `${creature.identity} gained ${xpGained}XP`,
+			channel,
+			channelName,
+			event: { name: 'gainedXP', properties: { creature } }
+		});
 	}
 
 	announceCardDrop (className, game, { contestant, card }) {
@@ -99,7 +112,7 @@ class Game extends BaseClass {
 		});
 
 		this.channelManager.queueMessage({
-			announce: `The following card dropped for ${contestant.monster.givenName}'s victory for ${contestant.character.identity}:
+			announce: `The following card dropped for ${contestant.monster.identity}'s victory for ${contestant.character.identity}:
 ${cardDropped}`,
 			channel,
 			channelName,
@@ -347,6 +360,18 @@ ${monsterCard(monster)}`
 			contestant,
 			card
 		});
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.character,
+			xpGained: XP_PER_VICTORY
+		});
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.monster,
+			xpGained: XP_PER_VICTORY
+		});
 	}
 
 	handleLoser (className, monster, { contestant }) { // eslint-disable-line class-methods-use-this
@@ -354,6 +379,12 @@ ${monsterCard(monster)}`
 
 		// The character still earns a small bit of XP in the case of defeat
 		contestant.character.xp += XP_PER_DEFEAT;
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.character,
+			xpGained: XP_PER_DEFEAT
+		});
 	}
 
 	clearRing () {
