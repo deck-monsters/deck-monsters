@@ -25,12 +25,11 @@ class BaseMonster extends BaseCreature {
 		});
 	}
 
-	get cardSlots () {
-		if (this.options.cardSlots === undefined) this.cardSlots = DEFAULT_CARD_SLOTS;
-		if (this.options.cardSlots !== DEFAULT_CARD_SLOTS) this.cardSlots = DEFAULT_CARD_SLOTS; // enforce default for now
-		const cardSlots = this.options.cardSlots || 0;
+	get cardSlots () { // eslint-disable-line class-methods-use-this
+		// if (this.options.cardSlots === undefined) this.cardSlots = DEFAULT_CARD_SLOTS;
+		// const cardSlots = this.options.cardSlots || 0;
 
-		return cardSlots;
+		return DEFAULT_CARD_SLOTS; // enforce default for now
 	}
 
 	set cardSlots (cardSlots) {
