@@ -81,9 +81,30 @@ class Game extends BaseClass {
 		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
 
+		this.on('cardDrop', this.announceCardDrop);
+
 		// Manage Fights
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
+	}
+
+	announceCardDrop (className, game, { contestant, card }) {
+		const channel = contestant.channel;
+		const channelName = contestant.channelName;
+
+		const cardDropped = formatCard({
+			title: `${card.icon}  ${card.cardType}`,
+			description: card.description,
+			stats: card.stats
+		});
+
+		this.channelManager.queueMessage({
+			announce: `The following card dropped for ${contestant.monster.givenName}'s victory for ${contestant.character.identity}:
+${cardDropped}`,
+			channel,
+			channelName,
+			event: { name: 'wonCard', properties: { character: contestant.character } }
+		});
 	}
 
 	/* eslint-disable max-len */
@@ -321,6 +342,11 @@ ${monsterCard(monster)}`
 		// Also draw a new card for the player
 		const card = this.drawCard({ character: contestant.character });
 		contestant.character.addCard(card);
+
+		this.emit('cardDrop', {
+			contestant,
+			card
+		});
 	}
 
 	handleLoser (className, monster, { contestant }) { // eslint-disable-line class-methods-use-this
