@@ -298,7 +298,7 @@ ${monsterCard(monster)}`
 
 		channel({
 			announce:
-`${monster.givenName} has left the ring at the behest of ${character.icon}  ${character.givenName}.`
+`${monster.givenName} was summoned from the ring by ${character.identity}.`
 		});
 	}
 
@@ -377,7 +377,7 @@ ${monsterCard(monster)}`
 					return character.equipMonster({ monsterName, channel })
 						.catch(err => log(err));
 				},
-				callMonsterOutOfTheRing ({ monsterName } = {}) {
+				callMonsterOutOfTheRing ({ monsterName } = '') {
 					return character.callMonsterOutOfTheRing({ monsterName, ring, channel, channelName })
 						.catch(err => log(err));
 				},

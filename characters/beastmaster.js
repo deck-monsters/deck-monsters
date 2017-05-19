@@ -1,6 +1,7 @@
 const BaseCharacter = require('./base');
 const { spawn, equip } = require('../monsters');
 const { getMonsterChoices } = require('../helpers/choices');
+const TENSE = require('../helpers/tense');
 
 const { monsterCard } = require('../helpers/card');
 
@@ -76,7 +77,7 @@ class Beastmaster extends BaseCharacter {
 		}));
 	}
 
-	chooseMonster ({ channel, monsters = this.monsters, monsterName, action = 'pick' }) {
+	chooseMonster ({ channel, monsters = this.monsters, monsterName, action = 'pick', reason = 'you don\'t appear to have a living monster by that name.' }) { // eslint-disable-line max-len
 		return Promise
 			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
@@ -94,7 +95,7 @@ class Beastmaster extends BaseCharacter {
 					}
 
 					return Promise.reject(channel({
-						announce: `You don't have a living monster named ${monsterName}.`
+						announce: `${monsterName} is not able to be ${TENSE[action].PAST} right now, because ${reason}`
 					}));
 				} else if (numberOfMonsters === 1) {
 					return monsters[0];
@@ -141,29 +142,25 @@ Which monster would you like to ${action}?`,
 
 	callMonsterOutOfTheRing ({ monsterName, ring, channel, channelName }) {
 		const character = this;
-		let monster = monsterName;
-		// If monster is an empty object or string, it means they didn't pass anything through
-		if (!monster || Object.keys(monster).length === 0) {
-			console.log('here');
-			monster = ring.contestants.find(contestant => contestant.character.name.toLowerCase() === character.name.toLowerCase()).monster;
-			console.log('monster gotten', monster);
+		const monsters = [];
+
+		// filter down to monsters already in the ring
+		ring.contestants.forEach((contestant) => {
+			if (contestant.character.name === character.name) {
+				monsters.push(contestant.monster);
+			}
+		});
+
+		if (monsters.length <= 0) {
+			return Promise.reject(channel({
+				announce: "It doesn't look like any of your monsters are in the ring right now."
+			}));
 		}
-		const monsterInRing = ring.contestants.find((contestant) => {
-			console.log(contestant.monster.givenName.toLowerCase(), monster.toLowerCase());
-			return contestant.monster.givenName.toLowerCase() === monster.toLowerCase();
-		}).monster;
 
 		return Promise
 			.resolve()
-			.then(() => {
-				if (monsterInRing && monsterInRing.givenName) {
-					return ring.removeMonster(monsterInRing, character, channel, channelName);
-				}
-
-				return Promise.reject(channel({
-					announce: "You don't have any monsters in the ring."
-				}));
-			});
+			.then(() => this.chooseMonster({ channel, monsters, monsterName, action: 'call from the ring', reason: 'they do not appear to be in the ring.' })) // eslint-disable-line max-len
+			.then(monsterInRing => ring.removeMonster(monsterInRing, character, channel, channelName));
 	}
 
 	sendMonsterToTheRing ({ monsterName, ring, channel, channelName }) {

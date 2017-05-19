@@ -6,6 +6,7 @@ const BaseClass = require('../baseClass');
 const delayTimes = require('../helpers/delay-times.js');
 
 const MAX_MONSTERS = 2;
+const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 30000;
 
 class Ring extends BaseClass {
@@ -31,34 +32,51 @@ class Ring extends BaseClass {
 	}
 
 	removeMonster (monster, character, channel, channelName) {
-		if (this.contestants.length > 0) {
-			const contestant = {
-				monster,
-				character,
-				channel,
-				channelName
-			};
+		return Promise
+			.resolve()
+			.then(() => {
+				if (this.contestants.length <= 0) {
+					return Promise.reject(channel({
+						announce: 'No monsters currently in ring'
+					}));
+				}
 
-			const contestantIndex = this.options.contestants.indexOf(contestant);
-			this.options.contestants = this.options.contestants.splice(contestantIndex, 1);
+				if (!monster || !monster.givenName) {
+					return Promise.reject(channel({
+						announce: 'No monster specified to remove from ring'
+					}));
+				}
 
-			this.emit('remove', {
-				contestant
+				if (!this.monsterIsInRing(monster)) {
+					return Promise.reject(channel({
+						announce: 'Your monster is not currently in the ring'
+					}));
+				}
+
+				return { monster, character, channel, channelName };
+			})
+			.then((contestant) => {
+				const contestantIndex = this.options.contestants.indexOf(contestant);
+
+				this.options.contestants.splice(contestantIndex, 1);
+
+				if (this.contestants.length < 1) {
+					this.clearRing();
+				}
+
+				this.emit('remove', {
+					contestant
+				});
+
+				this.channelManager.queueMessage({
+					announce: `${monster.givenName} has returned to nestle safely into your warm embrace.`,
+					channel,
+					channelName
+				});
+
+				this.channelManager.sendMessages()
+					.then(() => this.startFightTimer(channel, channelName));
 			});
-
-			this.channelManager.queueMessage({
-				announce: `${monster.givenName} has left the ring.`,
-				channel,
-				channelName
-			});
-
-			if (this.contestants.length < 1) {
-				this.clearRing();
-			}
-
-			this.channelManager.sendMessages()
-				.then(() => this.startFightTimer(channel, channelName));
-		}
 	}
 
 	addMonster (monster, character, channel, channelName) {
@@ -124,9 +142,9 @@ class Ring extends BaseClass {
 	startFightTimer (channel, channelName) {
 		clearTimeout(this.fightTimer);
 
-		if (this.contestants.length >= 2) {
+		if (this.contestants.length >= MIN_MONSTERS) {
 			this.channelManager.queueMessage({
-				announce: `Fight will begin in ${FIGHT_DELAY / 1000} seconds.`,
+				announce: `Fight will begin in ${Math.floor(FIGHT_DELAY / 1000)} seconds.`,
 				channel,
 				channelName
 			});
@@ -138,7 +156,7 @@ class Ring extends BaseClass {
 				}
 			}, FIGHT_DELAY);
 		} else {
-			const needed = 2 - this.contestants.length;
+			const needed = MIN_MONSTERS - this.contestants.length;
 			const monster = needed > 1 ? 'monsters' : 'monster';
 			this.channelManager.queueMessage({
 				announce: `Fight countdown will begin once ${needed} more ${monster} join the ring.`,
