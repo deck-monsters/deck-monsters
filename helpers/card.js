@@ -29,7 +29,6 @@ ${wrap(rankings, { indent: '| ', width: 40 })}`
 );
 
 const cardRarity = (card) => {
-
 	if (card.probability >= 75) {
 		return '•';
 	} else if (card.probability >= 50) {
