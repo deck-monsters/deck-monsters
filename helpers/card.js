@@ -28,6 +28,12 @@ ${wrap(rankings, { indent: '| ', width: 40 })}`
 `.replace(/^\s*[\r\n]/gm, '')
 );
 
+const actionCard = card => formatCard({
+	title: `${card.icon}  ${card.cardType}`,
+	description: card.description,
+	stats: card.stats
+});
+
 const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.name} > ${monster.givenName}`,
 	description: verbose ? upperFirst(monster.individualDescription) : '',
@@ -35,4 +41,4 @@ const monsterCard = (monster, verbose = true) => formatCard({
 	rankings: verbose ? monster.rankings : ''
 });
 
-module.exports = { formatCard, monsterCard };
+module.exports = { formatCard, monsterCard, actionCard };

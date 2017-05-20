@@ -12,7 +12,7 @@ const PlayerHandbook = require('./player-handbook');
 const ChannelManager = require('./channel');
 
 const { getFlavor } = require('./helpers/flavor');
-const { formatCard, monsterCard } = require('./helpers/card');
+const { actionCard, monsterCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
@@ -90,11 +90,7 @@ class Game extends BaseClass {
 	announceCard (className, card, { player }) {
 		const channel = this.publicChannel;
 
-		const cardPlayed = formatCard({
-			title: `${card.icon}  ${card.cardType}`,
-			description: card.description,
-			stats: card.stats
-		});
+		const cardPlayed = actionCard(card);
 
 		channel({
 			announce:

@@ -1,6 +1,6 @@
 const BaseClass = require('../baseClass');
 
-const { formatCard } = require('../helpers/card');
+const { actionCard } = require('../helpers/card');
 const { max } = require('../helpers/chance');
 
 class BaseCard extends BaseClass {
@@ -66,11 +66,7 @@ class BaseCard extends BaseClass {
 		return Promise
 			.resolve()
 			.then(() => channel({
-				announce: formatCard({
-					title: `${this.icon}  ${this.cardType}`,
-					description: this.description,
-					stats: this.stats
-				})
+				announce: actionCard(this)
 			}));
 	}
 }

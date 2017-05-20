@@ -1,6 +1,6 @@
 const BaseCreature = require('../creatures/base');
 const { getInitialDeck, getUniqueCards, getCardCounts } = require('../cards');
-const { formatCard, monsterCard } = require('../helpers/card');
+const { monsterCard, actionCard } = require('../helpers/card');
 const foreach = require('lodash.foreach');
 
 class BaseCharacter extends BaseCreature {
@@ -55,11 +55,7 @@ class BaseCharacter extends BaseCreature {
 
 	lookAtCards (channel) {
 		const cardImages = getUniqueCards(this.deck).reduce((cards, card) =>
-			cards + formatCard({
-				title: `${card.icon}  ${card.cardType}`,
-				description: card.description,
-				stats: card.stats
-			}), '');
+			cards + actionCard(card), '');
 
 		let cardCounts = '';
 		foreach(getCardCounts(this.deck), (count, card) => {
