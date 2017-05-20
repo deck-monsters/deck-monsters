@@ -32,6 +32,10 @@ class BaseCard extends BaseClass {
 		return this.constructor.level;
 	}
 
+	get probability () {
+		return this.constructor.probability;
+	}
+
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
 		let strokeOfLuck = false;
 		let curseOfLoki = false;

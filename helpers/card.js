@@ -28,8 +28,23 @@ ${wrap(rankings, { indent: '| ', width: 40 })}`
 `.replace(/^\s*[\r\n]/gm, '')
 );
 
+const cardRarity = (card) => {
+
+	if (card.probability >= 75) {
+		return '•';
+	} else if (card.probability >= 50) {
+		return '○';
+	} else if (card.probability >= 20) {
+		return '◆';
+	} else if (card.probability >= 10) {
+		return '★';
+	}
+
+	return '☆';
+};
+
 const actionCard = card => formatCard({
-	title: `${card.icon}  ${card.cardType}`,
+	title: `${card.icon}  ${card.cardType}  ${cardRarity(card)}`,
 	description: card.description,
 	stats: card.stats
 });
