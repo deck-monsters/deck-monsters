@@ -49,7 +49,7 @@ const actionCard = card => formatCard({
 });
 
 const monsterCard = (monster, verbose = true) => formatCard({
-	title: `${monster.icon}  ${monster.name} > ${monster.givenName}`,
+	title: `${monster.icon}  ${monster.name} - ${monster.givenName}`,
 	description: verbose ? upperFirst(monster.individualDescription) : '',
 	stats: monster.stats,
 	rankings: verbose ? monster.rankings : ''

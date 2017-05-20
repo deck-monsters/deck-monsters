@@ -456,6 +456,14 @@ ${monsterCard(monster)}`
 		}));
 	}
 
+	getRing () {
+		return this.ring;
+	}
+
+	lookAtRing (channel, ringName = 'main') {
+		return this.getRing(ringName).look(channel);
+	}
+
 	lookAt (channel, thing) {
 		if (thing) {
 			// What is this thing?
