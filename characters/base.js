@@ -1,5 +1,7 @@
 const BaseCreature = require('../creatures/base');
-const { getInitialDeck } = require('../cards');
+const { getInitialDeck, getUniqueCards, getCardCounts } = require('../cards');
+const { formatCard } = require('../helpers/card');
+const foreach = require('lodash.foreach');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options) {
@@ -32,6 +34,37 @@ class BaseCharacter extends BaseCreature {
 		this.deck = [...this.deck, card];
 
 		this.emit('cardAdded', { card });
+	}
+
+	lookAtCards (channel) {
+		const cardImages = getUniqueCards(this.deck).reduce((cards, card) =>
+			cards + formatCard({
+				title: `${card.icon}  ${card.cardType}`,
+				description: card.description,
+				stats: card.stats
+			}), '');
+
+		let cardCounts = '';
+		foreach(getCardCounts(this.deck), (count, card) => {
+			cardCounts += `${card} (${count})
+`;
+		});
+
+
+		const deckDisplay = `${cardImages} ${cardCounts}`;
+
+		if (deckDisplay) {
+			return Promise
+				.resolve()
+				.then(() => channel({
+					announce: deckDisplay
+				}));
+		}
+
+		return Promise.reject(channel({
+			announce: "Strangely enough, somehow you don't have any cards.",
+			delay: 'short'
+		}));
 	}
 }
 

@@ -385,6 +385,18 @@ ${monsterCard(monster)}`
 					return game.lookAtCard(channel, cardName)
 						.catch(err => log(err));
 				},
+				lookAtCards ({ deckName } = {}) {
+					return character.lookAtCards(channel, deckName)
+						.catch(err => log(err));
+				},
+				lookAtMonsters ({ monsterPoolName } = {}) {
+					return character.lookAtMonsters(channel, monsterPoolName)
+						.catch(err => log(err));
+				},
+				lookAtRing ({ ringName } = {}) {
+					return game.lookAtRing(channel, ringName)
+						.catch(err => log(err));
+				},
 				lookAt (thing) {
 					return game.lookAt(channel, thing)
 						.catch(err => log(err));

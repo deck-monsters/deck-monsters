@@ -42,6 +42,24 @@ const draw = (opts) => {
 	return new Card(options);
 };
 
+const getCardCounts = (cards) => {
+	const cardCounts = {};
+
+	cards.forEach((card) => {
+		cardCounts[card.cardType] = cardCounts[card.cardType] || 0;
+		cardCounts[card.cardType] += 1;
+	});
+
+	return cardCounts;
+};
+
+const getUniqueCards = cards =>
+	cards.reduce((uniqueCards, card) =>
+		uniqueCards.concat(!uniqueCards.find(possibleCard =>
+			possibleCard.name === card.name
+		) ? [card] : [])
+	, []);
+
 const getInitialDeck = options => [
 	new HitCard(options),
 	new HitCard(options),
@@ -64,5 +82,7 @@ module.exports = {
 	draw,
 	getInitialDeck,
 	hydrateCard,
-	hydrateDeck
+	hydrateDeck,
+	getUniqueCards,
+	getCardCounts
 };
