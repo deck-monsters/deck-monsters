@@ -1,5 +1,5 @@
-const { hydrateCard } = require('../cards');
-const { getChoices, getCardChoices, getCreatureTypeChoices } = require('../helpers/choices');
+const { hydrateCard, getCardCounts } = require('../cards');
+const { getChoices, getCardChoices, getCreatureTypeChoices, getFinalCardChoices } = require('../helpers/choices');
 const PRONOUNS = require('../helpers/pronouns');
 const Basilisk = require('./basilisk');
 const Minotaur = require('./minotaur');
@@ -129,22 +129,27 @@ const equip = (deck, monster, channel) => {
 	const cards = [];
 	const cardSlots = monster.cardSlots;
 
-	const addCard = ({ remainingSlots, remainingCards }) => Promise
+	const addCard = ({ remainingSlots, remainingCards }) => {
+		const possibleCards = getCardCounts(remainingCards);
+
+		return Promise
 		.resolve()
 		.then(() => channel({
 			question:
 `You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
 
-${getCardChoices(remainingCards)}
+${getCardChoices(possibleCards)}
 
 Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`,
-			choices: Object.keys(remainingCards)
+			choices: Object.keys(Object.keys(possibleCards))
 		}))
 		.then((answer) => {
 			const nowRemainingSlots = remainingSlots - 1;
 			const nowRemainingCards = [...remainingCards];
-			const selectedCard = nowRemainingCards[answer];
-			nowRemainingCards.splice(answer, 1);
+			const selectedCardType = Object.keys(possibleCards)[answer];
+			const cardInPool = nowRemainingCards.findIndex(card => card.cardType === selectedCardType);
+
+			const selectedCard = nowRemainingCards.splice(cardInPool, 1)[0];
 			cards.push(selectedCard);
 
 			return channel({
@@ -156,7 +161,7 @@ Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`
 						announce:
 `You've filled your slots with the following cards:
 
-${getCardChoices(cards)}`
+${getFinalCardChoices(cards)}`
 					});
 				}
 
@@ -165,7 +170,7 @@ ${getCardChoices(cards)}`
 						announce:
 `You're out of cards to equip, but you've equiped the following cards:
 
-${getCardChoices(cards)}`
+${getFinalCardChoices(cards)}`
 					});
 				}
 
@@ -173,6 +178,7 @@ ${getCardChoices(cards)}`
 			})
 			.then(() => cards);
 		});
+	};
 
 	return Promise
 		.resolve()
