@@ -1,6 +1,6 @@
 const emoji = require('node-emoji');
 
-const { hydrateCard } = require('../cards');
+const { hydrateCard, fillDeck } = require('../cards');
 const { hydrateMonster } = require('../monsters');
 const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
 const PRONOUNS = require('../helpers/pronouns');
@@ -95,7 +95,12 @@ const hydrateCharacter = (characterObj) => {
 	options.deck = options.deck.map(hydrateCard);
 	options.monsters = options.monsters.map(hydrateMonster);
 
-	return new Character(options);
+	const character = new Character(options);
+
+	// if deck minimum changes, and player now has fewer than minimum cards in already initialized deck, fill them up! (yes, this has happened)
+	character.deck = fillDeck(options.deck, { character: { level: character.level } });
+
+	return character;
 };
 
 const hydrateCharacters = charactersJSON => JSON
