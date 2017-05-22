@@ -96,8 +96,7 @@ class Game extends BaseClass {
 		this.channelManager.queueMessage({
 			announce: `${creature.identity} gained ${xpGained}XP`,
 			channel,
-			channelName,
-			event: { name: 'gainedXP', properties: { creature } }
+			channelName
 		});
 	}
 
@@ -115,8 +114,7 @@ class Game extends BaseClass {
 			announce: `The following card dropped for ${contestant.monster.identity}'s victory for ${contestant.character.identity}:
 ${cardDropped}`,
 			channel,
-			channelName,
-			event: { name: 'wonCard', properties: { character: contestant.character } }
+			channelName
 		});
 	}
 
