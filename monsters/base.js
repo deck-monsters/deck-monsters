@@ -2,7 +2,7 @@ const BaseCreature = require('../creatures/base');
 
 const { monsterCard } = require('../helpers/card');
 
-const DEFAULT_CARD_SLOTS = 3;
+const DEFAULT_CARD_SLOTS = 7;
 
 class BaseMonster extends BaseCreature {
 	constructor (options) {
@@ -25,12 +25,11 @@ class BaseMonster extends BaseCreature {
 		});
 	}
 
-	get cardSlots () {
-		if (this.options.cardSlots === undefined) this.cardSlots = DEFAULT_CARD_SLOTS;
-		const cardSlots = this.options.cardSlots || 0;
-		const level = this.level || 0;
+	get cardSlots () { // eslint-disable-line class-methods-use-this
+		// if (this.options.cardSlots === undefined) this.cardSlots = DEFAULT_CARD_SLOTS;
+		// const cardSlots = this.options.cardSlots || 0;
 
-		return cardSlots + level;
+		return DEFAULT_CARD_SLOTS; // enforce default for now
 	}
 
 	set cardSlots (cardSlots) {
