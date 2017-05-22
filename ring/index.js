@@ -31,6 +31,15 @@ class Ring extends BaseClass {
 		return this.options.contestants || [];
 	}
 
+	getMonsters (targetCharacter) {
+		let targetContestants = [...this.contestants];
+		if (targetCharacter) {
+			targetContestants = targetContestants.filter(contestant => contestant.character === targetCharacter);
+		}
+
+		return targetContestants.map(contestant => contestant.monster);
+	}
+
 	removeMonster (monster, character, channel, channelName) {
 		return Promise
 			.resolve()
@@ -116,8 +125,7 @@ class Ring extends BaseClass {
 	}
 
 	monsterIsInRing (monster) {
-		const contestants = this.contestants;
-		return !!contestants.find(contestant => contestant.monster === monster);
+		return !!this.contestants.find(contestant => contestant.monster === monster);
 	}
 
 	// TO-DO: This should probably be an encounter start / end method we call on the creature

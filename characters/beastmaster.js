@@ -141,15 +141,7 @@ Which monster would you like to ${action}?`,
 	}
 
 	callMonsterOutOfTheRing ({ monsterName, ring, channel, channelName }) {
-		const character = this;
-		const monsters = [];
-
-		// filter down to monsters already in the ring
-		ring.contestants.forEach((contestant) => {
-			if (contestant.character.name === character.name) {
-				monsters.push(contestant.monster);
-			}
-		});
+		const monsters = ring.getMonsters(this);
 
 		if (monsters.length <= 0) {
 			return Promise.reject(channel({
@@ -160,7 +152,7 @@ Which monster would you like to ${action}?`,
 		return Promise
 			.resolve()
 			.then(() => this.chooseMonster({ channel, monsters, monsterName, action: 'call from the ring', reason: 'they do not appear to be in the ring.' })) // eslint-disable-line max-len
-			.then(monsterInRing => ring.removeMonster(monsterInRing, character, channel, channelName));
+			.then(monsterInRing => ring.removeMonster(monsterInRing, this, channel, channelName));
 	}
 
 	sendMonsterToTheRing ({ monsterName, ring, channel, channelName }) {
