@@ -357,8 +357,8 @@ ${monsterCard(monster)}`
 					return character.spawnMonster(channel, Object.assign({}, options, { game }))
 						.catch(err => log(err));
 				},
-				equipMonster ({ monsterName } = {}) {
-					return character.equipMonster({ monsterName, channel })
+				equipMonster ({ monsterName, cardSelection } = {}) {
+					return character.equipMonster({ monsterName, cardSelection, channel })
 						.catch(err => log(err));
 				},
 				sendMonsterToTheRing ({ monsterName } = {}) {
