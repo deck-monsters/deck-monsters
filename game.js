@@ -3,8 +3,8 @@ const reduce = require('lodash.reduce');
 const { globalSemaphore } = require('./helpers/semaphore');
 const BaseClass = require('./baseClass');
 const Ring = require('./ring');
-const { all: allCards, draw } = require('./cards');
-const { all: allMonsters } = require('./monsters');
+const { all: cardTypes, draw } = require('./cards');
+const { all: monsterTypes } = require('./monsters');
 const { create: createCharacter } = require('./characters');
 
 const PlayerHandbook = require('./player-handbook');
@@ -465,14 +465,14 @@ ${monsterCard(monster)}`
 	}
 
 	static getCardTypes () {
-		return allCards.reduce((obj, Card) => {
+		return cardTypes.reduce((obj, Card) => {
 			obj[Card.cardType.toLowerCase()] = Card;
 			return obj;
 		}, {});
 	}
 
 	static getMonsterTypes () {
-		return allMonsters.reduce((obj, Monster) => {
+		return monsterTypes.reduce((obj, Monster) => {
 			obj[Monster.monsterType.toLowerCase()] = Monster;
 			return obj;
 		}, {});
@@ -486,8 +486,8 @@ ${monsterCard(monster)}`
 
 	lookAtMonster (channel, monsterName) {
 		if (monsterName) {
-			const monsters = this.getAllMonsters();
-			const monster = monsters.find(potentialMonster => potentialMonster.givenName.toLowerCase() === monsterName.toLowerCase());
+			const allMonsters = this.getAllMonsters();
+			const monster = allMonsters.find(potentialMonster => potentialMonster.givenName.toLowerCase() === monsterName.toLowerCase());
 
 			if (monster) return monster.look(channel);
 		}
