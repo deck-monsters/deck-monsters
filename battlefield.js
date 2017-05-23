@@ -68,4 +68,10 @@ Promise
 //	.then(() => vlad.equipMonster(vladAnnouncer))
 //	.then(() => char.equipMonster(charAnnouncer))
 	.then(() => vlad.sendMonsterToTheRing())
-	.then(() => char.sendMonsterToTheRing());
+	.then(() => char.sendMonsterToTheRing())
+	.then(() => {
+		setTimeout(() => {
+			vlad.callMonsterOutOfTheRing()
+				.then(() => vlad.sendMonsterToTheRing());
+		}, 15000);
+	});

@@ -3,8 +3,8 @@ const reduce = require('lodash.reduce');
 const { globalSemaphore } = require('./helpers/semaphore');
 const BaseClass = require('./baseClass');
 const Ring = require('./ring');
-const { all: allCards, draw } = require('./cards');
-const { all: allMonsters } = require('./monsters');
+const { all: cardTypes, draw } = require('./cards');
+const { all: monsterTypes } = require('./monsters');
 const { create: createCharacter } = require('./characters');
 
 const PlayerHandbook = require('./player-handbook');
@@ -75,6 +75,7 @@ class Game extends BaseClass {
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
 		this.on('ring.add', this.announceContestant);
+		this.on('ring.remove', this.announceContestantLeave);
 		this.on('ring.fight', this.announceFight);
 		this.on('ring.turnBegin', this.announceTurnBegin);
 		this.on('ring.endOfDeck', this.announceEndOfDeck);
@@ -322,6 +323,17 @@ ${monsterCard(monster)}`
 		});
 	}
 
+	announceContestantLeave (className, ring, { contestant }) {
+		const channel = this.publicChannel;
+		const monster = contestant.monster;
+		const character = contestant.character;
+
+		channel({
+			announce:
+`${monster.givenName} was summoned from the ring by ${character.identity}.`
+		});
+	}
+
 	announceFight (className, ring, { contestants }) {
 		const channel = this.publicChannel;
 
@@ -335,7 +347,7 @@ ${monsterCard(monster)}`
 
 		channel({
 			announce:
-`The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
+`The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
 `
 		});
 
@@ -420,6 +432,10 @@ ${monsterCard(monster)}`
 					return character.equipMonster({ monsterName, channel })
 						.catch(err => log(err));
 				},
+				callMonsterOutOfTheRing ({ monsterName } = '') {
+					return character.callMonsterOutOfTheRing({ monsterName, ring, channel, channelName })
+						.catch(err => log(err));
+				},
 				sendMonsterToTheRing ({ monsterName } = {}) {
 					return character.sendMonsterToTheRing({ monsterName, ring, channel, channelName })
 						.catch(err => log(err));
@@ -449,33 +465,33 @@ ${monsterCard(monster)}`
 	}
 
 	static getCardTypes () {
-		return allCards.reduce((obj, Card) => {
+		return cardTypes.reduce((obj, Card) => {
 			obj[Card.cardType.toLowerCase()] = Card;
 			return obj;
 		}, {});
 	}
 
 	static getMonsterTypes () {
-		return allMonsters.reduce((obj, Monster) => {
+		return monsterTypes.reduce((obj, Monster) => {
 			obj[Monster.monsterType.toLowerCase()] = Monster;
 			return obj;
 		}, {});
 	}
 
-	getAllMonsters () {
-		return reduce(this.characters, (obj, character) => {
+	getAllMonstersLookup () {
+		return reduce(this.characters, (all, character) => {
 			character.monsters.forEach((monster) => {
-				obj[monster.givenName.toLowerCase()] = monster;
+				all[monster.givenName.toLowerCase()] = monster;
 			});
 
-			return obj;
+			return all;
 		}, {});
 	}
 
 	lookAtMonster (channel, monsterName) {
 		if (monsterName) {
-			const monsters = this.getAllMonsters();
-			const monster = monsters[monsterName.toLowerCase()];
+			const allMonsters = this.getAllMonstersLookup();
+			const monster = allMonsters[monsterName.toLowerCase()];
 
 			if (monster) return monster.look(channel);
 		}
@@ -530,7 +546,7 @@ ${monsterCard(monster)}`
 			}
 
 			// Is it a monster?
-			const monsters = this.getAllMonsters();
+			const monsters = this.getAllMonstersLookup();
 			const monster = monsters[thing.toLowerCase()];
 
 			if (monster) return monster.look(channel);

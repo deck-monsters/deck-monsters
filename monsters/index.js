@@ -25,7 +25,7 @@ const spawn = (channel, { type, name, color, gender, cards, game } = {}) => {
 
 	let monsterNames = [];
 	if (game) {
-		monsterNames = Object.keys(game.getAllMonsters());
+		monsterNames = Object.keys(game.getAllMonstersLookup());
 	}
 
 	const askForCreatureType = () => Promise

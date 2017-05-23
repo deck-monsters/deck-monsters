@@ -48,7 +48,7 @@ const flavor = {
 			['n enraged', 80],
 			[' muscle-bound', 80],
 			[' terrified', 5],
-			[' cowardly, shaking, weak-kneed, gibbering, snot-sobbing, sorry excuse for a monster, who the entire crowd feels nothing but pity for', 1],
+			[' cowardly, shaking, weak-kneed, gibbering, snot-sobbing, sorry excuse for a monster, who the entire crowd feels nothing but pity for', 1], // eslint-disable-line max-len
 			[' swaggering', 80],
 			[' roaring', 80],
 			[' braggardly', 40],

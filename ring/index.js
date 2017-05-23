@@ -6,6 +6,8 @@ const BaseClass = require('../baseClass');
 const delayTimes = require('../helpers/delay-times.js');
 
 const MAX_MONSTERS = 2;
+const MIN_MONSTERS = 2;
+const FIGHT_DELAY = 30000;
 
 class Ring extends BaseClass {
 	constructor (channelManager, options) {
@@ -29,7 +31,64 @@ class Ring extends BaseClass {
 		return this.options.contestants || [];
 	}
 
-	addMonster (monster, character, channel, channelName) {
+	getMonsters (targetCharacter) {
+		let targetContestants = this.contestants;
+		if (targetCharacter) {
+			targetContestants = targetContestants.filter(contestant => contestant.character === targetCharacter);
+		}
+
+		return targetContestants.map(contestant => contestant.monster);
+	}
+
+	removeMonster ({ monster, character, channel, channelName }) {
+		return Promise
+			.resolve()
+			.then(() => {
+				if (this.contestants.length <= 0) {
+					return Promise.reject(channel({
+						announce: 'No monsters currently in ring'
+					}));
+				}
+
+				if (!monster || !monster.givenName) {
+					return Promise.reject(channel({
+						announce: 'No monster specified to remove from ring'
+					}));
+				}
+
+				if (!this.monsterIsInRing(monster)) {
+					return Promise.reject(channel({
+						announce: 'Your monster is not currently in the ring'
+					}));
+				}
+
+				return { monster, character, channel, channelName };
+			})
+			.then((contestant) => {
+				const contestantIndex = this.options.contestants.indexOf(contestant);
+
+				this.options.contestants.splice(contestantIndex, 1);
+
+				if (this.contestants.length < 1) {
+					this.clearRing();
+				}
+
+				this.emit('remove', {
+					contestant
+				});
+
+				this.channelManager.queueMessage({
+					announce: `${monster.givenName} has returned to nestle safely into your warm embrace.`,
+					channel,
+					channelName
+				});
+
+				this.channelManager.sendMessages()
+					.then(() => this.startFightTimer({ channel, channelName }));
+			});
+	}
+
+	addMonster ({ monster, character, channel, channelName }) {
 		if (this.contestants.length < MAX_MONSTERS) {
 			const contestant = {
 				monster,
@@ -52,10 +111,10 @@ class Ring extends BaseClass {
 
 			if (this.contestants.length > MAX_MONSTERS) {
 				this.clearRing();
-			} else if (this.contestants.length === MAX_MONSTERS) {
-				this.channelManager.sendMessages()
-					.then(() => this.fight());
 			}
+
+			this.channelManager.sendMessages()
+				.then(() => this.startFightTimer({ channel, channelName }));
 		} else {
 			this.channelManager.queueMessage({
 				announce: 'The ring is full! Wait until the current battle is over and try again.',
@@ -66,8 +125,7 @@ class Ring extends BaseClass {
 	}
 
 	monsterIsInRing (monster) {
-		const contestants = this.contestants;
-		return !!contestants.find(contestant => contestant.monster === monster);
+		return !!this.contestants.find(contestant => contestant.monster === monster);
 	}
 
 	// TO-DO: This should probably be an encounter start / end method we call on the creature
@@ -83,9 +141,37 @@ class Ring extends BaseClass {
 	}
 
 	clearRing () {
+		clearTimeout(this.fightTimer);
 		this.setEncounterFlag(false);
 		this.options.contestants = [];
 		this.emit('clear');
+	}
+
+	startFightTimer ({ channel, channelName }) {
+		clearTimeout(this.fightTimer);
+
+		if (this.contestants.length >= MIN_MONSTERS) {
+			this.channelManager.queueMessage({
+				announce: `Fight will begin in ${Math.floor(FIGHT_DELAY / 1000)} seconds.`,
+				channel,
+				channelName
+			});
+
+			this.fightTimer = setTimeout(() => {
+				if (this.contestants.length >= 2) {
+					this.channelManager.sendMessages()
+						.then(() => this.fight());
+				}
+			}, FIGHT_DELAY);
+		} else {
+			const needed = MIN_MONSTERS - this.contestants.length;
+			const monster = needed > 1 ? 'monsters' : 'monster';
+			this.channelManager.queueMessage({
+				announce: `Fight countdown will begin once ${needed} more ${monster} join the ring.`,
+				channel,
+				channelName
+			});
+		}
 	}
 
 	fight () {
@@ -200,10 +286,10 @@ class Ring extends BaseClass {
 
 		// Kick off the action loop with some initial values. Go to the conclusion method once it resolves
 		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
-			.then(contestant => this.fightConcludes(contestant, round));
+			.then(lastContestant => this.fightConcludes({ lastContestant, rounds: round }));
 	}
 
-	fightConcludes (lastContestant, rounds) {
+	fightConcludes ({ lastContestant, rounds }) {
 		const contestants = this.contestants;
 
 		const deadContestants = contestants.filter(contestant => !!contestant.monster.dead);
