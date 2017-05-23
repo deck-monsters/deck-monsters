@@ -32,7 +32,7 @@ class Ring extends BaseClass {
 	}
 
 	getMonsters (targetCharacter) {
-		let targetContestants = [...this.contestants];
+		let targetContestants = this.contestants;
 		if (targetCharacter) {
 			targetContestants = targetContestants.filter(contestant => contestant.character === targetCharacter);
 		}
@@ -40,7 +40,7 @@ class Ring extends BaseClass {
 		return targetContestants.map(contestant => contestant.monster);
 	}
 
-	removeMonster (monster, character, channel, channelName) {
+	removeMonster ({ monster, character, channel, channelName }) {
 		return Promise
 			.resolve()
 			.then(() => {
@@ -84,11 +84,11 @@ class Ring extends BaseClass {
 				});
 
 				this.channelManager.sendMessages()
-					.then(() => this.startFightTimer(channel, channelName));
+					.then(() => this.startFightTimer({ channel, channelName }));
 			});
 	}
 
-	addMonster (monster, character, channel, channelName) {
+	addMonster ({ monster, character, channel, channelName }) {
 		if (this.contestants.length < MAX_MONSTERS) {
 			const contestant = {
 				monster,
@@ -114,7 +114,7 @@ class Ring extends BaseClass {
 			}
 
 			this.channelManager.sendMessages()
-				.then(() => this.startFightTimer(channel, channelName));
+				.then(() => this.startFightTimer({ channel, channelName }));
 		} else {
 			this.channelManager.queueMessage({
 				announce: 'The ring is full! Wait until the current battle is over and try again.',
@@ -147,7 +147,7 @@ class Ring extends BaseClass {
 		this.emit('clear');
 	}
 
-	startFightTimer (channel, channelName) {
+	startFightTimer ({ channel, channelName }) {
 		clearTimeout(this.fightTimer);
 
 		if (this.contestants.length >= MIN_MONSTERS) {
@@ -286,10 +286,10 @@ class Ring extends BaseClass {
 
 		// Kick off the action loop with some initial values. Go to the conclusion method once it resolves
 		return doAction({ currentContestant: 0, currentCard: 0, emptyHanded: false })
-			.then(contestant => this.fightConcludes(contestant, round));
+			.then(lastContestant => this.fightConcludes({ lastContestant, round }));
 	}
 
-	fightConcludes (lastContestant, rounds) {
+	fightConcludes ({ lastContestant, rounds }) {
 		const contestants = this.contestants;
 
 		const deadContestants = contestants.filter(contestant => !!contestant.monster.dead);

@@ -479,19 +479,15 @@ ${monsterCard(monster)}`
 	}
 
 	getAllMonsters () {
-		return reduce(this.characters, (obj, character) => {
-			character.monsters.forEach((monster) => {
-				obj[monster.givenName.toLowerCase()] = monster;
-			});
-
-			return obj;
-		}, {});
+		return reduce(this.characters, (all, character) =>
+			character.monsters.reduce((monsters, monster) => monsters.push(monster), all)
+		, []);
 	}
 
 	lookAtMonster (channel, monsterName) {
 		if (monsterName) {
 			const monsters = this.getAllMonsters();
-			const monster = monsters[monsterName.toLowerCase()];
+			const monster = monsters.find(potentialMonster => potentialMonster.givenName.toLowerCase() === monsterName.toLowerCase());
 
 			if (monster) return monster.look(channel);
 		}
@@ -547,7 +543,7 @@ ${monsterCard(monster)}`
 
 			// Is it a monster?
 			const monsters = this.getAllMonsters();
-			const monster = monsters[thing.toLowerCase()];
+			const monster = monsters.find(potentialMonster => potentialMonster.givenName.toLowerCase() === thing.toLowerCase());
 
 			if (monster) return monster.look(channel);
 
