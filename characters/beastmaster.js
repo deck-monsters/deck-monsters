@@ -152,7 +152,7 @@ Which monster would you like to ${action}?`,
 		return Promise
 			.resolve()
 			.then(() => this.chooseMonster({ channel, monsters, monsterName, action: 'call from the ring', reason: 'they do not appear to be in the ring.' })) // eslint-disable-line max-len
-			.then(monsterInRing => ring.removeMonster({ monsterInRing, character: this, channel, channelName }));
+			.then(monsterInRing => ring.removeMonster({ monster: monsterInRing, character: this, channel, channelName }));
 	}
 
 	sendMonsterToTheRing ({ monsterName, ring, channel, channelName }) {
