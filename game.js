@@ -479,9 +479,7 @@ ${monsterCard(monster)}`
 	}
 
 	getAllMonsters () {
-		return reduce(this.characters, (all, character) =>
-			character.monsters.reduce((monsters, monster) => monsters.push(monster), all)
-		, []);
+		return reduce(this.characters, (all, character) => all.concat(character.monsters), []);
 	}
 
 	lookAtMonster (channel, monsterName) {

@@ -25,7 +25,8 @@ const spawn = (channel, { type, name, color, gender, cards, game } = {}) => {
 
 	let monsterNames = [];
 	if (game) {
-		monsterNames = game.getAllMonsters().reduce((monsters, monster) => monsters.push(monster.givenName), []);
+		const allMonsters = game.getAllMonsters();
+		monsterNames = allMonsters.reduce((monsters, monster) => monsters.concat(monster.givenName), []);
 	}
 
 	const askForCreatureType = () => Promise
