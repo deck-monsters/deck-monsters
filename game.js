@@ -58,7 +58,7 @@ class Game extends BaseClass {
 		if (stateSaveFunc) {
 			this.stateSaveFunc = game => stateSaveFunc(JSON.stringify(game));
 		} else {
-			this.stateSaveFunc = stateSaveFunc;
+			delete this.stateSaveFunc;
 		}
 	}
 
