@@ -3,8 +3,8 @@ const reduce = require('lodash.reduce');
 const { globalSemaphore } = require('./helpers/semaphore');
 const BaseClass = require('./baseClass');
 const Ring = require('./ring');
-const { all: allCards, draw } = require('./cards');
-const { all: allMonsters } = require('./monsters');
+const { all: cardTypes, draw } = require('./cards');
+const { all: monsterTypes } = require('./monsters');
 const { create: createCharacter } = require('./characters');
 
 const PlayerHandbook = require('./player-handbook');
@@ -58,7 +58,7 @@ class Game extends BaseClass {
 		if (stateSaveFunc) {
 			this.stateSaveFunc = game => stateSaveFunc(JSON.stringify(game));
 		} else {
-			this.stateSaveFunc = stateSaveFunc;
+			delete this.stateSaveFunc;
 		}
 	}
 
@@ -75,15 +75,48 @@ class Game extends BaseClass {
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
 		this.on('ring.add', this.announceContestant);
+		this.on('ring.remove', this.announceContestantLeave);
 		this.on('ring.fight', this.announceFight);
 		this.on('ring.turnBegin', this.announceTurnBegin);
 		this.on('ring.endOfDeck', this.announceEndOfDeck);
 		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
 
+		this.on('cardDrop', this.announceCardDrop);
+		this.on('gainedXP', this.announceXPGain);
+
 		// Manage Fights
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
+	}
+
+	announceXPGain (className, game, { contestant, creature, xpGained }) {
+		const channel = contestant.channel;
+		const channelName = contestant.channelName;
+
+		this.channelManager.queueMessage({
+			announce: `${creature.identity} gained ${xpGained}XP`,
+			channel,
+			channelName
+		});
+	}
+
+	announceCardDrop (className, game, { contestant, card }) {
+		const channel = contestant.channel;
+		const channelName = contestant.channelName;
+
+		const cardDropped = formatCard({
+			title: `${card.icon}  ${card.cardType}`,
+			description: card.description,
+			stats: card.stats
+		});
+
+		this.channelManager.queueMessage({
+			announce: `The following card dropped for ${contestant.monster.identity}'s victory for ${contestant.character.identity}:
+${cardDropped}`,
+			channel,
+			channelName
+		});
 	}
 
 	/* eslint-disable max-len */
@@ -286,6 +319,17 @@ ${monsterCard(monster)}`
 		});
 	}
 
+	announceContestantLeave (className, ring, { contestant }) {
+		const channel = this.publicChannel;
+		const monster = contestant.monster;
+		const character = contestant.character;
+
+		channel({
+			announce:
+`${monster.givenName} was summoned from the ring by ${character.identity}.`
+		});
+	}
+
 	announceFight (className, ring, { contestants }) {
 		const channel = this.publicChannel;
 
@@ -299,7 +343,7 @@ ${monsterCard(monster)}`
 
 		channel({
 			announce:
-`The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} afer ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
+`The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
 `
 		});
 
@@ -317,6 +361,23 @@ ${monsterCard(monster)}`
 		// Also draw a new card for the player
 		const card = this.drawCard({ character: contestant.character });
 		contestant.character.addCard(card);
+
+		this.emit('cardDrop', {
+			contestant,
+			card
+		});
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.character,
+			xpGained: XP_PER_VICTORY
+		});
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.monster,
+			xpGained: XP_PER_VICTORY
+		});
 	}
 
 	handleLoser (className, monster, { contestant }) { // eslint-disable-line class-methods-use-this
@@ -324,6 +385,12 @@ ${monsterCard(monster)}`
 
 		// The character still earns a small bit of XP in the case of defeat
 		contestant.character.xp += XP_PER_DEFEAT;
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.character,
+			xpGained: XP_PER_DEFEAT
+		});
 	}
 
 	clearRing () {
@@ -359,6 +426,10 @@ ${monsterCard(monster)}`
 				},
 				equipMonster ({ monsterName } = {}) {
 					return character.equipMonster({ monsterName, channel })
+						.catch(err => log(err));
+				},
+				callMonsterOutOfTheRing ({ monsterName } = '') {
+					return character.callMonsterOutOfTheRing({ monsterName, ring, channel, channelName })
 						.catch(err => log(err));
 				},
 				sendMonsterToTheRing ({ monsterName } = {}) {
@@ -402,33 +473,33 @@ ${monsterCard(monster)}`
 	}
 
 	static getCardTypes () {
-		return allCards.reduce((obj, Card) => {
+		return cardTypes.reduce((obj, Card) => {
 			obj[Card.cardType.toLowerCase()] = Card;
 			return obj;
 		}, {});
 	}
 
 	static getMonsterTypes () {
-		return allMonsters.reduce((obj, Monster) => {
+		return monsterTypes.reduce((obj, Monster) => {
 			obj[Monster.monsterType.toLowerCase()] = Monster;
 			return obj;
 		}, {});
 	}
 
-	getAllMonsters () {
-		return reduce(this.characters, (obj, character) => {
+	getAllMonstersLookup () {
+		return reduce(this.characters, (all, character) => {
 			character.monsters.forEach((monster) => {
-				obj[monster.givenName.toLowerCase()] = monster;
+				all[monster.givenName.toLowerCase()] = monster;
 			});
 
-			return obj;
+			return all;
 		}, {});
 	}
 
 	lookAtMonster (channel, monsterName) {
 		if (monsterName) {
-			const monsters = this.getAllMonsters();
-			const monster = monsters[monsterName.toLowerCase()];
+			const allMonsters = this.getAllMonstersLookup();
+			const monster = allMonsters[monsterName.toLowerCase()];
 
 			if (monster) return monster.look(channel);
 		}
@@ -491,7 +562,7 @@ ${monsterCard(monster)}`
 			}
 
 			// Is it a monster?
-			const monsters = this.getAllMonsters();
+			const monsters = this.getAllMonstersLookup();
 			const monster = monsters[thing.toLowerCase()];
 
 			if (monster) return monster.look(channel);

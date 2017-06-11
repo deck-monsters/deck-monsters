@@ -159,17 +159,20 @@ Battles won: ${this.battles.wins}`;
 		return ac;
 	}
 
-	get bonusAttackDice () {
-		const boost = Math.min(this.level, MAX_ATTACK_BOOST);
-		if (boost > 0) {
-			return `${boost}d4`; // +1d4 per level up to the max
-		}
-
-		return undefined;
-	}
+	// We don't have this right now
+	// get bonusAttackDice () {
+	// 	return undefined;
+	// }
 
 	get attackModifier () {
-		return this.options.attackModifier || 0;
+		let attackModifier = this.options.attackModifier || 0;
+
+		const boost = Math.min(this.level, MAX_ATTACK_BOOST);
+		if (boost > 0) {
+			attackModifier += boost; // +1 per level up to the max
+		}
+
+		return attackModifier;
 	}
 
 	// We don't have this right now
