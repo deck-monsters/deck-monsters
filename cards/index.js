@@ -68,16 +68,12 @@ const getInitialDeck = (options) => {
 	return fillDeck(deck, options);
 };
 
-const getCardCounts = (cards) => {
-	const cardCounts = {};
-
-	cards.forEach((card) => {
+const getCardCounts = cards =>
+	cards.reduce((cardCounts, card) => {
 		cardCounts[card.cardType] = cardCounts[card.cardType] || 0;
 		cardCounts[card.cardType] += 1;
-	});
-
-	return cardCounts;
-};
+		return cardCounts;
+	}, {});
 
 const getUniqueCards = cards =>
 	cards.reduce((uniqueCards, card) =>
