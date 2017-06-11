@@ -524,13 +524,13 @@ ${monsterCard(monster)}`
 			// What is this thing?
 
 			// Is it a player handbook?
-			if (thing === 'player handbook') {
+			if (thing.match(/player(?:s)? handbook/i)) {
 				const handbook = new PlayerHandbook();
 				return handbook.look(channel);
 			}
 
 			// Is it a monster manual?
-			if (thing === 'monster manual') { // monster manual will talk about the different monsters you can capture and their stats etc
+			if (thing.match(/monster manual/i)) { // monster manual will talk about the different monsters you can capture and their stats etc
 				return Promise.reject(channel({
 					announce: 'Monster manual coming soon!',
 					delay: 'short'
@@ -538,7 +538,7 @@ ${monsterCard(monster)}`
 			}
 
 			// Is it a dungeon master guide?
-			if (thing === 'dungeon master guide') { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
+			if (thing.match(/dungeon master guide/i)) { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
 				return Promise.reject(channel({
 					announce: 'dungeon master guide coming soon!',
 					delay: 'short'
