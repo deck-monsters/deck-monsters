@@ -530,7 +530,7 @@ ${monsterCard(monster)}`
 			}
 
 			// Is it a monster manual?
-			if (thing.match(/monster manual/i)) { // monster manual will talk about the different monsters you can capture and their stats etc
+			if (thing.match(/monster(?:s)? manual/i)) { // monster manual will talk about the different monsters you can capture and their stats etc
 				return Promise.reject(channel({
 					announce: 'Monster manual coming soon!',
 					delay: 'short'
@@ -538,7 +538,7 @@ ${monsterCard(monster)}`
 			}
 
 			// Is it a dungeon master guide?
-			if (thing.match(/dungeon master guide/i)) { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
+			if (thing.match(/dungeon master(?:s)? guide/i)) { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
 				return Promise.reject(channel({
 					announce: 'dungeon master guide coming soon!',
 					delay: 'short'
