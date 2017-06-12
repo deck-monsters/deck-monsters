@@ -1,7 +1,7 @@
 const BaseCreature = require('../creatures/base');
 const { getInitialDeck, getUniqueCards, getCardCounts } = require('../cards');
 const { monsterCard, actionCard } = require('../helpers/card');
-const foreach = require('lodash.foreach');
+const reduce = require('lodash.reduce');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options) {
@@ -57,11 +57,9 @@ class BaseCharacter extends BaseCreature {
 		const cardImages = getUniqueCards(this.deck).reduce((cards, card) =>
 			cards + actionCard(card), '');
 
-		let cardCounts = '';
-		foreach(getCardCounts(this.deck), (count, card) => {
-			cardCounts += `${card} (${count})
-`;
-		});
+		const cardCounts = reduce(getCardCounts(this.deck), (counts, count, card) =>
+			`${counts}${card} (${count})
+`, '');
 
 
 		const deckDisplay = `${cardImages} ${cardCounts}`;
