@@ -456,8 +456,8 @@ ${monsterCard(monster)}`
 					return character.lookAtCards(channel, deckName)
 						.catch(err => log(err));
 				},
-				lookAtMonsters ({ monsterPoolName } = {}) {
-					return character.lookAtMonsters(channel, monsterPoolName)
+				lookAtMonsters () {
+					return character.lookAtMonsters(channel)
 						.catch(err => log(err));
 				},
 				lookAtRing ({ ringName } = {}) {
