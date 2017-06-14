@@ -288,6 +288,7 @@ Battles won: ${this.battles.wins}`;
 
 			this.respawnTimeout = setTimeout(() => {
 				creature.dead = false;
+				creature.hp = 1;
 				creature.respawnTimeout = undefined;
 
 				creature.emit('respawn');
