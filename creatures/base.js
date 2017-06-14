@@ -285,6 +285,10 @@ Battles won: ${this.battles.wins}`;
 		if (!this.respawnTimeout) {
 			// TO-DO: Possibly do some other checks for whether this monster should respawn
 			const creature = this;
+			const timeoutLength = this.level * TIME_TO_RESURRECT;
+
+			this.respawnTimeoutBegan = Date.now();
+			this.respawnTimeoutLength = timeoutLength;
 
 			this.respawnTimeout = setTimeout(() => {
 				creature.dead = false;
@@ -292,8 +296,10 @@ Battles won: ${this.battles.wins}`;
 				creature.respawnTimeout = undefined;
 
 				creature.emit('respawn');
-			}, this.level * TIME_TO_RESURRECT);
+			}, timeoutLength);
 		}
+
+		return this.respawnTimeoutBegan + this.respawnTimeoutLength;
 	}
 
 	addWin () {

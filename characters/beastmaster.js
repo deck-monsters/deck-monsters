@@ -2,6 +2,7 @@ const BaseCharacter = require('./base');
 const { spawn, equip } = require('../monsters');
 const { getMonsterChoices } = require('../helpers/choices');
 const TENSE = require('../helpers/tense');
+const { capitalize } = require('../helpers/capitalize');
 
 const { monsterCard } = require('../helpers/card');
 
@@ -231,10 +232,14 @@ Which monster would you like to ${action}?`,
 
 				return monster;
 			})
-			.then(monster => channel({
-				announce: `${monster.givenName} has begun to revive.`
-			})
-				.then(() => monster));
+			.then((monster) => {
+				const timeToRevive = (monster.respawn() - Date.now()) / (60 * 60 * 1000);
+
+				return channel({
+					announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns[0])} is a level ${monster.level} monster, and therefore will be revived in ${timeToRevive} hours.`// eslint-disable-line max-len
+				})
+					.then(() => monster);
+			});
 	}
 }
 
