@@ -56,7 +56,18 @@ class Game extends BaseClass {
 
 	set saveState (stateSaveFunc) {
 		if (stateSaveFunc) {
-			this.stateSaveFunc = game => stateSaveFunc(JSON.stringify(game));
+			this.stateSaveFunc = (game) => {
+				try {
+					const gameJSON = JSON.stringify(game);
+					// console.log('not circular', gameJSON);
+					return stateSaveFunc(gameJSON);
+				} catch (e) {
+					// console.log('err circular');
+					// console.log(e);
+					// console.log('game', game);
+				}
+				return false;
+			};
 		} else {
 			delete this.stateSaveFunc;
 		}
