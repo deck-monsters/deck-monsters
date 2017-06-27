@@ -12,7 +12,7 @@ const PlayerHandbook = require('./player-handbook');
 const ChannelManager = require('./channel');
 
 const { getFlavor } = require('./helpers/flavor');
-const { formatCard, monsterCard } = require('./helpers/card');
+const { actionCard, monsterCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
@@ -123,11 +123,7 @@ ${cardDropped}`,
 	announceCard (className, card, { player }) {
 		const channel = this.publicChannel;
 
-		const cardPlayed = formatCard({
-			title: `${card.icon}  ${card.cardType}`,
-			description: card.description,
-			stats: card.stats
-		});
+		const cardPlayed = actionCard(card);
 
 		channel({
 			announce:
@@ -456,6 +452,18 @@ ${monsterCard(monster)}`
 					return game.lookAtCard(channel, cardName)
 						.catch(err => log(err));
 				},
+				lookAtCards ({ deckName } = {}) {
+					return character.lookAtCards(channel, deckName)
+						.catch(err => log(err));
+				},
+				lookAtMonsters () {
+					return character.lookAtMonsters(channel)
+						.catch(err => log(err));
+				},
+				lookAtRing ({ ringName } = {}) {
+					return game.lookAtRing(channel, ringName)
+						.catch(err => log(err));
+				},
 				lookAt (thing) {
 					return game.lookAt(channel, thing)
 						.catch(err => log(err));
@@ -517,6 +525,14 @@ ${monsterCard(monster)}`
 			announce: `Sorry, we don't carry ${cardName} cards here.`,
 			delay: 'short'
 		}));
+	}
+
+	getRing () {
+		return this.ring;
+	}
+
+	lookAtRing (channel, ringName = 'main') {
+		return this.getRing(ringName).look(channel);
 	}
 
 	lookAt (channel, thing) {
