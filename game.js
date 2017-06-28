@@ -425,7 +425,16 @@ ${monsterCard(monster)}`
 						.catch(err => log(err));
 				},
 				equipMonster ({ monsterName, cardSelection } = {}) {
-					return character.equipMonster({ monsterName, cardSelection, channel })
+					let selectedCards = [];
+					if (cardSelection) {
+						if (cardSelection.includes(', ')) {
+							selectedCards = cardSelection.split(', ');
+						} else {
+							selectedCards = cardSelection.split(' ');
+						}
+					}
+
+					return character.equipMonster({ monsterName, cardSelection: selectedCards, channel })
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {
