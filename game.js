@@ -554,7 +554,7 @@ ${monsterCard(monster)}`
 			}
 
 			// Is it a dungeon master guide?
-			if (thing.match(/dungeon master(?:s)? guide/i)) { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
+			if (thing.match(/(?:dungeon master(?:s)?|dm) guide|^dmg$/i)) { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
 				return Promise.reject(channel({
 					announce: 'dungeon master guide coming soon!',
 					delay: 'short'
