@@ -1,6 +1,6 @@
 const BaseClass = require('../baseClass');
 
-const { formatCard } = require('../helpers/card');
+const { actionCard } = require('../helpers/card');
 const { max } = require('../helpers/chance');
 
 class BaseCard extends BaseClass {
@@ -30,6 +30,10 @@ class BaseCard extends BaseClass {
 
 	get level () {
 		return this.constructor.level;
+	}
+
+	get probability () {
+		return this.constructor.probability;
 	}
 
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
@@ -66,11 +70,7 @@ class BaseCard extends BaseClass {
 		return Promise
 			.resolve()
 			.then(() => channel({
-				announce: formatCard({
-					title: `${this.icon}  ${this.cardType}`,
-					description: this.description,
-					stats: this.stats
-				})
+				announce: actionCard(this)
 			}));
 	}
 }

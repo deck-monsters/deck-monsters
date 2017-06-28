@@ -68,6 +68,20 @@ const getInitialDeck = (options) => {
 	return fillDeck(deck, options);
 };
 
+const getCardCounts = cards =>
+	cards.reduce((cardCounts, card) => {
+		cardCounts[card.cardType] = cardCounts[card.cardType] || 0;
+		cardCounts[card.cardType] += 1;
+		return cardCounts;
+	}, {});
+
+const getUniqueCards = cards =>
+	cards.reduce((uniqueCards, card) =>
+		uniqueCards.concat(!uniqueCards.find(possibleCard =>
+			possibleCard.name === card.name
+		) ? [card] : [])
+	, []);
+
 const hydrateCard = (cardObj) => {
 	const Card = all.find(({ name }) => name === cardObj.name);
 	return new Card(cardObj.options);
@@ -83,5 +97,7 @@ module.exports = {
 	getInitialDeck,
 	fillDeck,
 	hydrateCard,
-	hydrateDeck
+	hydrateDeck,
+	getUniqueCards,
+	getCardCounts
 };

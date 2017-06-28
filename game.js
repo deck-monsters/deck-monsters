@@ -12,7 +12,7 @@ const PlayerHandbook = require('./player-handbook');
 const ChannelManager = require('./channel');
 
 const { getFlavor } = require('./helpers/flavor');
-const { formatCard, monsterCard } = require('./helpers/card');
+const { actionCard, monsterCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 
 const noop = () => {};
@@ -123,11 +123,7 @@ ${cardDropped}`,
 	announceCard (className, card, { player }) {
 		const channel = this.publicChannel;
 
-		const cardPlayed = formatCard({
-			title: `${card.icon}  ${card.cardType}`,
-			description: card.description,
-			stats: card.stats
-		});
+		const cardPlayed = actionCard(card);
 
 		channel({
 			announce:
@@ -456,6 +452,18 @@ ${monsterCard(monster)}`
 					return game.lookAtCard(channel, cardName)
 						.catch(err => log(err));
 				},
+				lookAtCards ({ deckName } = {}) {
+					return character.lookAtCards(channel, deckName)
+						.catch(err => log(err));
+				},
+				lookAtMonsters () {
+					return character.lookAtMonsters(channel)
+						.catch(err => log(err));
+				},
+				lookAtRing ({ ringName } = {}) {
+					return game.lookAtRing(channel, ringName)
+						.catch(err => log(err));
+				},
 				lookAt (thing) {
 					return game.lookAt(channel, thing)
 						.catch(err => log(err));
@@ -519,18 +527,26 @@ ${monsterCard(monster)}`
 		}));
 	}
 
+	getRing () {
+		return this.ring;
+	}
+
+	lookAtRing (channel, ringName = 'main') {
+		return this.getRing(ringName).look(channel);
+	}
+
 	lookAt (channel, thing) {
 		if (thing) {
 			// What is this thing?
 
 			// Is it a player handbook?
-			if (thing === 'player handbook') {
+			if (thing.match(/player(?:s)? handbook/i)) {
 				const handbook = new PlayerHandbook();
 				return handbook.look(channel);
 			}
 
 			// Is it a monster manual?
-			if (thing === 'monster manual') { // monster manual will talk about the different monsters you can capture and their stats etc
+			if (thing.match(/monster(?:s)? manual/i)) { // monster manual will talk about the different monsters you can capture and their stats etc
 				return Promise.reject(channel({
 					announce: 'Monster manual coming soon!',
 					delay: 'short'
@@ -538,7 +554,7 @@ ${monsterCard(monster)}`
 			}
 
 			// Is it a dungeon master guide?
-			if (thing === 'dungeon master guide') { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
+			if (thing.match(/dungeon master(?:s)? guide/i)) { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
 				return Promise.reject(channel({
 					announce: 'dungeon master guide coming soon!',
 					delay: 'short'
