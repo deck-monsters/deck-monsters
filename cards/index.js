@@ -12,6 +12,8 @@ const HitHarderCard = require('./hit-harder');
 const RehitCard = require('./rehit');
 // const ReviveCard = require('./revive');
 
+const DEFAULT_MINIMUM_CARDS = 10;
+
 const all = [
 	BoostCard,
 	CurseCard,
@@ -32,6 +34,7 @@ const draw = (opts) => {
 	};
 
 	const options = Object.assign(defaultOptions, opts);
+
 	const shuffledDeck = shuffle(all);
 	const filteredDeck = shuffledDeck.filter(card => options.character.level >= card.level);
 
@@ -42,16 +45,35 @@ const draw = (opts) => {
 	return new Card(options);
 };
 
-const getCardCounts = (cards) => {
-	const cardCounts = {};
+// fills deck up with random cards appropriate for player's level
+const fillDeck = (deck, options) => {
+	while (deck.length < DEFAULT_MINIMUM_CARDS) {
+		deck.push(draw(options));
+	}
 
-	cards.forEach((card) => {
+	return deck;
+};
+
+const getInitialDeck = (options) => {
+	const deck = [
+		new HitCard(options),
+		new HitCard(options),
+		new HitCard(options),
+		new HitCard(options),
+		new HealCard(options),
+		new HealCard(options),
+		new FleeCard(options)
+	];
+
+	return fillDeck(deck, options);
+};
+
+const getCardCounts = cards =>
+	cards.reduce((cardCounts, card) => {
 		cardCounts[card.cardType] = cardCounts[card.cardType] || 0;
 		cardCounts[card.cardType] += 1;
-	});
-
-	return cardCounts;
-};
+		return cardCounts;
+	}, {});
 
 const getUniqueCards = cards =>
 	cards.reduce((uniqueCards, card) =>
@@ -59,14 +81,6 @@ const getUniqueCards = cards =>
 			possibleCard.name === card.name
 		) ? [card] : [])
 	, []);
-
-const getInitialDeck = options => [
-	new HitCard(options),
-	new HitCard(options),
-	new HealCard(options),
-	new FleeCard(options),
-	draw(options)
-];
 
 const hydrateCard = (cardObj) => {
 	const Card = all.find(({ name }) => name === cardObj.name);
@@ -81,6 +95,7 @@ module.exports = {
 	all,
 	draw,
 	getInitialDeck,
+	fillDeck,
 	hydrateCard,
 	hydrateDeck,
 	getUniqueCards,

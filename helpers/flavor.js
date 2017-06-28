@@ -48,7 +48,7 @@ const flavor = {
 			['n enraged', 80],
 			[' muscle-bound', 80],
 			[' terrified', 5],
-			[' cowardly, shaking, weak-kneed, gibbering, snot-sobbing, sorry excuse for a monster, who the entire crowd feels nothing but pity for', 1],
+			[' cowardly, shaking, weak-kneed, gibbering, snot-sobbing, sorry excuse for a monster, who the entire crowd feels nothing but pity for', 1], // eslint-disable-line max-len
 			[' swaggering', 80],
 			[' roaring', 80],
 			[' braggardly', 40],
@@ -79,7 +79,7 @@ const flavor = {
 			[' squishy', 12],
 			[' fuzzy', 13],
 			[' sleep deprived', 19],
-			[' motherly... In the way that a mother bear between whom it and its cubs you have just stepped is motherly.', 40],
+			[' motherly --In the way that a mother bear between whom it and its cubs you have just stepped is motherly--', 40],
 			[' not surprisingly, drunken', 20],
 			[' rash-covered', 7],
 			[' freshly bathed', 4],
