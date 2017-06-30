@@ -125,7 +125,7 @@ ${getChoices(genders)}`,
 		.then(() => new Monster(options));
 };
 
-const equip = (deck, monster, channel) => {
+const equip = (deck, monster, cardSelection, channel) => {
 	const cards = [];
 	const cardSlots = monster.cardSlots;
 
@@ -195,7 +195,31 @@ ${getFinalCardChoices(cards)}`
 				}));
 			}
 
-			return addCard({ remainingSlots: cardSlots, remainingCards: deck });
+			const nowRemainingCards = [...deck];
+			if (cardSelection) {
+				cardSelection.forEach((card) => {
+					if (cardSlots - cards.length > 0) {
+						const cardIndex = nowRemainingCards.findIndex(potentialCard => potentialCard.cardType.toLowerCase() === card.toLowerCase()); // eslint-disable-line max-len
+
+						if (cardIndex >= 0) {
+							const selectedCard = nowRemainingCards.splice(cardIndex, 1)[0];
+							cards.push(selectedCard);
+						}
+					}
+				});
+			}
+
+			const nowRemainingSlots = cardSlots - cards.length;
+			if (nowRemainingSlots <= 0) {
+				return channel({
+					announce:
+`You've filled your slots with the following cards:
+
+${getFinalCardChoices(cards)}`
+				}).then(() => cards);
+			}
+
+			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
 		});
 };
 
