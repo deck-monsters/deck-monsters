@@ -18,9 +18,9 @@
     "lint": "eslint \"**/*.{js,jsx}\"",
     "lint:fix": "npm run lint -- --fix",
     "tag": "mc-tag",
-    "test": "mc-test",
-    "test:debug": "mc-test --browsers Chrome",
-    "test:watch": "mc-test --watch"
+    "test": "mc-test --node",
+    "test:debug": "mc-test --node --browsers Chrome",
+    "test:watch": "mc-test --node --watch"
   },
   "repository": {
     "type": "git",
