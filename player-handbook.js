@@ -35,6 +35,24 @@ class PlayerHandbook extends BaseClass {
     During battle, your monster will play each card one at a time in the order in which you placed it in the monster's deck. When the monster gets to the end of its deck, it starts back at the beginning of the deck again.
 
     Choose your cards wisely, good luck, and have fun!
+
+    Commands:
+
+    \`spawn monster\` - Spawns a new monster
+
+    \`equip monster\` - Select a monster and equip it with cards
+
+    \`equip [monster name]\` - Equip provided monster with cards
+
+    \`send monster to the ring\` - Select a monster and send it to the ring
+
+    \`send [monster name] to the ring\` - Send provided monster to the ring
+
+    \`look at monsters\` - Looks at monsters
+
+    \`look at [monster name]\` - Look at specified monster
+
+    \`look at cards\` - Look at your cards
 \`\`\`
 `
 			}));

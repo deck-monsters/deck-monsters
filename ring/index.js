@@ -3,7 +3,8 @@
 const shuffle = require('lodash.shuffle');
 
 const BaseClass = require('../baseClass');
-const delayTimes = require('../helpers/delay-times.js');
+const delayTimes = require('../helpers/delay-times');
+const { monsterCard } = require('../helpers/card');
 
 const MAX_MONSTERS = 2;
 const MIN_MONSTERS = 2;
@@ -126,6 +127,27 @@ class Ring extends BaseClass {
 
 	monsterIsInRing (monster) {
 		return !!this.contestants.find(contestant => contestant.monster === monster);
+	}
+
+	look (channel) {
+		const ringContentsDisplay = this.contestants.reduce((ringContents, contestant) => {
+			const contestantDisplay = monsterCard(contestant.character, true);
+			const monsterDisplay = monsterCard(contestant.monster, true);
+			return `${ringContents} ${contestantDisplay} sent the following monster into the ring: ${monsterDisplay}`;
+		}, '');
+
+		if (ringContentsDisplay) {
+			return Promise
+				.resolve()
+				.then(() => channel({
+					announce: ringContentsDisplay
+				}));
+		}
+
+		return Promise.reject(channel({
+			announce: 'The ring is empty',
+			delay: 'short'
+		}));
 	}
 
 	// TO-DO: This should probably be an encounter start / end method we call on the creature
