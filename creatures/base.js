@@ -32,7 +32,7 @@ class BaseCreature extends BaseClass {
 		}
 
 		this.healingInterval = setInterval(() => {
-			if (this.hp < this.maxHp && !this.inEncounter) this.heal(1);
+			if (this.hp < this.maxHp && !this.inEncounter && !this.dead) this.heal(1);
 		}, TIME_TO_HEAL);
 	}
 
@@ -102,17 +102,18 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
-	// TO-DO: We want to save this in the options, but we'll have to create a method for reviving after Slack restarts
 	get dead () {
-		// return this.options.dead || false;
-		return this.isDead || false;
+		return this.hp <= 0;
 	}
 
 	set dead (dead) {
-		// this.setOptions({
-		// 	dead
-		// });
-		this.isDead = dead;
+		if (dead !== this.dead) {
+			if (dead && !this.dead) {
+				this.die({ identityWithHp: 'mysterious causes' });
+			} else if (!dead && this.dead) {
+				this.respawn();
+			}
+		}
 	}
 
 	get hp () {
@@ -275,19 +276,21 @@ Battles won: ${this.battles.wins}`;
 			assailant
 		});
 
-		this.hp = 0;
-		this.dead = true;
+		if (this.hp > 0) {
+			this.hp = 0;
+		}
 
 		return false;
 	}
 
-	respawn () {
-		if (!this.respawnTimeout) {
+	respawn (immediate) {
+		if (immediate || !this.respawnTimeout) {
 			// TO-DO: Possibly do some other checks for whether this monster should respawn
 			const creature = this;
+			const timeoutLength = (immediate) ? 0 : this.level * TIME_TO_RESURRECT;
 
 			this.respawnTimeout = setTimeout(() => {
-				creature.dead = false;
+				creature.hp = 1;
 				creature.respawnTimeout = undefined;
 
 				creature.emit('respawn');
