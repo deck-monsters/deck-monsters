@@ -1,9 +1,10 @@
 const BaseClass = require('../baseClass');
+const pause = require('../helpers/pause');
 
 const THROTTLE_RATE = 5000;
 
 const sendMessage = (channel, announce) => new Promise((resolve) => {
-	setTimeout(() => {
+	pause(() => {
 		resolve(channel ? channel({ announce }) : Promise.resolve());
 	}, THROTTLE_RATE);
 });
@@ -17,7 +18,7 @@ class ChannelManager extends BaseClass {
 		this.log = log;
 
 		const sendMessagesLoop = () => new Promise((resolve) => {
-			const timeout = () => setTimeout(() => resolve(), THROTTLE_RATE * 1.5);
+			const timeout = () => pause(() => resolve(), THROTTLE_RATE * 1.5);
 
 			this.sendMessages()
 				.then(timeout)
@@ -26,7 +27,7 @@ class ChannelManager extends BaseClass {
 					timeout();
 				});
 		})
-			.then(() => setTimeout(() => sendMessagesLoop(), 0));
+			.then(() => pause(() => sendMessagesLoop(), 0));
 
 		sendMessagesLoop();
 	}

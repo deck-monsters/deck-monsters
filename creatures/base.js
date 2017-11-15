@@ -5,6 +5,7 @@ const BaseClass = require('../baseClass');
 const { STARTING_XP, getLevel } = require('../helpers/levels');
 const PRONOUNS = require('../helpers/pronouns');
 const { signedNumber } = require('../helpers/signed-number');
+const pause = require('../helpers/pause');
 
 const BASE_AC = 5;
 const AC_VARIANCE = 2;
@@ -292,7 +293,7 @@ Battles won: ${this.battles.wins}`;
 			this.respawnTimeoutBegan = Date.now();
 			this.respawnTimeoutLength = timeoutLength;
 
-			this.respawnTimeout = setTimeout(() => {
+			this.respawnTimeout = pause(() => {
 				creature.hp = 1;
 				creature.respawnTimeout = undefined;
 

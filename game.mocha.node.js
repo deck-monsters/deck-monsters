@@ -2,6 +2,7 @@ const { expect, sinon } = require('./shared/test-setup');
 
 const Game = require('./game');
 
+const BaseCard = require('./cards/base');
 const ChannelManager = require('./channel');
 const Ring = require('./ring');
 
@@ -42,6 +43,17 @@ describe('./game.js', () => {
 
 		expect(game.ring).to.be.an.instanceof(Ring);
 		expect(game.ring.channelManager).to.equal(game.channelManager);
+		expect(game.getRing()).to.equal(game.ring);
+	});
+
+	it('can look at the ring', () => {
+		const game = new Game(publicChannelStub);
+		const lookStub = sinon.stub(game.ring, 'look');
+
+		game.lookAtRing('channel');
+
+		expect(lookStub).to.have.been.calledOnce;
+		expect(lookStub).to.have.been.calledWith('channel');
 	});
 
 	it('can save state', () => {
@@ -53,5 +65,14 @@ describe('./game.js', () => {
 
 		expect(saveStateStub).to.have.been.calledOnce;
 		expect(saveStateStub).to.have.been.calledWith('{"name":"Game","options":{}}');
+	});
+
+	it('can draw a card', () => {
+		const game = new Game(publicChannelStub);
+		const card = game.drawCard({ useless: 'option' });
+
+		expect(card).to.be.an.instanceof(BaseCard);
+		expect(card.name).to.not.equal(BaseCard.name);
+		expect(card.options.useless).to.be.undefined;
 	});
 });
