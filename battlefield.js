@@ -28,7 +28,7 @@ const announcer = (prefix, what) => new Promise((resolve, reject) => {
 			}
 		});
 	} else {
-		reject('Invalid arguments supplied to the channel');
+		reject('Invalid arguments supplied to the channel'); // eslint-disable-line prefer-promise-reject-errors
 	}
 });
 

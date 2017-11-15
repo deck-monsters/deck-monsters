@@ -89,7 +89,8 @@ class Beastmaster extends BaseCharacter {
 						announce: `You don't have any monsters to ${action}.`
 					}));
 				} else if (monsterName) {
-					const monster = monsters.find(potentialMonster => potentialMonster.givenName.toLowerCase() === monsterName.toLowerCase());
+					const monster = monsters.find(potentialMonster =>
+						potentialMonster.givenName.toLowerCase() === monsterName.toLowerCase());
 
 					if (monster) {
 						return monster;

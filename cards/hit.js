@@ -102,7 +102,7 @@ class HitCard extends BaseCard {
 		return new Promise((resolve) => {
 			// Add any player modifiers and roll the dice
 			const {
-				attackRoll, success, strokeOfLuck, curseOfLoki
+				attackRoll, success, strokeOfLuck, curseOfLoki // TODO: Is this curseOfLoki used elsewhere and we can simply drop it?
 			} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
 			ring.channelManager.sendMessages()
