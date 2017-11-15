@@ -2,26 +2,26 @@ const wrap = require('word-wrap');
 const upperFirst = require('lodash.upperfirst');
 
 const formatCard = ({ title, description, stats, rankings }) => (
-`
+	`
 \`\`\`
 ===========================================
 ${wrap(title, { indent: '| ', width: 40 })}
 -------------------------------------------${
-!description ? '' :
-`
+	!description ? '' :
+		`
 |
 ${wrap(description, { indent: '| ', width: 40 })}`
-}${
-!stats ? '' :
-`
+	}${
+		!stats ? '' :
+			`
 |
 ${wrap(stats, { indent: '| ', width: 40 })}`
-}${
-!rankings ? '' :
-`
+	}${
+		!rankings ? '' :
+			`
 |
 ${wrap(rankings, { indent: '| ', width: 40 })}`
-}
+	}
 |
 ===========================================
 \`\`\`

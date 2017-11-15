@@ -26,23 +26,18 @@ const all = [
 	RehitCard
 ];
 
-const draw = (opts) => {
-	const defaultOptions = {
-		character: {
-			level: 1
-		}
-	};
-
-	const options = Object.assign(defaultOptions, opts);
-
+const draw = ({ level = 1 } = {}) => {
 	const shuffledDeck = shuffle(all);
-	const filteredDeck = shuffledDeck.filter(card => options.character.level >= card.level);
+	const filteredDeck = shuffledDeck.filter(card => level >= card.level);
 
 	const Card = filteredDeck.find(isProbable);
 
-	if (!Card) return draw(options);
+	if (!Card) return draw({ level });
 
-	return new Card(options);
+	// In the future we may want to pass some options to the cards,
+	// but we need to make sure that we only pass card-related options.
+	// For example, the level is not meant to passed to the card.
+	return new Card();
 };
 
 // fills deck up with random cards appropriate for player's level
@@ -55,14 +50,12 @@ const fillDeck = (deck, options) => {
 };
 
 const getInitialDeck = (options) => {
+	// See above re: options
 	const deck = [
-		new HitCard(options),
-		new HitCard(options),
-		new HitCard(options),
-		new HitCard(options),
-		new HealCard(options),
-		new HealCard(options),
-		new FleeCard(options)
+		new HitCard(),
+		new HitCard(),
+		new HealCard(),
+		new FleeCard()
 	];
 
 	return fillDeck(deck, options);
@@ -80,7 +73,7 @@ const getUniqueCards = cards =>
 		uniqueCards.concat(!uniqueCards.find(possibleCard =>
 			possibleCard.name === card.name
 		) ? [card] : [])
-	, []);
+		, []);
 
 const hydrateCard = (cardObj) => {
 	const Card = all.find(({ name }) => name === cardObj.name);

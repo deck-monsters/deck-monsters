@@ -234,8 +234,24 @@ Which monster would you like to ${action}?`,
 			.then((monster) => {
 				const timeToRevive = (monster.respawn() - Date.now()) / (60 * 60 * 1000);
 
+				let reviveStatement = '';
+				switch (timeToRevive) {
+					case 0: {
+						reviveStatement = 'instantly';
+						break;
+					}
+					case 1: {
+						reviveStatement = `in ${timeToRevive} hour`;
+						break;
+					}
+					default: {
+						reviveStatement = `in ${timeToRevive} hours`;
+						break;
+					}
+				}
+
 				return channel({
-					announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns[0])} is a level ${monster.level} monster, and therefore will be revived in ${timeToRevive} hours.`// eslint-disable-line max-len
+					announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns[0])} is a level ${monster.level} monster, and therefore will be revived ${reviveStatement}.`// eslint-disable-line max-len
 				})
 					.then(() => monster);
 			});

@@ -1,6 +1,6 @@
 // A Battlefield
 
-const prompt = require('prompt');
+const prompt = require('prompt'); // eslint-disable-line node/no-unpublished-require
 const { Game } = require('./index.js');
 
 prompt.start();

@@ -133,51 +133,51 @@ const equip = (deck, monster, cardSelection, channel) => {
 		const possibleCards = getCardCounts(remainingCards);
 
 		return Promise
-		.resolve()
-		.then(() => channel({
-			question:
+			.resolve()
+			.then(() => channel({
+				question:
 `You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
 
 ${getCardChoices(possibleCards)}
 
 Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`,
-			choices: Object.keys(Object.keys(possibleCards))
-		}))
-		.then((answer) => {
-			const nowRemainingSlots = remainingSlots - 1;
-			const nowRemainingCards = [...remainingCards];
-			const selectedCardType = Object.keys(possibleCards)[answer];
-			const cardInPool = nowRemainingCards.findIndex(card => card.cardType === selectedCardType);
+				choices: Object.keys(Object.keys(possibleCards))
+			}))
+			.then((answer) => {
+				const nowRemainingSlots = remainingSlots - 1;
+				const nowRemainingCards = [...remainingCards];
+				const selectedCardType = Object.keys(possibleCards)[answer];
+				const cardInPool = nowRemainingCards.findIndex(card => card.cardType === selectedCardType);
 
-			const selectedCard = nowRemainingCards.splice(cardInPool, 1)[0];
-			cards.push(selectedCard);
+				const selectedCard = nowRemainingCards.splice(cardInPool, 1)[0];
+				cards.push(selectedCard);
 
-			return channel({
-				announce: `You selected a ${selectedCard.cardType.toLowerCase()} card.`
-			})
-			.then(() => {
-				if (nowRemainingSlots <= 0) {
-					return channel({
-						announce:
+				return channel({
+					announce: `You selected a ${selectedCard.cardType.toLowerCase()} card.`
+				})
+					.then(() => {
+						if (nowRemainingSlots <= 0) {
+							return channel({
+								announce:
 `You've filled your slots with the following cards:
 
 ${getFinalCardChoices(cards)}`
-					});
-				}
+							});
+						}
 
-				if (nowRemainingCards.length <= 0) {
-					return channel({
-						announce:
+						if (nowRemainingCards.length <= 0) {
+							return channel({
+								announce:
 `You're out of cards to equip, but you've equiped the following cards:
 
 ${getFinalCardChoices(cards)}`
-					});
-				}
+							});
+						}
 
-				return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
-			})
-			.then(() => cards);
-		});
+						return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
+					})
+					.then(() => cards);
+			});
 	};
 
 	return Promise

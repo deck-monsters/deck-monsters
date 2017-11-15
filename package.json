@@ -37,8 +37,8 @@
     "word-wrap": "^1.2.2"
   },
   "devDependencies": {
-    "@salesforce-mc/devscripts": "git+ssh://git@github.exacttarget.com:ApplicationCore/devscripts.git#v0.0.16",
-    "eslint-config-slds": "git+ssh://git@github.com/salesforce-ux/eslint-config-slds.git#v3.0.1",
+    "@salesforce-mc/devscripts": "^3.2.0",
+    "@salesforce-mc/eslint-config-sfmc": "^2.1.1",
     "prompt": "^1.0.0"
   }
 }
