@@ -41,7 +41,9 @@ class Ring extends BaseClass {
 		return targetContestants.map(contestant => contestant.monster);
 	}
 
-	removeMonster ({ monster, character, channel, channelName }) {
+	removeMonster ({
+		monster, character, channel, channelName
+	}) {
 		return Promise
 			.resolve()
 			.then(() => {
@@ -63,7 +65,9 @@ class Ring extends BaseClass {
 					}));
 				}
 
-				return { monster, character, channel, channelName };
+				return {
+					monster, character, channel, channelName
+				};
 			})
 			.then((contestant) => {
 				const contestantIndex = this.options.contestants.indexOf(contestant);
@@ -89,7 +93,9 @@ class Ring extends BaseClass {
 			});
 	}
 
-	addMonster ({ monster, character, channel, channelName }) {
+	addMonster ({
+		monster, character, channel, channelName
+	}) {
 		if (this.contestants.length < MAX_MONSTERS) {
 			const contestant = {
 				monster,
@@ -223,7 +229,7 @@ class Ring extends BaseClass {
 		const doAction = ({ currentContestant, currentCard, emptyHanded }) => new Promise((resolve) => {
 			// Find the monster at the current index
 			const contestant = contestants[currentContestant];
-			const monster = contestant.monster;
+			const { monster } = contestant;
 
 			// Find the card in that monster's hand at the current index if it exists
 			const card = monster.cards[currentCard];
@@ -312,7 +318,7 @@ class Ring extends BaseClass {
 	}
 
 	fightConcludes ({ lastContestant, rounds }) {
-		const contestants = this.contestants;
+		const { contestants } = this;
 
 		const deadContestants = contestants.filter(contestant => !!contestant.monster.dead);
 		const deaths = deadContestants.length;
@@ -332,8 +338,7 @@ class Ring extends BaseClass {
 
 		if (deaths > 0) {
 			contestants.forEach((contestant) => {
-				const channel = contestant.channel;
-				const channelName = contestant.channelName;
+				const { channel, channelName } = contestant;
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
@@ -355,8 +360,7 @@ class Ring extends BaseClass {
 			});
 		} else {
 			contestants.forEach((contestant) => {
-				const channel = contestant.channel;
-				const channelName = contestant.channelName;
+				const { channel, channelName } = contestant;
 
 				this.channelManager.queueMessage({
 					announce: 'The fight ended in a draw.',

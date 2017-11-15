@@ -15,7 +15,9 @@ const all = [
 // Channel should be a function that takes a question and an optional array of
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
-const create = (channel, { type, name, gender, icon } = {}) => {
+const create = (channel, {
+	type, name, gender, icon
+} = {}) => {
 	const options = {};
 
 	const iconChoices = [];

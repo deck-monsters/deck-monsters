@@ -90,8 +90,7 @@ class Game extends BaseClass {
 	}
 
 	announceXPGain (className, game, { contestant, creature, xpGained }) {
-		const channel = contestant.channel;
-		const channelName = contestant.channelName;
+		const { channel, channelName } = contestant;
 
 		this.channelManager.queueMessage({
 			announce: `${creature.identity} gained ${xpGained}XP`,
@@ -101,8 +100,7 @@ class Game extends BaseClass {
 	}
 
 	announceCardDrop (className, game, { contestant, card }) {
-		const channel = contestant.channel;
-		const channelName = contestant.channelName;
+		const { channel, channelName } = contestant;
 
 		const cardDropped = actionCard(card);
 
@@ -129,7 +127,7 @@ ${cardPlayed}`
 
 	announceTurnBegin (className, ring, { contestant }) {
 		const channel = this.publicChannel;
-		const monster = contestant.monster;
+		const { monster } = contestant;
 
 		channel({
 			announce:
@@ -144,7 +142,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 	announceEndOfDeck (className, ring, { contestant }) {
 		const channel = this.publicChannel;
-		const monster = contestant.monster;
+		const { monster } = contestant;
 
 		channel({
 			announce:
@@ -279,7 +277,9 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 		}
 	}
 
-	announceMiss (className, card, { attackResult, curseOfLoki, player, target }) {
+	announceMiss (className, card, {
+		attackResult, curseOfLoki, player, target
+	}) {
 		const channel = this.publicChannel;
 
 		let action = 'is blocked by';
@@ -304,8 +304,7 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 
 	announceContestant (className, ring, { contestant }) {
 		const channel = this.publicChannel;
-		const monster = contestant.monster;
-		const character = contestant.character;
+		const { character, monster } = contestant;
 
 		channel({
 			announce:
@@ -316,8 +315,7 @@ ${monsterCard(monster)}`
 
 	announceContestantLeave (className, ring, { contestant }) {
 		const channel = this.publicChannel;
-		const monster = contestant.monster;
-		const character = contestant.character;
+		const { character, monster } = contestant;
 
 		channel({
 			announce:
@@ -392,16 +390,19 @@ ${monsterCard(monster)}`
 		this.ring.clearRing();
 	}
 
-	getCharacter (channel, channelName, { id, name, type, gender, icon }) {
+	getCharacter (channel, channelName, {
+		id, name, type, gender, icon
+	}) {
 		const game = this;
-		const ring = this.ring;
-		const log = this.log;
+		const { log, ring } = game;
 
 		return Promise
 			.resolve(this.characters[id])
 			.then((existingCharacter) => {
 				if (!existingCharacter) {
-					return createCharacter(channel, { name, type, gender, icon })
+					return createCharacter(channel, {
+						name, type, gender, icon
+					})
 						.then((character) => {
 							game.characters[id] = character;
 
@@ -433,11 +434,15 @@ ${monsterCard(monster)}`
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {
-					return character.callMonsterOutOfTheRing({ monsterName, ring, channel, channelName })
+					return character.callMonsterOutOfTheRing({
+						monsterName, ring, channel, channelName
+					})
 						.catch(err => log(err));
 				},
 				sendMonsterToTheRing ({ monsterName } = {}) {
-					return character.sendMonsterToTheRing({ monsterName, ring, channel, channelName })
+					return character.sendMonsterToTheRing({
+						monsterName, ring, channel, channelName
+					})
 						.catch(err => log(err));
 				},
 				dismissMonster ({ monsterName } = {}) {

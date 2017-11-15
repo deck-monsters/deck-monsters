@@ -101,7 +101,9 @@ class HitCard extends BaseCard {
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
 			// Add any player modifiers and roll the dice
-			const { attackRoll, success, strokeOfLuck, curseOfLoki } = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
+			const {
+				attackRoll, success, strokeOfLuck, curseOfLoki
+			} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
 			ring.channelManager.sendMessages()
 				.then(() => {

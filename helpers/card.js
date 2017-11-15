@@ -1,7 +1,9 @@
 const wrap = require('word-wrap');
 const upperFirst = require('lodash.upperfirst');
 
-const formatCard = ({ title, description, stats, rankings }) => (
+const formatCard = ({
+	title, description, stats, rankings
+}) => (
 	`
 \`\`\`
 ===========================================

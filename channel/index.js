@@ -39,7 +39,9 @@ class ChannelManager extends BaseClass {
 		return this.channels[channelName];
 	}
 
-	queueMessage ({ announce, channel, channelName = Date.now(), event }) {
+	queueMessage ({
+		announce, channel, channelName = Date.now(), event
+	}) {
 		if (channel && !this.getChannel(channelName)) {
 			this.addChannel({ channel, channelName });
 		}

@@ -78,7 +78,9 @@ class Beastmaster extends BaseCharacter {
 		}));
 	}
 
-	chooseMonster ({ channel, monsters = this.monsters, monsterName, action = 'pick', reason = 'you don\'t appear to have a living monster by that name.' }) { // eslint-disable-line max-len
+	chooseMonster ({
+		channel, monsters = this.monsters, monsterName, action = 'pick', reason = 'you don\'t appear to have a living monster by that name.'
+	}) { // eslint-disable-line max-len
 		return Promise
 			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
@@ -87,9 +89,7 @@ class Beastmaster extends BaseCharacter {
 						announce: `You don't have any monsters to ${action}.`
 					}));
 				} else if (monsterName) {
-					const monster = monsters.find(
-						potentialMonster => potentialMonster.givenName.toLowerCase() === monsterName.toLowerCase()
-					);
+					const monster = monsters.find(potentialMonster => potentialMonster.givenName.toLowerCase() === monsterName.toLowerCase());
 
 					if (monster) {
 						return monster;
@@ -127,7 +127,9 @@ Which monster would you like to ${action}?`,
 					}));
 				}
 
-				return this.chooseMonster({ channel, monsters, monsterName, action: 'equip' });
+				return this.chooseMonster({
+					channel, monsters, monsterName, action: 'equip'
+				});
 			})
 			.then(monster => equip(this.deck, monster, cardSelection, channel)
 				.then((cards) => {
@@ -140,7 +142,9 @@ Which monster would you like to ${action}?`,
 				.then(() => monster));
 	}
 
-	callMonsterOutOfTheRing ({ monsterName, ring, channel, channelName }) {
+	callMonsterOutOfTheRing ({
+		monsterName, ring, channel, channelName
+	}) {
 		const monsters = ring.getMonsters(this);
 
 		if (monsters.length <= 0) {
@@ -151,11 +155,17 @@ Which monster would you like to ${action}?`,
 
 		return Promise
 			.resolve()
-			.then(() => this.chooseMonster({ channel, monsters, monsterName, action: 'call from the ring', reason: 'they do not appear to be in the ring.' })) // eslint-disable-line max-len
-			.then(monsterInRing => ring.removeMonster({ monster: monsterInRing, character: this, channel, channelName }));
+			.then(() => this.chooseMonster({
+				channel, monsters, monsterName, action: 'call from the ring', reason: 'they do not appear to be in the ring.'
+			})) // eslint-disable-line max-len
+			.then(monsterInRing => ring.removeMonster({
+				monster: monsterInRing, character: this, channel, channelName
+			}));
 	}
 
-	sendMonsterToTheRing ({ monsterName, ring, channel, channelName }) {
+	sendMonsterToTheRing ({
+		monsterName, ring, channel, channelName
+	}) {
 		const character = this;
 		const alreadyInRing = ring.contestants.filter(contestant => contestant.character === character);
 		const monsters = this.monsters.filter(monster => !monster.dead);
@@ -174,7 +184,9 @@ Which monster would you like to ${action}?`,
 					}));
 				}
 
-				return this.chooseMonster({ channel, monsters, monsterName, action: 'send into battle' });
+				return this.chooseMonster({
+					channel, monsters, monsterName, action: 'send into battle'
+				});
 			})
 			.then((monster) => {
 				if (monster.cards.length <= 0) {
@@ -183,7 +195,9 @@ Which monster would you like to ${action}?`,
 					}));
 				}
 
-				return ring.addMonster({ monster, character, channel, channelName });
+				return ring.addMonster({
+					monster, character, channel, channelName
+				});
 			});
 	}
 
@@ -199,7 +213,9 @@ Which monster would you like to ${action}?`,
 					}));
 				}
 
-				return this.chooseMonster({ channel, monsters, monsterName, action: 'dismiss' });
+				return this.chooseMonster({
+					channel, monsters, monsterName, action: 'dismiss'
+				});
 			})
 			.then((monster) => {
 				this.dropMonster(monster);
@@ -224,7 +240,9 @@ Which monster would you like to ${action}?`,
 					}));
 				}
 
-				return this.chooseMonster({ channel, monsters, monsterName, action: 'revive' });
+				return this.chooseMonster({
+					channel, monsters, monsterName, action: 'revive'
+				});
 			})
 			.then((monster) => {
 				monster.respawn();

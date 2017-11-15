@@ -1,5 +1,7 @@
 const { hydrateCard, getCardCounts } = require('../cards');
-const { getChoices, getCardChoices, getCreatureTypeChoices, getFinalCardChoices } = require('../helpers/choices');
+const {
+	getChoices, getCardChoices, getCreatureTypeChoices, getFinalCardChoices
+} = require('../helpers/choices');
 const PRONOUNS = require('../helpers/pronouns');
 const Basilisk = require('./basilisk');
 const Minotaur = require('./minotaur');
@@ -16,7 +18,9 @@ const all = [
 // Channel should be a function that takes a question and an optional array of
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
-const spawn = (channel, { type, name, color, gender, cards, game } = {}) => {
+const spawn = (channel, {
+	type, name, color, gender, cards, game
+} = {}) => {
 	const options = {};
 
 	if (cards && cards.length > 0) {
@@ -127,7 +131,7 @@ ${getChoices(genders)}`,
 
 const equip = (deck, monster, cardSelection, channel) => {
 	const cards = [];
-	const cardSlots = monster.cardSlots;
+	const { cardSlots } = monster;
 
 	const addCard = ({ remainingSlots, remainingCards }) => {
 		const possibleCards = getCardCounts(remainingCards);
