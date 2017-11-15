@@ -476,6 +476,10 @@ ${monsterCard(monster)}`
 				lookAt (thing) {
 					return game.lookAt(channel, thing)
 						.catch(err => log(err));
+				},
+				editMonster ({ monsterName } = {}) {
+					return game.editMonster(channel, monsterName)
+						.catch(err => log(err));
 				}
 			}))
 			.catch(err => log(err));
@@ -511,6 +515,20 @@ ${monsterCard(monster)}`
 			const monster = allMonsters[monsterName.toLowerCase()];
 
 			if (monster) return monster.look(channel);
+		}
+
+		return Promise.reject(channel({
+			announce: `I can find no monster by the name of ${monsterName}.`,
+			delay: 'short'
+		}));
+	}
+
+	editMonster (channel, monsterName) {
+		if (monsterName) {
+			const allMonsters = this.getAllMonstersLookup();
+			const monster = allMonsters[monsterName.toLowerCase()];
+
+			if (monster) return monster.edit(channel);
 		}
 
 		return Promise.reject(channel({

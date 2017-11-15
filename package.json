@@ -26,6 +26,9 @@
     "type": "git",
     "url": "git@github.com:deck-monsters/deck-monsters.git"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
   "main": "index.js",
   "dependencies": {
     "escape-string-regexp": "^1.0.5",
