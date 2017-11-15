@@ -32,7 +32,7 @@ class BaseCreature extends BaseClass {
 		}
 
 		this.healingInterval = setInterval(() => {
-			if (this.hp < this.maxHp && !this.inEncounter) this.heal(1);
+			if (this.hp < this.maxHp && !this.inEncounter && !this.dead) this.heal(1);
 		}, TIME_TO_HEAL);
 	}
 
