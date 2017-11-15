@@ -77,9 +77,11 @@ ${getAttributeChoices(this.options)}`,
 			})
 				.then((answer = '') => {
 					if (answer.toLowerCase() === 'yes') {
-						return this.setOptions({
+						this.setOptions({
 							[key]: newVal
 						});
+
+						return channel({ announce: 'Change saved.' });
 					}
 
 					return channel({ announce: 'Change reverted.' });
