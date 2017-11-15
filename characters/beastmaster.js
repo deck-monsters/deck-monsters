@@ -6,7 +6,7 @@ const { capitalize } = require('../helpers/capitalize');
 
 const { monsterCard } = require('../helpers/card');
 
-const DEFAULT_MONSTER_SLOTS = 2;
+const DEFAULT_MONSTER_SLOTS = 4;
 
 class Beastmaster extends BaseCharacter {
 	constructor (options) {
