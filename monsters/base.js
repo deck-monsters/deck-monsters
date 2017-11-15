@@ -53,32 +53,36 @@ ${getAttributeChoices(this.options)}`,
 			.then(index => Object.keys(this.options)[index])
 			.then(key => channel({
 				question:
-`The current value of ${key} is ${this.options[key]}. What would you like the new value of ${key} to be?`
+`The current value of ${key} is ${JSON.stringify(this.options[key])}. What would you like the new value of ${key} to be?`
 			})
 				.then((strVal) => {
 					const oldVal = this.options[key];
-					const numberVal = +strVal;
+					let newVal;
 
-					if (!isNaN(numberVal)) { // eslint-disable-line no-restricted-globals
-						this.options[key] = numberVal;
-					} else {
-						this.options[key] = strVal;
+					try {
+						newVal = JSON.parse(strVal);
+					} catch (ex) {
+						newVal = +strVal;
+
+						if (isNaN(newVal)) { // eslint-disable-line no-restricted-globals
+							newVal = strVal;
+						}
 					}
 
-					return { key, oldVal, newVal: this.options[key] };
+					return { key, oldVal, newVal };
 				}))
 			.then(({ key, oldVal, newVal }) => channel({
 				question:
-`The value of ${key} has been updated from ${oldVal} to ${newVal}. Would you like to keep this change? (yes/no)`
+`The value of ${key} has been updated from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}. Would you like to keep this change? (yes/no)` // eslint-disable-line max-len
 			})
 				.then((answer = '') => {
-					if (answer.toLowerCase() !== 'yes') {
-						this.options[key] = oldVal;
-
-						return channel({ announce: 'Change reverted.' });
+					if (answer.toLowerCase() === 'yes') {
+						return this.setOptions({
+							[key]: newVal
+						});
 					}
 
-					return Promise.resolve();
+					return channel({ announce: 'Change reverted.' });
 				}));
 	}
 
