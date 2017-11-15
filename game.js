@@ -32,8 +32,7 @@ class Game extends BaseClass {
 
 		this.initializeEvents();
 
-		const game = this;
-		this.on('stateChange', () => this.saveState(game));
+		this.on('stateChange', () => this.saveState());
 
 		this.emit('initialized');
 	}
@@ -56,7 +55,7 @@ class Game extends BaseClass {
 
 	set saveState (stateSaveFunc) {
 		if (stateSaveFunc) {
-			this.stateSaveFunc = game => stateSaveFunc(JSON.stringify(game));
+			this.stateSaveFunc = () => stateSaveFunc(JSON.stringify(this));
 		} else {
 			delete this.stateSaveFunc;
 		}
@@ -105,11 +104,7 @@ class Game extends BaseClass {
 		const channel = contestant.channel;
 		const channelName = contestant.channelName;
 
-		const cardDropped = formatCard({
-			title: `${card.icon}  ${card.cardType}`,
-			description: card.description,
-			stats: card.stats
-		});
+		const cardDropped = actionCard(card);
 
 		this.channelManager.queueMessage({
 			announce: `The following card dropped for ${contestant.monster.identity}'s victory for ${contestant.character.identity}:
@@ -235,9 +230,9 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 	}
 
 	announceCondition (className, monster, {
-			amount,
-			attr
-		}) {
+		amount,
+		attr
+	}) {
 		const channel = this.publicChannel;
 
 		let dir = 'increased';
@@ -359,7 +354,7 @@ ${monsterCard(monster)}`
 		contestant.character.xp += XP_PER_VICTORY;
 
 		// Also draw a new card for the player
-		const card = this.drawCard({ character: contestant.character });
+		const card = this.drawCard({ level: contestant.character.level });
 		contestant.character.addCard(card);
 
 		this.emit('cardDrop', {

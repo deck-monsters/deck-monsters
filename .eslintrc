@@ -1,4 +1,3 @@
 {
-  "extends": "eslint-config-slds",
-  "parser": "babel-eslint"
+  "extends": "@salesforce-mc/eslint-config-sfmc"
 }

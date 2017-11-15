@@ -4,9 +4,9 @@ const { monsterCard, actionCard } = require('../helpers/card');
 const reduce = require('lodash.reduce');
 
 class BaseCharacter extends BaseCreature {
-	constructor (options) {
+	constructor (options = {}) {
 		const defaultOptions = {
-			deck: getInitialDeck(options)
+			deck: getInitialDeck({ level: options.level })
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -18,7 +18,7 @@ class BaseCharacter extends BaseCreature {
 
 	get deck () {
 		if (this.options.deck === undefined || this.options.deck.length <= 0) {
-			this.deck = getInitialDeck(this.options);
+			this.deck = getInitialDeck({ level: this.options.level });
 		}
 
 		return this.options.deck || [];
