@@ -1,15 +1,19 @@
 const HealCard = require('./heal');
 
 class ReviveCard extends HealCard {
-	constructor (options) {
-		// Set defaults for these values that can be overridden by the options passed in
-		const defaultOptions = {
-			healthDice: '2d4',
-			modifier: 3,
-			icon: '⛑'
-		};
-
-		super(Object.assign(defaultOptions, options));
+	// Set defaults for these values that can be overridden by the options passed in
+	constructor ({
+		healthDice = '2d4',
+		modifier = 3,
+		icon = '⛑',
+		...rest
+	} = {}) {
+		super({
+			healthDice,
+			modifier,
+			icon,
+			...rest
+		});
 	}
 }
 

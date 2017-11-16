@@ -3,15 +3,13 @@ const { roll } = require('../helpers/chance');
 const isProbable = require('../helpers/is-probable');
 
 class HealCard extends BaseCard {
-	constructor (options) {
-		// Set defaults for these values that can be overridden by the options passed in
-		const defaultOptions = {
-			healthDice: '1d4',
-			modifier: 0,
-			icon: '💊'
-		};
-
-		super(Object.assign(defaultOptions, options));
+	// Set defaults for these values that can be overridden by the options passed in
+	constructor ({
+		healthDice = '1d4',
+		modifier = 0,
+		icon = '💊'
+	} = {}) {
+		super({ healthDice, modifier, icon });
 	}
 
 	get healthDice () {

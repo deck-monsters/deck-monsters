@@ -9,13 +9,12 @@ const HitCard = require('./hit');
 const { roll } = require('../helpers/chance');
 
 class Rehit extends HitCard {
-	constructor (options) {
-		// Set defaults for these values that can be overridden by the options passed in
-		const defaultOptions = {
-			icon: '🔂'
-		};
-
-		super(Object.assign(defaultOptions, options));
+	// Set defaults for these values that can be overridden by the options passed in
+	constructor ({
+		icon = '🔂',
+		...rest
+	} = {}) {
+		super({ icon, ...rest });
 	}
 
 	hitCheck (player, target) {

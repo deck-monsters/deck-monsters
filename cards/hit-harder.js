@@ -8,14 +8,13 @@ const HitCard = require('./hit');
 const { roll, max } = require('../helpers/chance');
 
 class HitHarder extends HitCard {
-	constructor (options) {
-		// Set defaults for these values that can be overridden by the options passed in
-		const defaultOptions = {
-			damageDice: '1d6', // Lucky you, the pound card does double damage
-			icon: '🔨'
-		};
-
-		super(Object.assign(defaultOptions, options));
+	// Set defaults for these values that can be overridden by the options passed in
+	constructor ({
+		damageDice = '1d6', // Lucky you, the pound card does double damage
+		icon = '🔨',
+		...rest
+	} = {}) {
+		super({ damageDice, icon, ...rest });
 	}
 
 	rollForDamage (player, target, strokeOfLuck) {

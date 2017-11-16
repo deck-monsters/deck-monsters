@@ -1,15 +1,13 @@
 const BaseCard = require('./base');
 
 class CurseCard extends BaseCard {
-	constructor (options) {
-		// Set defaults for these values that can be overridden by the options passed in
-		const defaultOptions = {
-			curseAmount: -1,
-			icon: '😖',
-			cursedProp: 'ac'
-		};
-
-		super(Object.assign(defaultOptions, options));
+	// Set defaults for these values that can be overridden by the options passed in
+	constructor ({
+		curseAmount = -1,
+		icon = '😖',
+		cursedProp = 'ac'
+	} = {}) {
+		super({ curseAmount, icon, cursedProp });
 	}
 
 	get curseAmount () {

@@ -2,13 +2,11 @@ const BaseCard = require('./base');
 const { roll } = require('../helpers/chance');
 
 class FleeCard extends BaseCard {
-	constructor (options) {
-		// Set defaults for these values that can be overridden by the options passed in
-		const defaultOptions = {
-			icon: '🏃'
-		};
-
-		super(Object.assign(defaultOptions, options));
+	// Set defaults for these values that can be overridden by the options passed in
+	constructor ({
+		icon = '🏃'
+	} = {}) {
+		super({ icon });
 	}
 
 	get stats () { // eslint-disable-line class-methods-use-this
