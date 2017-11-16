@@ -6,6 +6,7 @@ const BaseClass = require('../baseClass');
 const delayTimes = require('../helpers/delay-times');
 const { monsterCard } = require('../helpers/card');
 const pause = require('../helpers/pause');
+const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
 
 const MAX_MONSTERS = 3;
 const MIN_MONSTERS = 2;
@@ -31,6 +32,17 @@ class Ring extends BaseClass {
 
 	get contestants () {
 		return this.options.contestants || [];
+	}
+
+	get encounterEffects () {
+		return (this.encounter || {}).effects || [];
+	}
+
+	set encounterEffects (effects = []) {
+		this.encounter = {
+			...this.encounter,
+			effects
+		};
 	}
 
 	getMonsters (targetCharacter) {
@@ -165,12 +177,14 @@ class Ring extends BaseClass {
 
 	startEncounter () {
 		this.inEncounter = true;
+		this.encounter = {};
 		this.contestants.forEach(contestant => contestant.monster.startEncounter(this));
 	}
 
 	endEncounter () {
 		this.contestants.forEach(contestant => contestant.monster.endEncounter());
 		this.inEncounter = false;
+		delete this.encounter;
 	}
 
 	clearRing () {
@@ -237,7 +251,7 @@ class Ring extends BaseClass {
 			const { monster } = contestant;
 
 			// Find the card in that monster's hand at the current index if it exists
-			const card = monster.cards[currentCard];
+			let card = monster.cards[currentCard];
 
 			// Emit an event when a character's turn begins
 			// Note that as written currently this will emit _only if they have a card to play_
@@ -270,11 +284,32 @@ class Ring extends BaseClass {
 
 			// Does the monster have a card at the current position?
 			if (card) {
+				const nextMonster = contestants[nextContestant].monster;
+
+				// Now we're going to run through all of the possible effects
+				// Each effect should either return a card (which will replace the card that was going to be played)
+				// or do something in the background and then return nothing (in which case we'll keep the card we had)
+
+				// First, run through the effects from the current monster
+				card = monster.encounterEffects.reduce((result, effect) => effect({
+					card: result, player: monster, target: nextMonster, ring, phase: ATTACK_PHASE
+				}) || card, card);
+
+				// Second, run through the effects from the target monster
+				card = nextMonster.encounterEffects.reduce((result, effect) => effect({
+					card: result, player: monster, target: nextMonster, ring, phase: DEFENSE_PHASE
+				}) || card, card);
+
+				// Finally, run through any global effects
+				card = ring.encounterEffects.reduce((result, effect) => effect({
+					card: result, player: monster, target: nextMonster, ring, phase: GLOBAL_PHASE
+				}) || card, card);
+
 				// Play the card. If the fight should continue after the card it will return true, otherwise it will return false
 				card
 					// The current monster always attacks the next monster
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
-					.play(monster, contestants[nextContestant].monster, ring)
+					.play(monster, nextMonster, ring)
 					.then((fightContinues) => {
 						if (fightContinues) {
 							this.channelManager.sendMessages()
