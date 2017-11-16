@@ -139,8 +139,33 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get encounterConditions () {
+		return (this.encounter || {}).conditions || {};
+	}
+
+	set encounterConditions (conditions = {}) {
+		this.encounter = {
+			...this.encounter,
+			conditions
+		};
+	}
+
+	get encounterEffects () {
+		return (this.encounter || {}).effects || [];
+	}
+
+	set encounterEffects (effects = []) {
+		this.encounter = {
+			...this.encounter,
+			effects
+		};
+	}
+
 	get conditions () {
-		return this.options.conditions || {};
+		return {
+			...this.options.conditions,
+			...this.encounterConditions
+		};
 	}
 
 	set conditions (conditions) {
@@ -173,6 +198,7 @@ Battles won: ${this.battles.wins}`;
 		if (boost > 0) {
 			attackModifier += boost; // +1 per level up to the max
 		}
+		attackModifier += this.conditions.attackModifier || 0;
 
 		return attackModifier;
 	}
@@ -189,6 +215,7 @@ Battles won: ${this.battles.wins}`;
 		if (boost > 0) {
 			damageModifier += boost; // +1 per level up to the max
 		}
+		damageModifier += this.conditions.damageModifier || 0;
 
 		return damageModifier;
 	}
@@ -196,6 +223,7 @@ Battles won: ${this.battles.wins}`;
 	get maxHp () {
 		let maxHp = this.options.maxHp || this.DEFAULT_HP;
 		maxHp += Math.min(this.level * 2, MAX_HP_BOOST); // Gain 2 hp per level up to the max
+		maxHp += this.conditions.maxHp || 0;
 
 		return maxHp;
 	}
@@ -257,13 +285,17 @@ Battles won: ${this.battles.wins}`;
 		return true;
 	}
 
-	setCondition (attr, amount = 0) {
+	setCondition (attr, amount = 0, permanent = false) {
 		const prevValue = this.conditions[attr] || 0;
 		const conditions = Object.assign({}, this.conditions, {
 			[attr]: prevValue + amount
 		});
 
-		this.conditions = conditions;
+		if (permanent) {
+			this.conditions = conditions;
+		} else {
+			this.encounterConditions = conditions;
+		}
 
 		this.emit('condition', {
 			amount,
@@ -282,6 +314,18 @@ Battles won: ${this.battles.wins}`;
 		}
 
 		return false;
+	}
+
+	startEncounter (ring) {
+		this.inEncounter = true;
+		this.encounter = {
+			ring
+		};
+	}
+
+	endEncounter () {
+		this.inEncounter = false;
+		delete this.encounter;
 	}
 
 	respawn (immediate) {

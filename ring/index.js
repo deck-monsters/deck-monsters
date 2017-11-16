@@ -7,7 +7,7 @@ const delayTimes = require('../helpers/delay-times');
 const { monsterCard } = require('../helpers/card');
 const pause = require('../helpers/pause');
 
-const MAX_MONSTERS = 2;
+const MAX_MONSTERS = 3;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 30000;
 
@@ -48,6 +48,12 @@ class Ring extends BaseClass {
 		return Promise
 			.resolve()
 			.then(() => {
+				if (this.inEncounter) {
+					return Promise.reject(channel({
+						announce: 'You cannot withdraw while an encounter is in progress'
+					}));
+				}
+
 				if (this.contestants.length <= 0) {
 					return Promise.reject(channel({
 						announce: 'No monsters currently in ring'
@@ -97,7 +103,7 @@ class Ring extends BaseClass {
 	addMonster ({
 		monster, character, channel, channelName
 	}) {
-		if (this.contestants.length < MAX_MONSTERS) {
+		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
 			const contestant = {
 				monster,
 				character,
@@ -157,21 +163,19 @@ class Ring extends BaseClass {
 		}));
 	}
 
-	// TO-DO: This should probably be an encounter start / end method we call on the creature
-	setEncounterFlag (value) {
-		this.contestants.forEach((contestant) => {
-			contestant.monster.inEncounter = value;
-			if (value) {
-				contestant.savedConditions = Object.assign({}, contestant.monster.conditions);
-			} else {
-				contestant.monster.conditions = Object.assign({}, contestant.savedConditions);
-			}
-		});
+	startEncounter () {
+		this.inEncounter = true;
+		this.contestants.forEach(contestant => contestant.monster.startEncounter(this));
+	}
+
+	endEncounter () {
+		this.contestants.forEach(contestant => contestant.monster.endEncounter());
+		this.inEncounter = false;
 	}
 
 	clearRing () {
 		clearTimeout(this.fightTimer);
-		this.setEncounterFlag(false);
+		this.endEncounter();
 		this.options.contestants = [];
 		this.emit('clear');
 	}
@@ -208,7 +212,7 @@ class Ring extends BaseClass {
 		const ring = this;
 
 		// Set a flag on the contestants that are in the encounter
-		this.setEncounterFlag(true);
+		this.startEncounter();
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
