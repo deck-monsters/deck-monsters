@@ -139,13 +139,38 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
-	get conditions () {
-		return this.options.conditions || {};
+	get encounterModifiers () {
+		return (this.encounter || {}).modifiers || {};
 	}
 
-	set conditions (conditions) {
+	set encounterModifiers (modifiers = {}) {
+		this.encounter = {
+			...this.encounter,
+			modifiers
+		};
+	}
+
+	get encounterEffects () {
+		return (this.encounter || {}).effects || [];
+	}
+
+	set encounterEffects (effects = []) {
+		this.encounter = {
+			...this.encounter,
+			effects
+		};
+	}
+
+	get modifiers () {
+		return {
+			...this.options.modifiers,
+			...this.encounterModifiers
+		};
+	}
+
+	set modifiers (modifiers) {
 		this.setOptions({
-			conditions
+			modifiers
 		});
 	}
 
@@ -156,7 +181,7 @@ Battles won: ${this.battles.wins}`;
 	get ac () {
 		let ac = this.options.ac || this.DEFAULT_AC;
 		ac += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
-		ac += this.conditions.ac || 0;
+		ac += this.modifiers.ac || 0;
 
 		return ac;
 	}
@@ -173,6 +198,7 @@ Battles won: ${this.battles.wins}`;
 		if (boost > 0) {
 			attackModifier += boost; // +1 per level up to the max
 		}
+		attackModifier += this.modifiers.attackModifier || 0;
 
 		return attackModifier;
 	}
@@ -189,6 +215,7 @@ Battles won: ${this.battles.wins}`;
 		if (boost > 0) {
 			damageModifier += boost; // +1 per level up to the max
 		}
+		damageModifier += this.modifiers.damageModifier || 0;
 
 		return damageModifier;
 	}
@@ -196,6 +223,7 @@ Battles won: ${this.battles.wins}`;
 	get maxHp () {
 		let maxHp = this.options.maxHp || this.DEFAULT_HP;
 		maxHp += Math.min(this.level * 2, MAX_HP_BOOST); // Gain 2 hp per level up to the max
+		maxHp += this.modifiers.maxHp || 0;
 
 		return maxHp;
 	}
@@ -257,15 +285,19 @@ Battles won: ${this.battles.wins}`;
 		return true;
 	}
 
-	setCondition (attr, amount = 0) {
-		const prevValue = this.conditions[attr] || 0;
-		const conditions = Object.assign({}, this.conditions, {
+	setModifier (attr, amount = 0, permanent = false) {
+		const prevValue = this.modifiers[attr] || 0;
+		const modifiers = Object.assign({}, this.modifiers, {
 			[attr]: prevValue + amount
 		});
 
-		this.conditions = conditions;
+		if (permanent) {
+			this.modifiers = modifiers;
+		} else {
+			this.encounterModifiers = modifiers;
+		}
 
-		this.emit('condition', {
+		this.emit('modifier', {
 			amount,
 			attr,
 			prevValue
@@ -282,6 +314,18 @@ Battles won: ${this.battles.wins}`;
 		}
 
 		return false;
+	}
+
+	startEncounter (ring) {
+		this.inEncounter = true;
+		this.encounter = {
+			ring
+		};
+	}
+
+	endEncounter () {
+		this.inEncounter = false;
+		delete this.encounter;
 	}
 
 	respawn (immediate) {

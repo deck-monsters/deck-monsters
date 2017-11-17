@@ -24,7 +24,7 @@ class CurseCard extends BaseCard {
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
-			target.setCondition(this.cursedProp, this.curseAmount);
+			target.setModifier(this.cursedProp, this.curseAmount);
 
 			resolve(true);
 		});

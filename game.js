@@ -69,7 +69,7 @@ class Game extends BaseClass {
 		this.on('card.miss', this.announceMiss);
 		this.on('creature.hit', this.announceHit);
 		this.on('creature.heal', this.announceHeal);
-		this.on('creature.condition', this.announceCondition);
+		this.on('creature.modifier', this.announceModifier);
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
@@ -227,7 +227,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
-	announceCondition (className, monster, {
+	announceModifier (className, monster, {
 		amount,
 		attr
 	}) {
