@@ -182,13 +182,20 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
-	announceStay (className, monster, { player, target }) {
+	announceStay (className, monster, { fleeRoll, player, target }) {
 		const channel = this.publicChannel;
 
-		channel({
-			announce:
-`${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!`
-		});
+		if (fleeRoll) {
+			channel({
+				announce:
+	`${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!`
+			});
+		} else {
+			channel({
+				announce:
+	`${player.identityWithHp} bravely stays in the ring.`
+			});
+		}
 	}
 
 	announceRolling (className, monster, {

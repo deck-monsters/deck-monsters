@@ -199,7 +199,18 @@ ${getFinalCardChoices(cards)}`
 				}));
 			}
 
-			const nowRemainingCards = [...deck];
+			const nowRemainingCards = [...deck].sort((a, b) => {
+				if (a.cardType > b.cardType) {
+					return 1;
+				}
+
+				if (a.cardType < b.cardType) {
+					return -1;
+				}
+				
+				return 0;
+			});
+
 			if (cardSelection) {
 				cardSelection.forEach((card) => {
 					if (cardSlots - cards.length > 0) {
