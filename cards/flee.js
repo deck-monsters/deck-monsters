@@ -10,12 +10,12 @@ class FleeCard extends BaseCard {
 	}
 
 	get stats () { // eslint-disable-line class-methods-use-this
-		return 'Chance to run away if hp < 10';
+		return 'Chance to run away if bloodied (hp < half)';
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
-			if (player.hp < 10) {
+			if (player.hp < (player.maxHp / 2)) {
 				const fleeBonus = target.ac - player.ac;
 				const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
 				const success = this.checkSuccess(fleeRoll, target.ac);
