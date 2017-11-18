@@ -26,39 +26,44 @@ const all = [
 	RehitCard
 ];
 
-const draw = ({ level = 1 } = {}) => {
-	const shuffledDeck = shuffle(all);
-	const filteredDeck = shuffledDeck.filter(card => level >= card.level);
+const draw = (options, monster) => {
+	let deck = shuffle(all);
 
-	const Card = filteredDeck.find(isProbable);
+	if (monster) {
+		deck = deck.filter(card => monster.canHoldCard(card));
+	}
 
-	if (!Card) return draw({ level });
+	const Card = deck.find(isProbable);
+
+	if (!Card) return draw(options, monster);
 
 	// In the future we may want to pass some options to the cards,
 	// but we need to make sure that we only pass card-related options.
 	// For example, the level is not meant to passed to the card.
-	return new Card();
+	return new Card(options);
 };
 
 // fills deck up with random cards appropriate for player's level
-const fillDeck = (deck, options) => {
+const fillDeck = (deck, options, monster) => {
 	while (deck.length < DEFAULT_MINIMUM_CARDS) {
-		deck.push(draw(options));
+		deck.push(draw(options, monster));
 	}
 
 	return deck;
 };
 
-const getInitialDeck = (options) => {
+const getInitialDeck = (options, monster) => {
 	// See above re: options
 	const deck = [
+		new HitCard(),
+		new HitCard(),
 		new HitCard(),
 		new HitCard(),
 		new HealCard(),
 		new FleeCard()
 	];
 
-	return fillDeck(deck, options);
+	return fillDeck(deck, options, monster);
 };
 
 const getCardCounts = cards =>
@@ -76,14 +81,19 @@ const getUniqueCards = cards =>
 		, []
 	);
 
-const hydrateCard = (cardObj) => {
+const hydrateCard = (cardObj, monster) => {
 	const Card = all.find(({ name }) => name === cardObj.name);
-	return new Card(cardObj.options);
+
+	if (Card) {
+		return new Card(cardObj.options);
+	}
+
+	return draw({}, monster);
 };
 
-const hydrateDeck = deckJSON => JSON
+const hydrateDeck = (deckJSON, monster) => JSON
 	.parse(deckJSON)
-	.map(hydrateCard);
+	.map(cardObj => hydrateCard(cardObj, monster));
 
 module.exports = {
 	all,

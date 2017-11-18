@@ -37,6 +37,10 @@ class BaseCreature extends BaseClass {
 		}, TIME_TO_HEAL);
 	}
 
+	get class () {
+		return this.constructor.class;
+	}
+
 	get icon () {
 		return this.options.icon;
 	}
@@ -72,7 +76,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get individualDescription () {
-		return this.options.description;
+		return this.options.description || this.description;
 	}
 
 	get gender () {

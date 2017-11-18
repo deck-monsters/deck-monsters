@@ -3,6 +3,7 @@
 const random = require('lodash.sample');
 
 const BaseMonster = require('./base');
+const { BARBARIAN } = require('../helpers/classes');
 
 const DEFAULT_COLOR = 'angry red';
 const DEFAULT_NAME = 'Taurus';
@@ -30,10 +31,6 @@ class Minotaur extends BaseMonster {
 		};
 
 		super(Object.assign(defaultOptions, options));
-
-		this.setOptions({
-			description: `a battle-hardened, ${this.color} minotaur with a ${this.pattern} pattern shaved into ${this.pronouns[2]} thick fur. Make no mistake, despite ${this.pronouns[2]} ${this.descriptor} bulk ${this.pronouns[0]} is a first-class host who has never been put to shame at a dinner party.`
-		});
 	}
 
 	get color () {
@@ -47,9 +44,14 @@ class Minotaur extends BaseMonster {
 	get descriptor () {
 		return this.options.descriptor;
 	}
+
+	get description () {
+		return `a battle-hardened, ${this.color} minotaur with a ${this.pattern} pattern shaved into ${this.pronouns[2]} thick fur. Make no mistake, despite ${this.pronouns[2]} ${this.descriptor} bulk ${this.pronouns[0]} is a first-class host who has never been put to shame at a dinner party.`;
+	}
 }
 
 Minotaur.creatureType = 'Minotaur';
+Minotaur.class = BARBARIAN;
 Minotaur.description =
 `
 The bull-folk have many of the same characteristics as the bulls they resemble. Both genders have horned heads covered with shaggy hair. Warriors braid their hair with teeth or other tokens of fallen enemies. The thick hair covering their large bodies varies widely in color, from bright white to medium red-browns to dark brown and black. Many minotaurs shave or dye their fur in patterns signifying their allegiances and beliefs. Other methods of decoration include brands, ritual scars, and gilding or carving their horns.
