@@ -290,6 +290,9 @@ class Ring extends BaseClass {
 				// Each effect should either return a card (which will replace the card that was going to be played)
 				// or do something in the background and then return nothing (in which case we'll keep the card we had)
 
+				// Let's clone the card before we get started on this - that way any modifications won't be saved
+				card = card.clone();
+
 				// First, run through the effects from the current monster
 				card = monster.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
