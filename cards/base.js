@@ -40,6 +40,10 @@ class BaseCard extends BaseClass {
 		return this.constructor.probability;
 	}
 
+	get flavors () {
+		return this.constructor.flavors || this.options.flavors;
+	}
+
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
 		let strokeOfLuck = false;
 		let curseOfLoki = false;

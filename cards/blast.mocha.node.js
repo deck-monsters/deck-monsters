@@ -69,4 +69,10 @@ describe('./cards/blast.js', () => {
 				expect(target2.hp).to.equal(target2StatingHp - damage);
 			});
 	});
+
+	it('has hit flavors', () => {
+		const blast = new BlastCard();
+
+		expect(blast.flavors.hits).to.be.an('array');
+	});
 });

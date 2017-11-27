@@ -47,4 +47,14 @@ BlastCard.cost = 4;
 BlastCard.level = 0;
 BlastCard.permittedClasses = [CLERIC];
 
+BlastCard.flavors = {
+	hits: [
+		['blasts', 80],
+		['sends a magical blast hurtling into', 70],
+		['invokes an ancient spell against', 70],
+		['incinerates', 50],
+		['farts in the general direction of', 5]
+	]
+};
+
 module.exports = BlastCard;
