@@ -19,4 +19,14 @@ PoundCard.cost = 8;
 PoundCard.level = 3;
 PoundCard.permittedClasses = [BARBARIAN];
 
+PoundCard.flavors = {
+	hits: [
+		['pounds', 80],
+		['mercilessly beats', 70],
+		['trashes', 70],
+		['clubs', 50],
+		['performs a vicious wedgie on', 5]
+	]
+};
+
 module.exports = PoundCard;

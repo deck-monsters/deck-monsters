@@ -68,4 +68,13 @@ LuckyStrike.cost = 6;
 LuckyStrike.level = 2;
 LuckyStrike.permittedClasses = [CLERIC, FIGHTER];
 
+LuckyStrike.flavors = {
+	hits: [
+		['whistles tunelessly while absolutely destroying', 80],
+		['strikes many blows upon', 70],
+		['hits', 50],
+		['turns into a humingbird and beats down on', 5]
+	]
+};
+
 module.exports = LuckyStrike;

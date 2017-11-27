@@ -66,4 +66,14 @@ HitHarder.cost = 6;
 HitHarder.level = 2;
 HitHarder.permittedClasses = [BARBARIAN, FIGHTER];
 
+HitHarder.flavors = {
+	hits: [
+		['pounds', 80],
+		['mercilessly beats', 70],
+		['trashes', 70],
+		['clubs', 50],
+		['lifts up a nearby tree and bashes', 5]
+	]
+};
+
 module.exports = HitHarder;
