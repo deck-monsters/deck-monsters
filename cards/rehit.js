@@ -7,6 +7,7 @@
 
 const HitCard = require('./hit');
 const { roll } = require('../helpers/chance');
+const { CLERIC } = require('../helpers/classes');
 
 class Rehit extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -67,5 +68,6 @@ Rehit.probability = 20;
 Rehit.description = 'Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.';
 Rehit.cost = 5;
 Rehit.level = 2;
+Rehit.permittedClasses = [CLERIC];
 
 module.exports = Rehit;

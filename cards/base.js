@@ -32,8 +32,20 @@ class BaseCard extends BaseClass {
 		return this.constructor.level;
 	}
 
+	get permittedClasses () {
+		return this.constructor.permittedClasses;
+	}
+
 	get probability () {
 		return this.constructor.probability;
+	}
+
+	get flavors () {
+		return this.constructor.flavors || this.options.flavors;
+	}
+
+	clone () {
+		return Object.assign(Object.create(this), this);
 	}
 
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this

@@ -75,4 +75,14 @@ describe('./game.js', () => {
 		expect(card.name).to.not.equal(BaseCard.name);
 		expect(card.options.useless).to.be.undefined;
 	});
+
+	it('can draw a card for a specific monster', () => {
+		const game = new Game(publicChannelStub);
+		const canHoldCard = sinon.stub().returns(true);
+		const monster = { canHoldCard };
+		const card = game.drawCard({ useless: 'option' }, monster);
+
+		expect(card).to.be.an.instanceof(BaseCard);
+		expect(canHoldCard).to.have.been.called;
+	});
 });

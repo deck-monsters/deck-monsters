@@ -55,6 +55,6 @@ HealCard.cardType = 'Heal';
 HealCard.probability = 60;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';
 HealCard.cost = 3;
-HealCard.level = 1;
+HealCard.level = 0;
 
 module.exports = HealCard;

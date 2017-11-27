@@ -109,7 +109,7 @@ class HitCard extends BaseCard {
 						const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
 						// If we hit then do some damage
-						resolve(target.hit(damageRoll.result, player));
+						resolve(target.hit(damageRoll.result, player, this));
 					} else {
 						this.emit('miss', {
 							attackResult: attackRoll.result,
@@ -129,6 +129,6 @@ HitCard.cardType = 'Hit';
 HitCard.probability = 80;
 HitCard.description = 'A basic attack, the staple of all good monsters.';
 HitCard.cost = 4;
-HitCard.level = 1;
+HitCard.level = 0;
 
 module.exports = HitCard;

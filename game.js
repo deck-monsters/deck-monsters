@@ -67,6 +67,7 @@ class Game extends BaseClass {
 		this.on('card.rolling', this.announceRolling);
 		this.on('card.rolled', this.announceRolled);
 		this.on('card.miss', this.announceMiss);
+		this.on('card.effect', this.announceEffect);
 		this.on('creature.hit', this.announceHit);
 		this.on('creature.heal', this.announceHeal);
 		this.on('creature.modifier', this.announceModifier);
@@ -251,8 +252,9 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
-	announceHit (className, monster, { assailant, damage }) {
+	announceHit (className, monster, { assailant, card, damage }) {
 		const channel = this.publicChannel;
+		const flavors = card && card.flavors;
 
 		let icon = '🤜';
 		if (damage >= 10) {
@@ -265,7 +267,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 		channel({
 			announce:
-`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
+`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
 
 ${monster.icon}  *${monster.givenName} has ${monster.hp}HP left.*
 `
@@ -305,6 +307,18 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 		channel({
 			announce:
 `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
+`
+		});
+	}
+
+	announceEffect (className, card, {
+		effectName, player
+	}) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce:
+`${player.givenName} has put ${effectName} into play
 `
 		});
 	}
@@ -359,7 +373,7 @@ ${monsterCard(monster)}`
 		contestant.character.xp += XP_PER_VICTORY;
 
 		// Also draw a new card for the player
-		const card = this.drawCard({ level: contestant.character.level });
+		const card = this.drawCard({}, contestant.monster);
 		contestant.character.addCard(card);
 
 		this.emit('cardDrop', {
@@ -617,8 +631,8 @@ ${monsterCard(monster)}`
 		}));
 	}
 
-	drawCard (options) {
-		const card = draw(options);
+	drawCard (options, monster) {
+		const card = draw(options, monster);
 
 		this.emit('cardDrawn', { card });
 

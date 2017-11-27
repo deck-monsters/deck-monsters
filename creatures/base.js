@@ -37,6 +37,10 @@ class BaseCreature extends BaseClass {
 		}, TIME_TO_HEAL);
 	}
 
+	get class () {
+		return this.constructor.class;
+	}
+
 	get icon () {
 		return this.options.icon;
 	}
@@ -72,7 +76,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get individualDescription () {
-		return this.options.description;
+		return this.options.description || this.description;
 	}
 
 	get gender () {
@@ -228,6 +232,10 @@ Battles won: ${this.battles.wins}`;
 		return maxHp;
 	}
 
+	canHoldCard () { // eslint-disable-line class-methods-use-this
+		return false;
+	}
+
 	leaveCombat (assailant) {
 		this.emit('leave', {
 			assailant
@@ -236,7 +244,7 @@ Battles won: ${this.battles.wins}`;
 		return false;
 	}
 
-	hit (damage = 0, assailant) {
+	hit (damage = 0, assailant, card) {
 		const hp = this.hp - damage;
 		const originalHP = this.hp;
 
@@ -248,6 +256,7 @@ Battles won: ${this.battles.wins}`;
 
 		this.emit('hit', {
 			assailant,
+			card,
 			damage,
 			hp,
 			prevHp: originalHP
@@ -337,7 +346,7 @@ Battles won: ${this.battles.wins}`;
 			this.respawnTimeoutBegan = Date.now();
 			this.respawnTimeoutLength = timeoutLength;
 
-			this.respawnTimeout = pause(() => {
+			this.respawnTimeout = pause.setTimeout(() => {
 				creature.hp = 1;
 				creature.respawnTimeout = undefined;
 

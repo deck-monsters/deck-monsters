@@ -6,7 +6,7 @@ const reduce = require('lodash.reduce');
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {
 		const defaultOptions = {
-			deck: getInitialDeck({ level: options.level })
+			deck: []
 		};
 
 		super(Object.assign(defaultOptions, options));
@@ -18,7 +18,7 @@ class BaseCharacter extends BaseCreature {
 
 	get deck () {
 		if (this.options.deck === undefined || this.options.deck.length <= 0) {
-			this.deck = getInitialDeck({ level: this.options.level });
+			this.deck = getInitialDeck(undefined, this);
 		}
 
 		return this.options.deck || [];
@@ -28,6 +28,12 @@ class BaseCharacter extends BaseCreature {
 		this.setOptions({
 			deck
 		});
+	}
+
+	canHoldCard (card) {
+		const appropriateLevel = (!card.level || card.level <= this.level);
+
+		return appropriateLevel;
 	}
 
 	addCard (card) {

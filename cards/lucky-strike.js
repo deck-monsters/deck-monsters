@@ -8,6 +8,7 @@
 
 const HitCard = require('./hit');
 const { roll } = require('../helpers/chance');
+const { CLERIC, FIGHTER } = require('../helpers/classes');
 
 class LuckyStrike extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -65,5 +66,15 @@ LuckyStrike.probability = 20;
 LuckyStrike.description = 'Roll for attack twice, use the best roll to see if you hit.';
 LuckyStrike.cost = 6;
 LuckyStrike.level = 2;
+LuckyStrike.permittedClasses = [CLERIC, FIGHTER];
+
+LuckyStrike.flavors = {
+	hits: [
+		['whistles tunelessly while absolutely destroying', 80],
+		['strikes many blows upon', 70],
+		['hits', 50],
+		['turns into a humingbird and beats down on', 5]
+	]
+};
 
 module.exports = LuckyStrike;
