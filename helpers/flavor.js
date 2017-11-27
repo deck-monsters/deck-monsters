@@ -2,10 +2,10 @@ const { percent } = require('./chance');
 const shuffle = require('lodash.shuffle');
 
 const flavor = {
-	getFlavor (category) {
-		const possibleWords = shuffle(flavor.flavors[category]);
+	getFlavor (category, flavors = flavor.flavors) {
+		const possibleWords = shuffle(flavors[category]);
 
-		const words = possibleWords.find(card => percent() <= card[1]) || flavor.getFlavor(category);
+		const words = possibleWords.find(card => percent() <= card[1]) || flavor.getFlavor(category, flavors);
 
 		return words[0];
 	},
