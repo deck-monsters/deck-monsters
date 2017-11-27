@@ -19,9 +19,10 @@ class EnchantedFaceswapCard extends BaseCard {
 				phase
 			}) => {
 				if (phase === DEFENSE_PHASE) {
-					const modifiedCard = card.clone();
+					const { play } = card;
 
-					modifiedCard.play = (swappedPlayer, swappedTarget) => card.play.call(modifiedCard, swappedTarget, swappedPlayer, ring);
+					// The card that is passed in should be a clone already so we're going to edit it directly
+					card.play = (swappedPlayer, swappedTarget) => play.call(card, swappedTarget, swappedPlayer, ring);
 					faceswapPlayer.encounterEffects = faceswapPlayer.encounterEffects.filter(effect => effect !== faceswapEffect);
 
 					this.emit('effect', {
@@ -30,8 +31,6 @@ class EnchantedFaceswapCard extends BaseCard {
 						target: faceswapTarget,
 						ring
 					});
-
-					return modifiedCard;
 				}
 
 				return card;
