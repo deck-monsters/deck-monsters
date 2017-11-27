@@ -12,6 +12,7 @@ const HitHarderCard = require('./hit-harder');
 const LuckyStrike = require('./lucky-strike');
 const PoundCard = require('./pound');
 const RehitCard = require('./rehit');
+const WoodenSpearCard = require('./wooden-spear');
 // const ReviveCard = require('./revive');
 
 const DEFAULT_MINIMUM_CARDS = 10;
@@ -27,7 +28,8 @@ const all = [
 	HitHarderCard,
 	LuckyStrike,
 	PoundCard,
-	RehitCard
+	RehitCard,
+	WoodenSpearCard
 ];
 
 const draw = (options, creature) => {
