@@ -109,7 +109,7 @@ class HitCard extends BaseCard {
 						const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
 						// If we hit then do some damage
-						resolve(target.hit(damageRoll.result, player));
+						resolve(target.hit(damageRoll.result, player, this));
 					} else {
 						this.emit('miss', {
 							attackResult: attackRoll.result,

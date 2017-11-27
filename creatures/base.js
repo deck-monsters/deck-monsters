@@ -244,7 +244,7 @@ Battles won: ${this.battles.wins}`;
 		return false;
 	}
 
-	hit (damage = 0, assailant) {
+	hit (damage = 0, assailant, card) {
 		const hp = this.hp - damage;
 		const originalHP = this.hp;
 
@@ -256,6 +256,7 @@ Battles won: ${this.battles.wins}`;
 
 		this.emit('hit', {
 			assailant,
+			card,
 			damage,
 			hp,
 			prevHp: originalHP

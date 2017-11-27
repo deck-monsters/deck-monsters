@@ -251,8 +251,9 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
-	announceHit (className, monster, { assailant, damage }) {
+	announceHit (className, monster, { assailant, card, damage }) {
 		const channel = this.publicChannel;
+		const flavors = card && card.flavors;
 
 		let icon = '🤜';
 		if (damage >= 10) {
@@ -265,7 +266,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 		channel({
 			announce:
-`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits')} ${monster.givenName} for ${damage} damage.
+`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
 
 ${monster.icon}  *${monster.givenName} has ${monster.hp}HP left.*
 `
