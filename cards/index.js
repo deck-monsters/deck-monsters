@@ -26,16 +26,16 @@ const all = [
 	RehitCard
 ];
 
-const draw = (options, monster) => {
+const draw = (options, creature) => {
 	let deck = shuffle(all);
 
-	if (monster) {
-		deck = deck.filter(card => monster.canHoldCard(card));
+	if (creature) {
+		deck = deck.filter(card => creature.canHoldCard(card));
 	}
 
 	const Card = deck.find(isProbable);
 
-	if (!Card) return draw(options, monster);
+	if (!Card) return draw(options, creature);
 
 	// In the future we may want to pass some options to the cards,
 	// but we need to make sure that we only pass card-related options.
@@ -44,15 +44,15 @@ const draw = (options, monster) => {
 };
 
 // fills deck up with random cards appropriate for player's level
-const fillDeck = (deck, options, monster) => {
+const fillDeck = (deck, options, creature) => {
 	while (deck.length < DEFAULT_MINIMUM_CARDS) {
-		deck.push(draw(options, monster));
+		deck.push(draw(options, creature));
 	}
 
 	return deck;
 };
 
-const getInitialDeck = (options, monster) => {
+const getInitialDeck = (options, creature) => {
 	// See above re: options
 	const deck = [
 		new HitCard(),
@@ -63,7 +63,7 @@ const getInitialDeck = (options, monster) => {
 		new FleeCard()
 	];
 
-	return fillDeck(deck, options, monster);
+	return fillDeck(deck, options, creature);
 };
 
 const getCardCounts = cards =>

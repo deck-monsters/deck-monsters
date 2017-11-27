@@ -204,7 +204,7 @@ class Ring extends BaseClass {
 				channelName
 			});
 
-			this.fightTimer = pause(() => {
+			this.fightTimer = pause.setTimeout(() => {
 				if (this.contestants.length >= 2) {
 					this.channelManager.sendMessages()
 						.then(() => this.fight());
@@ -372,7 +372,7 @@ class Ring extends BaseClass {
 
 				// If we haven't gone an entire round yet we just pass play along to the next character
 				// If we're the first ones to have an empty hand then we'll set the value to our index, otherwise we'll just pass along the existing value (so that we can know when a full round has passed with no plays)
-				pause(() => next(emptyHanded === false ? currentContestant : emptyHanded), delayTimes.shortDelay());
+				pause.setTimeout(() => next(emptyHanded === false ? currentContestant : emptyHanded), delayTimes.shortDelay());
 			}
 		});
 

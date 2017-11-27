@@ -1,3 +1,5 @@
+const moment = require('moment');
+
 const BaseCharacter = require('./base');
 const { spawn, equip } = require('../monsters');
 const { getMonsterChoices } = require('../helpers/choices');
@@ -37,6 +39,14 @@ class Beastmaster extends BaseCharacter {
 		this.setOptions({
 			monsterSlots
 		});
+	}
+
+	canHoldCard (card) {
+		if (this.monsters.length > 0) {
+			return this.monsters.reduce((canHold, monster) => canHold && monster.canHoldCard(card), true);
+		}
+
+		return super.canHoldCard(card);
 	}
 
 	addMonster (monster) {
@@ -246,28 +256,8 @@ Which monster would you like to ${action}?`,
 				});
 			})
 			.then((monster) => {
-				monster.respawn();
-
-				return monster;
-			})
-			.then((monster) => {
-				const timeToRevive = (monster.respawn() - Date.now()) / (60 * 60 * 1000);
-
-				let reviveStatement = '';
-				switch (timeToRevive) {
-					case 0: {
-						reviveStatement = 'instantly';
-						break;
-					}
-					case 1: {
-						reviveStatement = `in ${timeToRevive} hour`;
-						break;
-					}
-					default: {
-						reviveStatement = `in ${timeToRevive} hours`;
-						break;
-					}
-				}
+				const timeToRevive = monster.respawn();
+				const reviveStatement = moment(timeToRevive).fromNow();
 
 				return channel({
 					announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns[0])} is a level ${monster.level} monster, and therefore will be revived ${reviveStatement}.`// eslint-disable-line max-len

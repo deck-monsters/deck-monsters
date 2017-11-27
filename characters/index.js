@@ -100,7 +100,7 @@ const hydrateCharacter = (characterObj) => {
 	const character = new Character(options);
 
 	// if deck minimum changes, and player now has fewer than minimum cards in already initialized deck, fill them up! (yes, this has happened)
-	character.deck = fillDeck(options.deck, options);
+	character.deck = fillDeck(options.deck, options, character);
 
 	return character;
 };
