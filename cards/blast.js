@@ -25,7 +25,7 @@ class BlastCard extends BaseCard {
 		return `Blast: ${this.damage} base damage + ${this.levelDamage} per level of the caster`;
 	}
 
-	effect (player, target, ring) { // eslint-disable-line no-unused-vars
+	effect (player, target, ring) {
 		const damage = this.damage + (this.levelDamage * player.level);
 
 		return new Promise((resolve) => {
