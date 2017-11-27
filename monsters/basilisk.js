@@ -3,6 +3,7 @@
 const random = require('lodash.sample');
 
 const BaseMonster = require('./base');
+const { BARBARIAN } = require('../helpers/classes');
 
 const DEFAULT_COLOR = 'tan';
 const DEFAULT_NAME = 'Cyris';
@@ -33,10 +34,6 @@ class Basilisk extends BaseMonster {
 		};
 
 		super(Object.assign(defaultOptions, options));
-
-		this.setOptions({
-			description: `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${this.pronouns[2]} gaze. In the forest ${this.pronouns[0]} is king and (weighing ${this.size.weight}) in the ring ${this.pronouns[0]} is much to be feared. See how ${this.pronouns[0]} rears ${this.pronouns[2]} head, and rolls about ${this.pronouns[2]} dreadful eyes, to drive all virtue out, or look it dead!`
-		});
 	}
 
 	get size () {
@@ -50,9 +47,14 @@ class Basilisk extends BaseMonster {
 	get location () {
 		return this.options.location;
 	}
+
+	get description () {
+		return `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${this.pronouns[2]} gaze. In the forest ${this.pronouns[0]} is king and (weighing ${this.size.weight}) in the ring ${this.pronouns[0]} is much to be feared. See how ${this.pronouns[0]} rears ${this.pronouns[2]} head, and rolls about ${this.pronouns[2]} dreadful eyes, to drive all virtue out, or look it dead!`;
+	}
 }
 
 Basilisk.creatureType = 'Basilisk';
+Basilisk.class = BARBARIAN;
 Basilisk.description =
 `
 The basilisk, often called the “King of Serpents,” is in fact not a serpent at all, but rather an eight-legged reptile with a nasty disposition and the ability to turn creatures to stone with its gaze. Folklore holds that, much like the cockatrice, the first basilisks hatched from eggs laid by snakes and incubated by roosters, but little in the basilisk’s physiology lends any credence to this claim.

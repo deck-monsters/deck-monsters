@@ -199,17 +199,19 @@ ${getFinalCardChoices(cards)}`
 				}));
 			}
 
-			const nowRemainingCards = [...deck].sort((a, b) => {
-				if (a.cardType > b.cardType) {
-					return 1;
-				}
+			const nowRemainingCards = [...deck]
+				.filter(card => monster.canHoldCard(card))
+				.sort((a, b) => {
+					if (a.cardType > b.cardType) {
+						return 1;
+					}
 
-				if (a.cardType < b.cardType) {
-					return -1;
-				}
-				
-				return 0;
-			});
+					if (a.cardType < b.cardType) {
+						return -1;
+					}
+
+					return 0;
+				});
 
 			if (cardSelection) {
 				cardSelection.forEach((card) => {
@@ -240,11 +242,16 @@ ${getFinalCardChoices(cards)}`
 
 const hydrateMonster = (monsterObj) => {
 	const Monster = all.find(({ name }) => name === monsterObj.name);
-	const options = Object.assign({ cards: [] }, monsterObj.options);
+	const options = {
+		...monsterObj.options,
+		cards: []
+	};
 
-	options.cards = options.cards.map(hydrateCard);
+	const monster = new Monster(options);
 
-	return new Monster(options);
+	monster.cards = monsterObj.options.cards.map(cardObj => hydrateCard(cardObj, monster));
+
+	return monster;
 };
 
 const hydrateMonsters = monstersJSON => JSON

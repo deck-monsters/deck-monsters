@@ -359,7 +359,7 @@ ${monsterCard(monster)}`
 		contestant.character.xp += XP_PER_VICTORY;
 
 		// Also draw a new card for the player
-		const card = this.drawCard({ level: contestant.character.level });
+		const card = this.drawCard({}, contestant.monster);
 		contestant.character.addCard(card);
 
 		this.emit('cardDrop', {
@@ -617,8 +617,8 @@ ${monsterCard(monster)}`
 		}));
 	}
 
-	drawCard (options) {
-		const card = draw(options);
+	drawCard (options, monster) {
+		const card = draw(options, monster);
 
 		this.emit('cardDrawn', { card });
 

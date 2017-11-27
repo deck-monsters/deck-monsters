@@ -1,4 +1,5 @@
 const HitCard = require('./hit');
+const { BARBARIAN } = require('../helpers/classes');
 
 class PoundCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -16,5 +17,6 @@ PoundCard.probability = 10;
 PoundCard.description = 'You wield the mighty pound card and can do double the damage.';
 PoundCard.cost = 8;
 PoundCard.level = 3;
+PoundCard.permittedClasses = [BARBARIAN];
 
 module.exports = PoundCard;

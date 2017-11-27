@@ -1,4 +1,5 @@
 const HealCard = require('./heal');
+const { CLERIC, WIZARD } = require('../helpers/classes');
 
 class ReviveCard extends HealCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -22,5 +23,6 @@ ReviveCard.probability = 10;
 ReviveCard.description = 'Luckily, you happened to have a fairy in your pocket.';
 ReviveCard.cost = 5;
 ReviveCard.level = 3;
+ReviveCard.permittedClasses = [CLERIC, WIZARD];
 
 module.exports = ReviveCard;
