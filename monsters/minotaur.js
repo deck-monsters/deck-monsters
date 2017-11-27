@@ -23,6 +23,7 @@ const DESCRIPTORS = [
 class Minotaur extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
+			damageModifier: 2,
 			color: DEFAULT_COLOR,
 			name: DEFAULT_NAME,
 			pattern: random(PATTERNS),

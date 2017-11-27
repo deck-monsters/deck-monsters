@@ -3,7 +3,9 @@ const {
 	getChoices, getCardChoices, getCreatureTypeChoices, getFinalCardChoices
 } = require('../helpers/choices');
 const PRONOUNS = require('../helpers/pronouns');
+
 const Basilisk = require('./basilisk');
+const Gladiator = require('./gladiator');
 const Minotaur = require('./minotaur');
 const WeepingAngel = require('./weeping-angel');
 
@@ -11,6 +13,7 @@ const genders = Object.keys(PRONOUNS);
 
 const all = [
 	Basilisk,
+	Gladiator,
 	Minotaur,
 	WeepingAngel
 ];

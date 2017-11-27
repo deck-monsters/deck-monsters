@@ -24,8 +24,8 @@ const LOCATIONS = [
 class Basilisk extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
-			attackModifier: -2,
-			damageModifier: 1,
+			attackModifier: -1,
+			damageModifier: 3,
 			color: DEFAULT_COLOR,
 			location: random(LOCATIONS),
 			name: DEFAULT_NAME,
