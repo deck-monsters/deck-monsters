@@ -50,7 +50,7 @@ describe('./cards/wooden-spear.js', () => {
 		const target = new Basilisk({ name: 'target' });
 		const roll = woodenSpear.getDamageRoll(player, target);
 
-		expect(roll.modifier).to.equal(4);
+		expect(roll.modifier).to.equal(3);
 	});
 
 	it('can be played against minotaurs', () => {
@@ -60,6 +60,6 @@ describe('./cards/wooden-spear.js', () => {
 		const target = new Minotaur({ name: 'target' });
 		const roll = woodenSpear.getDamageRoll(player, target);
 
-		expect(roll.modifier).to.equal(7);
+		expect(roll.modifier).to.equal(6);
 	});
 });

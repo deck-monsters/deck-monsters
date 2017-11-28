@@ -74,7 +74,7 @@ describe('./characters/beastmaster.js', () => {
 			.then(() => beastmaster.reviveMonster({ monsterName: 'Foo', channel: channelStub }))
 			.then(() => {
 				expect(channelStub).to.have.been.calledWith({
-					announce: 'Foo has begun to revive. He is a level 1 monster, and therefore will be revived in 30 minutes.'
+					announce: 'Foo has begun to revive. He is a beginner monster, and therefore will be revived instantly.'
 				});
 			});
 	});
@@ -95,7 +95,7 @@ describe('./characters/beastmaster.js', () => {
 			.then(() => beastmaster.reviveMonster({ monsterName: 'Foo', channel: channelStub }))
 			.then(() => {
 				expect(channelStub).to.have.been.calledWith({
-					announce: 'Foo has begun to revive. It is a level 3 monster, and therefore will be revived in 2 hours.'
+					announce: 'Foo has begun to revive. It is a level 2 monster, and therefore will be revived in an hour.'
 				});
 			});
 	});
