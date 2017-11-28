@@ -58,7 +58,7 @@ class BaseCreature extends BaseClass {
 	}
 
 	get stats () {
-		return `Level: ${this.level} | XP: ${this.xp}
+		return `Level: ${this.level || this.displayLevel} | XP: ${this.xp}
 AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}${
 	this.attackModifier === 0 ? '' :
 		`
@@ -180,6 +180,11 @@ Battles won: ${this.battles.wins}`;
 
 	get level () {
 		return getLevel(this.xp);
+	}
+
+	get displayLevel () {
+		const level = getLevel(this.xp);
+		return level ? `level ${level}` : 'beginner';
 	}
 
 	get ac () {

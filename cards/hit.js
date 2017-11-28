@@ -8,7 +8,7 @@ class HitCard extends BaseCard {
 	constructor ({
 		attackDice = '1d20',
 		damageDice = '1d6',
-		icon = '🗡'
+		icon = '👊'
 	} = {}) {
 		super({ attackDice, damageDice, icon });
 	}
@@ -62,8 +62,12 @@ class HitCard extends BaseCard {
 		};
 	}
 
+	getDamageRoll (player) {
+		return roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });
+	}
+
 	rollForDamage (player, target, strokeOfLuck) {
-		const damageRoll = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });
+		const damageRoll = this.getDamageRoll(player, target);
 
 		this.emit('rolling', {
 			reason: 'for damage',
@@ -126,7 +130,7 @@ class HitCard extends BaseCard {
 }
 
 HitCard.cardType = 'Hit';
-HitCard.probability = 80;
+HitCard.probability = 60;
 HitCard.description = 'A basic attack, the staple of all good monsters.';
 HitCard.cost = 4;
 HitCard.level = 0;

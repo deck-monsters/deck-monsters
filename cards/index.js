@@ -1,29 +1,37 @@
 const shuffle = require('lodash.shuffle');
 
 const isProbable = require('../helpers/is-probable');
+const BlastCard = require('./blast');
 const BoostCard = require('./boost');
 const CurseCard = require('./curse');
+const EnchantedFaceswapCard = require('./enchanted-faceswap');
 const FleeCard = require('./flee');
-const HitCard = require('./hit');
 const HealCard = require('./heal');
-const PoundCard = require('./pound');
-const LuckyStrike = require('./lucky-strike');
+const HitCard = require('./hit');
 const HitHarderCard = require('./hit-harder');
+const LuckyStrike = require('./lucky-strike');
+const PoundCard = require('./pound');
+const RandomCard = require('./random');
 const RehitCard = require('./rehit');
+const WoodenSpearCard = require('./wooden-spear');
 // const ReviveCard = require('./revive');
 
 const DEFAULT_MINIMUM_CARDS = 10;
 
 const all = [
+	BlastCard,
 	BoostCard,
 	CurseCard,
+	EnchantedFaceswapCard,
 	FleeCard,
-	HitCard,
 	HealCard,
-	PoundCard,
-	LuckyStrike,
+	HitCard,
 	HitHarderCard,
-	RehitCard
+	LuckyStrike,
+	PoundCard,
+	RandomCard,
+	RehitCard,
+	WoodenSpearCard
 ];
 
 const draw = (options, creature) => {

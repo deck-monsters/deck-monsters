@@ -65,25 +65,26 @@ Promise
 		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards
 	}))
 	.then(() => vlad.spawnMonster({
-		type: 0, name: 'qed', color: 'gray', gender: 2, cards: vladCards
+		type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards
 	}))
 	.then(() => char.spawnMonster({
-		type: 1, name: 'tom', color: 'brown', gender: 0, cards: charCards
+		type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards
 	}))
 	.then(() => char.spawnMonster({
-		type: 2, name: 'dbb', color: 'brown', gender: 0, cards: charCards
+		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards
 	}))
 	.then(() => vlad.lookAtCard({ cardName: 'hit' }))
+	.then(() => vlad.lookAtCard({ cardName: 'wooden spear' }))
 	.then(() => vlad.lookAt('player handbook'))
 //	.then(() => vlad.spawnMonster(vladAnnouncer))
 //	.then(() => char.spawnMonster(charAnnouncer))
 //	.then(() => vlad.equipMonster(vladAnnouncer))
 //	.then(() => char.equipMonster(charAnnouncer))
 	.then(() => vlad.sendMonsterToTheRing())
-	.then(() => char.sendMonsterToTheRing())
-	.then(() => {
-		setTimeout(() => {
-			vlad.callMonsterOutOfTheRing()
-				.then(() => vlad.sendMonsterToTheRing());
-		}, 15000);
-	});
+	.then(() => char.sendMonsterToTheRing());
+	// .then(() => {
+	// 	setTimeout(() => {
+	// 		vlad.callMonsterOutOfTheRing()
+	// 			.then(() => vlad.sendMonsterToTheRing());
+	// 	}, 15000);
+	// });

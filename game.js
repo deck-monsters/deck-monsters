@@ -67,6 +67,7 @@ class Game extends BaseClass {
 		this.on('card.rolling', this.announceRolling);
 		this.on('card.rolled', this.announceRolled);
 		this.on('card.miss', this.announceMiss);
+		this.on('card.effect', this.announceEffect);
 		this.on('creature.hit', this.announceHit);
 		this.on('creature.heal', this.announceHeal);
 		this.on('creature.modifier', this.announceModifier);
@@ -306,6 +307,18 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 		channel({
 			announce:
 `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
+`
+		});
+	}
+
+	announceEffect (className, card, {
+		effectName, player
+	}) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce:
+`${player.givenName} has put ${effectName} into play
 `
 		});
 	}
