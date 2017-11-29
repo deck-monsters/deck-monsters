@@ -1,6 +1,8 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const Beastmaster = require('./beastmaster');
+const Minotaur = require('../monsters/minotaur');
+const WeepingAngel = require('../monsters/weeping-angel');
 const pause = require('../helpers/pause');
 
 describe('./characters/beastmaster.js', () => {
@@ -98,5 +100,22 @@ describe('./characters/beastmaster.js', () => {
 					announce: 'Foo has begun to revive. It is a level 2 monster, and therefore will be revived in an hour.'
 				});
 			});
+	});
+
+	it('can hold a card usable by one of its monsters', () => {
+		const beastmaster = new Beastmaster();
+		const minotaur = new Minotaur();
+		const angel = new WeepingAngel();
+
+		angel.xp = 300;
+		beastmaster.monsters = [minotaur, angel];
+
+		const correctClassAndLevel = beastmaster.canHoldCard({ level: 1, permittedClasses: ['CLERIC'] });
+		const wrongClass = beastmaster.canHoldCard({ level: 1, permittedClasses: ['FIGHER'] });
+		const wrongLevel = beastmaster.canHoldCard({ level: 10, permittedClasses: ['CLERIC'] });
+
+		expect(correctClassAndLevel).to.equal(true);
+		expect(wrongClass).to.equal(false);
+		expect(wrongLevel).to.equal(false);
 	});
 });
