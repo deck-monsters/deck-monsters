@@ -1,6 +1,6 @@
 module.exports = {
-	BARBARIAN: 'BARBARIAN',
-	CLERIC: 'CLERIC',
-	FIGHTER: 'FIGHTER',
-	WIZARD: 'WIZARD'
+	BARBARIAN: 'Barbarian',
+	CLERIC: 'Cleric',
+	FIGHTER: 'Fighter',
+	WIZARD: 'Wizard'
 };

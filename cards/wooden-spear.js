@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const HitCard = require('./hit');
+const Minotaur = require('../monsters/minotaur');
 const { roll } = require('../helpers/chance');
 const { FIGHTER } = require('../helpers/classes');
 
@@ -15,17 +16,21 @@ class WoodenSpearCard extends HitCard {
 		this.options.damageModifier = damageModifier;
 	}
 
+	get creatureType () {
+		return this.constructor.creatureType;
+	}
+
 	get damageModifier () {
 		return this.options.damageModifier;
 	}
 
 	get stats () {
 		return `${super.stats}
-+${this.damageModifier} damage vs Minotaurs`;
++${this.damageModifier} damage vs ${this.creatureType}`;
 	}
 
 	getDamageRoll (player, target) {
-		if (target.name === 'Minotaur') {
+		if (target.name === this.creatureType) {
 			return roll({ primaryDice: this.damageDice, modifier: player.damageModifier + this.damageModifier, bonusDice: player.bonusDamageDice });
 		}
 
@@ -34,8 +39,9 @@ class WoodenSpearCard extends HitCard {
 }
 
 WoodenSpearCard.cardType = 'Wooden Spear';
+WoodenSpearCard.creatureType = Minotaur.creatureType;
 WoodenSpearCard.probability = 30;
-WoodenSpearCard.description = 'A simple weapon fashioned for Minotaur-hunting.';
+WoodenSpearCard.description = `A simple weapon fashioned for ${WoodenSpearCard.creatureType}-hunting.`;
 WoodenSpearCard.cost = 6;
 WoodenSpearCard.level = 1;
 WoodenSpearCard.permittedClasses = [FIGHTER];

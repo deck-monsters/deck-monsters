@@ -31,14 +31,14 @@ describe('./cards/blast.js', () => {
 		const blast = new BlastCard();
 
 		expect(blast).to.be.an.instanceof(BlastCard);
-		expect(blast.stats).to.equal('Blast: 3 base damage + 1 per level of the caster');
+		expect(blast.stats).to.equal('Blast: 3 base damage +1 per level of the caster');
 	});
 
 	it('can be instantiated with options', () => {
 		const blast = new BlastCard({ damage: 10, levelDamage: 2 });
 
 		expect(blast).to.be.an.instanceof(BlastCard);
-		expect(blast.stats).to.equal('Blast: 10 base damage + 2 per level of the caster');
+		expect(blast.stats).to.equal('Blast: 10 base damage +2 per level of the caster');
 	});
 
 	it('can be played', () => {

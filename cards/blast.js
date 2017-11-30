@@ -22,7 +22,7 @@ class BlastCard extends BaseCard {
 	}
 
 	get stats () {
-		return `Blast: ${this.damage} base damage + ${this.levelDamage} per level of the caster`;
+		return `Blast: ${this.damage} base damage +${this.levelDamage} per level of the caster`;
 	}
 
 	effect (player, target, ring) {
