@@ -231,7 +231,7 @@ class Ring extends BaseClass {
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
 		const contestants = shuffle([...this.contestants]);
-		const getLivingContestants = () => contestants.filter(contestant => !contestant.monster.dead);
+		const getActiveContestants = () => contestants.filter(contestant => (!contestant.monster.dead && !contestant.monster.fled));
 
 		// Emit an event when the fight begins
 		this.emit('fight', {
@@ -248,7 +248,7 @@ class Ring extends BaseClass {
 		// emptyHanded is the numeric index of the first character to not have a card in the position specified, and gets reset to "false" whenever a card is successfully played
 		const doAction = ({ currentContestant, cardIndex, emptyHanded }) => new Promise((resolve) => {
 			// Find the monster at the current index
-			const livingContestants = getLivingContestants();
+			const livingContestants = getActiveContestants();
 			const contestant = livingContestants[currentContestant];
 			const { monster } = contestant;
 
@@ -279,7 +279,7 @@ class Ring extends BaseClass {
 			// When this is called (see below) we pass the next contestant and card back into the looping
 			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a character as described above
 			const next = (nextEmptyHanded = false) => resolve(doAction({
-				currentContestant: nextContestant >= getLivingContestants().length ? 0 : nextContestant,
+				currentContestant: nextContestant,
 				cardIndex: nextCardIndex,
 				emptyHanded: nextEmptyHanded
 			}));
@@ -340,7 +340,9 @@ class Ring extends BaseClass {
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
 					.play(monster, nextMonster, ring)
 					.then((fightContinues) => {
-						if (fightContinues || getLivingContestants().length > 1) {
+						if (getActiveContestants().length > 1) {
+							if (!fightContinues) nextContestant = Math.max(nextContestant - 1, 0);
+
 							this.channelManager.sendMessages()
 								.then(() => next());
 						} else {

@@ -166,6 +166,17 @@ Battles won: ${this.battles.wins}`;
 		};
 	}
 
+	get fled () {
+		return !!(this.encounter || {}).fled;
+	}
+
+	set fled (fled) {
+		this.encounter = {
+			...this.encounter,
+			fled
+		};
+	}
+
 	get modifiers () {
 		return {
 			...this.options.modifiers,
@@ -246,6 +257,8 @@ Battles won: ${this.battles.wins}`;
 		this.emit('leave', {
 			assailant
 		});
+
+		this.fled = true;
 
 		return false;
 	}
