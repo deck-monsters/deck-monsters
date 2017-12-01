@@ -144,6 +144,16 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get coins () {
+		return this.options.coins || 0;
+	}
+
+	set coins (coins) {
+		this.setOptions({
+			coins
+		});
+	}
+
 	get encounterModifiers () {
 		return (this.encounter || {}).modifiers || {};
 	}
