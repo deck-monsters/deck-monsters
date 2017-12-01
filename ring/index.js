@@ -125,22 +125,22 @@ class Ring extends BaseClass {
 
 			this.options.contestants = shuffle([...this.contestants, contestant]);
 
-			this.emit('add', {
-				contestant
-			});
-
-			this.channelManager.queueMessage({
-				announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`,
-				channel,
-				channelName
-			});
-
 			if (this.contestants.length > MAX_MONSTERS) {
 				this.clearRing();
-			}
+			} else {
+				this.emit('add', {
+					contestant
+				});
 
-			this.channelManager.sendMessages()
-				.then(() => this.startFightTimer({ channel, channelName }));
+				this.channelManager.queueMessage({
+					announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`,
+					channel,
+					channelName
+				});
+
+				this.channelManager.sendMessages()
+					.then(() => this.startFightTimer({ channel, channelName }));
+			}
 		} else {
 			this.channelManager.queueMessage({
 				announce: 'The ring is full! Wait until the current battle is over and try again.',
@@ -176,9 +176,13 @@ class Ring extends BaseClass {
 	}
 
 	startEncounter () {
+		if (this.inEncounter) return false;
+
 		this.inEncounter = true;
 		this.encounter = {};
 		this.contestants.forEach(contestant => contestant.monster.startEncounter(this));
+
+		return true;
 	}
 
 	endEncounter () {
@@ -226,7 +230,7 @@ class Ring extends BaseClass {
 		const ring = this;
 
 		// Set a flag on the contestants that are in the encounter
-		this.startEncounter();
+		if (!this.startEncounter()) return;
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
