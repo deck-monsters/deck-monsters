@@ -64,15 +64,16 @@ class BaseCard extends BaseClass {
 		return { success, strokeOfLuck, curseOfLoki };
 	}
 
-	play (player, target, ring) {
+	play (player, target, ring, activeContestants) {
 		this.emit('played', {
 			player,
 			target,
-			ring
+			ring,
+			activeContestants
 		});
 
 		if (this.effect) {
-			return this.effect(player, target, ring);
+			return this.effect(player, target, ring, activeContestants);
 		}
 
 		return true;

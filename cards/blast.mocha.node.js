@@ -62,11 +62,44 @@ describe('./cards/blast.js', () => {
 		const target2StatingHp = target2.hp;
 
 		return blast
-			.play(player, target1, ring)
+			.play(player, target1, ring, ring.contestants)
 			.then(() => {
 				expect(player.hp).to.equal(playerStatingHp);
 				expect(target1.hp).to.equal(target1StatingHp - damage);
 				expect(target2.hp).to.equal(target2StatingHp - damage);
+			});
+	});
+
+	it('is only applied to active players', () => {
+		const blast = new BlastCard({ damage: 4, levelDamage: 2 });
+
+		const player = new Basilisk({ name: 'player' });
+		const target1 = new Basilisk({ name: 'target1' });
+		const target2 = new Basilisk({ name: 'target2' });
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target1 },
+				{ monster: target2 }
+			]
+		};
+		const activeContestants = [
+			{ monster: player },
+			{ monster: target1 }
+		];
+
+		const playerStatingHp = player.hp;
+		const playerLevel = player.level;
+		const damage = 4 + (2 * playerLevel);
+		const target1StatingHp = target1.hp;
+		const target2StatingHp = target2.hp;
+
+		return blast
+			.play(player, target1, ring, activeContestants)
+			.then(() => {
+				expect(player.hp).to.equal(playerStatingHp);
+				expect(target1.hp).to.equal(target1StatingHp - damage);
+				expect(target2.hp).to.equal(target2StatingHp);
 			});
 	});
 

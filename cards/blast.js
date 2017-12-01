@@ -25,11 +25,11 @@ class BlastCard extends BaseCard {
 		return `Blast: ${this.damage} base damage +${this.levelDamage} per level of the caster`;
 	}
 
-	effect (player, target, ring) {
+	effect (player, target, ring, activeContestants) {
 		const damage = this.damage + (this.levelDamage * player.level);
 
 		return new Promise((resolve) => {
-			resolve(Promise.all(ring.contestants.map(({ monster }) => {
+			resolve(Promise.all(activeContestants.map(({ monster }) => {
 				if (monster !== player) {
 					return monster.hit(damage, player, this);
 				}
