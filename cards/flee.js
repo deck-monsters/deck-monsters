@@ -49,6 +49,8 @@ class FleeCard extends BaseCard {
 					player,
 					target
 				});
+
+				resolve(true);
 			}
 		});
 	}
