@@ -231,6 +231,7 @@ class Ring extends BaseClass {
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
 		const contestants = shuffle([...this.contestants]);
+		const getLivingContestants = () => contestants.filter(contestant => !contestant.monster.dead);
 
 		// Emit an event when the fight begins
 		this.emit('fight', {
@@ -247,7 +248,8 @@ class Ring extends BaseClass {
 		// emptyHanded is the numeric index of the first character to not have a card in the position specified, and gets reset to "false" whenever a card is successfully played
 		const doAction = ({ currentContestant, cardIndex, emptyHanded }) => new Promise((resolve) => {
 			// Find the monster at the current index
-			const contestant = contestants[currentContestant];
+			const livingContestants = getLivingContestants();
+			const contestant = livingContestants[currentContestant];
 			const { monster } = contestant;
 
 			// Find the card in that monster's hand at the current index if it exists
@@ -264,7 +266,7 @@ class Ring extends BaseClass {
 
 			// Get the index of the next contestant, looping at the end of the array
 			let nextContestant = currentContestant + 1;
-			if (nextContestant >= contestants.length) {
+			if (nextContestant >= livingContestants.length) {
 				nextContestant = 0;
 			}
 
@@ -277,14 +279,14 @@ class Ring extends BaseClass {
 			// When this is called (see below) we pass the next contestant and card back into the looping
 			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a character as described above
 			const next = (nextEmptyHanded = false) => resolve(doAction({
-				currentContestant: nextContestant,
+				currentContestant: nextContestant >= getLivingContestants().length ? 0 : nextContestant,
 				cardIndex: nextCardIndex,
 				emptyHanded: nextEmptyHanded
 			}));
 
 			// Does the monster have a card at the current position?
 			if (card) {
-				const nextMonster = contestants[nextContestant].monster;
+				const nextMonster = livingContestants[nextContestant].monster;
 
 				// Now we're going to run through all of the possible effects
 				// Each effect should either return a card (which will replace the card that was going to be played)
@@ -338,7 +340,7 @@ class Ring extends BaseClass {
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
 					.play(monster, nextMonster, ring)
 					.then((fightContinues) => {
-						if (fightContinues) {
+						if (fightContinues || getLivingContestants().length > 1) {
 							this.channelManager.sendMessages()
 								.then(() => next());
 						} else {
