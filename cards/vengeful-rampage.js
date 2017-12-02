@@ -18,4 +18,14 @@ VenegefulRampageCard.description = 'Your wounds only make you stronger.';
 VenegefulRampageCard.level = 3;
 VenegefulRampageCard.permittedClasses = [BARBARIAN];
 
+VenegefulRampageCard.flavors = {
+	hits: [
+		['fights back against', 80],
+		['screams with rage against', 70],
+		['eviscerates', 70],
+		['curses the very existance of', 50],
+		['glows red with rage and annihilates', 5]
+	]
+};
+
 module.exports = VenegefulRampageCard;
