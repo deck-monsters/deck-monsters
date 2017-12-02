@@ -10,11 +10,11 @@ class RandomCard extends BaseCard {
 		super({ icon });
 	}
 
-	effect (player, target, ring) {
+	effect (player, target, ring, activeContestants) {
 		const { draw } = require('./index'); // eslint-disable-line global-require
 		const randomCard = draw(this.options, player);
 
-		return randomCard.play(player, target, ring);
+		return randomCard.play(player, target, ring, activeContestants);
 	}
 }
 
