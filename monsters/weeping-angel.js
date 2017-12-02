@@ -3,10 +3,11 @@
 const random = require('lodash.sample');
 
 const BaseMonster = require('./base');
+
 const { CLERIC } = require('../helpers/classes');
+const { WEEPING_ANGEL } = require('../helpers/creature-types');
 
 const DEFAULT_COLOR = 'stone gray';
-const DEFAULT_NAME = 'Aziraphale';
 
 const NATIONALITIES = [
 	'English',
@@ -25,7 +26,6 @@ class WeepingAngel extends BaseMonster {
 			attackModifier: 3,
 			damageModifier: -1,
 			color: DEFAULT_COLOR,
-			name: DEFAULT_NAME,
 			nationality: random(NATIONALITIES),
 			descriptor: random(DESCRIPTORS),
 			icon: '🌟'
@@ -51,7 +51,7 @@ class WeepingAngel extends BaseMonster {
 	}
 }
 
-WeepingAngel.creatureType = 'Weeping Angel';
+WeepingAngel.creatureType = WEEPING_ANGEL;
 WeepingAngel.class = CLERIC;
 WeepingAngel.description =
 `

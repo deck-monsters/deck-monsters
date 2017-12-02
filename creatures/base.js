@@ -2,10 +2,12 @@ const random = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
 const BaseClass = require('../baseClass');
-const { STARTING_XP, getLevel } = require('../helpers/levels');
-const PRONOUNS = require('../helpers/pronouns');
+
 const { signedNumber } = require('../helpers/signed-number');
+const { STARTING_XP, getLevel } = require('../helpers/levels');
+const names = require('../helpers/names');
 const pause = require('../helpers/pause');
+const PRONOUNS = require('../helpers/pronouns');
 
 const BASE_AC = 5;
 const AC_VARIANCE = 2;
@@ -46,6 +48,10 @@ class BaseCreature extends BaseClass {
 	}
 
 	get givenName () {
+		if (!this.options.name) {
+			this.options.name = names(this.constructor.creatureType, this.gender);
+		}
+
 		return startCase(this.options.name);
 	}
 
