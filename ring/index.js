@@ -125,22 +125,22 @@ class Ring extends BaseClass {
 
 			this.options.contestants = shuffle([...this.contestants, contestant]);
 
-			this.emit('add', {
-				contestant
-			});
-
-			this.channelManager.queueMessage({
-				announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`,
-				channel,
-				channelName
-			});
-
 			if (this.contestants.length > MAX_MONSTERS) {
 				this.clearRing();
-			}
+			} else {
+				this.emit('add', {
+					contestant
+				});
 
-			this.channelManager.sendMessages()
-				.then(() => this.startFightTimer({ channel, channelName }));
+				this.channelManager.queueMessage({
+					announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`,
+					channel,
+					channelName
+				});
+
+				this.channelManager.sendMessages()
+					.then(() => this.startFightTimer({ channel, channelName }));
+			}
 		} else {
 			this.channelManager.queueMessage({
 				announce: 'The ring is full! Wait until the current battle is over and try again.',
@@ -176,9 +176,13 @@ class Ring extends BaseClass {
 	}
 
 	startEncounter () {
+		if (this.inEncounter) return false;
+
 		this.inEncounter = true;
 		this.encounter = {};
 		this.contestants.forEach(contestant => contestant.monster.startEncounter(this));
+
+		return true;
 	}
 
 	endEncounter () {
@@ -226,11 +230,12 @@ class Ring extends BaseClass {
 		const ring = this;
 
 		// Set a flag on the contestants that are in the encounter
-		this.startEncounter();
+		if (!this.startEncounter()) return Promise.resolve();
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
 		const contestants = shuffle([...this.contestants]);
+		const getActiveContestants = () => contestants.filter(contestant => (!contestant.monster.dead && !contestant.monster.fled));
 
 		// Emit an event when the fight begins
 		this.emit('fight', {
@@ -247,7 +252,8 @@ class Ring extends BaseClass {
 		// emptyHanded is the numeric index of the first character to not have a card in the position specified, and gets reset to "false" whenever a card is successfully played
 		const doAction = ({ currentContestant, cardIndex, emptyHanded }) => new Promise((resolve) => {
 			// Find the monster at the current index
-			const contestant = contestants[currentContestant];
+			const activeContestants = getActiveContestants();
+			const contestant = activeContestants[currentContestant];
 			const { monster } = contestant;
 
 			// Find the card in that monster's hand at the current index if it exists
@@ -264,7 +270,7 @@ class Ring extends BaseClass {
 
 			// Get the index of the next contestant, looping at the end of the array
 			let nextContestant = currentContestant + 1;
-			if (nextContestant >= contestants.length) {
+			if (nextContestant >= activeContestants.length) {
 				nextContestant = 0;
 			}
 
@@ -284,7 +290,7 @@ class Ring extends BaseClass {
 
 			// Does the monster have a card at the current position?
 			if (card) {
-				const nextMonster = contestants[nextContestant].monster;
+				const nextMonster = activeContestants[nextContestant].monster;
 
 				// Now we're going to run through all of the possible effects
 				// Each effect should either return a card (which will replace the card that was going to be played)
@@ -296,11 +302,12 @@ class Ring extends BaseClass {
 				// First, run through the effects from the current monster
 				card = monster.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
+						activeContestants,
 						card: currentCard,
+						phase: ATTACK_PHASE,
 						player: monster,
-						target: nextMonster,
 						ring,
-						phase: ATTACK_PHASE
+						target: nextMonster
 					});
 
 					return modifiedCard || currentCard;
@@ -309,11 +316,12 @@ class Ring extends BaseClass {
 				// Second, run through the effects from the target monster
 				card = nextMonster.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
+						activeContestants,
 						card: currentCard,
+						phase: DEFENSE_PHASE,
 						player: monster,
-						target: nextMonster,
 						ring,
-						phase: DEFENSE_PHASE
+						target: nextMonster
 					});
 
 					return modifiedCard || currentCard;
@@ -322,11 +330,12 @@ class Ring extends BaseClass {
 				// Finally, run through any global effects
 				card = ring.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
+						activeContestants,
 						card: currentCard,
+						phase: GLOBAL_PHASE,
 						player: monster,
-						target: nextMonster,
 						ring,
-						phase: GLOBAL_PHASE
+						target: nextMonster
 					});
 
 					return modifiedCard || currentCard;
@@ -336,9 +345,11 @@ class Ring extends BaseClass {
 				card
 					// The current monster always attacks the next monster
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
-					.play(monster, nextMonster, ring)
+					.play(monster, nextMonster, ring, activeContestants)
 					.then((fightContinues) => {
-						if (fightContinues) {
+						if (getActiveContestants().length > 1) {
+							if (!fightContinues) nextContestant = Math.max(nextContestant - 1, 0);
+
 							this.channelManager.sendMessages()
 								.then(() => next());
 						} else {

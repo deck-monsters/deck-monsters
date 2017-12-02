@@ -12,7 +12,7 @@ class EnchantedFaceswapCard extends BaseCard {
 		super({ icon });
 	}
 
-	effect (faceswapPlayer, faceswapTarget, ring) { // eslint-disable-line no-unused-vars
+	effect (faceswapPlayer, faceswapTarget, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
 			const faceswapEffect = ({
 				card,
@@ -22,7 +22,7 @@ class EnchantedFaceswapCard extends BaseCard {
 					const { play } = card;
 
 					// The card that is passed in should be a clone already so we're going to edit it directly
-					card.play = (swappedPlayer, swappedTarget) => play.call(card, swappedTarget, swappedPlayer, ring);
+					card.play = (swappedPlayer, swappedTarget) => play.call(card, swappedTarget, swappedPlayer, ring, activeContestants);
 					faceswapPlayer.encounterEffects = faceswapPlayer.encounterEffects.filter(effect => effect !== faceswapEffect);
 
 					this.emit('effect', {

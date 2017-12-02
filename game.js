@@ -14,6 +14,7 @@ const ChannelManager = require('./channel');
 const { getFlavor } = require('./helpers/flavor');
 const { actionCard, monsterCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
+const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./helpers/coins');
 
 const noop = () => {};
 const { signedNumber } = require('./helpers/signed-number');
@@ -90,11 +91,21 @@ class Game extends BaseClass {
 		this.on('creature.loss', this.handleLoser);
 	}
 
-	announceXPGain (className, game, { contestant, creature, xpGained }) {
+	announceXPGain (className, game, {
+		contestant,
+		creature,
+		xpGained,
+		coinsGained
+	}) {
 		const { channel, channelName } = contestant;
 
+		let coinsMessage = '';
+		if (coinsGained) {
+			coinsMessage = ` and ${coinsGained} coins`;
+		}
+
 		this.channelManager.queueMessage({
-			announce: `${creature.identity} gained ${xpGained}XP`,
+			announce: `${creature.identity} gained ${xpGained}XP${coinsMessage}`,
 			channel,
 			channelName
 		});
@@ -372,6 +383,9 @@ ${monsterCard(monster)}`
 		contestant.monster.xp += XP_PER_VICTORY;
 		contestant.character.xp += XP_PER_VICTORY;
 
+		// Also give coins to the victor
+		contestant.character.coins += COINS_PER_VICTORY;
+
 		// Also draw a new card for the player
 		const card = this.drawCard({}, contestant.monster);
 		contestant.character.addCard(card);
@@ -384,7 +398,8 @@ ${monsterCard(monster)}`
 		this.emit('gainedXP', {
 			contestant,
 			creature: contestant.character,
-			xpGained: XP_PER_VICTORY
+			xpGained: XP_PER_VICTORY,
+			coinsGained: COINS_PER_VICTORY
 		});
 
 		this.emit('gainedXP', {
@@ -397,13 +412,15 @@ ${monsterCard(monster)}`
 	handleLoser (className, monster, { contestant }) { // eslint-disable-line class-methods-use-this
 		// Award XP, maybe kick off more events (that could be messaged)
 
-		// The character still earns a small bit of XP in the case of defeat
+		// The character still earns a small bit of XP and coins in the case of defeat
 		contestant.character.xp += XP_PER_DEFEAT;
+		contestant.character.coins += COINS_PER_DEFEAT;
 
 		this.emit('gainedXP', {
 			contestant,
 			creature: contestant.character,
-			xpGained: XP_PER_DEFEAT
+			xpGained: XP_PER_DEFEAT,
+			coinsGained: COINS_PER_DEFEAT
 		});
 	}
 

@@ -144,6 +144,16 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get coins () {
+		return this.options.coins || 0;
+	}
+
+	set coins (coins) {
+		this.setOptions({
+			coins
+		});
+	}
+
 	get encounterModifiers () {
 		return (this.encounter || {}).modifiers || {};
 	}
@@ -163,6 +173,17 @@ Battles won: ${this.battles.wins}`;
 		this.encounter = {
 			...this.encounter,
 			effects
+		};
+	}
+
+	get fled () {
+		return !!(this.encounter || {}).fled;
+	}
+
+	set fled (fled) {
+		this.encounter = {
+			...this.encounter,
+			fled
 		};
 	}
 
@@ -246,6 +267,8 @@ Battles won: ${this.battles.wins}`;
 		this.emit('leave', {
 			assailant
 		});
+
+		this.fled = true;
 
 		return false;
 	}

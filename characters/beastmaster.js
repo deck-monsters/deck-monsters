@@ -12,11 +12,10 @@ const DEFAULT_MONSTER_SLOTS = 4;
 
 class Beastmaster extends BaseCharacter {
 	constructor (options) {
-		const defaultOptions = {
-			monsterSlots: DEFAULT_MONSTER_SLOTS
-		};
-
-		super(Object.assign(defaultOptions, options));
+		super({
+			monsterSlots: DEFAULT_MONSTER_SLOTS,
+			...options
+		});
 	}
 
 	get monsters () {
@@ -30,7 +29,9 @@ class Beastmaster extends BaseCharacter {
 	}
 
 	get monsterSlots () {
-		if (this.options.monsterSlots === undefined) this.monsterSlots = DEFAULT_MONSTER_SLOTS;
+		if (this.options.monsterSlots === undefined || this.options.monsterSlots < DEFAULT_MONSTER_SLOTS) {
+			this.monsterSlots = DEFAULT_MONSTER_SLOTS;
+		}
 
 		return this.options.monsterSlots || 0;
 	}
