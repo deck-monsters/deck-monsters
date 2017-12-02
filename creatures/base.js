@@ -382,7 +382,7 @@ Battles won: ${this.battles.wins}`;
 			this.respawnTimeoutLength = timeoutLength;
 
 			this.respawnTimeout = pause.setTimeout(() => {
-				creature.hp = 1;
+				creature.hp = Math.max(1, creature.hp);
 				creature.respawnTimeout = undefined;
 
 				creature.emit('respawn');
