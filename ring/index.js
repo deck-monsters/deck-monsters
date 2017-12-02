@@ -230,7 +230,7 @@ class Ring extends BaseClass {
 		const ring = this;
 
 		// Set a flag on the contestants that are in the encounter
-		if (!this.startEncounter()) return;
+		if (!this.startEncounter()) return Promise.resolve();
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
