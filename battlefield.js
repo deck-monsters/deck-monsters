@@ -55,7 +55,7 @@ const bossAnnouncer = what => announcer('boss', what);
 let boss;
 let bossCards;
 
-Promise
+return Promise
 	.resolve()
 	.then(() => slackdem.getCharacter(vladAnnouncer, VLAD_ID, {
 		id: VLAD_ID, name: 'vlad', type: 0, gender: 1, icon: 0
@@ -96,16 +96,6 @@ Promise
 	.then(() => vlad.lookAtCard({ cardName: 'hit' }))
 	.then(() => vlad.lookAtCard({ cardName: 'wooden spear' }))
 	.then(() => vlad.lookAt('player handbook'))
-//	.then(() => vlad.spawnMonster(vladAnnouncer))
-//	.then(() => char.spawnMonster(charAnnouncer))
-//	.then(() => vlad.equipMonster(vladAnnouncer))
-//	.then(() => char.equipMonster(charAnnouncer))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
 	.then(() => boss.sendMonsterToTheRing());
-	// .then(() => {
-	// 	setTimeout(() => {
-	// 		vlad.callMonsterOutOfTheRing()
-	// 			.then(() => vlad.sendMonsterToTheRing());
-	// 	}, 15000);
-	// });
