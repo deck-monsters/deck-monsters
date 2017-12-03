@@ -17,10 +17,10 @@ const bossChannel = () => Promise.resolve();
 const bossChannelName = 'BOSS';
 
 class Ring extends BaseClass {
-	constructor (channelManager, options) {
+	constructor (channelManager, { spawnBosses = true, ...options } = {}) {
 		super(options);
 
-		this.spawnBosses = true; // Someday we may want to make this a configurable option
+		this.spawnBosses = spawnBosses;
 		this.channelManager = channelManager;
 		this.battles = [];
 

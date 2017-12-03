@@ -29,7 +29,7 @@ class Game extends BaseClass {
 		this.channelManager = new ChannelManager({}, this.log);
 		this.channelManager.addChannel({ channel: publicChannel, channelName: PUBLIC_CHANNEL });
 		this.publicChannel = ({ announce }) => this.channelManager.queueMessage({ announce, channelName: PUBLIC_CHANNEL });
-		this.ring = new Ring(this.channelManager);
+		this.ring = new Ring(this.channelManager, { spawnBosses: this.options.spawnBosses });
 
 		this.initializeEvents();
 
