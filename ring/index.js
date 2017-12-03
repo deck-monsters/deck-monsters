@@ -7,15 +7,20 @@ const delayTimes = require('../helpers/delay-times');
 const { monsterCard } = require('../helpers/card');
 const pause = require('../helpers/pause');
 const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
+const { randomCharacter } = require('../characters');
 
 const MAX_MONSTERS = 3;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 30000;
 
+const bossChannel = () => Promise.resolve();
+const bossChannelName = 'BOSS';
+
 class Ring extends BaseClass {
 	constructor (channelManager, options) {
 		super(options);
 
+		this.spawnBosses = true; // Someday we may want to make this a configurable option
 		this.channelManager = channelManager;
 		this.battles = [];
 
@@ -28,6 +33,8 @@ class Ring extends BaseClass {
 		this.channelManager.on('win', (className, channel, { contestant }) => ring.handleWinner({ contestant }));
 		this.channelManager.on('loss', (className, channel, { contestant }) => this.handleLoser({ contestant }));
 		this.channelManager.on('draw', (className, channel, { contestant }) => this.handleTied({ contestant }));
+
+		this.startBossTimer();
 	}
 
 	get contestants () {
@@ -78,15 +85,14 @@ class Ring extends BaseClass {
 					}));
 				}
 
-				if (!this.monsterIsInRing(monster)) {
+				const contestant = this.findContestant(character, monster);
+				if (!contestant) {
 					return Promise.reject(channel({
 						announce: 'Your monster is not currently in the ring'
 					}));
 				}
 
-				return {
-					monster, character, channel, channelName
-				};
+				return contestant;
 			})
 			.then((contestant) => {
 				const contestantIndex = this.options.contestants.indexOf(contestant);
@@ -152,6 +158,10 @@ class Ring extends BaseClass {
 
 	monsterIsInRing (monster) {
 		return !!this.contestants.find(contestant => contestant.monster === monster);
+	}
+
+	findContestant (character, monster) {
+		return this.contestants.find(contestant => (contestant.character === character && contestant.monster === monster));
 	}
 
 	look (channel) {
@@ -483,6 +493,49 @@ class Ring extends BaseClass {
 		contestant.monster.addDraw();
 		this.emit('draw', { contestant });
 		contestant.monster.emit('draw', { contestant });
+	}
+
+	startBossTimer () {
+		const ring = this;
+
+		if (this.spawnBosses) {
+			pause.setTimeout(() => {
+				ring.spawnBoss();
+				ring.startBossTimer(); // Do it again in an hour
+			}, 3600000);
+		}
+	}
+
+	spawnBoss () { // eslint-disable-line consistent-return
+		// Only try to enter the ring if it's already empty
+		if (!this.inEncounter && this.contestants.length === 0) {
+			const character = randomCharacter();
+			const monster = character.monsters[0];
+			const contestant = {
+				monster,
+				character,
+				channel: bossChannel,
+				channelName: bossChannelName
+			};
+
+			this.addMonster(contestant);
+
+			// Leave the ring after 10 minutes if no one joins the fight
+			const ring = this;
+			pause.setTimeout(() => {
+				ring.removeBoss(contestant);
+			}, 600000);
+
+			return contestant;
+		}
+	}
+
+	removeBoss (contestant) {
+		if (!this.inEncounter && this.contestants.length === 1) {
+			return this.removeMonster(contestant);
+		}
+
+		return Promise.resolve();
 	}
 }
 
