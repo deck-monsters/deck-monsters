@@ -33,6 +33,7 @@
   "dependencies": {
     "escape-string-regexp": "^1.0.5",
     "event-emitter-es6": "^1.1.5",
+    "fantasy-names": "^1.1.2",
     "lodash.foreach": "^4.5.0",
     "lodash.reduce": "^4.6.0",
     "lodash.sample": "^4.2.1",

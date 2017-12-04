@@ -3,10 +3,11 @@
 const random = require('lodash.sample');
 
 const BaseMonster = require('./base');
+
 const { BARBARIAN } = require('../helpers/classes');
+const { MINOTAUR } = require('../helpers/creature-types');
 
 const DEFAULT_COLOR = 'angry red';
-const DEFAULT_NAME = 'Taurus';
 
 const PATTERNS = [
 	'crescent',
@@ -25,7 +26,6 @@ class Minotaur extends BaseMonster {
 		const defaultOptions = {
 			damageModifier: 2,
 			color: DEFAULT_COLOR,
-			name: DEFAULT_NAME,
 			pattern: random(PATTERNS),
 			descriptor: random(DESCRIPTORS),
 			icon: '🐗'
@@ -51,7 +51,7 @@ class Minotaur extends BaseMonster {
 	}
 }
 
-Minotaur.creatureType = 'Minotaur';
+Minotaur.creatureType = MINOTAUR;
 Minotaur.class = BARBARIAN;
 Minotaur.description =
 `

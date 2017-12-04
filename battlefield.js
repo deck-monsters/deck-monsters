@@ -38,7 +38,7 @@ const announcer = (prefix, what) => new Promise((resolve, reject) => {
 });
 
 const roomAnnouncer = what => announcer('Room', what);
-const slackdem = new Game(roomAnnouncer);
+const slackdem = new Game(roomAnnouncer, { spawnBosses: false });
 
 const VLAD_ID = 1234;
 const vladAnnouncer = what => announcer('vlad', what);

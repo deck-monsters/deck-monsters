@@ -3,10 +3,11 @@
 const random = require('lodash.sample');
 
 const BaseMonster = require('./base');
+
 const { BARBARIAN } = require('../helpers/classes');
+const { BASILISK } = require('../helpers/creature-types');
 
 const DEFAULT_COLOR = 'tan';
-const DEFAULT_NAME = 'Cyris';
 
 const SIZES = [
 	{ adjective: 'slender', weight: '240lbs' },
@@ -28,7 +29,6 @@ class Basilisk extends BaseMonster {
 			damageModifier: 3,
 			color: DEFAULT_COLOR,
 			location: random(LOCATIONS),
-			name: DEFAULT_NAME,
 			size: random(SIZES),
 			icon: '🐍'
 		};
@@ -53,7 +53,7 @@ class Basilisk extends BaseMonster {
 	}
 }
 
-Basilisk.creatureType = 'Basilisk';
+Basilisk.creatureType = BASILISK;
 Basilisk.class = BARBARIAN;
 Basilisk.description =
 `

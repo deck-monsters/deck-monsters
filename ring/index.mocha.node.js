@@ -113,4 +113,51 @@ describe('./ring/index.js', () => {
 			})).to.eventually.be.rejected;
 		});
 	});
+
+	describe('bosses', () => {
+		it('will spawn a boss', () => {
+			const game = new Game(publicChannelStub);
+			const ring = game.getRing();
+
+			const contestant = ring.spawnBoss();
+
+			expect(ring.contestants.length).to.equal(1);
+			expect(ring.monsterIsInRing(contestant.monster)).to.equal(true);
+		});
+
+		it('will remove a boss', () => {
+			const game = new Game(publicChannelStub);
+			const ring = game.getRing();
+
+			const contestant = ring.spawnBoss();
+
+			return ring.removeBoss(contestant)
+				.then(() => expect(ring.contestants.length).to.equal(0));
+		});
+
+		it('will not spawn a boss if players are already in the ring', () => {
+			const game = new Game(publicChannelStub);
+			const ring = game.getRing();
+
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			const channelName = 'TEST_CHANNEL';
+
+			character.addMonster(monster);
+
+			ring.addMonster({
+				monster,
+				character,
+				channel: privateChannelStub,
+				channelName
+			});
+
+			expect(ring.contestants.length).to.equal(1);
+
+			const contestant = ring.spawnBoss();
+
+			expect(ring.contestants.length).to.equal(1);
+			expect(contestant).to.equal(undefined);
+		});
+	});
 });

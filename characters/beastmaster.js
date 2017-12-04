@@ -1,12 +1,13 @@
 const moment = require('moment');
 
 const BaseCharacter = require('./base');
-const { spawn, equip } = require('../monsters');
-const { getMonsterChoices } = require('../helpers/choices');
-const TENSE = require('../helpers/tense');
-const { capitalize } = require('../helpers/capitalize');
 
+const { BEASTMASTER } = require('../helpers/creature-types');
+const { capitalize } = require('../helpers/capitalize');
+const { getMonsterChoices } = require('../helpers/choices');
 const { monsterCard } = require('../helpers/card');
+const { spawn, equip } = require('../monsters');
+const TENSE = require('../helpers/tense');
 
 const DEFAULT_MONSTER_SLOTS = 4;
 
@@ -268,6 +269,6 @@ Which monster would you like to ${action}?`,
 	}
 }
 
-Beastmaster.creatureType = 'Beastmaster';
+Beastmaster.creatureType = BEASTMASTER;
 
 module.exports = Beastmaster;

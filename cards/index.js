@@ -1,6 +1,7 @@
 const shuffle = require('lodash.shuffle');
 
 const isProbable = require('../helpers/is-probable');
+const BasicShieldCard = require('./basic-shield');
 const BlastCard = require('./blast');
 const BoostCard = require('./boost');
 const CurseCard = require('./curse');
@@ -14,6 +15,7 @@ const PoundCard = require('./pound');
 const RandomCard = require('./random');
 const RehitCard = require('./rehit');
 const ScotchCard = require('./scotch');
+const ThickSkinCard = require('./thick-skin');
 const VenegefulRampageCard = require('./vengeful-rampage');
 const WhiskeyShotCard = require('./whiskey-shot');
 const WoodenSpearCard = require('./wooden-spear');
@@ -22,6 +24,7 @@ const WoodenSpearCard = require('./wooden-spear');
 const DEFAULT_MINIMUM_CARDS = 10;
 
 const all = [
+	BasicShieldCard,
 	BlastCard,
 	BoostCard,
 	CurseCard,
@@ -35,6 +38,7 @@ const all = [
 	RandomCard,
 	RehitCard,
 	ScotchCard,
+	ThickSkinCard,
 	VenegefulRampageCard,
 	WhiskeyShotCard,
 	WoodenSpearCard

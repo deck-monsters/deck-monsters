@@ -1,9 +1,10 @@
 /* eslint-disable max-len */
 
 const HitCard = require('./hit');
-const Minotaur = require('../monsters/minotaur');
-const { roll } = require('../helpers/chance');
+
 const { FIGHTER } = require('../helpers/classes');
+const { MINOTAUR } = require('../helpers/creature-types');
+const { roll } = require('../helpers/chance');
 
 class WoodenSpearCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -39,7 +40,7 @@ class WoodenSpearCard extends HitCard {
 }
 
 WoodenSpearCard.cardType = 'Wooden Spear';
-WoodenSpearCard.creatureType = Minotaur.creatureType;
+WoodenSpearCard.creatureType = MINOTAUR;
 WoodenSpearCard.probability = 30;
 WoodenSpearCard.description = `A simple weapon fashioned for ${WoodenSpearCard.creatureType}-hunting.`;
 WoodenSpearCard.cost = 6;

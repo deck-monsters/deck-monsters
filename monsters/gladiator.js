@@ -3,10 +3,11 @@
 const random = require('lodash.sample');
 
 const BaseMonster = require('./base');
+
 const { FIGHTER } = require('../helpers/classes');
+const { GLADIATOR } = require('../helpers/creature-types');
 
 const DEFAULT_COLOR = 'leather';
-const DEFAULT_NAME = 'Maximus';
 
 const SIZES = [
 	{ adjective: 'nimble', height: 'just over 5 feet' },
@@ -28,7 +29,6 @@ class Gladiator extends BaseMonster {
 			damageModifier: 1,
 			color: DEFAULT_COLOR,
 			location: random(LOCATIONS),
-			name: DEFAULT_NAME,
 			size: random(SIZES),
 			icon: '💪'
 		};
@@ -53,7 +53,7 @@ class Gladiator extends BaseMonster {
 	}
 }
 
-Gladiator.creatureType = 'Gladiator';
+Gladiator.creatureType = GLADIATOR;
 Gladiator.class = FIGHTER;
 Gladiator.description =
 `

@@ -1,10 +1,13 @@
 const emoji = require('node-emoji');
+const shuffle = require('lodash.shuffle');
 
-const { hydrateCard, fillDeck } = require('../cards');
-const { hydrateMonster } = require('../monsters');
 const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
-const PRONOUNS = require('../helpers/pronouns');
+const { hydrateCard, fillDeck } = require('../cards');
+const { all: allMonsters, hydrateMonster } = require('../monsters');
+const { randomInt } = require('../helpers/chance');
+const { XP_PER_VICTORY } = require('../helpers/levels');
 const Beastmaster = require('./beastmaster');
+const PRONOUNS = require('../helpers/pronouns');
 
 const genders = Object.keys(PRONOUNS);
 
@@ -90,6 +93,41 @@ ${getChoices(iconChoices)}`,
 		});
 };
 
+const randomCharacter = () => {
+	const battles = {
+		total: randomInt({ max: 35 })
+	};
+
+	battles.wins = randomInt({ max: battles.total });
+	battles.losses = battles.total - battles.wins;
+
+	const icon = emoji.random().emoji;
+
+	const xp = XP_PER_VICTORY * battles.wins;
+
+	const Monster = shuffle(allMonsters)[0];
+	const monster = new Monster({
+		battles,
+		xp
+	});
+
+	const character = new Beastmaster({
+		battles,
+		icon,
+		monsters: [monster],
+		xp
+	});
+
+	// Clean up the deck (reducing probability of certain cards)
+	const deck = character.deck.filter(card => card.cardType !== 'Flee' && card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
+	character.deck = fillDeck(deck, {}, character);
+
+	// Equip the monster
+	monster.cards = shuffle(character.deck.filter(card => monster.canHoldCard(card))).slice(0, monster.cardSlots);
+
+	return character;
+};
+
 const hydrateCharacter = (characterObj) => {
 	const Character = all.find(({ name }) => name === characterObj.name);
 	const options = Object.assign({ deck: [], monsters: [] }, characterObj.options);
@@ -114,5 +152,6 @@ module.exports = {
 	create,
 	hydrateCharacter,
 	hydrateCharacters,
+	randomCharacter,
 	Beastmaster
 };
