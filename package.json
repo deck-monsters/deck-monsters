@@ -31,6 +31,7 @@
   },
   "main": "index.js",
   "dependencies": {
+    "aws-sdk": "^2.162.0",
     "escape-string-regexp": "^1.0.5",
     "event-emitter-es6": "^1.1.5",
     "fantasy-names": "^1.1.2",

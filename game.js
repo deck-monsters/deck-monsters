@@ -1,11 +1,12 @@
 const reduce = require('lodash.reduce');
 
-const { globalSemaphore } = require('./helpers/semaphore');
-const BaseClass = require('./baseClass');
-const Ring = require('./ring');
 const { all: cardTypes, draw } = require('./cards');
 const { all: monsterTypes } = require('./monsters');
 const { create: createCharacter } = require('./characters');
+const { globalSemaphore } = require('./helpers/semaphore');
+const aws = require('./helpers/aws');
+const BaseClass = require('./baseClass');
+const Ring = require('./ring');
 
 const PlayerHandbook = require('./player-handbook');
 
@@ -16,7 +17,6 @@ const { actionCard, monsterCard } = require('./helpers/card');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./helpers/coins');
 
-const noop = () => {};
 const { signedNumber } = require('./helpers/signed-number');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
@@ -26,6 +26,7 @@ class Game extends BaseClass {
 		super(options, globalSemaphore);
 
 		this.log = log;
+		this.key = `DeckMonsters.Backup.${Date.now()}`;
 		this.channelManager = new ChannelManager({}, this.log);
 		this.channelManager.addChannel({ channel: publicChannel, channelName: PUBLIC_CHANNEL });
 		this.publicChannel = ({ announce }) => this.channelManager.queueMessage({ announce, channelName: PUBLIC_CHANNEL });
@@ -51,12 +52,20 @@ class Game extends BaseClass {
 	}
 
 	get saveState () {
-		return this.stateSaveFunc || noop;
+		return () => {
+			const state = JSON.stringify(this);
+
+			if (this.stateSaveFunc) {
+				setImmediate(this.stateSaveFunc, state);
+			}
+
+			setImmediate(aws.save, this.key, state, this.log);
+		};
 	}
 
 	set saveState (stateSaveFunc) {
 		if (stateSaveFunc) {
-			this.stateSaveFunc = () => stateSaveFunc(JSON.stringify(this));
+			this.stateSaveFunc = stateSaveFunc;
 		} else {
 			delete this.stateSaveFunc;
 		}
