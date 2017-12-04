@@ -128,6 +128,24 @@ Battles won: ${this.battles.wins}`;
 		}
 	}
 
+	get bloodiedValue () {
+		return Math.floor(this.maxHp / 2);
+	}
+
+	get bloodied () {
+		return this.hp < this.bloodiedValue();
+	}
+
+	set bloodied (hp) {
+		this.setOptions({
+			hp: this.bloodiedValue()
+		});
+	}
+
+	get destroyed () {
+		return this.hp < -this.bloodiedValue()
+	}
+
 	get hp () {
 		if (this.options.hp === undefined) this.hp = this.maxHp;
 
@@ -283,10 +301,6 @@ Battles won: ${this.battles.wins}`;
 		const hp = this.hp - damage;
 		const originalHP = this.hp;
 
-		if (hp <= 0) {
-			this.hp = 0;
-		}
-
 		this.hp = hp;
 
 		this.emit('hit', {
@@ -349,9 +363,15 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	die (assailant) {
-		this.emit('die', {
-			assailant
-		});
+		if () {
+			this.emit('destroy', {
+				assailant
+			});
+		} else {
+			this.emit('die', {
+				assailant
+			});
+		}
 
 		if (this.hp > 0) {
 			this.hp = 0;

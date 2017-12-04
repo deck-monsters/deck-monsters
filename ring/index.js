@@ -29,8 +29,7 @@ class Ring extends BaseClass {
 			ring.battles.push(results);
 		});
 
-		const ring = this;
-		this.channelManager.on('win', (className, channel, { contestant }) => ring.handleWinner({ contestant }));
+		this.channelManager.on('win', (className, channel, { contestant }) => this.handleWinner({ contestant }));
 		this.channelManager.on('loss', (className, channel, { contestant }) => this.handleLoser({ contestant }));
 		this.channelManager.on('draw', (className, channel, { contestant }) => this.handleTied({ contestant }));
 
@@ -351,14 +350,14 @@ class Ring extends BaseClass {
 					return modifiedCard || currentCard;
 				}, card);
 
-				// Play the card. If the fight should continue after the card it will return true, otherwise it will return false
+				// Play the card. If the target is still alive after resolving the card it will return true, otherwise it will return false
 				card
 					// The current monster always attacks the next monster
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
 					.play(monster, nextMonster, ring, activeContestants)
-					.then((fightContinues) => {
+					.then((targetAlive) => {
 						if (getActiveContestants().length > 1) {
-							if (!fightContinues) nextContestant = Math.max(nextContestant - 1, 0);
+							if (!targetAlive) nextContestant = Math.max(nextContestant - 1, 0);
 
 							this.channelManager.sendMessages()
 								.then(() => next());

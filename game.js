@@ -81,6 +81,7 @@ class Game extends BaseClass {
 		this.on('creature.hit', this.announceHit);
 		this.on('creature.heal', this.announceHeal);
 		this.on('creature.modifier', this.announceModifier);
+		this.on('creature.destroy', this.announceDestruction);
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
@@ -180,6 +181,18 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 🏁       round ${round} complete
 
 ###########################################`
+		});
+	}
+
+	announceDestroy (className, monster, { assailant }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce:
+`${monster.identityWithHp} has been sent to the land of ${monster.pronouns} fathers by ${assailant.identityWithHp}
+
+R.I.P ${monster.identity}
+`
 		});
 	}
 
@@ -289,7 +302,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 			announce:
 `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
 
-${monster.icon}  *${monster.givenName} has ${monster.hp}HP left.*
+${monster.icon}  *${monster.givenName} has ${monster.hp}HP.*
 `
 		});
 	}
