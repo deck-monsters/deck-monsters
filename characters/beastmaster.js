@@ -30,11 +30,11 @@ class Beastmaster extends BaseCharacter {
 	}
 
 	get monsterSlots () {
-		if (this.options.monsterSlots === undefined || this.options.monsterSlots < DEFAULT_MONSTER_SLOTS) {
+		if (!this.options.monsterSlots || this.options.monsterSlots < DEFAULT_MONSTER_SLOTS) {
 			this.monsterSlots = DEFAULT_MONSTER_SLOTS;
 		}
 
-		return this.options.monsterSlots || 0;
+		return this.options.monsterSlots;
 	}
 
 	set monsterSlots (monsterSlots) {

@@ -244,7 +244,7 @@ class Ring extends BaseClass {
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
-		const contestants = shuffle([...this.contestants]);
+		const contestants = [...this.contestants];
 		const getActiveContestants = () => contestants.filter(contestant => (!contestant.monster.dead && !contestant.monster.fled));
 
 		// Emit an event when the fight begins
