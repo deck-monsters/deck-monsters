@@ -11,7 +11,7 @@ const { randomCharacter } = require('../characters');
 
 const MAX_MONSTERS = 3;
 const MIN_MONSTERS = 2;
-const FIGHT_DELAY = 30000;
+const FIGHT_DELAY = 60000;
 
 const bossChannel = () => Promise.resolve();
 const bossChannelName = 'BOSS';
@@ -500,15 +500,21 @@ class Ring extends BaseClass {
 
 		if (this.spawnBosses) {
 			pause.setTimeout(() => {
-				ring.spawnBoss();
-				ring.startBossTimer(); // Do it again in an hour
-			}, 3600000);
+				ring.channelManager.queueMessage({
+					announce: 'A boss will enter the ring in 2 minutes.'
+				});
+
+				pause.setTimeout(() => {
+					ring.spawnBoss();
+					ring.startBossTimer(); // Do it again in an hour
+				}, 120000);
+			}, 3480000);
 		}
 	}
 
 	spawnBoss () { // eslint-disable-line consistent-return
-		// Only try to enter the ring if it's already empty
-		if (!this.inEncounter && this.contestants.length === 0) {
+		// Only try to enter the ring if there's not a current fight in progress
+		if (!this.inEncounter) {
 			const character = randomCharacter();
 			const monster = character.monsters[0];
 			const contestant = {
