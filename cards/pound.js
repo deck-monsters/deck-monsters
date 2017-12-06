@@ -4,11 +4,16 @@ const { BARBARIAN } = require('../helpers/classes');
 class PoundCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		damageDice = '2d6', // Lucky you, the pound card does double damage
+		damageDice,
 		icon = '⚒',
 		...rest
 	} = {}) {
 		super({ damageDice, icon, ...rest });
+
+		this.defaults = {
+			...this.defaults,
+			damageDice: '2d6' // Lucky you, the pound card does double damage
+		};
 	}
 }
 

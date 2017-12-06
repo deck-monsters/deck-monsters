@@ -9,12 +9,17 @@ const { roll } = require('../helpers/chance');
 class WoodenSpearCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		damageModifier = 3,
+		damageModifier,
 		icon = '🌳',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 		this.options.damageModifier = damageModifier;
+
+		this.defaults = {
+			...this.defaults,
+			damageModifier: 3
+		};
 	}
 
 	get creatureType () {
@@ -22,7 +27,7 @@ class WoodenSpearCard extends HitCard {
 	}
 
 	get damageModifier () {
-		return this.options.damageModifier;
+		return this.options.damageModifier || this.defaults.damageModifier;
 	}
 
 	get stats () {

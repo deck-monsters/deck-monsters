@@ -11,11 +11,16 @@ const { BARBARIAN, FIGHTER } = require('../helpers/classes');
 class HitHarder extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		damageDice = '1d6', // Lucky you, the pound card does double damage
+		damageDice,
 		icon = '🔨',
 		...rest
 	} = {}) {
 		super({ damageDice, icon, ...rest });
+
+		this.defaults = {
+			...this.defaults,
+			damageDice: '1d6' // Lucky you, the pound card does double damage
+		};
 	}
 
 	rollForDamage (player, target, strokeOfLuck) {

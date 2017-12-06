@@ -5,11 +5,16 @@ const { BARBARIAN } = require('../helpers/classes');
 class ThickSkinCard extends BoostCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		boostAmount = 2,
+		boostAmount,
 		icon = '🔬',
 		...rest
 	} = {}) {
 		super({ boostAmount, icon, ...rest });
+
+		this.defaults = {
+			...this.defaults,
+			boostAmount: 2
+		};
 	}
 }
 

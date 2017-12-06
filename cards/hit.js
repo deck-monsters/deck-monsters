@@ -6,19 +6,24 @@ const { roll, max } = require('../helpers/chance');
 class HitCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		attackDice = '1d20',
-		damageDice = '1d6',
+		attackDice,
+		damageDice,
 		icon = '👊'
 	} = {}) {
 		super({ attackDice, damageDice, icon });
+
+		this.defaults = {
+			attackDice: '1d20',
+			damageDice: '1d6'
+		};
 	}
 
 	get attackDice () {
-		return this.options.attackDice;
+		return this.options.attackDice || this.defaults.attackDice;
 	}
 
 	get damageDice () {
-		return this.options.damageDice;
+		return this.options.damageDice || this.defaults.damageDice;
 	}
 
 	get stats () {

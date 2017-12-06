@@ -3,19 +3,24 @@ const BaseCard = require('./base');
 class BoostCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		boostAmount = 1,
+		boostAmount,
 		icon = '🆙',
-		boostedProp = 'ac'
+		boostedProp
 	} = {}) {
 		super({ boostAmount, icon, boostedProp });
+
+		this.defaults = {
+			boostAmount: 1,
+			boostedProp: 'ac'
+		};
 	}
 
 	get boostAmount () {
-		return this.options.boostAmount;
+		return this.options.boostAmount || this.defaults.boostAmount;
 	}
 
 	get boostedProp () {
-		return this.options.boostedProp;
+		return this.options.boostedProp || this.defaults.boostedProp;
 	}
 
 	get stats () {
