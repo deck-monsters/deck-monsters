@@ -46,6 +46,17 @@ class BaseMonster extends BaseCreature {
 		return appropriateLevel && appropriateClass;
 	}
 
+	get emptyHanded () {
+		return !!(this.encounter || {}).emptyHanded;
+	}
+
+	set emptyHanded (emptyHanded) {
+		this.encounter = {
+			...this.encounter,
+			emptyHanded
+		};
+	}
+
 	edit (channel) {
 		return Promise
 			.resolve()
