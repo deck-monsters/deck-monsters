@@ -500,9 +500,7 @@ class Ring extends BaseClass {
 
 		if (this.spawnBosses) {
 			pause.setTimeout(() => {
-				ring.channelManager.queueMessage({
-					announce: 'A boss will enter the ring in 2 minutes.'
-				});
+				ring.emit('bossWillSpawn', { delay: 120000 });
 
 				pause.setTimeout(() => {
 					ring.spawnBoss();
