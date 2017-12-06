@@ -38,7 +38,7 @@ class HealCard extends BaseCard {
 
 			// Stroke of Luck
 			if (isProbable({ probability: 1 })) {
-				healResult = player.maxHp / 2;
+				healResult = Math.floor(player.maxHp / 2);
 				outcome = 'Stroke of luck. Heal half max HP.';
 			}
 

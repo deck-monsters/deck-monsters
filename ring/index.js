@@ -239,13 +239,20 @@ class Ring extends BaseClass {
 		// Save the instance of the ring we are fighting in
 		const ring = this;
 
+		// Keep a running log of everything that happens
+		const fightLog = [];
+
 		// Set a flag on the contestants that are in the encounter
 		if (!this.startEncounter()) return Promise.resolve();
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
 		const contestants = [...this.contestants];
-		const getActiveContestants = () => contestants.filter(contestant => (!contestant.monster.dead && !contestant.monster.fled));
+		const isActiveContestant = contestant => (contestant && !contestant.monster.dead && !contestant.monster.fled);
+		const getActiveContestants = currentContestants => currentContestants.filter(isActiveContestant);
+		const getAllActiveContestants = () => getActiveContestants(contestants);
+		const getContestantsWithCardsLeft = currentContestants => currentContestants.filter(contestant => contestant && !contestant.monster.emptyHanded);
+		const anyContestantsHaveCardsLeft = currentContestants => getContestantsWithCardsLeft(currentContestants).length > 0;
 
 		// Emit an event when the fight begins
 		this.emit('fight', {
@@ -257,50 +264,49 @@ class Ring extends BaseClass {
 
 		// This is the main loop that takes care of the "action" each character performs
 		// It's a promise so it can be chained, async, delayed, etc
-		// currentContestant is the numeric index of character whose turn we're on
+		// currentContestants is the current set of contestants we're working with
 		// cardIndex is the numeric index of card we'll play from that character's hand (if they have a card in that position)
-		// emptyHanded is the numeric index of the first character to not have a card in the position specified, and gets reset to "false" whenever a card is successfully played
-		const doAction = ({ currentContestant, cardIndex, emptyHanded }) => new Promise((resolve) => {
-			// Find the monster at the current index
-			const activeContestants = getActiveContestants();
-			const contestant = activeContestants[currentContestant];
-			const { monster } = contestant;
+		const doAction = ({ currentContestants = contestants, cardIndex = 0 } = {}) => new Promise((resolve) => {
+			// Let's get all of the contestants that are still active in the fight
+			let activeContestants = getActiveContestants(currentContestants);
 
-			// Find the card in that monster's hand at the current index if it exists
-			let card = monster.cards[cardIndex];
-
-			// Emit an event when a character's turn begins
-			// Note that as written currently this will emit _only if they have a card to play_
-			if (card) {
-				this.emit('turnBegin', {
-					contestant,
-					round
-				});
-			}
-
-			// Get the index of the next contestant, looping at the end of the array
-			let nextContestant = currentContestant + 1;
-			if (nextContestant >= activeContestants.length) {
-				nextContestant = 0;
-			}
-
-			// We don't actually move to the next card until every character has played the current card
+			// By default, the next card anyone plays should be the one at the same position as the one currently being played
 			let nextCardIndex = cardIndex;
-			if (nextContestant === 0) {
+
+			// But if we don't have any more contestants in this fight it's time to reset our list of contestants
+			// and it's going to be time to move on to the next card
+			if (activeContestants.length <= 1) {
+				activeContestants = [...activeContestants, ...getActiveContestants(contestants)];
 				nextCardIndex += 1;
 			}
 
+			// Let's get the current contestant and their monster
+			const playerContestant = activeContestants.shift();
+			const { monster: player } = playerContestant;
+
+			// Let's find our target
+			// This where we could do some fancy targetting logic if we wanted to
+			const targetContestant = activeContestants[0];
+			const { monster: target } = targetContestant;
+
+			// Find the card in the current player's hand at the current index
+			let card = player.cards[cardIndex];
+
 			// When this is called (see below) we pass the next contestant and card back into the looping
 			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a character as described above
-			const next = (nextEmptyHanded = false) => resolve(doAction({
-				currentContestant: nextContestant,
-				cardIndex: nextCardIndex,
-				emptyHanded: nextEmptyHanded
+			const next = () => resolve(doAction({
+				currentContestants: activeContestants,
+				cardIndex: nextCardIndex
 			}));
 
 			// Does the monster have a card at the current position?
 			if (card) {
-				const nextMonster = activeContestants[nextContestant].monster;
+				// Emit an event when a character's turn begins
+				// Note that as written currently this will emit _only if they have a card to play_
+				this.emit('turnBegin', {
+					contestant: playerContestant,
+					round
+				});
 
 				// Now we're going to run through all of the possible effects
 				// Each effect should either return a card (which will replace the card that was going to be played)
@@ -310,28 +316,28 @@ class Ring extends BaseClass {
 				card = card.clone();
 
 				// First, run through the effects from the current monster
-				card = monster.encounterEffects.reduce((currentCard, effect) => {
+				card = player.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
-						activeContestants,
+						activeContestants: getAllActiveContestants(),
 						card: currentCard,
 						phase: ATTACK_PHASE,
-						player: monster,
+						player,
 						ring,
-						target: nextMonster
+						target
 					});
 
 					return modifiedCard || currentCard;
 				}, card);
 
 				// Second, run through the effects from the target monster
-				card = nextMonster.encounterEffects.reduce((currentCard, effect) => {
+				card = target.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
-						activeContestants,
+						activeContestants: getAllActiveContestants(),
 						card: currentCard,
 						phase: DEFENSE_PHASE,
-						player: monster,
+						player,
 						ring,
-						target: nextMonster
+						target
 					});
 
 					return modifiedCard || currentCard;
@@ -340,54 +346,59 @@ class Ring extends BaseClass {
 				// Finally, run through any global effects
 				card = ring.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
-						activeContestants,
+						activeContestants: getAllActiveContestants(),
 						card: currentCard,
 						phase: GLOBAL_PHASE,
-						player: monster,
+						player,
 						ring,
-						target: nextMonster
+						target
 					});
 
 					return modifiedCard || currentCard;
 				}, card);
 
-				// Play the card. If the fight should continue after the card it will return true, otherwise it will return false
+				// Track the fight log
+				fightLog.push(`${player.givenName}: ${card.name} target ${target.givenName}`);
+
+				// Play the card
 				card
 					// The current monster always attacks the next monster
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
-					.play(monster, nextMonster, ring, activeContestants)
+					.play(player, target, ring, getAllActiveContestants())
 					.then(() => {
-						const newActiveContestants = getActiveContestants();
-						if (newActiveContestants.length > 1) {
-							nextContestant = newActiveContestants.indexOf(contestant) + 1;
-							if (nextContestant >= newActiveContestants.length) {
-								nextContestant = 0;
-								nextCardIndex += 1;
-							}
-
+						// Is there more than one monster left alive in the ring?
+						if (getAllActiveContestants().length > 1) {
 							this.channelManager.sendMessages()
 								.then(() => next());
 						} else {
 							// The fight is over, let's end this promise chain
 							// Also return the contestant we ended on for bookkeeping purposes
 							this.channelManager.sendMessages()
-								.then(() => resolve(contestant));
+								.then(() => resolve(playerContestant));
 						}
 					});
 			} else {
 				this.emit('endOfDeck', {
-					contestant,
+					contestant: playerContestant,
 					round
 				});
 
-				// We didn't have a card, so we can't play
-				// If we've gone an entire round with no plays then the value of emptyHanded is going to equal the index of the nextContestant
-				if (emptyHanded === nextContestant) {
+				player.emptyHanded = true;
+
+				// If nobody who's still active has any cards left it's time to reset
+				const allActiveContestants = getAllActiveContestants();
+				if (!anyContestantsHaveCardsLeft(allActiveContestants)) {
+					// Reset the value of `emptyHanded`
+					allActiveContestants.forEach(({ monster }) => {
+						monster.emptyHanded = false;
+					});
+
 					// The round is over so we'll go back to the first card in everyone's hand
 					nextCardIndex = 0;
+
 					// We also want to restart to the first contestant since the round is ending now
 					// In a game where everyone has the same size hand this would happen anyway, but we reset for unbalanced games
-					nextContestant = 0;
+					activeContestants = allActiveContestants;
 
 					// Emit an event when the round ends
 					this.emit('roundComplete', {
@@ -399,15 +410,13 @@ class Ring extends BaseClass {
 					round += 1;
 				}
 
-				// If we haven't gone an entire round yet we just pass play along to the next character
-				// If we're the first ones to have an empty hand then we'll set the value to our index, otherwise we'll just pass along the existing value (so that we can know when a full round has passed with no plays)
-				pause.setTimeout(() => next(emptyHanded === false ? currentContestant : emptyHanded), delayTimes.shortDelay());
+				pause.setTimeout(() => next(), delayTimes.shortDelay());
 			}
 		});
 
 		// Kick off the action loop with some initial values. Go to the conclusion method once it resolves
-		return doAction({ currentContestant: 0, cardIndex: 0, emptyHanded: false })
-			.then(lastContestant => this.fightConcludes({ lastContestant, rounds: round }));
+		return doAction()
+			.then(lastContestant => this.fightConcludes({ fightLog, lastContestant, rounds: round }));
 	}
 
 	fightConcludes ({ lastContestant, rounds }) {
