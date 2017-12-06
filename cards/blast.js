@@ -6,19 +6,24 @@ const { CLERIC } = require('../helpers/classes');
 class BlastCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		damage = 3,
+		damage,
 		icon = '💥',
-		levelDamage = 1
+		levelDamage
 	} = {}) {
 		super({ damage, icon, levelDamage });
+
+		this.defaults = {
+			damage: 3,
+			levelDamage: 1
+		};
 	}
 
 	get damage () {
-		return this.options.damage;
+		return this.options.damage || this.defaults.damage;
 	}
 
 	get levelDamage () {
-		return this.options.levelDamage;
+		return this.options.levelDamage || this.defaults.levelDamage;
 	}
 
 	get stats () {
@@ -35,7 +40,8 @@ class BlastCard extends BaseCard {
 				}
 
 				return Promise.resolve();
-			})));
+			}))
+				.then(() => !target.dead));
 		});
 	}
 }

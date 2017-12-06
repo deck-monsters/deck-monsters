@@ -5,11 +5,16 @@ const { FIGHTER } = require('../helpers/classes');
 class BasicShieldCard extends BoostCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		boostAmount = 2,
+		boostAmount,
 		icon = '🛡',
 		...rest
 	} = {}) {
 		super({ boostAmount, icon, ...rest });
+
+		this.defaults = {
+			...this.defaults,
+			boostAmount: 2
+		};
 	}
 }
 

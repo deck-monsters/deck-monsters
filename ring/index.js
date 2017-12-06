@@ -11,7 +11,7 @@ const { randomCharacter } = require('../characters');
 
 const MAX_MONSTERS = 3;
 const MIN_MONSTERS = 2;
-const FIGHT_DELAY = 30000;
+const FIGHT_DELAY = 60000;
 
 const bossChannel = () => Promise.resolve();
 const bossChannelName = 'BOSS';
@@ -243,7 +243,7 @@ class Ring extends BaseClass {
 
 		// Make a copy of the contestants array so that it won't be changed after we start using it
 		// Note that the contestants objects and the characters / monsters are references to the originals, not copies
-		const contestants = shuffle([...this.contestants]);
+		const contestants = [...this.contestants];
 		const getActiveContestants = () => contestants.filter(contestant => (!contestant.monster.dead && !contestant.monster.fled));
 
 		// Emit an event when the fight begins
@@ -355,9 +355,14 @@ class Ring extends BaseClass {
 					// The current monster always attacks the next monster
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
 					.play(monster, nextMonster, ring, activeContestants)
-					.then((targetAlive) => {
-						if (getActiveContestants().length > 1) {
-							if (!targetAlive) nextContestant = Math.max(nextContestant - 1, 0);
+					.then(() => {
+						const newActiveContestants = getActiveContestants();
+						if (newActiveContestants.length > 1) {
+							nextContestant = newActiveContestants.indexOf(contestant) + 1;
+							if (nextContestant >= newActiveContestants.length) {
+								nextContestant = 0;
+								nextCardIndex += 1;
+							}
 
 							this.channelManager.sendMessages()
 								.then(() => next());
@@ -499,15 +504,19 @@ class Ring extends BaseClass {
 
 		if (this.spawnBosses) {
 			pause.setTimeout(() => {
-				ring.spawnBoss();
-				ring.startBossTimer(); // Do it again in an hour
-			}, 3600000);
+				ring.emit('bossWillSpawn', { delay: 120000 });
+
+				pause.setTimeout(() => {
+					ring.spawnBoss();
+					ring.startBossTimer(); // Do it again in an hour
+				}, 120000);
+			}, 3480000);
 		}
 	}
 
 	spawnBoss () { // eslint-disable-line consistent-return
-		// Only try to enter the ring if it's already empty
-		if (!this.inEncounter && this.contestants.length === 0) {
+		// Only try to enter the ring if there's not a current fight in progress
+		if (!this.inEncounter) {
 			const character = randomCharacter();
 			const monster = character.monsters[0];
 			const contestant = {

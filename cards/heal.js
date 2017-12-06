@@ -5,19 +5,24 @@ const isProbable = require('../helpers/is-probable');
 class HealCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		healthDice = '1d4',
-		modifier = 0,
+		healthDice,
+		modifier,
 		icon = '💊'
 	} = {}) {
 		super({ healthDice, modifier, icon });
+
+		this.defaults = {
+			healthDice: '1d4',
+			modifier: 0
+		};
 	}
 
 	get healthDice () {
-		return this.options.healthDice;
+		return this.options.healthDice || this.defaults.healthDice;
 	}
 
 	get modifier () {
-		return this.options.modifier;
+		return this.options.modifier || this.defaults.modifier;
 	}
 
 	get stats () {

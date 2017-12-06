@@ -1,4 +1,5 @@
 const reduce = require('lodash.reduce');
+const moment = require('moment');
 
 const { all: cardTypes, draw } = require('./cards');
 const { all: monsterTypes } = require('./monsters');
@@ -92,6 +93,7 @@ class Game extends BaseClass {
 		this.on('ring.endOfDeck', this.announceEndOfDeck);
 		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
+		this.on('ring.bossWillSpawn', this.announceBossWillSpawn);
 
 		this.on('cardDrop', this.announceCardDrop);
 		this.on('gainedXP', this.announceXPGain);
@@ -385,13 +387,23 @@ ${monsterCard(monster)}`
 		});
 	}
 
-	announceFightConcludes (className, game, { deaths, isDraw, rounds }) {
+	announceFightConcludes (className, ring, { deaths, isDraw, rounds }) {
 		const channel = this.publicChannel;
 
 		channel({
 			announce:
 `The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
 `
+		});
+
+		this.channelManager.sendMessages();
+	}
+
+	announceBossWillSpawn (className, ring, { delay }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce: `A boss will enter the ring ${moment().add(delay).fromNow()}`
 		});
 
 		this.channelManager.sendMessages();

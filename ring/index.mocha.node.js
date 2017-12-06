@@ -135,7 +135,7 @@ describe('./ring/index.js', () => {
 				.then(() => expect(ring.contestants.length).to.equal(0));
 		});
 
-		it('will not spawn a boss if players are already in the ring', () => {
+		it('will not spawn a boss if an encounter is in progress', () => {
 			const game = new Game(publicChannelStub);
 			const ring = game.getRing();
 
@@ -151,6 +151,8 @@ describe('./ring/index.js', () => {
 				channel: privateChannelStub,
 				channelName
 			});
+
+			ring.startEncounter();
 
 			expect(ring.contestants.length).to.equal(1);
 

@@ -3,11 +3,16 @@ const HealCard = require('./heal');
 class WhiskeyShotCard extends HealCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		healthDice = '1d8',
+		healthDice,
 		icon = '🥃',
 		...rest
 	} = {}) {
 		super({ healthDice, icon, ...rest });
+
+		this.defaults = {
+			...this.defaults,
+			healthDice: '1d8'
+		};
 	}
 }
 

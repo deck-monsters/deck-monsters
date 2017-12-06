@@ -56,15 +56,18 @@ describe('./game.js', () => {
 		expect(lookStub).to.have.been.calledWith('channel');
 	});
 
-	it('can save state', () => {
+	it('can save state', (done) => {
 		const game = new Game(publicChannelStub);
 		const saveStateStub = sinon.stub();
 
 		game.saveState = saveStateStub;
 		game.emit('stateChange');
 
-		expect(saveStateStub).to.have.been.calledOnce;
-		expect(saveStateStub).to.have.been.calledWith('{"name":"Game","options":{}}');
+		setImmediate(() => {
+			expect(saveStateStub).to.have.been.calledOnce;
+			expect(saveStateStub).to.have.been.calledWith('{"name":"Game","options":{}}');
+			done();
+		});
 	});
 
 	it('can draw a card', () => {
