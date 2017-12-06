@@ -36,7 +36,7 @@ class BlastCard extends BaseCard {
 
 				return Promise.resolve();
 			}))
-				.then(() => !!target.dead));
+				.then(() => !target.dead));
 		});
 	}
 }

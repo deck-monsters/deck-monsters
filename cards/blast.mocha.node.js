@@ -1,7 +1,8 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const BlastCard = require('./blast');
+const { randomCharacter } = require('../characters');
 const Basilisk = require('../monsters/basilisk');
+const BlastCard = require('./blast');
 const pause = require('../helpers/pause');
 
 describe('./cards/blast.js', () => {
@@ -100,6 +101,54 @@ describe('./cards/blast.js', () => {
 				expect(player.hp).to.equal(playerStatingHp);
 				expect(target1.hp).to.equal(target1StatingHp - damage);
 				expect(target2.hp).to.equal(target2StatingHp);
+			});
+	});
+
+	it('returns true if the target is not killed', () => {
+		const blast = new BlastCard({ damage: 4, levelDamage: 2 });
+
+		const player = new Basilisk({ name: 'player' });
+		const target = {};
+
+		target.character = randomCharacter();
+		target.monster = target.character.monsters[0];
+		target.monster.hp = 99;
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				target
+			]
+		};
+
+		return blast
+			.play(player, target.monster, ring, ring.contestants)
+			.then((fightContinues) => {
+				expect(fightContinues).to.equal(true);
+			});
+	});
+
+	it('returns false if the target is killed', () => {
+		const blast = new BlastCard({ damage: 4, levelDamage: 2 });
+
+		const player = new Basilisk({ name: 'player' });
+		const target = {};
+
+		target.character = randomCharacter();
+		target.monster = target.character.monsters[0];
+		target.monster.hp = 1;
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				target
+			]
+		};
+
+		return blast
+			.play(player, target.monster, ring, ring.contestants)
+			.then((fightContinues) => {
+				expect(fightContinues).to.equal(false);
 			});
 	});
 
