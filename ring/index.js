@@ -356,9 +356,14 @@ class Ring extends BaseClass {
 					// The current monster always attacks the next monster
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
 					.play(monster, nextMonster, ring, activeContestants)
-					.then((fightContinues) => {
-						if (getActiveContestants().length > 1) {
-							if (!fightContinues) nextContestant = Math.max(nextContestant - 1, 0);
+					.then(() => {
+						const newActiveContestants = getActiveContestants();
+						if (newActiveContestants.length > 1) {
+							nextContestant = newActiveContestants.indexOf(contestant) + 1;
+							if (nextContestant >= newActiveContestants.length) {
+								nextContestant = 0;
+								nextCardIndex += 1;
+							}
 
 							this.channelManager.sendMessages()
 								.then(() => next());
