@@ -35,4 +35,19 @@ describe('./monsters/basilisk.js', () => {
 			icon: '🐍'
 		});
 	});
+
+	it('can be instantiated with higher XP', () => {
+		const basilisk = new Basilisk({ xp: 1000 });
+
+		expect(basilisk).to.be.an.instanceof(Basilisk);
+		expect(basilisk.name).to.equal('Basilisk');
+		expect(basilisk.givenName).to.be.a('string');
+		expect(basilisk.options).to.deep.contain({
+			attackModifier: -1,
+			damageModifier: 3,
+			color: 'tan',
+			icon: '🐍',
+			xp: 1000
+		});
+	});
 });

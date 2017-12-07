@@ -22,12 +22,16 @@ const all = [
 // choices and returns an answer to the question (or a Promise that resolves to
 // an answer to the question), or that takes a statement to announce.
 const spawn = (channel, {
-	type, name, color, gender, cards, game
+	type, name, color, gender, cards, game, xp
 } = {}) => {
 	const options = {};
 
 	if (cards && cards.length > 0) {
 		options.cards = cards;
+	}
+
+	if (xp && xp > 0) {
+		options.xp = xp
 	}
 
 	let monsterNames = [];
