@@ -434,12 +434,21 @@ class Ring extends BaseClass {
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-					this.channelManager.queueMessage({
-						announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`,
-						channel,
-						channelName,
-						event: { name: 'loss', properties: { contestant } }
-					});
+					if (contestant.monster.destroyed()) {
+						this.channelManager.queueMessage({
+							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
+							channel,
+							channelName,
+							event: { name: 'permaDeath', properties: { contestant } }
+						});
+					} else {
+						this.channelManager.queueMessage({
+							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`,
+							channel,
+							channelName,
+							event: { name: 'loss', properties: { contestant } }
+						});
+					}
 				} else {
 					contestant.won = true;
 					this.channelManager.queueMessage({

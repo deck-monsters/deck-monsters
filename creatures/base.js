@@ -363,14 +363,16 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	die (assailant) {
-		if () {
-			this.emit('destroy', {
-				assailant
-			});
-		} else {
-			this.emit('die', {
-				assailant
-			});
+		if (this.hp <= 0) {
+			if (this.destroyed()){
+				this.emit('destroy', {
+					assailant
+				});
+			} else {
+				this.emit('die', {
+					assailant
+				});
+			}
 		}
 
 		if (this.hp > 0) {

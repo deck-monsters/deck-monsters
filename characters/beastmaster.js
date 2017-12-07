@@ -214,33 +214,6 @@ Which monster would you like to ${action}?`,
 			});
 	}
 
-	destroyMonster ({ monsterName, channel }) {
-		const monsters = this.monsters.filter(monster => monster.dead);
-
-		return Promise
-			.resolve(monsters.length)
-			.then((numberOfMonsters) => {
-				if (numberOfMonsters <= 0) {
-					return Promise.reject(channel({
-						announce: "Lucky you. You somehow managed to revive your monster before it was utterly destroyed." // eslint-disable-line max-len
-					}));
-				}
-
-				return this.chooseMonster({
-					channel, monsters, monsterName, action: 'destroy'
-				});
-			})
-			.then((monster) => {
-				this.dropMonster(monster);
-
-				return monster;
-			})
-			.then(monster => channel({
-				announce: `${monster.givenName} has died forever.`
-			})
-				.then(() => monster));
-	}
-
 	dismissMonster ({ monsterName, channel }) {
 		const monsters = this.monsters.filter(monster => monster.dead);
 
