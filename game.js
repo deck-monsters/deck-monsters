@@ -191,7 +191,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		let announce;
 
 		if (destroyed) {
-			announce = `${monster.identityWithHp} has been sent to the land of ${monster.pronouns} fathers by ${assailant.identityWithHp}
+			announce = `${monster.identityWithHp} has been sent to the land of ${monster.pronouns[2]} fathers by ${assailant.identityWithHp}
 
 			☠️  R.I.P ${monster.identity}
 `;
