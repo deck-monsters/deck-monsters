@@ -1,4 +1,5 @@
 const { expect, sinon } = require('./shared/test-setup');
+const zlib = require('zlib');
 
 const Game = require('./game');
 
@@ -65,7 +66,7 @@ describe('./game.js', () => {
 
 		setImmediate(() => {
 			expect(saveStateStub).to.have.been.calledOnce;
-			expect(saveStateStub).to.have.been.calledWith('{"name":"Game","options":{}}');
+			expect(saveStateStub).to.have.been.calledWith(zlib.gzipSync('{"name":"Game","options":{}}').toString('base64'));
 			done();
 		});
 	});

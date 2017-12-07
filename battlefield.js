@@ -6,7 +6,7 @@ const shuffle = require('lodash.shuffle');
 const { Game } = require('./index.js');
 const pause = require('./helpers/pause');
 
-const DestroyCard = require('./cards/destroy.js');
+// const DestroyCard = require('./cards/destroy.js');
 
 pause.setTimeout = func => setTimeout(func, 5);
 
@@ -71,9 +71,9 @@ return Promise
 	}))
 	.then((character) => {
 		char = character;
-		// charCards = [...shuffle(char.character.deck).slice(0, 4)];
-		const destroy = new DestroyCard();
-		charCards = [destroy, destroy, destroy, destroy];
+		charCards = [...shuffle(char.character.deck).slice(0, 4)];
+		// const destroy = new DestroyCard();
+		// charCards = [destroy, destroy, destroy, destroy];
 	})
 	.then(() => slackdem.getCharacter(bossAnnouncer, BOSS_ID, {
 		id: BOSS_ID, name: 'boss', type: 0, gender: 0, icon: 0, xp: 500

@@ -204,7 +204,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 `;
 		} else {
 			announce = `💀  ${monster.identityWithHp} is killed by ${assailant.identityWithHp}
-`
+`;
 		}
 
 		channel({ announce });
