@@ -6,34 +6,34 @@ const formatCard = ({
 }) => (
 	`
 \`\`\`
-===========================================
-${wrap(title, { indent: '| ', width: 40 })}
--------------------------------------------${
+==================================
+${wrap(title, { indent: '| ', width: 31 })}
+----------------------------------${
 	!description ? '' :
 		`
 |
-${wrap(description, { indent: '| ', width: 40 })}`
+${wrap(description, { indent: '| ', width: 31 })}`
 	}${
 		!stats ? '' :
 			`
 |
-${wrap(stats, { indent: '| ', width: 40 })}`
+${wrap(stats, { indent: '| ', width: 31 })}`
 	}${
 		!rankings ? '' :
 			`
 |
-${wrap(rankings, { indent: '| ', width: 40 })}`
+${wrap(rankings, { indent: '| ', width: 31 })}`
 	}
 |
-===========================================
+==================================
 \`\`\`
 `.replace(/^\s*[\r\n]/gm, '')
 );
 
 const cardRarity = (card) => {
-	if (card.probability >= 75) {
+	if (card.probability >= 50) {
 		return '•';
-	} else if (card.probability >= 50) {
+	} else if (card.probability >= 30) {
 		return '○';
 	} else if (card.probability >= 20) {
 		return '◆';
@@ -51,7 +51,8 @@ const actionCard = card => formatCard({
 });
 
 const monsterCard = (monster, verbose = true) => formatCard({
-	title: `${monster.icon}  ${monster.givenName} - ${monster.name}`,
+	title: `${monster.icon}  ${monster.givenName}
+  ${monster.name}`,
 	description: verbose ? upperFirst(monster.individualDescription) : '',
 	stats: monster.stats,
 	rankings: verbose ? monster.rankings : ''

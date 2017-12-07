@@ -19,7 +19,7 @@ class HitHarder extends HitCard {
 
 		this.defaults = {
 			...this.defaults,
-			damageDice: '1d6' // Lucky you, the pound card does double damage
+			damageDice: '1d6'
 		};
 	}
 
@@ -33,7 +33,7 @@ class HitHarder extends HitCard {
 		const commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
 		this.emit('rolling', {
-			reason: 'for damage twice and uses the best roll',
+			reason: `twice for damage against ${target.givenName} and uses the best roll`,
 			card: this,
 			roll: betterRoll,
 			player,

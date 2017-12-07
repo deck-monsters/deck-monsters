@@ -26,7 +26,8 @@ class HealCard extends BaseCard {
 	}
 
 	get stats () {
-		return `Health: ${this.healthDice} / Possible Stroke of Luck`;
+		return `Health: ${this.healthDice}
+Possiblity of Stroke of Luck`;
 	}
 
 	// This doesn't have to be static if it needs access to the instance

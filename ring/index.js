@@ -416,7 +416,10 @@ class Ring extends BaseClass {
 
 		// Kick off the action loop with some initial values. Go to the conclusion method once it resolves
 		return doAction()
-			.then(lastContestant => this.fightConcludes({ fightLog, lastContestant, rounds: round }));
+			.then(lastContestant => this.fightConcludes({ fightLog, lastContestant, rounds: round }))
+			.catch(() => {
+				this.clearRing();
+			});
 	}
 
 	fightConcludes ({ lastContestant, rounds }) {
