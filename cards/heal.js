@@ -10,23 +10,19 @@ class HealCard extends BaseCard {
 		icon = '💊'
 	} = {}) {
 		super({ healthDice, modifier, icon });
-
-		this.defaults = {
-			healthDice: '1d4',
-			modifier: 0
-		};
 	}
 
 	get healthDice () {
-		return this.options.healthDice || this.defaults.healthDice;
+		return this.options.healthDice;
 	}
 
 	get modifier () {
-		return this.options.modifier || this.defaults.modifier;
+		return this.options.modifier;
 	}
 
 	get stats () {
-		return `Health: ${this.healthDice} / Possible Stroke of Luck`;
+		return `Health: ${this.healthDice}
+Possiblity of Stroke of Luck`;
 	}
 
 	// This doesn't have to be static if it needs access to the instance
@@ -38,7 +34,7 @@ class HealCard extends BaseCard {
 
 			// Stroke of Luck
 			if (isProbable({ probability: 1 })) {
-				healResult = player.maxHp / 2;
+				healResult = Math.floor(player.maxHp / 2);
 				outcome = 'Stroke of luck. Heal half max HP.';
 			}
 
@@ -61,5 +57,9 @@ HealCard.probability = 40;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';
 HealCard.cost = 3;
 HealCard.level = 0;
+HealCard.defaults = {
+	healthDice: '1d4',
+	modifier: 0
+};
 
 module.exports = HealCard;

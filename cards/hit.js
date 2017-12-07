@@ -11,19 +11,14 @@ class HitCard extends BaseCard {
 		icon = '👊'
 	} = {}) {
 		super({ attackDice, damageDice, icon });
-
-		this.defaults = {
-			attackDice: '1d20',
-			damageDice: '1d6'
-		};
 	}
 
 	get attackDice () {
-		return this.options.attackDice || this.defaults.attackDice;
+		return this.options.attackDice;
 	}
 
 	get damageDice () {
-		return this.options.damageDice || this.defaults.damageDice;
+		return this.options.damageDice;
 	}
 
 	get stats () {
@@ -34,7 +29,7 @@ class HitCard extends BaseCard {
 		const attackRoll = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
 
 		this.emit('rolling', {
-			reason: `vs AC (${target.ac}) to determine if the hit was a success`,
+			reason: `vs ${target.givenName}'s AC (${target.ac}) to determine if the hit was a success`,
 			card: this,
 			roll: attackRoll,
 			player,
@@ -75,7 +70,7 @@ class HitCard extends BaseCard {
 		const damageRoll = this.getDamageRoll(player, target);
 
 		this.emit('rolling', {
-			reason: 'for damage',
+			reason: `for damage against ${target.givenName}`,
 			card: this,
 			roll: damageRoll,
 			player,
@@ -114,7 +109,7 @@ class HitCard extends BaseCard {
 
 			ring.channelManager.sendMessages()
 				.then(() => {
-					if (success) {
+					if (success && !curseOfLoki) {
 						const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
 						// If we hit then do some damage
@@ -139,5 +134,9 @@ HitCard.probability = 60;
 HitCard.description = 'A basic attack, the staple of all good monsters.';
 HitCard.cost = 4;
 HitCard.level = 0;
+HitCard.defaults = {
+	attackDice: '1d20',
+	damageDice: '1d6'
+};
 
 module.exports = HitCard;

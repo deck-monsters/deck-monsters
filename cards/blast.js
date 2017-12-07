@@ -11,19 +11,14 @@ class BlastCard extends BaseCard {
 		levelDamage
 	} = {}) {
 		super({ damage, icon, levelDamage });
-
-		this.defaults = {
-			damage: 3,
-			levelDamage: 1
-		};
 	}
 
 	get damage () {
-		return this.options.damage || this.defaults.damage;
+		return this.options.damage;
 	}
 
 	get levelDamage () {
-		return this.options.levelDamage || this.defaults.levelDamage;
+		return this.options.levelDamage;
 	}
 
 	get stats () {
@@ -52,6 +47,10 @@ BlastCard.description = 'A magical blast against every opponent in the encounter
 BlastCard.cost = 4;
 BlastCard.level = 0;
 BlastCard.permittedClasses = [CLERIC];
+BlastCard.defaults = {
+	damage: 3,
+	levelDamage: 1
+};
 
 BlastCard.flavors = {
 	hits: [

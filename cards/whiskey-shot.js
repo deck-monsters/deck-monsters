@@ -8,16 +8,15 @@ class WhiskeyShotCard extends HealCard {
 		...rest
 	} = {}) {
 		super({ healthDice, icon, ...rest });
-
-		this.defaults = {
-			...this.defaults,
-			healthDice: '1d8'
-		};
 	}
 }
 
 WhiskeyShotCard.cardType = 'Whiskey Shot';
 WhiskeyShotCard.description = '1 shot of whiskey for your health. Doctor\'s orders.';
 WhiskeyShotCard.level = 2;
+WhiskeyShotCard.defaults = {
+	...HealCard.defaults,
+	healthDice: '1d8'
+};
 
 module.exports = WhiskeyShotCard;

@@ -24,12 +24,30 @@ class BaseClass {
 		return this.constructor.name;
 	}
 
+	get defaults () {
+		return this.constructor.defaults;
+	}
+
 	get options () {
-		return this.optionsStore || {};
+		return {
+			...this.defaults,
+			...this.optionsStore
+		};
 	}
 
 	setOptions (options) {
-		this.optionsStore = Object.assign({}, this.options, options);
+		const optionsStore = {
+			...this.optionsStore,
+			...options
+		};
+
+		Object.keys(optionsStore).forEach((key) => {
+			if (optionsStore[key] === undefined) {
+				delete optionsStore[key];
+			}
+		});
+
+		this.optionsStore = optionsStore;
 
 		this.emit('updated');
 		globalSemaphore.emit('stateChange');
@@ -53,9 +71,19 @@ class BaseClass {
 	}
 
 	toJSON () {
+		const { defaults, options } = this;
+
+		if (defaults) {
+			Object.keys(defaults).forEach((key) => {
+				if (options[key] === defaults[key]) {
+					delete options[key];
+				}
+			});
+		}
+
 		return {
 			name: this.name,
-			options: this.options
+			options
 		};
 	}
 

@@ -1,10 +1,11 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
-const TestCard = require('./test');
-const Basilisk = require('../monsters/basilisk');
 const { DEFENSE_PHASE } = require('../helpers/phases');
+const Basilisk = require('../monsters/basilisk');
 const pause = require('../helpers/pause');
+const TestCard = require('./test');
+const WeepingAngel = require('../monsters/weeping-angel');
 
 describe('./cards/enchanted-faceswap.js', () => {
 	let channelStub;
@@ -34,6 +35,15 @@ describe('./cards/enchanted-faceswap.js', () => {
 
 		expect(faceswap).to.be.an.instanceof(EnchantedFaceswapCard);
 		expect(faceswap.icon).to.equal('👥');
+	});
+
+	it('can be drawn', () => {
+		const faceswap = new EnchantedFaceswapCard();
+
+		const monster = new WeepingAngel({ name: 'player', xp: 50 });
+
+		expect(monster.canHoldCard(EnchantedFaceswapCard)).to.equal(true);
+		expect(monster.canHoldCard(faceswap)).to.equal(true);
 	});
 
 	it('can be played', () => {

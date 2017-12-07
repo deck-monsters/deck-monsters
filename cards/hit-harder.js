@@ -16,11 +16,6 @@ class HitHarder extends HitCard {
 		...rest
 	} = {}) {
 		super({ damageDice, icon, ...rest });
-
-		this.defaults = {
-			...this.defaults,
-			damageDice: '1d6' // Lucky you, the pound card does double damage
-		};
 	}
 
 	rollForDamage (player, target, strokeOfLuck) {
@@ -33,7 +28,7 @@ class HitHarder extends HitCard {
 		const commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
 		this.emit('rolling', {
-			reason: 'for damage twice and uses the best roll',
+			reason: `twice for damage against ${target.givenName} and uses the best roll`,
 			card: this,
 			roll: betterRoll,
 			player,
@@ -70,6 +65,10 @@ HitHarder.description = 'You hit just a little bit harder than the average bear.
 HitHarder.cost = 6;
 HitHarder.level = 2;
 HitHarder.permittedClasses = [BARBARIAN, FIGHTER];
+HitHarder.defaults = {
+	...HitCard.defaults,
+	damageDice: '1d6'
+};
 
 HitHarder.flavors = {
 	hits: [

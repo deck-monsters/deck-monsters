@@ -8,19 +8,14 @@ class BoostCard extends BaseCard {
 		boostedProp
 	} = {}) {
 		super({ boostAmount, icon, boostedProp });
-
-		this.defaults = {
-			boostAmount: 1,
-			boostedProp: 'ac'
-		};
 	}
 
 	get boostAmount () {
-		return this.options.boostAmount || this.defaults.boostAmount;
+		return this.options.boostAmount;
 	}
 
 	get boostedProp () {
-		return this.options.boostedProp || this.defaults.boostedProp;
+		return this.options.boostedProp;
 	}
 
 	get stats () {
@@ -41,5 +36,9 @@ BoostCard.probability = 10;
 BoostCard.description = "It's time to put on your big boy pants, and toughen up!";
 BoostCard.cost = 2;
 BoostCard.level = 1;
+BoostCard.defaults = {
+	boostAmount: 1,
+	boostedProp: 'ac'
+};
 
 module.exports = BoostCard;

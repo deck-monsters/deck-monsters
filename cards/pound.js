@@ -9,11 +9,6 @@ class PoundCard extends HitCard {
 		...rest
 	} = {}) {
 		super({ damageDice, icon, ...rest });
-
-		this.defaults = {
-			...this.defaults,
-			damageDice: '2d6' // Lucky you, the pound card does double damage
-		};
 	}
 }
 
@@ -23,6 +18,10 @@ PoundCard.description = 'You wield the mighty pound card and can do double the d
 PoundCard.cost = 8;
 PoundCard.level = 3;
 PoundCard.permittedClasses = [BARBARIAN];
+PoundCard.defaults = {
+	...HitCard.defaults,
+	damageDice: '2d6' // Lucky you, the pound card does double damage
+};
 
 PoundCard.flavors = {
 	hits: [

@@ -14,12 +14,10 @@ class WoodenSpearCard extends HitCard {
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
-		this.options.damageModifier = damageModifier;
 
-		this.defaults = {
-			...this.defaults,
-			damageModifier: 3
-		};
+		this.setOptions({
+			damageModifier
+		});
 	}
 
 	get creatureType () {
@@ -27,7 +25,7 @@ class WoodenSpearCard extends HitCard {
 	}
 
 	get damageModifier () {
-		return this.options.damageModifier || this.defaults.damageModifier;
+		return this.options.damageModifier;
 	}
 
 	get stats () {
@@ -51,6 +49,10 @@ WoodenSpearCard.description = `A simple weapon fashioned for ${WoodenSpearCard.c
 WoodenSpearCard.cost = 6;
 WoodenSpearCard.level = 1;
 WoodenSpearCard.permittedClasses = [FIGHTER];
+WoodenSpearCard.defaults = {
+	...HitCard.defaults,
+	damageModifier: 3
+};
 
 WoodenSpearCard.flavors = {
 	hits: [

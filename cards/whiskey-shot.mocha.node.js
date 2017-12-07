@@ -29,7 +29,7 @@ describe('./cards/whiskey-shot.js', () => {
 		expect(whiskeyShot).to.be.an.instanceof(WhiskeyShotCard);
 		expect(whiskeyShot.healthDice).to.equal('1d8');
 		expect(whiskeyShot.probability).to.equal(40);
-		expect(whiskeyShot.stats).to.equal('Health: 1d8 / Possible Stroke of Luck');
+		expect(whiskeyShot.stats).to.equal('Health: 1d8\nPossiblity of Stroke of Luck');
 	});
 
 	it('heals the player', () => {
