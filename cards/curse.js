@@ -8,19 +8,14 @@ class CurseCard extends BaseCard {
 		cursedProp = 'ac'
 	} = {}) {
 		super({ curseAmount, icon, cursedProp });
-
-		this.defaults = {
-			curseAmount: -1,
-			cursedProp: 'ac'
-		};
 	}
 
 	get curseAmount () {
-		return this.options.curseAmount || this.defaults.curseAmount;
+		return this.options.curseAmount;
 	}
 
 	get cursedProp () {
-		return this.options.cursedProp || this.defaults.cursedProp;
+		return this.options.cursedProp;
 	}
 
 	get stats () {
@@ -41,5 +36,9 @@ CurseCard.probability = 10;
 CurseCard.description = 'Sweep the leg... You have a problem with that? No mercy.';
 CurseCard.cost = 2;
 CurseCard.level = 1;
+CurseCard.defaults = {
+	curseAmount: -1,
+	cursedProp: 'ac'
+};
 
 module.exports = CurseCard;

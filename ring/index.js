@@ -41,6 +41,12 @@ class Ring extends BaseClass {
 		return this.options.contestants || [];
 	}
 
+	set contestants (contestants) {
+		return this.setOptions({
+			contestants
+		});
+	}
+
 	get encounterEffects () {
 		return (this.encounter || {}).effects || [];
 	}
@@ -95,9 +101,9 @@ class Ring extends BaseClass {
 				return contestant;
 			})
 			.then((contestant) => {
-				const contestantIndex = this.options.contestants.indexOf(contestant);
+				const contestantIndex = this.contestants.indexOf(contestant);
 
-				this.options.contestants.splice(contestantIndex, 1);
+				this.contestants.splice(contestantIndex, 1);
 
 				if (this.contestants.length < 1) {
 					this.clearRing();
@@ -129,7 +135,7 @@ class Ring extends BaseClass {
 				channelName
 			};
 
-			this.options.contestants = shuffle([...this.contestants, contestant]);
+			this.contestants = shuffle([...this.contestants, contestant]);
 
 			if (this.contestants.length > MAX_MONSTERS) {
 				this.clearRing();
@@ -204,7 +210,7 @@ class Ring extends BaseClass {
 	clearRing () {
 		clearTimeout(this.fightTimer);
 		this.endEncounter();
-		this.options.contestants = [];
+		this.contestants = [];
 		this.emit('clear');
 	}
 

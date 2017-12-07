@@ -10,11 +10,6 @@ class BasicShieldCard extends BoostCard {
 		...rest
 	} = {}) {
 		super({ boostAmount, icon, ...rest });
-
-		this.defaults = {
-			...this.defaults,
-			boostAmount: 2
-		};
 	}
 }
 
@@ -22,5 +17,9 @@ BasicShieldCard.cardType = 'Basic Shield';
 BasicShieldCard.description = 'Equip yourself for the battle ahead.';
 BasicShieldCard.level = 2;
 BasicShieldCard.permittedClasses = [FIGHTER];
+BasicShieldCard.defaults = {
+	...BoostCard.defaults,
+	boostAmount: 2
+};
 
 module.exports = BasicShieldCard;

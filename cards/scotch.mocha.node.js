@@ -27,7 +27,7 @@ describe('./cards/scotch.js', () => {
 		const scotch = new ScotchCard();
 
 		expect(scotch.probability).to.equal(10);
-		expect(scotch.stats).to.equal('Health: 2d6 / Possible Stroke of Luck');
+		expect(scotch.stats).to.equal('Health: 2d6\nPossiblity of Stroke of Luck');
 	});
 
 	it('heals the player', () => {

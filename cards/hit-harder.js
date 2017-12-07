@@ -16,11 +16,6 @@ class HitHarder extends HitCard {
 		...rest
 	} = {}) {
 		super({ damageDice, icon, ...rest });
-
-		this.defaults = {
-			...this.defaults,
-			damageDice: '1d6'
-		};
 	}
 
 	rollForDamage (player, target, strokeOfLuck) {
@@ -70,6 +65,10 @@ HitHarder.description = 'You hit just a little bit harder than the average bear.
 HitHarder.cost = 6;
 HitHarder.level = 2;
 HitHarder.permittedClasses = [BARBARIAN, FIGHTER];
+HitHarder.defaults = {
+	...HitCard.defaults,
+	damageDice: '1d6'
+};
 
 HitHarder.flavors = {
 	hits: [

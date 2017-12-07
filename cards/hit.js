@@ -11,19 +11,14 @@ class HitCard extends BaseCard {
 		icon = '👊'
 	} = {}) {
 		super({ attackDice, damageDice, icon });
-
-		this.defaults = {
-			attackDice: '1d20',
-			damageDice: '1d6'
-		};
 	}
 
 	get attackDice () {
-		return this.options.attackDice || this.defaults.attackDice;
+		return this.options.attackDice;
 	}
 
 	get damageDice () {
-		return this.options.damageDice || this.defaults.damageDice;
+		return this.options.damageDice;
 	}
 
 	get stats () {
@@ -139,5 +134,9 @@ HitCard.probability = 60;
 HitCard.description = 'A basic attack, the staple of all good monsters.';
 HitCard.cost = 4;
 HitCard.level = 0;
+HitCard.defaults = {
+	attackDice: '1d20',
+	damageDice: '1d6'
+};
 
 module.exports = HitCard;

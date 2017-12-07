@@ -49,7 +49,9 @@ class BaseCreature extends BaseClass {
 
 	get givenName () {
 		if (!this.options.name) {
-			this.options.name = names(this.constructor.creatureType, this.gender);
+			this.setOptions({
+				name: names(this.constructor.creatureType, this.gender)
+			});
 		}
 
 		return startCase(this.options.name);

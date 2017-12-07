@@ -10,19 +10,14 @@ class HealCard extends BaseCard {
 		icon = '💊'
 	} = {}) {
 		super({ healthDice, modifier, icon });
-
-		this.defaults = {
-			healthDice: '1d4',
-			modifier: 0
-		};
 	}
 
 	get healthDice () {
-		return this.options.healthDice || this.defaults.healthDice;
+		return this.options.healthDice;
 	}
 
 	get modifier () {
-		return this.options.modifier || this.defaults.modifier;
+		return this.options.modifier;
 	}
 
 	get stats () {
@@ -62,5 +57,9 @@ HealCard.probability = 40;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';
 HealCard.cost = 3;
 HealCard.level = 0;
+HealCard.defaults = {
+	healthDice: '1d4',
+	modifier: 0
+};
 
 module.exports = HealCard;

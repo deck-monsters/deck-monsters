@@ -7,11 +7,6 @@ class ScotchCard extends WhiskeyShotCard {
 		...rest
 	} = {}) {
 		super({ healthDice, ...rest });
-
-		this.defaults = {
-			...this.defaults,
-			healthDice: '2d6'
-		};
 	}
 }
 
@@ -19,5 +14,9 @@ ScotchCard.cardType = 'Scotch';
 ScotchCard.probability = 10;
 ScotchCard.description = 'Keep the heid, this battle\'s far from over.';
 ScotchCard.level = 2;
+ScotchCard.defaults = {
+	...WhiskeyShotCard.defaults,
+	healthDice: '2d6'
+};
 
 module.exports = ScotchCard;
