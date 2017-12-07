@@ -64,8 +64,9 @@ class BaseCreature extends BaseClass {
 	}
 
 	get stats () {
-		return `Level: ${this.level || this.displayLevel} | XP: ${this.xp}
+		return `Type: ${this.name}
 Class: ${this.class}
+Level: ${this.level || this.displayLevel} | XP: ${this.xp}
 AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}${
 	this.attackModifier === 0 ? '' :
 		`
