@@ -41,6 +41,11 @@ class Game extends BaseClass {
 		this.emit('initialized');
 	}
 
+	reset (options) {
+		this.optionsStore = {};
+		this.setOptions(options);
+	}
+
 	get characters () {
 		if (this.options.characters === undefined) this.characters = {};
 
