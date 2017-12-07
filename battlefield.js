@@ -6,6 +6,8 @@ const shuffle = require('lodash.shuffle');
 const { Game } = require('./index.js');
 const pause = require('./helpers/pause');
 
+const DestroyCard = require('./cards/destroy.js');
+
 pause.setTimeout = func => setTimeout(func, 5);
 
 prompt.start();
@@ -69,10 +71,12 @@ return Promise
 	}))
 	.then((character) => {
 		char = character;
-		charCards = [...shuffle(char.character.deck).slice(0, 4)];
+		// charCards = [...shuffle(char.character.deck).slice(0, 4)];
+		const destroy = new DestroyCard();
+		charCards = [destroy, destroy, destroy, destroy];
 	})
 	.then(() => slackdem.getCharacter(bossAnnouncer, BOSS_ID, {
-		id: BOSS_ID, name: 'boss', type: 0, gender: 0, icon: 0
+		id: BOSS_ID, name: 'boss', type: 0, gender: 0, icon: 0, xp: 500
 	}))
 	.then((character) => {
 		boss = character;
@@ -91,7 +95,7 @@ return Promise
 		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards
 	}))
 	.then(() => boss.spawnMonster({
-		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards
+		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
 	}))
 	.then(() => vlad.lookAtCard({ cardName: 'hit' }))
 	.then(() => vlad.lookAtCard({ cardName: 'wooden spear' }))

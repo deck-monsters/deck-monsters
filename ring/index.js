@@ -29,9 +29,9 @@ class Ring extends BaseClass {
 			ring.battles.push(results);
 		});
 
-		const ring = this;
-		this.channelManager.on('win', (className, channel, { contestant }) => ring.handleWinner({ contestant }));
+		this.channelManager.on('win', (className, channel, { contestant }) => this.handleWinner({ contestant }));
 		this.channelManager.on('loss', (className, channel, { contestant }) => this.handleLoser({ contestant }));
+		this.channelManager.on('permaDeath', (className, channel, { contestant }) => this.handlePermaDeath({ contestant }));
 		this.channelManager.on('draw', (className, channel, { contestant }) => this.handleTied({ contestant }));
 
 		this.startBossTimer();
@@ -453,12 +453,21 @@ class Ring extends BaseClass {
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-					this.channelManager.queueMessage({
-						announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`,
-						channel,
-						channelName,
-						event: { name: 'loss', properties: { contestant } }
-					});
+					if (contestant.monster.destroyed) {
+						this.channelManager.queueMessage({
+							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
+							channel,
+							channelName,
+							event: { name: 'permaDeath', properties: { contestant } }
+						});
+					} else {
+						this.channelManager.queueMessage({
+							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`,
+							channel,
+							channelName,
+							event: { name: 'loss', properties: { contestant } }
+						});
+					}
 				} else {
 					contestant.won = true;
 					this.channelManager.queueMessage({
@@ -509,6 +518,12 @@ class Ring extends BaseClass {
 		contestant.monster.addLoss();
 		this.emit('loss', { contestant });
 		contestant.monster.emit('loss', { contestant });
+	}
+
+	handlePermaDeath ({ contestant }) {
+		contestant.character.dropMonster(contestant.monster);
+		contestant.character.addLoss();
+		this.emit('permaDeath', { contestant });
 	}
 
 	handleTied ({ contestant }) {

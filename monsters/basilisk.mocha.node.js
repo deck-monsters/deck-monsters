@@ -35,4 +35,39 @@ describe('./monsters/basilisk.js', () => {
 			icon: '🐍'
 		});
 	});
+
+	it('can be instantiated with higher XP', () => {
+		const basilisk = new Basilisk({ xp: 1000 });
+
+		expect(basilisk).to.be.an.instanceof(Basilisk);
+		expect(basilisk.name).to.equal('Basilisk');
+		expect(basilisk.givenName).to.be.a('string');
+		expect(basilisk.options).to.deep.contain({
+			attackModifier: -1,
+			damageModifier: 3,
+			color: 'tan',
+			icon: '🐍',
+			xp: 1000
+		});
+	});
+
+	it('can tell if it is bloodied', () => {
+		const basilisk = new Basilisk();
+
+		expect(basilisk.bloodied).to.equal(false);
+
+		basilisk.hp = 1;
+
+		expect(basilisk.bloodied).to.equal(true);
+	});
+
+	it('can tell if it is destroyed', () => {
+		const basilisk = new Basilisk();
+
+		expect(basilisk.destroyed).to.equal(false);
+
+		basilisk.hp = -basilisk.bloodiedValue - 1;
+
+		expect(basilisk.destroyed).to.equal(true);
+	});
 });
