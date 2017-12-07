@@ -50,4 +50,24 @@ describe('./monsters/basilisk.js', () => {
 			xp: 1000
 		});
 	});
+
+	it('can tell if it is bloodied', () => {
+		const basilisk = new Basilisk();
+
+		expect(basilisk.bloodied).to.equal(false);
+
+		basilisk.hp = 1;
+
+		expect(basilisk.bloodied).to.equal(true);
+	});
+
+	it('can tell if it is destroyed', () => {
+		const basilisk = new Basilisk();
+
+		expect(basilisk.destroyed).to.equal(false);
+
+		basilisk.hp = -basilisk.bloodiedValue - 1;
+
+		expect(basilisk.destroyed).to.equal(true);
+	});
 });
