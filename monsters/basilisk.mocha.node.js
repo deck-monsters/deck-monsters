@@ -56,6 +56,14 @@ describe('./monsters/basilisk.js', () => {
 
 		expect(basilisk.bloodied).to.equal(false);
 
+		basilisk.hp = basilisk.bloodiedValue + 1;
+
+		expect(basilisk.bloodied).to.equal(false);
+
+		basilisk.hp = basilisk.bloodiedValue;
+
+		expect(basilisk.bloodied).to.equal(true);
+
 		basilisk.hp = 1;
 
 		expect(basilisk.bloodied).to.equal(true);

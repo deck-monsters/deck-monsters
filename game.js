@@ -302,7 +302,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 			icon = '🏓';
 		}
 
-		const bloodied = (prevHp >= monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
+		const bloodied = (prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
 		const only = monster.bloodied ? 'only ' : '';
 
 		channel({
