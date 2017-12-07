@@ -163,6 +163,18 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get items () {
+		if (!this.options.items) this.items = [];
+
+		return this.options.items;
+	}
+
+	set items (items) {
+		this.setOptions({
+			items
+		});
+	}
+
 	get encounterModifiers () {
 		return (this.encounter || {}).modifiers || {};
 	}
