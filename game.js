@@ -1,5 +1,6 @@
 const reduce = require('lodash.reduce');
 const moment = require('moment');
+const zlib = require('zlib');
 
 const { all: cardTypes, draw } = require('./cards');
 const { all: monsterTypes } = require('./monsters');
@@ -40,6 +41,11 @@ class Game extends BaseClass {
 		this.emit('initialized');
 	}
 
+	reset (options) {
+		this.optionsStore = {};
+		this.setOptions(options);
+	}
+
 	get characters () {
 		if (this.options.characters === undefined) this.characters = {};
 
@@ -54,13 +60,14 @@ class Game extends BaseClass {
 
 	get saveState () {
 		return () => {
-			const state = JSON.stringify(this);
+			const buffer = zlib.gzipSync(JSON.stringify(this));
 
 			if (this.stateSaveFunc) {
-				setImmediate(this.stateSaveFunc, state);
+				const string = buffer.toString('base64');
+				setImmediate(this.stateSaveFunc, string);
 			}
 
-			setImmediate(aws.save, this.key, state, this.log);
+			setImmediate(aws.save, this.key, buffer, this.log);
 		};
 	}
 

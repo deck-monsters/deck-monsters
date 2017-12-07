@@ -181,6 +181,18 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get items () {
+		if (!this.options.items) this.items = [];
+
+		return this.options.items;
+	}
+
+	set items (items) {
+		this.setOptions({
+			items
+		});
+	}
+
 	get encounterModifiers () {
 		return (this.encounter || {}).modifiers || {};
 	}
@@ -286,8 +298,16 @@ Battles won: ${this.battles.wins}`;
 		return maxHp;
 	}
 
-	canHoldCard () { // eslint-disable-line class-methods-use-this
+	canHold () { // eslint-disable-line class-methods-use-this
 		return false;
+	}
+
+	canHoldCard (card) {
+		return this.canHold(card);
+	}
+
+	canHoldItem (item) {
+		return this.canHold(item);
 	}
 
 	leaveCombat (assailant) {

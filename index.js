@@ -1,10 +1,22 @@
 const reduce = require('lodash.reduce');
+const zlib = require('zlib');
 
 const Game = require('./game');
 const { hydrateCharacter } = require('./characters');
 
-const restoreGame = (publicChannel, gameJSON, log) => {
-	const gameObj = typeof gameJSON === 'string' ? JSON.parse(gameJSON) : Object.assign({}, gameJSON);
+const getOptions = (gameJSON) => {
+	let gameObj;
+
+	if (typeof gameJSON === 'string') {
+		try {
+			gameObj = JSON.parse(gameJSON);
+		} catch (err) {
+			gameObj = JSON.parse(zlib.gunzipSync(Buffer.from(gameJSON, 'base64')));
+		}
+	} else {
+		gameObj = Object.assign({}, gameJSON);
+	}
+
 	const options = Object.assign({ characters: {} }, gameObj.options);
 
 	// Hydrate characters
@@ -14,10 +26,26 @@ const restoreGame = (publicChannel, gameJSON, log) => {
 		return characters;
 	}, {});
 
+	return options;
+};
+
+const restoreGame = (publicChannel, gameJSON, log) => {
+	const options = getOptions(gameJSON);
+
 	return new Game(publicChannel, options, log);
+};
+
+const resetGame = (game, gameJSON) => {
+	const options = getOptions(gameJSON);
+
+	if (options) {
+		game.reset(options);
+	}
 };
 
 module.exports = {
 	Game,
-	restoreGame
+	getOptions,
+	restoreGame,
+	resetGame
 };

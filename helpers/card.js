@@ -50,6 +50,8 @@ const actionCard = card => formatCard({
 	stats: card.stats
 });
 
+const itemCard = item => actionCard(item); // Just use the card formatter for now but we might do something custom later
+
 const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.givenName}`,
 	description: verbose ? upperFirst(monster.individualDescription) : '',
@@ -57,4 +59,9 @@ const monsterCard = (monster, verbose = true) => formatCard({
 	rankings: verbose ? monster.rankings : ''
 });
 
-module.exports = { formatCard, monsterCard, actionCard };
+module.exports = {
+	actionCard,
+	formatCard,
+	itemCard,
+	monsterCard
+};

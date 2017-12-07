@@ -51,6 +51,14 @@ class Beastmaster extends BaseCharacter {
 		return super.canHoldCard(card);
 	}
 
+	canHoldItem (item) {
+		if (this.monsters.length > 0) {
+			return this.monsters.reduce((canHold, monster) => canHold || monster.canHoldItem(item), false);
+		}
+
+		return super.canHoldItem(item);
+	}
+
 	addMonster (monster) {
 		this.monsters = [...this.monsters, monster];
 
