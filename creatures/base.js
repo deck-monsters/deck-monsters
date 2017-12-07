@@ -368,7 +368,7 @@ Battles won: ${this.battles.wins}`;
 	die (assailant) {
 		if (this.hp <= 0) {
 			this.emit('die', {
-				destroyed: this.destroyed
+				destroyed: this.destroyed,
 				assailant
 			});
 		}
