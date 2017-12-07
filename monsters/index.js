@@ -31,7 +31,7 @@ const spawn = (channel, {
 	}
 
 	if (xp && xp > 0) {
-		options.xp = xp
+		options.xp = xp;
 	}
 
 	let monsterNames = [];

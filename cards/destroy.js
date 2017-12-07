@@ -20,8 +20,8 @@ class DestroyCard extends BaseCard {
 		return this.options.levelDamage;
 	}
 
-	get stats () {
-		return `Destroy: Annihilates your opponent`;
+	get stats () { // eslint-disable-line class-methods-use-this
+		return 'Destroy: Annihilates your opponent';
 	}
 
 	effect (player, target, ring, activeContestants) {
