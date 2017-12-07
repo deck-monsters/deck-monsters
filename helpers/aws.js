@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const throttle = require('lodash.throttle');
 
 let s3;
 function getAPI (log) {
@@ -66,5 +67,5 @@ function save (key, buffer, log = () => {}) {
 }
 
 module.exports = {
-	save
+	save: throttle(save, 300000)
 };

@@ -6,7 +6,7 @@ const shuffle = require('lodash.shuffle');
 const { Game } = require('./index.js');
 const pause = require('./helpers/pause');
 
-const DestroyCard = require('./cards/destroy.js');
+// const DestroyCard = require('./cards/destroy.js');
 
 pause.setTimeout = func => setTimeout(func, 5);
 
