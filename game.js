@@ -289,7 +289,12 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
-	announceHit (className, monster, { assailant, card, damage, prevHp }) {
+	announceHit (className, monster, {
+		assailant,
+		card,
+		damage,
+		prevHp
+	}) {
 		const channel = this.publicChannel;
 		const flavors = card && card.flavors;
 
@@ -302,14 +307,14 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 			icon = '🏓';
 		}
 
-		const bloodied = (prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
-		const only = monster.bloodied ? 'only ' : '';
+		const bloodied = (monster.bloodied && prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
+		const only = (monster.bloodied && monster.hp > 0) ? 'only ' : '';
 
 		channel({
 			announce:
 `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
 
-${monster.icon}  *${bloodied}${monster.givenName} has ${only}${monster.hp}HP left.*
+${monster.icon}  *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
 `
 		});
 	}
