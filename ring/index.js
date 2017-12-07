@@ -453,7 +453,7 @@ class Ring extends BaseClass {
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-					if (contestant.monster.destroyed()) {
+					if (contestant.monster.destroyed {
 						this.channelManager.queueMessage({
 							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
 							channel,
