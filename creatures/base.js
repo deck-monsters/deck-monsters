@@ -136,17 +136,17 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get bloodied () {
-		return this.hp < this.bloodiedValue();
+		return this.hp < this.bloodiedValue;
 	}
 
 	set bloodied (hp) {
 		this.setOptions({
-			hp: this.bloodiedValue()
+			hp: this.bloodiedValue
 		});
 	}
 
 	get destroyed () {
-		return this.hp < -this.bloodiedValue()
+		return this.hp < -this.bloodiedValue;
 	}
 
 	get hp () {

@@ -82,7 +82,6 @@ class Game extends BaseClass {
 		this.on('creature.hit', this.announceHit);
 		this.on('creature.heal', this.announceHeal);
 		this.on('creature.modifier', this.announceModifier);
-		this.on('creature.destroy', this.announceDestroy);
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.leave', this.announceLeave);
 		this.on('card.stay', this.announceStay);
