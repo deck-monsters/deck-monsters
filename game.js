@@ -107,6 +107,7 @@ class Game extends BaseClass {
 		// Manage Fights
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
+		this.on('creature.permaDeath', this.handlePermaDeath);
 	}
 
 	announceXPGain (className, game, {
@@ -192,14 +193,21 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
-	announceDeath (className, monster, { assailant }) {
+	announceDeath (className, monster, { assailant, destroyed }) {
 		const channel = this.publicChannel;
+		let announce;
 
-		channel({
-			announce:
-`${monster.identityWithHp} is killed by ${assailant.identityWithHp}
-`
-		});
+		if (destroyed) {
+			announce = `${monster.identityWithHp} has been sent to the land of ${monster.pronouns[2]} fathers by ${assailant.identityWithHp}
+
+			☠️  R.I.P ${monster.identity}
+`;
+		} else {
+			announce = `💀  ${monster.identityWithHp} is killed by ${assailant.identityWithHp}
+`;
+		}
+
+		channel({ announce });
 	}
 
 	announceLeave (className, monster, { assailant }) {
@@ -298,7 +306,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 			announce:
 `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
 
-${monster.icon}  *${monster.givenName} has ${monster.hp}HP left.*
+${monster.icon}  *${monster.givenName} has ${monster.hp}HP.*
 `
 		});
 	}
@@ -404,6 +412,7 @@ ${monsterCard(monster)}`
 	}
 	/* eslint-enable max-len */
 
+
 	handleWinner (className, monster, { contestant }) {
 		// Award XP draw a card, maybe kick off more events (that could be messaged)
 
@@ -434,6 +443,21 @@ ${monsterCard(monster)}`
 			contestant,
 			creature: contestant.monster,
 			xpGained: XP_PER_VICTORY
+		});
+	}
+
+	handlePermaDeath (className, monster, { contestant }) {
+		// Award XP, maybe kick off more events (that could be messaged)
+
+		// The character still earns a small bit of XP and coins in the case of defeat
+		contestant.character.xp += XP_PER_DEFEAT * 2;
+		contestant.character.coins += COINS_PER_DEFEAT * 2;
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.character,
+			xpGained: XP_PER_DEFEAT * 2,
+			coinsGained: COINS_PER_DEFEAT * 2
 		});
 	}
 

@@ -12,7 +12,8 @@
     }
   ],
   "engines": {
-    "node": "6.10.2"
+    "node": "8.x",
+    "npm": "5.x"
   },
   "scripts": {
     "lint": "eslint \"**/*.{js,jsx}\"",
@@ -40,6 +41,7 @@
     "lodash.sample": "^4.2.1",
     "lodash.shuffle": "^4.2.0",
     "lodash.startcase": "^4.4.0",
+    "lodash.throttle": "^4.1.1",
     "lodash.upperfirst": "^4.3.1",
     "moment": "^2.19.2",
     "node-emoji": "^1.8.1",

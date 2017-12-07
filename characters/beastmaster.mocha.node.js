@@ -40,7 +40,7 @@ describe('./characters/beastmaster.js', () => {
 		expect(beastmaster.deck.length).to.equal(10);
 	});
 
-	it('can spwan a monster', () => {
+	it('can spawn a monster', () => {
 		const beastmaster = new Beastmaster();
 		channelStub.onCall(1).resolves(0);
 		channelStub.onCall(2).resolves('Foo');
