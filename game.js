@@ -198,7 +198,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		let announce;
 
 		if (destroyed) {
-			announce = `${monster.identityWithHp} has been sent to the land of ${monster.pronouns[2]} fathers by ${assailant.identityWithHp}
+			announce = `${monster.identityWithHp} has been sent to the land of ${monster.pronouns[2]} ancestors by ${assailant.identityWithHp}
 
 			☠️  R.I.P ${monster.identity}
 `;
@@ -302,7 +302,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 			icon = '🏓';
 		}
 
-		const bloodied = (prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
+		const bloodied = (prevHp >= monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
 		const only = monster.bloodied ? 'only ' : '';
 
 		channel({
