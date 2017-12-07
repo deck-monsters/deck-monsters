@@ -31,6 +31,7 @@ class Ring extends BaseClass {
 
 		this.channelManager.on('win', (className, channel, { contestant }) => this.handleWinner({ contestant }));
 		this.channelManager.on('loss', (className, channel, { contestant }) => this.handleLoser({ contestant }));
+		this.channelManager.on('permaDeath', (className, channel, { contestant }) => this.handlePermaDeath({ contestant }));
 		this.channelManager.on('draw', (className, channel, { contestant }) => this.handleTied({ contestant }));
 
 		this.startBossTimer();
@@ -517,6 +518,12 @@ class Ring extends BaseClass {
 		contestant.monster.addLoss();
 		this.emit('loss', { contestant });
 		contestant.monster.emit('loss', { contestant });
+	}
+
+	handlePermaDeath ({ contestant }) {
+		contestant.character.dropMonster(contestant.monster);
+		contestant.character.addLoss();
+		this.emit('permaDeath', { contestant });
 	}
 
 	handleTied ({ contestant }) {

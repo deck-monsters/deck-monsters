@@ -187,26 +187,21 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
-	announceDestroy (className, monster, { assailant }) {
+	announceDeath (className, monster, { assailant, destroyed }) {
 		const channel = this.publicChannel;
+		let announce;
 
-		channel({
-			announce:
-`${monster.identityWithHp} has been sent to the land of ${monster.pronouns} fathers by ${assailant.identityWithHp}
+		if (destroyed) {
+			announce = `${monster.identityWithHp} has been sent to the land of ${monster.pronouns} fathers by ${assailant.identityWithHp}
 
-☠️  R.I.P ${monster.identity}
+			☠️  R.I.P ${monster.identity}
+`;
+		} else {
+			announce = `💀  ${monster.identityWithHp} is killed by ${assailant.identityWithHp}
 `
-		});
-	}
+		}
 
-	announceDeath (className, monster, { assailant }) {
-		const channel = this.publicChannel;
-
-		channel({
-			announce:
-`💀  ${monster.identityWithHp} is killed by ${assailant.identityWithHp}
-`
-		});
+		channel({ announce });
 	}
 
 	announceLeave (className, monster, { assailant }) {
@@ -447,7 +442,6 @@ ${monsterCard(monster)}`
 
 	handlePermaDeath (className, monster, { contestant }) {
 		// Award XP, maybe kick off more events (that could be messaged)
-		contestant.character.dropMonster(monster);
 
 		// The character still earns a small bit of XP and coins in the case of defeat
 		contestant.character.xp += XP_PER_DEFEAT * 2;
