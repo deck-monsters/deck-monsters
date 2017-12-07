@@ -30,8 +30,8 @@ class BaseCharacter extends BaseCreature {
 		});
 	}
 
-	canHoldCard (card) {
-		const appropriateLevel = (!card.level || card.level <= this.level);
+	canHold (object) {
+		const appropriateLevel = (!object.level || object.level <= this.level);
 
 		return appropriateLevel;
 	}

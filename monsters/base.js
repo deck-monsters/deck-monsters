@@ -39,9 +39,9 @@ class BaseMonster extends BaseCreature {
 		});
 	}
 
-	canHoldCard (card) {
-		const appropriateLevel = (!card.level || card.level <= this.level);
-		const appropriateClass = (!card.permittedClasses || card.permittedClasses.includes(this.class));
+	canHold (object) {
+		const appropriateLevel = (!object.level || object.level <= this.level);
+		const appropriateClass = (!object.permittedClasses || object.permittedClasses.includes(this.class));
 
 		return appropriateLevel && appropriateClass;
 	}
