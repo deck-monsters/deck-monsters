@@ -1,5 +1,4 @@
 const AWS = require('aws-sdk');
-const zlib = require('zlib');
 
 let s3;
 function getAPI (log) {
@@ -26,7 +25,7 @@ function getAPI (log) {
 
 const bucket = { Bucket: 'deckmonsters-backups' };
 
-function save (key, string, log = () => {}) {
+function save (key, buffer, log = () => {}) {
 	try {
 		const api = getAPI(log);
 
@@ -36,7 +35,7 @@ function save (key, string, log = () => {}) {
 			const params = {
 				...bucket,
 				Key: `${key}.txt.gzip`,
-				Body: zlib.gzipSync(string)
+				Body: buffer
 			};
 
 			s3.upload(params, (err) => {
