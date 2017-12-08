@@ -9,7 +9,7 @@ const pause = require('../helpers/pause');
 const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
 const { randomCharacter } = require('../characters');
 
-const MAX_MONSTERS = 3;
+const MAX_MONSTERS = 5;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
 
