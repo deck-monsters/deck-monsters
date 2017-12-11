@@ -40,9 +40,9 @@ class Rehit extends HitCard {
 		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target.ac);
 
 		if (strokeOfLuck) {
-			commentary += `${player.givenName} rolled a natural 20. Automatic double max damage.`;
+			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
 		} else if (curseOfLoki) {
-			commentary += `${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
+			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
 		}
 
 		this.emit('rolled', {
