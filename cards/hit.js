@@ -25,8 +25,12 @@ class HitCard extends BaseCard {
 		return `Hit: ${this.attackDice} vs AC / Damage: ${this.damageDice}`;
 	}
 
+	getAttackRoll (player) {
+		return roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+	}
+
 	hitCheck (player, target) {
-		const attackRoll = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = getAttackRoll(player, target);
 
 		this.emit('rolling', {
 			reason: `vs ${target.givenName}'s AC (${target.ac}) to determine if the hit was a success`,
