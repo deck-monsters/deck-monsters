@@ -9,17 +9,21 @@ const { roll } = require('../helpers/chance');
 class ForkedStickCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		damageModifier,
 		attackModifier,
+		hitOnFail,
 		icon = '⑂',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			damageModifier,
-			attackModifier
+			attackModifier,
+			hitOnFail
 		});
+	}
+
+	get hitOnFail () {
+		return this.options.hitOnFail;
 	}
 
 	get creatureType () {
@@ -30,19 +34,15 @@ class ForkedStickCard extends HitCard {
 		return this.constructor.weakAgainstCreatureType;
 	}
 
-	get damageModifier () {
-		return this.options.damageModifier;
-	}
-
 	get attackModifier () {
 		return this.options.attackModifier;
 	}
 
-	getDamageModifier (target) {
-		if (target.name === this.creatureType) {
-			return this.options.damageModifier;
-		} else if (target.name === this.weakAgainstCreatureType) {
-			return -this.options.damageModifier;
+	getAttackModifier (target) {
+		if (target.name === this.weakAgainstCreatureType) {
+			return -this.options.attackModifier;
+		} else if (this.creatureType.includes(target.name)) {
+			return this.options.attackModifier;
 		} else {
 			return 0;
 		}
@@ -50,21 +50,132 @@ class ForkedStickCard extends HitCard {
 
 	get stats () {
 		return `${super.stats}
-Hit: ${this.attackDice}+${this.attackModifier} vs AC / Damage: ${this.damageDice}+${this.damageModifier} vs ${this.creatureType}
-Hit: ${this.attackDice}+${this.attackModifier} vs AC / Damage: ${this.damageDice}-${this.damageModifier} vs ${this.weakAgainstCreatureType}`;
+Chance to immobilize opponent by capturing their neck between prongs.
+
+Small chance to do damage.`;
 	}
 
-	getAttackRoll (player) {
-		return roll({ primaryDice: this.attackDice, modifier: player.attackModifier + this.attackModifier, bonusDice: player.bonusAttackDice });
+	getFreedomThreshold (player, target) {
+		return player.ac;
+	}
+
+	getAttackRoll (player, target) {
+		return roll({ primaryDice: this.attackDice, modifier: player.attackModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
 	}
 
 	getDamageRoll (player, target) {
-		return roll({ primaryDice: this.damageDice, modifier: player.damageModifier + this.getDamageModifier(target), bonusDice: player.bonusDamageDice });
+		if (this.getAttackRoll(player) > target.ac * 1.5) {
+			return roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });
+		}
+
+		return 0;
 	}
+
+	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
+		return new Promise((resolve) => {
+			const attackRoll = this.getAttackRoll(player, target);
+			const alreadyPinned = target.encounterEffects.includes(pinEffect);
+			const attackSuccess = this.checkSuccess(attackRoll, target.ac);
+
+			if (!alreadyPinned) {
+				this.emit('rolling', {
+					reason: `to see if you pin ${target.givenName}`,
+					card: this,
+					roll: damageRoll,
+					player,
+					target,
+					outcome: ''
+				});
+			}
+
+			if (!alreadyPinned && attackSuccess) {
+				this.emit('rolled', {
+					reason: 'for pin',
+					card: this,
+					roll: damageRoll,
+					player,
+					target,
+					outcome: 'Pin succeeded!'
+				});
+
+				const pinEffect = ({
+					card,
+					phase
+				}) => {
+					if (phase === DEFENSE_PHASE) {
+						this.emit('effect', {
+							effectName: `a ${this.icon}${this.cardType} effect`,
+							player,
+							target,
+							ring
+						});
+
+						const freedomRoll = roll({ primaryDice: '1d20' });
+						const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
+						let commentary;
+
+						if (strokeOfLuck) {
+							commentary = `${target.givenName} rolled a natural 20 and flings the metal rod back at ${player.givenName}.`;
+						}
+
+						this.emit('rolled', {
+							reason: 'and needs a 10 or higher to be free',
+							card: this,
+							roll: freedomRoll,
+							player: target,
+							target: player,
+							outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains pinned and will miss a turn.`
+						});
+
+						if (success) {
+							target.encounterEffects = target.encounterEffects.filter(effect => effect !== pinEffect);
+
+							if (strokeOfLuck) {
+								player.hit(2, target, this);
+							}
+						} else {
+							card.play = () => Promise.resolve(true);
+						}
+					}
+
+					return card;
+				};
+
+				resolve(true);
+			} else if (alreadyPinned || this.hitOnFail) {
+				if (alreadyPinned) {
+					this.emit('narration', {
+						narration: `${target.givenName} is already pinned, attempting to hit`
+					})
+				} else {
+					this.emit('rolled', {
+						reason: 'for pin',
+						card: this,
+						roll: damageRoll,
+						player,
+						target,
+						outcome: 'Pin failed, chance to hit instead...'
+					});
+				}
+
+				resolve(super.effect(player, target, ring, activeContestants));
+			}
+
+			this.emit('miss', {
+				attackResult: attackRoll.result,
+				attackRoll,
+				player,
+				target
+			});
+
+			resolve(false);
+		});
+	}
+
 }
 
 ForkedStickCard.cardType = 'Forked Stick';
-ForkedStickCard.creatureType = BASILISK;
+ForkedStickCard.creatureType = [FIGHTER, MINOTAUR, BASILISK];
 ForkedStickCard.probability = 30;
 ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.creatureType}-hunting.`;
 ForkedStickCard.cost = 6;
@@ -73,15 +184,15 @@ ForkedStickCard.permittedClasses = [FIGHTER, MINOTAUR];
 ForkedStickCard.weakAgainstCreatureType = MINOTAUR;
 ForkedStickCard.defaults = {
 	...HitCard.defaults,
-	damageModifier: 1,
-	attackModifier: 2
+	attackModifier: 2,
+	hitOnFail: false
 };
 
 ForkedStickCard.flavors = {
 	hits: [
-		['pins head to the ground, and stomps mercilessly', 80],
-		['bludgeons', 50],
-		['catches body, thrusts into air, and flings into the arena wall with a wet thud and several bone snapping crunches', 5]
+		['pins head to the ground', 80],
+		['pins neck to the wall', 50],
+		['in a fit of brute strength, snags by the neck, and brutally lofts into the air, where they dangle like a toddler\'s booger', 5]
 	]
 };
 

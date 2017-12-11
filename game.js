@@ -81,6 +81,7 @@ class Game extends BaseClass {
 
 	initializeEvents () {
 		// Initialize Messaging
+		this.on('card.narration', this.announceNarration);
 		this.on('card.played', this.announceCard);
 		this.on('card.rolling', this.announceRolling);
 		this.on('card.rolled', this.announceRolled);
@@ -178,6 +179,15 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		channel({
 			announce:
 `${monster.identity} is out of cards.`
+		});
+	}
+
+	announceNarration (className, monster, { narration }) {
+		const channel = this.publicChannel;
+
+		channel({
+			announce:
+`${narration}`
 		});
 	}
 
