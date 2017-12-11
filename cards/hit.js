@@ -30,7 +30,7 @@ class HitCard extends BaseCard {
 	}
 
 	hitCheck (player, target) {
-		const attackRoll = getAttackRoll(player, target);
+		const attackRoll = this.getAttackRoll(player, target);
 
 		this.emit('rolling', {
 			reason: `vs ${target.givenName}'s AC (${target.ac}) to determine if the hit was a success`,
