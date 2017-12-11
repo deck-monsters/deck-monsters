@@ -4,6 +4,7 @@ const HitCard = require('./hit');
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { DEFENSE_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 
 class ForkedStickCard extends HitCard {
@@ -43,9 +44,8 @@ class ForkedStickCard extends HitCard {
 			return -this.attackModifier;
 		} else if (this.creatureType.includes(target.name)) {
 			return this.attackModifier;
-		} else {
-			return 0;
 		}
+		return 0;
 	}
 
 	get stats () {
@@ -55,7 +55,7 @@ Chance to immobilize opponent by capturing their neck between prongs.
 Small chance to do damage.`;
 	}
 
-	getFreedomThreshold (player, target) {
+	getFreedomThreshold (player) { // eslint-disable-line class-methods-use-this
 		return player.ac;
 	}
 
@@ -74,14 +74,14 @@ Small chance to do damage.`;
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
 			const attackRoll = this.getAttackRoll(player, target);
-			const alreadyPinned = target.encounterEffects.includes(pinEffect);
+			const alreadyPinned = !!target.encounterEffects.find(effect => effect.effectType === 'PinEffect');
 			const attackSuccess = this.checkSuccess(attackRoll, target.ac);
 
 			if (!alreadyPinned) {
 				this.emit('rolling', {
 					reason: `to see if you pin ${target.givenName}`,
 					card: this,
-					roll: damageRoll,
+					roll: attackRoll,
 					player,
 					target,
 					outcome: ''
@@ -92,7 +92,7 @@ Small chance to do damage.`;
 				this.emit('rolled', {
 					reason: 'for pin',
 					card: this,
-					roll: damageRoll,
+					roll: attackRoll,
 					player,
 					target,
 					outcome: 'Pin succeeded!'
@@ -128,7 +128,7 @@ Small chance to do damage.`;
 						});
 
 						if (success) {
-							target.encounterEffects = target.encounterEffects.filter(effect => effect !== pinEffect);
+							target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'PinEffect');
 
 							if (strokeOfLuck) {
 								player.hit(2, target, this);
@@ -141,24 +141,27 @@ Small chance to do damage.`;
 					return card;
 				};
 
-				resolve(true);
+				pinEffect.effectType = 'PinEffect';
+				target.encounterEffects.push(pinEffect);
+
+				return resolve(true);
 			} else if (alreadyPinned || this.hitOnFail) {
 				if (alreadyPinned) {
 					this.emit('narration', {
 						narration: `${target.givenName} is already pinned, attempting to hit`
-					})
+					});
 				} else {
 					this.emit('rolled', {
 						reason: 'for pin',
 						card: this,
-						roll: damageRoll,
+						roll: attackRoll,
 						player,
 						target,
 						outcome: 'Pin failed, chance to hit instead...'
 					});
 				}
 
-				resolve(super.effect(player, target, ring, activeContestants));
+				return resolve(super.effect(player, target, ring, activeContestants));
 			}
 
 			this.emit('miss', {
@@ -168,10 +171,9 @@ Small chance to do damage.`;
 				target
 			});
 
-			resolve(false);
+			return resolve(false);
 		});
 	}
-
 }
 
 ForkedStickCard.cardType = 'Forked Stick';
