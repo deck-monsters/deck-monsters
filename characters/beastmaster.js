@@ -87,7 +87,7 @@ class Beastmaster extends BaseCharacter {
 					return Promise
 						.resolve()
 						.then(() => channel({
-							announce: `You're now the proud owner of a ${monster.name}. Before you is ${monsterCard(monster)}`
+							announce: `You're now the proud owner of a ${monster.creatureType}. Before you is ${monsterCard(monster)}`
 						}))
 						.then(() => monster);
 				});
