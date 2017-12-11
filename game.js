@@ -374,7 +374,7 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 
 		channel({
 			announce:
-`A${getFlavor('monsterAdjective')} ${monster.name} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
+`A${getFlavor('monsterAdjective')} ${monster.creatureType} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
 ${monsterCard(monster)}`
 		});
 	}

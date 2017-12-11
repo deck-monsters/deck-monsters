@@ -6,6 +6,7 @@ const BlastCard = require('./blast');
 const BoostCard = require('./boost');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
+const FistsOfVirtueCard = require('./fists-of-virtue');
 const FleeCard = require('./flee');
 const HealCard = require('./heal');
 const HitCard = require('./hit');
@@ -29,6 +30,7 @@ const all = [
 	BoostCard,
 	CurseCard,
 	EnchantedFaceswapCard,
+	FistsOfVirtueCard,
 	FleeCard,
 	HealCard,
 	HitCard,
