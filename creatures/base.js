@@ -43,6 +43,10 @@ class BaseCreature extends BaseClass {
 		return this.constructor.class;
 	}
 
+	get creatureType () {
+		return this.constructor.creatureType;
+	}
+
 	get icon () {
 		return this.options.icon;
 	}
@@ -50,7 +54,7 @@ class BaseCreature extends BaseClass {
 	get givenName () {
 		if (!this.options.name) {
 			this.setOptions({
-				name: names(this.constructor.creatureType, this.gender)
+				name: names(this.creatureType, this.gender)
 			});
 		}
 
@@ -66,7 +70,7 @@ class BaseCreature extends BaseClass {
 	}
 
 	get stats () {
-		return `Type: ${this.name}
+		return `Type: ${this.creatureType}
 Class: ${this.class}
 Level: ${this.level || this.displayLevel} | XP: ${this.xp}
 AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}${
