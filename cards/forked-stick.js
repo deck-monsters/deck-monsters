@@ -2,8 +2,8 @@
 
 const HitCard = require('./hit');
 
-const { FIGHTER } = require('../helpers/classes');
-const { MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { FIGHTER, BARBARIAN } = require('../helpers/classes');
+const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 const { roll } = require('../helpers/chance');
 
 class ForkedStickCard extends HitCard {
@@ -40,9 +40,9 @@ class ForkedStickCard extends HitCard {
 
 	getAttackModifier (target) {
 		if (target.name === this.weakAgainstCreatureType) {
-			return -this.options.attackModifier;
+			return -this.attackModifier;
 		} else if (this.creatureType.includes(target.name)) {
-			return this.options.attackModifier;
+			return this.attackModifier;
 		} else {
 			return 0;
 		}
@@ -175,12 +175,12 @@ Small chance to do damage.`;
 }
 
 ForkedStickCard.cardType = 'Forked Stick';
-ForkedStickCard.creatureType = [FIGHTER, MINOTAUR, BASILISK];
+ForkedStickCard.creatureType = [GLADIATOR, MINOTAUR, BASILISK];
 ForkedStickCard.probability = 30;
 ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.creatureType}-hunting.`;
 ForkedStickCard.cost = 6;
 ForkedStickCard.level = 1;
-ForkedStickCard.permittedClasses = [FIGHTER, MINOTAUR];
+ForkedStickCard.permittedClasses = [FIGHTER, BARBARIAN];
 ForkedStickCard.weakAgainstCreatureType = MINOTAUR;
 ForkedStickCard.defaults = {
 	...HitCard.defaults,
