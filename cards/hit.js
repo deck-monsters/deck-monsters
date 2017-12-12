@@ -69,33 +69,33 @@ class HitCard extends BaseCard {
 	rollForDamage (player, target, strokeOfLuck) {
 		const damageRoll = this.getDamageRoll(player, target);
 
-		this.emit('rolling', {
-			reason: `for damage against ${target.givenName}`,
-			card: this,
-			roll: damageRoll,
-			player,
-			target,
-			outcome: ''
-		});
-
 		if (strokeOfLuck) {
 			// change the natural roll into a max roll
 			damageRoll.naturalRoll.result = max(this.damageDice);
-			damageRoll.result = max(this.damageDice) * 2;
-		}
+			damageRoll.result = (max(this.damageDice) * 2) + damageRoll.modifier;
+		} else {
+			this.emit('rolling', {
+				reason: `for damage against ${target.givenName}`,
+				card: this,
+				roll: damageRoll,
+				player,
+				target,
+				outcome: ''
+			});
 
-		if (damageRoll.result === 0) {
-			damageRoll.result = 1;
-		}
+			if (damageRoll.result < 1) {
+				damageRoll.result = 1;
+			}
 
-		this.emit('rolled', {
-			reason: 'for damage',
-			card: this,
-			roll: damageRoll,
-			player,
-			target,
-			outcome: ''
-		});
+			this.emit('rolled', {
+				reason: 'for damage',
+				card: this,
+				roll: damageRoll,
+				player,
+				target,
+				outcome: ''
+			});
+		}
 
 		return damageRoll;
 	}

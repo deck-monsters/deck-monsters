@@ -18,42 +18,48 @@ class HitHarder extends HitCard {
 		super({ damageDice, icon, ...rest });
 	}
 
-	rollForDamage (player, target, strokeOfLuck) {
+	getDamageRoll (player) {
 		const damageRoll1 = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusAttackDice });
 		const damageRoll2 = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusAttackDice });
 
-		const betterRoll = (damageRoll2.naturalRoll.result > damageRoll1.naturalRoll.result) ? damageRoll2 : damageRoll1;
-		const worseRoll = (damageRoll2.naturalRoll.result < damageRoll1.naturalRoll.result) ? damageRoll2 : damageRoll1;
+		return {
+			betterRoll: (damageRoll2.naturalRoll.result > damageRoll1.naturalRoll.result) ? damageRoll2 : damageRoll1,
+			worseRoll: (damageRoll2.naturalRoll.result < damageRoll1.naturalRoll.result) ? damageRoll2 : damageRoll1
+		};
+	}
 
-		const commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
-
-		this.emit('rolling', {
-			reason: `twice for damage against ${target.givenName} and uses the best roll`,
-			card: this,
-			roll: betterRoll,
-			player,
-			target,
-			outcome: ''
-		});
+	rollForDamage (player, target, strokeOfLuck) {
+		const { betterRoll, worseRoll } = this.getDamageRoll(player);
 
 		if (strokeOfLuck) {
 			// change the natural roll into a max roll
 			betterRoll.naturalRoll.result = max(this.damageDice);
-			betterRoll.result = max(this.damageDice) * 2;
-		}
+			betterRoll.result = (max(this.damageDice) * 2) + betterRoll.modifier;
+		} else {
+			const commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
-		if (betterRoll.result === 0) {
-			betterRoll.result = 1;
-		}
+			this.emit('rolling', {
+				reason: `twice for damage against ${target.givenName} and uses the best roll`,
+				card: this,
+				roll: betterRoll,
+				player,
+				target,
+				outcome: ''
+			});
+			
+			if (betterRoll.result === 0) {
+				betterRoll.result = 1;
+			}
 
-		this.emit('rolled', {
-			reason: 'for damage',
-			card: this,
-			roll: betterRoll,
-			player,
-			target,
-			outcome: commentary
-		});
+			this.emit('rolled', {
+				reason: 'for damage',
+				card: this,
+				roll: betterRoll,
+				player,
+				target,
+				outcome: commentary
+			});
+		}
 
 		return betterRoll;
 	}
