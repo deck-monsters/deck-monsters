@@ -12,18 +12,24 @@ class ImmobilizeCard extends HitCard {
 	constructor ({
 		attackModifier,
 		hitOnFail,
+		alwaysDoDamage,
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
 			attackModifier,
-			hitOnFail
+			hitOnFail,
+			alwaysDoDamage
 		});
 
 		if (this.name === ImmobilizeCard.name) {
 			throw new Error('The ImmobilizeCard should not be instantiated directly!');
 		}
+	}
+
+	get alwaysDoDamage () {
+		return this.options.alwaysDoDamage;
 	}
 
 	get hitOnFail () {
@@ -43,7 +49,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	getAttackModifier (target) {
-		if (this.weakAgainstCreatureTypes.inclused(target.name)) {
+		if (this.weakAgainstCreatureTypes.includes(target.name)) {
 			return -this.attackModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
 			return this.attackModifier;
@@ -144,6 +150,10 @@ class ImmobilizeCard extends HitCard {
 				immobilizeEffect.effectType = 'ImmobilizeEffect';
 				target.encounterEffects.push(immobilizeEffect);
 
+				if (this.alwaysDoDamage) {
+					return resolve(super.effect(player, target, ring, activeContestants));
+				}
+
 				return resolve(true);
 			} else if (alreadyImmobilized || this.hitOnFail) {
 				if (alreadyImmobilized) {
@@ -183,11 +193,11 @@ ImmobilizeCard.probability = 0;
 ImmobilizeCard.description = `Immobilize your adversary.`;
 ImmobilizeCard.cost = 6;
 ImmobilizeCard.level = 1;
-ImmobilizeCard.permittedClasses = [FIGHTER];
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,
 	attackModifier: 2,
-	hitOnFail: false
+	hitOnFail: false,
+	alwaysDoDamage: false
 };
 ImmobilizeCard.action = ["immobilize", "immobilizes", "immobilized"];
 
