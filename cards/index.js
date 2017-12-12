@@ -4,8 +4,10 @@ const isProbable = require('../helpers/is-probable');
 const BasicShieldCard = require('./basic-shield');
 const BlastCard = require('./blast');
 const BoostCard = require('./boost');
+const BrainDrainCard = require('./brain-drain');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
+const FightOrFlightCard = require('./fight-or-flight');
 const FistsOfVirtueCard = require('./fists-of-virtue');
 const FleeCard = require('./flee');
 const HealCard = require('./heal');
@@ -28,8 +30,10 @@ const all = [
 	BasicShieldCard,
 	BlastCard,
 	BoostCard,
+	BrainDrainCard,
 	CurseCard,
 	EnchantedFaceswapCard,
+	FightOrFlightCard,
 	FistsOfVirtueCard,
 	FleeCard,
 	HealCard,
