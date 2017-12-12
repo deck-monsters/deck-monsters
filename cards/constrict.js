@@ -37,6 +37,7 @@ ConstrictCard.weakAgainstCreatureTypes = [BASILISK];
 ConstrictCard.defaults = {
 	...HitCard.defaults,
 	attackModifier: 2,
+	alwaysDoDamage: true,
 	hitOnFail: false
 };
 ConstrictCard.action = ["constrict", "constricts", "constricted"];
