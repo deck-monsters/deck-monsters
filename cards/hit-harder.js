@@ -39,7 +39,7 @@ class HitHarder extends HitCard {
 		if (strokeOfLuck) {
 			// change the natural roll into a max roll
 			betterRoll.naturalRoll.result = max(this.damageDice);
-			betterRoll.result = max(this.damageDice) * 2;
+			betterRoll.result = max(this.damageDice) * 2 + player.damageModifier;
 		}
 
 		if (betterRoll.result === 0) {

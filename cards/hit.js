@@ -81,7 +81,7 @@ class HitCard extends BaseCard {
 		if (strokeOfLuck) {
 			// change the natural roll into a max roll
 			damageRoll.naturalRoll.result = max(this.damageDice);
-			damageRoll.result = max(this.damageDice) * 2;
+			damageRoll.result = max(this.damageDice) * 2 + player.damageModifier;
 		}
 
 		if (damageRoll.result === 0) {
