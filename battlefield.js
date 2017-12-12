@@ -97,9 +97,11 @@ return Promise
 	.then(() => boss.spawnMonster({
 		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
 	}))
-	.then(() => vlad.lookAtCard({ cardName: 'hit' }))
+	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
 	.then(() => vlad.lookAtCard({ cardName: 'wooden spear' }))
+	.then(() => vlad.lookAtCards())
 	.then(() => vlad.lookAt('player handbook'))
+	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
 	.then(() => boss.sendMonsterToTheRing());

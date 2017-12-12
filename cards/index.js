@@ -97,6 +97,18 @@ const getCardCounts = cards =>
 		return cardCounts;
 	}, {});
 
+const sortCards = cards => cards.sort((a, b) => {
+	if (a.cardType > b.cardType) {
+		return 1;
+	}
+
+	if (a.cardType < b.cardType) {
+		return -1;
+	}
+
+	return 0;
+});
+
 const getUniqueCards = cards =>
 	cards.reduce(
 		(uniqueCards, card) =>
@@ -122,10 +134,11 @@ const hydrateDeck = (deckJSON, monster) => JSON
 module.exports = {
 	all,
 	draw,
-	getInitialDeck,
 	fillDeck,
+	getCardCounts,
+	getInitialDeck,
+	getUniqueCards,
 	hydrateCard,
 	hydrateDeck,
-	getUniqueCards,
-	getCardCounts
+	sortCards
 };

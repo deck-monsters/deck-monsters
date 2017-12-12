@@ -12,7 +12,7 @@ Damage: ${this.damageDice} +1 per wound suffered`;
 	}
 }
 
-VenegefulRampageCard.cardType = 'Venegeful Rampage';
+VenegefulRampageCard.cardType = 'Vengeful Rampage';
 VenegefulRampageCard.probability = 10;
 VenegefulRampageCard.description = 'Your wounds only make you stronger.';
 VenegefulRampageCard.level = 3;

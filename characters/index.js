@@ -93,28 +93,26 @@ ${getChoices(iconChoices)}`,
 		});
 };
 
-const randomCharacter = () => {
-	const battles = {
-		total: randomInt({ max: 35 })
-	};
-
-	battles.wins = randomInt({ max: battles.total });
-	battles.losses = battles.total - battles.wins;
+const randomCharacter = ({ battles = {}, Monsters } = {}) => {
+	if (!battles.total) {
+		battles.total = randomInt({ max: 45 });
+		battles.wins = randomInt({ max: battles.total });
+		battles.losses = battles.total - battles.wins;
+	}
 
 	const icon = emoji.random().emoji;
 
 	const xp = XP_PER_VICTORY * battles.wins;
 
-	const Monster = shuffle(allMonsters)[0];
-	const monster = new Monster({
+	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map(Monster => new Monster({
 		battles,
 		xp
-	});
+	}));
 
 	const character = new Beastmaster({
 		battles,
 		icon,
-		monsters: [monster],
+		monsters,
 		xp
 	});
 
@@ -123,7 +121,9 @@ const randomCharacter = () => {
 	character.deck = fillDeck(deck, {}, character);
 
 	// Equip the monster
-	monster.cards = shuffle(character.deck.filter(card => monster.canHoldCard(card))).slice(0, monster.cardSlots);
+	monsters.forEach((monster) => {
+		monster.cards = shuffle(character.deck.filter(card => monster.canHoldCard(card))).slice(0, monster.cardSlots);
+	});
 
 	return character;
 };

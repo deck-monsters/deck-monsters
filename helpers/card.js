@@ -44,10 +44,25 @@ const cardRarity = (card) => {
 	return '☆';
 };
 
+const getCardRequirements = (card) => {
+	const requirements = [];
+
+	if (card.level) {
+		requirements.push(`Level: ${card.level}`);
+	}
+
+	if (card.permittedClasses) {
+		requirements.push(`Classes: ${card.permittedClasses.join(', ')}`);
+	}
+
+	return requirements.length > 0 ? requirements.join('\n') : undefined;
+};
+
 const actionCard = card => formatCard({
 	title: `${card.icon}  ${card.cardType}  ${cardRarity(card)}`,
 	description: card.description,
-	stats: card.stats
+	stats: card.stats,
+	rankings: getCardRequirements(card)
 });
 
 const itemCard = item => actionCard(item); // Just use the card formatter for now but we might do something custom later
