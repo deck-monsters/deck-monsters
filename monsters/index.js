@@ -256,7 +256,9 @@ const hydrateMonster = (monsterObj) => {
 
 	const monster = new Monster(options);
 
-	monster.cards = monsterObj.options.cards.map(cardObj => hydrateCard(cardObj, monster));
+	if (monsterObj.options.cards) {
+		monster.cards = monsterObj.options.cards.map(cardObj => hydrateCard(cardObj, monster));
+	}
 
 	return monster;
 };
