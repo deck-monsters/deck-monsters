@@ -2,6 +2,8 @@
 
 const ForkedStickCard = require('./forked-stick');
 
+const ImmobilizeCard = require('./immoblize');
+
 const { roll } = require('../helpers/chance');
 
 class ForkedMetalRodCard extends ForkedStickCard {
@@ -14,7 +16,7 @@ class ForkedMetalRodCard extends ForkedStickCard {
 	}
 
 	get stats () {
-		return `${super.stats}
+		return `${ImmobilizeCard.stats}
 Chance to immobilize opponent by capturing their neck between strong prongs.
 
 Chance to do damage.`;
@@ -35,7 +37,7 @@ Chance to do damage.`;
 
 ForkedMetalRodCard.cardType = 'Forked Metal Rod';
 ForkedMetalRodCard.probability = 20;
-ForkedMetalRodCard.description = `A dangerously strong weapon fashioned for ${ForkedMetalRodCard.creatureType}-hunting.`;
+ForkedMetalRodCard.description = `A dangerously strong weapon fashioned for ${ForkedStickCard.creatureTypes[1]}-hunting.`;
 ForkedMetalRodCard.level = 2;
 ForkedMetalRodCard.defaults = {
 	...ForkedStickCard.defaults,
