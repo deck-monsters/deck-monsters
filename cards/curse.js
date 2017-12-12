@@ -5,7 +5,7 @@ class CurseCard extends BaseCard {
 	constructor ({
 		curseAmount,
 		icon = '😖',
-		cursedProp = 'ac'
+		cursedProp
 	} = {}) {
 		super({ curseAmount, icon, cursedProp });
 	}
