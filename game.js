@@ -81,25 +81,26 @@ class Game extends BaseClass {
 
 	initializeEvents () {
 		// Initialize Messaging
-		this.on('card.played', this.announceCard);
-		this.on('card.rolling', this.announceRolling);
-		this.on('card.rolled', this.announceRolled);
-		this.on('card.miss', this.announceMiss);
 		this.on('card.effect', this.announceEffect);
-		this.on('creature.hit', this.announceHit);
-		this.on('creature.heal', this.announceHeal);
-		this.on('creature.modifier', this.announceModifier);
-		this.on('creature.die', this.announceDeath);
-		this.on('creature.leave', this.announceLeave);
+		this.on('card.miss', this.announceMiss);
+		this.on('card.narration', this.announceNarration);
+		this.on('card.played', this.announceCard);
+		this.on('card.rolled', this.announceRolled);
+		this.on('card.rolling', this.announceRolling);
 		this.on('card.stay', this.announceStay);
+		this.on('creature.die', this.announceDeath);
+		this.on('creature.heal', this.announceHeal);
+		this.on('creature.hit', this.announceHit);
+		this.on('creature.leave', this.announceLeave);
+		this.on('creature.modifier', this.announceModifier);
 		this.on('ring.add', this.announceContestant);
-		this.on('ring.remove', this.announceContestantLeave);
-		this.on('ring.fight', this.announceFight);
-		this.on('ring.turnBegin', this.announceTurnBegin);
-		this.on('ring.endOfDeck', this.announceEndOfDeck);
-		this.on('ring.roundComplete', this.announceNextRound);
-		this.on('ring.fightConcludes', this.announceFightConcludes);
 		this.on('ring.bossWillSpawn', this.announceBossWillSpawn);
+		this.on('ring.endOfDeck', this.announceEndOfDeck);
+		this.on('ring.fight', this.announceFight);
+		this.on('ring.fightConcludes', this.announceFightConcludes);
+		this.on('ring.remove', this.announceContestantLeave);
+		this.on('ring.roundComplete', this.announceNextRound);
+		this.on('ring.turnBegin', this.announceTurnBegin);
 
 		this.on('cardDrop', this.announceCardDrop);
 		this.on('gainedXP', this.announceXPGain);
@@ -110,6 +111,7 @@ class Game extends BaseClass {
 		this.on('creature.permaDeath', this.handlePermaDeath);
 	}
 
+	/* eslint-disable max-len */
 	announceXPGain (className, game, {
 		contestant,
 		creature,
@@ -143,7 +145,6 @@ ${cardDropped}`,
 		});
 	}
 
-	/* eslint-disable max-len */
 	announceCard (className, card, { player }) {
 		const channel = this.publicChannel;
 
@@ -366,6 +367,12 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 `${player.givenName} has put ${effectName} into play
 `
 		});
+	}
+
+	announceNarration (className, card, { narration }) {
+		const channel = this.publicChannel;
+
+		channel({ announce: narration });
 	}
 
 	announceContestant (className, ring, { contestant }) {
