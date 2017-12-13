@@ -138,7 +138,7 @@ class Game extends BaseClass {
 		const cardDropped = actionCard(card);
 
 		this.channelManager.queueMessage({
-			announce: `The following card dropped for ${contestant.monster.identity}'s victory for ${contestant.character.identity}:
+			announce: `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:
 ${cardDropped}`,
 			channel,
 			channelName
