@@ -19,10 +19,14 @@ class KalevalaCard extends HitCard {
 		super({ damageDice, icon, ...rest });
 	}
 
+	get cardType () {
+		return `${this.constructor.cardType} (${this.damageDice})`;
+	}
+
 	hitCheck (player, target) {
 		const result = super.hitCheck(player, target);
 
-		if (result.strokeOfLuck) {
+		if (result.strokeOfLuck && !this.damageDice === damageLevels[damageLevels.length - 1]) {
 			const index = damageLevels.indexOf(this.damageDice) + 1;
 			const damageDice = damageLevels[index];
 

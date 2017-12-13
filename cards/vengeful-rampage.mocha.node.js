@@ -39,6 +39,6 @@ describe('./cards/vengeful-rampage.js', () => {
 
 		const roll = venegefulRampage.getDamageRoll(player, target);
 
-		expect(roll.modifier).to.equal(player.DEFAULT_HP - player.hp);
+		expect(roll.modifier).to.equal(player.maxHp - player.hp);
 	});
 });
