@@ -13,6 +13,7 @@ const FleeCard = require('./flee');
 const HealCard = require('./heal');
 const HitCard = require('./hit');
 const HitHarderCard = require('./hit-harder');
+const KalevalaCard = require('./kalevala');
 const LuckyStrike = require('./lucky-strike');
 const PoundCard = require('./pound');
 const RandomCard = require('./random');
@@ -39,6 +40,7 @@ const all = [
 	HealCard,
 	HitCard,
 	HitHarderCard,
+	KalevalaCard,
 	LuckyStrike,
 	PoundCard,
 	RandomCard,
