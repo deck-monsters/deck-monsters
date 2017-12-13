@@ -34,7 +34,7 @@ class HitHarder extends HitCard {
 		if (strokeOfLuck) {
 			// change the natural roll into a max roll
 			betterRoll.naturalRoll.result = max(this.damageDice);
-			betterRoll.result = (max(this.damageDice) * 2) + betterRoll.modifier;
+			betterRoll.result = max(this.damageDice) + betterRoll.modifier;
 		} else {
 			const commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
@@ -46,7 +46,7 @@ class HitHarder extends HitCard {
 				target,
 				outcome: ''
 			});
-			
+
 			if (betterRoll.result === 0) {
 				betterRoll.result = 1;
 			}

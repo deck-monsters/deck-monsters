@@ -40,9 +40,9 @@ class HitCard extends BaseCard {
 		let commentary;
 
 		if (strokeOfLuck) {
-			commentary = `${player.givenName} rolled a natural 20. Automatic double max damage.`;
+			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
 		} else if (curseOfLoki) {
-			commentary = `${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
+			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack ${target.givenName} ${player.pronouns[2]} attack flings back against ${player.pronouns[1]}.`;
 		}
 
 		this.emit('rolled', {
@@ -72,7 +72,7 @@ class HitCard extends BaseCard {
 		if (strokeOfLuck) {
 			// change the natural roll into a max roll
 			damageRoll.naturalRoll.result = max(this.damageDice);
-			damageRoll.result = (max(this.damageDice) * 2) + damageRoll.modifier;
+			damageRoll.result = max(this.damageDice) + damageRoll.modifier;
 		} else {
 			this.emit('rolling', {
 				reason: `for damage against ${target.givenName}`,
@@ -109,11 +109,16 @@ class HitCard extends BaseCard {
 
 			ring.channelManager.sendMessages()
 				.then(() => {
-					if (success && !curseOfLoki) {
+					if (success) {
 						const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
 						// If we hit then do some damage
 						resolve(target.hit(damageRoll.result, player, this));
+					} else if (curseOfLoki) {
+						const damageRoll = this.rollForDamage(target, player);
+
+						// Our attack is now bouncing back against us
+						resolve(player.hit(damageRoll.result, target, this));
 					} else {
 						this.emit('miss', {
 							attackResult: attackRoll.result,
