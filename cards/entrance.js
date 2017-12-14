@@ -1,6 +1,8 @@
 /* eslint-disable max-len */
 
 const EnthrallCard = require('./enthrall');
+const MesmerizeCard = require('./mesmerize');
+
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
@@ -27,15 +29,12 @@ class EntranceCard extends EnthrallCard {
 Chance to immobilize and damage your opponents.`;
 	}
 
-EntranceCard.cardType = 'Enthrall';
-EntranceCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
+EntranceCard.cardType = 'Entrance';
 EntranceCard.probability = 20;
 EntranceCard.level = 3;
 EntranceCard.description = `You strut and preen. Your painful beauty overwhelmes and entrances everyone, except yourself.`;
-EntranceCard.weakAgainstCreatureTypes = [MINOTAUR];
 EntranceCard.defaults = {
-	...HitCard.defaults,
-	attackModifier: 2,
+	...MesmerizeCard.defaults,
 	hitOnFail: true,
 	alwaysDoDamage: true
 };
