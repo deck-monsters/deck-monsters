@@ -4,13 +4,16 @@ const isProbable = require('../helpers/is-probable');
 const BasicShieldCard = require('./basic-shield');
 const BlastCard = require('./blast');
 const BoostCard = require('./boost');
+const BrainDrainCard = require('./brain-drain');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
+const FightOrFlightCard = require('./fight-or-flight');
 const FistsOfVirtueCard = require('./fists-of-virtue');
 const FleeCard = require('./flee');
 const HealCard = require('./heal');
 const HitCard = require('./hit');
 const HitHarderCard = require('./hit-harder');
+const KalevalaCard = require('./kalevala');
 const LuckyStrike = require('./lucky-strike');
 const PoundCard = require('./pound');
 const RandomCard = require('./random');
@@ -28,13 +31,16 @@ const all = [
 	BasicShieldCard,
 	BlastCard,
 	BoostCard,
+	BrainDrainCard,
 	CurseCard,
 	EnchantedFaceswapCard,
+	FightOrFlightCard,
 	FistsOfVirtueCard,
 	FleeCard,
 	HealCard,
 	HitCard,
 	HitHarderCard,
+	KalevalaCard,
 	LuckyStrike,
 	PoundCard,
 	RandomCard,
@@ -93,6 +99,18 @@ const getCardCounts = cards =>
 		return cardCounts;
 	}, {});
 
+const sortCards = cards => cards.sort((a, b) => {
+	if (a.cardType > b.cardType) {
+		return 1;
+	}
+
+	if (a.cardType < b.cardType) {
+		return -1;
+	}
+
+	return 0;
+});
+
 const getUniqueCards = cards =>
 	cards.reduce(
 		(uniqueCards, card) =>
@@ -118,10 +136,11 @@ const hydrateDeck = (deckJSON, monster) => JSON
 module.exports = {
 	all,
 	draw,
-	getInitialDeck,
 	fillDeck,
+	getCardCounts,
+	getInitialDeck,
+	getUniqueCards,
 	hydrateCard,
 	hydrateDeck,
-	getUniqueCards,
-	getCardCounts
+	sortCards
 };

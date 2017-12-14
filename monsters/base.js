@@ -1,6 +1,10 @@
 const BaseCreature = require('../creatures/base');
 
-const { monsterCard } = require('../helpers/card');
+const {
+	getUniqueCards,
+	sortCards
+} = require('../cards');
+const { actionCard, monsterCard } = require('../helpers/card');
 const { getAttributeChoices } = require('../helpers/choices');
 
 const DEFAULT_CARD_SLOTS = 7;
@@ -110,7 +114,27 @@ ${getAttributeChoices(this.options)}`,
 	look (channel) {
 		return Promise
 			.resolve()
-			.then(() => channel({ announce: monsterCard(this, true) }));
+			.then(() => channel({ announce: monsterCard(this, true) }))
+			.then(() => this.lookAtCards(channel));
+	}
+
+	lookAtCards (channel) {
+		const sortedDeck = sortCards(this.cards);
+		const uniqueCards = getUniqueCards(sortedDeck);
+
+		let announce;
+		if (uniqueCards.length > 0) {
+			announce = uniqueCards.reduce((cards, card) =>
+				cards + actionCard(card), 'Cards:\n');
+		} else {
+			announce = `${this.givenName}'s hand is empty.`;
+		}
+
+		return Promise
+			.resolve()
+			.then(() => channel({
+				announce
+			}));
 	}
 }
 

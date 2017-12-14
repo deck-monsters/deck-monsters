@@ -5,3 +5,4 @@ bin/
 config/
 dist/
 coverage/
+test.js

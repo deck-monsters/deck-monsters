@@ -1,6 +1,11 @@
 const BaseCreature = require('../creatures/base');
-const { getInitialDeck, getUniqueCards, getCardCounts } = require('../cards');
-const { monsterCard, actionCard } = require('../helpers/card');
+const {
+	getCardCounts,
+	getInitialDeck,
+	getUniqueCards,
+	sortCards
+} = require('../cards');
+const { actionCard, monsterCard } = require('../helpers/card');
 const reduce = require('lodash.reduce');
 
 class BaseCharacter extends BaseCreature {
@@ -60,10 +65,11 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	lookAtCards (channel) {
-		const cardImages = getUniqueCards(this.deck).reduce((cards, card) =>
+		const sortedDeck = sortCards(this.deck);
+		const cardImages = getUniqueCards(sortedDeck).reduce((cards, card) =>
 			cards + actionCard(card), '');
 
-		const cardCounts = reduce(getCardCounts(this.deck), (counts, count, card) =>
+		const cardCounts = reduce(getCardCounts(sortedDeck), (counts, count, card) =>
 			`${counts}${card} (${count})
 `, '');
 
