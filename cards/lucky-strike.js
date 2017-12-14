@@ -66,7 +66,7 @@ LuckyStrike.probability = 20;
 LuckyStrike.description = 'Roll for attack twice, use the best roll to see if you hit.';
 LuckyStrike.cost = 6;
 LuckyStrike.level = 2;
-LuckyStrike.permittedClasses = [CLERIC, FIGHTER];
+LuckyStrike.permittedClassesAndTypes = [CLERIC, FIGHTER];
 
 LuckyStrike.flavors = {
 	hits: [

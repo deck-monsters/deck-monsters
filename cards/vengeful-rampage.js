@@ -16,7 +16,7 @@ VenegefulRampageCard.cardType = 'Vengeful Rampage';
 VenegefulRampageCard.probability = 10;
 VenegefulRampageCard.description = 'Your wounds only make you stronger.';
 VenegefulRampageCard.level = 3;
-VenegefulRampageCard.permittedClasses = [BARBARIAN];
+VenegefulRampageCard.permittedClassesAndTypes = [BARBARIAN];
 
 VenegefulRampageCard.flavors = {
 	hits: [

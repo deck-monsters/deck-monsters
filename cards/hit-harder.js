@@ -70,7 +70,7 @@ HitHarder.probability = 20;
 HitHarder.description = 'You hit just a little bit harder than the average bear... Roll for damage twice, and use the best result.';
 HitHarder.cost = 6;
 HitHarder.level = 2;
-HitHarder.permittedClasses = [BARBARIAN, FIGHTER];
+HitHarder.permittedClassesAndTypes = [BARBARIAN, FIGHTER];
 HitHarder.defaults = {
 	...HitCard.defaults,
 	damageDice: '1d6'
