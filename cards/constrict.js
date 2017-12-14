@@ -31,8 +31,7 @@ ConstrictCard.cardType = 'Constrict';
 ConstrictCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
 ConstrictCard.probability = 30;
 ConstrictCard.description = `Your body _is_ the weapon`;
-ConstrictCard.permittedClasses = [];
-ConstrictCard.permittedTypes = [BASILISK];
+ConstrictCard.permittedClassesAndTypes = [BASILISK];
 ConstrictCard.weakAgainstCreatureTypes = [BASILISK];
 ConstrictCard.defaults = {
 	...HitCard.defaults,

@@ -32,8 +32,8 @@ class BaseCard extends BaseClass {
 		return this.constructor.level;
 	}
 
-	get permittedClasses () {
-		return this.constructor.permittedClasses;
+	get permittedClassesAndTypes () {
+		return this.constructor.permittedClassesAndTypes;
 	}
 
 	get probability () {

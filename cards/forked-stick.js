@@ -33,7 +33,7 @@ ForkedStickCard.cardType = 'Forked Stick';
 ForkedStickCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 ForkedStickCard.probability = 30;
 ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.creatureType[1]}-hunting.`;
-ForkedStickCard.permittedClasses = [FIGHTER, BARBARIAN];
+ForkedStickCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedStickCard.weakAgainstCreatureTypes = [MINOTAUR];
 ForkedStickCard.defaults = {
 	...HitCard.defaults,

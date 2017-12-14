@@ -41,10 +41,9 @@ class BaseMonster extends BaseCreature {
 
 	canHold (object) {
 		const appropriateLevel = (!object.level || object.level <= this.level);
-		const appropriateClass = (!object.permittedClasses || object.permittedClasses.includes(this.class));
-		const appropriateType = (!object.permittedTypes || object.permittedTypes.includes(this.type));
+		const appropriateClassOrType = (!object.permittedClassesAndTypes || object.permittedClassesAndTypes.includes(this.class) || object.permittedClassesAndTypes.includes(this.type));
 
-		return appropriateLevel && (appropriateClass || appropriateType);
+		return appropriateLevel && appropriateClassOrType;
 	}
 
 	get emptyHanded () {

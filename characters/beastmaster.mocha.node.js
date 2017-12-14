@@ -110,9 +110,9 @@ describe('./characters/beastmaster.js', () => {
 		angel.xp = 300;
 		beastmaster.monsters = [minotaur, angel];
 
-		const correctClassAndLevel = beastmaster.canHoldCard({ level: 1, permittedClasses: ['Cleric'] });
-		const wrongClass = beastmaster.canHoldCard({ level: 1, permittedClasses: ['Fighter'] });
-		const wrongLevel = beastmaster.canHoldCard({ level: 10, permittedClasses: ['Cleric'] });
+		const correctClassAndLevel = beastmaster.canHoldCard({ level: 1, permittedClassesAndTypes: ['Cleric'] });
+		const wrongClass = beastmaster.canHoldCard({ level: 1, permittedClassesAndTypes: ['Fighter'] });
+		const wrongLevel = beastmaster.canHoldCard({ level: 10, permittedClassesAndTypes: ['Cleric'] });
 
 		expect(correctClassAndLevel).to.equal(true);
 		expect(wrongClass).to.equal(false);

@@ -16,7 +16,7 @@ class ThickSkinCard extends BoostCard {
 ThickSkinCard.cardType = 'Thick Skin';
 ThickSkinCard.description = 'Grow a heavy layer of scales to deflect the blows of thine enemies.';
 ThickSkinCard.level = 2;
-ThickSkinCard.permittedClasses = [BARBARIAN];
+ThickSkinCard.permittedClassesAndTypes = [BARBARIAN];
 ThickSkinCard.defaults = {
 	...BoostCard.defaults,
 	boostAmount: 2

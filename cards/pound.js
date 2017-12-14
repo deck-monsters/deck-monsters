@@ -17,7 +17,7 @@ PoundCard.probability = 10;
 PoundCard.description = 'You wield the mighty pound card and can do double the damage.';
 PoundCard.cost = 8;
 PoundCard.level = 3;
-PoundCard.permittedClasses = [BARBARIAN];
+PoundCard.permittedClassesAndTypes = [BARBARIAN];
 PoundCard.defaults = {
 	...HitCard.defaults,
 	damageDice: '2d6' // Lucky you, the pound card does double damage
