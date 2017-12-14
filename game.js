@@ -88,11 +88,13 @@ class Game extends BaseClass {
 		this.on('card.rolled', this.announceRolled);
 		this.on('card.rolling', this.announceRolling);
 		this.on('card.stay', this.announceStay);
+		this.on('cardDrop', this.announceCardDrop);
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.heal', this.announceHeal);
 		this.on('creature.hit', this.announceHit);
 		this.on('creature.leave', this.announceLeave);
 		this.on('creature.modifier', this.announceModifier);
+		this.on('gainedXP', this.announceXPGain);
 		this.on('ring.add', this.announceContestant);
 		this.on('ring.bossWillSpawn', this.announceBossWillSpawn);
 		this.on('ring.endOfDeck', this.announceEndOfDeck);
@@ -101,9 +103,6 @@ class Game extends BaseClass {
 		this.on('ring.remove', this.announceContestantLeave);
 		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.turnBegin', this.announceTurnBegin);
-
-		this.on('cardDrop', this.announceCardDrop);
-		this.on('gainedXP', this.announceXPGain);
 
 		// Manage Fights
 		this.on('creature.win', this.handleWinner);
@@ -179,15 +178,6 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		channel({
 			announce:
 `${monster.identity} is out of cards.`
-		});
-	}
-
-	announceNarration (className, monster, { narration }) {
-		const channel = this.publicChannel;
-
-		channel({
-			announce:
-`${narration}`
 		});
 	}
 
