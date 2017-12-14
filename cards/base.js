@@ -55,7 +55,7 @@ class BaseCard extends BaseClass {
 		// Stroke of Luck
 		if (roll.naturalRoll.result === max(roll.primaryDice)) {
 			strokeOfLuck = true;
-		} else if (roll.naturalRoll === 1) {
+		} else if (roll.naturalRoll.result === 1) {
 			curseOfLoki = true;
 		}
 

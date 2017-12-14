@@ -44,9 +44,9 @@ class HitCard extends BaseCard {
 		let commentary;
 
 		if (strokeOfLuck) {
-			commentary = `${player.givenName} rolled a natural 20. Automatic double max damage.`;
+			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
 		} else if (curseOfLoki) {
-			commentary = `${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
+			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack ${target.givenName} ${player.pronouns[2]} attack flings back against ${player.pronouns[1]}.`;
 		}
 
 		this.emit('rolled', {
@@ -73,33 +73,33 @@ class HitCard extends BaseCard {
 	rollForDamage (player, target, strokeOfLuck) {
 		const damageRoll = this.getDamageRoll(player, target);
 
-		this.emit('rolling', {
-			reason: `for damage against ${target.givenName}`,
-			card: this,
-			roll: damageRoll,
-			player,
-			target,
-			outcome: ''
-		});
-
 		if (strokeOfLuck) {
 			// change the natural roll into a max roll
 			damageRoll.naturalRoll.result = max(this.damageDice);
-			damageRoll.result = max(this.damageDice) * 2;
-		}
+			damageRoll.result = max(this.damageDice) + damageRoll.modifier;
+		} else {
+			this.emit('rolling', {
+				reason: `for damage against ${target.givenName}`,
+				card: this,
+				roll: damageRoll,
+				player,
+				target,
+				outcome: ''
+			});
 
-		if (damageRoll.result === 0) {
-			damageRoll.result = 1;
-		}
+			if (damageRoll.result < 1) {
+				damageRoll.result = 1;
+			}
 
-		this.emit('rolled', {
-			reason: 'for damage',
-			card: this,
-			roll: damageRoll,
-			player,
-			target,
-			outcome: ''
-		});
+			this.emit('rolled', {
+				reason: 'for damage',
+				card: this,
+				roll: damageRoll,
+				player,
+				target,
+				outcome: ''
+			});
+		}
 
 		return damageRoll;
 	}
@@ -113,11 +113,16 @@ class HitCard extends BaseCard {
 
 			ring.channelManager.sendMessages()
 				.then(() => {
-					if (success && !curseOfLoki) {
+					if (success) {
 						const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
 						// If we hit then do some damage
 						resolve(target.hit(damageRoll.result, player, this));
+					} else if (curseOfLoki) {
+						const damageRoll = this.rollForDamage(target, player);
+
+						// Our attack is now bouncing back against us
+						resolve(player.hit(damageRoll.result, target, this));
 					} else {
 						this.emit('miss', {
 							attackResult: attackRoll.result,

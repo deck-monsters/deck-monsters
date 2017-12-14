@@ -166,7 +166,10 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get xp () {
-		return this.options.xp || STARTING_XP;
+		let xp = this.options.xp || STARTING_XP;
+		xp += this.modifiers.xp || 0;
+
+		return xp;
 	}
 
 	set xp (xp) {

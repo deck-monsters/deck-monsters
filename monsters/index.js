@@ -1,4 +1,4 @@
-const { hydrateCard, getCardCounts } = require('../cards');
+const { getCardCounts, hydrateCard, sortCards } = require('../cards');
 const {
 	getChoices, getCardChoices, getCreatureTypeChoices, getFinalCardChoices
 } = require('../helpers/choices');
@@ -206,19 +206,8 @@ ${getFinalCardChoices(cards)}`
 				}));
 			}
 
-			const nowRemainingCards = [...deck]
-				.filter(card => monster.canHoldCard(card))
-				.sort((a, b) => {
-					if (a.cardType > b.cardType) {
-						return 1;
-					}
-
-					if (a.cardType < b.cardType) {
-						return -1;
-					}
-
-					return 0;
-				});
+			const nowRemainingCards = sortCards([...deck]
+				.filter(card => monster.canHoldCard(card)));
 
 			if (cardSelection) {
 				cardSelection.forEach((card) => {
@@ -256,7 +245,9 @@ const hydrateMonster = (monsterObj) => {
 
 	const monster = new Monster(options);
 
-	monster.cards = monsterObj.options.cards.map(cardObj => hydrateCard(cardObj, monster));
+	if (monsterObj.options.cards) {
+		monster.cards = monsterObj.options.cards.map(cardObj => hydrateCard(cardObj, monster));
+	}
 
 	return monster;
 };

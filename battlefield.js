@@ -60,18 +60,18 @@ let bossCards;
 return Promise
 	.resolve()
 	.then(() => slackdem.getCharacter(vladAnnouncer, VLAD_ID, {
-		id: VLAD_ID, name: 'vlad', type: 0, gender: 1, icon: 0
+		id: VLAD_ID, name: 'vlad', type: 0, gender: 1, icon: 0, xp: 100
 	}))
 	.then((character) => {
 		vlad = character;
-		vladCards = [...shuffle(vlad.character.deck).slice(0, 4)];
+		vladCards = [...shuffle(vlad.character.deck).slice(0, 5)];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
-		id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0
+		id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0, xp: 200
 	}))
 	.then((character) => {
 		char = character;
-		charCards = [...shuffle(char.character.deck).slice(0, 4)];
+		charCards = [...shuffle(char.character.deck).slice(0, 5)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
 	})
@@ -80,26 +80,28 @@ return Promise
 	}))
 	.then((character) => {
 		boss = character;
-		bossCards = [...shuffle(boss.character.deck).slice(0, 4)];
+		bossCards = [...shuffle(boss.character.deck).slice(0, 5)];
 	})
 	.then(() => vlad.spawnMonster({
-		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards
+		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 100
 	}))
 	.then(() => vlad.spawnMonster({
-		type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards
+		type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 100
 	}))
 	.then(() => char.spawnMonster({
-		type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards
+		type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards, xp: 200
 	}))
 	.then(() => char.spawnMonster({
-		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards
+		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 200
 	}))
 	.then(() => boss.spawnMonster({
 		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
 	}))
-	.then(() => vlad.lookAtCard({ cardName: 'hit' }))
+	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
 	.then(() => vlad.lookAtCard({ cardName: 'wooden spear' }))
+	.then(() => vlad.lookAtCards())
 	.then(() => vlad.lookAt('player handbook'))
+	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
 	.then(() => boss.sendMonsterToTheRing());
