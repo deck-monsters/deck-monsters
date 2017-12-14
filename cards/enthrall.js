@@ -45,7 +45,6 @@ EnthrallCard.level = 2;
 EnthrallCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 EnthrallCard.probability = 30;
 EnthrallCard.description = `You strut and preen. Your beauty overwhelmes and enthralls everyone, except yourself.`;
-EnthrallCard.permittedClasses = [WEEPING_ANGEL];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR];
 EnthrallCard.defaults = {
 	...HitCard.defaults,

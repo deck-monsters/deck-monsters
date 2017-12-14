@@ -32,7 +32,6 @@ EntranceCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 EntranceCard.probability = 20;
 EntranceCard.level = 3;
 EntranceCard.description = `You strut and preen. Your painful beauty overwhelmes and entrances everyone, except yourself.`;
-EntranceCard.permittedClasses = [WEEPING_ANGEL];
 EntranceCard.weakAgainstCreatureTypes = [MINOTAUR];
 EntranceCard.defaults = {
 	...HitCard.defaults,

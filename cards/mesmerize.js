@@ -31,7 +31,8 @@ MesmerizeCard.cardType = 'Mesmerize';
 MesmerizeCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 MesmerizeCard.probability = 30;
 MesmerizeCard.description = `You strut and preen. Your beauty overwhelmes and mesmerizes everyone, including yourself.`;
-MesmerizeCard.permittedClasses = [WEEPING_ANGEL];
+MesmerizeCard.permittedClasses = [];
+MesmerizeCard.permittedTypes = [WEEPING_ANGEL];
 MesmerizeCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 MesmerizeCard.defaults = {
 	...HitCard.defaults,
