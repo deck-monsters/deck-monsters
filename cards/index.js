@@ -14,6 +14,7 @@ const HealCard = require('./heal');
 const HitCard = require('./hit');
 const HitHarderCard = require('./hit-harder');
 const KalevalaCard = require('./kalevala');
+const PickPocketCard = require('./pick-pocket');
 const LuckyStrike = require('./lucky-strike');
 const PoundCard = require('./pound');
 const RandomCard = require('./random');
@@ -41,6 +42,7 @@ const all = [
 	HitCard,
 	HitHarderCard,
 	KalevalaCard,
+	PickPocketCard,
 	LuckyStrike,
 	PoundCard,
 	RandomCard,

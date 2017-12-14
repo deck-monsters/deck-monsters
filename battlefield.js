@@ -98,7 +98,7 @@ return Promise
 		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
 	}))
 	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
-	.then(() => vlad.lookAtCard({ cardName: 'wooden spear' }))
+	.then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))
 	.then(() => vlad.lookAtCards())
 	.then(() => vlad.lookAt('player handbook'))
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
