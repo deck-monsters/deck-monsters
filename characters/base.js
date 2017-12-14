@@ -47,8 +47,8 @@ class BaseCharacter extends BaseCreature {
 		this.emit('cardAdded', { card });
 	}
 
-	lookAtMonsters (channel) {
-		const monstersDisplay = this.monsters.reduce((monsters, monster) => monsters + monsterCard(monster, true), '');
+	lookAtMonsters (channel, description) {
+		const monstersDisplay = this.monsters.reduce((monsters, monster) => monsters + monsterCard(monster, description), '');
 
 		if (monstersDisplay) {
 			return Promise
