@@ -1,11 +1,8 @@
 /* eslint-disable max-len */
 
-const ImmobilizeCard = require('./immoblize');
+const ImmobilizeCard = require('./immobilize');
 
-const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
-const { DEFENSE_PHASE } = require('../helpers/phases');
-const { roll } = require('../helpers/chance');
 
 class ConstrictCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -26,20 +23,19 @@ class ConstrictCard extends ImmobilizeCard {
 		return `${super.stats}
 Chance to immobilize opponent by coiling around them and then squeezing.`;
 	}
+}
 
 ConstrictCard.cardType = 'Constrict';
 ConstrictCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
 ConstrictCard.probability = 30;
-ConstrictCard.description = `Your body _is_ the weapon`;
+ConstrictCard.description = 'Your body _is_ the weapon';
 ConstrictCard.permittedClassesAndTypes = [BASILISK];
 ConstrictCard.weakAgainstCreatureTypes = [BASILISK];
 ConstrictCard.defaults = {
-	...HitCard.defaults,
-	attackModifier: 2,
+	...ImmobilizeCard.defaults,
 	alwaysDoDamage: true,
-	hitOnFail: false
 };
-ConstrictCard.action = ["constrict", "constricts", "constricted"];
+ConstrictCard.action = ['constrict', 'constricts', 'constricted'];
 
 ConstrictCard.flavors = {
 	hits: [

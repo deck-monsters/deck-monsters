@@ -2,8 +2,7 @@
 
 const HitCard = require('./hit');
 
-const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR } = require('../helpers/creature-types');
 const { DEFENSE_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 
@@ -11,14 +10,17 @@ class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		attackModifier,
+		damageModifier,
 		hitOnFail,
 		alwaysDoDamage,
+		icon = '😵',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
 			attackModifier,
+			damageModifier,
 			hitOnFail,
 			alwaysDoDamage
 		});
@@ -37,7 +39,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get strongAgainstCreatureTypes () {
-		return this.constructor.creatureTypes;
+		return this.constructor.strongAgainstCreatureTypes;
 	}
 
 	get weakAgainstCreatureTypes () {
@@ -46,6 +48,10 @@ class ImmobilizeCard extends HitCard {
 
 	get attackModifier () {
 		return this.options.attackModifier;
+	}
+
+	get damageModifier () {
+		return this.options.damageModifier;
 	}
 
 	getAttackModifier (target) {
@@ -190,16 +196,17 @@ ImmobilizeCard.cardType = 'Immobilize';
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
 ImmobilizeCard.probability = 0;
-ImmobilizeCard.description = `Immobilize your adversary.`;
+ImmobilizeCard.description = 'Immobilize your adversary.';
 ImmobilizeCard.cost = 6;
 ImmobilizeCard.level = 1;
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,
 	attackModifier: 2,
+	damageModifier: 0,
 	hitOnFail: false,
 	alwaysDoDamage: false
 };
-ImmobilizeCard.action = ["immobilize", "immobilizes", "immobilized"];
+ImmobilizeCard.action = ['immobilize', 'immobilizes', 'immobilized'];
 
 ImmobilizeCard.flavors = {
 	hits: [

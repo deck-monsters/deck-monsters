@@ -1,11 +1,9 @@
 /* eslint-disable max-len */
 
-const ImmobilizeCard = require('./immoblize');
+const ImmobilizeCard = require('./immobilize');
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
-const { DEFENSE_PHASE } = require('../helpers/phases');
-const { roll } = require('../helpers/chance');
 
 class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -28,19 +26,18 @@ Chance to immobilize opponent by capturing their neck between prongs.
 
 Small chance to do damage.`;
 	}
+}
 
 ForkedStickCard.cardType = 'Forked Stick';
 ForkedStickCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 ForkedStickCard.probability = 30;
-ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.creatureType[1]}-hunting.`;
+ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.strongAgainstCreatureTypes[1]}-hunting.`;
 ForkedStickCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedStickCard.weakAgainstCreatureTypes = [MINOTAUR];
 ForkedStickCard.defaults = {
-	...HitCard.defaults,
-	attackModifier: 2,
-	hitOnFail: false
+	...ImmobilizeCard.defaults
 };
-ForkedStickCard.action = ["pin", "pins", "pinned"];
+ForkedStickCard.action = ['pin', 'pins', 'pinned'];
 
 ForkedStickCard.flavors = {
 	hits: [

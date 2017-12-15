@@ -1,8 +1,7 @@
 /* eslint-disable max-len */
 
 const ForkedStickCard = require('./forked-stick');
-
-const ImmobilizeCard = require('./immoblize');
+const ImmobilizeCard = require('./immobilize');
 
 const { roll } = require('../helpers/chance');
 
@@ -15,8 +14,10 @@ class ForkedMetalRodCard extends ForkedStickCard {
 		super({ icon, ...rest });
 	}
 
-	get stats () {
-		return `${ImmobilizeCard.stats}
+	get stats () { // eslint-disable-line class-methods-use-this
+		const immobilize = new ImmobilizeCard();
+
+		return `${immobilize.stats}
 Chance to immobilize opponent by capturing their neck between strong prongs.
 
 Chance to do damage.`;
