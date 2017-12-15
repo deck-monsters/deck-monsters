@@ -1,6 +1,7 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const ForkedStick = require('./forked-stick');
+const Hit = require('./hit');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Gladiator = require('../monsters/gladiator');
@@ -31,15 +32,16 @@ describe('./cards/forked-stick.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const forkedStick = new ForkedStick();
+		const hit = new Hit();
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.attackModifier).to.equal(2);
-		expect(forkedStick.damageModifier).to.equal(1);
-		expect(forkedStick.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d6\nHit: 1d20+2 vs AC / Damage: 1d6+1 vs Basilisk\nHit: 1d20+2 vs AC / Damage: 1d6-1 vs Minotaur');
+		expect(forkedStick.damageModifier).to.equal(0);
+		expect(forkedStick.stats).to.equal(hit.stats);
 	});
 
 	it('can be instantiated with options', () => {
-		const forkedStick = new ForkedStick({ damageModifier: 4, attackModifier: 4 });
+		const forkedStick = new ForkedStick({ damageModifier: 4, attackModifier: 4, hitOnFail: true, alwaysDoDamage: true });
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.damageModifier).to.equal(4);
