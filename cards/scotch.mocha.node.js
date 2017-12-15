@@ -26,7 +26,7 @@ describe('./cards/scotch.js', () => {
 	it('can be instantiated with defaults', () => {
 		const scotch = new ScotchCard();
 
-		expect(scotch.probability).to.equal(10);
+		expect(scotch.probability).to.equal(20);
 		expect(scotch.stats).to.equal('Health: 2d6\nPossiblity of Stroke of Luck');
 	});
 

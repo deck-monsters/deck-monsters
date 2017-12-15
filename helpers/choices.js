@@ -6,7 +6,7 @@ const getCardChoices = remainingCards => getChoices(Object.keys(remainingCards).
 
 const getFinalCardChoices = deck => getChoices(deck.map(card => card.cardType));
 
-const getMonsterChoices = monsters => getChoices(monsters.map(monster => monsterCard(monster)));
+const getMonsterChoices = monsters => getChoices(monsters.map(monster => monsterCard(monster, false)));
 
 const getCreatureTypeChoices = creatures => getChoices(creatures.map(creature => creature.creatureType));
 

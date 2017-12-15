@@ -19,7 +19,7 @@ class ReviveCard extends HealCard {
 }
 
 ReviveCard.cardType = 'Revive';
-ReviveCard.probability = 10;
+ReviveCard.probability = 0;
 ReviveCard.description = 'Luckily, you happened to have a fairy in your pocket.';
 ReviveCard.cost = 5;
 ReviveCard.level = 3;

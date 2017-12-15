@@ -64,7 +64,7 @@ class Rehit extends HitCard {
 }
 
 Rehit.cardType = 'Rehit';
-Rehit.probability = 20;
+Rehit.probability = 50;
 Rehit.description = 'Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.';
 Rehit.cost = 5;
 Rehit.level = 2;

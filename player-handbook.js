@@ -50,6 +50,8 @@ class PlayerHandbook extends BaseClass {
 
     \`look at monsters\` - Looks at monsters
 
+	\`look at monsters in detail\` - Looks at monsters with their description
+
     \`look at [monster name]\` - Look at specified monster
 
     \`look at cards\` - Look at your cards

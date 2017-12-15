@@ -62,7 +62,7 @@ class LuckyStrike extends HitCard {
 }
 
 LuckyStrike.cardType = 'Lucky Strike';
-LuckyStrike.probability = 20;
+LuckyStrike.probability = 30;
 LuckyStrike.description = 'Roll for attack twice, use the best roll to see if you hit.';
 LuckyStrike.cost = 6;
 LuckyStrike.level = 2;

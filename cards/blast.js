@@ -42,7 +42,7 @@ class BlastCard extends BaseCard {
 }
 
 BlastCard.cardType = 'Blast';
-BlastCard.probability = 30;
+BlastCard.probability = 60;
 BlastCard.description = 'A magical blast against every opponent in the encounter.';
 BlastCard.cost = 4;
 BlastCard.level = 0;

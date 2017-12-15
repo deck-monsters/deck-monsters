@@ -57,7 +57,7 @@ class FleeCard extends BaseCard {
 }
 
 FleeCard.cardType = 'Flee';
-FleeCard.probability = 5;
+FleeCard.probability = 20;
 FleeCard.description = 'There is no shame in living to fight another day.';
 FleeCard.cost = 3;
 FleeCard.level = 0;
