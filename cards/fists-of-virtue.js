@@ -23,7 +23,7 @@ class FistsOfVirtueCard extends HitCard {
 }
 
 FistsOfVirtueCard.cardType = 'Fists of Virtue';
-FistsOfVirtueCard.probability = 20;
+FistsOfVirtueCard.probability = 40;
 FistsOfVirtueCard.description = 'You strike at the biggest bully in the room.';
 FistsOfVirtueCard.level = 1;
 FistsOfVirtueCard.defaults = {

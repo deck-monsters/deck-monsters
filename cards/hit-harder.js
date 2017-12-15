@@ -66,7 +66,7 @@ class HitHarder extends HitCard {
 }
 
 HitHarder.cardType = 'Hit Harder';
-HitHarder.probability = 20;
+HitHarder.probability = 50;
 HitHarder.description = 'You hit just a little bit harder than the average bear... Roll for damage twice, and use the best result.';
 HitHarder.cost = 6;
 HitHarder.level = 2;

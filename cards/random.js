@@ -19,7 +19,7 @@ class RandomCard extends BaseCard {
 }
 
 RandomCard.cardType = 'Random Play';
-RandomCard.probability = 20;
+RandomCard.probability = 30;
 RandomCard.description = 'Go wild. Draw a random card from the deck and play it.';
 
 module.exports = RandomCard;

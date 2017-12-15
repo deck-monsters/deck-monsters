@@ -31,13 +31,13 @@ ${wrap(rankings, { indent: '| ', width: 31 })}`
 );
 
 const cardRarity = (card) => {
-	if (card.probability >= 50) {
+	if (card.probability >= 80) {
 		return '•';
-	} else if (card.probability >= 30) {
+	} else if (card.probability >= 60) {
 		return '○';
-	} else if (card.probability >= 20) {
+	} else if (card.probability >= 40) {
 		return '◆';
-	} else if (card.probability >= 10) {
+	} else if (card.probability >= 20) {
 		return '★';
 	}
 

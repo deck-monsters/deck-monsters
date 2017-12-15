@@ -27,7 +27,7 @@ describe('./cards/vengeful-rampage.js', () => {
 		const venegefulRampage = new VenegefulRampageCard();
 
 		expect(venegefulRampage).to.be.an.instanceof(VenegefulRampageCard);
-		expect(venegefulRampage.probability).to.equal(10);
+		expect(venegefulRampage.probability).to.equal(20);
 		expect(venegefulRampage.stats).to.equal('Hit: 1d20 vs AC\nDamage: 1d6 +1 per wound suffered');
 	});
 
