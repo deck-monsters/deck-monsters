@@ -97,7 +97,7 @@ describe('./characters/beastmaster.js', () => {
 			.then(() => beastmaster.reviveMonster({ monsterName: 'Foo', channel: channelStub }))
 			.then(() => {
 				expect(channelStub).to.have.been.calledWith({
-					announce: 'Foo has begun to revive. It is a level 2 monster, and therefore will be revived in an hour.'
+					announce: 'Foo has begun to revive. It is a level 2 monster, and therefore will be revived in 20 minutes.'
 				});
 			});
 	});
@@ -119,7 +119,7 @@ describe('./characters/beastmaster.js', () => {
 		expect(wrongLevel).to.equal(false);
 	});
 
-	it('can shows monsters with description (default)', () => {
+	it('can show monsters with description (default)', () => {
 		const beastmaster = new Beastmaster();
 		const minotaur = new Minotaur({ color: 'asdf' });
 		const angel = new WeepingAngel({ color: 'qwer' });
@@ -134,7 +134,7 @@ describe('./characters/beastmaster.js', () => {
 			});
 	});
 
-	it('can shows monsters without description', () => {
+	it('can show monsters without description', () => {
 		const beastmaster = new Beastmaster();
 		const minotaur = new Minotaur({ color: 'asdf' });
 		const angel = new WeepingAngel({ color: 'qwer' });

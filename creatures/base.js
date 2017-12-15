@@ -18,7 +18,7 @@ const MAX_ATTACK_BOOST = 10;
 const MAX_DAMAGE_BOOST = 6;
 const MAX_HP_BOOST = (BASE_HP * 2) + HP_VARIANCE;
 const TIME_TO_HEAL = 300000; // Five minutes per hp
-const TIME_TO_RESURRECT = 1800000; // Half-hour per level
+const TIME_TO_RESURRECT = 600000; // Ten minutes per level
 
 class BaseCreature extends BaseClass {
 	constructor (options) {
@@ -37,6 +37,10 @@ class BaseCreature extends BaseClass {
 		this.healingInterval = setInterval(() => {
 			if (this.hp < this.maxHp && !this.inEncounter && !this.dead) this.heal(1);
 		}, TIME_TO_HEAL);
+
+		if (this.respawnTimeoutBegan) {
+			this.respawn();
+		}
 	}
 
 	get class () {
@@ -162,6 +166,16 @@ Battles won: ${this.battles.wins}`;
 	set hp (hp) {
 		this.setOptions({
 			hp
+		});
+	}
+
+	get respawnTimeoutBegan () {
+		return this.options.respawnTimeoutBegan || 0;
+	}
+
+	set respawnTimeoutBegan (respawnTimeoutBegan) {
+		this.setOptions({
+			respawnTimeoutBegan
 		});
 	}
 
@@ -420,23 +434,26 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	respawn (immediate) {
+		const now = Date.now();
+		const timeoutLength = (immediate) ? 0 : this.level * TIME_TO_RESURRECT;
+
 		if (immediate || !this.respawnTimeout) {
 			// TO-DO: Possibly do some other checks for whether this monster should respawn
 			const creature = this;
-			const timeoutLength = (immediate) ? 0 : this.level * TIME_TO_RESURRECT;
 
-			this.respawnTimeoutBegan = Date.now();
-			this.respawnTimeoutLength = timeoutLength;
+			this.respawnTimeoutBegan = this.respawnTimeoutBegan || now;
+			this.respawnTimeoutLength = Math.max((this.respawnTimeoutBegan + timeoutLength) - now, 0);
 
 			this.respawnTimeout = pause.setTimeout(() => {
 				creature.hp = Math.max(1, creature.hp);
 				creature.respawnTimeout = undefined;
+				creature.respawnTimeoutBegan = undefined;
 
 				creature.emit('respawn');
 			}, timeoutLength);
 		}
 
-		return this.respawnTimeoutBegan + this.respawnTimeoutLength;
+		return this.respawnTimeoutBegan + timeoutLength;
 	}
 
 	addWin () {
