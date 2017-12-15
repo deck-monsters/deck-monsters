@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-const startCase = require('lodash.startcase'); // eslint-disable-line node/no-unpublished-require
+const startCase = require('lodash.startcase');
 
 const { draw } = require('./cards');
 const { randomCharacter } = require('./characters');
