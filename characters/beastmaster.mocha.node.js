@@ -118,4 +118,34 @@ describe('./characters/beastmaster.js', () => {
 		expect(wrongClass).to.equal(false);
 		expect(wrongLevel).to.equal(false);
 	});
+
+	it('can shows monsters with description (default)', () => {
+		const beastmaster = new Beastmaster();
+		const minotaur = new Minotaur({ color: 'asdf' });
+		const angel = new WeepingAngel({ color: 'qwer' });
+
+		beastmaster.monsters = [minotaur, angel];
+
+		return beastmaster
+			.lookAtMonsters(channelStub, true)
+			.then(() => {
+				expect(channelStub.args[0][0].announce).to.include('asdf');
+				expect(channelStub.args[0][0].announce).to.include('qwer');
+			});
+	});
+
+	it('can shows monsters without description', () => {
+		const beastmaster = new Beastmaster();
+		const minotaur = new Minotaur({ color: 'asdf' });
+		const angel = new WeepingAngel({ color: 'qwer' });
+
+		beastmaster.monsters = [minotaur, angel];
+
+		return beastmaster
+			.lookAtMonsters(channelStub, false)
+			.then(() => {
+				expect(channelStub.args[0][0].announce).to.not.include('asdf');
+				expect(channelStub.args[0][0].announce).to.not.include('qwer');
+			});
+	});
 });
