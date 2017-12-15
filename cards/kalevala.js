@@ -47,7 +47,7 @@ It will now do ${this.damageDice} damage.`
 }
 
 KalevalaCard.cardType = 'The Kalevala';
-KalevalaCard.probability = 5;
+KalevalaCard.probability = 10;
 KalevalaCard.description = 'Steadfast old Väinämöinen himself fashioned this instrument of eternal joy. Tune its pikebone pegs and it may lead you on to victory.'; // eslint-disable-line max-len
 KalevalaCard.cost = 6;
 KalevalaCard.level = 1;
