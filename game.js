@@ -138,6 +138,7 @@ class Game extends BaseClass {
 
 		this.channelManager.queueMessage({
 			announce: `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:
+
 ${cardDropped}`,
 			channel,
 			channelName
@@ -285,7 +286,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 		channel({
 			announce:
-`${monster.identity}'s ${attr} ${dir} by ${amount}`
+`${monster.identity}'s ${attr} ${dir} by ${Math.abs(amount)}`
 		});
 	}
 
