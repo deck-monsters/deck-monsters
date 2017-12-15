@@ -570,7 +570,7 @@ ${monsterCard(monster)}`
 					return character.lookAtCards(channel, deckName)
 						.catch(err => log(err));
 				},
-				lookAtMonsters ({ inDetail }) {
+				lookAtMonsters ({ inDetail } = {}) {
 					return character.lookAtMonsters(channel, inDetail)
 						.catch(err => log(err));
 				},
