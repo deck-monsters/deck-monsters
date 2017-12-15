@@ -139,6 +139,7 @@ class Game extends BaseClass {
 
 		this.channelManager.queueMessage({
 			announce: `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:
+
 ${cardDropped}`,
 			channel,
 			channelName
