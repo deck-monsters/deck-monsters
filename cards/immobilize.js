@@ -2,7 +2,7 @@
 
 const HitCard = require('./hit');
 
-const { GLADIATOR, MINOTAUR } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 
@@ -12,7 +12,7 @@ class ImmobilizeCard extends HitCard {
 		attackModifier,
 		damageModifier,
 		hitOnFail,
-		alwaysDoDamage,
+		doDamageOnImmobilize,
 		icon = '😵',
 		freedomThresholdModifier,
 		...rest
@@ -23,7 +23,7 @@ class ImmobilizeCard extends HitCard {
 			attackModifier,
 			damageModifier,
 			hitOnFail,
-			alwaysDoDamage,
+			doDamageOnImmobilize,
 			freedomThresholdModifier
 		});
 
@@ -32,8 +32,8 @@ class ImmobilizeCard extends HitCard {
 		}
 	}
 
-	get alwaysDoDamage () {
-		return this.options.alwaysDoDamage;
+	get doDamageOnImmobilize () {
+		return this.options.doDamageOnImmobilize;
 	}
 
 	get hitOnFail () {
@@ -46,6 +46,10 @@ class ImmobilizeCard extends HitCard {
 
 	get weakAgainstCreatureTypes () {
 		return this.constructor.weakAgainstCreatureTypes;
+	}
+
+	get uselessAgainstCreatureTypes () {
+		return this.constructor.uselessAgainstCreatureTypes;
 	}
 
 	get attackModifier () {
@@ -89,9 +93,10 @@ class ImmobilizeCard extends HitCard {
 		return new Promise((resolve) => {
 			const attackRoll = this.getAttackRoll(player, target);
 			const alreadyImmobilized = !!target.encounterEffects.find(effect => effect.effectType === 'ImmobilizeEffect');
-			const attackSuccess = this.checkSuccess(attackRoll, target.ac);
 
-			if (!alreadyImmobilized) {
+			if (!alreadyImmobilized || !this.uselessAgainstCreatureTypes.includes(target.name)) {
+				const attackSuccess = this.checkSuccess(attackRoll, target.ac);
+
 				this.emit('rolling', {
 					reason: `to see if you ${this.getAction(0)} ${target.givenName}`,
 					card: this,
@@ -100,75 +105,69 @@ class ImmobilizeCard extends HitCard {
 					target,
 					outcome: ''
 				});
-			}
 
-			if (!alreadyImmobilized && attackSuccess) {
-				this.emit('rolled', {
-					reason: `for ${this.getAction(0)}`,
-					card: this,
-					roll: attackRoll,
-					player,
-					target,
-					outcome: `${this.getAction(0)} succeeded!`
-				});
+				if (attackSuccess) {
+					this.emit('rolled', {
+						reason: `for ${this.getAction(0)}`,
+						card: this,
+						roll: attackRoll,
+						player,
+						target,
+						outcome: `${this.getAction(0)} succeeded!`
+					});
 
-				const immobilizeEffect = ({
-					card,
-					phase
-				}) => {
-					if (phase === ATTACK_PHASE) {
-						this.emit('effect', {
-							effectName: `a ${this.icon}${this.cardType} effect`,
-							player,
-							target,
-							ring
-						});
+					const immobilizeEffect = ({
+						card,
+						phase
+					}) => {
+						if (phase === ATTACK_PHASE) {
+							this.emit('effect', {
+								effectName: `a ${this.icon}${this.cardType} effect`,
+								player,
+								target,
+								ring
+							});
 
-						const freedomRoll = roll({ primaryDice: '1d20' });
-						const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
-						let commentary;
-
-						if (strokeOfLuck) {
-							commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
-						}
-
-						this.emit('rolled', {
-							reason: `and needs higher than a ${this.getFreedomThreshold(player, target)} to be free`,
-							card: this,
-							roll: freedomRoll,
-							player: target,
-							target: player,
-							outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.getAction(2)} and will miss a turn.`
-						});
-
-						if (success) {
-							target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
+							const freedomRoll = roll({ primaryDice: '1d20' });
+							const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
+							let commentary;
 
 							if (strokeOfLuck) {
-								player.hit(2, target, this);
+								commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
 							}
-						} else {
-							card.play = () => Promise.resolve(true);
+
+							this.emit('rolled', {
+								reason: `and needs higher than a ${this.getFreedomThreshold(player, target)} to be free`,
+								card: this,
+								roll: freedomRoll,
+								player: target,
+								target: player,
+								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.getAction(2)} and will miss a turn.`
+							});
+
+							if (success) {
+								target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
+
+								if (strokeOfLuck) {
+									player.hit(2, target, this);
+								}
+							} else {
+								card.play = () => Promise.resolve(true);
+							}
 						}
+
+						return card;
+					};
+
+					immobilizeEffect.effectType = 'ImmobilizeEffect';
+					target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
+
+					if (this.doDamageOnImmobilize) {
+						return resolve(super.effect(player, target, ring, activeContestants));
 					}
 
-					return card;
-				};
-
-				immobilizeEffect.effectType = 'ImmobilizeEffect';
-				target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
-
-				if (this.alwaysDoDamage) {
-					return resolve(super.effect(player, target, ring, activeContestants));
-				}
-
-				return resolve(true);
-			} else if (alreadyImmobilized || this.hitOnFail) {
-				if (alreadyImmobilized) {
-					this.emit('narration', {
-						narration: `${target.givenName} is already ${this.getAction(2)}, attempting to hit`
-					});
-				} else {
+					return resolve(true);
+				} else if (this.hitOnFail) {
 					this.emit('rolled', {
 						reason: `for ${this.getAction(0)}`,
 						card: this,
@@ -177,7 +176,17 @@ class ImmobilizeCard extends HitCard {
 						target,
 						outcome: `${this.getAction(0)} failed, chance to hit instead...`
 					});
+
+					return resolve(super.effect(player, target, ring, activeContestants));
 				}
+			} else if (alreadyImmobilized || this.hitOnFail) {
+				let narration = '';
+				if (alreadyImmobilized) {
+					narration = `${target.givenName} is already ${this.getAction(2)}, now _show no mercy_!`
+				} else {
+					narration = `${target.givenName} laughs hautily as you try to ${this.getAction(2)} them, vent your fury at their mockery!`
+				}
+				this.emit('narration', { narration });
 
 				return resolve(super.effect(player, target, ring, activeContestants));
 			}
@@ -197,6 +206,7 @@ class ImmobilizeCard extends HitCard {
 ImmobilizeCard.cardType = 'Immobilize';
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
+ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];
 ImmobilizeCard.probability = 0;
 ImmobilizeCard.description = 'Immobilize your adversary.';
 ImmobilizeCard.cost = 6;
@@ -206,7 +216,7 @@ ImmobilizeCard.defaults = {
 	attackModifier: 2,
 	damageModifier: 0,
 	hitOnFail: false,
-	alwaysDoDamage: false,
+	doDamageOnImmobilize: false,
 	freedomThresholdModifier: 1
 };
 ImmobilizeCard.action = ['immobilize', 'immobilizes', 'immobilized'];

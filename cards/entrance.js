@@ -31,7 +31,7 @@ EntranceCard.description = 'You strut and preen. Your painful beauty overwhelmes
 EntranceCard.defaults = {
 	...MesmerizeCard.defaults,
 	hitOnFail: true,
-	alwaysDoDamage: true
+	doDamageOnImmobilize: true
 };
 EntranceCard.action = ['entrance', 'entrances', 'entranced'];
 

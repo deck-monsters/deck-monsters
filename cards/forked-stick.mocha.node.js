@@ -47,7 +47,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		expect(forkedStick.attackModifier).to.equal(2);
 		expect(forkedStick.damageModifier).to.equal(0);
 		expect(forkedStick.hitOnFail).to.be.false;
-		expect(forkedStick.alwaysDoDamage).to.be.false;
+		expect(forkedStick.doDamageOnImmobilize).to.be.false;
 		expect(forkedStick.stats).to.equal(stats);
 		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
 		expect(forkedStick.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR]);
@@ -56,7 +56,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 	it('can be instantiated with options', () => {
 		const forkedStick = new ForkedStick({
-			freedomThresholdModifier: 1.5, damageModifier: 4, attackModifier: 4, hitOnFail: true, alwaysDoDamage: true
+			freedomThresholdModifier: 1.5, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
@@ -64,7 +64,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		expect(forkedStick.attackModifier).to.equal(4);
 		expect(forkedStick.damageModifier).to.equal(4);
 		expect(forkedStick.hitOnFail).to.be.true;
-		expect(forkedStick.alwaysDoDamage).to.be.true;
+		expect(forkedStick.doDamageOnImmobilize).to.be.true;
 	});
 
 	it('can be played against gladiators for a bonus to attack', () => {

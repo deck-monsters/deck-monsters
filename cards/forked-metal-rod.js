@@ -24,7 +24,7 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 
 ForkedMetalRodCard.cardType = 'Forked Metal Rod';
 ForkedMetalRodCard.probability = 20;
-ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedStickCard.creatureTypes[1]}-hunting.`;
+ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedStickCard.strongAgainstCreatureTypes[1]}-hunting.`;
 ForkedMetalRodCard.level = 2;
 ForkedMetalRodCard.defaults = {
 	...ForkedStickCard.defaults,
