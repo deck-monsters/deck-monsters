@@ -73,6 +73,10 @@ class ImmobilizeCard extends HitCard {
 		return this.options.freedomThresholdModifier;
 	}
 
+	getAction (tense) {
+		return this.constructor.action[tense];
+	}
+
 	getFreedomThreshold (player) {
 		return player.ac * this.getFreedomThresholdModifier;
 	}
@@ -89,7 +93,7 @@ class ImmobilizeCard extends HitCard {
 
 			if (!alreadyImmobilized) {
 				this.emit('rolling', {
-					reason: `to see if you ${this.action[0]} ${target.givenName}`,
+					reason: `to see if you ${this.getAction(0)} ${target.givenName}`,
 					card: this,
 					roll: attackRoll,
 					player,
@@ -100,12 +104,12 @@ class ImmobilizeCard extends HitCard {
 
 			if (!alreadyImmobilized && attackSuccess) {
 				this.emit('rolled', {
-					reason: `for ${this.action[0]}`,
+					reason: `for ${this.getAction(0)}`,
 					card: this,
 					roll: attackRoll,
 					player,
 					target,
-					outcome: `${this.action[0]} succeeded!`
+					outcome: `${this.getAction(0)} succeeded!`
 				});
 
 				const immobilizeEffect = ({
@@ -134,7 +138,7 @@ class ImmobilizeCard extends HitCard {
 							roll: freedomRoll,
 							player: target,
 							target: player,
-							outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.action[2]} and will miss a turn.`
+							outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.getAction(2)} and will miss a turn.`
 						});
 
 						if (success) {
@@ -152,7 +156,7 @@ class ImmobilizeCard extends HitCard {
 				};
 
 				immobilizeEffect.effectType = 'ImmobilizeEffect';
-				target.encounterEffects.push(immobilizeEffect);
+				target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
 
 				if (this.alwaysDoDamage) {
 					return resolve(super.effect(player, target, ring, activeContestants));
@@ -162,16 +166,16 @@ class ImmobilizeCard extends HitCard {
 			} else if (alreadyImmobilized || this.hitOnFail) {
 				if (alreadyImmobilized) {
 					this.emit('narration', {
-						narration: `${target.givenName} is already ${this.action[2]}, attempting to hit`
+						narration: `${target.givenName} is already ${this.getAction(2)}, attempting to hit`
 					});
 				} else {
 					this.emit('rolled', {
-						reason: `for ${this.action[0]}`,
+						reason: `for ${this.getAction(0)}`,
 						card: this,
 						roll: attackRoll,
 						player,
 						target,
-						outcome: `${this.action[0]} failed, chance to hit instead...`
+						outcome: `${this.getAction(0)} failed, chance to hit instead...`
 					});
 				}
 
