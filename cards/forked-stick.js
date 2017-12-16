@@ -22,9 +22,7 @@ class ForkedStickCard extends ImmobilizeCard {
 	}
 	get stats () {
 		return `${super.stats}
-Chance to immobilize opponent by capturing their neck between prongs.
-
-Small chance to do damage.`;
+Attempt to pin your opponent between the branches of a forked stick.`;
 	}
 }
 

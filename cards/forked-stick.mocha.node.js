@@ -40,9 +40,7 @@ describe('./cards/forked-stick.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
-Chance to immobilize opponent by capturing their neck between prongs.
-
-Small chance to do damage.`;
+Attempt to pin your opponent between the branches of a forked stick.`;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.freedomThresholdModifier).to.equal(1);

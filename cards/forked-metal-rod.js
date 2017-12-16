@@ -16,15 +16,15 @@ class ForkedMetalRodCard extends ForkedStickCard {
 		const immobilize = new ImmobilizeCard();
 
 		return `${immobilize.stats}
-Chance to immobilize opponent by capturing their neck between strong prongs.
+Attempt to immobilize your opponent by capturing their neck between strong sharp prongs.
 
-Chance to do damage.`;
+Even if you miss, there's a chance you'll just stab them instead...`;
 	}
 }
 
 ForkedMetalRodCard.cardType = 'Forked Metal Rod';
 ForkedMetalRodCard.probability = 20;
-ForkedMetalRodCard.description = `A dangerously strong weapon fashioned for ${ForkedStickCard.creatureTypes[1]}-hunting.`;
+ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedStickCard.creatureTypes[1]}-hunting.`;
 ForkedMetalRodCard.level = 2;
 ForkedMetalRodCard.defaults = {
 	...ForkedStickCard.defaults,
