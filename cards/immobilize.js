@@ -73,7 +73,7 @@ class ImmobilizeCard extends HitCard {
 		return this.options.freedomThresholdModifier;
 	}
 
-	getFreedomThreshold (player) { // eslint-disable-line class-methods-use-this
+	getFreedomThreshold (player) {
 		return player.ac * this.getFreedomThresholdModifier;
 	}
 

@@ -80,6 +80,18 @@ Small chance to do damage.`;
 		expect(dmgRoll.modifier).to.equal(player.damageModifier);
 	});
 
+	it('can be played against basilisk for a bonus to attack', () => {
+		const forkedStick = new ForkedStick();
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const atkRoll = forkedStick.getAttackRoll(player, target);
+		const dmgRoll = forkedStick.getDamageRoll(player, target);
+
+		expect(atkRoll.modifier).to.equal(player.attackModifier + 2);
+		expect(dmgRoll.modifier).to.equal(player.damageModifier);
+	});
+
 	it('can be played against minotaurs for a weakened attack', () => {
 		const forkedStick = new ForkedStick();
 

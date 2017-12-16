@@ -3,8 +3,6 @@
 const ForkedStickCard = require('./forked-stick');
 const ImmobilizeCard = require('./immobilize');
 
-const { roll } = require('../helpers/chance');
-
 class ForkedMetalRodCard extends ForkedStickCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
