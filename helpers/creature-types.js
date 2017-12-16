@@ -3,5 +3,5 @@ module.exports = {
 	BEASTMASTER: 'Beastmaster',
 	GLADIATOR: 'Gladiator',
 	MINOTAUR: 'Minotaur',
-	WEEPING_ANGEL: 'Weeping Angel'
+	WEEPING_ANGEL: 'WeepingAngel'
 };

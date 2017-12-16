@@ -26,10 +26,6 @@ class ImmobilizeCard extends HitCard {
 			doDamageOnImmobilize,
 			freedomThresholdModifier
 		});
-
-		if (this.name === ImmobilizeCard.name) {
-			throw new Error('The ImmobilizeCard should not be instantiated directly!');
-		}
 	}
 
 	get doDamageOnImmobilize () {
@@ -93,8 +89,9 @@ class ImmobilizeCard extends HitCard {
 		return new Promise((resolve) => {
 			const attackRoll = this.getAttackRoll(player, target);
 			const alreadyImmobilized = !!target.encounterEffects.find(effect => effect.effectType === 'ImmobilizeEffect');
+			const canHaveEffect = !this.uselessAgainstCreatureTypes.includes(target.name)
 
-			if (!alreadyImmobilized || !this.uselessAgainstCreatureTypes.includes(target.name)) {
+			if (!alreadyImmobilized && canHaveEffect) {
 				const attackSuccess = this.checkSuccess(attackRoll, target.ac);
 
 				this.emit('rolling', {
@@ -106,7 +103,7 @@ class ImmobilizeCard extends HitCard {
 					outcome: ''
 				});
 
-				if (attackSuccess) {
+				if (attackSuccess.success) {
 					this.emit('rolled', {
 						reason: `for ${this.getAction(0)}`,
 						card: this,
@@ -179,7 +176,7 @@ class ImmobilizeCard extends HitCard {
 
 					return resolve(super.effect(player, target, ring, activeContestants));
 				}
-			} else if (alreadyImmobilized || this.hitOnFail) {
+			} else if (alreadyImmobilized || !canHaveEffect) {
 				let narration = '';
 				if (alreadyImmobilized) {
 					narration = `${target.givenName} is already ${this.getAction(2)}, now _show no mercy_!`
@@ -206,8 +203,8 @@ class ImmobilizeCard extends HitCard {
 ImmobilizeCard.cardType = 'Immobilize';
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
-ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];
-ImmobilizeCard.probability = 0;
+ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobilization, will hit instead
+ImmobilizeCard.probability = 0;// This card is never intended to be played on it's own, but I need access to parts of it for card progressions, so it needs to be instantiatable.
 ImmobilizeCard.description = 'Immobilize your adversary.';
 ImmobilizeCard.cost = 6;
 ImmobilizeCard.level = 1;
