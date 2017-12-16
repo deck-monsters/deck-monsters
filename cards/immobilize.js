@@ -89,7 +89,7 @@ class ImmobilizeCard extends HitCard {
 		return new Promise((resolve) => {
 			const attackRoll = this.getAttackRoll(player, target);
 			const alreadyImmobilized = !!target.encounterEffects.find(effect => effect.effectType === 'ImmobilizeEffect');
-			const canHaveEffect = !this.uselessAgainstCreatureTypes.includes(target.name)
+			const canHaveEffect = !this.uselessAgainstCreatureTypes.includes(target.creatureType);
 
 			if (!alreadyImmobilized && canHaveEffect) {
 				const attackSuccess = this.checkSuccess(attackRoll, target.ac);
