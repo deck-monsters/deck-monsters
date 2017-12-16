@@ -11,7 +11,7 @@ const pause = require('../helpers/pause');
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 
-describe.only('./cards/forked-stick.js', () => {
+describe('./cards/forked-stick.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -94,7 +94,7 @@ Small chance to do damage.`;
 		const forkedStick = new ForkedStick();
 
 		const target = new WeepingAngel({ name: 'player' });
-		const player = new Minotaur({ name: 'target' });
+		const player = new Gladiator({ name: 'target' });
 		const dmgRoll = forkedStick.getDamageRoll(player, target);
 		const atkRoll = forkedStick.getAttackRoll(player, target);
 

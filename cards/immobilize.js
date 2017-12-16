@@ -43,7 +43,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get weakAgainstCreatureTypes () {
-		return this.constructor.weakAgainstCreatureType;
+		return this.constructor.weakAgainstCreatureTypes;
 	}
 
 	get attackModifier () {
@@ -73,14 +73,6 @@ class ImmobilizeCard extends HitCard {
 
 	getAttackRoll (player, target) {
 		return roll({ primaryDice: this.attackDice, modifier: player.attackModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
-	}
-
-	getDamageRoll (player, target) {
-		if (this.getAttackRoll(player) > target.ac * 1.5) {
-			return roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });
-		}
-
-		return 0;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
