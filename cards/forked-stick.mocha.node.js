@@ -44,6 +44,7 @@ Chance to immobilize opponent by capturing their neck between prongs.
 Small chance to do damage.`;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
+		expect(forkedStick.freedomThresholdModifier).to.equal(1);
 		expect(forkedStick.attackModifier).to.equal(2);
 		expect(forkedStick.damageModifier).to.equal(0);
 		expect(forkedStick.hitOnFail).to.equal(false);
@@ -56,10 +57,11 @@ Small chance to do damage.`;
 
 	it('can be instantiated with options', () => {
 		const forkedStick = new ForkedStick({
-			damageModifier: 4, attackModifier: 4, hitOnFail: true, alwaysDoDamage: true
+			freedomThresholdModifier: 1.5, damageModifier: 4, attackModifier: 4, hitOnFail: true, alwaysDoDamage: true
 		});
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
+		expect(forkedStick.freedomThresholdModifier).to.equal(1.5);
 		expect(forkedStick.attackModifier).to.equal(4);
 		expect(forkedStick.damageModifier).to.equal(4);
 		expect(forkedStick.hitOnFail).to.equal(true);

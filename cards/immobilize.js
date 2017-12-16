@@ -14,6 +14,7 @@ class ImmobilizeCard extends HitCard {
 		hitOnFail,
 		alwaysDoDamage,
 		icon = '😵',
+		freedomThresholdModifier,
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
@@ -22,7 +23,8 @@ class ImmobilizeCard extends HitCard {
 			attackModifier,
 			damageModifier,
 			hitOnFail,
-			alwaysDoDamage
+			alwaysDoDamage,
+			freedomThresholdModifier
 		});
 
 		if (this.name === ImmobilizeCard.name) {
@@ -67,8 +69,12 @@ class ImmobilizeCard extends HitCard {
 		return `${super.stats}`;
 	}
 
+	get freedomThresholdModifier () {
+		return this.options.freedomThresholdModifier;
+	}
+
 	getFreedomThreshold (player) { // eslint-disable-line class-methods-use-this
-		return player.ac;
+		return player.ac * this.getFreedomThresholdModifier;
 	}
 
 	getAttackRoll (player, target) {
@@ -196,7 +202,8 @@ ImmobilizeCard.defaults = {
 	attackModifier: 2,
 	damageModifier: 0,
 	hitOnFail: false,
-	alwaysDoDamage: false
+	alwaysDoDamage: false,
+	freedomThresholdModifier: 1
 };
 ImmobilizeCard.action = ['immobilize', 'immobilizes', 'immobilized'];
 
