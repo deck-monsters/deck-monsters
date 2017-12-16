@@ -16,9 +16,10 @@
     "npm": "5.x"
   },
   "scripts": {
+    "build": "node ./helpers/card-probabilities.js",
     "lint": "eslint \"**/*.{js,jsx}\"",
     "lint:fix": "npm run lint -- --fix",
-    "tag": "mc-tag",
+    "tag": "mc-tag -b",
     "test": "mc-test --node",
     "test:debug": "mc-test --node --browsers Chrome",
     "test:watch": "mc-test --node --watch"
