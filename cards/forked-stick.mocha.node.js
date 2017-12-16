@@ -112,7 +112,7 @@ Small chance to do damage.`;
 		const dmgRoll = forkedStick.getDamageRoll(player, target);
 		const atkRoll = forkedStick.getAttackRoll(player, target);
 
-		expect(dmgRoll.modifier).to.equal(player.attackModifier);
-		expect(atkRoll.modifier).to.equal(player.damageModifier);
+		expect(dmgRoll.modifier).to.equal(player.damageModifier);
+		expect(atkRoll.modifier).to.equal(player.attackModifier);
 	});
 });
