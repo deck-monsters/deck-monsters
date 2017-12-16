@@ -115,4 +115,34 @@ Small chance to do damage.`;
 		expect(dmgRoll.modifier).to.equal(player.damageModifier);
 		expect(atkRoll.modifier).to.equal(player.attackModifier);
 	});
+
+	it.only('immobilizes basilisk on hit', () => {
+		const forkedStick = new ForkedStick();
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const before = target.hp;
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return forkedStick
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+				expect(target.hp).to.equal(before);
+				console.log(target.encounterEffects);
+				return expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+			});
+	});
 });
