@@ -47,8 +47,8 @@ Small chance to do damage.`;
 		expect(forkedStick.freedomThresholdModifier).to.equal(1);
 		expect(forkedStick.attackModifier).to.equal(2);
 		expect(forkedStick.damageModifier).to.equal(0);
-		expect(forkedStick.hitOnFail).to.equal(false);
-		expect(forkedStick.alwaysDoDamage).to.equal(false);
+		expect(forkedStick.hitOnFail).to.be.false;
+		expect(forkedStick.alwaysDoDamage).to.be.false;
 		expect(forkedStick.stats).to.equal(stats);
 		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
 		expect(forkedStick.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR]);
@@ -64,8 +64,8 @@ Small chance to do damage.`;
 		expect(forkedStick.freedomThresholdModifier).to.equal(1.5);
 		expect(forkedStick.attackModifier).to.equal(4);
 		expect(forkedStick.damageModifier).to.equal(4);
-		expect(forkedStick.hitOnFail).to.equal(true);
-		expect(forkedStick.alwaysDoDamage).to.equal(true);
+		expect(forkedStick.hitOnFail).to.be.true;
+		expect(forkedStick.alwaysDoDamage).to.be.true;
 	});
 
 	it('can be played against gladiators for a bonus to attack', () => {
