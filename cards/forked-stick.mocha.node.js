@@ -10,6 +10,7 @@ const pause = require('../helpers/pause');
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { ATTACK_PHASE } = require('../helpers/phases');
 
 describe('./cards/forked-stick.js', () => {
 	let channelStub;
@@ -116,7 +117,7 @@ Small chance to do damage.`;
 		expect(atkRoll.modifier).to.equal(player.attackModifier);
 	});
 
-	it.only('immobilizes basilisk on hit', () => {
+	it('immobilizes basilisk on hit', () => {
 		const forkedStick = new ForkedStick();
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick)), 'checkSuccess');
 
@@ -139,10 +140,67 @@ Small chance to do damage.`;
 		return forkedStick
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				checkSuccessStub.restore();
+
 				expect(target.hp).to.equal(before);
-				console.log(target.encounterEffects);
-				return expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+
+				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
+
+				const hit = new Hit();
+				return hit
+					.play(target, player, ring, ring.contestants)
+					.then(() => {
+						checkSuccessStub.restore();
+
+						return expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+					});
+			});
+	});
+
+	it('allows immobilized opponents to break free', () => {
+		const forkedStick = new ForkedStick();
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return forkedStick
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+
+				let card = target.encounterEffects.reduce((currentCard, effect) => {
+					const modifiedCard = effect({
+						activeContestants: [target, player],
+						card: currentCard,
+						phase: ATTACK_PHASE,
+						player,
+						ring,
+						target
+					});
+
+					return modifiedCard || currentCard;
+				}, new Hit());
+
+				return card
+					.play(target, player, ring, ring.contestants)
+					.then(() => {
+						checkSuccessStub.restore();
+
+						return expect(target.encounterEffects.length).to.equal(0);
+					});
 			});
 	});
 });

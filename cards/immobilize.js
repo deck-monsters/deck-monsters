@@ -3,7 +3,7 @@
 const HitCard = require('./hit');
 
 const { GLADIATOR, MINOTAUR } = require('../helpers/creature-types');
-const { DEFENSE_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 
 class ImmobilizeCard extends HitCard {
@@ -116,7 +116,7 @@ class ImmobilizeCard extends HitCard {
 					card,
 					phase
 				}) => {
-					if (phase === DEFENSE_PHASE) {
+					if (phase === ATTACK_PHASE) {
 						this.emit('effect', {
 							effectName: `a ${this.icon}${this.cardType} effect`,
 							player,
