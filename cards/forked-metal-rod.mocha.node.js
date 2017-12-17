@@ -1,17 +1,14 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const Hit = require('./hit');
-const WeepingAngel = require('../monsters/weeping-angel');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
-const Gladiator = require('../monsters/gladiator');
 const ForkedMetalRod = require('./forked-metal-rod');
 const pause = require('../helpers/pause');
 const { roll } = require('../helpers/chance');
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
-const { ATTACK_PHASE } = require('../helpers/phases');
 
 describe('./cards/forked-metal-rod.js', () => {
 	let channelStub;
@@ -70,93 +67,6 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.true;
 	});
 
-	it('can be played against gladiators for a bonus to attack', () => {
-		const forkedMetalRod = new ForkedMetalRod();
-
-		const player = new Minotaur({ name: 'player' });
-		const target = new Gladiator({ name: 'target' });
-		const atkRoll = forkedMetalRod.getAttackRoll(player, target);
-		const dmgRoll = forkedMetalRod.getDamageRoll(player, target);
-
-		expect(atkRoll.modifier).to.equal(player.attackModifier + 3);
-		expect(dmgRoll.modifier).to.equal(player.damageModifier);
-	});
-
-	it('can be played against basilisk for a bonus to attack', () => {
-		const forkedMetalRod = new ForkedMetalRod();
-
-		const player = new Minotaur({ name: 'player' });
-		const target = new Basilisk({ name: 'target' });
-		const atkRoll = forkedMetalRod.getAttackRoll(player, target);
-		const dmgRoll = forkedMetalRod.getDamageRoll(player, target);
-
-		expect(atkRoll.modifier).to.equal(player.attackModifier + 3);
-		expect(dmgRoll.modifier).to.equal(player.damageModifier);
-	});
-
-	it('can be played against minotaurs for a weakened attack', () => {
-		const forkedMetalRod = new ForkedMetalRod();
-
-		const player = new Gladiator({ name: 'player' });
-		const target = new Minotaur({ name: 'target' });
-		const atkRoll = forkedMetalRod.getAttackRoll(player, target);
-		const dmgRoll = forkedMetalRod.getDamageRoll(player, target);
-
-		expect(atkRoll.modifier).to.equal(player.attackModifier - 3);
-		expect(dmgRoll.modifier).to.equal(player.damageModifier);
-	});
-
-	it('can be played against weeping angel with no bonus/penalty', () => {
-		const forkedMetalRod = new ForkedMetalRod();
-
-		const target = new WeepingAngel({ name: 'player' });
-		const player = new Gladiator({ name: 'target' });
-		const dmgRoll = forkedMetalRod.getDamageRoll(player, target);
-		const atkRoll = forkedMetalRod.getAttackRoll(player, target);
-
-		expect(dmgRoll.modifier).to.equal(player.damageModifier);
-		expect(atkRoll.modifier).to.equal(player.attackModifier);
-	});
-
-	it('immobilizes basilisk on hit', () => {
-		const forkedMetalRod = new ForkedMetalRod();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedMetalRod)), 'checkSuccess');
-
-		const player = new Minotaur({ name: 'player' });
-		const target = new Basilisk({ name: 'target' });
-		const before = target.hp;
-
-		const ring = {
-			contestants: [
-				{ monster: player },
-				{ monster: target }
-			],
-			channelManager: {
-				sendMessages: () => Promise.resolve()
-			}
-		};
-
-		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
-
-		return forkedMetalRod
-			.play(player, target, ring, ring.contestants)
-			.then(() => {
-				expect(target.hp).to.equal(before);
-				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
-
-				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
-
-				const hit = new Hit();
-				return hit
-					.play(target, player, ring, ring.contestants)
-					.then(() => {
-						checkSuccessStub.restore();
-
-						return expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
-					});
-			});
-	});
-
 	it('do damage on fail to immobilize', () => {
 		const forkedMetalRod = new ForkedMetalRod();
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedMetalRod)), 'checkSuccess');
@@ -194,83 +104,6 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(0);
-			});
-	});
-
-	it('do damage instead of immobilizing weeping angel on hit', () => {
-		const forkedMetalRod = new ForkedMetalRod();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedMetalRod)), 'checkSuccess');
-
-		const player = new Minotaur({ name: 'player' });
-		const target = new WeepingAngel({ name: 'target' });
-		const before = target.hp;
-
-		const ring = {
-			contestants: [
-				{ monster: player },
-				{ monster: target }
-			],
-			channelManager: {
-				sendMessages: () => Promise.resolve()
-			}
-		};
-
-		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
-
-		return forkedMetalRod
-			.play(player, target, ring, ring.contestants)
-			.then(() => {
-				checkSuccessStub.restore();
-
-				expect(target.hp).to.be.below(before);
-				return expect(target.encounterEffects.length).to.equal(0);
-			});
-	});
-
-	it('allows immobilized opponents to break free', () => {
-		const forkedMetalRod = new ForkedMetalRod();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedMetalRod)), 'checkSuccess');
-
-		const player = new Minotaur({ name: 'player' });
-		const target = new Basilisk({ name: 'target' });
-
-		const ring = {
-			contestants: [
-				{ monster: player },
-				{ monster: target }
-			],
-			channelManager: {
-				sendMessages: () => Promise.resolve()
-			}
-		};
-
-		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
-
-		return forkedMetalRod
-			.play(player, target, ring, ring.contestants)
-			.then(() => {
-				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
-
-				const card = target.encounterEffects.reduce((currentCard, effect) => {
-					const modifiedCard = effect({
-						activeContestants: [target, player],
-						card: currentCard,
-						phase: ATTACK_PHASE,
-						player,
-						ring,
-						target
-					});
-
-					return modifiedCard || currentCard;
-				}, new Hit());
-
-				return card
-					.play(target, player, ring, ring.contestants)
-					.then(() => {
-						checkSuccessStub.restore();
-
-						return expect(target.encounterEffects.length).to.equal(0);
-					});
 			});
 	});
 });
