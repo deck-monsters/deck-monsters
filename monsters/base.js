@@ -122,7 +122,7 @@ ${getAttributeChoices(this.options)}`,
 	}
 
 	lookAtCards (channel) {
-		const sortedDeck = sortCards(this.cards);
+		const sortedDeck = sortCards([...this.cards]);
 		const uniqueCards = getUniqueCards(sortedDeck);
 
 		let announce;

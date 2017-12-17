@@ -65,7 +65,7 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	lookAtCards (channel) {
-		const sortedDeck = sortCards(this.deck);
+		const sortedDeck = sortCards([...this.deck]);
 		const cardImages = getUniqueCards(sortedDeck).reduce((cards, card) =>
 			cards + actionCard(card), '');
 
