@@ -10,7 +10,7 @@ const { roll } = require('../helpers/chance');
 
 const { GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL } = require('../helpers/creature-types');
 
-describe.only('./cards/mesmerize.js', () => {
+describe('./cards/mesmerize.js', () => {
 	let channelStub;
 	let pauseStub;
 

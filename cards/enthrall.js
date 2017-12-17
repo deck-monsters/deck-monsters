@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const MesmerizeCard = require('./mesmerize');
+const ImmobilizeCard = require('./immobilize');
 
 class EnthrallCard extends MesmerizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -18,8 +19,10 @@ class EnthrallCard extends MesmerizeCard {
 		});
 	}
 	get stats () {
-		return `${super.stats}
-Chance to immobilize your opponents with your beauty.`;
+		const immobilize = new ImmobilizeCard();
+
+		return `${immobilize.stats}
+Chance to immobilize your opponents with your shocking beauty.`;
 	}
 
 	effect (player, target, ring, activeContestants) {
@@ -38,8 +41,13 @@ Chance to immobilize your opponents with your beauty.`;
 
 EnthrallCard.cardType = 'Enthrall';
 EnthrallCard.level = 2;
-EnthrallCard.description = 'You strut and preen. Your beauty overwhelmes and enthralls everyone, except yourself.';
+EnthrallCard.description = 'You strut and preen. Your beauty overwhelms and enthralls everyone, except yourself.';
 EnthrallCard.action = ['enthrall', 'enthralls', 'enthralled'];
+
+EnthrallCard.defaults = {
+	...MesmerizeCard.defaults,
+	freedomThresholdModifier: 1
+};
 
 EnthrallCard.flavors = {
 	hits: [

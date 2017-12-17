@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const EnthrallCard = require('./enthrall');
-const MesmerizeCard = require('./mesmerize');
+const ImmobilizeCard = require('./immobilize');
 
 class EntranceCard extends EnthrallCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -19,19 +19,22 @@ class EntranceCard extends EnthrallCard {
 		});
 	}
 	get stats () {
-		return `${super.stats}
-Chance to immobilize and damage your opponents.`;
+		const immobilize = new ImmobilizeCard();
+
+		return `${immobilize.stats}
+Chance to immobilize and damage your opponents with your painfully shocking beauty.`;
 	}
 }
 
 EntranceCard.cardType = 'Entrance';
 EntranceCard.probability = 20;
 EntranceCard.level = 3;
-EntranceCard.description = 'You strut and preen. Your painful beauty overwhelmes and entrances everyone, except yourself.';
+EntranceCard.description = 'You strut and preen. Your _painful_ beauty overwhelms and entrances everyone, except yourself.';
 EntranceCard.defaults = {
-	...MesmerizeCard.defaults,
+	...EnthrallCard.defaults,
 	hitOnFail: true,
-	doDamageOnImmobilize: true
+	doDamageOnImmobilize: true,
+	freedomThresholdModifier: 2
 };
 EntranceCard.action = ['entrance', 'entrances', 'entranced'];
 
