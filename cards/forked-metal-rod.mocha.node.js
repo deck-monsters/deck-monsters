@@ -141,7 +141,6 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 		return forkedMetalRod
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-
 				expect(target.hp).to.equal(before);
 				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
@@ -185,7 +184,7 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 			success: { success: true, strokeOfLuck: false, curseOfLoki: false },
 			strokeOfLuck: false,
 			curseOfLoki: false
-		})
+		});
 
 		return forkedMetalRod
 			.play(player, target, ring, ring.contestants)
@@ -252,7 +251,7 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 			.then(() => {
 				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
-				let card = target.encounterEffects.reduce((currentCard, effect) => {
+				const card = target.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
 						activeContestants: [target, player],
 						card: currentCard,

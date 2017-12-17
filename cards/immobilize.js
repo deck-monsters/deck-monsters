@@ -78,7 +78,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	getFreedomThreshold (player) {
-		return player.ac + this.getFreedomThresholdModifier;
+		return player.ac + this.freedomThresholdModifier;
 	}
 
 	getAttackRoll (player, target) {
@@ -179,9 +179,9 @@ class ImmobilizeCard extends HitCard {
 			} else if (alreadyImmobilized || !canHaveEffect) {
 				let narration = '';
 				if (alreadyImmobilized) {
-					narration = `${target.givenName} is already ${this.getAction(2)}, now _show no mercy_!`
+					narration = `${target.givenName} is already ${this.getAction(2)}, now _show no mercy_!`;
 				} else {
-					narration = `${target.givenName} laughs hautily as you try to ${this.getAction(2)} them, vent your fury at their mockery!`
+					narration = `${target.givenName} laughs hautily as you try to ${this.getAction(2)} them, vent your fury at their mockery!`;
 				}
 				this.emit('narration', { narration });
 
@@ -214,7 +214,7 @@ ImmobilizeCard.defaults = {
 	damageModifier: 0,
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
-	freedomThresholdModifier: 0
+	freedomThresholdModifier: 2
 };
 ImmobilizeCard.action = ['immobilize', 'immobilizes', 'immobilized'];
 

@@ -27,7 +27,7 @@ describe('./monsters/weeping-angel.js', () => {
 		const weepingAngel = new WeepingAngel();
 
 		expect(weepingAngel).to.be.an.instanceof(WeepingAngel);
-		expect(weepingAngel.name).to.equal("WeepingAngel");
+		expect(weepingAngel.name).to.equal('WeepingAngel');
 		expect(weepingAngel.creatureType).to.equal(WEEPING_ANGEL);
 		expect(weepingAngel.givenName).to.be.a('string');
 		expect(weepingAngel.options).to.deep.contain({
@@ -42,7 +42,7 @@ describe('./monsters/weeping-angel.js', () => {
 		const weepingAngel = new WeepingAngel({ xp: 1000 });
 
 		expect(weepingAngel).to.be.an.instanceof(WeepingAngel);
-		expect(weepingAngel.name).to.equal("WeepingAngel");
+		expect(weepingAngel.name).to.equal('WeepingAngel');
 		expect(weepingAngel.creatureType).to.equal(WEEPING_ANGEL);
 		expect(weepingAngel.givenName).to.be.a('string');
 		expect(weepingAngel.options).to.deep.contain({

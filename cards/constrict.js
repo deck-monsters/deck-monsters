@@ -33,7 +33,8 @@ ConstrictCard.permittedClassesAndTypes = [BASILISK];
 ConstrictCard.weakAgainstCreatureTypes = [BASILISK];
 ConstrictCard.defaults = {
 	...ImmobilizeCard.defaults,
-	doDamageOnImmobilize: true
+	doDamageOnImmobilize: true,
+	freedomThresholdModifier: 3
 };
 ConstrictCard.action = ['constrict', 'constricts', 'constricted'];
 

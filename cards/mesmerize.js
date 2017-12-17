@@ -25,6 +25,10 @@ class MesmerizeCard extends ImmobilizeCard {
 		return `${super.stats}
 Chance to immobilize everyone with your beauty.`;
 	}
+
+	getFreedomThreshold () {
+		return 10 + this.freedomThresholdModifier;
+	}
 }
 
 MesmerizeCard.cardType = 'Mesmerize';

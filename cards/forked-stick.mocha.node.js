@@ -43,7 +43,7 @@ describe('./cards/forked-stick.js', () => {
 Attempt to pin your opponent between the branches of a forked stick.`;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
-		expect(forkedStick.freedomThresholdModifier).to.equal(0);
+		expect(forkedStick.freedomThresholdModifier).to.equal(2);
 		expect(forkedStick.attackModifier).to.equal(2);
 		expect(forkedStick.damageModifier).to.equal(0);
 		expect(forkedStick.hitOnFail).to.be.false;
@@ -65,6 +65,13 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		expect(forkedStick.damageModifier).to.equal(4);
 		expect(forkedStick.hitOnFail).to.be.true;
 		expect(forkedStick.doDamageOnImmobilize).to.be.true;
+	});
+
+	it('calculates freedom threshold correctly', () => {
+		const forkedStick = new ForkedStick();
+		const player = new Minotaur({ name: 'player' });
+
+		expect(forkedStick.getFreedomThreshold(player)).to.equal(player.ac + forkedStick.freedomThresholdModifier);
 	});
 
 	it('can be played against gladiators for a bonus to attack', () => {
@@ -138,7 +145,6 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		return forkedStick
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-
 				expect(target.hp).to.equal(before);
 				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
@@ -209,7 +215,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 			.then(() => {
 				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
-				let card = target.encounterEffects.reduce((currentCard, effect) => {
+				const card = target.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
 						activeContestants: [target, player],
 						card: currentCard,
