@@ -18,7 +18,7 @@ class EntranceCard extends EnthrallCard {
 			hitOnFail
 		});
 	}
-	get stats () {
+	get stats () { // eslint-disable-line class-methods-use-this
 		const immobilize = new ImmobilizeCard();
 
 		return `${immobilize.stats}

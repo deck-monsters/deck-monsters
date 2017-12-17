@@ -18,24 +18,11 @@ class EnthrallCard extends MesmerizeCard {
 			hitOnFail
 		});
 	}
-	get stats () {
+	get stats () { // eslint-disable-line class-methods-use-this
 		const immobilize = new ImmobilizeCard();
 
 		return `${immobilize.stats}
 Chance to immobilize your opponents with your shocking beauty.`;
-	}
-
-	effect (player, target, ring, activeContestants) {
-		return new Promise((resolve) => {
-			resolve(Promise.all(activeContestants.map(({ monster }) => {
-				if (monster !== player && (this.strongAgainstCreatureTypes.includes(monster.type) || this.weakAgainstCreatureTypes.includes(monster.type))) {
-					return super.effect(player, target, ring, activeContestants);
-				}
-
-				return Promise.resolve();
-			}))
-				.then(() => !target.dead));
-		});
 	}
 }
 
@@ -46,7 +33,9 @@ EnthrallCard.action = ['enthrall', 'enthralls', 'enthralled'];
 
 EnthrallCard.defaults = {
 	...MesmerizeCard.defaults,
-	freedomThresholdModifier: 1
+	freedomThresholdModifier: 1,
+	affectAll: false,
+	affectAllOthers: true
 };
 
 EnthrallCard.flavors = {

@@ -28,6 +28,14 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
+	get affectAll () {
+		return this.options.affectAll;
+	}
+
+	get affectAllOthers () {
+		return this.options.affectAllOthers;
+	}
+
 	get doDamageOnImmobilize () {
 		return this.options.doDamageOnImmobilize;
 	}
@@ -157,11 +165,26 @@ class ImmobilizeCard extends HitCard {
 					};
 
 					immobilizeEffect.effectType = 'ImmobilizeEffect';
+					if (this.affectAll || this.affectAllOthers) {
+						return resolve(Promise.all(activeContestants.map(({ monster }) => {
+							if (this.affectAll || (this.affectAllOthers && monster !== player)) {
+								monster.encounterEffects = [...monster.encounterEffects, immobilizeEffect];
+
+								if (this.doDamageOnImmobilize) {
+									return resolve(super.effect(player, monster, ring, activeContestants));
+								}
+							}
+
+							return Promise.resolve();
+						}))
+							.then(() => !target.dead));
+					}
 					target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
 
 					if (this.doDamageOnImmobilize) {
 						return resolve(super.effect(player, target, ring, activeContestants));
 					}
+
 
 					return resolve(true);
 				} else if (this.hitOnFail) {
@@ -214,7 +237,9 @@ ImmobilizeCard.defaults = {
 	damageModifier: 0,
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
-	freedomThresholdModifier: 2
+	freedomThresholdModifier: 2,
+	affectAll: false,
+	affectAllOthers: false
 };
 ImmobilizeCard.action = ['immobilize', 'immobilizes', 'immobilized'];
 

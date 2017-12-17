@@ -3,12 +3,15 @@ const { expect, sinon } = require('../shared/test-setup');
 const Hit = require('./hit');
 const WeepingAngel = require('../monsters/weeping-angel');
 const Minotaur = require('../monsters/minotaur');
+const Basilisk = require('../monsters/basilisk');
+const Gladiator = require('../monsters/gladiator');
 const Mesmerize = require('./mesmerize');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 
-const { GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL } = require('../helpers/creature-types');
+const {
+	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+} = require('../helpers/creature-types');
 
 describe('./cards/mesmerize.js', () => {
 	let channelStub;
@@ -70,5 +73,36 @@ Chance to immobilize everyone with your shocking beauty.`;
 		const player = new WeepingAngel({ name: 'player' });
 
 		expect(mesmerize.getFreedomThreshold(player)).to.equal(10 + mesmerize.freedomThresholdModifier);
+	});
+
+	it('immobilizes everyone on success', () => {
+		const mesmerize = new Mesmerize();
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(mesmerize)), 'checkSuccess');
+
+		const player = new WeepingAngel({ name: 'player' });
+		const target1 = new Basilisk({ name: 'target1' });
+		const target2 = new Minotaur({ name: 'target2' });
+		const target3 = new Gladiator({ name: 'target3' });
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target1 },
+				{ monster: target2 },
+				{ monster: target3 }
+			]
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return mesmerize
+			.play(player, target1, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+
+				expect(player.encounterEffects.length).to.equal(1);
+				expect(target1.encounterEffects.length).to.equal(1);
+				expect(target2.encounterEffects.length).to.equal(1);
+				return expect(target3.encounterEffects.length).to.equal(1);
+			});
 	});
 });

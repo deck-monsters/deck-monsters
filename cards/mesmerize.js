@@ -1,9 +1,10 @@
 /* eslint-disable max-len */
 
-const HitCard = require('./hit');
 const ImmobilizeCard = require('./immobilize');
 
-const { GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL } = require('../helpers/creature-types');
+const {
+	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+} = require('../helpers/creature-types');
 
 class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -40,7 +41,8 @@ MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,
 	attackModifier: 2,
 	hitOnFail: false,
-	freedomThresholdModifier: 0
+	freedomThresholdModifier: 0,
+	affectAll: true
 };
 MesmerizeCard.action = ['mesmerize', 'mesmerizes', 'mesmerized'];
 
