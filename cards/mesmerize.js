@@ -3,8 +3,7 @@
 const HitCard = require('./hit');
 const ImmobilizeCard = require('./immobilize');
 
-const { WEEPING_ANGEL } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL } = require('../helpers/creature-types');
 
 class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -23,7 +22,7 @@ class MesmerizeCard extends ImmobilizeCard {
 	}
 	get stats () {
 		return `${super.stats}
-Chance to immobilize everyone with your beauty.`;
+Chance to immobilize everyone with your shocking beauty.`;
 	}
 
 	getFreedomThreshold () {
@@ -34,13 +33,14 @@ Chance to immobilize everyone with your beauty.`;
 MesmerizeCard.cardType = 'Mesmerize';
 MesmerizeCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 MesmerizeCard.probability = 30;
-MesmerizeCard.description = 'You strut and preen. Your beauty overwhelmes and mesmerizes everyone, including yourself.';
+MesmerizeCard.description = 'You strut and preen. Your beauty overwhelms and mesmerizes everyone, including yourself.';
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 MesmerizeCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 MesmerizeCard.defaults = {
-	...HitCard.defaults,
+	...ImmobilizeCard.defaults,
 	attackModifier: 2,
-	hitOnFail: false
+	hitOnFail: false,
+	freedomThresholdModifier: 0
 };
 MesmerizeCard.action = ['mesmerize', 'mesmerizes', 'mesmerized'];
 
