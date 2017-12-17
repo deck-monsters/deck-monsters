@@ -30,7 +30,7 @@ ForkedMetalRodCard.defaults = {
 	...ForkedStickCard.defaults,
 	attackModifier: 3,
 	hitOnFail: true,
-	freedomThresholdModifier: 1.5
+	freedomThresholdModifier: 3
 };
 
 module.exports = ForkedMetalRodCard;

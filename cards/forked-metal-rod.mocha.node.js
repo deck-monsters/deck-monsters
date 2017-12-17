@@ -46,7 +46,7 @@ Attempt to immobilize your opponent by capturing their neck between strong sharp
 Even if you miss, there's a chance you'll just stab them instead...`;
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
-		expect(forkedMetalRod.freedomThresholdModifier).to.equal(1.5);
+		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
 		expect(forkedMetalRod.attackModifier).to.equal(3);
 		expect(forkedMetalRod.damageModifier).to.equal(0);
 		expect(forkedMetalRod.hitOnFail).to.be.true;

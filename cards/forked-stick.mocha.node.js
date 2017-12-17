@@ -43,7 +43,7 @@ describe('./cards/forked-stick.js', () => {
 Attempt to pin your opponent between the branches of a forked stick.`;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
-		expect(forkedStick.freedomThresholdModifier).to.equal(1);
+		expect(forkedStick.freedomThresholdModifier).to.equal(0);
 		expect(forkedStick.attackModifier).to.equal(2);
 		expect(forkedStick.damageModifier).to.equal(0);
 		expect(forkedStick.hitOnFail).to.be.false;
@@ -56,11 +56,11 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 	it('can be instantiated with options', () => {
 		const forkedStick = new ForkedStick({
-			freedomThresholdModifier: 1.5, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 1, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
-		expect(forkedStick.freedomThresholdModifier).to.equal(1.5);
+		expect(forkedStick.freedomThresholdModifier).to.equal(1);
 		expect(forkedStick.attackModifier).to.equal(4);
 		expect(forkedStick.damageModifier).to.equal(4);
 		expect(forkedStick.hitOnFail).to.be.true;
