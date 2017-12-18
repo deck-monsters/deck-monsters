@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-const shuffle = require('lodash.shuffle');
+const lodash = require('lodash');
 
 const BaseCard = require('./base');
 
@@ -11,26 +11,27 @@ class PickPocketCard extends BaseCard {
 		super({ icon });
 	}
 
-	effect (player, oldTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		const target = activeContestants.reduce((potentialTarget, { monster }) => {
+	effect (player, target, ring, activeContestants) { // eslint-disable-line class-methods-use-this
+		const highest = activeContestants.reduce((potentialTarget, { monster }) => {
 			if (monster !== player && monster.xp > potentialTarget.xp) {
 				return monster;
 			}
 
 			return potentialTarget;
-		}, oldTarget);
-		const randomCard = shuffle(target.cards)[0];
+		}, target);
+
+		const randomCard = lodash.shuffle(highest.cards)[0];
 
 		this.emit('narration', {
-			narration: `${player.givenName} steals a card from the hand of ${target.givenName}`
+			narration: `${player.givenName} steals a card from the hand of ${highest.givenName}`
 		});
 
-		return randomCard.play(player, oldTarget, ring, activeContestants);
+		return randomCard.play(player, target, ring, activeContestants);
 	}
 }
 
 PickPocketCard.cardType = 'Pick Pocket';
-PickPocketCard.probability = 20;
-PickPocketCard.description = 'Reach into the pocket of another player and grab one of their cards to play as your own.';
+PickPocketCard.probability = 30;
+PickPocketCard.description = 'Reach into the pocket of the most skilled player and grab one of their cards to play as your own.';
 
 module.exports = PickPocketCard;
