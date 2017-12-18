@@ -36,13 +36,13 @@ ConstrictCard.defaults = {
 	doDamageOnImmobilize: true,
 	freedomThresholdModifier: 3
 };
-ConstrictCard.action = ['constrict', 'constricts', 'constricted'];
+ConstrictCard.actions = ['constrict', 'constricts', 'constricted'];
 
 ConstrictCard.flavors = {
 	hits: [
-		[`${ConstrictCard.action[1]}`, 80],
+		[`${ConstrictCard.actions[1]}`, 80],
 		['squeezes and squeezes', 50],
-		['tightens so hard that anything on the inside that could easily come to the outside, well... _does_', 5]
+		['tightens so hard that anything on the inside that could easily come to the outside, well... _does_. This not only damages, but utterly humiliates', 5]
 	]
 };
 

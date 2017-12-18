@@ -28,6 +28,10 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
+	get actions () {
+		return this.constructor.actions;
+	}
+
 	get doDamageOnImmobilize () {
 		return this.options.doDamageOnImmobilize;
 	}
@@ -73,10 +77,6 @@ class ImmobilizeCard extends HitCard {
 		return this.options.freedomThresholdModifier;
 	}
 
-	getAction (tense) {
-		return this.constructor.action[tense];
-	}
-
 	getFreedomThreshold (player) {
 		return player.ac + this.freedomThresholdModifier;
 	}
@@ -95,7 +95,7 @@ class ImmobilizeCard extends HitCard {
 				const attackSuccess = this.checkSuccess(attackRoll, target.ac);
 
 				this.emit('rolling', {
-					reason: `to see if you ${this.getAction(0)} ${target.givenName}`,
+					reason: `to see if ${player.pronouns[0]} ${this.actions[1]} ${target.givenName}`,
 					card: this,
 					roll: attackRoll,
 					player,
@@ -105,12 +105,12 @@ class ImmobilizeCard extends HitCard {
 
 				if (attackSuccess.success) {
 					this.emit('rolled', {
-						reason: `for ${this.getAction(0)}`,
+						reason: `for ${this.actions[0]}`,
 						card: this,
 						roll: attackRoll,
 						player,
 						target,
-						outcome: `${this.getAction(0)} succeeded!`
+						outcome: `${this.actions[0]} succeeded!`
 					});
 
 					const immobilizeEffect = ({
@@ -119,7 +119,7 @@ class ImmobilizeCard extends HitCard {
 					}) => {
 						if (phase === ATTACK_PHASE) {
 							this.emit('effect', {
-								effectName: `a ${this.icon}${this.cardType} effect`,
+								effectResult: `${this.icon}  ${this.actions[2]}`,
 								player,
 								target,
 								ring
@@ -139,7 +139,7 @@ class ImmobilizeCard extends HitCard {
 								roll: freedomRoll,
 								player: target,
 								target: player,
-								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.getAction(2)} and will miss a turn.`
+								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`
 							});
 
 							if (success) {
@@ -166,12 +166,12 @@ class ImmobilizeCard extends HitCard {
 					return resolve(true);
 				} else if (this.hitOnFail) {
 					this.emit('rolled', {
-						reason: `for ${this.getAction(0)}`,
+						reason: `for ${this.actions[0]}`,
 						card: this,
 						roll: attackRoll,
 						player,
 						target,
-						outcome: `${this.getAction(0)} failed, chance to hit instead...`
+						outcome: `${this.actions[0]} failed, chance to hit instead...`
 					});
 
 					return resolve(super.effect(player, target, ring, activeContestants));
@@ -179,9 +179,9 @@ class ImmobilizeCard extends HitCard {
 			} else if (alreadyImmobilized || !canHaveEffect) {
 				let narration = '';
 				if (alreadyImmobilized) {
-					narration = `${target.givenName} is already ${this.getAction(2)}, now _show no mercy_!`;
+					narration = `${target.givenName} is already ${this.actions[2]}, now _show no mercy_!`;
 				} else {
-					narration = `${target.givenName} laughs hautily as you try to ${this.getAction(2)} them, vent your fury at their mockery!`;
+					narration = `${target.givenName} laughs hautily as you try to ${this.actions[2]} them, vent your fury at their mockery!`;
 				}
 				this.emit('narration', { narration });
 
@@ -216,7 +216,7 @@ ImmobilizeCard.defaults = {
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: 2
 };
-ImmobilizeCard.action = ['immobilize', 'immobilizes', 'immobilized'];
+ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 
 ImmobilizeCard.flavors = {
 	hits: [

@@ -358,13 +358,13 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 	}
 
 	announceEffect (className, card, {
-		effectName, player
+		player, target, effectResult
 	}) {
 		const channel = this.publicChannel;
 
 		channel({
 			announce:
-`${player.givenName} has put ${effectName} into play
+`${target.icon}  ${target.givenName} is currently ${effectResult} by ${player.icon}  ${player.givenName}
 `
 		});
 	}

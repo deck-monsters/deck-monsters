@@ -43,15 +43,14 @@ Chance to immobilize your opponents with your shocking beauty.`;
 }
 
 EnthrallCard.cardType = 'Enthrall';
+EnthrallCard.actions = ['enthrall', 'enthralls', 'enthralled'];
 EnthrallCard.level = 2;
 EnthrallCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 EnthrallCard.probability = 30;
-EnthrallCard.description = 'You strut and preen. Your beauty overwhelms and enthralls everyone, except yourself.';
+EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
 EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EnthrallCard.uselessAgainstCreatureTypes = [];
-
-EnthrallCard.action = ['enthrall', 'enthralls', 'enthralled'];
 
 EnthrallCard.defaults = {
 	...ImmobilizeCard.defaults,
@@ -62,9 +61,9 @@ EnthrallCard.defaults = {
 
 EnthrallCard.flavors = {
 	hits: [
-		['You enthrall your adversaries', 80],
-		['Your natural beauty overwhelms your enemies', 30],
-		['Narcisus himself would be distracted by your beauty... and that\'s when you hit.', 5]
+		[EnthrallCard.actions[1], 80],
+		['uses their natural beauty to incapacitate', 30],
+		[`${EnthrallCard.actions[1]} even Narcissus himself with their beauty... Which leaves no hope for`, 5]
 	]
 };
 

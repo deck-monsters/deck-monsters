@@ -5,10 +5,15 @@ const BasicShieldCard = require('./basic-shield');
 const BlastCard = require('./blast');
 const BoostCard = require('./boost');
 const BrainDrainCard = require('./brain-drain');
+const ConstrictCard = require('./constrict');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
+const EnthrallCard = require('./enthrall');
+const EntranceCard = require('./entrance');
 const FightOrFlightCard = require('./fight-or-flight');
 const FistsOfVirtueCard = require('./fists-of-virtue');
+const ForkedMetalRodCard = require('./forked-metal-rod');
+const ForkedStickCard = require('./forked-stick');
 const FleeCard = require('./flee');
 const HealCard = require('./heal');
 const HitCard = require('./hit');
@@ -16,6 +21,7 @@ const HitHarderCard = require('./hit-harder');
 const KalevalaCard = require('./kalevala');
 const PickPocketCard = require('./pick-pocket');
 const LuckyStrike = require('./lucky-strike');
+const MesmerizeCard = require('./mesmerize');
 const PoundCard = require('./pound');
 const RandomCard = require('./random');
 const RehitCard = require('./rehit');
@@ -33,17 +39,23 @@ const all = [
 	BlastCard,
 	BoostCard,
 	BrainDrainCard,
+	ConstrictCard,
 	CurseCard,
 	EnchantedFaceswapCard,
+	EnthrallCard,
+	EntranceCard,
 	FightOrFlightCard,
 	FistsOfVirtueCard,
 	FleeCard,
+	ForkedMetalRodCard,
+	ForkedStickCard,
 	HealCard,
 	HitCard,
 	HitHarderCard,
 	KalevalaCard,
 	PickPocketCard,
 	LuckyStrike,
+	MesmerizeCard,
 	PoundCard,
 	RandomCard,
 	RehitCard,
@@ -83,9 +95,9 @@ const fillDeck = (deck, options, creature) => {
 const getInitialDeck = (options, creature) => {
 	// See above re: options
 	const deck = [
-		new HitCard(),
-		new HitCard(),
-		new HitCard(),
+		new MesmerizeCard(),
+		new ForkedStickCard(),
+		new ConstrictCard(),
 		new HitCard(),
 		new HealCard(),
 		new FleeCard()

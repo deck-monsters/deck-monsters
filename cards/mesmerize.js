@@ -37,9 +37,10 @@ Chance to immobilize everyone with your shocking beauty.`;
 }
 
 MesmerizeCard.cardType = 'Mesmerize';
+MesmerizeCard.actions = ['mesmerize', 'mesmerizes', 'mesmerized'];
 MesmerizeCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 MesmerizeCard.probability = 30;
-MesmerizeCard.description = 'You strut and preen. Your beauty overwhelms and mesmerizes everyone, including yourself.';
+MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions[1]} everyone, including yourself.`;
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 MesmerizeCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 MesmerizeCard.uselessAgainstCreatureTypes = [];
@@ -49,13 +50,12 @@ MesmerizeCard.defaults = {
 	hitOnFail: false,
 	freedomThresholdModifier: 0
 };
-MesmerizeCard.action = ['mesmerize', 'mesmerizes', 'mesmerized'];
 
 MesmerizeCard.flavors = {
 	hits: [
-		['You mesmerize your adversaries', 80],
-		['Your natural beauty overwhelms your enemies', 30],
-		['Narcisus himself would be distracted by your beauty... and that\'s when you hit.', 5]
+		[MesmerizeCard.actions[1], 80],
+		['uses their natural beauty to overwhelm', 30],
+		[`${MesmerizeCard.actions[1]} even Narcissus himself with their beauty... Which leaves no hope for`, 5]
 	]
 };
 
