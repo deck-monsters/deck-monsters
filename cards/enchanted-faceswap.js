@@ -26,7 +26,7 @@ class EnchantedFaceswapCard extends BaseCard {
 					faceswapPlayer.encounterEffects = faceswapPlayer.encounterEffects.filter(effect => effect !== faceswapEffect);
 
 					this.emit('effect', {
-						effectName: `a faceswap ${this.icon} effect`,
+						effectResult: `${this.icon} faceswapped`,
 						player: faceswapPlayer,
 						target: faceswapTarget,
 						ring
@@ -48,6 +48,6 @@ EnchantedFaceswapCard.probability = 50;
 EnchantedFaceswapCard.description = 'A snapchat filter for the magically inclined. This spell will cause the next card played with the caster as the target to be reversed so that the player of the card becomes the target.';
 EnchantedFaceswapCard.cost = 4;
 EnchantedFaceswapCard.level = 1;
-EnchantedFaceswapCard.permittedClasses = [CLERIC];
+EnchantedFaceswapCard.permittedClassesAndTypes = [CLERIC];
 
 module.exports = EnchantedFaceswapCard;

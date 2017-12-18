@@ -56,18 +56,18 @@ describe('./cards/blast.js', () => {
 			]
 		};
 
-		const playerStatingHp = player.hp;
+		const playerStartingHp = player.hp;
 		const playerLevel = player.level;
 		const damage = 4 + (2 * playerLevel);
-		const target1StatingHp = target1.hp;
-		const target2StatingHp = target2.hp;
+		const target1StartingHp = target1.hp;
+		const target2StartingHp = target2.hp;
 
 		return blast
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
-				expect(player.hp).to.equal(playerStatingHp);
-				expect(target1.hp).to.equal(target1StatingHp - damage);
-				expect(target2.hp).to.equal(target2StatingHp - damage);
+				expect(player.hp).to.equal(playerStartingHp);
+				expect(target1.hp).to.equal(target1StartingHp - damage);
+				expect(target2.hp).to.equal(target2StartingHp - damage);
 			});
 	});
 
@@ -89,18 +89,18 @@ describe('./cards/blast.js', () => {
 			{ monster: target1 }
 		];
 
-		const playerStatingHp = player.hp;
+		const playerStartingHp = player.hp;
 		const playerLevel = player.level;
 		const damage = 4 + (2 * playerLevel);
-		const target1StatingHp = target1.hp;
-		const target2StatingHp = target2.hp;
+		const target1StartingHp = target1.hp;
+		const target2StartingHp = target2.hp;
 
 		return blast
 			.play(player, target1, ring, activeContestants)
 			.then(() => {
-				expect(player.hp).to.equal(playerStatingHp);
-				expect(target1.hp).to.equal(target1StatingHp - damage);
-				expect(target2.hp).to.equal(target2StatingHp);
+				expect(player.hp).to.equal(playerStartingHp);
+				expect(target1.hp).to.equal(target1StartingHp - damage);
+				expect(target2.hp).to.equal(target2StartingHp);
 			});
 	});
 

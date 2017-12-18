@@ -46,7 +46,7 @@ BlastCard.probability = 60;
 BlastCard.description = 'A magical blast against every opponent in the encounter.';
 BlastCard.cost = 4;
 BlastCard.level = 0;
-BlastCard.permittedClasses = [CLERIC];
+BlastCard.permittedClassesAndTypes = [CLERIC];
 BlastCard.defaults = {
 	damage: 3,
 	levelDamage: 1

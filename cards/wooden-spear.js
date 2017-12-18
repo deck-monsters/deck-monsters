@@ -48,7 +48,7 @@ WoodenSpearCard.probability = 60;
 WoodenSpearCard.description = `A simple weapon fashioned for ${WoodenSpearCard.creatureType}-hunting.`;
 WoodenSpearCard.cost = 6;
 WoodenSpearCard.level = 1;
-WoodenSpearCard.permittedClasses = [FIGHTER];
+WoodenSpearCard.permittedClassesAndTypes = [FIGHTER];
 WoodenSpearCard.defaults = {
 	...HitCard.defaults,
 	damageModifier: 3

@@ -23,6 +23,6 @@ ReviveCard.probability = 0;
 ReviveCard.description = 'Luckily, you happened to have a fairy in your pocket.';
 ReviveCard.cost = 5;
 ReviveCard.level = 3;
-ReviveCard.permittedClasses = [CLERIC, WIZARD];
+ReviveCard.permittedClassesAndTypes = [CLERIC, WIZARD];
 
 module.exports = ReviveCard;
