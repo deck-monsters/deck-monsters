@@ -431,15 +431,18 @@ ${monsterCard(monster)}`
 	handleWinner (className, monster, { contestant }) {
 		// Award XP draw a card, maybe kick off more events (that could be messaged)
 
+		// End the encounter for this monster
+		monster.endEncounter();
+
 		// Add XP to both the monster and the character in the case of victory
-		contestant.monster.xp += XP_PER_VICTORY;
+		monster.xp += XP_PER_VICTORY;
 		contestant.character.xp += XP_PER_VICTORY;
 
 		// Also give coins to the victor
 		contestant.character.coins += COINS_PER_VICTORY;
 
 		// Also draw a new card for the player
-		const card = this.drawCard({}, contestant.monster);
+		const card = this.drawCard({}, monster);
 		contestant.character.addCard(card);
 
 		this.emit('cardDrop', {
@@ -456,13 +459,16 @@ ${monsterCard(monster)}`
 
 		this.emit('gainedXP', {
 			contestant,
-			creature: contestant.monster,
+			creature: monster,
 			xpGained: XP_PER_VICTORY
 		});
 	}
 
 	handlePermaDeath (className, monster, { contestant }) {
 		// Award XP, maybe kick off more events (that could be messaged)
+
+		// End the encounter for this monster
+		monster.endEncounter();
 
 		// The character still earns a small bit of XP and coins in the case of defeat
 		contestant.character.xp += XP_PER_DEFEAT * 2;
@@ -478,6 +484,9 @@ ${monsterCard(monster)}`
 
 	handleLoser (className, monster, { contestant }) { // eslint-disable-line class-methods-use-this
 		// Award XP, maybe kick off more events (that could be messaged)
+
+		// End the encounter for this monster
+		monster.endEncounter();
 
 		// The character still earns a small bit of XP and coins in the case of defeat
 		contestant.character.xp += XP_PER_DEFEAT;

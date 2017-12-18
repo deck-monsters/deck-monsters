@@ -49,7 +49,7 @@ class Gladiator extends BaseMonster {
 	}
 
 	get description () {
-		return `a ${this.size.adjective} gladiator, dressed in ${this.color} and hailing from ${this.location}. Many years ago ${this.pronouns[0]} was captured, stripped of ${this.pronouns[2]} title and land, and forced to compete in brutal matches for the entertainment of a blood-thirsty crowd. Standing ${this.size.height} tall, when you see ${this.pronouns[1]} you know instantly that this is a warrior who has winessed the worst humankind has to offer and has overcome.`;
+		return `a ${this.size.adjective} gladiator, dressed in ${this.color} and hailing from ${this.location}. Many years ago ${this.pronouns[0]} was captured, stripped of ${this.pronouns[2]} title and land, and forced to compete in brutal matches for the entertainment of a blood-thirsty crowd. Standing ${this.size.height} tall, when you see ${this.pronouns[1]} you know instantly that this is a warrior who has witnessed the worst humankind has to offer and has overcome.`;
 	}
 }
 
