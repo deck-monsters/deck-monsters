@@ -39,6 +39,12 @@ describe('./game.js', () => {
 		expect(queueMessageStub).to.have.been.calledWith({ announce: 'Hello World', channelName: 'PUBLIC_CHANNEL' });
 	});
 
+	it('has card probabilities', () => {
+		const game = new Game(publicChannelStub);
+		
+		expect(game.getCardProbabilities()).to.be.an('object');
+	});
+
 	it('has a ring', () => {
 		const game = new Game(publicChannelStub);
 

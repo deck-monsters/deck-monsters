@@ -2,24 +2,21 @@ const reduce = require('lodash.reduce');
 const moment = require('moment');
 const zlib = require('zlib');
 
+const { actionCard, monsterCard } = require('./helpers/card');
 const { all: cardTypes, draw } = require('./cards');
 const { all: monsterTypes } = require('./monsters');
+const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./helpers/coins');
 const { create: createCharacter } = require('./characters');
+const { getFlavor } = require('./helpers/flavor');
 const { globalSemaphore } = require('./helpers/semaphore');
+const { signedNumber } = require('./helpers/signed-number');
+const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
 const aws = require('./helpers/aws');
 const BaseClass = require('./baseClass');
-const Ring = require('./ring');
-
-const PlayerHandbook = require('./player-handbook');
-
+const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
-
-const { getFlavor } = require('./helpers/flavor');
-const { actionCard, monsterCard } = require('./helpers/card');
-const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
-const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./helpers/coins');
-
-const { signedNumber } = require('./helpers/signed-number');
+const PlayerHandbook = require('./player-handbook');
+const Ring = require('./ring');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
 
@@ -666,6 +663,10 @@ ${monsterCard(monster)}`
 			announce: `Sorry, we don't carry ${cardName} cards here.`,
 			delay: 'short'
 		}));
+	}
+
+	getCardProbabilities () { // eslint-disable-line class-methods-use-this
+		return cardProbabilities;
 	}
 
 	getRing () {
