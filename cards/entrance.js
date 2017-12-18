@@ -41,7 +41,7 @@ EntranceCard.action = ['entrance', 'entrances', 'entranced'];
 EntranceCard.flavors = {
 	hits: [
 		['You entrance your adversaries, your magnificence is painful to look at', 80],
-		['Your natural beauty overwhelmes your enemies causing them to fall senseless to the ground', 30],
+		['Your natural beauty overwhelms your enemies causing them to fall senseless to the ground', 30],
 		['Narcisus himself would be distracted by your magnificence... and that\'s when you hit.', 5]
 	]
 };

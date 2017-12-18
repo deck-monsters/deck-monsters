@@ -29,6 +29,11 @@ Chance to immobilize everyone with your shocking beauty.`;
 	getFreedomThreshold () {
 		return 10 + this.freedomThresholdModifier;
 	}
+
+	effect (player, target, ring, activeContestants) {
+		return new Promise(resolve => resolve(Promise.all(activeContestants.map(({ monster }) => super.effect(player, monster, ring, activeContestants)))
+			.then(() => !target.dead)));
+	}
 }
 
 MesmerizeCard.cardType = 'Mesmerize';
@@ -37,19 +42,19 @@ MesmerizeCard.probability = 30;
 MesmerizeCard.description = 'You strut and preen. Your beauty overwhelms and mesmerizes everyone, including yourself.';
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 MesmerizeCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
+MesmerizeCard.uselessAgainstCreatureTypes = [];
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,
 	attackModifier: 2,
 	hitOnFail: false,
-	freedomThresholdModifier: 0,
-	affectAll: true
+	freedomThresholdModifier: 0
 };
 MesmerizeCard.action = ['mesmerize', 'mesmerizes', 'mesmerized'];
 
 MesmerizeCard.flavors = {
 	hits: [
 		['You mesmerize your adversaries', 80],
-		['Your natural beauty overwhelmes your enemies', 30],
+		['Your natural beauty overwhelms your enemies', 30],
 		['Narcisus himself would be distracted by your beauty... and that\'s when you hit.', 5]
 	]
 };

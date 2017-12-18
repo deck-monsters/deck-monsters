@@ -89,7 +89,10 @@ Chance to immobilize everyone with your shocking beauty.`;
 				{ monster: target1 },
 				{ monster: target2 },
 				{ monster: target3 }
-			]
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
 		};
 
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
