@@ -95,9 +95,9 @@ const fillDeck = (deck, options, creature) => {
 const getInitialDeck = (options, creature) => {
 	// See above re: options
 	const deck = [
-		new MesmerizeCard(),
-		new ForkedStickCard(),
-		new ConstrictCard(),
+		new HitCard(),
+		new HitCard(),
+		new HitCard(),
 		new HitCard(),
 		new HealCard(),
 		new FleeCard()

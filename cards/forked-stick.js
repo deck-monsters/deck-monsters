@@ -41,7 +41,7 @@ ForkedStickCard.flavors = {
 	hits: [
 		[`${ForkedStickCard.actions[1]} to the ground, the head of`, 80],
 		[`${ForkedStickCard.actions[1]} to the wall, the neck of`, 50],
-		['in a fit of brute strength, snags by the neck, and brutally lofts into the air, where they dangle like a toddler\'s booger', 5]
+		['in a fit of brute strength, snags by the neck, and brutally lofts into the air, their thoroughly surprised opponent', 5]
 	]
 };
 

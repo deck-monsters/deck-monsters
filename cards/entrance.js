@@ -42,7 +42,7 @@ EntranceCard.flavors = {
 	hits: [
 		[EntranceCard.actions[1], 80],
 		['uses their painfully stunning natural beauty to bring falling to their knees in agonized worship', 30],
-		[`${EntranceCard.actions[1]} even Narcissus himself with their beauty... And that's when they sucker punche`, 5]
+		[`${EntranceCard.actions[1]} even Narcissus himself with their beauty... And that's when they sucker punch`, 5]
 	]
 };
 
