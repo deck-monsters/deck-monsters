@@ -17,9 +17,10 @@ const bossChannel = () => Promise.resolve();
 const bossChannelName = 'BOSS';
 
 class Ring extends BaseClass {
-	constructor (channelManager, { spawnBosses = true, ...options } = {}) {
+	constructor (channelManager, { spawnBosses = true, ...options } = {}, log) {
 		super(options);
 
+		this.log = log;
 		this.spawnBosses = spawnBosses;
 		this.channelManager = channelManager;
 		this.battles = [];
@@ -272,7 +273,7 @@ class Ring extends BaseClass {
 		// It's a promise so it can be chained, async, delayed, etc
 		// currentContestants is the current set of contestants we're working with
 		// cardIndex is the numeric index of card we'll play from that character's hand (if they have a card in that position)
-		const doAction = ({ currentContestants = contestants, cardIndex = 0 } = {}) => new Promise((resolve) => {
+		const doAction = ({ currentContestants = contestants, cardIndex = 0 } = {}) => new Promise((resolve, reject) => {
 			// Let's get all of the contestants that are still active in the fight
 			let activeContestants = getActiveContestants(currentContestants);
 
@@ -382,6 +383,10 @@ class Ring extends BaseClass {
 							this.channelManager.sendMessages()
 								.then(() => resolve(playerContestant));
 						}
+					})
+					.catch((ex) => {
+						this.log(ex);
+						reject(ex);
 					});
 			} else {
 				this.emit('endOfDeck', {
