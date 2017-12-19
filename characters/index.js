@@ -93,7 +93,7 @@ ${getChoices(iconChoices)}`,
 		});
 };
 
-const randomCharacter = ({ battles = {}, Monsters } = {}) => {
+const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
 	if (!battles.total) {
 		battles.total = randomInt({ max: 45 });
 		battles.wins = randomInt({ max: battles.total });
@@ -106,14 +106,16 @@ const randomCharacter = ({ battles = {}, Monsters } = {}) => {
 
 	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map(Monster => new Monster({
 		battles,
-		xp
+		xp,
+		...options
 	}));
 
 	const character = new Beastmaster({
 		battles,
 		icon,
 		monsters,
-		xp
+		xp,
+		...options
 	});
 
 	// Clean up the deck (reducing probability of certain cards)
