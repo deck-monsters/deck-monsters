@@ -266,15 +266,14 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get killed () {
-		return this.encounter.killedCreatures || [];
+		return (this.encounter || {}).killedCreatures || [];
 	}
 
 	set killed (creature) {
-		if (!this.encounter.killedCreatures) {
-			this.encounter.killedCreatures = [creature];
-		} else {
-			this.encounter.killedCreatures.push(creature);
-		}
+		this.encounter = {
+			...this.encounter,
+			killedCreatures: [...this.killed, creature]
+		};
 	}
 
 	get level () {

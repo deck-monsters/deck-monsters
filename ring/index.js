@@ -451,15 +451,15 @@ class Ring extends BaseClass {
 			}
 		});
 
-		if (deaths > 0) {
-			contestants.forEach((contestant) => {
-				const { channel, channelName } = contestant;
+		contestants.forEach((contestant) => {
+			const { channel, channelName } = contestant;
 
+			if (deaths > 0) {
 				this.awardMonsterXP(contestant);
+				contestant.monster.endEncounter();
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-					contestant.monster.endEncounter();
 
 					if (contestant.monster.destroyed) {
 						this.channelManager.queueMessage({
@@ -477,8 +477,6 @@ class Ring extends BaseClass {
 						});
 					}
 				} else if (contestant.monster.fled) {
-					contestant.monster.endEncounter();
-
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.givenName} lived to fight another day!`,
 						channel,
@@ -487,7 +485,6 @@ class Ring extends BaseClass {
 					});
 				} else {
 					contestant.won = true;
-					contestant.monster.endEncounter();
 
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.identity} is victorious!`,
@@ -496,10 +493,7 @@ class Ring extends BaseClass {
 						event: { name: 'win', properties: { contestant } }
 					});
 				}
-			});
-		} else {
-			contestants.forEach((contestant) => {
-				const { channel, channelName } = contestant;
+			} else {
 				contestant.monster.endEncounter();
 
 				this.channelManager.queueMessage({
@@ -508,8 +502,8 @@ class Ring extends BaseClass {
 					channelName,
 					event: { name: 'draw', properties: { contestant } }
 				});
-			});
-		}
+			}
+		});
 
 		this.channelManager.sendMessages()
 			.then(() => {
@@ -529,10 +523,10 @@ class Ring extends BaseClass {
 	awardMonsterXP (contestant) {
 		const { monster } = contestant;
 		const monsterXP = calculateXP(monster);
-		
-		monster.xp += monsterXP;
 
 		if (monsterXP > 0) {
+			monster.xp += monsterXP;
+
 			this.emit('gainedXP', {
 				contestant,
 				creature: monster,

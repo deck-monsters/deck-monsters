@@ -35,4 +35,19 @@ describe('./monsters/gladiator.js', () => {
 			icon: '💪'
 		});
 	});
+
+	it('can track killed creatures', () => {
+		const gladiator = new Gladiator();
+
+		expect(gladiator.killed).to.deep.equal([]);
+
+		gladiator.killed = 'one';
+		gladiator.killed = 'two';
+
+		expect(gladiator.killed).to.deep.equal(['one', 'two']);
+
+		gladiator.endEncounter();
+
+		expect(gladiator.killed).to.deep.equal([]);
+	});
 });
