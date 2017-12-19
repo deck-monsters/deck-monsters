@@ -4,7 +4,8 @@ const startCase = require('lodash.startcase');
 const BaseClass = require('../baseClass');
 
 const { signedNumber } = require('../helpers/signed-number');
-const { STARTING_XP, getLevel } = require('../helpers/levels');
+const { getLevel } = require('../helpers/levels');
+const { STARTING_XP } = require('../helpers/experience');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
 const PRONOUNS = require('../helpers/pronouns');
@@ -260,6 +261,22 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get killed () {
+		if (!this.killedCreatures) {
+			this.killedCreatures = [];
+		}
+		
+		return this.killedCreatures;
+	}
+
+	set killed (creature) {
+		if (!this.killedCreatures) {
+			this.killedCreatures = [creature];
+		} else {
+			this.killedCreatures.push(creature);
+		}
+	}
+
 	get level () {
 		return getLevel(this.xp);
 	}
@@ -408,6 +425,10 @@ Battles won: ${this.battles.wins}`;
 
 	die (assailant) {
 		if (this.hp <= 0) {
+			if (assailant instanceof BaseCreature) {
+				assailant.killed = this;
+			}
+
 			this.emit('die', {
 				destroyed: this.destroyed,
 				assailant

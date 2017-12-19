@@ -2,6 +2,7 @@
 
 const shuffle = require('lodash.shuffle');
 
+const { calculateXP } = require('../helpers/experience');
 const BaseClass = require('../baseClass');
 const delayTimes = require('../helpers/delay-times');
 const { monsterCard } = require('../helpers/card');
@@ -452,6 +453,11 @@ class Ring extends BaseClass {
 			}
 		});
 
+		// End the encounter for all monsters
+		contestants.forEach((contestant) => {
+			contestant.monster.endEncounter();
+		});
+
 		if (deaths > 0) {
 			contestants.forEach((contestant) => {
 				const { channel, channelName } = contestant;
@@ -476,13 +482,15 @@ class Ring extends BaseClass {
 				} else {
 					contestant.won = true;
 					this.channelManager.queueMessage({
-						announce: `${contestant.monster.givenName} hath soundly beaten ${contestant.monster.pronouns[2]} opponents!`,
+						announce: `${contestant.monster.givenName} is victorious!`,
 						channel,
 						channelName,
 						event: { name: 'win', properties: { contestant } }
 					});
 				}
 			});
+
+			this.awardMonsterXP({ contestants });
 		} else {
 			contestants.forEach((contestant) => {
 				const { channel, channelName } = contestant;
@@ -509,6 +517,21 @@ class Ring extends BaseClass {
 
 				this.clearRing();
 			});
+	}
+
+	awardMonsterXP ({ contestants }) {
+		contestants.forEach((contestant) => {
+			const { monster } = contestant;
+			const monsterXP = calculateXP(monster, contestants);
+			
+			monster.xp += monsterXP;
+
+			this.emit('gainedXP', {
+				contestant,
+				creature: monster,
+				xpGained: monsterXP
+			});
+		});
 	}
 
 	handleWinner ({ contestant }) {
