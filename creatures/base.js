@@ -265,7 +265,7 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
-	get killed () {		
+	get killed () {
 		return this.encounter.killedCreatures || [];
 	}
 
