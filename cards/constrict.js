@@ -28,7 +28,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 ConstrictCard.cardType = 'Constrict';
 ConstrictCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
 ConstrictCard.probability = 30;
-ConstrictCard.description = 'Your body _is_ the weapon';
+ConstrictCard.description = 'Your body is the weapon.';
 ConstrictCard.permittedClassesAndTypes = [BASILISK];
 ConstrictCard.weakAgainstCreatureTypes = [BASILISK];
 ConstrictCard.defaults = {
