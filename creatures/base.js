@@ -101,6 +101,10 @@ Battles won: ${this.battles.wins}`;
 		return this.options.gender;
 	}
 
+	get isBoss () {
+		return this.options.isBoss;
+	}
+
 	get pronouns () {
 		return PRONOUNS[this.options.gender];
 	}
