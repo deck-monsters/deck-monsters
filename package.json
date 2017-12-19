@@ -1,7 +1,7 @@
 {
   "name": "deck-monsters",
   "description": "Spawn monsters, equip them with cards, and send them into the ring to fight.",
-  "version": "0.9.16",
+  "version": "0.9.17",
   "contributors": [
     {
       "name": "David Brainer",
