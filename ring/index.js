@@ -32,6 +32,7 @@ class Ring extends BaseClass {
 		this.channelManager.on('loss', (className, channel, { contestant }) => this.handleLoser({ contestant }));
 		this.channelManager.on('permaDeath', (className, channel, { contestant }) => this.handlePermaDeath({ contestant }));
 		this.channelManager.on('draw', (className, channel, { contestant }) => this.handleTied({ contestant }));
+		this.channelManager.on('fled', (className, channel, { contestant }) => this.handleFled({ contestant }));
 
 		this.startBossTimer();
 	}
@@ -450,17 +451,16 @@ class Ring extends BaseClass {
 			}
 		});
 
-		// End the encounter for all monsters
-		contestants.forEach((contestant) => {
-			contestant.monster.endEncounter();
-		});
-
 		if (deaths > 0) {
 			contestants.forEach((contestant) => {
 				const { channel, channelName } = contestant;
 
+				this.awardMonsterXP(contestant);
+
 				if (contestant.monster.dead) {
 					contestant.lost = true;
+					contestant.monster.endEncounter();
+
 					if (contestant.monster.destroyed) {
 						this.channelManager.queueMessage({
 							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
@@ -476,21 +476,31 @@ class Ring extends BaseClass {
 							event: { name: 'loss', properties: { contestant } }
 						});
 					}
+				} else if (contestant.monster.fled) {
+					contestant.monster.endEncounter();
+
+					this.channelManager.queueMessage({
+						announce: `${contestant.monster.givenName} lived to fight another day!`,
+						channel,
+						channelName,
+						event: { name: 'fled', properties: { contestant } }
+					});
 				} else {
 					contestant.won = true;
+					contestant.monster.endEncounter();
+
 					this.channelManager.queueMessage({
-						announce: `${contestant.monster.givenName} is victorious!`,
+						announce: `${contestant.monster.identity} is victorious!`,
 						channel,
 						channelName,
 						event: { name: 'win', properties: { contestant } }
 					});
 				}
 			});
-
-			this.awardMonsterXP({ contestants });
 		} else {
 			contestants.forEach((contestant) => {
 				const { channel, channelName } = contestant;
+				contestant.monster.endEncounter();
 
 				this.channelManager.queueMessage({
 					announce: 'The fight ended in a draw.',
@@ -516,19 +526,20 @@ class Ring extends BaseClass {
 			});
 	}
 
-	awardMonsterXP ({ contestants }) {
-		contestants.forEach((contestant) => {
-			const { monster } = contestant;
-			const monsterXP = calculateXP(monster, contestants);
-			
-			monster.xp += monsterXP;
+	awardMonsterXP (contestant) {
+		const { monster } = contestant;
+		const monsterXP = calculateXP(monster);
+		
+		monster.xp += monsterXP;
 
+		if (monsterXP > 0) {
 			this.emit('gainedXP', {
 				contestant,
 				creature: monster,
+				killed: monster.killed,
 				xpGained: monsterXP
 			});
-		});
+		}
 	}
 
 	handleWinner ({ contestant }) {
@@ -556,6 +567,13 @@ class Ring extends BaseClass {
 		contestant.monster.addDraw();
 		this.emit('draw', { contestant });
 		contestant.monster.emit('draw', { contestant });
+	}
+
+	handleFled ({ contestant }) {
+		contestant.character.addDraw();
+		contestant.monster.addDraw();
+		this.emit('fled', { contestant });
+		contestant.monster.emit('fled', { contestant });
 	}
 
 	startBossTimer () {

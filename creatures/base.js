@@ -265,19 +265,15 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
-	get killed () {
-		if (!this.killedCreatures) {
-			this.killedCreatures = [];
-		}
-		
-		return this.killedCreatures;
+	get killed () {		
+		return this.encounter.killedCreatures || [];
 	}
 
 	set killed (creature) {
-		if (!this.killedCreatures) {
-			this.killedCreatures = [creature];
+		if (!this.encounter.killedCreatures) {
+			this.encounter.killedCreatures = [creature];
 		} else {
-			this.killedCreatures.push(creature);
+			this.encounter.killedCreatures.push(creature);
 		}
 	}
 
