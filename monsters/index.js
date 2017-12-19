@@ -136,17 +136,17 @@ ${getChoices(genders)}`,
 		.then(() => new Monster(options));
 };
 
-const equip = (deck, monster, cardSelection, channel, ring) => {
+const equip = (deck, monster, cardSelection, channel) => {
 	const cards = [];
 	const { cardSlots } = monster;
 
-	if (ring.monsterIsInRing(monster)) {
-		return Promise.reject(channel({
-			announce: `You cannot equip ${monster.options.name} while they are in the ring!`
-		}));
-	}
-
 	const addCard = ({ remainingSlots, remainingCards }) => {
+		if (monster.inEncounter) {
+			return Promise.reject(channel({
+				announce: `You cannot equip ${monster.options.name} while they are fighting!`
+			}));
+		}
+
 		const possibleCards = getCardCounts(remainingCards);
 
 		return Promise
