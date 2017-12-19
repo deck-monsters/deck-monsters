@@ -2,19 +2,16 @@
 
 const shuffle = require('lodash.shuffle');
 
+const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
+const { monsterCard } = require('../helpers/card');
+const { randomContestant } = require('../helpers/bosses');
 const BaseClass = require('../baseClass');
 const delayTimes = require('../helpers/delay-times');
-const { monsterCard } = require('../helpers/card');
 const pause = require('../helpers/pause');
-const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
-const { randomCharacter } = require('../characters');
 
 const MAX_MONSTERS = 5;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
-
-const bossChannel = () => Promise.resolve();
-const bossChannelName = 'BOSS';
 
 class Ring extends BaseClass {
 	constructor (channelManager, { spawnBosses = true, ...options } = {}, log) {
@@ -556,14 +553,7 @@ class Ring extends BaseClass {
 	spawnBoss () { // eslint-disable-line consistent-return
 		// Only try to enter the ring if there's not a current fight in progress
 		if (!this.inEncounter) {
-			const character = randomCharacter();
-			const monster = character.monsters[0];
-			const contestant = {
-				monster,
-				character,
-				channel: bossChannel,
-				channelName: bossChannelName
-			};
+			const contestant = randomContestant();
 
 			this.addMonster(contestant);
 
