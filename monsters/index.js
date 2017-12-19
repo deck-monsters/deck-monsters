@@ -141,6 +141,12 @@ const equip = (deck, monster, cardSelection, channel) => {
 	const { cardSlots } = monster;
 
 	const addCard = ({ remainingSlots, remainingCards }) => {
+		if (monster.inEncounter) {
+			return Promise.reject(channel({
+				announce: `You cannot equip ${monster.options.name} while they are fighting!`
+			}));
+		}
+
 		const possibleCards = getCardCounts(remainingCards);
 
 		return Promise
