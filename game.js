@@ -541,7 +541,7 @@ ${monsterCard(monster)}`
 						}
 					}
 
-					return character.equipMonster({ monsterName, cardSelection: selectedCards, channel })
+					return character.equipMonster({ monsterName, cardSelection: selectedCards, channel, ring })
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {

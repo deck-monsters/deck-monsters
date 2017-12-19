@@ -137,7 +137,7 @@ Which monster would you like to ${action}?`,
 			});
 	}
 
-	equipMonster ({ monsterName, cardSelection, channel }) {
+	equipMonster ({ monsterName, cardSelection, channel, ring }) {
 		const monsters = this.monsters.filter(monster => !monster.dead);
 		return Promise
 			.resolve(monsters.length)
@@ -152,7 +152,7 @@ Which monster would you like to ${action}?`,
 					channel, monsters, monsterName, action: 'equip'
 				});
 			})
-			.then(monster => equip(this.deck, monster, cardSelection, channel)
+			.then(monster => equip(this.deck, monster, cardSelection, channel, ring)
 				.then((cards) => {
 					monster.cards = cards;
 					return monster;
