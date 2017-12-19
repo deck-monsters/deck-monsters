@@ -3,6 +3,7 @@
 const shuffle = require('lodash.shuffle');
 
 const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
+const { calculateXP } = require('../helpers/experience');
 const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
 const BaseClass = require('../baseClass');
@@ -31,6 +32,7 @@ class Ring extends BaseClass {
 		this.channelManager.on('loss', (className, channel, { contestant }) => this.handleLoser({ contestant }));
 		this.channelManager.on('permaDeath', (className, channel, { contestant }) => this.handlePermaDeath({ contestant }));
 		this.channelManager.on('draw', (className, channel, { contestant }) => this.handleTied({ contestant }));
+		this.channelManager.on('fled', (className, channel, { contestant }) => this.handleFled({ contestant }));
 
 		this.startBossTimer();
 	}
@@ -449,12 +451,16 @@ class Ring extends BaseClass {
 			}
 		});
 
-		if (deaths > 0) {
-			contestants.forEach((contestant) => {
-				const { channel, channelName } = contestant;
+		contestants.forEach((contestant) => {
+			const { channel, channelName } = contestant;
+
+			if (deaths > 0) {
+				this.awardMonsterXP(contestant);
+				contestant.monster.endEncounter();
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
+
 					if (contestant.monster.destroyed) {
 						this.channelManager.queueMessage({
 							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
@@ -470,19 +476,25 @@ class Ring extends BaseClass {
 							event: { name: 'loss', properties: { contestant } }
 						});
 					}
+				} else if (contestant.monster.fled) {
+					this.channelManager.queueMessage({
+						announce: `${contestant.monster.givenName} lived to fight another day!`,
+						channel,
+						channelName,
+						event: { name: 'fled', properties: { contestant } }
+					});
 				} else {
 					contestant.won = true;
+
 					this.channelManager.queueMessage({
-						announce: `${contestant.monster.givenName} hath soundly beaten ${contestant.monster.pronouns[2]} opponents!`,
+						announce: `${contestant.monster.identity} is victorious!`,
 						channel,
 						channelName,
 						event: { name: 'win', properties: { contestant } }
 					});
 				}
-			});
-		} else {
-			contestants.forEach((contestant) => {
-				const { channel, channelName } = contestant;
+			} else {
+				contestant.monster.endEncounter();
 
 				this.channelManager.queueMessage({
 					announce: 'The fight ended in a draw.',
@@ -490,8 +502,8 @@ class Ring extends BaseClass {
 					channelName,
 					event: { name: 'draw', properties: { contestant } }
 				});
-			});
-		}
+			}
+		});
 
 		this.channelManager.sendMessages()
 			.then(() => {
@@ -506,6 +518,22 @@ class Ring extends BaseClass {
 
 				this.clearRing();
 			});
+	}
+
+	awardMonsterXP (contestant) {
+		const { monster } = contestant;
+		const monsterXP = calculateXP(monster);
+
+		if (monsterXP > 0) {
+			monster.xp += monsterXP;
+
+			this.emit('gainedXP', {
+				contestant,
+				creature: monster,
+				killed: monster.killed,
+				xpGained: monsterXP
+			});
+		}
 	}
 
 	handleWinner ({ contestant }) {
@@ -533,6 +561,13 @@ class Ring extends BaseClass {
 		contestant.monster.addDraw();
 		this.emit('draw', { contestant });
 		contestant.monster.emit('draw', { contestant });
+	}
+
+	handleFled ({ contestant }) {
+		contestant.character.addDraw();
+		contestant.monster.addDraw();
+		this.emit('fled', { contestant });
+		contestant.monster.emit('fled', { contestant });
 	}
 
 	startBossTimer () {

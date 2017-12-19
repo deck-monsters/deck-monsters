@@ -10,7 +10,7 @@ const { create: createCharacter } = require('./characters');
 const { getFlavor } = require('./helpers/flavor');
 const { globalSemaphore } = require('./helpers/semaphore');
 const { signedNumber } = require('./helpers/signed-number');
-const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/levels');
+const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
 const aws = require('./helpers/aws');
 const BaseClass = require('./baseClass');
 const cardProbabilities = require('./card-probabilities.json');
@@ -97,6 +97,7 @@ class Game extends BaseClass {
 		this.on('ring.endOfDeck', this.announceEndOfDeck);
 		this.on('ring.fight', this.announceFight);
 		this.on('ring.fightConcludes', this.announceFightConcludes);
+		this.on('ring.gainedXP', this.announceXPGain);
 		this.on('ring.remove', this.announceContestantLeave);
 		this.on('ring.roundComplete', this.announceNextRound);
 		this.on('ring.turnBegin', this.announceTurnBegin);
@@ -105,6 +106,7 @@ class Game extends BaseClass {
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
 		this.on('creature.permaDeath', this.handlePermaDeath);
+		this.on('creature.fled', this.handleFled);
 	}
 
 	/* eslint-disable max-len */
@@ -112,6 +114,7 @@ class Game extends BaseClass {
 		contestant,
 		creature,
 		xpGained,
+		killed,
 		coinsGained
 	}) {
 		const { channel, channelName } = contestant;
@@ -121,8 +124,13 @@ class Game extends BaseClass {
 			coinsMessage = ` and ${coinsGained} coins`;
 		}
 
+		let killedMessage = '';
+		if (killed) {
+			killedMessage = ` for killing ${killed.length} ${killed.length > 1 ? 'monsters' : 'monster'}.`;
+		}
+
 		this.channelManager.queueMessage({
-			announce: `${creature.identity} gained ${xpGained}XP${coinsMessage}`,
+			announce: `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}`,
 			channel,
 			channelName
 		});
@@ -426,13 +434,9 @@ ${monsterCard(monster)}`
 
 
 	handleWinner (className, monster, { contestant }) {
-		// Award XP draw a card, maybe kick off more events (that could be messaged)
+		// Draw a card, maybe kick off more events (that could be messaged)
 
-		// End the encounter for this monster
-		monster.endEncounter();
-
-		// Add XP to both the monster and the character in the case of victory
-		monster.xp += XP_PER_VICTORY;
+		// Add XP to the character in the case of victory
 		contestant.character.xp += XP_PER_VICTORY;
 
 		// Also give coins to the victor
@@ -453,19 +457,10 @@ ${monsterCard(monster)}`
 			xpGained: XP_PER_VICTORY,
 			coinsGained: COINS_PER_VICTORY
 		});
-
-		this.emit('gainedXP', {
-			contestant,
-			creature: monster,
-			xpGained: XP_PER_VICTORY
-		});
 	}
 
 	handlePermaDeath (className, monster, { contestant }) {
 		// Award XP, maybe kick off more events (that could be messaged)
-
-		// End the encounter for this monster
-		monster.endEncounter();
 
 		// The character still earns a small bit of XP and coins in the case of defeat
 		contestant.character.xp += XP_PER_DEFEAT * 2;
@@ -482,9 +477,6 @@ ${monsterCard(monster)}`
 	handleLoser (className, monster, { contestant }) { // eslint-disable-line class-methods-use-this
 		// Award XP, maybe kick off more events (that could be messaged)
 
-		// End the encounter for this monster
-		monster.endEncounter();
-
 		// The character still earns a small bit of XP and coins in the case of defeat
 		contestant.character.xp += XP_PER_DEFEAT;
 		contestant.character.coins += COINS_PER_DEFEAT;
@@ -494,6 +486,26 @@ ${monsterCard(monster)}`
 			creature: contestant.character,
 			xpGained: XP_PER_DEFEAT,
 			coinsGained: COINS_PER_DEFEAT
+		});
+	}
+
+	handleFled (className, monster, { contestant }) {
+		// The character and monster still earn a small bit of XP and coins when he/she/it flees.
+		monster.xp += XP_PER_DEFEAT;
+		contestant.character.xp += XP_PER_DEFEAT;
+		contestant.character.coins += COINS_PER_DEFEAT;
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.character,
+			xpGained: XP_PER_DEFEAT,
+			coinsGained: COINS_PER_DEFEAT
+		});
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: monster,
+			xpGained: XP_PER_DEFEAT
 		});
 	}
 
