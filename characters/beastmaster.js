@@ -10,7 +10,7 @@ const { monsterCard } = require('../helpers/card');
 const { spawn, equip } = require('../monsters');
 const TENSE = require('../helpers/tense');
 
-const DEFAULT_MONSTER_SLOTS = 4;
+const DEFAULT_MONSTER_SLOTS = 6;
 
 class Beastmaster extends BaseCharacter {
 	constructor (options) {

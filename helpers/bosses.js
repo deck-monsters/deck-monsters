@@ -6,9 +6,6 @@ const bossChannelName = 'BOSS';
 function randomContestant () {
 	const character = randomCharacter({ isBoss: true });
 	const monster = character.monsters[0];
-	const { canHold } = monster;
-
-	monster.canHold = object => canHold.call(monster, object) && !object.noBosses;
 
 	return {
 		monster,

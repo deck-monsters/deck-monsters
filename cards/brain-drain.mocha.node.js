@@ -3,6 +3,7 @@ const { expect, sinon } = require('../shared/test-setup');
 const BrainDrainCard = require('./brain-drain');
 const Gladiator = require('../monsters/gladiator');
 const pause = require('../helpers/pause');
+const HitCard = require('./hit');
 
 describe('./cards/brain-drain.js', () => {
 	let pauseStub;
@@ -25,12 +26,16 @@ describe('./cards/brain-drain.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const brainDrain = new BrainDrainCard();
+		const hit = new HitCard({ damageDice: '1d4' });
+
+		const stats = `${hit.stats}
+Curse: xp -10`;
 
 		expect(brainDrain).to.be.an.instanceof(BrainDrainCard);
 		expect(brainDrain.icon).to.equal('🤡');
 		expect(brainDrain.curseAmount).to.equal(-10);
 		expect(brainDrain.cursedProp).to.equal('xp');
-		expect(brainDrain.stats).to.equal('Curse: xp -10');
+		expect(brainDrain.stats).to.equal(stats);
 	});
 
 	it('decreases xp', () => {
@@ -40,7 +45,17 @@ describe('./cards/brain-drain.js', () => {
 		const target = new Gladiator({ name: 'target' });
 		target.xp = 300;
 
-		return brainDrain.play(player, target)
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		return brainDrain.play(player, target, ring)
 			.then((result) => {
 				expect(result).to.equal(true);
 				return expect(target.xp).to.equal(290);

@@ -1,3 +1,4 @@
+const { randomColor } = require('grab-color-names');
 const emoji = require('node-emoji');
 const shuffle = require('lodash.shuffle');
 
@@ -5,7 +6,7 @@ const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
 const { hydrateCard, fillDeck } = require('../cards');
 const { all: allMonsters, hydrateMonster } = require('../monsters');
 const { randomInt } = require('../helpers/chance');
-const { XP_PER_VICTORY } = require('../helpers/levels');
+const { XP_PER_VICTORY } = require('../helpers/experience');
 const Beastmaster = require('./beastmaster');
 const PRONOUNS = require('../helpers/pronouns');
 
@@ -93,9 +94,14 @@ ${getChoices(iconChoices)}`,
 		});
 };
 
-const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
+const randomCharacter = ({
+	battles = {},
+	isBoss,
+	Monsters,
+	...options
+} = {}) => {
 	if (!battles.total) {
-		battles.total = randomInt({ max: 45 });
+		battles.total = randomInt({ max: 69 });
 		battles.wins = randomInt({ max: battles.total });
 		battles.losses = battles.total - battles.wins;
 	}
@@ -104,27 +110,46 @@ const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
 
 	const xp = XP_PER_VICTORY * battles.wins;
 
-	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map(Monster => new Monster({
-		battles,
-		xp,
-		...options
-	}));
+	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map((Monster) => {
+		const monster = new Monster({
+			battles,
+			color: randomColor()[1].toLowerCase(),
+			isBoss,
+			xp,
+			...options
+		});
+
+		if (isBoss) {
+			const { canHold } = monster;
+
+			monster.canHold = object => canHold.call(monster, object) && !object.noBosses;
+		}
+
+		return monster;
+	});
 
 	const character = new Beastmaster({
 		battles,
 		icon,
+		isBoss,
 		monsters,
 		xp,
 		...options
 	});
 
-	// Clean up the deck (reducing probability of certain cards)
-	const deck = character.deck.filter(card => card.cardType !== 'Flee' && card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
-	character.deck = fillDeck(deck, {}, character);
+	// If this is a boss, clean up the deck (reducing probability of certain cards)
+	if (isBoss) {
+		let deck = fillDeck([], {}, character);
+		deck = deck.filter(card => card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
+		character.deck = fillDeck(deck, {}, character);
+	}
 
 	// Equip the monster
 	monsters.forEach((monster) => {
-		monster.cards = shuffle(character.deck.filter(card => monster.canHoldCard(card))).slice(0, monster.cardSlots);
+		monster.cards = [
+			...shuffle(character.deck.filter(card => monster.canHoldCard(card))),
+			...fillDeck([], {}, monster) // Add more cards just in case the character doesn't have enough
+		].slice(0, monster.cardSlots);
 	});
 
 	return character;

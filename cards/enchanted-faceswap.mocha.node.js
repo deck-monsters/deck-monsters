@@ -79,8 +79,8 @@ describe('./cards/enchanted-faceswap.js', () => {
 			})
 			.then(() => faceswap.play(player, target))
 			// Effect only activates in defense phase
-			.then(() => player.encounterEffects[0]({ card, phase: 'Not DEFENSE_PHASE' }))
-			.then(modifiedCard => player.encounterEffects[0]({ card: modifiedCard, phase: DEFENSE_PHASE }))
+			.then(() => player.encounterEffects[0]({ card, phase: 'Not DEFENSE_PHASE', player: target }))
+			.then(modifiedCard => player.encounterEffects[0]({ card: modifiedCard, phase: DEFENSE_PHASE, player: target }))
 			.then(modifiedCard => modifiedCard.play(target, player))
 			.then(() => {
 				// Card plays reversed
