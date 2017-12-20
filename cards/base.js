@@ -45,7 +45,10 @@ class BaseCard extends BaseClass {
 	}
 
 	clone () {
-		return Object.assign(Object.create(this), this);
+		const clone = Object.assign(Object.create(this), this);
+		clone.original = this.original || this;
+
+		return clone;
 	}
 
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this

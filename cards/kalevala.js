@@ -31,7 +31,7 @@ class KalevalaCard extends HitCard {
 			const damageDice = damageLevels[index];
 
 			if (damageDice) {
-				this.setOptions({
+				(this.original || this).setOptions({
 					damageDice
 				});
 				this.emit('narration', {
