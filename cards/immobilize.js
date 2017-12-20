@@ -145,7 +145,7 @@ class ImmobilizeCard extends HitCard {
 							if (success) {
 								target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
 
-								if (strokeOfLuck) {
+								if (strokeOfLuck && target !== player) {
 									player.hit(2, target, this);
 								}
 							} else {
