@@ -34,8 +34,8 @@ class CurseCard extends HitCard {
 		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}`;
 
 		if (this.hasChanceToHit) {
-			stats = super.stats + `
-${stats}`
+			stats = `${super.stats}
+${stats}`;
 		}
 
 		return stats;
@@ -46,10 +46,10 @@ ${stats}`
 			target.setModifier(this.cursedProp, this.curseAmount);
 
 			if (this.hasChanceToHit) {
-				return super.effect(player, target, ring);
+				return resolve(super.effect(player, target, ring));
 			}
 
-			resolve(true);
+			return resolve(true);
 		});
 	}
 }

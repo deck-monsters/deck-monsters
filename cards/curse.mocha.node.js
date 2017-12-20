@@ -1,16 +1,10 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const WeepingAngel = require('../monsters/weeping-angel');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
-const Gladiator = require('../monsters/gladiator');
 const Curse = require('./curse');
 const Hit = require('./hit');
 const pause = require('../helpers/pause');
-
-const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
-const { ATTACK_PHASE } = require('../helpers/phases');
 
 describe.only('./cards/curse.js', () => {
 	let channelStub;
@@ -37,10 +31,10 @@ describe.only('./cards/curse.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const curse = new Curse();
-		const hit = new Hit();
+		const hit = new Hit({ damageDice: '1d4' });
 
-		const stats = `Curse: ${this.cursedProp} ${this.curseAmount}
-${hit.stats}`;
+		const stats = `${hit.stats}
+Curse: ac -1`;
 
 		expect(curse).to.be.an.instanceof(Curse);
 		expect(curse.stats).to.equal(stats);
