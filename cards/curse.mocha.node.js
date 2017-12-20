@@ -6,7 +6,7 @@ const Curse = require('./curse');
 const Hit = require('./hit');
 const pause = require('../helpers/pause');
 
-describe.only('./cards/curse.js', () => {
+describe('./cards/curse.js', () => {
 	let channelStub;
 	let pauseStub;
 
