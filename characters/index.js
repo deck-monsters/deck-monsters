@@ -1,6 +1,5 @@
 const emoji = require('node-emoji');
 const { randomColor } = require('grab-color-names');
-const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
 const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
@@ -102,7 +101,7 @@ const randomCharacter = ({
 	...options
 } = {}) => {
 	if (!battles.total) {
-		battles.total = randomInt({ max: 45 });
+		battles.total = randomInt({ max: 69 });
 		battles.wins = randomInt({ max: battles.total });
 		battles.losses = battles.total - battles.wins;
 	}
