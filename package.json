@@ -43,6 +43,7 @@
     "lodash.reduce": "^4.6.0",
     "lodash.sample": "^4.2.1",
     "lodash.shuffle": "^4.2.0",
+    "lodash.some": "^4.6.0",
     "lodash.startcase": "^4.4.0",
     "lodash.throttle": "^4.1.1",
     "lodash.upperfirst": "^4.3.1",

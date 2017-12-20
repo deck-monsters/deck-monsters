@@ -1,5 +1,5 @@
 const moment = require('moment');
-const { some } = require('lodash');
+const some = require('lodash.some');
 
 const BaseCharacter = require('./base');
 
