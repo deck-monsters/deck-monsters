@@ -565,7 +565,7 @@ ${monsterCard(monster)}`
 						.catch(err => log(err));
 				},
 				lookAtMonster ({ monsterName } = {}) {
-					return game.lookAtMonster(channel, monsterName)
+					return game.lookAtMonster(channel, monsterName, character)
 						.catch(err => log(err));
 				},
 				lookAtCard ({ cardName } = {}) {
@@ -620,12 +620,13 @@ ${monsterCard(monster)}`
 		}, {});
 	}
 
-	lookAtMonster (channel, monsterName) {
+	lookAtMonster (channel, monsterName, character) {
 		if (monsterName) {
 			const allMonsters = this.getAllMonstersLookup();
 			const monster = allMonsters[monsterName.toLowerCase()];
+			const ownsMonster = character.ownsMonster(monsterName);
 
-			if (monster) return monster.look(channel);
+			if (monster) return monster.look(channel, ownsMonster);
 		}
 
 		return Promise.reject(channel({

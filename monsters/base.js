@@ -114,21 +114,26 @@ ${getAttributeChoices(this.options)}`,
 				}));
 	}
 
-	look (channel) {
+	look (channel, inDetail) {
 		return Promise
 			.resolve()
 			.then(() => channel({ announce: monsterCard(this, true) }))
-			.then(() => this.lookAtCards(channel));
+			.then(() => this.lookAtCards(channel, inDetail));
 	}
 
-	lookAtCards (channel) {
-		const sortedDeck = sortCards([...this.cards]);
-		const uniqueCards = getUniqueCards(sortedDeck);
+	lookAtCards (channel, inDetail) {
+		let cards = [...this.cards];
+
+		if (!inDetail) {
+			const sortedDeck = sortCards(cards);
+			cards = getUniqueCards(sortedDeck);
+		}
 
 		let announce;
-		if (uniqueCards.length > 0) {
-			announce = uniqueCards.reduce((cards, card) =>
-				cards + actionCard(card), 'Cards:\n');
+
+		if (cards.length > 0) {
+			announce = cards.reduce((previousCards, card) =>
+				previousCards + actionCard(card), 'Cards:\n');
 		} else {
 			announce = `${this.givenName}'s hand is empty.`;
 		}
