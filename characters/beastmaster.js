@@ -1,4 +1,5 @@
 const moment = require('moment');
+const some = require('lodash.some');
 
 const BaseCharacter = require('./base');
 
@@ -69,6 +70,10 @@ class Beastmaster extends BaseCharacter {
 		this.monsters = this.monsters.filter(monster => monster !== monsterToBeDropped);
 
 		this.emit('monsterDropped', { monsterToBeDropped });
+	}
+
+	ownsMonster (monsterName) {
+		return some(this.monsters, monster => (monster.givenName.toLowerCase() === monsterName.toLowerCase()));
 	}
 
 	spawnMonster (channel, options) {
