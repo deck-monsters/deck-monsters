@@ -132,6 +132,7 @@ describe('./cards/blast.js', () => {
 		const blast = new BlastCard({ damage: 4, levelDamage: 2 });
 
 		const player = new Basilisk({ name: 'player' });
+		player.encounter = {};
 		const target = {};
 
 		target.character = randomCharacter();

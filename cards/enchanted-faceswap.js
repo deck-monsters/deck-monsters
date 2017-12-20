@@ -12,11 +12,12 @@ class EnchantedFaceswapCard extends BaseCard {
 		super({ icon });
 	}
 
-	effect (faceswapPlayer, faceswapTarget, ring, activeContestants) { // eslint-disable-line no-unused-vars
+	effect (faceswapPlayer, originalTarget, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
 			const faceswapEffect = ({
 				card,
-				phase
+				phase,
+				player: faceswapTarget
 			}) => {
 				if (phase === DEFENSE_PHASE) {
 					const { play } = card;

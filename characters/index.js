@@ -5,7 +5,7 @@ const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
 const { hydrateCard, fillDeck } = require('../cards');
 const { all: allMonsters, hydrateMonster } = require('../monsters');
 const { randomInt } = require('../helpers/chance');
-const { XP_PER_VICTORY } = require('../helpers/levels');
+const { XP_PER_VICTORY } = require('../helpers/experience');
 const Beastmaster = require('./beastmaster');
 const PRONOUNS = require('../helpers/pronouns');
 
