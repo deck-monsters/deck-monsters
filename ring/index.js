@@ -457,11 +457,11 @@ class Ring extends BaseClass {
 
 			if (deaths > 0) {
 				this.awardMonsterXP(contestant);
-				contestant.monster.endEncounter();
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-
+					contestant.monster.endEncounter();
+					
 					if (contestant.monster.destroyed) {
 						this.channelManager.queueMessage({
 							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
@@ -478,6 +478,8 @@ class Ring extends BaseClass {
 						});
 					}
 				} else if (contestant.monster.fled) {
+					contestant.monster.endEncounter();
+
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.givenName} lived to fight another day!`,
 						channel,
@@ -486,7 +488,8 @@ class Ring extends BaseClass {
 					});
 				} else {
 					contestant.won = true;
-
+					contestant.monster.endEncounter();
+					
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.identity} is victorious!`,
 						channel,
