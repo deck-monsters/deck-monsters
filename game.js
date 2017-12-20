@@ -88,7 +88,11 @@ class Game extends BaseClass {
 		this.on('cardDrop', this.announceCardDrop);
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.heal', this.announceHeal);
-		this.on('creature.hit', this.announceHit);
+
+		const AnnounceHit = require('./announcements/hit.js');
+		const announceHit = new AnnounceHit({ channel: this.publicChannel });
+		announceHit.on('creature.hit', announceHit.announce);
+
 		this.on('creature.leave', this.announceLeave);
 		this.on('creature.modifier', this.announceModifier);
 		this.on('gainedXP', this.announceXPGain);
@@ -152,7 +156,7 @@ ${cardDropped}`;
 			channelName
 		});
 
-		publicChannel({
+		channel({
 			announce
 		});
 	}
@@ -299,36 +303,6 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		channel({
 			announce:
 `${monster.identity}'s ${attr} ${dir} by ${Math.abs(amount)}`
-		});
-	}
-
-	announceHit (className, monster, {
-		assailant,
-		card,
-		damage,
-		prevHp
-	}) {
-		const channel = this.publicChannel;
-		const flavors = card && card.flavors;
-
-		let icon = '🤜';
-		if (damage >= 10) {
-			icon = '🔥';
-		} else if (damage >= 5) {
-			icon = '🔪';
-		} else if (damage === 1) {
-			icon = '🏓';
-		}
-
-		const bloodied = (monster.bloodied && prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
-		const only = (monster.bloodied && monster.hp > 0) ? 'only ' : '';
-
-		channel({
-			announce:
-`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
-
-${monster.icon}  *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
-`
 		});
 	}
 
