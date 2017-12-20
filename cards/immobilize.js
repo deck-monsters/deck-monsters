@@ -134,7 +134,7 @@ class ImmobilizeCard extends HitCard {
 							}
 
 							this.emit('rolled', {
-								reason: `and needs higher than a ${this.getFreedomThreshold(player, target)} to be free`,
+								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free`,
 								card: this,
 								roll: freedomRoll,
 								player: target,
