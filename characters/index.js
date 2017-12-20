@@ -1,4 +1,6 @@
 const emoji = require('node-emoji');
+const namedColors = require('color-name-list');
+const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
 const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
@@ -107,6 +109,7 @@ const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
 	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map((Monster) => {
 		const monster = new Monster({
 			battles,
+			color: namedColors[random(0, namedColors.length - 1)].name,
 			xp,
 			...options
 		});
