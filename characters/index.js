@@ -113,7 +113,7 @@ const randomCharacter = ({
 	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map((Monster) => {
 		const monster = new Monster({
 			battles,
-			color: randomColor()[1],
+			color: randomColor()[1].toLowerCase(),
 			isBoss,
 			xp,
 			...options
