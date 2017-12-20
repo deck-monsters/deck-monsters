@@ -1,5 +1,5 @@
-const emoji = require('node-emoji');
 const { randomColor } = require('grab-color-names');
+const emoji = require('node-emoji');
 const shuffle = require('lodash.shuffle');
 
 const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');

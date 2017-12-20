@@ -39,6 +39,7 @@
     "fantasy-names": "^1.1.2",
     "grab-color-names": "^1.1.2",
     "lodash.foreach": "^4.5.0",
+    "lodash.random": "^3.2.0",
     "lodash.reduce": "^4.6.0",
     "lodash.sample": "^4.2.1",
     "lodash.shuffle": "^4.2.0",

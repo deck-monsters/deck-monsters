@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 
+const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
 const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
@@ -581,7 +582,7 @@ class Ring extends BaseClass {
 					ring.spawnBoss();
 					ring.startBossTimer(); // Do it again in an hour
 				}, 120000);
-			}, 3480000);
+			}, random(2400000, 3480000));
 		}
 	}
 
