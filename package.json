@@ -55,7 +55,7 @@
   "devDependencies": {
     "@salesforce-mc/devscripts": "^3.2.0",
     "@salesforce-mc/devtest": "^4.1.0",
-    "@salesforce-mc/eslint-config-sfmc": "^3.0.1",
+    "@salesforce-mc/eslint-config-sfmc": "^3.0.2",
     "prompt": "^1.0.0"
   }
 }
