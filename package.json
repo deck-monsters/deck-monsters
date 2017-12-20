@@ -34,12 +34,11 @@
   "main": "index.js",
   "dependencies": {
     "aws-sdk": "^2.162.0",
-    "color-name-list": "^3.9.0",
     "escape-string-regexp": "^1.0.5",
     "event-emitter-es6": "^1.1.5",
     "fantasy-names": "^1.1.2",
+    "grab-color-names": "^1.1.2",
     "lodash.foreach": "^4.5.0",
-    "lodash.random": "^3.2.0",
     "lodash.reduce": "^4.6.0",
     "lodash.sample": "^4.2.1",
     "lodash.shuffle": "^4.2.0",

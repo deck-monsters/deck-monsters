@@ -1,5 +1,5 @@
 const emoji = require('node-emoji');
-const namedColors = require('color-name-list');
+const { randomColor } = require('grab-color-names');
 const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
@@ -95,7 +95,12 @@ ${getChoices(iconChoices)}`,
 		});
 };
 
-const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
+const randomCharacter = ({
+	battles = {},
+	isBoss,
+	Monsters,
+	...options
+} = {}) => {
 	if (!battles.total) {
 		battles.total = randomInt({ max: 45 });
 		battles.wins = randomInt({ max: battles.total });
@@ -109,12 +114,13 @@ const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
 	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map((Monster) => {
 		const monster = new Monster({
 			battles,
-			color: namedColors[random(0, namedColors.length - 1)].name,
+			color: randomColor()[1],
+			isBoss,
 			xp,
 			...options
 		});
 
-		if (options.isBoss) {
+		if (isBoss) {
 			const { canHold } = monster;
 
 			monster.canHold = object => canHold.call(monster, object) && !object.noBosses;
@@ -126,20 +132,25 @@ const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
 	const character = new Beastmaster({
 		battles,
 		icon,
+		isBoss,
 		monsters,
 		xp,
 		...options
 	});
 
 	// If this is a boss, clean up the deck (reducing probability of certain cards)
-	if (options.isBoss) {
-		const deck = character.deck.filter(card => card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
+	if (isBoss) {
+		let deck = fillDeck([], {}, character);
+		deck = deck.filter(card => card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
 		character.deck = fillDeck(deck, {}, character);
 	}
 
 	// Equip the monster
 	monsters.forEach((monster) => {
-		monster.cards = shuffle(character.deck.filter(card => monster.canHoldCard(card))).slice(0, monster.cardSlots);
+		monster.cards = [
+			...shuffle(character.deck.filter(card => monster.canHoldCard(card))),
+			...fillDeck([], {}, monster) // Add more cards just in case the character doesn't have enough
+		].slice(0, monster.cardSlots);
 	});
 
 	return character;
