@@ -1,4 +1,5 @@
-const random = require('lodash.sample');
+const random = require('lodash.random');
+const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
 const BaseClass = require('../baseClass');
@@ -12,7 +13,7 @@ const PRONOUNS = require('../helpers/pronouns');
 
 const BASE_AC = 5;
 const AC_VARIANCE = 2;
-const BASE_HP = 23;
+const BASE_HP = 28;
 const HP_VARIANCE = 5;
 const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
 const MAX_ATTACK_BOOST = 10;
@@ -22,14 +23,29 @@ const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
 
 class BaseCreature extends BaseClass {
-	constructor (options) {
-		const defaultOptions = {
-			gender: random(Object.keys(PRONOUNS)),
-			DEFAULT_HP: Math.ceil(Math.random() * HP_VARIANCE) + BASE_HP,
-			DEFAULT_AC: Math.ceil(Math.random() * AC_VARIANCE) + BASE_AC
-		};
+	constructor ({
+		acVariance = random(0, AC_VARIANCE),
+		hpVariance = random(0, HP_VARIANCE),
+		gender = sample(Object.keys(PRONOUNS)),
+		DEFAULT_AC, // legacy
+		DEFAULT_HP, // legacy
+		...options
+	} = {}) {
+		super({ acVariance, hpVariance, gender, ...options });
 
-		super(Object.assign(defaultOptions, options));
+		// Clean up old AC code
+		if (DEFAULT_AC) {
+			this.setOptions({
+				acVariance: DEFAULT_AC - 5
+			});
+		}
+
+		// Clean up old HP code
+		if (DEFAULT_HP) {
+			this.setOptions({
+				hpVariance: DEFAULT_HP - 23
+			});
+		}
 
 		if (this.name === BaseCreature.name) {
 			throw new Error('The BaseCreature should not be instantiated directly!');
@@ -110,12 +126,12 @@ Battles won: ${this.battles.wins}`;
 		return PRONOUNS[this.options.gender];
 	}
 
-	get DEFAULT_HP () {
-		return this.options.DEFAULT_HP;
+	get acVariance () {
+		return this.options.acVariance + (this.constructor.acVariance || 0);
 	}
 
-	get DEFAULT_AC () {
-		return this.options.DEFAULT_AC;
+	get hpVariance () {
+		return this.options.hpVariance + (this.constructor.hpVariance || 0);
 	}
 
 	get battles () {
@@ -160,6 +176,14 @@ Battles won: ${this.battles.wins}`;
 
 	get destroyed () {
 		return this.hp < -this.bloodiedValue;
+	}
+
+	get maxHp () {
+		let maxHp = BASE_HP + this.hpVariance;
+		maxHp += Math.min(this.level * 3, MAX_HP_BOOST); // Gain 3 hp per level up to the max
+		maxHp += this.modifiers.maxHp || 0;
+
+		return maxHp;
 	}
 
 	get hp () {
@@ -286,7 +310,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get ac () {
-		let ac = this.options.ac || this.DEFAULT_AC;
+		let ac = BASE_AC + this.acVariance;
 		ac += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
 		ac += this.modifiers.ac || 0;
 
@@ -325,14 +349,6 @@ Battles won: ${this.battles.wins}`;
 		damageModifier += this.modifiers.damageModifier || 0;
 
 		return damageModifier;
-	}
-
-	get maxHp () {
-		let maxHp = this.options.maxHp || this.DEFAULT_HP;
-		maxHp += Math.min(this.level * 2, MAX_HP_BOOST); // Gain 2 hp per level up to the max
-		maxHp += this.modifiers.maxHp || 0;
-
-		return maxHp;
 	}
 
 	canHold () { // eslint-disable-line class-methods-use-this
