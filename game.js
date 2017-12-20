@@ -137,16 +137,23 @@ class Game extends BaseClass {
 	}
 
 	announceCardDrop (className, game, { contestant, card }) {
+		const publicChannel = this.publicChannel;
 		const { channel, channelName } = contestant;
 
 		const cardDropped = actionCard(card);
 
-		this.channelManager.queueMessage({
-			announce: `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:
+		const announce = `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:
 
-${cardDropped}`,
+${cardDropped}`;
+
+		this.channelManager.queueMessage({
+			announce,
 			channel,
 			channelName
+		});
+
+		channel({
+			announce
 		});
 	}
 
