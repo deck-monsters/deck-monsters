@@ -7,7 +7,7 @@ const Basilisk = require('../monsters/basilisk');
 const Gladiator = require('../monsters/gladiator');
 const Mesmerize = require('./mesmerize');
 const pause = require('../helpers/pause');
-
+const { ATTACK_PHASE } = require('../helpers/phases');
 
 const {
 	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
@@ -106,6 +106,108 @@ Chance to immobilize everyone with your shocking beauty.`;
 				expect(target1.encounterEffects.length).to.equal(1);
 				expect(target2.encounterEffects.length).to.equal(1);
 				return expect(target3.encounterEffects.length).to.equal(1);
+			});
+	});
+
+	it('harms immobilizer on breaking free with natural 20', () => {
+		const mesmerize = new Mesmerize();
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(mesmerize)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const playerBeforeHP = player.hp;
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return mesmerize
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+
+				checkSuccessStub.returns({ success: true, strokeOfLuck: true, curseOfLoki: false });
+
+				const card = target.encounterEffects.reduce((currentCard, effect) => {
+					const modifiedCard = effect({
+						activeContestants: [target, player],
+						card: currentCard,
+						phase: ATTACK_PHASE,
+						player,
+						ring,
+						target
+					});
+
+					return modifiedCard || currentCard;
+				}, new Hit());
+
+				return card
+					.play(target, player, ring, ring.contestants)
+					.then(() => {
+						checkSuccessStub.restore();
+
+						expect(player.hp).to.be.below(playerBeforeHP);
+						return expect(target.encounterEffects.length).to.equal(0);
+					});
+			});
+	});
+
+	it('doesn\'t harm immobilizer on breaking free with natural 20 if immobilizer is self', () => {
+		const mesmerize = new Mesmerize();
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(mesmerize)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const playerBeforeHP = player.hp;
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return mesmerize
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				expect(player.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+
+				checkSuccessStub.returns({ success: true, strokeOfLuck: true, curseOfLoki: false });
+
+				const card = player.encounterEffects.reduce((currentCard, effect) => {
+					const modifiedCard = effect({
+						activeContestants: [target, player],
+						card: currentCard,
+						phase: ATTACK_PHASE,
+						player,
+						ring,
+						target
+					});
+
+					return modifiedCard || currentCard;
+				}, new Hit());
+
+				return card
+					.play(player, target, ring, ring.contestants)
+					.then(() => {
+						checkSuccessStub.restore();
+
+						expect(player.hp).to.equal(playerBeforeHP);
+						return expect(player.encounterEffects.length).to.equal(0);
+					});
 			});
 	});
 });
