@@ -104,11 +104,21 @@ const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
 
 	const xp = XP_PER_VICTORY * battles.wins;
 
-	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map(Monster => new Monster({
-		battles,
-		xp,
-		...options
-	}));
+	const monsters = (Monsters || [shuffle(allMonsters)[0]]).map((Monster) => {
+		const monster = new Monster({
+			battles,
+			xp,
+			...options
+		});
+
+		if (options.isBoss) {
+			const { canHold } = monster;
+
+			monster.canHold = object => canHold.call(monster, object) && !object.noBosses;
+		}
+
+		return monster;
+	});
 
 	const character = new Beastmaster({
 		battles,
@@ -118,9 +128,11 @@ const randomCharacter = ({ battles = {}, Monsters, ...options } = {}) => {
 		...options
 	});
 
-	// Clean up the deck (reducing probability of certain cards)
-	const deck = character.deck.filter(card => card.cardType !== 'Flee' && card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
-	character.deck = fillDeck(deck, {}, character);
+	// If this is a boss, clean up the deck (reducing probability of certain cards)
+	if (options.isBoss) {
+		const deck = character.deck.filter(card => card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
+		character.deck = fillDeck(deck, {}, character);
+	}
 
 	// Equip the monster
 	monsters.forEach((monster) => {
