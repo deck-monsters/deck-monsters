@@ -1,32 +1,14 @@
 
-const BaseAnnounce = require('./announce');
-
-const { actionCard } = require('../helpers/card');
-const { max } = require('../helpers/chance');
+const { getFlavor } = require('../helpers/flavor');
+const BaseAnnounce = require('./announce.js');
 
 class AnnounceHit extends BaseAnnounce {
-	constructor ({
-		channel
-	} = {}) {
-		super({ channel });
-	}
-
 	announce (className, monster, {
 		assailant,
 		card,
 		damage,
 		prevHp
 	}) {
-		console.log('');
-		console.log('');
-		console.log('');
-		console.log('');
-		console.log('asdfasdfadsfadsfasdfasdfasdfasdafsdasfasdf');
-		console.log('');
-		console.log('');
-		console.log('');
-		console.log('');
-		console.log('announce it!', this.channel, damage)
 		const flavors = card && card.flavors;
 
 		let icon = '🤜';
@@ -41,14 +23,14 @@ class AnnounceHit extends BaseAnnounce {
 		const bloodied = (monster.bloodied && prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
 		const only = (monster.bloodied && monster.hp > 0) ? 'only ' : '';
 
-		this.channel({
+		this.publicChannel({
 			announce:
-	`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${this.getFlaver('hits', flavors)} ${monster.givenName} for ${damage} damage.
+	`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
 
 	${monster.icon}  *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
 	`
 		});
-	};
+	}
 }
 
 module.exports = AnnounceHit;

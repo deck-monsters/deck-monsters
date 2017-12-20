@@ -18,6 +18,9 @@ const ChannelManager = require('./channel');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
 
+const AnnounceHit = require('./announcements/hit.js');
+console.log(AnnounceHit);
+
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
 
 class Game extends BaseClass {
@@ -89,9 +92,8 @@ class Game extends BaseClass {
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.heal', this.announceHeal);
 
-		const AnnounceHit = require('./announcements/hit.js');
-		const announceHit = new AnnounceHit({ channel: this.publicChannel });
-		announceHit.on('creature.hit', announceHit.announce);
+		const announceHit = new AnnounceHit();
+		this.on('creature.hit', announceHit.announce);
 
 		this.on('creature.leave', this.announceLeave);
 		this.on('creature.modifier', this.announceModifier);

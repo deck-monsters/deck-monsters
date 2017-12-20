@@ -34,5 +34,5 @@ describe('./exploration/index.js', () => {
 		expect(exploration.channelManager).to.be.an.instanceof(ChannelManager);
 	});
 
-	it('can have monsters sent to it')
+	it('can have monsters sent to it');
 });
