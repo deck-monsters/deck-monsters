@@ -26,6 +26,7 @@ const announceEffect = require('./announcements/effect.js');
 const announceEndOfDeck = require('./announcements/endOfDeck.js');
 const announceHit = require('./announcements/hit.js');
 const announceLeave = require('./announcements/leave.js');
+const announceModifier = require('./announcements/modifier.js');
 const announceRolled = require('./announcements/rolled.js');
 const announceRolling = require('./announcements/rolling.js');
 const announceStay = require('./announcements/stay.js');
@@ -100,6 +101,7 @@ class Game extends BaseClass {
 			{ event: 'ring.endOfDeck', listener: announceEndOfDeck },
 			{ event: 'creature.hit', listener: announceHit },
 			{ event: 'creature.leave', listener: announceLeave },
+			{ event: 'creature.modifier', listener: announceModifier },
 			{ event: 'card.rolled', listener: announceRolled },
 			{ event: 'card.rolling', listener: announceRolling },
 			{ event: 'card.stay', listener: announceStay },
@@ -112,7 +114,7 @@ class Game extends BaseClass {
 			{ event: 'card.narration', listener: this.announceNarration },
 
 
-			{ event: 'creature.modifier', listener: this.announceModifier },
+
 
 
 			{ event: 'ring.bossWillSpawn', listener: this.announceBossWillSpawn },
@@ -139,20 +141,6 @@ class Game extends BaseClass {
 		this.on('creature.fled', this.handleFled);
 	}
 
-	announceModifier (publicChannel, channelManager, className, monster, {
-		amount,
-		attr
-	}) {
-		let dir = 'increased';
-		if (amount < 0) {
-			dir = 'decreased';
-		}
-
-		publicChannel({
-			announce:
-`${monster.identity}'s ${attr} ${dir} by ${Math.abs(amount)}`
-		});
-	}
 
 	announceNextRound (publicChannel, channelManager, className, ring, { round }) {
 		publicChannel({
