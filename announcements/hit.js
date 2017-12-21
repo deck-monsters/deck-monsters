@@ -1,5 +1,7 @@
 
-const announceHit = (publicChannel, getFlavor, className, monster, {
+const { getFlavor } = require('../helpers/flavor');
+
+const announceHit = (publicChannel, channelManager, className, monster, {
 	assailant,
 	card,
 	damage,
