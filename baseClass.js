@@ -70,6 +70,14 @@ class BaseClass {
 		this.semaphore.off(event, func);
 	}
 
+	clone () {
+		const clone = Object.assign(Object.create(this), this);
+		clone.setOptions(this.options);
+		clone.original = this.original || this;
+
+		return clone;
+	}
+
 	toJSON () {
 		const { defaults, options } = this;
 

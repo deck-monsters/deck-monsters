@@ -36,6 +36,14 @@ describe('./cards/kalevala.js', () => {
 		expect(kalevala.icon).to.equal('🎻');
 	});
 
+	it('can be restored from backup defaults', () => {
+		const kalevala = new KalevalaCard(JSON.parse('{"damageDice":"1d6","icon":"🎻"}'));
+
+		expect(kalevala).to.be.an.instanceof(KalevalaCard);
+		expect(kalevala.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d6');
+		expect(kalevala.cardType).to.equal('The Kalevala (1d6)');
+	});
+
 	it('levels up the damage dice if a nat 20 is rolled', () => {
 		const kalevala = new KalevalaCard();
 		const hitCheckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(kalevala)), 'hitCheck');
@@ -80,7 +88,8 @@ describe('./cards/kalevala.js', () => {
 			.then(() => {
 				hitCheckStub.restore();
 				expect(target.hp).to.be.below(before);
-				return expect(kalevala.damageDice).to.equal('1d6');
+				expect(kalevala.damageDice).to.equal('1d6');
+				return expect(JSON.stringify(kalevala)).to.equal('{"name":"KalevalaCard","options":{"damageDice":"1d6","icon":"🎻"}}');
 			});
 	});
 

@@ -31,9 +31,16 @@ class KalevalaCard extends HitCard {
 			const damageDice = damageLevels[index];
 
 			if (damageDice) {
-				(this.original || this).setOptions({
+				this.setOptions({
 					damageDice
 				});
+
+				if (this.original) {
+					this.original.setOptions({
+						damageDice
+					});
+				}
+
 				this.emit('narration', {
 					narration:
 `✨ *This kalevala has levelled up.* ✨
