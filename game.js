@@ -1,15 +1,11 @@
 const reduce = require('lodash.reduce');
-const moment = require('moment');
 const zlib = require('zlib');
 
-// const { actionCard, monsterCard } = require('./helpers/card');
 const { all: cardTypes, draw } = require('./cards');
 const { all: monsterTypes } = require('./monsters');
 const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./helpers/coins');
 const { create: createCharacter } = require('./characters');
-const { getFlavor } = require('./helpers/flavor');
 const { globalSemaphore } = require('./helpers/semaphore');
-// const { signedNumber } = require('./helpers/signed-number');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
 const aws = require('./helpers/aws');
 const BaseClass = require('./baseClass');
@@ -18,15 +14,23 @@ const ChannelManager = require('./channel');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
 
+const announceBossWillSpawn = require('./announcements/bossWillSpawn.js');
 const announceCard = require('./announcements/card.js');
 const announceCardDrop = require('./announcements/cardDrop.js');
 const announceContestant = require('./announcements/contestant.js');
+const announceContestantLeave = require('./announcements/contestantLeave.js');
 const announceDeath = require('./announcements/death.js');
 const announceEffect = require('./announcements/effect.js');
 const announceEndOfDeck = require('./announcements/endOfDeck.js');
+const announceFight = require('./announcements/fight.js');
+const announceFightConcludes = require('./announcements/fightConcludes.js');
+const announceHeal = require('./announcements/heal.js');
 const announceHit = require('./announcements/hit.js');
 const announceLeave = require('./announcements/leave.js');
+const announceMiss = require('./announcements/miss.js');
 const announceModifier = require('./announcements/modifier.js');
+const announceNarration = require('./announcements/narration.js');
+const announceNextRound = require('./announcements/nextRound.js');
 const announceRolled = require('./announcements/rolled.js');
 const announceRolling = require('./announcements/rolling.js');
 const announceStay = require('./announcements/stay.js');
@@ -93,38 +97,28 @@ class Game extends BaseClass {
 
 	initializeEvents () {
 		const events = [
+			{ event: 'ring.bossWillSpawn', listener: announceBossWillSpawn },
 			{ event: 'card.played', listener: announceCard },
 			{ event: 'cardDrop', listener: announceCardDrop },
 			{ event: 'ring.add', listener: announceContestant },
+			{ event: 'ring.remove', listener: announceContestantLeave },
 			{ event: 'creature.die', listener: announceDeath },
 			{ event: 'card.effect', listener: announceEffect },
 			{ event: 'ring.endOfDeck', listener: announceEndOfDeck },
+			{ event: 'ring.fight', listener: announceFight },
+			{ event: 'ring.fightConcludes', listener: announceFightConcludes },
 			{ event: 'creature.hit', listener: announceHit },
 			{ event: 'creature.leave', listener: announceLeave },
+			{ event: 'card.miss', listener: announceMiss },
 			{ event: 'creature.modifier', listener: announceModifier },
+			{ event: 'card.narration', listener: announceNarration },
+			{ event: 'ring.roundComplete', listener: announceNextRound },
 			{ event: 'card.rolled', listener: announceRolled },
 			{ event: 'card.rolling', listener: announceRolling },
 			{ event: 'card.stay', listener: announceStay },
 			{ event: 'ring.turnBegin', listener: announceTurnBegin },
 			{ event: 'ring.gainedXP', listener: announceXPGain },
-			{ event: 'gainedXP', listener: announceXPGain },
-
-			{ event: 'card.miss', listener: this.announceMiss },
-
-			{ event: 'card.narration', listener: this.announceNarration },
-
-
-
-
-
-			{ event: 'ring.bossWillSpawn', listener: this.announceBossWillSpawn },
-
-			{ event: 'ring.fight', listener: this.announceFight },
-			{ event: 'ring.fightConcludes', listener: this.announceFightConcludes },
-
-			{ event: 'ring.remove', listener: this.announceContestantLeave },
-			{ event: 'ring.roundComplete', listener: this.announceNextRound }
-
+			{ event: 'gainedXP', listener: announceXPGain }
 		];
 
 		events.map(event => this.on(event.event, (...args) => {
@@ -132,94 +126,13 @@ class Game extends BaseClass {
 		}));
 
 		this.on('creature.heal', (...args) => {
-			this.announceHeal(this.publicChannel, this.channelManager, this.ring, ...args);
+			announceHeal(this.publicChannel, this.channelManager, this.ring, ...args);
 		});
 
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
 		this.on('creature.permaDeath', this.handlePermaDeath);
 		this.on('creature.fled', this.handleFled);
-	}
-
-
-	announceNextRound (publicChannel, channelManager, className, ring, { round }) {
-		publicChannel({
-			announce:
-`
-🏁       round ${round} complete
-
-###########################################`
-		});
-	}
-
-	announceHeal (publicChannel, channelManager, ring, className, monster, { amount }) {
-		if (ring.monsterIsInRing(monster)) {
-			publicChannel({
-				announce:
-`${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
-${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
-			});
-		}
-	}
-
-	announceMiss (publicChannel, channelManager, className, card, {
-		attackResult, curseOfLoki, player, target
-	}) {
-		let action = 'is blocked by';
-		let flavor = '';
-		let icon = '🛡';
-
-		if (curseOfLoki) {
-			action = 'misses';
-			flavor = 'horribly';
-			icon = '💨';
-		} else if (attackResult > 5) {
-			action = 'is barely blocked by';
-			icon = '⚔️';
-		}
-
-		publicChannel({
-			announce:
-`${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
-`
-		});
-	}
-
-	announceNarration (publicChannel, channelManager, className, card, { narration }) {
-		publicChannel({ announce: narration });
-	}
-
-	announceContestantLeave (publicChannel, channelManager, className, ring, { contestant }) {
-		const { character, monster } = contestant;
-
-		publicChannel({
-			announce:
-`${monster.givenName} was summoned from the ring by ${character.identity}.`
-		});
-	}
-
-	announceFight (publicChannel, channelManager, className, ring, { contestants }) {
-		publicChannel({
-			announce: contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')
-		});
-	}
-
-	announceFightConcludes (publicChannel, channelManager, className, ring, { deaths, isDraw, rounds }) {
-		publicChannel({
-			announce:
-`The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
-`
-		});
-
-		channelManager.sendMessages();
-	}
-
-	announceBossWillSpawn (publicChannel, channelManager, className, ring, { delay }) {
-		publicChannel({
-			announce: `A boss will enter the ring ${moment().add(delay).fromNow()}`
-		});
-
-		channelManager.sendMessages();
 	}
 
 	handleWinner (className, monster, { contestant }) {
