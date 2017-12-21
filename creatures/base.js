@@ -181,9 +181,9 @@ Battles won: ${this.battles.wins}`;
 	get maxHp () {
 		let maxHp = BASE_HP + this.hpVariance;
 		maxHp += Math.min(this.level * 3, MAX_HP_BOOST); // Gain 3 hp per level up to the max
-		maxHp += this.modifiers.maxHp || 0;
+		maxHp += Math.min(this.modifiers.maxHp || 0, MAX_HP_BOOST);
 
-		return maxHp;
+		return Math.max(maxHp, 1);
 	}
 
 	get hp () {
@@ -212,7 +212,7 @@ Battles won: ${this.battles.wins}`;
 		let xp = this.options.xp || STARTING_XP;
 		xp += this.modifiers.xp || 0;
 
-		return xp;
+		return Math.max(xp, 0);
 	}
 
 	set xp (xp) {
@@ -312,9 +312,9 @@ Battles won: ${this.battles.wins}`;
 	get ac () {
 		let ac = BASE_AC + this.acVariance;
 		ac += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
-		ac += this.modifiers.ac || 0;
+		ac += Math.min(this.modifiers.ac || 0, MAX_AC_BOOST);
 
-		return ac;
+		return Math.max(ac, 1);
 	}
 
 	// We don't have this right now
@@ -329,7 +329,8 @@ Battles won: ${this.battles.wins}`;
 		if (boost > 0) {
 			attackModifier += boost; // +1 per level up to the max
 		}
-		attackModifier += this.modifiers.attackModifier || 0;
+
+		attackModifier += Math.min(this.modifiers.attackModifier || 0, MAX_ATTACK_BOOST);
 
 		return attackModifier;
 	}
@@ -346,7 +347,8 @@ Battles won: ${this.battles.wins}`;
 		if (boost > 0) {
 			damageModifier += boost; // +1 per level up to the max
 		}
-		damageModifier += this.modifiers.damageModifier || 0;
+
+		damageModifier += Math.min(this.modifiers.damageModifier || 0, MAX_DAMAGE_BOOST);
 
 		return damageModifier;
 	}

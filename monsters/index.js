@@ -242,7 +242,7 @@ ${getFinalCardChoices(cards)}`
 		});
 };
 
-const hydrateMonster = (monsterObj) => {
+const hydrateMonster = (monsterObj, deck) => {
 	const Monster = all.find(({ name }) => name === monsterObj.name);
 	const options = {
 		...monsterObj.options,
@@ -252,7 +252,7 @@ const hydrateMonster = (monsterObj) => {
 	const monster = new Monster(options);
 
 	if (monsterObj.options.cards) {
-		monster.cards = monsterObj.options.cards.map(cardObj => hydrateCard(cardObj, monster));
+		monster.cards = monsterObj.options.cards.map(cardObj => hydrateCard(cardObj, monster, deck));
 	}
 
 	return monster;
