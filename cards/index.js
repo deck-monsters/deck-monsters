@@ -97,8 +97,8 @@ const fillDeck = (deck, options, creature) => {
 const getInitialDeck = (options, creature) => {
 	// See above re: options
 	const deck = [
-		new HitCard(),
-		new HitCard(),
+		new EnchantedFaceswapCard(),
+		new EnchantedFaceswapCard(),
 		new HitCard(),
 		new HitCard(),
 		new HealCard(),
