@@ -125,6 +125,7 @@ class Game extends BaseClass {
 			event.listener(this.publicChannel, this.channelManager, ...args);
 		}));
 
+		// this one needs ring, the others don't (or have it already).
 		this.on('creature.heal', (...args) => {
 			announceHeal(this.publicChannel, this.channelManager, this.ring, ...args);
 		});
