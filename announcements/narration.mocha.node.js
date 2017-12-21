@@ -23,7 +23,7 @@ describe('./announcements/narration.js', () => {
 		pause.setTimeout.restore();
 	});
 
-	describe.only('narration', () => {
+	describe('narration', () => {
 		it('can announce to public channel', () => {
 			const narration = 'success';
 
