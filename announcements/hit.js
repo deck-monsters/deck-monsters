@@ -1,4 +1,3 @@
-
 const { getFlavor } = require('../helpers/flavor');
 
 const announceHit = (publicChannel, channelManager, className, monster, {
@@ -28,6 +27,6 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 ${monster.icon}  *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
 `
 	});
-}
+};
 
 module.exports = announceHit;
