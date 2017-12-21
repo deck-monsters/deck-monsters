@@ -18,8 +18,8 @@ const ChannelManager = require('./channel');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
 
-const AnnounceHit = require('./announcements/hit.js');
-console.log(AnnounceHit);
+const announceHit = require('./announcements/hit.js');
+
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
 
@@ -80,9 +80,19 @@ class Game extends BaseClass {
 	}
 
 	initializeEvents () {
+		const events = [
+			{ event: 'card.effect', listener: this.announceEffect },
+			{ event: 'card.miss', listener: this.announceMiss },
+			{ event: 'creature.hit', listener: announceHit }
+		]
+
+		events.map((event) => {
+			this.on(event.event, (...args) => {
+				event.listener(this.publicChannel, getFlavor, ...args);
+			})
+		});
+
 		// Initialize Messaging
-		this.on('card.effect', this.announceEffect);
-		this.on('card.miss', this.announceMiss);
 		this.on('card.narration', this.announceNarration);
 		this.on('card.played', this.announceCard);
 		this.on('card.rolled', this.announceRolled);
@@ -92,8 +102,6 @@ class Game extends BaseClass {
 		this.on('creature.die', this.announceDeath);
 		this.on('creature.heal', this.announceHeal);
 
-		const announceHit = new AnnounceHit();
-		this.on('creature.hit', announceHit.announce);
 
 		this.on('creature.leave', this.announceLeave);
 		this.on('creature.modifier', this.announceModifier);
@@ -320,11 +328,9 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 		}
 	}
 
-	announceMiss (className, card, {
+	announceMiss (publicChannel, getFlavor, className, card, {
 		attackResult, curseOfLoki, player, target
 	}) {
-		const channel = this.publicChannel;
-
 		let action = 'is blocked by';
 		let flavor = '';
 		let icon = '🛡';
@@ -338,19 +344,17 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 			icon = '⚔️';
 		}
 
-		channel({
+		publicChannel({
 			announce:
 `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
 `
 		});
 	}
 
-	announceEffect (className, card, {
+	announceEffect (publicChannel, getFlavor, className, card, {
 		player, target, effectResult
 	}) {
-		const channel = this.publicChannel;
-
-		channel({
+		publicChannel({
 			announce:
 `${target.icon}  ${target.givenName} is currently ${effectResult} by ${player.icon}  ${player.givenName}
 `
