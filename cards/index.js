@@ -11,6 +11,7 @@ const EnchantedFaceswapCard = require('./enchanted-faceswap');
 const EnthrallCard = require('./enthrall');
 const EntranceCard = require('./entrance');
 const FightOrFlightCard = require('./fight-or-flight');
+const FistsOfVillainyCard = require('./fists-of-villainy');
 const FistsOfVirtueCard = require('./fists-of-virtue');
 const ForkedMetalRodCard = require('./forked-metal-rod');
 const ForkedStickCard = require('./forked-stick');
@@ -45,6 +46,7 @@ const all = [
 	EnthrallCard,
 	EntranceCard,
 	FightOrFlightCard,
+	FistsOfVillainyCard,
 	FistsOfVirtueCard,
 	FleeCard,
 	ForkedMetalRodCard,
@@ -133,12 +135,12 @@ const getUniqueCards = cards =>
 		, []
 	);
 
-const hydrateCard = (cardObj, monster) => {
-	const Card = all.find(({ name }) => name === cardObj.name);
+const hydrateCard = (cardObj, monster, deck = []) => {
+	const existingCard = deck.find(card => card.name === cardObj.name && JSON.stringify(card) === JSON.stringify(cardObj)); // restore cards from the players deck if possible
+	if (existingCard) return existingCard;
 
-	if (Card) {
-		return new Card(cardObj.options);
-	}
+	const Card = all.find(({ name }) => name === cardObj.name);
+	if (Card) return new Card(cardObj.options);
 
 	return draw({}, monster);
 };

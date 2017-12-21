@@ -160,8 +160,8 @@ const hydrateCharacter = (characterObj) => {
 	const Character = all.find(({ name }) => name === characterObj.name);
 	const options = Object.assign({ deck: [], monsters: [] }, characterObj.options);
 
-	options.deck = options.deck.map(hydrateCard);
-	options.monsters = options.monsters.map(hydrateMonster);
+	options.deck = options.deck.map(cardObj => hydrateCard(cardObj));
+	options.monsters = options.monsters.map(monsterObj => hydrateMonster(monsterObj, options.deck));
 
 	const character = new Character(options);
 
