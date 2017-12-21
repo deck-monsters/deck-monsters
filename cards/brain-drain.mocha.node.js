@@ -29,11 +29,11 @@ describe('./cards/brain-drain.js', () => {
 		const hit = new HitCard({ damageDice: '1d4' });
 
 		const stats = `${hit.stats}
-Curse: xp -10`;
+Curse: xp -20`;
 
 		expect(brainDrain).to.be.an.instanceof(BrainDrainCard);
 		expect(brainDrain.icon).to.equal('🤡');
-		expect(brainDrain.curseAmount).to.equal(-10);
+		expect(brainDrain.curseAmount).to.equal(-20);
 		expect(brainDrain.cursedProp).to.equal('xp');
 		expect(brainDrain.stats).to.equal(stats);
 	});
@@ -58,7 +58,7 @@ Curse: xp -10`;
 		return brainDrain.play(player, target, ring)
 			.then((result) => {
 				expect(result).to.equal(true);
-				return expect(target.xp).to.equal(290);
+				return expect(target.xp).to.equal(280);
 			});
 	});
 });
