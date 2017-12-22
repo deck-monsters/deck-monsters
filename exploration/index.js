@@ -43,7 +43,8 @@ class Exploration extends BaseClass {
 			{ type: 'boss', probability: 5 },
 			{ type: hazard, probability: 50 },
 			{ type: 'merchant', probability: 70 },
-			{ type: 'thief', probability: 30 }
+			{ type: 'thief', probability: 30 },
+			{ type: 'restAndRecovery', probability: 30 }
 		];
 	}
 
@@ -120,6 +121,8 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 		if (!discovery) return this.makeDiscovery(explorer);
 
 		explorer.discoveries.push(discovery);
+
+		discovery(explorer);
 
 		return discovery;
 	}
