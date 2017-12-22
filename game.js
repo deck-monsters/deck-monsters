@@ -13,6 +13,7 @@ const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
+const Exploration = require('./exploration');
 
 const announceBossWillSpawn = require('./announcements/bossWillSpawn.js');
 const announceCard = require('./announcements/card.js');
@@ -49,6 +50,7 @@ class Game extends BaseClass {
 		this.channelManager.addChannel({ channel: publicChannel, channelName: PUBLIC_CHANNEL });
 		this.publicChannel = ({ announce }) => this.channelManager.queueMessage({ announce, channelName: PUBLIC_CHANNEL });
 		this.ring = new Ring(this.channelManager, { spawnBosses: this.options.spawnBosses }, this.log);
+		this.exploration = new Exploration(this.log);
 
 		this.initializeEvents();
 
@@ -262,6 +264,12 @@ class Game extends BaseClass {
 				callMonsterOutOfTheRing ({ monsterName } = '') {
 					return character.callMonsterOutOfTheRing({
 						monsterName, ring, channel, channelName
+					})
+						.catch(err => log(err));
+				},
+				sendMonsterExploring ({ monsterName } = {}) {
+					return character.sendMonsterExploring({
+						monsterName, exploration, channel, channelName
 					})
 						.catch(err => log(err));
 				},
