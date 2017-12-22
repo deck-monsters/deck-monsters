@@ -2,7 +2,6 @@ const { expect, sinon } = require('../shared/test-setup');
 
 const announceNarration = require('./narration');
 const pause = require('../helpers/pause');
-const HitCard = require('../cards/hit');
 
 describe('./announcements/narration.js', () => {
 	let pauseStub;
