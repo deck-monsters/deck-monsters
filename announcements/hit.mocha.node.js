@@ -26,8 +26,8 @@ describe('./announcements/hit.js', () => {
 	});
 
 	describe('hit announcement', () => {
-		it('can announce to public channel', () => {
-			const announcement = `💪 🔪 💪  Assailant hits Monster for 7 damage.
+		it('can announce normal hit to public channel', () => {
+			const announcement = `💪 🤜 💪  Assailant hits Monster for 2 damage.
 
 💪  *Monster has 30HP.*
 `
@@ -35,11 +35,128 @@ describe('./announcements/hit.js', () => {
 				expect(announce).to.equal(announcement);
 			}
 
-			const monster = new Gladiator({ name: 'monster', hp: 30, ac: 10 });
-			const assailant = new Gladiator({ name: 'assailant', hp: 30, ac: 10 });
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
 			const card = {flavors: {hits: [['hits', 100]]}};
-			const damage = 7;
+			const damage = 2;
 			const prevHp = 15;
+
+			announceHit(publicChannel, {}, '', monster, {
+				assailant,
+				card,
+				damage,
+				prevHp
+			});
+		});
+
+		it('can announce weak hit to public channel', () => {
+			const announcement = `💪 🏓 💪  Assailant hits Monster for 1 damage.
+
+💪  *Monster has 30HP.*
+`
+			const publicChannel = ({ announce }) => {
+				expect(announce).to.equal(announcement);
+			}
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = {flavors: {hits: [['hits', 100]]}};
+			const damage = 1;
+			const prevHp = 15;
+
+			announceHit(publicChannel, {}, '', monster, {
+				assailant,
+				card,
+				damage,
+				prevHp
+			});
+		});
+
+		it('can announce strong damage to public channel', () => {
+			const announcement = `💪 🔪 💪  Assailant hits Monster for 5 damage.
+
+💪  *Monster has 30HP.*
+`
+			const publicChannel = ({ announce }) => {
+				expect(announce).to.equal(announcement);
+			}
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = {flavors: {hits: [['hits', 100]]}};
+			const damage = 5;
+			const prevHp = 15;
+
+			announceHit(publicChannel, {}, '', monster, {
+				assailant,
+				card,
+				damage,
+				prevHp
+			});
+		});
+
+		it('can announce top damage to public channel', () => {
+			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.
+
+💪  *Monster has 30HP.*
+`
+			const publicChannel = ({ announce }) => {
+				expect(announce).to.equal(announcement);
+			}
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = {flavors: {hits: [['hits', 100]]}};
+			const damage = 10;
+			const prevHp = 15;
+
+			announceHit(publicChannel, {}, '', monster, {
+				assailant,
+				card,
+				damage,
+				prevHp
+			});
+		});
+
+		it('can announce bloodied to public channel', () => {
+			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.
+
+💪  *Monster is now bloodied. Monster has only 15HP.*
+`
+			const publicChannel = ({ announce }) => {
+				expect(announce).to.equal(announcement);
+			}
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = {flavors: {hits: [['hits', 100]]}};
+			const damage = 10;
+			const prevHp = 30;
+			monster.bloodied = 15;
+
+			announceHit(publicChannel, {}, '', monster, {
+				assailant,
+				card,
+				damage,
+				prevHp
+			});
+		});
+
+		it('can announce bloodied to public channel', () => {
+			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.
+
+💪  *Monster has only 1HP.*
+`
+			const publicChannel = ({ announce }) => {
+				expect(announce).to.equal(announcement);
+			}
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = {flavors: {hits: [['hits', 100]]}};
+			const damage = 10;
+			const prevHp = 13;
+			monster.hp = 1;
 
 			announceHit(publicChannel, {}, '', monster, {
 				assailant,
