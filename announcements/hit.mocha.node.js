@@ -1,9 +1,7 @@
 const { expect, sinon } = require('../shared/test-setup');
-const flavor = require('../helpers/flavor');
 
 const announceHit = require('./hit');
 const pause = require('../helpers/pause');
-const HitCard = require('../cards/hit');
 const Gladiator = require('../monsters/gladiator');
 
 describe('./announcements/hit.js', () => {
