@@ -83,14 +83,6 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 200
 	}))
-	.then(() => {
-		console.log('about to send monster exploring');
-	})
 	.then(() => vlad.sendMonsterExploring())
-	.then(() => {
-		console.log('sent monster exploring');
-	})
-	.then(() => char.sendMonsterExploring())
-	.then(() => {
-		console.log('sent monster exploring');
-	})
+	.then(() => char.sendMonsterExploring());
+

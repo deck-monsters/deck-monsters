@@ -6,6 +6,8 @@ const isProbable = require('../helpers/is-probable');
 const pause = require('../helpers/pause');
 const shuffle = require('lodash.shuffle');
 
+const hazard = require('./hazard');
+
 const { ONE_MINUTE } = require('../helpers/delay-times');
 
 class Exploration extends BaseClass {
@@ -28,15 +30,20 @@ class Exploration extends BaseClass {
 		});
 	}
 
-	get discoveries () {
+	get discoveries () { // eslint-disable-line class-methods-use-this
 		return [
+			{ type: 'nothing', probability: 100 },
 			{ type: 'card', probability: 50 },
-			{ type: 'monster', probability: 60 },
+			{ type: 'monster', probability: 10 },
 			{ type: 'coins', probability: 40 },
 			{ type: 'xp', probability: 80 },
 			{ type: 'item', probability: 90 },
 			{ type: 'dungeon', probability: 30 },
-			{ type: 'nothing', probability: 100 }
+			{ type: 'minion', probability: 60 },
+			{ type: 'boss', probability: 5 },
+			{ type: hazard, probability: 50 },
+			{ type: 'merchant', probability: 70 },
+			{ type: 'thief', probability: 30 }
 		];
 	}
 
@@ -110,27 +117,24 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 		const discovery = discoveries.find(isProbable);
 
-		if (discovery.type !== 'nothing') {
-			explorer.discoveries.push(discovery)
-		} else {
+		if (!discovery) return this.makeDiscovery(explorer);
 
-		}
+		explorer.discoveries.push(discovery);
+
+		return discovery;
 	}
 
 	doExploration () {
 		this.explorers.forEach((explorer) => {
 			this.makeDiscovery(explorer);
 
-			if (explorer.discoveries.length > 5 || moment() > explorer.returnTime) {
-				return this.sendMonsterHome(explorer);
-			} else {
-				console.log('discoveries', explorer.discoveries.length)
+			if (explorer.discoveries.length >= 5 || moment() > explorer.returnTime) {
+				this.sendMonsterHome(explorer);
 			}
 		});
 	}
 
 	sendMonsterHome (explorer) {
-		console.log('send monster home', explorer.monster.givenName);
 		if (this.monsterIsExploring(explorer.monster)) {
 			const explorerIndex = this.explorers.indexOf(explorer);
 
