@@ -15,7 +15,7 @@ ${cardDropped}`;
 		channelName
 	});
 
-	channel({
+	publicChannel({
 		announce
 	});
 };
