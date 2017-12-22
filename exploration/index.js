@@ -3,11 +3,10 @@
 const BaseClass = require('../baseClass');
 
 class Exploration extends BaseClass {
-	constructor (channelManager, { ...options } = {}, log) {
+	constructor ({ ...options } = {}, log) {
 		super(options);
 
 		this.log = log;
-		this.channelManager = channelManager;
 	}
 }
 

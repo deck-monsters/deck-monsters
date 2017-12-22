@@ -5,7 +5,7 @@ const Beastmaster = require('../characters/beastmaster');
 const ChannelManager = require('../channel');
 const Game = require('../game');
 
-describe('./exploration/index.js', () => {
+describe.only('./exploration/index.js', () => {
 	let clock;
 	let privateChannelStub;
 	let publicChannelStub;
@@ -27,12 +27,26 @@ describe('./exploration/index.js', () => {
 		clock.restore();
 	});
 
-	it('has a channel manager', () => {
-		const game = new Game(publicChannelStub);
-		const exploration = game.getExploration();
+	describe('monsters', () => {
+		it('can be sent exploring', () => {
+			const game = new Game(publicChannelStub);
+			const exploration = game.getExploration();
 
-		expect(exploration.channelManager).to.be.an.instanceof(ChannelManager);
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			const channelName = 'TEST_CHANNEL';
+
+			character.addMonster(monster);
+
+			exploration.sendMonster({
+				monster,
+				character,
+				channel: privateChannelStub,
+				channelName
+			});
+
+			expect(exploration.explorers.length).to.equal(1);
+			expect(exploration.monsterIsExploring(monster)).to.equal(true);
+		});
 	});
-
-	it('can have monsters sent to it');
 });
