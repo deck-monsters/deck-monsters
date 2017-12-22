@@ -215,11 +215,9 @@ Which monster would you like to ${action}?`,
 					channel, monsters, monsterName, action: 'send exploring'
 				});
 			})
-			.then((monster) => {
-				return exploration.addMonster({
-					monster, character, channel, channelName
-				});
-			});
+			.then(monster => exploration.addMonster({
+				monster, character, channel, channelName
+			}));
 	}
 
 	sendMonsterToTheRing ({

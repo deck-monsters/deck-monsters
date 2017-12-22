@@ -28,7 +28,7 @@ describe('./announcements/narration.js', () => {
 
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(narration);
-			}
+			};
 
 			announceNarration(publicChannel, {}, '', {}, { narration });
 		});

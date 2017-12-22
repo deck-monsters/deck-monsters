@@ -38,7 +38,7 @@ describe.only('./exploration/index.js', () => {
 
 			character.addMonster(monster);
 
-			exploration.sendMonster({
+			exploration.sendMonsterExplorin({
 				monster,
 				character,
 				channel: privateChannelStub,
