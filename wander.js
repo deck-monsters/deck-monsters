@@ -60,14 +60,14 @@ return Promise
 	}))
 	.then((character) => {
 		vlad = character;
-		vladCards = [...shuffle(vlad.character.deck).slice(0, 5)];
+		vladCards = [...shuffle(vlad.character.deck).slice(0, 7)];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
 		id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0, xp: 200
 	}))
 	.then((character) => {
 		char = character;
-		charCards = [...shuffle(char.character.deck).slice(0, 5)];
+		charCards = [...shuffle(char.character.deck).slice(0, 7)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
 	})
@@ -75,7 +75,7 @@ return Promise
 		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 100
 	}))
 	.then(() => vlad.spawnMonster({
-		type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 100
+		type: 1, name: 'qed', color: 'gray', gender: 0, cards: vladCards, xp: 100
 	}))
 	.then(() => char.spawnMonster({
 		type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards, xp: 200
@@ -83,9 +83,14 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 200
 	}))
-	.then(() => boss.spawnMonster({
-		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
-	}))
+	.then(() => {
+		console.log('about to send monster exploring');
+	})
 	.then(() => vlad.sendMonsterExploring())
+	.then(() => {
+		console.log('sent monster exploring');
+	})
 	.then(() => char.sendMonsterExploring())
-	.then(() => boss.sendMonsterExploring());
+	.then(() => {
+		console.log('sent monster exploring');
+	})

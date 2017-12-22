@@ -50,7 +50,7 @@ class Game extends BaseClass {
 		this.channelManager.addChannel({ channel: publicChannel, channelName: PUBLIC_CHANNEL });
 		this.publicChannel = ({ announce }) => this.channelManager.queueMessage({ announce, channelName: PUBLIC_CHANNEL });
 		this.ring = new Ring(this.channelManager, { spawnBosses: this.options.spawnBosses }, this.log);
-		this.exploration = new Exploration(this.log);
+		this.exploration = new Exploration(this.channelManager, {}, this.log);
 
 		this.initializeEvents();
 
@@ -222,7 +222,7 @@ class Game extends BaseClass {
 		id, name, type, gender, icon
 	}) {
 		const game = this;
-		const { log, ring } = game;
+		const { log, ring, exploration } = game;
 
 		return Promise
 			.resolve(this.characters[id])

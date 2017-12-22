@@ -3,14 +3,17 @@
 const BaseClass = require('../baseClass');
 const moment = require('moment');
 const isProbable = require('../helpers/is-probable');
+const pause = require('../helpers/pause');
+const shuffle = require('lodash.shuffle');
 
 const { ONE_MINUTE } = require('../helpers/delay-times');
 
 class Exploration extends BaseClass {
-	constructor ({ ...options } = {}, log) {
+	constructor (channelManager, { ...options } = {}, log) {
 		super(options);
 
 		this.log = log;
+		this.channelManager = channelManager;
 
 		this.startExplorationTimer();
 	}
@@ -32,7 +35,8 @@ class Exploration extends BaseClass {
 			{ type: 'coins', probability: 40 },
 			{ type: 'xp', probability: 80 },
 			{ type: 'item', probability: 90 },
-			{ type: 'dungeon', probability: 30 }
+			{ type: 'dungeon', probability: 30 },
+			{ type: 'nothing', probability: 100 }
 		];
 	}
 
@@ -54,7 +58,8 @@ class Exploration extends BaseClass {
 				channel,
 				channelName,
 				startTime: moment(),
-				returnTime: moment().add(10, 'seconds').fromNow()
+				returnTime: moment().add(10, 'seconds'),
+				discoveries: []
 			};
 
 			this.explorers = [...this.explorers, explorer];
@@ -80,7 +85,7 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 		} else {
 			const exploringMonster = this.getExplorer(monster);
 			this.channelManager.queueMessage({
-				announce: `Your monster is already exploring and will return at ${exploringMonster.returnTime.format("dddd, MMMM Do YYYY, h:mm:ss a")}`,
+				announce: `Your monster is already exploring and will return at ${exploringMonster.returnTime.format('dddd, MMMM Do YYYY, h:mm:ss a')}`,
 				channel,
 				channelName
 			});
@@ -89,7 +94,6 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 	startExplorationTimer () {
 		const exploration = this;
-		const
 
 		pause.setTimeout(() => {
 			exploration.doExploration();
@@ -97,9 +101,8 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 		}, ONE_MINUTE);
 	}
 
-	// Discoveries are not guaranteed
 	makeDiscovery (explorer) {
-		let discoveries = shuffle(this.discoveries);
+		const discoveries = shuffle(this.discoveries);
 
 		// if (explorer) {
 		// 	discoveries = discoveries.filter(discovery => explorer.canFind(discovery));
@@ -107,26 +110,37 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 		const discovery = discoveries.find(isProbable);
 
-		if (discovery) {
-			console.log('disvoered', discovery);
-		}
+		if (discovery.type !== 'nothing') {
+			explorer.discoveries.push(discovery)
+		} else {
 
-		return;
+		}
 	}
 
 	doExploration () {
 		this.explorers.forEach((explorer) => {
 			this.makeDiscovery(explorer);
 
-			if (moment() > explorer.returnTime) {
+			if (explorer.discoveries.length > 5 || moment() > explorer.returnTime) {
 				return this.sendMonsterHome(explorer);
+			} else {
+				console.log('discoveries', explorer.discoveries.length)
 			}
-		})
+		});
 	}
 
 	sendMonsterHome (explorer) {
-		if (this.monsterIsExploring(explorer)) {
-			return this.removeMonster(explorer);
+		console.log('send monster home', explorer.monster.givenName);
+		if (this.monsterIsExploring(explorer.monster)) {
+			const explorerIndex = this.explorers.indexOf(explorer);
+
+			this.explorers.splice(explorerIndex, 1);
+
+			this.channelManager.queueMessage({
+				announce: `${explorer.monster.givenName} has returned to nestle safely into your warm embrace.`,
+				channel: explorer.channel,
+				channelName: explorer.channelName
+			});
 		}
 	}
 }

@@ -193,7 +193,7 @@ Which monster would you like to ${action}?`,
 		monsterName, exploration, channel, channelName
 	}) {
 		const character = this;
-		const alreadyInExploration = exploration.contestants.filter(contestant => contestant.character === character);
+		const alreadyInExploration = exploration.explorers.filter(explorer => explorer.character === character);
 		const monsters = this.monsters.filter(monster => !monster.dead);
 
 
@@ -215,7 +215,7 @@ Which monster would you like to ${action}?`,
 					channel, monsters, monsterName, action: 'send exploring'
 				});
 			})
-			.then(monster => exploration.addMonster({
+			.then(monster => exploration.sendMonsterExploring({
 				monster, character, channel, channelName
 			}));
 	}

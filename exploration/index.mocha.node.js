@@ -2,7 +2,6 @@ const { expect, sinon } = require('../shared/test-setup');
 
 const Basilisk = require('../monsters/basilisk');
 const Beastmaster = require('../characters/beastmaster');
-const ChannelManager = require('../channel');
 const Game = require('../game');
 
 describe.only('./exploration/index.js', () => {
