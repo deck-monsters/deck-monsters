@@ -454,14 +454,14 @@ class Ring extends BaseClass {
 
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
+			const encounter = contestant.monster.endEncounter();
 
 			if (deaths > 0) {
 				this.awardMonsterXP(contestant);
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-					contestant.monster.endEncounter();
-					
+
 					if (contestant.monster.destroyed) {
 						this.channelManager.queueMessage({
 							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
@@ -477,9 +477,7 @@ class Ring extends BaseClass {
 							event: { name: 'loss', properties: { contestant } }
 						});
 					}
-				} else if (contestant.monster.fled) {
-					contestant.monster.endEncounter();
-
+				} else if (encounter.fled) {
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.givenName} lived to fight another day!`,
 						channel,
@@ -488,8 +486,7 @@ class Ring extends BaseClass {
 					});
 				} else {
 					contestant.won = true;
-					contestant.monster.endEncounter();
-					
+
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.identity} is victorious!`,
 						channel,
@@ -498,8 +495,6 @@ class Ring extends BaseClass {
 					});
 				}
 			} else {
-				contestant.monster.endEncounter();
-
 				this.channelManager.queueMessage({
 					announce: 'The fight ended in a draw.',
 					channel,

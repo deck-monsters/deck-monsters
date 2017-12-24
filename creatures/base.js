@@ -467,8 +467,12 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	endEncounter () {
+		const { encounter = {} } = this;
+
 		this.inEncounter = false;
 		delete this.encounter;
+
+		return encounter;
 	}
 
 	respawn (immediate) {
