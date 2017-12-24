@@ -78,7 +78,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	getFreedomThreshold (player) {
-		return Math.min(player.ac, 12) + this.freedomThresholdModifier;
+		return Math.min(player.ac, 10) + this.freedomThresholdModifier;
 	}
 
 	getAttackRoll (player, target) {
