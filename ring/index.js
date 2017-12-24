@@ -454,14 +454,16 @@ class Ring extends BaseClass {
 
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
+			contestant.killed = contestant.monster.killed;
+			contestant.fled = contestant.monster.fled;
+			contestant.encounter = contestant.monster.endEncounter();
 
 			if (deaths > 0) {
 				this.awardMonsterXP(contestant);
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-					contestant.monster.endEncounter();
-					
+
 					if (contestant.monster.destroyed) {
 						this.channelManager.queueMessage({
 							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
@@ -477,9 +479,7 @@ class Ring extends BaseClass {
 							event: { name: 'loss', properties: { contestant } }
 						});
 					}
-				} else if (contestant.monster.fled) {
-					contestant.monster.endEncounter();
-
+				} else if (contestant.fled) {
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.givenName} lived to fight another day!`,
 						channel,
@@ -488,8 +488,7 @@ class Ring extends BaseClass {
 					});
 				} else {
 					contestant.won = true;
-					contestant.monster.endEncounter();
-					
+
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.identity} is victorious!`,
 						channel,
@@ -498,8 +497,6 @@ class Ring extends BaseClass {
 					});
 				}
 			} else {
-				contestant.monster.endEncounter();
-
 				this.channelManager.queueMessage({
 					announce: 'The fight ended in a draw.',
 					channel,
@@ -525,8 +522,8 @@ class Ring extends BaseClass {
 	}
 
 	awardMonsterXP (contestant) {
-		const { monster } = contestant;
-		const monsterXP = calculateXP(monster);
+		const { monster, killed } = contestant;
+		const monsterXP = calculateXP(monster, killed);
 
 		if (monsterXP > 0) {
 			monster.xp += monsterXP;
@@ -534,7 +531,7 @@ class Ring extends BaseClass {
 			this.emit('gainedXP', {
 				contestant,
 				creature: monster,
-				killed: monster.killed,
+				killed: killed,
 				xpGained: monsterXP
 			});
 		}
