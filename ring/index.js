@@ -531,7 +531,7 @@ class Ring extends BaseClass {
 			this.emit('gainedXP', {
 				contestant,
 				creature: monster,
-				killed: monster.killed,
+				killed: killed,
 				xpGained: monsterXP
 			});
 		}
