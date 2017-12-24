@@ -137,7 +137,7 @@ class Game extends BaseClass {
 	}
 
 	announceCardDrop (className, game, { contestant, card }) {
-		const publicChannel = this.publicChannel;
+		const { publicChannel } = this;
 		const { channel, channelName } = contestant;
 
 		const cardDropped = actionCard(card);
