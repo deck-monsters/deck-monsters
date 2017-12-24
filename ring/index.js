@@ -454,7 +454,9 @@ class Ring extends BaseClass {
 
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
-			const encounter = contestant.monster.endEncounter();
+			contestant.killed = contestant.monster.killed;
+			contestant.fled = contestant.monster.fled;
+			contestant.encounter = contestant.monster.endEncounter();
 
 			if (deaths > 0) {
 				this.awardMonsterXP(contestant);
@@ -477,7 +479,7 @@ class Ring extends BaseClass {
 							event: { name: 'loss', properties: { contestant } }
 						});
 					}
-				} else if (encounter.fled) {
+				} else if (contestant.fled) {
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.givenName} lived to fight another day!`,
 						channel,
@@ -520,8 +522,8 @@ class Ring extends BaseClass {
 	}
 
 	awardMonsterXP (contestant) {
-		const { monster } = contestant;
-		const monsterXP = calculateXP(monster);
+		const { monster, killed } = contestant;
+		const monsterXP = calculateXP(monster, killed);
 
 		if (monsterXP > 0) {
 			monster.xp += monsterXP;

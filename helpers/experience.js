@@ -3,11 +3,11 @@ const XP_PER_VICTORY = 10;
 const XP_PER_DEFEAT = 1;
 const STARTING_XP = 0;
 
-const calculateXP = (monster) => {
+const calculateXP = (monster, killed) => {
 	let levelDifference = 0;
 	let gainedXP = 0;
 
-	monster.killed.forEach((opponentKilled) => {
+	killed.forEach((opponentKilled) => {
 		levelDifference =  monster.level - opponentKilled.level;
 
 		// This formula calculates XP based on the following logarithmic function
