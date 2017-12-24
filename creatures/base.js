@@ -16,9 +16,11 @@ const AC_VARIANCE = 2;
 const BASE_HP = 28;
 const HP_VARIANCE = 5;
 const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
+const MAX_AC_MODIFICATION = 4;
 const MAX_ATTACK_BOOST = 10;
 const MAX_DAMAGE_BOOST = 6;
 const MAX_HP_BOOST = (BASE_HP * 2) + HP_VARIANCE;
+const MAX_HP_MODIFICATION = 12;
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
 
@@ -181,7 +183,7 @@ Battles won: ${this.battles.wins}`;
 	get maxHp () {
 		let maxHp = BASE_HP + this.hpVariance;
 		maxHp += Math.min(this.level * 3, MAX_HP_BOOST); // Gain 3 hp per level up to the max
-		maxHp += Math.min(this.modifiers.maxHp || 0, MAX_HP_BOOST);
+		maxHp += Math.min(this.modifiers.maxHp || 0, MAX_HP_MODIFICATION);
 
 		return Math.max(maxHp, 1);
 	}
@@ -312,7 +314,7 @@ Battles won: ${this.battles.wins}`;
 	get ac () {
 		let ac = BASE_AC + this.acVariance;
 		ac += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
-		ac += Math.min(this.modifiers.ac || 0, MAX_AC_BOOST);
+		ac += Math.min(this.modifiers.ac || 0, MAX_AC_MODIFICATION);
 
 		return Math.max(ac, 1);
 	}
