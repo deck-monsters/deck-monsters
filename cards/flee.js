@@ -16,9 +16,8 @@ class FleeCard extends BaseCard {
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
 			if (player.bloodied) {
-				const fleeBonus = target.ac - player.ac;
-				const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
-				const success = this.checkSuccess(fleeRoll, target.ac);
+				const fleeRoll = roll({ primaryDice: '1d20' });
+				const { success } = this.checkSuccess(fleeRoll, target.ac);
 
 				this.emit('rolled', {
 					reason: 'to flee',
