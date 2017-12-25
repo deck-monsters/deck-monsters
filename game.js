@@ -298,7 +298,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 
 		channel({
 			announce:
-`${monster.identity}'s ${attr} ${dir} by ${Math.abs(amount)}`
+`${monster.identity}'s ${attr} is now ${monster[attr]} (${dir} by ${Math.abs(amount)})`
 		});
 	}
 

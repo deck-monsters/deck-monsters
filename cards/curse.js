@@ -43,8 +43,12 @@ ${stats}`;
 	}
 
 	getCurseNarrative (player, target) {
-		return `${player.givenName} skillfully harries ${target.givenName} with a targetted sweeping blow intended to sting and distract.
-${target.givenName}'s ${this.cursedProp} is lowered by ${Math.abs(this.curseAmount)}`;
+		return `${player.givenName} skillfully harries ${target.givenName} with a targetted sweeping blow intended to sting and distract.`;
+	}
+
+	getCurseOverflowNarrative (player, target) {
+		return `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
+${player.givenName}'s harrying jab takes from HP instead.`
 	}
 
 	effect (player, target, ring) {
@@ -61,8 +65,7 @@ ${target.givenName}'s ${this.cursedProp} is lowered by ${Math.abs(this.curseAmou
 				curseAmount -= hpCurseOverflow;
 
 				this.emit('narration', {
-					narration: `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
-Taking ${hpCurseOverflow} from HP instead.`
+					narration: this.getCurseOverflowNarrative(player, target)
 				});
 				target.hit(hpCurseOverflow, player, this);
 			}
