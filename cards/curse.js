@@ -53,7 +53,7 @@ ${target.givenName}'s ${this.cursedProp} is lowered by ${Math.abs(this.curseAmou
 			let curseAmount = Math.abs(this.curseAmount);
 			const postCursedPropValue = preCursedPropValue - curseAmount;
 			const preBattlePropValue = target.getPreBattlePropValue(this.cursedProp);
-			let aggregateTotalCurseAmount = difference(preBattlePropValue, postCursedPropValue);
+			const aggregateTotalCurseAmount = difference(preBattlePropValue, postCursedPropValue);
 
 			// If the target has already been cursed for the max amount, make the curse overflow into their HP
 			const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.maxModifications[this.cursedProp] : 0;
