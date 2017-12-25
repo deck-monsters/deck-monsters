@@ -1,4 +1,6 @@
 const HitCard = require('./hit');
+const { difference } = require('../helpers/difference');
+const { max } = require('../helpers/chance');
 
 class CurseCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -41,9 +43,40 @@ ${stats}`;
 		return stats;
 	}
 
-	effect (player, target, ring) { // eslint-disable-line no-unused-vars
+	getCurseNarrative (player, target) {
+		return `${player.givenName} skillfully harries ${target.givenName} with a targetted sweeping blow intended to sting and distract.`;
+	}
+
+	getCurseOverflowNarrative (player, target) {
+		return `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
+${player.givenName}'s harrying jab takes from HP instead.`
+	}
+
+	effect (player, target, ring) {
 		return new Promise((resolve) => {
-			target.setModifier(this.cursedProp, this.curseAmount);
+			const preCursedPropValue = target[this.cursedProp];
+			let curseAmount = Math.abs(this.curseAmount);
+			const postCursedPropValue = preCursedPropValue - curseAmount;
+			const preBattlePropValue = target.getPreBattlePropValue(this.cursedProp);
+			const aggregateTotalCurseAmount = difference(preBattlePropValue, postCursedPropValue);
+
+			// If the target has already been cursed for the max amount, make the curse overflow into their HP
+			const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.maxModifications[this.cursedProp] : 0;
+			if (hpCurseOverflow > 0) {
+				curseAmount -= hpCurseOverflow;
+
+				this.emit('narration', {
+					narration: this.getCurseOverflowNarrative(player, target)
+				});
+				target.hit(Math.min(hpCurseOverflow, max(this.damageDice)), player, this);
+			}
+
+			if (curseAmount > 0) {
+				this.emit('narration', {
+					narration: this.getCurseNarrative(player, target)
+				});
+				target.setModifier(this.cursedProp, -curseAmount);
+			}
 
 			if (this.hasChanceToHit) {
 				return resolve(super.effect(player, target, ring));
