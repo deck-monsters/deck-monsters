@@ -1,4 +1,5 @@
 const HitCard = require('./hit');
+const { difference } = require('../helpers/difference');
 
 class CurseCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -46,20 +47,31 @@ ${stats}`;
 ${target.givenName}'s ${this.cursedProp} is lowered by ${Math.abs(this.curseAmount)}`;
 	}
 
-	effect (player, target, ring) { // eslint-disable-line no-unused-vars
+	effect (player, target, ring) {
 		return new Promise((resolve) => {
-			const acPenalty = target.getRawAc() - (target.ac - this.curseAmount);
+			const preCursedPropValue = target[this.cursedProp];
+			let curseAmount = Math.abs(this.curseAmount);
+			const postCursedPropValue = preCursedPropValue - curseAmount;
+			const preBattlePropValue = target.getPreBattlePropValue(this.cursedProp);
+			let aggregateTotalCurseAmount = difference(preBattlePropValue, postCursedPropValue);
 
-			if (acPenalty > target.maxModifications[this.cursedProp]) {
+			// If the target has already been cursed for the max amount, make the curse overflow into their HP
+			const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.maxModifications[this.cursedProp] : 0;
+			if (hpCurseOverflow > 0) {
+				curseAmount -= hpCurseOverflow;
+
 				this.emit('narration', {
-					narration: `${target.givenName}'s ${this.cursedProp} penalties have been maxed out. Taking ${Math.abs(this.curseAmount)} from HP instead.`
+					narration: `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
+Taking ${hpCurseOverflow} from HP instead.`
 				});
-				target.hit(Math.abs(this.cursedAmount), player, this);
-			} else {
+				target.hit(hpCurseOverflow, player, this);
+			}
+
+			if (curseAmount > 0) {
 				this.emit('narration', {
 					narration: this.getCurseNarrative(player, target)
 				});
-				target.setCurse(this.cursedProp, this.cursedAmount);
+				target.setModifier(this.cursedProp, -curseAmount);
 			}
 
 			if (this.hasChanceToHit) {

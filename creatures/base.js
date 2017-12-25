@@ -65,7 +65,8 @@ class BaseCreature extends BaseClass {
 	get maxModifications () {
 		return {
 			hp: MAX_HP_MODIFICATION,
-			ac: MAX_AC_MODIFICATION
+			ac: MAX_AC_MODIFICATION,
+			xp: this.getPreBattlePropValue('xp') / 2
 		};
 	}
 
@@ -218,7 +219,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get xp () {
-		let xp = this.options.xp || STARTING_XP;
+		let xp = this.getPreBattlePropValue('xp');
 		xp += this.modifiers.xp || 0;
 
 		return Math.max(xp, 0);
@@ -319,17 +320,30 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get ac () {
-		let ac = this.getRawAC();
+		let ac = this.getPreBattlePropValue('ac');
 		ac += Math.min(this.modifiers.ac || 0, MAX_AC_MODIFICATION);
 
 		return Math.max(ac, 1);
 	}
 
-	getRawAC () {
-		let ac = BASE_AC + this.acVariance;
-		ac += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
+	getPreBattlePropValue (prop) {
+		let raw;
 
-		return ac;
+		switch (prop) {
+			case 'ac':
+				raw = BASE_AC + this.acVariance;
+				raw += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
+				break;
+			case 'hp':
+				raw = this.maxHp;
+				break;
+			case 'xp':
+				raw = this.options.xp || STARTING_XP;
+				break;
+			default:
+		}
+
+		return raw;
 	}
 
 	// We don't have this right now
