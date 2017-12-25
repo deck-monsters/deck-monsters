@@ -1,5 +1,6 @@
 const HitCard = require('./hit');
 const { difference } = require('../helpers/difference');
+const { max } = require('../helpers/chance');
 
 class CurseCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -67,7 +68,7 @@ ${player.givenName}'s harrying jab takes from HP instead.`
 				this.emit('narration', {
 					narration: this.getCurseOverflowNarrative(player, target)
 				});
-				target.hit(hpCurseOverflow, player, this);
+				target.hit(Math.min(hpCurseOverflow, max(this.damageDice)), player, this);
 			}
 
 			if (curseAmount > 0) {

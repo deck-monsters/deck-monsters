@@ -241,7 +241,7 @@ Curse: ac -1`;
 			});
 	});
 
-	it('curses by enough that the prop value would go negative', () => {
+	it('curses by huge amount do reasonable damage', () => {
 		const curse = new Curse({ hasChanceToHit: false, curseAmount: -20 });
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(curse)), 'checkSuccess');
 
@@ -268,7 +268,7 @@ Curse: ac -1`;
 			.then(() => {
 				checkSuccessStub.restore();
 
-				expect(target.hp).to.equal(originalTargetHP - 16);
+				expect(target.hp).to.equal(originalTargetHP - 4);
 				return expect(target.ac).to.equal(11);// max ac modification is 4. original ac(15) - 4 is 11.
 			});
 	});
