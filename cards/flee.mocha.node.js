@@ -61,7 +61,7 @@ describe('./cards/flee.js', () => {
 
 		player.hp = 2;
 
-		return flee.play(player, target, ring)
+		return flee.play(player, target, ring, [{ monster: target }])
 			.then(result => expect(result).to.equal(false));
 	});
 

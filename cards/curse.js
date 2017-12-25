@@ -43,13 +43,13 @@ ${stats}`;
 		return stats;
 	}
 
-	getCurseNarrative (player, target) {
+	getCurseNarrative (player, target) { // eslint-disable-line class-methods-use-this
 		return `${player.givenName} skillfully harries ${target.givenName} with a targetted sweeping blow intended to sting and distract.`;
 	}
 
 	getCurseOverflowNarrative (player, target) {
 		return `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
-${player.givenName}'s harrying jab takes from HP instead.`
+${player.givenName}'s harrying jab takes from HP instead.`;
 	}
 
 	effect (player, target, ring) {
