@@ -394,9 +394,9 @@ Battles won: ${this.battles.wins}`;
 		return this.canHold(item);
 	}
 
-	leaveCombat (assailant) {
+	leaveCombat (activeContestants) {
 		this.emit('leave', {
-			assailant
+			activeContestants
 		});
 
 		this.fled = true;

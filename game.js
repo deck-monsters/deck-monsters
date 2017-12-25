@@ -223,12 +223,15 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		channel({ announce });
 	}
 
-	announceLeave (className, monster, { assailant }) {
+	announceLeave (className, monster, { activeContestants }) {
 		const channel = this.publicChannel;
+		const assailants = activeContestants
+			.filter(contestant => contestant.monster !== monster)
+			.map(contestant => contestant.monster.identityWithHp);
 
 		channel({
 			announce:
-`${monster.identityWithHp} flees from ${assailant.identityWithHp}
+`${monster.identityWithHp} flees from ${assailants.join(' and ')}
 `
 		});
 	}
