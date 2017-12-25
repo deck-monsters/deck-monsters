@@ -41,9 +41,26 @@ ${stats}`;
 		return stats;
 	}
 
+	getCurseNarrative (player, target) {
+		return `${player.givenName} skillfully harries ${target.givenName} with a targetted sweeping blow intended to sting and distract.
+${target.givenName}'s ${this.cursedProp} is lowered by ${Math.abs(this.curseAmount)}`;
+	}
+
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
-			target.setModifier(this.cursedProp, this.curseAmount);
+			const acPenalty = target.getRawAc() - (target.ac - this.curseAmount);
+
+			if (acPenalty > target.maxModifications[this.cursedProp]) {
+				this.emit('narration', {
+					narration: `${target.givenName}'s ${this.cursedProp} penalties have been maxed out. Taking ${Math.abs(this.curseAmount)} from HP instead.`
+				});
+				target.hit(Math.abs(this.cursedAmount), player, this);
+			} else {
+				this.emit('narration', {
+					narration: this.getCurseNarrative(player, target)
+				});
+				target.setCurse(this.cursedProp, this.cursedAmount);
+			}
 
 			if (this.hasChanceToHit) {
 				return resolve(super.effect(player, target, ring));

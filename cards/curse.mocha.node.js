@@ -117,4 +117,32 @@ Curse: ac -1`;
 				return expect(target.hp).to.equal(beforeHP);
 			});
 	});
+
+	it.only('curses by a lot', () => {
+		const curse = new Curse({ hasChanceToHit: false, curseAmount: -20 });
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(curse)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target', acVariance: 2, level: 5 });
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return curse
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+
+				return expect(target.ac).to.equal(8);
+			});
+	});
 });
