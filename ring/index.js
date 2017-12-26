@@ -455,12 +455,12 @@ class Ring extends BaseClass {
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
 			contestant.killed = contestant.monster.killed;
+			contestant.killedBy = contestants.filter(killer => killer.monster.killed === contestant.monster);
 			contestant.fled = contestant.monster.fled;
 			contestant.encounter = contestant.monster.endEncounter();
+			this.awardMonsterXP(contestant, contestants);
 
 			if (deaths > 0) {
-				this.awardMonsterXP(contestant);
-
 				if (contestant.monster.dead) {
 					contestant.lost = true;
 
@@ -521,9 +521,9 @@ class Ring extends BaseClass {
 			});
 	}
 
-	awardMonsterXP (contestant) {
+	awardMonsterXP (contestant, contestants) {
 		const { monster, killed } = contestant;
-		const monsterXP = calculateXP(monster, killed);
+		const monsterXP = calculateXP(contestant, contestants);
 
 		if (monsterXP > 0) {
 			monster.xp += monsterXP;
