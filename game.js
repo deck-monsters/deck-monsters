@@ -236,13 +236,17 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 		});
 	}
 
-	announceStay (className, monster, { fleeRoll, player, target }) {
+	announceStay (className, card, { fleeRoll, player, activeContestants }) {
 		const channel = this.publicChannel;
 
 		if (fleeRoll) {
+			const assailants = activeContestants
+				.filter(contestant => contestant.monster !== player)
+				.map(contestant => contestant.monster.identityWithHp);
+				
 			channel({
 				announce:
-	`${player.identityWithHp} tries to flee from ${target.identityWithHp}, but fails!`
+	`${player.identityWithHp} tries to flee from ${assailants.join(' and ')}, but fails!`
 			});
 		} else {
 			channel({

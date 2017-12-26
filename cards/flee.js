@@ -29,7 +29,7 @@ class FleeCard extends BaseCard {
 					roll: fleeRoll,
 					player,
 					target,
-					outcome: success ? 'success!' : 'fail!'
+					outcome: success ? 'Success!' : 'Fail!'
 				});
 
 				ring.channelManager.sendMessages()
@@ -42,7 +42,7 @@ class FleeCard extends BaseCard {
 							fleeResult: fleeRoll.result,
 							fleeRoll,
 							player,
-							target
+							activeContestants
 						});
 
 						return resolve(true);
@@ -50,7 +50,7 @@ class FleeCard extends BaseCard {
 			} else {
 				this.emit('stay', {
 					player,
-					target
+					activeContestants
 				});
 
 				resolve(true);
