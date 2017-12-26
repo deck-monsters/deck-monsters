@@ -66,7 +66,7 @@ class BaseCreature extends BaseClass {
 		return {
 			hp: MAX_HP_MODIFICATION,
 			ac: MAX_AC_MODIFICATION,
-			xp: this.getPreBattlePropValue('xp') / 2
+			xp: this.getPreBattlePropValue('xp')
 		};
 	}
 
