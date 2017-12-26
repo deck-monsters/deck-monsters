@@ -40,7 +40,7 @@ describe('./cards/flee.js', () => {
 		const player = new Basilisk({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
 
-		return flee.play(player, target)
+		return flee.play(player, target, null, [{ monster: target }])
 			.then(result => expect(result).to.equal(true));
 	});
 
@@ -82,7 +82,7 @@ describe('./cards/flee.js', () => {
 
 		player.hp = 2;
 
-		return flee.play(player, target, ring)
+		return flee.play(player, target, ring, [{ monster: target }])
 			.then(result => expect(result).to.equal(true));
 	});
 });
