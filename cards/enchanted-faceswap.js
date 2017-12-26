@@ -50,7 +50,7 @@ class EnchantedFaceswapCard extends BaseCard {
 
 			this.emit('narration', {
 				narration:
-`${faceswapPlayer.identity} prepares to ${this.icon} faceswap ${originalTarget.identity}.`
+`${faceswapPlayer.identity} prepares to ${this.icon} faceswap the next player who targets them.`
 			});
 
 			resolve(true);
