@@ -9,6 +9,8 @@ const Gladiator = require('./gladiator');
 const Minotaur = require('./minotaur');
 const WeepingAngel = require('./weeping-angel');
 
+const MAX_CARD_COPIES_IN_HAND = 4;
+
 const genders = Object.keys(PRONOUNS);
 
 const all = [
@@ -147,7 +149,13 @@ const equip = (deck, monster, cardSelection, channel) => {
 			}));
 		}
 
-		const possibleCards = getCardCounts(remainingCards);
+		const equipableCards = remainingCards.filter((card) => {
+			const alreadyChosenNumber = cards.filter(chosen => chosen.name === card.name).length;
+
+			return alreadyChosenNumber < MAX_CARD_COPIES_IN_HAND;
+		});
+
+		const cardCatalog = getCardCounts(equipableCards, MAX_CARD_COPIES_IN_HAND);
 
 		return Promise
 			.resolve()
@@ -155,15 +163,15 @@ const equip = (deck, monster, cardSelection, channel) => {
 				question:
 `You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
 
-${getCardChoices(possibleCards)}
+${getCardChoices(cardCatalog)}
 
 Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`,
-				choices: Object.keys(Object.keys(possibleCards))
+				choices: Object.keys(Object.keys(cardCatalog))
 			}))
 			.then((answer) => {
 				const nowRemainingSlots = remainingSlots - 1;
 				const nowRemainingCards = [...remainingCards];
-				const selectedCardType = Object.keys(possibleCards)[answer];
+				const selectedCardType = Object.keys(cardCatalog)[answer];
 				const cardInPool = nowRemainingCards.findIndex(card => card.cardType === selectedCardType);
 
 				const selectedCard = nowRemainingCards.splice(cardInPool, 1)[0];
@@ -226,7 +234,7 @@ ${getFinalCardChoices(cards)}`
 						} else {
 							channel({
 								announce: `${monster.givenName} can not hold ${card.toLowerCase()}`
-							})
+							});
 						}
 					}
 				});
