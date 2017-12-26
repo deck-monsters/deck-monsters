@@ -223,6 +223,10 @@ ${getFinalCardChoices(cards)}`
 						if (cardIndex >= 0) {
 							const selectedCard = nowRemainingCards.splice(cardIndex, 1)[0];
 							cards.push(selectedCard);
+						} else {
+							channel({
+								announce: `${monster.givenName} can not hold ${card.toLowerCase()}`
+							})
 						}
 					}
 				});
