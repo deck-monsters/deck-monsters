@@ -2,12 +2,12 @@ const TARGET_HIGHEST_HP_PLAYER = 'TARGET_HIGHEST_HP_PLAYER';
 const TARGET_MAX_HP_PLAYER = 'TARGET_MAX_HP_PLAYER';
 const TARGET_NEXT_PLAYER = 'TARGET_NEXT_PLAYER';
 
-function getTarget ({ playerContestant, activeContestants = [], strategy = TARGET_NEXT_PLAYER }) {
+function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT_PLAYER }) {
 	switch (strategy) {
 		case TARGET_HIGHEST_HP_PLAYER: {
-			const defaultTarget = getTarget({ playerContestant, activeContestants });
+			const defaultTarget = getTarget({ playerContestant, contestants });
 
-			return activeContestants.reduce((potentialTarget, contestant) => {
+			return contestants.reduce((potentialTarget, contestant) => {
 				// Skip the player
 				if (contestant === playerContestant) return potentialTarget;
 
@@ -21,9 +21,9 @@ function getTarget ({ playerContestant, activeContestants = [], strategy = TARGE
 			}, defaultTarget);
 		}
 		case TARGET_MAX_HP_PLAYER: {
-			const defaultTarget = getTarget({ playerContestant, activeContestants });
+			const defaultTarget = getTarget({ playerContestant, contestants });
 
-			return activeContestants.reduce((potentialTarget, contestant) => {
+			return contestants.reduce((potentialTarget, contestant) => {
 				// Skip the player
 				if (contestant === playerContestant) return potentialTarget;
 
@@ -38,12 +38,12 @@ function getTarget ({ playerContestant, activeContestants = [], strategy = TARGE
 		}
 		case TARGET_NEXT_PLAYER:
 		default: {
-			const currentIndex = activeContestants.indexOf(playerContestant);
+			const currentIndex = contestants.indexOf(playerContestant);
 			let nextIndex = currentIndex + 1;
 
-			if (nextIndex >= activeContestants.length) nextIndex = 0;
+			if (nextIndex >= contestants.length) nextIndex = 0;
 
-			return activeContestants[nextIndex];
+			return contestants[nextIndex];
 		}
 	}
 }

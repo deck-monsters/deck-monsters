@@ -45,7 +45,7 @@ describe('./helpers/targeting-strategies.js', () => {
 			level1,
 			level2,
 			level3,
-			activeContestants: [playerContestant, level3, level1, level2]
+			contestants: [playerContestant, level3, level1, level2]
 		};
 	};
 
@@ -54,12 +54,12 @@ describe('./helpers/targeting-strategies.js', () => {
 			const {
 				playerContestant,
 				level3,
-				activeContestants
+				contestants
 			} = getContestants();
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
-				activeContestants,
+				contestants,
 				strategy: targetingStrategies.TARGET_HIGHEST_HP_PLAYER
 			});
 
@@ -71,14 +71,14 @@ describe('./helpers/targeting-strategies.js', () => {
 				playerContestant,
 				level2,
 				level3,
-				activeContestants
+				contestants
 			} = getContestants();
 
 			level3.monster.hp = 5;
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
-				activeContestants,
+				contestants,
 				strategy: targetingStrategies.TARGET_HIGHEST_HP_PLAYER
 			});
 
@@ -91,12 +91,12 @@ describe('./helpers/targeting-strategies.js', () => {
 			const {
 				playerContestant,
 				level3,
-				activeContestants
+				contestants
 			} = getContestants();
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
-				activeContestants,
+				contestants,
 				strategy: targetingStrategies.TARGET_MAX_HP_PLAYER
 			});
 
@@ -109,12 +109,12 @@ describe('./helpers/targeting-strategies.js', () => {
 			const {
 				playerContestant,
 				level3,
-				activeContestants
+				contestants
 			} = getContestants();
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
-				activeContestants,
+				contestants,
 				strategy: targetingStrategies.TARGET_NEXT_PLAYER
 			});
 
@@ -125,12 +125,12 @@ describe('./helpers/targeting-strategies.js', () => {
 			const {
 				level3: playerContestant,
 				level1,
-				activeContestants
+				contestants
 			} = getContestants();
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
-				activeContestants,
+				contestants,
 				strategy: targetingStrategies.TARGET_NEXT_PLAYER
 			});
 
