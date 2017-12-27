@@ -150,8 +150,9 @@ const equip = (deck, monster, cardSelection, channel) => {
 		}
 
 		const equipableCards = remainingCards.filter((card) => {
-			const alreadyChosenNumber = cards.filter(chosen => chosen.name === card.name).length;
+			if (!card.level || card.level < 1) return true; // Cards below level 1 can always be equipped
 
+			const alreadyChosenNumber = cards.filter(chosen => chosen.name === card.name).length;
 			return alreadyChosenNumber < MAX_CARD_COPIES_IN_HAND;
 		});
 
