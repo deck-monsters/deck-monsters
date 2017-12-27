@@ -164,7 +164,7 @@ describe('./ring/index.js', () => {
 		});
 	});
 
-	describe.only('fightConcludes', () => {
+	describe('fightConcludes', () => {
 		it('can calculate xp for two level 1 monsters', () => {
 			const game = new Game(publicChannelStub);
 			const ring = game.getRing();

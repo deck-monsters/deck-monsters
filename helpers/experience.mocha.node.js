@@ -76,7 +76,7 @@ describe('./helpers/experience.js', () => {
 
 				expect(calculateXP(constestant2, contestants)).to.equal(0);
 			});
-		})
+		});
 
 		describe('calculate XP for loser', () => {
 			it('assigns 1 XP if level 1 monster is killed by same level monster', () => {
@@ -188,7 +188,7 @@ describe('./helpers/experience.js', () => {
 			});
 		});
 
-		describe.only('calculate XP for flee', () => {
+		describe('calculate XP for flee', () => {
 			it('Monsters awarded XP on flee if same level (1)', () => {
 				const constestant1 = {
 					monster: {
