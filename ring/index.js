@@ -455,10 +455,9 @@ class Ring extends BaseClass {
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
 			contestant.killed = contestant.monster.killed;
-			contestant.killedBy = contestants.filter(killer => killer.monster.killed === contestant.monster);
+			contestant.killedBy = contestant.monster.killedBy;
 			contestant.fled = contestant.monster.fled;
 			contestant.encounter = contestant.monster.endEncounter();
-			this.awardMonsterXP(contestant, contestants);
 
 			if (deaths > 0) {
 				if (contestant.monster.dead) {
@@ -505,6 +504,8 @@ class Ring extends BaseClass {
 				});
 			}
 		});
+
+		contestants.forEach(contestant => this.awardMonsterXP(contestant, contestants));
 
 		this.channelManager.sendMessages()
 			.then(() => {
