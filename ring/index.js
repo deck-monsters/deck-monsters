@@ -5,7 +5,7 @@ const shuffle = require('lodash.shuffle');
 
 const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
 const { calculateXP } = require('../helpers/experience');
-const { getTarget } = require('../helpers/targetting-strategies');
+const { getTarget } = require('../helpers/targeting-strategies');
 const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
 const BaseClass = require('../baseClass');
