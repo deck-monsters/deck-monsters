@@ -5,6 +5,7 @@ const shuffle = require('lodash.shuffle');
 
 const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
 const { calculateXP } = require('../helpers/experience');
+const { getTarget } = require('../helpers/targetting-strategies');
 const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
 const BaseClass = require('../baseClass');
@@ -293,7 +294,7 @@ class Ring extends BaseClass {
 
 			// Let's find our target
 			// This where we could do some fancy targetting logic if we wanted to
-			const targetContestant = activeContestants[0];
+			const targetContestant = getTarget({ playerContestant, activeContestants });
 			const { monster: target } = targetContestant;
 
 			// Find the card in the current player's hand at the current index
