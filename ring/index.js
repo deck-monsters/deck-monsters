@@ -294,7 +294,7 @@ class Ring extends BaseClass {
 
 			// Let's find our target
 			// This where we could do some fancy targetting logic if we wanted to
-			const targetContestant = getTarget({ playerContestant, activeContestants });
+			const targetContestant = getTarget({ playerContestant, activeContestants: getAllActiveContestants() });
 			const { monster: target } = targetContestant;
 
 			// Find the card in the current player's hand at the current index
