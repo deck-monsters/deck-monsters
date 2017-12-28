@@ -7,13 +7,13 @@ describe('./helpers/experience.js', () => {
 	describe('xpFormula works', () => {
 		it('words', () => {
 			expect(true).to.be.false;
-		})
+		});
 	});
 	describe('getAverageLevel works', () => {
 		it('words', () => {
 			expect(true).to.be.false;
-		})
-	})
+		});
+	});
 	describe('calculateXP in 1:1 battles', () => {
 		describe('calculate XP for winner', () => {
 			it('assigns 13 XP if you kill a same level monster', () => {
@@ -518,13 +518,13 @@ describe('./helpers/experience.js', () => {
 				monster: {
 					level: 1
 				},
-				flee: true
+				fled: true
 			};
 			const constestant5 = {
 				monster: {
 					level: 1
 				},
-				flee: true
+				fled: true
 			};
 			constestant1.killedBy = constestant2.monster;
 			constestant2.killedBy = constestant3.monster;
@@ -561,13 +561,13 @@ describe('./helpers/experience.js', () => {
 				monster: {
 					level: 4
 				},
-				flee: true
+				fled: true
 			};
 			const constestant5 = {
 				monster: {
 					level: 5
 				},
-				flee: true
+				fled: true
 			};
 			constestant1.killedBy = constestant2.monster;
 			constestant2.killedBy = constestant3.monster;
@@ -594,25 +594,25 @@ describe('./helpers/experience.js', () => {
 				monster: {
 					level: 2
 				},
-				flee: true
+				fled: true
 			};
 			const constestant3 = {
 				monster: {
 					level: 3
 				},
-				flee: true
+				fled: true
 			};
 			const constestant4 = {
 				monster: {
 					level: 4
 				},
-				flee: true
+				fled: true
 			};
 			const constestant5 = {
 				monster: {
 					level: 5
 				},
-				flee: true
+				fled: true
 			};
 
 
