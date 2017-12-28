@@ -53,9 +53,14 @@ describe('./helpers/targeting-strategies.js', () => {
 		it('gets the target with the higest hp', () => {
 			const {
 				playerContestant,
+				level1,
+				level2,
 				level3,
 				contestants
 			} = getContestants();
+
+			level1.monster.hp = 5;
+			level2.monster.hp = 5;
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
@@ -69,11 +74,13 @@ describe('./helpers/targeting-strategies.js', () => {
 		it('gets the target with the higest current hp', () => {
 			const {
 				playerContestant,
+				level1,
 				level2,
 				level3,
 				contestants
 			} = getContestants();
 
+			level1.monster.hp = 5;
 			level3.monster.hp = 5;
 
 			const target = targetingStrategies.getTarget({
@@ -90,9 +97,14 @@ describe('./helpers/targeting-strategies.js', () => {
 		it('gets the target with the higest max hp', () => {
 			const {
 				playerContestant,
+				level1,
+				level2,
 				level3,
 				contestants
 			} = getContestants();
+
+			level1.monster.maxHp = 5;
+			level2.monster.maxHp = 5;
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
