@@ -285,4 +285,312 @@ describe('./helpers/experience.js', () => {
 			});
 		});
 	});
+	describe.only('calculateXP in 5:5 battles', () => {
+		it('assigns proper xp to winners and losers if one beats all', () => {
+			const constestant1 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant2 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant3 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant4 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant5 = {
+				monster: {
+					level: 1
+				},
+				killed: [
+					constestant1.monster,
+					constestant2.monster,
+					constestant3.monster,
+					constestant4.monster
+				]
+			};
+			constestant1.killedBy = constestant5.monster;
+			constestant2.killedBy = constestant5.monster;
+			constestant3.killedBy = constestant5.monster;
+			constestant4.killedBy = constestant5.monster;
+
+			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
+
+			expect(calculateXP(constestant1, contestants)).to.equal(1);
+			expect(calculateXP(constestant2, contestants)).to.equal(1);
+			expect(calculateXP(constestant3, contestants)).to.equal(1);
+			expect(calculateXP(constestant4, contestants)).to.equal(1);
+			expect(calculateXP(constestant5, contestants)).to.equal(43);
+		});
+
+		it('assigns proper xp if 4 beat 1 all same level', () => {
+			const constestant1 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant2 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant3 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant4 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant5 = {
+				monster: {
+					level: 1
+				}
+			};
+			constestant1.killedBy = constestant2.monster;
+			constestant2.killedBy = constestant3.monster;
+			constestant2.killed = [constestant1.monster];
+			constestant3.killedBy = constestant4.monster;
+			constestant3.killed = [constestant2.monster];
+			constestant4.killedBy = constestant5.monster;
+			constestant4.killed = [constestant3.monster];
+			constestant5.killed = [constestant4.monster];
+
+			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
+
+			expect(calculateXP(constestant1, contestants)).to.equal(1);
+			expect(calculateXP(constestant2, contestants)).to.equal(11);
+			expect(calculateXP(constestant3, contestants)).to.equal(11);
+			expect(calculateXP(constestant4, contestants)).to.equal(11);
+			expect(calculateXP(constestant5, contestants)).to.equal(13);
+		});
+
+		it('assigns proper xp to winners and losers if one beats all all different levels', () => {
+			const constestant1 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant2 = {
+				monster: {
+					level: 2
+				}
+			};
+			const constestant3 = {
+				monster: {
+					level: 3
+				}
+			};
+			const constestant4 = {
+				monster: {
+					level: 4
+				}
+			};
+			const constestant5 = {
+				monster: {
+					level: 5
+				},
+				killed: [
+					constestant1.monster,
+					constestant2.monster,
+					constestant3.monster,
+					constestant4.monster
+				]
+			};
+			constestant1.killedBy = constestant5.monster;
+			constestant2.killedBy = constestant5.monster;
+			constestant3.killedBy = constestant5.monster;
+			constestant4.killedBy = constestant5.monster;
+
+			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
+
+			expect(calculateXP(constestant1, contestants)).to.equal(1);
+			expect(calculateXP(constestant2, contestants)).to.equal(1);
+			expect(calculateXP(constestant3, contestants)).to.equal(1);
+			expect(calculateXP(constestant4, contestants)).to.equal(1);
+			expect(calculateXP(constestant5, contestants)).to.equal(43);
+		});
+
+		it('assigns proper xp if 4 beat 1 all different levels', () => {
+			const constestant1 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant2 = {
+				monster: {
+					level: 2
+				}
+			};
+			const constestant3 = {
+				monster: {
+					level: 3
+				}
+			};
+			const constestant4 = {
+				monster: {
+					level: 4
+				}
+			};
+			const constestant5 = {
+				monster: {
+					level: 5
+				}
+			};
+			constestant1.killedBy = constestant2.monster;
+			constestant2.killedBy = constestant3.monster;
+			constestant2.killed = [constestant1.monster];
+			constestant3.killedBy = constestant4.monster;
+			constestant3.killed = [constestant2.monster];
+			constestant4.killedBy = constestant5.monster;
+			constestant4.killed = [constestant3.monster];
+			constestant5.killed = [constestant4.monster];
+
+			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
+
+			expect(calculateXP(constestant1, contestants)).to.equal(1);
+			expect(calculateXP(constestant2, contestants)).to.equal(11);
+			expect(calculateXP(constestant3, contestants)).to.equal(11);
+			expect(calculateXP(constestant4, contestants)).to.equal(11);
+			expect(calculateXP(constestant5, contestants)).to.equal(13);
+		});
+
+		it('assigns proper xp with mix of flee and kills all same level', () => {
+			const constestant1 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant2 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant3 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant4 = {
+				monster: {
+					level: 1
+				},
+				flee: true
+			};
+			const constestant5 = {
+				monster: {
+					level: 1
+				},
+				flee: true
+			};
+			constestant1.killedBy = constestant2.monster;
+			constestant2.killedBy = constestant3.monster;
+			constestant2.killed = [constestant1.monster];
+			constestant3.killed = [constestant2.monster];
+
+
+			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
+
+			expect(calculateXP(constestant1, contestants)).to.equal(1);
+			expect(calculateXP(constestant2, contestants)).to.equal(11);
+			expect(calculateXP(constestant3, contestants)).to.equal(11);
+			expect(calculateXP(constestant4, contestants)).to.equal(11);
+			expect(calculateXP(constestant5, contestants)).to.equal(13);
+		});
+
+		it('assigns proper xp with mix of flee and kills all different levels', () => {
+			const constestant1 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant2 = {
+				monster: {
+					level: 2
+				}
+			};
+			const constestant3 = {
+				monster: {
+					level: 3
+				}
+			};
+			const constestant4 = {
+				monster: {
+					level: 4
+				},
+				flee: true
+			};
+			const constestant5 = {
+				monster: {
+					level: 5
+				},
+				flee: true
+			};
+			constestant1.killedBy = constestant2.monster;
+			constestant2.killedBy = constestant3.monster;
+			constestant2.killed = [constestant1.monster];
+			constestant3.killed = [constestant2.monster];
+
+
+			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
+
+			expect(calculateXP(constestant1, contestants)).to.equal(1);
+			expect(calculateXP(constestant2, contestants)).to.equal(11);
+			expect(calculateXP(constestant3, contestants)).to.equal(11);
+			expect(calculateXP(constestant4, contestants)).to.equal(11);
+			expect(calculateXP(constestant5, contestants)).to.equal(13);
+		});
+
+		it('assigns proper xp with flee all different levels', () => {
+			const constestant1 = {
+				monster: {
+					level: 1
+				}
+			};
+			const constestant2 = {
+				monster: {
+					level: 2
+				},
+				flee: true
+			};
+			const constestant3 = {
+				monster: {
+					level: 3
+				},
+				flee: true
+			};
+			const constestant4 = {
+				monster: {
+					level: 4
+				},
+				flee: true
+			};
+			const constestant5 = {
+				monster: {
+					level: 5
+				},
+				flee: true
+			};
+
+
+			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
+
+			expect(calculateXP(constestant1, contestants)).to.equal(1);
+			expect(calculateXP(constestant2, contestants)).to.equal(11);
+			expect(calculateXP(constestant3, contestants)).to.equal(11);
+			expect(calculateXP(constestant4, contestants)).to.equal(11);
+			expect(calculateXP(constestant5, contestants)).to.equal(13);
+		});
+	});
 });
