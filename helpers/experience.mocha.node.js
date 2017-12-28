@@ -23,7 +23,7 @@ describe('./helpers/experience.js', () => {
 				expect(calculateXP(constestant2, contestants)).to.equal(13);
 			});
 
-			it('assigns 24 XP if you kill a 1 level higher monster', () => {
+			it('assigns 26 XP if you kill a 1 level higher monster', () => {
 				const constestant1 = {
 					monster: {
 						level: 2
@@ -38,7 +38,7 @@ describe('./helpers/experience.js', () => {
 
 				const contestants = [constestant1, constestant2];
 
-				expect(calculateXP(constestant2, contestants)).to.equal(24);
+				expect(calculateXP(constestant2, contestants)).to.equal(26);
 			});
 
 			it('assigns 7 XP if you kill a 1 level lower monster', () => {
@@ -189,7 +189,7 @@ describe('./helpers/experience.js', () => {
 		});
 
 		describe('calculate XP for flee', () => {
-			it('Monsters awarded XP on flee if same level (1)', () => {
+			it('assigns more xp to the monster that stays than the monster that flees', () => {
 				const constestant1 = {
 					monster: {
 						level: 1
@@ -199,16 +199,16 @@ describe('./helpers/experience.js', () => {
 					monster: {
 						level: 1
 					},
-					flee: constestant1.monster
+					fled: true
 				};
 
 				const contestants = [constestant1, constestant2];
 
 				expect(calculateXP(constestant1, contestants)).to.equal(3);
-				expect(calculateXP(constestant2, contestants)).to.equal(3);
+				expect(calculateXP(constestant2, contestants)).to.equal(2);
 			});
 
-			it('Monsters awarded XP on flee if same level (100)', () => {
+			it('assigns more xp to the monster that stays when both are level 100', () => {
 				const constestant1 = {
 					monster: {
 						level: 100
@@ -218,16 +218,16 @@ describe('./helpers/experience.js', () => {
 					monster: {
 						level: 100
 					},
-					flee: constestant1.monster
+					fled: true
 				};
 
 				const contestants = [constestant1, constestant2];
 
 				expect(calculateXP(constestant1, contestants)).to.equal(3);
-				expect(calculateXP(constestant2, contestants)).to.equal(3);
+				expect(calculateXP(constestant2, contestants)).to.equal(2);
 			});
 
-			it('Monsters awarded XP on flee if 1 level difference', () => {
+			it('assigns 6 xp if a monster 1 level higher flees you', () => {
 				const constestant1 = {
 					monster: {
 						level: 1
@@ -237,35 +237,35 @@ describe('./helpers/experience.js', () => {
 					monster: {
 						level: 2
 					},
-					flee: constestant1.monster
+					fled: true
 				};
 
 				const contestants = [constestant1, constestant2];
 
-				expect(calculateXP(constestant1, contestants)).to.equal(4);
-				expect(calculateXP(constestant2, contestants)).to.equal(2);
-			});
-
-			it('Monsters awarded XP on flee if 4 level difference', () => {
-				const constestant1 = {
-					monster: {
-						level: 1
-					}
-				};
-				const constestant2 = {
-					monster: {
-						level: 5
-					},
-					flee: constestant1.monster
-				};
-
-				const contestants = [constestant1, constestant2];
-
-				expect(calculateXP(constestant1, contestants)).to.equal(12);
+				expect(calculateXP(constestant1, contestants)).to.equal(6);
 				expect(calculateXP(constestant2, contestants)).to.equal(1);
 			});
 
-			it('assigns 16 XP if you are killed by 4 level higher monster', () => {
+			it('assigns 48 XP if a monster 4 levels higher flees you', () => {
+				const constestant1 = {
+					monster: {
+						level: 1
+					}
+				};
+				const constestant2 = {
+					monster: {
+						level: 5
+					},
+					fled: true
+				};
+
+				const contestants = [constestant1, constestant2];
+
+				expect(calculateXP(constestant1, contestants)).to.equal(48);
+				expect(calculateXP(constestant2, contestants)).to.equal(0);
+			});
+
+			it('assigns 32 XP if you flee a monster 4 levels higher', () => {
 				const constestant1 = {
 					monster: {
 						level: 5
@@ -275,13 +275,13 @@ describe('./helpers/experience.js', () => {
 					monster: {
 						level: 1
 					},
-					flee: constestant1.monster
+					fled: true
 				};
 
 				const contestants = [constestant1, constestant2];
 
-				expect(calculateXP(constestant1, contestants)).to.equal(1);
-				expect(calculateXP(constestant2, contestants)).to.equal(12);
+				expect(calculateXP(constestant1, contestants)).to.equal(0);
+				expect(calculateXP(constestant2, contestants)).to.equal(32);
 			});
 		});
 	});
