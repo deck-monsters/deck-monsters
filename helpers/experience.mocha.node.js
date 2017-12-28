@@ -3,6 +3,17 @@ const { expect } = require('../shared/test-setup');
 const { calculateXP } = require('./experience');
 
 describe('./helpers/experience.js', () => {
+	// didn't have time to look up how to stub these out as reminders, this works...
+	describe('xpFormula works', () => {
+		it('words', () => {
+			expect(true).to.be.false;
+		})
+	});
+	describe('getAverageLevel works', () => {
+		it('words', () => {
+			expect(true).to.be.false;
+		})
+	})
 	describe('calculateXP in 1:1 battles', () => {
 		describe('calculate XP for winner', () => {
 			it('assigns 13 XP if you kill a same level monster', () => {
