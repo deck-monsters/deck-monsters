@@ -119,7 +119,7 @@ class ImmobilizeCard extends HitCard {
 					}) => {
 						if (phase === ATTACK_PHASE) {
 							this.emit('effect', {
-								effectResult: `${this.icon}  ${this.actions[2]}`,
+								effectResult: `${this.icon}  ${this.actions[2]} by`,
 								player,
 								target,
 								ring

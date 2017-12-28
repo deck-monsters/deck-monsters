@@ -18,6 +18,8 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 	effect (invisibilityPlayer, invisibilityTarget) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
+			invisibilityTarget.invisibilityTurns = 0;
+
 			const invisibilityEffect = ({
 				card,
 				phase
@@ -28,19 +30,27 @@ class CloakOfInvisibilityCard extends BaseCard {
 					card.effect = (player, target, ring, activeContestants) => {
 						if (phase === DEFENSE_PHASE && player !== invisibilityTarget && target === invisibilityTarget) {
 							this.emit('effect', {
-								effectResult: `${this.icon} blinded`,
-								player: invisibilityTarget,
-								target: player,
+								effectResult: `${this.icon} hidden from`,
+								player,
+								target: invisibilityTarget,
 								ring
 							});
 
 							return Promise.resolve(true);
-						} else if (phase === ATTACK_PHASE && player === invisibilityTarget && target !== invisibilityTarget) {
-							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect !== invisibilityEffect);
+						} else if (phase === ATTACK_PHASE && player === invisibilityTarget) {
+							if (target !== invisibilityTarget || invisibilityTarget.invisibilityTurns >= 2) {
+								invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect !== invisibilityEffect);
 
-							this.emit('narration', {
-								narration: `${invisibilityTarget.identity} slips off ${invisibilityTarget.pronouns[2]} ${this.cardType.toLowerCase()}.`
-							});
+								if (!card.invisibilityNarrationEmitted) {
+									this.emit('narration', {
+										narration: `${invisibilityTarget.identity} slips off ${invisibilityTarget.pronouns[2]} ${this.cardType.toLowerCase()}.`
+									});
+
+									card.invisibilityNarrationEmitted = true;
+								}
+							} else {
+								invisibilityTarget.invisibilityTurns += 1;
+							}
 						}
 
 						return effect.call(card, player, target, ring, activeContestants);

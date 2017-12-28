@@ -243,7 +243,7 @@ ${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
 			const assailants = activeContestants
 				.filter(contestant => contestant.monster !== player)
 				.map(contestant => contestant.monster.identityWithHp);
-				
+
 			channel({
 				announce:
 	`${player.identityWithHp} tries to flee from ${assailants.join(' and ')}, but fails!`
@@ -383,7 +383,7 @@ ${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
 
 		channel({
 			announce:
-`${target.icon}  ${target.givenName} is currently ${effectResult} by ${player.icon}  ${player.givenName}
+`${target.icon}  ${target.givenName} is currently ${effectResult} ${player.icon}  ${player.givenName}
 `
 		});
 	}

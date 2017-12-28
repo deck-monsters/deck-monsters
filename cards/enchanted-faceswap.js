@@ -32,7 +32,7 @@ class EnchantedFaceswapCard extends BaseCard {
 								faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect !== faceswapEffect);
 
 								this.emit('effect', {
-									effectResult: `${this.icon} faceswapped`,
+									effectResult: `${this.icon} faceswapped by`,
 									player: faceswapTarget,
 									target: swappedPlayer,
 									ring
