@@ -12,13 +12,16 @@ const xpFormula = (levelDifference, base) =>
 	Math.round(Math.pow(10, (-0.3 * levelDifference)) * base);
 
 const getAverageLevel = (monster, contestants) =>
-	contestants.reduce((totalLevels, contestant) => (monster === contestant.monster ? totalLevels : totalLevels + contestant.monster.level), 0) / (contestants.length - 1); // eslint-disable-line max-len
+	contestants.reduce((totalLevels, contestant) =>
+		(monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level, 0) / (contestants.length - 1); // eslint-disable-line max-len
+
 
 const calculateXP = (contestant, contestants) => {
 	let levelDifference = 0;
 	let gainedXP = 0;
 	const { monster } = contestant;
 	const killed = contestant.killed || [];
+	const rounds = contestant.rounds || 1;
 
 	killed.forEach((opponentKilled) => {
 		levelDifference = monster.level - opponentKilled.level;
@@ -35,7 +38,7 @@ const calculateXP = (contestant, contestants) => {
 		const averageLevelDifference = monster.level - getAverageLevel(monster, contestants);
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
 
-		gainedXP += Math.max(xpFormula(averageLevelDifference, xpBase), 5 * contestant.rounds);
+		gainedXP += Math.min(xpFormula(averageLevelDifference, xpBase), 5 * rounds);
 	}
 
 	return gainedXP;
@@ -48,5 +51,7 @@ module.exports = {
 	XP_PER_VICTORY,
 	XP_PER_DEFEAT,
 	STARTING_XP,
-	calculateXP
+	calculateXP,
+	xpFormula,
+	getAverageLevel
 };
