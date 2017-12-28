@@ -457,6 +457,7 @@ class Ring extends BaseClass {
 			contestant.killed = contestant.monster.killed;
 			contestant.killedBy = contestant.monster.killedBy;
 			contestant.fled = contestant.monster.fled;
+			contestant.rounds = rounds;
 			contestant.encounter = contestant.monster.endEncounter();
 
 			if (deaths > 0) {

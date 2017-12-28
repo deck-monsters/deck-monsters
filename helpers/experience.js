@@ -18,7 +18,6 @@ const calculateXP = (contestant, contestants) => {
 	let levelDifference = 0;
 	let gainedXP = 0;
 	const { monster } = contestant;
-	// monster.killed & monster.killedBy has been cleared from the encounter at this point
 	const killed = contestant.killed || [];
 
 	killed.forEach((opponentKilled) => {
@@ -36,7 +35,7 @@ const calculateXP = (contestant, contestants) => {
 		const averageLevelDifference = monster.level - getAverageLevel(contestants);
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
 
-		gainedXP += xpFormula(averageLevelDifference, xpBase);
+		gainedXP += Math.max(xpFormula(averageLevelDifference, xpBase), 5 * contestant.rounds);
 	}
 
 	return gainedXP;
