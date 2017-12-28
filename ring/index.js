@@ -323,35 +323,25 @@ class Ring extends BaseClass {
 				// Let's clone the card before we get started on this - that way any modifications won't be saved
 				card = card.clone();
 
-				// First, run through the effects from the current monster
-				card = player.encounterEffects.reduce((currentCard, effect) => {
-					const modifiedCard = effect({
-						activeContestants: getAllActiveContestants(),
-						card: currentCard,
-						phase: ATTACK_PHASE,
-						player,
-						ring,
-						proposedTarget
-					});
+				// First, run through the effects from the contestants
+				card = (() => {
+					const allActiveContestants = getAllActiveContestants();
 
-					return modifiedCard || currentCard;
-				}, card);
+					return allActiveContestants.reduce((contestantCard, contestant) => contestant.monster.encounterEffects.reduce((effectCard, effect) => {
+						const modifiedCard = effect({
+							activeContestants: allActiveContestants,
+							card: effectCard,
+							phase: contestant.monster === player ? ATTACK_PHASE : DEFENSE_PHASE,
+							player,
+							ring,
+							proposedTarget
+						});
 
-				// Second, run through the effects from the (proposed) target monster
-				card = proposedTarget.encounterEffects.reduce((currentCard, effect) => {
-					const modifiedCard = effect({
-						activeContestants: getAllActiveContestants(),
-						card: currentCard,
-						phase: DEFENSE_PHASE,
-						player,
-						ring,
-						proposedTarget
-					});
+						return modifiedCard || effectCard;
+					}, contestantCard), card);
+				})();
 
-					return modifiedCard || currentCard;
-				}, card);
-
-				// Finally, run through any global effects
+				// Then, run through any global effects
 				card = ring.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
 						activeContestants: getAllActiveContestants(),

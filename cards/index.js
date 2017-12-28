@@ -5,6 +5,8 @@ const BasicShieldCard = require('./basic-shield');
 const BlastCard = require('./blast');
 const BoostCard = require('./boost');
 const BrainDrainCard = require('./brain-drain');
+const CamouflageVestCard = require('./camouflage-vest');
+const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
 const ConstrictCard = require('./constrict');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
@@ -40,6 +42,8 @@ const all = [
 	BlastCard,
 	BoostCard,
 	BrainDrainCard,
+	CamouflageVestCard,
+	CloakOfInvisibilityCard,
 	ConstrictCard,
 	CurseCard,
 	EnchantedFaceswapCard,
