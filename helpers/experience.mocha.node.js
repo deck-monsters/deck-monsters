@@ -1,13 +1,44 @@
 const { expect } = require('../shared/test-setup');
 
-const { calculateXP } = require('./experience');
+const { xpFormula, getAverageLevel, calculateXP } = require('./experience');
 
 describe('./helpers/experience.js', () => {
-	// didn't have time to look up how to stub these out as reminders, this works...
 	describe('xpFormula works', () => {
-		it('words', () => {
-			expect(true).to.be.false;
-		})
+		it('calculates base 1 correctly', () => {
+			expect(xpFormula(0, 1)).to.equal(1);
+			expect(xpFormula(1, 1)).to.equal(1);
+			expect(xpFormula(2, 1)).to.equal(0);
+			expect(xpFormula(3, 1)).to.equal(0);
+			expect(xpFormula(4, 1)).to.equal(0);
+			expect(xpFormula(5, 1)).to.equal(0);
+		});
+
+		it('calculates base 2 correctly', () => {
+			expect(xpFormula(0, 2)).to.equal(2);
+			expect(xpFormula(1, 2)).to.equal(1);
+			expect(xpFormula(2, 2)).to.equal(1);
+			expect(xpFormula(3, 2)).to.equal(0);
+			expect(xpFormula(4, 2)).to.equal(0);
+			expect(xpFormula(5, 2)).to.equal(0);
+		});
+
+		it('calculates base 3 correctly', () => {
+			expect(xpFormula(0, 3)).to.equal(3);
+			expect(xpFormula(1, 3)).to.equal(2);
+			expect(xpFormula(2, 3)).to.equal(1);
+			expect(xpFormula(3, 3)).to.equal(0);
+			expect(xpFormula(4, 3)).to.equal(0);
+			expect(xpFormula(5, 3)).to.equal(0);
+		});
+
+		it('calculates base 10 correctly', () => {
+			expect(xpFormula(0, 10)).to.equal(10);
+			expect(xpFormula(1, 10)).to.equal(5);
+			expect(xpFormula(2, 10)).to.equal(3);
+			expect(xpFormula(3, 10)).to.equal(1);
+			expect(xpFormula(4, 10)).to.equal(1);
+			expect(xpFormula(5, 10)).to.equal(0);
+		});
 	});
 	describe('getAverageLevel works', () => {
 		it('words', () => {
