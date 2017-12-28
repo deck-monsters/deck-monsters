@@ -13,7 +13,7 @@ const xpFormula = (levelDifference, base) =>
 
 const getAverageLevel = (monster, contestants) =>
 	contestants.reduce((totalLevels, contestant) =>
-		(monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level, 0) / (contestants.length - 1); // eslint-disable-line max-len
+		((monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level), 0) / (contestants.length - 1); // eslint-disable-line max-len
 
 
 const calculateXP = (contestant, contestants) => {
