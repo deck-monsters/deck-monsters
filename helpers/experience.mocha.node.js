@@ -40,9 +40,101 @@ describe('./helpers/experience.js', () => {
 			expect(xpFormula(5, 10)).to.equal(0);
 		});
 	});
-	describe('getAverageLevel works', () => {
-		it('words', () => {
-			expect(true).to.be.false;
+	describe.only('getAverageLevel works', () => {
+		it('calculates averages for level 1 monsters correctly', () => {
+			const contestants = [
+				{
+					monster: {
+						level: 1
+					}
+				},
+				{
+					monster: {
+						level: 1
+					}
+				},
+				{
+					monster: {
+						level: 1
+					}
+				},
+				{
+					monster: {
+						level: 1
+					}
+				},
+				{
+					monster: {
+						level: 1
+					}
+				}
+			];
+
+			expect(getAverageLevel(contestants[0].monster, contestants)).to.equal(1);
+		});
+
+		it('calculates averages for level 5 monsters correctly', () => {
+			const contestants = [
+				{
+					monster: {
+						level: 5
+					}
+				},
+				{
+					monster: {
+						level: 5
+					}
+				},
+				{
+					monster: {
+						level: 5
+					}
+				},
+				{
+					monster: {
+						level: 5
+					}
+				},
+				{
+					monster: {
+						level: 5
+					}
+				}
+			];
+
+			expect(getAverageLevel(contestants[0].monster, contestants)).to.equal(5);
+		});
+
+		it('calculates averages for disparate level monsters correctly', () => {
+			const contestants = [
+				{
+					monster: {
+						level: 5
+					}
+				},
+				{
+					monster: {
+						level: 3
+					}
+				},
+				{
+					monster: {
+						level: 1
+					}
+				},
+				{
+					monster: {
+						level: 1
+					}
+				},
+				{
+					monster: {
+						level: 7
+					}
+				}
+			];
+
+			expect(getAverageLevel(contestants[0].monster, contestants)).to.equal(3);
 		});
 	});
 	describe('calculateXP in 1:1 battles', () => {
