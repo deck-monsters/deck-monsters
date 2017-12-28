@@ -72,7 +72,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 }
 
 CloakOfInvisibilityCard.cardType = 'Cloak of Invisibility';
-CloakOfInvisibilityCard.probability = 30;
+CloakOfInvisibilityCard.probability = 20;
 CloakOfInvisibilityCard.description = 'You don your cloak and disappear, if only for a while.';
 CloakOfInvisibilityCard.cost = 4;
 CloakOfInvisibilityCard.level = 1;
