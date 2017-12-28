@@ -459,6 +459,8 @@ class Ring extends BaseClass {
 			contestant.fled = contestant.monster.fled;
 			contestant.encounter = contestant.monster.endEncounter();
 
+			this.awardMonsterXP(contestant, contestants);
+
 			if (deaths > 0) {
 				if (contestant.monster.dead) {
 					contestant.lost = true;
@@ -504,8 +506,6 @@ class Ring extends BaseClass {
 				});
 			}
 		});
-
-		contestants.forEach(contestant => this.awardMonsterXP(contestant, contestants));
 
 		this.channelManager.sendMessages()
 			.then(() => {

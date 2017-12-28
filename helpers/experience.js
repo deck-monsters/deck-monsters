@@ -11,8 +11,8 @@ const xpFormula = (levelDifference, base) =>
 	// -0.3x = log(y) where x is the level difference of the monsters
 	Math.round(Math.pow(10, (-0.3 * levelDifference)) * base);
 
-const getAverageLevel = contestants =>
-	contestants.reduce((totalLevels, contestant) => totalLevels + contestant.monster.level, 0) / contestants.length;
+const getAverageLevel = (monster, contestants) =>
+	contestants.reduce((totalLevels, contestant) => (monster === contestant.monster ? totalLevels : totalLevels + contestant.monster.level), 0) / (contestants.length - 1); // eslint-disable-line max-len
 
 const calculateXP = (contestant, contestants) => {
 	let levelDifference = 0;
@@ -33,7 +33,7 @@ const calculateXP = (contestant, contestants) => {
 		gainedXP += xpFormula(levelDifference, BASE_XP_PER_KILLED_BY);
 	} else {
 		// XP for being the last monster standing or fleeing
-		const averageLevelDifference = monster.level - getAverageLevel(contestants);
+		const averageLevelDifference = monster.level - getAverageLevel(monster, contestants);
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
 
 		gainedXP += xpFormula(averageLevelDifference, xpBase);
