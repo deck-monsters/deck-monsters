@@ -15,6 +15,7 @@ class ImmobilizeCard extends HitCard {
 		doDamageOnImmobilize,
 		icon = '😵',
 		freedomThresholdModifier,
+		ongoingDamage,
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
@@ -24,7 +25,8 @@ class ImmobilizeCard extends HitCard {
 			damageModifier,
 			hitOnFail,
 			doDamageOnImmobilize,
-			freedomThresholdModifier
+			freedomThresholdModifier,
+			ongoingDamage
 		});
 	}
 
@@ -34,6 +36,10 @@ class ImmobilizeCard extends HitCard {
 
 	get doDamageOnImmobilize () {
 		return this.options.doDamageOnImmobilize;
+	}
+
+	get ongoingDamage () {
+		return this.options.ongoingDamage;
 	}
 
 	get hitOnFail () {
@@ -149,6 +155,13 @@ class ImmobilizeCard extends HitCard {
 									player.hit(2, target, this);
 								}
 							} else {
+								if (this.ongoingDamage > 0) {
+									this.emit('narration', {
+										narration: `${target.givenName} takes ongoing damage from being ${this.actions[2]}`
+									});
+									target.hit(this.ongoingDamage, player, this);
+								}
+
 								card.play = () => Promise.resolve(true);
 							}
 						}
@@ -214,7 +227,8 @@ ImmobilizeCard.defaults = {
 	damageModifier: 0,
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
-	freedomThresholdModifier: 2
+	freedomThresholdModifier: 2,
+	ongoingDamage: 0
 };
 ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 
