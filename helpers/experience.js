@@ -42,15 +42,16 @@ const calculateXP = (contestant, contestants) => {
 
 	if (contestant.killedBy) {
 		levelDifference = monster.level - contestant.killedBy.level;
+		const levelDifferenceText = levelDifference === 0 ? 'same level' : `${levelDifference * -1} level difference`;
 		xp = xpFormula(levelDifference, BASE_XP_PER_KILLED_BY);
 
-		reasons.push(`Gained ${xp} XP for being killed by ${contestant.killedBy.givenName} (${levelDifference * -1} level difference)`);
+		reasons.push(`Gained ${xp} XP for being killed by ${contestant.killedBy.givenName} (${levelDifferenceText})`);
 
 		gainedXP += xp;
 	} else {
 		// XP for being the last monster standing or fleeing
 		const avgLevel = getAverageLevel(monster, contestants);
-		const averageLevelDifference = monster.level - getAverageLevel(monster, contestants);
+		const averageLevelDifference = monster.level - avgLevel;
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
 		xp = Math.min(xpFormula(averageLevelDifference, xpBase), 5 * rounds);
 

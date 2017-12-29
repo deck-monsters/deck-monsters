@@ -130,7 +130,9 @@ class Game extends BaseClass {
 			killedMessage = ` for killing ${killed.length} ${(killed.length > 1 || killed.length === 0) ? 'monsters' : 'monster'}.`;
 		}
 
-		const reasonsMessage = (reasons) ? `\n\n${reasons}` : '';
+		const reasonsMessage = (reasons) ? `
+
+${reasons}` : '';
 
 		this.channelManager.queueMessage({
 			announce: `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}${reasonsMessage}`,
