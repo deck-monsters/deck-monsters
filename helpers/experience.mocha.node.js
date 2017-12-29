@@ -157,13 +157,14 @@ describe.only('./helpers/experience.js', () => {
 
 				const { gainedXP, reasons } = calculateXP(constestant2, contestants);
 				expect(gainedXP).to.equal(13);
-				expect(reasons).to.equal('gained 10 for killing fred (0 level difference)\ngained 3 for last one standing in battle with opponents with average level of 1');
+				expect(reasons).to.equal('Gained 10 XP for killing fred (0 level difference)\nGained 3 XP for last one standing in battle with opponents with average level of 1');
 			});
 
 			it('assigns 25 XP if you kill a 1 level higher monster', () => {
 				const constestant1 = {
 					monster: {
-						level: 2
+						level: 2,
+						givenName: 'fred'
 					}
 				};
 				const constestant2 = {
@@ -175,8 +176,9 @@ describe.only('./helpers/experience.js', () => {
 
 				const contestants = [constestant1, constestant2];
 
-				const { gainedXP } = calculateXP(constestant2, contestants);
+				const { gainedXP, reasons } = calculateXP(constestant2, contestants);
 				expect(gainedXP).to.equal(25);
+				expect(reasons).to.equal('Gained 20 XP for killing fred (1 level difference)\nGained 5 XP for last one standing in battle with opponents with average level of 2');
 			});
 
 			it('assigns 7 XP if you kill a 1 level lower monster', () => {
@@ -237,7 +239,7 @@ describe.only('./helpers/experience.js', () => {
 
 				const { gainedXP, reasons } = calculateXP(constestant2, contestants);
 				expect(gainedXP).to.equal(1);
-				expect(reasons).to.equal('gained 1 for being killed by fred (0 level difference)');
+				expect(reasons).to.equal('Gained 1 XP for being killed by fred (0 level difference)');
 			});
 
 			it('assigns 1 XP if level 100 monster is killed by same level monster', () => {
@@ -354,10 +356,10 @@ describe.only('./helpers/experience.js', () => {
 
 				let { gainedXP, reasons } = calculateXP(constestant1, contestants);
 				expect(gainedXP).to.equal(3);
-				expect(reasons).to.equal('gained 3 for last one standing in battle with opponents with average level of 1');
+				expect(reasons).to.equal('Gained 3 XP for last one standing in battle with opponents with average level of 1');
 				({ gainedXP, reasons } = calculateXP(constestant2, contestants));
 				expect(gainedXP).to.equal(2);
-				expect(reasons).to.equal('gained 2 for fleeing in battle with opponents with average level of 1');
+				expect(reasons).to.equal('Gained 2 XP for fleeing in battle with opponents with average level of 1');
 			});
 
 			it('assigns more xp to the monster that stays when both are level 100', () => {
@@ -565,7 +567,7 @@ describe.only('./helpers/experience.js', () => {
 			expect(gainedXP).to.equal(11);
 			({ gainedXP, reasons } = calculateXP(constestant3, contestants));
 			expect(gainedXP).to.equal(11);
-			expect(reasons).to.equal('gained 10 for killing fred (0 level difference)\ngained 1 for being killed by sonka (0 level difference)');
+			expect(reasons).to.equal('Gained 10 XP for killing fred (0 level difference)\nGained 1 XP for being killed by sonka (0 level difference)');
 			({ gainedXP } = calculateXP(constestant4, contestants));
 			expect(gainedXP).to.equal(11);
 			({ gainedXP } = calculateXP(constestant5, contestants));
@@ -625,7 +627,7 @@ describe.only('./helpers/experience.js', () => {
 			expect(gainedXP).to.equal(2);
 			({ gainedXP, reasons } = calculateXP(constestant5, contestants));
 			expect(gainedXP).to.equal(11);
-			expect(reasons).to.equal('gained 1 for killing fred (4 level difference)\ngained 1 for killing barney (3 level difference)\ngained 3 for killing betty (2 level difference)\ngained 5 for killing wilma (1 level difference)\ngained 1 for last one standing in battle with opponents with average level of 3');
+			expect(reasons).to.equal('Gained 1 XP for killing fred (-4 level difference)\nGained 1 XP for killing barney (-3 level difference)\nGained 3 XP for killing betty (-2 level difference)\nGained 5 XP for killing wilma (-1 level difference)\nGained 1 XP for last one standing in battle with opponents with average level of 3');
 		});
 
 		it('assigns proper xp if 4 beat 1 all different levels', () => {

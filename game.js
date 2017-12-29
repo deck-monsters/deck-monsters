@@ -115,7 +115,8 @@ class Game extends BaseClass {
 		creature,
 		xpGained,
 		killed,
-		coinsGained
+		coinsGained,
+		reasons
 	}) {
 		const { channel, channelName } = contestant;
 
@@ -129,8 +130,10 @@ class Game extends BaseClass {
 			killedMessage = ` for killing ${killed.length} ${killed.length > 1 ? 'monsters' : 'monster'}.`;
 		}
 
+		let reasonsMessage = (reasons) ? `\n\n${reasons}` : '';
+
 		this.channelManager.queueMessage({
-			announce: `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}`,
+			announce: `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}${reasonsMessage}`,
 			channel,
 			channelName
 		});
