@@ -127,7 +127,7 @@ class Game extends BaseClass {
 
 		let killedMessage = '';
 		if (killed) {
-			killedMessage = ` for killing ${killed.length} ${killed.length > 1 ? 'monsters' : 'monster'}.`;
+			killedMessage = ` for killing ${killed.length} ${(killed.length > 1 || killed.length === 0) ? 'monsters' : 'monster'}.`;
 		}
 
 		let reasonsMessage = (reasons) ? `\n\n${reasons}` : '';
