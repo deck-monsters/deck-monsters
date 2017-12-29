@@ -299,6 +299,17 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get killedBy () {
+		return (this.encounter || {}).killedBy;
+	}
+
+	set killedBy (creature) {
+		this.encounter = {
+			...this.encounter,
+			killedBy: creature
+		};
+	}
+
 	get killed () {
 		return (this.encounter || {}).killedCreatures || [];
 	}
@@ -473,6 +484,7 @@ Battles won: ${this.battles.wins}`;
 		if (this.hp <= 0) {
 			if (assailant instanceof BaseCreature) {
 				assailant.killed = this;
+				this.killedBy = assailant;
 			}
 
 			this.emit('die', {
