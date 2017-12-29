@@ -1,8 +1,9 @@
+/* eslint-disable max-len */
 const { expect } = require('../shared/test-setup');
 
 const { xpFormula, getAverageLevel, calculateXP } = require('./experience');
 
-describe.only('./helpers/experience.js', () => {
+describe('./helpers/experience.js', () => {
 	describe('xpFormula works', () => {
 		it('calculates base 1 correctly', () => {
 			expect(xpFormula(0, 1)).to.equal(1);
@@ -561,7 +562,7 @@ describe.only('./helpers/experience.js', () => {
 
 			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
 
-			let { gainedXP } = calculateXP(constestant1, contestants);
+			let { gainedXP, reasons } = calculateXP(constestant1, contestants);
 			expect(gainedXP).to.equal(1);
 			({ gainedXP } = calculateXP(constestant2, contestants));
 			expect(gainedXP).to.equal(11);
@@ -617,7 +618,7 @@ describe.only('./helpers/experience.js', () => {
 
 			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
 
-			let { gainedXP } = calculateXP(constestant1, contestants);
+			let { gainedXP, reasons } = calculateXP(constestant1, contestants);
 			expect(gainedXP).to.equal(16);
 			({ gainedXP } = calculateXP(constestant2, contestants));
 			expect(gainedXP).to.equal(8);

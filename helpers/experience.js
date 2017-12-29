@@ -12,12 +12,14 @@ const xpFormula = (levelDifference, base) =>
 	Math.round(Math.pow(10, (-0.3 * levelDifference)) * base);
 
 const getAverageLevel = (monster, contestants) => {
-	const levelTotal = contestants.reduce((totalLevels, contestant) =>
-		((monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level)
-	, 0)
+	const levelTotal = contestants.reduce(
+		(totalLevels, contestant) =>
+			((monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level)
+		, 0
+	);
 
 	return Math.ceil(levelTotal / (contestants.length - 1));
-}
+};
 
 
 const calculateXP = (contestant, contestants) => {
@@ -50,9 +52,9 @@ const calculateXP = (contestant, contestants) => {
 		const avgLevel = getAverageLevel(monster, contestants);
 		const averageLevelDifference = monster.level - getAverageLevel(monster, contestants);
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
-		xp = Math.min(xpFormula(averageLevelDifference, xpBase), 5 * rounds)
+		xp = Math.min(xpFormula(averageLevelDifference, xpBase), 5 * rounds);
 
-		reasons.push(`Gained ${xp} XP for ${contestant.fled ? 'fleeing' : 'last one standing'} in battle with opponents with average level of ${avgLevel}`);
+		reasons.push(`Gained ${xp} XP for ${contestant.fled ? 'fleeing' : 'last one standing'} in battle with opponents with average level of ${avgLevel}`);// eslint-disable-line max-len
 
 		gainedXP += xp;
 	}
