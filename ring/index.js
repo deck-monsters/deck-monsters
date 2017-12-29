@@ -516,16 +516,17 @@ class Ring extends BaseClass {
 
 	awardMonsterXP (contestant, contestants) {
 		const { monster, killed } = contestant;
-		const monsterXP = calculateXP(contestant, contestants);
+		const { gainedXP, reasons } = calculateXP(contestant, contestants);
 
-		if (monsterXP > 0) {
-			monster.xp += monsterXP;
+		if (gainedXP > 0) {
+			monster.xp += gainedXP;
 
 			this.emit('gainedXP', {
 				contestant,
 				creature: monster,
 				killed,
-				xpGained: monsterXP
+				xpGained: gainedXP,
+				reasons
 			});
 		}
 	}
