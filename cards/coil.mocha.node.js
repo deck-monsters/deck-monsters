@@ -6,6 +6,7 @@ const Minotaur = require('../monsters/minotaur');
 const Coil = require('./coil');
 const pause = require('../helpers/pause');
 const { roll } = require('../helpers/chance');
+const { ATTACK_PHASE } = require('../helpers/phases');
 
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 
@@ -66,14 +67,15 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 		expect(coil.ongoingDamage).to.equal(0);
 	});
 
-	it('do not do damage on immobilize', () => {
+	it('does ongoingDamage until opponent breaks free', () => {
 		const coil = new Coil();
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(coil)), 'checkSuccess');
 		const hitCheckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(coil)), 'hitCheck');
 
-		const player = new Minotaur({ name: 'player' });
-		const target = new Basilisk({ name: 'target' });
-		const before = target.hp;
+		const player = new Basilisk({ name: 'player' });
+		const target = new Minotaur({ name: 'target' });
+		const startingTargetHP = target.hp;
+		const startingPlayerHP = player.hp;
 
 		const ring = {
 			contestants: [
@@ -85,9 +87,11 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
 
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+
 		hitCheckStub.returns({
 			attackRoll,
 			success: { success: true, strokeOfLuck: false, curseOfLoki: false },
@@ -98,11 +102,59 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 		return coil
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				checkSuccessStub.restore();
-				hitCheckStub.restore();
+				expect(target.encounterEffects.length).to.equal(1);
+				expect(target.hp).to.equal(startingTargetHP);
+				expect(player.hp).to.equal(startingPlayerHP);
 
-				expect(target.hp).to.equal(before);
-				return expect(target.encounterEffects.length).to.equal(1);
+				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
+
+				const card = target.encounterEffects.reduce((currentCard, effect) => {
+					const modifiedCard = effect({
+						activeContestants: [target, player],
+						card: currentCard,
+						phase: ATTACK_PHASE,
+						player,
+						ring,
+						target
+					});
+
+					return modifiedCard || currentCard;
+				}, new Hit());
+
+				return card
+					.play(target, player, ring, ring.contestants)
+					.then(() => {
+						expect(target.hp).to.equal(startingTargetHP - 1);
+						expect(player.hp).to.equal(startingPlayerHP);
+						expect(target.encounterEffects.length).to.equal(1);
+
+						checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+						const card = target.encounterEffects.reduce((currentCard, effect) => {
+							const modifiedCard = effect({
+								activeContestants: [target, player],
+								card: currentCard,
+								phase: ATTACK_PHASE,
+								player,
+								ring,
+								target
+							});
+
+							return modifiedCard || currentCard;
+						}, new Hit());
+
+						return card
+							.play(target, player, ring, ring.contestants)
+							.then(() => {
+								checkSuccessStub.restore();
+								hitCheckStub.restore();
+
+								expect(target.hp).to.equal(startingTargetHP - 1);
+								return expect(target.encounterEffects.length).to.equal(0);
+							}
+						);
+					}
+				);
 			});
 	});
 });
