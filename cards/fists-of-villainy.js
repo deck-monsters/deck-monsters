@@ -21,7 +21,7 @@ class FistsOfVillainyCard extends HitCard {
 }
 
 FistsOfVillainyCard.cardType = 'Fists of Villainy';
-FistsOfVillainyCard.probability = 30;
+FistsOfVillainyCard.probability = 20;
 FistsOfVillainyCard.description = 'You show no mercy to the weak.';
 FistsOfVillainyCard.level = 1;
 

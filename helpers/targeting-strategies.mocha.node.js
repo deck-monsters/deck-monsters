@@ -10,7 +10,8 @@ describe('./helpers/targeting-strategies.js', () => {
 				total: 1,
 				wins: 1,
 				losses: 0
-			}
+			},
+			hpVariance: 0
 		});
 
 		const level1 = randomContestant({
@@ -19,7 +20,8 @@ describe('./helpers/targeting-strategies.js', () => {
 				total: 5,
 				wins: 5,
 				losses: 0
-			}
+			},
+			hpVariance: 0
 		});
 
 		const level2 = randomContestant({
@@ -28,7 +30,8 @@ describe('./helpers/targeting-strategies.js', () => {
 				total: 10,
 				wins: 10,
 				losses: 0
-			}
+			},
+			hpVariance: 0
 		});
 
 		const level3 = randomContestant({
@@ -37,7 +40,8 @@ describe('./helpers/targeting-strategies.js', () => {
 				total: 15,
 				wins: 15,
 				losses: 0
-			}
+			},
+			hpVariance: 0
 		});
 
 		return {
@@ -97,14 +101,9 @@ describe('./helpers/targeting-strategies.js', () => {
 		it('gets the target with the higest max hp', () => {
 			const {
 				playerContestant,
-				level1,
-				level2,
 				level3,
 				contestants
 			} = getContestants();
-
-			level1.monster.maxHp = 5;
-			level2.monster.maxHp = 5;
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
