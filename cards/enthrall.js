@@ -30,15 +30,8 @@ Chance to immobilize your opponents with your shocking beauty.`;
 		return 10 + this.freedomThresholdModifier;
 	}
 
-	effect (player, target, ring, activeContestants) {
-		return new Promise(resolve => resolve(Promise.all(activeContestants.map(({ monster }) => {
-			if (monster !== player) {
-				return super.effect(player, monster, ring, activeContestants);
-			}
-
-			return Promise.resolve();
-		}))
-			.then(() => !target.dead)));
+	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
+		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
 	}
 }
 

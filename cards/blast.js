@@ -25,19 +25,14 @@ class BlastCard extends BaseCard {
 		return `Blast: ${this.damage} base damage +${this.levelDamage} per level of the caster`;
 	}
 
-	effect (player, target, ring, activeContestants) {
+	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
+		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
+	}
+
+	effect (player, target) {
 		const damage = this.damage + (this.levelDamage * player.level);
 
-		return new Promise((resolve) => {
-			resolve(Promise.all(activeContestants.map(({ monster }) => {
-				if (monster !== player) {
-					return monster.hit(damage, player, this);
-				}
-
-				return Promise.resolve();
-			}))
-				.then(() => !target.dead));
-		});
+		return target.hit(damage, player, this);
 	}
 }
 

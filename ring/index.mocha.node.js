@@ -1,5 +1,6 @@
 const { expect, sinon } = require('../shared/test-setup');
 
+const { randomContestant } = require('../helpers/bosses');
 const Basilisk = require('../monsters/basilisk');
 const Beastmaster = require('../characters/beastmaster');
 const ChannelManager = require('../channel');
@@ -160,6 +161,163 @@ describe('./ring/index.js', () => {
 
 			expect(ring.contestants.length).to.equal(1);
 			expect(contestant).to.equal(undefined);
+		});
+	});
+
+	describe('fightConcludes', () => {
+		it('can calculate xp for two level 1 monsters', () => {
+			const game = new Game(publicChannelStub);
+			const ring = game.getRing();
+
+			let contestant1 = randomContestant({
+				battles: {
+					total: 5,
+					wins: 5,
+					losses: 0
+				}
+			});
+			ring.addMonster(contestant1);
+
+			let contestant2 = randomContestant({
+				battles: {
+					total: 5,
+					wins: 5,
+					losses: 0
+				}
+			});
+			ring.addMonster(contestant2);
+
+			contestant1.monster.hp = 0;
+			contestant2.monster.killed = contestant1.monster;
+
+			const prevXP1 = contestant1.monster.xp;
+			const prevXP2 = contestant2.monster.xp;
+
+			ring.fightConcludes({ lastContestant: contestant2, rounds: 1 });
+
+			contestant1 = ring.findContestant(contestant1.character, contestant1.monster);
+			contestant2 = ring.findContestant(contestant2.character, contestant2.monster);
+
+			expect(contestant1.won).to.equal(undefined);
+			expect(contestant2.won).to.equal(true);
+			expect(contestant1.monster.xp).to.equal(prevXP1);
+			expect(contestant2.monster.xp).to.equal(prevXP2 + 10);
+		});
+
+		it('can calculate xp for a higher level monster beating a lower level monster', () => {
+			const game = new Game(publicChannelStub);
+			const ring = game.getRing();
+
+			let contestant1 = randomContestant({
+				battles: {
+					total: 5,
+					wins: 5,
+					losses: 0
+				}
+			});
+			ring.addMonster(contestant1);
+
+			let contestant2 = randomContestant({
+				battles: {
+					total: 10,
+					wins: 10,
+					losses: 0
+				}
+			});
+			ring.addMonster(contestant2);
+
+			contestant1.monster.hp = 0;
+			contestant2.monster.killed = contestant1.monster;
+
+			const prevXP1 = contestant1.monster.xp;
+			const prevXP2 = contestant2.monster.xp;
+
+			ring.fightConcludes({ lastContestant: contestant2, rounds: 1 });
+
+			contestant1 = ring.findContestant(contestant1.character, contestant1.monster);
+			contestant2 = ring.findContestant(contestant2.character, contestant2.monster);
+
+			expect(contestant1.won).to.equal(undefined);
+			expect(contestant2.won).to.equal(true);
+			expect(contestant1.monster.xp).to.equal(prevXP1);
+			expect(contestant2.monster.xp).to.equal(prevXP2 + 5);
+		});
+
+		it('can calculate xp for a lower level monster beating a higher level monster', () => {
+			const game = new Game(publicChannelStub);
+			const ring = game.getRing();
+
+			let contestant1 = randomContestant({
+				battles: {
+					total: 5,
+					wins: 5,
+					losses: 0
+				}
+			});
+			ring.addMonster(contestant1);
+
+			let contestant2 = randomContestant({
+				battles: {
+					total: 1,
+					wins: 1,
+					losses: 0
+				}
+			});
+			ring.addMonster(contestant2);
+
+			contestant1.monster.hp = 0;
+			contestant2.monster.killed = contestant1.monster;
+
+			const prevXP1 = contestant1.monster.xp;
+			const prevXP2 = contestant2.monster.xp;
+
+			ring.fightConcludes({ lastContestant: contestant2, rounds: 1 });
+
+			contestant1 = ring.findContestant(contestant1.character, contestant1.monster);
+			contestant2 = ring.findContestant(contestant2.character, contestant2.monster);
+
+			expect(contestant1.won).to.equal(undefined);
+			expect(contestant2.won).to.equal(true);
+			expect(contestant1.monster.xp).to.equal(prevXP1);
+			expect(contestant2.monster.xp).to.equal(prevXP2 + 20);
+		});
+
+		it('can calculate xp when a monster flees', () => {
+			const game = new Game(publicChannelStub);
+			const ring = game.getRing();
+
+			let contestant1 = randomContestant({
+				battles: {
+					total: 5,
+					wins: 5,
+					losses: 0
+				}
+			});
+			ring.addMonster(contestant1);
+
+			let contestant2 = randomContestant({
+				battles: {
+					total: 5,
+					wins: 5,
+					losses: 0
+				}
+			});
+			ring.addMonster(contestant2);
+
+			contestant1.monster.fled = true;
+
+			const prevXP1 = contestant1.monster.xp;
+			const prevXP2 = contestant2.monster.xp;
+
+			ring.fightConcludes({ lastContestant: contestant2, rounds: 1 });
+
+			contestant1 = ring.findContestant(contestant1.character, contestant1.monster);
+			contestant2 = ring.findContestant(contestant2.character, contestant2.monster);
+
+			expect(contestant1.won).to.equal(undefined);
+			expect(contestant2.won).to.equal(undefined);
+			expect(contestant1.monster.xp).to.equal(prevXP1);
+			expect(contestant2.monster.xp).to.equal(prevXP2);
 		});
 	});
 });

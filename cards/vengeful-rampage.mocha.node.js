@@ -34,11 +34,22 @@ describe('./cards/vengeful-rampage.js', () => {
 	it('deals damage equal to the amount of damage already taken', () => {
 		const venegefulRampage = new VenegefulRampageCard();
 
-		const player = new Basilisk({ name: 'player', hp: 2 });
+		const player = new Basilisk({ name: 'player', hp: 26, hpVariance: 0 });
 		const target = new Basilisk({ name: 'target' });
 
 		const roll = venegefulRampage.getDamageRoll(player, target);
 
-		expect(roll.modifier).to.equal(player.maxHp - player.hp);
+		expect(roll.modifier).to.equal(2);
+	});
+
+	it('does max damage equal to double player damage modifier', () => {
+		const venegefulRampage = new VenegefulRampageCard();
+
+		const player = new Basilisk({ name: 'player', hp: 2, hpVariance: 0, damageModifier: 6 });
+		const target = new Basilisk({ name: 'target' });
+
+		const roll = venegefulRampage.getDamageRoll(player, target);
+
+		expect(roll.modifier).to.equal(12);
 	});
 });

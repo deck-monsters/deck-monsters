@@ -25,6 +25,10 @@ class HealCard extends BaseCard {
 Possiblity of Stroke of Luck`;
 	}
 
+	getTargets (player) { // eslint-disable-line class-methods-use-this
+		return [player];
+	}
+
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
@@ -47,7 +51,7 @@ Possiblity of Stroke of Luck`;
 				outcome
 			});
 
-			resolve(player.heal(healResult));
+			resolve(target.heal(healResult));
 		});
 	}
 }

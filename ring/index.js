@@ -5,6 +5,7 @@ const shuffle = require('lodash.shuffle');
 
 const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
 const { calculateXP } = require('../helpers/experience');
+const { getTarget } = require('../helpers/targeting-strategies');
 const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
 const BaseClass = require('../baseClass');
@@ -293,8 +294,8 @@ class Ring extends BaseClass {
 
 			// Let's find our target
 			// This where we could do some fancy targetting logic if we wanted to
-			const targetContestant = activeContestants[0];
-			const { monster: target } = targetContestant;
+			const targetContestant = getTarget({ playerContestant, contestants: getAllActiveContestants() });
+			const { monster: proposedTarget } = targetContestant;
 
 			// Find the card in the current player's hand at the current index
 			let card = player.cards[cardIndex];
@@ -322,35 +323,25 @@ class Ring extends BaseClass {
 				// Let's clone the card before we get started on this - that way any modifications won't be saved
 				card = card.clone();
 
-				// First, run through the effects from the current monster
-				card = player.encounterEffects.reduce((currentCard, effect) => {
-					const modifiedCard = effect({
-						activeContestants: getAllActiveContestants(),
-						card: currentCard,
-						phase: ATTACK_PHASE,
-						player,
-						ring,
-						target
-					});
+				// First, run through the effects from the contestants
+				card = (() => {
+					const allActiveContestants = getAllActiveContestants();
 
-					return modifiedCard || currentCard;
-				}, card);
+					return allActiveContestants.reduce((contestantCard, contestant) => contestant.monster.encounterEffects.reduce((effectCard, effect) => {
+						const modifiedCard = effect({
+							activeContestants: allActiveContestants,
+							card: effectCard,
+							phase: contestant.monster === player ? ATTACK_PHASE : DEFENSE_PHASE,
+							player,
+							ring,
+							proposedTarget
+						});
 
-				// Second, run through the effects from the target monster
-				card = target.encounterEffects.reduce((currentCard, effect) => {
-					const modifiedCard = effect({
-						activeContestants: getAllActiveContestants(),
-						card: currentCard,
-						phase: DEFENSE_PHASE,
-						player,
-						ring,
-						target
-					});
+						return modifiedCard || effectCard;
+					}, contestantCard), card);
+				})();
 
-					return modifiedCard || currentCard;
-				}, card);
-
-				// Finally, run through any global effects
+				// Then, run through any global effects
 				card = ring.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
 						activeContestants: getAllActiveContestants(),
@@ -358,20 +349,20 @@ class Ring extends BaseClass {
 						phase: GLOBAL_PHASE,
 						player,
 						ring,
-						target
+						proposedTarget
 					});
 
 					return modifiedCard || currentCard;
 				}, card);
 
 				// Track the fight log
-				fightLog.push(`${player.givenName}: ${card.name} target ${target.givenName}`);
+				fightLog.push(`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`);
 
 				// Play the card
 				card
 					// The current monster always attacks the next monster
 					// This could be updated in future versions to take into account teams / alignment, and/or to randomize who is targeted
-					.play(player, target, ring, getAllActiveContestants())
+					.play(player, proposedTarget, ring, getAllActiveContestants())
 					.then(() => {
 						// Is there more than one monster left alive in the ring?
 						if (getAllActiveContestants().length > 1) {
@@ -454,14 +445,16 @@ class Ring extends BaseClass {
 
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
+			contestant.killed = contestant.monster.killed;
+			contestant.fled = contestant.monster.fled;
+			contestant.encounter = contestant.monster.endEncounter();
 
 			if (deaths > 0) {
 				this.awardMonsterXP(contestant);
 
 				if (contestant.monster.dead) {
 					contestant.lost = true;
-					contestant.monster.endEncounter();
-					
+
 					if (contestant.monster.destroyed) {
 						this.channelManager.queueMessage({
 							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
@@ -477,9 +470,7 @@ class Ring extends BaseClass {
 							event: { name: 'loss', properties: { contestant } }
 						});
 					}
-				} else if (contestant.monster.fled) {
-					contestant.monster.endEncounter();
-
+				} else if (contestant.fled) {
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.givenName} lived to fight another day!`,
 						channel,
@@ -488,8 +479,7 @@ class Ring extends BaseClass {
 					});
 				} else {
 					contestant.won = true;
-					contestant.monster.endEncounter();
-					
+
 					this.channelManager.queueMessage({
 						announce: `${contestant.monster.identity} is victorious!`,
 						channel,
@@ -498,8 +488,6 @@ class Ring extends BaseClass {
 					});
 				}
 			} else {
-				contestant.monster.endEncounter();
-
 				this.channelManager.queueMessage({
 					announce: 'The fight ended in a draw.',
 					channel,
@@ -525,8 +513,8 @@ class Ring extends BaseClass {
 	}
 
 	awardMonsterXP (contestant) {
-		const { monster } = contestant;
-		const monsterXP = calculateXP(monster);
+		const { monster, killed } = contestant;
+		const monsterXP = calculateXP(monster, killed);
 
 		if (monsterXP > 0) {
 			monster.xp += monsterXP;
@@ -534,7 +522,7 @@ class Ring extends BaseClass {
 			this.emit('gainedXP', {
 				contestant,
 				creature: monster,
-				killed: monster.killed,
+				killed,
 				xpGained: monsterXP
 			});
 		}

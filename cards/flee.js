@@ -13,33 +13,36 @@ class FleeCard extends BaseCard {
 		return 'Chance to run away if bloodied (hp < half)';
 	}
 
-	effect (player, target, ring) { // eslint-disable-line no-unused-vars
+	getTargets (player) { // eslint-disable-line class-methods-use-this, no-unused-vars
+		return [player];
+	}
+
+	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
-			if (player.bloodied) {
-				const fleeBonus = target.ac - player.ac;
-				const fleeRoll = roll({ primaryDice: '1d20', modifier: fleeBonus });
-				const success = this.checkSuccess(fleeRoll, target.ac);
+			if (target.bloodied) {
+				const fleeRoll = roll({ primaryDice: '1d20' });
+				const { success } = this.checkSuccess(fleeRoll, 10);
 
 				this.emit('rolled', {
-					reason: 'to flee',
+					reason: 'and needs 10 or higher to flee',
 					card: this,
 					roll: fleeRoll,
 					player,
 					target,
-					outcome: success ? 'success!' : 'fail!'
+					outcome: success ? 'Success!' : 'Fail!'
 				});
 
 				ring.channelManager.sendMessages()
 					.then(() => {
 						if (success) {
-							return resolve(player.leaveCombat(target));
+							return resolve(target.leaveCombat(activeContestants));
 						}
 
 						this.emit('stay', {
 							fleeResult: fleeRoll.result,
 							fleeRoll,
 							player,
-							target
+							activeContestants
 						});
 
 						return resolve(true);
@@ -47,7 +50,7 @@ class FleeCard extends BaseCard {
 			} else {
 				this.emit('stay', {
 					player,
-					target
+					activeContestants
 				});
 
 				resolve(true);

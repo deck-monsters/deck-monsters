@@ -5,6 +5,8 @@ const BasicShieldCard = require('./basic-shield');
 const BlastCard = require('./blast');
 const BoostCard = require('./boost');
 const BrainDrainCard = require('./brain-drain');
+const CamouflageVestCard = require('./camouflage-vest');
+const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
 const ConstrictCard = require('./constrict');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
@@ -40,6 +42,8 @@ const all = [
 	BlastCard,
 	BoostCard,
 	BrainDrainCard,
+	CamouflageVestCard,
+	CloakOfInvisibilityCard,
 	ConstrictCard,
 	CurseCard,
 	EnchantedFaceswapCard,
@@ -97,8 +101,8 @@ const fillDeck = (deck, options, creature) => {
 const getInitialDeck = (options, creature) => {
 	// See above re: options
 	const deck = [
-		new EnchantedFaceswapCard(),
-		new EnchantedFaceswapCard(),
+		new HitCard(),
+		new HitCard(),
 		new HitCard(),
 		new HitCard(),
 		new HealCard(),
@@ -108,10 +112,10 @@ const getInitialDeck = (options, creature) => {
 	return fillDeck(deck, options, creature);
 };
 
-const getCardCounts = cards =>
+const getCardCounts = (cards, maxReportableCopies = 9999) =>
 	cards.reduce((cardCounts, card) => {
 		cardCounts[card.cardType] = cardCounts[card.cardType] || 0;
-		cardCounts[card.cardType] += 1;
+		cardCounts[card.cardType] = Math.min(maxReportableCopies, cardCounts[card.cardType] + 1);
 		return cardCounts;
 	}, {});
 

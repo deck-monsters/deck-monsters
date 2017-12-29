@@ -16,9 +16,11 @@ const AC_VARIANCE = 2;
 const BASE_HP = 28;
 const HP_VARIANCE = 5;
 const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
+const MAX_AC_MODIFICATION = 4;
 const MAX_ATTACK_BOOST = 10;
 const MAX_DAMAGE_BOOST = 6;
 const MAX_HP_BOOST = (BASE_HP * 2) + HP_VARIANCE;
+const MAX_HP_MODIFICATION = 12;
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
 
@@ -58,6 +60,14 @@ class BaseCreature extends BaseClass {
 		if (this.respawnTimeoutBegan) {
 			this.respawn();
 		}
+	}
+
+	get maxModifications () {
+		return {
+			hp: MAX_HP_MODIFICATION,
+			ac: MAX_AC_MODIFICATION,
+			xp: Math.max(this.getPreBattlePropValue('xp') - 40, 0)
+		};
 	}
 
 	get class () {
@@ -181,7 +191,7 @@ Battles won: ${this.battles.wins}`;
 	get maxHp () {
 		let maxHp = BASE_HP + this.hpVariance;
 		maxHp += Math.min(this.level * 3, MAX_HP_BOOST); // Gain 3 hp per level up to the max
-		maxHp += Math.min(this.modifiers.maxHp || 0, MAX_HP_BOOST);
+		maxHp += Math.min(this.modifiers.maxHp || 0, MAX_HP_MODIFICATION);
 
 		return Math.max(maxHp, 1);
 	}
@@ -209,7 +219,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get xp () {
-		let xp = this.options.xp || STARTING_XP;
+		let xp = this.getPreBattlePropValue('xp');
 		xp += this.modifiers.xp || 0;
 
 		return Math.max(xp, 0);
@@ -310,11 +320,30 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get ac () {
-		let ac = BASE_AC + this.acVariance;
-		ac += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
-		ac += Math.min(this.modifiers.ac || 0, MAX_AC_BOOST);
+		let ac = this.getPreBattlePropValue('ac');
+		ac += Math.min(this.modifiers.ac || 0, MAX_AC_MODIFICATION);
 
 		return Math.max(ac, 1);
+	}
+
+	getPreBattlePropValue (prop) {
+		let raw;
+
+		switch (prop) {
+			case 'ac':
+				raw = BASE_AC + this.acVariance;
+				raw += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
+				break;
+			case 'hp':
+				raw = this.maxHp;
+				break;
+			case 'xp':
+				raw = this.options.xp || STARTING_XP;
+				break;
+			default:
+		}
+
+		return raw;
 	}
 
 	// We don't have this right now
@@ -365,9 +394,9 @@ Battles won: ${this.battles.wins}`;
 		return this.canHold(item);
 	}
 
-	leaveCombat (assailant) {
+	leaveCombat (activeContestants) {
 		this.emit('leave', {
-			assailant
+			activeContestants
 		});
 
 		this.fled = true;
@@ -467,8 +496,12 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	endEncounter () {
+		const { encounter = {} } = this;
+
 		this.inEncounter = false;
 		delete this.encounter;
+
+		return encounter;
 	}
 
 	respawn (immediate) {

@@ -60,19 +60,21 @@ class BaseCard extends BaseClass {
 		return { success, strokeOfLuck, curseOfLoki };
 	}
 
-	play (player, target, ring, activeContestants) {
-		this.emit('played', {
-			player,
-			target,
-			ring,
-			activeContestants
-		});
+	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this, no-unused-vars
+		return [proposedTarget];
+	}
+
+	play (player, proposedTarget, ring, activeContestants) {
+		this.emit('played', { player });
+
+		const targets = this.getTargets(player, proposedTarget, ring, activeContestants);
 
 		if (this.effect) {
-			return this.effect(player, target, ring, activeContestants);
+			return Promise.all(targets.map(target => this.effect(player, target, ring, activeContestants)))
+				.then(results => results.reduce((result, val) => result && val, true));
 		}
 
-		return true;
+		return Promise.resolve(true);
 	}
 
 	look (channel) {

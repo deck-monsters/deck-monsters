@@ -9,21 +9,19 @@ class FistsOfVirtueCard extends HitCard {
 		super({ icon, ...rest });
 	}
 
-	effect (player, oldTarget, ring, activeContestants) {
-		const target = activeContestants.reduce((potentialTarget, { monster }) => {
+	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
+		return [activeContestants.reduce((potentialTarget, { monster }) => {
 			if (monster !== player && monster.hp > potentialTarget.hp) {
 				return monster;
 			}
 
 			return potentialTarget;
-		}, oldTarget);
-
-		return super.effect(player, target, ring, activeContestants);
+		}, proposedTarget)];
 	}
 }
 
 FistsOfVirtueCard.cardType = 'Fists of Virtue';
-FistsOfVirtueCard.probability = 40;
+FistsOfVirtueCard.probability = 30;
 FistsOfVirtueCard.description = 'You strike at the biggest bully in the room.';
 FistsOfVirtueCard.level = 1;
 FistsOfVirtueCard.defaults = {

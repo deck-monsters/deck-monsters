@@ -85,6 +85,7 @@ return Promise
 	.then(() => vlad.spawnMonster({
 		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 100
 	}))
+	// .then(() => vlad.equipMonster({ monsterName: 'jerry', cardSelection: 'brain drain, pick pocket, hit' }));
 	.then(() => vlad.spawnMonster({
 		type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 100
 	}))

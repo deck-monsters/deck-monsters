@@ -9,7 +9,7 @@ const announceModifier = (publicChannel, channelManager, className, monster, {
 
 	publicChannel({
 		announce:
-`${monster.identity}'s ${attr} ${dir} by ${Math.abs(amount)}`
+`${monster.identity}'s ${attr} is now ${monster[attr]} (${dir} by ${Math.abs(amount)})`
 	});
 };
 
