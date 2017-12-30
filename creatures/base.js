@@ -299,6 +299,17 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get round () {
+		return (this.encounter || {}).round;
+	}
+
+	set round (round) {
+		this.encounter = {
+			...this.encounter,
+			round
+		};
+	}
+
 	get killedBy () {
 		return (this.encounter || {}).killedBy;
 	}
