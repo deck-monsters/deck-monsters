@@ -55,7 +55,7 @@ const calculateXP = (contestant, contestants) => {
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
 		xp = Math.min(xpFormula(averageLevelDifference, xpBase), 5 * rounds);
 
-		reasons.push(`Gained ${xp} XP for ${contestant.fled ? 'fleeing' : 'being the last one standing'} in battle with opponents with average level of ${avgLevel}`);// eslint-disable-line max-len
+		reasons.push(`Gained ${xp} XP for ${contestant.fled ? 'fleeing' : 'being the last one standing'} in battle with opponents at an average level of ${avgLevel}`);// eslint-disable-line max-len
 
 		gainedXP += xp;
 	}
