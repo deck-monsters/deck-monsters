@@ -282,7 +282,7 @@ describe('./ring/index.js', () => {
 			expect(contestant1.won).to.equal(undefined);
 			expect(contestant2.won).to.equal(true);
 			expect(contestant1.monster.xp).to.equal(prevXP1 + 1);
-			expect(contestant2.monster.xp).to.equal(prevXP2 + 25);
+			expect(contestant2.monster.xp).to.equal(prevXP2 + 23);
 		});
 
 		it('can calculate xp when a monster flees', () => {

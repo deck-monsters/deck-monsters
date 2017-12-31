@@ -158,10 +158,10 @@ describe('./helpers/experience.js', () => {
 
 				const { gainedXP, reasons } = calculateXP(constestant2, contestants);
 				expect(gainedXP).to.equal(13);
-				expect(reasons).to.equal('Gained 10 XP for killing fred (0 level difference)\nGained 3 XP for being the last one standing in battle with opponents at an average level of 1');
+				expect(reasons).to.equal('Gained 10 XP for killing fred (0 level difference)\nGained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in battle with opponents at an average level of 1');
 			});
 
-			it('assigns 25 XP if you kill a 1 level higher monster', () => {
+			it('assigns 23 XP if you kill a 1 level higher monster', () => {
 				const constestant1 = {
 					monster: {
 						level: 2,
@@ -178,8 +178,8 @@ describe('./helpers/experience.js', () => {
 				const contestants = [constestant1, constestant2];
 
 				const { gainedXP, reasons } = calculateXP(constestant2, contestants);
-				expect(gainedXP).to.equal(25);
-				expect(reasons).to.equal('Gained 20 XP for killing fred (1 level difference)\nGained 5 XP for being the last one standing in battle with opponents at an average level of 2');
+				expect(gainedXP).to.equal(23);
+				expect(reasons).to.equal('Gained 20 XP for killing fred (1 level difference)\nGained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in battle with opponents at an average level of 2');
 			});
 
 			it('assigns 7 XP if you kill a 1 level lower monster', () => {
@@ -376,10 +376,10 @@ describe('./helpers/experience.js', () => {
 
 				let { gainedXP, reasons } = calculateXP(constestant1, contestants);
 				expect(gainedXP).to.equal(3);
-				expect(reasons).to.equal('Gained 3 XP for being the last one standing in battle with opponents at an average level of 1');
+				expect(reasons).to.equal('Gained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in battle with opponents at an average level of 1');
 				({ gainedXP, reasons } = calculateXP(constestant2, contestants));
 				expect(gainedXP).to.equal(2);
-				expect(reasons).to.equal('Gained 2 XP for fleeing in battle with opponents at an average level of 1');
+				expect(reasons).to.equal('Gained 2 XP for fleeing as a level 1 monster lasting 1 rounds in battle with opponents at an average level of 1');
 			});
 
 			it('assigns more xp to the monster that stays when both are level 100', () => {
@@ -403,7 +403,7 @@ describe('./helpers/experience.js', () => {
 				expect(gainedXP).to.equal(2);
 			});
 
-			it('assigns 5 xp if a monster 1 level higher flees you', () => {
+			it('assigns 3 xp if a monster 1 level higher flees you', () => {
 				const constestant1 = {
 					monster: {
 						level: 1
@@ -419,12 +419,12 @@ describe('./helpers/experience.js', () => {
 				const contestants = [constestant1, constestant2];
 
 				let { gainedXP } = calculateXP(constestant1, contestants);
-				expect(gainedXP).to.equal(5);
+				expect(gainedXP).to.equal(3);
 				({ gainedXP } = calculateXP(constestant2, contestants));
 				expect(gainedXP).to.equal(1);
 			});
 
-			it('assigns 5 XP if a monster 4 levels higher flees you after 1 round', () => {
+			it('assigns 3 XP if a monster 4 levels higher flees you after 1 round', () => {
 				const constestant1 = {
 					monster: {
 						level: 1
@@ -440,12 +440,12 @@ describe('./helpers/experience.js', () => {
 				const contestants = [constestant1, constestant2];
 
 				let { gainedXP } = calculateXP(constestant1, contestants);
-				expect(gainedXP).to.equal(5);
+				expect(gainedXP).to.equal(3);
 				({ gainedXP } = calculateXP(constestant2, contestants));
 				expect(gainedXP).to.equal(0);
 			});
 
-			it('assigns 15 XP if a monster 4 levels higher flees you after 3 rounds', () => {
+			it('assigns 9 XP if a monster 4 levels higher flees you after 3 rounds', () => {
 				const constestant1 = {
 					monster: {
 						level: 1
@@ -463,12 +463,12 @@ describe('./helpers/experience.js', () => {
 				const contestants = [constestant1, constestant2];
 
 				let { gainedXP } = calculateXP(constestant1, contestants);
-				expect(gainedXP).to.equal(15);
+				expect(gainedXP).to.equal(9);
 				({ gainedXP } = calculateXP(constestant2, contestants));
 				expect(gainedXP).to.equal(0);
 			});
 
-			it('assigns 5 XP if you flee a monster 4 levels higher', () => {
+			it('assigns 2 XP if you flee a monster 4 levels higher', () => {
 				const constestant1 = {
 					monster: {
 						level: 5
@@ -486,7 +486,7 @@ describe('./helpers/experience.js', () => {
 				let { gainedXP } = calculateXP(constestant1, contestants);
 				expect(gainedXP).to.equal(0);
 				({ gainedXP } = calculateXP(constestant2, contestants));
-				expect(gainedXP).to.equal(5);
+				expect(gainedXP).to.equal(2);
 			});
 		});
 	});
@@ -647,7 +647,7 @@ describe('./helpers/experience.js', () => {
 			expect(gainedXP).to.equal(2);
 			({ gainedXP, reasons } = calculateXP(constestant5, contestants));
 			expect(gainedXP).to.equal(11);
-			expect(reasons).to.equal('Gained 1 XP for killing fred (-4 level difference)\nGained 1 XP for killing barney (-3 level difference)\nGained 3 XP for killing betty (-2 level difference)\nGained 5 XP for killing wilma (-1 level difference)\nGained 1 XP for being the last one standing in battle with opponents at an average level of 3');
+			expect(reasons).to.equal('Gained 1 XP for killing fred (-4 level difference)\nGained 1 XP for killing barney (-3 level difference)\nGained 3 XP for killing betty (-2 level difference)\nGained 5 XP for killing wilma (-1 level difference)\nGained 1 XP for being the last one standing as a level 5 monster lasting 1 rounds in battle with opponents at an average level of 3');
 		});
 
 		it('assigns proper xp if 4 beat 1 all different levels', () => {
@@ -830,9 +830,9 @@ describe('./helpers/experience.js', () => {
 			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
 
 			let { gainedXP } = calculateXP(constestant1, contestants);
-			expect(gainedXP).to.equal(5);
+			expect(gainedXP).to.equal(3);
 			({ gainedXP } = calculateXP(constestant2, contestants));
-			expect(gainedXP).to.equal(5);
+			expect(gainedXP).to.equal(2);
 			({ gainedXP } = calculateXP(constestant3, contestants));
 			expect(gainedXP).to.equal(2);
 			({ gainedXP } = calculateXP(constestant4, contestants));
