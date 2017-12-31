@@ -35,7 +35,7 @@ const calculateXP = (contestant, contestants) => {
 		levelDifference = monster.level - opponentKilled.level;
 		xp = xpFormula(levelDifference, BASE_XP_PER_KILL);
 
-		reasons.push(`Gained ${xp} XP for killing ${opponentKilled.givenName} (${levelDifference * -1} level difference)`);
+		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for killing ${opponentKilled.givenName} (${levelDifference * -1} level difference)`);
 
 		gainedXP += xp;
 	});
@@ -45,7 +45,7 @@ const calculateXP = (contestant, contestants) => {
 		const levelDifferenceText = levelDifference === 0 ? 'same level' : `${levelDifference * -1} level difference`;
 		xp = Math.min(xpFormula(levelDifference, BASE_XP_PER_KILLED_BY), BASE_XP_PER_KILLED_BY * rounds);
 
-		reasons.push(`Gained ${xp} XP for being killed by ${contestant.killedBy.givenName} (${levelDifferenceText})`);
+		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for being killed by ${contestant.killedBy.givenName} (${levelDifferenceText})`);
 
 		gainedXP += xp;
 	} else {
@@ -55,7 +55,9 @@ const calculateXP = (contestant, contestants) => {
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
 		xp = Math.min(xpFormula(averageLevelDifference, xpBase), xpBase * rounds);
 
-		reasons.push(`Gained ${xp} XP for ${contestant.fled ? 'fleeing' : 'being the last one standing'} as a level ${monster.level} monster lasting ${rounds} rounds in battle with opponents at an average level of ${avgLevel}`);// eslint-disable-line max-len
+		const avgLevelText = avgLevel > 0 ? avgLevel : 'beginner';
+		const forText = contestant.fled ? 'fleeing' : 'being the last one standing';
+		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a level ${monster.level} monster lasting ${rounds} rounds in battle with opponents at an average level of ${avgLevelText}`);// eslint-disable-line max-len
 
 		gainedXP += xp;
 	}
