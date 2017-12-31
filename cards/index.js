@@ -7,6 +7,7 @@ const BoostCard = require('./boost');
 const BrainDrainCard = require('./brain-drain');
 const CamouflageVestCard = require('./camouflage-vest');
 const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
+const CoilCard = require('./constrict');
 const ConstrictCard = require('./constrict');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
@@ -44,6 +45,7 @@ const all = [
 	BrainDrainCard,
 	CamouflageVestCard,
 	CloakOfInvisibilityCard,
+	CoilCard,
 	ConstrictCard,
 	CurseCard,
 	EnchantedFaceswapCard,
@@ -106,8 +108,18 @@ const getInitialDeck = (options, creature) => {
 		new HitCard(),
 		new HitCard(),
 		new HealCard(),
+		new HealCard(),
 		new FleeCard()
 	];
+
+	const beginnerSpecials = [
+		new CoilCard(),
+		new BlastCard(),
+		new HornGoreCard(),
+		new BerserkCard()
+	];
+
+	deck.push(beginnerSpecials[Math.random() * beginnerSpecials.length])
 
 	return fillDeck(deck, options, creature);
 };
