@@ -316,6 +316,8 @@ class Ring extends BaseClass {
 					round
 				});
 
+				playerContestant.round = round;
+
 				// Now we're going to run through all of the possible effects
 				// Each effect should either return a card (which will replace the card that was going to be played)
 				// or do something in the background and then return nothing (in which case we'll keep the card we had)
@@ -446,12 +448,14 @@ class Ring extends BaseClass {
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
 			contestant.killed = contestant.monster.killed;
+			contestant.killedBy = contestant.monster.killedBy;
 			contestant.fled = contestant.monster.fled;
+			contestant.rounds = contestant.monster.round;
 			contestant.encounter = contestant.monster.endEncounter();
 
-			if (deaths > 0) {
-				this.awardMonsterXP(contestant);
+			this.awardMonsterXP(contestant, contestants);
 
+			if (deaths > 0) {
 				if (contestant.monster.dead) {
 					contestant.lost = true;
 
@@ -512,18 +516,19 @@ class Ring extends BaseClass {
 			});
 	}
 
-	awardMonsterXP (contestant) {
+	awardMonsterXP (contestant, contestants) {
 		const { monster, killed } = contestant;
-		const monsterXP = calculateXP(monster, killed);
+		const { gainedXP, reasons } = calculateXP(contestant, contestants);
 
-		if (monsterXP > 0) {
-			monster.xp += monsterXP;
+		if (gainedXP > 0) {
+			monster.xp += gainedXP;
 
 			this.emit('gainedXP', {
 				contestant,
 				creature: monster,
 				killed,
-				xpGained: monsterXP
+				xpGained: gainedXP,
+				reasons
 			});
 		}
 	}
