@@ -880,15 +880,15 @@ describe('./helpers/experience.js', () => {
 
 			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
 
-			let { gainedXP, reasons } = calculateXP(constestant1, contestants);
+			let { gainedXP } = calculateXP(constestant1, contestants);
 			expect(gainedXP).to.equal(9);
-			({ gainedXP, reasons } = calculateXP(constestant2, contestants));
+			({ gainedXP } = calculateXP(constestant2, contestants));
 			expect(gainedXP).to.equal(6);
-			({ gainedXP, reasons } = calculateXP(constestant3, contestants));
+			({ gainedXP } = calculateXP(constestant3, contestants));
 			expect(gainedXP).to.equal(2);
-			({ gainedXP, reasons } = calculateXP(constestant4, contestants));
+			({ gainedXP } = calculateXP(constestant4, contestants));
 			expect(gainedXP).to.equal(1);
-			({ gainedXP, reasons } = calculateXP(constestant5, contestants));
+			({ gainedXP } = calculateXP(constestant5, contestants));
 			expect(gainedXP).to.equal(1);
 		});
 	});
