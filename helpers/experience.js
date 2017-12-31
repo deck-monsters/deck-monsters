@@ -43,7 +43,7 @@ const calculateXP = (contestant, contestants) => {
 	if (contestant.killedBy) {
 		levelDifference = monster.level - contestant.killedBy.level;
 		const levelDifferenceText = levelDifference === 0 ? 'same level' : `${levelDifference * -1} level difference`;
-		xp = xpFormula(levelDifference, BASE_XP_PER_KILLED_BY);
+		xp = Math.min(xpFormula(levelDifference, BASE_XP_PER_KILLED_BY), BASE_XP_PER_KILLED_BY * rounds);
 
 		reasons.push(`Gained ${xp} XP for being killed by ${contestant.killedBy.givenName} (${levelDifferenceText})`);
 

@@ -319,7 +319,7 @@ describe('./helpers/experience.js', () => {
 				expect(gainedXP).to.equal(0);
 			});
 
-			it('assigns 2 XP if you are killed by 1 level higher monster', () => {
+			it('assigns 1 XP if you are killed by 1 level higher monster', () => {
 				const constestant1 = {
 					monster: {
 						level: 2
@@ -335,10 +335,10 @@ describe('./helpers/experience.js', () => {
 				const contestants = [constestant1, constestant2];
 
 				const { gainedXP } = calculateXP(constestant2, contestants);
-				expect(gainedXP).to.equal(2);
+				expect(gainedXP).to.equal(1);
 			});
 
-			it('assigns 16 XP if you are killed by 4 level higher monster', () => {
+			it('assigns 2 XP if you are killed by 4 level higher monster after two rounds', () => {
 				const constestant1 = {
 					monster: {
 						level: 5
@@ -348,13 +348,14 @@ describe('./helpers/experience.js', () => {
 					monster: {
 						level: 1
 					},
-					killedBy: constestant1.monster
+					killedBy: constestant1.monster,
+					rounds: 2
 				};
 
 				const contestants = [constestant1, constestant2];
 
 				const { gainedXP } = calculateXP(constestant2, contestants);
-				expect(gainedXP).to.equal(16);
+				expect(gainedXP).to.equal(2);
 			});
 		});
 
@@ -599,7 +600,8 @@ describe('./helpers/experience.js', () => {
 				monster: {
 					level: 1,
 					givenName: 'fred'
-				}
+				},
+				rounds: 3
 			};
 			const constestant2 = {
 				monster: {
@@ -611,13 +613,15 @@ describe('./helpers/experience.js', () => {
 				monster: {
 					level: 3,
 					givenName: 'betty'
-				}
+				},
+				rounds: 2
 			};
 			const constestant4 = {
 				monster: {
 					level: 4,
 					givenName: 'wilma'
-				}
+				},
+				rounds: 5
 			};
 			const constestant5 = {
 				monster: {
@@ -628,7 +632,8 @@ describe('./helpers/experience.js', () => {
 					constestant2.monster,
 					constestant3.monster,
 					constestant4.monster
-				]
+				],
+				rounds: 5
 			};
 			constestant1.killedBy = constestant5.monster;
 			constestant2.killedBy = constestant5.monster;
@@ -638,43 +643,48 @@ describe('./helpers/experience.js', () => {
 			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
 
 			let { gainedXP, reasons } = calculateXP(constestant1, contestants);
-			expect(gainedXP).to.equal(16);
+			expect(gainedXP).to.equal(3);
 			({ gainedXP } = calculateXP(constestant2, contestants));
-			expect(gainedXP).to.equal(8);
+			expect(gainedXP).to.equal(1);
 			({ gainedXP } = calculateXP(constestant3, contestants));
-			expect(gainedXP).to.equal(4);
+			expect(gainedXP).to.equal(2);
 			({ gainedXP } = calculateXP(constestant4, contestants));
 			expect(gainedXP).to.equal(2);
 			({ gainedXP, reasons } = calculateXP(constestant5, contestants));
 			expect(gainedXP).to.equal(11);
-			expect(reasons).to.equal('Gained 1 XP for killing fred (-4 level difference)\nGained 1 XP for killing barney (-3 level difference)\nGained 3 XP for killing betty (-2 level difference)\nGained 5 XP for killing wilma (-1 level difference)\nGained 1 XP for being the last one standing as a level 5 monster lasting 1 rounds in battle with opponents at an average level of 3');
+			expect(reasons).to.equal('Gained 1 XP for killing fred (-4 level difference)\nGained 1 XP for killing barney (-3 level difference)\nGained 3 XP for killing betty (-2 level difference)\nGained 5 XP for killing wilma (-1 level difference)\nGained 1 XP for being the last one standing as a level 5 monster lasting 5 rounds in battle with opponents at an average level of 3');
 		});
 
 		it('assigns proper xp if 4 beat 1 all different levels', () => {
 			const constestant1 = {
 				monster: {
 					level: 1
-				}
+				},
+				rounds: 99
 			};
 			const constestant2 = {
 				monster: {
 					level: 2
-				}
+				},
+				rounds: 99
 			};
 			const constestant3 = {
 				monster: {
 					level: 3
-				}
+				},
+				rounds: 99
 			};
 			const constestant4 = {
 				monster: {
 					level: 4
-				}
+				},
+				rounds: 99
 			};
 			const constestant5 = {
 				monster: {
 					level: 5
-				}
+				},
+				rounds: 99
 			};
 			constestant1.killedBy = constestant2.monster;
 			constestant2.killedBy = constestant3.monster;
@@ -784,9 +794,9 @@ describe('./helpers/experience.js', () => {
 			const contestants = [constestant1, constestant2, constestant3, constestant4, constestant5];
 
 			let { gainedXP } = calculateXP(constestant1, contestants);
-			expect(gainedXP).to.equal(2);
+			expect(gainedXP).to.equal(1);
 			({ gainedXP } = calculateXP(constestant2, contestants));
-			expect(gainedXP).to.equal(7);
+			expect(gainedXP).to.equal(6);
 			({ gainedXP } = calculateXP(constestant3, contestants));
 			expect(gainedXP).to.equal(8);
 			({ gainedXP } = calculateXP(constestant4, contestants));
