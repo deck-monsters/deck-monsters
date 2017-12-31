@@ -1,15 +1,11 @@
 const reduce = require('lodash.reduce');
-const moment = require('moment');
 const zlib = require('zlib');
 
-const { actionCard, monsterCard } = require('./helpers/card');
 const { all: cardTypes, draw } = require('./cards');
 const { all: monsterTypes } = require('./monsters');
 const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./helpers/coins');
 const { create: createCharacter } = require('./characters');
-const { getFlavor } = require('./helpers/flavor');
 const { globalSemaphore } = require('./helpers/semaphore');
-const { signedNumber } = require('./helpers/signed-number');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
 const aws = require('./helpers/aws');
 const BaseClass = require('./baseClass');
@@ -17,6 +13,29 @@ const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
+
+const announceBossWillSpawn = require('./announcements/bossWillSpawn.js');
+const announceCard = require('./announcements/card.js');
+const announceCardDrop = require('./announcements/cardDrop.js');
+const announceContestant = require('./announcements/contestant.js');
+const announceContestantLeave = require('./announcements/contestantLeave.js');
+const announceDeath = require('./announcements/death.js');
+const announceEffect = require('./announcements/effect.js');
+const announceEndOfDeck = require('./announcements/endOfDeck.js');
+const announceFight = require('./announcements/fight.js');
+const announceFightConcludes = require('./announcements/fightConcludes.js');
+const announceHeal = require('./announcements/heal.js');
+const announceHit = require('./announcements/hit.js');
+const announceLeave = require('./announcements/leave.js');
+const announceMiss = require('./announcements/miss.js');
+const announceModifier = require('./announcements/modifier.js');
+const announceNarration = require('./announcements/narration.js');
+const announceNextRound = require('./announcements/nextRound.js');
+const announceRolled = require('./announcements/rolled.js');
+const announceRolling = require('./announcements/rolling.js');
+const announceStay = require('./announcements/stay.js');
+const announceTurnBegin = require('./announcements/turnBegin.js');
+const announceXPGain = require('./announcements/xpGain.js');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
 
@@ -77,375 +96,45 @@ class Game extends BaseClass {
 	}
 
 	initializeEvents () {
-		// Initialize Messaging
-		this.on('card.effect', this.announceEffect);
-		this.on('card.miss', this.announceMiss);
-		this.on('card.narration', this.announceNarration);
-		this.on('card.played', this.announceCard);
-		this.on('card.rolled', this.announceRolled);
-		this.on('card.rolling', this.announceRolling);
-		this.on('card.stay', this.announceStay);
-		this.on('cardDrop', this.announceCardDrop);
-		this.on('creature.die', this.announceDeath);
-		this.on('creature.heal', this.announceHeal);
-		this.on('creature.hit', this.announceHit);
-		this.on('creature.leave', this.announceLeave);
-		this.on('creature.modifier', this.announceModifier);
-		this.on('gainedXP', this.announceXPGain);
-		this.on('ring.add', this.announceContestant);
-		this.on('ring.bossWillSpawn', this.announceBossWillSpawn);
-		this.on('ring.endOfDeck', this.announceEndOfDeck);
-		this.on('ring.fight', this.announceFight);
-		this.on('ring.fightConcludes', this.announceFightConcludes);
-		this.on('ring.gainedXP', this.announceXPGain);
-		this.on('ring.remove', this.announceContestantLeave);
-		this.on('ring.roundComplete', this.announceNextRound);
-		this.on('ring.turnBegin', this.announceTurnBegin);
+		const events = [
+			{ event: 'ring.bossWillSpawn', listener: announceBossWillSpawn },
+			{ event: 'card.played', listener: announceCard },
+			{ event: 'cardDrop', listener: announceCardDrop },
+			{ event: 'ring.add', listener: announceContestant },
+			{ event: 'ring.remove', listener: announceContestantLeave },
+			{ event: 'creature.die', listener: announceDeath },
+			{ event: 'card.effect', listener: announceEffect },
+			{ event: 'ring.endOfDeck', listener: announceEndOfDeck },
+			{ event: 'ring.fight', listener: announceFight },
+			{ event: 'ring.fightConcludes', listener: announceFightConcludes },
+			{ event: 'creature.hit', listener: announceHit },
+			{ event: 'creature.leave', listener: announceLeave },
+			{ event: 'card.miss', listener: announceMiss },
+			{ event: 'creature.modifier', listener: announceModifier },
+			{ event: 'card.narration', listener: announceNarration },
+			{ event: 'ring.roundComplete', listener: announceNextRound },
+			{ event: 'card.rolled', listener: announceRolled },
+			{ event: 'card.rolling', listener: announceRolling },
+			{ event: 'card.stay', listener: announceStay },
+			{ event: 'ring.turnBegin', listener: announceTurnBegin },
+			{ event: 'ring.gainedXP', listener: announceXPGain },
+			{ event: 'gainedXP', listener: announceXPGain }
+		];
 
-		// Manage Fights
+		events.map(event => this.on(event.event, (...args) => {
+			event.listener(this.publicChannel, this.channelManager, ...args);
+		}));
+
+		// this one needs ring, the others don't (or have it already).
+		this.on('creature.heal', (...args) => {
+			announceHeal(this.publicChannel, this.channelManager, this.ring, ...args);
+		});
+
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
 		this.on('creature.permaDeath', this.handlePermaDeath);
 		this.on('creature.fled', this.handleFled);
 	}
-
-	/* eslint-disable max-len */
-	announceXPGain (className, game, {
-		contestant,
-		creature,
-		xpGained,
-		killed,
-		coinsGained
-	}) {
-		const { channel, channelName } = contestant;
-
-		let coinsMessage = '';
-		if (coinsGained) {
-			coinsMessage = ` and ${coinsGained} coins`;
-		}
-
-		let killedMessage = '';
-		if (killed) {
-			killedMessage = ` for killing ${killed.length} ${killed.length > 1 ? 'monsters' : 'monster'}.`;
-		}
-
-		this.channelManager.queueMessage({
-			announce: `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}`,
-			channel,
-			channelName
-		});
-	}
-
-	announceCardDrop (className, game, { contestant, card }) {
-		const { publicChannel } = this;
-		const { channel, channelName } = contestant;
-
-		const cardDropped = actionCard(card);
-
-		const announce = `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:
-
-${cardDropped}`;
-
-		this.channelManager.queueMessage({
-			announce,
-			channel,
-			channelName
-		});
-
-		publicChannel({
-			announce
-		});
-	}
-
-	announceCard (className, card, { player }) {
-		const channel = this.publicChannel;
-
-		const cardPlayed = actionCard(card);
-
-		channel({
-			announce:
-`${player.identity} lays down the following card:
-${cardPlayed}`
-		});
-	}
-
-	announceTurnBegin (className, ring, { contestant }) {
-		const channel = this.publicChannel;
-		const { monster } = contestant;
-
-		channel({
-			announce:
-`*It's ${contestant.character.givenName}'s turn.*
-
-${contestant.character.identity} plays the following monster:
-${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`
-		});
-
-		contestant.lastMonsterPlayed = monster;
-	}
-
-	announceEndOfDeck (className, ring, { contestant }) {
-		const channel = this.publicChannel;
-		const { monster } = contestant;
-
-		channel({
-			announce:
-`${monster.identity} is out of cards.`
-		});
-	}
-
-	announceNextRound (className, ring, { round }) {
-		const channel = this.publicChannel;
-
-		channel({
-			announce:
-`
-🏁       round ${round} complete
-
-###########################################`
-		});
-	}
-
-	announceDeath (className, monster, { assailant, destroyed }) {
-		const channel = this.publicChannel;
-		let announce;
-
-		if (destroyed) {
-			announce = `${monster.identityWithHp} has been sent to the land of ${monster.pronouns[2]} ancestors by ${assailant.identityWithHp}
-
-			☠️  R.I.P ${monster.identity}
-`;
-		} else {
-			announce = `💀  ${monster.identityWithHp} is killed by ${assailant.identityWithHp}
-`;
-		}
-
-		channel({ announce });
-	}
-
-	announceLeave (className, monster, { activeContestants }) {
-		const channel = this.publicChannel;
-		const assailants = activeContestants
-			.filter(contestant => contestant.monster !== monster)
-			.map(contestant => contestant.monster.identityWithHp);
-
-		channel({
-			announce:
-`${monster.identityWithHp} flees from ${assailants.join(' and ')}
-`
-		});
-	}
-
-	announceStay (className, card, { fleeRoll, player, activeContestants }) {
-		const channel = this.publicChannel;
-
-		if (fleeRoll) {
-			const assailants = activeContestants
-				.filter(contestant => contestant.monster !== player)
-				.map(contestant => contestant.monster.identityWithHp);
-
-			channel({
-				announce:
-	`${player.identityWithHp} tries to flee from ${assailants.join(' and ')}, but fails!`
-			});
-		} else {
-			channel({
-				announce:
-	`${player.identityWithHp} bravely stays in the ring.`
-			});
-		}
-	}
-
-	announceRolling (className, monster, {
-		reason,
-		roll,
-		player
-	}) {
-		const channel = this.publicChannel;
-
-		let title = roll.primaryDice;
-		if (roll.bonusDice) {
-			title += signedNumber(roll.bonusDice);
-		}
-		if (roll.modifier) {
-			title += signedNumber(roll.modifier);
-		}
-
-		channel({
-			announce:
-`🎲  ${player.identity} rolls ${title} ${reason}`
-		});
-	}
-
-	announceRolled (className, monster, {
-		reason,
-		roll,
-		player,
-		outcome
-	}) {
-		const channel = this.publicChannel;
-
-		channel({
-			announce:
-`🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
-    ${outcome}`
-		});
-	}
-
-	announceModifier (className, monster, {
-		amount,
-		attr
-	}) {
-		const channel = this.publicChannel;
-
-		let dir = 'increased';
-		if (amount < 0) {
-			dir = 'decreased';
-		}
-
-		channel({
-			announce:
-`${monster.identity}'s ${attr} is now ${monster[attr]} (${dir} by ${Math.abs(amount)})`
-		});
-	}
-
-	announceHit (className, monster, {
-		assailant,
-		card,
-		damage,
-		prevHp
-	}) {
-		const channel = this.publicChannel;
-		const flavors = card && card.flavors;
-
-		let icon = '🤜';
-		if (damage >= 10) {
-			icon = '🔥';
-		} else if (damage >= 5) {
-			icon = '🔪';
-		} else if (damage === 1) {
-			icon = '🏓';
-		}
-
-		const bloodied = (monster.bloodied && prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
-		const only = (monster.bloodied && monster.hp > 0) ? 'only ' : '';
-
-		channel({
-			announce:
-`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
-
-${monster.icon}  *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
-`
-		});
-	}
-
-	announceHeal (className, monster, { amount }) {
-		const channel = this.publicChannel;
-
-		if (this.ring.monsterIsInRing(monster)) {
-			channel({
-				announce:
-`${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
-${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
-			});
-		}
-	}
-
-	announceMiss (className, card, {
-		attackResult, curseOfLoki, player, target
-	}) {
-		const channel = this.publicChannel;
-
-		let action = 'is blocked by';
-		let flavor = '';
-		let icon = '🛡';
-
-		if (curseOfLoki) {
-			action = 'misses';
-			flavor = 'horribly';
-			icon = '💨';
-		} else if (attackResult > 5) {
-			action = 'is barely blocked by';
-			icon = '⚔️';
-		}
-
-		channel({
-			announce:
-`${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
-`
-		});
-	}
-
-	announceEffect (className, card, {
-		player, target, effectResult
-	}) {
-		const channel = this.publicChannel;
-
-		channel({
-			announce:
-`${target.icon}  ${target.givenName} is currently ${effectResult} ${player.icon}  ${player.givenName}
-`
-		});
-	}
-
-	announceNarration (className, card, { narration }) {
-		const channel = this.publicChannel;
-
-		channel({ announce: narration });
-	}
-
-	announceContestant (className, ring, { contestant }) {
-		const channel = this.publicChannel;
-		const { character, monster } = contestant;
-
-		channel({
-			announce:
-`A${getFlavor('monsterAdjective')} ${monster.creatureType} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
-${monsterCard(monster)}`
-		});
-	}
-
-	announceContestantLeave (className, ring, { contestant }) {
-		const channel = this.publicChannel;
-		const { character, monster } = contestant;
-
-		channel({
-			announce:
-`${monster.givenName} was summoned from the ring by ${character.identity}.`
-		});
-	}
-
-	announceFight (className, ring, { contestants }) {
-		const channel = this.publicChannel;
-
-		channel({
-			announce: contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')
-		});
-	}
-
-	announceFightConcludes (className, ring, { deaths, isDraw, rounds }) {
-		const channel = this.publicChannel;
-
-		channel({
-			announce:
-`The fight concluded ${isDraw ? 'in a draw' : `with ${deaths} dead`} after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}!
-`
-		});
-
-		this.channelManager.sendMessages();
-	}
-
-	announceBossWillSpawn (className, ring, { delay }) {
-		const channel = this.publicChannel;
-
-		channel({
-			announce: `A boss will enter the ring ${moment().add(delay).fromNow()}`
-		});
-
-		this.channelManager.sendMessages();
-	}
-	/* eslint-enable max-len */
-
 
 	handleWinner (className, monster, { contestant }) {
 		// Draw a card, maybe kick off more events (that could be messaged)
