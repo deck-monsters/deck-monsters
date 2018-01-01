@@ -3,8 +3,6 @@
 const CoilCard = require('./coil');
 const ImmobilizeCard = require('./immobilize');
 
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
-
 class ConstrictCard extends CoilCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({

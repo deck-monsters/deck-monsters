@@ -130,7 +130,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 
 						checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 
-						const card = target.encounterEffects.reduce((currentCard, effect) => {
+						const newcard = target.encounterEffects.reduce((currentCard, effect) => {
 							const modifiedCard = effect({
 								activeContestants: [target, player],
 								card: currentCard,
@@ -143,7 +143,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 							return modifiedCard || currentCard;
 						}, new Hit());
 
-						return card
+						return newcard
 							.play(target, player, ring, ring.contestants)
 							.then(() => {
 								checkSuccessStub.restore();
@@ -151,10 +151,8 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 
 								expect(target.hp).to.equal(startingTargetHP - 1);
 								return expect(target.encounterEffects.length).to.equal(0);
-							}
-						);
-					}
-				);
+							});
+					});
 			});
 	});
 });
