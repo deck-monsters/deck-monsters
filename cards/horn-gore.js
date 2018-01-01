@@ -21,7 +21,7 @@ class HornGore extends ImmobilizeCard {
 	}
 
 	get stats () {
-		return `attack twice (once with each horn). Very small chance to pin.
+		return `Attack twice (once with each horn). Small chance to pin if you successfully gore your opponent.
 ${super.stats}`;
 	}
 
@@ -31,7 +31,7 @@ ${super.stats}`;
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.attackModifier = STARTING_ATTACK_MODIFIER;
+		this.encounterModifiers = STARTING_ATTACK_MODIFIER;
 	}
 
 	increaseImmobilizeStrength (ammount) {
@@ -102,7 +102,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 		if (success) {
 			this.increaseImmobilizeStrength(2);
-			player.attackModifier += 1;
+			player.encounterModifiers = { attackModifier: player.encounterModifiers.attackModifier += 1 || 1 };
 
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
@@ -118,13 +118,18 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
-			const originalAttackModifier = player.attackModifier;
+			// if the player stabs with their first horn, make it slightly more likely that the second
+			// horn will also stab, but just for this one attack. Therefore, need to store their
+			// pre-gore attackModifier and restore it once the second stab is resolved (and before the
+			// actual immobilize takes place so it doesn't interfere with the immobilize logic).
+			const originalAttackModifier = player.encounterModifiers.attackModifier;
+
 			this.resetImmobilizeStrength();
 			const horn1 = this.gore(player, target, 1);
 			const horn2 = this.gore(player, target, 2);
 			const chanceToImmobilize = horn1.success || horn2.success;
 
-			player.attackModifier = originalAttackModifier;
+			player.encounterModifiers = { attackModifier: originalAttackModifier };
 
 			if (!player.dead && chanceToImmobilize) {
 				if (target.dead) {

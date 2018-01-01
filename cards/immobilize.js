@@ -62,6 +62,12 @@ class ImmobilizeCard extends HitCard {
 		return this.options.attackModifier;
 	}
 
+	set attackModifier (attackModifier) {
+		this.setOptions({
+			attackModifier
+		});
+	}
+
 	get damageModifier () {
 		return this.options.damageModifier;
 	}
@@ -81,6 +87,12 @@ class ImmobilizeCard extends HitCard {
 
 	get freedomThresholdModifier () {
 		return this.options.freedomThresholdModifier;
+	}
+
+	set freedomThresholdModifier (freedomThresholdModifier) {
+		this.setOptions({
+			freedomThresholdModifier
+		});
 	}
 
 	getFreedomThreshold (player) {
