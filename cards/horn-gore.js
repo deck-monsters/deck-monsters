@@ -31,7 +31,7 @@ ${super.stats}`;
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.encounterModifiers = STARTING_ATTACK_MODIFIER;
+		this.attackModifier = STARTING_ATTACK_MODIFIER;
 	}
 
 	increaseImmobilizeStrength (ammount) {

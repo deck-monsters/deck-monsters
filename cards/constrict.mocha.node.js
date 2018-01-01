@@ -9,7 +9,7 @@ const { roll } = require('../helpers/chance');
 
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 
-describe.only('./cards/constrict.js', () => {
+describe('./cards/constrict.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -54,7 +54,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 	it('can be instantiated with options', () => {
 		const constrict = new Constrict({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: false, ongoingDamage: 3
+			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: false, ongoingDamage: 3// eslint-disable-line max-len
 		});
 
 		expect(constrict).to.be.an.instanceof(Constrict);
@@ -90,7 +90,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,
-			success: { success: true, strokeOfLuck: false, curseOfLoki: false },
+			success: true,
 			strokeOfLuck: false,
 			curseOfLoki: false
 		});

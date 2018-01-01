@@ -36,7 +36,7 @@ describe.only('./cards/horn-gore.js', () => {
 
 		expect(hornGore).to.be.an.instanceof(HornGoreCard);
 		expect(hornGore.damageDice).to.equal('1d4');
-		expect(hornGore.stats).to.equal('Attack twice (once with each horn). Small chance to pin if you successfully gore your opponent.\nHit: 1d20 vs AC / Damage: 1d4');
+		expect(hornGore.stats).to.equal('Attack twice (once with each horn). Small chance to pin if you successfully gore your opponent.\nHit: 1d20 vs AC / Damage: 1d4');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {
@@ -54,12 +54,20 @@ describe.only('./cards/horn-gore.js', () => {
 
 	it('hits twice and immobilizes', () => {
 		const hornGore = new HornGoreCard();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(hornGore)), 'checkSuccess');
-		const hitCheckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(hornGore)), 'hitCheck');
-
 		const player = new Minotaur({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
 		const before = target.hp;
+
+		const hornGoreProto = Object.getPrototypeOf(hornGore);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		const hitCheckStub = sinon.stub(hornGoreProto, 'hitCheck');
+		const hitStub = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
 			contestants: [
@@ -76,7 +84,7 @@ describe.only('./cards/horn-gore.js', () => {
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,
-			success: { success: true, strokeOfLuck: false, curseOfLoki: false },
+			success: true,
 			strokeOfLuck: false,
 			curseOfLoki: false
 		});
@@ -84,11 +92,69 @@ describe.only('./cards/horn-gore.js', () => {
 		return hornGore
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(hitStub.callCount).to.equal(2);
+				expect(hornGore.freedomThresholdModifier).to.equal(-2);
+				expect(hornGore.attackModifier).to.equal(-2);
 				checkSuccessStub.restore();
 				hitCheckStub.restore();
+				hitStub.restore();
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
+			});
+	});
+
+	it('does not immobilize on fail to hit', () => {
+		const hornGore = new HornGoreCard();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const before = target.hp;
+
+		const hornGoreProto = Object.getPrototypeOf(hornGore);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		const hitCheckStub = sinon.stub(hornGoreProto, 'hitCheck');
+		const hitStub = sinon.spy(creatureProto, 'hit');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+
+		checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
+		hitCheckStub.returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		return hornGore
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(hitStub.callCount).to.equal(0);
+				expect(hornGore.freedomThresholdModifier).to.equal(-6);
+				expect(hornGore.attackModifier).to.equal(-6);
+				checkSuccessStub.restore();
+				hitCheckStub.restore();
+				hitStub.restore();
+
+				expect(target.hp).to.equal(before);
+				return expect(target.encounterEffects.length).to.equal(0);
 			});
 	});
 });

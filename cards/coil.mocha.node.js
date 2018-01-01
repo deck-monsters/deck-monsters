@@ -10,7 +10,7 @@ const { ATTACK_PHASE } = require('../helpers/phases');
 
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 
-describe.only('./cards/coil.js', () => {
+describe('./cards/coil.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -94,7 +94,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 
 		hitCheckStub.returns({
 			attackRoll,
-			success: { success: true, strokeOfLuck: false, curseOfLoki: false },
+			success: true,
 			strokeOfLuck: false,
 			curseOfLoki: false
 		});

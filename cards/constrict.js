@@ -11,7 +11,7 @@ class ConstrictCard extends CoilCard {
 	} = {}) {
 		super({ icon, ...rest });
 	}
-	get stats () {
+	get stats () { // eslint-disable-line class-methods-use-this
 		return `${new ImmobilizeCard().stats}
 Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
 	}
