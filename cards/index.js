@@ -22,6 +22,7 @@ const FleeCard = require('./flee');
 const HealCard = require('./heal');
 const HitCard = require('./hit');
 const HitHarderCard = require('./hit-harder');
+const HornGoreCard = require('./horn-gore');
 const KalevalaCard = require('./kalevala');
 const PickPocketCard = require('./pick-pocket');
 const LuckyStrike = require('./lucky-strike');
@@ -60,6 +61,7 @@ const all = [
 	HealCard,
 	HitCard,
 	HitHarderCard,
+	HornGoreCard,
 	KalevalaCard,
 	PickPocketCard,
 	LuckyStrike,
@@ -119,7 +121,7 @@ const getInitialDeck = (options, creature) => {
 		new BerserkCard()
 	];
 
-	deck.push(beginnerSpecials[Math.random() * beginnerSpecials.length])
+	deck.push(beginnerSpecials[Math.random() * beginnerSpecials.length]);
 
 	return fillDeck(deck, options, creature);
 };
