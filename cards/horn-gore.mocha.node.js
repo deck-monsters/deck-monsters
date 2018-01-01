@@ -8,7 +8,7 @@ const { roll } = require('../helpers/chance');
 
 const { MINOTAUR } = require('../helpers/classes');
 
-describe.only('./cards/horn-gore.js', () => {
+describe('./cards/horn-gore.js', () => {
 	let channelStub;
 	let pauseStub;
 

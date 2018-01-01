@@ -114,14 +114,14 @@ const getInitialDeck = (options, creature) => {
 		new FleeCard()
 	];
 
-	const beginnerSpecials = [
-		new CoilCard(),
-		new BlastCard(),
-		new HornGoreCard(),
-		new BerserkCard()
-	];
+	// const beginnerSpecials = [
+	// 	new CoilCard(),
+	// 	new BlastCard(),
+	// 	new HornGoreCard(),
+	// 	// new BerserkCard()
+	// ];
 
-	deck.push(beginnerSpecials[Math.random() * beginnerSpecials.length]);
+	// deck.push(beginnerSpecials[Math.random() * beginnerSpecials.length]);
 
 	return fillDeck(deck, options, creature);
 };
