@@ -111,13 +111,14 @@ const getInitialDeck = (options, creature) => {
 		new HitCard(),
 		new HealCard(),
 		new HealCard(),
-		new FleeCard()
+		new FleeCard(),
+		new CoilCard(),
+		new BlastCard(),
+		new HornGoreCard()
 	];
 
 	// const beginnerSpecials = [
-	// 	new CoilCard(),
-	// 	new BlastCard(),
-	// 	new HornGoreCard(),
+
 	// 	// new BerserkCard()
 	// ];
 
