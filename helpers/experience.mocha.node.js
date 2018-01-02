@@ -42,11 +42,16 @@ describe('./helpers/experience.js', () => {
 		});
 	});
 	describe('getAverageLevel works', () => {
-		it('calculates averages for level 1 monsters correctly', () => {
+		it('calculate average for mixed levels including beginner, rounding down', () => {
 			const contestants = [
 				{
 					monster: {
-						level: 1
+						level: 0
+					}
+				},
+				{
+					monster: {
+						level: 0
 					}
 				},
 				{
@@ -61,17 +66,76 @@ describe('./helpers/experience.js', () => {
 				},
 				{
 					monster: {
-						level: 1
-					}
-				},
-				{
-					monster: {
-						level: 1
+						level: 3
 					}
 				}
 			];
 
 			expect(getAverageLevel(contestants[0].monster, contestants)).to.equal(1);
+		});
+
+		it('calculate average for mixed levels including beginner, rounding up', () => {
+			const contestants = [
+				{
+					monster: {
+						level: 0
+					}
+				},
+				{
+					monster: {
+						level: 0
+					}
+				},
+				{
+					monster: {
+						level: 1
+					}
+				},
+				{
+					monster: {
+						level: 1
+					}
+				},
+				{
+					monster: {
+						level: 5
+					}
+				}
+			];
+
+			expect(getAverageLevel(contestants[0].monster, contestants)).to.equal(2);
+		});
+
+		it('calculates averages for level 0 monsters correctly', () => {
+			const contestants = [
+				{
+					monster: {
+						level: 0
+					}
+				},
+				{
+					monster: {
+						level: 0
+					}
+				},
+				{
+					monster: {
+						level: 0
+					}
+				},
+				{
+					monster: {
+						level: 0
+					}
+				},
+				{
+					monster: {
+						level: 0
+					}
+				}
+			];
+
+			expect(getAverageLevel(contestants[0].monster, contestants)).to.equal(0);
 		});
 
 		it('calculates averages for level 5 monsters correctly', () => {
@@ -105,38 +169,6 @@ describe('./helpers/experience.js', () => {
 
 			expect(getAverageLevel(contestants[0].monster, contestants)).to.equal(5);
 		});
-
-		it('calculates averages for disparate level monsters correctly', () => {
-			const contestants = [
-				{
-					monster: {
-						level: 5
-					}
-				},
-				{
-					monster: {
-						level: 4
-					}
-				},
-				{
-					monster: {
-						level: 3
-					}
-				},
-				{
-					monster: {
-						level: 2
-					}
-				},
-				{
-					monster: {
-						level: 1
-					}
-				}
-			];
-
-			expect(getAverageLevel(contestants[0].monster, contestants)).to.equal(3);
-		});
 	});
 	describe('calculateXP in 1:1 battles', () => {
 		describe('calculate XP for winner', () => {
@@ -149,7 +181,8 @@ describe('./helpers/experience.js', () => {
 				};
 				const constestant2 = {
 					monster: {
-						level: 1
+						level: 1,
+						displayLevel: 'level 1'
 					},
 					killed: [constestant1.monster]
 				};
@@ -170,7 +203,8 @@ describe('./helpers/experience.js', () => {
 				};
 				const constestant2 = {
 					monster: {
-						level: 1
+						level: 1,
+						displayLevel: 'level 1'
 					},
 					killed: [constestant1.monster]
 				};
@@ -363,12 +397,14 @@ describe('./helpers/experience.js', () => {
 			it('assigns more xp to the monster that stays than the monster that flees', () => {
 				const constestant1 = {
 					monster: {
-						level: 1
+						level: 1,
+						displayLevel: 'level 1'
 					}
 				};
 				const constestant2 = {
 					monster: {
-						level: 1
+						level: 1,
+						displayLevel: 'level 1'
 					},
 					fled: true
 				};
@@ -625,7 +661,8 @@ describe('./helpers/experience.js', () => {
 			};
 			const constestant5 = {
 				monster: {
-					level: 5
+					level: 5,
+					displayLevel: 'level 5'
 				},
 				killed: [
 					constestant1.monster,
@@ -893,7 +930,7 @@ describe('./helpers/experience.js', () => {
 			let { gainedXP } = calculateXP(constestant1, contestants);
 			expect(gainedXP).to.equal(9);
 			({ gainedXP } = calculateXP(constestant2, contestants));
-			expect(gainedXP).to.equal(6);
+			expect(gainedXP).to.equal(4);
 			({ gainedXP } = calculateXP(constestant3, contestants));
 			expect(gainedXP).to.equal(2);
 			({ gainedXP } = calculateXP(constestant4, contestants));

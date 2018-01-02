@@ -12,13 +12,9 @@ const xpFormula = (levelDifference, base) =>
 	Math.round(Math.pow(10, (-0.3 * levelDifference)) * base);
 
 const getAverageLevel = (monster, contestants) => {
-	const levelTotal = contestants.reduce(
-		(totalLevels, contestant) =>
-			((monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level)
-		, 0
-	);
+	const levelTotal = contestants.reduce((totalLevels, contestant) => ((monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level), 0);
 
-	return Math.ceil(levelTotal / (contestants.length - 1));
+	return Math.round(levelTotal / (contestants.length - 1));
 };
 
 
@@ -57,7 +53,7 @@ const calculateXP = (contestant, contestants) => {
 
 		const avgLevelText = avgLevel > 0 ? avgLevel : 'beginner';
 		const forText = contestant.fled ? 'fleeing' : 'being the last one standing';
-		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a level ${monster.level} monster lasting ${rounds} rounds in battle with opponents at an average level of ${avgLevelText}`);// eslint-disable-line max-len
+		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a ${monster.displayLevel} monster lasting ${rounds} rounds in battle with opponents at an average level of ${avgLevelText}`);// eslint-disable-line max-len
 
 		gainedXP += xp;
 	}
