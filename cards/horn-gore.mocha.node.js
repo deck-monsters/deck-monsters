@@ -105,6 +105,74 @@ describe('./cards/horn-gore.js', () => {
 			});
 	});
 
+	it('tries to immobilize even if only hits once', () => {
+		const hornGore = new HornGoreCard();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const before = target.hp;
+
+		const hornGoreProto = Object.getPrototypeOf(hornGore);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		// checkSuccess must return true in order for hit to be called from hitCheck
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess').callsFake(() =>// eslint-disable-line no-unused-vars
+			({ success: true, strokeOfLuck: false, curseOfLoki: false }));
+		const hitCheckStub = sinon.stub(hornGoreProto, 'hitCheck');
+		const goreSpy = sinon.spy(hornGoreProto, 'gore');
+		const hitSpy = sinon.spy(creatureProto, 'hit');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+
+		hitCheckStub.onFirstCall().returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.onSecondCall().returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		return hornGore
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(goreSpy.callCount).to.equal(2);
+				expect(hitSpy.callCount).to.equal(1);
+				expect(hornGore.freedomThresholdModifier).to.equal(-4);
+				expect(hornGore.attackModifier).to.equal(-4);
+				hitCheckStub.restore();
+				checkSuccessStub.restore();
+				hitSpy.restore();
+
+				expect(target.hp).to.be.below(before);
+				return expect(target.encounterEffects.length).to.equal(1);
+			});
+	});
+
 	it('does not immobilize on fail to hit', () => {
 		const hornGore = new HornGoreCard();
 		const player = new Minotaur({ name: 'player' });
