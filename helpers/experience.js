@@ -12,7 +12,11 @@ const xpFormula = (levelDifference, base) =>
 	Math.round(Math.pow(10, (-0.3 * levelDifference)) * base);
 
 const getAverageLevel = (monster, contestants) => {
-	const levelTotal = contestants.reduce((totalLevels, contestant) => ((monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level), 0);
+	const levelTotal = contestants.reduce(
+		(totalLevels, contestant) =>
+			((monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level)
+		, 0
+	);
 
 	return Math.round(levelTotal / (contestants.length - 1));
 };
