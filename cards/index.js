@@ -2,7 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const isProbable = require('../helpers/is-probable');
 const BasicShieldCard = require('./basic-shield');
-const BerserkCard = require('./berserk')
+const BerserkCard = require('./berserk');
 const BlastCard = require('./blast');
 // const BlinkCard = require('./blink');
 const BoostCard = require('./boost');

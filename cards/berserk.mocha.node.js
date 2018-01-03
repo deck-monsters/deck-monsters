@@ -8,7 +8,7 @@ const { roll } = require('../helpers/chance');
 
 const { GLADIATOR } = require('../helpers/creature-types');
 
-describe.only('./cards/berserk.js', () => {
+describe('./cards/berserk.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -36,7 +36,7 @@ describe.only('./cards/berserk.js', () => {
 
 		expect(berserk).to.be.an.instanceof(BerserkCard);
 		expect(berserk.damageAmount).to.equal(1);
-		expect(berserk.stats).to.equal(`Hit: 1d20 vs AC until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.`);// eslint-disable-line max-len
+		expect(berserk.stats).to.equal('Hit: 1d20 vs AC until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {

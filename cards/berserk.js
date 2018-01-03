@@ -31,7 +31,7 @@ class BerserkCard extends HitCard {
 		return this.damage;
 	}
 
-	get stats() {
+	get stats () {
 		return `Hit: ${this.attackDice} vs AC until you miss
 ${this.damageAmount} damage per hit.
 
@@ -46,7 +46,7 @@ Stroke of luck increases damage per hit by 1.`;
 			} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
 			if (strokeOfLuck) {
-				this.damageAmount = this.damageAmount += 1;
+				this.damageAmount = this.damageAmount + 1;
 			}
 
 			ring.channelManager.sendMessages()
