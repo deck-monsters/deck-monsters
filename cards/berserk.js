@@ -1,23 +1,41 @@
 /* eslint-disable max-len */
 
 const HitCard = require('./hit');
-const { BARBARIAN } = require('../helpers/classes');
+const { GLADIATOR } = require('../helpers/creature-types');
 
 class BerserkCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		damage,
 		icon = '😤',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
+
+		this.setOptions({
+			damage
+		});
+
+		this.resetDamageAmount();
+	}
+
+	resetDamageAmount () {
+		this.damageAmount = this.options.damage;
 	}
 
 	set damageAmount (amount) {
-		this.encounterOptions.damageAmount = amount;
+		this.damage = amount;
 	}
 
-	get damageAmount() {
-		return this.encounterOptions.damageAmount;
+	get damageAmount () {
+		return this.damage;
+	}
+
+	get stats() {
+		return `Hit: ${this.attackDice} vs AC until you miss
+${this.damageAmount} damage per hit.
+
+Stroke of luck increases damage per hit by 1.`;
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
@@ -28,7 +46,7 @@ class BerserkCard extends HitCard {
 			} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
 			if (strokeOfLuck) {
-				damageAmount = this.damageAmount += 1;
+				this.damageAmount = this.damageAmount += 1;
 			}
 
 			ring.channelManager.sendMessages()
@@ -38,9 +56,11 @@ class BerserkCard extends HitCard {
 						target.hit(this.damageAmount, player, this);
 						resolve(this.effect(player, target, ring));
 					} else if (curseOfLoki) {
+						this.resetDamageAmount();
 						// Our attack is now bouncing back against us
 						resolve(player.hit(1, target, this));
 					} else {
+						this.resetDamageAmount();
 						this.emit('miss', {
 							attackResult: attackRoll.result,
 							attackRoll,
@@ -60,9 +80,10 @@ BerserkCard.probability = 20;
 BerserkCard.description = 'The whole world disappears into a beautiful still, silent, red. At the center of all things is the perfect face of your enemy. Destroy it.';
 BerserkCard.cost = 6;
 BerserkCard.level = 0;
-BerserkCard.permittedClassesAndTypes = [BARBARIAN];
+BerserkCard.permittedClassesAndTypes = [GLADIATOR];
 BerserkCard.defaults = {
-	...HitCard.defaults
+	...HitCard.defaults,
+	damage: 1
 };
 
 BerserkCard.flavors = {
