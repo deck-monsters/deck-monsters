@@ -2,7 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const isProbable = require('../helpers/is-probable');
 const BasicShieldCard = require('./basic-shield');
-// const BerserkCard = require('./berserk')
+const BerserkCard = require('./berserk')
 const BlastCard = require('./blast');
 // const BlinkCard = require('./blink');
 const BoostCard = require('./boost');
@@ -43,7 +43,7 @@ const DEFAULT_MINIMUM_CARDS = 10;
 
 const all = [
 	BasicShieldCard,
-	// BerserkCard,
+	BerserkCard,
 	BlastCard,
 	// BlinkCard,
 	BoostCard,
@@ -118,8 +118,8 @@ const getInitialDeck = (options, creature) => {
 		new FleeCard(),
 		new CoilCard(),
 		// new BlinkCard(),
-		new HornGoreCard()
-		// new BerserkCard()
+		new HornGoreCard(),
+		new BerserkCard()
 	];
 
 	return fillDeck(deck, options, creature);
