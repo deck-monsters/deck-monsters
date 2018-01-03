@@ -103,16 +103,19 @@ class ImmobilizeCard extends HitCard {
 					outcome: ''
 				});
 
-				if (attackSuccess.success) {
-					this.emit('rolled', {
-						reason: `for ${this.actions[0]}`,
-						card: this,
-						roll: attackRoll,
-						player,
-						target,
-						outcome: `${this.actions[0]} succeeded!`
-					});
+				const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...':''}`;
+				const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
 
+				this.emit('rolled', {
+					reason: `for ${this.actions[0]}`,
+					card: this,
+					roll: attackRoll,
+					player,
+					target,
+					outcome
+				});
+
+				if (attackSuccess.success) {
 					const immobilizeEffect = ({
 						card,
 						phase
@@ -165,15 +168,6 @@ class ImmobilizeCard extends HitCard {
 
 					return resolve(true);
 				} else if (this.hitOnFail) {
-					this.emit('rolled', {
-						reason: `for ${this.actions[0]}`,
-						card: this,
-						roll: attackRoll,
-						player,
-						target,
-						outcome: `${this.actions[0]} failed, chance to hit instead...`
-					});
-
 					return resolve(super.effect(player, target, ring, activeContestants));
 				}
 			} else if (alreadyImmobilized || !canHaveEffect) {
