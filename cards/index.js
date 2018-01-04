@@ -4,7 +4,7 @@ const isProbable = require('../helpers/is-probable');
 const BasicShieldCard = require('./basic-shield');
 const BerserkCard = require('./berserk');
 const BlastCard = require('./blast');
-// const BlinkCard = require('./blink');
+const BlinkCard = require('./blink');
 const BoostCard = require('./boost');
 const BrainDrainCard = require('./brain-drain');
 const CamouflageVestCard = require('./camouflage-vest');
@@ -45,7 +45,7 @@ const all = [
 	BasicShieldCard,
 	BerserkCard,
 	BlastCard,
-	// BlinkCard,
+	BlinkCard,
 	BoostCard,
 	BrainDrainCard,
 	CamouflageVestCard,
@@ -109,17 +109,17 @@ const fillDeck = (deck, options, creature) => {
 const getInitialDeck = (options, creature) => {
 	// See above re: options
 	const deck = [
-		new HitCard(),
-		new HitCard(),
-		new HitCard(),
-		new HitCard(),
-		new HealCard(),
-		new HealCard(),
-		new FleeCard(),
+		new BlinkCard(),
 		new CoilCard(),
-		// new BlinkCard(),
 		new HornGoreCard(),
-		new BerserkCard()
+		new BerserkCard(),
+		new HitCard(),
+		new HitCard(),
+		new HitCard(),
+		new HitCard(),
+		new HealCard(),
+		new HealCard(),
+		new FleeCard()
 	];
 
 	return fillDeck(deck, options, creature);
