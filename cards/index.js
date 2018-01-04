@@ -39,7 +39,7 @@ const WhiskeyShotCard = require('./whiskey-shot');
 const WoodenSpearCard = require('./wooden-spear');
 // const ReviveCard = require('./revive');
 
-const DEFAULT_MINIMUM_CARDS = 10;
+const DEFAULT_MINIMUM_CARDS = 14;
 
 const all = [
 	BasicShieldCard,
