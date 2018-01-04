@@ -109,6 +109,7 @@ describe('./cards/blink.js', () => {
 			.then(() => {
 				expect(hitSpy.callCount).to.equal(1);
 				attackRollStub.restore();
+				hitSpy.restore();
 
 				expect(target.hp).to.be.below(targetBeforeHP);
 				expect(player.hp).to.be.above(playerBeforeHP);
