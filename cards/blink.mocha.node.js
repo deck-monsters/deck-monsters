@@ -68,7 +68,87 @@ describe('./cards/blink.js', () => {
 		expect(blink.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
 	});
 
-	it('drains hp and xp on hit', () => {
+	it('blinks target on hit', () => {
+		const blink = new BlinkCard();
+		const player = new WeepingAngel({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+
+		const blinkProto = Object.getPrototypeOf(blink);
+		const curseProto = Object.getPrototypeOf(blinkProto);
+		const hitProto = Object.getPrototypeOf(curseProto);
+
+		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		attackRollStub.returns({ primaryDice: '1d20', result: 19, naturalRoll: { rolled: [19], result: 19 }, bonusResult: 0, modifier: 0 });
+
+		return blink
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				attackRollStub.restore();
+
+				return expect(target.encounterEffects.length).to.equal(1);
+			});
+	});
+
+	it('drains hp and xp on blinked target\'s turn', () => {
+		const blink = new BlinkCard();
+		const card = new TestCard();
+		const player = new WeepingAngel({ name: 'player' });
+		player.hp = 1;// make sure the player is capable of healing
+		const target = new Basilisk({ name: 'target' });
+		target.xp = 100;// make sure target has xp to drain
+		const targetBeforeHP = target.hp;
+		const targetBeforeXP = target.xp;
+		const playerBeforeHP = player.hp;
+		const playerBeforeXP = player.xp;
+
+		const blinkProto = Object.getPrototypeOf(blink);
+		const curseProto = Object.getPrototypeOf(blinkProto);
+		const hitProto = Object.getPrototypeOf(curseProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const hitSpy = sinon.spy(creatureProto, 'hit');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		attackRollStub.returns({ primaryDice: '1d20', result: 19, naturalRoll: { rolled: [19], result: 19 }, bonusResult: 0, modifier: 0 });
+
+		return blink
+			.play(player, target, ring, ring.contestants)
+			.then(() => target.encounterEffects[0]({ card, phase: ATTACK_PHASE, player: target, target: player }))
+			.then(() => {
+				expect(hitSpy.callCount).to.equal(1);
+				attackRollStub.restore();
+				hitSpy.restore();
+
+				expect(target.hp).to.be.below(targetBeforeHP);
+				expect(player.hp).to.be.above(playerBeforeHP);
+				expect(target.xp).to.be.below(targetBeforeXP);
+				return expect(player.xp).to.be.above(playerBeforeXP);
+			});
+	});
+
+	it('unblinks target after blinked for 1 round', () => {
 		const blink = new BlinkCard();
 		const card = new TestCard();
 		const player = new WeepingAngel({ name: 'player' });
