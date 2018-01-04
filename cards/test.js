@@ -5,9 +5,30 @@ const BaseCard = require('./base');
 class TestCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		targets,
 		icon = ''
 	} = {}) {
 		super({ icon });
+
+		if (targets) {
+			this.setOptions({
+				targets
+			});
+		}
+	}
+
+	set targets (targets) {
+		this.setOptions({
+			targets
+		});
+	}
+
+	get targets () {
+		return this.options.targets;
+	}
+
+	getTargets (player, proposedTarget) {
+		return this.targets || [proposedTarget];
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars

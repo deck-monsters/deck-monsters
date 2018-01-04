@@ -1,6 +1,6 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const { ATTACK_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 const BlinkCard = require('./blink');
 const TestCard = require('./test');
 const Basilisk = require('../monsters/basilisk');
@@ -195,6 +195,90 @@ describe('./cards/blink.js', () => {
 				expect(player.hp).to.be.above(playerBeforeHP);
 				expect(target.xp).to.be.below(targetBeforeXP);
 				return expect(player.xp).to.be.above(playerBeforeXP);
+			});
+	});
+
+	it('blinked target is unable to be hit while blinked', () => {
+		const blink = new BlinkCard();
+		const card = new TestCard();
+		const player = new WeepingAngel({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+
+		const blinkProto = Object.getPrototypeOf(blink);
+		const curseProto = Object.getPrototypeOf(blinkProto);
+		const hitProto = Object.getPrototypeOf(curseProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const hitSpy = sinon.spy(creatureProto, 'hit');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		attackRollStub.returns({ primaryDice: '1d20', result: 19, naturalRoll: { rolled: [19], result: 19 }, bonusResult: 0, modifier: 0 });
+
+		card.targets = [target];// mimic something like "hit"
+		expect(card.played).to.be.undefined;
+		return card.play(player, target, ring, ring.contestants)
+			.then(() => expect(card.played).to.equal(1))
+			.then(() => blink.play(player, target, ring, ring.contestants))
+			.then(() => expect(target.encounterEffects.length).to.equal(1))
+			.then(() => target.encounterEffects[0]({ card, phase: DEFENSE_PHASE, player, target }))
+			.then(cardThatTargetsBlinked => cardThatTargetsBlinked.play(player, target))
+			.then(() => {
+				attackRollStub.restore();
+				hitSpy.restore();
+
+				return expect(card.played).to.equal(1);
+			});
+	});
+
+	it('player can still play cards that only affect themselves while opponent is blinked', () => {
+		const blink = new BlinkCard();
+		const card = new TestCard();
+		const player = new WeepingAngel({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+
+		const blinkProto = Object.getPrototypeOf(blink);
+		const curseProto = Object.getPrototypeOf(blinkProto);
+		const hitProto = Object.getPrototypeOf(curseProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const hitSpy = sinon.spy(creatureProto, 'hit');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		attackRollStub.returns({ primaryDice: '1d20', result: 19, naturalRoll: { rolled: [19], result: 19 }, bonusResult: 0, modifier: 0 });
+
+		card.targets = [player];// mimic something like "heal"
+		expect(card.played).to.be.undefined;
+		return blink.play(player, target, ring, ring.contestants)
+			.then(() => expect(target.encounterEffects.length).to.equal(1))
+			.then(() => target.encounterEffects[0]({ card, phase: DEFENSE_PHASE, player, target: player }))
+			.then(cardThatTargetsSelf => cardThatTargetsSelf.play(player, player))
+			.then(() => {
+				attackRollStub.restore();
+				hitSpy.restore();
+
+				return expect(card.played).to.equal(1);
 			});
 	});
 });
