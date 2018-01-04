@@ -18,6 +18,8 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 }
 
 ConstrictCard.cardType = 'Constrict';
+CoilCard.probability = 30;
+CoilCard.level = 1;
 ConstrictCard.defaults = {
 	...CoilCard.defaults,
 	doDamageOnImmobilize: true,
