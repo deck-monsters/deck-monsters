@@ -220,7 +220,7 @@ class ImmobilizeCard extends HitCard {
 				target
 			});
 
-			return resolve(false);
+			return resolve(true);
 		});
 	}
 }
