@@ -11,9 +11,11 @@ class BlinkCard extends CurseCard {
 		turnsToBlink,
 		energyToStealDice,
 		curseAmountDice,
+		cursedProp,
+		hasChanceToHit,
 		icon = '⏳'
 	} = {}) {
-		super({ icon });
+		super({ cursedProp, hasChanceToHit, icon });
 
 		this.setOptions({
 			turnsToBlink,
@@ -54,7 +56,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 			const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.ac);
 
 			this.emit('rolling', {
-				reason: `to see if ${blinkPlayer.pronouns[0]} time shifts ${blinkTarget.givenName}`,
+				reason: `vs ${blinkTarget.givenName}'s AC (${blinkTarget.ac}) to see if ${blinkPlayer.pronouns[0]} time shifts ${blinkTarget.givenName}`,
 				card: this,
 				roll: attackRoll,
 				player: blinkPlayer,
@@ -63,7 +65,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 			});
 
 			this.emit('rolled', {
-				reason: `to try and touch ${blinkTarget.givenName} to time-shift ${blinkTarget.pronouns[1]}`,
+				reason: `vs AC (${blinkTarget.ac}) to try and touch ${blinkTarget.givenName} to time-shift ${blinkTarget.pronouns[1]}`,
 				card: this,
 				roll: attackRoll,
 				player: blinkPlayer,
@@ -120,9 +122,13 @@ ${player.givenName}'s drain takes from HP instead.`;
 								outcome: ''
 							});
 
+							// drain hp
 							blinkTarget.hit(hpToSteal.result, blinkPlayer, this);
 							blinkPlayer.heal(hpToSteal.result, blinkTarget, this);
+
+							// drain xp
 							super.effect(blinkPlayer, blinkTarget, ring);
+							blinkPlayer.setModifier(this.cursedProp, xpToSteal.result);
 
 							card.play = () => Promise.resolve(true);
 						} else {
@@ -166,7 +172,6 @@ BlinkCard.defaults = {
 	turnsToBlink: 1,
 	energyToStealDice: '1d4',
 	curseAmountDice: '4d4',
-	curseAmount: -4,
 	cursedProp: 'xp',
 	hasChanceToHit: false
 };
