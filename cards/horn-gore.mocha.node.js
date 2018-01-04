@@ -173,6 +173,49 @@ describe('./cards/horn-gore.js', () => {
 			});
 	});
 
+	it('does not immobilize if target is dead', () => {
+		const hornGore = new HornGoreCard();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target', hp: 1 });
+
+		const hornGoreProto = Object.getPrototypeOf(hornGore);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		const hitCheckStub = sinon.stub(hornGoreProto, 'hitCheck');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = { primaryDice: '1d20', result: 19, naturalRoll: { rolled: [19], result: 19 }, bonusResult: 0, modifier: 0 };
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		return hornGore
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+				hitCheckStub.restore();
+
+				expect(target.hp).to.be.below(0);
+				return expect(target.encounterEffects.length).to.equal(0);
+			});
+	});
+
 	it('does not immobilize on fail to hit', () => {
 		const hornGore = new HornGoreCard();
 		const player = new Minotaur({ name: 'player' });

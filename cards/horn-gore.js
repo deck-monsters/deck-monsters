@@ -133,19 +133,19 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 			if (!player.dead && chanceToImmobilize) {
 				if (target.dead) {
-					resolve(false);
+					return resolve(false);
 				}
-				resolve(super.effect(player, target, ring, activeContestants));
-			} else {
-				this.emit('miss', {
-					attackResult: Math.max(horn1.attackRoll.result, horn2.attackRoll.result),
-					curseOfLoki: horn1.curseOfLoki || horn2.curseOfLoki,
-					player,
-					target
-				});
 
-				resolve(!target.dead);
+				return resolve(super.effect(player, target, ring, activeContestants));
 			}
+			this.emit('miss', {
+				attackResult: Math.max(horn1.attackRoll.result, horn2.attackRoll.result),
+				curseOfLoki: horn1.curseOfLoki || horn2.curseOfLoki,
+				player,
+				target
+			});
+
+			return resolve(!target.dead);
 		});
 	}
 }
