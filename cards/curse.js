@@ -24,6 +24,12 @@ class CurseCard extends HitCard {
 		return this.options.hasChanceToHit;
 	}
 
+	set curseAmount (curseAmount) {
+		this.setOptions({
+			curseAmount
+		});
+	}
+
 	get curseAmount () {
 		return this.options.curseAmount;
 	}
@@ -81,7 +87,6 @@ ${player.givenName}'s harrying jab takes from HP instead.`;
 			if (this.hasChanceToHit) {
 				return resolve(super.effect(player, target, ring));
 			}
-
 			return resolve(true);
 		});
 	}

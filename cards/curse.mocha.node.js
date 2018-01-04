@@ -56,6 +56,17 @@ Curse: ac -1`;
 		expect(curse.curseAmount).to.equal(-2);
 	});
 
+	it('can change the curst amount when told to', () => {
+		const curse = new Curse();
+		const hit = new Hit({ damageDice: '1d4' });
+
+		expect(curse.curseAmount).to.equal(-1);
+
+		curse.curseAmount = -2;
+
+		expect(curse.curseAmount).to.equal(-2);
+	});
+
 	it('curses and hits when appropriate', () => {
 		const curse = new Curse();
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(curse)), 'checkSuccess');
