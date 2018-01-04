@@ -120,16 +120,15 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 		if (!discovery) return this.makeDiscovery(explorer);
 
-		explorer.discoveries.push(discovery);
-
-		discovery(explorer);
+console.log(discovery);
+		// discovery(explorer);
 
 		return discovery;
 	}
 
 	doExploration () {
 		this.explorers.forEach((explorer) => {
-			this.makeDiscovery(explorer);
+			explorer.discoveries.push(this.makeDiscovery(explorer));
 
 			if (explorer.discoveries.length >= 5 || moment() > explorer.returnTime) {
 				this.sendMonsterHome(explorer);
