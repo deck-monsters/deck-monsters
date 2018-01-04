@@ -16,8 +16,16 @@ class FightOrFlightCard extends HitCard {
 Chance to flee if below a quarter health`;
 	}
 
-	effect (player, target, ring, activeContestants) {
+	getTargets (player, proposedTarget) { // eslint-disable-line class-methods-use-this, no-unused-vars
 		if (player.hp < (player.bloodiedValue / 2)) {
+			return [player];
+		}
+
+		return [proposedTarget];
+	}
+
+	effect (player, target, ring, activeContestants) {
+		if (player === target) {
 			return this.fleeEffect(player, target, ring, activeContestants);
 		}
 

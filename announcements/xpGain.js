@@ -3,7 +3,8 @@ const announceXPGain = (publicChannel, channelManager, className, game, {
 	creature,
 	xpGained,
 	killed,
-	coinsGained
+	coinsGained,
+	reasons
 }) => {
 	const { channel, channelName } = contestant;
 
@@ -13,12 +14,16 @@ const announceXPGain = (publicChannel, channelManager, className, game, {
 	}
 
 	let killedMessage = '';
-	if (killed) {
-		killedMessage = ` for killing ${killed.length} ${killed.length > 1 ? 'monsters' : 'monster'}.`;
+	if (killed && killed.length > 0) {
+		killedMessage = ` for killing ${killed.length} ${(killed.length > 1) ? 'monsters' : 'monster'}.`;
 	}
 
+	const reasonsMessage = (reasons) ? `
+
+${reasons}` : '';
+
 	channelManager.queueMessage({
-		announce: `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}`,
+		announce: `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}${reasonsMessage}`,
 		channel,
 		channelName
 	});

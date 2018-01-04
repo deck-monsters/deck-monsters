@@ -45,6 +45,8 @@ Curse: xp -20`;
 		const target = new Gladiator({ name: 'target' });
 		target.xp = 300;
 
+		expect(target.xp).to.equal(300);
+
 		const ring = {
 			contestants: [
 				{ monster: player },

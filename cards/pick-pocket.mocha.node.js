@@ -1,19 +1,24 @@
 const { expect, sinon } = require('../shared/test-setup');
-const { randomCharacter } = require('../characters');
+const proxyquire = require('proxyquire');
+const sample = require('lodash.sample');
 
-const PickPocketCard = require('./pick-pocket');
-const lodash = require('lodash');
+const { randomCharacter } = require('../characters');
 const pause = require('../helpers/pause');
 
 describe('./cards/pick-pocket.js', () => {
+	let PickPocketCard;
 	let channelStub;
 	let pauseStub;
-	let shuffleSpy;
+	let sampleSpy;
 
 	before(() => {
 		channelStub = sinon.stub();
 		pauseStub = sinon.stub(pause, 'setTimeout');
-		shuffleSpy = sinon.spy(lodash, 'shuffle');
+		sampleSpy = sinon.spy(sample);
+
+		PickPocketCard = proxyquire('./pick-pocket', {
+			'lodash.sample': sampleSpy
+		});
 	});
 
 	beforeEach(() => {
@@ -24,11 +29,10 @@ describe('./cards/pick-pocket.js', () => {
 	afterEach(() => {
 		channelStub.reset();
 		pauseStub.reset();
-		shuffleSpy.reset();
+		sampleSpy.reset();
 	});
 
 	after(() => {
-		lodash.shuffle.restore();
 		pause.setTimeout.restore();
 	});
 
@@ -70,7 +74,7 @@ describe('./cards/pick-pocket.js', () => {
 		return pickPocket
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
-				expect(shuffleSpy).to.have.been.calledWith(target2.cards);
+				expect(sampleSpy).to.have.been.calledWith(target2.cards);
 			});
 	});
 
@@ -107,7 +111,7 @@ describe('./cards/pick-pocket.js', () => {
 		return pickPocket
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
-				expect(shuffleSpy).to.have.been.calledWith(target3.cards);
+				expect(sampleSpy).to.have.been.calledWith(target3.cards);
 			});
 	});
 });

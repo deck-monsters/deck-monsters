@@ -10,7 +10,7 @@ const announceRolled = (publicChannel, channelManager, className, monster, {
 	publicChannel({
 		announce:
 `🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
-${outcome}`
+    ${outcome}`
 	});
 };
 

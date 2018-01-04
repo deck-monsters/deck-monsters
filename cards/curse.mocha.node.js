@@ -117,4 +117,159 @@ Curse: ac -1`;
 				return expect(target.hp).to.equal(beforeHP);
 			});
 	});
+
+	it('curses by less than max allowed', () => {
+		const curse = new Curse({ hasChanceToHit: false, curseAmount: -1 });// max is 4
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(curse)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target', acVariance: 2, xp: 800 });// base AC(5) + variance(2 + 2 for basilisk) + Math.min(level(6), 12) = 15
+		const originalTargetHP = target.hp;
+
+		expect(target.ac).to.equal(15);
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return curse
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+
+				expect(target.hp).to.equal(originalTargetHP);
+				return expect(target.ac).to.equal(14);// max ac modification is 4. original ac(15) - 4 is 11.
+			});
+	});
+
+	it('curses by more than max and overflows into hp', () => {
+		const curse = new Curse({ hasChanceToHit: false, curseAmount: -5 });// max is 4
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(curse)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target', acVariance: 2, xp: 800 });// base AC(5) + variance(2 + 2 for basilisk) + Math.min(level(6), 12) = 15
+		const originalTargetHP = target.hp;
+
+		expect(target.ac).to.equal(15);
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return curse
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+
+				expect(target.hp).to.equal(originalTargetHP - 1);
+				return expect(target.ac).to.equal(11);// max ac modification is 4. original ac(15) - 4 is 11.
+			});
+	});
+
+	it('multiple small curses that aggregate to more than max overflow into hp properly', () => {
+		const curse = new Curse({ hasChanceToHit: false, curseAmount: -3 });// max is 4
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(curse)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target', acVariance: 2, xp: 800 });// base AC(5) + variance(2 + 2 for basilisk) + Math.min(level(6), 12) = 15
+		const originalTargetHP = target.hp;
+
+		expect(target.ac).to.equal(15);
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return curse
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+
+				expect(target.hp).to.equal(originalTargetHP);
+				expect(target.ac).to.equal(12);// max ac modification is 4. original ac(15) - 3 is 12.
+
+				return curse
+					.play(player, target, ring, ring.contestants)
+					.then(() => {
+						checkSuccessStub.restore();
+
+						expect(target.hp).to.equal(originalTargetHP - 2);
+						expect(target.ac).to.equal(11);// max ac modification is 4. original ac(15) - 3 - 1 is 11.
+
+						return curse
+							.play(player, target, ring, ring.contestants)
+							.then(() => {
+								checkSuccessStub.restore();
+
+								expect(target.hp).to.equal(originalTargetHP - 5);
+								expect(target.ac).to.equal(11);// max ac modification is 4. original ac(15) - 3 - 1 is 11.
+
+								return curse
+									.play(player, target, ring, ring.contestants)
+									.then(() => {
+										checkSuccessStub.restore();
+
+										expect(target.hp).to.equal(originalTargetHP - 8);
+										return expect(target.ac).to.equal(11);// max ac modification is 4. original ac(15) - 3 - 1 is 11.
+									});
+							});
+					});
+			});
+	});
+
+	it('curses by huge amount do reasonable damage', () => {
+		const curse = new Curse({ hasChanceToHit: false, curseAmount: -20 });
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(curse)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target', acVariance: 2, xp: 800 });// base AC(5) + variance(2 + 2 for basilisk) + Math.min(level(6), 12) = 15
+		const originalTargetHP = target.hp;
+
+		expect(target.ac).to.equal(15);
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return curse
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+
+				expect(target.hp).to.equal(originalTargetHP - 4);
+				return expect(target.ac).to.equal(11);// max ac modification is 4. original ac(15) - 4 is 11.
+			});
+	});
 });

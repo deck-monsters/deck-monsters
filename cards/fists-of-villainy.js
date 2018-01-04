@@ -9,21 +9,19 @@ class FistsOfVillainyCard extends HitCard {
 		super({ icon, ...rest });
 	}
 
-	effect (player, oldTarget, ring, activeContestants) {
-		const target = activeContestants.reduce((potentialTarget, { monster }) => {
+	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
+		return [activeContestants.reduce((potentialTarget, { monster }) => {
 			if (monster !== player && monster.hp < potentialTarget.hp) {
 				return monster;
 			}
 
 			return potentialTarget;
-		}, oldTarget);
-
-		return super.effect(player, target, ring, activeContestants);
+		}, proposedTarget)];
 	}
 }
 
 FistsOfVillainyCard.cardType = 'Fists of Villainy';
-FistsOfVillainyCard.probability = 30;
+FistsOfVillainyCard.probability = 20;
 FistsOfVillainyCard.description = 'You show no mercy to the weak.';
 FistsOfVillainyCard.level = 1;
 

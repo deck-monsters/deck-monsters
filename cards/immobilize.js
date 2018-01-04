@@ -78,7 +78,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	getFreedomThreshold (player) {
-		return Math.min(player.ac, 12) + this.freedomThresholdModifier;
+		return Math.min(player.ac, 10) + this.freedomThresholdModifier;
 	}
 
 	getAttackRoll (player, target) {
@@ -119,7 +119,7 @@ class ImmobilizeCard extends HitCard {
 					}) => {
 						if (phase === ATTACK_PHASE) {
 							this.emit('effect', {
-								effectResult: `${this.icon}  ${this.actions[2]}`,
+								effectResult: `${this.icon}  ${this.actions[2]} by`,
 								player,
 								target,
 								ring

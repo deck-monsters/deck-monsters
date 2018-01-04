@@ -22,9 +22,13 @@ class BoostCard extends BaseCard {
 		return `Boost: ${this.boostedProp} +${this.boostAmount}`;
 	}
 
-	effect (player, target, ring) { // eslint-disable-line no-unused-vars
+	getTargets (player) { // eslint-disable-line class-methods-use-this
+		return [player];
+	}
+
+	effect (player, target) {
 		return new Promise((resolve) => {
-			player.setModifier(this.boostedProp, this.boostAmount);
+			target.setModifier(this.boostedProp, this.boostAmount);
 
 			resolve(true);
 		});

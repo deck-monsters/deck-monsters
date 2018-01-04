@@ -12,12 +12,15 @@ class EnchantedFaceswapCard extends BaseCard {
 		super({ icon });
 	}
 
-	effect (faceswapPlayer, originalTarget) { // eslint-disable-line no-unused-vars
+	getTargets (player) { // eslint-disable-line class-methods-use-this
+		return [player];
+	}
+
+	effect (faceswapPlayer, faceswapTarget) {
 		return new Promise((resolve) => {
 			const faceswapEffect = ({
 				card,
-				phase,
-				player: faceswapTarget
+				phase
 			}) => {
 				if (phase === DEFENSE_PHASE) {
 					const { effect } = card;
@@ -25,13 +28,13 @@ class EnchantedFaceswapCard extends BaseCard {
 					// The card that is passed in should be a clone already so we're going to edit it directly
 					if (effect) {
 						card.effect = (swappedPlayer, swappedTarget, ring, activeContestants) => {
-							if (swappedTarget === faceswapPlayer) {
-								faceswapPlayer.encounterEffects = faceswapPlayer.encounterEffects.filter(encounterEffect => encounterEffect !== faceswapEffect);
+							if (swappedTarget === faceswapTarget) {
+								faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect !== faceswapEffect);
 
 								this.emit('effect', {
-									effectResult: `${this.icon} faceswapped`,
-									player: faceswapPlayer,
-									target: faceswapTarget,
+									effectResult: `${this.icon} faceswapped by`,
+									player: faceswapTarget,
+									target: swappedPlayer,
 									ring
 								});
 
@@ -46,11 +49,10 @@ class EnchantedFaceswapCard extends BaseCard {
 				return card;
 			};
 
-			faceswapPlayer.encounterEffects = [...faceswapPlayer.encounterEffects, faceswapEffect];
+			faceswapTarget.encounterEffects = [...faceswapTarget.encounterEffects, faceswapEffect];
 
 			this.emit('narration', {
-				narration:
-`${faceswapPlayer.identity} prepares to ${this.icon} faceswap ${originalTarget.identity}.`
+				narration: `${faceswapTarget.identity} prepares to ${this.icon} faceswap the next player who targets them.`
 			});
 
 			resolve(true);
