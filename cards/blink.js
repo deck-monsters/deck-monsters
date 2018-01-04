@@ -2,7 +2,7 @@
 
 const CurseCard = require('./curse');
 const { WEEPING_ANGEL } = require('../helpers/creature-types');
-const { ATTACK_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 
 class BlinkCard extends CurseCard {
@@ -78,12 +78,28 @@ ${player.givenName}'s drain takes from HP instead.`;
 					card,
 					phase
 				}) => {
-					if (phase === ATTACK_PHASE) {
+					const { effect } = card;
+
+					if (effect && phase === DEFENSE_PHASE) {
+						card.effect = (player, target, effectRing, effectActiveContestants) => {
+							if (target === blinkTarget) {
+								this.emit('effect', {
+									effectResult: `not target-able because they are ${this.icon}  time-shifted by`,
+									player: blinkPlayer,
+									target: blinkTarget,
+									effectRing
+								});
+
+								return Promise.resolve(true);
+							}
+							return effect.call(card, player, target, effectRing, effectActiveContestants);
+						};
+					} else if (phase === ATTACK_PHASE) {
 						const turnsLeftToBlink = this.turnsToBlink - blinkTarget.blinkedTurns;
 						if (turnsLeftToBlink && !blinkPlayer.dead) {
 							blinkTarget.blinkedTurns++;
 
-							const effectResult = `${this.icon}  currently time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
+							const effectResult = `${this.icon}  time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
 							this.emit('effect', {
 								effectResult,
 								player: blinkPlayer,
@@ -132,7 +148,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 
 							card.play = () => Promise.resolve(true);
 						} else {
-							blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(effect => effect.effectType !== 'BlinkEffect');
+							blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== 'BlinkEffect');
 
 							this.emit('narration', {
 								narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns[2]} eyes and finds ${blinkTarget.pronouns[1]}self in an unfamiliar time.`
