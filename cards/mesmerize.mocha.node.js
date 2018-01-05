@@ -77,7 +77,12 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 	it('immobilizes everyone on success', () => {
 		const mesmerize = new Mesmerize();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(mesmerize)), 'checkSuccess');
+
+		const mesmerizeProto = Object.getPrototypeOf(mesmerize);
+		const immobilizeProto = Object.getPrototypeOf(mesmerizeProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
 
 		const player = new WeepingAngel({ name: 'player' });
 		const target1 = new Basilisk({ name: 'target1' });
@@ -111,7 +116,12 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 	it('harms immobilizer on breaking free with natural 20', () => {
 		const mesmerize = new Mesmerize();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(mesmerize)), 'checkSuccess');
+
+		const mesmerizeProto = Object.getPrototypeOf(mesmerize);
+		const immobilizeProto = Object.getPrototypeOf(mesmerizeProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
 
 		const player = new Minotaur({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
@@ -162,7 +172,12 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 	it('doesn\'t harm immobilizer on breaking free with natural 20 if immobilizer is self', () => {
 		const mesmerize = new Mesmerize();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(mesmerize)), 'checkSuccess');
+
+		const mesmerizeProto = Object.getPrototypeOf(mesmerize);
+		const immobilizeProto = Object.getPrototypeOf(mesmerizeProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
 
 		const player = new Minotaur({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
