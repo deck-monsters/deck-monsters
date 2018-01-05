@@ -3,6 +3,7 @@ const proxyquire = require('proxyquire');
 const sample = require('lodash.sample');
 
 const { randomCharacter } = require('../characters');
+const DestroyCard = require('./destroy');
 const pause = require('../helpers/pause');
 
 describe('./cards/pick-pocket.js', () => {
@@ -14,7 +15,7 @@ describe('./cards/pick-pocket.js', () => {
 	before(() => {
 		channelStub = sinon.stub();
 		pauseStub = sinon.stub(pause, 'setTimeout');
-		sampleSpy = sinon.spy(sample);
+		sampleSpy = sinon.stub();
 
 		PickPocketCard = proxyquire('./pick-pocket', {
 			'lodash.sample': sampleSpy
@@ -24,6 +25,7 @@ describe('./cards/pick-pocket.js', () => {
 	beforeEach(() => {
 		channelStub.resolves();
 		pauseStub.callsArg(0);
+		sampleSpy.callsFake(sample);
 	});
 
 	afterEach(() => {
@@ -108,10 +110,13 @@ describe('./cards/pick-pocket.js', () => {
 		target2.xp = 200;
 		target3.xp = 300;
 
+		sampleSpy.withArgs(target3.cards).returns(new DestroyCard());
+
 		return pickPocket
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
 				expect(sampleSpy).to.have.been.calledWith(target3.cards);
+				return expect(target1.dead).to.equal(true);
 			});
 	});
 });
