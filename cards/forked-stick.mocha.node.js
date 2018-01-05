@@ -71,7 +71,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		const forkedStick = new ForkedStick();
 		const player = new Minotaur({ name: 'player' });
 
-		expect(forkedStick.getFreedomThreshold(player)).to.equal(player.ac + forkedStick.freedomThresholdModifier);
+		expect(forkedStick.getFreedomThreshold(player, player)).to.equal(player.ac + forkedStick.freedomThresholdModifier);
 	});
 
 	it('can be played against gladiators for a bonus to attack', () => {
@@ -195,8 +195,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		const forkedStick = new ForkedStick();
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick))), 'checkSuccess');// eslint-disable-line max-len
 
-		const player = new Minotaur({ name: 'player', ac: 10 });
-		const target = new Basilisk({ name: 'target', ac: 10 });
+		const player = new Minotaur({ name: 'player', acVariance: 0 });
+		const target = new Basilisk({ name: 'target', acVariance: 0 });
 
 		const ring = {
 			contestants: [
@@ -217,7 +217,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
 
-				expect(forkedStick.getFreedomThreshold(player, target)).to.equal(8);
+				expect(forkedStick.getFreedomThreshold(player, target)).to.equal(6);
 
 				const card = target.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
@@ -235,7 +235,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 				return card
 					.play(target, player, ring, ring.contestants)
 					.then(() => {
-						expect(forkedStick.getFreedomThreshold(player, target)).to.equal(5);
+						expect(forkedStick.getFreedomThreshold(player, target)).to.equal(3);
 
 						checkSuccessStub.restore();
 
