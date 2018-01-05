@@ -83,7 +83,7 @@ class ImmobilizeCard extends HitCard {
 			fatigue = (target.pinnedTurns * 3);
 		}
 
-		return (Math.min(player.ac, 10) + this.freedomThresholdModifier) - fatigue;
+		return (player.ac + this.freedomThresholdModifier) - fatigue;
 	}
 
 	getAttackRoll (player, target) {
