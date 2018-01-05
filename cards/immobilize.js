@@ -77,8 +77,8 @@ class ImmobilizeCard extends HitCard {
 		return this.options.freedomThresholdModifier;
 	}
 
-	getFreedomThreshold (player) {
-		return Math.min(player.ac, 10) + this.freedomThresholdModifier;
+	getFreedomThreshold (player, target) {
+		return (Math.min(player.ac, 10) + this.freedomThresholdModifier) - (target.pinnedTurns * 3);
 	}
 
 	getAttackRoll (player, target) {
@@ -104,6 +104,8 @@ class ImmobilizeCard extends HitCard {
 				});
 
 				if (attackSuccess.success) {
+					target.pinnedTurns = 0;
+
 					this.emit('rolled', {
 						reason: `for ${this.actions[0]}`,
 						card: this,
@@ -149,6 +151,8 @@ class ImmobilizeCard extends HitCard {
 									player.hit(2, target, this);
 								}
 							} else {
+								target.pinnedTurns++;
+
 								card.play = () => Promise.resolve(true);
 							}
 						}

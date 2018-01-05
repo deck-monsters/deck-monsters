@@ -191,6 +191,59 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 			});
 	});
 
+	it('lowers freedomThreshold each turn a target is pinned', () => {
+		const forkedStick = new ForkedStick();
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick))), 'checkSuccess');// eslint-disable-line max-len
+
+		const player = new Minotaur({ name: 'player', ac: 10 });
+		const target = new Basilisk({ name: 'target', ac: 10 });
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return forkedStick
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+
+				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
+
+				expect(forkedStick.getFreedomThreshold(player, target)).to.equal(8);
+
+				const card = target.encounterEffects.reduce((currentCard, effect) => {
+					const modifiedCard = effect({
+						activeContestants: [target, player],
+						card: currentCard,
+						phase: ATTACK_PHASE,
+						player,
+						ring,
+						target
+					});
+
+					return modifiedCard || currentCard;
+				}, new Hit());
+
+				return card
+					.play(target, player, ring, ring.contestants)
+					.then(() => {
+						expect(forkedStick.getFreedomThreshold(player, target)).to.equal(5);
+
+						checkSuccessStub.restore();
+
+						return expect(target.encounterEffects.length).to.equal(1);
+					});
+			});
+	});
+
 	it('allows immobilized opponents to break free', () => {
 		const forkedStick = new ForkedStick();
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick)), 'checkSuccess');
