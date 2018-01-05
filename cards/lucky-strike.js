@@ -40,6 +40,8 @@ class LuckyStrike extends HitCard {
 
 		if (strokeOfLuck) {
 			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
+
+			this.pop(player);
 		} else if (curseOfLoki) {
 			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
 		}

@@ -45,6 +45,8 @@ class HitCard extends BaseCard {
 
 		if (strokeOfLuck) {
 			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
+
+			this.pop(player);
 		} else if (curseOfLoki) {
 			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns[2]} attack back against ${player.pronouns[1]}.`;
 		}
