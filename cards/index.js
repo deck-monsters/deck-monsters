@@ -112,6 +112,8 @@ const getInitialDeck = (options, creature) => {
 	return fillDeck(deck, options, creature);
 };
 
+const isMatchingCard = (card1, card2) => card1.name === card2.name && JSON.stringify(card1) === JSON.stringify(card2);
+
 const getCardCounts = (cards, maxReportableCopies = 9999) =>
 	cards.reduce((cardCounts, card) => {
 		cardCounts[card.cardType] = cardCounts[card.cardType] || 0;
@@ -140,7 +142,7 @@ const getUniqueCards = cards =>
 	);
 
 const hydrateCard = (cardObj, monster, deck = []) => {
-	const existingCard = deck.find(card => card.name === cardObj.name && JSON.stringify(card) === JSON.stringify(cardObj)); // restore cards from the players deck if possible
+	const existingCard = deck.find(card => isMatchingCard(card, cardObj)); // restore cards from the players deck if possible
 	if (existingCard) return existingCard;
 
 	const Card = all.find(({ name }) => name === cardObj.name);
@@ -162,5 +164,6 @@ module.exports = {
 	getUniqueCards,
 	hydrateCard,
 	hydrateDeck,
+	isMatchingCard,
 	sortCards
 };

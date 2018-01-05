@@ -3,6 +3,7 @@ const {
 	getCardCounts,
 	getInitialDeck,
 	getUniqueCards,
+	isMatchingCard,
 	sortCards
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
@@ -50,8 +51,7 @@ class BaseCharacter extends BaseCreature {
 	removeCard (cardToRemove) {
 		let isAlreadyRemoved = false;
 		this.deck = this.deck.filter((card) => {
-			const isMatchingCard = card.name === cardToRemove.name && JSON.stringify(card) === JSON.stringify(cardToRemove);
-			const shouldKeepCard = isAlreadyRemoved || !isMatchingCard;
+			const shouldKeepCard = isAlreadyRemoved || !isMatchingCard(card, cardToRemove);
 
 			if (!shouldKeepCard) isAlreadyRemoved = true;
 
