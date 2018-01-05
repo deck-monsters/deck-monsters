@@ -2,6 +2,7 @@ const BaseCreature = require('../creatures/base');
 
 const {
 	getUniqueCards,
+	isMatchingCard,
 	sortCards
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
@@ -52,6 +53,12 @@ class BaseMonster extends BaseCreature {
 		);
 
 		return appropriateLevel && appropriateClassOrType;
+	}
+
+	resetCards ({ matchCard } = {}) {
+		const shouldReset = !matchCard || !!this.cards.find(card => isMatchingCard(card, matchCard));
+
+		if (shouldReset) this.cards = [];
 	}
 
 	get emptyHanded () {
