@@ -1,6 +1,7 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const Beastmaster = require('./beastmaster');
+const HitCard = require('../cards/hit');
 const Minotaur = require('../monsters/minotaur');
 const WeepingAngel = require('../monsters/weeping-angel');
 const pause = require('../helpers/pause');
@@ -147,5 +148,25 @@ describe('./characters/beastmaster.js', () => {
 				expect(channelStub.args[0][0].announce).to.not.include('asdf');
 				expect(channelStub.args[0][0].announce).to.not.include('qwer');
 			});
+	});
+
+	it('can remove cards from deck', () => {
+		const hit = new HitCard();
+		const beastmaster = new Beastmaster({
+			deck: [
+				hit,
+				new HitCard(),
+				new HitCard(),
+				new HitCard(),
+				new HitCard()
+			]
+		});
+
+		expect(beastmaster.deck.length).to.equal(5);
+		beastmaster.removeCard(hit);
+		expect(beastmaster.deck.length).to.equal(4);
+		beastmaster.removeCard(hit);
+		beastmaster.removeCard(hit);
+		return expect(beastmaster.deck.length).to.equal(2);
 	});
 });
