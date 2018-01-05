@@ -71,7 +71,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		const forkedStick = new ForkedStick();
 		const player = new Minotaur({ name: 'player' });
 
-		expect(forkedStick.getFreedomThreshold(player)).to.equal(player.ac + forkedStick.freedomThresholdModifier);
+		expect(forkedStick.getFreedomThreshold(player, player)).to.equal(player.ac + forkedStick.freedomThresholdModifier);
 	});
 
 	it('can be played against gladiators for a bonus to attack', () => {
@@ -188,6 +188,59 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(0);
+			});
+	});
+
+	it('lowers freedomThreshold each turn a target is pinned', () => {
+		const forkedStick = new ForkedStick();
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick))), 'checkSuccess');// eslint-disable-line max-len
+
+		const player = new Minotaur({ name: 'player', acVariance: 0 });
+		const target = new Basilisk({ name: 'target', acVariance: 0 });
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return forkedStick
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+
+				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
+
+				expect(forkedStick.getFreedomThreshold(player, target)).to.equal(6);
+
+				const card = target.encounterEffects.reduce((currentCard, effect) => {
+					const modifiedCard = effect({
+						activeContestants: [target, player],
+						card: currentCard,
+						phase: ATTACK_PHASE,
+						player,
+						ring,
+						target
+					});
+
+					return modifiedCard || currentCard;
+				}, new Hit());
+
+				return card
+					.play(target, player, ring, ring.contestants)
+					.then(() => {
+						expect(forkedStick.getFreedomThreshold(player, target)).to.equal(3);
+
+						checkSuccessStub.restore();
+
+						return expect(target.encounterEffects.length).to.equal(1);
+					});
 			});
 	});
 
