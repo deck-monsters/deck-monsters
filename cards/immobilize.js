@@ -103,7 +103,7 @@ class ImmobilizeCard extends HitCard {
 					outcome: ''
 				});
 
-				const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...':''}`;
+				const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...' : ''}`;
 				const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
 
 				this.emit('rolled', {
@@ -129,7 +129,7 @@ class ImmobilizeCard extends HitCard {
 									ring
 								});
 
-								const freedomRoll = roll({ primaryDice: '1d20' });
+								const freedomRoll = super.getAttackRoll(player, target);
 								const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
 								let commentary;
 

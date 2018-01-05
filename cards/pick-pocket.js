@@ -11,21 +11,19 @@ class PickPocketCard extends BaseCard {
 		super({ icon });
 	}
 
-	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return [activeContestants.reduce((potentialTarget, { monster }) => {
+	effect (player, target, ring, activeContestants) {
+		const mostExperienced = activeContestants.reduce((potentialTarget, { monster }) => {
 			if (monster !== player && monster.xp > potentialTarget.xp) {
 				return monster;
 			}
 
 			return potentialTarget;
-		}, proposedTarget)];
-	}
-
-	effect (player, target, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		const randomCard = sample(target.cards);
+		}, target);
+		
+		const randomCard = sample(mostExperienced.cards);
 
 		this.emit('narration', {
-			narration: `${player.givenName} steals a card from the hand of ${target.givenName}`
+			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName}`
 		});
 
 		return randomCard.play(player, target, ring, activeContestants);
