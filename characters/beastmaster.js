@@ -60,6 +60,12 @@ class Beastmaster extends BaseCharacter {
 		return super.canHoldItem(item);
 	}
 
+	removeCard (cardToRemove) {
+		super.removeCard(cardToRemove);
+
+		this.monsters.forEach(monster => monster.resetCards({ matchCard: cardToRemove }));
+	}
+
 	addMonster (monster) {
 		this.monsters = [...this.monsters, monster];
 
