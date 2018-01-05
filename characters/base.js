@@ -47,6 +47,19 @@ class BaseCharacter extends BaseCreature {
 		this.emit('cardAdded', { card });
 	}
 
+	removeCard (cardToRemove) {
+		let alreadyRemoved = false;
+		this.deck = this.deck.filter((card) => {
+			const keep = alreadyRemoved || cardToRemove.name !== card.name;
+
+			if (!keep) alreadyRemoved = true;
+
+			return keep;
+		});
+
+		this.emit('cardRemoved', { cardToRemove });
+	}
+
 	lookAtMonsters (channel, description) {
 		const monstersDisplay = this.monsters.reduce((monsters, monster) => monsters + monsterCard(monster, description), '');
 
