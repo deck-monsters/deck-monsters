@@ -79,8 +79,8 @@ class ImmobilizeCard extends HitCard {
 
 	getFreedomThreshold (player, target) {
 		let fatigue = 0;
-		if (target.pinnedTurns) {
-			fatigue = (target.pinnedTurns * 3);
+		if (target.encounterModifiers.pinnedTurns) {
+			fatigue = (target.encounterModifiers.pinnedTurns * 3);
 		}
 
 		return (player.ac + this.freedomThresholdModifier) - fatigue;
@@ -121,7 +121,8 @@ class ImmobilizeCard extends HitCard {
 				});
 
 				if (attackSuccess.success) {
-					target.pinnedTurns = 0;
+					target.encounterModifiers = { pinnedTurns: 0 };
+
 					const immobilizeEffect = ({
 						card,
 						phase
@@ -159,7 +160,7 @@ class ImmobilizeCard extends HitCard {
 										player.hit(2, target, this);
 									}
 								} else {
-								target.pinnedTurns++;
+									target.encounterModifiers = { pinnedTurns: target.encounterModifiers.pinnedTurns + 1 };
 
 									card.play = () => Promise.resolve(true);
 								}
