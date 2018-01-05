@@ -152,21 +152,28 @@ describe('./characters/beastmaster.js', () => {
 
 	it('can remove cards from deck', () => {
 		const hit = new HitCard();
+		const hit2 = new HitCard();
 		const beastmaster = new Beastmaster({
 			deck: [
 				hit,
-				new HitCard(),
+				hit2,
 				new HitCard(),
 				new HitCard(),
 				new HitCard()
 			]
 		});
 
+		const minotaur = new Minotaur({ color: 'asdf', cards: [hit, hit2] });
+
+		beastmaster.monsters = [minotaur];
+
+		expect(minotaur.cards.length).to.equal(2);
 		expect(beastmaster.deck.length).to.equal(5);
 		beastmaster.removeCard(hit);
+		expect(minotaur.cards.length).to.equal(0);
 		expect(beastmaster.deck.length).to.equal(4);
 		beastmaster.removeCard(hit);
-		beastmaster.removeCard(hit);
+		beastmaster.removeCard(hit2);
 		return expect(beastmaster.deck.length).to.equal(2);
 	});
 });
