@@ -95,8 +95,13 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
-	getFreedomThreshold (player) {
-		return Math.min(player.ac, 10) + this.freedomThresholdModifier;
+	getFreedomThreshold (player, target) {
+		let fatigue = 0;
+		if (target.encounterModifiers.pinnedTurns) {
+			fatigue = (target.encounterModifiers.pinnedTurns * 3);
+		}
+
+		return (player.ac + this.freedomThresholdModifier) - fatigue;
 	}
 
 	getAttackRoll (player, target) {
@@ -134,6 +139,8 @@ class ImmobilizeCard extends HitCard {
 				});
 
 				if (attackSuccess.success) {
+					target.encounterModifiers = { pinnedTurns: 0 };
+
 					const immobilizeEffect = ({
 						card,
 						phase
@@ -171,6 +178,7 @@ class ImmobilizeCard extends HitCard {
 										player.hit(2, target, this);
 									}
 								} else {
+									target.encounterModifiers = { pinnedTurns: target.encounterModifiers.pinnedTurns + 1 };
 									if (this.ongoingDamage > 0) {
 										this.emit('narration', {
 											narration: `${target.givenName} takes ongoing damage from being ${this.actions[2]}`
