@@ -290,4 +290,54 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 					});
 			});
 	});
+
+	it('frees target if player dies between turns', () => {
+		const forkedStick = new ForkedStick();
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick)), 'checkSuccess');
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		return forkedStick
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+
+				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
+				player.dead = true;
+
+				const card = target.encounterEffects.reduce((currentCard, effect) => {
+					const modifiedCard = effect({
+						activeContestants: [target, player],
+						card: currentCard,
+						phase: ATTACK_PHASE,
+						player,
+						ring,
+						target
+					});
+
+					return modifiedCard || currentCard;
+				}, new Hit());
+
+				return card
+					.play(target, player, ring, ring.contestants)
+					.then(() => {
+						checkSuccessStub.restore();
+
+						return expect(target.encounterEffects.length).to.equal(0);
+					});
+			});
+	});
 });

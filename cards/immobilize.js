@@ -108,57 +108,67 @@ class ImmobilizeCard extends HitCard {
 					outcome: ''
 				});
 
+				const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...':''}`;
+				const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
+
+				this.emit('rolled', {
+					reason: `for ${this.actions[0]}`,
+					card: this,
+					roll: attackRoll,
+					player,
+					target,
+					outcome
+				});
+
 				if (attackSuccess.success) {
 					target.pinnedTurns = 0;
-
-					this.emit('rolled', {
-						reason: `for ${this.actions[0]}`,
-						card: this,
-						roll: attackRoll,
-						player,
-						target,
-						outcome: `${this.actions[0]} succeeded!`
-					});
-
 					const immobilizeEffect = ({
 						card,
 						phase
 					}) => {
 						if (phase === ATTACK_PHASE) {
-							this.emit('effect', {
-								effectResult: `${this.icon}  ${this.actions[2]} by`,
-								player,
-								target,
-								ring
-							});
+							if (!player.dead) {
+								this.emit('effect', {
+									effectResult: `${this.icon}  ${this.actions[2]} by`,
+									player,
+									target,
+									ring
+								});
 
-							const freedomRoll = roll({ primaryDice: '1d20' });
-							const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
-							let commentary;
+								const freedomRoll = roll({ primaryDice: '1d20' });
+								const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
+								let commentary;
 
-							if (strokeOfLuck) {
-								commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
-							}
-
-							this.emit('rolled', {
-								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free`,
-								card: this,
-								roll: freedomRoll,
-								player: target,
-								target: player,
-								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`
-							});
-
-							if (success) {
-								target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
-
-								if (strokeOfLuck && target !== player) {
-									player.hit(2, target, this);
+								if (strokeOfLuck) {
+									commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
 								}
-							} else {
+
+								this.emit('rolled', {
+									reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free`,
+									card: this,
+									roll: freedomRoll,
+									player: target,
+									target: player,
+									outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`
+								});
+
+								if (success) {
+									target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
+
+									if (strokeOfLuck && target !== player) {
+										player.hit(2, target, this);
+									}
+								} else {
 								target.pinnedTurns++;
 
-								card.play = () => Promise.resolve(true);
+									card.play = () => Promise.resolve(true);
+								}
+							} else {
+								target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
+
+								this.emit('narration', {
+									narration: `${target.givenName} is now ${this.actions[2]}. ${target.pronouns[0]} pushes the limp dead body of ${player.givenName} off of ${target.pronouns[1]}self and proudly stands prepared to fight`
+								});
 							}
 						}
 
@@ -174,15 +184,6 @@ class ImmobilizeCard extends HitCard {
 
 					return resolve(true);
 				} else if (this.hitOnFail) {
-					this.emit('rolled', {
-						reason: `for ${this.actions[0]}`,
-						card: this,
-						roll: attackRoll,
-						player,
-						target,
-						outcome: `${this.actions[0]} failed, chance to hit instead...`
-					});
-
 					return resolve(super.effect(player, target, ring, activeContestants));
 				}
 			} else if (alreadyImmobilized || !canHaveEffect) {
