@@ -60,17 +60,17 @@ class BaseCard extends BaseClass {
 		return { success, strokeOfLuck, curseOfLoki };
 	}
 
-	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this, no-unused-vars
+	getTargets (player, proposedTarget, area, activeContestants) { // eslint-disable-line class-methods-use-this, no-unused-vars
 		return [proposedTarget];
 	}
 
-	play (player, proposedTarget, ring, activeContestants) {
+	play (player, proposedTarget, area, activeContestants) {
 		this.emit('played', { player });
 
-		const targets = this.getTargets(player, proposedTarget, ring, activeContestants);
+		const targets = this.getTargets(player, proposedTarget, area, activeContestants);
 
 		if (this.effect) {
-			return Promise.all(targets.map(target => this.effect(player, target, ring, activeContestants)))
+			return Promise.all(targets.map(target => this.effect(player, target, area, activeContestants)))
 				.then(results => results.reduce((result, val) => result && val, true));
 		}
 

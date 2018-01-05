@@ -6,7 +6,8 @@ const isProbable = require('../helpers/is-probable');
 const pause = require('../helpers/pause');
 const shuffle = require('lodash.shuffle');
 
-const hazard = require('./hazard');
+const hazard = require('./discoveries/hazard');
+const nothing = require('./discoveries/nothing');
 
 const { ONE_MINUTE } = require('../helpers/delay-times');
 
@@ -32,7 +33,7 @@ class Exploration extends BaseClass {
 
 	get discoveries () { // eslint-disable-line class-methods-use-this
 		return [
-			{ type: 'nothing', probability: 100 },
+			{ type: nothing, probability: 100 },
 			{ type: 'card', probability: 50 },
 			{ type: 'monster', probability: 10 },
 			{ type: 'coins', probability: 40 },
@@ -120,10 +121,7 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 		if (!discovery) return this.makeDiscovery(explorer);
 
-console.log(discovery);
-		// discovery(explorer);
-
-		return discovery;
+		return discovery(explorer);
 	}
 
 	doExploration () {

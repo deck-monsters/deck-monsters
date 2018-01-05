@@ -5,7 +5,7 @@ const Beastmaster = require('../characters/beastmaster');
 const ChannelManager = require('../channel');
 const Game = require('../game');
 
-describe('./exploration/index.js', () => {
+describe.only('./exploration/index.js', () => {
 	let clock;
 	let privateChannelStub;
 	let publicChannelStub;

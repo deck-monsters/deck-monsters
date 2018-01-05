@@ -103,7 +103,7 @@ class ImmobilizeCard extends HitCard {
 					outcome: ''
 				});
 
-				const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...':''}`;
+				const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...' : ''}`;
 				const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
 
 				this.emit('rolled', {

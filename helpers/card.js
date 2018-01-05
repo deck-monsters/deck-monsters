@@ -66,6 +66,7 @@ const actionCard = card => formatCard({
 });
 
 const itemCard = item => actionCard(item); // Just use the card formatter for now but we might do something custom later
+const discoveryCard = item => actionCard(item); // Just use the card formatter for now but we might do something custom later
 
 const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.givenName}`,
