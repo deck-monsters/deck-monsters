@@ -3,6 +3,7 @@ const {
 	getCardCounts,
 	getInitialDeck,
 	getUniqueCards,
+	isMatchingCard,
 	sortCards
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
@@ -45,6 +46,19 @@ class BaseCharacter extends BaseCreature {
 		this.deck = [...this.deck, card];
 
 		this.emit('cardAdded', { card });
+	}
+
+	removeCard (cardToRemove) {
+		let isAlreadyRemoved = false;
+		this.deck = this.deck.filter((card) => {
+			const shouldKeepCard = isAlreadyRemoved || !isMatchingCard(card, cardToRemove);
+
+			if (!shouldKeepCard) isAlreadyRemoved = true;
+
+			return shouldKeepCard;
+		});
+
+		this.emit('cardRemoved', { cardToRemove });
 	}
 
 	lookAtMonsters (channel, description) {
