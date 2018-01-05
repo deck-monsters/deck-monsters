@@ -48,13 +48,14 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	removeCard (cardToRemove) {
-		let alreadyRemoved = false;
+		let isAlreadyRemoved = false;
 		this.deck = this.deck.filter((card) => {
-			const keep = alreadyRemoved || cardToRemove.name !== card.name;
+			const isMatchingCard = card.name === cardToRemove.name && JSON.stringify(card) === JSON.stringify(cardToRemove);
+			const shouldKeepCard = isAlreadyRemoved || !isMatchingCard;
 
-			if (!keep) alreadyRemoved = true;
+			if (!shouldKeepCard) isAlreadyRemoved = true;
 
-			return keep;
+			return shouldKeepCard;
 		});
 
 		this.emit('cardRemoved', { cardToRemove });
