@@ -1,5 +1,7 @@
 const BaseCard = require('./base');
 
+const isProbable = require('../helpers/is-probable');
+
 class BoostCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -28,6 +30,9 @@ class BoostCard extends BaseCard {
 
 	effect (player, target) {
 		return new Promise((resolve) => {
+			if (isProbable({ probability: 5 })) {
+				this.pop(player);
+			}
 			target.setModifier(this.boostedProp, this.boostAmount);
 
 			resolve(true);

@@ -20,6 +20,7 @@ class ForkedStickCard extends ImmobilizeCard {
 			hitOnFail
 		});
 	}
+
 	get stats () {
 		return `${super.stats}
 Attempt to pin your opponent between the branches of a forked stick.`;

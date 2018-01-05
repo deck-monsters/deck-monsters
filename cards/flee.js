@@ -23,6 +23,8 @@ class FleeCard extends BaseCard {
 				const fleeRoll = roll({ primaryDice: '1d20' });
 				const { success } = this.checkSuccess(fleeRoll, 10);
 
+				if (fleeRoll.strokeOfLuck) this.pop(player);
+
 				this.emit('rolled', {
 					reason: 'and needs 10 or higher to flee',
 					card: this,

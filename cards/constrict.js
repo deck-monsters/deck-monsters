@@ -19,6 +19,7 @@ class ConstrictCard extends ImmobilizeCard {
 			hitOnFail
 		});
 	}
+
 	get stats () {
 		return `${super.stats}
 Chance to immobilize opponent by coiling your serpentine body around them and then squeezing.`;

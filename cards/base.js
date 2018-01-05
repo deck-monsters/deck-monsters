@@ -1,7 +1,25 @@
+/* eslint-disable global-require, import/no-dynamic-require */
+
 const BaseClass = require('../baseClass');
 
 const { actionCard } = require('../helpers/card');
 const { max } = require('../helpers/chance');
+
+const randomOneOf = cards => cards[Math.floor(Math.random() * cards.length)];
+
+// requires have to be done on the fly because otherwise will cause circular dependencies
+const POP_MAP = {
+	HitCard: () => require(randomOneOf(['./rehit', './hit-harder'])),
+	HitHarderCard: () => require('./pound'),
+	CoilCard: () => require('./constrict'),
+	EnthrallCard: () => require('./entrance'),
+	FleeCard: () => require('./fight-or-flight'),
+	ForkedStickCard: () => require('./forked-metal-rod'),
+	HealCard: () => require('./whiskey-shot'),
+	MesmerizeCard: () => require('./enthrall'),
+	BoostCard: () => require(randomOneOf(['./thick-skin', './basic-shield'])),
+	WhiskeyShotCard: () => require('./scotch')
+};
 
 class BaseCard extends BaseClass {
 	constructor (options) {
@@ -42,6 +60,19 @@ class BaseCard extends BaseClass {
 
 	get flavors () {
 		return this.constructor.flavors || this.options.flavors;
+	}
+
+	pop (player) {
+		const NewCardRequire = POP_MAP[this.name];
+		if (!NewCardRequire) return;
+		const NewCard = NewCardRequire();
+		const newCard = new NewCard();
+
+		player.cards[player.cards.findIndex(card => card.name === this.name)] = newCard;
+
+		this.emit('narration', {
+			narration: `${this.name} Card leveled up! ${this.name} Card is now ${newCard.name} Card.`
+		});
 	}
 
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this

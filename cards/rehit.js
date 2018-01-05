@@ -1,10 +1,4 @@
 /* eslint-disable max-len */
-
-/*
-	Eventually this card will become a lower energy card that instead modifies the next card that is played.
-	It will make the next roll be a re-rollable roll. The mechanics are not in place for card chaining yet.
-*/
-
 const HitCard = require('./hit');
 const { roll } = require('../helpers/chance');
 const { CLERIC } = require('../helpers/classes');

@@ -174,6 +174,8 @@ class ImmobilizeCard extends HitCard {
 						return resolve(super.effect(player, target, ring, activeContestants));
 					}
 
+					if (attackSuccess.strokeOfLuck) this.pop(player);
+
 					return resolve(true);
 				} else if (this.hitOnFail) {
 					return resolve(super.effect(player, target, ring, activeContestants));

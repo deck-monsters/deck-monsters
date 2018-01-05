@@ -7,6 +7,7 @@ const { Game } = require('./index.js');
 const pause = require('./helpers/pause');
 
 // const DestroyCard = require('./cards/destroy.js');
+// const HitCard = require('./cards/hit.js');
 
 pause.setTimeout = func => setTimeout(func, 5);
 
@@ -65,6 +66,8 @@ return Promise
 	.then((character) => {
 		vlad = character;
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 5)];
+		// vlad.character.deck = [new HitCard()];
+		// vladCards = vlad.character.deck;
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
 		id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0, xp: 200
@@ -74,6 +77,8 @@ return Promise
 		charCards = [...shuffle(char.character.deck).slice(0, 5)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
+		// char.character.deck = [new HitCard()];
+		// charCards = char.character.deck;
 	})
 	.then(() => slackdem.getCharacter(bossAnnouncer, BOSS_ID, {
 		id: BOSS_ID, name: 'boss', type: 0, gender: 0, icon: 0, xp: 500

@@ -1,9 +1,5 @@
 /* eslint-disable max-len */
 
-/*
-	Eventually this card will be replaced by whatever LuckyStrike turns into.
-*/
-
 const HitCard = require('./hit');
 const { roll, max } = require('../helpers/chance');
 const { BARBARIAN, FIGHTER } = require('../helpers/classes');

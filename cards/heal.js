@@ -36,6 +36,11 @@ Possiblity of Stroke of Luck`;
 			let healResult = healRoll.result;
 			let outcome = '';
 
+			// normal pop probability 1/20
+			if (isProbable({ probability: 5 })) {
+				this.pop(player);
+			}
+
 			// Stroke of Luck
 			if (isProbable({ probability: 1 })) {
 				healResult = Math.floor(player.maxHp / 2);
