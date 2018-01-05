@@ -125,7 +125,7 @@ class ImmobilizeCard extends HitCard {
 								ring
 							});
 
-							const freedomRoll = roll({ primaryDice: '1d20' });
+							const freedomRoll = super.getAttackRoll(player, target);
 							const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
 							let commentary;
 

@@ -195,6 +195,12 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		const forkedStick = new ForkedStick();
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedStick)), 'checkSuccess');
 
+		const forkedStickProto = Object.getPrototypeOf(forkedStick);
+		const immobilizeProto = Object.getPrototypeOf(forkedStickProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const getAttackRollImmoblizeSpy = sinon.spy(immobilizeProto, 'getAttackRoll');
+		const getAttackRollHitSpy = sinon.spy(hitProto, 'getAttackRoll');
+
 		const player = new Minotaur({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
 
@@ -214,6 +220,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
 				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+				expect(getAttackRollImmoblizeSpy.callCount).to.equal(1);
+				expect(getAttackRollHitSpy.callCount).to.equal(0);
 
 				const card = target.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
@@ -231,7 +239,11 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 				return card
 					.play(target, player, ring, ring.contestants)
 					.then(() => {
+						expect(getAttackRollImmoblizeSpy.callCount).to.equal(1);
+						expect(getAttackRollHitSpy.callCount).to.equal(2);
+
 						checkSuccessStub.restore();
+						getAttackRollImmoblizeSpy.restore();
 
 						return expect(target.encounterEffects.length).to.equal(0);
 					});
