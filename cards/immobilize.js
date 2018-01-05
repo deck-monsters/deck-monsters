@@ -121,38 +121,46 @@ class ImmobilizeCard extends HitCard {
 						phase
 					}) => {
 						if (phase === ATTACK_PHASE) {
-							this.emit('effect', {
-								effectResult: `${this.icon}  ${this.actions[2]} by`,
-								player,
-								target,
-								ring
-							});
+							if (!player.dead) {
+								this.emit('effect', {
+									effectResult: `${this.icon}  ${this.actions[2]} by`,
+									player,
+									target,
+									ring
+								});
 
-							const freedomRoll = roll({ primaryDice: '1d20' });
-							const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
-							let commentary;
+								const freedomRoll = roll({ primaryDice: '1d20' });
+								const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
+								let commentary;
 
-							if (strokeOfLuck) {
-								commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
-							}
+								if (strokeOfLuck) {
+									commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
+								}
 
-							this.emit('rolled', {
-								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free`,
-								card: this,
-								roll: freedomRoll,
-								player: target,
-								target: player,
-								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`
-							});
+								this.emit('rolled', {
+									reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free`,
+									card: this,
+									roll: freedomRoll,
+									player: target,
+									target: player,
+									outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`
+								});
 
-							if (success) {
-								target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
+								if (success) {
+									target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
 
-								if (strokeOfLuck && target !== player) {
-									player.hit(2, target, this);
+									if (strokeOfLuck && target !== player) {
+										player.hit(2, target, this);
+									}
+								} else {
+									card.play = () => Promise.resolve(true);
 								}
 							} else {
-								card.play = () => Promise.resolve(true);
+								target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
+
+								this.emit('narration', {
+									narration: `${target.givenName} is now ${this.actions[2]}. ${target.pronouns[0]} pushes the limp dead body of ${player.givenName} off of ${target.pronouns[1]}self and proudly stands prepared to fight`
+								});
 							}
 						}
 
