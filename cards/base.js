@@ -74,7 +74,7 @@ class BaseCard extends BaseClass {
 		return this.options.icons;
 	}
 
-	set icons(icons) {
+	set icons (icons) {
 		this.setOptions({
 			icons
 		});

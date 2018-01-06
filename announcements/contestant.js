@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 const { monsterCard } = require('../helpers/card');
 const { getFlavor } = require('../helpers/flavor');
 

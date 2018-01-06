@@ -4,7 +4,7 @@ const announceHit = require('./hit');
 const pause = require('../helpers/pause');
 const Gladiator = require('../monsters/gladiator');
 
-describe.only('./announcements/hit.js', () => {
+describe('./announcements/hit.js', () => {
 	let pauseStub;
 
 	before(() => {
@@ -256,7 +256,7 @@ describe.only('./announcements/hit.js', () => {
 			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
 			const card = {
-				flavors: { hits: [['burns', 100, '🔥']] },
+				flavors: { hits: [['burns', 100, '🔥']] }
 			};
 			const damage = 1;
 			const prevHp = 2;
@@ -282,7 +282,7 @@ describe.only('./announcements/hit.js', () => {
 			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
 			const card = {
-				flavor: ['burns', 100, '🔥'],
+				flavor: ['burns', 100, '🔥']
 			};
 			const damage = 1;
 			const prevHp = 2;
