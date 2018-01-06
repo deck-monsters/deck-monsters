@@ -427,6 +427,8 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	hit (damage = 0, assailant, card) {
+		if (this.hp < 1) return false;
+
 		const hp = this.hp - damage;
 		const originalHP = this.hp;
 
