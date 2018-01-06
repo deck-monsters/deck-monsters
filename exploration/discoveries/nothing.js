@@ -20,7 +20,7 @@ class NothingCard extends BaseCard {
 }
 
 NothingCard.cardType = 'Nothing';
-NothingCard.probability = 100;
+NothingCard.probability = 80;
 NothingCard.description = 'Your monster finds...';
 
 NothingCard.flavors = {

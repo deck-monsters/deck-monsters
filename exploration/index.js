@@ -123,6 +123,7 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 		const discovery = new Discovery();
 		discovery.look(explorer.channel);
+		discovery.play(explorer.monster, explorer.monster)
 
 		return discovery;
 	}
@@ -131,7 +132,7 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 		this.explorers.forEach((explorer) => {
 			explorer.discoveries.push(this.makeDiscovery(explorer));
 
-			if (explorer.discoveries.length >= 5 || moment() > explorer.returnTime) {
+			if (explorer.monster.dead || explorer.discoveries.length >= 15 || moment() > explorer.returnTime) {
 				this.sendMonsterHome(explorer);
 			}
 		});
@@ -143,8 +144,11 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 			this.explorers.splice(explorerIndex, 1);
 
+			const deadMessage = `${explorer.monster.givenName}'s carcase is wheeled home in a cart by a kindly stranger`;
+			const aliveMessage = `${explorer.monster.givenName} has returned to nestle safely into your warm embrace.`;
+
 			this.channelManager.queueMessage({
-				announce: `${explorer.monster.givenName} has returned to nestle safely into your warm embrace.`,
+				announce: explorer.monster.dead ? deadMessage : aliveMessage,
 				channel: explorer.channel,
 				channelName: explorer.channelName
 			});

@@ -15,12 +15,14 @@ class HazardCard extends BaseCard {
 	}
 
 	effect (player) { // eslint-disable-line no-unused-vars
+		player.dead = true;
+
 		return player;
 	}
 }
 
 HazardCard.cardType = 'Hazard';
-HazardCard.probability = 100;
+HazardCard.probability = 10;
 HazardCard.description = 'It is dangerous out there...';
 
 HazardCard.flavors = {
