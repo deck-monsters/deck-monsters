@@ -26,7 +26,7 @@ DeathCard.probability = 1;
 DeathCard.description = 'It is dangerous out there...';
 
 DeathCard.flavors = {
-	hazard: [
+	death: [
 		['Your monster mistakenly eats some green potatoes', 100]
 	]
 };

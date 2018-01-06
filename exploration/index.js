@@ -32,14 +32,15 @@ class Exploration extends BaseClass {
 		});
 	}
 
+	get discoveries () {
+		return this.options.discoveries;
+	}
+
+
 	set discoveries (discoveries) {
 		this.setOptions({
 			discoveries
 		});
-	}
-
-	get discoveries () { // eslint-disable-line class-methods-use-this
-		return this.options.discoveries;
 	}
 
 	getExplorer (targetMonster) {

@@ -6,6 +6,7 @@ const ChannelManager = require('../channel');
 const Game = require('../game');
 const Discovery = require('./discoveries/base');
 const DeathCard = require('./discoveries/death');
+const NothingCard = require('./discoveries/nothing');
 
 describe.only('./exploration/index.js', () => {
 	let clock;
@@ -182,11 +183,22 @@ describe.only('./exploration/index.js', () => {
 			const explorer = exploration.getExplorer(monster);
 			expect(explorer.discoveries).to.have.lengthOf(0);
 
+			const makeDiscoveryStub = sinon.stub(Object.getPrototypeOf(exploration), 'makeDiscovery');
+			makeDiscoveryStub.callsFake(explorer => {
+				const nothing = new NothingCard();
+				nothing.look(explorer.channel);
+				nothing.play(explorer.monster, explorer.monster)
+
+				return nothing;
+			});
+
 			while (exploration.monsterIsExploring(monster)) {
 				exploration.doExploration();
 			}
 
-			expect(explorer.discoveries.length).to.be.below(16);
+			makeDiscoveryStub.restore();
+
+			expect(explorer.discoveries.length).to.equal(15);
 			expect(exploration.explorers.length).to.equal(0);
 			expect(exploration.monsterIsExploring(monster)).to.be.false;
 		});
@@ -222,6 +234,8 @@ describe.only('./exploration/index.js', () => {
 			while (exploration.monsterIsExploring(monster)) {
 				exploration.doExploration();
 			}
+
+			makeDiscoveryStub.restore();
 
 			expect(explorer.monster.dead).to.be.true;
 			expect(explorer.discoveries.length).to.be.below(2);
