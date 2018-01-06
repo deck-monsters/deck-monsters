@@ -44,6 +44,42 @@ class BaseCard extends BaseClass {
 		return this.constructor.flavors || this.options.flavors;
 	}
 
+	set flavors (flavors) {
+		this.setOptions({
+			flavors
+		});
+	}
+
+	get flavor () {
+		return this.constructor.flavor || this.options.flavor;
+	}
+
+	set flavor (flavor) {
+		this.setOptions({
+			flavor
+		});
+	}
+
+	get flavorText () {
+		return this.constructor.flavorText || this.options.flavorText;
+	}
+
+	set flavorText (flavorText) {
+		this.setOptions({
+			flavorText
+		});
+	}
+
+	get icons () {
+		return this.options.icons;
+	}
+
+	set icons(icons) {
+		this.setOptions({
+			icons
+		});
+	}
+
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
 		let strokeOfLuck = false;
 		let curseOfLoki = false;
