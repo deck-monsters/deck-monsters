@@ -1,5 +1,12 @@
 const { getFlavor } = require('../helpers/flavor');
 
+const defaultIcons = [
+	{ floor: 10, icon: '🔥' },
+	{ floor: 5, icon: '🔪' },
+	{ floor: 2, icon: '🤜' },
+	{ floor: 1, icon: '🏓' }
+];
+
 const announceHit = (publicChannel, channelManager, className, monster, {
 	assailant,
 	card,
@@ -7,15 +14,10 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 	prevHp
 }) => {
 	const flavors = card && card.flavors;
+	const icons = (card && card.icons) || defaultIcons;
 
-	let icon = '🤜';
-	if (damage >= 10) {
-		icon = '🔥';
-	} else if (damage >= 5) {
-		icon = '🔪';
-	} else if (damage === 1) {
-		icon = '🏓';
-	}
+	icons.sort((a, b) => b.floor - a.floor);
+	const { icon } = icons.find(i => damage >= i.floor);
 
 	const bloodied = (monster.bloodied && prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
 	const only = (monster.bloodied && monster.hp > 0) ? 'only ' : '';
