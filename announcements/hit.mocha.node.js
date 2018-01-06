@@ -4,7 +4,7 @@ const announceHit = require('./hit');
 const pause = require('../helpers/pause');
 const Gladiator = require('../monsters/gladiator');
 
-describe('./announcements/hit.js', () => {
+describe.only('./announcements/hit.js', () => {
 	let pauseStub;
 
 	before(() => {
@@ -177,7 +177,7 @@ describe('./announcements/hit.js', () => {
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
 			const card = {
 				flavors: { hits: [['hits', 100]] },
-				icons: [{ floor: 1, icon: '❌' }, { floor: 5, icon: '❌' }, { floor: 10, icon: '✅' }]
+				flavorIcons: [{ floor: 1, icon: '❌' }, { floor: 5, icon: '❌' }, { floor: 10, icon: '✅' }]
 			};
 			const damage = 11;
 			const prevHp = 12;
@@ -204,7 +204,85 @@ describe('./announcements/hit.js', () => {
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
 			const card = {
 				flavors: { hits: [['hits', 100]] },
-				icons: [{ floor: 1, icon: '✅' }, { floor: 5, icon: '❌' }, { floor: 10, icon: '❌' }]
+				flavorIcons: [{ floor: 1, icon: '✅' }, { floor: 5, icon: '❌' }, { floor: 10, icon: '❌' }]
+			};
+			const damage = 1;
+			const prevHp = 2;
+			monster.hp = 1;
+
+			announceHit(publicChannel, {}, '', monster, {
+				assailant,
+				card,
+				damage,
+				prevHp
+			});
+		});
+
+		it('can announce with custom flavorText', () => {
+			const announcement = `🔥 💪  Monster is caught in a sudden fire and takes 1 damage.
+
+💪  *Monster has only 1HP.*
+`;
+			const publicChannel = ({ announce }) => {
+				expect(announce).to.equal(announcement);
+			};
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = {
+				flavorText: '🔥 💪  Monster is caught in a sudden fire and takes 1 damage.'
+			};
+			const damage = 1;
+			const prevHp = 2;
+			monster.hp = 1;
+
+			announceHit(publicChannel, {}, '', monster, {
+				assailant,
+				card,
+				damage,
+				prevHp
+			});
+		});
+
+		it('can use custom flavor icon', () => {
+			const announcement = `💪 🔥 💪  Assailant burns Monster for 1 damage.
+
+💪  *Monster has only 1HP.*
+`;
+			const publicChannel = ({ announce }) => {
+				expect(announce).to.equal(announcement);
+			};
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = {
+				flavors: { hits: [['burns', 100, '🔥']] },
+			};
+			const damage = 1;
+			const prevHp = 2;
+			monster.hp = 1;
+
+			announceHit(publicChannel, {}, '', monster, {
+				assailant,
+				card,
+				damage,
+				prevHp
+			});
+		});
+
+		it('can use custom flavor', () => {
+			const announcement = `💪 🔥 💪  Assailant burns Monster for 1 damage.
+
+💪  *Monster has only 1HP.*
+`;
+			const publicChannel = ({ announce }) => {
+				expect(announce).to.equal(announcement);
+			};
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = {
+				flavor: ['burns', 100, '🔥'],
 			};
 			const damage = 1;
 			const prevHp = 2;
