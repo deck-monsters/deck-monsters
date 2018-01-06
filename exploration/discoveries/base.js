@@ -14,7 +14,7 @@ class BaseDiscoveryCard extends BaseCard {
 	}
 
 	get flavor () {
-		return getFlavor(this.cardType.toLowerCase(), this.flavors);
+		return getFlavor(this.cardType.toLowerCase(), this.flavors)[0];
 	}
 
 	look (channel) {
