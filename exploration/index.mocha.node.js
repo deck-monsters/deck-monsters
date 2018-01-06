@@ -5,6 +5,7 @@ const Beastmaster = require('../characters/beastmaster');
 const ChannelManager = require('../channel');
 const Game = require('../game');
 const Discovery = require('./discoveries/base');
+const DeathCard = require('./discoveries/death');
 
 describe.only('./exploration/index.js', () => {
 	let clock;
@@ -162,7 +163,7 @@ describe.only('./exploration/index.js', () => {
 			expect(explorer.discoveries).to.have.lengthOf(1);
 		});
 
-		it('is sent home after 5 discoveries', () => {
+		it('is sent home after 15 discoveries', () => {
 			const game = new Game(publicChannelStub);
 			const exploration = game.getExploration();
 
@@ -181,13 +182,49 @@ describe.only('./exploration/index.js', () => {
 			const explorer = exploration.getExplorer(monster);
 			expect(explorer.discoveries).to.have.lengthOf(0);
 
-			exploration.doExploration();
-			exploration.doExploration();
-			exploration.doExploration();
-			exploration.doExploration();
-			exploration.doExploration();
+			while (exploration.monsterIsExploring(monster)) {
+				exploration.doExploration();
+			}
 
-			expect(explorer.discoveries).to.have.lengthOf(5);
+			expect(explorer.discoveries.length).to.be.below(16);
+			expect(exploration.explorers.length).to.equal(0);
+			expect(exploration.monsterIsExploring(monster)).to.be.false;
+		});
+
+		it('is sent home if dead', () => {
+			const game = new Game(publicChannelStub);
+			const exploration = game.getExploration();
+
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			const channelName = 'TEST_CHANNEL';
+
+			character.addMonster(monster);
+
+			exploration.sendMonsterExploring({
+				monster,
+				character,
+				channel: privateChannelStub,
+				channelName
+			});
+			const explorer = exploration.getExplorer(monster);
+			expect(explorer.discoveries).to.have.lengthOf(0);
+
+			const makeDiscoveryStub = sinon.stub(Object.getPrototypeOf(exploration), 'makeDiscovery');
+			makeDiscoveryStub.callsFake(explorer => {
+				const death = new DeathCard();
+				death.look(explorer.channel);
+				death.play(explorer.monster, explorer.monster)
+
+				return death;
+			});
+
+			while (exploration.monsterIsExploring(monster)) {
+				exploration.doExploration();
+			}
+
+			expect(explorer.monster.dead).to.be.true;
+			expect(explorer.discoveries.length).to.be.below(2);
 			expect(exploration.explorers.length).to.equal(0);
 			expect(exploration.monsterIsExploring(monster)).to.be.false;
 		});

@@ -6,8 +6,9 @@ const isProbable = require('../helpers/is-probable');
 const pause = require('../helpers/pause');
 const shuffle = require('lodash.shuffle');
 
-const Hazard = require('./discoveries/hazard');
-const Nothing = require('./discoveries/nothing');
+const HazardCard = require('./discoveries/hazard');
+const NothingCard = require('./discoveries/nothing');
+const DeathCard = require('./discoveries/death');
 
 const { ONE_MINUTE } = require('../helpers/delay-times');
 
@@ -31,30 +32,22 @@ class Exploration extends BaseClass {
 		});
 	}
 
+	set discoveries (discoveries) {
+		this.setOptions({
+			discoveries
+		});
+	}
+
 	get discoveries () { // eslint-disable-line class-methods-use-this
-		return [
-			Nothing,
-			// 'card',
-			// 'monster',
-			// 'coins',
-			// 'xp',
-			// 'item',
-			// 'dungeon',
-			// 'minion',
-			// 'boss'
-			Hazard
-			// 'merchant',
-			// 'thief',
-			// 'restAndRecovery'
-		];
+		return this.options.discoveries;
 	}
 
 	getExplorer (targetMonster) {
-		return this.explorers.find(explorer => explorer.monster === targetMonster);
+		return this.explorers.find(explorer => JSON.stringify(explorer.monster) === JSON.stringify(targetMonster));
 	}
 
 	monsterIsExploring (targetMonster) {
-		return !!this.explorers.find(explorer => explorer.monster === targetMonster);
+		return !!this.getExplorer(targetMonster);
 	}
 
 	sendMonsterExploring ({
@@ -157,5 +150,23 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 }
 
 Exploration.eventPrefix = 'exploration';
+Exploration.defaults = {
+	discoveries: [
+		DeathCard,
+		HazardCard,
+		NothingCard
+		// 'card',
+		// 'monster',
+		// 'coins',
+		// 'xp',
+		// 'item',
+		// 'dungeon',
+		// 'minion',
+		// 'boss'
+		// 'merchant',
+		// 'thief',
+		// 'restAndRecovery'
+	]
+}
 
 module.exports = Exploration;
