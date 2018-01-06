@@ -5,7 +5,7 @@ const BaseCard = require('./base');
 class NothingCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		icon = '🤷‍'
+		icon = '🤷'
 	} = {}) {
 		super({ icon });
 	}

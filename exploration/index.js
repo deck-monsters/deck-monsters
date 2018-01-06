@@ -6,8 +6,8 @@ const isProbable = require('../helpers/is-probable');
 const pause = require('../helpers/pause');
 const shuffle = require('lodash.shuffle');
 
-const hazard = require('./discoveries/hazard');
-const nothing = require('./discoveries/nothing');
+const Hazard = require('./discoveries/hazard');
+const Nothing = require('./discoveries/nothing');
 
 const { ONE_MINUTE } = require('../helpers/delay-times');
 
@@ -33,19 +33,19 @@ class Exploration extends BaseClass {
 
 	get discoveries () { // eslint-disable-line class-methods-use-this
 		return [
-			{ type: nothing, probability: 100 },
-			{ type: 'card', probability: 50 },
-			{ type: 'monster', probability: 10 },
-			{ type: 'coins', probability: 40 },
-			{ type: 'xp', probability: 80 },
-			{ type: 'item', probability: 90 },
-			{ type: 'dungeon', probability: 30 },
-			{ type: 'minion', probability: 60 },
-			{ type: 'boss', probability: 5 },
-			{ type: hazard, probability: 50 },
-			{ type: 'merchant', probability: 70 },
-			{ type: 'thief', probability: 30 },
-			{ type: 'restAndRecovery', probability: 30 }
+			Nothing,
+			// 'card',
+			// 'monster',
+			// 'coins',
+			// 'xp',
+			// 'item',
+			// 'dungeon',
+			// 'minion',
+			// 'boss'
+			Hazard
+			// 'merchant',
+			// 'thief',
+			// 'restAndRecovery'
 		];
 	}
 
@@ -117,11 +117,14 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 		// 	discoveries = discoveries.filter(discovery => explorer.canFind(discovery));
 		// }
 
-		const discovery = discoveries.find(isProbable);
+		const Discovery = discoveries.find(isProbable);
 
-		if (!discovery) return this.makeDiscovery(explorer);
+		if (!Discovery) return this.makeDiscovery(explorer);
 
-		return discovery(explorer);
+		const discovery = new Discovery();
+		discovery.look(explorer.channel);
+
+		return discovery;
 	}
 
 	doExploration () {

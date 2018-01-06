@@ -1,9 +1,32 @@
-const hazard = explorer =>
-	// announce environmental hazard
-	// deduct HP
-	// add XP
+/* eslint-disable max-len */
 
-	explorer;
+const BaseCard = require('./base');
 
+class HazardCard extends BaseCard {
+	// Set defaults for these values that can be overridden by the options passed in
+	constructor ({
+		icon = '⚠️'
+	} = {}) {
+		super({ icon });
+	}
 
-module.exports = hazard;
+	get stats () {
+		return this.flavor;
+	}
+
+	effect (player) { // eslint-disable-line no-unused-vars
+		return player;
+	}
+}
+
+HazardCard.cardType = 'Hazard';
+HazardCard.probability = 100;
+HazardCard.description = 'It is dangerous out there...';
+
+HazardCard.flavors = {
+	hazard: [
+		['you fall and hit your head', 100]
+	]
+};
+
+module.exports = HazardCard;

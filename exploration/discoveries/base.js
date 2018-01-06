@@ -1,8 +1,8 @@
 const BaseCard = require('../../cards/base');
 
-const { discoveryCard } = require('../helpers/card');
+const { discoveryCard } = require('../../helpers/card');
 
-const { getFlavor } = require('../helpers/flavor');
+const { getFlavor } = require('../../helpers/flavor');
 
 class BaseDiscoveryCard extends BaseCard {
 	constructor (options) {
@@ -14,7 +14,7 @@ class BaseDiscoveryCard extends BaseCard {
 	}
 
 	get flavor () {
-		return getFlavor(this.name, this.flavors);
+		return getFlavor(this.cardType.toLowerCase(), this.flavors);
 	}
 
 	look (channel) {

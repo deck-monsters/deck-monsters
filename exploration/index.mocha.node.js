@@ -4,6 +4,7 @@ const Basilisk = require('../monsters/basilisk');
 const Beastmaster = require('../characters/beastmaster');
 const ChannelManager = require('../channel');
 const Game = require('../game');
+const Discovery = require('./discoveries/base');
 
 describe.only('./exploration/index.js', () => {
 	let clock;
@@ -132,9 +133,9 @@ describe.only('./exploration/index.js', () => {
 			});
 
 			const explorer = exploration.getExplorer(monster);
-			const discovery = exploration.makeDiscovery(explorer);
+			const ADiscovery = exploration.makeDiscovery(explorer);
 
-			expect(discovery).to.have.all.keys('type', 'probability');
+			expect(ADiscovery).to.be.instanceof(Discovery);
 		});
 
 		it('can explore', () => {

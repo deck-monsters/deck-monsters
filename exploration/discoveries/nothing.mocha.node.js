@@ -1,8 +1,8 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect, sinon } = require('../../shared/test-setup');
 
-const nothing = require('./nothing');
+const NothingCard = require('./nothing');
 
-const pause = require('../helpers/pause');
+const pause = require('../../helpers/pause');
 
 describe('./exploration/discoveries/nothing.js', () => {
 	let channelStub;
@@ -28,19 +28,9 @@ describe('./exploration/discoveries/nothing.js', () => {
 	});
 
 	it('can be instantiated with defaults', () => {
-		const flee = new FleeCard();
+		const nothing = new NothingCard();
 
-		expect(flee).to.be.an.instanceof(FleeCard);
-		expect(flee.icon).to.equal('🏃');
-	});
-
-	it('returns true if the player is not bloodied', () => {
-		const flee = new FleeCard();
-
-		const player = new Basilisk({ name: 'player' });
-		const target = new Basilisk({ name: 'target' });
-
-		return flee.play(player, target, null, [{ monster: target }])
-			.then(result => expect(result).to.equal(true));
+		expect(nothing).to.be.an.instanceof(NothingCard);
+		expect(nothing.icon).to.equal('🤷‍');
 	});
 });

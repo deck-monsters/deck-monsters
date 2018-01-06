@@ -79,5 +79,6 @@ module.exports = {
 	actionCard,
 	formatCard,
 	itemCard,
+	discoveryCard,
 	monsterCard
 };
