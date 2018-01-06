@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 const { getFlavor } = require('../helpers/flavor');
 
 const defaultIcons = [
@@ -22,7 +23,7 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 	} else {
 		const icons = (card && card.flavorIcons) || defaultIcons;
 		icons.sort((a, b) => b.floor - a.floor);
-		icon = icons.find(i => damage >= i.floor).icon;
+		({ icon } = icons.find(i => damage >= i.floor));
 	}
 
 	const bloodied = (monster.bloodied && prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
