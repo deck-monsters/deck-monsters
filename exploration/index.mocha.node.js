@@ -184,10 +184,10 @@ describe.only('./exploration/index.js', () => {
 			expect(explorer.discoveries).to.have.lengthOf(0);
 
 			const makeDiscoveryStub = sinon.stub(Object.getPrototypeOf(exploration), 'makeDiscovery');
-			makeDiscoveryStub.callsFake(explorer => {
+			makeDiscoveryStub.callsFake((explorer) => {
 				const nothing = new NothingCard();
 				nothing.look(explorer.channel);
-				nothing.play(explorer.monster, explorer.monster)
+				nothing.play(explorer.monster, explorer.monster);
 
 				return nothing;
 			});
@@ -223,10 +223,10 @@ describe.only('./exploration/index.js', () => {
 			expect(explorer.discoveries).to.have.lengthOf(0);
 
 			const makeDiscoveryStub = sinon.stub(Object.getPrototypeOf(exploration), 'makeDiscovery');
-			makeDiscoveryStub.callsFake(explorer => {
+			makeDiscoveryStub.callsFake((explorer) => {
 				const death = new DeathCard();
 				death.look(explorer.channel);
-				death.play(explorer.monster, explorer.monster)
+				death.play(explorer.monster, explorer.monster);
 
 				return death;
 			});

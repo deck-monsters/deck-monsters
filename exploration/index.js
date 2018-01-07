@@ -117,7 +117,7 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 		const discovery = new Discovery();
 		discovery.look(explorer.channel);
-		discovery.play(explorer.monster, explorer.monster)
+		discovery.play(explorer.monster, explorer.monster);
 
 		return discovery;
 	}
@@ -168,6 +168,6 @@ Exploration.defaults = {
 		// 'thief',
 		// 'restAndRecovery'
 	]
-}
+};
 
 module.exports = Exploration;
