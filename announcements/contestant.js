@@ -6,7 +6,7 @@ const announceContestant = (publicChannel, channelManager, className, ring, { co
 
 	publicChannel({
 		announce:
-`A${getFlavor('monsterAdjective')} ${monster.creatureType} has entered the ring at the behest of ${character.icon}  ${character.givenName}.
+`A${getFlavor('monsterAdjective')} ${monster.creatureType} has entered the ring at the behest of ${character.icon} ${character.givenName}.
 ${monsterCard(monster)}`
 	});
 };

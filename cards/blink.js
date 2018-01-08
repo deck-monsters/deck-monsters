@@ -83,7 +83,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 					card.effect = (player, target, effectRing, effectActiveContestants) => {
 						if (target === blinkTarget) {
 							this.emit('effect', {
-								effectResult: `not target-able because they are ${this.icon}  time-shifted by`,
+								effectResult: `not target-able because they are ${this.icon} time-shifted by`,
 								player: blinkPlayer,
 								target: blinkTarget,
 								effectRing
