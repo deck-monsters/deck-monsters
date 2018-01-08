@@ -43,7 +43,7 @@ Stroke of luck increases damage per hit by 1.`;
 						// We have to make a new BerserkCard here because just calling super.effect will cause a
 						// successfull hit to in turn call this.effect, which will result in hitting for 1d4 again
 						const berserk = new BerserkCard({ damage: this.damageAmount });
-						resolve(this.effect(player, target, ring, ring.contestants));
+						resolve(berserk.effect(player, target, ring, ring.contestants));
 					} else if (curseOfLoki) {
 						this.resetDamageAmount();
 						// Our attack is now bouncing back against us
