@@ -151,7 +151,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 }
 
 HornGore.cardType = 'Horn Gore';
-HornGore.probability = 20;
+HornGore.probability = 5;
 HornGore.description = 'You think those horns are just there to look pretty? Think again...';
 HornGore.cost = 6;
 HornGore.level = 0;

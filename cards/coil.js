@@ -20,7 +20,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 CoilCard.cardType = 'Coil';
 CoilCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
-CoilCard.probability = 20;
+CoilCard.probability = 5;
 CoilCard.level = 0;
 CoilCard.description = 'Your body is the weapon.';
 CoilCard.permittedClassesAndTypes = [BASILISK];

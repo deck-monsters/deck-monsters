@@ -178,7 +178,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 }
 
 BlinkCard.cardType = 'Blink';
-BlinkCard.probability = 20;
+BlinkCard.probability = 5;
 BlinkCard.description = "Consume your victim's potential energy";
 BlinkCard.cost = 4;
 BlinkCard.level = 0;
