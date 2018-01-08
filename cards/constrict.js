@@ -13,13 +13,12 @@ class ConstrictCard extends CoilCard {
 }
 
 ConstrictCard.cardType = 'Constrict';
-CoilCard.probability = 30;
-CoilCard.level = 1;
+ConstrictCard.probability = 30;
+ConstrictCard.level = 1;
 ConstrictCard.defaults = {
 	...CoilCard.defaults,
 	ongoingDamage: 2,
-	freedomThresholdModifier: 3,
-	level: 2
+	freedomThresholdModifier: 3
 };
 ConstrictCard.actions = ['constrict', 'constricts', 'constricted'];
 

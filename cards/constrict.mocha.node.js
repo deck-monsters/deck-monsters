@@ -66,7 +66,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 		expect(constrict.ongoingDamage).to.equal(3);
 	});
 
-	it('do not do damage on immobilize', () => {
+	it('do damage on immobilize', () => {
 		const constrict = new Constrict();
 		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(constrict)), 'checkSuccess');
 		const hitCheckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(constrict)), 'hitCheck');
