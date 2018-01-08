@@ -117,36 +117,34 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve) => {
-			// if the player stabs with their first horn, make it slightly more likely that the second
-			// horn will also stab, but just for this one attack. Therefore, need to store their
-			// pre-gore attackModifier and restore it once the second stab is resolved (and before the
-			// actual immobilize takes place so it doesn't interfere with the immobilize logic).
-			const originalAttackModifier = player.encounterModifiers.attackModifier;
+		// if the player stabs with their first horn, make it slightly more likely that the second
+		// horn will also stab, but just for this one attack. Therefore, need to store their
+		// pre-gore attackModifier and restore it once the second stab is resolved (and before the
+		// actual immobilize takes place so it doesn't interfere with the immobilize logic).
+		const originalAttackModifier = player.encounterModifiers.attackModifier;
 
-			this.resetImmobilizeStrength();
-			const horn1 = this.gore(player, target, 1);
-			const horn2 = this.gore(player, target, 2);
-			const chanceToImmobilize = horn1.success || horn2.success;
+		this.resetImmobilizeStrength();
+		const horn1 = this.gore(player, target, 1);
+		const horn2 = this.gore(player, target, 2);
+		const chanceToImmobilize = horn1.success || horn2.success;
 
-			player.encounterModifiers = { attackModifier: originalAttackModifier };
+		player.encounterModifiers = { attackModifier: originalAttackModifier };
 
-			if (!player.dead && chanceToImmobilize) {
-				if (target.dead) {
-					return resolve(false);
-				}
-
-				return resolve(super.effect(player, target, ring, activeContestants));
+		if (!player.dead && chanceToImmobilize) {
+			if (target.dead) {
+				return false;
 			}
-			this.emit('miss', {
-				attackResult: Math.max(horn1.attackRoll.result, horn2.attackRoll.result),
-				curseOfLoki: horn1.curseOfLoki || horn2.curseOfLoki,
-				player,
-				target
-			});
 
-			return resolve(!target.dead);
+			return super.effect(player, target, ring, activeContestants);
+		}
+		this.emit('miss', {
+			attackResult: Math.max(horn1.attackRoll.result, horn2.attackRoll.result),
+			curseOfLoki: horn1.curseOfLoki || horn2.curseOfLoki,
+			player,
+			target
 		});
+
+		return !target.dead;
 	}
 }
 

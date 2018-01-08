@@ -59,36 +59,34 @@ ${player.givenName}'s harrying jab takes from HP instead.`;
 	}
 
 	effect (player, target, ring) {
-		return new Promise((resolve) => {
-			const preCursedPropValue = target[this.cursedProp];
-			let curseAmount = Math.abs(this.curseAmount);
-			const postCursedPropValue = preCursedPropValue - curseAmount;
-			const preBattlePropValue = target.getPreBattlePropValue(this.cursedProp);
-			const aggregateTotalCurseAmount = difference(preBattlePropValue, postCursedPropValue);
+		const preCursedPropValue = target[this.cursedProp];
+		let curseAmount = Math.abs(this.curseAmount);
+		const postCursedPropValue = preCursedPropValue - curseAmount;
+		const preBattlePropValue = target.getPreBattlePropValue(this.cursedProp);
+		const aggregateTotalCurseAmount = difference(preBattlePropValue, postCursedPropValue);
 
-			// If the target has already been cursed for the max amount, make the curse overflow into their HP
-			const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.maxModifications[this.cursedProp] : 0;
-			if (hpCurseOverflow > 0) {
-				curseAmount -= hpCurseOverflow;
+		// If the target has already been cursed for the max amount, make the curse overflow into their HP
+		const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.maxModifications[this.cursedProp] : 0;
+		if (hpCurseOverflow > 0) {
+			curseAmount -= hpCurseOverflow;
 
-				this.emit('narration', {
-					narration: this.getCurseOverflowNarrative(player, target)
-				});
-				target.hit(Math.min(hpCurseOverflow, max(this.damageDice)), player, this);
-			}
+			this.emit('narration', {
+				narration: this.getCurseOverflowNarrative(player, target)
+			});
+			target.hit(Math.min(hpCurseOverflow, max(this.damageDice)), player, this);
+		}
 
-			if (curseAmount > 0) {
-				this.emit('narration', {
-					narration: this.getCurseNarrative(player, target)
-				});
-				target.setModifier(this.cursedProp, -curseAmount);
-			}
+		if (curseAmount > 0) {
+			this.emit('narration', {
+				narration: this.getCurseNarrative(player, target)
+			});
+			target.setModifier(this.cursedProp, -curseAmount);
+		}
 
-			if (this.hasChanceToHit) {
-				return resolve(super.effect(player, target, ring));
-			}
-			return resolve(true);
-		});
+		if (this.hasChanceToHit) {
+			return super.effect(player, target, ring);
+		}
+		return !target.dead;
 	}
 }
 

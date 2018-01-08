@@ -50,130 +50,128 @@ ${player.givenName}'s drain takes from HP instead.`;
 	}
 
 	effect (blinkPlayer, blinkTarget, ring, activeContestants) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve) => {
-			blinkTarget.blinkedTurns = 0;
-			const attackRoll = this.getAttackRoll(blinkPlayer);
-			const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.ac);
+		blinkTarget.blinkedTurns = 0;
+		const attackRoll = this.getAttackRoll(blinkPlayer);
+		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.ac);
 
-			this.emit('rolling', {
-				reason: `vs ${blinkTarget.givenName}'s AC (${blinkTarget.ac}) to see if ${blinkPlayer.pronouns[0]} time shifts ${blinkTarget.givenName}`,
-				card: this,
-				roll: attackRoll,
-				player: blinkPlayer,
-				target: blinkTarget,
-				outcome: ''
-			});
-
-			this.emit('rolled', {
-				reason: `vs AC (${blinkTarget.ac}) to try and touch ${blinkTarget.givenName} to time-shift ${blinkTarget.pronouns[1]}`,
-				card: this,
-				roll: attackRoll,
-				player: blinkPlayer,
-				target: blinkTarget,
-				outcome: `time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`
-			});
-
-			if (attackSuccess.success) {
-				const blinkEffect = ({
-					card,
-					phase
-				}) => {
-					const { effect } = card;
-
-					if (effect && phase === DEFENSE_PHASE) {
-						card.effect = (player, target, effectRing, effectActiveContestants) => {
-							if (target === blinkTarget) {
-								this.emit('effect', {
-									effectResult: `not target-able because they are ${this.icon}  time-shifted by`,
-									player: blinkPlayer,
-									target: blinkTarget,
-									effectRing
-								});
-
-								return Promise.resolve(true);
-							}
-							return effect.call(card, player, target, effectRing, effectActiveContestants);
-						};
-					} else if (phase === ATTACK_PHASE) {
-						const turnsLeftToBlink = this.turnsToBlink - blinkTarget.blinkedTurns;
-						if (turnsLeftToBlink && !blinkPlayer.dead) {
-							blinkTarget.blinkedTurns++;
-
-							const effectResult = `${this.icon}  time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
-							this.emit('effect', {
-								effectResult,
-								player: blinkPlayer,
-								target: blinkTarget,
-								ring
-							});
-
-							const hpToSteal = roll({ primaryDice: this.energyToStealDice });
-							const xpToSteal = roll({ primaryDice: this.curseAmountDice });
-							const combinedRoll = {
-								primaryDice: `${hpToSteal.primaryDice}(HP) & ${xpToSteal.primaryDice}(XP)`,
-								result: `${hpToSteal.result}(HP) & ${xpToSteal.result}(XP)`,
-								naturalRoll: {
-									result: `${hpToSteal.naturalRoll.result} & ${xpToSteal.naturalRoll.result}`
-								},
-								bonusResult: 0,
-								modifier: 0
-							};
-							this.curseAmount = -xpToSteal.result;
-
-							this.emit('rolling', {
-								reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,
-								card: this,
-								roll: combinedRoll,
-								player: blinkPlayer,
-								target: blinkTarget,
-								outcome: ''
-							});
-
-							this.emit('rolled', {
-								reason: 'to see how much potential energy to steal',
-								card: this,
-								roll: combinedRoll,
-								player: blinkPlayer,
-								target: blinkTarget,
-								outcome: ''
-							});
-
-							// drain hp
-							blinkTarget.hit(hpToSteal.result, blinkPlayer, this);
-							blinkPlayer.heal(hpToSteal.result, blinkTarget, this);
-
-							// drain xp
-							super.effect(blinkPlayer, blinkTarget, ring);
-							blinkPlayer.setModifier(this.cursedProp, xpToSteal.result);
-
-							card.play = () => Promise.resolve(true);
-						} else {
-							blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== 'BlinkEffect');
-
-							this.emit('narration', {
-								narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns[2]} eyes and finds ${blinkTarget.pronouns[1]}self in an unfamiliar time.`
-							});
-						}
-					}
-
-					return card;
-				};
-
-				blinkEffect.effectType = 'BlinkEffect';
-				blinkTarget.encounterEffects = [...blinkTarget.encounterEffects, blinkEffect];
-
-				return resolve(true);
-			}
-
-			this.emit('miss', {
-				attackResult: attackRoll.result,
-				attackRoll,
-				player: blinkPlayer,
-				target: blinkTarget
-			});
-
-			return resolve(true);
+		this.emit('rolling', {
+			reason: `vs ${blinkTarget.givenName}'s AC (${blinkTarget.ac}) to see if ${blinkPlayer.pronouns[0]} time shifts ${blinkTarget.givenName}`,
+			card: this,
+			roll: attackRoll,
+			player: blinkPlayer,
+			target: blinkTarget,
+			outcome: ''
 		});
+
+		this.emit('rolled', {
+			reason: `vs AC (${blinkTarget.ac}) to try and touch ${blinkTarget.givenName} to time-shift ${blinkTarget.pronouns[1]}`,
+			card: this,
+			roll: attackRoll,
+			player: blinkPlayer,
+			target: blinkTarget,
+			outcome: `time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`
+		});
+
+		if (attackSuccess.success) {
+			const blinkEffect = ({
+				card,
+				phase
+			}) => {
+				const { effect } = card;
+
+				if (effect && phase === DEFENSE_PHASE) {
+					card.effect = (player, target, effectRing, effectActiveContestants) => {
+						if (target === blinkTarget) {
+							this.emit('effect', {
+								effectResult: `not target-able because they are ${this.icon}  time-shifted by`,
+								player: blinkPlayer,
+								target: blinkTarget,
+								effectRing
+							});
+
+							return !blinkTarget.dead;
+						}
+						return effect.call(card, player, target, effectRing, effectActiveContestants);
+					};
+				} else if (phase === ATTACK_PHASE) {
+					const turnsLeftToBlink = this.turnsToBlink - blinkTarget.blinkedTurns;
+					if (turnsLeftToBlink && !blinkPlayer.dead) {
+						blinkTarget.blinkedTurns++;
+
+						const effectResult = `${this.icon}  time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
+						this.emit('effect', {
+							effectResult,
+							player: blinkPlayer,
+							target: blinkTarget,
+							ring
+						});
+
+						const hpToSteal = roll({ primaryDice: this.energyToStealDice });
+						const xpToSteal = roll({ primaryDice: this.curseAmountDice });
+						const combinedRoll = {
+							primaryDice: `${hpToSteal.primaryDice}(HP) & ${xpToSteal.primaryDice}(XP)`,
+							result: `${hpToSteal.result}(HP) & ${xpToSteal.result}(XP)`,
+							naturalRoll: {
+								result: `${hpToSteal.naturalRoll.result} & ${xpToSteal.naturalRoll.result}`
+							},
+							bonusResult: 0,
+							modifier: 0
+						};
+						this.curseAmount = -xpToSteal.result;
+
+						this.emit('rolling', {
+							reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,
+							card: this,
+							roll: combinedRoll,
+							player: blinkPlayer,
+							target: blinkTarget,
+							outcome: ''
+						});
+
+						this.emit('rolled', {
+							reason: 'to see how much potential energy to steal',
+							card: this,
+							roll: combinedRoll,
+							player: blinkPlayer,
+							target: blinkTarget,
+							outcome: ''
+						});
+
+						// drain hp
+						blinkTarget.hit(hpToSteal.result, blinkPlayer, this);
+						blinkPlayer.heal(hpToSteal.result, blinkTarget, this);
+
+						// drain xp
+						super.effect(blinkPlayer, blinkTarget, ring);
+						blinkPlayer.setModifier(this.cursedProp, xpToSteal.result);
+
+						card.play = () => Promise.resolve(true);
+					} else {
+						blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== 'BlinkEffect');
+
+						this.emit('narration', {
+							narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns[2]} eyes and finds ${blinkTarget.pronouns[1]}self in an unfamiliar time.`
+						});
+					}
+				}
+
+				return card;
+			};
+
+			blinkEffect.effectType = 'BlinkEffect';
+			blinkTarget.encounterEffects = [...blinkTarget.encounterEffects, blinkEffect];
+
+			return true;
+		}
+
+		this.emit('miss', {
+			attackResult: attackRoll.result,
+			attackRoll,
+			player: blinkPlayer,
+			target: blinkTarget
+		});
+
+		return true;
 	}
 }
 

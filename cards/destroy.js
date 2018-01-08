@@ -27,7 +27,7 @@ class DestroyCard extends BaseCard {
 	effect (player, target, ring, activeContestants) {
 		const damage = this.damage + (this.levelDamage * player.level);
 
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			resolve(Promise.all(activeContestants.map(({ monster }) => {
 				if (monster !== player) {
 					return monster.hit(damage, player, this);
@@ -35,7 +35,8 @@ class DestroyCard extends BaseCard {
 
 				return Promise.resolve();
 			}))
-				.then(() => !target.dead));
+				.then(() => !target.dead)
+				.catch(ex => reject(ex)));
 		});
 	}
 }

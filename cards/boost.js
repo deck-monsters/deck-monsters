@@ -27,11 +27,9 @@ class BoostCard extends BaseCard {
 	}
 
 	effect (player, target) {
-		return new Promise((resolve) => {
-			target.setModifier(this.boostedProp, this.boostAmount);
+		target.setModifier(this.boostedProp, this.boostAmount);
 
-			resolve(true);
-		});
+		return true;
 	}
 }
 

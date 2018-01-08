@@ -55,7 +55,12 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 	it('can be instantiated with options', () => {
 		const coil = new Coil({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: false, ongoingDamage: 0
+			freedomThresholdModifier: 2,
+			damageModifier: 4,
+			attackModifier: 4,
+			hitOnFail: true,
+			doDamageOnImmobilize: false,
+			ongoingDamage: 0
 		});
 
 		expect(coil).to.be.an.instanceof(Coil);

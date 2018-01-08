@@ -32,13 +32,11 @@ class TestCard extends BaseCard {
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve) => {
-			player.played = (player.played || 0) + 1;
-			target.targeted = (target.targeted || 0) + 1;
-			this.played = (this.played || 0) + 1;
+		player.played = (player.played || 0) + 1;
+		target.targeted = (target.targeted || 0) + 1;
+		this.played = (this.played || 0) + 1;
 
-			resolve(true);
-		});
+		return true;
 	}
 }
 
