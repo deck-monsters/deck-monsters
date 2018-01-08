@@ -172,10 +172,10 @@ const hydrateDeck = (deckJSON, monster) => {
 	const minimumDeckCardCounts = getCardCounts(minimumDeck);
 	const deckCardCounts = getCardCounts(deck);
 
-	Object.keys(minimumDeckCardCounts).forEach((card) => {
-		for (let i = deckCardCounts[card] || 0; i < minimumDeckCardCounts[card]; i++) {
-			const Card = all.find(({ cardType }) => cardType.toLowerCase() === card.toLowerCase());
-			if (Card) deck.push(new Card());
+	Object.keys(minimumDeckCardCounts).forEach((expectedCardType) => {
+		for (let i = deckCardCounts[expectedCardType] || 0; i < minimumDeckCardCounts[expectedCardType]; i++) {
+			const card = minimumDeck.find(({ cardType }) => cardType === expectedCardType);
+			if (card) deck.push(card);
 		}
 	});
 
