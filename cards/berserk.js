@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const HitCard = require('./hit');
-const { GLADIATOR } = require('../helpers/creature-types');
+const { BARBARIAN } = require('../helpers/classes');
 
 class BerserkCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -76,11 +76,11 @@ Stroke of luck increases damage per hit by 1.`;
 }
 
 BerserkCard.cardType = 'Berserk';
-BerserkCard.probability = 20;
+BerserkCard.probability = 40;
 BerserkCard.description = 'The whole world disappears into a beautiful still, silent, red. At the center of all things is the perfect face of your enemy. Destroy it.';
 BerserkCard.cost = 6;
-BerserkCard.level = 0;
-BerserkCard.permittedClassesAndTypes = [GLADIATOR];
+BerserkCard.level = 1;
+BerserkCard.permittedClassesAndTypes = [BARBARIAN];
 BerserkCard.defaults = {
 	...HitCard.defaults,
 	damage: 1
