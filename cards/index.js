@@ -113,6 +113,7 @@ const getInitialDeck = (options, creature) => {
 		new CoilCard(),
 		new HornGoreCard(),
 		new BerserkCard(),
+		new BlastCard(),
 		new HitCard(),
 		new HitCard(),
 		new HitCard(),
