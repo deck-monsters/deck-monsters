@@ -35,15 +35,17 @@ describe('./cards/battle-focus.js', () => {
 		const battleFocus = new BattleFocusCard();
 
 		expect(battleFocus).to.be.an.instanceof(BattleFocusCard);
+		expect(battleFocus.bigFirstHit).to.be.true;
 		expect(battleFocus.damageAmount).to.equal(1);
 		expect(battleFocus.damageDice).to.equal('1d4');
 		expect(battleFocus.stats).to.equal('Hit: 1d20 vs AC until you miss\n1d4 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {
-		const battleFocus = new BattleFocusCard({ damage: 4, damageDice: '2d4' });
+		const battleFocus = new BattleFocusCard({ damage: 4, damageDice: '2d4', bigFirstHit: false });
 
 		expect(battleFocus).to.be.an.instanceof(BattleFocusCard);
+		expect(battleFocus.bigFirstHit).to.be.false;
 		expect(battleFocus.damageAmount).to.equal(4);
 		expect(battleFocus.damageDice).to.equal('2d4');
 	});
@@ -73,8 +75,8 @@ describe('./cards/battle-focus.js', () => {
 		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
 		const getDamageRollStub = sinon.stub(hitProto, 'getDamageRoll').callsFake(() =>
 			({ naturalRoll: { result: 4 }, result: 5 }));
-		const battleFocusEffectSpy = sinon.spy(battleFocusProto, 'effect');
 		const berserkEffectSpy = sinon.spy(berserkProto, 'effect');
+		const berserkEffectLoopSpy = sinon.spy(berserkProto, 'effectLoop');
 		const hitEffectSpy = sinon.spy(hitProto, 'effect');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
@@ -114,13 +116,13 @@ describe('./cards/battle-focus.js', () => {
 				checkSuccessStub.restore();
 				hitCheckStub.restore();
 				getDamageRollStub.restore();
-				battleFocusEffectSpy.restore();
 				berserkEffectSpy.restore();
+				berserkEffectLoopSpy.restore();
 				hitEffectSpy.restore();
 				hitSpy.restore();
 
-				expect(battleFocusEffectSpy.callCount).to.equal(1);
-				expect(berserkEffectSpy.callCount).to.equal(2);
+				expect(berserkEffectSpy.callCount).to.equal(1);
+				expect(berserkEffectLoopSpy.callCount).to.equal(3);
 				expect(hitCheckStub.callCount).to.equal(3);
 				expect(hitEffectSpy.callCount).to.equal(0);
 				expect(hitSpy.callCount).to.equal(2);

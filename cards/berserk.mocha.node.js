@@ -35,14 +35,16 @@ describe('./cards/berserk.js', () => {
 		const berserk = new BerserkCard();
 
 		expect(berserk).to.be.an.instanceof(BerserkCard);
+		expect(berserk.bigFirstHit).to.be.false;
 		expect(berserk.damageAmount).to.equal(1);
 		expect(berserk.stats).to.equal('Hit: 1d20 vs AC until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {
-		const berserk = new BerserkCard({ damage: 4 });
+		const berserk = new BerserkCard({ damage: 4, bigFirstHit: true });
 
 		expect(berserk).to.be.an.instanceof(BerserkCard);
+		expect(berserk.bigFirstHit).to.be.true;
 		expect(berserk.damageAmount).to.equal(4);
 	});
 
@@ -69,6 +71,7 @@ describe('./cards/berserk.js', () => {
 			({ success: true, strokeOfLuck: false, curseOfLoki: false }));
 		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
 		const berserkEffectSpy = sinon.spy(berserkProto, 'effect');
+		const berserkEffectLoopSpy = sinon.spy(berserkProto, 'effectLoop');
 		const hitEffectSpy = sinon.spy(hitProto, 'effect');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
@@ -105,15 +108,17 @@ describe('./cards/berserk.js', () => {
 		return berserk
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect(berserkEffectSpy.callCount).to.equal(3);
-				expect(hitCheckStub.callCount).to.equal(3);
-				expect(hitEffectSpy.callCount).to.equal(0);
-				expect(hitSpy.callCount).to.equal(2);
 				hitCheckStub.restore();
 				hitEffectSpy.restore();
 				checkSuccessStub.restore();
 				hitSpy.restore();
 				berserkEffectSpy.restore();
+
+				expect(berserkEffectSpy.callCount).to.equal(1);
+				expect(berserkEffectLoopSpy.callCount).to.equal(3);
+				expect(hitCheckStub.callCount).to.equal(3);
+				expect(hitEffectSpy.callCount).to.equal(0);
+				expect(hitSpy.callCount).to.equal(2);
 
 				return expect(target.hp).to.equal(before - 2);
 			});

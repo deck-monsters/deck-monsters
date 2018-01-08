@@ -6,6 +6,7 @@ const { BARBARIAN } = require('../helpers/classes');
 class BerserkCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		bigFirstHit,
 		damage,
 		icon = '😤',
 		...rest
@@ -13,6 +14,7 @@ class BerserkCard extends HitCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
+			bigFirstHit,
 			damage
 		});
 
@@ -21,6 +23,14 @@ class BerserkCard extends HitCard {
 
 	resetDamageAmount () {
 		this.damageAmount = this.options.damage;
+	}
+
+	set bigFirstHit (bigFirstHit) {
+		this.bigFirstHit = bigFirstHit;
+	}
+
+	get bigFirstHit () {
+		return this.options.bigFirstHit;
 	}
 
 	set damageAmount (amount) {
@@ -32,14 +42,20 @@ class BerserkCard extends HitCard {
 	}
 
 	get stats () {
+		let damageDescription = `${this.damageAmount} damage per hit.`;
+		if (this.bigFirstHit) {
+			damageDescription = `${this.damageDice} damage on first hit.
+${this.damageAmount} damage per hit after that.`;
+		}
+
 		return `Hit: ${this.attackDice} vs AC until you miss
-${this.damageAmount} damage per hit.
+${damageDescription}
 
 Stroke of luck increases damage per hit by 1.`;
 	}
 
-	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve) => {
+	effectLoop (firstHit, player, target, ring, activeContestants) {
+		return new Promise((resolve, reject) => {
 			// Add any player modifiers and roll the dice
 			const {
 				attackRoll, success, strokeOfLuck, curseOfLoki
@@ -52,13 +68,23 @@ Stroke of luck increases damage per hit by 1.`;
 			ring.channelManager.sendMessages()
 				.then(() => {
 					if (success) {
+						let damage = this.damageAmount;
+						if (firstHit && this.bigFirstHit) {
+							damage = this.rollForDamage(player, target, strokeOfLuck).result;
+						}
+
 						// If we hit then do some damage
-						target.hit(this.damageAmount, player, this);
-						resolve(this.effect(player, target, ring, activeContestants));
+						target.hit(damage, player, this);
+						resolve(this.effectLoop(false, player, target, ring, activeContestants));
 					} else if (curseOfLoki) {
+						let damage = this.damageAmount;
+						if (firstHit && this.bigFirstHit) {
+							damage = this.rollForDamage(player, target, strokeOfLuck).result;
+						}
+
 						this.resetDamageAmount();
 						// Our attack is now bouncing back against us
-						resolve(player.hit(1, target, this));
+						resolve(player.hit(damage, target, this));
 					} else {
 						this.resetDamageAmount();
 						this.emit('miss', {
@@ -70,8 +96,12 @@ Stroke of luck increases damage per hit by 1.`;
 
 						resolve(!target.dead);
 					}
-				});
+				}).catch(ex => reject(ex));
 		});
+	}
+
+	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
+		return this.effectLoop(true, player, target, ring, activeContestants);
 	}
 }
 
@@ -83,7 +113,8 @@ BerserkCard.level = 1;
 BerserkCard.permittedClassesAndTypes = [BARBARIAN];
 BerserkCard.defaults = {
 	...HitCard.defaults,
-	damage: 1
+	damage: 1,
+	bigFirstHit: false
 };
 
 BerserkCard.flavors = {
