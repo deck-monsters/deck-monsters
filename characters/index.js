@@ -4,7 +4,7 @@ const sample = require('lodash.sample');
 const shuffle = require('lodash.shuffle');
 
 const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
-const { hydrateCard, fillDeck } = require('../cards');
+const { hydrateDeck, fillDeck } = require('../cards');
 const { all: allMonsters, hydrateMonster } = require('../monsters');
 const { randomInt } = require('../helpers/chance');
 const { XP_PER_VICTORY } = require('../helpers/experience');
@@ -160,7 +160,7 @@ const hydrateCharacter = (characterObj) => {
 	const Character = all.find(({ name }) => name === characterObj.name);
 	const options = Object.assign({ deck: [], monsters: [] }, characterObj.options);
 
-	options.deck = options.deck.map(cardObj => hydrateCard(cardObj));
+	options.deck = hydrateDeck(options.deck);
 	options.monsters = options.monsters.map(monsterObj => hydrateMonster(monsterObj, options.deck));
 
 	const character = new Character(options);

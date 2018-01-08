@@ -164,10 +164,9 @@ const hydrateCard = (cardObj, monster, deck = []) => {
 	return draw({}, monster);
 };
 
-const hydrateDeck = (deckJSON, monster) => {
-	const deck = JSON
-		.parse(deckJSON)
-		.map(cardObj => hydrateCard(cardObj, monster));
+const hydrateDeck = (deckJSON = [], monster) => {
+	let deck = typeof deckJSON === 'string' ? JSON.parse(deckJSON) : deckJSON;
+	deck = deck.map(cardObj => hydrateCard(cardObj, monster));
 
 	const minimumDeck = getMinimumDeck();
 	const minimumDeckCardCounts = getCardCounts(minimumDeck);
