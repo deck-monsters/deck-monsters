@@ -73,7 +73,7 @@ describe('./cards/battle-focus.js', () => {
 		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess').callsFake(() =>
 			({ success: true, strokeOfLuck: false, curseOfLoki: false }));
 		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
-		const getDamageRollStub = sinon.stub(hitProto, 'getDamageRoll').callsFake(() =>
+		const getDamageRollStub = sinon.stub(berserkProto, 'getDamageRoll').callsFake(() =>
 			({ naturalRoll: { result: 4 }, result: 5 }));
 		const berserkEffectSpy = sinon.spy(berserkProto, 'effect');
 		const berserkEffectLoopSpy = sinon.spy(berserkProto, 'effectLoop');
@@ -148,7 +148,7 @@ describe('./cards/battle-focus.js', () => {
 		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess').callsFake(() =>
 			({ success: true, strokeOfLuck: false, curseOfLoki: false }));
 		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
-		const getDamageRollStub = sinon.stub(hitProto, 'getDamageRoll').callsFake(() =>
+		const getDamageRollStub = sinon.stub(berserkProto, 'getDamageRoll').callsFake(() =>
 			({ naturalRoll: { result: 4 }, result: 5 }));
 		const battleFocusEffectSpy = sinon.spy(battleFocusProto, 'effect');
 		const berserkEffectSpy = sinon.spy(berserkProto, 'effect');

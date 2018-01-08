@@ -1,7 +1,8 @@
 /* eslint-disable max-len */
 
-const HitCard = require('./hit');
 const { BARBARIAN } = require('../helpers/classes');
+const { roll } = require('../helpers/chance');
+const HitCard = require('./hit');
 
 class BerserkCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -52,6 +53,10 @@ ${this.damageAmount} damage per hit after that.`;
 ${damageDescription}
 
 Stroke of luck increases damage per hit by 1.`;
+	}
+
+	getDamageRoll () {
+		return roll({ primaryDice: this.damageDice });
 	}
 
 	effectLoop (firstHit, player, target, ring, activeContestants) {
