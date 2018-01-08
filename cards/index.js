@@ -2,6 +2,7 @@ const shuffle = require('lodash.shuffle');
 
 const isProbable = require('../helpers/is-probable');
 const BasicShieldCard = require('./basic-shield');
+const BattleFocusCard = require('./battle-focus');
 const BerserkCard = require('./berserk');
 const BlastCard = require('./blast');
 const BlinkCard = require('./blink');
@@ -9,7 +10,7 @@ const BoostCard = require('./boost');
 const BrainDrainCard = require('./brain-drain');
 const CamouflageVestCard = require('./camouflage-vest');
 const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
-const CoilCard = require('./constrict');
+const CoilCard = require('./coil');
 const ConstrictCard = require('./constrict');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
@@ -43,6 +44,7 @@ const DEFAULT_MINIMUM_CARDS = 14;
 
 const all = [
 	BasicShieldCard,
+	BattleFocusCard,
 	BerserkCard,
 	BlastCard,
 	BlinkCard,
@@ -80,6 +82,21 @@ const all = [
 	WoodenSpearCard
 ];
 
+const minimumDeck = [
+	new BlinkCard(),
+	new CoilCard(),
+	new HornGoreCard(),
+	new BattleFocusCard(),
+	new BlastCard(),
+	new HitCard(),
+	new HitCard(),
+	new HitCard(),
+	new HitCard(),
+	new HealCard(),
+	new HealCard(),
+	new FleeCard()
+];
+
 const draw = (options, creature) => {
 	let deck = shuffle(all);
 
@@ -106,25 +123,7 @@ const fillDeck = (deck, options, creature) => {
 	return deck;
 };
 
-const getInitialDeck = (options, creature) => {
-	// See above re: options
-	const deck = [
-		new BlinkCard(),
-		new CoilCard(),
-		new HornGoreCard(),
-		new BerserkCard(),
-		new BlastCard(),
-		new HitCard(),
-		new HitCard(),
-		new HitCard(),
-		new HitCard(),
-		new HealCard(),
-		new HealCard(),
-		new FleeCard()
-	];
-
-	return fillDeck(deck, options, creature);
-};
+const getInitialDeck = (options, creature) => fillDeck(minimumDeck, options, creature);
 
 const isMatchingCard = (card1, card2) => card1.name === card2.name && JSON.stringify(card1) === JSON.stringify(card2);
 
@@ -165,9 +164,23 @@ const hydrateCard = (cardObj, monster, deck = []) => {
 	return draw({}, monster);
 };
 
-const hydrateDeck = (deckJSON, monster) => JSON
-	.parse(deckJSON)
-	.map(cardObj => hydrateCard(cardObj, monster));
+const hydrateDeck = (deckJSON, monster) => {
+	const deck = JSON
+		.parse(deckJSON)
+		.map(cardObj => hydrateCard(cardObj, monster));
+
+	const minimumDeckCardCounts = getCardCounts(minimumDeck);
+	const deckCardCounts = getCardCounts(deck);
+
+	Object.keys(minimumDeckCardCounts).forEach((card) => {
+		for (let i = deckCardCounts[card] || 0; i < minimumDeckCardCounts[card]; i++) {
+			const Card = all.find(({ cardType }) => cardType.toLowerCase() === card.toLowerCase());
+			if (Card) deck.push(new Card());
+		}
+	});
+
+	return deck;
+};
 
 module.exports = {
 	all,
