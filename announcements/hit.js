@@ -24,7 +24,7 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 		announce:
 `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
 
-${monster.icon}  *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
+${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
 `
 	});
 };

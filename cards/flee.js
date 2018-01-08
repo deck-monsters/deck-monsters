@@ -18,7 +18,7 @@ class FleeCard extends BaseCard {
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			if (target.bloodied) {
 				const fleeRoll = roll({ primaryDice: '1d20' });
 				const { success } = this.checkSuccess(fleeRoll, 10);
@@ -46,7 +46,7 @@ class FleeCard extends BaseCard {
 						});
 
 						return resolve(true);
-					});
+					}).catch(ex => reject(ex));
 			} else {
 				this.emit('stay', {
 					player,

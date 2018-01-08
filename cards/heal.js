@@ -31,28 +31,26 @@ Possiblity of Stroke of Luck`;
 
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve) => {
-			const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
-			let healResult = healRoll.result;
-			let outcome = '';
+		const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
+		let healResult = healRoll.result;
+		let outcome = '';
 
-			// Stroke of Luck
-			if (isProbable({ probability: 1 })) {
-				healResult = Math.floor(player.maxHp / 2);
-				outcome = 'Stroke of luck. Heal half max HP.';
-			}
+		// Stroke of Luck
+		if (isProbable({ probability: 1 })) {
+			healResult = Math.floor(player.maxHp / 2);
+			outcome = 'Stroke of luck. Heal half max HP.';
+		}
 
-			this.emit('rolled', {
-				reason: 'to determine how much to heal',
-				card: this,
-				roll: healRoll,
-				player,
-				target,
-				outcome
-			});
-
-			resolve(target.heal(healResult));
+		this.emit('rolled', {
+			reason: 'to determine how much to heal',
+			card: this,
+			roll: healRoll,
+			player,
+			target,
+			outcome
 		});
+
+		return target.heal(healResult);
 	}
 }
 

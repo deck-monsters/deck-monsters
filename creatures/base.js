@@ -93,7 +93,7 @@ class BaseCreature extends BaseClass {
 	}
 
 	get identity () {
-		return `${this.icon}  ${this.givenName}`;
+		return `${this.icon} ${this.givenName}`;
 	}
 
 	get identityWithHp () {
