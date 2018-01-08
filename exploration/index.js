@@ -10,6 +10,8 @@ const HazardCard = require('./discoveries/hazard');
 const NothingCard = require('./discoveries/nothing');
 const DeathCard = require('./discoveries/death');
 
+const TheWorld = require('../monsters/environment');
+
 const { ONE_MINUTE } = require('../helpers/delay-times');
 
 class Exploration extends BaseClass {
@@ -20,6 +22,16 @@ class Exploration extends BaseClass {
 		this.channelManager = channelManager;
 
 		this.startExplorationTimer();
+	}
+
+	get environment () {
+		return this.options.environment;
+	}
+
+	set environment (environment) {
+		return this.setOptions({
+			environment
+		});
 	}
 
 	get explorers () {
@@ -117,7 +129,7 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 		const discovery = new Discovery();
 		discovery.look(explorer.channel);
-		discovery.play(explorer.monster, explorer.monster);
+		discovery.play(this.environment, explorer.monster);
 
 		return discovery;
 	}
@@ -153,9 +165,9 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 Exploration.eventPrefix = 'exploration';
 Exploration.defaults = {
 	discoveries: [
-		DeathCard,
-		HazardCard,
-		NothingCard
+		// DeathCard,
+		HazardCard
+		// NothingCard
 		// 'card',
 		// 'monster',
 		// 'coins',
@@ -167,7 +179,8 @@ Exploration.defaults = {
 		// 'merchant',
 		// 'thief',
 		// 'restAndRecovery'
-	]
+	],
+	environment: new TheWorld()
 };
 
 module.exports = Exploration;

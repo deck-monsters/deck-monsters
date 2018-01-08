@@ -2,8 +2,6 @@ const BaseCard = require('../../cards/base');
 
 const { discoveryCard } = require('../../helpers/card');
 
-const { getFlavor } = require('../../helpers/flavor');
-
 class BaseDiscoveryCard extends BaseCard {
 	constructor (options) {
 		super(options);
@@ -11,10 +9,6 @@ class BaseDiscoveryCard extends BaseCard {
 		if (this.name === BaseDiscoveryCard.name) {
 			throw new Error('The BaseDiscoveryCard Card should not be instantiated directly!');
 		}
-	}
-
-	get flavor () {
-		return getFlavor(this.cardType.toLowerCase(), this.flavors)[0];
 	}
 
 	look (channel) {

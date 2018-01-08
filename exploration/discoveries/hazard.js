@@ -36,27 +36,27 @@ class HazardCard extends BaseCard {
 		const damageFlavors = [
 			[
 				['is caught in a sudden thunderstorm, and pummeled with hail for', 10, '⛈'],
-				[`stubs ${player.pronouns[1]} toe on a rock for`, 50, '👣'],
+				[`stubs ${player.pronouns[2]} toe on a rock for`, 50, '👣'],
 				['steps on a jagged stick and takes', 50, '👣'],
 				[`finds ${player.pronouns[1]}self caught in briars and takes`, 50, '🌵'],
 				['walks through a patch of stinging nettles and takes', 50, '🌿'],
 				['is eaten up by mosquitos for', 60, '🐜'],
 				['is bitten by a large spider for', 40, '🕷'],
 				['eats some mildly rotten trail rations and falls ill for', 5, '🤢'],
-				[`is terribly frightened by ${player.pronouns[1]} own ghost and takes`, 1, '👻']
+				[`is terribly frightened by ${player.pronouns[2]} own ghost and takes`, 1, '👻']
 			],
 			[
 				['is caught in a sudden windstorm, hit by debris and branches, and takes', 20, '🌬'],
 				['stumbles through some poison ivy and takes', 50, '🍂'],
 				['walks through a patch of saw grass and takes', 50, '🌾'],
-				[`trips, falls, and scrapes ${player.pronouns[1]} hands and knees for`, 80, '🚷'],
+				[`trips, falls, and scrapes ${player.pronouns[2]} hands and knees for`, 80, '🚷'],
 				['is pelted with acorns by an angry squirrel for', 40, '🐿'],
 				['is taken by surprise by a fast moving cold-front and suffers from mild exposure for', 20, '❄️'],
 				['gets in a fight with a troll over a disagreement about bridge fees, and is immediately tossed into the river for', 1, '👹']
 			],
 			[
 				['falls into a hole and takes', 20, '🕳'],
-				[`hits ${player.pronouns[1]} head on a low hanging branch for`, 80, '🌳'],
+				[`hits ${player.pronouns[2]} head on a low hanging branch for`, 80, '🌳'],
 				['is pelted with stones and walnuts by a troop of territorial monkeys for', 40, '🐒'],
 				['is stung by a scorpion for', 40, '🦂'],
 				['gets a particularly bad sunburn and receives', 65, '☀️'],
@@ -64,7 +64,7 @@ class HazardCard extends BaseCard {
 				['is chased by goblins and pelted with rocks and sticks and receives', 1, '👺']
 			],
 			[
-				[`is burnt by ${player.pronouns[1]} camp fire for`, 50, '🔥'],
+				[`is burnt by ${player.pronouns[2]} camp fire for`, 50, '🔥'],
 				['is caught in a sudden forest fire and takes', 20, '🔥'],
 				['steps on a hornet\'s nest and is stung repeatedly for', 40, '🐝'],
 				[`is caught off guard by a wild boar who, before dissapearing back into the foliage, rams ${player.pronouns[1]} for`, 70, '🐗'],
@@ -73,18 +73,18 @@ class HazardCard extends BaseCard {
 			]
 		];
 
-		return damageFlavors[number];
+		return { hazards: damageFlavors[number] };
 	}
 
-	effect (player) {
+	effect (environment, player) {
 		const damage = roll({ primaryDice: this.damageDice }).result;
 
 		this.flavors = this.getDamageFlavors(player, damage - 1);
 
-		this.flavor = getFlavor('hits', this.flavors);
-		this.flavorText = `${this.flavor[2]} ${player.icon}  ${player.givenName} ${this.flavor[0]} ${damage} damage.`;
+		this.flavor = getFlavor('hazards', this.flavors);
+		this.flavorText = `${this.flavor[2]}  ${player.icon}  ${player.givenName} ${this.flavor[0]} ${damage} damage.`;
 
-		player.hit(damage, this);
+		player.hit(damage, environment, this);
 
 		return player;
 	}
