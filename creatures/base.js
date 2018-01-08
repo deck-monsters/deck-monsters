@@ -427,6 +427,8 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	hit (damage = 0, assailant, card) {
+		if (this.hp < 1) return false;
+
 		const hp = this.hp - damage;
 		const originalHP = this.hp;
 
@@ -492,20 +494,20 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	die (assailant) {
-		if (this.hp <= 0) {
-			if (assailant instanceof BaseCreature) {
-				assailant.killed = this;
-				this.killedBy = assailant;
-			}
-
-			this.emit('die', {
-				destroyed: this.destroyed,
-				assailant
-			});
-		}
-
 		if (this.hp > 0) {
 			this.hp = 0;
+		}
+
+		if (assailant instanceof BaseCreature) {
+			if (!this.killedBy) { // You can only be killed by one monster
+				assailant.killed = this;
+				this.killedBy = assailant;
+
+				this.emit('die', {
+					destroyed: this.destroyed,
+					assailant
+				});
+			}
 		}
 
 		return false;
