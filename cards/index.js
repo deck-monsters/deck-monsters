@@ -82,7 +82,7 @@ const all = [
 	WoodenSpearCard
 ];
 
-const minimumDeck = [
+const getMinimumDeck = () => [
 	new BlinkCard(),
 	new CoilCard(),
 	new HornGoreCard(),
@@ -123,7 +123,7 @@ const fillDeck = (deck, options, creature) => {
 	return deck;
 };
 
-const getInitialDeck = (options, creature) => fillDeck(minimumDeck, options, creature);
+const getInitialDeck = (options, creature) => fillDeck(getMinimumDeck(), options, creature);
 
 const isMatchingCard = (card1, card2) => card1.name === card2.name && JSON.stringify(card1) === JSON.stringify(card2);
 
@@ -169,6 +169,7 @@ const hydrateDeck = (deckJSON, monster) => {
 		.parse(deckJSON)
 		.map(cardObj => hydrateCard(cardObj, monster));
 
+	const minimumDeck = getMinimumDeck();
 	const minimumDeckCardCounts = getCardCounts(minimumDeck);
 	const deckCardCounts = getCardCounts(deck);
 
