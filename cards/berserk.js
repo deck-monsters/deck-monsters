@@ -38,7 +38,7 @@ ${this.damageAmount} damage per hit.
 Stroke of luck increases damage per hit by 1.`;
 	}
 
-	effect (player, target, ring) { // eslint-disable-line no-unused-vars
+	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		return new Promise((resolve) => {
 			// Add any player modifiers and roll the dice
 			const {
@@ -54,7 +54,7 @@ Stroke of luck increases damage per hit by 1.`;
 					if (success) {
 						// If we hit then do some damage
 						target.hit(this.damageAmount, player, this);
-						resolve(this.effect(player, target, ring));
+						resolve(this.effect(player, target, ring, activeContestants));
 					} else if (curseOfLoki) {
 						this.resetDamageAmount();
 						// Our attack is now bouncing back against us

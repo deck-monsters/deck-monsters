@@ -22,8 +22,8 @@ ${this.damageAmount} damage per hit after that.
 Stroke of luck increases damage per hit by 1.`;
 	}
 
-	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve) => {
+	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
+		return new Promise((resolve, reject) => {
 			// Add any player modifiers and roll the dice
 			const {
 				attackRoll, success, strokeOfLuck, curseOfLoki
@@ -43,7 +43,7 @@ Stroke of luck increases damage per hit by 1.`;
 						// We have to make a new BerserkCard here because just calling super.effect will cause a
 						// successfull hit to in turn call this.effect, which will result in hitting for 1d4 again
 						const berserk = new BerserkCard({ damage: this.damageAmount });
-						resolve(this.effect(player, target, ring, ring.contestants));
+						resolve(berserk.effect(player, target, ring, activeContestants));
 					} else if (curseOfLoki) {
 						this.resetDamageAmount();
 						// Our attack is now bouncing back against us
@@ -60,7 +60,7 @@ Stroke of luck increases damage per hit by 1.`;
 
 						resolve(!target.dead);
 					}
-				});
+				}).catch(ex => reject(ex));
 		});
 	}
 }
