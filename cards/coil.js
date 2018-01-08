@@ -14,7 +14,7 @@ class CoilCard extends ImmobilizeCard {
 	}
 	get stats () {
 		return `${super.stats}
-Chance to immobilize opponent by coiling your serpentine body around them and then squeezing.`;
+Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
 	}
 }
 
@@ -27,7 +27,7 @@ CoilCard.permittedClassesAndTypes = [BASILISK];
 CoilCard.weakAgainstCreatureTypes = [BASILISK];
 CoilCard.defaults = {
 	...ImmobilizeCard.defaults,
-	doDamageOnImmobilize: false,
+	doDamageOnImmobilize: true,
 	ongoingDamage: 1,
 	freedomThresholdModifier: 0
 };

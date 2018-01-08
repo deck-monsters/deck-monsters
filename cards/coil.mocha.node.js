@@ -38,14 +38,14 @@ describe('./cards/coil.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
-Chance to immobilize opponent by coiling your serpentine body around them and then squeezing.`;
+Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
 
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(0);
 		expect(coil.attackModifier).to.equal(2);
 		expect(coil.damageModifier).to.equal(0);
 		expect(coil.hitOnFail).to.be.false;
-		expect(coil.doDamageOnImmobilize).to.be.false;
+		expect(coil.doDamageOnImmobilize).to.be.true;
 		expect(coil.ongoingDamage).to.equal(1);
 		expect(coil.stats).to.equal(stats);
 		expect(coil.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, MINOTAUR]);
@@ -55,7 +55,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 
 	it('can be instantiated with options', () => {
 		const coil = new Coil({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true, ongoingDamage: 0
+			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: false, ongoingDamage: 0
 		});
 
 		expect(coil).to.be.an.instanceof(Coil);
@@ -63,7 +63,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 		expect(coil.attackModifier).to.equal(4);
 		expect(coil.damageModifier).to.equal(4);
 		expect(coil.hitOnFail).to.be.true;
-		expect(coil.doDamageOnImmobilize).to.be.true;
+		expect(coil.doDamageOnImmobilize).to.be.false;
 		expect(coil.ongoingDamage).to.equal(0);
 	});
 
@@ -99,11 +99,14 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 			curseOfLoki: false
 		});
 
+		let ongoingHP = startingTargetHP;
+
 		return coil
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
 				expect(target.encounterEffects.length).to.equal(1);
-				expect(target.hp).to.equal(startingTargetHP);
+				expect(target.hp).to.below(startingTargetHP);
+				ongoingHP = target.hp;
 				expect(player.hp).to.equal(startingPlayerHP);
 
 				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
@@ -124,7 +127,8 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 				return card
 					.play(target, player, ring, ring.contestants)
 					.then(() => {
-						expect(target.hp).to.equal(startingTargetHP - 1);
+						expect(target.hp).to.equal(ongoingHP - 1);
+						ongoingHP = target.hp;
 						expect(player.hp).to.equal(startingPlayerHP);
 						expect(target.encounterEffects.length).to.equal(1);
 
@@ -149,7 +153,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 								checkSuccessStub.restore();
 								hitCheckStub.restore();
 
-								expect(target.hp).to.equal(startingTargetHP - 1);
+								expect(target.hp).to.equal(ongoingHP);
 								return expect(target.encounterEffects.length).to.equal(0);
 							});
 					});
