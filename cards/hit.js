@@ -105,7 +105,7 @@ class HitCard extends BaseCard {
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			// Add any player modifiers and roll the dice
 			const {
 				attackRoll, success, strokeOfLuck, curseOfLoki // TODO: Is this curseOfLoki used elsewhere and we can simply drop it?
@@ -133,7 +133,7 @@ class HitCard extends BaseCard {
 
 						resolve(true);
 					}
-				});
+				}).catch(ex => reject(ex));
 		});
 	}
 }

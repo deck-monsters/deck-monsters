@@ -91,7 +91,7 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 		checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,
-			success: { success: true, strokeOfLuck: false, curseOfLoki: false },
+			success: true,
 			strokeOfLuck: false,
 			curseOfLoki: false
 		});
