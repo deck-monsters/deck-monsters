@@ -17,46 +17,44 @@ class EnchantedFaceswapCard extends BaseCard {
 	}
 
 	effect (faceswapPlayer, faceswapTarget) {
-		return new Promise((resolve) => {
-			const faceswapEffect = ({
-				card,
-				phase
-			}) => {
-				if (phase === DEFENSE_PHASE) {
-					const { effect } = card;
+		const faceswapEffect = ({
+			card,
+			phase
+		}) => {
+			if (phase === DEFENSE_PHASE) {
+				const { effect } = card;
 
-					// The card that is passed in should be a clone already so we're going to edit it directly
-					if (effect) {
-						card.effect = (swappedPlayer, swappedTarget, ring, activeContestants) => {
-							if (swappedTarget === faceswapTarget) {
-								faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect !== faceswapEffect);
+				// The card that is passed in should be a clone already so we're going to edit it directly
+				if (effect) {
+					card.effect = (swappedPlayer, swappedTarget, ring, activeContestants) => {
+						if (swappedTarget === faceswapTarget) {
+							faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect !== faceswapEffect);
 
-								this.emit('effect', {
-									effectResult: `${this.icon} faceswapped by`,
-									player: faceswapTarget,
-									target: swappedPlayer,
-									ring
-								});
+							this.emit('effect', {
+								effectResult: `${this.icon} faceswapped by`,
+								player: faceswapTarget,
+								target: swappedPlayer,
+								ring
+							});
 
-								return effect.call(card, swappedTarget, swappedPlayer, ring, activeContestants);
-							}
+							return effect.call(card, swappedTarget, swappedPlayer, ring, activeContestants);
+						}
 
-							return effect.call(card, swappedPlayer, swappedTarget, ring, activeContestants);
-						};
-					}
+						return effect.call(card, swappedPlayer, swappedTarget, ring, activeContestants);
+					};
 				}
+			}
 
-				return card;
-			};
+			return card;
+		};
 
-			faceswapTarget.encounterEffects = [...faceswapTarget.encounterEffects, faceswapEffect];
+		faceswapTarget.encounterEffects = [...faceswapTarget.encounterEffects, faceswapEffect];
 
-			this.emit('narration', {
-				narration: `${faceswapTarget.identity} prepares to ${this.icon} faceswap the next player who targets them.`
-			});
-
-			resolve(true);
+		this.emit('narration', {
+			narration: `${faceswapTarget.identity} prepares to ${this.icon} faceswap the next player who targets them.`
 		});
+
+		return true;
 	}
 }
 

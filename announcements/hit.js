@@ -36,7 +36,7 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 		announce:
 `${flavorText}
 
-${monster.icon}  *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
+${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
 `
 	});
 };
