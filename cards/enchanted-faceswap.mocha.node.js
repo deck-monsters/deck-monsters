@@ -1,9 +1,11 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const EnchantedFaceswapCard = require('./enchanted-faceswap');
 const { DEFENSE_PHASE } = require('../helpers/phases');
 const Basilisk = require('../monsters/basilisk');
+const cards = require('./index');
+const EnchantedFaceswapCard = require('./enchanted-faceswap');
 const pause = require('../helpers/pause');
+const RandomCard = require('./random');
 const TestCard = require('./test');
 const WeepingAngel = require('../monsters/weeping-angel');
 
@@ -89,6 +91,42 @@ describe('./cards/enchanted-faceswap.js', () => {
 
 				// Effect cleans up after itself
 				expect(player.encounterEffects.length).to.equal(0);
+			});
+	});
+
+	it('works with random cards', () => {
+		const attack = new TestCard();
+		const drawStub = sinon.stub(cards, 'draw');
+		const faceswap = new EnchantedFaceswapCard();
+		const heal = new TestCard();
+		const random = new RandomCard();
+
+		const player = new Basilisk({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+
+		expect(player.encounterEffects.length).to.equal(0);
+
+		heal.getTargets = cardPlayer => [cardPlayer];
+
+		drawStub.onFirstCall().returns(heal);
+		drawStub.onSecondCall().returns(attack);
+
+		return faceswap.play(player, target)
+			.then(() => player.encounterEffects[0]({ card: random, phase: DEFENSE_PHASE, player: target }))
+			.then(modifiedCard => modifiedCard.play(target, player))
+			.then(() => player.encounterEffects[0]({ card: random, phase: DEFENSE_PHASE, player: target }))
+			.then(modifiedCard => modifiedCard.play(target, player))
+			.then(() => {
+				drawStub.restore();
+
+				// Card plays reversed
+				expect(target.targeted).to.equal(2);
+				expect(player.targeted).to.equal(undefined);
+				expect(target.played).to.equal(1);
+				expect(player.played).to.equal(1);
+
+				// Effect cleans up after itself
+				return expect(player.encounterEffects.length).to.equal(0);
 			});
 	});
 });
