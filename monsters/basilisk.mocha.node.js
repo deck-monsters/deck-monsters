@@ -78,4 +78,49 @@ describe('./monsters/basilisk.js', () => {
 
 		expect(basilisk.destroyed).to.equal(true);
 	});
+
+	it('can be hit', () => {
+		const basilisk = new Basilisk();
+
+		const beforeHP = basilisk.hp;
+
+		basilisk.hit(1, basilisk);
+
+		expect(basilisk.hp).to.equal(beforeHP - 1);
+	});
+
+	it('can die from being hit', () => {
+		const basilisk = new Basilisk();
+
+		basilisk.hp = 1;
+
+		expect(basilisk.dead).to.be.false;
+
+		basilisk.hit(1, basilisk);
+
+		expect(basilisk.dead).to.be.true;
+	});
+
+	it('can not be hit while dead', () => {
+		const basilisk = new Basilisk();
+
+		const basiliskProto = Object.getPrototypeOf(basilisk);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+		const dieSpy = sinon.spy(creatureProto, 'die');
+
+		expect(dieSpy.notCalled).to.be.true;
+
+		basilisk.die();
+
+		expect(dieSpy.calledOnce).to.be.true;
+
+		expect(basilisk.dead).to.be.true;
+
+		basilisk.hit(1, basilisk);
+
+		expect(dieSpy.calledOnce).to.be.true;
+
+		dieSpy.restore();
+		expect(basilisk.hp).to.equal(0);
+	});
 });
