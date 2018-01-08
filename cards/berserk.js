@@ -93,7 +93,7 @@ BerserkCard.flavors = {
 		['back-fists', 70],
 		['upper-cuts', 70],
 		['head-butts', 50],
-		['puts a boot to the face', 50],
+		['puts a boot to the face of', 50],
 		['back-hands', 50],
 		['elbows', 30],
 		['cupped-hand-smacks the ear of', 30],
