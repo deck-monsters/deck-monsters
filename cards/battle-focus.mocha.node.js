@@ -8,7 +8,7 @@ const { roll } = require('../helpers/chance');
 
 const { GLADIATOR } = require('../helpers/creature-types');
 
-describe.only('./cards/battle-focus.js', () => {
+describe('./cards/battle-focus.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -111,18 +111,19 @@ describe.only('./cards/battle-focus.js', () => {
 		return battleFocus
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
+				checkSuccessStub.restore();
+				hitCheckStub.restore();
+				getDamageRollStub.restore();
+				battleFocusEffectSpy.restore();
+				berserkEffectSpy.restore();
+				hitEffectSpy.restore();
+				hitSpy.restore();
+
 				expect(battleFocusEffectSpy.callCount).to.equal(1);
 				expect(berserkEffectSpy.callCount).to.equal(2);
 				expect(hitCheckStub.callCount).to.equal(3);
 				expect(hitEffectSpy.callCount).to.equal(0);
 				expect(hitSpy.callCount).to.equal(2);
-				hitCheckStub.restore();
-				hitEffectSpy.restore();
-				checkSuccessStub.restore();
-				hitSpy.restore();
-				getDamageRollStub.restore();
-				battleFocusEffectSpy.restore();
-				berserkEffectSpy.restore();
 
 				return expect(target.hp).to.equal(before - 6);
 			});
@@ -185,13 +186,13 @@ describe.only('./cards/battle-focus.js', () => {
 		return battleFocus
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				hitCheckStub.restore();
-				hitEffectSpy.restore();
 				checkSuccessStub.restore();
-				hitSpy.restore();
+				hitCheckStub.restore();
 				getDamageRollStub.restore();
 				battleFocusEffectSpy.restore();
 				berserkEffectSpy.restore();
+				hitEffectSpy.restore();
+				hitSpy.restore();
 
 				expect(target.hp).to.equal(before - 7);
 				return expect(battleFocus.damageAmount).to.equal(1);

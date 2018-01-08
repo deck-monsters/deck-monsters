@@ -37,17 +37,17 @@ Stroke of luck increases damage per hit by 1.`;
 				.then(() => {
 					if (success) {
 						// If we hit then do some damage
-						const { result } = this.rollForDamage(player, target, strokeOfLuck)
+						const { result } = this.rollForDamage(player, target, strokeOfLuck);
 						target.hit(result, player, this);
 
 						// We have to make a new BerserkCard here because just calling super.effect will cause a
 						// successfull hit to in turn call this.effect, which will result in hitting for 1d4 again
 						const berserk = new BerserkCard({ damage: this.damageAmount });
-						resolve(berserk.effect(player, target, ring));
+						resolve(this.effect(player, target, ring, ring.contestants));
 					} else if (curseOfLoki) {
 						this.resetDamageAmount();
 						// Our attack is now bouncing back against us
-						const { result } = this.rollForDamage(target, player)
+						const { result } = this.rollForDamage(target, player);
 						resolve(player.hit(result, target, this));
 					} else {
 						this.resetDamageAmount();
