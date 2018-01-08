@@ -578,7 +578,7 @@ class Ring extends BaseClass {
 					ring.spawnBoss();
 					ring.startBossTimer(); // Do it again in an hour
 				}, 120000);
-			}, random(2400000, 3480000));
+			}, random(2100000, 3480000));
 		}
 	}
 

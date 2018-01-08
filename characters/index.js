@@ -102,7 +102,7 @@ const randomCharacter = ({
 	...options
 } = {}) => {
 	if (!battles.total) {
-		battles.total = randomInt({ max: 69 });
+		battles.total = randomInt({ max: 80 });
 		battles.wins = randomInt({ max: battles.total });
 		battles.losses = battles.total - battles.wins;
 	}
