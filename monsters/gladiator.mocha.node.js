@@ -5,8 +5,6 @@ const { CLERIC, FIGHTER } = require('../helpers/classes');
 const { GLADIATOR, BASILISK } = require('../helpers/creature-types');
 const pause = require('../helpers/pause');
 
-const TestCard = require('../cards/test');
-
 describe('./monsters/gladiator.js', () => {
 	let pauseStub;
 
@@ -55,50 +53,50 @@ describe('./monsters/gladiator.js', () => {
 		expect(gladiator.killed).to.deep.equal([]);
 	});
 
-	it.only('can hold gladiator only cards', () => {
+	it('can hold gladiator only cards', () => {
 		const gladiator = new Gladiator();
 
-		const testCard = { permittedClassesAndTypes: [GLADIATOR] }
+		const testCard = { permittedClassesAndTypes: [GLADIATOR] };
 
 		expect(gladiator.canHold(testCard)).to.be.true;
 	});
 
-	it.only('can not hold Basilisk only cards', () => {
+	it('can not hold Basilisk only cards', () => {
 		const gladiator = new Gladiator();
 
-		const testCard = { permittedClassesAndTypes: [BASILISK] }
+		const testCard = { permittedClassesAndTypes: [BASILISK] };
 
 		expect(gladiator.canHold(testCard)).to.be.false;
 	});
 
-	it.only('can hold fighter only cards', () => {
+	it('can hold fighter only cards', () => {
 		const gladiator = new Gladiator();
 
-		const testCard = { permittedClassesAndTypes: [FIGHTER] }
+		const testCard = { permittedClassesAndTypes: [FIGHTER] };
 
 		expect(gladiator.canHold(testCard)).to.be.true;
 	});
 
-	it.only('can not hold cleric only cards', () => {
+	it('can not hold cleric only cards', () => {
 		const gladiator = new Gladiator();
 
-		const testCard = { permittedClassesAndTypes: [CLERIC] }
+		const testCard = { permittedClassesAndTypes: [CLERIC] };
 
 		expect(gladiator.canHold(testCard)).to.be.false;
 	});
 
-	it.only('can hold level appropriate cards', () => {
+	it('can hold level appropriate cards', () => {
 		const gladiator = new Gladiator();
 
-		const testCard = { level: 0 }
+		const testCard = { level: 0 };
 
 		expect(gladiator.canHold(testCard)).to.be.true;
 	});
 
-	it.only('can not hold level inappropriate cards', () => {
+	it('can not hold level inappropriate cards', () => {
 		const gladiator = new Gladiator();
 
-		const testCard = { level: 5 }
+		const testCard = { level: 5 };
 
 		expect(gladiator.canHold(testCard)).to.be.false;
 	});
