@@ -71,8 +71,9 @@ Chance to immobilize everyone with your shocking beauty.`;
 	it('calculates freedom threshold correctly', () => {
 		const mesmerize = new Mesmerize();
 		const player = new WeepingAngel({ name: 'player' });
+		const target = new WeepingAngel({ name: 'target' });
 
-		expect(mesmerize.getFreedomThreshold(player)).to.equal(10 + mesmerize.freedomThresholdModifier);
+		expect(mesmerize.getFreedomThreshold(player, target)).to.equal(10 + mesmerize.freedomThresholdModifier);
 	});
 
 	it('immobilizes everyone on success', () => {
