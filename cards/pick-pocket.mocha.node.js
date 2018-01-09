@@ -87,7 +87,7 @@ describe('./cards/pick-pocket.js', () => {
 
 		const promises = [];
 
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 50; i++) {
 			const target1 = randomContestant();
 			const target2 = randomContestant();
 
@@ -105,7 +105,7 @@ describe('./cards/pick-pocket.js', () => {
 			promises.push(pickPocket.play(player.monster, target1.monster, ring, ring.contestants));
 		}
 
-		return expect(Promise.all(promises)).to.be.fulfilled();
+		return expect(Promise.all(promises)).to.be.fulfilled;
 	});
 
 	it('cannot pick from own player\'s pocket', () => {

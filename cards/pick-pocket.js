@@ -22,12 +22,12 @@ class PickPocketCard extends BaseCard {
 			return potentialTarget;
 		}, proposedTarget);
 
-		const randomCard = sample(mostExperienced.cards);
+		const randomCard = sample(mostExperienced.cards.filter(card => !['Pick Pocket'].includes(card.cardType)));
 
 		this.emit('narration', {
 			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName}`
 		});
-		
+
 		randomCard.originalEffect = randomCard.effect;
 		randomCard.effect = (...args) => this.effect(...args);
 		this.randomCard = randomCard;
