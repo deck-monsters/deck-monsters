@@ -282,7 +282,7 @@ describe('./announcements/hit.js', () => {
 			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
 			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
 			const card = {
-				flavor: { text: 'burns', icon: '🔥'}
+				flavor: { text: 'burns', icon: '🔥' }
 			};
 			const damage = 1;
 			const prevHp = 2;
