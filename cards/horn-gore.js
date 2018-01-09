@@ -1,14 +1,12 @@
 /* eslint-disable max-len */
 
-/*
-	Eventually this card will be replaced by whatever LuckyStrike turns into.
-*/
-
 const ImmobilizeCard = require('./immobilize');
 const { MINOTAUR } = require('../helpers/creature-types');
 
-const STARTING_FREEDOM_THRESHOLD_MODIFIER = -6;
-const STARTING_ATTACK_MODIFIER = -6;
+const { roll } = require('../helpers/chance');
+
+const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
+const STARTING_ATTACK_MODIFIER = 0;
 
 class HornGore extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -39,14 +37,14 @@ ${super.stats}`;
 		this.attackModifier += ammount;
 	}
 
-	getCommentary (roll, player, target) { // eslint-disable-line class-methods-use-this
+	getCommentary (rolled, player, target) { // eslint-disable-line class-methods-use-this
 		let commentary;
 
-		if (roll.strokeOfLuck) {
+		if (rolled.strokeOfLuck) {
 			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
 		}
 
-		if (roll.curseOfLoki) {
+		if (rolled.curseOfLoki) {
 			const flavors = [
 				`gouge ${player.pronouns[1]} eye`,
 				`punch ${player.pronouns[1]} soft temple`,
@@ -62,21 +60,21 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 		return commentary;
 	}
 
-	emitRoll (roll, success, player, target, hornNumber) {
+	emitRoll (rolled, success, player, target, hornNumber) {
 		this.emit('rolling', {
 			reason: `vs ${target.givenName}'s AC (${target.ac}) for horn ${hornNumber} to determine if gore was successful`,
 			card: this,
-			roll,
+			roll: rolled,
 			player,
 			target
 		});
 
-		const commentary = this.getCommentary(roll, player, target);
+		const commentary = this.getCommentary(rolled, player, target);
 
 		this.emit('rolled', {
 			reason: `vs AC (${target.ac}) for horn ${hornNumber}`,
 			card: this,
-			roll,
+			roll: rolled,
 			player,
 			target,
 			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
@@ -95,6 +93,10 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 			strokeOfLuck,
 			curseOfLoki
 		};
+	}
+
+	getDamageRoll (player) {
+		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.damageModifier / 2)), bonusDice: player.bonusDamageDice });
 	}
 
 	gore (player, target, hornNumber) {
