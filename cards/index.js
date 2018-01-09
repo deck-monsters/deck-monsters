@@ -188,6 +188,7 @@ module.exports = {
 	fillDeck,
 	getCardCounts,
 	getInitialDeck,
+	getMinimumDeck,
 	getUniqueCards,
 	hydrateCard,
 	hydrateDeck,
