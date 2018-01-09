@@ -111,8 +111,10 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 			// If we hit then do some damage
 			target.hit(damageRoll.result, player, this);
 		} else if (curseOfLoki) {
+			const damageRoll = this.rollForDamage(target, player);
+
 			// Our attack is now bouncing back against us
-			this.hit(target, player);
+			player.hit(damageRoll.result, target, this);
 		}
 
 		return { attackRoll, success, strokeOfLuck, curseOfLoki };
@@ -139,6 +141,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 			return super.effect(player, target, ring, activeContestants);
 		}
+
 		this.emit('miss', {
 			attackResult: Math.max(horn1.attackRoll.result, horn2.attackRoll.result),
 			curseOfLoki: horn1.curseOfLoki || horn2.curseOfLoki,
