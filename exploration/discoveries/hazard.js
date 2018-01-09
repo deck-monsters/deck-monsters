@@ -82,7 +82,7 @@ class HazardCard extends BaseCard {
 		this.flavors = this.getDamageFlavors(player, damage - 1);
 
 		this.flavor = getFlavor('hazards', this.flavors);
-		this.flavorText = `${this.flavor[2]}  ${player.icon}  ${player.givenName} ${this.flavor[0]} ${damage} damage.`;
+		this.flavorText = `${this.flavor[2]}  ${player.icon} ${player.givenName} ${this.flavor[0]} ${damage} damage.`;
 
 		player.hit(damage, environment, this);
 

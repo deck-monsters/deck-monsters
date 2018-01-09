@@ -2,6 +2,7 @@ const { expect, sinon } = require('../../shared/test-setup');
 
 const HazardCard = require('./hazard');
 const Basilisk = require('../../monsters/basilisk');
+const Environment = require('../../monsters/environment');
 
 const pause = require('../../helpers/pause');
 
@@ -37,11 +38,12 @@ describe.only('./exploration/discoveries/hazard.js', () => {
 
 	it('can be played', () => {
 		const hazard = new HazardCard();
-		let monster = new Basilisk();
-		const originalhp = monster.hp;
+		let player = new Basilisk();
+		let environment = new Environment();
+		const originalhp = player.hp;
 
-		monster = hazard.effect(monster);
+		player = hazard.effect(environment, player);
 
-		expect(monster.hp).to.be.below(originalhp);
+		expect(player.hp).to.be.below(originalhp);
 	});
 });
