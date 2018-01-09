@@ -28,9 +28,12 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 
 	const bloodied = (monster.bloodied && prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
 	const only = (monster.bloodied && monster.hp > 0) ? 'only ' : '';
-	const defaultFlavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavor[0]} ${monster.givenName} for ${damage} damage.`;
-
-	const flavorText = (card && card.flavorText) || defaultFlavorText;
+	let flavorText;
+	if (card && card.flavorText) {
+		flavorText = card.flavorText;
+	} else {
+		flavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavor[0]} ${monster.givenName} for ${damage} damage.`;
+	}
 
 	publicChannel({
 		announce:
