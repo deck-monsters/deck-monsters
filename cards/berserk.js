@@ -59,7 +59,7 @@ Stroke of luck increases damage per hit by 1.`;
 		return roll({ primaryDice: this.damageDice });
 	}
 
-	effectLoop (firstHit, player, target, ring, activeContestants) {
+	effectLoop (iteration, player, target, ring, activeContestants) {
 		return new Promise((resolve, reject) => {
 			// Add any player modifiers and roll the dice
 			const {
@@ -74,18 +74,35 @@ Stroke of luck increases damage per hit by 1.`;
 				.then(() => {
 					if (success) {
 						let damage = this.damageAmount;
-						if (firstHit && this.bigFirstHit) {
+						if (iteration === 1 && this.bigFirstHit) {
 							damage = this.rollForDamage(player, target, strokeOfLuck).result;
 						}
 
+						// Do not consider the first hit part of the cumulative combo damage.
+						// For cards with a bigFirstHit, this will make perma-death possible (although unlikely)
+						if (iteration !== 1) {
+							this.cumulativeComboDamage++;
+						}
+
 						// If we hit then do some damage
-						target.hit(damage, player, this);
-						resolve(this.effectLoop(false, player, target, ring, activeContestants));
+						if (this.cumulativeComboDamage <= target.maxHp / 2) {
+							target.hit(damage, player, this);
+						} else {
+							this.emit('narration', {
+								narration: `HUMILIATION! ${iteration} hits, ${(target.maxHp / 2) - this.cumulativeComboDamage} damage overkill`
+							});
+						}
+
+						resolve(this.effectLoop(iteration + 1, player, target, ring, activeContestants));
 					} else if (curseOfLoki) {
 						let damage = this.damageAmount;
-						if (firstHit && this.bigFirstHit) {
+						if (iteration === 1 && this.bigFirstHit) {
 							damage = this.rollForDamage(player, target, strokeOfLuck).result;
 						}
+
+						this.emit('narration', {
+							narration: 'COMBO BREAKER!'
+						});
 
 						this.resetDamageAmount();
 						// Our attack is now bouncing back against us
@@ -99,6 +116,10 @@ Stroke of luck increases damage per hit by 1.`;
 							target
 						});
 
+						this.emit('narration', {
+							narration: `${target.dead ? 'ULTIMATE' : 'ULTRA'} COMBO! ${iteration} HITS`
+						});
+
 						resolve(!target.dead);
 					}
 				}).catch(ex => reject(ex));
@@ -106,7 +127,8 @@ Stroke of luck increases damage per hit by 1.`;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
-		return this.effectLoop(true, player, target, ring, activeContestants);
+		this.cumulativeComboDamage = 0;
+		return this.effectLoop(1, player, target, ring, activeContestants);
 	}
 }
 
