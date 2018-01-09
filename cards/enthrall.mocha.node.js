@@ -74,6 +74,10 @@ Chance to immobilize your opponents with your shocking beauty.`;
 		const target = new WeepingAngel({ name: 'target' });
 
 		expect(enthrall.getFreedomThreshold(player, target)).to.equal(10 + enthrall.freedomThresholdModifier);
+
+		target.encounterModifiers = { pinnedTurns: 2 };
+
+		expect(enthrall.getFreedomThreshold(player, target)).to.equal(4 + enthrall.freedomThresholdModifier);
 	});
 
 	it('immobilizes others on success', () => {

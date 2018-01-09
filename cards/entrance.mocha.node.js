@@ -74,6 +74,10 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 		const target = new WeepingAngel({ name: 'target' });
 
 		expect(entrance.getFreedomThreshold(player, target)).to.equal(10 + entrance.freedomThresholdModifier);
+
+		target.encounterModifiers = { pinnedTurns: 2 };
+
+		expect(entrance.getFreedomThreshold(player, target)).to.equal(4 + entrance.freedomThresholdModifier);
 	});
 
 	it('immobilizes and damages others on success', () => {
