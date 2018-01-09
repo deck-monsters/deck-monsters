@@ -139,6 +139,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 			return super.effect(player, target, ring, activeContestants);
 		}
+		
 		this.emit('miss', {
 			attackResult: Math.max(horn1.attackRoll.result, horn2.attackRoll.result),
 			curseOfLoki: horn1.curseOfLoki || horn2.curseOfLoki,
