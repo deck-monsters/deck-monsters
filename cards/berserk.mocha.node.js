@@ -94,7 +94,7 @@ const ultraComboNarration = [
 	'HUMILIATION! 99 hits, 83 damage overkill',
 	'HUMILIATION! 100 hits, 84 damage overkill',
 	'ULTRA COMBO! 101 HITS'
-]
+];
 
 describe('./cards/berserk.js', () => {
 	let channelStub;
@@ -323,7 +323,7 @@ describe('./cards/berserk.js', () => {
 			curseOfLoki: false
 		});
 
-		let narrations = []
+		const narrations = [];
 		berserk.on('narration', (className, monster, { narration }) => {
 			narrations.push(narration);
 		});
@@ -396,7 +396,7 @@ describe('./cards/berserk.js', () => {
 			curseOfLoki: true
 		});
 
-		let narrations = []
+		const narrations = [];
 		berserk.on('narration', (className, monster, { narration }) => {
 			narrations.push(narration);
 		});

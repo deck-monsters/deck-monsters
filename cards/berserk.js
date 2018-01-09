@@ -60,70 +60,72 @@ Stroke of luck increases damage per hit by 1.`;
 	}
 
 	effectLoop (iteration, player, target, ring, activeContestants) {
-			// Add any player modifiers and roll the dice
-			const {
-				attackRoll, success, strokeOfLuck, curseOfLoki
-			} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
+		// Add any player modifiers and roll the dice
+		const {
+			attackRoll, success, strokeOfLuck, curseOfLoki
+		} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
-			if (strokeOfLuck) {
-				this.damageAmount = this.damageAmount + 1;
+		if (strokeOfLuck) {
+			this.damageAmount = this.damageAmount + 1;
+		}
+
+		if (success) {
+			let damage = this.damageAmount;
+			if (iteration === 1 && this.bigFirstHit) {
+				damage = this.rollForDamage(player, target, strokeOfLuck).result;
 			}
 
-			if (success) {
-				let damage = this.damageAmount;
-				if (iteration === 1 && this.bigFirstHit) {
-					damage = this.rollForDamage(player, target, strokeOfLuck).result;
-				}
+			// Do not consider the first hit part of the cumulative combo damage.
+			// For cards with a bigFirstHit, this will make perma-death possible (although unlikely)
+			if (iteration !== 1) {
+				this.cumulativeComboDamage++;
+			}
 
-				// Do not consider the first hit part of the cumulative combo damage.
-				// For cards with a bigFirstHit, this will make perma-death possible (although unlikely)
-				if (iteration !== 1) {
-					this.cumulativeComboDamage++;
-				}
-
-				// If we hit then do some damage
-				if (this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)) {
-					target.hit(damage, player, this);
-				} else {
-					this.emit('narration', {
-						narration: `HUMILIATION! ${iteration} hits, ${(Math.floor(target.maxHp / 2) - this.cumulativeComboDamage) * -1} damage overkill`
-					});
-				}
-
-				return this.effectLoop(iteration + 1, player, target, ring, activeContestants);
-			} else if (curseOfLoki) {
-				let damage = this.damageAmount;
-				if (iteration === 1 && this.bigFirstHit) {
-					damage = this.rollForDamage(player, target, strokeOfLuck).result;
-				}
-
+			// If we hit then do some damage
+			if (this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)) {
+				target.hit(damage, player, this);
+			} else {
 				this.emit('narration', {
-					narration: 'COMBO BREAKER!'
+					narration: `HUMILIATION! ${iteration} hits, ${(Math.floor(target.maxHp / 2) - this.cumulativeComboDamage) * -1} damage overkill`
 				});
-
-				this.resetDamageAmount();
-				// Our attack is now bouncing back against us
-				return player.hit(damage, target, this);
 			}
 
-			this.resetDamageAmount();
-			this.emit('miss', {
-				attackResult: attackRoll.result,
-				attackRoll,
-				player,
-				target
+			return this.effectLoop(iteration + 1, player, target, ring, activeContestants);
+		} else if (curseOfLoki) {
+			let damage = this.damageAmount;
+			if (iteration === 1 && this.bigFirstHit) {
+				damage = this.rollForDamage(player, target, strokeOfLuck).result;
+			}
+
+			this.emit('narration', {
+				narration: 'COMBO BREAKER!'
 			});
 
-			if (iteration > 1) {
-				this.emit('narration', {
-					narration: `${target.dead ? 'ULTIMATE ' : (iteration > 5) ? 'ULTRA ' : ''}COMBO! ${iteration} HITS`
-				});
-			}
+			this.resetDamageAmount();
+			// Our attack is now bouncing back against us
+			return player.hit(damage, target, this);
+		}
 
-			return new Promise((resolve, reject) => {
-				ring.channelManager.sendMessages()
-					.then(() => resolve(!target.dead))
-			}).catch(ex => reject(ex));
+		this.resetDamageAmount();
+		this.emit('miss', {
+			attackResult: attackRoll.result,
+			attackRoll,
+			player,
+			target
+		});
+
+		if (iteration > 1) {
+			const ultraText = (iteration > 5) ? 'ULTRA ' : '';
+			this.emit('narration', {
+				narration: `${target.dead ? 'ULTIMATE ' : ultraText}COMBO! ${iteration} HITS`
+			});
+		}
+
+		return new Promise((resolve, reject) => {
+			ring.channelManager.sendMessages()
+				.then(() => resolve(!target.dead))
+				.catch(ex => reject(ex));
+		});
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
