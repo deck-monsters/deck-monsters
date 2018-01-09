@@ -6,7 +6,7 @@ const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
 const { roll } = require('../helpers/chance');
 
-const { MINOTAUR } = require('../helpers/classes');
+const { MINOTAUR } = require('../helpers/creature-types');
 
 describe('./cards/horn-gore.js', () => {
 	let channelStub;

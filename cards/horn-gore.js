@@ -5,7 +5,7 @@
 */
 
 const ImmobilizeCard = require('./immobilize');
-const { MINOTAUR } = require('../helpers/classes');
+const { MINOTAUR } = require('../helpers/creature-types');
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -6;
 const STARTING_ATTACK_MODIFIER = -6;
