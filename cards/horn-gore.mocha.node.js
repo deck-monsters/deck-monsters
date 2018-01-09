@@ -92,13 +92,14 @@ describe('./cards/horn-gore.js', () => {
 		return hornGore
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect(hitCheckStub.callCount).to.equal(2);
-				expect(hitStub.callCount).to.equal(2);
-				expect(hornGore.freedomThresholdModifier).to.equal(-2);
-				expect(hornGore.attackModifier).to.equal(-2);
 				checkSuccessStub.restore();
 				hitCheckStub.restore();
 				hitStub.restore();
+
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(hitStub.callCount).to.equal(2);
+				expect(hornGore.freedomThresholdModifier).to.equal(0);
+				expect(hornGore.attackModifier).to.equal(4);
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
@@ -159,15 +160,15 @@ describe('./cards/horn-gore.js', () => {
 		return hornGore
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect(hitCheckStub.callCount).to.equal(2);
-				expect(goreSpy.callCount).to.equal(2);
-				expect(hitSpy.callCount).to.equal(1);
-				expect(hornGore.freedomThresholdModifier).to.equal(-4);
-				expect(hornGore.attackModifier).to.equal(-4);
 				hitCheckStub.restore();
 				checkSuccessStub.restore();
 				hitSpy.restore();
 
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(goreSpy.callCount).to.equal(2);
+				expect(hitSpy.callCount).to.equal(1);
+				expect(hornGore.freedomThresholdModifier).to.equal(-2);
+				expect(hornGore.attackModifier).to.equal(2);
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});
@@ -256,14 +257,14 @@ describe('./cards/horn-gore.js', () => {
 		return hornGore
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect(hitCheckStub.callCount).to.equal(2);
-				expect(hitStub.callCount).to.equal(0);
-				expect(hornGore.freedomThresholdModifier).to.equal(-6);
-				expect(hornGore.attackModifier).to.equal(-6);
 				checkSuccessStub.restore();
 				hitCheckStub.restore();
 				hitStub.restore();
 
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(hitStub.callCount).to.equal(0);
+				expect(hornGore.freedomThresholdModifier).to.equal(-4);
+				expect(hornGore.attackModifier).to.equal(0);
 				expect(target.hp).to.equal(before);
 				return expect(target.encounterEffects.length).to.equal(0);
 			});

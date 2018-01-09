@@ -7,8 +7,8 @@
 const ImmobilizeCard = require('./immobilize');
 const { MINOTAUR } = require('../helpers/creature-types');
 
-const STARTING_FREEDOM_THRESHOLD_MODIFIER = -6;
-const STARTING_ATTACK_MODIFIER = -6;
+const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
+const STARTING_ATTACK_MODIFIER = 0;
 
 class HornGore extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
