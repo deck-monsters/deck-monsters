@@ -4,9 +4,6 @@ const BaseCard = require('./base');
 const { roll } = require('../../helpers/chance');
 const { getFlavor } = require('../../helpers/flavor');
 
-// ${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
-
-
 class HazardCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -82,7 +79,7 @@ class HazardCard extends BaseCard {
 		this.flavors = this.getDamageFlavors(player, damage - 1);
 
 		this.flavor = getFlavor('hazards', this.flavors);
-		this.flavorText = `${this.flavor[2]}  ${player.icon} ${player.givenName} ${this.flavor[0]} ${damage} damage.`;
+		this.flavorText = `${this.flavor.icon}  ${player.icon} ${player.givenName} ${this.flavor.text} ${damage} damage.`;
 
 		player.hit(damage, environment, this);
 
