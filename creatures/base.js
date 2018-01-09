@@ -300,7 +300,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get round () {
-		return (this.encounter || {}).round;
+		return (this.encounter || {}).round || 1;
 	}
 
 	set round (round) {

@@ -392,18 +392,6 @@ class Ring extends BaseClass {
 				// If nobody who's still active has any cards left it's time to reset
 				const allActiveContestants = getAllActiveContestants();
 				if (!anyContestantsHaveCardsLeft(allActiveContestants)) {
-					// Reset the value of `emptyHanded`
-					allActiveContestants.forEach(({ monster }) => {
-						monster.emptyHanded = false;
-					});
-
-					// The round is over so we'll go back to the first card in everyone's hand
-					nextCardIndex = 0;
-
-					// We also want to restart to the first contestant since the round is ending now
-					// In a game where everyone has the same size hand this would happen anyway, but we reset for unbalanced games
-					activeContestants = allActiveContestants;
-
 					// Emit an event when the round ends
 					this.emit('roundComplete', {
 						contestants,
@@ -412,6 +400,19 @@ class Ring extends BaseClass {
 
 					// Increment the round counter
 					round += 1;
+					
+					// Reset the value of `emptyHanded`
+					allActiveContestants.forEach(({ monster }) => {
+						monster.emptyHanded = false;
+						monster.round = round;
+					});
+
+					// The round is over so we'll go back to the first card in everyone's hand
+					nextCardIndex = 0;
+
+					// We also want to restart to the first contestant since the round is ending now
+					// In a game where everyone has the same size hand this would happen anyway, but we reset for unbalanced games
+					activeContestants = allActiveContestants;
 				}
 
 				pause.setTimeout(() => next(), delayTimes.shortDelay());
