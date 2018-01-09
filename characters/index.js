@@ -4,7 +4,7 @@ const sample = require('lodash.sample');
 const shuffle = require('lodash.shuffle');
 
 const { getChoices, getCreatureTypeChoices } = require('../helpers/choices');
-const { hydrateDeck, fillDeck } = require('../cards');
+const { fillDeck, getMinimumDeck, hydrateDeck } = require('../cards');
 const { all: allMonsters, hydrateMonster } = require('../monsters');
 const { randomInt } = require('../helpers/chance');
 const { XP_PER_VICTORY } = require('../helpers/experience');
@@ -138,10 +138,13 @@ const randomCharacter = ({
 		...options
 	});
 
+	const weakTypes = ['Flee', 'Harden', 'Heal', 'Hit', 'WhiskeyShot'];
+	const cleanBossDeck = deck => deck.filter(card => !weakTypes.includes(card.cardType));
+
 	// If this is a boss, clean up the deck (reducing probability of certain cards)
 	if (isBoss) {
-		let deck = fillDeck([], {}, character);
-		deck = deck.filter(card => card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
+		let deck = cleanBossDeck(getMinimumDeck());
+		deck = cleanBossDeck(fillDeck(deck, {}, character));
 		character.deck = fillDeck(deck, {}, character);
 	}
 

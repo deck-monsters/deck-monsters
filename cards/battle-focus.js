@@ -23,7 +23,7 @@ BattleFocusCard.level = 0;
 BattleFocusCard.permittedClassesAndTypes = [GLADIATOR];
 BattleFocusCard.defaults = {
 	...BerserkCard.defaults,
-	damageDice: '1d4',
+	damageDice: '1d6',
 	bigFirstHit: true
 };
 
