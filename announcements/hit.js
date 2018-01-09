@@ -18,8 +18,8 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 	const flavor = (card && card.flavor) || getFlavor('hits', flavors);
 
 	let icon;
-	if (flavor[2]) {
-		icon = flavor[2];
+	if (flavor.icon) {
+		icon = flavor.icon;
 	} else {
 		const icons = (card && card.flavorIcons) || defaultIcons;
 		icons.sort((a, b) => b.floor - a.floor);
@@ -32,7 +32,7 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 	if (card && card.flavorText) {
 		flavorText = card.flavorText;
 	} else {
-		flavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavor[0]} ${monster.givenName} for ${damage} damage.`;
+		flavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavor.text} ${monster.givenName} for ${damage} damage.`;
 	}
 
 	publicChannel({
