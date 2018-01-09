@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const ImmobilizeCard = require('./immobilize');
+const MesmerizeCard = require('./mesmerize');
 
 const {
 	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
@@ -20,14 +21,16 @@ class EnthrallCard extends ImmobilizeCard {
 			attackModifier,
 			hitOnFail
 		});
+
+		this.mesmerizeCard = new MesmerizeCard();
 	}
 	get stats () { // eslint-disable-line class-methods-use-this
 		return `${super.stats}
 Chance to immobilize your opponents with your shocking beauty.`;
 	}
 
-	getFreedomThreshold () {
-		return 10 + this.freedomThresholdModifier;
+	getFreedomThresholdBase (player) {
+		return this.mesmerizeCard.getFreedomThresholdBase(player);
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this

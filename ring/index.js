@@ -284,7 +284,7 @@ class Ring extends BaseClass {
 			// But if we don't have any more contestants in this fight it's time to reset our list of contestants
 			// and it's going to be time to move on to the next card
 			if (activeContestants.length <= 1) {
-				activeContestants = [...activeContestants, ...getActiveContestants(contestants)];
+				activeContestants = [...activeContestants, ...getAllActiveContestants()];
 				nextCardIndex += 1;
 			}
 
@@ -368,14 +368,14 @@ class Ring extends BaseClass {
 					.then(() => {
 						// Is there more than one monster left alive in the ring?
 						if (getAllActiveContestants().length > 1) {
-							this.channelManager.sendMessages()
+							return this.channelManager.sendMessages()
 								.then(() => next());
-						} else {
-							// The fight is over, let's end this promise chain
-							// Also return the contestant we ended on for bookkeeping purposes
-							this.channelManager.sendMessages()
-								.then(() => resolve(playerContestant));
 						}
+
+						// The fight is over, let's end this promise chain
+						// Also return the contestant we ended on for bookkeeping purposes
+						return this.channelManager.sendMessages()
+							.then(() => resolve(playerContestant));
 					})
 					.catch((ex) => {
 						this.log(ex);
@@ -578,7 +578,7 @@ class Ring extends BaseClass {
 					ring.spawnBoss();
 					ring.startBossTimer(); // Do it again in an hour
 				}, 120000);
-			}, random(2400000, 3480000));
+			}, random(2100000, 3480000));
 		}
 	}
 

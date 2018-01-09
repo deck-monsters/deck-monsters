@@ -29,7 +29,7 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 ForkedStickCard.cardType = 'Forked Stick';
 ForkedStickCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 ForkedStickCard.probability = 30;
-ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.strongAgainstCreatureTypes[1]}-hunting.`;
+ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
 ForkedStickCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedStickCard.weakAgainstCreatureTypes = [MINOTAUR];
 ForkedStickCard.defaults = {

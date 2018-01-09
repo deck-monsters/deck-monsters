@@ -26,8 +26,8 @@ class MesmerizeCard extends ImmobilizeCard {
 Chance to immobilize everyone with your shocking beauty.`;
 	}
 
-	getFreedomThreshold () {
-		return 10 + this.freedomThresholdModifier;
+	getFreedomThresholdBase () { // eslint-disable-line class-methods-use-this
+		return 10;
 	}
 
 	effect (player, target, ring, activeContestants) {

@@ -37,7 +37,7 @@ describe('./cards/constrict.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
-Chance to immobilize opponent by coiling your serpentine body around them and then squeezing.`;
+Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(3);
@@ -45,6 +45,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 		expect(constrict.damageModifier).to.equal(0);
 		expect(constrict.hitOnFail).to.be.false;
 		expect(constrict.doDamageOnImmobilize).to.be.true;
+		expect(constrict.ongoingDamage).to.equal(2);
 		expect(constrict.stats).to.equal(stats);
 		expect(constrict.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, MINOTAUR]);
 		expect(constrict.weakAgainstCreatureTypes).to.deep.equal([BASILISK]);
@@ -53,7 +54,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 
 	it('can be instantiated with options', () => {
 		const constrict = new Constrict({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: false
+			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: false, ongoingDamage: 3// eslint-disable-line max-len
 		});
 
 		expect(constrict).to.be.an.instanceof(Constrict);
@@ -62,6 +63,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 		expect(constrict.damageModifier).to.equal(4);
 		expect(constrict.hitOnFail).to.be.true;
 		expect(constrict.doDamageOnImmobilize).to.be.false;
+		expect(constrict.ongoingDamage).to.equal(3);
 	});
 
 	it('do damage on immobilize', () => {
@@ -88,7 +90,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and th
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,
-			success: { success: true, strokeOfLuck: false, curseOfLoki: false },
+			success: true,
 			strokeOfLuck: false,
 			curseOfLoki: false
 		});

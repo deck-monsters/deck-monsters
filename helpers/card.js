@@ -38,6 +38,8 @@ const cardRarity = (card) => {
 	} else if (card.probability >= 40) {
 		return '◆';
 	} else if (card.probability >= 20) {
+		return '◇';
+	} else if (card.probability > 5) {
 		return '★';
 	}
 

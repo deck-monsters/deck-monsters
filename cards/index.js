@@ -2,11 +2,15 @@ const shuffle = require('lodash.shuffle');
 
 const isProbable = require('../helpers/is-probable');
 const BasicShieldCard = require('./basic-shield');
+const BattleFocusCard = require('./battle-focus');
+const BerserkCard = require('./berserk');
 const BlastCard = require('./blast');
+const BlinkCard = require('./blink');
 const BoostCard = require('./boost');
 const BrainDrainCard = require('./brain-drain');
 const CamouflageVestCard = require('./camouflage-vest');
 const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
+const CoilCard = require('./coil');
 const ConstrictCard = require('./constrict');
 const CurseCard = require('./curse');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
@@ -21,6 +25,7 @@ const FleeCard = require('./flee');
 const HealCard = require('./heal');
 const HitCard = require('./hit');
 const HitHarderCard = require('./hit-harder');
+const HornGoreCard = require('./horn-gore');
 const KalevalaCard = require('./kalevala');
 const PickPocketCard = require('./pick-pocket');
 const LuckyStrike = require('./lucky-strike');
@@ -35,15 +40,19 @@ const WhiskeyShotCard = require('./whiskey-shot');
 const WoodenSpearCard = require('./wooden-spear');
 // const ReviveCard = require('./revive');
 
-const DEFAULT_MINIMUM_CARDS = 10;
+const DEFAULT_MINIMUM_CARDS = 14;
 
 const all = [
 	BasicShieldCard,
+	BattleFocusCard,
+	BerserkCard,
 	BlastCard,
+	BlinkCard,
 	BoostCard,
 	BrainDrainCard,
 	CamouflageVestCard,
 	CloakOfInvisibilityCard,
+	CoilCard,
 	ConstrictCard,
 	CurseCard,
 	EnchantedFaceswapCard,
@@ -58,6 +67,7 @@ const all = [
 	HealCard,
 	HitCard,
 	HitHarderCard,
+	HornGoreCard,
 	KalevalaCard,
 	PickPocketCard,
 	LuckyStrike,
@@ -70,6 +80,21 @@ const all = [
 	VenegefulRampageCard,
 	WhiskeyShotCard,
 	WoodenSpearCard
+];
+
+const getMinimumDeck = () => [
+	new BlinkCard(),
+	new CoilCard(),
+	new HornGoreCard(),
+	new BattleFocusCard(),
+	new BlastCard(),
+	new HitCard(),
+	new HitCard(),
+	new HitCard(),
+	new HitCard(),
+	new HealCard(),
+	new HealCard(),
+	new FleeCard()
 ];
 
 const draw = (options, creature) => {
@@ -98,19 +123,7 @@ const fillDeck = (deck, options, creature) => {
 	return deck;
 };
 
-const getInitialDeck = (options, creature) => {
-	// See above re: options
-	const deck = [
-		new HitCard(),
-		new HitCard(),
-		new HitCard(),
-		new HitCard(),
-		new HealCard(),
-		new FleeCard()
-	];
-
-	return fillDeck(deck, options, creature);
-};
+const getInitialDeck = (options, creature) => fillDeck(getMinimumDeck(), options, creature);
 
 const isMatchingCard = (card1, card2) => card1.name === card2.name && JSON.stringify(card1) === JSON.stringify(card2);
 
@@ -151,9 +164,23 @@ const hydrateCard = (cardObj, monster, deck = []) => {
 	return draw({}, monster);
 };
 
-const hydrateDeck = (deckJSON, monster) => JSON
-	.parse(deckJSON)
-	.map(cardObj => hydrateCard(cardObj, monster));
+const hydrateDeck = (deckJSON = [], monster) => {
+	let deck = typeof deckJSON === 'string' ? JSON.parse(deckJSON) : deckJSON;
+	deck = deck.map(cardObj => hydrateCard(cardObj, monster));
+
+	const minimumDeck = getMinimumDeck();
+	const minimumDeckCardCounts = getCardCounts(minimumDeck);
+	const deckCardCounts = getCardCounts(deck);
+
+	Object.keys(minimumDeckCardCounts).forEach((expectedCardType) => {
+		for (let i = deckCardCounts[expectedCardType] || 0; i < minimumDeckCardCounts[expectedCardType]; i++) {
+			const card = minimumDeck.find(({ cardType }) => cardType === expectedCardType);
+			if (card) deck.push(card);
+		}
+	});
+
+	return deck;
+};
 
 module.exports = {
 	all,
@@ -161,6 +188,7 @@ module.exports = {
 	fillDeck,
 	getCardCounts,
 	getInitialDeck,
+	getMinimumDeck,
 	getUniqueCards,
 	hydrateCard,
 	hydrateDeck,

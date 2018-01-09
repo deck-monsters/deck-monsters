@@ -27,7 +27,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce normal hit to public channel', () => {
 			const announcement = `💪 🤜 💪  Assailant hits Monster for 2 damage.
 
-💪  *Monster has 30HP.*
+💪 *Monster has 30HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -50,7 +50,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce weak hit to public channel', () => {
 			const announcement = `💪 🏓 💪  Assailant hits Monster for 1 damage.
 
-💪  *Monster has 30HP.*
+💪 *Monster has 30HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -73,7 +73,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce strong damage to public channel', () => {
 			const announcement = `💪 🔪 💪  Assailant hits Monster for 5 damage.
 
-💪  *Monster has 30HP.*
+💪 *Monster has 30HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -96,7 +96,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce top damage to public channel', () => {
 			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.
 
-💪  *Monster has 30HP.*
+💪 *Monster has 30HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -119,7 +119,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce bloodied to public channel', () => {
 			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.
 
-💪  *Monster is now bloodied. Monster has only 15HP.*
+💪 *Monster is now bloodied. Monster has only 15HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -143,7 +143,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce still bloodied after already bloodied to public channel', () => {
 			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.
 
-💪  *Monster has only 1HP.*
+💪 *Monster has only 1HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -167,7 +167,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce 11 damage hit with custom icons', () => {
 			const announcement = `💪 ✅ 💪  Assailant hits Monster for 11 damage.
 
-💪  *Monster has only 1HP.*
+💪 *Monster has only 1HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -194,7 +194,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce 1 damage hit with custom icons', () => {
 			const announcement = `💪 ✅ 💪  Assailant hits Monster for 1 damage.
 
-💪  *Monster has only 1HP.*
+💪 *Monster has only 1HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -221,7 +221,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce with custom flavorText', () => {
 			const announcement = `🔥 💪  Monster is caught in a sudden fire and takes 1 damage.
 
-💪  *Monster has only 1HP.*
+💪 *Monster has only 1HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -247,7 +247,7 @@ describe('./announcements/hit.js', () => {
 		it('can use custom flavor icon', () => {
 			const announcement = `💪 🔥 💪  Assailant burns Monster for 1 damage.
 
-💪  *Monster has only 1HP.*
+💪 *Monster has only 1HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -273,7 +273,7 @@ describe('./announcements/hit.js', () => {
 		it('can use custom flavor', () => {
 			const announcement = `💪 🔥 💪  Assailant burns Monster for 1 damage.
 
-💪  *Monster has only 1HP.*
+💪 *Monster has only 1HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
