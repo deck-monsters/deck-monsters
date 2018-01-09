@@ -1,4 +1,12 @@
+/* eslint-disable max-len */
 const { getFlavor } = require('../helpers/flavor');
+
+const defaultIcons = [
+	{ floor: 10, icon: '🔥' },
+	{ floor: 5, icon: '🔪' },
+	{ floor: 2, icon: '🤜' },
+	{ floor: 1, icon: '🏓' }
+];
 
 const announceHit = (publicChannel, channelManager, className, monster, {
 	assailant,
@@ -7,22 +15,29 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 	prevHp
 }) => {
 	const flavors = card && card.flavors;
+	const flavor = (card && card.flavor) || getFlavor('hits', flavors);
 
-	let icon = '🤜';
-	if (damage >= 10) {
-		icon = '🔥';
-	} else if (damage >= 5) {
-		icon = '🔪';
-	} else if (damage === 1) {
-		icon = '🏓';
+	let icon;
+	if (flavor.icon) {
+		icon = flavor.icon;
+	} else {
+		const icons = (card && card.flavorIcons) || defaultIcons;
+		icons.sort((a, b) => b.floor - a.floor);
+		({ icon } = icons.find(i => damage >= i.floor));
 	}
 
 	const bloodied = (monster.bloodied && prevHp > monster.bloodiedValue) ? `${monster.givenName} is now bloodied. ` : '';
 	const only = (monster.bloodied && monster.hp > 0) ? 'only ' : '';
+	let flavorText;
+	if (card && card.flavorText) {
+		flavorText = card.flavorText;
+	} else {
+		flavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavor.text} ${monster.givenName} for ${damage} damage.`;
+	}
 
 	publicChannel({
 		announce:
-`${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${getFlavor('hits', flavors)} ${monster.givenName} for ${damage} damage.
+`${flavorText}
 
 ${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
 `
