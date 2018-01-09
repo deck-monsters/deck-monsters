@@ -6,6 +6,9 @@ const ImmobilizeCard = require('./immobilize');
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = 3;
 const STARTING_ATTACK_MODIFIER = 3;
 
+const { FIGHTER, BARBARIAN } = require('../helpers/classes');
+const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+
 class ForkedMetalRodCard extends HornGoreCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -13,15 +16,15 @@ class ForkedMetalRodCard extends HornGoreCard {
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
+
+		this.immobilizeCard = new ImmobilizeCard();
 	}
 
 	get stats () { // eslint-disable-line class-methods-use-this
-		const immobilize = new ImmobilizeCard();
+		return `${this.immobilizeCard.stats}
+Attempt to stab your opponent with strong sharp prongs.
 
-		return `${immobilize.stats}
-Attempt to immobilize your opponent by capturing their neck between strong sharp prongs.
-
-Even if you miss, there's a chance you'll just stab them instead...`;
+Even if you miss, there's a chance you'll pin them...`;
 	}
 
 	resetImmobilizeStrength () {
@@ -37,9 +40,8 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 		const originalAttackModifier = player.encounterModifiers.attackModifier;
 
 		this.resetImmobilizeStrength();
-		const horn1 = this.gore(player, target, 1);
-		const horn2 = this.gore(player, target, 2);
-		const didHit = horn1.success || horn2.success;
+		this.gore(player, target, 1);
+		this.gore(player, target, 2);
 
 		player.encounterModifiers = { attackModifier: originalAttackModifier };
 
@@ -48,7 +50,7 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 				return false;
 			}
 
-			return super.effect(player, target, ring, activeContestants);
+			return this.immobilizeCard.effect(player, target, ring, activeContestants);
 		}
 
 		return !target.dead;
