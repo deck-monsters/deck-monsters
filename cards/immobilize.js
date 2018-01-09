@@ -95,13 +95,17 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
+	getFreedomThresholdBase (player) { // eslint-disable-line class-methods-use-this
+		return player.ac;
+	}
+
 	getFreedomThreshold (player, target) {
 		let fatigue = 0;
-		if (target.encounterModifiers.pinnedTurns) {
+		if (target.encounterModifiers && target.encounterModifiers.pinnedTurns) {
 			fatigue = (target.encounterModifiers.pinnedTurns * 3);
 		}
 
-		return (player.ac + this.freedomThresholdModifier) - fatigue;
+		return (this.getFreedomThresholdBase(player) + this.freedomThresholdModifier) - fatigue;
 	}
 
 	getAttackRoll (player, target) {

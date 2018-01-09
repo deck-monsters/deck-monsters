@@ -37,8 +37,8 @@ describe('./cards/battle-focus.js', () => {
 		expect(battleFocus).to.be.an.instanceof(BattleFocusCard);
 		expect(battleFocus.bigFirstHit).to.be.true;
 		expect(battleFocus.damageAmount).to.equal(1);
-		expect(battleFocus.damageDice).to.equal('1d4');
-		expect(battleFocus.stats).to.equal('Hit: 1d20 vs AC until you miss\n1d4 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
+		expect(battleFocus.damageDice).to.equal('1d6');
+		expect(battleFocus.stats).to.equal('Hit: 1d20 vs AC until you miss\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {

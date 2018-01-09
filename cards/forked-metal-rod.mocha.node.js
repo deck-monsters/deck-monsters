@@ -38,15 +38,15 @@ describe('./cards/forked-metal-rod.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
-Attempt to immobilize your opponent by capturing their neck between strong sharp prongs.
+Attempt to stab your opponent with strong sharp prongs.
 
-Even if you miss, there's a chance you'll just stab them instead...`;
+Even if you miss, there's a chance you'll pin them...`;
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
 		expect(forkedMetalRod.attackModifier).to.equal(3);
 		expect(forkedMetalRod.damageModifier).to.equal(0);
-		expect(forkedMetalRod.hitOnFail).to.be.true;
+		expect(forkedMetalRod.hitOnFail).to.be.false;
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.false;
 		expect(forkedMetalRod.stats).to.equal(stats);
 		expect(forkedMetalRod.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
@@ -56,25 +56,34 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 
 	it('can be instantiated with options', () => {
 		const forkedMetalRod = new ForkedMetalRod({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: false, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(2);
 		expect(forkedMetalRod.attackModifier).to.equal(4);
 		expect(forkedMetalRod.damageModifier).to.equal(4);
-		expect(forkedMetalRod.hitOnFail).to.be.false;
+		expect(forkedMetalRod.hitOnFail).to.be.true;
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.true;
 	});
 
-	it('do damage on fail to immobilize', () => {
+	it('can hit twice and immobilize', () => {
 		const forkedMetalRod = new ForkedMetalRod();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedMetalRod)), 'checkSuccess');
-		const hitCheckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(forkedMetalRod)), 'hitCheck');
-
 		const player = new Minotaur({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
 		const before = target.hp;
+
+		const forkedMetalRodProto = Object.getPrototypeOf(forkedMetalRod);
+		const hornGoreProto = Object.getPrototypeOf(forkedMetalRodProto);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		const hitCheckStub = sinon.stub(forkedMetalRodProto, 'hitCheck');
+		const hitStub = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
 			contestants: [
@@ -88,7 +97,192 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 
 		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
 
-		checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		return forkedMetalRod
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+				hitCheckStub.restore();
+				hitStub.restore();
+
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(hitStub.callCount).to.equal(2);
+				expect(forkedMetalRod.freedomThresholdModifier).to.equal(7);
+				expect(forkedMetalRod.attackModifier).to.equal(7);
+
+				expect(target.hp).to.be.below(before);
+				return expect(target.encounterEffects.length).to.equal(1);
+			});
+	});
+
+	it('can hit once and immobilize', () => {
+		const forkedMetalRod = new ForkedMetalRod();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const before = target.hp;
+
+		const forkedMetalRodProto = Object.getPrototypeOf(forkedMetalRod);
+		const hornGoreProto = Object.getPrototypeOf(forkedMetalRodProto);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		// checkSuccess must return true in order for hit to be called from hitCheck
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess').callsFake(() =>// eslint-disable-line no-unused-vars
+			({ success: true, strokeOfLuck: false, curseOfLoki: false }));
+		const hitCheckStub = sinon.stub(forkedMetalRodProto, 'hitCheck');
+		const goreSpy = sinon.spy(forkedMetalRodProto, 'gore');
+		const hitSpy = sinon.spy(creatureProto, 'hit');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+
+		hitCheckStub.onFirstCall().returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.onSecondCall().returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		return forkedMetalRod
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				hitCheckStub.restore();
+				checkSuccessStub.restore();
+				hitSpy.restore();
+
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(goreSpy.callCount).to.equal(2);
+				expect(hitSpy.callCount).to.equal(1);
+				expect(forkedMetalRod.freedomThresholdModifier).to.equal(5);
+				expect(forkedMetalRod.attackModifier).to.equal(5);
+				expect(target.hp).to.be.below(before);
+				return expect(target.encounterEffects.length).to.equal(1);
+			});
+	});
+
+	it('can immobilize even if hit failed', () => {
+		const forkedMetalRod = new ForkedMetalRod();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const before = target.hp;
+
+		const forkedMetalRodProto = Object.getPrototypeOf(forkedMetalRod);
+		const hornGoreProto = Object.getPrototypeOf(forkedMetalRodProto);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess').callsFake(() =>// eslint-disable-line no-unused-vars
+			({ success: true, strokeOfLuck: false, curseOfLoki: false }));
+		const hitCheckStub = sinon.stub(forkedMetalRodProto, 'hitCheck');
+		const hitStub = sinon.spy(creatureProto, 'hit');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+
+		hitCheckStub.onFirstCall().returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.onSecondCall().returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		return forkedMetalRod
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				checkSuccessStub.restore();
+				hitCheckStub.restore();
+				hitStub.restore();
+
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(hitStub.callCount).to.equal(0);
+				expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
+				expect(forkedMetalRod.attackModifier).to.equal(3);
+				expect(target.hp).to.equal(before);
+				return expect(target.encounterEffects.length).to.equal(1);
+			});
+	});
+
+	it('does not immobilize if target is dead', () => {
+		const forkedMetalRod = new ForkedMetalRod();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target', hp: 1 });
+
+		const forkedMetalRodProto = Object.getPrototypeOf(forkedMetalRod);
+		const hornGoreProto = Object.getPrototypeOf(forkedMetalRodProto);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		const hitCheckStub = sinon.stub(forkedMetalRodProto, 'hitCheck');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = { primaryDice: '1d20', result: 19, naturalRoll: { rolled: [19], result: 19 }, bonusResult: 0, modifier: 0 };
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,
@@ -102,7 +296,7 @@ Even if you miss, there's a chance you'll just stab them instead...`;
 				checkSuccessStub.restore();
 				hitCheckStub.restore();
 
-				expect(target.hp).to.be.below(before);
+				expect(target.hp).to.be.below(0);
 				return expect(target.encounterEffects.length).to.equal(0);
 			});
 	});

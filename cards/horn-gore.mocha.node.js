@@ -6,7 +6,7 @@ const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
 const { roll } = require('../helpers/chance');
 
-const { MINOTAUR } = require('../helpers/classes');
+const { MINOTAUR } = require('../helpers/creature-types');
 
 describe('./cards/horn-gore.js', () => {
 	let channelStub;
@@ -52,6 +52,14 @@ describe('./cards/horn-gore.js', () => {
 		expect(hornGore.permittedClassesAndTypes).to.deep.equal([MINOTAUR]);
 	});
 
+	it('only uses half of their damage modifier when calculating damage for a horn', () => {
+		const hornGore = new HornGoreCard();
+		const player = new Minotaur({ name: 'player' });
+		const damageRoll = hornGore.getDamageRoll(player);
+
+		expect(damageRoll.modifier).to.deep.equal(1);
+	});
+
 	it('hits twice and immobilizes', () => {
 		const hornGore = new HornGoreCard();
 		const player = new Minotaur({ name: 'player' });
@@ -92,13 +100,14 @@ describe('./cards/horn-gore.js', () => {
 		return hornGore
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect(hitCheckStub.callCount).to.equal(2);
-				expect(hitStub.callCount).to.equal(2);
-				expect(hornGore.freedomThresholdModifier).to.equal(-2);
-				expect(hornGore.attackModifier).to.equal(-2);
 				checkSuccessStub.restore();
 				hitCheckStub.restore();
 				hitStub.restore();
+
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(hitStub.callCount).to.equal(2);
+				expect(hornGore.freedomThresholdModifier).to.equal(0);
+				expect(hornGore.attackModifier).to.equal(4);
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
@@ -159,15 +168,15 @@ describe('./cards/horn-gore.js', () => {
 		return hornGore
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect(hitCheckStub.callCount).to.equal(2);
-				expect(goreSpy.callCount).to.equal(2);
-				expect(hitSpy.callCount).to.equal(1);
-				expect(hornGore.freedomThresholdModifier).to.equal(-4);
-				expect(hornGore.attackModifier).to.equal(-4);
 				hitCheckStub.restore();
 				checkSuccessStub.restore();
 				hitSpy.restore();
 
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(goreSpy.callCount).to.equal(2);
+				expect(hitSpy.callCount).to.equal(1);
+				expect(hornGore.freedomThresholdModifier).to.equal(-2);
+				expect(hornGore.attackModifier).to.equal(2);
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});
@@ -256,14 +265,14 @@ describe('./cards/horn-gore.js', () => {
 		return hornGore
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect(hitCheckStub.callCount).to.equal(2);
-				expect(hitStub.callCount).to.equal(0);
-				expect(hornGore.freedomThresholdModifier).to.equal(-6);
-				expect(hornGore.attackModifier).to.equal(-6);
 				checkSuccessStub.restore();
 				hitCheckStub.restore();
 				hitStub.restore();
 
+				expect(hitCheckStub.callCount).to.equal(2);
+				expect(hitStub.callCount).to.equal(0);
+				expect(hornGore.freedomThresholdModifier).to.equal(-4);
+				expect(hornGore.attackModifier).to.equal(0);
 				expect(target.hp).to.equal(before);
 				return expect(target.encounterEffects.length).to.equal(0);
 			});
