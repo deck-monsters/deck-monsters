@@ -59,11 +59,11 @@ Even if you miss, there's a chance you'll pin them...`;
 
 ForkedMetalRodCard.cardType = 'Forked Metal Rod';
 ForkedMetalRodCard.probability = 20;
-ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${HornGoreCard.strongAgainstCreatureTypes[1]}-hunting.`;
 ForkedMetalRodCard.level = 2;
 ForkedMetalRodCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 ForkedMetalRodCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedMetalRodCard.weakAgainstCreatureTypes = [MINOTAUR];
+ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedMetalRodCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
 ForkedMetalRodCard.defaults = {
 	...HornGoreCard.defaults,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
