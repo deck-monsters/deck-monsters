@@ -3,6 +3,7 @@ const proxyquire = require('proxyquire');
 const sample = require('lodash.sample');
 
 const { randomCharacter } = require('../characters');
+const { randomContestant } = require('../helpers/bosses');
 const DestroyCard = require('./destroy');
 const pause = require('../helpers/pause');
 
@@ -78,6 +79,33 @@ describe('./cards/pick-pocket.js', () => {
 			.then(() => {
 				expect(sampleSpy).to.have.been.calledWith(target2.cards);
 			});
+	});
+
+	it('can run many times without error', () => {
+		const pickPocket = new PickPocketCard();
+		const player = randomContestant();
+
+		const promises = [];
+
+		for (let i = 0; i < 50; i++) {
+			const target1 = randomContestant();
+			const target2 = randomContestant();
+
+			const ring = {
+				contestants: [
+					player,
+					target1,
+					target2
+				],
+				channelManager: {
+					sendMessages: () => Promise.resolve()
+				}
+			};
+
+			promises.push(pickPocket.play(player.monster, target1.monster, ring, ring.contestants));
+		}
+
+		return expect(Promise.all(promises)).to.be.fulfilled;
 	});
 
 	it('cannot pick from own player\'s pocket', () => {
