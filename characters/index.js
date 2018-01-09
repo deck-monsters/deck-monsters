@@ -138,11 +138,13 @@ const randomCharacter = ({
 		...options
 	});
 
+	const weakTypes = ['Flee', 'Harden', 'Heal', 'Hit', 'WhiskeyShot'];
+	const cleanBossDeck = deck => deck.filter(card => !weakTypes.includes(card.cardType));
+
 	// If this is a boss, clean up the deck (reducing probability of certain cards)
 	if (isBoss) {
-		let deck = getMinimumDeck().filter(card => card.cardType !== 'Flee' && card.cardType !== 'Hit');
-		deck = fillDeck(deck, {}, character);
-		deck = deck.filter(card => card.cardType !== 'Heal' && card.cardType !== 'WhiskeyShot');
+		let deck = cleanBossDeck(getMinimumDeck());
+		deck = cleanBossDeck(fillDeck(deck, {}, character));
 		character.deck = fillDeck(deck, {}, character);
 	}
 
