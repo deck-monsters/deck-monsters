@@ -8,7 +8,7 @@ const Discovery = require('./discoveries/base');
 const DeathCard = require('./discoveries/death');
 const NothingCard = require('./discoveries/nothing');
 
-describe.only('./exploration/index.js', () => {
+describe('./exploration/index.js', () => {
 	let clock;
 	let privateChannelStub;
 	let publicChannelStub;

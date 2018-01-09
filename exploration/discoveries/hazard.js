@@ -76,9 +76,9 @@ class HazardCard extends BaseCard {
 	effect (environment, player) {
 		const damage = roll({ primaryDice: this.damageDice }).result;
 
-		this.flavors = this.getDamageFlavors(player, damage - 1);
+		const flavors = this.getDamageFlavors(player, damage - 1);
 
-		this.flavor = getFlavor('hazards', this.flavors);
+		this.flavor = getFlavor('hazards', flavors);
 		this.flavorText = `${this.flavor.icon}  ${player.icon} ${player.givenName} ${this.flavor.text} ${damage} damage.`;
 
 		player.hit(damage, environment, this);
