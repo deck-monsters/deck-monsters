@@ -83,11 +83,11 @@ Stroke of luck increases damage per hit by 1.`;
 			}
 
 			// If we hit then do some damage
-			if (this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)) {
+			if (!target.dead && this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)) {
 				target.hit(damage, player, this);
 			} else {
 				this.emit('narration', {
-					narration: `HUMILIATION! ${iteration} hits, ${(Math.floor(target.maxHp / 2) - this.cumulativeComboDamage) * -1} damage overkill`
+					narration: `HUMILIATION! ${iteration} hits`
 				});
 			}
 
@@ -116,9 +116,10 @@ Stroke of luck increases damage per hit by 1.`;
 		});
 
 		if (iteration > 1) {
+			const comboText = (iteration > 3) ? 'COMBO! ' : '';
 			const ultraText = (iteration > 5) ? 'ULTRA ' : '';
 			this.emit('narration', {
-				narration: `${target.dead ? 'ULTIMATE ' : ultraText}COMBO! ${iteration} HITS`
+				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration-1} HIT${(iteration-1 > 1) ? 'S' : ''}`
 			});
 		}
 
