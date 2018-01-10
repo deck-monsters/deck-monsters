@@ -13,7 +13,8 @@ class SurvivalKnifeCard extends HitCard {
 	}
 
 	get stats () {
-		return `Either ${super.stats} or
+		return `Either ${super.stats}
+- or -
 Heal 2d4 if below a quarter health`;
 	}
 
