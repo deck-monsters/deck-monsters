@@ -42,9 +42,8 @@ describe('./cards/entrance.js', () => {
 
 		const stats = `${hit.stats}
 
- +2 against Gladiator
- -2 against Minotaur
-inneffective against Weeping Angel
+ +2 against Gladiator, Basilisk
+ -2 against Minotaur, Weeping Angel
 Chance to immobilize and damage your opponents with your painfully shocking beauty.`;
 
 		expect(entrance).to.be.an.instanceof(Entrance);

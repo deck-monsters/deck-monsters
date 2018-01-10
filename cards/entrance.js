@@ -4,6 +4,10 @@ const EnthrallCard = require('./enthrall');
 
 const ImmobilizeCard = require('./immobilize');
 
+const {
+	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+} = require('../helpers/creature-types');
+
 class EntranceCard extends EnthrallCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -18,11 +22,15 @@ class EntranceCard extends EnthrallCard {
 			attackModifier,
 			hitOnFail
 		});
+
+		this.immobilizeCard = new ImmobilizeCard({
+			strongAgainstCreatureTypes: [GLADIATOR, BASILISK],
+			weakAgainstCreatureTypes: [MINOTAUR, WEEPING_ANGEL],
+			uselessAgainstCreatureTypes: []
+		});
 	}
 	get stats () { // eslint-disable-line class-methods-use-this
-		const immobilize = new ImmobilizeCard();
-
-		return `${immobilize.stats}
+		return `${this.immobilizeCard.stats}
 Chance to immobilize and damage your opponents with your painfully shocking beauty.`;
 	}
 }
