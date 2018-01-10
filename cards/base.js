@@ -67,16 +67,19 @@ class BaseCard extends BaseClass {
 	}
 
 	play (player, proposedTarget, ring, activeContestants) {
-		this.emit('played', { player });
+		return Promise.resolve()
+			.then(() => {
+				this.emit('played', { player });
 
-		const targets = this.getTargets(player, proposedTarget, ring, activeContestants);
+				const targets = this.getTargets(player, proposedTarget, ring, activeContestants);
 
-		if (this.effect) {
-			return Promise.map(targets, target => this.effect(player, target, ring, activeContestants))
-				.then(results => results.reduce((result, val) => result && val, true));
-		}
+				if (this.effect) {
+					return Promise.map(targets, target => this.effect(player, target, ring, activeContestants))
+						.then(results => results.reduce((result, val) => result && val, true));
+				}
 
-		return Promise.resolve(true);
+				return Promise.resolve(true);
+			});
 	}
 
 	look (channel) {
