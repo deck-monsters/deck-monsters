@@ -41,6 +41,9 @@ describe('./cards/enthrall.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
+
+ +2 against Gladiator, Basilisk
+ -2 against Minotaur, Weeping Angel
 Chance to immobilize your opponents with your shocking beauty.`;
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);

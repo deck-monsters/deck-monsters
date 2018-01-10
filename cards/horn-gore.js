@@ -20,12 +20,17 @@ class HornGore extends ImmobilizeCard {
 	}
 
 	get stats () {
-		return `Attack twice (once with each horn). Small chance to pin if you successfully gore your opponent.
+		return `Attack twice (once with each horn). +2 to pin for each successfull horn hit.
 ${super.stats}`;
 	}
 
-	getAttackModifier () {
-		return this.attackModifier;
+	getAttackModifier (target) {
+		if (this.weakAgainstCreatureTypes.includes(target.name)) {
+			return -2 + this.attackModifier;
+		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
+			return this.attackModifier;
+		}
+		return 0;
 	}
 
 	resetImmobilizeStrength () {

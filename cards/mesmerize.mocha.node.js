@@ -41,6 +41,9 @@ describe('./cards/mesmerize.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
+
+ +2 against Gladiator, Basilisk
+ -2 against Minotaur, Weeping Angel
 Chance to immobilize everyone with your shocking beauty.`;
 
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);

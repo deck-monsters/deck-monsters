@@ -38,6 +38,10 @@ describe('./cards/coil.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
+
+ +2 against Gladiator, Minotaur
+ -2 against Basilisk
+inneffective against Weeping Angel
 Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
 
 		expect(coil).to.be.an.instanceof(Coil);
