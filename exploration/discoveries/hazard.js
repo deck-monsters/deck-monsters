@@ -4,15 +4,23 @@ const BaseCard = require('./base');
 const { roll } = require('../../helpers/chance');
 const { getFlavor } = require('../../helpers/flavor');
 
+const Gladiator = require('../../monsters/gladiator');
+
 class HazardCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		monster = new Gladiator({ name: 'default', color: 'gray', gender: 'androgynous' }),
 		damageDice,
 		icon = '⚠️',
-		icons,
-		flavorTemplate
+		icons
 	} = {}) {
-		super({ damageDice, icon, icons, flavorTemplate });
+		super({ damageDice, icon, icons });
+
+		this.damage = roll({ primaryDice: this.damageDice }).result;
+		const flavors = this.getDamageFlavors(monster, this.damage - 1);
+		this.flavor = getFlavor('hazards', flavors);
+		this.icon = this.flavor.icon;
+		this.flavorText = ' ';
 	}
 
 	get damageDice () {
@@ -26,7 +34,7 @@ class HazardCard extends BaseCard {
 	}
 
 	get stats () {
-		return this.flavor;
+		return `${this.flavor.text} ${this.damage} damage.`;
 	}
 
 	getDamageFlavors (player, number) {
@@ -74,14 +82,7 @@ class HazardCard extends BaseCard {
 	}
 
 	effect (environment, player) {
-		const damage = roll({ primaryDice: this.damageDice }).result;
-
-		const flavors = this.getDamageFlavors(player, damage - 1);
-
-		this.flavor = getFlavor('hazards', flavors);
-		this.flavorText = `${this.flavor.icon}  ${player.icon} ${player.givenName} ${this.flavor.text} ${damage} damage.`;
-
-		player.hit(damage, environment, this);
+		player.hit(this.damage, environment, this);
 
 		return player;
 	}

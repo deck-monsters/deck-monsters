@@ -22,6 +22,12 @@ class BaseCard extends BaseClass {
 		return this.constructor.description;
 	}
 
+	set icon (icon) {
+		this.setOptions({
+			icon
+		});
+	}
+
 	get icon () {
 		return this.options.icon;
 	}

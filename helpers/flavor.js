@@ -7,7 +7,7 @@ const flavor = {
 
 		const words = possibleWords.find(word => percent() <= word[1]) || flavor.getFlavor(category, flavors);
 
-		return { text: words[0], icon: words[2] };
+		return { text: words[0], probability: words[1], icon: words[2] };
 	},
 
 	flavors: {
