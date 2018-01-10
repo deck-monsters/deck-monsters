@@ -12,9 +12,8 @@ class SurvivalKnifeCard extends HitCard {
 		this.healCard = new HealCard({ healthDice: '2d4' });
 	}
 
-
 	get stats () {
-		return `${super.stats}
+		return `Either ${super.stats} or
 Heal 2d4 if below a quarter health`;
 	}
 
@@ -29,7 +28,7 @@ Heal 2d4 if below a quarter health`;
 
 SurvivalKnifeCard.cardType = 'Survival Knife';
 SurvivalKnifeCard.probability = 30;
-SurvivalKnifeCard.description = 'Never hurts to be prepared.';
+SurvivalKnifeCard.description = 'If times get too rough, stab yourself in the thigh and press the pommel for a Stimpak injection.';
 SurvivalKnifeCard.level = 1;
 SurvivalKnifeCard.defaults = {
 	...HitCard.defaults,
