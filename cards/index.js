@@ -34,6 +34,7 @@ const PoundCard = require('./pound');
 const RandomCard = require('./random');
 const RehitCard = require('./rehit');
 const ScotchCard = require('./scotch');
+const SurvivalKnife = require('./survival-knife');
 const ThickSkinCard = require('./thick-skin');
 const VenegefulRampageCard = require('./vengeful-rampage');
 const WhiskeyShotCard = require('./whiskey-shot');
@@ -76,6 +77,7 @@ const all = [
 	RandomCard,
 	RehitCard,
 	ScotchCard,
+	SurvivalKnife,
 	ThickSkinCard,
 	VenegefulRampageCard,
 	WhiskeyShotCard,
