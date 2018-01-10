@@ -400,7 +400,7 @@ class Ring extends BaseClass {
 
 					// Increment the round counter
 					round += 1;
-					
+
 					// Reset the value of `emptyHanded`
 					allActiveContestants.forEach(({ monster }) => {
 						monster.emptyHanded = false;

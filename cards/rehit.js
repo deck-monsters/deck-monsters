@@ -6,6 +6,7 @@
 */
 
 const HitCard = require('./hit');
+
 const { roll } = require('../helpers/chance');
 const { CLERIC } = require('../helpers/classes');
 

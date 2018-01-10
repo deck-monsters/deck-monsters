@@ -1,4 +1,5 @@
 const HitCard = require('./hit');
+
 const FleeCard = require('./flee');
 
 class FightOrFlightCard extends HitCard {

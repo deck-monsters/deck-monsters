@@ -1,8 +1,9 @@
 /* eslint-disable max-len */
 
+const HitCard = require('./hit');
+
 const { BARBARIAN } = require('../helpers/classes');
 const { roll } = require('../helpers/chance');
-const HitCard = require('./hit');
 
 class BerserkCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -121,11 +122,8 @@ Stroke of luck increases damage per hit by 1.`;
 			});
 		}
 
-		return new Promise((resolve, reject) => {
-			ring.channelManager.sendMessages()
-				.then(() => resolve(!target.dead))
-				.catch(ex => reject(ex));
-		});
+		return ring.channelManager.sendMessages()
+			.then(() => !target.dead);
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars

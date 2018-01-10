@@ -1,4 +1,5 @@
 const BaseCard = require('./base');
+
 const { roll } = require('../helpers/chance');
 const isProbable = require('../helpers/is-probable');
 

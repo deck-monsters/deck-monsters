@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
+
 const { BARBARIAN, FIGHTER } = require('../helpers/classes');
 
 class CamouflageVestCard extends CloakOfInvisibilityCard {}

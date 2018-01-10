@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 const BaseClass = require('../baseClass');
 const pause = require('../helpers/pause');
 
@@ -78,14 +80,14 @@ class ChannelManager extends BaseClass {
 
 				return messages;
 			}, []))
-			.then(messages => Promise.all(messages.map((message) => {
+			.then(messages => Promise.map(messages, (message) => {
 				const channel = this.channels[message.channelName];
 
 				return sendMessage(channel, message.announcements.join('\n'))
 					.then(() => {
 						message.events.forEach(event => this.emit(event.name, event.properties));
 					});
-			})));
+			}));
 	}
 }
 

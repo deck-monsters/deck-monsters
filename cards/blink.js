@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const CurseCard = require('./curse');
+
 const { WEEPING_ANGEL } = require('../helpers/creature-types');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');

@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const BaseCard = require('./base');
+
 const { CLERIC, WIZARD } = require('../helpers/classes');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 

@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 const BaseClass = require('../baseClass');
 
 const { actionCard } = require('../helpers/card');
@@ -70,7 +72,7 @@ class BaseCard extends BaseClass {
 		const targets = this.getTargets(player, proposedTarget, ring, activeContestants);
 
 		if (this.effect) {
-			return Promise.all(targets.map(target => this.effect(player, target, ring, activeContestants)))
+			return Promise.map(targets, target => this.effect(player, target, ring, activeContestants))
 				.then(results => results.reduce((result, val) => result && val, true));
 		}
 

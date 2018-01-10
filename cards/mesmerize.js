@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+const Promise = require('bluebird');
 
 const ImmobilizeCard = require('./immobilize');
 
@@ -31,8 +32,8 @@ Chance to immobilize everyone with your shocking beauty.`;
 	}
 
 	effect (player, target, ring, activeContestants) {
-		return new Promise(resolve => resolve(Promise.all(activeContestants.map(({ monster }) => super.effect(player, monster, ring, activeContestants)))
-			.then(() => !target.dead)));
+		return Promise.map(activeContestants, ({ monster }) => super.effect(player, monster, ring, activeContestants))
+			.then(() => !target.dead);
 	}
 }
 

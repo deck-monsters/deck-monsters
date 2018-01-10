@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const ImmobilizeCard = require('./immobilize');
+
 const MesmerizeCard = require('./mesmerize');
 
 const {

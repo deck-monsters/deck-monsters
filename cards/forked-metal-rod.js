@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const HornGoreCard = require('./horn-gore');
+
 const ImmobilizeCard = require('./immobilize');
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = 3;

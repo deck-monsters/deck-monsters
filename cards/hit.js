@@ -105,36 +105,34 @@ class HitCard extends BaseCard {
 	}
 
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		return new Promise((resolve, reject) => {
-			// Add any player modifiers and roll the dice
-			const {
-				attackRoll, success, strokeOfLuck, curseOfLoki // TODO: Is this curseOfLoki used elsewhere and we can simply drop it?
-			} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
+		// Add any player modifiers and roll the dice
+		const {
+			attackRoll, success, strokeOfLuck, curseOfLoki // TODO: Is this curseOfLoki used elsewhere and we can simply drop it?
+		} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
-			ring.channelManager.sendMessages()
-				.then(() => {
-					if (success) {
-						const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
+		return ring.channelManager.sendMessages()
+			.then(() => {
+				if (success) {
+					const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
-						// If we hit then do some damage
-						resolve(target.hit(damageRoll.result, player, this));
-					} else if (curseOfLoki) {
-						const damageRoll = this.rollForDamage(target, player);
+					// If we hit then do some damage
+					return target.hit(damageRoll.result, player, this);
+				} else if (curseOfLoki) {
+					const damageRoll = this.rollForDamage(target, player);
 
-						// Our attack is now bouncing back against us
-						resolve(player.hit(damageRoll.result, target, this));
-					} else {
-						this.emit('miss', {
-							attackResult: attackRoll.result,
-							attackRoll,
-							player,
-							target
-						});
+					// Our attack is now bouncing back against us
+					return player.hit(damageRoll.result, target, this);
+				}
 
-						resolve(true);
-					}
-				}).catch(ex => reject(ex));
-		});
+				this.emit('miss', {
+					attackResult: attackRoll.result,
+					attackRoll,
+					player,
+					target
+				});
+
+				return true;
+			});
 	}
 }
 
