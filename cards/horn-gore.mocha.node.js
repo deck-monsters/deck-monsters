@@ -36,7 +36,7 @@ describe('./cards/horn-gore.js', () => {
 
 		expect(hornGore).to.be.an.instanceof(HornGoreCard);
 		expect(hornGore.damageDice).to.equal('1d4');
-		expect(hornGore.stats).to.equal('Attack twice (once with each horn). Small chance to pin if you successfully gore your opponent.\nHit: 1d20 vs AC / Damage: 1d4');// eslint-disable-line max-len
+		expect(hornGore.stats).to.equal('Attack twice (once with each horn). Small chance to pin if you successfully gore your opponent.\nHit: 1d20 vs AC / Damage: 1d4\n\ninneffective against Weeping Angel');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {

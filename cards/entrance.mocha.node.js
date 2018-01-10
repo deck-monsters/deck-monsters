@@ -41,6 +41,10 @@ describe('./cards/entrance.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
+
+ +2 against Gladiator
+ -2 against Minotaur
+inneffective against Weeping Angel
 Chance to immobilize and damage your opponents with your painfully shocking beauty.`;
 
 		expect(entrance).to.be.an.instanceof(Entrance);
