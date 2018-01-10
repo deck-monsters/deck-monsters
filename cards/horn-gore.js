@@ -24,8 +24,13 @@ class HornGore extends ImmobilizeCard {
 ${super.stats}`;
 	}
 
-	getAttackModifier () {
-		return this.attackModifier;
+	getAttackModifier (target) {
+		if (this.weakAgainstCreatureTypes.includes(target.name)) {
+			return -2 + this.attackModifier;
+		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
+			return this.attackModifier;
+		}
+		return 0;
 	}
 
 	resetImmobilizeStrength () {
