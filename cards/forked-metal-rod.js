@@ -18,7 +18,7 @@ class ForkedMetalRodCard extends HornGoreCard {
 	} = {}) {
 		super({ icon, ...rest });
 
-		this.immobilizeCard = new ImmobilizeCard();
+		this.immobilizeCard = new ImmobilizeCard({ strongAgainstCreatureTypes: this.strongAgainstCreatureTypes });
 	}
 
 	get stats () { // eslint-disable-line class-methods-use-this

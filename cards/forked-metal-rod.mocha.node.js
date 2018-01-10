@@ -38,11 +38,18 @@ describe('./cards/forked-metal-rod.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
+
+ +2 against Gladiator, Basilisk
+ -2 against Minotaur
+inneffective against Weeping Angel
 Attempt to stab your opponent with strong sharp prongs.
 
 Even if you miss, there's a chance you'll pin them...`;
 
+		const description = 'A dangerously sharp forked metal rod fashioned for Gladiator and Basilisk-hunting.';
+
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
+		expect(forkedMetalRod.description).to.equal(description);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
 		expect(forkedMetalRod.attackModifier).to.equal(3);
 		expect(forkedMetalRod.damageModifier).to.equal(0);
