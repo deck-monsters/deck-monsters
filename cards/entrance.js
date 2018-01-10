@@ -28,6 +28,7 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 }
 
 EntranceCard.cardType = 'Entrance';
+EntranceCard.actions = ['entrance', 'entrances', 'entranced'];
 EntranceCard.probability = 20;
 EntranceCard.level = 3;
 EntranceCard.description = `You strut and preen. Your _painful_ beauty overwhelms and ${EntranceCard.actions[1]} everyone, except yourself.`;
@@ -37,13 +38,12 @@ EntranceCard.defaults = {
 	doDamageOnImmobilize: true,
 	freedomThresholdModifier: 2
 };
-EntranceCard.actions = ['entrance', 'entrances', 'entranced'];
 
 EntranceCard.flavors = {
 	hits: [
-		[EntranceCard.actions[1], 80],
-		['uses their painfully stunning natural beauty to bring falling to their knees in agonized worship', 30],
-		[`${EntranceCard.actions[1]} even Narcissus himself with their beauty... And that's when they sucker punch`, 5]
+		['stuns', 80],
+		['uses their painfully stunning natural beauty against', 30],
+		["stuns even Narcissus himself with their beauty... And that's when they sucker punch", 5]
 	]
 };
 

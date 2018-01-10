@@ -35,7 +35,7 @@ CoilCard.actions = ['coil', 'coils', 'coiled'];
 
 CoilCard.flavors = {
 	hits: [
-		[`${CoilCard.actions[1]}`, 80],
+		['squeezes', 80],
 		['squeezes and squeezes', 50],
 		['tightens so hard that anything on the inside that could easily come to the outside, well... _does_. This not only damages, but utterly humiliates', 5]
 	]

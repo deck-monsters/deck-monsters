@@ -54,9 +54,9 @@ MesmerizeCard.defaults = {
 
 MesmerizeCard.flavors = {
 	hits: [
-		[MesmerizeCard.actions[1], 80],
+		['overwhelms', 80],
 		['uses their natural beauty to overwhelm', 30],
-		[`${MesmerizeCard.actions[1]} even Narcissus himself with their beauty... Which leaves no hope for`, 5]
+		['stuns', 30]
 	]
 };
 

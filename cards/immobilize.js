@@ -195,7 +195,7 @@ class ImmobilizeCard extends HitCard {
 							target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
 
 							this.emit('narration', {
-								narration: `${target.givenName} is now ${this.actions[2]}. ${target.pronouns[0]} pushes the limp dead body of ${player.givenName} off of ${target.pronouns[1]}self and proudly stands prepared to fight`
+								narration: `${target.givenName} is no longer ${this.actions[2]}. ${target.pronouns[0]} pushes the limp dead body of ${player.givenName} off of ${target.pronouns[1]}self and proudly stands prepared to fight`
 							});
 						}
 					}
@@ -219,7 +219,7 @@ class ImmobilizeCard extends HitCard {
 			if (alreadyImmobilized) {
 				narration = `${target.givenName} is already ${this.actions[2]}, now _show no mercy_!`;
 			} else {
-				narration = `${target.givenName} laughs hautily as you try to ${this.actions[2]} them, vent your fury at their mockery!`;
+				narration = `${target.givenName} laughs hautily as you try to ${this.actions[0]} them, vent your fury at their mockery!`;
 			}
 			this.emit('narration', { narration });
 
@@ -258,7 +258,7 @@ ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 
 ImmobilizeCard.flavors = {
 	hits: [
-		['immobilizes', 100]
+		['stuns', 100]
 	]
 };
 
