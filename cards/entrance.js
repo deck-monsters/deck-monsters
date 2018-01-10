@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const EnthrallCard = require('./enthrall');
+
 const ImmobilizeCard = require('./immobilize');
 
 class EntranceCard extends EnthrallCard {

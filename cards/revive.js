@@ -1,4 +1,5 @@
 const HealCard = require('./heal');
+
 const { CLERIC, WIZARD } = require('../helpers/classes');
 
 class ReviveCard extends HealCard {

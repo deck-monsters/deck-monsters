@@ -40,7 +40,7 @@ const announcer = (prefix, what) => new Promise((resolve, reject) => {
 });
 
 const roomAnnouncer = what => announcer('Room', what);
-const slackdem = new Game(roomAnnouncer, { spawnBosses: false });
+const slackdem = new Game(roomAnnouncer, { spawnBosses: false }, console.log); // eslint-disable-line no-console
 
 const VLAD_ID = 1234;
 const vladAnnouncer = what => announcer('vlad', what);

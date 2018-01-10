@@ -1,4 +1,5 @@
 const HitCard = require('./hit');
+
 const { BARBARIAN } = require('../helpers/classes');
 
 class VenegefulRampageCard extends HitCard {

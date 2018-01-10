@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 const BaseClass = require('../baseClass');
 
 const { actionCard } = require('../helpers/card');
@@ -65,16 +67,19 @@ class BaseCard extends BaseClass {
 	}
 
 	play (player, proposedTarget, area, activeContestants) {
-		this.emit('played', { player });
+		return Promise.resolve()
+			.then(() => {
+				this.emit('played', { player });
 
-		const targets = this.getTargets(player, proposedTarget, area, activeContestants);
+				const targets = this.getTargets(player, proposedTarget, area, activeContestants);
 
-		if (this.effect) {
-			return Promise.all(targets.map(target => this.effect(player, target, area, activeContestants)))
-				.then(results => results.reduce((result, val) => result && val, true));
-		}
+				if (this.effect) {
+					return Promise.map(targets, target => this.effect(player, target, area, activeContestants))
+						.then(results => results.reduce((result, val) => result && val, true));
+				}
 
-		return Promise.resolve(true);
+				return Promise.resolve(true);
+			});
 	}
 
 	look (channel) {

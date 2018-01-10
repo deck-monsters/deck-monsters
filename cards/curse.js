@@ -1,4 +1,5 @@
 const HitCard = require('./hit');
+
 const { difference } = require('../helpers/difference');
 const { max } = require('../helpers/chance');
 

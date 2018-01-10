@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const BerserkCard = require('./berserk');
+
 const { GLADIATOR } = require('../helpers/creature-types');
 
 class BattleFocusCard extends BerserkCard {
