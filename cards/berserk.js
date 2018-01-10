@@ -119,7 +119,7 @@ Stroke of luck increases damage per hit by 1.`;
 			const comboText = (iteration > 3) ? 'COMBO! ' : '';
 			const ultraText = (iteration > 5) ? 'ULTRA ' : '';
 			this.emit('narration', {
-				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration-1} HIT${(iteration-1 > 1) ? 'S' : ''}`
+				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration - 1} HIT${(iteration - 1 > 1) ? 'S' : ''}`
 			});
 		}
 

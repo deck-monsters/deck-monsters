@@ -9,7 +9,7 @@ const { roll } = require('../helpers/chance');
 const { BARBARIAN } = require('../helpers/classes');
 
 const ultraComboNarration = [];
-for (var i = 17; i < 101; i++) {
+for (let i = 17; i < 101; i++) {
 	ultraComboNarration.push(`HUMILIATION! ${i} hits`);
 }
 ultraComboNarration.push('ULTRA COMBO! 100 HITS');
