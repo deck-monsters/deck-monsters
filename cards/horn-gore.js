@@ -20,7 +20,7 @@ class HornGore extends ImmobilizeCard {
 	}
 
 	get stats () {
-		return `Attack twice (once with each horn). +2 to pin for each successfully horn hit.
+		return `Attack twice (once with each horn). +2 to pin for each successfull horn hit.
 ${super.stats}`;
 	}
 

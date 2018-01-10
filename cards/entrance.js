@@ -24,9 +24,9 @@ class EntranceCard extends EnthrallCard {
 		});
 
 		this.immobilizeCard = new ImmobilizeCard({
-			strongAgainstCreatureTypes: [GLADIATOR, BASILISK],
-			weakAgainstCreatureTypes: [MINOTAUR, WEEPING_ANGEL],
-			uselessAgainstCreatureTypes: []
+			strongAgainstCreatureTypes: this.strongAgainstCreatureTypes,
+			weakAgainstCreatureTypes: this.weakAgainstCreatureTypes,
+			uselessAgainstCreatureTypes: this.uselessAgainstCreatureTypes
 		});
 	}
 	get stats () { // eslint-disable-line class-methods-use-this
@@ -38,6 +38,10 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 EntranceCard.cardType = 'Entrance';
 EntranceCard.probability = 20;
 EntranceCard.level = 3;
+EntranceCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
+EntranceCard.permittedClassesAndTypes = [WEEPING_ANGEL];
+EntranceCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
+EntranceCard.uselessAgainstCreatureTypes = [];
 EntranceCard.description = `You strut and preen. Your _painful_ beauty overwhelms and ${EntranceCard.actions[1]} everyone, except yourself.`;
 EntranceCard.defaults = {
 	...EnthrallCard.defaults,
