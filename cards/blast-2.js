@@ -16,10 +16,6 @@ class Blast2Card extends BlastCard {
 		return `Blast II: ${this.damage} base damage +spell bonus of caster`;
 	}
 
-	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
-	}
-
 	effect (player, target) {
 		const damage = this.damage + player.intModifier;
 		return target.hit(damage, player, this);
