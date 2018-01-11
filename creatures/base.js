@@ -19,7 +19,7 @@ const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
 const MAX_AC_MODIFICATION = 4;
 const MAX_DEX_BOOST = 10;
 const MAX_STRENGTH_BOOST = 6;
-const MAX_INT_BOOST = 6;
+const MAX_INT_BOOST = 8;
 const MAX_HP_BOOST = (BASE_HP * 2) + HP_VARIANCE;
 const MAX_HP_MODIFICATION = 12;
 const TIME_TO_HEAL = 300000; // Five minutes per hp
@@ -117,7 +117,7 @@ ${signedNumber(this.strengthModifier)} to damage`
 }${
 	this.intModifier === 0 ? '' :
 		`
-${signedNumber(this.strengthModifier)} to spells`
+${signedNumber(this.intModifier)} to spells`
 }`;
 	}
 
