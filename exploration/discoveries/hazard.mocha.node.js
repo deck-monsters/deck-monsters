@@ -39,7 +39,7 @@ describe('./exploration/discoveries/hazard.js', () => {
 	it('can be played', () => {
 		const hazard = new HazardCard();
 		let player = new Basilisk();
-		let environment = new Environment();
+		const environment = new Environment();
 		const originalhp = player.hp;
 
 		player = hazard.effect(environment, player);

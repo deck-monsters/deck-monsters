@@ -1,4 +1,5 @@
 const { expect, sinon } = require('../shared/test-setup');
+const Promise = require('bluebird');
 
 const Basilisk = require('../monsters/basilisk');
 const Beastmaster = require('../characters/beastmaster');
@@ -203,7 +204,7 @@ describe('./exploration/index.js', () => {
 			expect(exploration.monsterIsExploring(monster)).to.be.false;
 		});
 
-		it('is sent home if dead', () => {
+		it.only('is sent home if dead', () => {
 			const game = new Game(publicChannelStub);
 			const exploration = game.getExploration();
 
@@ -223,24 +224,39 @@ describe('./exploration/index.js', () => {
 			expect(explorer.discoveries).to.have.lengthOf(0);
 
 			const makeDiscoveryStub = sinon.stub(Object.getPrototypeOf(exploration), 'makeDiscovery');
-			makeDiscoveryStub.callsFake((explorer) => {
+			makeDiscoveryStub.callsFake((player) => {
 				const death = new DeathCard();
-				death.look(explorer.channel);
-				death.play(explorer.monster, explorer.monster);
-
-				return death;
+				death.look(player.channel);
+				return death.play(player.monster, player.monster);
 			});
 
-			while (exploration.monsterIsExploring(monster)) {
-				exploration.doExploration();
-			}
+			const continueExploring = () => new Promise((resolve, reject) => {
+				exploration
+					.doExploration()
+					.then(() => {
+						if (exploration.monsterIsExploring(monster)) {
+							console.log('monster is not dead, continue exploring');
+							return continueExploring();
+						}
+						console.log('monster is dead');
+						return resolve();
+					})
+					.catch((er) => {
+						console.log('er', er);
+						reject(er);
+					});
+			});
 
-			makeDiscoveryStub.restore();
+			continueExploring()
+				.then(() => {
+					console.log('all done');
+					makeDiscoveryStub.restore();
 
-			expect(explorer.monster.dead).to.be.true;
-			expect(explorer.discoveries.length).to.be.below(2);
-			expect(exploration.explorers.length).to.equal(0);
-			expect(exploration.monsterIsExploring(monster)).to.be.false;
+					expect(explorer.monster.dead).to.be.true;
+					expect(explorer.discoveries.length).to.be.below(2);
+					expect(exploration.explorers.length).to.equal(0);
+					expect(exploration.monsterIsExploring(monster)).to.be.false;
+				});
 		});
 	});
 });

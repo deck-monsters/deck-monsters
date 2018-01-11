@@ -12,6 +12,8 @@ const DeathCard = require('./discoveries/death');
 
 const TheWorld = require('../monsters/environment');
 
+const Promise = require('bluebird');
+
 const { ONE_MINUTE } = require('../helpers/delay-times');
 
 class Exploration extends BaseClass {
@@ -66,6 +68,7 @@ class Exploration extends BaseClass {
 	sendMonsterExploring ({
 		monster, character, channel, channelName
 	}) {
+		console.log('sendMonsterExploring')
 		if (!this.monsterIsExploring(monster)) {
 			const explorer = {
 				monster,
@@ -97,6 +100,7 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 				channel,
 				channelName
 			});
+			console.log('sent');
 		} else {
 			const exploringMonster = this.getExplorer(monster);
 			this.channelManager.queueMessage({
@@ -104,6 +108,7 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 				channel,
 				channelName
 			});
+			console.log('already exploring!');
 		}
 	}
 
@@ -111,36 +116,54 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 		const exploration = this;
 
 		pause.setTimeout(() => {
-			exploration.doExploration();
-			exploration.startExplorationTimer();
+			exploration
+				.doExploration()
+				.then(() => {
+					exploration.startExplorationTimer();
+				});
 		}, ONE_MINUTE);
 	}
 
 	makeDiscovery (explorer) {
-		const discoveries = shuffle(this.discoveries);
+		return new Promise((resolve, reject) => {
+			console.log('about to make discovery');
+			const discoveries = shuffle(this.discoveries);
 
-		// if (explorer) {
-		// 	discoveries = discoveries.filter(discovery => explorer.canFind(discovery));
-		// }
+			// if (explorer) {
+			// 	discoveries = discoveries.filter(discovery => explorer.canFind(discovery));
+			// }
 
-		const Discovery = discoveries.find(isProbable);
+			const Discovery = discoveries.find(isProbable);
 
-		if (!Discovery) return this.makeDiscovery(explorer);
+			if (!Discovery) return this.makeDiscovery(explorer);
 
-		const discovery = new Discovery();
-		discovery.look(explorer.channel);
-		discovery.play(this.environment, explorer.monster);
-
-		return discovery;
+			const discovery = new Discovery();
+			discovery.look(explorer.channel);
+			return discovery
+				.play(this.environment, explorer.monster)
+				.then((player) => {
+					console.log('resolve discovery');
+					return resolve(discovery);
+				})
+				.catch(er => reject(er));
+		});
 	}
 
 	doExploration () {
-		this.explorers.forEach((explorer) => {
-			explorer.discoveries.push(this.makeDiscovery(explorer));
+		console.log('in doExploration');
+		return Promise.map(this.explorers, explorer => {
+			console.log('in map');
+			this.makeDiscovery(explorer)
+				.then((discovery) => {
+					console.log('discovery made in then')
+					explorer.discoveries.push(discovery);
 
-			if (explorer.monster.dead || explorer.discoveries.length >= 15 || moment() > explorer.returnTime) {
-				this.sendMonsterHome(explorer);
-			}
+					if (explorer.monster.dead || explorer.discoveries.length >= 15 || moment() > explorer.returnTime) {
+						this.sendMonsterHome(explorer);
+					}
+
+					return Promise.resolve();
+				});
 		});
 	}
 

@@ -61,12 +61,15 @@ const getItemRequirements = (item) => {
 };
 
 
-const discoveryCard = card => formatCard({
-	title: `${card.icon}  ${card.cardType}  ${itemRarity(card.flavor.probability)}`,
-	description: card.description,
-	stats: card.stats,
-	rankings: getItemRequirements(card)
-});
+const discoveryCard = (card) => {
+	const probability = card.flavor && card.flavor.probability || card.probability || 1;
+	return formatCard({
+		title: `${card.icon}  ${card.cardType}  ${itemRarity(probability)}`,
+		description: card.description,
+		stats: card.stats,
+		rankings: getItemRequirements(card)
+	});
+};
 
 const itemCard = item => formatCard({
 	title: `${item.icon}  ${item.itemType}  ${itemRarity(item.probability)}`,
