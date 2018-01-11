@@ -38,6 +38,10 @@ Chance to immobilize your opponents with your shocking beauty.`;
 		return this.mesmerizeCard.getAttackRoll(player, target);
 	}
 
+	getTargetPropValue (target) {
+		return this.mesmerizeCard.getTargetPropValue(target);
+	}
+
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
 		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
 	}

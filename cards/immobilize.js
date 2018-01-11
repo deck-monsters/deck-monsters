@@ -11,7 +11,7 @@ class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		dexModifier,
-		strengthModifier,
+		strModifier,
 		hitOnFail,
 		doDamageOnImmobilize,
 		icon = '😵',
@@ -26,7 +26,7 @@ class ImmobilizeCard extends HitCard {
 
 		this.setOptions({
 			dexModifier,
-			strengthModifier,
+			strModifier,
 			hitOnFail,
 			doDamageOnImmobilize,
 			freedomThresholdModifier,
@@ -93,8 +93,8 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
-	get strengthModifier () {
-		return this.options.strengthModifier;
+	get strModifier () {
+		return this.options.strModifier;
 	}
 
 	getAttackModifier (target) {
@@ -107,23 +107,23 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get stats () {
-		let strengthModifiers = '\n';
+		let strModifiers = '\n';
 		if (this.strongAgainstCreatureTypes.length && this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] })) {
 			const strongAgainst = this.strongAgainstCreatureTypes.join(', ');
-			strengthModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}`;
+			strModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}`;
 		}
 
 		if (this.weakAgainstCreatureTypes.length && this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] })) {
 			const weakAgainst = this.weakAgainstCreatureTypes.join(', ');
-			strengthModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}`;
+			strModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}`;
 		}
 
 		if (this.uselessAgainstCreatureTypes.length) {
 			const uselessAgainst = this.uselessAgainstCreatureTypes.join(', ');
-			strengthModifiers += `\ninneffective against ${uselessAgainst}`;
+			strModifiers += `\ninneffective against ${uselessAgainst}`;
 		}
 
-		return `${super.stats}${strengthModifiers}`;
+		return `${super.stats}${strModifiers}`;
 	}
 
 	get freedomThresholdModifier () {
@@ -153,13 +153,17 @@ class ImmobilizeCard extends HitCard {
 		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
 	}
 
+	getTargetPropValue (target) {
+		return target.ac;
+	}
+
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		const attackRoll = this.getAttackRoll(player, target);
 		const alreadyImmobilized = !!target.encounterEffects.find(effect => effect.effectType === 'ImmobilizeEffect');
 		const canHaveEffect = !this.uselessAgainstCreatureTypes.includes(target.creatureType);
 
 		if (!alreadyImmobilized && canHaveEffect) {
-			const attackSuccess = this.checkSuccess(attackRoll, target.ac);
+			const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
 
 			this.emit('rolling', {
 				reason: `to see if ${player.pronouns[0]} ${this.actions[1]} ${target.givenName}`,
@@ -167,7 +171,8 @@ class ImmobilizeCard extends HitCard {
 				roll: attackRoll,
 				player,
 				target,
-				outcome: ''
+				outcome: '',
+				vs: this.getTargetPropValue(target)
 			});
 
 			const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...' : ''}`;
@@ -179,7 +184,8 @@ class ImmobilizeCard extends HitCard {
 				roll: attackRoll,
 				player,
 				target,
-				outcome
+				outcome,
+				vs: this.getTargetPropValue(target)
 			});
 
 			if (attackSuccess.success) {
@@ -289,7 +295,7 @@ ImmobilizeCard.level = 1;
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,
 	dexModifier: 2,
-	strengthModifier: 0,
+	strModifier: 0,
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: 2,

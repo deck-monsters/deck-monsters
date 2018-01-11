@@ -36,6 +36,10 @@ Chance to immobilize everyone with your shocking beauty.`;
 		return roll({ primaryDice: this.attackDice, modifier: player.intModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
 	}
 
+	getTargetPropValue (target) {
+		return target.int;
+	}
+
 	effect (player, target, ring, activeContestants) {
 		return Promise.map(activeContestants, ({ monster }) => super.effect(player, monster, ring, activeContestants))
 			.then(() => !target.dead);
