@@ -1,5 +1,7 @@
 const fantasyNames = require('fantasy-names');
+const random = require('lodash.random');
 const sample = require('lodash.sample');
+const throttle = require('lodash.throttle');
 
 const chooseCards = require('../../cards/helpers/choose');
 const chooseItems = require('../helpers/choose');
@@ -16,11 +18,17 @@ const ADJECTIVES = [
 	'small, round'
 ];
 
+const getShop = throttle(() => ({
+	name: fantasyNames('places', 'magic_shops'),
+	adjective: sample(ADJECTIVES),
+	priceOffset: random(0.6, 0.9)
+}), 7200000);
+
 module.exports = ({
 	character,
 	channel
 }) => {
-	const shopName = fantasyNames('places', 'magic_shops');
+	const shop = getShop();
 
 	const { cards, items } = character;
 	const numberOfItems = items.length === 1 ? '1 item' : `${items.length} items`;
@@ -30,7 +38,7 @@ module.exports = ({
 		.resolve()
 		.then(() => channel({
 			question:
-`You push open a ${sample(ADJECTIVES)} door and find yourself in ${shopName}.
+`You push open a ${shop.adjective} door and find yourself in ${shop.name}.
 
 You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 
@@ -50,11 +58,11 @@ You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 			return chooseCards({ cards, channel });
 		})
 		.then((choices) => {
-			const value = choices.reduce((total, choice) => total + Math.floor(choice.cost * 0.8), 0);
+			const value = choices.reduce((total, choice) => total + Math.floor(choice.cost * shop.priceOffset), 0);
 
 			return channel({
 				question:
-	`${shopName} is willing to buy your pitiful trash for ${value} coins.
+	`${shop.name} is willing to buy your pitiful trash for ${value} coins.
 
 	Would you like to sell? (yes/no)`
 			})
@@ -78,7 +86,7 @@ You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 						} else if (value === 1) {
 							return channel({
 								announce:
-`The proprietor of ${shopName} flips a single coin to ${character.givenName} without really looking at ${character.pronouns[1]} and promptly hangs a "Closed" sign in the window of the shop.` // eslint-disable-line max-len
+`The proprietor of ${shop.name} flips a single coin to ${character.givenName} without really looking at ${character.pronouns[1]} and promptly hangs a "Closed" sign in the window of the shop.` // eslint-disable-line max-len
 							});
 						}
 
