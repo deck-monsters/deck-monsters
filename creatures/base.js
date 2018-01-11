@@ -18,7 +18,7 @@ const BASE_INT = 5;
 const AC_VARIANCE = 2;
 const BASE_HP = 28;
 const HP_VARIANCE = 5;
-// Do not access these directly. Get from this.maxModifications
+// Do not access these directly. Get from this.getMaxModifications
 const MAX_PROP_MODIFICATIONS = {
 	ac: 1,
 	str: 1,
@@ -128,7 +128,7 @@ ${signedNumber(this.intModifier)} to spells`
 	get maxHp () {
 		let maxHp = BASE_HP + this.hpVariance;
 		maxHp += Math.min(this.level * 3, MAX_BOOSTS.hp); // Gain 3 hp per level up to the max
-		maxHp += Math.min(this.modifiers.maxHp || 0, this.maxModifications.hp);
+		maxHp += Math.min(this.modifiers.maxHp || 0, this.getMaxModifications('hp'));
 
 		return Math.max(maxHp, 1);
 	}
@@ -146,11 +146,11 @@ ${signedNumber(this.intModifier)} to spells`
 	}
 
 	get level () {
-		return getLevel(this.getPreBattlePropValue('xp'));
+		return getLevel(this.xp);
 	}
 
 	get displayLevel () {
-		const level = getLevel(this.getPreBattlePropValue('xp'));
+		const level = getLevel(this.xp);
 		return level ? `level ${level}` : 'beginner';
 	}
 
@@ -192,20 +192,28 @@ ${signedNumber(this.intModifier)} to spells`
 		return this.getModifier('int');
 	}
 
-	get maxModifications () {
-		return {
-			hp: MAX_PROP_MODIFICATIONS.hp,
-			ac: (MAX_PROP_MODIFICATIONS.ac * this.level + 1),
-			xp: Math.max(MAX_PROP_MODIFICATIONS.xp + this.getPreBattlePropValue('xp') - (MAX_PROP_MODIFICATIONS.xp * this.level), 0), // don't add 1 to level here or you'll end up with max XP modifications of 0 for beginner monsters
-			int: (MAX_PROP_MODIFICATIONS.int * this.level + 1),
-			str: (MAX_PROP_MODIFICATIONS.str * this.level + 1),
-			dex: (MAX_PROP_MODIFICATIONS.dex * this.level + 1)
+	getMaxModifications (prop) {
+		switch (prop) {
+			case 'hp':
+				return MAX_PROP_MODIFICATIONS.hp;
+			case 'ac':
+				return (MAX_PROP_MODIFICATIONS.ac * this.level + 1);
+			case 'xp':
+				return Math.max(this.getPreBattlePropValue('xp') - MAX_PROP_MODIFICATIONS.xp, 0);// can't use level for calculation because it would cause circular reference
+			case 'int':
+				return (MAX_PROP_MODIFICATIONS.int * this.level + 1);
+			case 'str':
+				return (MAX_PROP_MODIFICATIONS.str * this.level + 1);
+			case 'dex':
+				return (MAX_PROP_MODIFICATIONS.dex * this.level + 1);
+			default:
+				return 4;
 		};
 	}
 
 	getProp (targetProp) {
 		let prop = this.getPreBattlePropValue(targetProp);
-		prop += Math.min(this.modifiers[targetProp] || 0, this.maxModifications[targetProp]);
+		prop += Math.min(this.modifiers[targetProp] || 0, this.getMaxModifications(targetProp));
 
 		return Math.max(prop, 1);
 	}
