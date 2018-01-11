@@ -1,13 +1,15 @@
+const reduce = require('lodash.reduce');
+
 const BaseCreature = require('../creatures/base');
+
+const { actionCard, monsterCard } = require('../helpers/card');
 const {
-	getCardCounts,
 	getInitialDeck,
 	getUniqueCards,
 	isMatchingCard,
 	sortCards
 } = require('../cards');
-const { actionCard, monsterCard } = require('../helpers/card');
-const reduce = require('lodash.reduce');
+const getCardCounts = require('../items/helpers/counts');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {
