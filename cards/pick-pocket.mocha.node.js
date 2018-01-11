@@ -7,6 +7,8 @@ const { randomContestant } = require('../helpers/bosses');
 const DestroyCard = require('./destroy');
 const pause = require('../helpers/pause');
 
+const allCards = require('./helpers/all');
+
 describe('./cards/pick-pocket.js', () => {
 	let PickPocketCard;
 	let channelStub;
@@ -81,15 +83,18 @@ describe('./cards/pick-pocket.js', () => {
 			});
 	});
 
-	it('can run many times without error', () => {
+	it('can pick pocket every card without error', () => {
 		const pickPocket = new PickPocketCard();
 		const player = randomContestant();
 
 		const promises = [];
 
-		for (let i = 0; i < 50; i++) {
+		for (let i = 0; i < allCards.length; i++) {
+			if (allCards[i].name === "PickPocketCard") continue;
 			const target1 = randomContestant();
+			target1.monster.deck = [new allCards[i]()];
 			const target2 = randomContestant();
+			target2.monster.deck = [new allCards[i]()];
 
 			const ring = {
 				contestants: [
