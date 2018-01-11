@@ -3,7 +3,9 @@ const { signedNumber } = require('../helpers/signed-number');
 const announceRolling = (publicChannel, channelManager, className, monster, {
 	reason,
 	roll,
-	player
+	player,
+	target,
+	vs
 }) => {
 	let title = roll.primaryDice;
 	if (roll.bonusDice) {
@@ -15,7 +17,7 @@ const announceRolling = (publicChannel, channelManager, className, monster, {
 
 	publicChannel({
 		announce:
-`🎲  ${player.identity} rolls ${title} ${reason}`
+`🎲 ${player.icon} ${title} vs ${target.icon} ${vs}  ${player.identity} rolls ${title} ${reason}`
 	});
 };
 

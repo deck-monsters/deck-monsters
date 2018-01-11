@@ -32,7 +32,8 @@ class LuckyStrike extends HitCard {
 			card: this,
 			roll: betterRoll,
 			player,
-			target
+			target,
+			vs: target.ac
 		});
 
 		let commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
@@ -50,7 +51,8 @@ class LuckyStrike extends HitCard {
 			roll: betterRoll,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target.ac
 		});
 
 		return {

@@ -72,7 +72,8 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 			card: this,
 			roll: rolled,
 			player,
-			target
+			target,
+			vs: target.ac
 		});
 
 		const commentary = this.getCommentary(rolled, player, target);
@@ -83,7 +84,8 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 			roll: rolled,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target.ac
 		});
 	}
 

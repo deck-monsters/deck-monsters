@@ -35,7 +35,8 @@ class Rehit extends HitCard {
 			card: this,
 			roll: attackRoll,
 			player,
-			target
+			target,
+			vs: target.ac
 		});
 
 		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target.ac);
@@ -52,7 +53,8 @@ class Rehit extends HitCard {
 			roll: attackRoll,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target.ac
 		});
 
 		return {
