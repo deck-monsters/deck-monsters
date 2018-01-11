@@ -1,6 +1,5 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const { randomCharacter } = require('../characters');
 const Basilisk = require('../monsters/basilisk');
 const Blast2Card = require('./blast-2');
 const pause = require('../helpers/pause');
@@ -57,7 +56,6 @@ describe('./cards/blast-2.js', () => {
 		};
 
 		const playerStartingHp = player.hp;
-		const playerLevel = player.level;
 		const damage = 3 + player.intModifier;
 		const target1StartingHp = target1.hp;
 		const target2StartingHp = target2.hp;
@@ -90,7 +88,6 @@ describe('./cards/blast-2.js', () => {
 		];
 
 		const playerStartingHp = player.hp;
-		const playerLevel = player.level;
 		const damage = 3 + player.intModifier;
 		const target1StartingHp = target1.hp;
 		const target2StartingHp = target2.hp;

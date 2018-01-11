@@ -153,7 +153,7 @@ class ImmobilizeCard extends HitCard {
 		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
 	}
 
-	getTargetPropValue (target) {
+	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
 		return target.ac;
 	}
 

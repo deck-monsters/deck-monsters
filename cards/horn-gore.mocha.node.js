@@ -4,7 +4,6 @@ const HornGoreCard = require('./horn-gore');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 const { MINOTAUR } = require('../helpers/creature-types');
 
@@ -87,7 +86,7 @@ describe('./cards/horn-gore.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = hornGore.getAttackRoll(player, target);
 
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
@@ -144,7 +143,7 @@ describe('./cards/horn-gore.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = hornGore.getAttackRoll(player, target);
 
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
@@ -252,7 +251,7 @@ describe('./cards/horn-gore.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = hornGore.getAttackRoll(player, target);
 
 		checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({

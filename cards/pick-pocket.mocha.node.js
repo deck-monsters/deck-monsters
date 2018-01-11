@@ -90,24 +90,25 @@ describe('./cards/pick-pocket.js', () => {
 		const promises = [];
 
 		for (let i = 0; i < allCards.length; i++) {
-			if (allCards[i].name === "PickPocketCard") continue;
-			const target1 = randomContestant();
-			target1.monster.deck = [new allCards[i]()];
-			const target2 = randomContestant();
-			target2.monster.deck = [new allCards[i]()];
+			if (allCards[i].name !== 'PickPocketCard') {
+				const target1 = randomContestant();
+				target1.monster.deck = [new allCards[i]()];
+				const target2 = randomContestant();
+				target2.monster.deck = [new allCards[i]()];
 
-			const ring = {
-				contestants: [
-					player,
-					target1,
-					target2
-				],
-				channelManager: {
-					sendMessages: () => Promise.resolve()
-				}
-			};
+				const ring = {
+					contestants: [
+						player,
+						target1,
+						target2
+					],
+					channelManager: {
+						sendMessages: () => Promise.resolve()
+					}
+				};
 
-			promises.push(pickPocket.play(player.monster, target1.monster, ring, ring.contestants));
+				promises.push(pickPocket.play(player.monster, target1.monster, ring, ring.contestants));
+			}
 		}
 
 		return expect(Promise.all(promises)).to.be.fulfilled;

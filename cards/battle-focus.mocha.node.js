@@ -4,7 +4,6 @@ const BattleFocusCard = require('./battle-focus');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 const { GLADIATOR } = require('../helpers/creature-types');
 
@@ -90,7 +89,7 @@ describe('./cards/battle-focus.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = battleFocus.getAttackRoll(player);
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,
@@ -165,7 +164,7 @@ describe('./cards/battle-focus.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = battleFocus.getAttackRoll(player);
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,

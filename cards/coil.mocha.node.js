@@ -5,7 +5,6 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Coil = require('./coil');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
@@ -99,8 +98,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
-
+		const attackRoll = coil.getAttackRoll(player, target);
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,

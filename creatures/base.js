@@ -197,18 +197,18 @@ ${signedNumber(this.intModifier)} to spells`
 			case 'hp':
 				return MAX_PROP_MODIFICATIONS.hp;
 			case 'ac':
-				return (MAX_PROP_MODIFICATIONS.ac * this.level + 1);
+				return (MAX_PROP_MODIFICATIONS.ac * (this.level + 1));
 			case 'xp':
 				return Math.max(this.getPreBattlePropValue('xp') - MAX_PROP_MODIFICATIONS.xp, MAX_PROP_MODIFICATIONS.xp);// can't use level for calculation because it would cause circular reference
 			case 'int':
-				return (MAX_PROP_MODIFICATIONS.int * this.level + 1);
+				return (MAX_PROP_MODIFICATIONS.int * (this.level + 1));
 			case 'str':
-				return (MAX_PROP_MODIFICATIONS.str * this.level + 1);
+				return (MAX_PROP_MODIFICATIONS.str * (this.level + 1));
 			case 'dex':
-				return (MAX_PROP_MODIFICATIONS.dex * this.level + 1);
+				return (MAX_PROP_MODIFICATIONS.dex * (this.level + 1));
 			default:
 				return 4;
-		};
+		}
 	}
 
 	getProp (targetProp) {

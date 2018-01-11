@@ -5,7 +5,6 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Constrict = require('./constrict');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 
@@ -89,8 +88,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
-
+		const attackRoll = constrict.getAttackRoll(player, target);
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,

@@ -5,7 +5,6 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const ForkedMetalRod = require('./forked-metal-rod');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
@@ -102,8 +101,7 @@ Even if you miss, there's a chance you'll pin them...`;
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
-
+		const attackRoll = forkedMetalRod.getAttackRoll(player, target);
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,
@@ -160,7 +158,7 @@ Even if you miss, there's a chance you'll pin them...`;
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = forkedMetalRod.getAttackRoll(player, target);
 
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
@@ -227,7 +225,7 @@ Even if you miss, there's a chance you'll pin them...`;
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = forkedMetalRod.getAttackRoll(player, target);
 
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
@@ -288,7 +286,7 @@ Even if you miss, there's a chance you'll pin them...`;
 			}
 		};
 
-		const attackRoll = { primaryDice: '1d20', result: 19, naturalRoll: { rolled: [19], result: 19 }, bonusResult: 0, modifier: 0 };
+		const attackRoll = forkedMetalRod.getAttackRoll(player, target);
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,
