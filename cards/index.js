@@ -5,6 +5,7 @@ const BasicShieldCard = require('./basic-shield');
 const BattleFocusCard = require('./battle-focus');
 const BerserkCard = require('./berserk');
 const BlastCard = require('./blast');
+const Blast2Card = require('./blast-2');
 const BlinkCard = require('./blink');
 const BoostCard = require('./boost');
 const BrainDrainCard = require('./brain-drain');
@@ -47,6 +48,7 @@ const all = [
 	BattleFocusCard,
 	BerserkCard,
 	BlastCard,
+	Blast2Card,
 	BlinkCard,
 	BoostCard,
 	BrainDrainCard,
