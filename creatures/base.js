@@ -2,7 +2,7 @@ const random = require('lodash.random');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 
 const { signedNumber } = require('../helpers/signed-number');
 const { getLevel } = require('../helpers/levels');

@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this, max-len */
 
-const BaseClass = require('./baseClass');
+const BaseClass = require('./shared/baseClass');
 
 class PlayerHandbook extends BaseClass {
 	look (channel) {
