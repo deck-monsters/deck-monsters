@@ -63,8 +63,8 @@ class BaseItem extends BaseClass {
 		// a counter instead of boolean just in case the item can be used more than once
 		this.used += 1;
 
-		if (this.effect) {
-			return this.effect(character, monster);
+		if (this.action) {
+			return this.action(character, monster);
 		}
 
 		return this.used;
