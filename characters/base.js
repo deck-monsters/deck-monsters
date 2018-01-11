@@ -6,10 +6,11 @@ const { actionCard, monsterCard } = require('../helpers/card');
 const {
 	getInitialDeck,
 	getUniqueCards,
-	isMatchingCard,
 	sortCards
 } = require('../cards');
 const getCardCounts = require('../items/helpers/counts');
+const isMatchingItem = require('../items/helpers/is-matching');
+const sellItems = require('../items/store/sell');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {
@@ -61,7 +62,7 @@ class BaseCharacter extends BaseCreature {
 	removeCard (cardToRemove) {
 		let isAlreadyRemoved = false;
 		this.deck = this.deck.filter((card) => {
-			const shouldKeepCard = isAlreadyRemoved || !isMatchingCard(card, cardToRemove);
+			const shouldKeepCard = isAlreadyRemoved || !isMatchingItem(card, cardToRemove);
 
 			if (!shouldKeepCard) isAlreadyRemoved = true;
 
@@ -69,6 +70,19 @@ class BaseCharacter extends BaseCreature {
 		});
 
 		this.emit('cardRemoved', { cardToRemove });
+	}
+
+	removeItem (itemToRemove) {
+		let isAlreadyRemoved = false;
+		this.items = this.items.filter((item) => {
+			const shouldKeepItem = isAlreadyRemoved || !isMatchingItem(item, itemToRemove);
+
+			if (!shouldKeepItem) isAlreadyRemoved = true;
+
+			return shouldKeepItem;
+		});
+
+		this.emit('itemRemoved', { itemToRemove });
 	}
 
 	lookAtMonsters (channel, description) {
@@ -112,6 +126,13 @@ class BaseCharacter extends BaseCreature {
 			announce: "Strangely enough, somehow you don't have any cards.",
 			delay: 'short'
 		}));
+	}
+
+	sellItems (channel) {
+		return sellItems({
+			character: this,
+			channel
+		});
 	}
 }
 
