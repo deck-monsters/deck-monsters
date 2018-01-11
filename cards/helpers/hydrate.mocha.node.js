@@ -1,19 +1,10 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect, sinon } = require('../../shared/test-setup');
 
-const {
-	// all,
-	// draw,
-	// fillDeck,
-	getCardCounts,
-	// getInitialDeck,
-	// getUniqueCards,
-	// hydrateCard,
-	hydrateDeck
-	// isMatchingCard,
-	// sortCards
-} = require('./index');
-const pause = require('../helpers/pause');
-const Beastmaster = require('../characters/beastmaster');
+const pause = require('../../helpers/pause');
+const Beastmaster = require('../../characters/beastmaster');
+
+const { hydrateDeck } = require('./hydrate');
+const getCardCounts = require('./card-counts');
 
 const testDeck = `[
 	{
@@ -211,7 +202,7 @@ describe('./cards/index.js', () => {
 		pause.setTimeout.restore();
 	});
 
-	describe('cards', () => {
+	describe('./cards/helpers/hydrate.js', () => {
 		it('can restore from save state, ensuring card minimums are met', () => {
 			const player = new Beastmaster();
 

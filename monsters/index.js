@@ -1,7 +1,15 @@
-const { getCardCounts, hydrateCard, sortCards } = require('../cards');
 const {
-	getChoices, getCardChoices, getCreatureTypeChoices, getFinalCardChoices
+	chooseCards,
+	hydrateCard,
+	sortCards
+} = require('../cards');
+
+const {
+	getChoices,
+	getCreatureTypeChoices,
+	getFinalCardChoices
 } = require('../helpers/choices');
+
 const PRONOUNS = require('../helpers/pronouns');
 
 const Basilisk = require('./basilisk');
@@ -149,61 +157,72 @@ const equip = (deck, monster, cardSelection, channel) => {
 			}));
 		}
 
-		const equipableCards = remainingCards.filter((card) => {
-			if (!card.level || card.level < 1) return true; // Cards below level 1 can always be equipped
-
-			const alreadyChosenNumber = cards.filter(chosen => chosen.name === card.name).length;
-			return alreadyChosenNumber < MAX_CARD_COPIES_IN_HAND;
-		});
-
-		const cardCatalog = getCardCounts(equipableCards, MAX_CARD_COPIES_IN_HAND);
-
 		return Promise
 			.resolve()
-			.then(() => channel({
-				question:
-`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
+			.then(() => {
+				const equipableCards = remainingCards.reduce((equipable, card) => {
+					const alreadyChosenNumber = cards.filter(chosen => chosen.name === card.name).length;
+					const alreadyAddedNumber = equipable.filter(added => added.name === card.name).length;
 
-${getCardChoices(cardCatalog)}
+					if ((alreadyChosenNumber + alreadyAddedNumber) < MAX_CARD_COPIES_IN_HAND) {
+						equipable.push(card);
+					}
 
-Which card would you like to equip in slot ${(cardSlots - remainingSlots) + 1}?`,
-				choices: Object.keys(Object.keys(cardCatalog))
-			}))
-			.then((answer) => {
-				const nowRemainingSlots = remainingSlots - 1;
-				const nowRemainingCards = [...remainingCards];
-				const selectedCardType = Object.keys(cardCatalog)[answer];
-				const cardInPool = nowRemainingCards.findIndex(card => card.cardType === selectedCardType);
+					return equipable;
+				}, []);
 
-				const selectedCard = nowRemainingCards.splice(cardInPool, 1)[0];
-				cards.push(selectedCard);
+				const getQuestion = ({ cardChoices }) =>
+					(`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
 
-				return channel({
-					announce: `You selected a ${selectedCard.cardType.toLowerCase()} card.`
-				})
-					.then(() => {
-						if (nowRemainingSlots <= 0) {
-							return channel({
-								announce:
+${cardChoices}
+
+Which card(s) would you like to equip next?`);
+
+				return chooseCards({
+					cards: equipableCards,
+					channel,
+					getQuestion
+				});
+			})
+			.then((selectedCards) => {
+				const trimmedCards = selectedCards.slice(0, remainingSlots);
+				const nowRemainingSlots = remainingSlots - trimmedCards.length;
+				const nowRemainingCards = remainingCards.filter(card => !trimmedCards.includes(card));
+
+				cards.push(...trimmedCards);
+
+				if (trimmedCards.length < selectedCards.length) {
+					return channel({
+						announce:
+`You've run out of slots, but you've equiped the following cards:
+
+${getFinalCardChoices(cards)}`
+					});
+				}
+
+				if (nowRemainingSlots <= 0) {
+					return channel({
+						announce:
 `You've filled your slots with the following cards:
 
 ${getFinalCardChoices(cards)}`
-							});
-						}
+					});
+				}
 
-						if (nowRemainingCards.length <= 0) {
-							return channel({
-								announce:
+				if (nowRemainingCards.length <= 0) {
+					return channel({
+						announce:
 `You're out of cards to equip, but you've equiped the following cards:
 
 ${getFinalCardChoices(cards)}`
-							});
-						}
+					});
+				}
 
-						return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
-					})
-					.then(() => cards);
-			});
+				return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
+			})
+			.catch(() => Promise.reject(channel({
+				announce: 'Invalid selection.'
+			})));
 	};
 
 	return Promise
