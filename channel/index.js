@@ -1,6 +1,6 @@
 const Promise = require('bluebird');
 
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 const pause = require('../helpers/pause');
 
 const THROTTLE_RATE = 5000;

@@ -1,13 +1,15 @@
+const reduce = require('lodash.reduce');
+
 const BaseCreature = require('../creatures/base');
+
+const { actionCard, monsterCard } = require('../helpers/card');
 const {
-	getCardCounts,
 	getInitialDeck,
 	getUniqueCards,
 	isMatchingCard,
 	sortCards
 } = require('../cards');
-const { actionCard, monsterCard } = require('../helpers/card');
-const reduce = require('lodash.reduce');
+const getCardCounts = require('../items/helpers/counts');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {
@@ -22,7 +24,7 @@ class BaseCharacter extends BaseCreature {
 		}
 	}
 
-	get deck () {
+	get cards () {
 		if (this.options.deck === undefined || this.options.deck.length <= 0) {
 			this.deck = getInitialDeck(undefined, this);
 		}
@@ -30,10 +32,18 @@ class BaseCharacter extends BaseCreature {
 		return this.options.deck || [];
 	}
 
-	set deck (deck) {
+	set cards (deck) {
 		this.setOptions({
 			deck
 		});
+	}
+
+	get deck () {
+		return this.cards;
+	}
+
+	set deck (deck) {
+		this.cards = deck;
 	}
 
 	canHold (object) {

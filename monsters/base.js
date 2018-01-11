@@ -19,16 +19,12 @@ class BaseMonster extends BaseCreature {
 		}
 	}
 
-	get cards () {
-		if (this.options.cards === undefined) this.cards = [];
-
-		return this.options.cards || [];
+	get hand () {
+		return this.cards;
 	}
 
-	set cards (cards) {
-		this.setOptions({
-			cards
-		});
+	set hand (hand) {
+		this.cards = hand;
 	}
 
 	get cardSlots () { // eslint-disable-line class-methods-use-this

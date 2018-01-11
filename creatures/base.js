@@ -2,7 +2,7 @@ const random = require('lodash.random');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 
 const { signedNumber } = require('../helpers/signed-number');
 const { getLevel } = require('../helpers/levels');
@@ -73,6 +73,26 @@ class BaseCreature extends BaseClass {
 		if (this.respawnTimeoutBegan) {
 			this.respawn();
 		}
+	}
+
+	get cards () {
+		if (this.options.cards === undefined) this.cards = [];
+
+		return this.options.cards || [];
+	}
+
+	set cards (cards) {
+		this.setOptions({
+			cards
+		});
+	}
+
+	get maxModifications () {
+		return {
+			hp: MAX_HP_MODIFICATION,
+			ac: MAX_AC_MODIFICATION,
+			xp: Math.max(this.getPreBattlePropValue('xp') - 40, 0)
+		};
 	}
 
 	get class () {

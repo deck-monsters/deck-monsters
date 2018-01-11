@@ -8,7 +8,7 @@ const { calculateXP } = require('../helpers/experience');
 const { getTarget } = require('../helpers/targeting-strategies');
 const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 const delayTimes = require('../helpers/delay-times');
 const pause = require('../helpers/pause');
 
