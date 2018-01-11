@@ -10,8 +10,8 @@ const { signedNumber } = require('../helpers/signed-number');
 class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		attackModifier,
-		damageModifier,
+		dexModifier,
+		strengthModifier,
 		hitOnFail,
 		doDamageOnImmobilize,
 		icon = '😵',
@@ -25,8 +25,8 @@ class ImmobilizeCard extends HitCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			attackModifier,
-			damageModifier,
+			dexModifier,
+			strengthModifier,
 			hitOnFail,
 			doDamageOnImmobilize,
 			freedomThresholdModifier,
@@ -83,25 +83,25 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
-	get attackModifier () {
-		return this.options.attackModifier;
+	get dexModifier () {
+		return this.options.dexModifier;
 	}
 
-	set attackModifier (attackModifier) {
+	set dexModifier (dexModifier) {
 		this.setOptions({
-			attackModifier
+			dexModifier
 		});
 	}
 
-	get damageModifier () {
-		return this.options.damageModifier;
+	get strengthModifier () {
+		return this.options.strengthModifier;
 	}
 
 	getAttackModifier (target) {
 		if (this.weakAgainstCreatureTypes.includes(target.name)) {
-			return -this.attackModifier;
+			return -this.dexModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
-			return this.attackModifier;
+			return this.dexModifier;
 		}
 		return 0;
 	}
@@ -150,7 +150,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	getAttackRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player.attackModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
@@ -288,8 +288,8 @@ ImmobilizeCard.cost = 6;
 ImmobilizeCard.level = 1;
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,
-	attackModifier: 2,
-	damageModifier: 0,
+	dexModifier: 2,
+	strengthModifier: 0,
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: 2,

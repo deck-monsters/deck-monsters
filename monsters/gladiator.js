@@ -25,8 +25,9 @@ const LOCATIONS = [
 class Gladiator extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
-			attackModifier: 1,
-			damageModifier: 1,
+			dexModifier: 1,
+			strengthModifier: 1,
+			intModifier: 1,
 			color: DEFAULT_COLOR,
 			location: sample(LOCATIONS),
 			size: sample(SIZES),

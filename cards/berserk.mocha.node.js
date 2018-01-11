@@ -92,7 +92,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,
@@ -162,7 +162,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,
@@ -227,7 +227,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,
@@ -300,7 +300,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,

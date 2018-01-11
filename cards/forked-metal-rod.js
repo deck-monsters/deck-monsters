@@ -30,21 +30,21 @@ Even if you miss, there's a chance you'll pin them...`;
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.attackModifier = STARTING_ATTACK_MODIFIER;
+		this.dexModifier = STARTING_ATTACK_MODIFIER;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		// if the player stabs with their first horn, make it slightly more likely that the second
 		// horn will also stab, but just for this one attack. Therefore, need to store their
-		// pre-gore attackModifier and restore it once the second stab is resolved (and before the
+		// pre-gore dexModifier and restore it once the second stab is resolved (and before the
 		// actual immobilize takes place so it doesn't interfere with the immobilize logic).
-		const originalAttackModifier = player.encounterModifiers.attackModifier;
+		const originalAttackModifier = player.encounterModifiers.dexModifier;
 
 		this.resetImmobilizeStrength();
 		this.gore(player, target, 1);
 		this.gore(player, target, 2);
 
-		player.encounterModifiers = { attackModifier: originalAttackModifier };
+		player.encounterModifiers = { dexModifier: originalAttackModifier };
 
 		if (!player.dead) {
 			if (target.dead) {
@@ -68,7 +68,7 @@ ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned
 ForkedMetalRodCard.defaults = {
 	...HornGoreCard.defaults,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	attackModifier: STARTING_ATTACK_MODIFIER
+	dexModifier: STARTING_ATTACK_MODIFIER
 };
 
 ForkedMetalRodCard.actions = ['pin', 'pins', 'pinned'];

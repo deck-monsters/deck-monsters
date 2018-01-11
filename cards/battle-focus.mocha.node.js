@@ -90,7 +90,7 @@ describe('./cards/battle-focus.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,
@@ -165,7 +165,7 @@ describe('./cards/battle-focus.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,

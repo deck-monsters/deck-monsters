@@ -31,8 +31,9 @@ describe('./monsters/gladiator.js', () => {
 		expect(gladiator.name).to.equal('Gladiator');
 		expect(gladiator.givenName).to.be.a('string');
 		expect(gladiator.options).to.deep.contain({
-			attackModifier: 1,
-			damageModifier: 1,
+			dexModifier: 1,
+			strengthModifier: 1,
+			intModifier: 1,
 			color: 'leather',
 			icon: '💪'
 		});
