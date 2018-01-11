@@ -43,4 +43,4 @@ class BasePotion extends BaseItem {
 
 BasePotion.eventPrefix = 'potion';
 
-module.exports = BaseItem;
+module.exports = BasePotion;
