@@ -24,7 +24,7 @@ class BaseCharacter extends BaseCreature {
 		}
 	}
 
-	get deck () {
+	get cards () {
 		if (this.options.deck === undefined || this.options.deck.length <= 0) {
 			this.deck = getInitialDeck(undefined, this);
 		}
@@ -32,10 +32,18 @@ class BaseCharacter extends BaseCreature {
 		return this.options.deck || [];
 	}
 
-	set deck (deck) {
+	set cards (deck) {
 		this.setOptions({
 			deck
 		});
+	}
+
+	get deck () {
+		return this.cards;
+	}
+
+	set deck (deck) {
+		this.cards = deck;
 	}
 
 	canHold (object) {
