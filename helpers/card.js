@@ -30,13 +30,8 @@ ${wrap(rankings, { indent: '| ', width: 31 })}`
 `.replace(/^\s*[\r\n]/gm, '')
 );
 
-<<<<<<< HEAD
-const cardRarity = (probability) => {
+const itemRarity = (probability) => {
 	if (probability >= 80) {
-=======
-const itemRarity = (card) => {
-	if (card.probability >= 80) {
->>>>>>> master
 		return '•';
 	} else if (probability >= 60) {
 		return '○';
@@ -65,24 +60,16 @@ const getItemRequirements = (item) => {
 	return requirements.length > 0 ? requirements.join('\n') : undefined;
 };
 
-<<<<<<< HEAD
-const actionCard = card => formatCard({
-	title: `${card.icon}  ${card.cardType}  ${cardRarity(card.probability)}`,
+
+const discoveryCard = card => formatCard({
+	title: `${card.icon}  ${card.cardType}  ${itemRarity(card.flavor.probability)}`,
 	description: card.description,
 	stats: card.stats,
-	rankings: getCardRequirements(card)
+	rankings: getItemRequirements(card)
 });
 
-const itemCard = item => actionCard(item); // Just use the card formatter for now but we might do something custom later
-const discoveryCard = card => formatCard({
-	title: `${card.icon}  ${card.cardType}  ${cardRarity(card.flavor.probability)}`,
-	description: card.description,
-	stats: card.stats,
-	rankings: getCardRequirements(card)
-});
-=======
 const itemCard = item => formatCard({
-	title: `${item.icon}  ${item.itemType}  ${itemRarity(item)}`,
+	title: `${item.icon}  ${item.itemType}  ${itemRarity(item.probability)}`,
 	description: item.description,
 	stats: item.stats,
 	rankings: getItemRequirements(item)
@@ -92,7 +79,6 @@ const itemCard = item => formatCard({
 // rendering they render exactly the same as any other item.
 const actionCard = card => itemCard(card);
 
->>>>>>> master
 const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.givenName}`,
 	description: verbose ? upperFirst(monster.individualDescription) : '',

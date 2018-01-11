@@ -17,43 +17,8 @@ class BaseCard extends BaseItem {
 		return this.constructor.cardType;
 	}
 
-<<<<<<< HEAD
-	get description () {
-		return this.constructor.description;
-	}
-
-	set icon (icon) {
-		this.setOptions({
-			icon
-		});
-	}
-
-	get icon () {
-		return this.options.icon;
-	}
-
-	get cost () {
-		return this.constructor.cost;
-	}
-
-	get level () {
-		return this.constructor.level;
-	}
-
-	get permittedClassesAndTypes () {
-		return this.constructor.permittedClassesAndTypes;
-	}
-
-	get probability () {
-		return this.constructor.probability;
-	}
-
-	get flavors () {
-		return this.constructor.flavors || this.options.flavors;
-=======
 	get cardType () {
 		return this.itemType;
->>>>>>> master
 	}
 
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
