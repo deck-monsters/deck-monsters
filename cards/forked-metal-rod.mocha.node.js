@@ -51,8 +51,8 @@ Even if you miss, there's a chance you'll pin them...`;
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.description).to.equal(description);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
-		expect(forkedMetalRod.attackModifier).to.equal(3);
-		expect(forkedMetalRod.damageModifier).to.equal(0);
+		expect(forkedMetalRod.dexModifier).to.equal(3);
+		expect(forkedMetalRod.strengthModifier).to.equal(0);
 		expect(forkedMetalRod.hitOnFail).to.be.false;
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.false;
 		expect(forkedMetalRod.stats).to.equal(stats);
@@ -63,13 +63,13 @@ Even if you miss, there's a chance you'll pin them...`;
 
 	it('can be instantiated with options', () => {
 		const forkedMetalRod = new ForkedMetalRod({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, strengthModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(2);
-		expect(forkedMetalRod.attackModifier).to.equal(4);
-		expect(forkedMetalRod.damageModifier).to.equal(4);
+		expect(forkedMetalRod.dexModifier).to.equal(4);
+		expect(forkedMetalRod.strengthModifier).to.equal(4);
 		expect(forkedMetalRod.hitOnFail).to.be.true;
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.true;
 	});
@@ -102,7 +102,7 @@ Even if you miss, there's a chance you'll pin them...`;
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
@@ -122,7 +122,7 @@ Even if you miss, there's a chance you'll pin them...`;
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(2);
 				expect(forkedMetalRod.freedomThresholdModifier).to.equal(7);
-				expect(forkedMetalRod.attackModifier).to.equal(7);
+				expect(forkedMetalRod.dexModifier).to.equal(7);
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
@@ -160,7 +160,7 @@ Even if you miss, there's a chance you'll pin them...`;
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
@@ -192,7 +192,7 @@ Even if you miss, there's a chance you'll pin them...`;
 				expect(goreSpy.callCount).to.equal(2);
 				expect(hitSpy.callCount).to.equal(1);
 				expect(forkedMetalRod.freedomThresholdModifier).to.equal(5);
-				expect(forkedMetalRod.attackModifier).to.equal(5);
+				expect(forkedMetalRod.dexModifier).to.equal(5);
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});
@@ -227,7 +227,7 @@ Even if you miss, there's a chance you'll pin them...`;
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
@@ -258,7 +258,7 @@ Even if you miss, there's a chance you'll pin them...`;
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(0);
 				expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
-				expect(forkedMetalRod.attackModifier).to.equal(3);
+				expect(forkedMetalRod.dexModifier).to.equal(3);
 				expect(target.hp).to.equal(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});

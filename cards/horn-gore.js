@@ -26,21 +26,21 @@ ${super.stats}`;
 
 	getAttackModifier (target) {
 		if (this.weakAgainstCreatureTypes.includes(target.name)) {
-			return -2 + this.attackModifier;
+			return -2 + this.dexModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
-			return this.attackModifier;
+			return this.dexModifier;
 		}
 		return 0;
 	}
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.attackModifier = STARTING_ATTACK_MODIFIER;
+		this.dexModifier = STARTING_ATTACK_MODIFIER;
 	}
 
 	increaseImmobilizeStrength (ammount) {
 		this.freedomThresholdModifier += ammount;
-		this.attackModifier += ammount;
+		this.dexModifier += ammount;
 	}
 
 	getCommentary (rolled, player, target) { // eslint-disable-line class-methods-use-this
@@ -102,7 +102,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 
 	getDamageRoll (player) {
-		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.damageModifier / 2)), bonusDice: player.bonusDamageDice });
+		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.strengthModifier / 2)), bonusDice: player.bonusDamageDice });
 	}
 
 	gore (player, target, hornNumber) {
@@ -110,7 +110,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 		if (success) {
 			this.increaseImmobilizeStrength(2);
-			player.encounterModifiers = { attackModifier: player.encounterModifiers.attackModifier += 1 || 1 };
+			player.encounterModifiers = { dexModifier: player.encounterModifiers.dexModifier += 1 || 1 };
 
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
@@ -129,16 +129,16 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		// if the player stabs with their first horn, make it slightly more likely that the second
 		// horn will also stab, but just for this one attack. Therefore, need to store their
-		// pre-gore attackModifier and restore it once the second stab is resolved (and before the
+		// pre-gore dexModifier and restore it once the second stab is resolved (and before the
 		// actual immobilize takes place so it doesn't interfere with the immobilize logic).
-		const originalAttackModifier = player.encounterModifiers.attackModifier;
+		const originalAttackModifier = player.encounterModifiers.dexModifier;
 
 		this.resetImmobilizeStrength();
 		const horn1 = this.gore(player, target, 1);
 		const horn2 = this.gore(player, target, 2);
 		const chanceToImmobilize = horn1.success || horn2.success;
 
-		player.encounterModifiers = { attackModifier: originalAttackModifier };
+		player.encounterModifiers = { dexModifier: originalAttackModifier };
 
 		if (!player.dead && chanceToImmobilize) {
 			if (target.dead) {
@@ -171,7 +171,7 @@ HornGore.defaults = {
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	attackModifier: STARTING_ATTACK_MODIFIER
+	dexModifier: STARTING_ATTACK_MODIFIER
 };
 
 HornGore.flavors = {

@@ -9,14 +9,14 @@ const { roll } = require('../helpers/chance');
 class WoodenSpearCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		damageModifier,
+		strengthModifier,
 		icon = '🌳',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			damageModifier
+			strengthModifier
 		});
 	}
 
@@ -24,18 +24,18 @@ class WoodenSpearCard extends HitCard {
 		return this.constructor.creatureType;
 	}
 
-	get damageModifier () {
-		return this.options.damageModifier;
+	get strengthModifier () {
+		return this.options.strengthModifier;
 	}
 
 	get stats () {
 		return `${super.stats}
-+${this.damageModifier} damage vs ${this.creatureType}`;
++${this.strengthModifier} damage vs ${this.creatureType}`;
 	}
 
 	getDamageRoll (player, target) {
 		if (target.name === this.creatureType) {
-			return roll({ primaryDice: this.damageDice, modifier: player.damageModifier + this.damageModifier, bonusDice: player.bonusDamageDice });
+			return roll({ primaryDice: this.damageDice, modifier: player.strengthModifier + this.strengthModifier, bonusDice: player.bonusDamageDice });
 		}
 
 		return super.getDamageRoll(player, target);
@@ -51,7 +51,7 @@ WoodenSpearCard.level = 1;
 WoodenSpearCard.permittedClassesAndTypes = [FIGHTER];
 WoodenSpearCard.defaults = {
 	...HitCard.defaults,
-	damageModifier: 3
+	strengthModifier: 3
 };
 
 WoodenSpearCard.flavors = {

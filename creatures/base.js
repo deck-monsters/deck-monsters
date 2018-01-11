@@ -17,8 +17,9 @@ const BASE_HP = 28;
 const HP_VARIANCE = 5;
 const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
 const MAX_AC_MODIFICATION = 4;
-const MAX_ATTACK_BOOST = 10;
-const MAX_DAMAGE_BOOST = 6;
+const MAX_DEX_BOOST = 10;
+const MAX_STRENGTH_BOOST = 6;
+const MAX_INT_BOOST = 8;
 const MAX_HP_BOOST = (BASE_HP * 2) + HP_VARIANCE;
 const MAX_HP_MODIFICATION = 12;
 const TIME_TO_HEAL = 300000; // Five minutes per hp
@@ -104,14 +105,19 @@ class BaseCreature extends BaseClass {
 		return `Type: ${this.creatureType}
 Class: ${this.class}
 Level: ${this.level || this.displayLevel} | XP: ${this.xp}
-AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}${
-	this.attackModifier === 0 ? '' :
+AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
+DEX: ${5 + this.dexModifier} | STR: ${5 + this.strengthModifier} | INT: ${5 + this.intModifier}${
+	this.dexModifier === 0 ? '' :
 		`
-${signedNumber(this.attackModifier)} to hit`
+${signedNumber(this.dexModifier)} to hit`
 }${
-	this.damageModifier === 0 ? '' :
+	this.strengthModifier === 0 ? '' :
 		`
-${signedNumber(this.damageModifier)} to damage`
+${signedNumber(this.strengthModifier)} to damage`
+}${
+	this.intModifier === 0 ? '' :
+		`
+${signedNumber(this.intModifier)} to spells`
 }`;
 	}
 
@@ -373,17 +379,17 @@ Battles won: ${this.battles.wins}`;
 	// 	return undefined;
 	// }
 
-	get attackModifier () {
-		let attackModifier = this.options.attackModifier || 0;
+	get dexModifier () {
+		let dexModifier = this.options.dexModifier || 0;
 
-		const boost = Math.min(this.level, MAX_ATTACK_BOOST);
+		const boost = Math.min(this.level, MAX_DEX_BOOST);
 		if (boost > 0) {
-			attackModifier += boost; // +1 per level up to the max
+			dexModifier += boost; // +1 per level up to the max
 		}
 
-		attackModifier += Math.min(this.modifiers.attackModifier || 0, MAX_ATTACK_BOOST);
+		dexModifier += Math.min(this.modifiers.dexModifier || 0, MAX_DEX_BOOST);
 
-		return attackModifier;
+		return dexModifier;
 	}
 
 	// We don't have this right now
@@ -391,17 +397,30 @@ Battles won: ${this.battles.wins}`;
 	// 	return undefined;
 	// }
 
-	get damageModifier () {
-		let damageModifier = this.options.damageModifier || 0;
+	get strengthModifier () {
+		let strengthModifier = this.options.strengthModifier || 0;
 
-		const boost = Math.min(this.level, MAX_DAMAGE_BOOST);
+		const boost = Math.min(this.level, MAX_STRENGTH_BOOST);
 		if (boost > 0) {
-			damageModifier += boost; // +1 per level up to the max
+			strengthModifier += boost; // +1 per level up to the max
 		}
 
-		damageModifier += Math.min(this.modifiers.damageModifier || 0, MAX_DAMAGE_BOOST);
+		strengthModifier += Math.min(this.modifiers.strengthModifier || 0, MAX_STRENGTH_BOOST);
 
-		return damageModifier;
+		return strengthModifier;
+	}
+
+	get intModifier () {
+		let intModifier = this.options.intModifier || 0;
+
+		const boost = Math.min(this.level, MAX_INT_BOOST);
+		if (boost > 0) {
+			intModifier += boost; // +1 per level up to the max
+		}
+
+		intModifier += Math.min(this.modifiers.intModifier || 0, MAX_INT_BOOST);
+
+		return intModifier;
 	}
 
 	canHold () { // eslint-disable-line class-methods-use-this

@@ -1,7 +1,7 @@
 const HitCard = require('./hit');
 
 const { difference } = require('../helpers/difference');
-const { max } = require('../helpers/chance');
+const { roll, max } = require('../helpers/chance');
 
 class CurseCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -57,6 +57,10 @@ ${stats}`;
 	getCurseOverflowNarrative (player, target) {
 		return `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
 ${player.givenName}'s harrying jab takes from HP instead.`;
+	}
+
+	getAttackRoll (player) {
+		return roll({ primaryDice: this.attackDice, modifier: player.intModifier, bonusDice: player.bonusAttackDice });
 	}
 
 	effect (player, target, ring) {

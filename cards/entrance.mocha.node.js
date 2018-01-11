@@ -48,8 +48,8 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 
 		expect(entrance).to.be.an.instanceof(Entrance);
 		expect(entrance.freedomThresholdModifier).to.equal(2);
-		expect(entrance.attackModifier).to.equal(2);
-		expect(entrance.damageModifier).to.equal(0);
+		expect(entrance.dexModifier).to.equal(2);
+		expect(entrance.strengthModifier).to.equal(0);
 		expect(entrance.hitOnFail).to.be.true;
 		expect(entrance.doDamageOnImmobilize).to.be.true;
 		expect(entrance.stats).to.equal(stats);
@@ -60,13 +60,13 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 
 	it('can be instantiated with options', () => {
 		const entrance = new Entrance({
-			freedomThresholdModifier: 4, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 4, strengthModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(entrance).to.be.an.instanceof(Entrance);
 		expect(entrance.freedomThresholdModifier).to.equal(4);
-		expect(entrance.attackModifier).to.equal(4);
-		expect(entrance.damageModifier).to.equal(4);
+		expect(entrance.dexModifier).to.equal(4);
+		expect(entrance.strengthModifier).to.equal(4);
 		expect(entrance.hitOnFail).to.be.true;
 		expect(entrance.doDamageOnImmobilize).to.be.true;
 	});

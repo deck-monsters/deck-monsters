@@ -30,9 +30,13 @@ Possiblity of Stroke of Luck`;
 		return [player];
 	}
 
+	getHealRoll (player) {
+		return roll({ primaryDice: this.healthDice, modifier: player.intModifier + this.modifier, bonusDice: player.bonusIntDice });
+	}
+
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
+		const healRoll = this.getHealRoll(player);
 		let healResult = healRoll.result;
 		let outcome = '';
 

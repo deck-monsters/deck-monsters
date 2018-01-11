@@ -24,7 +24,9 @@ const DESCRIPTORS = [
 class Minotaur extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
-			damageModifier: 2,
+			dexModifier: 1,
+			strengthModifier: 2,
+			intModifier: -1,
 			color: DEFAULT_COLOR,
 			pattern: sample(PATTERNS),
 			descriptor: sample(DESCRIPTORS),

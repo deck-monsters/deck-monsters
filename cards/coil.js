@@ -2,6 +2,8 @@
 
 const ImmobilizeCard = require('./immobilize');
 
+const { roll } = require('../helpers/chance');
+
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 
 class CoilCard extends ImmobilizeCard {
@@ -12,6 +14,11 @@ class CoilCard extends ImmobilizeCard {
 	} = {}) {
 		super({ icon, ...rest });
 	}
+
+	getAttackRoll (player, target) {
+		return roll({ primaryDice: this.attackDice, modifier: player.strengthModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
+	}
+
 	get stats () {
 		return `${super.stats}
 Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;

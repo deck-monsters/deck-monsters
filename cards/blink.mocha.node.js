@@ -75,9 +75,8 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 
 		const ring = {
 			contestants: [
@@ -114,11 +113,10 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 		const basiliskProto = Object.getPrototypeOf(target);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
@@ -162,11 +160,10 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 		const basiliskProto = Object.getPrototypeOf(target);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
@@ -206,11 +203,10 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 		const basiliskProto = Object.getPrototypeOf(target);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
@@ -249,11 +245,10 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 		const basiliskProto = Object.getPrototypeOf(target);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
 		const ring = {

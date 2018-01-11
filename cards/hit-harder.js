@@ -16,8 +16,8 @@ class HitHarder extends HitCard {
 	}
 
 	getDamageRoll (player) {
-		const damageRoll1 = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusAttackDice });
-		const damageRoll2 = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusAttackDice });
+		const damageRoll1 = roll({ primaryDice: this.damageDice, modifier: player.strengthModifier, bonusDice: player.bonusAttackDice });
+		const damageRoll2 = roll({ primaryDice: this.damageDice, modifier: player.strengthModifier, bonusDice: player.bonusAttackDice });
 
 		return {
 			betterRoll: (damageRoll2.naturalRoll.result > damageRoll1.naturalRoll.result) ? damageRoll2 : damageRoll1,
