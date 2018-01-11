@@ -1,11 +1,10 @@
 const Promise = require('bluebird');
 
-const BaseClass = require('../baseClass');
+const BaseItem = require('../items/base');
 
-const { actionCard } = require('../helpers/card');
 const { max } = require('../helpers/chance');
 
-class BaseCard extends BaseClass {
+class BaseCard extends BaseItem {
 	constructor (options) {
 		super(options);
 
@@ -14,36 +13,12 @@ class BaseCard extends BaseClass {
 		}
 	}
 
-	get cardType () {
+	get itemType () {
 		return this.constructor.cardType;
 	}
 
-	get description () {
-		return this.constructor.description;
-	}
-
-	get icon () {
-		return this.options.icon;
-	}
-
-	get cost () {
-		return this.constructor.cost;
-	}
-
-	get level () {
-		return this.constructor.level;
-	}
-
-	get permittedClassesAndTypes () {
-		return this.constructor.permittedClassesAndTypes;
-	}
-
-	get probability () {
-		return this.constructor.probability;
-	}
-
-	get flavors () {
-		return this.constructor.flavors || this.options.flavors;
+	get cardType () {
+		return this.itemType;
 	}
 
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
@@ -80,14 +55,6 @@ class BaseCard extends BaseClass {
 
 				return Promise.resolve(true);
 			});
-	}
-
-	look (channel) {
-		return Promise
-			.resolve()
-			.then(() => channel({
-				announce: actionCard(this)
-			}));
 	}
 }
 
