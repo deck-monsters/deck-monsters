@@ -92,9 +92,9 @@ describe('./cards/pick-pocket.js', () => {
 		for (let i = 0; i < allCards.length; i++) {
 			if (allCards[i].name !== 'PickPocketCard') {
 				const target1 = randomContestant();
-				target1.monster.deck = [new allCards[i]()];
+				target1.monster.cards = [new allCards[i]()];
 				const target2 = randomContestant();
-				target2.monster.deck = [new allCards[i]()];
+				target2.monster.cards = [new allCards[i]()];
 
 				const ring = {
 					contestants: [
