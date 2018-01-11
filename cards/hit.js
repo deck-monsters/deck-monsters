@@ -67,7 +67,7 @@ class HitCard extends BaseCard {
 	}
 
 	getDamageRoll (player) {
-		return roll({ primaryDice: this.damageDice, modifier: player.strengthModifier, bonusDice: player.bonusDamageDice });
+		return roll({ primaryDice: this.damageDice, modifier: player.strModifier, bonusDice: player.bonusDamageDice });
 	}
 
 	rollForDamage (player, target, strokeOfLuck) {

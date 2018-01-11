@@ -16,7 +16,7 @@ class CoilCard extends ImmobilizeCard {
 	}
 
 	getAttackRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player.strengthModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.strModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
 	}
 
 	get stats () {

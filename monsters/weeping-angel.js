@@ -24,7 +24,7 @@ class WeepingAngel extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
 			dexModifier: 1,
-			strengthModifier: -1,
+			strModifier: -1,
 			intModifier: 2,
 			color: DEFAULT_COLOR,
 			nationality: sample(NATIONALITIES),

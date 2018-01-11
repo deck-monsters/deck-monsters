@@ -25,7 +25,7 @@ class Minotaur extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
 			dexModifier: 1,
-			strengthModifier: 2,
+			strModifier: 2,
 			intModifier: -1,
 			color: DEFAULT_COLOR,
 			pattern: sample(PATTERNS),

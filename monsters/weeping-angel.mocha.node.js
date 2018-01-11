@@ -32,7 +32,7 @@ describe('./monsters/weeping-angel.js', () => {
 		expect(weepingAngel.givenName).to.be.a('string');
 		expect(weepingAngel.options).to.deep.contain({
 			dexModifier: 1,
-			strengthModifier: -1,
+			strModifier: -1,
 			intModifier: 2,
 			color: 'stone gray',
 			icon: '🌟'
@@ -48,7 +48,7 @@ describe('./monsters/weeping-angel.js', () => {
 		expect(weepingAngel.givenName).to.be.a('string');
 		expect(weepingAngel.options).to.deep.contain({
 			dexModifier: 1,
-			strengthModifier: -1,
+			strModifier: -1,
 			intModifier: 2,
 			color: 'stone gray',
 			icon: '🌟',

@@ -47,7 +47,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(0);
 		expect(coil.dexModifier).to.equal(2);
-		expect(coil.strengthModifier).to.equal(0);
+		expect(coil.strModifier).to.equal(0);
 		expect(coil.hitOnFail).to.be.false;
 		expect(coil.doDamageOnImmobilize).to.be.true;
 		expect(coil.ongoingDamage).to.equal(1);
@@ -60,7 +60,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 	it('can be instantiated with options', () => {
 		const coil = new Coil({
 			freedomThresholdModifier: 2,
-			strengthModifier: 4,
+			strModifier: 4,
 			dexModifier: 4,
 			hitOnFail: true,
 			doDamageOnImmobilize: false,
@@ -70,7 +70,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(2);
 		expect(coil.dexModifier).to.equal(4);
-		expect(coil.strengthModifier).to.equal(4);
+		expect(coil.strModifier).to.equal(4);
 		expect(coil.hitOnFail).to.be.true;
 		expect(coil.doDamageOnImmobilize).to.be.false;
 		expect(coil.ongoingDamage).to.equal(0);

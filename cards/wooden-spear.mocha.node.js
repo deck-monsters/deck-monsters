@@ -32,15 +32,15 @@ describe('./cards/wooden-spear.js', () => {
 		const woodenSpear = new WoodenSpearCard();
 
 		expect(woodenSpear).to.be.an.instanceof(WoodenSpearCard);
-		expect(woodenSpear.strengthModifier).to.equal(3);
+		expect(woodenSpear.strModifier).to.equal(3);
 		expect(woodenSpear.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d6\n+3 damage vs Minotaur');
 	});
 
 	it('can be instantiated with options', () => {
-		const woodenSpear = new WoodenSpearCard({ strengthModifier: 4 });
+		const woodenSpear = new WoodenSpearCard({ strModifier: 4 });
 
 		expect(woodenSpear).to.be.an.instanceof(WoodenSpearCard);
-		expect(woodenSpear.strengthModifier).to.equal(4);
+		expect(woodenSpear.strModifier).to.equal(4);
 	});
 
 	it('can be played against non-minotaurs', () => {

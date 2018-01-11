@@ -49,7 +49,7 @@ Chance to immobilize everyone with your shocking beauty.`;
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);
 		expect(mesmerize.freedomThresholdModifier).to.equal(0);
 		expect(mesmerize.dexModifier).to.equal(2);
-		expect(mesmerize.strengthModifier).to.equal(0);
+		expect(mesmerize.strModifier).to.equal(0);
 		expect(mesmerize.hitOnFail).to.be.false;
 		expect(mesmerize.doDamageOnImmobilize).to.be.false;
 		expect(mesmerize.stats).to.equal(stats);
@@ -60,13 +60,13 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 	it('can be instantiated with options', () => {
 		const mesmerize = new Mesmerize({
-			freedomThresholdModifier: 2, strengthModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);
 		expect(mesmerize.freedomThresholdModifier).to.equal(2);
 		expect(mesmerize.dexModifier).to.equal(4);
-		expect(mesmerize.strengthModifier).to.equal(4);
+		expect(mesmerize.strModifier).to.equal(4);
 		expect(mesmerize.hitOnFail).to.be.true;
 		expect(mesmerize.doDamageOnImmobilize).to.be.true;
 	});

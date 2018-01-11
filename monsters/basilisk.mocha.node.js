@@ -30,7 +30,7 @@ describe('./monsters/basilisk.js', () => {
 		expect(basilisk.givenName).to.be.a('string');
 		expect(basilisk.options).to.deep.contain({
 			dexModifier: -1,
-			strengthModifier: 2,
+			strModifier: 2,
 			intModifier: 1,
 			color: 'tan',
 			icon: '🐍'
@@ -45,7 +45,7 @@ describe('./monsters/basilisk.js', () => {
 		expect(basilisk.givenName).to.be.a('string');
 		expect(basilisk.options).to.deep.contain({
 			dexModifier: -1,
-			strengthModifier: 2,
+			strModifier: 2,
 			intModifier: 1,
 			color: 'tan',
 			icon: '🐍',

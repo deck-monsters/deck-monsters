@@ -26,7 +26,7 @@ class Gladiator extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
 			dexModifier: 1,
-			strengthModifier: 1,
+			strModifier: 1,
 			intModifier: 1,
 			color: DEFAULT_COLOR,
 			location: sample(LOCATIONS),
