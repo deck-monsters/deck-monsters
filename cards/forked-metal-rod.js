@@ -5,7 +5,7 @@ const HornGoreCard = require('./horn-gore');
 const ImmobilizeCard = require('./immobilize');
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = 3;
-const STARTING_ATTACK_MODIFIER = 3;
+const STARTING_DEX_MODIFIER = 3;
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
@@ -30,7 +30,7 @@ Even if you miss, there's a chance you'll pin them...`;
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.dexModifier = STARTING_ATTACK_MODIFIER;
+		this.dexModifier = STARTING_DEX_MODIFIER;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
@@ -38,13 +38,13 @@ Even if you miss, there's a chance you'll pin them...`;
 		// horn will also stab, but just for this one attack. Therefore, need to store their
 		// pre-gore dexModifier and restore it once the second stab is resolved (and before the
 		// actual immobilize takes place so it doesn't interfere with the immobilize logic).
-		const originalAttackModifier = player.encounterModifiers.dexModifier;
+		const originalDexModifier = player.encounterModifiers.dexModifier;
 
 		this.resetImmobilizeStrength();
 		this.gore(player, target, 1);
 		this.gore(player, target, 2);
 
-		player.encounterModifiers = { dexModifier: originalAttackModifier };
+		player.encounterModifiers = { dexModifier: originalDexModifier };
 
 		if (!player.dead) {
 			if (target.dead) {
@@ -68,7 +68,7 @@ ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned
 ForkedMetalRodCard.defaults = {
 	...HornGoreCard.defaults,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	dexModifier: STARTING_ATTACK_MODIFIER
+	dexModifier: STARTING_DEX_MODIFIER
 };
 
 ForkedMetalRodCard.actions = ['pin', 'pins', 'pinned'];

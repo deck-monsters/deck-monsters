@@ -7,7 +7,7 @@ const { MINOTAUR } = require('../helpers/creature-types');
 const { roll } = require('../helpers/chance');
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
-const STARTING_ATTACK_MODIFIER = 0;
+const STARTING_DEX_MODIFIER = 0;
 
 class HornGore extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -35,7 +35,7 @@ ${super.stats}`;
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.dexModifier = STARTING_ATTACK_MODIFIER;
+		this.dexModifier = STARTING_DEX_MODIFIER;
 	}
 
 	increaseImmobilizeStrength (ammount) {
@@ -133,14 +133,14 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 		// horn will also stab, but just for this one attack. Therefore, need to store their
 		// pre-gore dexModifier and restore it once the second stab is resolved (and before the
 		// actual immobilize takes place so it doesn't interfere with the immobilize logic).
-		const originalAttackModifier = player.encounterModifiers.dexModifier;
+		const originalDexModifier = player.encounterModifiers.dexModifier;
 
 		this.resetImmobilizeStrength();
 		const horn1 = this.gore(player, target, 1);
 		const horn2 = this.gore(player, target, 2);
 		const chanceToImmobilize = horn1.success || horn2.success;
 
-		player.encounterModifiers = { dexModifier: originalAttackModifier };
+		player.encounterModifiers = { dexModifier: originalDexModifier };
 
 		if (!player.dead && chanceToImmobilize) {
 			if (target.dead) {
@@ -173,7 +173,7 @@ HornGore.defaults = {
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	dexModifier: STARTING_ATTACK_MODIFIER
+	dexModifier: STARTING_DEX_MODIFIER
 };
 
 HornGore.flavors = {
