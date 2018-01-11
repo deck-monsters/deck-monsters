@@ -71,7 +71,7 @@ ${player.givenName}'s harrying jab takes from HP instead.`;
 		const aggregateTotalCurseAmount = difference(preBattlePropValue, postCursedPropValue);
 
 		// If the target has already been cursed for the max amount, make the curse overflow into their HP
-		const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.maxModifications[this.cursedProp] : 0;
+		const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.getMaxModifications(this.cursedProp) : 0;
 		if (hpCurseOverflow > 0) {
 			curseAmount -= hpCurseOverflow;
 
