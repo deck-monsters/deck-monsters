@@ -135,10 +135,10 @@ describe('./cards/blink.js', () => {
 			.play(player, target, ring, ring.contestants)
 			.then(() => target.encounterEffects[0]({ card, phase: ATTACK_PHASE, player: target, target: player }))
 			.then(() => {
-				expect(hitSpy.callCount).to.equal(1);
 				attackRollStub.restore();
 				hitSpy.restore();
 
+				expect(hitSpy.callCount).to.equal(1);
 				expect(target.hp).to.be.below(targetBeforeHP);
 				expect(player.hp).to.be.above(playerBeforeHP);
 				expect(target.xp).to.be.below(targetBeforeXP);
@@ -184,10 +184,10 @@ describe('./cards/blink.js', () => {
 				expect(target.encounterEffects.length).to.equal(1);
 			}).then(() => target.encounterEffects[0]({ card, phase: ATTACK_PHASE, player: target, target: player }))
 			.then(() => {
-				expect(hitSpy.callCount).to.equal(1);
 				attackRollStub.restore();
 				hitSpy.restore();
 
+				expect(hitSpy.callCount).to.equal(1);
 				expect(target.hp).to.be.below(targetBeforeHP);
 				expect(player.hp).to.be.above(playerBeforeHP);
 				expect(target.xp).to.be.below(targetBeforeXP);
