@@ -8,9 +8,10 @@ class HitCard extends BaseCard {
 	constructor ({
 		attackDice,
 		damageDice,
+		targetProp,
 		icon = '👊'
 	} = {}) {
-		super({ attackDice, damageDice, icon });
+		super({ targetProp, attackDice, damageDice, icon });
 	}
 
 	get attackDice () {
@@ -21,8 +22,12 @@ class HitCard extends BaseCard {
 		return this.options.damageDice;
 	}
 
+	get targetProp () {
+		return this.options.targetProp;
+	}
+
 	get stats () {
-		return `Hit: ${this.attackDice} vs AC / Damage: ${this.damageDice}`;
+		return `Hit: ${this.attackDice} vs ${this.targetProp.toUpperCase()} / Damage: ${this.damageDice}`;
 	}
 
 	getAttackRoll (player) {
@@ -33,14 +38,15 @@ class HitCard extends BaseCard {
 		const attackRoll = this.getAttackRoll(player, target);
 
 		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac}) to determine if the hit was a success`,
+			reason: `vs ${target.identity}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) to determine if the hit was a success`,
 			card: this,
 			roll: attackRoll,
 			player,
-			target
+			target,
+			vs: target[this.targetProp]
 		});
 
-		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target.ac);
+		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target[this.targetProp]);
 		let commentary;
 
 		if (strokeOfLuck) {
@@ -50,12 +56,13 @@ class HitCard extends BaseCard {
 		}
 
 		this.emit('rolled', {
-			reason: `vs AC (${target.ac})`,
+			reason: `vs ${this.targetProp.toUpperCase()} (${target[this.targetProp]})`,
 			card: this,
 			roll: attackRoll,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target[this.targetProp]
 		});
 
 		return {
@@ -143,7 +150,8 @@ HitCard.cost = 4;
 HitCard.level = 0;
 HitCard.defaults = {
 	attackDice: '1d20',
-	damageDice: '1d6'
+	damageDice: '1d6',
+	targetProp: 'ac'
 };
 
 module.exports = HitCard;

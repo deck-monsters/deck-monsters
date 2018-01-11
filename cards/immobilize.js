@@ -218,7 +218,8 @@ class ImmobilizeCard extends HitCard {
 								roll: freedomRoll,
 								player: target,
 								target: player,
-								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`
+								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`,
+								vs: this.getFreedomThreshold(player, target)
 							});
 
 							if (success) {

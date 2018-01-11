@@ -28,7 +28,7 @@ class LuckyStrike extends HitCard {
 		const worseRoll = (attackRoll2.naturalRoll.result < attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 
 		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac}) twice to determine if the hit was a success, and uses the best roll.`,
+			reason: `vs ${target.identity}'s AC (${target.ac}) twice to determine if the hit was a success, and uses the best roll.`,
 			card: this,
 			roll: betterRoll,
 			player,

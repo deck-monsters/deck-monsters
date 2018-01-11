@@ -68,7 +68,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 	emitRoll (rolled, success, player, target, hornNumber) {
 		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful`,
+			reason: `vs ${target.identity}'s AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful`,
 			card: this,
 			roll: rolled,
 			player,
