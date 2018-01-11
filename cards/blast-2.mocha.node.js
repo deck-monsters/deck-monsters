@@ -39,7 +39,7 @@ describe('./cards/blast-2.js', () => {
 		const blast = new Blast2Card({ damage: 10 });
 
 		expect(blast).to.be.an.instanceof(Blast2Card);
-		expect(blast.stats).to.equal('Blast: 10 base damage +spell bonus of caster');
+		expect(blast.stats).to.equal('Blast II: 10 base damage +spell bonus of caster');
 	});
 
 	it('can be played', () => {
@@ -58,7 +58,7 @@ describe('./cards/blast-2.js', () => {
 
 		const playerStartingHp = player.hp;
 		const playerLevel = player.level;
-		const damage = player.intModifier;
+		const damage = 3 + player.intModifier;
 		const target1StartingHp = target1.hp;
 		const target2StartingHp = target2.hp;
 
@@ -91,7 +91,7 @@ describe('./cards/blast-2.js', () => {
 
 		const playerStartingHp = player.hp;
 		const playerLevel = player.level;
-		const damage = player.intModifier;
+		const damage = 3 + player.intModifier;
 		const target1StartingHp = target1.hp;
 		const target2StartingHp = target2.hp;
 
