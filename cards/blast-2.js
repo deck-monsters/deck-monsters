@@ -13,7 +13,7 @@ class Blast2Card extends BlastCard {
 	}
 
 	get stats () {
-		return `Blast II: Does damage equal to spell bonus of caster`;
+		return `Blast II: ${this.damage} base damage +spell bonus of caster`;
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
@@ -21,12 +21,16 @@ class Blast2Card extends BlastCard {
 	}
 
 	effect (player, target) {
-		return target.hit(player.intModifier, player, this);
+		const damage = this.damage + player.intModifier;
+		return target.hit(damage, player, this);
 	}
 }
 
 Blast2Card.cardType = 'Blast II';
-Blast2Card.probability = 40;
+Blast2Card.probability = 50;
 Blast2Card.level = 1;
+Blast2Card.defaults = {
+	damage: 3
+};
 
 module.exports = Blast2Card;

@@ -32,7 +32,14 @@ describe('./cards/blast-2.js', () => {
 		const blast = new Blast2Card();
 
 		expect(blast).to.be.an.instanceof(Blast2Card);
-		expect(blast.stats).to.equal('Blast II: Does damage equal to spell bonus of caster');
+		expect(blast.stats).to.equal('Blast II: 3 base damage +spell bonus of caster');
+	});
+
+	it('can be instantiated with options', () => {
+		const blast = new Blast2Card({ damage: 10 });
+
+		expect(blast).to.be.an.instanceof(Blast2Card);
+		expect(blast.stats).to.equal('Blast: 10 base damage +spell bonus of caster');
 	});
 
 	it('can be played', () => {
