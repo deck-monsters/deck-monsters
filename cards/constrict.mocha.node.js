@@ -37,6 +37,10 @@ describe('./cards/constrict.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
+
+ +2 against Gladiator, Minotaur
+ -2 against Basilisk
+inneffective against Weeping Angel
 Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
 
 		expect(constrict).to.be.an.instanceof(Constrict);

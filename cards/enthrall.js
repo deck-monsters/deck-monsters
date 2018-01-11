@@ -58,9 +58,9 @@ EnthrallCard.defaults = {
 
 EnthrallCard.flavors = {
 	hits: [
-		[EnthrallCard.actions[1], 80],
+		['stuns', 80],
 		['uses their natural beauty to incapacitate', 30],
-		[`${EnthrallCard.actions[1]} even Narcissus himself with their beauty... Which leaves no hope for`, 5]
+		['burns even Narcissus himself with their beauty... Which leaves no hope for', 5]
 	]
 };
 

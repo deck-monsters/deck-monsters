@@ -40,6 +40,10 @@ describe('./cards/forked-stick.js', () => {
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
+
+ +2 against Gladiator, Basilisk
+ -2 against Minotaur
+inneffective against Weeping Angel
 Attempt to pin your opponent between the branches of a forked stick.`;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);

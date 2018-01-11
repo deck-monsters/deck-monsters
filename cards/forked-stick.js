@@ -39,9 +39,9 @@ ForkedStickCard.actions = ['pin', 'pins', 'pinned'];
 
 ForkedStickCard.flavors = {
 	hits: [
-		[`${ForkedStickCard.actions[1]} to the ground, the head of`, 80],
-		[`${ForkedStickCard.actions[1]} to the wall, the neck of`, 50],
-		['in a fit of brute strength, snags by the neck, and brutally lofts into the air, their thoroughly surprised opponent', 5]
+		['hits', 80],
+		['pokes (in a not-so-facebook-flirting kind of way)', 50],
+		['snags and brutally lofts into the air their thoroughly surprised opponent', 5]
 	]
 };
 

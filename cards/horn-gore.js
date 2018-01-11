@@ -20,12 +20,17 @@ class HornGore extends ImmobilizeCard {
 	}
 
 	get stats () {
-		return `Attack twice (once with each horn). Small chance to pin if you successfully gore your opponent.
+		return `Attack twice (once with each horn). +2 to pin for each successfull horn hit.
 ${super.stats}`;
 	}
 
-	getAttackModifier () {
-		return this.attackModifier;
+	getAttackModifier (target) {
+		if (this.weakAgainstCreatureTypes.includes(target.name)) {
+			return -2 + this.attackModifier;
+		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
+			return this.attackModifier;
+		}
+		return 0;
 	}
 
 	resetImmobilizeStrength () {
@@ -63,7 +68,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 	emitRoll (rolled, success, player, target, hornNumber) {
 		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac}) for horn ${hornNumber} to determine if gore was successful`,
+			reason: `vs ${target.givenName}'s AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful`,
 			card: this,
 			roll: rolled,
 			player,
@@ -73,7 +78,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 		const commentary = this.getCommentary(rolled, player, target);
 
 		this.emit('rolled', {
-			reason: `vs AC (${target.ac}) for horn ${hornNumber}`,
+			reason: `vs AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''}`,
 			card: this,
 			roll: rolled,
 			player,

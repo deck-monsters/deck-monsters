@@ -18,7 +18,7 @@ class ForkedMetalRodCard extends HornGoreCard {
 	} = {}) {
 		super({ icon, ...rest });
 
-		this.immobilizeCard = new ImmobilizeCard();
+		this.immobilizeCard = new ImmobilizeCard({ strongAgainstCreatureTypes: this.strongAgainstCreatureTypes });
 	}
 
 	get stats () { // eslint-disable-line class-methods-use-this
@@ -75,9 +75,9 @@ ForkedMetalRodCard.actions = ['pin', 'pins', 'pinned'];
 
 ForkedMetalRodCard.flavors = {
 	hits: [
-		[`${ForkedMetalRodCard.actions[1]} to the ground, the head of`, 80],
-		[`${ForkedMetalRodCard.actions[1]} to the wall, the neck of`, 50],
-		['in a fit of brute strength, snags by the neck, and brutally lofts into the air, their thoroughly surprised opponent', 5]
+		['stabs', 80],
+		['pokes (in a not-so-facebook-flirting kind of way)', 50],
+		['snags and brutally lofts into the air their thoroughly surprised opponent', 5]
 	]
 };
 

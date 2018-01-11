@@ -5,6 +5,7 @@ const HitCard = require('./hit');
 const { GLADIATOR, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
+const { signedNumber } = require('../helpers/signed-number');
 
 class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -16,6 +17,9 @@ class ImmobilizeCard extends HitCard {
 		icon = '😵',
 		freedomThresholdModifier,
 		ongoingDamage,
+		strongAgainstCreatureTypes,
+		weakAgainstCreatureTypes,
+		uselessAgainstCreatureTypes,
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
@@ -26,7 +30,10 @@ class ImmobilizeCard extends HitCard {
 			hitOnFail,
 			doDamageOnImmobilize,
 			freedomThresholdModifier,
-			ongoingDamage
+			ongoingDamage,
+			strongAgainstCreatureTypes,
+			weakAgainstCreatureTypes,
+			uselessAgainstCreatureTypes
 		});
 	}
 
@@ -47,15 +54,33 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get strongAgainstCreatureTypes () {
-		return this.constructor.strongAgainstCreatureTypes;
+		return this.options.strongAgainstCreatureTypes || this.constructor.strongAgainstCreatureTypes;
+	}
+
+	set strongAgainstCreatureTypes (strongAgainstCreatureTypes) {
+		this.setOptions({
+			strongAgainstCreatureTypes
+		});
 	}
 
 	get weakAgainstCreatureTypes () {
-		return this.constructor.weakAgainstCreatureTypes;
+		return this.options.weakAgainstCreatureTypes || this.constructor.weakAgainstCreatureTypes;
+	}
+
+	set weakAgainstCreatureTypes (weakAgainstCreatureTypes) {
+		this.setOptions({
+			weakAgainstCreatureTypes
+		});
 	}
 
 	get uselessAgainstCreatureTypes () {
-		return this.constructor.uselessAgainstCreatureTypes;
+		return this.options.uselessAgainstCreatureTypes || this.constructor.uselessAgainstCreatureTypes;
+	}
+
+	set uselessAgainstCreatureTypes (uselessAgainstCreatureTypes) {
+		this.setOptions({
+			uselessAgainstCreatureTypes
+		});
 	}
 
 	get attackModifier () {
@@ -82,7 +107,23 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get stats () {
-		return `${super.stats}`;
+		let strengthModifiers = '\n';
+		if (this.strongAgainstCreatureTypes.length && this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] })) {
+			const strongAgainst = this.strongAgainstCreatureTypes.join(', ');
+			strengthModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}`;
+		}
+
+		if (this.weakAgainstCreatureTypes.length && this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] })) {
+			const weakAgainst = this.weakAgainstCreatureTypes.join(', ');
+			strengthModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}`;
+		}
+
+		if (this.uselessAgainstCreatureTypes.length) {
+			const uselessAgainst = this.uselessAgainstCreatureTypes.join(', ');
+			strengthModifiers += `\ninneffective against ${uselessAgainst}`;
+		}
+
+		return `${super.stats}${strengthModifiers}`;
 	}
 
 	get freedomThresholdModifier () {
@@ -195,7 +236,7 @@ class ImmobilizeCard extends HitCard {
 							target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
 
 							this.emit('narration', {
-								narration: `${target.givenName} is now ${this.actions[2]}. ${target.pronouns[0]} pushes the limp dead body of ${player.givenName} off of ${target.pronouns[1]}self and proudly stands prepared to fight`
+								narration: `${target.givenName} is no longer ${this.actions[2]}. ${target.pronouns[0]} pushes the limp dead body of ${player.givenName} off of ${target.pronouns[1]}self and proudly stands prepared to fight`
 							});
 						}
 					}
@@ -219,7 +260,7 @@ class ImmobilizeCard extends HitCard {
 			if (alreadyImmobilized) {
 				narration = `${target.givenName} is already ${this.actions[2]}, now _show no mercy_!`;
 			} else {
-				narration = `${target.givenName} laughs hautily as you try to ${this.actions[2]} them, vent your fury at their mockery!`;
+				narration = `${target.givenName} laughs hautily as you try to ${this.actions[0]} them, vent your fury at their mockery!`;
 			}
 			this.emit('narration', { narration });
 
@@ -258,7 +299,7 @@ ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 
 ImmobilizeCard.flavors = {
 	hits: [
-		['immobilizes', 100]
+		['stuns', 100]
 	]
 };
 
