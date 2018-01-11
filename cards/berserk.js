@@ -20,11 +20,12 @@ class BerserkCard extends HitCard {
 			damage
 		});
 
-		this.resetDamageAmount();
+		this.resetCard();
 	}
 
-	resetDamageAmount () {
+	resetCard () {
 		this.damageAmount = this.options.damage;
+		this.iterations = 0;
 	}
 
 	set bigFirstHit (bigFirstHit) {
@@ -60,7 +61,14 @@ Stroke of luck increases damage per hit by 1.`;
 		return roll({ primaryDice: this.damageDice });
 	}
 
+	getAttackRoll (player) {
+		// once you hit the first time, you get a diminishing bonus for each subsequent hit.
+		const modifier = player.dexModifier + (this.iterations > 1) ? Math.max(player.intModifier - this.iterations, 0) : 0;
+		return roll({ primaryDice: this.attackDice, modifier: modifier, bonusDice: player.bonusAttackDice });
+	}
+
 	effectLoop (iteration, player, target, ring, activeContestants) {
+		this.iterations = iteration;
 		// Add any player modifiers and roll the dice
 		const {
 			attackRoll, success, strokeOfLuck, curseOfLoki
@@ -102,12 +110,12 @@ Stroke of luck increases damage per hit by 1.`;
 				narration: 'COMBO BREAKER!'
 			});
 
-			this.resetDamageAmount();
+			this.resetCard();
 			// Our attack is now bouncing back against us
 			return player.hit(damage, target, this);
 		}
 
-		this.resetDamageAmount();
+		this.resetCard();
 		this.emit('miss', {
 			attackResult: attackRoll.result,
 			attackRoll,
