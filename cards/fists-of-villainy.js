@@ -24,5 +24,6 @@ FistsOfVillainyCard.cardType = 'Fists of Villainy';
 FistsOfVillainyCard.probability = 20;
 FistsOfVillainyCard.description = 'You show no mercy to the weak.';
 FistsOfVillainyCard.level = 1;
+FistsOfVillainyCard.cost = 20;
 
 module.exports = FistsOfVillainyCard;

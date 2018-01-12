@@ -13,9 +13,11 @@ class BasicShieldCard extends BoostCard {
 }
 
 BasicShieldCard.cardType = 'Basic Shield';
+BasicShieldCard.permittedClassesAndTypes = [FIGHTER];
 BasicShieldCard.description = 'Equip yourself for the battle ahead.';
 BasicShieldCard.level = 2;
-BasicShieldCard.permittedClassesAndTypes = [FIGHTER];
+BasicShieldCard.cost = 30;
+
 BasicShieldCard.defaults = {
 	...BoostCard.defaults,
 	boostAmount: 2

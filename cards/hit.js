@@ -139,8 +139,9 @@ class HitCard extends BaseCard {
 HitCard.cardType = 'Hit';
 HitCard.probability = 90;
 HitCard.description = 'A basic attack, the staple of all good monsters.';
-HitCard.cost = 4;
 HitCard.level = 0;
+HitCard.cost = 3;
+
 HitCard.defaults = {
 	attackDice: '1d20',
 	damageDice: '1d6'
