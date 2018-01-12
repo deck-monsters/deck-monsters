@@ -59,6 +59,7 @@ KalevalaCard.description = 'Steadfast old Väinämöinen himself fashioned this 
 KalevalaCard.level = 1;
 KalevalaCard.cost = 40;
 KalevalaCard.noBosses = true;
+KalevalaCard.notForSale = true;
 
 KalevalaCard.defaults = {
 	...HitCard.defaults,

@@ -20,6 +20,7 @@ VenegefulRampageCard.probability = 20;
 VenegefulRampageCard.description = 'Your wounds only make you stronger.';
 VenegefulRampageCard.level = 3;
 VenegefulRampageCard.cost = 40;
+VenegefulRampageCard.notForSale = true;
 
 VenegefulRampageCard.flavors = {
 	hits: [

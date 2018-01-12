@@ -68,6 +68,7 @@ LuckyStrike.probability = 30;
 LuckyStrike.description = 'Roll for attack twice, use the best roll to see if you hit.';
 LuckyStrike.level = 2;
 LuckyStrike.cost = 30;
+LuckyStrike.notForSale = true;
 
 LuckyStrike.flavors = {
 	hits: [

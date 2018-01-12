@@ -4,6 +4,8 @@ const getChoices = array => array.map((choice, index) => `${index}) ${choice}`).
 
 const getItemChoices = items => getChoices(Object.keys(items).map(item => `${item} [${items[item]}]`));
 
+const getItemChoicesWithPrice = items => getChoices(Object.keys(items).map(item => `${item} [${items[item].count}] - ${items[item].cost} coins`)); // eslint-disable-line max-len
+
 const getFinalItemChoices = items => getChoices(items.map(item => item.itemType));
 
 const getMonsterChoices = monsters => getChoices(monsters.map(monster => monsterCard(monster, false)));
@@ -20,5 +22,6 @@ module.exports = {
 	getFinalCardChoices: getFinalItemChoices,
 	getFinalItemChoices,
 	getItemChoices,
+	getItemChoicesWithPrice,
 	getMonsterChoices
 };
