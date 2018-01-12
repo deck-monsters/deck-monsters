@@ -348,7 +348,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get cards () {
-		if (!this.options.cards) this.cards = [];
+		if (!Array.isArray(this.options.cards)) this.cards = [];
 
 		return this.options.cards;
 	}
@@ -370,7 +370,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get items () {
-		if (!this.options.items) this.items = [];
+		if (!Array.isArray(this.options.items)) this.items = [];
 
 		return this.options.items;
 	}

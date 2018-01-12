@@ -54,7 +54,8 @@ Which card(s) would you like to equip next?`);
 `You've run out of slots, but you've equiped the following cards:
 
 ${getFinalCardChoices(cards)}`
-					});
+					})
+						.then(() => cards);
 				}
 
 				if (nowRemainingSlots <= 0) {
@@ -63,7 +64,8 @@ ${getFinalCardChoices(cards)}`
 `You've filled your slots with the following cards:
 
 ${getFinalCardChoices(cards)}`
-					});
+					})
+						.then(() => cards);
 				}
 
 				if (nowRemainingCards.length <= 0) {
@@ -72,7 +74,8 @@ ${getFinalCardChoices(cards)}`
 `You're out of cards to equip, but you've equiped the following cards:
 
 ${getFinalCardChoices(cards)}`
-					});
+					})
+						.then(() => cards);
 				}
 
 				return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
@@ -124,7 +127,8 @@ ${getFinalCardChoices(cards)}`
 `You've filled your slots with the following cards:
 
 ${getFinalCardChoices(cards)}`
-				}).then(() => cards);
+				})
+					.then(() => cards);
 			}
 
 			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
