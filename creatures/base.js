@@ -75,14 +75,6 @@ class BaseCreature extends BaseClass {
 		}
 	}
 
-	get maxModifications () {
-		return {
-			hp: MAX_HP_MODIFICATION,
-			ac: MAX_AC_MODIFICATION,
-			xp: Math.max(this.getPreBattlePropValue('xp') - 40, 0)
-		};
-	}
-
 	get class () {
 		return this.constructor.class;
 	}
@@ -352,19 +344,6 @@ Battles won: ${this.battles.wins}`;
 	set respawnTimeoutBegan (respawnTimeoutBegan) {
 		this.setOptions({
 			respawnTimeoutBegan
-		});
-	}
-
-	get xp () {
-		let xp = this.getPreBattlePropValue('xp');
-		xp += this.modifiers.xp || 0;
-
-		return Math.max(xp, 0);
-	}
-
-	set xp (xp) {
-		this.setOptions({
-			xp
 		});
 	}
 

@@ -45,7 +45,7 @@ class LuckyStrike extends HitCard {
 		} else if (curseOfLoki) {
 			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
 		} else if (tie) {
-			commentary = 'Miss... Tie goes to the defender.'
+			commentary = 'Miss... Tie goes to the defender.';
 		}
 		this.emit('rolled', {
 			reason: `vs AC (${target.ac})`,
