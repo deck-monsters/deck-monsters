@@ -1,6 +1,8 @@
 const HitCard = require('./hit');
 const HealCard = require('./heal');
 
+const { FIGHTER } = require('../helpers/classes');
+
 class SurvivalKnifeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -9,11 +11,7 @@ class SurvivalKnifeCard extends HitCard {
 	} = {}) {
 		super({ icon, ...rest });
 
-		this.healCard = new HealCard({ healthDice: this.healthDice });
-	}
-
-	get healthDice () {
-		return this.constructor.healthDice;
+		this.healCard = new HealCard({ healthDice: this.damageDice });
 	}
 
 	get stats () {
@@ -33,10 +31,10 @@ ${this.healCard.stats}`;
 
 SurvivalKnifeCard.cardType = 'Survival Knife';
 SurvivalKnifeCard.probability = 30;
-SurvivalKnifeCard.healthDice = '2d4';
 SurvivalKnifeCard.description = 'If times get too rough, stab yourself in the thigh and press the pommel for a Stimpak injection.';
+SurvivalKnifeCard.permittedClassesAndTypes = [FIGHTER];
 SurvivalKnifeCard.level = 1;
-SurvivalKnifeCard.cost = 25;
+SurvivalKnifeCard.cost = 15;
 
 SurvivalKnifeCard.defaults = {
 	...HitCard.defaults,

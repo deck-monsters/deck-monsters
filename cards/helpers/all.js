@@ -24,6 +24,7 @@ const HealCard = require('../heal');
 const HitCard = require('../hit');
 const HitHarderCard = require('../hit-harder');
 const HornGoreCard = require('../horn-gore');
+const IocaneCard = require('../iocane');
 const KalevalaCard = require('../kalevala');
 const LuckyStrike = require('../lucky-strike');
 const MesmerizeCard = require('../mesmerize');
@@ -34,6 +35,7 @@ const RehitCard = require('../rehit');
 const ScotchCard = require('../scotch');
 const SurvivalKnifeCard = require('../survival-knife');
 const ThickSkinCard = require('../thick-skin');
+const TurkeyThighCard = require('../turkey-thigh');
 const VenegefulRampageCard = require('../vengeful-rampage');
 const WhiskeyShotCard = require('../whiskey-shot');
 const WoodenSpearCard = require('../wooden-spear');
@@ -65,6 +67,7 @@ module.exports = [
 	HitCard,
 	HitHarderCard,
 	HornGoreCard,
+	IocaneCard,
 	KalevalaCard,
 	PickPocketCard,
 	LuckyStrike,
@@ -75,6 +78,7 @@ module.exports = [
 	ScotchCard,
 	SurvivalKnifeCard,
 	ThickSkinCard,
+	TurkeyThighCard,
 	VenegefulRampageCard,
 	WhiskeyShotCard,
 	WoodenSpearCard
