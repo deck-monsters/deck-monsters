@@ -5,7 +5,6 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Constrict = require('./constrict');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 
@@ -45,8 +44,8 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(3);
-		expect(constrict.attackModifier).to.equal(2);
-		expect(constrict.damageModifier).to.equal(0);
+		expect(constrict.dexModifier).to.equal(2);
+		expect(constrict.strModifier).to.equal(0);
 		expect(constrict.hitOnFail).to.be.false;
 		expect(constrict.doDamageOnImmobilize).to.be.true;
 		expect(constrict.ongoingDamage).to.equal(2);
@@ -58,13 +57,13 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 	it('can be instantiated with options', () => {
 		const constrict = new Constrict({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: false, ongoingDamage: 3// eslint-disable-line max-len
+			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: false, ongoingDamage: 3// eslint-disable-line max-len
 		});
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(2);
-		expect(constrict.attackModifier).to.equal(4);
-		expect(constrict.damageModifier).to.equal(4);
+		expect(constrict.dexModifier).to.equal(4);
+		expect(constrict.strModifier).to.equal(4);
 		expect(constrict.hitOnFail).to.be.true;
 		expect(constrict.doDamageOnImmobilize).to.be.false;
 		expect(constrict.ongoingDamage).to.equal(3);
@@ -89,8 +88,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
-
+		const attackRoll = constrict.getAttackRoll(player, target);
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
 			attackRoll,

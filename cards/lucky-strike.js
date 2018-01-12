@@ -21,28 +21,31 @@ class LuckyStrike extends HitCard {
 	}
 
 	hitCheck (player, target) {
-		const attackRoll1 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
-		const attackRoll2 = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll1 = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll2 = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 
 		const betterRoll = (attackRoll2.naturalRoll.result > attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 		const worseRoll = (attackRoll2.naturalRoll.result < attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 
 		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac}) twice to determine if the hit was a success, and uses the best roll.`,
+			reason: `vs ${target.identity}'s AC (${target.ac}) twice to determine if the hit was a success, and uses the best roll.`,
 			card: this,
 			roll: betterRoll,
 			player,
-			target
+			target,
+			vs: target.ac
 		});
 
 		let commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
-		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(betterRoll, target.ac);
+		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(betterRoll, target.ac);
 
 		if (strokeOfLuck) {
 			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
 		} else if (curseOfLoki) {
 			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
+		} else if (tie) {
+			commentary = 'Miss... Tie goes to the defender.'
 		}
 		this.emit('rolled', {
 			reason: `vs AC (${target.ac})`,
@@ -50,7 +53,8 @@ class LuckyStrike extends HitCard {
 			roll: betterRoll,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target.ac
 		});
 
 		return {

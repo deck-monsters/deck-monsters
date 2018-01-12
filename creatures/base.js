@@ -12,15 +12,28 @@ const pause = require('../helpers/pause');
 const PRONOUNS = require('../helpers/pronouns');
 
 const BASE_AC = 5;
+const BASE_STR = 5;
+const BASE_DEX = 5;
+const BASE_INT = 5;
 const AC_VARIANCE = 2;
 const BASE_HP = 28;
 const HP_VARIANCE = 5;
-const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
-const MAX_AC_MODIFICATION = 4;
-const MAX_ATTACK_BOOST = 10;
-const MAX_DAMAGE_BOOST = 6;
-const MAX_HP_BOOST = (BASE_HP * 2) + HP_VARIANCE;
-const MAX_HP_MODIFICATION = 12;
+// Do not access these directly. Get from this.getMaxModifications
+const MAX_PROP_MODIFICATIONS = {
+	ac: 1,
+	str: 1,
+	dex: 1,
+	int: 1,
+	xp: 40,
+	hp: 12
+};
+const MAX_BOOSTS = {
+	dex: 10,
+	str: 6,
+	int: 8,
+	hp: (BASE_HP * 2) + HP_VARIANCE,
+	ac: (BASE_AC * 2) + AC_VARIANCE
+};
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
 
@@ -104,15 +117,159 @@ class BaseCreature extends BaseClass {
 		return `Type: ${this.creatureType}
 Class: ${this.class}
 Level: ${this.level || this.displayLevel} | XP: ${this.xp}
-AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}${
-	this.attackModifier === 0 ? '' :
+AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
+DEX: ${this.dex} | STR: ${this.str} | INT: ${this.int}${
+	this.dexModifier === 0 ? '' :
 		`
-${signedNumber(this.attackModifier)} to hit`
+${signedNumber(this.dexModifier)} to hit`
 }${
-	this.damageModifier === 0 ? '' :
+	this.strModifier === 0 ? '' :
 		`
-${signedNumber(this.damageModifier)} to damage`
+${signedNumber(this.strModifier)} to damage`
+}${
+	this.intModifier === 0 ? '' :
+		`
+${signedNumber(this.intModifier)} to spells`
 }`;
+	}
+
+	get maxHp () {
+		let maxHp = BASE_HP + this.hpVariance;
+		maxHp += Math.min(this.level * 3, MAX_BOOSTS.hp); // Gain 3 hp per level up to the max
+		maxHp += Math.min(this.modifiers.maxHp || 0, this.getMaxModifications('hp'));
+
+		return Math.max(maxHp, 1);
+	}
+
+	get hp () {
+		if (this.options.hp === undefined) this.hp = this.maxHp;
+
+		return this.options.hp;
+	}
+
+	set hp (hp) {
+		this.setOptions({
+			hp
+		});
+	}
+
+	get level () {
+		return getLevel(this.xp);
+	}
+
+	get displayLevel () {
+		const level = getLevel(this.xp);
+		return level ? `level ${level}` : 'beginner';
+	}
+
+	get xp () {
+		return this.getProp('xp');
+	}
+
+	set xp (xp) {
+		this.setOptions({
+			xp
+		});
+	}
+
+	get ac () {
+		return this.getProp('ac');
+	}
+
+	get dex () {
+		return this.getProp('dex');
+	}
+
+	get str () {
+		return this.getProp('str');
+	}
+
+	get int () {
+		return this.getProp('int');
+	}
+
+	get dexModifier () {
+		return this.getModifier('dex');
+	}
+
+	get strModifier () {
+		return this.getModifier('str');
+	}
+
+	get intModifier () {
+		return this.getModifier('int');
+	}
+
+	getMaxModifications (prop) {
+		switch (prop) {
+			case 'hp':
+				return MAX_PROP_MODIFICATIONS.hp;
+			case 'ac':
+				return Math.ceil(MAX_PROP_MODIFICATIONS.ac * (this.level + 1));
+			case 'xp':
+				return Math.max(this.getPreBattlePropValue('xp') - MAX_PROP_MODIFICATIONS.xp, MAX_PROP_MODIFICATIONS.xp);// can't use level for calculation because it would cause circular reference
+			case 'int':
+				return Math.ceil(MAX_PROP_MODIFICATIONS.int * (this.level + 1));
+			case 'str':
+				return Math.ceil(MAX_PROP_MODIFICATIONS.str * (this.level + 1));
+			case 'dex':
+				return Math.ceil(MAX_PROP_MODIFICATIONS.dex * (this.level + 1));
+			default:
+				return 4;
+		}
+	}
+
+	getProp (targetProp) {
+		let prop = this.getPreBattlePropValue(targetProp);
+		prop += Math.min(this.modifiers[targetProp] || 0, this.getMaxModifications(targetProp));
+
+		return Math.max(prop, 1);
+	}
+
+	getPreBattlePropValue (prop) {
+		let raw;
+
+		switch (prop) {
+			case 'dex':
+				raw = BASE_DEX + this.dexModifier;
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to DEX per level up to the max
+				break;
+			case 'str':
+				raw = BASE_STR + this.strModifier;
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to STR per level up to the max
+				break;
+			case 'int':
+				raw = BASE_INT + this.intModifier;
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to INT per level up to the max
+				break;
+			case 'ac':
+				raw = BASE_AC + this.acVariance;
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to AC per level up to the max
+				break;
+			case 'hp':
+				raw = this.maxHp;
+				break;
+			case 'xp':
+				raw = this.options.xp || STARTING_XP;
+				break;
+			default:
+		}
+
+		return raw;
+	}
+
+	getModifier (targetProp) {
+		const targetModifier = `${targetProp}Modifier`;
+		let modifier = this.options[targetModifier] || 0;
+
+		const boost = Math.min(this.level, MAX_BOOSTS[targetProp]);
+		if (boost > 0) {
+			modifier += boost; // +1 per level up to the max
+		}
+
+		modifier += Math.min(this.modifiers[modifier] || 0, MAX_BOOSTS[targetProp]);
+
+		return modifier;
 	}
 
 	get rankings () {
@@ -186,26 +343,6 @@ Battles won: ${this.battles.wins}`;
 
 	get destroyed () {
 		return this.hp < -this.bloodiedValue;
-	}
-
-	get maxHp () {
-		let maxHp = BASE_HP + this.hpVariance;
-		maxHp += Math.min(this.level * 3, MAX_HP_BOOST); // Gain 3 hp per level up to the max
-		maxHp += Math.min(this.modifiers.maxHp || 0, MAX_HP_MODIFICATION);
-
-		return Math.max(maxHp, 1);
-	}
-
-	get hp () {
-		if (this.options.hp === undefined) this.hp = this.maxHp;
-
-		return this.options.hp;
-	}
-
-	set hp (hp) {
-		this.setOptions({
-			hp
-		});
 	}
 
 	get respawnTimeoutBegan () {
@@ -342,78 +479,6 @@ Battles won: ${this.battles.wins}`;
 			...this.encounter,
 			killedCreatures: [...this.killed, creature]
 		};
-	}
-
-	get level () {
-		return getLevel(this.xp);
-	}
-
-	get displayLevel () {
-		const level = getLevel(this.xp);
-		return level ? `level ${level}` : 'beginner';
-	}
-
-	get ac () {
-		let ac = this.getPreBattlePropValue('ac');
-		ac += Math.min(this.modifiers.ac || 0, MAX_AC_MODIFICATION);
-
-		return Math.max(ac, 1);
-	}
-
-	getPreBattlePropValue (prop) {
-		let raw;
-
-		switch (prop) {
-			case 'ac':
-				raw = BASE_AC + this.acVariance;
-				raw += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
-				break;
-			case 'hp':
-				raw = this.maxHp;
-				break;
-			case 'xp':
-				raw = this.options.xp || STARTING_XP;
-				break;
-			default:
-		}
-
-		return raw;
-	}
-
-	// We don't have this right now
-	// get bonusAttackDice () {
-	// 	return undefined;
-	// }
-
-	get attackModifier () {
-		let attackModifier = this.options.attackModifier || 0;
-
-		const boost = Math.min(this.level, MAX_ATTACK_BOOST);
-		if (boost > 0) {
-			attackModifier += boost; // +1 per level up to the max
-		}
-
-		attackModifier += Math.min(this.modifiers.attackModifier || 0, MAX_ATTACK_BOOST);
-
-		return attackModifier;
-	}
-
-	// We don't have this right now
-	// get bonusDamageDice () {
-	// 	return undefined;
-	// }
-
-	get damageModifier () {
-		let damageModifier = this.options.damageModifier || 0;
-
-		const boost = Math.min(this.level, MAX_DAMAGE_BOOST);
-		if (boost > 0) {
-			damageModifier += boost; // +1 per level up to the max
-		}
-
-		damageModifier += Math.min(this.modifiers.damageModifier || 0, MAX_DAMAGE_BOOST);
-
-		return damageModifier;
 	}
 
 	canHold () { // eslint-disable-line class-methods-use-this

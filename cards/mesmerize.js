@@ -2,6 +2,7 @@
 const Promise = require('bluebird');
 
 const ImmobilizeCard = require('./immobilize');
+const { roll } = require('../helpers/chance');
 
 const {
 	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
@@ -10,7 +11,7 @@ const {
 class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		attackModifier,
+		dexModifier,
 		hitOnFail,
 		icon = '🌠',
 		...rest
@@ -18,7 +19,7 @@ class MesmerizeCard extends ImmobilizeCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			attackModifier,
+			dexModifier,
 			hitOnFail
 		});
 	}
@@ -29,6 +30,14 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 	getFreedomThresholdBase () { // eslint-disable-line class-methods-use-this
 		return 10;
+	}
+
+	getAttackRoll (player, target) {
+		return roll({ primaryDice: this.attackDice, modifier: player.intModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
+	}
+
+	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
+		return target.int;
 	}
 
 	effect (player, target, ring, activeContestants) {
@@ -49,7 +58,7 @@ MesmerizeCard.cost = 15;
 
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,
-	attackModifier: 2,
+	dexModifier: 2,
 	hitOnFail: false,
 	freedomThresholdModifier: 0
 };

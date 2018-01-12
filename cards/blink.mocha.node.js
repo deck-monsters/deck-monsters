@@ -75,9 +75,8 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 
 		const ring = {
 			contestants: [
@@ -114,11 +113,10 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 		const basiliskProto = Object.getPrototypeOf(target);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
@@ -137,10 +135,10 @@ describe('./cards/blink.js', () => {
 			.play(player, target, ring, ring.contestants)
 			.then(() => target.encounterEffects[0]({ card, phase: ATTACK_PHASE, player: target, target: player }))
 			.then(() => {
-				expect(hitSpy.callCount).to.equal(1);
 				attackRollStub.restore();
 				hitSpy.restore();
 
+				expect(hitSpy.callCount).to.equal(1);
 				expect(target.hp).to.be.below(targetBeforeHP);
 				expect(player.hp).to.be.above(playerBeforeHP);
 				expect(target.xp).to.be.below(targetBeforeXP);
@@ -162,11 +160,10 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 		const basiliskProto = Object.getPrototypeOf(target);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
@@ -187,10 +184,10 @@ describe('./cards/blink.js', () => {
 				expect(target.encounterEffects.length).to.equal(1);
 			}).then(() => target.encounterEffects[0]({ card, phase: ATTACK_PHASE, player: target, target: player }))
 			.then(() => {
-				expect(hitSpy.callCount).to.equal(1);
 				attackRollStub.restore();
 				hitSpy.restore();
 
+				expect(hitSpy.callCount).to.equal(1);
 				expect(target.hp).to.be.below(targetBeforeHP);
 				expect(player.hp).to.be.above(playerBeforeHP);
 				expect(target.xp).to.be.below(targetBeforeXP);
@@ -206,11 +203,10 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 		const basiliskProto = Object.getPrototypeOf(target);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
@@ -249,11 +245,10 @@ describe('./cards/blink.js', () => {
 
 		const blinkProto = Object.getPrototypeOf(blink);
 		const curseProto = Object.getPrototypeOf(blinkProto);
-		const hitProto = Object.getPrototypeOf(curseProto);
 		const basiliskProto = Object.getPrototypeOf(target);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
 
-		const attackRollStub = sinon.stub(hitProto, 'getAttackRoll');
+		const attackRollStub = sinon.stub(curseProto, 'getAttackRoll');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
 
 		const ring = {
