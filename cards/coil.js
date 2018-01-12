@@ -19,12 +19,14 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 }
 
 CoilCard.cardType = 'Coil';
-CoilCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
-CoilCard.probability = 5;
-CoilCard.level = 0;
-CoilCard.description = 'Your body is the weapon.';
 CoilCard.permittedClassesAndTypes = [BASILISK];
+CoilCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
 CoilCard.weakAgainstCreatureTypes = [BASILISK];
+CoilCard.probability = 5;
+CoilCard.description = 'Your body is the weapon.';
+CoilCard.level = 0;
+CoilCard.cost = 80;
+
 CoilCard.defaults = {
 	...ImmobilizeCard.defaults,
 	doDamageOnImmobilize: true,

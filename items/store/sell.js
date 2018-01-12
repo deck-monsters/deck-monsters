@@ -1,28 +1,7 @@
-const fantasyNames = require('fantasy-names');
-const random = require('lodash.random');
-const sample = require('lodash.sample');
-const throttle = require('lodash.throttle');
-
 const chooseCards = require('../../cards/helpers/choose');
 const chooseItems = require('../helpers/choose');
 
-const ADJECTIVES = [
-	'rusty',
-	'moss-covered',
-	'gilded',
-	'heavy',
-	'newly-installed glass',
-	'mysterious',
-	'hidden',
-	'bright red',
-	'small, round'
-];
-
-const getShop = throttle(() => ({
-	name: fantasyNames('places', 'magic_shops'),
-	adjective: sample(ADJECTIVES),
-	priceOffset: random(0.6, 0.9)
-}), 7200000);
+const getShop = require('./shop');
 
 module.exports = ({
 	character,

@@ -41,13 +41,14 @@ Chance to immobilize your opponents with your shocking beauty.`;
 
 EnthrallCard.cardType = 'Enthrall';
 EnthrallCard.actions = ['enthrall', 'enthralls', 'enthralled'];
-EnthrallCard.level = 2;
-EnthrallCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
-EnthrallCard.probability = 30;
-EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
 EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];
+EnthrallCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EnthrallCard.uselessAgainstCreatureTypes = [];
+EnthrallCard.probability = 30;
+EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
+EnthrallCard.level = 2;
+EnthrallCard.cost = 30;
 
 EnthrallCard.defaults = {
 	...ImmobilizeCard.defaults,

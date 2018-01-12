@@ -39,12 +39,14 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 MesmerizeCard.cardType = 'Mesmerize';
 MesmerizeCard.actions = ['mesmerize', 'mesmerizes', 'mesmerized'];
-MesmerizeCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
-MesmerizeCard.probability = 30;
-MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions[1]} everyone, including yourself.`;
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];
+MesmerizeCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 MesmerizeCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 MesmerizeCard.uselessAgainstCreatureTypes = [];
+MesmerizeCard.probability = 30;
+MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions[1]} everyone, including yourself.`;
+MesmerizeCard.cost = 15;
+
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,
 	attackModifier: 2,
