@@ -22,21 +22,11 @@ class BaseCard extends BaseItem {
 	}
 
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
-		let strokeOfLuck = false;
-		let curseOfLoki = false;
-
-		// Stroke of Luck
-		if (roll.naturalRoll.result === max(roll.primaryDice)) {
-			strokeOfLuck = true;
-		} else if (roll.naturalRoll.result === 1) {
-			curseOfLoki = true;
-		}
-
-		const success = !curseOfLoki && (strokeOfLuck || targetNumber < roll.result);
+		const success = !roll.curseOfLoki && (roll.strokeOfLuck || targetNumber < roll.result);
 
 		const tie = targetNumber === roll.result;
 
-		return { success, strokeOfLuck, curseOfLoki, tie };
+		return { success, strokeOfLuck: roll.strokeOfLuck, curseOfLoki: roll.curseOfLoki, tie };
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this, no-unused-vars

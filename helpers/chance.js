@@ -8,13 +8,25 @@ const chance = {
 		const naturalRoll = dice.roll(primaryDice);
 		const bonusResult = bonusDice ? dice.roll(bonusDice).result : 0;
 
+		let strokeOfLuck = false;
+		let curseOfLoki = false;
+
+		// Stroke of Luck
+		if (naturalRoll.result === chance.max(primaryDice)) {
+			strokeOfLuck = true;
+		} else if (naturalRoll.result === 1) {
+			curseOfLoki = true;
+		}
+
 		return {
 			primaryDice,
 			bonusDice,
 			result: Math.max(naturalRoll.result + bonusResult + modifier, 0),
 			naturalRoll,
 			bonusResult,
-			modifier
+			modifier,
+			strokeOfLuck,
+			curseOfLoki
 		};
 	},
 	// Returns the highest possible roll, unmodified
