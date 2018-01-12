@@ -32,6 +32,8 @@ SurvivalKnifeCard.probability = 30;
 SurvivalKnifeCard.healthDice = '2d4';
 SurvivalKnifeCard.description = 'If times get too rough, stab yourself in the thigh and press the pommel for a Stimpak injection.';
 SurvivalKnifeCard.level = 1;
+SurvivalKnifeCard.cost = 25;
+
 SurvivalKnifeCard.defaults = {
 	...HitCard.defaults,
 	damageDice: '2d4'
