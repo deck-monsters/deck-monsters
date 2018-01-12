@@ -20,7 +20,8 @@ describe('./items/store/stock.js', () => {
 		it('can get a set of cards', () => {
 			const cards = getCards();
 
-			expect(cards.length).to.equal(20);
+			expect(cards.length).to.be.above(4);
+			expect(cards.length).to.be.below(21);
 
 			cards.forEach((item) => {
 				expect(item.constructor.notForSale).to.not.equal(true);

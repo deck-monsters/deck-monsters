@@ -35,6 +35,7 @@ SurvivalKnifeCard.description = 'If times get too rough, stab yourself in the th
 SurvivalKnifeCard.permittedClassesAndTypes = [FIGHTER];
 SurvivalKnifeCard.level = 1;
 SurvivalKnifeCard.cost = 15;
+SurvivalKnifeCard.notForSale = true;
 
 SurvivalKnifeCard.defaults = {
 	...HitCard.defaults,
