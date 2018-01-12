@@ -9,13 +9,13 @@ const announceRolled = (publicChannel, channelManager, className, monster, {
 	vs,
 	outcome
 }) => {
-	let rollResult = (roll.naturalRoll.result === 20) ? 'Natural 20!' : roll.result;
-	rollResult = (roll.naturalRoll.result === 1) ? 'Critical Failure!' : rollResult;
-	const vsMsg = vs ? ` vs ${vs}${target.icon}` : '';
+	let rollResult = (roll.strokeOfLuck) ? 'Natural 20!' : roll.result;
+	rollResult = (roll.curseOfLoki) ? 'Critical Failure!' : rollResult;
+	const vsMsg = vs ? ` _vs_ *${vs}* ${target.icon}` : '';
 
 	publicChannel({
 		announce:
-`🎲 ${player.icon}${rollResult}${vsMsg}  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
+`🎲 ${player.icon} *${rollResult}*${vsMsg}  (_${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}_)
     ${outcome}`
 	});
 };

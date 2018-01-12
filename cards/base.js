@@ -34,7 +34,9 @@ class BaseCard extends BaseItem {
 
 		const success = !curseOfLoki && (strokeOfLuck || targetNumber < roll.result);
 
-		return { success, strokeOfLuck, curseOfLoki };
+		const tie = targetNumber === roll.result;
+
+		return { success, strokeOfLuck, curseOfLoki, tie };
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this, no-unused-vars

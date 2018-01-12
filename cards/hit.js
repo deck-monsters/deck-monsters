@@ -46,17 +46,19 @@ class HitCard extends BaseCard {
 			vs: target[this.targetProp]
 		});
 
-		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target[this.targetProp]);
+		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(attackRoll, target[this.targetProp]);
 		let commentary;
 
 		if (strokeOfLuck) {
 			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
 		} else if (curseOfLoki) {
 			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns[2]} attack back against ${player.pronouns[1]}.`;
+		} else if (tie) {
+			commentary = 'Miss... Tie goes to the defender.'
 		}
 
 		this.emit('rolled', {
-			reason: `vs ${this.targetProp.toUpperCase()} (${target[this.targetProp]})`,
+			reason: `vs ${target.identity}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]})`,
 			card: this,
 			roll: attackRoll,
 			player,

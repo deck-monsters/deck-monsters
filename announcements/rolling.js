@@ -15,11 +15,11 @@ const announceRolling = (publicChannel, channelManager, className, monster, {
 		title += signedNumber(roll.modifier);
 	}
 
-	const vsMsg = vs ? ` vs ${vs}${target.icon}` : '';
+	const vsMsg = vs ? ` _vs_ *${vs}* ${target.icon}` : '';
 
 	publicChannel({
 		announce:
-`👋🎲 ${player.icon}${title}${vsMsg}  ${player.identity} rolls ${title} ${reason}`
+`👋🎲 ${player.icon} *${title}*${vsMsg}  (_${player.identity} rolls ${title} ${reason}_)`
 	});
 };
 
