@@ -30,9 +30,13 @@ Possiblity of Stroke of Luck`;
 		return [player];
 	}
 
+	getHealRoll (player) {
+		return roll({ primaryDice: this.healthDice, modifier: player.intModifier + this.modifier, bonusDice: player.bonusIntDice });
+	}
+
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		const healRoll = roll({ primaryDice: this.healthDice, modifier: this.modifier });
+		const healRoll = this.getHealRoll(player);
 		let healResult = healRoll.result;
 		let outcome = '';
 
@@ -58,8 +62,9 @@ Possiblity of Stroke of Luck`;
 HealCard.cardType = 'Heal';
 HealCard.probability = 40;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';
-HealCard.cost = 3;
 HealCard.level = 0;
+HealCard.cost = 5;
+
 HealCard.defaults = {
 	healthDice: '1d4',
 	modifier: 0

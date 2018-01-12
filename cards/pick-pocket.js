@@ -43,5 +43,6 @@ class PickPocketCard extends BaseCard {
 PickPocketCard.cardType = 'Pick Pocket';
 PickPocketCard.probability = 30;
 PickPocketCard.description = 'Reach into the pocket of the most skilled player and grab one of their cards to play as your own.';
+PickPocketCard.cost = 20;
 
 module.exports = PickPocketCard;

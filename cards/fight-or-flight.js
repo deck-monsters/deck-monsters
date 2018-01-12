@@ -37,6 +37,7 @@ Chance to flee if below a quarter health`;
 FightOrFlightCard.cardType = 'Fight or Flight';
 FightOrFlightCard.probability = 60;
 FightOrFlightCard.description = 'Survival instincts are nothing to be ashamed of.';
+FightOrFlightCard.cost = 10;
 FightOrFlightCard.noBosses = true;
 
 module.exports = FightOrFlightCard;

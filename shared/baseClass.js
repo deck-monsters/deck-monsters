@@ -1,4 +1,4 @@
-const { EventEmitter, globalSemaphore } = require('./helpers/semaphore');
+const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
 
 class BaseClass {
 	constructor (options, semaphore = new EventEmitter({ emitDelay: 0 })) {

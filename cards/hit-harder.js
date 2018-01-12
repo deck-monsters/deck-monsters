@@ -16,8 +16,8 @@ class HitHarder extends HitCard {
 	}
 
 	getDamageRoll (player) {
-		const damageRoll1 = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusAttackDice });
-		const damageRoll2 = roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusAttackDice });
+		const damageRoll1 = roll({ primaryDice: this.damageDice, modifier: player.strModifier, bonusDice: player.bonusAttackDice });
+		const damageRoll2 = roll({ primaryDice: this.damageDice, modifier: player.strModifier, bonusDice: player.bonusAttackDice });
 
 		return {
 			betterRoll: (damageRoll2.naturalRoll.result > damageRoll1.naturalRoll.result) ? damageRoll2 : damageRoll1,
@@ -63,11 +63,12 @@ class HitHarder extends HitCard {
 }
 
 HitHarder.cardType = 'Hit Harder';
+HitHarder.permittedClassesAndTypes = [BARBARIAN, FIGHTER];
 HitHarder.probability = 50;
 HitHarder.description = 'You hit just a little bit harder than the average bear... Roll for damage twice, and use the best result.';
-HitHarder.cost = 6;
 HitHarder.level = 2;
-HitHarder.permittedClassesAndTypes = [BARBARIAN, FIGHTER];
+HitHarder.cost = 30;
+
 HitHarder.defaults = {
 	...HitCard.defaults,
 	damageDice: '1d6'

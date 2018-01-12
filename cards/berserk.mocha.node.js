@@ -4,7 +4,6 @@ const BerserkCard = require('./berserk');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 const { BARBARIAN } = require('../helpers/classes');
 
@@ -92,7 +91,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = berserk.getAttackRoll(player);
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,
@@ -162,7 +161,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = berserk.getAttackRoll(player);
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,
@@ -227,7 +226,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = berserk.getAttackRoll(player);
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,
@@ -300,7 +299,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = berserk.getAttackRoll(player);
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,

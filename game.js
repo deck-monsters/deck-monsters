@@ -8,7 +8,7 @@ const { create: createCharacter } = require('./characters');
 const { globalSemaphore } = require('./helpers/semaphore');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
 const aws = require('./helpers/aws');
-const BaseClass = require('./baseClass');
+const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
 const PlayerHandbook = require('./player-handbook');
@@ -305,6 +305,14 @@ class Game extends BaseClass {
 				},
 				editMonster ({ monsterName } = {}) {
 					return game.editMonster(channel, monsterName)
+						.catch(err => log(err));
+				},
+				sellItems () {
+					return character.sellItems(channel)
+						.catch(err => log(err));
+				},
+				buyItems () {
+					return character.buyItems(channel)
 						.catch(err => log(err));
 				}
 			}))

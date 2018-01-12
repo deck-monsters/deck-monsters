@@ -1,4 +1,4 @@
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 
 const { itemCard } = require('../helpers/card');
 

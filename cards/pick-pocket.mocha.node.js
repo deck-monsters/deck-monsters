@@ -7,6 +7,8 @@ const { randomContestant } = require('../helpers/bosses');
 const DestroyCard = require('./destroy');
 const pause = require('../helpers/pause');
 
+const allCards = require('./helpers/all');
+
 describe('./cards/pick-pocket.js', () => {
 	let PickPocketCard;
 	let channelStub;
@@ -81,28 +83,32 @@ describe('./cards/pick-pocket.js', () => {
 			});
 	});
 
-	it('can run many times without error', () => {
+	it('can pick pocket every card without error', () => {
 		const pickPocket = new PickPocketCard();
 		const player = randomContestant();
 
 		const promises = [];
 
-		for (let i = 0; i < 50; i++) {
-			const target1 = randomContestant();
-			const target2 = randomContestant();
+		for (let i = 0; i < allCards.length; i++) {
+			if (allCards[i].name !== 'PickPocketCard') {
+				const target1 = randomContestant();
+				target1.monster.cards = [new allCards[i]()];
+				const target2 = randomContestant();
+				target2.monster.cards = [new allCards[i]()];
 
-			const ring = {
-				contestants: [
-					player,
-					target1,
-					target2
-				],
-				channelManager: {
-					sendMessages: () => Promise.resolve()
-				}
-			};
+				const ring = {
+					contestants: [
+						player,
+						target1,
+						target2
+					],
+					channelManager: {
+						sendMessages: () => Promise.resolve()
+					}
+				};
 
-			promises.push(pickPocket.play(player.monster, target1.monster, ring, ring.contestants));
+				promises.push(pickPocket.play(player.monster, target1.monster, ring, ring.contestants));
+			}
 		}
 
 		return expect(Promise.all(promises)).to.be.fulfilled;

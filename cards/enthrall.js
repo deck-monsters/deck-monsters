@@ -11,7 +11,7 @@ const {
 class EnthrallCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		attackModifier,
+		dexModifier,
 		hitOnFail,
 		icon = '🎇',
 		...rest
@@ -19,7 +19,7 @@ class EnthrallCard extends ImmobilizeCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			attackModifier,
+			dexModifier,
 			hitOnFail
 		});
 
@@ -34,6 +34,14 @@ Chance to immobilize your opponents with your shocking beauty.`;
 		return this.mesmerizeCard.getFreedomThresholdBase(player);
 	}
 
+	getAttackRoll (player, target) {
+		return this.mesmerizeCard.getAttackRoll(player, target);
+	}
+
+	getTargetPropValue (target) {
+		return this.mesmerizeCard.getTargetPropValue(target);
+	}
+
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
 		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
 	}
@@ -41,17 +49,18 @@ Chance to immobilize your opponents with your shocking beauty.`;
 
 EnthrallCard.cardType = 'Enthrall';
 EnthrallCard.actions = ['enthrall', 'enthralls', 'enthralled'];
-EnthrallCard.level = 2;
-EnthrallCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
-EnthrallCard.probability = 30;
-EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
 EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];
+EnthrallCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EnthrallCard.uselessAgainstCreatureTypes = [];
+EnthrallCard.probability = 30;
+EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
+EnthrallCard.level = 2;
+EnthrallCard.cost = 30;
 
 EnthrallCard.defaults = {
 	...ImmobilizeCard.defaults,
-	attackModifier: 2,
+	dexModifier: 2,
 	hitOnFail: false,
 	freedomThresholdModifier: 1
 };

@@ -1,7 +1,7 @@
 const HitCard = require('./hit');
 
 const { difference } = require('../helpers/difference');
-const { max } = require('../helpers/chance');
+const { roll, max } = require('../helpers/chance');
 
 class CurseCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -59,6 +59,10 @@ ${stats}`;
 ${player.givenName}'s harrying jab takes from HP instead.`;
 	}
 
+	getAttackRoll (player) {
+		return roll({ primaryDice: this.attackDice, modifier: player.intModifier, bonusDice: player.bonusAttackDice });
+	}
+
 	effect (player, target, ring) {
 		const preCursedPropValue = target[this.cursedProp];
 		let curseAmount = Math.abs(this.curseAmount);
@@ -67,7 +71,7 @@ ${player.givenName}'s harrying jab takes from HP instead.`;
 		const aggregateTotalCurseAmount = difference(preBattlePropValue, postCursedPropValue);
 
 		// If the target has already been cursed for the max amount, make the curse overflow into their HP
-		const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.maxModifications[this.cursedProp] : 0;
+		const hpCurseOverflow = this.cursedProp !== 'hp' ? aggregateTotalCurseAmount - target.getMaxModifications(this.cursedProp) : 0;
 		if (hpCurseOverflow > 0) {
 			curseAmount -= hpCurseOverflow;
 
@@ -94,8 +98,9 @@ ${player.givenName}'s harrying jab takes from HP instead.`;
 CurseCard.cardType = 'Soften';
 CurseCard.probability = 30;
 CurseCard.description = 'Sweep the leg... You have a problem with that? No mercy.';
-CurseCard.cost = 2;
 CurseCard.level = 1;
+CurseCard.cost = 10;
+
 CurseCard.defaults = {
 	...HitCard.defaults,
 	curseAmount: -1,

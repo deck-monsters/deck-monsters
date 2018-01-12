@@ -29,8 +29,9 @@ describe('./monsters/basilisk.js', () => {
 		expect(basilisk.name).to.equal('Basilisk');
 		expect(basilisk.givenName).to.be.a('string');
 		expect(basilisk.options).to.deep.contain({
-			attackModifier: -1,
-			damageModifier: 3,
+			dexModifier: -1,
+			strModifier: 2,
+			intModifier: 1,
 			color: 'tan',
 			icon: '🐍'
 		});
@@ -43,8 +44,9 @@ describe('./monsters/basilisk.js', () => {
 		expect(basilisk.name).to.equal('Basilisk');
 		expect(basilisk.givenName).to.be.a('string');
 		expect(basilisk.options).to.deep.contain({
-			attackModifier: -1,
-			damageModifier: 3,
+			dexModifier: -1,
+			strModifier: 2,
+			intModifier: 1,
 			color: 'tan',
 			icon: '🐍',
 			xp: 1000

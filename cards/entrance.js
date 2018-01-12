@@ -11,7 +11,7 @@ const {
 class EntranceCard extends EnthrallCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		attackModifier,
+		dexModifier,
 		hitOnFail,
 		icon = '🎆',
 		...rest
@@ -19,7 +19,7 @@ class EntranceCard extends EnthrallCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			attackModifier,
+			dexModifier,
 			hitOnFail
 		});
 
@@ -37,13 +37,16 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 
 EntranceCard.cardType = 'Entrance';
 EntranceCard.actions = ['entrance', 'entrances', 'entranced'];
-EntranceCard.probability = 20;
-EntranceCard.level = 3;
-EntranceCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 EntranceCard.permittedClassesAndTypes = [WEEPING_ANGEL];
+EntranceCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 EntranceCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EntranceCard.uselessAgainstCreatureTypes = [];
+EntranceCard.probability = 20;
 EntranceCard.description = `You strut and preen. Your _painful_ beauty overwhelms and ${EntranceCard.actions[1]} everyone, except yourself.`;
+EntranceCard.level = 3;
+EntranceCard.cost = 50;
+EntranceCard.notForSale = true;
+
 EntranceCard.defaults = {
 	...EnthrallCard.defaults,
 	hitOnFail: true,

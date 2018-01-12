@@ -42,8 +42,10 @@ class DestroyCard extends BaseCard {
 DestroyCard.cardType = 'Destroy';
 DestroyCard.probability = 0;
 DestroyCard.description = 'A test card used to completely destroy your opponent.';
-DestroyCard.cost = 4;
 DestroyCard.level = 0;
+DestroyCard.cost = 9999999999999;
+DestroyCard.notForSale = true;
+
 DestroyCard.defaults = {
 	damage: 9999999999999,
 	levelDamage: 1

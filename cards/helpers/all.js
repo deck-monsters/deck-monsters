@@ -1,6 +1,7 @@
 const BasicShieldCard = require('../basic-shield');
 const BattleFocusCard = require('../battle-focus');
 const BerserkCard = require('../berserk');
+const Blast2Card = require('../blast-2');
 const BlastCard = require('../blast');
 const BlinkCard = require('../blink');
 const BoostCard = require('../boost');
@@ -16,18 +17,18 @@ const EntranceCard = require('../entrance');
 const FightOrFlightCard = require('../fight-or-flight');
 const FistsOfVillainyCard = require('../fists-of-villainy');
 const FistsOfVirtueCard = require('../fists-of-virtue');
+const FleeCard = require('../flee');
 const ForkedMetalRodCard = require('../forked-metal-rod');
 const ForkedStickCard = require('../forked-stick');
-const FleeCard = require('../flee');
 const HealCard = require('../heal');
 const HitCard = require('../hit');
 const HitHarderCard = require('../hit-harder');
 const HornGoreCard = require('../horn-gore');
 const IocaneCard = require('../iocane');
 const KalevalaCard = require('../kalevala');
-const PickPocketCard = require('../pick-pocket');
 const LuckyStrike = require('../lucky-strike');
 const MesmerizeCard = require('../mesmerize');
+const PickPocketCard = require('../pick-pocket');
 const PoundCard = require('../pound');
 const RandomCard = require('../random');
 const RehitCard = require('../rehit');
@@ -44,6 +45,7 @@ module.exports = [
 	BattleFocusCard,
 	BerserkCard,
 	BlastCard,
+	Blast2Card,
 	BlinkCard,
 	BoostCard,
 	BrainDrainCard,
