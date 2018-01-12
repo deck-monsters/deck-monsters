@@ -79,7 +79,7 @@ describe('./cards/pick-pocket.js', () => {
 		return pickPocket
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
-				expect(sampleSpy).to.have.been.calledWith(target2.cards);
+				expect(sampleSpy).to.have.been.calledWith(target2.cards.filter(card => !['Pick Pocket'].includes(card.cardType)));
 			});
 	});
 
@@ -149,7 +149,7 @@ describe('./cards/pick-pocket.js', () => {
 		return pickPocket
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
-				expect(sampleSpy).to.have.been.calledWith(target3.cards);
+				expect(sampleSpy).to.have.been.calledWith(target3.cards.filter(card => !['Pick Pocket'].includes(card.cardType)));
 				return expect(target1.dead).to.equal(true);
 			});
 	});
