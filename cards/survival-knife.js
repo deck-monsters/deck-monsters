@@ -12,10 +12,14 @@ class SurvivalKnifeCard extends HitCard {
 		this.healCard = new HealCard({ healthDice: this.healthDice });
 	}
 
+	get healthDice () {
+		return this.constructor.healthDice;
+	}
+
 	get stats () {
 		return `${super.stats}
-- or -
-Heal 2d4 if below a quarter health`;
+- or, below 1/4 health -
+${this.healCard.stats}`;
 	}
 
 	effect (player, target, ring, activeContestants) {

@@ -31,7 +31,7 @@ describe('./cards/survival-knife.js', () => {
 		const survivalKnife = new SurvivalKnifeCard();
 
 		expect(survivalKnife).to.be.an.instanceof(SurvivalKnifeCard);
-		expect(survivalKnife.stats).to.equal('Hit: 1d20 vs AC / Damage: 2d4\n- or -\nHeal 2d4 if below a quarter health');
+		expect(survivalKnife.stats).to.equal('Hit: 1d20 vs AC / Damage: 2d4\n- or, below 1/4 health -\nHealth: 2d4\nPossiblity of Stroke of Luck'); // eslint-disable-line max-len
 	});
 
 	it('can be played when at full health', () => {
