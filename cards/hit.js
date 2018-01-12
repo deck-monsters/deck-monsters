@@ -8,9 +8,10 @@ class HitCard extends BaseCard {
 	constructor ({
 		attackDice,
 		damageDice,
+		targetProp,
 		icon = '👊'
 	} = {}) {
-		super({ attackDice, damageDice, icon });
+		super({ targetProp, attackDice, damageDice, icon });
 	}
 
 	get attackDice () {
@@ -21,41 +22,49 @@ class HitCard extends BaseCard {
 		return this.options.damageDice;
 	}
 
+	get targetProp () {
+		return this.options.targetProp;
+	}
+
 	get stats () {
-		return `Hit: ${this.attackDice} vs AC / Damage: ${this.damageDice}`;
+		return `Hit: ${this.attackDice} vs ${this.targetProp.toUpperCase()} / Damage: ${this.damageDice}`;
 	}
 
 	getAttackRoll (player) {
-		return roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 	}
 
 	hitCheck (player, target) {
 		const attackRoll = this.getAttackRoll(player, target);
 
 		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac}) to determine if the hit was a success`,
+			reason: `vs ${target.identity}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) to determine if the hit was a success`,
 			card: this,
 			roll: attackRoll,
 			player,
-			target
+			target,
+			vs: target[this.targetProp]
 		});
 
-		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target.ac);
+		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(attackRoll, target[this.targetProp]);
 		let commentary;
 
 		if (strokeOfLuck) {
 			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
 		} else if (curseOfLoki) {
 			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns[2]} attack back against ${player.pronouns[1]}.`;
+		} else if (tie) {
+			commentary = 'Miss... Tie goes to the defender.'
 		}
 
 		this.emit('rolled', {
-			reason: `vs AC (${target.ac})`,
+			reason: `vs ${target.identity}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]})`,
 			card: this,
 			roll: attackRoll,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target[this.targetProp]
 		});
 
 		return {
@@ -67,7 +76,7 @@ class HitCard extends BaseCard {
 	}
 
 	getDamageRoll (player) {
-		return roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });
+		return roll({ primaryDice: this.damageDice, modifier: player.strModifier, bonusDice: player.bonusDamageDice });
 	}
 
 	rollForDamage (player, target, strokeOfLuck) {
@@ -144,7 +153,8 @@ HitCard.cost = 3;
 
 HitCard.defaults = {
 	attackDice: '1d20',
-	damageDice: '1d6'
+	damageDice: '1d6',
+	targetProp: 'ac'
 };
 
 module.exports = HitCard;

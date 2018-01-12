@@ -20,11 +20,11 @@ class Rehit extends HitCard {
 	}
 
 	hitCheck (player, target) {
-		let attackRoll = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		let attackRoll = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 		let commentary = `Originally rolled ${attackRoll.naturalRoll.result}`;
 
 		if (attackRoll.naturalRoll.result < 10) {
-			attackRoll = roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+			attackRoll = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
 			commentary += ', which was less than 10. Rerolled and used second roll.';
 		} else {
 			commentary += ', which was greater than 10. Kept first roll.';
@@ -35,15 +35,18 @@ class Rehit extends HitCard {
 			card: this,
 			roll: attackRoll,
 			player,
-			target
+			target,
+			vs: target.ac
 		});
 
-		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target.ac);
+		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(attackRoll, target.ac);
 
 		if (strokeOfLuck) {
 			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
 		} else if (curseOfLoki) {
 			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
+		} else if (tie) {
+			commentary = 'Miss... Tie goes to the defender.'
 		}
 
 		this.emit('rolled', {
@@ -52,7 +55,8 @@ class Rehit extends HitCard {
 			roll: attackRoll,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target.ac
 		});
 
 		return {

@@ -7,7 +7,7 @@ const { MINOTAUR } = require('../helpers/creature-types');
 const { roll } = require('../helpers/chance');
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
-const STARTING_ATTACK_MODIFIER = 0;
+const STARTING_DEX_MODIFIER = 0;
 
 class HornGore extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -26,21 +26,21 @@ ${super.stats}`;
 
 	getAttackModifier (target) {
 		if (this.weakAgainstCreatureTypes.includes(target.name)) {
-			return -2 + this.attackModifier;
+			return -2 + this.dexModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
-			return this.attackModifier;
+			return this.dexModifier;
 		}
 		return 0;
 	}
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.attackModifier = STARTING_ATTACK_MODIFIER;
+		this.dexModifier = STARTING_DEX_MODIFIER;
 	}
 
 	increaseImmobilizeStrength (ammount) {
 		this.freedomThresholdModifier += ammount;
-		this.attackModifier += ammount;
+		this.dexModifier += ammount;
 	}
 
 	getCommentary (rolled, player, target) { // eslint-disable-line class-methods-use-this
@@ -68,11 +68,12 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 	emitRoll (rolled, success, player, target, hornNumber) {
 		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful`,
+			reason: `vs ${target.identity}'s AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful`,
 			card: this,
 			roll: rolled,
 			player,
-			target
+			target,
+			vs: target.ac
 		});
 
 		const commentary = this.getCommentary(rolled, player, target);
@@ -83,7 +84,8 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 			roll: rolled,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target.ac
 		});
 	}
 
@@ -102,7 +104,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 
 	getDamageRoll (player) {
-		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.damageModifier / 2)), bonusDice: player.bonusDamageDice });
+		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.strModifier / 2)), bonusDice: player.bonusDamageDice });
 	}
 
 	gore (player, target, hornNumber) {
@@ -110,7 +112,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 		if (success) {
 			this.increaseImmobilizeStrength(2);
-			player.encounterModifiers = { attackModifier: player.encounterModifiers.attackModifier += 1 || 1 };
+			player.encounterModifiers = { dexModifier: player.encounterModifiers.dexModifier += 1 || 1 };
 
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
@@ -129,16 +131,16 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		// if the player stabs with their first horn, make it slightly more likely that the second
 		// horn will also stab, but just for this one attack. Therefore, need to store their
-		// pre-gore attackModifier and restore it once the second stab is resolved (and before the
+		// pre-gore dexModifier and restore it once the second stab is resolved (and before the
 		// actual immobilize takes place so it doesn't interfere with the immobilize logic).
-		const originalAttackModifier = player.encounterModifiers.attackModifier;
+		const originalDexModifier = player.encounterModifiers.dexModifier;
 
 		this.resetImmobilizeStrength();
 		const horn1 = this.gore(player, target, 1);
 		const horn2 = this.gore(player, target, 2);
 		const chanceToImmobilize = horn1.success || horn2.success;
 
-		player.encounterModifiers = { attackModifier: originalAttackModifier };
+		player.encounterModifiers = { dexModifier: originalDexModifier };
 
 		if (!player.dead && chanceToImmobilize) {
 			if (target.dead) {
@@ -173,7 +175,7 @@ HornGore.defaults = {
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	attackModifier: STARTING_ATTACK_MODIFIER
+	dexModifier: STARTING_DEX_MODIFIER
 };
 
 HornGore.flavors = {

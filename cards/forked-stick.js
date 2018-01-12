@@ -8,7 +8,7 @@ const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		attackModifier,
+		dexModifier,
 		hitOnFail,
 		icon = '⑂',
 		...rest
@@ -16,7 +16,7 @@ class ForkedStickCard extends ImmobilizeCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			attackModifier,
+			dexModifier,
 			hitOnFail
 		});
 	}

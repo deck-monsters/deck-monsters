@@ -63,4 +63,37 @@ Curse: xp -20`;
 				return expect(target.xp).to.equal(280);
 			});
 	});
+
+	it('makes a difference for their modifiers', () => {
+		const brainDrain = new BrainDrainCard();
+
+		const player = new Gladiator({ name: 'player' });
+		const target = new Gladiator({ name: 'target' });
+		target.xp = 100;
+
+		expect(target.xp).to.equal(100);
+
+		const startingStrMod = target.strModifier;
+		const startingIntMod = target.intModifier;
+		const startingDexMod = target.dexModifier;
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		return brainDrain.play(player, target, ring)
+			.then((result) => {
+				expect(result).to.equal(true);
+				expect(startingStrMod).to.be.above(target.strModifier);
+				expect(startingIntMod).to.be.above(target.intModifier);
+				expect(startingDexMod).to.be.above(target.dexModifier);
+				return expect(target.xp).to.equal(80);
+			});
+	});
 });

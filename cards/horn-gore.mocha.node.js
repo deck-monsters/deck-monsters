@@ -4,7 +4,6 @@ const HornGoreCard = require('./horn-gore');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 const { MINOTAUR } = require('../helpers/creature-types');
 
@@ -40,10 +39,10 @@ describe('./cards/horn-gore.js', () => {
 	});
 
 	it('can be instantiated with options', () => {
-		const hornGore = new HornGoreCard({ damageModifier: 4 });
+		const hornGore = new HornGoreCard({ strModifier: 4 });
 
 		expect(hornGore).to.be.an.instanceof(HornGoreCard);
-		expect(hornGore.damageModifier).to.equal(4);
+		expect(hornGore.strModifier).to.equal(4);
 	});
 
 	it('can only be played by Minotaurs', () => {
@@ -87,7 +86,7 @@ describe('./cards/horn-gore.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = hornGore.getAttackRoll(player, target);
 
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
@@ -107,7 +106,7 @@ describe('./cards/horn-gore.js', () => {
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(2);
 				expect(hornGore.freedomThresholdModifier).to.equal(0);
-				expect(hornGore.attackModifier).to.equal(4);
+				expect(hornGore.dexModifier).to.equal(4);
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
@@ -144,7 +143,7 @@ describe('./cards/horn-gore.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = hornGore.getAttackRoll(player, target);
 
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
@@ -176,7 +175,7 @@ describe('./cards/horn-gore.js', () => {
 				expect(goreSpy.callCount).to.equal(2);
 				expect(hitSpy.callCount).to.equal(1);
 				expect(hornGore.freedomThresholdModifier).to.equal(-2);
-				expect(hornGore.attackModifier).to.equal(2);
+				expect(hornGore.dexModifier).to.equal(2);
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});
@@ -252,7 +251,7 @@ describe('./cards/horn-gore.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = hornGore.getAttackRoll(player, target);
 
 		checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
 		hitCheckStub.returns({
@@ -272,7 +271,7 @@ describe('./cards/horn-gore.js', () => {
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(0);
 				expect(hornGore.freedomThresholdModifier).to.equal(-4);
-				expect(hornGore.attackModifier).to.equal(0);
+				expect(hornGore.dexModifier).to.equal(0);
 				expect(target.hp).to.equal(before);
 				return expect(target.encounterEffects.length).to.equal(0);
 			});
