@@ -2,11 +2,11 @@ const BaseCreature = require('../creatures/base');
 
 const {
 	getUniqueCards,
-	isMatchingCard,
 	sortCards
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
 const { getAttributeChoices } = require('../helpers/choices');
+const isMatchingItem = require('../items/helpers/is-matching');
 
 const DEFAULT_CARD_SLOTS = 7;
 
@@ -19,16 +19,12 @@ class BaseMonster extends BaseCreature {
 		}
 	}
 
-	get cards () {
-		if (this.options.cards === undefined) this.cards = [];
-
-		return this.options.cards || [];
+	get hand () {
+		return this.cards;
 	}
 
-	set cards (cards) {
-		this.setOptions({
-			cards
-		});
+	set hand (hand) {
+		this.cards = hand;
 	}
 
 	get cardSlots () { // eslint-disable-line class-methods-use-this
@@ -56,9 +52,15 @@ class BaseMonster extends BaseCreature {
 	}
 
 	resetCards ({ matchCard } = {}) {
-		const shouldReset = !matchCard || !!this.cards.find(card => isMatchingCard(card, matchCard));
+		const shouldReset = !matchCard || !!this.cards.find(card => isMatchingItem(card, matchCard));
 
 		if (shouldReset) this.cards = [];
+	}
+
+	resetItems ({ matchItem } = {}) {
+		const shouldReset = !matchItem || !!this.items.find(item => isMatchingItem(item, matchItem));
+
+		if (shouldReset) this.items = [];
 	}
 
 	get emptyHanded () {

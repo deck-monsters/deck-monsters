@@ -53,24 +53,26 @@ ${player.givenName}'s drain takes from HP instead.`;
 	effect (blinkPlayer, blinkTarget, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		blinkTarget.blinkedTurns = 0;
 		const attackRoll = this.getAttackRoll(blinkPlayer);
-		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.ac);
+		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.int);
 
 		this.emit('rolling', {
-			reason: `vs ${blinkTarget.givenName}'s AC (${blinkTarget.ac}) to see if ${blinkPlayer.pronouns[0]} time shifts ${blinkTarget.givenName}`,
+			reason: `vs ${blinkTarget.givenName}'s INT (${blinkTarget.int}) to see if ${blinkPlayer.pronouns[0]} time shifts ${blinkTarget.givenName}`,
 			card: this,
 			roll: attackRoll,
 			player: blinkPlayer,
 			target: blinkTarget,
-			outcome: ''
+			outcome: '',
+			vs: blinkTarget.int
 		});
 
 		this.emit('rolled', {
-			reason: `vs AC (${blinkTarget.ac}) to try and touch ${blinkTarget.givenName} to time-shift ${blinkTarget.pronouns[1]}`,
+			reason: `vs INT (${blinkTarget.int}) to try and touch ${blinkTarget.givenName} to time-shift ${blinkTarget.pronouns[1]}`,
 			card: this,
 			roll: attackRoll,
 			player: blinkPlayer,
 			target: blinkTarget,
-			outcome: `time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`
+			outcome: `time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`,
+			vs: blinkTarget.int
 		});
 
 		if (attackSuccess.success) {
@@ -177,11 +179,13 @@ ${player.givenName}'s drain takes from HP instead.`;
 }
 
 BlinkCard.cardType = 'Blink';
+BlinkCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 BlinkCard.probability = 5;
 BlinkCard.description = "Consume your victim's potential energy";
-BlinkCard.cost = 4;
 BlinkCard.level = 0;
-BlinkCard.permittedClassesAndTypes = [WEEPING_ANGEL];
+BlinkCard.cost = 80;
+BlinkCard.notForSale = true;
+
 BlinkCard.defaults = {
 	...CurseCard.defaults,
 	turnsToBlink: 1,

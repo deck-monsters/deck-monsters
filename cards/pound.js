@@ -14,11 +14,13 @@ class PoundCard extends HitCard {
 }
 
 PoundCard.cardType = 'Pound';
+PoundCard.permittedClassesAndTypes = [BARBARIAN];
 PoundCard.probability = 10;
 PoundCard.description = 'You wield the mighty pound card and can do double the damage.';
-PoundCard.cost = 8;
 PoundCard.level = 3;
-PoundCard.permittedClassesAndTypes = [BARBARIAN];
+PoundCard.cost = 50;
+PoundCard.notForSale = true;
+
 PoundCard.defaults = {
 	...HitCard.defaults,
 	damageDice: '2d6' // Lucky you, the pound card does double damage

@@ -5,7 +5,6 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Coil = require('./coil');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
@@ -46,8 +45,8 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(0);
-		expect(coil.attackModifier).to.equal(2);
-		expect(coil.damageModifier).to.equal(0);
+		expect(coil.dexModifier).to.equal(2);
+		expect(coil.strModifier).to.equal(0);
 		expect(coil.hitOnFail).to.be.false;
 		expect(coil.doDamageOnImmobilize).to.be.true;
 		expect(coil.ongoingDamage).to.equal(1);
@@ -60,8 +59,8 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 	it('can be instantiated with options', () => {
 		const coil = new Coil({
 			freedomThresholdModifier: 2,
-			damageModifier: 4,
-			attackModifier: 4,
+			strModifier: 4,
+			dexModifier: 4,
 			hitOnFail: true,
 			doDamageOnImmobilize: false,
 			ongoingDamage: 0
@@ -69,8 +68,8 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(2);
-		expect(coil.attackModifier).to.equal(4);
-		expect(coil.damageModifier).to.equal(4);
+		expect(coil.dexModifier).to.equal(4);
+		expect(coil.strModifier).to.equal(4);
 		expect(coil.hitOnFail).to.be.true;
 		expect(coil.doDamageOnImmobilize).to.be.false;
 		expect(coil.ongoingDamage).to.equal(0);
@@ -99,8 +98,7 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
-
+		const attackRoll = coil.getAttackRoll(player, target);
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,

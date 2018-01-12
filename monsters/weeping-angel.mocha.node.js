@@ -31,8 +31,9 @@ describe('./monsters/weeping-angel.js', () => {
 		expect(weepingAngel.creatureType).to.equal(WEEPING_ANGEL);
 		expect(weepingAngel.givenName).to.be.a('string');
 		expect(weepingAngel.options).to.deep.contain({
-			attackModifier: 3,
-			damageModifier: -1,
+			dexModifier: 1,
+			strModifier: -1,
+			intModifier: 2,
 			color: 'stone gray',
 			icon: '🌟'
 		});
@@ -46,8 +47,9 @@ describe('./monsters/weeping-angel.js', () => {
 		expect(weepingAngel.creatureType).to.equal(WEEPING_ANGEL);
 		expect(weepingAngel.givenName).to.be.a('string');
 		expect(weepingAngel.options).to.deep.contain({
-			attackModifier: 3,
-			damageModifier: -1,
+			dexModifier: 1,
+			strModifier: -1,
+			intModifier: 2,
 			color: 'stone gray',
 			icon: '🌟',
 			xp: 1000

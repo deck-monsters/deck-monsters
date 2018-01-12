@@ -9,16 +9,18 @@ Damage: ${this.damageDice} +1 per wound suffered`;
 	}
 
 	getDamageRoll (player) {
-		const damageModifier = Math.min(player.maxHp - player.hp, Math.max(player.damageModifier * 2, 10));
-		return super.getDamageRoll({ damageModifier, bonusDamageDice: player.bonusDamageDice });
+		const strModifier = Math.min(player.maxHp - player.hp, Math.max(player.strModifier * 2, 10));
+		return super.getDamageRoll({ strModifier, bonusDamageDice: player.bonusDamageDice });
 	}
 }
 
 VenegefulRampageCard.cardType = 'Vengeful Rampage';
+VenegefulRampageCard.permittedClassesAndTypes = [BARBARIAN];
 VenegefulRampageCard.probability = 20;
 VenegefulRampageCard.description = 'Your wounds only make you stronger.';
 VenegefulRampageCard.level = 3;
-VenegefulRampageCard.permittedClassesAndTypes = [BARBARIAN];
+VenegefulRampageCard.cost = 40;
+VenegefulRampageCard.notForSale = true;
 
 VenegefulRampageCard.flavors = {
 	hits: [

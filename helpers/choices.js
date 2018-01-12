@@ -2,9 +2,11 @@ const { monsterCard } = require('../helpers/card');
 
 const getChoices = array => array.map((choice, index) => `${index}) ${choice}`).join('\n');
 
-const getCardChoices = remainingCards => getChoices(Object.keys(remainingCards).map(card => `${card} [${remainingCards[card]}]`));
+const getItemChoices = items => getChoices(Object.keys(items).map(item => `${item} [${items[item]}]`));
 
-const getFinalCardChoices = deck => getChoices(deck.map(card => card.cardType));
+const getItemChoicesWithPrice = items => getChoices(Object.keys(items).map(item => `${item} [${items[item].count}] - ${items[item].cost} coins`)); // eslint-disable-line max-len
+
+const getFinalItemChoices = items => getChoices(items.map(item => item.itemType));
 
 const getMonsterChoices = monsters => getChoices(monsters.map(monster => monsterCard(monster, false)));
 
@@ -13,10 +15,13 @@ const getCreatureTypeChoices = creatures => getChoices(creatures.map(creature =>
 const getAttributeChoices = options => getChoices(Object.keys(options).map(key => `${key} (${JSON.stringify(options[key])})`));
 
 module.exports = {
+	getAttributeChoices,
+	getCardChoices: getItemChoices,
 	getChoices,
-	getCardChoices,
-	getFinalCardChoices,
-	getMonsterChoices,
 	getCreatureTypeChoices,
-	getAttributeChoices
+	getFinalCardChoices: getFinalItemChoices,
+	getFinalItemChoices,
+	getItemChoices,
+	getItemChoicesWithPrice,
+	getMonsterChoices
 };

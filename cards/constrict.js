@@ -13,13 +13,16 @@ class ConstrictCard extends CoilCard {
 }
 
 ConstrictCard.cardType = 'Constrict';
+ConstrictCard.actions = ['constrict', 'constricts', 'constricted'];
 ConstrictCard.probability = 30;
 ConstrictCard.level = 1;
+ConstrictCard.cost = 30;
+ConstrictCard.notForSale = false;
+
 ConstrictCard.defaults = {
 	...CoilCard.defaults,
 	ongoingDamage: 2,
 	freedomThresholdModifier: 3
 };
-ConstrictCard.actions = ['constrict', 'constricts', 'constricted'];
 
 module.exports = ConstrictCard;
