@@ -45,6 +45,7 @@ EntranceCard.probability = 20;
 EntranceCard.description = `You strut and preen. Your _painful_ beauty overwhelms and ${EntranceCard.actions[1]} everyone, except yourself.`;
 EntranceCard.level = 3;
 EntranceCard.cost = 50;
+EntranceCard.notForSale = true;
 
 EntranceCard.defaults = {
 	...EnthrallCard.defaults,

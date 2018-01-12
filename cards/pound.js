@@ -19,6 +19,7 @@ PoundCard.probability = 10;
 PoundCard.description = 'You wield the mighty pound card and can do double the damage.';
 PoundCard.level = 3;
 PoundCard.cost = 50;
+PoundCard.notForSale = true;
 
 PoundCard.defaults = {
 	...HitCard.defaults,

@@ -3,6 +3,8 @@ const random = require('lodash.random');
 const sample = require('lodash.sample');
 const throttle = require('lodash.throttle');
 
+const { getCards } = require('./stock');
+
 const ADJECTIVES = [
 	'rusty',
 	'moss-covered',
@@ -22,7 +24,7 @@ const getShop = throttle(() => {
 		adjective: sample(ADJECTIVES),
 		priceOffset: random(0.6, 0.9),
 		items: [],
-		cards: []
+		cards: getCards()
 	};
 
 	return currentShop;

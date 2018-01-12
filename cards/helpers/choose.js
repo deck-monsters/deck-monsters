@@ -20,11 +20,15 @@ ${getFinalCardChoices(selectedCards)}`;
 module.exports = ({
 	cards,
 	channel,
+	showPrice,
+	priceOffset,
 	getQuestion = cardChoiceQuestion,
 	getResult = cardChoiceResult
 }) => chooseItems({
 	items: cards,
 	channel,
+	showPrice,
+	priceOffset,
 	getQuestion: ({ itemChoices }) => getQuestion({ cardChoices: itemChoices }),
 	getResult: ({ selectedItems }) => getResult({ selectedCards: selectedItems })
 });

@@ -76,5 +76,6 @@ CloakOfInvisibilityCard.probability = 20;
 CloakOfInvisibilityCard.description = 'You don your cloak and disappear, if only for a while.';
 CloakOfInvisibilityCard.level = 1;
 CloakOfInvisibilityCard.cost = 60;
+CloakOfInvisibilityCard.notForSale = true;
 
 module.exports = CloakOfInvisibilityCard;

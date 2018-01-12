@@ -34,10 +34,10 @@ You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 
 			if (cards.length < 1) return Promise.reject(channel({ announce: "You don't have any cards." }));
 
-			return chooseCards({ cards, channel });
+			return chooseCards({ cards, channel, showPrice: true, priceOffset: shop.priceOffset });
 		})
 		.then((choices) => {
-			const value = choices.reduce((total, choice) => total + Math.floor(choice.cost * shop.priceOffset), 0);
+			const value = choices.reduce((total, choice) => total + Math.round(choice.cost * shop.priceOffset), 0);
 
 			return channel({
 				question:
@@ -49,8 +49,10 @@ You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 					if (answer.toLowerCase() === 'yes') {
 						choices.forEach((choice) => {
 							if (choice.cardType) {
+								shop.cards.push(choice);
 								character.removeCard(choice);
 							} else {
+								shop.items.push(choice);
 								character.removeItem(choice);
 							}
 						});

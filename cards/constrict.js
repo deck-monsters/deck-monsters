@@ -17,6 +17,7 @@ ConstrictCard.actions = ['constrict', 'constricts', 'constricted'];
 ConstrictCard.probability = 30;
 ConstrictCard.level = 1;
 ConstrictCard.cost = 30;
+ConstrictCard.notForSale = false;
 
 ConstrictCard.defaults = {
 	...CoilCard.defaults,

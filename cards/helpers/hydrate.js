@@ -1,7 +1,7 @@
 const { getMinimumDeck } = require('./deck');
 const all = require('./all');
 const draw = require('./draw');
-const getCardCounts = require('../../items/helpers/counts');
+const getCardCounts = require('../../items/helpers/counts').getItemCounts;
 const isMatchingCard = require('./is-matching');
 
 const hydrateCard = (cardObj, monster, deck = []) => {

@@ -4,7 +4,7 @@ const pause = require('../../helpers/pause');
 const Beastmaster = require('../../characters/beastmaster');
 
 const { hydrateDeck } = require('./hydrate');
-const getCardCounts = require('../../items/helpers/counts');
+const getCardCounts = require('../../items/helpers/counts').getItemCounts;
 
 const testDeck = `[
 	{
