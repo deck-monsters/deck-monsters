@@ -68,7 +68,7 @@ We have 0 items and 1 card. Which would you like to see?
 		channelStub.withArgs({
 			question: `These fine items are available from Gorgons and Gremlins for a mere 13 coins.
 
-	Would you like to buy them? (yes/no)`
+Would you like to buy them? (yes/no)`
 		})
 			.resolves('yes');
 

@@ -41,9 +41,9 @@ You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 
 			return channel({
 				question:
-	`${shop.name} is willing to buy your pitiful trash for ${value} coins.
+`${shop.name} is willing to buy your pitiful trash for ${value} coins.
 
-	Would you like to sell? (yes/no)`
+Would you like to sell? (yes/no)`
 			})
 				.then((answer = '') => {
 					if (answer.toLowerCase() === 'yes') {

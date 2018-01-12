@@ -70,9 +70,9 @@ That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in
 
 			return channel({
 				question:
-	`These ${priceOffset > 2 ? 'exquisite' : 'fine'} items are available from ${shop.name} for a mere ${value} coins.
+`These ${priceOffset > 2 ? 'exquisite' : 'fine'} items are available from ${shop.name} for a mere ${value} coins.
 
-	Would you like to buy them? (yes/no)`
+Would you like to buy them? (yes/no)`
 			})
 				.then((answer = '') => {
 					if (answer.toLowerCase() === 'yes') {
