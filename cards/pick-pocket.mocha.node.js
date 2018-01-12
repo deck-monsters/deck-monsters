@@ -73,13 +73,13 @@ describe('./cards/pick-pocket.js', () => {
 
 		player.xp = 100;
 		target1.xp = 200;
-		target2.xp = 500;
+		target2.xp = 600;
 		target3.xp = 300;
 
 		return pickPocket
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
-				expect(sampleSpy).to.have.been.calledWith(target2.cards);
+				expect(sampleSpy).to.have.been.calledWith(target2.cards.filter(card => !['Pick Pocket'].includes(card.cardType)));
 			});
 	});
 
@@ -139,17 +139,17 @@ describe('./cards/pick-pocket.js', () => {
 		};
 
 		// player has most xp, but will not get picked
-		player.xp = 500;
+		player.xp = 600;
 		target1.xp = 100;
 		target2.xp = 200;
-		target3.xp = 300;
+		target3.xp = 500;
 
 		sampleSpy.withArgs(target3.cards).returns(new DestroyCard());
 
 		return pickPocket
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
-				expect(sampleSpy).to.have.been.calledWith(target3.cards);
+				expect(sampleSpy).to.have.been.calledWith(target3.cards.filter(card => !['Pick Pocket'].includes(card.cardType)));
 				return expect(target1.dead).to.equal(true);
 			});
 	});
