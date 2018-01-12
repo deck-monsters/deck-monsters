@@ -6,12 +6,13 @@ const { roll, max } = require('../helpers/chance');
 class HitCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		flavors,
 		attackDice,
 		damageDice,
 		targetProp,
 		icon = '👊'
 	} = {}) {
-		super({ targetProp, attackDice, damageDice, icon });
+		super({ flavors, targetProp, attackDice, damageDice, icon });
 	}
 
 	get attackDice () {
