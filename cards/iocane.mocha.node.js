@@ -32,7 +32,7 @@ describe('./cards/iocane.js', () => {
 		const iocane = new IocaneCard();
 
 		expect(iocane).to.be.an.instanceof(IocaneCard);
-		expect(iocane.stats).to.equal('Hit: 1d20 vs AC / Damage: 2d4\n- or -\nHeal 2d4 if below a quarter health');
+		expect(iocane.stats).to.equal('Hit: 1d20 vs AC / Damage: 2d4\n- or, below 1/4 health -\nHealth: 2d4\nPossiblity of Stroke of Luck');
 		expect(iocane.permittedClassesAndTypes).to.deep.equal([CLERIC]);
 		expect(iocane.icon).to.equal('⚗️');
 		expect(iocane.damageDice).to.equal('2d4');
@@ -42,7 +42,7 @@ describe('./cards/iocane.js', () => {
 		const iocane = new IocaneCard({ icon: '🤷‍♂️', damageDice: '1d4' });
 
 		expect(iocane).to.be.an.instanceof(IocaneCard);
-		expect(iocane.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4\n- or -\nHeal 1d4 if below a quarter health');
+		expect(iocane.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4\n- or, below 1/4 health -\nHealth: 1d4\nPossiblity of Stroke of Luck');
 		expect(iocane.permittedClassesAndTypes).to.deep.equal([CLERIC]);
 		expect(iocane.icon).to.equal('🤷‍♂️');
 		expect(iocane.damageDice).to.equal('1d4');
