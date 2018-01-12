@@ -11,7 +11,7 @@ class SurvivalKnifeCard extends HitCard {
 	} = {}) {
 		super({ icon, ...rest });
 
-		this.healCard = new HealCard({ healthDice: this.healthDice });
+		this.healCard = new HealCard({ healthDice: this.damageDice });
 	}
 
 	get stats () {
