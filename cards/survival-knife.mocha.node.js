@@ -94,6 +94,7 @@ describe('./cards/survival-knife.js', () => {
 		const healEffectSpy = sinon.spy(survivalKnife.healCard, 'effect');
 
 		return survivalKnife.play(player, target, ring, ring.contestants)
-			.then(() => expect(healEffectSpy).to.have.been.calledOnce);
+			.then(() => expect(healEffectSpy).to.have.been.calledOnce)
+			.then(() => healEffectSpy.restore());
 	});
 });

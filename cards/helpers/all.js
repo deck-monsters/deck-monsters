@@ -24,6 +24,7 @@ const HealCard = require('../heal');
 const HitCard = require('../hit');
 const HitHarderCard = require('../hit-harder');
 const HornGoreCard = require('../horn-gore');
+const HornSwipeCard = require('../horn-swipe');
 const IocaneCard = require('../iocane');
 const KalevalaCard = require('../kalevala');
 const LuckyStrike = require('../lucky-strike');
@@ -67,6 +68,7 @@ module.exports = [
 	HitCard,
 	HitHarderCard,
 	HornGoreCard,
+	HornSwipeCard,
 	IocaneCard,
 	KalevalaCard,
 	PickPocketCard,
