@@ -49,7 +49,7 @@ We have ${numberOfItems} and ${numberOfCards}. Which would you like to see?
 
 			return channel({
 				announce:
-`The proprietor of ${shop.name} smiles slightly.
+`The proprietor of ${shop.name} ${character.coins > 500 ? 'smiles slightly' : 'pauses for a second'}.
 
 But of course, ${character.givenName}. We have something really special in stock right now.`
 			})
