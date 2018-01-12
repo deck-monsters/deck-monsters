@@ -3,7 +3,7 @@ const random = require('lodash.random');
 const sample = require('lodash.sample');
 const throttle = require('lodash.throttle');
 
-const { getCards } = require('./stock');
+const { getBackRoom, getCards } = require('./stock');
 
 const ADJECTIVES = [
 	'rusty',
@@ -23,8 +23,10 @@ const getShop = throttle(() => {
 		name: fantasyNames('places', 'magic_shops'),
 		adjective: sample(ADJECTIVES),
 		priceOffset: random(0.6, 0.9),
+		backRoomOffset: random(6, 9),
 		items: [],
-		cards: getCards()
+		cards: getCards(),
+		backRoom: getBackRoom()
 	};
 
 	return currentShop;

@@ -60,6 +60,7 @@ KalevalaCard.level = 1;
 KalevalaCard.cost = 40;
 KalevalaCard.noBosses = true;
 KalevalaCard.notForSale = true;
+KalevalaCard.neverForSale = true;
 
 KalevalaCard.defaults = {
 	...HitCard.defaults,
