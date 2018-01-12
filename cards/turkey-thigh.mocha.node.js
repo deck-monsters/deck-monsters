@@ -32,7 +32,7 @@ describe('./cards/turkey-thigh.js', () => {
 		const turkeyThigh = new TurkeyThighCard();
 
 		expect(turkeyThigh).to.be.an.instanceof(TurkeyThighCard);
-		expect(turkeyThigh.stats).to.equal('Hit: 1d20 vs AC / Damage: 2d4\n- or -\nHeal 2d4 if below a quarter health');
+		expect(turkeyThigh.stats).to.equal('Hit: 1d20 vs AC / Damage: 2d4\n- or, below 1/4 health -\nHealth: 2d4\nPossiblity of Stroke of Luck'); // eslint-disable-line max-len
 		expect(turkeyThigh.permittedClassesAndTypes).to.deep.equal([BARBARIAN]);
 		expect(turkeyThigh.icon).to.equal('🍗');
 		expect(turkeyThigh.damageDice).to.equal('2d4');
@@ -42,7 +42,7 @@ describe('./cards/turkey-thigh.js', () => {
 		const turkeyThigh = new TurkeyThighCard({ icon: '🤷‍♂️', damageDice: '1d4' });
 
 		expect(turkeyThigh).to.be.an.instanceof(TurkeyThighCard);
-		expect(turkeyThigh.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4\n- or -\nHeal 1d4 if below a quarter health');
+		expect(turkeyThigh.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4\n- or, below 1/4 health -\nHealth: 1d4\nPossiblity of Stroke of Luck'); // eslint-disable-line max-len
 		expect(turkeyThigh.permittedClassesAndTypes).to.deep.equal([BARBARIAN]);
 		expect(turkeyThigh.icon).to.equal('🤷‍♂️');
 		expect(turkeyThigh.damageDice).to.equal('1d4');

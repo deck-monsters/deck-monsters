@@ -43,7 +43,7 @@ describe('./cards/survival-knife.js', () => {
 		const survivalKnife = new SurvivalKnifeCard({ icon: '🤷‍♂️', damageDice: '1d4' });
 
 		expect(survivalKnife).to.be.an.instanceof(SurvivalKnifeCard);
-		expect(survivalKnife.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4\n- or, below 1/4 health -\nHealth: 1d4\nPossiblity of Stroke of Luck');
+		expect(survivalKnife.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4\n- or, below 1/4 health -\nHealth: 1d4\nPossiblity of Stroke of Luck'); // eslint-disable-line max-len
 		expect(survivalKnife.permittedClassesAndTypes).to.deep.equal([FIGHTER]);
 		expect(survivalKnife.icon).to.equal('🤷‍♂️');
 		expect(survivalKnife.damageDice).to.equal('1d4');
