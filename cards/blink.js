@@ -184,6 +184,7 @@ BlinkCard.probability = 5;
 BlinkCard.description = "Consume your victim's potential energy";
 BlinkCard.level = 0;
 BlinkCard.cost = 80;
+BlinkCard.notForSale = true;
 
 BlinkCard.defaults = {
 	...CurseCard.defaults,

@@ -1,7 +1,7 @@
-const { getItemChoices, getFinalItemChoices } = require('../../helpers/choices');
+const { getItemChoices, getItemChoicesWithPrice, getFinalItemChoices } = require('../../helpers/choices');
 const getArray = require('../../helpers/get-array');
 
-const getItemCounts = require('./counts');
+const { getItemCounts, getItemCountsWithPrice } = require('./counts');
 
 const itemChoiceQuestion = ({ itemChoices }) => `Choose one or more of the following items:
 
@@ -22,11 +22,13 @@ ${getFinalItemChoices(selectedItems)}`;
 module.exports = ({
 	items,
 	channel,
+	showPrice,
+	priceOffset = 1,
 	getQuestion = itemChoiceQuestion,
 	getResult = itemChoiceResult
 }) => {
-	const itemCatalog = getItemCounts(items);
-	const itemChoices = getItemChoices(itemCatalog);
+	const itemCatalog = showPrice ? getItemCountsWithPrice(items, priceOffset) : getItemCounts(items);
+	const itemChoices = showPrice ? getItemChoicesWithPrice(itemCatalog) : getItemChoices(itemCatalog);
 
 	return Promise
 		.resolve()

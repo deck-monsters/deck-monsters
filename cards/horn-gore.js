@@ -167,6 +167,7 @@ HornGore.probability = 5;
 HornGore.description = 'You think those horns are just there to look pretty? Think again...';
 HornGore.level = 0;
 HornGore.cost = 80;
+HornGore.notForSale = true;
 
 HornGore.defaults = {
 	...ImmobilizeCard.defaults,

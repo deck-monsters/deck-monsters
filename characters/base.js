@@ -8,9 +8,10 @@ const {
 	getUniqueCards,
 	sortCards
 } = require('../cards');
-const getCardCounts = require('../items/helpers/counts');
+const getCardCounts = require('../items/helpers/counts').getItemCounts;
 const isMatchingItem = require('../items/helpers/is-matching');
 const sellItems = require('../items/store/sell');
+const buyItems = require('../items/store/buy');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {
@@ -57,6 +58,12 @@ class BaseCharacter extends BaseCreature {
 		this.deck = [...this.deck, card];
 
 		this.emit('cardAdded', { card });
+	}
+
+	addItem (item) {
+		this.items = [...this.items, item];
+
+		this.emit('itemAdded', { item });
 	}
 
 	removeCard (cardToRemove) {
@@ -130,6 +137,13 @@ class BaseCharacter extends BaseCreature {
 
 	sellItems (channel) {
 		return sellItems({
+			character: this,
+			channel
+		});
+	}
+
+	buyItems (channel) {
+		return buyItems({
 			character: this,
 			channel
 		});

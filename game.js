@@ -310,6 +310,10 @@ class Game extends BaseClass {
 				sellItems () {
 					return character.sellItems(channel)
 						.catch(err => log(err));
+				},
+				buyItems () {
+					return character.buyItems(channel)
+						.catch(err => log(err));
 				}
 			}))
 			.catch(err => log(err));

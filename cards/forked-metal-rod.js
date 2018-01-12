@@ -67,6 +67,7 @@ ForkedMetalRodCard.probability = 20;
 ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedMetalRodCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
 ForkedMetalRodCard.level = 2;
 ForkedMetalRodCard.cost = 50;
+ForkedMetalRodCard.notForSale = true;
 
 ForkedMetalRodCard.defaults = {
 	...HornGoreCard.defaults,

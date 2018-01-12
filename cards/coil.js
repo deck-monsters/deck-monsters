@@ -33,6 +33,7 @@ CoilCard.probability = 5;
 CoilCard.description = 'Your body is the weapon.';
 CoilCard.level = 0;
 CoilCard.cost = 80;
+CoilCard.notForSale = true;
 
 CoilCard.defaults = {
 	...ImmobilizeCard.defaults,
