@@ -86,21 +86,18 @@ describe('./cards/pick-pocket.js', () => {
 	it('can pick pocket every card without error', () => {
 		const pickPocket = new PickPocketCard();
 		const player = randomContestant();
+		const target1 = randomContestant();
 
 		const promises = [];
 
 		for (let i = 0; i < allCards.length; i++) {
 			if (allCards[i].name !== 'PickPocketCard') {
-				const target1 = randomContestant();
 				target1.monster.cards = [new allCards[i]()];
-				const target2 = randomContestant();
-				target2.monster.cards = [new allCards[i]()];
 
 				const ring = {
 					contestants: [
 						player,
-						target1,
-						target2
+						target1
 					],
 					channelManager: {
 						sendMessages: () => Promise.resolve()

@@ -202,7 +202,7 @@ describe('./cards/helpers/hydrate.js', () => {
 		pause.setTimeout.restore();
 	});
 
-	describe('./cards/helpers/hydrate.js', () => {
+	describe('hydrateDeck', () => {
 		it('can restore from save state', () => {
 			const player = new Beastmaster();
 

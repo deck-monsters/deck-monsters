@@ -43,6 +43,6 @@ class TestCard extends BaseCard {
 TestCard.cardType = 'Test';
 TestCard.probability = 100;
 TestCard.description = 'For testing purposes only.';
-TestCard.cost = 0;
+TestCard.cost = 10;
 
 module.exports = TestCard;
