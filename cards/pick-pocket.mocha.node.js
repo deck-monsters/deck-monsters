@@ -73,7 +73,7 @@ describe('./cards/pick-pocket.js', () => {
 
 		player.xp = 100;
 		target1.xp = 200;
-		target2.xp = 500;
+		target2.xp = 600;
 		target3.xp = 300;
 
 		return pickPocket
@@ -139,10 +139,10 @@ describe('./cards/pick-pocket.js', () => {
 		};
 
 		// player has most xp, but will not get picked
-		player.xp = 500;
+		player.xp = 600;
 		target1.xp = 100;
 		target2.xp = 200;
-		target3.xp = 300;
+		target3.xp = 500;
 
 		sampleSpy.withArgs(target3.cards).returns(new DestroyCard());
 
