@@ -3,7 +3,7 @@ const drawCard = require('../../cards/helpers/draw');
 const DEFAULT_CARD_INVENTORY_SIZE = 20;
 
 const canHoldBackRoom = {
-	canHoldCard: card => card.notForSale
+	canHoldCard: card => card.notForSale && !card.neverForSale
 };
 
 const getBackRoom = () => {
@@ -19,7 +19,7 @@ const getBackRoom = () => {
 };
 
 const canHoldStandard = {
-	canHoldCard: card => !card.notForSale
+	canHoldCard: card => !card.notForSale && !card.neverForSale
 };
 
 const getCards = () => {
