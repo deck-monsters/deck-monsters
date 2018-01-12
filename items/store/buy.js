@@ -11,7 +11,7 @@ module.exports = ({
 }) => {
 	const shop = getShop();
 
-	const { cards, items } = shop;
+	const { cards, items, backRoom } = shop;
 	const numberOfItems = items.length === 1 ? '1 item' : `${items.length} items`;
 	const numberOfCards = cards.length === 1 ? '1 card' : `${cards.length} cards`;
 
@@ -24,22 +24,40 @@ module.exports = ({
 We have ${numberOfItems} and ${numberOfCards}. Which would you like to see?
 
 1) Items
-2) Cards`,
-			choices: [1, 2]
+2) Cards
+3) Back Room`,
+			choices: [1, 2, 3]
 		}))
 		.then((answer = '') => {
+			let priceOffset = shop.priceOffset * 2;
+
 			if (answer - 0 === 1) {
 				if (items.length < 1) return Promise.reject(channel({ announce: "We don't have any items here." }));
 
-				return chooseItems({ items, channel });
+				return chooseItems({ items, channel, showPrice: true, priceOffset })
+					.then(choices => ({ choices, priceOffset }));
+			} else if (answer - 0 === 2) {
+				if (cards.length < 1) return Promise.reject(channel({ announce: "We don't have any cards here." }));
+
+				return chooseCards({ cards, channel, showPrice: true, priceOffset: shop.priceOffset * 2 })
+					.then(choices => ({ choices, priceOffset }));
 			}
 
-			if (cards.length < 1) return Promise.reject(channel({ announce: "We don't have any cards here." }));
+			if (backRoom.length < 1) return Promise.reject(channel({ announce: "Sorry, pal. That area's closed." }));
 
-			return chooseCards({ cards, channel, showPrice: true, priceOffset: shop.priceOffset * 2 });
+			priceOffset = shop.backRoomOffset;
+
+			return channel({
+				announce:
+`The proprietor of ${shop.name} smiles slightly.
+
+But of course, ${character.givenName}. We have something really special in stock right now.`
+			})
+				.then(() => chooseItems({ items: backRoom, channel, showPrice: true, priceOffset }))
+				.then(choices => ({ choices, priceOffset }));
 		})
-		.then((choices) => {
-			const value = choices.reduce((total, choice) => total + Math.round(choice.cost * (shop.priceOffset * 2)), 0);
+		.then(({ choices, priceOffset }) => {
+			const value = choices.reduce((total, choice) => total + Math.round(choice.cost * priceOffset), 0);
 
 			if (value > character.coins) {
 				return Promise.reject(channel({
@@ -52,7 +70,7 @@ That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in
 
 			return channel({
 				question:
-	`These fine items are available from ${shop.name} for a mere ${value} coins.
+	`These ${priceOffset > 2 ? 'exquisite' : 'fine'} items are available from ${shop.name} for a mere ${value} coins.
 
 	Would you like to buy them? (yes/no)`
 			})
@@ -62,12 +80,19 @@ That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in
 
 						choices.forEach((choice) => {
 							if (choice.cardType) {
-								shop.cards.splice(shop.cards.indexOf(choice), 1);
+								const index = shop.cards.indexOf(choice);
+								if (index > -1) shop.cards.splice(index, 1);
+
 								character.addCard(choice);
 							} else {
-								shop.items.splice(shop.items.indexOf(choice), 1);
+								const index = shop.items.indexOf(choice);
+								if (index > -1) shop.items.splice(index, 1);
+
 								character.addItem(choice);
 							}
+
+							const index = shop.backRoom.indexOf(choice);
+							if (index > -1) shop.backRoom.splice(index, 1);
 						});
 
 						return channel({
