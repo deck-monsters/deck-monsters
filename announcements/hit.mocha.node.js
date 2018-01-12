@@ -4,6 +4,10 @@ const announceHit = require('./hit');
 const pause = require('../helpers/pause');
 const Gladiator = require('../monsters/gladiator');
 
+const HitCard = require('../cards/hit');
+const HitHarderCard = require('../cards/hit-harder');
+const { flavors } = require('../helpers/flavor');
+
 describe('./announcements/hit.js', () => {
 	let pauseStub;
 
@@ -45,6 +49,64 @@ describe('./announcements/hit.js', () => {
 				damage,
 				prevHp
 			});
+		});
+
+		it('can announce all flavors for hit card to public channel', () => {
+			const promises = [];
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+
+			const damage = 2;
+			const prevHp = 15;
+
+			for (let i = 0; i < flavors.hits.length; i++) {
+				promises.push(new Promise((resolve) => {
+					const publicChannel = ({ announce }) => {
+						resolve(expect(announce).to.not.include('undefined'));
+					};
+
+					const card = new HitCard({ flavors: { hits: [flavors.hits[i]] } });
+
+					announceHit(publicChannel, {}, '', monster, {
+						assailant,
+						card,
+						damage,
+						prevHp
+					});
+				}));
+			}
+
+			return expect(Promise.all(promises)).to.be.fulfilled;
+		});
+
+		it('can announce all flavors for hit harder card to public channel', () => {
+			const promises = [];
+
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const flavorflaves = HitHarderCard.flavors;
+			const damage = 2;
+			const prevHp = 15;
+
+			for (let i = 0; i < flavorflaves.hits.length; i++) {
+				promises.push(new Promise((resolve) => {
+					const publicChannel = ({ announce }) => {
+						resolve(expect(announce).to.not.include('undefined'));
+					};
+
+					const card = new HitCard({ flavors: { hits: [flavors.hits[i]] } });
+
+					announceHit(publicChannel, {}, '', monster, {
+						assailant,
+						card,
+						damage,
+						prevHp
+					});
+				}));
+			}
+
+			return expect(Promise.all(promises)).to.be.fulfilled;
 		});
 
 		it('can announce weak hit to public channel', () => {
