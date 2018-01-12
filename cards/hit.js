@@ -54,7 +54,7 @@ class HitCard extends BaseCard {
 		} else if (curseOfLoki) {
 			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns[2]} attack back against ${player.pronouns[1]}.`;
 		} else if (tie) {
-			commentary = 'Miss... Tie goes to the defender.'
+			commentary = 'Miss... Tie goes to the defender.';
 		}
 
 		this.emit('rolled', {
