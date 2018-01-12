@@ -4,6 +4,8 @@ const SurvivalKnifeCard = require('./survival-knife');
 const Basilisk = require('../monsters/basilisk');
 const pause = require('../helpers/pause');
 
+const { FIGHTER } = require('../helpers/classes');
+
 describe('./cards/survival-knife.js', () => {
 	let channelStub;
 	let pauseStub;
@@ -32,6 +34,19 @@ describe('./cards/survival-knife.js', () => {
 
 		expect(survivalKnife).to.be.an.instanceof(SurvivalKnifeCard);
 		expect(survivalKnife.stats).to.equal('Hit: 1d20 vs AC / Damage: 2d4\n- or -\nHeal 2d4 if below a quarter health');
+		expect(survivalKnife.permittedClassesAndTypes).to.deep.equal([FIGHTER]);
+		expect(survivalKnife.icon).to.equal('🗡');
+		expect(survivalKnife.damageDice).to.equal('2d4');
+	});
+
+	it('can be instantiated with options', () => {
+		const survivalKnife = new SurvivalKnifeCard({ icon: '🤷‍♂️', damageDice: '1d4' });
+
+		expect(survivalKnife).to.be.an.instanceof(SurvivalKnifeCard);
+		expect(survivalKnife.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4\n- or -\nHeal 1d4 if below a quarter health');
+		expect(survivalKnife.permittedClassesAndTypes).to.deep.equal([FIGHTER]);
+		expect(survivalKnife.icon).to.equal('🤷‍♂️');
+		expect(survivalKnife.damageDice).to.equal('1d4');
 	});
 
 	it('can be played when at full health', () => {
