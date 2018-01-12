@@ -179,11 +179,12 @@ ${player.givenName}'s drain takes from HP instead.`;
 }
 
 BlinkCard.cardType = 'Blink';
+BlinkCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 BlinkCard.probability = 5;
 BlinkCard.description = "Consume your victim's potential energy";
-BlinkCard.cost = 4;
 BlinkCard.level = 0;
-BlinkCard.permittedClassesAndTypes = [WEEPING_ANGEL];
+BlinkCard.cost = 80;
+
 BlinkCard.defaults = {
 	...CurseCard.defaults,
 	turnsToBlink: 1,

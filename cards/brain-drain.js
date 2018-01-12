@@ -12,6 +12,7 @@ class BrainDrainCard extends CurseCard {
 
 BrainDrainCard.cardType = 'Brain Drain';
 BrainDrainCard.description = 'And we shall bury our enemies in their own confusion.';
+
 BrainDrainCard.defaults = {
 	...CurseCard.defaults,
 	curseAmount: -20,

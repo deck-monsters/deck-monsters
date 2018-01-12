@@ -60,10 +60,10 @@ class EnchantedFaceswapCard extends BaseCard {
 }
 
 EnchantedFaceswapCard.cardType = 'Enchanted Faceswap';
-EnchantedFaceswapCard.probability = 50;
-EnchantedFaceswapCard.description = 'A snapchat filter for the magically inclined. This spell will cause the next card played with the caster as the target to be reversed so that the player of the card becomes the target.';
-EnchantedFaceswapCard.cost = 4;
-EnchantedFaceswapCard.level = 1;
 EnchantedFaceswapCard.permittedClassesAndTypes = [CLERIC];
+EnchantedFaceswapCard.probability = 40;
+EnchantedFaceswapCard.description = 'A snapchat filter for the magically inclined. This spell will cause the next card played with the caster as the target to be reversed so that the player of the card becomes the target.';
+EnchantedFaceswapCard.level = 1;
+EnchantedFaceswapCard.cost = 25;
 
 module.exports = EnchantedFaceswapCard;

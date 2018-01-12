@@ -142,11 +142,12 @@ Stroke of luck increases damage per hit by 1.`;
 }
 
 BerserkCard.cardType = 'Berserk';
+BerserkCard.permittedClassesAndTypes = [BARBARIAN];
 BerserkCard.probability = 40;
 BerserkCard.description = 'The whole world disappears into a beautiful still, silent, red. At the center of all things is the perfect face of your enemy. Destroy it.';
-BerserkCard.cost = 6;
 BerserkCard.level = 1;
-BerserkCard.permittedClassesAndTypes = [BARBARIAN];
+BerserkCard.cost = 40;
+
 BerserkCard.defaults = {
 	...HitCard.defaults,
 	damage: 1,

@@ -15,10 +15,11 @@ Damage: ${this.damageDice} +1 per wound suffered`;
 }
 
 VenegefulRampageCard.cardType = 'Vengeful Rampage';
+VenegefulRampageCard.permittedClassesAndTypes = [BARBARIAN];
 VenegefulRampageCard.probability = 20;
 VenegefulRampageCard.description = 'Your wounds only make you stronger.';
 VenegefulRampageCard.level = 3;
-VenegefulRampageCard.permittedClassesAndTypes = [BARBARIAN];
+VenegefulRampageCard.cost = 40;
 
 VenegefulRampageCard.flavors = {
 	hits: [

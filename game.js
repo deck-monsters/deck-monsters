@@ -306,6 +306,10 @@ class Game extends BaseClass {
 				editMonster ({ monsterName } = {}) {
 					return game.editMonster(channel, monsterName)
 						.catch(err => log(err));
+				},
+				sellItems () {
+					return character.sellItems(channel)
+						.catch(err => log(err));
 				}
 			}))
 			.catch(err => log(err));

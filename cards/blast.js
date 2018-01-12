@@ -38,11 +38,12 @@ class BlastCard extends BaseCard {
 }
 
 BlastCard.cardType = 'Blast';
+BlastCard.permittedClassesAndTypes = [CLERIC];
 BlastCard.probability = 60;
 BlastCard.description = 'A magical blast against every opponent in the encounter.';
-BlastCard.cost = 4;
 BlastCard.level = 0;
-BlastCard.permittedClassesAndTypes = [CLERIC];
+BlastCard.cost = 30;
+
 BlastCard.defaults = {
 	damage: 3,
 	levelDamage: 1

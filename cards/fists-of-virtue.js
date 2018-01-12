@@ -24,6 +24,8 @@ FistsOfVirtueCard.cardType = 'Fists of Virtue';
 FistsOfVirtueCard.probability = 30;
 FistsOfVirtueCard.description = 'You strike at the biggest bully in the room.';
 FistsOfVirtueCard.level = 1;
+FistsOfVirtueCard.cost = 20;
+
 FistsOfVirtueCard.defaults = {
 	...HitCard.defaults,
 	damageDice: '1d8' // Slightly more possible damage

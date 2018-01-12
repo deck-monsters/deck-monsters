@@ -67,10 +67,10 @@ class Rehit extends HitCard {
 }
 
 Rehit.cardType = 'Rehit';
-Rehit.probability = 50;
-Rehit.description = 'Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.';
-Rehit.cost = 5;
-Rehit.level = 2;
 Rehit.permittedClassesAndTypes = [CLERIC];
+Rehit.probability = 40;
+Rehit.description = 'Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.';
+Rehit.level = 2;
+Rehit.cost = 15;
 
 module.exports = Rehit;

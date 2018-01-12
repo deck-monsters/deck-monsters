@@ -98,8 +98,9 @@ ${player.givenName}'s harrying jab takes from HP instead.`;
 CurseCard.cardType = 'Soften';
 CurseCard.probability = 30;
 CurseCard.description = 'Sweep the leg... You have a problem with that? No mercy.';
-CurseCard.cost = 2;
 CurseCard.level = 1;
+CurseCard.cost = 10;
+
 CurseCard.defaults = {
 	...HitCard.defaults,
 	curseAmount: -1,

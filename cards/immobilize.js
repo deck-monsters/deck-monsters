@@ -286,13 +286,15 @@ class ImmobilizeCard extends HitCard {
 }
 
 ImmobilizeCard.cardType = 'Immobilize';
+ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
 ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobilization, will hit instead
-ImmobilizeCard.probability = 0;// This card is never intended to be played on it's own, but I need access to parts of it for card progressions, so it needs to be instantiatable.
+ImmobilizeCard.probability = 0; // This card is never intended to be played on it's own, but I need access to parts of it for card progressions, so it needs to be instantiatable.
 ImmobilizeCard.description = 'Immobilize your adversary.';
-ImmobilizeCard.cost = 6;
 ImmobilizeCard.level = 1;
+ImmobilizeCard.cost = 0;
+
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,
 	dexModifier: 2,
@@ -302,7 +304,6 @@ ImmobilizeCard.defaults = {
 	freedomThresholdModifier: 2,
 	ongoingDamage: 0
 };
-ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 
 ImmobilizeCard.flavors = {
 	hits: [

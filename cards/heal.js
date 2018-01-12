@@ -62,8 +62,9 @@ Possiblity of Stroke of Luck`;
 HealCard.cardType = 'Heal';
 HealCard.probability = 40;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';
-HealCard.cost = 3;
 HealCard.level = 0;
+HealCard.cost = 5;
+
 HealCard.defaults = {
 	healthDice: '1d4',
 	modifier: 0

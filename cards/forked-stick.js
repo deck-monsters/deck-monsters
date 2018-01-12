@@ -27,15 +27,17 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 }
 
 ForkedStickCard.cardType = 'Forked Stick';
+ForkedStickCard.actions = ['pin', 'pins', 'pinned'];
+ForkedStickCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedStickCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
+ForkedStickCard.weakAgainstCreatureTypes = [MINOTAUR];
 ForkedStickCard.probability = 30;
 ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
-ForkedStickCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
-ForkedStickCard.weakAgainstCreatureTypes = [MINOTAUR];
+ForkedStickCard.cost = 20;
+
 ForkedStickCard.defaults = {
 	...ImmobilizeCard.defaults
 };
-ForkedStickCard.actions = ['pin', 'pins', 'pinned'];
 
 ForkedStickCard.flavors = {
 	hits: [

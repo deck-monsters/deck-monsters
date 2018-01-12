@@ -14,6 +14,8 @@ class WhiskeyShotCard extends HealCard {
 WhiskeyShotCard.cardType = 'Whiskey Shot';
 WhiskeyShotCard.description = '1 shot of whiskey for your health. Doctor\'s orders.';
 WhiskeyShotCard.level = 2;
+WhiskeyShotCard.cost = 20;
+
 WhiskeyShotCard.defaults = {
 	...HealCard.defaults,
 	healthDice: '1d8'

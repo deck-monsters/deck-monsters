@@ -162,11 +162,12 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 }
 
 HornGore.cardType = 'Horn Gore';
+HornGore.permittedClassesAndTypes = [MINOTAUR];
 HornGore.probability = 5;
 HornGore.description = 'You think those horns are just there to look pretty? Think again...';
-HornGore.cost = 6;
 HornGore.level = 0;
-HornGore.permittedClassesAndTypes = [MINOTAUR];
+HornGore.cost = 80;
+
 HornGore.defaults = {
 	...ImmobilizeCard.defaults,
 	damageDice: '1d4',

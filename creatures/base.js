@@ -75,18 +75,6 @@ class BaseCreature extends BaseClass {
 		}
 	}
 
-	get cards () {
-		if (this.options.cards === undefined) this.cards = [];
-
-		return this.options.cards || [];
-	}
-
-	set cards (cards) {
-		this.setOptions({
-			cards
-		});
-	}
-
 	get maxModifications () {
 		return {
 			hp: MAX_HP_MODIFICATION,
@@ -364,6 +352,31 @@ Battles won: ${this.battles.wins}`;
 	set respawnTimeoutBegan (respawnTimeoutBegan) {
 		this.setOptions({
 			respawnTimeoutBegan
+		});
+	}
+
+	get xp () {
+		let xp = this.getPreBattlePropValue('xp');
+		xp += this.modifiers.xp || 0;
+
+		return Math.max(xp, 0);
+	}
+
+	set xp (xp) {
+		this.setOptions({
+			xp
+		});
+	}
+
+	get cards () {
+		if (!this.options.cards) this.cards = [];
+
+		return this.options.cards;
+	}
+
+	set cards (cards) {
+		this.setOptions({
+			cards
 		});
 	}
 
