@@ -55,18 +55,18 @@ ${player.givenName}'s drain takes from HP instead.`;
 		const attackRoll = this.getAttackRoll(blinkPlayer);
 		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.int);
 
-		this.emit('rolling', {
-			reason: `vs ${blinkTarget.givenName}'s INT (${blinkTarget.int}) to see if ${blinkPlayer.pronouns[0]} time shifts ${blinkTarget.givenName}`,
-			card: this,
-			roll: attackRoll,
-			player: blinkPlayer,
-			target: blinkTarget,
-			outcome: '',
-			vs: blinkTarget.int
-		});
+		// this.emit('rolling', {
+		// 	reason: `vs ${blinkTarget.givenName}'s INT (${blinkTarget.int}) to see if ${blinkPlayer.pronouns.he} time shifts ${blinkTarget.givenName}`,
+		// 	card: this,
+		// 	roll: attackRoll,
+		// 	player: blinkPlayer,
+		// 	target: blinkTarget,
+		// 	outcome: '',
+		// 	vs: blinkTarget.int
+		// });
 
 		this.emit('rolled', {
-			reason: `vs INT (${blinkTarget.int}) to try and touch ${blinkTarget.givenName} to time-shift ${blinkTarget.pronouns[1]}`,
+			reason: `vs ${blinkTarget.givenName}'s INT (${blinkTarget.int}) to try and touch ${blinkTarget.pronouns.him} to time-shift ${blinkTarget.pronouns.him}`,
 			card: this,
 			roll: attackRoll,
 			player: blinkPlayer,
@@ -122,17 +122,17 @@ ${player.givenName}'s drain takes from HP instead.`;
 						};
 						this.curseAmount = -xpToSteal.result;
 
-						this.emit('rolling', {
-							reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,
-							card: this,
-							roll: combinedRoll,
-							player: blinkPlayer,
-							target: blinkTarget,
-							outcome: ''
-						});
+						// this.emit('rolling', {
+						// 	reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,
+						// 	card: this,
+						// 	roll: combinedRoll,
+						// 	player: blinkPlayer,
+						// 	target: blinkTarget,
+						// 	outcome: ''
+						// });
 
 						this.emit('rolled', {
-							reason: 'to see how much potential energy to steal',
+							reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,
 							card: this,
 							roll: combinedRoll,
 							player: blinkPlayer,
@@ -153,7 +153,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 						blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== 'BlinkEffect');
 
 						this.emit('narration', {
-							narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns[2]} eyes and finds ${blinkTarget.pronouns[1]}self in an unfamiliar time.`
+							narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns.his} eyes and finds ${blinkTarget.pronouns.him}self in an unfamiliar time.`
 						});
 					}
 				}

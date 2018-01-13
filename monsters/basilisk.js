@@ -50,7 +50,7 @@ class Basilisk extends BaseMonster {
 	}
 
 	get description () {
-		return `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${this.pronouns[2]} gaze. In the forest ${this.pronouns[0]} is king and (weighing ${this.size.weight}) in the ring ${this.pronouns[0]} is much to be feared. See how ${this.pronouns[0]} rears ${this.pronouns[2]} head, and rolls about ${this.pronouns[2]} dreadful eyes, to drive all virtue out, or look it dead!`;
+		return `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${this.pronouns.his} gaze. In the forest ${this.pronouns.he} is king and (weighing ${this.size.weight}) in the ring ${this.pronouns.he} is much to be feared. See how ${this.pronouns.he} rears ${this.pronouns.his} head, and rolls about ${this.pronouns.his} dreadful eyes, to drive all virtue out, or look it dead!`;
 	}
 }
 

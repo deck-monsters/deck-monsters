@@ -287,7 +287,7 @@ Which monster would you like to ${action}?`,
 				const reviveStatement = monster.respawnTimeoutLength ? moment(timeToRevive).from(monster.respawnTimeoutBegan) : 'instantly';
 
 				return channel({
-					announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns[0])} is a ${monster.displayLevel} monster, and therefore will be revived ${reviveStatement}.`// eslint-disable-line max-len
+					announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns.he)} is a ${monster.displayLevel} monster, and therefore will be revived ${reviveStatement}.`// eslint-disable-line max-len
 				})
 					.then(() => monster);
 			});

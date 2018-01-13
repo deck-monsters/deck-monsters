@@ -30,27 +30,27 @@ class Rehit extends HitCard {
 			commentary += ', which was greater than 10. Kept first roll.';
 		}
 
-		this.emit('rolling', {
-			reason: `vs AC (${target.ac}) to determine if the hit was a success. If roll is less than 10, rolls again and uses second roll.`,
-			card: this,
-			roll: attackRoll,
-			player,
-			target,
-			vs: target.ac
-		});
+		// this.emit('rolling', {
+		// 	reason: `vs AC (${target.ac}) to determine if the hit was a success. If roll is less than 10, rolls again and uses second roll.`,
+		// 	card: this,
+		// 	roll: attackRoll,
+		// 	player,
+		// 	target,
+		// 	vs: target.ac
+		// });
 
 		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(attackRoll, target.ac);
 
 		if (strokeOfLuck) {
 			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
 		} else if (curseOfLoki) {
-			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
+			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns.he} would have otherwise hit, ${player.pronouns.he} misses.`;
 		} else if (tie) {
 			commentary = 'Miss... Tie goes to the defender.';
 		}
 
 		this.emit('rolled', {
-			reason: `vs AC (${target.ac})`,
+			reason: `vs AC (${target.ac}) to determine if the hit was a success.`,
 			card: this,
 			roll: attackRoll,
 			player,

@@ -31,14 +31,14 @@ Roll twice for hit. Use the best roll.`;
 		const betterRoll = (attackRoll2.naturalRoll.result > attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 		const worseRoll = (attackRoll2.naturalRoll.result < attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 
-		this.emit('rolling', {
-			reason: `vs ${target.identity}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) twice to determine if the hit was a success, and uses the best roll.`,
-			card: this,
-			roll: betterRoll,
-			player,
-			target,
-			vs: target[this.targetProp]
-		});
+		// this.emit('rolling', {
+		// 	reason: `vs ${target.givenName}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) twice to determine if the hit was a success, and uses the best roll.`,
+		// 	card: this,
+		// 	roll: betterRoll,
+		// 	player,
+		// 	target,
+		// 	vs: target[this.targetProp]
+		// });
 
 		let commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
@@ -47,12 +47,12 @@ Roll twice for hit. Use the best roll.`;
 		if (strokeOfLuck) {
 			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
 		} else if (curseOfLoki) {
-			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns[0]} would have otherwise hit, ${player.pronouns[0]} misses.`;
+			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns.he} would have otherwise hit, ${player.pronouns.he} misses.`;
 		} else if (tie) {
 			commentary = 'Miss... Tie goes to the defender.';
 		}
 		this.emit('rolled', {
-			reason: `vs ${target.identity}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]})`,
+			reason: `vs ${target.givenName}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) to determine if the hit was a success`,
 			card: this,
 			roll: betterRoll,
 			player,

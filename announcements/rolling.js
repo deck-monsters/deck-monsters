@@ -16,10 +16,10 @@ const announceRolling = (publicChannel, channelManager, className, monster, {
 	}
 
 	const vsMsg = vs ? ` v ${vs}` : '';
-	const vsIcon = vs ? ` _v_ ${target.icon}` : '';
-	const verbose = (player.settings && player.settings.verbose) ? `  (_${player.identity} rolls ${title} ${reason}_)` : '';
+	const conciseText = vs ? ` _v_ ${target.givenName}` : '';
+	// const text = (player.settings && player.settings.verbose) ? ` ${reason}` : `${player.givenName} ${conciseText}`;
 
-	let spacingCount = 15 - title.length;
+	let spacingCount = 17 - title.length;
 	spacingCount = vs ? spacingCount - vsMsg.length : spacingCount;
 
 	let spacing = '';
@@ -29,7 +29,7 @@ const announceRolling = (publicChannel, channelManager, className, monster, {
 
 	publicChannel({
 		announce:
-`👋 \`${title}${vsMsg}${spacing}\`${player.icon}${vsIcon}${verbose}`
+`👋 \`${title}${vsMsg}${spacing}\`${text}`
 	});
 };
 
