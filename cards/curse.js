@@ -60,7 +60,7 @@ ${player.givenName}'s harrying jab takes from HP instead.`;
 	}
 
 	getAttackRoll (player) {
-		return roll({ primaryDice: this.attackDice, modifier: player.intModifier, bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.intModifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	effect (player, target, ring) {

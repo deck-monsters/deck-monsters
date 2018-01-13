@@ -18,7 +18,7 @@ class HornSwipeCard extends LuckyStrikeCard {
 	// use strMod for some variety. Idea being it is less about precision and more about brute force. If they block the
 	// first one you power through and stab with the second
 	getAttackRoll (player) {
-		return roll({ primaryDice: this.attackDice, modifier: player.strModifier, bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.strModifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 }
 

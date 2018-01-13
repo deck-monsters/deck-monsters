@@ -20,7 +20,7 @@ class FleeCard extends BaseCard {
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		if (target.bloodied) {
-			const fleeRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier });
+			const fleeRoll = roll({ primaryDice: '1d20', modifier: player.dexModifier, crit: true });
 			const { success } = this.checkSuccess(fleeRoll, 10);
 
 			this.emit('rolled', {

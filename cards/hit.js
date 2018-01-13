@@ -32,7 +32,7 @@ class HitCard extends BaseCard {
 	}
 
 	getAttackRoll (player) {
-		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	hitCheck (player, target) {

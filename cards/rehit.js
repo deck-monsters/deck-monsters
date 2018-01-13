@@ -20,11 +20,11 @@ class Rehit extends HitCard {
 	}
 
 	hitCheck (player, target) {
-		let attackRoll = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+		let attackRoll = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice, crit: true });
 		let commentary = `Originally rolled ${attackRoll.naturalRoll.result}`;
 
 		if (attackRoll.naturalRoll.result < 10) {
-			attackRoll = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice });
+			attackRoll = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice, crit: true });
 			commentary += ', which was less than 10. Rerolled and used second roll.';
 		} else {
 			commentary += ', which was greater than 10. Kept first roll.';

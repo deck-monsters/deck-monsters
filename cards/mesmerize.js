@@ -33,7 +33,7 @@ Chance to immobilize everyone with your shocking beauty.`;
 	}
 
 	getAttackRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player.intModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.intModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this

@@ -96,7 +96,7 @@ describe('./cards/survival-knife.js', () => {
 		return survivalKnife.play(player, target, ring, ring.contestants)
 			.then(() => {
 				expect(player.hp).to.be.above(1);
-				expect(healEffectSpy).to.have.been.calledOnce
+				expect(healEffectSpy).to.have.been.calledOnce;
 			})
 			.then(() => healEffectSpy.restore());
 	});
