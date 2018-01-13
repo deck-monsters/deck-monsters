@@ -55,7 +55,7 @@ ${super.stats}`;
 				`gouge ${player.pronouns[1]} eye`,
 				`punch ${player.pronouns[1]} soft temple`,
 				`kick ${player.pronouns[1]} jugular`,
-				`shove a fist into each of ${player.pronouns[1]} nostrils and spread ${target.prounouns[1]} arms as wide as ${target.pronouns[0]} can`,
+				`shove a fist into each of ${player.pronouns[1]} nostrils and spread ${target.pronouns[1]} arms as wide as ${target.pronouns[0]} can`,
 				`bite off ${player.pronouns[1]} ear`,
 				`grab ${player.pronouns[1]} tongue and pull for all ${target.pronouns[0]}'s worth`
 			];
