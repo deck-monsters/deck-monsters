@@ -43,8 +43,6 @@ function save (key, buffer, log = () => {}) {
 				if (err) {
 					log('Failed to save backup to AWS S3');
 					log(err);
-				} else {
-					log('here');
 				}
 			});
 		};
