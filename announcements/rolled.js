@@ -9,13 +9,24 @@ const announceRolled = (publicChannel, channelManager, className, monster, {
 	vs,
 	outcome
 }) => {
-	let rollResult = (roll.strokeOfLuck) ? 'Natural 20!' : roll.result;
-	rollResult = (roll.curseOfLoki) ? 'Critical Failure!' : rollResult;
-	const vsMsg = vs ? ` _vs_ *${vs}* ${target.icon}` : '';
+	let rollResult = (roll.strokeOfLuck) ? 'Nat 20!' : roll.result;
+	rollResult = (roll.curseOfLoki) ? 'Crit Fail!' : rollResult;
+
+	const vsMsg = vs ? ` v ${vs}` : '';
+	const vsIcon = vs ? ` _v_ ${target.icon}` : '';
+	const verbose = (player.settings && player.settings.verbose) ? `  (_${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}_)` : '';
+
+	let spacingCount = 15 - `${rollResult}`.length;
+	spacingCount = vs ? spacingCount - vsMsg.length : spacingCount;
+
+	let spacing = '';
+	for (let i = 0; i < spacingCount; i++) {
+		spacing += ' ';
+	}
 
 	publicChannel({
 		announce:
-`🎲 ${player.icon} *${rollResult}*${vsMsg}  (_${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}_)
+`🎲 \`${rollResult}${vsMsg}${spacing}\`${player.icon}${vsIcon}${verbose}
     ${outcome}`
 	});
 };

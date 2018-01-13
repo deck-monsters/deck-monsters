@@ -7,7 +7,7 @@ const announceRolling = (publicChannel, channelManager, className, monster, {
 	target,
 	vs
 }) => {
-	let title = roll.primaryDice;
+	let title = roll.primaryDice || '';
 	if (roll.bonusDice) {
 		title += signedNumber(roll.bonusDice);
 	}
@@ -15,11 +15,21 @@ const announceRolling = (publicChannel, channelManager, className, monster, {
 		title += signedNumber(roll.modifier);
 	}
 
-	const vsMsg = vs ? ` _vs_ *${vs}* ${target.icon}` : '';
+	const vsMsg = vs ? ` v ${vs}` : '';
+	const vsIcon = vs ? ` _v_ ${target.icon}` : '';
+	const verbose = (player.settings && player.settings.verbose) ? `  (_${player.identity} rolls ${title} ${reason}_)` : '';
+
+	let spacingCount = 15 - title.length;
+	spacingCount = vs ? spacingCount - vsMsg.length : spacingCount;
+
+	let spacing = '';
+	for (let i = 0; i < spacingCount; i++) {
+		spacing += ' ';
+	}
 
 	publicChannel({
 		announce:
-`👋🎲 ${player.icon} *${title}*${vsMsg}  (_${player.identity} rolls ${title} ${reason}_)`
+`👋 \`${title}${vsMsg}${spacing}\`${player.icon}${vsIcon}${verbose}`
 	});
 };
 
