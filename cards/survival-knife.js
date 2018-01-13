@@ -22,7 +22,7 @@ ${this.healCard.stats}`;
 
 	effect (player, target, ring, activeContestants) {
 		if (player.hp < (player.bloodiedValue / 2)) {
-			return this.healCard.effect(player, target, ring);
+			return this.healCard.effect(player, player, ring);
 		}
 
 		return super.effect(player, target, ring, activeContestants);
