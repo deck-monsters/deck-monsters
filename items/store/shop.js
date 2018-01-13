@@ -30,6 +30,6 @@ const getShop = throttle(() => {
 	};
 
 	return currentShop;
-}, 7200000);
+}, 28800000); // Eight hours
 
 module.exports = getShop;

@@ -2,8 +2,6 @@ const Promise = require('bluebird');
 
 const BaseItem = require('../items/base');
 
-const { max } = require('../helpers/chance');
-
 class BaseCard extends BaseItem {
 	constructor (options) {
 		super(options);

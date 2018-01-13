@@ -1,6 +1,9 @@
+const random = require('lodash.random');
+
 const drawCard = require('../../cards/helpers/draw');
 
-const DEFAULT_CARD_INVENTORY_SIZE = 20;
+const DEFAULT_MIN_CARD_INVENTORY_SIZE = 5;
+const DEFAULT_MAX_CARD_INVENTORY_SIZE = 20;
 
 const canHoldBackRoom = {
 	canHoldCard: card => card.notForSale && !card.neverForSale
@@ -24,8 +27,9 @@ const canHoldStandard = {
 
 const getCards = () => {
 	const cards = [];
+	const cardInventorySize = random(DEFAULT_MIN_CARD_INVENTORY_SIZE, DEFAULT_MAX_CARD_INVENTORY_SIZE);
 
-	while (cards.length < DEFAULT_CARD_INVENTORY_SIZE) {
+	while (cards.length < cardInventorySize) {
 		cards.push(drawCard({}, canHoldStandard));
 	}
 

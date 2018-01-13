@@ -21,7 +21,8 @@ describe('./items/store/shop.js', () => {
 		expect(shop.priceOffset).to.be.below(1);
 		expect(shop.backRoomOffset).to.be.below(10);
 		expect(shop.items).to.be.an.instanceof(Array);
-		expect(shop.cards.length).to.equal(20);
+		expect(shop.cards.length).to.be.above(4);
+		expect(shop.cards.length).to.be.below(21);
 		expect(shop.backRoom.length).to.equal(1);
 	});
 
@@ -32,10 +33,10 @@ describe('./items/store/shop.js', () => {
 		expect(shop).to.equal(shop2);
 	});
 
-	it('gets a different shop after 2 hours', () => {
+	it('gets a different shop after 8 hours', () => {
 		const shop = getShop();
 
-		clock.tick(7200001);
+		clock.tick(28800001);
 
 		const shop2 = getShop();
 
