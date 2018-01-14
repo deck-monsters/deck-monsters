@@ -524,7 +524,7 @@ Battles won: ${this.battles.wins}`;
 		});
 
 		if (hp <= 0) {
-			return this.die();
+			return this.die(this);
 		}
 
 		return true;
