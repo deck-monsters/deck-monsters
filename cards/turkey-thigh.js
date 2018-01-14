@@ -12,7 +12,7 @@ class TurkeyThighCard extends SurvivalKnifeCard {
 }
 
 TurkeyThighCard.cardType = 'Turkey Thigh';
-TurkeyThighCard.description = 'Beat your opponent with a huge turkey thigh. If times get tough, take a bite for a quick HP boost.';
+TurkeyThighCard.description = 'Beat your opponent with a huge turkey thigh. If times get tough, take a bite for a quick hp boost.';
 TurkeyThighCard.permittedClassesAndTypes = [BARBARIAN];
 
 module.exports = TurkeyThighCard;

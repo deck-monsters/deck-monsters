@@ -50,7 +50,7 @@ class HitCard extends BaseCard {
 		}
 
 		this.emit('rolled', {
-			reason: `vs ${target.givenName}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) to determine if the hit was a success`,
+			reason: `vs ${target.givenName}'s ${this.targetProp.toLowerCase()} (${target[this.targetProp]}) to determine if the hit was a success.`,
 			card: this,
 			roll: attackRoll,
 			player,
@@ -84,7 +84,7 @@ class HitCard extends BaseCard {
 			}
 
 			this.emit('rolled', {
-				reason: 'for damage',
+				reason: 'for damage.',
 				card: this,
 				roll: damageRoll,
 				player,

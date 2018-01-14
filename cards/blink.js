@@ -43,7 +43,7 @@ class BlinkCard extends CurseCard {
 
 	getCurseOverflowNarrative (player, target) { // eslint-disable-line class-methods-use-this
 		return `${target.givenName}'s xp penalties have been maxed out.
-${player.givenName}'s drain takes from HP instead.`;
+${player.givenName}'s drain takes from hp instead.`;
 	}
 
 	get stats () {
@@ -56,7 +56,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.int);
 
 		this.emit('rolled', {
-			reason: `vs ${blinkTarget.givenName}'s INT (${blinkTarget.int}) to time-shift ${blinkTarget.pronouns.him}`,
+			reason: `vs ${blinkTarget.givenName}'s int (${blinkTarget.int}) to time-shift ${blinkTarget.pronouns.him}.`,
 			card: this,
 			roll: attackRoll,
 			player: blinkPlayer,

@@ -56,7 +56,7 @@ ${stats}`;
 
 	getCurseOverflowNarrative (player, target) {
 		return `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
-${player.givenName}'s harrying jab takes from HP instead.`;
+${player.givenName}'s harrying jab takes from hp instead.`;
 	}
 
 	getAttackRoll (player) {

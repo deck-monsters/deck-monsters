@@ -70,7 +70,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 		const commentary = this.getCommentary(rolled, player, target);
 
 		this.emit('rolled', {
-			reason: `vs ${target.givenName}'s AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful`,
+			reason: `vs ${target.givenName}'s ac (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful.`,
 			card: this,
 			roll: rolled,
 			player,
