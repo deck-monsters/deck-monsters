@@ -165,16 +165,6 @@ class ImmobilizeCard extends HitCard {
 		if (!alreadyImmobilized && canHaveEffect) {
 			const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
 
-			// this.emit('rolling', {
-			// 	reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}`,
-			// 	card: this,
-			// 	roll: attackRoll,
-			// 	player,
-			// 	target,
-			// 	outcome: '',
-			// 	vs: this.getTargetPropValue(target)
-			// });
-
 			const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...' : ''}`;
 			const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
 
@@ -198,7 +188,7 @@ class ImmobilizeCard extends HitCard {
 					if (phase === ATTACK_PHASE) {
 						if (!player.dead) {
 							this.emit('effect', {
-								effectResult: `${this.icon}  ${this.actions[2]} by`,
+								effectResult: `${this.icon} ${this.actions[2]} by`,
 								player,
 								target,
 								ring

@@ -52,12 +52,12 @@ ${super.stats}`;
 
 		if (rolled.curseOfLoki) {
 			const flavors = [
-				`gouge ${player.pronouns.him} eye`,
-				`punch ${player.pronouns.him} soft temple`,
-				`kick ${player.pronouns.him} jugular`,
-				`shove a fist into each of ${player.pronouns.him} nostrils and spread ${target.pronouns.him} arms as wide as ${target.pronouns.he} can`,
-				`bite off ${player.pronouns.him} ear`,
-				`grab ${player.pronouns.him} tongue and pull for all ${target.pronouns.he}'s worth`
+				`gouge ${player.pronouns.his} eye`,
+				`punch ${player.pronouns.his} soft temple`,
+				`kick ${player.pronouns.his} jugular`,
+				`shove a fist into each of ${player.pronouns.his} nostrils and spread ${player.pronouns.his} arms as wide as ${target.pronouns.he} can`,
+				`bite off ${player.pronouns.his} ear`,
+				`grab ${player.pronouns.his} tongue and pull for all ${target.pronouns.he}'s worth`
 			];
 			commentary = `${player.givenName} rolled a 1.
 ${target.givenName} manages to take the opportunity of such close proximity to ${player.givenName}'s face to ${flavors[Math.random() * flavors.length]}.`;
@@ -67,15 +67,6 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 
 	emitRoll (rolled, success, player, target, hornNumber) {
-		// this.emit('rolling', {
-		// 	reason: `vs ${target.givenName}'s AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful`,
-		// 	card: this,
-		// 	roll: rolled,
-		// 	player,
-		// 	target,
-		// 	vs: target.ac
-		// });
-
 		const commentary = this.getCommentary(rolled, player, target);
 
 		this.emit('rolled', {
@@ -84,7 +75,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 			roll: rolled,
 			player,
 			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			outcome: commentary || (success ? 'Hit!' : 'Miss...'),
 			vs: target.ac
 		});
 	}

@@ -55,23 +55,13 @@ ${player.givenName}'s drain takes from HP instead.`;
 		const attackRoll = this.getAttackRoll(blinkPlayer);
 		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.int);
 
-		// this.emit('rolling', {
-		// 	reason: `vs ${blinkTarget.givenName}'s INT (${blinkTarget.int}) to see if ${blinkPlayer.pronouns.he} time shifts ${blinkTarget.givenName}`,
-		// 	card: this,
-		// 	roll: attackRoll,
-		// 	player: blinkPlayer,
-		// 	target: blinkTarget,
-		// 	outcome: '',
-		// 	vs: blinkTarget.int
-		// });
-
 		this.emit('rolled', {
-			reason: `vs ${blinkTarget.givenName}'s INT (${blinkTarget.int}) to try and touch ${blinkTarget.pronouns.him} to time-shift ${blinkTarget.pronouns.him}`,
+			reason: `vs ${blinkTarget.givenName}'s INT (${blinkTarget.int}) to time-shift ${blinkTarget.pronouns.him}`,
 			card: this,
 			roll: attackRoll,
 			player: blinkPlayer,
 			target: blinkTarget,
-			outcome: `time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`,
+			outcome: `Time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`,
 			vs: blinkTarget.int
 		});
 
@@ -101,7 +91,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 					if (turnsLeftToBlink && !blinkPlayer.dead) {
 						blinkTarget.blinkedTurns++;
 
-						const effectResult = `${this.icon}  time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
+						const effectResult = `${this.icon} time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
 						this.emit('effect', {
 							effectResult,
 							player: blinkPlayer,
@@ -112,8 +102,8 @@ ${player.givenName}'s drain takes from HP instead.`;
 						const hpToSteal = roll({ primaryDice: this.energyToStealDice });
 						const xpToSteal = roll({ primaryDice: this.curseAmountDice });
 						const combinedRoll = {
-							primaryDice: `${hpToSteal.primaryDice}(HP) & ${xpToSteal.primaryDice}(XP)`,
-							result: `${hpToSteal.result}(HP) & ${xpToSteal.result}(XP)`,
+							primaryDice: `${hpToSteal.primaryDice} (hp) & ${xpToSteal.primaryDice} (xp)`,
+							result: `${hpToSteal.result} (hp) & ${xpToSteal.result} (xp)`,
 							naturalRoll: {
 								result: `${hpToSteal.naturalRoll.result} & ${xpToSteal.naturalRoll.result}`
 							},
@@ -121,15 +111,6 @@ ${player.givenName}'s drain takes from HP instead.`;
 							modifier: 0
 						};
 						this.curseAmount = -xpToSteal.result;
-
-						// this.emit('rolling', {
-						// 	reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,
-						// 	card: this,
-						// 	roll: combinedRoll,
-						// 	player: blinkPlayer,
-						// 	target: blinkTarget,
-						// 	outcome: ''
-						// });
 
 						this.emit('rolled', {
 							reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,

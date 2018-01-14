@@ -30,15 +30,6 @@ class Rehit extends HitCard {
 			commentary += ', which was greater than 10. Kept first roll.';
 		}
 
-		// this.emit('rolling', {
-		// 	reason: `vs AC (${target.ac}) to determine if the hit was a success. If roll is less than 10, rolls again and uses second roll.`,
-		// 	card: this,
-		// 	roll: attackRoll,
-		// 	player,
-		// 	target,
-		// 	vs: target.ac
-		// });
-
 		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(attackRoll, target.ac);
 
 		if (strokeOfLuck) {
@@ -50,7 +41,7 @@ class Rehit extends HitCard {
 		}
 
 		this.emit('rolled', {
-			reason: `vs AC (${target.ac}) to determine if the hit was a success.`,
+			reason: `vs ac (${target.ac}) to determine if the hit was a success.`,
 			card: this,
 			roll: attackRoll,
 			player,

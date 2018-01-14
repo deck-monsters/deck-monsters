@@ -32,7 +32,6 @@ const announceModifier = require('./announcements/modifier.js');
 const announceNarration = require('./announcements/narration.js');
 const announceNextRound = require('./announcements/nextRound.js');
 const announceRolled = require('./announcements/rolled.js');
-const announceRolling = require('./announcements/rolling.js');
 const announceStay = require('./announcements/stay.js');
 const announceTurnBegin = require('./announcements/turnBegin.js');
 const announceXPGain = require('./announcements/xpGain.js');
@@ -114,7 +113,6 @@ class Game extends BaseClass {
 			{ event: 'card.narration', listener: announceNarration },
 			{ event: 'ring.roundComplete', listener: announceNextRound },
 			{ event: 'card.rolled', listener: announceRolled },
-			{ event: 'card.rolling', listener: announceRolling },
 			{ event: 'card.stay', listener: announceStay },
 			{ event: 'ring.turnBegin', listener: announceTurnBegin },
 			{ event: 'ring.gainedXP', listener: announceXPGain },

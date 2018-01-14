@@ -31,18 +31,9 @@ Roll twice for hit. Use the best roll.`;
 		const betterRoll = (attackRoll2.naturalRoll.result > attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 		const worseRoll = (attackRoll2.naturalRoll.result < attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 
-		// this.emit('rolling', {
-		// 	reason: `vs ${target.givenName}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) twice to determine if the hit was a success, and uses the best roll.`,
-		// 	card: this,
-		// 	roll: betterRoll,
-		// 	player,
-		// 	target,
-		// 	vs: target[this.targetProp]
-		// });
-
 		let commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
 
-		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(betterRoll, this.targetProp);
+		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(betterRoll, target[this.targetProp]);
 
 		if (strokeOfLuck) {
 			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
@@ -52,7 +43,7 @@ Roll twice for hit. Use the best roll.`;
 			commentary = 'Miss... Tie goes to the defender.';
 		}
 		this.emit('rolled', {
-			reason: `vs ${target.givenName}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) to determine if the hit was a success`,
+			reason: `vs ${target.givenName}'s ${this.targetProp.toLowerCase()} (${target[this.targetProp]}) to determine if the hit was a success`,
 			card: this,
 			roll: betterRoll,
 			player,
