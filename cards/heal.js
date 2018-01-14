@@ -31,7 +31,14 @@ Possiblity of Stroke of Luck`;
 	}
 
 	getHealRoll (player) {
-		return roll({ primaryDice: this.healthDice, modifier: player.intModifier + this.modifier, bonusDice: player.bonusIntDice });
+		// Heals get weaker each time down to zero, then start back from the top
+		if (!player.encounterModifiers.healModifier) {
+			player.encounterModifiers.healModifier = (player.intModifier + this.modifier);
+		} else {
+			player.encounterModifiers.healModifier = Math.max(player.encounterModifiers.healModifier - 1, 0);
+		}
+
+		return roll({ primaryDice: this.healthDice, modifier: player.encounterModifiers.healModifier, bonusDice: player.bonusIntDice });
 	}
 
 	// This doesn't have to be static if it needs access to the instance
