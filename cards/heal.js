@@ -51,6 +51,10 @@ Possiblity of Stroke of Luck`;
 		if (isProbable({ probability: 1 })) {
 			healResult = Math.floor(player.maxHp / 2);
 			outcome = 'Stroke of luck. Heal half max hp.';
+		// Curse of Loki
+		} else if (isProbable({ probability: 1 })) {
+			healResult *= -1;
+			outcome = 'Curse of Loki. You accidentally grab a vial of poison and take a swig.';
 		}
 
 		this.emit('rolled', {
