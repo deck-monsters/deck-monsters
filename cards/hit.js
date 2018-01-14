@@ -38,28 +38,19 @@ class HitCard extends BaseCard {
 	hitCheck (player, target) {
 		const attackRoll = this.getAttackRoll(player, target);
 
-		this.emit('rolling', {
-			reason: `vs ${target.identity}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]}) to determine if the hit was a success`,
-			card: this,
-			roll: attackRoll,
-			player,
-			target,
-			vs: target[this.targetProp]
-		});
-
 		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(attackRoll, target[this.targetProp]);
 		let commentary;
 
 		if (strokeOfLuck) {
 			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
 		} else if (curseOfLoki) {
-			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns[2]} attack back against ${player.pronouns[1]}.`;
+			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns.his} attack back against ${player.pronouns.him}.`;
 		} else if (tie) {
 			commentary = 'Miss... Tie goes to the defender.';
 		}
 
 		this.emit('rolled', {
-			reason: `vs ${target.identity}'s ${this.targetProp.toUpperCase()} (${target[this.targetProp]})`,
+			reason: `vs ${target.givenName}'s ${this.targetProp.toLowerCase()} (${target[this.targetProp]}) to determine if the hit was a success.`,
 			card: this,
 			roll: attackRoll,
 			player,
@@ -88,21 +79,12 @@ class HitCard extends BaseCard {
 			damageRoll.naturalRoll.result = max(this.damageDice);
 			damageRoll.result = max(this.damageDice) + damageRoll.modifier;
 		} else {
-			this.emit('rolling', {
-				reason: `for damage against ${target.givenName}`,
-				card: this,
-				roll: damageRoll,
-				player,
-				target,
-				outcome: ''
-			});
-
 			if (damageRoll.result < 1) {
 				damageRoll.result = 1;
 			}
 
 			this.emit('rolled', {
-				reason: 'for damage',
+				reason: 'for damage.',
 				card: this,
 				roll: damageRoll,
 				player,

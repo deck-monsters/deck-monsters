@@ -165,21 +165,11 @@ class ImmobilizeCard extends HitCard {
 		if (!alreadyImmobilized && canHaveEffect) {
 			const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
 
-			this.emit('rolling', {
-				reason: `to see if ${player.pronouns[0]} ${this.actions[1]} ${target.givenName}`,
-				card: this,
-				roll: attackRoll,
-				player,
-				target,
-				outcome: '',
-				vs: this.getTargetPropValue(target)
-			});
-
 			const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...' : ''}`;
 			const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
 
 			this.emit('rolled', {
-				reason: `for ${this.actions[0]}`,
+				reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}`,
 				card: this,
 				roll: attackRoll,
 				player,
@@ -198,7 +188,7 @@ class ImmobilizeCard extends HitCard {
 					if (phase === ATTACK_PHASE) {
 						if (!player.dead) {
 							this.emit('effect', {
-								effectResult: `${this.icon}  ${this.actions[2]} by`,
+								effectResult: `${this.icon} ${this.actions[2]} by`,
 								player,
 								target,
 								ring
@@ -213,7 +203,7 @@ class ImmobilizeCard extends HitCard {
 							}
 
 							this.emit('rolled', {
-								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free`,
+								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free.`,
 								card: this,
 								roll: freedomRoll,
 								player: target,
@@ -243,7 +233,7 @@ class ImmobilizeCard extends HitCard {
 							target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
 
 							this.emit('narration', {
-								narration: `${target.givenName} is no longer ${this.actions[2]}. ${target.pronouns[0]} pushes the limp dead body of ${player.givenName} off of ${target.pronouns[1]}self and proudly stands prepared to fight`
+								narration: `${target.givenName} is no longer ${this.actions[2]}. ${target.pronouns.he} pushes the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stands prepared to fight`
 							});
 						}
 					}

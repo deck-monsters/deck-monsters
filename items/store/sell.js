@@ -67,7 +67,7 @@ Would you like to sell? (yes/no)`
 						} else if (value === 1) {
 							return channel({
 								announce:
-`The proprietor of ${shop.name} flips a single coin to ${character.givenName} without really looking at ${character.pronouns[1]} and promptly hangs a "Closed" sign in the window of the shop.` // eslint-disable-line max-len
+`The proprietor of ${shop.name} flips a single coin to ${character.givenName} without really looking at ${character.pronouns.him} and promptly hangs a "Closed" sign in the window of the shop.` // eslint-disable-line max-len
 							});
 						}
 

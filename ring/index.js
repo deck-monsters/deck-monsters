@@ -469,7 +469,7 @@ class Ring extends BaseClass {
 						});
 					} else {
 						this.channelManager.queueMessage({
-							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`,
+							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
 							channel,
 							channelName,
 							event: { name: 'loss', properties: { contestant } }

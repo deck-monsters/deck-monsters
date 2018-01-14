@@ -43,7 +43,7 @@ Possiblity of Stroke of Luck`;
 		// Stroke of Luck
 		if (isProbable({ probability: 1 })) {
 			healResult = Math.floor(player.maxHp / 2);
-			outcome = 'Stroke of luck. Heal half max HP.';
+			outcome = 'Stroke of luck. Heal half max hp.';
 		}
 
 		this.emit('rolled', {

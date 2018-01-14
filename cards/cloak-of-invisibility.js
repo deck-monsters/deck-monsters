@@ -43,7 +43,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 							if (!card.invisibilityNarrationEmitted) {
 								this.emit('narration', {
-									narration: `${invisibilityTarget.identity} slips off ${invisibilityTarget.pronouns[2]} ${this.cardType.toLowerCase()}.`
+									narration: `${invisibilityTarget.identity} slips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`
 								});
 
 								card.invisibilityNarrationEmitted = true;
@@ -63,7 +63,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 		invisibilityTarget.encounterEffects = [...invisibilityTarget.encounterEffects, invisibilityEffect];
 
 		this.emit('narration', {
-			narration: `${invisibilityTarget.identity} dons ${invisibilityTarget.pronouns[2]} ${this.cardType.toLowerCase()}.`
+			narration: `${invisibilityTarget.identity} dons ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`
 		});
 
 		return true;
