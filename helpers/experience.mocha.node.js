@@ -2,6 +2,7 @@
 const { expect } = require('../shared/test-setup');
 
 const { xpFormula, getAverageLevel, calculateXP } = require('./experience');
+const { randomContestant } = require('./bosses');
 
 describe('./helpers/experience.js', () => {
 	describe('xpFormula works', () => {
@@ -275,6 +276,18 @@ describe('./helpers/experience.js', () => {
 				const { gainedXP, reasons } = calculateXP(constestant2, contestants);
 				expect(gainedXP).to.equal(1);
 				expect(reasons).to.equal('Gained 1 XP for being killed by fred (same level)');
+			});
+
+			it('assigns no XP when you kill yourself', () => {
+				const constestant1 = randomContestant();
+				const constestant2 = randomContestant({ gender: 'androgynous' });
+				constestant2.killedBy = constestant2.monster;
+
+				const contestants = [constestant1, constestant2];
+
+				const { gainedXP, reasons } = calculateXP(constestant2, contestants);
+				expect(gainedXP).to.equal(0);
+				expect(reasons).to.equal('Gained no XP for being killed by itself');
 			});
 
 			it('assigns 1 XP if level 100 monster is killed by same level monster', () => {

@@ -41,13 +41,17 @@ const calculateXP = (contestant, contestants) => {
 	});
 
 	if (contestant.killedBy) {
-		levelDifference = monster.level - contestant.killedBy.level;
-		const levelDifferenceText = levelDifference === 0 ? 'same level' : `${levelDifference * -1} level difference`;
-		xp = Math.min(xpFormula(levelDifference, BASE_XP_PER_KILLED_BY), BASE_XP_PER_KILLED_BY * rounds);
+		if (contestant.killedBy !== contestant.monster) {
+			levelDifference = monster.level - contestant.killedBy.level;
+			const levelDifferenceText = levelDifference === 0 ? 'same level' : `${levelDifference * -1} level difference`;
+			xp = Math.min(xpFormula(levelDifference, BASE_XP_PER_KILLED_BY), BASE_XP_PER_KILLED_BY * rounds);
 
-		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for being killed by ${contestant.killedBy.givenName} (${levelDifferenceText})`);
+			reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for being killed by ${contestant.killedBy.givenName} (${levelDifferenceText})`);
 
-		gainedXP += xp;
+			gainedXP += xp;
+		} else {
+			reasons.push(`Gained no XP for being killed by ${contestant.monster.pronouns.him}self`);
+		}
 	} else {
 		// XP for being the last monster standing or fleeing
 		const avgLevel = getAverageLevel(monster, contestants);
