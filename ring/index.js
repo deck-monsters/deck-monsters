@@ -398,6 +398,11 @@ class Ring extends BaseClass {
 						round
 					});
 
+					// Limit to 10 rounds (anyone left alive at that point will be a winner)
+					if (round === 10) {
+						resolve();
+					}
+
 					// Increment the round counter
 					round += 1;
 

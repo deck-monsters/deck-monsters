@@ -18,7 +18,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 	}
 
 	effect (invisibilityPlayer, invisibilityTarget) { // eslint-disable-line no-unused-vars
-		invisibilityTarget.invisibilityTurns = 0;
+		invisibilityTarget.encounterModifiers.invisibilityTurns = 0;
 
 		const invisibilityEffect = ({
 			card,
@@ -38,7 +38,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 						return Promise.resolve(true);
 					} else if (phase === ATTACK_PHASE && player === invisibilityTarget) {
-						if (target !== invisibilityTarget || invisibilityTarget.invisibilityTurns >= 2) {
+						if (target !== invisibilityTarget || invisibilityTarget.encounterModifiers.invisibilityTurns > 2) {
 							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect !== invisibilityEffect);
 
 							if (!card.invisibilityNarrationEmitted) {
@@ -49,7 +49,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 								card.invisibilityNarrationEmitted = true;
 							}
 						} else {
-							invisibilityTarget.invisibilityTurns += 1;
+							invisibilityTarget.encounterModifiers.invisibilityTurns += 1;
 						}
 					}
 

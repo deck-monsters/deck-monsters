@@ -524,7 +524,7 @@ Battles won: ${this.battles.wins}`;
 		});
 
 		if (hp <= 0) {
-			return this.die();
+			return this.die(this);
 		}
 
 		return true;
@@ -556,7 +556,7 @@ Battles won: ${this.battles.wins}`;
 
 		if (assailant instanceof BaseCreature) {
 			if (!this.killedBy) { // You can only be killed by one monster
-				assailant.killed = this;
+				if (assailant !== this) assailant.killed = this;
 				this.killedBy = assailant;
 
 				this.emit('die', {

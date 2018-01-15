@@ -8,7 +8,7 @@ const { actionCard, monsterCard } = require('../helpers/card');
 const { getAttributeChoices } = require('../helpers/choices');
 const isMatchingItem = require('../items/helpers/is-matching');
 
-const DEFAULT_CARD_SLOTS = 7;
+const DEFAULT_CARD_SLOTS = 9;
 
 class BaseMonster extends BaseCreature {
 	constructor (options) {

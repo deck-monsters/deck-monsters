@@ -227,9 +227,9 @@ Which monster would you like to ${action}?`,
 				});
 			})
 			.then((monster) => {
-				if (monster.cards.length <= 0) {
+				if (monster.cards.length < monster.cardSlots) {
 					return Promise.reject(channel({
-						announce: 'Only an evil master would send their monster into battle without any cards.'
+						announce: 'Only an evil master would send their monster into battle with enough cards.'
 					}));
 				}
 
