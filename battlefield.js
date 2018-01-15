@@ -7,6 +7,9 @@ const { Game } = require('./index.js');
 const pause = require('./helpers/pause');
 
 // const DestroyCard = require('./cards/destroy.js');
+const Cloak = require('./cards/cloak-of-invisibility.js');
+const Hit = require('./cards/hit.js');
+const Heal = require('./cards/heal.js');
 
 pause.setTimeout = func => setTimeout(func, 5);
 
@@ -64,6 +67,10 @@ return Promise
 	}))
 	.then((character) => {
 		vlad = character;
+		const cloak = new Cloak();
+		const hit = new Hit();
+		const heal = new Heal();
+		vlad.character.deck = [cloak, cloak, cloak, cloak, cloak, cloak, cloak, cloak, cloak];
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
@@ -71,9 +78,13 @@ return Promise
 	}))
 	.then((character) => {
 		char = character;
-		charCards = [...shuffle(char.character.deck).slice(0, 9)];
+		// charCards = [...shuffle(char.character.deck).slice(0, 9)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
+		const cloak = new Cloak();
+		const hit = new Hit();
+		const heal = new Heal();
+		charCards = [cloak, heal, heal, heal, hit, cloak, heal, heal, hit];
 	})
 	// .then(() => vlad.spawnMonster())
 	.then(() => vlad.spawnMonster({
@@ -92,11 +103,11 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
 	}))
-	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
-	.then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))
-	.then(() => vlad.lookAtCards())
-	.then(() => vlad.lookAt('player handbook'))
-	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
+	// .then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
+	// .then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))
+	// .then(() => vlad.lookAtCards())
+	// .then(() => vlad.lookAt('player handbook'))
+	// .then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
 	.then(() => slackdem.getRing().spawnBoss());
