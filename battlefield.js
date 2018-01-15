@@ -64,14 +64,14 @@ return Promise
 	}))
 	.then((character) => {
 		vlad = character;
-		vladCards = [...shuffle(vlad.character.deck).slice(0, 5)];
+		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
 		id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0, xp: 200
 	}))
 	.then((character) => {
 		char = character;
-		charCards = [...shuffle(char.character.deck).slice(0, 5)];
+		charCards = [...shuffle(char.character.deck).slice(0, 9)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
 	})
@@ -80,7 +80,7 @@ return Promise
 	}))
 	.then((character) => {
 		boss = character;
-		bossCards = [...shuffle(boss.character.deck).slice(0, 5)];
+		bossCards = [...shuffle(boss.character.deck).slice(0, 9)];
 	})
 	.then(() => vlad.spawnMonster({
 		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 100
