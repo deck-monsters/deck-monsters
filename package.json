@@ -20,7 +20,7 @@
     "lint": "eslint \"**/*.{js,jsx}\"",
     "lint:fix": "npm run lint -- --fix",
     "make-notes": "mc-make-notes",
-    "tag": "mc-tag -b",
+    "tag": "mc-tag -b && npm publish",
     "test": "mc-test --node",
     "test:debug": "mc-test --node --browsers Chrome",
     "test:watch": "mc-test --node --watch"
