@@ -213,7 +213,7 @@ ${signedNumber(this.intModifier)} to spells`
 
 	getProp (targetProp) {
 		let prop = this.getPreBattlePropValue(targetProp);
-		prop += Math.min(this.modifiers[targetProp] || 0, this.getMaxModifications(targetProp));
+		prop += Math.min(this.encounterModifiers[targetProp] || 0, this.getMaxModifications(targetProp));
 
 		return Math.max(prop, 1);
 	}
@@ -531,8 +531,8 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	setModifier (attr, amount = 0, permanent = false) {
-		const prevValue = this.modifiers[attr] || 0;
-		const modifiers = Object.assign({}, this.modifiers, {
+		const prevValue = (permanent) ? this.modifiers[attr] || 0 : this.encounterModifiers[attr] || 0;
+		const modifiers = Object.assign({}, (permanent) ? this.modifiers : this.encounterModifiers, {
 			[attr]: prevValue + amount
 		});
 
