@@ -1,6 +1,7 @@
 const random = require('lodash.random');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
+const { difference } = require('../helpers/difference');
 
 const BaseClass = require('../shared/baseClass');
 
@@ -485,20 +486,41 @@ Battles won: ${this.battles.wins}`;
 	hit (damage = 0, assailant, card) {
 		if (this.hp < 1) return false;
 
-		const hp = this.hp - damage;
-		const originalHP = this.hp;
+		if (this.encounterModifiers.ac >= damage) {
+			this.encounterModifiers.ac -= damage;
 
-		this.hp = hp;
+			this.emit('narration', {
+				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage.
+ac boost is now ${this.encounterModifiers.ac}`
+			});
+		} else {
+			let adjustedDamage = damage;
 
-		this.emit('hit', {
-			assailant,
-			card,
-			damage,
-			hp,
-			prevHp: originalHP
-		});
+			if (this.encounterModifiers.ac > 0) {
+				adjustedDamage -= this.encounterModifiers.ac;
+				this.emit('narration', {
+					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage.
+It was not enough to stop the full blow.
+ac boost is now 0.`
+				});
+				this.encounterModifiers.ac = 0;
+			}
 
-		if (hp <= 0) {
+			const hp = this.hp - adjustedDamage;
+			const originalHP = this.hp;
+
+			this.hp = hp;
+
+			this.emit('hit', {
+				assailant,
+				card,
+				damage,
+				hp,
+				prevHp: originalHP
+			});
+		}
+
+		if (this.hp <= 0) {
 			return this.die(assailant);
 		}
 
