@@ -33,6 +33,7 @@ const PickPocketCard = require('../pick-pocket');
 const PoundCard = require('../pound');
 const RandomCard = require('../random');
 const RehitCard = require('../rehit');
+const SandstormCard = require('../sandstorm');
 const ScotchCard = require('../scotch');
 const SurvivalKnifeCard = require('../survival-knife');
 const ThickSkinCard = require('../thick-skin');
@@ -77,6 +78,7 @@ module.exports = [
 	PoundCard,
 	RandomCard,
 	RehitCard,
+	SandstormCard,
 	ScotchCard,
 	SurvivalKnifeCard,
 	ThickSkinCard,
