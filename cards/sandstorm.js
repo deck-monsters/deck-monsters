@@ -9,7 +9,7 @@ const isProbable = require('../helpers/is-probable');
 
 const EFFECT_TYPE = 'SandstormEffect';
 
-class Sandstorm extends BlastCard {
+class SandstormCard extends BlastCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		hitProbability,
@@ -54,7 +54,7 @@ class Sandstorm extends BlastCard {
 
 				if (getTargets) {
 					// Has no effect on sandstorm cards
-					if (card.cardType === Sandstorm.cardType) {
+					if (card.cardType === SandstormCard.cardType) {
 						card.getTargets = (player, proposedTarget, ring, activeContestants) => {
 							this.emit('narration', {
 								narration: `${sandstormTarget.givenName} whips up an even bigger cloud of sand than ${sandstormPlayer.givenName} did.`
@@ -106,21 +106,21 @@ class Sandstorm extends BlastCard {
 	}
 }
 
-Sandstorm.cardType = 'Sandstorm';
-Sandstorm.permittedClassesAndTypes = [JINN];
-Sandstorm.probability = 5;
-Sandstorm.description = 'A blinding cloud of sand whips across the desert, damaging and confusing all those caught in it.';
-Sandstorm.level = 0;
-Sandstorm.cost = 80;
-Sandstorm.notForSale = true;
+SandstormCard.cardType = 'Sandstorm';
+SandstormCard.permittedClassesAndTypes = [JINN];
+SandstormCard.probability = 5;
+SandstormCard.description = 'A blinding cloud of sand whips across the desert, damaging and confusing all those caught in it.';
+SandstormCard.level = 0;
+SandstormCard.cost = 80;
+SandstormCard.notForSale = true;
 
-Sandstorm.defaults = {
+SandstormCard.defaults = {
 	damage: 1,
 	hitProbability: 30,
 	levelDamage: 1
 };
 
-Sandstorm.flavors = {
+SandstormCard.flavors = {
 	hits: [
 		['chokes', 80],
 		['whips sand in the eyes of', 70],
@@ -130,4 +130,4 @@ Sandstorm.flavors = {
 	]
 };
 
-module.exports = Sandstorm;
+module.exports = SandstormCard;

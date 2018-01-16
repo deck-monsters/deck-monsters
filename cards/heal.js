@@ -66,7 +66,8 @@ Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. ð
 				card: this,
 				roll: healRoll,
 				player,
-				target
+				target,
+				outcome: `${target.givenName} grows stronger...`
 			});
 		}
 

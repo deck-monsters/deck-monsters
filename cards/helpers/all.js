@@ -1,3 +1,4 @@
+const BadBatchCard = require('../bad-batch');
 const BasicShieldCard = require('../basic-shield');
 const BattleFocusCard = require('../battle-focus');
 const BerserkCard = require('../berserk');
@@ -43,6 +44,7 @@ const WhiskeyShotCard = require('../whiskey-shot');
 const WoodenSpearCard = require('../wooden-spear');
 
 module.exports = [
+	BadBatchCard,
 	BasicShieldCard,
 	BattleFocusCard,
 	BerserkCard,
