@@ -3,7 +3,7 @@ const fantasyNames = require('fantasy-names');
 const GENDERS = Object.keys(require('./pronouns'));
 const TYPES = require('./creature-types');
 
-module.exports = (type, gender) => {
+const chooseName = (type, gender, alreadyTaken = []) => {
 	let args;
 
 	switch (type) {
@@ -43,5 +43,13 @@ module.exports = (type, gender) => {
 		args.push(numericGender);
 	}
 
-	return fantasyNames(...args);
-};
+	const name = fantasyNames(...args);
+
+	if (alreadyTaken.includes(name)) {
+		return chooseName(type, gender, alreadyTaken);
+	}
+
+	return name;
+}
+
+module.exports = chooseName;
