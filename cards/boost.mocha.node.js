@@ -3,9 +3,8 @@ const { expect, sinon } = require('../shared/test-setup');
 const BoostCard = require('./boost');
 const Gladiator = require('../monsters/gladiator');
 const pause = require('../helpers/pause');
-const HitCard = require('./hit');
 
-describe.only('./cards/boost.js', () => {
+describe('./cards/boost.js', () => {
 	let pauseStub;
 
 	before(() => {
@@ -27,7 +26,7 @@ describe.only('./cards/boost.js', () => {
 	it('can be instantiated with defaults', () => {
 		const boostCard = new BoostCard();
 
-		const stats = `Boost: ac +1`;
+		const stats = 'Boost: ac +1';
 
 		expect(boostCard).to.be.an.instanceof(BoostCard);
 		expect(boostCard.icon).to.equal('🆙');
@@ -39,7 +38,7 @@ describe.only('./cards/boost.js', () => {
 	it('can be instantiated with options', () => {
 		const boostCard = new BoostCard({ boostAmount: 20 });
 
-		const stats = `Boost: ac +20`;
+		const stats = 'Boost: ac +20';
 
 		expect(boostCard).to.be.an.instanceof(BoostCard);
 		expect(boostCard.icon).to.equal('🆙');
@@ -121,28 +120,16 @@ describe.only('./cards/boost.js', () => {
 				return expect(beginner.ac).to.equal(beginner.getPreBattlePropValue('ac') + 1);
 			})
 			.then(boostCard.play(lvl1, lvl1, ring))
-			.then((result) => {
-				return expect(lvl1.ac).to.equal(lvl1.getPreBattlePropValue('ac') + 3);
-			})
+			.then(() => expect(lvl1.ac).to.equal(lvl1.getPreBattlePropValue('ac') + 3))
 			.then(boostCard.play(lvl2, lvl2, ring))
-			.then((result) => {
-				return expect(lvl2.ac).to.equal(lvl2.getPreBattlePropValue('ac') + 4);
-			})
+			.then(() => expect(lvl2.ac).to.equal(lvl2.getPreBattlePropValue('ac') + 4))
 			.then(boostCard.play(lvl3, lvl3, ring))
-			.then((result) => {
-				return expect(lvl3.ac).to.equal(lvl3.getPreBattlePropValue('ac') + 5);
-			})
+			.then(() => expect(lvl3.ac).to.equal(lvl3.getPreBattlePropValue('ac') + 5))
 			.then(boostCard.play(lvl4, lvl4, ring))
-			.then((result) => {
-				return expect(lvl4.ac).to.equal(lvl4.getPreBattlePropValue('ac') + 6);
-			})
+			.then(() => expect(lvl4.ac).to.equal(lvl4.getPreBattlePropValue('ac') + 6))
 			.then(boostCard.play(lvl5, lvl5, ring))
-			.then((result) => {
-				return expect(lvl5.ac).to.equal(lvl5.getPreBattlePropValue('ac') + 7);
-			})
+			.then(() => expect(lvl5.ac).to.equal(lvl5.getPreBattlePropValue('ac') + 7))
 			.then(boostCard.play(lvl6, lvl6, ring))
-			.then((result) => {
-				return expect(lvl6.ac).to.equal(lvl6.getPreBattlePropValue('ac') + 8);
-			});
+			.then(() => expect(lvl6.ac).to.equal(lvl6.getPreBattlePropValue('ac') + 8));
 	});
 });
