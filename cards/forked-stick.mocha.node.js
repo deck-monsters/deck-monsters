@@ -8,8 +8,8 @@ const Gladiator = require('../monsters/gladiator');
 const ForkedStick = require('./forked-stick');
 const pause = require('../helpers/pause');
 
-const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { BARD, FIGHTER, BARBARIAN } = require('../helpers/classes');
+const { GLADIATOR, JINN, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
 describe('./cards/forked-stick.js', () => {
@@ -41,8 +41,8 @@ describe('./cards/forked-stick.js', () => {
 
 		const stats = `${hit.stats}
 
- +2 against Gladiator, Basilisk
- -2 against Minotaur
+ +2 against Basilisk, Gladiator
+ -2 against Jinn, Minotaur
 inneffective against Weeping Angel
 Attempt to pin your opponent between the branches of a forked stick.`;
 
@@ -53,9 +53,9 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		expect(forkedStick.hitOnFail).to.be.false;
 		expect(forkedStick.doDamageOnImmobilize).to.be.false;
 		expect(forkedStick.stats).to.equal(stats);
-		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
-		expect(forkedStick.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR]);
-		expect(forkedStick.permittedClassesAndTypes).to.deep.equal([FIGHTER, BARBARIAN]);
+		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
+		expect(forkedStick.weakAgainstCreatureTypes).to.deep.equal([JINN, MINOTAUR]);
+		expect(forkedStick.permittedClassesAndTypes).to.deep.equal([BARD, BARBARIAN, FIGHTER]);
 	});
 
 	it('can be instantiated with options', () => {

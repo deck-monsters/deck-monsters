@@ -96,7 +96,7 @@ return Promise
 		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 200
 	}))
 	.then(() => boss.spawnMonster({
-		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
+		type: 4, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
 	}))
 	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
 	.then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))

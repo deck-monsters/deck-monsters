@@ -19,6 +19,10 @@ module.exports = (type, gender) => {
 			args = ['game_of_thrones', 'dothrakis'];
 			break;
 		}
+		case TYPES.JINN: {
+			args = ['pathfinder', 'ifrits'];
+			break;
+		}
 		case TYPES.MINOTAUR: {
 			args = ['dungeon_and_dragons', 'minotaurs'];
 			break;
