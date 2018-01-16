@@ -45,26 +45,30 @@ Possiblity of Stroke of Luck`;
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		const healRoll = this.getHealRoll(player);
 		let healResult = healRoll.result;
-		let outcome = '';
 
 		// Stroke of Luck
 		if (isProbable({ probability: 1 })) {
 			healResult = Math.floor(player.maxHp / 2);
-			outcome = 'Stroke of luck. Heal half max hp.';
+			this.emit('narration', {
+				narration: `Stoke of Luck!
+Wait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`
+			});
 		// Curse of Loki
 		} else if (isProbable({ probability: 1 })) {
 			healResult *= -1;
-			outcome = 'Curse of Loki. You accidentally grab a vial of poison and take a swig.';
+			this.emit('narration', {
+				narration: `Curse of Loki!
+Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. 🤢`
+			})
+		} else {
+			this.emit('rolled', {
+				reason: 'to determine how much to heal',
+				card: this,
+				roll: healRoll,
+				player,
+				target
+			});
 		}
-
-		this.emit('rolled', {
-			reason: 'to determine how much to heal',
-			card: this,
-			roll: healRoll,
-			player,
-			target,
-			outcome
-		});
 
 		return target.heal(healResult);
 	}
