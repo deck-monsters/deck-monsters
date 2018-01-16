@@ -1,7 +1,6 @@
 const random = require('lodash.random');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
-const { difference } = require('../helpers/difference');
 
 const BaseClass = require('../shared/baseClass');
 

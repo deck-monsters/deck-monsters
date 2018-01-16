@@ -41,7 +41,7 @@ class BoostCard extends BaseCard {
 				['pops some Mentats', 50],
 				['pops some Berry Mentats', 30],
 				['puts on Button\'s wig', 10],
-				['puts on Lincoln\'s hat', 10],
+				['puts on Lincoln\'s hat', 10]
 			],
 			ac: [
 				['pops some Buffout', 50],
@@ -61,14 +61,14 @@ class BoostCard extends BaseCard {
 				['eats a bowl of nazi guard dog food', 10],
 				['steps on a red-cross med-pack', 10]
 			]
-		}
+		};
 
 		const item = getFlavor(this.boostedProp, items);
-		return `${player.givenName} ${item} and boosts their ${this.boostedProp}`;
+		return `${target.givenName} ${item} and boosts their ${this.boostedProp}`;
 	}
 
 	getBoostOverflowNarrative (player, target) {
-		return `${player.givenName}'s ${this.cursedProp} boosts have been maxed out. Boost will be granted to hp instead.`;
+		return `${target.givenName}'s ${this.cursedProp} boosts have been maxed out. Boost will be granted to hp instead.`;
 	}
 
 	effect (player, target) {
@@ -86,7 +86,7 @@ class BoostCard extends BaseCard {
 			this.emit('narration', {
 				narration: this.getBoostOverflowNarrative(player, target)
 			});
-			player.heal(hpBoostOverflow, player, this);
+			player.heal(hpBoostOverflow, target, this);
 		}
 
 		if (boostAmount > 0) {
