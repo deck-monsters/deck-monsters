@@ -5,7 +5,7 @@ const ImmobilizeCard = require('./immobilize');
 const { roll } = require('../helpers/chance');
 
 const {
-	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
 class MesmerizeCard extends ImmobilizeCard {
@@ -49,8 +49,8 @@ Chance to immobilize everyone with your shocking beauty.`;
 MesmerizeCard.cardType = 'Mesmerize';
 MesmerizeCard.actions = ['mesmerize', 'mesmerizes', 'mesmerized'];
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];
-MesmerizeCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
-MesmerizeCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
+MesmerizeCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
+MesmerizeCard.weakAgainstCreatureTypes = [JINN, MINOTAUR, WEEPING_ANGEL];
 MesmerizeCard.uselessAgainstCreatureTypes = [];
 MesmerizeCard.probability = 30;
 MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions[1]} everyone, including yourself.`;

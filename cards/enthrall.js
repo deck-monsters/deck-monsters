@@ -5,7 +5,11 @@ const ImmobilizeCard = require('./immobilize');
 const MesmerizeCard = require('./mesmerize');
 
 const {
-	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+	BASILISK,
+	GLADIATOR,
+	JINN,
+	MINOTAUR,
+	WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
 class EnthrallCard extends ImmobilizeCard {
@@ -49,10 +53,10 @@ Chance to immobilize your opponents with your shocking beauty.`;
 
 EnthrallCard.cardType = 'Enthrall';
 EnthrallCard.actions = ['enthrall', 'enthralls', 'enthralled'];
-EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];
-EnthrallCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
+EnthrallCard.permittedClassesAndTypes = [JINN, WEEPING_ANGEL];
+EnthrallCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
-EnthrallCard.uselessAgainstCreatureTypes = [];
+EnthrallCard.uselessAgainstCreatureTypes = [JINN];
 EnthrallCard.probability = 30;
 EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
 EnthrallCard.level = 2;

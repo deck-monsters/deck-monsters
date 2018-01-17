@@ -17,9 +17,11 @@ const announceMiss = (publicChannel, channelManager, className, card, {
 		icon = '⚔️';
 	}
 
+	const targetIdentifier = target === player ? `${target.pronouns.him}self` : target.givenName;
+
 	publicChannel({
 		announce:
-`${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${target.givenName} ${flavor}
+`${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${targetIdentifier} ${flavor}
 `
 	});
 };

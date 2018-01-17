@@ -26,7 +26,7 @@ class HealCard extends BaseCard {
 + spell bonus (diminished by 1 each use until 0, then resets)
 
 1% chance to heal half max hp
-1% chance to heal to poison`;
+1% chance to poison`;
 	}
 
 	getTargets (player) { // eslint-disable-line class-methods-use-this
@@ -62,14 +62,15 @@ Wait... wasn't this the questionable phial you found on the floor behind the she
 			this.emit('narration', {
 				narration: `Curse of Loki!
 Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. 🤢`
-			})
+			});
 		} else {
 			this.emit('rolled', {
-				reason: 'to determine how much to heal',
+				reason: 'to determine how much to heal.',
 				card: this,
 				roll: healRoll,
 				player,
-				target
+				target,
+				outcome: `${target.givenName} grows stronger...`
 			});
 		}
 

@@ -4,10 +4,6 @@ const EnthrallCard = require('./enthrall');
 
 const ImmobilizeCard = require('./immobilize');
 
-const {
-	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
-} = require('../helpers/creature-types');
-
 class EntranceCard extends EnthrallCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -37,10 +33,6 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 
 EntranceCard.cardType = 'Entrance';
 EntranceCard.actions = ['entrance', 'entrances', 'entranced'];
-EntranceCard.permittedClassesAndTypes = [WEEPING_ANGEL];
-EntranceCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
-EntranceCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
-EntranceCard.uselessAgainstCreatureTypes = [];
 EntranceCard.probability = 20;
 EntranceCard.description = `You strut and preen. Your _painful_ beauty overwhelms and ${EntranceCard.actions[1]} everyone, except yourself.`;
 EntranceCard.level = 3;

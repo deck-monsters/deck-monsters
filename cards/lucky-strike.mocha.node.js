@@ -7,7 +7,7 @@ const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
 
-const { CLERIC, FIGHTER } = require('../helpers/classes');
+const { BARD, CLERIC, FIGHTER } = require('../helpers/classes');
 
 describe('./cards/lucky-strike.js', () => {
 	let channelStub;
@@ -49,10 +49,10 @@ describe('./cards/lucky-strike.js', () => {
 		expect(luckyStrike.targetProp).to.equal('str');
 	});
 
-	it('can only be played by Fighters and Clerics', () => {
+	it('can only be played by Bards, Fighters and Clerics', () => {
 		const luckyStrike = new LuckyStrikeCard();
 
-		expect(luckyStrike.permittedClassesAndTypes).to.deep.equal([CLERIC, FIGHTER]);
+		expect(luckyStrike.permittedClassesAndTypes).to.deep.equal([BARD, CLERIC, FIGHTER]);
 	});
 
 	it('rolls twice for attack', () => {

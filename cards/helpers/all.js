@@ -1,3 +1,4 @@
+const BadBatchCard = require('../bad-batch');
 const BasicShieldCard = require('../basic-shield');
 const BattleFocusCard = require('../battle-focus');
 const BerserkCard = require('../berserk');
@@ -33,6 +34,7 @@ const PickPocketCard = require('../pick-pocket');
 const PoundCard = require('../pound');
 const RandomCard = require('../random');
 const RehitCard = require('../rehit');
+const SandstormCard = require('../sandstorm');
 const ScotchCard = require('../scotch');
 const SurvivalKnifeCard = require('../survival-knife');
 const ThickSkinCard = require('../thick-skin');
@@ -42,6 +44,7 @@ const WhiskeyShotCard = require('../whiskey-shot');
 const WoodenSpearCard = require('../wooden-spear');
 
 module.exports = [
+	BadBatchCard,
 	BasicShieldCard,
 	BattleFocusCard,
 	BerserkCard,
@@ -77,6 +80,7 @@ module.exports = [
 	PoundCard,
 	RandomCard,
 	RehitCard,
+	SandstormCard,
 	ScotchCard,
 	SurvivalKnifeCard,
 	ThickSkinCard,

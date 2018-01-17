@@ -6,6 +6,7 @@ const FleeCard = require('../flee');
 const HealCard = require('../heal');
 const HitCard = require('../hit');
 const HornGoreCard = require('../horn-gore');
+const SandstormCard = require('../sandstorm');
 
 const { DEFAULT_MINIMUM_CARDS } = require('./constants');
 const draw = require('./draw');
@@ -16,6 +17,7 @@ const getMinimumDeck = () => [
 	new CoilCard(),
 	new HornGoreCard(),
 	new BattleFocusCard(),
+	new SandstormCard(),
 	new BlastCard(),
 	new HitCard(),
 	new HitCard(),

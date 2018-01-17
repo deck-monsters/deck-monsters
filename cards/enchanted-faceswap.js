@@ -2,7 +2,7 @@
 
 const BaseCard = require('./base');
 
-const { CLERIC } = require('../helpers/classes');
+const { BARD, CLERIC } = require('../helpers/classes');
 const { DEFENSE_PHASE } = require('../helpers/phases');
 
 class EnchantedFaceswapCard extends BaseCard {
@@ -60,7 +60,7 @@ class EnchantedFaceswapCard extends BaseCard {
 }
 
 EnchantedFaceswapCard.cardType = 'Enchanted Faceswap';
-EnchantedFaceswapCard.permittedClassesAndTypes = [CLERIC];
+EnchantedFaceswapCard.permittedClassesAndTypes = [BARD, CLERIC];
 EnchantedFaceswapCard.probability = 40;
 EnchantedFaceswapCard.description = 'A snapchat filter for the magically inclined. This spell will cause the next card played with the caster as the target to be reversed so that the player of the card becomes the target.';
 EnchantedFaceswapCard.level = 1;
