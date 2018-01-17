@@ -103,6 +103,10 @@ ${getCreatureTypeChoices(allMonsters)}`,
 					example = 'deceptively glorious';
 					descriptor = 'raiment be';
 					break;
+				case CREATURE_TYPES.JINN:
+					example = 'slightly translucent blue';
+					descriptor = 'nascent form be';
+					break;
 				default:
 					example = 'blue';
 					descriptor = 'clothing look like';
