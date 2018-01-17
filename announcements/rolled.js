@@ -18,8 +18,8 @@ const announceRolled = (publicChannel, channelManager, className, monster, {
 	publicChannel({
 		announce:
 `${text}
-🎲 *${rollResult}${vsMsg}*
-    ${outcome}
+🎲 *${rollResult}${vsMsg}*${outcome ? `
+    ${outcome}` : ''}
  `
 	});
 };

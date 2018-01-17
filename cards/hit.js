@@ -88,8 +88,7 @@ class HitCard extends BaseCard {
 				card: this,
 				roll: damageRoll,
 				player,
-				target,
-				outcome: ''
+				target
 			});
 		}
 

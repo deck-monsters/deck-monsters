@@ -117,8 +117,7 @@ ${player.givenName}'s drain takes from hp instead.`;
 							card: this,
 							roll: combinedRoll,
 							player: blinkPlayer,
-							target: blinkTarget,
-							outcome: ''
+							target: blinkTarget
 						});
 
 						// drain hp
