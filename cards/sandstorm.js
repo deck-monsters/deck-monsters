@@ -12,6 +12,7 @@ const EFFECT_TYPE = 'SandstormEffect';
 class SandstormCard extends BlastCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		healProbability,
 		hitProbability,
 		icon = '🌪',
 		...rest
@@ -19,8 +20,13 @@ class SandstormCard extends BlastCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
+			healProbability,
 			hitProbability
 		});
+	}
+
+	get healProbability () {
+		return this.options.healProbability;
 	}
 
 	get hitProbability () {
@@ -78,7 +84,7 @@ class SandstormCard extends BlastCard {
 						const newTargets = [];
 
 						// Probably steal health cards
-						if (oldTargets.length === 1 && oldTargets[0] === player && isProbable({ probability: 70 })) {
+						if (oldTargets.length === 1 && oldTargets[0] === player && isProbable({ probability: this.healProbability })) {
 							newTargets.push(sandstormPlayer);
 						}
 
@@ -116,6 +122,7 @@ SandstormCard.notForSale = true;
 
 SandstormCard.defaults = {
 	damage: 1,
+	healProbability: 70,
 	hitProbability: 30,
 	levelDamage: 1
 };

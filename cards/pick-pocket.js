@@ -28,11 +28,19 @@ class PickPocketCard extends BaseCard {
 			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName}`
 		});
 
+		randomCard.originalGetTargets = randomCard.getTargets;
+		randomCard.getTargets = (...args) => this.getTargets(...args);
+
 		randomCard.originalEffect = randomCard.effect;
 		randomCard.effect = (...args) => this.effect(...args);
+
 		this.randomCard = randomCard;
 
 		return randomCard.play(player, proposedTarget, ring, activeContestants);
+	}
+
+	getTargets (player, proposedTarget, ring, activeContestants) {
+		return this.randomCard.originalGetTargets.call(this.randomCard, player, proposedTarget, ring, activeContestants);
 	}
 
 	effect (player, target, ring, activeContestants) {
