@@ -23,7 +23,10 @@ class HealCard extends BaseCard {
 
 	get stats () {
 		return `Health: ${this.healthDice}
-Possiblity of Stroke of Luck`;
++ spell bonus (diminished by 1 each use until 0, then resets)
+
+1% chance to heal half max hp
+1% chance to poison`;
 	}
 
 	getTargets (player) { // eslint-disable-line class-methods-use-this
