@@ -3,6 +3,9 @@ const { expect, sinon } = require('../shared/test-setup');
 const IocaneCard = require('./iocane');
 const pause = require('../helpers/pause');
 
+const HitCard = require('./hit');
+const HealCard = require('./heal');
+
 const { CLERIC } = require('../helpers/classes');
 
 describe('./cards/iocane.js', () => {
@@ -30,9 +33,11 @@ describe('./cards/iocane.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const iocane = new IocaneCard();
+		const hit = new HitCard({ damageDice: iocane.damageDice });
+		const heal = new HealCard({ healthDice: iocane.damageDice });
 
 		expect(iocane).to.be.an.instanceof(IocaneCard);
-		expect(iocane.stats).to.equal('Hit: 1d20 vs AC / Damage: 2d4\n- or, below 1/4 health -\nHealth: 2d4\nPossiblity of Stroke of Luck');
+		expect(iocane.stats).to.equal(`${hit.stats}\n- or, below 1/4 health -\n${heal.stats}`);
 		expect(iocane.permittedClassesAndTypes).to.deep.equal([CLERIC]);
 		expect(iocane.icon).to.equal('⚗️');
 		expect(iocane.damageDice).to.equal('2d4');
@@ -40,9 +45,11 @@ describe('./cards/iocane.js', () => {
 
 	it('can be instantiated with options', () => {
 		const iocane = new IocaneCard({ icon: '🤷‍♂️', damageDice: '1d4' });
+		const hit = new HitCard({ damageDice: iocane.damageDice });
+		const heal = new HealCard({ healthDice: iocane.damageDice });
 
 		expect(iocane).to.be.an.instanceof(IocaneCard);
-		expect(iocane.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4\n- or, below 1/4 health -\nHealth: 1d4\nPossiblity of Stroke of Luck');
+		expect(iocane.stats).to.equal(`${hit.stats}\n- or, below 1/4 health -\n${heal.stats}`);
 		expect(iocane.permittedClassesAndTypes).to.deep.equal([CLERIC]);
 		expect(iocane.icon).to.equal('🤷‍♂️');
 		expect(iocane.damageDice).to.equal('1d4');
