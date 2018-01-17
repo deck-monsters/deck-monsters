@@ -59,8 +59,8 @@ ${getCreatureTypeChoices(allMonsters)}`,
 			let question = '';
 			if (alreadyTaken) question += 'That name is already taken, please choose a different name. ';
 
-			const name1 = names(Monster.creatureType.toLowerCase(), options.gender, monsterNames);
-			const name2 = names(Monster.creatureType.toLowerCase(), options.gender, [ name1, ...monsterNames ]);
+			const name1 = names(Monster.creatureType, options.gender, monsterNames);
+			const name2 = names(Monster.creatureType, options.gender, [ name1, ...monsterNames ]);
 
 			question += `What would you like to name ${PRONOUNS[options.gender].him}? ${name1}? ${name2}? Something else?`;
 
@@ -86,20 +86,20 @@ ${getCreatureTypeChoices(allMonsters)}`,
 
 			let example;
 			let descriptor;
-			switch (Monster.creatureType.toLowerCase()) {
-				case CREATURE_TYPES.BASILISK.toLowerCase():
+			switch (Monster.creatureType) {
+				case CREATURE_TYPES.BASILISK:
 					example = 'gold and black diamond patterned';
 					descriptor = 'skin look like';
 					break;
-				case CREATURE_TYPES.MINOTAUR.toLowerCase():
+				case CREATURE_TYPES.MINOTAUR:
 					example = 'scarred, wrinkled, and beautifully auburn';
 					descriptor = 'skin and hair look like';
 					break;
-				case CREATURE_TYPES.GLADIATOR.toLowerCase():
+				case CREATURE_TYPES.GLADIATOR:
 					example = 'tattered rags';
 					descriptor = 'garments look like';
 					break;
-				case CREATURE_TYPES.WEEPING_ANGEL.toLowerCase():
+				case CREATURE_TYPES.WEEPING_ANGEL:
 					example = 'deceptively glorious';
 					descriptor = 'raiment be';
 					break;

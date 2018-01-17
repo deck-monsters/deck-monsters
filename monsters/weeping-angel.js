@@ -20,21 +20,12 @@ const DESCRIPTORS = [
 	'nuttier'
 ];
 
-const COLOR_FLAVOR = [
-	'deceptively',
-	'sneakily',
-	'frighteningly',
-	'gloriously',
-	'horrifyingly'
-]
-
 class WeepingAngel extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
 			dexModifier: 1,
 			strModifier: -1,
 			intModifier: 2,
-			colorFlavor: sample(COLOR_FLAVOR),
 			color: DEFAULT_COLOR,
 			nationality: sample(NATIONALITIES),
 			descriptor: sample(DESCRIPTORS),
@@ -42,10 +33,6 @@ class WeepingAngel extends BaseMonster {
 		};
 
 		super(Object.assign(defaultOptions, options));
-	}
-
-	get colorFlavor () {
-		return this.options.colorFlavor;
 	}
 
 	get color () {
@@ -61,7 +48,7 @@ class WeepingAngel extends BaseMonster {
 	}
 
 	get description () {
-		return `a ${this.colorFlavor} ${this.color} weeping angel. On meeting ${this.pronouns.him} one might form the following three impressions: that ${this.pronouns.he} was ${this.nationality}, that ${this.pronouns.he} was intelligent, and that ${this.pronouns.he} was ${this.descriptor} than a treeful of monkeys on nitrous oxide.`;
+		return `A${this.color[0].match(/[aeiou]/i) ? 'n' : ''} ${this.color} weeping angel. On meeting ${this.pronouns.him} one might form the following three impressions: that ${this.pronouns.he} was ${this.nationality}, that ${this.pronouns.he} was intelligent, and that ${this.pronouns.he} was ${this.descriptor} than a treeful of monkeys on nitrous oxide.`;
 	}
 }
 
