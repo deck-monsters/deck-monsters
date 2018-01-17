@@ -51,7 +51,7 @@ Possiblity of Stroke of Luck`;
 			healResult = Math.floor(player.maxHp / 2);
 			this.emit('narration', {
 				narration: `Stoke of Luck!
-Wait... wasn't this the questionable vial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`
+Wait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`
 			});
 		// Curse of Loki
 		} else if (isProbable({ probability: 1 })) {
