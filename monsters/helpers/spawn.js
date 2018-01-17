@@ -60,7 +60,7 @@ ${getCreatureTypeChoices(allMonsters)}`,
 			if (alreadyTaken) question += 'That name is already taken, please choose a different name. ';
 
 			const name1 = names(Monster.creatureType, options.gender, monsterNames);
-			const name2 = names(Monster.creatureType, options.gender, [ name1, ...monsterNames ]);
+			const name2 = names(Monster.creatureType, options.gender, [name1, ...monsterNames]);
 
 			question += `What would you like to name ${PRONOUNS[options.gender].him}? ${name1}? ${name2}? Something else?`;
 
@@ -77,7 +77,7 @@ ${getCreatureTypeChoices(allMonsters)}`,
 			return options;
 		});
 
-	const askForColor = () => Promise
+	const askForColor = Monster => Promise
 		.resolve()
 		.then(() => {
 			if (color !== undefined) {
@@ -105,7 +105,7 @@ ${getCreatureTypeChoices(allMonsters)}`,
 					break;
 				default:
 					example = 'blue';
-					descriptor = 'clothing look like'
+					descriptor = 'clothing look like';
 			}
 
 			return channel({
@@ -148,6 +148,6 @@ ${getChoices(genders)}`,
 		})
 		.then(() => askForGender(Monster))
 		.then(() => askForName(Monster))
-		.then(askForColor)
+		.then(() => askForColor(Monster))
 		.then(() => new Monster(options));
 };

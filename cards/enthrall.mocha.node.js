@@ -10,7 +10,7 @@ const pause = require('../helpers/pause');
 
 
 const {
-	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+	GLADIATOR, JINN, MINOTAUR, BASILISK, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
 describe('./cards/enthrall.js', () => {
@@ -42,8 +42,9 @@ describe('./cards/enthrall.js', () => {
 
 		const stats = `${hit.stats}
 
- +2 against Gladiator, Basilisk
+ +2 against Basilisk, Gladiator
  -2 against Minotaur, Weeping Angel
+inneffective against Jinn
 Chance to immobilize your opponents with your shocking beauty.`;
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);
@@ -53,9 +54,10 @@ Chance to immobilize your opponents with your shocking beauty.`;
 		expect(enthrall.hitOnFail).to.be.false;
 		expect(enthrall.doDamageOnImmobilize).to.be.false;
 		expect(enthrall.stats).to.equal(stats);
-		expect(enthrall.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
+		expect(enthrall.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
 		expect(enthrall.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
-		expect(enthrall.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
+		expect(enthrall.permittedClassesAndTypes).to.deep.equal([JINN, WEEPING_ANGEL]);
+		expect(enthrall.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
 	});
 
 	it('can be instantiated with options', () => {

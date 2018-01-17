@@ -2,7 +2,7 @@
 
 const HitCard = require('./hit');
 
-const { FIGHTER } = require('../helpers/classes');
+const { BARD, FIGHTER } = require('../helpers/classes');
 const { MINOTAUR } = require('../helpers/creature-types');
 const { roll } = require('../helpers/chance');
 
@@ -43,7 +43,7 @@ class WoodenSpearCard extends HitCard {
 }
 
 WoodenSpearCard.cardType = 'Wooden Spear';
-WoodenSpearCard.permittedClassesAndTypes = [FIGHTER];
+WoodenSpearCard.permittedClassesAndTypes = [BARD, FIGHTER];
 WoodenSpearCard.creatureType = MINOTAUR;
 WoodenSpearCard.probability = 60;
 WoodenSpearCard.description = `A simple weapon fashioned for ${WoodenSpearCard.creatureType}-hunting.`;

@@ -2,7 +2,7 @@
 
 const BaseCard = require('./base');
 
-const { CLERIC, WIZARD } = require('../helpers/classes');
+const { BARD, CLERIC, WIZARD } = require('../helpers/classes');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 
 class CloakOfInvisibilityCard extends BaseCard {
@@ -71,7 +71,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 }
 
 CloakOfInvisibilityCard.cardType = 'Cloak of Invisibility';
-CloakOfInvisibilityCard.permittedClassesAndTypes = [CLERIC, WIZARD];
+CloakOfInvisibilityCard.permittedClassesAndTypes = [BARD, CLERIC, WIZARD];
 CloakOfInvisibilityCard.probability = 20;
 CloakOfInvisibilityCard.description = 'You don your cloak and disappear, if only for a while.';
 CloakOfInvisibilityCard.level = 1;

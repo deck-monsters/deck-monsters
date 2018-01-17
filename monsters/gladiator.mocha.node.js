@@ -33,7 +33,7 @@ describe('./monsters/gladiator.js', () => {
 		expect(gladiator.options).to.deep.contain({
 			dexModifier: 1,
 			strModifier: 1,
-			intModifier: 1,
+			intModifier: 0,
 			color: 'leather',
 			icon: '💪'
 		});

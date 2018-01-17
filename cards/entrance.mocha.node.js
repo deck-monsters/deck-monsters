@@ -10,7 +10,7 @@ const pause = require('../helpers/pause');
 
 
 const {
-	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+	GLADIATOR, JINN, MINOTAUR, BASILISK, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
 describe('./cards/entrance.js', () => {
@@ -42,8 +42,9 @@ describe('./cards/entrance.js', () => {
 
 		const stats = `${hit.stats}
 
- +2 against Gladiator, Basilisk
+ +2 against Basilisk, Gladiator
  -2 against Minotaur, Weeping Angel
+inneffective against Jinn
 Chance to immobilize and damage your opponents with your painfully shocking beauty.`;
 
 		expect(entrance).to.be.an.instanceof(Entrance);
@@ -53,9 +54,10 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 		expect(entrance.hitOnFail).to.be.true;
 		expect(entrance.doDamageOnImmobilize).to.be.true;
 		expect(entrance.stats).to.equal(stats);
-		expect(entrance.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
+		expect(entrance.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
 		expect(entrance.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
-		expect(entrance.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
+		expect(entrance.permittedClassesAndTypes).to.deep.equal([JINN, WEEPING_ANGEL]);
+		expect(entrance.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
 	});
 
 	it('can be instantiated with options', () => {

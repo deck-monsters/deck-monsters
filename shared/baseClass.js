@@ -24,6 +24,22 @@ class BaseClass {
 		return this.constructor.name;
 	}
 
+	get instanceId () {
+		if (this.original) {
+			return this.original.instanceId;
+		}
+
+		if (!this.instance) {
+			this.instance = {};
+		}
+
+		if (!this.instance.id) {
+			this.instance.id = Symbol('instanceId');
+		}
+
+		return this.instance.id;
+	}
+
 	get defaults () {
 		return this.constructor.defaults;
 	}

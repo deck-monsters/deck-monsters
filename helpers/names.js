@@ -19,6 +19,10 @@ const chooseName = (type, gender, alreadyTaken = []) => {
 			args = ['game_of_thrones', 'dothrakis'];
 			break;
 		}
+		case TYPES.JINN: {
+			args = ['pathfinder', 'ifrits'];
+			break;
+		}
 		case TYPES.MINOTAUR: {
 			args = ['dungeon_and_dragons', 'minotaurs'];
 			break;
@@ -50,6 +54,6 @@ const chooseName = (type, gender, alreadyTaken = []) => {
 	}
 
 	return name;
-}
+};
 
 module.exports = chooseName;

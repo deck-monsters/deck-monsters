@@ -41,7 +41,7 @@ class FleeCard extends BaseCard {
 					this.emit('stay', {
 						fleeResult: fleeRoll.result,
 						fleeRoll,
-						player,
+						player: target,
 						activeContestants
 					});
 
@@ -50,7 +50,7 @@ class FleeCard extends BaseCard {
 		}
 
 		this.emit('stay', {
-			player,
+			player: target,
 			activeContestants
 		});
 
