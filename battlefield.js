@@ -52,10 +52,10 @@ const charAnnouncer = what => announcer('charlemagne', what);
 let char;
 let charCards;
 
-const BOSS_ID = 666;
-const bossAnnouncer = what => announcer('boss', what);
-let boss;
-let bossCards;
+// const BOSS_ID = 666;
+// const bossAnnouncer = what => announcer('boss', what);
+// let boss;
+// let bossCards;
 
 return Promise
 	.resolve()
@@ -75,13 +75,7 @@ return Promise
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
 	})
-	.then(() => slackdem.getCharacter(bossAnnouncer, BOSS_ID, {
-		id: BOSS_ID, name: 'boss', type: 0, gender: 0, icon: 0, xp: 500
-	}))
-	.then((character) => {
-		boss = character;
-		bossCards = [...shuffle(boss.character.deck).slice(0, 9)];
-	})
+	// .then(() => vlad.spawnMonster())
 	.then(() => vlad.spawnMonster({
 		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 100
 	}))
@@ -95,9 +89,6 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 200
 	}))
-	.then(() => boss.spawnMonster({
-		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
-	}))
 	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
 	.then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))
 	.then(() => vlad.lookAtCards())
@@ -105,4 +96,4 @@ return Promise
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
-	.then(() => boss.sendMonsterToTheRing());
+	.then(() => slackdem.getRing().spawnBoss())
