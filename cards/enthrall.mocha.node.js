@@ -57,6 +57,7 @@ Chance to immobilize your opponents with your shocking beauty.`;
 		expect(enthrall.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
 		expect(enthrall.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
 		expect(enthrall.permittedClassesAndTypes).to.deep.equal([JINN, WEEPING_ANGEL]);
+		expect(enthrall.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
 	});
 
 	it('can be instantiated with options', () => {

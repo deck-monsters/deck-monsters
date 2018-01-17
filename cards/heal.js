@@ -62,7 +62,7 @@ Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. ð
 			});
 		} else {
 			this.emit('rolled', {
-				reason: 'to determine how much to heal',
+				reason: 'to determine how much to heal.',
 				card: this,
 				roll: healRoll,
 				player,

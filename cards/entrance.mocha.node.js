@@ -57,6 +57,7 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 		expect(entrance.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
 		expect(entrance.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
 		expect(entrance.permittedClassesAndTypes).to.deep.equal([JINN, WEEPING_ANGEL]);
+		expect(entrance.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
 	});
 
 	it('can be instantiated with options', () => {

@@ -45,7 +45,7 @@ class BadBatchCard extends BaseCard {
 						const healRoll = getHealRoll.call(card, player);
 
 						this.emit('rolled', {
-							reason: 'to determine how much to heal',
+							reason: 'to measure out a shot of whiskey.',
 							card: this,
 							roll: healRoll,
 							player,
@@ -88,7 +88,7 @@ BadBatchCard.flavors = {
 		['slips a mysterious liquid in the cup of', 60],
 		['buys a round for', 60],
 		['offers a drink to', 60],
-		['accidentally gives lead poisoning to', 20],
+		['"accidentally" gives lead poisoning to', 20],
 		['pours acid straight down the throat of', 5]
 	]
 };
