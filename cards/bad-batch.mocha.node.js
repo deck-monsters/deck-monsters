@@ -5,6 +5,7 @@ const Jinn = require('../monsters/jinn');
 const pause = require('../helpers/pause');
 const BadBatchCard = require('./bad-batch');
 const ScotchCard = require('./scotch');
+const HealCard = require('./heal');
 
 describe('./cards/bad-batch.js', () => {
 	let channelStub;
@@ -105,6 +106,53 @@ describe('./cards/bad-batch.js', () => {
 
 				// Effect cleans up after itself
 				expect(ring.encounterEffects.length).to.equal(0);
+			});
+	});
+
+	it('has no effect on other cards', () => {
+		const badBatch = new BadBatchCard();
+
+		const player = new Jinn({ name: 'player' });
+		const target1 = new Jinn({ name: 'target1' });
+		const target2 = new Jinn({ name: 'target2' });
+		const ring = {
+			encounterEffects: [],
+			contestants: [
+				{ monster: player },
+				{ monster: target1 },
+				{ monster: target2 }
+			]
+		};
+
+		const playerStartingHp = 5;
+		const target1StartingHp = 5;
+		const target2StartingHp = 5;
+
+		player.hp = playerStartingHp;
+		target1.hp = target1StartingHp;
+		target2.hp = target2StartingHp;
+
+		const heal = new HealCard();
+
+		expect(ring.encounterEffects.length).to.equal(0);
+
+		return heal
+			.play(target1, player)
+			.then(() => {
+				// Heal plays normally
+				expect(target1.hp).to.be.above(target1StartingHp);
+			})
+			.then(() => badBatch.play(player, target1, ring, ring.contestants))
+			.then(() => expect(ring.encounterEffects.length).to.equal(1))
+			// Effect does not activate on a non-targeted card (heal card)
+			.then(() => ring.encounterEffects[0]({ card: heal }))
+			.then(modifiedCard => modifiedCard.play(target2, player, ring, ring.contestants))
+			.then(() => {
+				// The heal does not turn to poison
+				expect(target2.hp).to.be.above(target2StartingHp);
+
+				// Effect still hangs about
+				expect(ring.encounterEffects.length).to.equal(1);
 			});
 	});
 });
