@@ -126,7 +126,8 @@ SandstormCard.flavors = {
 		['whips sand in the eyes of', 70],
 		['calls upon the desert gods to destroy', 70],
 		['disintigrates', 50],
-		['turns to dust and buries', 5]
+		['turns to dust and buries', 5],
+		['pulls out a cassette labeled `Darude, 1999 (extended cut)` and slips a pair of headphones over the ears of', 3]
 	]
 };
 
