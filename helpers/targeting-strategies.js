@@ -1,3 +1,5 @@
+const sample = require('lodash.sample');
+
 const TARGET_HIGHEST_HP_PLAYER = 'TARGET_HIGHEST_HP_PLAYER';
 const TARGET_MAX_HP_PLAYER = 'TARGET_MAX_HP_PLAYER';
 const TARGET_NEXT_PLAYER = 'TARGET_NEXT_PLAYER';
@@ -37,10 +39,11 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 				return potentialTarget;
 			}, defaultTarget);
 		}
-		case TARGET_RANDOM_PLAYER:
+		case TARGET_RANDOM_PLAYER: {
 			const potentialTargets = contestants.filter(contestant => (contestant !== playerContestant));
 
-			return potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
+			return sample(potentialTargets);
+		}
 		case TARGET_NEXT_PLAYER:
 		default: {
 			const currentIndex = contestants.indexOf(playerContestant);
