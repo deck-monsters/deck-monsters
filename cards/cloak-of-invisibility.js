@@ -36,13 +36,6 @@ class CloakOfInvisibilityCard extends BaseCard {
 				card.effect = (player, target, ring, activeContestants) => {
 					let finalTarget = target;
 
-					// this.emit('narration', {
-					// 	narration: `REMOVE .
-
-					// effect called on ${target.givenName}
-					// 	`
-					// });
-
 					const targetIsInvisible = !!target.encounterEffects.find(targetEffect => targetEffect.effectType === 'InvisibilityEffect');
 					if (phase === DEFENSE_PHASE && player !== invisibilityTarget && targetIsInvisible) {
 						this.emit('effect', {
@@ -78,35 +71,15 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 						if (!success) {
 							invisibilityTarget.encounterModifiers.alreadyRetargeted = true;
-							// this.emit('narration', {
-							// 	narration: `REMOVE .
 
-							// ==================================================================================
-
-
-							// 	`
-							// });
 							const playerContestant = activeContestants.filter(contestant => contestant.monster === player)[0];
-							const notInvisibilityTarget = contestant =>
-								// this.emit('narration', {
-								// 	narration: `
-								// is visible: ${!contestant.monster.encounterEffects.find(effect => effect.effectType === 'InvisibilityEffect')}
-								// not player: ${contestant.monster !== player}
-								// `
-								// });
-								 (contestant &&
+							const notInvisibilityTarget = contestant => (contestant &&
 									!contestant.monster.dead &&
 									!contestant.monster.fled &&
 									contestant.monster !== invisibilityTarget &&
 									!contestant.monster.encounterEffects.find(targetEffect => targetEffect.effectType === 'InvisibilityEffect') &&
 									contestant.monster !== player);
 							const visibleOtherContestants = activeContestants.filter(notInvisibilityTarget);
-
-							// this.emit('narration', {
-							// 	narration: `
-							// number visible: ${visibleOtherContestants.length}
-							// `
-							// });
 
 							if (visibleOtherContestants.length <= 0 || activeContestants.length <= 2 || invisibilityTarget.encounterModifiers.alreadyRetargeted) {
 								this.emit('narration', {
@@ -118,12 +91,6 @@ class CloakOfInvisibilityCard extends BaseCard {
 							}
 
 							const finalTargetContestant = getTarget({ playerContestant, contestants: visibleOtherContestants, strategy: TARGET_RANDOM_PLAYER });
-
-							// this.emit('narration', {
-							// 	narration: `
-							// final target chosen: ${finalTargetContestant.monster.givenName}
-							// `
-							// });
 
 							finalTarget = finalTargetContestant.monster;
 
@@ -147,9 +114,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 							invisibilityTarget.encounterModifiers.invisibilityTurns += 1;
 						}
 					}
-					// this.emit('narration', {
-					// 	narration: `REMOVE ${player.givenName} about to call effect on ${finalTarget.givenName}.`
-					// });
+
 					return effect.call(card, player, finalTarget, ring, activeContestants);
 				};
 			}
