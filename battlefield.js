@@ -55,11 +55,6 @@ const charAnnouncer = what => announcer('charlemagne', what);
 let char;
 let charCards;
 
-// const BOSS_ID = 666;
-// const bossAnnouncer = what => announcer('boss', what);
-// let boss;
-// let bossCards;
-
 return Promise
 	.resolve()
 	.then(() => slackdem.getCharacter(vladAnnouncer, VLAD_ID, {
@@ -67,10 +62,7 @@ return Promise
 	}))
 	.then((character) => {
 		vlad = character;
-		const cloak = new Cloak();
-		const hit = new Hit();
-		const heal = new Heal();
-		vlad.character.deck = [cloak, cloak, cloak, cloak, cloak, cloak, cloak, cloak, cloak];
+		vlad.character.deck = [new Cloak(), new Cloak(), new Cloak(), new Cloak(), new Cloak(), new Hit(), new Heal(), new Hit(), new Heal()];
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {

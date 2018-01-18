@@ -1,11 +1,16 @@
 /* eslint-disable max-len */
+const sample = require('lodash.sample');
 
 const BaseCard = require('./base');
-const { getTarget, TARGET_RANDOM_PLAYER } = require('../helpers/targeting-strategies');
 const { roll } = require('../helpers/chance');
 
 const { BARD, CLERIC, WIZARD } = require('../helpers/classes');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
+const { capitalize } = require('../helpers/capitalize');
+
+const EFFECT_TYPE = 'InvisibilityEffect';
+
+const isInvisible = monster => !!monster.encounterEffects.find(encounterEffect => encounterEffect.effectType === EFFECT_TYPE);
 
 class CloakOfInvisibilityCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -19,7 +24,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 		return [player];
 	}
 
-	getSavingThrow (player) {
+	getSavingThrow (player) { // eslint-disable-line class-methods-use-this
 		return roll({ primaryDice: '1d20', modifier: player.intModifier, crit: true });
 	}
 
@@ -34,10 +39,19 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 			if (effect) {
 				card.effect = (player, target, ring, activeContestants) => {
-					let finalTarget = target;
+					if (phase === DEFENSE_PHASE && player !== invisibilityTarget && target === invisibilityTarget) {
+						const potentialTargets = activeContestants.filter(({ monster }) => (monster !== player && !isInvisible(monster)));
 
-					const targetIsInvisible = !!target.encounterEffects.find(targetEffect => targetEffect.effectType === 'InvisibilityEffect');
-					if (phase === DEFENSE_PHASE && player !== invisibilityTarget && targetIsInvisible) {
+						if (potentialTargets.length > 0) {
+							const newTarget = sample(potentialTargets).monster;
+
+							this.emit('narration', {
+								narration: `${player.givenName} doesn't see ${invisibilityTarget.givenName} anywhere and turns ${player.pronouns.his} attention to ${newTarget.givenName} instead.`
+							});
+
+							return effect.call(card, player, newTarget, ring, activeContestants);
+						}
+
 						this.emit('effect', {
 							effectResult: `${this.icon} hidden from`,
 							player,
@@ -45,63 +59,42 @@ class CloakOfInvisibilityCard extends BaseCard {
 							ring
 						});
 
-						const savingThrow = this.getSavingThrow(player, invisibilityTarget);
-						const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(savingThrow, 200);// target.int);
-						let commentary;
+						const savingThrow = this.getSavingThrow(player);
+						const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(savingThrow, invisibilityTarget.ac);
+						let outcome;
 
 						if (strokeOfLuck) {
-							invisibilityTarget.encounterModifiers.invisibilityTurns = 3;
-							commentary = `${player.givenName} rolled a natural 20. ${player.pronouns.he} immediately realizes exactly where ${invisibilityTarget.givenName} is.`;
+							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
+
+							outcome = `${player.givenName} rolled a natural 20. ${capitalize(player.pronouns.he)} immediately realizes exactly where ${invisibilityTarget.givenName} is and strips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`;
 						} else if (curseOfLoki) {
-							invisibilityTarget.encounterModifiers.invisibilityTurns = 0;
-							commentary = `${player.givenName} rolled a 1. While looking for ${invisibilityTarget.givenName} ${player.pronouns.he} somehow turns ${player.pronouns.his} back to ${invisibilityTarget.pronouns.him}.`;
+							outcome = `${player.givenName} rolled a 1. While stumbling about looking for ${invisibilityTarget.givenName} ${player.pronouns.he} trips and hits himself instead.`;
 						} else if (tie) {
-							commentary = 'Miss... Tie goes to the defender.';
+							outcome = `${player.givenName} almost catches a glimpse of ${invisibilityTarget.givenName} but when ${player.pronouns.he} blinks ${invisibilityTarget.givenName} is gone.`;
+						} else if (success) {
+							outcome = `Success. ${player.givenName} catches a glimpse of ${invisibilityTarget.givenName} and attacks.`;
+						} else {
+							outcome = `Fail. ${invisibilityTarget.givenName} remains ${this.icon} hidden from ${player.givenName}.`;
 						}
 
 						this.emit('rolled', {
-							reason: `vs ${invisibilityTarget.givenName}'s int (${target.int}) to determine if ${player.pronouns.he} can see ${player.pronouns.him}.`,
-							card: this,
+							reason: `vs ${invisibilityTarget.givenName}'s ac (${target.ac}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
+							card,
 							roll: savingThrow,
 							player,
 							target: invisibilityTarget,
-							outcome: success ? commentary || `Success. ${player.givenName} is able to see ${invisibilityTarget.givenName}` : commentary || `Fail. ${invisibilityTarget.givenName} is ${this.icon} still hidden from ${player.givenName}`,
-							vs: target.int
+							outcome,
+							vs: target.ac
 						});
 
-						if (!success) {
-							invisibilityTarget.encounterModifiers.alreadyRetargeted = true;
-
-							const playerContestant = activeContestants.filter(contestant => contestant.monster === player)[0];
-							const notInvisibilityTarget = contestant => (contestant &&
-									!contestant.monster.dead &&
-									!contestant.monster.fled &&
-									contestant.monster !== invisibilityTarget &&
-									!contestant.monster.encounterEffects.find(targetEffect => targetEffect.effectType === 'InvisibilityEffect') &&
-									contestant.monster !== player);
-							const visibleOtherContestants = activeContestants.filter(notInvisibilityTarget);
-
-							if (visibleOtherContestants.length <= 0 || activeContestants.length <= 2 || invisibilityTarget.encounterModifiers.alreadyRetargeted) {
-								this.emit('narration', {
-									narration: `All players are currently ${this.icon} hidden from ${player.givenName}`
-								});
-
-								invisibilityTarget.encounterModifiers.alreadyRetargeted = false;
-								return Promise.resolve(true);
-							}
-
-							const finalTargetContestant = getTarget({ playerContestant, contestants: visibleOtherContestants, strategy: TARGET_RANDOM_PLAYER });
-
-							finalTarget = finalTargetContestant.monster;
-
-							this.emit('narration', {
-								narration: `${player.givenName} seeks out a new target and finds a good candidate in ${finalTarget.givenName}`
-							});
-							card.effect = effect;
+						if (curseOfLoki) {
+							return effect.call(card, player, player, ring, activeContestants);
+						} else if (!success) {
+							return true;
 						}
 					} else if (phase === ATTACK_PHASE && player === invisibilityTarget) {
 						if (target !== invisibilityTarget || invisibilityTarget.encounterModifiers.invisibilityTurns > 2) {
-							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect !== invisibilityEffect);
+							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
 
 							if (!card.invisibilityNarrationEmitted) {
 								this.emit('narration', {
@@ -115,15 +108,17 @@ class CloakOfInvisibilityCard extends BaseCard {
 						}
 					}
 
-					return effect.call(card, player, finalTarget, ring, activeContestants);
+					return effect.call(card, player, target, ring, activeContestants);
 				};
 			}
 
 			return card;
 		};
 
-		const alreadyInvisible = !!invisibilityTarget.encounterEffects.find(effect => effect.effectType === 'InvisibilityEffect');
-		invisibilityEffect.effectType = 'InvisibilityEffect';
+		invisibilityEffect.effectType = EFFECT_TYPE;
+
+		const alreadyInvisible = isInvisible(invisibilityTarget);
+
 		if (!alreadyInvisible) {
 			invisibilityTarget.encounterEffects = [...invisibilityTarget.encounterEffects, invisibilityEffect];
 
