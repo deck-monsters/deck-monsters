@@ -19,6 +19,10 @@ class BaseCard extends BaseItem {
 		return this.itemType;
 	}
 
+	get isAreaOfEffect () {
+		return !!this.constructor.isAreaOfEffect;
+	}
+
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
 		const success = !roll.curseOfLoki && (roll.strokeOfLuck || targetNumber < roll.result);
 
