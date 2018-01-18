@@ -66,7 +66,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 						});
 
 						const savingThrow = this.getSavingThrow(player);
-						const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(savingThrow, invisibilityTarget.ac);
+						const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(savingThrow, invisibilityTarget.int);
 						let outcome;
 
 						if (strokeOfLuck) {
@@ -84,13 +84,13 @@ class CloakOfInvisibilityCard extends BaseCard {
 						}
 
 						this.emit('rolled', {
-							reason: `vs ${invisibilityTarget.givenName}'s ac (${target.ac}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
+							reason: `vs ${invisibilityTarget.givenName}'s int (${target.int}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
 							card,
 							roll: savingThrow,
 							player,
 							target: invisibilityTarget,
 							outcome,
-							vs: target.ac
+							vs: target.int
 						});
 
 						if (curseOfLoki) {
