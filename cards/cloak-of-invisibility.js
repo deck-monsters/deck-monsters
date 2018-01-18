@@ -68,7 +68,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 							outcome = `${player.givenName} rolled a natural 20. ${capitalize(player.pronouns.he)} immediately realizes exactly where ${invisibilityTarget.givenName} is and strips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`;
 						} else if (curseOfLoki) {
-							outcome = `${player.givenName} rolled a 1. While stumbling about looking for ${invisibilityTarget.givenName} ${player.pronouns.he} trips and hits himself instead.`;
+							outcome = `${player.givenName} rolled a 1. While stumbling about looking for ${invisibilityTarget.givenName} ${player.pronouns.he} trips and hits ${player.pronouns.him}self instead.`;
 						} else if (tie) {
 							outcome = `${player.givenName} almost catches a glimpse of ${invisibilityTarget.givenName} but when ${player.pronouns.he} blinks ${invisibilityTarget.givenName} is gone.`;
 						} else if (success) {
