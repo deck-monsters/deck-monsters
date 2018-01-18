@@ -43,6 +43,7 @@ BlastCard.probability = 60;
 BlastCard.description = 'A magical blast against every opponent in the encounter.';
 BlastCard.level = 0;
 BlastCard.cost = 30;
+BlastCard.isAreaOfEffect = true;
 
 BlastCard.defaults = {
 	damage: 3,

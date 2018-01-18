@@ -5,6 +5,10 @@ const BaseCard = require('./base');
 const { BARD, CLERIC } = require('../helpers/classes');
 const { DEFENSE_PHASE } = require('../helpers/phases');
 
+const EFFECT_TYPE = 'FaceswapEffect';
+
+const isFaceswapping = monster => !!monster.encounterEffects.find(encounterEffect => encounterEffect.effectType === EFFECT_TYPE);
+
 class EnchantedFaceswapCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -23,13 +27,13 @@ class EnchantedFaceswapCard extends BaseCard {
 			phase
 		}) => {
 			if (phase === DEFENSE_PHASE) {
-				const { effect } = card;
+				const { effect, isAreaOfEffect } = card;
 
 				// The card that is passed in should be a clone already so we're going to edit it directly
-				if (effect) {
+				if (effect && !isAreaOfEffect) {
 					card.effect = (swappedPlayer, swappedTarget, ring, activeContestants) => {
 						if (swappedTarget === faceswapTarget) {
-							faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect !== faceswapEffect);
+							faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
 
 							this.emit('effect', {
 								effectResult: `${this.icon} faceswapped by`,
@@ -49,11 +53,21 @@ class EnchantedFaceswapCard extends BaseCard {
 			return card;
 		};
 
-		faceswapTarget.encounterEffects = [...faceswapTarget.encounterEffects, faceswapEffect];
+		faceswapEffect.effectType = EFFECT_TYPE;
 
-		this.emit('narration', {
-			narration: `${faceswapTarget.identity} prepares to ${this.icon} faceswap the next player who targets them.`
-		});
+		const alreadyFaceswapping = isFaceswapping(faceswapTarget);
+
+		if (!alreadyFaceswapping) {
+			faceswapTarget.encounterEffects = [...faceswapTarget.encounterEffects, faceswapEffect];
+
+			this.emit('narration', {
+				narration: `${faceswapTarget.identity} prepares to ${this.icon} faceswap the next player who targets ${faceswapTarget.pronouns.him}.`
+			});
+		} else {
+			this.emit('narration', {
+				narration: `${faceswapTarget.identity} already has ${faceswapTarget.pronouns.his} phone out.`
+			});
+		}
 
 		return true;
 	}

@@ -46,12 +46,12 @@ class HealCard extends BaseCard {
 
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		const healRoll = this.getHealRoll(player);
+		const healRoll = this.getHealRoll(target);
 		let healResult = healRoll.result;
 
 		// Stroke of Luck
 		if (isProbable({ probability: 1 })) {
-			healResult = Math.floor(player.maxHp / 2);
+			healResult = Math.floor(target.maxHp / 2);
 			this.emit('narration', {
 				narration: `Stoke of Luck!
 Wait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`

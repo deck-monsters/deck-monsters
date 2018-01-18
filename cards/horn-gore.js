@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+const sample = require('lodash.sample');
 
 const ImmobilizeCard = require('./immobilize');
 
@@ -60,7 +61,7 @@ ${super.stats}`;
 				`grab ${player.pronouns.his} tongue and pull for all ${target.pronouns.he}'s worth`
 			];
 			commentary = `${player.givenName} rolled a 1.
-${target.givenName} manages to take the opportunity of such close proximity to ${player.givenName}'s face to ${flavors[Math.random() * flavors.length]}.`;
+${target.givenName} manages to take the opportunity of such close proximity to ${player.givenName}'s face to ${sample(flavors)}.`;
 		}
 
 		return commentary;
@@ -172,9 +173,9 @@ HornGore.defaults = {
 HornGore.flavors = {
 	hits: [
 		['gores', 80],
-		['mercilessly juggles on their mighty horns', 70],
 		['pokes relentlessly', 70],
-		['impales', 50],
+		['impales', 70],
+		['mercilessly juggles (on their mighty horns) the pitiful', 50],
 		['chases down gleefully, stomps on, and then wantonly drives their horns through', 5],
 		['teaches the true meaning of "horny" to', 5]
 	]
