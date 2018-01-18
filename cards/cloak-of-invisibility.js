@@ -33,9 +33,15 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 		const invisibilityEffect = ({
 			card,
-			phase
+			phase,
+			player: effectPlayer
 		}) => {
 			const { effect, isAreaOfEffect } = card;
+
+			// Always increase the count of invisible turns
+			if (phase === ATTACK_PHASE && effectPlayer === invisibilityTarget) {
+				invisibilityTarget.encounterModifiers.invisibilityTurns += 1;
+			}
 
 			if (effect && !isAreaOfEffect) {
 				card.effect = (player, target, ring, activeContestants) => {
@@ -103,8 +109,6 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 								card.invisibilityNarrationEmitted = true;
 							}
-						} else {
-							invisibilityTarget.encounterModifiers.invisibilityTurns += 1;
 						}
 					}
 
