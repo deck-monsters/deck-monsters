@@ -7,9 +7,6 @@ const { Game } = require('./index.js');
 const pause = require('./helpers/pause');
 
 // const DestroyCard = require('./cards/destroy.js');
-const Cloak = require('./cards/cloak-of-invisibility.js');
-const Hit = require('./cards/hit.js');
-const Heal = require('./cards/heal.js');
 
 pause.setTimeout = func => setTimeout(func, 5);
 
@@ -55,6 +52,11 @@ const charAnnouncer = what => announcer('charlemagne', what);
 let char;
 let charCards;
 
+// const BOSS_ID = 666;
+// const bossAnnouncer = what => announcer('boss', what);
+// let boss;
+// let bossCards;
+
 return Promise
 	.resolve()
 	.then(() => slackdem.getCharacter(vladAnnouncer, VLAD_ID, {
@@ -62,7 +64,6 @@ return Promise
 	}))
 	.then((character) => {
 		vlad = character;
-		vlad.character.deck = [new Cloak(), new Cloak(), new Cloak(), new Cloak(), new Cloak(), new Hit(), new Heal(), new Hit(), new Heal()];
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
@@ -70,13 +71,9 @@ return Promise
 	}))
 	.then((character) => {
 		char = character;
-		// charCards = [...shuffle(char.character.deck).slice(0, 9)];
+		charCards = [...shuffle(char.character.deck).slice(0, 9)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
-		const cloak = new Cloak();
-		const hit = new Hit();
-		const heal = new Heal();
-		charCards = [cloak, heal, heal, heal, hit, cloak, heal, heal, hit];
 	})
 	// .then(() => vlad.spawnMonster())
 	.then(() => vlad.spawnMonster({
@@ -95,11 +92,11 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
 	}))
-	// .then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
-	// .then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))
-	// .then(() => vlad.lookAtCards())
-	// .then(() => vlad.lookAt('player handbook'))
-	// .then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
+	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
+	.then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))
+	.then(() => vlad.lookAtCards())
+	.then(() => vlad.lookAt('player handbook'))
+	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
 	.then(() => slackdem.getRing().spawnBoss());
