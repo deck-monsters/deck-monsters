@@ -61,7 +61,7 @@ class EnchantedFaceswapCard extends BaseCard {
 			faceswapTarget.encounterEffects = [...faceswapTarget.encounterEffects, faceswapEffect];
 
 			this.emit('narration', {
-				narration: `${faceswapTarget.identity} prepares to ${this.icon} faceswap the next player who targets them.`
+				narration: `${faceswapTarget.identity} prepares to ${this.icon} faceswap the next player who targets ${faceswapTarget.pronouns.him}.`
 			});
 		} else {
 			this.emit('narration', {
