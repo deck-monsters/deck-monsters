@@ -33,7 +33,7 @@ class TargetingScroll extends BaseScroll {
 			monster.targetingStrategy = targetingStrategy;
 		}
 
-		let narration = `${monster.givenName} learns new tactics from an 📜 well-worn scroll entitled _${this.itemType}_.`;
+		let narration = `${monster.givenName} learns new tactics from a 📜 well-worn scroll entitled _${this.itemType}_.`;
 
 		if (expired) {
 			narration = `${narration} Just as ${monster.pronouns.he} finishes reading, the ancient paper on which it was written finally succumbs to time and decay and falls apart in ${monster.pronouns.his} hands.`;
