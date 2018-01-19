@@ -2,9 +2,12 @@ const { expect } = require('../shared/test-setup');
 const { randomContestant } = require('./bosses');
 const targetingStrategies = require('./targeting-strategies');
 
+const HitCard = require('../cards/hit');
+
 describe('./helpers/targeting-strategies.js', () => {
 	const getContestants = () => {
 		const playerContestant = randomContestant({
+			name: 'Player Contestant',
 			isBoss: false,
 			battles: {
 				total: 1,
@@ -15,6 +18,7 @@ describe('./helpers/targeting-strategies.js', () => {
 		});
 
 		const level1 = randomContestant({
+			name: 'Level 1',
 			isBoss: false,
 			battles: {
 				total: 5,
@@ -25,6 +29,7 @@ describe('./helpers/targeting-strategies.js', () => {
 		});
 
 		const level2 = randomContestant({
+			name: 'Level 2',
 			isBoss: false,
 			battles: {
 				total: 10,
@@ -35,6 +40,7 @@ describe('./helpers/targeting-strategies.js', () => {
 		});
 
 		const level3 = randomContestant({
+			name: 'Level 3',
 			isBoss: false,
 			battles: {
 				total: 15,
@@ -98,7 +104,7 @@ describe('./helpers/targeting-strategies.js', () => {
 	});
 
 	describe('TARGET_MAX_HP_PLAYER', () => {
-		it('gets the target with the higest max hp', () => {
+		it('gets the target with the highest max hp', () => {
 			const {
 				playerContestant,
 				level3,
@@ -112,6 +118,49 @@ describe('./helpers/targeting-strategies.js', () => {
 			});
 
 			expect(target.monster.givenName).to.equal(level3.monster.givenName);
+		});
+	});
+
+	describe('TARGET_PLAYER_WHO_HIT_YOU_LAST', () => {
+		it('gets the default target if not yet hit', () => {
+			const {
+				playerContestant,
+				contestants
+			} = getContestants();
+
+			const defaulTarget = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_NEXT_PLAYER
+			});
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_PLAYER_WHO_HIT_YOU_LAST
+			});
+
+			expect(target).to.equal(defaulTarget);
+		});
+
+		it('targets the player who hit you last', () => {
+			const {
+				playerContestant,
+				level3,
+				contestants
+			} = getContestants();
+
+			const hit = new HitCard();
+
+			playerContestant.monster.hit(1, level3.monster, hit);
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_PLAYER_WHO_HIT_YOU_LAST
+			});
+
+			expect(target.character.givenName).to.equal(level3.character.givenName);
 		});
 	});
 
