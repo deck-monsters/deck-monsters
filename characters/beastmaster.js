@@ -267,7 +267,7 @@ Which monster would you like to ${action}?`,
 	}
 
 	reviveMonster ({ monsterName, channel }) {
-		const monsters = this.monsters.filter(monster => monster.dead);
+		const monsters = this.monsters.filter(monster => (monster.dead && !monster.inEncounter));
 
 		return Promise
 			.resolve(monsters.length)
