@@ -12,7 +12,7 @@ class HouseLannister extends TargetingScroll {
 	}
 
 	getTargetingDetails (monster) { // eslint-disable-line class-methods-use-this
-		return `${monster.givenName} targets the opponent who attacked ${monster.pronouns.him} last, unless directed otherwise by a specific card.`;
+		return `${monster.givenName} will target the opponent who attacked ${monster.pronouns.him} last, unless directed otherwise by a specific card.`;
 	}
 }
 

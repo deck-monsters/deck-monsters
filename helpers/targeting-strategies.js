@@ -81,6 +81,10 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 		case TARGET_PLAYER_WHO_HIT_YOU_LAST: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
 
+			if (!playerContestant.monster.encounterEffects.lastHitBy) {
+				return defaultTarget;
+			}
+
 			return contestants.reduce((potentialTarget, contestant) => {
 				// Skip the player
 				if (contestant === playerContestant) return potentialTarget;
