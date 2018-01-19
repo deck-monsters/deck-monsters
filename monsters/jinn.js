@@ -13,7 +13,8 @@ const ANIMALS = [
 	'black dog',
 	'coyote',
 	'goat',
-	'crow'
+	'crow',
+	'lamp'
 ];
 
 const DESCRIPTORS = [
