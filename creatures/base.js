@@ -125,6 +125,16 @@ ${signedNumber(this.intModifier)} to spells`
 }`;
 	}
 
+	get targetingStrategy () {
+		return this.options.targetingStrategy || undefined;
+	}
+
+	set targetingStrategy (targetingStrategy) {
+		this.setOptions({
+			targetingStrategy
+		});
+	}
+
 	get maxHp () {
 		let maxHp = BASE_HP + this.hpVariance;
 		maxHp += Math.min(this.level * 3, MAX_BOOSTS.hp); // Gain 3 hp per level up to the max
