@@ -6,7 +6,7 @@ const { TARGET_HIGHEST_XP_PLAYER } = require('../../helpers/targeting-strategies
 class QinShiHuangScroll extends TargetingScroll {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		icon = '🔥'
+		icon = '焚'
 	} = {}) {
 		super({ icon });
 	}
@@ -19,7 +19,7 @@ class QinShiHuangScroll extends TargetingScroll {
 QinShiHuangScroll.itemType = 'The Annals of Qin Shi Huang';
 QinShiHuangScroll.description = `焚書坑儒
 
-Target your opponent with the highest xp.`;
+Target the opponent who has the highest xp.`;
 QinShiHuangScroll.targetingStrategy = TARGET_HIGHEST_XP_PLAYER;
 
 module.exports = QinShiHuangScroll;
