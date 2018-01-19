@@ -13,7 +13,7 @@ class SirRobinScroll extends TargetingScroll {
 	}
 
 	getTargetingDetails (monster) { // eslint-disable-line class-methods-use-this
-		return `whenver ${monster.givenName} is in the ring ${monster.pronouns.he} will bravely look about, choose the player with the highest current hp, and target them, unless directed otherwise by a specific card.`;
+		return `whenever ${monster.givenName} is in the ring ${monster.pronouns.he} will bravely look about, choose the player with the highest current hp, and target them, unless directed otherwise by a specific card.`;
 	}
 }
 
