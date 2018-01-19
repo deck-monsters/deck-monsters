@@ -18,10 +18,6 @@ class TargetingScroll extends BaseScroll {
 		}
 	}
 
-	get numberOfUses () {
-		return this.constructor.numberOfUses;
-	}
-
 	get targetingStrategy () {
 		return this.options.targetingStrategy || this.constructor.targetingStrategy;
 	}
@@ -31,7 +27,7 @@ class TargetingScroll extends BaseScroll {
 	}
 
 	action (character, monster) {
-		const { numberOfUses, targetingStrategy, used } = this;
+		const { expired, targetingStrategy } = this;
 
 		if (targetingStrategy) {
 			monster.targetingStrategy = targetingStrategy;
@@ -39,9 +35,7 @@ class TargetingScroll extends BaseScroll {
 
 		let narration = `${monster.givenName} learns new tactics from an ancient scroll entitled _${this.itemType}_.`;
 
-		if (numberOfUses && used >= numberOfUses) {
-			character.removeItem(this);
-
+		if (expired) {
 			narration = `${narration} Just as ${monster.pronouns.he} finishes reading, the ancient paper on which it was written finally succumbs to time and decay and falls apart in ${monster.pronouns.his} hands.`;
 		}
 
