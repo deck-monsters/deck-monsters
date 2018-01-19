@@ -37,6 +37,6 @@ describe('./items/scrolls/house-lannister.js', () => {
 		expect(houseLannister.expired).to.be.false;
 		expect(houseLannister.stats).to.equal('Usable 3 times.');
 		expect(houseLannister.icon).to.equal('🦁');
-		expect(houseLannister.getTargetingDetails(jenn)).to.equal('Jenn targets the opponent who attacked her last, unless directed otherwise by a specific card.');
+		expect(houseLannister.getTargetingDetails(jenn)).to.equal('Jenn will target the opponent who attacked her last, unless directed otherwise by a specific card.');
 	});
 });
