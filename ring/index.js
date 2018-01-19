@@ -405,6 +405,7 @@ class Ring extends BaseClass {
 					// Limit to 10 rounds (anyone left alive at that point will be a winner)
 					if (round === 10) {
 						resolve();
+						return;
 					}
 
 					// Increment the round counter
