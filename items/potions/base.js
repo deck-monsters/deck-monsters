@@ -26,10 +26,17 @@ class BasePotion extends BaseItem {
 	get stats () {
 		const { numberOfUses } = this;
 
-		if (numberOfUses === 1) {
+		if (this.expired) {
+			return 'All used up!';
+		} else if (numberOfUses === 1) {
 			return 'Usable 1 time.';
 		} else if (numberOfUses > 1) {
-			return `Usable ${numberOfUses} times.`;
+			let usesLeft = `${numberOfUses} times`;
+			if (this.used) {
+				usesLeft = `${numberOfUses - this.used} more times (of ${numberOfUses} total)`;
+			}
+
+			return `Usable ${usesLeft}.`;
 		}
 
 		return 'Usable an unlimited number of times.';
