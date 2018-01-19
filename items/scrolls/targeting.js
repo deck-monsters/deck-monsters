@@ -3,7 +3,6 @@
 const BaseScroll = require('./base');
 
 class TargetingScroll extends BaseScroll {
-	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		customStrategy,
 		icon = '🎯'
@@ -23,6 +22,10 @@ class TargetingScroll extends BaseScroll {
 		return this.options.customStrategy || this.constructor.targetingStrategy;
 	}
 
+	getTargetingDetails () { // eslint-disable-line class-methods-use-this
+		return undefined;
+	}
+
 	action (character, monster) {
 		const { targetingStrategy, used } = this;
 
@@ -33,6 +36,13 @@ class TargetingScroll extends BaseScroll {
 		this.emit('narration', {
 			narration: `${monster.givenName} learns new tactics from an ancient scroll entitled _${this.itemType}_. Just as ${monster.pronouns.he} finishes reading, the ancient paper on which it was written finally succumbs to time and decay and falls apart in ${monster.pronouns.his} hands.`
 		});
+
+		const details = this.getTargetingDetails(monster);
+		if (details) {
+			this.emit('narration', {
+				narration: `From now on ${details}`
+			});
+		}
 
 		if (used >= 1) {
 			character.removeItem(this);
