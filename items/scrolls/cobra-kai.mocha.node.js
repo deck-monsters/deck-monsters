@@ -36,6 +36,7 @@ describe('./items/scrolls/cobra-kai.js', () => {
 		expect(cobraKai.numberOfUses).to.equal(3);
 		expect(cobraKai.expired).to.be.false;
 		expect(cobraKai.stats).to.equal('Usable 3 times.');
+		expect(cobraKai.icon).to.equal('🐍');
 		expect(cobraKai.getTargetingDetails(jenn)).to.equal('Jenn will target the player with the lowest current xp while she is in the ring unless directed otherwise by a specific card.');
 	});
 

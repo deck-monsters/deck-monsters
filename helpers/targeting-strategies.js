@@ -5,6 +5,7 @@ const TARGET_HIGHEST_XP_PLAYER = 'TARGET_HIGHEST_XP_PLAYER';
 const TARGET_LOWEST_HP_PLAYER = 'TARGET_LOWEST_HP_PLAYER';
 const TARGET_MAX_HP_PLAYER = 'TARGET_MAX_HP_PLAYER';
 const TARGET_NEXT_PLAYER = 'TARGET_NEXT_PLAYER';
+const TARGET_PLAYER_WHO_HIT_YOU_LAST = 'TARGET_PLAYER_WHO_HIT_YOU_LAST';
 const TARGET_RANDOM_PLAYER = 'TARGET_RANDOM_PLAYER';
 
 function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT_PLAYER }) {
@@ -77,6 +78,23 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 				return potentialTarget;
 			}, defaultTarget);
 		}
+		case TARGET_PLAYER_WHO_HIT_YOU_LAST: {
+			const defaultTarget = getTarget({ playerContestant, contestants });
+
+			return contestants.reduce((potentialTarget, contestant) => {
+				// Skip the player
+				if (contestant === playerContestant) return potentialTarget;
+
+				// If this player is the one who hit you last, target them
+				if (playerContestant.monster.encounterEffects.lastHitBy
+					&& playerContestant.monster.encounterEffects.lastHitBy.assailant === contestant.monster) {
+					return contestant;
+				}
+
+				// Otherwise, continue
+				return potentialTarget;
+			}, defaultTarget);
+		}
 		case TARGET_RANDOM_PLAYER: {
 			// Skip the player
 			const potentialTargets = contestants.filter(contestant => (contestant !== playerContestant));
@@ -102,6 +120,7 @@ module.exports = {
 	TARGET_LOWEST_HP_PLAYER,
 	TARGET_MAX_HP_PLAYER,
 	TARGET_NEXT_PLAYER,
+	TARGET_PLAYER_WHO_HIT_YOU_LAST,
 	TARGET_RANDOM_PLAYER,
 	getTarget
 };

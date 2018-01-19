@@ -36,6 +36,7 @@ describe('./items/scrolls/chaos-theory.js', () => {
 		expect(chaosTheory.numberOfUses).to.equal(3);
 		expect(chaosTheory.expired).to.be.false;
 		expect(chaosTheory.stats).to.equal('Usable 3 times.');
+		expect(chaosTheory.icon).to.equal('🦋');
 		expect(chaosTheory.getTargetingDetails(jenn)).to.equal('Jenn will look around the ring and pick a random foe to target, unless directed otherwise by a specific card.');
 	});
 });

@@ -36,6 +36,7 @@ describe('./items/scrolls/la-carambada.js', () => {
 		expect(laCarambada.numberOfUses).to.equal(3);
 		expect(laCarambada.expired).to.be.false;
 		expect(laCarambada.stats).to.equal('Usable 3 times.');
+		expect(laCarambada.icon).to.equal('💃');
 		expect(laCarambada.getTargetingDetails(jenn)).to.equal('Jenn will target whichever living opponent would have the highest hp if they were at full health (that is, the highest maximum hp), unless directed otherwise by a specific card.');
 	});
 });
