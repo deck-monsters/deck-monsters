@@ -4,22 +4,26 @@ const BaseScroll = require('./base');
 
 class TargetingScroll extends BaseScroll {
 	constructor ({
-		customStrategy,
-		icon = '🎯'
+		icon = '🎯',
+		targetingStrategy
 	} = {}) {
-		if (customStrategy && typeof customStrategy !== 'function') {
-			throw new Error('Custom targeting strategies must be functions.');
+		if (targetingStrategy && typeof targetingStrategy !== 'string') {
+			throw new Error('Targeting strategies must be a string.');
 		}
 
-		super({ customStrategy, icon });
+		super({ icon, targetingStrategy });
 
 		if (this.name === TargetingScroll.name) {
 			throw new Error('The TargetingScroll should not be instantiated directly!');
 		}
 	}
 
+	get numberOfUses () {
+		return this.constructor.numberOfUses;
+	}
+
 	get targetingStrategy () {
-		return this.options.customStrategy || this.constructor.targetingStrategy;
+		return this.options.targetingStrategy || this.constructor.targetingStrategy;
 	}
 
 	getTargetingDetails () { // eslint-disable-line class-methods-use-this
@@ -27,32 +31,37 @@ class TargetingScroll extends BaseScroll {
 	}
 
 	action (character, monster) {
-		const { targetingStrategy, used } = this;
+		const { numberOfUses, targetingStrategy, used } = this;
 
 		if (targetingStrategy) {
 			monster.targetingStrategy = targetingStrategy;
 		}
 
-		this.emit('narration', {
-			narration: `${monster.givenName} learns new tactics from an ancient scroll entitled _${this.itemType}_. Just as ${monster.pronouns.he} finishes reading, the ancient paper on which it was written finally succumbs to time and decay and falls apart in ${monster.pronouns.his} hands.`
-		});
+		let narration = `${monster.givenName} learns new tactics from an ancient scroll entitled _${this.itemType}_.`;
+
+		if (numberOfUses && used >= numberOfUses) {
+			character.removeItem(this);
+
+			narration = `${narration} Just as ${monster.pronouns.he} finishes reading, the ancient paper on which it was written finally succumbs to time and decay and falls apart in ${monster.pronouns.his} hands.`;
+		}
 
 		const details = this.getTargetingDetails(monster);
 		if (details) {
-			this.emit('narration', {
-				narration: `From now on ${details}`
-			});
+			narration = `${narration}
+
+From now on ${details}`;
 		}
 
-		if (used >= 1) {
-			character.removeItem(this);
-		}
+		this.emit('narration', {
+			narration
+		});
 	}
 }
 
 TargetingScroll.itemType = 'Targeting Strategy';
 TargetingScroll.probability = 60;
-TargetingScroll.description = "Change your monster's targeting strategy.";
+TargetingScroll.numberOfUses = 3;
+TargetingScroll.description = `Change your monster's targeting strategy up to ${TargetingScroll.numberOfUses} times.`;
 TargetingScroll.level = 1;
 TargetingScroll.cost = 20;
 
