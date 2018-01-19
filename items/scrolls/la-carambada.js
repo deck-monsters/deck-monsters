@@ -12,7 +12,7 @@ class LaCarambadaScroll extends TargetingScroll {
 	}
 
 	getTargetingDetails (monster) { // eslint-disable-line class-methods-use-this
-		return `${monster.givenName} will look for the living opponent with the highest possible hp while ${monster.pronouns.he} is in the ring and target them, even if that player currently has less hp, unless directed otherwise by a specific card.`;
+		return `${monster.givenName} will target whichever living opponent would have the highest hp if they were at full health (that is, the highest maximum hp), unless directed otherwise by a specific card.`;
 	}
 }
 
