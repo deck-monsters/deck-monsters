@@ -2,10 +2,10 @@
 const { expect, sinon } = require('../../shared/test-setup');
 
 const pause = require('../../helpers/pause');
-const CobraKaiScroll = require('./cobra_kai');
+const CobraKaiScroll = require('./cobra-kai');
 const Jinn = require('../../monsters/jinn');
 
-describe.only('./items/scrolls/cobra_kai.js', () => {
+describe('./items/scrolls/cobra-kai.js', () => {
 	let channelStub;
 	let pauseStub;
 
