@@ -169,11 +169,10 @@ class ImmobilizeCard extends HitCard {
 			const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
 
 			this.emit('rolled', {
-				reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}`,
+				reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}.`,
 				card: this,
 				roll: attackRoll,
-				player,
-				target,
+				who: player,
 				outcome,
 				vs: this.getTargetPropValue(target)
 			});
@@ -206,8 +205,7 @@ class ImmobilizeCard extends HitCard {
 								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free.`,
 								card: this,
 								roll: freedomRoll,
-								player: target,
-								target: player,
+								who: target,
 								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`,
 								vs: this.getFreedomThreshold(player, target)
 							});

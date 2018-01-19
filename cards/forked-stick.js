@@ -44,7 +44,8 @@ ForkedStickCard.flavors = {
 		['hits', 80],
 		['pokes (in a not-so-facebook-flirting kind of way)', 50],
 		['snags and brutally lofts into the air their thoroughly surprised opponent', 5]
-	]
+	],
+	spike: 'branch'
 };
 
 module.exports = ForkedStickCard;

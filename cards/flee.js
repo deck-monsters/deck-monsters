@@ -24,11 +24,10 @@ class FleeCard extends BaseCard {
 			const { success } = this.checkSuccess(fleeRoll, 10);
 
 			this.emit('rolled', {
-				reason: 'and needs 10 or higher to flee',
+				reason: 'and needs 10 or higher to flee.',
 				card: this,
 				roll: fleeRoll,
-				player,
-				target,
+				who: target,
 				outcome: success ? 'Success!' : 'Fail!'
 			});
 

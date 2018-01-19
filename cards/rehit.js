@@ -40,12 +40,18 @@ class Rehit extends HitCard {
 			commentary = 'Miss... Tie goes to the defender.';
 		}
 
+		let reason;
+		if (player === target) {
+			reason = `vs ${target.pronouns.his} own ac (${target.ac}) in confusion.`;
+		} else {
+			reason = `vs ${target.givenName}'s ac (${target.ac}) to determine if the hit was a success.`;
+		}
+
 		this.emit('rolled', {
-			reason: `vs ac (${target.ac}) to determine if the hit was a success.`,
+			reason,
 			card: this,
 			roll: attackRoll,
-			player,
-			target,
+			who: player,
 			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
 			vs: target.ac
 		});

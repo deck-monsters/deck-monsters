@@ -87,8 +87,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 							reason: `vs ${invisibilityTarget.givenName}'s int (${target.int}) to determine if ${player.pronouns.he} can find ${invisibilityTarget.pronouns.him}.`,
 							card,
 							roll: savingThrow,
-							player,
-							target: invisibilityTarget,
+							who: player,
 							outcome,
 							vs: target.int
 						});

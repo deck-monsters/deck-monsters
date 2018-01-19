@@ -39,12 +39,18 @@ class HitHarder extends HitCard {
 				betterRoll.result = 1;
 			}
 
+			let reason;
+			if (player === target) {
+				reason = `for damage against ${target.pronouns.him}self.`;
+			} else {
+				reason = `for damage against ${target.givenName}.`;
+			}
+
 			this.emit('rolled', {
-				reason: `for damage against ${target.givenName}`,
+				reason,
 				card: this,
 				roll: betterRoll,
-				player,
-				target,
+				who: player,
 				outcome: commentary
 			});
 		}
