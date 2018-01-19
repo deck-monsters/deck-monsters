@@ -12,7 +12,7 @@ class ChaosTheoryScroll extends TargetingScroll {
 	}
 
 	getTargetingDetails (monster) { // eslint-disable-line class-methods-use-this
-		return `${monster.givenName} will look around the ring and pick a random foe to target.`;
+		return `${monster.givenName} will look around the ring and pick a random foe to target, unless directed otherwise by a specific card.`;
 	}
 }
 
