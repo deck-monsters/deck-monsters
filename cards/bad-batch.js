@@ -42,14 +42,13 @@ class BadBatchCard extends BaseCard {
 							narration: `${target.givenName} doesn't notice that the seal on ${target.pronouns.his} bottle has been tampered with.`
 						});
 
-						const healRoll = getHealRoll.call(card, player);
+						const healRoll = getHealRoll.call(card, target);
 
 						this.emit('rolled', {
 							reason: 'to measure out a shot of whiskey.',
 							card: this,
 							roll: healRoll,
-							player,
-							target,
+							who: target,
 							outcome: 'Poisoned!'
 						});
 

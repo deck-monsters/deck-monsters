@@ -68,8 +68,7 @@ Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. ð
 				reason: 'to determine how much to heal.',
 				card: this,
 				roll: healRoll,
-				player,
-				target,
+				who: target,
 				outcome: `${target.givenName} grows stronger...`
 			});
 		}

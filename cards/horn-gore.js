@@ -70,12 +70,18 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	emitRoll (rolled, success, player, target, hornNumber) {
 		const commentary = this.getCommentary(rolled, player, target);
 
+		let reason;
+		if (player === target) {
+			reason = `vs ${target.pronouns.his} own ac (${target.ac})${hornNumber ? ` for ${this.flavors.spike} ${hornNumber}` : ''} in confusion.`;
+		} else {
+			reason = `vs ${target.givenName}'s ac (${target.ac})${hornNumber ? ` for ${this.flavors.spike} ${hornNumber}` : ''} to determine if gore was successful.`;
+		}
+
 		this.emit('rolled', {
-			reason: `vs ${target.givenName}'s ac (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful.`,
+			reason,
 			card: this,
 			roll: rolled,
-			player,
-			target,
+			who: player,
 			outcome: commentary || (success ? 'Hit!' : 'Miss...'),
 			vs: target.ac
 		});
@@ -178,7 +184,8 @@ HornGore.flavors = {
 		['mercilessly juggles (on their mighty horns) the pitiful', 50],
 		['chases down gleefully, stomps on, and then wantonly drives their horns through', 5],
 		['teaches the true meaning of "horny" to', 5]
-	]
+	],
+	spike: 'horn'
 };
 
 module.exports = HornGore;
