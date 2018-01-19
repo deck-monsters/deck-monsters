@@ -55,12 +55,18 @@ ${player.givenName}'s drain takes from hp instead.`;
 		const attackRoll = this.getAttackRoll(blinkPlayer);
 		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.int);
 
+		let timeShiftReason;
+		if (blinkPlayer === blinkTarget) {
+			timeShiftReason = `vs ${blinkTarget.pronouns.his} own int (${blinkTarget.int}) in confusion.`;
+		} else {
+			timeShiftReason = `vs ${blinkTarget.givenName}'s int (${blinkTarget.int}) in an attempt to time-shift ${blinkTarget.pronouns.him}.`;
+		}
+
 		this.emit('rolled', {
-			reason: `vs ${blinkTarget.givenName}'s int (${blinkTarget.int}) to time-shift ${blinkTarget.pronouns.him}.`,
+			reason: timeShiftReason,
 			card: this,
 			roll: attackRoll,
-			player: blinkPlayer,
-			target: blinkTarget,
+			who: blinkPlayer,
 			outcome: `Time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`,
 			vs: blinkTarget.int
 		});
@@ -112,12 +118,18 @@ ${player.givenName}'s drain takes from hp instead.`;
 						};
 						this.curseAmount = -xpToSteal.result;
 
+						let potentialEngeryReason;
+						if (blinkPlayer === blinkTarget) {
+							potentialEngeryReason = `to steal potential energy from ${blinkTarget.pronouns.him}self.`;
+						} else {
+							potentialEngeryReason = `to steal potential energy from ${blinkTarget.identityWithHp}.`;
+						}
+
 						this.emit('rolled', {
-							reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,
+							reason: potentialEngeryReason,
 							card: this,
 							roll: combinedRoll,
-							player: blinkPlayer,
-							target: blinkTarget
+							who: blinkPlayer
 						});
 
 						// drain hp
