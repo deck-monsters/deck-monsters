@@ -36,6 +36,6 @@ describe('./items/scrolls/clever-hans.js', () => {
 		expect(cleverHans.numberOfUses).to.equal(0);
 		expect(cleverHans.expired).to.be.false;
 		expect(cleverHans.stats).to.equal('Usable an unlimited number of times.');
-		expect(cleverHans.getTargetingDetails(jenn)).to.equal('Jenn will keep her friends close and her enemies closer, always attacking the next opponent in line unless directed otherwise by a specific card.');
+		expect(cleverHans.getTargetingDetails(jenn)).to.equal('Jenn will obey her mother and keep her friends close and her enemies closer, always attacking the next opponent in line unless directed otherwise by a specific card.');
 	});
 });
