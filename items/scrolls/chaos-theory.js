@@ -6,7 +6,7 @@ const { TARGET_RANDOM_PLAYER } = require('../../helpers/targeting-strategies');
 class ChaosTheoryScroll extends TargetingScroll {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		icon = '🐍'
+		icon = '🦋'
 	} = {}) {
 		super({ icon });
 	}

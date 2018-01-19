@@ -3,6 +3,7 @@
 const TargetingScroll = require('./targeting');
 const { TARGET_LOWEST_HP_PLAYER } = require('../../helpers/targeting-strategies');
 
+// The "Fists of Villainy" scroll
 class CobraKaiScroll extends TargetingScroll {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({

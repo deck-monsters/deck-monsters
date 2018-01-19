@@ -6,7 +6,7 @@ const { TARGET_MAX_HP_PLAYER } = require('../../helpers/targeting-strategies');
 class LaCarambadaScroll extends TargetingScroll {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		icon = '🐍'
+		icon = '💃'
 	} = {}) {
 		super({ icon });
 	}

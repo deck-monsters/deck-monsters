@@ -3,10 +3,11 @@
 const TargetingScroll = require('./targeting');
 const { TARGET_HIGHEST_HP_PLAYER } = require('../../helpers/targeting-strategies');
 
+// The "Fists of Virtue" scroll
 class SirRobinScroll extends TargetingScroll {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		icon = '🐍'
+		icon = '🙏'
 	} = {}) {
 		super({ icon });
 	}
