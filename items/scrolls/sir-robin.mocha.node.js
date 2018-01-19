@@ -36,6 +36,6 @@ describe('./items/scrolls/la-carambada.js', () => {
 		expect(sirRobin.numberOfUses).to.equal(3);
 		expect(sirRobin.expired).to.be.false;
 		expect(sirRobin.stats).to.equal('Usable 3 times.');
-		expect(sirRobin.getTargetingDetails(jenn)).to.equal('whenver Jenn is in the ring she will bravely look about, choose the player with the highest current hp, and target them, unless directed otherwise by a specific card.');
+		expect(sirRobin.getTargetingDetails(jenn)).to.equal('whenever Jenn is in the ring she will bravely look about, choose the player with the highest current hp, and target them, unless directed otherwise by a specific card.');
 	});
 });
