@@ -1,15 +1,24 @@
 const sample = require('lodash.sample');
 
+const TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS = 'TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS';
 const TARGET_HIGHEST_HP_PLAYER = 'TARGET_HIGHEST_HP_PLAYER';
+const TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS = 'TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS';
 const TARGET_HIGHEST_XP_PLAYER = 'TARGET_HIGHEST_XP_PLAYER';
+const TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS = 'TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS';
 const TARGET_LOWEST_HP_PLAYER = 'TARGET_LOWEST_HP_PLAYER';
+const TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS = 'TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS';
 const TARGET_MAX_HP_PLAYER = 'TARGET_MAX_HP_PLAYER';
 const TARGET_NEXT_PLAYER = 'TARGET_NEXT_PLAYER';
+const TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS = 'TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS';
 const TARGET_PLAYER_WHO_HIT_YOU_LAST = 'TARGET_PLAYER_WHO_HIT_YOU_LAST';
+const TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS = 'TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS';
 const TARGET_RANDOM_PLAYER = 'TARGET_RANDOM_PLAYER';
 
 function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT_PLAYER, ignoreSelf = true }) {
 	switch (strategy) {
+		case TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS: {
+			getTarget({ playerContestant, contestants, strategy: TARGET_HIGHEST_HP_PLAYER, ignoreSelf: false });
+		}
 		case TARGET_HIGHEST_HP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
 
@@ -26,6 +35,9 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 				// Otherwise, continue
 				return potentialTarget;
 			}, defaultTarget);
+		}
+		case TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS: {
+			getTarget({ playerContestant, contestants, strategy: TARGET_HIGHEST_XP_PLAYER, ignoreSelf: false });
 		}
 		case TARGET_HIGHEST_XP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -44,6 +56,9 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 				return potentialTarget;
 			}, defaultTarget);
 		}
+		case TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS: {
+			getTarget({ playerContestant, contestants, strategy: TARGET_LOWEST_HP_PLAYER, ignoreSelf: false });
+		}
 		case TARGET_LOWEST_HP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
 
@@ -60,6 +75,9 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 				// Otherwise, continue
 				return potentialTarget;
 			}, defaultTarget);
+		}
+		case TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS: {
+			getTarget({ playerContestant, contestants, strategy: TARGET_MAX_HP_PLAYER, ignoreSelf: false });
 		}
 		case TARGET_MAX_HP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -79,7 +97,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 			}, defaultTarget);
 		}
 		case TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS: {
-			getTarget({ playerContestant, contestants, TARGET_PLAYER_WHO_HIT_YOU_LAST, false });
+			getTarget({ playerContestant, contestants, strategy: TARGET_PLAYER_WHO_HIT_YOU_LAST, ignoreSelf: false });
 		}
 		case TARGET_PLAYER_WHO_HIT_YOU_LAST: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -102,9 +120,15 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 				return potentialTarget;
 			}, defaultTarget);
 		}
+		case TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS: {
+			getTarget({ playerContestant, contestants, strategy: TARGET_RANDOM_PLAYER, ignoreSelf: false });
+		}
 		case TARGET_RANDOM_PLAYER: {
-			// Skip the player
-			const potentialTargets = contestants.filter(contestant => (contestant !== playerContestant));
+			let potentialTargets = contestants;
+			if (ignoreSelf) {
+				// Skip the player
+				potentialTargets = contestants.filter(contestant => (contestant !== playerContestant));
+			}
 
 			// Pick any random target besides yourself
 			return sample(potentialTargets);
@@ -122,12 +146,18 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 }
 
 module.exports = {
+	TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS,
 	TARGET_HIGHEST_HP_PLAYER,
+	TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS,
 	TARGET_HIGHEST_XP_PLAYER,
+	TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS,
 	TARGET_LOWEST_HP_PLAYER,
+	TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS,
 	TARGET_MAX_HP_PLAYER,
 	TARGET_NEXT_PLAYER,
+	TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS,
 	TARGET_PLAYER_WHO_HIT_YOU_LAST,
+	TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS,
 	TARGET_RANDOM_PLAYER,
 	getTarget
 };
