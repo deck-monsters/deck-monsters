@@ -8,7 +8,7 @@ const TARGET_NEXT_PLAYER = 'TARGET_NEXT_PLAYER';
 const TARGET_PLAYER_WHO_HIT_YOU_LAST = 'TARGET_PLAYER_WHO_HIT_YOU_LAST';
 const TARGET_RANDOM_PLAYER = 'TARGET_RANDOM_PLAYER';
 
-function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT_PLAYER }) {
+function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT_PLAYER, ignoreSelf = true }) {
 	switch (strategy) {
 		case TARGET_HIGHEST_HP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -78,6 +78,9 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 				return potentialTarget;
 			}, defaultTarget);
 		}
+		case TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS: {
+			getTarget({ playerContestant, contestants, TARGET_PLAYER_WHO_HIT_YOU_LAST, false });
+		}
 		case TARGET_PLAYER_WHO_HIT_YOU_LAST: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
 
@@ -87,7 +90,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 
 			return contestants.reduce((potentialTarget, contestant) => {
 				// Skip the player
-				if (contestant === playerContestant) return potentialTarget;
+				if (ignoreSelf && contestant === playerContestant) return potentialTarget;
 
 				// If this player is the one who hit you last, target them
 				if (playerContestant.monster.encounterEffects.lastHitBy
