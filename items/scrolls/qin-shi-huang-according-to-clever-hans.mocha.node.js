@@ -5,6 +5,8 @@ const pause = require('../../helpers/pause');
 const QinShiHuangScroll = require('./qin-shi-huang-according-to-clever-hans');
 const Jinn = require('../../monsters/jinn');
 
+const { TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+
 describe('./items/scrolls/qin-shi-huang-according-to-clever-hans.js', () => {
 	let channelStub;
 	let pauseStub;
@@ -40,6 +42,7 @@ describe('./items/scrolls/qin-shi-huang-according-to-clever-hans.js', () => {
 		expect(qinShiHuangScroll.stats).to.equal('Usable 3 times.');
 		expect(qinShiHuangScroll.icon).to.equal('👦');
 		expect(qinShiHuangScroll.itemType).to.equal('The Annals of Qin Shi Huang According to Clever Hans');
+		expect(qinShiHuangScroll.targetingStrategy).to.equal(TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS);
 		expect(qinShiHuangScroll.getTargetingDetails(jenn)).to.equal('Jenn will seek to consolidate her power and lay waste to the biggest monster in the ring by targeting anyone with the highest xp, unless directed otherwise by a specific card.');
 		expect(qinShiHuangScroll.description).to.equal(`焚書坑儒
 
