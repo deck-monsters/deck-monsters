@@ -24,7 +24,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 
 			return contestants.reduce((potentialTarget, contestant) => {
 				// Skip the player
-				if (contestant === playerContestant) return potentialTarget;
+				if (ignoreSelf && contestant === playerContestant) return potentialTarget;
 
 				// Fists of virtue
 				// If another monster has higher current hp, target them instead
@@ -44,7 +44,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 
 			return contestants.reduce((potentialTarget, contestant) => {
 				// Skip the player
-				if (contestant === playerContestant) return potentialTarget;
+				if (ignoreSelf && contestant === playerContestant) return potentialTarget;
 
 				// Maximize potential win bonus
 				// If another monster has higher current xp, target them instead
@@ -64,7 +64,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 
 			return contestants.reduce((potentialTarget, contestant) => {
 				// Skip the player
-				if (contestant === playerContestant) return potentialTarget;
+				if (ignoreSelf && contestant === playerContestant) return potentialTarget;
 
 				// Fists of villainy
 				// If another monster has lower current hp, target them instead
@@ -84,7 +84,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 
 			return contestants.reduce((potentialTarget, contestant) => {
 				// Skip the player
-				if (contestant === playerContestant) return potentialTarget;
+				if (ignoreSelf && contestant === playerContestant) return potentialTarget;
 
 				// Take down the big boss
 				// If another monster has higher maxHp, target them instead
