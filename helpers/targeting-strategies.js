@@ -17,7 +17,7 @@ const TARGET_RANDOM_PLAYER = 'TARGET_RANDOM_PLAYER';
 function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT_PLAYER, ignoreSelf = true }) {
 	switch (strategy) {
 		case TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS: {
-			getTarget({ playerContestant, contestants, strategy: TARGET_HIGHEST_HP_PLAYER, ignoreSelf: false });
+			return getTarget({ playerContestant, contestants, strategy: TARGET_HIGHEST_HP_PLAYER, ignoreSelf: false });
 		}
 		case TARGET_HIGHEST_HP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -37,7 +37,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 			}, defaultTarget);
 		}
 		case TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS: {
-			getTarget({ playerContestant, contestants, strategy: TARGET_HIGHEST_XP_PLAYER, ignoreSelf: false });
+			return getTarget({ playerContestant, contestants, strategy: TARGET_HIGHEST_XP_PLAYER, ignoreSelf: false });
 		}
 		case TARGET_HIGHEST_XP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -57,7 +57,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 			}, defaultTarget);
 		}
 		case TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS: {
-			getTarget({ playerContestant, contestants, strategy: TARGET_LOWEST_HP_PLAYER, ignoreSelf: false });
+			return getTarget({ playerContestant, contestants, strategy: TARGET_LOWEST_HP_PLAYER, ignoreSelf: false });
 		}
 		case TARGET_LOWEST_HP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -77,7 +77,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 			}, defaultTarget);
 		}
 		case TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS: {
-			getTarget({ playerContestant, contestants, strategy: TARGET_MAX_HP_PLAYER, ignoreSelf: false });
+			return getTarget({ playerContestant, contestants, strategy: TARGET_MAX_HP_PLAYER, ignoreSelf: false });
 		}
 		case TARGET_MAX_HP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -97,7 +97,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 			}, defaultTarget);
 		}
 		case TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS: {
-			getTarget({ playerContestant, contestants, strategy: TARGET_PLAYER_WHO_HIT_YOU_LAST, ignoreSelf: false });
+			return getTarget({ playerContestant, contestants, strategy: TARGET_PLAYER_WHO_HIT_YOU_LAST, ignoreSelf: false });
 		}
 		case TARGET_PLAYER_WHO_HIT_YOU_LAST: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -121,7 +121,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 			}, defaultTarget);
 		}
 		case TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS: {
-			getTarget({ playerContestant, contestants, strategy: TARGET_RANDOM_PLAYER, ignoreSelf: false });
+			return getTarget({ playerContestant, contestants, strategy: TARGET_RANDOM_PLAYER, ignoreSelf: false });
 		}
 		case TARGET_RANDOM_PLAYER: {
 			let potentialTargets = contestants;
