@@ -37,6 +37,6 @@ describe('./items/scrolls/sir-robin.js', () => {
 		expect(sirRobin.expired).to.be.false;
 		expect(sirRobin.stats).to.equal('Usable 3 times.');
 		expect(sirRobin.icon).to.equal('🙏');
-		expect(sirRobin.getTargetingDetails(jenn)).to.equal('whenever Jenn is in the ring she will bravely look about, choose the player with the highest current hp, and target them, unless directed otherwise by a specific card.');
+		expect(sirRobin.getTargetingDetails(jenn)).to.equal('whenever Jenn is in the ring she will bravely look about, choose the opponent with the highest current hp, and target them, unless directed otherwise by a specific card.');
 	});
 });
