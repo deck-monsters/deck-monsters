@@ -4,7 +4,7 @@ const targetingStrategies = require('./targeting-strategies');
 
 const HitCard = require('../cards/hit');
 
-describe('./helpers/targeting-strategies.js', () => {
+describe.only('./helpers/targeting-strategies.js', () => {
 	const getContestants = () => {
 		const playerContestant = randomContestant({
 			name: 'Player Contestant',
@@ -69,6 +69,7 @@ describe('./helpers/targeting-strategies.js', () => {
 				contestants
 			} = getContestants();
 
+			playerContestant.monster.hp = 4000;
 			level1.monster.hp = 5;
 			level2.monster.hp = 5;
 
@@ -90,6 +91,7 @@ describe('./helpers/targeting-strategies.js', () => {
 				contestants
 			} = getContestants();
 
+			playerContestant.monster.hp = 4000;
 			level1.monster.hp = 5;
 			level3.monster.hp = 5;
 
@@ -100,6 +102,29 @@ describe('./helpers/targeting-strategies.js', () => {
 			});
 
 			expect(target.monster.givenName).to.equal(level2.monster.givenName);
+		});
+	});
+
+	describe('TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS', () => {
+		it('gets the target with the highest hp', () => {
+			const {
+				playerContestant,
+				level1,
+				level2,
+				level3,
+				contestants
+			} = getContestants();
+
+			playerContestant.monster.hp = 50001;
+			level3.monster.hp = 50000;
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS
+			});
+
+			expect(target.monster.givenName).to.equal(playerContestant.monster.givenName);
 		});
 	});
 
@@ -115,6 +140,24 @@ describe('./helpers/targeting-strategies.js', () => {
 				playerContestant,
 				contestants,
 				strategy: targetingStrategies.TARGET_MAX_HP_PLAYER
+			});
+
+			expect(target.monster.givenName).to.equal(level3.monster.givenName);
+		});
+	});
+
+	describe('TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS', () => {
+		it('gets the target with the highest max hp', () => {
+			const {
+				level1,
+				level3,
+				contestants
+			} = getContestants();
+
+			const target = targetingStrategies.getTarget({
+				level3,
+				contestants,
+				strategy: targetingStrategies.TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS
 			});
 
 			expect(target.monster.givenName).to.equal(level3.monster.givenName);
@@ -153,6 +196,7 @@ describe('./helpers/targeting-strategies.js', () => {
 			const hit = new HitCard();
 
 			playerContestant.monster.hit(1, level3.monster, hit);
+			playerContestant.monster.hit(1, playerContestant.monster, hit);
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
@@ -161,6 +205,29 @@ describe('./helpers/targeting-strategies.js', () => {
 			});
 
 			expect(target.character.givenName).to.equal(level3.character.givenName);
+		});
+	});
+
+	describe('TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS', () => {
+		it('targets the player who hit you last', () => {
+			const {
+				playerContestant,
+				level3,
+				contestants
+			} = getContestants();
+
+			const hit = new HitCard();
+
+			playerContestant.monster.hit(1, level3.monster, hit);
+			playerContestant.monster.hit(1, playerContestant.monster, hit);
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS
+			});
+
+			expect(target.character.givenName).to.equal(playerContestant.character.givenName);
 		});
 	});
 
