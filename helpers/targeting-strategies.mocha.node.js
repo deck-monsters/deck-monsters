@@ -60,7 +60,7 @@ describe('./helpers/targeting-strategies.js', () => {
 	};
 
 	describe('TARGET_HIGHEST_HP_PLAYER', () => {
-		it('gets the target with the higest hp', () => {
+		it('gets the target with the highest hp', () => {
 			const {
 				playerContestant,
 				level1,
@@ -81,7 +81,7 @@ describe('./helpers/targeting-strategies.js', () => {
 			expect(target.monster.givenName).to.equal(level3.monster.givenName);
 		});
 
-		it('gets the target with the higest current hp', () => {
+		it('gets the target with the highest current hp', () => {
 			const {
 				playerContestant,
 				level1,
