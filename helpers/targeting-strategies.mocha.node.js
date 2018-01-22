@@ -4,7 +4,7 @@ const targetingStrategies = require('./targeting-strategies');
 
 const HitCard = require('../cards/hit');
 
-describe.only('./helpers/targeting-strategies.js', () => {
+describe('./helpers/targeting-strategies.js', () => {
 	const getContestants = () => {
 		const playerContestant = randomContestant({
 			name: 'Player Contestant',
@@ -171,7 +171,7 @@ describe.only('./helpers/targeting-strategies.js', () => {
 				contestants
 			} = getContestants();
 
-			const defaulTarget = targetingStrategies.getTarget({
+			const defaultTarget = targetingStrategies.getTarget({
 				playerContestant,
 				contestants,
 				strategy: targetingStrategies.TARGET_NEXT_PLAYER
@@ -183,19 +183,20 @@ describe.only('./helpers/targeting-strategies.js', () => {
 				strategy: targetingStrategies.TARGET_PLAYER_WHO_HIT_YOU_LAST
 			});
 
-			expect(target).to.equal(defaulTarget);
+			expect(defaultTarget.monster.givenName).to.equal('Level 3');
+			expect(target).to.equal(defaultTarget);
 		});
 
 		it('targets the player who hit you last', () => {
 			const {
 				playerContestant,
-				level3,
+				level1,
 				contestants
 			} = getContestants();
 
 			const hit = new HitCard();
 
-			playerContestant.monster.hit(1, level3.monster, hit);
+			playerContestant.monster.hit(1, level1.monster, hit);
 			playerContestant.monster.hit(1, playerContestant.monster, hit);
 
 			const target = targetingStrategies.getTarget({
@@ -204,7 +205,7 @@ describe.only('./helpers/targeting-strategies.js', () => {
 				strategy: targetingStrategies.TARGET_PLAYER_WHO_HIT_YOU_LAST
 			});
 
-			expect(target.character.givenName).to.equal(level3.character.givenName);
+			expect(target.character.givenName).to.equal(level1.character.givenName);
 		});
 	});
 
