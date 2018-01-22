@@ -24,8 +24,11 @@ class DelayedHit extends HitCard {
 			ring
 		}) => {
 			if (phase === GLOBAL_PHASE) {
-				if (player.encounterModifiers.lastHitBy && player.encounterModifiers.lastHitBy.when > when) {
-					super.effect(player, player.encounterModifiers.lastHitBy.assailant, ring);
+				const lastHitByOther = player.encounterModifiers.hitLog.find(hitter => {
+					if (hitter.assailant !== delayingPlayer) return hitter;
+				}
+				if (lastHitByOther.when > when) {
+					super.effect(player, lastHitByOther.assailant, ring);
 				}
 			}
 		}
