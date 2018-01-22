@@ -109,11 +109,9 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 			let lastHit;
 
 			if (ignoreSelf) {
-				lastHit = playerContestant.monster.encounterModifiers.hitLog.find(hitter => {
-					return hitter.assailant !== playerContestant.monster;
-				});
+				lastHit = playerContestant.monster.encounterModifiers.hitLog.find(hitter => hitter.assailant !== playerContestant.monster);
 			} else {
-				lastHit = playerContestant.monster.encounterModifiers.hitLog[0]
+				lastHit = playerContestant.monster.encounterModifiers.hitLog[0];
 			}
 
 			return contestants.reduce((potentialTarget, contestant) => {

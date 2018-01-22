@@ -500,7 +500,7 @@ Battles won: ${this.battles.wins}`;
 			damage,
 			card,
 			when: Date.now()
-		})
+		});
 		this.encounterModifiers = {
 			hitLog
 		};

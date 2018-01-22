@@ -109,8 +109,6 @@ describe('./helpers/targeting-strategies.js', () => {
 		it('gets the target with the highest hp', () => {
 			const {
 				playerContestant,
-				level1,
-				level2,
 				level3,
 				contestants
 			} = getContestants();
@@ -149,7 +147,6 @@ describe('./helpers/targeting-strategies.js', () => {
 	describe('TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS', () => {
 		it('gets the target with the highest max hp', () => {
 			const {
-				level1,
 				level3,
 				contestants
 			} = getContestants();
