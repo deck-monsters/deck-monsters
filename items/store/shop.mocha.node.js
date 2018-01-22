@@ -20,13 +20,15 @@ describe('./items/store/shop.js', () => {
 		expect(shop.adjective).to.be.a('string');
 		expect(shop.priceOffset).to.be.below(1);
 		expect(shop.backRoomOffset).to.be.below(10);
-		expect(shop.items).to.be.an.instanceof(Array);
+		expect(shop.items.length).to.be.above(4);
+		expect(shop.items.length).to.be.below(21);
 		expect(shop.cards.length).to.be.above(4);
 		expect(shop.cards.length).to.be.below(21);
-		expect(shop.backRoom.length).to.equal(1);
+		expect(shop.backRoom.length).to.be.above(0);
+		expect(shop.backRoom.length).to.be.below(7);
 	});
 
-	it('gets the same shop for 2 hours', () => {
+	it('gets the same shop for 8 hours', () => {
 		const shop = getShop();
 		const shop2 = getShop();
 
