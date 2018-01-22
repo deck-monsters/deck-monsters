@@ -5,6 +5,7 @@ const HitCard = require('./hit');
 const { roll, max } = require('../helpers/chance');
 const { BARBARIAN, FIGHTER } = require('../helpers/classes');
 const { COMMON } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 class HitHarder extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -65,7 +66,7 @@ HitHarder.permittedClassesAndTypes = [BARBARIAN, FIGHTER];
 HitHarder.probability = COMMON.probability;
 HitHarder.description = 'You hit just a little bit harder than the average bear... Roll for damage twice, and use the best result.';
 HitHarder.level = 2;
-HitHarder.cost = 30;
+HitHarder.cost = EXPENSIVE.cost;
 
 HitHarder.defaults = {
 	...HitCard.defaults,

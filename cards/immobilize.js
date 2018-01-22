@@ -7,6 +7,7 @@ const { ATTACK_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 const { signedNumber } = require('../helpers/signed-number');
 const { IMPOSSIBLE } = require('../helpers/probabilities');
+const { FREE } = require('../helpers/costs');
 
 class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -282,7 +283,7 @@ ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobili
 ImmobilizeCard.probability = IMPOSSIBLE.probability; // This card is never intended to be played on it's own, but I need access to parts of it for card progressions, so it needs to be instantiatable.
 ImmobilizeCard.description = 'Immobilize your adversary.';
 ImmobilizeCard.level = 1;
-ImmobilizeCard.cost = 0;
+ImmobilizeCard.cost = FREE.cost;
 
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,

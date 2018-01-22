@@ -6,6 +6,7 @@ const { WEEPING_ANGEL } = require('../helpers/creature-types');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 const { EPIC } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 class BlinkCard extends CurseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -176,7 +177,7 @@ BlinkCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 BlinkCard.probability = EPIC.probability;
 BlinkCard.description = "Consume your victim's potential energy";
 BlinkCard.level = 0;
-BlinkCard.cost = 80;
+BlinkCard.cost = EXPENSIVE.cost;
 BlinkCard.notForSale = true;
 
 BlinkCard.defaults = {

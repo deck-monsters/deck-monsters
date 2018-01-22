@@ -3,6 +3,7 @@ const BaseCard = require('./base');
 const { roll } = require('../helpers/chance');
 const isProbable = require('../helpers/is-probable');
 const { COMMON } = require('../helpers/probabilities');
+const { ALMOST_NOTHING } = require('../helpers/costs');
 
 class HealCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -82,7 +83,7 @@ HealCard.cardType = 'Heal';
 HealCard.probability = COMMON.probability;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';
 HealCard.level = 0;
-HealCard.cost = 5;
+HealCard.cost = ALMOST_NOTHING.cost;
 
 HealCard.defaults = {
 	healthDice: '1d4',

@@ -1,6 +1,7 @@
 const HitCard = require('./hit');
 
 const { COMMON } = require('../helpers/probabilities');
+const { CHEAP } = require('../helpers/costs');
 
 class FistsOfVirtueCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -26,7 +27,7 @@ FistsOfVirtueCard.cardType = 'Fists of Virtue';
 FistsOfVirtueCard.probability = COMMON.probability;
 FistsOfVirtueCard.description = 'You strike at the biggest bully in the room.';
 FistsOfVirtueCard.level = 1;
-FistsOfVirtueCard.cost = 25;
+FistsOfVirtueCard.cost = CHEAP.cost;
 
 FistsOfVirtueCard.defaults = {
 	...HitCard.defaults,

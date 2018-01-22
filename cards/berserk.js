@@ -5,6 +5,7 @@ const HitCard = require('./hit');
 const { BARBARIAN } = require('../helpers/classes');
 const { roll } = require('../helpers/chance');
 const { COMMON } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
 
 class BerserkCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -147,7 +148,7 @@ BerserkCard.permittedClassesAndTypes = [BARBARIAN];
 BerserkCard.probability = COMMON.probability;
 BerserkCard.description = 'The whole world disappears into a beautiful still, silent, red. At the center of all things is the perfect face of your enemy. Destroy it.';
 BerserkCard.level = 1;
-BerserkCard.cost = 40;
+BerserkCard.cost = REASONABLE.cost;
 
 BerserkCard.defaults = {
 	...HitCard.defaults,

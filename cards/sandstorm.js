@@ -7,6 +7,7 @@ const { JINN } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 const isProbable = require('../helpers/is-probable');
 const { EPIC } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 const EFFECT_TYPE = 'SandstormEffect';
 
@@ -118,7 +119,7 @@ SandstormCard.permittedClassesAndTypes = [JINN];
 SandstormCard.probability = EPIC.probability;
 SandstormCard.description = 'A blinding cloud of sand whips across the desert, damaging and confusing all those caught in it.';
 SandstormCard.level = 0;
-SandstormCard.cost = 80;
+SandstormCard.cost = EXPENSIVE.cost;
 SandstormCard.notForSale = true;
 
 SandstormCard.defaults = {

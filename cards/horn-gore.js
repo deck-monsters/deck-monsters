@@ -6,6 +6,7 @@ const ImmobilizeCard = require('./immobilize');
 const { MINOTAUR } = require('../helpers/creature-types');
 const { roll } = require('../helpers/chance');
 const { EPIC } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
 const STARTING_DEX_MODIFIER = 0;
@@ -164,7 +165,7 @@ HornGore.permittedClassesAndTypes = [MINOTAUR];
 HornGore.probability = EPIC.probability;
 HornGore.description = 'You think those horns are just there to look pretty? Think again...';
 HornGore.level = 0;
-HornGore.cost = 80;
+HornGore.cost = EXPENSIVE.cost;
 HornGore.notForSale = true;
 
 HornGore.defaults = {

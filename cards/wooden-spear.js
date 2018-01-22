@@ -6,6 +6,7 @@ const { BARD, FIGHTER } = require('../helpers/classes');
 const { MINOTAUR } = require('../helpers/creature-types');
 const { roll } = require('../helpers/chance');
 const { COMMON } = require('../helpers/probabilities');
+const { CHEAP } = require('../helpers/costs');
 
 class WoodenSpearCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -49,7 +50,7 @@ WoodenSpearCard.creatureType = MINOTAUR;
 WoodenSpearCard.probability = COMMON.probability;
 WoodenSpearCard.description = `A simple weapon fashioned for ${WoodenSpearCard.creatureType}-hunting.`;
 WoodenSpearCard.level = 1;
-WoodenSpearCard.cost = 8;
+WoodenSpearCard.cost = CHEAP.cost;
 
 WoodenSpearCard.defaults = {
 	...HitCard.defaults,

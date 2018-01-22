@@ -5,6 +5,7 @@ const ImmobilizeCard = require('./immobilize');
 const { roll } = require('../helpers/chance');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 const { EPIC } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 class CoilCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -32,7 +33,7 @@ CoilCard.weakAgainstCreatureTypes = [BASILISK];
 CoilCard.probability = EPIC.probability;
 CoilCard.description = 'Your body is the weapon.';
 CoilCard.level = 0;
-CoilCard.cost = 80;
+CoilCard.cost = EXPENSIVE.cost;
 CoilCard.notForSale = true;
 
 CoilCard.defaults = {

@@ -8,6 +8,7 @@ const { BARD, CLERIC, WIZARD } = require('../helpers/classes');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 const { capitalize } = require('../helpers/capitalize');
 const { RARE } = require('../helpers/probabilities');
+const { PRICEY } = require('../helpers/costs');
 
 const EFFECT_TYPE = 'InvisibilityEffect';
 
@@ -144,7 +145,7 @@ CloakOfInvisibilityCard.permittedClassesAndTypes = [BARD, CLERIC, WIZARD];
 CloakOfInvisibilityCard.probability = RARE.probability;
 CloakOfInvisibilityCard.description = 'You don your cloak and disappear, if only for a while.';
 CloakOfInvisibilityCard.level = 1;
-CloakOfInvisibilityCard.cost = 60;
+CloakOfInvisibilityCard.cost = PRICEY.cost;
 CloakOfInvisibilityCard.notForSale = true;
 
 module.exports = CloakOfInvisibilityCard;

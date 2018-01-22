@@ -23,7 +23,7 @@ const getShop = throttle(() => {
 		name: fantasyNames('places', 'magic_shops'),
 		adjective: sample(ADJECTIVES),
 		priceOffset: random(0.6, 0.9),
-		backRoomOffset: random(6, 9),
+		backRoomOffset: random(5.5, 9.5),
 		items: [],
 		cards: getCards(),
 		backRoom: getBackRoom()

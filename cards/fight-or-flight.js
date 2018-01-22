@@ -3,6 +3,7 @@ const HitCard = require('./hit');
 const FleeCard = require('./flee');
 
 const { ABUNDANT } = require('../helpers/probabilities');
+const { ALMOST_NOTHING } = require('../helpers/costs');
 
 class FightOrFlightCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -39,7 +40,7 @@ Chance to flee if below a quarter health`;
 FightOrFlightCard.cardType = 'Fight or Flight';
 FightOrFlightCard.probability = ABUNDANT.probability;
 FightOrFlightCard.description = 'Survival instincts are nothing to be ashamed of.';
-FightOrFlightCard.cost = 10;
+FightOrFlightCard.cost = ALMOST_NOTHING.cost;
 FightOrFlightCard.noBosses = true;
 
 module.exports = FightOrFlightCard;

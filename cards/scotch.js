@@ -1,6 +1,7 @@
 const WhiskeyShotCard = require('./whiskey-shot');
 
 const { RARE } = require('../helpers/probabilities');
+const { PRICEY } = require('../helpers/costs');
 
 class ScotchCard extends WhiskeyShotCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -16,7 +17,7 @@ ScotchCard.cardType = 'Scotch';
 ScotchCard.probability = RARE.probability;
 ScotchCard.description = 'Keep the heid, this battle\'s far from over.';
 ScotchCard.level = 4;
-ScotchCard.cost = 50;
+ScotchCard.cost = PRICEY.cost;
 ScotchCard.notForSale = true;
 
 ScotchCard.defaults = {

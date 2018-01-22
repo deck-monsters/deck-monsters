@@ -4,6 +4,7 @@ const sample = require('lodash.sample');
 const BaseCard = require('./base');
 
 const { COMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
 
 class PickPocketCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -53,6 +54,6 @@ class PickPocketCard extends BaseCard {
 PickPocketCard.cardType = 'Pick Pocket';
 PickPocketCard.probability = COMMON.probability;
 PickPocketCard.description = 'Reach into the pocket of the most skilled player and grab one of their cards to play as your own.';
-PickPocketCard.cost = 20;
+PickPocketCard.cost = VERY_CHEAP.cost;
 
 module.exports = PickPocketCard;

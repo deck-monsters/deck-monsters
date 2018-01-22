@@ -2,13 +2,15 @@
 const Promise = require('bluebird');
 
 const ImmobilizeCard = require('./immobilize');
+
 const { roll } = require('../helpers/chance');
+const { COMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
 
 const {
 	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
-const { COMMON } = require('../helpers/probabilities');
 
 class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -56,7 +58,7 @@ MesmerizeCard.weakAgainstCreatureTypes = [JINN, MINOTAUR, WEEPING_ANGEL];
 MesmerizeCard.uselessAgainstCreatureTypes = [];
 MesmerizeCard.probability = COMMON.probability;
 MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions[1]} everyone, including yourself.`;
-MesmerizeCard.cost = 15;
+MesmerizeCard.cost = VERY_CHEAP.cost;
 
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,

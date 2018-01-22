@@ -10,6 +10,7 @@ const STARTING_DEX_MODIFIER = 3;
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 const { VERY_RARE } = require('../helpers/probabilities');
+const { PRICEY } = require('../helpers/costs');
 
 class ForkedMetalRodCard extends HornGoreCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -67,7 +68,7 @@ ForkedMetalRodCard.weakAgainstCreatureTypes = [MINOTAUR];
 ForkedMetalRodCard.probability = VERY_RARE.probability;
 ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedMetalRodCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
 ForkedMetalRodCard.level = 2;
-ForkedMetalRodCard.cost = 50;
+ForkedMetalRodCard.cost = PRICEY.cost;
 ForkedMetalRodCard.notForSale = true;
 
 ForkedMetalRodCard.defaults = {

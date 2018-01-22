@@ -11,6 +11,7 @@ const { roll } = require('../helpers/chance');
 const { CLERIC, FIGHTER } = require('../helpers/classes');
 
 const { UNCOMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
 
 class Rehit extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -72,6 +73,6 @@ Rehit.permittedClassesAndTypes = [CLERIC, FIGHTER];
 Rehit.probability = UNCOMMON.probability;
 Rehit.description = 'Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.';
 Rehit.level = 2;
-Rehit.cost = 15;
+Rehit.cost = VERY_CHEAP.cost;
 
 module.exports = Rehit;
