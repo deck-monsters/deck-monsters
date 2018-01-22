@@ -59,25 +59,25 @@ You have 0 items and 7 cards. Which would you like to sell?
 		channelStub.withArgs({
 			question: `Choose one or more of the following cards:
 
-0) Hit [7] - 2 coins`
+0) Hit [7] - 7 coins`
 		})
 			.resolves('0');
 
 		channelStub.withArgs({
-			question: `Gorgons and Gremlins is willing to buy your pitiful trash for 2 coins.
+			question: `Gorgons and Gremlins is willing to buy your pitiful trash for 7 coins.
 
 Would you like to sell? (yes/no)`
 		})
 			.resolves('yes');
 
-		sellItems({ character, channel: channelStub })
+		return sellItems({ character, channel: channelStub })
 			.then(() => {
 				expect(channelStub).to.have.been.calledWith({
-					announce: "Here's your 2 coins, Character. Pleasure doing business with you."
+					announce: "Here's your 7 coins, Character. Pleasure doing business with you."
 				});
 
 				expect(channelStub).to.have.been.calledWith({
-					announce: 'Character has 502 coins.'
+					announce: 'Character has 507 coins.'
 				});
 
 				expect(shop.cards.length).to.equal(1);
@@ -107,25 +107,25 @@ You have 0 items and 7 cards. Which would you like to sell?
 		channelStub.withArgs({
 			question: `Choose one or more of the following cards:
 
-0) Hit [7] - 2 coins`
+0) Hit [7] - 7 coins`
 		})
 			.resolves('0,0,0,0');
 
 		channelStub.withArgs({
-			question: `Gorgons and Gremlins is willing to buy your pitiful trash for 8 coins.
+			question: `Gorgons and Gremlins is willing to buy your pitiful trash for 28 coins.
 
 Would you like to sell? (yes/no)`
 		})
 			.resolves('yes');
 
-		sellItems({ character, channel: channelStub })
+		return sellItems({ character, channel: channelStub })
 			.then(() => {
 				expect(channelStub).to.have.been.calledWith({
-					announce: "Here's your 8 coins, Character. Pleasure doing business with you."
+					announce: "Here's your 28 coins, Character. Pleasure doing business with you."
 				});
 
 				expect(channelStub).to.have.been.calledWith({
-					announce: 'Character has 508 coins.'
+					announce: 'Character has 528 coins.'
 				});
 
 				expect(shop.cards.length).to.equal(5);
