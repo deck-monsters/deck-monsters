@@ -46,20 +46,29 @@ class HealCard extends BaseCard {
 		return roll({ primaryDice: this.healthDice, modifier: player.encounterModifiers.healModifier, bonusDice: player.bonusIntDice });
 	}
 
+	checkLuck () { // eslint-disable-line class-methods-use-this
+		return {
+			strokeOfLuck: isProbable({ probability: 1 }),
+			curseOfLoki: isProbable({ probability: 1 })
+		};
+	}
+
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		const healRoll = this.getHealRoll(target);
 		let healResult = healRoll.result;
 
+		const { strokeOfLuck, curseOfLoki } = this.checkLuck();
+
 		// Stroke of Luck
-		if (isProbable({ probability: 1 })) {
+		if (strokeOfLuck) {
 			healResult = Math.floor(target.maxHp / 2);
 			this.emit('narration', {
 				narration: `Stoke of Luck!
 Wait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`
 			});
 		// Curse of Loki
-		} else if (isProbable({ probability: 1 })) {
+		} else if (curseOfLoki) {
 			healResult *= -1;
 			this.emit('narration', {
 				narration: `Curse of Loki!

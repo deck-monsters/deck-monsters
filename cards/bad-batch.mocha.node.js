@@ -87,6 +87,9 @@ describe('./cards/bad-batch.js', () => {
 
 		const scotch = new ScotchCard();
 
+		const checkLuckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(scotch))), 'checkLuck');
+		checkLuckStub.returns({ strokeOfLuck: false, curseOfLoki: false });
+
 		expect(ring.encounterEffects.length).to.equal(0);
 
 		return scotch
@@ -106,6 +109,8 @@ describe('./cards/bad-batch.js', () => {
 
 				// Effect cleans up after itself
 				expect(ring.encounterEffects.length).to.equal(0);
+
+				checkLuckStub.restore();
 			});
 	});
 
