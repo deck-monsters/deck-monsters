@@ -23,8 +23,8 @@ class Blast2Card extends BlastCard {
 }
 
 Blast2Card.cardType = 'Blast II';
-Blast2Card.probability = 50;
-Blast2Card.level = 1;
+Blast2Card.probability = 40;
+Blast2Card.level = 2;
 Blast2Card.cost = 50;
 Blast2Card.notForSale = true;
 

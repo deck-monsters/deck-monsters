@@ -13,7 +13,7 @@ class ScotchCard extends WhiskeyShotCard {
 ScotchCard.cardType = 'Scotch';
 ScotchCard.probability = 20;
 ScotchCard.description = 'Keep the heid, this battle\'s far from over.';
-ScotchCard.level = 2;
+ScotchCard.level = 4;
 ScotchCard.cost = 50;
 ScotchCard.notForSale = true;
 

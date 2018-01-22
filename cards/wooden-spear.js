@@ -45,7 +45,7 @@ class WoodenSpearCard extends HitCard {
 WoodenSpearCard.cardType = 'Wooden Spear';
 WoodenSpearCard.permittedClassesAndTypes = [BARD, FIGHTER];
 WoodenSpearCard.creatureType = MINOTAUR;
-WoodenSpearCard.probability = 60;
+WoodenSpearCard.probability = 50;
 WoodenSpearCard.description = `A simple weapon fashioned for ${WoodenSpearCard.creatureType}-hunting.`;
 WoodenSpearCard.level = 1;
 WoodenSpearCard.cost = 8;
