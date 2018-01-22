@@ -2,6 +2,8 @@
 
 const BlastCard = require('./blast');
 
+const { UNCOMMON } = require('../helpers/probabilities');
+
 class Blast2Card extends BlastCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -23,7 +25,7 @@ class Blast2Card extends BlastCard {
 }
 
 Blast2Card.cardType = 'Blast II';
-Blast2Card.probability = 40;
+Blast2Card.probability = UNCOMMON.probability;
 Blast2Card.level = 2;
 Blast2Card.cost = 50;
 Blast2Card.notForSale = true;

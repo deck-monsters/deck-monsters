@@ -4,8 +4,8 @@ const sample = require('lodash.sample');
 const ImmobilizeCard = require('./immobilize');
 
 const { MINOTAUR } = require('../helpers/creature-types');
-
 const { roll } = require('../helpers/chance');
+const { EPIC } = require('../helpers/probabilities');
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
 const STARTING_DEX_MODIFIER = 0;
@@ -161,7 +161,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 HornGore.cardType = 'Horn Gore';
 HornGore.permittedClassesAndTypes = [MINOTAUR];
-HornGore.probability = 5;
+HornGore.probability = EPIC.probability;
 HornGore.description = 'You think those horns are just there to look pretty? Think again...';
 HornGore.level = 0;
 HornGore.cost = 80;

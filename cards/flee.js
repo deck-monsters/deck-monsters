@@ -2,6 +2,8 @@ const BaseCard = require('./base');
 
 const { roll } = require('../helpers/chance');
 
+const { UNCOMMON } = require('../helpers/probabilities');
+
 class FleeCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -58,7 +60,7 @@ class FleeCard extends BaseCard {
 }
 
 FleeCard.cardType = 'Flee';
-FleeCard.probability = 20;
+FleeCard.probability = UNCOMMON.probability;
 FleeCard.description = 'There is no shame in living to fight another day.';
 FleeCard.cost = 3;
 FleeCard.noBosses = true;

@@ -6,6 +6,7 @@ const BlastCard = require('./blast');
 const { JINN } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 const isProbable = require('../helpers/is-probable');
+const { EPIC } = require('../helpers/probabilities');
 
 const EFFECT_TYPE = 'SandstormEffect';
 
@@ -114,7 +115,7 @@ class SandstormCard extends BlastCard {
 
 SandstormCard.cardType = 'Sandstorm';
 SandstormCard.permittedClassesAndTypes = [JINN];
-SandstormCard.probability = 5;
+SandstormCard.probability = EPIC.probability;
 SandstormCard.description = 'A blinding cloud of sand whips across the desert, damaging and confusing all those caught in it.';
 SandstormCard.level = 0;
 SandstormCard.cost = 80;

@@ -2,6 +2,7 @@ const HitCard = require('./hit');
 const HealCard = require('./heal');
 
 const { FIGHTER } = require('../helpers/classes');
+const { UNCOMMON } = require('../helpers/probabilities');
 
 class SurvivalKnifeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -30,7 +31,7 @@ ${this.healCard.stats}`;
 }
 
 SurvivalKnifeCard.cardType = 'Survival Knife';
-SurvivalKnifeCard.probability = 30;
+SurvivalKnifeCard.probability = UNCOMMON.probability;
 SurvivalKnifeCard.description = 'If times get too rough, stab yourself in the thigh and press the pommel for a Stimpak injection.';
 SurvivalKnifeCard.permittedClassesAndTypes = [FIGHTER];
 SurvivalKnifeCard.level = 1;
