@@ -494,14 +494,19 @@ Battles won: ${this.battles.wins}`;
 
 	/* assailant is the monster who attacked you, not the contestant who owns the monster */
 	hit (damage = 0, assailant, card) {
-		if (this.hp < 1) return false;
-
-		this.encounterModifiers.lastHitBy = {
+		const hitLog = this.encounterModifiers.hitLog || [];
+		hitLog.unshift({
 			assailant,
 			damage,
 			card,
 			when: Date.now()
+		})
+		this.encounterModifiers = {
+			hitLog
 		};
+
+		// don't do damage if already dead
+		if (this.hp < 1) return false;
 
 		const hp = this.hp - damage;
 		const originalHP = this.hp;

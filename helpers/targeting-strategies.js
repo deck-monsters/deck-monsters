@@ -102,17 +102,22 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 		case TARGET_PLAYER_WHO_HIT_YOU_LAST: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
 
-			if (!playerContestant.monster.encounterEffects.lastHitBy) {
+			if (!playerContestant.monster.encounterModifiers.hitLog) {
 				return defaultTarget;
 			}
 
-			return contestants.reduce((potentialTarget, contestant) => {
-				// Skip the player
-				if (ignoreSelf && contestant === playerContestant) return potentialTarget;
+			let lastHit;
 
-				// If this player is the one who hit you last, target them
-				if (playerContestant.monster.encounterEffects.lastHitBy
-					&& playerContestant.monster.encounterEffects.lastHitBy.assailant === contestant.monster) {
+			if (ignoreSelf) {
+				lastHit = playerContestant.monster.encounterModifiers.hitLog.find(hitter => {
+					return hitter.assailant !== playerContestant.monster;
+				});
+			} else {
+				lastHit = playerContestant.monster.encounterModifiers.hitLog[0]
+			}
+
+			return contestants.reduce((potentialTarget, contestant) => {
+				if (contestant.monster.givenName === lastHit.assailant.givenName) {
 					return contestant;
 				}
 
