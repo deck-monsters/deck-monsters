@@ -1,6 +1,8 @@
 const HitCard = require('./hit');
 
 const { BARBARIAN } = require('../helpers/classes');
+const { RARE } = require('../helpers/probabilities');
+const { PRICEY } = require('../helpers/costs');
 
 class VenegefulRampageCard extends HitCard {
 	get stats () {
@@ -16,10 +18,10 @@ Damage: ${this.damageDice} +1 per wound suffered`;
 
 VenegefulRampageCard.cardType = 'Vengeful Rampage';
 VenegefulRampageCard.permittedClassesAndTypes = [BARBARIAN];
-VenegefulRampageCard.probability = 20;
+VenegefulRampageCard.probability = RARE.probability;
 VenegefulRampageCard.description = 'Your wounds only make you stronger.';
 VenegefulRampageCard.level = 3;
-VenegefulRampageCard.cost = 40;
+VenegefulRampageCard.cost = PRICEY.cost;
 VenegefulRampageCard.notForSale = true;
 
 VenegefulRampageCard.flavors = {

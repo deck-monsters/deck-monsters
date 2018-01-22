@@ -1,6 +1,8 @@
 const HitCard = require('./hit');
 
 const { BARD, BARBARIAN } = require('../helpers/classes');
+const { VERY_RARE } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 class PoundCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -15,10 +17,10 @@ class PoundCard extends HitCard {
 
 PoundCard.cardType = 'Pound';
 PoundCard.permittedClassesAndTypes = [BARD, BARBARIAN];
-PoundCard.probability = 10;
+PoundCard.probability = VERY_RARE.probability;
 PoundCard.description = 'You wield the mighty pound card and can do double the damage.';
 PoundCard.level = 3;
-PoundCard.cost = 50;
+PoundCard.cost = EXPENSIVE.cost;
 PoundCard.notForSale = true;
 
 PoundCard.defaults = {

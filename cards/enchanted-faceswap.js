@@ -4,6 +4,8 @@ const BaseCard = require('./base');
 
 const { BARD, CLERIC } = require('../helpers/classes');
 const { DEFENSE_PHASE } = require('../helpers/phases');
+const { RARE } = require('../helpers/probabilities');
+const { PRICEY } = require('../helpers/costs');
 
 const EFFECT_TYPE = 'FaceswapEffect';
 
@@ -75,9 +77,10 @@ class EnchantedFaceswapCard extends BaseCard {
 
 EnchantedFaceswapCard.cardType = 'Enchanted Faceswap';
 EnchantedFaceswapCard.permittedClassesAndTypes = [BARD, CLERIC];
-EnchantedFaceswapCard.probability = 40;
+EnchantedFaceswapCard.probability = RARE.probability;
 EnchantedFaceswapCard.description = 'A snapchat filter for the magically inclined. This spell will cause the next card played with the caster as the target to be reversed so that the player of the card becomes the target.';
 EnchantedFaceswapCard.level = 1;
-EnchantedFaceswapCard.cost = 55;
+EnchantedFaceswapCard.cost = PRICEY.cost;
+EnchantedFaceswapCard.notForSale = true;
 
 module.exports = EnchantedFaceswapCard;

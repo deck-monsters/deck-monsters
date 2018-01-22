@@ -4,10 +4,11 @@ const { getBackRoom, getCards } = require('./stock');
 
 describe('./items/store/stock.js', () => {
 	describe('getBackRoom', () => {
-		it('can get a special item for the back room', () => {
+		it('can get special items for the back room', () => {
 			const backRoom = getBackRoom();
 
-			expect(backRoom.length).to.equal(1);
+			expect(backRoom.length).to.be.above(0);
+			expect(backRoom.length).to.be.below(7);
 
 			backRoom.forEach((item) => {
 				expect(item.constructor.notForSale).to.equal(true);

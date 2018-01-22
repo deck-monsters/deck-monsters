@@ -2,6 +2,8 @@ const HitCard = require('./hit');
 
 const { difference } = require('../helpers/difference');
 const { roll, max } = require('../helpers/chance');
+const { UNCOMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
 
 class CurseCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -96,10 +98,10 @@ ${player.givenName}'s harrying jab takes from hp instead.`;
 }
 
 CurseCard.cardType = 'Soften';
-CurseCard.probability = 30;
+CurseCard.probability = UNCOMMON.probability;
 CurseCard.description = 'Sweep the leg... You have a problem with that? No mercy.';
 CurseCard.level = 1;
-CurseCard.cost = 10;
+CurseCard.cost = VERY_CHEAP.cost;
 
 CurseCard.defaults = {
 	...HitCard.defaults,

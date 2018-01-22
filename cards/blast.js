@@ -3,6 +3,8 @@
 const BaseCard = require('./base');
 
 const { CLERIC } = require('../helpers/classes');
+const { ABUNDANT } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
 
 class BlastCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -39,10 +41,10 @@ class BlastCard extends BaseCard {
 
 BlastCard.cardType = 'Blast';
 BlastCard.permittedClassesAndTypes = [CLERIC];
-BlastCard.probability = 60;
+BlastCard.probability = ABUNDANT.probability;
 BlastCard.description = 'A magical blast against every opponent in the encounter.';
 BlastCard.level = 0;
-BlastCard.cost = 30;
+BlastCard.cost = REASONABLE.cost;
 BlastCard.isAreaOfEffect = true;
 
 BlastCard.defaults = {
