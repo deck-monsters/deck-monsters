@@ -84,7 +84,7 @@ Stroke of luck increases damage per hit by 1.`;
 	}
 
 	increaseFatigue (currentFatigue) {
-		let fatigueAmount = (currentFatigue >= 0) ? currentFatigue : this.baseFatigue;
+		const fatigueAmount = (currentFatigue > this.baseFatigue) ? currentFatigue : this.baseFatigue;
 
 		return fatigueAmount + 1;
 	}
