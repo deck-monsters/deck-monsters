@@ -87,8 +87,23 @@ describe('./cards/bad-batch.js', () => {
 
 		const scotch = new ScotchCard();
 
-		const checkLuckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(scotch))), 'checkLuck');
-		checkLuckStub.returns({ strokeOfLuck: false, curseOfLoki: false });
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(scotch))), 'checkSuccess');
+		checkSuccessStub.returns({
+			curseOfLoki: false,
+			healRoll: {
+				primaryDice: '2d6',
+				bonusDice: undefined,
+				result: 10,
+				naturalRoll: { result: 10 },
+				bonusResult: 0,
+				modifier: 0,
+				strokeOfLuck: false,
+				curseOfLoki: false
+			},
+			result: 10,
+			strokeOfLuck: false,
+			success: true
+		});
 
 		expect(ring.encounterEffects.length).to.equal(0);
 
@@ -110,7 +125,7 @@ describe('./cards/bad-batch.js', () => {
 				// Effect cleans up after itself
 				expect(ring.encounterEffects.length).to.equal(0);
 
-				checkLuckStub.restore();
+				checkSuccessStub.restore();
 			});
 	});
 
