@@ -82,15 +82,15 @@ Stroke of luck increases damage per hit by 1.`;
 		return roll({ primaryDice: this.attackDice, modifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 
-	fatigueIntBonus (currentBonus, iteration) {
-		let newBonus = currentBonus;
+	fatigueIntBonus (currentBonusFatigue, iteration) {
+		let newBonusFatigue = currentBonusFatigue;
 
 		if (iteration > 1) {
-			newBonus = (newBonus >= 0) ? newBonus : this.baseDiminishment;
-			newBonus += 1;
+			newBonusFatigue = (newBonusFatigue >= 0) ? newBonusFatigue : this.baseDiminishment;
+			newBonusFatigue += 1;
 		}
 
-		return newBonus;
+		return newBonusFatigue;
 	}
 
 	effectLoop (iteration, player, target, ring, activeContestants) {
