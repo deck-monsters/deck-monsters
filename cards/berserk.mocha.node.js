@@ -156,10 +156,9 @@ describe('./cards/berserk.js', () => {
 		it('calculates fatigue properly', () => {
 			const berserk = new BerserkCard();
 
-			expect(berserk.increaseFatigue(undefined)).to.equal(0);
-			expect(berserk.increaseFatigue(0)).to.equal(1);
-			expect(berserk.increaseFatigue(1)).to.equal(2);
-			expect(berserk.increaseFatigue(2)).to.equal(3);
+			expect(berserk.intBonusFatigue).to.equal(0);
+			berserk.increaseFatigue()
+			expect(berserk.intBonusFatigue).to.equal(1);
 		});
 	});
 
@@ -172,6 +171,7 @@ describe('./cards/berserk.js', () => {
 		const hitProto = Object.getPrototypeOf(berserkProto);
 		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
 		const increaseFatigueSpy = sinon.spy(berserkProto, 'increaseFatigue');
+		const resetFatigueSpy = sinon.spy(berserkProto, 'resetFatigue');
 
 		const ring = {
 			contestants: [
@@ -203,33 +203,21 @@ describe('./cards/berserk.js', () => {
 			curseOfLoki: false
 		});
 
-		expect(berserk.intBonusFatigue).to.be.undefined;
-		expect(berserk.baseFatigue).to.equal(-1);
+		expect(berserk.intBonusFatigue).to.equal(0);
 
 		return berserk
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
 				hitCheckStub.restore();
 				increaseFatigueSpy.restore();
+				resetFatigueSpy.restore();
 
-				expect(increaseFatigueSpy.args[0]).to.deep.equal([undefined]);
-				expect(increaseFatigueSpy.args[1]).to.deep.equal([0]);
-				expect(increaseFatigueSpy.args[2]).to.deep.equal([1]);
-				expect(increaseFatigueSpy.args[3]).to.deep.equal([2]);
-				expect(increaseFatigueSpy.args[4]).to.deep.equal([-1]);
-				expect(increaseFatigueSpy.args[5]).to.deep.equal([0]);
-				expect(increaseFatigueSpy.args[6]).to.deep.equal([1]);
-				expect(increaseFatigueSpy.returnValues[0]).to.equal(0);
-				expect(increaseFatigueSpy.returnValues[1]).to.equal(1);
-				expect(increaseFatigueSpy.returnValues[2]).to.equal(2);
-				expect(increaseFatigueSpy.returnValues[3]).to.equal(3);
-				expect(increaseFatigueSpy.returnValues[4]).to.equal(0);
-				expect(increaseFatigueSpy.returnValues[5]).to.equal(1);
-				return expect(increaseFatigueSpy.returnValues[6]).to.equal(2);
+				expect(resetFatigueSpy.callCount).to.equal(2);
+				return expect(increaseFatigueSpy.callCount).to.equal(7);
 			});
 	});
 
-	it('resets intBonusFatigue and baseFatigue after play', () => {
+	it('resets intBonusFatigue after play', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target' });
@@ -262,16 +250,14 @@ describe('./cards/berserk.js', () => {
 			curseOfLoki: false
 		});
 
-		expect(berserk.intBonusFatigue).to.be.undefined;
-		expect(berserk.baseFatigue).to.equal(-1);
+		expect(berserk.intBonusFatigue).to.equal(0);
 
 		return berserk
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
 				hitCheckStub.restore();
 
-				expect(berserk.baseFatigue).to.equal(-1);
-				return expect(berserk.intBonusFatigue).to.be.undefined;
+				return expect(berserk.intBonusFatigue).to.equal(0);
 			});
 	});
 

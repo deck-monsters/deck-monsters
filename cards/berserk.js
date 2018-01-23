@@ -26,10 +26,25 @@ class BerserkCard extends HitCard {
 	}
 
 	resetCard () {
-		this.damageAmount = this.options.damage;
+		this.resetDamage();
 		this.iterations = 0;
-		this.baseFatigue = -1;
-		this.intBonusFatigue = undefined;
+		this.resetFatigue();
+	}
+
+	resetFatigue () {
+		this.intBonusFatigue = 0;
+	}
+
+	increaseFatigue () {
+		this.intBonusFatigue += 1;
+	}
+
+	resetDamage () {
+		this.damageAmount = this.options.damage;
+	}
+
+	increaseDamage () {
+		this.damageAmount += 1;
 	}
 
 	set bigFirstHit (bigFirstHit) {
@@ -71,7 +86,7 @@ Stroke of luck increases damage per hit by 1.`;
 
 		// intBonus doesn't kick in until we've actually successfully hit
 		if (this.iterations > 1) {
-			modifier += Math.max(player.intModifier - (this.intBonusFatigue || 0), 0);
+			modifier += Math.max(player.intModifier - this.intBonusFatigue, 0);
 		}
 
 		return modifier;
@@ -83,18 +98,11 @@ Stroke of luck increases damage per hit by 1.`;
 		return roll({ primaryDice: this.attackDice, modifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 
-	increaseFatigue (currentFatigue) {
-		const fatigueAmount = (currentFatigue > this.baseFatigue) ? currentFatigue : this.baseFatigue;
-
-		return fatigueAmount + 1;
-	}
-
 	effectLoop (iteration, player, target, ring, activeContestants) {
 		this.iterations = iteration;
-		// intBonus doesn't kick in until we've actually successfully hit, don't fatigue the bonus until then
-		if (iteration > 1) {
-			this.intBonusFatigue = this.increaseFatigue(this.intBonusFatigue);
-		}
+		// intBonus doesn't kick in until we've actually successfully hit, don't fatigue the bonus until after we've hit
+		// and after we've applied the bonus for the first time
+		if (iteration > 2) this.increaseFatigue();
 
 		// Add any player modifiers and roll the dice
 		const {
@@ -102,8 +110,8 @@ Stroke of luck increases damage per hit by 1.`;
 		} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
 		if (strokeOfLuck) {
-			this.damageAmount = this.damageAmount + 1;
-			this.intBonusFatigue = this.baseFatigue;
+			this.increaseDamage();
+			this.resetFatigue();
 		}
 
 		if (success) {
