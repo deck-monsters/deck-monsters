@@ -29,7 +29,7 @@ class BerserkCard extends HitCard {
 		this.damageAmount = this.options.damage;
 		this.iterations = 0;
 		this.baseDiminishment = -1;
-		this.intBonusDiminishment = undefined;
+		this.intBonusFatigue = undefined;
 	}
 
 	set bigFirstHit (bigFirstHit) {
@@ -56,7 +56,7 @@ ${this.damageAmount} damage per hit after that.`;
 		}
 
 		return `Hit: ${this.attackDice} + attack bonus vs AC on first hit
-then also + spell bonus (diminished by 1 each subsequent hit) until you miss
+then also + spell bonus (fatigued by 1 each subsequent hit) until you miss
 ${damageDescription}
 
 Stroke of luck increases damage per hit by 1.`;
@@ -70,19 +70,19 @@ Stroke of luck increases damage per hit by 1.`;
 		let modifier = player.dexModifier;
 
 		if (this.iterations > 1) {
-			modifier += Math.max(player.intModifier - (this.intBonusDiminishment || 0), 0);
+			modifier += Math.max(player.intModifier - (this.intBonusFatigue || 0), 0);
 		}
 
 		return modifier;
 	}
 
 	getAttackRoll (player, target) {
-		// once you hit the first time, you get a diminishing bonus for each subsequent hit.
+		// once you hit the first time, you get a fatiguing bonus for each subsequent hit.
 		const modifier = this.getAttackRollBonus(player, target);
 		return roll({ primaryDice: this.attackDice, modifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 
-	diminishIntBonus (currentBonus, iteration) {
+	fatigueIntBonus (currentBonus, iteration) {
 		let newBonus = currentBonus;
 
 		if (iteration > 1) {
@@ -95,7 +95,7 @@ Stroke of luck increases damage per hit by 1.`;
 
 	effectLoop (iteration, player, target, ring, activeContestants) {
 		this.iterations = iteration;
-		this.intBonusDiminishment = this.diminishIntBonus(this.intBonusDiminishment, iteration);
+		this.intBonusFatigue = this.fatigueIntBonus(this.intBonusFatigue, iteration);
 
 		// Add any player modifiers and roll the dice
 		const {
@@ -104,7 +104,7 @@ Stroke of luck increases damage per hit by 1.`;
 
 		if (strokeOfLuck) {
 			this.damageAmount = this.damageAmount + 1;
-			this.intBonusDiminishment = this.baseDiminishment;
+			this.intBonusFatigue = this.baseDiminishment;
 		}
 
 		if (success) {

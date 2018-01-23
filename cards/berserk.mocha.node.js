@@ -43,7 +43,7 @@ describe('./cards/berserk.js', () => {
 		expect(berserk).to.be.an.instanceof(BerserkCard);
 		expect(berserk.bigFirstHit).to.be.false;
 		expect(berserk.damageAmount).to.equal(1);
-		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (diminished by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
+		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {
@@ -132,7 +132,7 @@ describe('./cards/berserk.js', () => {
 	});
 
 	describe('attackRollBonus', () => {
-		it('takes iterations and intBonusDiminishment into account', () => {
+		it('takes iterations and intBonusFatigue into account', () => {
 			const berserk = new BerserkCard();
 			const player = new Gladiator({ name: 'player' });
 
@@ -140,32 +140,100 @@ describe('./cards/berserk.js', () => {
 			expect(player.intModifier).to.equal(2);
 			expect(player.dexModifier).to.equal(3);
 
-			berserk.intBonusDiminishment = 0;
+			berserk.intBonusFatigue = 0;
 			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier);
 			berserk.iterations = 2;
-			berserk.intBonusDiminishment = 0;
+			berserk.intBonusFatigue = 0;
 			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier + player.intModifier);
-			berserk.intBonusDiminishment = 1;
+			berserk.intBonusFatigue = 1;
 			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier + (player.intModifier - 1));
-			berserk.intBonusDiminishment = 10;
+			berserk.intBonusFatigue = 10;
 			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier);
 		});
 	});
 
-	describe('diminishIntBonus', () => {
-		it('calculates diminishment properly', () => {
+	describe('fatigueIntBonus', () => {
+		it('calculates fatigue properly', () => {
 			const berserk = new BerserkCard();
 
-			expect(berserk.diminishIntBonus(undefined, 0)).to.equal(undefined);
-			expect(berserk.diminishIntBonus(undefined, 1)).to.equal(undefined);
-			expect(berserk.diminishIntBonus(undefined, 2)).to.equal(0);
-			expect(berserk.diminishIntBonus(0, 3)).to.equal(1);
-			expect(berserk.diminishIntBonus(0, 5)).to.equal(1);
-			expect(berserk.diminishIntBonus(2, 5)).to.equal(3);
-		})
-	})
+			expect(berserk.fatigueIntBonus(undefined, 0)).to.equal(undefined);
+			expect(berserk.fatigueIntBonus(undefined, 1)).to.equal(undefined);
+			expect(berserk.fatigueIntBonus(undefined, 2)).to.equal(0);
+			expect(berserk.fatigueIntBonus(0, 3)).to.equal(1);
+			expect(berserk.fatigueIntBonus(0, 5)).to.equal(1);
+			expect(berserk.fatigueIntBonus(2, 5)).to.equal(3);
+		});
+	});
 
-	it('resets intBonusDiminishment and baseDiminishment after play', () => {
+	it('calls fatigueIntBonus each effectLoop iteration as expected', () => {
+		const berserk = new BerserkCard();
+		const player = new Gladiator({ name: 'player' });
+		const target = new Minotaur({ name: 'target' });
+
+		const berserkProto = Object.getPrototypeOf(berserk);
+		const hitProto = Object.getPrototypeOf(berserkProto);
+		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
+		const fatigueIntBonusSpy = sinon.spy(berserkProto, 'fatigueIntBonus');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = berserk.getAttackRoll(player);
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.onCall(4).returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: true,
+			curseOfLoki: false
+		});
+		hitCheckStub.onCall(8).returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		expect(berserk.intBonusFatigue).to.be.undefined;
+		expect(berserk.baseDiminishment).to.equal(-1);
+
+		return berserk
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				hitCheckStub.restore();
+				fatigueIntBonusSpy.restore();
+
+				expect(fatigueIntBonusSpy.args[0]).to.deep.equal([undefined, 1]);
+				expect(fatigueIntBonusSpy.args[1]).to.deep.equal([undefined, 2]);
+				expect(fatigueIntBonusSpy.args[2]).to.deep.equal([0, 3]);
+				expect(fatigueIntBonusSpy.args[3]).to.deep.equal([1, 4]);
+				expect(fatigueIntBonusSpy.args[4]).to.deep.equal([2, 5]);
+				expect(fatigueIntBonusSpy.args[5]).to.deep.equal([-1, 6]);
+				expect(fatigueIntBonusSpy.args[6]).to.deep.equal([0, 7]);
+				expect(fatigueIntBonusSpy.args[7]).to.deep.equal([1, 8]);
+				expect(fatigueIntBonusSpy.returnValues[0]).to.equal(undefined);
+				expect(fatigueIntBonusSpy.returnValues[1]).to.equal(0);
+				expect(fatigueIntBonusSpy.returnValues[2]).to.equal(1);
+				expect(fatigueIntBonusSpy.returnValues[3]).to.equal(2);
+				expect(fatigueIntBonusSpy.returnValues[4]).to.equal(3);
+				expect(fatigueIntBonusSpy.returnValues[5]).to.equal(0);
+				expect(fatigueIntBonusSpy.returnValues[6]).to.equal(1);
+				return expect(fatigueIntBonusSpy.returnValues[7]).to.equal(2);
+			});
+	});
+
+	it('resets intBonusFatigue and baseDiminishment after play', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target' });
@@ -198,7 +266,7 @@ describe('./cards/berserk.js', () => {
 			curseOfLoki: false
 		});
 
-		expect(berserk.intBonusDiminishment).to.be.undefined;
+		expect(berserk.intBonusFatigue).to.be.undefined;
 		expect(berserk.baseDiminishment).to.equal(-1);
 
 		return berserk
@@ -207,7 +275,7 @@ describe('./cards/berserk.js', () => {
 				hitCheckStub.restore();
 
 				expect(berserk.baseDiminishment).to.equal(-1);
-				return expect(berserk.intBonusDiminishment).to.be.undefined;
+				return expect(berserk.intBonusFatigue).to.be.undefined;
 			});
 	});
 
