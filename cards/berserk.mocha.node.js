@@ -157,7 +157,7 @@ describe('./cards/berserk.js', () => {
 			const berserk = new BerserkCard();
 
 			expect(berserk.intBonusFatigue).to.equal(0);
-			berserk.increaseFatigue()
+			berserk.increaseFatigue();
 			expect(berserk.intBonusFatigue).to.equal(1);
 		});
 	});
@@ -212,7 +212,7 @@ describe('./cards/berserk.js', () => {
 				increaseFatigueSpy.restore();
 				resetFatigueSpy.restore();
 
-				expect(resetFatigueSpy.callCount).to.equal(2);
+				expect(resetFatigueSpy.callCount).to.equal(3);
 				return expect(increaseFatigueSpy.callCount).to.equal(7);
 			});
 	});

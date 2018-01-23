@@ -25,9 +25,19 @@ class BerserkCard extends HitCard {
 		this.resetCard();
 	}
 
+	set bigFirstHit (bigFirstHit) {
+		this.setOptions({
+			bigFirstHit
+		});
+	}
+
+	get bigFirstHit () {
+		return this.options.bigFirstHit;
+	}
+
 	resetCard () {
-		this.resetDamage();
 		this.iterations = 0;
+		this.resetDamage();
 		this.resetFatigue();
 	}
 
@@ -47,24 +57,9 @@ class BerserkCard extends HitCard {
 		this.damageAmount += 1;
 	}
 
-	set bigFirstHit (bigFirstHit) {
-		this.bigFirstHit = bigFirstHit;
-	}
-
-	get bigFirstHit () {
-		return this.options.bigFirstHit;
-	}
-
-	set damageAmount (amount) {
-		this.damage = amount;
-	}
-
-	get damageAmount () {
-		return this.damage;
-	}
-
 	get stats () {
 		let damageDescription = `${this.damageAmount} damage per hit.`;
+
 		if (this.bigFirstHit) {
 			damageDescription = `${this.damageDice} damage on first hit.
 ${this.damageAmount} damage per hit after that.`;
@@ -100,6 +95,7 @@ Stroke of luck increases damage per hit by 1.`;
 
 	effectLoop (iteration, player, target, ring, activeContestants) {
 		this.iterations = iteration;
+
 		// intBonus doesn't kick in until we've actually successfully hit, don't fatigue the bonus until after we've hit
 		// and after we've applied the bonus for the first time
 		if (iteration > 2) this.increaseFatigue();
@@ -172,6 +168,7 @@ Stroke of luck increases damage per hit by 1.`;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
+		this.resetCard();
 		this.cumulativeComboDamage = 0;
 		return this.effectLoop(1, player, target, ring, activeContestants);
 	}
