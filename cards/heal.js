@@ -100,7 +100,7 @@ Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. ð
 			card: this,
 			roll: healRoll,
 			who: target,
-			outcome: success ? `${target.givenName} grows stronger...` : `Not a drop left for ${target.givenName}.`
+			outcome: success ? `${target.givenName} grows stronger...` : `Empty! Not a drop left for ${target.givenName}.`
 		});
 
 		if (!success) {
