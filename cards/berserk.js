@@ -25,35 +25,48 @@ class BerserkCard extends HitCard {
 		this.resetCard();
 	}
 
-	resetCard () {
-		this.damageAmount = this.options.damage;
-		this.iterations = 0;
-	}
-
 	set bigFirstHit (bigFirstHit) {
-		this.bigFirstHit = bigFirstHit;
+		this.setOptions({
+			bigFirstHit
+		});
 	}
 
 	get bigFirstHit () {
 		return this.options.bigFirstHit;
 	}
 
-	set damageAmount (amount) {
-		this.damage = amount;
+	resetCard () {
+		this.iterations = 0;
+		this.resetDamage();
+		this.resetFatigue();
 	}
 
-	get damageAmount () {
-		return this.damage;
+	resetFatigue () {
+		this.intBonusFatigue = 0;
+	}
+
+	increaseFatigue () {
+		this.intBonusFatigue += 1;
+	}
+
+	resetDamage () {
+		this.damageAmount = this.options.damage;
+	}
+
+	increaseDamage () {
+		this.damageAmount += 1;
 	}
 
 	get stats () {
 		let damageDescription = `${this.damageAmount} damage per hit.`;
+
 		if (this.bigFirstHit) {
 			damageDescription = `${this.damageDice} damage on first hit.
 ${this.damageAmount} damage per hit after that.`;
 		}
 
-		return `Hit: ${this.attackDice} vs AC until you miss
+		return `Hit: ${this.attackDice} + attack bonus vs AC on first hit
+then also + spell bonus (fatigued by 1 each subsequent hit) until you miss
 ${damageDescription}
 
 Stroke of luck increases damage per hit by 1.`;
@@ -63,21 +76,38 @@ Stroke of luck increases damage per hit by 1.`;
 		return roll({ primaryDice: this.damageDice });
 	}
 
-	getAttackRoll (player) {
-		// once you hit the first time, you get a diminishing bonus for each subsequent hit.
-		const modifier = player.dexModifier + (this.iterations > 1) ? Math.max(player.intModifier - this.iterations, 0) : 0;
+	getAttackRollBonus (player) {
+		let modifier = player.dexModifier;
+
+		// intBonus doesn't kick in until we've actually successfully hit
+		if (this.iterations > 1) {
+			modifier += Math.max(player.intModifier - this.intBonusFatigue, 0);
+		}
+
+		return modifier;
+	}
+
+	getAttackRoll (player, target) {
+		// once you hit the first time, you get a fatiguing bonus for each subsequent hit.
+		const modifier = this.getAttackRollBonus(player, target);
 		return roll({ primaryDice: this.attackDice, modifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	effectLoop (iteration, player, target, ring, activeContestants) {
 		this.iterations = iteration;
+
+		// intBonus doesn't kick in until we've actually successfully hit, don't fatigue the bonus until after we've hit
+		// and after we've applied the bonus for the first time
+		if (iteration > 2) this.increaseFatigue();
+
 		// Add any player modifiers and roll the dice
 		const {
 			attackRoll, success, strokeOfLuck, curseOfLoki
 		} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
 		if (strokeOfLuck) {
-			this.damageAmount = this.damageAmount + 1;
+			this.increaseDamage();
+			this.resetFatigue();
 		}
 
 		if (success) {
@@ -138,6 +168,7 @@ Stroke of luck increases damage per hit by 1.`;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
+		this.resetCard();
 		this.cumulativeComboDamage = 0;
 		return this.effectLoop(1, player, target, ring, activeContestants);
 	}
