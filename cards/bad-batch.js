@@ -40,8 +40,15 @@ class BadBatchCard extends BaseCard {
 
 				if (effect && getHealRoll) {
 					card.effect = (player, target) => {
+						let narration;
+						if (player === target) {
+							narration = `${target.givenName} forgets which bottle is ${target.pronouns.his} whiskey and which one is poison.`;
+						} else {
+							narration = `${target.givenName} doesn't notice that the seal on ${target.pronouns.his} bottle has been tampered with.`;
+						}
+
 						this.emit('narration', {
-							narration: `${target.givenName} doesn't notice that the seal on ${target.pronouns.his} bottle has been tampered with.`
+							narration
 						});
 
 						const healRoll = getHealRoll.call(card, target);

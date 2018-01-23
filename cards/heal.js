@@ -81,26 +81,39 @@ class HealCard extends BaseCard {
 			success
 		} = this.checkSuccess(this.getHealRoll(target), target);
 
+		// Default outcome
+		let outcome = `${target.givenName} grows stronger...`;
+
 		// Stroke of Luck
 		if (strokeOfLuck) {
 			this.emit('narration', {
 				narration: `Stoke of Luck!
 Wait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`
 			});
+
+			if (!success) {
+				outcome = 'The phial was empty!';
+			}
 		// Curse of Loki
-		} else if (success && curseOfLoki) {
+		} else if (curseOfLoki) {
 			this.emit('narration', {
 				narration: `Curse of Loki!
 Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. 🤢`
 			});
+
+			if (!success) {
+				outcome = 'Phew! Barely a drop left, not enough to do any harm';
+			}
+		} else if (!success) {
+			outcome = `Empty! Not a drop left for ${target.givenName}.`;
 		}
 
 		this.emit('rolled', {
-			reason: 'to determine how much to heal.',
+			reason: 'to determine how much to drink.',
 			card: this,
 			roll: healRoll,
 			who: target,
-			outcome: success ? `${target.givenName} grows stronger...` : `Empty! Not a drop left for ${target.givenName}.`
+			outcome
 		});
 
 		if (!success) {
