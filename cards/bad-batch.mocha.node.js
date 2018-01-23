@@ -160,4 +160,10 @@ describe('./cards/bad-batch.js', () => {
 				expect(ring.encounterEffects.length).to.equal(1);
 			});
 	});
+
+	it('can be held by Jinn', () => {
+		const player = new Jinn({ name: 'player', xp: 300 });
+
+		expect(player.canHold(BadBatchCard)).to.equal(true);
+	});
 });
