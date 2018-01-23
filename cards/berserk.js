@@ -28,7 +28,7 @@ class BerserkCard extends HitCard {
 	resetCard () {
 		this.damageAmount = this.options.damage;
 		this.iterations = 0;
-		this.baseDiminishment = -1;
+		this.baseFatigue = -1;
 		this.intBonusFatigue = undefined;
 	}
 
@@ -69,6 +69,7 @@ Stroke of luck increases damage per hit by 1.`;
 	getAttackRollBonus (player) {
 		let modifier = player.dexModifier;
 
+		// intBonus doesn't kick in until we've actually successfully hit
 		if (this.iterations > 1) {
 			modifier += Math.max(player.intModifier - (this.intBonusFatigue || 0), 0);
 		}
@@ -83,19 +84,17 @@ Stroke of luck increases damage per hit by 1.`;
 	}
 
 	fatigueIntBonus (currentBonusFatigue, iteration) {
-		let newBonusFatigue = currentBonusFatigue;
+		let newBonusFatigue = (currentBonusFatigue >= 0) ? currentBonusFatigue : this.baseFatigue;
 
-		if (iteration > 1) {
-			newBonusFatigue = (newBonusFatigue >= 0) ? newBonusFatigue : this.baseDiminishment;
-			newBonusFatigue += 1;
-		}
-
-		return newBonusFatigue;
+		return newBonusFatigue + 1;
 	}
 
 	effectLoop (iteration, player, target, ring, activeContestants) {
 		this.iterations = iteration;
-		this.intBonusFatigue = this.fatigueIntBonus(this.intBonusFatigue, iteration);
+		// intBonus doesn't kick in until we've actually successfully hit, don't fatigue the bonus until then
+		if (iteration > 1) {
+			this.intBonusFatigue = this.fatigueIntBonus(this.intBonusFatigue, iteration);
+		}
 
 		// Add any player modifiers and roll the dice
 		const {
@@ -104,7 +103,7 @@ Stroke of luck increases damage per hit by 1.`;
 
 		if (strokeOfLuck) {
 			this.damageAmount = this.damageAmount + 1;
-			this.intBonusFatigue = this.baseDiminishment;
+			this.intBonusFatigue = this.baseFatigue;
 		}
 
 		if (success) {
