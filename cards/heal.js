@@ -102,7 +102,7 @@ Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. ð
 			});
 
 			if (!success) {
-				outcome = 'Phew! Barely a drop left, not enough to do any harm';
+				outcome = 'Phew! Barely a drop left, not enough to do any harm.';
 			}
 		} else if (!success) {
 			outcome = `Empty! Not a drop left for ${target.givenName}.`;
