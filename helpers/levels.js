@@ -12,18 +12,19 @@ const getLevel = (xp = 0, prevPrevThreshold = 0, prevThreshold = 50, level = STA
 };
 
 const describeLevels = (...levels) => {
-	let level;
-	let compare;
 	let description;
 	let difference;
+	let opponentLevel;
+	let playerLevel;
 
 	if (levels.length === 1) {
-		level = levels[0];
-		description = level ? `level ${level}` : 'beginner';
+		playerLevel = levels[0];
+		description = playerLevel ? `level ${playerLevel}` : 'beginner';
 	} else if (levels.length === 2) {
-		level = levels[1];
-		compare = levels[0];
-		difference = compare - level;
+		playerLevel = levels[0];
+		opponentLevel = levels[1];
+
+		difference = playerLevel - opponentLevel;
 
 		if (difference === 0) {
 			description = 'same level';
@@ -39,18 +40,18 @@ const describeLevels = (...levels) => {
 			}
 		}
 	} else {
-		compare = levels.shift();
-		level = Math.round(levels.reduce((total, lvl) => total + lvl, 0) / levels.length);
-		difference = compare - level;
+		playerLevel = levels.shift();
+		opponentLevel = Math.round(levels.reduce((total, lvl) => total + lvl, 0) / levels.length);
+		difference = playerLevel - opponentLevel;
 
-		description = `average level of ${level || 'beginner'}`;
+		description = `average level of ${opponentLevel || 'beginner'}`;
 	}
 
 	return {
-		level,
-		compare,
 		description,
-		difference
+		difference,
+		opponentLevel,
+		playerLevel
 	};
 };
 

@@ -53,10 +53,7 @@ const calculateXP = (contestant, contestants) => {
 			}
 		});
 
-		const {
-			description: levelDescription,
-			difference: levelDifference
-		} = describeLevels(...levels);
+		const { description: levelDescription, difference: levelDifference } = describeLevels(...levels);
 
 		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
 		xp = Math.min(xpFormula(levelDifference, xpBase), xpBase * rounds);
