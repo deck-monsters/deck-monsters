@@ -152,20 +152,18 @@ describe('./cards/berserk.js', () => {
 		});
 	});
 
-	describe('fatigueIntBonus', () => {
+	describe('increaseFatigue', () => {
 		it('calculates fatigue properly', () => {
 			const berserk = new BerserkCard();
 
-			expect(berserk.fatigueIntBonus(undefined, 0)).to.equal(undefined);
-			expect(berserk.fatigueIntBonus(undefined, 1)).to.equal(undefined);
-			expect(berserk.fatigueIntBonus(undefined, 2)).to.equal(0);
-			expect(berserk.fatigueIntBonus(0, 3)).to.equal(1);
-			expect(berserk.fatigueIntBonus(0, 5)).to.equal(1);
-			expect(berserk.fatigueIntBonus(2, 5)).to.equal(3);
+			expect(berserk.increaseFatigue(undefined)).to.equal(0);
+			expect(berserk.increaseFatigue(0)).to.equal(1);
+			expect(berserk.increaseFatigue(1)).to.equal(2);
+			expect(berserk.increaseFatigue(2)).to.equal(3);
 		});
 	});
 
-	it('calls fatigueIntBonus each effectLoop iteration as expected', () => {
+	it('calls increaseFatigue each effectLoop iteration as expected', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target' });
@@ -173,7 +171,7 @@ describe('./cards/berserk.js', () => {
 		const berserkProto = Object.getPrototypeOf(berserk);
 		const hitProto = Object.getPrototypeOf(berserkProto);
 		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
-		const fatigueIntBonusSpy = sinon.spy(berserkProto, 'fatigueIntBonus');
+		const increaseFatigueSpy = sinon.spy(berserkProto, 'increaseFatigue');
 
 		const ring = {
 			contestants: [
@@ -206,34 +204,32 @@ describe('./cards/berserk.js', () => {
 		});
 
 		expect(berserk.intBonusFatigue).to.be.undefined;
-		expect(berserk.baseDiminishment).to.equal(-1);
+		expect(berserk.baseFatigue).to.equal(-1);
 
 		return berserk
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
 				hitCheckStub.restore();
-				fatigueIntBonusSpy.restore();
+				increaseFatigueSpy.restore();
 
-				expect(fatigueIntBonusSpy.args[0]).to.deep.equal([undefined, 1]);
-				expect(fatigueIntBonusSpy.args[1]).to.deep.equal([undefined, 2]);
-				expect(fatigueIntBonusSpy.args[2]).to.deep.equal([0, 3]);
-				expect(fatigueIntBonusSpy.args[3]).to.deep.equal([1, 4]);
-				expect(fatigueIntBonusSpy.args[4]).to.deep.equal([2, 5]);
-				expect(fatigueIntBonusSpy.args[5]).to.deep.equal([-1, 6]);
-				expect(fatigueIntBonusSpy.args[6]).to.deep.equal([0, 7]);
-				expect(fatigueIntBonusSpy.args[7]).to.deep.equal([1, 8]);
-				expect(fatigueIntBonusSpy.returnValues[0]).to.equal(undefined);
-				expect(fatigueIntBonusSpy.returnValues[1]).to.equal(0);
-				expect(fatigueIntBonusSpy.returnValues[2]).to.equal(1);
-				expect(fatigueIntBonusSpy.returnValues[3]).to.equal(2);
-				expect(fatigueIntBonusSpy.returnValues[4]).to.equal(3);
-				expect(fatigueIntBonusSpy.returnValues[5]).to.equal(0);
-				expect(fatigueIntBonusSpy.returnValues[6]).to.equal(1);
-				return expect(fatigueIntBonusSpy.returnValues[7]).to.equal(2);
+				expect(increaseFatigueSpy.args[0]).to.deep.equal([undefined]);
+				expect(increaseFatigueSpy.args[1]).to.deep.equal([0]);
+				expect(increaseFatigueSpy.args[2]).to.deep.equal([1]);
+				expect(increaseFatigueSpy.args[3]).to.deep.equal([2]);
+				expect(increaseFatigueSpy.args[4]).to.deep.equal([-1]);
+				expect(increaseFatigueSpy.args[5]).to.deep.equal([0]);
+				expect(increaseFatigueSpy.args[6]).to.deep.equal([1]);
+				expect(increaseFatigueSpy.returnValues[0]).to.equal(0);
+				expect(increaseFatigueSpy.returnValues[1]).to.equal(1);
+				expect(increaseFatigueSpy.returnValues[2]).to.equal(2);
+				expect(increaseFatigueSpy.returnValues[3]).to.equal(3);
+				expect(increaseFatigueSpy.returnValues[4]).to.equal(0);
+				expect(increaseFatigueSpy.returnValues[5]).to.equal(1);
+				return expect(increaseFatigueSpy.returnValues[6]).to.equal(2);
 			});
 	});
 
-	it('resets intBonusFatigue and baseDiminishment after play', () => {
+	it('resets intBonusFatigue and baseFatigue after play', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target' });
@@ -267,14 +263,14 @@ describe('./cards/berserk.js', () => {
 		});
 
 		expect(berserk.intBonusFatigue).to.be.undefined;
-		expect(berserk.baseDiminishment).to.equal(-1);
+		expect(berserk.baseFatigue).to.equal(-1);
 
 		return berserk
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
 				hitCheckStub.restore();
 
-				expect(berserk.baseDiminishment).to.equal(-1);
+				expect(berserk.baseFatigue).to.equal(-1);
 				return expect(berserk.intBonusFatigue).to.be.undefined;
 			});
 	});
