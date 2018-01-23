@@ -28,6 +28,8 @@ class BerserkCard extends HitCard {
 	resetCard () {
 		this.damageAmount = this.options.damage;
 		this.iterations = 0;
+		this.baseDiminishment = -1;
+		this.intBonusDiminishment = undefined;
 	}
 
 	set bigFirstHit (bigFirstHit) {
@@ -53,7 +55,8 @@ class BerserkCard extends HitCard {
 ${this.damageAmount} damage per hit after that.`;
 		}
 
-		return `Hit: ${this.attackDice} vs AC until you miss
+		return `Hit: ${this.attackDice} + attack bonus vs AC on first hit
+then also + spell bonus (diminished by 1 each subsequent hit) until you miss
 ${damageDescription}
 
 Stroke of luck increases damage per hit by 1.`;
@@ -63,14 +66,37 @@ Stroke of luck increases damage per hit by 1.`;
 		return roll({ primaryDice: this.damageDice });
 	}
 
-	getAttackRoll (player) {
+	getAttackRollBonus (player) {
+		let modifier = player.dexModifier;
+
+		if (this.iterations > 1) {
+			modifier += Math.max(player.intModifier - (this.intBonusDiminishment || 0), 0);
+		}
+
+		return modifier;
+	}
+
+	getAttackRoll (player, target) {
 		// once you hit the first time, you get a diminishing bonus for each subsequent hit.
-		const modifier = player.dexModifier + (this.iterations > 1) ? Math.max(player.intModifier - this.iterations, 0) : 0;
+		const modifier = this.getAttackRollBonus(player, target);
 		return roll({ primaryDice: this.attackDice, modifier, bonusDice: player.bonusAttackDice, crit: true });
+	}
+
+	diminishIntBonus (currentBonus, iteration) {
+		let newBonus = currentBonus;
+
+		if (iteration > 1) {
+			newBonus = (newBonus >= 0) ? newBonus : this.baseDiminishment;
+			newBonus += 1;
+		}
+
+		return newBonus;
 	}
 
 	effectLoop (iteration, player, target, ring, activeContestants) {
 		this.iterations = iteration;
+		this.intBonusDiminishment = this.diminishIntBonus(this.intBonusDiminishment, iteration);
+
 		// Add any player modifiers and roll the dice
 		const {
 			attackRoll, success, strokeOfLuck, curseOfLoki
@@ -78,6 +104,7 @@ Stroke of luck increases damage per hit by 1.`;
 
 		if (strokeOfLuck) {
 			this.damageAmount = this.damageAmount + 1;
+			this.intBonusDiminishment = this.baseDiminishment;
 		}
 
 		if (success) {

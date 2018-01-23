@@ -43,7 +43,7 @@ describe('./cards/berserk.js', () => {
 		expect(berserk).to.be.an.instanceof(BerserkCard);
 		expect(berserk.bigFirstHit).to.be.false;
 		expect(berserk.damageAmount).to.equal(1);
-		expect(berserk.stats).to.equal('Hit: 1d20 vs AC until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
+		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (diminished by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {
@@ -131,6 +131,86 @@ describe('./cards/berserk.js', () => {
 			});
 	});
 
+	describe('attackRollBonus', () => {
+		it('takes iterations and intBonusDiminishment into account', () => {
+			const berserk = new BerserkCard();
+			const player = new Gladiator({ name: 'player' });
+
+			player.xp = 100;
+			expect(player.intModifier).to.equal(2);
+			expect(player.dexModifier).to.equal(3);
+
+			berserk.intBonusDiminishment = 0;
+			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier);
+			berserk.iterations = 2;
+			berserk.intBonusDiminishment = 0;
+			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier + player.intModifier);
+			berserk.intBonusDiminishment = 1;
+			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier + (player.intModifier - 1));
+			berserk.intBonusDiminishment = 10;
+			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier);
+		});
+	});
+
+	describe('diminishIntBonus', () => {
+		it('calculates diminishment properly', () => {
+			const berserk = new BerserkCard();
+
+			expect(berserk.diminishIntBonus(undefined, 0)).to.equal(undefined);
+			expect(berserk.diminishIntBonus(undefined, 1)).to.equal(undefined);
+			expect(berserk.diminishIntBonus(undefined, 2)).to.equal(0);
+			expect(berserk.diminishIntBonus(0, 3)).to.equal(1);
+			expect(berserk.diminishIntBonus(0, 5)).to.equal(1);
+			expect(berserk.diminishIntBonus(2, 5)).to.equal(3);
+		})
+	})
+
+	it('resets intBonusDiminishment and baseDiminishment after play', () => {
+		const berserk = new BerserkCard();
+		const player = new Gladiator({ name: 'player' });
+		const target = new Minotaur({ name: 'target' });
+
+		const berserkProto = Object.getPrototypeOf(berserk);
+		const hitProto = Object.getPrototypeOf(berserkProto);
+		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = berserk.getAttackRoll(player);
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.onCall(4).returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		expect(berserk.intBonusDiminishment).to.be.undefined;
+		expect(berserk.baseDiminishment).to.equal(-1);
+
+		return berserk
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				hitCheckStub.restore();
+
+				expect(berserk.baseDiminishment).to.equal(-1);
+				return expect(berserk.intBonusDiminishment).to.be.undefined;
+			});
+	});
+
 	it('Increases attack strength on strokeOfLuck', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
@@ -162,19 +242,13 @@ describe('./cards/berserk.js', () => {
 		};
 
 		const attackRoll = berserk.getAttackRoll(player);
-		hitCheckStub.onFirstCall().returns({
-			attackRoll,
-			success: true,
-			strokeOfLuck: true,
-			curseOfLoki: false
-		});
-		hitCheckStub.onSecondCall().returns({
-			attackRoll,
-			success: true,
-			strokeOfLuck: true,
-			curseOfLoki: false
-		});
 		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: true,
+			curseOfLoki: false
+		});
+		hitCheckStub.onThirdCall().returns({
 			attackRoll,
 			success: false,
 			strokeOfLuck: false,
