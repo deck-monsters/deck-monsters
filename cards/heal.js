@@ -67,7 +67,7 @@ class HealCard extends BaseCard {
 			healRoll,
 			result,
 			strokeOfLuck,
-			success: healRoll.result > 0
+			success: result !== 0
 		};
 	}
 
