@@ -2,6 +2,7 @@
 
 const QinShiHuangScroll = require('./qin-shi-huang');
 const { TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { ALMOST_NOTHING } = require('../../helpers/costs');
 
 class QinShiHuangAccordingToCleverHansScroll extends QinShiHuangScroll {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -16,8 +17,8 @@ class QinShiHuangAccordingToCleverHansScroll extends QinShiHuangScroll {
 	}
 }
 
-QinShiHuangAccordingToCleverHansScroll.probability = 75;
-QinShiHuangAccordingToCleverHansScroll.cost = 18;
+QinShiHuangAccordingToCleverHansScroll.notForSale = true;
+QinShiHuangAccordingToCleverHansScroll.cost = ALMOST_NOTHING;
 QinShiHuangAccordingToCleverHansScroll.itemType = 'The Annals of Qin Shi Huang According to Clever Hans';
 QinShiHuangAccordingToCleverHansScroll.description = `焚書坑儒
 

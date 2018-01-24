@@ -2,6 +2,7 @@
 
 const SirRobinScroll = require('./sir-robin');
 const { TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { ALMOST_NOTHING } = require('../../helpers/costs');
 
 // The "Fists of Virtue" scroll
 class SirRobinScrollAccordingToCleverHans extends SirRobinScroll {
@@ -17,8 +18,8 @@ class SirRobinScrollAccordingToCleverHans extends SirRobinScroll {
 	}
 }
 
-SirRobinScrollAccordingToCleverHans.probability = 75;
-SirRobinScrollAccordingToCleverHans.cost = 18;
+SirRobinScrollAccordingToCleverHans.notForSale = true;
+SirRobinScrollAccordingToCleverHans.cost = ALMOST_NOTHING;
 SirRobinScrollAccordingToCleverHans.itemType = 'The Tale of Sir Robin According to Clever Hans';
 SirRobinScrollAccordingToCleverHans.description = `He was not in the least bit scared to be mashed into a pulp, or to have his eyes gouged out, and his elbows broken, to have his kneecaps split, and his body burned away... brave Sir Robin!
 

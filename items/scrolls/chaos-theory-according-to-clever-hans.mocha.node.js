@@ -5,6 +5,8 @@ const pause = require('../../helpers/pause');
 const ChaosTheoryAccordingToHansScroll = require('./chaos-theory-according-to-clever-hans');
 const Jinn = require('../../monsters/jinn');
 const { TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { ALMOST_NOTHING } = require('../../helpers/costs');
+const { ABUNDANT } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/chaos-theory-according-to-clever-hans.js', () => {
 	let channelStub;
@@ -33,8 +35,8 @@ describe('./items/scrolls/chaos-theory-according-to-clever-hans.js', () => {
 		const chaosTheory = new ChaosTheoryAccordingToHansScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
-		expect(chaosTheory.probability).to.equal(75);
-		expect(chaosTheory.cost).to.equal(18);
+		expect(chaosTheory.probability).to.equal(ABUNDANT.probability);
+		expect(chaosTheory.cost).to.equal(ALMOST_NOTHING);
 		expect(chaosTheory).to.be.an.instanceof(ChaosTheoryAccordingToHansScroll);
 		expect(chaosTheory.itemType).to.equal('Chaos Theory for Beginners According to Clever Hans');
 		expect(chaosTheory.numberOfUses).to.equal(3);
