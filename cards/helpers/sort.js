@@ -1,4 +1,4 @@
-const sortCardsAlphabetically = cards => cards.sort((a, b) => {
+const sortCardsAlphabetically = cards => [...cards].sort((a, b) => {
 	if (a.cardType > b.cardType) {
 		return 1;
 	}
