@@ -13,7 +13,7 @@ class ChaosTheoryAccordingToCleverHansScroll extends ChaosTheoryScroll {
 	}
 
 	getTargetingDetails (monster) { // eslint-disable-line class-methods-use-this
-		return `Clever ${monster.givenName}'s mother told ${monster.pronouns.him} that ${monster.pronouns.he} should look around the ring and pick a random foe to target, unless directed otherwise by a specific card, and that's exactly what ${monster.pronouns.he}'ll do.`;
+		return `Clever ${monster.givenName}'s mother told ${monster.pronouns.him} that ${monster.pronouns.he} should look around the ring and pick a random monster to target, unless directed otherwise by a specific card, and that's exactly what ${monster.pronouns.he}'ll do.`;
 	}
 }
 
@@ -23,6 +23,6 @@ ChaosTheoryAccordingToCleverHansScroll.itemType = 'Chaos Theory for Beginners Ac
 ChaosTheoryAccordingToCleverHansScroll.targetingStrategy = TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS;
 ChaosTheoryScroll.description = `Tiny variations, the orientation of hairs on your hand, the amount of blood distending your vessels, imperfections in the skin... vastly affect the outcome.
 
-Your mother told you to target a random opponent in the ring rather than following a defined order, and that's exactly what you'll do.`;
+Your mother told you to target a random monster in the ring rather than following a defined order, and that's exactly what you'll do.`;
 
 module.exports = ChaosTheoryAccordingToCleverHansScroll;
