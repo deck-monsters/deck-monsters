@@ -1,7 +1,7 @@
 const random = require('lodash.random');
 
-const drawCard = require('../../cards/helpers/draw');
-const drawItem = require('../helpers/draw');
+const { sortCardsAlphabetically, draw: drawCard } = require('../../cards');
+const { sortItemsAlphabetically, drawItem } = require('../');
 
 const DEFAULT_MIN_INVENTORY_SIZE = 5;
 const DEFAULT_MAX_INVENTORY_SIZE = 20;
@@ -35,7 +35,10 @@ const getBackRoom = () => {
 		}
 	}
 
-	return [...cards, ...items];
+	const sortedCards = sortCardsAlphabetically(cards);
+	const sortedItems = sortItemsAlphabetically(items);
+
+	return [...sortedCards, ...sortedItems];
 };
 
 const canHoldStandard = {
@@ -51,7 +54,9 @@ const getCards = () => {
 		cards.push(drawCard({}, canHoldStandard));
 	}
 
-	return cards;
+	const sortedCards = sortCardsAlphabetically(cards);
+
+	return sortedCards;
 };
 
 const getItems = () => {
@@ -62,7 +67,9 @@ const getItems = () => {
 		items.push(drawItem({}, canHoldStandard));
 	}
 
-	return items;
+	const sortedItems = sortItemsAlphabetically(items);
+
+	return sortedItems;
 };
 
 module.exports = {

@@ -6,7 +6,7 @@ const { actionCard, monsterCard } = require('../helpers/card');
 const {
 	getInitialDeck,
 	getUniqueCards,
-	sortCards
+	sortCardsAlphabetically
 } = require('../cards');
 const getCardCounts = require('../items/helpers/counts').getItemCounts;
 const isMatchingItem = require('../items/helpers/is-matching');
@@ -110,7 +110,7 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	lookAtCards (channel) {
-		const sortedDeck = sortCards([...this.deck]);
+		const sortedDeck = sortCardsAlphabetically([...this.deck]);
 		const cardImages = getUniqueCards(sortedDeck).reduce((cards, card) =>
 			cards + actionCard(card), '');
 
