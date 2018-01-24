@@ -99,4 +99,5 @@ return Promise
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
+	.then(() => slackdem.getRing().spawnBoss())
 	.then(() => slackdem.getRing().spawnBoss());
