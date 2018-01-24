@@ -1,41 +1,21 @@
-const sortByLevel = toBeSorted => toBeSorted.sort((a, b) => {
-	if (a.level > b.level) {
+const sort = (toBeSorted, byProperty = 'cardType') => [...toBeSorted].sort((a, b) => {
+	if (a[byProperty] > b[byProperty]) {
 		return 1;
 	}
 
-	if (a.level < b.level) {
+	if (a[byProperty] < b[byProperty]) {
 		return -1;
 	}
 
 	return 0;
 });
 
-const sortByProbability = toBeSorted => toBeSorted.sort((a, b) => {
-	if (a.probability > b.probability) {
-		return 1;
-	}
-
-	if (a.probability < b.probability) {
-		return -1;
-	}
-
-	return 0;
-});
-
-const sortByCost = toBeSorted => toBeSorted.sort((a, b) => {
-	if (a.cost > b.cost) {
-		return 1;
-	}
-
-	if (a.cost < b.cost) {
-		return -1;
-	}
-
-	return 0;
-});
-
+const sortByLevel = toBeSorted => sort(toBeSorted, 'level');
+const sortByProbability = toBeSorted => sort(toBeSorted, 'probability');
+const sortByCost = toBeSorted => sort(toBeSorted, 'cost');
 
 module.exports = {
+	sort,
 	sortByLevel,
 	sortByProbability,
 	sortByCost
