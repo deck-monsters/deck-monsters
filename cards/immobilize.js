@@ -219,7 +219,7 @@ class ImmobilizeCard extends HitCard {
 									player.hit(2, target, this);
 								}
 							} else {
-								target.encounterModifiers.pinnedTurns += 1;
+								target.encounterModifiers.pinnedTurns = (target.encounterModifiers.pinnedTurns || 0) + 1;
 								if (this.ongoingDamage > 0) {
 									this.emit('narration', {
 										narration: `${target.givenName} takes ongoing damage from being ${this.actions[2]}`

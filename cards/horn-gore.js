@@ -111,7 +111,8 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 		if (success) {
 			this.increaseImmobilizeStrength(2);
-			player.encounterModifiers.dexModifier = player.encounterModifiers.dexModifier + 1 || 1;
+			const { dexModifier } = player.encounterModifiers;
+			player.encounterModifiers.dexModifier = dexModifier > 0 ? dexModifier + 1 : 1;
 
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
