@@ -11,7 +11,7 @@ const ultraComboNarration = [];
 for (let i = 17; i < 101; i++) {
 	ultraComboNarration.push(`HUMILIATION! ${i} hits`);
 }
-ultraComboNarration.push('ULTRA COMBO! 100 HITS');
+ultraComboNarration.push('ULTRA COMBO! 100 HITS (99 total damage).');
 
 
 describe('./cards/berserk.js', () => {
@@ -459,7 +459,7 @@ describe('./cards/berserk.js', () => {
 				expect(hitEffectSpy.callCount).to.equal(0);
 				expect(hitSpy.callCount).to.equal(5);
 
-				expect(narrations).to.deep.equal(['COMBO BREAKER!']);
+				expect(narrations).to.deep.equal(['COMBO BREAKER!  (Broke a 4 hit combo, 3 total damage)']);
 
 				expect(player.hp).to.equal(playerBeforeHp - 1);
 				return expect(target.hp).to.equal(before - 4);
