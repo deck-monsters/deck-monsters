@@ -7,13 +7,13 @@ const { TARGET_NEXT_PLAYER } = require('../../helpers/targeting-strategies');
 class ParsifalScroll extends TargetingScroll {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		icon = '🐎'
+		icon = '🏇'
 	} = {}) {
 		super({ icon });
 	}
 
 	getTargetingDetails (monster) { // eslint-disable-line class-methods-use-this
-		return `${monster.givenName} will obey ${monster.pronouns.his} mother and keep ${monster.pronouns.his} friends close and ${monster.pronouns.his} enemies closer, always attacking the next opponent in line unless directed otherwise by a specific card.`;
+		return `${monster.givenName} will obey ${monster.pronouns.his} mother and keep ${monster.pronouns.his} friends close and ${monster.pronouns.his} enemies closer, always attacking the opponent next to ${monster.pronouns.him} unless directed otherwise by a specific card.`;
 	}
 }
 

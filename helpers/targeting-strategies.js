@@ -8,6 +8,7 @@ const TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS = 'TARGET_LOWEST_HP_PLAYER_ACCOR
 const TARGET_LOWEST_HP_PLAYER = 'TARGET_LOWEST_HP_PLAYER';
 const TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS = 'TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS';
 const TARGET_MAX_HP_PLAYER = 'TARGET_MAX_HP_PLAYER';
+const TARGET_PREVIOUS_PLAYER = 'TARGET_PREVIOUS_PLAYER';
 const TARGET_NEXT_PLAYER = 'TARGET_NEXT_PLAYER';
 const TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS = 'TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS';
 const TARGET_PLAYER_WHO_HIT_YOU_LAST = 'TARGET_PLAYER_WHO_HIT_YOU_LAST';
@@ -136,6 +137,14 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 			// Pick any random target besides yourself
 			return sample(potentialTargets);
 		}
+		case TARGET_PREVIOUS_PLAYER: {
+			const currentIndex = contestants.indexOf(playerContestant);
+			let previousIndex = currentIndex - 1;
+
+			if (previousIndex < 0) previousIndex = contestants.length - 1;
+
+			return contestants[previousIndex];
+		}
 		case TARGET_NEXT_PLAYER:
 		default: {
 			const currentIndex = contestants.indexOf(playerContestant);
@@ -157,6 +166,7 @@ module.exports = {
 	TARGET_LOWEST_HP_PLAYER,
 	TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS,
 	TARGET_MAX_HP_PLAYER,
+	TARGET_PREVIOUS_PLAYER,
 	TARGET_NEXT_PLAYER,
 	TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS,
 	TARGET_PLAYER_WHO_HIT_YOU_LAST,
