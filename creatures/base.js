@@ -391,7 +391,10 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get encounterModifiers () {
-		return (this.encounter || {}).modifiers || {};
+		if (!this.encounter) this.encounter = {};
+		if (!this.encounter.modifiers) this.encounter.modifiers = {};
+
+		return this.encounter.modifiers;
 	}
 
 	set encounterModifiers (modifiers = {}) {

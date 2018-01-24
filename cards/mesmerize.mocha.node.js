@@ -78,7 +78,7 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 		expect(mesmerize.getFreedomThreshold(player, target)).to.equal(10 + mesmerize.freedomThresholdModifier);
 
-		target.encounterModifiers = { pinnedTurns: 2 };
+		target.encounterModifiers.pinnedTurns = 2;
 
 		expect(mesmerize.getFreedomThreshold(player, target)).to.equal(4 + mesmerize.freedomThresholdModifier);
 	});
