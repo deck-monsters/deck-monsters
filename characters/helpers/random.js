@@ -6,6 +6,7 @@ const shuffle = require('lodash.shuffle');
 
 const { all: allMonsters } = require('../../monsters');
 const { fillDeck, getMinimumDeck } = require('../../cards');
+const { TARGET_HUMAN_PLAYER_WEAK } = require('../../helpers/targeting-strategies');
 const { XP_PER_VICTORY } = require('../../helpers/experience');
 const Beastmaster = require('../beastmaster');
 
@@ -39,6 +40,7 @@ module.exports = ({
 			const { canHold } = monster;
 
 			monster.canHold = object => canHold.call(monster, object) && !object.noBosses;
+			monster.targetingStrategy = TARGET_HUMAN_PLAYER_WEAK; // Prefer not to target other bosses
 		}
 
 		return monster;
