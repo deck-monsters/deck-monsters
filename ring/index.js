@@ -12,7 +12,8 @@ const BaseClass = require('../shared/baseClass');
 const delayTimes = require('../helpers/delay-times');
 const pause = require('../helpers/pause');
 
-const MAX_MONSTERS = 5;
+const MAX_BOSSES = 5;
+const MAX_MONSTERS = 8;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
 
@@ -622,8 +623,10 @@ class Ring extends BaseClass {
 	}
 
 	spawnBoss () { // eslint-disable-line consistent-return
+		const numberOfBossesInRing = this.contestants.reduce((total, contestant) => total + (contestant.isBoss ? 1 : 0), 0);
+
 		// Only try to enter the ring if there's not a current fight in progress
-		if (!this.inEncounter) {
+		if (!this.inEncounter && numberOfBossesInRing < MAX_BOSSES) {
 			const contestant = randomContestant();
 
 			this.addMonster(contestant);
