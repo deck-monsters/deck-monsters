@@ -57,9 +57,11 @@ class Beastmaster extends BaseCharacter {
 	}
 
 	removeCard (cardToRemove) {
-		super.removeCard(cardToRemove);
+		const card = super.removeCard(cardToRemove);
 
-		this.monsters.forEach(monster => monster.resetCards({ matchCard: cardToRemove }));
+		this.monsters.forEach(monster => monster.resetCards({ matchCard: card }));
+
+		return card;
 	}
 
 	removeItem (itemToRemove) {

@@ -4,9 +4,11 @@ const startCase = require('lodash.startcase');
 
 const BaseClass = require('../shared/baseClass');
 
-const { signedNumber } = require('../helpers/signed-number');
 const { describeLevels, getLevel } = require('../helpers/levels');
+const { signedNumber } = require('../helpers/signed-number');
+const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
+const isMatchingItem = require('../items/helpers/is-matching');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
 const PRONOUNS = require('../helpers/pronouns');
@@ -482,6 +484,37 @@ Battles won: ${this.battles.wins}`;
 
 	canHoldItem (item) {
 		return this.canHold(item);
+	}
+
+	addItem (item) {
+		this.items = sortItemsAlphabetically([...this.items, item]);
+
+		this.emit('itemAdded', { item });
+	}
+
+	removeItem (itemToRemove) {
+		let foundItem;
+		this.items = this.items.filter((item) => {
+			const shouldKeepItem = foundItem || !isMatchingItem(item, itemToRemove);
+
+			if (!shouldKeepItem) foundItem = item;
+
+			return shouldKeepItem;
+		});
+
+		if (foundItem) this.emit('itemRemoved', { item: foundItem });
+
+		return foundItem;
+	}
+
+	giveItem (itemToGive, recipient) {
+		const item = this.removeItem(itemToGive);
+
+		if (item) {
+			recipient.addItem(item);
+
+			this.emit('itemGiven', { item, recipient });
+		}
 	}
 
 	leaveCombat (activeContestants) {
