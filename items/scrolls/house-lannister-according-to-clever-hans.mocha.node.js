@@ -45,9 +45,9 @@ describe('./items/scrolls/house-lannister-according-to-clever-hans.js', () => {
 		expect(houseLannister.icon).to.equal('👦');
 		expect(houseLannister.targetingStrategy).to.equal(TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS);
 		expect(houseLannister.itemType).to.equal('House Lannister According To Clever Hans');
-		expect(houseLannister.getTargetingDetails(jenn)).to.equal("Clever Jenn's mother told her that she should target the opponent who attacked her last, unless directed otherwise by a specific card, and that's exactly what she'll do.");
+		expect(houseLannister.getTargetingDetails(jenn)).to.equal("Clever Jenn's mother told her that she should target the monster who attacked her last, unless directed otherwise by a specific card, and that's exactly what she'll do.");
 		expect(houseLannister.description).to.equal(`A Lannister always pays his debts...
 
-Your mother told you to target the opponent who attacked you last, unless directed otherwise by a specific card, and that's exactly what you'll do.`);
+Your mother told you to target the monster who attacked you last, unless directed otherwise by a specific card, and that's exactly what you'll do.`);
 	});
 });

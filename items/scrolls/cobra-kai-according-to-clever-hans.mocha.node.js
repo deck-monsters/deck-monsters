@@ -43,6 +43,9 @@ describe('./items/scrolls/cobra-kai-according-to-clever-hans.js', () => {
 		expect(cobraKai.stats).to.equal('Usable 3 times.');
 		expect(cobraKai.icon).to.equal('👦');
 		expect(cobraKai.targetingStrategy).to.equal(TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS);
-		expect(cobraKai.getTargetingDetails(jenn)).to.equal("Clever Jenn's mother told her that she should target the player with the lowest current xp while she is in the ring unless directed otherwise by a specific card, and that's exactly what she'll do.");
+		expect(cobraKai.description).to.equal(`We do not train to be merciful here. Mercy is for the weak. Here, in the streets, in competition: A man confronts you, he is the enemy. An enemy deserves no mercy.
+
+Your mother told you to target the weakest monster in the ring, every time, and that's exactly what you'll do.`);
+		expect(cobraKai.getTargetingDetails(jenn)).to.equal("Clever Jenn's mother told her that she should target the monster with the lowest current xp while she is in the ring unless directed otherwise by a specific card, and that's exactly what she'll do.");
 	});
 });

@@ -13,7 +13,7 @@ class HouseLannisterAccordingToCleverHans extends HouseLannister {
 	}
 
 	getTargetingDetails (monster) { // eslint-disable-line class-methods-use-this
-		return `Clever ${monster.givenName}'s mother told ${monster.pronouns.him} that ${monster.pronouns.he} should target the opponent who attacked ${monster.pronouns.him} last, unless directed otherwise by a specific card, and that's exactly what ${monster.pronouns.he}'ll do.`;
+		return `Clever ${monster.givenName}'s mother told ${monster.pronouns.him} that ${monster.pronouns.he} should target the monster who attacked ${monster.pronouns.him} last, unless directed otherwise by a specific card, and that's exactly what ${monster.pronouns.he}'ll do.`;
 	}
 }
 
@@ -23,6 +23,6 @@ HouseLannisterAccordingToCleverHans.itemType = 'House Lannister According To Cle
 HouseLannisterAccordingToCleverHans.targetingStrategy = TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS;
 HouseLannisterAccordingToCleverHans.description = `A Lannister always pays his debts...
 
-Your mother told you to target the opponent who attacked you last, unless directed otherwise by a specific card, and that's exactly what you'll do.`;
+Your mother told you to target the monster who attacked you last, unless directed otherwise by a specific card, and that's exactly what you'll do.`;
 
 module.exports = HouseLannisterAccordingToCleverHans;
