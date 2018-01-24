@@ -122,7 +122,7 @@ class Ring extends BaseClass {
 				});
 
 				this.channelManager.sendMessages()
-					.then(() => this.startFightTimer({ channel, channelName }));
+					.then(() => this.startFightTimer());
 			});
 	}
 
@@ -153,7 +153,7 @@ class Ring extends BaseClass {
 				});
 
 				this.channelManager.sendMessages()
-					.then(() => this.startFightTimer({ channel, channelName }));
+					.then(() => this.startFightTimer());
 			}
 		} else {
 			this.channelManager.queueMessage({
@@ -216,15 +216,15 @@ class Ring extends BaseClass {
 		this.emit('clear');
 	}
 
-	startFightTimer ({ channel, channelName }) {
+	startFightTimer () {
 		clearTimeout(this.fightTimer);
 
 		if (this.contestants.length >= MIN_MONSTERS) {
-			this.channelManager.queueMessage({
+			this.contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
 				announce: `Fight will begin in ${Math.floor(FIGHT_DELAY / 1000)} seconds.`,
 				channel,
 				channelName
-			});
+			}));
 
 			this.fightTimer = pause.setTimeout(() => {
 				if (this.contestants.length >= 2) {
@@ -232,14 +232,19 @@ class Ring extends BaseClass {
 						.then(() => this.fight());
 				}
 			}, FIGHT_DELAY);
+		} else if (this.contestants.length <= 0) {
+			this.emit('narration', {
+				narration: 'The ring is quiet save for the faint sound of footsteps fleeing into the distance.'
+			});
 		} else {
 			const needed = MIN_MONSTERS - this.contestants.length;
 			const monster = needed > 1 ? 'monsters' : 'monster';
-			this.channelManager.queueMessage({
+
+			this.contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
 				announce: `Fight countdown will begin once ${needed} more ${monster} join the ring.`,
 				channel,
 				channelName
-			});
+			}));
 		}
 	}
 

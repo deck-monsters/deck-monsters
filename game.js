@@ -96,27 +96,28 @@ class Game extends BaseClass {
 
 	initializeEvents () {
 		const events = [
-			{ event: 'ring.bossWillSpawn', listener: announceBossWillSpawn },
-			{ event: 'card.played', listener: announceCard },
-			{ event: 'cardDrop', listener: announceCardDrop },
-			{ event: 'ring.add', listener: announceContestant },
-			{ event: 'ring.remove', listener: announceContestantLeave },
-			{ event: 'creature.die', listener: announceDeath },
 			{ event: 'card.effect', listener: announceEffect },
+			{ event: 'card.miss', listener: announceMiss },
+			{ event: 'card.narration', listener: announceNarration },
+			{ event: 'card.played', listener: announceCard },
+			{ event: 'card.rolled', listener: announceRolled },
+			{ event: 'card.stay', listener: announceStay },
+			{ event: 'cardDrop', listener: announceCardDrop },
+			{ event: 'creature.die', listener: announceDeath },
+			{ event: 'creature.hit', listener: announceHit },
+			{ event: 'creature.leave', listener: announceLeave },
+			{ event: 'creature.modifier', listener: announceModifier },
+			{ event: 'gainedXP', listener: announceXPGain },
+			{ event: 'ring.add', listener: announceContestant },
+			{ event: 'ring.bossWillSpawn', listener: announceBossWillSpawn },
 			{ event: 'ring.endOfDeck', listener: announceEndOfDeck },
 			{ event: 'ring.fight', listener: announceFight },
 			{ event: 'ring.fightConcludes', listener: announceFightConcludes },
-			{ event: 'creature.hit', listener: announceHit },
-			{ event: 'creature.leave', listener: announceLeave },
-			{ event: 'card.miss', listener: announceMiss },
-			{ event: 'creature.modifier', listener: announceModifier },
-			{ event: 'card.narration', listener: announceNarration },
-			{ event: 'ring.roundComplete', listener: announceNextRound },
-			{ event: 'card.rolled', listener: announceRolled },
-			{ event: 'card.stay', listener: announceStay },
-			{ event: 'ring.turnBegin', listener: announceTurnBegin },
 			{ event: 'ring.gainedXP', listener: announceXPGain },
-			{ event: 'gainedXP', listener: announceXPGain }
+			{ event: 'ring.narration', listener: announceNarration },
+			{ event: 'ring.remove', listener: announceContestantLeave },
+			{ event: 'ring.roundComplete', listener: announceNextRound },
+			{ event: 'ring.turnBegin', listener: announceTurnBegin }
 		];
 
 		events.map(event => this.on(event.event, (...args) => {
