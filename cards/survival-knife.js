@@ -22,9 +22,17 @@ class SurvivalKnifeCard extends HitCard {
 ${this.healCard.stats}`;
 	}
 
+	getTargets (player, proposedTarget) { // eslint-disable-line class-methods-use-this, no-unused-vars
+		if (player.hp < (player.bloodiedValue / 2)) {
+			return [player];
+		}
+
+		return [proposedTarget];
+	}
+
 	effect (player, target, ring, activeContestants) {
 		if (player.hp < (player.bloodiedValue / 2)) {
-			return this.healCard.effect(player, player, ring);
+			return this.healCard.effect(player, target, ring, activeContestants);
 		}
 
 		return super.effect(player, target, ring, activeContestants);

@@ -46,7 +46,7 @@ Even if you miss, there's a chance you'll pin them...`;
 		this.gore(player, target, 1);
 		this.gore(player, target, 2);
 
-		player.encounterModifiers = { dexModifier: originalDexModifier };
+		player.encounterModifiers.dexModifier = originalDexModifier;
 
 		if (!player.dead) {
 			if (target.dead) {

@@ -80,7 +80,7 @@ Chance to immobilize your opponents with your shocking beauty.`;
 
 		expect(enthrall.getFreedomThreshold(player, target)).to.equal(10 + enthrall.freedomThresholdModifier);
 
-		target.encounterModifiers = { pinnedTurns: 2 };
+		target.encounterModifiers.pinnedTurns = 2;
 
 		expect(enthrall.getFreedomThreshold(player, target)).to.equal(4 + enthrall.freedomThresholdModifier);
 	});

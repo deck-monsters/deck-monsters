@@ -80,7 +80,7 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 
 		expect(entrance.getFreedomThreshold(player, target)).to.equal(10 + entrance.freedomThresholdModifier);
 
-		target.encounterModifiers = { pinnedTurns: 2 };
+		target.encounterModifiers.pinnedTurns = 2;
 
 		expect(entrance.getFreedomThreshold(player, target)).to.equal(4 + entrance.freedomThresholdModifier);
 	});

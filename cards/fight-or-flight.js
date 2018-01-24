@@ -29,7 +29,7 @@ Chance to flee if below a quarter health`;
 	}
 
 	effect (player, target, ring, activeContestants) {
-		if (player === target) {
+		if (player.hp < (player.bloodiedValue / 2)) {
 			return this.fleeEffect(player, target, ring, activeContestants);
 		}
 
