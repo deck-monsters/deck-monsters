@@ -2,6 +2,9 @@
 
 const BaseScroll = require('./base');
 
+const { ABUNDANT } = require('../../helpers/probabilities');
+const { VERY_CHEAP } = require('../../helpers/costs');
+
 class TargetingScroll extends BaseScroll {
 	constructor ({
 		icon = '🎯',
@@ -53,10 +56,10 @@ From now on ${details}`;
 }
 
 TargetingScroll.itemType = 'Targeting Strategy';
-TargetingScroll.probability = 60;
+TargetingScroll.probability = ABUNDANT.probability;
 TargetingScroll.numberOfUses = 3;
 TargetingScroll.description = `Change your monster's targeting strategy up to ${TargetingScroll.numberOfUses} times.`;
 TargetingScroll.level = 1;
-TargetingScroll.cost = 20;
+TargetingScroll.cost = VERY_CHEAP.cost;
 
 module.exports = TargetingScroll;

@@ -47,7 +47,7 @@ describe('./cards/pick-pocket.js', () => {
 		expect(pickPocket).to.be.an.instanceof(PickPocketCard);
 	});
 
-	it('finds the player with the higest xp', () => {
+	it('finds the player with the highest xp', () => {
 		const pickPocket = new PickPocketCard();
 
 		const playerCharacter = randomCharacter();

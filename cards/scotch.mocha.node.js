@@ -28,7 +28,7 @@ describe('./cards/scotch.js', () => {
 		const scotch = new ScotchCard();
 		const heal = new HealCard({ healthDice: scotch.healthDice });
 
-		expect(scotch.probability).to.equal(20);
+		expect(scotch.probability).to.equal(15);
 		expect(scotch.stats).to.equal(heal.stats);
 	});
 

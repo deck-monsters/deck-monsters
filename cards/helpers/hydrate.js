@@ -1,3 +1,4 @@
+const { sortCardsAlphabetically } = require('./sort');
 const all = require('./all');
 const draw = require('./draw');
 const isMatchingCard = require('./is-matching');
@@ -15,6 +16,7 @@ const hydrateCard = (cardObj, monster, deck = []) => {
 const hydrateDeck = (deckJSON = [], monster) => {
 	let deck = typeof deckJSON === 'string' ? JSON.parse(deckJSON) : deckJSON;
 	deck = deck.map(cardObj => hydrateCard(cardObj, monster));
+	deck = sortCardsAlphabetically(deck);
 
 	return deck;
 };

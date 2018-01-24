@@ -1,5 +1,8 @@
 const HitCard = require('./hit');
 
+const { VERY_RARE } = require('../helpers/probabilities');
+const { PRICEY } = require('../helpers/costs');
+
 const damageLevels = [
 	'1d4',
 	'1d6',
@@ -54,10 +57,10 @@ It will now do ${this.damageDice} damage.`
 }
 
 KalevalaCard.cardType = 'The Kalevala';
-KalevalaCard.probability = 10;
+KalevalaCard.probability = VERY_RARE.probability;
 KalevalaCard.description = 'Steadfast old Väinämöinen himself fashioned this instrument of eternal joy. Tune its pikebone pegs and it may lead you on to victory.'; // eslint-disable-line max-len
 KalevalaCard.level = 1;
-KalevalaCard.cost = 40;
+KalevalaCard.cost = PRICEY.cost;
 KalevalaCard.noBosses = true;
 KalevalaCard.notForSale = true;
 KalevalaCard.neverForSale = true;

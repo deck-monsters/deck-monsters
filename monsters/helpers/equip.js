@@ -1,4 +1,4 @@
-const { chooseCards, sortCards } = require('../../cards');
+const { chooseCards, sortCardsAlphabetically } = require('../../cards');
 const { getFinalCardChoices } = require('../../helpers/choices');
 
 const MAX_CARD_COPIES_IN_HAND = 4;
@@ -100,8 +100,7 @@ ${getFinalCardChoices(cards)}`
 				}));
 			}
 
-			const nowRemainingCards = sortCards([...deck]
-				.filter(card => monster.canHoldCard(card)));
+			const nowRemainingCards = sortCardsAlphabetically(deck.filter(card => monster.canHoldCard(card)));
 
 			if (cardSelection) {
 				cardSelection.forEach((card) => {

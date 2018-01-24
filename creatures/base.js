@@ -5,7 +5,7 @@ const startCase = require('lodash.startcase');
 const BaseClass = require('../shared/baseClass');
 
 const { signedNumber } = require('../helpers/signed-number');
-const { getLevel } = require('../helpers/levels');
+const { describeLevels, getLevel } = require('../helpers/levels');
 const { STARTING_XP } = require('../helpers/experience');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
@@ -160,8 +160,7 @@ ${signedNumber(this.intModifier)} to spells`
 	}
 
 	get displayLevel () {
-		const level = getLevel(this.xp);
-		return level ? `level ${level}` : 'beginner';
+		return describeLevels(this.level).description;
 	}
 
 	get xp () {
@@ -392,7 +391,10 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get encounterModifiers () {
-		return (this.encounter || {}).modifiers || {};
+		if (!this.encounter) this.encounter = {};
+		if (!this.encounter.modifiers) this.encounter.modifiers = {};
+
+		return this.encounter.modifiers;
 	}
 
 	set encounterModifiers (modifiers = {}) {
@@ -500,10 +502,8 @@ Battles won: ${this.battles.wins}`;
 			damage,
 			card,
 			when: Date.now()
-		})
-		this.encounterModifiers = {
-			hitLog
-		};
+		});
+		this.encounterModifiers.hitLog = hitLog;
 
 		// don't do damage if already dead
 		if (this.hp < 1) return false;

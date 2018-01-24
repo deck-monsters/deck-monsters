@@ -9,6 +9,8 @@ const STARTING_DEX_MODIFIER = 3;
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { VERY_RARE } = require('../helpers/probabilities');
+const { PRICEY } = require('../helpers/costs');
 
 class ForkedMetalRodCard extends HornGoreCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -44,7 +46,7 @@ Even if you miss, there's a chance you'll pin them...`;
 		this.gore(player, target, 1);
 		this.gore(player, target, 2);
 
-		player.encounterModifiers = { dexModifier: originalDexModifier };
+		player.encounterModifiers.dexModifier = originalDexModifier;
 
 		if (!player.dead) {
 			if (target.dead) {
@@ -63,10 +65,10 @@ ForkedMetalRodCard.actions = ['pin', 'pins', 'pinned'];
 ForkedMetalRodCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedMetalRodCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 ForkedMetalRodCard.weakAgainstCreatureTypes = [MINOTAUR];
-ForkedMetalRodCard.probability = 20;
+ForkedMetalRodCard.probability = VERY_RARE.probability;
 ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedMetalRodCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
 ForkedMetalRodCard.level = 2;
-ForkedMetalRodCard.cost = 50;
+ForkedMetalRodCard.cost = PRICEY.cost;
 ForkedMetalRodCard.notForSale = true;
 
 ForkedMetalRodCard.defaults = {

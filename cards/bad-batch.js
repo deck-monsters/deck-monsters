@@ -4,6 +4,8 @@ const WhiskeyShotCard = require('./whiskey-shot');
 const ScotchCard = require('./scotch');
 
 const { BARD } = require('../helpers/classes');
+const { UNCOMMON } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
 
 const EFFECT_TYPE = 'BadBatchEffect';
 
@@ -38,8 +40,15 @@ class BadBatchCard extends BaseCard {
 
 				if (effect && getHealRoll) {
 					card.effect = (player, target) => {
+						let narration;
+						if (badBatchTarget === target) {
+							narration = `${target.givenName} forgets which bottle is ${target.pronouns.his} whiskey and which one is poison.`;
+						} else {
+							narration = `${target.givenName} doesn't notice that the seal on ${target.pronouns.his} bottle has been tampered with.`;
+						}
+
 						this.emit('narration', {
-							narration: `${target.givenName} doesn't notice that the seal on ${target.pronouns.his} bottle has been tampered with.`
+							narration
 						});
 
 						const healRoll = getHealRoll.call(card, target);
@@ -75,10 +84,10 @@ class BadBatchCard extends BaseCard {
 BadBatchCard.cardType = 'Bad Batch';
 BadBatchCard.permittedClassesAndTypes = [BARD];
 BadBatchCard.targetCards = [WhiskeyShotCard.cardType, ScotchCard.cardType];
-BadBatchCard.probability = 30;
+BadBatchCard.probability = UNCOMMON.probability;
 BadBatchCard.description = 'Nothing like a little bathtub moonshine stored in sturdy lead jugs.';
 BadBatchCard.level = 1;
-BadBatchCard.cost = 30;
+BadBatchCard.cost = REASONABLE.cost;
 BadBatchCard.notForSale = true;
 
 BadBatchCard.flavors = {

@@ -3,7 +3,7 @@
 const TargetingScroll = require('./targeting');
 const { TARGET_PLAYER_WHO_HIT_YOU_LAST } = require('../../helpers/targeting-strategies');
 
-class HouseLannister extends TargetingScroll {
+class HouseLannisterScroll extends TargetingScroll {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		icon = '🦁'
@@ -16,10 +16,10 @@ class HouseLannister extends TargetingScroll {
 	}
 }
 
-HouseLannister.itemType = 'House Lannister';
-HouseLannister.description = `A Lannister always pays his debts...
+HouseLannisterScroll.itemType = 'House Lannister';
+HouseLannisterScroll.description = `A Lannister always pays his debts...
 
 Target the opponent who attacked you last, unless directed otherwise by a specific card.`;
-HouseLannister.targetingStrategy = TARGET_PLAYER_WHO_HIT_YOU_LAST;
+HouseLannisterScroll.targetingStrategy = TARGET_PLAYER_WHO_HIT_YOU_LAST;
 
-module.exports = HouseLannister;
+module.exports = HouseLannisterScroll;

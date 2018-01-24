@@ -28,7 +28,7 @@ describe('./helpers/bosses.js', () => {
 		it('can generate a contestant', () => {
 			const contestant = bosses.randomContestant();
 
-			expect(contestant).to.have.all.keys('monster', 'character', 'channel', 'channelName');
+			expect(contestant).to.have.all.keys('monster', 'character', 'channel', 'channelName', 'isBoss');
 		});
 
 		it('generates monsters which cannot flee', () => {

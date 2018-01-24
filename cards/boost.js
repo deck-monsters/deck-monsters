@@ -1,5 +1,8 @@
 const BaseCard = require('./base');
 
+const { COMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
+
 class BoostCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -34,10 +37,10 @@ class BoostCard extends BaseCard {
 }
 
 BoostCard.cardType = 'Harden';
-BoostCard.probability = 30;
+BoostCard.probability = COMMON.probability;
 BoostCard.description = "It's time to put on your big boy pants, and toughen up!";
 BoostCard.level = 1;
-BoostCard.cost = 10;
+BoostCard.cost = VERY_CHEAP.cost;
 
 BoostCard.defaults = {
 	boostAmount: 1,

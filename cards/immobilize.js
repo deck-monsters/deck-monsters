@@ -6,6 +6,8 @@ const { GLADIATOR, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-type
 const { ATTACK_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 const { signedNumber } = require('../helpers/signed-number');
+const { IMPOSSIBLE } = require('../helpers/probabilities');
+const { FREE } = require('../helpers/costs');
 
 class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -178,7 +180,7 @@ class ImmobilizeCard extends HitCard {
 			});
 
 			if (attackSuccess.success) {
-				target.encounterModifiers = { pinnedTurns: 0 };
+				target.encounterModifiers.pinnedTurns = 0;
 
 				const immobilizeEffect = ({
 					card,
@@ -217,7 +219,7 @@ class ImmobilizeCard extends HitCard {
 									player.hit(2, target, this);
 								}
 							} else {
-								target.encounterModifiers = { pinnedTurns: target.encounterModifiers.pinnedTurns + 1 };
+								target.encounterModifiers.pinnedTurns = (target.encounterModifiers.pinnedTurns || 0) + 1;
 								if (this.ongoingDamage > 0) {
 									this.emit('narration', {
 										narration: `${target.givenName} takes ongoing damage from being ${this.actions[2]}`
@@ -278,10 +280,10 @@ ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
 ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobilization, will hit instead
-ImmobilizeCard.probability = 0; // This card is never intended to be played on it's own, but I need access to parts of it for card progressions, so it needs to be instantiatable.
+ImmobilizeCard.probability = IMPOSSIBLE.probability; // This card is never intended to be played on it's own, but I need access to parts of it for card progressions, so it needs to be instantiatable.
 ImmobilizeCard.description = 'Immobilize your adversary.';
 ImmobilizeCard.level = 1;
-ImmobilizeCard.cost = 0;
+ImmobilizeCard.cost = FREE.cost;
 
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,

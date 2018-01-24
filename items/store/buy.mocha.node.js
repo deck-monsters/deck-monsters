@@ -74,7 +74,7 @@ Would you like to buy them? (yes/no)`
 
 		const numberOfCards = character.cards.length;
 
-		buyItems({ character, channel: channelStub })
+		return buyItems({ character, channel: channelStub })
 			.then(() => {
 				expect(channelStub).to.have.been.calledWith({
 					announce: 'Sold! Thank you for your purchase, Character. It was a pleasure doing business with you.'

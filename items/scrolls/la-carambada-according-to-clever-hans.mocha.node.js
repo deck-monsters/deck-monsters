@@ -6,6 +6,8 @@ const LaCarambadaScroll = require('./la-carambada-according-to-clever-hans');
 const Jinn = require('../../monsters/jinn');
 
 const { TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { ALMOST_NOTHING } = require('../../helpers/costs');
+const { ABUNDANT } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/la-carambada-according-to-clever-hans.js', () => {
 	let channelStub;
@@ -34,8 +36,8 @@ describe('./items/scrolls/la-carambada-according-to-clever-hans.js', () => {
 		const laCarambada = new LaCarambadaScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
-		expect(laCarambada.probability).to.equal(75);
-		expect(laCarambada.cost).to.equal(18);
+		expect(laCarambada.probability).to.equal(ABUNDANT.probability);
+		expect(laCarambada.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(laCarambada).to.be.an.instanceof(LaCarambadaScroll);
 		expect(laCarambada.numberOfUses).to.equal(3);
 		expect(laCarambada.expired).to.be.false;
@@ -43,9 +45,9 @@ describe('./items/scrolls/la-carambada-according-to-clever-hans.js', () => {
 		expect(laCarambada.icon).to.equal('👦');
 		expect(laCarambada.targetingStrategy).to.equal(TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS);
 		expect(laCarambada.itemType).to.equal('The Ballad of La Carambada According to Clever Hans');
-		expect(laCarambada.getTargetingDetails(jenn)).to.equal('Jenn will target whichever living opponent would have the highest hp if they were at full health (that is, the highest maximum hp), unless directed otherwise by a specific card.');
+		expect(laCarambada.getTargetingDetails(jenn)).to.equal("Clever Jenn's mother told her that she should target whichever living monster would have the highest hp if they were at full health (that is, the highest maximum hp), unless directed otherwise by a specific card, and that's exactly what she'll do.");
 		expect(laCarambada.description).to.equal(`Junto a ellos, aterrorizó la comarca, aguardando el día de la venganza. Hizo fama por su diestro manejo de la pistola, del machete y, sobre todo, por su extraordinaria habilidad para cabalgar. En tiempos en que las mujeres acompañaban a sus hombres a un lado del caballo, ver a una mujer galopando era un acontecimiento mayor.
 
-Target whoever has the highest maximum hp in the ring even if they currently have less hp.`);
+Your mother told you to target whoever has the highest maximum hp in the ring even if they currently have less hp, and that's exactly what you'll do.`);
 	});
 });

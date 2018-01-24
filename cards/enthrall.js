@@ -4,6 +4,9 @@ const ImmobilizeCard = require('./immobilize');
 
 const MesmerizeCard = require('./mesmerize');
 
+const { UNCOMMON } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
+
 const {
 	BASILISK,
 	GLADIATOR,
@@ -57,10 +60,10 @@ EnthrallCard.permittedClassesAndTypes = [JINN, WEEPING_ANGEL];
 EnthrallCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EnthrallCard.uselessAgainstCreatureTypes = [JINN];
-EnthrallCard.probability = 30;
+EnthrallCard.probability = UNCOMMON.probability;
 EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
 EnthrallCard.level = 2;
-EnthrallCard.cost = 30;
+EnthrallCard.cost = REASONABLE.cost;
 
 EnthrallCard.defaults = {
 	...ImmobilizeCard.defaults,

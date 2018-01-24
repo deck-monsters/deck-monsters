@@ -1,7 +1,10 @@
+const random = require('lodash.random');
+
 const BaseCard = require('./base');
 
 const { roll } = require('../helpers/chance');
-const isProbable = require('../helpers/is-probable');
+const { COMMON } = require('../helpers/probabilities');
+const { ALMOST_NOTHING } = require('../helpers/costs');
 
 class HealCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -44,44 +47,90 @@ class HealCard extends BaseCard {
 		return roll({ primaryDice: this.healthDice, modifier: player.encounterModifiers.healModifier, bonusDice: player.bonusIntDice });
 	}
 
+	checkSuccess (healRoll, target) { // eslint-disable-line class-methods-use-this
+		const hundred = random(1, 100);
+
+		const strokeOfLuck = (hundred === 7);
+		const curseOfLoki = (hundred === 13);
+
+		let { result } = healRoll;
+		if (strokeOfLuck) {
+			result = Math.floor(target.maxHp / 2);
+		} else if (curseOfLoki) {
+			result *= -1;
+		}
+
+		healRoll.result = result;
+
+		return {
+			curseOfLoki,
+			healRoll,
+			result,
+			strokeOfLuck,
+			success: result !== 0
+		};
+	}
+
 	// This doesn't have to be static if it needs access to the instance
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
-		const healRoll = this.getHealRoll(target);
-		let healResult = healRoll.result;
+		const {
+			curseOfLoki,
+			healRoll,
+			result,
+			strokeOfLuck,
+			success
+		} = this.checkSuccess(this.getHealRoll(target), target);
+
+		// Default outcome
+		let outcome = `${target.givenName} grows stronger...`;
 
 		// Stroke of Luck
-		if (isProbable({ probability: 1 })) {
-			healResult = Math.floor(target.maxHp / 2);
+		if (strokeOfLuck) {
 			this.emit('narration', {
 				narration: `Stoke of Luck!
 Wait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`
 			});
+
+			if (!success) {
+				outcome = 'The phial was empty!';
+			}
 		// Curse of Loki
-		} else if (isProbable({ probability: 1 })) {
-			healResult *= -1;
+		} else if (curseOfLoki) {
 			this.emit('narration', {
 				narration: `Curse of Loki!
 Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. 🤢`
 			});
-		} else {
-			this.emit('rolled', {
-				reason: 'to determine how much to heal.',
-				card: this,
-				roll: healRoll,
-				who: target,
-				outcome: `${target.givenName} grows stronger...`
-			});
+
+			if (!success) {
+				outcome = 'Phew! Barely a drop left, not enough to do any harm.';
+			} else {
+				outcome = 'Poisoned!';
+			}
+		} else if (!success) {
+			outcome = `Empty! Not a drop left for ${target.givenName}.`;
 		}
 
-		return target.heal(healResult);
+		this.emit('rolled', {
+			reason: 'to determine how much to drink.',
+			card: this,
+			roll: healRoll,
+			who: target,
+			outcome
+		});
+
+		if (!success) {
+			return true;
+		}
+
+		return target.heal(result);
 	}
 }
 
 HealCard.cardType = 'Heal';
-HealCard.probability = 40;
+HealCard.probability = COMMON.probability;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';
 HealCard.level = 0;
-HealCard.cost = 5;
+HealCard.cost = ALMOST_NOTHING.cost;
 
 HealCard.defaults = {
 	healthDice: '1d4',

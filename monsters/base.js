@@ -2,7 +2,7 @@ const BaseCreature = require('../creatures/base');
 
 const {
 	getUniqueCards,
-	sortCards
+	sortCardsAlphabetically
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
 const { getAttributeChoices } = require('../helpers/choices');
@@ -134,7 +134,7 @@ ${getAttributeChoices(this.options)}`,
 		let cards = [...this.cards];
 
 		if (!inDetail) {
-			const sortedDeck = sortCards(cards);
+			const sortedDeck = sortCardsAlphabetically(cards);
 			cards = getUniqueCards(sortedDeck);
 		}
 

@@ -1,42 +1,79 @@
 const random = require('lodash.random');
 
-const drawCard = require('../../cards/helpers/draw');
+const { sortCardsAlphabetically, draw: drawCard } = require('../../cards');
+const { sortItemsAlphabetically, drawItem } = require('../');
 
-const DEFAULT_MIN_CARD_INVENTORY_SIZE = 5;
-const DEFAULT_MAX_CARD_INVENTORY_SIZE = 20;
+const DEFAULT_MIN_INVENTORY_SIZE = 5;
+const DEFAULT_MAX_INVENTORY_SIZE = 20;
+
+const DEFAULT_MIN_BACK_ROOM_INVENTORY_SIZE = 1;
+const DEFAULT_MAX_BACK_ROOM_INVENTORY_SIZE = 3;
 
 const canHoldBackRoom = {
-	canHoldCard: card => card.notForSale && !card.neverForSale
+	canHoldCard: card => card.notForSale && !card.neverForSale,
+	canHoldItem: item => item.notForSale && !item.neverForSale
 };
 
 const getBackRoom = () => {
-	const items = [];
+	const cards = [];
+	const cardInventorySize = random(DEFAULT_MIN_BACK_ROOM_INVENTORY_SIZE, DEFAULT_MAX_BACK_ROOM_INVENTORY_SIZE);
 
-	while (items.length < 1) {
-		items.push(drawCard({}, canHoldBackRoom));
+	while (cards.length < cardInventorySize) {
+		cards.push(drawCard({}, canHoldBackRoom));
 	}
 
-	// TODO: Draw a special item (potion, scroll, etc) and push it here as well
+	const items = [];
+	const itemInventorySize = random(DEFAULT_MIN_BACK_ROOM_INVENTORY_SIZE, DEFAULT_MAX_BACK_ROOM_INVENTORY_SIZE);
 
-	return items;
+	while (items.length < itemInventorySize) {
+		const item = drawItem({}, canHoldBackRoom);
+
+		if (item) {
+			items.push(item);
+		} else {
+			break;
+		}
+	}
+
+	const sortedCards = sortCardsAlphabetically(cards);
+	const sortedItems = sortItemsAlphabetically(items);
+
+	return [...sortedCards, ...sortedItems];
 };
 
 const canHoldStandard = {
-	canHoldCard: card => !card.notForSale && !card.neverForSale
+	canHoldCard: card => !card.notForSale && !card.neverForSale,
+	canHoldItem: item => !item.notForSale && !item.neverForSale
 };
 
 const getCards = () => {
 	const cards = [];
-	const cardInventorySize = random(DEFAULT_MIN_CARD_INVENTORY_SIZE, DEFAULT_MAX_CARD_INVENTORY_SIZE);
+	const cardInventorySize = random(DEFAULT_MIN_INVENTORY_SIZE, DEFAULT_MAX_INVENTORY_SIZE);
 
 	while (cards.length < cardInventorySize) {
 		cards.push(drawCard({}, canHoldStandard));
 	}
 
-	return cards;
+	const sortedCards = sortCardsAlphabetically(cards);
+
+	return sortedCards;
+};
+
+const getItems = () => {
+	const items = [];
+	const itemInventorySize = random(DEFAULT_MIN_INVENTORY_SIZE, DEFAULT_MAX_INVENTORY_SIZE);
+
+	while (items.length < itemInventorySize) {
+		items.push(drawItem({}, canHoldStandard));
+	}
+
+	const sortedItems = sortItemsAlphabetically(items);
+
+	return sortedItems;
 };
 
 module.exports = {
 	getBackRoom,
-	getCards
+	getCards,
+	getItems
 };

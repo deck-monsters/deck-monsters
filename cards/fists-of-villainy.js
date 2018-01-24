@@ -1,5 +1,8 @@
 const HitCard = require('./hit');
 
+const { UNCOMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
+
 class FistsOfVillainyCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -21,9 +24,9 @@ class FistsOfVillainyCard extends HitCard {
 }
 
 FistsOfVillainyCard.cardType = 'Fists of Villainy';
-FistsOfVillainyCard.probability = 20;
+FistsOfVillainyCard.probability = UNCOMMON.probability;
 FistsOfVillainyCard.description = 'You show no mercy to the weak.';
 FistsOfVillainyCard.level = 1;
-FistsOfVillainyCard.cost = 20;
+FistsOfVillainyCard.cost = VERY_CHEAP.cost;
 
 module.exports = FistsOfVillainyCard;

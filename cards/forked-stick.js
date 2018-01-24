@@ -4,6 +4,8 @@ const ImmobilizeCard = require('./immobilize');
 
 const { BARD, BARBARIAN, FIGHTER } = require('../helpers/classes');
 const { BASILISK, GLADIATOR, JINN, MINOTAUR } = require('../helpers/creature-types');
+const { UNCOMMON } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
 
 class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -31,9 +33,9 @@ ForkedStickCard.actions = ['pin', 'pins', 'pinned'];
 ForkedStickCard.permittedClassesAndTypes = [BARD, BARBARIAN, FIGHTER];
 ForkedStickCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 ForkedStickCard.weakAgainstCreatureTypes = [JINN, MINOTAUR];
-ForkedStickCard.probability = 30;
+ForkedStickCard.probability = UNCOMMON.probability;
 ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
-ForkedStickCard.cost = 20;
+ForkedStickCard.cost = REASONABLE.cost;
 
 ForkedStickCard.defaults = {
 	...ImmobilizeCard.defaults

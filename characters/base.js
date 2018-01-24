@@ -6,8 +6,9 @@ const { actionCard, monsterCard } = require('../helpers/card');
 const {
 	getInitialDeck,
 	getUniqueCards,
-	sortCards
+	sortCardsAlphabetically
 } = require('../cards');
+const { sortItemsAlphabetically } = require('../items');
 const getCardCounts = require('../items/helpers/counts').getItemCounts;
 const isMatchingItem = require('../items/helpers/is-matching');
 const sellItems = require('../items/store/sell');
@@ -55,13 +56,13 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	addCard (card) {
-		this.deck = [...this.deck, card];
+		this.deck = sortCardsAlphabetically([...this.deck, card]);
 
 		this.emit('cardAdded', { card });
 	}
 
 	addItem (item) {
-		this.items = [...this.items, item];
+		this.items = sortItemsAlphabetically([...this.items, item]);
 
 		this.emit('itemAdded', { item });
 	}
@@ -110,7 +111,7 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	lookAtCards (channel) {
-		const sortedDeck = sortCards([...this.deck]);
+		const sortedDeck = sortCardsAlphabetically(this.deck);
 		const cardImages = getUniqueCards(sortedDeck).reduce((cards, card) =>
 			cards + actionCard(card), '');
 

@@ -59,6 +59,75 @@ describe('./helpers/targeting-strategies.js', () => {
 		};
 	};
 
+	describe('TARGET_HUMAN_PLAYER_WEAK', () => {
+		it('targets the person next to you if they are human', () => {
+			const {
+				playerContestant,
+				level1,
+				level2,
+				level3,
+				contestants
+			} = getContestants();
+
+			playerContestant.isBoss = true;
+			level1.isBoss = true;
+			level2.isBoss = true;
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_HUMAN_PLAYER_WEAK
+			});
+
+			expect(target.monster.givenName).to.equal(level3.monster.givenName);
+		});
+
+		it('finds a human to target if there is one', () => {
+			const {
+				playerContestant,
+				level1,
+				level2,
+				level3,
+				contestants
+			} = getContestants();
+
+			playerContestant.isBoss = true;
+			level3.isBoss = true;
+			level1.isBoss = true;
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_HUMAN_PLAYER_WEAK
+			});
+
+			expect(target.monster.givenName).to.equal(level2.monster.givenName);
+		});
+
+		it('targets the boss next to you if no humans are left', () => {
+			const {
+				playerContestant,
+				level1,
+				level2,
+				level3,
+				contestants
+			} = getContestants();
+
+			playerContestant.isBoss = true;
+			level3.isBoss = true;
+			level1.isBoss = true;
+			level2.isBoss = true;
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_HUMAN_PLAYER_WEAK
+			});
+
+			expect(target.monster.givenName).to.equal(level3.monster.givenName);
+		});
+	});
+
 	describe('TARGET_HIGHEST_HP_PLAYER', () => {
 		it('gets the target with the highest hp', () => {
 			const {
@@ -109,8 +178,6 @@ describe('./helpers/targeting-strategies.js', () => {
 		it('gets the target with the highest hp', () => {
 			const {
 				playerContestant,
-				level1,
-				level2,
 				level3,
 				contestants
 			} = getContestants();
@@ -149,7 +216,6 @@ describe('./helpers/targeting-strategies.js', () => {
 	describe('TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS', () => {
 		it('gets the target with the highest max hp', () => {
 			const {
-				level1,
 				level3,
 				contestants
 			} = getContestants();
@@ -232,6 +298,24 @@ describe('./helpers/targeting-strategies.js', () => {
 		});
 	});
 
+	describe('TARGET_PREVIOUS_PLAYER', () => {
+		it('gets the previous target in order of play', () => {
+			const {
+				playerContestant,
+				level2,
+				contestants
+			} = getContestants();
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_PREVIOUS_PLAYER
+			});
+
+			expect(target.monster.givenName).to.equal(level2.monster.givenName);
+		});
+	});
+
 	describe('TARGET_NEXT_PLAYER', () => {
 		it('gets the next target in order of play', () => {
 			const {
@@ -258,8 +342,7 @@ describe('./helpers/targeting-strategies.js', () => {
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
-				contestants,
-				strategy: targetingStrategies.TARGET_NEXT_PLAYER
+				contestants
 			});
 
 			expect(target.monster.givenName).to.equal(level1.monster.givenName);
