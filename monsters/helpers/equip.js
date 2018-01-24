@@ -100,8 +100,7 @@ ${getFinalCardChoices(cards)}`
 				}));
 			}
 
-			const nowRemainingCards = sortCardsAlphabetically([...deck]
-				.filter(card => monster.canHoldCard(card)));
+			const nowRemainingCards = sortCardsAlphabetically(deck.filter(card => monster.canHoldCard(card)));
 
 			if (cardSelection) {
 				cardSelection.forEach((card) => {
