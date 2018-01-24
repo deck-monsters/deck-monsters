@@ -220,17 +220,24 @@ class Ring extends BaseClass {
 	startFightTimer () {
 		clearTimeout(this.fightTimer);
 
-		let hasBoss = false;
-		const contestants = this.contestants.filter((contestant) => {
-			if (contestant.isBoss) {
-				hasBoss = true;
-				return false;
-			}
+		const getPlayerContestants = () => {
+			let hasBoss = false;
+			const playerContestants = this.contestants.filter((contestant) => {
+				if (contestant.isBoss) {
+					hasBoss = true;
+					return false;
+				}
 
-			return true;
-		});
+				return true;
+			});
 
-		const numberOfMonstersInRing = contestants.length + (hasBoss ? 1 : 0);
+			return {
+				contestants: playerContestants,
+				numberOfMonstersInRing: playerContestants.length + (hasBoss ? 1 : 0)
+			};
+		};
+
+		const { contestants, numberOfMonstersInRing } = getPlayerContestants();
 
 		if (numberOfMonstersInRing >= MIN_MONSTERS) {
 			contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
@@ -240,7 +247,9 @@ class Ring extends BaseClass {
 			}));
 
 			this.fightTimer = pause.setTimeout(() => {
-				if (this.contestants.length >= 2) {
+				const { numberOfMonstersInRing: numberOfMonstersStillInRing } = getPlayerContestants();
+
+				if (numberOfMonstersStillInRing >= MIN_MONSTERS) {
 					this.channelManager.sendMessages()
 						.then(() => this.fight());
 				}
