@@ -4,7 +4,7 @@ const pause = require('../helpers/pause');
 
 const { sort } = require('./sort');
 
-describe.only('./helpers/sort.js', () => {
+describe('./helpers/sort.js', () => {
 	let pauseStub;
 	let unsortedCards = [
 		{cardType: 'b', level: 1},
