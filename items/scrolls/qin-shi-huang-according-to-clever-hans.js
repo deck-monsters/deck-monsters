@@ -18,7 +18,7 @@ class QinShiHuangAccordingToCleverHansScroll extends QinShiHuangScroll {
 }
 
 QinShiHuangAccordingToCleverHansScroll.notForSale = true;
-QinShiHuangAccordingToCleverHansScroll.cost = ALMOST_NOTHING;
+QinShiHuangAccordingToCleverHansScroll.cost = ALMOST_NOTHING.cost;
 QinShiHuangAccordingToCleverHansScroll.itemType = 'The Annals of Qin Shi Huang According to Clever Hans';
 QinShiHuangAccordingToCleverHansScroll.description = `焚書坑儒
 

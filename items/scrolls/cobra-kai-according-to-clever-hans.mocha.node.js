@@ -36,7 +36,7 @@ describe('./items/scrolls/cobra-kai-according-to-clever-hans.js', () => {
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
 		expect(cobraKai.probability).to.equal(ABUNDANT.probability);
-		expect(cobraKai.cost).to.equal(ALMOST_NOTHING);
+		expect(cobraKai.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(cobraKai).to.be.an.instanceof(CobraKaiScroll);
 		expect(cobraKai.numberOfUses).to.equal(3);
 		expect(cobraKai.expired).to.be.false;

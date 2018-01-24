@@ -18,7 +18,7 @@ class CobraKaiAccordingToCleverHansScroll extends CobraKaiScroll {
 }
 
 CobraKaiAccordingToCleverHansScroll.notForSale = true;
-CobraKaiAccordingToCleverHansScroll.cost = ALMOST_NOTHING;
+CobraKaiAccordingToCleverHansScroll.cost = ALMOST_NOTHING.cost;
 CobraKaiAccordingToCleverHansScroll.itemType = 'The Way of the Cobra Kai According to Clever Hans';
 CobraKaiAccordingToCleverHansScroll.targetingStrategy = TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS;
 CobraKaiAccordingToCleverHansScroll.description = `We do not train to be merciful here. Mercy is for the weak. Here, in the streets, in competition: A man confronts you, he is the enemy. An enemy deserves no mercy.

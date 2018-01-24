@@ -37,7 +37,7 @@ describe('./items/scrolls/sir-robin-according-to-clever-hans.js', () => {
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
 		expect(sirRobin.probability).to.equal(ABUNDANT.probability);
-		expect(sirRobin.cost).to.equal(ALMOST_NOTHING);
+		expect(sirRobin.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(sirRobin).to.be.an.instanceof(SirRobinScroll);
 		expect(sirRobin.numberOfUses).to.equal(3);
 		expect(sirRobin.expired).to.be.false;

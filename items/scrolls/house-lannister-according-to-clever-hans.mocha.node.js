@@ -37,7 +37,7 @@ describe('./items/scrolls/house-lannister-according-to-clever-hans.js', () => {
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
 		expect(houseLannister.probability).to.equal(ABUNDANT.probability);
-		expect(houseLannister.cost).to.equal(ALMOST_NOTHING);
+		expect(houseLannister.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(houseLannister).to.be.an.instanceof(HouseLannisterScroll);
 		expect(houseLannister.numberOfUses).to.equal(3);
 		expect(houseLannister.expired).to.be.false;

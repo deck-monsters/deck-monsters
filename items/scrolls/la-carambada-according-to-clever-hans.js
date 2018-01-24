@@ -18,7 +18,7 @@ class LaCarambadaAccordingToCleverHansScroll extends LaCarambadaScroll {
 }
 
 LaCarambadaAccordingToCleverHansScroll.notForSale = true;
-LaCarambadaAccordingToCleverHansScroll.cost = ALMOST_NOTHING;
+LaCarambadaAccordingToCleverHansScroll.cost = ALMOST_NOTHING.cost;
 LaCarambadaAccordingToCleverHansScroll.itemType = 'The Ballad of La Carambada According to Clever Hans';
 LaCarambadaAccordingToCleverHansScroll.description = `Junto a ellos, aterrorizó la comarca, aguardando el día de la venganza. Hizo fama por su diestro manejo de la pistola, del machete y, sobre todo, por su extraordinaria habilidad para cabalgar. En tiempos en que las mujeres acompañaban a sus hombres a un lado del caballo, ver a una mujer galopando era un acontecimiento mayor.
 

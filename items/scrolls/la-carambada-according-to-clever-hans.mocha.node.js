@@ -37,7 +37,7 @@ describe('./items/scrolls/la-carambada-according-to-clever-hans.js', () => {
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
 		expect(laCarambada.probability).to.equal(ABUNDANT.probability);
-		expect(laCarambada.cost).to.equal(ALMOST_NOTHING);
+		expect(laCarambada.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(laCarambada).to.be.an.instanceof(LaCarambadaScroll);
 		expect(laCarambada.numberOfUses).to.equal(3);
 		expect(laCarambada.expired).to.be.false;

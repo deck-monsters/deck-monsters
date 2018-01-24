@@ -36,7 +36,7 @@ describe('./items/scrolls/chaos-theory-according-to-clever-hans.js', () => {
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
 		expect(chaosTheory.probability).to.equal(ABUNDANT.probability);
-		expect(chaosTheory.cost).to.equal(ALMOST_NOTHING);
+		expect(chaosTheory.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(chaosTheory).to.be.an.instanceof(ChaosTheoryAccordingToHansScroll);
 		expect(chaosTheory.itemType).to.equal('Chaos Theory for Beginners According to Clever Hans');
 		expect(chaosTheory.numberOfUses).to.equal(3);

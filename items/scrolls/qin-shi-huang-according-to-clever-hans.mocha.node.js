@@ -37,7 +37,7 @@ describe('./items/scrolls/qin-shi-huang-according-to-clever-hans.js', () => {
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
 		expect(qinShiHuangScroll.probability).to.equal(ABUNDANT.probability);
-		expect(qinShiHuangScroll.cost).to.equal(ALMOST_NOTHING);
+		expect(qinShiHuangScroll.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(qinShiHuangScroll).to.be.an.instanceof(QinShiHuangScroll);
 		expect(qinShiHuangScroll.numberOfUses).to.equal(3);
 		expect(qinShiHuangScroll.expired).to.be.false;

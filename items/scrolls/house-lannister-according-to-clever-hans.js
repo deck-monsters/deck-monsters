@@ -18,7 +18,7 @@ class HouseLannisterAccordingToCleverHans extends HouseLannister {
 }
 
 HouseLannisterAccordingToCleverHans.notForSale = true;
-HouseLannisterAccordingToCleverHans.cost = ALMOST_NOTHING;
+HouseLannisterAccordingToCleverHans.cost = ALMOST_NOTHING.cost;
 HouseLannisterAccordingToCleverHans.itemType = 'House Lannister According To Clever Hans';
 HouseLannisterAccordingToCleverHans.targetingStrategy = TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS;
 HouseLannisterAccordingToCleverHans.description = `A Lannister always pays his debts...
