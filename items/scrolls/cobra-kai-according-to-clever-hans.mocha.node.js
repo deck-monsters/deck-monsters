@@ -43,6 +43,6 @@ describe('./items/scrolls/cobra-kai-according-to-clever-hans.js', () => {
 		expect(cobraKai.stats).to.equal('Usable 3 times.');
 		expect(cobraKai.icon).to.equal('👦');
 		expect(cobraKai.targetingStrategy).to.equal(TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS);
-		expect(cobraKai.getTargetingDetails(jenn)).to.equal('Jenn will target the player with the lowest current xp while she is in the ring unless directed otherwise by a specific card.');
+		expect(cobraKai.getTargetingDetails(jenn)).to.equal("Clever Jenn's mother told her that she should target the player with the lowest current xp while she is in the ring unless directed otherwise by a specific card, and that's exactly what she'll do.");
 	});
 });
