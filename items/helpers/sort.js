@@ -1,14 +1,6 @@
-const sortItemsAlphabetically = items => [...items].sort((a, b) => {
-	if (a.itemType > b.itemType) {
-		return 1;
-	}
+const { sort } = require('../../helpers/sort');
 
-	if (a.itemType < b.itemType) {
-		return -1;
-	}
-
-	return 0;
-});
+const sortItemsAlphabetically = toBeSorted => sort(toBeSorted, 'itemType');
 
 module.exports = {
 	sortItemsAlphabetically
