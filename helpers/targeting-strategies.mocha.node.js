@@ -60,7 +60,7 @@ describe('./helpers/targeting-strategies.js', () => {
 	};
 
 	describe('TARGET_HIGHEST_HP_PLAYER', () => {
-		it('gets the target with the higest hp', () => {
+		it('gets the target with the highest hp', () => {
 			const {
 				playerContestant,
 				level1,
@@ -81,7 +81,7 @@ describe('./helpers/targeting-strategies.js', () => {
 			expect(target.monster.givenName).to.equal(level3.monster.givenName);
 		});
 
-		it('gets the target with the higest current hp', () => {
+		it('gets the target with the highest current hp', () => {
 			const {
 				playerContestant,
 				level1,
@@ -100,6 +100,75 @@ describe('./helpers/targeting-strategies.js', () => {
 			});
 
 			expect(target.monster.givenName).to.equal(level2.monster.givenName);
+		});
+	});
+
+	describe('TARGET_HUMAN_PLAYER_WEAK', () => {
+		it('targets the person next to you if they are human', () => {
+			const {
+				playerContestant,
+				level1,
+				level2,
+				level3,
+				contestants
+			} = getContestants();
+
+			playerContestant.isBoss = true;
+			level1.isBoss = true;
+			level2.isBoss = true;
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_HUMAN_PLAYER_WEAK
+			});
+
+			expect(target.monster.givenName).to.equal(level3.monster.givenName);
+		});
+
+		it('finds a human to target if there is one', () => {
+			const {
+				playerContestant,
+				level1,
+				level2,
+				level3,
+				contestants
+			} = getContestants();
+
+			playerContestant.isBoss = true;
+			level3.isBoss = true;
+			level1.isBoss = true;
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_HUMAN_PLAYER_WEAK
+			});
+
+			expect(target.monster.givenName).to.equal(level2.monster.givenName);
+		});
+
+		it('targets the boss next to you if no humans are left', () => {
+			const {
+				playerContestant,
+				level1,
+				level2,
+				level3,
+				contestants
+			} = getContestants();
+
+			playerContestant.isBoss = true;
+			level3.isBoss = true;
+			level1.isBoss = true;
+			level2.isBoss = true;
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_HUMAN_PLAYER_WEAK
+			});
+
+			expect(target.monster.givenName).to.equal(level3.monster.givenName);
 		});
 	});
 

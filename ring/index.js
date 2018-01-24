@@ -127,14 +127,15 @@ class Ring extends BaseClass {
 	}
 
 	addMonster ({
-		monster, character, channel, channelName
+		monster, character, channel, channelName, isBoss
 	}) {
 		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
 			const contestant = {
 				monster,
 				character,
 				channel,
-				channelName
+				channelName,
+				isBoss
 			};
 
 			this.contestants = shuffle([...this.contestants, contestant]);
@@ -219,8 +220,20 @@ class Ring extends BaseClass {
 	startFightTimer () {
 		clearTimeout(this.fightTimer);
 
-		if (this.contestants.length >= MIN_MONSTERS) {
-			this.contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
+		let hasBoss = false;
+		const contestants = this.contestants.filter((contestant) => {
+			if (contestant.isBoss) {
+				hasBoss = true;
+				return false;
+			}
+
+			return true;
+		});
+
+		const numberOfMonstersInRing = contestants.length + (hasBoss ? 1 : 0);
+
+		if (numberOfMonstersInRing >= MIN_MONSTERS) {
+			contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
 				announce: `Fight will begin in ${Math.floor(FIGHT_DELAY / 1000)} seconds.`,
 				channel,
 				channelName
@@ -232,16 +245,16 @@ class Ring extends BaseClass {
 						.then(() => this.fight());
 				}
 			}, FIGHT_DELAY);
-		} else if (this.contestants.length <= 0) {
+		} else if (numberOfMonstersInRing <= 0) {
 			this.emit('narration', {
 				narration: 'The ring is quiet save for the faint sound of footsteps fleeing into the distance.'
 			});
 		} else {
-			const needed = MIN_MONSTERS - this.contestants.length;
+			const needed = MIN_MONSTERS - numberOfMonstersInRing;
 			const monster = needed > 1 ? 'monsters' : 'monster';
 			const join = needed > 1 ? 'join' : 'joins';
 
-			this.contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
+			contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
 				announce: `Fight countdown will begin once ${needed} more ${monster} ${join} the ring.`,
 				channel,
 				channelName
@@ -593,7 +606,7 @@ class Ring extends BaseClass {
 
 				pause.setTimeout(() => {
 					ring.spawnBoss();
-					ring.startBossTimer(); // Do it again in an hour
+					ring.startBossTimer(); // Do it again in about an hour
 				}, 120000);
 			}, random(2100000, 3480000));
 		}
@@ -606,11 +619,15 @@ class Ring extends BaseClass {
 
 			this.addMonster(contestant);
 
-			// Leave the ring after 10 minutes if no one joins the fight
-			const ring = this;
-			pause.setTimeout(() => {
-				ring.removeBoss(contestant);
-			}, 600000);
+			// What should we do after 10 minutes?
+			// 50/50 chance we'll stick around
+			if (random(1)) {
+				// Otherwise, leave the ring if no one joins the fight
+				const ring = this;
+				pause.setTimeout(() => {
+					ring.removeBoss(contestant);
+				}, 600000);
+			}
 
 			return contestant;
 		}

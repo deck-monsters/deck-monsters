@@ -2,6 +2,7 @@ const sample = require('lodash.sample');
 
 const TARGET_HIGHEST_HP_PLAYER = 'TARGET_HIGHEST_HP_PLAYER';
 const TARGET_HIGHEST_XP_PLAYER = 'TARGET_HIGHEST_XP_PLAYER';
+const TARGET_HUMAN_PLAYER_WEAK = 'TARGET_HUMAN_PLAYER_WEAK';
 const TARGET_LOWEST_HP_PLAYER = 'TARGET_LOWEST_HP_PLAYER';
 const TARGET_MAX_HP_PLAYER = 'TARGET_MAX_HP_PLAYER';
 const TARGET_NEXT_PLAYER = 'TARGET_NEXT_PLAYER';
@@ -43,6 +44,20 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 				// Otherwise, continue
 				return potentialTarget;
 			}, defaultTarget);
+		}
+		case TARGET_HUMAN_PLAYER_WEAK: {
+			const defaultTarget = getTarget({ playerContestant, contestants });
+
+			// Are there any humans left in the room
+			const potentialTargets = contestants.filter(contestant => (contestant !== playerContestant && !contestant.isBoss));
+
+			// No humans left or the person next to you just happens to be one? Go ahead and hit them!
+			if (potentialTargets.length <= 0 || !defaultTarget.isBoss) {
+				return defaultTarget;
+			}
+
+			// Found some humans? Great! Let's hit one of them, they all look alike anyway
+			return sample(potentialTargets);
 		}
 		case TARGET_LOWEST_HP_PLAYER: {
 			const defaultTarget = getTarget({ playerContestant, contestants });
@@ -121,6 +136,7 @@ function getTarget ({ playerContestant, contestants = [], strategy = TARGET_NEXT
 module.exports = {
 	TARGET_HIGHEST_HP_PLAYER,
 	TARGET_HIGHEST_XP_PLAYER,
+	TARGET_HUMAN_PLAYER_WEAK,
 	TARGET_LOWEST_HP_PLAYER,
 	TARGET_MAX_HP_PLAYER,
 	TARGET_NEXT_PLAYER,
