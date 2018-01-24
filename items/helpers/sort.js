@@ -1,4 +1,4 @@
-module.exports = items => items.sort((a, b) => {
+const sortItemsAlphabetically = items => items.sort((a, b) => {
 	if (a.itemType > b.itemType) {
 		return 1;
 	}
@@ -9,3 +9,7 @@ module.exports = items => items.sort((a, b) => {
 
 	return 0;
 });
+
+module.exports = {
+	sortItemsAlphabetically
+};

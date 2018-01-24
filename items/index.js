@@ -1,7 +1,7 @@
 const chooseItems = require('./helpers/choose');
 const { getItemCounts, getItemCountsWithPrice } = require('./helpers/counts');
 const isMatchingItem = require('./helpers/is-matching');
-const sortItems = require('./helpers/sort');
+const { sortItemsAlphabetically } = require('./helpers/sort');
 const drawItem = require('./helpers/draw');
 
 module.exports = {
@@ -9,6 +9,6 @@ module.exports = {
 	getItemCounts,
 	getItemCountsWithPrice,
 	isMatchingItem,
-	sortItems,
+	sortItemsAlphabetically,
 	drawItem
 };
