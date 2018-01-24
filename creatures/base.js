@@ -500,9 +500,7 @@ Battles won: ${this.battles.wins}`;
 			card,
 			when: Date.now()
 		});
-		this.encounterModifiers = {
-			hitLog
-		};
+		this.encounterModifiers.hitLog = hitLog;
 
 		// don't do damage if already dead
 		if (this.hp < 1) return false;

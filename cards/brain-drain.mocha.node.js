@@ -38,13 +38,12 @@ Curse: xp -20`;
 		expect(brainDrain.stats).to.equal(stats);
 	});
 
-	it.only('decreases xp', () => {
+	it('decreases xp', () => {
 		const brainDrain = new BrainDrainCard();
 
 		const player = new Gladiator({ name: 'player' });
 		const target = new Gladiator({ name: 'target' });
 		target.xp = 300;
-		target.hp = 30;
 
 		expect(target.xp).to.equal(300);
 
@@ -61,7 +60,6 @@ Curse: xp -20`;
 		return brainDrain.play(player, target, ring)
 			.then((result) => {
 				expect(result).to.equal(true);
-				expect(target.hp).to.equal(30);
 				return expect(target.xp).to.equal(280);
 			});
 	});

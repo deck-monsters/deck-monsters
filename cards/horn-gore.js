@@ -111,7 +111,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 		if (success) {
 			this.increaseImmobilizeStrength(2);
-			player.encounterModifiers = { dexModifier: player.encounterModifiers.dexModifier += 1 || 1 };
+			player.encounterModifiers.dexModifier = player.encounterModifiers.dexModifier + 1 || 1;
 
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
@@ -139,7 +139,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 		const horn2 = this.gore(player, target, 2);
 		const chanceToImmobilize = horn1.success || horn2.success;
 
-		player.encounterModifiers = { dexModifier: originalDexModifier };
+		player.encounterModifiers.dexModifier = originalDexModifier;
 
 		if (!player.dead && chanceToImmobilize) {
 			if (target.dead) {
