@@ -57,12 +57,6 @@ class BaseMonster extends BaseCreature {
 		if (shouldReset) this.cards = [];
 	}
 
-	resetItems ({ matchItem } = {}) {
-		const shouldReset = !matchItem || !!this.items.find(item => isMatchingItem(item, matchItem));
-
-		if (shouldReset) this.items = [];
-	}
-
 	get emptyHanded () {
 		return !!(this.encounter || {}).emptyHanded;
 	}

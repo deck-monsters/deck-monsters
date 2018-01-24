@@ -53,11 +53,7 @@ class Beastmaster extends BaseCharacter {
 	}
 
 	canHoldItem (item) {
-		if (this.monsters.length > 0) {
-			return this.monsters.reduce((canHold, monster) => canHold || monster.canHoldItem(item), false);
-		}
-
-		return super.canHoldItem(item);
+		return super.canHoldItem(item) || this.monsters.reduce((canHold, monster) => canHold || monster.canHoldItem(item), false);
 	}
 
 	removeCard (cardToRemove) {
@@ -68,8 +64,6 @@ class Beastmaster extends BaseCharacter {
 
 	removeItem (itemToRemove) {
 		super.removeItem(itemToRemove);
-
-		this.monsters.forEach(monster => monster.resetItems({ matchItem: itemToRemove }));
 	}
 
 	addMonster (monster) {

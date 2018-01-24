@@ -56,5 +56,6 @@ LotteryTicket.numberOfUses = 1;
 LotteryTicket.description = 'Play the odds for a chance to win up to 2000 coins.';
 LotteryTicket.level = 0;
 LotteryTicket.cost = ALMOST_NOTHING.cost;
+LotteryTicket.usableWithoutMonster = true;
 
 module.exports = LotteryTicket;
