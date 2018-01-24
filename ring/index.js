@@ -239,9 +239,10 @@ class Ring extends BaseClass {
 		} else {
 			const needed = MIN_MONSTERS - this.contestants.length;
 			const monster = needed > 1 ? 'monsters' : 'monster';
+			const join = needed > 1 ? 'join' : 'joins';
 
 			this.contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
-				announce: `Fight countdown will begin once ${needed} more ${monster} join the ring.`,
+				announce: `Fight countdown will begin once ${needed} more ${monster} ${join} the ring.`,
 				channel,
 				channelName
 			}));
