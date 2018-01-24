@@ -1,4 +1,4 @@
-const sortItemsAlphabetically = items => items.sort((a, b) => {
+const sortItemsAlphabetically = items => [...items].sort((a, b) => {
 	if (a.itemType > b.itemType) {
 		return 1;
 	}
