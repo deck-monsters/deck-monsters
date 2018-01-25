@@ -141,7 +141,6 @@ describe('./cards/battle-focus.js', () => {
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target', hpVariance: 0 });
 		target.hp = 1;
-		const before = target.hp;
 
 		const battleFocusProto = Object.getPrototypeOf(battleFocus);
 		const berserkProto = Object.getPrototypeOf(battleFocusProto);
@@ -215,7 +214,7 @@ describe('./cards/battle-focus.js', () => {
 				expect(narrations).to.deep.equal(ultimateComboNarration);
 				expect(target.destroyed).to.be.true;
 
-				return expect(target.hp).to.be.below(-Math.floor(target.maxHp/2));
+				return expect(target.hp).to.be.below(-Math.floor(target.maxHp / 2));
 			});
 	});
 });

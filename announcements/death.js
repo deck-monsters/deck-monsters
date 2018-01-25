@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 const announceDeath = (publicChannel, channelManager, className, monster, { assailant, destroyed }) => {
 	let announce;
 

@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 const { expect, sinon } = require('../shared/test-setup');
 
 const BerserkCard = require('./berserk');
@@ -42,7 +44,7 @@ describe('./cards/berserk.js', () => {
 		expect(berserk).to.be.an.instanceof(BerserkCard);
 		expect(berserk.bigFirstHit).to.be.false;
 		expect(berserk.damageAmount).to.equal(1);
-		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
+		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');
 	});
 
 	it('can be instantiated with options', () => {
@@ -323,7 +325,6 @@ describe('./cards/berserk.js', () => {
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target', hpVariance: 0 });
 		target.hp = 1;
-		const before = target.hp;
 
 		const berserkProto = Object.getPrototypeOf(berserk);
 		const hitProto = Object.getPrototypeOf(berserkProto);
