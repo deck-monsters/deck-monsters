@@ -34,7 +34,7 @@ describe('./cards/prion-disease.js', () => {
 		expect(prionDisease).to.be.an.instanceof(PrionDiseaseCard);
 		expect(prionDisease.icon).to.equal('旦');
 		expect(prionDisease.stats).to.equal(`Serve everyone a nice round of milkshakes!
-Usually restores between 0-3hp to each player.
+Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 1:50 chance to kill each opponent.
 1:100 chance to kill yourself.`);
 	});

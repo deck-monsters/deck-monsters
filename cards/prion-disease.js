@@ -37,7 +37,7 @@ class PrionDiseaseCard extends BaseCard {
 
 	get stats () { // eslint-disable-line class-methods-use-this
 		return `Serve everyone a nice round of milkshakes!
-Usually restores between 0-3hp to each player.
+Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 1:50 chance to kill each opponent.
 1:100 chance to kill yourself.`;
 	}
