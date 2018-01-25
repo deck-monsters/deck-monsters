@@ -8,10 +8,10 @@ const {
 	getUniqueCards,
 	sortCardsAlphabetically
 } = require('../cards');
+const buyItems = require('../items/store/buy');
 const getCardCounts = require('../items/helpers/counts').getItemCounts;
 const isMatchingItem = require('../items/helpers/is-matching');
 const sellItems = require('../items/store/sell');
-const buyItems = require('../items/store/buy');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {

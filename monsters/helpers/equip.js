@@ -3,7 +3,7 @@ const { getFinalCardChoices } = require('../../helpers/choices');
 
 const MAX_CARD_COPIES_IN_HAND = 4;
 
-module.exports = (deck, monster, cardSelection, channel) => {
+module.exports = ({ deck, monster, cardSelection, channel }) => {
 	const cards = [];
 	const { cardSlots } = monster;
 
