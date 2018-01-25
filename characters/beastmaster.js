@@ -164,14 +164,10 @@ Which monster would you like to ${action}?`,
 				});
 			})
 			.then(monster => equip({ deck: this.deck, monster, cardSelection, channel })
-				.then((cards) => {
-					monster.cards = cards;
-					return monster;
-				}))
-			.then(monster => channel({
-				announce: `${monster.givenName} is good to go!`
-			})
-				.then(() => monster));
+				.then(() => channel({
+					announce: `${monster.givenName} is good to go!`
+				})
+					.then(() => monster)));
 	}
 
 	giveItemsToMonster ({ monsterName, itemSelection, channel }) {

@@ -17,10 +17,12 @@ module.exports = ({ deck, monster, cardSelection, channel }) => {
 		return Promise.resolve(arg);
 	};
 
-	const addCard = ({ remainingSlots, remainingCards }) => Promise
+	const addCard = ({ remainingSlots, remainingCards, selectedCards }) => Promise
 		.resolve()
 		.then(checkEncounter)
 		.then(() => {
+			if (selectedCards) return selectedCards;
+
 			const equipableCards = remainingCards.reduce((equipable, card) => {
 				const alreadyChosenNumber = cards.filter(chosen => chosen.name === card.name).length;
 				const alreadyAddedNumber = equipable.filter(added => added.name === card.name).length;
@@ -45,14 +47,14 @@ Which card(s) would you like to equip next?`);
 				getQuestion
 			});
 		})
-		.then((selectedCards) => {
-			const trimmedCards = selectedCards.slice(0, remainingSlots);
+		.then((result) => {
+			const trimmedCards = result.slice(0, remainingSlots);
 			const nowRemainingSlots = remainingSlots - trimmedCards.length;
 			const nowRemainingCards = remainingCards.filter(card => !trimmedCards.includes(card));
 
 			cards.push(...trimmedCards);
 
-			if (trimmedCards.length < selectedCards.length) {
+			if (trimmedCards.length < result.length) {
 				return channel({
 					announce:
 `You've run out of slots, but you've equiped the following cards:
@@ -102,36 +104,32 @@ ${getFinalCardChoices(cards)}`
 			}
 
 			const nowRemainingCards = sortCardsAlphabetically(deck.filter(card => monster.canHoldCard(card)));
-
-			if (cardSelection) {
-				cardSelection.forEach((card) => {
-					if (cardSlots - cards.length > 0) {
-						const cardIndex = nowRemainingCards.findIndex(potentialCard => potentialCard.cardType.toLowerCase() === card.toLowerCase()); // eslint-disable-line max-len
-
-						if (cardIndex >= 0) {
-							const selectedCard = nowRemainingCards.splice(cardIndex, 1)[0];
-							cards.push(selectedCard);
-						} else {
-							channel({
-								announce: `${monster.givenName} can not hold ${card.toLowerCase()}`
-							});
-						}
-					}
-				});
-			}
-
 			const nowRemainingSlots = cardSlots - cards.length;
-			if (nowRemainingSlots <= 0) {
-				return channel({
-					announce:
-`You've filled your slots with the following cards:
 
-${getFinalCardChoices(cards)}`
-				})
-					.then(() => cards);
+			let selectedCards;
+			if (cardSelection) {
+				const remainingItems = [...nowRemainingCards];
+				selectedCards = cardSelection.reduce((selection, cardType) => {
+					const cardIndex = remainingItems.findIndex(potential => potential.cardType.toLowerCase() === cardType.toLowerCase());
+
+					if (cardIndex >= 0) {
+						const selectedCard = remainingItems.splice(cardIndex, 1)[0];
+						selection.push(selectedCard);
+					} else {
+						channel({
+							announce: `${monster.givenName} can not hold ${cardType.toLowerCase()}`
+						});
+					}
+
+					return selection;
+				}, []);
 			}
 
-			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
+			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards, selectedCards });
 		})
-		.then(checkEncounter);
+		.then(checkEncounter)
+		.then(() => {
+			monster.cards = cards;
+			return cards;
+		});
 };
