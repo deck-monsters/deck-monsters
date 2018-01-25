@@ -18,8 +18,6 @@ module.exports = (channel, {
 		iconChoices.push(emoji.random().emoji);
 	}
 
-	const { findCharacterByName } = game;
-
 	const askForCreatureType = () => Promise
 		.resolve()
 		.then(() => {
@@ -81,7 +79,7 @@ ${getChoices(genders)}`,
 			});
 		})
 		.then((answer) => {
-			if (findCharacterByName(answer)) {
+			if (game && game.findCharacterByName(answer)) {
 				return askForName(Character, true);
 			}
 

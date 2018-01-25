@@ -6,6 +6,7 @@ const {
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
 const { getAttributeChoices } = require('../helpers/choices');
+const { signedNumber } = require('../helpers/signed-number');
 const isMatchingItem = require('../items/helpers/is-matching');
 
 const DEFAULT_CARD_SLOTS = 9;
@@ -43,6 +44,24 @@ class BaseMonster extends BaseCreature {
 
 	get itemSlots () { // eslint-disable-line class-methods-use-this
 		return DEFAULT_ITEM_SLOTS;
+	}
+
+	get stats () {
+		return `${super.stats}
+AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
+DEX: ${this.dex} | STR: ${this.str} | INT: ${this.int}${
+	this.dexModifier === 0 ? '' :
+		`
+${signedNumber(this.dexModifier)} to hit`
+}${
+	this.strModifier === 0 ? '' :
+		`
+${signedNumber(this.strModifier)} to damage`
+}${
+	this.intModifier === 0 ? '' :
+		`
+${signedNumber(this.intModifier)} to spells`
+}`;
 	}
 
 	canHold (object) {

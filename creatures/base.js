@@ -5,7 +5,6 @@ const startCase = require('lodash.startcase');
 const BaseClass = require('../shared/baseClass');
 
 const { describeLevels, getLevel } = require('../helpers/levels');
-const { signedNumber } = require('../helpers/signed-number');
 const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
 const isMatchingItem = require('../items/helpers/is-matching');
@@ -111,21 +110,7 @@ class BaseCreature extends BaseClass {
 	get stats () {
 		return `Type: ${this.creatureType}
 Class: ${this.class}
-Level: ${this.level || this.displayLevel} | XP: ${this.xp}
-AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
-DEX: ${this.dex} | STR: ${this.str} | INT: ${this.int}${
-	this.dexModifier === 0 ? '' :
-		`
-${signedNumber(this.dexModifier)} to hit`
-}${
-	this.strModifier === 0 ? '' :
-		`
-${signedNumber(this.strModifier)} to damage`
-}${
-	this.intModifier === 0 ? '' :
-		`
-${signedNumber(this.intModifier)} to spells`
-}`;
+Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
 	}
 
 	get targetingStrategy () {

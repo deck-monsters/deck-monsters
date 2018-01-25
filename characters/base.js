@@ -2,12 +2,9 @@ const reduce = require('lodash.reduce');
 
 const BaseCreature = require('../creatures/base');
 
-const { actionCard, monsterCard } = require('../helpers/card');
-const {
-	getInitialDeck,
-	getUniqueCards,
-	sortCardsAlphabetically
-} = require('../cards');
+const { actionCard, characterCard, monsterCard } = require('../helpers/card');
+const { getInitialDeck, getUniqueCards, sortCardsAlphabetically } = require('../cards');
+const { HERO } = require('../helpers/classes');
 const buyItems = require('../items/store/buy');
 const getCardCounts = require('../items/helpers/counts').getItemCounts;
 const isMatchingItem = require('../items/helpers/is-matching');
@@ -48,6 +45,11 @@ class BaseCharacter extends BaseCreature {
 		this.cards = deck;
 	}
 
+	get detailedStats () {
+		return `${super.stats}
+Coins: ${this.coins}`;
+	}
+
 	canHold (object) {
 		const appropriateLevel = (!object.level || object.level <= this.level);
 
@@ -73,6 +75,12 @@ class BaseCharacter extends BaseCreature {
 		if (foundCard) this.emit('cardRemoved', { card: foundCard });
 
 		return foundCard;
+	}
+
+	look (channel, inDetail) {
+		return Promise
+			.resolve()
+			.then(() => channel({ announce: characterCard(this, inDetail) }));
 	}
 
 	lookAtMonsters (channel, description) {
@@ -132,5 +140,7 @@ class BaseCharacter extends BaseCreature {
 		});
 	}
 }
+
+BaseCharacter.class = HERO;
 
 module.exports = BaseCharacter;
