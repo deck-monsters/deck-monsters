@@ -103,7 +103,7 @@ describe('./monsters/basilisk.js', () => {
 		expect(basilisk.dead).to.be.true;
 	});
 
-	it('can not be hit while dead', () => {
+	it('does not re-die if already dead', () => {
 		const basilisk = new Basilisk();
 
 		const basiliskProto = Object.getPrototypeOf(basilisk);
@@ -123,6 +123,6 @@ describe('./monsters/basilisk.js', () => {
 		expect(dieSpy.calledOnce).to.be.true;
 
 		dieSpy.restore();
-		expect(basilisk.hp).to.equal(0);
+		expect(basilisk.hp).to.equal(-1);
 	});
 });

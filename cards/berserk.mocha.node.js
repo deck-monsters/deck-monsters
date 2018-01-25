@@ -7,12 +7,11 @@ const pause = require('../helpers/pause');
 
 const { BARBARIAN } = require('../helpers/classes');
 
-const ultraComboNarration = [];
+const ultimateComboNarration = [];
 for (let i = 17; i < 101; i++) {
-	ultraComboNarration.push(`HUMILIATION! ${i} hits`);
+	ultimateComboNarration.push(`HUMILIATION! ${i} hits`);
 }
-ultraComboNarration.push('ULTRA COMBO! 100 HITS (99 total damage).');
-
+ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (99 total damage).');
 
 describe('./cards/berserk.js', () => {
 	let channelStub;
@@ -319,10 +318,11 @@ describe('./cards/berserk.js', () => {
 			});
 	});
 
-	it('Continues hitting after opponent is dead, but does not do combo damage after reaching maxHp/2', () => {
+	it('Continues hitting after opponent is dead, but does not do combo damage after reaching maxHp/2, and does not permakill player', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target', hpVariance: 0 });
+		target.hp = 1;
 		const before = target.hp;
 
 		const berserkProto = Object.getPrototypeOf(berserk);
@@ -385,9 +385,10 @@ describe('./cards/berserk.js', () => {
 				expect(hitCheckStub.callCount).to.equal(101);
 				expect(hitEffectSpy.callCount).to.equal(0);
 				expect(hitSpy.callCount).to.equal(16);
-				expect(narrations).to.deep.equal(ultraComboNarration);
+				expect(narrations).to.deep.equal(ultimateComboNarration);
+				expect(target.destroyed).to.be.false;
 
-				return expect(target.hp).to.equal(before - 16);
+				return expect(target.hp).to.equal(before - (Math.floor(target.maxHp/2) + 1));
 			});
 	});
 

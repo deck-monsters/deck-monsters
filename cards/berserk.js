@@ -119,11 +119,11 @@ Stroke of luck increases damage per hit by 1.`;
 			// Do not consider the first hit part of the cumulative combo damage.
 			// For cards with a bigFirstHit, this will make perma-death possible (although unlikely)
 			if (iteration !== 1) {
-				this.cumulativeComboDamage++;
+				this.cumulativeComboDamage += damage;
 			}
 
 			// If we hit then do some damage
-			if (!target.dead && this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)) {
+			if (this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)) {
 				target.hit(damage, player, this);
 			} else {
 				this.emit('narration', {
