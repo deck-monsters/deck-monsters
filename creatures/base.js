@@ -542,9 +542,6 @@ Battles won: ${this.battles.wins}`;
 		});
 		this.encounterModifiers.hitLog = hitLog;
 
-		// don't do damage if already dead
-		if (this.hp < 1) return false;
-
 		const hp = this.hp - damage;
 		const originalHP = this.hp;
 
@@ -558,11 +555,11 @@ Battles won: ${this.battles.wins}`;
 			prevHp: originalHP
 		});
 
-		if (hp <= 0) {
+		if (originalHP > 0 && hp <= 0) {
 			return this.die(assailant);
 		}
 
-		return true;
+		return !this.dead;
 	}
 
 	heal (amount = 0) {
