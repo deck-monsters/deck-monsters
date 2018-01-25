@@ -8,7 +8,7 @@ const { CLERIC } = require('../helpers/classes');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
 
-class BlastCard extends BaseCard {
+class PrionDiseaseCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		icon = '旦'
@@ -16,20 +16,20 @@ class BlastCard extends BaseCard {
 		super({ icon });
 	}
 
-	get damage (player, target) {
-		const damage = 0;
+	getHPModifier (player, target) {
+		let modification = random(0, 3);
 
 		if (target === player) {
-			if (random(1, 1000) === 13) {
-				damage = target.hp;
+			if (random(1, 100) === 13) {
+				modification = -target.hp;
 			}
 		} else {
-			if (random(1, 100) === 13) {
-				damage = target.hp;
+			if (random(1, 50) === 13) {
+				modification = -target.hp;
 			}
 		}
 
-		return damage;
+		return modification;
 	}
 
 	get levelDamage () {
@@ -37,15 +37,18 @@ class BlastCard extends BaseCard {
 	}
 
 	get stats () {
-		return `Blast: ${this.damage} base damage +${this.levelDamage} per level of the caster`;
+		return `Serve everyone a nice round of milkshakes!
+Usually restores between 0-3hp to each player.
+1:50 chance to kill each opponent.
+1:100 chance to kill yourself.`;
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return activeContestants;
+		return activeContestants.map(({ monster }) => monster);
 	}
 
-	effect (player, target) {
-		const damage = this.damage(player, target);
+	effect (player, target, ring, activeContestants) {
+		const hpChange = this.getHPModifier(player, target);
 		let narration = `
 　　∧,,,∧
 　 （ ・ω・） ${target.givenName} likes milkshake!
@@ -60,9 +63,8 @@ class BlastCard extends BaseCard {
 `
 
 
-		if (damage > 0) {
+		if (hpChange < 0) {
 			narration += `
-
 　　∧,,,∧
 　 （ ・ω・） Hmm, tastes like prion disease...
 　　( つ旦O
@@ -79,11 +81,14 @@ class BlastCard extends BaseCard {
 　　　　　　Ｖ　Ｖ　　　　　　 　 　 ﾟ*･:.｡
 `
 		} else {
+			let hearts = '';
+			for (let i = 0; i < hpChange; i++) {
+				hearts = hearts + '♥︎';
+			}
 			narration += `
-
 　　∧,,,∧
 　 （ ・ω・） tastes delicious!
-　　( つ旦O
+　　( つ旦O   ${hearts}
 　　と＿)_)
 `
 		}
@@ -92,28 +97,30 @@ class BlastCard extends BaseCard {
 			narration
 		});
 
-		if (damage > 0) {
-			return target.hit(damage, player, this);
+		if (hpChange < 0) {
+			return target.hit(-hpChange, player, this);
+		} else if (hpChange > 0) {
+			return target.heal(hpChange, player, this);
 		}
 
 		return true;
 	}
 }
 
-BlastCard.cardType = '( ˃ ヮ˂) : 1993-09-7202 18:58';
-BlastCard.permittedClassesAndTypes = [CLERIC];
-BlastCard.probability = EPIC.probability;
-BlastCard.description = 'Buy a questionable round of milkshakes for everyone.';
-BlastCard.level = 2;
-BlastCard.cost = EXPENSIVE.cost;
-BlastCard.isAreaOfEffect = true;
+PrionDiseaseCard.cardType = '1993-09-7202 18:58';
+PrionDiseaseCard.probability = EPIC.probability;
+PrionDiseaseCard.description = 'Buy a questionable round of milkshakes for everyone.';
+PrionDiseaseCard.level = 2;
+PrionDiseaseCard.cost = EXPENSIVE.cost;
+PrionDiseaseCard.isAreaOfEffect = true;
 
-BlastCard.flavors = {
+PrionDiseaseCard.flavors = {
 	hits: [
 		['gives prion disease to', 80],
 		['poisons', 70],
+		['calls user ( ˃ ヮ˂) to give a history lesson to', 5],
 		['invokes an ancient ascii art joke against', 5]
 	]
 };
 
-module.exports = BlastCard;
+module.exports = PrionDiseaseCard;
