@@ -44,4 +44,11 @@ describe('./helpers/get-array.js', () => {
 
 		expect(getArray(input)).to.deep.equal(output);
 	});
+
+	it('handles undefined', () => {
+		const input = undefined;
+		const output = null;
+
+		expect(getArray(input)).to.deep.equal(output);
+	});
 });
