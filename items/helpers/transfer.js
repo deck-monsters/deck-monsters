@@ -79,9 +79,9 @@ Which item(s) should ${from.givenName} give ${to.pronouns.him}?`);
 					const itemStr = trimmedItems.length === 1 ? 'item' : 'items';
 					let message;
 					if (trimmedItems.length < selectedItems.length) {
-						message = `${to.givenName} has run out of space, but ${from.givenName} has given ${to.pronouns.him} the following ${itemStr}:`; // eslint-disable-line max-len
+						message = `${to.givenName} has run out of space, but ${from.givenName} has given ${to.pronouns.him} the following ${itemStr}`; // eslint-disable-line max-len
 					} else {
-						message = `${from.givenName} has given ${to.givenName} the following ${itemStr}:`;
+						message = `${from.givenName} has given ${to.givenName} the following ${itemStr}`;
 					}
 
 					return channel({

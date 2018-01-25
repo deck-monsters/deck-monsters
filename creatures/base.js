@@ -498,18 +498,17 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	removeItem (itemToRemove) {
-		let foundItem;
-		this.items = this.items.filter((item) => {
-			const shouldKeepItem = foundItem || !isMatchingItem(item, itemToRemove);
+		const itemIndex = this.items.findIndex(item => isMatchingItem(item, itemToRemove));
 
-			if (!shouldKeepItem) foundItem = item;
+		if (itemIndex >= 0) {
+			const foundItem = this.items.splice(itemIndex, 1)[0];
 
-			return shouldKeepItem;
-		});
+			this.emit('itemRemoved', { item: foundItem });
 
-		if (foundItem) this.emit('itemRemoved', { item: foundItem });
+			return 'foundItem';
+		}
 
-		return foundItem;
+		return undefined;
 	}
 
 	giveItem (itemToGive, recipient) {
