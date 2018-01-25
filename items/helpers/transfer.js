@@ -56,7 +56,7 @@ module.exports = ({ from, to, itemSelection, channel }) => {
 			if (currentItemCount === 0) {
 				currentItemDescription = 'no items';
 			} else if (currentItemCount === 1) {
-				currentItemDescription = '1 item';
+				currentItemDescription = 'one item';
 			} else {
 				currentItemDescription = `${currentItemCount} items`;
 			}

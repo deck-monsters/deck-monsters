@@ -91,6 +91,49 @@ Which item(s) should Monster give her?`
 			});
 	});
 
+	it('can give three cards total to a monster', () => {
+		const character = randomCharacter({ name: 'Character', coins: 500, gender: 'female' });
+		character.items = [new LotteryTicket(), new LotteryTicket(), new LotteryTicket(), new LotteryTicket(), new LotteryTicket()];
+
+		const monster = character.monsters[0];
+		monster.optionsStore.name = 'Monster';
+		monster.items = [new LotteryTicket()];
+
+		channelStub.withArgs({
+			question: `Monster is holding one item and has space for 2 more:
+
+0) Lottery Ticket [5]
+
+Which item(s) should Character give her?`
+		})
+			.resolves('0,0,0,0');
+
+		expect(character.items.length).to.equal(5);
+		expect(monster.items.length).to.equal(1);
+
+		return transferItems({ from: character, to: monster, channel: channelStub })
+			.then(() => {
+				expect(channelStub).to.have.been.calledWith({
+					announce: `You selected the following items:
+
+0) Lottery Ticket
+1) Lottery Ticket
+2) Lottery Ticket
+3) Lottery Ticket`
+				});
+
+				expect(channelStub).to.have.been.calledWith({
+					announce: `Monster has run out of space, but Character has given her the following items:
+
+0) Lottery Ticket
+1) Lottery Ticket`
+				});
+
+				expect(character.items.length).to.equal(3);
+				return expect(monster.items.length).to.equal(3);
+			});
+	});
+
 	it('throws an error if the creature has no cards to give', () => {
 		const character = randomCharacter({ name: 'Character', coins: 500, gender: 'female' });
 
