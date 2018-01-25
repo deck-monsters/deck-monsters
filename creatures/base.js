@@ -4,9 +4,11 @@ const startCase = require('lodash.startcase');
 
 const BaseClass = require('../shared/baseClass');
 
-const { signedNumber } = require('../helpers/signed-number');
 const { describeLevels, getLevel } = require('../helpers/levels');
+const { getAttributeChoices } = require('../helpers/choices');
+const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
+const isMatchingItem = require('../items/helpers/is-matching');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
 const PRONOUNS = require('../helpers/pronouns');
@@ -36,6 +38,7 @@ const MAX_BOOSTS = {
 };
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
+const DEFAULT_ITEM_SLOTS = 12;
 
 class BaseCreature extends BaseClass {
 	constructor ({
@@ -108,21 +111,7 @@ class BaseCreature extends BaseClass {
 	get stats () {
 		return `Type: ${this.creatureType}
 Class: ${this.class}
-Level: ${this.level || this.displayLevel} | XP: ${this.xp}
-AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
-DEX: ${this.dex} | STR: ${this.str} | INT: ${this.int}${
-	this.dexModifier === 0 ? '' :
-		`
-${signedNumber(this.dexModifier)} to hit`
-}${
-	this.strModifier === 0 ? '' :
-		`
-${signedNumber(this.strModifier)} to damage`
-}${
-	this.intModifier === 0 ? '' :
-		`
-${signedNumber(this.intModifier)} to spells`
-}`;
+Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
 	}
 
 	get targetingStrategy () {
@@ -378,6 +367,10 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
+	}
+
 	get items () {
 		if (!Array.isArray(this.options.items)) this.items = [];
 
@@ -484,6 +477,36 @@ Battles won: ${this.battles.wins}`;
 		return this.canHold(item);
 	}
 
+	addItem (item) {
+		this.items = sortItemsAlphabetically([...this.items, item]);
+
+		this.emit('itemAdded', { item });
+	}
+
+	removeItem (itemToRemove) {
+		const itemIndex = this.items.findIndex(item => isMatchingItem(item, itemToRemove));
+
+		if (itemIndex >= 0) {
+			const foundItem = this.items.splice(itemIndex, 1)[0];
+
+			this.emit('itemRemoved', { item: foundItem });
+
+			return 'foundItem';
+		}
+
+		return undefined;
+	}
+
+	giveItem (itemToGive, recipient) {
+		const item = this.removeItem(itemToGive);
+
+		if (item) {
+			recipient.addItem(item);
+
+			this.emit('itemGiven', { item, recipient });
+		}
+	}
+
 	leaveCombat (activeContestants) {
 		this.emit('leave', {
 			activeContestants
@@ -505,9 +528,6 @@ Battles won: ${this.battles.wins}`;
 		});
 		this.encounterModifiers.hitLog = hitLog;
 
-		// don't do damage if already dead
-		if (this.hp < 1) return false;
-
 		const hp = this.hp - damage;
 		const originalHP = this.hp;
 
@@ -521,11 +541,11 @@ Battles won: ${this.battles.wins}`;
 			prevHp: originalHP
 		});
 
-		if (hp <= 0) {
+		if (originalHP > 0 && hp <= 0) {
 			return this.die(assailant);
 		}
 
-		return true;
+		return !this.dead;
 	}
 
 	heal (amount = 0) {
@@ -659,6 +679,55 @@ Battles won: ${this.battles.wins}`;
 		};
 
 		this.battles = battles;
+	}
+
+	edit (channel) {
+		return Promise
+			.resolve()
+			.then(() => this.look && this.look(channel))
+			.then(() => channel({
+				question:
+`Which attribute would you like to edit?
+
+${getAttributeChoices(this.options)}`,
+				choices: Object.keys(Object.keys(this.options))
+			}))
+			.then(index => Object.keys(this.options)[index])
+			.then(key => channel({
+				question:
+`The current value of ${key} is ${JSON.stringify(this.options[key])}. What would you like the new value of ${key} to be?`
+			})
+				.then((strVal) => {
+					const oldVal = this.options[key];
+					let newVal;
+
+					try {
+						newVal = JSON.parse(strVal);
+					} catch (ex) {
+						newVal = +strVal;
+
+						if (isNaN(newVal)) { // eslint-disable-line no-restricted-globals
+							newVal = strVal;
+						}
+					}
+
+					return { key, oldVal, newVal };
+				}))
+			.then(({ key, oldVal, newVal }) => channel({
+				question:
+`The value of ${key} has been updated from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}. Would you like to keep this change? (yes/no)` // eslint-disable-line max-len
+			})
+				.then((answer = '') => {
+					if (answer.toLowerCase() === 'yes') {
+						this.setOptions({
+							[key]: newVal
+						});
+
+						return channel({ announce: 'Change saved.' });
+					}
+
+					return channel({ announce: 'Change reverted.' });
+				}));
 	}
 }
 

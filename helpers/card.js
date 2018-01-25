@@ -66,8 +66,15 @@ const monsterCard = (monster, verbose = true) => formatCard({
 	rankings: verbose ? monster.rankings : ''
 });
 
+const characterCard = (character, verbose = true) => formatCard({
+	title: `${character.icon}  ${character.givenName}`,
+	stats: verbose ? character.detailedStats : character.stats,
+	rankings: character.rankings
+});
+
 module.exports = {
 	actionCard,
+	characterCard,
 	formatCard,
 	itemCard,
 	monsterCard

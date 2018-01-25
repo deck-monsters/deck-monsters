@@ -53,18 +53,28 @@ class BaseItem extends BaseClass {
 		});
 	}
 
+	get usableWithoutMonster () {
+		return !!this.constructor.usableWithoutMonster;
+	}
+
 	use (character, monster) {
-		this.emit('used', {
-			character,
-			monster
-		});
+		if (!this.usableWithoutMonster && !monster) {
+			this.emit('narration', {
+				narration: `${this.item} must be used on a monster.`
+			});
+		} else {
+			this.emit('used', {
+				character,
+				monster
+			});
 
-		// Generally speaking once something has been used the player will drop it but we'll increment
-		// a counter instead of boolean just in case the item can be used more than once
-		this.used += 1;
+			// Generally speaking once something has been used the player will drop it but we'll increment
+			// a counter instead of boolean just in case the item can be used more than once
+			this.used += 1;
 
-		if (this.action) {
-			return this.action(character, monster);
+			if (this.action) {
+				return this.action(character, monster);
+			}
 		}
 
 		return this.used;

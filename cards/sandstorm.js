@@ -79,7 +79,8 @@ class SandstormCard extends BlastCard {
 							effectResult: `${this.icon} lost in a cloud of blinding sand kicked up by`,
 							player: sandstormPlayer,
 							target: sandstormTarget,
-							ring
+							ring,
+							narration: `In the confusion of the sandstorm, ${sandstormTarget.givenName} will have trouble with ${sandstormTarget.pronouns.his} aim.`
 						});
 
 						const oldTargets = getTargets.call(card, player, proposedTarget, ring, activeContestants);

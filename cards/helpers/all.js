@@ -32,6 +32,7 @@ const LuckyStrike = require('../lucky-strike');
 const MesmerizeCard = require('../mesmerize');
 const PickPocketCard = require('../pick-pocket');
 const PoundCard = require('../pound');
+const PrionDiseaseCard = require('../prion-disease');
 const RandomCard = require('../random');
 const RehitCard = require('../rehit');
 const SandstormCard = require('../sandstorm');
@@ -74,10 +75,11 @@ module.exports = [
 	HornSwipeCard,
 	IocaneCard,
 	KalevalaCard,
-	PickPocketCard,
 	LuckyStrike,
 	MesmerizeCard,
+	PickPocketCard,
 	PoundCard,
+	PrionDiseaseCard,
 	RandomCard,
 	RehitCard,
 	SandstormCard,

@@ -1,15 +1,15 @@
 const emoji = require('node-emoji');
 
 const { getChoices, getCreatureTypeChoices } = require('../../helpers/choices');
-const PRONOUNS = require('../../helpers/pronouns');
-
 const allCharacters = require('./all');
+const names = require('../../helpers/names');
+const PRONOUNS = require('../../helpers/pronouns');
 
 const genders = Object.keys(PRONOUNS);
 
 // Create a new character for yourself
 module.exports = (channel, {
-	type, name, gender, icon
+	type, name, game, gender, icon
 } = {}) => {
 	const options = {};
 
@@ -18,8 +18,7 @@ module.exports = (channel, {
 		iconChoices.push(emoji.random().emoji);
 	}
 
-	let Character;
-	return Promise
+	const askForCreatureType = () => Promise
 		.resolve()
 		.then(() => {
 			if (type !== undefined) {
@@ -35,27 +34,21 @@ ${getCreatureTypeChoices(allCharacters)}`,
 			});
 		})
 		.then((answer) => {
-			Character = allCharacters[answer];
+			const Character = allCharacters[answer];
 
-			if (name !== undefined) {
-				return name;
-			}
+			return Character;
+		});
 
-			return channel({
-				question: `What would you like to name your new ${Character.creatureType.toLowerCase()}?`
-			});
-		})
-		.then((answer) => {
-			// TO-DO: Keep a master list of monsters and ensure that there are no duplicate names
-			options.name = answer;
-
+	const askForGender = Character => Promise
+		.resolve()
+		.then(() => {
 			if (gender !== undefined) {
 				return gender;
 			}
 
 			return channel({
 				question:
-`What gender would you like your ${Character.creatureType.toLowerCase()} to be?
+`What gender should your ${Character.creatureType.toLowerCase()} be?
 
 ${getChoices(genders)}`,
 				choices: Object.keys(genders)
@@ -63,7 +56,40 @@ ${getChoices(genders)}`,
 		})
 		.then((answer) => {
 			options.gender = genders[answer].toLowerCase();
+			return options;
+		});
 
+	const askForName = (Character, alreadyTaken) => Promise
+		.resolve()
+		.then(() => {
+			if (name !== undefined && !alreadyTaken) {
+				return name;
+			}
+
+			let question = '';
+			if (alreadyTaken) question += 'That name is already taken, please choose a different name. ';
+
+			const name1 = names(Character.creatureType, options.gender);
+			const name2 = names(Character.creatureType, options.gender, [name1]);
+
+			question += `What would you like to name ${PRONOUNS[options.gender].him}? ${name1}? ${name2}? Something else?`;
+
+			return channel({
+				question
+			});
+		})
+		.then((answer) => {
+			if (game && game.findCharacterByName(answer)) {
+				return askForName(Character, true);
+			}
+
+			options.name = answer;
+			return options;
+		});
+
+	const askForAvatar = () => Promise
+		.resolve()
+		.then(() => {
 			if (icon !== undefined) {
 				return icon;
 			}
@@ -78,7 +104,20 @@ ${getChoices(iconChoices)}`,
 		})
 		.then((answer) => {
 			options.icon = iconChoices[answer];
-
-			return new Character(options);
+			return options;
 		});
+
+	let Character;
+	return Promise
+		.resolve()
+		.then(askForCreatureType)
+		.then((Type) => {
+			Character = Type;
+
+			return Character;
+		})
+		.then(() => askForGender(Character))
+		.then(() => askForName(Character))
+		.then(() => askForAvatar())
+		.then(() => new Character(options));
 };

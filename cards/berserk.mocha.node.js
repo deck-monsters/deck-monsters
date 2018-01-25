@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 const { expect, sinon } = require('../shared/test-setup');
 
 const BerserkCard = require('./berserk');
@@ -7,12 +9,11 @@ const pause = require('../helpers/pause');
 
 const { BARBARIAN } = require('../helpers/classes');
 
-const ultraComboNarration = [];
-for (let i = 17; i < 101; i++) {
-	ultraComboNarration.push(`HUMILIATION! ${i} hits`);
+const ultimateComboNarration = [];
+for (let i = 5; i < 101; i++) {
+	ultimateComboNarration.push(`HUMILIATION! ${i} hits`);
 }
-ultraComboNarration.push('ULTRA COMBO! 100 HITS (99 total damage).');
-
+ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (5148 total damage).');
 
 describe('./cards/berserk.js', () => {
 	let channelStub;
@@ -43,7 +44,7 @@ describe('./cards/berserk.js', () => {
 		expect(berserk).to.be.an.instanceof(BerserkCard);
 		expect(berserk.bigFirstHit).to.be.false;
 		expect(berserk.damageAmount).to.equal(1);
-		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
+		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');
 	});
 
 	it('can be instantiated with options', () => {
@@ -319,11 +320,11 @@ describe('./cards/berserk.js', () => {
 			});
 	});
 
-	it('Continues hitting after opponent is dead, but does not do combo damage after reaching maxHp/2', () => {
+	it('Continues hitting after opponent is dead, but does not do combo damage after exceeding maxHp/2, and does not permakill player even if every hit is a crit', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target', hpVariance: 0 });
-		const before = target.hp;
+		target.hp = 1;
 
 		const berserkProto = Object.getPrototypeOf(berserk);
 		const hitProto = Object.getPrototypeOf(berserkProto);
@@ -354,7 +355,7 @@ describe('./cards/berserk.js', () => {
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,
-			strokeOfLuck: false,
+			strokeOfLuck: true,
 			curseOfLoki: false
 		});
 
@@ -384,10 +385,11 @@ describe('./cards/berserk.js', () => {
 				expect(berserkEffectLoopSpy.callCount).to.equal(101);
 				expect(hitCheckStub.callCount).to.equal(101);
 				expect(hitEffectSpy.callCount).to.equal(0);
-				expect(hitSpy.callCount).to.equal(16);
-				expect(narrations).to.deep.equal(ultraComboNarration);
+				expect(hitSpy.callCount).to.equal(4);
+				expect(narrations).to.deep.equal(ultimateComboNarration);
+				expect(target.destroyed).to.be.false;
 
-				return expect(target.hp).to.equal(before - 16);
+				return expect(target.hp).to.equal(-13);
 			});
 	});
 

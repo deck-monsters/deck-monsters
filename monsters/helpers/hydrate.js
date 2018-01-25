@@ -1,4 +1,5 @@
 const { hydrateCard } = require('../../cards');
+const { hydrateItem } = require('../../items');
 
 const allMonsters = require('./all');
 
@@ -13,6 +14,10 @@ const hydrateMonster = (monsterObj, deck) => {
 
 	if (monsterObj.options.cards) {
 		monster.cards = monsterObj.options.cards.map(cardObj => hydrateCard(cardObj, monster, deck));
+	}
+
+	if (monsterObj.options.items) {
+		monster.items = monsterObj.options.items.map(itemObj => hydrateItem(itemObj, monster));
 	}
 
 	return monster;

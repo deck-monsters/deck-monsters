@@ -3,5 +3,6 @@ module.exports = {
 	BARD: 'Bard',
 	CLERIC: 'Cleric',
 	FIGHTER: 'Fighter',
+	HERO: 'Hero',
 	WIZARD: 'Wizard'
 };
