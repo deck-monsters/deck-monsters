@@ -6,6 +6,9 @@ const BaseScroll = require('./base');
 const { ABUNDANT } = require('../../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
 
+const getTicketNumbers = () => [random(11, 99), random(11, 99), random(11, 99), random(11, 99), random(11, 99)];
+const getWinnings = (matches, cost) => Math.round(Math.pow(10, (0.5 * matches)) * cost);
+
 class LotteryTicket extends BaseScroll {
 	constructor ({
 		icon = '💰'
@@ -14,24 +17,26 @@ class LotteryTicket extends BaseScroll {
 	}
 
 	action (character) {
-		const ticketNumber = random(1000, 1999);
+		const characterNumbers = getTicketNumbers();
+		const winningNumbers = getTicketNumbers();
+
+		const matches = characterNumbers.reduce((numberOfMatches, number, currentIndex) => (winningNumbers[currentIndex] === number ? numberOfMatches + 1 || 1 : numberOfMatches), 0);
 
 		this.emit('narration', {
-			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${ticketNumber}".`
+			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${characterNumbers.join('" "')}".`
 		});
 
-		const winningNumber = random(1000, 1999);
+		if (matches > 0) {
+			const winnings = getWinnings(matches, this.cost);
 
-		if (ticketNumber === winningNumber) {
 			this.emit('narration', {
-				narration: `Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning number is finally revealed...
+				narration: `Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
-"${winningNumber}"
+"${winningNumbers.join('" "')}"
 
-🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${character.pronouns.he} has won!`
+🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${character.pronouns.he} has won ${winnings} coins!`
 			});
 
-			const winnings = random(100, 2000);
 
 			character.coins += winnings;
 
@@ -40,11 +45,11 @@ class LotteryTicket extends BaseScroll {
 			});
 		} else {
 			this.emit('narration', {
-				narration: `With anticipation building, ${character.pronouns.he} eagerly watches as the winning number is finally revealed...
+				narration: `With anticipation building, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
-"${winningNumber}"
+"${winningNumbers.join('" "')}"
 
-😔 Better luck next time, ${character.givenName}.`
+😔 ${character.givenName} can't believe ${character.pronouns.his} eyes. Not a single match. Better luck next time, ${character.givenName}.`
 			});
 		}
 	}
@@ -53,9 +58,9 @@ class LotteryTicket extends BaseScroll {
 LotteryTicket.itemType = 'Lottery Ticket';
 LotteryTicket.probability = ABUNDANT.probability;
 LotteryTicket.numberOfUses = 1;
-LotteryTicket.description = 'Play the odds for a chance to win up to 2000 coins.';
 LotteryTicket.level = 0;
 LotteryTicket.cost = ALMOST_NOTHING.cost;
+LotteryTicket.description = `Play the odds for a chance to win up to ${getWinnings(5, LotteryTicket.cost)} coins.`;
 LotteryTicket.usableWithoutMonster = true;
 
 module.exports = LotteryTicket;
