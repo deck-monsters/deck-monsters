@@ -19,7 +19,7 @@ describe('./items/helpers/transfer.js', () => {
 		channelStub.reset();
 	});
 
-	it('can give a card to a monster', () => {
+	it('can give an item to a monster', () => {
 		const character = randomCharacter({ name: 'Character', coins: 500, gender: 'female' });
 		character.items = [new LotteryTicket()];
 
@@ -55,7 +55,7 @@ Which item(s) should Character give her?`
 			});
 	});
 
-	it('can give a card to a character', () => {
+	it('can give an item to a character', () => {
 		const character = randomCharacter({ name: 'Character', coins: 500, gender: 'female' });
 
 		const monster = character.monsters[0];
@@ -91,7 +91,7 @@ Which item(s) should Monster give her?`
 			});
 	});
 
-	it('can give three cards total to a monster', () => {
+	it('can give three items total to a monster', () => {
 		const character = randomCharacter({ name: 'Character', coins: 500, gender: 'female' });
 		character.items = [new LotteryTicket(), new LotteryTicket(), new LotteryTicket(), new LotteryTicket(), new LotteryTicket()];
 
@@ -134,7 +134,7 @@ Which item(s) should Character give her?`
 			});
 	});
 
-	it('throws an error if the creature has no cards to give', () => {
+	it('throws an error if the creature has no items to give', () => {
 		const character = randomCharacter({ name: 'Character', coins: 500, gender: 'female' });
 
 		const monster = character.monsters[0];
