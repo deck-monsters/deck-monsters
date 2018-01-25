@@ -4,9 +4,11 @@ const startCase = require('lodash.startcase');
 
 const BaseClass = require('../shared/baseClass');
 
-const { signedNumber } = require('../helpers/signed-number');
 const { describeLevels, getLevel } = require('../helpers/levels');
+const { signedNumber } = require('../helpers/signed-number');
+const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
+const isMatchingItem = require('../items/helpers/is-matching');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
 const PRONOUNS = require('../helpers/pronouns');
@@ -36,6 +38,7 @@ const MAX_BOOSTS = {
 };
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
+const DEFAULT_ITEM_SLOTS = 12;
 
 class BaseCreature extends BaseClass {
 	constructor ({
@@ -378,6 +381,10 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
+	}
+
 	get items () {
 		if (!Array.isArray(this.options.items)) this.items = [];
 
@@ -482,6 +489,36 @@ Battles won: ${this.battles.wins}`;
 
 	canHoldItem (item) {
 		return this.canHold(item);
+	}
+
+	addItem (item) {
+		this.items = sortItemsAlphabetically([...this.items, item]);
+
+		this.emit('itemAdded', { item });
+	}
+
+	removeItem (itemToRemove) {
+		const itemIndex = this.items.findIndex(item => isMatchingItem(item, itemToRemove));
+
+		if (itemIndex >= 0) {
+			const foundItem = this.items.splice(itemIndex, 1)[0];
+
+			this.emit('itemRemoved', { item: foundItem });
+
+			return 'foundItem';
+		}
+
+		return undefined;
+	}
+
+	giveItem (itemToGive, recipient) {
+		const item = this.removeItem(itemToGive);
+
+		if (item) {
+			recipient.addItem(item);
+
+			this.emit('itemGiven', { item, recipient });
+		}
 	}
 
 	leaveCombat (activeContestants) {

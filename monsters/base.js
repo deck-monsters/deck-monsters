@@ -9,6 +9,7 @@ const { getAttributeChoices } = require('../helpers/choices');
 const isMatchingItem = require('../items/helpers/is-matching');
 
 const DEFAULT_CARD_SLOTS = 9;
+const DEFAULT_ITEM_SLOTS = 3;
 
 class BaseMonster extends BaseCreature {
 	constructor (options) {
@@ -40,6 +41,10 @@ class BaseMonster extends BaseCreature {
 		});
 	}
 
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
+	}
+
 	canHold (object) {
 		const appropriateLevel = (!object.level || object.level <= this.level);
 		const appropriateClassOrType = (
@@ -55,12 +60,6 @@ class BaseMonster extends BaseCreature {
 		const shouldReset = !matchCard || !!this.cards.find(card => isMatchingItem(card, matchCard));
 
 		if (shouldReset) this.cards = [];
-	}
-
-	resetItems ({ matchItem } = {}) {
-		const shouldReset = !matchItem || !!this.items.find(item => isMatchingItem(item, matchItem));
-
-		if (shouldReset) this.items = [];
 	}
 
 	get emptyHanded () {

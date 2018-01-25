@@ -32,7 +32,7 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 	if (card && card.flavorText) {
 		({ flavorText } = card);
 	} else {
-		const target = monster === assailant ? `${monster.pronouns.him}self` : monster.givenName;
+		const target = monster === assailant ? `${monster.pronouns.him}self by mistake` : monster.givenName;
 		flavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavor.text} ${target} for ${damage} damage.`;
 	}
 

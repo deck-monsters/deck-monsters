@@ -8,11 +8,10 @@ const {
 	getUniqueCards,
 	sortCardsAlphabetically
 } = require('../cards');
-const { sortItemsAlphabetically } = require('../items');
+const buyItems = require('../items/store/buy');
 const getCardCounts = require('../items/helpers/counts').getItemCounts;
 const isMatchingItem = require('../items/helpers/is-matching');
 const sellItems = require('../items/store/sell');
-const buyItems = require('../items/store/buy');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {
@@ -61,36 +60,19 @@ class BaseCharacter extends BaseCreature {
 		this.emit('cardAdded', { card });
 	}
 
-	addItem (item) {
-		this.items = sortItemsAlphabetically([...this.items, item]);
-
-		this.emit('itemAdded', { item });
-	}
-
 	removeCard (cardToRemove) {
-		let isAlreadyRemoved = false;
+		let foundCard;
 		this.deck = this.deck.filter((card) => {
-			const shouldKeepCard = isAlreadyRemoved || !isMatchingItem(card, cardToRemove);
+			const shouldKeepCard = foundCard || !isMatchingItem(card, cardToRemove);
 
-			if (!shouldKeepCard) isAlreadyRemoved = true;
+			if (!shouldKeepCard) foundCard = card;
 
 			return shouldKeepCard;
 		});
 
-		this.emit('cardRemoved', { cardToRemove });
-	}
+		if (foundCard) this.emit('cardRemoved', { card: foundCard });
 
-	removeItem (itemToRemove) {
-		let isAlreadyRemoved = false;
-		this.items = this.items.filter((item) => {
-			const shouldKeepItem = isAlreadyRemoved || !isMatchingItem(item, itemToRemove);
-
-			if (!shouldKeepItem) isAlreadyRemoved = true;
-
-			return shouldKeepItem;
-		});
-
-		this.emit('itemRemoved', { itemToRemove });
+		return foundCard;
 	}
 
 	lookAtMonsters (channel, description) {

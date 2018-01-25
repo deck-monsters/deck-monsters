@@ -11,6 +11,7 @@ const aws = require('./helpers/aws');
 const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
+const getArray = require('./helpers/get-array');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
 
@@ -246,16 +247,15 @@ class Game extends BaseClass {
 						.catch(err => log(err));
 				},
 				equipMonster ({ monsterName, cardSelection } = {}) {
-					let selectedCards = [];
-					if (cardSelection) {
-						if (cardSelection.includes(', ')) {
-							selectedCards = cardSelection.split(', ');
-						} else {
-							selectedCards = cardSelection.split(' ');
-						}
-					}
-
-					return character.equipMonster({ monsterName, cardSelection: selectedCards, channel })
+					return character.equipMonster({ monsterName, cardSelection: getArray(cardSelection), channel })
+						.catch(err => log(err));
+				},
+				giveItemsToMonster ({ monsterName, itemSelection } = {}) {
+					return character.giveItemsToMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
+						.catch(err => log(err));
+				},
+				takeItemsFromMonster ({ monsterName, itemSelection } = {}) {
+					return character.takeItemsFromMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {
