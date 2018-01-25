@@ -5,7 +5,7 @@ const proxyquire = require('proxyquire');
 const pause = require('../../helpers/pause');
 const randomCharacter = require('../../characters/helpers/random');
 
-describe('./items/scrolls/lottery-ticket.js', () => {
+describe.only('./items/scrolls/lottery-ticket.js', () => {
 	let channelStub;
 	let pauseStub;
 	let randomStub;
@@ -20,7 +20,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 	beforeEach(() => {
 		channelStub.resolves();
 		pauseStub.callsArg(0);
-		randomStub.returns(1000);
+		randomStub.returns(1);
 
 		LotteryTicket = proxyquire('./lottery-ticket', {
 			'lodash.random': randomStub
@@ -47,14 +47,22 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 		expect(lotteryTicket.icon).to.equal('💰');
 	});
 
+	it('can generate lottery numbers', () => {
+		const lotteryTicket = new LotteryTicket();
+
+		expect(lotteryTicket.ticketNumbers).to.deep.equal([1, 1, 1, 1, 1])
+	});
+
 	it('can give you nothing', () => {
 		const character = randomCharacter();
 
 		const lotteryTicket = new LotteryTicket();
 
-		randomStub.onCall(0).returns(1500);
-		randomStub.onCall(1).returns(1501);
-		randomStub.onCall(2).returns(1000);
+		randomStub.onCall(5).returns(5);
+		randomStub.onCall(6).returns(5);
+		randomStub.onCall(7).returns(5);
+		randomStub.onCall(8).returns(5);
+		randomStub.onCall(9).returns(5);
 
 		character.coins = 50;
 
@@ -63,14 +71,46 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 		expect(character.coins).to.equal(50);
 	});
 
-	it('can make you win big', () => {
+	it('can make you win on 1 match', () => {
 		const character = randomCharacter();
 
 		const lotteryTicket = new LotteryTicket();
 
-		randomStub.onCall(0).returns(1500);
-		randomStub.onCall(1).returns(1500);
-		randomStub.onCall(2).returns(1000);
+		randomStub.onCall(5).returns(12);
+		randomStub.onCall(6).returns(12);
+		randomStub.onCall(7).returns(12);
+		randomStub.onCall(8).returns(12);
+		randomStub.onCall(11).returns(1000);
+
+		character.coins = 50;
+
+		lotteryTicket.use(character);
+
+		expect(character.coins).to.equal(55);
+	});
+
+	it('can make you win on 3 matches', () => {
+		const character = randomCharacter();
+
+		const lotteryTicket = new LotteryTicket();
+
+		randomStub.onCall(5).returns(12);
+		randomStub.onCall(6).returns(12);
+		randomStub.onCall(11).returns(1000);
+
+		character.coins = 50;
+
+		lotteryTicket.use(character);
+
+		expect(character.coins).to.equal(61);
+	});
+
+	it('can make you win big on all 5 matches', () => {
+		const character = randomCharacter();
+
+		const lotteryTicket = new LotteryTicket();
+
+		randomStub.onCall(11).returns(1000);
 
 		character.coins = 50;
 

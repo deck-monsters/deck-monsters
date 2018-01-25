@@ -13,38 +13,52 @@ class LotteryTicket extends BaseScroll {
 		super({ icon });
 	}
 
+	get ticketNumbers () {
+		return [random(0, this.cost/2), random(0, this.cost), random(0, this.cost), random(0, this.cost), random(0, this.cost * 10)]
+	}
+
 	action (character) {
-		const ticketNumber = random(1000, 1999);
+		let ticketNumbers = this.ticketNumbers;
+		let winningNumbers = this.ticketNumbers;
+
+		let matches = ticketNumbers.reduce((matches, number, currentIndex) => winningNumbers[currentIndex] === number ? matches + 1 || 1 : matches, 0);
 
 		this.emit('narration', {
-			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${ticketNumber}".`
+			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${ticketNumbers.join(', ')}".`
 		});
 
-		const winningNumber = random(1000, 1999);
+		if (matches > 0) {
+			const winnings = [
+				0,
+				this.cost/2,
+				this.cost,
+				this.cost + 1,
+				random(this.cost + 2, this.cost * 3),
+				random(this.cost * 10, this.cost * 200)
+			];
 
-		if (ticketNumber === winningNumber) {
 			this.emit('narration', {
-				narration: `Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning number is finally revealed...
+				narration: `Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
-"${winningNumber}"
+"${winningNumbers.join(', ')}"
 
-🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${character.pronouns.he} has won!`
+🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches} matche${matches > 1 ? 's' : ''}! ${character.pronouns.he} has won ${winnings[matches]} coins!`
 			});
 
-			const winnings = random(100, 2000);
 
-			character.coins += winnings;
+
+			character.coins += winnings[matches];
 
 			this.emit('narration', {
-				narration: `The lottery agent hands ${character.givenName} a heavy sack containing ${winnings} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
+				narration: `The lottery agent hands ${character.givenName} a heavy sack containing ${winnings[matches]} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
 			});
 		} else {
 			this.emit('narration', {
-				narration: `With anticipation building, ${character.pronouns.he} eagerly watches as the winning number is finally revealed...
+				narration: `With anticipation building, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
-"${winningNumber}"
+"${winningNumbers.join(', ')}"
 
-😔 Better luck next time, ${character.givenName}.`
+😔 ${character.givenName} can't believe ${character.pronouns.his} eyes. Not a single match. Better luck next time, ${character.givenName}.`
 			});
 		}
 	}
