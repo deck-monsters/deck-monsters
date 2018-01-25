@@ -1,3 +1,4 @@
+const find = require('lodash.find');
 const reduce = require('lodash.reduce');
 const zlib = require('zlib');
 
@@ -227,7 +228,7 @@ class Game extends BaseClass {
 			.then((existingCharacter) => {
 				if (!existingCharacter) {
 					return createCharacter(channel, {
-						name, type, gender, icon
+						name, type, gender, icon, game
 					})
 						.then((character) => {
 							game.characters[id] = character;
@@ -278,6 +279,10 @@ class Game extends BaseClass {
 					return character.reviveMonster({ monsterName, channel })
 						.catch(err => log(err));
 				},
+				lookAtCharacter ({ characterName } = {}) {
+					return game.lookAtCharacter(channel, characterName, character)
+						.catch(err => log(err));
+				},
 				lookAtMonster ({ monsterName } = {}) {
 					return game.lookAtMonster(channel, monsterName, character)
 						.catch(err => log(err));
@@ -300,6 +305,10 @@ class Game extends BaseClass {
 				},
 				lookAt (thing) {
 					return game.lookAt(channel, thing)
+						.catch(err => log(err));
+				},
+				editCharacter ({ characterName } = {}) {
+					return game.editCharacter(channel, characterName)
 						.catch(err => log(err));
 				},
 				editMonster ({ monsterName } = {}) {
@@ -340,6 +349,37 @@ class Game extends BaseClass {
 
 			return all;
 		}, {});
+	}
+
+	findCharacterByName (name) {
+		return find(this.characters, character => character.givenName.toLowerCase() === name.toLowerCase());
+	}
+
+	lookAtCharacter (channel, characterName, self) {
+		if (characterName) {
+			const character = this.findCharacterByName(characterName);
+			const isSelf = character === self;
+
+			if (character) return character.look(channel, isSelf);
+		}
+
+		return Promise.reject(channel({
+			announce: `I can find no character by the name of ${characterName}.`,
+			delay: 'short'
+		}));
+	}
+
+	editCharacter (channel, characterName) {
+		if (characterName) {
+			const character = this.findCharacterByName(characterName);
+
+			if (character) return character.edit(channel);
+		}
+
+		return Promise.reject(channel({
+			announce: `I can find no character by the name of ${characterName}.`,
+			delay: 'short'
+		}));
 	}
 
 	lookAtMonster (channel, monsterName, character) {
