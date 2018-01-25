@@ -7,86 +7,87 @@ module.exports = ({ deck, monster, cardSelection, channel }) => {
 	const cards = [];
 	const { cardSlots } = monster;
 
-	const addCard = ({ remainingSlots, remainingCards }) => {
+	const checkEncounter = (arg) => {
 		if (monster.inEncounter) {
 			return Promise.reject(channel({
 				announce: `You cannot equip ${monster.givenName} while they are fighting!`
 			}));
 		}
 
-		return Promise
-			.resolve()
-			.then(() => {
-				const equipableCards = remainingCards.reduce((equipable, card) => {
-					const alreadyChosenNumber = cards.filter(chosen => chosen.name === card.name).length;
-					const alreadyAddedNumber = equipable.filter(added => added.name === card.name).length;
+		return Promise.resolve(arg);
+	};
 
-					if ((alreadyChosenNumber + alreadyAddedNumber) < MAX_CARD_COPIES_IN_HAND) {
-						equipable.push(card);
-					}
+	const addCard = ({ remainingSlots, remainingCards }) => Promise
+		.resolve()
+		.then(checkEncounter)
+		.then(() => {
+			const equipableCards = remainingCards.reduce((equipable, card) => {
+				const alreadyChosenNumber = cards.filter(chosen => chosen.name === card.name).length;
+				const alreadyAddedNumber = equipable.filter(added => added.name === card.name).length;
 
-					return equipable;
-				}, []);
+				if ((alreadyChosenNumber + alreadyAddedNumber) < MAX_CARD_COPIES_IN_HAND) {
+					equipable.push(card);
+				}
 
-				const getQuestion = ({ cardChoices }) =>
-					(`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
+				return equipable;
+			}, []);
+
+			const getQuestion = ({ cardChoices }) =>
+				(`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:
 
 ${cardChoices}
 
 Which card(s) would you like to equip next?`);
 
-				return chooseCards({
-					cards: equipableCards,
-					channel,
-					getQuestion
-				});
-			})
-			.then((selectedCards) => {
-				const trimmedCards = selectedCards.slice(0, remainingSlots);
-				const nowRemainingSlots = remainingSlots - trimmedCards.length;
-				const nowRemainingCards = remainingCards.filter(card => !trimmedCards.includes(card));
+			return chooseCards({
+				cards: equipableCards,
+				channel,
+				getQuestion
+			});
+		})
+		.then((selectedCards) => {
+			const trimmedCards = selectedCards.slice(0, remainingSlots);
+			const nowRemainingSlots = remainingSlots - trimmedCards.length;
+			const nowRemainingCards = remainingCards.filter(card => !trimmedCards.includes(card));
 
-				cards.push(...trimmedCards);
+			cards.push(...trimmedCards);
 
-				if (trimmedCards.length < selectedCards.length) {
-					return channel({
-						announce:
+			if (trimmedCards.length < selectedCards.length) {
+				return channel({
+					announce:
 `You've run out of slots, but you've equiped the following cards:
 
 ${getFinalCardChoices(cards)}`
-					})
-						.then(() => cards);
-				}
+				})
+					.then(() => cards);
+			}
 
-				if (nowRemainingSlots <= 0) {
-					return channel({
-						announce:
+			if (nowRemainingSlots <= 0) {
+				return channel({
+					announce:
 `You've filled your slots with the following cards:
 
 ${getFinalCardChoices(cards)}`
-					})
-						.then(() => cards);
-				}
+				})
+					.then(() => cards);
+			}
 
-				if (nowRemainingCards.length <= 0) {
-					return channel({
-						announce:
+			if (nowRemainingCards.length <= 0) {
+				return channel({
+					announce:
 `You're out of cards to equip, but you've equiped the following cards:
 
 ${getFinalCardChoices(cards)}`
-					})
-						.then(() => cards);
-				}
+				})
+					.then(() => cards);
+			}
 
-				return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
-			})
-			.catch(() => Promise.reject(channel({
-				announce: 'Invalid selection.'
-			})));
-	};
+			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
+		});
 
 	return Promise
 		.resolve()
+		.then(checkEncounter)
 		.then(() => {
 			if (cardSlots <= 0) {
 				return Promise.reject(channel({
@@ -131,5 +132,6 @@ ${getFinalCardChoices(cards)}`
 			}
 
 			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards });
-		});
+		})
+		.then(checkEncounter);
 };

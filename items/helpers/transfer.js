@@ -3,19 +3,24 @@ const { sortItemsAlphabetically } = require('./sort');
 const chooseItems = require('./choose');
 
 module.exports = ({ from, to, itemSelection, channel }) => {
-	if (to.inEncounter) {
-		return Promise.reject(channel({
-			announce: `You cannot give items to ${to.givenName} while they are fighting!`
-		}));
-	}
+	const checkEncounter = (arg) => {
+		if (to.inEncounter) {
+			return Promise.reject(channel({
+				announce: `You cannot give items to ${to.givenName} while they are fighting!`
+			}));
+		}
 
-	if (from.inEncounter) {
-		return Promise.reject(channel({
-			announce: `You cannot remove items from ${from.givenName} while they are fighting!`
-		}));
-	}
+		if (from.inEncounter) {
+			return Promise.reject(channel({
+				announce: `You cannot remove items from ${from.givenName} while they are fighting!`
+			}));
+		}
+
+		return Promise.resolve(arg);
+	};
 
 	return Promise.resolve()
+		.then(checkEncounter)
 		.then(() => {
 			const items = sortItemsAlphabetically(from.items.filter(item => to.canHoldItem(item)));
 
@@ -25,7 +30,7 @@ module.exports = ({ from, to, itemSelection, channel }) => {
 				}));
 			}
 
-			if (itemSelection) {
+			if (itemSelection && itemSelection.length > 0) {
 				return itemSelection.reduce((selectedItems, itemType) => {
 					const itemIndex = items.findIndex(potentialItem => potentialItem.itemType.toLowerCase() === itemType.toLowerCase()); // eslint-disable-line max-len
 
@@ -73,6 +78,7 @@ Which item(s) should ${from.givenName} give ${to.pronouns.him}?`);
 				channel,
 				getQuestion
 			})
+				.then(checkEncounter)
 				.then((selectedItems) => {
 					const trimmedItems = selectedItems.slice(0, remainingSlots);
 

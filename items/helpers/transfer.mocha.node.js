@@ -145,4 +145,35 @@ Which item(s) should Character give her?`
 				announce: "Monster doesn't have any items that Character can use."
 			}));
 	});
+
+	it('throws an error on an invalid selection', () => {
+		const character = randomCharacter({ name: 'Character', coins: 500, gender: 'female' });
+		character.items = [new LotteryTicket()];
+
+		const monster = character.monsters[0];
+		monster.optionsStore.name = 'Monster';
+		monster.items = [new LotteryTicket()];
+
+		channelStub.withArgs({
+			question: `Monster is holding one item and has space for 2 more:
+
+0) Lottery Ticket [1]
+
+Which item(s) should Character give her?`
+		})
+			.resolves('0,0,0,0');
+
+		expect(character.items.length).to.equal(1);
+		expect(monster.items.length).to.equal(1);
+
+		return transferItems({ from: character, to: monster, channel: channelStub })
+			.catch(() => {
+				expect(channelStub).to.have.been.calledWith({
+					announce: 'Invalid selection: Lottery Ticket'
+				});
+
+				expect(character.items.length).to.equal(1);
+				return expect(monster.items.length).to.equal(1);
+			});
+	});
 });

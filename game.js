@@ -11,6 +11,7 @@ const aws = require('./helpers/aws');
 const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
+const getArray = require('./helpers/get-array');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
 
@@ -246,16 +247,36 @@ class Game extends BaseClass {
 						.catch(err => log(err));
 				},
 				equipMonster ({ monsterName, cardSelection } = {}) {
-					let selectedCards = [];
+					let selectedCards;
+
 					if (cardSelection) {
-						if (cardSelection.includes(', ')) {
-							selectedCards = cardSelection.split(', ');
-						} else {
-							selectedCards = cardSelection.split(' ');
-						}
+						selectedCards = getArray(cardSelection);
+						if (selectedCards && !Array.isArray(selectedCards)) selectedCards = [selectedCards];
 					}
 
 					return character.equipMonster({ monsterName, cardSelection: selectedCards, channel })
+						.catch(err => log(err));
+				},
+				giveItemsToMonster ({ monsterName, itemSelection } = {}) {
+					let selectedItems;
+
+					if (itemSelection) {
+						selectedItems = getArray(itemSelection);
+						if (selectedItems && !Array.isArray(selectedItems)) selectedItems = [selectedItems];
+					}
+
+					return character.giveItemsToMonster({ monsterName, itemSelection: selectedItems, channel })
+						.catch(err => log(err));
+				},
+				takeItemsFromMonster ({ monsterName, itemSelection } = {}) {
+					let selectedItems;
+
+					if (itemSelection) {
+						selectedItems = getArray(itemSelection);
+						if (selectedItems && !Array.isArray(selectedItems)) selectedItems = [selectedItems];
+					}
+
+					return character.takeItemsFromMonster({ monsterName, itemSelection: selectedItems, channel })
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {

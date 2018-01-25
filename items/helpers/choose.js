@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 const { getItemChoices, getItemChoicesWithPrice, getFinalItemChoices } = require('../../helpers/choices');
 const getArray = require('../../helpers/get-array');
 
@@ -40,7 +42,8 @@ module.exports = ({
 			if (!Array.isArray(selectedItemIndexes)) selectedItemIndexes = [selectedItemIndexes];
 
 			const remainingItems = [...items];
-			const selectedItems = selectedItemIndexes.reduce((selection, index) => {
+
+			return Promise.reduce(selectedItemIndexes, (selection, index) => {
 				const itemType = Object.keys(itemCatalog)[index - 0];
 				const itemIndex = remainingItems.findIndex(potentialItem => potentialItem.itemType === itemType);
 
@@ -48,15 +51,16 @@ module.exports = ({
 					const selectedItem = remainingItems.splice(itemIndex, 1)[0];
 					selection.push(selectedItem);
 				} else {
-					throw new Error('Your selection could not be found.');
+					return Promise.reject(channel({
+						announce: `Invalid selection: ${itemType || index}`
+					}));
 				}
 
 				return selection;
-			}, []);
-
-			return channel({
-				announce: getResult({ selectedItems })
-			})
-				.then(() => selectedItems);
+			}, [])
+				.then(selectedItems => channel({
+					announce: getResult({ selectedItems })
+				})
+					.then(() => selectedItems));
 		});
 };
