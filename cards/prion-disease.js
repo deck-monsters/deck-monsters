@@ -113,6 +113,7 @@ PrionDiseaseCard.description = 'Buy a questionable round of milkshakes for every
 PrionDiseaseCard.level = 2;
 PrionDiseaseCard.cost = EXPENSIVE.cost;
 PrionDiseaseCard.isAreaOfEffect = true;
+PrionDiseaseCard.notForSale = true;
 
 PrionDiseaseCard.flavors = {
 	hits: [
