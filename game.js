@@ -247,36 +247,15 @@ class Game extends BaseClass {
 						.catch(err => log(err));
 				},
 				equipMonster ({ monsterName, cardSelection } = {}) {
-					let selectedCards;
-
-					if (cardSelection) {
-						selectedCards = getArray(cardSelection);
-						if (selectedCards && !Array.isArray(selectedCards)) selectedCards = [selectedCards];
-					}
-
-					return character.equipMonster({ monsterName, cardSelection: selectedCards, channel })
+					return character.equipMonster({ monsterName, cardSelection: getArray(cardSelection), channel })
 						.catch(err => log(err));
 				},
 				giveItemsToMonster ({ monsterName, itemSelection } = {}) {
-					let selectedItems;
-
-					if (itemSelection) {
-						selectedItems = getArray(itemSelection);
-						if (selectedItems && !Array.isArray(selectedItems)) selectedItems = [selectedItems];
-					}
-
-					return character.giveItemsToMonster({ monsterName, itemSelection: selectedItems, channel })
+					return character.giveItemsToMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
 						.catch(err => log(err));
 				},
 				takeItemsFromMonster ({ monsterName, itemSelection } = {}) {
-					let selectedItems;
-
-					if (itemSelection) {
-						selectedItems = getArray(itemSelection);
-						if (selectedItems && !Array.isArray(selectedItems)) selectedItems = [selectedItems];
-					}
-
-					return character.takeItemsFromMonster({ monsterName, itemSelection: selectedItems, channel })
+					return character.takeItemsFromMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {

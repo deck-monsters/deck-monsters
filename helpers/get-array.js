@@ -1,6 +1,14 @@
 /* eslint-disable no-cond-assign */
 
 module.exports = (string) => {
+	if (!string && string !== 0) {
+		return null;
+	} else if (Array.isArray(string)) {
+		return string;
+	} else if (typeof string !== 'string') {
+		return [string.toString()];
+	}
+
 	let match;
 
 	if (match = string.match(/^[\s]*"(.*)"[\s]*$/)) {
@@ -10,7 +18,10 @@ module.exports = (string) => {
 	}
 
 	try {
-		return JSON.parse(string);
+		let parsed = JSON.parse(string);
+		if ((parsed || parsed === 0) && !Array.isArray(parsed)) parsed = [parsed.toString()];
+
+		return parsed;
 	} catch (ex) {
 		match = string.match(/([^"']+)/);
 

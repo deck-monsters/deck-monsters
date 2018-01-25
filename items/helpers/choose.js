@@ -38,8 +38,7 @@ module.exports = ({
 			question: getQuestion({ itemChoices })
 		}))
 		.then((answer) => {
-			let selectedItemIndexes = getArray(answer);
-			if (!Array.isArray(selectedItemIndexes)) selectedItemIndexes = [selectedItemIndexes];
+			const selectedItemIndexes = getArray(answer);
 
 			const remainingItems = [...items];
 
