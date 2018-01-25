@@ -24,6 +24,13 @@ describe('./helpers/get-array.js', () => {
 		expect(getArray(input)).to.deep.equal(output);
 	});
 
+	it('can get an array from space-separated numbers', () => {
+		const input = '1 2';
+		const output = ['1', '2'];
+
+		expect(getArray(input)).to.deep.equal(output);
+	});
+
 	it('can get an array from comma-and-space-separated numbers', () => {
 		const input = '1, 2';
 		const output = ['1', '2'];
