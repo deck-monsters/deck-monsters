@@ -518,7 +518,7 @@ Battles won: ${this.battles.wins}`;
 			prevHp: originalHP
 		});
 
-		if (!this.dead && hp <= 0) {
+		if (originalHP > 0 && hp <= 0) {
 			return this.die(assailant);
 		}
 

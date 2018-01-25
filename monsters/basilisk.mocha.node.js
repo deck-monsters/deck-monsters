@@ -94,13 +94,20 @@ describe('./monsters/basilisk.js', () => {
 	it('can die from being hit', () => {
 		const basilisk = new Basilisk();
 
+		const basiliskProto = Object.getPrototypeOf(basilisk);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+		const dieSpy = sinon.spy(creatureProto, 'die');
+
 		basilisk.hp = 1;
 
 		expect(basilisk.dead).to.be.false;
 
 		basilisk.hit(1, basilisk);
 
+		expect(dieSpy.calledOnce).to.be.true;
 		expect(basilisk.dead).to.be.true;
+
+		dieSpy.restore();
 	});
 
 	it('does not re-die if already dead', () => {
