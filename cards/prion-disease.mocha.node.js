@@ -34,7 +34,9 @@ describe('./cards/prion-disease.js', () => {
 		expect(prionDisease).to.be.an.instanceof(PrionDiseaseCard);
 		expect(prionDisease.icon).to.equal('旦');
 		expect(prionDisease.stats).to.equal(`Serve everyone a nice round of milkshakes!
-1:100 chance to kill each opponent. 1:1000 chance to kill yourself.`);
+Usually restores between 0-3hp to each player.
+1:50 chance to kill each opponent.
+1:100 chance to kill yourself.`);
 	});
 
 	it('can be played', () => {
@@ -51,14 +53,14 @@ describe('./cards/prion-disease.js', () => {
 			]
 		};
 
-		const getDamageSpy = sinon.spy(prionDisease, 'getDamage');
+		const getHPModifierSpy = sinon.spy(prionDisease, 'getHPModifier');
 
 		return prionDisease
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
-				getDamageSpy.restore();
+				getHPModifierSpy.restore();
 
-				return expect(getDamageSpy.callCount).to.equal(3);
+				return expect(getHPModifierSpy.callCount).to.equal(3);
 			});
 	});
 
@@ -76,7 +78,7 @@ describe('./cards/prion-disease.js', () => {
 			]
 		};
 
-		const getDamageSpy = sinon.spy(prionDisease, 'getDamage');
+		const getHPModifierSpy = sinon.spy(prionDisease, 'getHPModifier');
 
 		const activeContestants = [
 			{ monster: player },
@@ -86,9 +88,9 @@ describe('./cards/prion-disease.js', () => {
 		return prionDisease
 			.play(player, target1, ring, activeContestants)
 			.then(() => {
-				getDamageSpy.restore();
+				getHPModifierSpy.restore();
 
-				return expect(getDamageSpy.callCount).to.equal(2);
+				return expect(getHPModifierSpy.callCount).to.equal(2);
 			});
 	});
 
@@ -155,16 +157,16 @@ describe('./cards/prion-disease.js', () => {
 			]
 		};
 
-		const getDamageStub = sinon.stub(prionDisease, 'getDamage');
-		getDamageStub.returns(0);
+		const getHPModifierStub = sinon.stub(prionDisease, 'getHPModifier');
+		getHPModifierStub.returns(0);
 
 		return prionDisease
 			.play(player, target1, ring, ring.contestants)
 			.then((fightContinues) => {
-				getDamageStub.restore();
+				getHPModifierStub.restore();
 
 				expect(fightContinues).to.equal(true);
-				return expect(getDamageStub.callCount).to.equal(3);
+				return expect(getHPModifierStub.callCount).to.equal(3);
 			});
 	});
 
@@ -173,25 +175,23 @@ describe('./cards/prion-disease.js', () => {
 
 		const player = new Basilisk({ name: 'player' });
 		const target1 = new Basilisk({ name: 'target1' });
-		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
 				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ monster: target1 }
 			]
 		};
 
-		const getDamageStub = sinon.stub(prionDisease, 'getDamage');
-		getDamageStub.returns(1000);
+		const getHPModifierStub = sinon.stub(prionDisease, 'getHPModifier');
+		getHPModifierStub.returns(-1000);
 
 		return prionDisease
 			.play(player, target1, ring, ring.contestants)
 			.then((fightContinues) => {
-				getDamageStub.restore();
+				getHPModifierStub.restore();
 
 				expect(fightContinues).to.equal(false);
-				return expect(getDamageStub.callCount).to.equal(3);
+				return expect(getHPModifierStub.callCount).to.equal(2);
 			});
 	});
 
