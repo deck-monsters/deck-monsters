@@ -80,7 +80,7 @@ class SandstormCard extends BlastCard {
 							player: sandstormPlayer,
 							target: sandstormTarget,
 							ring,
-							narration: `In the confusion of the sandstorm, ${sandstormTarget.givenName} will have trouble targeting ${sandstormTarget.pronouns.his} action.`
+							narration: `In the confusion of the sandstorm, ${sandstormTarget.givenName} will have trouble with ${sandstormTarget.pronouns.his} aim.`
 						});
 
 						const oldTargets = getTargets.call(card, player, proposedTarget, ring, activeContestants);
