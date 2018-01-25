@@ -45,12 +45,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 		expect(lotteryTicket.expired).to.be.false;
 		expect(lotteryTicket.stats).to.equal('Usable 1 time.');
 		expect(lotteryTicket.icon).to.equal('💰');
-	});
-
-	it('can generate lottery numbers', () => {
-		const lotteryTicket = new LotteryTicket();
-
-		expect(lotteryTicket.ticketNumbers).to.deep.equal([1, 1, 1, 1, 1]);
+		expect(lotteryTicket.description).to.equal('Play the odds for a chance to win up to 3162 coins.');
 	});
 
 	it('can give you nothing', () => {
@@ -80,13 +75,12 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 		randomStub.onCall(6).returns(12);
 		randomStub.onCall(7).returns(12);
 		randomStub.onCall(8).returns(12);
-		randomStub.onCall(11).returns(1000);
 
 		character.coins = 50;
 
 		lotteryTicket.use(character);
 
-		expect(character.coins).to.equal(55);
+		expect(character.coins).to.equal(82);
 	});
 
 	it('can make you win on 3 matches', () => {
@@ -96,13 +90,12 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		randomStub.onCall(5).returns(12);
 		randomStub.onCall(6).returns(12);
-		randomStub.onCall(11).returns(1000);
 
 		character.coins = 50;
 
 		lotteryTicket.use(character);
 
-		expect(character.coins).to.equal(61);
+		expect(character.coins).to.equal(366);
 	});
 
 	it('can make you win big on all 5 matches', () => {
@@ -110,12 +103,10 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		const lotteryTicket = new LotteryTicket();
 
-		randomStub.onCall(11).returns(1000);
-
 		character.coins = 50;
 
 		lotteryTicket.use(character);
 
-		expect(character.coins).to.equal(1050);
+		expect(character.coins).to.equal(3212);
 	});
 });
