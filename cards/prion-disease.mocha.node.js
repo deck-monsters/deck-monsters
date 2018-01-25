@@ -1,12 +1,11 @@
 const { expect, sinon } = require('../shared/test-setup');
 const proxyquire = require('proxyquire');
 
-const { randomCharacter } = require('../characters');
 const Basilisk = require('../monsters/basilisk');
 const PrionDiseaseCard = require('./prion-disease');
 const pause = require('../helpers/pause');
 
-describe.only('./cards/prion-disease.js', () => {
+describe('./cards/prion-disease.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -94,7 +93,7 @@ describe.only('./cards/prion-disease.js', () => {
 	});
 
 	it('randomly kills player', () => {
-		let randomStub = sinon.stub();
+		const randomStub = sinon.stub();
 		const PrionDisease = proxyquire('./prion-disease', {
 			'lodash.random': randomStub
 		});
@@ -114,13 +113,11 @@ describe.only('./cards/prion-disease.js', () => {
 
 		return prionDisease
 			.play(player, player, ring, activeContestants)
-			.then(() => {
-				return expect(player.hp).to.equal(0);
-			});
+			.then(() => expect(player.hp).to.equal(0));
 	});
 
-	it.only('randomly heals player', () => {
-		let randomStub = sinon.stub();
+	it('randomly heals player', () => {
+		const randomStub = sinon.stub();
 		const PrionDisease = proxyquire('./prion-disease', {
 			'lodash.random': randomStub
 		});
@@ -141,9 +138,7 @@ describe.only('./cards/prion-disease.js', () => {
 
 		return prionDisease
 			.play(player, player, ring, activeContestants)
-			.then(() => {
-				return expect(player.hp).to.equal(2);
-			});
+			.then(() => expect(player.hp).to.equal(3));
 	});
 
 	it('returns true if the target is not killed', () => {

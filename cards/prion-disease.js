@@ -1,10 +1,9 @@
-/* eslint-disable max-len */
+/* eslint-disable max-len, no-irregular-whitespace */
 
 const BaseCard = require('./base');
 
 const random = require('lodash.random');
 
-const { CLERIC } = require('../helpers/classes');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
 
@@ -16,17 +15,17 @@ class PrionDiseaseCard extends BaseCard {
 		super({ icon });
 	}
 
-	getHPModifier (player, target) {
+	getHPModifier (player, target) { // eslint-disable-line class-methods-use-this
 		let modification = random(0, 3);
 
 		if (target === player) {
 			if (random(1, 100) === 13) {
 				modification = -target.hp;
+			} else {
+				modification++;
 			}
-		} else {
-			if (random(1, 50) === 13) {
-				modification = -target.hp;
-			}
+		} else if (random(1, 50) === 13) {
+			modification = -target.hp;
 		}
 
 		return modification;
@@ -36,7 +35,7 @@ class PrionDiseaseCard extends BaseCard {
 		return this.options.levelDamage;
 	}
 
-	get stats () {
+	get stats () { // eslint-disable-line class-methods-use-this
 		return `Serve everyone a nice round of milkshakes!
 Usually restores between 0-3hp to each player.
 1:50 chance to kill each opponent.
@@ -47,7 +46,7 @@ Usually restores between 0-3hp to each player.
 		return activeContestants.map(({ monster }) => monster);
 	}
 
-	effect (player, target, ring, activeContestants) {
+	effect (player, target) {
 		const hpChange = this.getHPModifier(player, target);
 		let narration = `
 　　∧,,,∧
@@ -60,7 +59,7 @@ Usually restores between 0-3hp to each player.
 　　(　ﾞノ ヾ
 　　と＿)_)
 
-`
+`;
 
 
 		if (hpChange < 0) {
@@ -79,18 +78,18 @@ Usually restores between 0-3hp to each player.
 　　　 (´ 　 ｀ヽ、　　 　 __
 　　⊂,_と（　 　 ）⊃　 （__(）､;.o：。
 　　　　　　Ｖ　Ｖ　　　　　　 　 　 ﾟ*･:.｡
-`
+`;
 		} else {
 			let hearts = '';
 			for (let i = 0; i < hpChange; i++) {
-				hearts = hearts + '♥︎';
+				hearts += '♥︎';
 			}
 			narration += `
 　　∧,,,∧
 　 （ ・ω・） tastes delicious!
 　　( つ旦O   ${hearts}
 　　と＿)_)
-`
+`;
 		}
 
 		this.emit('narration', {
