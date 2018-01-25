@@ -14,23 +14,23 @@ class LotteryTicket extends BaseScroll {
 	}
 
 	get ticketNumbers () {
-		return [random(0, this.cost/2), random(0, this.cost), random(0, this.cost), random(0, this.cost), random(0, this.cost * 10)]
+		return [random(0, this.cost / 2), random(0, this.cost), random(0, this.cost), random(0, this.cost), random(0, this.cost * 10)];
 	}
 
 	action (character) {
-		let ticketNumbers = this.ticketNumbers;
-		let winningNumbers = this.ticketNumbers;
+		const characterNumbers = this.ticketNumbers;
+		const winningNumbers = this.ticketNumbers;
 
-		let matches = ticketNumbers.reduce((matches, number, currentIndex) => winningNumbers[currentIndex] === number ? matches + 1 || 1 : matches, 0);
+		const matches = characterNumbers.reduce((numberOfMatches, number, currentIndex) => (winningNumbers[currentIndex] === number ? numberOfMatches + 1 || 1 : numberOfMatches), 0);
 
 		this.emit('narration', {
-			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${ticketNumbers.join(', ')}".`
+			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${characterNumbers.join(', ')}".`
 		});
 
 		if (matches > 0) {
 			const winnings = [
 				0,
-				this.cost/2,
+				this.cost / 2,
 				this.cost,
 				this.cost + 1,
 				random(this.cost + 2, this.cost * 3),
@@ -44,7 +44,6 @@ class LotteryTicket extends BaseScroll {
 
 🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches} matche${matches > 1 ? 's' : ''}! ${character.pronouns.he} has won ${winnings[matches]} coins!`
 			});
-
 
 
 			character.coins += winnings[matches];

@@ -5,7 +5,7 @@ const proxyquire = require('proxyquire');
 const pause = require('../../helpers/pause');
 const randomCharacter = require('../../characters/helpers/random');
 
-describe.only('./items/scrolls/lottery-ticket.js', () => {
+describe('./items/scrolls/lottery-ticket.js', () => {
 	let channelStub;
 	let pauseStub;
 	let randomStub;
@@ -50,7 +50,7 @@ describe.only('./items/scrolls/lottery-ticket.js', () => {
 	it('can generate lottery numbers', () => {
 		const lotteryTicket = new LotteryTicket();
 
-		expect(lotteryTicket.ticketNumbers).to.deep.equal([1, 1, 1, 1, 1])
+		expect(lotteryTicket.ticketNumbers).to.deep.equal([1, 1, 1, 1, 1]);
 	});
 
 	it('can give you nothing', () => {
