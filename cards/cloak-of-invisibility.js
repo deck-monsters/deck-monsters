@@ -45,9 +45,9 @@ class CloakOfInvisibilityCard extends BaseCard {
 				invisibilityTarget.encounterModifiers.invisibilityTurns += 1;
 			}
 
-			if (effect && !isAreaOfEffect) {
+			if (effect) {
 				card.effect = (player, target, ring, activeContestants) => {
-					if (phase === DEFENSE_PHASE && player !== invisibilityTarget && target === invisibilityTarget) {
+					if (phase === DEFENSE_PHASE && player !== invisibilityTarget && target === invisibilityTarget && !isAreaOfEffect) {
 						const potentialTargets = activeContestants.filter(({ monster }) => (monster !== player && !isInvisible(monster)));
 
 						if (potentialTargets.length > 0) {
