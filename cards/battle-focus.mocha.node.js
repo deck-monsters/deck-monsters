@@ -136,7 +136,7 @@ describe('./cards/battle-focus.js', () => {
 			});
 	});
 
-	it('Permakills on big first hit and combos until humiliation.', () => {
+	it('Permakills if target HP < bigFirstHit damage amount and then combos until humiliation.', () => {
 		const battleFocus = new BattleFocusCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target', hpVariance: 0 });
