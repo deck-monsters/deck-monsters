@@ -307,6 +307,10 @@ class Game extends BaseClass {
 					return game.lookAt(channel, thing)
 						.catch(err => log(err));
 				},
+				editCharacter ({ characterName } = {}) {
+					return game.editCharacter(channel, characterName)
+						.catch(err => log(err));
+				},
 				editMonster ({ monsterName } = {}) {
 					return game.editMonster(channel, monsterName)
 						.catch(err => log(err));
@@ -357,6 +361,19 @@ class Game extends BaseClass {
 			const isSelf = character === self;
 
 			if (character) return character.look(channel, isSelf);
+		}
+
+		return Promise.reject(channel({
+			announce: `I can find no character by the name of ${characterName}.`,
+			delay: 'short'
+		}));
+	}
+
+	editCharacter (channel, characterName) {
+		if (characterName) {
+			const character = this.findCharacterByName(characterName);
+
+			if (character) return character.edit(channel);
 		}
 
 		return Promise.reject(channel({
