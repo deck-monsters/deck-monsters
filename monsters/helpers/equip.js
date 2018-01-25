@@ -10,7 +10,7 @@ module.exports = ({ deck, monster, cardSelection, channel }) => {
 	const addCard = ({ remainingSlots, remainingCards }) => {
 		if (monster.inEncounter) {
 			return Promise.reject(channel({
-				announce: `You cannot equip ${monster.options.name} while they are fighting!`
+				announce: `You cannot equip ${monster.givenName} while they are fighting!`
 			}));
 		}
 

@@ -38,6 +38,7 @@ const MAX_BOOSTS = {
 };
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
+const DEFAULT_ITEM_SLOTS = 12;
 
 class BaseCreature extends BaseClass {
 	constructor ({
@@ -378,6 +379,10 @@ Battles won: ${this.battles.wins}`;
 		this.setOptions({
 			coins
 		});
+	}
+
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
 	}
 
 	get items () {

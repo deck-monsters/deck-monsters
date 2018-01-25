@@ -9,6 +9,7 @@ const { getAttributeChoices } = require('../helpers/choices');
 const isMatchingItem = require('../items/helpers/is-matching');
 
 const DEFAULT_CARD_SLOTS = 9;
+const DEFAULT_ITEM_SLOTS = 3;
 
 class BaseMonster extends BaseCreature {
 	constructor (options) {
@@ -38,6 +39,10 @@ class BaseMonster extends BaseCreature {
 		this.setOptions({
 			cardSlots
 		});
+	}
+
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
 	}
 
 	canHold (object) {

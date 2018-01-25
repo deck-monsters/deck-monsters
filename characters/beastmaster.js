@@ -198,6 +198,26 @@ Which monster would you like to ${action}?`,
 				.then(() => monster));
 	}
 
+	takeItemsFromMonster ({ monsterName, itemSelection, channel }) {
+		const { monsters } = this;
+
+		return Promise
+			.resolve(monsters.length)
+			.then((numberOfMonsters) => {
+				if (numberOfMonsters <= 0) {
+					return Promise.reject(channel({
+						announce: "You don't have any monsters to take items from! You'll need to spawn one first."
+					}));
+				}
+
+				return this.chooseMonster({
+					channel, monsters, monsterName, action: 'take items from'
+				});
+			})
+			.then(monster => transferItems({ from: monster, to: this, itemSelection, channel })
+				.then(() => monster));
+	}
+
 	callMonsterOutOfTheRing ({
 		monsterName, ring, channel, channelName
 	}) {

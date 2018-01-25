@@ -6,7 +6,8 @@ const TENSE = {
 	revive: { PAST: 'revived' },
 	'send into battle': { PAST: 'sent into battle' },
 	'call from the ring': { PAST: 'called from the ring' },
-	'give items to': { PAST: 'given items' }
+	'give items to': { PAST: 'given items' },
+	'take items from': { PAST: 'asked for items' }
 };
 
 module.exports = TENSE;
