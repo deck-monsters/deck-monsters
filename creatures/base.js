@@ -45,25 +45,10 @@ class BaseCreature extends BaseClass {
 		acVariance = random(0, AC_VARIANCE),
 		hpVariance = random(0, HP_VARIANCE),
 		gender = sample(Object.keys(PRONOUNS)),
-		DEFAULT_AC, // legacy
-		DEFAULT_HP, // legacy
+		xp = 0,
 		...options
 	} = {}) {
-		super({ acVariance, hpVariance, gender, ...options });
-
-		// Clean up old AC code
-		if (DEFAULT_AC) {
-			this.setOptions({
-				acVariance: DEFAULT_AC - 5
-			});
-		}
-
-		// Clean up old HP code
-		if (DEFAULT_HP) {
-			this.setOptions({
-				hpVariance: DEFAULT_HP - 23
-			});
-		}
+		super({ acVariance, hpVariance, gender, xp, ...options });
 
 		if (this.name === BaseCreature.name) {
 			throw new Error('The BaseCreature should not be instantiated directly!');
@@ -477,6 +462,10 @@ Battles won: ${this.battles.wins}`;
 		return this.canHold(item);
 	}
 
+	canUseItem (item) {
+		return this.canHoldItem(item);
+	}
+
 	addItem (item) {
 		this.items = sortItemsAlphabetically([...this.items, item]);
 
@@ -491,7 +480,7 @@ Battles won: ${this.battles.wins}`;
 
 			this.emit('itemRemoved', { item: foundItem });
 
-			return 'foundItem';
+			return foundItem;
 		}
 
 		return undefined;
@@ -505,6 +494,18 @@ Battles won: ${this.battles.wins}`;
 
 			this.emit('itemGiven', { item, recipient });
 		}
+	}
+
+	useItem ({ channel, character = this, item, monster }) {
+		const foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
+
+		if (foundItem) {
+			return foundItem.use(character, monster);
+		}
+
+		return Promise.reject(channel({
+			announce: `${character.givenName} doesn't seem to be holding that item.`
+		}));
 	}
 
 	leaveCombat (activeContestants) {
