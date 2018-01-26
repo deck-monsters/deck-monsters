@@ -15,28 +15,7 @@ const ChannelManager = require('./channel');
 const getArray = require('./helpers/get-array');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
-
-const announceBossWillSpawn = require('./announcements/bossWillSpawn.js');
-const announceCard = require('./announcements/card.js');
-const announceCardDrop = require('./announcements/cardDrop.js');
-const announceContestant = require('./announcements/contestant.js');
-const announceContestantLeave = require('./announcements/contestantLeave.js');
-const announceDeath = require('./announcements/death.js');
-const announceEffect = require('./announcements/effect.js');
-const announceEndOfDeck = require('./announcements/endOfDeck.js');
-const announceFight = require('./announcements/fight.js');
-const announceFightConcludes = require('./announcements/fightConcludes.js');
-const announceHeal = require('./announcements/heal.js');
-const announceHit = require('./announcements/hit.js');
-const announceLeave = require('./announcements/leave.js');
-const announceMiss = require('./announcements/miss.js');
-const announceModifier = require('./announcements/modifier.js');
-const announceNarration = require('./announcements/narration.js');
-const announceNextRound = require('./announcements/nextRound.js');
-const announceRolled = require('./announcements/rolled.js');
-const announceStay = require('./announcements/stay.js');
-const announceTurnBegin = require('./announcements/turnBegin.js');
-const announceXPGain = require('./announcements/xpGain.js');
+const announcements = require('./announcements');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
 
@@ -97,40 +76,8 @@ class Game extends BaseClass {
 	}
 
 	initializeEvents () {
-		const events = [
-			{ event: 'card.effect', listener: announceEffect },
-			{ event: 'card.miss', listener: announceMiss },
-			{ event: 'card.narration', listener: announceNarration },
-			{ event: 'card.played', listener: announceCard },
-			{ event: 'card.rolled', listener: announceRolled },
-			{ event: 'card.stay', listener: announceStay },
-			{ event: 'cardDrop', listener: announceCardDrop },
-			{ event: 'creature.die', listener: announceDeath },
-			{ event: 'creature.hit', listener: announceHit },
-			{ event: 'creature.leave', listener: announceLeave },
-			{ event: 'creature.modifier', listener: announceModifier },
-			{ event: 'gainedXP', listener: announceXPGain },
-			{ event: 'ring.add', listener: announceContestant },
-			{ event: 'ring.bossWillSpawn', listener: announceBossWillSpawn },
-			{ event: 'ring.endOfDeck', listener: announceEndOfDeck },
-			{ event: 'ring.fight', listener: announceFight },
-			{ event: 'ring.fightConcludes', listener: announceFightConcludes },
-			{ event: 'ring.gainedXP', listener: announceXPGain },
-			{ event: 'ring.narration', listener: announceNarration },
-			{ event: 'ring.remove', listener: announceContestantLeave },
-			{ event: 'ring.roundComplete', listener: announceNextRound },
-			{ event: 'ring.turnBegin', listener: announceTurnBegin }
-		];
-
-		events.map(event => this.on(event.event, (...args) => {
-			event.listener(this.publicChannel, this.channelManager, ...args);
-		}));
-
-		// this one needs ring, the others don't (or have it already).
-		this.on('creature.heal', (...args) => {
-			announceHeal(this.publicChannel, this.channelManager, this.ring, ...args);
-		});
-
+		announcements.initialize(this);
+		
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
 		this.on('creature.permaDeath', this.handlePermaDeath);
