@@ -1,12 +1,14 @@
 /* eslint-disable no-cond-assign */
 
-module.exports = (string) => {
+module.exports = (string, commaSeparated = false) => {
 	if (!string && string !== 0) {
 		return null;
 	} else if (Array.isArray(string)) {
 		return string;
 	} else if (typeof string !== 'string') {
 		return [string.toString()];
+	} else if (commaSeparated && typeof string === 'string' && !string.includes(',')) {
+		return [string];
 	}
 
 	let match;

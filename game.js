@@ -199,19 +199,19 @@ class Game extends BaseClass {
 						.catch(err => log(err));
 				},
 				giveItemsToMonster ({ monsterName, itemSelection } = {}) {
-					return character.giveItemsToMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
+					return character.giveItemsToMonster({ monsterName, itemSelection: getArray(itemSelection, true), channel })
 						.catch(err => log(err));
 				},
 				takeItemsFromMonster ({ monsterName, itemSelection } = {}) {
-					return character.takeItemsFromMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
+					return character.takeItemsFromMonster({ monsterName, itemSelection: getArray(itemSelection, true), channel })
 						.catch(err => log(err));
 				},
 				useItemsOnMonster ({ monsterName, itemSelection } = {}) {
-					return character.useItems({ channel, isMonsterItem: true, itemSelection: getArray(itemSelection), monsterName })
+					return character.useItems({ channel, isMonsterItem: true, itemSelection: getArray(itemSelection, true), monsterName })
 						.catch(err => log(err));
 				},
 				useItems ({ itemSelection } = {}) {
-					return character.useItems({ channel, isMonsterItem: false, itemSelection: getArray(itemSelection) })
+					return character.useItems({ channel, isMonsterItem: false, itemSelection: getArray(itemSelection, true) })
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {

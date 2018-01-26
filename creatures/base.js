@@ -497,7 +497,15 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	useItem ({ channel, character = this, item, monster }) {
-		const foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
+		let foundItem;
+
+		if (monster) {
+			foundItem = monster.items.find(potentialItem => isMatchingItem(potentialItem, item));
+		}
+
+		if (!foundItem) {
+			foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
+		}
 
 		if (foundItem) {
 			return foundItem.use({ channel, character, monster });
