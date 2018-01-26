@@ -56,7 +56,8 @@ describe.only('./cards/hit.js', () => {
 		const before = target.hp;
 
 		return hit.play(player, target, ring)
-			.then((result) => {
+			.then(() => {
+				expect(target.hp).to.be.below(before);
 				expect(hitEffectSpy).to.have.been.calledOnce;
 				return expect(hitCheckStub).to.have.been.calledOnce;
 			});
