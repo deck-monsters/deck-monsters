@@ -19,6 +19,10 @@ class DelayedHit extends HitCard {
 ${super.stats}`;
 	}
 
+	getTargets (player) { // eslint-disable-line class-methods-use-this
+		return [player];
+	}
+
 	effect (delayingPlayer, target, ring) { // eslint-disable-line no-unused-vars
 		let whenPlayed = Date.now();
 
