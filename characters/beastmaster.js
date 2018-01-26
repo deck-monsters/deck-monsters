@@ -215,7 +215,7 @@ Which monster would you like to ${action}?`,
 				.then(() => monster));
 	}
 
-	useItems ({ channel, isMonsterItem, monsterName }) {
+	useItems ({ channel, isMonsterItem, itemSelection, monsterName }) {
 		return Promise.resolve()
 			.then(() => {
 				if (monsterName || isMonsterItem) {
@@ -229,7 +229,7 @@ Which monster would you like to ${action}?`,
 
 				return undefined;
 			})
-			.then(monster => useItems({ channel, character: this, monster, use: options => this.useItem(options) }));
+			.then(monster => useItems({ channel, character: this, itemSelection, monster, use: options => this.useItem(options) }));
 	}
 
 	useItem ({ channel, isMonsterItem, item, monster, monsterName }) {

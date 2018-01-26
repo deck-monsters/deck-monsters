@@ -77,7 +77,7 @@ class Game extends BaseClass {
 
 	initializeEvents () {
 		announcements.initialize(this);
-		
+
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
 		this.on('creature.permaDeath', this.handlePermaDeath);
@@ -204,6 +204,14 @@ class Game extends BaseClass {
 				},
 				takeItemsFromMonster ({ monsterName, itemSelection } = {}) {
 					return character.takeItemsFromMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
+						.catch(err => log(err));
+				},
+				useItemsOnMonster ({ monsterName, itemSelection } = {}) {
+					return character.useItems({ channel, isMonsterItem: true, itemSelection: getArray(itemSelection), monsterName })
+						.catch(err => log(err));
+				},
+				useItems ({ itemSelection } = {}) {
+					return character.useItems({ channel, isMonsterItem: false, itemSelection: getArray(itemSelection) })
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {

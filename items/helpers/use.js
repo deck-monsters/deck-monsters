@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 const { sortItemsAlphabetically } = require('./sort');
 const chooseItems = require('./choose');
 
-module.exports = ({ channel, character, monster, use }) => Promise.resolve()
+module.exports = ({ channel, character, itemSelection, monster, use }) => Promise.resolve()
 	.then(() => {
 		let items;
 		let targetStr;
@@ -20,6 +20,23 @@ module.exports = ({ channel, character, monster, use }) => Promise.resolve()
 			return Promise.reject(channel({
 				announce: `${character.givenName} doesn't have any items that ${character.pronouns.he} can use on ${targetStr}.`
 			}));
+		}
+
+		if (itemSelection && itemSelection.length > 0) {
+			return itemSelection.reduce((selectedItems, itemType) => {
+				const itemIndex = items.findIndex(potentialItem => potentialItem.itemType.toLowerCase() === itemType.toLowerCase());
+
+				if (itemIndex >= 0) {
+					const selectedItem = items.splice(itemIndex, 1)[0];
+					selectedItems.push(selectedItem);
+				} else {
+					channel({
+						announce: `${character.givenName} can not use ${itemType.toLowerCase()} on ${targetStr}.`
+					});
+				}
+
+				return selectedItems;
+			}, []);
 		}
 
 		items = sortItemsAlphabetically(items);
