@@ -4,7 +4,6 @@ const { ABUNDANT } = require('../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../helpers/costs');
 
 const HitCard = require('./hit');
-const HealCard = require('./heal');
 const Basilisk = require('../monsters/basilisk');
 const pause = require('../helpers/pause');
 
@@ -15,6 +14,7 @@ describe('./cards/hit.js', () => {
 	let hitCheckStub;
 	let player;
 	let target;
+	let ring;
 
 
 	before(() => {
@@ -38,7 +38,7 @@ describe('./cards/hit.js', () => {
 			}
 		};
 
-		hitCheckStub.returns({attackRoll: hit.getAttackRoll(player), success: true, strokeOfLuck: false, curseOfLoki: false });
+		hitCheckStub.returns({ attackRoll: hit.getAttackRoll(player), success: true, strokeOfLuck: false, curseOfLoki: false });
 	});
 
 	afterEach(() => {

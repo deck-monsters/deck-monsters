@@ -6,7 +6,6 @@ const { DEFENSE_PHASE } = require('../helpers/phases');
 
 const DelayedHitCard = require('./delayed-hit');
 const HitCard = require('./hit');
-const HealCard = require('./heal');
 const Basilisk = require('../monsters/basilisk');
 const pause = require('../helpers/pause');
 
@@ -19,6 +18,7 @@ describe('./cards/delayed-hit.js', () => {
 	let delayedHitHitCheckStub;
 	let player;
 	let target;
+	let ring;
 
 
 	before(() => {
@@ -46,7 +46,7 @@ describe('./cards/delayed-hit.js', () => {
 			encounterEffects: []
 		};
 
-		const successfulHit = {attackRoll: hit.getAttackRoll(player), success: true, strokeOfLuck: false, curseOfLoki: false };
+		const successfulHit = { attackRoll: hit.getAttackRoll(player), success: true, strokeOfLuck: false, curseOfLoki: false };
 		hitCheckStub.returns(successfulHit);
 		delayedHitHitCheckStub.returns(successfulHit);
 	});

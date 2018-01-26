@@ -4,7 +4,6 @@ const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 
 const HitCard = require('./hit');
-const { roll, max } = require('../helpers/chance');
 const random = require('lodash.random');
 const { DEFENSE_PHASE } = require('../helpers/phases');
 
@@ -22,7 +21,7 @@ class DelayedHit extends HitCard {
 ${super.stats}`;
 	}
 
-	effect (delayingPlayer, target, ring) { // eslint-disable-line no-unused-vars
+	effect (delayingPlayer, target) { // eslint-disable-line no-unused-vars
 		const when = Date.now();
 		const EFFECT_TYPE = `DelayedHitEffect${when}${random(0, 999999)}`;// Make sure these can stack, without the random sometimes in testing two would end up with the same EFFECT_TYPE
 
@@ -32,24 +31,21 @@ ${super.stats}`;
 			ring
 		}) => {
 			if (phase === DEFENSE_PHASE) {
-				const lastHitByOther = delayingPlayer.encounterModifiers.hitLog.find(hitter => {
-					if (hitter.assailant !== delayingPlayer) return hitter;
-				});
+				const lastHitByOther = delayingPlayer.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingPlayer);
 				if (lastHitByOther.when > when) {
 					delayingPlayer.encounterEffects = delayingPlayer.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
 
 					return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
-						.then(() => {
+						.then(() =>
 							// This does not affect the current player or turn in any way, it is a response
 							// to the previous player/turn, so just return the current card so they
 							// game can continue as normal
-							return card;
-						});
+							card);
 				}
 			}
 
 			return card;
-		}
+		};
 
 		delayedHitEffect.effectType = EFFECT_TYPE;
 		delayingPlayer.encounterEffects = [...delayingPlayer.encounterEffects, delayedHitEffect];
