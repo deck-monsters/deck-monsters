@@ -8,8 +8,8 @@ const Gladiator = require('../monsters/gladiator');
 const ForkedStick = require('./forked-stick');
 const pause = require('../helpers/pause');
 
-const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { BARD, FIGHTER, BARBARIAN } = require('../helpers/classes');
+const { GLADIATOR, JINN, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
 describe('./cards/forked-stick.js', () => {
@@ -41,32 +41,32 @@ describe('./cards/forked-stick.js', () => {
 
 		const stats = `${hit.stats}
 
- +2 against Gladiator, Basilisk
- -2 against Minotaur
+ +2 against Basilisk, Gladiator
+ -2 against Jinn, Minotaur
 inneffective against Weeping Angel
 Attempt to pin your opponent between the branches of a forked stick.`;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.freedomThresholdModifier).to.equal(2);
-		expect(forkedStick.attackModifier).to.equal(2);
-		expect(forkedStick.damageModifier).to.equal(0);
+		expect(forkedStick.dexModifier).to.equal(2);
+		expect(forkedStick.strModifier).to.equal(0);
 		expect(forkedStick.hitOnFail).to.be.false;
 		expect(forkedStick.doDamageOnImmobilize).to.be.false;
 		expect(forkedStick.stats).to.equal(stats);
-		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
-		expect(forkedStick.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR]);
-		expect(forkedStick.permittedClassesAndTypes).to.deep.equal([FIGHTER, BARBARIAN]);
+		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
+		expect(forkedStick.weakAgainstCreatureTypes).to.deep.equal([JINN, MINOTAUR]);
+		expect(forkedStick.permittedClassesAndTypes).to.deep.equal([BARD, BARBARIAN, FIGHTER]);
 	});
 
 	it('can be instantiated with options', () => {
 		const forkedStick = new ForkedStick({
-			freedomThresholdModifier: 1, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 1, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.freedomThresholdModifier).to.equal(1);
-		expect(forkedStick.attackModifier).to.equal(4);
-		expect(forkedStick.damageModifier).to.equal(4);
+		expect(forkedStick.dexModifier).to.equal(4);
+		expect(forkedStick.strModifier).to.equal(4);
 		expect(forkedStick.hitOnFail).to.be.true;
 		expect(forkedStick.doDamageOnImmobilize).to.be.true;
 	});
@@ -86,8 +86,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		const atkRoll = forkedStick.getAttackRoll(player, target);
 		const dmgRoll = forkedStick.getDamageRoll(player, target);
 
-		expect(atkRoll.modifier).to.equal(player.attackModifier + 2);
-		expect(dmgRoll.modifier).to.equal(player.damageModifier);
+		expect(atkRoll.modifier).to.equal(player.dexModifier + 2);
+		expect(dmgRoll.modifier).to.equal(player.strModifier);
 	});
 
 	it('can be played against basilisk for a bonus to attack', () => {
@@ -98,8 +98,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		const atkRoll = forkedStick.getAttackRoll(player, target);
 		const dmgRoll = forkedStick.getDamageRoll(player, target);
 
-		expect(atkRoll.modifier).to.equal(player.attackModifier + 2);
-		expect(dmgRoll.modifier).to.equal(player.damageModifier);
+		expect(atkRoll.modifier).to.equal(player.dexModifier + 2);
+		expect(dmgRoll.modifier).to.equal(player.strModifier);
 	});
 
 	it('can be played against minotaurs for a weakened attack', () => {
@@ -110,8 +110,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		const atkRoll = forkedStick.getAttackRoll(player, target);
 		const dmgRoll = forkedStick.getDamageRoll(player, target);
 
-		expect(atkRoll.modifier).to.equal(player.attackModifier - 2);
-		expect(dmgRoll.modifier).to.equal(player.damageModifier);
+		expect(atkRoll.modifier).to.equal(player.dexModifier - 2);
+		expect(dmgRoll.modifier).to.equal(player.strModifier);
 	});
 
 	it('can be played against weeping angel with no bonus/penalty', () => {
@@ -122,8 +122,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		const dmgRoll = forkedStick.getDamageRoll(player, target);
 		const atkRoll = forkedStick.getAttackRoll(player, target);
 
-		expect(dmgRoll.modifier).to.equal(player.damageModifier);
-		expect(atkRoll.modifier).to.equal(player.attackModifier);
+		expect(dmgRoll.modifier).to.equal(player.strModifier);
+		expect(atkRoll.modifier).to.equal(player.dexModifier);
 	});
 
 	it('immobilizes basilisk on hit', () => {

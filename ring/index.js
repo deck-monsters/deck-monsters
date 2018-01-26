@@ -8,11 +8,12 @@ const { calculateXP } = require('../helpers/experience');
 const { getTarget } = require('../helpers/targeting-strategies');
 const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 const delayTimes = require('../helpers/delay-times');
 const pause = require('../helpers/pause');
 
-const MAX_MONSTERS = 5;
+const MAX_BOSSES = 5;
+const MAX_MONSTERS = 8;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
 
@@ -122,19 +123,20 @@ class Ring extends BaseClass {
 				});
 
 				this.channelManager.sendMessages()
-					.then(() => this.startFightTimer({ channel, channelName }));
+					.then(() => this.startFightTimer());
 			});
 	}
 
 	addMonster ({
-		monster, character, channel, channelName
+		monster, character, channel, channelName, isBoss
 	}) {
 		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
 			const contestant = {
 				monster,
 				character,
 				channel,
-				channelName
+				channelName,
+				isBoss
 			};
 
 			this.contestants = shuffle([...this.contestants, contestant]);
@@ -153,7 +155,7 @@ class Ring extends BaseClass {
 				});
 
 				this.channelManager.sendMessages()
-					.then(() => this.startFightTimer({ channel, channelName }));
+					.then(() => this.startFightTimer());
 			}
 		} else {
 			this.channelManager.queueMessage({
@@ -216,30 +218,57 @@ class Ring extends BaseClass {
 		this.emit('clear');
 	}
 
-	startFightTimer ({ channel, channelName }) {
+	startFightTimer () {
 		clearTimeout(this.fightTimer);
 
-		if (this.contestants.length >= MIN_MONSTERS) {
-			this.channelManager.queueMessage({
+		const getPlayerContestants = () => {
+			let hasBoss = false;
+			const playerContestants = this.contestants.filter((contestant) => {
+				if (contestant.isBoss) {
+					hasBoss = true;
+					return false;
+				}
+
+				return true;
+			});
+
+			return {
+				contestants: playerContestants,
+				numberOfMonstersInRing: playerContestants.length + (hasBoss ? 1 : 0)
+			};
+		};
+
+		const { contestants, numberOfMonstersInRing } = getPlayerContestants();
+
+		if (numberOfMonstersInRing >= MIN_MONSTERS) {
+			contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
 				announce: `Fight will begin in ${Math.floor(FIGHT_DELAY / 1000)} seconds.`,
 				channel,
 				channelName
-			});
+			}));
 
 			this.fightTimer = pause.setTimeout(() => {
-				if (this.contestants.length >= 2) {
+				const { numberOfMonstersInRing: numberOfMonstersStillInRing } = getPlayerContestants();
+
+				if (numberOfMonstersStillInRing >= MIN_MONSTERS) {
 					this.channelManager.sendMessages()
 						.then(() => this.fight());
 				}
 			}, FIGHT_DELAY);
+		} else if (numberOfMonstersInRing <= 0) {
+			this.emit('narration', {
+				narration: 'The ring is quiet save for the faint sound of footsteps fleeing into the distance.'
+			});
 		} else {
-			const needed = MIN_MONSTERS - this.contestants.length;
+			const needed = MIN_MONSTERS - numberOfMonstersInRing;
 			const monster = needed > 1 ? 'monsters' : 'monster';
-			this.channelManager.queueMessage({
-				announce: `Fight countdown will begin once ${needed} more ${monster} join the ring.`,
+			const join = needed > 1 ? 'join' : 'joins';
+
+			contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
+				announce: `Fight countdown will begin once ${needed} more ${monster} ${join} the ring.`,
 				channel,
 				channelName
-			});
+			}));
 		}
 	}
 
@@ -294,7 +323,11 @@ class Ring extends BaseClass {
 
 			// Let's find our target
 			// This where we could do some fancy targetting logic if we wanted to
-			const targetContestant = getTarget({ playerContestant, contestants: getAllActiveContestants() });
+			const targetContestant = getTarget({
+				contestants: getAllActiveContestants(),
+				playerContestant,
+				strategy: playerContestant.monster.targetingStrategy
+			});
 			const { monster: proposedTarget } = targetContestant;
 
 			// Find the card in the current player's hand at the current index
@@ -398,6 +431,12 @@ class Ring extends BaseClass {
 						round
 					});
 
+					// Limit to 10 rounds (anyone left alive at that point will be a winner)
+					if (round === 10) {
+						resolve();
+						return;
+					}
+
 					// Increment the round counter
 					round += 1;
 
@@ -469,7 +508,7 @@ class Ring extends BaseClass {
 						});
 					} else {
 						this.channelManager.queueMessage({
-							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns[1]}.`,
+							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
 							channel,
 							channelName,
 							event: { name: 'loss', properties: { contestant } }
@@ -577,24 +616,30 @@ class Ring extends BaseClass {
 
 				pause.setTimeout(() => {
 					ring.spawnBoss();
-					ring.startBossTimer(); // Do it again in an hour
+					ring.startBossTimer(); // Do it again in about an hour
 				}, 120000);
 			}, random(2100000, 3480000));
 		}
 	}
 
 	spawnBoss () { // eslint-disable-line consistent-return
+		const numberOfBossesInRing = this.contestants.reduce((total, contestant) => total + (contestant.isBoss ? 1 : 0), 0);
+
 		// Only try to enter the ring if there's not a current fight in progress
-		if (!this.inEncounter) {
+		if (!this.inEncounter && numberOfBossesInRing < MAX_BOSSES) {
 			const contestant = randomContestant();
 
 			this.addMonster(contestant);
 
-			// Leave the ring after 10 minutes if no one joins the fight
-			const ring = this;
-			pause.setTimeout(() => {
-				ring.removeBoss(contestant);
-			}, 600000);
+			// What should we do after 10 minutes?
+			// 50/50 chance we'll stick around
+			if (random(1)) {
+				// Otherwise, leave the ring if no one joins the fight
+				const ring = this;
+				pause.setTimeout(() => {
+					ring.removeBoss(contestant);
+				}, 600000);
+			}
 
 			return contestant;
 		}

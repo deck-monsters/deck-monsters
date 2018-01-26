@@ -6,12 +6,14 @@ const { GLADIATOR, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-type
 const { ATTACK_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
 const { signedNumber } = require('../helpers/signed-number');
+const { IMPOSSIBLE } = require('../helpers/probabilities');
+const { FREE } = require('../helpers/costs');
 
 class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		attackModifier,
-		damageModifier,
+		dexModifier,
+		strModifier,
 		hitOnFail,
 		doDamageOnImmobilize,
 		icon = '😵',
@@ -25,8 +27,8 @@ class ImmobilizeCard extends HitCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			attackModifier,
-			damageModifier,
+			dexModifier,
+			strModifier,
 			hitOnFail,
 			doDamageOnImmobilize,
 			freedomThresholdModifier,
@@ -83,47 +85,47 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
-	get attackModifier () {
-		return this.options.attackModifier;
+	get dexModifier () {
+		return this.options.dexModifier;
 	}
 
-	set attackModifier (attackModifier) {
+	set dexModifier (dexModifier) {
 		this.setOptions({
-			attackModifier
+			dexModifier
 		});
 	}
 
-	get damageModifier () {
-		return this.options.damageModifier;
+	get strModifier () {
+		return this.options.strModifier;
 	}
 
 	getAttackModifier (target) {
 		if (this.weakAgainstCreatureTypes.includes(target.name)) {
-			return -this.attackModifier;
+			return -this.dexModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
-			return this.attackModifier;
+			return this.dexModifier;
 		}
 		return 0;
 	}
 
 	get stats () {
-		let strengthModifiers = '\n';
+		let strModifiers = '\n';
 		if (this.strongAgainstCreatureTypes.length && this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] })) {
 			const strongAgainst = this.strongAgainstCreatureTypes.join(', ');
-			strengthModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}`;
+			strModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}`;
 		}
 
 		if (this.weakAgainstCreatureTypes.length && this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] })) {
 			const weakAgainst = this.weakAgainstCreatureTypes.join(', ');
-			strengthModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}`;
+			strModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}`;
 		}
 
 		if (this.uselessAgainstCreatureTypes.length) {
 			const uselessAgainst = this.uselessAgainstCreatureTypes.join(', ');
-			strengthModifiers += `\ninneffective against ${uselessAgainst}`;
+			strModifiers += `\ninneffective against ${uselessAgainst}`;
 		}
 
-		return `${super.stats}${strengthModifiers}`;
+		return `${super.stats}${strModifiers}`;
 	}
 
 	get freedomThresholdModifier () {
@@ -150,7 +152,11 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	getAttackRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player.attackModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
+	}
+
+	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
+		return target.ac;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
@@ -159,31 +165,22 @@ class ImmobilizeCard extends HitCard {
 		const canHaveEffect = !this.uselessAgainstCreatureTypes.includes(target.creatureType);
 
 		if (!alreadyImmobilized && canHaveEffect) {
-			const attackSuccess = this.checkSuccess(attackRoll, target.ac);
-
-			this.emit('rolling', {
-				reason: `to see if ${player.pronouns[0]} ${this.actions[1]} ${target.givenName}`,
-				card: this,
-				roll: attackRoll,
-				player,
-				target,
-				outcome: ''
-			});
+			const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
 
 			const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...' : ''}`;
 			const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
 
 			this.emit('rolled', {
-				reason: `for ${this.actions[0]}`,
+				reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}.`,
 				card: this,
 				roll: attackRoll,
-				player,
-				target,
-				outcome
+				who: player,
+				outcome,
+				vs: this.getTargetPropValue(target)
 			});
 
 			if (attackSuccess.success) {
-				target.encounterModifiers = { pinnedTurns: 0 };
+				target.encounterModifiers.pinnedTurns = 0;
 
 				const immobilizeEffect = ({
 					card,
@@ -192,7 +189,7 @@ class ImmobilizeCard extends HitCard {
 					if (phase === ATTACK_PHASE) {
 						if (!player.dead) {
 							this.emit('effect', {
-								effectResult: `${this.icon}  ${this.actions[2]} by`,
+								effectResult: `${this.icon} ${this.actions[2]} by`,
 								player,
 								target,
 								ring
@@ -207,12 +204,12 @@ class ImmobilizeCard extends HitCard {
 							}
 
 							this.emit('rolled', {
-								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free`,
+								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free.`,
 								card: this,
 								roll: freedomRoll,
-								player: target,
-								target: player,
-								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`
+								who: target,
+								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`,
+								vs: this.getFreedomThreshold(player, target)
 							});
 
 							if (success) {
@@ -222,7 +219,7 @@ class ImmobilizeCard extends HitCard {
 									player.hit(2, target, this);
 								}
 							} else {
-								target.encounterModifiers = { pinnedTurns: target.encounterModifiers.pinnedTurns + 1 };
+								target.encounterModifiers.pinnedTurns = (target.encounterModifiers.pinnedTurns || 0) + 1;
 								if (this.ongoingDamage > 0) {
 									this.emit('narration', {
 										narration: `${target.givenName} takes ongoing damage from being ${this.actions[2]}`
@@ -236,7 +233,7 @@ class ImmobilizeCard extends HitCard {
 							target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
 
 							this.emit('narration', {
-								narration: `${target.givenName} is no longer ${this.actions[2]}. ${target.pronouns[0]} pushes the limp dead body of ${player.givenName} off of ${target.pronouns[1]}self and proudly stands prepared to fight`
+								narration: `${target.givenName} is no longer ${this.actions[2]}. ${target.pronouns.he} pushes the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stands prepared to fight`
 							});
 						}
 					}
@@ -279,23 +276,24 @@ class ImmobilizeCard extends HitCard {
 }
 
 ImmobilizeCard.cardType = 'Immobilize';
+ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
 ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobilization, will hit instead
-ImmobilizeCard.probability = 0;// This card is never intended to be played on it's own, but I need access to parts of it for card progressions, so it needs to be instantiatable.
+ImmobilizeCard.probability = IMPOSSIBLE.probability; // This card is never intended to be played on it's own, but I need access to parts of it for card progressions, so it needs to be instantiatable.
 ImmobilizeCard.description = 'Immobilize your adversary.';
-ImmobilizeCard.cost = 6;
 ImmobilizeCard.level = 1;
+ImmobilizeCard.cost = FREE.cost;
+
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,
-	attackModifier: 2,
-	damageModifier: 0,
+	dexModifier: 2,
+	strModifier: 0,
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: 2,
 	ongoingDamage: 0
 };
-ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
 
 ImmobilizeCard.flavors = {
 	hits: [

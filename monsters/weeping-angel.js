@@ -23,8 +23,9 @@ const DESCRIPTORS = [
 class WeepingAngel extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
-			attackModifier: 3,
-			damageModifier: -1,
+			dexModifier: 1,
+			strModifier: -1,
+			intModifier: 2,
 			color: DEFAULT_COLOR,
 			nationality: sample(NATIONALITIES),
 			descriptor: sample(DESCRIPTORS),
@@ -47,7 +48,7 @@ class WeepingAngel extends BaseMonster {
 	}
 
 	get description () {
-		return `a ${this.color} weeping angel. On meeting ${this.pronouns[1]} one might form the following three impressions: that ${this.pronouns[0]} was ${this.nationality}, that ${this.pronouns[0]} was intelligent, and that ${this.pronouns[0]} was ${this.descriptor} than a treeful of monkeys on nitrous oxide.`;
+		return `A${this.color[0].match(/[aeiou]/i) ? 'n' : ''} ${this.color} weeping angel. On meeting ${this.pronouns.him} one might form the following three impressions: that ${this.pronouns.he} was ${this.nationality}, that ${this.pronouns.he} was intelligent, and that ${this.pronouns.he} was ${this.descriptor} than a treeful of monkeys on nitrous oxide.`;
 	}
 }
 

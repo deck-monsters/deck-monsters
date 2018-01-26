@@ -5,6 +5,8 @@ const CurseCard = require('./curse');
 const { WEEPING_ANGEL } = require('../helpers/creature-types');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 const { roll } = require('../helpers/chance');
+const { EPIC } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 class BlinkCard extends CurseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -43,7 +45,7 @@ class BlinkCard extends CurseCard {
 
 	getCurseOverflowNarrative (player, target) { // eslint-disable-line class-methods-use-this
 		return `${target.givenName}'s xp penalties have been maxed out.
-${player.givenName}'s drain takes from HP instead.`;
+${player.givenName}'s drain takes from hp instead.`;
 	}
 
 	get stats () {
@@ -53,24 +55,22 @@ ${player.givenName}'s drain takes from HP instead.`;
 	effect (blinkPlayer, blinkTarget, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		blinkTarget.blinkedTurns = 0;
 		const attackRoll = this.getAttackRoll(blinkPlayer);
-		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.ac);
+		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.int);
 
-		this.emit('rolling', {
-			reason: `vs ${blinkTarget.givenName}'s AC (${blinkTarget.ac}) to see if ${blinkPlayer.pronouns[0]} time shifts ${blinkTarget.givenName}`,
-			card: this,
-			roll: attackRoll,
-			player: blinkPlayer,
-			target: blinkTarget,
-			outcome: ''
-		});
+		let timeShiftReason;
+		if (blinkPlayer === blinkTarget) {
+			timeShiftReason = `vs ${blinkTarget.pronouns.his} own int (${blinkTarget.int}) in confusion.`;
+		} else {
+			timeShiftReason = `vs ${blinkTarget.givenName}'s int (${blinkTarget.int}) in an attempt to time-shift ${blinkTarget.pronouns.him}.`;
+		}
 
 		this.emit('rolled', {
-			reason: `vs AC (${blinkTarget.ac}) to try and touch ${blinkTarget.givenName} to time-shift ${blinkTarget.pronouns[1]}`,
+			reason: timeShiftReason,
 			card: this,
 			roll: attackRoll,
-			player: blinkPlayer,
-			target: blinkTarget,
-			outcome: `time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`
+			who: blinkPlayer,
+			outcome: `Time shift ${attackSuccess.success ? 'succeeded!' : 'failed.'} ${blinkTarget.givenName} ${attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}`,
+			vs: blinkTarget.int
 		});
 
 		if (attackSuccess.success) {
@@ -99,7 +99,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 					if (turnsLeftToBlink && !blinkPlayer.dead) {
 						blinkTarget.blinkedTurns++;
 
-						const effectResult = `${this.icon}  time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
+						const effectResult = `${this.icon} time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
 						this.emit('effect', {
 							effectResult,
 							player: blinkPlayer,
@@ -110,8 +110,8 @@ ${player.givenName}'s drain takes from HP instead.`;
 						const hpToSteal = roll({ primaryDice: this.energyToStealDice });
 						const xpToSteal = roll({ primaryDice: this.curseAmountDice });
 						const combinedRoll = {
-							primaryDice: `${hpToSteal.primaryDice}(HP) & ${xpToSteal.primaryDice}(XP)`,
-							result: `${hpToSteal.result}(HP) & ${xpToSteal.result}(XP)`,
+							primaryDice: `${hpToSteal.primaryDice} (hp) & ${xpToSteal.primaryDice} (xp)`,
+							result: `${hpToSteal.result} (hp) & ${xpToSteal.result} (xp)`,
 							naturalRoll: {
 								result: `${hpToSteal.naturalRoll.result} & ${xpToSteal.naturalRoll.result}`
 							},
@@ -120,22 +120,18 @@ ${player.givenName}'s drain takes from HP instead.`;
 						};
 						this.curseAmount = -xpToSteal.result;
 
-						this.emit('rolling', {
-							reason: `to steal potential energy from ${blinkTarget.identityWithHp}`,
-							card: this,
-							roll: combinedRoll,
-							player: blinkPlayer,
-							target: blinkTarget,
-							outcome: ''
-						});
+						let potentialEngeryReason;
+						if (blinkPlayer === blinkTarget) {
+							potentialEngeryReason = `to steal potential energy from ${blinkTarget.pronouns.him}self.`;
+						} else {
+							potentialEngeryReason = `to steal potential energy from ${blinkTarget.identityWithHp}.`;
+						}
 
 						this.emit('rolled', {
-							reason: 'to see how much potential energy to steal',
+							reason: potentialEngeryReason,
 							card: this,
 							roll: combinedRoll,
-							player: blinkPlayer,
-							target: blinkTarget,
-							outcome: ''
+							who: blinkPlayer
 						});
 
 						// drain hp
@@ -151,7 +147,7 @@ ${player.givenName}'s drain takes from HP instead.`;
 						blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== 'BlinkEffect');
 
 						this.emit('narration', {
-							narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns[2]} eyes and finds ${blinkTarget.pronouns[1]}self in an unfamiliar time.`
+							narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns.his} eyes and finds ${blinkTarget.pronouns.him}self in an unfamiliar time.`
 						});
 					}
 				}
@@ -177,11 +173,13 @@ ${player.givenName}'s drain takes from HP instead.`;
 }
 
 BlinkCard.cardType = 'Blink';
-BlinkCard.probability = 5;
-BlinkCard.description = "Consume your victim's potential energy";
-BlinkCard.cost = 4;
-BlinkCard.level = 0;
 BlinkCard.permittedClassesAndTypes = [WEEPING_ANGEL];
+BlinkCard.probability = EPIC.probability;
+BlinkCard.description = "Consume your victim's potential energy";
+BlinkCard.level = 0;
+BlinkCard.cost = EXPENSIVE.cost;
+BlinkCard.notForSale = true;
+
 BlinkCard.defaults = {
 	...CurseCard.defaults,
 	turnsToBlink: 1,

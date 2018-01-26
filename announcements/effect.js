@@ -1,9 +1,9 @@
 const announceEffect = (publicChannel, channelManager, className, card, {
-	player, target, effectResult
+	player, target, effectResult, narration
 }) => {
 	publicChannel({
 		announce:
-`${target.icon} ${target.givenName} is currently ${effectResult} ${player.icon} ${player.givenName}
+`${target.icon} ${target.givenName} is currently ${effectResult} ${player.icon} ${player.givenName}.${narration ? ` ${narration}` : ''}
 `
 	});
 };

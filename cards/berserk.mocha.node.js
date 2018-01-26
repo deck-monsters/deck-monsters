@@ -1,19 +1,19 @@
+/* eslint-disable max-len */
+
 const { expect, sinon } = require('../shared/test-setup');
 
 const BerserkCard = require('./berserk');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
-const { roll } = require('../helpers/chance');
 
 const { BARBARIAN } = require('../helpers/classes');
 
-const ultraComboNarration = [];
-for (let i = 17; i < 101; i++) {
-	ultraComboNarration.push(`HUMILIATION! ${i} hits`);
+const ultimateComboNarration = [];
+for (let i = 5; i < 101; i++) {
+	ultimateComboNarration.push(`HUMILIATION! ${i} hits`);
 }
-ultraComboNarration.push('ULTRA COMBO! 100 HITS');
-
+ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (5150 total damage).');
 
 describe('./cards/berserk.js', () => {
 	let channelStub;
@@ -44,7 +44,7 @@ describe('./cards/berserk.js', () => {
 		expect(berserk).to.be.an.instanceof(BerserkCard);
 		expect(berserk.bigFirstHit).to.be.false;
 		expect(berserk.damageAmount).to.equal(1);
-		expect(berserk.stats).to.equal('Hit: 1d20 vs AC until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
+		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');
 	});
 
 	it('can be instantiated with options', () => {
@@ -92,7 +92,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = berserk.getAttackRoll(player);
 		hitCheckStub.onFirstCall().returns({
 			attackRoll,
 			success: true,
@@ -132,6 +132,136 @@ describe('./cards/berserk.js', () => {
 			});
 	});
 
+	describe('attackRollBonus', () => {
+		it('takes iterations and intBonusFatigue into account', () => {
+			const berserk = new BerserkCard();
+			const player = new Gladiator({ name: 'player' });
+
+			player.xp = 100;
+			expect(player.intModifier).to.equal(2);
+			expect(player.dexModifier).to.equal(3);
+
+			berserk.intBonusFatigue = 0;
+			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier);
+			berserk.iterations = 2;
+			berserk.intBonusFatigue = 0;
+			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier + player.intModifier);
+			berserk.intBonusFatigue = 1;
+			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier + (player.intModifier - 1));
+			berserk.intBonusFatigue = 10;
+			expect(berserk.getAttackRollBonus(player)).to.equal(player.dexModifier);
+		});
+	});
+
+	describe('increaseFatigue', () => {
+		it('calculates fatigue properly', () => {
+			const berserk = new BerserkCard();
+
+			expect(berserk.intBonusFatigue).to.equal(0);
+			berserk.increaseFatigue();
+			expect(berserk.intBonusFatigue).to.equal(1);
+		});
+	});
+
+	it('calls increaseFatigue each effectLoop iteration as expected', () => {
+		const berserk = new BerserkCard();
+		const player = new Gladiator({ name: 'player' });
+		const target = new Minotaur({ name: 'target' });
+
+		const berserkProto = Object.getPrototypeOf(berserk);
+		const hitProto = Object.getPrototypeOf(berserkProto);
+		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
+		const increaseFatigueSpy = sinon.spy(berserkProto, 'increaseFatigue');
+		const resetFatigueSpy = sinon.spy(berserkProto, 'resetFatigue');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = berserk.getAttackRoll(player);
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.onCall(4).returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: true,
+			curseOfLoki: false
+		});
+		hitCheckStub.onCall(8).returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		expect(berserk.intBonusFatigue).to.equal(0);
+
+		return berserk
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				hitCheckStub.restore();
+				increaseFatigueSpy.restore();
+				resetFatigueSpy.restore();
+
+				expect(resetFatigueSpy.callCount).to.equal(3);
+				return expect(increaseFatigueSpy.callCount).to.equal(7);
+			});
+	});
+
+	it('resets intBonusFatigue after play', () => {
+		const berserk = new BerserkCard();
+		const player = new Gladiator({ name: 'player' });
+		const target = new Minotaur({ name: 'target' });
+
+		const berserkProto = Object.getPrototypeOf(berserk);
+		const hitProto = Object.getPrototypeOf(berserkProto);
+		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
+
+		const ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		const attackRoll = berserk.getAttackRoll(player);
+		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+		hitCheckStub.onCall(4).returns({
+			attackRoll,
+			success: false,
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
+
+		expect(berserk.intBonusFatigue).to.equal(0);
+
+		return berserk
+			.play(player, target, ring, ring.contestants)
+			.then(() => {
+				hitCheckStub.restore();
+
+				return expect(berserk.intBonusFatigue).to.equal(0);
+			});
+	});
+
 	it('Increases attack strength on strokeOfLuck', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
@@ -162,20 +292,14 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
-		hitCheckStub.onFirstCall().returns({
-			attackRoll,
-			success: true,
-			strokeOfLuck: true,
-			curseOfLoki: false
-		});
-		hitCheckStub.onSecondCall().returns({
-			attackRoll,
-			success: true,
-			strokeOfLuck: true,
-			curseOfLoki: false
-		});
+		const attackRoll = berserk.getAttackRoll(player);
 		hitCheckStub.returns({
+			attackRoll,
+			success: true,
+			strokeOfLuck: true,
+			curseOfLoki: false
+		});
+		hitCheckStub.onThirdCall().returns({
 			attackRoll,
 			success: false,
 			strokeOfLuck: false,
@@ -196,11 +320,11 @@ describe('./cards/berserk.js', () => {
 			});
 	});
 
-	it('Continues hitting after opponent is dead, but does not do combo damage after reaching maxHp/2', () => {
+	it('Continues hitting after opponent is dead, but does not do combo damage after exceeding maxHp/2, and does not permakill player even if every hit is a crit', () => {
 		const berserk = new BerserkCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target', hpVariance: 0 });
-		const before = target.hp;
+		target.hp = 1;
 
 		const berserkProto = Object.getPrototypeOf(berserk);
 		const hitProto = Object.getPrototypeOf(berserkProto);
@@ -227,11 +351,11 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = berserk.getAttackRoll(player);
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,
-			strokeOfLuck: false,
+			strokeOfLuck: true,
 			curseOfLoki: false
 		});
 
@@ -261,10 +385,11 @@ describe('./cards/berserk.js', () => {
 				expect(berserkEffectLoopSpy.callCount).to.equal(101);
 				expect(hitCheckStub.callCount).to.equal(101);
 				expect(hitEffectSpy.callCount).to.equal(0);
-				expect(hitSpy.callCount).to.equal(16);
-				expect(narrations).to.deep.equal(ultraComboNarration);
+				expect(hitSpy.callCount).to.equal(4);
+				expect(narrations).to.deep.equal(ultimateComboNarration);
+				expect(target.destroyed).to.be.false;
 
-				return expect(target.hp).to.equal(before - 16);
+				return expect(target.hp).to.equal(-13);
 			});
 	});
 
@@ -300,7 +425,7 @@ describe('./cards/berserk.js', () => {
 			}
 		};
 
-		const attackRoll = roll({ primaryDice: '1d20', modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		const attackRoll = berserk.getAttackRoll(player);
 		hitCheckStub.returns({
 			attackRoll,
 			success: true,
@@ -336,7 +461,7 @@ describe('./cards/berserk.js', () => {
 				expect(hitEffectSpy.callCount).to.equal(0);
 				expect(hitSpy.callCount).to.equal(5);
 
-				expect(narrations).to.deep.equal(['COMBO BREAKER!']);
+				expect(narrations).to.deep.equal(['COMBO BREAKER!  (Broke a 4 hit combo, 4 total damage)']);
 
 				expect(player.hp).to.equal(playerBeforeHp - 1);
 				return expect(target.hp).to.equal(before - 4);

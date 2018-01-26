@@ -4,7 +4,7 @@ const pause = require('../../helpers/pause');
 const Beastmaster = require('../../characters/beastmaster');
 
 const { hydrateDeck } = require('./hydrate');
-const getCardCounts = require('./card-counts');
+const getCardCounts = require('../../items/helpers/counts').getItemCounts;
 
 const testDeck = `[
 	{
@@ -183,7 +183,7 @@ const testDeck = `[
 	}
 ]`;
 
-describe('./cards/index.js', () => {
+describe('./cards/helpers/hydrate.js', () => {
 	let pauseStub;
 
 	before(() => {
@@ -202,21 +202,17 @@ describe('./cards/index.js', () => {
 		pause.setTimeout.restore();
 	});
 
-	describe('./cards/helpers/hydrate.js', () => {
-		it('can restore from save state, ensuring card minimums are met', () => {
+	describe('hydrateDeck', () => {
+		it('can restore from save state', () => {
 			const player = new Beastmaster();
 
 			const deck = hydrateDeck(testDeck, player);
 
 			const cardCounts = getCardCounts(deck);
 
-			expect(cardCounts.Hit).to.equal(4);
+			expect(cardCounts.Hit).to.equal(1);
 			expect(cardCounts.Heal).to.equal(9);
 			expect(cardCounts.Flee).to.equal(2);
-			expect(cardCounts.Blink).to.equal(1);
-			expect(cardCounts.Coil).to.equal(1);
-			expect(cardCounts['Horn Gore']).to.equal(1);
-			expect(cardCounts['Battle Focus']).to.equal(1);
 			expect(cardCounts.Blast).to.equal(1);
 			expect(cardCounts['Random Play']).to.equal(9);
 			expect(cardCounts.Soften).to.equal(2);

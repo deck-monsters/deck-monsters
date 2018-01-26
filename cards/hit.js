@@ -2,15 +2,19 @@
 
 const BaseCard = require('./base');
 const { roll, max } = require('../helpers/chance');
+const { ABUNDANT } = require('../helpers/probabilities');
+const { ALMOST_NOTHING } = require('../helpers/costs');
 
 class HitCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		flavors,
 		attackDice,
 		damageDice,
+		targetProp,
 		icon = '👊'
 	} = {}) {
-		super({ attackDice, damageDice, icon });
+		super({ flavors, targetProp, attackDice, damageDice, icon });
 	}
 
 	get attackDice () {
@@ -21,41 +25,46 @@ class HitCard extends BaseCard {
 		return this.options.damageDice;
 	}
 
+	get targetProp () {
+		return this.options.targetProp;
+	}
+
 	get stats () {
-		return `Hit: ${this.attackDice} vs AC / Damage: ${this.damageDice}`;
+		return `Hit: ${this.attackDice} vs ${this.targetProp.toUpperCase()} / Damage: ${this.damageDice}`;
 	}
 
 	getAttackRoll (player) {
-		return roll({ primaryDice: this.attackDice, modifier: player.attackModifier, bonusDice: player.bonusAttackDice });
+		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	hitCheck (player, target) {
 		const attackRoll = this.getAttackRoll(player, target);
 
-		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac}) to determine if the hit was a success`,
-			card: this,
-			roll: attackRoll,
-			player,
-			target
-		});
-
-		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target.ac);
+		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(attackRoll, target[this.targetProp]);
 		let commentary;
 
 		if (strokeOfLuck) {
 			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
 		} else if (curseOfLoki) {
-			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns[2]} attack back against ${player.pronouns[1]}.`;
+			commentary = `${player.givenName} rolled a 1. Unfortunately, while trying to attack, ${target.givenName} flings ${player.pronouns.his} attack back against ${player.pronouns.him}.`;
+		} else if (tie) {
+			commentary = 'Miss... Tie goes to the defender.';
+		}
+
+		let reason;
+		if (player === target) {
+			reason = `vs ${target.pronouns.his} own ${this.targetProp.toLowerCase()} (${target[this.targetProp]}) in confusion.`;
+		} else {
+			reason = `vs ${target.givenName}'s ${this.targetProp.toLowerCase()} (${target[this.targetProp]}) to determine if the hit was a success.`;
 		}
 
 		this.emit('rolled', {
-			reason: `vs AC (${target.ac})`,
+			reason,
 			card: this,
 			roll: attackRoll,
-			player,
-			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			who: player,
+			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
+			vs: target[this.targetProp]
 		});
 
 		return {
@@ -67,7 +76,7 @@ class HitCard extends BaseCard {
 	}
 
 	getDamageRoll (player) {
-		return roll({ primaryDice: this.damageDice, modifier: player.damageModifier, bonusDice: player.bonusDamageDice });
+		return roll({ primaryDice: this.damageDice, modifier: player.strModifier, bonusDice: player.bonusDamageDice });
 	}
 
 	rollForDamage (player, target, strokeOfLuck) {
@@ -78,26 +87,15 @@ class HitCard extends BaseCard {
 			damageRoll.naturalRoll.result = max(this.damageDice);
 			damageRoll.result = max(this.damageDice) + damageRoll.modifier;
 		} else {
-			this.emit('rolling', {
-				reason: `for damage against ${target.givenName}`,
-				card: this,
-				roll: damageRoll,
-				player,
-				target,
-				outcome: ''
-			});
-
 			if (damageRoll.result < 1) {
 				damageRoll.result = 1;
 			}
 
 			this.emit('rolled', {
-				reason: 'for damage',
+				reason: 'for damage.',
 				card: this,
 				roll: damageRoll,
-				player,
-				target,
-				outcome: ''
+				who: player
 			});
 		}
 
@@ -137,13 +135,15 @@ class HitCard extends BaseCard {
 }
 
 HitCard.cardType = 'Hit';
-HitCard.probability = 90;
+HitCard.probability = (ABUNDANT.probability + 10);
 HitCard.description = 'A basic attack, the staple of all good monsters.';
-HitCard.cost = 4;
 HitCard.level = 0;
+HitCard.cost = ALMOST_NOTHING.cost;
+
 HitCard.defaults = {
 	attackDice: '1d20',
-	damageDice: '1d6'
+	damageDice: '1d6',
+	targetProp: 'ac'
 };
 
 module.exports = HitCard;

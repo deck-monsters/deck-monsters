@@ -52,10 +52,10 @@ const charAnnouncer = what => announcer('charlemagne', what);
 let char;
 let charCards;
 
-const BOSS_ID = 666;
-const bossAnnouncer = what => announcer('boss', what);
-let boss;
-let bossCards;
+// const BOSS_ID = 666;
+// const bossAnnouncer = what => announcer('boss', what);
+// let boss;
+// let bossCards;
 
 return Promise
 	.resolve()
@@ -64,39 +64,33 @@ return Promise
 	}))
 	.then((character) => {
 		vlad = character;
-		vladCards = [...shuffle(vlad.character.deck).slice(0, 5)];
+		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
 		id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0, xp: 200
 	}))
 	.then((character) => {
 		char = character;
-		charCards = [...shuffle(char.character.deck).slice(0, 5)];
+		charCards = [...shuffle(char.character.deck).slice(0, 9)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
 	})
-	.then(() => slackdem.getCharacter(bossAnnouncer, BOSS_ID, {
-		id: BOSS_ID, name: 'boss', type: 0, gender: 0, icon: 0, xp: 500
-	}))
-	.then((character) => {
-		boss = character;
-		bossCards = [...shuffle(boss.character.deck).slice(0, 5)];
-	})
+	// .then(() => vlad.spawnMonster())
 	.then(() => vlad.spawnMonster({
-		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 100
+		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 300
 	}))
 	// .then(() => vlad.equipMonster({ monsterName: 'jerry', cardSelection: 'brain drain, pick pocket, hit' }));
 	.then(() => vlad.spawnMonster({
-		type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 100
+		type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 300
 	}))
 	.then(() => char.spawnMonster({
-		type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards, xp: 200
+		type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards, xp: 300
 	}))
 	.then(() => char.spawnMonster({
-		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 200
+		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 300
 	}))
-	.then(() => boss.spawnMonster({
-		type: 0, name: 'king', color: 'brown', gender: 1, cards: bossCards, xp: 500
+	.then(() => char.spawnMonster({
+		type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
 	}))
 	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
 	.then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))
@@ -105,4 +99,5 @@ return Promise
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
-	.then(() => boss.sendMonsterToTheRing());
+	.then(() => slackdem.getRing().spawnBoss())
+	.then(() => slackdem.getRing().spawnBoss());

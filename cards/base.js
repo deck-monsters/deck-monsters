@@ -2,8 +2,6 @@ const Promise = require('bluebird');
 
 const BaseItem = require('../items/base');
 
-const { max } = require('../helpers/chance');
-
 class BaseCard extends BaseItem {
 	constructor (options) {
 		super(options);
@@ -21,20 +19,16 @@ class BaseCard extends BaseItem {
 		return this.itemType;
 	}
 
+	get isAreaOfEffect () {
+		return !!this.constructor.isAreaOfEffect;
+	}
+
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
-		let strokeOfLuck = false;
-		let curseOfLoki = false;
+		const success = !roll.curseOfLoki && (roll.strokeOfLuck || targetNumber < roll.result);
 
-		// Stroke of Luck
-		if (roll.naturalRoll.result === max(roll.primaryDice)) {
-			strokeOfLuck = true;
-		} else if (roll.naturalRoll.result === 1) {
-			curseOfLoki = true;
-		}
+		const tie = targetNumber === roll.result;
 
-		const success = !curseOfLoki && (strokeOfLuck || targetNumber < roll.result);
-
-		return { success, strokeOfLuck, curseOfLoki };
+		return { success, strokeOfLuck: roll.strokeOfLuck, curseOfLoki: roll.curseOfLoki, tie };
 	}
 
 	getTargets (player, proposedTarget, area, activeContestants) { // eslint-disable-line class-methods-use-this, no-unused-vars

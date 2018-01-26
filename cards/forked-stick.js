@@ -2,13 +2,15 @@
 
 const ImmobilizeCard = require('./immobilize');
 
-const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { BARD, BARBARIAN, FIGHTER } = require('../helpers/classes');
+const { BASILISK, GLADIATOR, JINN, MINOTAUR } = require('../helpers/creature-types');
+const { UNCOMMON } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
 
 class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		attackModifier,
+		dexModifier,
 		hitOnFail,
 		icon = '⑂',
 		...rest
@@ -16,7 +18,7 @@ class ForkedStickCard extends ImmobilizeCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			attackModifier,
+			dexModifier,
 			hitOnFail
 		});
 	}
@@ -27,22 +29,25 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 }
 
 ForkedStickCard.cardType = 'Forked Stick';
-ForkedStickCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
-ForkedStickCard.probability = 30;
+ForkedStickCard.actions = ['pin', 'pins', 'pinned'];
+ForkedStickCard.permittedClassesAndTypes = [BARD, BARBARIAN, FIGHTER];
+ForkedStickCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
+ForkedStickCard.weakAgainstCreatureTypes = [JINN, MINOTAUR];
+ForkedStickCard.probability = UNCOMMON.probability;
 ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
-ForkedStickCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
-ForkedStickCard.weakAgainstCreatureTypes = [MINOTAUR];
+ForkedStickCard.cost = REASONABLE.cost;
+
 ForkedStickCard.defaults = {
 	...ImmobilizeCard.defaults
 };
-ForkedStickCard.actions = ['pin', 'pins', 'pinned'];
 
 ForkedStickCard.flavors = {
 	hits: [
 		['hits', 80],
 		['pokes (in a not-so-facebook-flirting kind of way)', 50],
 		['snags and brutally lofts into the air their thoroughly surprised opponent', 5]
-	]
+	],
+	spike: 'branch'
 };
 
 module.exports = ForkedStickCard;

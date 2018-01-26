@@ -27,7 +27,7 @@ describe('./cards/vengeful-rampage.js', () => {
 		const venegefulRampage = new VenegefulRampageCard();
 
 		expect(venegefulRampage).to.be.an.instanceof(VenegefulRampageCard);
-		expect(venegefulRampage.probability).to.equal(20);
+		expect(venegefulRampage.probability).to.equal(15);
 		expect(venegefulRampage.stats).to.equal('Hit: 1d20 vs AC\nDamage: 1d6 +1 per wound suffered');
 	});
 
@@ -45,7 +45,7 @@ describe('./cards/vengeful-rampage.js', () => {
 	it('does max damage equal to double player damage modifier', () => {
 		const venegefulRampage = new VenegefulRampageCard();
 
-		const player = new Basilisk({ name: 'player', hp: 2, hpVariance: 0, damageModifier: 6 });
+		const player = new Basilisk({ name: 'player', hp: 2, hpVariance: 0, strModifier: 6 });
 		const target = new Basilisk({ name: 'target' });
 
 		const roll = venegefulRampage.getDamageRoll(player, target);

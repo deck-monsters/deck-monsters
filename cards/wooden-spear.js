@@ -2,21 +2,23 @@
 
 const HitCard = require('./hit');
 
-const { FIGHTER } = require('../helpers/classes');
+const { BARD, FIGHTER } = require('../helpers/classes');
 const { MINOTAUR } = require('../helpers/creature-types');
 const { roll } = require('../helpers/chance');
+const { COMMON } = require('../helpers/probabilities');
+const { CHEAP } = require('../helpers/costs');
 
 class WoodenSpearCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		damageModifier,
+		strModifier,
 		icon = '🌳',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			damageModifier
+			strModifier
 		});
 	}
 
@@ -24,18 +26,18 @@ class WoodenSpearCard extends HitCard {
 		return this.constructor.creatureType;
 	}
 
-	get damageModifier () {
-		return this.options.damageModifier;
+	get strModifier () {
+		return this.options.strModifier;
 	}
 
 	get stats () {
 		return `${super.stats}
-+${this.damageModifier} damage vs ${this.creatureType}`;
++${this.strModifier} damage vs ${this.creatureType}`;
 	}
 
 	getDamageRoll (player, target) {
 		if (target.name === this.creatureType) {
-			return roll({ primaryDice: this.damageDice, modifier: player.damageModifier + this.damageModifier, bonusDice: player.bonusDamageDice });
+			return roll({ primaryDice: this.damageDice, modifier: player.strModifier + this.strModifier, bonusDice: player.bonusDamageDice });
 		}
 
 		return super.getDamageRoll(player, target);
@@ -43,15 +45,16 @@ class WoodenSpearCard extends HitCard {
 }
 
 WoodenSpearCard.cardType = 'Wooden Spear';
+WoodenSpearCard.permittedClassesAndTypes = [BARD, FIGHTER];
 WoodenSpearCard.creatureType = MINOTAUR;
-WoodenSpearCard.probability = 60;
+WoodenSpearCard.probability = COMMON.probability;
 WoodenSpearCard.description = `A simple weapon fashioned for ${WoodenSpearCard.creatureType}-hunting.`;
-WoodenSpearCard.cost = 6;
 WoodenSpearCard.level = 1;
-WoodenSpearCard.permittedClassesAndTypes = [FIGHTER];
+WoodenSpearCard.cost = CHEAP.cost;
+
 WoodenSpearCard.defaults = {
 	...HitCard.defaults,
-	damageModifier: 3
+	strModifier: 3
 };
 
 WoodenSpearCard.flavors = {

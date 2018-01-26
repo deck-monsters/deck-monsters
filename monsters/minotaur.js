@@ -24,7 +24,9 @@ const DESCRIPTORS = [
 class Minotaur extends BaseMonster {
 	constructor (options) {
 		const defaultOptions = {
-			damageModifier: 2,
+			dexModifier: 1,
+			strModifier: 2,
+			intModifier: -1,
 			color: DEFAULT_COLOR,
 			pattern: sample(PATTERNS),
 			descriptor: sample(DESCRIPTORS),
@@ -47,7 +49,7 @@ class Minotaur extends BaseMonster {
 	}
 
 	get description () {
-		return `a battle-hardened, ${this.color} minotaur with a ${this.pattern} pattern shaved into ${this.pronouns[2]} thick fur. Make no mistake, despite ${this.pronouns[2]} ${this.descriptor} bulk ${this.pronouns[0]} is a first-class host who has never been put to shame at a dinner party.`;
+		return `a battle-hardened, ${this.color} minotaur with a ${this.pattern} pattern shaved into ${this.pronouns.his} thick fur. Make no mistake, despite ${this.pronouns.his} ${this.descriptor} bulk ${this.pronouns.he} is a first-class host who has never been put to shame at a dinner party.`;
 	}
 }
 

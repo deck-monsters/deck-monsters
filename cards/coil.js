@@ -2,7 +2,10 @@
 
 const ImmobilizeCard = require('./immobilize');
 
+const { roll } = require('../helpers/chance');
 const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { EPIC } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 class CoilCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -12,6 +15,11 @@ class CoilCard extends ImmobilizeCard {
 	} = {}) {
 		super({ icon, ...rest });
 	}
+
+	getAttackRoll (player, target) {
+		return roll({ primaryDice: this.attackDice, modifier: player.strModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
+	}
+
 	get stats () {
 		return `${super.stats}
 Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
@@ -19,12 +27,15 @@ Chance to immobilize opponent by coiling your serpentine body around them and sq
 }
 
 CoilCard.cardType = 'Coil';
-CoilCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
-CoilCard.probability = 5;
-CoilCard.level = 0;
-CoilCard.description = 'Your body is the weapon.';
 CoilCard.permittedClassesAndTypes = [BASILISK];
+CoilCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
 CoilCard.weakAgainstCreatureTypes = [BASILISK];
+CoilCard.probability = EPIC.probability;
+CoilCard.description = 'Your body is the weapon.';
+CoilCard.level = 0;
+CoilCard.cost = EXPENSIVE.cost;
+CoilCard.notForSale = true;
+
 CoilCard.defaults = {
 	...ImmobilizeCard.defaults,
 	doDamageOnImmobilize: true,

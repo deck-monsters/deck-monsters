@@ -1,6 +1,7 @@
 const BoostCard = require('./boost');
 
-const { FIGHTER } = require('../helpers/classes');
+const { BARD, FIGHTER } = require('../helpers/classes');
+const { REASONABLE } = require('../helpers/costs');
 
 class BasicShieldCard extends BoostCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -13,9 +14,11 @@ class BasicShieldCard extends BoostCard {
 }
 
 BasicShieldCard.cardType = 'Basic Shield';
+BasicShieldCard.permittedClassesAndTypes = [BARD, FIGHTER];
 BasicShieldCard.description = 'Equip yourself for the battle ahead.';
 BasicShieldCard.level = 2;
-BasicShieldCard.permittedClassesAndTypes = [FIGHTER];
+BasicShieldCard.cost = REASONABLE.cost;
+
 BasicShieldCard.defaults = {
 	...BoostCard.defaults,
 	boostAmount: 2

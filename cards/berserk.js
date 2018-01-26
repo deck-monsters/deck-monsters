@@ -4,6 +4,8 @@ const HitCard = require('./hit');
 
 const { BARBARIAN } = require('../helpers/classes');
 const { roll } = require('../helpers/chance');
+const { COMMON } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
 
 class BerserkCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -20,37 +22,51 @@ class BerserkCard extends HitCard {
 			damage
 		});
 
-		this.resetDamageAmount();
-	}
-
-	resetDamageAmount () {
-		this.damageAmount = this.options.damage;
+		this.resetCard();
 	}
 
 	set bigFirstHit (bigFirstHit) {
-		this.bigFirstHit = bigFirstHit;
+		this.setOptions({
+			bigFirstHit
+		});
 	}
 
 	get bigFirstHit () {
 		return this.options.bigFirstHit;
 	}
 
-	set damageAmount (amount) {
-		this.damage = amount;
+	resetCard () {
+		this.iterations = 0;
+		this.resetDamage();
+		this.resetFatigue();
 	}
 
-	get damageAmount () {
-		return this.damage;
+	resetFatigue () {
+		this.intBonusFatigue = 0;
+	}
+
+	increaseFatigue () {
+		this.intBonusFatigue += 1;
+	}
+
+	resetDamage () {
+		this.damageAmount = this.options.damage;
+	}
+
+	increaseDamage () {
+		this.damageAmount += 1;
 	}
 
 	get stats () {
 		let damageDescription = `${this.damageAmount} damage per hit.`;
+
 		if (this.bigFirstHit) {
 			damageDescription = `${this.damageDice} damage on first hit.
 ${this.damageAmount} damage per hit after that.`;
 		}
 
-		return `Hit: ${this.attackDice} vs AC until you miss
+		return `Hit: ${this.attackDice} + attack bonus vs AC on first hit
+then also + spell bonus (fatigued by 1 each subsequent hit) until you miss
 ${damageDescription}
 
 Stroke of luck increases damage per hit by 1.`;
@@ -60,14 +76,38 @@ Stroke of luck increases damage per hit by 1.`;
 		return roll({ primaryDice: this.damageDice });
 	}
 
+	getAttackRollBonus (player) {
+		let modifier = player.dexModifier;
+
+		// intBonus doesn't kick in until we've actually successfully hit
+		if (this.iterations > 1) {
+			modifier += Math.max(player.intModifier - this.intBonusFatigue, 0);
+		}
+
+		return modifier;
+	}
+
+	getAttackRoll (player, target) {
+		// once you hit the first time, you get a fatiguing bonus for each subsequent hit.
+		const modifier = this.getAttackRollBonus(player, target);
+		return roll({ primaryDice: this.attackDice, modifier, bonusDice: player.bonusAttackDice, crit: true });
+	}
+
 	effectLoop (iteration, player, target, ring, activeContestants) {
+		this.iterations = iteration;
+
+		// intBonus doesn't kick in until we've actually successfully hit, don't fatigue the bonus until after we've hit
+		// and after we've applied the bonus for the first time
+		if (iteration > 2) this.increaseFatigue();
+
 		// Add any player modifiers and roll the dice
 		const {
 			attackRoll, success, strokeOfLuck, curseOfLoki
 		} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
 		if (strokeOfLuck) {
-			this.damageAmount = this.damageAmount + 1;
+			this.increaseDamage();
+			this.resetFatigue();
 		}
 
 		if (success) {
@@ -79,11 +119,13 @@ Stroke of luck increases damage per hit by 1.`;
 			// Do not consider the first hit part of the cumulative combo damage.
 			// For cards with a bigFirstHit, this will make perma-death possible (although unlikely)
 			if (iteration !== 1) {
-				this.cumulativeComboDamage++;
+				this.cumulativeComboDamage += damage;
+			} else {
+				this.initialDamage = damage;
 			}
 
 			// If we hit then do some damage
-			if (!target.dead && this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)) {
+			if (this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)) {
 				target.hit(damage, player, this);
 			} else {
 				this.emit('narration', {
@@ -99,15 +141,15 @@ Stroke of luck increases damage per hit by 1.`;
 			}
 
 			this.emit('narration', {
-				narration: 'COMBO BREAKER!'
+				narration: `COMBO BREAKER!  (Broke a ${iteration - 1} hit combo, ${this.initialDamage + this.cumulativeComboDamage} total damage)`
 			});
 
-			this.resetDamageAmount();
+			this.resetCard();
 			// Our attack is now bouncing back against us
 			return player.hit(damage, target, this);
 		}
 
-		this.resetDamageAmount();
+		this.resetCard();
 		this.emit('miss', {
 			attackResult: attackRoll.result,
 			attackRoll,
@@ -119,7 +161,7 @@ Stroke of luck increases damage per hit by 1.`;
 			const comboText = (iteration > 3) ? 'COMBO! ' : '';
 			const ultraText = (iteration > 5) ? 'ULTRA ' : '';
 			this.emit('narration', {
-				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration - 1} HIT${(iteration - 1 > 1) ? 'S' : ''}`
+				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration - 1} HIT${(iteration - 1 > 1) ? 'S' : ''} (${this.initialDamage + this.cumulativeComboDamage} total damage).`
 			});
 		}
 
@@ -128,17 +170,19 @@ Stroke of luck increases damage per hit by 1.`;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
+		this.resetCard();
 		this.cumulativeComboDamage = 0;
 		return this.effectLoop(1, player, target, ring, activeContestants);
 	}
 }
 
 BerserkCard.cardType = 'Berserk';
-BerserkCard.probability = 40;
-BerserkCard.description = 'The whole world disappears into a beautiful still, silent, red. At the center of all things is the perfect face of your enemy. Destroy it.';
-BerserkCard.cost = 6;
-BerserkCard.level = 1;
 BerserkCard.permittedClassesAndTypes = [BARBARIAN];
+BerserkCard.probability = COMMON.probability;
+BerserkCard.description = 'The whole world disappears into a beautiful still, silent, red. At the center of all things is the perfect face of your enemy. Destroy it.';
+BerserkCard.level = 1;
+BerserkCard.cost = REASONABLE.cost;
+
 BerserkCard.defaults = {
 	...HitCard.defaults,
 	damage: 1,

@@ -1,4 +1,4 @@
-const { EventEmitter, globalSemaphore } = require('./helpers/semaphore');
+const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
 
 class BaseClass {
 	constructor (options, semaphore = new EventEmitter({ emitDelay: 0 })) {
@@ -22,6 +22,22 @@ class BaseClass {
 
 	get name () {
 		return this.constructor.name;
+	}
+
+	get instanceId () {
+		if (this.original) {
+			return this.original.instanceId;
+		}
+
+		if (!this.instance) {
+			this.instance = {};
+		}
+
+		if (!this.instance.id) {
+			this.instance.id = Symbol('instanceId');
+		}
+
+		return this.instance.id;
 	}
 
 	get defaults () {

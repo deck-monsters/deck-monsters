@@ -2,8 +2,7 @@ const announceHeal = (publicChannel, channelManager, ring, className, monster, {
 	if (ring.monsterIsInRing(monster)) {
 		publicChannel({
 			announce:
-`${monster.icon} 💊      ${monster.givenName} heals ${amount} hp
-${monster.icon}  ${monster.givenName} now has ${monster.hp}HP.`
+`${monster.icon} 💊 ${monster.givenName} healed ${amount} hp and has *${monster.hp} hp*.`
 		});
 	}
 };

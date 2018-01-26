@@ -2,13 +2,14 @@ const BaseCreature = require('../creatures/base');
 
 const {
 	getUniqueCards,
-	isMatchingCard,
-	sortCards
+	sortCardsAlphabetically
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
-const { getAttributeChoices } = require('../helpers/choices');
+const { signedNumber } = require('../helpers/signed-number');
+const isMatchingItem = require('../items/helpers/is-matching');
 
-const DEFAULT_CARD_SLOTS = 7;
+const DEFAULT_CARD_SLOTS = 9;
+const DEFAULT_ITEM_SLOTS = 3;
 
 class BaseMonster extends BaseCreature {
 	constructor (options) {
@@ -19,16 +20,12 @@ class BaseMonster extends BaseCreature {
 		}
 	}
 
-	get cards () {
-		if (this.options.cards === undefined) this.cards = [];
-
-		return this.options.cards || [];
+	get hand () {
+		return this.cards;
 	}
 
-	set cards (cards) {
-		this.setOptions({
-			cards
-		});
+	set hand (hand) {
+		this.cards = hand;
 	}
 
 	get cardSlots () { // eslint-disable-line class-methods-use-this
@@ -44,6 +41,28 @@ class BaseMonster extends BaseCreature {
 		});
 	}
 
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
+	}
+
+	get stats () {
+		return `${super.stats}
+AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
+DEX: ${this.dex} | STR: ${this.str} | INT: ${this.int}${
+	this.dexModifier === 0 ? '' :
+		`
+${signedNumber(this.dexModifier)} to hit`
+}${
+	this.strModifier === 0 ? '' :
+		`
+${signedNumber(this.strModifier)} to damage`
+}${
+	this.intModifier === 0 ? '' :
+		`
+${signedNumber(this.intModifier)} to spells`
+}`;
+	}
+
 	canHold (object) {
 		const appropriateLevel = (!object.level || object.level <= this.level);
 		const appropriateClassOrType = (
@@ -56,7 +75,7 @@ class BaseMonster extends BaseCreature {
 	}
 
 	resetCards ({ matchCard } = {}) {
-		const shouldReset = !matchCard || !!this.cards.find(card => isMatchingCard(card, matchCard));
+		const shouldReset = !matchCard || !!this.cards.find(card => isMatchingItem(card, matchCard));
 
 		if (shouldReset) this.cards = [];
 	}
@@ -72,67 +91,18 @@ class BaseMonster extends BaseCreature {
 		};
 	}
 
-	edit (channel) {
-		return Promise
-			.resolve()
-			.then(() => channel({ announce: monsterCard(this, true) }))
-			.then(() => channel({
-				question:
-`Which attribute would you like to edit?
-
-${getAttributeChoices(this.options)}`,
-				choices: Object.keys(Object.keys(this.options))
-			}))
-			.then(index => Object.keys(this.options)[index])
-			.then(key => channel({
-				question:
-`The current value of ${key} is ${JSON.stringify(this.options[key])}. What would you like the new value of ${key} to be?`
-			})
-				.then((strVal) => {
-					const oldVal = this.options[key];
-					let newVal;
-
-					try {
-						newVal = JSON.parse(strVal);
-					} catch (ex) {
-						newVal = +strVal;
-
-						if (isNaN(newVal)) { // eslint-disable-line no-restricted-globals
-							newVal = strVal;
-						}
-					}
-
-					return { key, oldVal, newVal };
-				}))
-			.then(({ key, oldVal, newVal }) => channel({
-				question:
-`The value of ${key} has been updated from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}. Would you like to keep this change? (yes/no)` // eslint-disable-line max-len
-			})
-				.then((answer = '') => {
-					if (answer.toLowerCase() === 'yes') {
-						this.setOptions({
-							[key]: newVal
-						});
-
-						return channel({ announce: 'Change saved.' });
-					}
-
-					return channel({ announce: 'Change reverted.' });
-				}));
-	}
-
 	look (channel, inDetail) {
 		return Promise
 			.resolve()
 			.then(() => channel({ announce: monsterCard(this, true) }))
-			.then(() => this.lookAtCards(channel, inDetail));
+			.then(() => inDetail && this.lookAtCards(channel, inDetail));
 	}
 
 	lookAtCards (channel, inDetail) {
 		let cards = [...this.cards];
 
 		if (!inDetail) {
-			const sortedDeck = sortCards(cards);
+			const sortedDeck = sortCardsAlphabetically(cards);
 			cards = getUniqueCards(sortedDeck);
 		}
 

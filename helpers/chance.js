@@ -4,9 +4,21 @@ const dice = new Roll();
 
 const chance = {
 	// Returns an object with a breakdown of the results
-	roll ({ primaryDice, modifier = 0, bonusDice }) {
+	roll ({ primaryDice, modifier = 0, bonusDice, crit }) {
 		const naturalRoll = dice.roll(primaryDice);
 		const bonusResult = bonusDice ? dice.roll(bonusDice).result : 0;
+
+		let strokeOfLuck = false;
+		let curseOfLoki = false;
+
+		if (crit) {
+			// Stroke of Luck
+			if (naturalRoll.result === chance.max(primaryDice)) {
+				strokeOfLuck = true;
+			} else if (naturalRoll.result === 1) {
+				curseOfLoki = true;
+			}
+		}
 
 		return {
 			primaryDice,
@@ -14,7 +26,9 @@ const chance = {
 			result: Math.max(naturalRoll.result + bonusResult + modifier, 0),
 			naturalRoll,
 			bonusResult,
-			modifier
+			modifier,
+			strokeOfLuck,
+			curseOfLoki
 		};
 	},
 	// Returns the highest possible roll, unmodified
@@ -29,9 +43,6 @@ const chance = {
 	},
 	percent () {
 		return dice.roll('d%').result;
-	},
-	randomInt ({ min = 0, max }) {
-		return Math.floor(Math.random() * ((max - min) + 1)) + min;
 	}
 };
 

@@ -2,15 +2,27 @@
 const { signedNumber } = require('../helpers/signed-number');
 
 const announceRolled = (publicChannel, channelManager, className, monster, {
+	outcome,
 	reason,
 	roll,
-	player,
-	outcome
+	vs,
+	who
 }) => {
+	let rollDesc = `${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}`;
+	if (roll.primaryDice) rollDesc = `${rollDesc} on ${roll.primaryDice}`;
+
+	const text = `${who.givenName} rolled _${rollDesc}_ ${reason}`;
+
+	const vsMsg = vs ? ` v ${vs}` : '';
+	let rollResult = (roll.strokeOfLuck) ? 'Nat 20!' : roll.result;
+	rollResult = (roll.curseOfLoki) ? 'Crit Fail!' : rollResult;
+
 	publicChannel({
 		announce:
-`🎲  ${player.identity} rolled a ${roll.result} (natural ${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}) ${reason}
-    ${outcome}`
+`${text}
+🎲 *${rollResult}${vsMsg}*${outcome ? `
+    ${outcome}` : ''}
+ `
 	});
 };
 

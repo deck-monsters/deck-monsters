@@ -10,7 +10,7 @@ const pause = require('../helpers/pause');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
 const {
-	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
 describe('./cards/mesmerize.js', () => {
@@ -42,31 +42,31 @@ describe('./cards/mesmerize.js', () => {
 
 		const stats = `${hit.stats}
 
- +2 against Gladiator, Basilisk
- -2 against Minotaur, Weeping Angel
+ +2 against Basilisk, Gladiator
+ -2 against Jinn, Minotaur, Weeping Angel
 Chance to immobilize everyone with your shocking beauty.`;
 
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);
 		expect(mesmerize.freedomThresholdModifier).to.equal(0);
-		expect(mesmerize.attackModifier).to.equal(2);
-		expect(mesmerize.damageModifier).to.equal(0);
+		expect(mesmerize.dexModifier).to.equal(2);
+		expect(mesmerize.strModifier).to.equal(0);
 		expect(mesmerize.hitOnFail).to.be.false;
 		expect(mesmerize.doDamageOnImmobilize).to.be.false;
 		expect(mesmerize.stats).to.equal(stats);
-		expect(mesmerize.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
-		expect(mesmerize.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
+		expect(mesmerize.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
+		expect(mesmerize.weakAgainstCreatureTypes).to.deep.equal([JINN, MINOTAUR, WEEPING_ANGEL]);
 		expect(mesmerize.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
 	});
 
 	it('can be instantiated with options', () => {
 		const mesmerize = new Mesmerize({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);
 		expect(mesmerize.freedomThresholdModifier).to.equal(2);
-		expect(mesmerize.attackModifier).to.equal(4);
-		expect(mesmerize.damageModifier).to.equal(4);
+		expect(mesmerize.dexModifier).to.equal(4);
+		expect(mesmerize.strModifier).to.equal(4);
 		expect(mesmerize.hitOnFail).to.be.true;
 		expect(mesmerize.doDamageOnImmobilize).to.be.true;
 	});
@@ -78,7 +78,7 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 		expect(mesmerize.getFreedomThreshold(player, target)).to.equal(10 + mesmerize.freedomThresholdModifier);
 
-		target.encounterModifiers = { pinnedTurns: 2 };
+		target.encounterModifiers.pinnedTurns = 2;
 
 		expect(mesmerize.getFreedomThreshold(player, target)).to.equal(4 + mesmerize.freedomThresholdModifier);
 	});

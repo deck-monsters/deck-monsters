@@ -5,7 +5,11 @@ const flavor = {
 	getFlavor (category, flavors = flavor.flavors) {
 		const possibleWords = shuffle(flavors[category] || flavor.flavors[category]);
 
-		const words = possibleWords.find(word => percent() <= word[1]) || flavor.getFlavor(category, flavors);
+		const words = possibleWords.find(word => percent() <= word[1]);
+
+		if (!words) {
+			return flavor.getFlavor(category, flavors);
+		}
 
 		return { text: words[0], probability: words[1], icon: words[2] };
 	},

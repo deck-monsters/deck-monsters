@@ -1,6 +1,7 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const ScotchCard = require('./scotch');
+const HealCard = require('./heal');
 const Basilisk = require('../monsters/basilisk');
 const pause = require('../helpers/pause');
 
@@ -25,9 +26,10 @@ describe('./cards/scotch.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const scotch = new ScotchCard();
+		const heal = new HealCard({ healthDice: scotch.healthDice });
 
-		expect(scotch.probability).to.equal(20);
-		expect(scotch.stats).to.equal('Health: 2d6\nPossiblity of Stroke of Luck');
+		expect(scotch.probability).to.equal(15);
+		expect(scotch.stats).to.equal(heal.stats);
 	});
 
 	it('heals the player', () => {

@@ -3,6 +3,8 @@
 const BerserkCard = require('./berserk');
 
 const { GLADIATOR } = require('../helpers/creature-types');
+const { EPIC } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 class BattleFocusCard extends BerserkCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -18,10 +20,13 @@ class BattleFocusCard extends BerserkCard {
 }
 
 BattleFocusCard.cardType = 'Battle Focus';
-BattleFocusCard.probability = 5;
+BattleFocusCard.permittedClassesAndTypes = [GLADIATOR];
+BattleFocusCard.probability = EPIC.probability;
 BattleFocusCard.description = 'Years of training, drill after drill, kick in. An attack is not a single hit, but a series of strikes each leading to another. Time seems to disappear and for a brief moment you and your adversary become perfectly in sync as you lead in a dance of their destruction.';
 BattleFocusCard.level = 0;
-BattleFocusCard.permittedClassesAndTypes = [GLADIATOR];
+BattleFocusCard.cost = EXPENSIVE.cost;
+BattleFocusCard.notForSale = true;
+
 BattleFocusCard.defaults = {
 	...BerserkCard.defaults,
 	damageDice: '1d6',

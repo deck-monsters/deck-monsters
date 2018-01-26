@@ -1,13 +1,14 @@
-const BaseCreature = require('../creatures/base');
-const {
-	getCardCounts,
-	getInitialDeck,
-	getUniqueCards,
-	isMatchingCard,
-	sortCards
-} = require('../cards');
-const { actionCard, monsterCard } = require('../helpers/card');
 const reduce = require('lodash.reduce');
+
+const BaseCreature = require('../creatures/base');
+
+const { actionCard, characterCard, monsterCard } = require('../helpers/card');
+const { getInitialDeck, getUniqueCards, sortCardsAlphabetically } = require('../cards');
+const { HERO } = require('../helpers/classes');
+const buyItems = require('../items/store/buy');
+const getCardCounts = require('../items/helpers/counts').getItemCounts;
+const isMatchingItem = require('../items/helpers/is-matching');
+const sellItems = require('../items/store/sell');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {
@@ -22,7 +23,7 @@ class BaseCharacter extends BaseCreature {
 		}
 	}
 
-	get deck () {
+	get cards () {
 		if (this.options.deck === undefined || this.options.deck.length <= 0) {
 			this.deck = getInitialDeck(undefined, this);
 		}
@@ -30,10 +31,23 @@ class BaseCharacter extends BaseCreature {
 		return this.options.deck || [];
 	}
 
-	set deck (deck) {
+	set cards (deck) {
 		this.setOptions({
 			deck
 		});
+	}
+
+	get deck () {
+		return this.cards;
+	}
+
+	set deck (deck) {
+		this.cards = deck;
+	}
+
+	get detailedStats () {
+		return `${super.stats}
+Coins: ${this.coins}`;
 	}
 
 	canHold (object) {
@@ -43,22 +57,30 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	addCard (card) {
-		this.deck = [...this.deck, card];
+		this.deck = sortCardsAlphabetically([...this.deck, card]);
 
 		this.emit('cardAdded', { card });
 	}
 
 	removeCard (cardToRemove) {
-		let isAlreadyRemoved = false;
+		let foundCard;
 		this.deck = this.deck.filter((card) => {
-			const shouldKeepCard = isAlreadyRemoved || !isMatchingCard(card, cardToRemove);
+			const shouldKeepCard = foundCard || !isMatchingItem(card, cardToRemove);
 
-			if (!shouldKeepCard) isAlreadyRemoved = true;
+			if (!shouldKeepCard) foundCard = card;
 
 			return shouldKeepCard;
 		});
 
-		this.emit('cardRemoved', { cardToRemove });
+		if (foundCard) this.emit('cardRemoved', { card: foundCard });
+
+		return foundCard;
+	}
+
+	look (channel, inDetail) {
+		return Promise
+			.resolve()
+			.then(() => channel({ announce: characterCard(this, inDetail) }));
 	}
 
 	lookAtMonsters (channel, description) {
@@ -79,7 +101,7 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	lookAtCards (channel) {
-		const sortedDeck = sortCards([...this.deck]);
+		const sortedDeck = sortCardsAlphabetically(this.deck);
 		const cardImages = getUniqueCards(sortedDeck).reduce((cards, card) =>
 			cards + actionCard(card), '');
 
@@ -103,6 +125,22 @@ class BaseCharacter extends BaseCreature {
 			delay: 'short'
 		}));
 	}
+
+	sellItems (channel) {
+		return sellItems({
+			character: this,
+			channel
+		});
+	}
+
+	buyItems (channel) {
+		return buyItems({
+			character: this,
+			channel
+		});
+	}
 }
+
+BaseCharacter.class = HERO;
 
 module.exports = BaseCharacter;

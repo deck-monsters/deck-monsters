@@ -10,7 +10,7 @@ const pause = require('../helpers/pause');
 
 
 const {
-	GLADIATOR, MINOTAUR, BASILISK, WEEPING_ANGEL
+	GLADIATOR, JINN, MINOTAUR, BASILISK, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
 describe('./cards/enthrall.js', () => {
@@ -42,31 +42,33 @@ describe('./cards/enthrall.js', () => {
 
 		const stats = `${hit.stats}
 
- +2 against Gladiator, Basilisk
+ +2 against Basilisk, Gladiator
  -2 against Minotaur, Weeping Angel
+inneffective against Jinn
 Chance to immobilize your opponents with your shocking beauty.`;
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);
 		expect(enthrall.freedomThresholdModifier).to.equal(1);
-		expect(enthrall.attackModifier).to.equal(2);
-		expect(enthrall.damageModifier).to.equal(0);
+		expect(enthrall.dexModifier).to.equal(2);
+		expect(enthrall.strModifier).to.equal(0);
 		expect(enthrall.hitOnFail).to.be.false;
 		expect(enthrall.doDamageOnImmobilize).to.be.false;
 		expect(enthrall.stats).to.equal(stats);
-		expect(enthrall.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
+		expect(enthrall.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
 		expect(enthrall.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
-		expect(enthrall.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
+		expect(enthrall.permittedClassesAndTypes).to.deep.equal([JINN, WEEPING_ANGEL]);
+		expect(enthrall.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
 	});
 
 	it('can be instantiated with options', () => {
 		const enthrall = new Enthrall({
-			freedomThresholdModifier: 2, damageModifier: 4, attackModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
 		});
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);
 		expect(enthrall.freedomThresholdModifier).to.equal(2);
-		expect(enthrall.attackModifier).to.equal(4);
-		expect(enthrall.damageModifier).to.equal(4);
+		expect(enthrall.dexModifier).to.equal(4);
+		expect(enthrall.strModifier).to.equal(4);
 		expect(enthrall.hitOnFail).to.be.true;
 		expect(enthrall.doDamageOnImmobilize).to.be.true;
 	});
@@ -78,7 +80,7 @@ Chance to immobilize your opponents with your shocking beauty.`;
 
 		expect(enthrall.getFreedomThreshold(player, target)).to.equal(10 + enthrall.freedomThresholdModifier);
 
-		target.encounterModifiers = { pinnedTurns: 2 };
+		target.encounterModifiers.pinnedTurns = 2;
 
 		expect(enthrall.getFreedomThreshold(player, target)).to.equal(4 + enthrall.freedomThresholdModifier);
 	});

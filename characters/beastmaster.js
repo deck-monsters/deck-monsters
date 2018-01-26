@@ -9,8 +9,10 @@ const { getMonsterChoices } = require('../helpers/choices');
 const { monsterCard } = require('../helpers/card');
 const { spawn, equip } = require('../monsters');
 const TENSE = require('../helpers/tense');
+const transferItems = require('../items/helpers/transfer');
+const useItems = require('../items/helpers/use');
 
-const DEFAULT_MONSTER_SLOTS = 6;
+const DEFAULT_MONSTER_SLOTS = 7;
 
 class Beastmaster extends BaseCharacter {
 	constructor (options) {
@@ -53,17 +55,19 @@ class Beastmaster extends BaseCharacter {
 	}
 
 	canHoldItem (item) {
-		if (this.monsters.length > 0) {
-			return this.monsters.reduce((canHold, monster) => canHold || monster.canHoldItem(item), false);
-		}
+		return super.canHoldItem(item) || this.monsters.reduce((canHold, monster) => canHold || monster.canHoldItem(item), false);
+	}
 
-		return super.canHoldItem(item);
+	canUseItem (item) {
+		return item.usableWithoutMonster && super.canUseItem(item);
 	}
 
 	removeCard (cardToRemove) {
-		super.removeCard(cardToRemove);
+		const card = super.removeCard(cardToRemove);
 
-		this.monsters.forEach(monster => monster.resetCards({ matchCard: cardToRemove }));
+		this.monsters.forEach(monster => monster.resetCards({ matchCard: card }));
+
+		return card;
 	}
 
 	addMonster (monster) {
@@ -110,7 +114,7 @@ class Beastmaster extends BaseCharacter {
 	}
 
 	chooseMonster ({
-		channel, monsters = this.monsters, monsterName, action = 'pick', reason = 'you don\'t appear to have a living monster by that name.'
+		channel, monsters = this.monsters, monsterName, action = 'pick', reason = 'you don\'t appear to have a monster by that name.'
 	}) { // eslint-disable-line max-len
 		return Promise
 			.resolve(monsters.length)
@@ -128,7 +132,7 @@ class Beastmaster extends BaseCharacter {
 					}
 
 					return Promise.reject(channel({
-						announce: `${monsterName} is not able to be ${TENSE[action].PAST} right now, because ${reason}`
+						announce: `${monsterName} is not able to ${TENSE[action].PAST} right now, because ${reason}`
 					}));
 				} else if (numberOfMonsters === 1) {
 					return monsters[0];
@@ -149,13 +153,14 @@ Which monster would you like to ${action}?`,
 	}
 
 	equipMonster ({ monsterName, cardSelection, channel }) {
-		const monsters = this.monsters.filter(monster => !monster.dead);
+		const { monsters } = this;
+
 		return Promise
 			.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
 					return Promise.reject(channel({
-						announce: "You don't have any living monsters to equip. Spawn one first, or wait for your dead monsters to revive." // eslint-disable-line max-len
+						announce: "You don't have any monsters to equip! You'll need to spawn one first."
 					}));
 				}
 
@@ -163,15 +168,82 @@ Which monster would you like to ${action}?`,
 					channel, monsters, monsterName, action: 'equip'
 				});
 			})
-			.then(monster => equip(this.deck, monster, cardSelection, channel)
-				.then((cards) => {
-					monster.cards = cards;
-					return monster;
-				}))
-			.then(monster => channel({
-				announce: `${monster.givenName} is good to go!`
+			.then(monster => equip({ deck: this.deck, monster, cardSelection, channel })
+				.then(() => channel({
+					announce: `${monster.givenName} is good to go!`
+				})
+					.then(() => monster)));
+	}
+
+	giveItemsToMonster ({ monsterName, itemSelection, channel }) {
+		const { monsters } = this;
+
+		return Promise
+			.resolve(monsters.length)
+			.then((numberOfMonsters) => {
+				if (numberOfMonsters <= 0) {
+					return Promise.reject(channel({
+						announce: "You don't have any monsters to give items to! You'll need to spawn one first."
+					}));
+				}
+
+				return this.chooseMonster({
+					channel, monsters, monsterName, action: 'give items to'
+				});
 			})
+			.then(monster => transferItems({ from: this, to: monster, itemSelection, channel })
 				.then(() => monster));
+	}
+
+	takeItemsFromMonster ({ monsterName, itemSelection, channel }) {
+		const { monsters } = this;
+
+		return Promise
+			.resolve(monsters.length)
+			.then((numberOfMonsters) => {
+				if (numberOfMonsters <= 0) {
+					return Promise.reject(channel({
+						announce: "You don't have any monsters to take items from! You'll need to spawn one first."
+					}));
+				}
+
+				return this.chooseMonster({
+					channel, monsters, monsterName, action: 'take items from'
+				});
+			})
+			.then(monster => transferItems({ from: monster, to: this, itemSelection, channel })
+				.then(() => monster));
+	}
+
+	useItems ({ channel, isMonsterItem, monsterName }) {
+		return Promise.resolve()
+			.then(() => {
+				if (monsterName || isMonsterItem) {
+					const { monsters } = this;
+
+					return Promise.resolve()
+						.then(() => this.chooseMonster({
+							channel, monsters, monsterName, action: 'use items on'
+						}));
+				}
+
+				return undefined;
+			})
+			.then(monster => useItems({ channel, character: this, monster, use: options => this.useItem(options) }));
+	}
+
+	useItem ({ channel, isMonsterItem, item, monster, monsterName }) {
+		if (!monster && (monsterName || isMonsterItem)) {
+			const { monsters } = this;
+
+			return Promise.resolve()
+				.then(() => this.chooseMonster({
+					channel, monsters, monsterName, action: 'use the item on'
+				}))
+				.then(foundMonster => super.useItem({ channel, item, monster: foundMonster }));
+		}
+
+		return super.useItem({ channel, item, monster });
 	}
 
 	callMonsterOutOfTheRing ({
@@ -248,13 +320,13 @@ Which monster would you like to ${action}?`,
 				}
 
 				return this.chooseMonster({
-					channel, monsters, monsterName, action: 'send into battle'
+					channel, monsters, monsterName, action: 'send into battle', reason: 'you don\'t appear to have a monster by that name.'
 				});
 			})
 			.then((monster) => {
-				if (monster.cards.length <= 0) {
+				if (monster.cards.length < monster.cardSlots) {
 					return Promise.reject(channel({
-						announce: 'Only an evil master would send their monster into battle without any cards.'
+						announce: 'Only an evil master would send their monster into battle with enough cards.'
 					}));
 				}
 
@@ -277,7 +349,7 @@ Which monster would you like to ${action}?`,
 				}
 
 				return this.chooseMonster({
-					channel, monsters, monsterName, action: 'dismiss'
+					channel, monsters, monsterName, action: 'dismiss', reason: 'you don\'t appear to have a defeated monster by that name.'
 				});
 			})
 			.then((monster) => {
@@ -292,7 +364,7 @@ Which monster would you like to ${action}?`,
 	}
 
 	reviveMonster ({ monsterName, channel }) {
-		const monsters = this.monsters.filter(monster => monster.dead);
+		const monsters = this.monsters.filter(monster => (monster.dead && !monster.inEncounter));
 
 		return Promise
 			.resolve(monsters.length)
@@ -304,7 +376,7 @@ Which monster would you like to ${action}?`,
 				}
 
 				return this.chooseMonster({
-					channel, monsters, monsterName, action: 'revive'
+					channel, monsters, monsterName, action: 'revive', reason: 'you don\'t appear to have a defeated monster by that name.'
 				});
 			})
 			.then((monster) => {
@@ -312,7 +384,7 @@ Which monster would you like to ${action}?`,
 				const reviveStatement = monster.respawnTimeoutLength ? moment(timeToRevive).from(monster.respawnTimeoutBegan) : 'instantly';
 
 				return channel({
-					announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns[0])} is a ${monster.displayLevel} monster, and therefore will be revived ${reviveStatement}.`// eslint-disable-line max-len
+					announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns.he)} is a ${monster.displayLevel} monster, and therefore will be revived ${reviveStatement}.`// eslint-disable-line max-len
 				})
 					.then(() => monster);
 			});

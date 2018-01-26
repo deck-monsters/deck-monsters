@@ -1,3 +1,5 @@
+const { describeLevels } = require('./levels');
+
 const BASE_XP_PER_KILL = 10;
 const BASE_XP_PER_KILLED_BY = 1;
 const BASE_XP_PER_FLEEING = 2;
@@ -11,19 +13,8 @@ const xpFormula = (levelDifference, base) =>
 	// -0.3x = log(y) where x is the level difference of the monsters
 	Math.round(Math.pow(10, (-0.3 * levelDifference)) * base);
 
-const getAverageLevel = (monster, contestants) => {
-	const levelTotal = contestants.reduce(
-		(totalLevels, contestant) =>
-			((monster === contestant.monster) ? totalLevels : totalLevels + contestant.monster.level)
-		, 0
-	);
-
-	return Math.round(levelTotal / (contestants.length - 1));
-};
-
 
 const calculateXP = (contestant, contestants) => {
-	let levelDifference = 0;
 	let gainedXP = 0;
 	const { monster } = contestant;
 	const killed = contestant.killed || [];
@@ -32,32 +23,51 @@ const calculateXP = (contestant, contestants) => {
 	let xp;
 
 	killed.forEach((opponentKilled) => {
-		levelDifference = monster.level - opponentKilled.level;
+		const { difference: levelDifference, description: levelDescription } = describeLevels(monster.level, opponentKilled.level);
 		xp = xpFormula(levelDifference, BASE_XP_PER_KILL);
 
-		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for killing ${opponentKilled.givenName} (${levelDifference * -1} level difference)`);
+		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for killing ${opponentKilled.givenName} (${levelDescription})`);
 
 		gainedXP += xp;
 	});
 
 	if (contestant.killedBy) {
-		levelDifference = monster.level - contestant.killedBy.level;
-		const levelDifferenceText = levelDifference === 0 ? 'same level' : `${levelDifference * -1} level difference`;
-		xp = Math.min(xpFormula(levelDifference, BASE_XP_PER_KILLED_BY), BASE_XP_PER_KILLED_BY * rounds);
+		if (contestant.killedBy !== contestant.monster) {
+			const { difference: levelDifference, description: levelDescription } = describeLevels(monster.level, contestant.killedBy.level);
+			xp = Math.min(xpFormula(levelDifference, BASE_XP_PER_KILLED_BY), BASE_XP_PER_KILLED_BY * rounds);
 
-		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for being killed by ${contestant.killedBy.givenName} (${levelDifferenceText})`);
+			reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for being killed by ${contestant.killedBy.givenName} (${levelDescription})`);
 
-		gainedXP += xp;
+			gainedXP += xp;
+		} else {
+			reasons.push(`Gained no XP for being killed by ${contestant.monster.pronouns.him}self`);
+		}
 	} else {
 		// XP for being the last monster standing or fleeing
-		const avgLevel = getAverageLevel(monster, contestants);
-		const averageLevelDifference = monster.level - avgLevel;
-		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
-		xp = Math.min(xpFormula(averageLevelDifference, xpBase), xpBase * rounds);
+		const levels = [monster.level];
+		const opponents = [];
+		contestants.forEach((opponent) => {
+			if (opponent.monster !== monster) {
+				levels.push(opponent.monster.level);
+				opponents.push(opponent);
+			}
+		});
 
-		const avgLevelText = avgLevel > 0 ? avgLevel : 'beginner';
+		const { description: levelDescription, difference: levelDifference } = describeLevels(...levels);
+
+		const xpBase = contestant.fled ? BASE_XP_PER_FLEEING : BASE_XP_LAST_ONE_STANDING;
+		xp = Math.min(xpFormula(levelDifference, xpBase), xpBase * rounds);
+
 		const forText = contestant.fled ? 'fleeing' : 'being the last one standing';
-		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a ${monster.displayLevel} monster lasting ${rounds} rounds in battle with opponents at an average level of ${avgLevelText}`);// eslint-disable-line max-len
+
+		let levelText;
+		if (opponents.length > 1) {
+			levelText = `${contestants.length - 1} opponents at an ${levelDescription}`;
+		} else {
+			levelText = `${opponents[0].monster.givenName} (${levelDescription})`;
+		}
+
+		reasons.push(`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a ${monster.displayLevel} monster lasting ${rounds} rounds in battle with ${levelText}`);// eslint-disable-line max-len
 
 		gainedXP += xp;
 	}
@@ -75,6 +85,5 @@ module.exports = {
 	XP_PER_DEFEAT,
 	STARTING_XP,
 	calculateXP,
-	xpFormula,
-	getAverageLevel
+	xpFormula
 };

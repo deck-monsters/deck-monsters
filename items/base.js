@@ -1,4 +1,4 @@
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 
 const { itemCard } = require('../helpers/card');
 
@@ -59,21 +59,35 @@ class BaseItem extends BaseClass {
 		});
 	}
 
-	use (character, monster) {
-		this.emit('used', {
-			character,
-			monster
-		});
+	get usableWithoutMonster () {
+		return !!this.constructor.usableWithoutMonster;
+	}
 
-		// Generally speaking once something has been used the player will drop it but we'll increment
-		// a counter instead of boolean just in case the item can be used more than once
-		this.used += 1;
+	use ({ channel, character, monster }) {
+		return Promise.resolve()
+			.then(() => {
+				if (!this.usableWithoutMonster && !monster) {
+					return Promise.reject(channel({
+						announce: `${this.item} must be used on a monster.`
+					}));
+				}
 
-		if (this.action) {
-			return this.action(character, monster);
-		}
+				this.emit('used', {
+					channel,
+					character,
+					monster
+				});
 
-		return this.used;
+				// Generally speaking once something has been used the player will drop it but we'll increment
+				// a counter instead of boolean just in case the item can be used more than once
+				this.used += 1;
+
+				if (this.action) {
+					return this.action({ channel, character, monster });
+				}
+
+				return this.used;
+			});
 	}
 
 	look (channel) {

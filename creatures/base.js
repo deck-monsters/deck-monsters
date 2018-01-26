@@ -2,52 +2,53 @@ const random = require('lodash.random');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 
-const { signedNumber } = require('../helpers/signed-number');
-const { getLevel } = require('../helpers/levels');
+const { describeLevels, getLevel } = require('../helpers/levels');
+const { getAttributeChoices } = require('../helpers/choices');
+const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
+const isMatchingItem = require('../items/helpers/is-matching');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
 const PRONOUNS = require('../helpers/pronouns');
 
 const BASE_AC = 5;
+const BASE_STR = 5;
+const BASE_DEX = 5;
+const BASE_INT = 5;
 const AC_VARIANCE = 2;
 const BASE_HP = 28;
 const HP_VARIANCE = 5;
-const MAX_AC_BOOST = (BASE_AC * 2) + AC_VARIANCE;
-const MAX_AC_MODIFICATION = 4;
-const MAX_ATTACK_BOOST = 10;
-const MAX_DAMAGE_BOOST = 6;
-const MAX_HP_BOOST = (BASE_HP * 2) + HP_VARIANCE;
-const MAX_HP_MODIFICATION = 12;
+// Do not access these directly. Get from this.getMaxModifications
+const MAX_PROP_MODIFICATIONS = {
+	ac: 1,
+	str: 1,
+	dex: 1,
+	int: 1,
+	xp: 40,
+	hp: 12
+};
+const MAX_BOOSTS = {
+	dex: 10,
+	str: 6,
+	int: 8,
+	hp: (BASE_HP * 2) + HP_VARIANCE,
+	ac: (BASE_AC * 2) + AC_VARIANCE
+};
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
+const DEFAULT_ITEM_SLOTS = 12;
 
 class BaseCreature extends BaseClass {
 	constructor ({
 		acVariance = random(0, AC_VARIANCE),
 		hpVariance = random(0, HP_VARIANCE),
 		gender = sample(Object.keys(PRONOUNS)),
-		DEFAULT_AC, // legacy
-		DEFAULT_HP, // legacy
+		xp = 0,
 		...options
 	} = {}) {
-		super({ acVariance, hpVariance, gender, ...options });
-
-		// Clean up old AC code
-		if (DEFAULT_AC) {
-			this.setOptions({
-				acVariance: DEFAULT_AC - 5
-			});
-		}
-
-		// Clean up old HP code
-		if (DEFAULT_HP) {
-			this.setOptions({
-				hpVariance: DEFAULT_HP - 23
-			});
-		}
+		super({ acVariance, hpVariance, gender, xp, ...options });
 
 		if (this.name === BaseCreature.name) {
 			throw new Error('The BaseCreature should not be instantiated directly!');
@@ -60,14 +61,6 @@ class BaseCreature extends BaseClass {
 		if (this.respawnTimeoutBegan) {
 			this.respawn();
 		}
-	}
-
-	get maxModifications () {
-		return {
-			hp: MAX_HP_MODIFICATION,
-			ac: MAX_AC_MODIFICATION,
-			xp: Math.max(this.getPreBattlePropValue('xp') - 40, 0)
-		};
 	}
 
 	get class () {
@@ -103,16 +96,155 @@ class BaseCreature extends BaseClass {
 	get stats () {
 		return `Type: ${this.creatureType}
 Class: ${this.class}
-Level: ${this.level || this.displayLevel} | XP: ${this.xp}
-AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}${
-	this.attackModifier === 0 ? '' :
-		`
-${signedNumber(this.attackModifier)} to hit`
-}${
-	this.damageModifier === 0 ? '' :
-		`
-${signedNumber(this.damageModifier)} to damage`
-}`;
+Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
+	}
+
+	get targetingStrategy () {
+		return this.options.targetingStrategy || undefined;
+	}
+
+	set targetingStrategy (targetingStrategy) {
+		this.setOptions({
+			targetingStrategy
+		});
+	}
+
+	get maxHp () {
+		let maxHp = BASE_HP + this.hpVariance;
+		maxHp += Math.min(this.level * 3, MAX_BOOSTS.hp); // Gain 3 hp per level up to the max
+		maxHp += Math.min(this.modifiers.maxHp || 0, this.getMaxModifications('hp'));
+
+		return Math.max(maxHp, 1);
+	}
+
+	get hp () {
+		if (this.options.hp === undefined) this.hp = this.maxHp;
+
+		return this.options.hp;
+	}
+
+	set hp (hp) {
+		this.setOptions({
+			hp
+		});
+	}
+
+	get level () {
+		return getLevel(this.xp);
+	}
+
+	get displayLevel () {
+		return describeLevels(this.level).description;
+	}
+
+	get xp () {
+		return this.getProp('xp');
+	}
+
+	set xp (xp) {
+		this.setOptions({
+			xp
+		});
+	}
+
+	get ac () {
+		return this.getProp('ac');
+	}
+
+	get dex () {
+		return this.getProp('dex');
+	}
+
+	get str () {
+		return this.getProp('str');
+	}
+
+	get int () {
+		return this.getProp('int');
+	}
+
+	get dexModifier () {
+		return this.getModifier('dex');
+	}
+
+	get strModifier () {
+		return this.getModifier('str');
+	}
+
+	get intModifier () {
+		return this.getModifier('int');
+	}
+
+	getMaxModifications (prop) {
+		switch (prop) {
+			case 'hp':
+				return MAX_PROP_MODIFICATIONS.hp;
+			case 'ac':
+				return Math.ceil(MAX_PROP_MODIFICATIONS.ac * (this.level + 1));
+			case 'xp':
+				return Math.max(this.getPreBattlePropValue('xp') - MAX_PROP_MODIFICATIONS.xp, MAX_PROP_MODIFICATIONS.xp);// can't use level for calculation because it would cause circular reference
+			case 'int':
+				return Math.ceil(MAX_PROP_MODIFICATIONS.int * (this.level + 1));
+			case 'str':
+				return Math.ceil(MAX_PROP_MODIFICATIONS.str * (this.level + 1));
+			case 'dex':
+				return Math.ceil(MAX_PROP_MODIFICATIONS.dex * (this.level + 1));
+			default:
+				return 4;
+		}
+	}
+
+	getProp (targetProp) {
+		let prop = this.getPreBattlePropValue(targetProp);
+		prop += Math.min(this.encounterModifiers[targetProp] || 0, this.getMaxModifications(targetProp));
+
+		return Math.max(prop, 1);
+	}
+
+	getPreBattlePropValue (prop) {
+		let raw;
+
+		switch (prop) {
+			case 'dex':
+				raw = BASE_DEX + this.dexModifier;
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to DEX per level up to the max
+				break;
+			case 'str':
+				raw = BASE_STR + this.strModifier;
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to STR per level up to the max
+				break;
+			case 'int':
+				raw = BASE_INT + this.intModifier;
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to INT per level up to the max
+				break;
+			case 'ac':
+				raw = BASE_AC + this.acVariance;
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to AC per level up to the max
+				break;
+			case 'hp':
+				raw = this.maxHp;
+				break;
+			case 'xp':
+				raw = this.options.xp || STARTING_XP;
+				break;
+			default:
+		}
+
+		return raw;
+	}
+
+	getModifier (targetProp) {
+		const targetModifier = `${targetProp}Modifier`;
+		let modifier = this.options[targetModifier] || 0;
+
+		const boost = Math.min(this.level, MAX_BOOSTS[targetProp]);
+		if (boost > 0) {
+			modifier += boost; // +1 per level up to the max
+		}
+
+		modifier += Math.min(this.modifiers[modifier] || 0, MAX_BOOSTS[targetProp]);
+
+		return modifier;
 	}
 
 	get rankings () {
@@ -188,26 +320,6 @@ Battles won: ${this.battles.wins}`;
 		return this.hp < -this.bloodiedValue;
 	}
 
-	get maxHp () {
-		let maxHp = BASE_HP + this.hpVariance;
-		maxHp += Math.min(this.level * 3, MAX_HP_BOOST); // Gain 3 hp per level up to the max
-		maxHp += Math.min(this.modifiers.maxHp || 0, MAX_HP_MODIFICATION);
-
-		return Math.max(maxHp, 1);
-	}
-
-	get hp () {
-		if (this.options.hp === undefined) this.hp = this.maxHp;
-
-		return this.options.hp;
-	}
-
-	set hp (hp) {
-		this.setOptions({
-			hp
-		});
-	}
-
 	get respawnTimeoutBegan () {
 		return this.options.respawnTimeoutBegan || 0;
 	}
@@ -218,16 +330,15 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
-	get xp () {
-		let xp = this.getPreBattlePropValue('xp');
-		xp += this.modifiers.xp || 0;
+	get cards () {
+		if (!Array.isArray(this.options.cards)) this.cards = [];
 
-		return Math.max(xp, 0);
+		return this.options.cards;
 	}
 
-	set xp (xp) {
+	set cards (cards) {
 		this.setOptions({
-			xp
+			cards
 		});
 	}
 
@@ -241,8 +352,12 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
+	}
+
 	get items () {
-		if (!this.options.items) this.items = [];
+		if (!Array.isArray(this.options.items)) this.items = [];
 
 		return this.options.items;
 	}
@@ -254,7 +369,10 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get encounterModifiers () {
-		return (this.encounter || {}).modifiers || {};
+		if (!this.encounter) this.encounter = {};
+		if (!this.encounter.modifiers) this.encounter.modifiers = {};
+
+		return this.encounter.modifiers;
 	}
 
 	set encounterModifiers (modifiers = {}) {
@@ -332,78 +450,6 @@ Battles won: ${this.battles.wins}`;
 		};
 	}
 
-	get level () {
-		return getLevel(this.xp);
-	}
-
-	get displayLevel () {
-		const level = getLevel(this.xp);
-		return level ? `level ${level}` : 'beginner';
-	}
-
-	get ac () {
-		let ac = this.getPreBattlePropValue('ac');
-		ac += Math.min(this.modifiers.ac || 0, MAX_AC_MODIFICATION);
-
-		return Math.max(ac, 1);
-	}
-
-	getPreBattlePropValue (prop) {
-		let raw;
-
-		switch (prop) {
-			case 'ac':
-				raw = BASE_AC + this.acVariance;
-				raw += Math.min(this.level, MAX_AC_BOOST); // +1 to AC per level up to the max
-				break;
-			case 'hp':
-				raw = this.maxHp;
-				break;
-			case 'xp':
-				raw = this.options.xp || STARTING_XP;
-				break;
-			default:
-		}
-
-		return raw;
-	}
-
-	// We don't have this right now
-	// get bonusAttackDice () {
-	// 	return undefined;
-	// }
-
-	get attackModifier () {
-		let attackModifier = this.options.attackModifier || 0;
-
-		const boost = Math.min(this.level, MAX_ATTACK_BOOST);
-		if (boost > 0) {
-			attackModifier += boost; // +1 per level up to the max
-		}
-
-		attackModifier += Math.min(this.modifiers.attackModifier || 0, MAX_ATTACK_BOOST);
-
-		return attackModifier;
-	}
-
-	// We don't have this right now
-	// get bonusDamageDice () {
-	// 	return undefined;
-	// }
-
-	get damageModifier () {
-		let damageModifier = this.options.damageModifier || 0;
-
-		const boost = Math.min(this.level, MAX_DAMAGE_BOOST);
-		if (boost > 0) {
-			damageModifier += boost; // +1 per level up to the max
-		}
-
-		damageModifier += Math.min(this.modifiers.damageModifier || 0, MAX_DAMAGE_BOOST);
-
-		return damageModifier;
-	}
-
 	canHold () { // eslint-disable-line class-methods-use-this
 		return false;
 	}
@@ -416,6 +462,52 @@ Battles won: ${this.battles.wins}`;
 		return this.canHold(item);
 	}
 
+	canUseItem (item) {
+		return this.canHoldItem(item);
+	}
+
+	addItem (item) {
+		this.items = sortItemsAlphabetically([...this.items, item]);
+
+		this.emit('itemAdded', { item });
+	}
+
+	removeItem (itemToRemove) {
+		const itemIndex = this.items.findIndex(item => isMatchingItem(item, itemToRemove));
+
+		if (itemIndex >= 0) {
+			const foundItem = this.items.splice(itemIndex, 1)[0];
+
+			this.emit('itemRemoved', { item: foundItem });
+
+			return foundItem;
+		}
+
+		return undefined;
+	}
+
+	giveItem (itemToGive, recipient) {
+		const item = this.removeItem(itemToGive);
+
+		if (item) {
+			recipient.addItem(item);
+
+			this.emit('itemGiven', { item, recipient });
+		}
+	}
+
+	useItem ({ channel, character = this, item, monster }) {
+		const foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
+
+		if (foundItem) {
+			return foundItem.use({ channel, character, monster });
+		}
+
+		return Promise.reject(channel({
+			announce: `${character.givenName} doesn't seem to be holding that item.`
+		}));
+	}
+
 	leaveCombat (activeContestants) {
 		this.emit('leave', {
 			activeContestants
@@ -426,8 +518,16 @@ Battles won: ${this.battles.wins}`;
 		return false;
 	}
 
+	/* assailant is the monster who attacked you, not the contestant who owns the monster */
 	hit (damage = 0, assailant, card) {
-		if (this.hp < 1) return false;
+		const hitLog = this.encounterModifiers.hitLog || [];
+		hitLog.unshift({
+			assailant,
+			damage,
+			card,
+			when: Date.now()
+		});
+		this.encounterModifiers.hitLog = hitLog;
 
 		const hp = this.hp - damage;
 		const originalHP = this.hp;
@@ -442,11 +542,11 @@ Battles won: ${this.battles.wins}`;
 			prevHp: originalHP
 		});
 
-		if (hp <= 0) {
+		if (originalHP > 0 && hp <= 0) {
 			return this.die(assailant);
 		}
 
-		return true;
+		return !this.dead;
 	}
 
 	heal (amount = 0) {
@@ -468,15 +568,15 @@ Battles won: ${this.battles.wins}`;
 		});
 
 		if (hp <= 0) {
-			return this.die();
+			return this.die(this);
 		}
 
 		return true;
 	}
 
 	setModifier (attr, amount = 0, permanent = false) {
-		const prevValue = this.modifiers[attr] || 0;
-		const modifiers = Object.assign({}, this.modifiers, {
+		const prevValue = (permanent) ? this.modifiers[attr] || 0 : this.encounterModifiers[attr] || 0;
+		const modifiers = Object.assign({}, (permanent) ? this.modifiers : this.encounterModifiers, {
 			[attr]: prevValue + amount
 		});
 
@@ -500,7 +600,7 @@ Battles won: ${this.battles.wins}`;
 
 		if (assailant instanceof BaseCreature) {
 			if (!this.killedBy) { // You can only be killed by one monster
-				assailant.killed = this;
+				if (assailant !== this) assailant.killed = this;
 				this.killedBy = assailant;
 
 				this.emit('die', {
@@ -580,6 +680,55 @@ Battles won: ${this.battles.wins}`;
 		};
 
 		this.battles = battles;
+	}
+
+	edit (channel) {
+		return Promise
+			.resolve()
+			.then(() => this.look && this.look(channel))
+			.then(() => channel({
+				question:
+`Which attribute would you like to edit?
+
+${getAttributeChoices(this.options)}`,
+				choices: Object.keys(Object.keys(this.options))
+			}))
+			.then(index => Object.keys(this.options)[index])
+			.then(key => channel({
+				question:
+`The current value of ${key} is ${JSON.stringify(this.options[key])}. What would you like the new value of ${key} to be?`
+			})
+				.then((strVal) => {
+					const oldVal = this.options[key];
+					let newVal;
+
+					try {
+						newVal = JSON.parse(strVal);
+					} catch (ex) {
+						newVal = +strVal;
+
+						if (isNaN(newVal)) { // eslint-disable-line no-restricted-globals
+							newVal = strVal;
+						}
+					}
+
+					return { key, oldVal, newVal };
+				}))
+			.then(({ key, oldVal, newVal }) => channel({
+				question:
+`The value of ${key} has been updated from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}. Would you like to keep this change? (yes/no)` // eslint-disable-line max-len
+			})
+				.then((answer = '') => {
+					if (answer.toLowerCase() === 'yes') {
+						this.setOptions({
+							[key]: newVal
+						});
+
+						return channel({ announce: 'Change saved.' });
+					}
+
+					return channel({ announce: 'Change reverted.' });
+				}));
 	}
 }
 

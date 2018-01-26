@@ -1,6 +1,8 @@
 const wrap = require('word-wrap');
 const upperFirst = require('lodash.upperfirst');
 
+const { findProbabilityMatch } = require('./probabilities');
+
 const formatCard = ({
 	title, description, stats, rankings
 }) => (
@@ -30,21 +32,7 @@ ${wrap(rankings, { indent: '| ', width: 31 })}`
 `.replace(/^\s*[\r\n]/gm, '')
 );
 
-const itemRarity = (probability) => {
-	if (probability >= 80) {
-		return '•';
-	} else if (probability >= 60) {
-		return '○';
-	} else if (probability >= 40) {
-		return '◆';
-	} else if (probability >= 20) {
-		return '◇';
-	} else if (probability > 5) {
-		return '★';
-	}
-
-	return '☆';
-};
+const itemRarity = item => findProbabilityMatch(item.probability || 0).icon;
 
 const getItemRequirements = (item) => {
 	const requirements = [];
@@ -89,8 +77,15 @@ const monsterCard = (monster, verbose = true) => formatCard({
 	rankings: verbose ? monster.rankings : ''
 });
 
+const characterCard = (character, verbose = true) => formatCard({
+	title: `${character.icon}  ${character.givenName}`,
+	stats: verbose ? character.detailedStats : character.stats,
+	rankings: character.rankings
+});
+
 module.exports = {
 	actionCard,
+	characterCard,
 	formatCard,
 	itemCard,
 	discoveryCard,

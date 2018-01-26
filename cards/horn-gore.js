@@ -1,13 +1,15 @@
 /* eslint-disable max-len */
+const sample = require('lodash.sample');
 
 const ImmobilizeCard = require('./immobilize');
 
 const { MINOTAUR } = require('../helpers/creature-types');
-
 const { roll } = require('../helpers/chance');
+const { EPIC } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
-const STARTING_ATTACK_MODIFIER = 0;
+const STARTING_DEX_MODIFIER = 0;
 
 class HornGore extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -26,21 +28,21 @@ ${super.stats}`;
 
 	getAttackModifier (target) {
 		if (this.weakAgainstCreatureTypes.includes(target.name)) {
-			return -2 + this.attackModifier;
+			return -2 + this.dexModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
-			return this.attackModifier;
+			return this.dexModifier;
 		}
 		return 0;
 	}
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.attackModifier = STARTING_ATTACK_MODIFIER;
+		this.dexModifier = STARTING_DEX_MODIFIER;
 	}
 
 	increaseImmobilizeStrength (ammount) {
 		this.freedomThresholdModifier += ammount;
-		this.attackModifier += ammount;
+		this.dexModifier += ammount;
 	}
 
 	getCommentary (rolled, player, target) { // eslint-disable-line class-methods-use-this
@@ -52,38 +54,37 @@ ${super.stats}`;
 
 		if (rolled.curseOfLoki) {
 			const flavors = [
-				`gouge ${player.pronouns[1]} eye`,
-				`punch ${player.pronouns[1]} soft temple`,
-				`kick ${player.pronouns[1]} jugular`,
-				`shove a fist into each of ${player.pronouns[1]} nostrils and spread ${target.prounouns[1]} arms as wide as ${target.pronouns[0]} can`,
-				`bite off ${player.pronouns[1]} ear`,
-				`grab ${player.pronouns[1]} tongue and pull for all ${target.pronouns[0]}'s worth`
+				`gouge ${player.pronouns.his} eye`,
+				`punch ${player.pronouns.his} soft temple`,
+				`kick ${player.pronouns.his} jugular`,
+				`shove a fist into each of ${player.pronouns.his} nostrils and spread ${player.pronouns.his} arms as wide as ${target.pronouns.he} can`,
+				`bite off ${player.pronouns.his} ear`,
+				`grab ${player.pronouns.his} tongue and pull for all ${target.pronouns.he}'s worth`
 			];
 			commentary = `${player.givenName} rolled a 1.
-${target.givenName} manages to take the opportunity of such close proximity to ${player.givenName}'s face to ${flavors[Math.random() * flavors.length]}.`;
+${target.givenName} manages to take the opportunity of such close proximity to ${player.givenName}'s face to ${sample(flavors)}.`;
 		}
 
 		return commentary;
 	}
 
 	emitRoll (rolled, success, player, target, hornNumber) {
-		this.emit('rolling', {
-			reason: `vs ${target.givenName}'s AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''} to determine if gore was successful`,
-			card: this,
-			roll: rolled,
-			player,
-			target
-		});
-
 		const commentary = this.getCommentary(rolled, player, target);
 
+		let reason;
+		if (player === target) {
+			reason = `vs ${target.pronouns.his} own ac (${target.ac})${hornNumber ? ` for ${this.flavors.spike} ${hornNumber}` : ''} in confusion.`;
+		} else {
+			reason = `vs ${target.givenName}'s ac (${target.ac})${hornNumber ? ` for ${this.flavors.spike} ${hornNumber}` : ''} to determine if gore was successful.`;
+		}
+
 		this.emit('rolled', {
-			reason: `vs AC (${target.ac})${hornNumber ? ` for horn ${hornNumber}` : ''}`,
+			reason,
 			card: this,
 			roll: rolled,
-			player,
-			target,
-			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...'
+			who: player,
+			outcome: commentary || (success ? 'Hit!' : 'Miss...'),
+			vs: target.ac
 		});
 	}
 
@@ -102,7 +103,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 
 	getDamageRoll (player) {
-		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.damageModifier / 2)), bonusDice: player.bonusDamageDice });
+		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.strModifier / 2)), bonusDice: player.bonusDamageDice });
 	}
 
 	gore (player, target, hornNumber) {
@@ -110,7 +111,8 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 		if (success) {
 			this.increaseImmobilizeStrength(2);
-			player.encounterModifiers = { attackModifier: player.encounterModifiers.attackModifier += 1 || 1 };
+			const { dexModifier } = player.encounterModifiers;
+			player.encounterModifiers.dexModifier = dexModifier > 0 ? dexModifier + 1 : 1;
 
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
@@ -129,16 +131,16 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		// if the player stabs with their first horn, make it slightly more likely that the second
 		// horn will also stab, but just for this one attack. Therefore, need to store their
-		// pre-gore attackModifier and restore it once the second stab is resolved (and before the
+		// pre-gore dexModifier and restore it once the second stab is resolved (and before the
 		// actual immobilize takes place so it doesn't interfere with the immobilize logic).
-		const originalAttackModifier = player.encounterModifiers.attackModifier;
+		const originalDexModifier = player.encounterModifiers.dexModifier;
 
 		this.resetImmobilizeStrength();
 		const horn1 = this.gore(player, target, 1);
 		const horn2 = this.gore(player, target, 2);
 		const chanceToImmobilize = horn1.success || horn2.success;
 
-		player.encounterModifiers = { attackModifier: originalAttackModifier };
+		player.encounterModifiers.dexModifier = originalDexModifier;
 
 		if (!player.dead && chanceToImmobilize) {
 			if (target.dead) {
@@ -160,29 +162,32 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 }
 
 HornGore.cardType = 'Horn Gore';
-HornGore.probability = 5;
-HornGore.description = 'You think those horns are just there to look pretty? Think again...';
-HornGore.cost = 6;
-HornGore.level = 0;
 HornGore.permittedClassesAndTypes = [MINOTAUR];
+HornGore.probability = EPIC.probability;
+HornGore.description = 'You think those horns are just there to look pretty? Think again...';
+HornGore.level = 0;
+HornGore.cost = EXPENSIVE.cost;
+HornGore.notForSale = true;
+
 HornGore.defaults = {
 	...ImmobilizeCard.defaults,
 	damageDice: '1d4',
 	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	attackModifier: STARTING_ATTACK_MODIFIER
+	dexModifier: STARTING_DEX_MODIFIER
 };
 
 HornGore.flavors = {
 	hits: [
 		['gores', 80],
-		['mercilessly juggles on their mighty horns', 70],
 		['pokes relentlessly', 70],
-		['impales', 50],
+		['impales', 70],
+		['mercilessly juggles (on their mighty horns) the pitiful', 50],
 		['chases down gleefully, stomps on, and then wantonly drives their horns through', 5],
 		['teaches the true meaning of "horny" to', 5]
-	]
+	],
+	spike: 'horn'
 };
 
 module.exports = HornGore;

@@ -2,6 +2,9 @@
 
 const CoilCard = require('./coil');
 
+const { VERY_RARE } = require('../helpers/probabilities');
+const { PRICEY } = require('../helpers/costs');
+
 class ConstrictCard extends CoilCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -13,13 +16,16 @@ class ConstrictCard extends CoilCard {
 }
 
 ConstrictCard.cardType = 'Constrict';
-ConstrictCard.probability = 30;
+ConstrictCard.actions = ['constrict', 'constricts', 'constricted'];
+ConstrictCard.probability = VERY_RARE.probability;
 ConstrictCard.level = 1;
+ConstrictCard.cost = PRICEY.cost;
+ConstrictCard.notForSale = false;
+
 ConstrictCard.defaults = {
 	...CoilCard.defaults,
 	ongoingDamage: 2,
 	freedomThresholdModifier: 3
 };
-ConstrictCard.actions = ['constrict', 'constricts', 'constricted'];
 
 module.exports = ConstrictCard;

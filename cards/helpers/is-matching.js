@@ -1,1 +1,3 @@
-module.exports = (card1, card2) => card1.name === card2.name && JSON.stringify(card1) === JSON.stringify(card2);
+const isMatchingItem = require('../../items/helpers/is-matching');
+
+module.exports = isMatchingItem;
