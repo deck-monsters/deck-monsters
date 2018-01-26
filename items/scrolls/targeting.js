@@ -2,7 +2,7 @@
 
 const BaseScroll = require('./base');
 
-const { ABUNDANT } = require('../../helpers/probabilities');
+const { COMMON } = require('../../helpers/probabilities');
 const { VERY_CHEAP } = require('../../helpers/costs');
 
 class TargetingScroll extends BaseScroll {
@@ -57,7 +57,7 @@ From now on ${details}`;
 }
 
 TargetingScroll.itemType = 'Targeting Strategy';
-TargetingScroll.probability = ABUNDANT.probability;
+TargetingScroll.probability = COMMON.probability;
 TargetingScroll.numberOfUses = 3;
 TargetingScroll.description = `Change your monster's targeting strategy up to ${TargetingScroll.numberOfUses} times.`;
 TargetingScroll.level = 1;

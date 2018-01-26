@@ -1,9 +1,10 @@
 /* eslint-disable max-len */
 const { expect, sinon } = require('../../shared/test-setup');
 
-const pause = require('../../helpers/pause');
 const ChaosTheoryScroll = require('./chaos-theory');
 const Jinn = require('../../monsters/jinn');
+const pause = require('../../helpers/pause');
+const randomCharacter = require('../../characters/helpers/random');
 const targetingStrategies = require('../../helpers/targeting-strategies');
 
 describe('./items/scrolls/chaos-theory.js', () => {
@@ -43,10 +44,11 @@ describe('./items/scrolls/chaos-theory.js', () => {
 
 	it('can change your targeting strategy', () => {
 		const chaosTheory = new ChaosTheoryScroll();
-		const monster = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
+		const character = randomCharacter();
+		const monster = character.monsters[0];
 
 		expect(monster.targetingStrategy).to.equal(undefined);
 
-		return chaosTheory.use({ monster }).then(() => expect(monster.targetingStrategy).to.equal(targetingStrategies.TARGET_RANDOM_PLAYER));
+		return chaosTheory.use({ channel: channelStub, character, monster }).then(() => expect(monster.targetingStrategy).to.equal(targetingStrategies.TARGET_RANDOM_PLAYER));
 	});
 });

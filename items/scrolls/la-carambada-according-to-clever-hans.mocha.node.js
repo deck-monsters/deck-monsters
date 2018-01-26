@@ -7,7 +7,7 @@ const Jinn = require('../../monsters/jinn');
 
 const { TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
-const { ABUNDANT } = require('../../helpers/probabilities');
+const { COMMON } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/la-carambada-according-to-clever-hans.js', () => {
 	let channelStub;
@@ -36,7 +36,7 @@ describe('./items/scrolls/la-carambada-according-to-clever-hans.js', () => {
 		const laCarambada = new LaCarambadaScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
-		expect(laCarambada.probability).to.equal(ABUNDANT.probability);
+		expect(laCarambada.probability).to.equal(COMMON.probability);
 		expect(laCarambada.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(laCarambada).to.be.an.instanceof(LaCarambadaScroll);
 		expect(laCarambada.numberOfUses).to.equal(3);

@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 
 const TargetingScroll = require('./targeting');
+const { ABUNDANT } = require('../../helpers/probabilities');
 const { TARGET_NEXT_PLAYER } = require('../../helpers/targeting-strategies');
 
 // The "default" scroll
@@ -24,5 +25,6 @@ ParsifalScroll.description = `My mother said that if you know your enemy and kno
 Keep your strategy simple: your opponent is always the person next to you.`;
 ParsifalScroll.level = 0;
 ParsifalScroll.targetingStrategy = TARGET_NEXT_PLAYER;
+ParsifalScroll.probability = ABUNDANT.probability;
 
 module.exports = ParsifalScroll;

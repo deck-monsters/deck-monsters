@@ -7,7 +7,7 @@ const Jinn = require('../../monsters/jinn');
 
 const { TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
-const { ABUNDANT } = require('../../helpers/probabilities');
+const { COMMON } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/house-lannister-according-to-clever-hans.js', () => {
 	let channelStub;
@@ -36,7 +36,7 @@ describe('./items/scrolls/house-lannister-according-to-clever-hans.js', () => {
 		const houseLannister = new HouseLannisterScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
-		expect(houseLannister.probability).to.equal(ABUNDANT.probability);
+		expect(houseLannister.probability).to.equal(COMMON.probability);
 		expect(houseLannister.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(houseLannister).to.be.an.instanceof(HouseLannisterScroll);
 		expect(houseLannister.numberOfUses).to.equal(3);

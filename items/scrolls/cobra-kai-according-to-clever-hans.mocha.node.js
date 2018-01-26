@@ -6,7 +6,7 @@ const CobraKaiScroll = require('./cobra-kai-according-to-clever-hans');
 const Jinn = require('../../monsters/jinn');
 const { TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
-const { ABUNDANT } = require('../../helpers/probabilities');
+const { COMMON } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/cobra-kai-according-to-clever-hans.js', () => {
 	let channelStub;
@@ -35,7 +35,7 @@ describe('./items/scrolls/cobra-kai-according-to-clever-hans.js', () => {
 		const cobraKai = new CobraKaiScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
-		expect(cobraKai.probability).to.equal(ABUNDANT.probability);
+		expect(cobraKai.probability).to.equal(COMMON.probability);
 		expect(cobraKai.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(cobraKai).to.be.an.instanceof(CobraKaiScroll);
 		expect(cobraKai.numberOfUses).to.equal(3);
