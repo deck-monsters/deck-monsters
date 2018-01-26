@@ -4,7 +4,6 @@ const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 
 const HitCard = require('./hit');
-const { DEFENSE_PHASE } = require('../helpers/phases');
 
 class DelayedHit extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
