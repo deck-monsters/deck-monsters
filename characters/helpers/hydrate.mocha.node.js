@@ -31,7 +31,9 @@ describe('./characters/helpers/hydrate.js', () => {
 
 		expect(character).to.be.an.instanceof(Beastmaster);
 		expect(character.monsters.length).to.equal(4);
-		expect(character.deck.length).to.equal(35);
+		expect(character.deck.length).to.equal(37);
+
+		expect(character.deck.find(card => card.name === 'DelayedHit')).to.be.defined;
 
 		const characterKalevala = character.deck.find(card => card.name === 'KalevalaCard');
 		const monsterKalevala = character.monsters[1].cards.find(card => card.name === 'KalevalaCard');

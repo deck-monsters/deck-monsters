@@ -2,6 +2,7 @@ const BattleFocusCard = require('../battle-focus');
 const BlastCard = require('../blast');
 const BlinkCard = require('../blink');
 const CoilCard = require('../coil');
+const DelayedHitCard = require('../delayed-hit');
 const FleeCard = require('../flee');
 const HealCard = require('../heal');
 const HitCard = require('../hit');
@@ -23,6 +24,8 @@ const getMinimumDeck = () => [
 	new HitCard(),
 	new HitCard(),
 	new HitCard(),
+	new DelayedHitCard(),
+	new DelayedHitCard(),
 	new HealCard(),
 	new HealCard(),
 	new FleeCard()

@@ -12,6 +12,7 @@ const CloakOfInvisibilityCard = require('../cloak-of-invisibility');
 const CoilCard = require('../coil');
 const ConstrictCard = require('../constrict');
 const CurseCard = require('../curse');
+const DelayedHit = require('../delayed-hit');
 const EnchantedFaceswapCard = require('../enchanted-faceswap');
 const EnthrallCard = require('../enthrall');
 const EntranceCard = require('../entrance');
@@ -59,6 +60,7 @@ module.exports = [
 	CoilCard,
 	ConstrictCard,
 	CurseCard,
+	DelayedHit,
 	EnchantedFaceswapCard,
 	EnthrallCard,
 	EntranceCard,
