@@ -4,7 +4,7 @@ const { randomCharacter } = require('../characters');
 const FistsOfVillainyCard = require('./fists-of-villainy');
 const pause = require('../helpers/pause');
 
-describe('./cards/fists-of-villainyjs', () => {
+describe('./cards/fists-of-villainy.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -31,7 +31,8 @@ describe('./cards/fists-of-villainyjs', () => {
 		const villainy = new FistsOfVillainyCard();
 
 		expect(villainy).to.be.an.instanceof(FistsOfVillainyCard);
-		expect(villainy.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d6');
+		expect(villainy.stats).to.equal(`Hit: 1d20 vs AC / Damage: 1d6
+Strikes opponent with lowest current hp.`);
 		expect(villainy.icon).to.equal('🐀');
 	});
 
