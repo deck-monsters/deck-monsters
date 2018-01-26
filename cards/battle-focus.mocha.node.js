@@ -11,7 +11,7 @@ const ultimateComboNarration = [];
 for (let i = 17; i < 101; i++) {
 	ultimateComboNarration.push(`HUMILIATION! ${i} hits`);
 }
-ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (99 total damage).');
+ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (109 total damage).');
 
 describe('./cards/battle-focus.js', () => {
 	let channelStub;
