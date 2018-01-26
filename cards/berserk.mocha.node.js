@@ -13,7 +13,7 @@ const ultimateComboNarration = [];
 for (let i = 5; i < 101; i++) {
 	ultimateComboNarration.push(`HUMILIATION! ${i} hits`);
 }
-ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (5148 total damage).');
+ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (5150 total damage).');
 
 describe('./cards/berserk.js', () => {
 	let channelStub;
@@ -461,7 +461,7 @@ describe('./cards/berserk.js', () => {
 				expect(hitEffectSpy.callCount).to.equal(0);
 				expect(hitSpy.callCount).to.equal(5);
 
-				expect(narrations).to.deep.equal(['COMBO BREAKER!  (Broke a 4 hit combo, 3 total damage)']);
+				expect(narrations).to.deep.equal(['COMBO BREAKER!  (Broke a 4 hit combo, 4 total damage)']);
 
 				expect(player.hp).to.equal(playerBeforeHp - 1);
 				return expect(target.hp).to.equal(before - 4);
