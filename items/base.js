@@ -77,7 +77,7 @@ class BaseItem extends BaseClass {
 				this.used += 1;
 
 				if (this.action) {
-					return this.action({ channel, character, monster });
+					return Promise.resolve().then(() => this.action({ channel, character, monster }));
 				}
 
 				return this.used;
