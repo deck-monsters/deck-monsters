@@ -20,25 +20,30 @@ class DelayedHit extends HitCard {
 ${super.stats}`;
 	}
 
-	effect (delayingPlayer, target) { // eslint-disable-line no-unused-vars
+	effect (delayingPlayer, target, ring) { // eslint-disable-line no-unused-vars
 		let whenPlayed = Date.now();
 
 		const delayedHitEffect = ({
-			card,
-			phase,
-			ring
+			card
 		}) => {
-			if (phase === DEFENSE_PHASE) {
-				const { play } = card;
+			const { play } = card;
+
+			if (play) {
 				card.play = (...args) => play.call(card, ...args).then((result) => {
 					const lastHitByOther = delayingPlayer.encounterModifiers.hitLog && delayingPlayer.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingPlayer);
 					if (lastHitByOther && lastHitByOther.when > whenPlayed) {
 						whenPlayed = lastHitByOther.when;
-						delayingPlayer.encounterEffects = delayingPlayer.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
+						ring.encounterEffects = ring.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
 
-						this.emit('narration', {
-							narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}`
-						});
+						if (delayingPlayer.dead) {
+							this.emit('narration', {
+								narration: `With ${delayingPlayer.pronouns.his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
+							});
+						} else {
+							this.emit('narration', {
+								narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
+							});
+						}
 
 						return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
 							.then(() =>
@@ -58,7 +63,7 @@ ${super.stats}`;
 			narration: `${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${delayingPlayer.pronouns.his} enemy to reveal themself.`
 		});
 
-		delayingPlayer.encounterEffects = [...delayingPlayer.encounterEffects, delayedHitEffect];
+		ring.encounterEffects = [...ring.encounterEffects, delayedHitEffect];
 	}
 }
 
