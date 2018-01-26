@@ -57,27 +57,31 @@ class BaseItem extends BaseClass {
 		return !!this.constructor.usableWithoutMonster;
 	}
 
-	use (character, monster) {
-		if (!this.usableWithoutMonster && !monster) {
-			this.emit('narration', {
-				narration: `${this.item} must be used on a monster.`
+	use ({ channel, character, monster }) {
+		return Promise.resolve()
+			.then(() => {
+				if (!this.usableWithoutMonster && !monster) {
+					return Promise.reject(channel({
+						announce: `${this.item} must be used on a monster.`
+					}));
+				}
+
+				this.emit('used', {
+					channel,
+					character,
+					monster
+				});
+
+				// Generally speaking once something has been used the player will drop it but we'll increment
+				// a counter instead of boolean just in case the item can be used more than once
+				this.used += 1;
+
+				if (this.action) {
+					return this.action({ channel, character, monster });
+				}
+
+				return this.used;
 			});
-		} else {
-			this.emit('used', {
-				character,
-				monster
-			});
-
-			// Generally speaking once something has been used the player will drop it but we'll increment
-			// a counter instead of boolean just in case the item can be used more than once
-			this.used += 1;
-
-			if (this.action) {
-				return this.action(character, monster);
-			}
-		}
-
-		return this.used;
 	}
 
 	look (channel) {

@@ -10,6 +10,7 @@ const { monsterCard } = require('../helpers/card');
 const { spawn, equip } = require('../monsters');
 const TENSE = require('../helpers/tense');
 const transferItems = require('../items/helpers/transfer');
+const useItems = require('../items/helpers/use');
 
 const DEFAULT_MONSTER_SLOTS = 7;
 
@@ -55,6 +56,10 @@ class Beastmaster extends BaseCharacter {
 
 	canHoldItem (item) {
 		return super.canHoldItem(item) || this.monsters.reduce((canHold, monster) => canHold || monster.canHoldItem(item), false);
+	}
+
+	canUseItem (item) {
+		return item.usableWithoutMonster && super.canUseItem(item);
 	}
 
 	removeCard (cardToRemove) {
@@ -127,7 +132,7 @@ class Beastmaster extends BaseCharacter {
 					}
 
 					return Promise.reject(channel({
-						announce: `${monsterName} is not able to be ${TENSE[action].PAST} right now, because ${reason}`
+						announce: `${monsterName} is not able to ${TENSE[action].PAST} right now, because ${reason}`
 					}));
 				} else if (numberOfMonsters === 1) {
 					return monsters[0];
@@ -208,6 +213,37 @@ Which monster would you like to ${action}?`,
 			})
 			.then(monster => transferItems({ from: monster, to: this, itemSelection, channel })
 				.then(() => monster));
+	}
+
+	useItems ({ channel, isMonsterItem, monsterName }) {
+		return Promise.resolve()
+			.then(() => {
+				if (monsterName || isMonsterItem) {
+					const { monsters } = this;
+
+					return Promise.resolve()
+						.then(() => this.chooseMonster({
+							channel, monsters, monsterName, action: 'use items on'
+						}));
+				}
+
+				return undefined;
+			})
+			.then(monster => useItems({ channel, character: this, monster, use: options => this.useItem(options) }));
+	}
+
+	useItem ({ channel, isMonsterItem, item, monster, monsterName }) {
+		if (!monster && (monsterName || isMonsterItem)) {
+			const { monsters } = this;
+
+			return Promise.resolve()
+				.then(() => this.chooseMonster({
+					channel, monsters, monsterName, action: 'use the item on'
+				}))
+				.then(foundMonster => super.useItem({ channel, item, monster: foundMonster }));
+		}
+
+		return super.useItem({ channel, item, monster });
 	}
 
 	callMonsterOutOfTheRing ({

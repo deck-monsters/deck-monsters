@@ -1,5 +1,5 @@
-const announceNarration = (publicChannel, channelManager, className, card, { narration }) => {
-	publicChannel({ announce: narration });
+const announceNarration = (publicChannel, channelManager, className, item, { channel, narration }) => {
+	(channel || publicChannel)({ announce: narration });
 };
 
 module.exports = announceNarration;

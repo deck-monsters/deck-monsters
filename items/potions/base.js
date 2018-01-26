@@ -42,12 +42,26 @@ class BasePotion extends BaseItem {
 		return 'Usable an unlimited number of times.';
 	}
 
-	use (character, monster) {
-		super.use(character, monster);
+	use ({ channel, character, monster }) {
+		return Promise.resolve()
+			.then(() => {
+				if (this.expired) {
+					return channel({
+						announce: `This ${this.itemType} is expired and cannot be used.`
+					});
+				}
 
-		if (this.expired) {
-			character.removeItem(this);
-		}
+				return super.use({ channel, character, monster });
+			})
+			.then((result) => {
+				if (this.expired) {
+					if (!monster || !monster.removeItem(this)) {
+						character.removeItem(this);
+					}
+				}
+
+				return result;
+			});
 	}
 }
 

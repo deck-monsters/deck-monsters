@@ -32,5 +32,18 @@ describe('./announcements/narration.js', () => {
 
 			announceNarration(publicChannel, {}, '', {}, { narration });
 		});
+
+		it('can announce to private channel', () => {
+			const narration = 'success';
+
+			const publicChannel = sinon.stub();
+
+			const channel = ({ announce }) => {
+				expect(announce).to.equal(narration);
+				expect(publicChannel).to.not.have.been.called;
+			};
+
+			announceNarration(publicChannel, {}, '', {}, { channel, narration });
+		});
 	});
 });
