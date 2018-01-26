@@ -20,7 +20,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 	beforeEach(() => {
 		channelStub.resolves();
 		pauseStub.callsArg(0);
-		randomStub.returns(1000);
+		randomStub.returns(1);
 
 		LotteryTicket = proxyquire('./lottery-ticket', {
 			'lodash.random': randomStub
@@ -45,6 +45,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 		expect(lotteryTicket.expired).to.be.false;
 		expect(lotteryTicket.stats).to.equal('Usable 1 time.');
 		expect(lotteryTicket.icon).to.equal('💰');
+		expect(lotteryTicket.description).to.equal('Play the odds for a chance to win up to 3162 coins.');
 	});
 
 	it('can give you nothing', () => {
@@ -52,9 +53,11 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		const lotteryTicket = new LotteryTicket();
 
-		randomStub.onCall(0).returns(1500);
-		randomStub.onCall(1).returns(1501);
-		randomStub.onCall(2).returns(1000);
+		randomStub.onCall(5).returns(5);
+		randomStub.onCall(6).returns(5);
+		randomStub.onCall(7).returns(5);
+		randomStub.onCall(8).returns(5);
+		randomStub.onCall(9).returns(5);
 
 		character.coins = 50;
 
@@ -63,19 +66,47 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 		expect(character.coins).to.equal(50);
 	});
 
-	it('can make you win big', () => {
+	it('can make you win on 1 match', () => {
 		const character = randomCharacter();
 
 		const lotteryTicket = new LotteryTicket();
 
-		randomStub.onCall(0).returns(1500);
-		randomStub.onCall(1).returns(1500);
-		randomStub.onCall(2).returns(1000);
+		randomStub.onCall(5).returns(12);
+		randomStub.onCall(6).returns(12);
+		randomStub.onCall(7).returns(12);
+		randomStub.onCall(8).returns(12);
 
 		character.coins = 50;
 
 		lotteryTicket.use(character);
 
-		expect(character.coins).to.equal(1050);
+		expect(character.coins).to.equal(82);
+	});
+
+	it('can make you win on 3 matches', () => {
+		const character = randomCharacter();
+
+		const lotteryTicket = new LotteryTicket();
+
+		randomStub.onCall(5).returns(12);
+		randomStub.onCall(6).returns(12);
+
+		character.coins = 50;
+
+		lotteryTicket.use(character);
+
+		expect(character.coins).to.equal(366);
+	});
+
+	it('can make you win big on all 5 matches', () => {
+		const character = randomCharacter();
+
+		const lotteryTicket = new LotteryTicket();
+
+		character.coins = 50;
+
+		lotteryTicket.use(character);
+
+		expect(character.coins).to.equal(3212);
 	});
 });
