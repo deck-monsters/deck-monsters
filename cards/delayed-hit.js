@@ -4,7 +4,6 @@ const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 
 const HitCard = require('./hit');
-const random = require('lodash.random');
 const { DEFENSE_PHASE } = require('../helpers/phases');
 
 class DelayedHit extends HitCard {
@@ -23,7 +22,6 @@ ${super.stats}`;
 
 	effect (delayingPlayer, target) { // eslint-disable-line no-unused-vars
 		const when = Date.now();
-		const EFFECT_TYPE = `DelayedHitEffect${when}${random(0, 999999)}`;// Make sure these can stack, without the random sometimes in testing two would end up with the same EFFECT_TYPE
 
 		const delayedHitEffect = ({
 			card,
@@ -33,7 +31,7 @@ ${super.stats}`;
 			if (phase === DEFENSE_PHASE) {
 				const lastHitByOther = delayingPlayer.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingPlayer);
 				if (lastHitByOther.when > when) {
-					delayingPlayer.encounterEffects = delayingPlayer.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
+					delayingPlayer.encounterEffects = delayingPlayer.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
 
 					return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
 						.then(() =>
@@ -47,14 +45,13 @@ ${super.stats}`;
 			return card;
 		};
 
-		delayedHitEffect.effectType = EFFECT_TYPE;
 		delayingPlayer.encounterEffects = [...delayingPlayer.encounterEffects, delayedHitEffect];
 	}
 }
 
 DelayedHit.cardType = 'Delayed Hit';
 DelayedHit.probability = UNCOMMON;
-DelayedHit.description = 'Delay your turn, and to attack the next player who hits you.';
+DelayedHit.description = 'Patience. Patience is key. When your opponent reveals themselves, then you strike.';
 DelayedHit.cost = REASONABLE.cost;
 
 DelayedHit.defaults = {

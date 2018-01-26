@@ -1,3 +1,3 @@
 module.exports = {
-	DEFAULT_MINIMUM_CARDS: 14
+	DEFAULT_MINIMUM_CARDS: 20
 };

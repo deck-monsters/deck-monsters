@@ -38,7 +38,7 @@ describe('./characters/beastmaster.js', () => {
 	it('gets a deck by default', () => {
 		const beastmaster = new Beastmaster();
 
-		expect(beastmaster.deck.length).to.equal(14);
+		expect(beastmaster.deck.length).to.equal(20);
 	});
 
 	it('can spawn a monster', () => {

@@ -1,5 +1,7 @@
 const { expect, sinon } = require('../shared/test-setup');
 
+const Promise = require('bluebird');
+
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 const { DEFENSE_PHASE } = require('../helpers/phases');
@@ -100,6 +102,7 @@ ${customHit.stats}`);
 
 		return delayedHit.play(player, target, ring)
 			.then(() => expect(player.encounterEffects.length).to.equal(1))
+			.then(() => Promise.delay(1))
 			.then(() => {
 				expect(target.hp).to.equal(previousTargetHP);
 				expect(player.hp).to.equal(previousPlayerHP);
@@ -108,6 +111,7 @@ ${customHit.stats}`);
 			})
 			.then(() => delayedHit.play(player, target, ring))
 			.then(() => expect(player.encounterEffects.length).to.equal(2))
+			.then(() => Promise.delay(1)) // make sure hit card play occurs after delayHit card play
 			.then(() => {
 				expect(target.hp).to.equal(previousTargetHP);
 				expect(player.hp).to.equal(previousPlayerHP);
