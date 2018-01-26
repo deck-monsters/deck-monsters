@@ -95,13 +95,13 @@ ${customHit.stats}`);
 	});
 
 	it('can be played and is stack-able', () => {
-		let previousTargetHP = target.hp;
-		let previousPlayerHP = player.hp;
+		const previousTargetHP = target.hp;
+		const previousPlayerHP = player.hp;
 
 		expect(ring.encounterEffects.length).to.equal(0);
 
 		return delayedHit.play(player, target, ring)
-			.then(() => expect(player.encounterEffects.length).to.equal(1))
+			.then(() => expect(ring.encounterEffects.length).to.equal(1))
 			.then(() => Promise.delay(1))
 			.then(() => {
 				expect(target.hp).to.equal(previousTargetHP);
@@ -110,7 +110,7 @@ ${customHit.stats}`);
 				return expect(hitCheckStub).to.not.have.been.called;
 			})
 			.then(() => delayedHit.play(player, target, ring))
-			.then(() => expect(player.encounterEffects.length).to.equal(2))
+			.then(() => expect(ring.encounterEffects.length).to.equal(2))
 			.then(() => Promise.delay(1)) // make sure hit card play occurs after delayHit card play
 			.then(() => {
 				expect(target.hp).to.equal(previousTargetHP);
@@ -118,32 +118,13 @@ ${customHit.stats}`);
 				expect(hitEffectSpy).to.not.have.been.called;
 				return expect(hitCheckStub).to.not.have.been.called;
 			})
+			.then(() => ring.encounterEffects[0]({ phase: DEFENSE_PHASE, ring, card: hit }))
+			.then(() => ring.encounterEffects[1]({ phase: DEFENSE_PHASE, ring, card: hit }))
 			.then(() => hit.play(target, player, ring))
+			.then(() => expect(ring.encounterEffects.length).to.equal(0))
 			.then(() => {
-				expect(target.hp).to.equal(previousTargetHP);
+				expect(target.hp).to.be.below(previousTargetHP);
 				expect(player.hp).to.be.below(previousPlayerHP);
-
-				previousPlayerHP = player.hp;
-
-				expect(hitEffectSpy).to.have.been.calledOnce;
-				return expect(hitCheckStub).to.have.been.calledOnce;
-			})
-			.then(() => player.encounterEffects[0]({ phase: DEFENSE_PHASE, ring }))
-			.then(() => expect(player.encounterEffects.length).to.equal(1))
-			.then(() => {
-				expect(target.hp).to.be.below(previousTargetHP);
-				expect(player.hp).to.be.equal(previousPlayerHP);
-
-				previousTargetHP = target.hp;
-
-				expect(delayedHitHitCheckStub).to.have.been.calledOnce;
-				return expect(hitCheckStub).to.have.been.calledOnce;
-			})
-			.then(() => player.encounterEffects[0]({ phase: DEFENSE_PHASE, ring }))
-			.then(() => expect(player.encounterEffects.length).to.equal(0))
-			.then(() => {
-				expect(target.hp).to.be.below(previousTargetHP);
-				expect(player.hp).to.be.equal(previousPlayerHP);
 				expect(delayedHitHitCheckStub).to.have.been.calledTwice;
 				return expect(hitCheckStub).to.have.been.calledOnce;
 			});
