@@ -120,6 +120,8 @@ Stroke of luck increases damage per hit by 1.`;
 			// For cards with a bigFirstHit, this will make perma-death possible (although unlikely)
 			if (iteration !== 1) {
 				this.cumulativeComboDamage += damage;
+			} else {
+				this.initialDamage = damage;
 			}
 
 			// If we hit then do some damage
@@ -139,7 +141,7 @@ Stroke of luck increases damage per hit by 1.`;
 			}
 
 			this.emit('narration', {
-				narration: `COMBO BREAKER!  (Broke a ${iteration - 1} hit combo, ${this.cumulativeComboDamage} total damage)`
+				narration: `COMBO BREAKER!  (Broke a ${iteration - 1} hit combo, ${this.initialDamage + this.cumulativeComboDamage} total damage)`
 			});
 
 			this.resetCard();
@@ -159,7 +161,7 @@ Stroke of luck increases damage per hit by 1.`;
 			const comboText = (iteration > 3) ? 'COMBO! ' : '';
 			const ultraText = (iteration > 5) ? 'ULTRA ' : '';
 			this.emit('narration', {
-				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration - 1} HIT${(iteration - 1 > 1) ? 'S' : ''} (${this.cumulativeComboDamage} total damage).`
+				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration - 1} HIT${(iteration - 1 > 1) ? 'S' : ''} (${this.initialDamage + this.cumulativeComboDamage} total damage).`
 			});
 		}
 

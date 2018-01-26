@@ -12,6 +12,11 @@ class FistsOfVillainyCard extends HitCard {
 		super({ icon, ...rest });
 	}
 
+	get stats () {
+		return `${super.stats}
+Strikes opponent with lowest current hp.`;
+	}
+
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
 		return [activeContestants.reduce((potentialTarget, { monster }) => {
 			if (monster !== player && monster.hp < potentialTarget.hp) {
