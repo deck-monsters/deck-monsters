@@ -59,7 +59,7 @@ ${super.stats}`;
 		};
 
 		this.emit('narration', {
-			narration: `${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${delayingPlayer.pronouns.his} enemy to reveal themself.`
+			narration: `${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${delayingPlayer.pronouns.his} enemy to reveal themselves.`
 		});
 
 		ring.encounterEffects = [...ring.encounterEffects, delayedHitEffect];
