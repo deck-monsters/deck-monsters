@@ -21,7 +21,7 @@ ${super.stats}`;
 	}
 
 	effect (delayingPlayer, target) { // eslint-disable-line no-unused-vars
-		const when = Date.now();
+		let whenPlayed = Date.now();
 
 		const delayedHitEffect = ({
 			card,
@@ -29,21 +29,26 @@ ${super.stats}`;
 			ring
 		}) => {
 			if (phase === DEFENSE_PHASE) {
-				const lastHitByOther = delayingPlayer.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingPlayer);
-				if (lastHitByOther.when > when) {
-					delayingPlayer.encounterEffects = delayingPlayer.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
+				const { play } = card;
+				card.play = (...args) => play.call(card, ...args).then((result) => {
+					const lastHitByOther = delayingPlayer.encounterModifiers.hitLog && delayingPlayer.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingPlayer);
+					if (lastHitByOther && lastHitByOther.when > whenPlayed) {
+						whenPlayed = lastHitByOther.when;
+						delayingPlayer.encounterEffects = delayingPlayer.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
 
-					this.emit('narration', {
-						narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}`
-					});
+						this.emit('narration', {
+							narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}`
+						});
 
-					return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
-						.then(() =>
-							// This does not affect the current player or turn in any way, it is a response
-							// to the previous player/turn, so just return the current card so they
-							// game can continue as normal
-							card);
-				}
+						return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
+							.then(() =>
+								// This does not affect the current player or turn in any way, it is a response
+								// to the previous player/turn, so just return the current card's result
+								result);
+					}
+
+					return result;
+				});
 			}
 
 			return card;
