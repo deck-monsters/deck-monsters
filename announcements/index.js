@@ -37,6 +37,8 @@ const initialize = (game) => {
 		{ event: 'gainedXP', listener: announceXPGain },
 		{ event: 'item.narration', listener: announceNarration },
 		{ event: 'item.used', listener: announceItemUsed },
+		{ event: 'potion.narration', listener: announceNarration },
+		{ event: 'potion.used', listener: announceItemUsed },
 		{ event: 'ring.add', listener: announceContestant },
 		{ event: 'ring.bossWillSpawn', listener: announceBossWillSpawn },
 		{ event: 'ring.endOfDeck', listener: announceEndOfDeck },
@@ -46,7 +48,9 @@ const initialize = (game) => {
 		{ event: 'ring.narration', listener: announceNarration },
 		{ event: 'ring.remove', listener: announceContestantLeave },
 		{ event: 'ring.roundComplete', listener: announceNextRound },
-		{ event: 'ring.turnBegin', listener: announceTurnBegin }
+		{ event: 'ring.turnBegin', listener: announceTurnBegin },
+		{ event: 'scroll.narration', listener: announceNarration },
+		{ event: 'scroll.used', listener: announceItemUsed }
 	];
 
 	events.map(event => game.on(event.event, (...args) => {
