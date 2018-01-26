@@ -53,7 +53,7 @@ ${player.givenName}'s drain takes from hp instead.`;
 	}
 
 	effect (blinkPlayer, blinkTarget, ring, activeContestants) { // eslint-disable-line no-unused-vars
-		blinkTarget.blinkedTurns = 0;
+		blinkTarget.encounterModifiers.blinkedTurns = 0;
 		const attackRoll = this.getAttackRoll(blinkPlayer);
 		const attackSuccess = this.checkSuccess(attackRoll, blinkTarget.int);
 
@@ -95,9 +95,9 @@ ${player.givenName}'s drain takes from hp instead.`;
 						return effect.call(card, player, target, effectRing, effectActiveContestants);
 					};
 				} else if (phase === ATTACK_PHASE) {
-					const turnsLeftToBlink = this.turnsToBlink - blinkTarget.blinkedTurns;
+					const turnsLeftToBlink = this.turnsToBlink - blinkTarget.encounterModifiers.blinkedTurns;
 					if (turnsLeftToBlink && !blinkPlayer.dead) {
-						blinkTarget.blinkedTurns++;
+						blinkTarget.encounterModifiers.blinkedTurns++;
 
 						const effectResult = `${this.icon} time-shifted for ${turnsLeftToBlink} more turn${turnsLeftToBlink > 1 ? 's' : ''} by`;
 						this.emit('effect', {
@@ -144,6 +144,8 @@ ${player.givenName}'s drain takes from hp instead.`;
 
 						card.play = () => Promise.resolve(true);
 					} else {
+						blinkTarget.encounterModifiers.timeShifted = false;
+						blinkTarget.encounterModifiers.blinkedTurns = 0;
 						blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== 'BlinkEffect');
 
 						this.emit('narration', {
@@ -156,6 +158,7 @@ ${player.givenName}'s drain takes from hp instead.`;
 			};
 
 			blinkEffect.effectType = 'BlinkEffect';
+			blinkTarget.encounterModifiers.timeShifted = true;
 			blinkTarget.encounterEffects = [...blinkTarget.encounterEffects, blinkEffect];
 
 			return true;

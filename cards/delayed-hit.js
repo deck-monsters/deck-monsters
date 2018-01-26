@@ -33,26 +33,28 @@ ${super.stats}`;
 
 			if (play) {
 				card.play = (...args) => play.call(card, ...args).then((result) => {
-					const lastHitByOther = delayingPlayer.encounterModifiers.hitLog && delayingPlayer.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingPlayer);
-					if (lastHitByOther && lastHitByOther.when > whenPlayed) {
-						whenPlayed = lastHitByOther.when;
-						ring.encounterEffects = ring.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
+					if (!delayingPlayer.encounterModifiers.timeShifted === true) {
+						const lastHitByOther = delayingPlayer.encounterModifiers.hitLog && delayingPlayer.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingPlayer);
+						if (lastHitByOther && lastHitByOther.when > whenPlayed) {
+							whenPlayed = lastHitByOther.when;
+							ring.encounterEffects = ring.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
 
-						if (delayingPlayer.dead) {
-							this.emit('narration', {
-								narration: `With ${delayingPlayer.pronouns.his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
-							});
-						} else {
-							this.emit('narration', {
-								narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
-							});
+							if (delayingPlayer.dead) {
+								this.emit('narration', {
+									narration: `With ${delayingPlayer.pronouns.his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
+								});
+							} else {
+								this.emit('narration', {
+									narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
+								});
+							}
+
+							return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
+								.then(() =>
+									// This does not affect the current player or turn in any way, it is a response
+									// to the previous player/turn, so just return the current card's result
+									result);
 						}
-
-						return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
-							.then(() =>
-								// This does not affect the current player or turn in any way, it is a response
-								// to the previous player/turn, so just return the current card's result
-								result);
 					}
 
 					return result;
