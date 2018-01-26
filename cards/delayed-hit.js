@@ -1,48 +1,65 @@
 /* eslint-disable max-len */
 
+const { UNCOMMON } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
+
 const HitCard = require('./hit');
 const { roll, max } = require('../helpers/chance');
-const { GLOBAL_PHASE } = require('../helpers/phases');
+const random = require('lodash.random');
+const { DEFENSE_PHASE } = require('../helpers/phases');
 
 class DelayedHit extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		flavors,
-		attackDice,
-		damageDice,
-		targetProp,
-		icon = '👊'
+		icon = '🤛',
+		...rest
 	} = {}) {
-		super({ flavors, targetProp, attackDice, damageDice, icon });
+		super({ icon, ...rest });
+	}
+
+	get stats () {
+		return `Delay your turn. Use the delayed turn to immediately hit the next player who hits you.
+${super.stats}`;
 	}
 
 	effect (delayingPlayer, target, ring) { // eslint-disable-line no-unused-vars
 		const when = Date.now();
+		const EFFECT_TYPE = `DelayedHitEffect${when}${random(0, 999999)}`;// Make sure these can stack, without the random sometimes in testing two would end up with the same EFFECT_TYPE
 
 		const delayedHitEffect = ({
+			card,
 			phase,
 			ring
 		}) => {
-			if (phase === GLOBAL_PHASE) {
-				const lastHitByOther = player.encounterModifiers.hitLog.find(hitter => {
+			if (phase === DEFENSE_PHASE) {
+				const lastHitByOther = delayingPlayer.encounterModifiers.hitLog.find(hitter => {
 					if (hitter.assailant !== delayingPlayer) return hitter;
-				}
+				});
 				if (lastHitByOther.when > when) {
-					super.effect(player, lastHitByOther.assailant, ring);
+					delayingPlayer.encounterEffects = delayingPlayer.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
+
+					return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
+						.then(() => {
+							// This does not affect the current player or turn in any way, it is a response
+							// to the previous player/turn, so just return the current card so they
+							// game can continue as normal
+							return card;
+						});
 				}
 			}
+
+			return card;
 		}
 
-		delayedHitEffect.effectType = 'DelayedHitEffect';
-		ring.encounterEffects = [...ring.encounterEffects, delayedHitEffect];
+		delayedHitEffect.effectType = EFFECT_TYPE;
+		delayingPlayer.encounterEffects = [...delayingPlayer.encounterEffects, delayedHitEffect];
 	}
 }
 
 DelayedHit.cardType = 'Delayed Hit';
-DelayedHit.probability = 60;
+DelayedHit.probability = UNCOMMON;
 DelayedHit.description = 'Delay your turn, and to attack the next player who hits you.';
-DelayedHit.level = 0;
-DelayedHit.cost = 10;
+DelayedHit.cost = REASONABLE.cost;
 
 DelayedHit.defaults = {
 	...HitCard.defaults
