@@ -33,6 +33,10 @@ ${super.stats}`;
 				if (lastHitByOther.when > when) {
 					delayingPlayer.encounterEffects = delayingPlayer.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
 
+					this.emit('narration', {
+						narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}`
+					});
+
 					return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
 						.then(() =>
 							// This does not affect the current player or turn in any way, it is a response
@@ -44,6 +48,10 @@ ${super.stats}`;
 
 			return card;
 		};
+
+		this.emit('narration', {
+			narration: `${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${delayingPlayer.pronouns.his} enemy to reveal themself.`
+		});
 
 		delayingPlayer.encounterEffects = [...delayingPlayer.encounterEffects, delayedHitEffect];
 	}
