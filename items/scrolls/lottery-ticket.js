@@ -16,13 +16,14 @@ class LotteryTicket extends BaseScroll {
 		super({ icon });
 	}
 
-	action (character) {
+	action ({ channel, character }) {
 		const characterNumbers = getTicketNumbers();
 		const winningNumbers = getTicketNumbers();
 
 		const matches = characterNumbers.reduce((numberOfMatches, number, currentIndex) => (winningNumbers[currentIndex] === number ? numberOfMatches + 1 || 1 : numberOfMatches), 0);
 
 		this.emit('narration', {
+			channel,
 			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${characterNumbers.join('" "')}".`
 		});
 
@@ -30,6 +31,7 @@ class LotteryTicket extends BaseScroll {
 			const winnings = getWinnings(matches, this.cost);
 
 			this.emit('narration', {
+				channel,
 				narration: `Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
 "${winningNumbers.join('" "')}"
@@ -41,10 +43,12 @@ class LotteryTicket extends BaseScroll {
 			character.coins += winnings;
 
 			this.emit('narration', {
+				channel,
 				narration: `The lottery agent hands ${character.givenName} a heavy sack containing ${winnings} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
 			});
 		} else {
 			this.emit('narration', {
+				channel,
 				narration: `With anticipation building, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
 "${winningNumbers.join('" "')}"

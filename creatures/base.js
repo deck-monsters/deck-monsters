@@ -500,7 +500,7 @@ Battles won: ${this.battles.wins}`;
 		const foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
 
 		if (foundItem) {
-			return foundItem.use(character, monster);
+			return foundItem.use({ channel, character, monster });
 		}
 
 		return Promise.reject(channel({

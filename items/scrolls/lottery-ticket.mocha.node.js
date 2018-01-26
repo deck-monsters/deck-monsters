@@ -61,9 +61,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		character.coins = 50;
 
-		lotteryTicket.use(character);
-
-		expect(character.coins).to.equal(50);
+		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(50));
 	});
 
 	it('can make you win on 1 match', () => {
@@ -78,9 +76,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		character.coins = 50;
 
-		lotteryTicket.use(character);
-
-		expect(character.coins).to.equal(82);
+		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(82));
 	});
 
 	it('can make you win on 3 matches', () => {
@@ -93,9 +89,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		character.coins = 50;
 
-		lotteryTicket.use(character);
-
-		expect(character.coins).to.equal(366);
+		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(366));
 	});
 
 	it('can make you win big on all 5 matches', () => {
@@ -105,8 +99,6 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		character.coins = 50;
 
-		lotteryTicket.use(character);
-
-		expect(character.coins).to.equal(3212);
+		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(3212));
 	});
 });
