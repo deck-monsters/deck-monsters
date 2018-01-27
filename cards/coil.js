@@ -21,8 +21,12 @@ class CoilCard extends ImmobilizeCard {
 	}
 
 	get stats () {
+		const thresholdBonus = (this.freedomThresholdModifier > 0) ? ' + ' + this.freedomThresholdModifier: '';
 		return `${super.stats}
-Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
+Chance to immobilize opponent by coiling your serpentine body around them and squeezing.
+
+${this.ongoingDamage} ongoing damage.
+Opponent breaks free by rolling 1d20 vs AC${thresholdBonus} - 1 per turn immobilized`;
 	}
 }
 
