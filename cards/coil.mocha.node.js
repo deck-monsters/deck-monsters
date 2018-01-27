@@ -41,7 +41,10 @@ describe('./cards/coil.js', () => {
  +2 against Gladiator, Minotaur
  -2 against Basilisk
 inneffective against Weeping Angel
-Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
+Chance to immobilize opponent by coiling your serpentine body around them and squeezing.
+
+1 ongoing damage.
+Opponent breaks free by rolling 1d20 vs AC - 1 per turn immobilized`;
 
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(0);

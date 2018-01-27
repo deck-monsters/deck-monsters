@@ -40,7 +40,10 @@ describe('./cards/constrict.js', () => {
  +2 against Gladiator, Minotaur
  -2 against Basilisk
 inneffective against Weeping Angel
-Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
+Chance to immobilize opponent by coiling your serpentine body around them and squeezing.
+
+2 ongoing damage.
+Opponent breaks free by rolling 1d20 vs AC + 3 - 1 per turn immobilized`;
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(3);
