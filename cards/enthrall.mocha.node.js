@@ -51,7 +51,6 @@ Chance to immobilize your opponents with your shocking beauty.`;
 		expect(enthrall.freedomThresholdModifier).to.equal(1);
 		expect(enthrall.dexModifier).to.equal(2);
 		expect(enthrall.strModifier).to.equal(0);
-		expect(enthrall.hitOnFail).to.be.false;
 		expect(enthrall.doDamageOnImmobilize).to.be.false;
 		expect(enthrall.stats).to.equal(stats);
 		expect(enthrall.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
@@ -62,14 +61,13 @@ Chance to immobilize your opponents with your shocking beauty.`;
 
 	it('can be instantiated with options', () => {
 		const enthrall = new Enthrall({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: true
 		});
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);
 		expect(enthrall.freedomThresholdModifier).to.equal(2);
 		expect(enthrall.dexModifier).to.equal(4);
 		expect(enthrall.strModifier).to.equal(4);
-		expect(enthrall.hitOnFail).to.be.true;
 		expect(enthrall.doDamageOnImmobilize).to.be.true;
 	});
 
@@ -80,7 +78,7 @@ Chance to immobilize your opponents with your shocking beauty.`;
 
 		expect(enthrall.getFreedomThreshold(player, target)).to.equal(10 + enthrall.freedomThresholdModifier);
 
-		target.encounterModifiers.pinnedTurns = 2;
+		target.encounterModifiers.immobilizedTurns = 2;
 
 		expect(enthrall.getFreedomThreshold(player, target)).to.equal(4 + enthrall.freedomThresholdModifier);
 	});

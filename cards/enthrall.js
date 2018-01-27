@@ -19,15 +19,13 @@ class EnthrallCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		dexModifier,
-		hitOnFail,
 		icon = '🎇',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			dexModifier,
-			hitOnFail
+			dexModifier
 		});
 
 		this.mesmerizeCard = new MesmerizeCard();
@@ -68,7 +66,6 @@ EnthrallCard.cost = REASONABLE.cost;
 EnthrallCard.defaults = {
 	...ImmobilizeCard.defaults,
 	dexModifier: 2,
-	hitOnFail: false,
 	freedomThresholdModifier: 1
 };
 

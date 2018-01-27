@@ -50,7 +50,6 @@ Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)`;
 		expect(coil.freedomThresholdModifier).to.equal(0);
 		expect(coil.dexModifier).to.equal(2);
 		expect(coil.strModifier).to.equal(0);
-		expect(coil.hitOnFail).to.be.false;
 		expect(coil.doDamageOnImmobilize).to.be.true;
 		expect(coil.ongoingDamage).to.equal(1);
 		expect(coil.stats).to.equal(stats);
@@ -64,7 +63,6 @@ Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)`;
 			freedomThresholdModifier: 2,
 			strModifier: 4,
 			dexModifier: 4,
-			hitOnFail: true,
 			doDamageOnImmobilize: false,
 			ongoingDamage: 0
 		});
@@ -73,7 +71,6 @@ Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)`;
 		expect(coil.freedomThresholdModifier).to.equal(2);
 		expect(coil.dexModifier).to.equal(4);
 		expect(coil.strModifier).to.equal(4);
-		expect(coil.hitOnFail).to.be.true;
 		expect(coil.doDamageOnImmobilize).to.be.false;
 		expect(coil.ongoingDamage).to.equal(0);
 	});

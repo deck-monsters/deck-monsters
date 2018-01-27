@@ -13,29 +13,31 @@ class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		dexModifier,
-		strModifier,
-		hitOnFail,
 		doDamageOnImmobilize,
 		icon = '😵',
+		freedomSavingThrowTargetAttr,
 		freedomThresholdModifier,
 		ongoingDamage,
+		strModifier,
 		strongAgainstCreatureTypes,
-		weakAgainstCreatureTypes,
+		targetAttr,
 		uselessAgainstCreatureTypes,
+		weakAgainstCreatureTypes,
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
 			dexModifier,
-			strModifier,
-			hitOnFail,
 			doDamageOnImmobilize,
+			freedomSavingThrowTargetAttr,
 			freedomThresholdModifier,
 			ongoingDamage,
+			strModifier,
 			strongAgainstCreatureTypes,
+			targetAttr,
+			uselessAgainstCreatureTypes,
 			weakAgainstCreatureTypes,
-			uselessAgainstCreatureTypes
 		});
 	}
 
@@ -49,10 +51,6 @@ class ImmobilizeCard extends HitCard {
 
 	get ongoingDamage () {
 		return this.options.ongoingDamage;
-	}
-
-	get hitOnFail () {
-		return this.options.hitOnFail;
 	}
 
 	get strongAgainstCreatureTypes () {
@@ -138,14 +136,40 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
+	get freedomSavingThrowTargetAttr () { // eslint-disable-line class-methods-use-this
+		return this.options.freedomSavingThrowTargetAttr;
+	}
+
+	set freedomSavingThrowTargetAttr (freedomSavingThrowTargetAttr) {
+		this.setOptions({
+			freedomSavingThrowTargetAttr
+		});
+	}
+
 	getFreedomThresholdBase (player) { // eslint-disable-line class-methods-use-this
-		return player.ac;
+		return player[this.freedomSavingThrowTargetAttr];
+	}
+
+	freedomThresholdNarrative (player, target) {
+		return `1d20 vs ${player.givenName}'s ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)}) ${signedNumber(this.freedomThresholdModifier)} -(immobilized turns x 3)`;
+	}
+
+	emitImmobilizeNarrative (player, target) {
+		let immobilizeNarrative = `${player.givenName} ${this.icon} immobilizes ${target.givenName}.
+at the beginning of each of ${target.givenName}'s turn, they will roll:
+${this.freedomThresholdNarrative(player, target)} to attempt to break free.`
+		if (this.ongoingDamage > 0) {
+			immobilizeNarrative += `takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}`
+		}
+		this.emit('narration', {
+			narration: immobilizeNarrative
+		});
 	}
 
 	getFreedomThreshold (player, target) {
 		let fatigue = 0;
-		if (target.encounterModifiers && target.encounterModifiers.pinnedTurns) {
-			fatigue = (target.encounterModifiers.pinnedTurns * 3);
+		if (target.encounterModifiers && target.encounterModifiers.immobilizedTurns) {
+			fatigue = (target.encounterModifiers.immobilizedTurns * 3);
 		}
 
 		return (this.getFreedomThresholdBase(player) + this.freedomThresholdModifier) - fatigue;
@@ -155,128 +179,124 @@ class ImmobilizeCard extends HitCard {
 		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
-	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
-		return target.ac;
+	get targetAttr () {
+		return this.options.targetAttr;
 	}
 
-	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
-		const attackRoll = this.getAttackRoll(player, target);
+	set targetAttr (targetAttr) {
+		this.setOptions({
+			targetAttr
+		});
+	}
+
+	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
+		return target[this.targetAttr];
+	}
+
+	// Most of the time this should be an auto-success since they get a chance to break free on their next turn
+	immobilizeCheck (player, target, ring, activeContestants) {// eslint-disable-line no-unused-vars, class-methods-use-this
+		return true;
+	}
+
+	getImmobilizeEffect (player, target, ring, activeContestants) {
+		const ImmobilizeEffect = ({ card, phase }) => {
+			if (phase === ATTACK_PHASE) {
+				if (!player.dead) {
+					this.emit('effect', {
+						effectResult: `${this.icon} ${this.actions.IMMOBILIZED} by`,
+						player,
+						target,
+						ring
+					});
+
+					const freedomRoll = super.getAttackRoll(player, target);
+					const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
+					let commentary;
+
+					if (strokeOfLuck) {
+						commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
+					}
+
+					this.emit('rolled', {
+						reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free.`,
+						card: this,
+						roll: freedomRoll,
+						who: target,
+						outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions.IMMOBILIZED} and will miss a turn.`,
+						vs: this.getFreedomThreshold(player, target)
+					});
+
+					if (success) {
+						target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
+
+						if (strokeOfLuck && target !== player) {
+							player.hit(2, target, this);
+						}
+					} else {
+						target.encounterModifiers.immobilizedTurns = (target.encounterModifiers.immobilizedTurns || 0) + 1;
+						if (this.ongoingDamage > 0) {
+							this.emit('narration', {
+								narration: `${target.givenName} takes ongoing damage from being ${this.actions.IMMOBILIZED}`
+							});
+							target.hit(this.ongoingDamage, player, this);
+						}
+
+						card.play = () => Promise.resolve(true);
+					}
+				} else {
+					target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
+
+					this.emit('narration', {
+						narration: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}. ${target.pronouns.he} pushes the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stands prepared to fight`
+					});
+				}
+			}
+
+			return card;
+		};
+
+		return ImmobilizeEffect;
+	}
+
+	effect (player, target, ring, activeContestants) {
 		const alreadyImmobilized = !!target.encounterEffects.find(effect => effect.effectType === 'ImmobilizeEffect');
 		const canHaveEffect = !this.uselessAgainstCreatureTypes.includes(target.creatureType);
 
-		if (!alreadyImmobilized && canHaveEffect) {
-			const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
-
-			const failMessage = `${this.actions[0]} failed${this.hitOnFail ? ', chance to hit instead...' : ''}`;
-			const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
-
-			this.emit('rolled', {
-				reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}.`,
-				card: this,
-				roll: attackRoll,
-				who: player,
-				outcome,
-				vs: this.getTargetPropValue(target)
-			});
-
-			if (attackSuccess.success) {
-				target.encounterModifiers.pinnedTurns = 0;
-
-				const immobilizeEffect = ({
-					card,
-					phase
-				}) => {
-					if (phase === ATTACK_PHASE) {
-						if (!player.dead) {
-							this.emit('effect', {
-								effectResult: `${this.icon} ${this.actions[2]} by`,
-								player,
-								target,
-								ring
-							});
-
-							const freedomRoll = super.getAttackRoll(player, target);
-							const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
-							let commentary;
-
-							if (strokeOfLuck) {
-								commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
-							}
-
-							this.emit('rolled', {
-								reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free.`,
-								card: this,
-								roll: freedomRoll,
-								who: target,
-								outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions[2]} and will miss a turn.`,
-								vs: this.getFreedomThreshold(player, target)
-							});
-
-							if (success) {
-								target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
-
-								if (strokeOfLuck && target !== player) {
-									player.hit(2, target, this);
-								}
-							} else {
-								target.encounterModifiers.pinnedTurns = (target.encounterModifiers.pinnedTurns || 0) + 1;
-								if (this.ongoingDamage > 0) {
-									this.emit('narration', {
-										narration: `${target.givenName} takes ongoing damage from being ${this.actions[2]}`
-									});
-									target.hit(this.ongoingDamage, player, this);
-								}
-
-								card.play = () => Promise.resolve(true);
-							}
-						} else {
-							target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
-
-							this.emit('narration', {
-								narration: `${target.givenName} is no longer ${this.actions[2]}. ${target.pronouns.he} pushes the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stands prepared to fight`
-							});
-						}
-					}
-
-					return card;
-				};
-
-				immobilizeEffect.effectType = 'ImmobilizeEffect';
-				target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
-
-				if (this.doDamageOnImmobilize) {
-					return super.effect(player, target, ring, activeContestants);
-				}
-
-				return true;
-			} else if (this.hitOnFail) {
-				return super.effect(player, target, ring, activeContestants);
-			}
-		} else if (alreadyImmobilized || !canHaveEffect) {
+		if (alreadyImmobilized || !canHaveEffect) {
 			let narration = '';
 			if (alreadyImmobilized) {
-				narration = `${target.givenName} is already ${this.actions[2]}, now _show no mercy_!`;
+				narration = `${target.givenName} is already ${this.actions.IMMOBILIZED}, now _show no mercy_!`;
 			} else {
-				narration = `${target.givenName} laughs hautily as you try to ${this.actions[0]} them, vent your fury at their mockery!`;
+				narration = `${target.givenName} laughs hautily as you try to ${this.actions.IMMOBILIZE} them, vent your fury at their mockery!`;
 			}
 			this.emit('narration', { narration });
 
 			return super.effect(player, target, ring, activeContestants);
 		}
 
-		this.emit('miss', {
-			attackResult: attackRoll.result,
-			attackRoll,
-			player,
-			target
-		});
+		const attackSuccess = this.immobilizeCheck(player, target, ring, activeContestants);
+		if (attackSuccess) {
+			this.emitImmobilizeNarrative(player, target);
 
-		return true;
+			const immobilizeEffect = this.getImmobilizeEffect(player, target, ring, activeContestants);
+			immobilizeEffect.effectType = 'ImmobilizeEffect';
+			target.encounterEffects = [...target.encounterEffects, immobilizeEffect];
+			target.encounterModifiers.immobilizedTurns = 0;
+
+			if (this.doDamageOnImmobilize) {
+				return super.effect(player, target, ring, activeContestants);
+			}
+
+			return !target.dead;
+		}
+
+		// immobilize failed
+		return !target.dead;
 	}
 }
 
 ImmobilizeCard.cardType = 'Immobilize';
-ImmobilizeCard.actions = ['immobilize', 'immobilizes', 'immobilized'];
+ImmobilizeCard.actions = { IMMOBILIZE: 'immobilize', IMMOBILIZES: 'immobilizes', IMMOBILIZED: 'immobilized'};
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
 ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobilization, will hit instead
@@ -288,11 +308,12 @@ ImmobilizeCard.cost = FREE.cost;
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,
 	dexModifier: 2,
-	strModifier: 0,
-	hitOnFail: false,
 	doDamageOnImmobilize: false,
+	freedomSavingThrowTargetAttr: 'ac',
 	freedomThresholdModifier: 2,
-	ongoingDamage: 0
+	ongoingDamage: 0,
+	strModifier: 0,
+	targetAttr: 'ac'
 };
 
 ImmobilizeCard.flavors = {

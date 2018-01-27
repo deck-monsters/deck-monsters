@@ -11,17 +11,49 @@ class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		dexModifier,
-		hitOnFail,
 		icon = '⑂',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			dexModifier,
-			hitOnFail
+			dexModifier
 		});
 	}
+
+	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
+		return target.dex;
+	}
+
+	// do not auto-succeed since this already hits twice
+	immobilizeCheck (player, target, ring, activeContestants) {
+		const attackRoll = this.getAttackRoll(player, target);
+		const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
+
+		const failMessage = `${this.actions[0]} failed.`;
+		const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
+
+		this.emit('rolled', {
+			reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}.`,
+			card: this,
+			roll: attackRoll,
+			who: player,
+			outcome,
+			vs: this.getTargetPropValue(target)
+		});
+
+		if (!attackSuccess) {
+			this.emit('miss', {
+				attackResult: attackRoll.result,
+				attackRoll,
+				player,
+				target
+			});
+		}
+
+		return attackSuccess;
+	}
+
 	get stats () {
 		return `${super.stats}
 Attempt to pin your opponent between the branches of a forked stick.`;
@@ -36,6 +68,7 @@ ForkedStickCard.weakAgainstCreatureTypes = [JINN, MINOTAUR];
 ForkedStickCard.probability = UNCOMMON.probability;
 ForkedStickCard.description = `A simple weapon fashioned for ${ForkedStickCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
 ForkedStickCard.cost = REASONABLE.cost;
+ForkedStickCard.level = 0;
 
 ForkedStickCard.defaults = {
 	...ImmobilizeCard.defaults

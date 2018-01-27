@@ -16,15 +16,13 @@ class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		dexModifier,
-		hitOnFail,
 		icon = '🌠',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			dexModifier,
-			hitOnFail
+			dexModifier
 		});
 	}
 	get stats () {
@@ -63,7 +61,6 @@ MesmerizeCard.cost = VERY_CHEAP.cost;
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,
 	dexModifier: 2,
-	hitOnFail: false,
 	freedomThresholdModifier: 0
 };
 

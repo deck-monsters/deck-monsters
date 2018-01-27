@@ -35,6 +35,10 @@ ${super.stats}`;
 		return 0;
 	}
 
+	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
+		return target.dex;
+	}
+
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
 		this.dexModifier = STARTING_DEX_MODIFIER;
@@ -128,6 +132,35 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 		return { attackRoll, success, strokeOfLuck, curseOfLoki };
 	}
 
+	// do not auto-succeed since this already hits twice
+	immobilizeCheck (player, target, ring, activeContestants) {
+		const attackRoll = this.getAttackRoll(player, target);
+		const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
+
+		const failMessage = `${this.actions[0]} failed.`;
+		const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
+
+		this.emit('rolled', {
+			reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}.`,
+			card: this,
+			roll: attackRoll,
+			who: player,
+			outcome,
+			vs: this.getTargetPropValue(target)
+		});
+
+		if (!attackSuccess) {
+			this.emit('miss', {
+				attackResult: attackRoll.result,
+				attackRoll,
+				player,
+				target
+			});
+		}
+
+		return attackSuccess;
+	}
+
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		// if the player stabs with their first horn, make it slightly more likely that the second
 		// horn will also stab, but just for this one attack. Therefore, need to store their
@@ -172,7 +205,6 @@ HornGore.notForSale = true;
 HornGore.defaults = {
 	...ImmobilizeCard.defaults,
 	damageDice: '1d4',
-	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
 	dexModifier: STARTING_DEX_MODIFIER

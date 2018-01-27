@@ -52,7 +52,6 @@ Even if you miss, there's a chance you'll pin them...`;
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
 		expect(forkedMetalRod.dexModifier).to.equal(3);
 		expect(forkedMetalRod.strModifier).to.equal(0);
-		expect(forkedMetalRod.hitOnFail).to.be.false;
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.false;
 		expect(forkedMetalRod.stats).to.equal(stats);
 		expect(forkedMetalRod.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
@@ -62,14 +61,13 @@ Even if you miss, there's a chance you'll pin them...`;
 
 	it('can be instantiated with options', () => {
 		const forkedMetalRod = new ForkedMetalRod({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: true
 		});
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(2);
 		expect(forkedMetalRod.dexModifier).to.equal(4);
 		expect(forkedMetalRod.strModifier).to.equal(4);
-		expect(forkedMetalRod.hitOnFail).to.be.true;
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.true;
 	});
 

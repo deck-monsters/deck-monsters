@@ -12,7 +12,7 @@ const { BARD, FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, JINN, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
-describe('./cards/forked-stick.js', () => {
+describe.only('./cards/forked-stick.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -50,7 +50,6 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 		expect(forkedStick.freedomThresholdModifier).to.equal(2);
 		expect(forkedStick.dexModifier).to.equal(2);
 		expect(forkedStick.strModifier).to.equal(0);
-		expect(forkedStick.hitOnFail).to.be.false;
 		expect(forkedStick.doDamageOnImmobilize).to.be.false;
 		expect(forkedStick.stats).to.equal(stats);
 		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
@@ -60,14 +59,13 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 	it('can be instantiated with options', () => {
 		const forkedStick = new ForkedStick({
-			freedomThresholdModifier: 1, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 1, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: true
 		});
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.freedomThresholdModifier).to.equal(1);
 		expect(forkedStick.dexModifier).to.equal(4);
 		expect(forkedStick.strModifier).to.equal(4);
-		expect(forkedStick.hitOnFail).to.be.true;
 		expect(forkedStick.doDamageOnImmobilize).to.be.true;
 	});
 

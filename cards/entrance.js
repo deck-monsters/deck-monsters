@@ -11,15 +11,13 @@ class EntranceCard extends EnthrallCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		dexModifier,
-		hitOnFail,
 		icon = '🎆',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			dexModifier,
-			hitOnFail
+			dexModifier
 		});
 
 		this.immobilizeCard = new ImmobilizeCard({
@@ -44,7 +42,6 @@ EntranceCard.notForSale = true;
 
 EntranceCard.defaults = {
 	...EnthrallCard.defaults,
-	hitOnFail: true,
 	doDamageOnImmobilize: true,
 	freedomThresholdModifier: 2
 };
