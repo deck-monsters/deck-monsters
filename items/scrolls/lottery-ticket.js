@@ -16,7 +16,7 @@ class LotteryTicket extends BaseScroll {
 		super({ icon });
 	}
 
-	action ({ channel, character }) {
+	action ({ channel, channelName, character }) {
 		const characterNumbers = getTicketNumbers();
 		const winningNumbers = getTicketNumbers();
 
@@ -24,31 +24,30 @@ class LotteryTicket extends BaseScroll {
 
 		this.emit('narration', {
 			channel,
+			channelName,
+			flush: true,
 			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${characterNumbers.join('" "')}".`
 		});
 
 		if (matches > 0) {
 			const winnings = getWinnings(matches, this.cost);
-
-			this.emit('narration', {
-				channel,
-				narration: `Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
-
-"${winningNumbers.join('" "')}"
-
-🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${character.pronouns.he} has won ${winnings} coins!`
-			});
-
-
 			character.coins += winnings;
 
 			this.emit('narration', {
 				channel,
-				narration: `The lottery agent hands ${character.givenName} a heavy sack containing ${winnings} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
+				channelName,
+				narration: `Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
+
+"${winningNumbers.join('" "')}"
+
+🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${character.pronouns.he} has won ${winnings} coins!
+
+The lottery agent hands ${character.givenName} a heavy sack containing ${winnings} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
 			});
 		} else {
 			this.emit('narration', {
 				channel,
+				channelName,
 				narration: `With anticipation building, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
 "${winningNumbers.join('" "')}"

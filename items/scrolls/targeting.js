@@ -29,7 +29,7 @@ class TargetingScroll extends BaseScroll {
 		return undefined;
 	}
 
-	action ({ channel, monster }) {
+	action ({ channel, channelName, monster }) {
 		const { expired, targetingStrategy } = this;
 
 		if (targetingStrategy) {
@@ -51,6 +51,7 @@ From now on ${details}`;
 
 		this.emit('narration', {
 			channel,
+			channelName,
 			narration
 		});
 	}

@@ -195,23 +195,27 @@ class Game extends BaseClass {
 						.catch(err => log(err));
 				},
 				equipMonster ({ monsterName, cardSelection } = {}) {
-					return character.equipMonster({ monsterName, cardSelection: getArray(cardSelection), channel })
+					return character.equipMonster({ channel, cardSelection: getArray(cardSelection), monsterName })
 						.catch(err => log(err));
 				},
 				giveItemsToMonster ({ monsterName, itemSelection } = {}) {
-					return character.giveItemsToMonster({ monsterName, itemSelection: getArray(itemSelection, true), channel })
+					return character.giveItemsToMonster({ channel, itemSelection: getArray(itemSelection, true), monsterName })
 						.catch(err => log(err));
 				},
 				takeItemsFromMonster ({ monsterName, itemSelection } = {}) {
-					return character.takeItemsFromMonster({ monsterName, itemSelection: getArray(itemSelection, true), channel })
+					return character.takeItemsFromMonster({ channel, itemSelection: getArray(itemSelection, true), monsterName })
 						.catch(err => log(err));
 				},
 				useItemsOnMonster ({ monsterName, itemSelection } = {}) {
-					return character.useItems({ channel, isMonsterItem: true, itemSelection: getArray(itemSelection, true), monsterName })
+					return character.useItems({
+						channel, channelName, isMonsterItem: true, itemSelection: getArray(itemSelection, true), monsterName
+					})
 						.catch(err => log(err));
 				},
 				useItems ({ itemSelection } = {}) {
-					return character.useItems({ channel, isMonsterItem: false, itemSelection: getArray(itemSelection, true) })
+					return character.useItems({
+						channel, channelName, isMonsterItem: false, itemSelection: getArray(itemSelection, true)
+					})
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {

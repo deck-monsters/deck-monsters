@@ -57,7 +57,7 @@ class BaseItem extends BaseClass {
 		return !!this.constructor.usableWithoutMonster;
 	}
 
-	use ({ channel, character, monster }) {
+	use ({ channel, channelName, character, monster }) {
 		return Promise.resolve()
 			.then(() => {
 				if (!this.usableWithoutMonster && !monster) {
@@ -68,6 +68,7 @@ class BaseItem extends BaseClass {
 
 				this.emit('used', {
 					channel,
+					channelName,
 					character,
 					monster
 				});
@@ -77,7 +78,7 @@ class BaseItem extends BaseClass {
 				this.used += 1;
 
 				if (this.action) {
-					return Promise.resolve().then(() => this.action({ channel, character, monster }));
+					return this.action({ channel, channelName, character, monster });
 				}
 
 				return this.used;

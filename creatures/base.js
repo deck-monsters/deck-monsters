@@ -496,7 +496,7 @@ Battles won: ${this.battles.wins}`;
 		}
 	}
 
-	useItem ({ channel, character = this, item, monster }) {
+	useItem ({ channel, channelName, character = this, item, monster }) {
 		let foundItem;
 
 		if (monster) {
@@ -508,7 +508,7 @@ Battles won: ${this.battles.wins}`;
 		}
 
 		if (foundItem) {
-			return foundItem.use({ channel, character, monster });
+			return foundItem.use({ channel, channelName, character, monster });
 		}
 
 		return Promise.reject(channel({

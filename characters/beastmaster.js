@@ -215,7 +215,7 @@ Which monster would you like to ${action}?`,
 				.then(() => monster));
 	}
 
-	useItems ({ channel, isMonsterItem, itemSelection, monsterName }) {
+	useItems ({ channel, channelName, isMonsterItem, itemSelection, monsterName }) {
 		return Promise.resolve()
 			.then(() => {
 				if (monsterName || isMonsterItem) {
@@ -229,10 +229,16 @@ Which monster would you like to ${action}?`,
 
 				return undefined;
 			})
-			.then(monster => useItems({ channel, character: this, itemSelection, monster, use: options => this.useItem(options) }));
+			.then(monster => useItems({
+				channel,
+				character: this,
+				itemSelection,
+				monster,
+				use: options => this.useItem({ channelName, ...options })
+			}));
 	}
 
-	useItem ({ channel, isMonsterItem, item, monster, monsterName }) {
+	useItem ({ channel, channelName, isMonsterItem, item, monster, monsterName }) {
 		if (!monster && (monsterName || isMonsterItem)) {
 			const { monsters } = this;
 
@@ -240,10 +246,10 @@ Which monster would you like to ${action}?`,
 				.then(() => this.chooseMonster({
 					channel, monsters, monsterName, action: 'use the item on'
 				}))
-				.then(foundMonster => super.useItem({ channel, item, monster: foundMonster }));
+				.then(foundMonster => super.useItem({ channel, channelName, item, monster: foundMonster }));
 		}
 
-		return super.useItem({ channel, item, monster });
+		return super.useItem({ channel, channelName, item, monster });
 	}
 
 	callMonsterOutOfTheRing ({
