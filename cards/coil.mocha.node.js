@@ -44,7 +44,7 @@ inneffective against Weeping Angel
 Chance to immobilize opponent by coiling your serpentine body around them and squeezing.
 
 1 ongoing damage.
-Opponent breaks free by rolling 1d20 vs AC - 1 per turn immobilized`;
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)`;
 
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(0);
