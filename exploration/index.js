@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-const BaseClass = require('../baseClass');
+const BaseClass = require('../shared/baseClass');
 const moment = require('moment');
 const isProbable = require('../helpers/is-probable');
 const pause = require('../helpers/pause');

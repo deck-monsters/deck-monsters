@@ -9,7 +9,7 @@ const Discovery = require('./discoveries/base');
 const DeathCard = require('./discoveries/death');
 const NothingCard = require('./discoveries/nothing');
 
-describe('./exploration/index.js', () => {
+describe.only('./exploration/index.js', () => {
 	let clock;
 	let privateChannelStub;
 	let publicChannelStub;
@@ -204,7 +204,7 @@ describe('./exploration/index.js', () => {
 			expect(exploration.monsterIsExploring(monster)).to.be.false;
 		});
 
-		it.only('is sent home if dead', () => {
+		it('is sent home if dead', () => {
 			const game = new Game(publicChannelStub);
 			const exploration = game.getExploration();
 
@@ -235,21 +235,17 @@ describe('./exploration/index.js', () => {
 					.doExploration()
 					.then(() => {
 						if (exploration.monsterIsExploring(monster)) {
-							console.log('monster is not dead, continue exploring');
 							return continueExploring();
 						}
-						console.log('monster is dead');
 						return resolve();
 					})
 					.catch((er) => {
-						console.log('er', er);
 						reject(er);
 					});
 			});
 
 			continueExploring()
 				.then(() => {
-					console.log('all done');
 					makeDiscoveryStub.restore();
 
 					expect(explorer.monster.dead).to.be.true;
