@@ -34,7 +34,7 @@ describe('./items/helpers/use.js', () => {
 			.resolves('0');
 
 		channelStub.withArgs({
-			question: 'Is this correct? (yes/no)'
+			question: 'Are you sure? (yes/no)'
 		})
 			.resolves('yes');
 
@@ -68,7 +68,7 @@ describe('./items/helpers/use.js', () => {
 			.resolves('0');
 
 		channelStub.withArgs({
-			question: 'Is this correct? (yes/no)'
+			question: 'Are you sure? (yes/no)'
 		})
 			.resolves('yes');
 

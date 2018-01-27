@@ -504,6 +504,13 @@ Battles won: ${this.battles.wins}`;
 		}
 
 		if (!foundItem) {
+			// Monsters in an encounter can only use items they are carrying
+			if (monster && monster.inEncounter) {
+				return Promise.reject(channel({
+					announce: `${monster.givenName} doesn't seem to be holding that item.`
+				}));
+			}
+
 			foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
 		}
 

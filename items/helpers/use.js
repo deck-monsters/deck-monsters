@@ -9,10 +9,16 @@ module.exports = ({ channel, character, itemSelection, monster, use }) => Promis
 		let items;
 		let targetStr;
 		if (monster) {
-			items = [...character.items, ...monster.items].filter(item => monster.canUseItem(item));
-			targetStr = monster.givenName;
+			items = [...monster.items];
+
+			if (!monster.inEncounter) {
+				items = [...items, ...character.items.filter(item => monster.canUseItem(item))];
+				targetStr = monster.givenName;
+			} else {
+				targetStr = `${monster.givenName} while ${monster.pronouns.he} is in an encounter`;
+			}
 		} else {
-			items = [...character.items].filter(item => character.canUseItem(item));
+			items = character.items.filter(item => character.canUseItem(item));
 			targetStr = `${character.pronouns.him}self`;
 		}
 
@@ -50,16 +56,16 @@ ${itemChoices}`);
 			items,
 			channel,
 			getQuestion
-		})
-			.then(selectedItems => channel({
-				question: 'Is this correct? (yes/no)'
-			})
-				.then((answer = '') => {
-					if (answer.toLowerCase() === 'yes') {
-						return selectedItems;
-					}
-
-					return Promise.reject(channel({ announce: 'You know what they always say, "An item saved is an item earned."' }));
-				}));
+		});
 	})
+	.then(selectedItems => channel({
+		question: 'Are you sure? (yes/no)'
+	})
+		.then((answer = '') => {
+			if (answer.toLowerCase() === 'yes') {
+				return selectedItems;
+			}
+
+			return Promise.reject(channel({ announce: 'You know what they always say, "An item saved is an item earned."' }));
+		}))
 	.then(selectedItems => Promise.map(selectedItems, item => use({ channel, isMonsterItem: !!monster || !item.usableWithoutMonster, item, monster })));
