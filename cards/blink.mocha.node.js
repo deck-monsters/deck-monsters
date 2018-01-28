@@ -59,7 +59,7 @@ describe('./cards/blink.js', () => {
 		expect(blink.curseAmountDice).to.equal('4d6');
 		expect(blink.cursedProp).to.equal('ac');
 		expect(blink.hasChanceToHit).to.be.true;
-		expect(blink.stats).to.equal('1d20 vs opponent\'s int. They are removed from the battle (and can not be target).\nOn what would have been their next turn, if you are still alive you drain 2d4 hp and 4d6 ac');// eslint-disable-line max-len
+		expect(blink.stats).to.equal('1d20 vs opponent\'s int. They are removed from the battle (and can not be targeted).\nOn what would have been their next turn, if you are still alive you drain 2d4 hp and 4d6 ac');// eslint-disable-line max-len
 	});
 
 	it('can only be played by WeepingAngels', () => {
