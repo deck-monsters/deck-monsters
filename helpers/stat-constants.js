@@ -31,4 +31,4 @@ module.exports = {
 	HP_VARIANCE,
 	MAX_BOOSTS,
 	MAX_PROP_MODIFICATIONS
-}
+};
