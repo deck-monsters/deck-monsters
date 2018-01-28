@@ -12,7 +12,7 @@ const { BARD, FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, JINN, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
-describe.only('./cards/forked-stick.js', () => {
+describe('./cards/forked-stick.js', () => {
 	let channelStub;
 	let pauseStub;
 

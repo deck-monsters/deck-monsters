@@ -21,7 +21,7 @@ class CoilCard extends ImmobilizeCard {
 	}
 
 	get stats () {
-		const thresholdBonus = (this.freedomThresholdModifier > 0) ? ' + ' + this.freedomThresholdModifier: '';
+		const thresholdBonus = (this.freedomThresholdModifier > 0) ? ` + ${this.freedomThresholdModifier}` : '';
 		return `${super.stats}
 Chance to immobilize opponent by coiling your serpentine body around them and squeezing.
 

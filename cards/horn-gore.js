@@ -133,7 +133,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 
 	// do not auto-succeed since this already hits twice
-	immobilizeCheck (player, target, ring, activeContestants) {
+	immobilizeCheck (player, target) {
 		const attackRoll = this.getAttackRoll(player, target);
 		const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
 

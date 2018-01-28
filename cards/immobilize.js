@@ -37,7 +37,7 @@ class ImmobilizeCard extends HitCard {
 			strongAgainstCreatureTypes,
 			targetAttr,
 			uselessAgainstCreatureTypes,
-			weakAgainstCreatureTypes,
+			weakAgainstCreatureTypes
 		});
 	}
 
@@ -150,16 +150,16 @@ class ImmobilizeCard extends HitCard {
 		return player[this.freedomSavingThrowTargetAttr];
 	}
 
-	freedomThresholdNarrative (player, target) {
+	freedomThresholdNarrative (player) {
 		return `1d20 vs ${player.givenName}'s ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)}) ${signedNumber(this.freedomThresholdModifier)} -(immobilized turns x 3)`;
 	}
 
 	emitImmobilizeNarrative (player, target) {
 		let immobilizeNarrative = `${player.givenName} ${this.icon} immobilizes ${target.givenName}.
 at the beginning of each of ${target.givenName}'s turn, they will roll:
-${this.freedomThresholdNarrative(player, target)} to attempt to break free.`
+${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
 		if (this.ongoingDamage > 0) {
-			immobilizeNarrative += `takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}`
+			immobilizeNarrative += `takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}`;
 		}
 		this.emit('narration', {
 			narration: immobilizeNarrative
@@ -194,11 +194,11 @@ ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`
 	}
 
 	// Most of the time this should be an auto-success since they get a chance to break free on their next turn
-	immobilizeCheck (player, target, ring, activeContestants) {// eslint-disable-line no-unused-vars, class-methods-use-this
+	immobilizeCheck (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars, class-methods-use-this
 		return true;
 	}
 
-	getImmobilizeEffect (player, target, ring, activeContestants) {
+	getImmobilizeEffect (player, target, ring) {
 		const ImmobilizeEffect = ({ card, phase }) => {
 			if (phase === ATTACK_PHASE) {
 				if (!player.dead) {
@@ -296,7 +296,7 @@ ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`
 }
 
 ImmobilizeCard.cardType = 'Immobilize';
-ImmobilizeCard.actions = { IMMOBILIZE: 'immobilize', IMMOBILIZES: 'immobilizes', IMMOBILIZED: 'immobilized'};
+ImmobilizeCard.actions = { IMMOBILIZE: 'immobilize', IMMOBILIZES: 'immobilizes', IMMOBILIZED: 'immobilized' };
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
 ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobilization, will hit instead

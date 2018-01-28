@@ -26,7 +26,7 @@ class ForkedStickCard extends ImmobilizeCard {
 	}
 
 	// do not auto-succeed since this already hits twice
-	immobilizeCheck (player, target, ring, activeContestants) {
+	immobilizeCheck (player, target) {
 		const attackRoll = this.getAttackRoll(player, target);
 		const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
 
