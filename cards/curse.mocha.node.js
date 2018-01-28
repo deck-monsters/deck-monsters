@@ -6,8 +6,6 @@ const Curse = require('./curse');
 const Hit = require('./hit');
 const pause = require('../helpers/pause');
 
-const STATS = require('../helpers/stat-constants');
-
 describe('./cards/curse.js', () => {
 	let channelStub;
 	let pauseStub;
