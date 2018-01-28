@@ -41,7 +41,7 @@ describe('./cards/blink.js', () => {
 		expect(blink.curseAmountDice).to.equal('4d4');
 		expect(blink.cursedProp).to.equal('xp');
 		expect(blink.hasChanceToHit).to.be.false;
-		expect(blink.stats).to.equal('1d20 vs opponent\'s int. They are removed from the battle (and can not be target).\nOn what would have been their next turn, if you are still alive you drain 1d4 hp and 4d4 xp');// eslint-disable-line max-len
+		expect(blink.stats).to.equal('1d20 vs opponent\'s int. They are removed from the battle (and can not be targeted).\nOn what would have been their next turn, if you are still alive you drain 1d4 hp and 4d4 xp');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {
