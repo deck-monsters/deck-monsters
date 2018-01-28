@@ -41,11 +41,13 @@ ${super.stats}`;
 
 							if (delayingPlayer.dead) {
 								this.emit('narration', {
-									narration: `With ${delayingPlayer.pronouns.his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
+									narration: `
+${this.icon} With ${delayingPlayer.pronouns.his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
 								});
 							} else {
 								this.emit('narration', {
-									narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
+									narration: `
+${this.icon} ${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
 								});
 							}
 
