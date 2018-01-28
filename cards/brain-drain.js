@@ -1,6 +1,8 @@
 const CurseCard = require('./curse');
 const HitCard = require('./hit');
 
+const { max } = require('../helpers/chance');
+
 const { REASONABLE } = require('../helpers/costs');
 
 const STATS = require('../helpers/stat-constants');
@@ -17,7 +19,7 @@ class BrainDrainCard extends CurseCard {
 	get stats () {
 		const hit = new HitCard({ damageDice: this.damageDice });
 		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
-(up to a maximum total of pre-battle XP - ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]})`;
+can reduce ${this.cursedProp} down to ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]}, then takes ${max(this.damageDice)} from hp instead.`;
 
 		if (this.hasChanceToHit) {
 			stats = `${hit.stats}

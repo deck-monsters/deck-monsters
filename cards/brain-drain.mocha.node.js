@@ -30,7 +30,7 @@ describe('./cards/brain-drain.js', () => {
 
 		const stats = `${hit.stats}
 Curse: xp -20
-(up to a maximum total of pre-battle XP - 40)`;
+can reduce xp down to 40, then takes 4 from hp instead.`;
 
 		expect(brainDrain).to.be.an.instanceof(BrainDrainCard);
 		expect(brainDrain.icon).to.equal('🤡');
