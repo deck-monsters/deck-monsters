@@ -77,4 +77,33 @@ describe('./cards/horn-swipe.js', () => {
 			.then(() => expect(getAttackRollSpy).to.have.been.calledTwice)
 			.then(() => getAttackRollSpy.restore());
 	});
+
+	it('narrates correctly', () => {
+		const hornSwipe = new HornSwipe();
+
+		const player = new Minotaur({ name: 'player' });
+		const target = new Minotaur({ name: 'target' });
+
+		const failRoll = hornSwipe.getAttackRoll(player);
+		failRoll.result = 2;
+		failRoll.naturalRoll.result = 2;
+		failRoll.strokeOfLuck = false;
+		failRoll.curseOfLoki = false;
+
+		const successRoll = hornSwipe.getAttackRoll(player);
+		successRoll.result = 25;
+		successRoll.naturalRoll.result = 23;
+		successRoll.strokeOfLuck = false;
+		successRoll.curseOfLoki = false;
+
+		const missNarrative = hornSwipe.getAttackCommentary(player, target, failRoll, failRoll);
+		const luckNarrative = hornSwipe.getAttackCommentary(player, target, successRoll, failRoll);
+		const hitNarrative = hornSwipe.getAttackCommentary(player, target, successRoll, successRoll);
+
+		expect(missNarrative).to.equal(`(${failRoll.result}) ${target.givenName} manages to block your first horn...
+(${failRoll.result}) and your second horn as well.`);
+		expect(luckNarrative).to.equal(`(${failRoll.result}) ${target.givenName} manages to block your first horn...
+(${successRoll.naturalRoll.result}) but fails to block your second horn.`);
+		expect(hitNarrative).to.equal(`(${successRoll.naturalRoll.result}) ${target.givenName} fails to block your horn.`);
+	});
 });
