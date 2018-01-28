@@ -1,6 +1,9 @@
 const CurseCard = require('./curse');
+const HitCard = require('./hit');
 
 const { REASONABLE } = require('../helpers/costs');
+
+const STATS = require('../helpers/stat-constants');
 
 class BrainDrainCard extends CurseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -9,6 +12,20 @@ class BrainDrainCard extends CurseCard {
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
+	}
+
+	get stats () {
+		const curse = new CurseCard();
+		const hit = new HitCard({ damageDice: curse.damageDice });
+		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
+(up to a maximum total of pre-battle XP - ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]})`;
+
+		if (this.hasChanceToHit) {
+			stats = `${hit.stats}
+${stats}`;
+		}
+
+		return stats;
 	}
 }
 

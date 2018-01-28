@@ -6,6 +6,8 @@ const Curse = require('./curse');
 const Hit = require('./hit');
 const pause = require('../helpers/pause');
 
+const STATS = require('../helpers/stat-constants');
+
 describe('./cards/curse.js', () => {
 	let channelStub;
 	let pauseStub;
@@ -34,7 +36,8 @@ describe('./cards/curse.js', () => {
 		const hit = new Hit({ damageDice: '1d4' });
 
 		const stats = `${hit.stats}
-Curse: ac -1`;
+Curse: ac -1
+(up to a maximum total of -3 per level)`;
 
 		expect(curse).to.be.an.instanceof(Curse);
 		expect(curse.stats).to.equal(stats);
