@@ -15,8 +15,7 @@ class BrainDrainCard extends CurseCard {
 	}
 
 	get stats () {
-		const curse = new CurseCard();
-		const hit = new HitCard({ damageDice: curse.damageDice });
+		const hit = new HitCard({ damageDice: this.damageDice });
 		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
 (up to a maximum total of pre-battle XP - ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]})`;
 
