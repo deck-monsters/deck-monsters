@@ -49,7 +49,8 @@ ${player.givenName}'s drain takes from hp instead.`;
 	}
 
 	get stats () {
-		return `Drain ${this.energyToStealDice} hp and ${this.curseAmountDice} ${this.cursedProp}`;
+		return `1d20 vs opponent's int. They are removed from the battle (and can not be target).
+On what would have been their next turn, if you are still alive you drain ${this.energyToStealDice} hp and ${this.curseAmountDice} ${this.cursedProp}`;
 	}
 
 	effect (blinkPlayer, blinkTarget, ring, activeContestants) { // eslint-disable-line no-unused-vars
