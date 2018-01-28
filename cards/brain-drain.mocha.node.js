@@ -29,7 +29,8 @@ describe('./cards/brain-drain.js', () => {
 		const hit = new HitCard({ damageDice: '1d4' });
 
 		const stats = `${hit.stats}
-Curse: xp -20`;
+Curse: xp -20
+(up to a maximum total of pre-battle XP - 40)`;
 
 		expect(brainDrain).to.be.an.instanceof(BrainDrainCard);
 		expect(brainDrain.icon).to.equal('🤡');
