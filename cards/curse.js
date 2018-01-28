@@ -45,7 +45,7 @@ class CurseCard extends HitCard {
 
 	get stats () {
 		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
-(up to a maximum total of -${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp] * 3} per level)`;
+maximum total curse of -${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp] * 3} per level, afterwards penalties come out of hp instead.`;
 
 		if (this.hasChanceToHit) {
 			stats = `${super.stats}

@@ -35,7 +35,7 @@ describe('./cards/curse.js', () => {
 
 		const stats = `${hit.stats}
 Curse: ac -1
-(up to a maximum total of -3 per level)`;
+maximum total curse of -3 per level, afterwards penalties come out of hp instead.`;
 
 		expect(curse).to.be.an.instanceof(Curse);
 		expect(curse.stats).to.equal(stats);
