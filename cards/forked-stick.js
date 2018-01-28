@@ -10,11 +10,12 @@ const { REASONABLE } = require('../helpers/costs');
 class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		actions,
 		dexModifier,
 		icon = '⑂',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ actions, icon, ...rest });
 
 		this.setOptions({
 			dexModifier
@@ -61,7 +62,6 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 }
 
 ForkedStickCard.cardType = 'Forked Stick';
-ForkedStickCard.actions = ['pin', 'pins', 'pinned'];
 ForkedStickCard.permittedClassesAndTypes = [BARD, BARBARIAN, FIGHTER];
 ForkedStickCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 ForkedStickCard.weakAgainstCreatureTypes = [JINN, MINOTAUR];
@@ -71,7 +71,8 @@ ForkedStickCard.cost = REASONABLE.cost;
 ForkedStickCard.level = 0;
 
 ForkedStickCard.defaults = {
-	...ImmobilizeCard.defaults
+	...ImmobilizeCard.defaults,
+	actions: { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' }
 };
 
 ForkedStickCard.flavors = {

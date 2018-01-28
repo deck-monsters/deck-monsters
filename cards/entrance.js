@@ -10,11 +10,12 @@ const { PRICEY } = require('../helpers/costs');
 class EntranceCard extends EnthrallCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		actions,
 		dexModifier,
 		icon = '🎆',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ actions, icon, ...rest });
 
 		this.setOptions({
 			dexModifier
@@ -33,9 +34,9 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 }
 
 EntranceCard.cardType = 'Entrance';
-EntranceCard.actions = ['entrance', 'entrances', 'entranced'];
+EntranceCard.actions = { IMMOBILIZE: 'entrance', IMMOBILIZES: 'entrances', IMMOBILIZED: 'entranced' };
 EntranceCard.probability = RARE.probability;
-EntranceCard.description = `You strut and preen. Your _painful_ beauty overwhelms and ${EntranceCard.actions[1]} everyone, except yourself.`;
+EntranceCard.description = `You strut and preen. Your _painful_ beauty overwhelms and ${EntranceCard.actions.IMMOBILIZES} everyone, except yourself.`;
 EntranceCard.level = 3;
 EntranceCard.cost = PRICEY.cost;
 EntranceCard.notForSale = true;
@@ -43,7 +44,8 @@ EntranceCard.notForSale = true;
 EntranceCard.defaults = {
 	...EnthrallCard.defaults,
 	doDamageOnImmobilize: true,
-	freedomThresholdModifier: 2
+	freedomThresholdModifier: 2,
+	actions: EntranceCard.actions
 };
 
 EntranceCard.flavors = {

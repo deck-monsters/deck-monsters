@@ -14,11 +14,12 @@ const STARTING_DEX_MODIFIER = 0;
 class HornGore extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		actions,
 		damageDice,
 		icon = '🐂',
 		...rest
 	} = {}) {
-		super({ damageDice, icon, ...rest });
+		super({ actions, damageDice, icon, ...rest });
 	}
 
 	get stats () {
@@ -207,7 +208,8 @@ HornGore.defaults = {
 	damageDice: '1d4',
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	dexModifier: STARTING_DEX_MODIFIER
+	dexModifier: STARTING_DEX_MODIFIER,
+	actions: { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' }//TODO: This isn't getting passed through and used for horn-gore/forked-metal-rod immobilizations for some reason...
 };
 
 HornGore.flavors = {

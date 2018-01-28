@@ -15,11 +15,12 @@ const {
 class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		actions,
 		dexModifier,
 		icon = '🌠',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ actions, icon, ...rest });
 
 		this.setOptions({
 			dexModifier
@@ -49,19 +50,20 @@ Chance to immobilize everyone with your shocking beauty.`;
 }
 
 MesmerizeCard.cardType = 'Mesmerize';
-MesmerizeCard.actions = ['mesmerize', 'mesmerizes', 'mesmerized'];
+MesmerizeCard.actions = { IMMOBILIZE: 'mesmerize', IMMOBILIZES: 'mesmerizes', IMMOBILIZED: 'mesmerized' };
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 MesmerizeCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 MesmerizeCard.weakAgainstCreatureTypes = [JINN, MINOTAUR, WEEPING_ANGEL];
 MesmerizeCard.uselessAgainstCreatureTypes = [];
 MesmerizeCard.probability = COMMON.probability;
-MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions[1]} everyone, including yourself.`;
+MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions.IMMOBILIZES} everyone, including yourself.`;
 MesmerizeCard.cost = VERY_CHEAP.cost;
 
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,
 	dexModifier: 2,
-	freedomThresholdModifier: 0
+	freedomThresholdModifier: 0,
+	actions: MesmerizeCard.actions
 };
 
 MesmerizeCard.flavors = {

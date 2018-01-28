@@ -12,6 +12,7 @@ const { FREE } = require('../helpers/costs');
 class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		actions,
 		dexModifier,
 		doDamageOnImmobilize,
 		icon = '😵',
@@ -28,6 +29,7 @@ class ImmobilizeCard extends HitCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
+			actions,
 			dexModifier,
 			doDamageOnImmobilize,
 			freedomSavingThrowTargetAttr,
@@ -42,7 +44,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get actions () {
-		return this.constructor.actions;
+		return this.options.actions;
 	}
 
 	get doDamageOnImmobilize () {
@@ -150,14 +152,17 @@ class ImmobilizeCard extends HitCard {
 		return player[this.freedomSavingThrowTargetAttr];
 	}
 
-	freedomThresholdNarrative (player) {
-		return `1d20 vs ${player.givenName}'s ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)}) ${signedNumber(this.freedomThresholdModifier)} -(immobilized turns x 3)`;
+	freedomThresholdNarrative (player, target) {
+		const thresholdBonusText = this.freedomThresholdModifier ? signedNumber(this.freedomThresholdModifier) : '';
+		const targetName = player === target ? `${player.pronouns.his} own` : `${player.givenName}'s`;
+		return `1d20 vs ${targetName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)}${thresholdBonusText}) -(immobilized turns x 3)`;
 	}
 
 	emitImmobilizeNarrative (player, target) {
-		let immobilizeNarrative = `${player.givenName} ${this.icon} immobilizes ${target.givenName}.
-at the beginning of each of ${target.givenName}'s turn, they will roll:
-${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
+		const targetName = player === target ? `${player.pronouns.him}self` : target.givenName;
+		let immobilizeNarrative = `
+${player.givenName} ${this.icon} ${this.actions.IMMOBILIZES} ${targetName}.
+at the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
 		if (this.ongoingDamage > 0) {
 			immobilizeNarrative += `takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}`;
 		}
@@ -210,11 +215,13 @@ ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
 					});
 
 					const freedomRoll = super.getAttackRoll(player, target);
-					const { success, strokeOfLuck } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
+					const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
 					let commentary;
 
 					if (strokeOfLuck) {
 						commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
+					} else if (tie) {
+						commentary = 'Miss... Tie goes to the defender.';
 					}
 
 					this.emit('rolled', {
@@ -265,7 +272,7 @@ ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
 		if (alreadyImmobilized || !canHaveEffect) {
 			let narration = '';
 			if (alreadyImmobilized) {
-				narration = `${target.givenName} is already ${this.actions.IMMOBILIZED}, now _show no mercy_!`;
+				narration = `${target.givenName} is already immobilized, now _show no mercy_!`;// Use immobilize here, because it could be the result of ANY immobilization, not just "coil" or whatever is checking right now.
 			} else {
 				narration = `${target.givenName} laughs hautily as you try to ${this.actions.IMMOBILIZE} them, vent your fury at their mockery!`;
 			}
@@ -296,7 +303,6 @@ ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
 }
 
 ImmobilizeCard.cardType = 'Immobilize';
-ImmobilizeCard.actions = { IMMOBILIZE: 'immobilize', IMMOBILIZES: 'immobilizes', IMMOBILIZED: 'immobilized' };
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
 ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobilization, will hit instead
@@ -313,7 +319,8 @@ ImmobilizeCard.defaults = {
 	freedomThresholdModifier: 2,
 	ongoingDamage: 0,
 	strModifier: 0,
-	targetAttr: 'ac'
+	targetAttr: 'ac',
+	actions: { IMMOBILIZE: 'immobilize', IMMOBILIZES: 'immobilizes', IMMOBILIZED: 'immobilized' }
 };
 
 ImmobilizeCard.flavors = {

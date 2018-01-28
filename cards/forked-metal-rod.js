@@ -15,10 +15,11 @@ const { PRICEY } = require('../helpers/costs');
 class ForkedMetalRodCard extends HornGoreCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		actions,
 		icon = '⑂⑂',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ actions, icon, ...rest });
 
 		this.immobilizeCard = new ImmobilizeCard({ strongAgainstCreatureTypes: this.strongAgainstCreatureTypes });
 	}
@@ -61,7 +62,6 @@ Even if you miss, there's a chance you'll pin them...`;
 }
 
 ForkedMetalRodCard.cardType = 'Forked Metal Rod';
-ForkedMetalRodCard.actions = ['pin', 'pins', 'pinned'];
 ForkedMetalRodCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedMetalRodCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
 ForkedMetalRodCard.weakAgainstCreatureTypes = [MINOTAUR];

@@ -18,11 +18,12 @@ const {
 class EnthrallCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		actions,
 		dexModifier,
 		icon = '🎇',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ actions, icon, ...rest });
 
 		this.setOptions({
 			dexModifier
@@ -53,20 +54,21 @@ Chance to immobilize your opponents with your shocking beauty.`;
 }
 
 EnthrallCard.cardType = 'Enthrall';
-EnthrallCard.actions = ['enthrall', 'enthralls', 'enthralled'];
+EnthrallCard.actions = { IMMOBILIZE: 'enthrall', IMMOBILIZES: 'enthralls', IMMOBILIZED: 'enthralled' };
 EnthrallCard.permittedClassesAndTypes = [JINN, WEEPING_ANGEL];
 EnthrallCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EnthrallCard.uselessAgainstCreatureTypes = [JINN];
 EnthrallCard.probability = UNCOMMON.probability;
-EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
+EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions.IMMOBILIZES} everyone, except yourself.`;
 EnthrallCard.level = 2;
 EnthrallCard.cost = REASONABLE.cost;
 
 EnthrallCard.defaults = {
 	...ImmobilizeCard.defaults,
 	dexModifier: 2,
-	freedomThresholdModifier: 1
+	freedomThresholdModifier: 1,
+	actions: EnthrallCard.actions
 };
 
 EnthrallCard.flavors = {

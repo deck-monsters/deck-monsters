@@ -10,10 +10,11 @@ const { EXPENSIVE } = require('../helpers/costs');
 class CoilCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		actions,
 		icon = '➰',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ actions, icon, ...rest });
 	}
 
 	getAttackRoll (player, target) {
@@ -44,9 +45,9 @@ CoilCard.defaults = {
 	...ImmobilizeCard.defaults,
 	doDamageOnImmobilize: true,
 	ongoingDamage: 1,
-	freedomThresholdModifier: 0
+	freedomThresholdModifier: 0,
+	actions: { IMMOBILIZE: 'coil', IMMOBILIZES: 'coils', IMMOBILIZED: 'coiled' }
 };
-CoilCard.actions = ['coil', 'coils', 'coiled'];
 
 CoilCard.flavors = {
 	hits: [
