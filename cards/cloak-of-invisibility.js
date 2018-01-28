@@ -22,6 +22,11 @@ class CloakOfInvisibilityCard extends BaseCard {
 		super({ icon });
 	}
 
+	get stats () { // eslint-disable-line class-methods-use-this
+		return `You are invisible until you play a card that targets another player, or for the next 2 turns (whichever comes first).
+1d20 vs your int for opponent to see you on their turn (natural 20 removes your cloak).`;
+	}
+
 	getTargets (player) { // eslint-disable-line class-methods-use-this
 		return [player];
 	}
