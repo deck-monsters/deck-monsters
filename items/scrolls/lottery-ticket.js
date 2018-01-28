@@ -6,7 +6,7 @@ const BaseScroll = require('./base');
 const { ABUNDANT } = require('../../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
 
-const getTicketNumbers = () => [random(11, 99), random(11, 99), random(11, 99), random(11, 99), random(11, 99)];
+const getTicketNumbers = () => [random(11, 99), random(11, 55), random(11, 99), random(11, 99), random(11, 99)];
 const getWinnings = (matches, cost) => Math.round(Math.pow(10, (0.5 * matches)) * cost);
 
 class LotteryTicket extends BaseScroll {
