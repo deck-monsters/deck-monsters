@@ -15,14 +15,11 @@ const {
 class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		freedomSavingThrowTargetAttr,
 		icon = '🌠',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
-	}
-
-	getFreedomThresholdBase () { // eslint-disable-line class-methods-use-this
-		return 10;
+		super({ freedomSavingThrowTargetAttr, icon, ...rest });
 	}
 
 	getAttackRoll (player, target) {
@@ -50,7 +47,8 @@ MesmerizeCard.description = `You strut and preen. Your beauty ${MesmerizeCard.ac
 MesmerizeCard.cost = VERY_CHEAP.cost;
 
 MesmerizeCard.defaults = {
-	...ImmobilizeCard.defaults
+	...ImmobilizeCard.defaults,
+	freedomSavingThrowTargetAttr: 'int'
 };
 
 MesmerizeCard.flavors = {

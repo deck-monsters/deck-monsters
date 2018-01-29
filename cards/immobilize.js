@@ -80,9 +80,9 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	getAttackModifier (target) {
-		if (this.weakAgainstCreatureTypes.includes(target.name)) {
+		if (this.weakAgainstCreatureTypes.includes(target.creatureType)) {
 			return -this.freedomThresholdModifier;
-		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
+		} else if (this.strongAgainstCreatureTypes.includes(target.creatureType)) {
 			return this.freedomThresholdModifier;
 		}
 		return 0;
@@ -90,14 +90,14 @@ class ImmobilizeCard extends HitCard {
 
 	get stats () {
 		let strModifiers = '\n';
-		if (this.strongAgainstCreatureTypes.length && this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] })) {
+		if (this.strongAgainstCreatureTypes.length && this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] })) {
 			const strongAgainst = this.strongAgainstCreatureTypes.join(', ');
-			strModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}`;
+			strModifiers += `\n${signedNumber(this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}`;
 		}
 
-		if (this.weakAgainstCreatureTypes.length && this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] })) {
+		if (this.weakAgainstCreatureTypes.length && this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] })) {
 			const weakAgainst = this.weakAgainstCreatureTypes.join(', ');
-			strModifiers += `\n${signedNumber(this.getAttackModifier({ name: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}`;
+			strModifiers += `\n${signedNumber(this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}`;
 		}
 
 		if (this.uselessAgainstCreatureTypes.length) {
@@ -141,34 +141,13 @@ ${ongoingDamageText}`;
 		return player[this.freedomSavingThrowTargetAttr];
 	}
 
-	freedomThresholdNarrative (player, target) {
-		const thresholdBonusText = this.getAttackModifier(target) ? `${signedNumber(this.getAttackModifier(target))}` : '';
-		const playerName = player === target ? `${player.pronouns.his} own` : `${player.givenName}'s`;
-		return `1d20 vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
-	}
-
-	emitImmobilizeNarrative (player, target) {
-		const targetName = player === target ? `${player.pronouns.him}self` : target.givenName;
-		let immobilizeNarrative = `
-${player.givenName} ${this.icon} ${this.actions.IMMOBILIZES} ${targetName}.
-At the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
-		if (this.ongoingDamage > 0) {
-			immobilizeNarrative += `
-${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}
-`;
-		}
-		this.emit('narration', {
-			narration: immobilizeNarrative
-		});
-	}
-
 	getFreedomThreshold (player, target) {
 		let fatigue = 0;
 		if (target.encounterModifiers && target.encounterModifiers.immobilizedTurns) {
 			fatigue = (target.encounterModifiers.immobilizedTurns * 3);
 		}
 
-		return (this.getFreedomThresholdBase(player) + this.getAttackModifier(target)) - fatigue;
+		return Math.max((this.getFreedomThresholdBase(player) + this.getAttackModifier(target)) - fatigue, 1);
 	}
 
 	getAttackRoll (player, target) {
@@ -257,6 +236,27 @@ ${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronoun
 		};
 
 		return ImmobilizeEffect;
+	}
+
+	freedomThresholdNarrative (player, target) {
+		const thresholdBonusText = this.getAttackModifier(target) ? `${signedNumber(this.getAttackModifier(target))}` : '';
+		const playerName = player === target ? `${player.pronouns.his} own` : `${player.givenName}'s`;
+		return `1d20 vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
+	}
+
+	emitImmobilizeNarrative (player, target) {
+		const targetName = player === target ? `${player.pronouns.him}self` : target.givenName;
+		let immobilizeNarrative = `
+${player.givenName} ${this.icon} ${this.actions.IMMOBILIZES} ${targetName}.
+At the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
+		if (this.ongoingDamage > 0) {
+			immobilizeNarrative += `
+${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}
+`;
+		}
+		this.emit('narration', {
+			narration: immobilizeNarrative
+		});
 	}
 
 	effect (player, target, ring, activeContestants) {
