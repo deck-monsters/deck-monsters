@@ -6,6 +6,7 @@ const {
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
 const { signedNumber } = require('../helpers/signed-number');
+const { getStrategyDescription } = require('../helpers/targeting-strategies');
 const isMatchingItem = require('../items/helpers/is-matching');
 
 const DEFAULT_CARD_SLOTS = 9;
@@ -60,6 +61,11 @@ ${signedNumber(this.strModifier)} to damage`
 	this.intModifier === 0 ? '' :
 		`
 ${signedNumber(this.intModifier)} to spells`
+}${
+	!this.targetingStrategy ? '' :
+		`
+
+Strategy: ${getStrategyDescription(this.targetingStrategy)}`
 }`;
 	}
 

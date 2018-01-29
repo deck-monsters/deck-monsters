@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const QinShiHuangScroll = require('./qin-shi-huang');
-const { TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS, getStrategyDescription } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
 
 class QinShiHuangAccordingToCleverHansScroll extends QinShiHuangScroll {
@@ -20,9 +20,9 @@ class QinShiHuangAccordingToCleverHansScroll extends QinShiHuangScroll {
 QinShiHuangAccordingToCleverHansScroll.notForSale = true;
 QinShiHuangAccordingToCleverHansScroll.cost = ALMOST_NOTHING.cost;
 QinShiHuangAccordingToCleverHansScroll.itemType = 'The Annals of Qin Shi Huang According to Clever Hans';
+QinShiHuangAccordingToCleverHansScroll.targetingStrategy = TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS;
 QinShiHuangAccordingToCleverHansScroll.description = `焚書坑儒
 
-Your mother told you to target the monster who has the highest xp, and that's exactly what you'll do.`;
-QinShiHuangAccordingToCleverHansScroll.targetingStrategy = TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS;
+${getStrategyDescription(QinShiHuangAccordingToCleverHansScroll.targetingStrategy)}`;
 
 module.exports = QinShiHuangAccordingToCleverHansScroll;

@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const TargetingScroll = require('./targeting');
-const { TARGET_HIGHEST_HP_PLAYER } = require('../../helpers/targeting-strategies');
+const { TARGET_HIGHEST_HP_PLAYER, getStrategyDescription } = require('../../helpers/targeting-strategies');
 
 // The "Fists of Virtue" scroll
 class SirRobinScroll extends TargetingScroll {
@@ -18,9 +18,9 @@ class SirRobinScroll extends TargetingScroll {
 }
 
 SirRobinScroll.itemType = 'The Tale of Sir Robin';
+SirRobinScroll.targetingStrategy = TARGET_HIGHEST_HP_PLAYER;
 SirRobinScroll.description = `He was not in the least bit scared to be mashed into a pulp, or to have his eyes gouged out, and his elbows broken, to have his kneecaps split, and his body burned away... brave Sir Robin!
 
-Target whichever opponent currently has the highest hp.`;
-SirRobinScroll.targetingStrategy = TARGET_HIGHEST_HP_PLAYER;
+${getStrategyDescription(SirRobinScroll.targetingStrategy)}`;
 
 module.exports = SirRobinScroll;
