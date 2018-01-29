@@ -18,7 +18,7 @@ class ChocolateBar extends HealingPotion {
 
 ChocolateBar.itemType = 'Chocolate Bar';
 ChocolateBar.healAmount = 1;
-ChocolateBar.description = `A quick snack to restore ${HealingPotion.healAmount} hp.`;
+ChocolateBar.description = `A quick snack to restore ${ChocolateBar.healAmount} hp.`;
 ChocolateBar.cost = VERY_CHEAP.cost;
 
 module.exports = ChocolateBar;
