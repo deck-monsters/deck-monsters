@@ -7,7 +7,7 @@ const Coil = require('./coil');
 const pause = require('../helpers/pause');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../helpers/creature-types');
 
 describe('./cards/coil.js', () => {
 	let channelStub;
@@ -42,8 +42,7 @@ ${hit.stats}
 
 
  +2 against Gladiator, Minotaur
- -2 against Basilisk
-inneffective against Weeping Angel
+ -2 against Basilisk, Jinn
 Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
@@ -52,11 +51,13 @@ Turns immobilized resets on curse of loki.
 
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(2);
+		expect(coil.freedomSavingThrowTargetAttr).to.equal('dex');
 		expect(coil.doDamageOnImmobilize).to.be.true;
 		expect(coil.ongoingDamage).to.equal(1);
 		expect(coil.stats).to.equal(stats);
 		expect(coil.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, MINOTAUR]);
-		expect(coil.weakAgainstCreatureTypes).to.deep.equal([BASILISK]);
+		expect(coil.weakAgainstCreatureTypes).to.deep.equal([BASILISK, JINN]);
+		expect(coil.uselessAgainstCreatureTypes).to.deep.equal([]);
 		expect(coil.permittedClassesAndTypes).to.deep.equal([BASILISK]);
 	});
 
@@ -75,7 +76,7 @@ Turns immobilized resets on curse of loki.
 
 	it('does ongoingDamage until opponent breaks free', () => {
 		const coil = new Coil();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(coil)), 'checkSuccess');
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(coil))), 'checkSuccess');
 		const hitCheckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(coil)), 'hitCheck');
 
 		const player = new Basilisk({ name: 'player' });

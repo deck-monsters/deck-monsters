@@ -8,10 +8,11 @@ const { PRICEY } = require('../helpers/costs');
 class ConstrictCard extends CoilCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		freedomSavingThrowTargetAttr,
 		icon = '➰➰',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ freedomSavingThrowTargetAttr, icon, ...rest });
 	}
 }
 

@@ -6,7 +6,7 @@ const Minotaur = require('../monsters/minotaur');
 const Constrict = require('./constrict');
 const pause = require('../helpers/pause');
 
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../helpers/creature-types');
 
 describe('./cards/constrict.js', () => {
 	let channelStub;
@@ -37,12 +37,11 @@ describe('./cards/constrict.js', () => {
 
 		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
-Hit: 1d20 vs AC / Damage: 1d6
+${hit.stats}
 
 
  +3 against Gladiator, Minotaur
- -3 against Basilisk
-inneffective against Weeping Angel
+ -3 against Basilisk, Jinn
 Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
@@ -51,11 +50,13 @@ Turns immobilized resets on curse of loki.
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(3);
+		expect(constrict.freedomSavingThrowTargetAttr).to.equal('dex');
 		expect(constrict.doDamageOnImmobilize).to.be.true;
 		expect(constrict.ongoingDamage).to.equal(2);
 		expect(constrict.stats).to.equal(stats);
 		expect(constrict.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, MINOTAUR]);
-		expect(constrict.weakAgainstCreatureTypes).to.deep.equal([BASILISK]);
+		expect(constrict.weakAgainstCreatureTypes).to.deep.equal([BASILISK, JINN]);
+		expect(constrict.uselessAgainstCreatureTypes).to.deep.equal([]);
 		expect(constrict.permittedClassesAndTypes).to.deep.equal([BASILISK]);
 	});
 
