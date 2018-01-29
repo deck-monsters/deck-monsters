@@ -63,10 +63,10 @@ describe('./cards/pick-pocket.js', () => {
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: playerCharacter, monster: player },
+				{ character: target1Character, monster: target1 },
+				{ character: target2Character, monster: target2 },
+				{ character: target3Character, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -123,10 +123,10 @@ describe('./cards/pick-pocket.js', () => {
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 },
+				{ character: {}, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()

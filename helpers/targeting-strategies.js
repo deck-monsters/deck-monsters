@@ -46,7 +46,7 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 	if (!playerContestant && playerMonster) {
 		const foundPlayerContestant = contestants.find(({ monster }) => monster === playerMonster);
 
-		if (foundPlayerContestant) return getTarget({ contestants, ignoreSelf, playerContestant: foundPlayerContestant, strategy, team: playerContestant.character.team });
+		if (foundPlayerContestant) return getTarget({ contestants, ignoreSelf, playerContestant: foundPlayerContestant, strategy, team });
 	}
 
 	if (team === undefined && playerContestant.character.team) {
@@ -216,6 +216,7 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 }
 
 module.exports = {
+	TARGET_ALL_CONTESTANTS,
 	TARGET_HIGHEST_HP_PLAYER_ACCORDING_TO_HANS,
 	TARGET_HIGHEST_HP_PLAYER,
 	TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS,

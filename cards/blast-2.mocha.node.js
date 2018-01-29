@@ -49,9 +49,9 @@ describe('./cards/blast-2.js', () => {
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -77,14 +77,14 @@ describe('./cards/blast-2.js', () => {
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 		const activeContestants = [
-			{ monster: player },
-			{ monster: target1 }
+			{ character: {}, monster: player },
+			{ character: {}, monster: target1 }
 		];
 
 		const playerStartingHp = player.hp;
