@@ -579,9 +579,10 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	setModifier (attr, amount = 0, permanent = false) {
-		const prevValue = (permanent) ? this.modifiers[attr] || 0 : this.encounterModifiers[attr] || 0;
+		const prevAmount = (permanent) ? this.modifiers[attr] || 0 : this.encounterModifiers[attr] || 0;
+		const prevValue = this[attr];
 		const modifiers = Object.assign({}, (permanent) ? this.modifiers : this.encounterModifiers, {
-			[attr]: prevValue + amount
+			[attr]: prevAmount + amount
 		});
 
 		if (permanent) {
@@ -593,6 +594,7 @@ Battles won: ${this.battles.wins}`;
 		this.emit('modifier', {
 			amount,
 			attr,
+			prevAmount,
 			prevValue
 		});
 	}

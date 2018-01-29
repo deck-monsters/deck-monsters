@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 const CurseCard = require('./curse');
 const HitCard = require('./hit');
 
