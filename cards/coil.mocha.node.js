@@ -36,20 +36,22 @@ describe('./cards/coil.js', () => {
 		const coil = new Coil();
 		const hit = new Hit();
 
-		const stats = `${hit.stats}
+		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
+
+${hit.stats}
+
 
  +2 against Gladiator, Minotaur
  -2 against Basilisk
 inneffective against Weeping Angel
-Chance to immobilize opponent by coiling your serpentine body around them and squeezing.
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
 
-1 ongoing damage.
-Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)`;
+-1 hp each turn immobilized.`;
 
 		expect(coil).to.be.an.instanceof(Coil);
-		expect(coil.freedomThresholdModifier).to.equal(0);
-		expect(coil.dexModifier).to.equal(2);
-		expect(coil.strModifier).to.equal(0);
+		expect(coil.freedomThresholdModifier).to.equal(2);
 		expect(coil.doDamageOnImmobilize).to.be.true;
 		expect(coil.ongoingDamage).to.equal(1);
 		expect(coil.stats).to.equal(stats);
@@ -61,16 +63,12 @@ Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)`;
 	it('can be instantiated with options', () => {
 		const coil = new Coil({
 			freedomThresholdModifier: 2,
-			strModifier: 4,
-			dexModifier: 4,
 			doDamageOnImmobilize: false,
 			ongoingDamage: 0
 		});
 
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(2);
-		expect(coil.dexModifier).to.equal(4);
-		expect(coil.strModifier).to.equal(4);
 		expect(coil.doDamageOnImmobilize).to.be.false;
 		expect(coil.ongoingDamage).to.equal(0);
 	});

@@ -35,21 +35,22 @@ describe('./cards/constrict.js', () => {
 		const constrict = new Constrict();
 		const hit = new Hit();
 
-		const stats = `${hit.stats}
+		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
- +2 against Gladiator, Minotaur
- -2 against Basilisk
+Hit: 1d20 vs AC / Damage: 1d6
+
+
+ +3 against Gladiator, Minotaur
+ -3 against Basilisk
 inneffective against Weeping Angel
-Chance to immobilize opponent by coiling your serpentine body around them and squeezing.
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
 
-2 ongoing damage.
-Opponent breaks free by rolling 1d20 vs AC + 3 - (turns immobilized * 3)`;
+-2 hp each turn immobilized.`;
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(3);
-		expect(constrict.dexModifier).to.equal(2);
-		expect(constrict.strModifier).to.equal(0);
-
 		expect(constrict.doDamageOnImmobilize).to.be.true;
 		expect(constrict.ongoingDamage).to.equal(2);
 		expect(constrict.stats).to.equal(stats);
@@ -60,14 +61,11 @@ Opponent breaks free by rolling 1d20 vs AC + 3 - (turns immobilized * 3)`;
 
 	it('can be instantiated with options', () => {
 		const constrict = new Constrict({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: false, ongoingDamage: 3// eslint-disable-line max-len
+			freedomThresholdModifier: 2, doDamageOnImmobilize: false, ongoingDamage: 3// eslint-disable-line max-len
 		});
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(2);
-		expect(constrict.dexModifier).to.equal(4);
-		expect(constrict.strModifier).to.equal(4);
-
 		expect(constrict.doDamageOnImmobilize).to.be.false;
 		expect(constrict.ongoingDamage).to.equal(3);
 	});

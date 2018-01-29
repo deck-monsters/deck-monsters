@@ -25,6 +25,7 @@ class HornGore extends ImmobilizeCard {
 		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and ${this.actions.IMMOBILIZE} for each successfull ${this.flavors.spike} hit.
 
 If either ${this.flavors.spike} hits, chance to ${this.actions.IMMOBILIZE}: 1d20 - 6 vs ${this.targetAttr}.
+
 ${super.stats}`;
 	}
 

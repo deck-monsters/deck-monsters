@@ -39,17 +39,22 @@ describe('./cards/forked-stick.js', () => {
 		const forkedStick = new ForkedStick();
 		const hit = new Hit();
 
-		const stats = `${hit.stats}
+		const stats = `Attempt to pin your opponent between the branches of a forked stick.
+
+If immobilized, then hit.
+${hit.stats}
+
 
  +2 against Basilisk, Gladiator
  -2 against Jinn, Minotaur
 inneffective against Weeping Angel
-Attempt to pin your opponent between the branches of a forked stick.`;
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+`;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.freedomThresholdModifier).to.equal(2);
-		expect(forkedStick.dexModifier).to.equal(2);
-		expect(forkedStick.strModifier).to.equal(0);
 		expect(forkedStick.doDamageOnImmobilize).to.be.false;
 		expect(forkedStick.stats).to.equal(stats);
 		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
@@ -59,13 +64,11 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 	it('can be instantiated with options', () => {
 		const forkedStick = new ForkedStick({
-			freedomThresholdModifier: 1, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: true
+			freedomThresholdModifier: 1, doDamageOnImmobilize: true
 		});
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.freedomThresholdModifier).to.equal(1);
-		expect(forkedStick.dexModifier).to.equal(4);
-		expect(forkedStick.strModifier).to.equal(4);
 		expect(forkedStick.doDamageOnImmobilize).to.be.true;
 	});
 

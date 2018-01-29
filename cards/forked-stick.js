@@ -10,15 +10,10 @@ const { REASONABLE } = require('../helpers/costs');
 class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		dexModifier,
 		icon = '⑂',
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
-
-		this.setOptions({
-			dexModifier
-		});
 	}
 
 	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this

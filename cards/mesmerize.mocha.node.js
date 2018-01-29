@@ -42,14 +42,16 @@ describe('./cards/mesmerize.js', () => {
 
 		const stats = `${hit.stats}
 
+
  +2 against Basilisk, Gladiator
  -2 against Jinn, Minotaur, Weeping Angel
-Chance to immobilize everyone with your shocking beauty.`;
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+`;
 
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);
-		expect(mesmerize.freedomThresholdModifier).to.equal(0);
-		expect(mesmerize.dexModifier).to.equal(2);
-		expect(mesmerize.strModifier).to.equal(0);
+		expect(mesmerize.freedomThresholdModifier).to.equal(2);
 		expect(mesmerize.doDamageOnImmobilize).to.be.false;
 		expect(mesmerize.stats).to.equal(stats);
 		expect(mesmerize.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
@@ -59,13 +61,11 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 	it('can be instantiated with options', () => {
 		const mesmerize = new Mesmerize({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, doDamageOnImmobilize: true
 		});
 
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);
 		expect(mesmerize.freedomThresholdModifier).to.equal(2);
-		expect(mesmerize.dexModifier).to.equal(4);
-		expect(mesmerize.strModifier).to.equal(4);
 		expect(mesmerize.doDamageOnImmobilize).to.be.true;
 	});
 

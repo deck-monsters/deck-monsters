@@ -42,15 +42,17 @@ describe('./cards/enthrall.js', () => {
 
 		const stats = `${hit.stats}
 
+
  +2 against Basilisk, Gladiator
  -2 against Minotaur, Weeping Angel
 inneffective against Jinn
-Chance to immobilize your opponents with your shocking beauty.`;
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+`;
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);
-		expect(enthrall.freedomThresholdModifier).to.equal(1);
-		expect(enthrall.dexModifier).to.equal(2);
-		expect(enthrall.strModifier).to.equal(0);
+		expect(enthrall.freedomThresholdModifier).to.equal(2);
 		expect(enthrall.doDamageOnImmobilize).to.be.false;
 		expect(enthrall.stats).to.equal(stats);
 		expect(enthrall.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
@@ -61,13 +63,11 @@ Chance to immobilize your opponents with your shocking beauty.`;
 
 	it('can be instantiated with options', () => {
 		const enthrall = new Enthrall({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, doDamageOnImmobilize: true
 		});
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);
 		expect(enthrall.freedomThresholdModifier).to.equal(2);
-		expect(enthrall.dexModifier).to.equal(4);
-		expect(enthrall.strModifier).to.equal(4);
 		expect(enthrall.doDamageOnImmobilize).to.be.true;
 	});
 
@@ -76,7 +76,7 @@ Chance to immobilize your opponents with your shocking beauty.`;
 		const player = new WeepingAngel({ name: 'player' });
 		const target = new WeepingAngel({ name: 'target' });
 
-		expect(enthrall.getFreedomThreshold(player, target)).to.equal(10 + enthrall.freedomThresholdModifier);
+		expect(enthrall.getFreedomThreshold(player, target)).to.equal(8 + enthrall.freedomThresholdModifier);
 
 		target.encounterModifiers.immobilizedTurns = 2;
 

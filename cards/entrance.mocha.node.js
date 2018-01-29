@@ -42,15 +42,18 @@ describe('./cards/entrance.js', () => {
 
 		const stats = `${hit.stats}
 
+
  +2 against Basilisk, Gladiator
  -2 against Minotaur, Weeping Angel
 inneffective against Jinn
-Chance to immobilize and damage your opponents with your painfully shocking beauty.`;
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+
+-1 hp each turn immobilized.`;
 
 		expect(entrance).to.be.an.instanceof(Entrance);
 		expect(entrance.freedomThresholdModifier).to.equal(2);
-		expect(entrance.dexModifier).to.equal(2);
-		expect(entrance.strModifier).to.equal(0);
 		expect(entrance.doDamageOnImmobilize).to.be.true;
 		expect(entrance.stats).to.equal(stats);
 		expect(entrance.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
@@ -61,13 +64,11 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 
 	it('can be instantiated with options', () => {
 		const entrance = new Entrance({
-			freedomThresholdModifier: 4, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: true
+			freedomThresholdModifier: 4, doDamageOnImmobilize: true
 		});
 
 		expect(entrance).to.be.an.instanceof(Entrance);
 		expect(entrance.freedomThresholdModifier).to.equal(4);
-		expect(entrance.dexModifier).to.equal(4);
-		expect(entrance.strModifier).to.equal(4);
 		expect(entrance.doDamageOnImmobilize).to.be.true;
 	});
 

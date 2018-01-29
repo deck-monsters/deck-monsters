@@ -36,22 +36,26 @@ describe('./cards/forked-metal-rod.js', () => {
 		const forkedMetalRod = new ForkedMetalRod();
 		const hit = new Hit();
 
-		const stats = `${hit.stats}
+		const stats = `Attack twice (once with each prong). +2 to hit and pin for each successfull prong hit.
+
+Chance to pin: 1d20 - 6 vs ac.
+
+${hit.stats}
+
 
  +2 against Gladiator, Basilisk
  -2 against Minotaur
 inneffective against Weeping Angel
-Attempt to stab your opponent with strong sharp prongs.
-
-Even if you miss, there's a chance you'll pin them...`;
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+`;
 
 		const description = 'A dangerously sharp forked metal rod fashioned for Gladiator and Basilisk-hunting.';
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.description).to.equal(description);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
-		expect(forkedMetalRod.dexModifier).to.equal(3);
-		expect(forkedMetalRod.strModifier).to.equal(0);
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.false;
 		expect(forkedMetalRod.stats).to.equal(stats);
 		expect(forkedMetalRod.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
@@ -61,13 +65,11 @@ Even if you miss, there's a chance you'll pin them...`;
 
 	it('can be instantiated with options', () => {
 		const forkedMetalRod = new ForkedMetalRod({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, doDamageOnImmobilize: true
 		});
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(2);
-		expect(forkedMetalRod.dexModifier).to.equal(4);
-		expect(forkedMetalRod.strModifier).to.equal(4);
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.true;
 	});
 

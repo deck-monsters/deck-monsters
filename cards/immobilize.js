@@ -17,7 +17,6 @@ class ImmobilizeCard extends HitCard {
 		freedomSavingThrowTargetAttr,
 		freedomThresholdModifier,
 		ongoingDamage,
-		strModifier,
 		strongAgainstCreatureTypes,
 		targetAttr,
 		uselessAgainstCreatureTypes,
@@ -31,7 +30,6 @@ class ImmobilizeCard extends HitCard {
 			freedomSavingThrowTargetAttr,
 			freedomThresholdModifier,
 			ongoingDamage,
-			strModifier,
 			strongAgainstCreatureTypes,
 			targetAttr,
 			uselessAgainstCreatureTypes,
@@ -81,10 +79,6 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
-	get strModifier () {
-		return this.options.strModifier;
-	}
-
 	getAttackModifier (target) {
 		if (this.weakAgainstCreatureTypes.includes(target.name)) {
 			return -this.freedomThresholdModifier;
@@ -112,7 +106,7 @@ class ImmobilizeCard extends HitCard {
 		}
 
 		const ongoingDamageText = this.ongoingDamage ? `
--${this.ongoingDamage} hp each turn immoblized.` : '';
+-${this.ongoingDamage} hp each turn immobilized.` : '';
 
 
 		return `${super.stats}
@@ -318,7 +312,6 @@ ImmobilizeCard.defaults = {
 	freedomSavingThrowTargetAttr: 'ac',
 	freedomThresholdModifier: 2,
 	ongoingDamage: 0,
-	strModifier: 0,
 	targetAttr: 'ac'
 };
 

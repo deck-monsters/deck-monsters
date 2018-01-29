@@ -35,14 +35,20 @@ describe('./cards/horn-gore.js', () => {
 
 		expect(hornGore).to.be.an.instanceof(HornGoreCard);
 		expect(hornGore.damageDice).to.equal('1d4');
-		expect(hornGore.stats).to.equal('Attack twice (once with each horn). +2 to pin for each successfull horn hit.\nHit: 1d20 vs AC / Damage: 1d4\n\n -2 against Minotaur\ninneffective against Weeping Angel');// eslint-disable-line max-len
-	});
+		expect(hornGore.stats).to.equal(`Attack twice (once with each horn). +2 to hit and pin for each successfull horn hit.
 
-	it('can be instantiated with options', () => {
-		const hornGore = new HornGoreCard({ strModifier: 4 });
+If either horn hits, chance to pin: 1d20 - 6 vs ac.
 
-		expect(hornGore).to.be.an.instanceof(HornGoreCard);
-		expect(hornGore.strModifier).to.equal(4);
+Hit: 1d20 vs AC / Damage: 1d4
+
+
+ -4 against Gladiator
+ -6 against Minotaur
+inneffective against Weeping Angel
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+`);
 	});
 
 	it('can only be played by Minotaurs', () => {
