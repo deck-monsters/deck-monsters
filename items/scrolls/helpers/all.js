@@ -13,6 +13,7 @@ const QinShiHuangAccordingToCleverHansScroll = require('../qin-shi-huang-accordi
 const QinShiHuangScroll = require('../qin-shi-huang');
 const SirRobinAccordingToCleverHansScroll = require('../sir-robin-according-to-clever-hans');
 const SirRobinScroll = require('../sir-robin');
+const SortingHat = require('../sorting-hat');
 
 module.exports = [
 	ChaosTheoryAccordingToCleverHansScroll,
@@ -29,5 +30,6 @@ module.exports = [
 	QinShiHuangAccordingToCleverHansScroll,
 	QinShiHuangScroll,
 	SirRobinAccordingToCleverHansScroll,
-	SirRobinScroll
+	SirRobinScroll,
+	SortingHat
 ];

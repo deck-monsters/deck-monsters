@@ -47,9 +47,9 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -72,17 +72,17 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
 		const getHPModifierSpy = sinon.spy(prionDisease, 'getHPModifier');
 
 		const activeContestants = [
-			{ monster: player },
-			{ monster: target1 }
+			{ character: {}, monster: player },
+			{ character: {}, monster: target1 }
 		];
 
 		return prionDisease
@@ -105,12 +105,12 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 		const player = new Basilisk({ name: 'player' });
 		const ring = {
 			contestants: [
-				{ monster: player }
+				{ character: {}, monster: player }
 			]
 		};
 
 		const activeContestants = [
-			{ monster: player }
+			{ character: {}, monster: player }
 		];
 
 		return prionDisease
@@ -130,12 +130,12 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 		player.hp = 1;
 		const ring = {
 			contestants: [
-				{ monster: player }
+				{ character: {}, monster: player }
 			]
 		};
 
 		const activeContestants = [
-			{ monster: player }
+			{ character: {}, monster: player }
 		];
 
 		return prionDisease
@@ -151,9 +151,9 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -177,8 +177,8 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 		const target1 = new Basilisk({ name: 'target1' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 }
 			]
 		};
 
