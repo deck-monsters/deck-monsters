@@ -49,8 +49,9 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 		if (foundPlayerContestant) return getTarget({ contestants, ignoreSelf, playerContestant: foundPlayerContestant, strategy, team });
 	}
 
-	if (team === undefined && playerContestant.character.team) {
-		return getTarget({ contestants, ignoreSelf, playerContestant, strategy, team: playerContestant.character.team });
+	const playerTeam = (team || playerContestant.monster.team || playerContestant.character.team);
+	if (team === undefined && playerTeam) {
+		return getTarget({ contestants, ignoreSelf, playerContestant, strategy, team: playerTeam });
 	}
 
 	switch (strategy) {
