@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const HouseLannister = require('./house-lannister');
-const { TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS, getStrategyDescription } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
 
 class HouseLannisterAccordingToCleverHans extends HouseLannister {
@@ -23,6 +23,6 @@ HouseLannisterAccordingToCleverHans.itemType = 'House Lannister According To Cle
 HouseLannisterAccordingToCleverHans.targetingStrategy = TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS;
 HouseLannisterAccordingToCleverHans.description = `A Lannister always pays his debts...
 
-Your mother told you to target the monster who attacked you last, unless directed otherwise by a specific card, and that's exactly what you'll do.`;
+${getStrategyDescription(HouseLannisterAccordingToCleverHans.targetingStrategy)}`;
 
 module.exports = HouseLannisterAccordingToCleverHans;
