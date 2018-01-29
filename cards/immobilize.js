@@ -118,6 +118,8 @@ class ImmobilizeCard extends HitCard {
 		return `${super.stats}
 ${strModifiers}
 Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
 ${ongoingDamageText}`;
 	}
 
