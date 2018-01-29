@@ -64,7 +64,7 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 				return true;
 			});
 
-			if (filteredContestants.length < 1) return [...contestants];
+			if (filteredContestants.length < 1) return getTarget({ contestants, ignoreSelf, playerContestant, strategy: TARGET_ALL_CONTESTANTS, team: false });
 
 			return filteredContestants;
 		}
