@@ -99,10 +99,10 @@ Chance to immobilize and damage your opponents with your painfully shocking beau
 		const target3StartingHp = target3.hp;
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 },
+				{ character: {}, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()

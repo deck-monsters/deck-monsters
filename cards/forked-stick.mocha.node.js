@@ -136,8 +136,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -175,8 +175,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -204,8 +204,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -263,8 +263,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -316,8 +316,8 @@ Attempt to pin your opponent between the branches of a forked stick.`;
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()

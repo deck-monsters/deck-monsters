@@ -63,8 +63,8 @@ describe('./cards/horn-swipe.js', () => {
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
