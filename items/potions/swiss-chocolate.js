@@ -11,4 +11,4 @@ SwissChocolate.healAmount = 10;
 SwissChocolate.probability = EPIC.probability;
 SwissChocolate.description = `Only the finest Swiss chocolate. Restores ${SwissChocolate.healAmount} hp.`;
 
-module.exports = ChocolateBar;
+module.exports = SwissChocolate;
