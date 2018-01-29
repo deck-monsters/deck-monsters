@@ -33,7 +33,8 @@ EntranceCard.notForSale = true;
 
 EntranceCard.defaults = {
 	...EnthrallCard.defaults,
-	doDamageOnImmobilize: true
+	doDamageOnImmobilize: true,
+	ongoingDamage: 1
 };
 
 EntranceCard.flavors = {

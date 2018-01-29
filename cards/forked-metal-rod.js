@@ -23,16 +23,16 @@ class ForkedMetalRodCard extends HornGoreCard {
 		this.immobilizeCard = new ImmobilizeCard({ strongAgainstCreatureTypes: this.strongAgainstCreatureTypes });
 	}
 
-	get stats () { // eslint-disable-line class-methods-use-this
-		return `Attempt to stab your opponent with strong sharp prongs.
-
-1d20 vs ${this.targetAttr} to pin.
-${this.immobilizeCard.stats}`;
-	}
-
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
 		this.dexModifier = STARTING_DEX_MODIFIER;
+	}
+
+	get stats () {
+		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and ${this.actions.IMMOBILIZE} for each successfull ${this.flavors.spike} hit.
+
+Chance to ${this.actions.IMMOBILIZE}: 1d20 - 6 vs ${this.targetAttr}.
+${this.immobilizeCard.stats}`;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars

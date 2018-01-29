@@ -112,7 +112,7 @@ class ImmobilizeCard extends HitCard {
 		}
 
 		const ongoingDamageText = this.ongoingDamage ? `
-${this.ongoingDamage} each turn immoblized.` : '';
+-${this.ongoingDamage} hp each turn immoblized.` : '';
 
 
 		return `${super.stats}
@@ -155,10 +155,11 @@ ${ongoingDamageText}`;
 		const targetName = player === target ? `${player.pronouns.him}self` : target.givenName;
 		let immobilizeNarrative = `
 ${player.givenName} ${this.icon} ${this.actions.IMMOBILIZES} ${targetName}.
-at the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
+At the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
 		if (this.ongoingDamage > 0) {
 			immobilizeNarrative += `
-${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}`;
+${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}
+`;
 		}
 		this.emit('narration', {
 			narration: immobilizeNarrative
