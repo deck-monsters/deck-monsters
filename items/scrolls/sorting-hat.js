@@ -38,7 +38,7 @@ ${getChoices(teamChoices)}`,
 				const team = teamChoices[answer];
 
 				const publicNarration = `${givenName} joins the ${team} team.`;
-				const privateNarration = `"Is that so? Well if you're sure... better be ${team.toUpperCase}!"
+				const privateNarration = `"Is that so? Well if you're sure... better be ${team.toUpperCase()}!"
 
 And just like that the ${this.itemType} is gone and ${publicNarration}`;
 
@@ -51,11 +51,11 @@ And just like that the ${this.itemType} is gone and ${publicNarration}`;
 				this.emit('narration', {
 					channel,
 					channelName,
-					privateNarration
+					narration: privateNarration
 				});
 
 				this.emit('narration', {
-					publicNarration
+					narration: publicNarration
 				});
 
 				return team;

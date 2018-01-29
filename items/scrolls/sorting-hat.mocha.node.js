@@ -34,7 +34,7 @@ describe('./items/sorting-hat.js', () => {
 2) Ravenclaw
 3) Slytherin`
 		})
-			.resolves('3');
+			.resolves(3);
 
 		expect(character.team).to.equal(undefined);
 

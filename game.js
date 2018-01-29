@@ -165,11 +165,14 @@ class Game extends BaseClass {
 		this.ring.clearRing();
 	}
 
-	getCharacter (channel, channelName, {
+	getCharacter (privateChannel, channelName, {
 		id, name, type, gender, icon
 	}) {
 		const game = this;
-		const { log, ring } = game;
+		const { channelManager, log, ring } = game;
+		const channel = (...args) => privateChannel(...args);
+		channel.channelManager = channelManager;
+		channel.channelName = channelName;
 
 		return Promise
 			.resolve(this.characters[id])
