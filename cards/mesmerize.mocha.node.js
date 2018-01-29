@@ -14,7 +14,7 @@ const {
 	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
-describe.only('./cards/mesmerize.js', () => {
+describe('./cards/mesmerize.js', () => {
 	let angel;
 	let basilisk;
 	let channelStub;
@@ -82,7 +82,6 @@ describe.only('./cards/mesmerize.js', () => {
 	});
 
 	it('can be instantiated with defaults', () => {
-		const mesmerize = new Mesmerize();
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
@@ -106,13 +105,13 @@ Turns immobilized resets on curse of loki.
 	});
 
 	it('can be instantiated with options', () => {
-		const mesmerize = new Mesmerize({
+		const customMesmerize = new Mesmerize({
 			freedomThresholdModifier: 4, doDamageOnImmobilize: true
 		});
 
-		expect(mesmerize).to.be.an.instanceof(Mesmerize);
-		expect(mesmerize.freedomThresholdModifier).to.equal(4);
-		expect(mesmerize.doDamageOnImmobilize).to.be.true;
+		expect(customMesmerize).to.be.an.instanceof(Mesmerize);
+		expect(customMesmerize.freedomThresholdModifier).to.equal(4);
+		expect(customMesmerize.doDamageOnImmobilize).to.be.true;
 	});
 
 	it('calculates attackModifier correctly', () => {
@@ -121,7 +120,7 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.getAttackModifier(gladiator)).to.equal(2);
 		expect(mesmerize.getAttackModifier(jinn)).to.equal(-2);
 		expect(mesmerize.getAttackModifier(minotaur)).to.equal(-2);
-	})
+	});
 
 	it('calculates freedom threshold correctly', () => {
 		expect(mesmerize.getFreedomThreshold(player, angel)).to.equal(5);
@@ -143,41 +142,37 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.getFreedomThreshold(player, minotaur)).to.equal(1);
 	});
 
-	it('immobilizes everyone on play', () => {
-		return mesmerize
-			.play(player, basilisk, ring, ring.contestants)
-			.then(() => {
-				expect(player.encounterEffects.length).to.equal(1);
-				expect(angel.encounterEffects.length).to.equal(1);
-				expect(basilisk.encounterEffects.length).to.equal(1);
-				expect(gladiator.encounterEffects.length).to.equal(1);
-				expect(jinn.encounterEffects.length).to.equal(1);
-				return expect(minotaur.encounterEffects.length).to.equal(1);
-			});
-	});
+	it('immobilizes everyone on play', () => mesmerize
+		.play(player, basilisk, ring, ring.contestants)
+		.then(() => {
+			expect(player.encounterEffects.length).to.equal(1);
+			expect(angel.encounterEffects.length).to.equal(1);
+			expect(basilisk.encounterEffects.length).to.equal(1);
+			expect(gladiator.encounterEffects.length).to.equal(1);
+			expect(jinn.encounterEffects.length).to.equal(1);
+			return expect(minotaur.encounterEffects.length).to.equal(1);
+		}));
 
 	it('hits already immobilized monsters on play', () => {
-		let playerBeforeHP = player.hp;
-		let angelBeforeHP = angel.hp;
-		let basiliskBeforeHP = basilisk.hp;
-		let gladiatorBeforeHP = gladiator.hp;
-		let jinnBeforeHP = jinn.hp;
-		let minotaurBeforeHP = minotaur.hp;
+		const playerBeforeHP = player.hp;
+		const angelBeforeHP = angel.hp;
+		const basiliskBeforeHP = basilisk.hp;
+		const gladiatorBeforeHP = gladiator.hp;
+		const jinnBeforeHP = jinn.hp;
+		const minotaurBeforeHP = minotaur.hp;
 
 		return mesmerize
 			.play(player, basilisk, ring, ring.contestants)
-			.then(() => {
-				return mesmerize
-					.play(player, basilisk, ring, ring.contestants)
-					.then(() => {
-						expect(player.hp).to.be.below(playerBeforeHP);
-						expect(angel.hp).to.be.below(angelBeforeHP)
-						expect(basilisk.hp).to.be.below(basiliskBeforeHP)
-						expect(gladiator.hp).to.be.below(gladiatorBeforeHP)
-						expect(jinn.hp).to.be.below(jinnBeforeHP)
-						return expect(minotaur.hp).to.be.below(minotaurBeforeHP)
-					});
-			});
+			.then(() => mesmerize
+				.play(player, basilisk, ring, ring.contestants)
+				.then(() => {
+					expect(player.hp).to.be.below(playerBeforeHP);
+					expect(angel.hp).to.be.below(angelBeforeHP);
+					expect(basilisk.hp).to.be.below(basiliskBeforeHP);
+					expect(gladiator.hp).to.be.below(gladiatorBeforeHP);
+					expect(jinn.hp).to.be.below(jinnBeforeHP);
+					return expect(minotaur.hp).to.be.below(minotaurBeforeHP);
+				}));
 	});
 
 	it('harms immobilizer on breaking free with natural 20', () => {
