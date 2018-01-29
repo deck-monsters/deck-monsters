@@ -18,9 +18,9 @@ class CobraKaiScroll extends TargetingScroll {
 }
 
 CobraKaiScroll.itemType = 'The Way of the Cobra Kai';
+CobraKaiScroll.targetingStrategy = TARGET_LOWEST_HP_PLAYER;
 CobraKaiScroll.description = `We do not train to be merciful here. Mercy is for the weak. Here, in the streets, in competition: A man confronts you, he is the enemy. An enemy deserves no mercy.
 
 ${getStrategyDescription(CobraKaiScroll.targetingStrategy)}`;
-CobraKaiScroll.targetingStrategy = TARGET_LOWEST_HP_PLAYER;
 
 module.exports = CobraKaiScroll;

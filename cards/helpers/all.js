@@ -16,6 +16,7 @@ const DelayedHit = require('../delayed-hit');
 const EnchantedFaceswapCard = require('../enchanted-faceswap');
 const EnthrallCard = require('../enthrall');
 const EntranceCard = require('../entrance');
+const FelineCompanionCard = require('../feline-companion');
 const FightOrFlightCard = require('../fight-or-flight');
 const FistsOfVillainyCard = require('../fists-of-villainy');
 const FistsOfVirtueCard = require('../fists-of-virtue');
@@ -64,6 +65,7 @@ module.exports = [
 	EnchantedFaceswapCard,
 	EnthrallCard,
 	EntranceCard,
+	FelineCompanionCard,
 	FightOrFlightCard,
 	FistsOfVillainyCard,
 	FistsOfVirtueCard,
