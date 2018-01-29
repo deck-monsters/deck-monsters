@@ -14,12 +14,11 @@ const STARTING_DEX_MODIFIER = 0;
 class HornGore extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		actions,
 		damageDice,
 		icon = '🐂',
 		...rest
 	} = {}) {
-		super({ actions, damageDice, icon, ...rest });
+		super({ damageDice, icon, ...rest });
 	}
 
 	get stats () {
@@ -29,15 +28,11 @@ ${super.stats}`;
 
 	getAttackModifier (target) {
 		if (this.weakAgainstCreatureTypes.includes(target.name)) {
-			return -2 + this.dexModifier;
+			return -2 + this.freedomThresholdModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
-			return this.dexModifier;
+			return this.freedomThresholdModifier;
 		}
 		return 0;
-	}
-
-	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
-		return target.dex;
 	}
 
 	resetImmobilizeStrength () {
@@ -138,11 +133,11 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 		const attackRoll = this.getAttackRoll(player, target);
 		const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
 
-		const failMessage = `${this.actions[0]} failed.`;
-		const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
+		const failMessage = `${this.actions.IMMOBILIZE} failed.`;
+		const outcome = attackSuccess.success ? `${this.actions.IMMOBILIZE} succeeded!` : failMessage;
 
 		this.emit('rolled', {
-			reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}.`,
+			reason: `to see if ${player.pronouns.he} ${this.actions.IMMOBILIZES} ${target.givenName}.`,
 			card: this,
 			roll: attackRoll,
 			who: player,
@@ -196,6 +191,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 }
 
 HornGore.cardType = 'Horn Gore';
+HornGore.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' };
 HornGore.permittedClassesAndTypes = [MINOTAUR];
 HornGore.probability = EPIC.probability;
 HornGore.description = 'You think those horns are just there to look pretty? Think again...';
@@ -207,9 +203,7 @@ HornGore.defaults = {
 	...ImmobilizeCard.defaults,
 	damageDice: '1d4',
 	doDamageOnImmobilize: false,
-	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	dexModifier: STARTING_DEX_MODIFIER,
-	actions: { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' }//TODO: This isn't getting passed through and used for horn-gore/forked-metal-rod immobilizations for some reason...
+	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER
 };
 
 HornGore.flavors = {

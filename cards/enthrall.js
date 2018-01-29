@@ -18,22 +18,12 @@ const {
 class EnthrallCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		actions,
-		dexModifier,
 		icon = '🎇',
 		...rest
 	} = {}) {
-		super({ actions, icon, ...rest });
-
-		this.setOptions({
-			dexModifier
-		});
+		super({ icon, ...rest });
 
 		this.mesmerizeCard = new MesmerizeCard();
-	}
-	get stats () { // eslint-disable-line class-methods-use-this
-		return `${super.stats}
-Chance to immobilize your opponents with your shocking beauty.`;
 	}
 
 	getFreedomThresholdBase (player) {
@@ -60,15 +50,12 @@ EnthrallCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EnthrallCard.uselessAgainstCreatureTypes = [JINN];
 EnthrallCard.probability = UNCOMMON.probability;
-EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions.IMMOBILIZES} everyone, except yourself.`;
+EnthrallCard.description = `You strut and preen. Your beauty ${EnthrallCard.actions.IMMOBILIZES} everyone, except yourself.`;
 EnthrallCard.level = 2;
 EnthrallCard.cost = REASONABLE.cost;
 
 EnthrallCard.defaults = {
-	...ImmobilizeCard.defaults,
-	dexModifier: 2,
-	freedomThresholdModifier: 1,
-	actions: EnthrallCard.actions
+	...ImmobilizeCard.defaults
 };
 
 EnthrallCard.flavors = {

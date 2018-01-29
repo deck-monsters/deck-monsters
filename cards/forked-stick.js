@@ -10,12 +10,11 @@ const { REASONABLE } = require('../helpers/costs');
 class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		actions,
 		dexModifier,
 		icon = '⑂',
 		...rest
 	} = {}) {
-		super({ actions, icon, ...rest });
+		super({ icon, ...rest });
 
 		this.setOptions({
 			dexModifier
@@ -31,11 +30,11 @@ class ForkedStickCard extends ImmobilizeCard {
 		const attackRoll = this.getAttackRoll(player, target);
 		const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
 
-		const failMessage = `${this.actions[0]} failed.`;
-		const outcome = attackSuccess.success ? `${this.actions[0]} succeeded!` : failMessage;
+		const failMessage = `${this.actions.IMMOBILIZE} failed.`;
+		const outcome = attackSuccess.success ? `${this.actions.IMMOBILIZE} succeeded!` : failMessage;
 
 		this.emit('rolled', {
-			reason: `to see if ${player.pronouns.he} ${this.actions[1]} ${target.givenName}.`,
+			reason: `to see if ${player.pronouns.he} ${this.actions.IMMOBILIZES} ${target.givenName}.`,
 			card: this,
 			roll: attackRoll,
 			who: player,
@@ -56,12 +55,15 @@ class ForkedStickCard extends ImmobilizeCard {
 	}
 
 	get stats () {
-		return `${super.stats}
-Attempt to pin your opponent between the branches of a forked stick.`;
+		return `Attempt to pin your opponent between the branches of a forked stick.
+
+If immobilized, then hit.
+${super.stats}`;
 	}
 }
 
 ForkedStickCard.cardType = 'Forked Stick';
+ForkedStickCard.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' };
 ForkedStickCard.permittedClassesAndTypes = [BARD, BARBARIAN, FIGHTER];
 ForkedStickCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 ForkedStickCard.weakAgainstCreatureTypes = [JINN, MINOTAUR];
@@ -71,8 +73,7 @@ ForkedStickCard.cost = REASONABLE.cost;
 ForkedStickCard.level = 0;
 
 ForkedStickCard.defaults = {
-	...ImmobilizeCard.defaults,
-	actions: { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' }
+	...ImmobilizeCard.defaults
 };
 
 ForkedStickCard.flavors = {

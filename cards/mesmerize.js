@@ -15,20 +15,10 @@ const {
 class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		actions,
-		dexModifier,
 		icon = '🌠',
 		...rest
 	} = {}) {
-		super({ actions, icon, ...rest });
-
-		this.setOptions({
-			dexModifier
-		});
-	}
-	get stats () {
-		return `${super.stats}
-Chance to immobilize everyone with your shocking beauty.`;
+		super({ icon, ...rest });
 	}
 
 	getFreedomThresholdBase () { // eslint-disable-line class-methods-use-this
@@ -56,14 +46,11 @@ MesmerizeCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 MesmerizeCard.weakAgainstCreatureTypes = [JINN, MINOTAUR, WEEPING_ANGEL];
 MesmerizeCard.uselessAgainstCreatureTypes = [];
 MesmerizeCard.probability = COMMON.probability;
-MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions.IMMOBILIZES} everyone, including yourself.`;
+MesmerizeCard.description = `You strut and preen. Your beauty ${MesmerizeCard.actions.IMMOBILIZES} everyone, including yourself.`;
 MesmerizeCard.cost = VERY_CHEAP.cost;
 
 MesmerizeCard.defaults = {
-	...ImmobilizeCard.defaults,
-	dexModifier: 2,
-	freedomThresholdModifier: 0,
-	actions: MesmerizeCard.actions
+	...ImmobilizeCard.defaults
 };
 
 MesmerizeCard.flavors = {

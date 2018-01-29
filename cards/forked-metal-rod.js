@@ -15,20 +15,19 @@ const { PRICEY } = require('../helpers/costs');
 class ForkedMetalRodCard extends HornGoreCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		actions,
 		icon = '⑂⑂',
 		...rest
 	} = {}) {
-		super({ actions, icon, ...rest });
+		super({ icon, ...rest });
 
 		this.immobilizeCard = new ImmobilizeCard({ strongAgainstCreatureTypes: this.strongAgainstCreatureTypes });
 	}
 
 	get stats () { // eslint-disable-line class-methods-use-this
-		return `${this.immobilizeCard.stats}
-Attempt to stab your opponent with strong sharp prongs.
+		return `Attempt to stab your opponent with strong sharp prongs.
 
-Even if you miss, there's a chance you'll pin them...`;
+1d20 vs ${this.targetAttr} to pin.
+${this.immobilizeCard.stats}`;
 	}
 
 	resetImmobilizeStrength () {
@@ -73,8 +72,7 @@ ForkedMetalRodCard.notForSale = true;
 
 ForkedMetalRodCard.defaults = {
 	...HornGoreCard.defaults,
-	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	dexModifier: STARTING_DEX_MODIFIER
+	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER
 };
 
 ForkedMetalRodCard.flavors = {

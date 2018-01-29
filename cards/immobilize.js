@@ -12,8 +12,6 @@ const { FREE } = require('../helpers/costs');
 class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		actions,
-		dexModifier,
 		doDamageOnImmobilize,
 		icon = '😵',
 		freedomSavingThrowTargetAttr,
@@ -29,8 +27,6 @@ class ImmobilizeCard extends HitCard {
 		super({ icon, ...rest });
 
 		this.setOptions({
-			actions,
-			dexModifier,
 			doDamageOnImmobilize,
 			freedomSavingThrowTargetAttr,
 			freedomThresholdModifier,
@@ -44,7 +40,7 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get actions () {
-		return this.options.actions;
+		return this.constructor.actions;
 	}
 
 	get doDamageOnImmobilize () {
@@ -85,25 +81,15 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
-	get dexModifier () {
-		return this.options.dexModifier;
-	}
-
-	set dexModifier (dexModifier) {
-		this.setOptions({
-			dexModifier
-		});
-	}
-
 	get strModifier () {
 		return this.options.strModifier;
 	}
 
 	getAttackModifier (target) {
 		if (this.weakAgainstCreatureTypes.includes(target.name)) {
-			return -this.dexModifier;
+			return -this.freedomThresholdModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
-			return this.dexModifier;
+			return this.freedomThresholdModifier;
 		}
 		return 0;
 	}
@@ -125,7 +111,14 @@ class ImmobilizeCard extends HitCard {
 			strModifiers += `\ninneffective against ${uselessAgainst}`;
 		}
 
-		return `${super.stats}${strModifiers}`;
+		const ongoingDamageText = this.ongoingDamage ? `
+${this.ongoingDamage} each turn immoblized.` : '';
+
+
+		return `${super.stats}
+${strModifiers}
+Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+${ongoingDamageText}`;
 	}
 
 	get freedomThresholdModifier () {
@@ -153,9 +146,9 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	freedomThresholdNarrative (player, target) {
-		const thresholdBonusText = this.freedomThresholdModifier ? signedNumber(this.freedomThresholdModifier) : '';
-		const targetName = player === target ? `${player.pronouns.his} own` : `${player.givenName}'s`;
-		return `1d20 vs ${targetName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)}${thresholdBonusText}) -(immobilized turns x 3)`;
+		const thresholdBonusText = this.getAttackModifier(target) ? `${signedNumber(this.getAttackModifier(target))}` : '';
+		const playerName = player === target ? `${player.pronouns.his} own` : `${player.givenName}'s`;
+		return `1d20 vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
 	}
 
 	emitImmobilizeNarrative (player, target) {
@@ -164,7 +157,8 @@ class ImmobilizeCard extends HitCard {
 ${player.givenName} ${this.icon} ${this.actions.IMMOBILIZES} ${targetName}.
 at the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
 		if (this.ongoingDamage > 0) {
-			immobilizeNarrative += `takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}`;
+			immobilizeNarrative += `
+${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}`;
 		}
 		this.emit('narration', {
 			narration: immobilizeNarrative
@@ -177,7 +171,7 @@ at the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll $
 			fatigue = (target.encounterModifiers.immobilizedTurns * 3);
 		}
 
-		return (this.getFreedomThresholdBase(player) + this.freedomThresholdModifier) - fatigue;
+		return (this.getFreedomThresholdBase(player) + this.getAttackModifier(target)) - fatigue;
 	}
 
 	getAttackRoll (player, target) {
@@ -220,6 +214,9 @@ at the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll $
 
 					if (strokeOfLuck) {
 						commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
+					} else if (curseOfLoki) {
+						target.encounterModifiers.immobilizedTurns = 0;
+						commentary = `${target.givenName} rolled a natural 1. ${player.givenName} improves ${player.pronouns.his} cruel hold on ${target.pronouns.him}`;
 					} else if (tie) {
 						commentary = 'Miss... Tie goes to the defender.';
 					}
@@ -303,6 +300,7 @@ at the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll $
 }
 
 ImmobilizeCard.cardType = 'Immobilize';
+ImmobilizeCard.actions = { IMMOBILIZE: 'immobilize', IMMOBILIZES: 'immobilizes', IMMOBILIZED: 'immobilized' };
 ImmobilizeCard.strongAgainstCreatureTypes = [GLADIATOR];// Very effective against these creatures
 ImmobilizeCard.weakAgainstCreatureTypes = [MINOTAUR];// Less effective against (but will still hit) these creatures
 ImmobilizeCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];// Immune to mobilization, will hit instead
@@ -313,14 +311,12 @@ ImmobilizeCard.cost = FREE.cost;
 
 ImmobilizeCard.defaults = {
 	...HitCard.defaults,
-	dexModifier: 2,
 	doDamageOnImmobilize: false,
 	freedomSavingThrowTargetAttr: 'ac',
 	freedomThresholdModifier: 2,
 	ongoingDamage: 0,
 	strModifier: 0,
-	targetAttr: 'ac',
-	actions: { IMMOBILIZE: 'immobilize', IMMOBILIZES: 'immobilizes', IMMOBILIZED: 'immobilized' }
+	targetAttr: 'ac'
 };
 
 ImmobilizeCard.flavors = {

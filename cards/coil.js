@@ -10,11 +10,10 @@ const { EXPENSIVE } = require('../helpers/costs');
 class CoilCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		actions,
 		icon = '➰',
 		...rest
 	} = {}) {
-		super({ actions, icon, ...rest });
+		super({ icon, ...rest });
 	}
 
 	getAttackRoll (player, target) {
@@ -22,16 +21,14 @@ class CoilCard extends ImmobilizeCard {
 	}
 
 	get stats () {
-		const thresholdBonus = (this.freedomThresholdModifier > 0) ? ` + ${this.freedomThresholdModifier}` : '';
-		return `${super.stats}
-Chance to immobilize opponent by coiling your serpentine body around them and squeezing.
+		return `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
-${this.ongoingDamage} ongoing damage.
-Opponent breaks free by rolling 1d20 vs AC${thresholdBonus} - (turns immobilized * 3)`;
+${super.stats}`;
 	}
 }
 
 CoilCard.cardType = 'Coil';
+CoilCard.actions = { IMMOBILIZE: 'coil', IMMOBILIZES: 'coils', IMMOBILIZED: 'coiled' };
 CoilCard.permittedClassesAndTypes = [BASILISK];
 CoilCard.strongAgainstCreatureTypes = [GLADIATOR, MINOTAUR];
 CoilCard.weakAgainstCreatureTypes = [BASILISK];
@@ -44,9 +41,7 @@ CoilCard.notForSale = true;
 CoilCard.defaults = {
 	...ImmobilizeCard.defaults,
 	doDamageOnImmobilize: true,
-	ongoingDamage: 1,
-	freedomThresholdModifier: 0,
-	actions: { IMMOBILIZE: 'coil', IMMOBILIZES: 'coils', IMMOBILIZED: 'coiled' }
+	ongoingDamage: 1
 };
 
 CoilCard.flavors = {
