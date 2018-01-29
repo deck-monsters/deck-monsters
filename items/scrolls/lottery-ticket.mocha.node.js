@@ -45,7 +45,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 		expect(lotteryTicket.expired).to.be.false;
 		expect(lotteryTicket.stats).to.equal('Usable 1 time.');
 		expect(lotteryTicket.icon).to.equal('💰');
-		expect(lotteryTicket.description).to.equal('Play the odds for a chance to win up to 3162 coins.');
+		expect(lotteryTicket.description).to.equal('Play the odds for a chance to win up to 10000 coins.');
 	});
 
 	it('can give you nothing', () => {
@@ -76,7 +76,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		character.coins = 50;
 
-		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(82));
+		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(90));
 	});
 
 	it('can make you win on 3 matches', () => {
@@ -89,7 +89,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		character.coins = 50;
 
-		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(366));
+		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(681));
 	});
 
 	it('can make you win big on all 5 matches', () => {
@@ -99,6 +99,6 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 
 		character.coins = 50;
 
-		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(3212));
+		return lotteryTicket.use({ character }).then(() => expect(character.coins).to.equal(10050));
 	});
 });
