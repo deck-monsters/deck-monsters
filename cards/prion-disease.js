@@ -6,6 +6,7 @@ const random = require('lodash.random');
 
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
+const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
 
 class PrionDiseaseCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -43,7 +44,13 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return activeContestants.map(({ monster }) => monster);
+		return getTarget({
+			contestants: activeContestants,
+			ignoreSelf: false,
+			playerMonster: player,
+			strategy: TARGET_ALL_CONTESTANTS,
+			team: false
+		}).map(({ monster }) => monster);
 	}
 
 	effect (player, target) {
