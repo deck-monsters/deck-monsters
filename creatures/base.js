@@ -84,8 +84,22 @@ class BaseCreature extends BaseClass {
 
 	get stats () {
 		return `Type: ${this.creatureType}
-Class: ${this.class}
+Class: ${this.class}${
+	!this.team ? '' :
+		`
+Team: ${this.team}`
+}
 Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
+	}
+
+	get team () {
+		return this.options.team || undefined;
+	}
+
+	set team (team) {
+		this.setOptions({
+			team
+		});
 	}
 
 	get targetingStrategy () {
