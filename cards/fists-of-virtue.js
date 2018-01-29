@@ -2,6 +2,7 @@ const HitCard = require('./hit');
 
 const { COMMON } = require('../helpers/probabilities');
 const { CHEAP } = require('../helpers/costs');
+const { TARGET_HIGHEST_HP_PLAYER, getTarget } = require('../helpers/targeting-strategies');
 
 class FistsOfVirtueCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -18,13 +19,11 @@ Strikes opponent with highest current hp.`;
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return [activeContestants.reduce((potentialTarget, { monster }) => {
-			if (monster !== player && monster.hp > potentialTarget.hp) {
-				return monster;
-			}
-
-			return potentialTarget;
-		}, proposedTarget)];
+		return [getTarget({
+			contestants: activeContestants,
+			playerMonster: player,
+			strategy: TARGET_HIGHEST_HP_PLAYER
+		}).monster];
 	}
 }
 

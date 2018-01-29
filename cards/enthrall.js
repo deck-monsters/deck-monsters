@@ -6,6 +6,7 @@ const MesmerizeCard = require('./mesmerize');
 
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
+const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
 
 const {
 	BASILISK,
@@ -50,7 +51,11 @@ Chance to immobilize your opponents with your shocking beauty.`;
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
+		return getTarget({
+			contestants: activeContestants,
+			playerMonster: player,
+			strategy: TARGET_ALL_CONTESTANTS
+		}).map(({ monster }) => monster);
 	}
 }
 

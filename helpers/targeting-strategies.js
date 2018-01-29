@@ -42,7 +42,17 @@ function getStrategyDescription (strategy) {
 	return descriptionMap[strategy] || strategy;
 }
 
-function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, strategy = TARGET_NEXT_PLAYER, team }) {
+function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, playerMonster, strategy = TARGET_NEXT_PLAYER, team }) {
+	if (!playerContestant && playerMonster) {
+		const foundPlayerContestant = contestants.find(({ monster }) => monster === playerMonster);
+
+		if (foundPlayerContestant) return getTarget({ contestants, ignoreSelf, playerContestant: foundPlayerContestant, strategy, team: playerContestant.character.team });
+	}
+
+	if (team === undefined && playerContestant.character.team) {
+		return getTarget({ contestants, ignoreSelf, playerContestant, strategy, team: playerContestant.character.team });
+	}
+
 	switch (strategy) {
 		case TARGET_ALL_CONTESTANTS: {
 			const filteredContestants = contestants.filter((contestant) => {

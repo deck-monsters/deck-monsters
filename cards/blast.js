@@ -5,6 +5,7 @@ const BaseCard = require('./base');
 const { CLERIC } = require('../helpers/classes');
 const { ABUNDANT } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
+const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
 
 class BlastCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -29,7 +30,11 @@ class BlastCard extends BaseCard {
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
+		return getTarget({
+			contestants: activeContestants,
+			playerMonster: player,
+			strategy: TARGET_ALL_CONTESTANTS
+		}).map(({ monster }) => monster);
 	}
 
 	effect (player, target) {
