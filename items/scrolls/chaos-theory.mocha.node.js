@@ -49,6 +49,11 @@ describe('./items/scrolls/chaos-theory.js', () => {
 
 		expect(monster.targetingStrategy).to.equal(undefined);
 
-		return chaosTheory.use({ channel: channelStub, character, monster }).then(() => expect(monster.targetingStrategy).to.equal(targetingStrategies.TARGET_RANDOM_PLAYER));
+		return chaosTheory.use({ channel: channelStub, character, monster }).then(() => {
+			expect(monster.targetingStrategy).to.equal(targetingStrategies.TARGET_RANDOM_PLAYER);
+			expect(chaosTheory.used).to.equal(1);
+			expect(chaosTheory.expired).to.be.false;
+			return expect(chaosTheory.stats).to.equal('Usable 2 more times (of 3 total).');
+		});
 	});
 });
