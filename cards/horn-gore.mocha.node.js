@@ -47,10 +47,9 @@ describe('./cards/horn-gore.js', () => {
 If either horn hits, chance to pin: 1d20 - 6 vs DEX.
 
 Hit: 1d20 vs AC / Damage: 1d4
-
-
  -4 against Minotaur, Gladiator
  -6 against Basilisk, Jinn, Weeping Angel
+
 Opponent breaks free by rolling 1d20 vs DEX - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.

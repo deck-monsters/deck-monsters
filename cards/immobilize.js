@@ -89,20 +89,20 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get stats () {
-		let strModifiers = '\n';
+		let strModifiers = '';
 		if (this.strongAgainstCreatureTypes.length && this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] })) {
 			const strongAgainst = this.strongAgainstCreatureTypes.join(', ');
-			strModifiers += `\n${signedNumber(this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}`;
+			strModifiers += `${signedNumber(this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}\n`;
 		}
 
 		if (this.weakAgainstCreatureTypes.length && this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] })) {
 			const weakAgainst = this.weakAgainstCreatureTypes.join(', ');
-			strModifiers += `\n${signedNumber(this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}`;
+			strModifiers += `${signedNumber(this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}\n`;
 		}
 
 		if (this.uselessAgainstCreatureTypes.length) {
 			const uselessAgainst = this.uselessAgainstCreatureTypes.join(', ');
-			strModifiers += `\ninneffective against ${uselessAgainst}`;
+			strModifiers += `inneffective against ${uselessAgainst}\n`;
 		}
 
 		const ongoingDamageText = this.ongoingDamage ? `

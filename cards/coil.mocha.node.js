@@ -39,10 +39,9 @@ describe('./cards/coil.js', () => {
 		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
 ${hit.stats}
-
-
  +2 against Gladiator, Minotaur
  -2 against Basilisk, Jinn
+
 Opponent breaks free by rolling 1d20 vs DEX - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.

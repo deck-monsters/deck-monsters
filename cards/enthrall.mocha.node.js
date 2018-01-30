@@ -89,11 +89,10 @@ describe('./cards/enthrall.js', () => {
 		const hit = new Hit({ targetProp: enthrall.targetProp });
 
 		const stats = `${hit.stats}
-
-
  +2 against Basilisk, Gladiator
  -2 against Minotaur, Weeping Angel
 inneffective against Jinn
+
 Opponent breaks free by rolling 1d20 vs INT - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
