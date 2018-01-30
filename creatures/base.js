@@ -505,30 +505,33 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	useItem ({ channel, channelName, character = this, item, monster }) {
-		let foundItem;
+		return Promise.resolve()
+			.then(() => {
+				let foundItem;
 
-		if (monster) {
-			foundItem = monster.items.find(potentialItem => isMatchingItem(potentialItem, item));
-		}
+				if (monster) {
+					foundItem = monster.items.find(potentialItem => isMatchingItem(potentialItem, item));
+				}
 
-		if (!foundItem) {
-			// Monsters in an encounter can only use items they are carrying
-			if (monster && monster.inEncounter) {
+				if (!foundItem) {
+					// Monsters in an encounter can only use items they are carrying
+					if (monster && monster.inEncounter) {
+						return Promise.reject(channel({
+							announce: `${monster.givenName} doesn't seem to be holding that item.`
+						}));
+					}
+
+					foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
+				}
+
+				if (foundItem) {
+					return foundItem.use({ channel, channelName, character, monster });
+				}
+
 				return Promise.reject(channel({
-					announce: `${monster.givenName} doesn't seem to be holding that item.`
+					announce: `${character.givenName} doesn't seem to be holding that item.`
 				}));
-			}
-
-			foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
-		}
-
-		if (foundItem) {
-			return foundItem.use({ channel, channelName, character, monster });
-		}
-
-		return Promise.reject(channel({
-			announce: `${character.givenName} doesn't seem to be holding that item.`
-		}));
+			});
 	}
 
 	lookAtItems (channel, items = this.items) {
