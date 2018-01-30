@@ -1,21 +1,40 @@
 const { expect, sinon } = require('../shared/test-setup');
 
+const Enthrall = require('./enthrall');
 const Hit = require('./hit');
-const WeepingAngel = require('../monsters/weeping-angel');
-const Minotaur = require('../monsters/minotaur');
+
 const Basilisk = require('../monsters/basilisk');
 const Gladiator = require('../monsters/gladiator');
-const Enthrall = require('./enthrall');
+const Jinn = require('../monsters/jinn');
+const Minotaur = require('../monsters/minotaur');
+const WeepingAngel = require('../monsters/weeping-angel');
+
 const pause = require('../helpers/pause');
 
 
 const {
-	GLADIATOR, JINN, MINOTAUR, BASILISK, WEEPING_ANGEL
+	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
 describe('./cards/enthrall.js', () => {
-	let channelStub;
 	let pauseStub;
+	let channelStub;
+
+	let angel;
+	let basilisk;
+	let gladiator;
+	let jinn;
+	let minotaur;
+	let player;
+
+	let ring;
+
+	let enthrall;
+	let enthrallProto;
+	let immobilizeProto;
+	let hitProto;
+	let baseProto;
+	let checkSuccessStub;
 
 	before(() => {
 		channelStub = sinon.stub();
@@ -25,11 +44,41 @@ describe('./cards/enthrall.js', () => {
 	beforeEach(() => {
 		channelStub.resolves();
 		pauseStub.callsArg(0);
+
+		angel = new WeepingAngel();
+		basilisk = new Basilisk();
+		gladiator = new Gladiator();
+		jinn = new Jinn();
+		minotaur = new Minotaur();
+		player = new WeepingAngel({ intVariance: 0 });
+
+		ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: angel },
+				{ monster: basilisk },
+				{ monster: minotaur },
+				{ monster: gladiator },
+				{ monster: jinn }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		enthrall = new Enthrall();
+		enthrallProto = Object.getPrototypeOf(enthrall);
+		immobilizeProto = Object.getPrototypeOf(enthrallProto);
+		hitProto = Object.getPrototypeOf(immobilizeProto);
+		baseProto = Object.getPrototypeOf(hitProto);
+		checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 	});
 
 	afterEach(() => {
 		channelStub.reset();
 		pauseStub.reset();
+		checkSuccessStub.restore();
 	});
 
 	after(() => {
@@ -37,7 +86,6 @@ describe('./cards/enthrall.js', () => {
 	});
 
 	it('can be instantiated with defaults', () => {
-		const enthrall = new Enthrall();
 		const hit = new Hit();
 
 		const stats = `${hit.stats}
@@ -53,67 +101,72 @@ Turns immobilized resets on curse of loki.
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);
 		expect(enthrall.freedomThresholdModifier).to.equal(2);
+		expect(enthrall.freedomSavingThrowTargetAttr).to.equal('int');
 		expect(enthrall.doDamageOnImmobilize).to.be.false;
 		expect(enthrall.stats).to.equal(stats);
 		expect(enthrall.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
 		expect(enthrall.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
-		expect(enthrall.permittedClassesAndTypes).to.deep.equal([JINN, WEEPING_ANGEL]);
+		expect(enthrall.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
 		expect(enthrall.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
 	});
 
 	it('can be instantiated with options', () => {
-		const enthrall = new Enthrall({
+		const customEnthrall = new Enthrall({
 			freedomThresholdModifier: 2, doDamageOnImmobilize: true
 		});
 
-		expect(enthrall).to.be.an.instanceof(Enthrall);
-		expect(enthrall.freedomThresholdModifier).to.equal(2);
-		expect(enthrall.doDamageOnImmobilize).to.be.true;
+		expect(customEnthrall).to.be.an.instanceof(Enthrall);
+		expect(customEnthrall.freedomThresholdModifier).to.equal(2);
+		expect(customEnthrall.doDamageOnImmobilize).to.be.true;
+	});
+
+	it('calculates attackModifier correctly', () => {
+		expect(enthrall.getAttackModifier(angel)).to.equal(-2);
+		expect(enthrall.getAttackModifier(basilisk)).to.equal(2);
+		expect(enthrall.getAttackModifier(gladiator)).to.equal(2);
+		expect(enthrall.getAttackModifier(jinn)).to.equal(0);
+		expect(enthrall.getAttackModifier(minotaur)).to.equal(-2);
 	});
 
 	it('calculates freedom threshold correctly', () => {
-		const enthrall = new Enthrall();
-		const player = new WeepingAngel({ name: 'player' });
-		const target = new WeepingAngel({ name: 'target' });
+		expect(enthrall.getFreedomThreshold(player, angel)).to.equal(5);
+		expect(enthrall.getFreedomThreshold(player, basilisk)).to.equal(9);
+		expect(enthrall.getFreedomThreshold(player, gladiator)).to.equal(9);
+		expect(enthrall.getFreedomThreshold(player, jinn)).to.equal(7);
+		expect(enthrall.getFreedomThreshold(player, minotaur)).to.equal(5);
 
-		expect(enthrall.getFreedomThreshold(player, target)).to.equal(8 + enthrall.freedomThresholdModifier);
+		angel.encounterModifiers.immobilizedTurns = 2;
+		basilisk.encounterModifiers.immobilizedTurns = 2;
+		minotaur.encounterModifiers.immobilizedTurns = 2;
+		gladiator.encounterModifiers.immobilizedTurns = 2;
+		jinn.encounterModifiers.immobilizedTurns = 2;
 
-		target.encounterModifiers.immobilizedTurns = 2;
-
-		expect(enthrall.getFreedomThreshold(player, target)).to.equal(4 + enthrall.freedomThresholdModifier);
+		expect(enthrall.getFreedomThreshold(player, angel)).to.equal(1);
+		expect(enthrall.getFreedomThreshold(player, basilisk)).to.equal(3);
+		expect(enthrall.getFreedomThreshold(player, gladiator)).to.equal(3);
+		expect(enthrall.getFreedomThreshold(player, jinn)).to.equal(1);
+		expect(enthrall.getFreedomThreshold(player, minotaur)).to.equal(1);
 	});
 
-	it('immobilizes others on success', () => {
-		const enthrall = new Enthrall();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(enthrall)), 'checkSuccess');
+	it('immobilizes others on play', () => enthrall
+		.play(player, basilisk, ring, ring.contestants)
+		.then(() => {
+			expect(player.encounterEffects.length).to.equal(0);
+			expect(angel.encounterEffects.length).to.equal(1);
+			expect(basilisk.encounterEffects.length).to.equal(1);
+			expect(gladiator.encounterEffects.length).to.equal(1);
+			expect(jinn.encounterEffects.length).to.equal(0);
+			return expect(minotaur.encounterEffects.length).to.equal(1);
+		}));
 
-		const player = new WeepingAngel({ name: 'player' });
-		const target1 = new Basilisk({ name: 'target1' });
-		const target2 = new Minotaur({ name: 'target2' });
-		const target3 = new Gladiator({ name: 'target3' });
-		const ring = {
-			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
-			],
-			channelManager: {
-				sendMessages: () => Promise.resolve()
-			}
-		};
-
-		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+	it('hits immune players on play', () => {
+		const jinnBeforeHP = jinn.hp;
 
 		return enthrall
-			.play(player, target1, ring, ring.contestants)
+			.play(player, jinn, ring, ring.contestants)
 			.then(() => {
-				checkSuccessStub.restore();
-
-				expect(player.encounterEffects.length).to.equal(0);
-				expect(target1.encounterEffects.length).to.equal(1);
-				expect(target2.encounterEffects.length).to.equal(1);
-				return expect(target3.encounterEffects.length).to.equal(1);
+				expect(jinn.hp).to.be.below(jinnBeforeHP);
+				return expect(jinn.encounterEffects.length).to.equal(0);
 			});
 	});
 });

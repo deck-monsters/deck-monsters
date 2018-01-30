@@ -18,16 +18,13 @@ const {
 class EnthrallCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		freedomSavingThrowTargetAttr,
 		icon = '🎇',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ freedomSavingThrowTargetAttr, icon, ...rest });
 
 		this.mesmerizeCard = new MesmerizeCard();
-	}
-
-	getFreedomThresholdBase (player) {
-		return this.mesmerizeCard.getFreedomThresholdBase(player);
 	}
 
 	getAttackRoll (player, target) {
@@ -45,7 +42,7 @@ class EnthrallCard extends ImmobilizeCard {
 
 EnthrallCard.cardType = 'Enthrall';
 EnthrallCard.actions = { IMMOBILIZE: 'enthrall', IMMOBILIZES: 'enthralls', IMMOBILIZED: 'enthralled' };
-EnthrallCard.permittedClassesAndTypes = [JINN, WEEPING_ANGEL];
+EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 EnthrallCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EnthrallCard.uselessAgainstCreatureTypes = [JINN];
@@ -55,7 +52,8 @@ EnthrallCard.level = 2;
 EnthrallCard.cost = REASONABLE.cost;
 
 EnthrallCard.defaults = {
-	...ImmobilizeCard.defaults
+	...ImmobilizeCard.defaults,
+	freedomSavingThrowTargetAttr: 'int'
 };
 
 EnthrallCard.flavors = {

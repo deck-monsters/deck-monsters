@@ -15,17 +15,19 @@ const {
 } = require('../helpers/creature-types');
 
 describe('./cards/mesmerize.js', () => {
+	let pauseStub;
+	let channelStub;
+
 	let angel;
 	let basilisk;
-	let channelStub;
 	let gladiator;
 	let jinn;
-	let mesmerize;
 	let minotaur;
-	let pauseStub;
 	let player;
+
 	let ring;
 
+	let mesmerize;
 	let mesmerizeProto;
 	let immobilizeProto;
 	let hitProto;
@@ -88,7 +90,8 @@ describe('./cards/mesmerize.js', () => {
 
 
  +2 against Basilisk, Gladiator
- -2 against Jinn, Minotaur, Weeping Angel
+ -2 against Minotaur, Weeping Angel
+inneffective against Jinn
 Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
@@ -100,8 +103,9 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.doDamageOnImmobilize).to.be.false;
 		expect(mesmerize.stats).to.equal(stats);
 		expect(mesmerize.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
-		expect(mesmerize.weakAgainstCreatureTypes).to.deep.equal([JINN, MINOTAUR, WEEPING_ANGEL]);
+		expect(mesmerize.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
 		expect(mesmerize.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
+		expect(mesmerize.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
 	});
 
 	it('can be instantiated with options', () => {
@@ -118,7 +122,7 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.getAttackModifier(angel)).to.equal(-2);
 		expect(mesmerize.getAttackModifier(basilisk)).to.equal(2);
 		expect(mesmerize.getAttackModifier(gladiator)).to.equal(2);
-		expect(mesmerize.getAttackModifier(jinn)).to.equal(-2);
+		expect(mesmerize.getAttackModifier(jinn)).to.equal(0);
 		expect(mesmerize.getAttackModifier(minotaur)).to.equal(-2);
 	});
 
@@ -126,7 +130,7 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.getFreedomThreshold(player, angel)).to.equal(5);
 		expect(mesmerize.getFreedomThreshold(player, basilisk)).to.equal(9);
 		expect(mesmerize.getFreedomThreshold(player, gladiator)).to.equal(9);
-		expect(mesmerize.getFreedomThreshold(player, jinn)).to.equal(5);
+		expect(mesmerize.getFreedomThreshold(player, jinn)).to.equal(7);
 		expect(mesmerize.getFreedomThreshold(player, minotaur)).to.equal(5);
 
 		angel.encounterModifiers.immobilizedTurns = 2;
@@ -149,7 +153,7 @@ Turns immobilized resets on curse of loki.
 			expect(angel.encounterEffects.length).to.equal(1);
 			expect(basilisk.encounterEffects.length).to.equal(1);
 			expect(gladiator.encounterEffects.length).to.equal(1);
-			expect(jinn.encounterEffects.length).to.equal(1);
+			expect(jinn.encounterEffects.length).to.equal(0);
 			return expect(minotaur.encounterEffects.length).to.equal(1);
 		}));
 
@@ -173,6 +177,17 @@ Turns immobilized resets on curse of loki.
 					expect(jinn.hp).to.be.below(jinnBeforeHP);
 					return expect(minotaur.hp).to.be.below(minotaurBeforeHP);
 				}));
+	});
+
+	it('hits immune players on play', () => {
+		const jinnBeforeHP = jinn.hp;
+
+		return mesmerize
+			.play(player, jinn, ring, ring.contestants)
+			.then(() => {
+				expect(jinn.hp).to.be.below(jinnBeforeHP);
+				return expect(jinn.encounterEffects.length).to.equal(0);
+			});
 	});
 
 	it('harms immobilizer on breaking free with natural 20', () => {
