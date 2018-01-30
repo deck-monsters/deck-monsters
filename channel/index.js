@@ -66,12 +66,14 @@ class ChannelManager extends BaseClass {
 			})
 			.then(messagesForChannel => messagesForChannel.reduce((messages, item) => {
 				let message = messages[messages.length - 1];
+				const announceLength = item.announce ? item.announce.length : 0;
 
-				if (!message || (message.channelName !== item.channelName)) {
+				if (!message || message.channelName !== item.channelName || (message.length + announceLength) > 3000) {
 					message = {
 						announcements: [],
 						channelName: item.channelName,
-						events: []
+						events: [],
+						length: 0
 					};
 
 					messages.push(message);
@@ -79,6 +81,7 @@ class ChannelManager extends BaseClass {
 
 				if (item.announce) message.announcements.push(item.announce);
 				if (item.event) message.events.push(item.event);
+				message.length += announceLength;
 
 				return messages;
 			}, []))

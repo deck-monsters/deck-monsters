@@ -554,7 +554,8 @@ Battles won: ${this.battles.wins}`;
 `, ''),
 				channel,
 				channelName
-			}));
+			}))
+			.then(() => channelManager.sendMessages());
 	}
 
 	leaveCombat (activeContestants) {
