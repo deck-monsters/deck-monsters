@@ -262,7 +262,7 @@ Which monster would you like to ${action}?`,
 				if (monster.items.length < 1) return Promise.resolve();
 
 				return Promise.resolve(channelManager.queueMessage({
-					announce: `${monster.givenName}'s Items:'`,
+					announce: `${monster.givenName}'s Items:`,
 					channel,
 					channelName
 				}))
