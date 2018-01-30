@@ -7,9 +7,9 @@ const ForkedMetalRod = require('./forked-metal-rod');
 const pause = require('../helpers/pause');
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../helpers/creature-types');
 
-describe('./cards/forked-metal-rod.js', () => {
+describe.only('./cards/forked-metal-rod.js', () => {
 	let channelStub;
 	let pauseStub;
 
@@ -63,6 +63,7 @@ Turns immobilized resets on curse of loki.
 		expect(forkedMetalRod.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
 		expect(forkedMetalRod.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR]);
 		expect(forkedMetalRod.permittedClassesAndTypes).to.deep.equal([FIGHTER, BARBARIAN]);
+		expect(forkedMetalRod.uselessAgainstCreatureTypes).to.deep.equal([JINN, WEEPING_ANGEL]);
 	});
 
 	it('can be instantiated with options', () => {
