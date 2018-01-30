@@ -1,4 +1,5 @@
 const moment = require('moment');
+const Promise = require('bluebird');
 const some = require('lodash.some');
 
 const BaseCharacter = require('./base');
@@ -250,6 +251,23 @@ Which monster would you like to ${action}?`,
 		}
 
 		return super.useItem({ channel, channelName, item, monster });
+	}
+
+	lookAtItems (channel) {
+		const { channelManager, channelName } = channel;
+
+		return Promise.resolve()
+			.then(() => this.items.length && super.lookAtItems(channel))
+			.then(() => Promise.each(this.monsters, (monster) => {
+				if (monster.items.length < 1) return Promise.resolve();
+
+				return Promise.resolve(channelManager.queueMessage({
+					announce: `${monster.givenName}'s Items:'`,
+					channel,
+					channelName
+				}))
+					.then(() => super.lookAtItems(channel, monster.items));
+			}));
 	}
 
 	callMonsterOutOfTheRing ({

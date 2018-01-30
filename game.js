@@ -258,6 +258,10 @@ class Game extends BaseClass {
 					return game.lookAtItem(channel, itemName)
 						.catch(err => log(err));
 				},
+				lookAtItems () {
+					return character.lookAtItems(channel)
+						.catch(err => log(err));
+				},
 				lookAtMonster ({ monsterName } = {}) {
 					return game.lookAtMonster(channel, monsterName, character)
 						.catch(err => log(err));

@@ -1,4 +1,6 @@
+const Promise = require('bluebird');
 const random = require('lodash.random');
+const reduce = require('lodash.reduce');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
@@ -6,8 +8,11 @@ const BaseClass = require('../shared/baseClass');
 
 const { describeLevels, getLevel } = require('../helpers/levels');
 const { getAttributeChoices } = require('../helpers/choices');
+const { getItemCounts } = require('../items/helpers/counts');
+const { itemCard } = require('../helpers/card');
 const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
+const getUniqueItems = require('../items/helpers/unique-items');
 const isMatchingItem = require('../items/helpers/is-matching');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
@@ -524,6 +529,29 @@ Battles won: ${this.battles.wins}`;
 		return Promise.reject(channel({
 			announce: `${character.givenName} doesn't seem to be holding that item.`
 		}));
+	}
+
+	lookAtItems (channel, items = this.items) {
+		if (items.length < 1) {
+			return Promise.reject();
+		}
+
+		const sortedItems = sortItemsAlphabetically(items);
+
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => Promise.each(getUniqueItems(sortedItems), item => channelManager.queueMessage({
+				announce: itemCard(item),
+				channel,
+				channelName
+			})))
+			.then(() => channelManager.queueMessage({
+				announce: reduce(getItemCounts(sortedItems), (counts, count, card) =>
+					`${counts}${card} (${count})
+`, ''),
+				channel,
+				channelName
+			}));
 	}
 
 	leaveCombat (activeContestants) {
