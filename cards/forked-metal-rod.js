@@ -8,7 +8,7 @@ const STARTING_FREEDOM_THRESHOLD_MODIFIER = 3;
 const STARTING_DEX_MODIFIER = 3;
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../helpers/creature-types');
 const { VERY_RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 
@@ -71,7 +71,8 @@ ${this.immobilizeCard.stats}`;
 ForkedMetalRodCard.cardType = 'Forked Metal Rod';
 ForkedMetalRodCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedMetalRodCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
-ForkedMetalRodCard.weakAgainstCreatureTypes = [MINOTAUR];
+ForkedMetalRodCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];
+ForkedMetalRodCard.weakAgainstCreatureTypes = [JINN, MINOTAUR];
 ForkedMetalRodCard.probability = VERY_RARE.probability;
 ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedMetalRodCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
 ForkedMetalRodCard.level = 2;
