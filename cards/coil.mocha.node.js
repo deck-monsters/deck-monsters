@@ -34,7 +34,7 @@ describe('./cards/coil.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const coil = new Coil();
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: coil.targetProp });
 
 		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
@@ -43,7 +43,7 @@ ${hit.stats}
 
  +2 against Gladiator, Minotaur
  -2 against Basilisk, Jinn
-Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs DEX - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -52,6 +52,7 @@ Turns immobilized resets on curse of loki.
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(2);
 		expect(coil.freedomSavingThrowTargetAttr).to.equal('dex');
+		expect(coil.targetProp).to.equal('dex');
 		expect(coil.doDamageOnImmobilize).to.be.true;
 		expect(coil.ongoingDamage).to.equal(1);
 		expect(coil.stats).to.equal(stats);

@@ -10,20 +10,18 @@ const { REASONABLE } = require('../helpers/costs');
 class ForkedStickCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		freedomSavingThrowTargetAttr,
 		icon = '⑂',
+		targetProp,
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
-	}
-
-	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
-		return target.dex;
+		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
 	}
 
 	// do not auto-succeed since this already hits twice
 	immobilizeCheck (player, target) {
 		const attackRoll = this.getAttackRoll(player, target);
-		const attackSuccess = this.checkSuccess(attackRoll, this.getTargetPropValue(target));
+		const attackSuccess = this.checkSuccess(attackRoll, target[this.targetProp]);
 
 		const failMessage = `${this.actions.IMMOBILIZE} failed.`;
 		const outcome = attackSuccess.success ? `${this.actions.IMMOBILIZE} succeeded!` : failMessage;
@@ -34,7 +32,7 @@ class ForkedStickCard extends ImmobilizeCard {
 			roll: attackRoll,
 			who: player,
 			outcome,
-			vs: this.getTargetPropValue(target)
+			vs: this.targetProp
 		});
 
 		if (!attackSuccess) {
@@ -68,7 +66,9 @@ ForkedStickCard.cost = REASONABLE.cost;
 ForkedStickCard.level = 0;
 
 ForkedStickCard.defaults = {
-	...ImmobilizeCard.defaults
+	...ImmobilizeCard.defaults,
+	freedomSavingThrowTargetAttr: 'str',
+	targetProp: 'dex'
 };
 
 ForkedStickCard.flavors = {

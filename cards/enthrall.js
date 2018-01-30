@@ -19,20 +19,20 @@ class EnthrallCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		freedomSavingThrowTargetAttr,
+		targetProp,
 		icon = '🎇',
 		...rest
 	} = {}) {
-		super({ freedomSavingThrowTargetAttr, icon, ...rest });
+		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
 
-		this.mesmerizeCard = new MesmerizeCard();
+		this.mesmerizeCard = new MesmerizeCard({
+			freedomSavingThrowTargetAttr: freedomSavingThrowTargetAttr || this.constructor.defaults.freedomSavingThrowTargetAttr,
+			targetProp: targetProp || this.constructor.defaults.targetProp
+		});
 	}
 
 	getAttackRoll (player, target) {
 		return this.mesmerizeCard.getAttackRoll(player, target);
-	}
-
-	getTargetPropValue (target) {
-		return this.mesmerizeCard.getTargetPropValue(target);
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
@@ -53,7 +53,8 @@ EnthrallCard.cost = REASONABLE.cost;
 
 EnthrallCard.defaults = {
 	...ImmobilizeCard.defaults,
-	freedomSavingThrowTargetAttr: 'int'
+	freedomSavingThrowTargetAttr: 'int',
+	targetProp: 'int'
 };
 
 EnthrallCard.flavors = {

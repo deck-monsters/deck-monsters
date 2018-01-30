@@ -34,11 +34,11 @@ describe('./cards/forked-metal-rod.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const forkedMetalRod = new ForkedMetalRod();
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: forkedMetalRod.targetProp });
 
 		const stats = `Attack twice (once with each prong). +2 to hit and pin for each successfull prong hit.
 
-Chance to pin: 1d20 - 6 vs ac.
+Chance to pin: 1d20 - 6 vs DEX.
 
 ${hit.stats}
 
@@ -56,6 +56,8 @@ Turns immobilized resets on curse of loki.
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.description).to.equal(description);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
+		expect(forkedMetalRod.freedomSavingThrowTargetAttr).to.equal('dex');
+		expect(forkedMetalRod.targetProp).to.equal('ac');
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.false;
 		expect(forkedMetalRod.stats).to.equal(stats);
 		expect(forkedMetalRod.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);

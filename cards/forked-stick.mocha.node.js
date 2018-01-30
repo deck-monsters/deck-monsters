@@ -37,7 +37,7 @@ describe('./cards/forked-stick.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const forkedStick = new ForkedStick();
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: forkedStick.targetProp });
 
 		const stats = `Attempt to pin your opponent between the branches of a forked stick.
 
@@ -48,13 +48,15 @@ ${hit.stats}
  +2 against Basilisk, Gladiator
  -2 against Jinn, Minotaur
 inneffective against Weeping Angel
-Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs STR - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.freedomThresholdModifier).to.equal(2);
+		expect(forkedStick.freedomSavingThrowTargetAttr).to.equal('str');
+		expect(forkedStick.targetProp).to.equal('dex');
 		expect(forkedStick.doDamageOnImmobilize).to.be.false;
 		expect(forkedStick.stats).to.equal(stats);
 		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
@@ -76,7 +78,7 @@ Turns immobilized resets on curse of loki.
 		const forkedStick = new ForkedStick();
 		const player = new Minotaur({ name: 'player' });
 
-		expect(forkedStick.getFreedomThreshold(player, player)).to.equal(player.ac + forkedStick.freedomThresholdModifier);
+		expect(forkedStick.getFreedomThreshold(player, player)).to.equal(5);
 	});
 
 	it('can be played against gladiators for a bonus to attack', () => {
@@ -222,7 +224,7 @@ Turns immobilized resets on curse of loki.
 
 				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
 
-				expect(forkedStick.getFreedomThreshold(player, target)).to.equal(6);
+				expect(forkedStick.getFreedomThreshold(player, target)).to.equal(9);
 
 				const card = target.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
@@ -240,7 +242,7 @@ Turns immobilized resets on curse of loki.
 				return card
 					.play(target, player, ring, ring.contestants)
 					.then(() => {
-						expect(forkedStick.getFreedomThreshold(player, target)).to.equal(3);
+						expect(forkedStick.getFreedomThreshold(player, target)).to.equal(6);
 
 						checkSuccessStub.restore();
 

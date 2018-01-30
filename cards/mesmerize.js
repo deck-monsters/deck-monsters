@@ -26,10 +26,6 @@ class MesmerizeCard extends ImmobilizeCard {
 		return roll({ primaryDice: this.attackDice, modifier: player.intModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
-	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
-		return target.int;
-	}
-
 	effect (player, target, ring, activeContestants) {
 		return Promise.map(activeContestants, ({ monster }) => super.effect(player, monster, ring, activeContestants))
 			.then(() => !target.dead);
@@ -48,7 +44,8 @@ MesmerizeCard.cost = VERY_CHEAP.cost;
 
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,
-	freedomSavingThrowTargetAttr: 'int'
+	freedomSavingThrowTargetAttr: 'int',
+	targetProp: 'int'
 };
 
 MesmerizeCard.flavors = {

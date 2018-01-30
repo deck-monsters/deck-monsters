@@ -15,12 +15,18 @@ const { PRICEY } = require('../helpers/costs');
 class ForkedMetalRodCard extends HornGoreCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		freedomSavingThrowTargetAttr,
 		icon = '⑂⑂',
+		targetProp,
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
 
-		this.immobilizeCard = new ImmobilizeCard({ strongAgainstCreatureTypes: this.strongAgainstCreatureTypes });
+		this.immobilizeCard = new ImmobilizeCard({
+			strongAgainstCreatureTypes: this.strongAgainstCreatureTypes,
+			targetProp: targetProp || this.constructor.defaults.targetProp,
+			freedomSavingThrowTargetAttr
+		});
 		this.immobilizeCard.immobilizeCheck = this.immobilizeCheck;
 	}
 
@@ -32,7 +38,7 @@ class ForkedMetalRodCard extends HornGoreCard {
 	get stats () {
 		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and ${this.actions.IMMOBILIZE} for each successfull ${this.flavors.spike} hit.
 
-Chance to ${this.actions.IMMOBILIZE}: 1d20 - 6 vs ${this.targetAttr}.
+Chance to ${this.actions.IMMOBILIZE}: 1d20 - 6 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.
 
 ${this.immobilizeCard.stats}`;
 	}
@@ -74,7 +80,9 @@ ForkedMetalRodCard.notForSale = true;
 
 ForkedMetalRodCard.defaults = {
 	...HornGoreCard.defaults,
-	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER
+	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
+	freedomSavingThrowTargetAttr: 'dex',
+	targetProp: 'ac'
 };
 
 ForkedMetalRodCard.flavors = {

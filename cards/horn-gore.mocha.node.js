@@ -1,11 +1,11 @@
 const { expect, sinon } = require('../shared/test-setup');
 
+const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
+
 const HornGoreCard = require('./horn-gore');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const pause = require('../helpers/pause');
-
-const { MINOTAUR } = require('../helpers/creature-types');
 
 describe('./cards/horn-gore.js', () => {
 	let channelStub;
@@ -34,18 +34,24 @@ describe('./cards/horn-gore.js', () => {
 		const hornGore = new HornGoreCard();
 
 		expect(hornGore).to.be.an.instanceof(HornGoreCard);
+		expect(hornGore.freedomSavingThrowTargetAttr).to.equal('dex');
+		expect(hornGore.targetProp).to.equal('ac');
+		expect(hornGore.freedomThresholdModifier).to.equal(-4);
+		expect(hornGore.strongAgainstCreatureTypes).to.deep.equal([MINOTAUR, GLADIATOR]);
+		expect(hornGore.weakAgainstCreatureTypes).to.deep.equal([BASILISK, JINN, WEEPING_ANGEL]);
+		expect(hornGore.permittedClassesAndTypes).to.deep.equal([MINOTAUR]);
+		expect(hornGore.doDamageOnImmobilize).to.be.false;
 		expect(hornGore.damageDice).to.equal('1d4');
 		expect(hornGore.stats).to.equal(`Attack twice (once with each horn). +2 to hit and pin for each successfull horn hit.
 
-If either horn hits, chance to pin: 1d20 - 6 vs ac.
+If either horn hits, chance to pin: 1d20 - 6 vs DEX.
 
 Hit: 1d20 vs AC / Damage: 1d4
 
 
- -4 against Gladiator
- -6 against Minotaur
-inneffective against Weeping Angel
-Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+ -4 against Minotaur, Gladiator
+ -6 against Basilisk, Jinn, Weeping Angel
+Opponent breaks free by rolling 1d20 vs DEX - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `);

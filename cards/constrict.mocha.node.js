@@ -33,7 +33,7 @@ describe('./cards/constrict.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		const constrict = new Constrict();
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: constrict.targetProp });
 
 		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
@@ -42,7 +42,7 @@ ${hit.stats}
 
  +3 against Gladiator, Minotaur
  -3 against Basilisk, Jinn
-Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs DEX - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -51,6 +51,7 @@ Turns immobilized resets on curse of loki.
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(3);
 		expect(constrict.freedomSavingThrowTargetAttr).to.equal('dex');
+		expect(constrict.targetProp).to.equal('dex');
 		expect(constrict.doDamageOnImmobilize).to.be.true;
 		expect(constrict.ongoingDamage).to.equal(2);
 		expect(constrict.stats).to.equal(stats);

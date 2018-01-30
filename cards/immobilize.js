@@ -18,12 +18,12 @@ class ImmobilizeCard extends HitCard {
 		freedomThresholdModifier,
 		ongoingDamage,
 		strongAgainstCreatureTypes,
-		targetAttr,
+		targetProp,
 		uselessAgainstCreatureTypes,
 		weakAgainstCreatureTypes,
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
+		super({ icon, targetProp, ...rest });
 
 		this.setOptions({
 			doDamageOnImmobilize,
@@ -31,7 +31,7 @@ class ImmobilizeCard extends HitCard {
 			freedomThresholdModifier,
 			ongoingDamage,
 			strongAgainstCreatureTypes,
-			targetAttr,
+			targetProp,
 			uselessAgainstCreatureTypes,
 			weakAgainstCreatureTypes
 		});
@@ -111,7 +111,7 @@ class ImmobilizeCard extends HitCard {
 
 		return `${super.stats}
 ${strModifiers}
-Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()} - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ${ongoingDamageText}`;
@@ -152,20 +152,6 @@ ${ongoingDamageText}`;
 
 	getAttackRoll (player, target) {
 		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
-	}
-
-	get targetAttr () {
-		return this.options.targetAttr;
-	}
-
-	set targetAttr (targetAttr) {
-		this.setOptions({
-			targetAttr
-		});
-	}
-
-	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
-		return target[this.targetAttr];
 	}
 
 	// Most of the time this should be an auto-success since they get a chance to break free on their next turn
@@ -312,7 +298,7 @@ ImmobilizeCard.defaults = {
 	freedomSavingThrowTargetAttr: 'ac',
 	freedomThresholdModifier: 2,
 	ongoingDamage: 0,
-	targetAttr: 'ac'
+	targetProp: 'dex'
 };
 
 ImmobilizeCard.flavors = {

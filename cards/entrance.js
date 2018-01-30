@@ -15,12 +15,6 @@ class EntranceCard extends EnthrallCard {
 		...rest
 	} = {}) {
 		super({ freedomSavingThrowTargetAttr, icon, ...rest });
-
-		this.immobilizeCard = new ImmobilizeCard({
-			strongAgainstCreatureTypes: this.strongAgainstCreatureTypes,
-			weakAgainstCreatureTypes: this.weakAgainstCreatureTypes,
-			uselessAgainstCreatureTypes: this.uselessAgainstCreatureTypes
-		});
 	}
 }
 

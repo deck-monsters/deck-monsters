@@ -84,7 +84,7 @@ describe('./cards/mesmerize.js', () => {
 	});
 
 	it('can be instantiated with defaults', () => {
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: mesmerize.targetProp });
 
 		const stats = `${hit.stats}
 
@@ -92,7 +92,7 @@ describe('./cards/mesmerize.js', () => {
  +2 against Basilisk, Gladiator
  -2 against Minotaur, Weeping Angel
 inneffective against Jinn
-Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs INT - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;
@@ -100,6 +100,7 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);
 		expect(mesmerize.freedomThresholdModifier).to.equal(2);
 		expect(mesmerize.freedomSavingThrowTargetAttr).to.equal('int');
+		expect(mesmerize.targetProp).to.equal('int');
 		expect(mesmerize.doDamageOnImmobilize).to.be.false;
 		expect(mesmerize.stats).to.equal(stats);
 		expect(mesmerize.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);

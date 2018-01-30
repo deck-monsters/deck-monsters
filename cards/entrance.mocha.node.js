@@ -86,7 +86,7 @@ describe('./cards/entrance.js', () => {
 	});
 
 	it('can be instantiated with defaults', () => {
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: entrance.targetProp });
 
 		const stats = `${hit.stats}
 
@@ -94,7 +94,7 @@ describe('./cards/entrance.js', () => {
  +2 against Basilisk, Gladiator
  -2 against Minotaur, Weeping Angel
 inneffective against Jinn
-Opponent breaks free by rolling 1d20 vs AC - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs INT - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
@@ -103,6 +103,7 @@ Turns immobilized resets on curse of loki.
 		expect(entrance).to.be.an.instanceof(Entrance);
 		expect(entrance.freedomThresholdModifier).to.equal(2);
 		expect(entrance.freedomSavingThrowTargetAttr).to.equal('int');
+		expect(entrance.targetProp).to.equal('int');
 		expect(entrance.doDamageOnImmobilize).to.be.true;
 		expect(entrance.stats).to.equal(stats);
 		expect(entrance.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
