@@ -48,9 +48,9 @@ describe('./cards/sandstorm.js', () => {
 		const target2 = new Jinn({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -77,9 +77,9 @@ describe('./cards/sandstorm.js', () => {
 		const target2 = new Jinn({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -124,9 +124,9 @@ describe('./cards/sandstorm.js', () => {
 		const target2 = new Jinn({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 

@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const ChaosTheoryScroll = require('./chaos-theory');
-const { TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS, getStrategyDescription } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
 
 class ChaosTheoryAccordingToCleverHansScroll extends ChaosTheoryScroll {
@@ -23,6 +23,6 @@ ChaosTheoryAccordingToCleverHansScroll.itemType = 'Chaos Theory for Beginners Ac
 ChaosTheoryAccordingToCleverHansScroll.targetingStrategy = TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS;
 ChaosTheoryAccordingToCleverHansScroll.description = `Tiny variations, the orientation of hairs on your hand, the amount of blood distending your vessels, imperfections in the skin... vastly affect the outcome.
 
-Your mother told you to target a random monster in the ring rather than following a defined order, and that's exactly what you'll do.`;
+${getStrategyDescription(ChaosTheoryAccordingToCleverHansScroll.targetingStrategy)}`;
 
 module.exports = ChaosTheoryAccordingToCleverHansScroll;

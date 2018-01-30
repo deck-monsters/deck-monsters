@@ -3,11 +3,13 @@ const reduce = require('lodash.reduce');
 const zlib = require('zlib');
 
 const { all: cardTypes, draw } = require('./cards');
+const { all: itemTypes } = require('./items');
 const { all: monsterTypes } = require('./monsters');
 const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./helpers/coins');
 const { create: createCharacter } = require('./characters');
 const { globalSemaphore } = require('./helpers/semaphore');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
+const announcements = require('./announcements');
 const aws = require('./helpers/aws');
 const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
@@ -15,7 +17,6 @@ const ChannelManager = require('./channel');
 const getArray = require('./helpers/get-array');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
-const announcements = require('./announcements');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
 
@@ -164,11 +165,14 @@ class Game extends BaseClass {
 		this.ring.clearRing();
 	}
 
-	getCharacter (channel, channelName, {
+	getCharacter (privateChannel, channelName, {
 		id, name, type, gender, icon
 	}) {
 		const game = this;
-		const { log, ring } = game;
+		const { channelManager, log, ring } = game;
+		const channel = (...args) => privateChannel(...args);
+		channel.channelManager = channelManager;
+		channel.channelName = channelName;
 
 		return Promise
 			.resolve(this.characters[id])
@@ -238,20 +242,24 @@ class Game extends BaseClass {
 					return character.reviveMonster({ monsterName, channel })
 						.catch(err => log(err));
 				},
-				lookAtCharacter ({ characterName } = {}) {
-					return game.lookAtCharacter(channel, characterName, character)
-						.catch(err => log(err));
-				},
-				lookAtMonster ({ monsterName } = {}) {
-					return game.lookAtMonster(channel, monsterName, character)
-						.catch(err => log(err));
-				},
 				lookAtCard ({ cardName } = {}) {
 					return game.lookAtCard(channel, cardName)
 						.catch(err => log(err));
 				},
 				lookAtCards ({ deckName } = {}) {
 					return character.lookAtCards(channel, deckName)
+						.catch(err => log(err));
+				},
+				lookAtCharacter ({ characterName } = {}) {
+					return game.lookAtCharacter(channel, characterName, character)
+						.catch(err => log(err));
+				},
+				lookAtItem ({ itemName } = {}) {
+					return game.lookAtItem(channel, itemName)
+						.catch(err => log(err));
+				},
+				lookAtMonster ({ monsterName } = {}) {
+					return game.lookAtMonster(channel, monsterName, character)
 						.catch(err => log(err));
 				},
 				lookAtMonsters ({ inDetail } = {}) {
@@ -289,6 +297,13 @@ class Game extends BaseClass {
 	static getCardTypes () {
 		return cardTypes.reduce((obj, Card) => {
 			obj[Card.cardType.toLowerCase()] = Card;
+			return obj;
+		}, {});
+	}
+
+	static getItemTypes () {
+		return itemTypes.reduce((obj, Item) => {
+			obj[Item.itemType.toLowerCase()] = Item;
 			return obj;
 		}, {});
 	}
@@ -387,6 +402,23 @@ class Game extends BaseClass {
 		}));
 	}
 
+	lookAtItem (channel, itemName) {
+		if (itemName) {
+			const items = this.constructor.getItemTypes();
+			const Item = items[itemName.toLowerCase()];
+
+			if (Item) {
+				const item = new Item();
+				return item.look(channel);
+			}
+		}
+
+		return Promise.reject(channel({
+			announce: `Sorry, we don't carry ${itemName} here.`,
+			delay: 'short'
+		}));
+	}
+
 	getCardProbabilities () { // eslint-disable-line class-methods-use-this
 		return cardProbabilities;
 	}
@@ -438,6 +470,15 @@ class Game extends BaseClass {
 			if (Card) {
 				const card = new Card();
 				return card.look(channel);
+			}
+
+			// Is it an item?
+			const items = this.constructor.getItemTypes();
+			const Item = items[thing.toLowerCase()];
+
+			if (Item) {
+				const item = new Item();
+				return item.look(channel);
 			}
 		}
 

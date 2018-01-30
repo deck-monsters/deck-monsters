@@ -1,6 +1,13 @@
+/* eslint-disable max-len */
+
 const CurseCard = require('./curse');
+const HitCard = require('./hit');
+
+const { max } = require('../helpers/chance');
 
 const { REASONABLE } = require('../helpers/costs');
+
+const STATS = require('../helpers/stat-constants');
 
 class BrainDrainCard extends CurseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -9,6 +16,19 @@ class BrainDrainCard extends CurseCard {
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
+	}
+
+	get stats () {
+		const hit = new HitCard({ damageDice: this.damageDice });
+		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
+can reduce ${this.cursedProp} down to ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]}, then takes ${max(this.damageDice)} from hp instead.`;
+
+		if (this.hasChanceToHit) {
+			stats = `${hit.stats}
+${stats}`;
+		}
+
+		return stats;
 	}
 }
 

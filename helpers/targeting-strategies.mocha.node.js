@@ -221,7 +221,7 @@ describe('./helpers/targeting-strategies.js', () => {
 			} = getContestants();
 
 			const target = targetingStrategies.getTarget({
-				level3,
+				playerContestant: level3,
 				contestants,
 				strategy: targetingStrategies.TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS
 			});

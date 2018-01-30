@@ -15,10 +15,31 @@ class HornSwipeCard extends LuckyStrikeCard {
 		super({ targetProp, icon, ...rest });
 	}
 
-	// use strMod for some variety. Idea being it is less about precision and more about brute force. If they block the
+	// use strModifier for some variety. Idea being it is less about precision and more about brute force. If they block the
 	// first one you power through and stab with the second
 	getAttackRoll (player) {
 		return roll({ primaryDice: this.attackDice, modifier: player.strModifier, bonusDice: player.bonusAttackDice, crit: true });
+	}
+
+	getAttackCommentary (player, target, betterRoll, worseRoll) {
+		let commentary = '';
+
+		const { success: horn1Success } = this.checkSuccess(worseRoll, target[this.targetProp]);
+		if (!horn1Success) {
+			commentary = `(${worseRoll.result}) ${target.givenName} manages to block your first horn...
+`;
+
+			const { success: horn2Success } = this.checkSuccess(betterRoll, target[this.targetProp]);
+			if (!horn2Success) {
+				commentary += `(${betterRoll.result}) and your second horn as well.`;
+
+				return commentary;
+			}
+		}
+
+		commentary += `(${betterRoll.naturalRoll.result}) ${!horn1Success ? 'but' : target.givenName} fails to block your${!horn1Success ? ' second' : ''} horn.`;
+
+		return commentary;
 	}
 }
 

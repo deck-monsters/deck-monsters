@@ -29,7 +29,8 @@ describe('./cards/brain-drain.js', () => {
 		const hit = new HitCard({ damageDice: '1d4' });
 
 		const stats = `${hit.stats}
-Curse: xp -20`;
+Curse: xp -20
+can reduce xp down to 40, then takes 4 from hp instead.`;
 
 		expect(brainDrain).to.be.an.instanceof(BrainDrainCard);
 		expect(brainDrain.icon).to.equal('🤡');

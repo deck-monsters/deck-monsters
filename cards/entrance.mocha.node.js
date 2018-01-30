@@ -53,12 +53,12 @@ describe('./cards/entrance.js', () => {
 
 		ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: angel },
-				{ monster: basilisk },
-				{ monster: minotaur },
-				{ monster: gladiator },
-				{ monster: jinn }
+				{ character: {}, monster: player },
+				{ character: {}, monster: angel },
+				{ character: {}, monster: basilisk },
+				{ character: {}, monster: minotaur },
+				{ character: {}, monster: gladiator },
+				{ character: {}, monster: jinn }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()

@@ -138,8 +138,8 @@ Turns immobilized resets on curse of loki.
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -177,8 +177,8 @@ Turns immobilized resets on curse of loki.
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -206,8 +206,8 @@ Turns immobilized resets on curse of loki.
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -265,8 +265,8 @@ Turns immobilized resets on curse of loki.
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -318,8 +318,8 @@ Turns immobilized resets on curse of loki.
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()

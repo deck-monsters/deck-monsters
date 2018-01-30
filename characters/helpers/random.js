@@ -18,7 +18,7 @@ module.exports = ({
 	...options
 } = {}) => {
 	if (!battles.total) {
-		battles.total = random(0, 100);
+		battles.total = random(0, 120);
 		battles.wins = random(0, battles.total);
 		battles.losses = battles.total - battles.wins;
 	}

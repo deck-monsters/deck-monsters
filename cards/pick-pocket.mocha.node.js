@@ -7,6 +7,8 @@ const { randomContestant } = require('../helpers/bosses');
 const DestroyCard = require('./destroy');
 const pause = require('../helpers/pause');
 
+const Gladiator = require('../monsters/gladiator');
+
 const allCards = require('./helpers/all');
 
 describe('./cards/pick-pocket.js', () => {
@@ -61,10 +63,10 @@ describe('./cards/pick-pocket.js', () => {
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: playerCharacter, monster: player },
+				{ character: target1Character, monster: target1 },
+				{ character: target2Character, monster: target2 },
+				{ character: target3Character, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -114,21 +116,17 @@ describe('./cards/pick-pocket.js', () => {
 	it('cannot pick from own player\'s pocket', () => {
 		const pickPocket = new PickPocketCard();
 
-		const playerCharacter = randomCharacter();
-		const player = playerCharacter.monsters[0];
-		const target1Character = randomCharacter();
-		const target1 = target1Character.monsters[0];
-		const target2Character = randomCharacter();
-		const target2 = target2Character.monsters[0];
-		const target3Character = randomCharacter();
-		const target3 = target3Character.monsters[0];
+		const player = new Gladiator({ name: 'player' });
+		const target1 = new Gladiator({ name: 'target1' });
+		const target2 = new Gladiator({ name: 'target2' });
+		const target3 = new Gladiator({ name: 'target3' });
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 },
+				{ character: {}, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -147,7 +145,10 @@ describe('./cards/pick-pocket.js', () => {
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
 				expect(sampleSpy).to.have.been.calledWith(target3.cards.filter(card => !['Pick Pocket'].includes(card.cardType)));
-				return expect(target1.dead).to.equal(true);
+				expect(target2.dead).to.be.true;
+				expect(target3.dead).to.be.true;
+				expect(player.dead).to.be.false;
+				return expect(target1.dead).to.be.true;
 			});
 	});
 });

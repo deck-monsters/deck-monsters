@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 const { expect, sinon } = require('../shared/test-setup');
 
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
@@ -35,6 +36,8 @@ describe('./cards/cloak-of-invisibility.js', () => {
 
 		expect(invisibility).to.be.an.instanceof(CloakOfInvisibilityCard);
 		expect(invisibility.icon).to.equal('☁️');
+		expect(invisibility.stats).to.equal(`You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).
+1d20 vs your int for opponent to see you on their turn (natural 20 removes your cloak).`);
 	});
 
 	it('can be drawn', () => {

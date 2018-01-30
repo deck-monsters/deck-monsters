@@ -78,7 +78,9 @@ class BaseItem extends BaseClass {
 				this.used += 1;
 
 				if (this.action) {
-					return this.action({ channel, channelName, character, monster });
+					return Promise.resolve(channel)
+						.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
+						.then(() => this.action({ channel, channelName, character, monster }));
 				}
 
 				return this.used;
