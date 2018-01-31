@@ -19,7 +19,7 @@ class EntranceCard extends EnthrallCard {
 EntranceCard.cardType = 'Entrance';
 EntranceCard.actions = { IMMOBILIZE: 'entrance', IMMOBILIZES: 'entrances', IMMOBILIZED: 'entranced' };
 EntranceCard.probability = RARE.probability;
-EntranceCard.description = `You strut and preen. Your beauty _painfully_ ${EntranceCard.actions.IMMOBILIZES} everyone, except yourself.`;
+EntranceCard.description = `You strut and preen. Your painful beauty hits and ${EntranceCard.actions.IMMOBILIZES} everyone, except yourself.`;
 EntranceCard.level = 3;
 EntranceCard.cost = PRICEY.cost;
 EntranceCard.notForSale = true;

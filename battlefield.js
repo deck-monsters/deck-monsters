@@ -76,15 +76,15 @@ return Promise
 		vlad = character;
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 		vladCards = [
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard()
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard()
 			// new CoilCard(),
 			// new ForkedStickCard(),
 			// new EntranceCard(),
@@ -104,15 +104,15 @@ return Promise
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
 		charCards = [
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard(),
-			new ForkedStickCard()
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard(),
+			new EntranceCard()
 		];
 	})
 	// .then(() => vlad.spawnMonster())
