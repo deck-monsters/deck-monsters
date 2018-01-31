@@ -43,11 +43,11 @@ describe('./cards/forked-stick.js', () => {
 
 If immobilized, then hit.
 ${hit.stats}
- +2 against Basilisk, Gladiator
- -2 against Jinn, Minotaur
+ +2 advantage vs Basilisk, Gladiator
+ -2 advantage vs Jinn, Minotaur
 inneffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs STR - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's STR + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;
@@ -258,6 +258,7 @@ Turns immobilized resets on curse of loki.
 		const immobilizeProto = Object.getPrototypeOf(forkedStickProto);
 		const hitProto = Object.getPrototypeOf(immobilizeProto);
 		const getAttackRollImmoblizeSpy = sinon.spy(immobilizeProto, 'getAttackRoll');
+		const getFreedomRollImmoblizeSpy = sinon.spy(immobilizeProto, 'getFreedomRoll');
 		const getAttackRollHitSpy = sinon.spy(hitProto, 'getAttackRoll');
 
 		const player = new Minotaur({ name: 'player' });
@@ -279,7 +280,8 @@ Turns immobilized resets on curse of loki.
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
 				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
-				expect(getAttackRollImmoblizeSpy.callCount).to.equal(1);
+				expect(getAttackRollImmoblizeSpy.callCount).to.equal(0);
+				expect(getFreedomRollImmoblizeSpy.callCount).to.equal(1);
 				expect(getAttackRollHitSpy.callCount).to.equal(0);
 
 				const card = target.encounterEffects.reduce((currentCard, effect) => {
@@ -298,11 +300,14 @@ Turns immobilized resets on curse of loki.
 				return card
 					.play(target, player, ring, ring.contestants)
 					.then(() => {
-						expect(getAttackRollImmoblizeSpy.callCount).to.equal(1);
-						expect(getAttackRollHitSpy.callCount).to.equal(2);
+						expect(getAttackRollImmoblizeSpy.callCount).to.equal(0);
+						expect(getFreedomRollImmoblizeSpy.callCount).to.equal(2);
+						expect(getAttackRollHitSpy.callCount).to.equal(1);
 
 						checkSuccessStub.restore();
 						getAttackRollImmoblizeSpy.restore();
+						getFreedomRollImmoblizeSpy.restore();
+						getAttackRollHitSpy.restore();
 
 						return expect(target.encounterEffects.length).to.equal(0);
 					});

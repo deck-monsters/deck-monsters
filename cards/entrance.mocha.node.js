@@ -89,11 +89,11 @@ describe('./cards/entrance.js', () => {
 		const hit = new Hit({ targetProp: entrance.targetProp });
 
 		const stats = `${hit.stats}
- +2 against Basilisk, Gladiator
- -2 against Minotaur, Weeping Angel
+ +2 advantage vs Basilisk, Gladiator
+ -2 advantage vs Minotaur, Weeping Angel
 inneffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs INT - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's INT + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 

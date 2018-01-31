@@ -92,12 +92,12 @@ class ImmobilizeCard extends HitCard {
 		let strModifiers = '';
 		if (this.strongAgainstCreatureTypes.length && this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] })) {
 			const strongAgainst = this.strongAgainstCreatureTypes.join(', ');
-			strModifiers += `${signedNumber(this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] }))} against ${strongAgainst}\n`;
+			strModifiers += `${signedNumber(this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] }))} advantage vs ${strongAgainst}\n`;
 		}
 
 		if (this.weakAgainstCreatureTypes.length && this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] })) {
 			const weakAgainst = this.weakAgainstCreatureTypes.join(', ');
-			strModifiers += `${signedNumber(this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] }))} against ${weakAgainst}\n`;
+			strModifiers += `${signedNumber(this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] }))} advantage vs ${weakAgainst}\n`;
 		}
 
 		if (this.uselessAgainstCreatureTypes.length) {
@@ -111,7 +111,7 @@ class ImmobilizeCard extends HitCard {
 
 		return `${super.stats}
 ${strModifiers}
-Opponent breaks free by rolling 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()} - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's ${this.freedomSavingThrowTargetAttr.toUpperCase()} + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ${ongoingDamageText}`;
@@ -151,7 +151,11 @@ ${ongoingDamageText}`;
 	}
 
 	getAttackRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
+		return roll({ primaryDice: this.attackDice, modifier: player[`${this.targetProp}Modifier`] + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
+	}
+
+	getFreedomRoll (player, target) {
+		return roll({ primaryDice: this.attackDice, modifier: player[`${this.freedomSavingThrowTargetAttr}Modifier`] + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	// Most of the time this should be an auto-success since they get a chance to break free on their next turn
@@ -160,6 +164,7 @@ ${ongoingDamageText}`;
 	}
 
 	getImmobilizeEffect (player, target, ring) {
+		const immobilize = this;
 		const ImmobilizeEffect = ({ card, phase }) => {
 			if (phase === ATTACK_PHASE) {
 				if (!player.dead) {
@@ -170,7 +175,7 @@ ${ongoingDamageText}`;
 						ring
 					});
 
-					const freedomRoll = super.getAttackRoll(player, target);
+					const freedomRoll = immobilize.getFreedomRoll(player, target);
 					const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
 					let commentary;
 
@@ -227,7 +232,7 @@ ${ongoingDamageText}`;
 	freedomThresholdNarrative (player, target) {
 		const thresholdBonusText = this.getAttackModifier(target) ? `${signedNumber(this.getAttackModifier(target))}` : '';
 		const playerName = player === target ? `${player.pronouns.his} own` : `${player.givenName}'s`;
-		return `1d20 vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
+		return `1d20 vs ${playerName} ${this.freedomSavingThrowTargetAttr.toUpperCase()}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
 	}
 
 	emitImmobilizeNarrative (player, target) {

@@ -38,10 +38,10 @@ describe('./cards/constrict.js', () => {
 		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
 ${hit.stats}
- +3 against Gladiator, Minotaur
- -3 against Basilisk, Jinn
+ +3 advantage vs Gladiator, Minotaur
+ -3 advantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs DEX - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's DEX + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 
