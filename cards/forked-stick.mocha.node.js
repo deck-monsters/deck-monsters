@@ -49,7 +49,7 @@ inneffective against Weeping Angel
 
 Opponent breaks free by rolling 1d20 vs immobilizer's STR +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
-Immobilized turns resets on curse of loki.
+Turns immobilized resets on curse of loki.
 `;
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
