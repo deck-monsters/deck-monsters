@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 
+const Promise = require('bluebird');
 const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
