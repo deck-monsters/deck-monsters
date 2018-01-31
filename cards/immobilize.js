@@ -2,12 +2,13 @@
 
 const HitCard = require('./hit');
 
-const { GLADIATOR, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
+const { capitalize } = require('../helpers/capitalize');
+const { FREE } = require('../helpers/costs');
+const { GLADIATOR, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
+const { IMPOSSIBLE } = require('../helpers/probabilities');
 const { roll } = require('../helpers/chance');
 const { signedNumber } = require('../helpers/signed-number');
-const { IMPOSSIBLE } = require('../helpers/probabilities');
-const { FREE } = require('../helpers/costs');
 
 class ImmobilizeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in

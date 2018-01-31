@@ -52,7 +52,7 @@ class Jinn extends BaseMonster {
 	}
 
 	get description () {
-		return `a ${this.color} figure ${this.descriptor} in the dusty shadows at the corner of your vision. At first you think it might be human and you wonder who or what ${this.pronouns.he} is. What is ${this.pronouns.he} about? When you turn to look closer all you see is a ${this.animal} and a gently settling cloud of sand.`;
+		return `a ${this.color} figure ${this.descriptor} in the dusty shadows at the corner of your vision. At first you think it might be human and you wonder who or what ${this.pronouns.he} is. What is ${this.pronouns.he} thinking about? When you turn to look closer all you see is a ${this.animal} and a gently settling cloud of sand.`;
 	}
 }
 

@@ -1,4 +1,6 @@
+const Promise = require('bluebird');
 const random = require('lodash.random');
+const reduce = require('lodash.reduce');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
@@ -6,8 +8,11 @@ const BaseClass = require('../shared/baseClass');
 
 const { describeLevels, getLevel } = require('../helpers/levels');
 const { getAttributeChoices } = require('../helpers/choices');
+const { getItemCounts } = require('../items/helpers/counts');
+const { itemCard } = require('../helpers/card');
 const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
+const getUniqueItems = require('../items/helpers/unique-items');
 const isMatchingItem = require('../items/helpers/is-matching');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
@@ -472,6 +477,11 @@ Battles won: ${this.battles.wins}`;
 	addItem (item) {
 		this.items = sortItemsAlphabetically([...this.items, item]);
 
+		if (item.onAdded) {
+			item.onAdded(this);
+		}
+
+		item.emit('added', { creature: this });
 		this.emit('itemAdded', { item });
 	}
 
@@ -481,6 +491,11 @@ Battles won: ${this.battles.wins}`;
 		if (itemIndex >= 0) {
 			const foundItem = this.items.splice(itemIndex, 1)[0];
 
+			if (foundItem.onRemoved) {
+				foundItem.onRemoved(this);
+			}
+
+			foundItem.emit('removed', { creature: this });
 			this.emit('itemRemoved', { item: foundItem });
 
 			return foundItem;
@@ -500,30 +515,40 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	useItem ({ channel, channelName, character = this, item, monster }) {
-		let foundItem;
+		return Promise.resolve()
+			.then(() => {
+				if (monster && monster.inEncounter && !monster.items.find(potentialItem => isMatchingItem(potentialItem, item))) {
+					return Promise.reject(channel({
+						announce: `${monster.givenName} doesn't seem to be holding that item.`
+					}));
+				}
 
-		if (monster) {
-			foundItem = monster.items.find(potentialItem => isMatchingItem(potentialItem, item));
+				return item.use({ channel, channelName, character, monster });
+			});
+	}
+
+	lookAtItems (channel, items = this.items) {
+		if (items.length < 1) {
+			return Promise.reject();
 		}
 
-		if (!foundItem) {
-			// Monsters in an encounter can only use items they are carrying
-			if (monster && monster.inEncounter) {
-				return Promise.reject(channel({
-					announce: `${monster.givenName} doesn't seem to be holding that item.`
-				}));
-			}
+		const sortedItems = sortItemsAlphabetically(items);
 
-			foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
-		}
-
-		if (foundItem) {
-			return foundItem.use({ channel, channelName, character, monster });
-		}
-
-		return Promise.reject(channel({
-			announce: `${character.givenName} doesn't seem to be holding that item.`
-		}));
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => Promise.each(getUniqueItems(sortedItems), item => channelManager.queueMessage({
+				announce: itemCard(item),
+				channel,
+				channelName
+			})))
+			.then(() => channelManager.queueMessage({
+				announce: reduce(getItemCounts(sortedItems), (counts, count, card) =>
+					`${counts}${card} (${count})
+`, ''),
+				channel,
+				channelName
+			}))
+			.then(() => channelManager.sendMessages());
 	}
 
 	leaveCombat (activeContestants) {

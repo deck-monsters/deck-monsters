@@ -74,6 +74,7 @@ return Promise
 	}))
 	.then((character) => {
 		vlad = character;
+		vlad.character.coins = 1000;
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 		vladCards = [
 			new EntranceCard(),
@@ -100,6 +101,7 @@ return Promise
 	}))
 	.then((character) => {
 		char = character;
+		char.character.coins = 1000;
 		charCards = [...shuffle(char.character.deck).slice(0, 9)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
@@ -140,7 +142,13 @@ return Promise
 	.then(() => vlad.lookAtCard({ cardName: 'forked stick' }))
 	.then(() => vlad.lookAtCard({ cardName: 'horn gore' }))
 	.then(() => vlad.lookAtCard({ cardName: 'forked metal rod' }))
+
+	// .then(() => vlad.buyItems())
+	// .then(() => vlad.giveItemsToMonster())
+	// .then(() => vlad.useItems())
+	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
 	.then(() => vlad.lookAtItem({ itemName: 'the way of the cobra kai' }))
+	.then(() => vlad.lookAtItems())
 	.then(() => vlad.lookAtCards())
 	.then(() => vlad.lookAt('player handbook'))
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))

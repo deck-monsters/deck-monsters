@@ -42,7 +42,7 @@ Roll twice for hit. Use the best roll.`;
 			}
 		}
 
-		commentary += `(${betterRoll.naturalRoll.result})${!roll1Success ? ' but' : ''} ${target.givenName} fails to block your blow.`;
+		commentary += `(${betterRoll.naturalRoll.result})${!roll1Success ? ' but' : ''} ${target.givenName} fails to block ${player.pronouns.his} blow.`;
 
 		return commentary;
 	}
