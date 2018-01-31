@@ -41,7 +41,7 @@ describe('./cards/forked-stick.js', () => {
 
 		const stats = `Attempt to pin your opponent between the branches of a forked stick.
 
-If immobilized, then hit.
+If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Basilisk, Gladiator
  -2 disadvantage vs Jinn, Minotaur

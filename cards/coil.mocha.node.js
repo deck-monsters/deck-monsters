@@ -36,8 +36,9 @@ describe('./cards/coil.js', () => {
 		const coil = new Coil();
 		const hit = new Hit({ targetProp: coil.targetProp });
 
-		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
+		const stats = `Immobilize and hit opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
+If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Gladiator, Minotaur
  -2 disadvantage vs Basilisk, Jinn

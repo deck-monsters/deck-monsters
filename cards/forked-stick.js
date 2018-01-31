@@ -50,7 +50,6 @@ class ForkedStickCard extends ImmobilizeCard {
 	get stats () {
 		return `Attempt to pin your opponent between the branches of a forked stick.
 
-If immobilized, then hit.
 ${super.stats}`;
 	}
 }

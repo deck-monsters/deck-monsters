@@ -111,7 +111,8 @@ class ImmobilizeCard extends HitCard {
 			advantageModifier = '+/- advantage/disadvantage';
 		}
 
-		return `${super.stats}
+		return `If already immobilized, hit instead.
+${super.stats}
 ${strModifiers}
 Opponent breaks free by rolling 1d20 vs immobilizer's ${this.freedomSavingThrowTargetAttr.toUpperCase()} ${advantageModifier} - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.

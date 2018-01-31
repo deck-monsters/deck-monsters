@@ -88,7 +88,8 @@ describe('./cards/mesmerize.js', () => {
 	it('can be instantiated with defaults', () => {
 		const hit = new Hit({ targetProp: mesmerize.targetProp });
 
-		const stats = `${hit.stats}
+		const stats = `If already immobilized, hit instead.
+${hit.stats}
  +2 advantage vs Basilisk, Gladiator
  -2 disadvantage vs Minotaur, Weeping Angel
 inneffective against Jinn

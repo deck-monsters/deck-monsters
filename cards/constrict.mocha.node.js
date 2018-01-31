@@ -35,8 +35,9 @@ describe('./cards/constrict.js', () => {
 		const constrict = new Constrict();
 		const hit = new Hit({ targetProp: constrict.targetProp });
 
-		const stats = `Immobilize opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
+		const stats = `Immobilize and hit opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
 
+If already immobilized, hit instead.
 ${hit.stats}
  +3 advantage vs Gladiator, Minotaur
  -3 disadvantage vs Basilisk, Jinn

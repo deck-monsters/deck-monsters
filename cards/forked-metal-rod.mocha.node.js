@@ -40,6 +40,7 @@ describe('./cards/forked-metal-rod.js', () => {
 
 Chance to pin: 1d20 - 6 vs DEX.
 
+If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Gladiator, Basilisk
  -2 disadvantage vs Minotaur

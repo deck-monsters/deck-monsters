@@ -127,6 +127,7 @@ describe('./cards/horn-gore.js', () => {
 
 If either horn hits, chance to pin: 1d20 - 6 vs DEX.
 
+If already immobilized, hit instead.
 Hit: 1d20 vs AC / Damage: 1d4
  -2 disadvantage vs Minotaur, Gladiator
  -6 disadvantage vs Basilisk, Jinn, Weeping Angel
