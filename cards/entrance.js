@@ -2,8 +2,6 @@
 
 const EnthrallCard = require('./enthrall');
 
-const ImmobilizeCard = require('./immobilize');
-
 const { RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 

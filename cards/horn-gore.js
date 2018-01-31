@@ -35,7 +35,7 @@ ${super.stats}`;
 		if (this.weakAgainstCreatureTypes.includes(target.creatureType)) {
 			return -2 + this.freedomThresholdModifier;
 		} else if (this.strongAgainstCreatureTypes.includes(target.creatureType)) {
-			return this.freedomThresholdModifier;
+			return 2 + this.freedomThresholdModifier;
 		}
 		return 0;
 	}
@@ -108,7 +108,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 
 	getDamageRoll (player) {
-		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.strModifier / 2)), bonusDice: player.bonusDamageDice });
+		return roll({ primaryDice: this.damageDice, modifier: Math.floor(player.strModifier / 2), bonusDice: player.bonusDamageDice });
 	}
 
 	gore (player, target, hornNumber) {

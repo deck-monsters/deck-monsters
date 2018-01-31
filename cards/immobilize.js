@@ -79,25 +79,21 @@ class ImmobilizeCard extends HitCard {
 		});
 	}
 
-	getAttackModifier (target) {
-		if (this.weakAgainstCreatureTypes.includes(target.creatureType)) {
-			return -this.freedomThresholdModifier;
-		} else if (this.strongAgainstCreatureTypes.includes(target.creatureType)) {
-			return this.freedomThresholdModifier;
-		}
-		return 0;
-	}
-
 	get stats () {
 		let strModifiers = '';
+		let strongBonus = 0;
+		let weakBonus = 0;
+
 		if (this.strongAgainstCreatureTypes.length && this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] })) {
 			const strongAgainst = this.strongAgainstCreatureTypes.join(', ');
-			strModifiers += `${signedNumber(this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] }))} advantage vs ${strongAgainst}\n`;
+			strongBonus = signedNumber(this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] }));
+			strModifiers += `${strongBonus} ${strongBonus < 0 ? 'dis' : ''}advantage vs ${strongAgainst}\n`;
 		}
 
 		if (this.weakAgainstCreatureTypes.length && this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] })) {
 			const weakAgainst = this.weakAgainstCreatureTypes.join(', ');
-			strModifiers += `${signedNumber(this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] }))} advantage vs ${weakAgainst}\n`;
+			weakBonus = signedNumber(this.getAttackModifier({ creatureType: this.weakAgainstCreatureTypes[0] }));
+			strModifiers += `${weakBonus} ${weakBonus < 0 ? 'dis' : ''}advantage vs ${weakAgainst}\n`;
 		}
 
 		if (this.uselessAgainstCreatureTypes.length) {
@@ -108,10 +104,16 @@ class ImmobilizeCard extends HitCard {
 		const ongoingDamageText = this.ongoingDamage ? `
 -${this.ongoingDamage} hp each turn immobilized.` : '';
 
+		let advantageModifier = '+ advantage';
+		if (strongBonus < 0 && weakBonus < 0) {
+			advantageModifier = '- disadvantage';
+		} else if (strongBonus >= 0 && weakBonus < 0) {
+			advantageModifier = '+/- advantage/disadvantage';
+		}
 
 		return `${super.stats}
 ${strModifiers}
-Opponent breaks free by rolling 1d20 vs immobilizer's ${this.freedomSavingThrowTargetAttr.toUpperCase()} + advantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's ${this.freedomSavingThrowTargetAttr.toUpperCase()} ${advantageModifier} - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ${ongoingDamageText}`;
@@ -150,16 +152,28 @@ ${ongoingDamageText}`;
 		return Math.max((this.getFreedomThresholdBase(player) + this.getAttackModifier(target)) - fatigue, 1);
 	}
 
+	getAttackModifier (target) {
+		if (this.weakAgainstCreatureTypes.includes(target.creatureType)) {
+			return -this.freedomThresholdModifier;
+		} else if (this.strongAgainstCreatureTypes.includes(target.creatureType)) {
+			return this.freedomThresholdModifier;
+		}
+		return 0;
+	}
+
 	getAttackRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player[`${this.targetProp}Modifier`] + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
+		const statsBonus = this.targetProp === 'ac' ? player.dexModifier : player[`${this.targetProp}Modifier`];
+		return roll({ primaryDice: this.attackDice, modifier: statsBonus + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
-	getImmobilizeRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player[`${this.freedomSavingThrowTargetAttr}Modifier`] + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
+	getImmobilizeRoll (immoblizer, immoblized) {
+		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immoblizer.dexModifier : immoblizer[`${this.freedomSavingThrowTargetAttr}Modifier`];
+		return roll({ primaryDice: this.attackDice, modifier: statsBonus + this.getAttackModifier(immoblized), bonusDice: immoblizer.bonusAttackDice, crit: true });
 	}
 
-	getFreedomRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player[`${this.freedomSavingThrowTargetAttr}Modifier`] - this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
+	getFreedomRoll (immoblizer, immoblized) {
+		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immoblized.dexModifier : immoblized[`${this.freedomSavingThrowTargetAttr}Modifier`];
+		return roll({ primaryDice: this.attackDice, modifier: statsBonus - this.getAttackModifier(immoblized), bonusDice: immoblized.bonusAttackDice, crit: true });
 	}
 
 	// Most of the time this should be an auto-success since they get a chance to break free on their next turn

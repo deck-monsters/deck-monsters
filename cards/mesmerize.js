@@ -3,7 +3,6 @@ const Promise = require('bluebird');
 
 const ImmobilizeCard = require('./immobilize');
 
-const { roll } = require('../helpers/chance');
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 
@@ -20,10 +19,6 @@ class MesmerizeCard extends ImmobilizeCard {
 		...rest
 	} = {}) {
 		super({ freedomSavingThrowTargetAttr, icon, ...rest });
-	}
-
-	getAttackRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player.intModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	effect (player, target, ring, activeContestants) {

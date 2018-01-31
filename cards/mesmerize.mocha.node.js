@@ -1,12 +1,14 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const Hit = require('./hit');
-const WeepingAngel = require('../monsters/weeping-angel');
-const Minotaur = require('../monsters/minotaur');
+const Mesmerize = require('./mesmerize');
+
 const Basilisk = require('../monsters/basilisk');
 const Gladiator = require('../monsters/gladiator');
 const Jinn = require('../monsters/jinn');
-const Mesmerize = require('./mesmerize');
+const Minotaur = require('../monsters/minotaur');
+const WeepingAngel = require('../monsters/weeping-angel');
+
 const pause = require('../helpers/pause');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
@@ -106,6 +108,7 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
 		expect(mesmerize.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
 		expect(mesmerize.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
+		expect(mesmerize.immoblizeCheck()).to.be.true; // always immobilizes
 	});
 
 	it('can be instantiated with options', () => {
@@ -144,6 +147,29 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.getFreedomThreshold(player, gladiator)).to.equal(3);
 		expect(mesmerize.getFreedomThreshold(player, jinn)).to.equal(1);
 		expect(mesmerize.getFreedomThreshold(player, minotaur)).to.equal(1);
+	});
+
+	it('calculates roll modifiers correctly', () => {
+		expect(mesmerize.getAttackRoll(player, player).modifier).to.equal(player.intModifier - 2);
+		expect(mesmerize.getAttackRoll(player, angel).modifier).to.equal(player.intModifier - 2);
+		expect(mesmerize.getAttackRoll(player, basilisk).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getAttackRoll(player, gladiator).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getAttackRoll(player, jinn).modifier).to.equal(player.intModifier);
+		expect(mesmerize.getAttackRoll(player, minotaur).modifier).to.equal(player.intModifier - 2);
+
+		expect(mesmerize.getImmobilizeRoll(player, player).modifier).to.equal(player.intModifier - 2);
+		expect(mesmerize.getImmobilizeRoll(player, angel).modifier).to.equal(player.intModifier - 2);
+		expect(mesmerize.getImmobilizeRoll(player, basilisk).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getImmobilizeRoll(player, gladiator).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getImmobilizeRoll(player, jinn).modifier).to.equal(player.intModifier);
+		expect(mesmerize.getImmobilizeRoll(player, minotaur).modifier).to.equal(player.intModifier - 2);
+
+		expect(mesmerize.getFreedomRoll(player, player).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getFreedomRoll(player, angel).modifier).to.equal(angel.intModifier + 2);
+		expect(mesmerize.getFreedomRoll(player, basilisk).modifier).to.equal(basilisk.intModifier - 2);
+		expect(mesmerize.getFreedomRoll(player, gladiator).modifier).to.equal(gladiator.intModifier - 2);
+		expect(mesmerize.getFreedomRoll(player, jinn).modifier).to.equal(jinn.intModifier);
+		expect(mesmerize.getFreedomRoll(player, minotaur).modifier).to.equal(minotaur.intModifier + 2);
 	});
 
 	it('immobilizes everyone on play', () => mesmerize
