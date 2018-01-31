@@ -2,8 +2,6 @@
 
 const ImmobilizeCard = require('./immobilize');
 
-const MesmerizeCard = require('./mesmerize');
-
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
@@ -25,21 +23,16 @@ class EnthrallCard extends ImmobilizeCard {
 		...rest
 	} = {}) {
 		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
+	}
 
-		this.mesmerizeCard = new MesmerizeCard({
-			freedomSavingThrowTargetAttr: freedomSavingThrowTargetAttr || this.constructor.defaults.freedomSavingThrowTargetAttr,
-			targetProp: targetProp || this.constructor.defaults.targetProp
-		});
+	get mechanics () {
+		return 'Immobilize all opponents.';
 	}
 
 	get stats () {
-		return `Immobilize all opponents.
+		return `${this.mechanics}
 
 ${super.stats}`;
-	}
-
-	getAttackRoll (player, target) {
-		return this.mesmerizeCard.getAttackRoll(player, target);
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this

@@ -25,7 +25,7 @@ class ForkedMetalRodCard extends HornGoreCard {
 		this.immobilizeCard = new ImmobilizeCard({
 			strongAgainstCreatureTypes: this.strongAgainstCreatureTypes,
 			targetProp: targetProp || this.constructor.defaults.targetProp,
-			freedomSavingThrowTargetAttr
+			freedomSavingThrowTargetAttr: freedomSavingThrowTargetAttr || this.constructor.freedomSavingThrowTargetAttr
 		});
 		this.immobilizeCard.immobilizeCheck = this.immobilizeCheck;
 	}
@@ -35,12 +35,10 @@ class ForkedMetalRodCard extends HornGoreCard {
 		this.dexModifier = STARTING_DEX_MODIFIER;
 	}
 
-	get stats () {
+	get mechanics () {
 		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successfull ${this.flavors.spike} hit.
 
-Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.
-
-${this.immobilizeCard.stats}`;
+Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.`;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
@@ -61,7 +59,7 @@ ${this.immobilizeCard.stats}`;
 				return false;
 			}
 
-			return this.immobilizeCard.effect(player, target, ring, activeContestants);
+			return this.immobilize(player, target, ring, activeContestants);
 		}
 
 		return !target.dead;
@@ -81,8 +79,9 @@ ForkedMetalRodCard.notForSale = true;
 
 ForkedMetalRodCard.defaults = {
 	...HornGoreCard.defaults,
+	damageDice: '1d6',
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	freedomSavingThrowTargetAttr: 'dex',
+	freedomSavingThrowTargetAttr: 'str',
 	targetProp: 'ac'
 };
 

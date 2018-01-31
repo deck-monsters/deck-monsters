@@ -88,7 +88,9 @@ describe('./cards/enthrall.js', () => {
 	it('can be instantiated with defaults', () => {
 		const hit = new Hit({ targetProp: enthrall.targetProp });
 
-		const stats = `If already immobilized, hit instead.
+		const stats = `Immobilize all opponents.
+
+If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Basilisk, Gladiator
  -2 disadvantage vs Minotaur, Weeping Angel

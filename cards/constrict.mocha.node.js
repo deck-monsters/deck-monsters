@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 const { expect, sinon } = require('../shared/test-setup');
 
 const Hit = require('./hit');
@@ -35,7 +36,7 @@ describe('./cards/constrict.js', () => {
 		const constrict = new Constrict();
 		const hit = new Hit({ targetProp: constrict.targetProp });
 
-		const stats = `Immobilize and hit opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
+		const stats = `Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 If already immobilized, hit instead.
 ${hit.stats}
@@ -63,7 +64,7 @@ Turns immobilized resets on curse of loki.
 
 	it('can be instantiated with options', () => {
 		const constrict = new Constrict({
-			freedomThresholdModifier: 2, doDamageOnImmobilize: false, ongoingDamage: 3// eslint-disable-line max-len
+			freedomThresholdModifier: 2, doDamageOnImmobilize: false, ongoingDamage: 3
 		});
 
 		expect(constrict).to.be.an.instanceof(Constrict);

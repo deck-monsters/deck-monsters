@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 
+const ImmobilizeCard = require('./immobilize');
 const EnthrallCard = require('./enthrall');
 
 const { RARE } = require('../helpers/probabilities');
@@ -10,15 +11,14 @@ class EntranceCard extends EnthrallCard {
 	constructor ({
 		freedomSavingThrowTargetAttr,
 		icon = '🎆',
+		ongoingDamage,
 		...rest
 	} = {}) {
-		super({ freedomSavingThrowTargetAttr, icon, ...rest });
+		super({ freedomSavingThrowTargetAttr, icon, ongoingDamage, ...rest });
 	}
 
-	get stats () {
-		return `Immobilize and hit all opponents.
-
-${super.stats}`;
+	get mechanics () {
+		return 'Immobilize and hit all opponents.';
 	}
 }
 

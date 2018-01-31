@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 const { expect, sinon } = require('../shared/test-setup');
 
 const Hit = require('./hit');
@@ -36,7 +37,7 @@ describe('./cards/coil.js', () => {
 		const coil = new Coil();
 		const hit = new Hit({ targetProp: coil.targetProp });
 
-		const stats = `Immobilize and hit opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
+		const stats = `Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 If already immobilized, hit instead.
 ${hit.stats}

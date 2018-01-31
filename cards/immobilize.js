@@ -269,7 +269,7 @@ ${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronoun
 		});
 	}
 
-	effect (player, target, ring, activeContestants) {
+	immobilize (player, target, ring, activeContestants) {
 		const alreadyImmobilized = !!target.encounterEffects.find(effect => effect.effectType === 'ImmobilizeEffect');
 		const canHaveEffect = !this.uselessAgainstCreatureTypes.includes(target.creatureType);
 
@@ -303,6 +303,10 @@ ${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronoun
 
 		// immobilize failed
 		return !target.dead;
+	}
+
+	effect (player, target, ring, activeContestants) {
+		return this.immobilize(player, target, ring, activeContestants);
 	}
 }
 

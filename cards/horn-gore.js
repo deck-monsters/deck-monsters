@@ -23,10 +23,14 @@ class HornGore extends ImmobilizeCard {
 		super({ damageDice, freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
 	}
 
-	get stats () {
+	get mechanics () {
 		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successfull ${this.flavors.spike} hit.
 
-If either ${this.flavors.spike} hits, chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.
+If either ${this.flavors.spike} hits, chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.`;
+	}
+
+	get stats () {
+		return `${this.mechanics}
 
 ${super.stats}`;
 	}
@@ -181,7 +185,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 				return false;
 			}
 
-			return super.effect(player, target, ring, activeContestants);
+			return this.immobilize(player, target, ring, activeContestants);
 		}
 
 		this.emit('miss', {
@@ -212,7 +216,7 @@ HornGore.defaults = {
 	damageDice: '1d4',
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	freedomSavingThrowTargetAttr: 'dex',
+	freedomSavingThrowTargetAttr: 'str',
 	targetProp: 'ac'
 };
 

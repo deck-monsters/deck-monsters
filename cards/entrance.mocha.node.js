@@ -88,7 +88,9 @@ describe('./cards/entrance.js', () => {
 	it('can be instantiated with defaults', () => {
 		const hit = new Hit({ targetProp: entrance.targetProp });
 
-		const stats = `If already immobilized, hit instead.
+		const stats = `Immobilize and hit all opponents.
+
+If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Basilisk, Gladiator
  -2 disadvantage vs Minotaur, Weeping Angel

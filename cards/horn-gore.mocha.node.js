@@ -115,7 +115,7 @@ describe('./cards/horn-gore.js', () => {
 
 	it('can be instantiated with defaults', () => {
 		expect(hornGore).to.be.an.instanceof(HornGoreCard);
-		expect(hornGore.freedomSavingThrowTargetAttr).to.equal('dex');
+		expect(hornGore.freedomSavingThrowTargetAttr).to.equal('str');
 		expect(hornGore.targetProp).to.equal('ac');
 		expect(hornGore.freedomThresholdModifier).to.equal(-4);
 		expect(hornGore.strongAgainstCreatureTypes).to.deep.equal([MINOTAUR, GLADIATOR]);
@@ -123,16 +123,16 @@ describe('./cards/horn-gore.js', () => {
 		expect(hornGore.permittedClassesAndTypes).to.deep.equal([MINOTAUR]);
 		expect(hornGore.doDamageOnImmobilize).to.be.false;
 		expect(hornGore.damageDice).to.equal('1d4');
-		expect(hornGore.stats).to.equal(`Attack twice (once with each horn). +2 to hit and pin for each successfull horn hit.
+		expect(hornGore.stats).to.equal(`Attack twice (once with each horn). +2 to hit and immobilize for each successfull horn hit.
 
-If either horn hits, chance to pin: 1d20 - 6 vs DEX.
+If either horn hits, chance to immobilize: 1d20 vs STR.
 
 If already immobilized, hit instead.
 Hit: 1d20 vs AC / Damage: 1d4
  -2 disadvantage vs Minotaur, Gladiator
  -6 disadvantage vs Basilisk, Jinn, Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's DEX - disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's STR - disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `);
@@ -155,9 +155,9 @@ Turns immobilized resets on curse of loki.
 	it('calculates freedom threshold correctly', () => {
 		expect(hornGore.getFreedomThreshold(player, angel)).to.equal(1);
 		expect(hornGore.getFreedomThreshold(player, basilisk)).to.equal(1);
-		expect(hornGore.getFreedomThreshold(player, gladiator)).to.equal(player.dex - 2);
+		expect(hornGore.getFreedomThreshold(player, gladiator)).to.equal(player.str - 2);
 		expect(hornGore.getFreedomThreshold(player, jinn)).to.equal(1);
-		expect(hornGore.getFreedomThreshold(player, minotaur)).to.equal(player.dex - 2);
+		expect(hornGore.getFreedomThreshold(player, minotaur)).to.equal(player.str - 2);
 
 		angel.encounterModifiers.immobilizedTurns = 1;
 		basilisk.encounterModifiers.immobilizedTurns = 1;
@@ -167,9 +167,9 @@ Turns immobilized resets on curse of loki.
 
 		expect(hornGore.getFreedomThreshold(player, angel)).to.equal(1);
 		expect(hornGore.getFreedomThreshold(player, basilisk)).to.equal(1);
-		expect(hornGore.getFreedomThreshold(player, gladiator)).to.equal(player.dex - 2 - 3);
+		expect(hornGore.getFreedomThreshold(player, gladiator)).to.equal(player.str - 2 - 3);
 		expect(hornGore.getFreedomThreshold(player, jinn)).to.equal(1);
-		expect(hornGore.getFreedomThreshold(player, minotaur)).to.equal(player.dex - 2 - 3);
+		expect(hornGore.getFreedomThreshold(player, minotaur)).to.equal(player.str - 2 - 3);
 
 		angel.encounterModifiers.immobilizedTurns = 2;
 		basilisk.encounterModifiers.immobilizedTurns = 2;
@@ -191,17 +191,17 @@ Turns immobilized resets on curse of loki.
 		expect(hornGore.getAttackRoll(player, jinn).modifier).to.equal(player.dexModifier - 6);
 		expect(hornGore.getAttackRoll(player, minotaur).modifier).to.equal(player.dexModifier - 2);
 
-		expect(hornGore.getImmobilizeRoll(player, angel).modifier).to.equal(player.dexModifier - 6);
-		expect(hornGore.getImmobilizeRoll(player, basilisk).modifier).to.equal(player.dexModifier - 6);
-		expect(hornGore.getImmobilizeRoll(player, gladiator).modifier).to.equal(player.dexModifier - 2);
-		expect(hornGore.getImmobilizeRoll(player, jinn).modifier).to.equal(player.dexModifier - 6);
-		expect(hornGore.getImmobilizeRoll(player, minotaur).modifier).to.equal(player.dexModifier - 2);
+		expect(hornGore.getImmobilizeRoll(player, angel).modifier).to.equal(player.strModifier - 6);
+		expect(hornGore.getImmobilizeRoll(player, basilisk).modifier).to.equal(player.strModifier - 6);
+		expect(hornGore.getImmobilizeRoll(player, gladiator).modifier).to.equal(player.strModifier - 2);
+		expect(hornGore.getImmobilizeRoll(player, jinn).modifier).to.equal(player.strModifier - 6);
+		expect(hornGore.getImmobilizeRoll(player, minotaur).modifier).to.equal(player.strModifier - 2);
 
-		expect(hornGore.getFreedomRoll(player, angel).modifier).to.equal(angel.dexModifier + 6);
-		expect(hornGore.getFreedomRoll(player, basilisk).modifier).to.equal(basilisk.dexModifier + 6);
-		expect(hornGore.getFreedomRoll(player, gladiator).modifier).to.equal(gladiator.dexModifier + 2);
-		expect(hornGore.getFreedomRoll(player, jinn).modifier).to.equal(jinn.dexModifier + 6);
-		expect(hornGore.getFreedomRoll(player, minotaur).modifier).to.equal(minotaur.dexModifier + 2);
+		expect(hornGore.getFreedomRoll(player, angel).modifier).to.equal(angel.strModifier + 6);
+		expect(hornGore.getFreedomRoll(player, basilisk).modifier).to.equal(basilisk.strModifier + 6);
+		expect(hornGore.getFreedomRoll(player, gladiator).modifier).to.equal(gladiator.strModifier + 2);
+		expect(hornGore.getFreedomRoll(player, jinn).modifier).to.equal(jinn.strModifier + 6);
+		expect(hornGore.getFreedomRoll(player, minotaur).modifier).to.equal(minotaur.strModifier + 2);
 	});
 
 	it('hits twice and immobilizes', () => {

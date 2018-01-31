@@ -39,8 +39,9 @@ describe('./cards/forked-stick.js', () => {
 		const forkedStick = new ForkedStick();
 		const hit = new Hit({ targetProp: forkedStick.targetProp });
 
-		const stats = `Attempt to pin your opponent between the branches of a forked stick.
+		const stats = `Attempt to immobilize your opponent by pinning them between the branches of a forked stick.
 
+Chance to immobilize: 1d20 vs STR.
 If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Basilisk, Gladiator

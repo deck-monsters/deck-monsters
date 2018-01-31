@@ -36,17 +36,17 @@ describe('./cards/forked-metal-rod.js', () => {
 		const forkedMetalRod = new ForkedMetalRod();
 		const hit = new Hit({ targetProp: forkedMetalRod.targetProp });
 
-		const stats = `Attack twice (once with each prong). +2 to hit and pin for each successfull prong hit.
+		const stats = `Attack twice (once with each prong). +2 to hit and immobilize for each successfull prong hit.
 
-Chance to pin: 1d20 - 6 vs DEX.
+Chance to immobilize: 1d20 vs STR.
 
 If already immobilized, hit instead.
 ${hit.stats}
- +2 advantage vs Gladiator, Basilisk
- -2 disadvantage vs Minotaur
+ +5 advantage vs Gladiator, Basilisk
+ +1 advantage vs Jinn, Minotaur
 inneffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's AC +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's STR + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;
@@ -56,9 +56,10 @@ Turns immobilized resets on curse of loki.
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.description).to.equal(description);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
-		expect(forkedMetalRod.freedomSavingThrowTargetAttr).to.equal('dex');
+		expect(forkedMetalRod.freedomSavingThrowTargetAttr).to.equal('str');
 		expect(forkedMetalRod.targetProp).to.equal('ac');
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.false;
+		expect(forkedMetalRod.damageDice).to.equal('1d6');
 		expect(forkedMetalRod.stats).to.equal(stats);
 		expect(forkedMetalRod.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
 		expect(forkedMetalRod.weakAgainstCreatureTypes).to.deep.equal([JINN, MINOTAUR]);
