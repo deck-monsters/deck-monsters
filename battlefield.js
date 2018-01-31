@@ -132,7 +132,14 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
 	}))
-	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
+	.then(() => vlad.lookAtCard({ cardName: 'coil' }))
+	.then(() => vlad.lookAtCard({ cardName: 'constrict' }))
+	.then(() => vlad.lookAtCard({ cardName: 'mesmerize' }))
+	.then(() => vlad.lookAtCard({ cardName: 'enthrall' }))
+	.then(() => vlad.lookAtCard({ cardName: 'entrance' }))
+	.then(() => vlad.lookAtCard({ cardName: 'forked stick' }))
+	.then(() => vlad.lookAtCard({ cardName: 'horn gore' }))
+	.then(() => vlad.lookAtCard({ cardName: 'forked metal rod' }))
 	.then(() => vlad.lookAtItem({ itemName: 'the way of the cobra kai' }))
 	.then(() => vlad.lookAtCards())
 	.then(() => vlad.lookAt('player handbook'))

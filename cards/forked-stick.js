@@ -48,14 +48,15 @@ class ForkedStickCard extends ImmobilizeCard {
 	}
 
 	get stats () {
-		return `Attempt to pin your opponent between the branches of a forked stick.
+		return `Attempt to immobilize your opponent by ${this.actions.IMMOBILIZING} them between the branches of a forked stick.
 
+Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.
 ${super.stats}`;
 	}
 }
 
 ForkedStickCard.cardType = 'Forked Stick';
-ForkedStickCard.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' };
+ForkedStickCard.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned', IMMOBILIZING: 'pinning' };
 ForkedStickCard.permittedClassesAndTypes = [BARD, BARBARIAN, FIGHTER];
 ForkedStickCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 ForkedStickCard.weakAgainstCreatureTypes = [JINN, MINOTAUR];

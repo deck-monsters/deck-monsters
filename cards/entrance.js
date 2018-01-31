@@ -14,12 +14,18 @@ class EntranceCard extends EnthrallCard {
 	} = {}) {
 		super({ freedomSavingThrowTargetAttr, icon, ...rest });
 	}
+
+	get stats () {
+		return `Immobilize and hit all opponents.
+
+${super.stats}`;
+	}
 }
 
 EntranceCard.cardType = 'Entrance';
 EntranceCard.actions = { IMMOBILIZE: 'entrance', IMMOBILIZES: 'entrances', IMMOBILIZED: 'entranced' };
 EntranceCard.probability = RARE.probability;
-EntranceCard.description = `You strut and preen. Your painful beauty hits and ${EntranceCard.actions.IMMOBILIZES} everyone, except yourself.`;
+EntranceCard.description = `You strut and preen. Your painful beauty ${EntranceCard.actions.IMMOBILIZES} and hits everyone, except yourself.`;
 EntranceCard.level = 3;
 EntranceCard.cost = PRICEY.cost;
 EntranceCard.notForSale = true;

@@ -21,6 +21,12 @@ class MesmerizeCard extends ImmobilizeCard {
 		super({ freedomSavingThrowTargetAttr, icon, ...rest });
 	}
 
+	get stats () {
+		return `Immobilize everyone.
+
+${super.stats}`;
+	}
+
 	effect (player, target, ring, activeContestants) {
 		return Promise.map(activeContestants, ({ monster }) => super.effect(player, monster, ring, activeContestants))
 			.then(() => !target.dead);

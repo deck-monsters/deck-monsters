@@ -22,7 +22,7 @@ class CoilCard extends ImmobilizeCard {
 	}
 
 	get stats () {
-		return `Immobilize and hit opponent by coiling your serpentine body around them and squeezing, or hit instead if opponent is immune.
+		return `Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
 ${super.stats}`;
 	}

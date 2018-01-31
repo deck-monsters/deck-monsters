@@ -32,6 +32,12 @@ class EnthrallCard extends ImmobilizeCard {
 		});
 	}
 
+	get stats () {
+		return `Immobilize all opponents.
+
+${super.stats}`;
+	}
+
 	getAttackRoll (player, target) {
 		return this.mesmerizeCard.getAttackRoll(player, target);
 	}

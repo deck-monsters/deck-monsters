@@ -36,9 +36,9 @@ class ForkedMetalRodCard extends HornGoreCard {
 	}
 
 	get stats () {
-		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and ${this.actions.IMMOBILIZE} for each successfull ${this.flavors.spike} hit.
+		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successfull ${this.flavors.spike} hit.
 
-Chance to ${this.actions.IMMOBILIZE}: 1d20 - 6 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.
+Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.
 
 ${this.immobilizeCard.stats}`;
 	}
