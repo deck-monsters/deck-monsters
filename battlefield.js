@@ -96,6 +96,7 @@ return Promise
 	}))
 	// .then(() => vlad.buyItems())
 	// .then(() => vlad.giveItemsToMonster())
+	// .then(() => vlad.useItems())
 	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
 	.then(() => vlad.lookAtItem({ itemName: 'the way of the cobra kai' }))
 	.then(() => vlad.lookAtItems())
