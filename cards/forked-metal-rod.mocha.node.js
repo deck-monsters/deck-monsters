@@ -42,10 +42,10 @@ Chance to pin: 1d20 - 6 vs DEX.
 
 ${hit.stats}
  +2 advantage vs Gladiator, Basilisk
- -2 advantage vs Minotaur
+ -2 disadvantage vs Minotaur
 inneffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's AC + advantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's AC +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;

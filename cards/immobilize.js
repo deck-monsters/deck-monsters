@@ -166,14 +166,14 @@ ${ongoingDamageText}`;
 		return roll({ primaryDice: this.attackDice, modifier: statsBonus + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
-	getImmobilizeRoll (immoblizer, immoblized) {
-		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immoblizer.dexModifier : immoblizer[`${this.freedomSavingThrowTargetAttr}Modifier`];
-		return roll({ primaryDice: this.attackDice, modifier: statsBonus + this.getAttackModifier(immoblized), bonusDice: immoblizer.bonusAttackDice, crit: true });
+	getImmobilizeRoll (immobilizer, immobilized) {
+		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immobilizer.dexModifier : immobilizer[`${this.freedomSavingThrowTargetAttr}Modifier`];
+		return roll({ primaryDice: this.attackDice, modifier: statsBonus + this.getAttackModifier(immobilized), bonusDice: immobilizer.bonusAttackDice, crit: true });
 	}
 
-	getFreedomRoll (immoblizer, immoblized) {
-		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immoblized.dexModifier : immoblized[`${this.freedomSavingThrowTargetAttr}Modifier`];
-		return roll({ primaryDice: this.attackDice, modifier: statsBonus - this.getAttackModifier(immoblized), bonusDice: immoblized.bonusAttackDice, crit: true });
+	getFreedomRoll (immobilizer, immobilized) {
+		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immobilized.dexModifier : immobilized[`${this.freedomSavingThrowTargetAttr}Modifier`];
+		return roll({ primaryDice: this.attackDice, modifier: statsBonus - this.getAttackModifier(immobilized), bonusDice: immobilized.bonusAttackDice, crit: true });
 	}
 
 	// Most of the time this should be an auto-success since they get a chance to break free on their next turn

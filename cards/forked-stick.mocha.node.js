@@ -44,10 +44,10 @@ describe('./cards/forked-stick.js', () => {
 If immobilized, then hit.
 ${hit.stats}
  +2 advantage vs Basilisk, Gladiator
- -2 advantage vs Jinn, Minotaur
+ -2 disadvantage vs Jinn, Minotaur
 inneffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's STR + advantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's STR +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;

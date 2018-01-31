@@ -90,10 +90,10 @@ describe('./cards/mesmerize.js', () => {
 
 		const stats = `${hit.stats}
  +2 advantage vs Basilisk, Gladiator
- -2 advantage vs Minotaur, Weeping Angel
+ -2 disadvantage vs Minotaur, Weeping Angel
 inneffective against Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's INT + advantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's INT +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;
@@ -108,7 +108,7 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
 		expect(mesmerize.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
 		expect(mesmerize.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
-		expect(mesmerize.immoblizeCheck()).to.be.true; // always immobilizes
+		expect(mesmerize.immobilizeCheck()).to.be.true; // always immobilizes
 	});
 
 	it('can be instantiated with options', () => {
