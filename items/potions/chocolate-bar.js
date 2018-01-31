@@ -2,6 +2,7 @@
 
 const HealingPotion = require('./healing');
 
+const { capitalize } = require('../../helpers/capitalize');
 const { VERY_CHEAP } = require('../../helpers/costs');
 
 class ChocolateBar extends HealingPotion {
@@ -12,7 +13,7 @@ class ChocolateBar extends HealingPotion {
 	}
 
 	healingMessage (monster) {
-		return `${monster.givenName} unwraps ${monster.pronouns.his} ${this.icon} ${this.itemType} and bites in. ${monster.pronouns.he}'s feeling better already.`;
+		return `${monster.givenName} unwraps ${monster.pronouns.his} ${this.icon} ${this.itemType} and bites in. ${capitalize(monster.pronouns.he)}'s feeling better already.`;
 	}
 }
 
