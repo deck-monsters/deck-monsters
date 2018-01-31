@@ -285,8 +285,8 @@ ${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronoun
 			return super.effect(player, target, ring, activeContestants);
 		}
 
-		const attackSuccess = this.immobilizeCheck(player, target, ring, activeContestants);
-		if (attackSuccess) {
+		const immobilizeSuccess = this.immobilizeCheck(player, target, ring, activeContestants);
+		if (immobilizeSuccess) {
 			this.emitImmobilizeNarrative(player, target);
 
 			const immobilizeEffect = this.getImmobilizeEffect(player, target, ring, activeContestants);

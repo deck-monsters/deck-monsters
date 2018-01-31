@@ -20,31 +20,31 @@ class ForkedStickCard extends ImmobilizeCard {
 
 	// do not auto-succeed since this already hits twice
 	immobilizeCheck (player, target) {
-		const attackRoll = this.getImmobilizeRoll(player, target);
-		const attackSuccess = this.checkSuccess(attackRoll, target[this.targetProp]);
+		const immobilizeRoll = this.getImmobilizeRoll(player, target);
+		const { success: immobilizeSuccess } = this.checkSuccess(immobilizeRoll, target[this.targetProp]);
 
 		const failMessage = `${this.actions.IMMOBILIZE} failed.`;
-		const outcome = attackSuccess.success ? `${this.actions.IMMOBILIZE} succeeded!` : failMessage;
+		const outcome = immobilizeSuccess ? `${this.actions.IMMOBILIZE} succeeded!` : failMessage;
 
 		this.emit('rolled', {
 			reason: `to see if ${player.pronouns.he} ${this.actions.IMMOBILIZES} ${target.givenName}.`,
 			card: this,
-			roll: attackRoll,
+			roll: immobilizeRoll,
 			who: player,
 			outcome,
-			vs: this.targetProp
+			vs: target[this.targetProp]
 		});
 
-		if (!attackSuccess) {
+		if (!immobilizeSuccess) {
 			this.emit('miss', {
-				attackResult: attackRoll.result,
-				attackRoll,
+				attackResult: immobilizeRoll.result,
+				immobilizeRoll,
 				player,
 				target
 			});
 		}
 
-		return attackSuccess;
+		return immobilizeSuccess;
 	}
 
 	get stats () {
