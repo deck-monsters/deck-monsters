@@ -95,7 +95,7 @@ inneffective against Jinn
 
 Opponent breaks free by rolling 1d20 vs immobilizer's INT +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
-Turns immobilized resets on curse of loki.
+Immobilized turns resets on curse of loki.
 `;
 
 		expect(enthrall).to.be.an.instanceof(Enthrall);

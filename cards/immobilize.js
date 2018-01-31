@@ -115,7 +115,7 @@ class ImmobilizeCard extends HitCard {
 ${strModifiers}
 Opponent breaks free by rolling 1d20 vs immobilizer's ${this.freedomSavingThrowTargetAttr.toUpperCase()} ${advantageModifier} - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
-Turns immobilized resets on curse of loki.
+Immobilized turns resets on curse of loki.
 ${ongoingDamageText}`;
 	}
 

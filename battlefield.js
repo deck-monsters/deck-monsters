@@ -76,15 +76,23 @@ return Promise
 		vlad = character;
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 		vladCards = [
-			new MesmerizeCard(),
 			new CoilCard(),
-			new ForkedStickCard(),
-			new EntranceCard(),
-			new ConstrictCard(),
-			new ForkedMetalRodCard(),
-			new EnthrallCard(),
-			new HitCard(),
-			new HitCard()
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard()
+			// new CoilCard(),
+			// new ForkedStickCard(),
+			// new EntranceCard(),
+			// new ConstrictCard(),
+			// new ForkedMetalRodCard(),
+			// new EnthrallCard(),
+			// new HitCard(),
+			// new HitCard()
 		];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
@@ -96,15 +104,15 @@ return Promise
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
 		charCards = [
-			new MesmerizeCard(),
 			new CoilCard(),
-			new ForkedStickCard(),
-			new EntranceCard(),
-			new ConstrictCard(),
-			new ForkedMetalRodCard(),
-			new EnthrallCard(),
-			new HitCard(),
-			new HitCard()
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard(),
+			new CoilCard()
 		];
 	})
 	// .then(() => vlad.spawnMonster())

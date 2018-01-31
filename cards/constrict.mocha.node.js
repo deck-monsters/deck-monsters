@@ -43,7 +43,7 @@ ${hit.stats}
 
 Opponent breaks free by rolling 1d20 vs immobilizer's DEX +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
-Turns immobilized resets on curse of loki.
+Immobilized turns resets on curse of loki.
 
 -2 hp each turn immobilized.`;
 

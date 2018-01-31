@@ -47,7 +47,7 @@ inneffective against Weeping Angel
 
 Opponent breaks free by rolling 1d20 vs immobilizer's AC +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
-Turns immobilized resets on curse of loki.
+Immobilized turns resets on curse of loki.
 `;
 
 		const description = 'A dangerously sharp forked metal rod fashioned for Gladiator and Basilisk-hunting.';
