@@ -5,6 +5,7 @@ const BaseScroll = require('./base');
 
 const { ABUNDANT } = require('../../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
+const { capitalize } = require('../../helpers/capitalize');
 
 const getTicketNumbers = () => [random(11, 99), random(11, 55), random(11, 99), random(11, 99), random(11, 99)];
 const getWinnings = (matches, cost) => Math.round(Math.pow(10, (0.6 * matches)) * cost);
@@ -48,7 +49,7 @@ class LotteryTicket extends BaseScroll {
 
 "${winningNumbers.join('" "')}"
 
-🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${character.pronouns.he} has won ${winnings} coins!
+🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${capitalize(character.pronouns.he)} has won ${winnings} coins!
 
 The lottery agent hands ${character.givenName} a heavy sack containing ${winnings} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
 					});

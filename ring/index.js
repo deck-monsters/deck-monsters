@@ -175,24 +175,29 @@ class Ring extends BaseClass {
 	}
 
 	look (channel) {
-		const ringContentsDisplay = this.contestants.reduce((ringContents, contestant) => {
-			const contestantDisplay = monsterCard(contestant.character, true);
-			const monsterDisplay = monsterCard(contestant.monster, true);
-			return `${ringContents} ${contestantDisplay} sent the following monster into the ring: ${monsterDisplay}`;
-		}, '');
-
-		if (ringContentsDisplay) {
-			return Promise
-				.resolve()
-				.then(() => channel({
-					announce: ringContentsDisplay
-				}));
+		if (this.contestants.length < 1) {
+			return Promise.reject(channel({
+				announce: 'The ring is empty',
+				delay: 'short'
+			}));
 		}
 
-		return Promise.reject(channel({
-			announce: 'The ring is empty',
-			delay: 'short'
-		}));
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => Promise.each(this.contestants, (contestant) => {
+				const contestantDisplay = monsterCard(contestant.character, true);
+				const monsterDisplay = monsterCard(contestant.monster, true);
+
+				channelManager.queueMessage({
+					announce:
+`${contestantDisplay}
+Sent the following monster into the ring:
+${monsterDisplay}`,
+					channel,
+					channelName
+				});
+			}))
+			.then(() => channelManager.sendMessages());
 	}
 
 	startEncounter () {
