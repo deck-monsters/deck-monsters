@@ -97,6 +97,18 @@ Strategy: ${getStrategyDescription(this.targetingStrategy)}`
 		};
 	}
 
+	startEncounter (ring) {
+		super.startEncounter(ring);
+
+		this.items.forEach(item => item.startEncounter && item.startEncounter({ monster: this, ring }));
+	}
+
+	endEncounter () {
+		this.items.forEach(item => item.endEncounter && item.endEncounter({ monster: this, ring: this.encounter.ring }));
+
+		super.endEncounter();
+	}
+
 	look (channel, inDetail) {
 		return Promise
 			.resolve()
