@@ -154,8 +154,12 @@ ${ongoingDamageText}`;
 		return roll({ primaryDice: this.attackDice, modifier: player[`${this.targetProp}Modifier`] + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
-	getFreedomRoll (player, target) {
+	getImmobilizeRoll (player, target) {
 		return roll({ primaryDice: this.attackDice, modifier: player[`${this.freedomSavingThrowTargetAttr}Modifier`] + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
+	}
+
+	getFreedomRoll (player, target) {
+		return roll({ primaryDice: this.attackDice, modifier: player[`${this.freedomSavingThrowTargetAttr}Modifier`] - this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	// Most of the time this should be an auto-success since they get a chance to break free on their next turn
