@@ -477,6 +477,11 @@ Battles won: ${this.battles.wins}`;
 	addItem (item) {
 		this.items = sortItemsAlphabetically([...this.items, item]);
 
+		if (item.onAdded) {
+			item.onAdded(this);
+		}
+
+		item.emit('added', { creature: this });
 		this.emit('itemAdded', { item });
 	}
 
@@ -486,6 +491,11 @@ Battles won: ${this.battles.wins}`;
 		if (itemIndex >= 0) {
 			const foundItem = this.items.splice(itemIndex, 1)[0];
 
+			if (foundItem.onRemoved) {
+				foundItem.onRemoved(this);
+			}
+
+			foundItem.emit('removed', { creature: this });
 			this.emit('itemRemoved', { item: foundItem });
 
 			return foundItem;

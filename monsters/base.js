@@ -100,11 +100,11 @@ Strategy: ${getStrategyDescription(this.targetingStrategy)}`
 	startEncounter (ring) {
 		super.startEncounter(ring);
 
-		this.items.forEach(item => item.startEncounter && item.startEncounter({ monster: this, ring }));
+		this.items.forEach(item => item.onStartEncounter && item.onStartEncounter({ monster: this, ring }));
 	}
 
 	endEncounter () {
-		this.items.forEach(item => item.endEncounter && item.endEncounter({ monster: this, ring: this.encounter.ring }));
+		this.items.forEach(item => item.onEndEncounter && item.onEndEncounter({ monster: this, ring: this.encounter.ring }));
 
 		super.endEncounter();
 	}
