@@ -238,7 +238,7 @@ ${ongoingDamageText}`;
 					target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
 
 					this.emit('narration', {
-						narration: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}. ${target.pronouns.he} pushes the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stands prepared to fight`
+						narration: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}. ${capitalize(target.pronouns.he)} pushes the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stands prepared to fight`
 					});
 				}
 			}
