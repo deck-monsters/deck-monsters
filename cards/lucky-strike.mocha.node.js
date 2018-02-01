@@ -103,7 +103,7 @@ describe('./cards/lucky-strike.js', () => {
 		expect(missNarrative).to.equal(`(${failRoll.result}) ${player.givenName} was sure ${player.pronouns.he} was going to miss ${target.givenName}
 (${failRoll.result}) and ${player.pronouns.he} did.`);
 		expect(luckNarrative).to.equal(`(${failRoll.result}) ${player.givenName} was sure ${player.pronouns.he} was going to miss ${target.givenName}
-(${successRoll.naturalRoll.result}) but ${target.givenName} fails to block your blow.`);
-		expect(hitNarrative).to.equal(`(${successRoll.naturalRoll.result}) ${target.givenName} fails to block your blow.`);
+(${successRoll.naturalRoll.result}) but ${target.givenName} fails to block ${player.pronouns.his} blow.`);
+		expect(hitNarrative).to.equal(`(${successRoll.naturalRoll.result}) ${target.givenName} fails to block ${player.pronouns.his} blow.`);
 	});
 });

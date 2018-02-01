@@ -172,7 +172,8 @@ ${ongoingDamageText}`;
 					});
 
 					const freedomRoll = immobilize.getFreedomRoll(player, target);
-					const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(freedomRoll, this.getFreedomThreshold(player, target));
+					const freedomThreshold = this.getFreedomThreshold(player, target);
+					const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(freedomRoll, freedomThreshold);
 					let commentary;
 
 					if (strokeOfLuck) {
@@ -185,12 +186,12 @@ ${ongoingDamageText}`;
 					}
 
 					this.emit('rolled', {
-						reason: `and needs ${this.getFreedomThreshold(player, target) + 1} or higher to break free.`,
+						reason: `and needs ${freedomThreshold + 1} or higher to break free.`,
 						card: this,
 						roll: freedomRoll,
 						who: target,
 						outcome: success ? commentary || `Success! ${target.givenName} is freed.` : commentary || `${target.givenName} remains ${this.actions.IMMOBILIZED} and will miss a turn.`,
-						vs: this.getFreedomThreshold(player, target)
+						vs: freedomThreshold
 					});
 
 					if (success) {

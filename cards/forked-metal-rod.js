@@ -2,8 +2,6 @@
 
 const HornGoreCard = require('./horn-gore');
 
-const ImmobilizeCard = require('./immobilize');
-
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = 3;
 const STARTING_DEX_MODIFIER = 3;
 

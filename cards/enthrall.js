@@ -25,7 +25,7 @@ class EnthrallCard extends ImmobilizeCard {
 		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
 	}
 
-	get mechanics () {
+	get mechanics () { // eslint-disable-line class-methods-use-this
 		return 'Immobilize all opponents.';
 	}
 
