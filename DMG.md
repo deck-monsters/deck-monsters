@@ -9,7 +9,53 @@
 
 *The Card Catalogue:*
 
-Bad Batch, Basic Shield, Battle Focus, Berserk, Blast, Blast II, Blink, Harden, Brain Drain, Camouflage Vest, Cloak of Invisibility, Coil, Constrict, Soften, Delayed Hit, Enchanted Faceswap, Enthrall, Entrance, Feline Companion, Fight or Flight, Fists of Villainy, Fists of Virtue, Flee, Forked Metal Rod, Forked Stick, Heal, Hit, Hit Harder, Horn Gore, Horn Swipe, Iocane, The Kalevala, Lucky Strike, Mesmerize, Pick Pocket, Pound, 1993-09-7202 18:58, Random Play, Rehit, Sandstorm, Scotch, Survival Knife, Thick Skin, Turkey Thigh, Vengeful Rampage, Whiskey Shot, Wooden Spear
+Bad Batch
+Basic Shield
+Battle Focus
+Berserk
+Blast
+Blast II
+Blink
+Harden
+Brain Drain
+Camouflage Vest
+Cloak of Invisibility
+Coil
+Constrict
+Soften
+Delayed Hit
+Enchanted Faceswap
+Enthrall
+Entrance
+Feline Companion
+Fight or Flight
+Fists of Villainy
+Fists of Virtue
+Flee
+Forked Metal Rod
+Forked Stick
+Heal
+Hit
+Hit Harder
+Horn Gore
+Horn Swipe
+Iocane
+The Kalevala
+Lucky Strike
+Mesmerize
+Pick Pocket
+Pound
+1993-09-7202 18:58
+Random Play
+Rehit
+Sandstorm
+Scotch
+Survival Knife
+Thick Skin
+Turkey Thigh
+Vengeful Rampage
+Whiskey Shot
+Wooden Spear
 ```
 
 ```
@@ -1117,8 +1163,26 @@ Bad Batch, Basic Shield, Battle Focus, Berserk, Blast, Blast II, Blink, Harden, 
 ```
 *The Item Catalogue:*
 
-Chocolate Bar, Potion of Healing, Swiss Chocolate, Chaos Theory for Beginners According to Clever Hans, Chaos Theory for Beginners, The Way of the Cobra Kai According to Clever Hans, The Way of the Cobra Kai, House Lannister According To Clever Hans, House Lannister, The Ballad of La Carambada According to Clever Hans, The Ballad of La Carambada, Lottery Ticket, The Gospel According to Clever Hans, The Gospel According to Parsifal, The Annals of Qin Shi Huang According to Clever Hans, The Annals of Qin Shi Huang, The Tale of Sir Robin According to Clever Hans, The Tale of Sir Robin, Sorting Hat
-		```
+Chocolate Bar
+Potion of Healing
+Swiss Chocolate
+Chaos Theory for Beginners According to Clever Hans
+Chaos Theory for Beginners
+The Way of the Cobra Kai According to Clever Hans
+The Way of the Cobra Kai
+House Lannister According To Clever Hans
+House Lannister
+The Ballad of La Carambada According to Clever Hans
+The Ballad of La Carambada
+Lottery Ticket
+The Gospel According to Clever Hans
+The Gospel According to Parsifal
+The Annals of Qin Shi Huang According to Clever Hans
+The Annals of Qin Shi Huang
+The Tale of Sir Robin According to Clever Hans
+The Tale of Sir Robin
+Sorting Hat
+```
 ```
 ==================================
 | 🍫  Chocolate Bar  ○

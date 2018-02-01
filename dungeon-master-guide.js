@@ -22,7 +22,7 @@ const generateDungeonMasterGuide = (output) => {
 
 *The Card Catalogue:*
 
-${cardList.join(', ')}
+${cardList.join('\n')}
 \`\`\`
 `;
 
@@ -32,8 +32,8 @@ ${cardList.join(', ')}
 		.then(() => output(`\`\`\`
 *The Item Catalogue:*
 
-${itemList.join(', ')}
-		\`\`\``))
+${itemList.join('\n')}
+\`\`\``))
 		.then(() => Promise.each(allItems, Item => output(itemCard(new Item(), true))));
 };
 
