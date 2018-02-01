@@ -54,7 +54,7 @@ class PlayerHandbook extends BaseClass {
 
     *The Ring*
 
-    The glorious crucible of your monsters destiny.
+    The glorious crucible of your monster's destiny.
 
     \`send monster to the ring\` - Select a monster and send it to the ring
 
