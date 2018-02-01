@@ -208,7 +208,7 @@ ${ongoingDamageText}`;
 							target.hit(this.ongoingDamage, player, this);
 						}
 
-						card.play = () => Promise.resolve(true);
+						card.play = () => Promise.resolve(!target.dead);
 					}
 				} else {
 					target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
