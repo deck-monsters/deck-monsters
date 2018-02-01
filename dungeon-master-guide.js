@@ -3,17 +3,17 @@ const Promise = require('bluebird');
 
 const { actionCard, itemCard } = require('./helpers/card');
 
-const BaseClass = require('./shared/baseClass');
-
 const allCards = require('./cards/helpers/all.js');
-const cardList = allCards.map(Card => `${new Card().cardType}`);
 const allItems = require('./items/helpers/all.js');
-const itemList = allItems.map(Item => `${new Item().itemType}`);
+
+const cardList = allCards.map(({ cardType }) => cardType);
+const itemList = allItems.map(({ itemType }) => itemType);
 
 const dungeonMasterGuide = (channel) => {
 	const { channelManager, channelName } = channel;
 
-	const header = `
+	const header =
+`
 \`\`\`
 				██████╗ ███╗   ███╗ ██████╗
 				██╔══██╗████╗ ████║██╔════╝
@@ -22,9 +22,9 @@ const dungeonMasterGuide = (channel) => {
 				██████╔╝██║ ╚═╝ ██║╚██████╔╝
 				╚═════╝ ╚═╝     ╚═╝ ╚═════╝
 
-	*The Card Catalogue:*
+*The Card Catalogue:*
 
-	${cardList.join(', ')}
+${cardList.join(', ')}
 \`\`\`
 `;
 
@@ -40,8 +40,9 @@ const dungeonMasterGuide = (channel) => {
 			channelName
 		})))
 		.then(() => channelManager.queueMessage({
-			announce: `\`\`\`
-	*The Item Catalogue:*
+			announce:
+`\`\`\`
+*The Item Catalogue:*
 
 ${itemList.join(', ')}
 \`\`\``,

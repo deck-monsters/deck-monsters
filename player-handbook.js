@@ -1,10 +1,9 @@
 const Promise = require('bluebird');
 
-const playerHandbook = (channel) => {
-	return Promise
-		.resolve()
-		.then(() => channel({
-			announce: `
+const playerHandbook = channel => Promise
+	.resolve()
+	.then(() => channel({
+		announce: `
 \`\`\`
 	 ____    ___
 	/\\  _\`\\ /\\_ \\
@@ -99,7 +98,6 @@ const playerHandbook = (channel) => {
 
 \`\`\`
 `
-		}));
-};
+	}));
 
 module.exports = playerHandbook;
