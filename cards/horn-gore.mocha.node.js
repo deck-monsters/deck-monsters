@@ -197,11 +197,11 @@ Turns immobilized resets on curse of loki.
 		expect(hornGore.getImmobilizeRoll(player, jinn).modifier).to.equal(player.strModifier - 6);
 		expect(hornGore.getImmobilizeRoll(player, minotaur).modifier).to.equal(player.strModifier - 2);
 
-		expect(hornGore.getFreedomRoll(player, angel).modifier).to.equal(angel.strModifier + 6);
-		expect(hornGore.getFreedomRoll(player, basilisk).modifier).to.equal(basilisk.strModifier + 6);
-		expect(hornGore.getFreedomRoll(player, gladiator).modifier).to.equal(gladiator.strModifier + 2);
-		expect(hornGore.getFreedomRoll(player, jinn).modifier).to.equal(jinn.strModifier + 6);
-		expect(hornGore.getFreedomRoll(player, minotaur).modifier).to.equal(minotaur.strModifier + 2);
+		expect(hornGore.getFreedomRoll(player, angel).modifier).to.equal(angel.strModifier);
+		expect(hornGore.getFreedomRoll(player, basilisk).modifier).to.equal(basilisk.strModifier);
+		expect(hornGore.getFreedomRoll(player, gladiator).modifier).to.equal(gladiator.strModifier);
+		expect(hornGore.getFreedomRoll(player, jinn).modifier).to.equal(jinn.strModifier);
+		expect(hornGore.getFreedomRoll(player, minotaur).modifier).to.equal(minotaur.strModifier);
 	});
 
 	it('hits twice and immobilizes', () => {
