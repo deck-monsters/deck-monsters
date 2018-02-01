@@ -448,7 +448,7 @@ class Game extends BaseClass {
 
 			// Is it a monster manual?
 			if (thing.match(/monster(?:s)? manual/i)) {
-				return monsterManual(channel);
+				return monsterManual({ channel });
 			}
 
 			// Is it a player handbook?
