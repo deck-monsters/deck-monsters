@@ -151,7 +151,7 @@ ${ongoingDamageText}`;
 
 	getFreedomRoll (immobilizer, immobilized) {
 		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immobilized.dexModifier : immobilized[`${this.freedomSavingThrowTargetAttr}Modifier`];
-		return roll({ primaryDice: this.attackDice, modifier: statsBonus - this.getAttackModifier(immobilized), bonusDice: immobilized.bonusAttackDice, crit: true });
+		return roll({ primaryDice: this.attackDice, modifier: statsBonus, bonusDice: immobilized.bonusAttackDice, crit: true });
 	}
 
 	// Most of the time this should be an auto-success since they get a chance to break free on their next turn

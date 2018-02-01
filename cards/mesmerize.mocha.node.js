@@ -167,12 +167,12 @@ Turns immobilized resets on curse of loki.
 		expect(mesmerize.getImmobilizeRoll(player, jinn).modifier).to.equal(player.intModifier);
 		expect(mesmerize.getImmobilizeRoll(player, minotaur).modifier).to.equal(player.intModifier - 2);
 
-		expect(mesmerize.getFreedomRoll(player, player).modifier).to.equal(player.intModifier + 2);
-		expect(mesmerize.getFreedomRoll(player, angel).modifier).to.equal(angel.intModifier + 2);
-		expect(mesmerize.getFreedomRoll(player, basilisk).modifier).to.equal(basilisk.intModifier - 2);
-		expect(mesmerize.getFreedomRoll(player, gladiator).modifier).to.equal(gladiator.intModifier - 2);
+		expect(mesmerize.getFreedomRoll(player, player).modifier).to.equal(player.intModifier);
+		expect(mesmerize.getFreedomRoll(player, angel).modifier).to.equal(angel.intModifier);
+		expect(mesmerize.getFreedomRoll(player, basilisk).modifier).to.equal(basilisk.intModifier);
+		expect(mesmerize.getFreedomRoll(player, gladiator).modifier).to.equal(gladiator.intModifier);
 		expect(mesmerize.getFreedomRoll(player, jinn).modifier).to.equal(jinn.intModifier);
-		expect(mesmerize.getFreedomRoll(player, minotaur).modifier).to.equal(minotaur.intModifier + 2);
+		expect(mesmerize.getFreedomRoll(player, minotaur).modifier).to.equal(minotaur.intModifier);
 	});
 
 	it('immobilizes everyone on play', () => mesmerize
