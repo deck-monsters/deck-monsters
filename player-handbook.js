@@ -56,13 +56,13 @@ class PlayerHandbook extends BaseClass {
 
     The glorious crucible of your monsters destiny.
 
-    \`send monster to ring\` - Select a monster and send it to the ring
+    \`send monster to the ring\` - Select a monster and send it to the ring
 
-    \`send [monster name] to ring\` - Send provided monster to the ring
+    \`send [monster name] to the ring\` - Send provided monster to the ring
 
-    \`summon [monster name] from ring\` - Calls provided monster back from the ring
+    \`summon [monster name] from the ring\` - Calls provided monster back from the ring
 
-    \`look at ring\` - Take a peak at the ring to see which monsters are there and who sent them
+    \`look at the ring\` - Take a peak at the ring to see which monsters are there and who sent them
 
     *Cards*
 
@@ -80,11 +80,15 @@ class PlayerHandbook extends BaseClass {
 
     \`use item\` - Use one of your items on yourself
 
-    \`give item to [monster name]\` - Give an item to one of your monsters
+    \`use [item name]\` - Use the provided item on yourself
 
-    \`take item from [monster name]\` - Take an item from one of your monsters
+    Any of these can be used with [item name] and/or [monster name] as a shortcut to specify the item and/or monster.
 
-    \`use item on [monster name]\` - Use one of your items on yourself
+    \`give item to monster\` - Give an item to the provided monster
+
+    \`take item from monster\` - Take an item from one of your monsters
+
+    \`use item on monster\` - Use one of your items on yourself
 
     *The Shop*
 

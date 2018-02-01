@@ -1,20 +1,21 @@
 /* eslint-disable class-methods-use-this, max-len */
+const Promise = require('bluebird');
+
 const { actionCard, itemCard } = require('./helpers/card');
 
 const BaseClass = require('./shared/baseClass');
 
 const allCards = require('./cards/helpers/all.js');
+const cardList = allCards.map(Card => `${new Card().cardType}`);
 const allItems = require('./items/helpers/all.js');
-const cardCatalogue = allCards.reduce((catalogue, Card) => catalogue + `${actionCard(new Card(), true)}\n\n`, '');
-const itemCatalogue = allItems.reduce((catalogue, Card) => catalogue + `${itemCard(new Card(), true)}\n\n`, '');
+const itemList = allItems.map(Item => `${new Item().itemType}`);
 
 
 class DungeonMasterGuide extends BaseClass {
 	look (channel) {
-		return Promise
-			.resolve()
-			.then(() => channel({
-				announce: `
+		const { channelManager, channelName } = channel;
+
+		const header = `
 \`\`\`
 				██████╗ ███╗   ███╗ ██████╗
 				██╔══██╗████╗ ████║██╔════╝
@@ -24,17 +25,38 @@ class DungeonMasterGuide extends BaseClass {
 				╚═════╝ ╚═╝     ╚═╝ ╚═════╝
 
 	*The Card Catalogue:*
-\`\`\`
 
-${cardCatalogue}
-
+	${cardList.join(', ')}
 \`\`\`
+`;
+
+		return Promise.resolve()
+			.then(() => channelManager.queueMessage({
+				announce: header,
+				channel,
+				channelName
+			}))
+			.then(() => Promise.each(allCards, Card => channelManager.queueMessage({
+				announce: actionCard(new Card(), true),
+				channel,
+				channelName
+			})))
+			.then(() => channelManager.queueMessage({
+				announce: `\`\`\`
 	*The Item Catalogue:*
-\`\`\`
 
-${itemCatalogue}
-`
-			}));
+	${itemList.join(', ')}
+\`\`\``,
+				channel,
+				channelName
+			}))
+			.then(() => Promise.each(allItems, Card => channelManager.queueMessage({
+				announce: itemCard(new Card(), true),
+				channel,
+				channelName
+			})))
+			.then(() => channelManager.sendMessages());
+
 	}
 }
 
