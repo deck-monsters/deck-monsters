@@ -102,6 +102,8 @@ return Promise
 	.then(() => vlad.lookAtItems())
 	.then(() => vlad.lookAtCards())
 	.then(() => vlad.lookAt('player handbook'))
+	.then(() => vlad.lookAt('dungeon master guide'))
+	.then(() => vlad.lookAt('monster manual'))
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())

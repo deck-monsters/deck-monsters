@@ -87,11 +87,11 @@ class BaseItem extends BaseClass {
 			});
 	}
 
-	look (channel) {
+	look (channel, verbose) {
 		return Promise
 			.resolve()
 			.then(() => channel({
-				announce: itemCard(this)
+				announce: itemCard(this, verbose)
 			}));
 	}
 }

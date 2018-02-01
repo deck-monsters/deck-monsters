@@ -537,7 +537,7 @@ Battles won: ${this.battles.wins}`;
 		const { channelManager, channelName } = channel;
 		return Promise.resolve()
 			.then(() => Promise.each(getUniqueItems(sortedItems), item => channelManager.queueMessage({
-				announce: itemCard(item),
+				announce: itemCard(item, true),
 				channel,
 				channelName
 			})))
