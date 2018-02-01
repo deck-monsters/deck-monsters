@@ -21,13 +21,6 @@ class ForkedMetalRodCard extends HornGoreCard {
 		...rest
 	} = {}) {
 		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
-
-		this.immobilizeCard = new ImmobilizeCard({
-			strongAgainstCreatureTypes: this.strongAgainstCreatureTypes,
-			targetProp: targetProp || this.constructor.defaults.targetProp,
-			freedomSavingThrowTargetAttr: freedomSavingThrowTargetAttr || this.constructor.freedomSavingThrowTargetAttr
-		});
-		this.immobilizeCard.immobilizeCheck = this.immobilizeCheck;
 	}
 
 	resetImmobilizeStrength () {

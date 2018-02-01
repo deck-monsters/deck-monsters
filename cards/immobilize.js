@@ -18,10 +18,7 @@ class ImmobilizeCard extends HitCard {
 		freedomSavingThrowTargetAttr,
 		freedomThresholdModifier,
 		ongoingDamage,
-		strongAgainstCreatureTypes,
 		targetProp,
-		uselessAgainstCreatureTypes,
-		weakAgainstCreatureTypes,
 		...rest
 	} = {}) {
 		super({ icon, targetProp, ...rest });
@@ -31,10 +28,7 @@ class ImmobilizeCard extends HitCard {
 			freedomSavingThrowTargetAttr,
 			freedomThresholdModifier,
 			ongoingDamage,
-			strongAgainstCreatureTypes,
-			targetProp,
-			uselessAgainstCreatureTypes,
-			weakAgainstCreatureTypes
+			targetProp
 		});
 	}
 
@@ -51,33 +45,15 @@ class ImmobilizeCard extends HitCard {
 	}
 
 	get strongAgainstCreatureTypes () {
-		return this.options.strongAgainstCreatureTypes || this.constructor.strongAgainstCreatureTypes;
-	}
-
-	set strongAgainstCreatureTypes (strongAgainstCreatureTypes) {
-		this.setOptions({
-			strongAgainstCreatureTypes
-		});
+		return this.constructor.strongAgainstCreatureTypes;
 	}
 
 	get weakAgainstCreatureTypes () {
-		return this.options.weakAgainstCreatureTypes || this.constructor.weakAgainstCreatureTypes;
-	}
-
-	set weakAgainstCreatureTypes (weakAgainstCreatureTypes) {
-		this.setOptions({
-			weakAgainstCreatureTypes
-		});
+		return this.constructor.weakAgainstCreatureTypes;
 	}
 
 	get uselessAgainstCreatureTypes () {
-		return this.options.uselessAgainstCreatureTypes || this.constructor.uselessAgainstCreatureTypes;
-	}
-
-	set uselessAgainstCreatureTypes (uselessAgainstCreatureTypes) {
-		this.setOptions({
-			uselessAgainstCreatureTypes
-		});
+		return this.constructor.uselessAgainstCreatureTypes;
 	}
 
 	get stats () {
@@ -277,9 +253,9 @@ ${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronoun
 		if (alreadyImmobilized || !canHaveEffect) {
 			let narration = '';
 			if (alreadyImmobilized) {
-				narration = `${target.givenName} is already immobilized, now _show no mercy_!`;// Use immobilize here, because it could be the result of ANY immobilization, not just "coil" or whatever is checking right now.
+				narration = `${target.givenName} is already immobilized, ${player.givenName} _shows no mercy_!`;// Use immobilize here, because it could be the result of ANY immobilization, not just "coil" or whatever is checking right now.
 			} else {
-				narration = `${target.givenName} laughs hautily as you try to ${this.actions.IMMOBILIZE} them, vent your fury at their mockery!`;
+				narration = `${target.givenName} laughs hautily as ${player.givenName} tries to ${this.actions.IMMOBILIZE} them, ${player.pronouns.he} vents ${player.pronouns.his} fury at ${target.pronouns.his} mockery!`;
 			}
 			this.emit('narration', { narration });
 
