@@ -15,6 +15,8 @@ const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
 const getArray = require('./helpers/get-array');
+const DungeonMasterGuide = require('./dungeon-master-guide');
+const MonsterManual = require('./monster-manual');
 const PlayerHandbook = require('./player-handbook');
 const Ring = require('./ring');
 
@@ -396,7 +398,7 @@ class Game extends BaseClass {
 
 			if (Card) {
 				const card = new Card();
-				return card.look(channel);
+				return card.look(channel, true);
 			}
 		}
 
@@ -413,7 +415,7 @@ class Game extends BaseClass {
 
 			if (Item) {
 				const item = new Item();
-				return item.look(channel);
+				return item.look(channel, true);
 			}
 		}
 
@@ -439,26 +441,22 @@ class Game extends BaseClass {
 		if (thing) {
 			// What is this thing?
 
+			// Is it a dungeon master guide?
+			if (thing.match(/(?:dungeon master(?:s)?|dm) guide|dmg/i)) {
+				const dmg = new DungeonMasterGuide();
+				return dmg.look(channel);
+			}
+
+			// Is it a monster manual?
+			if (thing.match(/monster(?:s)? manual/i)) {
+				const monsterManual = new MonsterManual();
+				return monsterManual.look(channel);
+			}
+
 			// Is it a player handbook?
 			if (thing.match(/player(?:s)? handbook/i)) {
 				const handbook = new PlayerHandbook();
 				return handbook.look(channel);
-			}
-
-			// Is it a monster manual?
-			if (thing.match(/monster(?:s)? manual/i)) { // monster manual will talk about the different monsters you can capture and their stats etc
-				return Promise.reject(channel({
-					announce: 'Monster manual coming soon!',
-					delay: 'short'
-				}));
-			}
-
-			// Is it a dungeon master guide?
-			if (thing.match(/(?:dungeon master(?:s)?|dm) guide|dmg/i)) { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
-				return Promise.reject(channel({
-					announce: 'dungeon master guide coming soon!',
-					delay: 'short'
-				}));
 			}
 
 			// Is it a monster?

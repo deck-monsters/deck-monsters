@@ -38,23 +38,64 @@ class PlayerHandbook extends BaseClass {
 
     Commands:
 
+    *Monsters*
+
     \`spawn monster\` - Spawns a new monster
 
     \`equip monster\` - Select a monster and equip it with cards
 
     \`equip [monster name]\` - Equip provided monster with cards
 
-    \`send monster to the ring\` - Select a monster and send it to the ring
+    \`look at monsters\` - Looks at your monsters
 
-    \`send [monster name] to the ring\` - Send provided monster to the ring
+	\`look at monsters in detail\` - Looks at your monsters with their description
 
-    \`look at monsters\` - Looks at monsters
+    \`look at [monster name]\` - Look at specified monster (yours or another player's)
 
-	\`look at monsters in detail\` - Looks at monsters with their description
+    *The Ring*
 
-    \`look at [monster name]\` - Look at specified monster
+    The glorious crucible of your monsters destiny.
+
+    \`send monster to ring\` - Select a monster and send it to the ring
+
+    \`send [monster name] to ring\` - Send provided monster to the ring
+
+    \`summon [monster name] from ring\` - Calls provided monster back from the ring
+
+    \`look at ring\` - Take a peak at the ring to see which monsters are there and who sent them
+
+    *Cards*
 
     \`look at cards\` - Look at your cards
+
+    \`look at [card name]\` - Look at specified card
+
+    *Items*
+
+    You can hold up to 3 items + 3 per monster under your care. In addition, your monsters can each hold 3 items. Items can be used on yourself or your monsters between battles, but a monster can only use an item during battle that you gave them ahead of time.
+
+    \`look at items\` - Look at your items
+
+    \`look at [item name]\` - Look at specified item
+
+    \`use item\` - Use one of your items on yourself
+
+    \`give item to [monster name]\` - Give an item to one of your monsters
+
+    \`take item from [monster name]\` - Take an item from one of your monsters
+
+    \`use item on [monster name]\` - Use one of your items on yourself
+
+    *The Shop*
+
+    Every 8 hours the current merchant will pack up and leave and a new merchant will come to town for you to do business with.
+
+    Each merchant has their own pricing, so be a shrewd businessman, and make sure you are getting a good deal. The shop will never give you as much as your card is worth, but that doesn't mean you have to get ripped off either.
+
+    \`visit the shop\` - Lets you visit the shop to make a purchase
+
+    \`sell to the shop\` - Lets you sell items to the shop
+
 \`\`\`
 `
 			}));
