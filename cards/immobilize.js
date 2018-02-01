@@ -91,7 +91,7 @@ class ImmobilizeCard extends HitCard {
 		return `If already immobilized, hit instead.
 ${super.stats}
 ${strModifiers}
-Opponent breaks free by rolling 1d20 vs immobilizer's ${this.freedomSavingThrowTargetAttr.toUpperCase()} ${advantageModifier} - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's ${this.freedomSavingThrowTargetAttr} ${advantageModifier} - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 ${ongoingDamageText}`;
@@ -228,7 +228,7 @@ ${ongoingDamageText}`;
 	freedomThresholdNarrative (player, target) {
 		const thresholdBonusText = this.getAttackModifier(target) ? `${signedNumber(this.getAttackModifier(target))}` : '';
 		const playerName = player === target ? `${player.pronouns.his} own` : `${player.givenName}'s`;
-		return `1d20 vs ${playerName} ${this.freedomSavingThrowTargetAttr.toUpperCase()}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
+		return `1d20 vs ${playerName} ${this.freedomSavingThrowTargetAttr}(${this.getFreedomThresholdBase(player)})${thresholdBonusText} -(immobilized turns x 3)`;
 	}
 
 	emitImmobilizeNarrative (player, target) {

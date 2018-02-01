@@ -43,7 +43,7 @@ ${hit.stats}
  +3 advantage vs Gladiator, Minotaur
  -3 disadvantage vs Basilisk, Jinn
 
-Opponent breaks free by rolling 1d20 vs immobilizer's DEX +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 

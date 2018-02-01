@@ -31,7 +31,7 @@ class ForkedMetalRodCard extends HornGoreCard {
 	get mechanics () {
 		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successfull ${this.flavors.spike} hit.
 
-Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.`;
+Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.`;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars

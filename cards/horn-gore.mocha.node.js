@@ -125,14 +125,14 @@ describe('./cards/horn-gore.js', () => {
 		expect(hornGore.damageDice).to.equal('1d4');
 		expect(hornGore.stats).to.equal(`Attack twice (once with each horn). +2 to hit and immobilize for each successfull horn hit.
 
-If either horn hits, chance to immobilize: 1d20 vs STR.
+If either horn hits, chance to immobilize: 1d20 vs str.
 
 If already immobilized, hit instead.
-Hit: 1d20 vs AC / Damage: 1d4
+Hit: 1d20 vs ac / Damage: 1d4
  -2 disadvantage vs Minotaur, Gladiator
  -6 disadvantage vs Basilisk, Jinn, Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's STR - disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's str - disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `);

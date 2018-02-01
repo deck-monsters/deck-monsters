@@ -38,7 +38,7 @@ describe('./cards/forked-metal-rod.js', () => {
 
 		const stats = `Attack twice (once with each prong). +2 to hit and immobilize for each successfull prong hit.
 
-Chance to immobilize: 1d20 vs STR.
+Chance to immobilize: 1d20 vs str.
 
 If already immobilized, hit instead.
 ${hit.stats}
@@ -46,7 +46,7 @@ ${hit.stats}
  +1 advantage vs Jinn, Minotaur
 inneffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's STR + advantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's str + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;

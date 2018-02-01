@@ -41,14 +41,14 @@ describe('./cards/forked-stick.js', () => {
 
 		const stats = `Attempt to immobilize your opponent by pinning them between the branches of a forked stick.
 
-Chance to immobilize: 1d20 vs STR.
+Chance to immobilize: 1d20 vs str.
 If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Basilisk, Gladiator
  -2 disadvantage vs Jinn, Minotaur
 inneffective against Weeping Angel
 
-Opponent breaks free by rolling 1d20 vs immobilizer's STR +/- advantage/disadvantage - (turns immobilized * 3)
+Opponent breaks free by rolling 1d20 vs immobilizer's str +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.
 Turns immobilized resets on curse of loki.
 `;

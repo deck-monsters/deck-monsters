@@ -50,7 +50,7 @@ class ForkedStickCard extends ImmobilizeCard {
 	get stats () {
 		return `Attempt to immobilize your opponent by ${this.actions.IMMOBILIZING} them between the branches of a forked stick.
 
-Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr.toUpperCase()}.
+Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.
 ${super.stats}`;
 	}
 }
