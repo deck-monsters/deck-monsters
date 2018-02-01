@@ -3,12 +3,11 @@ const generateDocs = ({ channel, generate, output }) => {
 
 	if (channel) {
 		const { channelManager, channelName } = channel;
-		format = announce => Promise.resolve()
-			.then(() => channelManager.queueMessage({
-				announce,
-				channel,
-				channelName
-			}));
+		format = announce => channelManager.queueMessage({
+			announce,
+			channel,
+			channelName
+		});
 
 		return generate(format).then(() => channelManager.sendMessages());
 	} else if (output) {

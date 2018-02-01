@@ -45,13 +45,15 @@ class ChannelManager extends BaseClass {
 	queueMessage ({
 		announce, channel, channelName = Date.now(), event
 	}) {
-		if (channel && !this.getChannel(channelName)) {
-			this.addChannel({ channel, channelName });
-		}
+		return Promise
+			.resolve()
+			.then(() => {
+				if (channel && !this.getChannel(channelName)) {
+					this.addChannel({ channel, channelName });
+				}
 
-		this.queue.push({ announce, channelName, event });
-
-		return Promise.resolve();
+				this.queue.push({ announce, channelName, event });
+			});
 	}
 
 	// Normally send messages for all channels when called, but allow this to be overriden as needed
