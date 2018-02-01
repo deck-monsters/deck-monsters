@@ -22,7 +22,7 @@ class KalevalaCard extends HitCard {
 		super({ damageDice, icon, ...rest });
 	}
 
-	get cardType () {
+	get itemType () {
 		return `${this.constructor.cardType} (${this.damageDice})`;
 	}
 
