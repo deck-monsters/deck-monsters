@@ -8,16 +8,6 @@ const pause = require('./helpers/pause');
 
 // const DestroyCard = require('./cards/destroy.js');
 
-const MesmerizeCard = require('./cards/mesmerize.js');
-const EnthrallCard = require('./cards/enthrall.js');
-const EntranceCard = require('./cards/entrance.js');
-const ForkedStickCard = require('./cards/forked-stick.js');
-const ForkedMetalRodCard = require('./cards/forked-metal-rod.js');
-const CoilCard = require('./cards/coil.js');
-const ConstrictCard = require('./cards/constrict.js');
-const HitCard = require('./cards/hit.js');
-
-
 pause.setTimeout = func => setTimeout(func, 5);
 
 prompt.start();
@@ -76,25 +66,6 @@ return Promise
 		vlad = character;
 		vlad.character.coins = 1000;
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
-		vladCards = [
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard()
-			// new CoilCard(),
-			// new ForkedStickCard(),
-			// new EntranceCard(),
-			// new ConstrictCard(),
-			// new ForkedMetalRodCard(),
-			// new EnthrallCard(),
-			// new HitCard(),
-			// new HitCard()
-		];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
 		id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0, xp: 200
@@ -105,17 +76,6 @@ return Promise
 		charCards = [...shuffle(char.character.deck).slice(0, 9)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
-		charCards = [
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard(),
-			new EntranceCard()
-		];
 	})
 	// .then(() => vlad.spawnMonster())
 	.then(() => vlad.spawnMonster({
@@ -134,15 +94,6 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
 	}))
-	.then(() => vlad.lookAtCard({ cardName: 'coil' }))
-	.then(() => vlad.lookAtCard({ cardName: 'constrict' }))
-	.then(() => vlad.lookAtCard({ cardName: 'mesmerize' }))
-	.then(() => vlad.lookAtCard({ cardName: 'enthrall' }))
-	.then(() => vlad.lookAtCard({ cardName: 'entrance' }))
-	.then(() => vlad.lookAtCard({ cardName: 'forked stick' }))
-	.then(() => vlad.lookAtCard({ cardName: 'horn gore' }))
-	.then(() => vlad.lookAtCard({ cardName: 'forked metal rod' }))
-
 	// .then(() => vlad.buyItems())
 	// .then(() => vlad.giveItemsToMonster())
 	// .then(() => vlad.useItems())
@@ -154,5 +105,5 @@ return Promise
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
+	.then(() => slackdem.getRing().spawnBoss())
 	.then(() => slackdem.getRing().spawnBoss());
-// .then(() => slackdem.getRing().spawnBoss());
