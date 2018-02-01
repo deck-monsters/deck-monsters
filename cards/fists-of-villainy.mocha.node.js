@@ -31,7 +31,7 @@ describe('./cards/fists-of-villainy.js', () => {
 		const villainy = new FistsOfVillainyCard();
 
 		expect(villainy).to.be.an.instanceof(FistsOfVillainyCard);
-		expect(villainy.stats).to.equal(`Hit: 1d20 vs AC / Damage: 1d6
+		expect(villainy.stats).to.equal(`Hit: 1d20 vs ac / Damage: 1d6
 Strikes opponent with lowest current hp.`);
 		expect(villainy.icon).to.equal('🐀');
 	});

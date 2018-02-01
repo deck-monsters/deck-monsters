@@ -3,7 +3,6 @@ const Promise = require('bluebird');
 
 const ImmobilizeCard = require('./immobilize');
 
-const { roll } = require('../helpers/chance');
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 
@@ -15,33 +14,17 @@ const {
 class MesmerizeCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		dexModifier,
-		hitOnFail,
+		freedomSavingThrowTargetAttr,
 		icon = '🌠',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
-
-		this.setOptions({
-			dexModifier,
-			hitOnFail
-		});
+		super({ freedomSavingThrowTargetAttr, icon, ...rest });
 	}
+
 	get stats () {
-		return `${super.stats}
-Chance to immobilize everyone with your shocking beauty.`;
-	}
+		return `Immobilize everyone.
 
-	getFreedomThresholdBase () { // eslint-disable-line class-methods-use-this
-		return 10;
-	}
-
-	getAttackRoll (player, target) {
-		return roll({ primaryDice: this.attackDice, modifier: player.intModifier + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
-	}
-
-	getTargetPropValue (target) { // eslint-disable-line class-methods-use-this
-		return target.int;
+${super.stats}`;
 	}
 
 	effect (player, target, ring, activeContestants) {
@@ -51,20 +34,19 @@ Chance to immobilize everyone with your shocking beauty.`;
 }
 
 MesmerizeCard.cardType = 'Mesmerize';
-MesmerizeCard.actions = ['mesmerize', 'mesmerizes', 'mesmerized'];
+MesmerizeCard.actions = { IMMOBILIZE: 'mesmerize', IMMOBILIZES: 'mesmerizes', IMMOBILIZED: 'mesmerized' };
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 MesmerizeCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
-MesmerizeCard.weakAgainstCreatureTypes = [JINN, MINOTAUR, WEEPING_ANGEL];
-MesmerizeCard.uselessAgainstCreatureTypes = [];
+MesmerizeCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
+MesmerizeCard.uselessAgainstCreatureTypes = [JINN];
 MesmerizeCard.probability = COMMON.probability;
-MesmerizeCard.description = `You strut and preen. Your beauty overwhelms and ${MesmerizeCard.actions[1]} everyone, including yourself.`;
+MesmerizeCard.description = `You strut and preen. Your beauty ${MesmerizeCard.actions.IMMOBILIZES} everyone, including yourself.`;
 MesmerizeCard.cost = VERY_CHEAP.cost;
 
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,
-	dexModifier: 2,
-	hitOnFail: false,
-	freedomThresholdModifier: 0
+	freedomSavingThrowTargetAttr: 'int',
+	targetProp: 'int'
 };
 
 MesmerizeCard.flavors = {

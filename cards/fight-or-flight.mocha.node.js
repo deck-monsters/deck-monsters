@@ -31,7 +31,7 @@ describe('./cards/fight-or-flight.js', () => {
 		const fightOrFlight = new FightOrFlightCard();
 
 		expect(fightOrFlight).to.be.an.instanceof(FightOrFlightCard);
-		expect(fightOrFlight.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d6\nChance to flee if below a quarter health');
+		expect(fightOrFlight.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d6\nChance to flee if below a quarter health');
 	});
 
 	it('can be played when at full health', () => {

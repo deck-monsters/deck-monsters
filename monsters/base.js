@@ -48,8 +48,8 @@ class BaseMonster extends BaseCreature {
 
 	get stats () {
 		return `${super.stats}
-AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
-DEX: ${this.dex} | STR: ${this.str} | INT: ${this.int}${
+ac: ${this.ac} | hp: ${this.hp}/${this.maxHp}
+dex: ${this.dex} | str: ${this.str} | int: ${this.int}${
 	this.dexModifier === 0 ? '' :
 		`
 ${signedNumber(this.dexModifier)} to hit`

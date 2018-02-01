@@ -33,7 +33,7 @@ describe('./cards/wooden-spear.js', () => {
 
 		expect(woodenSpear).to.be.an.instanceof(WoodenSpearCard);
 		expect(woodenSpear.strModifier).to.equal(3);
-		expect(woodenSpear.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d6\n+3 damage vs Minotaur');
+		expect(woodenSpear.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d6\n+3 damage vs Minotaur');
 	});
 
 	it('can be instantiated with options', () => {

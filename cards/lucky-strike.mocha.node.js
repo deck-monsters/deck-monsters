@@ -39,7 +39,7 @@ describe('./cards/lucky-strike.js', () => {
 		expect(luckyStrike.damageDice).to.equal('1d6');
 		expect(luckyStrike.targetProp).to.equal('ac');
 		expect(luckyStrike.description).to.equal('A man in a jester\'s hat smiles at you from the crowd. You feel... Lucky for some reason. Or perhaps feel the _unluckyness_ of your opponent...');
-		expect(luckyStrike.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d6\n\nRoll twice for hit. Use the best roll.');
+		expect(luckyStrike.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d6\n\nRoll twice for hit. Use the best roll.');
 	});
 
 	it('can be instantiated with options', () => {

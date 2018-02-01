@@ -30,7 +30,7 @@ class HitCard extends BaseCard {
 	}
 
 	get stats () {
-		return `Hit: ${this.attackDice} vs ${this.targetProp.toUpperCase()} / Damage: ${this.damageDice}`;
+		return `Hit: ${this.attackDice} vs ${this.targetProp} / Damage: ${this.damageDice}`;
 	}
 
 	getAttackRoll (player) {

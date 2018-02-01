@@ -3,7 +3,7 @@ const sample = require('lodash.sample');
 
 const ImmobilizeCard = require('./immobilize');
 
-const { MINOTAUR } = require('../helpers/creature-types');
+const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
 const { roll } = require('../helpers/chance');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
@@ -15,22 +15,31 @@ class HornGore extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
 		damageDice,
+		freedomSavingThrowTargetAttr,
 		icon = '🐂',
+		targetProp,
 		...rest
 	} = {}) {
-		super({ damageDice, icon, ...rest });
+		super({ damageDice, freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
+	}
+
+	get mechanics () {
+		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successfull ${this.flavors.spike} hit.
+
+If either ${this.flavors.spike} hits, chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.`;
 	}
 
 	get stats () {
-		return `Attack twice (once with each horn). +2 to pin for each successfull horn hit.
+		return `${this.mechanics}
+
 ${super.stats}`;
 	}
 
 	getAttackModifier (target) {
-		if (this.weakAgainstCreatureTypes.includes(target.name)) {
-			return -2 + this.dexModifier;
-		} else if (this.strongAgainstCreatureTypes.includes(target.name)) {
-			return this.dexModifier;
+		if (this.weakAgainstCreatureTypes.includes(target.creatureType)) {
+			return -2 + this.freedomThresholdModifier;
+		} else if (this.strongAgainstCreatureTypes.includes(target.creatureType)) {
+			return 2 + this.freedomThresholdModifier;
 		}
 		return 0;
 	}
@@ -90,7 +99,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 
 	hitCheck (player, target, hornNumber) {
 		const attackRoll = this.getAttackRoll(player, target);
-		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target.ac);
+		const { success, strokeOfLuck, curseOfLoki } = this.checkSuccess(attackRoll, target[this.targetProp]);
 
 		this.emitRoll(attackRoll, success, player, target, hornNumber);
 
@@ -103,7 +112,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 
 	getDamageRoll (player) {
-		return roll({ primaryDice: this.damageDice, modifier: (Math.floor(player.strModifier / 2)), bonusDice: player.bonusDamageDice });
+		return roll({ primaryDice: this.damageDice, modifier: Math.floor(player.strModifier / 2), bonusDice: player.bonusDamageDice });
 	}
 
 	gore (player, target, hornNumber) {
@@ -128,6 +137,35 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 		return { attackRoll, success, strokeOfLuck, curseOfLoki };
 	}
 
+	// do not auto-succeed since this already hits twice
+	immobilizeCheck (player, target) {
+		const immobilizeRoll = this.getImmobilizeRoll(player, target);
+		const { success: immobilizeSuccess } = this.checkSuccess(immobilizeRoll, target[this.freedomSavingThrowTargetAttr]);
+
+		const failMessage = `${this.actions.IMMOBILIZE} failed.`;
+		const outcome = immobilizeSuccess ? `${this.actions.IMMOBILIZE} succeeded!` : failMessage;
+
+		this.emit('rolled', {
+			reason: `to see if ${player.pronouns.he} ${this.actions.IMMOBILIZES} ${target.givenName}.`,
+			card: this,
+			roll: immobilizeRoll,
+			who: player,
+			outcome,
+			vs: this.freedomSavingThrowTargetAttr
+		});
+
+		if (!immobilizeSuccess) {
+			this.emit('miss', {
+				attackResult: immobilizeRoll.result,
+				immobilizeRoll,
+				player,
+				target
+			});
+		}
+
+		return immobilizeSuccess;
+	}
+
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
 		// if the player stabs with their first horn, make it slightly more likely that the second
 		// horn will also stab, but just for this one attack. Therefore, need to store their
@@ -147,7 +185,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 				return false;
 			}
 
-			return super.effect(player, target, ring, activeContestants);
+			return this.immobilize(player, target, ring, activeContestants);
 		}
 
 		this.emit('miss', {
@@ -162,7 +200,11 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 }
 
 HornGore.cardType = 'Horn Gore';
+HornGore.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' };
 HornGore.permittedClassesAndTypes = [MINOTAUR];
+HornGore.strongAgainstCreatureTypes = [MINOTAUR, GLADIATOR];
+HornGore.weakAgainstCreatureTypes = [BASILISK, JINN, WEEPING_ANGEL];
+HornGore.uselessAgainstCreatureTypes = [];
 HornGore.probability = EPIC.probability;
 HornGore.description = 'You think those horns are just there to look pretty? Think again...';
 HornGore.level = 0;
@@ -172,10 +214,10 @@ HornGore.notForSale = true;
 HornGore.defaults = {
 	...ImmobilizeCard.defaults,
 	damageDice: '1d4',
-	hitOnFail: false,
 	doDamageOnImmobilize: false,
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	dexModifier: STARTING_DEX_MODIFIER
+	freedomSavingThrowTargetAttr: 'str',
+	targetProp: 'ac'
 };
 
 HornGore.flavors = {

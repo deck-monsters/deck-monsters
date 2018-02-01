@@ -1,11 +1,14 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const Hit = require('./hit');
-const WeepingAngel = require('../monsters/weeping-angel');
-const Minotaur = require('../monsters/minotaur');
+const Mesmerize = require('./mesmerize');
+
 const Basilisk = require('../monsters/basilisk');
 const Gladiator = require('../monsters/gladiator');
-const Mesmerize = require('./mesmerize');
+const Jinn = require('../monsters/jinn');
+const Minotaur = require('../monsters/minotaur');
+const WeepingAngel = require('../monsters/weeping-angel');
+
 const pause = require('../helpers/pause');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
@@ -14,8 +17,24 @@ const {
 } = require('../helpers/creature-types');
 
 describe('./cards/mesmerize.js', () => {
-	let channelStub;
 	let pauseStub;
+	let channelStub;
+
+	let angel;
+	let basilisk;
+	let gladiator;
+	let jinn;
+	let minotaur;
+	let player;
+
+	let ring;
+
+	let mesmerize;
+	let mesmerizeProto;
+	let immobilizeProto;
+	let hitProto;
+	let baseProto;
+	let checkSuccessStub;
 
 	before(() => {
 		channelStub = sinon.stub();
@@ -25,11 +44,41 @@ describe('./cards/mesmerize.js', () => {
 	beforeEach(() => {
 		channelStub.resolves();
 		pauseStub.callsArg(0);
+
+		angel = new WeepingAngel();
+		basilisk = new Basilisk();
+		gladiator = new Gladiator();
+		jinn = new Jinn();
+		minotaur = new Minotaur();
+		player = new WeepingAngel({ intVariance: 0 });
+
+		ring = {
+			contestants: [
+				{ monster: player },
+				{ monster: angel },
+				{ monster: basilisk },
+				{ monster: minotaur },
+				{ monster: gladiator },
+				{ monster: jinn }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		mesmerize = new Mesmerize();
+		mesmerizeProto = Object.getPrototypeOf(mesmerize);
+		immobilizeProto = Object.getPrototypeOf(mesmerizeProto);
+		hitProto = Object.getPrototypeOf(immobilizeProto);
+		baseProto = Object.getPrototypeOf(hitProto);
+		checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 	});
 
 	afterEach(() => {
 		channelStub.reset();
 		pauseStub.reset();
+		checkSuccessStub.restore();
 	});
 
 	after(() => {
@@ -37,174 +86,176 @@ describe('./cards/mesmerize.js', () => {
 	});
 
 	it('can be instantiated with defaults', () => {
-		const mesmerize = new Mesmerize();
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: mesmerize.targetProp });
 
-		const stats = `${hit.stats}
+		const stats = `Immobilize everyone.
 
- +2 against Basilisk, Gladiator
- -2 against Jinn, Minotaur, Weeping Angel
-Chance to immobilize everyone with your shocking beauty.`;
+If already immobilized, hit instead.
+${hit.stats}
+ +2 advantage vs Basilisk, Gladiator
+ -2 disadvantage vs Minotaur, Weeping Angel
+inneffective against Jinn
 
-		expect(mesmerize).to.be.an.instanceof(Mesmerize);
-		expect(mesmerize.freedomThresholdModifier).to.equal(0);
-		expect(mesmerize.dexModifier).to.equal(2);
-		expect(mesmerize.strModifier).to.equal(0);
-		expect(mesmerize.hitOnFail).to.be.false;
-		expect(mesmerize.doDamageOnImmobilize).to.be.false;
-		expect(mesmerize.stats).to.equal(stats);
-		expect(mesmerize.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
-		expect(mesmerize.weakAgainstCreatureTypes).to.deep.equal([JINN, MINOTAUR, WEEPING_ANGEL]);
-		expect(mesmerize.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
-	});
-
-	it('can be instantiated with options', () => {
-		const mesmerize = new Mesmerize({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
-		});
+Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+`;
 
 		expect(mesmerize).to.be.an.instanceof(Mesmerize);
 		expect(mesmerize.freedomThresholdModifier).to.equal(2);
-		expect(mesmerize.dexModifier).to.equal(4);
-		expect(mesmerize.strModifier).to.equal(4);
-		expect(mesmerize.hitOnFail).to.be.true;
-		expect(mesmerize.doDamageOnImmobilize).to.be.true;
+		expect(mesmerize.freedomSavingThrowTargetAttr).to.equal('int');
+		expect(mesmerize.targetProp).to.equal('int');
+		expect(mesmerize.doDamageOnImmobilize).to.be.false;
+		expect(mesmerize.stats).to.equal(stats);
+		expect(mesmerize.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
+		expect(mesmerize.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR, WEEPING_ANGEL]);
+		expect(mesmerize.permittedClassesAndTypes).to.deep.equal([WEEPING_ANGEL]);
+		expect(mesmerize.uselessAgainstCreatureTypes).to.deep.equal([JINN]);
+		expect(mesmerize.immobilizeCheck()).to.be.true; // always immobilizes
+	});
+
+	it('can be instantiated with options', () => {
+		const customMesmerize = new Mesmerize({
+			freedomThresholdModifier: 4, doDamageOnImmobilize: true
+		});
+
+		expect(customMesmerize).to.be.an.instanceof(Mesmerize);
+		expect(customMesmerize.freedomThresholdModifier).to.equal(4);
+		expect(customMesmerize.doDamageOnImmobilize).to.be.true;
+	});
+
+	it('calculates attackModifier correctly', () => {
+		expect(mesmerize.getAttackModifier(angel)).to.equal(-2);
+		expect(mesmerize.getAttackModifier(basilisk)).to.equal(2);
+		expect(mesmerize.getAttackModifier(gladiator)).to.equal(2);
+		expect(mesmerize.getAttackModifier(jinn)).to.equal(0);
+		expect(mesmerize.getAttackModifier(minotaur)).to.equal(-2);
 	});
 
 	it('calculates freedom threshold correctly', () => {
-		const mesmerize = new Mesmerize();
-		const player = new WeepingAngel({ name: 'player' });
-		const target = new WeepingAngel({ name: 'target' });
+		expect(mesmerize.getFreedomThreshold(player, angel)).to.equal(5);
+		expect(mesmerize.getFreedomThreshold(player, basilisk)).to.equal(9);
+		expect(mesmerize.getFreedomThreshold(player, gladiator)).to.equal(9);
+		expect(mesmerize.getFreedomThreshold(player, jinn)).to.equal(7);
+		expect(mesmerize.getFreedomThreshold(player, minotaur)).to.equal(5);
 
-		expect(mesmerize.getFreedomThreshold(player, target)).to.equal(10 + mesmerize.freedomThresholdModifier);
+		angel.encounterModifiers.immobilizedTurns = 2;
+		basilisk.encounterModifiers.immobilizedTurns = 2;
+		minotaur.encounterModifiers.immobilizedTurns = 2;
+		gladiator.encounterModifiers.immobilizedTurns = 2;
+		jinn.encounterModifiers.immobilizedTurns = 2;
 
-		target.encounterModifiers.pinnedTurns = 2;
-
-		expect(mesmerize.getFreedomThreshold(player, target)).to.equal(4 + mesmerize.freedomThresholdModifier);
+		expect(mesmerize.getFreedomThreshold(player, angel)).to.equal(1);
+		expect(mesmerize.getFreedomThreshold(player, basilisk)).to.equal(3);
+		expect(mesmerize.getFreedomThreshold(player, gladiator)).to.equal(3);
+		expect(mesmerize.getFreedomThreshold(player, jinn)).to.equal(1);
+		expect(mesmerize.getFreedomThreshold(player, minotaur)).to.equal(1);
 	});
 
-	it('immobilizes everyone on success', () => {
-		const mesmerize = new Mesmerize();
+	it('calculates roll modifiers correctly', () => {
+		expect(mesmerize.getAttackRoll(player, player).modifier).to.equal(player.intModifier - 2);
+		expect(mesmerize.getAttackRoll(player, angel).modifier).to.equal(player.intModifier - 2);
+		expect(mesmerize.getAttackRoll(player, basilisk).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getAttackRoll(player, gladiator).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getAttackRoll(player, jinn).modifier).to.equal(player.intModifier);
+		expect(mesmerize.getAttackRoll(player, minotaur).modifier).to.equal(player.intModifier - 2);
 
-		const mesmerizeProto = Object.getPrototypeOf(mesmerize);
-		const immobilizeProto = Object.getPrototypeOf(mesmerizeProto);
-		const hitProto = Object.getPrototypeOf(immobilizeProto);
-		const baseProto = Object.getPrototypeOf(hitProto);
-		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		expect(mesmerize.getImmobilizeRoll(player, player).modifier).to.equal(player.intModifier - 2);
+		expect(mesmerize.getImmobilizeRoll(player, angel).modifier).to.equal(player.intModifier - 2);
+		expect(mesmerize.getImmobilizeRoll(player, basilisk).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getImmobilizeRoll(player, gladiator).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getImmobilizeRoll(player, jinn).modifier).to.equal(player.intModifier);
+		expect(mesmerize.getImmobilizeRoll(player, minotaur).modifier).to.equal(player.intModifier - 2);
 
-		const player = new WeepingAngel({ name: 'player' });
-		const target1 = new Basilisk({ name: 'target1' });
-		const target2 = new Minotaur({ name: 'target2' });
-		const target3 = new Gladiator({ name: 'target3' });
-		const ring = {
-			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
-			],
-			channelManager: {
-				sendMessages: () => Promise.resolve()
-			}
-		};
+		expect(mesmerize.getFreedomRoll(player, player).modifier).to.equal(player.intModifier + 2);
+		expect(mesmerize.getFreedomRoll(player, angel).modifier).to.equal(angel.intModifier + 2);
+		expect(mesmerize.getFreedomRoll(player, basilisk).modifier).to.equal(basilisk.intModifier - 2);
+		expect(mesmerize.getFreedomRoll(player, gladiator).modifier).to.equal(gladiator.intModifier - 2);
+		expect(mesmerize.getFreedomRoll(player, jinn).modifier).to.equal(jinn.intModifier);
+		expect(mesmerize.getFreedomRoll(player, minotaur).modifier).to.equal(minotaur.intModifier + 2);
+	});
 
-		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+	it('immobilizes everyone on play', () => mesmerize
+		.play(player, basilisk, ring, ring.contestants)
+		.then(() => {
+			expect(player.encounterEffects.length).to.equal(1);
+			expect(angel.encounterEffects.length).to.equal(1);
+			expect(basilisk.encounterEffects.length).to.equal(1);
+			expect(gladiator.encounterEffects.length).to.equal(1);
+			expect(jinn.encounterEffects.length).to.equal(0);
+			return expect(minotaur.encounterEffects.length).to.equal(1);
+		}));
+
+	it('hits already immobilized monsters on play', () => {
+		const playerBeforeHP = player.hp;
+		const angelBeforeHP = angel.hp;
+		const basiliskBeforeHP = basilisk.hp;
+		const gladiatorBeforeHP = gladiator.hp;
+		const jinnBeforeHP = jinn.hp;
+		const minotaurBeforeHP = minotaur.hp;
 
 		return mesmerize
-			.play(player, target1, ring, ring.contestants)
-			.then(() => {
-				checkSuccessStub.restore();
+			.play(player, basilisk, ring, ring.contestants)
+			.then(() => mesmerize
+				.play(player, basilisk, ring, ring.contestants)
+				.then(() => {
+					expect(player.hp).to.be.below(playerBeforeHP);
+					expect(angel.hp).to.be.below(angelBeforeHP);
+					expect(basilisk.hp).to.be.below(basiliskBeforeHP);
+					expect(gladiator.hp).to.be.below(gladiatorBeforeHP);
+					expect(jinn.hp).to.be.below(jinnBeforeHP);
+					return expect(minotaur.hp).to.be.below(minotaurBeforeHP);
+				}));
+	});
 
-				expect(player.encounterEffects.length).to.equal(1);
-				expect(target1.encounterEffects.length).to.equal(1);
-				expect(target2.encounterEffects.length).to.equal(1);
-				return expect(target3.encounterEffects.length).to.equal(1);
+	it('hits immune players on play', () => {
+		const jinnBeforeHP = jinn.hp;
+
+		return mesmerize
+			.play(player, jinn, ring, ring.contestants)
+			.then(() => {
+				expect(jinn.hp).to.be.below(jinnBeforeHP);
+				return expect(jinn.encounterEffects.length).to.equal(0);
 			});
 	});
 
 	it('harms immobilizer on breaking free with natural 20', () => {
-		const mesmerize = new Mesmerize();
-
-		const mesmerizeProto = Object.getPrototypeOf(mesmerize);
-		const immobilizeProto = Object.getPrototypeOf(mesmerizeProto);
-		const hitProto = Object.getPrototypeOf(immobilizeProto);
-		const baseProto = Object.getPrototypeOf(hitProto);
-		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
-
-		const player = new Minotaur({ name: 'player' });
-		const target = new Basilisk({ name: 'target' });
 		const playerBeforeHP = player.hp;
 
-		const ring = {
-			contestants: [
-				{ monster: player },
-				{ monster: target }
-			],
-			channelManager: {
-				sendMessages: () => Promise.resolve()
-			}
-		};
-
-		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
-
 		return mesmerize
-			.play(player, target, ring, ring.contestants)
+			.play(player, basilisk, ring, ring.contestants)
 			.then(() => {
-				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
+				expect(basilisk.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
 				checkSuccessStub.returns({ success: true, strokeOfLuck: true, curseOfLoki: false });
 
-				const card = target.encounterEffects.reduce((currentCard, effect) => {
+				const card = basilisk.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
-						activeContestants: [target, player],
+						activeContestants: [basilisk, player],
 						card: currentCard,
 						phase: ATTACK_PHASE,
 						player,
 						ring,
-						target
+						basilisk
 					});
 
 					return modifiedCard || currentCard;
 				}, new Hit());
 
 				return card
-					.play(target, player, ring, ring.contestants)
+					.play(basilisk, player, ring, ring.contestants)
 					.then(() => {
-						checkSuccessStub.restore();
-
 						expect(player.hp).to.be.below(playerBeforeHP);
-						return expect(target.encounterEffects.length).to.equal(0);
+						return expect(basilisk.encounterEffects.length).to.equal(0);
 					});
 			});
 	});
 
 	it('doesn\'t harm immobilizer on breaking free with natural 20 if immobilizer is self', () => {
-		const mesmerize = new Mesmerize();
-
-		const mesmerizeProto = Object.getPrototypeOf(mesmerize);
-		const immobilizeProto = Object.getPrototypeOf(mesmerizeProto);
-		const hitProto = Object.getPrototypeOf(immobilizeProto);
-		const baseProto = Object.getPrototypeOf(hitProto);
-		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
-
-		const player = new Minotaur({ name: 'player' });
-		const target = new Basilisk({ name: 'target' });
 		const playerBeforeHP = player.hp;
 
-		const ring = {
-			contestants: [
-				{ monster: player },
-				{ monster: target }
-			],
-			channelManager: {
-				sendMessages: () => Promise.resolve()
-			}
-		};
-
-		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
-
 		return mesmerize
-			.play(player, target, ring, ring.contestants)
+			.play(player, basilisk, ring, ring.contestants)
 			.then(() => {
 				expect(player.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
@@ -212,22 +263,20 @@ Chance to immobilize everyone with your shocking beauty.`;
 
 				const card = player.encounterEffects.reduce((currentCard, effect) => {
 					const modifiedCard = effect({
-						activeContestants: [target, player],
+						activeContestants: [basilisk, player],
 						card: currentCard,
 						phase: ATTACK_PHASE,
 						player,
 						ring,
-						target
+						basilisk
 					});
 
 					return modifiedCard || currentCard;
 				}, new Hit());
 
 				return card
-					.play(player, target, ring, ring.contestants)
+					.play(player, basilisk, ring, ring.contestants)
 					.then(() => {
-						checkSuccessStub.restore();
-
 						expect(player.hp).to.equal(playerBeforeHP);
 						return expect(player.encounterEffects.length).to.equal(0);
 					});

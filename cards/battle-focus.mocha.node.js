@@ -43,7 +43,7 @@ describe('./cards/battle-focus.js', () => {
 		expect(battleFocus.bigFirstHit).to.be.true;
 		expect(battleFocus.damageAmount).to.equal(1);
 		expect(battleFocus.damageDice).to.equal('1d6');
-		expect(battleFocus.stats).to.equal('Hit: 1d20 + attack bonus vs AC on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
+		expect(battleFocus.stats).to.equal('Hit: 1d20 + attack bonus vs ac on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {

@@ -67,7 +67,7 @@ class BerserkCard extends HitCard {
 ${this.damageAmount} damage per hit after that.`;
 		}
 
-		return `Hit: ${this.attackDice} + attack bonus vs AC on first hit
+		return `Hit: ${this.attackDice} + attack bonus vs ac on first hit
 then also + spell bonus (fatigued by 1 each subsequent hit) until you miss
 ${damageDescription}
 
