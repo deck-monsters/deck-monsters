@@ -6,14 +6,13 @@ const { monsterCard } = require('./helpers/card');
 const BaseClass = require('./shared/baseClass');
 
 const allMonsters = require('./monsters/helpers/all.js');
-const monsterList = allMonsters.reduce((list, Monster) => list + `${new Monster().creatureType}\n`, '');
+const monsterList = allMonsters.reduce((list, Monster) => list + `${new Monster().creatureType}\n\t\t`, '');
 
 
-class MonsterManual extends BaseClass {
-	look (channel) {
-		const { channelManager, channelName } = channel;
+const monsterManual = (channel) => {
+	const { channelManager, channelName } = channel;
 
-		const header = `\`\`\`
+	const header = `\`\`\`
 
  ███▄ ▄███▓ ▒█████   ███▄    █   ██████ ▄▄▄█████▓▓█████  ██▀███      ███▄ ▄███▓ ▄▄▄       ███▄    █  █    ██  ▄▄▄       ██▓
 ▓██▒▀█▀ ██▒▒██▒  ██▒ ██ ▀█   █ ▒██    ▒ ▓  ██▒ ▓▒▓█   ▀ ▓██ ▒ ██▒   ▓██▒▀█▀ ██▒▒████▄     ██ ▀█   █  ██  ▓██▒▒████▄    ▓██▒
@@ -25,29 +24,27 @@ class MonsterManual extends BaseClass {
 ░      ░   ░ ░ ░ ▒     ░   ░ ░ ░  ░  ░    ░         ░     ░░   ░    ░      ░     ░   ▒      ░   ░ ░  ░░░ ░ ░   ░   ▒     ░ ░
        ░       ░ ░           ░       ░              ░  ░   ░               ░         ░  ░         ░    ░           ░  ░    ░  ░
 
-There are ${allMonsters.length} different types of monsters:
+	There are ${allMonsters.length} different types of monsters:
 
-${monsterList}
+		${monsterList}
 
 
-Here are some sample beginner level monsters:
+	Here are some sample beginner level monsters:
 \`\`\``;
 
-		return Promise.resolve()
-			.then(() => channelManager.queueMessage({
-				announce: header,
-				channel,
-				channelName
-			}))
-			.then(() => Promise.each(allMonsters, Monster => channelManager.queueMessage({
-				announce: monsterCard(new Monster(), true),
-				channel,
-				channelName
-			})))
-			.then(() => channelManager.sendMessages());
-	}
+	return Promise.resolve()
+		.then(() => channelManager.queueMessage({
+			announce: header,
+			channel,
+			channelName
+		}))
+		.then(() => Promise.each(allMonsters, Monster => channelManager.queueMessage({
+			announce: monsterCard(new Monster(), true),
+			channel,
+			channelName
+		})))
+		.then(() => channelManager.sendMessages());
+
 }
 
-MonsterManual.eventPrefix = 'monsterManual';
-
-module.exports = MonsterManual;
+module.exports = monsterManual;

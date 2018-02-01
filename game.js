@@ -15,9 +15,9 @@ const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
 const getArray = require('./helpers/get-array');
-const DungeonMasterGuide = require('./dungeon-master-guide');
-const MonsterManual = require('./monster-manual');
-const PlayerHandbook = require('./player-handbook');
+const dungeonMasterGuide = require('./dungeon-master-guide');
+const monsterManual = require('./monster-manual');
+const playerHandbook = require('./player-handbook');
 const Ring = require('./ring');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
@@ -443,20 +443,17 @@ class Game extends BaseClass {
 
 			// Is it a dungeon master guide?
 			if (thing.match(/(?:dungeon master(?:s)?|dm) guide|dmg/i)) {
-				const dmg = new DungeonMasterGuide();
-				return dmg.look(channel);
+				return dungeonMasterGuide(channel);
 			}
 
 			// Is it a monster manual?
 			if (thing.match(/monster(?:s)? manual/i)) {
-				const monsterManual = new MonsterManual();
-				return monsterManual.look(channel);
+				return monsterManual(channel);
 			}
 
 			// Is it a player handbook?
 			if (thing.match(/player(?:s)? handbook/i)) {
-				const handbook = new PlayerHandbook();
-				return handbook.look(channel);
+				return playerHandbook(channel);
 			}
 
 			// Is it a monster?

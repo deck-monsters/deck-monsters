@@ -1,13 +1,10 @@
-/* eslint-disable class-methods-use-this, max-len */
+const Promise = require('bluebird');
 
-const BaseClass = require('./shared/baseClass');
-
-class PlayerHandbook extends BaseClass {
-	look (channel) {
-		return Promise
-			.resolve()
-			.then(() => channel({
-				announce: `
+const playerHandbook = (channel) => {
+	return Promise
+		.resolve()
+		.then(() => channel({
+			announce: `
 \`\`\`
 	 ____    ___
 	/\\  _\`\\ /\\_ \\
@@ -102,10 +99,7 @@ class PlayerHandbook extends BaseClass {
 
 \`\`\`
 `
-			}));
-	}
-}
+		}));
+};
 
-PlayerHandbook.eventPrefix = 'playerHandbook';
-
-module.exports = PlayerHandbook;
+module.exports = playerHandbook;

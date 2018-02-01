@@ -10,12 +10,10 @@ const cardList = allCards.map(Card => `${new Card().cardType}`);
 const allItems = require('./items/helpers/all.js');
 const itemList = allItems.map(Item => `${new Item().itemType}`);
 
+const dungeonMasterGuide = (channel) => {
+	const { channelManager, channelName } = channel;
 
-class DungeonMasterGuide extends BaseClass {
-	look (channel) {
-		const { channelManager, channelName } = channel;
-
-		const header = `
+	const header = `
 \`\`\`
 				██████╗ ███╗   ███╗ ██████╗
 				██╔══██╗████╗ ████║██╔════╝
@@ -30,36 +28,32 @@ class DungeonMasterGuide extends BaseClass {
 \`\`\`
 `;
 
-		return Promise.resolve()
-			.then(() => channelManager.queueMessage({
-				announce: header,
-				channel,
-				channelName
-			}))
-			.then(() => Promise.each(allCards, Card => channelManager.queueMessage({
-				announce: actionCard(new Card(), true),
-				channel,
-				channelName
-			})))
-			.then(() => channelManager.queueMessage({
-				announce: `\`\`\`
+	return Promise.resolve()
+		.then(() => channelManager.queueMessage({
+			announce: header,
+			channel,
+			channelName
+		}))
+		.then(() => Promise.each(allCards, Card => channelManager.queueMessage({
+			announce: actionCard(new Card(), true),
+			channel,
+			channelName
+		})))
+		.then(() => channelManager.queueMessage({
+			announce: `\`\`\`
 	*The Item Catalogue:*
 
-	${itemList.join(', ')}
+${itemList.join(', ')}
 \`\`\``,
-				channel,
-				channelName
-			}))
-			.then(() => Promise.each(allItems, Card => channelManager.queueMessage({
-				announce: itemCard(new Card(), true),
-				channel,
-				channelName
-			})))
-			.then(() => channelManager.sendMessages());
+			channel,
+			channelName
+		}))
+		.then(() => Promise.each(allItems, Card => channelManager.queueMessage({
+			announce: itemCard(new Card(), true),
+			channel,
+			channelName
+		})))
+		.then(() => channelManager.sendMessages());
+};
 
-	}
-}
-
-DungeonMasterGuide.eventPrefix = 'dungeonMasterGuide';
-
-module.exports = DungeonMasterGuide;
+module.exports = dungeonMasterGuide;
