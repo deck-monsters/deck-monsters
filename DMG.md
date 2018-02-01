@@ -819,7 +819,7 @@ Wooden Spear
 
 ```
 ==================================
-| 🎻  The Kalevala  ★
+| 🎻  The Kalevala (1d4)  ★
 ----------------------------------
 |
 | Steadfast old Väinämöinen 
