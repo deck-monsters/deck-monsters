@@ -67,6 +67,8 @@ ForkedStickCard.level = 0;
 
 ForkedStickCard.defaults = {
 	...ImmobilizeCard.defaults,
+	damageDice: '1d4',
+	doDamageOnImmobilize: true,
 	freedomSavingThrowTargetAttr: 'str',
 	targetProp: 'dex'
 };

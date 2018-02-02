@@ -14,7 +14,7 @@ const { ATTACK_PHASE } = require('../helpers/phases');
 describe('./cards/forked-stick.js', () => {
 	it('can be instantiated with defaults', () => {
 		const forkedStick = new ForkedStick();
-		const hit = new Hit({ targetProp: forkedStick.targetProp });
+		const hit = new Hit({ targetProp: forkedStick.targetProp, damageDice: forkedStick.damageDice });
 
 		const stats = `Attempt to immobilize your opponent by pinning them between the branches of a forked stick.
 
@@ -34,7 +34,8 @@ Turns immobilized resets on curse of loki.
 		expect(forkedStick.freedomThresholdModifier).to.equal(2);
 		expect(forkedStick.freedomSavingThrowTargetAttr).to.equal('str');
 		expect(forkedStick.targetProp).to.equal('dex');
-		expect(forkedStick.doDamageOnImmobilize).to.be.false;
+		expect(forkedStick.doDamageOnImmobilize).to.be.true;
+		expect(forkedStick.damageDice).to.equal('1d4');
 		expect(forkedStick.stats).to.equal(stats);
 		expect(forkedStick.strongAgainstCreatureTypes).to.deep.equal([BASILISK, GLADIATOR]);
 		expect(forkedStick.weakAgainstCreatureTypes).to.deep.equal([JINN, MINOTAUR]);
@@ -43,12 +44,12 @@ Turns immobilized resets on curse of loki.
 
 	it('can be instantiated with options', () => {
 		const forkedStick = new ForkedStick({
-			freedomThresholdModifier: 1, doDamageOnImmobilize: true
+			freedomThresholdModifier: 1, doDamageOnImmobilize: false
 		});
 
 		expect(forkedStick).to.be.an.instanceof(ForkedStick);
 		expect(forkedStick.freedomThresholdModifier).to.equal(1);
-		expect(forkedStick.doDamageOnImmobilize).to.be.true;
+		expect(forkedStick.doDamageOnImmobilize).to.be.false;
 	});
 
 	it('calculates freedom threshold correctly', () => {
@@ -129,7 +130,7 @@ Turns immobilized resets on curse of loki.
 		return forkedStick
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect(target.hp).to.equal(before);
+				expect(target.hp).to.be.below(before);
 				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
 				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
@@ -259,7 +260,7 @@ Turns immobilized resets on curse of loki.
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
 				expect(target.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
-				expect(getAttackRollImmobilizeSpy.callCount).to.equal(0);
+				expect(getAttackRollImmobilizeSpy.callCount).to.equal(1);
 				expect(getFreedomRollImmobilizeSpy.callCount).to.equal(0);
 				expect(getImmobilizeRollImmobilizeSpy.callCount).to.equal(1);
 				expect(getAttackRollHitSpy.callCount).to.equal(0);
@@ -280,7 +281,7 @@ Turns immobilized resets on curse of loki.
 				return card
 					.play(target, player, ring, ring.contestants)
 					.then(() => {
-						expect(getAttackRollImmobilizeSpy.callCount).to.equal(0);
+						expect(getAttackRollImmobilizeSpy.callCount).to.equal(1);
 						expect(getFreedomRollImmobilizeSpy.callCount).to.equal(1);
 						expect(getImmobilizeRollImmobilizeSpy.callCount).to.equal(1);
 						expect(getAttackRollHitSpy.callCount).to.equal(1);
