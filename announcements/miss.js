@@ -11,7 +11,16 @@ const announceMiss = (publicChannel, channelManager, className, card, {
 		icon = '💨';
 	} else if (target.dead) {
 		action = 'stops mercilessly beating the dead body of';
-		icon = (player.gender === 'female') ? '🙇‍♀️' : '🙇‍♂️';
+		switch (player.gender) {
+			case 'female':
+				icon = '💃';
+				break;
+			case 'male':
+				icon = '🙇‍';
+				break;
+			default:
+				icon = '⚰️';
+		}
 	} else if (attackResult > 5) {
 		action = 'is barely blocked by';
 		icon = '⚔️';
