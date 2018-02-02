@@ -37,8 +37,9 @@ function getCardDPT () {
 				cards.forEach((card) => {
 					character.monsters.forEach((target) => {
 						target.hp = Math.ceil(target.maxHp / 2) + 10;
-						target.encounterEffects = 0;
-						ring.encounterEffects = 0;
+						target.encounterEffects = [];
+						player.encounterEffects = [];
+						ring.encounterEffects = [];
 						target.encounterModifiers = {};
 						const beforeHP = target.hp;
 

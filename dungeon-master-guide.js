@@ -28,7 +28,7 @@ ${cardList.join('\n')}
 
 	return Promise.resolve()
 		.then(() => output(header))
-		.then(() => Promise.each(allCards, Card => output(actionCard(new Card(), true))))
+		.then(() => Promise.each(allCards, Card => output(actionCard(new Card()))))
 		.then(() => output(`\`\`\`
 *The Item Catalogue:*
 
