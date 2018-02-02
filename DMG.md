@@ -18,6 +18,7 @@ Blast II
 Blink
 Harden
 Brain Drain
+Calisthenics
 Camouflage Vest
 Cloak of Invisibility
 Coil
@@ -43,6 +44,7 @@ Iocane
 The Kalevala
 Lucky Strike
 Mesmerize
+Molasses
 Pick Pocket
 Pound
 1993-09-7202 18:58
@@ -246,6 +248,24 @@ Wooden Spear
 |
 | Level: 1
 | Usable by: All
+| MSRP: 50
+|
+==================================
+```
+
+```
+==================================
+| 🙆‍  Calisthenics  ○
+----------------------------------
+|
+| Your daily workout routine 
+| limbers you up for battle.
+|
+| Boost: dex +1-2 depending on 
+| how deep the stretch is
+|
+| Level: 2
+| Usable by: Barbarian, Fighter
 | MSRP: 50
 |
 ==================================
@@ -891,6 +911,27 @@ Wooden Spear
 | Level: 1
 | Usable by: Weeping Angel
 | MSRP: 20
+|
+==================================
+```
+
+```
+==================================
+| 🍯  Molasses  ◆
+----------------------------------
+|
+| Slow down your enemies like 
+| it's 1919.
+|
+| Hit: 1d20 vs ac / Damage: 1d4
+| Curse: dex -1
+| maximum total curse of -3 per 
+| level, afterwards penalties 
+| come out of hp instead.
+|
+| Level: 1
+| Usable by: All
+| MSRP: 50
 |
 ==================================
 ```
