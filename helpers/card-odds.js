@@ -1,10 +1,6 @@
-const fs = require('fs-extra');
-// const startCase = require('lodash.startcase');
-
 const { randomCharacter } = require('../characters');
 const { all: Monsters } = require('../monsters');
 const { all: Cards } = require('../cards');
-
 
 function getCardDPT () {
 	const levels = [1, 5, 10, 15, 25];
@@ -117,6 +113,4 @@ function getCardDPT () {
 	}, {});
 }
 
-fs.outputJsonSync('card-odds.json', getCardDPT());
-
-process.exit(0);
+module.exports = getCardDPT;

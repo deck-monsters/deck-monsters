@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 
 const dungeonMasterGuide = require('./dungeon-master-guide');
+const getCardDPT = require('./helpers/card-odds');
 const getCardProbabilities = require('./helpers/card-probabilities');
 const monsterManual = require('./monster-manual');
 
@@ -18,6 +19,7 @@ Promise.resolve()
 			.then(() => writeMarkdown('MONSTERS', content.join('\n')));
 	})
 	.then(() => {
+		fs.outputJsonSync('card-odds.json', getCardDPT());
 		fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
 
 		process.exit(0);

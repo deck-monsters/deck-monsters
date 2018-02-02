@@ -127,7 +127,7 @@ class HitCard extends BaseCard {
 			target
 		});
     
-    return !target.dead;
+		return !target.dead;
 	}
 }
 
