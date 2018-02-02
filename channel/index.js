@@ -5,11 +5,9 @@ const pause = require('../helpers/pause');
 
 const THROTTLE_RATE = 5000;
 
-const sendMessage = (channel, announce) => new Promise((resolve) => {
-	pause.setTimeout(() => {
-		resolve(channel ? channel({ announce }) : Promise.resolve());
-	}, THROTTLE_RATE);
-});
+const sendMessage = (channel, announce) => Promise.resolve()
+	.then(() => channel && channel({ announce })
+		.then(() => Promise.delay(THROTTLE_RATE)));
 
 class ChannelManager extends BaseClass {
 	constructor (options, log) {
@@ -87,7 +85,7 @@ class ChannelManager extends BaseClass {
 
 				return messages;
 			}, []))
-			.then(messages => Promise.map(messages, (message) => {
+			.then(messages => Promise.mapSeries(messages, (message) => {
 				const channel = this.channels[message.channelName];
 
 				return sendMessage(channel, message.announcements.join('\n'))

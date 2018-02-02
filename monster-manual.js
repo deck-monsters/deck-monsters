@@ -39,8 +39,7 @@ ${monsterList.join('\n')}
 Here are some sample beginner level monsters:
 \`\`\``;
 
-	return Promise.resolve()
-		.then(() => output(header))
+	return output(header, true)
 		.then(() => Promise.each(allMonsters, Monster => output(monsterCard(new Monster(), true))));
 };
 
