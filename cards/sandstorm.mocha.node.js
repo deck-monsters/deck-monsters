@@ -4,34 +4,11 @@ const { expect, sinon } = require('../shared/test-setup');
 const { ATTACK_PHASE } = require('../helpers/phases');
 const cards = require('./index');
 const Jinn = require('../monsters/jinn');
-const pause = require('../helpers/pause');
 const RandomCard = require('./random');
 const SandstormCard = require('./sandstorm');
 const TestCard = require('./test');
 
 describe('./cards/sandstorm.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const sandstorm = new SandstormCard();
 

@@ -1,28 +1,9 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const ThickSkinCard = require('./thick-skin');
 const Basilisk = require('../monsters/basilisk');
-const pause = require('../helpers/pause');
 
 describe('./cards/thick-skin.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const thickSkin = new ThickSkinCard();
 

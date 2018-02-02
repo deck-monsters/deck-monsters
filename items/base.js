@@ -58,7 +58,8 @@ class BaseItem extends BaseClass {
 	}
 
 	use ({ channel, channelName, character, monster }) {
-		return Promise.resolve()
+		return Promise.resolve(channel)
+			.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
 			.then(() => {
 				if (!this.usableWithoutMonster && !monster) {
 					return Promise.reject(channel({
@@ -78,9 +79,7 @@ class BaseItem extends BaseClass {
 				this.used += 1;
 
 				if (this.action) {
-					return Promise.resolve(channel)
-						.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
-						.then(() => this.action({ channel, channelName, character, monster }));
+					return this.action({ channel, channelName, character, monster });
 				}
 
 				return this.used;

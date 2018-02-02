@@ -43,7 +43,7 @@ class BaseCard extends BaseItem {
 				const targets = this.getTargets(player, proposedTarget, ring, activeContestants);
 
 				if (this.effect) {
-					return Promise.map(targets, target => this.effect(player, target, ring, activeContestants))
+					return Promise.mapSeries(targets, target => this.effect(player, target, ring, activeContestants))
 						.then(results => results.reduce((result, val) => result && val, true));
 				}
 

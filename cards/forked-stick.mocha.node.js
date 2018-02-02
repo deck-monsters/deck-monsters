@@ -6,35 +6,12 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Gladiator = require('../monsters/gladiator');
 const ForkedStick = require('./forked-stick');
-const pause = require('../helpers/pause');
 
 const { BARD, FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, JINN, MINOTAUR, BASILISK } = require('../helpers/creature-types');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
 describe('./cards/forked-stick.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const forkedStick = new ForkedStick();
 		const hit = new Hit({ targetProp: forkedStick.targetProp });

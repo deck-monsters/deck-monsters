@@ -5,33 +5,10 @@ const { expect, sinon } = require('../shared/test-setup');
 const LuckyStrikeCard = require('./lucky-strike');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
-const pause = require('../helpers/pause');
 
 const { BARD, CLERIC, FIGHTER } = require('../helpers/classes');
 
 describe('./cards/lucky-strike.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const luckyStrike = new LuckyStrikeCard();
 

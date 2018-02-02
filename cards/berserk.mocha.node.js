@@ -5,7 +5,6 @@ const { expect, sinon } = require('../shared/test-setup');
 const BerserkCard = require('./berserk');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
-const pause = require('../helpers/pause');
 
 const { BARBARIAN } = require('../helpers/classes');
 
@@ -16,28 +15,6 @@ for (let i = 5; i < 101; i++) {
 ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (5150 total damage).');
 
 describe('./cards/berserk.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const berserk = new BerserkCard();
 

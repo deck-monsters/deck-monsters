@@ -3,7 +3,6 @@ const { expect, sinon } = require('../shared/test-setup');
 const BattleFocusCard = require('./battle-focus');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
-const pause = require('../helpers/pause');
 
 const { GLADIATOR } = require('../helpers/creature-types');
 
@@ -14,28 +13,6 @@ for (let i = 17; i < 101; i++) {
 ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (109 total damage).');
 
 describe('./cards/battle-focus.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const battleFocus = new BattleFocusCard();
 

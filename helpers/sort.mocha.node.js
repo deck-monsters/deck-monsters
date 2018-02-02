@@ -1,11 +1,8 @@
-const { expect, sinon } = require('../shared/test-setup');
-
-const pause = require('../helpers/pause');
+const { expect } = require('../shared/test-setup');
 
 const { sort } = require('./sort');
 
 describe('./helpers/sort.js', () => {
-	let pauseStub;
 	const unsortedCards = [
 		{ cardType: 'b', level: 1 },
 		{ cardType: 'a', level: 0 },
@@ -16,22 +13,6 @@ describe('./helpers/sort.js', () => {
 		{ cardType: 'b', level: 1 },
 		{ cardType: 'd', level: 2 }
 	];
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
 
 	describe('sort', () => {
 		it('sorts by cardType by default', () => {

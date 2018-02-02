@@ -8,6 +8,7 @@ const pause = require('./helpers/pause');
 
 // const DestroyCard = require('./cards/destroy.js');
 
+pause.getThrottleRate = () => 5;
 pause.setTimeout = func => setTimeout(func, 5);
 
 prompt.start();

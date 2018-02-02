@@ -9,7 +9,6 @@ const Jinn = require('../monsters/jinn');
 const Minotaur = require('../monsters/minotaur');
 const WeepingAngel = require('../monsters/weeping-angel');
 
-const pause = require('../helpers/pause');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
 const {
@@ -17,9 +16,6 @@ const {
 } = require('../helpers/creature-types');
 
 describe('./cards/mesmerize.js', () => {
-	let pauseStub;
-	let channelStub;
-
 	let angel;
 	let basilisk;
 	let gladiator;
@@ -36,15 +32,7 @@ describe('./cards/mesmerize.js', () => {
 	let baseProto;
 	let checkSuccessStub;
 
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
 	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-
 		angel = new WeepingAngel();
 		basilisk = new Basilisk();
 		gladiator = new Gladiator();
@@ -54,12 +42,12 @@ describe('./cards/mesmerize.js', () => {
 
 		ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: angel },
-				{ monster: basilisk },
-				{ monster: minotaur },
-				{ monster: gladiator },
-				{ monster: jinn }
+				{ character: {}, monster: player },
+				{ character: {}, monster: angel },
+				{ character: {}, monster: basilisk },
+				{ character: {}, monster: minotaur },
+				{ character: {}, monster: gladiator },
+				{ character: {}, monster: jinn }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
@@ -76,13 +64,7 @@ describe('./cards/mesmerize.js', () => {
 	});
 
 	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
 		checkSuccessStub.restore();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {

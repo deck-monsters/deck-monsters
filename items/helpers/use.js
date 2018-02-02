@@ -68,4 +68,4 @@ ${itemChoices}`);
 
 			return Promise.reject(channel({ announce: 'You know what they always say, "An item saved is an item earned."' }));
 		}))
-	.then(selectedItems => Promise.map(selectedItems, item => use({ channel, isMonsterItem: !!monster || !item.usableWithoutMonster, item, monster })));
+	.then(selectedItems => Promise.mapSeries(selectedItems, item => use({ channel, isMonsterItem: !!monster || !item.usableWithoutMonster, item, monster })));

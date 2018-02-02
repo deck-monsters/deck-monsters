@@ -2,9 +2,8 @@
 const Promise = require('bluebird');
 
 const { monsterCard } = require('./helpers/card');
-
-
 const allMonsters = require('./monsters/helpers/all.js');
+const generateDocs = require('./helpers/generate-docs');
 
 const monsterList = allMonsters.map(({ creatureType }) => creatureType);
 
@@ -40,31 +39,10 @@ ${monsterList.join('\n')}
 Here are some sample beginner level monsters:
 \`\`\``;
 
-	return Promise.resolve()
-		.then(output(header))
+	return output(header, true)
 		.then(() => Promise.each(allMonsters, Monster => output(monsterCard(new Monster(), true))));
 };
 
-const monsterManual = ({ channel, output }) => {
-	let format;
-
-	if (channel) {
-		const { channelManager, channelName } = channel;
-		format = announce => Promise.resolve()
-			.then(() => channelManager.queueMessage({
-				announce,
-				channel,
-				channelName
-			}));
-
-		return generateMonsterManual(format).then(() => channelManager.sendMessages());
-	} else if (output) {
-		format = string => Promise.resolve().then(() => output(string));
-	} else {
-		format = string => Promise.resolve().then(() => console.log(string)); // eslint-disable-line no-console
-	}
-
-	return generateMonsterManual(format);
-};
+const monsterManual = ({ channel, output }) => generateDocs({ channel, generate: generateMonsterManual, output });
 
 module.exports = monsterManual;

@@ -443,7 +443,7 @@ class Game extends BaseClass {
 
 			// Is it a dungeon master guide?
 			if (thing.match(/(?:dungeon master(?:s)?|dm) guide|dmg/i)) {
-				return dungeonMasterGuide(channel);
+				return dungeonMasterGuide({ channel });
 			}
 
 			// Is it a monster manual?

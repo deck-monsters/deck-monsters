@@ -1,33 +1,10 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const { randomCharacter } = require('../characters');
 const Basilisk = require('../monsters/basilisk');
 const BlastCard = require('./blast');
-const pause = require('../helpers/pause');
 
 describe('./cards/blast.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const blast = new BlastCard();
 

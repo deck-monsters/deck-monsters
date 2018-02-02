@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
-const { expect, sinon } = require('../../shared/test-setup');
+const { expect } = require('../../shared/test-setup');
 
-const pause = require('../../helpers/pause');
 const CobraKaiScroll = require('./cobra-kai-according-to-clever-hans');
 const Jinn = require('../../monsters/jinn');
 const { TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
@@ -9,28 +8,6 @@ const { ALMOST_NOTHING } = require('../../helpers/costs');
 const { COMMON } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/cobra-kai-according-to-clever-hans.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const cobraKai = new CobraKaiScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });

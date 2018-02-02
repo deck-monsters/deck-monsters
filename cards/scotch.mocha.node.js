@@ -1,29 +1,10 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const ScotchCard = require('./scotch');
 const HealCard = require('./heal');
 const Basilisk = require('../monsters/basilisk');
-const pause = require('../helpers/pause');
 
 describe('./cards/scotch.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const scotch = new ScotchCard();
 		const heal = new HealCard({ healthDice: scotch.healthDice });
