@@ -108,29 +108,26 @@ class HitCard extends BaseCard {
 			attackRoll, success, strokeOfLuck, curseOfLoki // TODO: Is this curseOfLoki used elsewhere and we can simply drop it?
 		} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
-		return ring.channelManager.sendMessages()
-			.then(() => {
-				if (success) {
-					const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
+		if (success) {
+			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
-					// If we hit then do some damage
-					return target.hit(damageRoll.result, player, this);
-				} else if (curseOfLoki) {
-					const damageRoll = this.rollForDamage(target, player);
+			// If we hit then do some damage
+			return target.hit(damageRoll.result, player, this);
+		} else if (curseOfLoki) {
+			const damageRoll = this.rollForDamage(target, player);
 
-					// Our attack is now bouncing back against us
-					return player.hit(damageRoll.result, target, this);
-				}
+			// Our attack is now bouncing back against us
+			return player.hit(damageRoll.result, target, this);
+		}
 
-				this.emit('miss', {
-					attackResult: attackRoll.result,
-					attackRoll,
-					player,
-					target
-				});
+		this.emit('miss', {
+			attackResult: attackRoll.result,
+			attackRoll,
+			player,
+			target
+		});
 
-				return true;
-			});
+		return !target.dead;
 	}
 }
 
