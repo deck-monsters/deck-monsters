@@ -1,10 +1,9 @@
 /* eslint-disable max-len */
-const Promise = require('bluebird');
-
 const ImmobilizeCard = require('./immobilize');
 
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
+const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
 
 const {
 	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
@@ -27,9 +26,13 @@ class MesmerizeCard extends ImmobilizeCard {
 ${super.stats}`;
 	}
 
-	effect (player, target, ring, activeContestants) {
-		return Promise.map(activeContestants, ({ monster }) => super.effect(player, monster, ring, activeContestants))
-			.then(() => !target.dead);
+	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
+		return getTarget({
+			contestants: activeContestants,
+			ignoreSelf: false,
+			playerMonster: player,
+			strategy: TARGET_ALL_CONTESTANTS
+		}).map(({ monster }) => monster);
 	}
 }
 
@@ -42,6 +45,7 @@ MesmerizeCard.uselessAgainstCreatureTypes = [JINN];
 MesmerizeCard.probability = COMMON.probability;
 MesmerizeCard.description = `You strut and preen. Your beauty ${MesmerizeCard.actions.IMMOBILIZES} everyone, including yourself.`;
 MesmerizeCard.cost = VERY_CHEAP.cost;
+MesmerizeCard.isAreaOfEffect = true;
 
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,

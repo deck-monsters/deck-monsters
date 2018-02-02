@@ -254,9 +254,11 @@ ${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronoun
 		if (alreadyImmobilized || !canHaveEffect) {
 			let narration = '';
 			if (alreadyImmobilized) {
-				narration = `${target.givenName} is already immobilized, ${player.givenName} _shows no mercy_!`;// Use immobilize here, because it could be the result of ANY immobilization, not just "coil" or whatever is checking right now.
+				narration = `
+${target.givenName} is already immobilized, ${player.givenName} _shows no mercy_!`;// Use immobilize here, because it could be the result of ANY immobilization, not just "coil" or whatever is checking right now.
 			} else {
-				narration = `${target.givenName} laughs haughtily as ${player.givenName} tries to ${this.actions.IMMOBILIZE} them, ${player.pronouns.he} vents ${player.pronouns.his} fury at ${target.pronouns.his} mockery!`;
+				narration = `
+${target.givenName} laughs haughtily as ${player.givenName} tries to ${this.actions.IMMOBILIZE} them, ${player.pronouns.he} vents ${player.pronouns.his} fury at ${target.pronouns.his} mockery!`;
 			}
 			this.emit('narration', { narration });
 
