@@ -53,7 +53,7 @@ ${this.icon} ${delayingPlayer.givenName} immediately responds to the blow ${last
 								});
 							}
 
-							return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
+							return Promise.resolve(super.effect(delayingPlayer, lastHitByOther.assailant, ring))
 								.then(() =>
 									// This does not affect the current player or turn in any way, it is a response
 									// to the previous player/turn, so just return the current card's result
