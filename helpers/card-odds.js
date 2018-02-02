@@ -1,4 +1,5 @@
-const startCase = require('lodash.startcase');
+const fs = require('fs-extra');
+// const startCase = require('lodash.startcase');
 
 const { randomCharacter } = require('../characters');
 const { all: Monsters } = require('../monsters');
@@ -18,7 +19,7 @@ function getCardDPT () {
 			Monsters
 		});
 
-		const cards = Cards.map((Card) => new Card());
+		const cards = Cards.map(Card => new Card());
 		const plays = {};
 
 		const ring = {
@@ -81,7 +82,7 @@ function getCardDPT () {
 			});
 		}
 
-		Object.keys(plays).map(cardName => {
+		Object.keys(plays).map((cardName) => {
 			const play = plays[cardName];
 
 			if (play.hits) {
@@ -102,7 +103,8 @@ function getCardDPT () {
 				play.modifierChance = Math.round((play.modifiers / 2500) * 100);
 			}
 
-		})
+			return play;
+		});
 
 		probabilities[character.level] = plays;
 
