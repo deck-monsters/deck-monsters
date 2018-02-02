@@ -19,13 +19,13 @@ class CalisthenicsCard extends BoostCard {
 	}
 
 	get stats () {
-		return `Boost: ${this.boostedProp} +1 or 2 depending on how deep the stretch is`;
+		return `Boost: ${this.boostedProp} +1-${this.options.boostAmount} depending on how deep the stretch is`;
 	}
 }
 
 CalisthenicsCard.cardType = 'Calisthenics';
 CalisthenicsCard.permittedClassesAndTypes = [BARBARIAN, FIGHTER];
-CalisthenicsCard.description = 'Equip yourself for the battle ahead.';
+CalisthenicsCard.description = 'Your daily workout routine limbers you up for battle.';
 CalisthenicsCard.level = 2;
 CalisthenicsCard.cost = REASONABLE.cost;
 

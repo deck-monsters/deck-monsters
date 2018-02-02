@@ -33,6 +33,7 @@ const IocaneCard = require('../iocane');
 const KalevalaCard = require('../kalevala');
 const LuckyStrike = require('../lucky-strike');
 const MesmerizeCard = require('../mesmerize');
+const MolassesCard = require('../molasses');
 const PickPocketCard = require('../pick-pocket');
 const PoundCard = require('../pound');
 const PrionDiseaseCard = require('../prion-disease');
@@ -83,6 +84,7 @@ module.exports = [
 	KalevalaCard,
 	LuckyStrike,
 	MesmerizeCard,
+	MolassesCard,
 	PickPocketCard,
 	PoundCard,
 	PrionDiseaseCard,
