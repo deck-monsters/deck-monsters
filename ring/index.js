@@ -4,13 +4,15 @@ const Promise = require('bluebird');
 const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
+const { actionCard, monsterCard } = require('../helpers/card');
 const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
 const { calculateXP } = require('../helpers/experience');
 const { getTarget } = require('../helpers/targeting-strategies');
-const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
+const { sortCardsAlphabetically } = require('../cards/helpers/sort');
 const BaseClass = require('../shared/baseClass');
 const delayTimes = require('../helpers/delay-times');
+const getUniqueCards = require('../cards/helpers/unique-cards');
 const pause = require('../helpers/pause');
 
 const MAX_BOSSES = 5;
@@ -212,6 +214,51 @@ Sent the following monster into the ring:
 					channel,
 					channelName
 				});
+			}))
+			.then(() => channelManager.sendMessages());
+	}
+
+	lookAtCards (channel) {
+		const { length } = this.contestants;
+
+		if (length < 1) {
+			return Promise.reject(channel({
+				announce: 'The ring is empty',
+				delay: 'short'
+			}));
+		}
+
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => channelManager.queueMessage({
+				announce:
+`###########################################
+The following cards are in play:
+`,
+				channel,
+				channelName
+			}))
+			.then(() => {
+				const cards = sortCardsAlphabetically(getUniqueCards(this.contestants.reduce((allCards, { monster }) => {
+					allCards.push(...monster.cards);
+
+					return allCards;
+				}, [])));
+
+				return Promise.each(cards, (card) => {
+					const cardDisplay = actionCard(card, true);
+
+					return channelManager.queueMessage({
+						announce: cardDisplay,
+						channel,
+						channelName
+					});
+				});
+			})
+			.then(() => channelManager.queueMessage({
+				announce: '###########################################',
+				channel,
+				channelName
 			}))
 			.then(() => channelManager.sendMessages());
 	}

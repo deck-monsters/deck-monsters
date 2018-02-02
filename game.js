@@ -276,6 +276,10 @@ class Game extends BaseClass {
 					return game.lookAtRing(channel, ringName, showCharacters)
 						.catch(err => log(err));
 				},
+				lookAtRingCards ({ ringName } = {}) {
+					return game.lookAtRingCards(channel, ringName)
+						.catch(err => log(err));
+				},
 				lookAt (thing) {
 					return game.lookAt(channel, thing)
 						.catch(err => log(err));
@@ -435,6 +439,10 @@ class Game extends BaseClass {
 
 	lookAtRing (channel, ringName = 'main', showCharacters) {
 		return this.getRing(ringName).look(channel, showCharacters);
+	}
+
+	lookAtRingCards (channel, ringName = 'main') {
+		return this.getRing(ringName).lookAtCards(channel);
 	}
 
 	lookAt (channel, thing) {
