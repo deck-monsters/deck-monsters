@@ -175,8 +175,10 @@ class Ring extends BaseClass {
 		return this.contestants.find(contestant => (contestant.character === character && contestant.monster === monster));
 	}
 
-	look (channel) {
-		if (this.contestants.length < 1) {
+	look (channel, showCharacters = true) {
+		const { length } = this.contestants;
+
+		if (length < 1) {
 			return Promise.reject(channel({
 				announce: 'The ring is empty',
 				delay: 'short'
@@ -185,15 +187,28 @@ class Ring extends BaseClass {
 
 		const { channelManager, channelName } = channel;
 		return Promise.resolve()
+			.then(() => channelManager.queueMessage({
+				announce:
+`###########################################
+There ${length === 1 ? 'is one contestant' : `are ${length} contestants`} in the ring.
+###########################################`,
+				channel,
+				channelName
+			}))
 			.then(() => Promise.each(this.contestants, (contestant) => {
-				const contestantDisplay = monsterCard(contestant.character, true);
 				const monsterDisplay = monsterCard(contestant.monster, true);
 
-				channelManager.queueMessage({
-					announce:
-`${contestantDisplay}
+				let characterDisplay = '';
+				if (showCharacters) {
+					characterDisplay = `${monsterCard(contestant.character, true)}
 Sent the following monster into the ring:
-${monsterDisplay}`,
+
+`;
+				}
+
+				return channelManager.queueMessage({
+					announce:
+`${characterDisplay}${monsterDisplay}###########################################`,
 					channel,
 					channelName
 				});
