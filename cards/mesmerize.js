@@ -31,7 +31,8 @@ ${super.stats}`;
 			contestants: activeContestants,
 			ignoreSelf: false,
 			playerMonster: player,
-			strategy: TARGET_ALL_CONTESTANTS
+			strategy: TARGET_ALL_CONTESTANTS,
+			team: false
 		}).map(({ monster }) => monster);
 	}
 }
