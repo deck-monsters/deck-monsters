@@ -5,10 +5,8 @@ const { ALMOST_NOTHING } = require('../helpers/costs');
 
 const HitCard = require('./hit');
 const Basilisk = require('../monsters/basilisk');
-const pause = require('../helpers/pause');
 
 describe('./cards/hit.js', () => {
-	let pauseStub;
 	let hit;
 	let hitEffectSpy;
 	let hitCheckStub;
@@ -19,13 +17,11 @@ describe('./cards/hit.js', () => {
 
 	before(() => {
 		hit = new HitCard();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 		hitEffectSpy = sinon.spy(hit, 'effect');
 		hitCheckStub = sinon.stub(hit, 'hitCheck');
 	});
 
 	beforeEach(() => {
-		pauseStub.callsArg(0);
 		player = new Basilisk({ name: 'player' });
 		target = new Basilisk({ name: 'target' });
 		ring = {
@@ -42,12 +38,10 @@ describe('./cards/hit.js', () => {
 	});
 
 	afterEach(() => {
-		pauseStub.reset();
 		hitEffectSpy.reset();
 	});
 
 	after(() => {
-		pause.setTimeout.restore();
 		hitEffectSpy.restore();
 	});
 

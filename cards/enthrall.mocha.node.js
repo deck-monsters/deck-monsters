@@ -9,17 +9,11 @@ const Jinn = require('../monsters/jinn');
 const Minotaur = require('../monsters/minotaur');
 const WeepingAngel = require('../monsters/weeping-angel');
 
-const pause = require('../helpers/pause');
-
-
 const {
 	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
 } = require('../helpers/creature-types');
 
 describe('./cards/enthrall.js', () => {
-	let pauseStub;
-	let channelStub;
-
 	let angel;
 	let basilisk;
 	let gladiator;
@@ -36,15 +30,7 @@ describe('./cards/enthrall.js', () => {
 	let baseProto;
 	let checkSuccessStub;
 
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
 	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-
 		angel = new WeepingAngel();
 		basilisk = new Basilisk();
 		gladiator = new Gladiator();
@@ -76,13 +62,7 @@ describe('./cards/enthrall.js', () => {
 	});
 
 	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
 		checkSuccessStub.restore();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {

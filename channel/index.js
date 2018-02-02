@@ -3,11 +3,9 @@ const Promise = require('bluebird');
 const BaseClass = require('../shared/baseClass');
 const pause = require('../helpers/pause');
 
-const THROTTLE_RATE = 5000;
-
 const sendMessage = (channel, announce) => Promise.resolve()
 	.then(() => channel && channel({ announce })
-		.then(() => Promise.delay(THROTTLE_RATE)));
+		.then(() => Promise.delay(pause.getThrottleRate())));
 
 class ChannelManager extends BaseClass {
 	constructor (options, log) {
@@ -17,17 +15,11 @@ class ChannelManager extends BaseClass {
 		this.queue = [];
 		this.log = log;
 
-		const sendMessagesLoop = () => new Promise((resolve) => {
-			const timeout = () => pause.setTimeout(() => resolve(), THROTTLE_RATE * 1.5);
-
-			this.sendMessages()
-				.then(timeout)
-				.catch((err) => {
-					log(err);
-					timeout();
-				});
-		})
-			.then(() => pause.setTimeout(() => sendMessagesLoop(), 0));
+		const sendMessagesLoop = () => this
+			.sendMessages()
+			.catch(err => log(err))
+			.then(() => Promise.delay(pause.getThrottleRate() * 1.5))
+			.then(() => setTimeout(() => sendMessagesLoop(), 0));
 
 		sendMessagesLoop();
 	}

@@ -4,34 +4,24 @@ const RandomCard = require('./random');
 const TestCard = require('./test');
 const Basilisk = require('../monsters/basilisk');
 const cards = require('./index');
-const pause = require('../helpers/pause');
 
 describe('./cards/random.js', () => {
-	let channelStub;
 	let drawStub;
-	let pauseStub;
 
 	before(() => {
-		channelStub = sinon.stub();
 		drawStub = sinon.stub(cards, 'draw');
-		pauseStub = sinon.stub(pause, 'setTimeout');
 	});
 
 	beforeEach(() => {
-		channelStub.resolves();
 		drawStub.returns(new TestCard());
-		pauseStub.callsArg(0);
 	});
 
 	afterEach(() => {
-		channelStub.reset();
 		drawStub.reset();
-		pauseStub.reset();
 	});
 
 	after(() => {
 		cards.draw.restore();
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {

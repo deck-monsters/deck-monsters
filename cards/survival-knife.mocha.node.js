@@ -2,7 +2,6 @@ const { expect, sinon } = require('../shared/test-setup');
 
 const SurvivalKnifeCard = require('./survival-knife');
 const Basilisk = require('../monsters/basilisk');
-const pause = require('../helpers/pause');
 
 const HitCard = require('./hit');
 const HealCard = require('./heal');
@@ -10,28 +9,6 @@ const HealCard = require('./heal');
 const { FIGHTER } = require('../helpers/classes');
 
 describe('./cards/survival-knife.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const survivalKnife = new SurvivalKnifeCard();
 		const hit = new HitCard({ damageDice: survivalKnife.damageDice });

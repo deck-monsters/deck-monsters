@@ -1,5 +1,4 @@
 const { expect, sinon } = require('../shared/test-setup');
-const pause = require('../helpers/pause');
 
 const Hit = require('./hit');
 const Entrance = require('./entrance');
@@ -15,9 +14,6 @@ const {
 } = require('../helpers/creature-types');
 
 describe('./cards/entrance.js', () => {
-	let pauseStub;
-	let channelStub;
-
 	let angel;
 	let basilisk;
 	let gladiator;
@@ -35,15 +31,7 @@ describe('./cards/entrance.js', () => {
 	let baseProto;
 	let checkSuccessStub;
 
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
 	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-
 		angel = new WeepingAngel();
 		basilisk = new Basilisk();
 		gladiator = new Gladiator();
@@ -76,13 +64,7 @@ describe('./cards/entrance.js', () => {
 	});
 
 	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
 		checkSuccessStub.restore();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {

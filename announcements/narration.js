@@ -1,4 +1,4 @@
-const announceNarration = (publicChannel, channelManager, className, item, { channel, channelName, flush, narration }) => {
+const announceNarration = (publicChannel, channelManager, className, item, { channel, channelName, narration }) => {
 	if (channel) {
 		channelManager.queueMessage({
 			announce: narration,
@@ -8,8 +8,6 @@ const announceNarration = (publicChannel, channelManager, className, item, { cha
 	} else {
 		publicChannel({ announce: narration });
 	}
-
-	if (flush) channelManager.sendMessages();
 };
 
 module.exports = announceNarration;

@@ -12,19 +12,12 @@ describe('./announcements/hit.js', () => {
 	let pauseStub;
 
 	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
+		pauseStub = sinon.stub(pause, 'getThrottleRate');
+		pauseStub.returns(5);
 	});
 
 	after(() => {
-		pause.setTimeout.restore();
+		pause.getThrottleRate.restore();
 	});
 
 	describe('hit announcement', () => {

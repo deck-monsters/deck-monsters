@@ -9,10 +9,8 @@ const { DEFENSE_PHASE } = require('../helpers/phases');
 const DelayedHitCard = require('./delayed-hit');
 const HitCard = require('./hit');
 const Basilisk = require('../monsters/basilisk');
-const pause = require('../helpers/pause');
 
 describe('./cards/delayed-hit.js', () => {
-	let pauseStub;
 	let hit;
 	let delayedHit;
 	let hitEffectSpy;
@@ -22,11 +20,9 @@ describe('./cards/delayed-hit.js', () => {
 	let target;
 	let ring;
 
-
 	before(() => {
 		hit = new HitCard();
 		delayedHit = new DelayedHitCard();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 		hitEffectSpy = sinon.spy(hit, 'effect');
 		hitCheckStub = sinon.stub(hit, 'hitCheck');
 
@@ -34,7 +30,6 @@ describe('./cards/delayed-hit.js', () => {
 	});
 
 	beforeEach(() => {
-		pauseStub.callsArg(0);
 		player = new Basilisk({ name: 'player' });
 		target = new Basilisk({ name: 'target' });
 		ring = {
@@ -54,14 +49,12 @@ describe('./cards/delayed-hit.js', () => {
 	});
 
 	afterEach(() => {
-		pauseStub.reset();
 		hitEffectSpy.reset();
 		hitCheckStub.reset();
 		delayedHitHitCheckStub.reset();
 	});
 
 	after(() => {
-		pause.setTimeout.restore();
 		hitEffectSpy.restore();
 		hitCheckStub.restore();
 		delayedHitHitCheckStub.restore();

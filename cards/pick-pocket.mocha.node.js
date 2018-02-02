@@ -5,7 +5,6 @@ const sample = require('lodash.sample');
 const { randomCharacter } = require('../characters');
 const { randomContestant } = require('../helpers/bosses');
 const DestroyCard = require('./destroy');
-const pause = require('../helpers/pause');
 
 const Gladiator = require('../monsters/gladiator');
 
@@ -13,13 +12,9 @@ const allCards = require('./helpers/all');
 
 describe('./cards/pick-pocket.js', () => {
 	let PickPocketCard;
-	let channelStub;
-	let pauseStub;
 	let sampleSpy;
 
 	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 		sampleSpy = sinon.stub();
 
 		PickPocketCard = proxyquire('./pick-pocket', {
@@ -28,19 +23,11 @@ describe('./cards/pick-pocket.js', () => {
 	});
 
 	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
 		sampleSpy.callsFake(sample);
 	});
 
 	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
 		sampleSpy.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {

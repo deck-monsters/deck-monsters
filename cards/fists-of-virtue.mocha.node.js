@@ -2,31 +2,8 @@ const { expect, sinon } = require('../shared/test-setup');
 
 const { randomCharacter } = require('../characters');
 const FistsOfVirtueCard = require('./fists-of-virtue');
-const pause = require('../helpers/pause');
 
 describe('./cards/fists-of-virtue.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const virtue = new FistsOfVirtueCard();
 

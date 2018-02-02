@@ -5,34 +5,11 @@ const Hit = require('./hit');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Coil = require('./coil');
-const pause = require('../helpers/pause');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
 const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../helpers/creature-types');
 
 describe('./cards/coil.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const coil = new Coil();
 		const hit = new Hit({ targetProp: coil.targetProp });

@@ -4,34 +4,11 @@ const { DEFENSE_PHASE } = require('../helpers/phases');
 const Basilisk = require('../monsters/basilisk');
 const cards = require('./index');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
-const pause = require('../helpers/pause');
 const RandomCard = require('./random');
 const TestCard = require('./test');
 const WeepingAngel = require('../monsters/weeping-angel');
 
 describe('./cards/enchanted-faceswap.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const faceswap = new EnchantedFaceswapCard();
 

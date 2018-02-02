@@ -36,7 +36,8 @@ class BaseCard extends BaseItem {
 	}
 
 	play (player, proposedTarget, ring, activeContestants) {
-		return Promise.resolve()
+		return Promise.resolve(ring)
+			.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
 			.then(() => {
 				this.emit('played', { player });
 

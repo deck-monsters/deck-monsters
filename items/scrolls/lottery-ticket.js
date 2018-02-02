@@ -28,7 +28,6 @@ class LotteryTicket extends BaseScroll {
 				this.emit('narration', {
 					channel,
 					channelName,
-					flush: true,
 					narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${characterNumbers.join('" "')}".`
 				});
 

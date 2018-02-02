@@ -4,34 +4,11 @@ const Hit = require('./hit');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const ForkedMetalRod = require('./forked-metal-rod');
-const pause = require('../helpers/pause');
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
 const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../helpers/creature-types');
 
 describe('./cards/forked-metal-rod.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const forkedMetalRod = new ForkedMetalRod();
 		const hit = new Hit({ targetProp: forkedMetalRod.targetProp });

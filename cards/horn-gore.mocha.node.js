@@ -10,12 +10,7 @@ const Jinn = require('../monsters/jinn');
 const Minotaur = require('../monsters/minotaur');
 const WeepingAngel = require('../monsters/weeping-angel');
 
-const pause = require('../helpers/pause');
-
 describe('./cards/horn-gore.js', () => {
-	let channelStub;
-	let pauseStub;
-
 	let hornGore;
 	let angel;
 	let basilisk;
@@ -40,9 +35,6 @@ describe('./cards/horn-gore.js', () => {
 	let attackRoll;
 
 	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-
 		hornGore = new HornGoreCard();
 		basilisk = new Basilisk();
 
@@ -59,9 +51,6 @@ describe('./cards/horn-gore.js', () => {
 	});
 
 	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-
 		hornGore = new HornGoreCard();
 		angel = new WeepingAngel();
 		basilisk = new Basilisk();
@@ -97,17 +86,12 @@ describe('./cards/horn-gore.js', () => {
 	});
 
 	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-
 		checkSuccessStub.reset();
 		hitCheckStub.reset();
 		hitStub.reset();
 	});
 
 	after(() => {
-		pause.setTimeout.restore();
-
 		checkSuccessStub.restore();
 		hitCheckStub.restore();
 		hitStub.restore();

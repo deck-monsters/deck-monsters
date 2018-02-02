@@ -1,29 +1,10 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const Gladiator = require('./gladiator');
 const { CLERIC, FIGHTER } = require('../helpers/classes');
 const { GLADIATOR, BASILISK } = require('../helpers/creature-types');
-const pause = require('../helpers/pause');
 
 describe('./monsters/gladiator.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const gladiator = new Gladiator();
 

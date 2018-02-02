@@ -7,6 +7,7 @@ const BlastCard = require('../blast');
 const BlinkCard = require('../blink');
 const BoostCard = require('../boost');
 const BrainDrainCard = require('../brain-drain');
+const CalisthenicsCard = require('../calisthenics');
 const CamouflageVestCard = require('../camouflage-vest');
 const CloakOfInvisibilityCard = require('../cloak-of-invisibility');
 const CoilCard = require('../coil');
@@ -56,6 +57,7 @@ module.exports = [
 	BlinkCard,
 	BoostCard,
 	BrainDrainCard,
+	CalisthenicsCard,
 	CamouflageVestCard,
 	CloakOfInvisibilityCard,
 	CoilCard,

@@ -4,29 +4,20 @@ const Beastmaster = require('./beastmaster');
 const HitCard = require('../cards/hit');
 const Minotaur = require('../monsters/minotaur');
 const WeepingAngel = require('../monsters/weeping-angel');
-const pause = require('../helpers/pause');
 
 describe('./characters/beastmaster.js', () => {
 	let channelStub;
-	let pauseStub;
 
 	before(() => {
 		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 	});
 
 	beforeEach(() => {
 		channelStub.resolves();
-		pauseStub.callsArg(0);
 	});
 
 	afterEach(() => {
 		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated', () => {

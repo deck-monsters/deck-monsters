@@ -1,29 +1,10 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const BrainDrainCard = require('./brain-drain');
 const Gladiator = require('../monsters/gladiator');
-const pause = require('../helpers/pause');
 const HitCard = require('./hit');
 
 describe('./cards/brain-drain.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const brainDrain = new BrainDrainCard();
 		const hit = new HitCard({ damageDice: '1d4' });

@@ -2,24 +2,17 @@
 const { expect, sinon } = require('../../shared/test-setup');
 const proxyquire = require('proxyquire');
 
-const pause = require('../../helpers/pause');
 const randomCharacter = require('../../characters/helpers/random');
 
 describe('./items/scrolls/lottery-ticket.js', () => {
-	let channelStub;
-	let pauseStub;
 	let randomStub;
 	let LotteryTicket;
 
 	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 		randomStub = sinon.stub();
 	});
 
 	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
 		randomStub.returns(1);
 
 		LotteryTicket = proxyquire('./lottery-ticket', {
@@ -28,13 +21,7 @@ describe('./items/scrolls/lottery-ticket.js', () => {
 	});
 
 	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
 		randomStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {

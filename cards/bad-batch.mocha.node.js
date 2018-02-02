@@ -2,32 +2,23 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const Jinn = require('../monsters/jinn');
-const pause = require('../helpers/pause');
 const BadBatchCard = require('./bad-batch');
 const ScotchCard = require('./scotch');
 const HealCard = require('./heal');
 
 describe('./cards/bad-batch.js', () => {
 	let channelStub;
-	let pauseStub;
 
 	before(() => {
 		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 	});
 
 	beforeEach(() => {
 		channelStub.resolves();
-		pauseStub.callsArg(0);
 	});
 
 	afterEach(() => {
 		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {
