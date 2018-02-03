@@ -671,7 +671,7 @@ Wooden Spear
 | str.
 | If already immobilized, hit 
 | instead.
-| Hit: 1d20 vs dex / Damage: 1d6
+| Hit: 1d20 vs dex / Damage: 1d4
 | +2 advantage vs Basilisk, 
 | Gladiator
 | -2 disadvantage vs Jinn, 
