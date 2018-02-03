@@ -14,12 +14,12 @@ const formatCard = ({
 ==================================
 ${wrap(title, { indent: ' ', width: 32 })}
 ----------------------------------${
-	!verbose || !description ? '' :
+	!description ? '' :
 		`
 
 ${wrap(description, { indent: ' ', width: 32 })}`
 	}${
-		!stats ? '' :
+	!verbose || !stats ? '' :
 			`
 
 ${wrap(stats, { indent: ' ', width: 32 })}`
@@ -90,8 +90,8 @@ const actionCard = (card, verbose) => itemCard(card, verbose);
 
 const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.givenName}`,
-	description: upperFirst(monster.individualDescription),
-	stats: monster.stats,
+	description: monster.stats,
+	stats: upperFirst(monster.individualDescription),
 	rankings: monster.rankings,
 	verbose
 });

@@ -1,11 +1,11 @@
 
 ```
-				██████╗ ███╗   ███╗ ██████╗
-				██╔══██╗████╗ ████║██╔════╝
-				██║  ██║██╔████╔██║██║  ███╗
-				██║  ██║██║╚██╔╝██║██║   ██║
-				██████╔╝██║ ╚═╝ ██║╚██████╔╝
-				╚═════╝ ╚═╝     ╚═╝ ╚═════╝
+				.------..------..------..------..------.
+				|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
+				| :/\: || (\/) || :(): || :/\: || :/\: |
+				| :\/: || :\/: || ()() || (__) || :\/: |
+				| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
+				`------'`------'`------'`------'`------'
 
 *The Card Catalogue:*
 
@@ -70,14 +70,6 @@ Wooden Spear
  moonshine stored in sturdy lead 
  jugs.
 
- The next Whiskey Shot or Scotch 
- played will poison rather than 
- heal.
-
- Level: 1
- Usable by: Bard
- MSRP: 50
-
 ==================================
 ```
 
@@ -89,12 +81,6 @@ Wooden Spear
 
  Equip yourself for the battle 
  ahead.
-
- Boost: ac +2
-
- Level: 2
- Usable by: Bard, Fighter
- MSRP: 50
 
 ==================================
 ```
@@ -115,22 +101,6 @@ Wooden Spear
  sync as you lead in a dance of 
  their destruction.
 
- Hit: 1d20 + str bonus vs ac on 
- first hit
- then also + int bonus (fatigued 
- by 1 each subsequent hit) until 
- you miss
- 1d6 damage on first hit.
- 1 damage per hit after that.
-
- Stroke of luck increases damage 
- per hit by 1.
-
- Level: Beginner
- Usable by: Gladiator
- Hit chance: 71% | DPT: 5
- MSRP: 130
-
 ==================================
 ```
 
@@ -146,21 +116,6 @@ Wooden Spear
  the perfect face of your enemy. 
  Destroy it.
 
- Hit: 1d20 + str bonus vs ac on 
- first hit
- then also + int bonus (fatigued 
- by 1 each subsequent hit) until 
- you miss
- 1 damage per hit.
-
- Stroke of luck increases damage 
- per hit by 1.
-
- Level: 1
- Usable by: Barbarian
- Hit chance: 71% | DPT: 3
- MSRP: 50
-
 ==================================
 ```
 
@@ -172,14 +127,6 @@ Wooden Spear
 
  A magical blast against every 
  opponent in the encounter.
-
- Blast: 3 base damage +1 per 
- level of the caster
-
- Level: Beginner
- Usable by: Cleric
- Hit chance: 100% | DPT: 3
- MSRP: 50
 
 ==================================
 ```
@@ -193,14 +140,6 @@ Wooden Spear
  A strong magical blast against 
  every opponent in the encounter.
 
- Blast II: 3 base damage + int 
- bonus of caster
-
- Level: 2
- Usable by: Cleric
- Hit chance: 100% | DPT: 4
- MSRP: 80
-
 ==================================
 ```
 
@@ -212,19 +151,6 @@ Wooden Spear
 
  Consume your victim's potential 
  energy
-
- 1d20 vs opponent's int. They are 
- removed from the battle (and can 
- not be targeted).
- On what would have been their 
- next turn, if you are still 
- alive you drain 1d4 hp and 4d4 
- xp
-
- Level: Beginner
- Usable by: Weeping Angel
- Effect chance: 74%
- MSRP: 130
 
 ==================================
 ```
@@ -238,12 +164,6 @@ Wooden Spear
  It's time to put on your big boy 
  pants, and toughen up!
 
- Boost: ac +1
-
- Level: 1
- Usable by: All
- MSRP: 20
-
 ==================================
 ```
 
@@ -255,16 +175,6 @@ Wooden Spear
 
  And we shall bury our enemies in 
  their own confusion.
-
- Hit: 1d20 vs ac / Damage: 1d4
- Curse: xp -20
- can reduce xp down to 40, then 
- takes 4 from hp instead.
-
- Level: 1
- Usable by: All
- Hit chance: 70% | DPT: 2
- MSRP: 50
 
 ==================================
 ```
@@ -278,13 +188,6 @@ Wooden Spear
  Your daily workout routine 
  limbers you up for battle.
 
- Boost: dex +1-2 depending on how 
- deep the stretch is
-
- Level: 2
- Usable by: Barbarian, Fighter
- MSRP: 50
-
 ==================================
 ```
 
@@ -296,20 +199,6 @@ Wooden Spear
 
  You don your vest and blend in, 
  if only for a while.
-
- You are invisible until you play 
- a card that targets another 
- player, or for the next 2 cards 
- you play (whichever comes 
- first).
- 1d20 vs your int for opponent to 
- see you on their turn (natural 
- 20 removes your cloak).
-
- Level: 1
- Usable by: Barbarian, Fighter
- Effect chance: 100%
- MSRP: 80
 
 ==================================
 ```
@@ -323,20 +212,6 @@ Wooden Spear
  You don your cloak and 
  disappear, if only for a while.
 
- You are invisible until you play 
- a card that targets another 
- player, or for the next 2 cards 
- you play (whichever comes 
- first).
- 1d20 vs your int for opponent to 
- see you on their turn (natural 
- 20 removes your cloak).
-
- Level: 1
- Usable by: Bard, Cleric, Wizard
- Effect chance: 100%
- MSRP: 80
-
 ==================================
 ```
 
@@ -348,38 +223,6 @@ Wooden Spear
 
  Coil around your enemies with 
  your body, and squeeze.
-
- Immobilize and hit your opponent 
- by coiling your serpentine body 
- around them and squeezing. If 
- opponent is immune, hit instead.
-
- If already immobilized, hit 
- instead.
- Hit: 1d20 vs dex / Damage: 1d6
- 
- +2 advantage vs Gladiator, 
- Minotaur
- 
- -2 disadvantage vs Basilisk, 
- Jinn
-
- Opponent breaks free by rolling 
- 1d20 vs immobilizer's dex +/- 
- advantage/disadvantage - (turns 
- immobilized * 3)
- Hits immobilizer back on stroke 
- of luck.
- Turns immobilized resets on 
- curse of loki.
-
- -1 hp each turn immobilized.
-
- Level: Beginner
- Usable by: Basilisk
- Hit chance: 77% | DPT: 4
- Effect chance: 100%
- MSRP: 130
 
 ==================================
 ```
@@ -394,38 +237,6 @@ Wooden Spear
  your body, and squeeze like you 
  mean it.
 
- Immobilize and hit your opponent 
- by coiling your serpentine body 
- around them and squeezing. If 
- opponent is immune, hit instead.
-
- If already immobilized, hit 
- instead.
- Hit: 1d20 vs dex / Damage: 1d6
- 
- +3 advantage vs Gladiator, 
- Minotaur
- 
- -3 disadvantage vs Basilisk, 
- Jinn
-
- Opponent breaks free by rolling 
- 1d20 vs immobilizer's dex +/- 
- advantage/disadvantage - (turns 
- immobilized * 3)
- Hits immobilizer back on stroke 
- of luck.
- Turns immobilized resets on 
- curse of loki.
-
- -2 hp each turn immobilized.
-
- Level: 1
- Usable by: Basilisk
- Hit chance: 78% | DPT: 4
- Effect chance: 100%
- MSRP: 80
-
 ==================================
 ```
 
@@ -437,17 +248,6 @@ Wooden Spear
 
  Sweep the leg... You have a 
  problem with that? No mercy.
-
- Hit: 1d20 vs ac / Damage: 1d4
- Curse: ac -1
- maximum total curse of -3 per 
- level, afterwards penalties come 
- out of hp instead.
-
- Level: 1
- Usable by: All
- Hit chance: 77% | DPT: 3
- MSRP: 20
 
 ==================================
 ```
@@ -461,15 +261,6 @@ Wooden Spear
  Patience. Patience is key. When 
  your opponent reveals 
  themselves, then you strike.
-
- Delay your turn. Use the delayed 
- turn to immediately hit the next 
- player who hits you.
- Hit: 1d20 vs ac / Damage: 1d6
-
- Level: Beginner
- Usable by: All
- MSRP: 50
 
 ==================================
 ```
@@ -487,11 +278,6 @@ Wooden Spear
  be reversed so that the player 
  of the card becomes the target.
 
- Level: 1
- Usable by: Bard, Cleric
- Effect chance: 100%
- MSRP: 80
-
 ==================================
 ```
 
@@ -504,34 +290,6 @@ Wooden Spear
  You strut and preen. Your beauty 
  enthralls everyone, except 
  yourself.
-
- Immobilize all opponents.
-
- If already immobilized, hit 
- instead.
- Hit: 1d20 vs int / Damage: 1d6
- 
- +2 advantage vs Basilisk, 
- Gladiator
- 
- -2 disadvantage vs Minotaur, 
- Weeping Angel
- inneffective against Jinn
-
- Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
- advantage/disadvantage - (turns 
- immobilized * 3)
- Hits immobilizer back on stroke 
- of luck.
- Turns immobilized resets on 
- curse of loki.
-
- Level: 2
- Usable by: Weeping Angel
- Hit chance: 16% | DPT: 1
- Effect chance: 80%
- MSRP: 50
 
 ==================================
 ```
@@ -546,37 +304,6 @@ Wooden Spear
  painful beauty entrances and 
  hits everyone, except yourself.
 
- Immobilize and hit all 
- opponents.
-
- If already immobilized, hit 
- instead.
- Hit: 1d20 vs int / Damage: 1d6
- 
- +2 advantage vs Basilisk, 
- Gladiator
- 
- -2 disadvantage vs Minotaur, 
- Weeping Angel
- inneffective against Jinn
-
- Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
- advantage/disadvantage - (turns 
- immobilized * 3)
- Hits immobilizer back on stroke 
- of luck.
- Turns immobilized resets on 
- curse of loki.
-
- -1 hp each turn immobilized.
-
- Level: 3
- Usable by: Weeping Angel
- Hit chance: 74% | DPT: 3
- Effect chance: 80%
- MSRP: 80
-
 ==================================
 ```
 
@@ -588,12 +315,6 @@ Wooden Spear
 
  A low purr in your ears helps 
  you focus your energy.
-
- Boost: int +2
-
- Level: 2
- Usable by: Bard, Cleric
- MSRP: 80
 
 ==================================
 ```
@@ -607,15 +328,6 @@ Wooden Spear
  Survival instincts are nothing 
  to be ashamed of.
 
- Hit: 1d20 vs ac / Damage: 1d6
- Chance to flee if below a 
- quarter health
-
- Level: Beginner
- Usable by: All
- Hit chance: 70% | DPT: 3
- MSRP: 10
-
 ==================================
 ```
 
@@ -626,15 +338,6 @@ Wooden Spear
 ----------------------------------
 
  You show no mercy to the weak.
-
- Hit: 1d20 vs ac / Damage: 1d6
- Strikes opponent with lowest 
- current hp.
-
- Level: 1
- Usable by: All
- Hit chance: 72% | DPT: 3
- MSRP: 20
 
 ==================================
 ```
@@ -648,15 +351,6 @@ Wooden Spear
  You strike at the biggest bully 
  in the room.
 
- Hit: 1d20 vs ac / Damage: 1d8
- Strikes opponent with highest 
- current hp.
-
- Level: 1
- Usable by: All
- Hit chance: 71% | DPT: 4
- MSRP: 30
-
 ==================================
 ```
 
@@ -668,13 +362,6 @@ Wooden Spear
 
  There is no shame in living to 
  fight another day.
-
- Chance to run away if bloodied 
- (hp < half)
-
- Level: Beginner
- Usable by: All
- MSRP: 10
 
 ==================================
 ```
@@ -689,39 +376,6 @@ Wooden Spear
  rod fashioned for Gladiator and 
  Basilisk-hunting.
 
- Attack twice (once with each 
- prong). +2 to hit and immobilize 
- for each successfull prong hit.
-
- Chance to immobilize: 1d20 vs 
- str.
-
- If already immobilized, hit 
- instead.
- Hit: 1d20 vs ac / Damage: 1d6
- 
- +5 advantage vs Gladiator, 
- Basilisk
- 
- +1 advantage vs Jinn, Minotaur
- inneffective against Weeping 
- Angel
-
- Opponent breaks free by rolling 
- 1d20 vs immobilizer's str + 
- advantage - (turns immobilized * 
- 3)
- Hits immobilizer back on stroke 
- of luck.
- Turns immobilized resets on 
- curse of loki.
-
- Level: 2
- Usable by: Fighter, Barbarian
- Hit chance: 97% | DPT: 7
- Effect chance: 75%
- MSRP: 80
-
 ==================================
 ```
 
@@ -733,40 +387,6 @@ Wooden Spear
 
  A simple weapon fashioned for 
  Basilisk and Gladiator-hunting.
-
- Attempt to immobilize your 
- opponent by pinning them between 
- the branches of a forked stick.
-
- Chance to immobilize: 1d20 vs 
- str.
- If already immobilized, hit 
- instead.
- Hit: 1d20 vs dex / Damage: 1d4
- 
- +2 advantage vs Basilisk, 
- Gladiator
- 
- -2 disadvantage vs Jinn, 
- Minotaur
- inneffective against Weeping 
- Angel
-
- Opponent breaks free by rolling 
- 1d20 vs immobilizer's str +/- 
- advantage/disadvantage - (turns 
- immobilized * 3)
- Hits immobilizer back on stroke 
- of luck.
- Turns immobilized resets on 
- curse of loki.
-
- Level: Beginner
- Usable by: Bard, Barbarian, 
- Fighter
- Hit chance: 62% | DPT: 2
- Effect chance: 61%
- MSRP: 50
 
 ==================================
 ```
@@ -781,19 +401,6 @@ Wooden Spear
  difference between sweet victory 
  and devastating defeat.
 
- Health: 1d4
- + int bonus (diminished by 1 
- each use until 0, then resets)
-
- 1% chance to heal half max hp
- 1% chance to poison
-
- Level: Beginner
- Usable by: All
- Hit chance: 1% | DPT: 0
- Heal chance: 93% | HPT: 3
- MSRP: 10
-
 ==================================
 ```
 
@@ -806,13 +413,6 @@ Wooden Spear
  A basic attack, the staple of 
  all good monsters.
 
- Hit: 1d20 vs ac / Damage: 1d6
-
- Level: Beginner
- Usable by: All
- Hit chance: 71% | DPT: 3
- MSRP: 10
-
 ==================================
 ```
 
@@ -824,15 +424,6 @@ Wooden Spear
 
  You hit just a little bit harder 
  than the average bear...
-
- Hit: 1d20 vs ac / Damage: 1d6
- Roll for damage twice, and use 
- the best result.
-
- Level: 2
- Usable by: Barbarian, Fighter
- Hit chance: 72% | DPT: 4
- MSRP: 130
 
 ==================================
 ```
@@ -847,38 +438,6 @@ Wooden Spear
  there to look pretty? Think 
  again...
 
- Attack twice (once with each 
- horn). +2 to hit and immobilize 
- for each successfull horn hit.
-
- If either horn hits, chance to 
- immobilize: 1d20 vs str.
-
- If already immobilized, hit 
- instead.
- Hit: 1d20 vs ac / Damage: 1d4
- 
- -2 disadvantage vs Minotaur, 
- Gladiator
- 
- -6 disadvantage vs Basilisk, 
- Jinn, Weeping Angel
-
- Opponent breaks free by rolling 
- 1d20 vs immobilizer's str - 
- disadvantage - (turns 
- immobilized * 3)
- Hits immobilizer back on stroke 
- of luck.
- Turns immobilized resets on 
- curse of loki.
-
- Level: Beginner
- Usable by: Minotaur
- Hit chance: 71% | DPT: 3
- Effect chance: 47%
- MSRP: 130
-
 ==================================
 ```
 
@@ -890,15 +449,6 @@ Wooden Spear
 
  Swing your horns at your 
  opponent.
-
- Hit: 1d20 vs str / Damage: 1d6
- Roll twice for hit. Use the best 
- roll.
-
- Level: 2
- Usable by: Minotaur
- Hit chance: 93% | DPT: 4
- MSRP: 50
 
 ==================================
 ```
@@ -912,20 +462,6 @@ Wooden Spear
  They were both poisoned. I spent 
  the last few years building up 
  an immunity to iocane powder...
-
- Hit: 1d20 vs ac / Damage: 2d4
- - or, below 1/4 health -
- Health: 2d4
- + int bonus (diminished by 1 
- each use until 0, then resets)
-
- 1% chance to heal half max hp
- 1% chance to poison
-
- Level: 1
- Usable by: Bard, Cleric
- Hit chance: 71% | DPT: 4
- MSRP: 20
 
 ==================================
 ```
@@ -942,13 +478,6 @@ Wooden Spear
  its pikebone pegs and it may 
  lead you on to victory.
 
- Hit: 1d20 vs ac / Damage: 1d4
-
- Level: 1
- Usable by: All
- Hit chance: 71% | DPT: 7
- MSRP: 80
-
 ==================================
 ```
 
@@ -964,15 +493,6 @@ Wooden Spear
  Or perhaps feel the unluckiness 
  of your opponent...
 
- Hit: 1d20 vs ac / Damage: 1d6
- Roll twice for hit. Use the best 
- roll.
-
- Level: 2
- Usable by: Bard, Cleric, Fighter
- Hit chance: 89% | DPT: 4
- MSRP: 50
-
 ==================================
 ```
 
@@ -986,34 +506,6 @@ Wooden Spear
  mesmerizes everyone, including 
  yourself.
 
- Immobilize everyone.
-
- If already immobilized, hit 
- instead.
- Hit: 1d20 vs int / Damage: 1d6
- 
- +2 advantage vs Basilisk, 
- Gladiator
- 
- -2 disadvantage vs Minotaur, 
- Weeping Angel
- inneffective against Jinn
-
- Opponent breaks free by rolling 
- 1d20 vs immobilizer's int +/- 
- advantage/disadvantage - (turns 
- immobilized * 3)
- Hits immobilizer back on stroke 
- of luck.
- Turns immobilized resets on 
- curse of loki.
-
- Level: 1
- Usable by: Weeping Angel
- Hit chance: 15% | DPT: 1
- Effect chance: 80%
- MSRP: 20
-
 ==================================
 ```
 
@@ -1025,17 +517,6 @@ Wooden Spear
 
  Slow down your enemies like it's 
  1919.
-
- Hit: 1d20 vs ac / Damage: 1d4
- Curse: dex -1
- maximum total curse of -3 per 
- level, afterwards penalties come 
- out of hp instead.
-
- Level: 1
- Usable by: All
- Hit chance: 71% | DPT: 2
- MSRP: 50
 
 ==================================
 ```
@@ -1051,10 +532,6 @@ Wooden Spear
  of their cards to play as your 
  own.
 
- Level: Beginner
- Usable by: All
- MSRP: 20
-
 ==================================
 ```
 
@@ -1067,13 +544,6 @@ Wooden Spear
  You wield the mighty pound card 
  and can do double the damage.
 
- Hit: 1d20 vs ac / Damage: 2d6
-
- Level: 3
- Usable by: Bard, Barbarian
- Hit chance: 69% | DPT: 6
- MSRP: 130
-
 ==================================
 ```
 
@@ -1085,21 +555,6 @@ Wooden Spear
 
  Buy a questionable round of 
  milkshakes for everyone.
-
- Serve everyone a nice round of 
- milkshakes!
- Usually restores between 0-3hp 
- to each opponent, and 1-4hp for 
- the player.
- 1:50 chance to kill each 
- opponent.
- 1:100 chance to kill yourself.
-
- Level: 2
- Usable by: All
- Hit chance: 2% | DPT: 1
- Heal chance: 78% | HPT: 2
- MSRP: 130
 
 ==================================
 ```
@@ -1116,10 +571,6 @@ Wooden Spear
  play it --as it crumbles to 
  dust.
 
- Level: Beginner
- Usable by: All
- MSRP: 10
-
 ==================================
 ```
 
@@ -1133,16 +584,6 @@ Wooden Spear
  your trajectory is off and 
  quickly attempt to correct your 
  aim.
-
- Hit: 1d20 vs ac / Damage: 1d6
- Roll for attack, if you roll 
- less than 10, roll again and use 
- the second roll no matter what.
-
- Level: 2
- Usable by: Cleric, Fighter
- Hit chance: 86% | DPT: 4
- MSRP: 20
 
 ==================================
 ```
@@ -1158,18 +599,6 @@ Wooden Spear
  confusing all those caught in 
  it.
 
- 1 storm damage +1 per level of 
- the jinni to everyone in the 
- ring. Temporarily confuses 
- opponents and causes them to 
- mistake their targets.
-
- Level: Beginner
- Usable by: Jinn
- Hit chance: 100% | DPT: 1
- Effect chance: 100%
- MSRP: 130
-
 ==================================
 ```
 
@@ -1181,19 +610,6 @@ Wooden Spear
 
  Keep the heid, this battle's far 
  from over.
-
- Health: 2d6
- + int bonus (diminished by 1 
- each use until 0, then resets)
-
- 1% chance to heal half max hp
- 1% chance to poison
-
- Level: 4
- Usable by: All
- Hit chance: 1% | DPT: 0
- Heal chance: 99% | HPT: 5
- MSRP: 80
 
 ==================================
 ```
@@ -1209,20 +625,6 @@ Wooden Spear
  the pommel for a Stimpak 
  injection.
 
- Hit: 1d20 vs ac / Damage: 2d4
- - or, below 1/4 health -
- Health: 2d4
- + int bonus (diminished by 1 
- each use until 0, then resets)
-
- 1% chance to heal half max hp
- 1% chance to poison
-
- Level: 1
- Usable by: Fighter
- Hit chance: 70% | DPT: 4
- MSRP: 20
-
 ==================================
 ```
 
@@ -1235,12 +637,6 @@ Wooden Spear
  Grow a heavy layer of scales to 
  deflect the blows of thine 
  enemies.
-
- Boost: ac +2
-
- Level: 2
- Usable by: Basilisk
- MSRP: 50
 
 ==================================
 ```
@@ -1256,20 +652,6 @@ Wooden Spear
  tough, take a bite for a quick 
  hp boost.
 
- Hit: 1d20 vs ac / Damage: 2d4
- - or, below 1/4 health -
- Health: 2d4
- + int bonus (diminished by 1 
- each use until 0, then resets)
-
- 1% chance to heal half max hp
- 1% chance to poison
-
- Level: 1
- Usable by: Barbarian
- Hit chance: 71% | DPT: 4
- MSRP: 20
-
 ==================================
 ```
 
@@ -1281,15 +663,6 @@ Wooden Spear
 
  Your wounds only make you 
  stronger.
-
- Hit: 1d20 vs ac
- Damage: 1d6 +1 per wound 
- suffered
-
- Level: 3
- Usable by: Barbarian
- Hit chance: 70% | DPT: 8
- MSRP: 80
 
 ==================================
 ```
@@ -1303,19 +676,6 @@ Wooden Spear
  1 shot of whiskey for your 
  health. Doctor's orders.
 
- Health: 1d8
- + int bonus (diminished by 1 
- each use until 0, then resets)
-
- 1% chance to heal half max hp
- 1% chance to poison
-
- Level: 2
- Usable by: All
- Hit chance: 1% | DPT: 0
- Heal chance: 96% | HPT: 4
- MSRP: 50
-
 ==================================
 ```
 
@@ -1327,14 +687,6 @@ Wooden Spear
 
  A simple weapon fashioned for 
  Minotaur-hunting.
-
- Hit: 1d20 vs ac / Damage: 1d6
- +3 damage vs Minotaur
-
- Level: 1
- Usable by: Bard, Fighter
- Hit chance: 72% | DPT: 4
- MSRP: 30
 
 ==================================
 ```
@@ -1370,12 +722,6 @@ Sorting Hat
 
  A quick snack to restore 1 hp.
 
- Usable 1 time.
-
- Level: 1
- Usable by: All
- MSRP: 20
-
 ==================================
 ```
 
@@ -1386,12 +732,6 @@ Sorting Hat
 ----------------------------------
 
  Instantly heal 8 hp.
-
- Usable 1 time.
-
- Level: 1
- Usable by: All
- MSRP: 50
 
 ==================================
 ```
@@ -1404,12 +744,6 @@ Sorting Hat
 
  Only the finest Swiss chocolate. 
  Restores 10 hp.
-
- Usable 1 time.
-
- Level: 1
- Usable by: All
- MSRP: 20
 
 ==================================
 ```
@@ -1434,12 +768,6 @@ Sorting Hat
  order, and that's exactly what 
  you'll do.
 
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 10
-
 ==================================
 ```
 
@@ -1461,12 +789,6 @@ Sorting Hat
  ring (other than yourself) 
  rather than following a defined 
  order
-
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 20
 
 ==================================
 ```
@@ -1490,12 +812,6 @@ Sorting Hat
  every time, and that's exactly 
  what you'll do.
 
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 10
-
 ==================================
 ```
 
@@ -1514,12 +830,6 @@ Sorting Hat
 
  You target the weakest player in 
  the ring, every time.
-
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 20
 
 ==================================
 ```
@@ -1540,12 +850,6 @@ Sorting Hat
  by a specific card, and that's 
  exactly what you'll do.
 
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 10
-
 ==================================
 ```
 
@@ -1561,12 +865,6 @@ Sorting Hat
  Target the opponent who attacked 
  you last, unless directed 
  otherwise by a specific card.
-
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 20
 
 ==================================
 ```
@@ -1596,12 +894,6 @@ Sorting Hat
  currently have less hp, and 
  that's exactly what you'll do.
 
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 10
-
 ==================================
 ```
 
@@ -1629,12 +921,6 @@ Sorting Hat
  than yourself) even if they 
  currently have less hp.
 
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 20
-
 ==================================
 ```
 
@@ -1646,12 +932,6 @@ Sorting Hat
 
  Play the odds for a chance to 
  win up to 10000 coins.
-
- Usable 1 time.
-
- Level: Beginner
- Usable by: All
- MSRP: 10
 
 ==================================
 ```
@@ -1682,12 +962,6 @@ Sorting Hat
  other... You know what? Just 
  forget it... That one's fine).
 
- Usable 3 times.
-
- Level: Beginner
- Usable by: All
- MSRP: 20
-
 ==================================
 ```
 
@@ -1712,13 +986,6 @@ Sorting Hat
  opponent is always the person 
  next to you.
 
- Usable an unlimited number of 
- times.
-
- Level: Beginner
- Usable by: All
- MSRP: 20
-
 ==================================
 ```
 
@@ -1736,12 +1003,6 @@ Sorting Hat
  xp, and that's exactly what 
  you'll do.
 
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 10
-
 ==================================
 ```
 
@@ -1756,12 +1017,6 @@ Sorting Hat
 
  Target the opponent who has the 
  highest xp.
-
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 20
 
 ==================================
 ```
@@ -1785,12 +1040,6 @@ Sorting Hat
  the highest hp, and that's 
  exactly what you'll do.
 
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 10
-
 ==================================
 ```
 
@@ -1810,12 +1059,6 @@ Sorting Hat
  Target whichever opponent 
  currently has the highest hp.
 
- Usable 3 times.
-
- Level: 1
- Usable by: All
- MSRP: 20
-
 ==================================
 ```
 
@@ -1834,12 +1077,6 @@ Sorting Hat
  team but your monster hasn't, 
  that monster will be on your 
  character's team by default.
-
- Usable 1 time.
-
- Level: Beginner
- Usable by: All
- MSRP: free
 
 ==================================
 ```

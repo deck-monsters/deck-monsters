@@ -47,24 +47,23 @@ class BaseMonster extends BaseCreature {
 	}
 
 	get stats () {
+		const bonuses = [];
+
+		if (this.dexModifier !== 0) {
+			bonuses.push(`${signedNumber(this.dexModifier)} dex ${this.dexModifier > 0 ? 'bonus' : 'penalty'}`);
+		}
+		if (this.strModifier !== 0) {
+			bonuses.push(`${signedNumber(this.strModifier)} str ${this.strModifier > 0 ? 'bonus' : 'penalty'}`);
+		}
+		if (this.intModifier !== 0) {
+			bonuses.push(`${signedNumber(this.intModifier)} int ${this.intModifier > 0 ? 'bonus' : 'penalty'}`);
+		}
+
 		return `${super.stats}
 ac: ${this.ac} | hp: ${this.hp}/${this.maxHp}
-dex: ${this.dex} | str: ${this.str} | int: ${this.int}${
-	this.dexModifier === 0 ? '' :
-		`
-${signedNumber(this.dexModifier)} to hit`
-}${
-	this.strModifier === 0 ? '' :
-		`
-${signedNumber(this.strModifier)} to damage`
-}${
-	this.intModifier === 0 ? '' :
-		`
-${signedNumber(this.intModifier)} to spells`
-}${
+dex: ${this.dex} | str: ${this.str} | int: ${this.int}\r${bonuses.join(`\r`)}${
 	!this.targetingStrategy ? '' :
 		`
-
 Strategy: ${getStrategyDescription(this.targetingStrategy)}`
 }`;
 	}

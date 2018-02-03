@@ -16,7 +16,7 @@ class Blast2Card extends BlastCard {
 	}
 
 	get stats () {
-		return `Blast II: ${this.damage} base damage +spell bonus of caster`;
+		return `Blast II: ${this.damage} base damage + int bonus of caster`;
 	}
 
 	effect (player, target) {
@@ -26,6 +26,7 @@ class Blast2Card extends BlastCard {
 }
 
 Blast2Card.cardType = 'Blast II';
+Blast2Card.description = 'A strong magical blast against every opponent in the encounter.';
 Blast2Card.probability = UNCOMMON.probability;
 Blast2Card.level = 2;
 Blast2Card.cost = PRICEY.cost;
