@@ -179,7 +179,7 @@ Turns immobilized resets on curse of loki.
 		return mesmerize
 			.play(player, basilisk, ring, ring.contestants)
 			.then(() => mesmerize
-				.play(player, basilisk, ring, ring.contestants)
+				.play(player, basilisk, ring, ring.contestants, false)
 				.then(() => {
 					expect(player.hp).to.be.below(playerBeforeHP);
 					expect(angel.hp).to.be.below(angelBeforeHP);
