@@ -3,8 +3,7 @@ const upperFirst = require('lodash.upperfirst');
 
 const { findProbabilityMatch } = require('./probabilities');
 
-const fs = require('fs');
-const odds = JSON.parse(fs.readFileSync('card-odds.json', 'utf8'));
+const odds = require('../card-odds.json');
 
 const formatCard = ({
 	title, description, stats, rankings, verbose
