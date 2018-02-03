@@ -4,7 +4,7 @@ const announceNextRound = (publicChannel, channelManager, className, ring, { rou
 `
 ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅
 
-🏁       round ${round} complete
+🏁       round ${round + 1}
 `
 	});
 };
