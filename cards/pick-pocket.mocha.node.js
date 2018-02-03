@@ -1,4 +1,5 @@
 const { expect, sinon } = require('../shared/test-setup');
+const Promise = require('bluebird');
 const proxyquire = require('proxyquire');
 const sample = require('lodash.sample');
 
@@ -77,11 +78,9 @@ describe('./cards/pick-pocket.js', () => {
 		const player = randomContestant();
 		const target1 = randomContestant();
 
-		const promises = [];
-
-		for (let i = 0; i < allCards.length; i++) {
-			if (allCards[i].name !== 'PickPocketCard') {
-				target1.monster.cards = [new allCards[i]()];
+		return expect(Promise.each(allCards, (Card) => {
+			if (Card.name !== 'PickPocketCard') {
+				target1.monster.cards = [new Card()];
 
 				const ring = {
 					contestants: [
@@ -90,14 +89,15 @@ describe('./cards/pick-pocket.js', () => {
 					],
 					channelManager: {
 						sendMessages: () => Promise.resolve()
-					}
+					},
+					encounterEffects: []
 				};
 
-				promises.push(pickPocket.play(player.monster, target1.monster, ring, ring.contestants));
+				return pickPocket.play(player.monster, target1.monster, ring, ring.contestants);
 			}
-		}
 
-		return expect(Promise.all(promises)).to.be.fulfilled;
+			return Promise.resolve();
+		})).to.be.fulfilled;
 	});
 
 	it('cannot pick from own player\'s pocket', () => {
