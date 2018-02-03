@@ -1,5 +1,4 @@
 const announceNextTurn = (publicChannel, channelManager, className, ring, { contestants, round, turn }) => {
-
 	publicChannel({
 		announce:
 `

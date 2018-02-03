@@ -386,7 +386,6 @@ The following cards are in play:
 					contestants,
 					round
 				});
-
 			}
 
 			// But if we don't have any more contestants in this fight it's time to reset our list of contestants

@@ -18,12 +18,12 @@ ${wrap(title, { indent: ' ', width: 32 })}
 
 ${wrap(description, { indent: ' ', width: 32 })}`
 	}${
-	!verbose || !stats ? '' :
+		!verbose || !stats ? '' :
 			`
 
 ${wrap(stats, { indent: ' ', width: 32 })}`
 	}${
-	!verbose || !rankings ? '' :
+		!verbose || !rankings ? '' :
 			`
 
 ${wrap(rankings, { indent: ' ', width: 32 })}`
@@ -54,7 +54,7 @@ const itemRarity = item => findProbabilityMatch(item.probability || 0).icon;
 const getItemRequirements = (item) => {
 	const requirements = [
 		`Level: ${item.level ? item.level : 'Beginner'}`,
-		`Usable by: ${item.permittedClassesAndTypes ? item.permittedClassesAndTypes.join(', ') : 'All'}`,
+		`Usable by: ${item.permittedClassesAndTypes ? item.permittedClassesAndTypes.join(', ') : 'All'}`
 	];
 
 	const cardOdds = odds[0][item.name];

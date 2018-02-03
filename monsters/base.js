@@ -61,7 +61,7 @@ class BaseMonster extends BaseCreature {
 
 		return `${super.stats}
 ac: ${this.ac} | hp: ${this.hp}/${this.maxHp}
-dex: ${this.dex} | str: ${this.str} | int: ${this.int}\r${bonuses.join(`\r`)}${
+dex: ${this.dex} | str: ${this.str} | int: ${this.int}\r${bonuses.join('\r')}${
 	!this.targetingStrategy ? '' :
 		`
 Strategy: ${getStrategyDescription(this.targetingStrategy)}`
