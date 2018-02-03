@@ -34,7 +34,12 @@ class TestCard extends BaseCard {
 	effect (player, target, ring) { // eslint-disable-line no-unused-vars
 		player.played = (player.played || 0) + 1;
 		target.targeted = (target.targeted || 0) + 1;
-		this.played = (this.played || 0) + 1;
+
+		if (this.original) {
+			this.original.played = (this.original.played || 0) + 1;
+		} else {
+			this.played = (this.played || 0) + 1;
+		}
 
 		return true;
 	}

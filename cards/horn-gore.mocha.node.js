@@ -196,8 +196,8 @@ Turns immobilized resets on curse of loki.
 			.then(() => {
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(2);
-				expect(hornGore.freedomThresholdModifier).to.equal(0);
-				expect(hornGore.dexModifier).to.equal(4);
+				expect(hornGore.new.freedomThresholdModifier).to.equal(0);
+				expect(hornGore.new.dexModifier).to.equal(4);
 
 				expect(basilisk.hp).to.be.below(before);
 				return expect(basilisk.encounterEffects.length).to.equal(1);
@@ -227,8 +227,8 @@ Turns immobilized resets on curse of loki.
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(goreSpy.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(1);
-				expect(hornGore.freedomThresholdModifier).to.equal(-2);
-				expect(hornGore.dexModifier).to.equal(2);
+				expect(hornGore.new.freedomThresholdModifier).to.equal(-2);
+				expect(hornGore.new.dexModifier).to.equal(2);
 				expect(basilisk.hp).to.be.below(before);
 				return expect(basilisk.encounterEffects.length).to.equal(1);
 			});
@@ -263,8 +263,8 @@ Turns immobilized resets on curse of loki.
 			.then(() => {
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(0);
-				expect(hornGore.freedomThresholdModifier).to.equal(-4);
-				expect(hornGore.dexModifier).to.equal(0);
+				expect(hornGore.new.freedomThresholdModifier).to.equal(-4);
+				expect(hornGore.new.dexModifier).to.equal(0);
 				expect(basilisk.hp).to.equal(before);
 				return expect(basilisk.encounterEffects.length).to.equal(0);
 			});

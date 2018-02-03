@@ -117,15 +117,13 @@ describe('./cards/sandstorm.js', () => {
 
 		return sandstorm
 			.play(player, target1, ring, ring.contestants)
-			.then(() => target1.encounterEffects[0]({ card: random.clone(), phase: ATTACK_PHASE, player: target1 }))
-			.then(modifiedCard => modifiedCard.play(target1, player, ring, ring.contestants))
+			.then(() => random.clone().play(target1, player, ring, ring.contestants))
 			.then(() => {
 				expect(target1.played).to.equal(1);
 				expect(target1.targeted).to.equal(undefined);
 				expect(player.targeted).to.equal(1);
 			})
-			.then(() => target2.encounterEffects[0]({ card: random.clone(), phase: ATTACK_PHASE, player: target2 }))
-			.then(modifiedCard => modifiedCard.play(target2, player, ring, ring.contestants))
+			.then(() => random.clone().play(target2, player, ring, ring.contestants))
 			.then(() => {
 				drawStub.restore();
 
