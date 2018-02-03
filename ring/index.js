@@ -365,6 +365,7 @@ The following cards are in play:
 
 		// And we're off. The round variable is only used for reporting at the end
 		let round = 1;
+		let turn;
 
 		// This is the main loop that takes care of the "action" each character performs
 		// It's a promise so it can be chained, async, delayed, etc
@@ -376,6 +377,17 @@ The following cards are in play:
 
 			// By default, the next card anyone plays should be the one at the same position as the one currently being played
 			let nextCardIndex = cardIndex;
+
+			if (turn !== cardIndex) {
+				turn = cardIndex;
+				// Emit an event when the round ends
+				this.emit('startTurn', {
+					turn: cardIndex,
+					contestants,
+					round
+				});
+
+			}
 
 			// But if we don't have any more contestants in this fight it's time to reset our list of contestants
 			// and it's going to be time to move on to the next card
@@ -411,7 +423,7 @@ The following cards are in play:
 			if (card) {
 				// Emit an event when a character's turn begins
 				// Note that as written currently this will emit _only if they have a card to play_
-				this.emit('turnBegin', {
+				this.emit('playerTurnBegin', {
 					contestant: playerContestant,
 					round
 				});

@@ -16,9 +16,10 @@ const announceMiss = require('./miss.js');
 const announceModifier = require('./modifier.js');
 const announceNarration = require('./narration.js');
 const announceNextRound = require('./nextRound.js');
+const announceNextTurn = require('./nextTurn.js');
 const announceRolled = require('./rolled.js');
 const announceStay = require('./stay.js');
-const announceTurnBegin = require('./turnBegin.js');
+const announceTurnBegin = require('./playerTurnBegin.js');
 const announceXPGain = require('./xpGain.js');
 
 const initialize = (game) => {
@@ -48,7 +49,8 @@ const initialize = (game) => {
 		{ event: 'ring.narration', listener: announceNarration },
 		{ event: 'ring.remove', listener: announceContestantLeave },
 		{ event: 'ring.roundComplete', listener: announceNextRound },
-		{ event: 'ring.turnBegin', listener: announceTurnBegin },
+		{ event: 'ring.startTurn', listener: announceNextTurn },
+		{ event: 'ring.playerTurnBegin', listener: announceTurnBegin },
 		{ event: 'scroll.narration', listener: announceNarration },
 		{ event: 'scroll.used', listener: announceItemUsed }
 	];
