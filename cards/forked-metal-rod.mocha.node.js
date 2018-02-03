@@ -100,8 +100,8 @@ Turns immobilized resets on curse of loki.
 
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(2);
-				expect(forkedMetalRod.freedomThresholdModifier).to.equal(7);
-				expect(forkedMetalRod.dexModifier).to.equal(7);
+				expect(forkedMetalRod.new.freedomThresholdModifier).to.equal(7);
+				expect(forkedMetalRod.new.dexModifier).to.equal(7);
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
@@ -170,8 +170,8 @@ Turns immobilized resets on curse of loki.
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(goreSpy.callCount).to.equal(2);
 				expect(hitSpy.callCount).to.equal(1);
-				expect(forkedMetalRod.freedomThresholdModifier).to.equal(5);
-				expect(forkedMetalRod.dexModifier).to.equal(5);
+				expect(forkedMetalRod.new.freedomThresholdModifier).to.equal(5);
+				expect(forkedMetalRod.new.dexModifier).to.equal(5);
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});
@@ -236,8 +236,8 @@ Turns immobilized resets on curse of loki.
 
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(0);
-				expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
-				expect(forkedMetalRod.dexModifier).to.equal(3);
+				expect(forkedMetalRod.new.freedomThresholdModifier).to.equal(3);
+				expect(forkedMetalRod.new.dexModifier).to.equal(3);
 				expect(target.hp).to.equal(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});

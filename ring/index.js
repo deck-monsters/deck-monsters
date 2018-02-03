@@ -5,7 +5,6 @@ const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
 const { actionCard, monsterCard } = require('../helpers/card');
-const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
 const { calculateXP } = require('../helpers/experience');
 const { getTarget } = require('../helpers/targeting-strategies');
 const { randomContestant } = require('../helpers/bosses');
@@ -399,7 +398,7 @@ The following cards are in play:
 			const { monster: proposedTarget } = targetContestant;
 
 			// Find the card in the current player's hand at the current index
-			let card = player.cards[cardIndex];
+			const card = player.cards[cardIndex];
 
 			// When this is called (see below) we pass the next contestant and card back into the looping
 			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a character as described above
@@ -418,45 +417,6 @@ The following cards are in play:
 				});
 
 				playerContestant.round = round;
-
-				// Now we're going to run through all of the possible effects
-				// Each effect should either return a card (which will replace the card that was going to be played)
-				// or do something in the background and then return nothing (in which case we'll keep the card we had)
-
-				// Let's clone the card before we get started on this - that way any modifications won't be saved
-				card = card.clone();
-
-				// First, run through the effects from the contestants
-				card = (() => {
-					const allActiveContestants = getAllActiveContestants();
-
-					return allActiveContestants.reduce((contestantCard, contestant) => contestant.monster.encounterEffects.reduce((effectCard, effect) => {
-						const modifiedCard = effect({
-							activeContestants: allActiveContestants,
-							card: effectCard,
-							phase: contestant.monster === player ? ATTACK_PHASE : DEFENSE_PHASE,
-							player,
-							ring,
-							proposedTarget
-						});
-
-						return modifiedCard || effectCard;
-					}, contestantCard), card);
-				})();
-
-				// Then, run through any global effects
-				card = ring.encounterEffects.reduce((currentCard, effect) => {
-					const modifiedCard = effect({
-						activeContestants: getAllActiveContestants(),
-						card: currentCard,
-						phase: GLOBAL_PHASE,
-						player,
-						ring,
-						proposedTarget
-					});
-
-					return modifiedCard || currentCard;
-				}, card);
 
 				// Track the fight log
 				fightLog.push(`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`);

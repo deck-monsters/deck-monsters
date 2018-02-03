@@ -88,11 +88,19 @@ describe('./cards/enchanted-faceswap.js', () => {
 		drawStub.onFirstCall().returns(heal);
 		drawStub.onSecondCall().returns(attack);
 
-		return faceswap.play(player, target)
-			.then(() => player.encounterEffects[0]({ card: random, phase: DEFENSE_PHASE, player: target }))
-			.then(modifiedCard => modifiedCard.play(target, player))
-			.then(() => player.encounterEffects[0]({ card: random, phase: DEFENSE_PHASE, player: target }))
-			.then(modifiedCard => modifiedCard.play(target, player))
+		const ring = {
+			contestants: [
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		return faceswap.play(player, target, ring, ring.contestants)
+			.then(() => random.play(target, player, ring, ring.contestants))
+			.then(() => random.play(target, player, ring, ring.contestants))
 			.then(() => {
 				drawStub.restore();
 

@@ -1,6 +1,6 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE } = require('../helpers/phases');
 const BlinkCard = require('./blink');
 const TestCard = require('./test');
 const Basilisk = require('../monsters/basilisk');
@@ -204,8 +204,7 @@ describe('./cards/blink.js', () => {
 			.then(() => expect(card.played).to.equal(1))
 			.then(() => blink.play(player, target, ring, ring.contestants))
 			.then(() => expect(target.encounterEffects.length).to.equal(1))
-			.then(() => target.encounterEffects[0]({ card, phase: DEFENSE_PHASE, player, target }))
-			.then(cardThatTargetsBlinked => cardThatTargetsBlinked.play(player, target))
+			.then(() => card.play(player, target, ring, ring.contestants))
 			.then(() => {
 				attackRollStub.restore();
 				hitSpy.restore();
@@ -244,8 +243,7 @@ describe('./cards/blink.js', () => {
 		expect(card.played).to.be.undefined;
 		return blink.play(player, target, ring, ring.contestants)
 			.then(() => expect(target.encounterEffects.length).to.equal(1))
-			.then(() => target.encounterEffects[0]({ card, phase: DEFENSE_PHASE, player, target: player }))
-			.then(cardThatTargetsSelf => cardThatTargetsSelf.play(player, player))
+			.then(() => card.play(player, target, ring, ring.contestants))
 			.then(() => {
 				attackRollStub.restore();
 				hitSpy.restore();
