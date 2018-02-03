@@ -26,7 +26,7 @@ ${super.stats}`;
 	effect (delayingPlayer, delayingTarget, ring) { // eslint-disable-line no-unused-vars
 		let whenPlayed = Date.now();
 		const him = (delayingPlayer !== delayingTarget) ? delayingTarget.givenName : delayingPlayer.pronouns.him;
-		const his = (delayingPlayer !== delayingTarget) ? `${delayingTarget.givenName}'s'` : delayingPlayer.pronouns.his;
+		const his = (delayingPlayer !== delayingTarget) ? `${delayingTarget.givenName}'s` : delayingPlayer.pronouns.his;
 
 		const delayedHitEffect = ({
 			card
