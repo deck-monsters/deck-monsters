@@ -9,6 +9,7 @@
 
 *The Card Catalogue:*
 
+Adrenaline Rush
 Bad Batch
 Basic Shield
 Battle Focus
@@ -28,6 +29,7 @@ Delayed Hit
 Enchanted Faceswap
 Enthrall
 Entrance
+Ecdysis
 Feline Companion
 Fight or Flight
 Fists of Villainy
@@ -58,6 +60,30 @@ Turkey Thigh
 Vengeful Rampage
 Whiskey Shot
 Wooden Spear
+```
+
+
+```
+==================================
+ ❗️  Adrenaline Rush  ✪
+----------------------------------
+
+ Life or Death brings about a 
+ certain focus... A certain 
+ AWAKENESS most people don't 
+ actually want. It's what you 
+ live for. It's how you know you 
+ exist. You embrace it a welcome 
+ the rush.
+
+ Boost: dex +1
+ Boost: str +1
+
+ Level: 2
+ Usable by: Barbarian, Fighter
+ MSRP: 50
+
+==================================
 ```
 
 
@@ -576,6 +602,25 @@ Wooden Spear
  Hit chance: 76% | DPT: 3
  Effect chance: 80%
  MSRP: 80
+
+==================================
+```
+
+
+```
+==================================
+ 📶  Ecdysis  ✪
+----------------------------------
+
+ Evolve into your more perfect 
+ form
+
+ Boost: dex +1
+ Boost: str +1
+
+ Level: 2
+ Usable by: Basilisk
+ MSRP: 50
 
 ==================================
 ```
