@@ -6,6 +6,7 @@ const {
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
 const { signedNumber } = require('../helpers/signed-number');
+const { getStrategyDescription } = require('../helpers/targeting-strategies');
 const isMatchingItem = require('../items/helpers/is-matching');
 
 const DEFAULT_CARD_SLOTS = 9;
@@ -47,8 +48,8 @@ class BaseMonster extends BaseCreature {
 
 	get stats () {
 		return `${super.stats}
-AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
-DEX: ${this.dex} | STR: ${this.str} | INT: ${this.int}${
+ac: ${this.ac} | hp: ${this.hp}/${this.maxHp}
+dex: ${this.dex} | str: ${this.str} | int: ${this.int}${
 	this.dexModifier === 0 ? '' :
 		`
 ${signedNumber(this.dexModifier)} to hit`
@@ -60,6 +61,11 @@ ${signedNumber(this.strModifier)} to damage`
 	this.intModifier === 0 ? '' :
 		`
 ${signedNumber(this.intModifier)} to spells`
+}${
+	!this.targetingStrategy ? '' :
+		`
+
+Strategy: ${getStrategyDescription(this.targetingStrategy)}`
 }`;
 	}
 
@@ -89,6 +95,18 @@ ${signedNumber(this.intModifier)} to spells`
 			...this.encounter,
 			emptyHanded
 		};
+	}
+
+	startEncounter (ring) {
+		super.startEncounter(ring);
+
+		this.items.forEach(item => item.onStartEncounter && item.onStartEncounter({ monster: this, ring }));
+	}
+
+	endEncounter () {
+		this.items.forEach(item => item.onEndEncounter && item.onEndEncounter({ monster: this, ring: this.encounter.ring }));
+
+		super.endEncounter();
 	}
 
 	look (channel, inDetail) {

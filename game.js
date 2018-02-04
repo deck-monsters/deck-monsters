@@ -3,17 +3,21 @@ const reduce = require('lodash.reduce');
 const zlib = require('zlib');
 
 const { all: cardTypes, draw } = require('./cards');
+const { all: itemTypes } = require('./items');
 const { all: monsterTypes } = require('./monsters');
 const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./helpers/coins');
 const { create: createCharacter } = require('./characters');
 const { globalSemaphore } = require('./helpers/semaphore');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
+const announcements = require('./announcements');
 const aws = require('./helpers/aws');
 const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
 const getArray = require('./helpers/get-array');
-const PlayerHandbook = require('./player-handbook');
+const dungeonMasterGuide = require('./dungeon-master-guide');
+const monsterManual = require('./monster-manual');
+const playerHandbook = require('./player-handbook');
 const Ring = require('./ring');
 const announcements = require('./announcements');
 const Exploration = require('./exploration');
@@ -79,7 +83,7 @@ class Game extends BaseClass {
 
 	initializeEvents () {
 		announcements.initialize(this);
-		
+
 		this.on('creature.win', this.handleWinner);
 		this.on('creature.loss', this.handleLoser);
 		this.on('creature.permaDeath', this.handlePermaDeath);
@@ -166,11 +170,14 @@ class Game extends BaseClass {
 		this.ring.clearRing();
 	}
 
-	getCharacter (channel, channelName, {
+	getCharacter (privateChannel, channelName, {
 		id, name, type, gender, icon
 	}) {
 		const game = this;
-		const { log, ring, exploration } = game;
+		const { channelManager, log, ring, exploration } = game;
+		const channel = (...args) => privateChannel(...args);
+		channel.channelManager = channelManager;
+		channel.channelName = channelName;
 
 		return Promise
 			.resolve(this.characters[id])
@@ -197,15 +204,27 @@ class Game extends BaseClass {
 						.catch(err => log(err));
 				},
 				equipMonster ({ monsterName, cardSelection } = {}) {
-					return character.equipMonster({ monsterName, cardSelection: getArray(cardSelection), channel })
+					return character.equipMonster({ channel, cardSelection: getArray(cardSelection), monsterName })
 						.catch(err => log(err));
 				},
 				giveItemsToMonster ({ monsterName, itemSelection } = {}) {
-					return character.giveItemsToMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
+					return character.giveItemsToMonster({ channel, itemSelection: getArray(itemSelection, true), monsterName })
 						.catch(err => log(err));
 				},
 				takeItemsFromMonster ({ monsterName, itemSelection } = {}) {
-					return character.takeItemsFromMonster({ monsterName, itemSelection: getArray(itemSelection), channel })
+					return character.takeItemsFromMonster({ channel, itemSelection: getArray(itemSelection, true), monsterName })
+						.catch(err => log(err));
+				},
+				useItemsOnMonster ({ monsterName, itemSelection } = {}) {
+					return character.useItems({
+						channel, channelName, isMonsterItem: true, itemSelection: getArray(itemSelection, true), monsterName
+					})
+						.catch(err => log(err));
+				},
+				useItems ({ itemSelection } = {}) {
+					return character.useItems({
+						channel, channelName, isMonsterItem: false, itemSelection: getArray(itemSelection, true)
+					})
 						.catch(err => log(err));
 				},
 				callMonsterOutOfTheRing ({ monsterName } = '') {
@@ -234,14 +253,6 @@ class Game extends BaseClass {
 					return character.reviveMonster({ monsterName, channel })
 						.catch(err => log(err));
 				},
-				lookAtCharacter ({ characterName } = {}) {
-					return game.lookAtCharacter(channel, characterName, character)
-						.catch(err => log(err));
-				},
-				lookAtMonster ({ monsterName } = {}) {
-					return game.lookAtMonster(channel, monsterName, character)
-						.catch(err => log(err));
-				},
 				lookAtCard ({ cardName } = {}) {
 					return game.lookAtCard(channel, cardName)
 						.catch(err => log(err));
@@ -250,12 +261,32 @@ class Game extends BaseClass {
 					return character.lookAtCards(channel, deckName)
 						.catch(err => log(err));
 				},
+				lookAtCharacter ({ characterName } = {}) {
+					return game.lookAtCharacter(channel, characterName, character)
+						.catch(err => log(err));
+				},
+				lookAtItem ({ itemName } = {}) {
+					return game.lookAtItem(channel, itemName)
+						.catch(err => log(err));
+				},
+				lookAtItems () {
+					return character.lookAtItems(channel)
+						.catch(err => log(err));
+				},
+				lookAtMonster ({ monsterName } = {}) {
+					return game.lookAtMonster(channel, monsterName, character)
+						.catch(err => log(err));
+				},
 				lookAtMonsters ({ inDetail } = {}) {
 					return character.lookAtMonsters(channel, inDetail)
 						.catch(err => log(err));
 				},
-				lookAtRing ({ ringName } = {}) {
-					return game.lookAtRing(channel, ringName)
+				lookAtRing ({ ringName, showCharacters } = {}) {
+					return game.lookAtRing(channel, ringName, showCharacters)
+						.catch(err => log(err));
+				},
+				lookAtRingCards ({ ringName } = {}) {
+					return game.lookAtRingCards(channel, ringName)
 						.catch(err => log(err));
 				},
 				lookAt (thing) {
@@ -285,6 +316,13 @@ class Game extends BaseClass {
 	static getCardTypes () {
 		return cardTypes.reduce((obj, Card) => {
 			obj[Card.cardType.toLowerCase()] = Card;
+	static getItemTypes () {
+			return obj;
+		}, {});
+	}
+
+		return itemTypes.reduce((obj, Item) => {
+			obj[Item.itemType.toLowerCase()] = Item;
 			return obj;
 		}, {});
 	}
@@ -373,12 +411,29 @@ class Game extends BaseClass {
 
 			if (Card) {
 				const card = new Card();
-				return card.look(channel);
+				return card.look(channel, true);
 			}
 		}
 
 		return Promise.reject(channel({
 			announce: `Sorry, we don't carry ${cardName} cards here.`,
+			delay: 'short'
+		}));
+	}
+	lookAtItem (channel, itemName) {
+
+		if (itemName) {
+			const items = this.constructor.getItemTypes();
+			const Item = items[itemName.toLowerCase()];
+
+			if (Item) {
+				const item = new Item();
+				return item.look(channel, true);
+			}
+		}
+
+		return Promise.reject(channel({
+			announce: `Sorry, we don't carry ${itemName} here.`,
 			delay: 'short'
 		}));
 	}
@@ -391,38 +446,31 @@ class Game extends BaseClass {
 		return this.exploration;
 	}
 
-	getRing () {
-		return this.ring;
+	lookAtRing (channel, ringName = 'main', showCharacters) {
+		return this.getRing(ringName).look(channel, showCharacters);
 	}
 
-	lookAtRing (channel, ringName = 'main') {
-		return this.getRing(ringName).look(channel);
+	lookAtRingCards (channel, ringName = 'main') {
+		return this.getRing(ringName).lookAtCards(channel);
 	}
 
 	lookAt (channel, thing) {
 		if (thing) {
 			// What is this thing?
 
-			// Is it a player handbook?
-			if (thing.match(/player(?:s)? handbook/i)) {
-				const handbook = new PlayerHandbook();
-				return handbook.look(channel);
+			// Is it a dungeon master guide?
+			if (thing.match(/(?:dungeon master(?:s)?|dm) guide|dmg/i)) {
+				return dungeonMasterGuide({ channel });
 			}
 
 			// Is it a monster manual?
-			if (thing.match(/monster(?:s)? manual/i)) { // monster manual will talk about the different monsters you can capture and their stats etc
-				return Promise.reject(channel({
-					announce: 'Monster manual coming soon!',
-					delay: 'short'
-				}));
+			if (thing.match(/monster(?:s)? manual/i)) {
+				return monsterManual({ channel });
 			}
 
-			// Is it a dungeon master guide?
-			if (thing.match(/(?:dungeon master(?:s)?|dm) guide|dmg/i)) { // dmg will talk about how to make new cards, monsters, and dungeons. Basically, the developer docs
-				return Promise.reject(channel({
-					announce: 'dungeon master guide coming soon!',
-					delay: 'short'
-				}));
+			// Is it a player handbook?
+			if (thing.match(/player(?:s)? handbook/i)) {
+				return playerHandbook(channel);
 			}
 
 			// Is it a monster?
@@ -438,6 +486,15 @@ class Game extends BaseClass {
 			if (Card) {
 				const card = new Card();
 				return card.look(channel);
+			}
+
+			// Is it an item?
+			const items = this.constructor.getItemTypes();
+			const Item = items[thing.toLowerCase()];
+
+			if (Item) {
+				const item = new Item();
+				return item.look(channel);
 			}
 		}
 

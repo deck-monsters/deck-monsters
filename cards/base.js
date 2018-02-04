@@ -2,6 +2,8 @@ const Promise = require('bluebird');
 
 const BaseItem = require('../items/base');
 
+const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
+
 class BaseCard extends BaseItem {
 	constructor (options) {
 		super(options);
@@ -23,6 +25,68 @@ class BaseCard extends BaseItem {
 		return !!this.constructor.isAreaOfEffect;
 	}
 
+	get new () {
+		if (this.original) {
+			return this.original.new;
+		}
+
+		return this.newCard;
+	}
+
+	set new (newCard) {
+		if (this.original) {
+			this.original.new = newCard;
+		}
+
+		this.newCard = newCard;
+	}
+
+	applyEffects (player, proposedTarget, ring, activeContestants) {
+		// Now we're going to run through all of the possible effects
+		// Each effect should either return a card (which will replace the card that was going to be played)
+		// or do something in the background and then return nothing (in which case we'll keep the card we had)
+
+		// Let's clone the card before we get started on this - that way any modifications won't be saved
+		let card = this.clone();
+
+		// First, run through the effects from the contestants
+		if (activeContestants) {
+			card = activeContestants.reduce((contestantCard, contestant) =>
+				contestant.monster.encounterEffects.reduce((effectCard, effect) => {
+					const modifiedCard = effect({
+						activeContestants,
+						card: effectCard,
+						phase: contestant.monster === player ? ATTACK_PHASE : DEFENSE_PHASE,
+						player,
+						ring,
+						proposedTarget
+					});
+
+					return modifiedCard || effectCard;
+				}, contestantCard), card);
+		}
+
+		// Then, run through any global effects
+		if (ring && ring.encounterEffects) {
+			card = ring.encounterEffects.reduce((currentCard, effect) => {
+				const modifiedCard = effect({
+					activeContestants,
+					card: currentCard,
+					phase: GLOBAL_PHASE,
+					player,
+					ring,
+					proposedTarget
+				});
+
+				return modifiedCard || currentCard;
+			}, card);
+		}
+
+		this.new = card;
+
+		return card;
+	}
+
 	checkSuccess (roll, targetNumber) { // eslint-disable-line class-methods-use-this
 		const success = !roll.curseOfLoki && (roll.strokeOfLuck || targetNumber < roll.result);
 
@@ -35,6 +99,12 @@ class BaseCard extends BaseItem {
 		return [proposedTarget];
 	}
 
+	play (player, proposedTarget, ring, activeContestants, shouldApplyEffects = true) {
+		if (shouldApplyEffects) {
+			const card = this.applyEffects(player, proposedTarget, ring, activeContestants);
+			return card.play(player, proposedTarget, ring, activeContestants, false);
+		}
+
 	play (player, proposedTarget, area, activeContestants) {
 		return Promise.resolve()
 			.then(() => {
@@ -43,11 +113,13 @@ class BaseCard extends BaseItem {
 				const targets = this.getTargets(player, proposedTarget, area, activeContestants);
 
 				if (this.effect) {
-					return Promise.map(targets, target => this.effect(player, target, area, activeContestants))
+					return Promise.resolve(ring)
+						.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
+						.then(() => Promise.mapSeries(targets, target => this.effect(player, target, area, activeContestants)))
 						.then(results => results.reduce((result, val) => result && val, true));
 				}
 
-				return Promise.resolve(true);
+				return true;
 			});
 	}
 }

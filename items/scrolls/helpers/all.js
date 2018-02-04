@@ -1,29 +1,35 @@
-const ChaosTheoryAccordingToCleverHansScroll = require('../chaos-theory');
-const ChaosTheoryScroll = require('../chaos-theory-according-to-clever-hans');
+const ChaosTheoryAccordingToCleverHansScroll = require('../chaos-theory-according-to-clever-hans');
+const ChaosTheoryScroll = require('../chaos-theory');
+const CobraKaiAccordingToCleverHansScroll = require('../cobra-kai-according-to-clever-hans');
+const CobraKaiScroll = require('../cobra-kai');
+const HouseLannisterAccordingToCleverHansScroll = require('../house-lannister-according-to-clever-hans');
+const HouseLannisterScroll = require('../house-lannister');
+const LaCarambadaAccordingToCleverHansScroll = require('../la-carambada-according-to-clever-hans');
+const LaCarambadaScroll = require('../la-carambada');
+const LotteryTicket = require('../lottery-ticket');
+const ParsifalAccordingToCleverHansScroll = require('../parsifal-according-to-clever-hans');
 const ParsifalScroll = require('../parsifal');
-const CobraKaiAccordingToCleverHansScroll = require('../cobra-kai');
-const CobraKaiScroll = require('../cobra-kai-according-to-clever-hans');
-const HouseLannisterAccordingToCleverHansScroll = require('../house-lannister');
-const HouseLannisterScroll = require('../house-lannister-according-to-clever-hans');
-const LaCarambadaAccordingToCleverHansScroll = require('../la-carambada');
-const LaCarambadaScroll = require('../la-carambada-according-to-clever-hans');
-const QinShiHuangAccordingToCleverHansScroll = require('../qin-shi-huang');
-const QinShiHuangScroll = require('../qin-shi-huang-according-to-clever-hans');
-const SirRobinAccordingToCleverHansScroll = require('../sir-robin');
-const SirRobinScroll = require('../sir-robin-according-to-clever-hans');
+const QinShiHuangAccordingToCleverHansScroll = require('../qin-shi-huang-according-to-clever-hans');
+const QinShiHuangScroll = require('../qin-shi-huang');
+const SirRobinAccordingToCleverHansScroll = require('../sir-robin-according-to-clever-hans');
+const SirRobinScroll = require('../sir-robin');
+const SortingHat = require('../sorting-hat');
 
 module.exports = [
 	ChaosTheoryAccordingToCleverHansScroll,
 	ChaosTheoryScroll,
-	ParsifalScroll,
 	CobraKaiAccordingToCleverHansScroll,
 	CobraKaiScroll,
 	HouseLannisterAccordingToCleverHansScroll,
 	HouseLannisterScroll,
 	LaCarambadaAccordingToCleverHansScroll,
 	LaCarambadaScroll,
+	LotteryTicket,
+	ParsifalAccordingToCleverHansScroll,
+	ParsifalScroll,
 	QinShiHuangAccordingToCleverHansScroll,
 	QinShiHuangScroll,
 	SirRobinAccordingToCleverHansScroll,
-	SirRobinScroll
+	SirRobinScroll,
+	SortingHat
 ];

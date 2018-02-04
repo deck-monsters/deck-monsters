@@ -1,4 +1,6 @@
+const Promise = require('bluebird');
 const random = require('lodash.random');
+const reduce = require('lodash.reduce');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
@@ -6,36 +8,28 @@ const BaseClass = require('../shared/baseClass');
 
 const { describeLevels, getLevel } = require('../helpers/levels');
 const { getAttributeChoices } = require('../helpers/choices');
+const { getItemCounts } = require('../items/helpers/counts');
+const { itemCard } = require('../helpers/card');
 const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
+const getUniqueItems = require('../items/helpers/unique-items');
 const isMatchingItem = require('../items/helpers/is-matching');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
 const PRONOUNS = require('../helpers/pronouns');
 
-const BASE_AC = 5;
-const BASE_STR = 5;
-const BASE_DEX = 5;
-const BASE_INT = 5;
-const AC_VARIANCE = 2;
-const BASE_HP = 28;
-const HP_VARIANCE = 5;
-// Do not access these directly. Get from this.getMaxModifications
-const MAX_PROP_MODIFICATIONS = {
-	ac: 1,
-	str: 1,
-	dex: 1,
-	int: 1,
-	xp: 40,
-	hp: 12
-};
-const MAX_BOOSTS = {
-	dex: 10,
-	str: 6,
-	int: 8,
-	hp: (BASE_HP * 2) + HP_VARIANCE,
-	ac: (BASE_AC * 2) + AC_VARIANCE
-};
+const {
+	AC_VARIANCE,
+	BASE_AC,
+	BASE_DEX,
+	BASE_HP,
+	BASE_INT,
+	BASE_STR,
+	HP_VARIANCE,
+	MAX_BOOSTS,
+	MAX_PROP_MODIFICATIONS
+} = require('../helpers/stat-constants');
+
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
 const DEFAULT_ITEM_SLOTS = 12;
@@ -95,8 +89,22 @@ class BaseCreature extends BaseClass {
 
 	get stats () {
 		return `Type: ${this.creatureType}
-Class: ${this.class}
+Class: ${this.class}${
+	!this.team ? '' :
+		`
+Team: ${this.team}`
+}
 Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
+	}
+
+	get team () {
+		return this.options.team || undefined;
+	}
+
+	set team (team) {
+		this.setOptions({
+			team
+		});
 	}
 
 	get targetingStrategy () {
@@ -469,6 +477,11 @@ Battles won: ${this.battles.wins}`;
 	addItem (item) {
 		this.items = sortItemsAlphabetically([...this.items, item]);
 
+		if (item.onAdded) {
+			item.onAdded(this);
+		}
+
+		item.emit('added', { creature: this });
 		this.emit('itemAdded', { item });
 	}
 
@@ -478,6 +491,11 @@ Battles won: ${this.battles.wins}`;
 		if (itemIndex >= 0) {
 			const foundItem = this.items.splice(itemIndex, 1)[0];
 
+			if (foundItem.onRemoved) {
+				foundItem.onRemoved(this);
+			}
+
+			foundItem.emit('removed', { creature: this });
 			this.emit('itemRemoved', { item: foundItem });
 
 			return foundItem;
@@ -496,16 +514,41 @@ Battles won: ${this.battles.wins}`;
 		}
 	}
 
-	useItem ({ channel, character = this, item, monster }) {
-		const foundItem = character.items.find(potentialItem => isMatchingItem(potentialItem, item));
+	useItem ({ channel, channelName, character = this, item, monster }) {
+		return Promise.resolve()
+			.then(() => {
+				if (monster && monster.inEncounter && !monster.items.find(potentialItem => isMatchingItem(potentialItem, item))) {
+					return Promise.reject(channel({
+						announce: `${monster.givenName} doesn't seem to be holding that item.`
+					}));
+				}
 
-		if (foundItem) {
-			return foundItem.use({ channel, character, monster });
+				return item.use({ channel, channelName, character, monster });
+			});
+	}
+
+	lookAtItems (channel, items = this.items) {
+		if (items.length < 1) {
+			return Promise.reject();
 		}
 
-		return Promise.reject(channel({
-			announce: `${character.givenName} doesn't seem to be holding that item.`
-		}));
+		const sortedItems = sortItemsAlphabetically(items);
+
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => Promise.each(getUniqueItems(sortedItems), item => channelManager.queueMessage({
+				announce: itemCard(item, true),
+				channel,
+				channelName
+			})))
+			.then(() => channelManager.queueMessage({
+				announce: reduce(getItemCounts(sortedItems), (counts, count, card) =>
+					`${counts}${card} (${count})
+`, ''),
+				channel,
+				channelName
+			}))
+			.then(() => channelManager.sendMessages());
 	}
 
 	leaveCombat (activeContestants) {
@@ -575,9 +618,10 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	setModifier (attr, amount = 0, permanent = false) {
-		const prevValue = (permanent) ? this.modifiers[attr] || 0 : this.encounterModifiers[attr] || 0;
+		const prevAmount = (permanent) ? this.modifiers[attr] || 0 : this.encounterModifiers[attr] || 0;
+		const prevValue = this[attr];
 		const modifiers = Object.assign({}, (permanent) ? this.modifiers : this.encounterModifiers, {
-			[attr]: prevValue + amount
+			[attr]: prevAmount + amount
 		});
 
 		if (permanent) {
@@ -589,6 +633,7 @@ Battles won: ${this.battles.wins}`;
 		this.emit('modifier', {
 			amount,
 			attr,
+			prevAmount,
 			prevValue
 		});
 	}

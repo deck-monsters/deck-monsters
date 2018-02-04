@@ -5,6 +5,7 @@ const BaseCard = require('./base');
 
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
+const { TARGET_HIGHEST_XP_PLAYER, getTarget } = require('../helpers/targeting-strategies');
 
 class PickPocketCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -17,13 +18,11 @@ class PickPocketCard extends BaseCard {
 	play (player, proposedTarget, ring, activeContestants) {
 		this.emit('played', { player });
 
-		const mostExperienced = activeContestants.reduce((potentialTarget, { monster }) => {
-			if (monster !== player && monster.xp > potentialTarget.xp) {
-				return monster;
-			}
-
-			return potentialTarget;
-		}, proposedTarget);
+		const mostExperienced = getTarget({
+			contestants: activeContestants,
+			playerMonster: player,
+			strategy: TARGET_HIGHEST_XP_PLAYER
+		}).monster;
 
 		const randomCard = sample(mostExperienced.cards.filter(card => !['Pick Pocket'].includes(card.cardType))).clone();
 
@@ -31,23 +30,9 @@ class PickPocketCard extends BaseCard {
 			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName}`
 		});
 
-		randomCard.originalGetTargets = randomCard.getTargets;
-		randomCard.getTargets = (...args) => this.getTargets(...args);
-
-		randomCard.originalEffect = randomCard.effect;
-		randomCard.effect = (...args) => this.effect(...args);
-
 		this.randomCard = randomCard;
 
 		return randomCard.play(player, proposedTarget, ring, activeContestants);
-	}
-
-	getTargets (player, proposedTarget, ring, activeContestants) {
-		return this.randomCard.originalGetTargets.call(this.randomCard, player, proposedTarget, ring, activeContestants);
-	}
-
-	effect (player, target, ring, activeContestants) {
-		return this.randomCard.originalEffect.call(this.randomCard, player, target, ring, activeContestants);
 	}
 }
 

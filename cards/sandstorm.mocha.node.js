@@ -4,34 +4,11 @@ const { expect, sinon } = require('../shared/test-setup');
 const { ATTACK_PHASE } = require('../helpers/phases');
 const cards = require('./index');
 const Jinn = require('../monsters/jinn');
-const pause = require('../helpers/pause');
 const RandomCard = require('./random');
 const SandstormCard = require('./sandstorm');
 const TestCard = require('./test');
 
 describe('./cards/sandstorm.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const sandstorm = new SandstormCard();
 
@@ -48,9 +25,9 @@ describe('./cards/sandstorm.js', () => {
 		const target2 = new Jinn({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -77,9 +54,9 @@ describe('./cards/sandstorm.js', () => {
 		const target2 = new Jinn({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -124,9 +101,9 @@ describe('./cards/sandstorm.js', () => {
 		const target2 = new Jinn({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -140,15 +117,13 @@ describe('./cards/sandstorm.js', () => {
 
 		return sandstorm
 			.play(player, target1, ring, ring.contestants)
-			.then(() => target1.encounterEffects[0]({ card: random.clone(), phase: ATTACK_PHASE, player: target1 }))
-			.then(modifiedCard => modifiedCard.play(target1, player, ring, ring.contestants))
+			.then(() => random.clone().play(target1, player, ring, ring.contestants))
 			.then(() => {
 				expect(target1.played).to.equal(1);
 				expect(target1.targeted).to.equal(undefined);
 				expect(player.targeted).to.equal(1);
 			})
-			.then(() => target2.encounterEffects[0]({ card: random.clone(), phase: ATTACK_PHASE, player: target2 }))
-			.then(modifiedCard => modifiedCard.play(target2, player, ring, ring.contestants))
+			.then(() => random.clone().play(target2, player, ring, ring.contestants))
 			.then(() => {
 				drawStub.restore();
 

@@ -3,7 +3,7 @@ Class: ALL
 	Cards:
 	- The Pilaf Eventuality
 		If encounterEffect DragonBalls !== 7
-			1d20 + INT vs 10 to find DragonBalls
+			1d20 + int vs 10 to find DragonBalls
 		else
 			Summon dragon
 				- You can not be hit without a natural 20

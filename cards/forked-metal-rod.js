@@ -2,37 +2,34 @@
 
 const HornGoreCard = require('./horn-gore');
 
-const ImmobilizeCard = require('./immobilize');
-
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = 3;
 const STARTING_DEX_MODIFIER = 3;
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../helpers/creature-types');
 const { VERY_RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 
 class ForkedMetalRodCard extends HornGoreCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
+		freedomSavingThrowTargetAttr,
 		icon = '⑂⑂',
+		targetProp,
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
-
-		this.immobilizeCard = new ImmobilizeCard({ strongAgainstCreatureTypes: this.strongAgainstCreatureTypes });
-	}
-
-	get stats () { // eslint-disable-line class-methods-use-this
-		return `${this.immobilizeCard.stats}
-Attempt to stab your opponent with strong sharp prongs.
-
-Even if you miss, there's a chance you'll pin them...`;
+		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
 	}
 
 	resetImmobilizeStrength () {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
 		this.dexModifier = STARTING_DEX_MODIFIER;
+	}
+
+	get mechanics () {
+		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successfull ${this.flavors.spike} hit.
+
+Chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.`;
 	}
 
 	effect (player, target, ring, activeContestants) { // eslint-disable-line no-unused-vars
@@ -53,7 +50,7 @@ Even if you miss, there's a chance you'll pin them...`;
 				return false;
 			}
 
-			return this.immobilizeCard.effect(player, target, ring, activeContestants);
+			return this.immobilize(player, target, ring, activeContestants);
 		}
 
 		return !target.dead;
@@ -61,10 +58,10 @@ Even if you miss, there's a chance you'll pin them...`;
 }
 
 ForkedMetalRodCard.cardType = 'Forked Metal Rod';
-ForkedMetalRodCard.actions = ['pin', 'pins', 'pinned'];
 ForkedMetalRodCard.permittedClassesAndTypes = [FIGHTER, BARBARIAN];
 ForkedMetalRodCard.strongAgainstCreatureTypes = [GLADIATOR, BASILISK];
-ForkedMetalRodCard.weakAgainstCreatureTypes = [MINOTAUR];
+ForkedMetalRodCard.uselessAgainstCreatureTypes = [WEEPING_ANGEL];
+ForkedMetalRodCard.weakAgainstCreatureTypes = [JINN, MINOTAUR];
 ForkedMetalRodCard.probability = VERY_RARE.probability;
 ForkedMetalRodCard.description = `A dangerously sharp forked metal rod fashioned for ${ForkedMetalRodCard.strongAgainstCreatureTypes.join(' and ')}-hunting.`;
 ForkedMetalRodCard.level = 2;
@@ -73,8 +70,10 @@ ForkedMetalRodCard.notForSale = true;
 
 ForkedMetalRodCard.defaults = {
 	...HornGoreCard.defaults,
+	damageDice: '1d6',
 	freedomThresholdModifier: STARTING_FREEDOM_THRESHOLD_MODIFIER,
-	dexModifier: STARTING_DEX_MODIFIER
+	freedomSavingThrowTargetAttr: 'str',
+	targetProp: 'ac'
 };
 
 ForkedMetalRodCard.flavors = {

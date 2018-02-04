@@ -1,6 +1,5 @@
-const { expect, sinon } = require('../../shared/test-setup');
+const { expect } = require('../../shared/test-setup');
 
-const pause = require('../../helpers/pause');
 const Beastmaster = require('../../characters/beastmaster');
 
 const { hydrateDeck } = require('./hydrate');
@@ -184,24 +183,6 @@ const testDeck = `[
 ]`;
 
 describe('./cards/helpers/hydrate.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	describe('hydrateDeck', () => {
 		it('can restore from save state', () => {
 			const player = new Beastmaster();

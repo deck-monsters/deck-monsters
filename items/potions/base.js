@@ -42,7 +42,7 @@ class BasePotion extends BaseItem {
 		return 'Usable an unlimited number of times.';
 	}
 
-	use ({ channel, character, monster }) {
+	use ({ channel, channelName, character, monster }) {
 		return Promise.resolve()
 			.then(() => {
 				if (this.expired) {
@@ -51,7 +51,7 @@ class BasePotion extends BaseItem {
 					});
 				}
 
-				return super.use({ channel, character, monster });
+				return super.use({ channel, channelName, character, monster });
 			})
 			.then((result) => {
 				if (this.expired) {

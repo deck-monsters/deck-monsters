@@ -1,33 +1,10 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const { randomCharacter } = require('../characters');
 const Basilisk = require('../monsters/basilisk');
 const BlastCard = require('./blast');
-const pause = require('../helpers/pause');
 
 describe('./cards/blast.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const blast = new BlastCard();
 
@@ -50,9 +27,9 @@ describe('./cards/blast.js', () => {
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -79,14 +56,14 @@ describe('./cards/blast.js', () => {
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 		const activeContestants = [
-			{ monster: player },
-			{ monster: target1 }
+			{ character: {}, monster: player },
+			{ character: {}, monster: target1 }
 		];
 
 		const playerStartingHp = player.hp;
@@ -116,7 +93,7 @@ describe('./cards/blast.js', () => {
 
 		const ring = {
 			contestants: [
-				{ monster: player },
+				{ character: {}, monster: player },
 				target
 			]
 		};
@@ -141,7 +118,7 @@ describe('./cards/blast.js', () => {
 
 		const ring = {
 			contestants: [
-				{ monster: player },
+				{ character: {}, monster: player },
 				target
 			]
 		};

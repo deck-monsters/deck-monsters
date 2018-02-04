@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const ParsifalScroll = require('./parsifal');
-const { TARGET_PREVIOUS_PLAYER } = require('../../helpers/targeting-strategies');
+const { TARGET_PREVIOUS_PLAYER, getStrategyDescription } = require('../../helpers/targeting-strategies');
 
 // The "default" scroll
 class ParsifalAccordingToCleverHansScroll extends ParsifalScroll {
@@ -19,9 +19,9 @@ class ParsifalAccordingToCleverHansScroll extends ParsifalScroll {
 
 ParsifalAccordingToCleverHansScroll.itemType = 'The Gospel According to Clever Hans';
 ParsifalAccordingToCleverHansScroll.numberOfUses = 3;
+ParsifalAccordingToCleverHansScroll.targetingStrategy = TARGET_PREVIOUS_PLAYER;
 ParsifalAccordingToCleverHansScroll.description = `Your mother said that my mother said that if you know your enemy and know yourself, you will not be put at risk even in a hundred battles. If you only know yourself, but not your opponent, you may win or may lose. If you know neither yourself nor your enemy, you will always endanger yourself.
 
-Your mother told you to keep your strategy simple: your opponent is always the person to your right (wait, no, your other right --No no, the other other... You know what? Just forget it... That one's fine).`;
-ParsifalAccordingToCleverHansScroll.targetingStrategy = TARGET_PREVIOUS_PLAYER;
+${getStrategyDescription(ParsifalAccordingToCleverHansScroll.targetingStrategy)}`;
 
 module.exports = ParsifalAccordingToCleverHansScroll;

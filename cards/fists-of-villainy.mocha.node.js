@@ -2,36 +2,13 @@ const { expect, sinon } = require('../shared/test-setup');
 
 const { randomCharacter } = require('../characters');
 const FistsOfVillainyCard = require('./fists-of-villainy');
-const pause = require('../helpers/pause');
 
 describe('./cards/fists-of-villainy.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const villainy = new FistsOfVillainyCard();
 
 		expect(villainy).to.be.an.instanceof(FistsOfVillainyCard);
-		expect(villainy.stats).to.equal(`Hit: 1d20 vs AC / Damage: 1d6
+		expect(villainy.stats).to.equal(`Hit: 1d20 vs ac / Damage: 1d6
 Strikes opponent with lowest current hp.`);
 		expect(villainy.icon).to.equal('🐀');
 	});
@@ -50,10 +27,10 @@ Strikes opponent with lowest current hp.`);
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 },
+				{ character: {}, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()

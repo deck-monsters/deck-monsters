@@ -4,37 +4,15 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Curse = require('./curse');
 const Hit = require('./hit');
-const pause = require('../helpers/pause');
 
 describe('./cards/curse.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const curse = new Curse();
 		const hit = new Hit({ damageDice: '1d4' });
 
 		const stats = `${hit.stats}
-Curse: ac -1`;
+Curse: ac -1
+maximum total curse of -3 per level, afterwards penalties come out of hp instead.`;
 
 		expect(curse).to.be.an.instanceof(Curse);
 		expect(curse.stats).to.equal(stats);

@@ -1,70 +1,51 @@
+/* eslint-disable max-len */
 const { expect, sinon } = require('../shared/test-setup');
 
 const Hit = require('./hit');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Constrict = require('./constrict');
-const pause = require('../helpers/pause');
 
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../helpers/creature-types');
 
 describe('./cards/constrict.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const constrict = new Constrict();
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: constrict.targetProp });
 
-		const stats = `${hit.stats}
+		const stats = `Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
- +2 against Gladiator, Minotaur
- -2 against Basilisk
-inneffective against Weeping Angel
-Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
+If already immobilized, hit instead.
+${hit.stats}
+ +3 advantage vs Gladiator, Minotaur
+ -3 disadvantage vs Basilisk, Jinn
+
+Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+
+-2 hp each turn immobilized.`;
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(3);
-		expect(constrict.dexModifier).to.equal(2);
-		expect(constrict.strModifier).to.equal(0);
-		expect(constrict.hitOnFail).to.be.false;
+		expect(constrict.freedomSavingThrowTargetAttr).to.equal('dex');
+		expect(constrict.targetProp).to.equal('dex');
 		expect(constrict.doDamageOnImmobilize).to.be.true;
 		expect(constrict.ongoingDamage).to.equal(2);
 		expect(constrict.stats).to.equal(stats);
 		expect(constrict.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, MINOTAUR]);
-		expect(constrict.weakAgainstCreatureTypes).to.deep.equal([BASILISK]);
+		expect(constrict.weakAgainstCreatureTypes).to.deep.equal([BASILISK, JINN]);
+		expect(constrict.uselessAgainstCreatureTypes).to.deep.equal([]);
 		expect(constrict.permittedClassesAndTypes).to.deep.equal([BASILISK]);
 	});
 
 	it('can be instantiated with options', () => {
 		const constrict = new Constrict({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: false, ongoingDamage: 3// eslint-disable-line max-len
+			freedomThresholdModifier: 2, doDamageOnImmobilize: false, ongoingDamage: 3
 		});
 
 		expect(constrict).to.be.an.instanceof(Constrict);
 		expect(constrict.freedomThresholdModifier).to.equal(2);
-		expect(constrict.dexModifier).to.equal(4);
-		expect(constrict.strModifier).to.equal(4);
-		expect(constrict.hitOnFail).to.be.true;
 		expect(constrict.doDamageOnImmobilize).to.be.false;
 		expect(constrict.ongoingDamage).to.equal(3);
 	});

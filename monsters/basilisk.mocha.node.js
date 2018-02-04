@@ -1,27 +1,8 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const Basilisk = require('./basilisk');
-const pause = require('../helpers/pause');
 
 describe('./monsters/basilisk.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const basilisk = new Basilisk();
 

@@ -2,36 +2,13 @@ const { expect, sinon } = require('../shared/test-setup');
 
 const { randomCharacter } = require('../characters');
 const KalevalaCard = require('./kalevala');
-const pause = require('../helpers/pause');
 
 describe('./cards/kalevala.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const kalevala = new KalevalaCard();
 
 		expect(kalevala).to.be.an.instanceof(KalevalaCard);
-		expect(kalevala.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d4');
+		expect(kalevala.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d4');
 		expect(kalevala.cardType).to.equal('The Kalevala (1d4)');
 		expect(kalevala.icon).to.equal('🎻');
 	});
@@ -40,7 +17,7 @@ describe('./cards/kalevala.js', () => {
 		const kalevala = new KalevalaCard(JSON.parse('{"damageDice":"1d6","icon":"🎻"}'));
 
 		expect(kalevala).to.be.an.instanceof(KalevalaCard);
-		expect(kalevala.stats).to.equal('Hit: 1d20 vs AC / Damage: 1d6');
+		expect(kalevala.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d6');
 		expect(kalevala.cardType).to.equal('The Kalevala (1d6)');
 	});
 

@@ -26,6 +26,27 @@ Roll twice for hit. Use the best roll.`;
 		return roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice, crit: true });
 	}
 
+	getAttackCommentary (player, target, betterRoll, worseRoll) {
+		let commentary = '';
+
+		const { success: roll1Success } = this.checkSuccess(worseRoll, target[this.targetProp]);
+		if (!roll1Success) {
+			commentary = `(${worseRoll.result}) ${player.givenName} was sure ${player.pronouns.he} was going to miss ${target.givenName}
+`;
+
+			const { success: roll2Success } = this.checkSuccess(betterRoll, target[this.targetProp]);
+			if (!roll2Success) {
+				commentary += `(${betterRoll.result}) and ${player.pronouns.he} did.`;
+
+				return commentary;
+			}
+		}
+
+		commentary += `(${betterRoll.naturalRoll.result})${!roll1Success ? ' but' : ''} ${target.givenName} fails to block ${player.pronouns.his} blow.`;
+
+		return commentary;
+	}
+
 	hitCheck (player, target) {
 		const attackRoll1 = this.getAttackRoll(player);
 		const attackRoll2 = this.getAttackRoll(player);
@@ -33,7 +54,7 @@ Roll twice for hit. Use the best roll.`;
 		const betterRoll = (attackRoll2.naturalRoll.result > attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 		const worseRoll = (attackRoll2.naturalRoll.result < attackRoll1.naturalRoll.result) ? attackRoll2 : attackRoll1;
 
-		let commentary = `Natural rolls were ${betterRoll.naturalRoll.result} and ${worseRoll.naturalRoll.result}; used ${betterRoll.naturalRoll.result} as better roll.`;
+		let commentary = this.getAttackCommentary(player, target, betterRoll, worseRoll);
 
 		const { success, strokeOfLuck, curseOfLoki, tie } = this.checkSuccess(betterRoll, target[this.targetProp]);
 

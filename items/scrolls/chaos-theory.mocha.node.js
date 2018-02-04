@@ -1,32 +1,24 @@
 /* eslint-disable max-len */
 const { expect, sinon } = require('../../shared/test-setup');
 
-const pause = require('../../helpers/pause');
 const ChaosTheoryScroll = require('./chaos-theory');
 const Jinn = require('../../monsters/jinn');
+const randomCharacter = require('../../characters/helpers/random');
 const targetingStrategies = require('../../helpers/targeting-strategies');
 
 describe('./items/scrolls/chaos-theory.js', () => {
 	let channelStub;
-	let pauseStub;
 
 	before(() => {
 		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 	});
 
 	beforeEach(() => {
 		channelStub.resolves();
-		pauseStub.callsArg(0);
 	});
 
 	afterEach(() => {
 		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {
@@ -43,10 +35,16 @@ describe('./items/scrolls/chaos-theory.js', () => {
 
 	it('can change your targeting strategy', () => {
 		const chaosTheory = new ChaosTheoryScroll();
-		const monster = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
+		const character = randomCharacter();
+		const monster = character.monsters[0];
 
 		expect(monster.targetingStrategy).to.equal(undefined);
 
-		return chaosTheory.use({ monster }).then(() => expect(monster.targetingStrategy).to.equal(targetingStrategies.TARGET_RANDOM_PLAYER));
+		return chaosTheory.use({ channel: channelStub, character, monster }).then(() => {
+			expect(monster.targetingStrategy).to.equal(targetingStrategies.TARGET_RANDOM_PLAYER);
+			expect(chaosTheory.used).to.equal(1);
+			expect(chaosTheory.expired).to.be.false;
+			return expect(chaosTheory.stats).to.equal('Usable 2 more times (of 3 total).');
+		});
 	});
 });

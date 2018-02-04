@@ -8,6 +8,7 @@ const pause = require('./helpers/pause');
 
 // const DestroyCard = require('./cards/destroy.js');
 
+pause.getThrottleRate = () => 5;
 pause.setTimeout = func => setTimeout(func, 5);
 
 prompt.start();
@@ -64,6 +65,7 @@ return Promise
 	}))
 	.then((character) => {
 		vlad = character;
+		vlad.character.coins = 1000;
 		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
 	})
 	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
@@ -71,6 +73,7 @@ return Promise
 	}))
 	.then((character) => {
 		char = character;
+		char.character.coins = 1000;
 		charCards = [...shuffle(char.character.deck).slice(0, 9)];
 		// const destroy = new DestroyCard();
 		// charCards = [destroy, destroy, destroy, destroy];
@@ -92,10 +95,16 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
 	}))
+	// .then(() => vlad.buyItems())
+	// .then(() => vlad.giveItemsToMonster())
+	// .then(() => vlad.useItems())
 	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
-	.then(() => vlad.lookAtCard({ cardName: 'pick pocket' }))
+	.then(() => vlad.lookAtItem({ itemName: 'the way of the cobra kai' }))
+	.then(() => vlad.lookAtItems())
 	.then(() => vlad.lookAtCards())
 	.then(() => vlad.lookAt('player handbook'))
+	.then(() => vlad.lookAt('dungeon master guide'))
+	.then(() => vlad.lookAt('monster manual'))
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())

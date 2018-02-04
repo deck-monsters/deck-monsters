@@ -2,30 +2,14 @@ const { expect, sinon } = require('../shared/test-setup');
 
 const FleeCard = require('./flee');
 const Basilisk = require('../monsters/basilisk');
-const pause = require('../helpers/pause');
 
 describe('./cards/flee.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
+	const ring = {
+		channelManager: {
+			sendMessages: sinon.stub()
+		}
+	};
+	ring.channelManager.sendMessages.resolves();
 
 	it('can be instantiated with defaults', () => {
 		const flee = new FleeCard();
@@ -40,7 +24,7 @@ describe('./cards/flee.js', () => {
 		const player = new Basilisk({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
 
-		return flee.play(player, target, null, [{ monster: target }])
+		return flee.play(player, target, ring, [{ monster: target }])
 			.then(result => expect(result).to.equal(true));
 	});
 
@@ -52,12 +36,6 @@ describe('./cards/flee.js', () => {
 
 		const player = new Basilisk({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
-		const ring = {
-			channelManager: {
-				sendMessages: sinon.stub()
-			}
-		};
-		ring.channelManager.sendMessages.resolves();
 
 		player.hp = 2;
 
@@ -73,12 +51,6 @@ describe('./cards/flee.js', () => {
 
 		const player = new Basilisk({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
-		const ring = {
-			channelManager: {
-				sendMessages: sinon.stub()
-			}
-		};
-		ring.channelManager.sendMessages.resolves();
 
 		player.hp = 2;
 

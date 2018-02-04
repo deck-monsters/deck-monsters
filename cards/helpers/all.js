@@ -7,6 +7,7 @@ const BlastCard = require('../blast');
 const BlinkCard = require('../blink');
 const BoostCard = require('../boost');
 const BrainDrainCard = require('../brain-drain');
+const CalisthenicsCard = require('../calisthenics');
 const CamouflageVestCard = require('../camouflage-vest');
 const CloakOfInvisibilityCard = require('../cloak-of-invisibility');
 const CoilCard = require('../coil');
@@ -16,6 +17,7 @@ const DelayedHit = require('../delayed-hit');
 const EnchantedFaceswapCard = require('../enchanted-faceswap');
 const EnthrallCard = require('../enthrall');
 const EntranceCard = require('../entrance');
+const FelineCompanionCard = require('../feline-companion');
 const FightOrFlightCard = require('../fight-or-flight');
 const FistsOfVillainyCard = require('../fists-of-villainy');
 const FistsOfVirtueCard = require('../fists-of-virtue');
@@ -31,6 +33,7 @@ const IocaneCard = require('../iocane');
 const KalevalaCard = require('../kalevala');
 const LuckyStrike = require('../lucky-strike');
 const MesmerizeCard = require('../mesmerize');
+const MolassesCard = require('../molasses');
 const PickPocketCard = require('../pick-pocket');
 const PoundCard = require('../pound');
 const PrionDiseaseCard = require('../prion-disease');
@@ -55,6 +58,7 @@ module.exports = [
 	BlinkCard,
 	BoostCard,
 	BrainDrainCard,
+	CalisthenicsCard,
 	CamouflageVestCard,
 	CloakOfInvisibilityCard,
 	CoilCard,
@@ -64,6 +68,7 @@ module.exports = [
 	EnchantedFaceswapCard,
 	EnthrallCard,
 	EntranceCard,
+	FelineCompanionCard,
 	FightOrFlightCard,
 	FistsOfVillainyCard,
 	FistsOfVirtueCard,
@@ -79,6 +84,7 @@ module.exports = [
 	KalevalaCard,
 	LuckyStrike,
 	MesmerizeCard,
+	MolassesCard,
 	PickPocketCard,
 	PoundCard,
 	PrionDiseaseCard,

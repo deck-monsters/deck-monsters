@@ -1,42 +1,19 @@
 /* eslint-disable max-len */
-const { expect, sinon } = require('../../shared/test-setup');
+const { expect } = require('../../shared/test-setup');
 
-const pause = require('../../helpers/pause');
 const LaCarambadaScroll = require('./la-carambada-according-to-clever-hans');
 const Jinn = require('../../monsters/jinn');
 
 const { TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
-const { ABUNDANT } = require('../../helpers/probabilities');
+const { COMMON } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/la-carambada-according-to-clever-hans.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const laCarambada = new LaCarambadaScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
-		expect(laCarambada.probability).to.equal(ABUNDANT.probability);
+		expect(laCarambada.probability).to.equal(COMMON.probability);
 		expect(laCarambada.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(laCarambada).to.be.an.instanceof(LaCarambadaScroll);
 		expect(laCarambada.numberOfUses).to.equal(3);

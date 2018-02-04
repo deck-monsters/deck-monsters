@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const CobraKaiScroll = require('./cobra-kai');
-const { TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS, getStrategyDescription } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
 
 class CobraKaiAccordingToCleverHansScroll extends CobraKaiScroll {
@@ -23,6 +23,6 @@ CobraKaiAccordingToCleverHansScroll.itemType = 'The Way of the Cobra Kai Accordi
 CobraKaiAccordingToCleverHansScroll.targetingStrategy = TARGET_LOWEST_HP_PLAYER_ACCORDING_TO_HANS;
 CobraKaiAccordingToCleverHansScroll.description = `We do not train to be merciful here. Mercy is for the weak. Here, in the streets, in competition: A man confronts you, he is the enemy. An enemy deserves no mercy.
 
-Your mother told you to target the weakest monster in the ring, every time, and that's exactly what you'll do.`;
+${getStrategyDescription(CobraKaiAccordingToCleverHansScroll.targetingStrategy)}`;
 
 module.exports = CobraKaiAccordingToCleverHansScroll;

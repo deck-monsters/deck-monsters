@@ -6,7 +6,7 @@ const { PRICEY } = require('../helpers/costs');
 
 class VenegefulRampageCard extends HitCard {
 	get stats () {
-		return `Hit: ${this.attackDice} vs AC
+		return `Hit: ${this.attackDice} vs ac
 Damage: ${this.damageDice} +1 per wound suffered`;
 	}
 

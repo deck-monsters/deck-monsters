@@ -1,7 +1,8 @@
 /* eslint-disable max-len */
 
 const TargetingScroll = require('./targeting');
-const { TARGET_NEXT_PLAYER } = require('../../helpers/targeting-strategies');
+const { ABUNDANT } = require('../../helpers/probabilities');
+const { TARGET_NEXT_PLAYER, getStrategyDescription } = require('../../helpers/targeting-strategies');
 
 // The "default" scroll
 class ParsifalScroll extends TargetingScroll {
@@ -19,10 +20,11 @@ class ParsifalScroll extends TargetingScroll {
 
 ParsifalScroll.itemType = 'The Gospel According to Parsifal';
 ParsifalScroll.numberOfUses = 0;
+ParsifalScroll.targetingStrategy = TARGET_NEXT_PLAYER;
 ParsifalScroll.description = `My mother said that if you know your enemy and know yourself, you will not be put at risk even in a hundred battles. If you only know yourself, but not your opponent, you may win or may lose. If you know neither yourself nor your enemy, you will always endanger yourself.
 
-Keep your strategy simple: your opponent is always the person next to you.`;
+${getStrategyDescription(ParsifalScroll.targetingStrategy)}`;
 ParsifalScroll.level = 0;
-ParsifalScroll.targetingStrategy = TARGET_NEXT_PLAYER;
+ParsifalScroll.probability = ABUNDANT.probability;
 
 module.exports = ParsifalScroll;

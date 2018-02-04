@@ -1,42 +1,19 @@
 /* eslint-disable max-len */
-const { expect, sinon } = require('../../shared/test-setup');
+const { expect } = require('../../shared/test-setup');
 
-const pause = require('../../helpers/pause');
 const QinShiHuangScroll = require('./qin-shi-huang-according-to-clever-hans');
 const Jinn = require('../../monsters/jinn');
 
 const { TARGET_HIGHEST_XP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
-const { ABUNDANT } = require('../../helpers/probabilities');
+const { COMMON } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/qin-shi-huang-according-to-clever-hans.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const qinShiHuangScroll = new QinShiHuangScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
-		expect(qinShiHuangScroll.probability).to.equal(ABUNDANT.probability);
+		expect(qinShiHuangScroll.probability).to.equal(COMMON.probability);
 		expect(qinShiHuangScroll.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(qinShiHuangScroll).to.be.an.instanceof(QinShiHuangScroll);
 		expect(qinShiHuangScroll.numberOfUses).to.equal(3);

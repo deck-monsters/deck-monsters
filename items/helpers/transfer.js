@@ -39,7 +39,7 @@ module.exports = ({ from, to, itemSelection, channel }) => {
 						selectedItems.push(selectedItem);
 					} else {
 						channel({
-							announce: `${to.givenName} can not hold ${itemType.toLowerCase()}`
+							announce: `${to.givenName} can not hold ${itemType.toLowerCase()}.`
 						});
 					}
 

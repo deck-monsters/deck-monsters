@@ -1,7 +1,7 @@
 {
   "name": "deck-monsters",
   "description": "Spawn monsters, equip them with cards, and send them into the ring to fight.",
-  "version": "0.12.18",
+  "version": "0.12.44",
   "contributors": [
     {
       "name": "David Brainer",
@@ -16,7 +16,7 @@
     "npm": "5.x"
   },
   "scripts": {
-    "build": "node ./helpers/card-probabilities.js",
+    "build": "node ./build.js",
     "lint": "eslint \"**/*.{js,jsx}\"",
     "lint:fix": "npm run lint -- --fix",
     "make-notes": "mc-make-notes",

@@ -1,41 +1,18 @@
 /* eslint-disable max-len */
-const { expect, sinon } = require('../../shared/test-setup');
+const { expect } = require('../../shared/test-setup');
 
-const pause = require('../../helpers/pause');
 const ChaosTheoryAccordingToHansScroll = require('./chaos-theory-according-to-clever-hans');
 const Jinn = require('../../monsters/jinn');
 const { TARGET_RANDOM_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
-const { ABUNDANT } = require('../../helpers/probabilities');
+const { COMMON } = require('../../helpers/probabilities');
 
 describe('./items/scrolls/chaos-theory-according-to-clever-hans.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const chaosTheory = new ChaosTheoryAccordingToHansScroll();
 		const jenn = new Jinn({ name: 'jenn', acVariance: 0, xp: 1300, gender: 'female' });
 
-		expect(chaosTheory.probability).to.equal(ABUNDANT.probability);
+		expect(chaosTheory.probability).to.equal(COMMON.probability);
 		expect(chaosTheory.cost).to.equal(ALMOST_NOTHING.cost);
 		expect(chaosTheory).to.be.an.instanceof(ChaosTheoryAccordingToHansScroll);
 		expect(chaosTheory.itemType).to.equal('Chaos Theory for Beginners According to Clever Hans');

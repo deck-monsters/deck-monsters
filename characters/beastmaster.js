@@ -1,4 +1,5 @@
 const moment = require('moment');
+const Promise = require('bluebird');
 const some = require('lodash.some');
 
 const BaseCharacter = require('./base');
@@ -215,7 +216,7 @@ Which monster would you like to ${action}?`,
 				.then(() => monster));
 	}
 
-	useItems ({ channel, isMonsterItem, monsterName }) {
+	useItems ({ channel, channelName, isMonsterItem, itemSelection, monsterName }) {
 		return Promise.resolve()
 			.then(() => {
 				if (monsterName || isMonsterItem) {
@@ -229,10 +230,16 @@ Which monster would you like to ${action}?`,
 
 				return undefined;
 			})
-			.then(monster => useItems({ channel, character: this, monster, use: options => this.useItem(options) }));
+			.then(monster => useItems({
+				channel,
+				character: this,
+				itemSelection,
+				monster,
+				use: options => this.useItem({ channelName, ...options })
+			}));
 	}
 
-	useItem ({ channel, isMonsterItem, item, monster, monsterName }) {
+	useItem ({ channel, channelName, isMonsterItem, item, monster, monsterName }) {
 		if (!monster && (monsterName || isMonsterItem)) {
 			const { monsters } = this;
 
@@ -240,10 +247,27 @@ Which monster would you like to ${action}?`,
 				.then(() => this.chooseMonster({
 					channel, monsters, monsterName, action: 'use the item on'
 				}))
-				.then(foundMonster => super.useItem({ channel, item, monster: foundMonster }));
+				.then(foundMonster => super.useItem({ channel, channelName, item, monster: foundMonster }));
 		}
 
-		return super.useItem({ channel, item, monster });
+		return super.useItem({ channel, channelName, item, monster });
+	}
+
+	lookAtItems (channel) {
+		const { channelManager, channelName } = channel;
+
+		return Promise.resolve()
+			.then(() => this.items.length && super.lookAtItems(channel))
+			.then(() => Promise.each(this.monsters, (monster) => {
+				if (monster.items.length < 1) return Promise.resolve();
+
+				return Promise.resolve(channelManager.queueMessage({
+					announce: `${monster.givenName}'s Items:`,
+					channel,
+					channelName
+				}))
+					.then(() => super.lookAtItems(channel, monster.items));
+			}));
 	}
 
 	callMonsterOutOfTheRing ({

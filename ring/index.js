@@ -1,15 +1,17 @@
 /* eslint-disable max-len */
 
+const Promise = require('bluebird');
 const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
-const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
+const { actionCard, monsterCard } = require('../helpers/card');
 const { calculateXP } = require('../helpers/experience');
 const { getTarget } = require('../helpers/targeting-strategies');
-const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
+const { sortCardsAlphabetically } = require('../cards/helpers/sort');
 const BaseClass = require('../shared/baseClass');
 const delayTimes = require('../helpers/delay-times');
+const getUniqueCards = require('../cards/helpers/unique-cards');
 const pause = require('../helpers/pause');
 
 const MAX_BOSSES = 5;
@@ -174,25 +176,90 @@ class Ring extends BaseClass {
 		return this.contestants.find(contestant => (contestant.character === character && contestant.monster === monster));
 	}
 
-	look (channel) {
-		const ringContentsDisplay = this.contestants.reduce((ringContents, contestant) => {
-			const contestantDisplay = monsterCard(contestant.character, true);
-			const monsterDisplay = monsterCard(contestant.monster, true);
-			return `${ringContents} ${contestantDisplay} sent the following monster into the ring: ${monsterDisplay}`;
-		}, '');
+	look (channel, showCharacters = true) {
+		const { length } = this.contestants;
 
-		if (ringContentsDisplay) {
-			return Promise
-				.resolve()
-				.then(() => channel({
-					announce: ringContentsDisplay
-				}));
+		if (length < 1) {
+			return Promise.reject(channel({
+				announce: 'The ring is empty',
+				delay: 'short'
+			}));
 		}
 
-		return Promise.reject(channel({
-			announce: 'The ring is empty',
-			delay: 'short'
-		}));
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => channelManager.queueMessage({
+				announce:
+`###########################################
+There ${length === 1 ? 'is one contestant' : `are ${length} contestants`} in the ring.
+###########################################`,
+				channel,
+				channelName
+			}))
+			.then(() => Promise.each(this.contestants, (contestant) => {
+				const monsterDisplay = monsterCard(contestant.monster, true);
+
+				let characterDisplay = '';
+				if (showCharacters) {
+					characterDisplay = `${monsterCard(contestant.character, true)}
+Sent the following monster into the ring:
+
+`;
+				}
+
+				return channelManager.queueMessage({
+					announce:
+`${characterDisplay}${monsterDisplay}###########################################`,
+					channel,
+					channelName
+				});
+			}))
+			.then(() => channelManager.sendMessages());
+	}
+
+	lookAtCards (channel) {
+		const { length } = this.contestants;
+
+		if (length < 1) {
+			return Promise.reject(channel({
+				announce: 'The ring is empty',
+				delay: 'short'
+			}));
+		}
+
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => channelManager.queueMessage({
+				announce:
+`###########################################
+The following cards are in play:
+`,
+				channel,
+				channelName
+			}))
+			.then(() => {
+				const cards = sortCardsAlphabetically(getUniqueCards(this.contestants.reduce((allCards, { monster }) => {
+					allCards.push(...monster.cards);
+
+					return allCards;
+				}, [])));
+
+				return Promise.each(cards, (card) => {
+					const cardDisplay = actionCard(card, true);
+
+					return channelManager.queueMessage({
+						announce: cardDisplay,
+						channel,
+						channelName
+					});
+				});
+			})
+			.then(() => channelManager.queueMessage({
+				announce: '###########################################',
+				channel,
+				channelName
+			}))
+			.then(() => channelManager.sendMessages());
 	}
 
 	startEncounter () {
@@ -331,7 +398,7 @@ class Ring extends BaseClass {
 			const { monster: proposedTarget } = targetContestant;
 
 			// Find the card in the current player's hand at the current index
-			let card = player.cards[cardIndex];
+			const card = player.cards[cardIndex];
 
 			// When this is called (see below) we pass the next contestant and card back into the looping
 			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a character as described above
@@ -350,45 +417,6 @@ class Ring extends BaseClass {
 				});
 
 				playerContestant.round = round;
-
-				// Now we're going to run through all of the possible effects
-				// Each effect should either return a card (which will replace the card that was going to be played)
-				// or do something in the background and then return nothing (in which case we'll keep the card we had)
-
-				// Let's clone the card before we get started on this - that way any modifications won't be saved
-				card = card.clone();
-
-				// First, run through the effects from the contestants
-				card = (() => {
-					const allActiveContestants = getAllActiveContestants();
-
-					return allActiveContestants.reduce((contestantCard, contestant) => contestant.monster.encounterEffects.reduce((effectCard, effect) => {
-						const modifiedCard = effect({
-							activeContestants: allActiveContestants,
-							card: effectCard,
-							phase: contestant.monster === player ? ATTACK_PHASE : DEFENSE_PHASE,
-							player,
-							ring,
-							proposedTarget
-						});
-
-						return modifiedCard || effectCard;
-					}, contestantCard), card);
-				})();
-
-				// Then, run through any global effects
-				card = ring.encounterEffects.reduce((currentCard, effect) => {
-					const modifiedCard = effect({
-						activeContestants: getAllActiveContestants(),
-						card: currentCard,
-						phase: GLOBAL_PHASE,
-						player,
-						ring,
-						proposedTarget
-					});
-
-					return modifiedCard || currentCard;
-				}, card);
 
 				// Track the fight log
 				fightLog.push(`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`);

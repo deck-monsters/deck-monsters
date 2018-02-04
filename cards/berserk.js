@@ -36,6 +36,8 @@ class BerserkCard extends HitCard {
 	}
 
 	resetCard () {
+		this.cumulativeComboDamage = 0;
+		this.initialDamage = 0;
 		this.iterations = 0;
 		this.resetDamage();
 		this.resetFatigue();
@@ -65,7 +67,7 @@ class BerserkCard extends HitCard {
 ${this.damageAmount} damage per hit after that.`;
 		}
 
-		return `Hit: ${this.attackDice} + attack bonus vs AC on first hit
+		return `Hit: ${this.attackDice} + attack bonus vs ac on first hit
 then also + spell bonus (fatigued by 1 each subsequent hit) until you miss
 ${damageDescription}
 
@@ -144,12 +146,11 @@ Stroke of luck increases damage per hit by 1.`;
 				narration: `COMBO BREAKER!  (Broke a ${iteration - 1} hit combo, ${this.initialDamage + this.cumulativeComboDamage} total damage)`
 			});
 
-			this.resetCard();
 			// Our attack is now bouncing back against us
+			this.resetCard();
 			return player.hit(damage, target, this);
 		}
 
-		this.resetCard();
 		this.emit('miss', {
 			attackResult: attackRoll.result,
 			attackRoll,
@@ -165,6 +166,7 @@ Stroke of luck increases damage per hit by 1.`;
 			});
 		}
 
+		this.resetCard();
 		return ring.channelManager.sendMessages()
 			.then(() => !target.dead);
 	}

@@ -1,12 +1,9 @@
-const reduce = require('lodash.reduce');
-
 const BaseCreature = require('../creatures/base');
 
-const { actionCard, characterCard, monsterCard } = require('../helpers/card');
-const { getInitialDeck, getUniqueCards, sortCardsAlphabetically } = require('../cards');
+const { characterCard, monsterCard } = require('../helpers/card');
+const { getInitialDeck, sortCardsAlphabetically } = require('../cards');
 const { HERO } = require('../helpers/classes');
 const buyItems = require('../items/store/buy');
-const getCardCounts = require('../items/helpers/counts').getItemCounts;
 const isMatchingItem = require('../items/helpers/is-matching');
 const sellItems = require('../items/store/sell');
 
@@ -101,29 +98,11 @@ Coins: ${this.coins}`;
 	}
 
 	lookAtCards (channel) {
-		const sortedDeck = sortCardsAlphabetically(this.deck);
-		const cardImages = getUniqueCards(sortedDeck).reduce((cards, card) =>
-			cards + actionCard(card), '');
-
-		const cardCounts = reduce(getCardCounts(sortedDeck), (counts, count, card) =>
-			`${counts}${card} (${count})
-`, '');
-
-
-		const deckDisplay = `${cardImages} ${cardCounts}`;
-
-		if (deckDisplay) {
-			return Promise
-				.resolve()
-				.then(() => channel({
-					announce: deckDisplay
-				}));
-		}
-
-		return Promise.reject(channel({
-			announce: "Strangely enough, somehow you don't have any cards.",
-			delay: 'short'
-		}));
+		return super.lookAtItems(channel, this.deck)
+			.catch(() => channel({
+				announce: "Strangely enough, somehow you don't have any cards.",
+				delay: 'short'
+			}));
 	}
 
 	sellItems (channel) {

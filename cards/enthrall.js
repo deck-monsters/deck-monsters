@@ -2,10 +2,9 @@
 
 const ImmobilizeCard = require('./immobilize');
 
-const MesmerizeCard = require('./mesmerize');
-
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
+const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
 
 const {
 	BASILISK,
@@ -18,58 +17,48 @@ const {
 class EnthrallCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
-		dexModifier,
-		hitOnFail,
+		freedomSavingThrowTargetAttr,
+		targetProp,
 		icon = '🎇',
 		...rest
 	} = {}) {
-		super({ icon, ...rest });
-
-		this.setOptions({
-			dexModifier,
-			hitOnFail
-		});
-
-		this.mesmerizeCard = new MesmerizeCard();
-	}
-	get stats () { // eslint-disable-line class-methods-use-this
-		return `${super.stats}
-Chance to immobilize your opponents with your shocking beauty.`;
+		super({ freedomSavingThrowTargetAttr, icon, targetProp, ...rest });
 	}
 
-	getFreedomThresholdBase (player) {
-		return this.mesmerizeCard.getFreedomThresholdBase(player);
+	get mechanics () { // eslint-disable-line class-methods-use-this
+		return 'Immobilize all opponents.';
 	}
 
-	getAttackRoll (player, target) {
-		return this.mesmerizeCard.getAttackRoll(player, target);
-	}
+	get stats () {
+		return `${this.mechanics}
 
-	getTargetPropValue (target) {
-		return this.mesmerizeCard.getTargetPropValue(target);
+${super.stats}`;
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
+		return getTarget({
+			contestants: activeContestants,
+			playerMonster: player,
+			strategy: TARGET_ALL_CONTESTANTS
+		}).map(({ monster }) => monster);
 	}
 }
 
 EnthrallCard.cardType = 'Enthrall';
-EnthrallCard.actions = ['enthrall', 'enthralls', 'enthralled'];
-EnthrallCard.permittedClassesAndTypes = [JINN, WEEPING_ANGEL];
+EnthrallCard.actions = { IMMOBILIZE: 'enthrall', IMMOBILIZES: 'enthralls', IMMOBILIZED: 'enthralled' };
+EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 EnthrallCard.strongAgainstCreatureTypes = [BASILISK, GLADIATOR];
 EnthrallCard.weakAgainstCreatureTypes = [MINOTAUR, WEEPING_ANGEL];
 EnthrallCard.uselessAgainstCreatureTypes = [JINN];
 EnthrallCard.probability = UNCOMMON.probability;
-EnthrallCard.description = `You strut and preen. Your beauty overwhelms and ${EnthrallCard.actions[1]} everyone, except yourself.`;
+EnthrallCard.description = `You strut and preen. Your beauty ${EnthrallCard.actions.IMMOBILIZES} everyone, except yourself.`;
 EnthrallCard.level = 2;
 EnthrallCard.cost = REASONABLE.cost;
 
 EnthrallCard.defaults = {
 	...ImmobilizeCard.defaults,
-	dexModifier: 2,
-	hitOnFail: false,
-	freedomThresholdModifier: 1
+	freedomSavingThrowTargetAttr: 'int',
+	targetProp: 'int'
 };
 
 EnthrallCard.flavors = {

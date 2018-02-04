@@ -5,9 +5,10 @@ const BaseScroll = require('./base');
 
 const { ABUNDANT } = require('../../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
+const { capitalize } = require('../../helpers/capitalize');
 
-const getTicketNumbers = () => [random(11, 99), random(11, 99), random(11, 99), random(11, 99), random(11, 99)];
-const getWinnings = (matches, cost) => Math.round(Math.pow(10, (0.5 * matches)) * cost);
+const getTicketNumbers = () => [random(11, 99), random(11, 55), random(11, 99), random(11, 99), random(11, 99)];
+const getWinnings = (matches, cost) => Math.round(Math.pow(10, (0.6 * matches)) * cost);
 
 class LotteryTicket extends BaseScroll {
 	constructor ({
@@ -16,46 +17,63 @@ class LotteryTicket extends BaseScroll {
 		super({ icon });
 	}
 
-	action ({ channel, character }) {
-		const characterNumbers = getTicketNumbers();
-		const winningNumbers = getTicketNumbers();
+	action ({ channel, channelName, character }) {
+		return Promise.resolve()
+			.then(() => {
+				const characterNumbers = getTicketNumbers();
+				const winningNumbers = getTicketNumbers();
 
-		const matches = characterNumbers.reduce((numberOfMatches, number, currentIndex) => (winningNumbers[currentIndex] === number ? numberOfMatches + 1 || 1 : numberOfMatches), 0);
+				const matches = characterNumbers.reduce((numberOfMatches, number, currentIndex) => (winningNumbers[currentIndex] === number ? numberOfMatches + 1 || 1 : numberOfMatches), 0);
 
-		this.emit('narration', {
-			channel,
-			narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${characterNumbers.join('" "')}".`
-		});
+				this.emit('narration', {
+					channel,
+					channelName,
+					narration: `🤞 ${character.givenName} holds a ticket imprinted with the numbers "${characterNumbers.join('" "')}".`
+				});
 
-		if (matches > 0) {
-			const winnings = getWinnings(matches, this.cost);
+				return Promise.resolve(channel)
+					.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
+					.then(() => ({ winningNumbers, matches }));
+			})
+			.then(({ winningNumbers, matches }) => {
+				if (matches > 0) {
+					const winnings = getWinnings(matches, this.cost);
+					character.coins += winnings;
 
-			this.emit('narration', {
-				channel,
-				narration: `Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
+					this.emit('narration', {
+						channel,
+						channelName,
+						narration:
+`Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
 "${winningNumbers.join('" "')}"
 
-🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${character.pronouns.he} has won ${winnings} coins!`
-			});
+🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${capitalize(character.pronouns.he)} has won ${winnings} coins!
 
+The lottery agent hands ${character.givenName} a heavy sack containing ${winnings} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
+					});
 
-			character.coins += winnings;
+					// Also send a notification to everyone
+					this.emit('narration', {
+						narration: `🍾 ${character.givenName} just won ${winnings} coins in the lottery! Drinks on ${character.pronouns.him}.`
+					});
 
-			this.emit('narration', {
-				channel,
-				narration: `The lottery agent hands ${character.givenName} a heavy sack containing ${winnings} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
-			});
-		} else {
-			this.emit('narration', {
-				channel,
-				narration: `With anticipation building, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
+					return true;
+				}
+
+				this.emit('narration', {
+					channel,
+					channelName,
+					narration:
+`With anticipation building, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
 
 "${winningNumbers.join('" "')}"
 
 😔 ${character.givenName} can't believe ${character.pronouns.his} eyes. Not a single match. Better luck next time, ${character.givenName}.`
+				});
+
+				return false;
 			});
-		}
 	}
 }
 

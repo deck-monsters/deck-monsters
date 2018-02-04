@@ -23,8 +23,10 @@ ${super.stats}`;
 		return [player];
 	}
 
-	effect (delayingPlayer, target, ring) { // eslint-disable-line no-unused-vars
+	effect (delayingPlayer, delayingTarget, ring) { // eslint-disable-line no-unused-vars
 		let whenPlayed = Date.now();
+		const him = (delayingPlayer !== delayingTarget) ? delayingTarget.givenName : delayingPlayer.pronouns.him;
+		const his = (delayingPlayer !== delayingTarget) ? `${delayingTarget.givenName}'s` : delayingPlayer.pronouns.his;
 
 		const delayedHitEffect = ({
 			card
@@ -33,26 +35,30 @@ ${super.stats}`;
 
 			if (play) {
 				card.play = (...args) => play.call(card, ...args).then((result) => {
-					const lastHitByOther = delayingPlayer.encounterModifiers.hitLog && delayingPlayer.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingPlayer);
-					if (lastHitByOther && lastHitByOther.when > whenPlayed) {
-						whenPlayed = lastHitByOther.when;
-						ring.encounterEffects = ring.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
+					if (!delayingTarget.encounterModifiers.timeShifted === true) {
+						const lastHitByOther = delayingTarget.encounterModifiers.hitLog && delayingTarget.encounterModifiers.hitLog.find(hitter => hitter.assailant !== delayingTarget);
+						if (lastHitByOther && lastHitByOther.when > whenPlayed) {
+							whenPlayed = lastHitByOther.when;
+							ring.encounterEffects = ring.encounterEffects.filter(encounterEffect => encounterEffect !== delayedHitEffect);
 
-						if (delayingPlayer.dead) {
-							this.emit('narration', {
-								narration: `With ${delayingPlayer.pronouns.his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
-							});
-						} else {
-							this.emit('narration', {
-								narration: `${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${delayingPlayer.pronouns.him}.`
-							});
+							if (delayingTarget.dead) {
+								this.emit('narration', {
+									narration: `
+${this.icon} With ${his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${him}.`
+								});
+							} else {
+								this.emit('narration', {
+									narration: `
+${this.icon} ${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`
+								});
+							}
+
+							return Promise.resolve(super.effect(delayingPlayer, lastHitByOther.assailant, ring))
+								.then(() =>
+									// This does not affect the current player or turn in any way, it is a response
+									// to the previous player/turn, so just return the current card's result
+									result);
 						}
-
-						return super.effect(delayingPlayer, lastHitByOther.assailant, ring)
-							.then(() =>
-								// This does not affect the current player or turn in any way, it is a response
-								// to the previous player/turn, so just return the current card's result
-								result);
 					}
 
 					return result;
@@ -63,7 +69,7 @@ ${super.stats}`;
 		};
 
 		this.emit('narration', {
-			narration: `${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${delayingPlayer.pronouns.his} enemy to reveal themselves.`
+			narration: `${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${his} enemy to reveal themselves.`
 		});
 
 		ring.encounterEffects = [...ring.encounterEffects, delayedHitEffect];

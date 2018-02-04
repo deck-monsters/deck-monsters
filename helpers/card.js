@@ -37,17 +37,14 @@ const itemRarity = item => findProbabilityMatch(item.probability || 0).icon;
 const getItemRequirements = (item) => {
 	const requirements = [];
 
-	if (item.level) {
-		requirements.push(`Level: ${item.level}`);
-	}
+	requirements.push(`Level: ${item.level ? item.level : 'Beginner'}`);
 
-	if (item.permittedClassesAndTypes) {
-		requirements.push(`Usable by: ${item.permittedClassesAndTypes.join(', ')}`);
-	}
+	requirements.push(`Usable by: ${item.permittedClassesAndTypes ? item.permittedClassesAndTypes.join(', ') : 'All'}`);
 
-	return requirements.length > 0 ? requirements.join('\n') : undefined;
+	requirements.push(`MSRP: ${item.cost ? item.cost : 'free'}`);
+
+	return requirements.join('\n');
 };
-
 
 const discoveryCard = (card) => {
 	const probability = card.flavor && card.flavor.probability || card.probability || 1;
@@ -59,16 +56,16 @@ const discoveryCard = (card) => {
 	});
 };
 
-const itemCard = item => formatCard({
-	title: `${item.icon}  ${item.itemType}  ${itemRarity(item.probability)}`,
+const itemCard = (item, verbose = false) => formatCard({
+	title: `${item.icon}  ${item.itemType}  ${itemRarity(item)}`,
 	description: item.description,
 	stats: item.stats,
-	rankings: getItemRequirements(item)
+	rankings: verbose ? getItemRequirements(item, verbose) : ''
 });
 
 // This is included for legacy support. Until cards need some sort of special
 // rendering they render exactly the same as any other item.
-const actionCard = card => itemCard(card);
+const actionCard = (card, verbose) => itemCard(card, verbose);
 
 const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.givenName}`,

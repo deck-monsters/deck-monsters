@@ -2,36 +2,13 @@ const { expect, sinon } = require('../shared/test-setup');
 
 const { randomCharacter } = require('../characters');
 const FistsOfVirtueCard = require('./fists-of-virtue');
-const pause = require('../helpers/pause');
 
 describe('./cards/fists-of-virtue.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const virtue = new FistsOfVirtueCard();
 
 		expect(virtue).to.be.an.instanceof(FistsOfVirtueCard);
-		expect(virtue.stats).to.equal(`Hit: 1d20 vs AC / Damage: 1d8
+		expect(virtue.stats).to.equal(`Hit: 1d20 vs ac / Damage: 1d8
 Strikes opponent with highest current hp.`);
 		expect(virtue.icon).to.equal('🙏');
 	});
@@ -50,10 +27,10 @@ Strikes opponent with highest current hp.`);
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 },
+				{ character: {}, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()

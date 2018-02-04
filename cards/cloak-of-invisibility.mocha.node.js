@@ -1,40 +1,20 @@
-const { expect, sinon } = require('../shared/test-setup');
+/* eslint-disable max-len */
+const { expect } = require('../shared/test-setup');
 
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 const Basilisk = require('../monsters/basilisk');
 const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
-const pause = require('../helpers/pause');
 const TestCard = require('./test');
 const WeepingAngel = require('../monsters/weeping-angel');
 
 describe('./cards/cloak-of-invisibility.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const invisibility = new CloakOfInvisibilityCard();
 
 		expect(invisibility).to.be.an.instanceof(CloakOfInvisibilityCard);
 		expect(invisibility.icon).to.equal('☁️');
+		expect(invisibility.stats).to.equal(`You are invisible until you play a card that targets another player, or for the next 2 cards you play (whichever comes first).
+1d20 vs your int for opponent to see you on their turn (natural 20 removes your cloak).`);
 	});
 
 	it('can be drawn', () => {

@@ -1,7 +1,6 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const IocaneCard = require('./iocane');
-const pause = require('../helpers/pause');
 
 const HitCard = require('./hit');
 const HealCard = require('./heal');
@@ -9,28 +8,6 @@ const HealCard = require('./heal');
 const { BARD, CLERIC } = require('../helpers/classes');
 
 describe('./cards/iocane.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const iocane = new IocaneCard();
 		const hit = new HitCard({ damageDice: iocane.damageDice });

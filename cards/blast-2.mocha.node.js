@@ -1,32 +1,9 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const Basilisk = require('../monsters/basilisk');
 const Blast2Card = require('./blast-2');
-const pause = require('../helpers/pause');
 
 describe('./cards/blast-2.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const blast = new Blast2Card();
 
@@ -49,9 +26,9 @@ describe('./cards/blast-2.js', () => {
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 
@@ -77,14 +54,14 @@ describe('./cards/blast-2.js', () => {
 		const target2 = new Basilisk({ name: 'target2' });
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 }
 			]
 		};
 		const activeContestants = [
-			{ monster: player },
-			{ monster: target1 }
+			{ character: {}, monster: player },
+			{ character: {}, monster: target1 }
 		];
 
 		const playerStartingHp = player.hp;

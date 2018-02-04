@@ -63,8 +63,9 @@ class BaseItem extends BaseClass {
 		return !!this.constructor.usableWithoutMonster;
 	}
 
-	use ({ channel, character, monster }) {
-		return Promise.resolve()
+	use ({ channel, channelName, character, monster }) {
+		return Promise.resolve(channel)
+			.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
 			.then(() => {
 				if (!this.usableWithoutMonster && !monster) {
 					return Promise.reject(channel({
@@ -74,6 +75,7 @@ class BaseItem extends BaseClass {
 
 				this.emit('used', {
 					channel,
+					channelName,
 					character,
 					monster
 				});
@@ -83,18 +85,18 @@ class BaseItem extends BaseClass {
 				this.used += 1;
 
 				if (this.action) {
-					return this.action({ channel, character, monster });
+					return this.action({ channel, channelName, character, monster });
 				}
 
 				return this.used;
 			});
 	}
 
-	look (channel) {
+	look (channel, verbose) {
 		return Promise
 			.resolve()
 			.then(() => channel({
-				announce: itemCard(this)
+				announce: itemCard(this, verbose)
 			}));
 	}
 }

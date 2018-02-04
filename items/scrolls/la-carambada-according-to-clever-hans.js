@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 
 const LaCarambadaScroll = require('./la-carambada');
-const { TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS } = require('../../helpers/targeting-strategies');
+const { TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS, getStrategyDescription } = require('../../helpers/targeting-strategies');
 const { ALMOST_NOTHING } = require('../../helpers/costs');
 
 class LaCarambadaAccordingToCleverHansScroll extends LaCarambadaScroll {
@@ -20,9 +20,9 @@ class LaCarambadaAccordingToCleverHansScroll extends LaCarambadaScroll {
 LaCarambadaAccordingToCleverHansScroll.notForSale = true;
 LaCarambadaAccordingToCleverHansScroll.cost = ALMOST_NOTHING.cost;
 LaCarambadaAccordingToCleverHansScroll.itemType = 'The Ballad of La Carambada According to Clever Hans';
+LaCarambadaAccordingToCleverHansScroll.targetingStrategy = TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS;
 LaCarambadaAccordingToCleverHansScroll.description = `Junto a ellos, aterrorizó la comarca, aguardando el día de la venganza. Hizo fama por su diestro manejo de la pistola, del machete y, sobre todo, por su extraordinaria habilidad para cabalgar. En tiempos en que las mujeres acompañaban a sus hombres a un lado del caballo, ver a una mujer galopando era un acontecimiento mayor.
 
-Your mother told you to target whoever has the highest maximum hp in the ring even if they currently have less hp, and that's exactly what you'll do.`;
-LaCarambadaAccordingToCleverHansScroll.targetingStrategy = TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS;
+${getStrategyDescription(LaCarambadaAccordingToCleverHansScroll.targetingStrategy)}`;
 
 module.exports = LaCarambadaAccordingToCleverHansScroll;
