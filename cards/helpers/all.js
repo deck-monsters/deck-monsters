@@ -1,3 +1,4 @@
+const AdrenalineRushCard = require('../adrenaline-rush');
 const BadBatchCard = require('../bad-batch');
 const BasicShieldCard = require('../basic-shield');
 const BattleFocusCard = require('../battle-focus');
@@ -14,6 +15,7 @@ const CoilCard = require('../coil');
 const ConstrictCard = require('../constrict');
 const CurseCard = require('../curse');
 const DelayedHit = require('../delayed-hit');
+const EcdysisCard = require('../ecdysis');
 const EnchantedFaceswapCard = require('../enchanted-faceswap');
 const EnthrallCard = require('../enthrall');
 const EntranceCard = require('../entrance');
@@ -49,6 +51,7 @@ const WhiskeyShotCard = require('../whiskey-shot');
 const WoodenSpearCard = require('../wooden-spear');
 
 module.exports = [
+	AdrenalineRushCard,
 	BadBatchCard,
 	BasicShieldCard,
 	BattleFocusCard,
@@ -68,6 +71,7 @@ module.exports = [
 	EnchantedFaceswapCard,
 	EnthrallCard,
 	EntranceCard,
+	EcdysisCard,
 	FelineCompanionCard,
 	FightOrFlightCard,
 	FistsOfVillainyCard,
