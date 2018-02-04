@@ -11,10 +11,10 @@ const playerHandbook = require('./player-handbook');
 const writeToFile = (name, string, suffix = 'md') => fs.writeFileSync(`${name}.${suffix}`, string);
 
 Promise.resolve()
-	// .then(() => {
-	// 	fs.outputJsonSync('card-odds.json', getCardDPT());
-	// 	fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
-	// })
+	.then(() => {
+		fs.outputJsonSync('card-odds.json', getCardDPT());
+		fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
+	})
 	.then(() => {
 		const content = [];
 		return dungeonMasterGuide({ output: section => content.push(section) })
