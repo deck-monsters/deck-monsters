@@ -34,15 +34,15 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🐍  Hicl Tehtlar
+ 🐍  Ahonhe
 ----------------------------------
 
- A stocky, tan, forest-dwelling 
+ A slender, tan, forest-dwelling 
  basilisk with a nasty 
  disposition and the ability to 
  turn creatures to stone with his 
  gaze. In the forest he is king 
- and (weighing 320lbs) in the 
+ and (weighing 240lbs) in the 
  ring he is much to be feared. 
  See how he rears his head, and 
  rolls about his dreadful eyes, 
@@ -52,7 +52,7 @@ Here are some sample beginner level monsters:
  Type: Basilisk
  Class: Barbarian
  Level: beginner | XP: 1
- ac: 9 | hp: 30/30
+ ac: 8 | hp: 30/30
  dex: 4 | str: 7 | int: 6 
  -1 dex penalty 
  +2 str bonus 
@@ -67,20 +67,19 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 💪  Annithi Annithat To Cause 
- Pain
+ 💪  Rakharo Rakh Boy
 ----------------------------------
 
- A gigantic gladiator, dressed in 
- leather and hailing from a dusty 
- rural arena. Many years ago she 
- was captured, stripped of her 
- title and land, and forced to 
- compete in brutal matches for 
- the entertainment of a 
- blood-thirsty crowd. Standing 
- well over 8 feet tall, when you 
- see her you know instantly that 
+ A nimble gladiator, dressed in 
+ leather and hailing from an 
+ underground fight club. Many 
+ years ago he was captured, 
+ stripped of his title and land, 
+ and forced to compete in brutal 
+ matches for the entertainment of 
+ a blood-thirsty crowd. Standing 
+ just over 5 feet tall, when you 
+ see him you know instantly that 
  this is a warrior who has 
  witnessed the worst humankind 
  has to offer and has overcome.
@@ -88,7 +87,7 @@ Here are some sample beginner level monsters:
  Type: Gladiator
  Class: Fighter
  Level: beginner | XP: 1
- ac: 5 | hp: 35/35
+ ac: 6 | hp: 35/35
  dex: 6 | str: 6 | int: 5 
  +1 dex bonus 
  +1 str bonus
@@ -102,7 +101,7 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🕌  Hirla
+ 🕌  Sutrerli
 ----------------------------------
 
  A fiery red figure sulks in the 
@@ -118,7 +117,7 @@ Here are some sample beginner level monsters:
  Type: Jinn
  Class: Bard
  Level: beginner | XP: 1
- ac: 7 | hp: 31/31
+ ac: 8 | hp: 32/32
  dex: 6 | str: 5 | int: 6 
  +1 dex bonus 
  +1 int bonus
@@ -132,22 +131,21 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🐗  Kirgur Boulderfist
+ 🐗  Asetred Orcbane
 ----------------------------------
 
  A battle-hardened, angry red 
- minotaur with a mind-blowingly 
- intricate pattern shaved into 
- his thick fur. Make no mistake, 
- despite his awe-inspiring bulk 
- he is a first-class host who has 
- never been put to shame at a 
- dinner party.
+ minotaur with a crescent pattern 
+ shaved into her thick fur. Make 
+ no mistake, despite her fearsome 
+ bulk she is a first-class host 
+ who has never been put to shame 
+ at a dinner party.
 
  Type: Minotaur
  Class: Barbarian
  Level: beginner | XP: 1
- ac: 6 | hp: 34/34
+ ac: 5 | hp: 34/34
  dex: 6 | str: 7 | int: 4 
  +1 dex bonus 
  +2 str bonus 
@@ -162,21 +160,21 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🌟  Tartys
+ 🌟  Naomi
 ----------------------------------
 
  A stone gray weeping angel. On 
  meeting her one might form the 
  following three impressions: 
- that she was Scottish, that she 
+ that she was English, that she 
  was intelligent, and that she 
- was frutier than a treeful of 
+ was nuttier than a treeful of 
  monkeys on nitrous oxide.
 
  Type: Weeping Angel
  Class: Cleric
  Level: beginner | XP: 1
- ac: 6 | hp: 33/33
+ ac: 7 | hp: 34/34
  dex: 6 | str: 4 | int: 7 
  +1 dex bonus 
  -1 str penalty 
