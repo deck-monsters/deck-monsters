@@ -18,6 +18,7 @@ class ConstrictCard extends CoilCard {
 
 ConstrictCard.cardType = 'Constrict';
 ConstrictCard.actions = { IMMOBILIZE: 'constrict', IMMOBILIZES: 'constricts', IMMOBILIZED: 'constricted' };
+ConstrictCard.description = 'Coil around your enemies with your body, and squeeze like you mean it.';
 ConstrictCard.probability = VERY_RARE.probability;
 ConstrictCard.level = 1;
 ConstrictCard.cost = PRICEY.cost;

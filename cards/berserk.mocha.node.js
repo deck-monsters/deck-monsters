@@ -21,7 +21,7 @@ describe('./cards/berserk.js', () => {
 		expect(berserk).to.be.an.instanceof(BerserkCard);
 		expect(berserk.bigFirstHit).to.be.false;
 		expect(berserk.damageAmount).to.equal(1);
-		expect(berserk.stats).to.equal('Hit: 1d20 + attack bonus vs ac on first hit\nthen also + spell bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');
+		expect(berserk.stats).to.equal('Hit: 1d20 + str bonus vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n1 damage per hit.\n\nStroke of luck increases damage per hit by 1.');
 	});
 
 	it('can be instantiated with options', () => {

@@ -45,7 +45,7 @@ class HornSwipeCard extends LuckyStrikeCard {
 
 HornSwipeCard.cardType = 'Horn Swipe';
 HornSwipeCard.permittedClassesAndTypes = [MINOTAUR];
-HornSwipeCard.description = 'Swing your horns at your opponent. If they block the first, maybe you\'ll power through and hit with the second out of sheer brute force.';
+HornSwipeCard.description = 'Swing your horns at your opponent.';
 HornSwipeCard.defaults = {
 	...LuckyStrikeCard.defaults,
 	targetProp: 'str'

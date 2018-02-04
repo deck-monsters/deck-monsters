@@ -1,27 +1,25 @@
 /* eslint-disable max-len */
-const Promise = require('bluebird');
+const generateDocs = require('./helpers/generate-docs');
 
-const playerHandbook = channel => Promise
-	.resolve()
-	.then(() => channel({
-		announce: `
+const generatePlayerHandbook = (output) => {
+	const contents = `
 \`\`\`
-	 ____    ___
-	/\\  _\`\\ /\\_ \\
-	\\ \\ \\L\\ \\//\\ \\      __     __  __     __   _ __
-	 \\ \\ ,__/ \\ \\ \\   /'__\`\\  /\\ \\/\\ \\  /'__\`\\/\\\`'__\\
-	  \\ \\ \\/   \\_\\ \\_/\\ \\L\\.\\_\\ \\ \\_\\ \\/\\  __/\\ \\ \\/
-	   \\ \\_\\   /\\____\\ \\__/.\\_\\\\/\`____ \\ \\____\\\\ \\_\\
-	    \\/_/   \\/____/\\/__/\\/_/ \`/___/> \\/____/ \\/_/
-	                               /\\___/
-	                               \\/__/
-	 __  __                       __  __                      __
-	/\\ \\/\\ \\                     /\\ \\/\\ \\                    /\\ \\
-	\\ \\ \\_\\ \\     __      ___    \\_\\ \\ \\ \\____    ___     ___\\ \\ \\/'\\
-	 \\ \\  _  \\  /'__\`\\  /' _ \`\\  /'_\` \\ \\ '__\`\\  / __\`\\  / __\`\\ \\ , <
-	  \\ \\ \\ \\ \\/\\ \\L\\.\\_/\\ \\/\\ \\/\\ \\L\\ \\ \\ \\L\\ \\/\\ \\L\\ \\/\\ \\L\\ \\ \\ \\\\\`\\
-	   \\ \\_\\ \\_\\ \\__/.\\_\\ \\_\\ \\_\\ \\___,_\\ \\_,__/\\ \\____/\\ \\____/\\ \\_\\ \\_\\
-	    \\/_/\\/_/\\/__/\\/_/\\/_/\\/_/\\/__,_ /\\/___/  \\/___/  \\/___/  \\/_/\\/_/
+     ____    ___
+    /\\  _\`\\ /\\_ \\
+    \\ \\ \\L\\ \\//\\ \\      __     __  __     __   _ __
+     \\ \\ ,__/ \\ \\ \\   /'__\`\\  /\\ \\/\\ \\  /'__\`\\/\\\`'__\\
+      \\ \\ \\/   \\_\\ \\_/\\ \\L\\.\\_\\ \\ \\_\\ \\/\\  __/\\ \\ \\/
+       \\ \\_\\   /\\____\\ \\__/.\\_\\\\/\`____ \\ \\____\\\\ \\_\\
+        \\/_/   \\/____/\\/__/\\/_/ \`/___/> \\/____/ \\/_/
+                                   /\\___/
+                                   \\/__/
+     __  __                       __  __                      __
+    /\\ \\/\\ \\                     /\\ \\/\\ \\                    /\\ \\
+    \\ \\ \\_\\ \\     __      ___    \\_\\ \\ \\ \\____    ___     ___\\ \\ \\/'\\
+     \\ \\  _  \\  /'__\`\\  /' _ \`\\  /'_\` \\ \\ '__\`\\  / __\`\\  / __\`\\ \\ , <
+      \\ \\ \\ \\ \\/\\ \\L\\.\\_/\\ \\/\\ \\/\\ \\L\\ \\ \\ \\L\\ \\/\\ \\L\\ \\/\\ \\L\\ \\ \\ \\\\\`\\
+       \\ \\_\\ \\_\\ \\__/.\\_\\ \\_\\ \\_\\ \\___,_\\ \\_,__/\\ \\____/\\ \\____/\\ \\_\\ \\_\\
+        \\/_/\\/_/\\/__/\\/_/\\/_/\\/_/\\/__,_ /\\/___/  \\/___/  \\/___/  \\/_/\\/_/
 
 
 
@@ -33,9 +31,9 @@ const playerHandbook = channel => Promise
 
     Choose your cards wisely, good luck, and have fun!
 
-    Commands:
+    # Commands:
 
-    *Monsters*
+    ## Monsters
 
     \`spawn monster\` - Spawns a new monster
 
@@ -45,11 +43,11 @@ const playerHandbook = channel => Promise
 
     \`look at monsters\` - Looks at your monsters
 
-	\`look at monsters in detail\` - Looks at your monsters with their description
+    \`look at monsters in detail\` - Looks at your monsters with their description
 
     \`look at [monster name]\` - Look at specified monster (yours or another player's)
 
-    *The Ring*
+    ## The Ring
 
     The glorious crucible of your monster's destiny.
 
@@ -61,13 +59,13 @@ const playerHandbook = channel => Promise
 
     \`look at the ring\` - Take a peak at the ring to see which monsters are there and who sent them
 
-    *Cards*
+    ## Cards
 
     \`look at cards\` - Look at your cards
 
     \`look at [card name]\` - Look at specified card
 
-    *Items*
+    ## Items
 
     You can hold up to 3 items + 3 per monster under your care. In addition, your monsters can each hold 3 items. Items can be used on yourself or your monsters between battles, but a monster can only use an item during battle that you gave them ahead of time.
 
@@ -87,7 +85,7 @@ const playerHandbook = channel => Promise
 
     \`use item on monster\` - Use one of your items on yourself
 
-    *The Shop*
+    ## The Shop
 
     Every 8 hours the current merchant will pack up and leave and a new merchant will come to town for you to do business with.
 
@@ -97,8 +95,44 @@ const playerHandbook = channel => Promise
 
     \`sell to the shop\` - Lets you sell items to the shop
 
+
+    # Basic Build Strategies
+
+    Here are some examples of basic build strategies by class and level. When you are hidden, playing a card that affects other players will reveal you to them, so that's a great time to play your Delayed Hit, stat boost, or healing cards. Another opportune time to play non-damaging cards is while your opponent is immobilized since they can't attack you between your card plays if they don't break free.
+
+    ## Minotaur Level 1
+
+    \`equip [monster] with "Horn Gore", "Delayed Hit", "Delayed Hit", "Heal", "Hit", "Hit", "Hit", "Hit", "Heal"\`
+
+    ## Gladiator Level 1
+
+    \`equip [monster] with "Soften", "Forked Stick", "Battle Focus", "Camouflage Vest", "Heal", "Delayed Hit", "Delayed Hit", "Forked Stick", "Survival Knife", "Wooden Spear"\`
+
+    ## Jinn Level 2
+
+    \`equip [monster] with "Sandstorm", "Enchanted Faceswap", "Lucky Strike", "Forked Stick", "Soften", "Delayed Hit", "Forked Stick", "Delayed Hit", "Heal"\`
+
+    ## Basilisk Level 3
+
+    \`equip [monster] with "Constrict", "Thick Skin", "Delayed Hit", "Coil", "Whiskey Shot", "Delayed Hit", "Berserk", "Hit Harder", "Hit"\`
+
+    ## Weeping Angel Level 4
+
+    \`equip [monster] with "Blink", "Delayed Hit", "Delayed Hit", "Mesmerize", "Scotch", "Blast", "Blast", "Pick Pocket", "Random Play"\`
+
+    ## Minotaur Level 5
+
+    \`equip [monster] with "Camouflage Vest", "Delayed Hit", "Delayed Hit", "Soften", "Forked Metal Rod", "Horn Gore", "Turkey Thigh", "Hit Harder", "Berserk"\`
+
+    ## Gladiator Level 6
+
+    \`equip [monster] with "Camouflage Vest", "Basic Shield", "Delayed Hit", "Forked Metal Rod", "Camouflage Vest", "Scotch", "Delayed Hit", "Lucky Strike", "Battle Focus"\`
 \`\`\`
-`
-	}));
+`;
+
+	return output(contents, true);
+};
+
+const playerHandbook = ({ channel, output }) => generateDocs({ channel, generate: generatePlayerHandbook, output });
 
 module.exports = playerHandbook;

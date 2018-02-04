@@ -18,7 +18,6 @@ class LuckyStrike extends HitCard {
 
 	get stats () {
 		return `${super.stats}
-
 Roll twice for hit. Use the best roll.`;
 	}
 
@@ -94,7 +93,7 @@ Roll twice for hit. Use the best roll.`;
 LuckyStrike.cardType = 'Lucky Strike';
 LuckyStrike.permittedClassesAndTypes = [BARD, CLERIC, FIGHTER];
 LuckyStrike.probability = RARE.probability;
-LuckyStrike.description = 'A man in a jester\'s hat smiles at you from the crowd. You feel... Lucky for some reason. Or perhaps feel the _unluckyness_ of your opponent...';
+LuckyStrike.description = 'A man in a jester\'s hat smiles at you from the crowd. You feel... Lucky for some reason. Or perhaps feel the unluckiness of your opponent...';
 LuckyStrike.level = 2;
 LuckyStrike.cost = REASONABLE.cost;
 LuckyStrike.notForSale = true;

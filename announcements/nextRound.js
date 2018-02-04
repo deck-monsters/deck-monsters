@@ -2,9 +2,10 @@ const announceNextRound = (publicChannel, channelManager, className, ring, { rou
 	publicChannel({
 		announce:
 `
-🏁       round ${round} complete
+⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅
 
-###########################################`
+🏁       round ${round + 1}
+`
 	});
 };
 
