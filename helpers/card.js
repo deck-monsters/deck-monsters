@@ -34,21 +34,6 @@ ${wrap(rankings, { indent: ' ', width: 32 })}`
 `
 );
 
-// const formatCard = ({
-// 	title, description, stats, rankings
-// }) => (
-// `\`\`\`
-//  ${title}
-
-//  ${description}
-
-//  ${stats}
-
-//  ${rankings}
-// \`\`\`
-// `
-// );
-
 const itemRarity = item => findProbabilityMatch(item.probability || 0).icon;
 
 const getItemRequirements = (item) => {
