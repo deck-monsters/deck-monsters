@@ -6,6 +6,7 @@
 				| :\/: || :\/: || ()() || (__) || :\/: |
 				| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
 				`------'`------'`------'`------'`------'
+```
 
 *The Card Catalogue:*
 
@@ -60,7 +61,6 @@ Turkey Thigh
 Vengeful Rampage
 Whiskey Shot
 Wooden Spear
-```
 
 
 ```
@@ -722,7 +722,7 @@ Wooden Spear
 ==================================
 ```
 
-```
+
 *The Item Catalogue:*
 
 Chocolate Bar
@@ -744,7 +744,7 @@ The Annals of Qin Shi Huang
 The Tale of Sir Robin According to Clever Hans
 The Tale of Sir Robin
 Sorting Hat
-```
+
 
 ```
 ==================================

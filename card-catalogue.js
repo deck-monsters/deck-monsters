@@ -19,21 +19,21 @@ const generatecardCatalogue = (output) => {
 				| :\\/: || :\\/: || ()() || (__) || :\\/: |
 				| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
 				\`------'\`------'\`------'\`------'\`------'
+\`\`\`
 
 *The Card Catalogue:*
 
 ${cardList.join('\n')}
-\`\`\`
 `;
 
 	return Promise.resolve()
 		.then(() => output(header))
 		.then(() => Promise.each(allCards, Card => output(actionCard(new Card(), false))))
-		.then(() => output(`\`\`\`
+		.then(() => output(`
 *The Item Catalogue:*
 
 ${itemList.join('\n')}
-\`\`\``))
+`))
 		.then(() => Promise.each(allItems, Item => output(itemCard(new Item(), false))));
 };
 

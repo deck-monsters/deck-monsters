@@ -11,8 +11,8 @@ const writeMarkdown = (name, string) => fs.writeFileSync(`${name.toUpperCase()}.
 
 Promise.resolve()
 	.then(() => {
-		fs.outputJsonSync('card-odds.json', getCardDPT());
-		fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
+		// fs.outputJsonSync('card-odds.json', getCardDPT());
+		// fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
 	})
 	.then(() => {
 		const content = [];
