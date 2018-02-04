@@ -1,27 +1,25 @@
 /* eslint-disable max-len */
-const Promise = require('bluebird');
+const generateDocs = require('./helpers/generate-docs');
 
-const playerHandbook = channel => Promise
-	.resolve()
-	.then(() => channel({
-		announce: `
+const generatePlayerHandbook = (output) => {
+	const contents = `
 \`\`\`
-	 ____    ___
-	/\\  _\`\\ /\\_ \\
-	\\ \\ \\L\\ \\//\\ \\      __     __  __     __   _ __
-	 \\ \\ ,__/ \\ \\ \\   /'__\`\\  /\\ \\/\\ \\  /'__\`\\/\\\`'__\\
-	  \\ \\ \\/   \\_\\ \\_/\\ \\L\\.\\_\\ \\ \\_\\ \\/\\  __/\\ \\ \\/
-	   \\ \\_\\   /\\____\\ \\__/.\\_\\\\/\`____ \\ \\____\\\\ \\_\\
-	    \\/_/   \\/____/\\/__/\\/_/ \`/___/> \\/____/ \\/_/
-	                               /\\___/
-	                               \\/__/
-	 __  __                       __  __                      __
-	/\\ \\/\\ \\                     /\\ \\/\\ \\                    /\\ \\
-	\\ \\ \\_\\ \\     __      ___    \\_\\ \\ \\ \\____    ___     ___\\ \\ \\/'\\
-	 \\ \\  _  \\  /'__\`\\  /' _ \`\\  /'_\` \\ \\ '__\`\\  / __\`\\  / __\`\\ \\ , <
-	  \\ \\ \\ \\ \\/\\ \\L\\.\\_/\\ \\/\\ \\/\\ \\L\\ \\ \\ \\L\\ \\/\\ \\L\\ \\/\\ \\L\\ \\ \\ \\\\\`\\
-	   \\ \\_\\ \\_\\ \\__/.\\_\\ \\_\\ \\_\\ \\___,_\\ \\_,__/\\ \\____/\\ \\____/\\ \\_\\ \\_\\
-	    \\/_/\\/_/\\/__/\\/_/\\/_/\\/_/\\/__,_ /\\/___/  \\/___/  \\/___/  \\/_/\\/_/
+     ____    ___
+    /\\  _\`\\ /\\_ \\
+    \\ \\ \\L\\ \\//\\ \\      __     __  __     __   _ __
+     \\ \\ ,__/ \\ \\ \\   /'__\`\\  /\\ \\/\\ \\  /'__\`\\/\\\`'__\\
+      \\ \\ \\/   \\_\\ \\_/\\ \\L\\.\\_\\ \\ \\_\\ \\/\\  __/\\ \\ \\/
+       \\ \\_\\   /\\____\\ \\__/.\\_\\\\/\`____ \\ \\____\\\\ \\_\\
+        \\/_/   \\/____/\\/__/\\/_/ \`/___/> \\/____/ \\/_/
+                                   /\\___/
+                                   \\/__/
+     __  __                       __  __                      __
+    /\\ \\/\\ \\                     /\\ \\/\\ \\                    /\\ \\
+    \\ \\ \\_\\ \\     __      ___    \\_\\ \\ \\ \\____    ___     ___\\ \\ \\/'\\
+     \\ \\  _  \\  /'__\`\\  /' _ \`\\  /'_\` \\ \\ '__\`\\  / __\`\\  / __\`\\ \\ , <
+      \\ \\ \\ \\ \\/\\ \\L\\.\\_/\\ \\/\\ \\/\\ \\L\\ \\ \\ \\L\\ \\/\\ \\L\\ \\/\\ \\L\\ \\ \\ \\\\\`\\
+       \\ \\_\\ \\_\\ \\__/.\\_\\ \\_\\ \\_\\ \\___,_\\ \\_,__/\\ \\____/\\ \\____/\\ \\_\\ \\_\\
+        \\/_/\\/_/\\/__/\\/_/\\/_/\\/_/\\/__,_ /\\/___/  \\/___/  \\/___/  \\/_/\\/_/
 
 
 
@@ -45,7 +43,7 @@ const playerHandbook = channel => Promise
 
     \`look at monsters\` - Looks at your monsters
 
-	\`look at monsters in detail\` - Looks at your monsters with their description
+    \`look at monsters in detail\` - Looks at your monsters with their description
 
     \`look at [monster name]\` - Look at specified monster (yours or another player's)
 
@@ -104,33 +102,37 @@ const playerHandbook = channel => Promise
 
     ## Minotaur Level 1
 
-    `equip [monster] with "Horn Gore", "Delayed Hit", "Delayed Hit", "Heal", "Hit", "Hit", "Hit", "Hit", "Heal"`
+    \`equip [monster] with "Horn Gore", "Delayed Hit", "Delayed Hit", "Heal", "Hit", "Hit", "Hit", "Hit", "Heal"\`
 
     ## Gladiator Level 1
 
-   `equip [monster] with "Soften", "Forked Stick", "Battle Focus", "Camouflage Vest", "Heal", "Delayed Hit", "Delayed Hit", "Forked Stick", "Survival Knife", "Wooden Spear"`
+    \`equip [monster] with "Soften", "Forked Stick", "Battle Focus", "Camouflage Vest", "Heal", "Delayed Hit", "Delayed Hit", "Forked Stick", "Survival Knife", "Wooden Spear"\`
 
     ## Jinn Level 2
 
-    `equip [monster] with "Sandstorm", "Enchanted Faceswap", "Lucky Strike", "Forked Stick", "Soften", "Delayed Hit", "Forked Stick", "Delayed Hit", "Heal"`
+    \`equip [monster] with "Sandstorm", "Enchanted Faceswap", "Lucky Strike", "Forked Stick", "Soften", "Delayed Hit", "Forked Stick", "Delayed Hit", "Heal"\`
 
     ## Basilisk Level 3
 
-    `equip [monster] with "Constrict", "Thick Skin", "Delayed Hit", "Coil", "Whiskey Shot", "Delayed Hit", "Berserk", "Hit Harder", "Hit"`
+    \`equip [monster] with "Constrict", "Thick Skin", "Delayed Hit", "Coil", "Whiskey Shot", "Delayed Hit", "Berserk", "Hit Harder", "Hit"\`
 
     ## Weeping Angel Level 4
 
-    `equip [monster] with "Blink", "Delayed Hit", "Delayed Hit", "Mesmerize", "Scotch", "Blast", "Blast", "Pick Pocket", "Random Play"`
+    \`equip [monster] with "Blink", "Delayed Hit", "Delayed Hit", "Mesmerize", "Scotch", "Blast", "Blast", "Pick Pocket", "Random Play"\`
 
     ## Minotaur Level 5
 
-    `equip [monster] with "Camouflage Vest", "Delayed Hit", "Delayed Hit", "Soften", "Forked Metal Rod", "Horn Gore", "Turkey Thigh", "Hit Harder", "Berserk"`
+    \`equip [monster] with "Camouflage Vest", "Delayed Hit", "Delayed Hit", "Soften", "Forked Metal Rod", "Horn Gore", "Turkey Thigh", "Hit Harder", "Berserk"\`
 
     ## Gladiator Level 6
 
-    `equip [monster] with "Camouflage Vest", "Basic Shield", "Delayed Hit", "Forked Metal Rod", "Camouflage Vest", "Scotch", "Delayed Hit", "Lucky Strike", "Battle Focus"`
+    \`equip [monster] with "Camouflage Vest", "Basic Shield", "Delayed Hit", "Forked Metal Rod", "Camouflage Vest", "Scotch", "Delayed Hit", "Lucky Strike", "Battle Focus"\`
 \`\`\`
-`
-	}));
+`;
+
+	return output(contents, true);
+};
+
+const playerHandbook = ({ channel, output }) => generateDocs({ channel, generate: generatePlayerHandbook, output });
 
 module.exports = playerHandbook;

@@ -5,6 +5,7 @@ const dungeonMasterGuide = require('./dungeon-master-guide');
 const getCardDPT = require('./helpers/card-odds');
 const getCardProbabilities = require('./helpers/card-probabilities');
 const monsterManual = require('./monster-manual');
+const playerHandbook = require('./player-handbook');
 
 const writeMarkdown = (name, string) => fs.writeFileSync(`${name.toUpperCase()}.md`, string);
 
@@ -27,6 +28,11 @@ Promise.resolve()
 		const content = [];
 		return monsterManual({ output: section => content.push(section) })
 			.then(() => writeMarkdown('MONSTERS', content.join('\n')));
+	})
+	.then(() => {
+		const content = [];
+		return playerHandbook({ output: section => content.push(section) })
+			.then(() => writeMarkdown('PLAYER_HANDBOOK', content.join('\n')));
 	})
 	.then(() => {
 		process.exit(0);
