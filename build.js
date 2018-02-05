@@ -12,8 +12,13 @@ const writeToFile = (name, string, suffix = 'md') => fs.writeFileSync(`${name}.$
 
 Promise.resolve()
 	.then(() => {
-		// fs.outputJsonSync('card-odds.json', getCardDPT());
-		// fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
+		if (process.argv[2] === '--calculate-stats') {
+			console.log('calculating card stats, this will take some time...');
+			fs.outputJsonSync('card-odds.json', getCardDPT());
+			fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
+		} else {
+			console.log('skipping stats calculation. Pass --calculate-stats to re-calculate card stats');
+		}
 	})
 	.then(() => {
 		const content = [];
