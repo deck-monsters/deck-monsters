@@ -1,5 +1,8 @@
 const { expect } = require('../shared/test-setup');
 
+const { COMMON } = require('../helpers/probabilities');
+const { BASILISK } = require('../helpers/creature-types');
+const { REASONABLE } = require('../helpers/costs');
 const EcdysisCard = require('./ecdysis');
 const Basilisk = require('../monsters/basilisk');
 
@@ -16,12 +19,17 @@ describe('./cards/ecdysis.js', () => {
 		const stats = 'Boost: dex +1\rBoost: str +1';
 
 		expect(ecdysisCard).to.be.an.instanceof(EcdysisCard);
+		expect(ecdysisCard.cardType).to.equal('Ecdysis');
+		expect(ecdysisCard.description).to.equal('Evolve into your more perfect form.');
 		expect(ecdysisCard.icon).to.equal('📶');
 		expect(ecdysisCard.boosts).to.deep.equal([
 			{ prop: 'dex', amount: 1 },
 			{ prop: 'str', amount: 1 }
 		]);
 		expect(ecdysisCard.stats).to.equal(stats);
+		expect(ecdysisCard.cost).to.equal(REASONABLE.cost);
+		expect(ecdysisCard.permittedClassesAndTypes).to.deep.equal([BASILISK]);
+		expect(ecdysisCard.probability).to.equal(COMMON.probability);
 	});
 
 	it('can be instantiated with options', () => {

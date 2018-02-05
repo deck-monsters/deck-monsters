@@ -65,7 +65,7 @@ Wooden Spear
 
 ```
 ==================================
- ❗️  Adrenaline Rush  ✪
+ ❗️  Adrenaline Rush  ○
 ----------------------------------
 
  Life or Death brings about a 
@@ -329,11 +329,11 @@ Wooden Spear
 
 ```
 ==================================
- 📶  Ecdysis  ✪
+ 📶  Ecdysis  ○
 ----------------------------------
 
  Evolve into your more perfect 
- form
+ form.
 
 ==================================
 ```
