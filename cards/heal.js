@@ -26,7 +26,7 @@ class HealCard extends BaseCard {
 
 	get stats () {
 		return `Health: ${this.healthDice}
-+ spell bonus (diminished by 1 each use until 0, then resets)
++ int bonus (diminished by 1 each use until 0, then resets)
 
 1% chance to heal half max hp
 1% chance to poison`;

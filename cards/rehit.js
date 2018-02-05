@@ -22,6 +22,11 @@ class Rehit extends HitCard {
 		super({ icon, ...rest });
 	}
 
+	get stats () {
+		return `${super.stats}
+Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.`;
+	}
+
 	hitCheck (player, target) {
 		let attackRoll = roll({ primaryDice: this.attackDice, modifier: player.dexModifier, bonusDice: player.bonusAttackDice, crit: true });
 		let commentary = `Originally rolled ${attackRoll.naturalRoll.result}`;
@@ -71,7 +76,7 @@ class Rehit extends HitCard {
 Rehit.cardType = 'Rehit';
 Rehit.permittedClassesAndTypes = [CLERIC, FIGHTER];
 Rehit.probability = UNCOMMON.probability;
-Rehit.description = 'Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.';
+Rehit.description = 'At the last moment you realize your trajectory is off and quickly attempt to correct your aim.';
 Rehit.level = 2;
 Rehit.cost = VERY_CHEAP.cost;
 

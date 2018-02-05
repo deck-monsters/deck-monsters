@@ -17,6 +17,11 @@ class HitHarder extends HitCard {
 		super({ damageDice, icon, ...rest });
 	}
 
+	get stats () {
+		return `${super.stats}
+Roll for damage twice, and use the best result.`;
+	}
+
 	getDamageRoll (player) {
 		const damageRoll1 = roll({ primaryDice: this.damageDice, modifier: player.strModifier, bonusDice: player.bonusAttackDice });
 		const damageRoll2 = roll({ primaryDice: this.damageDice, modifier: player.strModifier, bonusDice: player.bonusAttackDice });
@@ -64,7 +69,7 @@ class HitHarder extends HitCard {
 HitHarder.cardType = 'Hit Harder';
 HitHarder.permittedClassesAndTypes = [BARBARIAN, FIGHTER];
 HitHarder.probability = COMMON.probability;
-HitHarder.description = 'You hit just a little bit harder than the average bear... Roll for damage twice, and use the best result.';
+HitHarder.description = 'You hit just a little bit harder than the average bear...';
 HitHarder.level = 2;
 HitHarder.cost = EXPENSIVE.cost;
 

@@ -14,8 +14,8 @@ describe('./cards/horn-swipe.js', () => {
 		expect(hornSwipe).to.be.an.instanceof(HornSwipe);
 		expect(hornSwipe.targetProp).to.equal('str');
 		expect(hornSwipe.damageDice).to.equal('1d6');
-		expect(hornSwipe.description).to.equal('Swing your horns at your opponent. If they block the first, maybe you\'ll power through and hit with the second out of sheer brute force.');
-		expect(hornSwipe.stats).to.equal('Hit: 1d20 vs str / Damage: 1d6\n\nRoll twice for hit. Use the best roll.');
+		expect(hornSwipe.description).to.equal('Swing your horns at your opponent.');
+		expect(hornSwipe.stats).to.equal('Hit: 1d20 vs str / Damage: 1d6\nRoll twice for hit. Use the best roll.');
 	});
 
 	it('can be instantiated with options', () => {
