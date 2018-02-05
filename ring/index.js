@@ -181,7 +181,7 @@ class Ring extends BaseClass {
 
 		if (length < 1) {
 			return Promise.reject(channel({
-				announce: 'The ring is empty',
+				announce: 'The ring is empty.',
 				delay: 'short'
 			}));
 		}
@@ -197,8 +197,6 @@ There ${length === 1 ? 'is one contestant' : `are ${length} contestants`} in the
 				channelName
 			}))
 			.then(() => Promise.each(this.contestants, (contestant) => {
-				const monsterDisplay = monsterCard(contestant.monster, true);
-
 				let characterDisplay = '';
 				if (showCharacters) {
 					characterDisplay = `${monsterCard(contestant.character, true)}
@@ -206,6 +204,8 @@ Sent the following monster into the ring:
 
 `;
 				}
+
+				const monsterDisplay = monsterCard(contestant.monster, !showCharacters);
 
 				return channelManager.queueMessage({
 					announce:
@@ -222,7 +222,14 @@ Sent the following monster into the ring:
 
 		if (length < 1) {
 			return Promise.reject(channel({
-				announce: 'The ring is empty',
+				announce: 'The ring is empty.',
+				delay: 'short'
+			}));
+		}
+
+		if (!this.inEncounter) {
+			return Promise.reject(channel({
+				announce: 'Wait until the encounter has started.',
 				delay: 'short'
 			}));
 		}
@@ -267,7 +274,15 @@ The following cards are in play:
 
 		this.inEncounter = true;
 		this.encounter = {};
-		this.contestants.forEach(contestant => contestant.monster.startEncounter(this));
+		this.contestants.forEach(({ channel, channelName, monster }) => {
+			monster.startEncounter(this);
+
+			this.channelManager.queueMessage({
+				announce: 'The fight has begun! You may now type `look at monsters in the ring` to see all participants with their current stats, and `look at cards in the ring` to see the detailed stats of every card that will be in play.',
+				channel,
+				channelName
+			});
+		});
 
 		return true;
 	}
