@@ -1,10 +1,7 @@
 const { expect } = require('../shared/test-setup');
 
-const { COMMON } = require('../helpers/probabilities');
 const { BARBARIAN, FIGHTER } = require('../helpers/classes');
-const { REASONABLE } = require('../helpers/costs');
 const AdrenalineRushCard = require('./adrenaline-rush');
-const Gladiator = require('../monsters/gladiator');
 
 describe('./cards/adrenaline-rush.js', () => {
 	it('can be instantiated with defaults', () => {
