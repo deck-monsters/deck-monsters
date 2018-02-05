@@ -1,38 +1,49 @@
 const fs = require('fs-extra');
 
 const cardCatalogue = require('./card-catalogue');
+const cardCatalogueAsHTML = require('./card-catalogue-as-html');
 const dungeonMasterGuide = require('./dungeon-master-guide');
 const getCardDPT = require('./helpers/card-odds');
 const getCardProbabilities = require('./helpers/card-probabilities');
 const monsterManual = require('./monster-manual');
 const playerHandbook = require('./player-handbook');
 
-const writeMarkdown = (name, string) => fs.writeFileSync(`${name.toUpperCase()}.md`, string);
+const writeToFile = (name, string, suffix = 'md') => fs.writeFileSync(`${name}.${suffix}`, string);
 
 Promise.resolve()
 	.then(() => {
-		fs.outputJsonSync('card-odds.json', getCardDPT());
-		fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
+		if (process.argv[2] === '--calculate-stats') {
+			console.log('calculating card stats, this will take some time...');
+			fs.outputJsonSync('card-odds.json', getCardDPT());
+			fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
+		} else {
+			console.log('skipping stats calculation. Pass --calculate-stats to re-calculate card stats');
+		}
 	})
 	.then(() => {
 		const content = [];
 		return dungeonMasterGuide({ output: section => content.push(section) })
-			.then(() => writeMarkdown('DMG', content.join('\n')));
+			.then(() => writeToFile('DMG', content.join('\n')));
 	})
 	.then(() => {
 		const content = [];
 		return cardCatalogue({ output: section => content.push(section) })
-			.then(() => writeMarkdown('CARDS', content.join('\n')));
+			.then(() => writeToFile('CARDS', content.join('\n')));
 	})
 	.then(() => {
 		const content = [];
 		return monsterManual({ output: section => content.push(section) })
-			.then(() => writeMarkdown('MONSTERS', content.join('\n')));
+			.then(() => writeToFile('MONSTERS', content.join('\n')));
 	})
 	.then(() => {
 		const content = [];
 		return playerHandbook({ output: section => content.push(section) })
-			.then(() => writeMarkdown('PLAYER_HANDBOOK', content.join('\n')));
+			.then(() => writeToFile('PLAYER_HANDBOOK', content.join('\n')));
+	})
+	.then(() => {
+		const content = [];
+		return cardCatalogueAsHTML({ output: section => content.push(section) })
+			.then(() => writeToFile('cards', content.join('\n'), 'html'));
 	})
 	.then(() => {
 		process.exit(0);
