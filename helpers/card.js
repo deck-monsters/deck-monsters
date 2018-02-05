@@ -5,6 +5,32 @@ const { findProbabilityMatch } = require('./probabilities');
 
 const odds = require('../card-odds.json');
 
+const itemRarity = item => findProbabilityMatch(item.probability || 0).icon;
+
+const getItemRequirements = (item) => {
+	const requirements = [
+		`Level: ${item.level ? item.level : 'Beginner'}`,
+		`Usable by: ${item.permittedClassesAndTypes ? item.permittedClassesAndTypes.join(', ') : 'All'}`
+	];
+
+	const cardOdds = odds[0][item.name];
+	if (cardOdds) {
+		if (cardOdds.hitChance) {
+			requirements.push(`Hit chance: ${cardOdds.hitChance}% | DPT: ${cardOdds.dpt}`);
+		}
+		if (cardOdds.healChance) {
+			requirements.push(`Heal chance: ${cardOdds.healChance}% | HPT: ${cardOdds.hpt}`);
+		}
+		if (cardOdds.effectChance) {
+			requirements.push(`Effect chance: ${cardOdds.effectChance}%`);
+		}
+	}
+
+	requirements.push(`MSRP: ${item.cost ? item.cost : 'free'}`);
+
+	return requirements;
+};
+
 const formatCard = ({
 	title, description, stats, rankings, verbose
 }) => (
@@ -48,32 +74,6 @@ const formatCardAsHTML = card => (`
 		<footer></footer>
 	</article>
 `);
-
-const itemRarity = item => findProbabilityMatch(item.probability || 0).icon;
-
-const getItemRequirements = (item) => {
-	const requirements = [
-		`Level: ${item.level ? item.level : 'Beginner'}`,
-		`Usable by: ${item.permittedClassesAndTypes ? item.permittedClassesAndTypes.join(', ') : 'All'}`
-	];
-
-	const cardOdds = odds[0][item.name];
-	if (cardOdds) {
-		if (cardOdds.hitChance) {
-			requirements.push(`Hit chance: ${cardOdds.hitChance}% | DPT: ${cardOdds.dpt}`);
-		}
-		if (cardOdds.healChance) {
-			requirements.push(`Heal chance: ${cardOdds.healChance}% | HPT: ${cardOdds.hpt}`);
-		}
-		if (cardOdds.effectChance) {
-			requirements.push(`Effect chance: ${cardOdds.effectChance}%`);
-		}
-	}
-
-	requirements.push(`MSRP: ${item.cost ? item.cost : 'free'}`);
-
-	return requirements;
-};
 
 const itemCard = (item, verbose = false) => formatCard({
 	title: `${item.icon}  ${item.itemType}  ${itemRarity(item)}`,

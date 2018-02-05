@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 const fs = require('fs-extra');
 
 const cardCatalogue = require('./card-catalogue');
@@ -13,11 +15,11 @@ const writeToFile = (name, string, suffix = 'md') => fs.writeFileSync(`${name}.$
 Promise.resolve()
 	.then(() => {
 		if (process.argv[2] === '--calculate-stats') {
-			console.log('calculating card stats, this will take some time...');
+			console.log('Calculating card stats, this will take some time...');
 			fs.outputJsonSync('card-odds.json', getCardDPT());
 			fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
 		} else {
-			console.log('skipping stats calculation. Pass --calculate-stats to re-calculate card stats');
+			console.log('Skipping stats calculation. Pass --calculate-stats to re-calculate card stats.');
 		}
 	})
 	.then(() => {

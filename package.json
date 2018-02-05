@@ -17,13 +17,14 @@
   },
   "scripts": {
     "build": "node ./build.js",
-    "lint": "eslint \"**/*.{js,jsx}\"",
     "lint:fix": "npm run lint -- --fix",
+    "lint": "eslint \"**/*.{js,jsx}\"",
     "make-notes": "mc-make-notes",
+    "recalculate": "node ./build.js --calculate-stats",
     "tag": "mc-tag -b && npm publish",
-    "test": "mc-test --node",
     "test:debug": "mc-test --node --browsers Chrome",
-    "test:watch": "mc-test --node --watch"
+    "test:watch": "mc-test --node --watch",
+    "test": "mc-test --node"
   },
   "repository": {
     "type": "git",

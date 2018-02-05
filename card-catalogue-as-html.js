@@ -76,7 +76,7 @@ const generatecardCatalogue = (output) => {
 		.then(() => output(`
 </body>
 </html>
-`))
+`));
 };
 
 const cardCatalogueAsHTML = ({ channel, output }) => generateDocs({ channel, generate: generatecardCatalogue, output });
