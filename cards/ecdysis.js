@@ -1,5 +1,6 @@
 const BaseCard = require('./base');
 
+const { COMMON } = require('../helpers/probabilities');
 const { BASILISK } = require('../helpers/creature-types');
 const { REASONABLE } = require('../helpers/costs');
 
@@ -35,9 +36,10 @@ class EcdysisCard extends BaseCard {
 
 EcdysisCard.cardType = 'Ecdysis';
 EcdysisCard.permittedClassesAndTypes = [BASILISK];
-EcdysisCard.description = 'Evolve into your more perfect form';
+EcdysisCard.description = 'Evolve into your more perfect form.';
 EcdysisCard.level = 2;
 EcdysisCard.cost = REASONABLE.cost;
+EcdysisCard.probability = COMMON.probability;
 
 EcdysisCard.defaults = {
 	boosts: [
