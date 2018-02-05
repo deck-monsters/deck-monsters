@@ -68,7 +68,7 @@ class Exploration extends BaseClass {
 	sendMonsterExploring ({
 		monster, character, channel, channelName
 	}) {
-		console.log('sendMonsterExploring')
+		console.log('sendMonsterExploring');
 		if (!this.monsterIsExploring(monster)) {
 			const explorer = {
 				monster,
@@ -151,11 +151,11 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 
 	doExploration () {
 		console.log('in doExploration');
-		return Promise.map(this.explorers, explorer => {
+		return Promise.map(this.explorers, (explorer) => {
 			console.log('in map');
 			this.makeDiscovery(explorer)
 				.then((discovery) => {
-					console.log('discovery made in then')
+					console.log('discovery made in then');
 					explorer.discoveries.push(discovery);
 
 					if (explorer.monster.dead || explorer.discoveries.length >= 15 || moment() > explorer.returnTime) {
