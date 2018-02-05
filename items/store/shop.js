@@ -19,6 +19,7 @@ const ADJECTIVES = [
 
 let currentShop;
 const getShop = throttle(() => {
+	const now = new Date();
 	currentShop = {
 		name: fantasyNames('places', 'magic_shops'),
 		adjective: sample(ADJECTIVES),
@@ -26,7 +27,8 @@ const getShop = throttle(() => {
 		backRoomOffset: random(5.5, 9.5),
 		items: getItems(),
 		cards: getCards(),
-		backRoom: getBackRoom()
+		backRoom: getBackRoom(),
+		closingTime: now.setHours(now.getHours() + 8)
 	};
 
 	return currentShop;
