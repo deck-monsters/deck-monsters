@@ -1,7 +1,6 @@
 const EcdysisCard = require('./ecdysis');
 
 const { BARBARIAN, FIGHTER } = require('../helpers/classes');
-const { REASONABLE } = require('../helpers/costs');
 
 class AdrenalineRushCard extends EcdysisCard {
 	constructor ({
@@ -16,8 +15,6 @@ class AdrenalineRushCard extends EcdysisCard {
 AdrenalineRushCard.cardType = 'Adrenaline Rush';
 AdrenalineRushCard.permittedClassesAndTypes = [BARBARIAN, FIGHTER];
 AdrenalineRushCard.description = 'Life or Death brings about a certain focus... A certain AWAKENESS most people don\'t actually want. It\'s what you live for. It\'s how you know you exist. You embrace it a welcome the rush.'; // eslint-disable-line max-len
-AdrenalineRushCard.level = 2;
-AdrenalineRushCard.cost = REASONABLE.cost;
 
 AdrenalineRushCard.defaults = {
 	...EcdysisCard.defaults
