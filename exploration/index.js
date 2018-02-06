@@ -56,7 +56,7 @@ class Exploration extends BaseClass {
 	}
 
 	getExplorer (targetMonster) {
-		return this.explorers.find(explorer => JSON.stringify(explorer.monster) === JSON.stringify(targetMonster));
+		return this.explorers.find(explorer => explorer.monster === targetMonster);
 	}
 
 	monsterIsExploring (targetMonster) {
