@@ -440,6 +440,10 @@ class Game extends BaseClass {
 		return cardProbabilities;
 	}
 
+	getRing () {
+		return this.ring;
+	}
+
 	getExploration () {
 		return this.exploration;
 	}
