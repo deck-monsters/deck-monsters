@@ -75,39 +75,13 @@ const formatCardAsHTML = card => (`
 	</article>
 `);
 
-const getItemRequirements = (item) => {
-	const requirements = [
-		`Level: ${item.level ? item.level : 'Beginner'}`,
-		`Usable by: ${item.permittedClassesAndTypes ? item.permittedClassesAndTypes.join(', ') : 'All'}`
-	];
-
-	const cardOdds = odds[0][item.name];
-	if (cardOdds) {
-		if (cardOdds.hitChance) {
-			requirements.push(`Hit chance: ${cardOdds.hitChance}% | DPT: ${cardOdds.dpt}`);
-		}
-		if (cardOdds.healChance) {
-			requirements.push(`Heal chance: ${cardOdds.healChance}% | HPT: ${cardOdds.hpt}`);
-		}
-		if (cardOdds.effectChance) {
-			requirements.push(`Effect chance: ${cardOdds.effectChance}%`);
-		}
-	}
-
-	requirements.push(`MSRP: ${item.cost ? item.cost : 'free'}`);
-
-	return requirements.join('\n');
-};
-
-const discoveryCard = (card) => {
-	const probability = card.flavor && card.flavor.probability || card.probability || 1;
-	return formatCard({
-		title: `${card.icon}  ${card.cardType}  ${itemRarity(probability)}`,
-		description: card.description,
-		stats: card.stats,
-		rankings: getItemRequirements(card)
-	});
-};
+const discoveryCard = (card, verbose = true) => formatCard({
+	title: `${card.icon}  ${card.cardType}  ${itemRarity(card)}`,
+	description: card.description,
+	stats: card.stats,
+	rankings: getItemRequirements(card).join('\n'),
+	verbose
+});
 
 const itemCard = (item, verbose = false) => formatCard({
 	title: `${item.icon}  ${item.itemType}  ${itemRarity(item)}`,

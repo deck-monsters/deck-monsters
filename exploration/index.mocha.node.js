@@ -1,5 +1,4 @@
 const { expect, sinon } = require('../shared/test-setup');
-const Promise = require('bluebird');
 
 const Basilisk = require('../monsters/basilisk');
 const Beastmaster = require('../characters/beastmaster');
@@ -9,20 +8,44 @@ const Discovery = require('./discoveries/base');
 const DeathCard = require('./discoveries/death');
 const NothingCard = require('./discoveries/nothing');
 
-describe.only('./exploration/index.js', () => {
+describe('./exploration/index.js', () => {
 	let clock;
 	let privateChannelStub;
 	let publicChannelStub;
 
+	let game;
+	let exploration;
+
+	let character;
+	let monster;
+
+	let channelName;
+
 	before(() => {
 		publicChannelStub = sinon.stub();
 		privateChannelStub = sinon.stub();
+
+		channelName = 'TEST_CHANNEL';
 	});
 
 	beforeEach(() => {
 		publicChannelStub.resolves();
 		privateChannelStub.resolves();
 		clock = sinon.useFakeTimers();
+
+		game = new Game(publicChannelStub);
+		exploration = game.getExploration();
+
+		character = new Beastmaster();
+		monster = new Basilisk();
+		character.addMonster(monster);
+
+		exploration.sendMonsterExploring({
+			monster,
+			character,
+			channel: privateChannelStub,
+			channelName
+		});
 	});
 
 	afterEach(() => {
@@ -32,82 +55,23 @@ describe.only('./exploration/index.js', () => {
 	});
 
 	it('has a channel manager', () => {
-		const game = new Game(publicChannelStub);
-		const exploration = game.getExploration();
-
 		expect(exploration.channelManager).to.be.an.instanceof(ChannelManager);
 	});
 
 	describe('monsters', () => {
 		it('can be sent exploring', () => {
-			const game = new Game(publicChannelStub);
-			const exploration = game.getExploration();
-
-			const character = new Beastmaster();
-			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
-
-			character.addMonster(monster);
-
-			exploration.sendMonsterExploring({
-				monster,
-				character,
-				channel: privateChannelStub,
-				channelName
-			});
-
 			expect(exploration.explorers.length).to.equal(1);
 			expect(exploration.monsterIsExploring(monster)).to.equal(true);
 		});
 
 		it('can not be re-sent exploring if already exploring', () => {
-			const game = new Game(publicChannelStub);
-			const exploration = game.getExploration();
-
-			const character = new Beastmaster();
-			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
-
-			character.addMonster(monster);
-
-			exploration.sendMonsterExploring({
-				monster,
-				character,
-				channel: privateChannelStub,
-				channelName
-			});
-
 			expect(exploration.explorers.length).to.equal(1);
 			expect(exploration.monsterIsExploring(monster)).to.equal(true);
-
-			exploration.sendMonsterExploring({
-				monster,
-				character,
-				channel: privateChannelStub,
-				channelName
-			});
-
 			expect(exploration.explorers.length).to.equal(1);
 			expect(exploration.monsterIsExploring(monster)).to.equal(true);
 		});
 
 		it('can be sent home', () => {
-			const game = new Game(publicChannelStub);
-			const exploration = game.getExploration();
-
-			const character = new Beastmaster();
-			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
-
-			character.addMonster(monster);
-
-			exploration.sendMonsterExploring({
-				monster,
-				character,
-				channel: privateChannelStub,
-				channelName
-			});
-
 			expect(exploration.explorers.length).to.equal(1);
 			expect(exploration.monsterIsExploring(monster)).to.be.true;
 
@@ -119,81 +83,34 @@ describe.only('./exploration/index.js', () => {
 		});
 
 		it('can make discoveries', () => {
-			const game = new Game(publicChannelStub);
-			const exploration = game.getExploration();
-
-			const character = new Beastmaster();
-			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
-
-			character.addMonster(monster);
-
-			exploration.sendMonsterExploring({
-				monster,
-				character,
-				channel: privateChannelStub,
-				channelName
-			});
-
 			const explorer = exploration.getExplorer(monster);
-			const ADiscovery = exploration.makeDiscovery(explorer);
 
+			const ADiscovery = exploration.makeDiscovery(explorer);
 			expect(ADiscovery).to.be.instanceof(Discovery);
 		});
 
 		it('can explore', () => {
-			const game = new Game(publicChannelStub);
-			const exploration = game.getExploration();
-
-			const character = new Beastmaster();
-			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
-
-			character.addMonster(monster);
-
-			exploration.sendMonsterExploring({
-				monster,
-				character,
-				channel: privateChannelStub,
-				channelName
-			});
 			const explorer = exploration.getExplorer(monster);
 			expect(explorer.discoveries).to.have.lengthOf(0);
 
 			exploration.doExploration();
-
 			expect(explorer.discoveries).to.have.lengthOf(1);
 		});
 
 		it('is sent home after 15 discoveries', () => {
-			const game = new Game(publicChannelStub);
-			const exploration = game.getExploration();
-
-			const character = new Beastmaster();
-			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
-
-			character.addMonster(monster);
-
-			exploration.sendMonsterExploring({
-				monster,
-				character,
-				channel: privateChannelStub,
-				channelName
-			});
 			const explorer = exploration.getExplorer(monster);
 			expect(explorer.discoveries).to.have.lengthOf(0);
 
 			const makeDiscoveryStub = sinon.stub(Object.getPrototypeOf(exploration), 'makeDiscovery');
-			makeDiscoveryStub.callsFake((explorer) => {
+			makeDiscoveryStub.callsFake((fakeExplorer) => {
 				const nothing = new NothingCard();
-				nothing.look(explorer.channel);
-				nothing.play(explorer.monster, explorer.monster);
+				nothing.look(fakeExplorer.channel);
+				nothing.play(fakeExplorer.monster, fakeExplorer.monster);
 
 				return nothing;
 			});
 
-			while (exploration.monsterIsExploring(monster)) {
+			while (exploration.monsterIsExploring(explorer.monster)) {
 				exploration.doExploration();
 			}
 
@@ -205,21 +122,6 @@ describe.only('./exploration/index.js', () => {
 		});
 
 		it('is sent home if dead', () => {
-			const game = new Game(publicChannelStub);
-			const exploration = game.getExploration();
-
-			const character = new Beastmaster();
-			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
-
-			character.addMonster(monster);
-
-			exploration.sendMonsterExploring({
-				monster,
-				character,
-				channel: privateChannelStub,
-				channelName
-			});
 			const explorer = exploration.getExplorer(monster);
 			expect(explorer.discoveries).to.have.lengthOf(0);
 
@@ -227,32 +129,20 @@ describe.only('./exploration/index.js', () => {
 			makeDiscoveryStub.callsFake((player) => {
 				const death = new DeathCard();
 				death.look(player.channel);
-				return death.play(player.monster, player.monster);
+				death.play(player.monster, player.monster);
+
+				return death;
 			});
 
-			const continueExploring = () => new Promise((resolve, reject) => {
-				exploration
-					.doExploration()
-					.then(() => {
-						if (exploration.monsterIsExploring(monster)) {
-							return continueExploring();
-						}
-						return resolve();
-					})
-					.catch((er) => {
-						reject(er);
-					});
-			});
+			while (exploration.monsterIsExploring(explorer.monster)) {
+				exploration.doExploration();
+			}
 
-			continueExploring()
-				.then(() => {
-					makeDiscoveryStub.restore();
+			makeDiscoveryStub.restore();
 
-					expect(explorer.monster.dead).to.be.true;
-					expect(explorer.discoveries.length).to.be.below(2);
-					expect(exploration.explorers.length).to.equal(0);
-					expect(exploration.monsterIsExploring(monster)).to.be.false;
-				});
+			expect(explorer.discoveries.length).to.equal(1);
+			expect(exploration.explorers.length).to.equal(0);
+			expect(exploration.monsterIsExploring(monster)).to.be.false;
 		});
 	});
 });

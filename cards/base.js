@@ -95,7 +95,7 @@ class BaseCard extends BaseItem {
 		return { success, strokeOfLuck: roll.strokeOfLuck, curseOfLoki: roll.curseOfLoki, tie };
 	}
 
-	getTargets (player, proposedTarget, area, activeContestants) { // eslint-disable-line class-methods-use-this, no-unused-vars
+	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this, no-unused-vars
 		return [proposedTarget];
 	}
 
@@ -105,17 +105,16 @@ class BaseCard extends BaseItem {
 			return card.play(player, proposedTarget, ring, activeContestants, false);
 		}
 
-	play (player, proposedTarget, area, activeContestants) {
 		return Promise.resolve()
 			.then(() => {
 				this.emit('played', { player });
 
-				const targets = this.getTargets(player, proposedTarget, area, activeContestants);
+				const targets = this.getTargets(player, proposedTarget, ring, activeContestants);
 
 				if (this.effect) {
 					return Promise.resolve(ring)
 						.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
-						.then(() => Promise.mapSeries(targets, target => this.effect(player, target, area, activeContestants)))
+						.then(() => Promise.mapSeries(targets, target => this.effect(player, target, ring, activeContestants)))
 						.then(results => results.reduce((result, val) => result && val, true));
 				}
 

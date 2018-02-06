@@ -14,7 +14,7 @@ class DeathCard extends BaseCard {
 		return this.flavor;
 	}
 
-	effect (player) { // eslint-disable-line no-unused-vars
+	effect (player) { // eslint-disable-line class-methods-use-this
 		player.dead = true;
 
 		return player;

@@ -19,7 +19,6 @@ const dungeonMasterGuide = require('./dungeon-master-guide');
 const monsterManual = require('./monster-manual');
 const playerHandbook = require('./player-handbook');
 const Ring = require('./ring');
-const announcements = require('./announcements');
 const Exploration = require('./exploration');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
@@ -316,11 +315,11 @@ class Game extends BaseClass {
 	static getCardTypes () {
 		return cardTypes.reduce((obj, Card) => {
 			obj[Card.cardType.toLowerCase()] = Card;
-	static getItemTypes () {
 			return obj;
 		}, {});
 	}
 
+	static getItemTypes () {
 		return itemTypes.reduce((obj, Item) => {
 			obj[Item.itemType.toLowerCase()] = Item;
 			return obj;
@@ -421,7 +420,6 @@ class Game extends BaseClass {
 		}));
 	}
 	lookAtItem (channel, itemName) {
-
 		if (itemName) {
 			const items = this.constructor.getItemTypes();
 			const Item = items[itemName.toLowerCase()];

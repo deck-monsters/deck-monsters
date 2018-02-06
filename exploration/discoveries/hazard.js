@@ -37,7 +37,7 @@ class HazardCard extends BaseCard {
 		return `${this.flavor.text} ${this.damage} damage.`;
 	}
 
-	getDamageFlavors (player, number) {
+	getDamageFlavors (player, number) { // eslint-disable-line class-methods-use-this
 		const damageFlavors = [
 			[
 				['is caught in a sudden thunderstorm, and pummeled with hail for', 10, '⛈'],

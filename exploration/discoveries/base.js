@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 const BaseCard = require('../../cards/base');
 
 const { discoveryCard } = require('../../helpers/card');
@@ -17,6 +19,10 @@ class BaseDiscoveryCard extends BaseCard {
 			.then(() => channel({
 				announce: discoveryCard(this)
 			}));
+	}
+
+	play (player, proposedTarget) {
+		return this.effect(player, proposedTarget);
 	}
 }
 
