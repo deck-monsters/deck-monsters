@@ -1,5 +1,3 @@
-const Promise = require('bluebird');
-
 const BaseCard = require('../../cards/base');
 
 const { discoveryCard } = require('../../helpers/card');
