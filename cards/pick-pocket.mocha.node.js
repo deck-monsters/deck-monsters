@@ -58,7 +58,8 @@ describe('./cards/pick-pocket.js', () => {
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
-			}
+			},
+			encounterEffects: []
 		};
 
 		player.xp = 100;
@@ -117,7 +118,8 @@ describe('./cards/pick-pocket.js', () => {
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
-			}
+			},
+			encounterEffects: []
 		};
 
 		// player has most xp, but will not get picked

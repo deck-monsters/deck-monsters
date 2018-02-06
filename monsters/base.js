@@ -50,18 +50,20 @@ class BaseMonster extends BaseCreature {
 		const bonuses = [];
 
 		if (this.dexModifier !== 0) {
-			bonuses.push(`${signedNumber(this.dexModifier)} dex ${this.dexModifier > 0 ? 'bonus' : 'penalty'}`);
+			bonuses.push(`${signedNumber(this.dexModifier)} dex ${this.dexModifier > 0 ? 'bonus' : 'penalty'}`.trim());
 		}
 		if (this.strModifier !== 0) {
-			bonuses.push(`${signedNumber(this.strModifier)} str ${this.strModifier > 0 ? 'bonus' : 'penalty'}`);
+			bonuses.push(`${signedNumber(this.strModifier)} str ${this.strModifier > 0 ? 'bonus' : 'penalty'}`.trim());
 		}
 		if (this.intModifier !== 0) {
-			bonuses.push(`${signedNumber(this.intModifier)} int ${this.intModifier > 0 ? 'bonus' : 'penalty'}`);
+			bonuses.push(`${signedNumber(this.intModifier)} int ${this.intModifier > 0 ? 'bonus' : 'penalty'}`.trim());
 		}
 
 		return `${super.stats}
+
 ac: ${this.ac} | hp: ${this.hp}/${this.maxHp}
-dex: ${this.dex} | str: ${this.str} | int: ${this.int}\r${bonuses.join('\r')}${
+dex: ${this.dex} | str: ${this.str} | int: ${this.int}
+${bonuses.join('\n')}${
 	!this.targetingStrategy ? '' :
 		`
 Strategy: ${getStrategyDescription(this.targetingStrategy)}`
