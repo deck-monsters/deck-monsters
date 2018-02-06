@@ -92,12 +92,31 @@ class SandstormCard extends BlastCard {
 						}
 
 						// Probably don't end up as the target of hit cards
+
 						while (newTargets.length < oldTargets.length) {
 							const { monster } = sample(activeContestants);
 							if (monster !== sandstormPlayer || isProbable({ probability: this.hitProbability })) {
 								newTargets.push(monster);
 							}
 						}
+
+						const messages = [];
+						newTargets.forEach((newTarget, index) => {
+							const formerTarget = oldTargets[index];
+							const formerTargetName = formerTarget === sandstormTarget ? `${sandstormTarget.pronouns.him}self` : formerTarget.givenName;
+							const newTargetName = newTarget === sandstormTarget ? `${sandstormTarget.pronouns.him}self` : newTarget.givenName;
+
+							if (newTarget === formerTarget) {
+								messages.push(`${sandstormTarget.givenName} keeps ${sandstormTarget.pronouns.his} wits about ${sandstormTarget.pronouns.him} and manages to target ${formerTargetName}.`);
+							} else {
+								messages.push(`While trying to target ${formerTargetName}, ${sandstormTarget.givenName} instead targets ${newTargetName}.`);
+							}
+						});
+
+						this.emit('narration', {
+							narration: `${messages.join('\n')}
+`
+						});
 
 						return newTargets;
 					};
