@@ -5,6 +5,32 @@ const { findProbabilityMatch } = require('./probabilities');
 
 const odds = require('../card-odds.json');
 
+const itemRarity = item => findProbabilityMatch(item.probability || 0).icon;
+
+const getItemRequirements = (item) => {
+	const requirements = [
+		`Level: ${item.level ? item.level : 'Beginner'}`,
+		`Usable by: ${item.permittedClassesAndTypes ? item.permittedClassesAndTypes.join(', ') : 'All'}`
+	];
+
+	const cardOdds = odds[0][item.name];
+	if (cardOdds) {
+		if (cardOdds.hitChance) {
+			requirements.push(`Hit chance: ${cardOdds.hitChance}% | DPT: ${cardOdds.dpt}`);
+		}
+		if (cardOdds.healChance) {
+			requirements.push(`Heal chance: ${cardOdds.healChance}% | HPT: ${cardOdds.hpt}`);
+		}
+		if (cardOdds.effectChance) {
+			requirements.push(`Effect chance: ${cardOdds.effectChance}%`);
+		}
+	}
+
+	requirements.push(`MSRP: ${item.cost ? item.cost : 'free'}`);
+
+	return requirements;
+};
+
 const formatCard = ({
 	title, description, stats, rankings, verbose
 }) => (
@@ -34,7 +60,20 @@ ${wrap(rankings, { indent: ' ', width: 32 })}`
 `
 );
 
-const itemRarity = item => findProbabilityMatch(item.probability || 0).icon;
+const formatCardAsHTML = card => (`
+	<article>
+		<a name="${card.itemType}"></a>
+		<header>
+			<h3>${card.icon}  ${card.itemType}  ${itemRarity(card)}</h3>
+		</header>
+		<section>${card.description}</section>
+		<section>${card.stats}</section>
+		<section>
+			<ul><li>${getItemRequirements(card).join('</li>\n<li>')}</li></ul>
+		</section>
+		<footer></footer>
+	</article>
+`);
 
 const getItemRequirements = (item) => {
 	const requirements = [
@@ -74,13 +113,15 @@ const itemCard = (item, verbose = false) => formatCard({
 	title: `${item.icon}  ${item.itemType}  ${itemRarity(item)}`,
 	description: item.description,
 	stats: item.stats,
-	rankings: getItemRequirements(item),
+	rankings: getItemRequirements(item).join('\n'),
 	verbose
 });
+const itemCardHTML = item => formatCardAsHTML(item);
 
 // This is included for legacy support. Until cards need some sort of special
 // rendering they render exactly the same as any other item.
 const actionCard = (card, verbose) => itemCard(card, verbose);
+const actionCardHTML = card => itemCardHTML(card);
 
 const monsterCard = (monster, verbose = true) => formatCard({
 	title: `${monster.icon}  ${monster.givenName}`,
@@ -99,9 +140,12 @@ const characterCard = (character, verbose = true) => formatCard({
 
 module.exports = {
 	actionCard,
+	actionCardHTML,
 	characterCard,
 	formatCard,
+	formatCardAsHTML,
 	itemCard,
+	itemCardHTML,
 	discoveryCard,
 	monsterCard
 };
