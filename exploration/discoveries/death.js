@@ -14,10 +14,10 @@ class DeathCard extends BaseCard {
 		return this.flavor;
 	}
 
-	effect (player) { // eslint-disable-line class-methods-use-this
-		player.dead = true;
+	effect (environment, monster) { // eslint-disable-line class-methods-use-this
+		monster.die(environment);
 
-		return player;
+		return !monster.dead;
 	}
 }
 

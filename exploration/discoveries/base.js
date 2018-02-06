@@ -21,8 +21,8 @@ class BaseDiscoveryCard extends BaseCard {
 			}));
 	}
 
-	play (player, proposedTarget) {
-		return this.effect(player, proposedTarget);
+	play (environment, monster) {
+		return this.effect(environment, monster);
 	}
 }
 
