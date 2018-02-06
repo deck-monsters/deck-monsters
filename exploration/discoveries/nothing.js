@@ -17,8 +17,8 @@ class NothingCard extends BaseCard {
 		return flavor;
 	}
 
-	effect (environment, player) { // eslint-disable-line class-methods-use-this
-		return !player.dead;
+	effect (environment, monster) { // eslint-disable-line class-methods-use-this
+		return !monster.dead;
 	}
 }
 

@@ -6,9 +6,11 @@ const Environment = require('../../monsters/environment');
 
 const pause = require('../../helpers/pause');
 
-describe.only('./exploration/discoveries/hazard.js', () => {
+describe('./exploration/discoveries/hazard.js', () => {
 	let channelStub;
 	let pauseStub;
+	let hazard;
+	let monster;
 
 	before(() => {
 		channelStub = sinon.stub();
@@ -18,6 +20,9 @@ describe.only('./exploration/discoveries/hazard.js', () => {
 	beforeEach(() => {
 		channelStub.resolves();
 		pauseStub.callsArg(0);
+
+		hazard = new HazardCard();
+		monster = new Basilisk();
 	});
 
 	afterEach(() => {
@@ -30,20 +35,16 @@ describe.only('./exploration/discoveries/hazard.js', () => {
 	});
 
 	it('can be instantiated with defaults', () => {
-		const hazard = new HazardCard();
-
 		expect(hazard).to.be.an.instanceof(HazardCard);
 		expect(hazard.icon).to.exist;
 	});
 
 	it('can be played', () => {
-		const hazard = new HazardCard();
-		let player = new Basilisk();
 		const environment = new Environment();
-		const originalhp = player.hp;
+		const originalhp = monster.hp;
 
-		player = hazard.effect(environment, player);
+		hazard.effect(environment, monster);
 
-		expect(player.hp).to.be.below(originalhp);
+		expect(monster.hp).to.be.below(originalhp);
 	});
 });
