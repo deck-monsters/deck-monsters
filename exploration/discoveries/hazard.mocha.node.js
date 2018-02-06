@@ -6,7 +6,7 @@ const Environment = require('../../monsters/environment');
 
 const pause = require('../../helpers/pause');
 
-describe('./exploration/discoveries/hazard.js', () => {
+describe.only('./exploration/discoveries/hazard.js', () => {
 	let channelStub;
 	let pauseStub;
 

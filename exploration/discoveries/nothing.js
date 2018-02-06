@@ -2,6 +2,8 @@
 
 const BaseCard = require('./base');
 
+const { getFlavor } = require('../../helpers/flavor');
+
 class NothingCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -11,7 +13,8 @@ class NothingCard extends BaseCard {
 	}
 
 	get stats () {
-		return this.flavor;
+		const { text: flavor } = getFlavor('nothing', this.flavors);
+		return flavor;
 	}
 
 	effect (environment, player) { // eslint-disable-line class-methods-use-this
@@ -45,7 +48,7 @@ NothingCard.flavors = {
 		['you really do not want to know. Let\'s just pretend this was never discovered and move on.', 10],
 		['something that smells a lot like --nope. No it just actually is, dung.', 5],
 		['self awareness. It turns out to be very dismal and depressing.', 5],
-		['the carcasses of some dead dismissed monsters. Horrifying. Time to sit and reflect on the meaninglessness of existence as a monster used for the enjoyment of cruel masters.', 1]
+		['the carcases of some dead dismissed monsters. Horrifying. Time to sit and reflect on the meaninglessness of existence as a monster used for the enjoyment of cruel masters.', 1]
 	]
 };
 

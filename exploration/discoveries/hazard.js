@@ -91,7 +91,7 @@ class HazardCard extends BaseCard {
 
 HazardCard.cardType = 'Hazard';
 HazardCard.probability = 10;
-HazardCard.description = 'It is dangerous out there. Your monster...';
+HazardCard.description = "It's dangerous out there. Your monster...";
 HazardCard.defaults = {
 	damageDice: '1d4'
 };

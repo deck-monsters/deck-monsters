@@ -32,5 +32,6 @@ describe('./exploration/discoveries/nothing.js', () => {
 
 		expect(nothing).to.be.an.instanceof(NothingCard);
 		expect(nothing.icon).to.equal('🤷‍');
+		expect(nothing.stats).to.be.a('string');
 	});
 });
