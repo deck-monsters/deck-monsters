@@ -75,6 +75,14 @@ const formatCardAsHTML = card => (`
 	</article>
 `);
 
+const discoveryCard = (card, verbose = true) => formatCard({
+	title: `${card.icon}  ${card.cardType}  ${itemRarity(card)}`,
+	description: card.description,
+	stats: card.stats,
+	rankings: getItemRequirements(card).join('\n'),
+	verbose
+});
+
 const itemCard = (item, verbose = false) => formatCard({
 	title: `${item.icon}  ${item.itemType}  ${itemRarity(item)}`,
 	description: item.description,
@@ -112,5 +120,6 @@ module.exports = {
 	formatCardAsHTML,
 	itemCard,
 	itemCardHTML,
+	discoveryCard,
 	monsterCard
 };

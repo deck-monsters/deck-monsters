@@ -23,6 +23,12 @@ class BaseItem extends BaseClass {
 		return this.options.icon;
 	}
 
+	set icon (icon) {
+		this.setOptions({
+			icon
+		});
+	}
+
 	get cost () {
 		return this.constructor.cost;
 	}

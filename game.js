@@ -19,6 +19,7 @@ const dungeonMasterGuide = require('./dungeon-master-guide');
 const monsterManual = require('./monster-manual');
 const playerHandbook = require('./player-handbook');
 const Ring = require('./ring');
+const Exploration = require('./exploration');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
 
@@ -32,6 +33,7 @@ class Game extends BaseClass {
 		this.channelManager.addChannel({ channel: publicChannel, channelName: PUBLIC_CHANNEL });
 		this.publicChannel = ({ announce }) => this.channelManager.queueMessage({ announce, channelName: PUBLIC_CHANNEL });
 		this.ring = new Ring(this.channelManager, { spawnBosses: this.options.spawnBosses }, this.log);
+		this.exploration = new Exploration(this.channelManager, {}, this.log);
 
 		this.initializeEvents();
 
@@ -171,7 +173,7 @@ class Game extends BaseClass {
 		id, name, type, gender, icon
 	}) {
 		const game = this;
-		const { channelManager, log, ring } = game;
+		const { channelManager, log, ring, exploration } = game;
 		const channel = (...args) => privateChannel(...args);
 		channel.channelManager = channelManager;
 		channel.channelName = channelName;
@@ -227,6 +229,12 @@ class Game extends BaseClass {
 				callMonsterOutOfTheRing ({ monsterName } = '') {
 					return character.callMonsterOutOfTheRing({
 						monsterName, ring, channel, channelName
+					})
+						.catch(err => log(err));
+				},
+				sendMonsterExploring ({ monsterName } = {}) {
+					return character.sendMonsterExploring({
+						monsterName, exploration, channel, channelName
 					})
 						.catch(err => log(err));
 				},
@@ -411,7 +419,6 @@ class Game extends BaseClass {
 			delay: 'short'
 		}));
 	}
-
 	lookAtItem (channel, itemName) {
 		if (itemName) {
 			const items = this.constructor.getItemTypes();
@@ -435,6 +442,10 @@ class Game extends BaseClass {
 
 	getRing () {
 		return this.ring;
+	}
+
+	getExploration () {
+		return this.exploration;
 	}
 
 	lookAtRing (channel, ringName = 'main', showCharacters) {

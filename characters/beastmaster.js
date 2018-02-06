@@ -291,6 +291,37 @@ Which monster would you like to ${action}?`,
 			}));
 	}
 
+	sendMonsterExploring ({
+		monsterName, exploration, channel, channelName
+	}) {
+		const character = this;
+		const alreadyInExploration = exploration.explorers.filter(explorer => explorer.character === character);
+		const monsters = this.monsters.filter(monster => !monster.dead);
+
+
+		return Promise
+			.resolve(monsters.length)
+			.then((numberOfMonsters) => {
+				// For now, each beastmaster can only have one monster exploring at a time
+				if (alreadyInExploration && alreadyInExploration.length > 0) {
+					return Promise.reject(channel({
+						announce: 'You already have a monster exploring!'
+					}));
+				} else if (numberOfMonsters <= 0) {
+					return Promise.reject(channel({
+						announce: "You don't have any living monsters to send exploring. Spawn one first, or wait for your dead monsters to revive." // eslint-disable-line max-len
+					}));
+				}
+
+				return this.chooseMonster({
+					channel, monsters, monsterName, action: 'send exploring'
+				});
+			})
+			.then(monster => exploration.sendMonsterExploring({
+				monster, character, channel, channelName
+			}));
+	}
+
 	sendMonsterToTheRing ({
 		monsterName, ring, channel, channelName
 	}) {
