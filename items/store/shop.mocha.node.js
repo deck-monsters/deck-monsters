@@ -26,6 +26,7 @@ describe('./items/store/shop.js', () => {
 		expect(shop.cards.length).to.be.below(21);
 		expect(shop.backRoom.length).to.be.above(0);
 		expect(shop.backRoom.length).to.be.below(7);
+		expect(shop.pronouns).to.be.an('object');
 	});
 
 	it('gets the same shop for 8 hours', () => {

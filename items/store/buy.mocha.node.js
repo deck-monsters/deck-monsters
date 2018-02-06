@@ -5,14 +5,17 @@ const randomCharacter = require('../../characters/helpers/random');
 const TestCard = require('../../cards/test');
 
 const defaultShop = {
-	name: 'Gorgons and Gremlins',
 	adjective: 'rusty',
-	priceOffset: 0.6689276100094799,
+	backRoom: [],
 	backRoomOffset: 9,
-	items: [],
 	cards: [],
-	backRoom: []
+	items: [],
+	name: 'Gorgons and Gremlins',
+	priceOffset: 0.6689276100094799,
+	pronouns: { he: 'she', him: 'her', his: 'her' }
 };
+
+const defaultClosingTime = 'TIME';
 
 describe('./items/store/buy.js', () => {
 	let buyItems;
@@ -20,14 +23,17 @@ describe('./items/store/buy.js', () => {
 
 	const channelStub = sinon.stub();
 	const getShopStub = sinon.stub();
+	const getClosingTimeStub = sinon.stub();
 
 	beforeEach(() => {
 		clock = sinon.useFakeTimers();
 		channelStub.resolves();
 		getShopStub.returns(defaultShop);
+		getClosingTimeStub.returns(defaultClosingTime);
 
 		buyItems = proxyquire('./buy', {
-			'./shop': getShopStub
+			'./shop': getShopStub,
+			'./closing-time': getClosingTimeStub
 		});
 	});
 
@@ -35,6 +41,7 @@ describe('./items/store/buy.js', () => {
 		clock.restore();
 		channelStub.reset();
 		getShopStub.reset();
+		getClosingTimeStub.reset();
 	});
 
 	it('can offer cards for sale', () => {
@@ -49,6 +56,8 @@ describe('./items/store/buy.js', () => {
 		channelStub.withArgs({
 			choices: [1, 2, 3],
 			question: `You push open a rusty door and find yourself in Gorgons and Gremlins with 500 coins in your pocket.
+
+${defaultClosingTime}
 
 We have 0 items and 1 card. Which would you like to see?
 
