@@ -14,11 +14,9 @@ class BaseDiscoveryCard extends BaseCard {
 	}
 
 	look (channel) {
-		return Promise
-			.resolve()
-			.then(() => channel({
-				announce: discoveryCard(this)
-			}));
+		channel({
+			announce: discoveryCard(this)
+		});
 	}
 
 	play (environment, monster) {
