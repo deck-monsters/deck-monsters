@@ -393,39 +393,6 @@ The following cards are in play:
 			// By default, the next card anyone plays should be the one at the same position as the one currently being played
 			let nextCardIndex = cardIndex;
 
-			if (turn !== cardIndex) {
-				turn = cardIndex;
-				// Emit an event when the round ends
-				this.emit('startTurn', {
-					turn: cardIndex,
-					contestants,
-					round
-				});
-			}
-
-			// But if we don't have any more contestants in this fight it's time to reset our list of contestants
-			// and it's going to be time to move on to the next card
-			if (activeContestants.length <= 1) {
-				activeContestants = [...activeContestants, ...getAllActiveContestants()];
-				nextCardIndex += 1;
-			}
-
-			// Let's get the current contestant and their monster
-			const playerContestant = activeContestants.shift();
-			const { monster: player } = playerContestant;
-
-			// Let's find our target
-			// This where we could do some fancy targetting logic if we wanted to
-			const targetContestant = getTarget({
-				contestants: getAllActiveContestants(),
-				playerContestant,
-				strategy: playerContestant.monster.targetingStrategy
-			});
-			const { monster: proposedTarget } = targetContestant;
-
-			// Find the card in the current player's hand at the current index
-			const card = player.cards[cardIndex];
-
 			// When this is called (see below) we pass the next contestant and card back into the looping
 			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a character as described above
 			const next = () => resolve(doAction({
@@ -433,14 +400,55 @@ The following cards are in play:
 				cardIndex: nextCardIndex
 			}));
 
+			// But if we don't have any more contestants in this fight it's time to reset our list of contestants
+			// and it's going to be time to move on to the next card
+			if (activeContestants.length <= 1) {
+				nextCardIndex += 1;
+
+				if (activeContestants.length === 1) {
+					activeContestants = [...activeContestants, ...getAllActiveContestants()];
+				} else {
+					activeContestants = getAllActiveContestants();
+
+					next();
+					return;
+				}
+			}
+
+			// Let's get the current contestant and their monster
+			const playerContestant = activeContestants.shift();
+			const { monster: player } = playerContestant;
+
+			// Find the card in the current player's hand at the current index
+			const card = player.cards[cardIndex];
+
 			// Does the monster have a card at the current position?
 			if (card) {
+				// Emit an event at the start of each turn
+				if (turn !== cardIndex) {
+					turn = cardIndex;
+
+					this.emit('startTurn', {
+						turn,
+						contestants: getAllActiveContestants(),
+						round
+					});
+				}
+
 				// Emit an event when a character's turn begins
 				// Note that as written currently this will emit _only if they have a card to play_
 				this.emit('playerTurnBegin', {
 					contestant: playerContestant,
 					round
 				});
+
+				// Next, let's find our target
+				const targetContestant = getTarget({
+					contestants: getAllActiveContestants(),
+					playerContestant,
+					strategy: playerContestant.monster.targetingStrategy
+				});
+				const { monster: proposedTarget } = targetContestant;
 
 				playerContestant.round = round;
 
