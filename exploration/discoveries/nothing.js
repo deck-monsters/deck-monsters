@@ -3,6 +3,7 @@
 const BaseCard = require('./base');
 
 const { getFlavor } = require('../../helpers/flavor');
+const { capitalize } = require('../../helpers/capitalize');
 
 class NothingCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -14,7 +15,7 @@ class NothingCard extends BaseCard {
 
 	get stats () {
 		const { text: flavor } = getFlavor('nothing', this.flavors);
-		return flavor;
+		return capitalize(flavor);
 	}
 
 	effect (environment, monster) { // eslint-disable-line class-methods-use-this

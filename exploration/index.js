@@ -111,20 +111,17 @@ And whither then ${monster.pronouns[0]} cannot say.`,
 		const exploration = this;
 
 		pause.setTimeout(() => {
-			exploration
-				.doExploration()
-				.then(() => {
-					exploration.startExplorationTimer();
-				});
+			exploration.doExploration();
+			exploration.startExplorationTimer();
 		}, ONE_MINUTE);
 	}
 
 	makeDiscovery (explorer) {
-		const discoveries = shuffle(this.discoveries);
+		let discoveries = shuffle(this.discoveries);
 
-		// if (explorer) {
-		// 	discoveries = discoveries.filter(discovery => explorer.canFind(discovery));
-		// }
+		if (explorer) {
+			discoveries = discoveries.filter(discovery => explorer.monster.canHold(discovery));
+		}
 
 		const Discovery = discoveries.find(isProbable);
 
