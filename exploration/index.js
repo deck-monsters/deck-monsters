@@ -89,11 +89,11 @@ class Exploration extends BaseClass {
 The Road goes ever on and on
 Down from the town where it began.
 Now far ahead the Road has gone,
-And ${monster.givenName} must follow, if ${monster.pronouns[0]} can,
+And ${monster.givenName} must follow, if ${monster.pronouns.he} can,
 Pursuing it with eager feet,
 Until it joins some larger way
 Where many treasures and fell beasts meet.
-And whither then ${monster.pronouns[0]} cannot say.`,
+And whither then ${monster.pronouns.he} cannot say.`,
 				channel,
 				channelName
 			});
