@@ -33,7 +33,7 @@ describe('./exploration/discoveries/hazard.js', () => {
 		const hazard = new HazardCard();
 
 		expect(hazard).to.be.an.instanceof(HazardCard);
-		expect(hazard.icon).to.equal('⚠️');
+		expect(hazard.icon).to.exist;
 	});
 
 	it('can be played', () => {
