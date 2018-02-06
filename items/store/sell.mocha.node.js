@@ -5,14 +5,17 @@ const randomCharacter = require('../../characters/helpers/random');
 const HitCard = require('../../cards/hit');
 
 const defaultShop = {
-	name: 'Gorgons and Gremlins',
 	adjective: 'rusty',
-	priceOffset: 0.6689276100094799,
+	backRoom: [],
 	backRoomOffset: 9,
-	items: [],
 	cards: [],
-	backRoom: []
+	items: [],
+	name: 'Gorgons and Gremlins',
+	priceOffset: 0.6689276100094799,
+	pronouns: { he: 'she', him: 'her', his: 'her' }
 };
+
+const defaultClosingTime = 'TIME';
 
 describe('./items/store/sell.js', () => {
 	let sellItems;
@@ -20,14 +23,17 @@ describe('./items/store/sell.js', () => {
 
 	const channelStub = sinon.stub();
 	const getShopStub = sinon.stub();
+	const getClosingTimeStub = sinon.stub();
 
 	beforeEach(() => {
 		clock = sinon.useFakeTimers();
 		channelStub.resolves();
 		getShopStub.returns(defaultShop);
+		getClosingTimeStub.returns(defaultClosingTime);
 
 		sellItems = proxyquire('./sell', {
-			'./shop': getShopStub
+			'./shop': getShopStub,
+			'./closing-time': getClosingTimeStub
 		});
 	});
 
@@ -35,6 +41,7 @@ describe('./items/store/sell.js', () => {
 		clock.restore();
 		channelStub.reset();
 		getShopStub.reset();
+		getClosingTimeStub.reset();
 	});
 
 	it('can buy a card', () => {
@@ -48,6 +55,8 @@ describe('./items/store/sell.js', () => {
 		channelStub.withArgs({
 			choices: [1, 2],
 			question: `You push open a rusty door and find yourself in Gorgons and Gremlins.
+
+${defaultClosingTime}
 
 You have 0 items and 7 cards. Which would you like to sell?
 
@@ -96,6 +105,8 @@ Would you like to sell? (yes/no)`
 		channelStub.withArgs({
 			choices: [1, 2],
 			question: `You push open a rusty door and find yourself in Gorgons and Gremlins.
+
+${defaultClosingTime}
 
 You have 0 items and 7 cards. Which would you like to sell?
 

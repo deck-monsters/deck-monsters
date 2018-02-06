@@ -1,16 +1,22 @@
+/* eslint-disable max-len */
+
 const sample = require('lodash.sample');
 
-const ADJECTIVES = [
-	'gloomily mutters',
-	'happily declares',
-	'says with a suspicious gleam in his eye',
-	'utters, as if by rote, without even looking up from her book',
-	'states matter-of-factly',
-	'says distractedly, and continues studying the cards her the counter',
-	'intones with a utterly creepy far-off look in his eyes, as if declaring the very hour of his own death and disappearance forever from this mortal coil' // eslint-disable-line max-len
-];
+const getClosingTime = ({ closingTime, pronouns }) => {
+	const ADJECTIVES = [
+		'declares enthusiastically',
+		'declares',
+		`informs you without even looking up from ${pronouns.his} book`,
+		'informs you',
+		`intones with an utterly creepy, far-off look in ${pronouns.his} eyes, as if declaring the very hour of ${pronouns.his} own death and disappearance from this mortal coil`,
+		'mutters gloomily',
+		`says distractedly, but you can see that ${pronouns.his} attention is really captured by the cards on ${pronouns.his} counter`,
+		`says with a suspicious gleam in ${pronouns.his} eye`,
+		'says',
+		'states matter-of-factly',
+		`whispers conspiratorially and then pours you both a shot from a small, dark bottle that ${pronouns.he} keeps hooked to ${pronouns.his} belt`
+	];
 
-const getClosingTime = (closingTime) => {
 	const rawClosingTime = (closingTime - new Date()) / 3600000;
 	let closingHours = Math.floor(rawClosingTime);
 	const closingMinutes = rawClosingTime - closingHours;
@@ -20,11 +26,11 @@ const getClosingTime = (closingTime) => {
 		if (closingMinutes < 0.1) {
 			closingTimeText = '...actually, we are closing right now. What\'ll it be?';
 		} else if (closingMinutes < 0.25) {
-			closingTimeText = 'a few minutes';
+			closingTimeText = 'a few minutes,';
 		} else if (closingMinutes < 0.70) {
-			closingTimeText = 'about half an hour';
+			closingTimeText = 'about half an hour,';
 		} else {
-			closingTimeText = 'about an hour';
+			closingTimeText = 'about an hour,';
 		}
 	} else {
 		let minutes = '';
@@ -35,7 +41,7 @@ const getClosingTime = (closingTime) => {
 			closingHours += 1;
 		}
 
-		closingTimeText = closingHours > 1 ? `about ${closingHours}${minutes} hours` : `about an hour${minutes}`;
+		closingTimeText = closingHours > 1 ? `about ${closingHours}${minutes} hours,` : `about an hour${minutes},`;
 	}
 
 	return `"Better hurry up and make your selection, we close in ${closingTimeText}" the proprieter ${sample(ADJECTIVES)}.`;

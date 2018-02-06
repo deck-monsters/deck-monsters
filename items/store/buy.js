@@ -22,7 +22,7 @@ module.exports = ({
 			question:
 `You push open a ${shop.adjective} door and find yourself in ${shop.name} with ${character.coins} ${character.coins === 1 ? 'coin' : 'coins'} in your pocket.
 
-${getClosingTime(shop.closingTime)}
+${getClosingTime(shop)}
 
 We have ${numberOfItems} and ${numberOfCards}. Which would you like to see?
 

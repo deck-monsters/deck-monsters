@@ -20,7 +20,7 @@ module.exports = ({
 			question:
 `You push open a ${shop.adjective} door and find yourself in ${shop.name}.
 
-${getClosingTime(shop.closingTime)}
+${getClosingTime(shop)}
 
 You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 
