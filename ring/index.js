@@ -674,7 +674,10 @@ The following cards are in play:
 
 		if (this.spawnBosses) {
 			pause.setTimeout(() => {
-				ring.emit('bossWillSpawn', { delay: 120000 });
+				const numberOfBossesInRing = ring.contestants.reduce((total, contestant) => total + (contestant.isBoss ? 1 : 0), 0);
+				if (!ring.inEncounter && numberOfBossesInRing < MAX_BOSSES) {
+					ring.emit('bossWillSpawn', { delay: 120000 });
+				}
 
 				pause.setTimeout(() => {
 					ring.spawnBoss();
