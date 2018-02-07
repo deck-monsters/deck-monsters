@@ -56,16 +56,20 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 
 	switch (strategy) {
 		case TARGET_ALL_CONTESTANTS: {
+			let found = (team === false);
 			const filteredContestants = contestants.filter((contestant) => {
 				if (contestant === playerContestant) return !ignoreSelf;
 
 				const contestantTeam = (contestant.monster.team || contestant.character.team);
 				if (team && contestantTeam === team) return false;
 
+				found = true;
 				return true;
 			});
 
-			if (filteredContestants.length < 1) return getTarget({ contestants, ignoreSelf, playerContestant, strategy: TARGET_ALL_CONTESTANTS, team: false });
+			if (!found) {
+				return getTarget({ contestants, ignoreSelf, playerContestant, strategy: TARGET_ALL_CONTESTANTS, team: false });
+			}
 
 			return filteredContestants;
 		}
