@@ -154,7 +154,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Gladiator
- Hit chance: 68% | DPT: 5
+ Hit chance: 66% | DPT: 4
  MSRP: 130
 
 ==================================
@@ -184,7 +184,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian
- Hit chance: 69% | DPT: 3
+ Hit chance: 66% | DPT: 3
  MSRP: 50
 
 ==================================
@@ -249,7 +249,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Weeping Angel
- Effect chance: 74%
+ Effect chance: 75%
  MSRP: 130
 
 ==================================
@@ -289,7 +289,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 68% | DPT: 2
+ Hit chance: 69% | DPT: 2
  MSRP: 50
 
 ==================================
@@ -403,7 +403,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Basilisk
- Hit chance: 76% | DPT: 3
+ Hit chance: 77% | DPT: 4
  Effect chance: 100%
  MSRP: 130
 
@@ -448,7 +448,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Basilisk
- Hit chance: 78% | DPT: 4
+ Hit chance: 77% | DPT: 4
  Effect chance: 100%
  MSRP: 80
 
@@ -472,7 +472,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 73% | DPT: 2
+ Hit chance: 73% | DPT: 3
  MSRP: 20
 
 ==================================
@@ -555,7 +555,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Weeping Angel
- Hit chance: 14% | DPT: 1
+ Hit chance: 15% | DPT: 1
  Effect chance: 80%
  MSRP: 50
 
@@ -678,7 +678,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 69% | DPT: 3
+ Hit chance: 68% | DPT: 3
  MSRP: 20
 
 ==================================
@@ -699,7 +699,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 69% | DPT: 4
+ Hit chance: 68% | DPT: 4
  MSRP: 30
 
 ==================================
@@ -809,8 +809,8 @@ Wooden Spear
  Level: Beginner
  Usable by: Bard, Barbarian, 
  Fighter
- Hit chance: 62% | DPT: 2
- Effect chance: 61%
+ Hit chance: 64% | DPT: 2
+ Effect chance: 62%
  MSRP: 50
 
 ==================================
@@ -835,6 +835,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
+ Hit chance: 1% | DPT: 0
  Heal chance: 94% | HPT: 3
  MSRP: 10
 
@@ -854,7 +855,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 67% | DPT: 3
+ Hit chance: 66% | DPT: 3
  MSRP: 10
 
 ==================================
@@ -875,7 +876,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Barbarian, Fighter
- Hit chance: 67% | DPT: 4
+ Hit chance: 66% | DPT: 4
  MSRP: 130
 
 ==================================
@@ -919,7 +920,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Minotaur
- Hit chance: 68% | DPT: 3
+ Hit chance: 67% | DPT: 3
  Effect chance: 46%
  MSRP: 130
 
@@ -1078,7 +1079,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 67% | DPT: 2
+ Hit chance: 65% | DPT: 2
  MSRP: 50
 
 ==================================
@@ -1115,7 +1116,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Bard, Barbarian
- Hit chance: 69% | DPT: 6
+ Hit chance: 66% | DPT: 5
  MSRP: 130
 
 ==================================
@@ -1141,8 +1142,8 @@ Wooden Spear
 
  Level: 2
  Usable by: All
- Hit chance: 2% | DPT: 0
- Heal chance: 79% | HPT: 2
+ Hit chance: 2% | DPT: 1
+ Heal chance: 78% | HPT: 2
  MSRP: 130
 
 ==================================
@@ -1332,7 +1333,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Barbarian
- Hit chance: 68% | DPT: 8
+ Hit chance: 67% | DPT: 8
  MSRP: 80
 
 ==================================
@@ -1377,7 +1378,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard, Fighter
- Hit chance: 68% | DPT: 4
+ Hit chance: 67% | DPT: 3
  MSRP: 30
 
 ==================================
