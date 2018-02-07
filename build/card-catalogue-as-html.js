@@ -1,10 +1,10 @@
 /* eslint-disable class-methods-use-this, max-len */
 const Promise = require('bluebird');
 
-const { actionCardHTML, itemCardHTML } = require('./helpers/card');
-const allCards = require('./cards/helpers/all.js');
-const allItems = require('./items/helpers/all.js');
-const generateDocs = require('./helpers/generate-docs');
+const { actionCardHTML, itemCardHTML } = require('../helpers/card');
+const allCards = require('../cards/helpers/all.js');
+const allItems = require('../items/helpers/all.js');
+const generateDocs = require('./generate-docs');
 
 const cardList = allCards.map(({ cardType }) => `<a href="#${cardType}">${cardType}</a>`);
 const itemList = allItems.map(({ itemType }) => `<a href="#${itemType}">${itemType}</a>`);
