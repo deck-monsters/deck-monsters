@@ -1,83 +1,61 @@
+/* eslint-disable max-len */
 const { expect, sinon } = require('../shared/test-setup');
 
 const Hit = require('./hit');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Coil = require('./coil');
-const pause = require('../helpers/pause');
 const { ATTACK_PHASE } = require('../helpers/phases');
 
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../helpers/creature-types');
 
 describe('./cards/coil.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const coil = new Coil();
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: coil.targetProp });
 
-		const stats = `${hit.stats}
+		const stats = `Immobilize and hit your opponent by coiling your serpentine body around them and squeezing. If opponent is immune, hit instead.
 
- +2 against Gladiator, Minotaur
- -2 against Basilisk
-inneffective against Weeping Angel
-Chance to immobilize opponent by coiling your serpentine body around them and squeezing.`;
+If already immobilized, hit instead.
+${hit.stats}
+ +2 advantage vs Gladiator, Minotaur
+ -2 disadvantage vs Basilisk, Jinn
+
+Opponent breaks free by rolling 1d20 vs immobilizer's dex +/- advantage/disadvantage - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+
+-1 hp each turn immobilized.`;
 
 		expect(coil).to.be.an.instanceof(Coil);
-		expect(coil.freedomThresholdModifier).to.equal(0);
-		expect(coil.dexModifier).to.equal(2);
-		expect(coil.strModifier).to.equal(0);
-		expect(coil.hitOnFail).to.be.false;
+		expect(coil.freedomThresholdModifier).to.equal(2);
+		expect(coil.freedomSavingThrowTargetAttr).to.equal('dex');
+		expect(coil.targetProp).to.equal('dex');
 		expect(coil.doDamageOnImmobilize).to.be.true;
 		expect(coil.ongoingDamage).to.equal(1);
 		expect(coil.stats).to.equal(stats);
 		expect(coil.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, MINOTAUR]);
-		expect(coil.weakAgainstCreatureTypes).to.deep.equal([BASILISK]);
+		expect(coil.weakAgainstCreatureTypes).to.deep.equal([BASILISK, JINN]);
+		expect(coil.uselessAgainstCreatureTypes).to.deep.equal([]);
 		expect(coil.permittedClassesAndTypes).to.deep.equal([BASILISK]);
 	});
 
 	it('can be instantiated with options', () => {
 		const coil = new Coil({
 			freedomThresholdModifier: 2,
-			strModifier: 4,
-			dexModifier: 4,
-			hitOnFail: true,
 			doDamageOnImmobilize: false,
 			ongoingDamage: 0
 		});
 
 		expect(coil).to.be.an.instanceof(Coil);
 		expect(coil.freedomThresholdModifier).to.equal(2);
-		expect(coil.dexModifier).to.equal(4);
-		expect(coil.strModifier).to.equal(4);
-		expect(coil.hitOnFail).to.be.true;
 		expect(coil.doDamageOnImmobilize).to.be.false;
 		expect(coil.ongoingDamage).to.equal(0);
 	});
 
 	it('does ongoingDamage until opponent breaks free', () => {
 		const coil = new Coil();
-		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(coil)), 'checkSuccess');
+		const checkSuccessStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(coil))), 'checkSuccess');
 		const hitCheckStub = sinon.stub(Object.getPrototypeOf(Object.getPrototypeOf(coil)), 'hitCheck');
 
 		const player = new Basilisk({ name: 'player' });

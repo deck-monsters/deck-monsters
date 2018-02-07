@@ -1,6 +1,10 @@
 const { getChoices, getCreatureTypeChoices } = require('../../helpers/choices');
 const PRONOUNS = require('../../helpers/pronouns');
 
+const CREATURE_TYPES = require('../../helpers/creature-types');
+
+const names = require('../../helpers/names');
+
 const allMonsters = require('./all');
 
 const genders = Object.keys(PRONOUNS);
@@ -55,7 +59,10 @@ ${getCreatureTypeChoices(allMonsters)}`,
 			let question = '';
 			if (alreadyTaken) question += 'That name is already taken, please choose a different name. ';
 
-			question += `What would you like to name your new ${Monster.creatureType.toLowerCase()}?`;
+			const name1 = names(Monster.creatureType, options.gender, monsterNames);
+			const name2 = names(Monster.creatureType, options.gender, [name1, ...monsterNames]);
+
+			question += `What would you like to name ${PRONOUNS[options.gender].him}? ${name1}? ${name2}? Something else?`;
 
 			return channel({
 				question
@@ -70,15 +77,43 @@ ${getCreatureTypeChoices(allMonsters)}`,
 			return options;
 		});
 
-	const askForColor = () => Promise
+	const askForColor = Monster => Promise
 		.resolve()
 		.then(() => {
 			if (color !== undefined) {
 				return color;
 			}
 
+			let example;
+			let descriptor;
+			switch (Monster.creatureType) {
+				case CREATURE_TYPES.BASILISK:
+					example = 'gold and black diamond patterned';
+					descriptor = 'skin look like';
+					break;
+				case CREATURE_TYPES.MINOTAUR:
+					example = 'scarred, wrinkled, and beautifully auburn';
+					descriptor = 'skin and hair look like';
+					break;
+				case CREATURE_TYPES.GLADIATOR:
+					example = 'tattered rags';
+					descriptor = 'garments look like';
+					break;
+				case CREATURE_TYPES.WEEPING_ANGEL:
+					example = 'deceptively glorious';
+					descriptor = 'raiment be';
+					break;
+				case CREATURE_TYPES.JINN:
+					example = 'slightly translucent blue';
+					descriptor = 'nascent form be';
+					break;
+				default:
+					example = 'blue';
+					descriptor = 'clothing look like';
+			}
+
 			return channel({
-				question: `What color should ${options.name} be?`
+				question: `What should ${PRONOUNS[options.gender].his} ${descriptor}? (eg: ${example})`
 			});
 		})
 		.then((answer) => {
@@ -95,7 +130,7 @@ ${getCreatureTypeChoices(allMonsters)}`,
 
 			return channel({
 				question:
-`What gender is ${options.name} the ${options.color} ${Monster.creatureType.toLowerCase()}?
+`What gender should your ${Monster.creatureType.toLowerCase()} be?
 
 ${getChoices(genders)}`,
 				choices: Object.keys(genders)
@@ -115,8 +150,8 @@ ${getChoices(genders)}`,
 
 			return Monster;
 		})
-		.then(() => askForName(Monster))
-		.then(askForColor)
 		.then(() => askForGender(Monster))
+		.then(() => askForName(Monster))
+		.then(() => askForColor(Monster))
 		.then(() => new Monster(options));
 };

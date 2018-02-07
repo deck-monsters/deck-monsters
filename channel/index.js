@@ -3,13 +3,9 @@ const Promise = require('bluebird');
 const BaseClass = require('../shared/baseClass');
 const pause = require('../helpers/pause');
 
-const THROTTLE_RATE = 5000;
-
-const sendMessage = (channel, announce) => new Promise((resolve) => {
-	pause.setTimeout(() => {
-		resolve(channel ? channel({ announce }) : Promise.resolve());
-	}, THROTTLE_RATE);
-});
+const sendMessage = (channel, announce) => Promise.resolve()
+	.then(() => channel && channel({ announce })
+		.then(() => Promise.delay(pause.getThrottleRate())));
 
 class ChannelManager extends BaseClass {
 	constructor (options, log) {
@@ -19,17 +15,11 @@ class ChannelManager extends BaseClass {
 		this.queue = [];
 		this.log = log;
 
-		const sendMessagesLoop = () => new Promise((resolve) => {
-			const timeout = () => pause.setTimeout(() => resolve(), THROTTLE_RATE * 1.5);
-
-			this.sendMessages()
-				.then(timeout)
-				.catch((err) => {
-					log(err);
-					timeout();
-				});
-		})
-			.then(() => pause.setTimeout(() => sendMessagesLoop(), 0));
+		const sendMessagesLoop = () => this
+			.sendMessages()
+			.catch(err => log(err))
+			.then(() => Promise.delay(pause.getThrottleRate() * 1.5))
+			.then(() => setTimeout(() => sendMessagesLoop(), 0));
 
 		sendMessagesLoop();
 	}
@@ -45,11 +35,15 @@ class ChannelManager extends BaseClass {
 	queueMessage ({
 		announce, channel, channelName = Date.now(), event
 	}) {
-		if (channel && !this.getChannel(channelName)) {
-			this.addChannel({ channel, channelName });
-		}
+		return Promise
+			.resolve()
+			.then(() => {
+				if (channel && !this.getChannel(channelName)) {
+					this.addChannel({ channel, channelName });
+				}
 
-		this.queue.push({ announce, channelName, event });
+				this.queue.push({ announce, channelName, event });
+			});
 	}
 
 	// Normally send messages for all channels when called, but allow this to be overriden as needed
@@ -64,12 +58,14 @@ class ChannelManager extends BaseClass {
 			})
 			.then(messagesForChannel => messagesForChannel.reduce((messages, item) => {
 				let message = messages[messages.length - 1];
+				const announceLength = item.announce ? item.announce.length : 0;
 
-				if (!message || (message.channelName !== item.channelName)) {
+				if (!message || message.channelName !== item.channelName || (message.length + announceLength) > 3000) {
 					message = {
 						announcements: [],
 						channelName: item.channelName,
-						events: []
+						events: [],
+						length: 0
 					};
 
 					messages.push(message);
@@ -77,10 +73,11 @@ class ChannelManager extends BaseClass {
 
 				if (item.announce) message.announcements.push(item.announce);
 				if (item.event) message.events.push(item.event);
+				message.length += announceLength;
 
 				return messages;
 			}, []))
-			.then(messages => Promise.map(messages, (message) => {
+			.then(messages => Promise.mapSeries(messages, (message) => {
 				const channel = this.channels[message.channelName];
 
 				return sendMessage(channel, message.announcements.join('\n'))

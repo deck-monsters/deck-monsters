@@ -1,3 +1,5 @@
+const AdrenalineRushCard = require('../adrenaline-rush');
+const BadBatchCard = require('../bad-batch');
 const BasicShieldCard = require('../basic-shield');
 const BattleFocusCard = require('../battle-focus');
 const BerserkCard = require('../berserk');
@@ -6,14 +8,18 @@ const BlastCard = require('../blast');
 const BlinkCard = require('../blink');
 const BoostCard = require('../boost');
 const BrainDrainCard = require('../brain-drain');
+const CalisthenicsCard = require('../calisthenics');
 const CamouflageVestCard = require('../camouflage-vest');
 const CloakOfInvisibilityCard = require('../cloak-of-invisibility');
 const CoilCard = require('../coil');
 const ConstrictCard = require('../constrict');
 const CurseCard = require('../curse');
+const DelayedHit = require('../delayed-hit');
+const EcdysisCard = require('../ecdysis');
 const EnchantedFaceswapCard = require('../enchanted-faceswap');
 const EnthrallCard = require('../enthrall');
 const EntranceCard = require('../entrance');
+const FelineCompanionCard = require('../feline-companion');
 const FightOrFlightCard = require('../fight-or-flight');
 const FistsOfVillainyCard = require('../fists-of-villainy');
 const FistsOfVirtueCard = require('../fists-of-virtue');
@@ -29,10 +35,13 @@ const IocaneCard = require('../iocane');
 const KalevalaCard = require('../kalevala');
 const LuckyStrike = require('../lucky-strike');
 const MesmerizeCard = require('../mesmerize');
+const MolassesCard = require('../molasses');
 const PickPocketCard = require('../pick-pocket');
 const PoundCard = require('../pound');
+const PrionDiseaseCard = require('../prion-disease');
 const RandomCard = require('../random');
 const RehitCard = require('../rehit');
+const SandstormCard = require('../sandstorm');
 const ScotchCard = require('../scotch');
 const SurvivalKnifeCard = require('../survival-knife');
 const ThickSkinCard = require('../thick-skin');
@@ -42,6 +51,8 @@ const WhiskeyShotCard = require('../whiskey-shot');
 const WoodenSpearCard = require('../wooden-spear');
 
 module.exports = [
+	AdrenalineRushCard,
+	BadBatchCard,
 	BasicShieldCard,
 	BattleFocusCard,
 	BerserkCard,
@@ -50,14 +61,18 @@ module.exports = [
 	BlinkCard,
 	BoostCard,
 	BrainDrainCard,
+	CalisthenicsCard,
 	CamouflageVestCard,
 	CloakOfInvisibilityCard,
 	CoilCard,
 	ConstrictCard,
 	CurseCard,
+	DelayedHit,
 	EnchantedFaceswapCard,
 	EnthrallCard,
 	EntranceCard,
+	EcdysisCard,
+	FelineCompanionCard,
 	FightOrFlightCard,
 	FistsOfVillainyCard,
 	FistsOfVirtueCard,
@@ -71,12 +86,15 @@ module.exports = [
 	HornSwipeCard,
 	IocaneCard,
 	KalevalaCard,
-	PickPocketCard,
 	LuckyStrike,
 	MesmerizeCard,
+	MolassesCard,
+	PickPocketCard,
 	PoundCard,
+	PrionDiseaseCard,
 	RandomCard,
 	RehitCard,
+	SandstormCard,
 	ScotchCard,
 	SurvivalKnifeCard,
 	ThickSkinCard,

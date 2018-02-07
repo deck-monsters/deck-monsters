@@ -1,29 +1,10 @@
-const { expect, sinon } = require('../../shared/test-setup');
+const { expect } = require('../../shared/test-setup');
 
 const Beastmaster = require('../beastmaster');
-const pause = require('../../helpers/pause');
 
 const randomCharacter = require('./random');
 
 describe('./characters/index.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can get a random character', () => {
 		const character = randomCharacter();
 

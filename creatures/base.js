@@ -1,66 +1,48 @@
+const Promise = require('bluebird');
 const random = require('lodash.random');
+const reduce = require('lodash.reduce');
 const sample = require('lodash.sample');
 const startCase = require('lodash.startcase');
 
 const BaseClass = require('../shared/baseClass');
 
-const { signedNumber } = require('../helpers/signed-number');
-const { getLevel } = require('../helpers/levels');
+const { describeLevels, getLevel } = require('../helpers/levels');
+const { getAttributeChoices } = require('../helpers/choices');
+const { getItemCounts } = require('../items/helpers/counts');
+const { itemCard } = require('../helpers/card');
+const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
+const getUniqueItems = require('../items/helpers/unique-items');
+const isMatchingItem = require('../items/helpers/is-matching');
 const names = require('../helpers/names');
 const pause = require('../helpers/pause');
 const PRONOUNS = require('../helpers/pronouns');
 
-const BASE_AC = 5;
-const BASE_STR = 5;
-const BASE_DEX = 5;
-const BASE_INT = 5;
-const AC_VARIANCE = 2;
-const BASE_HP = 28;
-const HP_VARIANCE = 5;
-// Do not access these directly. Get from this.getMaxModifications
-const MAX_PROP_MODIFICATIONS = {
-	ac: 1,
-	str: 1,
-	dex: 1,
-	int: 1,
-	xp: 40,
-	hp: 12
-};
-const MAX_BOOSTS = {
-	dex: 10,
-	str: 6,
-	int: 8,
-	hp: (BASE_HP * 2) + HP_VARIANCE,
-	ac: (BASE_AC * 2) + AC_VARIANCE
-};
+const {
+	AC_VARIANCE,
+	BASE_AC,
+	BASE_DEX,
+	BASE_HP,
+	BASE_INT,
+	BASE_STR,
+	HP_VARIANCE,
+	MAX_BOOSTS,
+	MAX_PROP_MODIFICATIONS
+} = require('../helpers/stat-constants');
+
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
+const DEFAULT_ITEM_SLOTS = 12;
 
 class BaseCreature extends BaseClass {
 	constructor ({
 		acVariance = random(0, AC_VARIANCE),
 		hpVariance = random(0, HP_VARIANCE),
 		gender = sample(Object.keys(PRONOUNS)),
-		DEFAULT_AC, // legacy
-		DEFAULT_HP, // legacy
+		xp = 0,
 		...options
 	} = {}) {
-		super({ acVariance, hpVariance, gender, ...options });
-
-		// Clean up old AC code
-		if (DEFAULT_AC) {
-			this.setOptions({
-				acVariance: DEFAULT_AC - 5
-			});
-		}
-
-		// Clean up old HP code
-		if (DEFAULT_HP) {
-			this.setOptions({
-				hpVariance: DEFAULT_HP - 23
-			});
-		}
+		super({ acVariance, hpVariance, gender, xp, ...options });
 
 		if (this.name === BaseCreature.name) {
 			throw new Error('The BaseCreature should not be instantiated directly!');
@@ -107,22 +89,32 @@ class BaseCreature extends BaseClass {
 
 	get stats () {
 		return `Type: ${this.creatureType}
-Class: ${this.class}
-Level: ${this.level || this.displayLevel} | XP: ${this.xp}
-AC: ${this.ac} | HP: ${this.hp}/${this.maxHp}
-DEX: ${this.dex} | STR: ${this.str} | INT: ${this.int}${
-	this.dexModifier === 0 ? '' :
+Class: ${this.class}${
+	!this.team ? '' :
 		`
-${signedNumber(this.dexModifier)} to hit`
-}${
-	this.strModifier === 0 ? '' :
-		`
-${signedNumber(this.strModifier)} to damage`
-}${
-	this.intModifier === 0 ? '' :
-		`
-${signedNumber(this.intModifier)} to spells`
-}`;
+Team: ${this.team}`
+}
+Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
+	}
+
+	get team () {
+		return this.options.team || undefined;
+	}
+
+	set team (team) {
+		this.setOptions({
+			team
+		});
+	}
+
+	get targetingStrategy () {
+		return this.options.targetingStrategy || undefined;
+	}
+
+	set targetingStrategy (targetingStrategy) {
+		this.setOptions({
+			targetingStrategy
+		});
 	}
 
 	get maxHp () {
@@ -150,8 +142,7 @@ ${signedNumber(this.intModifier)} to spells`
 	}
 
 	get displayLevel () {
-		const level = getLevel(this.xp);
-		return level ? `level ${level}` : 'beginner';
+		return describeLevels(this.level).description;
 	}
 
 	get xp () {
@@ -369,6 +360,10 @@ Battles won: ${this.battles.wins}`;
 		});
 	}
 
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
+	}
+
 	get items () {
 		if (!Array.isArray(this.options.items)) this.items = [];
 
@@ -382,7 +377,10 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get encounterModifiers () {
-		return (this.encounter || {}).modifiers || {};
+		if (!this.encounter) this.encounter = {};
+		if (!this.encounter.modifiers) this.encounter.modifiers = {};
+
+		return this.encounter.modifiers;
 	}
 
 	set encounterModifiers (modifiers = {}) {
@@ -472,6 +470,87 @@ Battles won: ${this.battles.wins}`;
 		return this.canHold(item);
 	}
 
+	canUseItem (item) {
+		return this.canHoldItem(item);
+	}
+
+	addItem (item) {
+		this.items = sortItemsAlphabetically([...this.items, item]);
+
+		if (item.onAdded) {
+			item.onAdded(this);
+		}
+
+		item.emit('added', { creature: this });
+		this.emit('itemAdded', { item });
+	}
+
+	removeItem (itemToRemove) {
+		const itemIndex = this.items.findIndex(item => isMatchingItem(item, itemToRemove));
+
+		if (itemIndex >= 0) {
+			const foundItem = this.items.splice(itemIndex, 1)[0];
+
+			if (foundItem.onRemoved) {
+				foundItem.onRemoved(this);
+			}
+
+			foundItem.emit('removed', { creature: this });
+			this.emit('itemRemoved', { item: foundItem });
+
+			return foundItem;
+		}
+
+		return undefined;
+	}
+
+	giveItem (itemToGive, recipient) {
+		const item = this.removeItem(itemToGive);
+
+		if (item) {
+			recipient.addItem(item);
+
+			this.emit('itemGiven', { item, recipient });
+		}
+	}
+
+	useItem ({ channel, channelName, character = this, item, monster }) {
+		return Promise.resolve()
+			.then(() => {
+				if (monster && monster.inEncounter && !monster.items.find(potentialItem => isMatchingItem(potentialItem, item))) {
+					return Promise.reject(channel({
+						announce: `${monster.givenName} doesn't seem to be holding that item.`
+					}));
+				}
+
+				return item.use({ channel, channelName, character, monster });
+			});
+	}
+
+	lookAtItems (channel, items = this.items) {
+		if (items.length < 1) {
+			return Promise.reject();
+		}
+
+		const sortedItems = sortItemsAlphabetically(items);
+
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => Promise.each(getUniqueItems(sortedItems), item => channelManager.queueMessage({
+				announce: itemCard(item, true),
+				channel,
+				channelName
+			})))
+			.then(() => channelManager.queueMessage({
+				announce: reduce(getItemCounts(sortedItems), (counts, count, card) =>
+					`${counts}${card} (${count})
+`, ''),
+				channel,
+				channelName
+			}))
+			.then(() => channelManager.sendMessages());
+	}
+
 	leaveCombat (activeContestants) {
 		this.emit('leave', {
 			activeContestants
@@ -482,8 +561,16 @@ Battles won: ${this.battles.wins}`;
 		return false;
 	}
 
+	/* assailant is the monster who attacked you, not the contestant who owns the monster */
 	hit (damage = 0, assailant, card) {
-		if (this.hp < 1) return false;
+		const hitLog = this.encounterModifiers.hitLog || [];
+		hitLog.unshift({
+			assailant,
+			damage,
+			card,
+			when: Date.now()
+		});
+		this.encounterModifiers.hitLog = hitLog;
 
 		if (this.encounterModifiers.ac >= damage) {
 			this.encounterModifiers.ac -= damage;
@@ -519,11 +606,11 @@ ac boost is now 0.`
 			});
 		}
 
-		if (this.hp <= 0) {
+		if (originalHP > 0 && this.hp <= 0) {
 			return this.die(assailant);
 		}
 
-		return true;
+		return !this.dead;
 	}
 
 	heal (amount = 0) {
@@ -552,9 +639,10 @@ ac boost is now 0.`
 	}
 
 	setModifier (attr, amount = 0, permanent = false) {
-		const prevValue = (permanent) ? this.modifiers[attr] || 0 : this.encounterModifiers[attr] || 0;
+		const prevAmount = (permanent) ? this.modifiers[attr] || 0 : this.encounterModifiers[attr] || 0;
+		const prevValue = this[attr];
 		const modifiers = Object.assign({}, (permanent) ? this.modifiers : this.encounterModifiers, {
-			[attr]: prevValue + amount
+			[attr]: prevAmount + amount
 		});
 
 		if (permanent) {
@@ -566,6 +654,7 @@ ac boost is now 0.`
 		this.emit('modifier', {
 			amount,
 			attr,
+			prevAmount,
 			prevValue
 		});
 	}
@@ -657,6 +746,55 @@ ac boost is now 0.`
 		};
 
 		this.battles = battles;
+	}
+
+	edit (channel) {
+		return Promise
+			.resolve()
+			.then(() => this.look && this.look(channel))
+			.then(() => channel({
+				question:
+`Which attribute would you like to edit?
+
+${getAttributeChoices(this.options)}`,
+				choices: Object.keys(Object.keys(this.options))
+			}))
+			.then(index => Object.keys(this.options)[index])
+			.then(key => channel({
+				question:
+`The current value of ${key} is ${JSON.stringify(this.options[key])}. What would you like the new value of ${key} to be?`
+			})
+				.then((strVal) => {
+					const oldVal = this.options[key];
+					let newVal;
+
+					try {
+						newVal = JSON.parse(strVal);
+					} catch (ex) {
+						newVal = +strVal;
+
+						if (isNaN(newVal)) { // eslint-disable-line no-restricted-globals
+							newVal = strVal;
+						}
+					}
+
+					return { key, oldVal, newVal };
+				}))
+			.then(({ key, oldVal, newVal }) => channel({
+				question:
+`The value of ${key} has been updated from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}. Would you like to keep this change? (yes/no)` // eslint-disable-line max-len
+			})
+				.then((answer = '') => {
+					if (answer.toLowerCase() === 'yes') {
+						this.setOptions({
+							[key]: newVal
+						});
+
+						return channel({ announce: 'Change saved.' });
+					}
+
+					return channel({ announce: 'Change reverted.' });
+				}));
 	}
 }
 

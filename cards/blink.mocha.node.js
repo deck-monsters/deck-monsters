@@ -1,37 +1,14 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE } = require('../helpers/phases');
 const BlinkCard = require('./blink');
 const TestCard = require('./test');
 const Basilisk = require('../monsters/basilisk');
 const WeepingAngel = require('../monsters/weeping-angel');
-const pause = require('../helpers/pause');
 
 const { WEEPING_ANGEL } = require('../helpers/creature-types');
 
 describe('./cards/blink.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const blink = new BlinkCard();
 
@@ -41,7 +18,7 @@ describe('./cards/blink.js', () => {
 		expect(blink.curseAmountDice).to.equal('4d4');
 		expect(blink.cursedProp).to.equal('xp');
 		expect(blink.hasChanceToHit).to.be.false;
-		expect(blink.stats).to.equal('Drain 1d4 hp and 4d4 xp');// eslint-disable-line max-len
+		expect(blink.stats).to.equal('1d20 vs opponent\'s int. They are removed from the battle (and can not be targeted).\nOn what would have been their next turn, if you are still alive you drain 1d4 hp and 4d4 xp');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {
@@ -59,7 +36,7 @@ describe('./cards/blink.js', () => {
 		expect(blink.curseAmountDice).to.equal('4d6');
 		expect(blink.cursedProp).to.equal('ac');
 		expect(blink.hasChanceToHit).to.be.true;
-		expect(blink.stats).to.equal('Drain 2d4 hp and 4d6 ac');// eslint-disable-line max-len
+		expect(blink.stats).to.equal('1d20 vs opponent\'s int. They are removed from the battle (and can not be targeted).\nOn what would have been their next turn, if you are still alive you drain 2d4 hp and 4d6 ac');// eslint-disable-line max-len
 	});
 
 	it('can only be played by WeepingAngels', () => {
@@ -227,8 +204,7 @@ describe('./cards/blink.js', () => {
 			.then(() => expect(card.played).to.equal(1))
 			.then(() => blink.play(player, target, ring, ring.contestants))
 			.then(() => expect(target.encounterEffects.length).to.equal(1))
-			.then(() => target.encounterEffects[0]({ card, phase: DEFENSE_PHASE, player, target }))
-			.then(cardThatTargetsBlinked => cardThatTargetsBlinked.play(player, target))
+			.then(() => card.play(player, target, ring, ring.contestants))
 			.then(() => {
 				attackRollStub.restore();
 				hitSpy.restore();
@@ -267,8 +243,7 @@ describe('./cards/blink.js', () => {
 		expect(card.played).to.be.undefined;
 		return blink.play(player, target, ring, ring.contestants)
 			.then(() => expect(target.encounterEffects.length).to.equal(1))
-			.then(() => target.encounterEffects[0]({ card, phase: DEFENSE_PHASE, player, target: player }))
-			.then(cardThatTargetsSelf => cardThatTargetsSelf.play(player, player))
+			.then(() => card.play(player, target, ring, ring.contestants))
 			.then(() => {
 				attackRollStub.restore();
 				hitSpy.restore();

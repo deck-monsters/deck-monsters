@@ -1,6 +1,6 @@
 const SurvivalKnifeCard = require('./survival-knife');
 
-const { CLERIC } = require('../helpers/classes');
+const { BARD, CLERIC } = require('../helpers/classes');
 
 class IocaneCard extends SurvivalKnifeCard {
 	constructor ({
@@ -13,6 +13,6 @@ class IocaneCard extends SurvivalKnifeCard {
 
 IocaneCard.cardType = 'Iocane';
 IocaneCard.description = 'They were both poisoned. I spent the last few years building up an immunity to iocane powder...';
-IocaneCard.permittedClassesAndTypes = [CLERIC];
+IocaneCard.permittedClassesAndTypes = [BARD, CLERIC];
 
 module.exports = IocaneCard;

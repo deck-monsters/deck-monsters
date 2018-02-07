@@ -1,11 +1,12 @@
 const { randomColor } = require('grab-color-names');
 const emoji = require('node-emoji');
+const random = require('lodash.random');
 const sample = require('lodash.sample');
 const shuffle = require('lodash.shuffle');
 
 const { all: allMonsters } = require('../../monsters');
 const { fillDeck, getMinimumDeck } = require('../../cards');
-const { randomInt } = require('../../helpers/chance');
+const { TARGET_HUMAN_PLAYER_WEAK } = require('../../helpers/targeting-strategies');
 const { XP_PER_VICTORY } = require('../../helpers/experience');
 const Beastmaster = require('../beastmaster');
 
@@ -17,8 +18,8 @@ module.exports = ({
 	...options
 } = {}) => {
 	if (!battles.total) {
-		battles.total = randomInt({ max: 80 });
-		battles.wins = randomInt({ max: battles.total });
+		battles.total = random(0, 180);
+		battles.wins = random(0, battles.total);
 		battles.losses = battles.total - battles.wins;
 	}
 
@@ -39,6 +40,7 @@ module.exports = ({
 			const { canHold } = monster;
 
 			monster.canHold = object => canHold.call(monster, object) && !object.noBosses;
+			monster.targetingStrategy = TARGET_HUMAN_PLAYER_WEAK; // Prefer not to target other bosses
 		}
 
 		return monster;

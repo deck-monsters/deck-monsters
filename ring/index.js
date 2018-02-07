@@ -1,18 +1,21 @@
 /* eslint-disable max-len */
 
+const Promise = require('bluebird');
 const random = require('lodash.random');
 const shuffle = require('lodash.shuffle');
 
-const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
+const { actionCard, monsterCard } = require('../helpers/card');
 const { calculateXP } = require('../helpers/experience');
 const { getTarget } = require('../helpers/targeting-strategies');
-const { monsterCard } = require('../helpers/card');
 const { randomContestant } = require('../helpers/bosses');
+const { sortCardsAlphabetically } = require('../cards/helpers/sort');
 const BaseClass = require('../shared/baseClass');
 const delayTimes = require('../helpers/delay-times');
+const getUniqueCards = require('../cards/helpers/unique-cards');
 const pause = require('../helpers/pause');
 
-const MAX_MONSTERS = 5;
+const MAX_BOSSES = 5;
+const MAX_MONSTERS = 8;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
 
@@ -122,19 +125,20 @@ class Ring extends BaseClass {
 				});
 
 				this.channelManager.sendMessages()
-					.then(() => this.startFightTimer({ channel, channelName }));
+					.then(() => this.startFightTimer());
 			});
 	}
 
 	addMonster ({
-		monster, character, channel, channelName
+		monster, character, channel, channelName, isBoss
 	}) {
 		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
 			const contestant = {
 				monster,
 				character,
 				channel,
-				channelName
+				channelName,
+				isBoss
 			};
 
 			this.contestants = shuffle([...this.contestants, contestant]);
@@ -153,7 +157,7 @@ class Ring extends BaseClass {
 				});
 
 				this.channelManager.sendMessages()
-					.then(() => this.startFightTimer({ channel, channelName }));
+					.then(() => this.startFightTimer());
 			}
 		} else {
 			this.channelManager.queueMessage({
@@ -172,25 +176,97 @@ class Ring extends BaseClass {
 		return this.contestants.find(contestant => (contestant.character === character && contestant.monster === monster));
 	}
 
-	look (channel) {
-		const ringContentsDisplay = this.contestants.reduce((ringContents, contestant) => {
-			const contestantDisplay = monsterCard(contestant.character, true);
-			const monsterDisplay = monsterCard(contestant.monster, true);
-			return `${ringContents} ${contestantDisplay} sent the following monster into the ring: ${monsterDisplay}`;
-		}, '');
+	look (channel, showCharacters = true) {
+		const { length } = this.contestants;
 
-		if (ringContentsDisplay) {
-			return Promise
-				.resolve()
-				.then(() => channel({
-					announce: ringContentsDisplay
-				}));
+		if (length < 1) {
+			return Promise.reject(channel({
+				announce: 'The ring is empty.',
+				delay: 'short'
+			}));
 		}
 
-		return Promise.reject(channel({
-			announce: 'The ring is empty',
-			delay: 'short'
-		}));
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => channelManager.queueMessage({
+				announce:
+`###########################################
+There ${length === 1 ? 'is one contestant' : `are ${length} contestants`} in the ring.
+###########################################`,
+				channel,
+				channelName
+			}))
+			.then(() => Promise.each(this.contestants, (contestant) => {
+				let characterDisplay = '';
+				if (showCharacters) {
+					characterDisplay = `${monsterCard(contestant.character, true)}
+Sent the following monster into the ring:
+
+`;
+				}
+
+				const monsterDisplay = monsterCard(contestant.monster, !showCharacters);
+
+				return channelManager.queueMessage({
+					announce:
+`${characterDisplay}${monsterDisplay}###########################################`,
+					channel,
+					channelName
+				});
+			}))
+			.then(() => channelManager.sendMessages());
+	}
+
+	lookAtCards (channel) {
+		const { length } = this.contestants;
+
+		if (length < 1) {
+			return Promise.reject(channel({
+				announce: 'The ring is empty.',
+				delay: 'short'
+			}));
+		}
+
+		if (!this.inEncounter) {
+			return Promise.reject(channel({
+				announce: 'Wait until the encounter has started.',
+				delay: 'short'
+			}));
+		}
+
+		const { channelManager, channelName } = channel;
+		return Promise.resolve()
+			.then(() => channelManager.queueMessage({
+				announce:
+`###########################################
+The following cards are in play:
+`,
+				channel,
+				channelName
+			}))
+			.then(() => {
+				const cards = sortCardsAlphabetically(getUniqueCards(this.contestants.reduce((allCards, { monster }) => {
+					allCards.push(...monster.cards);
+
+					return allCards;
+				}, [])));
+
+				return Promise.each(cards, (card) => {
+					const cardDisplay = actionCard(card, true);
+
+					return channelManager.queueMessage({
+						announce: cardDisplay,
+						channel,
+						channelName
+					});
+				});
+			})
+			.then(() => channelManager.queueMessage({
+				announce: '###########################################',
+				channel,
+				channelName
+			}))
+			.then(() => channelManager.sendMessages());
 	}
 
 	startEncounter () {
@@ -198,7 +274,15 @@ class Ring extends BaseClass {
 
 		this.inEncounter = true;
 		this.encounter = {};
-		this.contestants.forEach(contestant => contestant.monster.startEncounter(this));
+		this.contestants.forEach(({ channel, channelName, monster }) => {
+			monster.startEncounter(this);
+
+			this.channelManager.queueMessage({
+				announce: 'The fight has begun! You may now type `look at monsters in the ring` to see all participants with their current stats, and `look at cards in the ring` to see the detailed stats of every card that will be in play.',
+				channel,
+				channelName
+			});
+		});
 
 		return true;
 	}
@@ -216,30 +300,57 @@ class Ring extends BaseClass {
 		this.emit('clear');
 	}
 
-	startFightTimer ({ channel, channelName }) {
+	startFightTimer () {
 		clearTimeout(this.fightTimer);
 
-		if (this.contestants.length >= MIN_MONSTERS) {
-			this.channelManager.queueMessage({
+		const getPlayerContestants = () => {
+			let hasBoss = false;
+			const playerContestants = this.contestants.filter((contestant) => {
+				if (contestant.isBoss) {
+					hasBoss = true;
+					return false;
+				}
+
+				return true;
+			});
+
+			return {
+				contestants: playerContestants,
+				numberOfMonstersInRing: playerContestants.length + (hasBoss ? 1 : 0)
+			};
+		};
+
+		const { contestants, numberOfMonstersInRing } = getPlayerContestants();
+
+		if (numberOfMonstersInRing >= MIN_MONSTERS) {
+			contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
 				announce: `Fight will begin in ${Math.floor(FIGHT_DELAY / 1000)} seconds.`,
 				channel,
 				channelName
-			});
+			}));
 
 			this.fightTimer = pause.setTimeout(() => {
-				if (this.contestants.length >= 2) {
+				const { numberOfMonstersInRing: numberOfMonstersStillInRing } = getPlayerContestants();
+
+				if (numberOfMonstersStillInRing >= MIN_MONSTERS) {
 					this.channelManager.sendMessages()
 						.then(() => this.fight());
 				}
 			}, FIGHT_DELAY);
+		} else if (numberOfMonstersInRing <= 0) {
+			this.emit('narration', {
+				narration: 'The ring is quiet save for the faint sound of footsteps fleeing into the distance.'
+			});
 		} else {
-			const needed = MIN_MONSTERS - this.contestants.length;
+			const needed = MIN_MONSTERS - numberOfMonstersInRing;
 			const monster = needed > 1 ? 'monsters' : 'monster';
-			this.channelManager.queueMessage({
-				announce: `Fight countdown will begin once ${needed} more ${monster} join the ring.`,
+			const join = needed > 1 ? 'join' : 'joins';
+
+			contestants.forEach(({ channel, channelName }) => this.channelManager.queueMessage({
+				announce: `Fight countdown will begin once ${needed} more ${monster} ${join} the ring.`,
 				channel,
 				channelName
-			});
+			}));
 		}
 	}
 
@@ -269,6 +380,7 @@ class Ring extends BaseClass {
 
 		// And we're off. The round variable is only used for reporting at the end
 		let round = 1;
+		let turn;
 
 		// This is the main loop that takes care of the "action" each character performs
 		// It's a promise so it can be chained, async, delayed, etc
@@ -281,25 +393,6 @@ class Ring extends BaseClass {
 			// By default, the next card anyone plays should be the one at the same position as the one currently being played
 			let nextCardIndex = cardIndex;
 
-			// But if we don't have any more contestants in this fight it's time to reset our list of contestants
-			// and it's going to be time to move on to the next card
-			if (activeContestants.length <= 1) {
-				activeContestants = [...activeContestants, ...getAllActiveContestants()];
-				nextCardIndex += 1;
-			}
-
-			// Let's get the current contestant and their monster
-			const playerContestant = activeContestants.shift();
-			const { monster: player } = playerContestant;
-
-			// Let's find our target
-			// This where we could do some fancy targetting logic if we wanted to
-			const targetContestant = getTarget({ playerContestant, contestants: getAllActiveContestants() });
-			const { monster: proposedTarget } = targetContestant;
-
-			// Find the card in the current player's hand at the current index
-			let card = player.cards[cardIndex];
-
 			// When this is called (see below) we pass the next contestant and card back into the looping
 			// If a card was played then emptyHanded will be reset to false, otherwise it will be the index of a character as described above
 			const next = () => resolve(doAction({
@@ -307,55 +400,57 @@ class Ring extends BaseClass {
 				cardIndex: nextCardIndex
 			}));
 
+			// But if we don't have any more contestants in this fight it's time to reset our list of contestants
+			// and it's going to be time to move on to the next card
+			if (activeContestants.length <= 1) {
+				nextCardIndex += 1;
+
+				if (activeContestants.length === 1) {
+					activeContestants = [...activeContestants, ...getAllActiveContestants()];
+				} else {
+					activeContestants = getAllActiveContestants();
+
+					next();
+					return;
+				}
+			}
+
+			// Let's get the current contestant and their monster
+			const playerContestant = activeContestants.shift();
+			const { monster: player } = playerContestant;
+
+			// Find the card in the current player's hand at the current index
+			const card = player.cards[cardIndex];
+
 			// Does the monster have a card at the current position?
 			if (card) {
+				// Emit an event at the start of each turn
+				if (turn !== cardIndex) {
+					turn = cardIndex;
+
+					this.emit('startTurn', {
+						turn,
+						contestants: getAllActiveContestants(),
+						round
+					});
+				}
+
 				// Emit an event when a character's turn begins
 				// Note that as written currently this will emit _only if they have a card to play_
-				this.emit('turnBegin', {
+				this.emit('playerTurnBegin', {
 					contestant: playerContestant,
 					round
 				});
 
+				// Next, let's find our target
+				const targetContestant = getTarget({
+					contestants: getAllActiveContestants(),
+					playerContestant,
+					strategy: playerContestant.monster.targetingStrategy
+				});
+				const { monster: proposedTarget } = targetContestant;
+
 				playerContestant.round = round;
-
-				// Now we're going to run through all of the possible effects
-				// Each effect should either return a card (which will replace the card that was going to be played)
-				// or do something in the background and then return nothing (in which case we'll keep the card we had)
-
-				// Let's clone the card before we get started on this - that way any modifications won't be saved
-				card = card.clone();
-
-				// First, run through the effects from the contestants
-				card = (() => {
-					const allActiveContestants = getAllActiveContestants();
-
-					return allActiveContestants.reduce((contestantCard, contestant) => contestant.monster.encounterEffects.reduce((effectCard, effect) => {
-						const modifiedCard = effect({
-							activeContestants: allActiveContestants,
-							card: effectCard,
-							phase: contestant.monster === player ? ATTACK_PHASE : DEFENSE_PHASE,
-							player,
-							ring,
-							proposedTarget
-						});
-
-						return modifiedCard || effectCard;
-					}, contestantCard), card);
-				})();
-
-				// Then, run through any global effects
-				card = ring.encounterEffects.reduce((currentCard, effect) => {
-					const modifiedCard = effect({
-						activeContestants: getAllActiveContestants(),
-						card: currentCard,
-						phase: GLOBAL_PHASE,
-						player,
-						ring,
-						proposedTarget
-					});
-
-					return modifiedCard || currentCard;
-				}, card);
 
 				// Track the fight log
 				fightLog.push(`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`);
@@ -401,6 +496,7 @@ class Ring extends BaseClass {
 					// Limit to 10 rounds (anyone left alive at that point will be a winner)
 					if (round === 10) {
 						resolve();
+						return;
 					}
 
 					// Increment the round counter
@@ -582,24 +678,30 @@ class Ring extends BaseClass {
 
 				pause.setTimeout(() => {
 					ring.spawnBoss();
-					ring.startBossTimer(); // Do it again in an hour
+					ring.startBossTimer(); // Do it again in about an hour
 				}, 120000);
 			}, random(2100000, 3480000));
 		}
 	}
 
 	spawnBoss () { // eslint-disable-line consistent-return
+		const numberOfBossesInRing = this.contestants.reduce((total, contestant) => total + (contestant.isBoss ? 1 : 0), 0);
+
 		// Only try to enter the ring if there's not a current fight in progress
-		if (!this.inEncounter) {
+		if (!this.inEncounter && numberOfBossesInRing < MAX_BOSSES) {
 			const contestant = randomContestant();
 
 			this.addMonster(contestant);
 
-			// Leave the ring after 10 minutes if no one joins the fight
-			const ring = this;
-			pause.setTimeout(() => {
-				ring.removeBoss(contestant);
-			}, 600000);
+			// What should we do after 10 minutes?
+			// 50/50 chance we'll stick around
+			if (random(1)) {
+				// Otherwise, leave the ring if no one joins the fight
+				const ring = this;
+				pause.setTimeout(() => {
+					ring.removeBoss(contestant);
+				}, 600000);
+			}
 
 			return contestant;
 		}

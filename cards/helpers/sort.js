@@ -1,11 +1,7 @@
-module.exports = cards => cards.sort((a, b) => {
-	if (a.cardType > b.cardType) {
-		return 1;
-	}
+const { sort } = require('../../helpers/sort');
 
-	if (a.cardType < b.cardType) {
-		return -1;
-	}
+const sortCardsAlphabetically = toBeSorted => sort(toBeSorted, 'cardType');
 
-	return 0;
-});
+module.exports = {
+	sortCardsAlphabetically
+};

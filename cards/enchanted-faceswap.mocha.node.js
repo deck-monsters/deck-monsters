@@ -4,34 +4,11 @@ const { DEFENSE_PHASE } = require('../helpers/phases');
 const Basilisk = require('../monsters/basilisk');
 const cards = require('./index');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');
-const pause = require('../helpers/pause');
 const RandomCard = require('./random');
 const TestCard = require('./test');
 const WeepingAngel = require('../monsters/weeping-angel');
 
 describe('./cards/enchanted-faceswap.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const faceswap = new EnchantedFaceswapCard();
 
@@ -111,11 +88,19 @@ describe('./cards/enchanted-faceswap.js', () => {
 		drawStub.onFirstCall().returns(heal);
 		drawStub.onSecondCall().returns(attack);
 
-		return faceswap.play(player, target)
-			.then(() => player.encounterEffects[0]({ card: random, phase: DEFENSE_PHASE, player: target }))
-			.then(modifiedCard => modifiedCard.play(target, player))
-			.then(() => player.encounterEffects[0]({ card: random, phase: DEFENSE_PHASE, player: target }))
-			.then(modifiedCard => modifiedCard.play(target, player))
+		const ring = {
+			contestants: [
+				{ character: {}, monster: player },
+				{ character: {}, monster: target }
+			],
+			channelManager: {
+				sendMessages: () => Promise.resolve()
+			}
+		};
+
+		return faceswap.play(player, target, ring, ring.contestants)
+			.then(() => random.play(target, player, ring, ring.contestants))
+			.then(() => random.play(target, player, ring, ring.contestants))
 			.then(() => {
 				drawStub.restore();
 

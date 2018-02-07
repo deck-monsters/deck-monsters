@@ -5,7 +5,7 @@ const chooseCards = require('./helpers/choose');
 const draw = require('./helpers/draw');
 const getUniqueCards = require('./helpers/unique-cards');
 const isMatchingCard = require('./helpers/is-matching');
-const sortCards = require('./helpers/sort');
+const { sortCardsAlphabetically } = require('./helpers/sort');
 
 module.exports = {
 	all,
@@ -18,5 +18,5 @@ module.exports = {
 	hydrateCard,
 	hydrateDeck,
 	isMatchingCard,
-	sortCards
+	sortCardsAlphabetically
 };

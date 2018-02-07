@@ -1,35 +1,18 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const WhiskeyShotCard = require('./whiskey-shot');
+const HealCard = require('./heal');
 const Basilisk = require('../monsters/basilisk');
-const pause = require('../helpers/pause');
 
 describe('./cards/whiskey-shot.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const whiskeyShot = new WhiskeyShotCard();
+		const heal = new HealCard({ healthDice: whiskeyShot.healthDice });
 
 		expect(whiskeyShot).to.be.an.instanceof(WhiskeyShotCard);
 		expect(whiskeyShot.healthDice).to.equal('1d8');
 		expect(whiskeyShot.probability).to.equal(40);
-		expect(whiskeyShot.stats).to.equal('Health: 1d8\nPossiblity of Stroke of Luck');
+		expect(whiskeyShot.stats).to.equal(heal.stats);
 	});
 
 	it('heals the player', () => {

@@ -4,29 +4,20 @@ const Beastmaster = require('./beastmaster');
 const HitCard = require('../cards/hit');
 const Minotaur = require('../monsters/minotaur');
 const WeepingAngel = require('../monsters/weeping-angel');
-const pause = require('../helpers/pause');
 
 describe('./characters/beastmaster.js', () => {
 	let channelStub;
-	let pauseStub;
 
 	before(() => {
 		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 	});
 
 	beforeEach(() => {
 		channelStub.resolves();
-		pauseStub.callsArg(0);
 	});
 
 	afterEach(() => {
 		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated', () => {
@@ -38,15 +29,15 @@ describe('./characters/beastmaster.js', () => {
 	it('gets a deck by default', () => {
 		const beastmaster = new Beastmaster();
 
-		expect(beastmaster.deck.length).to.equal(14);
+		expect(beastmaster.deck.length).to.equal(20);
 	});
 
 	it('can spawn a monster', () => {
 		const beastmaster = new Beastmaster();
 		channelStub.onCall(1).resolves(0);
-		channelStub.onCall(2).resolves('Foo');
-		channelStub.onCall(3).resolves('Blue');
-		channelStub.onCall(4).resolves(1);
+		channelStub.onCall(2).resolves(1);
+		channelStub.onCall(3).resolves('Foo');
+		channelStub.onCall(4).resolves('Blue');
 
 		return beastmaster
 			.spawnMonster(channelStub)
@@ -65,9 +56,9 @@ describe('./characters/beastmaster.js', () => {
 	it('can revive a monster', () => {
 		const beastmaster = new Beastmaster();
 		channelStub.onCall(1).resolves(0);
-		channelStub.onCall(2).resolves('Foo');
-		channelStub.onCall(3).resolves('Blue');
-		channelStub.onCall(4).resolves(0);
+		channelStub.onCall(2).resolves(0);
+		channelStub.onCall(3).resolves('Foo');
+		channelStub.onCall(4).resolves('Blue');
 
 		return beastmaster
 			.spawnMonster(channelStub)
@@ -85,9 +76,9 @@ describe('./characters/beastmaster.js', () => {
 	it('can revive a level 3 monster', () => {
 		const beastmaster = new Beastmaster();
 		channelStub.onCall(1).resolves(0);
-		channelStub.onCall(2).resolves('Foo');
-		channelStub.onCall(3).resolves('Blue');
-		channelStub.onCall(4).resolves(2);
+		channelStub.onCall(2).resolves(2);
+		channelStub.onCall(3).resolves('Foo');
+		channelStub.onCall(4).resolves('Blue');
 
 		return beastmaster
 			.spawnMonster(channelStub)

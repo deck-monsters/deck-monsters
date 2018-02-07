@@ -2,6 +2,8 @@
 
 const BaseCard = require('./base');
 const { roll, max } = require('../helpers/chance');
+const { ABUNDANT } = require('../helpers/probabilities');
+const { ALMOST_NOTHING } = require('../helpers/costs');
 
 class HitCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -28,7 +30,7 @@ class HitCard extends BaseCard {
 	}
 
 	get stats () {
-		return `Hit: ${this.attackDice} vs ${this.targetProp.toUpperCase()} / Damage: ${this.damageDice}`;
+		return `Hit: ${this.attackDice} vs ${this.targetProp} / Damage: ${this.damageDice}`;
 	}
 
 	getAttackRoll (player) {
@@ -49,12 +51,18 @@ class HitCard extends BaseCard {
 			commentary = 'Miss... Tie goes to the defender.';
 		}
 
+		let reason;
+		if (player === target) {
+			reason = `vs ${target.pronouns.his} own ${this.targetProp.toLowerCase()} (${target[this.targetProp]}) in confusion.`;
+		} else {
+			reason = `vs ${target.givenName}'s ${this.targetProp.toLowerCase()} (${target[this.targetProp]}) to determine if the hit was a success.`;
+		}
+
 		this.emit('rolled', {
-			reason: `vs ${target.givenName}'s ${this.targetProp.toLowerCase()} (${target[this.targetProp]}) to determine if the hit was a success.`,
+			reason,
 			card: this,
 			roll: attackRoll,
-			player,
-			target,
+			who: player,
 			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
 			vs: target[this.targetProp]
 		});
@@ -87,9 +95,7 @@ class HitCard extends BaseCard {
 				reason: 'for damage.',
 				card: this,
 				roll: damageRoll,
-				player,
-				target,
-				outcome: ''
+				who: player
 			});
 		}
 
@@ -102,37 +108,34 @@ class HitCard extends BaseCard {
 			attackRoll, success, strokeOfLuck, curseOfLoki // TODO: Is this curseOfLoki used elsewhere and we can simply drop it?
 		} = this.hitCheck(player, target);// eslint-disable-line no-unused-vars
 
-		return ring.channelManager.sendMessages()
-			.then(() => {
-				if (success) {
-					const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
+		if (success) {
+			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 
-					// If we hit then do some damage
-					return target.hit(damageRoll.result, player, this);
-				} else if (curseOfLoki) {
-					const damageRoll = this.rollForDamage(target, player);
+			// If we hit then do some damage
+			return target.hit(damageRoll.result, player, this);
+		} else if (curseOfLoki) {
+			const damageRoll = this.rollForDamage(target, player);
 
-					// Our attack is now bouncing back against us
-					return player.hit(damageRoll.result, target, this);
-				}
+			// Our attack is now bouncing back against us
+			return player.hit(damageRoll.result, target, this);
+		}
 
-				this.emit('miss', {
-					attackResult: attackRoll.result,
-					attackRoll,
-					player,
-					target
-				});
+		this.emit('miss', {
+			attackResult: attackRoll.result,
+			attackRoll,
+			player,
+			target
+		});
 
-				return true;
-			});
+		return !target.dead;
 	}
 }
 
 HitCard.cardType = 'Hit';
-HitCard.probability = 90;
+HitCard.probability = (ABUNDANT.probability + 10);
 HitCard.description = 'A basic attack, the staple of all good monsters.';
 HitCard.level = 0;
-HitCard.cost = 3;
+HitCard.cost = ALMOST_NOTHING.cost;
 
 HitCard.defaults = {
 	attackDice: '1d20',

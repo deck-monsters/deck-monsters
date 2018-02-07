@@ -3,33 +3,16 @@ const { expect, sinon } = require('../shared/test-setup');
 const BattleFocusCard = require('./battle-focus');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
-const pause = require('../helpers/pause');
 
 const { GLADIATOR } = require('../helpers/creature-types');
 
+const ultimateComboNarration = [];
+for (let i = 17; i < 101; i++) {
+	ultimateComboNarration.push(`HUMILIATION! ${i} hits`);
+}
+ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (109 total damage).');
+
 describe('./cards/battle-focus.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const battleFocus = new BattleFocusCard();
 
@@ -37,7 +20,7 @@ describe('./cards/battle-focus.js', () => {
 		expect(battleFocus.bigFirstHit).to.be.true;
 		expect(battleFocus.damageAmount).to.equal(1);
 		expect(battleFocus.damageDice).to.equal('1d6');
-		expect(battleFocus.stats).to.equal('Hit: 1d20 vs AC until you miss\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
+		expect(battleFocus.stats).to.equal('Hit: 1d20 + str bonus vs ac on first hit\nthen also + int bonus (fatigued by 1 each subsequent hit) until you miss\n1d6 damage on first hit.\n1 damage per hit after that.\n\nStroke of luck increases damage per hit by 1.');// eslint-disable-line max-len
 	});
 
 	it('can be instantiated with options', () => {
@@ -55,7 +38,7 @@ describe('./cards/battle-focus.js', () => {
 		expect(battleFocus.permittedClassesAndTypes).to.deep.equal([GLADIATOR]);
 	});
 
-	it('Hits for 1 until attack misses', () => {
+	it('Hits for 1d6 and then 1 until attack misses', () => {
 		const battleFocus = new BattleFocusCard();
 		const player = new Gladiator({ name: 'player' });
 		const target = new Minotaur({ name: 'target' });
@@ -130,11 +113,11 @@ describe('./cards/battle-focus.js', () => {
 			});
 	});
 
-	it('Increases attack strength on strokeOfLuck', () => {
+	it('Permakills if target HP < bigFirstHit damage amount and then combos until humiliation.', () => {
 		const battleFocus = new BattleFocusCard();
 		const player = new Gladiator({ name: 'player' });
-		const target = new Minotaur({ name: 'target' });
-		const before = target.hp;
+		const target = new Minotaur({ name: 'target', hpVariance: 0 });
+		target.hp = 1;
 
 		const battleFocusProto = Object.getPrototypeOf(battleFocus);
 		const berserkProto = Object.getPrototypeOf(battleFocusProto);
@@ -144,15 +127,20 @@ describe('./cards/battle-focus.js', () => {
 		const creatureProto = Object.getPrototypeOf(minotaurProto);
 
 		// checkSuccess must return true in order for hit to be called from hitCheck
-		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess').callsFake(() =>
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess').callsFake(() =>// eslint-disable-line no-unused-vars
 			({ success: true, strokeOfLuck: false, curseOfLoki: false }));
 		const hitCheckStub = sinon.stub(hitProto, 'hitCheck');
-		const getDamageRollStub = sinon.stub(berserkProto, 'getDamageRoll').callsFake(() =>
-			({ naturalRoll: { result: 4 }, result: 5 }));
-		const battleFocusEffectSpy = sinon.spy(battleFocusProto, 'effect');
 		const berserkEffectSpy = sinon.spy(berserkProto, 'effect');
+		const berserkEffectLoopSpy = sinon.spy(berserkProto, 'effectLoop');
 		const hitEffectSpy = sinon.spy(hitProto, 'effect');
 		const hitSpy = sinon.spy(creatureProto, 'hit');
+		const getDamageRollStub = sinon.stub(berserkProto, 'getDamageRoll');
+		getDamageRollStub.returns({
+			result: 10,
+			naturalRoll: { result: 10 },
+			strokeOfLuck: false,
+			curseOfLoki: false
+		});
 
 		const ring = {
 			contestants: [
@@ -165,38 +153,45 @@ describe('./cards/battle-focus.js', () => {
 		};
 
 		const attackRoll = battleFocus.getAttackRoll(player);
-		hitCheckStub.onFirstCall().returns({
+		hitCheckStub.returns({
 			attackRoll,
 			success: true,
 			strokeOfLuck: false,
 			curseOfLoki: false
 		});
-		hitCheckStub.onSecondCall().returns({
-			attackRoll,
-			success: true,
-			strokeOfLuck: true,
-			curseOfLoki: false
-		});
-		hitCheckStub.returns({
+
+		hitCheckStub.onCall(100).returns({
 			attackRoll,
 			success: false,
 			strokeOfLuck: false,
 			curseOfLoki: false
 		});
 
+		const narrations = [];
+		battleFocus.on('narration', (className, monster, { narration }) => {
+			narrations.push(narration);
+		});
+
 		return battleFocus
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				checkSuccessStub.restore();
 				hitCheckStub.restore();
-				getDamageRollStub.restore();
-				battleFocusEffectSpy.restore();
-				berserkEffectSpy.restore();
 				hitEffectSpy.restore();
+				checkSuccessStub.restore();
 				hitSpy.restore();
+				berserkEffectSpy.restore();
+				berserkEffectLoopSpy.restore();
+				getDamageRollStub.restore();
 
-				expect(target.hp).to.equal(before - 7);
-				return expect(battleFocus.damageAmount).to.equal(1);
+				expect(berserkEffectSpy.callCount).to.equal(1);
+				expect(berserkEffectLoopSpy.callCount).to.equal(101);
+				expect(hitCheckStub.callCount).to.equal(101);
+				expect(hitEffectSpy.callCount).to.equal(0);
+				expect(hitSpy.callCount).to.equal(16);
+				expect(narrations).to.deep.equal(ultimateComboNarration);
+				expect(target.destroyed).to.be.true;
+
+				return expect(target.hp).to.be.below(-Math.floor(target.maxHp / 2));
 			});
 	});
 });

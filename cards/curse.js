@@ -2,6 +2,10 @@ const HitCard = require('./hit');
 
 const { difference } = require('../helpers/difference');
 const { roll, max } = require('../helpers/chance');
+const { UNCOMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
+
+const STATS = require('../helpers/stat-constants');
 
 class CurseCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -40,7 +44,8 @@ class CurseCard extends HitCard {
 	}
 
 	get stats () {
-		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}`;
+		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
+maximum total curse of -${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp] * 3} per level, afterwards penalties come out of hp instead.`;
 
 		if (this.hasChanceToHit) {
 			stats = `${super.stats}
@@ -51,12 +56,14 @@ ${stats}`;
 	}
 
 	getCurseNarrative (player, target) { // eslint-disable-line class-methods-use-this
-		return `${player.givenName} skillfully harries ${target.givenName} with a targetted sweeping blow intended to sting and distract.`;
+		const targetName = target.givenName === player.givenName ? `${player.pronouns.him}self` : target.givenName;
+		return `${player.givenName} skillfully harries ${targetName} with a targetted sweeping blow intended to sting and distract.`;
 	}
 
 	getCurseOverflowNarrative (player, target) {
+		const playerName = target.givenName === player.givenName ? player.pronouns.his : `${player.givenName}'s`;
 		return `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
-${player.givenName}'s harrying jab takes from hp instead.`;
+${playerName} harrying jab takes from hp instead.`;
 	}
 
 	getAttackRoll (player) {
@@ -96,10 +103,10 @@ ${player.givenName}'s harrying jab takes from hp instead.`;
 }
 
 CurseCard.cardType = 'Soften';
-CurseCard.probability = 30;
+CurseCard.probability = UNCOMMON.probability;
 CurseCard.description = 'Sweep the leg... You have a problem with that? No mercy.';
 CurseCard.level = 1;
-CurseCard.cost = 10;
+CurseCard.cost = VERY_CHEAP.cost;
 
 CurseCard.defaults = {
 	...HitCard.defaults,

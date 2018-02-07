@@ -1,6 +1,7 @@
 const BoostCard = require('./boost');
 
 const { BASILISK } = require('../helpers/creature-types');
+const { REASONABLE } = require('../helpers/costs');
 
 class ThickSkinCard extends BoostCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -17,7 +18,7 @@ ThickSkinCard.cardType = 'Thick Skin';
 ThickSkinCard.permittedClassesAndTypes = [BASILISK];
 ThickSkinCard.description = 'Grow a heavy layer of scales to deflect the blows of thine enemies.';
 ThickSkinCard.level = 2;
-ThickSkinCard.cost = 30;
+ThickSkinCard.cost = REASONABLE.cost;
 
 ThickSkinCard.defaults = {
 	...BoostCard.defaults,

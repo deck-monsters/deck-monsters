@@ -2,6 +2,8 @@ const HitCard = require('./hit');
 const HealCard = require('./heal');
 
 const { FIGHTER } = require('../helpers/classes');
+const { UNCOMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
 
 class SurvivalKnifeCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -20,9 +22,17 @@ class SurvivalKnifeCard extends HitCard {
 ${this.healCard.stats}`;
 	}
 
+	getTargets (player, proposedTarget) { // eslint-disable-line class-methods-use-this, no-unused-vars
+		if (player.hp < (player.bloodiedValue / 2)) {
+			return [player];
+		}
+
+		return [proposedTarget];
+	}
+
 	effect (player, target, ring, activeContestants) {
 		if (player.hp < (player.bloodiedValue / 2)) {
-			return this.healCard.effect(player, player, ring);
+			return this.healCard.effect(player, target, ring, activeContestants);
 		}
 
 		return super.effect(player, target, ring, activeContestants);
@@ -30,11 +40,11 @@ ${this.healCard.stats}`;
 }
 
 SurvivalKnifeCard.cardType = 'Survival Knife';
-SurvivalKnifeCard.probability = 30;
+SurvivalKnifeCard.probability = UNCOMMON.probability;
 SurvivalKnifeCard.description = 'If times get too rough, stab yourself in the thigh and press the pommel for a Stimpak injection.';
 SurvivalKnifeCard.permittedClassesAndTypes = [FIGHTER];
 SurvivalKnifeCard.level = 1;
-SurvivalKnifeCard.cost = 15;
+SurvivalKnifeCard.cost = VERY_CHEAP.cost;
 SurvivalKnifeCard.notForSale = true;
 
 SurvivalKnifeCard.defaults = {

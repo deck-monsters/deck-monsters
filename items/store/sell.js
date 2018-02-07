@@ -2,6 +2,7 @@ const chooseCards = require('../../cards/helpers/choose');
 const chooseItems = require('../helpers/choose');
 
 const getShop = require('./shop');
+const getClosingTime = require('./closing-time');
 
 module.exports = ({
 	character,
@@ -18,6 +19,8 @@ module.exports = ({
 		.then(() => channel({
 			question:
 `You push open a ${shop.adjective} door and find yourself in ${shop.name}.
+
+${getClosingTime(shop)}
 
 You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 

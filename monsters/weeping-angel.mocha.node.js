@@ -1,28 +1,9 @@
-const { expect, sinon } = require('../shared/test-setup');
+const { expect } = require('../shared/test-setup');
 
 const WeepingAngel = require('./weeping-angel');
 const { WEEPING_ANGEL } = require('../helpers/creature-types');
-const pause = require('../helpers/pause');
 
 describe('./monsters/weeping-angel.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const weepingAngel = new WeepingAngel();
 

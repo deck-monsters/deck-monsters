@@ -3,6 +3,9 @@
 const BaseCard = require('./base');
 
 const { CLERIC } = require('../helpers/classes');
+const { ABUNDANT } = require('../helpers/probabilities');
+const { REASONABLE } = require('../helpers/costs');
+const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
 
 class BlastCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -27,7 +30,11 @@ class BlastCard extends BaseCard {
 	}
 
 	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return activeContestants.map(({ monster }) => monster).filter(target => target !== player);
+		return getTarget({
+			contestants: activeContestants,
+			playerMonster: player,
+			strategy: TARGET_ALL_CONTESTANTS
+		}).map(({ monster }) => monster);
 	}
 
 	effect (player, target) {
@@ -39,10 +46,11 @@ class BlastCard extends BaseCard {
 
 BlastCard.cardType = 'Blast';
 BlastCard.permittedClassesAndTypes = [CLERIC];
-BlastCard.probability = 60;
+BlastCard.probability = ABUNDANT.probability;
 BlastCard.description = 'A magical blast against every opponent in the encounter.';
 BlastCard.level = 0;
-BlastCard.cost = 30;
+BlastCard.cost = REASONABLE.cost;
+BlastCard.isAreaOfEffect = true;
 
 BlastCard.defaults = {
 	damage: 3,

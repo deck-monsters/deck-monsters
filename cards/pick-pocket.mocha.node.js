@@ -1,23 +1,21 @@
 const { expect, sinon } = require('../shared/test-setup');
+const Promise = require('bluebird');
 const proxyquire = require('proxyquire');
 const sample = require('lodash.sample');
 
 const { randomCharacter } = require('../characters');
 const { randomContestant } = require('../helpers/bosses');
 const DestroyCard = require('./destroy');
-const pause = require('../helpers/pause');
+
+const Gladiator = require('../monsters/gladiator');
 
 const allCards = require('./helpers/all');
 
 describe('./cards/pick-pocket.js', () => {
 	let PickPocketCard;
-	let channelStub;
-	let pauseStub;
 	let sampleSpy;
 
 	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
 		sampleSpy = sinon.stub();
 
 		PickPocketCard = proxyquire('./pick-pocket', {
@@ -26,19 +24,11 @@ describe('./cards/pick-pocket.js', () => {
 	});
 
 	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
 		sampleSpy.callsFake(sample);
 	});
 
 	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
 		sampleSpy.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
 	});
 
 	it('can be instantiated with defaults', () => {
@@ -47,7 +37,7 @@ describe('./cards/pick-pocket.js', () => {
 		expect(pickPocket).to.be.an.instanceof(PickPocketCard);
 	});
 
-	it('finds the player with the higest xp', () => {
+	it('finds the player with the highest xp', () => {
 		const pickPocket = new PickPocketCard();
 
 		const playerCharacter = randomCharacter();
@@ -61,14 +51,15 @@ describe('./cards/pick-pocket.js', () => {
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: playerCharacter, monster: player },
+				{ character: target1Character, monster: target1 },
+				{ character: target2Character, monster: target2 },
+				{ character: target3Character, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
-			}
+			},
+			encounterEffects: []
 		};
 
 		player.xp = 100;
@@ -88,11 +79,9 @@ describe('./cards/pick-pocket.js', () => {
 		const player = randomContestant();
 		const target1 = randomContestant();
 
-		const promises = [];
-
-		for (let i = 0; i < allCards.length; i++) {
-			if (allCards[i].name !== 'PickPocketCard') {
-				target1.monster.cards = [new allCards[i]()];
+		return expect(Promise.each(allCards, (Card) => {
+			if (Card.name !== 'PickPocketCard') {
+				target1.monster.cards = [new Card()];
 
 				const ring = {
 					contestants: [
@@ -101,38 +90,36 @@ describe('./cards/pick-pocket.js', () => {
 					],
 					channelManager: {
 						sendMessages: () => Promise.resolve()
-					}
+					},
+					encounterEffects: []
 				};
 
-				promises.push(pickPocket.play(player.monster, target1.monster, ring, ring.contestants));
+				return pickPocket.play(player.monster, target1.monster, ring, ring.contestants);
 			}
-		}
 
-		return expect(Promise.all(promises)).to.be.fulfilled;
+			return Promise.resolve();
+		})).to.be.fulfilled;
 	});
 
 	it('cannot pick from own player\'s pocket', () => {
 		const pickPocket = new PickPocketCard();
 
-		const playerCharacter = randomCharacter();
-		const player = playerCharacter.monsters[0];
-		const target1Character = randomCharacter();
-		const target1 = target1Character.monsters[0];
-		const target2Character = randomCharacter();
-		const target2 = target2Character.monsters[0];
-		const target3Character = randomCharacter();
-		const target3 = target3Character.monsters[0];
+		const player = new Gladiator({ name: 'player' });
+		const target1 = new Gladiator({ name: 'target1' });
+		const target2 = new Gladiator({ name: 'target2' });
+		const target3 = new Gladiator({ name: 'target3' });
 
 		const ring = {
 			contestants: [
-				{ monster: player },
-				{ monster: target1 },
-				{ monster: target2 },
-				{ monster: target3 }
+				{ character: {}, monster: player },
+				{ character: {}, monster: target1 },
+				{ character: {}, monster: target2 },
+				{ character: {}, monster: target3 }
 			],
 			channelManager: {
 				sendMessages: () => Promise.resolve()
-			}
+			},
+			encounterEffects: []
 		};
 
 		// player has most xp, but will not get picked
@@ -147,7 +134,10 @@ describe('./cards/pick-pocket.js', () => {
 			.play(player, target1, ring, ring.contestants)
 			.then(() => {
 				expect(sampleSpy).to.have.been.calledWith(target3.cards.filter(card => !['Pick Pocket'].includes(card.cardType)));
-				return expect(target1.dead).to.equal(true);
+				expect(target2.dead).to.be.true;
+				expect(target3.dead).to.be.true;
+				expect(player.dead).to.be.false;
+				return expect(target1.dead).to.be.true;
 			});
 	});
 });

@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 
-const fs = require('fs-extra');
 const startCase = require('lodash.startcase');
 
 const { draw } = require('../cards');
@@ -35,6 +34,4 @@ function getCardProbabilities () {
 	}, {});
 }
 
-fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
-
-process.exit(0);
+module.exports = getCardProbabilities;

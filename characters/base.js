@@ -1,17 +1,11 @@
-const reduce = require('lodash.reduce');
-
 const BaseCreature = require('../creatures/base');
 
-const { actionCard, monsterCard } = require('../helpers/card');
-const {
-	getInitialDeck,
-	getUniqueCards,
-	sortCards
-} = require('../cards');
-const getCardCounts = require('../items/helpers/counts').getItemCounts;
+const { characterCard, monsterCard } = require('../helpers/card');
+const { getInitialDeck, sortCardsAlphabetically } = require('../cards');
+const { HERO } = require('../helpers/classes');
+const buyItems = require('../items/store/buy');
 const isMatchingItem = require('../items/helpers/is-matching');
 const sellItems = require('../items/store/sell');
-const buyItems = require('../items/store/buy');
 
 class BaseCharacter extends BaseCreature {
 	constructor (options = {}) {
@@ -48,6 +42,11 @@ class BaseCharacter extends BaseCreature {
 		this.cards = deck;
 	}
 
+	get detailedStats () {
+		return `${super.stats}
+Coins: ${this.coins}`;
+	}
+
 	canHold (object) {
 		const appropriateLevel = (!object.level || object.level <= this.level);
 
@@ -55,41 +54,30 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	addCard (card) {
-		this.deck = [...this.deck, card];
+		this.deck = sortCardsAlphabetically([...this.deck, card]);
 
 		this.emit('cardAdded', { card });
 	}
 
-	addItem (item) {
-		this.items = [...this.items, item];
-
-		this.emit('itemAdded', { item });
-	}
-
 	removeCard (cardToRemove) {
-		let isAlreadyRemoved = false;
+		let foundCard;
 		this.deck = this.deck.filter((card) => {
-			const shouldKeepCard = isAlreadyRemoved || !isMatchingItem(card, cardToRemove);
+			const shouldKeepCard = foundCard || !isMatchingItem(card, cardToRemove);
 
-			if (!shouldKeepCard) isAlreadyRemoved = true;
+			if (!shouldKeepCard) foundCard = card;
 
 			return shouldKeepCard;
 		});
 
-		this.emit('cardRemoved', { cardToRemove });
+		if (foundCard) this.emit('cardRemoved', { card: foundCard });
+
+		return foundCard;
 	}
 
-	removeItem (itemToRemove) {
-		let isAlreadyRemoved = false;
-		this.items = this.items.filter((item) => {
-			const shouldKeepItem = isAlreadyRemoved || !isMatchingItem(item, itemToRemove);
-
-			if (!shouldKeepItem) isAlreadyRemoved = true;
-
-			return shouldKeepItem;
-		});
-
-		this.emit('itemRemoved', { itemToRemove });
+	look (channel, inDetail) {
+		return Promise
+			.resolve()
+			.then(() => channel({ announce: characterCard(this, inDetail) }));
 	}
 
 	lookAtMonsters (channel, description) {
@@ -110,29 +98,11 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	lookAtCards (channel) {
-		const sortedDeck = sortCards([...this.deck]);
-		const cardImages = getUniqueCards(sortedDeck).reduce((cards, card) =>
-			cards + actionCard(card), '');
-
-		const cardCounts = reduce(getCardCounts(sortedDeck), (counts, count, card) =>
-			`${counts}${card} (${count})
-`, '');
-
-
-		const deckDisplay = `${cardImages} ${cardCounts}`;
-
-		if (deckDisplay) {
-			return Promise
-				.resolve()
-				.then(() => channel({
-					announce: deckDisplay
-				}));
-		}
-
-		return Promise.reject(channel({
-			announce: "Strangely enough, somehow you don't have any cards.",
-			delay: 'short'
-		}));
+		return super.lookAtItems(channel, this.deck)
+			.catch(() => channel({
+				announce: "Strangely enough, somehow you don't have any cards.",
+				delay: 'short'
+			}));
 	}
 
 	sellItems (channel) {
@@ -149,5 +119,7 @@ class BaseCharacter extends BaseCreature {
 		});
 	}
 }
+
+BaseCharacter.class = HERO;
 
 module.exports = BaseCharacter;

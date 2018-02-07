@@ -2,13 +2,15 @@ const BaseCreature = require('../creatures/base');
 
 const {
 	getUniqueCards,
-	sortCards
+	sortCardsAlphabetically
 } = require('../cards');
 const { actionCard, monsterCard } = require('../helpers/card');
-const { getAttributeChoices } = require('../helpers/choices');
+const { signedNumber } = require('../helpers/signed-number');
+const { getStrategyDescription } = require('../helpers/targeting-strategies');
 const isMatchingItem = require('../items/helpers/is-matching');
 
 const DEFAULT_CARD_SLOTS = 9;
+const DEFAULT_ITEM_SLOTS = 3;
 
 class BaseMonster extends BaseCreature {
 	constructor (options) {
@@ -40,6 +42,34 @@ class BaseMonster extends BaseCreature {
 		});
 	}
 
+	get itemSlots () { // eslint-disable-line class-methods-use-this
+		return DEFAULT_ITEM_SLOTS;
+	}
+
+	get stats () {
+		const bonuses = [];
+
+		if (this.dexModifier !== 0) {
+			bonuses.push(`${signedNumber(this.dexModifier)} dex ${this.dexModifier > 0 ? 'bonus' : 'penalty'}`.trim());
+		}
+		if (this.strModifier !== 0) {
+			bonuses.push(`${signedNumber(this.strModifier)} str ${this.strModifier > 0 ? 'bonus' : 'penalty'}`.trim());
+		}
+		if (this.intModifier !== 0) {
+			bonuses.push(`${signedNumber(this.intModifier)} int ${this.intModifier > 0 ? 'bonus' : 'penalty'}`.trim());
+		}
+
+		return `${super.stats}
+
+ac: ${this.ac} | hp: ${this.hp}/${this.maxHp}
+dex: ${this.dex} | str: ${this.str} | int: ${this.int}
+${bonuses.join('\n')}${
+	!this.targetingStrategy ? '' :
+		`
+Strategy: ${getStrategyDescription(this.targetingStrategy)}`
+}`;
+	}
+
 	canHold (object) {
 		const appropriateLevel = (!object.level || object.level <= this.level);
 		const appropriateClassOrType = (
@@ -57,12 +87,6 @@ class BaseMonster extends BaseCreature {
 		if (shouldReset) this.cards = [];
 	}
 
-	resetItems ({ matchItem } = {}) {
-		const shouldReset = !matchItem || !!this.items.find(item => isMatchingItem(item, matchItem));
-
-		if (shouldReset) this.items = [];
-	}
-
 	get emptyHanded () {
 		return !!(this.encounter || {}).emptyHanded;
 	}
@@ -74,67 +98,30 @@ class BaseMonster extends BaseCreature {
 		};
 	}
 
-	edit (channel) {
-		return Promise
-			.resolve()
-			.then(() => channel({ announce: monsterCard(this, true) }))
-			.then(() => channel({
-				question:
-`Which attribute would you like to edit?
+	startEncounter (ring) {
+		super.startEncounter(ring);
 
-${getAttributeChoices(this.options)}`,
-				choices: Object.keys(Object.keys(this.options))
-			}))
-			.then(index => Object.keys(this.options)[index])
-			.then(key => channel({
-				question:
-`The current value of ${key} is ${JSON.stringify(this.options[key])}. What would you like the new value of ${key} to be?`
-			})
-				.then((strVal) => {
-					const oldVal = this.options[key];
-					let newVal;
+		this.items.forEach(item => item.onStartEncounter && item.onStartEncounter({ monster: this, ring }));
+	}
 
-					try {
-						newVal = JSON.parse(strVal);
-					} catch (ex) {
-						newVal = +strVal;
+	endEncounter () {
+		this.items.forEach(item => item.onEndEncounter && item.onEndEncounter({ monster: this, ring: this.encounter.ring }));
 
-						if (isNaN(newVal)) { // eslint-disable-line no-restricted-globals
-							newVal = strVal;
-						}
-					}
-
-					return { key, oldVal, newVal };
-				}))
-			.then(({ key, oldVal, newVal }) => channel({
-				question:
-`The value of ${key} has been updated from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}. Would you like to keep this change? (yes/no)` // eslint-disable-line max-len
-			})
-				.then((answer = '') => {
-					if (answer.toLowerCase() === 'yes') {
-						this.setOptions({
-							[key]: newVal
-						});
-
-						return channel({ announce: 'Change saved.' });
-					}
-
-					return channel({ announce: 'Change reverted.' });
-				}));
+		super.endEncounter();
 	}
 
 	look (channel, inDetail) {
 		return Promise
 			.resolve()
 			.then(() => channel({ announce: monsterCard(this, true) }))
-			.then(() => this.lookAtCards(channel, inDetail));
+			.then(() => inDetail && this.lookAtCards(channel, inDetail));
 	}
 
 	lookAtCards (channel, inDetail) {
 		let cards = [...this.cards];
 
 		if (!inDetail) {
-			const sortedDeck = sortCards(cards);
+			const sortedDeck = sortCardsAlphabetically(cards);
 			cards = getUniqueCards(sortedDeck);
 		}
 

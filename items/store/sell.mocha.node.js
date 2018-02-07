@@ -5,14 +5,17 @@ const randomCharacter = require('../../characters/helpers/random');
 const HitCard = require('../../cards/hit');
 
 const defaultShop = {
-	name: 'Gorgons and Gremlins',
 	adjective: 'rusty',
-	priceOffset: 0.6689276100094799,
+	backRoom: [],
 	backRoomOffset: 9,
-	items: [],
 	cards: [],
-	backRoom: []
+	items: [],
+	name: 'Gorgons and Gremlins',
+	priceOffset: 0.6689276100094799,
+	pronouns: { he: 'she', him: 'her', his: 'her' }
 };
+
+const defaultClosingTime = 'TIME';
 
 describe('./items/store/sell.js', () => {
 	let sellItems;
@@ -20,14 +23,17 @@ describe('./items/store/sell.js', () => {
 
 	const channelStub = sinon.stub();
 	const getShopStub = sinon.stub();
+	const getClosingTimeStub = sinon.stub();
 
 	beforeEach(() => {
 		clock = sinon.useFakeTimers();
 		channelStub.resolves();
 		getShopStub.returns(defaultShop);
+		getClosingTimeStub.returns(defaultClosingTime);
 
 		sellItems = proxyquire('./sell', {
-			'./shop': getShopStub
+			'./shop': getShopStub,
+			'./closing-time': getClosingTimeStub
 		});
 	});
 
@@ -35,6 +41,7 @@ describe('./items/store/sell.js', () => {
 		clock.restore();
 		channelStub.reset();
 		getShopStub.reset();
+		getClosingTimeStub.reset();
 	});
 
 	it('can buy a card', () => {
@@ -49,6 +56,8 @@ describe('./items/store/sell.js', () => {
 			choices: [1, 2],
 			question: `You push open a rusty door and find yourself in Gorgons and Gremlins.
 
+${defaultClosingTime}
+
 You have 0 items and 7 cards. Which would you like to sell?
 
 1) Items
@@ -59,25 +68,25 @@ You have 0 items and 7 cards. Which would you like to sell?
 		channelStub.withArgs({
 			question: `Choose one or more of the following cards:
 
-0) Hit [7] - 2 coins`
+0) Hit [7] - 7 coins`
 		})
 			.resolves('0');
 
 		channelStub.withArgs({
-			question: `Gorgons and Gremlins is willing to buy your pitiful trash for 2 coins.
+			question: `Gorgons and Gremlins is willing to buy your pitiful trash for 7 coins.
 
 Would you like to sell? (yes/no)`
 		})
 			.resolves('yes');
 
-		sellItems({ character, channel: channelStub })
+		return sellItems({ character, channel: channelStub })
 			.then(() => {
 				expect(channelStub).to.have.been.calledWith({
-					announce: "Here's your 2 coins, Character. Pleasure doing business with you."
+					announce: "Here's your 7 coins, Character. Pleasure doing business with you."
 				});
 
 				expect(channelStub).to.have.been.calledWith({
-					announce: 'Character has 502 coins.'
+					announce: 'Character has 507 coins.'
 				});
 
 				expect(shop.cards.length).to.equal(1);
@@ -97,6 +106,8 @@ Would you like to sell? (yes/no)`
 			choices: [1, 2],
 			question: `You push open a rusty door and find yourself in Gorgons and Gremlins.
 
+${defaultClosingTime}
+
 You have 0 items and 7 cards. Which would you like to sell?
 
 1) Items
@@ -107,25 +118,25 @@ You have 0 items and 7 cards. Which would you like to sell?
 		channelStub.withArgs({
 			question: `Choose one or more of the following cards:
 
-0) Hit [7] - 2 coins`
+0) Hit [7] - 7 coins`
 		})
 			.resolves('0,0,0,0');
 
 		channelStub.withArgs({
-			question: `Gorgons and Gremlins is willing to buy your pitiful trash for 8 coins.
+			question: `Gorgons and Gremlins is willing to buy your pitiful trash for 28 coins.
 
 Would you like to sell? (yes/no)`
 		})
 			.resolves('yes');
 
-		sellItems({ character, channel: channelStub })
+		return sellItems({ character, channel: channelStub })
 			.then(() => {
 				expect(channelStub).to.have.been.calledWith({
-					announce: "Here's your 8 coins, Character. Pleasure doing business with you."
+					announce: "Here's your 28 coins, Character. Pleasure doing business with you."
 				});
 
 				expect(channelStub).to.have.been.calledWith({
-					announce: 'Character has 508 coins.'
+					announce: 'Character has 528 coins.'
 				});
 
 				expect(shop.cards.length).to.equal(5);

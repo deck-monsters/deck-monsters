@@ -4,72 +4,53 @@ const Hit = require('./hit');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const ForkedMetalRod = require('./forked-metal-rod');
-const pause = require('../helpers/pause');
 
 const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../helpers/creature-types');
 
 describe('./cards/forked-metal-rod.js', () => {
-	let channelStub;
-	let pauseStub;
-
-	before(() => {
-		channelStub = sinon.stub();
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		channelStub.resolves();
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		channelStub.reset();
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const forkedMetalRod = new ForkedMetalRod();
-		const hit = new Hit();
+		const hit = new Hit({ targetProp: forkedMetalRod.targetProp });
 
-		const stats = `${hit.stats}
+		const stats = `Attack twice (once with each prong). +2 to hit and immobilize for each successfull prong hit.
 
- +2 against Gladiator, Basilisk
- -2 against Minotaur
+Chance to immobilize: 1d20 vs str.
+
+If already immobilized, hit instead.
+${hit.stats}
+ +5 advantage vs Gladiator, Basilisk
+ +1 advantage vs Jinn, Minotaur
 inneffective against Weeping Angel
-Attempt to stab your opponent with strong sharp prongs.
 
-Even if you miss, there's a chance you'll pin them...`;
+Opponent breaks free by rolling 1d20 vs immobilizer's str + advantage - (turns immobilized * 3)
+Hits immobilizer back on stroke of luck.
+Turns immobilized resets on curse of loki.
+`;
 
 		const description = 'A dangerously sharp forked metal rod fashioned for Gladiator and Basilisk-hunting.';
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.description).to.equal(description);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
-		expect(forkedMetalRod.dexModifier).to.equal(3);
-		expect(forkedMetalRod.strModifier).to.equal(0);
-		expect(forkedMetalRod.hitOnFail).to.be.false;
+		expect(forkedMetalRod.freedomSavingThrowTargetAttr).to.equal('str');
+		expect(forkedMetalRod.targetProp).to.equal('ac');
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.false;
+		expect(forkedMetalRod.damageDice).to.equal('1d6');
 		expect(forkedMetalRod.stats).to.equal(stats);
 		expect(forkedMetalRod.strongAgainstCreatureTypes).to.deep.equal([GLADIATOR, BASILISK]);
-		expect(forkedMetalRod.weakAgainstCreatureTypes).to.deep.equal([MINOTAUR]);
+		expect(forkedMetalRod.weakAgainstCreatureTypes).to.deep.equal([JINN, MINOTAUR]);
 		expect(forkedMetalRod.permittedClassesAndTypes).to.deep.equal([FIGHTER, BARBARIAN]);
+		expect(forkedMetalRod.uselessAgainstCreatureTypes).to.deep.equal([WEEPING_ANGEL]);
 	});
 
 	it('can be instantiated with options', () => {
 		const forkedMetalRod = new ForkedMetalRod({
-			freedomThresholdModifier: 2, strModifier: 4, dexModifier: 4, hitOnFail: true, doDamageOnImmobilize: true
+			freedomThresholdModifier: 2, doDamageOnImmobilize: true
 		});
 
 		expect(forkedMetalRod).to.be.an.instanceof(ForkedMetalRod);
 		expect(forkedMetalRod.freedomThresholdModifier).to.equal(2);
-		expect(forkedMetalRod.dexModifier).to.equal(4);
-		expect(forkedMetalRod.strModifier).to.equal(4);
-		expect(forkedMetalRod.hitOnFail).to.be.true;
 		expect(forkedMetalRod.doDamageOnImmobilize).to.be.true;
 	});
 
@@ -119,8 +100,8 @@ Even if you miss, there's a chance you'll pin them...`;
 
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(2);
-				expect(forkedMetalRod.freedomThresholdModifier).to.equal(7);
-				expect(forkedMetalRod.dexModifier).to.equal(7);
+				expect(forkedMetalRod.new.freedomThresholdModifier).to.equal(7);
+				expect(forkedMetalRod.new.dexModifier).to.equal(7);
 
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
@@ -189,8 +170,8 @@ Even if you miss, there's a chance you'll pin them...`;
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(goreSpy.callCount).to.equal(2);
 				expect(hitSpy.callCount).to.equal(1);
-				expect(forkedMetalRod.freedomThresholdModifier).to.equal(5);
-				expect(forkedMetalRod.dexModifier).to.equal(5);
+				expect(forkedMetalRod.new.freedomThresholdModifier).to.equal(5);
+				expect(forkedMetalRod.new.dexModifier).to.equal(5);
 				expect(target.hp).to.be.below(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});
@@ -255,8 +236,8 @@ Even if you miss, there's a chance you'll pin them...`;
 
 				expect(hitCheckStub.callCount).to.equal(2);
 				expect(hitStub.callCount).to.equal(0);
-				expect(forkedMetalRod.freedomThresholdModifier).to.equal(3);
-				expect(forkedMetalRod.dexModifier).to.equal(3);
+				expect(forkedMetalRod.new.freedomThresholdModifier).to.equal(3);
+				expect(forkedMetalRod.new.dexModifier).to.equal(3);
 				expect(target.hp).to.equal(before);
 				return expect(target.encounterEffects.length).to.equal(1);
 			});

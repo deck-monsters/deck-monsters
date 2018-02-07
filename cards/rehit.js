@@ -8,7 +8,10 @@
 const HitCard = require('./hit');
 
 const { roll } = require('../helpers/chance');
-const { CLERIC } = require('../helpers/classes');
+const { CLERIC, FIGHTER } = require('../helpers/classes');
+
+const { UNCOMMON } = require('../helpers/probabilities');
+const { VERY_CHEAP } = require('../helpers/costs');
 
 class Rehit extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -17,6 +20,11 @@ class Rehit extends HitCard {
 		...rest
 	} = {}) {
 		super({ icon, ...rest });
+	}
+
+	get stats () {
+		return `${super.stats}
+Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.`;
 	}
 
 	hitCheck (player, target) {
@@ -40,12 +48,18 @@ class Rehit extends HitCard {
 			commentary = 'Miss... Tie goes to the defender.';
 		}
 
+		let reason;
+		if (player === target) {
+			reason = `vs ${target.pronouns.his} own ac (${target.ac}) in confusion.`;
+		} else {
+			reason = `vs ${target.givenName}'s ac (${target.ac}) to determine if the hit was a success.`;
+		}
+
 		this.emit('rolled', {
-			reason: `vs ac (${target.ac}) to determine if the hit was a success.`,
+			reason,
 			card: this,
 			roll: attackRoll,
-			player,
-			target,
+			who: player,
 			outcome: success ? commentary || 'Hit!' : commentary || 'Miss...',
 			vs: target.ac
 		});
@@ -60,10 +74,10 @@ class Rehit extends HitCard {
 }
 
 Rehit.cardType = 'Rehit';
-Rehit.permittedClassesAndTypes = [CLERIC];
-Rehit.probability = 40;
-Rehit.description = 'Roll for attack, if you roll less than 10, roll again and use the second roll no matter what.';
+Rehit.permittedClassesAndTypes = [CLERIC, FIGHTER];
+Rehit.probability = UNCOMMON.probability;
+Rehit.description = 'At the last moment you realize your trajectory is off and quickly attempt to correct your aim.';
 Rehit.level = 2;
-Rehit.cost = 15;
+Rehit.cost = VERY_CHEAP.cost;
 
 module.exports = Rehit;

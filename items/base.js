@@ -23,6 +23,12 @@ class BaseItem extends BaseClass {
 		return this.options.icon;
 	}
 
+	set icon (icon) {
+		this.setOptions({
+			icon
+		});
+	}
+
 	get cost () {
 		return this.constructor.cost;
 	}
@@ -53,28 +59,44 @@ class BaseItem extends BaseClass {
 		});
 	}
 
-	use (character, monster) {
-		this.emit('used', {
-			character,
-			monster
-		});
-
-		// Generally speaking once something has been used the player will drop it but we'll increment
-		// a counter instead of boolean just in case the item can be used more than once
-		this.used += 1;
-
-		if (this.action) {
-			return this.action(character, monster);
-		}
-
-		return this.used;
+	get usableWithoutMonster () {
+		return !!this.constructor.usableWithoutMonster;
 	}
 
-	look (channel) {
+	use ({ channel, channelName, character, monster }) {
+		return Promise.resolve(channel)
+			.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
+			.then(() => {
+				if (!this.usableWithoutMonster && !monster) {
+					return Promise.reject(channel({
+						announce: `${this.item} must be used on a monster.`
+					}));
+				}
+
+				this.emit('used', {
+					channel,
+					channelName,
+					character,
+					monster
+				});
+
+				// Generally speaking once something has been used the player will drop it but we'll increment
+				// a counter instead of boolean just in case the item can be used more than once
+				this.used += 1;
+
+				if (this.action) {
+					return this.action({ channel, channelName, character, monster });
+				}
+
+				return this.used;
+			});
+	}
+
+	look (channel, verbose) {
 		return Promise
 			.resolve()
 			.then(() => channel({
-				announce: itemCard(this)
+				announce: itemCard(this, verbose)
 			}));
 	}
 }

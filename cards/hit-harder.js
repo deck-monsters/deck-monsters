@@ -4,6 +4,8 @@ const HitCard = require('./hit');
 
 const { roll, max } = require('../helpers/chance');
 const { BARBARIAN, FIGHTER } = require('../helpers/classes');
+const { COMMON } = require('../helpers/probabilities');
+const { EXPENSIVE } = require('../helpers/costs');
 
 class HitHarder extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -13,6 +15,11 @@ class HitHarder extends HitCard {
 		...rest
 	} = {}) {
 		super({ damageDice, icon, ...rest });
+	}
+
+	get stats () {
+		return `${super.stats}
+Roll for damage twice, and use the best result.`;
 	}
 
 	getDamageRoll (player) {
@@ -39,12 +46,18 @@ class HitHarder extends HitCard {
 				betterRoll.result = 1;
 			}
 
+			let reason;
+			if (player === target) {
+				reason = `for damage against ${target.pronouns.him}self.`;
+			} else {
+				reason = `for damage against ${target.givenName}.`;
+			}
+
 			this.emit('rolled', {
-				reason: `for damage against ${target.givenName}`,
+				reason,
 				card: this,
 				roll: betterRoll,
-				player,
-				target,
+				who: player,
 				outcome: commentary
 			});
 		}
@@ -55,10 +68,10 @@ class HitHarder extends HitCard {
 
 HitHarder.cardType = 'Hit Harder';
 HitHarder.permittedClassesAndTypes = [BARBARIAN, FIGHTER];
-HitHarder.probability = 50;
-HitHarder.description = 'You hit just a little bit harder than the average bear... Roll for damage twice, and use the best result.';
+HitHarder.probability = COMMON.probability;
+HitHarder.description = 'You hit just a little bit harder than the average bear...';
 HitHarder.level = 2;
-HitHarder.cost = 30;
+HitHarder.cost = EXPENSIVE.cost;
 
 HitHarder.defaults = {
 	...HitCard.defaults,

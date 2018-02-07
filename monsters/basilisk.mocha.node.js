@@ -1,27 +1,8 @@
 const { expect, sinon } = require('../shared/test-setup');
 
 const Basilisk = require('./basilisk');
-const pause = require('../helpers/pause');
 
 describe('./monsters/basilisk.js', () => {
-	let pauseStub;
-
-	before(() => {
-		pauseStub = sinon.stub(pause, 'setTimeout');
-	});
-
-	beforeEach(() => {
-		pauseStub.callsArg(0);
-	});
-
-	afterEach(() => {
-		pauseStub.reset();
-	});
-
-	after(() => {
-		pause.setTimeout.restore();
-	});
-
 	it('can be instantiated with defaults', () => {
 		const basilisk = new Basilisk();
 
@@ -94,16 +75,23 @@ describe('./monsters/basilisk.js', () => {
 	it('can die from being hit', () => {
 		const basilisk = new Basilisk();
 
+		const basiliskProto = Object.getPrototypeOf(basilisk);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+		const dieSpy = sinon.spy(creatureProto, 'die');
+
 		basilisk.hp = 1;
 
 		expect(basilisk.dead).to.be.false;
 
 		basilisk.hit(1, basilisk);
 
+		expect(dieSpy.calledOnce).to.be.true;
 		expect(basilisk.dead).to.be.true;
+
+		dieSpy.restore();
 	});
 
-	it('can not be hit while dead', () => {
+	it('does not re-die if already dead', () => {
 		const basilisk = new Basilisk();
 
 		const basiliskProto = Object.getPrototypeOf(basilisk);
@@ -123,6 +111,6 @@ describe('./monsters/basilisk.js', () => {
 		expect(dieSpy.calledOnce).to.be.true;
 
 		dieSpy.restore();
-		expect(basilisk.hp).to.equal(0);
+		expect(basilisk.hp).to.equal(-1);
 	});
 });
