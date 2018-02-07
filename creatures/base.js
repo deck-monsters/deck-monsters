@@ -592,24 +592,23 @@ ac boost is now 0.`
 				this.encounterModifiers.ac = 0;
 			}
 
-			const hp = this.hp - adjustedDamage;
+			const newHP = this.hp - adjustedDamage;
 			const originalHP = this.hp;
 
-			this.hp = hp;
+			this.hp = newHP;
 
 			this.emit('hit', {
 				assailant,
 				card,
 				damage,
-				hp,
+				newHP,
 				prevHp: originalHP
 			});
-		}
 
-		if (originalHP > 0 && this.hp <= 0) {
-			return this.die(assailant);
+			if (originalHP > 0 && this.hp <= 0) {
+				return this.die(assailant);
+			}
 		}
-
 		return !this.dead;
 	}
 
