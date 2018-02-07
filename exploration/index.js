@@ -128,6 +128,7 @@ And whither then ${monster.pronouns.he} cannot say.`,
 		if (!Discovery) return this.makeDiscovery(explorer);
 
 		const discovery = new Discovery();
+		// TODO: Look into this. I guess I'm partly wondering why you have look followed by play - for both cards and items we usually show the card or item as part of play/use. The pattern in items, while more complicated than you need for this, is a good starting place. https://github.com/deck-monsters/deck-monsters/blob/master/items/base.js#L60
 		discovery.look(explorer.channel);
 		discovery.play(this.environment, explorer.monster);
 
