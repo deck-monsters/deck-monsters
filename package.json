@@ -16,11 +16,11 @@
     "npm": "5.x"
   },
   "scripts": {
-    "build": "node ./build.js",
+    "build": "node ./build",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint \"**/*.{js,jsx}\"",
     "make-notes": "mc-make-notes",
-    "recalculate": "node ./build.js --calculate-stats",
+    "recalculate": "node ./build --calculate-stats",
     "tag": "mc-tag -b && npm publish",
     "test:debug": "mc-test --node --browsers Chrome",
     "test:watch": "mc-test --node --watch",
