@@ -4,7 +4,6 @@ const announceFight = (publicChannel, channelManager, className, ring, { contest
 _______________________________________________________________________________________________________
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ${contestants.length} contestants stand tall under the laudations and hissing jeers of a roaring crowd.
-${contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')}
 
 ⚔︎ Let the games begin! ⚔︎
 `
