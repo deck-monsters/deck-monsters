@@ -110,7 +110,7 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 			}, defaultTarget);
 		}
 		case TARGET_HUMAN_PLAYER_WEAK: {
-			const defaultTarget = getTarget({ contestants, ignoreSelf, playerContestant, team });
+			const defaultTarget = getTarget({ contestants, ignoreSelf, playerContestant, team: false });
 			const allContestants = getTarget({ contestants, ignoreSelf, playerContestant, strategy: TARGET_ALL_CONTESTANTS, team });
 
 			// Are there any humans left in the room
@@ -214,7 +214,7 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 			const currentIndex = allContestants.indexOf(playerContestant);
 			let nextIndex = currentIndex + 1;
 
-			if (nextIndex >= contestants.length) nextIndex = 0;
+			if (nextIndex >= allContestants.length) nextIndex = 0;
 
 			return allContestants[nextIndex];
 		}
