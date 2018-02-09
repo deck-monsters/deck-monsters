@@ -202,7 +202,7 @@ describe('./ring/index.js', () => {
 			expect(contestant1.won).to.equal(undefined);
 			expect(contestant2.won).to.equal(true);
 			expect(contestant1.monster.xp).to.equal(prevXP1 + 1);
-			expect(contestant2.monster.xp).to.equal(prevXP2 + 13);
+			expect(contestant2.monster.xp).to.equal(prevXP2 + 14);
 		});
 
 		it('can calculate xp for a higher level monster beating a lower level monster', () => {
@@ -242,7 +242,7 @@ describe('./ring/index.js', () => {
 			expect(contestant1.won).to.equal(undefined);
 			expect(contestant2.won).to.equal(true);
 			expect(contestant1.monster.xp).to.equal(prevXP1 + 1);
-			expect(contestant2.monster.xp).to.equal(prevXP2 + 7);
+			expect(contestant2.monster.xp).to.equal(prevXP2 + 8);
 		});
 
 		it('can calculate xp for a lower level monster beating a higher level monster', () => {
@@ -282,7 +282,7 @@ describe('./ring/index.js', () => {
 			expect(contestant1.won).to.equal(undefined);
 			expect(contestant2.won).to.equal(true);
 			expect(contestant1.monster.xp).to.equal(prevXP1 + 1);
-			expect(contestant2.monster.xp).to.equal(prevXP2 + 23);
+			expect(contestant2.monster.xp).to.equal(prevXP2 + 24);
 		});
 
 		it('can calculate xp when a monster flees', () => {
@@ -320,7 +320,7 @@ describe('./ring/index.js', () => {
 			expect(contestant1.won).to.equal(undefined);
 			expect(contestant2.won).to.equal(undefined);
 			expect(contestant1.monster.xp).to.equal(prevXP1 + 2);
-			expect(contestant2.monster.xp).to.equal(prevXP2 + 3);
+			expect(contestant2.monster.xp).to.equal(prevXP2 + 4);
 		});
 	});
 });

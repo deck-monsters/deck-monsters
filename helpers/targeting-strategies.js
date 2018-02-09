@@ -56,16 +56,20 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 
 	switch (strategy) {
 		case TARGET_ALL_CONTESTANTS: {
+			let found = (team === false);
 			const filteredContestants = contestants.filter((contestant) => {
-				if (ignoreSelf && contestant === playerContestant) return false;
+				if (contestant === playerContestant) return !ignoreSelf;
 
 				const contestantTeam = (contestant.monster.team || contestant.character.team);
 				if (team && contestantTeam === team) return false;
 
+				found = true;
 				return true;
 			});
 
-			if (filteredContestants.length < 1) return getTarget({ contestants, ignoreSelf, playerContestant, strategy: TARGET_ALL_CONTESTANTS, team: false });
+			if (!found) {
+				return getTarget({ contestants, ignoreSelf, playerContestant, strategy: TARGET_ALL_CONTESTANTS, team: false });
+			}
 
 			return filteredContestants;
 		}
@@ -106,7 +110,7 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 			}, defaultTarget);
 		}
 		case TARGET_HUMAN_PLAYER_WEAK: {
-			const defaultTarget = getTarget({ contestants, ignoreSelf, playerContestant, team });
+			const defaultTarget = getTarget({ contestants, ignoreSelf, playerContestant, team: false });
 			const allContestants = getTarget({ contestants, ignoreSelf, playerContestant, strategy: TARGET_ALL_CONTESTANTS, team });
 
 			// Are there any humans left in the room
@@ -210,7 +214,7 @@ function getTarget ({ contestants = [], ignoreSelf = true, playerContestant, pla
 			const currentIndex = allContestants.indexOf(playerContestant);
 			let nextIndex = currentIndex + 1;
 
-			if (nextIndex >= contestants.length) nextIndex = 0;
+			if (nextIndex >= allContestants.length) nextIndex = 0;
 
 			return allContestants[nextIndex];
 		}
