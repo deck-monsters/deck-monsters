@@ -82,6 +82,7 @@ Wooden Spear
  Level: 2
  Usable by: Barbarian, Fighter
  MSRP: 50
+ Class: Boost
 
 ==================================
 ```
@@ -103,6 +104,7 @@ Wooden Spear
  Level: 1
  Usable by: Bard
  MSRP: 50
+ Class: Poison
 
 ==================================
 ```
@@ -121,6 +123,7 @@ Wooden Spear
  Level: 2
  Usable by: Bard, Fighter
  MSRP: 50
+ Class: Boost
 
 ==================================
 ```
@@ -156,6 +159,8 @@ Wooden Spear
  Usable by: Gladiator
  Hit chance: 66% | DPT: 4
  MSRP: 130
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -186,6 +191,8 @@ Wooden Spear
  Usable by: Barbarian
  Hit chance: 66% | DPT: 3
  MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -206,6 +213,7 @@ Wooden Spear
  Usable by: Cleric
  Hit chance: 100% | DPT: 3
  MSRP: 50
+ Class: AOE
 
 ==================================
 ```
@@ -226,6 +234,7 @@ Wooden Spear
  Usable by: Cleric
  Hit chance: 100% | DPT: 4
  MSRP: 80
+ Class: AOE
 
 ==================================
 ```
@@ -251,6 +260,8 @@ Wooden Spear
  Usable by: Weeping Angel
  Effect chance: 75%
  MSRP: 130
+ Targets: ac
+ Class: Psychic
 
 ==================================
 ```
@@ -269,6 +280,7 @@ Wooden Spear
  Level: 1
  Usable by: All
  MSRP: 20
+ Class: Boost
 
 ==================================
 ```
@@ -291,6 +303,8 @@ Wooden Spear
  Usable by: All
  Hit chance: 69% | DPT: 2
  MSRP: 50
+ Targets: ac
+ Class: Psychic
 
 ==================================
 ```
@@ -310,6 +324,7 @@ Wooden Spear
  Level: 2
  Usable by: Barbarian, Fighter
  MSRP: 50
+ Class: Boost
 
 ==================================
 ```
@@ -336,6 +351,7 @@ Wooden Spear
  Usable by: Barbarian, Fighter
  Effect chance: 100%
  MSRP: 80
+ Class: Hide
 
 ==================================
 ```
@@ -362,6 +378,7 @@ Wooden Spear
  Usable by: Bard, Cleric, Wizard
  Effect chance: 100%
  MSRP: 80
+ Class: Hide
 
 ==================================
 ```
@@ -406,6 +423,8 @@ Wooden Spear
  Hit chance: 77% | DPT: 4
  Effect chance: 100%
  MSRP: 130
+ Targets: dex
+ Class: Melee
 
 ==================================
 ```
@@ -451,6 +470,8 @@ Wooden Spear
  Hit chance: 77% | DPT: 4
  Effect chance: 100%
  MSRP: 80
+ Targets: dex
+ Class: Melee
 
 ==================================
 ```
@@ -474,6 +495,8 @@ Wooden Spear
  Usable by: All
  Hit chance: 73% | DPT: 3
  MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -496,6 +519,8 @@ Wooden Spear
  Level: Beginner
  Usable by: All
  MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -517,6 +542,7 @@ Wooden Spear
  Usable by: Bard, Cleric
  Effect chance: 100%
  MSRP: 80
+ Class: Hide
 
 ==================================
 ```
@@ -558,6 +584,8 @@ Wooden Spear
  Hit chance: 15% | DPT: 1
  Effect chance: 80%
  MSRP: 50
+ Targets: int
+ Class: Psychic
 
 ==================================
 ```
@@ -602,6 +630,8 @@ Wooden Spear
  Hit chance: 76% | DPT: 3
  Effect chance: 80%
  MSRP: 80
+ Targets: int
+ Class: Psychic
 
 ==================================
 ```
@@ -621,6 +651,7 @@ Wooden Spear
  Level: 2
  Usable by: Basilisk
  MSRP: 50
+ Class: Boost
 
 ==================================
 ```
@@ -639,6 +670,7 @@ Wooden Spear
  Level: 2
  Usable by: Bard, Cleric
  MSRP: 80
+ Class: Boost
 
 ==================================
 ```
@@ -660,6 +692,8 @@ Wooden Spear
  Usable by: All
  Hit chance: 68% | DPT: 3
  MSRP: 10
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -680,6 +714,8 @@ Wooden Spear
  Usable by: All
  Hit chance: 68% | DPT: 3
  MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -701,6 +737,8 @@ Wooden Spear
  Usable by: All
  Hit chance: 68% | DPT: 4
  MSRP: 30
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -720,6 +758,7 @@ Wooden Spear
  Level: Beginner
  Usable by: All
  MSRP: 10
+ Class: Hide
 
 ==================================
 ```
@@ -766,6 +805,8 @@ Wooden Spear
  Hit chance: 96% | DPT: 7
  Effect chance: 75%
  MSRP: 80
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -812,6 +853,8 @@ Wooden Spear
  Hit chance: 64% | DPT: 2
  Effect chance: 62%
  MSRP: 50
+ Targets: dex
+ Class: Melee
 
 ==================================
 ```
@@ -838,6 +881,7 @@ Wooden Spear
  Hit chance: 1% | DPT: 0
  Heal chance: 94% | HPT: 3
  MSRP: 10
+ Class: Heal
 
 ==================================
 ```
@@ -857,6 +901,8 @@ Wooden Spear
  Usable by: All
  Hit chance: 66% | DPT: 3
  MSRP: 10
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -878,6 +924,8 @@ Wooden Spear
  Usable by: Barbarian, Fighter
  Hit chance: 66% | DPT: 4
  MSRP: 130
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -923,6 +971,8 @@ Wooden Spear
  Hit chance: 67% | DPT: 3
  Effect chance: 46%
  MSRP: 130
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -944,6 +994,8 @@ Wooden Spear
  Usable by: Minotaur
  Hit chance: 93% | DPT: 4
  MSRP: 50
+ Targets: str
+ Class: Melee
 
 ==================================
 ```
@@ -971,6 +1023,8 @@ Wooden Spear
  Usable by: Bard, Cleric
  Hit chance: 68% | DPT: 4
  MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -993,6 +1047,8 @@ Wooden Spear
  Usable by: All
  Hit chance: 67% | DPT: 7
  MSRP: 80
+ Targets: ac
+ Class: Psychic
 
 ==================================
 ```
@@ -1017,6 +1073,8 @@ Wooden Spear
  Usable by: Bard, Cleric, Fighter
  Hit chance: 88% | DPT: 4
  MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -1058,6 +1116,8 @@ Wooden Spear
  Hit chance: 15% | DPT: 1
  Effect chance: 80%
  MSRP: 20
+ Targets: int
+ Class: AOE
 
 ==================================
 ```
@@ -1081,6 +1141,8 @@ Wooden Spear
  Usable by: All
  Hit chance: 65% | DPT: 2
  MSRP: 50
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -1099,6 +1161,7 @@ Wooden Spear
  Level: Beginner
  Usable by: All
  MSRP: 20
+ Class: Melee
 
 ==================================
 ```
@@ -1118,6 +1181,8 @@ Wooden Spear
  Usable by: Bard, Barbarian
  Hit chance: 66% | DPT: 5
  MSRP: 130
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -1145,6 +1210,7 @@ Wooden Spear
  Hit chance: 2% | DPT: 1
  Heal chance: 78% | HPT: 2
  MSRP: 130
+ Class: Poison
 
 ==================================
 ```
@@ -1164,6 +1230,7 @@ Wooden Spear
  Level: Beginner
  Usable by: All
  MSRP: 10
+ Class: Psychic
 
 ==================================
 ```
@@ -1188,6 +1255,8 @@ Wooden Spear
  Usable by: Cleric, Fighter
  Hit chance: 86% | DPT: 4
  MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -1214,6 +1283,7 @@ Wooden Spear
  Hit chance: 100% | DPT: 1
  Effect chance: 100%
  MSRP: 130
+ Class: AOE
 
 ==================================
 ```
@@ -1239,6 +1309,7 @@ Wooden Spear
  Hit chance: 1% | DPT: 0
  Heal chance: 99% | HPT: 5
  MSRP: 80
+ Class: Heal
 
 ==================================
 ```
@@ -1267,6 +1338,8 @@ Wooden Spear
  Usable by: Fighter
  Hit chance: 68% | DPT: 4
  MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -1286,6 +1359,7 @@ Wooden Spear
  Level: 2
  Usable by: Basilisk
  MSRP: 50
+ Class: Boost
 
 ==================================
 ```
@@ -1314,6 +1388,8 @@ Wooden Spear
  Usable by: Barbarian
  Hit chance: 69% | DPT: 4
  MSRP: 20
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -1335,6 +1411,8 @@ Wooden Spear
  Usable by: Barbarian
  Hit chance: 67% | DPT: 8
  MSRP: 80
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```
@@ -1360,6 +1438,7 @@ Wooden Spear
  Hit chance: 1% | DPT: 0
  Heal chance: 96% | HPT: 4
  MSRP: 50
+ Class: Heal
 
 ==================================
 ```
@@ -1380,6 +1459,8 @@ Wooden Spear
  Usable by: Bard, Fighter
  Hit chance: 67% | DPT: 3
  MSRP: 30
+ Targets: ac
+ Class: Melee
 
 ==================================
 ```

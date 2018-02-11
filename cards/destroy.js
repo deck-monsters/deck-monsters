@@ -41,6 +41,7 @@ class DestroyCard extends BaseCard {
 	}
 }
 
+DestroyCard.cardClass = 'Melee';
 DestroyCard.cardType = 'Destroy';
 DestroyCard.probability = IMPOSSIBLE.probability;
 DestroyCard.description = 'A test card used to completely destroy your opponent.';

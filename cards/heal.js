@@ -126,6 +126,7 @@ Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. ð
 	}
 }
 
+HealCard.cardClass = 'Heal';
 HealCard.cardType = 'Heal';
 HealCard.probability = COMMON.probability;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';

@@ -45,6 +45,7 @@ class TestCard extends BaseCard {
 	}
 }
 
+TestCard.cardClass = 'Melee';
 TestCard.cardType = 'Test';
 TestCard.probability = 100;
 TestCard.description = 'For testing purposes only.';

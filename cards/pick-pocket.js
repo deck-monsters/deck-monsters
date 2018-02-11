@@ -31,11 +31,13 @@ class PickPocketCard extends BaseCard {
 		});
 
 		this.randomCard = randomCard;
+		this.cardClass = randomCard.cardClass;
 
 		return randomCard.play(player, proposedTarget, ring, activeContestants);
 	}
 }
 
+PickPocketCard.cardClass = 'Melee';
 PickPocketCard.cardType = 'Pick Pocket';
 PickPocketCard.probability = COMMON.probability;
 PickPocketCard.description = 'Reach into the pocket of the most skilled player and grab one of their cards to play as your own.';

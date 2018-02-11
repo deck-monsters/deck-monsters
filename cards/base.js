@@ -21,8 +21,8 @@ class BaseCard extends BaseItem {
 		return this.itemType;
 	}
 
-	get isAreaOfEffect () {
-		return !!this.constructor.isAreaOfEffect;
+	get cardClass () {
+		return this.constructor.cardClass;
 	}
 
 	get new () {

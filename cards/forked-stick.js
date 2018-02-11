@@ -55,6 +55,7 @@ ${super.stats}`;
 	}
 }
 
+ForkedStickCard.cardClass = 'Melee';
 ForkedStickCard.cardType = 'Forked Stick';
 ForkedStickCard.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned', IMMOBILIZING: 'pinning' };
 ForkedStickCard.permittedClassesAndTypes = [BARD, BARBARIAN, FIGHTER];

@@ -28,6 +28,7 @@ ${super.stats}`;
 	}
 }
 
+CoilCard.cardClass = 'Melee';
 CoilCard.cardType = 'Coil';
 CoilCard.actions = { IMMOBILIZE: 'coil', IMMOBILIZES: 'coils', IMMOBILIZED: 'coiled' };
 CoilCard.permittedClassesAndTypes = [BASILISK];

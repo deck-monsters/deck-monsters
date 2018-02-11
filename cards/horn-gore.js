@@ -199,6 +199,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 }
 
+HornGore.cardClass = 'Melee';
 HornGore.cardType = 'Horn Gore';
 HornGore.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' };
 HornGore.permittedClassesAndTypes = [MINOTAUR];
