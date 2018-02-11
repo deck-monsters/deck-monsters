@@ -78,7 +78,7 @@ class BoostCard extends BaseCard {
 
 	effect (player, target) {
 		const preBoostedPropValue = target[this.boostedProp];
-		let boostAmount = Math.abs(this.boostAmount);
+		let boostAmount = this.boostAmount;
 		const postBoostedPropValue = preBoostedPropValue + boostAmount;
 		const preBattlePropValue = target.getPreBattlePropValue(this.boostedProp);
 		const aggregateTotalBoostAmount = difference(preBattlePropValue, postBoostedPropValue);
