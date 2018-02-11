@@ -23,7 +23,7 @@ describe('./cards/basic-shield.js', () => {
 		expect(basicShield.icon).to.equal('🛡');
 		expect(basicShield.boostAmount).to.equal(2);
 		expect(basicShield.boostedProp).to.equal('ac');
-		expect(basicShield.stats).to.equal('Boost: ac +2');
+		expect(basicShield.stats).to.equal('Boost: ac +2 (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.'); // eslint-disable-line max-len
 	});
 
 	it('increases ac', () => {
