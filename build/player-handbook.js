@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-const generateDocs = require('./helpers/generate-docs');
+const generateDocs = require('./generate-docs');
 
 const generatePlayerHandbook = (output) => {
 	const contents = `

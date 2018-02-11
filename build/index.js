@@ -5,8 +5,8 @@ const fs = require('fs-extra');
 const cardCatalogue = require('./card-catalogue');
 const cardCatalogueAsHTML = require('./card-catalogue-as-html');
 const dungeonMasterGuide = require('./dungeon-master-guide');
-const getCardDPT = require('./helpers/card-odds');
-const getCardProbabilities = require('./helpers/card-probabilities');
+const getCardDPT = require('./card-odds');
+const getCardProbabilities = require('./card-probabilities');
 const monsterManual = require('./monster-manual');
 const playerHandbook = require('./player-handbook');
 

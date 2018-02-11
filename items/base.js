@@ -20,7 +20,7 @@ class BaseItem extends BaseClass {
 	}
 
 	get icon () {
-		return this.options.icon;
+		return this.options.icon || this.constructor.icon;
 	}
 
 	set icon (icon) {

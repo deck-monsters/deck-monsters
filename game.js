@@ -15,9 +15,9 @@ const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
 const getArray = require('./helpers/get-array');
-const dungeonMasterGuide = require('./dungeon-master-guide');
-const monsterManual = require('./monster-manual');
-const playerHandbook = require('./player-handbook');
+const dungeonMasterGuide = require('./build/dungeon-master-guide');
+const monsterManual = require('./build/monster-manual');
+const playerHandbook = require('./build/player-handbook');
 const Ring = require('./ring');
 const Exploration = require('./exploration');
 
