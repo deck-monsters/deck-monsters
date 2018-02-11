@@ -21,6 +21,10 @@ class BaseCard extends BaseItem {
 		return this.itemType;
 	}
 
+	set cardClass (newClass) {
+		this.constructor.cardClass = newClass;
+	}
+
 	get cardClass () {
 		return this.constructor.cardClass;
 	}

@@ -562,7 +562,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	/* assailant is the monster who attacked you, not the contestant who owns the monster */
-	hit (damage = 0, assailant, card) {
+	hit (damage = 0, assailant, card = { cardClass: 'psychic' }) {
 		const hitLog = this.encounterModifiers.hitLog || [];
 		hitLog.unshift({
 			assailant,
