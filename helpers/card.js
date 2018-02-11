@@ -27,8 +27,8 @@ const getItemRequirements = (item) => {
 	}
 
 	requirements.push(`MSRP: ${item.cost ? item.cost : 'free'}`);
-	if (item.targetProp) requirements.push(`Targets: ${item.targetProp}`)
-	if (item.cardClass) requirements.push(`Class: ${item.cardClass}`)
+	if (item.targetProp) requirements.push(`Targets: ${item.targetProp}`);
+	if (item.cardClass) requirements.push(`Class: ${item.cardClass}`);
 
 
 	return requirements;
