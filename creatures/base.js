@@ -572,7 +572,7 @@ Battles won: ${this.battles.wins}`;
 		});
 		this.encounterModifiers.hitLog = hitLog;
 
-		if (this.encounterModifiers.ac >= damage) {
+		if (card.cardClass === 'melee' && this.encounterModifiers.ac >= damage) {
 			this.encounterModifiers.ac -= damage;
 
 			this.emit('narration', {
@@ -581,7 +581,7 @@ Battles won: ${this.battles.wins}`;
 		} else {
 			let adjustedDamage = damage;
 
-			if (this.encounterModifiers.ac > 0) {
+			if (card.cardClass === 'melee' && this.encounterModifiers.ac > 0) {
 				adjustedDamage -= this.encounterModifiers.ac;
 				this.emit('narration', {
 					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ac boost is now 0.`

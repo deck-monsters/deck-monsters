@@ -24,7 +24,10 @@ class BoostCard extends BaseCard {
 	}
 
 	get stats () {
-		return `Boost: ${this.boostedProp} +${this.boostAmount}`;
+		const acBoost = (this.boostedProp === 'ac') ?
+			'\nIf hit by melee attack, damage comes out of ac boost first.' :
+			'';
+		return `Boost: ${this.boostedProp} +${this.boostAmount} (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).${acBoost}`;
 	}
 
 	getTargets (player) { // eslint-disable-line class-methods-use-this

@@ -118,7 +118,11 @@ Wooden Spear
  Equip yourself for the battle 
  ahead.
 
- Boost: ac +2
+ Boost: ac +2 (max boost of level 
+ * 2, or 1 for beginner, then 
+ boost granted to hp instead).
+ If hit by melee attack, damage 
+ comes out of ac boost first.
 
  Level: 2
  Usable by: Bard, Fighter
@@ -275,7 +279,11 @@ Wooden Spear
  It's time to put on your big boy 
  pants, and toughen up!
 
- Boost: ac +1
+ Boost: ac +1 (max boost of level 
+ * 2, or 1 for beginner, then 
+ boost granted to hp instead).
+ If hit by melee attack, damage 
+ comes out of ac boost first.
 
  Level: 1
  Usable by: All
@@ -665,7 +673,10 @@ Wooden Spear
  A low purr in your ears helps 
  you focus your energy.
 
- Boost: int +2
+ Boost: int +2 (max boost of 
+ level * 2, or 1 for beginner, 
+ then boost granted to hp 
+ instead).
 
  Level: 2
  Usable by: Bard, Cleric
@@ -1354,7 +1365,11 @@ Wooden Spear
  deflect the blows of thine 
  enemies.
 
- Boost: ac +2
+ Boost: ac +2 (max boost of level 
+ * 2, or 1 for beginner, then 
+ boost granted to hp instead).
+ If hit by melee attack, damage 
+ comes out of ac boost first.
 
  Level: 2
  Usable by: Basilisk
