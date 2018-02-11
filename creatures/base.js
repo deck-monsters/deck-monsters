@@ -576,7 +576,7 @@ Battles won: ${this.battles.wins}`;
 			this.encounterModifiers.ac -= damage;
 
 			this.emit('narration', {
-				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage. ac boost is now ${this.encounterModifiers.ac}.`
+				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage. ac boost is now ${this.encounterModifiers.ac}.` // eslint-disable-line max-len
 			});
 		} else {
 			let adjustedDamage = damage;
@@ -584,7 +584,7 @@ Battles won: ${this.battles.wins}`;
 			if (card.cardClass === 'melee' && this.encounterModifiers.ac > 0) {
 				adjustedDamage -= this.encounterModifiers.ac;
 				this.emit('narration', {
-					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ac boost is now 0.`
+					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ac boost is now 0.` // eslint-disable-line max-len
 				});
 				this.encounterModifiers.ac = 0;
 			}
