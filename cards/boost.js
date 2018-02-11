@@ -102,6 +102,7 @@ class BoostCard extends BaseCard {
 	}
 }
 
+BoostCard.cardClass = 'Boost';
 BoostCard.cardType = 'Harden';
 BoostCard.probability = COMMON.probability;
 BoostCard.description = "It's time to put on your big boy pants, and toughen up!";

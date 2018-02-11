@@ -32,6 +32,7 @@ ${stats}`;
 	}
 }
 
+BrainDrainCard.cardClass = 'Psychic';
 BrainDrainCard.cardType = 'Brain Drain';
 BrainDrainCard.description = 'And we shall bury our enemies in their own confusion.';
 BrainDrainCard.cost = REASONABLE.cost;

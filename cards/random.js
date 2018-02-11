@@ -20,11 +20,13 @@ class RandomCard extends BaseCard {
 		const randomCard = draw(this.options, player);
 
 		this.randomCard = randomCard;
+		this.cardClass = randomCard.cardClass;
 
 		return randomCard.play(player, proposedTarget, ring, activeContestants);
 	}
 }
 
+RandomCard.cardClass = 'Psychic';
 RandomCard.cardType = 'Random Play';
 RandomCard.probability = COMMON.probability;
 RandomCard.description = 'You find the illegible scraps of an ancient card in the corner. Curious to see what it does, you play it --as it crumbles to dust.';

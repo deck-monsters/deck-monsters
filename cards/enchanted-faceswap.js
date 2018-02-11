@@ -29,10 +29,10 @@ class EnchantedFaceswapCard extends BaseCard {
 			phase
 		}) => {
 			if (phase === DEFENSE_PHASE) {
-				const { effect, isAreaOfEffect } = card;
+				const { effect, cardClass } = card;
 
 				// The card that is passed in should be a clone already so we're going to edit it directly
-				if (effect && !isAreaOfEffect) {
+				if (effect && cardClass !== 'AOE') {
 					card.effect = (swappedPlayer, swappedTarget, ring, activeContestants) => {
 						if (swappedTarget === faceswapTarget) {
 							faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
@@ -75,6 +75,7 @@ class EnchantedFaceswapCard extends BaseCard {
 	}
 }
 
+EnchantedFaceswapCard.cardClass = 'Hide';
 EnchantedFaceswapCard.cardType = 'Enchanted Faceswap';
 EnchantedFaceswapCard.permittedClassesAndTypes = [BARD, CLERIC];
 EnchantedFaceswapCard.probability = RARE.probability;

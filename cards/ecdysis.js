@@ -34,6 +34,7 @@ class EcdysisCard extends BaseCard {
 	}
 }
 
+EcdysisCard.cardClass = 'Boost';
 EcdysisCard.cardType = 'Ecdysis';
 EcdysisCard.permittedClassesAndTypes = [BASILISK];
 EcdysisCard.description = 'Evolve into your more perfect form.';

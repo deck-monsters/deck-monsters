@@ -81,6 +81,7 @@ class BadBatchCard extends BaseCard {
 	}
 }
 
+BadBatchCard.cardClass = 'Poison';
 BadBatchCard.cardType = 'Bad Batch';
 BadBatchCard.permittedClassesAndTypes = [BARD];
 BadBatchCard.targetCards = [WhiskeyShotCard.cardType, ScotchCard.cardType];

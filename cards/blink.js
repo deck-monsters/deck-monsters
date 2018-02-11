@@ -176,6 +176,7 @@ On what would have been their next turn, if you are still alive you drain ${this
 	}
 }
 
+BlinkCard.cardClass = 'Psychic';
 BlinkCard.cardType = 'Blink';
 BlinkCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 BlinkCard.probability = EPIC.probability;

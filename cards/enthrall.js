@@ -44,6 +44,7 @@ ${super.stats}`;
 	}
 }
 
+EnthrallCard.cardClass = 'Psychic';
 EnthrallCard.cardType = 'Enthrall';
 EnthrallCard.actions = { IMMOBILIZE: 'enthrall', IMMOBILIZES: 'enthralls', IMMOBILIZED: 'enthralled' };
 EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];

@@ -44,13 +44,13 @@ class BlastCard extends BaseCard {
 	}
 }
 
+BlastCard.cardClass = 'AOE';
 BlastCard.cardType = 'Blast';
 BlastCard.permittedClassesAndTypes = [CLERIC];
 BlastCard.probability = ABUNDANT.probability;
 BlastCard.description = 'A magical blast against every opponent in the encounter.';
 BlastCard.level = 0;
 BlastCard.cost = REASONABLE.cost;
-BlastCard.isAreaOfEffect = true;
 
 BlastCard.defaults = {
 	damage: 3,

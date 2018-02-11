@@ -60,6 +60,7 @@ class FleeCard extends BaseCard {
 	}
 }
 
+FleeCard.cardClass = 'Hide';
 FleeCard.cardType = 'Flee';
 FleeCard.probability = UNCOMMON.probability;
 FleeCard.description = 'There is no shame in living to fight another day.';

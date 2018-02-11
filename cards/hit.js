@@ -131,6 +131,7 @@ class HitCard extends BaseCard {
 	}
 }
 
+HitCard.cardClass = 'Melee';
 HitCard.cardType = 'Hit';
 HitCard.probability = (ABUNDANT.probability + 10);
 HitCard.description = 'A basic attack, the staple of all good monsters.';
