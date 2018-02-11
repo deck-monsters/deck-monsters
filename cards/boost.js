@@ -31,7 +31,7 @@ class BoostCard extends BaseCard {
 		return [player];
 	}
 
-	getBoostNarrative (player, target) { // eslint-disable-line class-methods-use-this
+	getBoostNarrative (player, target) {
 		const items = {
 			str: [
 				['pops some Ant nectar', 50],
@@ -93,7 +93,7 @@ class BoostCard extends BaseCard {
 
 		if (boostAmount > 0) {
 			this.emit('narration', {
-				narration: this.getBoostNarrative(player, target, this.boostedProp)
+				narration: this.getBoostNarrative(player, target)
 			});
 			target.setModifier(this.boostedProp, boostAmount);
 		}
