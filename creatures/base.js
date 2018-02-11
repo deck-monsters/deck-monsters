@@ -576,8 +576,7 @@ Battles won: ${this.battles.wins}`;
 			this.encounterModifiers.ac -= damage;
 
 			this.emit('narration', {
-				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage.
-ac boost is now ${this.encounterModifiers.ac}`
+				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage. ac boost is now ${this.encounterModifiers.ac}.`
 			});
 		} else {
 			let adjustedDamage = damage;
@@ -585,9 +584,7 @@ ac boost is now ${this.encounterModifiers.ac}`
 			if (this.encounterModifiers.ac > 0) {
 				adjustedDamage -= this.encounterModifiers.ac;
 				this.emit('narration', {
-					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage.
-It was not enough to stop the full blow.
-ac boost is now 0.`
+					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ac boost is now 0.`
 				});
 				this.encounterModifiers.ac = 0;
 			}
@@ -600,7 +597,7 @@ ac boost is now 0.`
 			this.emit('hit', {
 				assailant,
 				card,
-				damage,
+				damage: adjustedDamage,
 				newHP,
 				prevHp: originalHP
 			});
