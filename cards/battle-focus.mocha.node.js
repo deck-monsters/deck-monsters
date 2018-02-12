@@ -4,7 +4,7 @@ const BattleFocusCard = require('./battle-focus');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
 
-const { GLADIATOR } = require('../helpers/creature-types');
+const { GLADIATOR } = require('../constants/creature-types');
 
 const ultimateComboNarration = [];
 for (let i = 17; i < 101; i++) {

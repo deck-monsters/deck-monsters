@@ -3,10 +3,12 @@ const sample = require('lodash.sample');
 
 const ImmobilizeCard = require('./immobilize');
 
-const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
+const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../constants/creature-types');
 const { roll } = require('../helpers/chance');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
+const { MELEE } = require('../constants/card-classes');
+
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
 const STARTING_DEX_MODIFIER = 0;
@@ -199,6 +201,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 }
 
+HornGore.cardClass = [MELEE];
 HornGore.cardType = 'Horn Gore';
 HornGore.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' };
 HornGore.permittedClassesAndTypes = [MINOTAUR];

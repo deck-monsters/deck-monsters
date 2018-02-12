@@ -6,10 +6,12 @@ const startCase = require('lodash.startcase');
 
 const BaseClass = require('../shared/baseClass');
 
+const { capitalize } = require('../helpers/capitalize');
 const { describeLevels, getLevel } = require('../helpers/levels');
 const { getAttributeChoices } = require('../helpers/choices');
 const { getItemCounts } = require('../items/helpers/counts');
 const { itemCard } = require('../helpers/card');
+const { MELEE } = require('../constants/card-classes');
 const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
 const getUniqueItems = require('../items/helpers/unique-items');
@@ -28,7 +30,7 @@ const {
 	HP_VARIANCE,
 	MAX_BOOSTS,
 	MAX_PROP_MODIFICATIONS
-} = require('../helpers/stat-constants');
+} = require('../constants/stats');
 
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
@@ -572,21 +574,41 @@ Battles won: ${this.battles.wins}`;
 		});
 		this.encounterModifiers.hitLog = hitLog;
 
-		const hp = this.hp - damage;
-		const originalHP = this.hp;
+		const isMelee = card && card.isCardClass(MELEE);
 
-		this.hp = hp;
+		if (isMelee && this.encounterModifiers.ac >= damage) {
+			this.encounterModifiers.ac -= damage;
 
-		this.emit('hit', {
-			assailant,
-			card,
-			damage,
-			hp,
-			prevHp: originalHP
-		});
+			this.emit('narration', {
+				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage. ${capitalize(this.pronouns.his)} ac boost is now ${this.encounterModifiers.ac}.` // eslint-disable-line max-len
+			});
+		} else {
+			let adjustedDamage = damage;
 
-		if (originalHP > 0 && hp <= 0) {
-			return this.die(assailant);
+			if (isMelee && this.encounterModifiers.ac > 0) {
+				adjustedDamage -= this.encounterModifiers.ac;
+				this.emit('narration', {
+					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ${capitalize(this.pronouns.his)} ac boost is now 0.` // eslint-disable-line max-len
+				});
+				this.encounterModifiers.ac = 0;
+			}
+
+			const newHP = this.hp - adjustedDamage;
+			const originalHP = this.hp;
+
+			this.hp = newHP;
+
+			this.emit('hit', {
+				assailant,
+				card,
+				damage: adjustedDamage,
+				newHP,
+				prevHp: originalHP
+			});
+
+			if (originalHP > 0 && this.hp <= 0) {
+				return this.die(assailant);
+			}
 		}
 
 		return !this.dead;

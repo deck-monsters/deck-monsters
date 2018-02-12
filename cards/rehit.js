@@ -8,7 +8,7 @@
 const HitCard = require('./hit');
 
 const { roll } = require('../helpers/chance');
-const { CLERIC, FIGHTER } = require('../helpers/classes');
+const { CLERIC, FIGHTER } = require('../constants/creature-classes');
 
 const { UNCOMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');

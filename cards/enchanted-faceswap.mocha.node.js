@@ -1,6 +1,6 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const { DEFENSE_PHASE } = require('../helpers/phases');
+const { DEFENSE_PHASE } = require('../constants/phases');
 const Basilisk = require('../monsters/basilisk');
 const cards = require('./index');
 const EnchantedFaceswapCard = require('./enchanted-faceswap');

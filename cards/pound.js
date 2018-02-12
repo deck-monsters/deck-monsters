@@ -1,6 +1,6 @@
 const HitCard = require('./hit');
 
-const { BARD, BARBARIAN } = require('../helpers/classes');
+const { BARD, BARBARIAN } = require('../constants/creature-classes');
 const { VERY_RARE } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
 

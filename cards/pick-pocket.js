@@ -4,6 +4,7 @@ const sample = require('lodash.sample');
 const BaseCard = require('./base');
 
 const { COMMON } = require('../helpers/probabilities');
+const { MELEE } = require('../constants/card-classes');
 const { VERY_CHEAP } = require('../helpers/costs');
 const { TARGET_HIGHEST_XP_PLAYER, getTarget } = require('../helpers/targeting-strategies');
 
@@ -30,12 +31,11 @@ class PickPocketCard extends BaseCard {
 			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName}`
 		});
 
-		this.randomCard = randomCard;
-
 		return randomCard.play(player, proposedTarget, ring, activeContestants);
 	}
 }
 
+PickPocketCard.cardClass = [MELEE];
 PickPocketCard.cardType = 'Pick Pocket';
 PickPocketCard.probability = COMMON.probability;
 PickPocketCard.description = 'Reach into the pocket of the most skilled player and grab one of their cards to play as your own.';

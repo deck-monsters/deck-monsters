@@ -1,6 +1,6 @@
 const { expect } = require('../shared/test-setup');
 
-const { BARBARIAN, FIGHTER } = require('../helpers/classes');
+const { BARBARIAN, FIGHTER } = require('../constants/creature-classes');
 const AdrenalineRushCard = require('./adrenaline-rush');
 
 describe('./cards/adrenaline-rush.js', () => {

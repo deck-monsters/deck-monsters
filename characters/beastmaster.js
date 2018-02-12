@@ -4,7 +4,7 @@ const some = require('lodash.some');
 
 const BaseCharacter = require('./base');
 
-const { BEASTMASTER } = require('../helpers/creature-types');
+const { BEASTMASTER } = require('../constants/creature-types');
 const { capitalize } = require('../helpers/capitalize');
 const { getMonsterChoices } = require('../helpers/choices');
 const { monsterCard } = require('../helpers/card');

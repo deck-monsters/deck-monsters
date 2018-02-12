@@ -1,6 +1,6 @@
 const HealCard = require('./heal');
 
-const { BARD, CLERIC, WIZARD } = require('../helpers/classes');
+const { BARD, CLERIC, WIZARD } = require('../constants/creature-classes');
 const { EXPENSIVE } = require('../helpers/costs');
 
 class ReviveCard extends HealCard {

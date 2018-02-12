@@ -2,8 +2,9 @@
 
 const BaseCard = require('./base');
 
-const { BARD, CLERIC } = require('../helpers/classes');
-const { DEFENSE_PHASE } = require('../helpers/phases');
+const { BARD, CLERIC } = require('../constants/creature-classes');
+const { DEFENSE_PHASE } = require('../constants/phases');
+const { AOE, HIDE, PSYCHIC } = require('../constants/card-classes');
 const { RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 
@@ -29,10 +30,10 @@ class EnchantedFaceswapCard extends BaseCard {
 			phase
 		}) => {
 			if (phase === DEFENSE_PHASE) {
-				const { effect, isAreaOfEffect } = card;
+				const { effect } = card;
 
 				// The card that is passed in should be a clone already so we're going to edit it directly
-				if (effect && !isAreaOfEffect) {
+				if (effect && !card.isCardClass(AOE) && !card.isCardClass(PSYCHIC)) {
 					card.effect = (swappedPlayer, swappedTarget, ring, activeContestants) => {
 						if (swappedTarget === faceswapTarget) {
 							faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
@@ -75,6 +76,7 @@ class EnchantedFaceswapCard extends BaseCard {
 	}
 }
 
+EnchantedFaceswapCard.cardClass = [HIDE];
 EnchantedFaceswapCard.cardType = 'Enchanted Faceswap';
 EnchantedFaceswapCard.permittedClassesAndTypes = [BARD, CLERIC];
 EnchantedFaceswapCard.probability = RARE.probability;

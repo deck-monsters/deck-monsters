@@ -7,9 +7,9 @@ const Minotaur = require('../monsters/minotaur');
 const Gladiator = require('../monsters/gladiator');
 const ForkedStick = require('./forked-stick');
 
-const { BARD, FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, JINN, MINOTAUR, BASILISK } = require('../helpers/creature-types');
-const { ATTACK_PHASE } = require('../helpers/phases');
+const { BARD, FIGHTER, BARBARIAN } = require('../constants/creature-classes');
+const { GLADIATOR, JINN, MINOTAUR, BASILISK } = require('../constants/creature-types');
+const { ATTACK_PHASE } = require('../constants/phases');
 
 describe('./cards/forked-stick.js', () => {
 	it('can be instantiated with defaults', () => {

@@ -6,7 +6,7 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Constrict = require('./constrict');
 
-const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../constants/creature-types');
 
 describe('./cards/constrict.js', () => {
 	it('can be instantiated with defaults', () => {

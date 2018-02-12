@@ -1,7 +1,8 @@
 const BaseCard = require('./base');
 
+const { BOOST } = require('../constants/card-classes');
 const { COMMON } = require('../helpers/probabilities');
-const { BASILISK } = require('../helpers/creature-types');
+const { BASILISK } = require('../constants/creature-types');
 const { REASONABLE } = require('../helpers/costs');
 
 class EcdysisCard extends BaseCard {
@@ -34,6 +35,7 @@ class EcdysisCard extends BaseCard {
 	}
 }
 
+EcdysisCard.cardClass = [BOOST];
 EcdysisCard.cardType = 'Ecdysis';
 EcdysisCard.permittedClassesAndTypes = [BASILISK];
 EcdysisCard.description = 'Evolve into your more perfect form.';

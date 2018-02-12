@@ -11,7 +11,7 @@ describe('./cards/thick-skin.js', () => {
 		expect(thickSkin.icon).to.equal('🔬');
 		expect(thickSkin.boostAmount).to.equal(2);
 		expect(thickSkin.boostedProp).to.equal('ac');
-		expect(thickSkin.stats).to.equal('Boost: ac +2');
+		expect(thickSkin.stats).to.equal('Boost: ac +2 (max boost of level * 2, or 1 for beginner, then boost granted to hp instead).\nIf hit by melee attack, damage comes out of ac boost first.'); // eslint-disable-line max-len
 	});
 
 	it('increases ac', () => {

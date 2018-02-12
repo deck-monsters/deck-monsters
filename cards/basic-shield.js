@@ -1,6 +1,6 @@
 const BoostCard = require('./boost');
 
-const { BARD, FIGHTER } = require('../helpers/classes');
+const { BARD, FIGHTER } = require('../constants/creature-classes');
 const { REASONABLE } = require('../helpers/costs');
 
 class BasicShieldCard extends BoostCard {

@@ -9,11 +9,11 @@ const Jinn = require('../monsters/jinn');
 const Minotaur = require('../monsters/minotaur');
 const WeepingAngel = require('../monsters/weeping-angel');
 
-const { ATTACK_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE } = require('../constants/phases');
 
 const {
 	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
-} = require('../helpers/creature-types');
+} = require('../constants/creature-types');
 
 describe('./cards/mesmerize.js', () => {
 	let angel;

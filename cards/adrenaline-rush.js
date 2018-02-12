@@ -1,6 +1,6 @@
 const EcdysisCard = require('./ecdysis');
 
-const { BARBARIAN, FIGHTER } = require('../helpers/classes');
+const { BARBARIAN, FIGHTER } = require('../constants/creature-classes');
 
 class AdrenalineRushCard extends EcdysisCard {
 	constructor ({

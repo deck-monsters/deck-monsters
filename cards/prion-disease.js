@@ -4,6 +4,8 @@ const BaseCard = require('./base');
 
 const random = require('lodash.random');
 
+const { AOE, POISON } = require('../constants/card-classes');
+
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
@@ -113,12 +115,12 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 	}
 }
 
+PrionDiseaseCard.cardClass = [POISON, AOE];
 PrionDiseaseCard.cardType = '1993-09-7202 18:58';
 PrionDiseaseCard.probability = EPIC.probability;
 PrionDiseaseCard.description = 'Buy a questionable round of milkshakes for everyone.';
 PrionDiseaseCard.level = 2;
 PrionDiseaseCard.cost = EXPENSIVE.cost;
-PrionDiseaseCard.isAreaOfEffect = true;
 PrionDiseaseCard.notForSale = true;
 
 PrionDiseaseCard.flavors = {

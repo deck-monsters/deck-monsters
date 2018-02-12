@@ -2,7 +2,7 @@
 
 const LuckyStrikeCard = require('./lucky-strike');
 
-const { MINOTAUR } = require('../helpers/creature-types');
+const { MINOTAUR } = require('../constants/creature-types');
 
 const { roll } = require('../helpers/chance');
 

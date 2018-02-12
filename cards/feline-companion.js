@@ -1,6 +1,6 @@
 const BoostCard = require('./boost');
 
-const { BARD, CLERIC } = require('../helpers/classes');
+const { BARD, CLERIC } = require('../constants/creature-classes');
 const { PRICEY } = require('../helpers/costs');
 
 class FelineCompanionCard extends BoostCard {

@@ -2,7 +2,7 @@ const Promise = require('bluebird');
 
 const BaseItem = require('../items/base');
 
-const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../constants/phases');
 
 class BaseCard extends BaseItem {
 	constructor (options) {
@@ -21,10 +21,6 @@ class BaseCard extends BaseItem {
 		return this.itemType;
 	}
 
-	get isAreaOfEffect () {
-		return !!this.constructor.isAreaOfEffect;
-	}
-
 	get new () {
 		if (this.original) {
 			return this.original.new;
@@ -39,6 +35,20 @@ class BaseCard extends BaseItem {
 		}
 
 		this.newCard = newCard;
+	}
+
+	get cardClass () {
+		return this.options.cardClass || this.constructor.cardClass;
+	}
+
+	set cardClass (cardClass) {
+		this.setOptions({
+			cardClass
+		});
+	}
+
+	isCardClass (cardClass) {
+		return this.cardClass && this.cardClass.includes(cardClass);
 	}
 
 	applyEffects (player, proposedTarget, ring, activeContestants) {

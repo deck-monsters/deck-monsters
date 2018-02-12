@@ -6,7 +6,7 @@ const BerserkCard = require('./berserk');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
 
-const { BARBARIAN } = require('../helpers/classes');
+const { BARBARIAN } = require('../constants/creature-classes');
 
 const ultimateComboNarration = [];
 for (let i = 5; i < 101; i++) {

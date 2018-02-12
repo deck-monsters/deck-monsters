@@ -5,7 +5,8 @@ const defaultIcons = [
 	{ floor: 10, icon: '🔥' },
 	{ floor: 5, icon: '🔪' },
 	{ floor: 2, icon: '🤜' },
-	{ floor: 1, icon: '🏓' }
+	{ floor: 1, icon: '🏓' },
+	{ floor: 0, icon: '💋' }
 ];
 
 const announceHit = (publicChannel, channelManager, className, monster, {
