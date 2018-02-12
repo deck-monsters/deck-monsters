@@ -7,6 +7,8 @@ const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../helpe
 const { roll } = require('../helpers/chance');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
+const { MELEE } = require('./helpers/constants');
+
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0
 const STARTING_DEX_MODIFIER = 0;
@@ -199,7 +201,7 @@ ${target.givenName} manages to take the opportunity of such close proximity to $
 	}
 }
 
-HornGore.cardClass = 'Melee';
+HornGore.cardClass = [MELEE];
 HornGore.cardType = 'Horn Gore';
 HornGore.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned' };
 HornGore.permittedClassesAndTypes = [MINOTAUR];

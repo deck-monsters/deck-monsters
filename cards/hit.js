@@ -4,6 +4,7 @@ const BaseCard = require('./base');
 const { roll, max } = require('../helpers/chance');
 const { ABUNDANT } = require('../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../helpers/costs');
+const { MELEE } = require('./helpers/constants');
 
 class HitCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -131,7 +132,7 @@ class HitCard extends BaseCard {
 	}
 }
 
-HitCard.cardClass = 'Melee';
+HitCard.cardClass = [MELEE];
 HitCard.cardType = 'Hit';
 HitCard.probability = (ABUNDANT.probability + 10);
 HitCard.description = 'A basic attack, the staple of all good monsters.';

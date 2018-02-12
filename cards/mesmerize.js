@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 const ImmobilizeCard = require('./immobilize');
 
+const { AOE } = require('./helpers/constants');
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
@@ -37,7 +38,7 @@ ${super.stats}`;
 	}
 }
 
-MesmerizeCard.cardClass = 'AOE';
+MesmerizeCard.cardClass = [AOE];
 MesmerizeCard.cardType = 'Mesmerize';
 MesmerizeCard.actions = { IMMOBILIZE: 'mesmerize', IMMOBILIZES: 'mesmerizes', IMMOBILIZED: 'mesmerized' };
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];

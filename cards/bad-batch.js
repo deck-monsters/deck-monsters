@@ -4,8 +4,9 @@ const WhiskeyShotCard = require('./whiskey-shot');
 const ScotchCard = require('./scotch');
 
 const { BARD } = require('../helpers/classes');
-const { UNCOMMON } = require('../helpers/probabilities');
+const { POISON } = require('./helpers/constants');
 const { REASONABLE } = require('../helpers/costs');
+const { UNCOMMON } = require('../helpers/probabilities');
 
 const EFFECT_TYPE = 'BadBatchEffect';
 
@@ -81,7 +82,7 @@ class BadBatchCard extends BaseCard {
 	}
 }
 
-BadBatchCard.cardClass = 'Poison';
+BadBatchCard.cardClass = [POISON];
 BadBatchCard.cardType = 'Bad Batch';
 BadBatchCard.permittedClassesAndTypes = [BARD];
 BadBatchCard.targetCards = [WhiskeyShotCard.cardType, ScotchCard.cardType];

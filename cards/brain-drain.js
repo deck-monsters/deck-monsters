@@ -4,7 +4,7 @@ const CurseCard = require('./curse');
 const HitCard = require('./hit');
 
 const { max } = require('../helpers/chance');
-
+const { PSYCHIC } = require('./helpers/constants');
 const { REASONABLE } = require('../helpers/costs');
 
 const STATS = require('../helpers/stat-constants');
@@ -32,7 +32,7 @@ ${stats}`;
 	}
 }
 
-BrainDrainCard.cardClass = 'Psychic';
+BrainDrainCard.cardClass = [PSYCHIC];
 BrainDrainCard.cardType = 'Brain Drain';
 BrainDrainCard.description = 'And we shall bury our enemies in their own confusion.';
 BrainDrainCard.cost = REASONABLE.cost;

@@ -2,6 +2,7 @@
 
 const ImmobilizeCard = require('./immobilize');
 
+const { PSYCHIC } = require('./helpers/constants');
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
@@ -44,7 +45,7 @@ ${super.stats}`;
 	}
 }
 
-EnthrallCard.cardClass = 'Psychic';
+EnthrallCard.cardClass = [PSYCHIC];
 EnthrallCard.cardType = 'Enthrall';
 EnthrallCard.actions = { IMMOBILIZE: 'enthrall', IMMOBILIZES: 'enthralls', IMMOBILIZED: 'enthralled' };
 EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];
