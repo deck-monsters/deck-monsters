@@ -2,7 +2,7 @@
 
 const BaseCard = require('./base');
 
-const { PSYCHIC } = require('./helpers/constants');
+const { PSYCHIC } = require('../constants/card-classes');
 
 const { COMMON } = require('../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../helpers/costs');
@@ -20,9 +20,6 @@ class RandomCard extends BaseCard {
 
 		const { draw } = require('./index'); // eslint-disable-line global-require
 		const randomCard = draw(this.options, player);
-
-		this.randomCard = randomCard;
-		this.cardClass = randomCard.cardClass;
 
 		return randomCard.play(player, proposedTarget, ring, activeContestants);
 	}

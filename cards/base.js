@@ -2,7 +2,7 @@ const Promise = require('bluebird');
 
 const BaseItem = require('../items/base');
 
-const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } = require('../constants/phases');
 
 class BaseCard extends BaseItem {
 	constructor (options) {
@@ -21,12 +21,14 @@ class BaseCard extends BaseItem {
 		return this.itemType;
 	}
 
-	set cardClass (newClass) {
-		this.constructor.cardClass = newClass;
+	set cardClass (cardClass) {
+		this.setOptions({
+			cardClass
+		});
 	}
 
 	get cardClass () {
-		return this.constructor.cardClass;
+		return this.options.cardClass || this.constructor.cardClass;
 	}
 
 	get new () {

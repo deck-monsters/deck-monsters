@@ -4,8 +4,8 @@ const sample = require('lodash.sample');
 
 const BaseMonster = require('./base');
 
-const { CLERIC } = require('../helpers/classes');
-const { WEEPING_ANGEL } = require('../helpers/creature-types');
+const { CLERIC } = require('../constants/creature-classes');
+const { WEEPING_ANGEL } = require('../constants/creature-types');
 
 const DEFAULT_COLOR = 'stone gray';
 

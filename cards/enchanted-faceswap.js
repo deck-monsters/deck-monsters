@@ -2,9 +2,9 @@
 
 const BaseCard = require('./base');
 
-const { BARD, CLERIC } = require('../helpers/classes');
-const { DEFENSE_PHASE } = require('../helpers/phases');
-const { AOE, HIDE, PSYCHIC } = require('./helpers/constants');
+const { BARD, CLERIC } = require('../constants/creature-classes');
+const { DEFENSE_PHASE } = require('../constants/phases');
+const { AOE, HIDE, PSYCHIC } = require('../constants/card-classes');
 const { RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 

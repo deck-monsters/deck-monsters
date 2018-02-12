@@ -11,7 +11,7 @@ const WeepingAngel = require('../monsters/weeping-angel');
 
 const {
 	GLADIATOR, JINN, MINOTAUR, BASILISK, WEEPING_ANGEL
-} = require('../helpers/creature-types');
+} = require('../constants/creature-types');
 
 describe('./cards/entrance.js', () => {
 	let angel;

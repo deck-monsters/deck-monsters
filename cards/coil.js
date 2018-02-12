@@ -3,10 +3,10 @@
 const ImmobilizeCard = require('./immobilize');
 
 const { roll } = require('../helpers/chance');
-const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../constants/creature-types');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
-const { MELEE } = require('./helpers/constants');
+const { MELEE } = require('../constants/card-classes');
 
 class CoilCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in

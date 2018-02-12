@@ -4,10 +4,10 @@ const sample = require('lodash.sample');
 const BaseCard = require('./base');
 const { roll } = require('../helpers/chance');
 
-const { BARD, CLERIC, WIZARD } = require('../helpers/classes');
-const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
+const { BARD, CLERIC, WIZARD } = require('../constants/creature-classes');
+const { ATTACK_PHASE, DEFENSE_PHASE } = require('../constants/phases');
 const { capitalize } = require('../helpers/capitalize');
-const { AOE, HIDE, PSYCHIC } = require('./helpers/constants');
+const { AOE, HIDE, PSYCHIC } = require('../constants/card-classes');
 const { RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 

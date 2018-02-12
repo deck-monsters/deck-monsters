@@ -5,7 +5,7 @@ const TurkeyThighCard = require('./turkey-thigh');
 const HitCard = require('./hit');
 const HealCard = require('./heal');
 
-const { BARBARIAN } = require('../helpers/classes');
+const { BARBARIAN } = require('../constants/creature-classes');
 
 describe('./cards/turkey-thigh.js', () => {
 	it('can be instantiated with defaults', () => {

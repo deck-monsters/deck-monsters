@@ -2,8 +2,8 @@
 
 const BaseCard = require('./base');
 
-const { AOE } = require('./helpers/constants');
-const { CLERIC } = require('../helpers/classes');
+const { AOE } = require('../constants/card-classes');
+const { CLERIC } = require('../constants/creature-classes');
 const { ABUNDANT } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');

@@ -1,6 +1,6 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
+const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../constants/creature-types');
 
 const HornGoreCard = require('./horn-gore');
 

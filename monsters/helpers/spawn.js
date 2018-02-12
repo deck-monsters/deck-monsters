@@ -1,7 +1,7 @@
 const { getChoices, getCreatureTypeChoices } = require('../../helpers/choices');
 const PRONOUNS = require('../../helpers/pronouns');
 
-const CREATURE_TYPES = require('../../helpers/creature-types');
+const CREATURE_TYPES = require('../../constants/creature-types');
 
 const names = require('../../helpers/names');
 

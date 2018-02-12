@@ -5,7 +5,7 @@ const { expect, sinon } = require('../shared/test-setup');
 const HornSwipe = require('./horn-swipe');
 const Minotaur = require('../monsters/minotaur');
 
-const { MINOTAUR } = require('../helpers/creature-types');
+const { MINOTAUR } = require('../constants/creature-types');
 
 describe('./cards/horn-swipe.js', () => {
 	it('can be instantiated with defaults', () => {

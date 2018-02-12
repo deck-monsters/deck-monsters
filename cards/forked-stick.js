@@ -2,9 +2,9 @@
 
 const ImmobilizeCard = require('./immobilize');
 
-const { BARD, BARBARIAN, FIGHTER } = require('../helpers/classes');
-const { BASILISK, GLADIATOR, JINN, MINOTAUR } = require('../helpers/creature-types');
-const { MELEE } = require('./helpers/constants');
+const { BARD, BARBARIAN, FIGHTER } = require('../constants/creature-classes');
+const { BASILISK, GLADIATOR, JINN, MINOTAUR } = require('../constants/creature-types');
+const { MELEE } = require('../constants/card-classes');
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 

@@ -5,7 +5,7 @@ const BaseScroll = require('./base');
 const { ABUNDANT } = require('../../helpers/probabilities');
 const { FREE } = require('../../helpers/costs');
 const { getChoices } = require('../../helpers/choices');
-const teams = require('../../helpers/teams');
+const teams = require('../../constants/teams');
 
 class SortingHat extends BaseScroll {
 	constructor ({

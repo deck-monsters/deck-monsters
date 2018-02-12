@@ -4,7 +4,7 @@ const { roll } = require('../helpers/chance');
 
 const { UNCOMMON } = require('../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../helpers/costs');
-const { HIDE } = require('./helpers/constants');
+const { HIDE } = require('../constants/card-classes');
 
 class FleeCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in

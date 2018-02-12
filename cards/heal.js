@@ -5,7 +5,7 @@ const BaseCard = require('./base');
 const { roll } = require('../helpers/chance');
 const { COMMON } = require('../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../helpers/costs');
-const { HEAL } = require('./helpers/constants');
+const { HEAL } = require('../constants/card-classes');
 
 class HealCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in

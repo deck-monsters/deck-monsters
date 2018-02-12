@@ -5,7 +5,7 @@ const IocaneCard = require('./iocane');
 const HitCard = require('./hit');
 const HealCard = require('./heal');
 
-const { BARD, CLERIC } = require('../helpers/classes');
+const { BARD, CLERIC } = require('../constants/creature-classes');
 
 describe('./cards/iocane.js', () => {
 	it('can be instantiated with defaults', () => {

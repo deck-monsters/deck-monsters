@@ -1,6 +1,6 @@
 const HitCard = require('./hit');
 
-const { PSYCHIC } = require('./helpers/constants');
+const { PSYCHIC } = require('../constants/card-classes');
 
 const { VERY_RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');

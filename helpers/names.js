@@ -1,7 +1,7 @@
 const fantasyNames = require('fantasy-names');
 
 const GENDERS = Object.keys(require('./pronouns'));
-const TYPES = require('./creature-types');
+const TYPES = require('../constants/creature-types');
 
 const chooseName = (type, gender, alreadyTaken = []) => {
 	let args;

@@ -1,7 +1,7 @@
 const HitCard = require('./hit');
 const HealCard = require('./heal');
 
-const { FIGHTER } = require('../helpers/classes');
+const { FIGHTER } = require('../constants/creature-classes');
 const { UNCOMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 

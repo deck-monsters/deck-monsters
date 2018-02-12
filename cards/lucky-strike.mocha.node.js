@@ -6,7 +6,7 @@ const LuckyStrikeCard = require('./lucky-strike');
 const Gladiator = require('../monsters/gladiator');
 const Minotaur = require('../monsters/minotaur');
 
-const { BARD, CLERIC, FIGHTER } = require('../helpers/classes');
+const { BARD, CLERIC, FIGHTER } = require('../constants/creature-classes');
 
 describe('./cards/lucky-strike.js', () => {
 	it('can be instantiated with defaults', () => {

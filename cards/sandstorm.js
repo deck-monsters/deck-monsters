@@ -3,8 +3,8 @@ const sample = require('lodash.sample');
 
 const BlastCard = require('./blast');
 
-const { JINN } = require('../helpers/creature-types');
-const { ATTACK_PHASE } = require('../helpers/phases');
+const { JINN } = require('../constants/creature-types');
+const { ATTACK_PHASE } = require('../constants/phases');
 const isProbable = require('../helpers/is-probable');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');

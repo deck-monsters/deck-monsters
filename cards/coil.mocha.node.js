@@ -5,9 +5,9 @@ const Hit = require('./hit');
 const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const Coil = require('./coil');
-const { ATTACK_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE } = require('../constants/phases');
 
-const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../helpers/creature-types');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN } = require('../constants/creature-types');
 
 describe('./cards/coil.js', () => {
 	it('can be instantiated with defaults', () => {

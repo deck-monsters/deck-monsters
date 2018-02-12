@@ -1,6 +1,6 @@
 const SurvivalKnifeCard = require('./survival-knife');
 
-const { BARBARIAN } = require('../helpers/classes');
+const { BARBARIAN } = require('../constants/creature-classes');
 
 class TurkeyThighCard extends SurvivalKnifeCard {
 	constructor ({

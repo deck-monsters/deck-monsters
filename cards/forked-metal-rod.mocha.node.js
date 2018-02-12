@@ -5,8 +5,8 @@ const Basilisk = require('../monsters/basilisk');
 const Minotaur = require('../monsters/minotaur');
 const ForkedMetalRod = require('./forked-metal-rod');
 
-const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../helpers/creature-types');
+const { FIGHTER, BARBARIAN } = require('../constants/creature-classes');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../constants/creature-types');
 
 describe('./cards/forked-metal-rod.js', () => {
 	it('can be instantiated with defaults', () => {

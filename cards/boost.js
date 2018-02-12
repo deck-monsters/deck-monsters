@@ -1,6 +1,6 @@
 const BaseCard = require('./base');
 
-const { BOOST } = require('./helpers/constants');
+const { BOOST } = require('../constants/card-classes');
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 
