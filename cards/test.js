@@ -2,6 +2,8 @@
 
 const BaseCard = require('./base');
 
+const { MELEE } = require('./helpers/constants');
+
 class TestCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
 	constructor ({
@@ -45,7 +47,7 @@ class TestCard extends BaseCard {
 	}
 }
 
-TestCard.cardClass = 'Melee';
+TestCard.cardClass = [MELEE];
 TestCard.cardType = 'Test';
 TestCard.probability = 100;
 TestCard.description = 'For testing purposes only.';

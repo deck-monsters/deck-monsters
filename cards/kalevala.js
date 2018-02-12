@@ -1,5 +1,7 @@
 const HitCard = require('./hit');
 
+const { PSYCHIC } = require('./helpers/constants');
+
 const { VERY_RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 
@@ -56,7 +58,7 @@ It will now do ${this.damageDice} damage.`
 	}
 }
 
-KalevalaCard.cardClass = 'Psychic';
+KalevalaCard.cardClass = [PSYCHIC];
 KalevalaCard.cardType = 'The Kalevala';
 KalevalaCard.probability = VERY_RARE.probability;
 KalevalaCard.description = 'Steadfast old Väinämöinen himself fashioned this instrument of eternal joy. Tune its pikebone pegs and it may lead you on to victory.'; // eslint-disable-line max-len

@@ -4,6 +4,7 @@ const ImmobilizeCard = require('./immobilize');
 
 const { BARD, BARBARIAN, FIGHTER } = require('../helpers/classes');
 const { BASILISK, GLADIATOR, JINN, MINOTAUR } = require('../helpers/creature-types');
+const { MELEE } = require('./helpers/constants');
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 
@@ -55,7 +56,7 @@ ${super.stats}`;
 	}
 }
 
-ForkedStickCard.cardClass = 'Melee';
+ForkedStickCard.cardClass = [MELEE];
 ForkedStickCard.cardType = 'Forked Stick';
 ForkedStickCard.actions = { IMMOBILIZE: 'pin', IMMOBILIZES: 'pins', IMMOBILIZED: 'pinned', IMMOBILIZING: 'pinning' };
 ForkedStickCard.permittedClassesAndTypes = [BARD, BARBARIAN, FIGHTER];

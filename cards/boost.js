@@ -1,5 +1,6 @@
 const BaseCard = require('./base');
 
+const { BOOST } = require('./helpers/constants');
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 const { difference } = require('../helpers/difference');
@@ -105,7 +106,7 @@ class BoostCard extends BaseCard {
 	}
 }
 
-BoostCard.cardClass = 'Boost';
+BoostCard.cardClass = [BOOST];
 BoostCard.cardType = 'Harden';
 BoostCard.probability = COMMON.probability;
 BoostCard.description = "It's time to put on your big boy pants, and toughen up!";

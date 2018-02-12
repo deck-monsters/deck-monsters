@@ -2,6 +2,7 @@
 
 const BaseCard = require('./base');
 
+const { AOE } = require('./helpers/constants');
 const { CLERIC } = require('../helpers/classes');
 const { ABUNDANT } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
@@ -44,7 +45,7 @@ class BlastCard extends BaseCard {
 	}
 }
 
-BlastCard.cardClass = 'AOE';
+BlastCard.cardClass = [AOE];
 BlastCard.cardType = 'Blast';
 BlastCard.permittedClassesAndTypes = [CLERIC];
 BlastCard.probability = ABUNDANT.probability;

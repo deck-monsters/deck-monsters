@@ -7,6 +7,7 @@ const { roll } = require('../helpers/chance');
 const { BARD, CLERIC, WIZARD } = require('../helpers/classes');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
 const { capitalize } = require('../helpers/capitalize');
+const { AOE, HIDE, PSYCHIC } = require('./helpers/constants');
 const { RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 
@@ -52,7 +53,10 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 			if (effect) {
 				card.effect = (player, target, ring, activeContestants) => {
-					if (phase === DEFENSE_PHASE && player !== invisibilityTarget && target === invisibilityTarget && cardClass !== 'AOE') {
+					if (phase === DEFENSE_PHASE &&
+						player !== invisibilityTarget && target === invisibilityTarget &&
+						!cardClass.includes(AOE) &&
+						!cardClass.includes(PSYCHIC)) {
 						const potentialTargets = activeContestants.filter(({ monster }) => (monster !== player && !isInvisible(monster)));
 
 						if (potentialTargets.length > 0) {
@@ -145,7 +149,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 	}
 }
 
-CloakOfInvisibilityCard.cardClass = 'Hide';
+CloakOfInvisibilityCard.cardClass = [HIDE];
 CloakOfInvisibilityCard.cardType = 'Cloak of Invisibility';
 CloakOfInvisibilityCard.permittedClassesAndTypes = [BARD, CLERIC, WIZARD];
 CloakOfInvisibilityCard.probability = RARE.probability;
