@@ -29,10 +29,10 @@ const getOptions = (gameJSON) => {
 	return options;
 };
 
-const restoreGame = (publicChannel, gameJSON, log) => {
+const restoreGame = (channels, gameJSON, log) => {
 	const options = getOptions(gameJSON);
 
-	return new Game(publicChannel, options, log);
+	return new Game(channels, options, log);
 };
 
 const resetGame = (game, gameJSON) => {

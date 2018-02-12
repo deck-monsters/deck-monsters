@@ -124,21 +124,22 @@ And whither then ${monster.pronouns.he} cannot say.`,
 			discoveries = discoveries.filter(discovery => explorer.monster.canHold(discovery));
 		}
 
-		const Discovery = discoveries.find(isProbable);
+		let Discovery = discoveries.find(isProbable);
 
 		if (!Discovery) return this.makeDiscovery(explorer);
 
-		switch (Discovery) {
-			case 'card':
-				Discovery = draw({}, explorer.monster)
+		let discovery;
+		switch (Discovery.itemType) {
+			case 'BattleCard':
+				discovery = draw({}, explorer.monster);
+				this.emit('found', { explorer, discovery });
 				break;
 			default:
+				discovery = new Discovery();
+				discovery.play({
+					environment, explorer, channel: explorer.channel, channelName: explorer.channelName
+				});
 		}
-
-		const discovery = new Discovery();
-		// TODO: Look into this. I guess I'm partly wondering why you have look followed by play - for both cards and items we usually show the card or item as part of play/use. The pattern in items, while more complicated than you need for this, is a good starting place. https://github.com/deck-monsters/deck-monsters/blob/master/items/base.js#L60
-		discovery.look(explorer.channel);
-		discovery.play(this.environment, explorer.monster);
 
 		return discovery;
 	}
@@ -179,7 +180,7 @@ Exploration.defaults = {
 		// DeathCard,
 		// HazardCard,
 		// NothingCard,
-		'card',
+		{ itemType: 'BattleCard', probability: 10 },
 		// 'monster',
 		// 'coins',
 		// 'xp',

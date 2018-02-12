@@ -17,8 +17,20 @@ class BaseDiscoveryCard extends BaseCard {
 		});
 	}
 
-	play (environment, monster) {
-		return this.effect(environment, monster);
+	play ({ channel, channelName, environment, explorer }) {
+		return Promise.resolve(channel)
+			.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
+			.then(() => {
+				this.emit('found', {
+					explorer,
+					discovery: this
+				});
+
+				if (this.effect) {
+					return this.effect({ channel, channelName, environment, monster: explorer.monster });
+				}
+			});
+
 	}
 }
 

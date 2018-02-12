@@ -4,6 +4,7 @@ const announceCardPlayed = require('./card-played.js');
 const announceContestant = require('./contestant.js');
 const announceContestantLeave = require('./contestantLeave.js');
 const announceDeath = require('./death.js');
+const announceDiscoveryFound = require('./discovery-found.js');
 const announceEffect = require('./effect.js');
 const announceEndOfDeck = require('./endOfDeck.js');
 const announceFight = require('./fight.js');
@@ -23,7 +24,7 @@ const announceTurnBegin = require('./playerTurnBegin.js');
 const announceXPGain = require('./xpGain.js');
 
 const initialize = (game) => {
-	const events = [
+	const ringEvents = [
 		{ event: 'card.effect', listener: announceEffect },
 		{ event: 'card.miss', listener: announceMiss },
 		{ event: 'card.narration', listener: announceNarration },
@@ -56,7 +57,20 @@ const initialize = (game) => {
 		{ event: 'scroll.used', listener: announceItemUsed }
 	];
 
-	events.map(event => game.on(event.event, (...args) => {
+	ringEvents.map(event => game.on(event.event, (...args) => {
+		event.listener(game.publicChannel, game.channelManager, ...args);
+	}));
+
+	const worldEvents = [
+		{ event: 'discovery.found', listener: announceDiscoveryFound },
+		{ event: 'discovery.narration', listener: announceNarration },
+		{ event: 'exploration.found', listener: announceDiscoveryFound },
+		{ event: 'exploration.narration', listener: announceNarration }
+	]
+
+	worldEvents.map(event => game.on(event.event, (...args) => {
+		const args = ...args;
+		args.publicChannelName = THE_WORLD;
 		event.listener(game.publicChannel, game.channelManager, ...args);
 	}));
 
