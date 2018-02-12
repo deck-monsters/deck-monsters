@@ -44,7 +44,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 			phase,
 			player: effectPlayer
 		}) => {
-			const { effect, cardClass } = card;
+			const { effect } = card;
 
 			// Always increase the count of invisible turns
 			if (phase === ATTACK_PHASE && effectPlayer === invisibilityTarget) {
@@ -55,8 +55,8 @@ class CloakOfInvisibilityCard extends BaseCard {
 				card.effect = (player, target, ring, activeContestants) => {
 					if (phase === DEFENSE_PHASE &&
 						player !== invisibilityTarget && target === invisibilityTarget &&
-						!cardClass.includes(AOE) &&
-						!cardClass.includes(PSYCHIC)) {
+						!card.isCardClass(AOE) &&
+						!card.isCardClass(PSYCHIC)) {
 						const potentialTargets = activeContestants.filter(({ monster }) => (monster !== player && !isInvisible(monster)));
 
 						if (potentialTargets.length > 0) {

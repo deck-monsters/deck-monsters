@@ -6,10 +6,12 @@ const startCase = require('lodash.startcase');
 
 const BaseClass = require('../shared/baseClass');
 
+const { capitalize } = require('../helpers/capitalize');
 const { describeLevels, getLevel } = require('../helpers/levels');
 const { getAttributeChoices } = require('../helpers/choices');
 const { getItemCounts } = require('../items/helpers/counts');
 const { itemCard } = require('../helpers/card');
+const { MELEE } = require('../constants/card-classes');
 const { sortItemsAlphabetically } = require('../items/helpers/sort');
 const { STARTING_XP } = require('../helpers/experience');
 const getUniqueItems = require('../items/helpers/unique-items');
@@ -562,7 +564,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	/* assailant is the monster who attacked you, not the contestant who owns the monster */
-	hit (damage = 0, assailant, card = { cardClass: 'psychic' }) {
+	hit (damage = 0, assailant, card) {
 		const hitLog = this.encounterModifiers.hitLog || [];
 		hitLog.unshift({
 			assailant,
@@ -572,19 +574,21 @@ Battles won: ${this.battles.wins}`;
 		});
 		this.encounterModifiers.hitLog = hitLog;
 
-		if (card.cardClass === 'melee' && this.encounterModifiers.ac >= damage) {
+		const isMelee = card && card.isCardClass(MELEE);
+
+		if (isMelee && this.encounterModifiers.ac >= damage) {
 			this.encounterModifiers.ac -= damage;
 
 			this.emit('narration', {
-				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage. ac boost is now ${this.encounterModifiers.ac}.` // eslint-disable-line max-len
+				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage. ${capitalize(this.pronouns.his)} ac boost is now ${this.encounterModifiers.ac}.` // eslint-disable-line max-len
 			});
 		} else {
 			let adjustedDamage = damage;
 
-			if (card.cardClass === 'melee' && this.encounterModifiers.ac > 0) {
+			if (isMelee && this.encounterModifiers.ac > 0) {
 				adjustedDamage -= this.encounterModifiers.ac;
 				this.emit('narration', {
-					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ac boost is now 0.` // eslint-disable-line max-len
+					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ${capitalize(this.pronouns.his)} ac boost is now 0.` // eslint-disable-line max-len
 				});
 				this.encounterModifiers.ac = 0;
 			}
@@ -606,6 +610,7 @@ Battles won: ${this.battles.wins}`;
 				return this.die(assailant);
 			}
 		}
+
 		return !this.dead;
 	}
 
