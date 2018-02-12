@@ -3,7 +3,7 @@
 const HitCard = require('./hit');
 
 const { roll, max } = require('../helpers/chance');
-const { BARBARIAN, FIGHTER } = require('../helpers/classes');
+const { BARBARIAN, FIGHTER } = require('../constants/creature-classes');
 const { COMMON } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
 

@@ -1,13 +1,14 @@
 /* eslint-disable max-len */
 const ImmobilizeCard = require('./immobilize');
 
+const { AOE } = require('../constants/card-classes');
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
 
 const {
 	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
-} = require('../helpers/creature-types');
+} = require('../constants/creature-types');
 
 
 class MesmerizeCard extends ImmobilizeCard {
@@ -37,6 +38,7 @@ ${super.stats}`;
 	}
 }
 
+MesmerizeCard.cardClass = [AOE];
 MesmerizeCard.cardType = 'Mesmerize';
 MesmerizeCard.actions = { IMMOBILIZE: 'mesmerize', IMMOBILIZES: 'mesmerizes', IMMOBILIZED: 'mesmerized' };
 MesmerizeCard.permittedClassesAndTypes = [WEEPING_ANGEL];
@@ -46,7 +48,6 @@ MesmerizeCard.uselessAgainstCreatureTypes = [JINN];
 MesmerizeCard.probability = COMMON.probability;
 MesmerizeCard.description = `You strut and preen. Your beauty ${MesmerizeCard.actions.IMMOBILIZES} everyone, including yourself.`;
 MesmerizeCard.cost = VERY_CHEAP.cost;
-MesmerizeCard.isAreaOfEffect = true;
 
 MesmerizeCard.defaults = {
 	...ImmobilizeCard.defaults,

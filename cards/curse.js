@@ -5,7 +5,7 @@ const { roll, max } = require('../helpers/chance');
 const { UNCOMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 
-const STATS = require('../helpers/stat-constants');
+const STATS = require('../constants/stats');
 
 class CurseCard extends HitCard {
 	// Set defaults for these values that can be overridden by the options passed in

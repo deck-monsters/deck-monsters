@@ -5,6 +5,7 @@ const BaseCard = require('./base');
 const { roll } = require('../helpers/chance');
 const { COMMON } = require('../helpers/probabilities');
 const { ALMOST_NOTHING } = require('../helpers/costs');
+const { HEAL } = require('../constants/card-classes');
 
 class HealCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -126,6 +127,7 @@ Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. ð
 	}
 }
 
+HealCard.cardClass = [HEAL];
 HealCard.cardType = 'Heal';
 HealCard.probability = COMMON.probability;
 HealCard.description = 'A well-timed healing can be the difference between sweet victory and devastating defeat.';

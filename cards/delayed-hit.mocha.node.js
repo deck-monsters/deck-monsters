@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
-const { DEFENSE_PHASE } = require('../helpers/phases');
+const { DEFENSE_PHASE } = require('../constants/phases');
 
 const DelayedHitCard = require('./delayed-hit');
 const HitCard = require('./hit');

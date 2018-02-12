@@ -2,8 +2,8 @@
 
 const HitCard = require('./hit');
 
-const { BARD, FIGHTER } = require('../helpers/classes');
-const { MINOTAUR } = require('../helpers/creature-types');
+const { BARD, FIGHTER } = require('../constants/creature-classes');
+const { MINOTAUR } = require('../constants/creature-types');
 const { roll } = require('../helpers/chance');
 const { COMMON } = require('../helpers/probabilities');
 const { CHEAP } = require('../helpers/costs');

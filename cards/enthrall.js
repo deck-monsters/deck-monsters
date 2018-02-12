@@ -2,6 +2,7 @@
 
 const ImmobilizeCard = require('./immobilize');
 
+const { PSYCHIC } = require('../constants/card-classes');
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
@@ -12,7 +13,7 @@ const {
 	JINN,
 	MINOTAUR,
 	WEEPING_ANGEL
-} = require('../helpers/creature-types');
+} = require('../constants/creature-types');
 
 class EnthrallCard extends ImmobilizeCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -44,6 +45,7 @@ ${super.stats}`;
 	}
 }
 
+EnthrallCard.cardClass = [PSYCHIC];
 EnthrallCard.cardType = 'Enthrall';
 EnthrallCard.actions = { IMMOBILIZE: 'enthrall', IMMOBILIZES: 'enthralls', IMMOBILIZED: 'enthralled' };
 EnthrallCard.permittedClassesAndTypes = [WEEPING_ANGEL];

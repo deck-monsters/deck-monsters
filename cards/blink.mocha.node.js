@@ -1,12 +1,12 @@
 const { expect, sinon } = require('../shared/test-setup');
 
-const { ATTACK_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE } = require('../constants/phases');
 const BlinkCard = require('./blink');
 const TestCard = require('./test');
 const Basilisk = require('../monsters/basilisk');
 const WeepingAngel = require('../monsters/weeping-angel');
 
-const { WEEPING_ANGEL } = require('../helpers/creature-types');
+const { WEEPING_ANGEL } = require('../constants/creature-types');
 
 describe('./cards/blink.js', () => {
 	it('can be instantiated with defaults', () => {

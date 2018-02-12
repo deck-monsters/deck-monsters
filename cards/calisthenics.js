@@ -2,7 +2,7 @@ const random = require('lodash.random');
 
 const BoostCard = require('./boost');
 
-const { BARBARIAN, FIGHTER } = require('../helpers/classes');
+const { BARBARIAN, FIGHTER } = require('../constants/creature-classes');
 const { REASONABLE } = require('../helpers/costs');
 
 class CalisthenicsCard extends BoostCard {

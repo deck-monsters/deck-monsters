@@ -4,9 +4,10 @@ const sample = require('lodash.sample');
 const BaseCard = require('./base');
 const { roll } = require('../helpers/chance');
 
-const { BARD, CLERIC, WIZARD } = require('../helpers/classes');
-const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
+const { BARD, CLERIC, WIZARD } = require('../constants/creature-classes');
+const { ATTACK_PHASE, DEFENSE_PHASE } = require('../constants/phases');
 const { capitalize } = require('../helpers/capitalize');
+const { AOE, HIDE, PSYCHIC } = require('../constants/card-classes');
 const { RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 
@@ -43,7 +44,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 			phase,
 			player: effectPlayer
 		}) => {
-			const { effect, isAreaOfEffect } = card;
+			const { effect, cardClass } = card;
 
 			// Always increase the count of invisible turns
 			if (phase === ATTACK_PHASE && effectPlayer === invisibilityTarget) {
@@ -52,7 +53,10 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 			if (effect) {
 				card.effect = (player, target, ring, activeContestants) => {
-					if (phase === DEFENSE_PHASE && player !== invisibilityTarget && target === invisibilityTarget && !isAreaOfEffect) {
+					if (phase === DEFENSE_PHASE &&
+						player !== invisibilityTarget && target === invisibilityTarget &&
+						!cardClass.includes(AOE) &&
+						!cardClass.includes(PSYCHIC)) {
 						const potentialTargets = activeContestants.filter(({ monster }) => (monster !== player && !isInvisible(monster)));
 
 						if (potentialTargets.length > 0) {
@@ -145,6 +149,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 	}
 }
 
+CloakOfInvisibilityCard.cardClass = [HIDE];
 CloakOfInvisibilityCard.cardType = 'Cloak of Invisibility';
 CloakOfInvisibilityCard.permittedClassesAndTypes = [BARD, CLERIC, WIZARD];
 CloakOfInvisibilityCard.probability = RARE.probability;

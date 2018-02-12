@@ -28,7 +28,7 @@ const {
 	HP_VARIANCE,
 	MAX_BOOSTS,
 	MAX_PROP_MODIFICATIONS
-} = require('../helpers/stat-constants');
+} = require('../constants/stats');
 
 const TIME_TO_HEAL = 300000; // Five minutes per hp
 const TIME_TO_RESURRECT = 600000; // Ten minutes per level
@@ -562,7 +562,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	/* assailant is the monster who attacked you, not the contestant who owns the monster */
-	hit (damage = 0, assailant, card) {
+	hit (damage = 0, assailant, card = { cardClass: 'psychic' }) {
 		const hitLog = this.encounterModifiers.hitLog || [];
 		hitLog.unshift({
 			assailant,

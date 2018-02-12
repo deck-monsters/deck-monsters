@@ -1,7 +1,7 @@
 const { expect } = require('../shared/test-setup');
 
 const WeepingAngel = require('./weeping-angel');
-const { WEEPING_ANGEL } = require('../helpers/creature-types');
+const { WEEPING_ANGEL } = require('../constants/creature-types');
 
 describe('./monsters/weeping-angel.js', () => {
 	it('can be instantiated with defaults', () => {

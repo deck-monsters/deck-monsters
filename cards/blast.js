@@ -2,7 +2,8 @@
 
 const BaseCard = require('./base');
 
-const { CLERIC } = require('../helpers/classes');
+const { AOE } = require('../constants/card-classes');
+const { CLERIC } = require('../constants/creature-classes');
 const { ABUNDANT } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
@@ -44,13 +45,13 @@ class BlastCard extends BaseCard {
 	}
 }
 
+BlastCard.cardClass = [AOE];
 BlastCard.cardType = 'Blast';
 BlastCard.permittedClassesAndTypes = [CLERIC];
 BlastCard.probability = ABUNDANT.probability;
 BlastCard.description = 'A magical blast against every opponent in the encounter.';
 BlastCard.level = 0;
 BlastCard.cost = REASONABLE.cost;
-BlastCard.isAreaOfEffect = true;
 
 BlastCard.defaults = {
 	damage: 3,

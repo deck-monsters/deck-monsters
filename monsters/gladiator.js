@@ -4,8 +4,8 @@ const sample = require('lodash.sample');
 
 const BaseMonster = require('./base');
 
-const { FIGHTER } = require('../helpers/classes');
-const { GLADIATOR } = require('../helpers/creature-types');
+const { FIGHTER } = require('../constants/creature-classes');
+const { GLADIATOR } = require('../constants/creature-types');
 
 const DEFAULT_COLOR = 'leather';
 

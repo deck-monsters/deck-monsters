@@ -2,7 +2,7 @@
 
 const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
 
-const { BARBARIAN, FIGHTER } = require('../helpers/classes');
+const { BARBARIAN, FIGHTER } = require('../constants/creature-classes');
 
 class CamouflageVestCard extends CloakOfInvisibilityCard {}
 

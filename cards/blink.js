@@ -2,11 +2,12 @@
 
 const CurseCard = require('./curse');
 
-const { WEEPING_ANGEL } = require('../helpers/creature-types');
-const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
+const { WEEPING_ANGEL } = require('../constants/creature-types');
+const { ATTACK_PHASE, DEFENSE_PHASE } = require('../constants/phases');
 const { roll } = require('../helpers/chance');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
+const { PSYCHIC } = require('../constants/card-classes');
 
 class BlinkCard extends CurseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -176,6 +177,7 @@ On what would have been their next turn, if you are still alive you drain ${this
 	}
 }
 
+BlinkCard.cardClass = [PSYCHIC];
 BlinkCard.cardType = 'Blink';
 BlinkCard.permittedClassesAndTypes = [WEEPING_ANGEL];
 BlinkCard.probability = EPIC.probability;

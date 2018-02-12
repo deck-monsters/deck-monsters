@@ -2,7 +2,7 @@
 
 const BerserkCard = require('./berserk');
 
-const { GLADIATOR } = require('../helpers/creature-types');
+const { GLADIATOR } = require('../constants/creature-types');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
 
