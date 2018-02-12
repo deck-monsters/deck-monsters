@@ -35,6 +35,7 @@ const initialize = (game) => {
 		{ event: 'creature.hit', listener: announceHit },
 		{ event: 'creature.leave', listener: announceLeave },
 		{ event: 'creature.modifier', listener: announceModifier },
+		{ event: 'creature.narration', listener: announceNarration },
 		{ event: 'gainedXP', listener: announceXPGain },
 		{ event: 'item.narration', listener: announceNarration },
 		{ event: 'item.used', listener: announceItemUsed },

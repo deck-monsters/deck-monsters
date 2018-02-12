@@ -21,16 +21,6 @@ class BaseCard extends BaseItem {
 		return this.itemType;
 	}
 
-	set cardClass (cardClass) {
-		this.setOptions({
-			cardClass
-		});
-	}
-
-	get cardClass () {
-		return this.options.cardClass || this.constructor.cardClass;
-	}
-
 	get new () {
 		if (this.original) {
 			return this.original.new;
@@ -45,6 +35,20 @@ class BaseCard extends BaseItem {
 		}
 
 		this.newCard = newCard;
+	}
+
+	get cardClass () {
+		return this.options.cardClass || this.constructor.cardClass;
+	}
+
+	set cardClass (cardClass) {
+		this.setOptions({
+			cardClass
+		});
+	}
+
+	isCardClass (cardClass) {
+		return this.cardClass && this.cardClass.includes(cardClass);
 	}
 
 	applyEffects (player, proposedTarget, ring, activeContestants) {
