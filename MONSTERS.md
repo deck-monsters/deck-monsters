@@ -34,15 +34,15 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🐍  Occen
+ 🐍  Zux Noketl
 ----------------------------------
 
- A powerful, tan, forest-dwelling 
+ A stocky, tan, forest-dwelling 
  basilisk with a nasty 
  disposition and the ability to 
  turn creatures to stone with his 
  gaze. In the forest he is king 
- and (weighing 300lbs) in the 
+ and (weighing 320lbs) in the 
  ring he is much to be feared. 
  See how he rears his head, and 
  rolls about his dreadful eyes, 
@@ -53,7 +53,7 @@ Here are some sample beginner level monsters:
  Class: Barbarian
  Level: beginner | XP: 1
 
- ac: 7 | hp: 32/32
+ ac: 9 | hp: 28/28
  dex: 4 | str: 7 | int: 6
  -1 dex penalty
  +2 str bonus
@@ -68,19 +68,19 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 💪  Davro Davra Good Useful
+ 💪  Aqqi
 ----------------------------------
 
  A stocky gladiator, dressed in 
  leather and hailing from an 
  underground fight club. Many 
- years ago he was captured, 
- stripped of his title and land, 
+ years ago she was captured, 
+ stripped of her title and land, 
  and forced to compete in brutal 
  matches for the entertainment of 
  a blood-thirsty crowd. Standing 
  a portly five and a half feet 
- tall, when you see him you know 
+ tall, when you see her you know 
  instantly that this is a warrior 
  who has witnessed the worst 
  humankind has to offer and has 
@@ -90,7 +90,7 @@ Here are some sample beginner level monsters:
  Class: Fighter
  Level: beginner | XP: 1
 
- ac: 7 | hp: 33/33
+ ac: 5 | hp: 32/32
  dex: 6 | str: 6 | int: 5
  +1 dex bonus
  +1 str bonus
@@ -104,24 +104,24 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🕌  Nanlih
+ 🕌  Ega
 ----------------------------------
 
- A fiery red figure sulks in the 
+ A fiery red figure lurks in the 
  dusty shadows at the corner of 
  your vision. At first you think 
  it might be human and you wonder 
- who or what she is. What is she 
+ who or what he is. What is he 
  thinking about? When you turn to 
  look closer all you see is a 
- crow and a gently settling cloud 
+ goat and a gently settling cloud 
  of sand.
 
  Type: Jinn
  Class: Bard
  Level: beginner | XP: 1
 
- ac: 8 | hp: 29/29
+ ac: 8 | hp: 28/28
  dex: 6 | str: 5 | int: 6
  +1 dex bonus
  +1 int bonus
@@ -135,23 +135,22 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🐗  Carnarun Strongleader
+ 🐗  Kinmanuk Thunderroar
 ----------------------------------
 
  A battle-hardened, angry red 
- minotaur with a mind-blowingly 
- intricate pattern shaved into 
- his thick fur. Make no mistake, 
- despite his fearsome bulk he is 
- a first-class host who has never 
- been put to shame at a dinner 
- party.
+ minotaur with a crescent pattern 
+ shaved into his thick fur. Make 
+ no mistake, despite his fearsome 
+ bulk he is a first-class host 
+ who has never been put to shame 
+ at a dinner party.
 
  Type: Minotaur
  Class: Barbarian
  Level: beginner | XP: 1
 
- ac: 4 | hp: 34/34
+ ac: 4 | hp: 32/32
  dex: 6 | str: 7 | int: 4
  +1 dex bonus
  +2 str bonus
@@ -166,15 +165,15 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🌟  Barbiel
+ 🌟  Zephon
 ----------------------------------
 
  A stone gray weeping angel. On 
  meeting him one might form the 
  following three impressions: 
- that he was Scottish, that he 
- was intelligent, and that he was 
- nuttier than a treeful of 
+ that he was Welsh, that he was 
+ intelligent, and that he was 
+ frutier than a treeful of 
  monkeys on nitrous oxide.
 
  Type: Weeping Angel
