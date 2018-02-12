@@ -261,7 +261,7 @@ Wooden Spear
  Effect chance: 75%
  MSRP: 130
  Targets: ac
- Class: Psychic
+ Class: Pyscic
 
 ==================================
 ```
@@ -304,7 +304,7 @@ Wooden Spear
  Hit chance: 69% | DPT: 2
  MSRP: 50
  Targets: ac
- Class: Psychic
+ Class: Pyscic
 
 ==================================
 ```
@@ -585,7 +585,7 @@ Wooden Spear
  Effect chance: 80%
  MSRP: 50
  Targets: int
- Class: Psychic
+ Class: Pyscic
 
 ==================================
 ```
@@ -631,7 +631,7 @@ Wooden Spear
  Effect chance: 80%
  MSRP: 80
  Targets: int
- Class: Psychic
+ Class: Pyscic
 
 ==================================
 ```
@@ -1048,7 +1048,7 @@ Wooden Spear
  Hit chance: 67% | DPT: 7
  MSRP: 80
  Targets: ac
- Class: Psychic
+ Class: Pyscic
 
 ==================================
 ```
@@ -1210,7 +1210,7 @@ Wooden Spear
  Hit chance: 2% | DPT: 1
  Heal chance: 78% | HPT: 2
  MSRP: 130
- Class: Poison
+ Class: Poison, AOE
 
 ==================================
 ```
@@ -1230,7 +1230,7 @@ Wooden Spear
  Level: Beginner
  Usable by: All
  MSRP: 10
- Class: Psychic
+ Class: Pyscic
 
 ==================================
 ```
