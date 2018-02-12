@@ -1,6 +1,6 @@
 const BoostCard = require('./boost');
 
-const { BASILISK } = require('../helpers/creature-types');
+const { BASILISK } = require('../constants/creature-types');
 const { REASONABLE } = require('../helpers/costs');
 
 class ThickSkinCard extends BoostCard {

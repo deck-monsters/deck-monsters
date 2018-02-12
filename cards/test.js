@@ -2,7 +2,7 @@
 
 const BaseCard = require('./base');
 
-const { MELEE } = require('./helpers/constants');
+const { MELEE } = require('../constants/card-classes');
 
 class TestCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in

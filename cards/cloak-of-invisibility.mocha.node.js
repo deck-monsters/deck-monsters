@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 const { expect } = require('../shared/test-setup');
 
-const { ATTACK_PHASE, DEFENSE_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE, DEFENSE_PHASE } = require('../constants/phases');
 const Basilisk = require('../monsters/basilisk');
 const CloakOfInvisibilityCard = require('./cloak-of-invisibility');
 const TestCard = require('./test');

@@ -4,10 +4,10 @@ const CurseCard = require('./curse');
 const HitCard = require('./hit');
 
 const { max } = require('../helpers/chance');
-const { PSYCHIC } = require('./helpers/constants');
+const { PSYCHIC } = require('../constants/card-classes');
 const { REASONABLE } = require('../helpers/costs');
 
-const STATS = require('../helpers/stat-constants');
+const STATS = require('../constants/stats');
 
 class BrainDrainCard extends CurseCard {
 	// Set defaults for these values that can be overridden by the options passed in

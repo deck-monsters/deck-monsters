@@ -2,7 +2,7 @@ const BaseCreature = require('../creatures/base');
 
 const { characterCard, monsterCard } = require('../helpers/card');
 const { getInitialDeck, sortCardsAlphabetically } = require('../cards');
-const { HERO } = require('../helpers/classes');
+const { HERO } = require('../constants/creature-classes');
 const buyItems = require('../items/store/buy');
 const isMatchingItem = require('../items/helpers/is-matching');
 const sellItems = require('../items/store/sell');

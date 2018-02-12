@@ -1,14 +1,14 @@
 /* eslint-disable max-len */
 const ImmobilizeCard = require('./immobilize');
 
-const { AOE } = require('./helpers/constants');
+const { AOE } = require('../constants/card-classes');
 const { COMMON } = require('../helpers/probabilities');
 const { VERY_CHEAP } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
 
 const {
 	BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL
-} = require('../helpers/creature-types');
+} = require('../constants/creature-types');
 
 
 class MesmerizeCard extends ImmobilizeCard {

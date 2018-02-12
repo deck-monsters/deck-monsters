@@ -1,7 +1,7 @@
 const { expect } = require('../shared/test-setup');
 
 const { COMMON } = require('../helpers/probabilities');
-const { BASILISK } = require('../helpers/creature-types');
+const { BASILISK } = require('../constants/creature-types');
 const { REASONABLE } = require('../helpers/costs');
 const EcdysisCard = require('./ecdysis');
 const Basilisk = require('../monsters/basilisk');

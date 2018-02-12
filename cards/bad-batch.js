@@ -3,8 +3,8 @@ const BaseCard = require('./base');
 const WhiskeyShotCard = require('./whiskey-shot');
 const ScotchCard = require('./scotch');
 
-const { BARD } = require('../helpers/classes');
-const { POISON } = require('./helpers/constants');
+const { BARD } = require('../constants/creature-classes');
+const { POISON } = require('../constants/card-classes');
 const { REASONABLE } = require('../helpers/costs');
 const { UNCOMMON } = require('../helpers/probabilities');
 

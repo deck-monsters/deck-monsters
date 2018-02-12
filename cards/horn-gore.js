@@ -3,11 +3,11 @@ const sample = require('lodash.sample');
 
 const ImmobilizeCard = require('./immobilize');
 
-const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../helpers/creature-types');
+const { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } = require('../constants/creature-types');
 const { roll } = require('../helpers/chance');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
-const { MELEE } = require('./helpers/constants');
+const { MELEE } = require('../constants/card-classes');
 
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;// If they stab with both horns, freedom threshold modifier will be 0

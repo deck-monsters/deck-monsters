@@ -4,8 +4,8 @@ const sample = require('lodash.sample');
 
 const BaseMonster = require('./base');
 
-const { BARBARIAN } = require('../helpers/classes');
-const { MINOTAUR } = require('../helpers/creature-types');
+const { BARBARIAN } = require('../constants/creature-classes');
+const { MINOTAUR } = require('../constants/creature-types');
 
 const DEFAULT_COLOR = 'angry red';
 

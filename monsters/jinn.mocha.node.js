@@ -1,7 +1,7 @@
 const { expect } = require('../shared/test-setup');
 
 const Jinn = require('./jinn');
-const { JINN } = require('../helpers/creature-types');
+const { JINN } = require('../constants/creature-types');
 
 describe('./monsters/jinn.js', () => {
 	it('can be instantiated with defaults', () => {

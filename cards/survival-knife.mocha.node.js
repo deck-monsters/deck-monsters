@@ -6,7 +6,7 @@ const Basilisk = require('../monsters/basilisk');
 const HitCard = require('./hit');
 const HealCard = require('./heal');
 
-const { FIGHTER } = require('../helpers/classes');
+const { FIGHTER } = require('../constants/creature-classes');
 
 describe('./cards/survival-knife.js', () => {
 	it('can be instantiated with defaults', () => {

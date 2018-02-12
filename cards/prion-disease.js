@@ -4,7 +4,7 @@ const BaseCard = require('./base');
 
 const random = require('lodash.random');
 
-const { AOE, POISON } = require('./helpers/constants');
+const { AOE, POISON } = require('../constants/card-classes');
 
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');

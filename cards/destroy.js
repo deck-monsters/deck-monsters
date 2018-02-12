@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 const BaseCard = require('./base');
 
 const { IMPOSSIBLE } = require('../helpers/probabilities');
-const { MELEE } = require('./helpers/constants');
+const { MELEE } = require('../constants/card-classes');
 
 class DestroyCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in

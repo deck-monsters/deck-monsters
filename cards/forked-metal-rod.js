@@ -5,8 +5,8 @@ const HornGoreCard = require('./horn-gore');
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = 3;
 const STARTING_DEX_MODIFIER = 3;
 
-const { FIGHTER, BARBARIAN } = require('../helpers/classes');
-const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../helpers/creature-types');
+const { FIGHTER, BARBARIAN } = require('../constants/creature-classes');
+const { GLADIATOR, MINOTAUR, BASILISK, JINN, WEEPING_ANGEL } = require('../constants/creature-types');
 const { VERY_RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 

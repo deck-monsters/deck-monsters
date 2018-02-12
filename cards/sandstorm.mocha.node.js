@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 const { expect, sinon } = require('../shared/test-setup');
 
-const { ATTACK_PHASE } = require('../helpers/phases');
+const { ATTACK_PHASE } = require('../constants/phases');
 const cards = require('./index');
 const Jinn = require('../monsters/jinn');
 const RandomCard = require('./random');

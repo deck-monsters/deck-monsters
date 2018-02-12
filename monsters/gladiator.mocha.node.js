@@ -1,8 +1,8 @@
 const { expect } = require('../shared/test-setup');
 
 const Gladiator = require('./gladiator');
-const { CLERIC, FIGHTER } = require('../helpers/classes');
-const { GLADIATOR, BASILISK } = require('../helpers/creature-types');
+const { CLERIC, FIGHTER } = require('../constants/creature-classes');
+const { GLADIATOR, BASILISK } = require('../constants/creature-types');
 
 describe('./monsters/gladiator.js', () => {
 	it('can be instantiated with defaults', () => {
