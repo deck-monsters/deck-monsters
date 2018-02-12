@@ -5,6 +5,7 @@ const moment = require('moment');
 const isProbable = require('../helpers/is-probable');
 const pause = require('../helpers/pause');
 const shuffle = require('lodash.shuffle');
+const draw = require('../cards/helpers/draw');
 
 const HazardCard = require('./discoveries/hazard');
 const NothingCard = require('./discoveries/nothing');
@@ -127,6 +128,13 @@ And whither then ${monster.pronouns.he} cannot say.`,
 
 		if (!Discovery) return this.makeDiscovery(explorer);
 
+		switch (Discovery) {
+			case 'card':
+				Discovery = draw({}, explorer.monster)
+				break;
+			default:
+		}
+
 		const discovery = new Discovery();
 		// TODO: Look into this. I guess I'm partly wondering why you have look followed by play - for both cards and items we usually show the card or item as part of play/use. The pattern in items, while more complicated than you need for this, is a good starting place. https://github.com/deck-monsters/deck-monsters/blob/master/items/base.js#L60
 		discovery.look(explorer.channel);
@@ -168,10 +176,10 @@ And whither then ${monster.pronouns.he} cannot say.`,
 Exploration.eventPrefix = 'exploration';
 Exploration.defaults = {
 	discoveries: [
-		DeathCard,
-		HazardCard,
-		NothingCard
-		// 'card',
+		// DeathCard,
+		// HazardCard,
+		// NothingCard,
+		'card',
 		// 'monster',
 		// 'coins',
 		// 'xp',
