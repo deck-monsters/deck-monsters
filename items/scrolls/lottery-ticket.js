@@ -72,7 +72,7 @@ The lottery agent hands ${character.givenName} a heavy sack containing ${winning
 😔 ${character.givenName} can't believe ${character.pronouns.his} eyes. Not a single match. Better luck next time, ${character.givenName}.`
 				});
 
-				return false;
+				return true;
 			});
 	}
 }
