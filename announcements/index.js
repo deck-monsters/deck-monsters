@@ -69,7 +69,6 @@ const initialize = (game) => {
 	]
 
 	worldEvents.map(event => game.on(event.event, (...args) => {
-		const args = ...args;
 		args.publicChannelName = THE_WORLD;
 		event.listener(game.publicChannel, game.channelManager, ...args);
 	}));
