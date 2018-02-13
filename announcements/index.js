@@ -1,4 +1,3 @@
-const THE_WORLD = require('../helpers/channel-names');
 const announceBossWillSpawn = require('./bossWillSpawn.js');
 const announceCardDrop = require('./cardDrop.js');
 const announceCardPlayed = require('./card-played.js');
@@ -23,6 +22,8 @@ const announceRolled = require('./rolled.js');
 const announceStay = require('./stay.js');
 const announceTurnBegin = require('./playerTurnBegin.js');
 const announceXPGain = require('./xpGain.js');
+
+const { THE_WORLD, MAIN_RING } = require('../helpers/channel-names');
 
 const initialize = (game) => {
 	const ringEvents = [
@@ -70,8 +71,7 @@ const initialize = (game) => {
 	]
 
 	worldEvents.map(event => game.on(event.event, (...args) => {
-		args.publicChannelName = THE_WORLD;
-		event.listener(game.publicChannel, game.channelManager, ...args);
+		event.listener(game.publicChannel, game.channelManager, ...args, THE_WORLD);
 	}));
 
 	// this one needs ring, the others don't (or have it already).

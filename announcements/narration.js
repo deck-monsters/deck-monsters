@@ -1,6 +1,8 @@
-const { THE_RING } = require('../helpers/channel-names');
+const { MAIN_RING } = require('../helpers/channel-names');
 
-const announceNarration = (publicChannel, channelManager, className, item, { channel, channelName, narration, publicChannelName = THE_RING }) => {
+const announceNarration = (publicChannel, channelManager, className, item, { channel, channelName, narration }, publicChannelName = MAIN_RING) => {
+	console.log('channelName', publicChannelName, MAIN_RING)
+
 	if (channel) {
 		channelManager.queueMessage({
 			announce: narration,
