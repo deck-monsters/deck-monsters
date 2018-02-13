@@ -19,7 +19,7 @@ class SpinUp extends BaseScroll {
 
 	action ({ channel, channelName, monster }) {
 		if (monster && !monster.inEncounter && monster.dead) {
-			const healAmount = random(1, monster.maxHP);
+			const healAmount = random(1, monster.maxHp);
 
 			this.emit('narration', {
 				channel,
