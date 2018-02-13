@@ -54,6 +54,10 @@ class BasePotion extends BaseItem {
 				return super.use({ channel, channelName, character, monster });
 			})
 			.then((result) => {
+				if (result) {
+					this.used += 1;
+				}
+
 				if (this.expired) {
 					if (!monster || !monster.removeItem(this)) {
 						character.removeItem(this);

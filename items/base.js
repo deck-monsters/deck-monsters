@@ -53,6 +53,8 @@ class BaseItem extends BaseClass {
 		return this.options.used || 0;
 	}
 
+	// Generally speaking once something has been used the player will drop it but we'll increment
+	// a counter instead of boolean just in case the item can be used more than once
 	set used (used) {
 		this.setOptions({
 			used
@@ -80,14 +82,11 @@ class BaseItem extends BaseClass {
 					monster
 				});
 
-				// Generally speaking once something has been used the player will drop it but we'll increment
-				// a counter instead of boolean just in case the item can be used more than once
-				this.used += 1;
-
 				if (this.action) {
 					return this.action({ channel, channelName, character, monster });
 				}
 
+				this.used += 1;
 				return this.used;
 			});
 	}

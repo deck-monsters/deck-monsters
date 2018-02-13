@@ -54,6 +54,8 @@ From now on ${details}`;
 			channelName,
 			narration
 		});
+
+		return true;
 	}
 }
 
