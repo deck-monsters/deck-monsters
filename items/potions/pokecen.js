@@ -1,7 +1,6 @@
 /* eslint-disable max-len */
 
 const BaseScroll = require('./base');
-const random = require('../../helpers/random');
 
 const { COMMON } = require('../../helpers/probabilities');
 const { REASONABLE } = require('../../helpers/costs');
@@ -13,7 +12,7 @@ class SpinUp extends BaseScroll {
 		super({ icon });
 	}
 
-	healingMessage (monster, healAmount) {
+	healingMessage (monster) { // eslint-disable-line class-methods-use-this
 		return `${monster.givenName}'s hp is fully restored.`;
 	}
 
@@ -38,7 +37,7 @@ class SpinUp extends BaseScroll {
 SpinUp.itemType = 'Pokecen';
 SpinUp.probability = COMMON.probability;
 SpinUp.numberOfUses = 1;
-SpinUp.description = `ポケモンセンター Heal Your Monsters!`;
+SpinUp.description = 'ポケモンセンター Heal Your Monsters!';
 SpinUp.level = 1;
 SpinUp.cost = REASONABLE.cost;
 

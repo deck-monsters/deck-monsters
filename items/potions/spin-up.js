@@ -41,7 +41,7 @@ class SpinUp extends BaseScroll {
 SpinUp.itemType = 'Spin Up';
 SpinUp.probability = COMMON.probability;
 SpinUp.numberOfUses = 1;
-SpinUp.description = `Instantly spin monster back up in a new sleeve.`;
+SpinUp.description = 'Instantly spin monster back up in a new sleeve.';
 SpinUp.level = 1;
 SpinUp.cost = REASONABLE.cost;
 
