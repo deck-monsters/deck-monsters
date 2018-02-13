@@ -1,3 +1,4 @@
+const THE_WORLD = require('../helpers/channel-names');
 const announceBossWillSpawn = require('./bossWillSpawn.js');
 const announceCardDrop = require('./cardDrop.js');
 const announceCardPlayed = require('./card-played.js');
