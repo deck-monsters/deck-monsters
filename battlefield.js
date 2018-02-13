@@ -40,8 +40,8 @@ const announcer = (prefix, what) => new Promise((resolve, reject) => {
 	}
 });
 
-const ringAnnouncer = what => announcer('THE_RING', what);
-const worldAnnouncer = what => announcer('THE_WORLD', what);
+const ringAnnouncer = { channel: what => announcer('THE_RING', what), channelName: 'THE_RING' };
+const worldAnnouncer = { channel: what => announcer('THE_WORLD', what), channelName: 'THE_WORLD' };
 const slackdem = new Game([ringAnnouncer, worldAnnouncer], { spawnBosses: false }, console.log); // eslint-disable-line no-console
 
 const VLAD_ID = 1234;
