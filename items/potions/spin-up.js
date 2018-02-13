@@ -24,7 +24,7 @@ class SpinUp extends BaseScroll {
 			this.emit('narration', {
 				channel,
 				channelName,
-				narration: this.healingMessage(monster)
+				narration: this.healingMessage(monster, healAmount)
 			});
 
 			monster.respawn(true);
