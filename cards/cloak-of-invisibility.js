@@ -140,8 +140,6 @@ class CloakOfInvisibilityCard extends BaseCard {
 				narration: `${invisibilityTarget.identity} dons ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`
 			});
 		} else {
-			invisibilityTarget.encounterModifiers.invisibilityTurns = 0;
-
 			this.emit('narration', {
 				narration: `${invisibilityTarget.identity} takes a moment to improve ${invisibilityTarget.pronouns.his} concealment.`
 			});
