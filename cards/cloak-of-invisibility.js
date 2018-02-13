@@ -141,7 +141,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 			});
 		} else {
 			this.emit('narration', {
-				narration: `${invisibilityTarget.identity} is already hidden.`
+				narration: `${invisibilityTarget.identity} takes a moment to improve ${invisibilityTarget.pronouns.his} concealment.`
 			});
 		}
 
