@@ -1489,6 +1489,8 @@ Wooden Spear
 
 Chocolate Bar
 Potion of Healing
+Pokecen
+Spin Up
 Swiss Chocolate
 Chaos Theory for Beginners According to Clever Hans
 Chaos Theory for Beginners
@@ -1537,6 +1539,41 @@ Sorting Hat
  Level: 1
  Usable by: All
  MSRP: 50
+
+==================================
+```
+
+
+```
+==================================
+ 🏩  Pokecen  ○
+----------------------------------
+
+ ポケモンセンター Heal Your Monsters!
+
+ Usable 1 time.
+
+ Level: 1
+ Usable by: All
+ MSRP: 50
+
+==================================
+```
+
+
+```
+==================================
+ 🧠  Spin Up  ○
+----------------------------------
+
+ Instantly spin monster back up 
+ in a new sleeve.
+
+ Usable 1 time.
+
+ Level: 1
+ Usable by: All
+ MSRP: 20
 
 ==================================
 ```
