@@ -47,4 +47,15 @@ describe('./items/spin-up.js', () => {
 				return expect(character.items.length).to.equal(0);
 			});
 	});
+
+	it('can not revive dead monster who is in an encounter', () => {
+		expect(character.items.length).to.equal(1);
+		monster.inEncounter = true;
+		monster.die();
+		return spinUp.use({ channel: channelStub, channelName, character, monster })
+			.then(() => {
+				expect(monster.hp).to.equal(0);
+				return expect(character.items.length).to.equal(1);
+			});
+	});
 });

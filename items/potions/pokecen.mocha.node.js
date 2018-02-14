@@ -47,4 +47,15 @@ describe('./items/pokecen.js', () => {
 				return expect(character.items.length).to.equal(1);
 			});
 	});
+
+	it('can not heal monster in encounter', () => {
+		expect(character.items.length).to.equal(1);
+		monster.inEncounter = true;
+		monster.hp = 1;
+		return pokecen.use({ channel: channelStub, channelName, character, monster })
+			.then(() => {
+				expect(monster.hp).to.equal(1);
+				return expect(character.items.length).to.equal(1);
+			});
+	});
 });
