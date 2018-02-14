@@ -95,9 +95,11 @@ return Promise
 	.then(() => char.spawnMonster({
 		type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
 	}))
+	// .then(() => vlad.character.monsters[0].die())
 	// .then(() => vlad.buyItems())
 	// .then(() => vlad.giveItemsToMonster())
 	// .then(() => vlad.useItems())
+	// .then(() => vlad.useItemsOnMonster())
 	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
 	.then(() => vlad.lookAtItem({ itemName: 'the way of the cobra kai' }))
 	.then(() => vlad.lookAtItems())
@@ -106,6 +108,7 @@ return Promise
 	.then(() => vlad.lookAt('dungeon master guide'))
 	.then(() => vlad.lookAt('monster manual'))
 	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
+	// .then(() => vlad.useItemsOnMonster())
 	.then(() => vlad.sendMonsterToTheRing())
 	.then(() => char.sendMonsterToTheRing())
 	.then(() => slackdem.getRing().spawnBoss())

@@ -31,7 +31,11 @@ class HealingPotion extends BaseScroll {
 			});
 
 			monster.heal(healAmount);
+
+			return true;
 		}
+
+		return false;
 	}
 }
 
