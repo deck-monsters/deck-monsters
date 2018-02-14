@@ -1,8 +1,28 @@
-node_modules
-.DS_Store*
-.hubot_history
-config/*
-!config/*default.env
-npm-debug.log
-/test.js
+# COVERAGE
 coverage/
+
+# DEPENDENCIES
+node_modules/
+
+# EDITORS
+*~
+*.sublime-project
+*.sublime-workspace
+*.sw*
+.idea/
+.vscode/
+
+# FILESYSTEM
+.DS_Store
+
+# GITHUB PAGES
+_site/
+
+# LOCKS
+package-lock.json
+yarn.lock
+
+# OTHER
+.esformatter
+.imdone/
+.tmp/
