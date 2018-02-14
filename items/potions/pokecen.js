@@ -24,7 +24,7 @@ class SpinUp extends BaseScroll {
 				narration: this.healingMessage(monster)
 			});
 
-			monster.heal(monster.maxHp);
+			monster.heal(monster.maxHp - monster.hp);
 
 			return true;
 		}

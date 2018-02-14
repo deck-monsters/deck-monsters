@@ -1,10 +1,10 @@
 /* eslint-disable max-len */
 
 const BaseScroll = require('./base');
-const random = require('../../helpers/random');
+const random = require('lodash.random');
 
 const { COMMON } = require('../../helpers/probabilities');
-const { REASONABLE } = require('../../helpers/costs');
+const { VERY_CHEAP } = require('../../helpers/costs');
 
 class SpinUp extends BaseScroll {
 	constructor ({
@@ -19,7 +19,7 @@ class SpinUp extends BaseScroll {
 
 	action ({ channel, channelName, monster }) {
 		if (monster && !monster.inEncounter && monster.dead) {
-			const healAmount = random(1, monster.maxHp);
+			const healAmount = random(1, Math.ceil(monster.maxHp));
 
 			this.emit('narration', {
 				channel,
@@ -43,6 +43,6 @@ SpinUp.probability = COMMON.probability;
 SpinUp.numberOfUses = 1;
 SpinUp.description = 'Instantly spin monster back up in a new sleeve.';
 SpinUp.level = 1;
-SpinUp.cost = REASONABLE.cost;
+SpinUp.cost = VERY_CHEAP.cost;
 
 module.exports = SpinUp;
