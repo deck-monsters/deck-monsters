@@ -5,7 +5,7 @@ const { expect, sinon } = require('../../shared/test-setup');
 const SpinUp = require('./spin-up');
 const randomCharacter = require('../../characters/helpers/random');
 
-describe('./items/healing.js', () => {
+describe('./items/spin-up.js', () => {
 	let clock;
 	let spinUp;
 	let character;
