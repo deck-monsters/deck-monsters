@@ -34,7 +34,7 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🐍  Xoahpuztletl
+ 🐍  Mon Tlaktep
 ----------------------------------
 
  A slender, tan, forest-dwelling 
@@ -53,7 +53,7 @@ Here are some sample beginner level monsters:
  Class: Barbarian
  Level: beginner | XP: 1
 
- ac: 8 | hp: 33/33
+ ac: 9 | hp: 32/32
  dex: 4 | str: 7 | int: 6
  -1 dex penalty
  +2 str bonus
@@ -68,19 +68,19 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 💪  Gizzi Giz Bee
+ 💪  Chozhaemo
 ----------------------------------
 
- A gigantic gladiator, dressed in 
+ A powerful gladiator, dressed in 
  leather and hailing from a dusty 
- rural arena. Many years ago it 
- was captured, stripped of its 
+ rural arena. Many years ago he 
+ was captured, stripped of his 
  title and land, and forced to 
  compete in brutal matches for 
  the entertainment of a 
- blood-thirsty crowd. Standing 
- well over 8 feet tall, when you 
- see it you know instantly that 
+ blood-thirsty crowd. Standing a 
+ towering 6 feet tall, when you 
+ see him you know instantly that 
  this is a warrior who has 
  witnessed the worst humankind 
  has to offer and has overcome.
@@ -89,7 +89,7 @@ Here are some sample beginner level monsters:
  Class: Fighter
  Level: beginner | XP: 1
 
- ac: 5 | hp: 31/31
+ ac: 7 | hp: 32/32
  dex: 6 | str: 6 | int: 5
  +1 dex bonus
  +1 str bonus
@@ -103,7 +103,7 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🕌  Rafim
+ 🕌  Emut
 ----------------------------------
 
  A fiery red figure hides in the 
@@ -120,7 +120,7 @@ Here are some sample beginner level monsters:
  Class: Bard
  Level: beginner | XP: 1
 
- ac: 7 | hp: 29/29
+ ac: 9 | hp: 30/30
  dex: 6 | str: 5 | int: 6
  +1 dex bonus
  +1 int bonus
@@ -134,23 +134,22 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🐗  Mirgur Sharpmind
+ 🐗  Hineres Truthspeaker
 ----------------------------------
 
  A battle-hardened, angry red 
  minotaur with a bold pattern 
- shaved into his thick fur. Make 
- no mistake, despite his 
- awe-inspiring bulk he is a 
- first-class host who has never 
- been put to shame at a dinner 
- party.
+ shaved into its thick fur. Make 
+ no mistake, despite its fearsome 
+ bulk it is a first-class host 
+ who has never been put to shame 
+ at a dinner party.
 
  Type: Minotaur
  Class: Barbarian
  Level: beginner | XP: 1
 
- ac: 6 | hp: 36/36
+ ac: 5 | hp: 34/34
  dex: 6 | str: 7 | int: 4
  +1 dex bonus
  +2 str bonus
@@ -165,22 +164,22 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🌟  Jeremiel
+ 🌟  Irin
 ----------------------------------
 
  A stone gray weeping angel. On 
- meeting him one might form the 
+ meeting her one might form the 
  following three impressions: 
- that he was Scottish, that he 
- was intelligent, and that he was 
- nuttier than a treeful of 
+ that she was Scottish, that she 
+ was intelligent, and that she 
+ was frutier than a treeful of 
  monkeys on nitrous oxide.
 
  Type: Weeping Angel
  Class: Cleric
  Level: beginner | XP: 1
 
- ac: 8 | hp: 32/32
+ ac: 7 | hp: 30/30
  dex: 6 | str: 4 | int: 7
  +1 dex bonus
  -1 str penalty
