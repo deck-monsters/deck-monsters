@@ -5,5 +5,5 @@ module.exports = {
 	HIDE: 'Hide',
 	MELEE: 'Melee',
 	POISON: 'Poison',
-	PSYCHIC: 'Pyscic'
+	PSYCHIC: 'Psychic'
 };
