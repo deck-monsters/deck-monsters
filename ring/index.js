@@ -531,7 +531,18 @@ The following cards are in play:
 	fightConcludes ({ lastContestant, rounds }) {
 		const { contestants } = this;
 
-		const deadContestants = contestants.filter(contestant => !!contestant.monster.dead);
+		const deadContestants = [];
+		contestants.forEach((contestant) => {
+			if (contestant.monster.dead) {
+				deadContestants.push(contestant);
+			}
+
+			contestant.killed = contestant.monster.killed;
+			contestant.killedBy = contestant.monster.killedBy;
+			contestant.fled = contestant.monster.fled;
+			contestant.rounds = contestant.monster.round;
+			contestant.encounter = contestant.monster.endEncounter();
+		});
 		const deaths = deadContestants.length;
 
 		this.channelManager.queueMessage({
@@ -549,11 +560,6 @@ The following cards are in play:
 
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
-			contestant.killed = contestant.monster.killed;
-			contestant.killedBy = contestant.monster.killedBy;
-			contestant.fled = contestant.monster.fled;
-			contestant.rounds = contestant.monster.round;
-			contestant.encounter = contestant.monster.endEncounter();
 
 			this.awardMonsterXP(contestant, contestants);
 
