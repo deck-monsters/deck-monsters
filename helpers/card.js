@@ -112,7 +112,7 @@ const characterCard = (character, verbose = true) => formatCard({
 	title: `${character.icon}  ${character.givenName}`,
 	stats: verbose ? character.detailedStats : character.stats,
 	rankings: character.rankings,
-	verbose
+	verbose: true
 });
 
 module.exports = {
