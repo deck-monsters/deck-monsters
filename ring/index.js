@@ -15,7 +15,7 @@ const getUniqueCards = require('../cards/helpers/unique-cards');
 const pause = require('../helpers/pause');
 
 const MAX_BOSSES = 5;
-const MAX_MONSTERS = 8;
+const MAX_MONSTERS = 12;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
 
