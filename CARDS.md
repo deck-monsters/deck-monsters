@@ -727,6 +727,8 @@ Wooden Spear
 
 Chocolate Bar
 Potion of Healing
+Pokecen
+Spin Up
 Swiss Chocolate
 Chaos Theory for Beginners According to Clever Hans
 Chaos Theory for Beginners
@@ -763,6 +765,29 @@ Sorting Hat
 ----------------------------------
 
  Instantly heal 8 hp.
+
+==================================
+```
+
+
+```
+==================================
+ 🏩  Pokecen  ○
+----------------------------------
+
+ ポケモンセンター Heal Your Monsters!
+
+==================================
+```
+
+
+```
+==================================
+ 🧠  Spin Up  ○
+----------------------------------
+
+ Instantly spin monster back up 
+ in a new sleeve.
 
 ==================================
 ```
