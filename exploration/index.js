@@ -117,7 +117,7 @@ And whither then ${monster.pronouns.he} cannot say.`,
 		}, ONE_MINUTE);
 	}
 
-	makeDiscovery (explorer) {
+	makeDiscovery (environment, explorer) {
 		let discoveries = shuffle(this.discoveries);
 
 		if (explorer) {
@@ -126,7 +126,7 @@ And whither then ${monster.pronouns.he} cannot say.`,
 
 		let Discovery = discoveries.find(isProbable);
 
-		if (!Discovery) return this.makeDiscovery(explorer);
+		if (!Discovery) return this.makeDiscovery(environment, explorer);
 
 		let discovery;
 		switch (Discovery.itemType) {
@@ -146,7 +146,7 @@ And whither then ${monster.pronouns.he} cannot say.`,
 
 	doExploration () {
 		this.explorers.forEach((explorer) => {
-			const discovery = this.makeDiscovery(explorer);
+			const discovery = this.makeDiscovery(this.environment, explorer);
 
 			explorer.discoveries.push(discovery);
 
@@ -177,9 +177,9 @@ And whither then ${monster.pronouns.he} cannot say.`,
 Exploration.eventPrefix = 'exploration';
 Exploration.defaults = {
 	discoveries: [
-		// DeathCard,
-		// HazardCard,
-		// NothingCard,
+		DeathCard,
+		HazardCard,
+		NothingCard,
 		{ itemType: 'BattleCard', probability: 10 },
 		// 'monster',
 		// 'coins',

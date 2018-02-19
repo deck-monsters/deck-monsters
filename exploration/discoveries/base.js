@@ -27,10 +27,12 @@ class BaseDiscoveryCard extends BaseCard {
 				});
 
 				if (this.effect) {
-					return this.effect({ channel, channelName, environment, monster: explorer.monster });
+					return this.effect(environment, explorer.monster);
 				}
+			})
+			.catch(function(err) {
+				console.log('err', err.message); // some coding error in handling happened
 			});
-
 	}
 }
 
