@@ -46,7 +46,7 @@ class ChannelManager extends BaseClass {
 			});
 	}
 
-	// Normally send messages for all channels when called, but allow this to be overriden as needed
+	// Normally send messages for all channels when called, but allow this to be overridden as needed
 	sendMessages ({ channelName } = {}) {
 		return Promise
 			.resolve()

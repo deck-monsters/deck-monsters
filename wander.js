@@ -42,7 +42,7 @@ const announcer = (prefix, what) => new Promise((resolve, reject) => {
 
 const ringAnnouncer = { channel: what => announcer('MAIN_RING', what), channelName: 'MAIN_RING' };
 const worldAnnouncer = { channel: what => announcer('THE_WORLD', what), channelName: 'THE_WORLD' };
-const slackdem = new Game([ringAnnouncer, worldAnnouncer], { spawnBosses: false }, console.log); // eslint-disable-line no-console
+const slackdem = new Game({ mainRing: ringAnnouncer, theWorld: worldAnnouncer }, { spawnBosses: false }, console.log); // eslint-disable-line no-console
 
 const VLAD_ID = 1234;
 const vladAnnouncer = what => announcer('vlad', what);

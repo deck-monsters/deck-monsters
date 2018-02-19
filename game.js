@@ -22,19 +22,20 @@ const Ring = require('./ring');
 const Exploration = require('./exploration');
 
 // channel names
-const { MAIN_RING, THE_WORD } = './helpers/channel-names';
+const { MAIN_RING, THE_WORLD } = require('./helpers/channel-names');
 
 class Game extends BaseClass {
-	constructor (channels, options, log = () => {}) {
+	constructor ({ mainRing, theWorld }, options, log = () => {}) {
 		super(options, globalSemaphore);
 
 		this.log = log;
 		this.key = `DeckMonsters.Backup.${Date.now()}`;
 		this.channelManager = new ChannelManager({}, this.log);
-		channels.forEach(({ channel, channelName }) => {
-			this.channelManager.addChannel({ channel, channelName });
-		});
-		this.publicChannel = ({ announce, channelName = MAIN_RING }) => this.channelManager.queueMessage({ announce, channelName });
+		this.channelManager.addChannel({ channel: mainRing.channel, channelName: mainRing.channelName });
+		this.channelManager.addChannel({ channel: theWorld.channel, channelName: theWorld.channelName });
+		this.publicChannel = ({ announce, channelName=MAIN_RING }) => {
+			return this.channelManager.queueMessage({ announce, channelName })
+		};
 		this.ring = new Ring(this.channelManager, { spawnBosses: this.options.spawnBosses }, this.log);
 		this.exploration = new Exploration(this.channelManager, {}, this.log);
 
