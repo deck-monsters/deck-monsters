@@ -7,7 +7,7 @@ const { roll } = require('../helpers/chance');
 const { BARD, CLERIC, WIZARD } = require('../constants/creature-classes');
 const { ATTACK_PHASE, DEFENSE_PHASE } = require('../constants/phases');
 const { capitalize } = require('../helpers/capitalize');
-const { AOE, HIDE, MUSICAL, PSYCHIC } = require('../constants/card-classes');
+const { AOE, HIDE, ACOUSTIC, PSYCHIC } = require('../constants/card-classes');
 const { RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
 
@@ -56,7 +56,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 					if (phase === DEFENSE_PHASE &&
 						player !== invisibilityTarget && target === invisibilityTarget &&
 						!card.isCardClass(AOE) &&
-						!card.isCardClass(MUSICAL)) {
+						!card.isCardClass(ACOUSTIC)) {
 						// If this isn't a psychic attack and your target is invisible, look for a new target
 						if (!card.isCardClass(PSYCHIC)) {
 							const potentialTargets = activeContestants.filter(({ monster }) => (monster !== player && !isInvisible(monster)));
