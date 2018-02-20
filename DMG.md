@@ -1088,7 +1088,7 @@ Wooden Spear
  Hit chance: 71% | DPT: 7
  MSRP: 80
  Targets: int
- Class: , Psychic
+ Class: Acoustic, Psychic
 
 ==================================
 ```
