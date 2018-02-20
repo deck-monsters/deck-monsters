@@ -7,7 +7,7 @@ const Minotaur = require('../monsters/minotaur');
 const { GLADIATOR } = require('../constants/creature-types');
 
 const ultimateComboNarration = [];
-for (let i = 17; i < 101; i++) {
+for (let i = 18; i < 101; i++) {
 	ultimateComboNarration.push(`HUMILIATION! ${i} hits`);
 }
 ultimateComboNarration.push('ULTIMATE COMBO! 100 HITS (109 total damage).');
@@ -187,7 +187,7 @@ describe('./cards/battle-focus.js', () => {
 				expect(berserkEffectLoopSpy.callCount).to.equal(101);
 				expect(hitCheckStub.callCount).to.equal(101);
 				expect(hitEffectSpy.callCount).to.equal(0);
-				expect(hitSpy.callCount).to.equal(16);
+				expect(hitSpy.callCount).to.equal(17);
 				expect(narrations).to.deep.equal(ultimateComboNarration);
 				expect(target.destroyed).to.be.true;
 

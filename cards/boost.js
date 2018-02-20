@@ -74,7 +74,7 @@ class BoostCard extends BaseCard {
 	}
 
 	getBoostOverflowNarrative (player, target) {
-		return `${target.givenName}'s ${this.cursedProp} boosts have been maxed out. Boost will be granted to hp instead.`;
+		return `${target.givenName}'s ${this.boostedProp} boosts have been maxed out. Boost will be granted to hp instead.`;
 	}
 
 	effect (player, target) {

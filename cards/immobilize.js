@@ -141,16 +141,20 @@ ${ongoingDamageText}`;
 
 	getAttackRoll (player, target) {
 		const statsBonus = this.targetProp === 'ac' ? player.dexModifier : player[`${this.targetProp}Modifier`];
+
 		return roll({ primaryDice: this.attackDice, modifier: statsBonus + this.getAttackModifier(target), bonusDice: player.bonusAttackDice, crit: true });
 	}
 
 	getImmobilizeRoll (immobilizer, immobilized) {
 		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immobilizer.dexModifier : immobilizer[`${this.freedomSavingThrowTargetAttr}Modifier`];
-		return roll({ primaryDice: this.attackDice, modifier: statsBonus + this.getAttackModifier(immobilized), bonusDice: immobilizer.bonusAttackDice, crit: true });
+		const attackModifier = immobilized ? this.getAttackModifier(immobilized) : 0;
+
+		return roll({ primaryDice: this.attackDice, modifier: statsBonus + attackModifier, bonusDice: immobilizer.bonusAttackDice, crit: true });
 	}
 
 	getFreedomRoll (immobilizer, immobilized) {
 		const statsBonus = this.freedomSavingThrowTargetAttr === 'ac' ? immobilized.dexModifier : immobilized[`${this.freedomSavingThrowTargetAttr}Modifier`];
+
 		return roll({ primaryDice: this.attackDice, modifier: statsBonus, bonusDice: immobilized.bonusAttackDice, crit: true });
 	}
 

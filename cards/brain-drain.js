@@ -3,10 +3,11 @@
 const CurseCard = require('./curse');
 const HitCard = require('./hit');
 
+const { CLERIC } = require('../constants/creature-classes');
+const { JINN } = require('../constants/creature-types');
 const { max } = require('../helpers/chance');
 const { PSYCHIC } = require('../constants/card-classes');
 const { REASONABLE } = require('../helpers/costs');
-
 const STATS = require('../constants/stats');
 
 class BrainDrainCard extends CurseCard {
@@ -19,9 +20,9 @@ class BrainDrainCard extends CurseCard {
 	}
 
 	get stats () {
-		const hit = new HitCard({ damageDice: this.damageDice });
+		const hit = new HitCard(this.options);
 		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
-can reduce ${this.cursedProp} down to ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]}, then takes ${max(this.damageDice)} from hp instead.`;
+Can reduce ${this.cursedProp} down to ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]}, then takes ${max(this.damageDice)} from hp instead.`;
 
 		if (this.hasChanceToHit) {
 			stats = `${hit.stats}
@@ -34,13 +35,15 @@ ${stats}`;
 
 BrainDrainCard.cardClass = [PSYCHIC];
 BrainDrainCard.cardType = 'Brain Drain';
+BrainDrainCard.permittedClassesAndTypes = [CLERIC, JINN];
 BrainDrainCard.description = 'And we shall bury our enemies in their own confusion.';
 BrainDrainCard.cost = REASONABLE.cost;
 
 BrainDrainCard.defaults = {
 	...CurseCard.defaults,
 	curseAmount: -20,
-	cursedProp: 'xp'
+	cursedProp: 'xp',
+	targetProp: 'int'
 };
 
 module.exports = BrainDrainCard;

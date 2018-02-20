@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 const HitCard = require('./hit');
 
 const { difference } = require('../helpers/difference');
@@ -43,9 +44,12 @@ class CurseCard extends HitCard {
 		return this.options.cursedProp;
 	}
 
+	get curseDescription () {
+		return `Curse: ${this.cursedProp} ${this.curseAmount}`;
+	}
+
 	get stats () {
-		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
-maximum total curse of -${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp] * 3} per level, afterwards penalties come out of hp instead.`;
+		let stats = `${this.curseDescription}, with a maximum total curse of -${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp] * 3} per level. Afterwards penalties come out of hp instead.`;
 
 		if (this.hasChanceToHit) {
 			stats = `${super.stats}

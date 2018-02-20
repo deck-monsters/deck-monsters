@@ -1,6 +1,6 @@
 const HitCard = require('./hit');
 
-const { PSYCHIC } = require('../constants/card-classes');
+const { ACOUSTIC, PSYCHIC } = require('../constants/card-classes');
 
 const { VERY_RARE } = require('../helpers/probabilities');
 const { PRICEY } = require('../helpers/costs');
@@ -28,11 +28,11 @@ class KalevalaCard extends HitCard {
 		return `${this.constructor.cardType} (${this.damageDice})`;
 	}
 
-	hitCheck (player, target) {
-		const result = super.hitCheck(player, target);
+	levelUp (amount) {
+		if (this.damageDice !== damageLevels[damageLevels.length - 1]) {
+			let index = damageLevels.indexOf(this.damageDice) + amount;
+			if (index >= damageLevels.length) index = damageLevels.length - 1;
 
-		if (result.strokeOfLuck && this.damageDice !== damageLevels[damageLevels.length - 1]) {
-			const index = damageLevels.indexOf(this.damageDice) + 1;
 			const damageDice = damageLevels[index];
 
 			if (damageDice) {
@@ -53,12 +53,20 @@ It will now do ${this.damageDice} damage.`
 				});
 			}
 		}
+	}
+
+	hitCheck (player, target) {
+		const result = super.hitCheck(player, target);
+
+		if (result.strokeOfLuck) {
+			this.levelUp(1);
+		}
 
 		return result;
 	}
 }
 
-KalevalaCard.cardClass = [PSYCHIC];
+KalevalaCard.cardClass = [ACOUSTIC, PSYCHIC];
 KalevalaCard.cardType = 'The Kalevala';
 KalevalaCard.probability = VERY_RARE.probability;
 KalevalaCard.description = 'Steadfast old Väinämöinen himself fashioned this instrument of eternal joy. Tune its pikebone pegs and it may lead you on to victory.'; // eslint-disable-line max-len
@@ -70,7 +78,8 @@ KalevalaCard.neverForSale = true;
 
 KalevalaCard.defaults = {
 	...HitCard.defaults,
-	damageDice: damageLevels[0] // What begins weak may one day be strong
+	damageDice: damageLevels[0], // What begins weak may one day be strong
+	targetProp: 'int'
 };
 
 KalevalaCard.flavors = {
