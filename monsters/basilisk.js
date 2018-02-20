@@ -57,6 +57,7 @@ class Basilisk extends BaseMonster {
 Basilisk.creatureType = BASILISK;
 Basilisk.class = BARBARIAN;
 Basilisk.acVariance = 2;
+Basilisk.hpVariance = 2;
 Basilisk.description =
 `
 The basilisk, often called the “King of Serpents,” is in fact not a serpent at all, but rather an eight-legged reptile with a nasty disposition and the ability to turn creatures to stone with its gaze. Folklore holds that, much like the cockatrice, the first basilisks hatched from eggs laid by snakes and incubated by roosters, but little in the basilisk’s physiology lends any credence to this claim.

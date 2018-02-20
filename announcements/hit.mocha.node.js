@@ -24,7 +24,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce normal hit to public channel', () => {
 			const announcement = `💪 🤜 💪  Assailant hits Monster for 2 damage.
 
-💪 *Monster has 30HP.*
+💪 *Monster has 31HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -105,7 +105,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce weak hit to public channel', () => {
 			const announcement = `💪 🏓 💪  Assailant hits Monster for 1 damage.
 
-💪 *Monster has 30HP.*
+💪 *Monster has 31HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -128,7 +128,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce strong damage to public channel', () => {
 			const announcement = `💪 🔪 💪  Assailant hits Monster for 5 damage.
 
-💪 *Monster has 30HP.*
+💪 *Monster has 31HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);
@@ -151,7 +151,7 @@ describe('./announcements/hit.js', () => {
 		it('can announce top damage to public channel', () => {
 			const announcement = `💪 🔥 💪  Assailant hits Monster for 10 damage.
 
-💪 *Monster has 30HP.*
+💪 *Monster has 31HP.*
 `;
 			const publicChannel = ({ announce }) => {
 				expect(announce).to.equal(announcement);

@@ -55,18 +55,20 @@ class CloakOfInvisibilityCard extends BaseCard {
 				card.effect = (player, target, ring, activeContestants) => {
 					if (phase === DEFENSE_PHASE &&
 						player !== invisibilityTarget && target === invisibilityTarget &&
-						!card.isCardClass(AOE) &&
-						!card.isCardClass(PSYCHIC)) {
-						const potentialTargets = activeContestants.filter(({ monster }) => (monster !== player && !isInvisible(monster)));
+						!card.isCardClass(AOE)) {
+						// If this isn't a psychic attack and your target is invisible, look for a new target
+						if (!card.isCardClass(PSYCHIC)) {
+							const potentialTargets = activeContestants.filter(({ monster }) => (monster !== player && !isInvisible(monster)));
 
-						if (potentialTargets.length > 0) {
-							const newTarget = sample(potentialTargets).monster;
+							if (potentialTargets.length > 0) {
+								const newTarget = sample(potentialTargets).monster;
 
-							this.emit('narration', {
-								narration: `${player.givenName} doesn't see ${invisibilityTarget.givenName} anywhere and turns ${player.pronouns.his} attention to ${newTarget.givenName} instead.`
-							});
+								this.emit('narration', {
+									narration: `${player.givenName} doesn't see ${invisibilityTarget.givenName} anywhere and turns ${player.pronouns.his} attention to ${newTarget.givenName} instead.`
+								});
 
-							return effect.call(card, player, newTarget, ring, activeContestants);
+								return effect.call(card, player, newTarget, ring, activeContestants);
+							}
 						}
 
 						this.emit('effect', {

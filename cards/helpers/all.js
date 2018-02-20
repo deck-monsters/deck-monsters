@@ -12,6 +12,7 @@ const CalisthenicsCard = require('../calisthenics');
 const CamouflageVestCard = require('../camouflage-vest');
 const CloakOfInvisibilityCard = require('../cloak-of-invisibility');
 const CoilCard = require('../coil');
+const ConcussionCard = require('../concussion');
 const ConstrictCard = require('../constrict');
 const CurseCard = require('../curse');
 const DelayedHit = require('../delayed-hit');
@@ -65,6 +66,7 @@ module.exports = [
 	CamouflageVestCard,
 	CloakOfInvisibilityCard,
 	CoilCard,
+	ConcussionCard,
 	ConstrictCard,
 	CurseCard,
 	DelayedHit,

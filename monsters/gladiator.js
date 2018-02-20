@@ -56,7 +56,7 @@ class Gladiator extends BaseMonster {
 
 Gladiator.creatureType = GLADIATOR;
 Gladiator.class = FIGHTER;
-Gladiator.hpVariance = 2;
+Gladiator.hpVariance = 3;
 Gladiator.description =
 `
 The gladiator is a professional duelist. Many are born slaves and reared in gladiatorial schools, until such time as they earn their freedom in battle, escape, or rebel. Some join dueling academies voluntarily, seeking fame or fortune in prize fights and honor matches. Some gladiators began as warriors from faroff lands, captured in battle and forced to fight to the death, while others are condemned criminals, paying their debt to society by participating in ritual combat for the public. Whatever their station or background, the gladiator has been hardened by combat and has learned to anticipate a wily foe. While gladiatorial matches often follow a prescribed, even ritual format, the gladiator must always be ready for the possibility that they will be thrown into a situation with unusual weapons, conditions, or opponents. Some arena fighters specialize in fighting exotic animals and monsters.
