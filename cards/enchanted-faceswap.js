@@ -2,15 +2,14 @@
 
 const BaseCard = require('./base');
 
+const { AOE, HIDE, PSYCHIC } = require('../constants/card-classes');
 const { BARD, CLERIC } = require('../constants/creature-classes');
 const { DEFENSE_PHASE } = require('../constants/phases');
-const { AOE, HIDE, PSYCHIC } = require('../constants/card-classes');
-const { RARE } = require('../helpers/probabilities');
+const { FACESWAP_EFFECT } = require('../constants/effect-types');
 const { PRICEY } = require('../helpers/costs');
+const { RARE } = require('../helpers/probabilities');
 
-const EFFECT_TYPE = 'FaceswapEffect';
-
-const isFaceswapping = monster => !!monster.encounterEffects.find(encounterEffect => encounterEffect.effectType === EFFECT_TYPE);
+const isFaceswapping = monster => !!monster.encounterEffects.find(encounterEffect => encounterEffect.effectType === FACESWAP_EFFECT);
 
 class EnchantedFaceswapCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -36,7 +35,7 @@ class EnchantedFaceswapCard extends BaseCard {
 				if (effect && !card.isCardClass(AOE) && !card.isCardClass(PSYCHIC)) {
 					card.effect = (swappedPlayer, swappedTarget, ring, activeContestants) => {
 						if (swappedTarget === faceswapTarget) {
-							faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
+							faceswapTarget.encounterEffects = faceswapTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== FACESWAP_EFFECT);
 
 							this.emit('effect', {
 								effectResult: `${this.icon} faceswapped by`,
@@ -56,7 +55,7 @@ class EnchantedFaceswapCard extends BaseCard {
 			return card;
 		};
 
-		faceswapEffect.effectType = EFFECT_TYPE;
+		faceswapEffect.effectType = FACESWAP_EFFECT;
 
 		const alreadyFaceswapping = isFaceswapping(faceswapTarget);
 
