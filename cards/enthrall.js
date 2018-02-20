@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+const Promise = require('bluebird');
 
 const ImmobilizeCard = require('./immobilize');
 
@@ -36,12 +37,29 @@ class EnthrallCard extends ImmobilizeCard {
 ${super.stats}`;
 	}
 
-	getTargets (player, proposedTarget, ring, activeContestants) { // eslint-disable-line class-methods-use-this
-		return getTarget({
+	getTargets (player) { // eslint-disable-line class-methods-use-this
+		return [player];
+	}
+
+	effect (player, target, ring, activeContestants) {
+		if (player === target) {
+			this.emit('narration', {
+				narration: `${player.givenName} prepares ${player.pronouns.him}self to ${this.actions.IMMOBILIZE} ${player.pronouns.his} targets.`
+			});
+		} else {
+			this.emit('narration', {
+				narration: `${player.givenName} is confused and uses ${player.pronouns.his} power to help ${target.givenName} ${this.actions.IMMOBILIZE} ${target.pronouns.his} targets.`
+			});
+		}
+
+		const targets = getTarget({
 			contestants: activeContestants,
-			playerMonster: player,
+			playerMonster: target,
 			strategy: TARGET_ALL_CONTESTANTS
 		}).map(({ monster }) => monster);
+
+		return Promise.mapSeries(targets, newTarget => super.effect(target, newTarget, ring, activeContestants))
+			.then(results => results.reduce((result, val) => result && val, true));
 	}
 }
 
