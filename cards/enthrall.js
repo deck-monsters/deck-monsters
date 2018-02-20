@@ -7,6 +7,7 @@ const { PSYCHIC } = require('../constants/card-classes');
 const { UNCOMMON } = require('../helpers/probabilities');
 const { REASONABLE } = require('../helpers/costs');
 const { TARGET_ALL_CONTESTANTS, getTarget } = require('../helpers/targeting-strategies');
+const isInvisible = require('../helpers/is-invisible');
 
 const {
 	BASILISK,
@@ -50,6 +51,14 @@ ${super.stats}`;
 			this.emit('narration', {
 				narration: `${player.givenName} is confused and uses ${player.pronouns.his} power to help ${target.givenName} ${this.actions.IMMOBILIZE} ${target.pronouns.his} targets.`
 			});
+		}
+
+		if (isInvisible(target)) {
+			this.emit('narration', {
+				narration: `${target.givenName} is gets prepared but ${target.pronouns.he} is hidden from view, making it impossible for ${target.pronouns.him} to ${this.actions.IMMOBILIZE} anyone.`
+			});
+
+			return true;
 		}
 
 		const targets = getTarget({

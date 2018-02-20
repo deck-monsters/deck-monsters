@@ -4,16 +4,14 @@ const sample = require('lodash.sample');
 const BaseCard = require('./base');
 const { roll } = require('../helpers/chance');
 
-const { BARD, CLERIC, WIZARD } = require('../constants/creature-classes');
-const { ATTACK_PHASE, DEFENSE_PHASE } = require('../constants/phases');
-const { capitalize } = require('../helpers/capitalize');
 const { AOE, HIDE, ACOUSTIC, PSYCHIC } = require('../constants/card-classes');
-const { RARE } = require('../helpers/probabilities');
+const { ATTACK_PHASE, DEFENSE_PHASE } = require('../constants/phases');
+const { BARD, CLERIC, WIZARD } = require('../constants/creature-classes');
+const { capitalize } = require('../helpers/capitalize');
+const { INVISIBILITY_EFFECT } = require('../constants/effect-types');
 const { PRICEY } = require('../helpers/costs');
-
-const EFFECT_TYPE = 'InvisibilityEffect';
-
-const isInvisible = monster => !!monster.encounterEffects.find(encounterEffect => encounterEffect.effectType === EFFECT_TYPE);
+const { RARE } = require('../helpers/probabilities');
+const isInvisible = require('../helpers/is-invisible');
 
 class CloakOfInvisibilityCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -84,7 +82,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 						let outcome;
 
 						if (strokeOfLuck) {
-							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
+							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== INVISIBILITY_EFFECT);
 
 							outcome = `${player.givenName} rolled a natural 20. ${capitalize(player.pronouns.he)} immediately realizes exactly where ${invisibilityTarget.givenName} is and strips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`;
 						} else if (curseOfLoki) {
@@ -113,7 +111,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 						}
 					} else if (phase === ATTACK_PHASE && player === invisibilityTarget) {
 						if (target !== invisibilityTarget || invisibilityTarget.encounterModifiers.invisibilityTurns > 2) {
-							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== EFFECT_TYPE);
+							invisibilityTarget.encounterEffects = invisibilityTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== INVISIBILITY_EFFECT);
 
 							if (!card.invisibilityNarrationEmitted) {
 								this.emit('narration', {
@@ -132,7 +130,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 			return card;
 		};
 
-		invisibilityEffect.effectType = EFFECT_TYPE;
+		invisibilityEffect.effectType = INVISIBILITY_EFFECT;
 
 		const alreadyInvisible = isInvisible(invisibilityTarget);
 

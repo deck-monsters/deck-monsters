@@ -3,12 +3,11 @@ const BaseCard = require('./base');
 const WhiskeyShotCard = require('./whiskey-shot');
 const ScotchCard = require('./scotch');
 
+const { BAD_BATCH_EFFECT } = require('../constants/effect-types');
 const { BARD } = require('../constants/creature-classes');
 const { POISON } = require('../constants/card-classes');
 const { REASONABLE } = require('../helpers/costs');
 const { UNCOMMON } = require('../helpers/probabilities');
-
-const EFFECT_TYPE = 'BadBatchEffect';
 
 class BadBatchCard extends BaseCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -70,7 +69,7 @@ class BadBatchCard extends BaseCard {
 			return card;
 		};
 
-		badBatchEffect.effectType = EFFECT_TYPE;
+		badBatchEffect.effectType = BAD_BATCH_EFFECT;
 
 		badBatchRing.encounterEffects = [...badBatchRing.encounterEffects, badBatchEffect];
 
