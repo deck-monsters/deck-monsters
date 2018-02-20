@@ -34,15 +34,15 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🐍  Krealmep
+ 🐍  Macca
 ----------------------------------
 
- A powerful, tan, cave-dwelling 
+ A stocky, tan, cave-dwelling 
  basilisk with a nasty 
  disposition and the ability to 
  turn creatures to stone with his 
  gaze. In the forest he is king 
- and (weighing 300lbs) in the 
+ and (weighing 320lbs) in the 
  ring he is much to be feared. 
  See how he rears his head, and 
  rolls about his dreadful eyes, 
@@ -53,7 +53,7 @@ Here are some sample beginner level monsters:
  Class: Barbarian
  Level: beginner | XP: 1
 
- ac: 7 | hp: 34/34
+ ac: 8 | hp: 35/35
  dex: 4 | str: 7 | int: 6
  -1 dex penalty
  +2 str bonus
@@ -68,19 +68,19 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 💪  Izzo Izzat To Poison
+ 💪  Gosho Goshat To Be Sure
 ----------------------------------
 
- A nimble gladiator, dressed in 
- leather and hailing from the 
- Roman colosseum. Many years ago 
- it was captured, stripped of its 
+ A powerful gladiator, dressed in 
+ leather and hailing from a dusty 
+ rural arena. Many years ago he 
+ was captured, stripped of his 
  title and land, and forced to 
  compete in brutal matches for 
  the entertainment of a 
- blood-thirsty crowd. Standing 
- just over 5 feet tall, when you 
- see it you know instantly that 
+ blood-thirsty crowd. Standing a 
+ towering 6 feet tall, when you 
+ see him you know instantly that 
  this is a warrior who has 
  witnessed the worst humankind 
  has to offer and has overcome.
@@ -103,24 +103,24 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🕌  Itwu
+ 🕌  Hethadwu
 ----------------------------------
 
- A fiery red figure hides in the 
+ A fiery red figure lurks in the 
  dusty shadows at the corner of 
  your vision. At first you think 
  it might be human and you wonder 
  who or what she is. What is she 
  thinking about? When you turn to 
  look closer all you see is a 
- goat and a gently settling cloud 
- of sand.
+ coyote and a gently settling 
+ cloud of sand.
 
  Type: Jinn
  Class: Bard
  Level: beginner | XP: 1
 
- ac: 9 | hp: 32/32
+ ac: 9 | hp: 30/30
  dex: 6 | str: 5 | int: 6
  +1 dex bonus
  +1 int bonus
@@ -134,17 +134,16 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🐗  Kiaren Wolfvigor
+ 🐗  Loosia Steelhorn
 ----------------------------------
 
  A battle-hardened, angry red 
  minotaur with a bold pattern 
  shaved into her thick fur. Make 
- no mistake, despite her 
- awe-inspiring bulk she is a 
- first-class host who has never 
- been put to shame at a dinner 
- party.
+ no mistake, despite her fearsome 
+ bulk she is a first-class host 
+ who has never been put to shame 
+ at a dinner party.
 
  Type: Minotaur
  Class: Barbarian
@@ -165,22 +164,22 @@ Here are some sample beginner level monsters:
 
 ```
 ==================================
- 🌟  Chamuel
+ 🌟  Mariel
 ----------------------------------
 
  A stone gray weeping angel. On 
- meeting him one might form the 
+ meeting her one might form the 
  following three impressions: 
- that he was Welsh, that he was 
- intelligent, and that he was 
- nuttier than a treeful of 
+ that she was Scottish, that she 
+ was intelligent, and that she 
+ was nuttier than a treeful of 
  monkeys on nitrous oxide.
 
  Type: Weeping Angel
  Class: Cleric
  Level: beginner | XP: 1
 
- ac: 8 | hp: 33/33
+ ac: 7 | hp: 29/29
  dex: 6 | str: 4 | int: 7
  +1 dex bonus
  -1 str penalty
