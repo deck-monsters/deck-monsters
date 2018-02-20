@@ -28,11 +28,11 @@ class KalevalaCard extends HitCard {
 		return `${this.constructor.cardType} (${this.damageDice})`;
 	}
 
-	hitCheck (player, target) {
-		const result = super.hitCheck(player, target);
+	levelUp (amount) {
+		if (this.damageDice !== damageLevels[damageLevels.length - 1]) {
+			let index = damageLevels.indexOf(this.damageDice) + amount;
+			if (index >= damageLevels.length) index = damageLevels.length - 1;
 
-		if (result.strokeOfLuck && this.damageDice !== damageLevels[damageLevels.length - 1]) {
-			const index = damageLevels.indexOf(this.damageDice) + 1;
 			const damageDice = damageLevels[index];
 
 			if (damageDice) {
@@ -53,6 +53,14 @@ It will now do ${this.damageDice} damage.`
 				});
 			}
 		}
+	}
+
+	hitCheck (player, target) {
+		const result = super.hitCheck(player, target);
+
+		if (result.strokeOfLuck) {
+			this.levelUp(1);
+		}
 
 		return result;
 	}
@@ -70,7 +78,8 @@ KalevalaCard.neverForSale = true;
 
 KalevalaCard.defaults = {
 	...HitCard.defaults,
-	damageDice: damageLevels[0] // What begins weak may one day be strong
+	damageDice: damageLevels[0], // What begins weak may one day be strong
+	targetProp: 'int'
 };
 
 KalevalaCard.flavors = {

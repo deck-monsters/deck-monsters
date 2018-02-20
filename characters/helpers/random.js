@@ -57,7 +57,7 @@ module.exports = ({
 
 	let cleanBossDeck;
 	if (isBoss) {
-		const weakTypes = ['Flee', 'Harden', 'Heal', 'Hit', 'WhiskeyShot'];
+		const weakTypes = ['Flee', 'Harden', 'Heal', 'Hit', 'Whiskey Shot'];
 		cleanBossDeck = deck => deck.filter(card => !weakTypes.includes(card.cardType));
 	} else {
 		cleanBossDeck = deck => deck;
@@ -68,6 +68,13 @@ module.exports = ({
 		let deck = cleanBossDeck(getMinimumDeck());
 		deck = cleanBossDeck(fillDeck(deck, {}, character));
 		character.deck = fillDeck(deck, {}, character);
+
+		// Also level up some Kalevalas
+		character.deck.forEach((card) => {
+			if (typeof card.levelUp === 'function') {
+				card.levelUp(random(0, 6));
+			}
+		});
 	}
 
 	// Equip the monster

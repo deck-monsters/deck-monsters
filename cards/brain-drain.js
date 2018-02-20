@@ -20,9 +20,9 @@ class BrainDrainCard extends CurseCard {
 	}
 
 	get stats () {
-		const hit = new HitCard({ damageDice: this.damageDice });
+		const hit = new HitCard(this.options);
 		let stats = `Curse: ${this.cursedProp} ${this.curseAmount}
-can reduce ${this.cursedProp} down to ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]}, then takes ${max(this.damageDice)} from hp instead.`;
+Can reduce ${this.cursedProp} down to ${STATS.MAX_PROP_MODIFICATIONS[this.cursedProp]}, then takes ${max(this.damageDice)} from hp instead.`;
 
 		if (this.hasChanceToHit) {
 			stats = `${hit.stats}
@@ -42,7 +42,8 @@ BrainDrainCard.cost = REASONABLE.cost;
 BrainDrainCard.defaults = {
 	...CurseCard.defaults,
 	curseAmount: -20,
-	cursedProp: 'xp'
+	cursedProp: 'xp',
+	targetProp: 'int'
 };
 
 module.exports = BrainDrainCard;
