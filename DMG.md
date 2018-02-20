@@ -23,6 +23,7 @@ Calisthenics
 Camouflage Vest
 Cloak of Invisibility
 Coil
+Concussion
 Constrict
 Soften
 Delayed Hit
@@ -303,16 +304,16 @@ Wooden Spear
  And we shall bury our enemies in 
  their own confusion.
 
- Hit: 1d20 vs ac / Damage: 1d4
+ Hit: 1d20 vs int / Damage: 1d4
  Curse: xp -20
- can reduce xp down to 40, then 
+ Can reduce xp down to 40, then 
  takes 4 from hp instead.
 
  Level: 1
- Usable by: All
+ Usable by: Cleric, Jinn
  Hit chance: 71% | DPT: 2
  MSRP: 50
- Targets: ac
+ Targets: int
  Class: Psychic
 
 ==================================
@@ -442,6 +443,31 @@ Wooden Spear
 
 ```
 ==================================
+ 🥊  Concussion  ◆
+----------------------------------
+
+ A hard blow to the head should 
+ do the trick.
+
+ Hit: 1d20 vs ac / Damage: 1d4
+ Curse: int -1-2 depending on how 
+ hard the hit is, with a maximum 
+ total curse of -3 per level. 
+ Afterwards penalties come out of 
+ hp instead.
+
+ Level: 1
+ Usable by: Barbarian, Fighter
+ MSRP: 50
+ Targets: ac
+ Class: Melee
+
+==================================
+```
+
+
+```
+==================================
  ➰➰  Constrict  ★
 ----------------------------------
 
@@ -496,10 +522,10 @@ Wooden Spear
  problem with that? No mercy.
 
  Hit: 1d20 vs ac / Damage: 1d4
- Curse: ac -1
- maximum total curse of -3 per 
- level, afterwards penalties come 
- out of hp instead.
+ Curse: ac -1, with a maximum 
+ total curse of -3 per level. 
+ Afterwards penalties come out of 
+ hp instead.
 
  Level: 1
  Usable by: All
@@ -1055,14 +1081,14 @@ Wooden Spear
  its pikebone pegs and it may 
  lead you on to victory.
 
- Hit: 1d20 vs ac / Damage: 1d4
+ Hit: 1d20 vs int / Damage: 1d4
 
  Level: 1
  Usable by: All
  Hit chance: 71% | DPT: 7
  MSRP: 80
- Targets: ac
- Class: Psychic
+ Targets: int
+ Class: , Psychic
 
 ==================================
 ```
@@ -1146,10 +1172,10 @@ Wooden Spear
  1919.
 
  Hit: 1d20 vs ac / Damage: 1d4
- Curse: dex -1
- maximum total curse of -3 per 
- level, afterwards penalties come 
- out of hp instead.
+ Curse: dex -1, with a maximum 
+ total curse of -3 per level. 
+ Afterwards penalties come out of 
+ hp instead.
 
  Level: 1
  Usable by: All
