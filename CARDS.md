@@ -24,6 +24,7 @@ Calisthenics
 Camouflage Vest
 Cloak of Invisibility
 Coil
+Concussion
 Constrict
 Soften
 Delayed Hit
@@ -242,6 +243,18 @@ Wooden Spear
 
  Coil around your enemies with 
  your body, and squeeze.
+
+==================================
+```
+
+
+```
+==================================
+ 🥊  Concussion  ◆
+----------------------------------
+
+ A hard blow to the head should 
+ do the trick.
 
 ==================================
 ```
