@@ -176,7 +176,7 @@ class Ring extends BaseClass {
 		return this.contestants.find(contestant => (contestant.character === character && contestant.monster === monster));
 	}
 
-	look (channel, showCharacters = true) {
+	look (channel, showCharacters = true, summary = false) {
 		const { length } = this.contestants;
 
 		if (length < 1) {
@@ -187,10 +187,31 @@ class Ring extends BaseClass {
 		}
 
 		const { channelManager, channelName } = channel;
+
+		if (summary) {
+			return Promise.resolve()
+				.then(() => {
+					const monsters = this.contestants.map(({ monster }) => (
+						`${monster.identity} - ${monster.creatureType} (${monster.level})`
+					));
+
+					return channelManager.queueMessage({
+						announce:
+`###########################################
+Ring summary:
+${monsters.join('\n')}
+###########################################`,
+						channel,
+						channelName
+					});
+				})
+				.then(() => channelManager.sendMessages());
+		}
+
 		return Promise.resolve()
 			.then(() => channelManager.queueMessage({
 				announce:
-`###########################################
+`#####################NOOOOOOOOO######################
 There ${length === 1 ? 'is one contestant' : `are ${length} contestants`} in the ring.
 ###########################################`,
 				channel,
@@ -214,20 +235,20 @@ Sent the following monster into the ring:
 					channelName
 				});
 			}))
-			.then(() => {
-				const summary = this.contestants.map(({ monster }) => (
-					`${monster.identity} - ${monster.creatureType} (${monster.level})`
-				));
+// 			.then(() => {
+// 				const summary = this.contestants.map(({ monster }) => (
+// 					`${monster.identity} - ${monster.creatureType} (${monster.level})`
+// 				));
 
-				return channelManager.queueMessage({
-					announce:
-`Ring summary:
-${summary.join('\n')}
-###########################################`,
-					channel,
-					channelName
-				});
-			})
+// 				return channelManager.queueMessage({
+// 					announce:
+// `Ring summary:
+// ${summary.join('\n')}
+// ###########################################`,
+// 					channel,
+// 					channelName
+// 				});
+// 			})
 			.then(() => channelManager.sendMessages());
 	}
 

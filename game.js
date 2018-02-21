@@ -347,8 +347,8 @@ class Game extends BaseClass {
 		return this.exploration;
 	}
 
-	lookAtRing (channel, ringName = 'main', showCharacters) {
-		return this.getRing(ringName).look(channel, showCharacters);
+	lookAtRing (channel, ringName = 'main', showCharacters, summary) {
+		return this.getRing(ringName).look(channel, showCharacters, summary);
 	}
 
 	lookAtRingCards (channel, ringName = 'main') {
