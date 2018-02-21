@@ -215,10 +215,9 @@ Sent the following monster into the ring:
 				});
 			}))
 			.then(() => {
-				const summary = this.contestants.map((contestant) => {
-					const { monster } = contestant;
-					return `${monster.identity} - ${monster.creatureType} (${monster.level})`;
-				});
+				const summary = this.contestants.map(({ monster }) => (
+					`${monster.identity} - ${monster.creatureType} (${monster.level})`
+				));
 
 				return channelManager.queueMessage({
 					announce:
