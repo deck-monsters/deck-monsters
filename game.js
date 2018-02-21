@@ -8,18 +8,19 @@ const { all: monsterTypes } = require('./monsters');
 const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./constants/coins');
 const { create: createCharacter } = require('./characters');
 const { globalSemaphore } = require('./helpers/semaphore');
+const { listen, loadHandlers } = require('./commands');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
 const announcements = require('./announcements');
 const aws = require('./helpers/aws');
 const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
-const getArray = require('./helpers/get-array');
 const dungeonMasterGuide = require('./build/dungeon-master-guide');
+const Exploration = require('./exploration');
+const getArray = require('./helpers/get-array');
 const monsterManual = require('./build/monster-manual');
 const playerHandbook = require('./build/player-handbook');
 const Ring = require('./ring');
-const Exploration = require('./exploration');
 
 const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
 
@@ -36,6 +37,7 @@ class Game extends BaseClass {
 		this.exploration = new Exploration(this.channelManager, {}, this.log);
 
 		this.initializeEvents();
+		loadHandlers();
 
 		this.on('stateChange', () => this.saveState());
 
@@ -87,6 +89,24 @@ class Game extends BaseClass {
 		this.on('creature.loss', this.handleLoser);
 		this.on('creature.permaDeath', this.handlePermaDeath);
 		this.on('creature.fled', this.handleFled);
+	}
+
+	handleCommand ({
+		channel = this.publicChannel,
+		channelName = PUBLIC_CHANNEL,
+		command,
+		game = this,
+		id,
+		name
+	}) {
+		return listen({
+			channel,
+			channelName,
+			command,
+			game,
+			id,
+			name
+		});
 	}
 
 	handleWinner (className, monster, { contestant }) {
@@ -419,6 +439,7 @@ class Game extends BaseClass {
 			delay: 'short'
 		}));
 	}
+
 	lookAtItem (channel, itemName) {
 		if (itemName) {
 			const items = this.constructor.getItemTypes();
@@ -477,13 +498,13 @@ class Game extends BaseClass {
 
 			// Is it a monster?
 			const monsters = this.getAllMonstersLookup();
-			const monster = monsters[thing.toLowerCase()];
+			const monster = monsters[thing];
 
 			if (monster) return monster.look(channel);
 
 			// Is it a card?
 			const cards = this.constructor.getCardTypes();
-			const Card = cards[thing.toLowerCase()];
+			const Card = cards[thing];
 
 			if (Card) {
 				const card = new Card();
@@ -492,7 +513,7 @@ class Game extends BaseClass {
 
 			// Is it an item?
 			const items = this.constructor.getItemTypes();
-			const Item = items[thing.toLowerCase()];
+			const Item = items[thing];
 
 			if (Item) {
 				const item = new Item();

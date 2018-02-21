@@ -4,8 +4,8 @@ const LOOK_AT_REGEX = /look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? 
 function lookAtAction ({ character, results }) {
 	return Promise.resolve()
 		.then(() => {
-			const type = (results[1] || '').trim();
-			let thing = (results[2] || '').trim();
+			const type = (results[1] || '').trim().toLowerCase();
+			let thing = (results[2] || '').trim().toLowerCase();
 
 			switch (type) {
 				case 'deck':

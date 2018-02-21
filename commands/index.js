@@ -31,8 +31,14 @@ function listen (options) {
 	const action = handlers.reduce((result, handler) => result || handler(command), null);
 
 	if (action) {
-		return actionOptions => game
-			.getCharacter(channel, channelName, { id, name })
+		return actionOptions => Promise.resolve(actionOptions || {})
+			.then(({ isAdmin }) => {
+				if (aliasCheck && !isAdmin) {
+					return Promise.reject(new Error('Aliases are a debugging feature and are only usable by admins.'));
+				}
+
+				return game.getCharacter(channel, channelName, { id, name });
+			})
 			.then(character => action({ character, game, ...actionOptions }));
 	}
 
