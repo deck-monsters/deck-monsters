@@ -3,7 +3,7 @@
 const EDIT_REGEX = /edit character (.+?)$/i;
 function editCharacterAction ({ character, isAdmin, results }) {
 	if (!isAdmin) {
-		return Promise.reject(new Error('You do not have sufficient privileges to edit characters.'));
+		return Promise.reject(new Error('You do not have sufficient privileges to edit characters'));
 	}
 
 	return Promise.resolve()

@@ -92,20 +92,12 @@ class Game extends BaseClass {
 	}
 
 	handleCommand ({
-		channel = this.publicChannel,
-		channelName = PUBLIC_CHANNEL,
 		command,
-		game = this,
-		id,
-		name
+		game = this
 	}) {
 		return listen({
-			channel,
-			channelName,
 			command,
-			game,
-			id,
-			name
+			game
 		});
 	}
 

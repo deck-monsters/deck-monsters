@@ -7,23 +7,13 @@ const ALIAS_REGEX = /(.+) as (.+?)\s*$/i;
 const handlers = [];
 
 function listen (options) {
-	const {
-		channel,
-		channelName,
-		game
-	} = options;
+	const { game } = options;
 
-	let {
-		command = '',
-		id,
-		name
-	} = options;
+	let { command = '' } = options;
 
 	const aliasCheck = command.match(ALIAS_REGEX);
 	if (aliasCheck) {
 		command = aliasCheck[1];
-		name = aliasCheck[2];
-		id = `${id}_${name}`;
 	}
 
 	command = command.trim().toLowerCase();
@@ -31,10 +21,26 @@ function listen (options) {
 	const action = handlers.reduce((result, handler) => result || handler(command), null);
 
 	if (action) {
-		return actionOptions => Promise.resolve(actionOptions || {})
-			.then(({ isAdmin }) => {
-				if (aliasCheck && !isAdmin) {
-					return Promise.reject(new Error('Aliases are a debugging feature and are only usable by admins.'));
+		return actionOptions => Promise.resolve()
+			.then(() => {
+				const {
+					channel,
+					channelName,
+					isAdmin
+				} = actionOptions;
+
+				let {
+					id,
+					name
+				} = actionOptions;
+
+				if (aliasCheck) {
+					if (!isAdmin) {
+						return Promise.reject(new Error('Aliases are a debugging feature and are only usable by admins'));
+					}
+
+					name = aliasCheck[2];
+					id = `${id}_${name}`;
 				}
 
 				return game.getCharacter(channel, channelName, { id, name });

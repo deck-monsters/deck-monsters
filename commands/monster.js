@@ -11,7 +11,11 @@ const cleanArgs = (args = {}) => {
 };
 
 const CALL_MONSTER_OUT_OF_THE_RING_REGEX = /(?:remove|call|fetch|bring|summon) (?:a )?(.+?)? (?:from|out of) (?:the )?(?:ring|battle)$/i;
-function callMonsterOutOfTheRingAction ({ character, results }) {
+function callMonsterOutOfTheRingAction ({ character, isDM, results }) {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
 	return Promise.resolve()
 		.then(() => {
 			const args = {
@@ -23,7 +27,11 @@ function callMonsterOutOfTheRingAction ({ character, results }) {
 }
 
 const DISMISS_REGEX = /dismiss (?:a )?(.+?)$/i;
-function dismissMonsterAction ({ character, results }) {
+function dismissMonsterAction ({ character, isDM, results }) {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
 	return Promise.resolve()
 		.then(() => {
 			const args = {
@@ -37,7 +45,7 @@ function dismissMonsterAction ({ character, results }) {
 const EDIT_REGEX = /edit monster (.+?)$/i;
 function editMonsterAction ({ character, isAdmin, results }) {
 	if (!isAdmin) {
-		return Promise.reject(new Error('You do not have sufficient privileges to edit monsters.'));
+		return Promise.reject(new Error('You do not have sufficient privileges to edit monsters'));
 	}
 
 	return Promise.resolve()
@@ -51,7 +59,11 @@ function editMonsterAction ({ character, isAdmin, results }) {
 }
 
 const EQUIP_REGEX = /equip (?:a )?(.+?)(?: with (.+?))?$/i;
-function equipMonsterAction ({ character, results }) {
+function equipMonsterAction ({ character, isDM, results }) {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
 	return Promise.resolve()
 		.then(() => {
 			const args = {
@@ -64,7 +76,11 @@ function equipMonsterAction ({ character, results }) {
 }
 
 const GIVE_ITEMS_TO_MONSTER_REGEX = /give (?:(?:an )?items?|(.+?)?) to (?:a )?(.+?)$/i;
-function giveItemsToMonsterAction ({ character, results }) {
+function giveItemsToMonsterAction ({ character, isDM, results }) {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
 	return Promise.resolve()
 		.then(() => {
 			const args = {
@@ -77,7 +93,11 @@ function giveItemsToMonsterAction ({ character, results }) {
 }
 
 const REVIVE_REGEX = /revive (?:a )?(.+?)$/i;
-function reviveMonsterAction ({ character, results }) {
+function reviveMonsterAction ({ character, isDM, results }) {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
 	return Promise.resolve()
 		.then(() => {
 			const args = {
@@ -89,7 +109,11 @@ function reviveMonsterAction ({ character, results }) {
 }
 
 const SEND_MONSTER_TO_THE_RING_REGEX = /send (?:a )?(.+?)? (?:to|into) (?:the )?(?:ring|battle)$/i;
-function sendMonsterToTheRingAction ({ character, results }) {
+function sendMonsterToTheRingAction ({ character, isDM, results }) {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
 	return Promise.resolve()
 		.then(() => {
 			const args = {
@@ -101,14 +125,18 @@ function sendMonsterToTheRingAction ({ character, results }) {
 }
 
 const SPAWN_REGEX = /spawn (?:a )?monster$/i;
-function spawnAction ({ character }) {
+function spawnAction ({ character, isDM }) {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
 	return character.spawnMonster();
 }
 
 const SPAWN_BOSS_REGEX = /spawn (?:a )?boss$/i;
 function spawnBossAction ({ game, isAdmin }) {
 	if (!isAdmin) {
-		return Promise.reject(new Error('Only admins can spawn bosses.'));
+		return Promise.reject(new Error('Only admins can spawn bosses'));
 	}
 
 	return Promise.resolve(game.getRing())
@@ -116,7 +144,11 @@ function spawnBossAction ({ game, isAdmin }) {
 }
 
 const TAKE_ITEMS_FROM_MONSTER_REGEX = /take (?:(?:an )?items?|(.+?)?) from (?:a )?(.+?)$/i;
-function takeItemsFromMonsterAction ({ character, results }) {
+function takeItemsFromMonsterAction ({ character, isDM, results }) {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
 	return Promise.resolve()
 		.then(() => {
 			const args = {
