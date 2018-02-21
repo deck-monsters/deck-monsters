@@ -192,13 +192,12 @@ class Ring extends BaseClass {
 			return Promise.resolve()
 				.then(() => {
 					const monsters = this.contestants.map(({ monster }) => (
-						`${monster.identity} - ${monster.creatureType} (${monster.level})`
+						`${monster.identity} - ${monster.creatureType} (${monster.displayLevel.replace('level ', '')})`
 					));
 
 					return channelManager.queueMessage({
 						announce:
 `###########################################
-Ring summary:
 ${monsters.join('\n')}
 ###########################################`,
 						channel,
@@ -211,7 +210,7 @@ ${monsters.join('\n')}
 		return Promise.resolve()
 			.then(() => channelManager.queueMessage({
 				announce:
-`#####################NOOOOOOOOO######################
+`###########################################
 There ${length === 1 ? 'is one contestant' : `are ${length} contestants`} in the ring.
 ###########################################`,
 				channel,
@@ -235,20 +234,6 @@ Sent the following monster into the ring:
 					channelName
 				});
 			}))
-// 			.then(() => {
-// 				const summary = this.contestants.map(({ monster }) => (
-// 					`${monster.identity} - ${monster.creatureType} (${monster.level})`
-// 				));
-
-// 				return channelManager.queueMessage({
-// 					announce:
-// `Ring summary:
-// ${summary.join('\n')}
-// ###########################################`,
-// 					channel,
-// 					channelName
-// 				});
-// 			})
 			.then(() => channelManager.sendMessages());
 	}
 
