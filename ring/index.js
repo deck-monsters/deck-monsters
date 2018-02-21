@@ -214,6 +214,21 @@ Sent the following monster into the ring:
 					channelName
 				});
 			}))
+			.then(() => {
+				const summary = this.contestants.map((contestant) => {
+					const { monster } = contestant;
+					return `${monster.identity} - ${monster.creatureType} (${monster.level})`;
+				});
+
+				return channelManager.queueMessage({
+					announce:
+`Ring summary:
+${summary.join('\n')}
+###########################################`,
+					channel,
+					channelName
+				});
+			})
 			.then(() => channelManager.sendMessages());
 	}
 
