@@ -176,7 +176,7 @@ class Ring extends BaseClass {
 		return this.contestants.find(contestant => (contestant.character === character && contestant.monster === monster));
 	}
 
-	look (channel, showCharacters = true) {
+	look (channel, showCharacters = true, summary = false) {
 		const { length } = this.contestants;
 
 		if (length < 1) {
@@ -187,6 +187,26 @@ class Ring extends BaseClass {
 		}
 
 		const { channelManager, channelName } = channel;
+
+		if (summary) {
+			return Promise.resolve()
+				.then(() => {
+					const monsters = this.contestants.map(({ monster }) => (
+						`${monster.identity} - ${monster.creatureType} (${monster.displayLevel.replace('level ', '')})`
+					));
+
+					return channelManager.queueMessage({
+						announce:
+`###########################################
+${monsters.join('\n')}
+###########################################`,
+						channel,
+						channelName
+					});
+				})
+				.then(() => channelManager.sendMessages());
+		}
+
 		return Promise.resolve()
 			.then(() => channelManager.queueMessage({
 				announce:

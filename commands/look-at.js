@@ -11,8 +11,10 @@ function lookAtAction ({ channel, character, game, results }) {
 				case 'deck':
 				case 'cards':
 					return character.lookAtCards(channel, thing);
-				case 'ring':
-					return game.lookAtRing(channel, thing);
+				case 'ring': {
+					const summary = thing === 'summary';
+					return game.lookAtRing(channel, undefined, true, summary);
+				}
 				case 'monsters in': {
 					thing = thing.replace(/the /i, '');
 					const ringName = thing === 'ring' ? undefined : thing;
