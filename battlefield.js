@@ -57,11 +57,6 @@ const charOptions = { user: charUser, channel: charAnnouncer, channelName: 'char
 let char;
 let charCards;
 
-// const BOSS_ID = 666;
-// const bossAnnouncer = what => announcer('boss', what);
-// let boss;
-// let bossCards;
-
 return Promise
 	.resolve()
 	.then(() => slackdem.getCharacter({
@@ -83,7 +78,6 @@ return Promise
 	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
 		...vladOptions, type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 300
 	}))
-	// .then(() => vlad.equipMonster({ monsterName: 'jerry', cardSelection: 'brain drain, pick pocket, hit' }));
 	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
 		...vladOptions, type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 300
 	}))
