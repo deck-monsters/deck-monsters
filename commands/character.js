@@ -1,30 +1,51 @@
 /* eslint-disable max-len, security/detect-unsafe-regex */
+const getArray = require('../helpers/get-array');
+
+const cleanArgs = (args = {}) => {
+	if (args.characterName) {
+		args.characterName = args.characterName.trim();
+	}
+
+	if (args.itemSelection) {
+		args.itemSelection = getArray(args.itemSelection, true);
+	}
+
+	return args;
+};
 
 const EDIT_REGEX = /edit character (.+?)$/i;
-function editCharacterAction ({ character, isAdmin, results }) {
+function editCharacterAction ({ channel, game, isAdmin, results }) {
 	if (!isAdmin) {
 		return Promise.reject(new Error('You do not have sufficient privileges to edit characters'));
 	}
 
 	return Promise.resolve()
 		.then(() => {
-			const args = {
-				characterName: results[1].trim()
-			};
+			const {
+				characterName
+			} = cleanArgs({
+				characterName: results[1]
+			});
 
-			return character.editCharacter(args);
+			return game.editCharacter(channel, characterName)
+				.catch(err => game.log(err));
 		});
 }
 
 const USE_ITEMS_REGEX = /use (?:(?:an )?items?|(.+?)?)$/i;
-function useItemsAction ({ character, results }) {
+function useItemsAction ({ channel, channelName, character, game, results }) {
 	return Promise.resolve()
 		.then(() => {
-			const args = {
+			const {
+				itemSelection
+			} = cleanArgs({
 				itemSelection: results[1]
-			};
+			});
 
-			return character.useItems(args);
+			return character.useItems({
+				channel, channelName, isMonsterItem: false, itemSelection
+			})
+				.catch(err => game.log(err));
 		});
 }
 

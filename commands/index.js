@@ -24,15 +24,16 @@ function listen (options) {
 		return actionOptions => Promise.resolve()
 			.then(() => {
 				const {
-					channel,
+					channel: privateChannel,
 					channelName,
-					isAdmin
+					isAdmin,
+					user
 				} = actionOptions;
 
 				let {
 					id,
 					name
-				} = actionOptions;
+				} = user;
 
 				if (aliasCheck) {
 					if (!isAdmin) {
@@ -43,9 +44,14 @@ function listen (options) {
 					id = `${id}_${name}`;
 				}
 
-				return game.getCharacter(channel, channelName, { id, name });
-			})
-			.then(character => action({ character, game, ...actionOptions }));
+				const { channelManager } = game;
+				const channel = (...args) => privateChannel(...args);
+				channel.channelManager = channelManager;
+				channel.channelName = channelName;
+
+				return game.getCharacter({ ...actionOptions, channel, id, name })
+					.then(character => action({ ...actionOptions, channel, character, game }));
+			});
 	}
 
 	return null;
