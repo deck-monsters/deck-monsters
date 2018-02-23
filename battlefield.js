@@ -49,71 +49,60 @@ const slackdem = new Game({ mainRing: ringAnnouncer, theWorld: worldAnnouncer },
 
 const VLAD_ID = 1234;
 const vladAnnouncer = what => announcer('vlad', what);
+const vladUser = { id: VLAD_ID, name: 'vlad' };
+const vladOptions = { user: vladUser, channel: vladAnnouncer, channelName: 'vlad', isDM: true };
 let vlad;
 let vladCards;
 
 const CHAR_ID = 861;
 const charAnnouncer = what => announcer('charlemagne', what);
+const charUser = { id: CHAR_ID, name: 'charlemagne' };
+const charOptions = { user: charUser, channel: charAnnouncer, channelName: 'charlemagne', isDM: true };
 let char;
 let charCards;
 
-// const BOSS_ID = 666;
-// const bossAnnouncer = what => announcer('boss', what);
-// let boss;
-// let bossCards;
-
 return Promise
 	.resolve()
-	.then(() => slackdem.getCharacter(vladAnnouncer, VLAD_ID, {
-		id: VLAD_ID, name: 'vlad', type: 0, gender: 1, icon: 0, xp: 100
+	.then(() => slackdem.getCharacter({
+		...vladOptions, ...vladUser, type: 0, gender: 1, icon: 0, xp: 100
 	}))
 	.then((character) => {
 		vlad = character;
-		vlad.character.coins = 1000;
-		vladCards = [...shuffle(vlad.character.deck).slice(0, 9)];
+		vlad.coins = 1000;
+		vladCards = [...shuffle(vlad.deck).slice(0, 9)];
 	})
-	.then(() => slackdem.getCharacter(charAnnouncer, CHAR_ID, {
-		id: CHAR_ID, name: 'charlemagne', type: 0, gender: 1, icon: 0, xp: 200
+	.then(() => slackdem.getCharacter({
+		...charOptions, ...charUser, type: 0, gender: 1, icon: 0, xp: 200
 	}))
 	.then((character) => {
 		char = character;
-		char.character.coins = 1000;
-		charCards = [...shuffle(char.character.deck).slice(0, 9)];
-		// const destroy = new DestroyCard();
-		// charCards = [destroy, destroy, destroy, destroy];
+		char.coins = 1000;
+		charCards = [...shuffle(char.deck).slice(0, 9)];
 	})
-	// .then(() => vlad.spawnMonster())
-	.then(() => vlad.spawnMonster({
-		type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 300
+	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
+		...vladOptions, type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 300
 	}))
-	// .then(() => vlad.equipMonster({ monsterName: 'jerry', cardSelection: 'brain drain, pick pocket, hit' }));
-	.then(() => vlad.spawnMonster({
-		type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 300
+	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
+		...vladOptions, type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 300
 	}))
-	.then(() => char.spawnMonster({
-		type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards, xp: 300
+	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
+		...charOptions, type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards, xp: 300
 	}))
-	.then(() => char.spawnMonster({
-		type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 300
+	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
+		...charOptions, type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 300
 	}))
-	.then(() => char.spawnMonster({
-		type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
+	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
+		...charOptions, type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
 	}))
-	// .then(() => vlad.character.monsters[0].die())
-	// .then(() => vlad.buyItems())
-	// .then(() => vlad.giveItemsToMonster())
-	// .then(() => vlad.useItems())
-	// .then(() => vlad.useItemsOnMonster())
-	.then(() => vlad.lookAtCard({ cardName: 'brain drain' }))
-	.then(() => vlad.lookAtItem({ itemName: 'the way of the cobra kai' }))
-	.then(() => vlad.lookAtItems())
-	.then(() => vlad.lookAtCards())
-	.then(() => vlad.lookAt('player handbook'))
-	.then(() => vlad.lookAt('dungeon master guide'))
-	.then(() => vlad.lookAt('monster manual'))
-	.then(() => vlad.lookAtMonster({ monsterName: 'jerry' }))
-	// .then(() => vlad.useItemsOnMonster())
-	.then(() => vlad.sendMonsterToTheRing())
-	.then(() => char.sendMonsterToTheRing())
+	.then(() => slackdem.handleCommand({ command: 'look at card brain drain' })({
+		...vladOptions
+	}))
+	.then(() => slackdem.handleCommand({ command: 'send a monster to the ring' })({
+		...vladOptions
+	}))
+	.then(() => slackdem.handleCommand({ command: 'send a monster to the ring' })({
+		...charOptions
+	}))
 	.then(() => slackdem.getRing().spawnBoss())
-	.then(() => slackdem.getRing().spawnBoss());
+	.then(() => slackdem.getRing().spawnBoss())
+	.catch(err => console.error(err)); // eslint-disable-line no-console

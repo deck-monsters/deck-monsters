@@ -15,7 +15,7 @@ const getUniqueCards = require('../cards/helpers/unique-cards');
 const pause = require('../helpers/pause');
 
 const MAX_BOSSES = 5;
-const MAX_MONSTERS = 8;
+const MAX_MONSTERS = 12;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
 
@@ -176,7 +176,7 @@ class Ring extends BaseClass {
 		return this.contestants.find(contestant => (contestant.character === character && contestant.monster === monster));
 	}
 
-	look (channel, showCharacters = true) {
+	look (channel, showCharacters = true, summary = false) {
 		const { length } = this.contestants;
 
 		if (length < 1) {
@@ -187,6 +187,26 @@ class Ring extends BaseClass {
 		}
 
 		const { channelManager, channelName } = channel;
+
+		if (summary) {
+			return Promise.resolve()
+				.then(() => {
+					const monsters = this.contestants.map(({ monster }) => (
+						`${monster.identity} - ${monster.creatureType} (${monster.displayLevel.replace('level ', '')})`
+					));
+
+					return channelManager.queueMessage({
+						announce:
+`###########################################
+${monsters.join('\n')}
+###########################################`,
+						channel,
+						channelName
+					});
+				})
+				.then(() => channelManager.sendMessages());
+		}
+
 		return Promise.resolve()
 			.then(() => channelManager.queueMessage({
 				announce:
@@ -531,7 +551,18 @@ The following cards are in play:
 	fightConcludes ({ lastContestant, rounds }) {
 		const { contestants } = this;
 
-		const deadContestants = contestants.filter(contestant => !!contestant.monster.dead);
+		const deadContestants = [];
+		contestants.forEach((contestant) => {
+			if (contestant.monster.dead) {
+				deadContestants.push(contestant);
+			}
+
+			contestant.killed = contestant.monster.killed;
+			contestant.killedBy = contestant.monster.killedBy;
+			contestant.fled = contestant.monster.fled;
+			contestant.rounds = contestant.monster.round;
+			contestant.encounter = contestant.monster.endEncounter();
+		});
 		const deaths = deadContestants.length;
 
 		this.channelManager.queueMessage({
@@ -549,11 +580,6 @@ The following cards are in play:
 
 		contestants.forEach((contestant) => {
 			const { channel, channelName } = contestant;
-			contestant.killed = contestant.monster.killed;
-			contestant.killedBy = contestant.monster.killedBy;
-			contestant.fled = contestant.monster.fled;
-			contestant.rounds = contestant.monster.round;
-			contestant.encounter = contestant.monster.endEncounter();
 
 			this.awardMonsterXP(contestant, contestants);
 

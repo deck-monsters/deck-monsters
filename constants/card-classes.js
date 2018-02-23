@@ -4,6 +4,7 @@ module.exports = {
 	HEAL: 'Heal',
 	HIDE: 'Hide',
 	MELEE: 'Melee',
+	ACOUSTIC: 'Acoustic',
 	POISON: 'Poison',
 	PSYCHIC: 'Psychic'
 };

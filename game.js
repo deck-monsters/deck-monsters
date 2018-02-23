@@ -8,18 +8,18 @@ const { all: monsterTypes } = require('./monsters');
 const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./constants/coins');
 const { create: createCharacter } = require('./characters');
 const { globalSemaphore } = require('./helpers/semaphore');
+const { listen, loadHandlers } = require('./commands');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
 const announcements = require('./announcements');
 const aws = require('./helpers/aws');
 const BaseClass = require('./shared/baseClass');
 const cardProbabilities = require('./card-probabilities.json');
 const ChannelManager = require('./channel');
-const getArray = require('./helpers/get-array');
 const dungeonMasterGuide = require('./build/dungeon-master-guide');
+const Exploration = require('./exploration');
 const monsterManual = require('./build/monster-manual');
 const playerHandbook = require('./build/player-handbook');
 const Ring = require('./ring');
-const Exploration = require('./exploration');
 
 // channel names
 const { MAIN_RING } = require('./helpers/channel-names');
@@ -38,6 +38,7 @@ class Game extends BaseClass {
 		this.exploration = new Exploration(this.channelManager, {}, this.log);
 
 		this.initializeEvents();
+		loadHandlers();
 
 		this.on('stateChange', () => this.saveState());
 
@@ -89,6 +90,16 @@ class Game extends BaseClass {
 		this.on('creature.loss', this.handleLoser);
 		this.on('creature.permaDeath', this.handlePermaDeath);
 		this.on('creature.fled', this.handleFled);
+	}
+
+	handleCommand ({
+		command,
+		game = this
+	}) {
+		return listen({
+			command,
+			game
+		});
 	}
 
 	handleWinner (className, monster, { contestant }) {
@@ -171,14 +182,15 @@ class Game extends BaseClass {
 		this.ring.clearRing();
 	}
 
-	getCharacter (privateChannel, channelName, {
-		id, name, type, gender, icon
+	getCharacter ({
+		channel,
+		gender,
+		icon,
+		id,
+		name,
+		type
 	}) {
 		const game = this;
-		const { channelManager, log, ring, exploration } = game;
-		const channel = (...args) => privateChannel(...args);
-		channel.channelManager = channelManager;
-		channel.channelName = channelName;
 
 		return Promise
 			.resolve(this.characters[id])
@@ -197,121 +209,7 @@ class Game extends BaseClass {
 				}
 
 				return existingCharacter;
-			})
-			.then(character => ({
-				character,
-				spawnMonster (options) {
-					return character.spawnMonster(channel, Object.assign({}, options, { game }))
-						.catch(err => log(err));
-				},
-				equipMonster ({ monsterName, cardSelection } = {}) {
-					return character.equipMonster({ channel, cardSelection: getArray(cardSelection), monsterName })
-						.catch(err => log(err));
-				},
-				giveItemsToMonster ({ monsterName, itemSelection } = {}) {
-					return character.giveItemsToMonster({ channel, itemSelection: getArray(itemSelection, true), monsterName })
-						.catch(err => log(err));
-				},
-				takeItemsFromMonster ({ monsterName, itemSelection } = {}) {
-					return character.takeItemsFromMonster({ channel, itemSelection: getArray(itemSelection, true), monsterName })
-						.catch(err => log(err));
-				},
-				useItemsOnMonster ({ monsterName, itemSelection } = {}) {
-					return character.useItems({
-						channel, channelName, isMonsterItem: true, itemSelection: getArray(itemSelection, true), monsterName
-					})
-						.catch(err => log(err));
-				},
-				useItems ({ itemSelection } = {}) {
-					return character.useItems({
-						channel, channelName, isMonsterItem: false, itemSelection: getArray(itemSelection, true)
-					})
-						.catch(err => log(err));
-				},
-				callMonsterOutOfTheRing ({ monsterName } = '') {
-					return character.callMonsterOutOfTheRing({
-						monsterName, ring, channel, channelName
-					})
-						.catch(err => log(err));
-				},
-				sendMonsterExploring ({ monsterName } = {}) {
-					return character.sendMonsterExploring({
-						monsterName, exploration, channel, channelName
-					})
-						.catch(err => log(err));
-				},
-				sendMonsterToTheRing ({ monsterName } = {}) {
-					return character.sendMonsterToTheRing({
-						monsterName, ring, channel, channelName
-					})
-						.catch(err => log(err));
-				},
-				dismissMonster ({ monsterName } = {}) {
-					return character.dismissMonster({ monsterName, channel })
-						.catch(err => log(err));
-				},
-				reviveMonster ({ monsterName } = {}) {
-					return character.reviveMonster({ monsterName, channel })
-						.catch(err => log(err));
-				},
-				lookAtCard ({ cardName } = {}) {
-					return game.lookAtCard(channel, cardName)
-						.catch(err => log(err));
-				},
-				lookAtCards ({ deckName } = {}) {
-					return character.lookAtCards(channel, deckName)
-						.catch(err => log(err));
-				},
-				lookAtCharacter ({ characterName } = {}) {
-					return game.lookAtCharacter(channel, characterName, character)
-						.catch(err => log(err));
-				},
-				lookAtItem ({ itemName } = {}) {
-					return game.lookAtItem(channel, itemName)
-						.catch(err => log(err));
-				},
-				lookAtItems () {
-					return character.lookAtItems(channel)
-						.catch(err => log(err));
-				},
-				lookAtMonster ({ monsterName } = {}) {
-					return game.lookAtMonster(channel, monsterName, character)
-						.catch(err => log(err));
-				},
-				lookAtMonsters ({ inDetail } = {}) {
-					return character.lookAtMonsters(channel, inDetail)
-						.catch(err => log(err));
-				},
-				lookAtRing ({ ringName, showCharacters } = {}) {
-					return game.lookAtRing(channel, ringName, showCharacters)
-						.catch(err => log(err));
-				},
-				lookAtRingCards ({ ringName } = {}) {
-					return game.lookAtRingCards(channel, ringName)
-						.catch(err => log(err));
-				},
-				lookAt (thing) {
-					return game.lookAt(channel, thing)
-						.catch(err => log(err));
-				},
-				editCharacter ({ characterName } = {}) {
-					return game.editCharacter(channel, characterName)
-						.catch(err => log(err));
-				},
-				editMonster ({ monsterName } = {}) {
-					return game.editMonster(channel, monsterName)
-						.catch(err => log(err));
-				},
-				sellItems () {
-					return character.sellItems(channel)
-						.catch(err => log(err));
-				},
-				buyItems () {
-					return character.buyItems(channel)
-						.catch(err => log(err));
-				}
-			}))
-			.catch(err => log(err));
+			});
 	}
 
 	static getCardTypes () {
@@ -421,6 +319,7 @@ class Game extends BaseClass {
 			delay: 'short'
 		}));
 	}
+
 	lookAtItem (channel, itemName) {
 		if (itemName) {
 			const items = this.constructor.getItemTypes();
@@ -450,8 +349,8 @@ class Game extends BaseClass {
 		return this.exploration;
 	}
 
-	lookAtRing (channel, ringName = 'main', showCharacters) {
-		return this.getRing(ringName).look(channel, showCharacters);
+	lookAtRing (channel, ringName = 'main', showCharacters, summary) {
+		return this.getRing(ringName).look(channel, showCharacters, summary);
 	}
 
 	lookAtRingCards (channel, ringName = 'main') {
@@ -479,13 +378,13 @@ class Game extends BaseClass {
 
 			// Is it a monster?
 			const monsters = this.getAllMonstersLookup();
-			const monster = monsters[thing.toLowerCase()];
+			const monster = monsters[thing];
 
 			if (monster) return monster.look(channel);
 
 			// Is it a card?
 			const cards = this.constructor.getCardTypes();
-			const Card = cards[thing.toLowerCase()];
+			const Card = cards[thing];
 
 			if (Card) {
 				const card = new Card();
@@ -494,7 +393,7 @@ class Game extends BaseClass {
 
 			// Is it an item?
 			const items = this.constructor.getItemTypes();
-			const Item = items[thing.toLowerCase()];
+			const Item = items[thing];
 
 			if (Item) {
 				const item = new Item();

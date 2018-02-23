@@ -7,11 +7,11 @@ const HitCard = require('./hit');
 describe('./cards/brain-drain.js', () => {
 	it('can be instantiated with defaults', () => {
 		const brainDrain = new BrainDrainCard();
-		const hit = new HitCard({ damageDice: '1d4' });
+		const hit = new HitCard({ damageDice: '1d4', targetProp: 'int' });
 
 		const stats = `${hit.stats}
 Curse: xp -20
-can reduce xp down to 40, then takes 4 from hp instead.`;
+Can reduce xp down to 40, then takes 4 from hp instead.`;
 
 		expect(brainDrain).to.be.an.instanceof(BrainDrainCard);
 		expect(brainDrain.icon).to.equal('🤡');

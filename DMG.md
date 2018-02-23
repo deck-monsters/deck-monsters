@@ -23,6 +23,7 @@ Calisthenics
 Camouflage Vest
 Cloak of Invisibility
 Coil
+Concussion
 Constrict
 Soften
 Delayed Hit
@@ -162,7 +163,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Gladiator
- Hit chance: 69% | DPT: 5
+ Hit chance: 66% | DPT: 5
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -194,7 +195,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian
- Hit chance: 67% | DPT: 3
+ Hit chance: 69% | DPT: 3
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -263,7 +264,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Weeping Angel
- Effect chance: 75%
+ Effect chance: 76%
  MSRP: 130
  Targets: ac
  Class: Psychic
@@ -303,16 +304,16 @@ Wooden Spear
  And we shall bury our enemies in 
  their own confusion.
 
- Hit: 1d20 vs ac / Damage: 1d4
+ Hit: 1d20 vs int / Damage: 1d4
  Curse: xp -20
- can reduce xp down to 40, then 
+ Can reduce xp down to 40, then 
  takes 4 from hp instead.
 
  Level: 1
- Usable by: All
- Hit chance: 68% | DPT: 2
+ Usable by: Cleric, Jinn
+ Hit chance: 76% | DPT: 3
  MSRP: 50
- Targets: ac
+ Targets: int
  Class: Psychic
 
 ==================================
@@ -442,6 +443,32 @@ Wooden Spear
 
 ```
 ==================================
+ 🥊  Concussion  ◆
+----------------------------------
+
+ A hard blow to the head should 
+ do the trick.
+
+ Hit: 1d20 vs ac / Damage: 1d4
+ Curse: int -1-2 depending on how 
+ hard the hit is, with a maximum 
+ total curse of -3 per level. 
+ Afterwards penalties come out of 
+ hp instead.
+
+ Level: 1
+ Usable by: Barbarian, Fighter
+ Hit chance: 84% | DPT: 3
+ MSRP: 50
+ Targets: ac
+ Class: Melee
+
+==================================
+```
+
+
+```
+==================================
  ➰➰  Constrict  ★
 ----------------------------------
 
@@ -477,7 +504,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Basilisk
- Hit chance: 78% | DPT: 4
+ Hit chance: 77% | DPT: 4
  Effect chance: 100%
  MSRP: 80
  Targets: dex
@@ -496,14 +523,14 @@ Wooden Spear
  problem with that? No mercy.
 
  Hit: 1d20 vs ac / Damage: 1d4
- Curse: ac -1
- maximum total curse of -3 per 
- level, afterwards penalties come 
- out of hp instead.
+ Curse: ac -1, with a maximum 
+ total curse of -3 per level. 
+ Afterwards penalties come out of 
+ hp instead.
 
  Level: 1
  Usable by: All
- Hit chance: 74% | DPT: 3
+ Hit chance: 73% | DPT: 2
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -591,8 +618,6 @@ Wooden Spear
 
  Level: 2
  Usable by: Weeping Angel
- Hit chance: 15% | DPT: 1
- Effect chance: 80%
  MSRP: 50
  Targets: int
  Class: Psychic
@@ -637,8 +662,6 @@ Wooden Spear
 
  Level: 3
  Usable by: Weeping Angel
- Hit chance: 76% | DPT: 3
- Effect chance: 80%
  MSRP: 80
  Targets: int
  Class: Psychic
@@ -704,7 +727,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 68% | DPT: 3
+ Hit chance: 67% | DPT: 3
  MSRP: 10
  Targets: ac
  Class: Melee
@@ -726,7 +749,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 69% | DPT: 3
+ Hit chance: 68% | DPT: 3
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -749,7 +772,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 68% | DPT: 4
+ Hit chance: 66% | DPT: 4
  MSRP: 30
  Targets: ac
  Class: Melee
@@ -864,8 +887,8 @@ Wooden Spear
  Level: Beginner
  Usable by: Bard, Barbarian, 
  Fighter
- Hit chance: 62% | DPT: 2
- Effect chance: 60%
+ Hit chance: 61% | DPT: 2
+ Effect chance: 61%
  MSRP: 50
  Targets: dex
  Class: Melee
@@ -913,7 +936,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 69% | DPT: 3
+ Hit chance: 68% | DPT: 3
  MSRP: 10
  Targets: ac
  Class: Melee
@@ -982,8 +1005,8 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Minotaur
- Hit chance: 69% | DPT: 3
- Effect chance: 47%
+ Hit chance: 68% | DPT: 3
+ Effect chance: 46%
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1035,7 +1058,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard, Cleric
- Hit chance: 69% | DPT: 4
+ Hit chance: 68% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1055,14 +1078,14 @@ Wooden Spear
  its pikebone pegs and it may 
  lead you on to victory.
 
- Hit: 1d20 vs ac / Damage: 1d4
+ Hit: 1d20 vs int / Damage: 1d4
 
  Level: 1
  Usable by: All
- Hit chance: 68% | DPT: 7
+ Hit chance: 76% | DPT: 8
  MSRP: 80
- Targets: ac
- Class: Psychic
+ Targets: int
+ Class: Acoustic, Psychic
 
 ==================================
 ```
@@ -1085,7 +1108,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Bard, Cleric, Fighter
- Hit chance: 88% | DPT: 4
+ Hit chance: 87% | DPT: 4
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -1127,7 +1150,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Weeping Angel
- Hit chance: 15% | DPT: 1
+ Hit chance: 14% | DPT: 1
  Effect chance: 80%
  MSRP: 20
  Targets: int
@@ -1146,14 +1169,14 @@ Wooden Spear
  1919.
 
  Hit: 1d20 vs ac / Damage: 1d4
- Curse: dex -1
- maximum total curse of -3 per 
- level, afterwards penalties come 
- out of hp instead.
+ Curse: dex -1, with a maximum 
+ total curse of -3 per level. 
+ Afterwards penalties come out of 
+ hp instead.
 
  Level: 1
  Usable by: All
- Hit chance: 68% | DPT: 2
+ Hit chance: 67% | DPT: 2
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -1193,7 +1216,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Bard, Barbarian
- Hit chance: 69% | DPT: 6
+ Hit chance: 67% | DPT: 5
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1221,8 +1244,8 @@ Wooden Spear
 
  Level: 2
  Usable by: All
- Hit chance: 2% | DPT: 1
- Heal chance: 78% | HPT: 2
+ Hit chance: 1% | DPT: 0
+ Heal chance: 79% | HPT: 2
  MSRP: 130
  Class: Poison, AOE
 
@@ -1267,7 +1290,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Cleric, Fighter
- Hit chance: 86% | DPT: 4
+ Hit chance: 85% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1405,7 +1428,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian
- Hit chance: 67% | DPT: 4
+ Hit chance: 68% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee

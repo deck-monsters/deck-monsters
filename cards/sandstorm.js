@@ -3,13 +3,12 @@ const sample = require('lodash.sample');
 
 const BlastCard = require('./blast');
 
-const { JINN } = require('../constants/creature-types');
 const { ATTACK_PHASE } = require('../constants/phases');
-const isProbable = require('../helpers/is-probable');
 const { EPIC } = require('../helpers/probabilities');
 const { EXPENSIVE } = require('../helpers/costs');
-
-const EFFECT_TYPE = 'SandstormEffect';
+const { JINN } = require('../constants/creature-types');
+const { SANDSTORM_EFFECT } = require('../constants/effect-types');
+const isProbable = require('../helpers/is-probable');
 
 class SandstormCard extends BlastCard {
 	// Set defaults for these values that can be overridden by the options passed in
@@ -40,7 +39,7 @@ class SandstormCard extends BlastCard {
 	}
 
 	effect (sandstormPlayer, sandstormTarget) {
-		const alreadyLost = !!sandstormTarget.encounterEffects.find(effect => effect.effectType === EFFECT_TYPE);
+		const alreadyLost = !!sandstormTarget.encounterEffects.find(effect => effect.effectType === SANDSTORM_EFFECT);
 
 		if (alreadyLost) {
 			this.emit('narration', {
@@ -126,7 +125,7 @@ class SandstormCard extends BlastCard {
 			return card;
 		};
 
-		sandstormEffect.effectType = EFFECT_TYPE;
+		sandstormEffect.effectType = SANDSTORM_EFFECT;
 
 		sandstormTarget.encounterEffects = [...sandstormTarget.encounterEffects, sandstormEffect];
 

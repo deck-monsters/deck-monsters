@@ -8,7 +8,7 @@ describe('./cards/kalevala.js', () => {
 		const kalevala = new KalevalaCard();
 
 		expect(kalevala).to.be.an.instanceof(KalevalaCard);
-		expect(kalevala.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d4');
+		expect(kalevala.stats).to.equal('Hit: 1d20 vs int / Damage: 1d4');
 		expect(kalevala.cardType).to.equal('The Kalevala (1d4)');
 		expect(kalevala.icon).to.equal('🎻');
 	});
@@ -17,7 +17,7 @@ describe('./cards/kalevala.js', () => {
 		const kalevala = new KalevalaCard(JSON.parse('{"damageDice":"1d6","icon":"🎻"}'));
 
 		expect(kalevala).to.be.an.instanceof(KalevalaCard);
-		expect(kalevala.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d6');
+		expect(kalevala.stats).to.equal('Hit: 1d20 vs int / Damage: 1d6');
 		expect(kalevala.cardType).to.equal('The Kalevala (1d6)');
 	});
 
