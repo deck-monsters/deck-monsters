@@ -124,7 +124,7 @@ And whither then ${monster.pronouns.he} cannot say.`,
 			discoveries = discoveries.filter(discovery => explorer.monster.canHold(discovery));
 		}
 
-		let Discovery = discoveries.find(isProbable);
+		const Discovery = discoveries.find(isProbable);
 
 		if (!Discovery) return this.makeDiscovery(environment, explorer);
 
@@ -180,7 +180,7 @@ Exploration.defaults = {
 		DeathCard,
 		HazardCard,
 		NothingCard,
-		{ itemType: 'BattleCard', probability: 10 },
+		{ itemType: 'BattleCard', probability: 10 }
 		// 'monster',
 		// 'coins',
 		// 'xp',

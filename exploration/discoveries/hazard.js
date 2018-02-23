@@ -83,6 +83,7 @@ class HazardCard extends BaseCard {
 	}
 
 	effect (environment, monster) {
+		// TODO: Make sure this prints out to THE_WORLD instead of MAIN_RING
 		monster.hit(this.damage, environment, this);
 
 		return !monster.dead;

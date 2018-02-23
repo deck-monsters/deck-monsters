@@ -23,7 +23,7 @@ const announceStay = require('./stay.js');
 const announceTurnBegin = require('./playerTurnBegin.js');
 const announceXPGain = require('./xpGain.js');
 
-const { THE_WORLD, MAIN_RING } = require('../helpers/channel-names');
+const { THE_WORLD } = require('../helpers/channel-names');
 
 const initialize = (game) => {
 	const ringEvents = [
@@ -64,11 +64,12 @@ const initialize = (game) => {
 	}));
 
 	const worldEvents = [
+		{ event: 'creature.hit', listener: announceHit },
 		{ event: 'discovery.found', listener: announceDiscoveryFound },
 		{ event: 'discovery.narration', listener: announceNarration },
 		{ event: 'exploration.found', listener: announceDiscoveryFound },
 		{ event: 'exploration.narration', listener: announceNarration }
-	]
+	];
 
 	worldEvents.map(event => game.on(event.event, (...args) => {
 		event.listener(game.publicChannel, game.channelManager, ...args, THE_WORLD);

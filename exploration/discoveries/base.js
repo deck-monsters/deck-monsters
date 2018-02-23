@@ -17,7 +17,7 @@ class BaseDiscoveryCard extends BaseCard {
 		});
 	}
 
-	play ({ channel, channelName, environment, explorer }) {
+	play ({ channel, environment, explorer }) {
 		return Promise.resolve(channel)
 			.then(({ channelManager } = {}) => channelManager && channelManager.sendMessages())
 			.then(() => {
@@ -29,10 +29,11 @@ class BaseDiscoveryCard extends BaseCard {
 				if (this.effect) {
 					return this.effect(environment, explorer.monster);
 				}
-			})
-			.catch(function(err) {
-				console.log('err', err.message); // some coding error in handling happened
+				return !explorer.monster.dead;
 			});
+		// .catch((err) => {
+		// 	console.log('err', err.message); // some coding error in handling happened
+		// });
 	}
 }
 
