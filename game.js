@@ -9,6 +9,7 @@ const { COINS_PER_VICTORY, COINS_PER_DEFEAT } = require('./constants/coins');
 const { create: createCharacter } = require('./characters');
 const { globalSemaphore } = require('./helpers/semaphore');
 const { listen, loadHandlers } = require('./commands');
+const { sortByXP } = require('./helpers/sort');
 const { XP_PER_VICTORY, XP_PER_DEFEAT } = require('./helpers/experience');
 const announcements = require('./announcements');
 const aws = require('./helpers/aws');
@@ -255,6 +256,52 @@ class Game extends BaseClass {
 
 		return Promise.reject(channel({
 			announce: `I can find no character by the name of ${characterName}.`,
+			delay: 'short'
+		}));
+	}
+
+	getCreatureRankings (creatures, top = 5) { // eslint-disable-line class-methods-use-this
+		const sortedCreatures = sortByXP(creatures).reverse();
+		sortedCreatures.length = Math.min(sortedCreatures.length, top);
+
+		const maxLength = sortedCreatures.reduce((length, creature) => Math.max(creature.givenName.length, length), 0);
+		const padding = ' '.repeat(maxLength);
+
+		const results = sortedCreatures.map((creature) => {
+			const paddedName = `${creature.givenName}${padding}`.slice(0, maxLength);
+
+			return `${paddedName}   ${creature.xp}`;
+		});
+
+		return results;
+	}
+
+	lookAtCharacterRankings (channel) {
+		const results = this.getCreatureRankings(Object.values(this.characters));
+
+		return Promise.resolve(channel({
+			announce:
+`*Top ${results.length} Players by XP:*
+
+\`\`\`
+${results.join('\n')}
+\`\`\`
+`,
+			delay: 'short'
+		}));
+	}
+
+	lookAtMonsterRankings (channel) {
+		const results = this.getCreatureRankings(Object.values(this.getAllMonstersLookup()));
+
+		return Promise.resolve(channel({
+			announce:
+`*Top ${results.length} Monsters by XP:*
+
+\`\`\`
+${results.join('\n')}
+\`\`\`
+`,
 			delay: 'short'
 		}));
 	}
