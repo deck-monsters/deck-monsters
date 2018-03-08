@@ -16,11 +16,12 @@ const TheWorld = require('../monsters/environment');
 const { ONE_MINUTE } = require('../helpers/delay-times');
 
 class Exploration extends BaseClass {
-	constructor (channelManager, { ...options } = {}, log) {
+	constructor (channelManager, { channel, ...options } = {}, log) {
 		super(options);
 
 		this.log = log;
 		this.channelManager = channelManager;
+		this.channel = channel;
 
 		this.startExplorationTimer();
 	}
@@ -68,6 +69,8 @@ class Exploration extends BaseClass {
 		monster, character, channel, channelName
 	}) {
 		if (!this.monsterIsExploring(monster)) {
+			monster.environment = this;
+
 			const explorer = {
 				monster,
 				character,

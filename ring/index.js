@@ -20,13 +20,14 @@ const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
 
 class Ring extends BaseClass {
-	constructor (channelManager, { spawnBosses = true, ...options } = {}, log) {
+	constructor (channelManager, { spawnBosses = true, channel, ...options } = {}, log) {
 		super(options);
 
 		this.log = log;
 		this.spawnBosses = spawnBosses;
 		this.channelManager = channelManager;
 		this.battles = [];
+		this.channel = channel;
 
 		// Note that we're not saving / hydrating this as of now
 		this.on('fightConcludes', (className, ring, results) => {
@@ -106,6 +107,8 @@ class Ring extends BaseClass {
 				return contestant;
 			})
 			.then((contestant) => {
+				monster.environment = '';
+
 				const contestantIndex = this.contestants.indexOf(contestant);
 
 				this.contestants.splice(contestantIndex, 1);
@@ -133,6 +136,8 @@ class Ring extends BaseClass {
 		monster, character, channel, channelName, isBoss
 	}) {
 		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
+			monster.environment = this;
+
 			const contestant = {
 				monster,
 				character,

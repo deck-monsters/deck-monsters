@@ -26,6 +26,7 @@ class ChannelManager extends BaseClass {
 
 	addChannel ({ channel, channelName }) {
 		this.channels[channelName] = channel;
+		return this.channels[channelName];
 	}
 
 	getChannel ({ channelName }) {
