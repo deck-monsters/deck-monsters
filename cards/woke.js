@@ -89,6 +89,7 @@ Woke.flavors = {
 		['riles up the crowd into a mob-like frenzy until they pelt the entire battlefield with poorly aimed stones, which end up hitting', 70], // eslint-disable-line max-len
 		['becomes internet-outraged and screams through a bull-horn at', 80],
 		['gets a large group of people to loudly scream nonsense to prohibit any discussion at', 50],
+		['tries to defend their point but doesn’t really understand the issue so ends up refuting it to, causing a fit of painful laughter on the part of', 10] // eslint-disable-line max-len
 		['turns their tactic of screaming at any "fascist" who disagrees with them until the person face-palms them-self so hard it hurts in the direction of', 10], // eslint-disable-line max-len
 		['manifests a predilection towards contradictory incomprehensible paradoxic sophist lexicomanarianism all in under 240 characters, erudition of which induces mental anguish in', 5], // eslint-disable-line max-len
 		['pulls out a wine-skin and squeezes it just right to project a fine-mist-jet-stream of stinging-pepper-water in the direction of', 5], // eslint-disable-line max-len
