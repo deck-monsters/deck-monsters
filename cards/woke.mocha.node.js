@@ -21,7 +21,7 @@ describe('./cards/woke.js', () => {
 
 		expect(woke).to.be.an.instanceof(WokeCard);
 		expect(woke.cardType).to.equal('Woke');
-		expect(woke.description).to.equal('POTUS tweets and everyone gets dumber. But in you, it brings about a certain rage... A certain WOKENESS most people don\'t actually want. It\'s what you live for. It\'s how you know you exist. You embrace it a welcome the rush.'); // eslint-disable-line max-len
+		expect(woke.description).to.equal('Someone tweets and everyone gets dumber. But in you, it brings about a certain rage... A certain WOKENESS most people don\'t actually want. It\'s what you live for. It\'s how you know you exist. You embrace it and welcome the rush.'); // eslint-disable-line max-len
 		expect(woke.icon).to.equal('🤬');
 		expect(woke.boosts).to.deep.equal([
 			{ prop: 'str', amount: 1 },
