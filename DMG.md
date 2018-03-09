@@ -60,6 +60,7 @@ Thick Skin
 Turkey Thigh
 Vengeful Rampage
 Whiskey Shot
+Woke
 Wooden Spear
 ```
 
@@ -163,7 +164,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Gladiator
- Hit chance: 66% | DPT: 5
+ Hit chance: 71% | DPT: 5
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -431,7 +432,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Basilisk
- Hit chance: 78% | DPT: 4
+ Hit chance: 74% | DPT: 3
  Effect chance: 100%
  MSRP: 130
  Targets: dex
@@ -458,7 +459,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian, Fighter
- Hit chance: 84% | DPT: 3
+ Hit chance: 86% | DPT: 3
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -504,7 +505,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Basilisk
- Hit chance: 77% | DPT: 4
+ Hit chance: 77% | DPT: 3
  Effect chance: 100%
  MSRP: 80
  Targets: dex
@@ -530,7 +531,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 73% | DPT: 2
+ Hit chance: 75% | DPT: 3
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -727,7 +728,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 67% | DPT: 3
+ Hit chance: 69% | DPT: 3
  MSRP: 10
  Targets: ac
  Class: Melee
@@ -749,7 +750,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 68% | DPT: 3
+ Hit chance: 71% | DPT: 3
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -772,7 +773,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 66% | DPT: 4
+ Hit chance: 70% | DPT: 4
  MSRP: 30
  Targets: ac
  Class: Melee
@@ -839,8 +840,8 @@ Wooden Spear
 
  Level: 2
  Usable by: Fighter, Barbarian
- Hit chance: 96% | DPT: 7
- Effect chance: 75%
+ Hit chance: 95% | DPT: 7
+ Effect chance: 74%
  MSRP: 80
  Targets: ac
  Class: Melee
@@ -887,7 +888,7 @@ Wooden Spear
  Level: Beginner
  Usable by: Bard, Barbarian, 
  Fighter
- Hit chance: 61% | DPT: 2
+ Hit chance: 63% | DPT: 2
  Effect chance: 61%
  MSRP: 50
  Targets: dex
@@ -916,7 +917,7 @@ Wooden Spear
  Level: Beginner
  Usable by: All
  Hit chance: 1% | DPT: 0
- Heal chance: 94% | HPT: 3
+ Heal chance: 93% | HPT: 3
  MSRP: 10
  Class: Heal
 
@@ -936,7 +937,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 68% | DPT: 3
+ Hit chance: 69% | DPT: 3
  MSRP: 10
  Targets: ac
  Class: Melee
@@ -959,7 +960,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Barbarian, Fighter
- Hit chance: 69% | DPT: 4
+ Hit chance: 70% | DPT: 4
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1005,8 +1006,8 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Minotaur
- Hit chance: 68% | DPT: 3
- Effect chance: 46%
+ Hit chance: 70% | DPT: 3
+ Effect chance: 48%
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1058,7 +1059,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard, Cleric
- Hit chance: 68% | DPT: 4
+ Hit chance: 70% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1082,7 +1083,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 76% | DPT: 8
+ Hit chance: 75% | DPT: 8
  MSRP: 80
  Targets: int
  Class: Acoustic, Psychic
@@ -1108,7 +1109,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Bard, Cleric, Fighter
- Hit chance: 87% | DPT: 4
+ Hit chance: 89% | DPT: 4
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -1150,7 +1151,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Weeping Angel
- Hit chance: 14% | DPT: 1
+ Hit chance: 16% | DPT: 1
  Effect chance: 80%
  MSRP: 20
  Targets: int
@@ -1176,7 +1177,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 67% | DPT: 2
+ Hit chance: 71% | DPT: 2
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -1216,7 +1217,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Bard, Barbarian
- Hit chance: 67% | DPT: 5
+ Hit chance: 70% | DPT: 6
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1244,7 +1245,7 @@ Wooden Spear
 
  Level: 2
  Usable by: All
- Hit chance: 1% | DPT: 0
+ Hit chance: 2% | DPT: 0
  Heal chance: 79% | HPT: 2
  MSRP: 130
  Class: Poison, AOE
@@ -1290,7 +1291,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Cleric, Fighter
- Hit chance: 85% | DPT: 4
+ Hit chance: 87% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1344,7 +1345,7 @@ Wooden Spear
  Level: 4
  Usable by: All
  Hit chance: 1% | DPT: 0
- Heal chance: 99% | HPT: 5
+ Heal chance: 99% | HPT: 6
  MSRP: 80
  Class: Heal
 
@@ -1373,7 +1374,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Fighter
- Hit chance: 68% | DPT: 4
+ Hit chance: 70% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1428,7 +1429,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian
- Hit chance: 68% | DPT: 4
+ Hit chance: 70% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1451,7 +1452,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Barbarian
- Hit chance: 69% | DPT: 8
+ Hit chance: 70% | DPT: 8
  MSRP: 80
  Targets: ac
  Class: Melee
@@ -1478,9 +1479,37 @@ Wooden Spear
  Level: 2
  Usable by: All
  Hit chance: 1% | DPT: 0
- Heal chance: 97% | HPT: 4
+ Heal chance: 97% | HPT: 5
  MSRP: 50
  Class: Heal
+
+==================================
+```
+
+
+```
+==================================
+ 🤬  Woke  ★
+----------------------------------
+
+ POTUS tweets and everyone gets 
+ dumber. But in you, it brings 
+ about a certain rage... A 
+ certain WOKENESS most people 
+ don't actually want. It's what 
+ you live for. It's how you know 
+ you exist. You embrace it a 
+ welcome the rush.
+
+ Boost player: str +1
+ Boost player: ac +1
+ Curses all players: int -1
+
+ Level: 1
+ Usable by: Barbarian
+ MSRP: 80
+ Targets: ac
+ Class: Acoustic, Psychic
 
 ==================================
 ```
@@ -1499,7 +1528,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard, Fighter
- Hit chance: 68% | DPT: 4
+ Hit chance: 70% | DPT: 4
  MSRP: 30
  Targets: ac
  Class: Melee
