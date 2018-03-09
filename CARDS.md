@@ -61,6 +61,7 @@ Thick Skin
 Turkey Thigh
 Vengeful Rampage
 Whiskey Shot
+Woke
 Wooden Spear
 
 
@@ -74,8 +75,8 @@ Wooden Spear
  AWAKENESS most people don't 
  actually want. It's what you 
  live for. It's how you know you 
- exist. You embrace it a welcome 
- the rush.
+ exist. You embrace it and 
+ welcome the rush.
 
 ==================================
 ```
@@ -719,6 +720,24 @@ Wooden Spear
 
  1 shot of whiskey for your 
  health. Doctor's orders.
+
+==================================
+```
+
+
+```
+==================================
+ 🤬  Woke  ★
+----------------------------------
+
+ Someone tweets and everyone gets 
+ dumber. But in you, it brings 
+ about a certain rage... A 
+ certain WOKENESS most people 
+ don't actually want. It's what 
+ you live for. It's how you know 
+ you exist. You embrace it and 
+ welcome the rush.
 
 ==================================
 ```
