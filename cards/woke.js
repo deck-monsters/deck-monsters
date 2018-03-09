@@ -38,6 +38,11 @@ class Woke extends CurseCard {
 		return `${player.givenName} skillfully fires off a flury of tweets targetting ${targetName}. They both get dumber.`;
 	}
 
+	getBoostNarrative (player, target) { // eslint-disable-line class-methods-use-this
+		const targetName = target.givenName === player.givenName ? `${player.pronouns.him}self` : target.givenName;
+		return `${targetName} is filled with self-righteous rage, becoming increasingly numb as ${target.pronouns.his} focus is narrowed.`;
+	}
+
 	getCurseOverflowNarrative (player, target) {
 		const playerName = target.givenName === player.givenName ? player.pronouns.his : `${player.givenName}'s`;
 		return `${target.givenName}'s ${this.cursedProp} penalties have been maxed out.
@@ -45,6 +50,9 @@ ${playerName} switches tactics...`;
 	}
 
 	effect (player, target, ring, activeContestants) {
+		this.emit('narration', {
+				narration: this.getBoostNarrative(player, target);
+		}
 		this.boosts.forEach(boost => target.setModifier(boost.prop, boost.amount));
 		activeContestants.forEach((contestant) => {
 			super.effect(player, contestant.monster, ring);
