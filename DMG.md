@@ -75,8 +75,8 @@ Wooden Spear
  AWAKENESS most people don't 
  actually want. It's what you 
  live for. It's how you know you 
- exist. You embrace it a welcome 
- the rush.
+ exist. You embrace it and 
+ welcome the rush.
 
  Boost: dex +1
  Boost: str +1
@@ -196,7 +196,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian
- Hit chance: 69% | DPT: 3
+ Hit chance: 72% | DPT: 4
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -265,7 +265,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Weeping Angel
- Effect chance: 76%
+ Effect chance: 73%
  MSRP: 130
  Targets: ac
  Class: Psychic
@@ -432,7 +432,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Basilisk
- Hit chance: 74% | DPT: 3
+ Hit chance: 77% | DPT: 4
  Effect chance: 100%
  MSRP: 130
  Targets: dex
@@ -531,7 +531,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 75% | DPT: 3
+ Hit chance: 76% | DPT: 3
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -728,7 +728,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 69% | DPT: 3
+ Hit chance: 73% | DPT: 3
  MSRP: 10
  Targets: ac
  Class: Melee
@@ -750,7 +750,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 71% | DPT: 3
+ Hit chance: 72% | DPT: 3
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -773,7 +773,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 70% | DPT: 4
+ Hit chance: 72% | DPT: 4
  MSRP: 30
  Targets: ac
  Class: Melee
@@ -840,8 +840,8 @@ Wooden Spear
 
  Level: 2
  Usable by: Fighter, Barbarian
- Hit chance: 95% | DPT: 7
- Effect chance: 74%
+ Hit chance: 97% | DPT: 7
+ Effect chance: 75%
  MSRP: 80
  Targets: ac
  Class: Melee
@@ -889,7 +889,7 @@ Wooden Spear
  Usable by: Bard, Barbarian, 
  Fighter
  Hit chance: 63% | DPT: 2
- Effect chance: 61%
+ Effect chance: 62%
  MSRP: 50
  Targets: dex
  Class: Melee
@@ -917,7 +917,7 @@ Wooden Spear
  Level: Beginner
  Usable by: All
  Hit chance: 1% | DPT: 0
- Heal chance: 93% | HPT: 3
+ Heal chance: 94% | HPT: 3
  MSRP: 10
  Class: Heal
 
@@ -937,7 +937,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 69% | DPT: 3
+ Hit chance: 74% | DPT: 3
  MSRP: 10
  Targets: ac
  Class: Melee
@@ -960,7 +960,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Barbarian, Fighter
- Hit chance: 70% | DPT: 4
+ Hit chance: 72% | DPT: 4
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1006,8 +1006,8 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Minotaur
- Hit chance: 70% | DPT: 3
- Effect chance: 48%
+ Hit chance: 73% | DPT: 3
+ Effect chance: 49%
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1030,7 +1030,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Minotaur
- Hit chance: 93% | DPT: 4
+ Hit chance: 94% | DPT: 4
  MSRP: 50
  Targets: str
  Class: Melee
@@ -1059,7 +1059,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard, Cleric
- Hit chance: 70% | DPT: 4
+ Hit chance: 71% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1083,7 +1083,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 75% | DPT: 8
+ Hit chance: 77% | DPT: 8
  MSRP: 80
  Targets: int
  Class: Acoustic, Psychic
@@ -1109,7 +1109,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Bard, Cleric, Fighter
- Hit chance: 89% | DPT: 4
+ Hit chance: 91% | DPT: 4
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -1151,7 +1151,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Weeping Angel
- Hit chance: 16% | DPT: 1
+ Hit chance: 15% | DPT: 1
  Effect chance: 80%
  MSRP: 20
  Targets: int
@@ -1177,7 +1177,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 71% | DPT: 2
+ Hit chance: 72% | DPT: 2
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -1217,7 +1217,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Bard, Barbarian
- Hit chance: 70% | DPT: 6
+ Hit chance: 74% | DPT: 6
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1245,8 +1245,8 @@ Wooden Spear
 
  Level: 2
  Usable by: All
- Hit chance: 2% | DPT: 0
- Heal chance: 79% | HPT: 2
+ Hit chance: 2% | DPT: 1
+ Heal chance: 78% | HPT: 2
  MSRP: 130
  Class: Poison, AOE
 
@@ -1345,7 +1345,7 @@ Wooden Spear
  Level: 4
  Usable by: All
  Hit chance: 1% | DPT: 0
- Heal chance: 99% | HPT: 6
+ Heal chance: 99% | HPT: 5
  MSRP: 80
  Class: Heal
 
@@ -1374,7 +1374,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Fighter
- Hit chance: 70% | DPT: 4
+ Hit chance: 73% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1429,7 +1429,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian
- Hit chance: 70% | DPT: 4
+ Hit chance: 73% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1452,7 +1452,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Barbarian
- Hit chance: 70% | DPT: 8
+ Hit chance: 71% | DPT: 8
  MSRP: 80
  Targets: ac
  Class: Melee
@@ -1479,7 +1479,7 @@ Wooden Spear
  Level: 2
  Usable by: All
  Hit chance: 1% | DPT: 0
- Heal chance: 97% | HPT: 5
+ Heal chance: 96% | HPT: 4
  MSRP: 50
  Class: Heal
 
@@ -1492,13 +1492,13 @@ Wooden Spear
  🤬  Woke  ★
 ----------------------------------
 
- POTUS tweets and everyone gets 
+ Someone tweets and everyone gets 
  dumber. But in you, it brings 
  about a certain rage... A 
  certain WOKENESS most people 
  don't actually want. It's what 
  you live for. It's how you know 
- you exist. You embrace it a 
+ you exist. You embrace it and 
  welcome the rush.
 
  Boost player: str +1
@@ -1528,7 +1528,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard, Fighter
- Hit chance: 70% | DPT: 4
+ Hit chance: 72% | DPT: 4
  MSRP: 30
  Targets: ac
  Class: Melee
