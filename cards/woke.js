@@ -51,8 +51,9 @@ ${playerName} switches tactics...`;
 
 	effect (player, target, ring, activeContestants) {
 		this.emit('narration', {
-				narration: this.getBoostNarrative(player, target);
-		}
+			narration: this.getBoostNarrative(player, target)
+		});
+
 		this.boosts.forEach(boost => target.setModifier(boost.prop, boost.amount));
 		activeContestants.forEach((contestant) => {
 			super.effect(player, contestant.monster, ring);
