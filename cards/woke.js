@@ -66,7 +66,7 @@ Woke.cardClass = [ACOUSTIC, PSYCHIC];
 Woke.probability = VERY_RARE.probability;
 Woke.cardType = 'Woke';
 Woke.permittedClassesAndTypes = [BARBARIAN];
-Woke.description = 'POTUS tweets and everyone gets dumber. But in you, it brings about a certain rage... A certain WOKENESS most people don\'t actually want. It\'s what you live for. It\'s how you know you exist. You embrace it a welcome the rush.'; // eslint-disable-line max-len
+Woke.description = 'Someone tweets and everyone gets dumber. But in you, it brings about a certain rage... A certain WOKENESS most people don\'t actually want. It\'s what you live for. It\'s how you know you exist. You embrace it a welcome the rush.'; // eslint-disable-line max-len
 Woke.cost = PRICEY.cost;
 Woke.noBosses = true;
 Woke.notForSale = true;
@@ -91,9 +91,9 @@ Woke.flavors = {
 		['turns their tactic of screaming at any "fascist" who disagrees with them until the person face-palms them-self so hard it hurts in the direction of', 10], // eslint-disable-line max-len
 		['manifests a predilection towards contradictory incomprehensible paradoxic sophist lexicomanarianism all in under 240 characters, erudition of which induces mental anguish in', 5], // eslint-disable-line max-len
 		['pulls out a wine-skin and squeezes it just right to project a fine-mist-jet-stream of stinging-pepper-water in the direction of', 5], // eslint-disable-line max-len
-		['puts a pair of cat-ears on their head, and screams non-sense through a bull-horn at', 5],
+		['dresses strangely in order to disappear into a sea of group conformance, and screams non-sense through a bull-horn at', 5],
 		['puts on, head-to-toe, red (for no obvious reason) and for the time being devotes their entire life to screaming insults at', 5], // eslint-disable-line max-len
-		['dons all black, holds an incomprehensible sign, twirls a noise-maker, stomps their feet, and beats on windows and doors while mindlessly repeating whatever someone else is yelling through a bullhorn for them to say in an effort to silence', 5] // eslint-disable-line max-len
+		['holds an incomprehensible sign, twirls a noise-maker, stomps their feet, and beats on windows and doors while mindlessly repeating whatever someone else is yelling through a bullhorn for them to say in an effort to silence', 5] // eslint-disable-line max-len
 	]
 };
 
