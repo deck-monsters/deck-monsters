@@ -2,8 +2,8 @@ const { discoveryCard } = require('../helpers/card');
 
 const { THE_WORLD } = require('../helpers/channel-names');
 
-const announceCardDrop = (publicChannel, channelManager, className, game, { explorer, discovery }) => {
-	const { channel, channelName } = explorer;
+const announceCardDrop = (className, game, { explorer, discovery }) => {
+	const { channel, channelName, environment } = explorer;
 
 	const cardDropped = discoveryCard(discovery, true);
 
@@ -11,13 +11,13 @@ const announceCardDrop = (publicChannel, channelManager, className, game, { expl
 
 ${cardDropped}`;
 
-	channelManager.queueMessage({
+	environment.channelManager.queueMessage({
 		announce,
 		channel,
 		channelName
 	});
 
-	publicChannel({
+	environment.channel({
 		announce,
 		channelName: THE_WORLD
 	});

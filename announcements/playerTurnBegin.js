@@ -1,9 +1,9 @@
 const { monsterCard } = require('../helpers/card');
 
-const announceTurnBegin = (publicChannel, channelManager, className, ring, { contestant }) => {
+const announceTurnBegin = (className, ring, { contestant }) => {
 	const { monster } = contestant;
 
-	publicChannel({
+	ring.channel({
 		announce:
 `*It's ${contestant.character.givenName}'s turn.*
 

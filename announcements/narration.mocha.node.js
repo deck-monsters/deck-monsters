@@ -42,7 +42,7 @@ describe('./announcements/narration.js', () => {
 				sendMessages: sinon.stub()
 			};
 
-			announceNarration(publicChannel, channelManager, '', {}, { channel, channelName, narration });
+			announceNarration('', { channelManager, channel: publicChannel }, { channel, channelName, narration });
 		});
 	});
 });

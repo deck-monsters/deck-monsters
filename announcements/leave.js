@@ -1,9 +1,9 @@
-const announceLeave = (publicChannel, channelManager, className, monster, { activeContestants }) => {
+const announceLeave = (className, monster, { activeContestants }) => {
 	const assailants = activeContestants
 		.filter(contestant => contestant.monster !== monster)
 		.map(contestant => contestant.monster.identityWithHp);
 
-	publicChannel({
+	monster.environment.channel({
 		announce:
 `${monster.identityWithHp} flees from ${assailants.join(' and ')}
 `

@@ -1,7 +1,7 @@
-const announceEndOfDeck = (publicChannel, channelManager, className, ring, { contestant }) => {
-	const { monster } = contestant;
+const announceEndOfDeck = (className, ring, { contestant }) => {
+	const { monster, environment } = contestant;
 
-	publicChannel({
+	environment.channel({
 		announce:
 `${monster.identity} is out of cards.`
 	});

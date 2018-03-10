@@ -1,4 +1,4 @@
-const announceXPGain = (publicChannel, channelManager, className, game, {
+const announceXPGain = (className, game, {
 	contestant,
 	creature,
 	xpGained,
@@ -22,7 +22,7 @@ const announceXPGain = (publicChannel, channelManager, className, game, {
 
 ${reasons}` : '';
 
-	channelManager.queueMessage({
+	game.channelManager.queueMessage({
 		announce: `${creature.identity} gained ${xpGained} XP${killedMessage}${coinsMessage}${reasonsMessage}`,
 		channel,
 		channelName

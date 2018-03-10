@@ -1,4 +1,4 @@
-const announceMiss = (publicChannel, channelManager, className, card, {
+const announceMiss = (className, card, {
 	attackResult, curseOfLoki, player, target
 }) => {
 	let action = 'is blocked by';
@@ -28,7 +28,7 @@ const announceMiss = (publicChannel, channelManager, className, card, {
 
 	const targetIdentifier = target === player ? `${target.pronouns.him}self` : target.givenName;
 
-	publicChannel({
+	player.environment.channel({
 		announce:
 `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${targetIdentifier} ${flavor}
 `

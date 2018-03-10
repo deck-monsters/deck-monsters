@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 const { signedNumber } = require('../helpers/signed-number');
 
-const announceRolled = (publicChannel, channelManager, className, monster, {
+const announceRolled = (className, monster, {
 	outcome,
 	reason,
 	roll,
@@ -17,7 +17,7 @@ const announceRolled = (publicChannel, channelManager, className, monster, {
 	let rollResult = (roll.strokeOfLuck) ? 'Nat 20!' : roll.result;
 	rollResult = (roll.curseOfLoki) ? 'Crit Fail!' : rollResult;
 
-	publicChannel({
+	monster.environment.channel({
 		announce:
 `${text}
 🎲 *${rollResult}${vsMsg}*${outcome ? `

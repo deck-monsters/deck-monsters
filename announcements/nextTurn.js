@@ -1,5 +1,5 @@
-const announceNextTurn = (publicChannel, channelManager, className, ring, { contestants, round, turn }) => {
-	publicChannel({
+const announceNextTurn = (className, ring, { contestants, round, turn }) => {
+	ring.channel({
 		announce:
 `
 ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅

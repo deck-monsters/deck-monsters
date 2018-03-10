@@ -1,5 +1,5 @@
-const announceFight = (publicChannel, channelManager, className, ring, { contestants }) => {
-	publicChannel({
+const announceFight = (className, ring, { contestants }) => {
+	ring.channel({
 		announce: `
 _______________________________________________________________________________________________________
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
