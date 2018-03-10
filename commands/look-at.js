@@ -29,10 +29,20 @@ function lookAtAction ({ channel, character, game, results }) {
 					const inDetail = thing === 'in detail';
 					return character.lookAtMonsters(channel, inDetail);
 				}
-				case 'monster':
+				case 'monster': {
+					if (thing === 'rankings') {
+						return game.lookAtMonsterRankings(channel);
+					}
+
 					return game.lookAtMonster(channel, thing, character);
-				case 'character':
+				}
+				case 'character': {
+					if (thing === 'rankings') {
+						return game.lookAtCharacterRankings(channel);
+					}
+
 					return game.lookAtCharacter(channel, thing, character);
+				}
 				case 'card':
 					return game.lookAtCard(channel, thing);
 				case 'item':

@@ -80,21 +80,27 @@ return Promise
 		charCards = [...shuffle(char.deck).slice(0, 9)];
 	})
 	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
-		...vladOptions, type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 300
+		...vladOptions, type: 0, name: 'jerry', color: 'gray', gender: 1, cards: vladCards, xp: 301
 	}))
 	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
-		...vladOptions, type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 300
+		...vladOptions, type: 1, name: 'qed', color: 'gray', gender: 2, cards: vladCards, xp: 302
 	}))
 	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
-		...charOptions, type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards, xp: 300
+		...charOptions, type: 2, name: 'tom', color: 'brown', gender: 0, cards: charCards, xp: 303
 	}))
 	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
-		...charOptions, type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 300
+		...charOptions, type: 3, name: 'dbb', color: 'brown', gender: 0, cards: charCards, xp: 304
 	}))
 	.then(() => slackdem.handleCommand({ command: 'spawn a monster' })({
-		...charOptions, type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 300
+		...charOptions, type: 4, name: 'king', color: 'brown', gender: 1, cards: charCards, xp: 305
 	}))
 	.then(() => slackdem.handleCommand({ command: 'look at card brain drain' })({
+		...vladOptions
+	}))
+	.then(() => slackdem.handleCommand({ command: 'look at character rankings' })({
+		...vladOptions
+	}))
+	.then(() => slackdem.handleCommand({ command: 'look at monster rankings' })({
 		...vladOptions
 	}))
 	.then(() => slackdem.handleCommand({ command: 'send a monster to the ring' })({
