@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 
-const announceDeath = (publicChannel, channelManager, className, monster, { assailant, destroyed }) => {
+const announceDeath = (className, monster, { assailant, destroyed }) => {
 	let announce;
 
 	if (destroyed) {
@@ -14,7 +14,7 @@ So it is written. So it is done.
 `;
 	}
 
-	publicChannel({ announce });
+	monster.environment.channel({ announce });
 };
 
 module.exports = announceDeath;
