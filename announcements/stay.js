@@ -1,5 +1,4 @@
 const announceStay = (className, monster, { fleeRoll, player, activeContestants }) => {
-	console.log('monster', monster);
 	if (fleeRoll) {
 		const assailants = activeContestants
 			.filter(contestant => contestant.monster !== player)
