@@ -208,6 +208,7 @@ ${ongoingDamageText}`;
 						target.encounterModifiers.immobilizedTurns = (target.encounterModifiers.immobilizedTurns || 0) + 1;
 						if (this.ongoingDamage > 0) {
 							this.emit('narration', {
+								environment: target.environment,
 								narration: `${target.givenName} takes ongoing damage from being ${this.actions.IMMOBILIZED}`
 							});
 							target.hit(this.ongoingDamage, player, this);
@@ -219,6 +220,7 @@ ${ongoingDamageText}`;
 					target.encounterEffects = target.encounterEffects.filter(effect => effect.effectType !== 'ImmobilizeEffect');
 
 					this.emit('narration', {
+						environment: target.environment,
 						narration: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}. ${capitalize(target.pronouns.he)} pushes the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stands prepared to fight`
 					});
 				}
@@ -247,6 +249,7 @@ ${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronoun
 `;
 		}
 		this.emit('narration', {
+			environment: target.environment,
 			narration: immobilizeNarrative
 		});
 	}
@@ -264,7 +267,7 @@ ${target.givenName} is already immobilized, ${player.givenName} _shows no mercy_
 				narration = `
 ${target.givenName} laughs haughtily as ${player.givenName} tries to ${this.actions.IMMOBILIZE} them, ${player.pronouns.he} vents ${player.pronouns.his} fury at ${target.pronouns.his} mockery!`;
 			}
-			this.emit('narration', { narration });
+			this.emit('narration', { environment: target.environment, narration });
 
 			return super.effect(player, target, ring, activeContestants);
 		}

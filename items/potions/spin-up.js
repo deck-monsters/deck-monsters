@@ -22,6 +22,7 @@ class SpinUp extends BaseScroll {
 			const healAmount = random(1, Math.ceil(monster.maxHp));
 
 			this.emit('narration', {
+				environment: monster.environment,
 				channel,
 				channelName,
 				narration: this.healingMessage(monster, healAmount)

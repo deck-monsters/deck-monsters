@@ -28,7 +28,7 @@ class KalevalaCard extends HitCard {
 		return `${this.constructor.cardType} (${this.damageDice})`;
 	}
 
-	levelUp (amount) {
+	levelUp (player, amount) {
 		if (this.damageDice !== damageLevels[damageLevels.length - 1]) {
 			let index = damageLevels.indexOf(this.damageDice) + amount;
 			if (index >= damageLevels.length) index = damageLevels.length - 1;
@@ -47,6 +47,7 @@ class KalevalaCard extends HitCard {
 				}
 
 				this.emit('narration', {
+					environment: player.environment,
 					narration:
 `✨ *This kalevala has levelled up.* ✨
 It will now do ${this.damageDice} damage.`
@@ -59,7 +60,7 @@ It will now do ${this.damageDice} damage.`
 		const result = super.hitCheck(player, target);
 
 		if (result.strokeOfLuck) {
-			this.levelUp(1);
+			this.levelUp(player, 1);
 		}
 
 		return result;

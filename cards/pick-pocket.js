@@ -28,6 +28,7 @@ class PickPocketCard extends BaseCard {
 		const randomCard = sample(mostExperienced.cards.filter(card => !['Pick Pocket'].includes(card.cardType))).clone();
 
 		this.emit('narration', {
+			environment: player.environment,
 			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName}`
 		});
 

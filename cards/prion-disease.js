@@ -102,6 +102,7 @@ Usually restores between 0-3hp to each opponent, and 1-4hp for the player.
 		}
 
 		this.emit('narration', {
+			environment: target.environment,
 			narration
 		});
 

@@ -49,12 +49,14 @@ And just like that the ${this.itemType} is gone and ${publicNarration}`;
 				}
 
 				this.emit('narration', {
+					environment: character.environment,
 					channel,
 					channelName,
 					narration: privateNarration
 				});
 
 				this.emit('narration', {
+					environment: character.environment,
 					narration: publicNarration
 				});
 

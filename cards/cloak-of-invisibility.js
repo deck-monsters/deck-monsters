@@ -63,6 +63,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 								const newTarget = sample(potentialTargets).monster;
 
 								this.emit('narration', {
+									environment: player.environment,
 									narration: `${player.givenName} doesn't see ${invisibilityTarget.givenName} anywhere and turns ${player.pronouns.his} attention to ${newTarget.givenName} instead.`
 								});
 
@@ -115,6 +116,7 @@ class CloakOfInvisibilityCard extends BaseCard {
 
 							if (!card.invisibilityNarrationEmitted) {
 								this.emit('narration', {
+									environment: invisibilityTarget.environment,
 									narration: `${invisibilityTarget.identity} slips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`
 								});
 
@@ -138,10 +140,12 @@ class CloakOfInvisibilityCard extends BaseCard {
 			invisibilityTarget.encounterEffects = [...invisibilityTarget.encounterEffects, invisibilityEffect];
 
 			this.emit('narration', {
+				environment: invisibilityTarget.environment,
 				narration: `${invisibilityTarget.identity} dons ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`
 			});
 		} else {
 			this.emit('narration', {
+				environment: invisibilityTarget.environment,
 				narration: `${invisibilityTarget.identity} takes a moment to improve ${invisibilityTarget.pronouns.his} concealment.`
 			});
 		}

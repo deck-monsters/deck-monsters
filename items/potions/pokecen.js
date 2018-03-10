@@ -19,6 +19,7 @@ class SpinUp extends BaseScroll {
 	action ({ channel, channelName, monster }) {
 		if (monster && !monster.inEncounter && !monster.dead) {
 			this.emit('narration', {
+				environment: monster.environment,
 				channel,
 				channelName,
 				narration: this.healingMessage(monster)

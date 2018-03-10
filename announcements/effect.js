@@ -1,7 +1,7 @@
-const announceEffect = (publicChannel, channelManager, className, card, {
+const announceEffect = (className, card, {
 	player, target, effectResult, narration
 }) => {
-	publicChannel({
+	player.environment.channel({
 		announce:
 `${target.icon} ${target.givenName} is currently ${effectResult} ${player.icon} ${player.givenName}.${narration ? ` ${narration}` : ''}
 `

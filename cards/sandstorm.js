@@ -43,6 +43,7 @@ class SandstormCard extends BlastCard {
 
 		if (alreadyLost) {
 			this.emit('narration', {
+				environment: sandstormPlayer.environment,
 				narration: `${sandstormTarget.givenName} is already lost and confused, so ${sandstormPlayer.givenName} takes advantage of ${sandstormTarget.pronouns.his} weakened state.`
 			});
 
@@ -64,6 +65,7 @@ class SandstormCard extends BlastCard {
 					if (card.cardType === SandstormCard.cardType) {
 						card.getTargets = (player, proposedTarget, ring, activeContestants) => {
 							this.emit('narration', {
+								environment: sandstormTarget.environment,
 								narration: `${sandstormTarget.givenName} whips up an even bigger cloud of sand than ${sandstormPlayer.givenName} did.`
 							});
 
@@ -113,6 +115,7 @@ class SandstormCard extends BlastCard {
 						});
 
 						this.emit('narration', {
+							environment: sandstormTarget.environment,
 							narration: `${messages.join('\n')}
 `
 						});

@@ -43,11 +43,13 @@ ${super.stats}`;
 
 							if (delayingTarget.dead) {
 								this.emit('narration', {
+									environment: lastHitByOther.assailant.environment,
 									narration: `
 ${this.icon} With ${his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${him}.`
 								});
 							} else {
 								this.emit('narration', {
+									environment: lastHitByOther.assailant.environment,
 									narration: `
 ${this.icon} ${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`
 								});
@@ -69,6 +71,7 @@ ${this.icon} ${delayingPlayer.givenName} immediately responds to the blow ${last
 		};
 
 		this.emit('narration', {
+			environment: delayingPlayer.environment,
 			narration: `${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${his} enemy to reveal themselves.`
 		});
 

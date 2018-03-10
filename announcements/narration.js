@@ -1,12 +1,13 @@
-const announceNarration = (className, item, { channel, channelName, narration }) => {
+const announceNarration = (className, item, { environment, channel, channelName, narration }) => {
+	console.log('item', item);
 	if (channel) {
-		item.environment.channelManager.queueMessage({
+		environment.channelManager.queueMessage({
 			announce: narration,
 			channel,
 			channelName
 		});
 	} else {
-		item.environment.channel({ announce: narration });
+		environment.channel({ announce: narration });
 	}
 };
 

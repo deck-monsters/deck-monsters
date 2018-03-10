@@ -48,6 +48,7 @@ class BadBatchCard extends BaseCard {
 						}
 
 						this.emit('narration', {
+							environment: badBatchTarget.environment,
 							narration
 						});
 
@@ -74,6 +75,7 @@ class BadBatchCard extends BaseCard {
 		badBatchRing.encounterEffects = [...badBatchRing.encounterEffects, badBatchEffect];
 
 		this.emit('narration', {
+			environment: badBatchPlayer.environment,
 			narration: `${badBatchTarget.identity} brews up a ${this.icon} bad batch of the strong drink.`
 		});
 

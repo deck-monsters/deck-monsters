@@ -23,7 +23,7 @@ describe('./announcements/narration.js', () => {
 				expect(announce).to.equal(narration);
 			};
 
-			announceNarration(publicChannel, {}, '', {}, { narration });
+			announceNarration('', {}, { environment: { channel: publicChannel }, narration });
 		});
 
 		it('can announce to private channel', () => {
@@ -42,7 +42,7 @@ describe('./announcements/narration.js', () => {
 				sendMessages: sinon.stub()
 			};
 
-			announceNarration('', { environment: { channelManager, channel: publicChannel }}, { channel, channelName, narration });
+			announceNarration('', {}, { environment: { channelManager, channel: publicChannel }, channel, channelName, narration });
 		});
 	});
 });

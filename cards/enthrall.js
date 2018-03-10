@@ -45,17 +45,20 @@ ${super.stats}`;
 	effect (player, target, ring, activeContestants) {
 		if (player === target) {
 			this.emit('narration', {
+				environment: player.environment,
 				narration: `${player.givenName} prepares ${player.pronouns.him}self to ${this.actions.IMMOBILIZE} ${player.pronouns.his} targets.`
 			});
 		} else {
 			this.emit('narration', {
+				environment: target.environment,
 				narration: `${player.givenName} is confused and uses ${player.pronouns.his} power to help ${target.givenName} ${this.actions.IMMOBILIZE} ${target.pronouns.his} targets.`
 			});
 		}
 
 		if (isInvisible(target)) {
 			this.emit('narration', {
-				narration: `${target.givenName} is gets prepared but ${target.pronouns.he} is hidden from view, making it impossible for ${target.pronouns.him} to ${this.actions.IMMOBILIZE} anyone.`
+				environment: target.environment,
+				narration: `${target.givenName} prepares ${player.pronouns.him}self to ${this.actions.IMMOBILIZE} ${player.pronouns.his} targets, but ${target.pronouns.he} is hidden from view, making ${target.pronouns.his} efforts as fruitless as a twitter user whom nobody follows.`
 			});
 
 			return true;

@@ -88,6 +88,7 @@ class HealCard extends BaseCard {
 		// Stroke of Luck
 		if (strokeOfLuck) {
 			this.emit('narration', {
+				environment: target.environment,
 				narration: `Stoke of Luck!
 Wait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`
 			});
@@ -98,6 +99,7 @@ Wait... wasn't this the questionable phial you found on the floor behind the she
 		// Curse of Loki
 		} else if (curseOfLoki) {
 			this.emit('narration', {
+				environment: target.environment,
 				narration: `Curse of Loki!
 Ew... That tasted awful. Almost like... Oh no. Oh _no_. You just drank poison. 🤢`
 			});

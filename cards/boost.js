@@ -90,6 +90,7 @@ class BoostCard extends BaseCard {
 			boostAmount -= hpBoostOverflow;
 
 			this.emit('narration', {
+				environment: target.environment,
 				narration: this.getBoostOverflowNarrative(player, target)
 			});
 			player.heal(hpBoostOverflow, target, this);
@@ -97,6 +98,7 @@ class BoostCard extends BaseCard {
 
 		if (boostAmount > 0) {
 			this.emit('narration', {
+				environment: target.environment,
 				narration: this.getBoostNarrative(player, target)
 			});
 			target.setModifier(this.boostedProp, boostAmount);

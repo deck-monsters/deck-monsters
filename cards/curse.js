@@ -87,6 +87,7 @@ ${playerName} harrying jab takes from hp instead.`;
 			curseAmount -= hpCurseOverflow;
 
 			this.emit('narration', {
+				environment: target.environment,
 				narration: this.getCurseOverflowNarrative(player, target)
 			});
 			target.hit(Math.min(hpCurseOverflow, max(this.damageDice)), player, this);
@@ -94,6 +95,7 @@ ${playerName} harrying jab takes from hp instead.`;
 
 		if (curseAmount > 0) {
 			this.emit('narration', {
+				environment: target.environment,
 				narration: this.getCurseNarrative(player, target)
 			});
 			target.setModifier(this.cursedProp, -curseAmount);

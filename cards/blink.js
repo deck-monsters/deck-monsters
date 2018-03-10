@@ -151,6 +151,7 @@ On what would have been their next turn, if you are still alive you drain ${this
 						blinkTarget.encounterEffects = blinkTarget.encounterEffects.filter(encounterEffect => encounterEffect.effectType !== 'BlinkEffect');
 
 						this.emit('narration', {
+							environment: blinkTarget.environment,
 							narration: `${blinkTarget.identity} opens ${blinkTarget.pronouns.his} eyes and finds ${blinkTarget.pronouns.him}self in an unfamiliar time.`
 						});
 					}

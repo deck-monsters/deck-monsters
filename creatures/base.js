@@ -580,6 +580,7 @@ Battles won: ${this.battles.wins}`;
 			this.encounterModifiers.ac -= damage;
 
 			this.emit('narration', {
+				environment: this.environment,
 				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage. ${capitalize(this.pronouns.his)} ac boost is now ${this.encounterModifiers.ac}.` // eslint-disable-line max-len
 			});
 		} else {
@@ -588,6 +589,7 @@ Battles won: ${this.battles.wins}`;
 			if (isMelee && this.encounterModifiers.ac > 0) {
 				adjustedDamage -= this.encounterModifiers.ac;
 				this.emit('narration', {
+					environment: this.environment,
 					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ${capitalize(this.pronouns.his)} ac boost is now 0.` // eslint-disable-line max-len
 				});
 				this.encounterModifiers.ac = 0;

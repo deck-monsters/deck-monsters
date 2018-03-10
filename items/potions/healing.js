@@ -25,6 +25,7 @@ class HealingPotion extends BaseScroll {
 
 		if (monster && !monster.dead && healAmount) {
 			this.emit('narration', {
+				environment: monster.environment,
 				channel,
 				channelName,
 				narration: this.healingMessage(monster)

@@ -50,6 +50,7 @@ From now on ${details}`;
 		}
 
 		this.emit('narration', {
+			environment: character.environment,
 			channel,
 			channelName,
 			narration

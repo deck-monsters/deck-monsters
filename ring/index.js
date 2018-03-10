@@ -364,6 +364,7 @@ The following cards are in play:
 			}, FIGHT_DELAY);
 		} else if (numberOfMonstersInRing <= 0) {
 			this.emit('narration', {
+				environment: this.environment,
 				narration: 'The ring is quiet save for the faint sound of footsteps fleeing into the distance.'
 			});
 		} else {

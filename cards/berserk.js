@@ -131,6 +131,7 @@ Stroke of luck increases damage per hit by 1.`;
 				target.hit(damage, player, this);
 			} else {
 				this.emit('narration', {
+					environment: target.environment,
 					narration: `HUMILIATION! ${iteration} hits`
 				});
 			}
@@ -143,6 +144,7 @@ Stroke of luck increases damage per hit by 1.`;
 			}
 
 			this.emit('narration', {
+				environment: target.environment,
 				narration: `COMBO BREAKER!  (Broke a ${iteration - 1} hit combo, ${this.initialDamage + this.cumulativeComboDamage} total damage)`
 			});
 
@@ -162,6 +164,7 @@ Stroke of luck increases damage per hit by 1.`;
 			const comboText = (iteration > 3) ? 'COMBO! ' : '';
 			const ultraText = (iteration > 5) ? 'ULTRA ' : '';
 			this.emit('narration', {
+				environment: target.environment,
 				narration: `${target.dead ? 'ULTIMATE ' : ultraText}${comboText}${iteration - 1} HIT${(iteration - 1 > 1) ? 'S' : ''} (${this.initialDamage + this.cumulativeComboDamage} total damage).`
 			});
 		}

@@ -51,6 +51,7 @@ ${playerName} switches tactics...`;
 
 	effect (player, target, ring, activeContestants) {
 		this.emit('narration', {
+			environment: target.environment,
 			narration: this.getBoostNarrative(player, target)
 		});
 
