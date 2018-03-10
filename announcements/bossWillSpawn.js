@@ -1,11 +1,11 @@
 const moment = require('moment');
 
-const announceBossWillSpawn = (publicChannel, channelManager, className, ring, { delay }) => {
-	publicChannel({
+const announceBossWillSpawn = (className, ring, { delay }) => {
+	ring.channel({
 		announce: `A boss will enter the ring ${moment().add(delay).fromNow()}`
 	});
 
-	channelManager.sendMessages();
+	ring.channelManager.sendMessages();
 };
 
 module.exports = announceBossWillSpawn;

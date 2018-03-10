@@ -35,7 +35,7 @@ class Game extends BaseClass {
 		const ringChannel = this.channelManager.addChannel({ channel: mainRing.channel, channelName: mainRing.channelName });
 		const worldChannel = this.channelManager.addChannel({ channel: theWorld.channel, channelName: theWorld.channelName });
 		this.publicChannel = ({ announce, channelName = MAIN_RING }) => this.channelManager.queueMessage({ announce, channelName });
-		this.ring = new Ring(this.channelManager, { spawnBosses: this.options.spawnBosses, channel: ringChannel}, this.log);
+		this.ring = new Ring(this.channelManager, { spawnBosses: this.options.spawnBosses, channel: ringChannel }, this.log);
 		this.exploration = new Exploration(this.channelManager, { channel: worldChannel }, this.log);
 
 		this.initializeEvents();

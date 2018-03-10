@@ -23,10 +23,8 @@ const announceStay = require('./stay.js');
 const announceTurnBegin = require('./playerTurnBegin.js');
 const announceXPGain = require('./xpGain.js');
 
-const { THE_WORLD } = require('../helpers/channel-names');
-
 const initialize = (game) => {
-	const ringEvents = [
+	const events = [
 		{ event: 'card.effect', listener: announceEffect },
 		{ event: 'card.miss', listener: announceMiss },
 		{ event: 'card.narration', listener: announceNarration },
@@ -35,10 +33,15 @@ const initialize = (game) => {
 		{ event: 'card.stay', listener: announceStay },
 		{ event: 'cardDrop', listener: announceCardDrop },
 		{ event: 'creature.die', listener: announceDeath },
+		{ event: 'creature.heal', listener: announceHeal },
 		{ event: 'creature.hit', listener: announceHit },
 		{ event: 'creature.leave', listener: announceLeave },
 		{ event: 'creature.modifier', listener: announceModifier },
 		{ event: 'creature.narration', listener: announceNarration },
+		{ event: 'discovery.found', listener: announceDiscoveryFound },
+		{ event: 'discovery.narration', listener: announceNarration },
+		{ event: 'exploration.found', listener: announceDiscoveryFound },
+		{ event: 'exploration.narration', listener: announceNarration },
 		{ event: 'gainedXP', listener: announceXPGain },
 		{ event: 'item.narration', listener: announceNarration },
 		{ event: 'item.used', listener: announceItemUsed },
@@ -59,26 +62,9 @@ const initialize = (game) => {
 		{ event: 'scroll.used', listener: announceItemUsed }
 	];
 
-	ringEvents.map(event => game.on(event.event, (...args) => {
-		event.listener(game.publicChannel, game.channelManager, ...args);
+	events.map(event => game.on(event.event, (...args) => {
+		event.listener(...args);
 	}));
-
-	const worldEvents = [
-		{ event: 'creature.hit', listener: announceHit },
-		{ event: 'discovery.found', listener: announceDiscoveryFound },
-		{ event: 'discovery.narration', listener: announceNarration },
-		{ event: 'exploration.found', listener: announceDiscoveryFound },
-		{ event: 'exploration.narration', listener: announceNarration }
-	];
-
-	worldEvents.map(event => game.on(event.event, (...args) => {
-		event.listener(game.publicChannel, game.channelManager, ...args, THE_WORLD);
-	}));
-
-	// this one needs ring, the others don't (or have it already).
-	game.on('creature.heal', (...args) => {
-		announceHeal(game.publicChannel, game.channelManager, game.ring, ...args);
-	});
 };
 
 module.exports = {

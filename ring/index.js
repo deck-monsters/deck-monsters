@@ -34,11 +34,11 @@ class Ring extends BaseClass {
 			ring.battles.push(results);
 		});
 
-		this.channelManager.on('win', (className, channel, { contestant }) => this.handleWinner({ contestant }));
-		this.channelManager.on('loss', (className, channel, { contestant }) => this.handleLoser({ contestant }));
-		this.channelManager.on('permaDeath', (className, channel, { contestant }) => this.handlePermaDeath({ contestant }));
-		this.channelManager.on('draw', (className, channel, { contestant }) => this.handleTied({ contestant }));
-		this.channelManager.on('fled', (className, channel, { contestant }) => this.handleFled({ contestant }));
+		this.channelManager.on('win', (className, ringChannel, { contestant }) => this.handleWinner({ contestant }));
+		this.channelManager.on('loss', (className, ringChannel, { contestant }) => this.handleLoser({ contestant }));
+		this.channelManager.on('permaDeath', (className, ringChannel, { contestant }) => this.handlePermaDeath({ contestant }));
+		this.channelManager.on('draw', (className, ringChannel, { contestant }) => this.handleTied({ contestant }));
+		this.channelManager.on('fled', (className, ringChannel, { contestant }) => this.handleFled({ contestant }));
 
 		this.startBossTimer();
 	}

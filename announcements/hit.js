@@ -9,7 +9,7 @@ const defaultIcons = [
 	{ floor: 0, icon: '💋' }
 ];
 
-const announceHit = (publicChannel, channelManager, className, monster, {
+const announceHit = (className, monster, {
 	assailant,
 	card,
 	damage,
@@ -37,7 +37,7 @@ const announceHit = (publicChannel, channelManager, className, monster, {
 		flavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavor.text} ${target} for ${damage} damage.`;
 	}
 
-	publicChannel({
+	monster.environment.channel({
 		announce:
 `${flavorText}
 

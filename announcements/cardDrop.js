@@ -1,6 +1,6 @@
 const { actionCard } = require('../helpers/card');
 
-const announceCardDrop = (publicChannel, channelManager, className, game, { contestant, card }) => {
+const announceCardDrop = (className, game, { contestant, card }) => {
 	const { channel, channelName } = contestant;
 
 	const cardDropped = actionCard(card, true);
@@ -9,13 +9,13 @@ const announceCardDrop = (publicChannel, channelManager, className, game, { cont
 
 ${cardDropped}`;
 
-	channelManager.queueMessage({
+	contestant.environment.channelManager.queueMessage({
 		announce,
 		channel,
 		channelName
 	});
 
-	publicChannel({
+	contestant.environment.channel({
 		announce
 	});
 };

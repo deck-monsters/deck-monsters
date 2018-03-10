@@ -1,9 +1,9 @@
 const { actionCard } = require('../helpers/card');
 
-const announceCard = (publicChannel, channelManager, className, card, { player }) => {
+const announceCard = (className, card, { player }) => {
 	const cardPlayed = actionCard(card);
 
-	publicChannel({
+	player.environment.channel({
 		announce:
 `${player.identity} lays down the following card:
 ${cardPlayed}`
