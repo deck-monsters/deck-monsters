@@ -9,13 +9,13 @@ const announceCardDrop = (className, game, { contestant, card }) => {
 
 ${cardDropped}`;
 
-	contestant.environment.channelManager.queueMessage({
+	game.environment.channelManager.queueMessage({
 		announce,
 		channel,
 		channelName
 	});
 
-	contestant.environment.channel({
+	game.environment.channel({
 		announce
 	});
 };

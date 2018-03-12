@@ -1,14 +1,14 @@
-const announceBossWillSpawn = require('./bossWillSpawn.js');
-const announceCardDrop = require('./cardDrop.js');
+const announceBossWillSpawn = require('./boss-will-spawn.js');
+const announceCardDrop = require('./card-drop.js');
 const announceCardPlayed = require('./card-played.js');
 const announceContestant = require('./contestant.js');
-const announceContestantLeave = require('./contestantLeave.js');
+const announceContestantLeave = require('./contestant-leave.js');
 const announceDeath = require('./death.js');
 const announceDiscoveryFound = require('./discovery-found.js');
 const announceEffect = require('./effect.js');
-const announceEndOfDeck = require('./endOfDeck.js');
+const announceEndOfDeck = require('./end-of-deck.js');
 const announceFight = require('./fight.js');
-const announceFightConcludes = require('./fightConcludes.js');
+const announceFightConcludes = require('./fight-concludes.js');
 const announceHeal = require('./heal.js');
 const announceHit = require('./hit.js');
 const announceItemUsed = require('./item-used.js');
@@ -16,12 +16,12 @@ const announceLeave = require('./leave.js');
 const announceMiss = require('./miss.js');
 const announceModifier = require('./modifier.js');
 const announceNarration = require('./narration.js');
-const announceNextRound = require('./nextRound.js');
-const announceNextTurn = require('./nextTurn.js');
+const announceNextRound = require('./next-round.js');
+const announceNextTurn = require('./next-turn.js');
 const announceRolled = require('./rolled.js');
 const announceStay = require('./stay.js');
-const announceTurnBegin = require('./playerTurnBegin.js');
-const announceXPGain = require('./xpGain.js');
+const announceTurnBegin = require('./player-turn-begin.js');
+const announceXPGain = require('./xp-gain.js');
 
 const initialize = (game) => {
 	const events = [
