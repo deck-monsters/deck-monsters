@@ -1,7 +1,7 @@
 // A Battlefield
 
 const prompt = require('prompt'); // eslint-disable-line node/no-unpublished-require
-const shuffle = require('lodash.shuffle');
+const { shuffle } = require('./helpers/random');
 
 const { Game } = require('./index.js');
 const pause = require('./helpers/pause');
@@ -51,7 +51,6 @@ const CHAR_ID = 861;
 const charAnnouncer = what => announcer('charlemagne', what);
 let char;
 let charCards;
-
 
 return Promise
 	.resolve()

@@ -106,3 +106,7 @@ Use **Turborepo** for task orchestration (`turbo build`, `turbo test` runs every
 - Migrate TypeScript incrementally — `allowJs: true` initially so JS and TS files coexist during migration
 - The 93 existing test files are the safety net for the migration; get Vitest running on them first before touching source files
 - `creatures/base.js` is the hardest file to type (2000 lines, many dynamic patterns) — leave it for last
+
+## Future Evaluation Item
+
+- Keep direct Mocha as the short-term runner after removing `@salesforce-mc/devtest`, then re-evaluate a Vitest migration once TypeScript migration risk is lower and test behavior parity can be validated with less disruption.

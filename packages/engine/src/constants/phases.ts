@@ -1,0 +1,3 @@
+export const ATTACK_PHASE = 'ATTACK_PHASE';
+export const DEFENSE_PHASE = 'DEFENSE_PHASE';
+export const GLOBAL_PHASE = 'GLOBAL_PHASE';

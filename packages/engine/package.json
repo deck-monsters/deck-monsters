@@ -1,0 +1,45 @@
+{
+  "name": "@deck-monsters/engine",
+  "version": "0.13.1",
+  "description": "Deck Monsters game engine — TypeScript/ESM",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test": "mocha",
+    "test:watch": "mocha --watch",
+    "test:coverage": "c8 mocha"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1020.0",
+    "escape-string-regexp": "^1.0.5",
+    "fantasy-names": "^1.1.2",
+    "grab-color-names": "^1.1.2",
+    "node-emoji": "^1.8.1",
+    "roll": "^1.2.0",
+    "word-wrap": "^1.2.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.0.0",
+    "@types/chai-as-promised": "^8.0.2",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^24.6.0",
+    "@types/sinon": "^17.0.0",
+    "@types/sinon-chai": "^3.2.12",
+    "c8": "^10.0.0",
+    "chai": "^6.2.2",
+    "chai-as-promised": "^8.0.2",
+    "mocha": "^11.7.4",
+    "sinon": "^21.0.0",
+    "sinon-chai": "^4.0.1",
+    "tsx": "^4.0.0",
+    "typescript": "^5.9.3"
+  }
+}

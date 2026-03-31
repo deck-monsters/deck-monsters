@@ -1,9 +1,8 @@
 /* eslint-disable class-methods-use-this, max-len */
-const Promise = require('bluebird');
-
 const { monsterCard } = require('../helpers/card');
 const allMonsters = require('../monsters/helpers/all.js');
 const generateDocs = require('./generate-docs');
+const { eachSeries } = require('../helpers/promise');
 
 const monsterList = allMonsters.map(({ creatureType }) => creatureType);
 
@@ -40,7 +39,7 @@ Here are some sample beginner level monsters:
 \`\`\``;
 
 	return output(header, true)
-		.then(() => Promise.each(allMonsters, Monster => output(monsterCard(new Monster(), true))));
+		.then(() => eachSeries(allMonsters, Monster => output(monsterCard(new Monster(), true))));
 };
 
 const monsterManual = ({ channel, output }) => generateDocs({ channel, generate: generateMonsterManual, output });
