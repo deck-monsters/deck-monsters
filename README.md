@@ -37,32 +37,41 @@ Platform (Slack / Discord / Web / Mobile)
 
 ### Building a Connector
 
+Both channel callbacks share the same shape. The engine calls them with either an announcement or an interactive question:
+
 ```javascript
 const { Game, restoreGame } = require('deck-monsters')
 
-// Called whenever the engine broadcasts to the shared ring channel
-const publicChannel = async (message) => { /* post to #ring channel */ }
+// Both channel callbacks take { announce?, question?, choices?, delay? }
+// announce  → post the string to the channel; resolve when sent
+// question  → prompt the user and resolve with their answer (2-min timeout)
+const publicChannel = ({ announce }) => postToChannel('#ring', announce)
 
-// Restore a previously saved game, or create a fresh one
+const privateChannel = ({ announce, question, choices }) => {
+  if (announce) return sendDM(userId, announce)
+  if (question) return promptUser(userId, question, choices)
+}
+
+// Initialize (restore from DB or create fresh)
 const game = savedState
   ? restoreGame(publicChannel, savedState, console.log)
   : new Game(publicChannel, {}, console.log)
 
-// Persist state whenever it changes
-game.on('stateChange', async () => {
-  const state = game.saveState  // base64-gzipped JSON
-  await db.saveRoomState(roomId, state)
-})
+// Wire up persistence — engine calls this automatically on every state change
+game.saveState = (state) => db.saveRoomState(roomId, state)
 
-// Get or create a player character
-const privateChannel = async (message) => { /* DM the player */ }
-const character = await game.getCharacter(privateChannel, userId, { id: userId, name })
+// Get the action object for a player (creates character on first call)
+const player = await game.getCharacter(privateChannel, userId, { id: userId, name })
 
-// Map platform commands to game actions
-await character.spawnMonster({ type: 'Basilisk', name: 'Fang' })
-await character.sendMonsterToTheRing({ monsterName: 'Fang' })
-await character.equipMonster({ monsterName: 'Fang', cardSelection: [...] })
+// Map platform inputs to action methods
+await player.spawnMonster({ /* prompts user interactively via privateChannel */ })
+await player.sendMonsterToTheRing({ monsterName: 'Fang' })
+await player.equipMonster({ monsterName: 'Fang', cardSelection: [...] })
+await player.buyItems()   // interactive: shows shop, prompts for selection
+await player.lookAt('basilisk')
 ```
+
+See [CLAUDE.md](CLAUDE.md) for the full action method list and deeper architecture notes.
 
 ---
 

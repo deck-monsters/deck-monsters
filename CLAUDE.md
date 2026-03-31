@@ -47,29 +47,90 @@ shared/                # BaseClass, test utilities (test-setup.js)
 ## How the Game Engine Works
 
 ### Adapter Pattern
-The engine has **no Slack/Discord/HTTP code**. Connectors instantiate the game and relay commands:
+The engine has **no Slack/Discord/HTTP code**. Connectors instantiate the game and provide two things:
+1. A `publicChannel` callback — the engine calls this to broadcast ring events to everyone
+2. A `privateChannel` callback — the engine calls this to DM a specific player
+
+Both callbacks share the same signature: `({ announce, question?, choices?, delay? }) => Promise`
+
+- `{ announce }` — fire-and-forget message (most calls)
+- `{ question, choices }` — interactive prompt; the connector must ask the user and resolve with their answer. Used during multi-step flows like equipping a monster or shopping.
 
 ```javascript
 const { Game, restoreGame } = require('deck-monsters')
 
-// Provide two channel callbacks: public (broadcast) and private (DM)
-const game = new Game(publicChannelFn, options, logger)
-const character = await game.getCharacter(privateChannelFn, userId, userInfo)
+// publicChannel is called for ring broadcasts
+const publicChannel = ({ announce }) => postToChannel('#ring', announce)
 
-// Then map platform commands → character/game methods
-await character.spawnMonster({ type: 'Basilisk', name: 'Fang' })
-await character.sendMonsterToTheRing({ monsterName: 'Fang' })
+// privateChannel is called for DMs; must also handle interactive questions
+const privateChannel = ({ announce, question, choices }) => {
+  if (announce) return sendDM(userId, announce)
+  if (question) return promptUser(userId, question, choices) // must return Promise<answer>
+}
+
+// Initialize
+const game = savedState
+  ? restoreGame(publicChannel, savedState, log)
+  : new Game(publicChannel, {}, log)
+
+// Wire up state persistence
+game.saveState = (state) => db.save(state) // called automatically on stateChange
+
+// Get the action object for a player
+const player = await game.getCharacter(privateChannel, userId, { id, name })
 ```
 
-### State Serialization
-```javascript
-// Save (triggered by stateChange events):
-zlib.gzipSync(JSON.stringify(game)) → base64 string → stateSaveFunc + S3
+### `getCharacter()` returns an action object
 
-// Restore:
+`game.getCharacter(privateChannel, channelName, { id, name, type, gender, icon })` resolves with an object of bound action methods — not a Character class. All actions go through this object:
+
+```javascript
+player.spawnMonster({ /* options */ })
+player.equipMonster({ monsterName, cardSelection })
+player.sendMonsterToTheRing({ monsterName })
+player.callMonsterOutOfTheRing({ monsterName })
+player.lookAt(thing)              // look at a card, monster, item, handbook, etc.
+player.lookAtCards({ deckName })
+player.lookAtMonster({ monsterName })
+player.lookAtMonsters({ inDetail })
+player.lookAtRing({ ringName })
+player.buyItems()
+player.sellItems()
+player.giveItemsToMonster({ monsterName, itemSelection })
+player.takeItemsFromMonster({ monsterName, itemSelection })
+player.useItemsOnMonster({ monsterName, itemSelection })
+player.useItems({ itemSelection })
+player.dismissMonster({ monsterName })
+player.reviveMonster({ monsterName })
+player.editCharacter({ characterName })
+player.editMonster({ monsterName })
+```
+
+### `handleCommand` — missing from current engine
+
+The original Jane connector used `game.handleCommand({ command })` to parse natural language strings like `"spawn monster"` or `"send a monster to the ring"` and return an action function. **This method is not in the current engine source.** It is a gap that needs to be filled for the revival. Options:
+
+- **Re-add `handleCommand` to the engine** — useful for chat-style connectors (Slack, Discord text) that receive free-form text
+- **Each connector maps its own commands** — appropriate for Discord slash commands, web REST endpoints, and mobile buttons, which don't need NL parsing
+
+### State Serialization
+
+```javascript
+// `game.saveState` is a getter/setter pair:
+
+// Setting it stores the save function:
+game.saveState = (base64GzipString) => db.save(base64GzipString)
+
+// Getting it returns a function that serializes and calls the stored function:
+//   zlib.gzipSync(JSON.stringify(game)) → base64 → stateSaveFunc() + aws.save()
+// The engine calls this.saveState() automatically on every 'stateChange' event.
+
+// Restore from saved state:
 restoreGame(publicChannel, base64GzipString, logger)
 // Hydrates characters → monsters → cards → items recursively
 ```
+
+Jane stored state in Hubot Brain (Redis) as primary storage; S3 was a safety-net backup. For the revival, Postgres is the primary store and S3 backup is optional.
 
 ### Game Loop
 1. Monsters join ring → `ring.addMonster()`
@@ -80,7 +141,7 @@ restoreGame(publicChannel, base64GzipString, logger)
 6. Ring loops; players can swap/update decks between fights
 
 ### Channel Manager
-Messages are queued and batched (3000-char max per message) to respect platform rate limits. Connectors receive a callback that the engine calls with formatted strings.
+The engine queues and batches outgoing messages (3000-char max per batch) to respect platform rate limits. The connector's `publicChannel` callback is called with already-batched strings. Jane additionally added a 1200ms delay between messages; new connectors should implement similar pacing appropriate to their platform.
 
 ## Development Commands
 
@@ -123,14 +184,17 @@ Note: AWS env var naming is Hubot-legacy and should be generalized.
 
 ## Architecture Notes for New Connectors
 
-When building a new connector:
-1. Implement `publicChannelFn(message): Promise` — posts to the shared channel/room
-2. Implement `privateChannelFn(message): Promise` — sends a DM to the player
-3. Map platform events (slash commands, messages) to `character.*` and `game.*` methods
-4. Implement `stateSaveFunc(base64GzipString)` and persist it (DB, file, etc.)
-5. On startup, load the saved string and pass to `restoreGame()`
+See "How the Game Engine Works" above for the full API details. Quick checklist:
 
-The engine emits `stateChange` whenever anything significant happens; listen for it and trigger your save.
+1. Implement the channel callback: `({ announce, question?, choices?, delay? }) => Promise`
+   - `announce` — post the string to the channel/DM; return after sending
+   - `question` + `choices` — prompt the user and resolve with their text answer; timeout after ~2 minutes
+2. Initialize the game: `restoreGame(publicChannel, savedState, log)` or `new Game(publicChannel, {}, log)`
+3. Set the save function: `game.saveState = (state) => db.save(state)` — engine calls this automatically
+4. Get a player's action object: `await game.getCharacter(privateChannel, userId, { id, name })`
+5. Map platform inputs (slash commands / button presses / text) to action object methods
+
+The `question`/`choices` pattern is used during interactive multi-step flows (choosing which monster to equip, which item to buy, etc.). Connectors that only support one-shot commands (e.g., REST endpoints) will need to either break these into separate requests or trigger a guided flow via DM.
 
 ## Planned Enhancements
 

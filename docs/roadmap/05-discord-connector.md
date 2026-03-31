@@ -9,12 +9,22 @@ Build a Discord bot adapter that makes Deck Monsters playable in any Discord ser
 
 ## How It Fits the Engine
 
-The game engine is connector-agnostic. The Discord adapter provides:
+The game engine is connector-agnostic. The Discord adapter provides two channel callbacks with this shape:
 
-1. `publicChannel(message)` → posts to a designated `#deck-monsters` text channel
-2. `privateChannel(message)` → sends a Discord DM or ephemeral reply to the player
-3. Maps Discord slash commands to `character.*` / `game.*` calls
-4. Persists game state via the new `StateStore` (see hosting issue)
+```typescript
+type ChannelFn = (args: { announce?: string; question?: string; choices?: string[] }) => Promise<string | undefined>
+```
+
+- `{ announce }` — post the string to the channel/DM
+- `{ question, choices }` — prompt the user and resolve with their answer; timeout after ~2 minutes
+
+Discord adapter responsibilities:
+1. `publicChannel` → posts to a designated `#deck-monsters` text channel
+2. `privateChannel` → sends a Discord DM or ephemeral reply; handles interactive questions
+3. Maps slash commands to `player.*` action object methods (from `game.getCharacter()`)
+4. Persists game state via the shared state store (see hosting issue)
+
+See the Slack connector doc for notes on `handleCommand` — the same gap applies here if we want text-based `dm <command>` style interaction in addition to slash commands.
 
 ## Suggested Tech Stack
 
