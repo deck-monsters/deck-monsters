@@ -58,7 +58,7 @@ export class ForkedMetalRodCard extends HornGore {
 	}
 
 	override get mechanics(): string {
-		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successfull ${this.flavors.spike} hit.\n\nChance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.`;
+		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successful ${this.flavors.spike} hit.\n\nChance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.`;
 	}
 
 	override effect(

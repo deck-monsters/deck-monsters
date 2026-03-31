@@ -138,12 +138,19 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	lookAtCards(channel: ChannelFn): Promise<void> {
-		return super.lookAtItems(channel, this.deck).catch(() => {
-			channel({
-				announce: "Strangely enough, somehow you don't have any cards.",
-				delay: 'short',
-			});
-		});
+		const deck: CardInstance[] = (this.deck as CardInstance[]) || [];
+
+		if (deck.length < 1) {
+			channel({ announce: "Strangely enough, somehow you don't have any cards.", delay: 'short' });
+			return Promise.resolve();
+		}
+
+		const sorted = _sortCardsAlphabetically(deck);
+		const numbered = sorted
+			.map((card: CardInstance, i: number) => `${i + 1}) ${(card as any).itemType || (card as any).name}`)
+			.join('\n');
+
+		return Promise.resolve().then(() => { channel({ announce: `Cards:\n${numbered}` }); });
 	}
 
 	sellItems(channel: ChannelFn): Promise<void> {

@@ -21,6 +21,7 @@ export { announceTurnBegin } from './playerTurnBegin.js';
 export { announceRolled } from './rolled.js';
 export { announceStay } from './stay.js';
 export { announceXPGain } from './xpGain.js';
+export { announceLevelUp } from './level-up.js';
 
 import { announceBossWillSpawn } from './bossWillSpawn.js';
 import { announceCard as announceCardPlayed } from './card-played.js';
@@ -45,6 +46,7 @@ import { announceTurnBegin } from './playerTurnBegin.js';
 import { announceRolled } from './rolled.js';
 import { announceStay } from './stay.js';
 import { announceXPGain } from './xpGain.js';
+import { announceLevelUp } from './level-up.js';
 
 interface EventListener {
 	event: string;
@@ -76,6 +78,8 @@ export function initialize(game: any): void {
 		{ event: 'ring.fight', listener: announceFight },
 		{ event: 'ring.fightConcludes', listener: announceFightConcludes },
 		{ event: 'ring.gainedXP', listener: announceXPGain },
+		{ event: 'creature.levelUp', listener: (_className: string, _instance: any, { monster, level }: { monster: any; level: number }) =>
+			announceLevelUp(game.publicChannel, monster, level) },
 		{ event: 'ring.narration', listener: announceNarration },
 		{ event: 'ring.remove', listener: announceContestantLeave },
 		{ event: 'ring.roundComplete', listener: announceNextRound },

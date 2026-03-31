@@ -1,26 +1,27 @@
-/* eslint-disable class-methods-use-this, max-len */
-const { actionCard, itemCard } = require('../helpers/card');
-const allCards = require('../cards/helpers/all.js');
-const allItems = require('../items/helpers/all.js');
-const generateDocs = require('./generate-docs');
-const { eachSeries } = require('../helpers/promise');
+/* eslint-disable max-len */
+import { actionCard, itemCard } from '../packages/engine/src/helpers/card.js';
+import { all as allCards } from '../packages/engine/src/cards/helpers/all.js';
+import allItems from '../packages/engine/src/items/helpers/all.js';
+import { eachSeries } from '../packages/engine/src/helpers/promise.js';
+import generateDocs from './generate-docs.js';
 
 const cardList = allCards.map(({ cardType }) => cardType);
 const itemList = allItems.map(({ itemType }) => itemType);
 
-const generatecardCatalogue = (output) => {
+const generateCardCatalogue = (output) => {
 	const header =
 `
 \`\`\`
-				.------..------..------..------..------.
-				|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
-				| :/\\: || (\\/) || :(): || :/\\: || :/\\: |
-				| :\\/: || :\\/: || ()() || (__) || :\\/: |
-				| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
-				\`------'\`------'\`------'\`------'\`------'
+			.------..------..------..------..------.
+			|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
+			| :/\\: || (\\/) || :(): || :/\\: || :/\\: |
+			| :\\/: || :\\/: || ()() || (__) || :\\/: |
+			| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
+			\`------'\`------'\`------'\`------'\`------'
 \`\`\`
 
-*The Card Catalogue:*
+*The Card Catalogue (Player Reference):*
+Cards available in the game — name, description, cost, and rarity.
 
 ${cardList.join('\n')}
 `;
@@ -36,6 +37,6 @@ ${itemList.join('\n')}
 		.then(() => eachSeries(allItems, Item => output(itemCard(new Item(), false))));
 };
 
-const cardCatalogue = ({ channel, output }) => generateDocs({ channel, generate: generatecardCatalogue, output });
+const cardCatalogue = ({ channel, output } = {}) => generateDocs({ channel, generate: generateCardCatalogue, output });
 
-module.exports = cardCatalogue;
+export default cardCatalogue;

@@ -15,63 +15,64 @@ The original Slack connector was a Hubot script named **Jane**. It ran inside a 
 - Used a `hubot-conversation` library for multi-turn dialogs (interactive questions with a 120-second timeout)
 - Had one admin command: `permanently delete all deck monsters game state` (role-gated)
 
-```javascript
-// Jane's channel callback — dual-purpose: announce or question
-const channel = ({ id, msg }) => ({ announce, question, choices }) => new Promise((resolve, reject) => {
-  if (announce) {
-    robot.sendDelayedMessage({ roomId: id, message: announce, delay: 1200 })
-      .then(() => resolve(announce))
-  } else if (question && msg) {
-    // hubot-conversation dialog with 120-second timeout
-    const dialog = conversation.startDialog(msg, 120000)
-    // ... prompt user, resolve with answer
-  }
-})
+## handleCommand — Available in the Engine
+
+The `handleCommand` method has been re-added to the engine. `Game.handleCommand({ command })` delegates to the `commands/` module, which validates input with Zod (`commandInputSchema`) and dispatches to four handler modules: `monster.ts`, `character.ts`, `look-at.ts`, and `store.ts`.
+
+Chat-based connectors (Slack, Discord text commands) can use this directly — no need to reimplement command parsing.
+
+## How It Fits the Event Bus
+
+Like the Discord connector, the Slack connector subscribes to a room's `RoomEventBus` and translates `GameEvent` objects into Slack messages:
+
+```
+Slack message: "dm send fang to the ring"
+  → connector strips "dm " prefix
+  → looks up room for this workspace+channel (via RoomManager)
+  → looks up userId for this Slack user (via user_connectors)
+  → calls game.handleCommand({ command: "send fang to the ring" })
+  → engine processes command, publishes GameEvents
+  → Slack connector (subscribed to bus) receives events
+  → posts to #deck-monsters channel (public) or DMs the user (private)
+  → adds 1200ms delay between messages to respect Slack rate limits
 ```
 
-## The `handleCommand` Gap
+### Prompt Handling
 
-Jane called `game.handleCommand({ command })` to parse natural language commands. **This method does not exist in the current engine source.** It was most likely defined in Jane's own helpers (the `../helpers/` directory referenced in the imports) — a command parser that mapped strings like `"spawn monster"` to the appropriate `player.*` action method and returned it as a function for Hubot to call.
+Interactive prompts (equipping, shopping) are modeled as `PromptRequest` events on the bus. The Slack connector handles these by:
+1. Posting the question text to the user's DM
+2. Listening for a reply within a 120-second timeout (matching Jane's original behavior)
+3. Sending the answer back as a `PromptResponse`
 
-When the Jane helpers are found, check for a command-routing/parsing file that maps command strings to action methods. This is the implementation reference for rebuilding `handleCommand`.
-
-It needs to be either:
-
-1. Re-added to the engine (recommended for chat-based connectors like Slack and Discord text commands) — parses strings like `"spawn monster"`, `"send a monster to the ring"`, `"look at basilisk"` and returns the matching action function
-2. Or replaced by explicit command routing in the connector (each command wired up separately with its own regex)
-
-Option 1 is cleaner because the command vocabulary lives in the engine, not scattered across connectors. It also means all chat connectors (Slack, Discord) share the same command parsing.
+Alternatively, use Slack's **Block Kit** interactive components (buttons, select menus) for a more modern UX — but the text-reply pattern should work as a baseline.
 
 ## Modern Slack Approach
 
 Rebuild Jane using Slack's official **Bolt SDK** (`@slack/bolt`), replacing Hubot:
 
 - Socket Mode or Events API (not the deprecated RTM API Hubot used)
-- Same `dm <command>` text trigger, or optionally slash commands
-- Same channel callback pattern — post with delay, handle interactive questions
-- State stored in shared Postgres DB (see hosting issue), not Hubot Brain
+- Same `dm <command>` text trigger
+- State stored in shared Postgres DB (see backend hosting doc), not Hubot Brain
+- Message pacing handled by the connector (1200ms between batched messages), not the engine
 
 ```typescript
-// Modern equivalent of Jane's channel function
-const makeChannel = (channelId: string, client: WebClient) =>
-  async ({ announce, question, choices }: ChannelArgs) => {
-    if (announce) {
-      await sleep(1200)
-      await client.chat.postMessage({ channel: channelId, text: announce })
-      return announce
-    }
-    if (question) {
-      await client.chat.postMessage({ channel: channelId, text: question })
-      return waitForReply(channelId, choices, 120_000) // 2-min timeout
-    }
+// The Slack connector subscribes to the event bus and posts messages
+const slackEventHandler = (event: GameEvent) => {
+  if (event.scope === 'public') {
+    await sleep(1200);
+    await client.chat.postMessage({ channel: ringChannelId, text: event.text });
+  } else if (event.scope === 'private') {
+    const slackUserId = await lookupSlackId(event.targetUserId);
+    await client.chat.postMessage({ channel: slackUserId, text: event.text });
   }
+};
 ```
 
 ## Multi-Workspace Support
 
-- Each Slack workspace gets its own room by default
-- Workspace ID serves as `room_id` for the default room
-- Sub-rooms could be created per Slack channel for different groups within a workspace (see multi-room issue)
+- Each Slack workspace gets its own default room
+- Workspace ID serves as the external ID for room lookup (managed by the connector)
+- Sub-rooms could be created per Slack channel for different groups within a workspace (see multi-room doc)
 
 ## Admin Commands
 
@@ -82,13 +83,15 @@ Preserve the admin reset command. Gate it behind a config-driven admin user list
 
 ## Tasks
 
-- [ ] Re-add `handleCommand` to the engine (or add a command-routing module)
-- [ ] Create `connector-slack` package in the monorepo
+- [ ] Create `packages/connector-slack` in the monorepo
 - [ ] Initialize Bolt app (Socket Mode recommended for simplicity)
-- [ ] Implement the dual-purpose channel callback with message delay
-- [ ] Implement multi-turn dialog (question/choices) using Bolt's `say` + reply listener
-- [ ] Wire `dm <command>` text trigger to `handleCommand`
-- [ ] Integrate with shared Postgres state storage
+- [ ] Implement event bus subscription for public events → channel messages
+- [ ] Implement event bus subscription for private events → DMs
+- [ ] Implement prompt handling (text reply or Block Kit interactive components)
+- [ ] Wire `dm <command>` text trigger to `game.handleCommand()`
+- [ ] Add 1200ms message pacing
+- [ ] Integrate with RoomManager (workspace+channel → room mapping)
+- [ ] Integrate with auth (Slack user ID → canonical userId via `user_connectors`)
 - [ ] Implement admin commands with config-driven role checking
 - [ ] Document setup for workspace admins (bot token scopes, Socket Mode setup)
 - [ ] Test in a real Slack workspace

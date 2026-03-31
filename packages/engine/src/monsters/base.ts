@@ -184,7 +184,8 @@ ${bonuses.join('\n')}${strategyLine}`;
 
 		if (cards.length > 0) {
 			announce = cards.reduce(
-				(previousCards: string, card: CardInstance) => previousCards + actionCard(card as any),
+				(previousCards: string, card: CardInstance, index: number) =>
+					previousCards + `${index + 1}) ` + actionCard(card as any),
 				'Cards:\n',
 			);
 		} else {

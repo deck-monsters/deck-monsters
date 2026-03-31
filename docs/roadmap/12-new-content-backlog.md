@@ -118,6 +118,8 @@ An "Inn" with a **job request board**. Players take jobs and receive encounter b
 
 An endgame system: **daily/weekly or player-initiated tournaments** with multiple rounds, NPC opponents, prizes, titles, and awards. Provides a goal structure beyond just grinding ring XP.
 
+With the event bus, tournament brackets and results naturally become `GameEvent` objects, viewable in real time across all connectors.
+
 ### Team Battles + Better XP (upstream #257)
 
 XP formula adjustments for team combat (multiple players' monsters vs. a single powerful opponent or NPC boss). Currently XP doesn't scale well for team scenarios.
@@ -138,7 +140,7 @@ End-of-battle mechanic for large group encounters (4+ players defeating a boss w
 
 ## Currency Symbol (upstream #262)
 
-Replace the word "coins" with a symbol. Upstream suggests ㊥ or similar. Worth deciding on a consistent symbol to use across all connectors.
+Replace the word "coins" with a symbol. Upstream suggests ㊥ or similar. Worth deciding on a consistent symbol to use across all connectors and the `GameEvent.text` output.
 
 ---
 

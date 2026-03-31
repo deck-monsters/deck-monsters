@@ -5,6 +5,22 @@ import getClosingTime from './closing-time.js';
 // Card choosing is referenced via any until cards module is ready
 type ChooseCards = (opts: { cards: any[]; channel: any; showPrice?: boolean; priceOffset?: number }) => Promise<any[]>;
 
+const ownedCountSuffix = (character: any, itemType: string): string => {
+	const owned = (character.items as any[] || []).filter((i: any) => i.itemType === itemType).length;
+	return owned > 0 ? ` [own ${owned}]` : '';
+};
+
+const addOwnershipToChoiceQuestion = (character: any, items: any[]) =>
+	({ itemChoices }: { itemChoices: string }): string => {
+		const lines = itemChoices.split('\n').map((line: string) => {
+			const match = line.match(/^(\d+\))\s+(.+?)\s*(-\s*\d+.*)?$/);
+			if (!match) return line;
+			const itemType = match[2].trim();
+			return line + ownedCountSuffix(character, itemType);
+		});
+		return `Choose one or more of the following items:\n\n${lines.join('\n')}`;
+	};
+
 const buyItems = ({
 	character,
 	channel,
@@ -41,8 +57,8 @@ We have ${numberOfItems} and ${numberOfCards}. Which would you like to see?
 			if (Number(answer) === 1) {
 				if (items.length < 1) return Promise.reject(channel({ announce: "We don't have any items here." }));
 
-				return chooseItems({ items, channel, showPrice: true, priceOffset })
-					.then((choices: any[]) => ({ choices, priceOffset }));
+			return chooseItems({ items, channel, showPrice: true, priceOffset, getQuestion: addOwnershipToChoiceQuestion(character, items) })
+				.then((choices: any[]) => ({ choices, priceOffset }));
 			} else if (Number(answer) === 2) {
 				if (cards.length < 1) return Promise.reject(channel({ announce: "We don't have any cards here." }));
 

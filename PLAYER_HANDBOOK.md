@@ -91,6 +91,9 @@
 
     `sell to the shop` - Lets you sell items to the shop
 
+    ## Your Character
+
+    `edit my character` - Edit your character's name and icon
 
     # Basic Build Strategies
 

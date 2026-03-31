@@ -1,10 +1,7 @@
-/* eslint-disable no-console */
-
-const startCase = require('../helpers/start-case');
-
-const { draw } = require('../cards');
-const { randomCharacter } = require('../characters');
-const { all: Monsters } = require('../monsters');
+import { startCase } from '../packages/engine/src/helpers/start-case.js';
+import { draw } from '../packages/engine/src/cards/index.js';
+import { randomCharacter } from '../packages/engine/src/characters/index.js';
+import { all as Monsters } from '../packages/engine/src/monsters/index.js';
 
 function getCardProbabilities () {
 	const levels = [1, 5, 10, 15, 25];
@@ -34,4 +31,4 @@ function getCardProbabilities () {
 	}, {});
 }
 
-module.exports = getCardProbabilities;
+export default getCardProbabilities;

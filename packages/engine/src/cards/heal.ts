@@ -105,7 +105,7 @@ export class HealCard extends BaseCard<HealCardOptions> {
 
 		if (strokeOfLuck) {
 			this.emit('narration', {
-				narration: `Stoke of Luck!\nWait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`,
+				narration: `Stroke of Luck!\nWait... wasn't this the questionable phial you found on the floor behind the shelf? Is it safe? Desperate times... Down the hatch!`,
 			});
 			if (!success) outcome = 'The phial was empty!';
 		} else if (curseOfLoki) {

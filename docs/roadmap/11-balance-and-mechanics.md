@@ -16,7 +16,7 @@ Currently some cards have no crit fail (natural 1) outcome. Every card should ha
 
 Related: **#182** — Crit fail on a time-shift card specifically should freeze the attacker for a turn and make them untargetable.
 
-**Action**: Audit all cards for missing crit fail handlers. Add appropriate outcomes.
+**Action**: Audit all cards for missing crit fail handlers. Add appropriate outcomes. The `curseOfLoki` mechanic (computed in `helpers/chance.ts`, propagated through `checkSuccess`) already provides the flag — the issue is that not all cards act on it.
 
 ---
 
@@ -39,7 +39,7 @@ This is a significant change. Requires careful migration for existing characters
 
 ## Initiative (upstream #189)
 
-Play order in the ring is currently deterministic (order monsters entered, or fixed). It should be based on an initiative roll:
+Play order in the ring is currently based on entry order (shuffled on add). It should be based on an initiative roll:
 
 - Each monster rolls **1d20** at the start of each encounter
 - Modified by a **SPEED stat** bonus (no current monster class has a speed advantage — reserved for a future Thief/Rogue class)
@@ -47,7 +47,7 @@ Play order in the ring is currently deterministic (order monsters entered, or fi
 
 This adds meaningful variance to fights and prevents the "first mover always wins" dynamic.
 
-**Action**: Add initiative roll to ring encounter start. Add SPEED stat (even if all current monsters start at 0 modifier).
+**Action**: Add initiative roll to `Ring.startEncounter()`. Add SPEED stat to `constants/stats.ts` (even if all current monsters start at 0 modifier).
 
 ---
 
@@ -82,14 +82,30 @@ Add a "crit tick" system to reward skilled play and create a stat progression pa
 
 Each fight in the ring should post its battle narration in a **thread** rather than flooding the main ring channel. The main channel gets a short summary post; full narration lives in the thread.
 
-This is especially natural for:
-- **Discord**: native thread support per message
-- **Web app**: collapsible fight threads in the ring feed
-- **Slack**: native thread replies
+This maps naturally onto the event bus architecture:
 
-The engine's `ChannelManager` would need a concept of "thread" vs "channel" for the public channel callback.
+- The engine emits a `ring.fightStart` event (summary, posted to the main channel)
+- Subsequent combat events (`card.played`, `damage.dealt`, etc.) are tagged with a `threadId` linking them to the fight
+- Connectors decide how to render threads:
+  - **Discord**: native thread support per message
+  - **Web app**: collapsible fight sections in the ring feed
+  - **Slack**: native thread replies
+  - **Mobile**: expandable/collapsible fight sections
 
-**Action**: Add optional thread context to the public channel callback signature. Implement in Discord and web connectors.
+The `GameEvent` type could include an optional `threadId` field. Connectors that don't support threads (or haven't implemented thread rendering) just ignore it and display events inline as before.
+
+**Action**: Add optional `threadId` to `GameEvent`. Emit a `ring.fightStart` summary event. Tag all subsequent fight events with the thread ID.
+
+---
+
+## Critical Bug Fixes Completed (prerequisite to balance work)
+
+Before balance work begins, two critical stat calculation bugs were fixed in the TypeScript migration:
+
+- **Double-counted level bonus**: `getModifier()` was adding the level boost AND `getPreBattlePropValue()` was adding it again for STR/DEX/INT. Fixed: level scaling lives only in `getModifier()`, `getPreBattlePropValue()` uses the modifier as-is.
+- **Wrong property key**: `this.modifiers[modifier]` used the numeric modifier value as an object key (always `undefined`). Fixed to `permanentModifiers[targetProp]` (permanent/option modifiers only); encounter modifiers are handled separately in `getProp()`.
+
+These bugs meant all creatures were effectively one extra level-worth stronger than intended, and permanent stat modifiers (from `setModifier(..., permanent=true)`) were silently ignored. All 365 tests pass with the corrected behavior.
 
 ---
 
@@ -99,7 +115,8 @@ The engine's `ChannelManager` would need a concept of "thread" vs "channel" for 
 - [ ] Implement time-shift specific crit fail (frozen + untargetable) (upstream #182)
 - [ ] Design and implement new stat variance/modifier system (upstream #188)
 - [ ] Decide migration path for existing characters on the new stat system
-- [ ] Add initiative roll to encounter start; add SPEED stat (upstream #189)
+- [ ] Add initiative roll to `Ring.startEncounter()`; add SPEED stat (upstream #189)
 - [ ] Audit card power by level tier; add counterparts/saving throws (upstream #190)
 - [ ] Implement crit tick tracking and level-up d100 resolution (upstream #164)
-- [ ] Add thread support to public channel callback; implement in Discord + web (upstream #83)
+- [ ] Add `threadId` to `GameEvent`; implement thread rendering in Discord + web (upstream #83)
+- [ ] Build a battle simulation harness for mechanics testing and balance tuning

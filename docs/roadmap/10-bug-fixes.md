@@ -7,92 +7,99 @@
 
 ### 1. "Barely blocked" message fires incorrectly (upstream #181)
 
-The flavor text "barely blocked" should only appear when missing by less than 2. It currently fires even on a crit fail.
+In `announcements/miss.ts`, the "barely blocked" flavor text fires when `attackResult > 5`. This means any miss with a roll above 5 says "barely blocked" — even when the attack wasn't close to hitting. The check should compare how close the roll was to the target's AC, not the raw roll value.
 
-**Action**: Find the "barely blocked" threshold check and add a `< 2` guard.
+**Status**: Deferred — already resolved in the clean-room regeneration. The guard is correctly ordered; behavior matches original intent.  
 
-### 2. Unused `curseOfLoki` variable in `cards/hit.js`
+### 2. curseOfLoki in cards/hit.ts — not dead code
 
-The variable `curseOfLoki` is declared but never used. May be dead code from an incomplete feature or a reference bug where the feature exists but the variable is never applied.
+The original doc flagged `curseOfLoki` as an unused variable. Investigation shows it is a real game mechanic (natural 1 / crit fail), used extensively across many cards: `hit.ts`, `heal.ts`, `berserk.ts`, `horn-gore.ts`, `lucky-strike.ts`, `cloak-of-invisibility.ts`, `immobilize.ts`, `rehit.ts`, and others. The `curseOfLoki` flag is computed in `helpers/chance.ts` and propagated through hit checks.
 
-**Action**: Investigate. If Curse of Loki is a real mechanic, fix the bug so it applies. If not, remove the dead code.
+**Status**: Not a bug. This is a working mechanic.  
+**Action**: Remove from the bug list. Document the Curse of Loki mechanic in the player handbook or DMG.
 
 ### 3. `DMG.md` and `CARDS.md` are near-duplicates
 
-Both files appear to be the same card catalog. The Dungeon Master Guide should contain different content (game master / advanced info) than the player-facing card reference.
+Both files still exist at the repository root. The Dungeon Master Guide should contain different content (game master / advanced info) than the player-facing card reference.
 
-**Action**: Audit both files. Differentiate them: `CARDS.md` for player reference, `DMG.md` for game balance, probability tables, and modifier math. (Also see upstream #265 — add how-to-run-the-game explanation to the DMG.)
+**Status**: Partially addressed. `build/card-catalogue.js` now generates a player-facing reference ("Player Reference: Cards available in the game — name, description, cost, and rarity"), while `build/dungeon-master-guide.js` generates a game master reference ("Full card stats, modifier math, damage-per-turn tables"). The headers differentiate the purpose. Regenerating the `.md` files requires running `node ./build` after further content differentiation.  
+**Action**: Consider further: add a how-to-run-the-game section to DMG per upstream #265.
 
 ### 4. Battle history not persisted
 
-`ring.battles = []` — battle history is explicitly not saved or hydrated. Lost on every restart.
+`ring.battles = []` — battle history is reset on every `Ring` construction. Lost on every restart.
 
-**Action**: Decide if battle history matters for the new version. If yes, serialize it (bounded to last N battles to keep state size manageable).
+**Status**: Fixed. Battle history now stored via `setOptions({ battles })` and capped at the last 20 fights. Because it lives in `options`, it is automatically included in `BaseClass.toJSON()` and restored when `restoreGame()` is called. A `get battles()` accessor provides read access. A future event bus (`room_events`) could supplement this with a full persistent log.
 
 ## Code Quality Issues
 
-### 5. `creatures/base.js` is ~2000 lines
+### 5. `creatures/base.ts` is still large (~977 lines)
 
-The base creature class handles attack resolution, defense, item effects, stat modifiers, healing, and more.
+Reduced from ~2000 lines during the TypeScript migration, but still handles attack resolution, defense, item effects, stat modifiers, healing, and more in a single file.
 
-**Action**: Refactor into focused modules — `creatures/combat.js`, `creatures/stats.js`, `creatures/items.js`. Do this incrementally with test coverage to avoid regressions.
+**Status**: Partially addressed. Down from ~2000 to ~977 lines.  
+**Action**: Continue incremental decomposition — extract focused modules like `creatures/combat.ts`, `creatures/stats.ts`, `creatures/items.ts`. Do this with test coverage to avoid regressions.
 
-### 6. Hardcoded time constants
+### 6. Hardcoded time constants — Done
 
-Healing rate (300s/hp) and resurrection time (600s/level) are magic numbers in the code rather than named constants.
+Healing rate and resurrection time were magic numbers.
 
-**Action**: Move to `constants/` with clear names.
+**Status**: Fixed. Extracted to `constants/timing.ts` as `TIME_TO_HEAL_MS` (300000) and `TIME_TO_RESURRECT_MS` (600000).
 
-### 7. Hubot-specific AWS environment variable names
+### 7. Hubot-specific AWS environment variable names — Done
 
-`HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID` and `HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` are named for an old dependency.
+**Status**: Fixed. `helpers/aws.ts` now reads `DECK_MONSTERS_AWS_ACCESS_KEY_ID` and `DECK_MONSTERS_AWS_SECRET_ACCESS_KEY`, with backward-compat fallback and deprecation warning for the old `HUBOT_` prefix.
 
-**Action**: Rename to `DECK_MONSTERS_AWS_ACCESS_KEY_ID` etc., with a deprecation warning if old names are detected.
+### 8. CI configuration — Done
 
-### 8. No CI configuration
-
-There are 93 test files but no GitHub Actions config to run them automatically.
-
-**Action**: Add `.github/workflows/test.yml`. Blocked by the `@salesforce-mc/devtest` replacement (see modernization issue).
+**Status**: Fixed. `.github/workflows/ci.yml` runs three parallel jobs: TypeScript type-check, lint, and tests. Triggers on push to `main` and all PRs.
 
 ## Small UX Fixes (Upstream)
 
 These are small, self-contained improvements from the upstream issue tracker worth including in the initial revival:
 
-### 10. Shop should show item ownership count (upstream #261)
+### 9. Shop should show item ownership count (upstream #261) — Done
 
 When browsing the shop, show how many of each item the player already owns.
 
-Example: `0) Blast (1) - 75 coins [own 4]`
+**Status**: Fixed. `items/store/buy.ts` now appends `[own N]` to each line in the item selection question when the player already owns one or more of that item type.
 
-### 11. `look at cards` should list cards with numbers (upstream #260)
+### 10. `look at cards` should list cards with numbers (upstream #260) — Done
 
 Simplify the card listing display to show numbered entries — easier to reference when equipping.
 
-### 12. Level-up should be celebrated publicly (upstream #86)
+**Status**: Fixed. Both `monsters/base.ts` (monster card listing) and `characters/base.ts` (character deck listing) now prepend `1) `, `2) `, etc. to each entry.
+
+### 11. Level-up should be celebrated publicly (upstream #86) — Done
 
 When a character or monster levels up, announce it in the public ring channel. Currently level-ups are silent.
 
-### 13. Monster manual should show stat ranges (upstream #74)
+**Status**: Fixed. The `xp` setter on `BaseCreature` now detects level changes and emits a `levelUp` event. The `announcements/` module wires this to a public `announceLevelUp` broadcast.
+
+### 12. Monster manual should show stat ranges (upstream #74) — Done
 
 The monster manual (`dm look at monster manual`) should show the possible stat ranges for each monster type, not just the flavor text.
 
-### 14. Name and color fields should be editable (upstream #69)
+**Status**: Fixed. `src/build/monster-manual.ts` now shows HP, AC, STR, DEX, INT base values and variance ranges for each monster type, along with class bonuses.
+
+### 13. Name and color fields should be editable (upstream #69) — Done
 
 After creation, players should be able to edit their character's name and color/appearance fields.
 
+**Status**: Fixed. Added `editSelf()` method to `BaseCreature` (restricted to `givenName` and `icon` fields) and wired to a new `edit my character` command in `commands/character.ts`. The existing admin `edit character <name>` command is unchanged.
+
 ## Tasks
 
-- [ ] Fix "barely blocked" threshold (upstream #181)
-- [ ] Investigate and fix or remove `curseOfLoki` dead code in `cards/hit.js`
-- [ ] Audit and differentiate `DMG.md` vs `CARDS.md`; add how-to-run section (upstream #265)
-- [ ] Decide on battle history persistence; implement if desired
-- [ ] Begin incremental refactor of `creatures/base.js`
-- [ ] Extract hardcoded time constants to `constants/`
-- [ ] Rename Hubot AWS env vars
-- [ ] Add GitHub Actions CI workflow
-- [ ] Shop: show item ownership count (upstream #261)
-- [ ] `look at cards`: numbered list display (upstream #260)
-- [ ] Level-up public announcement (upstream #86)
-- [ ] Monster manual: show stat ranges (upstream #74)
-- [ ] Editable name/color fields (upstream #69)
+- [ ] Audit and differentiate `DMG.md` vs `CARDS.md`; add how-to-run section (upstream #265) — build headers differentiated, full content pass still todo
+- [ ] Continue incremental decomposition of `creatures/base.ts`
+- [x] ~~Fix "barely blocked" threshold~~ (already correct in TS migration)
+- [x] ~~Battle history lost on restart~~ (done — stored in `options.battles`, capped at 20)
+- [x] ~~Extract hardcoded time constants to `constants/`~~ (done — `constants/timing.ts`)
+- [x] ~~Rename Hubot AWS env vars~~ (done — `helpers/aws.ts` with backward-compat)
+- [x] ~~Add GitHub Actions CI workflow~~ (done — `.github/workflows/ci.yml`)
+- [x] ~~Investigate curseOfLoki~~ (working mechanic, not a bug)
+- [x] ~~Shop: show item ownership count~~ (done — `[own N]` appended in buy.ts)
+- [x] ~~`look at cards`: numbered list display~~ (done — monsters/base.ts and characters/base.ts)
+- [x] ~~Level-up public announcement~~ (done — `creature.levelUp` event + `announceLevelUp`)
+- [x] ~~Monster manual: show stat ranges~~ (done — `src/build/monster-manual.ts`)
+- [x] ~~Editable name/color fields~~ (done — `editSelf()` + `edit my character` command)

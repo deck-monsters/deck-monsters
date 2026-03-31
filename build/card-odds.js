@@ -1,6 +1,6 @@
-const { randomCharacter } = require('../characters');
-const { all: Monsters } = require('../monsters');
-const { all: Cards } = require('../cards');
+import { randomCharacter } from '../packages/engine/src/characters/index.js';
+import { all as Monsters } from '../packages/engine/src/monsters/index.js';
+import { all as Cards } from '../packages/engine/src/cards/index.js';
 
 function getCardDPT () {
 	const levels = [1, 5, 10, 15, 25];
@@ -46,7 +46,7 @@ function getCardDPT () {
 						try {
 							card.effect(player, target, ring);
 						} catch (e) {
-							// console.log('err on card', card.name)
+							// ignore card errors during DPT calculation
 						}
 
 						if (target.encounterEffects.length > 0 || ring.encounterEffects > 0) {
@@ -59,7 +59,6 @@ function getCardDPT () {
 							plays[card.name].modifiers = plays[card.name].modifiers + 1 || 1;
 						}
 
-
 						if (target.hp < beforeHP) {
 							const dmg = beforeHP - target.hp;
 							plays[card.name] = plays[card.name] || {};
@@ -70,9 +69,6 @@ function getCardDPT () {
 							plays[card.name] = plays[card.name] || {};
 							plays[card.name].heals = plays[card.name].heals + 1 || 1;
 							plays[card.name].health = plays[card.name].health + heal || heal;
-							// console.log(`${card.name} healed target for ${target.hp - beforeHP} ${target.hp}`);
-						} else {
-							// console.log(`${card.name} had no effect`);
 						}
 					});
 				});
@@ -105,13 +101,8 @@ function getCardDPT () {
 
 		probabilities[character.level] = plays;
 
-		// probabilities[startCase(character.displayLevel)] = Object
-		// 	.keys(results)
-		// 	.sort((key1, key2) => results[key1] - results[key2])
-		// 	.map(key => `${key}: ${Math.round(results[key] / 200)}%`);
-
 		return probabilities;
 	}, {});
 }
 
-module.exports = getCardDPT;
+export default getCardDPT;

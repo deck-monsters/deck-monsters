@@ -1,14 +1,14 @@
-/* eslint-disable class-methods-use-this, max-len */
-const { actionCardHTML, itemCardHTML } = require('../helpers/card');
-const allCards = require('../cards/helpers/all.js');
-const allItems = require('../items/helpers/all.js');
-const generateDocs = require('./generate-docs');
-const { eachSeries } = require('../helpers/promise');
+/* eslint-disable max-len */
+import { actionCardHTML, itemCardHTML } from '../packages/engine/src/helpers/card.js';
+import { all as allCards } from '../packages/engine/src/cards/helpers/all.js';
+import allItems from '../packages/engine/src/items/helpers/all.js';
+import { eachSeries } from '../packages/engine/src/helpers/promise.js';
+import generateDocs from './generate-docs.js';
 
 const cardList = allCards.map(({ cardType }) => `<a href="#${cardType}">${cardType}</a>`);
 const itemList = allItems.map(({ itemType }) => `<a href="#${itemType}">${itemType}</a>`);
 
-const generatecardCatalogue = (output) => {
+const generateCardCatalogueAsHTML = (output) => {
 	const header =
 `
 <!DOCTYPE html>
@@ -37,12 +37,12 @@ const generatecardCatalogue = (output) => {
 </head>
 <body>
 <!--  <pre>
-				.------..------..------..------..------.
-				|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
-				| :/\\: || (\\/) || :(): || :/\\: || :/\\: |
-				| :\\/: || :\\/: || ()() || (__) || :\\/: |
-				| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
-				\`------'\`------'\`------'\`------'\`------'
+			.------..------..------..------..------.
+			|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
+			| :/\\: || (\\/) || :(): || :/\\: || :/\\: |
+			| :\\/: || :\\/: || ()() || (__) || :\\/: |
+			| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
+			\`------'\`------'\`------'\`------'\`------'
   </pre>
 
   <ul>
@@ -78,6 +78,6 @@ const generatecardCatalogue = (output) => {
 `));
 };
 
-const cardCatalogueAsHTML = ({ channel, output }) => generateDocs({ channel, generate: generatecardCatalogue, output });
+const cardCatalogueAsHTML = ({ channel, output } = {}) => generateDocs({ channel, generate: generateCardCatalogueAsHTML, output });
 
-module.exports = cardCatalogueAsHTML;
+export default cardCatalogueAsHTML;

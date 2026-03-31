@@ -37,7 +37,6 @@ export class Ring extends BaseClass {
 	log: (err: unknown) => void;
 	spawnBosses: boolean;
 	channelManager: ChannelManager;
-	battles: any[];
 	inEncounter: boolean = false;
 	encounter?: Record<string, any>;
 	fightTimer?: ReturnType<typeof setTimeout>;
@@ -52,10 +51,14 @@ export class Ring extends BaseClass {
 		this.log = log;
 		this.spawnBosses = spawnBosses;
 		this.channelManager = channelManager;
-		this.battles = [];
+		if (!Array.isArray((this.options as any).battles)) {
+			this.setOptions({ battles: [] } as any);
+		}
 
 		this.on('fightConcludes', (_className: string, ring: Ring, results: any) => {
-			ring.battles.push(results);
+			const current: any[] = (ring.options as any).battles || [];
+			const updated = [...current, results].slice(-20);
+			ring.setOptions({ battles: updated } as any);
 		});
 
 		this.channelManager.on('win', (_className: string, _channel: any, { contestant }: { contestant: Contestant }) =>
@@ -75,6 +78,10 @@ export class Ring extends BaseClass {
 		);
 
 		this.startBossTimer();
+	}
+
+	get battles(): any[] {
+		return (this.options as any).battles || [];
 	}
 
 	get contestants(): Contestant[] {
@@ -524,10 +531,11 @@ export class Ring extends BaseClass {
 					if (!anyContestantsHaveCardsLeft(allActiveContestants)) {
 						this.emit('roundComplete', { contestants, round });
 
-						if (round === 10) {
-							resolve(undefined);
-							return;
-						}
+					if (round === 10) {
+						this.channelManager.queueMessage({ announce: 'The fight has ended in a draw after 10 rounds — no monsters could finish the job.' });
+						resolve(undefined);
+						return;
+					}
 
 						round += 1;
 

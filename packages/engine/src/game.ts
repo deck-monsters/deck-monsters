@@ -316,6 +316,11 @@ export class Game extends BaseClass {
 		);
 	}
 
+	editSelfCharacter(channel: any, character: any): Promise<unknown> {
+		if (character) return character.editSelf(channel);
+		return Promise.reject(channel({ announce: 'Could not find your character.', delay: 'short' }));
+	}
+
 	editCharacter(channel: any, characterName: string): Promise<unknown> {
 		if (characterName) {
 			const character = this.findCharacterByName(characterName);
