@@ -49,7 +49,6 @@ const ThickSkinCard = require('../thick-skin');
 const TurkeyThighCard = require('../turkey-thigh');
 const VenegefulRampageCard = require('../vengeful-rampage');
 const WhiskeyShotCard = require('../whiskey-shot');
-const WokeCard = require('../woke');
 const WoodenSpearCard = require('../wooden-spear');
 
 module.exports = [
@@ -104,6 +103,5 @@ module.exports = [
 	TurkeyThighCard,
 	VenegefulRampageCard,
 	WhiskeyShotCard,
-	WokeCard,
 	WoodenSpearCard
 ];

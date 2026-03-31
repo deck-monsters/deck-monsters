@@ -64,7 +64,7 @@ class BoostCard extends BaseCard {
 			hp: [
 				['eats a red mushroom', 40],
 				['absorbs a purple circle strangely floating in the air', 30],
-				['eats a bowl of nazi guard dog food', 10],
+				['tears open a suspicious foil packet labeled "HP+"', 10],
 				['steps on a red-cross med-pack', 10]
 			]
 		};
