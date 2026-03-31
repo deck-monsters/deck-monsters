@@ -4,7 +4,7 @@
 **Priority**: Medium (do before or during launch, before new content)  
 **Source**: Upstream issues tagged with the Balance milestone and related discussions
 
-These are mechanics changes that affect the core game feel. They should be done as a coordinated pass rather than piecemeal, because some of them interact.
+These are mechanics changes that affect the core game feel. They should be done as a coordinated pass rather than piecemeal, because some of them interact. We should also write a harness which allows us to test mock battles / cards over and over to fine tune the mechanics as they interact, find bugs in their interactions, and resolve issues balance / over powered cards.
 
 ---
 
