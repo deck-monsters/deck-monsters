@@ -31,7 +31,11 @@ const channel = ({ id, msg }) => ({ announce, question, choices }) => new Promis
 
 ## The `handleCommand` Gap
 
-Jane called `game.handleCommand({ command })` to parse natural language commands. **This method does not exist in the current engine source.** It needs to be either:
+Jane called `game.handleCommand({ command })` to parse natural language commands. **This method does not exist in the current engine source.** It was most likely defined in Jane's own helpers (the `../helpers/` directory referenced in the imports) — a command parser that mapped strings like `"spawn monster"` to the appropriate `player.*` action method and returned it as a function for Hubot to call.
+
+When the Jane helpers are found, check for a command-routing/parsing file that maps command strings to action methods. This is the implementation reference for rebuilding `handleCommand`.
+
+It needs to be either:
 
 1. Re-added to the engine (recommended for chat-based connectors like Slack and Discord text commands) — parses strings like `"spawn monster"`, `"send a monster to the ring"`, `"look at basilisk"` and returns the matching action function
 2. Or replaced by explicit command routing in the connector (each command wired up separately with its own regex)
