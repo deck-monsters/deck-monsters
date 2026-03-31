@@ -1,7 +1,0 @@
-const COINS_PER_VICTORY = 5;
-const COINS_PER_DEFEAT = 2;
-
-module.exports = {
-	COINS_PER_VICTORY,
-	COINS_PER_DEFEAT
-};

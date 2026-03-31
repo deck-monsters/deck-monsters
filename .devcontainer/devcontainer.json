@@ -1,0 +1,31 @@
+{
+  "name": "deck-monsters-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "node",
+  "workspaceFolder": "/workspaces/deck-monsters",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "mounts": [
+    "source=deck-monsters-gh-config,target=/home/node/.gitconfig,type=volume",
+    "source=deck-monsters-gh-ssh,target=/home/node/.ssh,type=volume",
+    "source=deck-monsters-ghconfig,target=/home/node/.config/gh,type=volume",
+    "source=deck-monsters-npm-cache,target=/home/node/.npm,type=volume"
+  ],
+  "postCreateCommand": "npm ci --ignore-scripts",
+  "postStartCommand": "git config --global credential.helper store && git config --global --get user.email >/dev/null 2>&1 || git config --global user.email \"devcontainer@example.local\" && git config --global --get user.name >/dev/null 2>&1 || git config --global user.name \"Deck Monsters Dev\"",
+  "remoteEnv": {
+    "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org"
+  }
+}

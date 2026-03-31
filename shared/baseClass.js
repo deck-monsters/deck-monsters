@@ -1,7 +1,7 @@
 const { EventEmitter, globalSemaphore } = require('../helpers/semaphore');
 
 class BaseClass {
-	constructor (options, semaphore = new EventEmitter({ emitDelay: 0 })) {
+	constructor (options, semaphore = new EventEmitter()) {
 		if (this.name === BaseClass.name) {
 			throw new Error('The BaseClass should not be instantiated directly!');
 		}

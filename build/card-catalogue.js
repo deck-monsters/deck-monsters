@@ -1,10 +1,9 @@
 /* eslint-disable class-methods-use-this, max-len */
-const Promise = require('bluebird');
-
 const { actionCard, itemCard } = require('../helpers/card');
 const allCards = require('../cards/helpers/all.js');
 const allItems = require('../items/helpers/all.js');
 const generateDocs = require('./generate-docs');
+const { eachSeries } = require('../helpers/promise');
 
 const cardList = allCards.map(({ cardType }) => cardType);
 const itemList = allItems.map(({ itemType }) => itemType);
@@ -28,13 +27,13 @@ ${cardList.join('\n')}
 
 	return Promise.resolve()
 		.then(() => output(header))
-		.then(() => Promise.each(allCards, Card => output(actionCard(new Card(), false))))
+		.then(() => eachSeries(allCards, Card => output(actionCard(new Card(), false))))
 		.then(() => output(`
 *The Item Catalogue:*
 
 ${itemList.join('\n')}
 `))
-		.then(() => Promise.each(allItems, Item => output(itemCard(new Item(), false))));
+		.then(() => eachSeries(allItems, Item => output(itemCard(new Item(), false))));
 };
 
 const cardCatalogue = ({ channel, output }) => generateDocs({ channel, generate: generatecardCatalogue, output });

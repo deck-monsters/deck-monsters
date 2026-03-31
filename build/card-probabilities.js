@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-const startCase = require('lodash.startcase');
+const startCase = require('../helpers/start-case');
 
 const { draw } = require('../cards');
 const { randomCharacter } = require('../characters');
