@@ -28,11 +28,21 @@ shared/                # BaseClass, test utilities (test-setup.js)
 
 ## Tech Stack
 
-- **Runtime**: Node.js (currently v8 — needs upgrading)
+**Current (legacy JS)**
+- **Runtime**: Node.js v8 (EOL — being upgraded to v22)
 - **Key libs**: bluebird (promises), lodash (utilities), roll (dice), node-emoji, moment, word-wrap
 - **State persistence**: gzip+base64 → external adapter callback + AWS S3 backup (throttled 5 min)
-- **Testing**: Mocha via `@salesforce-mc/devtest`; 93 test files colocated with source
-- **Linting**: ESLint with Salesforce SFMC config
+- **Testing**: Mocha via `@salesforce-mc/devtest` (internal Salesforce package — being replaced)
+- **Linting**: ESLint with Salesforce SFMC config (being replaced)
+
+**Target (TypeScript revival)**
+- **Language**: TypeScript (strict mode, ESM, Node.js v22)
+- **Testing**: Vitest (Jest-compatible API, native TS + ESM support, much faster)
+- **Monorepo**: pnpm workspaces + Turborepo
+- **Database**: Drizzle ORM + PostgreSQL
+- **API**: tRPC (type-safe end-to-end for web + mobile clients)
+- **Runtime validation**: Zod (state deserialization, incoming command validation)
+- **Linting**: `@typescript-eslint` + Prettier
 
 ## How the Game Engine Works
 
@@ -75,12 +85,16 @@ Messages are queued and batched (3000-char max per message) to respect platform 
 ## Development Commands
 
 ```bash
-npm test              # Run all Mocha tests
-npm run test:watch    # Watch mode
-npm run test:debug    # Debug in Chrome + Node
+# Current (JS/legacy)
+npm test              # Run all Mocha tests (requires @salesforce-mc/devtest)
 node ./build          # Regenerate CARDS.md / DMG.md / probability docs
-node wander.js        # CLI demo (exploration)
 node battlefield.js   # CLI demo (ring combat)
+
+# Target (TypeScript/pnpm monorepo)
+pnpm test             # vitest run (all packages)
+pnpm test:watch       # vitest --watch
+pnpm test:coverage    # vitest run --coverage
+pnpm build            # tsc --build (all packages via Turborepo)
 ```
 
 ## Environment Variables
@@ -98,10 +112,14 @@ Note: AWS env var naming is Hubot-legacy and should be generalized.
 - `cards/hit.js` has an unused `curseOfLoki` variable (dead code or incomplete feature)
 - `DMG.md` and `CARDS.md` are near-duplicates — consolidate
 - Battle arrays are not persisted (`ring.battles = []` — history lost on restart)
-- AWS env var names are Hubot-specific; needs generalization
-- Node.js 8 is EOL — needs significant version bump
+- AWS env var names are Hubot-specific (`HUBOT_DECK_MONSTERS_*`); needs generalization
+- Node.js 8 is EOL — upgrading to v22 LTS
 - No CI configuration exists
-- `@salesforce-mc/devtest` is an internal Salesforce test runner — needs replacement
+- `@salesforce-mc/devtest` is an internal Salesforce test runner — being replaced with Vitest
+
+## Archived Features
+
+- **Exploration system** (`exploration/`) — monster expeditions (find loot, hazards, death cards). Archived for the revival; the core game is the ring combat. See `docs/archive/exploration-system.md`.
 
 ## Architecture Notes for New Connectors
 
@@ -114,15 +132,17 @@ When building a new connector:
 
 The engine emits `stateChange` whenever anything significant happens; listen for it and trigger your save.
 
-## Planned Enhancements (tracked as GitHub issues)
+## Planned Enhancements
 
-- Auth system (user identity, sessions)
-- Multi-room/group support (isolated game instances per group)
-- Discord connector
-- Web app connector
-- iOS + Android mobile apps
-- Modern backend hosting (containerized, cloud-native)
-- Modern state storage (replace S3 ad-hoc backup with proper DB)
-- Node.js upgrade and dependency modernization
-- Simple graphics/sprites for web and mobile
-- Bug fixes (see issues)
+See `docs/roadmap/` for detailed plans. Summary:
+
+- TypeScript migration + Vitest + monorepo (pnpm + Turborepo) — `01-modernize-stack.md`
+- Postgres state storage + tRPC API + containerized hosting — `02-backend-hosting.md`
+- Auth system (JWT, OAuth) — `03-auth-and-identity.md`
+- Multi-room/group support — `04-multi-room-groups.md`
+- Discord connector (discord.js v14, slash commands) — `05-discord-connector.md`
+- Web app (Fastify + React + WebSocket ring feed) — `06-web-app.md`
+- Mobile app (React Native + Expo, iOS + Android) — `07-mobile-app.md`
+- Modernize Slack connector (Bolt SDK, remove Hubot) — `08-modernize-slack-connector.md`
+- Simple graphics/sprites for web and mobile — `09-graphics.md`
+- Bug fixes and code quality — `10-bug-fixes.md`

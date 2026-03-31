@@ -1,63 +1,67 @@
 # Deck Monsters
 
-A turn-based monster-battling RPG game engine. Spawn monsters, equip them with action card decks, and send them into the ring to auto-battle. The engine is platform-agnostic — it exposes a clean JavaScript API that connector adapters plug into to bring the game to any platform (Slack, Discord, web, mobile, etc.).
+A turn-based monster-battling RPG game engine — think Pokémon meets deck-building. Players collect monsters, equip them with action card decks, and send them into a shared ring to auto-battle while everyone watches.
 
-Originally built to run inside a private Slack workspace. Now being revived and expanded.
+The engine is platform-agnostic: a connector adapter plugs in and brings the game to any chat platform or app. The original connector was a Slack bot called **Jane**, which ran the game inside a private Slack workspace. The ring fights appeared in a shared channel; everything else (spawning monsters, building decks, buying items) happened through DMs with Jane.
+
+The project is being revived with new connectors (Discord, web, mobile) and modern infrastructure.
 
 ---
 
-## Gameplay
+## How It Plays
 
-- **Spawn monsters** — 5 monster types (Basilisk, Gladiator, Jinn, Minotaur, Weeping Angel), each with randomized base stats
-- **Build decks** — equip monsters with a deck of 60+ action cards (melee, healing, control, stat boosts, utility)
-- **Fight** — send monsters into the ring; battles auto-resolve every 60 seconds, cards play in deck order
-- **Level up** — earn XP and coins from victories, unlock stronger cards, buy items from the shop
-- **Explore** — send monsters on expeditions to discover cards, loot, or hazards
+1. **DM the bot** to build your roster — spawn monsters, equip them with card decks, buy items from the shop, level them up over time
+2. **Send a monster to the ring** — a shared channel where everyone's monsters fight automatically
+3. **Watch the ring** — battles play out every 60 seconds, narrated in the channel; wins earn XP and coins
+4. **Iterate** — swap cards, upgrade monsters, build toward stronger strategies
 
-See [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) for commands and build strategies, [MONSTERS.md](MONSTERS.md) for monster stats, and [CARDS.md](CARDS.md) for the full card catalog.
+The game has 5 monster types, 60+ action cards across 4 classes (melee, healing, control, utility), and 25+ items. Monsters level up with experience, and stronger cards unlock at higher levels.
+
+See [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) for all commands and sample deck builds, [MONSTERS.md](MONSTERS.md) for monster stats, and [CARDS.md](CARDS.md) for the full card catalog.
 
 ---
 
 ## Architecture
 
-The engine has no platform-specific code. Connectors instantiate the `Game` class and relay platform events (slash commands, messages, button presses) to game methods.
+The engine has no platform-specific code. A connector provides two callbacks (public channel + private DM) and maps platform events to game method calls.
 
 ```
 Platform (Slack / Discord / Web / Mobile)
-    ↓ commands
-  Connector Adapter
-    ↓ method calls
-  Game Engine (this repo)
-    ↓ message callbacks
-  Platform (posts results)
+     ↓  slash commands / messages / button presses
+  Connector Adapter  (Jane, discord-connector, web-connector, …)
+     ↓  character.spawnMonster(), character.sendMonsterToTheRing(), …
+  Game Engine  (this repo)
+     ↓  publicChannelFn("Fang attacks…"), privateChannelFn("You earned 10 coins")
+  Platform
 ```
 
-### Quick Start (building a connector)
+### Building a Connector
 
 ```javascript
 const { Game, restoreGame } = require('deck-monsters')
 
-// Called whenever the engine has something to say publicly
-const publicChannel = async (message) => { /* post to channel */ }
+// Called whenever the engine broadcasts to the shared ring channel
+const publicChannel = async (message) => { /* post to #ring channel */ }
 
-// Restore a previously saved game (or create a fresh one)
+// Restore a previously saved game, or create a fresh one
 const game = savedState
   ? restoreGame(publicChannel, savedState, console.log)
   : new Game(publicChannel, {}, console.log)
 
-// Save state whenever it changes
-game.on('stateChange', () => {
+// Persist state whenever it changes
+game.on('stateChange', async () => {
   const state = game.saveState  // base64-gzipped JSON
-  db.save(state)
+  await db.saveRoomState(roomId, state)
 })
 
 // Get or create a player character
 const privateChannel = async (message) => { /* DM the player */ }
-const character = await game.getCharacter(privateChannel, userId, { id, name })
+const character = await game.getCharacter(privateChannel, userId, { id: userId, name })
 
 // Map platform commands to game actions
 await character.spawnMonster({ type: 'Basilisk', name: 'Fang' })
 await character.sendMonsterToTheRing({ monsterName: 'Fang' })
+await character.equipMonster({ monsterName: 'Fang', cardSelection: [...] })
 ```
 
 ---
@@ -66,26 +70,26 @@ await character.sendMonsterToTheRing({ monsterName: 'Fang' })
 
 ### Prerequisites
 
-- Node.js (see `.nvmrc` or `package.json` for required version)
+- Node.js v22 LTS (see `.nvmrc`)
+- pnpm
 
 ### Install
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Test
 
 ```bash
-npm test              # run all tests
-npm run test:watch    # watch mode
-npm run test:debug    # debug in Chrome DevTools
+pnpm test              # vitest run (all packages)
+pnpm test:watch        # vitest --watch
+pnpm test:coverage     # vitest run --coverage
 ```
 
 ### CLI Demos
 
 ```bash
-node wander.js        # exploration demo
 node battlefield.js   # ring combat demo
 ```
 
@@ -101,10 +105,11 @@ node ./build          # rebuilds CARDS.md, DMG.md, and probability tables
 
 | File | Contents |
 |------|---------|
-| [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) | All player commands + sample deck builds |
+| [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) | All player commands + sample deck builds by level |
 | [MONSTERS.md](MONSTERS.md) | Monster types and stat distributions |
 | [CARDS.md](CARDS.md) | Full card catalog with levels, descriptions, and MSRP |
 | [CLAUDE.md](CLAUDE.md) | Codebase guide for AI-assisted development |
+| [docs/roadmap/](docs/roadmap/) | Detailed plans for each planned enhancement |
 
 ---
 
@@ -112,19 +117,25 @@ node ./build          # rebuilds CARDS.md, DMG.md, and probability tables
 
 | Variable | Purpose |
 |----------|---------|
-| `HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID` | S3 state backup (optional) |
-| `HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` | S3 state backup (optional) |
+| `DATABASE_URL` | Postgres connection string for state storage |
+| `JWT_SECRET` | Auth token signing |
+| `AWS_ACCESS_KEY_ID` | S3 backup (optional) |
+| `AWS_SECRET_ACCESS_KEY` | S3 backup (optional) |
+
+> Legacy: the engine previously used `HUBOT_DECK_MONSTERS_AWS_*` names from an old Hubot integration. These are being retired.
 
 ---
 
 ## Status
 
-The project is actively being revived. Planned work includes:
+The project is actively being revived. The core engine is stable. Current focus:
 
-- Discord, web, and mobile connectors
-- Authentication and multi-group/room support
-- Modern hosting and database-backed state storage
-- Node.js and dependency upgrades
-- Simple graphics for web and mobile UIs
+- **TypeScript migration** — converting the JS codebase to TypeScript, replacing internal test infrastructure with Vitest, setting up CI
+- **Monorepo** — reorganizing engine + connectors + apps into a pnpm workspace
+- **Infrastructure** — Postgres-backed state storage, containerized hosting, tRPC API layer for web/mobile
+- **New connectors** — Discord bot, web app, iOS/Android app (React Native)
+- **Auth + multi-room** — user identity, invite-based friend groups
 
-See the [issue tracker](../../issues) for the full roadmap.
+The exploration system (expeditions) has been archived for now — it's a concept that could be revived later, but the core game is the ring combat.
+
+See [docs/roadmap/](docs/roadmap/) for detailed plans on each of these.
