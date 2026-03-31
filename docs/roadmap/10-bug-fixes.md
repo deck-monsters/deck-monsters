@@ -55,12 +55,6 @@ There are 93 test files but no GitHub Actions config to run them automatically.
 
 **Action**: Add `.github/workflows/test.yml`. Blocked by the `@salesforce-mc/devtest` replacement (see modernization issue).
 
-### 9. Engine should process its own commands (upstream #259)
-
-The original Jane connector called `game.handleCommand({ command })` to parse natural language commands, but this method is absent from the current engine source. The command vocabulary (what maps to what) belongs in the engine, not in each connector separately.
-
-**Action**: Add a `handleCommand(command: string)` method to the engine that parses command strings and returns the appropriate action function. This is the primary enabler for chat-style connectors (Slack, Discord text commands).
-
 ## Small UX Fixes (Upstream)
 
 These are small, self-contained improvements from the upstream issue tracker worth including in the initial revival:
@@ -97,7 +91,6 @@ After creation, players should be able to edit their character's name and color/
 - [ ] Extract hardcoded time constants to `constants/`
 - [ ] Rename Hubot AWS env vars
 - [ ] Add GitHub Actions CI workflow
-- [ ] Add `handleCommand` to the engine (upstream #259)
 - [ ] Shop: show item ownership count (upstream #261)
 - [ ] `look at cards`: numbered list display (upstream #260)
 - [ ] Level-up public announcement (upstream #86)

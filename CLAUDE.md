@@ -11,6 +11,7 @@ Originally built to run inside a private Slack workspace. The project is being r
 ```
 index.js               # Public API: Game, restoreGame, resetGame, getOptions
 game.js                # Main Game class (orchestrator, state serialization)
+commands/              # Natural language command parser (handleCommand dispatch)
 cards/                 # 60+ action card types; base.js is the card base class
 monsters/              # 5 monster types (Basilisk, Gladiator, Jinn, Minotaur, Weeping Angel)
 creatures/base.js      # BaseCreature — core combat/stat logic (~2000 lines, monolithic)
@@ -76,42 +77,28 @@ const game = savedState
 // Wire up state persistence
 game.saveState = (state) => db.save(state) // called automatically on stateChange
 
-// Get the action object for a player
-const player = await game.getCharacter(privateChannel, userId, { id, name })
+// Dispatch a command (chat-style connectors)
+const action = game.handleCommand({ command: 'send a monster to the ring' })
+if (action) await action({ channel: privateChannel, channelName, isAdmin, isDM, user })
 ```
 
-### `getCharacter()` returns an action object
+### `handleCommand` — now in the engine (`commands/`)
 
-`game.getCharacter(privateChannel, channelName, { id, name, type, gender, icon })` resolves with an object of bound action methods — not a Character class. All actions go through this object:
+`game.handleCommand({ command })` parses a natural language string and returns an action function, or `null` if the command isn't recognized. The action function is then called with `{ channel, channelName, isAdmin, isDM, user }`:
 
-```javascript
-player.spawnMonster({ /* options */ })
-player.equipMonster({ monsterName, cardSelection })
-player.sendMonsterToTheRing({ monsterName })
-player.callMonsterOutOfTheRing({ monsterName })
-player.lookAt(thing)              // look at a card, monster, item, handbook, etc.
-player.lookAtCards({ deckName })
-player.lookAtMonster({ monsterName })
-player.lookAtMonsters({ inDetail })
-player.lookAtRing({ ringName })
-player.buyItems()
-player.sellItems()
-player.giveItemsToMonster({ monsterName, itemSelection })
-player.takeItemsFromMonster({ monsterName, itemSelection })
-player.useItemsOnMonster({ monsterName, itemSelection })
-player.useItems({ itemSelection })
-player.dismissMonster({ monsterName })
-player.reviveMonster({ monsterName })
-player.editCharacter({ characterName })
-player.editMonster({ monsterName })
-```
+The command system is modular — handlers live in `commands/` and are loaded at startup via `loadHandlers()`:
+- `commands/monster.js` — spawn, equip, ring, explore, dismiss, revive, look at monster(s)
+- `commands/character.js` — look at character, rankings, edit character
+- `commands/look-at.js` — look at card, item, handbook, ring
+- `commands/store.js` — buy, sell
 
-### `handleCommand` — missing from current engine
+An **alias** feature exists for admin debugging: `"<command> as <name>"` runs as a different character (admin-only).
 
-The original Jane connector used `game.handleCommand({ command })` to parse natural language strings like `"spawn monster"` or `"send a monster to the ring"` and return an action function. **This method is not in the current engine source.** It is a gap that needs to be filled for the revival. Options:
+New connectors can register additional commands via `registerHandler(matcher, action)`.
 
-- **Re-add `handleCommand` to the engine** — useful for chat-style connectors (Slack, Discord text) that receive free-form text
-- **Each connector maps its own commands** — appropriate for Discord slash commands, web REST endpoints, and mobile buttons, which don't need NL parsing
+### `getCharacter()` — gets or creates a player's Character
+
+`game.getCharacter({ channel, id, name, type, gender, icon })` resolves with a Character object. Connectors using `handleCommand` don't need to call this directly — the command system calls it internally. Direct calls are only needed if bypassing the command system (e.g., REST endpoints mapping individual actions).
 
 ### State Serialization
 
@@ -191,8 +178,8 @@ See "How the Game Engine Works" above for the full API details. Quick checklist:
    - `question` + `choices` — prompt the user and resolve with their text answer; timeout after ~2 minutes
 2. Initialize the game: `restoreGame(publicChannel, savedState, log)` or `new Game(publicChannel, {}, log)`
 3. Set the save function: `game.saveState = (state) => db.save(state)` — engine calls this automatically
-4. Get a player's action object: `await game.getCharacter(privateChannel, userId, { id, name })`
-5. Map platform inputs (slash commands / button presses / text) to action object methods
+4. For chat-style connectors: strip the bot prefix, call `game.handleCommand({ command })`, then call the returned action with `{ channel, channelName, isAdmin, isDM, user }`
+5. For slash command / REST / button connectors: call `game.getCharacter({ channel, id, name })` directly and invoke the specific action method
 
 The `question`/`choices` pattern is used during interactive multi-step flows (choosing which monster to equip, which item to buy, etc.). Connectors that only support one-shot commands (e.g., REST endpoints) will need to either break these into separate requests or trigger a guided flow via DM.
 
