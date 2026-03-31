@@ -19,4 +19,4 @@ const generateDocs = ({ channel, generate, output }) => {
 	return generate(format);
 };
 
-module.exports = generateDocs;
+export default generateDocs;

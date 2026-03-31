@@ -22,6 +22,7 @@ import {
 	MAX_BOOSTS,
 	MAX_PROP_MODIFICATIONS
 } from '../constants/stats.js';
+import { TIME_TO_HEAL_MS, TIME_TO_RESURRECT_MS } from '../constants/timing.js';
 
 // These helpers will exist when items are generated
 import type { sortItemsAlphabetically as SortItemsFn } from '../items/helpers/sort.js';
@@ -149,6 +150,12 @@ export interface CreatureOptions {
 	dexModifier?: number;
 	strModifier?: number;
 	intModifier?: number;
+	/** Reserved for future item/equipment effects that grant bonus attack dice. */
+	bonusAttackDice?: string;
+	/** Reserved for future item/equipment effects that grant bonus damage dice. */
+	bonusDamageDice?: string;
+	/** Reserved for future item/equipment effects that grant bonus INT dice. */
+	bonusIntDice?: string;
 	[key: string]: unknown;
 }
 
@@ -156,8 +163,6 @@ export interface CreatureOptions {
 // Constants
 // ---------------------------------------------------------------------------
 
-const TIME_TO_HEAL = 300000;      // Five minutes per hp
-const TIME_TO_RESURRECT = 600000; // Ten minutes per level
 const DEFAULT_ITEM_SLOTS = 12;
 
 // ---------------------------------------------------------------------------
@@ -194,7 +199,7 @@ class BaseCreature extends BaseClass<CreatureOptions> {
 
 		this.healingInterval = setInterval(() => {
 			if (this.hp < this.maxHp && !this.inEncounter && !this.dead) this.heal(1);
-		}, TIME_TO_HEAL);
+		}, TIME_TO_HEAL_MS);
 
 		if (this.respawnTimeoutBegan) {
 			this.respawn();
@@ -329,7 +334,12 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	set xp (xp: number) {
+		const previousLevel = this.level;
 		this.setOptions({ xp });
+		const newLevel = this.level;
+		if (newLevel > previousLevel) {
+			this.emit('levelUp', { monster: this, level: newLevel });
+		}
 	}
 
 	get ac (): number {
@@ -392,20 +402,18 @@ Battles won: ${this.battles.wins}`;
 
 		switch (prop) {
 			case 'dex':
+				// dexModifier already includes level scaling (+1/level via getModifier)
 				raw = BASE_DEX + this.dexModifier;
-				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to DEX per level up to the max
 				break;
 			case 'str':
 				raw = BASE_STR + this.strModifier;
-				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to STR per level up to the max
 				break;
 			case 'int':
 				raw = BASE_INT + this.intModifier;
-				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to INT per level up to the max
 				break;
 			case 'ac':
 				raw = BASE_AC + this.acVariance;
-				raw += Math.min(this.level, MAX_BOOSTS[prop]); // +1 to AC per level up to the max
+				raw += Math.min(this.level, MAX_BOOSTS[prop]); // AC level bonus is not in getModifier
 				break;
 			case 'hp':
 				raw = this.maxHp;
@@ -423,12 +431,12 @@ Battles won: ${this.battles.wins}`;
 		const targetModifier = `${targetProp}Modifier`;
 		let modifier = (this.options[targetModifier] as number) || 0;
 
-		const boost = Math.min(this.level, (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0);
-		if (boost > 0) {
-			modifier += boost; // +1 per level up to the max
-		}
+		// Level scaling: +1 per level up to the stat cap
+		modifier += Math.min(this.level, (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0);
 
-		modifier += Math.min((this.modifiers as Record<string, number>)[modifier] || 0, (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0);
+		// Permanent modifiers set via setModifier(..., permanent=true) live in options.modifiers
+		const permanentModifiers = (this.options.modifiers as Record<string, number>) || {};
+		modifier += Math.min(permanentModifiers[targetProp] || 0, (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0);
 
 		return modifier;
 	}
@@ -620,7 +628,7 @@ Battles won: ${this.battles.wins}`;
 
 	respawn (immediate?: boolean): number {
 		const now = Date.now();
-		const timeoutLength = immediate ? 0 : this.level * TIME_TO_RESURRECT;
+		const timeoutLength = immediate ? 0 : this.level * TIME_TO_RESURRECT_MS;
 
 		if (immediate || !this.respawnTimeout) {
 			const creature = this;
@@ -917,6 +925,39 @@ Battles won: ${this.battles.wins}`;
 	// ---------------------------------------------------------------------------
 	// Edit
 	// ---------------------------------------------------------------------------
+
+	editSelf (channel: ChannelFn): Promise<unknown> {
+		const allowedKeys = ['givenName', 'icon'] as const;
+		type AllowedKey = typeof allowedKeys[number];
+
+		return Promise.resolve()
+			.then(() => channel({
+				question:
+`Which field would you like to update?
+
+1) Name (currently: ${this.givenName})
+2) Icon/color (currently: ${this.icon})`,
+				choices: ['1', '2']
+			}))
+			.then((answer: unknown) => {
+				const key: AllowedKey = Number(answer) === 1 ? 'givenName' : 'icon';
+				const current = this.options[key];
+				return (channel({
+					question: `The current value of ${key} is ${JSON.stringify(current)}. What would you like the new value to be?`
+				}) as Promise<string>).then((strVal: string) => ({ key, oldVal: current, newVal: strVal.trim() }));
+			})
+			.then(({ key, oldVal, newVal }: { key: AllowedKey; oldVal: unknown; newVal: string }) =>
+				(channel({
+					question: `Update ${key} from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}? (yes/no)`
+				}) as Promise<string>).then((answer = '') => {
+					if (answer.toLowerCase() === 'yes') {
+						this.setOptions({ [key]: newVal });
+						return channel({ announce: 'Change saved.' });
+					}
+					return channel({ announce: 'Change reverted.' });
+				})
+			);
+	}
 
 	edit (channel: ChannelFn): Promise<unknown> {
 		return Promise

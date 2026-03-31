@@ -64,7 +64,7 @@ If already immobilized, hit instead.
 ${hit.stats}
  +2 advantage vs Basilisk, Gladiator
  -2 disadvantage vs Minotaur, Weeping Angel
-inneffective against Jinn
+ineffective against Jinn
 
 Opponent breaks free by rolling 1d20 vs immobilizer's int +/- advantage/disadvantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.

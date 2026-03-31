@@ -30,6 +30,15 @@ function editCharacterAction({ channel, game, isAdmin, results }: any): Promise<
 	});
 }
 
+const EDIT_SELF_REGEX = /edit (?:my )?character$/i;
+function editSelfCharacterAction({ channel, character, game }: any): Promise<unknown> {
+	return Promise.resolve().then(() =>
+		game
+			.editSelfCharacter(channel, character)
+			.catch((err: unknown) => game.log(err))
+	);
+}
+
 const USE_ITEMS_REGEX = /use (?:(?:an )?items?|(.+?)?)$/i;
 function useItemsAction({ channel, channelName, character, game, results }: any): Promise<unknown> {
 	return Promise.resolve().then(() => {
@@ -44,6 +53,7 @@ function useItemsAction({ channel, channelName, character, game, results }: any)
 export default function characterHandlers(
 	registerHandlerFn: typeof registerHandler
 ): void {
+	registerHandlerFn(EDIT_SELF_REGEX, editSelfCharacterAction);
 	registerHandlerFn(EDIT_REGEX, editCharacterAction);
 	registerHandlerFn(USE_ITEMS_REGEX, useItemsAction);
 }

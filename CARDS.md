@@ -1,14 +1,15 @@
 
 ```
-				.------..------..------..------..------.
-				|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
-				| :/\: || (\/) || :(): || :/\: || :/\: |
-				| :\/: || :\/: || ()() || (__) || :\/: |
-				| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
-				`------'`------'`------'`------'`------'
+			.------..------..------..------..------.
+			|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
+			| :/\: || (\/) || :(): || :/\: || :/\: |
+			| :\/: || :\/: || ()() || (__) || :\/: |
+			| '--'C|| '--'A|| '--'R|| '--'D|| '--'S|
+			`------'`------'`------'`------'`------'
 ```
 
-*The Card Catalogue:*
+*The Card Catalogue (Player Reference):*
+Cards available in the game — name, description, cost, and rarity.
 
 Adrenaline Rush
 Bad Batch
@@ -61,7 +62,6 @@ Thick Skin
 Turkey Thigh
 Vengeful Rampage
 Whiskey Shot
-Woke
 Wooden Spear
 
 
@@ -288,7 +288,7 @@ Wooden Spear
 
 ```
 ==================================
- 🤛  Delayed Hit  •
+ 🤛  Delayed Hit  ◆
 ----------------------------------
 
  Patience. Patience is key. When 
@@ -720,24 +720,6 @@ Wooden Spear
 
  1 shot of whiskey for your 
  health. Doctor's orders.
-
-==================================
-```
-
-
-```
-==================================
- 🤬  Woke  ★
-----------------------------------
-
- Someone tweets and everyone gets 
- dumber. But in you, it brings 
- about a certain rage... A 
- certain WOKENESS most people 
- don't actually want. It's what 
- you live for. It's how you know 
- you exist. You embrace it and 
- welcome the rush.
 
 ==================================
 ```

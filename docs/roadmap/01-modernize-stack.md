@@ -1,112 +1,111 @@
 # Modernize Stack: TypeScript, Testing, and Dependencies
 
 **Category**: Tech Debt / Modernization  
-**Priority**: High (blocker for most other work)
+**Priority**: High (blocker for most other work)  
+**Status**: Mostly complete — TypeScript migration, dependency replacement, CI, and monorepo structure are done. Vitest migration and legacy file cleanup remain.
 
 ## Background
 
-The engine was written targeting Node.js 8, which has been EOL since 2019. Several dependencies are significantly outdated, and the test runner (`@salesforce-mc/devtest`) is an internal Salesforce package unavailable publicly. The migration to TypeScript is being done at the same time to get type safety across the engine and all connectors.
+The engine was written targeting Node.js 8, which has been EOL since 2019. Several dependencies were significantly outdated, and the test runner (`@salesforce-mc/devtest`) was an internal Salesforce package unavailable publicly. The migration to TypeScript has been completed to get type safety across the engine and all future connectors.
 
-## TypeScript Migration
+## TypeScript Migration — Done
 
-Convert the entire engine to TypeScript:
+The entire engine has been converted to TypeScript under `packages/engine/src/` (303 `.ts` files, zero `.js` files in the engine package). Key details:
 
-- Add `tsconfig.json` targeting ES2022 / Node.js v22, `"module": "NodeNext"` (ESM)
-- Migrate source files `.js` → `.ts` incrementally (start with `constants/`, `helpers/`, then work inward to the core classes)
-- Define shared types for the engine's public surface: `Monster`, `Character`, `Card`, `Item`, `Game`, `RoomState`
-- Export types from the engine package so connectors and apps can import them — this is the main payoff of TypeScript across the monorepo
-- Use **Zod** for runtime validation at system boundaries (restoring serialized state, incoming commands from connectors)
+- `tsconfig.json` targets ES2022 / `NodeNext` (ESM with `.js` extension imports)
+- `strict: true`, `allowJs: false` in the engine package
+- Emits declarations, declaration maps, and source maps
+- Shared types defined and exported from `packages/engine/src/types/` (card, character, game, item, monster, ring, state)
+- Zod schemas in `packages/engine/src/schemas/` for runtime validation of game state deserialization and command input
 
-### Key Types to Define
+### Key Types Defined
 
 ```typescript
-// Engine public API
-export interface GameOptions { ... }
-export interface CharacterInfo { id: string; name: string; icon?: string }
-export type PublicChannelFn = (message: string) => Promise<void>
-export type PrivateChannelFn = (message: string) => Promise<void>
-export type StateSaveFn = (state: string) => Promise<void>
+// packages/engine/src/types/game.ts
+export type PublicChannelFn = (message: ChannelMessage) => Promise<unknown> | unknown;
+export type PrivateChannelFn = (message: ChannelMessage) => Promise<unknown> | unknown;
+export type StateSaveFn = (state: SerializedState) => Promise<unknown> | unknown;
+export type CommandAction = (context: CommandContext) => Promise<unknown> | unknown;
 
-// Connector-facing character API (replace string-command dispatch)
-export interface CharacterActions {
-  spawnMonster(opts: SpawnOptions): Promise<void>
-  sendMonsterToTheRing(opts: RingOptions): Promise<void>
-  equipMonster(opts: EquipOptions): Promise<void>
-  // ...
-}
+// Also: ChannelMessage, GameOptions, CommandContext, GamePublicApi, CharacterActions, etc.
 ```
 
-## Testing: Vitest
+15 legacy `.js` files remain at the repository root (build scripts, `battlefield.js`, `wander.js`, `shared/baseClass.js`, `shared/test-setup.js`). These are not part of the engine package and can be cleaned up or removed as a low-priority task.
 
-Replace `@salesforce-mc/devtest` with **Vitest**:
+## Testing: Mocha → Vitest — Partially Done
 
-- Jest-compatible API — nearly all existing test logic migrates without changes
-- Native ESM + TypeScript support out of the box (no `ts-jest` or Babel config needed)
-- Significantly faster than Jest for large test suites (Vite-based transformer)
-- Built-in coverage via `@vitest/coverage-v8`
+`@salesforce-mc/devtest` has been fully removed. The engine currently uses **Mocha** with **tsx** (TypeScript execution without compilation), **Chai** + **Sinon** for assertions/mocking, and **c8** for coverage.
 
-```bash
-npm test              # vitest run
-npm run test:watch    # vitest --watch
-npm run test:coverage # vitest run --coverage
-```
+77 test files exist as `*.test.ts` under `packages/engine/src/`.
 
-Rename test files from `*.mocha.node.js` → `*.test.ts` as part of the TypeScript migration.
+The original plan was to migrate to Vitest. This was deferred to reduce risk during the TypeScript migration — Mocha provided a known-good baseline while source files were being converted. Now that the TypeScript migration is complete, the Vitest migration can proceed:
 
-## Monorepo Structure
+- Vitest's Jest-compatible API means most test logic migrates without changes
+- The main work is replacing Chai/Sinon patterns with Vitest's built-in `expect` and `vi` mocking
+- Or: use `vitest` with Chai/Sinon as-is initially (Vitest can run with external assertion libraries), then migrate assertions incrementally
 
-With multiple connectors and apps, organize as a **pnpm workspace** monorepo:
+### Decision Needed
+
+Whether to migrate to Vitest at all, or stay with Mocha. The case for Vitest is speed and native ESM/TS support without the tsx loader. The case for staying is that Mocha works fine now and migration has a nonzero cost. Either way, the test suite is healthy and covers the engine well.
+
+## Monorepo Structure — Done
+
+Organized as a **pnpm workspace** monorepo with **Turborepo** for task orchestration:
 
 ```
 packages/
-  engine/           # This repo's code, compiled to TypeScript
-  connector-slack/  # Slack Bolt adapter
-  connector-discord/# discord.js adapter
-  connector-web/    # Fastify HTTP + WebSocket adapter
+  engine/           # Game engine (TypeScript, fully migrated)
+  connector-slack/  # (not yet created)
+  connector-discord/# (not yet created)
+  server/           # (not yet created — HTTP + WS + tRPC)
 apps/
-  web/              # React web frontend
-  mobile/           # React Native + Expo
+  web/              # (not yet created)
+  mobile/           # (not yet created)
 ```
 
-Shared TypeScript types flow from `engine` → connectors → apps automatically.
+- `pnpm-workspace.yaml` declares `packages/*`
+- `turbo.json` defines `build`, `lint`, `lint:fix`, `test`, and `test:coverage` tasks
+- Root `package.json` specifies `"packageManager": "pnpm@10.33.0"` and delegates scripts to Turborepo
 
-Use **Turborepo** for task orchestration (`turbo build`, `turbo test` runs everything in dependency order with caching).
+Shared TypeScript types flow from `engine` → connectors → apps automatically via package imports.
 
-## Other Dependencies
+## Dependency Replacement — Done
 
-| Current | Replace With | Reason |
-|---------|-------------|--------|
-| `bluebird` | native `async/await` | Unnecessary with modern Node.js |
-| `moment` | `date-fns` or native `Temporal` | moment is in maintenance mode |
-| lodash piecemeal | native ES2022+ | Most use cases covered natively |
-| `aws-sdk` v2 | `@aws-sdk/client-s3` v3 | v2 in maintenance mode |
-| `@salesforce-mc/devtest` | Vitest | Internal package, unavailable publicly |
-| `event-emitter-es6` | Node.js `EventEmitter` (typed) | No external dep needed |
-| Salesforce ESLint config | `@typescript-eslint` + Prettier | Standard toolchain |
+| Original | Replaced With | Status |
+|----------|--------------|--------|
+| `bluebird` | Native `async/await` (`helpers/promise.ts`) | Done |
+| `moment` | Native Date handling (`helpers/time.ts`) | Done |
+| lodash piecemeal | Native ES2022+ (`helpers/collection.ts`, `helpers/random.ts`, `helpers/start-case.ts`, etc.) | Done |
+| `event-emitter-es6` | Node.js `EventEmitter` from `node:events` | Done |
+| `aws-sdk` v2 | `@aws-sdk/client-s3` v3 | Done |
+| `@salesforce-mc/devtest` | Mocha (Vitest still planned) | Done |
+| Salesforce ESLint config | `@typescript-eslint` + Prettier | Done |
 
-## Tasks
+Remaining runtime dependencies: `roll` (dice), `node-emoji`, `word-wrap`, `fantasy-names`, `grab-color-names`, `escape-string-regexp`, `zod`.
 
-- [ ] Add `tsconfig.json` (ESM, strict mode, Node.js v22 target)
-- [ ] Add `.nvmrc` (Node.js 22 LTS) and update `engines` in `package.json`
-- [ ] Replace `@salesforce-mc/devtest` with Vitest + rename test files to `*.test.ts`
-- [ ] Set up ESLint with `@typescript-eslint` + Prettier
-- [ ] Set up GitHub Actions CI (test + lint on every PR)
-- [ ] Migrate `constants/` and `helpers/` to TypeScript first (low risk, high type leverage)
-- [ ] Migrate `cards/`, `monsters/`, `creatures/` (more complex — do with test coverage)
-- [ ] Define and export public engine types (`Monster`, `Character`, `Card`, `Game`, etc.)
-- [ ] Add Zod schemas for state deserialization and incoming command validation
-- [ ] Replace `bluebird` with async/await
-- [ ] Replace `moment`, lodash, other outdated deps
-- [ ] Upgrade `aws-sdk` v2 → v3
-- [ ] Set up pnpm workspace monorepo structure
-- [ ] Add Turborepo for task orchestration
+## CI — Done
 
-## Notes
+GitHub Actions workflow at `.github/workflows/ci.yml` with three parallel jobs:
 
-- Migrate TypeScript incrementally — `allowJs: true` initially so JS and TS files coexist during migration
-- The 93 existing test files are the safety net for the migration; get Vitest running on them first before touching source files
-- `creatures/base.js` is the hardest file to type (2000 lines, many dynamic patterns) — leave it for last
+1. TypeScript — `tsc --noEmit` type-check
+2. Lint — `pnpm run lint`
+3. Tests — `pnpm run test`
 
-## Future Evaluation Item
+Runs on push to `main` and all PRs. Uses pnpm 10, Node.js 22 (from `.nvmrc`), `ubuntu-latest`.
 
-- Keep direct Mocha as the short-term runner after removing `@salesforce-mc/devtest`, then re-evaluate a Vitest migration once TypeScript migration risk is lower and test behavior parity can be validated with less disruption.
+## Other Completed Items
+
+- `.nvmrc` set to `22`; `engines` field requires Node >= 22, npm >= 10
+- ESLint flat config with `@typescript-eslint` and Prettier integration
+- AWS env vars generalized to `DECK_MONSTERS_AWS_ACCESS_KEY_ID` with backward-compat fallback and deprecation warning for old `HUBOT_` prefix
+- Hardcoded time constants extracted to `constants/timing.ts` (`TIME_TO_HEAL_MS`, `TIME_TO_RESURRECT_MS`)
+- `creatures/base.ts` reduced from ~2000 lines to ~977 lines (still a single file, but significantly smaller)
+- Command system (`commands/`) fully migrated with Zod validation via `commandInputSchema`
+
+## Remaining Tasks
+
+- [ ] Evaluate Mocha → Vitest migration (decision: migrate or stay with Mocha)
+- [ ] If migrating to Vitest: replace Mocha + c8 with Vitest + `@vitest/coverage-v8`, update test scripts
+- [ ] Clean up 15 legacy root-level `.js` files (build scripts, battlefield.js, wander.js, shared/)
+- [ ] Continue decomposing `creatures/base.ts` (977 lines — still large, but functional)
+- [ ] Create remaining monorepo packages as other roadmap items are implemented (`server`, `connector-slack`, `connector-discord`, `apps/web`, `apps/mobile`)

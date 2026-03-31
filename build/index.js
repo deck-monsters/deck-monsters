@@ -1,23 +1,23 @@
 /* eslint-disable no-console */
+import { writeFileSync } from 'fs';
 
-const fs = require('fs-extra');
+import cardCatalogue from './card-catalogue.js';
+import cardCatalogueAsHTML from './card-catalogue-as-html.js';
+import dungeonMasterGuide from './dungeon-master-guide.js';
+import getCardDPT from './card-odds.js';
+import getCardProbabilities from './card-probabilities.js';
+import monsterManual from './monster-manual.js';
+import playerHandbook from './player-handbook.js';
 
-const cardCatalogue = require('./card-catalogue');
-const cardCatalogueAsHTML = require('./card-catalogue-as-html');
-const dungeonMasterGuide = require('./dungeon-master-guide');
-const getCardDPT = require('./card-odds');
-const getCardProbabilities = require('./card-probabilities');
-const monsterManual = require('./monster-manual');
-const playerHandbook = require('./player-handbook');
-
-const writeToFile = (name, string, suffix = 'md') => fs.writeFileSync(`${name}.${suffix}`, string);
+const writeToFile = (name, string, suffix = 'md') =>
+	writeFileSync(`${name}.${suffix}`, string);
 
 Promise.resolve()
 	.then(() => {
 		if (process.argv[2] === '--calculate-stats') {
 			console.log('Calculating card stats, this will take some time...');
-			fs.outputJsonSync('card-odds.json', getCardDPT());
-			fs.outputJsonSync('card-probabilities.json', getCardProbabilities());
+			writeToFile('card-odds', JSON.stringify(getCardDPT(), null, 2), 'json');
+			writeToFile('card-probabilities', JSON.stringify(getCardProbabilities(), null, 2), 'json');
 		} else {
 			console.log('Skipping stats calculation. Pass --calculate-stats to re-calculate card stats.');
 		}
@@ -48,5 +48,10 @@ Promise.resolve()
 			.then(() => writeToFile('cards', content.join('\n'), 'html'));
 	})
 	.then(() => {
+		console.log('Done!');
 		process.exit(0);
+	})
+	.catch((err) => {
+		console.error('Build failed:', err);
+		process.exit(1);
 	});

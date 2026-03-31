@@ -16,26 +16,54 @@ A **room** is a named, isolated game instance:
 - Has a unique `room_id`
 - Has an owner / admin
 - Has an invite code or invite link for joining
-- Stores its own serialized game state (see hosting issue)
+- Stores its own serialized game state (see backend hosting doc)
 - Has its own ring, character roster, shop inventory, etc.
+- Is connector-agnostic — any connector can attach to any room
+
+### RoomManager
+
+The `RoomManager` is the central orchestrator that sits between connectors and game instances:
+
+```typescript
+class RoomManager {
+  private rooms: Map<string, { game: Game; eventBus: RoomEventBus }>;
+
+  getGame(roomId: string): Game { ... }
+  getEventBus(roomId: string): RoomEventBus { ... }
+
+  createRoom(ownerId: string, name: string): Promise<Room> { ... }
+  loadRoom(roomId: string): Promise<void> { ... }  // restore from DB
+  unloadRoom(roomId: string): Promise<void> { ... } // save + remove from memory
+
+  listRoomsForUser(userId: string): Promise<Room[]> { ... }
+}
+```
+
+Connectors don't interact with `Game` directly — they go through `RoomManager` to get the game instance and event bus for a specific room. This is the integration point where auth (`userId`), room membership, and the event bus all come together.
+
+### Room Lifecycle
+
+1. User creates a room → `RoomManager.createRoom()` → new `Game` instance + `RoomEventBus` + DB row
+2. Connector subscribes to the room's event bus to receive game events
+3. Game state is periodically snapshotted to DB (throttled, not on every mutation — see backend hosting doc)
+4. Idle rooms (no activity for N hours) can be unloaded from memory; reloaded on next interaction
+5. Room deletion: owner-only, with confirmation; removes DB row and all associated events
+
+### Lazy Loading
+
+Not all rooms need to be in memory at all times. On startup, load only rooms with recent activity. When a command targets a room that isn't loaded, restore it from the DB snapshot on demand. This keeps memory usage proportional to active rooms, not total rooms.
 
 ### Multi-Room Engine Changes
 
-The engine itself (`Game` class) already encapsulates a single room. The connector layer needs to:
+The engine itself (`Game` class) already encapsulates a single room. No changes to the engine are needed for multi-room — it's a concern of the server layer:
 
-1. Maintain a map of `room_id → Game instance`
-2. Route each player's commands to their current room's `Game`
-3. Handle room creation, joining, leaving
-
-```
-rooms/
-  room-abc123  → Game instance A  (public channel → #deck-monsters-abc)
-  room-def456  → Game instance B  (public channel → #deck-monsters-def)
-```
+1. `RoomManager` maintains a map of `room_id → { Game, RoomEventBus }`
+2. Routes each command to the correct room's `Game`
+3. Handles room creation, joining, leaving, and lifecycle
 
 ### Room Management Commands
 
-New commands needed (surfaced via each connector):
+New commands surfaced via each connector:
 
 | Command | Description |
 |---------|-------------|
@@ -43,20 +71,32 @@ New commands needed (surfaced via each connector):
 | `/join-room [code]` | Join a room by invite code |
 | `/leave-room` | Leave your current room |
 | `/room-info` | Show current room name, player count, active ring |
-| `/list-rooms` | (Admin) List all rooms |
+| `/list-rooms` | List rooms you belong to |
+
+### External ID Mapping
+
+Connectors map their platform-specific identifiers to room IDs:
+
+- **Discord**: a guild ID maps to a default room; sub-rooms can be created per channel
+- **Slack**: a workspace+channel pair maps to a room
+- **Web/mobile**: rooms are managed directly through the UI
+
+This mapping lives in the connector, not the database schema — a room is just a room, agnostic of which connector created it.
 
 ### Player ↔ Room Relationship
 
 - A player can belong to multiple rooms (different friend groups)
-- Characters are global to the player, not room-specific — you bring your monsters with you
-- Or alternatively: characters are room-scoped (simpler, avoids stat inflation across groups) — **TBD**
+- Characters are room-scoped (simpler, avoids stat inflation across groups, prevents "grinding in one room to dominate another")
+- The `room_members` table tracks membership: `{ room_id, user_id, joined_at, role }`
 
 ## Tasks
 
-- [ ] Design room schema: `{ room_id, name, owner_id, invite_code, created_at }`
-- [ ] Implement `RoomManager` class that manages multiple `Game` instances
-- [ ] Add room CRUD to the web app backend API
-- [ ] Add room join/leave/create commands to Discord connector
+- [ ] Design and implement `RoomManager` class
+- [ ] Add room CRUD to the tRPC API (create, join, leave, list, info)
+- [ ] Implement lazy loading / unloading of rooms
 - [ ] Add room management UI to web app
-- [ ] Decide: global vs room-scoped characters (ADR needed)
+- [ ] Add room join/leave/create commands to Discord connector
+- [ ] Add room management to Slack connector
+- [ ] Implement invite code generation and redemption
 - [ ] Handle room cleanup (idle rooms, owner leaves, etc.)
+- [ ] Decide and document room-scoped vs global characters (ADR)

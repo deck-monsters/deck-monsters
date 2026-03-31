@@ -58,7 +58,7 @@ Note the flavor text is based on the raw die roll (6), not the total (23) — th
 
 ## Design Principles for the Revival
 
-- **Don't break the text feed.** The ring channel is a scrolling log of battle narration. That stays as text.
+- **Don't break the text feed.** The ring channel is a scrolling log of battle narration. That stays as text, delivered via `GameEvent.text`.
 - **The `===` separator cards are the UI.** On web/mobile, render them in a monospace font inside a styled container. Don't convert them to a different format.
 - **Emoji carry a lot of weight.** Each monster and player has an emoji. The card catalog uses emoji icons. Keep this — it's low-overhead personality.
 - **Jane's identity.** Jane (the bot) had a distinctive folk-art avatar. The bot's identity should be consistent across all connectors — same name, same avatar.
@@ -73,6 +73,8 @@ The following are *additions* that enhance without replacing the text-first expe
 - Small monster emoji/icon next to monster names in the sidebar list
 - HP bar in the monster detail view (visual representation of current HP vs max)
 - Dark theme by default — the ASCII aesthetic suits it
+
+Rich rendering is optional and incremental. The web client receives `GameEvent` objects — it can start by displaying `event.text` in monospace, then later use `event.type` and `event.payload` to render HP bars, monster cards, and other enhanced UI for specific event types.
 
 ### For the Mobile App
 

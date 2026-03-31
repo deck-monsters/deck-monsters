@@ -5,7 +5,7 @@
 
 ## Overview
 
-A native mobile app for iOS (and optionally Android) so players can check on their monsters, send commands, and watch fights from their phone — similar to how the game was originally used in Slack's mobile app.
+A native mobile app for iOS and Android so players can check on their monsters, send commands, and watch fights from their phone — similar to how the game was originally used in Slack's mobile app.
 
 ## Design Philosophy
 
@@ -35,36 +35,46 @@ Native-only Swift/Kotlin is an option if specific platform features are needed, 
 
 ## Backend Integration
 
-The mobile app connects to the same backend API as the web app (REST + WebSocket). No game engine code runs on the device — it's a thin client.
+The mobile app connects to the same tRPC API and event bus as the web app. No game engine code runs on the device — it's a thin client.
 
-- REST API for commands (spawn, ring, equip, buy, etc.)
-- WebSocket for real-time ring feed
-- Push notifications (APNs / FCM) for major events when app is in background
+- **tRPC mutations** for commands (spawn, ring, equip, buy, etc.) via `@trpc/react-query`
+- **tRPC WebSocket subscription** for real-time ring feed (`GameEvent` stream)
+- **Reconnection with catch-up**: on reconnect, send `lastEventId` to replay missed events (same pattern as web — see backend hosting doc)
+- **Push notifications** (APNs / FCM) for events when the app is in background
+
+The mobile and web apps share the same server package (`packages/server`) and the same tRPC router. The only difference is the client-side rendering.
 
 ## Push Notifications
 
 Notify players when:
 - Their monster wins or loses a fight
-- Their monster is knocked out
+- Their monster is knocked out / permadeath
 - A new fight is starting in their ring
 - Exploration completes
 
+Push notifications are driven by `GameEvent` types on the server side. The server checks if the target user has an active WebSocket connection; if not, it sends a push notification instead.
+
+## Ring Feed Rendering
+
+Same approach as the web app: render `GameEvent.text` in a monospace font. React Native supports custom fonts (`JetBrains Mono`, `Fira Code`). For richer rendering (HP bars, monster icons), use `GameEvent.type` and `GameEvent.payload` — but start with text-only.
+
 ## Graphics
 
-Simple monster icons / sprites go a long way on mobile (see graphics issue). A small icon next to each monster name makes scanning the feed much easier.
+Simple monster icons / sprites go a long way on mobile (see graphics doc). A small icon next to each monster name makes scanning the feed much easier.
 
 ## Tasks
 
-- [ ] Set up React Native + Expo project
-- [ ] Implement WebSocket client for ring feed
-- [ ] Implement REST API client (typed, with error handling)
-- [ ] Build ring feed screen with live updates
+- [ ] Create `apps/mobile` — React Native + Expo project
+- [ ] Set up tRPC client with `@trpc/react-query` (shared types with web app)
+- [ ] Implement WebSocket subscription for ring feed with reconnection
+- [ ] Build ring feed screen with live updates (monospace text rendering)
 - [ ] Build my monsters screen
 - [ ] Build monster detail + deck builder screens
 - [ ] Build shop screen
 - [ ] Build spawn screen
+- [ ] Build room management screen (create, join, invite)
 - [ ] Integrate auth (JWT storage via Expo SecureStore)
-- [ ] Implement push notifications (Expo Notifications + backend integration)
+- [ ] Implement push notifications (Expo Notifications + server-side event routing)
 - [ ] iOS: configure APNs, submit to App Store
 - [ ] Android: configure FCM, submit to Google Play
-- [ ] Add simple monster icons (see graphics issue)
+- [ ] Add simple monster icons (see graphics doc)

@@ -71,7 +71,7 @@ export class HornGore extends ImmobilizeCard {
 	}
 
 	get mechanics(): string {
-		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successfull ${this.flavors.spike} hit.\n\nIf either ${this.flavors.spike} hits, chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.`;
+		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successful ${this.flavors.spike} hit.\n\nIf either ${this.flavors.spike} hits, chance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.`;
 	}
 
 	override get stats(): string {

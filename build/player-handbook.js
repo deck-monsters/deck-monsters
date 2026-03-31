@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-const generateDocs = require('./generate-docs');
+import generateDocs from './generate-docs.js';
 
 const generatePlayerHandbook = (output) => {
 	const contents = `
@@ -95,6 +95,9 @@ const generatePlayerHandbook = (output) => {
 
     \`sell to the shop\` - Lets you sell items to the shop
 
+    ## Your Character
+
+    \`edit my character\` - Edit your character's name and icon
 
     # Basic Build Strategies
 
@@ -133,6 +136,6 @@ const generatePlayerHandbook = (output) => {
 	return output(contents, true);
 };
 
-const playerHandbook = ({ channel, output }) => generateDocs({ channel, generate: generatePlayerHandbook, output });
+const playerHandbook = ({ channel, output } = {}) => generateDocs({ channel, generate: generatePlayerHandbook, output });
 
-module.exports = playerHandbook;
+export default playerHandbook;

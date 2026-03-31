@@ -1,8 +1,8 @@
-/* eslint-disable class-methods-use-this, max-len */
-const { monsterCard } = require('../helpers/card');
-const allMonsters = require('../monsters/helpers/all.js');
-const generateDocs = require('./generate-docs');
-const { eachSeries } = require('../helpers/promise');
+/* eslint-disable max-len */
+import { monsterCard } from '../packages/engine/src/helpers/card.js';
+import { allMonsters } from '../packages/engine/src/monsters/helpers/all.js';
+import { eachSeries } from '../packages/engine/src/helpers/promise.js';
+import generateDocs from './generate-docs.js';
 
 const monsterList = allMonsters.map(({ creatureType }) => creatureType);
 
@@ -42,6 +42,6 @@ Here are some sample beginner level monsters:
 		.then(() => eachSeries(allMonsters, Monster => output(monsterCard(new Monster(), true))));
 };
 
-const monsterManual = ({ channel, output }) => generateDocs({ channel, generate: generateMonsterManual, output });
+const monsterManual = ({ channel, output } = {}) => generateDocs({ channel, generate: generateMonsterManual, output });
 
-module.exports = monsterManual;
+export default monsterManual;

@@ -13,7 +13,7 @@ describe('./cards/forked-metal-rod.ts', () => {
 		const forkedMetalRod = new ForkedMetalRodCard();
 		const hit = new HitCard({ targetProp: (forkedMetalRod as any).targetProp });
 
-		const stats = `Attack twice (once with each prong). +2 to hit and immobilize for each successfull prong hit.
+		const stats = `Attack twice (once with each prong). +2 to hit and immobilize for each successful prong hit.
 
 Chance to immobilize: 1d20 vs str.
 
@@ -21,7 +21,7 @@ If already immobilized, hit instead.
 ${hit.stats}
  +5 advantage vs Gladiator, Basilisk
  +1 advantage vs Jinn, Minotaur
-inneffective against Weeping Angel
+ineffective against Weeping Angel
 
 Opponent breaks free by rolling 1d20 vs immobilizer's str + advantage - (turns immobilized * 3)
 Hits immobilizer back on stroke of luck.

@@ -88,9 +88,6 @@ export class ImmobilizeCard extends HitCard {
 			this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] })
 		) {
 			const strongAgainst = this.strongAgainstCreatureTypes.join(', ');
-			strongBonus = signedNumber(
-				this.getAttackModifier({ creatureType: this.strongAgainstCreatureTypes[0] })
-			) as unknown as number;
 			const sb = this.getAttackModifier({
 				creatureType: this.strongAgainstCreatureTypes[0],
 			});
@@ -112,7 +109,7 @@ export class ImmobilizeCard extends HitCard {
 
 		if (this.uselessAgainstCreatureTypes.length) {
 			const uselessAgainst = this.uselessAgainstCreatureTypes.join(', ');
-			strModifiers += `inneffective against ${uselessAgainst}\n`;
+			strModifiers += `ineffective against ${uselessAgainst}\n`;
 		}
 
 		const ongoingDamageText = this.ongoingDamage

@@ -12,8 +12,17 @@ let s3: S3Client | false | undefined;
 
 const getAPI = (log: Logger): S3Client | false => {
 	if (s3 === undefined) {
-		const accessKeyId = process.env.HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID;
-		const secretAccessKey = process.env.HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY;
+		let accessKeyId = process.env.DECK_MONSTERS_AWS_ACCESS_KEY_ID;
+		let secretAccessKey = process.env.DECK_MONSTERS_AWS_SECRET_ACCESS_KEY;
+
+		if (!accessKeyId && process.env.HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID) {
+			log('Warning: HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID is deprecated. Use DECK_MONSTERS_AWS_ACCESS_KEY_ID instead.');
+			accessKeyId = process.env.HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID;
+		}
+		if (!secretAccessKey && process.env.HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY) {
+			log('Warning: HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY is deprecated. Use DECK_MONSTERS_AWS_SECRET_ACCESS_KEY instead.');
+			secretAccessKey = process.env.HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY;
+		}
 
 		if (accessKeyId && secretAccessKey) {
 			s3 = new S3Client({

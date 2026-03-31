@@ -7,30 +7,40 @@
 
 Build a Discord bot adapter that makes Deck Monsters playable in any Discord server. This is the highest-priority new connector as Discord is where most gaming communities live.
 
-## How It Fits the Engine
+## How It Fits the Architecture
 
-The game engine is connector-agnostic. The Discord adapter provides two channel callbacks with this shape:
+The Discord connector is a subscriber on the event bus. It does not call `publicChannelFn` or store callbacks — it subscribes to a room's `RoomEventBus` and translates `GameEvent` objects into Discord messages.
 
-```typescript
-type ChannelFn = (args: { announce?: string; question?: string; choices?: string[] }) => Promise<string | undefined>
+```
+Discord user sends /ring command
+  → connector looks up room for this guild (via RoomManager)
+  → connector looks up userId for this Discord user (via user_connectors)
+  → connector calls game.getCharacter({ id: userId, ... })
+  → game engine processes the command, publishes GameEvents to the room's event bus
+  → Discord connector (subscribed to that bus) receives events
+  → posts to the #deck-monsters channel (public events) or DMs the user (private events)
 ```
 
-- `{ announce }` — post the string to the channel/DM
-- `{ question, choices }` — prompt the user and resolve with their answer; timeout after ~2 minutes
+### Event Delivery
 
-Discord adapter responsibilities:
-1. `publicChannel` → posts to a designated `#deck-monsters` text channel
-2. `privateChannel` → sends a Discord DM or ephemeral reply; handles interactive questions
-3. Maps slash commands to `player.*` action object methods (from `game.getCharacter()`)
-4. Persists game state via the shared state store (see hosting issue)
+- **Public events** (`scope: 'public'`): posted to the designated `#deck-monsters` text channel in the guild
+- **Private events** (`scope: 'private'`, `targetUserId` matches): sent as a Discord DM or ephemeral reply
+- **Prompt requests**: when the engine needs player input (equipping, shopping), the connector sends an ephemeral message with Discord buttons/select menus, then responds to the engine with the player's choice
 
-See the Slack connector doc for notes on `handleCommand` — the same gap applies here if we want text-based `dm <command>` style interaction in addition to slash commands.
+The connector uses the `GameEvent.text` field for text channels (preserves the original game voice). For embeds (monster stat cards, card displays), it can use `GameEvent.type` and `GameEvent.payload` to render richer formatting.
+
+### Multi-Guild Support
+
+- Each Discord guild gets its own room by default (guild ID → room mapping managed by the connector)
+- Players in a guild can optionally create sub-rooms for different friend groups (see multi-room doc)
+- The connector maintains subscriptions to the event bus for each active guild's room
 
 ## Suggested Tech Stack
 
 - `discord.js` v14
 - Slash command registration via Discord's application command API
 - Ephemeral message responses for private game feedback
+- Message components (buttons, select menus) for interactive prompts
 
 ## Slash Commands to Implement
 
@@ -49,33 +59,31 @@ See the Slack connector doc for notes on `handleCommand` — the same gap applie
 | `/create-room [name]` | Create a new game room |
 | `/join-room [code]` | Join a room |
 
+Additionally, the connector can support free-text commands via a `dm <command>` message pattern, routing through `game.handleCommand()` — the command system is fully migrated and uses Zod validation.
+
 ## UI Considerations
 
-- Use Discord **embeds** for monster stat cards and card displays — much more readable than plain text
-- Use Discord **buttons** (message components) for confirmations (e.g., "Send to ring? [Yes] [No]")
+- Use Discord **embeds** for monster stat cards and card displays — rendered from `GameEvent.payload` data
+- Use Discord **buttons** (message components) for confirmations and interactive prompts (replaces the old callback-based question/choices pattern)
 - Use **autocomplete** on `/equip` and `/ring` to show the player's available monsters
-- The ring feed (public channel) remains as plain text messages — this preserves the original feel
-
-## Multi-Server Support
-
-- Each Discord guild (server) gets its own room by default
-- Players in a guild can optionally create sub-rooms for different friend groups (see multi-room issue)
-- Guild ID is used as the `room_id` for the default room
+- The ring feed (public channel) uses `GameEvent.text` as plain text messages — preserves the original feel
+- Consider posting fight narration in **threads** (see balance and mechanics doc, "fights in threads") to avoid flooding the main channel
 
 ## Tasks
 
-- [ ] Initialize discord.js bot project structure
-- [ ] Implement slash command registration
-- [ ] Implement `publicChannel` → channel message mapping
-- [ ] Implement `privateChannel` → ephemeral or DM mapping
+- [ ] Create `packages/connector-discord` in the monorepo
+- [ ] Initialize discord.js bot with slash command registration
+- [ ] Implement event bus subscription for public events → guild channel
+- [ ] Implement event bus subscription for private events → DM / ephemeral
+- [ ] Implement prompt handling via Discord buttons/select menus
 - [ ] Implement all slash commands (see table above)
-- [ ] Add embed formatting for monster/card displays
-- [ ] Add message component buttons for confirmations
-- [ ] Integrate with auth (Discord OAuth — Discord users are already authenticated)
-- [ ] Integrate with state storage
-- [ ] Write setup/deployment docs for server admins adding the bot
+- [ ] Add embed formatting for monster/card displays using event payload data
+- [ ] Integrate with auth (Discord OAuth — auto-create user records, link via `user_connectors`)
+- [ ] Integrate with RoomManager (guild ID → room mapping, room lifecycle)
+- [ ] Write setup/deployment docs for server admins adding the bot to their guild
 
 ## Notes
 
-- Discord users are already authenticated by Discord — no additional auth needed for the Discord connector
-- The Discord user ID becomes the `userId` passed to `game.getCharacter()`
+- Discord users are already authenticated by Discord — no additional auth needed for the Discord connector itself
+- The Discord user ID is mapped to a canonical `userId` via `user_connectors` (see auth doc)
+- The connector package depends on `@deck-monsters/engine` for types but does not run game logic directly — it goes through `RoomManager`

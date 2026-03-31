@@ -61,7 +61,7 @@ const game = savedState
 game.saveState = (state) => db.saveRoomState(roomId, state)
 
 // Get the action object for a player (creates character on first call)
-const player = await game.getCharacter(privateChannel, userId, { id: userId, name })
+const player = await game.getCharacter({ channel: privateChannel, id: userId, name })
 
 // Map platform inputs to action methods
 await player.spawnMonster({ /* prompts user interactively via privateChannel */ })
@@ -91,9 +91,9 @@ pnpm install
 ### Test
 
 ```bash
-pnpm test              # vitest run (all packages)
-pnpm test:watch        # vitest --watch
-pnpm test:coverage     # vitest run --coverage
+pnpm test              # mocha (all packages via Turborepo)
+pnpm test:watch        # mocha --watch
+pnpm test:coverage     # mocha + c8 coverage
 ```
 
 ### CLI Demos
@@ -105,7 +105,7 @@ node battlefield.js   # ring combat demo
 ### Regenerate Docs
 
 ```bash
-node ./build          # rebuilds CARDS.md, DMG.md, and probability tables
+pnpm run build:docs   # rebuilds CARDS.md, DMG.md, MONSTERS.md, PLAYER_HANDBOOK.md, cards.html
 ```
 
 ---
@@ -126,24 +126,28 @@ node ./build          # rebuilds CARDS.md, DMG.md, and probability tables
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | Postgres connection string for state storage |
-| `JWT_SECRET` | Auth token signing |
-| `AWS_ACCESS_KEY_ID` | S3 backup (optional) |
-| `AWS_SECRET_ACCESS_KEY` | S3 backup (optional) |
+| `DECK_MONSTERS_AWS_ACCESS_KEY_ID` | S3 backup credentials (optional) |
+| `DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` | S3 backup credentials (optional) |
 
-> Legacy: the engine previously used `HUBOT_DECK_MONSTERS_AWS_*` names from an old Hubot integration. These are being retired.
+> Legacy: `HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID` and `HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` still work with a deprecation warning, but the `DECK_MONSTERS_AWS_*` names are preferred.
 
 ---
 
 ## Status
 
-The project is actively being revived. The core engine is stable. Current focus:
+The project is actively being revived. The core engine is stable.
 
-- **TypeScript migration** — converting the JS codebase to TypeScript, replacing internal test infrastructure with Vitest, setting up CI
-- **Monorepo** — reorganizing engine + connectors + apps into a pnpm workspace
-- **Infrastructure** — Postgres-backed state storage, containerized hosting, tRPC API layer for web/mobile
-- **New connectors** — Discord bot, web app, iOS/Android app (React Native)
-- **Auth + multi-room** — user identity, invite-based friend groups
+**Completed:**
+- TypeScript migration (303 `.ts` files, strict mode, ESM, Zod validation)
+- Monorepo structure (pnpm workspaces + Turborepo)
+- Dependency modernization (native async/await, `@aws-sdk` v3, `@typescript-eslint` + Prettier)
+- CI via GitHub Actions (type-check, lint, test on every push/PR)
+
+**In progress / next up:**
+- Vitest migration (currently Mocha + tsx; Vitest migration is optional — see `docs/roadmap/01-modernize-stack.md`)
+- Infrastructure — Postgres-backed state storage, containerized hosting, tRPC API layer
+- New connectors — Discord bot, web app, iOS/Android app (React Native)
+- Auth + multi-room — user identity, invite-based friend groups
 
 The exploration system (expeditions) has been archived for now — it's a concept that could be revived later, but the core game is the ring combat.
 
