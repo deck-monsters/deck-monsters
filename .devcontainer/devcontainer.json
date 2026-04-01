@@ -23,7 +23,7 @@
     "source=deck-monsters-ghconfig,target=/home/node/.config/gh,type=volume",
     "source=deck-monsters-npm-cache,target=/home/node/.npm,type=volume"
   ],
-  "postCreateCommand": "npm ci --ignore-scripts",
+  "postCreateCommand": "pnpm install --frozen-lockfile",
   "postStartCommand": "touch /home/node/.gitconfig-store/config && git config --global credential.helper store && git config --global --get user.email >/dev/null 2>&1 || git config --global user.email \"devcontainer@example.local\" && git config --global --get user.name >/dev/null 2>&1 || git config --global user.name \"Deck Monsters Dev\"",
   "remoteEnv": {
     "NPM_CONFIG_REGISTRY": "https://registry.npmjs.org",
