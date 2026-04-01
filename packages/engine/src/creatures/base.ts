@@ -1,64 +1,21 @@
 import { random, sample } from '../helpers/random.js';
 import { startCase } from '../helpers/start-case.js';
 import { BaseClass } from '../shared/baseClass.js';
-import { capitalize } from '../helpers/capitalize.js';
 import { describeLevels, getLevel } from '../helpers/levels.js';
 import { getAttributeChoices } from '../helpers/choices.js';
-import { itemCard } from '../helpers/card.js';
-import { MELEE } from '../constants/card-classes.js';
-import { eachSeries } from '../helpers/promise.js';
-import { STARTING_XP } from '../helpers/experience.js';
 import PRONOUNS from '../helpers/pronouns.js';
 import names from '../helpers/names.js';
 
 import {
 	AC_VARIANCE,
-	BASE_AC,
-	BASE_DEX,
-	BASE_HP,
-	BASE_INT,
-	BASE_STR,
 	HP_VARIANCE,
-	MAX_BOOSTS,
-	MAX_PROP_MODIFICATIONS
 } from '../constants/stats.js';
-import { TIME_TO_HEAL_MS, TIME_TO_RESURRECT_MS } from '../constants/timing.js';
+import { TIME_TO_HEAL_MS } from '../constants/timing.js';
 
-// These helpers will exist when items are generated
-import type { sortItemsAlphabetically as SortItemsFn } from '../items/helpers/sort.js';
-import type { getItemCounts as GetItemCountsFn } from '../items/helpers/counts.js';
-import type { default as getUniqueItemsFn } from '../items/helpers/unique-items.js';
-import type { default as isMatchingItemFn } from '../items/helpers/is-matching.js';
-
-// Runtime imports using dynamic require-style pattern for items helpers
-// (these modules will be available at runtime even if TS doesn't resolve them yet)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _sortItemsAlphabetically: typeof SortItemsFn = (items: any[]) => items;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _getItemCounts: typeof GetItemCountsFn = (items: any[]) => ({} as any);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _getUniqueItems: typeof getUniqueItemsFn = (items: any[]) => items;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _isMatchingItem: typeof isMatchingItemFn = () => false;
-
-// Lazy-load items helpers to avoid circular dependency / ordering issues
-const getItemsHelpers = async () => {
-	const [sort, counts, unique, matching] = await Promise.all([
-		import('../items/helpers/sort.js'),
-		import('../items/helpers/counts.js'),
-		import('../items/helpers/unique-items.js'),
-		import('../items/helpers/is-matching.js')
-	]);
-	_sortItemsAlphabetically = sort.sortItemsAlphabetically;
-	_getItemCounts = counts.getItemCounts;
-	_getUniqueItems = unique.default ?? (unique as any).getUniqueItems ?? unique;
-	_isMatchingItem = matching.default ?? (matching as any).isMatchingItem ?? matching;
-};
-
-// Kick off loading immediately (non-blocking)
-getItemsHelpers().catch(() => {
-	// Items helpers may not exist yet during generation; stubs remain in place
-});
+import { getMaxModifications, getPreBattlePropValue, getProp, getModifier } from './stats.js';
+import { startEncounter, endEncounter, getEncounterModifiers, setEncounterModifiers, getEncounterEffects, setEncounterEffects, getFled, setFled, getRound, setRound, getKilledBy, setKilledBy, getKilled, appendKilled, setModifier, leaveCombat } from './encounter.js';
+import { hit, heal, die, respawn } from './health.js';
+import { addItem, removeItem, giveItem, useItem, lookAtItems } from './items.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -176,7 +133,6 @@ class BaseCreature extends BaseClass<CreatureOptions> {
 	declare respawnTimeoutLength: number | undefined;
 	declare healingInterval: ReturnType<typeof setInterval>;
 
-	// Static properties set on subclasses
 	static eventPrefix = 'creature';
 	static class?: string;
 	static creatureType?: string;
@@ -224,11 +180,8 @@ class BaseCreature extends BaseClass<CreatureOptions> {
 
 	get givenName (): string {
 		if (!this.options.name) {
-			this.setOptions({
-				name: names(this.creatureType ?? '', this.gender ?? '')
-			});
+			this.setOptions({ name: names(this.creatureType ?? '', this.gender ?? '') });
 		}
-
 		return startCase(this.options.name);
 	}
 
@@ -292,7 +245,7 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	// ---------------------------------------------------------------------------
-	// Stats
+	// Stats — delegated to creatures/stats.ts
 	// ---------------------------------------------------------------------------
 
 	get acVariance (): number {
@@ -304,16 +257,11 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	get maxHp (): number {
-		let maxHp = BASE_HP + this.hpVariance;
-		maxHp += Math.min(this.level * 3, MAX_BOOSTS.hp); // Gain 3 hp per level up to the max
-		maxHp += Math.min((this.modifiers as Record<string, number>).maxHp || 0, this.getMaxModifications('hp'));
-
-		return Math.max(maxHp, 1);
+		return Math.max(getPreBattlePropValue(this, 'hp') ?? 1, 1);
 	}
 
 	get hp (): number {
 		if (this.options.hp === undefined) this.hp = this.maxHp;
-
 		return this.options.hp as number;
 	}
 
@@ -342,104 +290,19 @@ Battles won: ${this.battles.wins}`;
 		}
 	}
 
-	get ac (): number {
-		return this.getProp('ac');
-	}
+	get ac (): number { return this.getProp('ac'); }
+	get dex (): number { return this.getProp('dex'); }
+	get str (): number { return this.getProp('str'); }
+	get int (): number { return this.getProp('int'); }
 
-	get dex (): number {
-		return this.getProp('dex');
-	}
+	get dexModifier (): number { return this.getModifier('dex'); }
+	get strModifier (): number { return this.getModifier('str'); }
+	get intModifier (): number { return this.getModifier('int'); }
 
-	get str (): number {
-		return this.getProp('str');
-	}
-
-	get int (): number {
-		return this.getProp('int');
-	}
-
-	get dexModifier (): number {
-		return this.getModifier('dex');
-	}
-
-	get strModifier (): number {
-		return this.getModifier('str');
-	}
-
-	get intModifier (): number {
-		return this.getModifier('int');
-	}
-
-	getMaxModifications (prop: string): number {
-		switch (prop) {
-			case 'hp':
-				return MAX_PROP_MODIFICATIONS.hp;
-			case 'ac':
-				return Math.ceil(MAX_PROP_MODIFICATIONS.ac * (this.level + 1));
-			case 'xp':
-				// can't use level for calculation because it would cause circular reference
-				return Math.max(this.getPreBattlePropValue('xp')! - MAX_PROP_MODIFICATIONS.xp, MAX_PROP_MODIFICATIONS.xp);
-			case 'int':
-				return Math.ceil(MAX_PROP_MODIFICATIONS.int * (this.level + 1));
-			case 'str':
-				return Math.ceil(MAX_PROP_MODIFICATIONS.str * (this.level + 1));
-			case 'dex':
-				return Math.ceil(MAX_PROP_MODIFICATIONS.dex * (this.level + 1));
-			default:
-				return 4;
-		}
-	}
-
-	getProp (targetProp: string): number {
-		let prop = this.getPreBattlePropValue(targetProp) ?? 0;
-		prop += Math.min((this.encounterModifiers[targetProp] as number) || 0, this.getMaxModifications(targetProp));
-
-		return Math.max(prop, 1);
-	}
-
-	getPreBattlePropValue (prop: string): number | undefined {
-		let raw: number | undefined;
-
-		switch (prop) {
-			case 'dex':
-				// dexModifier already includes level scaling (+1/level via getModifier)
-				raw = BASE_DEX + this.dexModifier;
-				break;
-			case 'str':
-				raw = BASE_STR + this.strModifier;
-				break;
-			case 'int':
-				raw = BASE_INT + this.intModifier;
-				break;
-			case 'ac':
-				raw = BASE_AC + this.acVariance;
-				raw += Math.min(this.level, MAX_BOOSTS[prop]); // AC level bonus is not in getModifier
-				break;
-			case 'hp':
-				raw = this.maxHp;
-				break;
-			case 'xp':
-				raw = (this.options.xp as number) || STARTING_XP;
-				break;
-			default:
-		}
-
-		return raw;
-	}
-
-	getModifier (targetProp: string): number {
-		const targetModifier = `${targetProp}Modifier`;
-		let modifier = (this.options[targetModifier] as number) || 0;
-
-		// Level scaling: +1 per level up to the stat cap
-		modifier += Math.min(this.level, (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0);
-
-		// Permanent modifiers set via setModifier(..., permanent=true) live in options.modifiers
-		const permanentModifiers = (this.options.modifiers as Record<string, number>) || {};
-		modifier += Math.min(permanentModifiers[targetProp] || 0, (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0);
-
-		return modifier;
-	}
+	getMaxModifications (prop: string): number { return getMaxModifications(this, prop); }
+	getProp (targetProp: string): number { return getProp(this, targetProp); }
+	getPreBattlePropValue (prop: string): number | undefined { return getPreBattlePropValue(this, prop); }
+	getModifier (targetProp: string): number { return getModifier(this, targetProp); }
 
 	// ---------------------------------------------------------------------------
 	// Battles
@@ -447,7 +310,6 @@ Battles won: ${this.battles.wins}`;
 
 	get battles (): BattleRecord {
 		if (this.options.battles === undefined) this.battles = { wins: 0, losses: 0, total: 0 };
-
 		return this.options.battles as BattleRecord;
 	}
 
@@ -456,42 +318,22 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	addWin (): void {
-		const battles: BattleRecord = {
-			wins: this.battles.wins + 1,
-			losses: this.battles.losses,
-			total: this.battles.total + 1
-		};
-
-		this.battles = battles;
+		this.battles = { wins: this.battles.wins + 1, losses: this.battles.losses, total: this.battles.total + 1 };
 	}
 
 	addLoss (): void {
-		const battles: BattleRecord = {
-			wins: this.battles.wins,
-			losses: this.battles.losses + 1,
-			total: this.battles.total + 1
-		};
-
-		this.battles = battles;
+		this.battles = { wins: this.battles.wins, losses: this.battles.losses + 1, total: this.battles.total + 1 };
 	}
 
 	addDraw (): void {
-		const battles: BattleRecord = {
-			wins: this.battles.wins,
-			losses: this.battles.losses,
-			total: this.battles.total + 1
-		};
-
-		this.battles = battles;
+		this.battles = { wins: this.battles.wins, losses: this.battles.losses, total: this.battles.total + 1 };
 	}
 
 	// ---------------------------------------------------------------------------
-	// Health / death
+	// Health / death — delegated to creatures/health.ts
 	// ---------------------------------------------------------------------------
 
-	get dead (): boolean {
-		return this.hp <= 0;
-	}
+	get dead (): boolean { return this.hp <= 0; }
 
 	set dead (dead: boolean) {
 		if (dead !== this.dead) {
@@ -503,120 +345,19 @@ Battles won: ${this.battles.wins}`;
 		}
 	}
 
-	get bloodiedValue (): number {
-		return Math.floor(this.maxHp / 2);
-	}
-
-	get bloodied (): boolean {
-		return this.hp <= this.bloodiedValue;
-	}
+	get bloodiedValue (): number { return Math.floor(this.maxHp / 2); }
+	get bloodied (): boolean { return this.hp <= this.bloodiedValue; }
 
 	set bloodied (_hp: number) {
 		this.setOptions({ hp: this.bloodiedValue });
 	}
 
-	get destroyed (): boolean {
-		return this.hp < -this.bloodiedValue;
-	}
+	get destroyed (): boolean { return this.hp < -this.bloodiedValue; }
 
-	hit (damage = 0, assailant?: BaseCreature, card?: CardInstance): boolean {
-		const hitLog: HitLogEntry[] = (this.encounterModifiers.hitLog as HitLogEntry[]) || [];
-		hitLog.unshift({
-			assailant,
-			damage,
-			card,
-			when: Date.now()
-		});
-		this.encounterModifiers.hitLog = hitLog;
-
-		const isMelee = card && typeof card.isCardClass === 'function' && card.isCardClass(MELEE);
-
-		if (isMelee && (this.encounterModifiers.ac as number) >= damage) {
-			(this.encounterModifiers as Record<string, unknown>).ac = (this.encounterModifiers.ac as number) - damage;
-
-			this.emit('narration', {
-				narration: `${this.givenName} was braced for a hit, and was able to absorb ${damage} damage. ${capitalize(this.pronouns.his)} ac boost is now ${this.encounterModifiers.ac}.`
-			});
-		} else {
-			let adjustedDamage = damage;
-
-			if (isMelee && (this.encounterModifiers.ac as number) > 0) {
-				adjustedDamage -= this.encounterModifiers.ac as number;
-				this.emit('narration', {
-					narration: `${this.givenName} was braced for a hit, and was able to absorb ${this.encounterModifiers.ac} damage. ${capitalize(this.pronouns.his)} ac boost is now 0.`
-				});
-				(this.encounterModifiers as Record<string, unknown>).ac = 0;
-			}
-
-			const newHP = this.hp - adjustedDamage;
-			const originalHP = this.hp;
-
-			this.hp = newHP;
-
-			this.emit('hit', {
-				assailant,
-				card,
-				damage: adjustedDamage,
-				newHP,
-				prevHp: originalHP
-			});
-
-			if (originalHP > 0 && this.hp <= 0) {
-				return this.die(assailant);
-			}
-		}
-
-		return !this.dead;
-	}
-
-	heal (amount = 0): boolean {
-		const hp = this.hp + amount;
-		const originalHP = this.hp;
-
-		if (hp <= 0) {
-			this.hp = 0;
-		} else if (hp > this.maxHp) {
-			this.hp = this.maxHp;
-		} else {
-			this.hp = hp;
-		}
-
-		this.emit('heal', {
-			amount,
-			hp,
-			prevHp: originalHP
-		});
-
-		if (hp <= 0) {
-			return this.die(this);
-		}
-
-		return true;
-	}
-
-	die (assailant?: BaseCreature): boolean {
-		if (this.hp > 0) {
-			this.hp = 0;
-		}
-
-		if (assailant instanceof BaseCreature) {
-			if (!this.killedBy) { // You can only be killed by one monster
-				if (assailant !== this) assailant.killed = this;
-				this.killedBy = assailant;
-
-				this.emit('die', {
-					destroyed: this.destroyed,
-					assailant
-				});
-			}
-		}
-
-		return false;
-	}
-
-	// ---------------------------------------------------------------------------
-	// Respawn
-	// ---------------------------------------------------------------------------
+	hit (damage = 0, assailant?: BaseCreature, card?: CardInstance): boolean { return hit(this, damage, assailant, card); }
+	heal (amount = 0): boolean { return heal(this, amount); }
+	die (assailant?: BaseCreature): boolean { return die(this, assailant); }
+	respawn (immediate?: boolean): number { return respawn(this, immediate); }
 
 	get respawnTimeoutBegan (): number {
 		return (this.options.respawnTimeoutBegan as number) || 0;
@@ -626,157 +367,41 @@ Battles won: ${this.battles.wins}`;
 		this.setOptions({ respawnTimeoutBegan });
 	}
 
-	respawn (immediate?: boolean): number {
-		const now = Date.now();
-		const timeoutLength = immediate ? 0 : this.level * TIME_TO_RESURRECT_MS;
-
-		if (immediate || !this.respawnTimeout) {
-			const creature = this;
-
-			this.respawnTimeoutBegan = this.respawnTimeoutBegan || now;
-			this.respawnTimeoutLength = Math.max((this.respawnTimeoutBegan + timeoutLength) - now, 0);
-
-			this.respawnTimeout = setTimeout(() => {
-				creature.hp = Math.max(1, creature.hp);
-				creature.respawnTimeout = undefined;
-				creature.respawnTimeoutBegan = undefined as unknown as number;
-
-				creature.emit('respawn');
-			}, timeoutLength);
-		}
-
-		return this.respawnTimeoutBegan + timeoutLength;
-	}
-
 	// ---------------------------------------------------------------------------
-	// Encounter
+	// Encounter — delegated to creatures/encounter.ts
 	// ---------------------------------------------------------------------------
 
-	startEncounter (ring: unknown): void {
-		this.inEncounter = true;
-		this.encounter = { ring };
-	}
+	startEncounter (ring: unknown): void { startEncounter(this, ring); }
+	endEncounter (): Encounter { return endEncounter(this); }
 
-	endEncounter (): Encounter {
-		const { encounter = {} } = this;
+	get encounterModifiers (): EncounterModifiers { return getEncounterModifiers(this); }
+	set encounterModifiers (modifiers: EncounterModifiers) { setEncounterModifiers(this, modifiers); }
 
-		this.inEncounter = false;
-		delete this.encounter;
+	get encounterEffects (): unknown[] { return getEncounterEffects(this); }
+	set encounterEffects (effects: unknown[]) { setEncounterEffects(this, effects); }
 
-		return encounter as Encounter;
-	}
-
-	get encounterModifiers (): EncounterModifiers {
-		if (!this.encounter) this.encounter = {};
-		if (!this.encounter.modifiers) this.encounter.modifiers = {};
-
-		return this.encounter.modifiers as EncounterModifiers;
-	}
-
-	set encounterModifiers (modifiers: EncounterModifiers) {
-		this.encounter = {
-			...this.encounter,
-			modifiers
-		};
-	}
-
-	get encounterEffects (): unknown[] {
-		return (this.encounter ?? {}).effects ?? [];
-	}
-
-	set encounterEffects (effects: unknown[]) {
-		this.encounter = {
-			...this.encounter,
-			effects
-		};
-	}
-
-	get fled (): boolean {
-		return !!(this.encounter ?? {}).fled;
-	}
-
-	set fled (fled: boolean) {
-		this.encounter = {
-			...this.encounter,
-			fled
-		};
-	}
+	get fled (): boolean { return getFled(this); }
+	set fled (fled: boolean) { setFled(this, fled); }
 
 	get modifiers (): Record<string, unknown> {
-		return {
-			...this.options.modifiers,
-			...this.encounterModifiers
-		};
+		return { ...this.options.modifiers, ...this.encounterModifiers };
 	}
 
 	set modifiers (modifiers: Record<string, unknown>) {
 		this.setOptions({ modifiers });
 	}
 
-	get round (): number {
-		return (this.encounter ?? {}).round ?? 1;
-	}
+	get round (): number { return getRound(this); }
+	set round (round: number) { setRound(this, round); }
 
-	set round (round: number) {
-		this.encounter = {
-			...this.encounter,
-			round
-		};
-	}
+	get killedBy (): BaseCreature | undefined { return getKilledBy(this); }
+	set killedBy (creature: BaseCreature) { setKilledBy(this, creature); }
 
-	get killedBy (): BaseCreature | undefined {
-		return (this.encounter ?? {}).killedBy;
-	}
+	get killed (): BaseCreature[] { return getKilled(this); }
+	set killed (creature: BaseCreature) { appendKilled(this, creature); }
 
-	set killedBy (creature: BaseCreature) {
-		this.encounter = {
-			...this.encounter,
-			killedBy: creature
-		};
-	}
-
-	get killed (): BaseCreature[] {
-		return (this.encounter ?? {}).killedCreatures ?? [];
-	}
-
-	set killed (creature: BaseCreature) {
-		this.encounter = {
-			...this.encounter,
-			killedCreatures: [...this.killed, creature]
-		};
-	}
-
-	setModifier (attr: string, amount = 0, permanent = false): void {
-		const prevAmount = permanent
-			? (this.modifiers[attr] as number) || 0
-			: (this.encounterModifiers[attr] as number) || 0;
-		const prevValue = (this as unknown as Record<string, unknown>)[attr];
-		const modifiers = Object.assign(
-			{},
-			permanent ? this.modifiers : this.encounterModifiers,
-			{ [attr]: prevAmount + amount }
-		);
-
-		if (permanent) {
-			this.modifiers = modifiers;
-		} else {
-			this.encounterModifiers = modifiers as EncounterModifiers;
-		}
-
-		this.emit('modifier', {
-			amount,
-			attr,
-			prevAmount,
-			prevValue
-		});
-	}
-
-	leaveCombat (activeContestants: unknown): boolean {
-		this.emit('leave', { activeContestants });
-		this.fled = true;
-
-		return false;
-	}
+	setModifier (attr: string, amount = 0, permanent = false): void { setModifier(this, attr, amount, permanent); }
+	leaveCombat (activeContestants: unknown): boolean { return leaveCombat(this, activeContestants); }
 
 	// ---------------------------------------------------------------------------
 	// Cards
@@ -784,7 +409,6 @@ Battles won: ${this.battles.wins}`;
 
 	get cards (): CardInstance[] {
 		if (!Array.isArray(this.options.cards)) this.cards = [];
-
 		return this.options.cards as CardInstance[];
 	}
 
@@ -796,25 +420,17 @@ Battles won: ${this.battles.wins}`;
 	// Coins
 	// ---------------------------------------------------------------------------
 
-	get coins (): number {
-		return (this.options.coins as number) || 0;
-	}
-
-	set coins (coins: number) {
-		this.setOptions({ coins });
-	}
+	get coins (): number { return (this.options.coins as number) || 0; }
+	set coins (coins: number) { this.setOptions({ coins }); }
 
 	// ---------------------------------------------------------------------------
-	// Items
+	// Items — delegated to creatures/items.ts
 	// ---------------------------------------------------------------------------
 
-	get itemSlots (): number {
-		return DEFAULT_ITEM_SLOTS;
-	}
+	get itemSlots (): number { return DEFAULT_ITEM_SLOTS; }
 
 	get items (): ItemInstance[] {
 		if (!Array.isArray(this.options.items)) this.items = [];
-
 		return this.options.items as ItemInstance[];
 	}
 
@@ -822,60 +438,14 @@ Battles won: ${this.battles.wins}`;
 		this.setOptions({ items });
 	}
 
-	canHold (_itemOrCard?: CardInstance | ItemInstance): boolean {
-		return false;
-	}
+	canHold (_itemOrCard?: CardInstance | ItemInstance): boolean { return false; }
+	canHoldCard (card: CardInstance): boolean { return this.canHold(card); }
+	canHoldItem (item: ItemInstance): boolean { return this.canHold(item); }
+	canUseItem (item: ItemInstance): boolean { return this.canHoldItem(item); }
 
-	canHoldCard (card: CardInstance): boolean {
-		return this.canHold(card);
-	}
-
-	canHoldItem (item: ItemInstance): boolean {
-		return this.canHold(item);
-	}
-
-	canUseItem (item: ItemInstance): boolean {
-		return this.canHoldItem(item);
-	}
-
-	addItem (item: ItemInstance): void {
-		this.items = _sortItemsAlphabetically([...this.items, item]);
-
-		if (item.onAdded) {
-			item.onAdded(this);
-		}
-
-		item.emit('added', { creature: this });
-		this.emit('itemAdded', { item });
-	}
-
-	removeItem (itemToRemove: ItemInstance): ItemInstance | undefined {
-		const itemIndex = this.items.findIndex((item: ItemInstance) => _isMatchingItem(item, itemToRemove));
-
-		if (itemIndex >= 0) {
-			const foundItem = this.items.splice(itemIndex, 1)[0];
-
-			if (foundItem.onRemoved) {
-				foundItem.onRemoved(this);
-			}
-
-			foundItem.emit('removed', { creature: this });
-			this.emit('itemRemoved', { item: foundItem });
-
-			return foundItem;
-		}
-
-		return undefined;
-	}
-
-	giveItem (itemToGive: ItemInstance, recipient: BaseCreature): void {
-		const item = this.removeItem(itemToGive);
-
-		if (item) {
-			recipient.addItem(item);
-			this.emit('itemGiven', { item, recipient });
-		}
-	}
+	addItem (item: ItemInstance): void { addItem(this, item); }
+	removeItem (itemToRemove: ItemInstance): ItemInstance | undefined { return removeItem(this, itemToRemove); }
+	giveItem (itemToGive: ItemInstance, recipient: BaseCreature): void { giveItem(this, itemToGive, recipient); }
 
 	useItem ({ channel, channelName, character = this as unknown as BaseCreature, item, monster }: {
 		channel: ChannelFn;
@@ -884,42 +454,11 @@ Battles won: ${this.battles.wins}`;
 		item: ItemInstance;
 		monster?: BaseCreature;
 	}): Promise<unknown> {
-		return Promise.resolve()
-			.then(() => {
-				if (monster && monster.inEncounter && !monster.items.find((potentialItem: ItemInstance) => _isMatchingItem(potentialItem, item))) {
-					return Promise.reject(channel({
-						announce: `${monster.givenName} doesn't seem to be holding that item.`
-					}));
-				}
-
-				return item.use({ channel, channelName, character, monster });
-			});
+		return useItem(this, { channel, channelName, character, item, monster });
 	}
 
 	lookAtItems (channel: ChannelFn, items: ItemInstance[] = this.items): Promise<void> {
-		if (items.length < 1) {
-			return Promise.reject();
-		}
-
-		const sortedItems = _sortItemsAlphabetically(items);
-		const channelWithMgr = channel as unknown as ChannelWithManager;
-		const { channelManager, channelName } = channelWithMgr;
-
-		return Promise.resolve()
-			.then(() => eachSeries(_getUniqueItems(sortedItems), (item: ItemInstance) => channelManager.queueMessage({
-				announce: itemCard(item, true),
-				channel,
-				channelName
-			})))
-			.then(() => channelManager.queueMessage({
-				announce: Object.entries(_getItemCounts(sortedItems) as Record<string, number>).reduce(
-					(counts: string, [card, count]: [string, number]) => `${counts}${card} (${count})\n`,
-					''
-				),
-				channel,
-				channelName
-			}))
-			.then(() => channelManager.sendMessages());
+		return lookAtItems(this, channel, items);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -983,10 +522,7 @@ ${getAttributeChoices(this.options)}`,
 						newVal = JSON.parse(strVal);
 					} catch (ex) {
 						newVal = +strVal;
-
-						if (isNaN(newVal as number)) {
-							newVal = strVal;
-						}
+						if (isNaN(newVal as number)) newVal = strVal;
 					}
 
 					return { key, oldVal, newVal };
@@ -998,10 +534,8 @@ ${getAttributeChoices(this.options)}`,
 				.then((answer = '') => {
 					if (answer.toLowerCase() === 'yes') {
 						this.setOptions({ [key]: newVal });
-
 						return channel({ announce: 'Change saved.' });
 					}
-
 					return channel({ announce: 'Change reverted.' });
 				}));
 	}

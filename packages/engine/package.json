@@ -17,7 +17,6 @@
     "test:coverage": "c8 mocha"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1020.0",
     "escape-string-regexp": "^1.0.5",
     "fantasy-names": "^1.1.2",
     "grab-color-names": "^1.1.2",

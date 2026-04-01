@@ -38,7 +38,7 @@ git config --global user.email "you@example.com"
 
 The devcontainer mounts named Docker volumes for:
 
-- `/home/node/.gitconfig`
+- `/home/node/.gitconfig-store/config` (via `GIT_CONFIG_GLOBAL` — Docker volumes are directories, so the file lives one level inside)
 - `/home/node/.ssh`
 - `/home/node/.config/gh`
 

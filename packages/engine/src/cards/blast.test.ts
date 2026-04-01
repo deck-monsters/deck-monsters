@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 
 import { BlastCard } from './blast.js';
-import { randomCharacter } from '../characters/index.js';
 import Basilisk from '../monsters/basilisk.js';
 
 describe('./cards/blast.ts', () => {
@@ -81,17 +80,15 @@ describe('./cards/blast.ts', () => {
 		const blast = new BlastCard({ damage: 4, levelDamage: 2 } as any);
 
 		const player = new Basilisk({ name: 'player' });
-		const target: any = {};
+		const targetMonster = new Basilisk({ name: 'target' });
+		(targetMonster as any).hp = 99;
 
-		target.character = randomCharacter();
-		target.monster = target.character.monsters[0];
-		(target.monster as any).hp = 99;
-
+		const target: any = { character: {}, monster: targetMonster };
 		const ring: any = {
 			contestants: [{ character: {}, monster: player }, target],
 		};
 
-		return blast.play(player, target.monster, ring, ring.contestants).then(fightContinues => {
+		return blast.play(player, targetMonster, ring, ring.contestants).then(fightContinues => {
 			expect(fightContinues).to.equal(true);
 		});
 	});
@@ -101,17 +98,15 @@ describe('./cards/blast.ts', () => {
 
 		const player = new Basilisk({ name: 'player' });
 		(player as any).encounter = {};
-		const target: any = {};
+		const targetMonster = new Basilisk({ name: 'target' });
+		(targetMonster as any).hp = 1;
 
-		target.character = randomCharacter();
-		target.monster = target.character.monsters[0];
-		(target.monster as any).hp = 1;
-
+		const target: any = { character: {}, monster: targetMonster };
 		const ring: any = {
 			contestants: [{ character: {}, monster: player }, target],
 		};
 
-		return blast.play(player, target.monster, ring, ring.contestants).then(fightContinues => {
+		return blast.play(player, targetMonster, ring, ring.contestants).then(fightContinues => {
 			expect(fightContinues).to.equal(false);
 		});
 	});
