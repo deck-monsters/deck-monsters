@@ -16,6 +16,9 @@
     "node": ">=22",
     "npm": ">=10"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "supabase"]
+  },
   "scripts": {
     "build:docs": "node --import ./packages/engine/node_modules/tsx/dist/esm/index.cjs ./build/index.js",
     "build": "turbo run build",
