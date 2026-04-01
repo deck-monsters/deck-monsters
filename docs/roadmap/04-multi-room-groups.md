@@ -2,7 +2,7 @@
 
 **Category**: Feature  
 **Priority**: High (required for web and multi-server Discord)  
-**Status**: Not started
+**Status**: Phase 1 complete (server code) — connector integration and web UI deferred
 
 ## Background
 
@@ -92,12 +92,12 @@ This mapping lives in the connector, not the database schema — a room is just 
 
 ## Tasks
 
-- [ ] Design and implement `RoomManager` class
-- [ ] Add room CRUD to the tRPC API (create, join, leave, list, info)
-- [ ] Implement lazy loading / unloading of rooms
-- [ ] Add room management UI to web app
-- [ ] Add room join/leave/create commands to Discord connector
-- [ ] Add room management to Slack connector
-- [ ] Implement invite code generation and redemption
-- [ ] Handle room cleanup (idle rooms, owner leaves, etc.)
-- [ ] Decide and document room-scoped vs global characters (ADR)
+- [x] Design and implement `RoomManager` class (lazy loading, state restore, event bus wiring)
+- [x] Add room CRUD to the tRPC API (create, join, leave, list, info, delete)
+- [x] Implement lazy loading / unloading of rooms (`_getOrLoad`, `unloadRoom`, `sweepIdleRooms`)
+- [ ] Add room management UI to web app _(deferred → roadmap 06)_
+- [ ] Add room join/leave/create commands to Discord connector _(deferred → roadmap 05)_
+- [ ] Add room management to Slack connector _(deferred → roadmap 08)_
+- [x] Implement invite code generation and redemption
+- [x] Handle room cleanup (idle rooms: `sweepIdleRooms` with 10-minute sweep interval; owner leaves: FORBIDDEN guard in `leaveRoom`; owner deletes: `deleteRoom`)
+- [x] Decide and document room-scoped vs global characters — **decided: characters are room-scoped** (simpler, prevents stat inflation across groups, prevents grinding in one room to dominate another; enforced implicitly by each `Game` instance being isolated to its room)
