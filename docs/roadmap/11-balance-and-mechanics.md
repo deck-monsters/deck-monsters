@@ -2,6 +2,7 @@
 
 **Category**: Game Design / Balance  
 **Priority**: Medium (do before or during launch, before new content)  
+**Status**: Not started — two prerequisite stat calculation bugs were fixed during the TypeScript migration  
 **Source**: Upstream issues tagged with the Balance milestone and related discussions
 
 These are mechanics changes that affect the core game feel. They should be done as a coordinated pass rather than piecemeal, because some of them interact. We should also write a harness which allows us to test mock battles / cards over and over to fine tune the mechanics as they interact, find bugs in their interactions, and resolve issues balance / over powered cards.
@@ -100,7 +101,7 @@ The `GameEvent` type could include an optional `threadId` field. Connectors that
 
 ## Critical Bug Fixes Completed (prerequisite to balance work)
 
-Before balance work begins, two critical stat calculation bugs were fixed in the TypeScript migration:
+Before balance work begins, two critical stat calculation bugs were fixed (PR [#286](https://github.com/deck-monsters/deck-monsters/pull/286)):
 
 - **Double-counted level bonus**: `getModifier()` was adding the level boost AND `getPreBattlePropValue()` was adding it again for STR/DEX/INT. Fixed: level scaling lives only in `getModifier()`, `getPreBattlePropValue()` uses the modifier as-is.
 - **Wrong property key**: `this.modifiers[modifier]` used the numeric modifier value as an object key (always `undefined`). Fixed to `permanentModifiers[targetProp]` (permanent/option modifiers only); encounter modifiers are handled separately in `getProp()`.

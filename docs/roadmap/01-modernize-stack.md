@@ -77,7 +77,7 @@ Shared TypeScript types flow from `engine` → connectors → apps automatically
 | `moment` | Native Date handling (`helpers/time.ts`) | Done |
 | lodash piecemeal | Native ES2022+ (`helpers/collection.ts`, `helpers/random.ts`, `helpers/start-case.ts`, etc.) | Done |
 | `event-emitter-es6` | Node.js `EventEmitter` from `node:events` | Done |
-| `aws-sdk` v2 | `@aws-sdk/client-s3` v3 | Done |
+| `aws-sdk` v2 | `@aws-sdk/client-s3` v3 (to be removed — S3 backup replaced by Supabase Postgres) | Done |
 | `@salesforce-mc/devtest` | Mocha (Vitest still planned) | Done |
 | Salesforce ESLint config | `@typescript-eslint` + Prettier | Done |
 
@@ -107,5 +107,6 @@ Runs on push to `main` and all PRs. Uses pnpm 10, Node.js 22 (from `.nvmrc`), `u
 - [ ] Evaluate Mocha → Vitest migration (decision: migrate or stay with Mocha)
 - [ ] If migrating to Vitest: replace Mocha + c8 with Vitest + `@vitest/coverage-v8`, update test scripts
 - [ ] Clean up 15 legacy root-level `.js` files (build scripts, battlefield.js, wander.js, shared/)
+- [ ] Remove `@aws-sdk/client-s3` dependency and `helpers/aws.ts` (S3 backup replaced by Supabase Postgres — see backend hosting doc)
 - [ ] Continue decomposing `creatures/base.ts` (977 lines — still large, but functional)
-- [ ] Create remaining monorepo packages as other roadmap items are implemented (`server`, `connector-slack`, `connector-discord`, `apps/web`, `apps/mobile`)
+- [ ] Create remaining monorepo packages as other roadmap items are implemented (`server`, `connector-discord`, `apps/web`; `connector-slack` and `apps/mobile` deferred)

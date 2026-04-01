@@ -1,81 +1,174 @@
 # Authentication and User Identity
 
 **Category**: Feature / Security  
-**Priority**: High (required for web and mobile connectors)
+**Priority**: High (required for web and Discord connectors)  
+**Status**: Not started — provider decision made (Supabase Auth), implementation pending
 
 ## Background
 
 The original game ran in a private enterprise Slack workspace. Slack already handled authentication — every message came from an authenticated Slack user ID, so the game never needed its own auth.
 
-With a web app, mobile app, or public Discord server, the game needs its own identity layer.
+With a web app, public Discord server, or mobile client, the game needs its own identity layer.
 
 ## Design Goals
 
-- **Simple to start**: don't over-engineer; a username + password or social OAuth is enough initially
+- **Don't reinvent auth**: use a managed service that handles OAuth, password hashing, session management, and token issuance — not a hand-rolled solution
 - **Connector-agnostic**: the game engine identifies players by an opaque `userId` string — auth just needs to produce that consistently
 - **Multi-connector**: the same player should optionally be able to link their Discord identity and their web account to the same game character
+
+## Provider Decision: Supabase Auth
+
+Use **Supabase Auth** as the identity provider. This is a direct consequence of the hosting decision (see backend hosting doc) — auth and database share one trust boundary in Supabase, which eliminates a class of security bugs and reduces custom code.
+
+### Why Supabase Auth Over DIY
+
+| Concern | Supabase Auth | DIY (passport.js, lucia, better-auth) |
+|---------|---------------|---------------------------------------|
+| OAuth providers | Built-in (Google, Discord, Slack, GitHub, etc.) | Must configure each provider manually |
+| Password hashing | Handled (bcrypt, configurable) | Must implement correctly |
+| JWT issuance | Automatic, tied to `auth.uid()` | Must implement token lifecycle |
+| Session management | Built-in (refresh tokens, expiry) | Must implement refresh flow |
+| Rate limiting | Built-in on auth endpoints | Must add middleware |
+| RLS integration | JWT claims usable in Postgres policies | No database-level integration |
+| Maintenance | Managed service | Own the code forever |
+
+The tradeoff is less control over auth internals. That's acceptable — auth is not a differentiator for this project, and the risk of a custom auth bug outweighs the flexibility benefit.
+
+### Why Not Auth0 or Firebase Auth
+
+- **Auth0**: capable but expensive at scale, and adds a third provider alongside Supabase and Railway. Keeping auth co-located with the database reduces moving parts.
+- **Firebase Auth**: excellent standalone, but couples you toward the Firebase ecosystem (Firestore, Functions). The project uses Postgres and Drizzle, so Firebase Auth alone would create a split that's hard to justify.
 
 ## How Auth Relates to the Event Bus
 
 The event bus (see backend hosting doc) routes events by `userId`. Auth is what produces that `userId` consistently across connectors:
 
-- **Web/mobile**: user logs in → JWT contains `userId` → server uses it when subscribing to the room event bus and when dispatching commands to the engine
-- **Discord**: Discord's own auth provides a Discord user ID → mapped to a `userId` via `user_connectors`
+- **Web/mobile**: user logs in via Supabase Auth → JWT contains `sub` (the Supabase user ID) → server uses it when subscribing to the room event bus and when dispatching commands to the engine
+- **Discord**: Discord's own auth provides a Discord user ID → mapped to a Supabase `userId` via `user_connectors`
 - **Slack**: Slack's own auth provides a Slack user ID → same mapping
 
 Private events (DMs, prompt requests) are routed to `targetUserId` on the event bus. The connector that owns that user's active session delivers the event. If a user is connected on multiple connectors simultaneously, each connector receives the event — the user sees it wherever they're currently active.
 
-## Proposed Approach
+## Auth Phases
 
-### Phase 1 — Basic Auth for Web/Mobile
+Phases are ordered to match the connector rollout: Discord and web ship first, mobile and Slack come later.
 
-- Email + password with bcrypt hashing
-- JWT-based sessions (short-lived access token + refresh token)
-- Library: `better-auth`, `lucia`, or `passport.js`
-- Store users in the same Postgres DB as game state
-- JWT `userId` claim is the canonical user identifier used by the engine and event bus
+### Phase 1 — Discord + Web Foundation
 
-### Phase 2 — OAuth (Social Login)
+Ship with the Discord connector and web app:
 
-- Support Google and/or Discord OAuth as login options
-- Simplifies onboarding significantly (no email/password to manage)
-- Discord OAuth is especially natural since Discord users are already gaming-oriented
+- **Email + password** via Supabase Auth (fallback for users without Discord)
+- **Discord OAuth** via Supabase Auth (primary for Discord users, natural for gaming)
+- JWT-based sessions: Supabase issues short-lived access tokens + refresh tokens
+- Railway backend validates JWTs using `SUPABASE_JWT_SECRET`
+- The `sub` claim in the JWT is the canonical `userId` used by the engine and event bus
+
+Discord OAuth is prioritized because the Discord connector ships first and Discord users already expect OAuth login flows.
+
+### Phase 2 — Google OAuth + Web Polish
+
+- **Google OAuth** via Supabase Auth (broadens web onboarding beyond Discord-only users)
+- Supabase handles provider configuration — adding a new OAuth provider is a dashboard setting + a few lines of client code
 
 ### Phase 3 — Cross-Connector Identity Linking
 
-- Allow a player to link their Discord ID to their web/mobile account
+Ship when the Slack connector is ready:
+
+- **Slack OAuth** via Supabase Auth
+- **Account linking**: allow a player to connect multiple OAuth providers to one account
 - Unified `userId` means the same characters/monsters across all connectors
-- Store connector-specific IDs in the `user_connectors` table: `{ user_id, connector_type, external_id }`
+- Connector-specific IDs stored in `user_connectors`: `{ user_id, connector_type, external_id }`
 - When a Discord command arrives, look up `user_connectors` to find the canonical `userId`; if no link exists, auto-create a user record (Discord users are already authenticated by Discord)
 
 ### Identity Flow
 
 ```
-Slack message from U12345
-  → lookup user_connectors(connector_type='slack', external_id='U12345')
+Discord slash command from Discord user 981234567
+  → lookup user_connectors(connector_type='discord', external_id='981234567')
   → found: user_id = 'abc-def-789'
   → engine.getCharacter({ id: 'abc-def-789', ... })
 
-Web login with email
-  → JWT issued with user_id = 'abc-def-789'
+Web login with email (or Discord OAuth on the web)
+  → Supabase Auth issues JWT with sub = 'abc-def-789'
   → same user, same character, different connector
 ```
 
+For Discord users who have never logged into the web app, the Discord connector auto-creates a Supabase user record and `user_connectors` entry on first interaction. If they later sign up on the web with the same email, account linking merges the identities.
+
+## JWT Validation on Railway
+
+The Railway backend validates every request by checking the Supabase JWT:
+
+```typescript
+import { createClient } from '@supabase/supabase-js';
+// or, for lighter weight: verify the JWT directly using the secret
+
+import jwt from 'jsonwebtoken';
+
+function validateToken(token: string): { userId: string } {
+  const payload = jwt.verify(token, process.env.SUPABASE_JWT_SECRET!);
+  return { userId: payload.sub as string };
+}
+```
+
+This is used in the tRPC middleware to create a `protectedProcedure` that requires a valid JWT and injects `ctx.userId` into all downstream handlers.
+
+For WebSocket connections, the JWT is validated on initial connection. If the token expires mid-session, the client refreshes via Supabase and reconnects.
+
+## Database Tables
+
+Auth-related tables in the `public` schema (Supabase manages `auth.users` internally):
+
+```typescript
+// profiles — game-specific user data, created via trigger on Supabase Auth signup
+profiles: {
+  id: uuid primary key references auth.users(id),
+  display_name: text,
+  created_at: timestamp default now()
+}
+
+// user_connectors — maps external platform IDs to canonical user
+user_connectors: {
+  id: uuid primary key,
+  user_id: uuid references profiles(id),
+  connector_type: text,     // 'discord' | 'slack'
+  external_id: text,        // platform-specific user ID
+  created_at: timestamp default now()
+}
+// unique index on (connector_type, external_id)
+```
+
+A Supabase database trigger creates the `profiles` row automatically when a new user signs up, keeping the auth and game-data layers in sync without application code.
+
 ## Tasks
 
-- [ ] Add `users` table to database schema
-- [ ] Implement email + password registration / login endpoints
-- [ ] Implement JWT issuance and validation middleware
-- [ ] Add auth to the web/mobile tRPC layer (protected procedures)
-- [ ] Phase 2: Add Google OAuth
-- [ ] Phase 2: Add Discord OAuth
-- [ ] Phase 3: Cross-connector identity linking (link/unlink endpoints)
-- [ ] Phase 3: Auto-create user records for Discord/Slack users on first interaction
+### Phase 1 — Discord + Web
+- [ ] Create Supabase project, enable email/password and Discord OAuth providers
+- [ ] Configure Discord OAuth app (client ID, secret, redirect URI) in Supabase dashboard
+- [ ] Implement JWT validation middleware in `packages/server` (tRPC `protectedProcedure`)
+- [ ] Create `profiles` table and signup trigger in Supabase
+- [ ] Create `user_connectors` table
+- [ ] Implement auto-creation of user records for Discord users on first interaction
+- [ ] Add auth to web app (Supabase client SDK for login/register/OAuth)
+- [ ] Add auth to tRPC WebSocket connections (JWT on connect)
+
+### Phase 2 — Google OAuth
+- [ ] Enable Google OAuth in Supabase dashboard
+- [ ] Add Google login button to web app
+- [ ] Test account linking when same email is used across providers
+
+### Phase 3 — Slack + Identity Linking
+- [ ] Enable Slack OAuth in Supabase dashboard
+- [ ] Implement link/unlink endpoints for connecting providers to existing accounts
+- [ ] Auto-create user records for Slack users on first interaction
+- [ ] Test cross-connector identity: same character accessible from Discord, web, and Slack
 
 ## Security Considerations
 
-- Never store plaintext passwords (bcrypt with cost factor >= 12)
-- HTTPS everywhere (terminate at load balancer or reverse proxy)
-- Rate-limit auth endpoints to prevent brute force
-- Rotate JWT secrets via environment variables; support key rotation
-- WebSocket connections should validate JWT on connect and re-validate on token refresh
+Supabase handles the most security-sensitive operations (password hashing, token issuance, session management, rate limiting on auth endpoints). Remaining application-level concerns:
+
+- HTTPS everywhere (Railway provides SSL termination)
+- Store `SUPABASE_JWT_SECRET` securely in Railway environment variables; rotate via Supabase dashboard
+- WebSocket connections validate JWT on connect and require reconnection on token expiry
+- RLS policies on Supabase Postgres provide defense-in-depth — even if application code has a bug, the database enforces access boundaries
+- The `user_connectors` unique index on `(connector_type, external_id)` prevents duplicate identity mappings

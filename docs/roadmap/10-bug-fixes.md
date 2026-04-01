@@ -1,7 +1,8 @@
 # Bug Fixes and Code Quality
 
 **Category**: Bug / Tech Debt  
-**Priority**: High (fix before major new development)
+**Priority**: High (fix before major new development)  
+**Status**: Mostly complete — 12 of 14 items resolved (PR [#286](https://github.com/deck-monsters/deck-monsters/pull/286) and TypeScript migration). Two remaining items are low-priority cleanup.
 
 ## Known Bugs
 
@@ -88,6 +89,12 @@ After creation, players should be able to edit their character's name and color/
 
 **Status**: Fixed. Added `editSelf()` method to `BaseCreature` (restricted to `givenName` and `icon` fields) and wired to a new `edit my character` command in `commands/character.ts`. The existing admin `edit character <name>` command is unchanged.
 
+### 14. Missing draw announcement at round 10 — Done
+
+When a fight reaches round 10 without a winner, the draw/stalemate announcement was not firing.
+
+**Status**: Fixed in PR #286.
+
 ## Tasks
 
 - [ ] Audit and differentiate `DMG.md` vs `CARDS.md`; add how-to-run section (upstream #265) — build headers differentiated, full content pass still todo
@@ -103,3 +110,4 @@ After creation, players should be able to edit their character's name and color/
 - [x] ~~Level-up public announcement~~ (done — `creature.levelUp` event + `announceLevelUp`)
 - [x] ~~Monster manual: show stat ranges~~ (done — `src/build/monster-manual.ts`)
 - [x] ~~Editable name/color fields~~ (done — `editSelf()` + `edit my character` command)
+- [x] ~~Draw announcement at round 10~~ (done — PR #286)
