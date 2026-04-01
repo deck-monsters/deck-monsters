@@ -4,9 +4,12 @@ import { hydrateCharacter } from './characters/index.js';
 import { gameStateSchema } from './schemas/state.js';
 import Game from './game.js';
 import type { ChannelCallback } from './channel/index.js';
+import { ConnectorAdapter } from './channel/index.js';
+import { RoomEventBus } from './events/index.js';
+import type { GameEvent, EventType, EventScope, EventSubscriber } from './events/index.js';
 
-export { Game };
-export type { ChannelCallback };
+export { Game, ConnectorAdapter, RoomEventBus };
+export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber };
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {
 	let gameObj: Record<string, unknown>;
@@ -50,13 +53,12 @@ export const getOptions = (gameJSON: string | Record<string, unknown>): Record<s
 };
 
 export const restoreGame = (
-	publicChannel: ChannelCallback,
 	gameJSON: string | Record<string, unknown>,
 	log?: (err: unknown) => void
 ): Game => {
 	const options = getOptions(gameJSON);
 
-	return new Game(publicChannel, options, log);
+	return new Game(options, log);
 };
 
 export const resetGame = (

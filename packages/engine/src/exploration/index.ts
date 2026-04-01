@@ -8,7 +8,7 @@ import HazardCard from './discoveries/hazard.js';
 import NothingCard from './discoveries/nothing.js';
 import DeathCard from './discoveries/death.js';
 import Environment from '../monsters/environment.js';
-import type { ChannelManager, ChannelCallback } from '../channel/index.js';
+import type { ChannelCallback } from '../channel/index.js';
 
 export interface Explorer {
 	monster: any;
@@ -29,17 +29,15 @@ export class Exploration extends BaseClass {
 	};
 
 	log: (err: unknown) => void;
-	channelManager: ChannelManager;
 
 	constructor(
-		channelManager: ChannelManager,
+		_eventBusOrChannelManager: unknown,
 		options: Record<string, unknown> = {},
 		log: (err: unknown) => void = () => {}
 	) {
 		super(options);
 
 		this.log = log;
-		this.channelManager = channelManager;
 
 		this.startExplorationTimer();
 	}
@@ -102,7 +100,7 @@ export class Exploration extends BaseClass {
 
 			this.emit('add', { explorer });
 
-			this.channelManager.queueMessage({
+			channel({
 				announce: `${monster.givenName} has gone exploring.
 
 The Road goes ever on and on
@@ -113,15 +111,11 @@ Pursuing it with eager feet,
 Until it joins some larger way
 Where many treasures and fell beasts meet.
 And whither then ${monster.pronouns.he} cannot say.`,
-				channel,
-				channelName,
 			});
 		} else {
 			const exploringMonster = this.getExplorer(monster)!;
-			this.channelManager.queueMessage({
+			channel({
 				announce: `Your monster is already exploring and will return at ${formatLongTimestamp(exploringMonster.returnTime)}`,
-				channel,
-				channelName,
 			});
 		}
 	}
@@ -180,10 +174,8 @@ And whither then ${monster.pronouns.he} cannot say.`,
 			const deadMessage = `${explorer.monster.givenName}'s carcase is wheeled home in a cart by a kindly stranger`;
 			const aliveMessage = `${explorer.monster.givenName} has returned to nestle safely into your warm embrace.`;
 
-			this.channelManager.queueMessage({
+			explorer.channel({
 				announce: explorer.monster.dead ? deadMessage : aliveMessage,
-				channel: explorer.channel,
-				channelName: explorer.channelName,
 			});
 		}
 	}

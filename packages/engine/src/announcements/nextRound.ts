@@ -1,18 +1,15 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 export function announceNextRound(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	ring: any,
 	{ round }: { round: number },
 ): void {
-	publicChannel({
-		announce: `
-⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅
-
-🏁       round ${round + 1}
-`,
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅\n\n🏁       round ${round + 1}\n`,
+		payload: { round },
 	});
 }

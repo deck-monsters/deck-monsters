@@ -1,7 +1,5 @@
 import { signedNumber } from '../helpers/signed-number.js';
-
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 interface ModifierOpts {
 	amount: number;
@@ -10,8 +8,7 @@ interface ModifierOpts {
 }
 
 export function announceModifier(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	monster: any,
 	{ amount, attr, prevValue }: ModifierOpts,
@@ -23,17 +20,14 @@ export function announceModifier(
 	const dir = amount < 0 ? 'decreased' : 'increased';
 	const total = totalMod !== amount ? `,${signedNumber(totalMod)} total` : '';
 
+	let text: string;
 	if (difference === 0) {
-		publicChannel({
-			announce: `${monster.identity}'s ${attr} could not be ${dir} and remains the same.`,
-		});
+		text = `${monster.identity}'s ${attr} could not be ${dir} and remains the same.`;
 	} else if (difference !== amount) {
-		publicChannel({
-			announce: `${monster.identity}'s ${attr} could not be ${dir} by ${Math.abs(amount)}, ${monster.pronouns.his} ${attr} is now ${newValue} (${dir} by ${Math.abs(difference)}${total})`,
-		});
+		text = `${monster.identity}'s ${attr} could not be ${dir} by ${Math.abs(amount)}, ${monster.pronouns.his} ${attr} is now ${newValue} (${dir} by ${Math.abs(difference)}${total})`;
 	} else {
-		publicChannel({
-			announce: `${monster.identity}'s ${attr} is now ${newValue} (${dir} by ${Math.abs(amount)}${total})`,
-		});
+		text = `${monster.identity}'s ${attr} is now ${newValue} (${dir} by ${Math.abs(amount)}${total})`;
 	}
+
+	eb.publish({ type: 'announce', scope: 'public', text, payload: {} });
 }

@@ -1,0 +1,108 @@
+import { randomUUID } from 'node:crypto';
+
+import type { GameEvent, EventSubscriber, EventScope, EventType } from './types.js';
+
+const RING_BUFFER_SIZE = 200;
+
+type PublishInput = {
+	type: EventType;
+	scope: EventScope;
+	text: string;
+	payload: Record<string, unknown>;
+	targetUserId?: string;
+};
+
+export class RoomEventBus {
+	private subscribers = new Map<string, EventSubscriber>();
+	private eventLog: GameEvent[] = [];
+	private counter = 0;
+	private pendingPrompts = new Map<string, {
+		resolve: (answer: string) => void;
+		reject: (err: Error) => void;
+		timer: ReturnType<typeof setTimeout>;
+	}>();
+
+	constructor(public readonly roomId: string) {}
+
+	publish(event: PublishInput): GameEvent {
+		const fullEvent: GameEvent = {
+			...event,
+			id: String(++this.counter),
+			roomId: this.roomId,
+			timestamp: Date.now(),
+		};
+
+		this.eventLog.push(fullEvent);
+		if (this.eventLog.length > RING_BUFFER_SIZE) {
+			this.eventLog.shift();
+		}
+
+		for (const subscriber of this.subscribers.values()) {
+			if (
+				fullEvent.scope === 'public' ||
+				subscriber.userId === fullEvent.targetUserId
+			) {
+				try {
+					subscriber.deliver(fullEvent);
+				} catch {
+					// subscriber errors must not crash the engine
+				}
+			}
+		}
+
+		return fullEvent;
+	}
+
+	subscribe(id: string, subscriber: EventSubscriber): () => void {
+		this.subscribers.set(id, subscriber);
+		return () => this.unsubscribe(id);
+	}
+
+	unsubscribe(id: string): void {
+		this.subscribers.delete(id);
+	}
+
+	getEventsSince(eventId: string): GameEvent[] {
+		const idx = this.eventLog.findIndex(e => e.id === eventId);
+		return idx === -1 ? [] : this.eventLog.slice(idx + 1);
+	}
+
+	getRecentEvents(count: number): GameEvent[] {
+		return this.eventLog.slice(-count);
+	}
+
+	sendPrompt(
+		userId: string,
+		question: string,
+		choices: string[],
+		timeoutMs = 120_000
+	): Promise<string> {
+		return new Promise<string>((resolve, reject) => {
+			const requestId = randomUUID();
+
+			const timer = setTimeout(() => {
+				this.pendingPrompts.delete(requestId);
+				reject(new Error(`Prompt timed out after ${timeoutMs}ms`));
+			}, timeoutMs);
+
+			this.pendingPrompts.set(requestId, { resolve, reject, timer });
+
+			this.publish({
+				type: 'prompt.request',
+				scope: 'private',
+				targetUserId: userId,
+				text: question,
+				payload: { requestId, question, choices },
+			});
+		});
+	}
+
+	respondToPrompt(requestId: string, answer: string): void {
+		const pending = this.pendingPrompts.get(requestId);
+		if (pending) {
+			clearTimeout(pending.timer);
+			this.pendingPrompts.delete(requestId);
+			pending.resolve(answer);
+		}
+	}
+}

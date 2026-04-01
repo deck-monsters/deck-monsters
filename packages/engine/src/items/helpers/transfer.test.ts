@@ -31,7 +31,7 @@ describe('./items/helpers/transfer.ts', () => {
 	const channelStub = sinon.stub();
 
 	beforeEach(() => {
-		clock = sinon.useFakeTimers();
+		clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
 		channelStub.resolves();
 	});
 

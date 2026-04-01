@@ -1,7 +1,5 @@
 import { signedNumber } from '../helpers/signed-number.js';
-
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 interface RollResult {
 	naturalRoll: { result: number };
@@ -22,8 +20,7 @@ interface RolledOpts {
 }
 
 export function announceRolled(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	monster: any,
 	{ outcome, reason, roll, vs, who }: RolledOpts,
@@ -37,9 +34,10 @@ export function announceRolled(
 	let rollResult: string = roll.strokeOfLuck ? 'Nat 20!' : String(roll.result);
 	if (roll.curseOfLoki) rollResult = 'Crit Fail!';
 
-	publicChannel({
-		announce: `${text}
-🎲 *${rollResult}${vsMsg}*${outcome ? `\n    ${outcome}` : ''}
- `,
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `${text}\n🎲 *${rollResult}${vsMsg}*${outcome ? `\n    ${outcome}` : ''}\n `,
+		payload: { roll, who, outcome },
 	});
 }

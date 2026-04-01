@@ -1,16 +1,17 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 export function announceEndOfDeck(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	ring: any,
 	{ contestant }: { contestant: any },
 ): void {
 	const { monster } = contestant;
 
-	publicChannel({
-		announce: `${monster.identity} is out of cards.`,
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `${monster.identity} is out of cards.`,
+		payload: {},
 	});
 }

@@ -1,20 +1,15 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 export function announceFight(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	ring: any,
 	{ contestants }: { contestants: any[] },
 ): void {
-	publicChannel({
-		announce: `
-_______________________________________________________________________________________________________
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-${contestants.length} contestants stand tall under the laudations and hissing jeers of a roaring crowd.
-
-⚔︎ Let the games begin! ⚔︎
-`,
+	eb.publish({
+		type: 'ring.fight',
+		scope: 'public',
+		text: `\n_______________________________________________________________________________________________________\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n${contestants.length} contestants stand tall under the laudations and hissing jeers of a roaring crowd.\n\n⚔︎ Let the games begin! ⚔︎\n`,
+		payload: { contestants },
 	});
 }

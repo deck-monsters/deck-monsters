@@ -37,7 +37,7 @@ describe('./items/potions/pokecen.ts', () => {
 	const channelName = 'CHANNEL';
 
 	beforeEach(() => {
-		clock = sinon.useFakeTimers();
+		clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
 		channelStub.resolves();
 	});
 

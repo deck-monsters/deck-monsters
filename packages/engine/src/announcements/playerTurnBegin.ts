@@ -1,22 +1,19 @@
 import { monsterCard } from '../helpers/card.js';
-
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 export function announceTurnBegin(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	ring: any,
 	{ contestant }: { contestant: any },
 ): void {
 	const { monster } = contestant;
 
-	publicChannel({
-		announce: `*It's ${contestant.character.givenName}'s turn.*
-
-${contestant.character.identity} plays the following monster:
-${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`,
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `*It's ${contestant.character.givenName}'s turn.*\n\n${contestant.character.identity} plays the following monster:\n${monsterCard(monster, contestant.lastMonsterPlayed !== monster)}`,
+		payload: { contestant },
 	});
 
 	contestant.lastMonsterPlayed = monster;

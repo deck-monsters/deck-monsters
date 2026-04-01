@@ -3,8 +3,8 @@ import sinon from 'sinon';
 
 import Basilisk from '../monsters/basilisk.js';
 import Beastmaster from '../characters/beastmaster.js';
-import ChannelManager from '../channel/index.js';
 import Game from '../game.js';
+import { RoomEventBus } from '../events/index.js';
 import BaseDiscoveryCard from './discoveries/base.js';
 import DeathCard from './discoveries/death.js';
 import NothingCard from './discoveries/nothing.js';
@@ -25,11 +25,11 @@ describe('exploration/index.ts', () => {
 	beforeEach(() => {
 		publicChannelStub = sinon.stub().resolves(undefined);
 		privateChannelStub = sinon.stub().resolves(undefined);
-		clock = sinon.useFakeTimers();
+		clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
 
 		channelName = 'TEST_CHANNEL';
 
-		game = new Game(publicChannelStub);
+		game = new Game();
 		exploration = game.getExploration();
 
 		character = new Beastmaster();
@@ -49,8 +49,8 @@ describe('exploration/index.ts', () => {
 		sinon.restore();
 	});
 
-	it('has a channel manager', () => {
-		expect(exploration.channelManager).to.be.instanceOf(ChannelManager);
+	it('has an event bus', () => {
+		expect(game.eventBus).to.be.instanceOf(RoomEventBus);
 	});
 
 	describe('monsters', () => {

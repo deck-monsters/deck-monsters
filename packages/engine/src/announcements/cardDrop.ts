@@ -1,10 +1,5 @@
 import { actionCard } from '../helpers/card.js';
-
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-
-interface ChannelManager {
-	queueMessage(opts: { announce: string; channel: any; channelName: string }): void;
-}
+import type { RoomEventBus } from '../events/index.js';
 
 interface CardDropOpts {
 	contestant: any;
@@ -12,25 +7,16 @@ interface CardDropOpts {
 }
 
 export function announceCardDrop(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	game: any,
 	{ contestant, card }: CardDropOpts,
 ): void {
-	const { channel, channelName } = contestant;
-
 	const cardDropped = actionCard(card, true);
 
-	const announce = `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:
+	const text = `${contestant.monster.identity} finds a card for ${contestant.character.identity} in the dust of the ring:\n\n${cardDropped}`;
 
-${cardDropped}`;
-
-	channelManager.queueMessage({
-		announce,
-		channel,
-		channelName,
-	});
-
-	publicChannel({ announce });
+	// Send privately to the player and also broadcast publicly
+	eb.publish({ type: 'ring.cardDrop', scope: 'private', targetUserId: contestant.userId, text, payload: { contestant, card } });
+	eb.publish({ type: 'ring.cardDrop', scope: 'public', text, payload: { contestant, card } });
 }

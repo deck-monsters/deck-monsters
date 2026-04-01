@@ -1,5 +1,4 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 interface MissOpts {
 	attackResult: number;
@@ -9,8 +8,7 @@ interface MissOpts {
 }
 
 export function announceMiss(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	card: any,
 	{ attackResult, curseOfLoki, player, target }: MissOpts,
@@ -42,8 +40,10 @@ export function announceMiss(
 
 	const targetIdentifier = target === player ? `${target.pronouns.him}self` : target.givenName;
 
-	publicChannel({
-		announce: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${targetIdentifier} ${flavor}
-`,
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${targetIdentifier} ${flavor}\n`,
+		payload: {},
 	});
 }

@@ -1,29 +1,21 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-
-interface ChannelManager {
-	queueMessage(opts: { announce: string; channel: any; channelName: string }): void;
-}
+import type { RoomEventBus } from '../events/index.js';
 
 interface NarrationOpts {
-	channel?: any;
+	channel?: (opts: { announce: string }) => void | Promise<void>;
 	channelName?: string;
 	narration: string;
 }
 
 export function announceNarration(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	item: any,
-	{ channel, channelName, narration }: NarrationOpts,
+	{ channel, narration }: NarrationOpts,
 ): void {
 	if (channel) {
-		channelManager.queueMessage({
-			announce: narration,
-			channel,
-			channelName: channelName ?? '',
-		});
+		// Items still use the direct callback pattern; call it directly
+		void channel({ announce: narration });
 	} else {
-		publicChannel({ announce: narration });
+		eb.publish({ type: 'announce', scope: 'public', text: narration, payload: {} });
 	}
 }

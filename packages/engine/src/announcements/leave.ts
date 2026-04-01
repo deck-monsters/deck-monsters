@@ -1,13 +1,11 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 interface LeaveOpts {
 	activeContestants: any[];
 }
 
 export function announceLeave(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	monster: any,
 	{ activeContestants }: LeaveOpts,
@@ -16,8 +14,10 @@ export function announceLeave(
 		.filter(contestant => contestant.monster !== monster)
 		.map(contestant => contestant.monster.identityWithHp);
 
-	publicChannel({
-		announce: `${monster.identityWithHp} flees from ${assailants.join(' and ')}
-`,
+	eb.publish({
+		type: 'ring.fled',
+		scope: 'public',
+		text: `${monster.identityWithHp} flees from ${assailants.join(' and ')}\n`,
+		payload: { monster },
 	});
 }

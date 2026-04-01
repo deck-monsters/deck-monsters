@@ -1,16 +1,17 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 export function announceContestantLeave(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	ring: any,
 	{ contestant }: { contestant: any },
 ): void {
 	const { character, monster } = contestant;
 
-	publicChannel({
-		announce: `${monster.givenName} was summoned from the ring by ${character.identity}.`,
+	eb.publish({
+		type: 'ring.remove',
+		scope: 'public',
+		text: `${monster.givenName} was summoned from the ring by ${character.identity}.`,
+		payload: { contestant },
 	});
 }

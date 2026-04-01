@@ -7,8 +7,7 @@ import { randomContestant } from '../helpers/bosses.js';
 import { sortCardsAlphabetically } from '../cards/helpers/sort.js';
 import { shortDelay } from '../helpers/delay-times.js';
 import { uniqueCards } from '../cards/helpers/unique-cards.js';
-import { eachSeries } from '../helpers/promise.js';
-import type { ChannelManager, ChannelCallback } from '../channel/index.js';
+import type { RoomEventBus } from '../events/index.js';
 
 const MAX_BOSSES = 5;
 const MAX_MONSTERS = 12;
@@ -18,8 +17,7 @@ const FIGHT_DELAY = 60000;
 export interface Contestant {
 	monster: any;
 	character: any;
-	channel: ChannelCallback;
-	channelName: string;
+	userId: string;
 	isBoss?: boolean;
 	won?: boolean;
 	lost?: boolean;
@@ -36,13 +34,13 @@ export class Ring extends BaseClass {
 
 	log: (err: unknown) => void;
 	spawnBosses: boolean;
-	channelManager: ChannelManager;
+	eventBus: RoomEventBus;
 	inEncounter: boolean = false;
 	encounter?: Record<string, any>;
 	fightTimer?: ReturnType<typeof setTimeout>;
 
 	constructor(
-		channelManager: ChannelManager,
+		eventBus: RoomEventBus,
 		{ spawnBosses = true, ...options }: Record<string, any> = {},
 		log: (err: unknown) => void = () => {}
 	) {
@@ -50,7 +48,7 @@ export class Ring extends BaseClass {
 
 		this.log = log;
 		this.spawnBosses = spawnBosses;
-		this.channelManager = channelManager;
+		this.eventBus = eventBus;
 		if (!Array.isArray((this.options as any).battles)) {
 			this.setOptions({ battles: [] } as any);
 		}
@@ -61,23 +59,39 @@ export class Ring extends BaseClass {
 			ring.setOptions({ battles: updated } as any);
 		});
 
-		this.channelManager.on('win', (_className: string, _channel: any, { contestant }: { contestant: Contestant }) =>
-			this.handleWinner({ contestant })
-		);
-		this.channelManager.on('loss', (_className: string, _channel: any, { contestant }: { contestant: Contestant }) =>
-			this.handleLoser({ contestant })
-		);
-		this.channelManager.on('permaDeath', (_className: string, _channel: any, { contestant }: { contestant: Contestant }) =>
-			this.handlePermaDeath({ contestant })
-		);
-		this.channelManager.on('draw', (_className: string, _channel: any, { contestant }: { contestant: Contestant }) =>
-			this.handleTied({ contestant })
-		);
-		this.channelManager.on('fled', (_className: string, _channel: any, { contestant }: { contestant: Contestant }) =>
-			this.handleFled({ contestant })
-		);
+		// Route outcome events back to ring handlers via event bus
+		this.eventBus.subscribe('ring-internal', {
+			deliver: (event) => {
+				if (event.type === 'ring.win') {
+					this.handleWinner({ contestant: (event.payload as any).contestant });
+				} else if (event.type === 'ring.loss') {
+					this.handleLoser({ contestant: (event.payload as any).contestant });
+				} else if (event.type === 'ring.permaDeath') {
+					this.handlePermaDeath({ contestant: (event.payload as any).contestant });
+				} else if (event.type === 'ring.draw') {
+					this.handleTied({ contestant: (event.payload as any).contestant });
+				} else if (event.type === 'ring.fled') {
+					this.handleFled({ contestant: (event.payload as any).contestant });
+				}
+			}
+		});
 
 		this.startBossTimer();
+	}
+
+	private pub(
+		type: Parameters<RoomEventBus['publish']>[0]['type'],
+		text: string,
+		payload: Record<string, unknown> = {},
+		targetUserId?: string
+	): void {
+		this.eventBus.publish({
+			type,
+			scope: targetUserId ? 'private' : 'public',
+			text,
+			payload,
+			...(targetUserId ? { targetUserId } : {}),
+		});
 	}
 
 	get battles(): any[] {
@@ -117,37 +131,33 @@ export class Ring extends BaseClass {
 	removeMonster({
 		monster,
 		character,
-		channel,
-		channelName,
+		userId,
 	}: {
 		monster: any;
 		character: any;
-		channel: ChannelCallback;
-		channelName: string;
+		userId: string;
 	}): Promise<void> {
 		return Promise.resolve()
 			.then(() => {
 				if (this.inEncounter) {
-					return Promise.reject(
-						channel({ announce: 'You cannot withdraw while an encounter is in progress' })
-					);
+					this.pub('announce', 'You cannot withdraw while an encounter is in progress', {}, userId);
+					return Promise.reject(new Error('Encounter in progress'));
 				}
 
 				if (this.contestants.length <= 0) {
-					return Promise.reject(channel({ announce: 'No monsters currently in ring' }));
+					this.pub('announce', 'No monsters currently in ring', {}, userId);
+					return Promise.reject(new Error('Ring is empty'));
 				}
 
 				if (!monster || !monster.givenName) {
-					return Promise.reject(
-						channel({ announce: 'No monster specified to remove from ring' })
-					);
+					this.pub('announce', 'No monster specified to remove from ring', {}, userId);
+					return Promise.reject(new Error('No monster specified'));
 				}
 
 				const contestant = this.findContestant(character, monster);
 				if (!contestant) {
-					return Promise.reject(
-						channel({ announce: 'Your monster is not currently in the ring' })
-					);
+					this.pub('announce', 'Your monster is not currently in the ring', {}, userId);
+					return Promise.reject(new Error('Monster not in ring'));
 				}
 
 				return contestant;
@@ -163,35 +173,33 @@ export class Ring extends BaseClass {
 
 				this.emit('remove', { contestant });
 
-				this.channelManager.queueMessage({
-					announce: `${monster.givenName} has returned to nestle safely into your warm embrace.`,
-					channel,
-					channelName,
-				});
+				this.pub(
+					'ring.remove',
+					`${monster.givenName} has returned to nestle safely into your warm embrace.`,
+					{ contestant },
+					userId
+				);
 
-				this.channelManager.sendMessages().then(() => this.startFightTimer());
+				this.startFightTimer();
 			});
 	}
 
 	addMonster({
 		monster,
 		character,
-		channel,
-		channelName,
+		userId,
 		isBoss,
 	}: {
 		monster: any;
 		character: any;
-		channel: ChannelCallback;
-		channelName: string;
+		userId: string;
 		isBoss?: boolean;
 	}): void {
 		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
 			const contestant: Contestant = {
 				monster,
 				character,
-				channel,
-				channelName,
+				userId,
 				isBoss,
 			};
 
@@ -201,21 +209,15 @@ export class Ring extends BaseClass {
 				this.clearRing();
 			} else {
 				this.emit('add', { contestant });
-
-				this.channelManager.queueMessage({
-					announce: `${monster.givenName} has entered the ring. May the odds be ever in your favor.`,
-					channel,
-					channelName,
-				});
-
-				this.channelManager.sendMessages().then(() => this.startFightTimer());
+				this.startFightTimer();
 			}
 		} else {
-			this.channelManager.queueMessage({
-				announce: 'The ring is full! Wait until the current battle is over and try again.',
-				channel,
-				channelName,
-			});
+			this.pub(
+				'announce',
+				'The ring is full! Wait until the current battle is over and try again.',
+				{},
+				userId
+			);
 		}
 	}
 
@@ -229,111 +231,86 @@ export class Ring extends BaseClass {
 		);
 	}
 
-	look(channel: any, showCharacters = true, summary = false): Promise<void> {
+	look(userId: string, showCharacters = true, summary = false): Promise<void> {
 		const { length } = this.contestants;
 
 		if (length < 1) {
-			return Promise.reject(
-				channel({ announce: 'The ring is empty.', delay: 'short' })
-			);
+			this.pub('announce', 'The ring is empty.', {}, userId);
+			return Promise.reject(new Error('The ring is empty.'));
 		}
-
-		const { channelManager, channelName } = channel;
 
 		if (summary) {
-			return Promise.resolve()
-				.then(() => {
-					const monsters = this.contestants.map(
-						({ monster }) =>
-							`${monster.identity} - ${monster.creatureType} (${monster.displayLevel.replace('level ', '')})`
-					);
+			const monsters = this.contestants.map(
+				({ monster }) =>
+					`${monster.identity} - ${monster.creatureType} (${monster.displayLevel.replace('level ', '')})`
+			);
 
-					return channelManager.queueMessage({
-						announce: `###########################################\n${monsters.join('\n')}\n###########################################`,
-						channel,
-						channelName,
-					});
-				})
-				.then(() => channelManager.sendMessages());
+			this.pub(
+				'announce',
+				`###########################################\n${monsters.join('\n')}\n###########################################`,
+				{},
+				userId
+			);
+			return Promise.resolve();
 		}
 
-		return Promise.resolve()
-			.then(() =>
-				channelManager.queueMessage({
-					announce: `###########################################\nThere ${length === 1 ? 'is one contestant' : `are ${length} contestants`} in the ring.\n###########################################`,
-					channel,
-					channelName,
-				})
-			)
-			.then(() =>
-				eachSeries(this.contestants, (contestant: Contestant) => {
-					let characterDisplay = '';
-					if (showCharacters) {
-						characterDisplay = `${monsterCard(contestant.character, true)}\nSent the following monster into the ring:\n\n`;
-					}
+		this.pub(
+			'announce',
+			`###########################################\nThere ${length === 1 ? 'is one contestant' : `are ${length} contestants`} in the ring.\n###########################################`,
+			{},
+			userId
+		);
 
-					const monsterDisplay = monsterCard(contestant.monster, !showCharacters);
+		this.contestants.forEach(contestant => {
+			let characterDisplay = '';
+			if (showCharacters) {
+				characterDisplay = `${monsterCard(contestant.character, true)}\nSent the following monster into the ring:\n\n`;
+			}
 
-					return channelManager.queueMessage({
-						announce: `${characterDisplay}${monsterDisplay}###########################################`,
-						channel,
-						channelName,
-					});
-				})
-			)
-			.then(() => channelManager.sendMessages());
+			const monsterDisplay = monsterCard(contestant.monster, !showCharacters);
+
+			this.pub(
+				'announce',
+				`${characterDisplay}${monsterDisplay}###########################################`,
+				{},
+				userId
+			);
+		});
+
+		return Promise.resolve();
 	}
 
-	lookAtCards(channel: any): Promise<void> {
+	lookAtCards(userId: string): Promise<void> {
 		const { length } = this.contestants;
 
 		if (length < 1) {
-			return Promise.reject(channel({ announce: 'The ring is empty.', delay: 'short' }));
+			this.pub('announce', 'The ring is empty.', {}, userId);
+			return Promise.reject(new Error('The ring is empty.'));
 		}
 
 		if (!this.inEncounter) {
-			return Promise.reject(
-				channel({ announce: 'Wait until the encounter has started.', delay: 'short' })
-			);
+			this.pub('announce', 'Wait until the encounter has started.', {}, userId);
+			return Promise.reject(new Error('Encounter not started.'));
 		}
 
-		const { channelManager, channelName } = channel;
-		return Promise.resolve()
-			.then(() =>
-				channelManager.queueMessage({
-					announce: `###########################################\nThe following cards are in play:\n`,
-					channel,
-					channelName,
-				})
-			)
-			.then(() => {
-				const cards = sortCardsAlphabetically(
-					uniqueCards(
-						this.contestants.reduce((allCards: any[], { monster }: Contestant) => {
-							allCards.push(...monster.cards);
-							return allCards;
-						}, [])
-					)
-				);
+		this.pub('announce', `###########################################\nThe following cards are in play:\n`, {}, userId);
 
-				return eachSeries(cards, (card: any) => {
-					const cardDisplay = actionCard(card, true);
-
-					return channelManager.queueMessage({
-						announce: cardDisplay,
-						channel,
-						channelName,
-					});
-				});
-			})
-			.then(() =>
-				channelManager.queueMessage({
-					announce: '###########################################',
-					channel,
-					channelName,
-				})
+		const cards = sortCardsAlphabetically(
+			uniqueCards(
+				this.contestants.reduce((allCards: any[], { monster }: Contestant) => {
+					allCards.push(...monster.cards);
+					return allCards;
+				}, [])
 			)
-			.then(() => channelManager.sendMessages());
+		);
+
+		cards.forEach((card: any) => {
+			this.pub('announce', actionCard(card, true), {}, userId);
+		});
+
+		this.pub('announce', '###########################################', {}, userId);
+
+		return Promise.resolve();
 	}
 
 	startEncounter(): boolean {
@@ -341,15 +318,15 @@ export class Ring extends BaseClass {
 
 		this.inEncounter = true;
 		this.encounter = {};
-		this.contestants.forEach(({ channel, channelName, monster }) => {
+		this.contestants.forEach(({ userId, monster }) => {
 			monster.startEncounter(this);
 
-			this.channelManager.queueMessage({
-				announce:
-					'The fight has begun! You may now type `look at monsters in the ring` to see all participants with their current stats, and `look at cards in the ring` to see the detailed stats of every card that will be in play.',
-				channel,
-				channelName,
-			});
+			this.pub(
+				'announce',
+				'The fight has begun! You may now type `look at monsters in the ring` to see all participants with their current stats, and `look at cards in the ring` to see the detailed stats of every card that will be in play.',
+				{},
+				userId
+			);
 		});
 
 		return true;
@@ -394,12 +371,13 @@ export class Ring extends BaseClass {
 		const { contestants, numberOfMonstersInRing } = getPlayerContestants();
 
 		if (numberOfMonstersInRing >= MIN_MONSTERS) {
-			contestants.forEach(({ channel, channelName }) =>
-				this.channelManager.queueMessage({
-					announce: `Fight will begin in ${Math.floor(FIGHT_DELAY / 1000)} seconds.`,
-					channel,
-					channelName,
-				})
+			contestants.forEach(({ userId }) =>
+				this.pub(
+					'ring.countdown',
+					`Fight will begin in ${Math.floor(FIGHT_DELAY / 1000)} seconds.`,
+					{},
+					userId
+				)
 			);
 
 			this.fightTimer = setTimeout(() => {
@@ -407,7 +385,7 @@ export class Ring extends BaseClass {
 					getPlayerContestants();
 
 				if (numberOfMonstersStillInRing >= MIN_MONSTERS) {
-					this.channelManager.sendMessages().then(() => this.fight());
+					this.fight();
 				}
 			}, FIGHT_DELAY);
 		} else if (numberOfMonstersInRing <= 0) {
@@ -419,12 +397,13 @@ export class Ring extends BaseClass {
 			const monster = needed > 1 ? 'monsters' : 'monster';
 			const join = needed > 1 ? 'join' : 'joins';
 
-			contestants.forEach(({ channel, channelName }) =>
-				this.channelManager.queueMessage({
-					announce: `Fight countdown will begin once ${needed} more ${monster} ${join} the ring.`,
-					channel,
-					channelName,
-				})
+			contestants.forEach(({ userId }) =>
+				this.pub(
+					'announce',
+					`Fight countdown will begin once ${needed} more ${monster} ${join} the ring.`,
+					{},
+					userId
+				)
 			);
 		}
 	}
@@ -511,12 +490,10 @@ export class Ring extends BaseClass {
 						.play(player, proposedTarget, ring, getAllActiveContestants())
 						.then(() => {
 							if (getAllActiveContestants().length > 1) {
-								return this.channelManager.sendMessages().then(() => next());
+								return Promise.resolve().then(() => next());
 							}
 
-							return this.channelManager
-								.sendMessages()
-								.then(() => resolve(playerContestant));
+							return Promise.resolve().then(() => resolve(playerContestant));
 						})
 						.catch((ex: unknown) => {
 							this.log(ex);
@@ -531,11 +508,11 @@ export class Ring extends BaseClass {
 					if (!anyContestantsHaveCardsLeft(allActiveContestants)) {
 						this.emit('roundComplete', { contestants, round });
 
-					if (round === 10) {
-						this.channelManager.queueMessage({ announce: 'The fight has ended in a draw after 10 rounds — no monsters could finish the job.' });
-						resolve(undefined);
-						return;
-					}
+						if (round === 10) {
+							this.pub('announce', 'The fight has ended in a draw after 10 rounds — no monsters could finish the job.', {});
+							resolve(undefined);
+							return;
+						}
 
 						round += 1;
 
@@ -553,9 +530,10 @@ export class Ring extends BaseClass {
 			});
 
 		return doAction()
-			.then(lastContestant =>
-				this.fightConcludes({ fightLog, lastContestant, rounds: round })
-			)
+			.then(lastContestant => {
+				this.fightConcludes({ fightLog, lastContestant, rounds: round });
+				this.clearRing();
+			})
 			.catch(() => {
 				this.clearRing();
 			});
@@ -585,21 +563,23 @@ export class Ring extends BaseClass {
 		});
 		const deaths = deadContestants.length;
 
-		this.channelManager.queueMessage({
-			event: {
-				name: 'fightConcludes',
-				properties: {
-					contestants,
-					deadContestants,
-					deaths,
-					lastContestant,
-					rounds,
-				},
+		// Emit for battle history
+		this.eventBus.publish({
+			type: 'ring.fight',
+			scope: 'public',
+			text: `Fight concluded: ${deaths} dead after ${rounds} rounds`,
+			payload: {
+				contestants,
+				deadContestants,
+				deaths,
+				lastContestant,
+				rounds,
+				eventName: 'fightConcludes',
 			},
 		});
 
 		contestants.forEach(contestant => {
-			const { channel, channelName } = contestant;
+			const { userId } = contestant;
 
 			this.awardMonsterXP(contestant, contestants);
 
@@ -608,58 +588,59 @@ export class Ring extends BaseClass {
 					contestant.lost = true;
 
 					if (contestant.monster.destroyed) {
-						this.channelManager.queueMessage({
-							announce: `${contestant.monster.givenName} was too badly injured to be revived.`,
-							channel,
-							channelName,
-							event: { name: 'permaDeath', properties: { contestant } },
+						this.eventBus.publish({
+							type: 'ring.permaDeath',
+							scope: 'private',
+							targetUserId: userId,
+							text: `${contestant.monster.givenName} was too badly injured to be revived.`,
+							payload: { contestant },
 						});
 					} else {
-						this.channelManager.queueMessage({
-							announce: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
-							channel,
-							channelName,
-							event: { name: 'loss', properties: { contestant } },
+						this.eventBus.publish({
+							type: 'ring.loss',
+							scope: 'private',
+							targetUserId: userId,
+							text: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
+							payload: { contestant },
 						});
 					}
 				} else if (contestant.fled) {
-					this.channelManager.queueMessage({
-						announce: `${contestant.monster.givenName} lived to fight another day!`,
-						channel,
-						channelName,
-						event: { name: 'fled', properties: { contestant } },
+					this.eventBus.publish({
+						type: 'ring.fled',
+						scope: 'private',
+						targetUserId: userId,
+						text: `${contestant.monster.givenName} lived to fight another day!`,
+						payload: { contestant },
 					});
 				} else {
 					contestant.won = true;
 
-					this.channelManager.queueMessage({
-						announce: `${contestant.monster.identity} is victorious!`,
-						channel,
-						channelName,
-						event: { name: 'win', properties: { contestant } },
+					this.eventBus.publish({
+						type: 'ring.win',
+						scope: 'private',
+						targetUserId: userId,
+						text: `${contestant.monster.identity} is victorious!`,
+						payload: { contestant },
 					});
 				}
 			} else {
-				this.channelManager.queueMessage({
-					announce: 'The fight ended in a draw.',
-					channel,
-					channelName,
-					event: { name: 'draw', properties: { contestant } },
+				this.eventBus.publish({
+					type: 'ring.draw',
+					scope: 'private',
+					targetUserId: userId,
+					text: 'The fight ended in a draw.',
+					payload: { contestant },
 				});
 			}
 		});
 
-		this.channelManager.sendMessages().then(() => {
-			this.emit('fightConcludes', {
-				contestants,
-				deadContestants,
-				deaths,
-				isDraw: deaths <= 0,
-				lastContestant,
-				rounds,
-			});
-
-			this.clearRing();
+		this.emit('fightConcludes', {
+			contestants,
+			deadContestants,
+			deaths,
+			isDraw: deaths <= 0,
+			lastContestant,
+			rounds,
 		});
 	}
 
