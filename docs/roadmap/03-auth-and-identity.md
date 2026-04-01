@@ -2,7 +2,7 @@
 
 **Category**: Feature / Security  
 **Priority**: High (required for web and Discord connectors)  
-**Status**: Not started — provider decision made (Supabase Auth), implementation pending
+**Status**: Phase 1 complete (code) — Supabase project provisioning and web app auth UI pending
 
 ## Background
 
@@ -143,14 +143,14 @@ A Supabase database trigger creates the `profiles` row automatically when a new 
 ## Tasks
 
 ### Phase 1 — Discord + Web
-- [ ] Create Supabase project, enable email/password and Discord OAuth providers
-- [ ] Configure Discord OAuth app (client ID, secret, redirect URI) in Supabase dashboard
-- [ ] Implement JWT validation middleware in `packages/server` (tRPC `protectedProcedure`)
-- [ ] Create `profiles` table and signup trigger in Supabase
-- [ ] Create `user_connectors` table
-- [ ] Implement auto-creation of user records for Discord users on first interaction
-- [ ] Add auth to web app (Supabase client SDK for login/register/OAuth)
-- [ ] Add auth to tRPC WebSocket connections (JWT on connect)
+- [ ] Create Supabase project, enable email/password and Discord OAuth providers _(manual infra — not automated)_
+- [ ] Configure Discord OAuth app (client ID, secret, redirect URI) in Supabase dashboard _(manual infra — not automated)_
+- [x] Implement JWT validation middleware in `packages/server` (tRPC `protectedProcedure`) _(done in 01/02)_
+- [x] Create `profiles` table and signup trigger in Supabase _(done in 01/02)_
+- [x] Create `user_connectors` table _(done in 01/02)_
+- [x] Implement auto-creation of user records for Discord users on first interaction (`auth.registerConnectorUser` tRPC procedure + `ensureConnectorUser` service in `packages/server/src/auth/connector-users.ts`)
+- [ ] Add auth to web app (Supabase client SDK for login/register/OAuth) _(deferred to roadmap 06 — web app)_
+- [x] Add auth to tRPC WebSocket connections (JWT on connect via `?token=` query param fallback in `packages/server/src/trpc/context.ts`)
 
 ### Phase 2 — Google OAuth
 - [ ] Enable Google OAuth in Supabase dashboard

@@ -4,8 +4,9 @@ import type { AnyRouter } from '@trpc/server';
 
 import type { GameEvent } from '@deck-monsters/engine';
 import { t } from './trpc.js';
-import { protectedProcedure } from './middleware.js';
+import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
+import { ensureConnectorUser } from '../auth/connector-users.js';
 
 export function createRouter(roomManager: RoomManager): AnyRouter {
 	const roomRouter = t.router({
@@ -152,7 +153,7 @@ export function createRouter(roomManager: RoomManager): AnyRouter {
 					`trpc:${ctx.userId}:${Date.now()}`,
 					{
 						userId: ctx.userId,
-						deliver(event) {
+						deliver(event: GameEvent) {
 							queue.push(event);
 							resolve?.();
 							resolve = null;
@@ -178,9 +179,29 @@ export function createRouter(roomManager: RoomManager): AnyRouter {
 			}),
 	});
 
+	const authRouter = t.router({
+		registerConnectorUser: serviceProcedure
+			.input(
+				z.object({
+					connectorType: z.enum(['discord', 'slack']),
+					externalId: z.string().min(1),
+					displayName: z.string().min(1).max(100),
+				})
+			)
+			.mutation(async ({ input }) => {
+				const userId = await ensureConnectorUser(
+					input.connectorType,
+					input.externalId,
+					input.displayName
+				);
+				return { userId };
+			}),
+	});
+
 	return t.router({
 		room: roomRouter,
 		game: gameRouter,
+		auth: authRouter,
 		health: t.procedure.query(() => ({
 			status: 'ok',
 			timestamp: new Date().toISOString(),

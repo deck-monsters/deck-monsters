@@ -11,12 +11,16 @@
     "start": "node dist/index.js",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
+    "test": "mocha",
+    "test:watch": "mocha --watch",
+    "test:coverage": "c8 mocha",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
     "@deck-monsters/engine": "workspace:*",
     "@fastify/websocket": "^11.0.2",
+    "@supabase/supabase-js": "^2.49.4",
     "@trpc/server": "^11.4.3",
     "drizzle-orm": "^0.44.2",
     "fastify": "^5.4.0",
@@ -25,9 +29,20 @@
     "zod": "^3.25.71"
   },
   "devDependencies": {
+    "@types/chai": "^5.0.0",
+    "@types/chai-as-promised": "^8.0.2",
+    "@types/mocha": "^10.0.0",
     "@types/node": "^24.6.0",
     "@types/pg": "^8.11.15",
+    "@types/sinon": "^17.0.0",
+    "@types/sinon-chai": "^3.2.12",
+    "c8": "^10.0.0",
+    "chai": "^6.2.2",
+    "chai-as-promised": "^8.0.2",
     "drizzle-kit": "^0.31.4",
+    "mocha": "^11.7.4",
+    "sinon": "^21.0.0",
+    "sinon-chai": "^4.0.1",
     "tsx": "^4.0.0",
     "typescript": "^5.9.3"
   }

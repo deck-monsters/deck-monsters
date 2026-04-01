@@ -8,3 +8,11 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 
 	return next({ ctx: { ...ctx, userId: ctx.userId } });
 });
+
+export const serviceProcedure = t.procedure.use(({ ctx, next }) => {
+	if (!ctx.serviceTokenValid) {
+		throw new TRPCError({ code: 'UNAUTHORIZED' });
+	}
+
+	return next({ ctx });
+});
