@@ -29,6 +29,13 @@ export function createRouter(roomManager: RoomManager): AnyRouter {
 				return { ok: true };
 			}),
 
+		delete: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.deleteRoom(ctx.userId, input.roomId);
+				return { ok: true };
+			}),
+
 		list: protectedProcedure.query(async ({ ctx }) => {
 			return roomManager.listRoomsForUser(ctx.userId);
 		}),

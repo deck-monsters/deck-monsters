@@ -17,6 +17,14 @@ async function start(): Promise<void> {
 	await fastify.register(ws);
 
 	const roomManager = new RoomManager(db);
+
+	const SWEEP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+	setInterval(() => {
+		roomManager.sweepIdleRooms().catch((err: unknown) => {
+			fastify.log.error(err, 'sweepIdleRooms failed');
+		});
+	}, SWEEP_INTERVAL_MS).unref();
+
 	const router = createRouter(roomManager);
 
 	await fastify.register(fastifyTRPCPlugin, {

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, count } from 'drizzle-orm';
 
 import { Game, RoomEventBus, restoreGame } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
@@ -10,6 +10,12 @@ import { PostgresStateStore } from './state-store.js';
 interface ActiveRoom {
 	game: Game;
 	eventBus: RoomEventBus;
+	lastActivityAt: number;
+}
+
+interface EngineDeps {
+	Game: typeof Game;
+	restoreGame: typeof restoreGame;
 }
 
 function generateInviteCode(): string {
@@ -21,7 +27,8 @@ export class RoomManager {
 
 	constructor(
 		private readonly db: Db,
-		private readonly log: (err: unknown) => void = () => {}
+		private readonly log: (err: unknown) => void = () => {},
+		private readonly deps: EngineDeps = { Game, restoreGame }
 	) {}
 
 	async createRoom(
@@ -45,11 +52,11 @@ export class RoomManager {
 		});
 
 		const stateStore = new PostgresStateStore(this.db);
-		const game = new Game({ roomId }, this.log);
+		const game = new this.deps.Game({ roomId }, this.log);
 		game.stateStore = stateStore;
 
 		const eventBus = game.eventBus;
-		this.active.set(roomId, { game, eventBus });
+		this.active.set(roomId, { game, eventBus, lastActivityAt: Date.now() });
 
 		return { roomId, inviteCode };
 	}
@@ -81,9 +88,44 @@ export class RoomManager {
 	}
 
 	async leaveRoom(userId: string, roomId: string): Promise<void> {
+		const rows = await this.db
+			.select({ ownerId: rooms.ownerId })
+			.from(rooms)
+			.where(eq(rooms.id, roomId))
+			.limit(1);
+
+		if (rows[0]?.ownerId === userId) {
+			throw new TRPCError({
+				code: 'FORBIDDEN',
+				message: 'Owners cannot leave; delete the room or transfer ownership first',
+			});
+		}
+
 		await this.db
 			.delete(roomMembers)
 			.where(and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)));
+	}
+
+	async deleteRoom(userId: string, roomId: string): Promise<void> {
+		const rows = await this.db
+			.select({ ownerId: rooms.ownerId })
+			.from(rooms)
+			.where(eq(rooms.id, roomId))
+			.limit(1);
+
+		if (!rows[0]) {
+			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
+		}
+
+		if (rows[0].ownerId !== userId) {
+			throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the room owner can delete it' });
+		}
+
+		// Remove from memory first — no state flush needed since the DB row is being deleted.
+		this.active.delete(roomId);
+
+		// Cascade deletes room_members and room_events.
+		await this.db.delete(rooms).where(eq(rooms.id, roomId));
 	}
 
 	async listRoomsForUser(userId: string): Promise<Array<{ roomId: string; name: string; role: string }>> {
@@ -100,7 +142,9 @@ export class RoomManager {
 		return rows;
 	}
 
-	async getRoomInfo(roomId: string): Promise<{ roomId: string; name: string; inviteCode: string }> {
+	async getRoomInfo(
+		roomId: string
+	): Promise<{ roomId: string; name: string; inviteCode: string; memberCount: number }> {
 		const rows = await this.db
 			.select({ id: rooms.id, name: rooms.name, inviteCode: rooms.inviteCode })
 			.from(rooms)
@@ -111,7 +155,19 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
-		return { roomId: rows[0].id, name: rows[0].name, inviteCode: rows[0].inviteCode };
+		const countRows = await this.db
+			.select({ value: count() })
+			.from(roomMembers)
+			.where(eq(roomMembers.roomId, roomId));
+
+		const memberCount = countRows[0]?.value ?? 0;
+
+		return {
+			roomId: rows[0].id,
+			name: rows[0].name,
+			inviteCode: rows[0].inviteCode,
+			memberCount,
+		};
 	}
 
 	async assertMember(userId: string, roomId: string): Promise<void> {
@@ -127,15 +183,36 @@ export class RoomManager {
 	}
 
 	async getGame(roomId: string): Promise<Game> {
-		return (await this._getOrLoad(roomId)).game;
+		const entry = await this._getOrLoad(roomId);
+		entry.lastActivityAt = Date.now();
+		return entry.game;
 	}
 
 	async getEventBus(roomId: string): Promise<RoomEventBus> {
-		return (await this._getOrLoad(roomId)).eventBus;
+		const entry = await this._getOrLoad(roomId);
+		entry.lastActivityAt = Date.now();
+		return entry.eventBus;
 	}
 
-	unloadRoom(roomId: string): void {
+	async unloadRoom(roomId: string): Promise<void> {
+		const entry = this.active.get(roomId);
+		if (entry) {
+			// saveState is a getter returning the bound persist function — call it to flush
+			// any state not yet written by the 30s debounce.
+			entry.game.saveState();
+		}
 		this.active.delete(roomId);
+	}
+
+	async sweepIdleRooms(idleThresholdMs = 2 * 60 * 60 * 1000): Promise<void> {
+		const now = Date.now();
+		const promises: Promise<void>[] = [];
+		for (const [roomId, entry] of this.active) {
+			if (now - entry.lastActivityAt > idleThresholdMs) {
+				promises.push(this.unloadRoom(roomId));
+			}
+		}
+		await Promise.all(promises);
 	}
 
 	private async _getOrLoad(roomId: string): Promise<ActiveRoom> {
@@ -156,15 +233,15 @@ export class RoomManager {
 		let game: Game;
 
 		if (rows[0].stateBlob) {
-			game = restoreGame(rows[0].stateBlob, this.log);
-			(game.options as any).roomId = roomId;
+			game = this.deps.restoreGame(rows[0].stateBlob, this.log);
+			(game.options as Record<string, unknown>).roomId = roomId;
 		} else {
-			game = new Game({ roomId }, this.log);
+			game = new this.deps.Game({ roomId }, this.log);
 		}
 
 		game.stateStore = stateStore;
 
-		const entry: ActiveRoom = { game, eventBus: game.eventBus };
+		const entry: ActiveRoom = { game, eventBus: game.eventBus, lastActivityAt: Date.now() };
 		this.active.set(roomId, entry);
 		return entry;
 	}
