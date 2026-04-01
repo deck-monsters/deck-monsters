@@ -1,11 +1,12 @@
 # Web App Connector
 
 **Category**: Feature / Connector  
-**Priority**: Medium-High
+**Priority**: High (ships alongside the Discord connector)  
+**Status**: Not started
 
 ## Overview
 
-A browser-based interface for Deck Monsters. Players visit the site, log in, join or create a room, and play the game in real time without needing Slack or Discord.
+A browser-based interface for Deck Monsters. Players visit the site, log in, join or create a room, and play the game in real time without needing Slack or Discord. The web app and Discord connector are the two launch connectors — they share the same backend, auth system, and event bus.
 
 ## Design Philosophy
 
@@ -30,9 +31,9 @@ The web app is a thin client. No game logic runs in the browser — all game sta
 
 The web connector is the cleanest event bus consumer because it was designed alongside the event bus architecture:
 
-1. User authenticates (JWT via `better-auth` / `lucia` / `passport.js`)
+1. User authenticates via Supabase Auth (Discord OAuth, Google OAuth, or email/password)
 2. Client opens a tRPC WebSocket subscription to `ringFeed` for their current room
-3. Server subscribes to the room's `RoomEventBus` on behalf of this client
+3. Server validates the Supabase JWT and subscribes to the room's `RoomEventBus` on behalf of this client
 4. Public `GameEvent` objects are forwarded to all subscribed WebSocket clients in the room
 5. Private `GameEvent` objects are forwarded only to the matching `targetUserId`
 6. Prompt requests (equip choices, shop purchases) are sent as private events; the client renders a UI and responds via a tRPC mutation
@@ -46,7 +47,7 @@ When a WebSocket disconnects and reconnects, the client sends its `lastEventId`.
 - **Server**: `packages/server` — Fastify with tRPC adapter (HTTP + WebSocket)
 - **Frontend**: React with `@trpc/react-query` for fully typed API calls
 - **Styling**: Simple CSS — dark terminal theme, monospace for card/combat rendering
-- **Auth**: JWT tokens stored in `httpOnly` cookies or localStorage
+- **Auth**: Supabase Auth via `@supabase/supabase-js` (handles OAuth flows, token refresh, session persistence)
 
 ## Core Views
 
@@ -85,6 +86,6 @@ All optional — the text works fine on its own.
 - [ ] Build shop view
 - [ ] Build spawn + explore views
 - [ ] Build room management views (create, join, invite, member list)
-- [ ] Integrate auth (JWT, login/register pages)
+- [ ] Integrate Supabase Auth (login/register pages with Discord OAuth, Google OAuth, and email/password)
 - [ ] Responsive design (mobile browser should work reasonably well)
 - [ ] Deploy to chosen hosting platform (see backend hosting doc)

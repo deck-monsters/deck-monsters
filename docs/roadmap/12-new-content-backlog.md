@@ -2,6 +2,7 @@
 
 **Category**: Content / Game Design  
 **Priority**: Post-launch  
+**Status**: Backlog — not started, not required for launch  
 **Source**: Upstream issue tracker
 
 This is a holding area for new cards, monsters, items, and larger features from the upstream issue tracker. None of this is required for the revival launch — it's a rich backlog to draw from once the core is stable and running.

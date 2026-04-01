@@ -1,11 +1,14 @@
 # Native Mobile App (iOS + Android)
 
 **Category**: Feature / Connector  
-**Priority**: Medium
+**Priority**: Low (deferred — ships after Discord and web connectors are stable)  
+**Status**: Not started
 
 ## Overview
 
 A native mobile app for iOS and Android so players can check on their monsters, send commands, and watch fights from their phone — similar to how the game was originally used in Slack's mobile app.
+
+The mobile app is deferred until the Discord connector and web app are stable and the backend infrastructure (Supabase + Railway, event bus, tRPC API) is proven in production. The web app is responsive and works in mobile browsers, providing a reasonable mobile experience in the interim.
 
 ## Design Philosophy
 
@@ -73,7 +76,7 @@ Simple monster icons / sprites go a long way on mobile (see graphics doc). A sma
 - [ ] Build shop screen
 - [ ] Build spawn screen
 - [ ] Build room management screen (create, join, invite)
-- [ ] Integrate auth (JWT storage via Expo SecureStore)
+- [ ] Integrate Supabase Auth (JWT storage via Expo SecureStore, OAuth via `@supabase/supabase-js`)
 - [ ] Implement push notifications (Expo Notifications + server-side event routing)
 - [ ] iOS: configure APNs, submit to App Store
 - [ ] Android: configure FCM, submit to Google Play

@@ -1,7 +1,8 @@
 # Multi-Room / Groups Support
 
 **Category**: Feature  
-**Priority**: High (required for web, mobile, and multi-server Discord)
+**Priority**: High (required for web and multi-server Discord)  
+**Status**: Not started
 
 ## Background
 

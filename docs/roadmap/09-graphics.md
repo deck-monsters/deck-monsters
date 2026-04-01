@@ -1,7 +1,8 @@
 # Graphics and Visual Design
 
 **Category**: Enhancement / UX  
-**Priority**: Low (nice to have)
+**Priority**: Low (nice to have — post-launch)  
+**Status**: Not started
 
 ## The Original Aesthetic
 

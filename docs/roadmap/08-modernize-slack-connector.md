@@ -1,7 +1,8 @@
 # Modernize Slack Connector (Jane)
 
 **Category**: Maintenance / Connector  
-**Priority**: Low-Medium (preserve existing functionality)
+**Priority**: Low (deferred — ships after Discord and web connectors are stable)  
+**Status**: Not started
 
 ## Background: Jane
 
@@ -91,7 +92,7 @@ Preserve the admin reset command. Gate it behind a config-driven admin user list
 - [ ] Wire `dm <command>` text trigger to `game.handleCommand()`
 - [ ] Add 1200ms message pacing
 - [ ] Integrate with RoomManager (workspace+channel → room mapping)
-- [ ] Integrate with auth (Slack user ID → canonical userId via `user_connectors`)
+- [ ] Integrate with Supabase Auth (Slack OAuth provider, Slack user ID → canonical userId via `user_connectors`)
 - [ ] Implement admin commands with config-driven role checking
 - [ ] Document setup for workspace admins (bot token scopes, Socket Mode setup)
 - [ ] Test in a real Slack workspace

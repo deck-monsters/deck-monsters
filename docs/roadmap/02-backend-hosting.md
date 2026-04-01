@@ -1,15 +1,14 @@
 # Backend Hosting and State Storage Strategy
 
 **Category**: Infrastructure  
-**Priority**: High (required by all connector work)
+**Priority**: High (required by all connector work)  
+**Status**: In progress — hosting decision made (Supabase Cloud + Railway); event bus and engine refactoring completed (PR [#287](https://github.com/deck-monsters/deck-monsters/pull/287)); database, API, and infrastructure work pending
 
 ## Background
 
-The game currently persists state two ways:
-1. A callback (`stateSaveFunc`) provided by the adapter — the adapter stores the blob however it likes
-2. An ad-hoc S3 backup (throttled 5 min, keyed by timestamp) as a safety net
+The game currently persists state via a callback (`stateSaveFunc`) provided by the adapter — the adapter stores the blob however it likes. The legacy Slack connector stored this in Hubot Brain (Redis). A secondary S3 backup existed as a safety net but is no longer needed — Supabase Postgres with managed backups replaces both.
 
-This worked fine for a single private Slack workspace but won't scale to multi-room, multi-connector, or multi-user scenarios.
+This single-callback model worked fine for a single private Slack workspace but won't scale to multi-room, multi-connector, or multi-user scenarios.
 
 ### Why the Current Architecture Doesn't Work for Multiple Clients
 
@@ -25,9 +24,102 @@ The engine was built around a single-callback model: one `publicChannelFn` for b
 
 **Single-process, no horizontal scaling path.** All game state lives in-memory JavaScript objects. Running multiple rooms across multiple processes isn't possible without rethinking how state is owned and shared.
 
+## Hosting Decision
+
+**Supabase Cloud** for auth, database, and storage. **Railway** for application runtime.
+
+### Why This Split
+
+Supabase provides managed Postgres with integrated auth — JWT tokens map directly to database-level Row-Level Security (RLS) policies. This keeps identity and data in one trust boundary, eliminating a class of security bugs that arise when auth and data are managed separately.
+
+Railway provides flexible container hosting for the application layer — API server, game engine, WebSocket connections, workers, and connector bots. It supports Node.js and WebSockets natively, with a straightforward deployment model for small teams.
+
+Supabase handles *who the user is* and *where data lives*. Railway handles *what the game does* and *how events flow*.
+
+### How Railway Connects to Supabase Postgres
+
+Railway connects to Supabase Postgres via a standard connection string — the same way any application connects to an external Postgres database:
+
+```typescript
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.SUPABASE_DB_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+export const db = drizzle(pool);
+```
+
+Supabase provides the connection credentials (host, port, database, user, password) via its dashboard. These are stored as environment variables on Railway. From the application's perspective, it's just a Postgres database.
+
+The Supabase client SDK and REST API are not required for backend data access. The backend treats Supabase as "managed Postgres + auth layer" and uses Drizzle ORM for all queries.
+
+### Why Supabase Postgres Over Railway Postgres
+
+Railway also offers managed Postgres. Using Supabase Postgres has specific advantages for this project:
+
+| Concern | Supabase Postgres | Railway Postgres |
+|---------|-------------------|------------------|
+| Auth integration | JWT ↔ `auth.uid()` built in | Must implement user/auth mapping manually |
+| Row-Level Security | Policies tied to authenticated user | Must enforce access checks in application code |
+| Identity + data boundary | Same system | Split across Supabase (auth) and Railway (data) |
+| Connector identity | `user_connectors` co-located with auth | Glue code to bridge auth and data |
+| Backups | Managed, automatic | Managed, but decoupled from auth |
+
+The game needs multi-connector identity (Discord, web, Slack all map to one user), room-scoped permissions, and per-user data isolation. With Supabase Postgres, RLS policies handle a significant portion of this at the database level:
+
+```sql
+CREATE POLICY "Users see their rooms"
+ON rooms FOR SELECT
+USING (user_id = auth.uid());
+```
+
+With Railway Postgres, every access check must be implemented and maintained in application code — more surface area for security bugs.
+
+### What Goes Where
+
+**Supabase Cloud** (durable state):
+- Auth: OAuth providers, email/password, JWT issuance
+- Postgres database: users, rooms, events, state snapshots
+- Storage: user assets, if needed later
+
+**Railway** (application runtime):
+- Backend API server (Fastify + tRPC)
+- Game engine instances (one per active room)
+- WebSocket connections for real-time ring feed
+- Connector bots (Discord, later Slack)
+- Background jobs (state snapshots, event pruning)
+
+```
+Client (web / Discord / mobile)
+  ↓ login
+Supabase Auth (OAuth, email/password → JWT)
+  ↓ JWT
+Railway API (validates JWT, runs game logic)
+  ↓ SQL over TCP (connection string)
+Supabase Postgres (RLS-enforced data access)
+```
+
+### Non-Goals
+
+- **Self-hosted Supabase**: the Railway Supabase template is explicitly incomplete (no edge functions, no logs, flaky dashboard features) and adds significant DevOps overhead for no benefit at this stage.
+- **Firebase**: Firestore is NoSQL, which conflicts with the Drizzle/relational model. Vendor lock-in is high and cost escalates unpredictably.
+- **Split auth + data providers** (e.g., Supabase Auth + Railway Postgres): creates a split trust boundary with more glue code and more failure modes. Not worth the complexity.
+- **S3 backup**: the legacy S3 safety-net backup is no longer needed. Supabase provides managed daily backups and point-in-time recovery on paid plans. The `helpers/aws.ts` code and `@aws-sdk/client-s3` dependency should be removed.
+
+### Future Scaling Path
+
+If the project outgrows Railway (latency requirements, multi-region), migrate the application layer to Fly.io. The database stays on Supabase — only the compute layer moves. This is a clean upgrade because Supabase is accessed via a standard connection string, not platform-specific integrations.
+
+Self-hosting Supabase becomes relevant only if full data sovereignty or compliance requirements emerge. Not needed now.
+
+If additional backup redundancy beyond Supabase's managed backups is ever wanted, options include periodic `pg_dump` to object storage or Supabase's database branching feature. Evaluate post-launch if needed.
+
 ## Architecture: Event Bus Between Engine and Connectors
 
-The fundamental change is to decouple event production from event delivery. Instead of the engine calling connector callbacks directly, it publishes structured events. Connectors subscribe.
+The engine has been refactored (PR [#287](https://github.com/deck-monsters/deck-monsters/pull/287)) to decouple event production from event delivery. Instead of calling connector callbacks directly, it publishes structured events. Connectors subscribe.
 
 ```
 Game Engine
@@ -41,7 +133,7 @@ Room Event Bus (per room)
 
 ### GameEvent: Structured Event Format
 
-Replace the current string-based `announce` messages with structured events that carry both machine-readable data and a pre-rendered text representation:
+The engine replaces the old string-based `announce` messages with structured events that carry both machine-readable data and a pre-rendered text representation:
 
 ```typescript
 interface GameEvent {
@@ -60,7 +152,7 @@ The `text` field means connectors that just want to post a string (Slack, Discor
 
 ### Event Bus: Start Simple, Scale Later
 
-Phase 1 — in-process `EventEmitter` with subscriber list:
+The current implementation is an in-process `EventEmitter` with subscriber list:
 
 ```typescript
 class RoomEventBus {
@@ -81,17 +173,17 @@ class RoomEventBus {
 
 This is enough to support multiple connectors watching the same room in a single process — which is the expected deployment model for a long time.
 
-Phase 2 — if horizontal scaling is ever needed, swap the in-process bus for Postgres `LISTEN/NOTIFY` or Redis pub/sub. The `GameEvent` format doesn't change; only the transport does. This is a connector-infrastructure concern, not a game-engine concern.
+If horizontal scaling is ever needed, swap the in-process bus for Postgres `LISTEN/NOTIFY` or Redis pub/sub. The `GameEvent` format doesn't change; only the transport does. This is a connector-infrastructure concern, not a game-engine concern.
 
-### Engine Changes Required
+### Engine Changes Completed (PR #287)
 
-1. **Remove callback storage from `Contestant`.** The ring should not hold function references. Replace `{ channel, channelName }` on `Contestant` with `{ userId, connectorId }`. The event bus handles routing.
+1. **Callback storage removed from `Contestant`.** The ring no longer holds function references. `Contestant` uses `{ userId }` instead of `{ channel, channelName }`. The event bus handles routing.
 
-2. **Replace `ChannelManager.queueMessage()` with `eventBus.publish()`.** The `ChannelManager` currently batches strings and calls callbacks. Replace this with publishing `GameEvent` objects. Batching/throttling moves to the connector side (each platform has different rate limits).
+2. **`ChannelManager` replaced with `eventBus.publish()`.** All 21 announcement modules publish `GameEvent` objects. Batching/throttling is now a connector-side concern (each platform has different rate limits).
 
-3. **Replace `publicChannelFn` with event bus subscription.** The `Game` constructor no longer takes a callback. Instead, the connector subscribes to the room's event bus after creating or restoring the game.
+3. **`publicChannelFn` removed from `Game` constructor.** Connectors subscribe to the room's event bus after creating or restoring the game. A `ConnectorAdapter` (`channel/connector-adapter.ts`) bridges the new event bus to legacy callback-based connectors.
 
-4. **Interactive prompts (question/choices).** The current `{ question, choices }` pattern is a synchronous request-response between the engine and a specific player's connector. This still needs a direct channel, but it only happens during player-initiated flows (equipping, shopping) — not during ring combat. Model this as a separate `PromptRequest` that the engine emits and the connector responds to via a `PromptResponse`, rather than a blocking callback.
+4. **Interactive prompts use the event bus.** The old blocking `{ question, choices }` callback pattern is replaced with a prompt mechanism on the event bus. Prompt requests are emitted as events; connectors respond asynchronously.
 
 ### Reconnection and Catch-Up
 
@@ -106,24 +198,43 @@ interface RoomEventLog {
 
 When a web/mobile client reconnects, it sends its last-seen `eventId`. The server replays everything since then. For short disconnects (< 5 minutes), an in-memory ring buffer of the last ~200 events per room is sufficient. For longer disconnects, fall back to the database event log.
 
-## Database: Drizzle ORM + PostgreSQL
+## Database: Drizzle ORM + Supabase PostgreSQL
 
 Use **Drizzle ORM** as the TypeScript-native database layer:
 
 - Schema-as-TypeScript (no code generation step, just types)
 - Lightweight compared to Prisma
-- Works well with the hosting options below
+- Connects to Supabase Postgres via standard connection string
 
 ### Schema
 
+Supabase manages its own `auth.users` table (handles passwords, OAuth tokens, sessions). Game-specific data lives in the `public` schema, referencing `auth.users(id)` for the foreign key:
+
 ```typescript
+// profiles — game-specific user data, linked to Supabase auth
+profiles: {
+  id: uuid primary key references auth.users(id),
+  display_name: text,
+  created_at: timestamp default now()
+}
+
+// user_connectors — cross-connector identity mapping
+user_connectors: {
+  id: uuid primary key,
+  user_id: uuid references profiles(id),
+  connector_type: text,     // 'discord' | 'slack' | 'web'
+  external_id: text,        // Discord user ID, Slack user ID, etc.
+  created_at: timestamp default now()
+}
+// unique index on (connector_type, external_id)
+
 // rooms — one game instance per room
 rooms: {
   id: uuid primary key,
   name: text,
-  owner_id: uuid references users,
+  owner_id: uuid references profiles(id),
   invite_code: text unique,
-  state_blob: text,      // base64-gzipped game state (full snapshot)
+  state_blob: text,         // base64-gzipped game state (full snapshot)
   created_at: timestamp,
   updated_at: timestamp
 }
@@ -132,25 +243,26 @@ rooms: {
 room_events: {
   id: bigserial primary key,
   room_id: uuid references rooms,
-  type: text,              // event type enum
-  scope: text,             // 'public' | 'private'
-  target_user_id: uuid,    // null for public events
+  type: text,               // event type enum
+  scope: text,              // 'public' | 'private'
+  target_user_id: uuid,     // null for public events
   payload: jsonb,
-  text: text,              // pre-rendered message
+  text: text,               // pre-rendered message
   created_at: timestamp default now()
 }
 // index on (room_id, id) for catch-up queries
 // consider TTL / retention policy — prune events older than N days
 
-// users — see auth doc
-users: { id, email, password_hash, created_at }
-
-// user_connectors — cross-connector identity
-user_connectors: { user_id, connector_type, external_id }
-
 // room_members — tracks which users belong to which rooms
-room_members: { room_id, user_id, joined_at, role }
+room_members: {
+  room_id: uuid references rooms,
+  user_id: uuid references profiles(id),
+  joined_at: timestamp default now(),
+  role: text               // 'owner' | 'member'
+}
 ```
+
+A database trigger (or Supabase hook) creates a `profiles` row when a new user signs up via Supabase Auth, so the game-specific table stays in sync with the auth layer.
 
 The `connector_type` and `external_id` columns that were on the `rooms` table in the original design are removed — a room is connector-agnostic. Any connector can connect to any room. The mapping from external identifiers (Discord guild ID, Slack workspace+channel) to room ID is handled by the connector, not the database schema.
 
@@ -209,15 +321,9 @@ const ringFeed = protectedProcedure
 
 Discord and Slack connectors don't use tRPC — they call the engine directly in-process and subscribe to the room event bus.
 
-## Hosting
+## Deployment
 
-**Recommendation: Railway or Fly.io** (managed containers with Postgres included)
-
-- Deploy as a single Docker container (monorepo → one image for the backend)
-- Managed Postgres on the same platform — no separate DB hosting to configure
-- Both support WebSockets natively (required for real-time ring feed)
-- Railway: simpler DX, great for small projects; scales up fine
-- Fly.io: more control, better for multi-region if ever needed
+Deploy the server as a single Docker container on Railway:
 
 ```dockerfile
 FROM node:22-alpine
@@ -227,7 +333,7 @@ RUN pnpm install --frozen-lockfile && pnpm build
 CMD ["node", "packages/server/dist/index.js"]
 ```
 
-**Alternative: Hetzner VPS + Docker Compose** — cheapest option (~€5/mo), more maintenance
+Railway handles container orchestration, health checks, and zero-downtime deploys. The container connects to Supabase Postgres over the network via the connection string in environment variables.
 
 ### Scaling Considerations
 
@@ -241,38 +347,34 @@ If this ever becomes insufficient, rooms are naturally shardable. Each room's `G
 
 ## Environment Variables
 
-Generalize all env var names (remove Hubot prefix):
-
 ```bash
-# Remove:
-HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID
-HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY
-
-# Add:
-DATABASE_URL
-JWT_SECRET
-# AWS vars only needed if keeping S3 as backup option:
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
+# Supabase
+SUPABASE_DB_URL              # Postgres connection string (from Supabase dashboard)
+SUPABASE_JWT_SECRET          # For validating JWTs issued by Supabase Auth
+SUPABASE_URL                 # Supabase project URL (for client-side auth flows)
+SUPABASE_ANON_KEY            # Supabase anonymous key (for client-side auth)
 ```
 
 ## Tasks
 
-### Event Bus and Engine Refactoring
-- [ ] Define `GameEvent` type and `EventType` enum
-- [ ] Implement `RoomEventBus` (in-process pub/sub with subscriber management)
-- [ ] Remove `channel` / `channelName` from `Contestant` — replace with `userId`
-- [ ] Replace `ChannelManager.queueMessage()` calls with `eventBus.publish()` in `Ring`, `Game`, and announcements
-- [ ] Implement `PromptRequest` / `PromptResponse` pattern for interactive flows (equip, shop, etc.)
-- [ ] Add in-memory event ring buffer per room for reconnection catch-up
-- [ ] Update `Game` constructor to no longer require `publicChannelFn` — connectors subscribe via event bus
+### Event Bus and Engine Refactoring — Done (PR [#287](https://github.com/deck-monsters/deck-monsters/pull/287))
+- [x] ~~Define `GameEvent` type and `EventType` enum~~ (`packages/engine/src/events/types.ts`)
+- [x] ~~Implement `RoomEventBus` (in-process pub/sub with subscriber management)~~ (`packages/engine/src/events/room-event-bus.ts`, 200-event ring buffer)
+- [x] ~~Remove `channel` / `channelName` from `Contestant` — replace with `userId`~~
+- [x] ~~Replace `ChannelManager.queueMessage()` calls with `eventBus.publish()` in `Ring`, `Game`, and announcements~~ (all 21 announcement modules updated)
+- [x] ~~Implement `PromptRequest` / `PromptResponse` pattern for interactive flows~~ (prompt mechanism in event bus)
+- [x] ~~Add in-memory event ring buffer per room for reconnection catch-up~~ (200-event buffer with `getEventsSince`)
+- [x] ~~Update `Game` constructor to no longer require `publicChannelFn`~~ (connectors subscribe via event bus; `ConnectorAdapter` bridges legacy callbacks)
+- [x] ~~Throttle snapshot saves~~ (30s debounce in `Game`)
 
 ### Database and State Storage
 - [ ] Add Drizzle ORM + `drizzle-kit` for migrations
-- [ ] Define initial database schema (`rooms`, `room_events`, `users`, `user_connectors`, `room_members`)
-- [ ] Implement `StateStore` interface in the engine (replaces direct S3 calls)
+- [ ] Define initial database schema (`profiles`, `user_connectors`, `rooms`, `room_events`, `room_members`)
+- [ ] Create Supabase project and configure connection
+- [ ] Set up database trigger to create `profiles` row on Supabase Auth signup
+- [ ] Implement `StateStore` interface in the engine (abstracts persistence behind an interface so the server layer provides the Postgres implementation)
 - [ ] Implement Postgres adapter for `StateStore`
-- [ ] Throttle snapshot saves (30-60s debounce instead of every mutation)
+- [ ] Remove legacy S3 backup code (`helpers/aws.ts`, `@aws-sdk/client-s3` dependency)
 - [ ] Write `room_events` on publish for reconnection and history
 
 ### API Layer
@@ -282,11 +384,14 @@ AWS_SECRET_ACCESS_KEY
 
 ### Infrastructure
 - [ ] Add Docker + docker-compose for local development
-- [ ] Write deployment docs (Railway / Fly.io)
-- [ ] Generalize env var names; add deprecation warning if old Hubot names detected
+- [ ] Set up Supabase CLI for local development (`supabase init`, `supabase start` — runs local Postgres + Auth + Dashboard)
+- [ ] Evaluate Supabase CLI migrations alongside `drizzle-kit` (both support migration generation; decide which owns the schema)
+- [ ] Write deployment docs for Railway
+- [ ] Configure Railway environment variables (Supabase connection string, JWT secret)
 
 ## Open Questions
 
 - **Event retention policy**: How long to keep `room_events` rows? A rolling window (e.g., 7 days) keeps the table small. Older history could be archived or simply discarded — battle results are reflected in character/monster stats regardless.
 - **Interactive prompts across connectors**: If a player is connected via both Discord and web, and the engine needs to ask them a question (e.g., "which monster to equip?"), which connector gets the prompt? Simplest answer: whichever connector initiated the action. But worth thinking about.
 - **Event granularity**: How fine-grained should events be? One event per `announce` call (matches current behavior) vs. one event per game-mechanical action (e.g., `card.played`, `damage.dealt`, `monster.died`). Finer granularity enables richer client rendering but is more work upfront. Start coarse, refine later.
+- **Supabase connection pooling**: Supabase offers both direct connections and a connection pooler (Supavisor). For Railway, the pooler is recommended for production to avoid exhausting Postgres connection limits under load. Evaluate during deployment.

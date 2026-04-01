@@ -1,11 +1,12 @@
 # Discord Connector Adapter
 
 **Category**: Feature / Connector  
-**Priority**: High
+**Priority**: High (first connector to ship)  
+**Status**: Not started
 
 ## Overview
 
-Build a Discord bot adapter that makes Deck Monsters playable in any Discord server. This is the highest-priority new connector as Discord is where most gaming communities live.
+Build a Discord bot adapter that makes Deck Monsters playable in any Discord server. This is the first connector to ship — Discord is where most gaming communities live, and Discord OAuth is the primary login method for the web app as well.
 
 ## How It Fits the Architecture
 
@@ -78,12 +79,21 @@ Additionally, the connector can support free-text commands via a `dm <command>` 
 - [ ] Implement prompt handling via Discord buttons/select menus
 - [ ] Implement all slash commands (see table above)
 - [ ] Add embed formatting for monster/card displays using event payload data
-- [ ] Integrate with auth (Discord OAuth — auto-create user records, link via `user_connectors`)
+- [ ] Integrate with auth (auto-create Supabase user records for Discord users, populate `user_connectors`)
 - [ ] Integrate with RoomManager (guild ID → room mapping, room lifecycle)
 - [ ] Write setup/deployment docs for server admins adding the bot to their guild
 
+## Auth Integration
+
+Discord users are already authenticated by Discord — no additional login step is needed for the Discord connector itself. The connector maps Discord user IDs to canonical Supabase user IDs via the `user_connectors` table:
+
+1. Discord command arrives with Discord user ID
+2. Connector looks up `user_connectors(connector_type='discord', external_id=<discord_id>)`
+3. If found → use the existing `user_id`
+4. If not found → auto-create a Supabase user record and `user_connectors` entry
+
+This auto-creation means Discord users can start playing immediately without signing up on the web. If they later sign into the web app with Discord OAuth (via Supabase Auth), the accounts merge because the same Discord identity resolves to the same user.
+
 ## Notes
 
-- Discord users are already authenticated by Discord — no additional auth needed for the Discord connector itself
-- The Discord user ID is mapped to a canonical `userId` via `user_connectors` (see auth doc)
 - The connector package depends on `@deck-monsters/engine` for types but does not run game logic directly — it goes through `RoomManager`
