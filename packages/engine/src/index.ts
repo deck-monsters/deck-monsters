@@ -10,6 +10,7 @@ import type { GameEvent, EventType, EventScope, EventSubscriber } from './events
 
 export { Game, ConnectorAdapter, RoomEventBus };
 export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber };
+export type { StateStore } from './types/state-store.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {
 	let gameObj: Record<string, unknown>;

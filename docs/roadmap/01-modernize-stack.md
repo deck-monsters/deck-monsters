@@ -2,7 +2,7 @@
 
 **Category**: Tech Debt / Modernization  
 **Priority**: High (blocker for most other work)  
-**Status**: Mostly complete — TypeScript migration, dependency replacement, CI, and monorepo structure are done. Vitest migration and legacy file cleanup remain.
+**Status**: Mostly complete — TypeScript migration, dependency replacement, CI, monorepo structure, legacy cleanup, and server package scaffold are all done. Vitest migration is the remaining open question.
 
 ## Background
 
@@ -30,7 +30,7 @@ export type CommandAction = (context: CommandContext) => Promise<unknown> | unkn
 // Also: ChannelMessage, GameOptions, CommandContext, GamePublicApi, CharacterActions, etc.
 ```
 
-15 legacy `.js` files remain at the repository root (build scripts, `battlefield.js`, `wander.js`, `shared/baseClass.js`, `shared/test-setup.js`). These are not part of the engine package and can be cleaned up or removed as a low-priority task.
+Legacy `.js` files at the repository root have been cleaned up: `wander.js`, `config/include-paths.js`, `shared/baseClass.js`, `shared/baseClass.ts`, `shared/test-setup.js`, and `shared/test-setup.ts` have been deleted. The remaining root-level `.js` files (`battlefield.js` and the `build/` doc-generation scripts) are intentionally kept — they work as-is and converting them gains little (see decision in section below).
 
 ## Testing: Mocha → Vitest — Partially Done
 
@@ -55,9 +55,9 @@ Organized as a **pnpm workspace** monorepo with **Turborepo** for task orchestra
 ```
 packages/
   engine/           # Game engine (TypeScript, fully migrated)
+  server/           # Fastify + tRPC + Drizzle API server (done)
   connector-slack/  # (not yet created)
   connector-discord/# (not yet created)
-  server/           # (not yet created — HTTP + WS + tRPC)
 apps/
   web/              # (not yet created)
   mobile/           # (not yet created)
@@ -77,7 +77,7 @@ Shared TypeScript types flow from `engine` → connectors → apps automatically
 | `moment` | Native Date handling (`helpers/time.ts`) | Done |
 | lodash piecemeal | Native ES2022+ (`helpers/collection.ts`, `helpers/random.ts`, `helpers/start-case.ts`, etc.) | Done |
 | `event-emitter-es6` | Node.js `EventEmitter` from `node:events` | Done |
-| `aws-sdk` v2 | `@aws-sdk/client-s3` v3 (to be removed — S3 backup replaced by Supabase Postgres) | Done |
+| `aws-sdk` v2 / `@aws-sdk/client-s3` v3 | Removed — S3 backup replaced by Supabase Postgres | Done |
 | `@salesforce-mc/devtest` | Mocha (Vitest still planned) | Done |
 | Salesforce ESLint config | `@typescript-eslint` + Prettier | Done |
 
@@ -97,16 +97,18 @@ Runs on push to `main` and all PRs. Uses pnpm 10, Node.js 22 (from `.nvmrc`), `u
 
 - `.nvmrc` set to `22`; `engines` field requires Node >= 22, npm >= 10
 - ESLint flat config with `@typescript-eslint` and Prettier integration
-- AWS env vars generalized to `DECK_MONSTERS_AWS_ACCESS_KEY_ID` with backward-compat fallback and deprecation warning for old `HUBOT_` prefix
+- AWS S3 backup code removed: `helpers/aws.ts` deleted, `@aws-sdk/client-s3` dependency removed, `awsSave` call removed from `game.ts`
 - Hardcoded time constants extracted to `constants/timing.ts` (`TIME_TO_HEAL_MS`, `TIME_TO_RESURRECT_MS`)
-- `creatures/base.ts` reduced from ~2000 lines to ~977 lines (still a single file, but significantly smaller)
+- `creatures/base.ts` decomposed from ~2000 lines into focused modules: `creatures/encounter.ts`, `creatures/health.ts`, `creatures/items.ts`, `creatures/stats.ts` — `base.ts` now ~400 lines handling only identity, teams, cards, battles, and coin logic
 - Command system (`commands/`) fully migrated with Zod validation via `commandInputSchema`
+- Legacy root-level files cleaned up: `wander.js`, `config/include-paths.js`, `shared/baseClass.{js,ts}`, `shared/test-setup.{js,ts}` deleted
+- `packages/server/` created: Fastify + tRPC + Drizzle + `RoomManager` + `PostgresStateStore`
+- `StateStore` interface added to `packages/engine/src/types/` and exported from the engine; `Game.persistState()` calls `stateStore.save()` when injected
 
 ## Remaining Tasks
 
 - [ ] Evaluate Mocha → Vitest migration (decision: migrate or stay with Mocha)
 - [ ] If migrating to Vitest: replace Mocha + c8 with Vitest + `@vitest/coverage-v8`, update test scripts
-- [ ] Clean up 15 legacy root-level `.js` files (build scripts, battlefield.js, wander.js, shared/)
-- [ ] Remove `@aws-sdk/client-s3` dependency and `helpers/aws.ts` (S3 backup replaced by Supabase Postgres — see backend hosting doc)
-- [ ] Continue decomposing `creatures/base.ts` (977 lines — still large, but functional)
-- [ ] Create remaining monorepo packages as other roadmap items are implemented (`server`, `connector-discord`, `apps/web`; `connector-slack` and `apps/mobile` deferred)
+- [x] ~~Fix 2 flaky tests in `cards/blast.test.ts`~~ — tests used `randomCharacter()` whose lazy dynamic imports race with test execution; replaced with direct `new Basilisk()` calls, same as other tests in the file
+- [x] ~~Fix `MaxListenersExceededWarning` spam in tests~~ — `globalSemaphore` is a singleton bus that legitimately accumulates listeners from all active Game instances; added `setMaxListeners(0)` in `helpers/semaphore.ts`
+- [ ] Create remaining monorepo packages as other roadmap items are implemented (`connector-discord`, `apps/web`; `connector-slack` and `apps/mobile` deferred)

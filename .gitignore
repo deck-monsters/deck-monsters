@@ -11,6 +11,7 @@ node_modules/
 *.sw*
 .idea/
 .vscode/
+.cursor/plans/
 
 # FILESYSTEM
 .DS_Store
@@ -22,7 +23,17 @@ _site/
 package-lock.json
 yarn.lock
 
+# PNPM
+.pnpm-store/
+
 # OTHER
 .esformatter
 .imdone/
 .tmp/
+
+# BUILD
+dist/
+
+# ENVIRONMENT
+.env.local
+.env.*.local

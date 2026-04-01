@@ -5,3 +5,4 @@ export * from './item.js';
 export * from './monster.js';
 export * from './ring.js';
 export * from './state.js';
+export * from './state-store.js';

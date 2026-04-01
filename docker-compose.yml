@@ -1,0 +1,41 @@
+# Local development stack for Deck Monsters.
+#
+# Usage:
+#   1. Start the Supabase local stack first:
+#        supabase start
+#   2. Then start the server:
+#        docker-compose up
+#
+# The server connects to the local Supabase Postgres instance started by
+# `supabase start`. The connection string is printed by `supabase start`
+# (look for "DB URL") — set it in .env.local before running.
+#
+# Alternatively, run the server without Docker during development:
+#   cd packages/server && pnpm dev
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder       # Use builder stage for dev (includes source maps)
+    command: ["node", "--enable-source-maps", "packages/server/dist/index.js"]
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      # Set these in a .env.local file or override here.
+      # Values are printed by `supabase start`.
+      SUPABASE_DB_URL: "${SUPABASE_DB_URL}"
+      SUPABASE_JWT_SECRET: "${SUPABASE_JWT_SECRET}"
+      SUPABASE_URL: "${SUPABASE_URL}"
+      SUPABASE_ANON_KEY: "${SUPABASE_ANON_KEY}"
+    env_file:
+      - .env.local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

@@ -11,7 +11,6 @@ import { listen, loadHandlers } from './commands/index.js';
 import { sortByXP } from './helpers/sort.js';
 import { XP_PER_VICTORY, XP_PER_DEFEAT } from './helpers/experience.js';
 import { initialize as initializeAnnouncements } from './announcements/index.js';
-import { save as awsSave } from './helpers/aws.js';
 import { BaseClass } from './shared/baseClass.js';
 import cardOdds from './card-odds.json' with { type: 'json' };
 import { dungeonMasterGuide } from './build/dungeon-master-guide.js';
@@ -20,6 +19,7 @@ import { monsterManual } from './build/monster-manual.js';
 import { playerHandbook } from './build/player-handbook.js';
 import { Ring } from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
+import type { StateStore } from './types/state-store.js';
 
 // State save debounce: 30 seconds
 const SAVE_DEBOUNCE_MS = 30_000;
@@ -28,10 +28,11 @@ export class Game extends BaseClass {
 	static eventPrefix = 'game';
 
 	log: (err: unknown) => void;
-	key: string;
 	ring: Ring;
 	exploration: Exploration;
+	roomId: string;
 	stateSaveFunc?: (state: string) => void;
+	stateStore?: StateStore;
 	private _eventBus: RoomEventBus;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
 
@@ -42,10 +43,9 @@ export class Game extends BaseClass {
 		super(options, globalSemaphore);
 
 		this.log = log;
-		this.key = `DeckMonsters.Backup.${Date.now()}`;
 
-		const roomId = (options as any).roomId ?? 'default';
-		this._eventBus = new RoomEventBus(roomId);
+		this.roomId = (options as any).roomId ?? 'default';
+		this._eventBus = new RoomEventBus(this.roomId);
 
 		this.ring = new Ring(
 			this._eventBus,
@@ -71,7 +71,7 @@ export class Game extends BaseClass {
 			clearTimeout(this._saveDebounce);
 			this._saveDebounce = undefined;
 		}
-		if (!this.stateSaveFunc) return;
+		if (!this.stateSaveFunc && !this.stateStore) return;
 		this._saveDebounce = setTimeout(() => {
 			this._saveDebounce = undefined;
 			this.persistState();
@@ -80,13 +80,15 @@ export class Game extends BaseClass {
 
 	private persistState(): void {
 		const buffer = zlib.gzipSync(JSON.stringify(this));
+		const string = buffer.toString('base64');
 
-		if (this.stateSaveFunc) {
-			const string = buffer.toString('base64');
-			setImmediate(this.stateSaveFunc, string);
+		if (this.stateStore) {
+			this.stateStore.save(this.roomId, string).catch((err: unknown) => this.log(err));
 		}
 
-		setImmediate(awsSave, this.key, buffer, this.log);
+		if (this.stateSaveFunc) {
+			setImmediate(this.stateSaveFunc, string);
+		}
 	}
 
 	reset(options: Record<string, unknown>): void {

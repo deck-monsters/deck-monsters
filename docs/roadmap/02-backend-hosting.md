@@ -2,7 +2,7 @@
 
 **Category**: Infrastructure  
 **Priority**: High (required by all connector work)  
-**Status**: In progress — hosting decision made (Supabase Cloud + Railway); event bus and engine refactoring completed (PR [#287](https://github.com/deck-monsters/deck-monsters/pull/287)); database, API, and infrastructure work pending
+**Status**: Mostly complete — hosting decision made; event bus, engine refactoring, S3 removal, Drizzle schema, Supabase migration, `StateStore`, `RoomManager`, tRPC router, Fastify server, Docker, and deployment docs are all done. Remaining: create Supabase project (manual), configure Railway (manual), and persist `room_events` to the database on publish.
 
 ## Background
 
@@ -290,32 +290,45 @@ For the web app and mobile app (both TypeScript clients), use **tRPC**:
 
 ```typescript
 // Command procedure — typed end-to-end
-const sendToRing = protectedProcedure
-  .input(z.object({ monsterName: z.string(), roomId: z.string() }))
+const command = protectedProcedure
+  .input(z.object({ roomId: z.string().uuid(), command: z.string().min(1) }))
   .mutation(async ({ input, ctx }) => {
-    const game = roomManager.getGame(input.roomId);
-    const character = await game.getCharacter({ id: ctx.userId, ... });
-    await character.sendMonsterToTheRing({ monsterName: input.monsterName });
+    const game = await roomManager.getGame(input.roomId);
+    const action = game.handleCommand({ command: input.command });
+    if (!action) return { ok: false, message: 'Command not recognized' };
+    await action({ channel, channelName: input.roomId, isDM: true,
+                   user: { id: ctx.userId, name: ctx.userId } });
+    return { ok: true };
   })
 
-// Subscription — client receives GameEvents in real time
+// Subscription — async generator, tRPC v11, with catch-up via lastEventId
 const ringFeed = protectedProcedure
-  .input(z.object({ roomId: z.string(), lastEventId: z.string().optional() }))
-  .subscription(({ input }) => {
-    return observable<GameEvent>((emit) => {
-      const bus = roomManager.getEventBus(input.roomId);
+  .input(z.object({ roomId: z.string().uuid(), lastEventId: z.string().optional() }))
+  .subscription(async function* ({ input, ctx, signal }) {
+    const eventBus = await roomManager.getEventBus(input.roomId);
 
-      // Catch-up: replay missed events
-      if (input.lastEventId) {
-        for (const event of bus.getEventsSince(input.lastEventId)) {
-          emit.next(event);
+    // Catch-up: replay missed events
+    if (input.lastEventId) {
+      for (const event of eventBus.getEventsSince(input.lastEventId)) {
+        if (event.scope === 'public' || event.targetUserId === ctx.userId) {
+          yield tracked(event.id, event);  // tracked() enables client-side cursor
         }
       }
+    }
 
-      // Live: subscribe to new events
-      const unsub = bus.subscribe(emit.next);
-      return unsub;
+    // Live: subscribe until client disconnects
+    const queue: GameEvent[] = [];
+    let wake: (() => void) | null = null;
+    const unsub = eventBus.subscribe(`trpc:${ctx.userId}`, {
+      userId: ctx.userId,
+      deliver(event) { queue.push(event); wake?.(); wake = null; },
     });
+    try {
+      while (!signal?.aborted) {
+        while (queue.length) yield tracked(queue[0]!.id, queue.shift()!);
+        await new Promise<void>((res) => { wake = res; });
+      }
+    } finally { unsub(); }
   })
 ```
 
@@ -323,15 +336,15 @@ Discord and Slack connectors don't use tRPC — they call the engine directly in
 
 ## Deployment
 
-Deploy the server as a single Docker container on Railway:
+Deploy the server as a single Docker container on Railway. A multi-stage `Dockerfile` is at the repo root:
 
-```dockerfile
-FROM node:22-alpine
-WORKDIR /app
-COPY . .
-RUN pnpm install --frozen-lockfile && pnpm build
-CMD ["node", "packages/server/dist/index.js"]
 ```
+Stage 1 (deps)    — install all workspace dependencies (pnpm + frozen lockfile)
+Stage 2 (builder) — compile engine + server TypeScript via Turborepo
+Stage 3 (runner)  — production image, only production deps + compiled dist/
+```
+
+A `docker-compose.yml` at the repo root provides a local dev stack: the server container connects to the Supabase CLI local stack running on the host (default: `localhost:54322`). See `docs/deployment.md` for the full step-by-step setup guide.
 
 Railway handles container orchestration, health checks, and zero-downtime deploys. The container connects to Supabase Postgres over the network via the connection string in environment variables.
 
@@ -348,11 +361,11 @@ If this ever becomes insufficient, rooms are naturally shardable. Each room's `G
 ## Environment Variables
 
 ```bash
-# Supabase
-SUPABASE_DB_URL              # Postgres connection string (from Supabase dashboard)
-SUPABASE_JWT_SECRET          # For validating JWTs issued by Supabase Auth
-SUPABASE_URL                 # Supabase project URL (for client-side auth flows)
-SUPABASE_ANON_KEY            # Supabase anonymous key (for client-side auth)
+DATABASE_URL          # Postgres connection string (from Supabase dashboard — use Transaction pooler URL for Railway)
+SUPABASE_JWT_SECRET   # For validating JWTs issued by Supabase Auth
+SUPABASE_URL          # Supabase project URL (for client-side auth flows)
+SUPABASE_ANON_KEY     # Supabase anonymous key (for client-side auth)
+PORT                  # HTTP + WebSocket port (Railway injects this; default 3000)
 ```
 
 ## Tasks
@@ -367,27 +380,27 @@ SUPABASE_ANON_KEY            # Supabase anonymous key (for client-side auth)
 - [x] ~~Update `Game` constructor to no longer require `publicChannelFn`~~ (connectors subscribe via event bus; `ConnectorAdapter` bridges legacy callbacks)
 - [x] ~~Throttle snapshot saves~~ (30s debounce in `Game`)
 
-### Database and State Storage
-- [ ] Add Drizzle ORM + `drizzle-kit` for migrations
-- [ ] Define initial database schema (`profiles`, `user_connectors`, `rooms`, `room_events`, `room_members`)
-- [ ] Create Supabase project and configure connection
-- [ ] Set up database trigger to create `profiles` row on Supabase Auth signup
-- [ ] Implement `StateStore` interface in the engine (abstracts persistence behind an interface so the server layer provides the Postgres implementation)
-- [ ] Implement Postgres adapter for `StateStore`
-- [ ] Remove legacy S3 backup code (`helpers/aws.ts`, `@aws-sdk/client-s3` dependency)
-- [ ] Write `room_events` on publish for reconnection and history
+### Database and State Storage — Done
+- [x] ~~Add Drizzle ORM + `drizzle-kit` for migrations~~ (`packages/server/src/db/schema.ts`, `packages/server/drizzle.config.ts`)
+- [x] ~~Define initial database schema~~ (`profiles`, `user_connectors`, `rooms`, `room_events`, `room_members` — in `db/schema.ts` + `supabase/migrations/20260101000000_initial.sql`)
+- [ ] Create Supabase project and configure connection *(requires manual setup — see `docs/deployment.md`)*
+- [x] ~~Set up database trigger to create `profiles` row on Supabase Auth signup~~ (in initial migration SQL)
+- [x] ~~Implement `StateStore` interface in the engine~~ (`packages/engine/src/types/state-store.ts`, exported from `@deck-monsters/engine`)
+- [x] ~~Implement Postgres adapter for `StateStore`~~ (`packages/server/src/state-store.ts` — `PostgresStateStore` writes to `rooms.state_blob`)
+- [x] ~~Remove legacy S3 backup code (`helpers/aws.ts`, `@aws-sdk/client-s3` dependency)~~
+- [ ] Write `room_events` rows to the database on publish (currently only the in-memory 200-event ring buffer is used; DB write needed for long reconnects and persistent battle history)
 
-### API Layer
-- [ ] Set up tRPC router with game command procedures
-- [ ] Add tRPC WebSocket subscriptions for ring feed with catch-up support
-- [ ] Implement `RoomManager` that maps room IDs → Game instances and event buses
+### API Layer — Done
+- [x] ~~Set up tRPC router with game command procedures~~ (`packages/server/src/trpc/router.ts` — `room.*` + `game.command` procedures)
+- [x] ~~Add tRPC WebSocket subscriptions for ring feed with catch-up support~~ (`game.ringFeed` subscription with `lastEventId` catch-up and `tracked()` for client-side cursor)
+- [x] ~~Implement `RoomManager` that maps room IDs → Game instances and event buses~~ (`packages/server/src/room-manager.ts` — create/join/leave/list/load rooms, lazy `Game` restore from snapshot)
 
-### Infrastructure
-- [ ] Add Docker + docker-compose for local development
-- [ ] Set up Supabase CLI for local development (`supabase init`, `supabase start` — runs local Postgres + Auth + Dashboard)
-- [ ] Evaluate Supabase CLI migrations alongside `drizzle-kit` (both support migration generation; decide which owns the schema)
-- [ ] Write deployment docs for Railway
-- [ ] Configure Railway environment variables (Supabase connection string, JWT secret)
+### Infrastructure — Done
+- [x] ~~Add Docker + docker-compose for local development~~ (`Dockerfile` multi-stage build; `docker-compose.yml` targeting Supabase CLI local stack)
+- [x] ~~Set up Supabase CLI for local development~~ (`supabase/config.toml`, `supabase/migrations/` directory created; run `supabase start` to boot local stack)
+- [x] ~~Evaluate Supabase CLI migrations alongside `drizzle-kit`~~ (decided: Supabase CLI owns DDL via `supabase/migrations/`; Drizzle is for type-safe queries only — `drizzle.config.ts` points to the same migrations folder)
+- [x] ~~Write deployment docs for Railway~~ (`docs/deployment.md` — full guide: Supabase project setup, schema push, auth providers, Railway deploy, env vars, health check)
+- [ ] Configure Railway environment variables and deploy *(requires manual Railway + Supabase project setup)*
 
 ## Open Questions
 
