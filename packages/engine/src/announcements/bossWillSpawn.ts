@@ -1,18 +1,16 @@
 import { add, formatRelative } from '../helpers/time.js';
-
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = { sendMessages(): void };
+import type { RoomEventBus } from '../events/index.js';
 
 export function announceBossWillSpawn(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	ring: any,
 	{ delay }: { delay: number },
 ): void {
-	publicChannel({
-		announce: `A boss will enter the ring ${formatRelative(add(Date.now(), delay))}`,
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `A boss will enter the ring ${formatRelative(add(Date.now(), delay))}`,
+		payload: { delay },
 	});
-
-	channelManager.sendMessages();
 }

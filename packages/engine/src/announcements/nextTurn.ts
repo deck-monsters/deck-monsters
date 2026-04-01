@@ -1,5 +1,4 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 interface NextTurnOpts {
 	contestants: any[];
@@ -8,20 +7,15 @@ interface NextTurnOpts {
 }
 
 export function announceNextTurn(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	ring: any,
 	{ contestants, round, turn }: NextTurnOpts,
 ): void {
-	publicChannel({
-		announce: `
-⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅
-
-round ${round}, turn ${turn + 1}
-
-${contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')}
-
-`,
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅\n\nround ${round}, turn ${turn + 1}\n\n${contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')}\n\n`,
+		payload: { round, turn, contestants },
 	});
 }

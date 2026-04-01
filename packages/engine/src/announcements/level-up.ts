@@ -1,11 +1,14 @@
-type ChannelFn = (opts: { announce: string }) => Promise<void>;
+import type { RoomEventBus } from '../events/index.js';
 
 export function announceLevelUp(
-	publicChannel: ChannelFn,
+	eb: RoomEventBus,
 	monster: any,
 	level: number
-): Promise<void> {
-	return publicChannel({
-		announce: `🎉 ${monster.icon}  **${monster.givenName}** has reached level ${level}! (${monster.displayLevel})`,
+): void {
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `🎉 ${monster.icon}  **${monster.givenName}** has reached level ${level}! (${monster.displayLevel})`,
+		payload: { monster, level },
 	});
 }

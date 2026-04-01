@@ -1,37 +1,29 @@
 import { itemCard } from '../helpers/card.js';
-
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-
-interface ChannelManager {
-	queueMessage(opts: { announce: string; channel: any; channelName: string }): void;
-}
+import type { RoomEventBus } from '../events/index.js';
 
 interface ItemUsedOpts {
-	channel?: any;
+	channel?: (opts: { announce: string }) => void | Promise<void>;
 	channelName?: string;
 	character: any;
 	monster?: any;
 }
 
 export function announceItem(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	item: any,
-	{ channel, channelName, character, monster }: ItemUsedOpts,
+	{ channel, character, monster }: ItemUsedOpts,
 ): void {
 	const itemUsed = itemCard(item, true);
 	const targetStr = monster ? monster.givenName : `${character.pronouns.him}self`;
-	const announce = `${character.identity} uses the following item on ${targetStr}:
-${itemUsed}`;
+	const announce = `${character.identity} uses the following item on ${targetStr}:\n${itemUsed}`;
 
 	if (channel) {
-		channelManager.queueMessage({
-			announce,
-			channel,
-			channelName: channelName ?? '',
-		});
+		// Items still use the direct callback pattern; call it directly
+		void channel({ announce });
 	}
 
-	if (!channel || (monster && monster.inEncounter)) publicChannel({ announce });
+	if (!channel || (monster && monster.inEncounter)) {
+		eb.publish({ type: 'announce', scope: 'public', text: announce, payload: { item, character, monster } });
+	}
 }

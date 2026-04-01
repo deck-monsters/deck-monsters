@@ -36,7 +36,7 @@ describe('./items/potions/healing.ts', () => {
 	const channelName = 'CHANNEL';
 
 	beforeEach(() => {
-		clock = sinon.useFakeTimers();
+		clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
 		channelStub.resolves();
 	});
 

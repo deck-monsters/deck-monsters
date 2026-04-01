@@ -139,3 +139,5 @@ export class ChannelManager extends BaseClass {
 }
 
 export default ChannelManager;
+
+export { ConnectorAdapter } from './connector-adapter.js';

@@ -14,29 +14,28 @@ import { initialize as initializeAnnouncements } from './announcements/index.js'
 import { save as awsSave } from './helpers/aws.js';
 import { BaseClass } from './shared/baseClass.js';
 import cardOdds from './card-odds.json' with { type: 'json' };
-import { ChannelManager } from './channel/index.js';
 import { dungeonMasterGuide } from './build/dungeon-master-guide.js';
 import { Exploration } from './exploration/index.js';
 import { monsterManual } from './build/monster-manual.js';
 import { playerHandbook } from './build/player-handbook.js';
 import { Ring } from './ring/index.js';
-import type { ChannelCallback } from './channel/index.js';
+import { RoomEventBus } from './events/index.js';
 
-const PUBLIC_CHANNEL = 'PUBLIC_CHANNEL';
+// State save debounce: 30 seconds
+const SAVE_DEBOUNCE_MS = 30_000;
 
 export class Game extends BaseClass {
 	static eventPrefix = 'game';
 
 	log: (err: unknown) => void;
 	key: string;
-	channelManager: ChannelManager;
-	publicChannel: (opts: { announce: string }) => Promise<unknown>;
 	ring: Ring;
 	exploration: Exploration;
 	stateSaveFunc?: (state: string) => void;
+	private _eventBus: RoomEventBus;
+	private _saveDebounce?: ReturnType<typeof setTimeout>;
 
 	constructor(
-		publicChannelFn: ChannelCallback,
 		options: Record<string, unknown> = {},
 		log: (err: unknown) => void = () => {}
 	) {
@@ -44,26 +43,50 @@ export class Game extends BaseClass {
 
 		this.log = log;
 		this.key = `DeckMonsters.Backup.${Date.now()}`;
-		this.channelManager = new ChannelManager({}, this.log);
-		this.channelManager.addChannel({
-			channel: publicChannelFn,
-			channelName: PUBLIC_CHANNEL,
-		});
-		this.publicChannel = ({ announce }) =>
-			this.channelManager.queueMessage({ announce, channelName: PUBLIC_CHANNEL });
+
+		const roomId = (options as any).roomId ?? 'default';
+		this._eventBus = new RoomEventBus(roomId);
+
 		this.ring = new Ring(
-			this.channelManager,
+			this._eventBus,
 			{ spawnBosses: (this.options as any).spawnBosses },
 			this.log
 		);
-		this.exploration = new Exploration(this.channelManager, {}, this.log);
+		this.exploration = new Exploration(this._eventBus as any, {}, this.log);
 
 		this.initializeEvents();
 		loadHandlers();
 
-		this.on('stateChange', () => this.saveState());
+		this.on('stateChange', () => this.scheduleSave());
 
 		this.emit('initialized');
+	}
+
+	get eventBus(): RoomEventBus {
+		return this._eventBus;
+	}
+
+	private scheduleSave(): void {
+		if (this._saveDebounce !== undefined) {
+			clearTimeout(this._saveDebounce);
+			this._saveDebounce = undefined;
+		}
+		if (!this.stateSaveFunc) return;
+		this._saveDebounce = setTimeout(() => {
+			this._saveDebounce = undefined;
+			this.persistState();
+		}, SAVE_DEBOUNCE_MS);
+	}
+
+	private persistState(): void {
+		const buffer = zlib.gzipSync(JSON.stringify(this));
+
+		if (this.stateSaveFunc) {
+			const string = buffer.toString('base64');
+			setImmediate(this.stateSaveFunc, string);
+		}
+
+		setImmediate(awsSave, this.key, buffer, this.log);
 	}
 
 	reset(options: Record<string, unknown>): void {
@@ -84,16 +107,7 @@ export class Game extends BaseClass {
 	}
 
 	get saveState(): () => void {
-		return () => {
-			const buffer = zlib.gzipSync(JSON.stringify(this));
-
-			if (this.stateSaveFunc) {
-				const string = buffer.toString('base64');
-				setImmediate(this.stateSaveFunc, string);
-			}
-
-			setImmediate(awsSave, this.key, buffer, this.log);
-		};
+		return () => this.persistState();
 	}
 
 	set saveState(stateSaveFunc: ((state: string) => void) | undefined) {
@@ -419,17 +433,12 @@ export class Game extends BaseClass {
 		return this.exploration;
 	}
 
-	lookAtRing(
-		channel: any,
-		_ringName = 'main',
-		showCharacters?: boolean,
-		summary?: boolean
-	): Promise<void> {
-		return this.getRing().look(channel, showCharacters, summary);
+	lookAtRing(userId: string, _ringName = 'main', showCharacters?: boolean, summary?: boolean): Promise<void> {
+		return this.getRing().look(userId, showCharacters, summary);
 	}
 
-	lookAtRingCards(channel: any, _ringName = 'main'): Promise<void> {
-		return this.getRing().lookAtCards(channel);
+	lookAtRingCards(userId: string, _ringName = 'main'): Promise<void> {
+		return this.getRing().lookAtCards(userId);
 	}
 
 	lookAt(channel: any, thing: string): Promise<unknown> {

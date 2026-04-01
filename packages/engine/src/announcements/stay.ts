@@ -1,5 +1,4 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 interface StayOpts {
 	fleeRoll?: any;
@@ -8,8 +7,7 @@ interface StayOpts {
 }
 
 export function announceStay(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	monster: any,
 	{ fleeRoll, player, activeContestants }: StayOpts,
@@ -19,12 +17,18 @@ export function announceStay(
 			.filter(contestant => contestant.monster !== player)
 			.map(contestant => contestant.monster.identityWithHp);
 
-		publicChannel({
-			announce: `${player.identityWithHp} tries to flee from ${assailants.join(' and ')}, but fails!`,
+		eb.publish({
+			type: 'announce',
+			scope: 'public',
+			text: `${player.identityWithHp} tries to flee from ${assailants.join(' and ')}, but fails!`,
+			payload: {},
 		});
 	} else {
-		publicChannel({
-			announce: `${player.identityWithHp} bravely stays in the ring.`,
+		eb.publish({
+			type: 'announce',
+			scope: 'public',
+			text: `${player.identityWithHp} bravely stays in the ring.`,
+			payload: {},
 		});
 	}
 }

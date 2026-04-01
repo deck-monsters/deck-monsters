@@ -1,7 +1,5 @@
 import flavor from '../helpers/flavor.js';
-
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 interface FloorIcon {
 	floor: number;
@@ -24,8 +22,7 @@ interface HitOpts {
 }
 
 export function announceHit(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	className: string,
 	monster: any,
 	{ assailant, card, damage, prevHp }: HitOpts,
@@ -57,10 +54,10 @@ export function announceHit(
 		flavorText = `${assailant.icon} ${icon} ${monster.icon}  ${assailant.givenName} ${flavorResult.text} ${target} for ${damage} damage.`;
 	}
 
-	publicChannel({
-		announce: `${flavorText}
-
-${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*
-`,
+	eb.publish({
+		type: 'announce',
+		scope: 'public',
+		text: `${flavorText}\n\n${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*\n`,
+		payload: {},
 	});
 }

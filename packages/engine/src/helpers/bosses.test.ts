@@ -12,8 +12,7 @@ describe('./helpers/bosses.ts', () => {
 			expect(contestant).to.have.all.keys(
 				'monster',
 				'character',
-				'channel',
-				'channelName',
+				'userId',
 				'isBoss'
 			);
 		});

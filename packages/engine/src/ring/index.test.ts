@@ -4,48 +4,36 @@ import sinon from 'sinon';
 import { randomContestant } from '../helpers/bosses.js';
 import Basilisk from '../monsters/basilisk.js';
 import Beastmaster from '../characters/beastmaster.js';
-import ChannelManager from '../channel/index.js';
 import Game from '../game.js';
+import { RoomEventBus } from '../events/index.js';
 
 describe('ring/index.ts', () => {
-	let privateChannelStub: sinon.SinonStub;
-	let publicChannelStub: sinon.SinonStub;
-	let clock: sinon.SinonFakeTimers;
-
-	beforeEach(() => {
-		publicChannelStub = sinon.stub().resolves(undefined);
-		privateChannelStub = sinon.stub().resolves(undefined);
-		clock = sinon.useFakeTimers();
-	});
-
 	afterEach(() => {
-		clock.restore();
 		sinon.restore();
 	});
 
-	it('has a channel manager', () => {
-		const game = new Game(publicChannelStub);
+
+	it('has an event bus', () => {
+		const game = new Game();
 		const ring = game.getRing();
 
-		expect(ring.channelManager).to.be.instanceOf(ChannelManager);
+		expect(ring.eventBus).to.be.instanceOf(RoomEventBus);
 	});
 
 	describe('monsters', () => {
 		it('can be added', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			const character = new Beastmaster();
 			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
 
 			character.addMonster(monster);
 
 			ring.addMonster({
 				monster,
 				character,
-				channel: privateChannelStub,
-				channelName,
+				userId: 'user-1',
 			});
 
 			expect(ring.contestants.length).to.equal(1);
@@ -53,47 +41,44 @@ describe('ring/index.ts', () => {
 		});
 
 		it('can be removed', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			const character = new Beastmaster();
 			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
 
 			character.addMonster(monster);
 
 			ring.addMonster({
 				monster,
 				character,
-				channel: privateChannelStub,
-				channelName,
+				userId: 'user-1',
 			});
 
 			expect(ring.contestants.length).to.equal(1);
 
 			return ring
-				.removeMonster({ monster, character, channel: privateChannelStub, channelName })
+				.removeMonster({ monster, character, userId: 'user-1' })
 				.then(() => expect(ring.monsterIsInRing(monster)).to.equal(false));
 		});
 
 		it('cannot be removed while an encounter is in progress', async () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			const character = new Beastmaster();
 			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
 
 			character.addMonster(monster);
 
-			ring.addMonster({ monster, character, channel: privateChannelStub, channelName });
+			ring.addMonster({ monster, character, userId: 'user-1' });
 			expect(ring.contestants.length).to.equal(1);
 
 			ring.startEncounter();
 
 			let threw = false;
 			try {
-				await ring.removeMonster({ monster, character, channel: privateChannelStub, channelName });
+				await ring.removeMonster({ monster, character, userId: 'user-1' });
 			} catch (_e) {
 				threw = true;
 			}
@@ -103,7 +88,7 @@ describe('ring/index.ts', () => {
 
 	describe('bosses', () => {
 		it('will spawn a boss', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			const contestant = ring.spawnBoss();
@@ -113,7 +98,7 @@ describe('ring/index.ts', () => {
 		});
 
 		it('will remove a boss', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			const contestant = ring.spawnBoss()!;
@@ -124,16 +109,15 @@ describe('ring/index.ts', () => {
 		});
 
 		it('will not spawn a boss if an encounter is in progress', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			const character = new Beastmaster();
 			const monster = new Basilisk();
-			const channelName = 'TEST_CHANNEL';
 
 			character.addMonster(monster);
 
-			ring.addMonster({ monster, character, channel: privateChannelStub, channelName });
+			ring.addMonster({ monster, character, userId: 'user-1' });
 			ring.startEncounter();
 
 			expect(ring.contestants.length).to.equal(1);
@@ -147,7 +131,7 @@ describe('ring/index.ts', () => {
 
 	describe('fightConcludes', () => {
 		it('can calculate xp for two level 1 monsters', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			let contestant1 = randomContestant({ battles: { total: 5, wins: 5, losses: 0 } });
@@ -175,7 +159,7 @@ describe('ring/index.ts', () => {
 		});
 
 		it('can calculate xp for a higher level monster beating a lower level monster', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			let contestant1 = randomContestant({ battles: { total: 5, wins: 5, losses: 0 } });
@@ -203,7 +187,7 @@ describe('ring/index.ts', () => {
 		});
 
 		it('can calculate xp for a lower level monster beating a higher level monster', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			let contestant1 = randomContestant({ battles: { total: 5, wins: 5, losses: 0 } });
@@ -231,7 +215,7 @@ describe('ring/index.ts', () => {
 		});
 
 		it('can calculate xp when a monster flees', () => {
-			const game = new Game(publicChannelStub);
+			const game = new Game();
 			const ring = game.getRing();
 
 			let contestant1 = randomContestant({ battles: { total: 5, wins: 5, losses: 0 } });

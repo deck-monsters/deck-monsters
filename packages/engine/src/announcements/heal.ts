@@ -1,17 +1,18 @@
-type PublicChannel = (opts: { announce: string }) => void | Promise<void>;
-type ChannelManager = Record<string, never>;
+import type { RoomEventBus } from '../events/index.js';
 
 export function announceHeal(
-	publicChannel: PublicChannel,
-	channelManager: ChannelManager,
+	eb: RoomEventBus,
 	ring: any,
 	className: string,
 	monster: any,
 	{ amount }: { amount: number },
 ): void {
 	if (ring.monsterIsInRing(monster)) {
-		publicChannel({
-			announce: `${monster.icon} 💊 ${monster.givenName} healed ${amount} hp and has *${monster.hp} hp*.`,
+		eb.publish({
+			type: 'announce',
+			scope: 'public',
+			text: `${monster.icon} 💊 ${monster.givenName} healed ${amount} hp and has *${monster.hp} hp*.`,
+			payload: { monster, amount },
 		});
 	}
 }
