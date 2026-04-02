@@ -5,6 +5,7 @@ import {
 	timestamp,
 	bigserial,
 	jsonb,
+	boolean,
 	primaryKey,
 	unique,
 	index,
@@ -57,6 +58,19 @@ export const roomEvents = pgTable(
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
 	(t) => [index('room_events_room_id_id_idx').on(t.roomId, t.id)]
+);
+
+export const guildRooms = pgTable(
+	'guild_rooms',
+	{
+		guildId: text('guild_id').notNull(),
+		roomId: uuid('room_id')
+			.notNull()
+			.references(() => rooms.id, { onDelete: 'cascade' }),
+		channelId: text('channel_id'),
+		isDefault: boolean('is_default').notNull().default(true),
+	},
+	(t) => [primaryKey({ columns: [t.guildId, t.roomId] })]
 );
 
 export const roomMembers = pgTable(

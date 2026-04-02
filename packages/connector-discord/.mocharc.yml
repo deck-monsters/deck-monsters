@@ -1,0 +1,4 @@
+import: tsx
+spec: "src/__tests__/**/*.test.ts"
+timeout: 10000
+exit: true
