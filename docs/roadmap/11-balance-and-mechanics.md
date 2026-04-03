@@ -110,6 +110,20 @@ These bugs meant all creatures were effectively one extra level-worth stronger t
 
 ---
 
+## AI-Assisted Balance Validation
+
+The battle simulation harness (below) pairs well with AI-assisted validation. An agent skill documenting the combat system, stat calculations, and known balance pitfalls would allow contributors to:
+
+- Describe a proposed card or mechanic change in natural language
+- Have the agent review the proposal against existing cards and flag potential issues (overpowered scaling, missing crit fail handlers, interactions that break the game loop)
+- Run simulated battles to verify the change doesn't produce degenerate outcomes
+
+This addresses historical problems where new cards inadvertently disrupted game mechanics because the author didn't anticipate interactions with the full card pool. The simulation harness provides empirical evidence; the agent skill provides institutional knowledge about what "balanced" means in this game.
+
+**Action**: Build the battle simulation harness first, then create the Cursor skill. See also the AI-assisted card authoring section in the new content backlog.
+
+---
+
 ## Tasks
 
 - [ ] Audit all cards for missing crit fail handlers; add appropriate outcomes (upstream #183)

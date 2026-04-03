@@ -2,7 +2,7 @@
 
 **Category**: Feature / Connector  
 **Priority**: High (first connector to ship)  
-**Status**: Not started
+**Status**: Substantially complete — core infrastructure, event bus bridging, prompt handling, guild-room management, embed wiring, and slash command surface are implemented. Remaining: admin role support, `/preset`, slash command tests, and deployment hardening.
 
 ## Overview
 
@@ -53,10 +53,14 @@ The connector uses the `GameEvent.text` field for text channels (preserves the o
 | `/explore [monster]` | `character.explore()` |
 | `/shop` | `character.shop()` |
 | `/buy [item]` | `character.buyItem()` |
+| `/sell [item]` | `character.sellItem()` |
 | `/use [item] [target]` | `character.useItem()` |
 | `/status` | `character.lookAtCard()` / monster status |
 | `/monsters` | List player's monsters |
+| `/dismiss [monster]` | `character.dismissMonster()` |
+| `/revive [monster]` | `character.reviveMonster()` |
 | `/ring-status` | Show current ring contestants |
+| `/preset [monster] [name]` | Switch a monster's active deck to a saved preset loadout |
 | `/create-room [name]` | Create a new game room |
 | `/join-room [code]` | Join a room |
 
@@ -66,22 +70,26 @@ Additionally, the connector can support free-text commands via a `dm <command>` 
 
 - Use Discord **embeds** for monster stat cards and card displays — rendered from `GameEvent.payload` data
 - Use Discord **buttons** (message components) for confirmations and interactive prompts (replaces the old callback-based question/choices pattern)
-- Use **autocomplete** on `/equip` and `/ring` to show the player's available monsters
+- Use **autocomplete** on `/equip`, `/ring`, and `/preset` to show the player's available monsters and saved presets
 - The ring feed (public channel) uses `GameEvent.text` as plain text messages — preserves the original feel
 - Consider posting fight narration in **threads** (see balance and mechanics doc, "fights in threads") to avoid flooding the main channel
 
 ## Tasks
 
-- [ ] Create `packages/connector-discord` in the monorepo
-- [ ] Initialize discord.js bot with slash command registration
-- [ ] Implement event bus subscription for public events → guild channel
-- [ ] Implement event bus subscription for private events → DM / ephemeral
-- [ ] Implement prompt handling via Discord buttons/select menus
-- [ ] Implement all slash commands (see table above)
-- [ ] Add embed formatting for monster/card displays using event payload data
-- [ ] Integrate with auth (auto-create Supabase user records for Discord users, populate `user_connectors`)
-- [ ] Integrate with RoomManager (guild ID → room mapping, room lifecycle)
-- [ ] Write setup/deployment docs for server admins adding the bot to their guild
+- [x] Create `packages/connector-discord` in the monorepo
+- [x] Initialize discord.js bot with slash command registration (`src/bot.ts` — REST API registration on startup)
+- [x] Implement event bus subscription for public events → guild channel (`src/guild-room-subscription.ts`)
+- [x] Implement event bus subscription for private events → DM / ephemeral (`src/guild-room-subscription.ts`)
+- [x] Implement prompt handling via Discord buttons/select menus (`src/prompt-handler.ts` — 2-min timeout, button cap at 5)
+- [x] Implement all slash commands — 12 commands: spawn, ring, equip, explore, shop, buy, use, status, monsters, ring-status, create-room, join-room, help (`src/slash-commands/`)
+- [x] Integrate with auth (auto-create Supabase user records for Discord users, populate `user_connectors`) — via `ensureConnectorUser` in `src/bot.ts`
+- [x] Integrate with RoomManager (guild ID → room mapping, room lifecycle) — `src/guild-room-manager.ts`
+- [x] Wire up rich embed builders — `buildMonsterCardEmbed` and `buildCardDisplayEmbed` are now called from `guild-room-subscription.ts`
+- [x] Add missing slash commands: `/sell`, `/dismiss`, `/revive`
+- [x] Handle `/explore` gracefully (exploration system is archived — returns "coming soon")
+- [ ] Add admin support — commands currently pass `isAdmin: false`; guild owner/admin role detection needed
+- [ ] Write tests for slash command handlers (`src/slash-commands/` have no test coverage)
+- [x] Write setup/deployment docs for server admins adding the bot to their guild _(added to `docs/deployment.md` section 3)_
 
 ## Auth Integration
 

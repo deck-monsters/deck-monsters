@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { TRPCError, tracked } from '@trpc/server';
-import type { AnyRouter } from '@trpc/server';
 
 import type { GameEvent } from '@deck-monsters/engine';
 import { t } from './trpc.js';
@@ -8,7 +7,9 @@ import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
 
-export function createRouter(roomManager: RoomManager): AnyRouter {
+export type AppRouter = ReturnType<typeof createRouter>;
+
+export function createRouter(roomManager: RoomManager) {
 	const roomRouter = t.router({
 		create: protectedProcedure
 			.input(z.object({ name: z.string().min(1).max(100) }))
@@ -72,9 +73,12 @@ export function createRouter(roomManager: RoomManager): AnyRouter {
 					return { ok: false, message: 'Command not recognized' };
 				}
 
-				// Build a minimal channel callback that routes prompts through the event bus.
+				// Build a channel callback that:
+				// - Routes announce messages to the event bus as private events so the
+				//   web client receives them via the ringFeed subscription.
+				// - Routes interactive prompts through the event bus prompt mechanism.
 				const channel = async ({
-					announce: _announce,
+					announce,
 					question,
 					choices,
 				}: {
@@ -89,6 +93,17 @@ export function createRouter(roomManager: RoomManager): AnyRouter {
 							Object.keys(choices)
 						);
 					}
+
+					if (announce) {
+						eventBus.publish({
+							type: 'announce',
+							scope: 'private',
+							targetUserId: ctx.userId,
+							text: announce,
+							payload: {},
+						});
+					}
+
 					return undefined;
 				};
 

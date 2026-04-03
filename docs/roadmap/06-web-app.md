@@ -2,7 +2,7 @@
 
 **Category**: Feature / Connector  
 **Priority**: High (ships alongside the Discord connector)  
-**Status**: Not started
+**Status**: Implemented (initial version) — `apps/web` scaffolded with React + Vite + `@trpc/react-query`, Supabase auth, room lobby, ring feed subscription, and core gameplay views (monsters, deck builder, shop, spawn).
 
 ## Overview
 
@@ -55,11 +55,18 @@ When a WebSocket disconnects and reconnects, the client sends its `lastEventId`.
 |------|-------------|
 | Ring Feed | Live scrolling battle log — the main screen. Renders `GameEvent.text` in a monospace container. |
 | My Monsters | Cards showing each monster's stats, deck, items, level |
-| Deck Builder | Card selection UI for equipping a monster |
+| Deck Builder | Card selection UI with drag-and-drop reordering and preset deck management (see below) |
 | Shop | Browse and buy items with current coin balance |
 | Spawn | Form to create a new monster (choose type, name) |
-| Explore | Send a monster on an expedition, see result |
+| Explore | Deferred (exploration is currently archived in revival scope) |
 | Room Lobby | Create/join rooms, see who's playing, invite friends |
+
+### Deck Builder
+
+The deck builder is the most interactive view in the web app. Two key capabilities:
+
+- **Drag-and-drop card reordering**: players drag cards to set play order within a 7-card deck. This is the most natural interaction model for the web — significantly easier than typing card positions in chat.
+- **Deck presets**: players can save multiple named loadouts (e.g., "Defensive", "Aggressive", "Anti-Basilisk") and swap between them with one click before sending a monster to the ring. See the new content backlog for the full design. The web UI is the primary surface for creating/editing presets, but chat connectors will support swapping via commands too.
 
 ### Ring Feed Rendering
 
@@ -76,16 +83,17 @@ All optional — the text works fine on its own.
 
 ## Tasks
 
-- [ ] Create `packages/server` — Fastify + tRPC router + WebSocket server
-- [ ] Implement tRPC procedures for all game commands (via RoomManager)
-- [ ] Implement tRPC WebSocket subscription for ring feed with reconnection support
-- [ ] Create `apps/web` — React app with `@trpc/react-query`
-- [ ] Build ring feed view (WebSocket subscription → monospace text rendering)
-- [ ] Build my monsters view
-- [ ] Build deck builder view
-- [ ] Build shop view
-- [ ] Build spawn + explore views
-- [ ] Build room management views (create, join, invite, member list)
-- [ ] Integrate Supabase Auth (login/register pages with Discord OAuth, Google OAuth, and email/password)
-- [ ] Responsive design (mobile browser should work reasonably well)
+- [x] Create `packages/server` — Fastify + tRPC router + WebSocket server
+- [x] Implement tRPC procedures for all game commands (via RoomManager)
+- [x] Implement tRPC WebSocket subscription for ring feed with reconnection support
+- [x] Create `apps/web` — React app with `@trpc/react-query`
+- [x] Build ring feed view (WebSocket subscription → monospace text rendering)
+- [x] Build my monsters view
+- [x] Build deck builder view (drag-and-drop reordering + preset management foundation)
+- [x] Build shop view
+- [x] Build spawn view
+- [ ] Build explore view (feature intentionally deferred while exploration remains archived)
+- [x] Build room management views (create, join, list)
+- [x] Integrate Supabase Auth (login/register pages with Discord OAuth and email/password)
+- [x] Responsive design (mobile browser baseline support)
 - [ ] Deploy to chosen hosting platform (see backend hosting doc)

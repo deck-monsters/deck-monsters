@@ -2,7 +2,7 @@
 
 **Category**: Infrastructure  
 **Priority**: High (required by all connector work)  
-**Status**: Mostly complete — hosting decision made; event bus, engine refactoring, S3 removal, Drizzle schema, Supabase migration, `StateStore`, `RoomManager`, tRPC router, Fastify server, Docker, and deployment docs are all done. Remaining: create Supabase project (manual), configure Railway (manual), and persist `room_events` to the database on publish.
+**Status**: Mostly complete — hosting decision made; event bus, engine refactoring, S3 removal, Drizzle schema, Supabase migration, `StateStore`, `RoomManager`, tRPC router, Fastify server, Docker, deployment docs, and `room_events` persistence are done. Remaining: create Supabase project (manual) and configure Railway (manual).
 
 ## Background
 
@@ -45,7 +45,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
 const pool = new Pool({
-  connectionString: process.env.SUPABASE_DB_URL,
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
@@ -388,7 +388,7 @@ PORT                  # HTTP + WebSocket port (Railway injects this; default 300
 - [x] ~~Implement `StateStore` interface in the engine~~ (`packages/engine/src/types/state-store.ts`, exported from `@deck-monsters/engine`)
 - [x] ~~Implement Postgres adapter for `StateStore`~~ (`packages/server/src/state-store.ts` — `PostgresStateStore` writes to `rooms.state_blob`)
 - [x] ~~Remove legacy S3 backup code (`helpers/aws.ts`, `@aws-sdk/client-s3` dependency)~~
-- [ ] Write `room_events` rows to the database on publish (currently only the in-memory 200-event ring buffer is used; DB write needed for long reconnects and persistent battle history)
+- [x] Write `room_events` rows to the database on publish (implemented via server-side event persister subscriber)
 
 ### API Layer — Done
 - [x] ~~Set up tRPC router with game command procedures~~ (`packages/server/src/trpc/router.ts` — `room.*` + `game.command` procedures)

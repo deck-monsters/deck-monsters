@@ -7,6 +7,7 @@
   "main": "./dist/index.js",
   "exports": {
     ".": "./src/index.js",
+    "./types": "./src/types.js",
     "./room-manager": "./src/room-manager.js",
     "./db": "./src/db/index.js",
     "./db/schema": "./src/db/schema.js",

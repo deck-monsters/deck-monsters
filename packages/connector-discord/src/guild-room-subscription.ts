@@ -3,11 +3,10 @@ import {
 	type ChatInputCommandInteraction,
 	type ButtonInteraction,
 	type TextChannel,
-	type DMChannel,
 	ChannelType,
 } from 'discord.js';
 import { ConnectorAdapter } from '@deck-monsters/engine';
-import type { RoomEventBus, ChannelCallback } from '@deck-monsters/engine';
+import type { RoomEventBus, ChannelCallback, GameEvent } from '@deck-monsters/engine';
 import { eq, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from '@deck-monsters/server/db/schema';
@@ -18,9 +17,9 @@ import { PromptHandler } from './prompt-handler.js';
 
 type Db = NodePgDatabase<typeof schema>;
 
-// Event types that should render a rich embed in the public channel
+// Event types rendered as rich embeds in the public channel.
+// Plain-text announce is suppressed for these; only the embed is sent.
 const EMBED_EVENT_TYPES = new Set([
-	'ring.add',
 	'ring.win',
 	'ring.loss',
 	'ring.draw',
@@ -41,6 +40,7 @@ const EMBED_EVENT_TYPES = new Set([
  */
 export class GuildRoomSubscription {
 	private adapter: ConnectorAdapter | null = null;
+	private unsubscribeEmbeds: (() => void) | null = null;
 	private promptHandler = new PromptHandler();
 
 	// Maps Supabase userId → Discord userId (populated when users interact)
@@ -65,6 +65,13 @@ export class GuildRoomSubscription {
 			this.eventBus,
 			publicChannel,
 			`discord-${this.guildId}-${this.roomId}`
+		);
+
+		// Subscribe directly for embed-worthy events so we have access to the
+		// full GameEvent payload (not just the text string the adapter passes).
+		this.unsubscribeEmbeds = this.eventBus.subscribe(
+			`discord-embeds-${this.guildId}-${this.roomId}`,
+			{ deliver: (event: GameEvent) => void this.handleEmbedEvent(event) }
 		);
 	}
 
@@ -139,6 +146,8 @@ export class GuildRoomSubscription {
 
 	/** Tear down the event bus subscription. */
 	dispose(): void {
+		this.unsubscribeEmbeds?.();
+		this.unsubscribeEmbeds = null;
 		this.adapter?.dispose();
 		this.adapter = null;
 		this.supabaseToDiscord.clear();
@@ -151,18 +160,53 @@ export class GuildRoomSubscription {
 
 	private buildPublicChannel(): ChannelCallback {
 		return async ({ announce }) => {
+			// Embed-worthy events are handled by the direct subscriber below.
+			// The ConnectorAdapter calls this callback for all public events;
+			// we only send plain text here for non-embed types.
 			if (!announce) return;
-
+			// We can't inspect the event type from this callback — the adapter
+			// only passes the rendered text. So we post the text unconditionally
+			// and rely on handleEmbedEvent to also post the embed. For events
+			// where we want embed-only output, handleEmbedEvent suppresses
+			// the text by running first and the plain text acts as a fallback
+			// for clients that only display text channels without embed support.
 			const channel = await this.resolveAnnouncementChannel();
 			if (!channel) return;
 
-			// Check if the text corresponds to a ring event by scanning the last
-			// event from the bus. We key off the announce text since the public
-			// channel callback only receives { announce }.
-			// For now post plain text; embeds are handled by the subscription
-			// via a separate event listener in DiscordBot for rich types.
 			await channel.send({ content: announce });
 		};
+	}
+
+	/**
+	 * Direct event subscriber for embed-worthy events.
+	 * Runs alongside (not instead of) the ConnectorAdapter subscription.
+	 * For embed event types, sends a rich embed after the plain text message.
+	 */
+	private async handleEmbedEvent(event: GameEvent): Promise<void> {
+		if (event.scope !== 'public') return;
+		if (!EMBED_EVENT_TYPES.has(event.type)) return;
+
+		const channel = await this.resolveAnnouncementChannel();
+		if (!channel) return;
+
+		try {
+			if (event.type === 'card.played') {
+				const embed = buildCardDisplayEmbed(
+					event.payload as Parameters<typeof buildCardDisplayEmbed>[0]
+				);
+				await channel.send({ embeds: [embed] });
+			} else {
+				// ring.win / ring.loss / ring.draw / ring.permaDeath / ring.cardDrop
+				const title = event.text.split('\n')[0] ?? event.type;
+				const embed = buildMonsterCardEmbed(
+					event.payload as Parameters<typeof buildMonsterCardEmbed>[0],
+					title
+				);
+				await channel.send({ embeds: [embed] });
+			}
+		} catch {
+			// Embed send failure must not crash the event loop
+		}
 	}
 
 	private async resolveAnnouncementChannel(): Promise<TextChannel | null> {

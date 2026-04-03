@@ -15,7 +15,10 @@ import { equip } from './equip.js';
 import { explore } from './explore.js';
 import { shop } from './shop.js';
 import { buy } from './buy.js';
+import { sell } from './sell.js';
 import { use } from './use.js';
+import { dismiss } from './dismiss.js';
+import { revive } from './revive.js';
 import { status } from './status.js';
 import { monsters } from './monsters.js';
 import { ringStatus } from './ring-status.js';
@@ -44,7 +47,10 @@ export function loadCommands(): Map<string, SlashCommand> {
 		explore,
 		shop,
 		buy,
+		sell,
 		use,
+		dismiss,
+		revive,
 		status,
 		monsters,
 		ringStatus,

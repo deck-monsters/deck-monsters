@@ -27,10 +27,12 @@ services:
       PORT: "3000"
       # Set these in a .env.local file or override here.
       # Values are printed by `supabase start`.
-      SUPABASE_DB_URL: "${SUPABASE_DB_URL}"
+      DATABASE_URL: "${DATABASE_URL}"
       SUPABASE_JWT_SECRET: "${SUPABASE_JWT_SECRET}"
       SUPABASE_URL: "${SUPABASE_URL}"
       SUPABASE_ANON_KEY: "${SUPABASE_ANON_KEY}"
+      SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY}"
+      CONNECTOR_SERVICE_TOKEN: "${CONNECTOR_SERVICE_TOKEN}"
     env_file:
       - .env.local
     restart: unless-stopped

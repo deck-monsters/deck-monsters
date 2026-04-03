@@ -55,7 +55,13 @@ In **Project Settings → Database**, copy the connection string and set it as:
 
 | Variable | Value |
 |---|---|
-| `SUPABASE_DB_URL` | `postgresql://postgres:<password>@db.<project>.supabase.co:5432/postgres` |
+| `DATABASE_URL` | `postgresql://postgres:<password>@db.<project>.supabase.co:5432/postgres` |
+
+Also copy the **Service Role Key** (in **Settings → API**, under "Project API keys → service_role"):
+
+| Variable | Value |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | `service_role` key (keep secret — has full DB access, required for connector user creation) |
 
 ### Apply the database schema
 
@@ -92,10 +98,12 @@ In Railway, go to the service → **Variables** and add:
 |---|---|
 | `PORT` | `3000` (Railway may set this automatically) |
 | `NODE_ENV` | `production` |
-| `SUPABASE_DB_URL` | Your Supabase database connection string |
+| `DATABASE_URL` | Your Supabase database connection string (use the **Transaction pooler** URL from Supabase → Settings → Database → Connection string) |
 | `SUPABASE_JWT_SECRET` | Your Supabase JWT secret |
 | `SUPABASE_URL` | Your Supabase project URL |
 | `SUPABASE_ANON_KEY` | Your Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key (required for connector user auto-creation) |
+| `CONNECTOR_SERVICE_TOKEN` | A secret token you generate (e.g., `openssl rand -hex 32`) used by connectors to authenticate server-to-server calls |
 
 ### Verify the deployment
 
@@ -108,7 +116,55 @@ curl https://<your-railway-url>/health
 
 ---
 
-## 3. Local Development
+## 3. Discord Bot Setup
+
+The Discord connector runs as a separate process (or a second Railway service) alongside the API server.
+
+### Create the Discord application
+
+1. Go to [discord.com/developers/applications](https://discord.com/developers/applications)
+2. Click **New Application** and give it a name (e.g., `Deck Monsters`)
+3. Go to **Bot** → click **Add Bot**
+4. Under **Token**, click **Reset Token** and copy it — this is your `DISCORD_TOKEN`
+5. Enable the following **Privileged Gateway Intents**: `Message Content Intent`
+6. Go to **OAuth2 → General** and copy the **Client ID** — this is your `DISCORD_CLIENT_ID`
+
+### Set the redirect URI (for OAuth login via Supabase)
+
+In the Discord application's **OAuth2 → Redirects**, add the Supabase callback URL:
+`https://<project>.supabase.co/auth/v1/callback`
+
+This is the same URL you added when enabling Discord OAuth in Supabase (step 1).
+
+### Invite the bot to your server
+
+Build an invite URL with the required permissions:
+
+```
+https://discord.com/api/oauth2/authorize?client_id=<DISCORD_CLIENT_ID>&permissions=137439266816&scope=bot+applications.commands
+```
+
+Required permissions: Send Messages, Read Message History, Use Slash Commands, Send Messages in Threads, Embed Links, Add Reactions.
+
+### Deploy the Discord connector on Railway
+
+Add a second service in your Railway project:
+
+1. In the same Railway project, add a new service from the same GitHub repo
+2. Override the start command to: `node packages/connector-discord/dist/index.js`
+3. Add the following environment variables:
+
+| Variable | Value |
+|---|---|
+| `DISCORD_TOKEN` | Your bot token from the Discord developer portal |
+| `DISCORD_CLIENT_ID` | Your application's client ID |
+| `DATABASE_URL` | Same Supabase database connection string as the server |
+| `SERVER_URL` | The Railway URL of the API server (e.g., `https://<server>.railway.app`) |
+| `CONNECTOR_SERVICE_TOKEN` | Same token set on the API server |
+
+---
+
+## 4. Local Development (Server)
 
 ### Start the Supabase local stack
 
@@ -128,10 +184,17 @@ anon key: eyJ...
 Create a `.env.local` file at the repo root (git-ignored):
 
 ```env
-SUPABASE_DB_URL=postgresql://postgres:postgres@localhost:54322/postgres
+DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
 SUPABASE_JWT_SECRET=super-secret-jwt-token-with-at-least-32-characters-long
 SUPABASE_URL=http://localhost:54321
 SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+CONNECTOR_SERVICE_TOKEN=dev-service-token
+
+# Discord connector (only needed when running the bot locally)
+DISCORD_TOKEN=your-bot-token
+DISCORD_CLIENT_ID=your-client-id
+SERVER_URL=http://localhost:3000
 ```
 
 ### Apply migrations to local Postgres
@@ -164,20 +227,25 @@ The local Supabase Studio is at `http://localhost:54323` — use it to inspect t
 
 | Variable | Required | Description |
 |---|---|---|
-| `SUPABASE_DB_URL` | Yes | PostgreSQL connection string for Drizzle ORM |
+| `DATABASE_URL` | Yes | PostgreSQL connection string for Drizzle ORM (use Transaction pooler URL on Railway) |
 | `SUPABASE_JWT_SECRET` | Yes | Used to verify Supabase-issued JWTs on the server |
-| `SUPABASE_URL` | Yes | Supabase project URL (used by client-side SDK) |
-| `SUPABASE_ANON_KEY` | Yes | Supabase anonymous key (used by client-side SDK) |
-| `PORT` | No | HTTP port, defaults to `3000` |
-| `HOST` | No | Bind address, defaults to `0.0.0.0` |
+| `SUPABASE_URL` | Yes | Supabase project URL (used by connector user creation) |
+| `SUPABASE_ANON_KEY` | Yes | Supabase anonymous key (used by client-side auth flows) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key — used by `ensureConnectorUser` to create auth users for Discord/Slack identities |
+| `CONNECTOR_SERVICE_TOKEN` | Yes | Shared secret for authenticating connector-to-server service calls (set in both the server and each connector's env) |
+| `PORT` | No | HTTP port, defaults to `3000` (server only) |
+| `HOST` | No | Bind address, defaults to `0.0.0.0` (server only) |
 | `NODE_ENV` | No | `production` or `development` |
+| `DISCORD_TOKEN` | Connector | Discord bot token (Discord connector only) |
+| `DISCORD_CLIENT_ID` | Connector | Discord application client ID (Discord connector only) |
+| `SERVER_URL` | Connector | Base URL of the API server, used by the Discord connector for service calls |
 
 ---
 
 ## Troubleshooting
 
-**`SUPABASE_DB_URL environment variable is required`**
-The server refuses to start without a database URL. Check your Railway environment variables.
+**`DATABASE_URL environment variable is required`**
+The server refuses to start without a database URL. Check your Railway environment variables — the variable is named `DATABASE_URL`, not `SUPABASE_DB_URL`.
 
 **JWT verification failures**
 Ensure `SUPABASE_JWT_SECRET` on Railway matches the value in **Supabase → Settings → API → JWT Settings**.

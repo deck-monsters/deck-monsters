@@ -6,11 +6,13 @@ import { Game, RoomEventBus, restoreGame } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { rooms, roomMembers } from './db/schema.js';
 import { PostgresStateStore } from './state-store.js';
+import { attachEventPersister } from './event-persister.js';
 
 interface ActiveRoom {
 	game: Game;
 	eventBus: RoomEventBus;
 	lastActivityAt: number;
+	unsubscribePersister: () => void;
 }
 
 interface EngineDeps {
@@ -56,7 +58,8 @@ export class RoomManager {
 		game.stateStore = stateStore;
 
 		const eventBus = game.eventBus;
-		this.active.set(roomId, { game, eventBus, lastActivityAt: Date.now() });
+		const unsubscribePersister = attachEventPersister(eventBus, this.db, this.log);
+		this.active.set(roomId, { game, eventBus, lastActivityAt: Date.now(), unsubscribePersister });
 
 		return { roomId, inviteCode };
 	}
@@ -197,6 +200,8 @@ export class RoomManager {
 	async unloadRoom(roomId: string): Promise<void> {
 		const entry = this.active.get(roomId);
 		if (entry) {
+			// Stop persisting events for this room.
+			entry.unsubscribePersister();
 			// saveState is a getter returning the bound persist function — call it to flush
 			// any state not yet written by the 30s debounce.
 			entry.game.saveState();
@@ -241,7 +246,9 @@ export class RoomManager {
 
 		game.stateStore = stateStore;
 
-		const entry: ActiveRoom = { game, eventBus: game.eventBus, lastActivityAt: Date.now() };
+		const eventBus = game.eventBus;
+		const unsubscribePersister = attachEventPersister(eventBus, this.db, this.log);
+		const entry: ActiveRoom = { game, eventBus, lastActivityAt: Date.now(), unsubscribePersister };
 		this.active.set(roomId, entry);
 		return entry;
 	}
