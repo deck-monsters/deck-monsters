@@ -21,6 +21,7 @@ import { monsters } from './monsters.js';
 import { ringStatus } from './ring-status.js';
 import { createRoom } from './create-room.js';
 import { joinRoom } from './join-room.js';
+import { help } from './help.js';
 
 export interface CommandContext {
 	bot: DiscordBot;
@@ -49,6 +50,7 @@ export function loadCommands(): Map<string, SlashCommand> {
 		ringStatus,
 		createRoom,
 		joinRoom,
+		help,
 	];
 
 	const map = new Map<string, SlashCommand>();

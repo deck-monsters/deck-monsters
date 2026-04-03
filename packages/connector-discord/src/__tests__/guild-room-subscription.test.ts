@@ -168,4 +168,75 @@ describe('GuildRoomSubscription', () => {
 
 		expect(eventBus.unsubscribe.calledOnce).to.be.true;
 	});
+
+	it('registerUserFromMessage registers user mapping without an interaction', async () => {
+		const client = makeDiscordClient();
+		const eventBus = makeEventBus();
+		const db = makeDbStub();
+
+		const sub = new GuildRoomSubscription(
+			client as any,
+			eventBus as any,
+			'guild-1',
+			'room-1',
+			null,
+			db as any
+		);
+		sub.start();
+
+		sub.registerUserFromMessage('discord-42', 'supabase-abc');
+
+		// The Supabase→Discord mapping should be cached
+		const discordId = await sub.lookupDiscordId('supabase-abc');
+		expect(discordId).to.equal('discord-42');
+		// DB should not have been queried
+		expect(db.select.called).to.be.false;
+	});
+
+	it('buildPrivateChannel falls back to DM prompt when no interaction is available', async () => {
+		const dmSend = sinon.stub().callsFake(async () => {
+			// Return a message that immediately resolves the button collector with 'option-b'
+			const collector = {
+				on: sinon.stub().callsFake((event: string, fn: (...args: unknown[]) => void) => {
+					if (event === 'collect') {
+						setImmediate(() => {
+							fn({
+								customId: 'option-b',
+								user: { id: 'discord-42' },
+								update: sinon.stub().resolves(),
+							});
+						});
+					} else if (event === 'end') {
+						setImmediate(() => fn({ size: 1 }));
+					}
+				}),
+			};
+			return { createMessageComponentCollector: sinon.stub().returns(collector) };
+		});
+
+		const dmChannel = { send: dmSend };
+		const user = { createDM: sinon.stub().resolves(dmChannel) };
+		const client = makeDiscordClient();
+		client.users.fetch = sinon.stub().resolves(user) as any;
+
+		const eventBus = makeEventBus();
+		const db = makeDbStub();
+
+		const sub = new GuildRoomSubscription(
+			client as any,
+			eventBus as any,
+			'guild-1',
+			'room-1',
+			null,
+			db as any
+		);
+		sub.start();
+
+		// Build a private channel with no interaction — triggers the DM fallback
+		const channel = sub.buildPrivateChannel('discord-42');
+		const answer = await channel({ announce: undefined as any, question: 'Pick one:', choices: ['option-a', 'option-b'] });
+
+		expect(answer).to.equal('option-b');
+		expect(dmSend.calledOnce).to.be.true;
+	});
 });

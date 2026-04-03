@@ -110,18 +110,12 @@ export class GuildRoomSubscription {
 				const activeInteraction =
 					interaction ?? this.activeInteractions.get(discordUserId);
 
-				if (!activeInteraction) {
-					throw new Error(
-						`No active interaction for Discord user ${discordUserId} — cannot deliver prompt`
-					);
+				if (activeInteraction) {
+					return this.promptHandler.sendPrompt(activeInteraction, question, choiceKeys);
 				}
 
-				const answer = await this.promptHandler.sendPrompt(
-					activeInteraction,
-					question,
-					choiceKeys
-				);
-				return answer;
+				// Fallback for message-based commands: send buttons via DM
+				return this.promptHandler.sendDmPrompt(this.client, discordUserId, question, choiceKeys);
 			}
 
 			// Announcement → DM
@@ -131,6 +125,16 @@ export class GuildRoomSubscription {
 
 			return undefined;
 		};
+	}
+
+	/**
+	 * Register a Discord user ↔ Supabase user mapping from a free-text message
+	 * (no interaction object available). Used by handleMessage in the bot.
+	 */
+	registerUserFromMessage(discordUserId: string, supabaseUserId: string): void {
+		this.supabaseToDiscord.set(supabaseUserId, discordUserId);
+		const privateChannel = this.buildPrivateChannel(discordUserId);
+		this.adapter?.registerUser(supabaseUserId, privateChannel);
 	}
 
 	/** Tear down the event bus subscription. */

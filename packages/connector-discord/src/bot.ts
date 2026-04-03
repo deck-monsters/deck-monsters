@@ -1,6 +1,7 @@
 import {
 	Client,
 	GatewayIntentBits,
+	Partials,
 	REST,
 	Routes,
 	type Interaction,
@@ -34,7 +35,9 @@ export class DiscordBot {
 				GatewayIntentBits.Guilds,
 				GatewayIntentBits.GuildMessages,
 				GatewayIntentBits.DirectMessages,
+				GatewayIntentBits.MessageContent,
 			],
+			partials: [Partials.Channel],
 		});
 
 		this.commands = loadCommands();
@@ -176,6 +179,7 @@ export class DiscordBot {
 			}
 
 			const sub = await this.getOrCreateSubscription(guildId, roomId);
+			sub.registerUserFromMessage(message.author.id, supabaseUserId);
 
 			const channel = sub.buildPrivateChannel(message.author.id);
 

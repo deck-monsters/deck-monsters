@@ -109,4 +109,58 @@ describe('PromptHandler', () => {
 		// ActionRowBuilder — access via components property
 		expect(row.components).to.have.length(5);
 	});
+
+	it('sendDmPrompt sends buttons as a DM and resolves with the chosen option', async () => {
+		const msg = makeMessage('fire');
+		const dmChannel = {
+			send: sinon.stub().resolves(msg),
+		};
+		const user = {
+			createDM: sinon.stub().resolves(dmChannel),
+		};
+		const mockClient = {
+			users: {
+				fetch: sinon.stub().resolves(user),
+			},
+		};
+
+		const handler = new PromptHandler();
+		const answer = await handler.sendDmPrompt(
+			mockClient as any,
+			'user-42',
+			'Which card?',
+			['fire', 'ice', 'thunder']
+		);
+
+		expect(answer).to.equal('fire');
+		expect(mockClient.users.fetch.calledWith('user-42')).to.be.true;
+		expect(user.createDM.calledOnce).to.be.true;
+		expect(dmChannel.send.calledOnce).to.be.true;
+
+		const sendArgs = dmChannel.send.firstCall.args[0];
+		expect(sendArgs.content).to.equal('Which card?');
+		expect(sendArgs.components).to.have.length(1);
+	});
+
+	it('sendDmPrompt rejects when the DM prompt times out', async () => {
+		const msg = makeMessage(undefined, true);
+		const dmChannel = {
+			send: sinon.stub().resolves(msg),
+		};
+		const user = {
+			createDM: sinon.stub().resolves(dmChannel),
+		};
+		const mockClient = {
+			users: { fetch: sinon.stub().resolves(user) },
+		};
+
+		const handler = new PromptHandler();
+
+		try {
+			await handler.sendDmPrompt(mockClient as any, 'user-42', 'Choose:', ['yes', 'no']);
+			expect.fail('Should have rejected on timeout');
+		} catch (err) {
+			expect((err as Error).message).to.match(/timed out/i);
+		}
+	});
 });

@@ -5,6 +5,7 @@ import {
 	ComponentType,
 	type ButtonInteraction,
 	type ChatInputCommandInteraction,
+	type Client,
 	type Message,
 	type MessageComponentInteraction,
 } from 'discord.js';
@@ -34,6 +35,24 @@ export class PromptHandler {
 		});
 
 		return collectButtonResponse(reply, interaction.user.id, choices, timeoutMs);
+	}
+
+	/**
+	 * Sends a button prompt via DM when no interaction is available (e.g. when
+	 * the command was issued as a free-text message rather than a slash command).
+	 */
+	async sendDmPrompt(
+		client: Client,
+		discordUserId: string,
+		question: string,
+		choices: string[],
+		timeoutMs = PROMPT_TIMEOUT_MS
+	): Promise<string> {
+		const user = await client.users.fetch(discordUserId);
+		const dm = await user.createDM();
+		const row = buildButtonRow(choices);
+		const reply = await dm.send({ content: question, components: [row] });
+		return collectButtonResponse(reply, discordUserId, choices, timeoutMs);
 	}
 }
 
