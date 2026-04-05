@@ -44,12 +44,13 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 	// 2. req.url  (raw Node.js IncomingMessage path+query) — present for WebSocket
 	//    upgrade requests, where tRPC passes req.raw instead of the Fastify wrapper
 	const queryToken = (() => {
-		const q = (req as Record<string, unknown>)['query'];
+		const raw = req as unknown as Record<string, unknown>;
+		const q = raw['query'];
 		if (typeof q === 'object' && q !== null) {
 			const t = (q as Record<string, unknown>)['token'];
 			if (typeof t === 'string') return t;
 		}
-		const url = (req as Record<string, unknown>)['url'];
+		const url = raw['url'];
 		if (typeof url === 'string' && url.includes('?')) {
 			const qs = url.slice(url.indexOf('?') + 1);
 			const t = new URLSearchParams(qs).get('token');

@@ -36,7 +36,7 @@ function makeRawReq(opts: {
 }
 
 // Build a fake CreateFastifyContextOptions (only req is used by createContext)
-function makeCtxOpts(req: ReturnType<typeof makeReq>) {
+function makeCtxOpts(req: unknown) {
 	return { req } as unknown as Parameters<typeof createContext>[0];
 }
 
