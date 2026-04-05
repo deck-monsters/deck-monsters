@@ -24,7 +24,7 @@ function makeCtxOpts(req: ReturnType<typeof makeReq>) {
 }
 
 describe('trpc/context.ts', () => {
-	let privateKey: CryptoKey;
+	let privateKey: Awaited<ReturnType<typeof generateKeyPair>>['privateKey'];
 	let localJWKS: ReturnType<typeof createLocalJWKSet>;
 
 	const originalSupabaseUrl = process.env['SUPABASE_URL'];

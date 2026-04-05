@@ -1,8 +1,7 @@
-import { randomUUID } from 'node:crypto';
 import { eq, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from '@deck-monsters/server/db/schema';
-import { guildRooms, rooms, roomMembers } from '@deck-monsters/server/db/schema';
+import { guildRooms, rooms } from '@deck-monsters/server/db/schema';
 import type { RoomManager } from '@deck-monsters/server/room-manager';
 
 type Db = NodePgDatabase<typeof schema>;

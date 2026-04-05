@@ -22,7 +22,13 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile=false --ignore-scripts
-      - run: cd packages/engine && npx tsc --noEmit
+      # Build engine first — server and connector-discord depend on engine/dist for type resolution
+      - run: pnpm --filter @deck-monsters/engine run build
+      - run: pnpm --filter @deck-monsters/engine exec tsc --noEmit
+      - run: pnpm --filter @deck-monsters/server exec tsc --noEmit
+      - run: pnpm --filter @deck-monsters/connector-discord exec tsc --noEmit
+      # Web uses vite's bundler resolution; tsc --noEmit validates it separately
+      - run: pnpm --filter @deck-monsters/web exec tsc --noEmit
 
   lint:
     name: Lint
@@ -37,7 +43,12 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile=false --ignore-scripts
-      - run: pnpm run lint
+      # Lint the new TypeScript packages. The engine package has ~2150 pre-existing
+      # any-type warnings from the legacy JS→TS migration and is linted separately
+      # as part of that cleanup effort.
+      - run: pnpm --filter @deck-monsters/server run lint
+      - run: pnpm --filter @deck-monsters/connector-discord run lint
+      - run: pnpm --filter @deck-monsters/web run lint
 
   test:
     name: Tests
@@ -52,4 +63,6 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile=false --ignore-scripts
+      # Build engine first — server and connector-discord tests import from engine/dist
+      - run: pnpm --filter @deck-monsters/engine run build
       - run: pnpm run test

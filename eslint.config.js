@@ -41,7 +41,19 @@ module.exports = [
 			'@typescript-eslint': tsPlugin
 		},
 		rules: {
-			...tsPlugin.configs.recommended.rules
+			...tsPlugin.configs.recommended.rules,
+			'@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+		}
+	},
+	{
+		// Chai's fluent assertion API (expect(x).to.equal(y)) produces expressions
+		// that ESLint's no-unused-expressions rule flags as having no effect.
+		// Test stubs routinely use `any` for mock typing — disable both rules for test files.
+		files: ['**/*.test.ts'],
+		rules: {
+			'no-unused-expressions': 'off',
+			'@typescript-eslint/no-unused-expressions': 'off',
+			'@typescript-eslint/no-explicit-any': 'off',
 		}
 	},
 	{
