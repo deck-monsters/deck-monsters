@@ -149,6 +149,7 @@ Then go to **Variables** and add:
 | `SUPABASE_PUBLISHABLE_KEY` | Your Supabase Publishable key (`sb_publishable_...`) |
 | `SUPABASE_SECRET_KEY` | Your Supabase Secret key (`sb_secret_...`) — bypasses RLS, keep secret |
 | `CONNECTOR_SERVICE_TOKEN` | A secret token shared with all connectors — generate with `openssl rand -hex 32` |
+| `CORS_ORIGINS` | Comma-separated allowed origins, e.g. `https://<web>.up.railway.app,http://localhost:5173` |
 
 Once the build completes, verify the server is running:
 

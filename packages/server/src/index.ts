@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import ws from '@fastify/websocket';
 import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import { db } from './db/index.js';
@@ -9,9 +10,20 @@ import { createContext } from './trpc/context.js';
 const PORT = parseInt(process.env['PORT'] ?? '3000', 10);
 const HOST = process.env['HOST'] ?? '0.0.0.0';
 
+// Comma-separated list of allowed origins, e.g. "https://app.example.com,http://localhost:5173"
+const CORS_ORIGINS = (process.env['CORS_ORIGINS'] ?? 'http://localhost:5173')
+	.split(',')
+	.map((o) => o.trim())
+	.filter(Boolean);
+
 async function start(): Promise<void> {
 	const fastify = Fastify({
 		logger: true,
+	});
+
+	await fastify.register(cors, {
+		origin: CORS_ORIGINS,
+		credentials: true,
 	});
 
 	await fastify.register(ws);

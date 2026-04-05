@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@deck-monsters/engine": "workspace:*",
+    "@fastify/cors": "^11.2.0",
     "@fastify/websocket": "^11.0.2",
     "@supabase/supabase-js": "^2.49.4",
     "@trpc/server": "^11.4.3",
