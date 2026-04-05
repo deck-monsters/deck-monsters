@@ -4,9 +4,12 @@
   "description": "Deck Monsters game engine — TypeScript/ESM",
   "type": "module",
   "private": true,
-  "main": "./src/index.js",
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./src/index.js"
+    ".": {
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
     "build": "tsc --build",

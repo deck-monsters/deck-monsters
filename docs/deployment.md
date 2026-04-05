@@ -3,7 +3,7 @@
 Deck Monsters runs on two hosted services:
 
 - **Supabase Cloud** — PostgreSQL database, Auth (JWT issuance), and Storage
-- **Railway** — Node.js application runtime (API server, game engine, WebSocket ring feed)
+- **Railway** — three services from the same repo: the React web app (static SPA), the Fastify API server, and the Discord bot connector
 
 This guide covers setting up both from scratch and connecting them.
 
@@ -80,40 +80,85 @@ Verify the tables exist in **Table Editor**.
 
 ## 2. Railway Deployment
 
-### Create the Railway project
+The project deploys as three separate Railway services from the same GitHub repository:
 
-1. Go to [railway.app](https://railway.app) and create a new project
+| Service | Source | What it is |
+|---|---|---|
+| **Web** | `apps/web/` | React SPA served as a static site |
+| **Server** | repo root `Dockerfile` | Fastify API server + WebSocket ring feed |
+| **Discord bot** | `packages/connector-discord/` | Discord connector (covered in section 3) |
+
+### 2a. Create the Railway project
+
+1. Go to [railway.app](https://railway.app) and click **New Project**
 2. Choose **Deploy from GitHub repo** and connect your `deck-monsters` repository
-3. Railway will detect the `Dockerfile` at the root and build from it automatically
+3. Railway will create the project and add an initial service — this will become the **Web** service
 
-### Configure environment variables
+### 2b. Service: Web (static SPA)
 
-In Railway, go to the service → **Variables** and add:
+Railway auto-detects the Vite app. If it didn't configure itself correctly, go to the service → **Settings → Build** and set:
+
+| Setting | Value |
+|---|---|
+| **Root directory** | `apps/web` |
+| **Build command** | `pnpm --filter @deck-monsters/web build` |
+| **Start command** | `pnpm --filter @deck-monsters/web start` |
+
+Go to **Settings → Networking** and generate a public domain so you have a URL for the web app.
+
+Then go to **Variables** and add:
 
 | Variable | Value |
 |---|---|
-| `PORT` | `3000` (Railway may set this automatically) |
+| `VITE_SUPABASE_URL` | Your Supabase project URL (e.g., `https://xxxx.supabase.co`) |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase Publishable key (`sb_publishable_...`) |
+| `VITE_SERVER_URL` | _(leave blank for now — fill in after deploying the Server service)_ |
+
+### 2c. Service: Server (API)
+
+In the same Railway project, click **New Service → GitHub Repo** and select the same `deck-monsters` repository again.
+
+Go to the new service → **Settings → Build** and set:
+
+| Setting | Value |
+|---|---|
+| **Root directory** | _(leave blank — the Dockerfile is at the repo root)_ |
+| **Builder** | **Dockerfile** |
+| **Dockerfile path** | `Dockerfile` |
+
+Go to **Settings → Networking** and generate a public domain. Copy that URL — you will need it for the Web service and the Discord connector.
+
+Then go to **Variables** and add:
+
+| Variable | Value |
+|---|---|
 | `NODE_ENV` | `production` |
-| `DATABASE_URL` | Transaction pooler URL from Supabase → Settings → Database → Connection string |
-| `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | Your Supabase Publishable key |
-| `SUPABASE_SECRET_KEY` | Your Supabase Secret key (required for connector user auto-creation) |
-| `CONNECTOR_SERVICE_TOKEN` | A secret token you generate (e.g., `openssl rand -hex 32`) used by connectors to authenticate server-to-server calls |
+| `DATABASE_URL` | Transaction pooler URL from Supabase → **Settings → Database → Connection string** |
+| `SUPABASE_URL` | Your Supabase project URL (e.g., `https://xxxx.supabase.co`) |
+| `SUPABASE_PUBLISHABLE_KEY` | Your Supabase Publishable key (`sb_publishable_...`) |
+| `SUPABASE_SECRET_KEY` | Your Supabase Secret key (`sb_secret_...`) — bypasses RLS, keep secret |
+| `CONNECTOR_SERVICE_TOKEN` | A secret token shared with all connectors — generate with `openssl rand -hex 32` |
 
-### Verify the deployment
-
-Once the build completes, Railway provides a public URL. Check the health endpoint:
+Once the build completes, verify the server is running:
 
 ```bash
-curl https://<your-railway-url>/health
+curl https://<your-server-railway-url>/health
 # {"status":"ok","timestamp":"..."}
 ```
+
+### 2d. Wire the URLs
+
+Now that both services are deployed and have public URLs:
+
+1. Go to the **Web** service → **Variables**
+2. Set `VITE_SERVER_URL` to the Server service's public Railway URL (e.g., `https://<server>.up.railway.app`)
+3. Redeploy the Web service (Railway will trigger this automatically when you save the variable)
 
 ---
 
 ## 3. Discord Bot Setup
 
-The Discord connector runs as a separate process (or a second Railway service) alongside the API server.
+The Discord connector runs as a third Railway service alongside the API server.
 
 ### Create the Discord application
 
@@ -143,19 +188,27 @@ Required permissions: Send Messages, Read Message History, Use Slash Commands, S
 
 ### Deploy the Discord connector on Railway
 
-Add a second service in your Railway project:
+In the same Railway project, click **New Service → GitHub Repo** and select the `deck-monsters` repository again.
 
-1. In the same Railway project, add a new service from the same GitHub repo
-2. Override the start command to: `node packages/connector-discord/dist/index.js`
-3. Add the following environment variables:
+Go to the new service → **Settings → Build** and set:
+
+| Setting | Value |
+|---|---|
+| **Root directory** | _(leave blank — build runs from the repo root)_ |
+| **Build command** | `pnpm install && pnpm --filter @deck-monsters/engine build && pnpm --filter @deck-monsters/connector-discord build` |
+| **Start command** | `node packages/connector-discord/dist/index.js` |
+
+This service does not need a public domain — it connects outbound to Discord and the Server.
+
+Go to **Variables** and add:
 
 | Variable | Value |
 |---|---|
 | `DISCORD_TOKEN` | Your bot token from the Discord developer portal |
 | `DISCORD_CLIENT_ID` | Your application's client ID |
-| `DATABASE_URL` | Same Supabase database connection string as the server |
-| `SERVER_URL` | The Railway URL of the API server (e.g., `https://<server>.railway.app`) |
-| `CONNECTOR_SERVICE_TOKEN` | Same token set on the API server |
+| `DATABASE_URL` | Same Supabase transaction pooler URL as the server |
+| `SERVER_URL` | The Server service's public Railway URL (e.g., `https://<server>.up.railway.app`) |
+| `CONNECTOR_SERVICE_TOKEN` | Same token set on the Server service |
 
 ---
 

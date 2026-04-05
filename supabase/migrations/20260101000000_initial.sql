@@ -77,15 +77,6 @@ create table if not exists public.rooms (
 
 alter table public.rooms enable row level security;
 
-create policy "Room members can view rooms"
-  on public.rooms for select
-  using (
-    exists (
-      select 1 from public.room_members
-      where room_id = rooms.id and user_id = auth.uid()
-    )
-  );
-
 create policy "Room owners can update rooms"
   on public.rooms for update
   using (owner_id = auth.uid());
@@ -112,6 +103,16 @@ create policy "Members can view membership"
 create policy "Members can leave (delete own membership)"
   on public.room_members for delete
   using (user_id = auth.uid());
+
+-- Deferred: depends on room_members existing
+create policy "Room members can view rooms"
+  on public.rooms for select
+  using (
+    exists (
+      select 1 from public.room_members
+      where room_id = rooms.id and user_id = auth.uid()
+    )
+  );
 
 
 -- ────────────────────────────────────────────────────────────

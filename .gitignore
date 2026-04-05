@@ -31,6 +31,16 @@ yarn.lock
 .imdone/
 .tmp/
 
+# SUPABASE LOCAL
+supabase/.temp/
+
+# RAILWAY LOCAL
+.railway/
+
+# CURSOR AGENTS
+.agents/
+skills-lock.json
+
 # BUILD
 dist/
 
