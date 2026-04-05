@@ -15,7 +15,7 @@ function getJWKS(): ReturnType<typeof createRemoteJWKSet> | null {
 	if (jwksOverride !== null) return jwksOverride;
 	const supabaseUrl = process.env['SUPABASE_URL'];
 	if (!supabaseUrl) return null;
-	const url = new URL('/auth/v1/jwks', supabaseUrl).toString();
+	const url = new URL('/auth/v1/.well-known/jwks.json', supabaseUrl).toString();
 	if (url !== cachedUrl) {
 		jwks = createRemoteJWKSet(new URL(url));
 		cachedUrl = url;
