@@ -98,7 +98,7 @@ The project deploys as three separate Railway services from the same GitHub repo
 
 The web service is configured via `apps/web/railway.toml` (checked into the repo), which tells Railway to use Nixpacks and the correct monorepo build command. You just need to point Railway at that config file.
 
-Go to the service → **Settings → Source** and set:
+Go to the service → **Settings → Config-as-code** and set:
 
 | Setting | Value |
 |---|---|
@@ -120,13 +120,11 @@ Then go to **Variables** and add:
 
 In the same Railway project, click **New Service → GitHub Repo** and select the same `deck-monsters` repository again.
 
-Go to the new service → **Settings → Build** and set:
+The server service is configured via `packages/server/railway.toml`. Go to the new service → **Settings → Config-as-code** and set:
 
 | Setting | Value |
 |---|---|
-| **Root directory** | _(leave blank — the Dockerfile is at the repo root)_ |
-| **Builder** | **Dockerfile** |
-| **Dockerfile path** | `Dockerfile` |
+| **Config file path** | `packages/server/railway.toml` |
 
 Go to **Settings → Networking** and generate a public domain. Copy that URL — you will need it for the Web service and the Discord connector.
 
