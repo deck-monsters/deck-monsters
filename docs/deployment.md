@@ -43,27 +43,21 @@ In the project dashboard, go to **Authentication → Providers**:
 
 ### Collect Supabase credentials
 
-In **Project Settings → API**, copy:
+In **Project Settings → API Keys**, copy:
 
 | Variable | Where to find it |
 |---|---|
-| `SUPABASE_URL` | Project URL (e.g., `https://xxxx.supabase.co`) |
-| `SUPABASE_ANON_KEY` | **Publishable key** (under **Settings → API → Publishable and secret API keys**) |
-| `SUPABASE_JWT_SECRET` | **Settings → JWT → Legacy JWT Secret** |
+| `SUPABASE_URL` | Project URL (e.g., `https://xxxx.supabase.co`) — shown at the top of the API Keys page |
+| `SUPABASE_PUBLISHABLE_KEY` | **Publishable key** (`sb_publishable_...`) |
+| `SUPABASE_SECRET_KEY` | **Secret key** (`sb_secret_...`) — keep this secret; it bypasses RLS and has full DB access |
 
-> **Note:** Supabase is migrating from the legacy JWT secret (HS256) to asymmetric JWT Signing Keys (RS256). The legacy secret still works, but new projects should expect to switch eventually. When that happens, the server's JWT verification in `packages/server/src/trpc/context.ts` will need updating to use the public key instead of the shared secret.
+> The server verifies user JWTs by fetching Supabase's public JWKS endpoint (`/auth/v1/jwks`) — no JWT secret needs to be copied.
 
-In **Project Settings → Database**, copy the connection string and set it as:
-
-| Variable | Value |
-|---|---|
-| `DATABASE_URL` | `postgresql://postgres:<password>@db.<project>.supabase.co:5432/postgres` |
-
-Also copy the **Secret key** (in **Settings → API → Publishable and secret API keys**):
+In **Project Settings → Database**, copy the connection string:
 
 | Variable | Value |
 |---|---|
-| `SUPABASE_SERVICE_ROLE_KEY` | **Secret key** (keep secret — bypasses RLS, has full DB access, required for connector user creation) |
+| `DATABASE_URL` | Use the **Transaction pooler** URL (e.g., `postgresql://postgres.<project>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres`) |
 
 ### Apply the database schema
 
@@ -100,11 +94,10 @@ In Railway, go to the service → **Variables** and add:
 |---|---|
 | `PORT` | `3000` (Railway may set this automatically) |
 | `NODE_ENV` | `production` |
-| `DATABASE_URL` | Your Supabase database connection string (use the **Transaction pooler** URL from Supabase → Settings → Database → Connection string) |
-| `SUPABASE_JWT_SECRET` | Your Supabase JWT secret |
+| `DATABASE_URL` | Transaction pooler URL from Supabase → Settings → Database → Connection string |
 | `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_ANON_KEY` | Your Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key (required for connector user auto-creation) |
+| `SUPABASE_PUBLISHABLE_KEY` | Your Supabase Publishable key |
+| `SUPABASE_SECRET_KEY` | Your Supabase Secret key (required for connector user auto-creation) |
 | `CONNECTOR_SERVICE_TOKEN` | A secret token you generate (e.g., `openssl rand -hex 32`) used by connectors to authenticate server-to-server calls |
 
 ### Verify the deployment
@@ -181,16 +174,21 @@ API URL: http://localhost:54321
 DB URL: postgresql://postgres:postgres@localhost:54322/postgres
 JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
 anon key: eyJ...
+service_role key: eyJ...
 ```
+
+> The local CLI still uses the legacy key names. Map them to the current env vars:
+> - `anon key` → `SUPABASE_PUBLISHABLE_KEY`
+> - `service_role key` → `SUPABASE_SECRET_KEY`
+> - The `JWT secret` line is not needed — local JWT verification uses the same JWKS endpoint at `http://localhost:54321/auth/v1/jwks`
 
 Create a `.env.local` file at the repo root (git-ignored):
 
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
-SUPABASE_JWT_SECRET=super-secret-jwt-token-with-at-least-32-characters-long
 SUPABASE_URL=http://localhost:54321
-SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_PUBLISHABLE_KEY=eyJ...   # "anon key" from supabase start output
+SUPABASE_SECRET_KEY=eyJ...        # "service_role key" from supabase start output
 CONNECTOR_SERVICE_TOKEN=dev-service-token
 
 # Discord connector (only needed when running the bot locally)
@@ -230,10 +228,9 @@ The local Supabase Studio is at `http://localhost:54323` — use it to inspect t
 | Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | Yes | PostgreSQL connection string for Drizzle ORM (use Transaction pooler URL on Railway) |
-| `SUPABASE_JWT_SECRET` | Yes | Used to verify Supabase-issued JWTs on the server |
-| `SUPABASE_URL` | Yes | Supabase project URL (used by connector user creation) |
-| `SUPABASE_ANON_KEY` | Yes | Supabase Publishable key (used by client-side auth flows) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase Secret key — used by `ensureConnectorUser` to create auth users for Discord/Slack identities; bypasses RLS, never expose publicly |
+| `SUPABASE_URL` | Yes | Supabase project URL — used to construct the JWKS endpoint for JWT verification and for admin auth calls |
+| `SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase Publishable key (`sb_publishable_...`) — safe for client-side use with RLS enabled |
+| `SUPABASE_SECRET_KEY` | Yes | Supabase Secret key (`sb_secret_...`) — used by `ensureConnectorUser` to create auth users; bypasses RLS, never expose publicly |
 | `CONNECTOR_SERVICE_TOKEN` | Yes | Shared secret for authenticating connector-to-server service calls (set in both the server and each connector's env) |
 | `PORT` | No | HTTP port, defaults to `3000` (server only) |
 | `HOST` | No | Bind address, defaults to `0.0.0.0` (server only) |
@@ -250,7 +247,10 @@ The local Supabase Studio is at `http://localhost:54323` — use it to inspect t
 The server refuses to start without a database URL. Check your Railway environment variables — the variable is named `DATABASE_URL`, not `SUPABASE_DB_URL`.
 
 **JWT verification failures**
-Ensure `SUPABASE_JWT_SECRET` on Railway matches the **Legacy JWT Secret** shown in **Supabase → Settings → JWT**.
+The server verifies JWTs by fetching `<SUPABASE_URL>/auth/v1/jwks`. Check that:
+- `SUPABASE_URL` is set correctly on Railway
+- The Railway service has outbound HTTPS access to your Supabase project
+- Locally, `supabase start` is running before you start the server
 
 **Migrations not applied**
 Run `supabase db push --linked` (production) or `supabase db reset` (local) to apply pending migrations.

@@ -23,7 +23,7 @@ function makeDbStub(selectResult: Array<{ userId: string }>) {
 
 describe('auth/connector-users.ts', () => {
 	const originalSupabaseUrl = process.env['SUPABASE_URL'];
-	const originalServiceRoleKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
+	const originalServiceRoleKey = process.env['SUPABASE_SECRET_KEY'];
 
 	afterEach(() => {
 		sinon.restore();
@@ -31,8 +31,8 @@ describe('auth/connector-users.ts', () => {
 		if (originalSupabaseUrl === undefined) delete process.env['SUPABASE_URL'];
 		else process.env['SUPABASE_URL'] = originalSupabaseUrl;
 
-		if (originalServiceRoleKey === undefined) delete process.env['SUPABASE_SERVICE_ROLE_KEY'];
-		else process.env['SUPABASE_SERVICE_ROLE_KEY'] = originalServiceRoleKey;
+		if (originalServiceRoleKey === undefined) delete process.env['SUPABASE_SECRET_KEY'];
+		else process.env['SUPABASE_SECRET_KEY'] = originalServiceRoleKey;
 	});
 
 	describe('when the connector user already exists', () => {
@@ -54,24 +54,24 @@ describe('auth/connector-users.ts', () => {
 	describe('when the connector user does not exist', () => {
 		it('throws when SUPABASE_URL is missing', async () => {
 			delete process.env['SUPABASE_URL'];
-			delete process.env['SUPABASE_SERVICE_ROLE_KEY'];
+			delete process.env['SUPABASE_SECRET_KEY'];
 
 			const db = makeDbStub([]);
 
 			await expect(
 				ensureConnectorUser('discord', 'new-discord-user', 'NewUser', db as never)
-			).to.be.rejectedWith('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+			).to.be.rejectedWith('SUPABASE_URL and SUPABASE_SECRET_KEY are required');
 		});
 
-		it('throws when SUPABASE_SERVICE_ROLE_KEY is missing', async () => {
+		it('throws when SUPABASE_SECRET_KEY is missing', async () => {
 			process.env['SUPABASE_URL'] = 'https://example.supabase.co';
-			delete process.env['SUPABASE_SERVICE_ROLE_KEY'];
+			delete process.env['SUPABASE_SECRET_KEY'];
 
 			const db = makeDbStub([]);
 
 			await expect(
 				ensureConnectorUser('discord', 'new-discord-user', 'NewUser', db as never)
-			).to.be.rejectedWith('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+			).to.be.rejectedWith('SUPABASE_URL and SUPABASE_SECRET_KEY are required');
 		});
 	});
 });

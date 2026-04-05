@@ -361,11 +361,11 @@ If this ever becomes insufficient, rooms are naturally shardable. Each room's `G
 ## Environment Variables
 
 ```bash
-DATABASE_URL          # Postgres connection string (from Supabase dashboard — use Transaction pooler URL for Railway)
-SUPABASE_JWT_SECRET   # For validating JWTs issued by Supabase Auth
-SUPABASE_URL          # Supabase project URL (for client-side auth flows)
-SUPABASE_ANON_KEY     # Supabase Publishable key (for client-side auth)
-PORT                  # HTTP + WebSocket port (Railway injects this; default 3000)
+DATABASE_URL               # Postgres connection string (from Supabase dashboard — use Transaction pooler URL for Railway)
+SUPABASE_URL               # Supabase project URL — used for JWKS endpoint (JWT verification) and admin auth calls
+SUPABASE_PUBLISHABLE_KEY   # Supabase Publishable key (sb_publishable_...) — safe for client-side use
+SUPABASE_SECRET_KEY        # Supabase Secret key (sb_secret_...) — server-only, bypasses RLS
+PORT                       # HTTP + WebSocket port (Railway injects this; default 3000)
 ```
 
 ## Tasks
