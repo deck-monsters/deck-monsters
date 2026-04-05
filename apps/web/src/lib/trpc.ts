@@ -7,11 +7,17 @@ import {
   type TRPCLink,
 } from '@trpc/client';
 import type { AppRouter } from '@deck-monsters/server/types';
-import { getAccessToken } from './supabase.js';
 
 export type { AppRouter };
 
 export const trpc = createTRPCReact<AppRouter>();
+
+// Kept in sync by AuthProvider via setTRPCToken — avoids calling getSession()
+// asynchronously on every request, which can race against initial auth load.
+let _token: string | null = null;
+export function setTRPCToken(token: string | null): void {
+  _token = token;
+}
 
 function getServerUrl(): string {
   return import.meta.env['VITE_SERVER_URL'] as string ?? '';
@@ -21,7 +27,6 @@ function getWsUrl(): string {
   const base = getServerUrl();
   if (base.startsWith('https://')) return base.replace('https://', 'wss://');
   if (base.startsWith('http://')) return base.replace('http://', 'ws://');
-  // Same origin — use relative ws path
   return `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`;
 }
 
@@ -36,9 +41,8 @@ function getWsClient() {
   return wsClient;
 }
 
-async function headers() {
-  const token = await getAccessToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+function headers() {
+  return _token ? { Authorization: `Bearer ${_token}` } : {};
 }
 
 export function createTRPCClient() {
