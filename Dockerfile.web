@@ -1,0 +1,56 @@
+# Multi-stage build for the Deck Monsters web app (@deck-monsters/web)
+# Runs on Railway as the static SPA service.
+# In Railway: set Dockerfile path to "Dockerfile.web" in Settings → Build.
+
+# ── Stage 1: Install dependencies ──────────────────────────────────────────
+FROM node:22-alpine AS deps
+
+WORKDIR /app
+
+RUN corepack enable pnpm
+
+# Copy all workspace manifests so pnpm can resolve the full workspace graph
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/web/package.json                        ./apps/web/package.json
+COPY packages/engine/package.json                 ./packages/engine/package.json
+COPY packages/server/package.json                 ./packages/server/package.json
+COPY packages/connector-discord/package.json      ./packages/connector-discord/package.json
+
+RUN pnpm install --frozen-lockfile
+
+
+# ── Stage 2: Build ─────────────────────────────────────────────────────────
+FROM deps AS builder
+
+WORKDIR /app
+
+# Build engine first — produces dist/ declarations needed by server types,
+# which the web app imports via @deck-monsters/server workspace package.
+COPY packages/engine ./packages/engine
+RUN pnpm --filter @deck-monsters/engine build
+
+# Server source needed for tRPC type imports (no build required)
+COPY packages/server ./packages/server
+
+# Build the web app
+COPY apps/web ./apps/web
+RUN pnpm --filter @deck-monsters/web build
+
+
+# ── Stage 3: Production image ───────────────────────────────────────────────
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+# serve handles static file serving + SPA fallback routing (--single)
+RUN npm install -g serve
+
+COPY --from=builder /app/apps/web/dist ./dist
+
+EXPOSE 3000
+
+ENV NODE_ENV=production
+
+# --single serves index.html for unmatched routes (required for React Router)
+# PORT is injected by Railway; defaults to 3000
+CMD ["sh", "-c", "serve dist --listen ${PORT:-3000} --single"]
