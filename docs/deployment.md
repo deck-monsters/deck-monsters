@@ -27,6 +27,17 @@ This guide covers setting up both from scratch and connecting them.
 3. Choose an organization, set a project name (e.g., `deck-monsters`), and pick the region closest to your Railway deployment
 4. Save the database password somewhere secure — you will not be shown it again
 
+### Configure Auth URLs
+
+In **Authentication → URL Configuration**, set:
+
+| Setting | Value |
+|---|---|
+| **Site URL** | `https://<your-web-service>.up.railway.app` (your Railway web domain) |
+| **Redirect URLs** | Add `https://<your-web-service>.up.railway.app/**` and `http://localhost:5173/**` |
+
+The Site URL is where Supabase redirects users after OAuth. If left as `localhost`, production OAuth flows will send users to your local machine.
+
 ### Enable Auth providers
 
 In the project dashboard, go to **Authentication → Providers**:
