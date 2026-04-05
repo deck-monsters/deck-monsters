@@ -19,16 +19,11 @@ let wsClient: ReturnType<typeof createWSClient> | null = null;
 
 export function setTRPCToken(token: string | null): void {
   _token = token;
-  // WebSocket connections cannot send HTTP headers. The server accepts the JWT
-  // as a ?token= query param on the upgrade request instead. Force a reconnect
-  // so the new URL (with or without the token) is picked up immediately.
-  if (wsClient) {
-    try {
-      wsClient.connection?.ws.close();
-    } catch {
-      // ignore — connection may already be closed
-    }
-  }
+  // No reconnect needed here. The wsClient uses lazy mode (connects only when
+  // there are active subscriptions). Because all subscription-bearing views are
+  // inside RequireAuth, the token is always set before the first connection is
+  // attempted. Forcing a close here caused "WebSocket closed before established"
+  // errors when onAuthStateChange fired multiple times during the OAuth flow.
 }
 
 function getServerUrl(): string {
@@ -50,6 +45,13 @@ function getWsClient() {
         // Include the JWT as a query param — the only way to authenticate a
         // WebSocket upgrade request (Authorization headers aren't settable).
         return _token ? `${base}?token=${encodeURIComponent(_token)}` : base;
+      },
+      // Only open the WebSocket when there are active subscriptions.
+      // This guarantees the connection happens after RequireAuth has set the
+      // token, so the very first upgrade request always carries the JWT.
+      lazy: {
+        enabled: true,
+        closeMs: 30_000,
       },
     });
   }
