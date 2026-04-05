@@ -48,7 +48,7 @@ In **Project Settings → API**, copy:
 | Variable | Where to find it |
 |---|---|
 | `SUPABASE_URL` | Project URL (e.g., `https://xxxx.supabase.co`) |
-| `SUPABASE_ANON_KEY` | `anon` `public` key |
+| `SUPABASE_ANON_KEY` | **Publishable key** (under **Settings → API → Publishable and secret API keys**) |
 | `SUPABASE_JWT_SECRET` | **Settings → API → JWT Settings → JWT Secret** |
 
 In **Project Settings → Database**, copy the connection string and set it as:
@@ -57,11 +57,11 @@ In **Project Settings → Database**, copy the connection string and set it as:
 |---|---|
 | `DATABASE_URL` | `postgresql://postgres:<password>@db.<project>.supabase.co:5432/postgres` |
 
-Also copy the **Service Role Key** (in **Settings → API**, under "Project API keys → service_role"):
+Also copy the **Secret key** (in **Settings → API → Publishable and secret API keys**):
 
 | Variable | Value |
 |---|---|
-| `SUPABASE_SERVICE_ROLE_KEY` | `service_role` key (keep secret — has full DB access, required for connector user creation) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Secret key** (keep secret — bypasses RLS, has full DB access, required for connector user creation) |
 
 ### Apply the database schema
 
@@ -230,8 +230,8 @@ The local Supabase Studio is at `http://localhost:54323` — use it to inspect t
 | `DATABASE_URL` | Yes | PostgreSQL connection string for Drizzle ORM (use Transaction pooler URL on Railway) |
 | `SUPABASE_JWT_SECRET` | Yes | Used to verify Supabase-issued JWTs on the server |
 | `SUPABASE_URL` | Yes | Supabase project URL (used by connector user creation) |
-| `SUPABASE_ANON_KEY` | Yes | Supabase anonymous key (used by client-side auth flows) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key — used by `ensureConnectorUser` to create auth users for Discord/Slack identities |
+| `SUPABASE_ANON_KEY` | Yes | Supabase Publishable key (used by client-side auth flows) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase Secret key — used by `ensureConnectorUser` to create auth users for Discord/Slack identities; bypasses RLS, never expose publicly |
 | `CONNECTOR_SERVICE_TOKEN` | Yes | Shared secret for authenticating connector-to-server service calls (set in both the server and each connector's env) |
 | `PORT` | No | HTTP port, defaults to `3000` (server only) |
 | `HOST` | No | Bind address, defaults to `0.0.0.0` (server only) |
