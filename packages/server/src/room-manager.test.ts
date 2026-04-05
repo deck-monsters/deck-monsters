@@ -56,14 +56,14 @@ function makeDbStub(opts: DbStubOpts = {}) {
 function makeEngineDeps() {
 	const saveStateFn = sinon.stub();
 
-	const mockEventBus = { subscribe: sinon.stub() };
+	const mockEventBus = { subscribe: sinon.stub().returns(sinon.stub()) };
 
 	// stateStore is set via a property assignment on game — track the value manually.
 	let _stateStore: unknown = undefined;
 	const mockGame = {
 		get stateStore() { return _stateStore; },
 		set stateStore(v: unknown) { _stateStore = v; },
-		eventBus: mockEventBus as any,
+		eventBus: mockEventBus as never,
 		options: {} as Record<string, unknown>,
 		// saveState getter mirrors the real Game implementation
 		get saveState() { return saveStateFn; },
@@ -73,7 +73,7 @@ function makeEngineDeps() {
 		mockGame.options = opts ?? {};
 		return mockGame;
 	});
-	const restoreGameStub = sinon.stub().callsFake((_blob: string) => {
+	const restoreGameStub = sinon.stub().callsFake(() => {
 		mockGame.options = {};
 		return mockGame;
 	});

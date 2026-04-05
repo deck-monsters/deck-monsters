@@ -172,7 +172,9 @@ describe('./helpers/targeting-strategies.ts', () => {
 				strategy: targetingStrategies.TARGET_MAX_HP_PLAYER_ACCORDING_TO_HANS
 			}) as typeof level3;
 
-			expect(target.monster.givenName).to.equal(level3.monster.givenName);
+			// ignoreSelf is false for ACCORDING_TO_HANS, so the player is included
+			const expectedMaxHp = Math.max(...contestants.map(c => c.monster.maxHp));
+			expect(target.monster.maxHp).to.equal(expectedMaxHp);
 		});
 	});
 

@@ -6,13 +6,34 @@ export interface Context {
 	serviceTokenValid: boolean;
 }
 
+// Module-level JWKS cache — jose handles HTTP caching internally.
+let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+let cachedUrl: string | null = null;
+let jwksOverride: ReturnType<typeof createRemoteJWKSet> | null = null;
+
+function getJWKS(): ReturnType<typeof createRemoteJWKSet> | null {
+	if (jwksOverride !== null) return jwksOverride;
+	const supabaseUrl = process.env['SUPABASE_URL'];
+	if (!supabaseUrl) return null;
+	const url = new URL('/auth/v1/jwks', supabaseUrl).toString();
+	if (url !== cachedUrl) {
+		jwks = createRemoteJWKSet(new URL(url));
+		cachedUrl = url;
+	}
+	return jwks;
+}
+
+// For testing only — inject a local JWKS to avoid HTTP calls.
+export function _setJWKSOverride(override: ReturnType<typeof createRemoteJWKSet> | null): void {
+	jwksOverride = override;
+}
+
 export async function createContext({ req }: CreateFastifyContextOptions): Promise<Context> {
 	const connectorServiceToken = process.env['CONNECTOR_SERVICE_TOKEN'];
 	const serviceTokenValid =
 		!!connectorServiceToken &&
 		req.headers['x-service-token'] === connectorServiceToken;
 
-	const jwtSecret = process.env['SUPABASE_JWT_SECRET'];
 	const authHeader = req.headers.authorization;
 
 	// For WebSocket browser clients, Authorization headers aren't settable — accept
@@ -29,12 +50,12 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 	}
 
 	try {
-		if (!jwtSecret) {
-			throw new Error('SUPABASE_JWT_SECRET is not configured');
+		const keySet = getJWKS();
+		if (!keySet) {
+			throw new Error('SUPABASE_URL is not configured');
 		}
 
-		const secret = new TextEncoder().encode(jwtSecret);
-		const { payload } = await jwtVerify(rawToken, secret);
+		const { payload } = await jwtVerify(rawToken, keySet);
 		const sub = payload.sub;
 
 		return { userId: typeof sub === 'string' ? sub : null, serviceTokenValid };
@@ -42,6 +63,3 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 		return { userId: null, serviceTokenValid };
 	}
 }
-
-// Re-export for use by createRemoteJWKSet (Supabase JWKS endpoint) if needed in future.
-export { createRemoteJWKSet };

@@ -20,7 +20,6 @@
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"],
   "references": [
-    { "path": "../engine" },
-    { "path": "../server" }
+    { "path": "../engine" }
   ]
 }

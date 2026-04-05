@@ -59,8 +59,8 @@ Ship with the Discord connector and web app:
 
 - **Email + password** via Supabase Auth (fallback for users without Discord)
 - **Discord OAuth** via Supabase Auth (primary for Discord users, natural for gaming)
-- JWT-based sessions: Supabase issues short-lived access tokens + refresh tokens
-- Railway backend validates JWTs using `SUPABASE_JWT_SECRET`
+- JWT-based sessions: Supabase issues short-lived access tokens + refresh tokens (signed with RS256)
+- Railway backend validates JWTs using Supabase's public JWKS endpoint (`/auth/v1/jwks`) — no shared secret needed
 - The `sub` claim in the JWT is the canonical `userId` used by the engine and event bus
 
 Discord OAuth is prioritized because the Discord connector ships first and Discord users already expect OAuth login flows.
@@ -97,19 +97,20 @@ For Discord users who have never logged into the web app, the Discord connector 
 
 ## JWT Validation on Railway
 
-The Railway backend validates every request by checking the Supabase JWT:
+The Railway backend validates every request by fetching Supabase's public JWKS endpoint and verifying the token signature (RS256). No shared secret is required:
 
 ```typescript
-import { createClient } from '@supabase/supabase-js';
-// or, for lighter weight: verify the JWT directly using the secret
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 
-import jwt from 'jsonwebtoken';
+const JWKS = createRemoteJWKSet(new URL(`${process.env.SUPABASE_URL}/auth/v1/jwks`));
 
-function validateToken(token: string): { userId: string } {
-  const payload = jwt.verify(token, process.env.SUPABASE_JWT_SECRET!);
+async function validateToken(token: string): Promise<{ userId: string }> {
+  const { payload } = await jwtVerify(token, JWKS);
   return { userId: payload.sub as string };
 }
 ```
+
+`createRemoteJWKSet` caches the keys in memory and re-fetches when a new `kid` is seen, so key rotation is handled automatically. See the actual implementation in `packages/server/src/trpc/context.ts`.
 
 This is used in the tRPC middleware to create a `protectedProcedure` that requires a valid JWT and injects `ctx.userId` into all downstream handlers.
 
@@ -168,7 +169,7 @@ A Supabase database trigger creates the `profiles` row automatically when a new 
 Supabase handles the most security-sensitive operations (password hashing, token issuance, session management, rate limiting on auth endpoints). Remaining application-level concerns:
 
 - HTTPS everywhere (Railway provides SSL termination)
-- Store `SUPABASE_JWT_SECRET` securely in Railway environment variables; rotate via Supabase dashboard
+- JWT verification uses Supabase's public JWKS endpoint — no secret to store or rotate on the server; Supabase manages key rotation automatically
 - WebSocket connections validate JWT on connect and require reconnection on token expiry
 - RLS policies on Supabase Postgres provide defense-in-depth — even if application code has a bug, the database enforces access boundaries
 - The `user_connectors` unique index on `(connector_type, external_id)` prevents duplicate identity mappings

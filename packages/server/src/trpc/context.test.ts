@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { SignJWT } from 'jose';
+import { SignJWT, generateKeyPair, exportJWK, createLocalJWKSet } from 'jose';
 
-import { createContext } from './context.js';
+import { createContext, _setJWKSOverride } from './context.js';
 
 // Minimal fake Fastify request factory
 function makeReq(opts: {
@@ -23,29 +23,39 @@ function makeCtxOpts(req: ReturnType<typeof makeReq>) {
 	return { req } as unknown as Parameters<typeof createContext>[0];
 }
 
-async function signJwt(secret: string, sub: string): Promise<string> {
-	return new SignJWT({ sub })
-		.setProtectedHeader({ alg: 'HS256' })
-		.setIssuedAt()
-		.setExpirationTime('1h')
-		.sign(new TextEncoder().encode(secret));
-}
-
 describe('trpc/context.ts', () => {
-	const originalSecret = process.env['SUPABASE_JWT_SECRET'];
+	let privateKey: Awaited<ReturnType<typeof generateKeyPair>>['privateKey'];
+	let localJWKS: ReturnType<typeof createLocalJWKSet>;
+
+	const originalSupabaseUrl = process.env['SUPABASE_URL'];
 	const originalServiceToken = process.env['CONNECTOR_SERVICE_TOKEN'];
-	const testSecret = 'test-jwt-secret-32-chars-long!!1';
+
+	before(async () => {
+		const pair = await generateKeyPair('RS256');
+		privateKey = pair.privateKey;
+
+		const jwk = await exportJWK(pair.publicKey);
+		localJWKS = createLocalJWKSet({
+			keys: [{ ...jwk, kid: 'test-key', alg: 'RS256' }],
+		});
+		// Inject a local JWKS so tests never make HTTP calls
+		_setJWKSOverride(localJWKS as Parameters<typeof _setJWKSOverride>[0]);
+	});
+
+	after(() => {
+		_setJWKSOverride(null);
+	});
 
 	beforeEach(() => {
-		process.env['SUPABASE_JWT_SECRET'] = testSecret;
+		process.env['SUPABASE_URL'] = 'https://test.supabase.co';
 		delete process.env['CONNECTOR_SERVICE_TOKEN'];
 	});
 
 	afterEach(() => {
-		if (originalSecret === undefined) {
-			delete process.env['SUPABASE_JWT_SECRET'];
+		if (originalSupabaseUrl === undefined) {
+			delete process.env['SUPABASE_URL'];
 		} else {
-			process.env['SUPABASE_JWT_SECRET'] = originalSecret;
+			process.env['SUPABASE_URL'] = originalSupabaseUrl;
 		}
 		if (originalServiceToken === undefined) {
 			delete process.env['CONNECTOR_SERVICE_TOKEN'];
@@ -54,6 +64,14 @@ describe('trpc/context.ts', () => {
 		}
 	});
 
+	async function signJwt(sub: string): Promise<string> {
+		return new SignJWT({ sub })
+			.setProtectedHeader({ alg: 'RS256', kid: 'test-key' })
+			.setIssuedAt()
+			.setExpirationTime('1h')
+			.sign(privateKey);
+	}
+
 	describe('userId extraction', () => {
 		it('returns null userId when no token is present', async () => {
 			const ctx = await createContext(makeCtxOpts(makeReq({})));
@@ -61,7 +79,7 @@ describe('trpc/context.ts', () => {
 		});
 
 		it('extracts userId from Authorization Bearer header', async () => {
-			const token = await signJwt(testSecret, 'user-abc');
+			const token = await signJwt('user-abc');
 			const ctx = await createContext(
 				makeCtxOpts(makeReq({ authorization: `Bearer ${token}` }))
 			);
@@ -69,7 +87,7 @@ describe('trpc/context.ts', () => {
 		});
 
 		it('extracts userId from ?token= query param (WebSocket fallback)', async () => {
-			const token = await signJwt(testSecret, 'user-ws');
+			const token = await signJwt('user-ws');
 			const ctx = await createContext(
 				makeCtxOpts(makeReq({ queryToken: token }))
 			);
@@ -77,8 +95,8 @@ describe('trpc/context.ts', () => {
 		});
 
 		it('prefers Authorization header over query param when both are present', async () => {
-			const headerToken = await signJwt(testSecret, 'user-header');
-			const queryToken = await signJwt(testSecret, 'user-query');
+			const headerToken = await signJwt('user-header');
+			const queryToken = await signJwt('user-query');
 			const ctx = await createContext(
 				makeCtxOpts(
 					makeReq({ authorization: `Bearer ${headerToken}`, queryToken })
@@ -94,13 +112,17 @@ describe('trpc/context.ts', () => {
 			expect(ctx.userId).to.be.null;
 		});
 
-		it('returns null userId when SUPABASE_JWT_SECRET is not configured', async () => {
-			delete process.env['SUPABASE_JWT_SECRET'];
-			const token = await signJwt(testSecret, 'user-abc');
+		it('returns null userId when SUPABASE_URL is not configured', async () => {
+			_setJWKSOverride(null);
+			delete process.env['SUPABASE_URL'];
+
+			const token = await signJwt('user-abc');
 			const ctx = await createContext(
 				makeCtxOpts(makeReq({ authorization: `Bearer ${token}` }))
 			);
 			expect(ctx.userId).to.be.null;
+
+			_setJWKSOverride(localJWKS as Parameters<typeof _setJWKSOverride>[0]);
 		});
 	});
 

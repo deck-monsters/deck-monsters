@@ -102,6 +102,9 @@ importers:
       discord.js:
         specifier: ^14.18.0
         version: 14.26.0
+      drizzle-orm:
+        specifier: ^0.44.7
+        version: 0.44.7(@types/pg@8.20.0)(pg@8.20.0)
       zod:
         specifier: ^3.25.71
         version: 3.25.76

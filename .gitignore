@@ -37,3 +37,4 @@ dist/
 # ENVIRONMENT
 .env.local
 .env.*.local
+*.tsbuildinfo

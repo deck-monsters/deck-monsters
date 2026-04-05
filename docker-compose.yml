@@ -28,10 +28,9 @@ services:
       # Set these in a .env.local file or override here.
       # Values are printed by `supabase start`.
       DATABASE_URL: "${DATABASE_URL}"
-      SUPABASE_JWT_SECRET: "${SUPABASE_JWT_SECRET}"
       SUPABASE_URL: "${SUPABASE_URL}"
-      SUPABASE_ANON_KEY: "${SUPABASE_ANON_KEY}"
-      SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY}"
+      SUPABASE_PUBLISHABLE_KEY: "${SUPABASE_PUBLISHABLE_KEY}"
+      SUPABASE_SECRET_KEY: "${SUPABASE_SECRET_KEY}"
       CONNECTOR_SERVICE_TOKEN: "${CONNECTOR_SERVICE_TOKEN}"
     env_file:
       - .env.local

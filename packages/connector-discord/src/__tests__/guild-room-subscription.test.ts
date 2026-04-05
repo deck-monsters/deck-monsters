@@ -234,7 +234,7 @@ describe('GuildRoomSubscription', () => {
 
 		// Build a private channel with no interaction — triggers the DM fallback
 		const channel = sub.buildPrivateChannel('discord-42');
-		const answer = await channel({ announce: undefined as any, question: 'Pick one:', choices: ['option-a', 'option-b'] });
+		const answer = await channel({ announce: undefined as any, question: 'Pick one:', choices: ['option-a', 'option-b'] as any });
 
 		expect(answer).to.equal('option-b');
 		expect(dmSend.calledOnce).to.be.true;
