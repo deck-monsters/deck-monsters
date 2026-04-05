@@ -1,5 +1,5 @@
 [build]
-builder = "NIXPACKS"
+builder = "RAILPACK"
 buildCommand = "pnpm --filter @deck-monsters/engine build && pnpm --filter @deck-monsters/web build"
 watchPatterns = ["apps/web/**", "packages/engine/**"]
 
