@@ -101,8 +101,10 @@ Railway auto-detects the Vite app. If it didn't configure itself correctly, go t
 | Setting | Value |
 |---|---|
 | **Root directory** | `apps/web` |
-| **Build command** | `pnpm --filter @deck-monsters/web build` |
-| **Start command** | `pnpm --filter @deck-monsters/web start` |
+| **Builder** | `Nixpacks` |
+| **Build command** | `pnpm --filter @deck-monsters/engine build && pnpm --filter @deck-monsters/web build` |
+| **Output directory** | `apps/web/dist` |
+| **Start command** | _(leave blank — Railway serves the static output)_ |
 
 Go to **Settings → Networking** and generate a public domain so you have a URL for the web app.
 
