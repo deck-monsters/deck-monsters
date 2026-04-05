@@ -19,10 +19,10 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile=false --ignore-scripts
-      # Build engine first — server and connector-discord depend on engine/dist for type resolution
+      - run: pnpm install --frozen-lockfile=false
+      # Build engine first — server and connector-discord depend on engine/dist for type resolution.
+      # Engine has composite:true so tsc --build validates it; --noEmit is incompatible with composite.
       - run: pnpm --filter @deck-monsters/engine run build
-      - run: pnpm --filter @deck-monsters/engine exec tsc --noEmit
       - run: pnpm --filter @deck-monsters/server exec tsc --noEmit
       - run: pnpm --filter @deck-monsters/connector-discord exec tsc --noEmit
       # Web uses vite's bundler resolution; tsc --noEmit validates it separately
@@ -38,7 +38,7 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile=false --ignore-scripts
+      - run: pnpm install --frozen-lockfile=false
       # Lint the new TypeScript packages. The engine package has ~2150 pre-existing
       # any-type warnings from the legacy JS→TS migration and is linted separately
       # as part of that cleanup effort.
@@ -56,7 +56,7 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
-      - run: pnpm install --frozen-lockfile=false --ignore-scripts
+      - run: pnpm install --frozen-lockfile=false
       # Build engine first — server and connector-discord tests import from engine/dist
       - run: pnpm --filter @deck-monsters/engine run build
       - run: pnpm run test
