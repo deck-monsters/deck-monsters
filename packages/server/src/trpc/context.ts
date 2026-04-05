@@ -55,11 +55,16 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 			throw new Error('SUPABASE_URL is not configured');
 		}
 
-		const { payload } = await jwtVerify(rawToken, keySet);
+		const { payload } = await jwtVerify(rawToken, keySet, {
+			// Supabase JWTs set aud: "authenticated" — jose v5 requires explicit
+			// audience verification when the aud claim is present.
+			audience: 'authenticated',
+		});
 		const sub = payload.sub;
 
 		return { userId: typeof sub === 'string' ? sub : null, serviceTokenValid };
-	} catch {
+	} catch (err) {
+		console.error('[auth] JWT verification failed:', err instanceof Error ? err.message : err);
 		return { userId: null, serviceTokenValid };
 	}
 }
