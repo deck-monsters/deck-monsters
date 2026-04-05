@@ -49,7 +49,9 @@ In **Project Settings → API**, copy:
 |---|---|
 | `SUPABASE_URL` | Project URL (e.g., `https://xxxx.supabase.co`) |
 | `SUPABASE_ANON_KEY` | **Publishable key** (under **Settings → API → Publishable and secret API keys**) |
-| `SUPABASE_JWT_SECRET` | **Settings → API → JWT Settings → JWT Secret** |
+| `SUPABASE_JWT_SECRET` | **Settings → JWT → Legacy JWT Secret** |
+
+> **Note:** Supabase is migrating from the legacy JWT secret (HS256) to asymmetric JWT Signing Keys (RS256). The legacy secret still works, but new projects should expect to switch eventually. When that happens, the server's JWT verification in `packages/server/src/trpc/context.ts` will need updating to use the public key instead of the shared secret.
 
 In **Project Settings → Database**, copy the connection string and set it as:
 
@@ -248,7 +250,7 @@ The local Supabase Studio is at `http://localhost:54323` — use it to inspect t
 The server refuses to start without a database URL. Check your Railway environment variables — the variable is named `DATABASE_URL`, not `SUPABASE_DB_URL`.
 
 **JWT verification failures**
-Ensure `SUPABASE_JWT_SECRET` on Railway matches the value in **Supabase → Settings → API → JWT Settings**.
+Ensure `SUPABASE_JWT_SECRET` on Railway matches the **Legacy JWT Secret** shown in **Supabase → Settings → JWT**.
 
 **Migrations not applied**
 Run `supabase db push --linked` (production) or `supabase db reset` (local) to apply pending migrations.
