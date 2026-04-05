@@ -73,10 +73,11 @@ export function createRouter(roomManager: RoomManager) {
 					return { ok: false, message: 'Command not recognized' };
 				}
 
-				// Build a channel callback that:
-				// - Routes announce messages to the event bus as private events so the
-				//   web client receives them via the ringFeed subscription.
-				// - Routes interactive prompts through the event bus prompt mechanism.
+				// Channel callback: all output (announcements and prompts) goes through
+				// the event bus so the web client receives it via the ringFeed WebSocket.
+				//
+				// Questions WITHOUT choices (free-text) are treated the same as questions
+				// with choices — sendPrompt is always called when there is a question.
 				const channel = async ({
 					announce,
 					question,
@@ -84,14 +85,15 @@ export function createRouter(roomManager: RoomManager) {
 				}: {
 					announce?: string;
 					question?: string;
-					choices?: Record<string, unknown>;
+					choices?: Record<string, unknown> | string[];
 				}): Promise<unknown> => {
-					if (question && choices) {
-						return eventBus.sendPrompt(
-							ctx.userId,
-							question,
-							Object.keys(choices)
-						);
+					if (question) {
+						const choiceKeys = choices
+							? Array.isArray(choices)
+								? choices
+								: Object.keys(choices)
+							: [];
+						return eventBus.sendPrompt(ctx.userId, question, choiceKeys);
 					}
 
 					if (announce) {
@@ -107,12 +109,23 @@ export function createRouter(roomManager: RoomManager) {
 					return undefined;
 				};
 
-				await action({
+				// Fire-and-forget: do NOT await the action. The interactive flow
+				// (character creation, spawning, equipping, etc.) involves multiple
+				// sendPrompt calls that can take minutes. Awaiting here would hold the
+				// HTTP connection open until the entire flow completes or times out.
+				// Instead, we return immediately; all output arrives via ringFeed.
+				void action({
 					channel,
 					channelName: input.channelName,
 					isAdmin: input.isAdmin,
 					isDM: input.isDM,
 					user: { id: ctx.userId, name: input.userName },
+				}).catch((err: unknown) => {
+					// Prompt timeouts are expected when users abandon a flow.
+					const msg = err instanceof Error ? err.message : String(err);
+					if (!msg.includes('Prompt timed out')) {
+						roomManager['log']?.(err);
+					}
 				});
 
 				return { ok: true };
