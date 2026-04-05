@@ -259,12 +259,12 @@ describe('RoomManager', () => {
 			});
 			const rm2 = new RoomManager(db2 as never, () => {}, deps);
 			// Prime cache
-			(rm2 as never).active.set(roomId, { game: mockGame, eventBus: mockGame.eventBus, lastActivityAt: Date.now() });
+			(rm2 as any).active.set(roomId, { game: mockGame, eventBus: mockGame.eventBus, lastActivityAt: Date.now() });
 
 			await rm2.deleteRoom(OWNER_ID, roomId);
 
 			// Cache should be empty — getGame would now call _getOrLoad and hit DB
-			expect((rm2 as never).active.has(roomId)).to.be.false;
+			expect((rm2 as any).active.has(roomId)).to.be.false;
 		});
 	});
 
@@ -410,7 +410,7 @@ describe('RoomManager', () => {
 			await rm.unloadRoom(roomId);
 
 			expect(saveStateFn.calledOnce).to.be.true;
-			expect((rm as never).active.has(roomId)).to.be.false;
+			expect((rm as any).active.has(roomId)).to.be.false;
 		});
 
 		it('is a no-op for a room not in the active cache', async () => {
@@ -435,7 +435,7 @@ describe('RoomManager', () => {
 			await rm.sweepIdleRooms(-1);
 
 			expect(saveStateFn.calledOnce).to.be.true;
-			expect((rm as never).active.has(roomId)).to.be.false;
+			expect((rm as any).active.has(roomId)).to.be.false;
 		});
 
 		it('keeps rooms within the idle threshold', async () => {
@@ -459,13 +459,13 @@ describe('RoomManager', () => {
 			const { roomId: roomB } = await rm.createRoom(OWNER_ID, 'Room B');
 
 			// Backdate Room A to look stale
-			(rm as never).active.get(roomA).lastActivityAt = Date.now() - 1000;
+			(rm as any).active.get(roomA).lastActivityAt = Date.now() - 1000;
 
 			// Threshold of 500ms — Room A (1000ms old) is stale, Room B is fresh
 			await rm.sweepIdleRooms(500);
 
-			expect((rm as never).active.has(roomA)).to.be.false;
-			expect((rm as never).active.has(roomB)).to.be.true;
+			expect((rm as any).active.has(roomA)).to.be.false;
+			expect((rm as any).active.has(roomB)).to.be.true;
 			expect(saveStateFn.calledOnce).to.be.true;
 		});
 	});

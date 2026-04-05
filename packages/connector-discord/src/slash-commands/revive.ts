@@ -48,6 +48,7 @@ export const revive: SlashCommand = {
 			);
 			const game = await ctx.roomManager.getGame(roomId);
 			const character = await game.getCharacter({
+				channel: null,
 				id: supabaseUserId,
 				name: interaction.user.username,
 			});

@@ -19,6 +19,7 @@
     "@deck-monsters/engine": "workspace:*",
     "@deck-monsters/server": "workspace:*",
     "discord.js": "^14.18.0",
+    "drizzle-orm": "^0.44.7",
     "zod": "^3.25.71"
   },
   "devDependencies": {
