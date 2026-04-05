@@ -96,15 +96,15 @@ The project deploys as three separate Railway services from the same GitHub repo
 
 ### 2b. Service: Web (static SPA)
 
-Railway auto-detects the Vite app. If it didn't configure itself correctly, go to the service → **Settings → Build** and set:
+The web service is configured via `apps/web/railway.toml` (checked into the repo), which tells Railway to use Nixpacks and the correct monorepo build command. You just need to point Railway at that config file.
+
+Go to the service → **Settings → Source** and set:
 
 | Setting | Value |
 |---|---|
-| **Root directory** | `apps/web` |
-| **Builder** | `Nixpacks` |
-| **Build command** | `pnpm --filter @deck-monsters/engine build && pnpm --filter @deck-monsters/web build` |
-| **Output directory** | `apps/web/dist` |
-| **Start command** | _(leave blank — Railway serves the static output)_ |
+| **Config file path** | `apps/web/railway.toml` |
+
+That's it — no Dockerfile, no manual build command entry. Railway will read the config and build the SPA with Nixpacks, then serve it via [`serve`](https://github.com/vercel/serve).
 
 Go to **Settings → Networking** and generate a public domain so you have a URL for the web app.
 
