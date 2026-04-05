@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "start": "serve dist -s -l ${PORT:-3000}",
+    "start": "serve dist -s -l tcp://0.0.0.0:${PORT:-3000}",
     "lint": "eslint src"
   },
   "dependencies": {
