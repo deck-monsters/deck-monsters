@@ -3,7 +3,7 @@ import { SignJWT, generateKeyPair, exportJWK, createLocalJWKSet } from 'jose';
 
 import { createContext, _setJWKSOverride } from './context.js';
 
-// Minimal fake Fastify request factory
+// Minimal fake Fastify request factory (HTTP path — has req.query)
 function makeReq(opts: {
 	authorization?: string;
 	queryToken?: string;
@@ -15,6 +15,23 @@ function makeReq(opts: {
 			'x-service-token': opts.serviceToken,
 		},
 		query: opts.queryToken !== undefined ? { token: opts.queryToken } : {},
+	};
+}
+
+// Fake raw Node.js IncomingMessage (WebSocket path — has req.url, no req.query)
+function makeRawReq(opts: {
+	authorization?: string;
+	queryToken?: string;
+	serviceToken?: string;
+}) {
+	const qs = opts.queryToken !== undefined ? `?token=${encodeURIComponent(opts.queryToken)}` : '';
+	return {
+		headers: {
+			authorization: opts.authorization,
+			'x-service-token': opts.serviceToken,
+		},
+		url: `/trpc${qs}`,
+		// Deliberately no .query property — simulates IncomingMessage
 	};
 }
 
@@ -87,12 +104,20 @@ describe('trpc/context.ts', () => {
 			expect(ctx.userId).to.equal('user-abc');
 		});
 
-		it('extracts userId from ?token= query param (WebSocket fallback)', async () => {
+		it('extracts userId from ?token= query param (WebSocket fallback via req.query)', async () => {
 			const token = await signJwt('user-ws');
 			const ctx = await createContext(
 				makeCtxOpts(makeReq({ queryToken: token }))
 			);
 			expect(ctx.userId).to.equal('user-ws');
+		});
+
+		it('extracts userId from ?token= in req.url (WebSocket raw IncomingMessage fallback)', async () => {
+			const token = await signJwt('user-ws-raw');
+			const ctx = await createContext(
+				makeCtxOpts(makeRawReq({ queryToken: token }))
+			);
+			expect(ctx.userId).to.equal('user-ws-raw');
 		});
 
 		it('prefers Authorization header over query param when both are present', async () => {

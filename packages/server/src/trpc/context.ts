@@ -38,12 +38,29 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 
 	// For WebSocket browser clients, Authorization headers aren't settable — accept
 	// a token query parameter as a fallback on the HTTP upgrade request.
-	const rawToken =
-		authHeader?.startsWith('Bearer ') ? authHeader.slice(7)
-		: typeof req.query === 'object' &&
-		  typeof (req.query as Record<string, unknown>)['token'] === 'string'
-		? (req.query as Record<string, string>)['token']
-		: null;
+	//
+	// Two sources for the query token:
+	// 1. req.query (Fastify-parsed object) — present for HTTP requests
+	// 2. req.url  (raw Node.js IncomingMessage path+query) — present for WebSocket
+	//    upgrade requests, where tRPC passes req.raw instead of the Fastify wrapper
+	const queryToken = (() => {
+		const q = (req as Record<string, unknown>)['query'];
+		if (typeof q === 'object' && q !== null) {
+			const t = (q as Record<string, unknown>)['token'];
+			if (typeof t === 'string') return t;
+		}
+		const url = (req as Record<string, unknown>)['url'];
+		if (typeof url === 'string' && url.includes('?')) {
+			const qs = url.slice(url.indexOf('?') + 1);
+			const t = new URLSearchParams(qs).get('token');
+			if (t) return t;
+		}
+		return null;
+	})();
+
+	const rawToken = authHeader?.startsWith('Bearer ')
+		? authHeader.slice(7)
+		: queryToken;
 
 	if (!rawToken) {
 		return { userId: null, serviceTokenValid };
