@@ -67,6 +67,7 @@ describe('trpc/context.ts', () => {
 	async function signJwt(sub: string): Promise<string> {
 		return new SignJWT({ sub })
 			.setProtectedHeader({ alg: 'RS256', kid: 'test-key' })
+			.setAudience('authenticated')
 			.setIssuedAt()
 			.setExpirationTime('1h')
 			.sign(privateKey);
