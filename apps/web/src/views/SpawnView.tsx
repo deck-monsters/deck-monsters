@@ -2,41 +2,53 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { trpc } from '../lib/trpc.js';
 
-const MONSTER_TYPES = [
-  { value: 'basilisk', label: 'Basilisk', description: 'Cunning serpent. Balanced stats.' },
-  { value: 'gladiator', label: 'Gladiator', description: 'Armored warrior. High AC, strong melee.' },
-  { value: 'jinn', label: 'Jinn', description: 'Magical spirit. High INT, unpredictable.' },
-  { value: 'minotaur', label: 'Minotaur', description: 'Brutal brute. High STR, low DEX.' },
-  { value: 'weeping angel', label: 'Weeping Angel', description: 'Terrifying stalker. Fast and deadly.' },
-];
-
 export default function SpawnView() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const [selectedType, setSelectedType] = useState('');
-  const [monsterName, setMonsterName] = useState('');
+  const [log, setLog] = useState<string[]>([]);
+  const [spawning, setSpawning] = useState(false);
+  const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  // Subscribe to private announce events so spawn progress appears in this view
+  trpc.game.ringFeed.useSubscription(
+    { roomId: roomId! },
+    {
+      enabled: !!roomId && spawning,
+      onData(tracked) {
+        const event = tracked.data;
+        if (event.scope === 'private' && event.type === 'announce' && event.text) {
+          setLog((prev) => [...prev, event.text]);
+        }
+      },
+    },
+  );
 
   const sendCommand = trpc.game.command.useMutation({
     onSuccess: () => {
-      setSuccess(`${monsterName || 'Your monster'} has been spawned! Head to Monsters to see them.`);
-      setMonsterName('');
-      setSelectedType('');
+      setSpawning(false);
+      setDone(true);
     },
-    onError: (err) => setError(err.message),
+    onError: (err) => {
+      setSpawning(false);
+      setError(err.message);
+    },
   });
 
-  function handleSpawn(e: React.FormEvent) {
-    e.preventDefault();
-    if (!roomId || !selectedType || !monsterName.trim()) return;
+  function handleSpawn() {
+    if (!roomId || spawning) return;
     setError(null);
-    setSuccess(null);
-    sendCommand.mutate({
-      roomId,
-      command: `spawn a ${selectedType} named ${monsterName.trim()}`,
-      isDM: true,
-    });
+    setLog([]);
+    setDone(false);
+    setSpawning(true);
+    sendCommand.mutate({ roomId, command: 'spawn a monster', isDM: true });
+  }
+
+  function handleReset() {
+    setLog([]);
+    setDone(false);
+    setError(null);
+    setSpawning(false);
   }
 
   if (!roomId) return <div className="empty-state">No room selected.</div>;
@@ -45,57 +57,52 @@ export default function SpawnView() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <button className="btn" onClick={() => navigate(`/monsters/${roomId}`)}>
-          ← Monsters
+          Monsters
         </button>
         <h1 style={{ margin: 0 }}>Spawn a Monster</h1>
       </div>
 
       {error && <div className="error-msg">{error}</div>}
-      {success && <div className="success-msg">{success}</div>}
 
-      <form onSubmit={handleSpawn}>
-        <div className="form-group">
-          <label>Monster name</label>
-          <input
-            type="text"
-            value={monsterName}
-            onChange={(e) => setMonsterName(e.target.value)}
-            placeholder="e.g. Fang, Blaze, Shadow…"
-            required
-          />
+      {!spawning && !done && (
+        <div className="spawn-intro">
+          <p style={{ color: 'var(--text-dim)', marginBottom: 16 }}>
+            The game will guide you through choosing your monster's type, gender, name, and
+            appearance. Answer each prompt as it appears.
+          </p>
+          <button className="btn btn-primary" onClick={handleSpawn}>
+            Spawn a Monster
+          </button>
         </div>
+      )}
 
-        <div className="form-group">
-          <label>Monster type</label>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: 8,
-            }}
-          >
-            {MONSTER_TYPES.map((mt) => (
-              <div
-                key={mt.value}
-                className={`monster-card ${selectedType === mt.value ? 'selected' : ''}`}
-                onClick={() => setSelectedType(mt.value)}
-              >
-                <p className="monster-card-name">{mt.label}</p>
-                <p className="monster-card-meta">{mt.description}</p>
-              </div>
-            ))}
+      {spawning && (
+        <div style={{ color: 'var(--text-dim)', marginBottom: 12 }}>
+          Spawning in progress — answer the prompts as they appear…
+        </div>
+      )}
+
+      {done && (
+        <div>
+          <div className="success-msg">Your monster has been spawned!</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button className="btn btn-primary" onClick={() => navigate(`/monsters/${roomId}`)}>
+              View Monsters
+            </button>
+            <button className="btn" onClick={handleReset}>
+              Spawn another
+            </button>
           </div>
         </div>
+      )}
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={sendCommand.isPending || !selectedType || !monsterName.trim()}
-          style={{ marginTop: 8 }}
-        >
-          {sendCommand.isPending ? 'Spawning…' : 'Spawn monster'}
-        </button>
-      </form>
+      {log.length > 0 && (
+        <div className="spawn-log">
+          {log.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

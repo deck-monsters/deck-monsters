@@ -81,7 +81,7 @@ export default function MonstersView() {
     fetchedRef.current = true;
     sendCommand.mutate({
       roomId,
-      command: 'look at my monsters',
+      command: 'look at monsters',
       isDM: true,
     });
   }, [roomId]);

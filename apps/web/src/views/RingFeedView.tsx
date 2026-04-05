@@ -129,9 +129,9 @@ export default function RingFeedView() {
 
       <p style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 8 }}>
         Type commands like you would in Slack/Discord. Examples:{' '}
-        <code style={{ fontFamily: 'var(--mono)' }}>spawn a basilisk named Fang</code>,{' '}
+        <code style={{ fontFamily: 'var(--mono)' }}>spawn a monster</code>,{' '}
         <code style={{ fontFamily: 'var(--mono)' }}>send Fang to the ring</code>,{' '}
-        <code style={{ fontFamily: 'var(--mono)' }}>look at my monsters</code>
+        <code style={{ fontFamily: 'var(--mono)' }}>look at monsters</code>
       </p>
     </div>
   );

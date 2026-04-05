@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
+import PromptOverlay from './PromptOverlay.js';
 
 export default function AppLayout() {
   const { signOut, user } = useAuth();
@@ -8,7 +9,7 @@ export default function AppLayout() {
   return (
     <div className="app-layout">
       <header className="app-header">
-        <span className="logo">⚔️ Deck Monsters</span>
+        <span className="logo">Deck Monsters</span>
         <div className="spacer" />
         {user && (
           <>
@@ -37,6 +38,9 @@ export default function AppLayout() {
       <main className="app-main">
         <Outlet />
       </main>
+
+      {/* Global prompt handler — renders when the engine asks an interactive question */}
+      <PromptOverlay />
     </div>
   );
 }

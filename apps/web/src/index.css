@@ -361,6 +361,109 @@ h3 { font-size: 14px; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* Prompt overlay ------------------------------------------------------------ */
+
+.prompt-overlay {
+  position: fixed;
+  bottom: 20px;
+  right: 24px;
+  z-index: 100;
+  width: 380px;
+  max-width: calc(100vw - 48px);
+  animation: prompt-slide-in 0.2s ease;
+}
+
+@keyframes prompt-slide-in {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.prompt-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.prompt-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.prompt-queue-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.prompt-question {
+  font-size: 13px;
+  color: var(--text-bright);
+  margin: 0 0 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.prompt-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.prompt-choice-btn {
+  font-size: 12px;
+  padding: 5px 12px;
+}
+
+.prompt-choice-btn:hover:not(:disabled) {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.prompt-text-form {
+  display: flex;
+  gap: 8px;
+}
+
+.prompt-text-form input {
+  flex: 1;
+  font-size: 13px;
+}
+
+/* Spawn view ---------------------------------------------------------------- */
+
+.spawn-intro {
+  max-width: 480px;
+}
+
+.spawn-log {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-top: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 @media (max-width: 640px) {
   .app-layout {
     grid-template-columns: 1fr;

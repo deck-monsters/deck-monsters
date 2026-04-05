@@ -90,10 +90,10 @@ export default function DeckBuilderView() {
     if (!roomId || !decodedName) return;
     setError(null);
     setSuccess(null);
-    // The engine's equip command walks through an interactive prompt;
-    // navigate to ring feed where the multi-step flow will play out.
-    sendCommand.mutate({ roomId, command: `equip ${decodedName}`, isDM: true });
-    setSuccess('Equip prompt sent — check the ring feed or your DMs to complete the flow.');
+    sendCommand.mutate(
+      { roomId, command: `equip ${decodedName}`, isDM: true },
+      { onSuccess: () => setSuccess('Deck equipped successfully!') },
+    );
   }
 
   if (!roomId || !decodedName) return <div className="empty-state">No monster selected.</div>;
