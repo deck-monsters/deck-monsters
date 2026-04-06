@@ -13,7 +13,12 @@ export type EventType =
 	| 'ring.cardDrop'
 	| 'card.played'
 	| 'announce'
-	| 'prompt.request';
+	| 'prompt.request'
+	| 'prompt.timeout'
+	| 'prompt.cancel'
+	| 'quick_actions'
+	| 'system'
+	| 'handshake';
 
 export type EventScope = 'public' | 'private';
 
@@ -26,6 +31,10 @@ export interface GameEvent {
 	targetUserId?: string;
 	payload: Record<string, unknown>;
 	text: string;
+	/** Protocol version of the server that emitted this event (set on handshake events). */
+	protocolVersion?: number;
+	/** The commandId that triggered this event, for client-side correlation. */
+	causedByCommandId?: string;
 }
 
 export interface EventSubscriber {

@@ -1,0 +1,28 @@
+/* CRT scanline overlay — controlled by --crt-scanline-opacity (default 0 = off) */
+
+.terminal-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, var(--crt-scanline-opacity)) 2px,
+    rgba(0, 0, 0, var(--crt-scanline-opacity)) 4px
+  );
+  z-index: 100;
+}
+
+/* Blinking cursor effect on the active command input */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .command-input:not(:disabled) {
+    caret-color: var(--color-accent);
+    /* Native caret blinks automatically */
+  }
+}

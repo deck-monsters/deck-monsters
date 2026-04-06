@@ -15,7 +15,7 @@ export default function RoomLobbyView() {
   const createRoom = trpc.room.create.useMutation({
     onSuccess: (data) => {
       void utils.room.list.invalidate();
-      navigate(`/room/${data.roomId}`);
+      navigate(`/ring/${data.roomId}`);
     },
     onError: (err) => setError(err.message),
   });
@@ -23,7 +23,7 @@ export default function RoomLobbyView() {
   const joinRoom = trpc.room.join.useMutation({
     onSuccess: (data) => {
       void utils.room.list.invalidate();
-      navigate(`/room/${data.roomId}`);
+      navigate(`/ring/${data.roomId}`);
     },
     onError: (err) => setError(err.message),
   });
@@ -43,7 +43,7 @@ export default function RoomLobbyView() {
   }
 
   return (
-    <div className="page">
+    <div>
       <h1>Rooms</h1>
 
       {error && <div className="error-msg">{error}</div>}
@@ -53,9 +53,8 @@ export default function RoomLobbyView() {
           <p className="panel-title">Create a room</p>
           <form onSubmit={handleCreate}>
             <div className="form-group">
-              <label htmlFor="new-room-name">Room name</label>
+              <label>Room name</label>
               <input
-                id="new-room-name"
                 type="text"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
@@ -77,15 +76,14 @@ export default function RoomLobbyView() {
           <p className="panel-title">Join a room</p>
           <form onSubmit={handleJoin}>
             <div className="form-group">
-              <label htmlFor="invite-code">Invite code</label>
+              <label>Invite code</label>
               <input
-                id="invite-code"
                 type="text"
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
                 placeholder="ABC12345"
                 maxLength={8}
-                style={{ textTransform: 'uppercase' }}
+                style={{ textTransform: 'uppercase', fontFamily: 'var(--mono)' }}
                 required
               />
             </div>
@@ -117,26 +115,28 @@ export default function RoomLobbyView() {
               key={room.roomId}
               className="panel"
               style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
-              onClick={() => navigate(`/room/${room.roomId}`)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/room/${room.roomId}`); }}
+              onClick={() => navigate(`/ring/${room.roomId}`)}
             >
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-fg-bright)' }}>
-                  {room.name}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--color-fg-dim)' }}>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{room.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>
                   <span className="tag">{room.role}</span>
                 </div>
               </div>
-              <button
-                className="btn"
-                onClick={(e) => { e.stopPropagation(); navigate(`/room/${room.roomId}`); }}
-                aria-label={`Enter ${room.name}`}
-              >
-                Enter
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  className="btn"
+                  onClick={(e) => { e.stopPropagation(); navigate(`/ring/${room.roomId}`); }}
+                >
+                  Ring Feed
+                </button>
+                <button
+                  className="btn"
+                  onClick={(e) => { e.stopPropagation(); navigate(`/monsters/${room.roomId}`); }}
+                >
+                  Monsters
+                </button>
+              </div>
             </div>
           ))}
         </div>

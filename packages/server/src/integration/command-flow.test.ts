@@ -225,6 +225,80 @@ describe('integration: command flow', function () {
 		});
 	});
 
+	describe('protocol v1 events', () => {
+		it('publishes prompt.timeout when a prompt times out', async () => {
+			const game = createTestGame();
+			const events: ReturnType<typeof game.eventBus.getRecentEvents> = [];
+
+			const unsub = game.eventBus.subscribe('timeout-test', {
+				userId: USER_A,
+				deliver(e) { events.push(e); },
+			});
+
+			// Use a 50ms timeout so the test completes quickly
+			const promptPromise = game.eventBus.sendPrompt(
+				USER_A,
+				'Will you answer in time?',
+				['yes', 'no'],
+				50,
+			);
+
+			// The promise should reject after 50ms
+			await promptPromise.catch(() => { /* expected */ });
+			unsub();
+
+			const timeoutEvent = events.find(e => e.type === 'prompt.timeout');
+			expect(timeoutEvent, 'prompt.timeout event should be published').to.exist;
+			expect(timeoutEvent?.targetUserId).to.equal(USER_A);
+			expect(timeoutEvent?.scope).to.equal('private');
+		});
+
+		it('cancelPrompt resolves the prompt and publishes prompt.cancel', async () => {
+			const game = createTestGame();
+			const events: ReturnType<typeof game.eventBus.getRecentEvents> = [];
+
+			const unsub = game.eventBus.subscribe('cancel-test', {
+				userId: USER_A,
+				deliver(e) { events.push(e); },
+			});
+
+			let requestId = '';
+			// Subscribe to capture the requestId from the prompt.request event
+			const captureUnsub = game.eventBus.subscribe('capture-req', {
+				userId: USER_A,
+				deliver(e) {
+					if (e.type === 'prompt.request') {
+						requestId = (e.payload as { requestId: string }).requestId;
+					}
+				},
+			});
+
+			const promptPromise = game.eventBus.sendPrompt(
+				USER_A,
+				'Pick an option',
+				['a', 'b'],
+				5_000,
+			);
+
+			// Wait for the prompt.request to be delivered
+			await new Promise<void>(res => setImmediate(res));
+			captureUnsub();
+
+			expect(requestId, 'requestId should be captured').to.be.a('string').and.not.empty;
+
+			game.eventBus.cancelPrompt(requestId);
+
+			// The promise should resolve with the sentinel value
+			const answer = await promptPromise;
+			unsub();
+
+			expect(answer).to.equal('__cancelled__');
+			const cancelEvent = events.find(e => e.type === 'prompt.cancel');
+			expect(cancelEvent, 'prompt.cancel event should be published').to.exist;
+			expect(cancelEvent?.targetUserId).to.equal(USER_A);
+		});
+	});
+
 	describe('channel wiring', () => {
 		it('channel function sends announce events to the event bus', async () => {
 			const game = createTestGame();

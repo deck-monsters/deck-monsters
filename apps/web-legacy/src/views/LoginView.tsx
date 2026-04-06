@@ -39,31 +39,13 @@ export default function LoginView() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--color-bg)',
+        background: 'var(--bg)',
         padding: 16,
       }}
     >
       <div style={{ width: '100%', maxWidth: 360 }}>
-        <h1
-          style={{
-            textAlign: 'center',
-            marginBottom: 8,
-            color: 'var(--color-fg-bright)',
-            letterSpacing: '0.1em',
-            fontSize: '1.4rem',
-          }}
-        >
-          DECK MONSTERS
-        </h1>
-        <p
-          style={{
-            textAlign: 'center',
-            color: 'var(--color-fg-dim)',
-            fontSize: 13,
-            marginBottom: 24,
-            letterSpacing: '0.05em',
-          }}
-        >
+        <h1 style={{ textAlign: 'center', marginBottom: 8 }}>⚔️ Deck Monsters</h1>
+        <p style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: 13, marginBottom: 24 }}>
           Turn-based monster battling arena
         </p>
 
@@ -85,20 +67,19 @@ export default function LoginView() {
               alignItems: 'center',
               gap: 8,
               marginBottom: 16,
-              color: 'var(--color-fg-dim)',
+              color: 'var(--text-dim)',
               fontSize: 12,
             }}
           >
-            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
             or
-            <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
           </div>
 
           <form onSubmit={(e) => void handleEmailSubmit(e)}>
             <div className="form-group">
-              <label htmlFor="login-email">Email</label>
+              <label>Email</label>
               <input
-                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -107,9 +88,8 @@ export default function LoginView() {
               />
             </div>
             <div className="form-group">
-              <label htmlFor="login-password">Password</label>
+              <label>Password</label>
               <input
-                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -128,7 +108,7 @@ export default function LoginView() {
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-fg-dim)', marginTop: 12 }}>
+          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-dim)', marginTop: 12 }}>
             {mode === 'signin' ? (
               <>
                 No account?{' '}
@@ -136,11 +116,10 @@ export default function LoginView() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--color-accent)',
+                    color: 'var(--accent)',
                     cursor: 'pointer',
                     padding: 0,
                     fontSize: 'inherit',
-                    fontFamily: 'inherit',
                   }}
                   onClick={() => { setMode('signup'); setError(null); }}
                 >
@@ -154,11 +133,10 @@ export default function LoginView() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--color-accent)',
+                    color: 'var(--accent)',
                     cursor: 'pointer',
                     padding: 0,
                     fontSize: 'inherit',
-                    fontFamily: 'inherit',
                   }}
                   onClick={() => { setMode('signin'); setError(null); }}
                 >
