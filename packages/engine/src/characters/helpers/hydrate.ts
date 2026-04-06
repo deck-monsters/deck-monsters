@@ -96,6 +96,6 @@ const hydrateCharacter = (characterObj: CharacterObj, log?: (msg: string) => voi
 };
 
 const hydrateCharacters = (charactersJSON: string): BaseCharacter[] =>
-	(JSON.parse(charactersJSON) as CharacterObj[]).map(hydrateCharacter);
+	(JSON.parse(charactersJSON) as CharacterObj[]).map(obj => hydrateCharacter(obj));
 
 export { hydrateCharacter, hydrateCharacters };
