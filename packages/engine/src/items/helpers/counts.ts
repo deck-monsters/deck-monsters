@@ -3,9 +3,13 @@ export interface ItemCountEntry {
 	cost: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getItemKey = (item: any): string =>
+	item.itemType ?? item.cardType ?? item.name ?? 'Unknown';
+
 export const getItemCounts = (items: Array<{ itemType?: string; cardType?: string; name?: string }>): Record<string, number> =>
 	items.reduce<Record<string, number>>((itemCounts, item) => {
-		const key = item.itemType ?? (item as any).cardType ?? (item as any).name ?? 'Unknown';
+		const key = getItemKey(item);
 		itemCounts[key] = (itemCounts[key] ?? 0) + 1;
 		return itemCounts;
 	}, {});

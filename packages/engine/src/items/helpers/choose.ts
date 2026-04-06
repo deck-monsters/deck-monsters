@@ -2,16 +2,16 @@ import { getItemChoices, getItemChoicesWithPrice, getFinalItemChoices } from '..
 import { getArray } from '../../helpers/get-array.js';
 import { reduceSeries } from '../../helpers/promise.js';
 
-import { getItemCounts, getItemCountsWithPrice } from './counts.js';
+import { getItemCounts, getItemCountsWithPrice, getItemKey } from './counts.js';
 
 const itemChoiceQuestion = ({ itemChoices }: { itemChoices: string }): string =>
 	`Choose one or more of the following items:\n\n${itemChoices}`;
 
-const itemChoiceResult = ({ selectedItems }: { selectedItems: Array<{ itemType: string }> }): string => {
+const itemChoiceResult = ({ selectedItems }: { selectedItems: Array<{ itemType?: string }> }): string => {
 	if (selectedItems.length <= 0) {
 		return 'You selected no items.';
 	} else if (selectedItems.length === 1) {
-		return `You selected a ${selectedItems[0].itemType.toLowerCase()} item.`;
+		return `You selected a ${(getItemKey(selectedItems[0])).toLowerCase()} item.`;
 	}
 
 	return `You selected the following items:\n\n${getFinalItemChoices(selectedItems)}`;
@@ -52,7 +52,7 @@ const chooseItems = ({
 			return reduceSeries(selectedItemIndexes, (selection: any[], index: string) => {
 				const itemType = Object.keys(itemCatalog)[Number(index)];
 				const itemIndex = remainingItems.findIndex(
-					(potentialItem: { itemType: string }) => potentialItem.itemType === itemType
+					(potentialItem: any) => getItemKey(potentialItem) === itemType
 				);
 
 				if (itemIndex >= 0) {
