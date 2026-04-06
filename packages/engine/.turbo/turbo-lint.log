@@ -112,6 +112,19 @@
    7:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   15:8   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
+/workspaces/deck-monsters/packages/engine/src/build/dungeon-master-guide.ts
+  34:49   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:37   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:37   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:36   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:35   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  80:91   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  80:108  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:53   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  85:91   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  85:108  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  87:51   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
 /workspaces/deck-monsters/packages/engine/src/build/monster-manual.ts
    9:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   11:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -832,6 +845,7 @@
   105:21   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   121:43   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   128:116  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  178:33   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   237:35   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   237:55   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   237:95   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
@@ -873,6 +887,7 @@
   27:33   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   43:2    warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
   44:9    error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  66:72   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   76:58   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   96:39   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   97:39   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
@@ -889,15 +904,15 @@
   29:20  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   34:23  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   35:23  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  66:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
-  67:14  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  68:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
-  69:14  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  70:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
-  71:14  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  73:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
+  74:14  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   75:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
-  76:78  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  79:41  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  76:14  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  77:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
+  78:14  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  89:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
+  90:78  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  93:41  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
 
 /workspaces/deck-monsters/packages/engine/src/characters/helpers/random.ts
     6:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
@@ -910,16 +925,16 @@
    35:23  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
    39:30  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
    40:36  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-   51:13  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-   77:84  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-   79:48  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-   90:31  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  107:28  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  107:38  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  110:46  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  120:33  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  127:29  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  129:33  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+   55:13  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+   81:84  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+   83:48  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+   94:31  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  111:28  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  111:38  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  114:46  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  124:33  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  131:29  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  133:33  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
 
 /workspaces/deck-monsters/packages/engine/src/commands/character.ts
    4:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -928,16 +943,19 @@
   34:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   43:77  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
+/workspaces/deck-monsters/packages/engine/src/commands/help.ts
+  5:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
 /workspaces/deck-monsters/packages/engine/src/commands/index.ts
-  17:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  25:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  29:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  68:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  69:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  70:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  74:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  85:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  95:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   21:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   29:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   79:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   96:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /workspaces/deck-monsters/packages/engine/src/commands/look-at.ts
   6:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -964,12 +982,13 @@
   15:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /workspaces/deck-monsters/packages/engine/src/creatures/base.ts
+    5:10  warning  'getAttributeChoices' is defined but never used. Allowed unused vars must match /^_/u                                                    @typescript-eslint/no-unused-vars
    24:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
    25:28  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
    26:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
    27:28  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   469:9   warning  'allowedKeys' is assigned a value but only used as a type. Allowed unused vars must match /^_/u                                          @typescript-eslint/no-unused-vars
-  523:15  warning  'ex' is defined but never used                                                                                                           @typescript-eslint/no-unused-vars
+  521:15  warning  'ex' is defined but never used                                                                                                           @typescript-eslint/no-unused-vars
 
 /workspaces/deck-monsters/packages/engine/src/creatures/items.ts
   14:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
@@ -983,6 +1002,9 @@
   20:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
   32:49  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   33:53  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+
+/workspaces/deck-monsters/packages/engine/src/events/room-event-bus.test.ts
+  84:9  warning  'p3' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /workspaces/deck-monsters/packages/engine/src/exploration/discoveries/base.ts
   13:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
@@ -1082,42 +1104,42 @@
   214:14  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
   215:9   error  Unexpected aliasing of 'this' to local variable  @typescript-eslint/no-this-alias
   225:25  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  238:40  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  239:24  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  239:59  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  239:71  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  245:40  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  246:24  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  246:59  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  246:71  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  252:43  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  253:27  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  253:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  253:77  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  259:41  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  262:25  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  262:42  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  263:42  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  273:37  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  276:16  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  280:27  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  280:61  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  296:33  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  301:31  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  306:41  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  313:35  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  324:33  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  335:29  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  335:45  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  340:25  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  355:25  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  355:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  372:23  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  388:22  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  407:22  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  446:18  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  487:55  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
-  487:61  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  249:40  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  250:24  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  250:59  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  250:71  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  256:40  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  257:24  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  257:59  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  257:71  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  263:43  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  264:27  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  264:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  264:77  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  270:41  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  273:25  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  273:42  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  274:42  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  284:37  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  287:16  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  291:27  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  291:61  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  309:33  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  314:31  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  319:41  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  326:35  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  337:33  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  348:29  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  348:45  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  353:25  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  368:25  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  368:62  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  385:23  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  401:22  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  420:22  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  459:18  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  500:55  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  500:61  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
 
 /workspaces/deck-monsters/packages/engine/src/helpers/experience.test.ts
   139:5  warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
@@ -1133,8 +1155,9 @@
   30:3   error    Unexpected aliasing of 'this' to local variable                                                                                          @typescript-eslint/no-this-alias
 
 /workspaces/deck-monsters/packages/engine/src/index.ts
-  40:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  46:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:15  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  50:52  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:13  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
 
 /workspaces/deck-monsters/packages/engine/src/items/base.ts
    26:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -1151,8 +1174,13 @@
   36:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   39:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   40:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  51:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  68:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/workspaces/deck-monsters/packages/engine/src/items/helpers/counts.ts
+  6:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
+  7:34  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
 
 /workspaces/deck-monsters/packages/engine/src/items/helpers/draw.ts
    6:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -1284,13 +1312,6 @@
 /workspaces/deck-monsters/packages/engine/src/items/scrolls/sorting-hat.test.ts
   11:15  warning  'item' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
 
-/workspaces/deck-monsters/packages/engine/src/items/scrolls/sorting-hat.ts
-  20:66   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  20:104  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  20:119  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  26:53   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  29:53   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
 /workspaces/deck-monsters/packages/engine/src/items/scrolls/targeting.ts
   19:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   27:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -1389,15 +1410,15 @@
   62:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /workspaces/deck-monsters/packages/engine/src/monsters/helpers/equip.ts
-   4:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
-   5:24  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-   5:34  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  22:20  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  22:56  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  26:19  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+   5:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
+   6:24  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+   6:34  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  23:20  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  23:56  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   27:19  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
-  32:22  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  28:19  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
   33:22  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+  34:22  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
 
 /workspaces/deck-monsters/packages/engine/src/monsters/helpers/hydrate.ts
    4:1   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
@@ -1424,6 +1445,8 @@
    22:22   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
    38:2    warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
    39:9    error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+   72:42   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
+   72:69   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
    91:37   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
    92:37   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
    94:61   error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
@@ -1505,6 +1528,6 @@
   34:2   warning  '// eslint-disable-next-line @typescript-eslint/no-explicit-any' has no effect because you have 'noInlineConfig' setting in your config
   35:19  error    Unexpected any. Specify a different type                                                                                                 @typescript-eslint/no-explicit-any
 
-✖ 1178 problems (1111 errors, 67 warnings)
+✖ 1195 problems (1124 errors, 71 warnings)
 
  ELIFECYCLE  Command failed with exit code 1.
