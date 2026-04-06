@@ -1,0 +1,4 @@
+
+> @deck-monsters/web@0.1.0 lint /workspaces/deck-monsters/apps/web
+> eslint src
+

@@ -1,0 +1,4 @@
+
+> @deck-monsters/connector-discord@0.1.0 lint /workspaces/deck-monsters/packages/connector-discord
+> eslint src
+

@@ -1,13 +1,19 @@
+import { randomUUID } from 'node:crypto';
+
 import { z } from 'zod';
 import { TRPCError, tracked } from '@trpc/server';
 
-import type { GameEvent } from '@deck-monsters/engine';
+import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
 import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
 
 export type AppRouter = ReturnType<typeof createRouter>;
+
+// Increment when the client<->server protocol changes in a breaking way.
+const PROTOCOL_VERSION = 1;
+const BUILD_VERSION = process.env['BUILD_VERSION'] ?? 'dev';
 
 // Per-user active-flow lock.  Key = `${roomId}:${userId}`.
 // While a command flow is in progress for a given user+room, further commands
@@ -91,6 +97,8 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				activeFlows.add(flowKey);
 
+				const commandId = randomUUID();
+
 				// Channel callback: all output (announcements and prompts) goes through
 				// the event bus so the web client receives it via the ringFeed WebSocket.
 				//
@@ -120,7 +128,7 @@ export function createRouter(roomManager: RoomManager) {
 							scope: 'private',
 							targetUserId: ctx.userId,
 							text: announce,
-							payload: {},
+							payload: { causedByCommandId: commandId },
 						});
 					}
 
@@ -150,7 +158,9 @@ export function createRouter(roomManager: RoomManager) {
 						activeFlows.delete(flowKey);
 					});
 
-				return { ok: true };
+				// TODO: emit quick_actions event after command completes with contextual suggestions
+
+				return { ok: true, commandId };
 			}),
 
 		respondToPrompt: protectedProcedure
@@ -168,6 +178,20 @@ export function createRouter(roomManager: RoomManager) {
 				return { ok: true };
 			}),
 
+		cancelPrompt: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					requestId: z.string(),
+				})
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const eventBus = await roomManager.getEventBus(input.roomId);
+				eventBus.cancelPrompt(input.requestId);
+				return { ok: true };
+			}),
+
 		ringFeed: protectedProcedure
 			.input(
 				z.object({
@@ -178,6 +202,24 @@ export function createRouter(roomManager: RoomManager) {
 			.subscription(async function* ({ input, ctx, signal }) {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const eventBus = await roomManager.getEventBus(input.roomId);
+
+				// Emit handshake event first so the client can verify protocol compatibility.
+				const handshakeEvent: GameEvent = {
+					id: 'handshake',
+					roomId: input.roomId,
+					timestamp: Date.now(),
+					type: 'handshake' as EventType,
+					scope: 'private' as EventScope,
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						protocolVersion: PROTOCOL_VERSION,
+						buildVersion: BUILD_VERSION,
+						serverTime: new Date().toISOString(),
+						yourUserId: ctx.userId,
+					},
+				};
+				yield tracked('handshake', handshakeEvent);
 
 				// Deliver any missed events since the last received event ID.
 				if (input.lastEventId) {

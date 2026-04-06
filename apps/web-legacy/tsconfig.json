@@ -10,7 +10,7 @@
     "strict": true,
     "jsx": "react-jsx",
     "skipLibCheck": true,
-    "types": ["vite/client", "vitest/globals"]
+    "types": ["vite/client"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "../../packages/engine/src", "../../packages/server/src"]
