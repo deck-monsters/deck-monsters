@@ -35,6 +35,11 @@ function LoadingScreen() {
   );
 }
 
+function RedirectWithParam({ base }: { base: string }) {
+  const { roomId } = useParams<{ roomId: string }>();
+  return <Navigate to={`${base}/${roomId ?? ''}`} replace />;
+}
+
 function RoomView() {
   const { roomId } = useParams<{ roomId: string }>();
   const { data: room } = trpc.room.info.useQuery(
@@ -52,8 +57,14 @@ function RoomView() {
 }
 
 function RoomSettingsWrapper() {
+  const { roomId } = useParams<{ roomId: string }>();
+  const { data: room } = trpc.room.info.useQuery(
+    { roomId: roomId ?? '' },
+    { enabled: !!roomId }
+  );
+
   return (
-    <AppShell>
+    <AppShell roomName={room?.name} roomId={roomId}>
       <RoomSettingsView />
     </AppShell>
   );
@@ -170,8 +181,8 @@ export default function App() {
       <Route path="/join/:inviteCode" element={<JoinByInviteWrapper />} />
 
       {/* Redirect old ring/monster routes to new terminal */}
-      <Route path="/ring/:roomId" element={<Navigate to="/room/:roomId" replace />} />
-      <Route path="/monsters/:roomId" element={<Navigate to="/room/:roomId" replace />} />
+      <Route path="/ring/:roomId" element={<RedirectWithParam base="/room" />} />
+      <Route path="/monsters/:roomId" element={<RedirectWithParam base="/room" />} />
 
       {/* RequireAuth holds the loading screen while Supabase processes OAuth hash tokens */}
       <Route path="/" element={<RequireAuth><Navigate to="/rooms" replace /></RequireAuth>} />

@@ -1,10 +1,14 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 
 type Mode = 'signin' | 'signup';
 
 export default function LoginView() {
-  const { signInWithDiscord, signInWithEmail, signUpWithEmail } = useAuth();
+  const { session, signInWithDiscord, signInWithEmail, signUpWithEmail } = useAuth();
+
+  // Already authenticated — skip the login form
+  if (session) return <Navigate to="/rooms" replace />;
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

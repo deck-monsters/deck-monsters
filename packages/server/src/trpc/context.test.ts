@@ -85,6 +85,8 @@ describe('trpc/context.ts', () => {
 		return new SignJWT({ sub })
 			.setProtectedHeader({ alg: 'RS256', kid: 'test-key' })
 			.setAudience('authenticated')
+			// Matches the issuer expected by createContext: `${SUPABASE_URL}/auth/v1`
+			.setIssuer('https://test.supabase.co/auth/v1')
 			.setIssuedAt()
 			.setExpirationTime('1h')
 			.sign(privateKey);

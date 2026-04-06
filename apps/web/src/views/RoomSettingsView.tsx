@@ -17,7 +17,7 @@ export default function RoomSettingsView() {
     { enabled: !!roomId }
   );
 
-  const { data: members } = trpc.room.members.useQuery(
+  const { data: members, isLoading: membersLoading } = trpc.room.members.useQuery(
     { roomId: roomId ?? '' },
     { enabled: !!roomId }
   );
@@ -48,17 +48,25 @@ export default function RoomSettingsView() {
 
   async function copyInviteCode() {
     if (!room?.inviteCode) return;
-    await navigator.clipboard.writeText(room.inviteCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(room.inviteCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Could not copy to clipboard. Please copy the code manually.');
+    }
   }
 
   async function copyInviteLink() {
     if (!room?.inviteCode) return;
     const link = `${window.location.origin}/join/${room.inviteCode}`;
-    await navigator.clipboard.writeText(link);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      setError('Could not copy to clipboard. Please copy the link manually.');
+    }
   }
 
   return (
@@ -98,9 +106,13 @@ export default function RoomSettingsView() {
         </p>
       </div>
 
-      {members && members.length > 0 && (
-        <div className="panel">
-          <p className="panel-title">Members ({members.length})</p>
+      <div className="panel">
+        <p className="panel-title">
+          Members{members ? ` (${members.length})` : ''}
+        </p>
+        {membersLoading ? (
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-fg-dim)' }}>Loading members…</p>
+        ) : members && members.length > 0 ? (
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {members.map((m) => (
               <li
@@ -120,8 +132,10 @@ export default function RoomSettingsView() {
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-fg-dim)' }}>No members yet.</p>
+        )}
+      </div>
 
       <div className="panel" style={{ borderColor: 'rgba(255,107,107,0.3)' }}>
         <p className="panel-title" style={{ color: 'var(--color-error)' }}>Danger Zone</p>
@@ -164,33 +178,35 @@ export default function RoomSettingsView() {
           </div>
         )}
 
-        {!confirmDelete ? (
-          <button
-            className="btn"
-            style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
-            onClick={() => setConfirmDelete(true)}
-          >
-            Delete room
-          </button>
-        ) : (
-          <div>
-            <p style={{ color: 'var(--color-fg)', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-              This will permanently delete <strong>{room.name}</strong> and all its data. Are you sure?
-            </p>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                className="btn"
-                style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
-                disabled={deleteRoom.isPending}
-                onClick={() => deleteRoom.mutate({ roomId })}
-              >
-                {deleteRoom.isPending ? 'Deleting…' : 'Yes, delete it'}
-              </button>
-              <button className="btn" onClick={() => setConfirmDelete(false)}>
-                Cancel
-              </button>
+        {isOwner && (
+          !confirmDelete ? (
+            <button
+              className="btn"
+              style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
+              onClick={() => setConfirmDelete(true)}
+            >
+              Delete room
+            </button>
+          ) : (
+            <div>
+              <p style={{ color: 'var(--color-fg)', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                This will permanently delete <strong>{room.name}</strong> and all its data. Are you sure?
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  className="btn"
+                  style={{ borderColor: 'var(--color-error)', color: 'var(--color-error)' }}
+                  disabled={deleteRoom.isPending}
+                  onClick={() => deleteRoom.mutate({ roomId })}
+                >
+                  {deleteRoom.isPending ? 'Deleting…' : 'Yes, delete it'}
+                </button>
+                <button className="btn" onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
     </div>

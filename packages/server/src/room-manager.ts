@@ -148,7 +148,7 @@ export class RoomManager {
 	async getRoomInfo(
 		userId: string,
 		roomId: string
-	): Promise<{ roomId: string; name: string; inviteCode: string; memberCount: number; role: 'owner' | 'member' }> {
+	): Promise<{ roomId: string; name: string; inviteCode: string; memberCount: number; role: 'owner' | 'member' } | null> {
 		const rows = await this.db
 			.select({ id: rooms.id, name: rooms.name, inviteCode: rooms.inviteCode })
 			.from(rooms)
@@ -168,8 +168,11 @@ export class RoomManager {
 				.limit(1),
 		]);
 
+		// Non-members get null — callers should throw NOT_FOUND or FORBIDDEN
+		if (!memberRows[0]) return null;
+
 		const memberCount = countRows[0]?.value ?? 0;
-		const role = (memberRows[0]?.role ?? 'member') as 'owner' | 'member';
+		const role = memberRows[0].role as 'owner' | 'member';
 
 		return {
 			roomId: rows[0].id,

@@ -49,12 +49,14 @@ export async function dispatchCommand(
 	const sub = await ctx.bot.getOrCreateSubscription(guildId, roomId);
 	sub.registerUser(interaction.user.id, supabaseUserId, interaction);
 
-	const channel = sub.buildPrivateChannel(interaction.user.id, interaction);
+	const channel = sub.buildPrivateChannel(interaction.user.id, interaction, supabaseUserId);
+
+	const role = await ctx.roomManager.getMemberRole(supabaseUserId, roomId);
 
 	await action({
 		channel,
 		channelName: interaction.channelId ?? 'discord',
-		isAdmin: false,
+		isAdmin: role === 'owner',
 		isDM: !interaction.guildId,
 		user: { id: supabaseUserId, name: interaction.user.username },
 	});

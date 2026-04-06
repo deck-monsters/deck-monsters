@@ -46,6 +46,13 @@ export class GuildRoomSubscription {
 	// Maps Supabase userId → Discord userId (populated when users interact)
 	private supabaseToDiscord = new Map<string, string>();
 
+	// Reverse map: Discord userId → Supabase userId
+	private discordToSupabase = new Map<string, string>();
+
+	// Tracks the most recent prompt requestId per Supabase userId so that
+	// PromptHandler.onTimeout can call eventBus.cancelPrompt with the correct id.
+	private pendingPromptRequestIds = new Map<string, string>();
+
 	// Stores the active interaction per Discord user for follow-up prompts
 	private activeInteractions = new Map<string, ChatInputCommandInteraction | ButtonInteraction>();
 
@@ -60,18 +67,20 @@ export class GuildRoomSubscription {
 
 	/** Start listening to the event bus. Call once after construction. */
 	start(): void {
-		const publicChannel = this.buildPublicChannel();
+		// ConnectorAdapter handles private channel routing (prompt.request and private announces).
+		// A no-op public channel is passed because public events are handled directly below,
+		// where we have access to the full GameEvent type for embed vs. plain-text routing.
 		this.adapter = new ConnectorAdapter(
 			this.eventBus,
-			publicChannel,
-			`discord-${this.guildId}-${this.roomId}`
+			async () => undefined,
+			`discord-adapter-${this.guildId}-${this.roomId}`
 		);
 
-		// Subscribe directly for embed-worthy events so we have access to the
-		// full GameEvent payload (not just the text string the adapter passes).
+		// Direct subscriber for ALL public events — gives us event.type so we can
+		// send a rich embed instead of plain text for EMBED_EVENT_TYPES.
 		this.unsubscribeEmbeds = this.eventBus.subscribe(
-			`discord-embeds-${this.guildId}-${this.roomId}`,
-			{ deliver: (event: GameEvent) => void this.handleEmbedEvent(event) }
+			`discord-${this.guildId}-${this.roomId}`,
+			{ deliver: (event: GameEvent) => this.handlePublicEvent(event) }
 		);
 	}
 
@@ -86,9 +95,22 @@ export class GuildRoomSubscription {
 		interaction: ChatInputCommandInteraction | ButtonInteraction
 	): void {
 		this.supabaseToDiscord.set(supabaseUserId, discordUserId);
+		this.discordToSupabase.set(discordUserId, supabaseUserId);
 		this.activeInteractions.set(discordUserId, interaction);
 
-		const privateChannel = this.buildPrivateChannel(discordUserId);
+		// Subscribe to capture prompt requestIds for this user so the PromptHandler
+		// onTimeout callback can call eventBus.cancelPrompt with the correct id.
+		this.eventBus.subscribe(`discord-prompt-tracker-${supabaseUserId}`, {
+			userId: supabaseUserId,
+			deliver: (event: GameEvent) => {
+				if (event.type === 'prompt.request') {
+					const { requestId } = event.payload as { requestId: string };
+					this.pendingPromptRequestIds.set(supabaseUserId, requestId);
+				}
+			},
+		});
+
+		const privateChannel = this.buildPrivateChannel(discordUserId, undefined, supabaseUserId);
 		this.adapter?.registerUser(supabaseUserId, privateChannel);
 	}
 
@@ -97,15 +119,19 @@ export class GuildRoomSubscription {
 		const discordId = this.supabaseToDiscord.get(supabaseUserId);
 		if (discordId) {
 			this.activeInteractions.delete(discordId);
-			this.supabaseToDiscord.delete(supabaseUserId);
+			this.discordToSupabase.delete(discordId);
 		}
+		this.supabaseToDiscord.delete(supabaseUserId);
+		this.pendingPromptRequestIds.delete(supabaseUserId);
+		this.eventBus.unsubscribe(`discord-prompt-tracker-${supabaseUserId}`);
 		this.adapter?.unregisterUser(supabaseUserId);
 	}
 
 	/** Build the private channel callback for a given Discord user. */
 	buildPrivateChannel(
 		discordUserId: string,
-		interaction?: ChatInputCommandInteraction | ButtonInteraction
+		interaction?: ChatInputCommandInteraction | ButtonInteraction,
+		supabaseUserId?: string
 	): ChannelCallback {
 		return async ({ announce, question, choices }) => {
 			// Interactive prompt
@@ -114,15 +140,33 @@ export class GuildRoomSubscription {
 					? choices
 					: Object.keys(choices);
 
+				// Build an onTimeout callback that clears the engine bus pending prompt
+				// when the Discord button collector times out.
+				const resolvedSupabaseId =
+					supabaseUserId ?? this.discordToSupabase.get(discordUserId);
+				const onTimeout = resolvedSupabaseId
+					? () => {
+						const requestId = this.pendingPromptRequestIds.get(resolvedSupabaseId);
+						if (requestId) {
+							this.eventBus.cancelPrompt(requestId, resolvedSupabaseId);
+							this.pendingPromptRequestIds.delete(resolvedSupabaseId);
+						}
+					}
+					: undefined;
+
 				const activeInteraction =
 					interaction ?? this.activeInteractions.get(discordUserId);
 
 				if (activeInteraction) {
-					return this.promptHandler.sendPrompt(activeInteraction, question, choiceKeys);
+					return this.promptHandler.sendPrompt(
+						activeInteraction, question, choiceKeys, undefined, onTimeout
+					);
 				}
 
 				// Fallback for message-based commands: send buttons via DM
-				return this.promptHandler.sendDmPrompt(this.client, discordUserId, question, choiceKeys);
+				return this.promptHandler.sendDmPrompt(
+					this.client, discordUserId, question, choiceKeys, undefined, onTimeout
+				);
 			}
 
 			// Announcement → DM
@@ -140,7 +184,8 @@ export class GuildRoomSubscription {
 	 */
 	registerUserFromMessage(discordUserId: string, supabaseUserId: string): void {
 		this.supabaseToDiscord.set(supabaseUserId, discordUserId);
-		const privateChannel = this.buildPrivateChannel(discordUserId);
+		this.discordToSupabase.set(discordUserId, supabaseUserId);
+		const privateChannel = this.buildPrivateChannel(discordUserId, undefined, supabaseUserId);
 		this.adapter?.registerUser(supabaseUserId, privateChannel);
 	}
 
@@ -150,7 +195,13 @@ export class GuildRoomSubscription {
 		this.unsubscribeEmbeds = null;
 		this.adapter?.dispose();
 		this.adapter = null;
+		// Unsubscribe any per-user prompt trackers
+		for (const supabaseUserId of this.supabaseToDiscord.keys()) {
+			this.eventBus.unsubscribe(`discord-prompt-tracker-${supabaseUserId}`);
+		}
 		this.supabaseToDiscord.clear();
+		this.discordToSupabase.clear();
+		this.pendingPromptRequestIds.clear();
 		this.activeInteractions.clear();
 	}
 
@@ -158,54 +209,42 @@ export class GuildRoomSubscription {
 	// Private helpers
 	// ---------------------------------------------------------------------------
 
-	private buildPublicChannel(): ChannelCallback {
-		return async ({ announce }) => {
-			// Embed-worthy events are handled by the direct subscriber below.
-			// The ConnectorAdapter calls this callback for all public events;
-			// we only send plain text here for non-embed types.
-			if (!announce) return;
-			// We can't inspect the event type from this callback — the adapter
-			// only passes the rendered text. So we post the text unconditionally
-			// and rely on handleEmbedEvent to also post the embed. For events
-			// where we want embed-only output, handleEmbedEvent suppresses
-			// the text by running first and the plain text acts as a fallback
-			// for clients that only display text channels without embed support.
-			const channel = await this.resolveAnnouncementChannel();
-			if (!channel) return;
-
-			await channel.send({ content: announce });
-		};
-	}
-
 	/**
-	 * Direct event subscriber for embed-worthy events.
-	 * Runs alongside (not instead of) the ConnectorAdapter subscription.
-	 * For embed event types, sends a rich embed after the plain text message.
+	 * Handles all public events from the event bus.
+	 * Embed-worthy event types get a rich embed only (no redundant plain text).
+	 * All other public events get plain text.
 	 */
-	private async handleEmbedEvent(event: GameEvent): Promise<void> {
+	private async handlePublicEvent(event: GameEvent): Promise<void> {
 		if (event.scope !== 'public') return;
-		if (!EMBED_EVENT_TYPES.has(event.type)) return;
 
 		const channel = await this.resolveAnnouncementChannel();
 		if (!channel) return;
 
-		try {
-			if (event.type === 'card.played') {
-				const embed = buildCardDisplayEmbed(
-					event.payload as Parameters<typeof buildCardDisplayEmbed>[0]
-				);
-				await channel.send({ embeds: [embed] });
-			} else {
-				// ring.win / ring.loss / ring.draw / ring.permaDeath / ring.cardDrop
-				const title = event.text.split('\n')[0] ?? event.type;
-				const embed = buildMonsterCardEmbed(
-					event.payload as Parameters<typeof buildMonsterCardEmbed>[0],
-					title
-				);
-				await channel.send({ embeds: [embed] });
+		if (EMBED_EVENT_TYPES.has(event.type)) {
+			// Send rich embed only — skip plain text to avoid duplicate messages
+			try {
+				if (event.type === 'card.played') {
+					const embed = buildCardDisplayEmbed(
+						event.payload as Parameters<typeof buildCardDisplayEmbed>[0]
+					);
+					await channel.send({ embeds: [embed] });
+				} else {
+					// ring.win / ring.loss / ring.draw / ring.permaDeath / ring.cardDrop
+					const title = event.text.split('\n')[0] ?? event.type;
+					const embed = buildMonsterCardEmbed(
+						event.payload as Parameters<typeof buildMonsterCardEmbed>[0],
+						title
+					);
+					await channel.send({ embeds: [embed] });
+				}
+			} catch {
+				// Embed send failure must not crash the event loop
 			}
-		} catch {
-			// Embed send failure must not crash the event loop
+		} else {
+			// Send plain text for all other public event types
+			if (event.text) {
+				await channel.send({ content: event.text });
+			}
 		}
 	}
 

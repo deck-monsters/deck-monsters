@@ -74,6 +74,9 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
         role="dialog"
         aria-label="Command Reference"
         aria-modal="true"
+        aria-hidden={!open}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        {...(!open ? { inert: '' } : {})}
         style={{
           position: 'fixed',
           top: 0,

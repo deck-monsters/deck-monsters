@@ -7,17 +7,28 @@ import { GuildRoomSubscription } from '../guild-room-subscription.js';
 // ---------------------------------------------------------------------------
 
 function makeEventBus() {
-	let subscriberDeliver: ((event: unknown) => void) | null = null;
+	const subscribers = new Map<string, { userId?: string; deliver: (e: unknown) => void }>();
 
 	return {
-		subscribe: sinon.stub().callsFake((_id: string, sub: { deliver: (e: unknown) => void }) => {
-			subscriberDeliver = sub.deliver;
-			return () => {};
+		subscribe: sinon.stub().callsFake((id: string, sub: { userId?: string; deliver: (e: unknown) => void }) => {
+			subscribers.set(id, sub);
+			return () => { subscribers.delete(id); };
 		}),
-		unsubscribe: sinon.stub(),
+		unsubscribe: sinon.stub().callsFake((id: string) => { subscribers.delete(id); }),
 		respondToPrompt: sinon.stub(),
-		_deliver(event: unknown) {
-			subscriberDeliver?.(event);
+		cancelPrompt: sinon.stub(),
+		async _deliver(event: { scope?: string; targetUserId?: string; [k: string]: unknown }) {
+			const promises: Promise<unknown>[] = [];
+			for (const sub of subscribers.values()) {
+				// Mimic RoomEventBus delivery logic: public events go to all;
+				// private events only to matching userId subscribers
+				if (event.scope === 'public' || sub.userId === event.targetUserId) {
+					// Capture any returned promise so tests can await full completion
+					const result = sub.deliver(event);
+					if (result instanceof Promise) promises.push(result);
+				}
+			}
+			await Promise.all(promises);
 		},
 	};
 }
@@ -76,10 +87,16 @@ describe('GuildRoomSubscription', () => {
 		);
 		sub.start();
 
-		// Simulate a public event arriving via ConnectorAdapter
-		// We test the public channel callback directly
-		const publicChannel = (sub as any).buildPublicChannel();
-		await publicChannel({ announce: 'Round 1 begins!' });
+		// Simulate a public announce event arriving via the direct event bus subscriber
+		await eventBus._deliver({
+			id: '1',
+			roomId: 'room-1',
+			scope: 'public',
+			type: 'announce',
+			text: 'Round 1 begins!',
+			payload: {},
+			timestamp: Date.now(),
+		});
 
 		expect(textChannel.send.calledOnce).to.be.true;
 		expect(textChannel.send.firstCall.args[0].content).to.equal('Round 1 begins!');

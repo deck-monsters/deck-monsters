@@ -20,11 +20,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setTRPCToken(data.session?.access_token ?? null);
-      setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setTRPCToken(data.session?.access_token ?? null);
+      })
+      .catch(() => {
+        // Ignore network errors — session stays null, user sees login page
+      })
+      .finally(() => setLoading(false));
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);

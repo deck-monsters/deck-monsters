@@ -25,6 +25,7 @@ import { ringStatus } from './ring-status.js';
 import { createRoom } from './create-room.js';
 import { joinRoom } from './join-room.js';
 import { help } from './help.js';
+import { setAnnouncementChannel } from './set-announcement-channel.js';
 
 export interface CommandContext {
 	bot: DiscordBot;
@@ -57,6 +58,7 @@ export function loadCommands(): Map<string, SlashCommand> {
 		createRoom,
 		joinRoom,
 		help,
+		setAnnouncementChannel,
 	];
 
 	const map = new Map<string, SlashCommand>();

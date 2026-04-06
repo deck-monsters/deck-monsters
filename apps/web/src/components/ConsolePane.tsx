@@ -206,14 +206,27 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   );
 
   async function handleCancelPrompt(requestId: string) {
+    // Optimistically hide the countdown and tombstone the prompt immediately
+    setConsoleEvents(prev => prev.map(ev =>
+      ev.promptData?.requestId === requestId
+        ? { ...ev, promptData: { ...ev.promptData!, cancelled: true } }
+        : ev
+    ));
+    setActivePromptId(null);
     try {
       await cancelPromptMutation.mutateAsync({ roomId, requestId });
     } catch {
-      // Silent — UI will update when prompt.cancel event arrives via ringFeed
+      // Silent — optimistic update already applied
     }
   }
 
   async function handleCancelFlow() {
+    // Optimistically cancel all visible unresolved prompts so countdowns hide immediately
+    setConsoleEvents(prev => prev.map(ev =>
+      ev.promptData && !ev.promptData.selectedAnswer && !ev.promptData.timedOut && !ev.promptData.cancelled
+        ? { ...ev, promptData: { ...ev.promptData, cancelled: true } }
+        : ev
+    ));
     try {
       await cancelFlowMutation.mutateAsync({ roomId });
       addConsoleEvent({

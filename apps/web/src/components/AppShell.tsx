@@ -159,6 +159,13 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           >
             <Link to="/rooms" className="btn" onClick={() => setMenuOpen(false)}>Rooms</Link>
             <Link to="/account" className="btn" onClick={() => setMenuOpen(false)}>Account</Link>
+            <button
+              className="btn"
+              onClick={() => { setRefOpen(true); setMenuOpen(false); }}
+              aria-label="Open command reference"
+            >
+              Help / Commands
+            </button>
             <button className="btn" onClick={() => { setTheme(theme === 'phosphor' ? 'amber' : 'phosphor'); setMenuOpen(false); }}>
               Theme: {theme}
             </button>

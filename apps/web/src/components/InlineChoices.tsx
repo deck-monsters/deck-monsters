@@ -20,6 +20,22 @@ function isMultiSelect(question: string): boolean {
   return /one or more|card\(s\)|item\(s\)/i.test(question);
 }
 
+/**
+ * Parse per-index max counts from the engine's question text.
+ * The engine formats choices as "0) CardName [3]\n1) OtherCard [1]" (via getItemChoices).
+ * Returns a map of { choiceIndex -> maxCount }. If the format isn't found, returns null
+ * (callers fall back to max-1 toggle behavior).
+ */
+function parseChoiceCounts(question: string): Map<number, number> | null {
+  const matches = [...question.matchAll(/^(\d+)\)\s+.+?\[(\d+)\]/gm)];
+  if (matches.length === 0) return null;
+  const map = new Map<number, number>();
+  for (const m of matches) {
+    map.set(Number(m[1]), Number(m[2]));
+  }
+  return map;
+}
+
 export default function InlineChoices({
   requestId,
   question,
@@ -35,6 +51,9 @@ export default function InlineChoices({
   // Position in this array = deck slot (1-based displayed to user).
   const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
   const multi = isMultiSelect(question);
+  // Per-index max counts parsed from the question text (e.g., "Hit [3]" → idx→3).
+  // When null, fall back to max-1 toggle (no count info available).
+  const choiceCounts = multi ? parseChoiceCounts(question) : null;
 
   // Move keyboard focus to the first choice button when rendered
   useEffect(() => {
@@ -66,7 +85,11 @@ export default function InlineChoices({
     );
   }
 
-  if (cancelled) {
+  const isDone = selectedAnswer !== null;
+
+  // Only show the cancelled tombstone if the user hasn't already submitted an answer.
+  // A sweep prompt.cancel can arrive after the answer is recorded — prefer the answered state.
+  if (cancelled && !isDone) {
     return (
       <div className="event-tombstone" role="status">
         <p>Action cancelled.</p>
@@ -74,22 +97,21 @@ export default function InlineChoices({
     );
   }
 
-  const isDone = selectedAnswer !== null;
-
   function handleSingleSelect(idx: number) {
     onAnswer(requestId, String(idx));
   }
 
   function handleToggle(idx: number) {
     setSelectionOrder(prev => {
-      const pos = prev.indexOf(idx);
-      if (pos >= 0) {
-        // Deselect: remove from order, keeping other positions stable
+      const currentCount = prev.filter(i => i === idx).length;
+      const maxCount = choiceCounts?.get(idx) ?? 1;
+
+      if (currentCount >= maxCount) {
+        // At max — deselect all copies
         return prev.filter(i => i !== idx);
-      } else {
-        // Select: append to end — this becomes the next slot in the deck
-        return [...prev, idx];
       }
+      // Add another copy (supports having 2x, 3x of the same card)
+      return [...prev, idx];
     });
   }
 
@@ -110,9 +132,13 @@ export default function InlineChoices({
         style={{ listStyle: 'none', padding: 0, marginTop: '0.25rem' }}
       >
         {choices.map((choice, idx) => {
-          const slotPosition = multi ? selectionOrder.indexOf(idx) : -1;
-          const isSelected = multi ? slotPosition >= 0 : selectedAnswer === String(idx);
-          const slotLabel = slotPosition >= 0 ? slotPosition + 1 : null;
+          const selectedCount = multi ? selectionOrder.filter(i => i === idx).length : 0;
+          const maxCount = multi ? (choiceCounts?.get(idx) ?? 1) : 1;
+          const isSelected = multi ? selectedCount > 0 : selectedAnswer === String(idx);
+          const isAtMax = multi && selectedCount >= maxCount;
+          // First slot position this index occupies in selectionOrder (for display)
+          const firstSlot = multi ? selectionOrder.indexOf(idx) : -1;
+          const slotLabel = firstSlot >= 0 ? firstSlot + 1 : null;
 
           return (
             <li key={idx} role="option" aria-selected={isSelected}>
@@ -134,7 +160,7 @@ export default function InlineChoices({
                   padding: '0.35rem 0.6rem',
                   marginBottom: '0.4rem',
                   cursor: isDone ? 'default' : 'pointer',
-                  opacity: isDone && !isSelected ? 0.5 : 1,
+                  opacity: isDone && !isSelected ? 0.5 : isAtMax ? 0.75 : 1,
                 }}
                 onClick={() => multi ? handleToggle(idx) : handleSingleSelect(idx)}
                 onKeyDown={(e) => handleKey(e, idx)}
@@ -152,6 +178,25 @@ export default function InlineChoices({
                   </span>
                 ) : null}
                 {choice}
+                {multi && selectedCount > 1 && (
+                  <span style={{
+                    marginLeft: '0.5rem',
+                    fontSize: '0.7rem',
+                    color: 'var(--color-accent)',
+                    fontWeight: 700,
+                  }}>
+                    ×{selectedCount}
+                  </span>
+                )}
+                {multi && !isDone && isAtMax && maxCount > 1 && (
+                  <span style={{
+                    marginLeft: '0.4rem',
+                    fontSize: '0.7rem',
+                    color: 'var(--color-fg-dim)',
+                  }}>
+                    (max)
+                  </span>
+                )}
               </button>
             </li>
           );

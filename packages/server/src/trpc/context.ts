@@ -77,6 +77,8 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 			// Supabase JWTs set aud: "authenticated" — jose v5 requires explicit
 			// audience verification when the aud claim is present.
 			audience: 'authenticated',
+			// Verify the issuer so tokens from other Supabase projects are rejected.
+			issuer: `${process.env['SUPABASE_URL']}/auth/v1`,
 		});
 		const sub = payload.sub;
 

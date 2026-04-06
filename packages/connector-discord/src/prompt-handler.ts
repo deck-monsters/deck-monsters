@@ -24,7 +24,8 @@ export class PromptHandler {
 		interaction: ChatInputCommandInteraction | ButtonInteraction,
 		question: string,
 		choices: string[],
-		timeoutMs = PROMPT_TIMEOUT_MS
+		timeoutMs = PROMPT_TIMEOUT_MS,
+		onTimeout?: () => void
 	): Promise<string> {
 		const row = buildButtonRow(choices);
 
@@ -34,7 +35,7 @@ export class PromptHandler {
 			ephemeral: true,
 		});
 
-		return collectButtonResponse(reply, interaction.user.id, choices, timeoutMs);
+		return collectButtonResponse(reply, interaction.user.id, choices, timeoutMs, onTimeout);
 	}
 
 	/**
@@ -46,13 +47,14 @@ export class PromptHandler {
 		discordUserId: string,
 		question: string,
 		choices: string[],
-		timeoutMs = PROMPT_TIMEOUT_MS
+		timeoutMs = PROMPT_TIMEOUT_MS,
+		onTimeout?: () => void
 	): Promise<string> {
 		const user = await client.users.fetch(discordUserId);
 		const dm = await user.createDM();
 		const row = buildButtonRow(choices);
 		const reply = await dm.send({ content: question, components: [row] });
-		return collectButtonResponse(reply, discordUserId, choices, timeoutMs);
+		return collectButtonResponse(reply, discordUserId, choices, timeoutMs, onTimeout);
 	}
 }
 
@@ -80,7 +82,8 @@ async function collectButtonResponse(
 	reply: Message,
 	userId: string,
 	choices: string[],
-	timeoutMs: number
+	timeoutMs: number,
+	onTimeout?: () => void
 ): Promise<string> {
 	const collector = reply.createMessageComponentCollector({
 		componentType: ComponentType.Button,
@@ -99,6 +102,8 @@ async function collectButtonResponse(
 
 		collector.on('end', (collected) => {
 			if (collected.size === 0) {
+				// Notify the caller so it can clear engine bus state
+				onTimeout?.();
 				reject(new Error('Prompt timed out — no response within the allowed time.'));
 			}
 		});
