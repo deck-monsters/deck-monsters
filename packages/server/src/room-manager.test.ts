@@ -286,23 +286,25 @@ describe('RoomManager', () => {
 	// ---- getRoomInfo ----
 
 	describe('getRoomInfo', () => {
-		it('returns roomId, name, inviteCode, and memberCount', async () => {
+		it('returns roomId, name, inviteCode, memberCount, and role', async () => {
 			const db = makeDbStub({
 				selectResults: [
 					[{ id: ROOM_ID, name: 'My Room', inviteCode: INVITE }],
-					[{ value: 3 }],  // count query
+					[{ value: 3 }],     // count query (Promise.all[0])
+					[{ role: 'owner' }], // member role query (Promise.all[1])
 				],
 			});
 			const { deps } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 
-			const result = await rm.getRoomInfo(ROOM_ID);
+			const result = await rm.getRoomInfo(OWNER_ID, ROOM_ID);
 
 			expect(result).to.deep.equal({
 				roomId: ROOM_ID,
 				name: 'My Room',
 				inviteCode: INVITE,
 				memberCount: 3,
+				role: 'owner',
 			});
 		});
 
@@ -311,7 +313,7 @@ describe('RoomManager', () => {
 			const { deps } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 
-			const err = await rm.getRoomInfo(ROOM_ID).catch((e: unknown) => e);
+			const err = await rm.getRoomInfo(OWNER_ID, ROOM_ID).catch((e: unknown) => e);
 			expect(err).to.be.instanceOf(TRPCError);
 			expect((err as TRPCError).code).to.equal('NOT_FOUND');
 		});

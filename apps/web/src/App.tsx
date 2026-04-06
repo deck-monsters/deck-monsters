@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from './lib/auth-context.js';
 import AppShell from './components/AppShell.js';
 import Terminal from './components/Terminal.js';
@@ -78,6 +79,53 @@ function AccountWrapper() {
   );
 }
 
+function JoinByInvite() {
+  const { inviteCode } = useParams<{ inviteCode: string }>();
+  const navigate = useNavigate();
+  const utils = trpc.useUtils();
+
+  const joinRoom = trpc.room.join.useMutation({
+    onSuccess: (data) => {
+      void utils.room.list.invalidate();
+      navigate(`/room/${data.roomId}`, { replace: true });
+    },
+    onError: () => {
+      // Fall back to lobby with code pre-filled via query param
+      navigate(`/rooms?invite=${inviteCode ?? ''}`, { replace: true });
+    },
+  });
+
+  useEffect(() => {
+    if (inviteCode) joinRoom.mutate({ inviteCode: inviteCode.toUpperCase() });
+    else navigate('/rooms', { replace: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteCode]);
+
+  return (
+    <div
+      style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--color-bg)',
+        color: 'var(--color-fg-dim)',
+        fontFamily: 'var(--font-family)',
+      }}
+    >
+      {joinRoom.isError ? 'Redirecting…' : 'Joining room…'}
+    </div>
+  );
+}
+
+function JoinByInviteWrapper() {
+  return (
+    <RequireAuth>
+      <JoinByInvite />
+    </RequireAuth>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
@@ -118,6 +166,8 @@ export default function App() {
           </RequireAuth>
         }
       />
+
+      <Route path="/join/:inviteCode" element={<JoinByInviteWrapper />} />
 
       {/* Redirect old ring/monster routes to new terminal */}
       <Route path="/ring/:roomId" element={<Navigate to="/room/:roomId" replace />} />

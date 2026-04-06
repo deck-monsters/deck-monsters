@@ -56,10 +56,16 @@ export function createRouter(roomManager: RoomManager) {
 		info: protectedProcedure
 			.input(z.object({ roomId: z.string().uuid() }))
 			.query(async ({ input, ctx }) => {
-				await roomManager.assertMember(ctx.userId, input.roomId);
-				const info = await roomManager.getRoomInfo(input.roomId);
+				const info = await roomManager.getRoomInfo(ctx.userId, input.roomId);
 				if (!info) throw new TRPCError({ code: 'NOT_FOUND' });
 				return info;
+			}),
+
+		members: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				return roomManager.getRoomMembers(input.roomId);
 			}),
 	});
 
@@ -71,11 +77,13 @@ export function createRouter(roomManager: RoomManager) {
 					command: z.string().min(1),
 					channelName: z.string().default('default'),
 					isDM: z.boolean().default(false),
-					userName: z.string().default('Player'),
 				})
 			)
 			.mutation(async ({ input, ctx }) => {
-				const role = await roomManager.getMemberRole(ctx.userId, input.roomId);
+				const [role, displayName] = await Promise.all([
+					roomManager.getMemberRole(ctx.userId, input.roomId),
+					roomManager.getDisplayName(ctx.userId),
+				]);
 				const isAdmin = role === 'owner';
 				const game = await roomManager.getGame(input.roomId);
 				const eventBus = await roomManager.getEventBus(input.roomId);
@@ -145,7 +153,7 @@ export function createRouter(roomManager: RoomManager) {
 					channelName: input.channelName,
 					isAdmin,
 					isDM: input.isDM,
-					user: { id: ctx.userId, name: input.userName },
+					user: { id: ctx.userId, name: displayName },
 				})
 					.catch((err: unknown) => {
 						// Prompt timeouts are expected when users abandon a flow.

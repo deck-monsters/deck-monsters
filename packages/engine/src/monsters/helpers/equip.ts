@@ -1,5 +1,6 @@
 import type BaseMonster from '../base.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
+import { getItemKey } from '../../items/helpers/counts.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => any;
@@ -77,11 +78,12 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 
 				const equipableCards = remainingCards.reduce(
 					(equipable: CardInstance[], card: CardInstance) => {
+						const cardKey = getItemKey(card);
 						const alreadyChosenNumber = cards.filter(
-							chosen => chosen.name === card.name,
+							chosen => getItemKey(chosen) === cardKey,
 						).length;
 						const alreadyAddedNumber = equipable.filter(
-							added => added.name === card.name,
+							added => getItemKey(added) === cardKey,
 						).length;
 
 						if (alreadyChosenNumber + alreadyAddedNumber < MAX_CARD_COPIES_IN_HAND) {

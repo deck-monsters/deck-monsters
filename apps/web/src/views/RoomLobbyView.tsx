@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { trpc } from '../lib/trpc.js';
 
 export default function RoomLobbyView() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
+  const [searchParams] = useSearchParams();
 
   const { data: rooms, isLoading } = trpc.room.list.useQuery();
 
   const [newRoomName, setNewRoomName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
+  const [inviteCode, setInviteCode] = useState(searchParams.get('invite') ?? '');
   const [error, setError] = useState<string | null>(null);
 
   const createRoom = trpc.room.create.useMutation({

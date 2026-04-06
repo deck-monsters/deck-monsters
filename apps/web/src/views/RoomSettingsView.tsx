@@ -7,18 +7,35 @@ export default function RoomSettingsView() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const { data: room, isLoading } = trpc.room.info.useQuery(
     { roomId: roomId ?? '' },
     { enabled: !!roomId }
   );
 
+  const { data: members } = trpc.room.members.useQuery(
+    { roomId: roomId ?? '' },
+    { enabled: !!roomId }
+  );
+
+  const isOwner = room?.role === 'owner';
+
   const deleteRoom = trpc.room.delete.useMutation({
     onSuccess: () => {
       void utils.room.list.invalidate();
       navigate('/rooms');
+    },
+    onError: (err) => setError(err.message),
+  });
+
+  const resetRoom = trpc.admin.resetRoom.useMutation({
+    onSuccess: () => {
+      setConfirmReset(false);
+      setError(null);
     },
     onError: (err) => setError(err.message),
   });
@@ -36,6 +53,14 @@ export default function RoomSettingsView() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  async function copyInviteLink() {
+    if (!room?.inviteCode) return;
+    const link = `${window.location.origin}/join/${room.inviteCode}`;
+    await navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  }
+
   return (
     <div className="page">
       <h1>Room Settings</h1>
@@ -46,8 +71,8 @@ export default function RoomSettingsView() {
       {error && <div className="error-msg">{error}</div>}
 
       <div className="panel">
-        <p className="panel-title">Invite Code</p>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <p className="panel-title">Invite</p>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
           <code
             style={{
               flex: 1,
@@ -62,19 +87,22 @@ export default function RoomSettingsView() {
             {room.inviteCode}
           </code>
           <button className="btn" onClick={() => void copyInviteCode()}>
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? 'Copied!' : 'Copy Code'}
+          </button>
+          <button className="btn" onClick={() => void copyInviteLink()}>
+            {copiedLink ? 'Copied!' : 'Copy Link'}
           </button>
         </div>
-        <p style={{ fontSize: '0.75rem', color: 'var(--color-fg-dim)', marginTop: '0.5rem' }}>
-          Share this code to invite players to your room.
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-fg-dim)', marginTop: '0.25rem' }}>
+          Share the code or link to invite players. The link takes them directly to the join page.
         </p>
       </div>
 
-      {'members' in room && Array.isArray((room as { members?: unknown[] }).members) && (
+      {members && members.length > 0 && (
         <div className="panel">
-          <p className="panel-title">Members ({(room as { members: unknown[] }).members.length})</p>
+          <p className="panel-title">Members ({members.length})</p>
           <ul style={{ listStyle: 'none', padding: 0 }}>
-            {(room as { members: Array<{ userId: string; name: string; role: string }> }).members.map((m) => (
+            {members.map((m) => (
               <li
                 key={m.userId}
                 style={{
@@ -87,7 +115,7 @@ export default function RoomSettingsView() {
                   fontSize: '0.875rem',
                 }}
               >
-                <span style={{ flex: 1 }}>{m.name}</span>
+                <span style={{ flex: 1 }}>{m.displayName}</span>
                 <span className="tag">{m.role}</span>
               </li>
             ))}
@@ -97,6 +125,45 @@ export default function RoomSettingsView() {
 
       <div className="panel" style={{ borderColor: 'rgba(255,107,107,0.3)' }}>
         <p className="panel-title" style={{ color: 'var(--color-error)' }}>Danger Zone</p>
+
+        {isOwner && (
+          <div style={{ marginBottom: '1rem' }}>
+            {!confirmReset ? (
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-fg-dim)', marginBottom: '0.5rem' }}>
+                  Reset the game state for this room. All monsters, characters, and ring progress will be erased, but the room and its members will be kept.
+                </p>
+                <button
+                  className="btn"
+                  style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+                  onClick={() => setConfirmReset(true)}
+                >
+                  Reset game state
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p style={{ color: 'var(--color-fg)', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                  This will erase all game state in <strong>{room.name}</strong>. Monsters, characters, and ring progress will be lost. The room and members stay. Are you sure?
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    className="btn"
+                    style={{ borderColor: 'var(--color-accent)', color: 'var(--color-accent)' }}
+                    disabled={resetRoom.isPending}
+                    onClick={() => resetRoom.mutate({ roomId })}
+                  >
+                    {resetRoom.isPending ? 'Resetting…' : 'Yes, reset it'}
+                  </button>
+                  <button className="btn" onClick={() => setConfirmReset(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {!confirmDelete ? (
           <button
             className="btn"

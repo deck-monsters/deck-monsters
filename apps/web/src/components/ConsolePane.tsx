@@ -220,7 +220,6 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         roomId,
         command,
         isDM: true,
-        userName: user?.user_metadata?.['full_name'] as string ?? user?.email ?? 'Player',
       });
 
       if (!result.ok) {

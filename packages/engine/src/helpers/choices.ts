@@ -1,4 +1,5 @@
 import { monsterCard } from './card.js';
+import { getItemKey } from '../items/helpers/counts.js';
 
 const getChoices = (array: string[]): string =>
 	array.map((choice, index) => `${index}) ${choice}`).join('\n');
@@ -13,8 +14,8 @@ const getItemChoicesWithPrice = (
 		Object.keys(items).map(item => `${item} [${items[item].count}] - ${items[item].cost} coins`)
 	);
 
-const getFinalItemChoices = (items: Array<{ itemType?: string }>): string =>
-	getChoices(items.map(item => item.itemType ?? ''));
+const getFinalItemChoices = (items: Array<Record<string, unknown>>): string =>
+	getChoices(items.map(item => getItemKey(item)));
 
 const getMonsterChoices = (monsters: Array<Record<string, unknown>>): string =>
 	getChoices(monsters.map(monster => monsterCard(monster as Parameters<typeof monsterCard>[0], false)));

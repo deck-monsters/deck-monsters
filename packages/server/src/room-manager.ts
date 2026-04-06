@@ -4,7 +4,7 @@ import { eq, and, count } from 'drizzle-orm';
 
 import { Game, RoomEventBus, restoreGame, engineReady } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
-import { rooms, roomMembers } from './db/schema.js';
+import { rooms, roomMembers, profiles } from './db/schema.js';
 import { PostgresStateStore } from './state-store.js';
 import { attachEventPersister } from './event-persister.js';
 
@@ -146,8 +146,9 @@ export class RoomManager {
 	}
 
 	async getRoomInfo(
+		userId: string,
 		roomId: string
-	): Promise<{ roomId: string; name: string; inviteCode: string; memberCount: number }> {
+	): Promise<{ roomId: string; name: string; inviteCode: string; memberCount: number; role: 'owner' | 'member' }> {
 		const rows = await this.db
 			.select({ id: rooms.id, name: rooms.name, inviteCode: rooms.inviteCode })
 			.from(rooms)
@@ -158,19 +159,42 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
-		const countRows = await this.db
-			.select({ value: count() })
-			.from(roomMembers)
-			.where(eq(roomMembers.roomId, roomId));
+		const [countRows, memberRows] = await Promise.all([
+			this.db.select({ value: count() }).from(roomMembers).where(eq(roomMembers.roomId, roomId)),
+			this.db
+				.select({ role: roomMembers.role })
+				.from(roomMembers)
+				.where(and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)))
+				.limit(1),
+		]);
 
 		const memberCount = countRows[0]?.value ?? 0;
+		const role = (memberRows[0]?.role ?? 'member') as 'owner' | 'member';
 
 		return {
 			roomId: rows[0].id,
 			name: rows[0].name,
 			inviteCode: rows[0].inviteCode,
 			memberCount,
+			role,
 		};
+	}
+
+	async getRoomMembers(
+		roomId: string
+	): Promise<Array<{ userId: string; displayName: string; role: string; joinedAt: Date }>> {
+		const rows = await this.db
+			.select({
+				userId: roomMembers.userId,
+				displayName: profiles.displayName,
+				role: roomMembers.role,
+				joinedAt: roomMembers.joinedAt,
+			})
+			.from(roomMembers)
+			.innerJoin(profiles, eq(roomMembers.userId, profiles.id))
+			.where(eq(roomMembers.roomId, roomId));
+
+		return rows;
 	}
 
 	async assertMember(userId: string, roomId: string): Promise<void> {
@@ -183,6 +207,16 @@ export class RoomManager {
 		if (!rows[0]) {
 			throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a member of this room' });
 		}
+	}
+
+	async getDisplayName(userId: string): Promise<string> {
+		const rows = await this.db
+			.select({ displayName: profiles.displayName })
+			.from(profiles)
+			.where(eq(profiles.id, userId))
+			.limit(1);
+
+		return rows[0]?.displayName ?? 'Player';
 	}
 
 	async getMemberRole(userId: string, roomId: string): Promise<'owner' | 'member'> {
