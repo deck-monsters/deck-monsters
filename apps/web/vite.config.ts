@@ -7,9 +7,10 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // Resolve engine to TypeScript source for Vite dev/test.
-      // Production: engine must be built first (handled by Turborepo task ordering).
-      '@deck-monsters/engine': path.resolve(__dirname, '../../packages/engine/src/index.ts'),
+      // Resolve engine to a browser-safe entry that only exports pure-data
+      // modules (COMMAND_CATALOG etc.) with no Node.js dependencies.
+      // The full engine (Node-only) is never bundled into the web client.
+      '@deck-monsters/engine': path.resolve(__dirname, '../../packages/engine/src/browser.ts'),
     },
   },
   define: {
