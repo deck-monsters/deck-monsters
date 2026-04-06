@@ -1,7 +1,6 @@
 import { BaseScroll } from './base.js';
 import { ABUNDANT } from '../../helpers/probabilities.js';
 import { FREE } from '../../helpers/costs.js';
-import { getChoices } from '../../helpers/choices.js';
 import * as teams from '../../constants/teams.js';
 
 export class SortingHat extends BaseScroll {
