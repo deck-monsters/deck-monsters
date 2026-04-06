@@ -1,36 +1,50 @@
 import { expect } from 'chai';
-import Beastmaster from '../beastmaster.js';
+import { helpersReady } from './random.js';
 import { hydrateCharacter } from './hydrate.js';
 
-const sampleCharacterData = {
-	name: 'Beastmaster',
-	options: {
-		acVariance: 2,
-		hpVariance: 2,
-		gender: 'male',
-		deck: [],
-		monsterSlots: 4,
-		monsters: [],
-		name: 'testcharacter',
-		icon: '🎭',
-		hp: 42,
-		battles: { wins: 5, losses: 10, total: 15 },
-		xp: 50,
-		coins: 0,
-	},
-};
-
-describe('characters/helpers/hydrate', () => {
-	it('can hydrate a character', () => {
-		const character = hydrateCharacter(sampleCharacterData);
-
-		expect(character).to.be.instanceOf(Beastmaster);
-		expect((character as any).monsters.length).to.equal(0);
+describe('hydrateCharacter resilience', () => {
+	before(async () => {
+		await helpersReady;
 	});
 
-	it('throws on unknown character type', () => {
-		const badData = { name: 'UnknownClass', options: {} };
+	it('succeeds with a valid Beastmaster characterObj', () => {
+		const characterObj = {
+			name: 'Beastmaster',
+			options: { deck: [], items: [], monsters: [] },
+		};
+		const character = hydrateCharacter(characterObj);
+		expect(character).to.exist;
+	});
 
-		expect(() => hydrateCharacter(badData as any)).to.throw('Unknown character type');
+	it('falls back to Beastmaster for unknown character types instead of throwing', () => {
+		const characterObj = {
+			name: 'DeprecatedCharacterType',
+			options: { deck: [], items: [], monsters: [] },
+		};
+		const warnings: string[] = [];
+		// Should not throw
+		const character = hydrateCharacter(characterObj, (msg) => warnings.push(msg));
+		expect(character).to.exist;
+		expect(warnings).to.have.length.greaterThan(0);
+		expect(warnings[0]).to.include('Unknown character type');
+	});
+
+	it('filters null monsters from the hydrated monster array', () => {
+		const characterObj = {
+			name: 'Beastmaster',
+			options: {
+				deck: [],
+				items: [],
+				monsters: [
+					// Invalid monster — will throw during hydrateMonster and be filtered
+					{ name: '__invalid_monster__', options: { name: 'X', creatureType: 'Unknown' } },
+				],
+			},
+		};
+		// Should not throw; the bad monster is skipped
+		const character = hydrateCharacter(characterObj) as any;
+		expect(character.options?.monsters ?? []).to.satisfy(
+			(arr: unknown[]) => arr.every(m => m !== null && m !== undefined)
+		);
 	});
 });

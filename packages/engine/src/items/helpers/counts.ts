@@ -3,9 +3,10 @@ export interface ItemCountEntry {
 	cost: number;
 }
 
-export const getItemCounts = (items: Array<{ itemType: string }>): Record<string, number> =>
+export const getItemCounts = (items: Array<{ itemType?: string; cardType?: string; name?: string }>): Record<string, number> =>
 	items.reduce<Record<string, number>>((itemCounts, item) => {
-		itemCounts[item.itemType] = (itemCounts[item.itemType] ?? 0) + 1;
+		const key = item.itemType ?? (item as any).cardType ?? (item as any).name ?? 'Unknown';
+		itemCounts[key] = (itemCounts[key] ?? 0) + 1;
 		return itemCounts;
 	}, {});
 

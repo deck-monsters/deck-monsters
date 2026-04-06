@@ -2,10 +2,14 @@ import lookAtHandlers from './look-at.js';
 import monsterHandlers from './monster.js';
 import characterHandlers from './character.js';
 import storeHandlers from './store.js';
+import { helpHandler } from './help.js';
 import { commandInputSchema } from '../schemas/command.js';
 
 const ALIAS_REGEX = /(.+) as (.+?)\s*$/i;
 const handlers: Array<(command: string) => ((options: ActionOptions) => Promise<unknown>) | null> = [];
+
+// Handlers that don't require a character (bypass game.getCharacter).
+const preCharacterHandlers: Array<{ matcher: RegExp; action: (options: ActionOptions) => Promise<unknown> }> = [];
 
 export interface User {
 	id: string;
@@ -35,6 +39,13 @@ export function listen(options: { command?: string; game: any } | null): ((actio
 	}
 
 	command = command.trim().toLowerCase();
+
+	// Check pre-character handlers first (they don't need a character to exist).
+	for (const { matcher, action } of preCharacterHandlers) {
+		if (matcher.test(command)) {
+			return (actionOptions: ActionOptions) => action(actionOptions);
+		}
+	}
 
 	const action = handlers.reduce<((options: ActionOptions) => Promise<unknown>) | null>(
 		(result, handler) => result || handler(command),
@@ -101,6 +112,7 @@ export function registerHandler(
 }
 
 export function loadHandlers(): void {
+	preCharacterHandlers.push(helpHandler);
 	lookAtHandlers(registerHandler);
 	monsterHandlers(registerHandler);
 	characterHandlers(registerHandler);

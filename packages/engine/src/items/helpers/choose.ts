@@ -42,7 +42,8 @@ const chooseItems = ({
 	return Promise
 		.resolve()
 		.then(() => channel({
-			question: getQuestion({ itemChoices })
+			question: getQuestion({ itemChoices }),
+			choices: Object.keys(itemCatalog),
 		}))
 		.then((answer: unknown) => {
 			const selectedItemIndexes = getArray(answer) ?? [];

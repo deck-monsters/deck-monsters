@@ -37,7 +37,7 @@ const loadHelpers = async () => {
 	}
 };
 
-loadHelpers().catch(() => {
+export const hydrateHelpersReady = loadHelpers().catch(() => {
 	// Helpers not ready yet; stubs remain in place
 });
 
@@ -51,11 +51,18 @@ interface CharacterObj {
 	};
 }
 
-const hydrateCharacter = (characterObj: CharacterObj): BaseCharacter => {
-	const CharacterClass = allCharacters.find(({ name }) => name === characterObj.name);
+const hydrateCharacter = (characterObj: CharacterObj, log?: (msg: string) => void): BaseCharacter => {
+	let CharacterClass = allCharacters.find(({ name }) => name === characterObj.name);
 
 	if (!CharacterClass) {
-		throw new Error(`Unknown character type: ${characterObj.name}`);
+		// Fall back to the first character class (Beastmaster) rather than crashing
+		// the entire game restore. The player keeps their data with a default class.
+		log?.(`Unknown character type "${characterObj.name}", falling back to ${allCharacters[0]?.name ?? 'default'}`);
+		CharacterClass = allCharacters[0];
+	}
+
+	if (!CharacterClass) {
+		throw new Error('No character classes available for hydration');
 	}
 
 	const options = Object.assign(
@@ -66,11 +73,18 @@ const hydrateCharacter = (characterObj: CharacterObj): BaseCharacter => {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(options as any).deck = _hydrateDeck(options.deck as unknown[]);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(options as any).items = _hydrateItems(options.items as unknown[]);
+	(options as any).items = (_hydrateItems(options.items as unknown[]) as unknown[]).filter(Boolean);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(options as any).monsters = (options.monsters as unknown[]).map(
-		(monsterObj: unknown) => _hydrateMonster(monsterObj, options.deck),
-	);
+	(options as any).monsters = (options.monsters as unknown[])
+		.map((monsterObj: unknown) => {
+			try {
+				return _hydrateMonster(monsterObj, options.deck);
+			} catch (err) {
+				log?.(`Failed to hydrate monster, skipping: ${err}`);
+				return null;
+			}
+		})
+		.filter(Boolean);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const character = new CharacterClass(options as Record<string, unknown>) as any;

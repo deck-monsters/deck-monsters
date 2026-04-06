@@ -123,8 +123,9 @@ export default function App() {
       <Route path="/ring/:roomId" element={<Navigate to="/room/:roomId" replace />} />
       <Route path="/monsters/:roomId" element={<Navigate to="/room/:roomId" replace />} />
 
-      <Route path="/" element={<Navigate to="/rooms" replace />} />
-      <Route path="*" element={<Navigate to="/rooms" replace />} />
+      {/* RequireAuth holds the loading screen while Supabase processes OAuth hash tokens */}
+      <Route path="/" element={<RequireAuth><Navigate to="/rooms" replace /></RequireAuth>} />
+      <Route path="*" element={<RequireAuth><Navigate to="/rooms" replace /></RequireAuth>} />
     </Routes>
   );
 }

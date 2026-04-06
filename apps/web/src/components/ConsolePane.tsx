@@ -5,6 +5,9 @@ type TrackedEvent = { id: string; data: GameEvent };
 import { trpc } from '../lib/trpc.js';
 import { useAuth } from '../lib/auth-context.js';
 import { useHandshake } from '../hooks/useHandshake.js';
+import { useCommandInsert } from '../lib/command-insert-context.js';
+import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
+import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 
 interface ActivePrompt {
@@ -40,6 +43,7 @@ interface ConsolePaneProps {
 export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePaneProps) {
   const { user } = useAuth();
   const { handleHandshakeEvent } = useHandshake();
+  const { registerInsertFn } = useCommandInsert();
 
   const [consoleEvents, setConsoleEvents] = useState<ConsoleEvent[]>([]);
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
@@ -48,11 +52,20 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [reconnecting, setReconnecting] = useState(false);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
+  const [suggestionIndex, setSuggestionIndex] = useState(-1);
 
   const feedRef = useRef<HTMLOListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
   const lastEventIdRef = useRef<string | undefined>(undefined);
+
+  // Register command-insert function so external callers (CommandReference, etc.) can populate the input
+  useEffect(() => {
+    registerInsertFn((command: string) => {
+      setInputValue(command);
+      inputRef.current?.focus();
+    });
+  }, [registerInsertFn]);
 
   // Auto-scroll when new events arrive
   useEffect(() => {
@@ -71,6 +84,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
     setIsAtBottom(true);
   }, []);
+
+  const suggestions = useCommandAutocomplete(inputValue, !activePromptId && !inputLocked);
 
   const sendCommand = trpc.game.command.useMutation();
   const respondToPrompt = trpc.game.respondToPrompt.useMutation();
@@ -247,8 +262,33 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   }
 
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (suggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSuggestionIndex(i => Math.min(i + 1, suggestions.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSuggestionIndex(i => Math.max(i - 1, -1));
+        return;
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const target = suggestionIndex >= 0 ? suggestions[suggestionIndex] : suggestions[0];
+        if (target) setInputValue(target.insertValue);
+        setSuggestionIndex(-1);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setSuggestionIndex(-1);
+        setInputValue('');
+        return;
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      setSuggestionIndex(-1);
       void handleSubmitCommand(inputValue);
     }
   }
@@ -347,9 +387,16 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
       <form
         className="command-dock"
-        onSubmit={(e) => { e.preventDefault(); void handleSubmitCommand(inputValue); }}
+        onSubmit={(e) => { e.preventDefault(); setSuggestionIndex(-1); void handleSubmitCommand(inputValue); }}
         aria-label="Command input"
+        style={{ position: 'relative' }}
       >
+        <CommandSuggestions
+          suggestions={suggestions}
+          activeIndex={suggestionIndex}
+          onSelect={(value) => { setInputValue(value); setSuggestionIndex(-1); inputRef.current?.focus(); }}
+          onDismiss={() => setSuggestionIndex(-1)}
+        />
         <label htmlFor="console-input" aria-label="Command prompt">{'>'}</label>
         <input
           ref={inputRef}
@@ -357,7 +404,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           type="text"
           className="command-input"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={(e) => { setInputValue(e.target.value); setSuggestionIndex(-1); }}
           onKeyDown={handleInputKeyDown}
           disabled={inputLocked}
           placeholder={placeholder}

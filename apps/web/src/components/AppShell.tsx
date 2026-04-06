@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 import { useTheme } from '../hooks/useTheme.js';
+import { useCommandInsert } from '../lib/command-insert-context.js';
+import CommandReference from './CommandReference.js';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -13,6 +15,8 @@ export default function AppShell({ children, roomName }: AppShellProps) {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [refOpen, setRefOpen] = useState(false);
+  const { insertCommand } = useCommandInsert();
 
   async function handleSignOut() {
     await signOut();
@@ -60,6 +64,16 @@ export default function AppShell({ children, roomName }: AppShellProps) {
           style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}
           aria-label="Main navigation"
         >
+          <button
+            className="btn"
+            style={{ fontSize: '0.8rem' }}
+            onClick={() => setRefOpen(v => !v)}
+            title="Command reference"
+            aria-label="Open command reference"
+            aria-expanded={refOpen}
+          >
+            ?
+          </button>
           <Link to="/rooms" className="btn" style={{ fontSize: '0.8rem' }}>
             Rooms
           </Link>
@@ -143,6 +157,12 @@ export default function AppShell({ children, roomName }: AppShellProps) {
       <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {children}
       </main>
+
+      <CommandReference
+        open={refOpen}
+        onClose={() => setRefOpen(false)}
+        onInsertCommand={(cmd) => { insertCommand(cmd); }}
+      />
     </div>
   );
 }

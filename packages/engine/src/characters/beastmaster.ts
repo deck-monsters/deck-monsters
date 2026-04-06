@@ -25,7 +25,7 @@ const loadHelpers = async () => {
 	}
 };
 
-loadHelpers().catch(() => {
+export const beastmasterReady = loadHelpers().catch(() => {
 	// Helpers not ready yet; stubs remain in place
 });
 

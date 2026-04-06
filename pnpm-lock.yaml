@@ -47,6 +47,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@deck-monsters/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@deck-monsters/server':
         specifier: workspace:*
         version: link:../../packages/server

@@ -105,9 +105,10 @@ export class RoomEventBus {
 		});
 	}
 
-	cancelPrompt(requestId: string): void {
+	cancelPrompt(requestId: string, callerId?: string): void {
 		const pending = this.pendingPrompts.get(requestId);
 		if (pending) {
+			if (callerId && pending.userId !== callerId) return;
 			clearTimeout(pending.timer);
 			this.pendingPrompts.delete(requestId);
 			this.publish({
@@ -121,9 +122,10 @@ export class RoomEventBus {
 		}
 	}
 
-	respondToPrompt(requestId: string, answer: string): void {
+	respondToPrompt(requestId: string, answer: string, callerId?: string): void {
 		const pending = this.pendingPrompts.get(requestId);
 		if (pending) {
+			if (callerId && pending.userId !== callerId) return;
 			clearTimeout(pending.timer);
 			this.pendingPrompts.delete(requestId);
 			pending.resolve(answer);

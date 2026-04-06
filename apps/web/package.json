@@ -15,6 +15,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@deck-monsters/engine": "workspace:*",
     "@deck-monsters/server": "workspace:*",
     "@fontsource/jetbrains-mono": "^5.2.5",
     "@supabase/supabase-js": "^2.49.4",

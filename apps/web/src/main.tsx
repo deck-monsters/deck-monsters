@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { trpc, createTRPCClient } from './lib/trpc.js';
 import { AuthProvider } from './lib/auth-context.js';
+import { CommandInsertProvider } from './lib/command-insert-context.js';
 import App from './App.js';
 
 import '@fontsource/jetbrains-mono/400.css';
@@ -30,9 +31,11 @@ createRoot(root).render(
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <CommandInsertProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </CommandInsertProvider>
         </AuthProvider>
       </QueryClientProvider>
     </trpc.Provider>

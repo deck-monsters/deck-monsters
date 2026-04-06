@@ -70,13 +70,13 @@ export function createRouter(roomManager: RoomManager) {
 					roomId: z.string().uuid(),
 					command: z.string().min(1),
 					channelName: z.string().default('default'),
-					isAdmin: z.boolean().default(false),
 					isDM: z.boolean().default(false),
 					userName: z.string().default('Player'),
 				})
 			)
 			.mutation(async ({ input, ctx }) => {
-				await roomManager.assertMember(ctx.userId, input.roomId);
+				const role = await roomManager.getMemberRole(ctx.userId, input.roomId);
+				const isAdmin = role === 'owner';
 				const game = await roomManager.getGame(input.roomId);
 				const eventBus = await roomManager.getEventBus(input.roomId);
 				const action = game.handleCommand({ command: input.command });
@@ -143,7 +143,7 @@ export function createRouter(roomManager: RoomManager) {
 				void action({
 					channel,
 					channelName: input.channelName,
-					isAdmin: input.isAdmin,
+					isAdmin,
 					isDM: input.isDM,
 					user: { id: ctx.userId, name: input.userName },
 				})
@@ -174,7 +174,7 @@ export function createRouter(roomManager: RoomManager) {
 			.mutation(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const eventBus = await roomManager.getEventBus(input.roomId);
-				eventBus.respondToPrompt(input.requestId, input.answer);
+				eventBus.respondToPrompt(input.requestId, input.answer, ctx.userId);
 				return { ok: true };
 			}),
 
@@ -188,7 +188,7 @@ export function createRouter(roomManager: RoomManager) {
 			.mutation(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const eventBus = await roomManager.getEventBus(input.roomId);
-				eventBus.cancelPrompt(input.requestId);
+				eventBus.cancelPrompt(input.requestId, ctx.userId);
 				return { ok: true };
 			}),
 
@@ -278,6 +278,19 @@ export function createRouter(roomManager: RoomManager) {
 			}),
 	});
 
+	const adminRouter = t.router({
+		resetRoom: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.mutation(async ({ input, ctx }) => {
+				const role = await roomManager.getMemberRole(ctx.userId, input.roomId);
+				if (role !== 'owner') {
+					throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the room owner can reset game state' });
+				}
+				await roomManager.resetRoomState(input.roomId);
+				return { ok: true };
+			}),
+	});
+
 	const authRouter = t.router({
 		registerConnectorUser: serviceProcedure
 			.input(
@@ -300,6 +313,7 @@ export function createRouter(roomManager: RoomManager) {
 	return t.router({
 		room: roomRouter,
 		game: gameRouter,
+		admin: adminRouter,
 		auth: authRouter,
 		health: t.procedure.query(() => ({
 			status: 'ok',

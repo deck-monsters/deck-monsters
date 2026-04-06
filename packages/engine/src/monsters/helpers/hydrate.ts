@@ -55,15 +55,15 @@ const hydrateMonster = (monsterObj: MonsterObj, deck?: CardInstance[]): BaseMons
 	const monster = new MonsterClass(options);
 
 	if (monsterObj.options.cards) {
-		monster.cards = monsterObj.options.cards.map(
-			(cardObj: CardInstance) => _hydrateCard(cardObj, monster, deck),
-		);
+		monster.cards = monsterObj.options.cards
+			.map((cardObj: CardInstance) => _hydrateCard(cardObj, monster, deck))
+			.filter(Boolean);
 	}
 
 	if (monsterObj.options.items) {
-		monster.items = monsterObj.options.items.map(
-			(itemObj: ItemInstance) => _hydrateItem(itemObj, monster),
-		);
+		monster.items = monsterObj.options.items
+			.map((itemObj: ItemInstance) => _hydrateItem(itemObj, monster))
+			.filter(Boolean);
 	}
 
 	return monster;

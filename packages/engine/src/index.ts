@@ -11,6 +11,9 @@ import type { GameEvent, EventType, EventScope, EventSubscriber } from './events
 export { Game, ConnectorAdapter, RoomEventBus };
 export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber };
 export type { StateStore } from './types/state-store.js';
+export { engineReady } from './helpers/engine-ready.js';
+export { COMMAND_CATALOG } from './commands/catalog.js';
+export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {
 	let gameObj: Record<string, unknown>;
@@ -43,7 +46,12 @@ export const getOptions = (gameJSON: string | Record<string, unknown>): Record<s
 	const rawCharacters = options.characters as Record<string, unknown>;
 	options.characters = Object.entries(rawCharacters).reduce(
 		(characters: Record<string, unknown>, [id, character]) => {
-			characters[id] = hydrateCharacter(character as any);
+			try {
+				characters[id] = hydrateCharacter(character as any);
+			} catch (err) {
+				// Skip one bad character rather than losing the entire game state.
+				// The bad data is already quarantined at the RoomManager layer.
+			}
 
 			return characters;
 		},

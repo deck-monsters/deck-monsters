@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
 import { eq, and, count } from 'drizzle-orm';
 
-import { Game, RoomEventBus, restoreGame } from '@deck-monsters/engine';
+import { Game, RoomEventBus, restoreGame, engineReady } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { rooms, roomMembers } from './db/schema.js';
 import { PostgresStateStore } from './state-store.js';
@@ -185,16 +185,56 @@ export class RoomManager {
 		}
 	}
 
+	async getMemberRole(userId: string, roomId: string): Promise<'owner' | 'member'> {
+		const rows = await this.db
+			.select({ role: roomMembers.role })
+			.from(roomMembers)
+			.where(and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)))
+			.limit(1);
+
+		if (!rows[0]) {
+			throw new TRPCError({ code: 'FORBIDDEN', message: 'Not a member of this room' });
+		}
+
+		return rows[0].role as 'owner' | 'member';
+	}
+
 	async getGame(roomId: string): Promise<Game> {
+		await engineReady;
 		const entry = await this._getOrLoad(roomId);
 		entry.lastActivityAt = Date.now();
 		return entry.game;
 	}
 
 	async getEventBus(roomId: string): Promise<RoomEventBus> {
+		await engineReady;
 		const entry = await this._getOrLoad(roomId);
 		entry.lastActivityAt = Date.now();
 		return entry.eventBus;
+	}
+
+	async resetRoomState(roomId: string): Promise<void> {
+		// Quarantine current state, start fresh on next load.
+		const rows = await this.db
+			.select({ stateBlob: rooms.stateBlob })
+			.from(rooms)
+			.where(eq(rooms.id, roomId))
+			.limit(1);
+
+		if (rows[0]?.stateBlob) {
+			await this.db.update(rooms).set({
+				stateBlob: null,
+				quarantinedBlob: rows[0].stateBlob,
+				updatedAt: new Date(),
+			}).where(eq(rooms.id, roomId));
+		}
+
+		// Evict from active cache so next load starts fresh.
+		const entry = this.active.get(roomId);
+		if (entry) {
+			entry.unsubscribePersister();
+		}
+		this.active.delete(roomId);
 	}
 
 	async unloadRoom(roomId: string): Promise<void> {
@@ -238,8 +278,20 @@ export class RoomManager {
 		let game: Game;
 
 		if (rows[0].stateBlob) {
-			game = this.deps.restoreGame(rows[0].stateBlob, this.log);
-			(game.options as Record<string, unknown>).roomId = roomId;
+			try {
+				game = this.deps.restoreGame(rows[0].stateBlob, this.log);
+				(game.options as Record<string, unknown>).roomId = roomId;
+			} catch (err) {
+				// Hydration failed — quarantine the bad blob so it can be inspected,
+				// then start a fresh game so the room is usable again immediately.
+				this.log(err);
+				await this.db.update(rooms).set({
+					stateBlob: null,
+					quarantinedBlob: rows[0].stateBlob,
+					updatedAt: new Date(),
+				}).where(eq(rooms.id, roomId));
+				game = new this.deps.Game({ roomId }, this.log);
+			}
 		} else {
 			game = new this.deps.Game({ roomId }, this.log);
 		}

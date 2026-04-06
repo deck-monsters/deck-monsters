@@ -39,6 +39,7 @@ export const rooms = pgTable('rooms', {
 		.references(() => profiles.id),
 	inviteCode: text('invite_code').notNull().unique(),
 	stateBlob: text('state_blob'),
+	quarantinedBlob: text('quarantined_blob'),
 	createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

@@ -35,7 +35,7 @@ const loadHelpers = async () => {
 	}
 };
 
-loadHelpers().catch(() => {
+export const equipHelpersReady = loadHelpers().catch(() => {
 	// Helpers not ready yet; stubs remain in place
 });
 

@@ -41,7 +41,7 @@ const loadHelpers = async () => {
 	}
 };
 
-loadHelpers().catch(() => {
+export const characterBaseReady = loadHelpers().catch(() => {
 	// Helpers not ready yet; stubs remain in place
 });
 
