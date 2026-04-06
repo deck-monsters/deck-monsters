@@ -174,8 +174,8 @@ class Beastmaster extends BaseCharacter {
 			return Promise.resolve()
 				.then(() =>
 					channel({
-						question: `You have ${numberOfMonsters} monsters:\n\n${_getMonsterChoices(monsters)}\nWhich monster would you like to ${action}?`,
-						choices: Object.keys(monsters),
+						question: `Which monster would you like to ${action}?`,
+						choices: monsters.map((m: any) => m.givenName ?? m.name ?? 'Unknown'),
 					}),
 				)
 				.then((answer: unknown) => monsters[answer as number]);

@@ -499,17 +499,15 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	edit (channel: ChannelFn): Promise<unknown> {
+		const optionKeys = Object.keys(this.options);
 		return Promise
 			.resolve()
 			.then(() => (this as unknown as Record<string, unknown>).look && (this as unknown as { look: (ch: ChannelFn) => unknown }).look(channel))
 			.then(() => channel({
-				question:
-`Which attribute would you like to edit?
-
-${getAttributeChoices(this.options)}`,
-				choices: Object.keys(Object.keys(this.options))
+				question: `Which attribute would you like to edit?`,
+				choices: optionKeys.map(key => `${key} (${JSON.stringify(this.options[key])})`)
 			}))
-			.then(index => Object.keys(this.options)[index as unknown as number])
+			.then(index => optionKeys[index as unknown as number])
 			.then(key => (channel({
 				question:
 `The current value of ${key} is ${JSON.stringify(this.options[key])}. What would you like the new value of ${key} to be?`

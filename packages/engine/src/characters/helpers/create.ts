@@ -62,8 +62,8 @@ const createCharacter = (
 			.then(() => {
 				if (type !== undefined) return type;
 				return channel({
-					question: `Which type of character would you like to be?\n\n${_getCreatureTypeChoices(allCharacters as CharacterConstructor[])}`,
-					choices: Object.keys(allCharacters),
+					question: `Which type of character would you like to be?`,
+					choices: (allCharacters as CharacterConstructor[]).map(c => (c as any).creatureType ?? c.name),
 				});
 			})
 			.then((answer: unknown) => allCharacters[answer as number] as CharacterConstructor);
@@ -73,8 +73,8 @@ const createCharacter = (
 			.then(() => {
 				if (gender !== undefined) return gender;
 				return channel({
-					question: `What gender should your ${((Character as any).creatureType as string).toLowerCase()} be?\n\n${_getChoices(genders)}`,
-					choices: Object.keys(genders),
+					question: `What gender should your ${((Character as any).creatureType as string).toLowerCase()} be?`,
+					choices: genders,
 				});
 			})
 			.then((answer: unknown) => {
@@ -114,8 +114,8 @@ const createCharacter = (
 			.then(() => {
 				if (icon !== undefined) return icon;
 				return channel({
-					question: `Finally, choose an avatar:\n\n${_getChoices(iconChoices)}`,
-					choices: Object.keys(iconChoices),
+					question: `Finally, choose an avatar:`,
+					choices: iconChoices,
 				});
 			})
 			.then((answer: unknown) => {

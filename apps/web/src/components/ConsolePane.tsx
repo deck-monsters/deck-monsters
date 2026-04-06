@@ -331,6 +331,11 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
       if (trimmed === 'cancel' || trimmed === 'exit') {
         setInputValue('');
         void handleCancelFlow();
+      } else if (activePromptId) {
+        // Route text input to the active prompt as a free-form answer
+        const answer = inputValue.trim();
+        setInputValue('');
+        if (answer) void handleAnswer(activePromptId, answer);
       } else {
         void handleSubmitCommand(inputValue);
       }
@@ -457,6 +462,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           if (trimmed === 'cancel' || trimmed === 'exit') {
             setInputValue('');
             void handleCancelFlow();
+          } else if (activePromptId) {
+            const answer = inputValue.trim();
+            setInputValue('');
+            if (answer) void handleAnswer(activePromptId, answer);
           } else {
             void handleSubmitCommand(inputValue);
           }

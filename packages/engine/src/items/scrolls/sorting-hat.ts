@@ -33,10 +33,8 @@ export class SortingHat extends BaseScroll {
 			.resolve()
 			.then(() => channel({
 				question:
-`"Hmm," says a small voice in ${givenName}'s ear. "Difficult. Very difficult. Plenty of courage, I see. Not a bad mind either. There's talent, oh my goodness, yes — and a nice thirst to prove yourself, now that's interesting. . . . So where shall I put you?"
-
-${getChoices(teamChoices)}`,
-				choices: Object.keys(teamChoices)
+`"Hmm," says a small voice in ${givenName}'s ear. "Difficult. Very difficult. Plenty of courage, I see. Not a bad mind either. There's talent, oh my goodness, yes — and a nice thirst to prove yourself, now that's interesting. . . . So where shall I put you?"`,
+				choices: teamChoices
 			}))
 			.then((answer: number | string) => {
 				const team = teamChoices[Number(answer)];

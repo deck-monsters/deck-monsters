@@ -184,11 +184,13 @@ button {
 
 .tag {
   font-size: 0.75rem;
-  padding: 0.1rem 0.4rem;
+  padding: 0.15rem 0.4rem;
   border: 1px solid var(--color-border);
   color: var(--color-fg-dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+  display: inline-block;
 }
 
 .empty-state {

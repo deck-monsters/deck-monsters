@@ -68,8 +68,8 @@ const spawnMonster = (
 				if (type !== undefined) return type;
 
 				return channel({
-					question: `Which type of monster would you like to spawn?\n\n${_getCreatureTypeChoices(allMonsters)}`,
-					choices: Object.keys(allMonsters),
+					question: `Which type of monster would you like to spawn?`,
+					choices: allMonsters.map(m => (m as any).creatureType ?? (m as any).name ?? 'Unknown'),
 				});
 			})
 			.then((answer: unknown) => {
@@ -145,8 +145,8 @@ const spawnMonster = (
 				if (gender !== undefined) return gender;
 
 				return channel({
-					question: `What gender should your ${((Monster as any).creatureType as string).toLowerCase()} be?\n\n${_getChoices(genders)}`,
-					choices: Object.keys(genders),
+					question: `What gender should your ${((Monster as any).creatureType as string).toLowerCase()} be?`,
+					choices: genders,
 				});
 			})
 			.then((answer: unknown) => {

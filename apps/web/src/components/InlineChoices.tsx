@@ -131,8 +131,8 @@ export default function InlineChoices({
                   color: isSelected ? 'var(--color-fg-bright)' : 'var(--color-fg)',
                   fontFamily: 'var(--font-family)',
                   fontSize: 'var(--font-size)',
-                  padding: '0.25rem 0.5rem',
-                  marginBottom: '0.25rem',
+                  padding: '0.35rem 0.6rem',
+                  marginBottom: '0.3rem',
                   cursor: isDone ? 'default' : 'pointer',
                   opacity: isDone && !isSelected ? 0.5 : 1,
                 }}
