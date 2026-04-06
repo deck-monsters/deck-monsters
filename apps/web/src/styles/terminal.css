@@ -89,29 +89,35 @@
   display: none; /* hidden by default; accessible to screen readers */
 }
 
-.event p {
+.event p,
+.event .event-text {
   margin: 0;
 }
 
 /* Event type styling */
-.event-announce p {
+.event-announce p,
+.event-announce .event-text {
   color: var(--color-fg);
 }
 
-.event-ring p {
+.event-ring p,
+.event-ring .event-text {
   color: var(--color-fg-bright);
 }
 
-.event-system p {
+.event-system p,
+.event-system .event-text {
   color: var(--color-system);
   font-style: italic;
 }
 
-.event-input p {
+.event-input p,
+.event-input .event-text {
   color: var(--color-accent);
 }
 
-.event-input p::before {
+.event-input p::before,
+.event-input .event-text::before {
   content: '> ';
   color: var(--color-prompt-glyph);
 }
@@ -134,8 +140,18 @@
 
 .prompt-question {
   color: var(--color-accent);
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   white-space: pre-line;
+}
+
+/* Styled panel for triple-backtick blocks from the engine (card/item/monster displays) */
+.event-card-block {
+  border: 1px solid var(--color-border);
+  background: var(--color-input-bg);
+  padding: 0.5rem 0.75rem;
+  margin: 0.4rem 0;
+  white-space: pre-wrap;
+  display: block;
 }
 
 /* Quick-action suggestions strip */

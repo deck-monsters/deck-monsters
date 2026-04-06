@@ -9,6 +9,7 @@ import { useCommandInsert } from '../lib/command-insert-context.js';
 import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
 import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
+import { formatEventText } from '../utils/format-event-text.js';
 
 interface ActivePrompt {
   requestId: string;
@@ -335,7 +336,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         // Route text input to the active prompt as a free-form answer
         const answer = inputValue.trim();
         setInputValue('');
-        if (answer) void handleAnswer(activePromptId, answer);
+        if (answer) {
+          addConsoleEvent({ id: `input-${Date.now()}`, type: 'input', text: answer });
+          void handleAnswer(activePromptId, answer);
+        }
       } else {
         void handleSubmitCommand(inputValue);
       }
@@ -421,7 +425,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           }
           return (
             <li key={ev.id} className={`event event-${ev.type}`}>
-              <p>{ev.text}</p>
+              <div className="event-text">{formatEventText(ev.text ?? '')}</div>
             </li>
           );
         })}
@@ -465,7 +469,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           } else if (activePromptId) {
             const answer = inputValue.trim();
             setInputValue('');
-            if (answer) void handleAnswer(activePromptId, answer);
+            if (answer) {
+              addConsoleEvent({ id: `input-${Date.now()}`, type: 'input', text: answer });
+              void handleAnswer(activePromptId, answer);
+            }
           } else {
             void handleSubmitCommand(inputValue);
           }

@@ -4,6 +4,7 @@ import type { GameEvent } from '@deck-monsters/server/types';
 type TrackedEvent = { id: string; data: GameEvent };
 import { trpc } from '../lib/trpc.js';
 import { useHandshake } from '../hooks/useHandshake.js';
+import { formatEventText } from '../utils/format-event-text.js';
 
 interface RingPaneProps {
   roomId: string;
@@ -121,7 +122,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
             <time dateTime={new Date(event.timestamp).toISOString()} aria-hidden="true">
               {new Date(event.timestamp).toLocaleTimeString()}
             </time>
-            <p>{event.text}</p>
+            <div className="event-text">{formatEventText(event.text ?? '')}</div>
           </li>
         ))}
       </ol>

@@ -289,7 +289,9 @@ export class Game extends BaseClass {
 	}
 
 	lookAtCharacter(channel: any, characterName: string, self: any): Promise<unknown> {
-		if (characterName) {
+		if (!characterName) {
+			if (self) return self.look(channel, true);
+		} else {
 			const character = this.findCharacterByName(characterName);
 			const isSelf = character === self;
 

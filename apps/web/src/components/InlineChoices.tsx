@@ -107,7 +107,7 @@ export default function InlineChoices({
         role="listbox"
         aria-multiselectable={multi}
         aria-label="Choose an option"
-        style={{ listStyle: 'none', padding: 0 }}
+        style={{ listStyle: 'none', padding: 0, marginTop: '0.25rem' }}
       >
         {choices.map((choice, idx) => {
           const slotPosition = multi ? selectionOrder.indexOf(idx) : -1;
@@ -132,7 +132,7 @@ export default function InlineChoices({
                   fontFamily: 'var(--font-family)',
                   fontSize: 'var(--font-size)',
                   padding: '0.35rem 0.6rem',
-                  marginBottom: '0.3rem',
+                  marginBottom: '0.4rem',
                   cursor: isDone ? 'default' : 'pointer',
                   opacity: isDone && !isSelected ? 0.5 : 1,
                 }}
