@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { trpc } from '../lib/trpc.js';
 
 interface MonsterInfo {
@@ -50,17 +50,19 @@ export default function MonstersView() {
   const [output, setOutput] = useState<string[]>([]);
   const [monsters, setMonsters] = useState<MonsterInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const fetchedRef = useRef(false);
+  // true once the user has explicitly asked to load their monster list
+  const [loaded, setLoaded] = useState(false);
 
   const sendCommand = trpc.game.command.useMutation({
     onError: (err) => setError(err.message),
   });
 
-  // Subscribe to ring feed to capture monster list output
+  // Subscribe to ring feed to capture monster list output.
+  // Only enabled once the user has explicitly triggered a load.
   trpc.game.ringFeed.useSubscription(
     { roomId: roomId! },
     {
-      enabled: !!roomId,
+      enabled: !!roomId && loaded,
       onData(tracked) {
         const event = tracked.data;
         if (event.scope === 'private' && event.text) {
@@ -76,15 +78,14 @@ export default function MonstersView() {
     }
   );
 
-  useEffect(() => {
-    if (!roomId || fetchedRef.current) return;
-    fetchedRef.current = true;
-    sendCommand.mutate({
-      roomId,
-      command: 'look at monsters',
-      isDM: true,
-    });
-  }, [roomId]);
+  function loadMonsters() {
+    if (!roomId) return;
+    setError(null);
+    setOutput([]);
+    setMonsters([]);
+    setLoaded(true);
+    sendCommand.mutate({ roomId, command: 'look at monsters', isDM: true });
+  }
 
   function sendToRing(name: string) {
     if (!roomId) return;
@@ -107,7 +108,16 @@ export default function MonstersView() {
 
       {error && <div className="error-msg">{error}</div>}
 
-      {monsters.length === 0 && (
+      {!loaded && (
+        <div className="empty-state">
+          <p>View your monsters to get started.</p>
+          <button className="btn btn-primary" onClick={loadMonsters}>
+            Load monsters
+          </button>
+        </div>
+      )}
+
+      {loaded && monsters.length === 0 && (
         <div className="empty-state">
           {sendCommand.isPending
             ? 'Loading your monsters…'

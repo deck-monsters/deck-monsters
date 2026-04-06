@@ -9,6 +9,12 @@ import { ensureConnectorUser } from '../auth/connector-users.js';
 
 export type AppRouter = ReturnType<typeof createRouter>;
 
+// Per-user active-flow lock.  Key = `${roomId}:${userId}`.
+// While a command flow is in progress for a given user+room, further commands
+// are rejected with a friendly message so users know to answer the prompt first.
+// Exported so it can be inspected in unit tests.
+export const activeFlows = new Set<string>();
+
 export function createRouter(roomManager: RoomManager) {
 	const roomRouter = t.router({
 		create: protectedProcedure
@@ -73,6 +79,18 @@ export function createRouter(roomManager: RoomManager) {
 					return { ok: false, message: 'Command not recognized' };
 				}
 
+				// Prevent concurrent interactive flows for the same user+room.
+				// The engine is not designed for concurrent access — interleaved prompt
+				// flows corrupt game state and produce nonsensical UX.
+				const flowKey = `${input.roomId}:${ctx.userId}`;
+				if (activeFlows.has(flowKey)) {
+					return {
+						ok: false,
+						message: 'A command is already in progress — answer the current prompt first.',
+					};
+				}
+				activeFlows.add(flowKey);
+
 				// Channel callback: all output (announcements and prompts) goes through
 				// the event bus so the web client receives it via the ringFeed WebSocket.
 				//
@@ -120,13 +138,17 @@ export function createRouter(roomManager: RoomManager) {
 					isAdmin: input.isAdmin,
 					isDM: input.isDM,
 					user: { id: ctx.userId, name: input.userName },
-				}).catch((err: unknown) => {
-					// Prompt timeouts are expected when users abandon a flow.
-					const msg = err instanceof Error ? err.message : String(err);
-					if (!msg.includes('Prompt timed out')) {
-						roomManager['log']?.(err);
-					}
-				});
+				})
+					.catch((err: unknown) => {
+						// Prompt timeouts are expected when users abandon a flow.
+						const msg = err instanceof Error ? err.message : String(err);
+						if (!msg.includes('Prompt timed out')) {
+							roomManager['log']?.(err);
+						}
+					})
+					.finally(() => {
+						activeFlows.delete(flowKey);
+					});
 
 				return { ok: true };
 			}),

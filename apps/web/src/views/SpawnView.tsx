@@ -10,7 +10,9 @@ export default function SpawnView() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Subscribe to private announce events so spawn progress appears in this view
+  // Subscribe to private announce events so spawn progress appears in this view.
+  // Stays active while spawning — do NOT disable on mutation success because
+  // game.command is fire-and-forget; the flow continues after the HTTP call returns.
   trpc.game.ringFeed.useSubscription(
     { roomId: roomId! },
     {
@@ -19,29 +21,50 @@ export default function SpawnView() {
         const event = tracked.data;
         if (event.scope === 'private' && event.type === 'announce' && event.text) {
           setLog((prev) => [...prev, event.text]);
+
+          // "proud owner of a" is the engine's sentinel that the monster was created.
+          if (event.text.includes('proud owner of a')) {
+            setSpawning(false);
+            setDone(true);
+          }
         }
       },
     },
   );
 
   const sendCommand = trpc.game.command.useMutation({
-    onSuccess: () => {
-      setSpawning(false);
-      setDone(true);
-    },
     onError: (err) => {
       setSpawning(false);
       setError(err.message);
     },
   });
 
-  function handleSpawn() {
+  async function handleSpawn() {
     if (!roomId || spawning) return;
     setError(null);
     setLog([]);
     setDone(false);
     setSpawning(true);
-    sendCommand.mutate({ roomId, command: 'spawn a monster', isDM: true });
+
+    try {
+      const result = await sendCommand.mutateAsync({ roomId, command: 'spawn a monster', isDM: true });
+
+      // game.command returns { ok: true } immediately (fire-and-forget). If ok is
+      // false the command was rejected (e.g. concurrent flow lock) — stop here.
+      if (!result.ok) {
+        setSpawning(false);
+        setError((result as { ok: false; message?: string }).message ?? 'Command rejected.');
+      }
+      // If ok:true the flow is running; stay in spawning mode until the sentinel arrives.
+    } catch (err) {
+      setSpawning(false);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  }
+
+  function handleDone() {
+    setSpawning(false);
+    setDone(true);
   }
 
   function handleReset() {
@@ -77,8 +100,13 @@ export default function SpawnView() {
       )}
 
       {spawning && (
-        <div style={{ color: 'var(--text-dim)', marginBottom: 12 }}>
-          Spawning in progress — answer the prompts as they appear…
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ color: 'var(--text-dim)', marginBottom: 8 }}>
+            Spawning in progress — answer the prompts as they appear…
+          </div>
+          <button className="btn" onClick={handleDone}>
+            Done
+          </button>
         </div>
       )}
 

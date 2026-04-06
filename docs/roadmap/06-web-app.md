@@ -97,3 +97,21 @@ All optional — the text works fine on its own.
 - [x] Integrate Supabase Auth (login/register pages with Discord OAuth and email/password)
 - [x] Responsive design (mobile browser baseline support)
 - [ ] Deploy to chosen hosting platform (see backend hosting doc)
+
+## UX Improvements Backlog
+
+The following improvements are tracked here for later — they are non-blocking for initial launch but would meaningfully improve player experience:
+
+- **Structured game state API**: Expose a read-only query endpoint that returns character + monster data (name, type, HP, level, stats) as structured JSON, so the web UI doesn't have to parse free-form announce text to render monster cards. This also enables the "look at monsters" page to be data-driven rather than triggering a side-effectful game command.
+
+- **Flow progress indicator**: When the user is in a multi-step interactive flow (spawn, equip, shop), show which step they are on (e.g. "Step 2 of 4 — Choose a name"). The engine knows the flow structure; this metadata could be included in the `prompt.request` payload.
+
+- **Prompt context labels**: Show which flow a prompt belongs to (e.g. "Spawning your monster" vs. "Character setup") so users aren't confused when a prompt appears unexpectedly (e.g. first-time character creation triggered by any command).
+
+- **Graceful prompt timeout handling**: The server-side `sendPrompt` times out after 120 seconds. When a prompt times out, notify the user in the UI (e.g. "The game stopped waiting for your answer — start a new command to try again."). Currently the user has no feedback that their flow was abandoned.
+
+- **First-time onboarding**: Detect new users (no character yet) and surface a clear "Create your character" flow on first login, rather than requiring them to discover it by accident via a game command.
+
+- **Cross-view event isolation**: Private `announce` events from one game flow (e.g. spawn) currently leak into other views' ring feed subscriptions. Views should filter events to only those relevant to the flow they initiated.
+
+- **Cancel in-flight prompt**: Add a server-side mechanism for users to cancel a pending prompt (abandon the current flow) without waiting for the 120s timeout. This could be a `game.cancelPrompt` tRPC mutation.

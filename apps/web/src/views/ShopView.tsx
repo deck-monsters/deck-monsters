@@ -9,7 +9,10 @@ export default function ShopView() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Capture announce events from the store interaction
+  // Capture announce events from the store interaction.
+  // Stays active while `active` is true — do NOT disable on mutation success
+  // because game.command is fire-and-forget; the interactive flow continues
+  // via the ring feed after the HTTP call returns.
   trpc.game.ringFeed.useSubscription(
     { roomId: roomId! },
     {
@@ -24,23 +27,38 @@ export default function ShopView() {
   );
 
   const sendCommand = trpc.game.command.useMutation({
-    onSuccess: () => {
-      setActive(false);
-      setDone(true);
-    },
     onError: (err) => {
       setActive(false);
       setError(err.message);
     },
   });
 
-  function startFlow(command: string) {
+  async function startFlow(command: string) {
     if (!roomId || active) return;
     setError(null);
     setLog([]);
     setDone(false);
     setActive(true);
-    sendCommand.mutate({ roomId, command, isDM: true });
+
+    try {
+      const result = await sendCommand.mutateAsync({ roomId, command, isDM: true });
+
+      // game.command returns { ok: true } immediately (fire-and-forget). If ok is
+      // false the command was rejected — stop here.
+      if (!result.ok) {
+        setActive(false);
+        setError((result as { ok: false; message?: string }).message ?? 'Command rejected.');
+      }
+      // If ok:true the flow is running; stay active until the user clicks Done.
+    } catch (err) {
+      setActive(false);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  }
+
+  function handleDone() {
+    setActive(false);
+    setDone(true);
   }
 
   function handleReset() {
@@ -76,8 +94,13 @@ export default function ShopView() {
       )}
 
       {active && (
-        <div style={{ color: 'var(--text-dim)', marginBottom: 12 }}>
-          Shop session active — answer the prompts as they appear…
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ color: 'var(--text-dim)', marginBottom: 8 }}>
+            Shop session active — answer the prompts as they appear…
+          </div>
+          <button className="btn" onClick={handleDone}>
+            Done
+          </button>
         </div>
       )}
 

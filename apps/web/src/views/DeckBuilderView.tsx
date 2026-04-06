@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { trpc } from '../lib/trpc.js';
 
 interface CardEntry {
@@ -30,7 +30,8 @@ export default function DeckBuilderView() {
   const [success, setSuccess] = useState<string | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
-  const fetchedRef = useRef(false);
+  // true once the user has explicitly asked to load the deck
+  const [loaded, setLoaded] = useState(false);
 
   const sendCommand = trpc.game.command.useMutation({
     onError: (err) => setError(err.message),
@@ -39,7 +40,7 @@ export default function DeckBuilderView() {
   trpc.game.ringFeed.useSubscription(
     { roomId: roomId! },
     {
-      enabled: !!roomId,
+      enabled: !!roomId && loaded,
       onData(tracked) {
         const event = tracked.data;
         if (event.scope === 'private' && event.text) {
@@ -54,15 +55,14 @@ export default function DeckBuilderView() {
     }
   );
 
-  useEffect(() => {
-    if (!roomId || !decodedName || fetchedRef.current) return;
-    fetchedRef.current = true;
-    sendCommand.mutate({
-      roomId,
-      command: `look at ${decodedName}'s cards`,
-      isDM: true,
-    });
-  }, [roomId, decodedName]);
+  function loadDeck() {
+    if (!roomId || !decodedName) return;
+    setError(null);
+    setOutput([]);
+    setCards([]);
+    setLoaded(true);
+    sendCommand.mutate({ roomId, command: `look at ${decodedName}'s cards`, isDM: true });
+  }
 
   // Drag-and-drop reorder
   function handleDragStart(idx: number) { setDragIdx(idx); }
@@ -110,7 +110,16 @@ export default function DeckBuilderView() {
       {error && <div className="error-msg">{error}</div>}
       {success && <div className="success-msg">{success}</div>}
 
-      {cards.length === 0 && (
+      {!loaded && (
+        <div className="empty-state">
+          <p>Load the current deck for {decodedName}.</p>
+          <button className="btn btn-primary" onClick={loadDeck}>
+            Load deck
+          </button>
+        </div>
+      )}
+
+      {loaded && cards.length === 0 && (
         <div className="empty-state">
           {sendCommand.isPending ? 'Loading deck…' : 'No cards found for this monster.'}
         </div>

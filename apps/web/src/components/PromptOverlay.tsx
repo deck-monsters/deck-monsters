@@ -1,6 +1,13 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { trpc } from '../lib/trpc.js';
+
+// Prompts older than this threshold at subscription start are considered stale.
+// The ringFeed replays the last N events from the ring buffer on every new
+// subscription — any prompt.request from a previous session would be replayed
+// and incorrectly shown. 30 seconds is generous enough to survive a WS
+// reconnect mid-flow while still discarding prompts from earlier navigations.
+const STALE_PROMPT_THRESHOLD_MS = 30_000;
 
 interface PendingPrompt {
   requestId: string;
@@ -48,6 +55,17 @@ export default function PromptOverlay() {
   const [queue, setQueue] = useState<PendingPrompt[]>([]);
   const [freeText, setFreeText] = useState('');
   const seenRef = useRef(new Set<string>());
+  // Recorded when this component mounts; used to discard replayed stale prompts.
+  const subscriptionStartRef = useRef<number>(Date.now());
+
+  // Reset the subscription start time and seen-prompt set whenever roomId changes
+  // (i.e. the user navigates to a different room or the component re-mounts).
+  useEffect(() => {
+    subscriptionStartRef.current = Date.now();
+    seenRef.current = new Set();
+    setQueue([]);
+    setFreeText('');
+  }, [roomId]);
 
   const respond = trpc.game.respondToPrompt.useMutation({
     onSuccess: () => {
@@ -65,6 +83,14 @@ export default function PromptOverlay() {
         if (event.type !== 'prompt.request') return;
         const requestId = event.payload?.requestId as string | undefined;
         if (!requestId || seenRef.current.has(requestId)) return;
+
+        // Discard prompts that are older than STALE_PROMPT_THRESHOLD_MS relative
+        // to when this subscription started. The ringFeed replays the last N events
+        // on every new subscription, so old prompts from a previous page load would
+        // otherwise appear immediately without user action.
+        const cutoff = subscriptionStartRef.current - STALE_PROMPT_THRESHOLD_MS;
+        if (event.timestamp < cutoff) return;
+
         seenRef.current.add(requestId);
         setQueue((prev) => [
           ...prev,
