@@ -45,7 +45,7 @@ function RoomView() {
   if (!roomId) return <Navigate to="/rooms" replace />;
 
   return (
-    <AppShell roomName={room?.name}>
+    <AppShell roomName={room?.name} roomId={roomId}>
       <Terminal roomId={roomId} />
     </AppShell>
   );

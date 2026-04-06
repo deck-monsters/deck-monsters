@@ -89,6 +89,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
   const sendCommand = trpc.game.command.useMutation();
   const respondToPrompt = trpc.game.respondToPrompt.useMutation();
+  const cancelPromptMutation = trpc.game.cancelPrompt.useMutation();
+  const cancelFlowMutation = trpc.game.cancelFlow.useMutation();
 
   function addConsoleEvent(ev: ConsoleEvent) {
     setConsoleEvents(prev => [...prev, ev]);
@@ -202,6 +204,34 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     }
   );
 
+  async function handleCancelPrompt(requestId: string) {
+    try {
+      await cancelPromptMutation.mutateAsync({ roomId, requestId });
+    } catch {
+      // Silent — UI will update when prompt.cancel event arrives via ringFeed
+    }
+  }
+
+  async function handleCancelFlow() {
+    try {
+      await cancelFlowMutation.mutateAsync({ roomId });
+      addConsoleEvent({
+        id: `sys-${Date.now()}`,
+        type: 'system',
+        text: '-- current action cancelled --',
+      });
+      setActivePromptId(null);
+    } catch (err) {
+      addConsoleEvent({
+        id: `sys-${Date.now()}`,
+        type: 'system',
+        text: `! ${err instanceof Error ? err.message : 'Cancel failed'}`,
+      });
+    } finally {
+      inputRef.current?.focus();
+    }
+  }
+
   async function handleSubmitCommand(command: string) {
     if (!command.trim() || inputLocked) return;
 
@@ -223,11 +253,20 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
       });
 
       if (!result.ok) {
+        const msg = 'message' in result ? result.message : 'Command failed';
         addConsoleEvent({
           id: `sys-${Date.now()}`,
           type: 'system',
-          text: `! ${'message' in result ? result.message : 'Command failed'}`,
+          text: `! ${msg}`,
         });
+        // If blocked by an in-progress flow, offer a force-cancel shortcut
+        if (typeof msg === 'string' && msg.includes('already in progress')) {
+          addConsoleEvent({
+            id: `sys-cancel-${Date.now()}`,
+            type: 'system',
+            text: '-- type "cancel" or click Cancel on the active prompt to abort it --',
+          });
+        }
       }
     } catch (err) {
       addConsoleEvent({
@@ -288,7 +327,13 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       setSuggestionIndex(-1);
-      void handleSubmitCommand(inputValue);
+      const trimmed = inputValue.trim().toLowerCase();
+      if (trimmed === 'cancel' || trimmed === 'exit') {
+        setInputValue('');
+        void handleCancelFlow();
+      } else {
+        void handleSubmitCommand(inputValue);
+      }
     }
   }
 
@@ -312,6 +357,24 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
       <header className="pane-header">
         <span>Console</span>
         {reconnecting && <span style={{ color: 'var(--color-accent)' }}>reconnecting…</span>}
+        {activePromptId && (
+          <button
+            onClick={() => void handleCancelFlow()}
+            style={{
+              marginLeft: 'auto',
+              padding: '0.1rem 0.5rem',
+              fontSize: '0.75rem',
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-fg-dim)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-family)',
+            }}
+            title="Cancel current action"
+          >
+            Cancel action
+          </button>
+        )}
       </header>
 
       <ol
@@ -340,6 +403,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
                   timedOut={ev.promptData.timedOut}
                   cancelled={ev.promptData.cancelled}
                   onAnswer={handleAnswer}
+                  onCancel={handleCancelPrompt}
                 />
                 {ev.promptData.timeoutSeconds && !ev.promptData.selectedAnswer && !ev.promptData.timedOut && !ev.promptData.cancelled && (
                   <PromptCountdown
@@ -386,7 +450,17 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
       <form
         className="command-dock"
-        onSubmit={(e) => { e.preventDefault(); setSuggestionIndex(-1); void handleSubmitCommand(inputValue); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          setSuggestionIndex(-1);
+          const trimmed = inputValue.trim().toLowerCase();
+          if (trimmed === 'cancel' || trimmed === 'exit') {
+            setInputValue('');
+            void handleCancelFlow();
+          } else {
+            void handleSubmitCommand(inputValue);
+          }
+        }}
         aria-label="Command input"
         style={{ position: 'relative' }}
       >

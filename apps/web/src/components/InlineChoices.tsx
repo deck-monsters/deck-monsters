@@ -8,6 +8,7 @@ interface InlineChoicesProps {
   timedOut: boolean;
   cancelled: boolean;
   onAnswer: (requestId: string, answer: string) => void;
+  onCancel?: (requestId: string) => void;
 }
 
 /**
@@ -27,6 +28,7 @@ export default function InlineChoices({
   timedOut,
   cancelled,
   onAnswer,
+  onCancel,
 }: InlineChoicesProps) {
   const listRef = useRef<HTMLUListElement>(null);
   // Ordered array: each entry is the choice index, in the order the user picked them.
@@ -177,6 +179,41 @@ export default function InlineChoices({
               Order: {selectionOrder.map(i => choices[i]).join(' → ')}
             </span>
           )}
+          {onCancel && (
+            <button
+              onClick={() => onCancel(requestId)}
+              style={{
+                padding: '0.3rem 0.75rem',
+                background: 'transparent',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-fg-dim)',
+                fontFamily: 'var(--font-family)',
+                fontSize: 'var(--font-size)',
+                cursor: 'pointer',
+                marginLeft: 'auto',
+              }}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
+      {!multi && !isDone && onCancel && (
+        <div style={{ marginTop: '0.25rem' }}>
+          <button
+            onClick={() => onCancel(requestId)}
+            style={{
+              padding: '0.2rem 0.5rem',
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-fg-dim)',
+              fontFamily: 'var(--font-family)',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
         </div>
       )}
     </div>

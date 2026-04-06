@@ -231,6 +231,17 @@ export class Game extends BaseClass {
 				});
 			}
 
+			// If the character was created with the generic 'Player' fallback name
+			// (before server-side display name resolution), update it silently.
+			if (
+				existingCharacter.givenName === 'Player' &&
+				name &&
+				name !== 'Player'
+			) {
+				existingCharacter.setOptions({ name });
+				game.emit('stateChange', { character: existingCharacter });
+			}
+
 			return existingCharacter;
 		});
 	}

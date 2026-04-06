@@ -81,4 +81,38 @@ describe('game.ts', () => {
 		expect(card).to.be.instanceOf(BaseCard);
 		expect(canHoldCard.called).to.equal(true);
 	});
+
+	describe('getCharacter Player-name auto-update', () => {
+		it('updates givenName when existing character has placeholder "Player" name', async () => {
+			const game = new Game();
+			const channel = sinon.stub().resolves('0');
+
+			// getCharacter will call createCharacter which uses the provided name as default
+			// without prompting — char will be created with givenName 'Player'
+			const char1 = await game.getCharacter({ channel, id: 'user-1', name: 'Player' });
+			expect((char1 as any).givenName).to.equal('Player');
+
+			// Second call with the real name resolved server-side
+			const char2 = await game.getCharacter({ channel, id: 'user-1', name: 'RealName' });
+
+			expect(char2).to.equal(char1); // same object returned
+			// startCase splits camelCase: 'RealName' → 'Real Name'
+			expect((char2 as any).givenName).to.equal('Real Name');
+		});
+
+		it('does not overwrite a custom character name with the real display name', async () => {
+			const game = new Game();
+			const channel = sinon.stub().resolves('0');
+
+			// Create char with placeholder name
+			const char1 = await game.getCharacter({ channel, id: 'user-2', name: 'Player' });
+			// User explicitly renamed their character via editSelf — update via setOptions
+			(char1 as any).setOptions({ name: 'CustomHero' });
+			expect((char1 as any).givenName).to.equal('Custom Hero');
+
+			const char2 = await game.getCharacter({ channel, id: 'user-2', name: 'RealName' });
+			// 'Custom Hero' !== 'Player', so no override should happen
+			expect((char2 as any).givenName).to.equal('Custom Hero'); // unchanged
+		});
+	});
 });

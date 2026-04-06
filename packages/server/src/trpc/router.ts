@@ -200,6 +200,21 @@ export function createRouter(roomManager: RoomManager) {
 				return { ok: true };
 			}),
 
+		cancelFlow: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const eventBus = await roomManager.getEventBus(input.roomId);
+				// Cancel all pending prompts — this resolves them with '__cancelled__'
+				// which allows the in-flight action promise chain to settle normally
+				// and release the activeFlows lock in its .finally() handler.
+				eventBus.cancelAllUserPrompts(ctx.userId);
+				// Belt-and-suspenders: force-clear the lock immediately so the user
+				// isn't blocked if the action chain doesn't settle within a tick.
+				activeFlows.delete(`${input.roomId}:${ctx.userId}`);
+				return { ok: true };
+			}),
+
 		ringFeed: protectedProcedure
 			.input(
 				z.object({

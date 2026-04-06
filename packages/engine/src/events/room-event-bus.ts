@@ -100,9 +100,26 @@ export class RoomEventBus {
 				scope: 'private',
 				targetUserId: userId,
 				text: question,
-				payload: { requestId, question, choices },
+				payload: { requestId, question, choices, timeoutSeconds: Math.round(timeoutMs / 1000) },
 			});
 		});
+	}
+
+	cancelAllUserPrompts(userId: string): void {
+		for (const [requestId, pending] of this.pendingPrompts) {
+			if (pending.userId === userId) {
+				clearTimeout(pending.timer);
+				this.pendingPrompts.delete(requestId);
+				this.publish({
+					type: 'prompt.cancel',
+					scope: 'private',
+					targetUserId: userId,
+					text: 'Action cancelled.',
+					payload: { requestId },
+				});
+				pending.resolve('__cancelled__');
+			}
+		}
 	}
 
 	cancelPrompt(requestId: string, callerId?: string): void {

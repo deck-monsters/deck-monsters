@@ -8,9 +8,10 @@ import CommandReference from './CommandReference.js';
 interface AppShellProps {
   children: React.ReactNode;
   roomName?: string;
+  roomId?: string;
 }
 
-export default function AppShell({ children, roomName }: AppShellProps) {
+export default function AppShell({ children, roomName, roomId }: AppShellProps) {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -54,6 +55,22 @@ export default function AppShell({ children, roomName }: AppShellProps) {
           <>
             <span style={{ color: 'var(--color-fg-dim)' }}>/</span>
             <span style={{ color: 'var(--color-fg)', fontSize: '0.9rem' }}>{roomName}</span>
+            {roomId && (
+              <Link
+                to={`/room/${roomId}/settings`}
+                style={{
+                  color: 'var(--color-fg-dim)',
+                  textDecoration: 'none',
+                  fontSize: '0.8rem',
+                  padding: '0.15rem 0.3rem',
+                  border: '1px solid var(--color-border)',
+                }}
+                title="Room settings"
+                aria-label="Room settings"
+              >
+                ⚙
+              </Link>
+            )}
           </>
         )}
 

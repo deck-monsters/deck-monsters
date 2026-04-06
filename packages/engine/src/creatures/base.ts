@@ -474,12 +474,12 @@ Battles won: ${this.battles.wins}`;
 				question:
 `Which field would you like to update?
 
-1) Name (currently: ${this.givenName})
-2) Icon/color (currently: ${this.icon})`,
-				choices: ['1', '2']
+0) Name (currently: ${this.givenName})
+1) Icon/color (currently: ${this.icon})`,
+				choices: [`Name (currently: ${this.givenName})`, `Icon/color (currently: ${this.icon})`]
 			}))
 			.then((answer: unknown) => {
-				const key: AllowedKey = Number(answer) === 1 ? 'givenName' : 'icon';
+				const key: AllowedKey = Number(answer) === 0 ? 'givenName' : 'icon';
 				const current = this.options[key];
 				return (channel({
 					question: `The current value of ${key} is ${JSON.stringify(current)}. What would you like the new value to be?`
