@@ -199,6 +199,16 @@ button {
   text-align: center;
 }
 
+/* Header nav/hamburger visibility */
+.header-hamburger { display: none; }
+
+/* Mobile layout — narrow screens */
+@media (max-width: 600px) {
+  .header-nav { display: none !important; }
+  .header-hamburger { display: inline-flex !important; }
+  .lobby-grid { grid-template-columns: 1fr !important; }
+}
+
 /* Accessibility: reduce motion */
 @media (prefers-reduced-motion: reduce) {
   *,

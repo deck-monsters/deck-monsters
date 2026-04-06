@@ -49,7 +49,7 @@ export default function RoomLobbyView() {
 
       {error && <div className="error-msg">{error}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div className="lobby-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
         <div className="panel">
           <p className="panel-title">Create a room</p>
           <form onSubmit={handleCreate}>

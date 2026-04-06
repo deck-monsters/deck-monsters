@@ -71,7 +71,7 @@ Stat curses (from cards like Soften, Concussion, Molasses)
 cap at -3 per level; further penalties come out of HP instead.
 `.trim();
 
-export const dungeonMasterGuide = async ({ channel }: { channel: ChannelFn }): Promise<unknown> => {
+export const dungeonMasterGuide = async ({ channel }: { channel: ChannelFn }): Promise<void> => {
 	await channel({ announce: DMG_HEADER });
 	await channel({ announce: ADMIN_COMMANDS });
 	await channel({ announce: STATS_REFERENCE });

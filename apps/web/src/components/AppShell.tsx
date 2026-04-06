@@ -78,6 +78,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
 
         {/* Desktop nav */}
         <nav
+          className="header-nav"
           style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}
           aria-label="Main navigation"
         >
@@ -119,8 +120,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
 
         {/* Mobile hamburger */}
         <button
-          className="btn"
-          style={{ display: 'none' }}
+          className="btn header-hamburger"
           aria-label="Open menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(v => !v)}
