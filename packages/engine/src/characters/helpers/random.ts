@@ -41,7 +41,11 @@ const loadHelpers = async () => {
 	}
 };
 
-loadHelpers().catch(() => {
+/** Resolves once all dynamic helpers (monsters, colors, emoji, deck) are loaded.
+ *  Await this in test `before` hooks when tests depend on randomCharacter() producing a
+ *  fully-populated character with monsters.
+ */
+export const helpersReady = loadHelpers().catch(() => {
 	// Helpers not ready yet; stubs remain in place
 });
 
