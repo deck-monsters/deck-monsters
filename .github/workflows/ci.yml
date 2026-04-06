@@ -26,6 +26,9 @@ jobs:
       - run: pnpm --filter @deck-monsters/server exec tsc --noEmit
       - run: pnpm --filter @deck-monsters/connector-discord exec tsc --noEmit
       # Web uses vite's bundler resolution; tsc --noEmit validates it separately
+      # web-legacy is the archived prior implementation kept for reference
+      - run: pnpm --filter @deck-monsters/web-legacy exec tsc --noEmit
+      # New rebuild
       - run: pnpm --filter @deck-monsters/web exec tsc --noEmit
 
   lint:
@@ -44,6 +47,9 @@ jobs:
       # as part of that cleanup effort.
       - run: pnpm --filter @deck-monsters/server run lint
       - run: pnpm --filter @deck-monsters/connector-discord run lint
+      # web-legacy: lint during rebuild transition
+      - run: pnpm --filter @deck-monsters/web-legacy run lint
+      # New rebuild
       - run: pnpm --filter @deck-monsters/web run lint
 
   test:
@@ -60,3 +66,4 @@ jobs:
       # Build engine first — server and connector-discord tests import from engine/dist
       - run: pnpm --filter @deck-monsters/engine run build
       - run: pnpm run test
+      - run: pnpm --filter @deck-monsters/web run test

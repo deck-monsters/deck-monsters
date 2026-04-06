@@ -20,6 +20,7 @@ export class RoomEventBus {
 		resolve: (answer: string) => void;
 		reject: (err: Error) => void;
 		timer: ReturnType<typeof setTimeout>;
+		userId: string;
 	}>();
 
 	constructor(public readonly roomId: string) {}
@@ -82,10 +83,17 @@ export class RoomEventBus {
 
 			const timer = setTimeout(() => {
 				this.pendingPrompts.delete(requestId);
+				this.publish({
+					type: 'prompt.timeout',
+					scope: 'private',
+					targetUserId: userId,
+					text: 'The game stopped waiting for your answer. Try the command again.',
+					payload: { requestId },
+				});
 				reject(new Error(`Prompt timed out after ${timeoutMs}ms`));
 			}, timeoutMs);
 
-			this.pendingPrompts.set(requestId, { resolve, reject, timer });
+			this.pendingPrompts.set(requestId, { resolve, reject, timer, userId });
 
 			this.publish({
 				type: 'prompt.request',
@@ -95,6 +103,22 @@ export class RoomEventBus {
 				payload: { requestId, question, choices },
 			});
 		});
+	}
+
+	cancelPrompt(requestId: string): void {
+		const pending = this.pendingPrompts.get(requestId);
+		if (pending) {
+			clearTimeout(pending.timer);
+			this.pendingPrompts.delete(requestId);
+			this.publish({
+				type: 'prompt.cancel',
+				scope: 'private',
+				targetUserId: pending.userId,
+				text: 'Action cancelled.',
+				payload: { requestId },
+			});
+			pending.resolve('__cancelled__');
+		}
 	}
 
 	respondToPrompt(requestId: string, answer: string): void {

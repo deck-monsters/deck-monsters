@@ -1,0 +1,16 @@
+/* Amber-on-black retro terminal theme */
+[data-theme='amber'] {
+  --color-bg: #0a0800;
+  --color-fg: #ffb000;
+  --color-fg-bright: #ffd060;
+  --color-fg-dim: #805500;
+  --color-accent: #ff8800;
+  --color-system: #5a4a00;
+  --color-error: #ff4422;
+  --color-success: #aacc00;
+  --color-prompt-glyph: var(--color-accent);
+  --color-border: #3a2800;
+  --color-input-bg: #0d0900;
+  --color-choice-hover: #1a1000;
+  --color-choice-selected: #2a1800;
+}
