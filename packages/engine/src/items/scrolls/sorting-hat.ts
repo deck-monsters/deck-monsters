@@ -1,6 +1,7 @@
 import { BaseScroll } from './base.js';
 import { ABUNDANT } from '../../helpers/probabilities.js';
 import { FREE } from '../../helpers/costs.js';
+import type { ChannelFn } from '../../creatures/base.js';
 import * as teams from '../../constants/teams.js';
 
 export class SortingHat extends BaseScroll {
@@ -16,16 +17,21 @@ export class SortingHat extends BaseScroll {
 		super({ icon });
 	}
 
-	action({ channel, channelName, character, monster }: { channel: any; channelName?: string; character: any; monster?: any }): Promise<string> {
+	action({ channel, channelName, character, monster }: {
+		channel: ChannelFn;
+		channelName?: string;
+		character: Record<string, unknown>;
+		monster?: Record<string, unknown>;
+	}): Promise<string> {
 		let givenName: string;
 		let teamChoices: string[];
 
 		if (monster) {
-			givenName = monster.givenName;
-			teamChoices = Object.values(teams).filter((team: any) => team !== monster.team) as string[];
+			givenName = monster['givenName'] as string;
+			teamChoices = (Object.values(teams) as string[]).filter(team => team !== (monster['team'] as string));
 		} else {
-			givenName = character.givenName;
-			teamChoices = Object.values(teams).filter((team: any) => team !== character.team) as string[];
+			givenName = character['givenName'] as string;
+			teamChoices = (Object.values(teams) as string[]).filter(team => team !== (character['team'] as string));
 		}
 
 		return Promise
@@ -35,7 +41,7 @@ export class SortingHat extends BaseScroll {
 `"Hmm," says a small voice in ${givenName}'s ear. "Difficult. Very difficult. Plenty of courage, I see. Not a bad mind either. There's talent, oh my goodness, yes — and a nice thirst to prove yourself, now that's interesting. . . . So where shall I put you?"`,
 				choices: teamChoices
 			}))
-			.then((answer: number | string) => {
+			.then((answer: unknown) => {
 				const team = teamChoices[Number(answer)];
 
 				const publicNarration = `${givenName} joins the ${team} team.`;
