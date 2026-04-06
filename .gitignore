@@ -43,6 +43,7 @@ skills-lock.json
 
 # BUILD
 dist/
+.turbo/cache/
 
 # ENVIRONMENT
 .env.local
