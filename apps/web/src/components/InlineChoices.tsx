@@ -29,7 +29,9 @@ export default function InlineChoices({
   onAnswer,
 }: InlineChoicesProps) {
   const listRef = useRef<HTMLUListElement>(null);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  // Ordered array: each entry is the choice index, in the order the user picked them.
+  // Position in this array = deck slot (1-based displayed to user).
+  const [selectionOrder, setSelectionOrder] = useState<number[]>([]);
   const multi = isMultiSelect(question);
 
   // Move keyboard focus to the first choice button when rendered
@@ -77,21 +79,22 @@ export default function InlineChoices({
   }
 
   function handleToggle(idx: number) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(idx)) {
-        next.delete(idx);
+    setSelectionOrder(prev => {
+      const pos = prev.indexOf(idx);
+      if (pos >= 0) {
+        // Deselect: remove from order, keeping other positions stable
+        return prev.filter(i => i !== idx);
       } else {
-        next.add(idx);
+        // Select: append to end — this becomes the next slot in the deck
+        return [...prev, idx];
       }
-      return next;
     });
   }
 
   function handleConfirm() {
-    if (selected.size === 0) return;
-    const answer = Array.from(selected).sort((a, b) => a - b).join(', ');
-    onAnswer(requestId, answer);
+    if (selectionOrder.length === 0) return;
+    // Send indices in the user's chosen order (not sorted) — deck slot order matters
+    onAnswer(requestId, selectionOrder.join(', '));
   }
 
   return (
@@ -105,7 +108,10 @@ export default function InlineChoices({
         style={{ listStyle: 'none', padding: 0 }}
       >
         {choices.map((choice, idx) => {
-          const isSelected = multi ? selected.has(idx) : selectedAnswer === String(idx);
+          const slotPosition = multi ? selectionOrder.indexOf(idx) : -1;
+          const isSelected = multi ? slotPosition >= 0 : selectedAnswer === String(idx);
+          const slotLabel = slotPosition >= 0 ? slotPosition + 1 : null;
+
           return (
             <li key={idx} role="option" aria-selected={isSelected}>
               <button
@@ -131,34 +137,47 @@ export default function InlineChoices({
                 onClick={() => multi ? handleToggle(idx) : handleSingleSelect(idx)}
                 onKeyDown={(e) => handleKey(e, idx)}
               >
-                {multi && (
-                  <span style={{ marginRight: '0.4rem', opacity: 0.7 }}>
-                    {isSelected ? '[x]' : '[ ]'}
+                {multi ? (
+                  // Show slot position (1-based) when selected, empty brackets when not
+                  <span style={{
+                    display: 'inline-block',
+                    width: '2.5rem',
+                    marginRight: '0.4rem',
+                    color: isSelected ? 'var(--color-accent)' : 'var(--color-fg-dim)',
+                    fontWeight: isSelected ? 700 : 400,
+                  }}>
+                    {slotLabel !== null ? `[${slotLabel}]` : '[ ]'}
                   </span>
-                )}
-                [{idx}] {choice}
+                ) : null}
+                {choice}
               </button>
             </li>
           );
         })}
       </ul>
       {multi && !isDone && (
-        <button
-          onClick={handleConfirm}
-          disabled={selected.size === 0}
-          style={{
-            marginTop: '0.5rem',
-            padding: '0.3rem 0.75rem',
-            background: selected.size > 0 ? 'var(--color-accent)' : 'transparent',
-            border: '1px solid var(--color-accent)',
-            color: selected.size > 0 ? 'var(--color-bg)' : 'var(--color-fg-dim)',
-            fontFamily: 'var(--font-family)',
-            fontSize: 'var(--font-size)',
-            cursor: selected.size > 0 ? 'pointer' : 'default',
-          }}
-        >
-          Equip selected ({selected.size})
-        </button>
+        <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleConfirm}
+            disabled={selectionOrder.length === 0}
+            style={{
+              padding: '0.3rem 0.75rem',
+              background: selectionOrder.length > 0 ? 'var(--color-accent)' : 'transparent',
+              border: '1px solid var(--color-accent)',
+              color: selectionOrder.length > 0 ? 'var(--color-bg)' : 'var(--color-fg-dim)',
+              fontFamily: 'var(--font-family)',
+              fontSize: 'var(--font-size)',
+              cursor: selectionOrder.length > 0 ? 'pointer' : 'default',
+            }}
+          >
+            Equip {selectionOrder.length > 0 ? `${selectionOrder.length} card${selectionOrder.length !== 1 ? 's' : ''}` : 'cards'}
+          </button>
+          {selectionOrder.length > 0 && (
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-dim)' }}>
+              Order: {selectionOrder.map(i => choices[i]).join(' → ')}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

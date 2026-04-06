@@ -15,9 +15,9 @@ describe('InlineChoices', () => {
 
   it('renders all choices as buttons', () => {
     render(<InlineChoices {...defaultProps} />);
-    expect(screen.getByText(/\[0\] Hit/)).toBeTruthy();
-    expect(screen.getByText(/\[1\] Heal/)).toBeTruthy();
-    expect(screen.getByText(/\[2\] Blast/)).toBeTruthy();
+    expect(screen.getByText('Hit')).toBeTruthy();
+    expect(screen.getByText('Heal')).toBeTruthy();
+    expect(screen.getByText('Blast')).toBeTruthy();
   });
 
   it('sends the numeric index (not the label text) when a choice is clicked', () => {
@@ -25,8 +25,7 @@ describe('InlineChoices', () => {
     render(<InlineChoices {...defaultProps} onAnswer={onAnswer} />);
 
     // Click the second choice (index 1 = "Heal")
-    const healBtn = screen.getByText(/\[1\] Heal/);
-    fireEvent.click(healBtn);
+    fireEvent.click(screen.getByText('Heal'));
 
     expect(onAnswer).toHaveBeenCalledWith('req-1', '1');
     expect(onAnswer).not.toHaveBeenCalledWith('req-1', 'Heal');
@@ -51,12 +50,12 @@ describe('InlineChoices', () => {
   });
 
   describe('multi-select mode', () => {
-    it('shows checkboxes for questions containing "card(s)"', () => {
+    it('shows equip button for questions containing "card(s)"', () => {
       render(<InlineChoices {...defaultProps} question="Which card(s) to equip?" />);
-      expect(screen.getByText('Equip selected (0)')).toBeTruthy();
+      expect(screen.getByText('Equip cards')).toBeTruthy();
     });
 
-    it('sends a comma-separated index list when multiple are selected and confirmed', () => {
+    it('sends indices in selection order (not sorted) when confirmed', () => {
       const onAnswer = vi.fn();
       render(
         <InlineChoices
@@ -66,11 +65,50 @@ describe('InlineChoices', () => {
         />
       );
 
-      fireEvent.click(screen.getByText(/\[0\] Hit/));
-      fireEvent.click(screen.getByText(/\[2\] Blast/));
-      fireEvent.click(screen.getByText(/Equip selected/));
+      // Select Blast first (idx 2), then Hit (idx 0) — order should be preserved
+      fireEvent.click(screen.getByText('Blast'));
+      fireEvent.click(screen.getByText('Hit'));
+      fireEvent.click(screen.getByText(/Equip 2 cards/));
 
+      // Answer should be in selection order: Blast first (2), Hit second (0)
+      expect(onAnswer).toHaveBeenCalledWith('req-1', '2, 0');
+    });
+
+    it('deselecting a card renumbers remaining slots', () => {
+      const onAnswer = vi.fn();
+      render(
+        <InlineChoices
+          {...defaultProps}
+          question="Which card(s) to equip?"
+          onAnswer={onAnswer}
+        />
+      );
+
+      // Select all three, then deselect the middle one (Heal, idx 1)
+      fireEvent.click(screen.getByText('Hit'));
+      fireEvent.click(screen.getByText('Heal'));
+      fireEvent.click(screen.getByText('Blast'));
+      fireEvent.click(screen.getByText('Heal')); // deselect
+
+      fireEvent.click(screen.getByText(/Equip 2 cards/));
+
+      // Should send Hit (0) then Blast (2) in that order
       expect(onAnswer).toHaveBeenCalledWith('req-1', '0, 2');
+    });
+
+    it('shows a live order summary as cards are selected', () => {
+      render(
+        <InlineChoices
+          {...defaultProps}
+          question="Which card(s) to equip?"
+        />
+      );
+
+      fireEvent.click(screen.getByText('Blast'));
+      fireEvent.click(screen.getByText('Hit'));
+
+      // Order summary should show Blast → Hit
+      expect(screen.getByText(/Blast.*→.*Hit/)).toBeTruthy();
     });
   });
 });
