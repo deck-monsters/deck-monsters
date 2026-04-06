@@ -1,6 +1,6 @@
 import { BasePotion, type BasePotionOptions } from '../potions/base.js';
 
-export interface BaseScrollOptions extends BasePotionOptions {}
+export type BaseScrollOptions = BasePotionOptions;
 
 export class BaseScroll<TOptions extends BaseScrollOptions = BaseScrollOptions> extends BasePotion<TOptions> {
 	constructor(options?: Partial<TOptions>) {

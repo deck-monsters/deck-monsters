@@ -1,6 +1,6 @@
 import { BaseItem, type BaseItemOptions, type UseOptions } from '../base.js';
 
-export interface BasePotionOptions extends BaseItemOptions {}
+export type BasePotionOptions = BaseItemOptions;
 
 export class BasePotion<TOptions extends BasePotionOptions = BasePotionOptions> extends BaseItem<TOptions> {
 	constructor(options?: Partial<TOptions>) {
