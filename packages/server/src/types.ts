@@ -3,3 +3,4 @@
  * Import as: import type { AppRouter } from '@deck-monsters/server/types'
  */
 export type { AppRouter } from './trpc/router.js';
+export type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';

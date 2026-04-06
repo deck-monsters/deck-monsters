@@ -613,43 +613,50 @@ Suggested approach:
 
 ### Phase 0 — Preparation
 
-- [ ] Move current `apps/web` to `apps/web-legacy` and update the workspace config to keep it building (so we can compare behaviors during the rebuild)
-- [ ] Audit the legacy `tRPC` client and Supabase auth setup; note what's directly reusable
-- [ ] Add the new `quick_actions` event type and prompt context fields to the engine event bus (server work that unblocks the client)
-- [ ] Add the `handshake` message and version negotiation on the WebSocket server
+- [x] Move current `apps/web` to `apps/web-legacy` and update the workspace config to keep it building (so we can compare behaviors during the rebuild)
+- [x] Audit the legacy `tRPC` client and Supabase auth setup; note what's directly reusable
+- [x] Add the new `quick_actions`, `prompt.timeout`, `prompt.cancel`, `system`, `handshake` event types to the engine; add `cancelPrompt` to `RoomEventBus`; add `commandId` correlation; add `cancelPrompt` tRPC mutation
+- [x] Add the `handshake` message and version negotiation on the WebSocket server (`ringFeed` subscription)
+- [x] Server integration tests for `prompt.timeout`, `cancelPrompt`
 
 ### Phase 1 — Core Terminal
 
-- [ ] Scaffold new `apps/web` with clean slate (Vite + React + tRPC client + Supabase auth, no UI library)
-- [ ] Establish the semantic HTML structure (`<main class="terminal">`, `<section class="pane">`, `<ol class="event-feed">`, etc.)
-- [ ] Set up CSS custom properties and the default phosphor theme as a single stylesheet
-- [ ] Build Ring pane: WebSocket subscription → auto-scrolling monospace text stream
-- [ ] Build Console pane: private event stream + text input + submit + active-prompt tracking
-- [ ] Implement inline choice rendering for `prompt` events (tappable/clickable, keyboard-navigable)
-- [ ] Implement quick-action suggestions strip above input field (populated from `quick_actions` events)
-- [ ] Implement responsive layout: side-by-side ≥1024px, tabbed below that and on mobile
-- [ ] Implement tab keyboard shortcuts and scroll-position persistence per tab
-- [ ] Reconnection with `lastEventId` replay and "caught up" boundary marker
-- [ ] Version handshake: hard reload on `protocolVersion` mismatch, soft notice on `buildVersion` mismatch
-- [ ] Onboarding: first-time character creation flows in-console (no special UI, just the natural command flow)
+- [x] Scaffold new `apps/web` with clean slate (Vite + React + tRPC client + Supabase auth, Vitest, no UI library)
+- [x] Establish the semantic HTML structure (`<main class="terminal-shell">`, `<section class="terminal-pane">`, `<ol class="event-feed">`, etc.)
+- [x] Set up CSS custom properties and the default phosphor theme (`src/styles/theme-phosphor.css`)
+- [x] Build Ring pane: WebSocket subscription → auto-scrolling monospace text stream (`RingPane.tsx`)
+- [x] Build Console pane: private event stream + text input + submit + active-prompt tracking (`ConsolePane.tsx`)
+- [x] Implement inline choice rendering for `prompt.request` events — tappable/clickable, keyboard-navigable (`InlineChoices.tsx`)
+- [x] Implement quick-action suggestions strip above input field (populated from `quick_actions` events)
+- [x] Implement responsive layout: side-by-side ≥1024px (`ResizeObserver`), tabbed below
+- [x] Implement tab keyboard shortcuts (Cmd/Ctrl+1 / Cmd/Ctrl+2)
+- [x] Reconnection with `lastEventId` replay and de-duplication by event id
+- [x] Version handshake: hard reload on `protocolVersion` mismatch, soft notice on `buildVersion` mismatch (`useHandshake.ts`)
+- [x] Onboarding: first-time character creation flows in-console (no special UI, just the natural command flow)
+- [x] Draggable pane divider (desktop) — `PaneDivider.tsx`
+- [x] Navigation / routing: `/login`, `/rooms`, `/room/:roomId`, `/room/:roomId/settings`, `/account` (`App.tsx`)
+- [x] AppShell header with room name, account link, theme toggle, sign-out (`AppShell.tsx`)
+- [x] Scroll-to-bottom jump button in both panes
+- [x] Prompt timeout countdown (inline, visible in Console)
+- [x] Unit tests: `useTheme`, `useHandshake`, `InlineChoices` (16 passing)
 
 ### Phase 2 — Room & Account Management
 
-- [ ] Room lobby page: create / join / list rooms, invite link generation
-- [ ] Room settings (admin-only): ring configuration
-- [ ] Account page: profile, settings, linked accounts
-- [ ] Auth pages: login, register, OAuth (Supabase — largely reuse from previous implementation)
+- [x] Room lobby page: create / join / list rooms (`RoomLobbyView.tsx`)
+- [x] Room settings (admin-only): invite code copy, member list, delete room (`RoomSettingsView.tsx`)
+- [x] Account page: profile, theme picker, sign-out (`AccountView.tsx`)
+- [x] Auth pages: login + signup with Discord OAuth and email/password (`LoginView.tsx`)
 
 ### Phase 3 — Polish, Theming, and Mobile Refinement
 
-- [ ] Tune mobile input dock behavior (keyboard avoidance, iOS safe areas, Android nav bar)
-- [ ] Quick-action suggestions horizontal scroll strip on mobile
-- [ ] Scroll-to-bottom button when user has scrolled up in active feed
-- [ ] Prompt timeout countdown (inline, visible in Console)
-- [ ] Optional CRT scanline CSS toggle in settings
-- [ ] Build at least one alternate theme (amber-on-black) to validate the theming architecture
-- [ ] Settings UI for theme selection and persistence in `localStorage`
-- [ ] Honor `prefers-color-scheme`, `prefers-reduced-motion`, `prefers-contrast`
-- [ ] Accessibility: keyboard navigation, focus management, ARIA labels on interactive elements, screen reader testing
-- [ ] Performance: virtualized scroll for long-running sessions (if profiling shows it's needed)
-- [ ] Cleanup: remove `apps/web-legacy` once the rebuild is at parity
+- [x] Mobile input dock: `position: sticky; bottom: env(safe-area-inset-bottom)` in `terminal.css`
+- [x] Quick-action suggestions horizontal scroll strip (mobile-friendly)
+- [x] Scroll-to-bottom button when user has scrolled up in active feed
+- [x] Prompt timeout countdown (inline, visible in Console)
+- [x] CRT scanline CSS toggle via `--crt-scanline-opacity` custom property (`effects.css`)
+- [x] Amber-on-black alternate theme (`theme-amber.css`)
+- [x] Theme selection UI (radio buttons in AccountView) + `localStorage` persistence (`useTheme.ts`)
+- [x] Honor `prefers-reduced-motion` and `prefers-contrast` in `base.css`
+- [x] Accessibility: `role="log"`, `aria-live="polite"`, `role="listbox"` on choices, ARIA labels on all interactive elements, keyboard navigation for choice buttons and pane divider
+- [ ] Performance: virtualized scroll for long-running sessions (deferred — profile first)
+- [ ] Cleanup: remove `apps/web-legacy` once the rebuild is confirmed at parity in production

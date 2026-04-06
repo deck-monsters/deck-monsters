@@ -94,7 +94,35 @@ pnpm install
 pnpm test              # mocha (all packages via Turborepo)
 pnpm test:watch        # mocha --watch
 pnpm test:coverage     # mocha + c8 coverage
+
+# Web app (Vitest)
+pnpm --filter @deck-monsters/web test          # vitest run
+pnpm --filter @deck-monsters/web test:watch    # vitest --watch
+pnpm --filter @deck-monsters/web test:coverage # vitest run --coverage
 ```
+
+### Web App
+
+The web app is a two-pane terminal UI — a Ring feed on the left and your private Console on the right. See [`docs/roadmap/06a-web-app.md`](docs/roadmap/06a-web-app.md) for the full design spec.
+
+```bash
+# Start the Vite dev server (proxies /trpc to localhost:3000)
+pnpm --filter @deck-monsters/web dev
+
+# Production build
+pnpm --filter @deck-monsters/web build
+```
+
+**Web app environment variables** (copy `apps/web/.env.example` to `apps/web/.env.local`):
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable API key |
+| `VITE_SERVER_URL` | API server URL (leave empty in dev to use Vite proxy) |
+| `VITE_BUILD_VERSION` | Build version for protocol handshake (set by CI, defaults to `dev`) |
+
+---
 
 ### CLI Demos
 

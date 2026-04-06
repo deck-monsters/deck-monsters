@@ -1,0 +1,26 @@
+/* Default phosphor (green-on-dark) terminal theme */
+:root {
+  --color-bg: #0a0e0a;
+  --color-fg: #a8d060;
+  --color-fg-bright: #d4f0a0;
+  --color-fg-dim: #5a7050;
+  --color-accent: #ffe28a;
+  --color-system: #6a6a6a;
+  --color-error: #ff6b6b;
+  --color-success: #88cc44;
+  --color-prompt-glyph: var(--color-accent);
+  --color-border: #2a3a2a;
+  --color-input-bg: #111811;
+  --color-choice-hover: #1a2a1a;
+  --color-choice-selected: #1e3a0e;
+  --font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  --font-size: 14px;
+  --line-height: 1.4;
+  --pane-padding: 0.75rem;
+  --event-spacing: 0.25rem;
+  --crt-scanline-opacity: 0;
+  --input-height: 2.5rem;
+  --header-height: 3rem;
+  --divider-width: 4px;
+  --divider-handle-width: 24px;
+}

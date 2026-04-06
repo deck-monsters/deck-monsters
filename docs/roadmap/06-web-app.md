@@ -2,7 +2,7 @@
 
 **Category**: Feature / Connector  
 **Priority**: High (ships alongside the Discord connector)  
-**Status**: Implemented (initial version) — `apps/web` scaffolded with React + Vite + `@trpc/react-query`, Supabase auth, room lobby, ring feed subscription, and core gameplay views (monsters, deck builder, shop, spawn).
+**Status**: Rebuilt — see [`06a-web-app.md`](06a-web-app.md) for the current implementation. The initial view-based implementation has been archived to `apps/web-legacy`; the new two-pane terminal UI is at `apps/web`.
 
 ## Overview
 

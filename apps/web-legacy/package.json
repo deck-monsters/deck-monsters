@@ -1,7 +1,7 @@
 {
-  "name": "@deck-monsters/web",
+  "name": "@deck-monsters/web-legacy",
   "version": "0.1.0",
-  "description": "Deck Monsters web client — two-pane terminal rebuild",
+  "description": "Deck Monsters web client",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,14 +9,10 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "start": "serve dist -s -l tcp://0.0.0.0:${PORT:-3000}",
-    "lint": "eslint src",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@deck-monsters/server": "workspace:*",
-    "@fontsource/jetbrains-mono": "^5.2.5",
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.64.2",
     "@trpc/client": "^11.4.3",
@@ -28,15 +24,10 @@
     "serve": "^14.2.6"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.3.21",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.4.1",
-    "jsdom": "^26.1.0",
     "typescript": "^5.9.3",
-    "vite": "^6.3.5",
-    "vitest": "^3.1.1"
+    "vite": "^6.3.5"
   }
 }

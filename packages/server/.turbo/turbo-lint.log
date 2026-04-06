@@ -1,0 +1,4 @@
+
+> @deck-monsters/server@0.1.0 lint /workspaces/deck-monsters/packages/server
+> eslint src
+

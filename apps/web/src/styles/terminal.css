@@ -1,0 +1,309 @@
+/* Two-pane terminal layout */
+
+.terminal-shell {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: var(--ring-pane-width, 1fr) var(--divider-width, 4px) 1fr;
+  background: var(--color-bg);
+}
+
+/* Tab bar — visible only on narrow screens */
+.terminal-tabs {
+  display: none;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.terminal-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-fg-dim);
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.terminal-tab.active {
+  color: var(--color-fg-bright);
+  border-bottom-color: var(--color-accent);
+}
+
+.terminal-tab:hover:not(.active) {
+  color: var(--color-fg);
+}
+
+/* Individual panes */
+.terminal-pane {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--color-border);
+  min-width: 0; /* prevent grid blowout */
+}
+
+.terminal-pane:last-child {
+  border-right: none;
+}
+
+.pane-header {
+  padding: 0.35rem var(--pane-padding);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-fg-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Event feed — the scrollable list of game events */
+.event-feed {
+  list-style: none;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--pane-padding);
+  scroll-behavior: smooth;
+}
+
+.event-feed:focus {
+  outline: none;
+}
+
+.event {
+  padding: var(--event-spacing) 0;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.event time {
+  display: none; /* hidden by default; accessible to screen readers */
+}
+
+.event p {
+  margin: 0;
+}
+
+/* Event type styling */
+.event-announce p {
+  color: var(--color-fg);
+}
+
+.event-ring p {
+  color: var(--color-fg-bright);
+}
+
+.event-system p {
+  color: var(--color-system);
+  font-style: italic;
+}
+
+.event-input p {
+  color: var(--color-accent);
+}
+
+.event-input p::before {
+  content: '> ';
+  color: var(--color-prompt-glyph);
+}
+
+.event-tombstone {
+  padding: 0.4rem 0;
+}
+
+.event-tombstone p {
+  color: var(--color-fg-dim);
+  font-style: italic;
+}
+
+/* Prompt block rendered inline */
+.event-prompt {
+  border-left: 2px solid var(--color-accent);
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.prompt-question {
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+}
+
+/* Quick-action suggestions strip */
+.quick-actions {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.4rem var(--pane-padding);
+  border-top: 1px solid var(--color-border);
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+
+.quick-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-action-chip {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-dim);
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.quick-action-chip:hover {
+  border-color: var(--color-fg);
+  color: var(--color-fg);
+}
+
+/* Command input dock */
+.command-dock {
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 var(--pane-padding);
+  position: sticky;
+  bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--color-bg);
+}
+
+.command-dock label {
+  color: var(--color-prompt-glyph);
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+  font-size: var(--font-size);
+  user-select: none;
+}
+
+.command-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-fg);
+  font-family: var(--font-family);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  height: var(--input-height);
+  outline: none;
+  caret-color: var(--color-accent);
+}
+
+.command-input::placeholder {
+  color: var(--color-fg-dim);
+  opacity: 0.6;
+}
+
+.command-input:disabled {
+  opacity: 0.5;
+}
+
+/* Scroll-to-bottom button */
+.jump-to-bottom {
+  position: absolute;
+  bottom: calc(var(--input-height) + 0.75rem);
+  right: 1rem;
+  background: var(--color-choice-hover);
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
+  font-family: var(--font-family);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  opacity: 0.9;
+  z-index: 10;
+}
+
+.jump-to-bottom:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Pane divider (desktop) */
+.pane-divider {
+  width: var(--divider-width, 4px);
+  background: var(--color-border);
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.1s;
+  position: relative;
+  z-index: 5;
+}
+
+.pane-divider:hover,
+.pane-divider.dragging {
+  background: var(--color-fg-dim);
+}
+
+.pane-divider-handle {
+  width: var(--divider-handle-width, 24px);
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-fg-dim);
+  pointer-events: none;
+}
+
+/* Narrow screens: tabbed layout */
+@media (max-width: 1023px) {
+  .terminal-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .terminal-tabs {
+    display: flex;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .pane-divider {
+    display: none;
+  }
+
+  .terminal-pane {
+    display: none;
+    grid-column: 1;
+    grid-row: 2;
+    border-right: none;
+  }
+
+  .terminal-pane.active {
+    display: flex;
+  }
+}
+
+/* Reconnection status banner */
+.connection-banner {
+  padding: 0.25rem var(--pane-padding);
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--color-fg-dim);
+  background: var(--color-input-bg);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.connection-banner.reconnecting {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
