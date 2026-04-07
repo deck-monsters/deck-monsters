@@ -215,6 +215,24 @@ export function createRouter(roomManager: RoomManager) {
 				return { ok: true };
 			}),
 
+		ringState: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				return roomManager.getRingState(ctx.userId, input.roomId);
+			}),
+
+		ringHistory: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				return roomManager.getRingHistory(ctx.userId, input.roomId);
+			}),
+
+		consoleHistory: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				return roomManager.getConsoleHistory(ctx.userId, input.roomId);
+			}),
+
 		ringFeed: protectedProcedure
 			.input(
 				z.object({

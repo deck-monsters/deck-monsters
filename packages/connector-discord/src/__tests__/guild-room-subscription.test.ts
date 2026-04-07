@@ -7,10 +7,10 @@ import { GuildRoomSubscription } from '../guild-room-subscription.js';
 // ---------------------------------------------------------------------------
 
 function makeEventBus() {
-	const subscribers = new Map<string, { userId?: string; deliver: (e: unknown) => void }>();
+	const subscribers = new Map<string, { userId?: string; deliver: (e: unknown) => unknown }>();
 
 	return {
-		subscribe: sinon.stub().callsFake((id: string, sub: { userId?: string; deliver: (e: unknown) => void }) => {
+		subscribe: sinon.stub().callsFake((id: string, sub: { userId?: string; deliver: (e: unknown) => unknown }) => {
 			subscribers.set(id, sub);
 			return () => { subscribers.delete(id); };
 		}),

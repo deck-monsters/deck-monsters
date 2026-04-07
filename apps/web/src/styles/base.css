@@ -92,6 +92,7 @@ input[type='password'] {
   padding: 0.4rem 0.6rem;
   width: 100%;
   outline: none;
+  touch-action: manipulation; /* removes 300ms tap delay on mobile */
 }
 
 input[type='text']:focus,
@@ -100,11 +101,22 @@ input[type='password']:focus {
   border-color: var(--color-accent);
 }
 
+/* Prevent iOS Safari auto-zoom on input focus: font-size must be ≥16px on touch devices.
+   Scoped to pointer: coarse so desktop rendering at 14px is unchanged. */
+@media (pointer: coarse) {
+  input[type='text'],
+  input[type='email'],
+  input[type='password'] {
+    font-size: 16px;
+  }
+}
+
 /* Buttons */
 button {
   cursor: pointer;
   font-family: var(--font-family);
   font-size: var(--font-size);
+  touch-action: manipulation; /* removes 300ms tap delay on mobile */
 }
 
 .btn {

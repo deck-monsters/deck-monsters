@@ -28,6 +28,7 @@
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: color 0.1s, border-color 0.1s;
+  touch-action: manipulation; /* removes 300ms tap delay on mobile */
 }
 
 .terminal-tab.active {
@@ -63,6 +64,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* Ring timer badge shown in the pane header */
+.pane-header-timer {
+  color: var(--color-accent);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  margin-left: auto;
+  margin-right: 0.75rem;
+  text-transform: none;
 }
 
 /* Event feed — the scrollable list of game events */
@@ -180,6 +191,7 @@
   cursor: pointer;
   flex-shrink: 0;
   transition: border-color 0.1s, color 0.1s;
+  touch-action: manipulation; /* removes 300ms tap delay on mobile */
 }
 
 .quick-action-chip:hover {
@@ -219,6 +231,13 @@
   height: var(--input-height);
   outline: none;
   caret-color: var(--color-accent);
+}
+
+/* Prevent iOS Safari auto-zoom on command input focus (threshold is 16px). */
+@media (pointer: coarse) {
+  .command-input {
+    font-size: 16px;
+  }
 }
 
 .command-input::placeholder {

@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, gte, desc } from 'drizzle-orm';
 
 import { Game, RoomEventBus, restoreGame, engineReady } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
-import { rooms, roomMembers, profiles } from './db/schema.js';
+import { rooms, roomMembers, profiles, roomEvents } from './db/schema.js';
+import type { GameEvent } from '@deck-monsters/engine';
 import { PostgresStateStore } from './state-store.js';
 import { attachEventPersister } from './event-persister.js';
 
@@ -22,6 +23,31 @@ interface EngineDeps {
 
 function generateInviteCode(): string {
 	return randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase();
+}
+
+type DbRoomEvent = {
+	id: number;
+	roomId: string;
+	type: string;
+	scope: string;
+	targetUserId: string | null;
+	payload: unknown;
+	text: string;
+	eventId: string | null;
+	createdAt: Date;
+};
+
+function dbRowToGameEvent(row: DbRoomEvent): GameEvent {
+	return {
+		id: row.eventId ?? `hist:${row.id}`,
+		roomId: row.roomId,
+		timestamp: row.createdAt.getTime(),
+		type: row.type as GameEvent['type'],
+		scope: row.scope as GameEvent['scope'],
+		targetUserId: row.targetUserId ?? undefined,
+		payload: (row.payload ?? {}) as Record<string, unknown>,
+		text: row.text,
+	};
 }
 
 export class RoomManager {
@@ -295,6 +321,88 @@ export class RoomManager {
 			}
 		}
 		await Promise.all(promises);
+	}
+
+	async getRingState(
+		userId: string,
+		roomId: string
+	): Promise<{ nextBossSpawnAt: number | null; nextFightAt: number | null; monsterCount: number }> {
+		await this.assertMember(userId, roomId);
+		const game = await this.getGame(roomId);
+		const ring = game.ring;
+		return {
+			nextBossSpawnAt: ring.nextBossSpawnAt,
+			nextFightAt: ring.nextFightAt,
+			monsterCount: ring.contestants.length,
+		};
+	}
+
+	async getRingHistory(userId: string, roomId: string): Promise<GameEvent[]> {
+		await this.assertMember(userId, roomId);
+
+		const RING_MAX = 500;
+		const MINIMUM = 20;
+		const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+		const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+		let rows = await this.db
+			.select()
+			.from(roomEvents)
+			.where(and(eq(roomEvents.roomId, roomId), eq(roomEvents.scope, 'public'), gte(roomEvents.createdAt, cutoff24h)))
+			.orderBy(desc(roomEvents.id))
+			.limit(RING_MAX);
+
+		if (rows.length < MINIMUM) {
+			rows = await this.db
+				.select()
+				.from(roomEvents)
+				.where(and(eq(roomEvents.roomId, roomId), eq(roomEvents.scope, 'public'), gte(roomEvents.createdAt, cutoff7d)))
+				.orderBy(desc(roomEvents.id))
+				.limit(MINIMUM);
+		}
+
+		return rows.reverse().map(dbRowToGameEvent);
+	}
+
+	async getConsoleHistory(userId: string, roomId: string): Promise<GameEvent[]> {
+		await this.assertMember(userId, roomId);
+
+		const CONSOLE_MAX = 200;
+		const MINIMUM = 20;
+		const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+		const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+		let rows = await this.db
+			.select()
+			.from(roomEvents)
+			.where(
+				and(
+					eq(roomEvents.roomId, roomId),
+					eq(roomEvents.scope, 'private'),
+					eq(roomEvents.targetUserId, userId),
+					gte(roomEvents.createdAt, cutoff24h)
+				)
+			)
+			.orderBy(desc(roomEvents.id))
+			.limit(CONSOLE_MAX);
+
+		if (rows.length < MINIMUM) {
+			rows = await this.db
+				.select()
+				.from(roomEvents)
+				.where(
+					and(
+						eq(roomEvents.roomId, roomId),
+						eq(roomEvents.scope, 'private'),
+						eq(roomEvents.targetUserId, userId),
+						gte(roomEvents.createdAt, cutoff7d)
+					)
+				)
+				.orderBy(desc(roomEvents.id))
+				.limit(MINIMUM);
+		}
+
+		return rows.reverse().map(dbRowToGameEvent);
 	}
 
 	private async _getOrLoad(roomId: string): Promise<ActiveRoom> {

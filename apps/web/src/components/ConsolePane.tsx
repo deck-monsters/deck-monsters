@@ -41,6 +41,23 @@ interface ConsolePaneProps {
   onEvent?: (event: unknown) => void;
 }
 
+/** Convert a historical GameEvent to a ConsoleEvent for display. Returns null for event types
+ *  that don't produce a feed entry (quick_actions, prompt.cancel) or that are handled
+ *  interactively (active prompts are not reconstructed from history). */
+function historyEventToConsoleEvent(event: { id: string; type: string; text: string; payload: Record<string, unknown> }): ConsoleEvent | null {
+  if (event.type === 'announce' || event.type === 'system') {
+    return { id: event.id, type: event.type as 'announce' | 'system', text: event.text };
+  }
+  if (event.type === 'prompt.request') {
+    // Show the question text as a plain announce — don't reconstruct interactive state
+    return { id: event.id, type: 'announce', text: event.text || (event.payload as any)?.question || '' };
+  }
+  if (event.type === 'prompt.timeout') {
+    return { id: event.id, type: 'tombstone', text: event.text };
+  }
+  return null;
+}
+
 export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePaneProps) {
   const { user } = useAuth();
   const { handleHandshakeEvent } = useHandshake();
@@ -59,6 +76,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
   const lastEventIdRef = useRef<string | undefined>(undefined);
+  const historyApplied = useRef(false);
 
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
   useEffect(() => {
@@ -67,6 +85,26 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
       inputRef.current?.focus();
     });
   }, [registerInsertFn]);
+
+  // Fetch persistent console history from DB on mount
+  const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
+
+  // Apply DB history once — pre-populate seenRef and set lastEventIdRef
+  useEffect(() => {
+    if (!history || historyApplied.current) return;
+    historyApplied.current = true;
+    const initialEvents: ConsoleEvent[] = [];
+    for (const ev of history) {
+      seenRef.current.add(ev.id);
+      const consoleEv = historyEventToConsoleEvent(ev as any);
+      if (consoleEv) initialEvents.push(consoleEv);
+    }
+    if (initialEvents.length > 0) setConsoleEvents(initialEvents);
+    const last = history[history.length - 1];
+    if (last?.id && !last.id.startsWith('hist:')) {
+      lastEventIdRef.current = last.id;
+    }
+  }, [history]);
 
   // Auto-scroll when new events arrive
   useEffect(() => {
