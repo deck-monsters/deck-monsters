@@ -1,4 +1,0 @@
-
-> @deck-monsters/connector-discord@0.1.0 build /workspaces/deck-monsters/packages/connector-discord
-> tsc --build
-

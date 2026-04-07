@@ -1,4 +1,0 @@
-
-> @deck-monsters/server@0.1.0 build /workspaces/deck-monsters/packages/server
-> tsc --build
-

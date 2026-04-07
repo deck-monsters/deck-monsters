@@ -11,7 +11,7 @@ node_modules/
 *.sw*
 .idea/
 .vscode/
-.cursor/plans/
+.cursor/
 
 # FILESYSTEM
 .DS_Store
@@ -43,7 +43,7 @@ skills-lock.json
 
 # BUILD
 dist/
-.turbo/cache/
+.turbo/
 
 # ENVIRONMENT
 .env.local
