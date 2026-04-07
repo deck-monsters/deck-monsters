@@ -5,6 +5,7 @@ import { useTheme, type Theme } from '../hooks/useTheme.js';
 const THEME_LABELS: Record<Theme, string> = {
   phosphor: 'Phosphor (green on black)',
   amber: 'Amber (orange on black)',
+  'street-fighter': 'Street Fighter (SNES, 1992)',
 };
 
 export default function AccountView() {

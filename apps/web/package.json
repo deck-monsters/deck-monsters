@@ -18,6 +18,7 @@
     "@deck-monsters/engine": "workspace:*",
     "@deck-monsters/server": "workspace:*",
     "@fontsource/jetbrains-mono": "^5.2.5",
+    "@fontsource/press-start-2p": "^5.2.7",
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.64.2",
     "@trpc/client": "^11.4.3",

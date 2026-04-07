@@ -11,8 +11,10 @@ import App from './App.js';
 
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
+import '@fontsource/press-start-2p/400.css';
 import './styles/theme-phosphor.css';
 import './styles/theme-amber.css';
+import './styles/theme-street-fighter.css';
 import './styles/base.css';
 import './styles/terminal.css';
 import './styles/effects.css';

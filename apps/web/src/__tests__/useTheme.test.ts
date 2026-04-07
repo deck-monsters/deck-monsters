@@ -50,4 +50,16 @@ describe('useTheme', () => {
     rerender();
     expect(result.current.theme).toBe('amber');
   });
+
+  it('sets data-theme="street-fighter" and persists it', () => {
+    const { result } = renderHook(() => useTheme());
+    act(() => result.current.setTheme('street-fighter'));
+    expect(document.documentElement.getAttribute('data-theme')).toBe('street-fighter');
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('street-fighter');
+  });
+
+  it('includes street-fighter in validThemes', () => {
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.validThemes).toContain('street-fighter');
+  });
 });

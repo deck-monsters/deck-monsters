@@ -1,0 +1,67 @@
+/* ── Color palette: SNES Street Fighter II (1992) ── */
+[data-theme='street-fighter'] {
+  --color-bg: #060c1e;           /* Deep navy-black — SF2 stage backgrounds */
+  --color-fg: #f8c000;           /* HP-bar gold — main text */
+  --color-fg-bright: #fce000;    /* Brighter yellow — "FIGHT!" highlights */
+  --color-fg-dim: #504090;       /* Muted indigo — secondary UI */
+  --color-accent: #e01810;       /* Hadouken red-orange */
+  --color-system: #604898;       /* Mid purple — system messages */
+  --color-error: #ff2828;        /* Bright red */
+  --color-success: #10c820;      /* HP-bar fill green */
+  --color-prompt-glyph: var(--color-accent);
+  --color-border: #281c58;       /* Dark indigo — SF2 frame edges */
+  --color-input-bg: #0a0e28;
+  --color-choice-hover: #141040;
+  --color-choice-selected: #1e1860;
+  --crt-scanline-opacity: 0.12;  /* Prominent CRT scanlines — wired in effects.css */
+}
+
+/* ── Pixel font on pane headers (arcade UI feel) ── */
+[data-theme='street-fighter'] .pane-header {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-bright);
+  text-shadow: 0 0 8px rgba(252, 224, 0, 0.65);
+  border-bottom-color: var(--color-fg-dim);
+}
+
+/* ── Golden CRT phosphor glow on game text ── */
+[data-theme='street-fighter'] .event-announce .event-text,
+[data-theme='street-fighter'] .event-announce p,
+[data-theme='street-fighter'] .event-ring .event-text,
+[data-theme='street-fighter'] .event-ring p {
+  text-shadow:
+    0 0 5px rgba(248, 192, 0, 0.55),
+    0 0 12px rgba(248, 192, 0, 0.2);
+}
+
+/* ── Hadouken red glow on player input and prompts ── */
+[data-theme='street-fighter'] .event-input .event-text,
+[data-theme='street-fighter'] .event-input p,
+[data-theme='street-fighter'] .prompt-question {
+  text-shadow:
+    0 0 6px rgba(224, 24, 16, 0.75),
+    0 0 14px rgba(224, 24, 16, 0.3);
+}
+
+/* ── SF2-style double border on card/monster stat blocks ── */
+[data-theme='street-fighter'] .event-card-block {
+  border: 2px solid var(--color-fg);
+  box-shadow:
+    0 0 0 1px var(--color-border),
+    inset 0 0 0 1px var(--color-border),
+    0 0 10px rgba(248, 192, 0, 0.12);
+}
+
+/* ── Command dock: HP-bar-style top edge ── */
+[data-theme='street-fighter'] .command-dock {
+  border-top: 2px solid var(--color-fg);
+  box-shadow: 0 -4px 14px rgba(248, 192, 0, 0.08);
+}
+
+/* ── Prompt block: wider red bar, subtle fill ── */
+[data-theme='street-fighter'] .event-prompt {
+  border-left-width: 3px;
+  background: rgba(224, 24, 16, 0.05);
+}
