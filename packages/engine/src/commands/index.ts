@@ -111,7 +111,11 @@ export function registerHandler(
 	handlers.push(handler);
 }
 
+let handlersLoaded = false;
+
 export function loadHandlers(): void {
+	if (handlersLoaded) return;
+	handlersLoaded = true;
 	preCharacterHandlers.push(helpHandler);
 	lookAtHandlers(registerHandler);
 	monsterHandlers(registerHandler);

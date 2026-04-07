@@ -5,7 +5,7 @@ import { useAuth } from '../lib/auth-context.js';
 type Mode = 'signin' | 'signup';
 
 export default function LoginView() {
-  const { session, signInWithDiscord, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail } = useAuth();
+  const { session, signInWithDiscord, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
 
   // Already authenticated — skip the login form
   if (session) return <Navigate to="/rooms" replace />;
@@ -89,13 +89,6 @@ export default function LoginView() {
               onClick={() => void signInWithGoogle()}
             >
               Sign in with Google
-            </button>
-            <button
-              className="btn btn-primary"
-              style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => void signInWithApple()}
-            >
-              Sign in with Apple
             </button>
           </div>
 

@@ -9,7 +9,7 @@ export function announceFight(
 	eb.publish({
 		type: 'ring.fight',
 		scope: 'public',
-		text: `\n_______________________________________________________________________________________________________\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n${contestants.length} contestants stand tall under the laudations and hissing jeers of a roaring crowd.\n\n⚔︎ Let the games begin! ⚔︎\n`,
+		text: `\n________________________________________\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n${contestants.length} contestants stand tall under the laudations and hissing jeers of a roaring crowd.\n\n⚔︎ Let the games begin! ⚔︎\n`,
 		payload: { contestants },
 	});
 }

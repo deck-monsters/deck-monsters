@@ -17,6 +17,7 @@ import { characterBaseReady } from '../characters/base.js';
 import { beastmasterReady } from '../characters/beastmaster.js';
 import { spawnHelpersReady } from '../monsters/helpers/spawn.js';
 import { equipHelpersReady } from '../monsters/helpers/equip.js';
+import { monsterHydrateReady } from '../monsters/helpers/hydrate.js';
 
 export const engineReady: Promise<void> = Promise.all([
 	randomReady,
@@ -26,4 +27,5 @@ export const engineReady: Promise<void> = Promise.all([
 	beastmasterReady,
 	spawnHelpersReady,
 	equipHelpersReady,
+	monsterHydrateReady,
 ]).then(() => undefined);

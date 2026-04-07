@@ -55,9 +55,12 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     nextBossSpawnAt: null,
     monsterCount: 0,
   });
+  // Stable subscription input — set once from history, never changed on re-renders.
+  // Passing a ref directly causes tRPC to restart the subscription on every state
+  // change (HAR showed 6 subscriptions in 0.5s). Using useState keeps the input stable.
+  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
   const feedRef = useRef<HTMLOListElement>(null);
   const seenRef = useRef(new Set<string>());
-  const lastEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
   const { handleHandshakeEvent } = useHandshake();
 
@@ -72,20 +75,44 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     return () => clearInterval(id);
   }, [timerState.nextFightAt, timerState.nextBossSpawnAt]);
 
-  // Apply DB history once — pre-populate seenRef and set lastEventIdRef so
-  // the live subscription skips already-delivered events.
+  // Apply DB history once — pre-populate seenRef and seed the stable subscription
+  // lastEventId so the live subscription skips already-delivered events.
   useEffect(() => {
     if (!history || historyApplied.current) return;
     historyApplied.current = true;
+
+    // Deduplicate history by event ID (handles legacy duplicate rows in DB)
+    const seen = new Set<string>();
+    const dedupedHistory: GameEvent[] = [];
     for (const ev of history) {
+      if (!seen.has(ev.id)) {
+        seen.add(ev.id);
+        dedupedHistory.push(ev);
+      }
+    }
+
+    for (const ev of dedupedHistory) {
       seenRef.current.add(ev.id);
     }
-    setEvents(history);
-    const last = history[history.length - 1];
+
+    // Merge history with any live events that arrived before history loaded.
+    // Live events take priority over history events with the same ID.
+    setEvents(prev => {
+      if (prev.length === 0) return dedupedHistory;
+      const liveById = new Map(prev.map(ev => [ev.id, ev]));
+      const merged: GameEvent[] = dedupedHistory.map(ev => liveById.get(ev.id) ?? ev);
+      const historyIds = new Set(dedupedHistory.map(ev => ev.id));
+      for (const ev of prev) {
+        if (!historyIds.has(ev.id)) merged.push(ev);
+      }
+      return merged;
+    });
+
+    const last = dedupedHistory[dedupedHistory.length - 1];
     // Only use event UUIDs (not the hist:N fallback) as lastEventId — the
     // subscription's getEventsSince only understands in-memory UUIDs.
     if (last?.id && !last.id.startsWith('hist:')) {
-      lastEventIdRef.current = last.id;
+      setSubLastEventId(last.id);
     }
     // Scroll to bottom after history loads so we start at the latest message
     requestAnimationFrame(() => {
@@ -129,7 +156,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   }, []);
 
   trpc.game.ringFeed.useSubscription(
-    { roomId, lastEventId: lastEventIdRef.current },
+    { roomId, lastEventId: subLastEventId },
     {
       onData(tracked: TrackedEvent) {
         const event = tracked.data;
@@ -156,7 +183,6 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
 
         if (seenRef.current.has(tracked.id)) return;
         seenRef.current.add(tracked.id);
-        lastEventIdRef.current = tracked.id;
 
         setEvents(prev => [...prev, event]);
         onEvent?.(event);

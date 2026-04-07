@@ -52,6 +52,7 @@ function dbRowToGameEvent(row: DbRoomEvent): GameEvent {
 
 export class RoomManager {
 	private active = new Map<string, ActiveRoom>();
+	private loading = new Map<string, Promise<ActiveRoom>>();
 
 	constructor(
 		private readonly db: Db,
@@ -409,7 +410,22 @@ export class RoomManager {
 		return rows.reverse().map(dbRowToGameEvent);
 	}
 
-	private async _getOrLoad(roomId: string): Promise<ActiveRoom> {
+	private _getOrLoad(roomId: string): Promise<ActiveRoom> {
+		const cached = this.active.get(roomId);
+		if (cached) return Promise.resolve(cached);
+
+		const inflight = this.loading.get(roomId);
+		if (inflight) return inflight;
+
+		const promise = this._loadRoom(roomId).finally(() => {
+			this.loading.delete(roomId);
+		});
+		this.loading.set(roomId, promise);
+		return promise;
+	}
+
+	private async _loadRoom(roomId: string): Promise<ActiveRoom> {
+		// Re-check the cache in case it was populated while we were waiting
 		const cached = this.active.get(roomId);
 		if (cached) return cached;
 

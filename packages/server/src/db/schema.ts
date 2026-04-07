@@ -59,7 +59,10 @@ export const roomEvents = pgTable(
 		eventId: text('event_id'),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},
-	(t) => [index('room_events_room_id_id_idx').on(t.roomId, t.id)]
+	(t) => [
+		index('room_events_room_id_id_idx').on(t.roomId, t.id),
+		unique('room_events_room_id_event_id_key').on(t.roomId, t.eventId),
+	]
 );
 
 export const guildRooms = pgTable(

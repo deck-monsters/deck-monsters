@@ -15,7 +15,6 @@ type PublishInput = {
 export class RoomEventBus {
 	private subscribers = new Map<string, EventSubscriber>();
 	private eventLog: GameEvent[] = [];
-	private counter = 0;
 	private pendingPrompts = new Map<string, {
 		resolve: (answer: string) => void;
 		reject: (err: Error) => void;
@@ -28,7 +27,7 @@ export class RoomEventBus {
 	publish(event: PublishInput): GameEvent {
 		const fullEvent: GameEvent = {
 			...event,
-			id: String(++this.counter),
+			id: `${Date.now()}-${randomUUID().slice(0, 8)}`,
 			roomId: this.roomId,
 			timestamp: Date.now(),
 		};

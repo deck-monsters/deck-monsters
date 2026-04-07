@@ -37,6 +37,7 @@ export function attachEventPersister(
 					text: event.text,
 					eventId: event.id,
 				})
+				.onConflictDoNothing()
 				.catch((err: unknown) => log(err));
 		},
 	});

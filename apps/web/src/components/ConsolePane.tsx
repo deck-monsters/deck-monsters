@@ -72,10 +72,11 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
 
+  // Stable subscription input — set once from history, never changed on re-renders.
+  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
   const feedRef = useRef<HTMLOListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
-  const lastEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
 
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
@@ -89,20 +90,48 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   // Fetch persistent console history from DB on mount
   const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
 
-  // Apply DB history once — pre-populate seenRef and set lastEventIdRef
+  // Apply DB history once — pre-populate seenRef and seed stable subscription lastEventId.
   useEffect(() => {
     if (!history || historyApplied.current) return;
     historyApplied.current = true;
-    const initialEvents: ConsoleEvent[] = [];
+
+    // Deduplicate history by event ID (handles legacy duplicate rows in DB)
+    const seen = new Set<string>();
+    const dedupedHistory: typeof history = [];
     for (const ev of history) {
+      if (!seen.has(ev.id)) {
+        seen.add(ev.id);
+        dedupedHistory.push(ev);
+      }
+    }
+
+    const historyConsoleEvents: ConsoleEvent[] = [];
+    for (const ev of dedupedHistory) {
       seenRef.current.add(ev.id);
       const consoleEv = historyEventToConsoleEvent(ev as any);
-      if (consoleEv) initialEvents.push(consoleEv);
+      if (consoleEv) historyConsoleEvents.push(consoleEv);
     }
-    if (initialEvents.length > 0) setConsoleEvents(initialEvents);
-    const last = history[history.length - 1];
+
+    if (historyConsoleEvents.length > 0) {
+      // Merge history with any live events that arrived before history loaded.
+      // Live events take priority over history events with the same ID.
+      setConsoleEvents(prev => {
+        const liveById = new Map(prev.map(ev => [ev.id, ev]));
+        const merged: ConsoleEvent[] = historyConsoleEvents.map(
+          ev => liveById.get(ev.id) ?? ev
+        );
+        // Append any live events not already in history (arrived after the
+        // most recent history item's timestamp).
+        const historyIds = new Set(historyConsoleEvents.map(ev => ev.id));
+        for (const ev of prev) {
+          if (!historyIds.has(ev.id)) merged.push(ev);
+        }
+        return merged;
+      });
+    }
+    const last = dedupedHistory[dedupedHistory.length - 1];
     if (last?.id && !last.id.startsWith('hist:')) {
-      lastEventIdRef.current = last.id;
+      setSubLastEventId(last.id);
     }
     // Scroll to bottom after history loads so we start at the latest message
     requestAnimationFrame(() => {
@@ -154,13 +183,12 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   }
 
   trpc.game.ringFeed.useSubscription(
-    { roomId, lastEventId: lastEventIdRef.current },
+    { roomId, lastEventId: subLastEventId },
     {
       onData(tracked: TrackedEvent) {
         const event = tracked.data;
         if (seenRef.current.has(tracked.id)) return;
         seenRef.current.add(tracked.id);
-        lastEventIdRef.current = tracked.id;
 
         if (event.type === 'handshake') {
           handleHandshakeEvent(event);

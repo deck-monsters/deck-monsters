@@ -36,7 +36,7 @@ const loadHydrators = async () => {
 	}
 };
 
-loadHydrators().catch(() => {
+export const monsterHydrateReady: Promise<void> = loadHydrators().catch(() => {
 	// Hydrators not ready yet; stubs remain in place
 });
 
