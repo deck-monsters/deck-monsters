@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
 import { eq, and, count, gte, desc } from 'drizzle-orm';
 
-import { Game, RoomEventBus, restoreGame, engineReady } from '@deck-monsters/engine';
+import { Game, RoomEventBus, restoreGame, engineReady, getHydratorStatus } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { rooms, roomMembers, profiles, roomEvents } from './db/schema.js';
 import type { GameEvent } from '@deck-monsters/engine';
@@ -425,6 +425,21 @@ export class RoomManager {
 	}
 
 	private async _loadRoom(roomId: string): Promise<ActiveRoom> {
+		// Verify all lazy hydrators resolved — if any are still stubs, card hydration
+		// will produce plain objects and fights will crash.
+		const hydratorStatus = getHydratorStatus();
+		const failedHydrators = Object.entries(hydratorStatus)
+			.filter(([, ok]) => !ok)
+			.map(([key]) => key);
+		if (failedHydrators.length > 0) {
+			this.log({
+				context: 'room-manager.loadRoom.hydratorWarning',
+				roomId,
+				failedHydrators,
+				message: 'Some hydrators are still stubs — card hydration may be broken.',
+			});
+		}
+
 		// Re-check the cache in case it was populated while we were waiting
 		const cached = this.active.get(roomId);
 		if (cached) return cached;

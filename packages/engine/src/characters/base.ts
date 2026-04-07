@@ -41,8 +41,8 @@ const loadHelpers = async () => {
 	}
 };
 
-export const characterBaseReady = loadHelpers().catch(() => {
-	// Helpers not ready yet; stubs remain in place
+export const characterBaseReady = loadHelpers().catch((err) => {
+	console.error('[engine] characterBaseReady FAILED — character base helpers will be stubs:', err);
 });
 
 // ---------------------------------------------------------------------------

@@ -23,8 +23,8 @@ const loadHelpers = async () => {
 	}
 };
 
-export const spawnHelpersReady = loadHelpers().catch(() => {
-	// Helpers not ready yet; stubs remain in place
+export const spawnHelpersReady = loadHelpers().catch((err) => {
+	console.error('[engine] spawnHelpersReady FAILED — spawn helpers will be stubs:', err);
 });
 
 const genders = Object.keys(PRONOUNS);

@@ -210,6 +210,24 @@ export class Ring extends BaseClass {
 
 			this.contestants = shuffle([...this.contestants, contestant]);
 
+			// Pre-flight: warn if any card is a plain object without a play() method.
+			// This surfaces hydration failures before the fight starts rather than mid-combat.
+			for (let i = 0; i < monster.cards.length; i++) {
+				const c = monster.cards[i];
+				if (typeof c?.play !== 'function') {
+					this.log({
+						context: 'ring.addMonster.cardValidation',
+						monsterName: monster.givenName,
+						monsterConstructor: monster?.constructor?.name,
+						cardIndex: i,
+						cardConstructor: c?.constructor?.name ?? 'unknown',
+						cardKeys: c ? Object.keys(c) : [],
+						hasPlay: typeof c?.play,
+						cardJSON: JSON.stringify(c)?.slice(0, 200),
+					});
+				}
+			}
+
 			if (this.contestants.length > MAX_MONSTERS) {
 				this.clearRing();
 			} else {
@@ -523,6 +541,27 @@ export class Ring extends BaseClass {
 					fightLog.push(
 						`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`
 					);
+
+				// Guard: if card is a plain object (hydration failure), skip it gracefully.
+				if (typeof card.play !== 'function') {
+					this.log({
+						context: 'ring.fight.invalidCard',
+						monsterName: player.givenName,
+						monsterConstructor: player?.constructor?.name,
+						cardIndex,
+						cardConstructor: card?.constructor?.name ?? 'unknown',
+						cardKeys: Object.keys(card),
+						cardName: card?.name,
+						typeof_play: typeof card?.play,
+						cardJSON: JSON.stringify(card)?.slice(0, 300),
+					});
+					if (getAllActiveContestants().length > 1) {
+						next();
+					} else {
+						resolve(playerContestant);
+					}
+					return;
+				}
 
 				card
 					.play(player, proposedTarget, ring, getAllActiveContestants())

@@ -6,8 +6,13 @@ import Basilisk from '../monsters/basilisk.js';
 import Beastmaster from '../characters/beastmaster.js';
 import Game from '../game.js';
 import { RoomEventBus } from '../events/index.js';
+import { engineReady } from '../helpers/engine-ready.js';
 
 describe('ring/index.ts', () => {
+	before(async () => {
+		await engineReady;
+	});
+
 	afterEach(() => {
 		sinon.restore();
 	});
@@ -238,6 +243,114 @@ describe('ring/index.ts', () => {
 			expect(contestant2.won).to.be.undefined;
 			expect(contestant1.monster.xp).to.equal(prevXP1 + 2);
 			expect(contestant2.monster.xp).to.equal(prevXP2 + 4);
+		});
+	});
+
+	describe('fight()', () => {
+		it('runs to completion without throwing when monsters have properly hydrated cards', async function () {
+			// Give the fight plenty of time to complete (may take multiple rounds)
+			this.timeout(15_000);
+
+			const game = new Game();
+			const ring = game.getRing();
+
+			const contestant1 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const contestant2 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+
+			// Verify cards are proper instances before adding to ring
+			for (const card of contestant1.monster.cards) {
+				expect(card.play, 'contestant1 card should have play()').to.be.a('function');
+			}
+			for (const card of contestant2.monster.cards) {
+				expect(card.play, 'contestant2 card should have play()').to.be.a('function');
+			}
+
+			ring.addMonster(contestant1);
+			ring.addMonster(contestant2);
+
+			// fight() should resolve (not reject)
+			let caughtError: unknown;
+			try {
+				await ring.fight();
+			} catch (err) {
+				caughtError = err;
+			}
+
+			expect(caughtError, 'fight() should not throw').to.be.undefined;
+		});
+
+		it('cards on monsters spawned via randomContestant all have play() methods', () => {
+			const contestant = randomContestant({ isBoss: false });
+
+			expect(contestant.monster.cards.length, 'monster should have cards').to.be.above(0);
+			for (const card of contestant.monster.cards) {
+				expect(card.play, `card "${card.name}" should have play()`).to.be.a('function');
+			}
+		});
+
+		it('addMonster logs pre-flight card validation warnings for plain-object cards', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const logs: unknown[] = [];
+			ring.log = (msg: unknown) => logs.push(msg);
+
+			const contestant1 = randomContestant({ isBoss: false });
+
+			// Simulate hydration failure: replace cards with plain objects lacking play()
+			contestant1.monster.cards = [
+				{ name: 'HitCard', options: {} },
+				{ name: 'HealCard', options: {} },
+			] as any[];
+
+			ring.addMonster(contestant1);
+
+			// The addMonster pre-flight validation should have logged warnings for each broken card
+			const addWarnings = logs.filter(
+				(l: any) => l?.context === 'ring.addMonster.cardValidation'
+			);
+			expect(addWarnings.length, 'should log one warning per broken card').to.equal(2);
+			expect((addWarnings[0] as any).monsterName).to.equal(contestant1.monster.givenName);
+			expect((addWarnings[0] as any).cardIndex).to.equal(0);
+			expect((addWarnings[0] as any).hasPlay).to.equal('undefined');
+		});
+
+		it('ring.fight.invalidCard guard fires for plain-object cards and logs diagnostic info', async function () {
+			this.timeout(20_000);
+
+			const game = new Game();
+			const ring = game.getRing();
+			const logs: unknown[] = [];
+			ring.log = (msg: unknown) => logs.push(msg);
+
+			const contestant1 = randomContestant({ isBoss: false });
+			const contestant2 = randomContestant({ isBoss: false });
+
+			// Simulate hydration failure on contestant1
+			contestant1.monster.cards = [
+				{ name: 'HitCard', options: {} },
+			] as any[];
+
+			// Give contestant1 very low HP so contestant2 kills them quickly
+			contestant1.monster.hp = 1;
+
+			ring.addMonster(contestant1);
+			ring.addMonster(contestant2);
+
+			let caughtError: unknown;
+			try {
+				await ring.fight();
+			} catch (err) {
+				caughtError = err;
+			}
+
+			expect(caughtError, 'fight() should not throw with broken cards').to.be.undefined;
+
+			// The invalid-card guard should have logged the skip attempt
+			const fightWarnings = logs.filter(
+				(l: any) => l?.context === 'ring.fight.invalidCard'
+			);
+			expect(fightWarnings.length, 'should log invalid-card guard warnings during fight').to.be.above(0);
+			expect((fightWarnings[0] as any).typeof_play).to.equal('undefined');
 		});
 	});
 });

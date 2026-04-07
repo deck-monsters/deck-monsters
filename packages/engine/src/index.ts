@@ -11,7 +11,7 @@ import type { GameEvent, EventType, EventScope, EventSubscriber } from './events
 export { Game, ConnectorAdapter, RoomEventBus };
 export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber };
 export type { StateStore } from './types/state-store.js';
-export { engineReady } from './helpers/engine-ready.js';
+export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { COMMAND_CATALOG } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 

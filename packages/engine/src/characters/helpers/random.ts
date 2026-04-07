@@ -45,8 +45,8 @@ const loadHelpers = async () => {
  *  Await this in test `before` hooks when tests depend on randomCharacter() producing a
  *  fully-populated character with monsters.
  */
-export const helpersReady = loadHelpers().catch(() => {
-	// Helpers not ready yet; stubs remain in place
+export const helpersReady = loadHelpers().catch((err) => {
+	console.error('[engine] randomCharacter helpersReady FAILED — random characters will be empty:', err);
 });
 
 export interface RandomCharacterOptions {

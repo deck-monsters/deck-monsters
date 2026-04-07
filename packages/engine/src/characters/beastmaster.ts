@@ -25,8 +25,8 @@ const loadHelpers = async () => {
 	}
 };
 
-export const beastmasterReady = loadHelpers().catch(() => {
-	// Helpers not ready yet; stubs remain in place
+export const beastmasterReady = loadHelpers().catch((err) => {
+	console.error('[engine] beastmasterReady FAILED — beastmaster helpers will be stubs:', err);
 });
 
 const DEFAULT_MONSTER_SLOTS = 7;

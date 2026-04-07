@@ -10,6 +10,11 @@ let _fillDeck: AnyFn = (deck: unknown[]) => deck;
 let _hydrateItems: AnyFn = (items: unknown[]) => items;
 let _hydrateMonster: AnyFn = (obj: unknown) => obj;
 
+let _hydratorStatus = { hydrateDeck: false, fillDeck: false, hydrateItems: false, hydrateMonster: false };
+
+/** Returns whether lazy hydrators were successfully loaded (not stubs). */
+export const getCharacterHydratorStatus = (): typeof _hydratorStatus => ({ ..._hydratorStatus });
+
 const loadHelpers = async () => {
 	const [cardDeckModule, itemsModule, monstersModule] = await Promise.all([
 		import('../../cards/helpers/deck.js').catch(() => null),
@@ -22,23 +27,27 @@ const loadHelpers = async () => {
 			(cardDeckModule as any).hydrateDeck ?? (cardDeckModule as any).default ?? _hydrateDeck;
 		_fillDeck =
 			(cardDeckModule as any).fillDeck ?? _fillDeck;
+		_hydratorStatus.hydrateDeck = true;
+		_hydratorStatus.fillDeck = true;
 	}
 	if (itemsModule) {
 		_hydrateItems =
 			(itemsModule as any).hydrateItems ??
 			(itemsModule as any).default ??
 			_hydrateItems;
+		_hydratorStatus.hydrateItems = true;
 	}
 	if (monstersModule) {
 		_hydrateMonster =
 			(monstersModule as any).hydrateMonster ??
 			(monstersModule as any).default ??
 			_hydrateMonster;
+		_hydratorStatus.hydrateMonster = true;
 	}
 };
 
-export const hydrateHelpersReady = loadHelpers().catch(() => {
-	// Helpers not ready yet; stubs remain in place
+export const hydrateHelpersReady = loadHelpers().catch((err) => {
+	console.error('[engine] hydrateHelpersReady FAILED — character hydration will be broken:', err);
 });
 
 interface CharacterObj {

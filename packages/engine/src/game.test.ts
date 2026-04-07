@@ -3,9 +3,11 @@ import sinon from 'sinon';
 import zlib from 'node:zlib';
 
 import Game from './game.js';
+import { restoreGame } from './index.js';
 import { BaseCard } from './cards/base.js';
 import Ring from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
+import { engineReady } from './helpers/engine-ready.js';
 
 describe('game.ts', () => {
 	afterEach(() => {
@@ -80,6 +82,75 @@ describe('game.ts', () => {
 
 		expect(card).to.be.instanceOf(BaseCard);
 		expect(canHoldCard.called).to.equal(true);
+	});
+
+	describe('save/restore round-trip', () => {
+		before(async () => {
+			await engineReady;
+		});
+
+		it('restores a game with a character whose monster cards all have play() methods', async () => {
+			const game = new Game({ roomId: 'restore-test' });
+
+			const Basilisk = (await import('./monsters/basilisk.js')).default;
+			const { HitCard } = await import('./cards/hit.js');
+			const { HealCard } = await import('./cards/heal.js');
+			const { FleeCard } = await import('./cards/flee.js');
+			const Beastmaster = (await import('./characters/beastmaster.js')).default;
+
+			const cards = [new HitCard(), new HitCard(), new HealCard(), new FleeCard()];
+			const monster = new Basilisk({ name: 'Fang' });
+			monster.cards = cards;
+
+			const character = new Beastmaster({ name: 'Tester' });
+			character.addMonster(monster);
+			game.characters['test-user'] = character;
+
+			// Serialize
+			const serialized = JSON.stringify(game);
+			expect(serialized).to.be.a('string');
+
+			// Restore
+			const restoredGame = restoreGame(serialized);
+			const restoredCharacter = restoredGame.characters['test-user'];
+			expect(restoredCharacter, 'character should be restored').to.exist;
+
+			const restoredMonster = restoredCharacter.monsters[0];
+			expect(restoredMonster, 'monster should be restored').to.exist;
+			expect(restoredMonster.cards.length, 'cards should be restored').to.be.above(0);
+
+			for (let i = 0; i < restoredMonster.cards.length; i++) {
+				const card = restoredMonster.cards[i];
+				expect(
+					typeof card?.play,
+					`card[${i}] (${card?.name ?? card?.constructor?.name}) should have play() — got ${typeof card?.play}`
+				).to.equal('function');
+			}
+		});
+
+		it('restored monster cards have play() methods (not plain objects)', async () => {
+			const game = new Game({ roomId: 'restore-instance-test' });
+
+			const Basilisk = (await import('./monsters/basilisk.js')).default;
+			const { HitCard } = await import('./cards/hit.js');
+			const Beastmaster = (await import('./characters/beastmaster.js')).default;
+
+			const monster = new Basilisk({ name: 'Scales' });
+			monster.cards = [new HitCard(), new HitCard(), new HitCard()];
+			const character = new Beastmaster({ name: 'Hero' });
+			character.addMonster(monster);
+			game.characters['user-2'] = character;
+
+			const restoredGame = restoreGame(JSON.stringify(game));
+			const restoredMonster = restoredGame.characters['user-2']?.monsters[0];
+
+			for (const card of restoredMonster.cards) {
+				expect(
+					typeof card?.play,
+					`restored card "${card?.name}" should have play(), not be a plain object`
+				).to.equal('function');
+			}
+		});
 	});
 
 	describe('getCharacter Player-name auto-update', () => {

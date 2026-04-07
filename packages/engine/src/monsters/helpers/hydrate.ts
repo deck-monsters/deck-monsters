@@ -21,6 +21,12 @@ let _hydrateCard: (cardObj: any, monster: any, deck: any) => CardInstance = obj 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _hydrateItem: (itemObj: any, monster: any) => ItemInstance = obj => obj;
 
+let _hydratorStatus = { hydrateCard: false, hydrateItem: false };
+
+/** Returns whether lazy hydrators were successfully loaded (not stubs). */
+export const getMonsterHydratorStatus = (): { hydrateCard: boolean; hydrateItem: boolean } =>
+	({ ..._hydratorStatus });
+
 const loadHydrators = async () => {
 	const [cardsModule, itemsModule] = await Promise.all([
 		import('../../cards/helpers/hydrate.js').catch(() => null),
@@ -29,15 +35,17 @@ const loadHydrators = async () => {
 	if (cardsModule) {
 		_hydrateCard =
 			(cardsModule as any).hydrateCard ?? (cardsModule as any).default ?? _hydrateCard;
+		_hydratorStatus.hydrateCard = true;
 	}
 	if (itemsModule) {
 		_hydrateItem =
 			(itemsModule as any).hydrateItem ?? (itemsModule as any).default ?? _hydrateItem;
+		_hydratorStatus.hydrateItem = true;
 	}
 };
 
-export const monsterHydrateReady: Promise<void> = loadHydrators().catch(() => {
-	// Hydrators not ready yet; stubs remain in place
+export const monsterHydrateReady: Promise<void> = loadHydrators().catch((err) => {
+	console.error('[engine] monsterHydrateReady FAILED — card/item hydration will be broken:', err);
 });
 
 const hydrateMonster = (monsterObj: MonsterObj, deck?: CardInstance[]): BaseMonster => {

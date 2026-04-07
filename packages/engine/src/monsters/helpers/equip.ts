@@ -36,8 +36,8 @@ const loadHelpers = async () => {
 	}
 };
 
-export const equipHelpersReady = loadHelpers().catch(() => {
-	// Helpers not ready yet; stubs remain in place
+export const equipHelpersReady = loadHelpers().catch((err) => {
+	console.error('[engine] equipHelpersReady FAILED — equip helpers will be stubs:', err);
 });
 
 const MAX_CARD_COPIES_IN_HAND = 4;

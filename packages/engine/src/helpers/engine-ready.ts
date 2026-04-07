@@ -11,13 +11,13 @@
  */
 
 import { helpersReady as randomReady } from '../characters/helpers/random.js';
-import { hydrateHelpersReady } from '../characters/helpers/hydrate.js';
+import { hydrateHelpersReady, getCharacterHydratorStatus } from '../characters/helpers/hydrate.js';
 import { createHelperReady } from '../characters/helpers/create.js';
 import { characterBaseReady } from '../characters/base.js';
 import { beastmasterReady } from '../characters/beastmaster.js';
 import { spawnHelpersReady } from '../monsters/helpers/spawn.js';
 import { equipHelpersReady } from '../monsters/helpers/equip.js';
-import { monsterHydrateReady } from '../monsters/helpers/hydrate.js';
+import { monsterHydrateReady, getMonsterHydratorStatus } from '../monsters/helpers/hydrate.js';
 
 export const engineReady: Promise<void> = Promise.all([
 	randomReady,
@@ -29,3 +29,13 @@ export const engineReady: Promise<void> = Promise.all([
 	equipHelpersReady,
 	monsterHydrateReady,
 ]).then(() => undefined);
+
+/**
+ * Returns the current hydrator status for all lazy-loaded helpers.
+ * All values should be `true` once `engineReady` has resolved.
+ * Call this after `await engineReady` to verify nothing was silently skipped.
+ */
+export const getHydratorStatus = (): Record<string, boolean> => ({
+	...getCharacterHydratorStatus(),
+	...getMonsterHydratorStatus(),
+});
