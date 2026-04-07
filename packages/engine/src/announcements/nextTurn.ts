@@ -15,7 +15,7 @@ export function announceNextTurn(
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅\n\nround ${round}, turn ${turn + 1}\n\n${contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')}\n\n`,
+		text: `\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃\n\nround ${round}, turn ${turn + 1}\n\n${contestants.map(contestant => contestant.monster.identityWithHp).join(' vs ')}\n\n`,
 		payload: { round, turn, contestants },
 	});
 }
