@@ -49,7 +49,7 @@ import { announceXPGain } from './xpGain.js';
 import { announceLevelUp } from './level-up.js';
 import type { RoomEventBus } from '../events/index.js';
 
-export function initialize(game: any): void {
+export function initialize(game: any): () => void {
 	const eb: RoomEventBus = game.eventBus;
 
 	const wrap = (fn: (eb: RoomEventBus, ...args: any[]) => void) =>
@@ -93,12 +93,22 @@ export function initialize(game: any): void {
 		{ event: 'scroll.used', listener: wrap(announceItemUsed) },
 	];
 
-	events.forEach(event =>
-		game.on(event.event, event.listener)
-	);
+	// Collect bound listeners so they can be removed on dispose
+	const registered: Array<{ event: string; bound: (...args: any[]) => void }> = [];
+
+	events.forEach(({ event, listener }) => {
+		const bound = game.on(event, listener);
+		registered.push({ event, bound });
+	});
 
 	// heal is special: ring is passed as an extra argument before the standard args
-	game.on('creature.heal', (...args: any[]) => {
+	const healListener = (...args: any[]) => {
 		(announceHeal as (...a: any[]) => void)(eb, game.ring, ...args);
-	});
+	};
+	const boundHeal = game.on('creature.heal', healListener);
+	registered.push({ event: 'creature.heal', bound: boundHeal });
+
+	return () => {
+		registered.forEach(({ event, bound }) => game.off(event, bound));
+	};
 }

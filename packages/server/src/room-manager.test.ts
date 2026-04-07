@@ -67,6 +67,7 @@ function makeEngineDeps() {
 		options: {} as Record<string, unknown>,
 		// saveState getter mirrors the real Game implementation
 		get saveState() { return saveStateFn; },
+		dispose: sinon.stub(),
 	};
 
 	const GameStub = sinon.stub().callsFake((opts: Record<string, unknown>) => {

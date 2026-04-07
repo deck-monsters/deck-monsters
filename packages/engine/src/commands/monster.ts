@@ -157,6 +157,7 @@ function sendMonsterToTheRingAction({
 	game,
 	isDM,
 	results,
+	user,
 }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));
@@ -171,6 +172,7 @@ function sendMonsterToTheRingAction({
 				ring: game.getRing(),
 				channel,
 				channelName,
+				userId: user?.id,
 			})
 			.catch((err: unknown) => game.log(err));
 	});

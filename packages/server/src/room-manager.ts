@@ -296,6 +296,7 @@ export class RoomManager {
 		const entry = this.active.get(roomId);
 		if (entry) {
 			entry.unsubscribePersister();
+			entry.game.dispose();
 		}
 		this.active.delete(roomId);
 	}
@@ -308,6 +309,9 @@ export class RoomManager {
 			// saveState is a getter returning the bound persist function — call it to flush
 			// any state not yet written by the 30s debounce.
 			entry.game.saveState();
+			// Remove globalSemaphore listeners and stop ring timers so orphaned game
+			// instances don't keep firing after the room is evicted from memory.
+			entry.game.dispose();
 		}
 		this.active.delete(roomId);
 	}

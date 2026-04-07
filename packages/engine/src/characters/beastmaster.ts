@@ -395,11 +395,13 @@ class Beastmaster extends BaseCharacter {
 		ring,
 		channel,
 		channelName,
+		userId,
 	}: {
 		monsterName?: string;
 		ring: any;
 		channel: ChannelFn;
 		channelName?: string;
+		userId: string;
 	}): Promise<unknown> {
 		const character = this;
 		const alreadyInRing = ring.contestants.filter(
@@ -434,7 +436,7 @@ class Beastmaster extends BaseCharacter {
 						}),
 					);
 				}
-				return ring.addMonster({ monster, character, channel, channelName });
+				return ring.addMonster({ monster, character, userId });
 			});
 		});
 	}

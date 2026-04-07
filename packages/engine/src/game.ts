@@ -35,6 +35,7 @@ export class Game extends BaseClass {
 	stateStore?: StateStore;
 	private _eventBus: RoomEventBus;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
+	private _disposeListeners: Array<() => void> = [];
 
 	constructor(
 		options: Record<string, unknown> = {},
@@ -56,8 +57,6 @@ export class Game extends BaseClass {
 
 		this.initializeEvents();
 		loadHandlers();
-
-		this.on('stateChange', () => this.scheduleSave());
 
 		this.emit('initialized');
 	}
@@ -121,12 +120,35 @@ export class Game extends BaseClass {
 	}
 
 	initializeEvents(): void {
-		initializeAnnouncements(this);
+		const disposeAnnouncements = initializeAnnouncements(this);
 
-		this.on('creature.win', this.handleWinner.bind(this));
-		this.on('creature.loss', this.handleLoser.bind(this));
-		this.on('creature.permaDeath', this.handlePermaDeath.bind(this));
-		this.on('creature.fled', this.handleFled.bind(this));
+		const boundWin = this.on('creature.win', this.handleWinner.bind(this));
+		const boundLoss = this.on('creature.loss', this.handleLoser.bind(this));
+		const boundPermaDeath = this.on('creature.permaDeath', this.handlePermaDeath.bind(this));
+		const boundFled = this.on('creature.fled', this.handleFled.bind(this));
+		const boundStateChange = this.on('stateChange', () => this.scheduleSave());
+
+		this._disposeListeners = [
+			disposeAnnouncements,
+			() => this.off('creature.win', boundWin),
+			() => this.off('creature.loss', boundLoss),
+			() => this.off('creature.permaDeath', boundPermaDeath),
+			() => this.off('creature.fled', boundFled),
+			() => this.off('stateChange', boundStateChange),
+		];
+	}
+
+	dispose(): void {
+		// Cancel pending saves
+		if (this._saveDebounce !== undefined) {
+			clearTimeout(this._saveDebounce);
+			this._saveDebounce = undefined;
+		}
+		// Remove all globalSemaphore listeners registered for this game instance
+		this._disposeListeners.forEach(fn => fn());
+		this._disposeListeners = [];
+		// Stop ring timers so orphaned Game instances don't keep firing
+		this.ring.dispose();
 	}
 
 	handleCommand({ command, game = this }: { command: string; game?: Game }): any {

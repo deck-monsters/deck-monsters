@@ -38,6 +38,7 @@ export class Ring extends BaseClass {
 	inEncounter: boolean = false;
 	encounter?: Record<string, any>;
 	fightTimer?: ReturnType<typeof setTimeout>;
+	bossTimer?: ReturnType<typeof setTimeout>;
 	/** Epoch ms when the next boss will enter the ring (including the 2-min announcement window), or null if no timer is running. */
 	nextBossSpawnAt: number | null = null;
 	/** Epoch ms when the next fight will start, or null if no fight timer is active. */
@@ -349,6 +350,16 @@ export class Ring extends BaseClass {
 		this.emit('clear');
 	}
 
+	dispose(): void {
+		clearTimeout(this.fightTimer);
+		clearTimeout(this.bossTimer);
+		this.fightTimer = undefined;
+		this.bossTimer = undefined;
+		this.nextFightAt = null;
+		this.nextBossSpawnAt = null;
+		this.eventBus.unsubscribe('ring-internal');
+	}
+
 	startFightTimer(): void {
 		clearTimeout(this.fightTimer);
 		this.nextFightAt = null;
@@ -541,7 +552,13 @@ export class Ring extends BaseClass {
 				this.fightConcludes({ fightLog, lastContestant, rounds: round });
 				this.clearRing();
 			})
-			.catch(() => {
+			.catch((err: unknown) => {
+				this.log(err);
+				this.pub(
+					'announce',
+					'The fight has been cancelled due to an unexpected error. The ring has been cleared.',
+					{}
+				);
 				this.clearRing();
 			});
 	}
@@ -709,7 +726,8 @@ export class Ring extends BaseClass {
 			const outerDelay = random(2100000, 3480000); // 35–58 min
 			this.nextBossSpawnAt = Date.now() + outerDelay + 120000; // includes 2-min warn window
 
-			setTimeout(() => {
+			this.bossTimer = setTimeout(() => {
+				this.bossTimer = undefined;
 				const numberOfBossesInRing = ring.contestants.reduce(
 					(total, contestant) => total + (contestant.isBoss ? 1 : 0),
 					0
@@ -718,9 +736,12 @@ export class Ring extends BaseClass {
 					ring.emit('bossWillSpawn', { delay: 120000 });
 				}
 
-				setTimeout(() => {
+				this.bossTimer = setTimeout(() => {
+					this.bossTimer = undefined;
 					ring.nextBossSpawnAt = null;
-					ring.spawnBoss();
+					if (!ring.inEncounter) {
+						ring.spawnBoss();
+					}
 					ring.startBossTimer();
 				}, 120000);
 			}, outerDelay);
