@@ -13,9 +13,11 @@ interface AppShellProps {
 
 export default function AppShell({ children, roomName, roomId }: AppShellProps) {
   const { user, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, validThemes } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const THEME_ICON: Record<string, string> = { phosphor: '🟢', amber: '🟡', 'street-fighter': '🕹️' };
+  const nextTheme = validThemes[(validThemes.indexOf(theme) + 1) % validThemes.length];
   const [refOpen, setRefOpen] = useState(false);
   const { insertCommand } = useCommandInsert();
 
@@ -101,11 +103,11 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           <button
             className="btn"
             style={{ fontSize: '0.8rem' }}
-            onClick={() => setTheme(theme === 'phosphor' ? 'amber' : 'phosphor')}
-            title={`Switch to ${theme === 'phosphor' ? 'amber' : 'phosphor'} theme`}
-            aria-label={`Switch to ${theme === 'phosphor' ? 'amber' : 'phosphor'} theme`}
+            onClick={() => setTheme(nextTheme)}
+            title={`Switch to ${nextTheme} theme`}
+            aria-label={`Switch to ${nextTheme} theme`}
           >
-            {theme === 'phosphor' ? '🟡' : '🟢'}
+            {THEME_ICON[theme] ?? '🎨'}
           </button>
           {user && (
             <button
@@ -166,7 +168,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             >
               Help / Commands
             </button>
-            <button className="btn" onClick={() => { setTheme(theme === 'phosphor' ? 'amber' : 'phosphor'); setMenuOpen(false); }}>
+            <button className="btn" onClick={() => { setTheme(nextTheme); setMenuOpen(false); }}>
               Theme: {theme}
             </button>
             {user && (

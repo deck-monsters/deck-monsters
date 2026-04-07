@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 
 const STORAGE_KEY = 'deck-monsters-theme';
-const VALID_THEMES = ['phosphor', 'amber'] as const;
+const VALID_THEMES = ['phosphor', 'amber', 'street-fighter'] as const;
 export type Theme = typeof VALID_THEMES[number];
 
 function isValidTheme(value: string | null): value is Theme {
