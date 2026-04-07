@@ -187,14 +187,17 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     {
       onData(tracked: TrackedEvent) {
         const event = tracked.data;
-        if (seenRef.current.has(tracked.id)) return;
-        seenRef.current.add(tracked.id);
 
+        // Handshake must always be processed — signals new or reconnected subscription.
+        // Must come before seenRef dedup since the server uses a stable 'handshake' ID.
         if (event.type === 'handshake') {
           handleHandshakeEvent(event);
           setReconnecting(false);
           return;
         }
+
+        if (seenRef.current.has(tracked.id)) return;
+        seenRef.current.add(tracked.id);
 
         // Only process events targeted to this user
         const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
