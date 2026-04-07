@@ -104,7 +104,25 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     if (last?.id && !last.id.startsWith('hist:')) {
       lastEventIdRef.current = last.id;
     }
+    // Scroll to bottom after history loads so we start at the latest message
+    requestAnimationFrame(() => {
+      if (feedRef.current) {
+        feedRef.current.scrollTop = feedRef.current.scrollHeight;
+      }
+    });
   }, [history]);
+
+  // Scroll to bottom when this pane becomes active (tab switch)
+  useEffect(() => {
+    if (isActive) {
+      requestAnimationFrame(() => {
+        if (feedRef.current) {
+          feedRef.current.scrollTop = feedRef.current.scrollHeight;
+          setIsAtBottom(true);
+        }
+      });
+    }
+  }, [isActive]);
 
   // Auto-scroll when new events arrive
   useEffect(() => {

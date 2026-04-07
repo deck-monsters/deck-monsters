@@ -504,19 +504,29 @@ export class Ring extends BaseClass {
 						`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`
 					);
 
-					card
-						.play(player, proposedTarget, ring, getAllActiveContestants())
-						.then(() => {
-							if (getAllActiveContestants().length > 1) {
-								return Promise.resolve().then(() => next());
-							}
+				card
+					.play(player, proposedTarget, ring, getAllActiveContestants())
+					.then(() => {
+						if (getAllActiveContestants().length > 1) {
+							return Promise.resolve().then(() => next());
+						}
 
-							return Promise.resolve().then(() => resolve(playerContestant));
-						})
-						.catch((ex: unknown) => {
-							this.log(ex);
-							reject(ex);
+						return Promise.resolve().then(() => resolve(playerContestant));
+					})
+					.catch((ex: unknown) => {
+						this.log({
+							err: ex,
+							context: 'card.play',
+							card: card.name,
+							player: player.givenName,
+							target: proposedTarget.givenName,
 						});
+						// Skip the failed card and continue the fight rather than crashing
+						if (getAllActiveContestants().length > 1) {
+							return Promise.resolve().then(() => next());
+						}
+						return Promise.resolve().then(() => resolve(playerContestant));
+					});
 				} else {
 					this.emit('endOfDeck', { contestant: playerContestant, round });
 
@@ -552,15 +562,19 @@ export class Ring extends BaseClass {
 				this.fightConcludes({ fightLog, lastContestant, rounds: round });
 				this.clearRing();
 			})
-			.catch((err: unknown) => {
-				this.log(err);
-				this.pub(
-					'announce',
-					'The fight has been cancelled due to an unexpected error. The ring has been cleared.',
-					{}
-				);
-				this.clearRing();
+		.catch((err: unknown) => {
+			this.log({
+				err,
+				context: 'ring.fight',
+				contestants: this.contestants.map(c => c.monster.givenName),
 			});
+			this.pub(
+				'announce',
+				'The fight has been cancelled due to an unexpected error. The ring has been cleared.',
+				{}
+			);
+			this.clearRing();
+		});
 	}
 
 	fightConcludes({

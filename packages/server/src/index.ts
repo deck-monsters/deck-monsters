@@ -28,7 +28,7 @@ async function start(): Promise<void> {
 
 	await fastify.register(ws);
 
-	const roomManager = new RoomManager(db);
+	const roomManager = new RoomManager(db, fastify.log.error.bind(fastify.log));
 
 	const SWEEP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 	setInterval(() => {

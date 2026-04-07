@@ -47,15 +47,24 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   const lastEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
   const { handleHandshakeEvent } = useHandshake();
+  const utils = trpc.useUtils();
 
   // Fetch persistent ring history from DB on mount
   const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
 
-  // Fetch ring timer state, refreshed every 30s
+  // Fetch ring timer state, refreshed every 15s
   const { data: ringState } = trpc.game.ringState.useQuery(
     { roomId },
-    { refetchInterval: 30_000 }
+    { refetchInterval: 15_000 }
   );
+
+  // Tick every second to keep the countdown badge live
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!ringState?.nextFightAt && !ringState?.nextBossSpawnAt) return;
+    const id = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [ringState?.nextFightAt, ringState?.nextBossSpawnAt]);
 
   // Apply DB history once — pre-populate seenRef and set lastEventIdRef so
   // the live subscription skips already-delivered events.
@@ -72,7 +81,25 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     if (last?.id && !last.id.startsWith('hist:')) {
       lastEventIdRef.current = last.id;
     }
+    // Scroll to bottom after history loads so we start at the latest message
+    requestAnimationFrame(() => {
+      if (feedRef.current) {
+        feedRef.current.scrollTop = feedRef.current.scrollHeight;
+      }
+    });
   }, [history]);
+
+  // Scroll to bottom when this pane becomes active (tab switch)
+  useEffect(() => {
+    if (isActive) {
+      requestAnimationFrame(() => {
+        if (feedRef.current) {
+          feedRef.current.scrollTop = feedRef.current.scrollHeight;
+          setIsAtBottom(true);
+        }
+      });
+    }
+  }, [isActive]);
 
   // Auto-scroll to bottom when new events arrive, if the user hasn't scrolled up
   useEffect(() => {
@@ -117,6 +144,12 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
 
         setEvents(prev => [...prev, event]);
         onEvent?.(event);
+
+        // Refetch ring timer state immediately when the ring situation changes
+        if (event.type === 'ring.add' || event.type === 'ring.remove' ||
+            event.type === 'ring.clear' || event.type === 'ring.fight') {
+          void utils.game.ringState.invalidate({ roomId });
+        }
       },
       onError() {
         setConnected(false);
@@ -125,10 +158,11 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     }
   );
 
-  // Compute the timer badge to show in the header (fight takes priority over boss)
+  // Compute the timer badge inline — tick state re-renders every second to keep it current
   let timerBadge: string | null = null;
   if (ringState?.nextFightAt) {
-    timerBadge = `fight in ${formatCountdown(ringState.nextFightAt)}`;
+    const delta = ringState.nextFightAt - Date.now();
+    timerBadge = delta <= 0 ? 'fight now!' : `fight in ${formatCountdown(ringState.nextFightAt)}`;
   } else if (ringState?.nextBossSpawnAt) {
     timerBadge = `boss in ~${formatCountdown(ringState.nextBossSpawnAt)}`;
   }
