@@ -20,8 +20,13 @@ export function attachEventPersister(
 ): () => void {
 	const subscriberId = `${SUBSCRIBER_ID_PREFIX}:${eventBus.roomId}`;
 
+	// Event types that are transient state-sync signals and should not be
+	// persisted to the history table — they have no replay value.
+	const EPHEMERAL_TYPES = new Set(['ring.state', 'handshake']);
+
 	return eventBus.subscribe(subscriberId, {
 		deliver(event: GameEvent) {
+			if (EPHEMERAL_TYPES.has(event.type)) return;
 			db.insert(roomEvents)
 				.values({
 					roomId: event.roomId,

@@ -11,6 +11,7 @@ export type EventType =
 	| 'ring.permaDeath'
 	| 'ring.xp'
 	| 'ring.cardDrop'
+	| 'ring.state'
 	| 'card.played'
 	| 'announce'
 	| 'prompt.request'

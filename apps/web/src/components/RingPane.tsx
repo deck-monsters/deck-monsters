@@ -13,6 +13,12 @@ interface RingPaneProps {
   onEvent?: (event: unknown) => void;
 }
 
+interface TimerState {
+  nextFightAt: number | null;
+  nextBossSpawnAt: number | null;
+  monsterCount: number;
+}
+
 const RING_TYPES = new Set([
   'ring.add', 'ring.remove', 'ring.clear', 'ring.countdown', 'ring.fight',
   'ring.win', 'ring.loss', 'ring.draw', 'ring.fled', 'ring.permaDeath',
@@ -42,29 +48,29 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [connected, setConnected] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
+  // Timer state is pushed from the server via ring.state events and the handshake payload.
+  // No HTTP polling needed.
+  const [timerState, setTimerState] = useState<TimerState>({
+    nextFightAt: null,
+    nextBossSpawnAt: null,
+    monsterCount: 0,
+  });
   const feedRef = useRef<HTMLOListElement>(null);
   const seenRef = useRef(new Set<string>());
   const lastEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
   const { handleHandshakeEvent } = useHandshake();
-  const utils = trpc.useUtils();
 
   // Fetch persistent ring history from DB on mount
   const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
 
-  // Fetch ring timer state, refreshed every 15s
-  const { data: ringState } = trpc.game.ringState.useQuery(
-    { roomId },
-    { refetchInterval: 15_000 }
-  );
-
-  // Tick every second to keep the countdown badge live
+  // Tick every second while a fight or boss timer is active, to keep the badge live
   const [, setTick] = useState(0);
   useEffect(() => {
-    if (!ringState?.nextFightAt && !ringState?.nextBossSpawnAt) return;
+    if (!timerState.nextFightAt && !timerState.nextBossSpawnAt) return;
     const id = setInterval(() => setTick(t => t + 1), 1000);
     return () => clearInterval(id);
-  }, [ringState?.nextFightAt, ringState?.nextBossSpawnAt]);
+  }, [timerState.nextFightAt, timerState.nextBossSpawnAt]);
 
   // Apply DB history once — pre-populate seenRef and set lastEventIdRef so
   // the live subscription skips already-delivered events.
@@ -132,6 +138,16 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
           handleHandshakeEvent(event);
           setConnected(true);
           setReconnecting(false);
+          // Seed timer state from the handshake payload so we have instant values
+          const hs = event.payload as { ringState?: unknown };
+          if (hs.ringState) setTimerState(hs.ringState as TimerState);
+          return;
+        }
+
+        // ring.state is a state-sync signal — update timers but don't show in the feed
+        if (event.type === 'ring.state') {
+          const s = event.payload as unknown as TimerState;
+          setTimerState({ nextFightAt: s.nextFightAt, nextBossSpawnAt: s.nextBossSpawnAt, monsterCount: s.monsterCount });
           return;
         }
 
@@ -144,12 +160,6 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
 
         setEvents(prev => [...prev, event]);
         onEvent?.(event);
-
-        // Refetch ring timer state immediately when the ring situation changes
-        if (event.type === 'ring.add' || event.type === 'ring.remove' ||
-            event.type === 'ring.clear' || event.type === 'ring.fight') {
-          void utils.game.ringState.invalidate({ roomId });
-        }
       },
       onError() {
         setConnected(false);
@@ -160,11 +170,11 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
 
   // Compute the timer badge inline — tick state re-renders every second to keep it current
   let timerBadge: string | null = null;
-  if (ringState?.nextFightAt) {
-    const delta = ringState.nextFightAt - Date.now();
-    timerBadge = delta <= 0 ? 'fight now!' : `fight in ${formatCountdown(ringState.nextFightAt)}`;
-  } else if (ringState?.nextBossSpawnAt) {
-    timerBadge = `boss in ~${formatCountdown(ringState.nextBossSpawnAt)}`;
+  if (timerState.nextFightAt) {
+    const delta = timerState.nextFightAt - Date.now();
+    timerBadge = delta <= 0 ? 'fight now!' : `fight in ${formatCountdown(timerState.nextFightAt)}`;
+  } else if (timerState.nextBossSpawnAt) {
+    timerBadge = `boss in ~${formatCountdown(timerState.nextBossSpawnAt)}`;
   }
 
   return (

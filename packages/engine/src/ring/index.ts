@@ -343,11 +343,28 @@ export class Ring extends BaseClass {
 		delete this.encounter;
 	}
 
+	/** Publish current ring timer state to all connected clients via the event bus. */
+	publishState(): void {
+		this.eventBus.publish({
+			type: 'ring.state',
+			scope: 'public',
+			text: '',
+			payload: {
+				nextFightAt: this.nextFightAt,
+				nextBossSpawnAt: this.nextBossSpawnAt,
+				monsterCount: this.contestants.length,
+			},
+		});
+	}
+
 	clearRing(): void {
 		clearTimeout(this.fightTimer);
+		this.fightTimer = undefined;
+		this.nextFightAt = null;
 		this.endEncounter();
 		this.contestants = [];
 		this.emit('clear');
+		this.publishState();
 	}
 
 	dispose(): void {
@@ -397,6 +414,7 @@ export class Ring extends BaseClass {
 			);
 
 			this.nextFightAt = Date.now() + FIGHT_DELAY;
+			this.publishState();
 			this.fightTimer = setTimeout(() => {
 				this.nextFightAt = null;
 				const { numberOfMonstersInRing: numberOfMonstersStillInRing } =
@@ -410,6 +428,7 @@ export class Ring extends BaseClass {
 			this.emit('narration', {
 				narration: 'The ring is quiet save for the faint sound of footsteps fleeing into the distance.',
 			});
+			this.publishState();
 		} else {
 			const needed = MIN_MONSTERS - numberOfMonstersInRing;
 			const monster = needed > 1 ? 'monsters' : 'monster';
@@ -423,6 +442,7 @@ export class Ring extends BaseClass {
 					userId
 				)
 			);
+			this.publishState();
 		}
 	}
 
@@ -739,6 +759,7 @@ export class Ring extends BaseClass {
 		if (this.spawnBosses) {
 			const outerDelay = random(2100000, 3480000); // 35–58 min
 			this.nextBossSpawnAt = Date.now() + outerDelay + 120000; // includes 2-min warn window
+			this.publishState();
 
 			this.bossTimer = setTimeout(() => {
 				this.bossTimer = undefined;
@@ -753,6 +774,7 @@ export class Ring extends BaseClass {
 				this.bossTimer = setTimeout(() => {
 					this.bossTimer = undefined;
 					ring.nextBossSpawnAt = null;
+					ring.publishState();
 					if (!ring.inEncounter) {
 						ring.spawnBoss();
 					}

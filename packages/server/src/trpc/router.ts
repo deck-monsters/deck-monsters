@@ -241,26 +241,35 @@ export function createRouter(roomManager: RoomManager) {
 				})
 			)
 			.subscription(async function* ({ input, ctx, signal }) {
-				await roomManager.assertMember(ctx.userId, input.roomId);
-				const eventBus = await roomManager.getEventBus(input.roomId);
+			await roomManager.assertMember(ctx.userId, input.roomId);
+			const eventBus = await roomManager.getEventBus(input.roomId);
+			const game = await roomManager.getGame(input.roomId);
+			const ring = game.ring;
 
-				// Emit handshake event first so the client can verify protocol compatibility.
-				const handshakeEvent: GameEvent = {
-					id: 'handshake',
-					roomId: input.roomId,
-					timestamp: Date.now(),
-					type: 'handshake' as EventType,
-					scope: 'private' as EventScope,
-					targetUserId: ctx.userId,
-					text: '',
-					payload: {
-						protocolVersion: PROTOCOL_VERSION,
-						buildVersion: BUILD_VERSION,
-						serverTime: new Date().toISOString(),
-						yourUserId: ctx.userId,
+			// Emit handshake event first so the client can verify protocol compatibility.
+			// Include current ring timer state so clients have instant values on connect
+			// without needing a separate HTTP poll.
+			const handshakeEvent: GameEvent = {
+				id: 'handshake',
+				roomId: input.roomId,
+				timestamp: Date.now(),
+				type: 'handshake' as EventType,
+				scope: 'private' as EventScope,
+				targetUserId: ctx.userId,
+				text: '',
+				payload: {
+					protocolVersion: PROTOCOL_VERSION,
+					buildVersion: BUILD_VERSION,
+					serverTime: new Date().toISOString(),
+					yourUserId: ctx.userId,
+					ringState: {
+						nextFightAt: ring.nextFightAt,
+						nextBossSpawnAt: ring.nextBossSpawnAt,
+						monsterCount: ring.contestants.length,
 					},
-				};
-				yield tracked('handshake', handshakeEvent);
+				},
+			};
+			yield tracked('handshake', handshakeEvent);
 
 				// Deliver any missed events since the last received event ID.
 				if (input.lastEventId) {
