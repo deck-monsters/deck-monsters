@@ -33,14 +33,18 @@ const loadHydrators = async () => {
 		import('../../items/helpers/hydrate.js').catch(() => null),
 	]);
 	if (cardsModule) {
-		_hydrateCard =
-			(cardsModule as any).hydrateCard ?? (cardsModule as any).default ?? _hydrateCard;
-		_hydratorStatus.hydrateCard = true;
+		const fn = (cardsModule as any).hydrateCard ?? (cardsModule as any).default;
+		if (typeof fn === 'function') {
+			_hydrateCard = fn;
+			_hydratorStatus.hydrateCard = true;
+		}
 	}
 	if (itemsModule) {
-		_hydrateItem =
-			(itemsModule as any).hydrateItem ?? (itemsModule as any).default ?? _hydrateItem;
-		_hydratorStatus.hydrateItem = true;
+		const fn = (itemsModule as any).hydrateItem ?? (itemsModule as any).default;
+		if (typeof fn === 'function') {
+			_hydrateItem = fn;
+			_hydratorStatus.hydrateItem = true;
+		}
 	}
 };
 

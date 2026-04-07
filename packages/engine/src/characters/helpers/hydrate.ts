@@ -16,33 +16,40 @@ let _hydratorStatus = { hydrateDeck: false, fillDeck: false, hydrateItems: false
 export const getCharacterHydratorStatus = (): typeof _hydratorStatus => ({ ..._hydratorStatus });
 
 const loadHelpers = async () => {
-	const [cardDeckModule, itemsModule, monstersModule] = await Promise.all([
+	const [cardHydrateModule, cardDeckModule, itemsModule, monstersModule] = await Promise.all([
+		import('../../cards/helpers/hydrate.js').catch(() => null),
 		import('../../cards/helpers/deck.js').catch(() => null),
 		import('../../items/helpers/hydrate.js').catch(() => null),
 		import('../../monsters/helpers/hydrate.js').catch(() => null),
 	]);
 
+	if (cardHydrateModule) {
+		const fn = (cardHydrateModule as any).hydrateDeck;
+		if (typeof fn === 'function') {
+			_hydrateDeck = fn;
+			_hydratorStatus.hydrateDeck = true;
+		}
+	}
 	if (cardDeckModule) {
-		_hydrateDeck =
-			(cardDeckModule as any).hydrateDeck ?? (cardDeckModule as any).default ?? _hydrateDeck;
-		_fillDeck =
-			(cardDeckModule as any).fillDeck ?? _fillDeck;
-		_hydratorStatus.hydrateDeck = true;
-		_hydratorStatus.fillDeck = true;
+		const fn = (cardDeckModule as any).fillDeck;
+		if (typeof fn === 'function') {
+			_fillDeck = fn;
+			_hydratorStatus.fillDeck = true;
+		}
 	}
 	if (itemsModule) {
-		_hydrateItems =
-			(itemsModule as any).hydrateItems ??
-			(itemsModule as any).default ??
-			_hydrateItems;
-		_hydratorStatus.hydrateItems = true;
+		const fn = (itemsModule as any).hydrateItems ?? (itemsModule as any).default;
+		if (typeof fn === 'function') {
+			_hydrateItems = fn;
+			_hydratorStatus.hydrateItems = true;
+		}
 	}
 	if (monstersModule) {
-		_hydrateMonster =
-			(monstersModule as any).hydrateMonster ??
-			(monstersModule as any).default ??
-			_hydrateMonster;
-		_hydratorStatus.hydrateMonster = true;
+		const fn = (monstersModule as any).hydrateMonster ?? (monstersModule as any).default;
+		if (typeof fn === 'function') {
+			_hydrateMonster = fn;
+			_hydratorStatus.hydrateMonster = true;
+		}
 	}
 };
 
