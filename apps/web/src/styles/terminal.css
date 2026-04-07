@@ -66,6 +66,16 @@
   justify-content: space-between;
 }
 
+/* Ring timer badge shown in the pane header */
+.pane-header-timer {
+  color: var(--color-accent);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  margin-left: auto;
+  margin-right: 0.75rem;
+  text-transform: none;
+}
+
 /* Event feed — the scrollable list of game events */
 .event-feed {
   list-style: none;

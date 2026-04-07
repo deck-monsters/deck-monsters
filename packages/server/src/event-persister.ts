@@ -30,6 +30,7 @@ export function attachEventPersister(
 					targetUserId: event.targetUserId ?? null,
 					payload: event.payload as Record<string, unknown>,
 					text: event.text,
+					eventId: event.id,
 				})
 				.catch((err: unknown) => log(err));
 		},

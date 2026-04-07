@@ -25,6 +25,18 @@ function eventClass(type: string): string {
   return 'event-announce';
 }
 
+/** Returns a human-readable countdown string from an epoch-ms timestamp. */
+function formatCountdown(epochMs: number): string {
+  const deltaMs = epochMs - Date.now();
+  if (deltaMs <= 0) return 'now';
+  const totalSeconds = Math.ceil(deltaMs / 1000);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.ceil((totalSeconds % 3600) / 60);
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
 export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -33,7 +45,34 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   const feedRef = useRef<HTMLOListElement>(null);
   const seenRef = useRef(new Set<string>());
   const lastEventIdRef = useRef<string | undefined>(undefined);
+  const historyApplied = useRef(false);
   const { handleHandshakeEvent } = useHandshake();
+
+  // Fetch persistent ring history from DB on mount
+  const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
+
+  // Fetch ring timer state, refreshed every 30s
+  const { data: ringState } = trpc.game.ringState.useQuery(
+    { roomId },
+    { refetchInterval: 30_000 }
+  );
+
+  // Apply DB history once — pre-populate seenRef and set lastEventIdRef so
+  // the live subscription skips already-delivered events.
+  useEffect(() => {
+    if (!history || historyApplied.current) return;
+    historyApplied.current = true;
+    for (const ev of history) {
+      seenRef.current.add(ev.id);
+    }
+    setEvents(history);
+    const last = history[history.length - 1];
+    // Only use event UUIDs (not the hist:N fallback) as lastEventId — the
+    // subscription's getEventsSince only understands in-memory UUIDs.
+    if (last?.id && !last.id.startsWith('hist:')) {
+      lastEventIdRef.current = last.id;
+    }
+  }, [history]);
 
   // Auto-scroll to bottom when new events arrive, if the user hasn't scrolled up
   useEffect(() => {
@@ -86,6 +125,14 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     }
   );
 
+  // Compute the timer badge to show in the header (fight takes priority over boss)
+  let timerBadge: string | null = null;
+  if (ringState?.nextFightAt) {
+    timerBadge = `fight in ${formatCountdown(ringState.nextFightAt)}`;
+  } else if (ringState?.nextBossSpawnAt) {
+    timerBadge = `boss in ~${formatCountdown(ringState.nextBossSpawnAt)}`;
+  }
+
   return (
     <section
       className={`terminal-pane${isActive ? ' active' : ''}`}
@@ -93,6 +140,11 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     >
       <header className="pane-header">
         <span>The Ring</span>
+        {timerBadge && (
+          <span className="pane-header-timer" title="Time until next ring event">
+            {timerBadge}
+          </span>
+        )}
         {!connected && !reconnecting && <span style={{ color: 'var(--color-fg-dim)' }}>connecting…</span>}
         {reconnecting && <span style={{ color: 'var(--color-accent)' }}>reconnecting…</span>}
       </header>
