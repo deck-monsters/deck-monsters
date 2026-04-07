@@ -659,4 +659,4 @@ Suggested approach:
 - [x] Honor `prefers-reduced-motion` and `prefers-contrast` in `base.css`
 - [x] Accessibility: `role="log"`, `aria-live="polite"`, `role="listbox"` on choices, ARIA labels on all interactive elements, keyboard navigation for choice buttons and pane divider
 - [ ] Performance: virtualized scroll for long-running sessions (deferred — profile first)
-- [ ] Cleanup: remove `apps/web-legacy` once the rebuild is confirmed at parity in production
+- [x] Cleanup: remove `apps/web-legacy` once the rebuild is confirmed at parity in production
