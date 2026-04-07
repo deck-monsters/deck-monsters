@@ -5,7 +5,7 @@ import { useAuth } from '../lib/auth-context.js';
 type Mode = 'signin' | 'signup';
 
 export default function LoginView() {
-  const { session, signInWithDiscord, signInWithEmail, signUpWithEmail } = useAuth();
+  const { session, signInWithDiscord, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail } = useAuth();
 
   // Already authenticated — skip the login form
   if (session) return <Navigate to="/rooms" replace />;
@@ -75,13 +75,29 @@ export default function LoginView() {
         {message && <div className="success-msg">{message}</div>}
 
         <div className="panel">
-          <button
-            className="btn btn-primary"
-            style={{ width: '100%', justifyContent: 'center', marginBottom: 16 }}
-            onClick={() => void signInWithDiscord()}
-          >
-            Sign in with Discord
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => void signInWithDiscord()}
+            >
+              Sign in with Discord
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => void signInWithGoogle()}
+            >
+              Sign in with Google
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => void signInWithApple()}
+            >
+              Sign in with Apple
+            </button>
+          </div>
 
           <div
             style={{

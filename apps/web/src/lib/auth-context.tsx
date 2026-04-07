@@ -8,6 +8,8 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   signInWithDiscord: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<string | null>;
   signUpWithEmail: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
@@ -45,6 +47,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  async function signInWithGoogle() {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+  }
+
+  async function signInWithApple() {
+    await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: window.location.origin },
+    });
+  }
+
   async function signInWithEmail(email: string, password: string): Promise<string | null> {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return error?.message ?? null;
@@ -66,6 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         signInWithDiscord,
+        signInWithGoogle,
+        signInWithApple,
         signInWithEmail,
         signUpWithEmail,
         signOut,

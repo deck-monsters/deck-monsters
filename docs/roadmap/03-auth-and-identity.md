@@ -65,9 +65,10 @@ Ship with the Discord connector and web app:
 
 Discord OAuth is prioritized because the Discord connector ships first and Discord users already expect OAuth login flows.
 
-### Phase 2 — Google OAuth + Web Polish
+### Phase 2 — Google + Apple OAuth + Web Polish
 
 - **Google OAuth** via Supabase Auth (broadens web onboarding beyond Discord-only users)
+- **Apple OAuth** via Supabase Auth (required for App Store distribution; covers iOS/macOS users)
 - Supabase handles provider configuration — adding a new OAuth provider is a dashboard setting + a few lines of client code
 
 ### Phase 3 — Cross-Connector Identity Linking
@@ -153,9 +154,13 @@ A Supabase database trigger creates the `profiles` row automatically when a new 
 - [x] Add auth to web app (Supabase client SDK for login/register/OAuth) _(implemented in `apps/web`)_
 - [x] Add auth to tRPC WebSocket connections (JWT on connect via `?token=` query param fallback in `packages/server/src/trpc/context.ts`)
 
-### Phase 2 — Google OAuth
-- [ ] Enable Google OAuth in Supabase dashboard
-- [ ] Add Google login button to web app
+### Phase 2 — Google + Apple OAuth
+- [ ] Enable Google OAuth in Supabase dashboard _(manual infra — not automated)_
+- [ ] Configure Google OAuth app (client ID, secret, redirect URI) in Google Cloud Console _(manual infra — not automated)_
+- [x] Add Google login button to web app
+- [ ] Enable Apple OAuth in Supabase dashboard _(manual infra — not automated)_
+- [ ] Configure Apple Services ID, Key, and redirect URI in Apple Developer Portal _(manual infra — not automated)_
+- [x] Add Apple login button to web app
 - [ ] Test account linking when same email is used across providers
 
 ### Phase 3 — Slack + Identity Linking

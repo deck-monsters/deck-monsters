@@ -44,6 +44,8 @@ In the project dashboard, go to **Authentication → Providers**:
 
 - **Email** — enable, disable "Confirm email" for now (enable later for production)
 - **Discord** — enable; set the Redirect URL shown to your Discord OAuth application
+- **Google** — enable; paste the Client ID and Client Secret from your Google Cloud project
+- **Apple** — enable; paste the Services ID, Key ID, Team ID, and `.p8` key contents from Apple Developer
 
 #### Discord OAuth application
 
@@ -51,6 +53,24 @@ In the project dashboard, go to **Authentication → Providers**:
 2. Create a new application, then go to **OAuth2**
 3. Add the redirect URL from Supabase (looks like `https://<project>.supabase.co/auth/v1/callback`)
 4. Copy the Client ID and Client Secret back into Supabase's Discord provider settings
+
+#### Google OAuth application
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com/) and create (or select) a project
+2. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**
+3. Set application type to **Web application**
+4. Add the Supabase callback as an authorized redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`
+5. Also add `http://localhost:54321/auth/v1/callback` for local dev
+6. Copy the **Client ID** and **Client Secret** back into Supabase's Google provider settings
+
+#### Apple OAuth application
+
+Requires an [Apple Developer Program](https://developer.apple.com/programs/) membership ($99/year).
+
+1. In [Apple Developer Portal](https://developer.apple.com/account/), register an **App ID** with "Sign in with Apple" capability enabled
+2. Register a **Services ID** — this is your OAuth client ID; set the return URL to `https://<project-ref>.supabase.co/auth/v1/callback`
+3. Create a **Key** with "Sign in with Apple" enabled and download the `.p8` key file
+4. In Supabase's Apple provider settings, fill in: **Services ID** (client ID), **Key ID**, **Team ID**, and the contents of the `.p8` file
 
 ### Collect Supabase credentials
 

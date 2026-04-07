@@ -42,3 +42,13 @@ enable_confirmations = false
 enabled = false
 client_id = ""
 secret = ""
+
+[auth.external.google]
+enabled = false
+client_id = ""
+secret = ""
+
+[auth.external.apple]
+enabled = false
+client_id = ""
+secret = ""
