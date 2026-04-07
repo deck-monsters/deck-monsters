@@ -9,7 +9,7 @@ export function announceNextRound(
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃\n\n🏁       round ${round + 1}\n`,
+		text: `\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂\n\n🏁       round ${round + 1}\n`,
 		payload: { round },
 	});
 }
