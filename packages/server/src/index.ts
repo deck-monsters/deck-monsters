@@ -21,6 +21,8 @@ const CORS_ORIGINS = (process.env['CORS_ORIGINS'] ?? 'http://localhost:5173')
 // Collect Node.js process metrics (event loop lag, GC, memory, file descriptors).
 collectDefaultMetrics({ register: registry });
 
+const METRICS_TOKEN = process.env['METRICS_TOKEN'];
+
 async function start(): Promise<void> {
 	const fastify = Fastify({
 		logger: true,
@@ -55,7 +57,14 @@ async function start(): Promise<void> {
 
 	fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
-	fastify.get('/metrics', async (_req, reply) => {
+	fastify.get('/metrics', async (req, reply) => {
+		if (METRICS_TOKEN) {
+			const auth = (req.headers['authorization'] as string | undefined) ?? '';
+			if (auth !== `Bearer ${METRICS_TOKEN}`) {
+				reply.code(401).header('WWW-Authenticate', 'Bearer').send('Unauthorized');
+				return;
+			}
+		}
 		const output = await registry.metrics();
 		reply.header('Content-Type', registry.contentType);
 		return output;
