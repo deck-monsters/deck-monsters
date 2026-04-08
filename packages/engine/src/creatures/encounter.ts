@@ -9,7 +9,12 @@ export function endEncounter (self: BaseCreature): import('./base.js').Encounter
 	const { encounter = {} } = self;
 	self.inEncounter = false;
 	delete self.encounter;
-	return encounter;
+	// Strip the `ring` back-reference before returning: the ring object holds
+	// `ring.contestants` which would create a circular reference when the
+	// encounter is stored on a contestant and the contestant is JSON-serialized
+	// in an event payload (ring.win / ring.loss / fightConcludes etc.).
+	const { ring: _ring, ...rest } = encounter as Record<string, unknown>;
+	return rest as import('./base.js').Encounter;
 }
 
 export function getEncounterModifiers (self: BaseCreature): EncounterModifiers {
