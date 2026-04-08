@@ -556,7 +556,7 @@ export class Ring extends BaseClass {
 						cardJSON: JSON.stringify(card)?.slice(0, 300),
 					});
 					if (getAllActiveContestants().length > 1) {
-						next();
+						setTimeout(() => next(), veryShortDelay());
 					} else {
 						resolve(playerContestant);
 					}
@@ -582,7 +582,7 @@ export class Ring extends BaseClass {
 						});
 						// Skip the failed card and continue the fight rather than crashing
 						if (getAllActiveContestants().length > 1) {
-							return Promise.resolve().then(() => next());
+							return new Promise<void>(r => setTimeout(r, veryShortDelay())).then(() => next());
 						}
 						return Promise.resolve().then(() => resolve(playerContestant));
 					});
