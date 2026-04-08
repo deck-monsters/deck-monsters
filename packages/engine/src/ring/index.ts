@@ -5,7 +5,7 @@ import { calculateXP } from '../helpers/experience.js';
 import { getTarget } from '../helpers/targeting-strategies.js';
 import { randomContestant } from '../helpers/bosses.js';
 import { sortCardsAlphabetically } from '../cards/helpers/sort.js';
-import { shortDelay } from '../helpers/delay-times.js';
+import { shortDelay, veryShortDelay } from '../helpers/delay-times.js';
 import { uniqueCards } from '../cards/helpers/unique-cards.js';
 import type { RoomEventBus } from '../events/index.js';
 
@@ -567,7 +567,7 @@ export class Ring extends BaseClass {
 					.play(player, proposedTarget, ring, getAllActiveContestants())
 					.then(() => {
 						if (getAllActiveContestants().length > 1) {
-							return Promise.resolve().then(() => next());
+							return new Promise<void>(r => setTimeout(r, veryShortDelay())).then(() => next());
 						}
 
 						return Promise.resolve().then(() => resolve(playerContestant));
