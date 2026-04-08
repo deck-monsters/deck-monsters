@@ -282,12 +282,14 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         }
       },
       onError() {
+        if (!reconnecting) {
+          addConsoleEvent({
+            id: `sys-${Date.now()}`,
+            type: 'system',
+            text: '-- reconnecting --',
+          });
+        }
         setReconnecting(true);
-        addConsoleEvent({
-          id: `sys-${Date.now()}`,
-          type: 'system',
-          text: '-- reconnecting --',
-        });
       },
     }
   );

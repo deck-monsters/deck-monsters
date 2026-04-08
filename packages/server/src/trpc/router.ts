@@ -249,8 +249,11 @@ export function createRouter(roomManager: RoomManager) {
 			// Emit handshake event first so the client can verify protocol compatibility.
 			// Include current ring timer state so clients have instant values on connect
 			// without needing a separate HTTP poll.
+			// Use a unique id per subscription invocation so no dedup layer (tRPC
+			// client, seenRef, etc.) can swallow the handshake on reconnect.
+			const handshakeId = `handshake-${Date.now()}`;
 			const handshakeEvent: GameEvent = {
-				id: 'handshake',
+				id: handshakeId,
 				roomId: input.roomId,
 				timestamp: Date.now(),
 				type: 'handshake' as EventType,
@@ -269,7 +272,7 @@ export function createRouter(roomManager: RoomManager) {
 					},
 				},
 			};
-			yield tracked('handshake', handshakeEvent);
+			yield tracked(handshakeId, handshakeEvent);
 
 				// Deliver any missed events since the last received event ID.
 				if (input.lastEventId) {
