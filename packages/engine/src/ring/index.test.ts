@@ -248,7 +248,6 @@ describe('ring/index.ts', () => {
 
 	describe('fight()', () => {
 		it('runs to completion without throwing when monsters have properly hydrated cards', async function () {
-			this.timeout(30_000);
 
 			const game = new Game();
 			const ring = game.getRing();
@@ -314,7 +313,6 @@ describe('ring/index.ts', () => {
 		});
 
 		it('ring.fight.invalidCard guard fires for plain-object cards and logs diagnostic info', async function () {
-			this.timeout(20_000);
 
 			const game = new Game();
 			const ring = game.getRing();
@@ -324,13 +322,19 @@ describe('ring/index.ts', () => {
 			const contestant1 = randomContestant({ isBoss: false });
 			const contestant2 = randomContestant({ isBoss: false });
 
-			// Simulate hydration failure on contestant1
-			contestant1.monster.cards = [
-				{ name: 'HitCard', options: {} },
-			] as any[];
-
-			// Give contestant1 very low HP so contestant2 kills them quickly
-			contestant1.monster.hp = 1;
+			// Simulate hydration failure: replace all of contestant1's cards with plain
+			// objects (no play() method). The guard fires and skips each one, so
+			// contestant1 deals no damage while contestant2 chips away normally.
+			//
+			// We give contestant1 enough broken cards to outlast the fight — this avoids
+			// the endOfDeck shortDelay (1–2 s) that would fire every round if contestant1
+			// only had a single card and recycled through it.  With ~20 broken cards the
+			// fight ends (contestant2 wins) well before contestant1 exhausts their deck,
+			// keeping total test time to a few seconds.
+			contestant1.monster.cards = Array.from({ length: 20 }, (_, i) => ({
+				name: `BrokenCard${i}`,
+				options: {},
+			})) as any[];
 
 			ring.addMonster(contestant1);
 			ring.addMonster(contestant2);
