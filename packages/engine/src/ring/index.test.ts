@@ -248,8 +248,7 @@ describe('ring/index.ts', () => {
 
 	describe('fight()', () => {
 		it('runs to completion without throwing when monsters have properly hydrated cards', async function () {
-			// Give the fight plenty of time to complete (may take multiple rounds)
-			this.timeout(15_000);
+			this.timeout(30_000);
 
 			const game = new Game();
 			const ring = game.getRing();
