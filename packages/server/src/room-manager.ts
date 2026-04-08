@@ -8,12 +8,23 @@ import { rooms, roomMembers, profiles, roomEvents } from './db/schema.js';
 import type { GameEvent } from '@deck-monsters/engine';
 import { PostgresStateStore } from './state-store.js';
 import { attachEventPersister } from './event-persister.js';
+import { attachMetricsCollector } from './metrics/collector.js';
+import {
+	roomsCreated,
+	roomsActive,
+	roomHydrationFailures,
+	roomHydrationWarnings,
+	cardErrors,
+	cardValidationWarnings,
+	fightErrors,
+} from './metrics/index.js';
 
 interface ActiveRoom {
 	game: Game;
 	eventBus: RoomEventBus;
 	lastActivityAt: number;
 	unsubscribePersister: () => void;
+	unsubscribeMetrics: () => void;
 }
 
 interface EngineDeps {
@@ -60,6 +71,20 @@ export class RoomManager {
 		private readonly deps: EngineDeps = { Game, restoreGame }
 	) {}
 
+	/**
+	 * Returns a log callback scoped to a room that increments the relevant
+	 * error counter before delegating to the base logger.
+	 */
+	private _makeRoomLogger(roomId: string): (err: unknown) => void {
+		return (err: unknown) => {
+			const ctx = (err as Record<string, unknown> | null)?.context;
+			if (ctx === 'ring.fight.invalidCard') cardErrors.inc({ room_id: roomId });
+			else if (ctx === 'ring.addMonster.cardValidation') cardValidationWarnings.inc({ room_id: roomId });
+			else if (ctx === 'ring.fight') fightErrors.inc({ room_id: roomId });
+			this.log(err);
+		};
+	}
+
 	async createRoom(
 		ownerId: string,
 		name: string
@@ -81,12 +106,16 @@ export class RoomManager {
 		});
 
 		const stateStore = new PostgresStateStore(this.db);
-		const game = new this.deps.Game({ roomId }, this.log);
+		const roomLog = this._makeRoomLogger(roomId);
+		const game = new this.deps.Game({ roomId }, roomLog);
 		game.stateStore = stateStore;
 
 		const eventBus = game.eventBus;
 		const unsubscribePersister = attachEventPersister(eventBus, this.db, this.log);
-		this.active.set(roomId, { game, eventBus, lastActivityAt: Date.now(), unsubscribePersister });
+		const unsubscribeMetrics = attachMetricsCollector(eventBus, game.ring, roomId);
+		this.active.set(roomId, { game, eventBus, lastActivityAt: Date.now(), unsubscribePersister, unsubscribeMetrics });
+		roomsCreated.inc();
+		roomsActive.set(this.active.size);
 
 		return { roomId, inviteCode };
 	}
@@ -152,7 +181,12 @@ export class RoomManager {
 		}
 
 		// Remove from memory first — no state flush needed since the DB row is being deleted.
+		const activeEntry = this.active.get(roomId);
+		if (activeEntry) {
+			activeEntry.unsubscribeMetrics();
+		}
 		this.active.delete(roomId);
+		roomsActive.set(this.active.size);
 
 		// Cascade deletes room_members and room_events.
 		await this.db.delete(rooms).where(eq(rooms.id, roomId));
@@ -297,9 +331,11 @@ export class RoomManager {
 		const entry = this.active.get(roomId);
 		if (entry) {
 			entry.unsubscribePersister();
+			entry.unsubscribeMetrics();
 			entry.game.dispose();
 		}
 		this.active.delete(roomId);
+		roomsActive.set(this.active.size);
 	}
 
 	async unloadRoom(roomId: string): Promise<void> {
@@ -307,6 +343,7 @@ export class RoomManager {
 		if (entry) {
 			// Stop persisting events for this room.
 			entry.unsubscribePersister();
+			entry.unsubscribeMetrics();
 			// saveState is a getter returning the bound persist function — call it to flush
 			// any state not yet written by the 30s debounce.
 			entry.game.saveState();
@@ -315,6 +352,7 @@ export class RoomManager {
 			entry.game.dispose();
 		}
 		this.active.delete(roomId);
+		roomsActive.set(this.active.size);
 	}
 
 	async sweepIdleRooms(idleThresholdMs = 2 * 60 * 60 * 1000): Promise<void> {
@@ -432,6 +470,7 @@ export class RoomManager {
 			.filter(([, ok]) => !ok)
 			.map(([key]) => key);
 		if (failedHydrators.length > 0) {
+			roomHydrationWarnings.inc({ room_id: roomId });
 			this.log({
 				context: 'room-manager.loadRoom.hydratorWarning',
 				roomId,
@@ -455,33 +494,37 @@ export class RoomManager {
 		}
 
 		const stateStore = new PostgresStateStore(this.db);
+		const roomLog = this._makeRoomLogger(roomId);
 		let game: Game;
 
 		if (rows[0].stateBlob) {
 			try {
-				game = this.deps.restoreGame(rows[0].stateBlob, this.log);
+				game = this.deps.restoreGame(rows[0].stateBlob, roomLog);
 				(game.options as Record<string, unknown>).roomId = roomId;
 			} catch (err) {
 				// Hydration failed — quarantine the bad blob so it can be inspected,
 				// then start a fresh game so the room is usable again immediately.
+				roomHydrationFailures.inc({ room_id: roomId });
 				this.log(err);
 				await this.db.update(rooms).set({
 					stateBlob: null,
 					quarantinedBlob: rows[0].stateBlob,
 					updatedAt: new Date(),
 				}).where(eq(rooms.id, roomId));
-				game = new this.deps.Game({ roomId }, this.log);
+				game = new this.deps.Game({ roomId }, roomLog);
 			}
 		} else {
-			game = new this.deps.Game({ roomId }, this.log);
+			game = new this.deps.Game({ roomId }, roomLog);
 		}
 
 		game.stateStore = stateStore;
 
 		const eventBus = game.eventBus;
 		const unsubscribePersister = attachEventPersister(eventBus, this.db, this.log);
-		const entry: ActiveRoom = { game, eventBus, lastActivityAt: Date.now(), unsubscribePersister };
+		const unsubscribeMetrics = attachMetricsCollector(eventBus, game.ring, roomId);
+		const entry: ActiveRoom = { game, eventBus, lastActivityAt: Date.now(), unsubscribePersister, unsubscribeMetrics };
 		this.active.set(roomId, entry);
+		roomsActive.set(this.active.size);
 		return entry;
 	}
 }

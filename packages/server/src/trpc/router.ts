@@ -8,6 +8,7 @@ import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
+import { commandsTotal, wsConnectionsActive } from '../metrics/index.js';
 
 export type AppRouter = ReturnType<typeof createRouter>;
 
@@ -80,6 +81,7 @@ export function createRouter(roomManager: RoomManager) {
 				})
 			)
 			.mutation(async ({ input, ctx }) => {
+				try {
 				const [role, displayName] = await Promise.all([
 					roomManager.getMemberRole(ctx.userId, input.roomId),
 					roomManager.getDisplayName(ctx.userId),
@@ -90,6 +92,7 @@ export function createRouter(roomManager: RoomManager) {
 				const action = game.handleCommand({ command: input.command });
 
 				if (!action) {
+					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
 					return { ok: false, message: 'Command not recognized' };
 				}
 
@@ -98,6 +101,7 @@ export function createRouter(roomManager: RoomManager) {
 				// flows corrupt game state and produce nonsensical UX.
 				const flowKey = `${input.roomId}:${ctx.userId}`;
 				if (activeFlows.has(flowKey)) {
+					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
 					return {
 						ok: false,
 						message: 'A command is already in progress — answer the current prompt first.',
@@ -168,7 +172,12 @@ export function createRouter(roomManager: RoomManager) {
 
 				// TODO: emit quick_actions event after command completes with contextual suggestions
 
+				commandsTotal.inc({ room_id: input.roomId, result: 'ok' });
 				return { ok: true, commandId };
+				} catch (err) {
+					commandsTotal.inc({ room_id: input.roomId, result: 'error' });
+					throw err;
+				}
 			}),
 
 		respondToPrompt: protectedProcedure
@@ -313,6 +322,7 @@ export function createRouter(roomManager: RoomManager) {
 					}
 				);
 
+				wsConnectionsActive.inc({ room_id: input.roomId });
 				try {
 					while (!signal?.aborted) {
 						while (queue.length > 0) {
@@ -327,6 +337,7 @@ export function createRouter(roomManager: RoomManager) {
 					}
 				} finally {
 					unsubscribe();
+					wsConnectionsActive.dec({ room_id: input.roomId });
 				}
 			}),
 	});
