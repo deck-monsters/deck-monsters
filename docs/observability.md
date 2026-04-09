@@ -1,47 +1,78 @@
 # Observability Guide
 
 Deck Monsters exposes Prometheus-format metrics at `GET /metrics` via
-[prom-client](https://github.com/siimon/prom-client). This guide covers two
-ways to get those metrics into Grafana:
+[prom-client](https://github.com/siimon/prom-client).
 
-| Approach | When to use |
-|---|---|
-| **A — Grafana Alloy on Railway** (recommended) | Production. Alloy runs inside your Railway project and scrapes the server over the private internal network, then pushes to Grafana Cloud. Metrics never traverse the public internet. |
-| **B — Direct Grafana Cloud scrape** | Quick local testing or if you're already comfortable exposing `/metrics` behind `METRICS_TOKEN`. |
+**Phase 1 (current):** Direct scraping from Grafana Cloud — the server already
+has a public Railway domain, so no extra service is needed. Just point Grafana
+Cloud at the endpoint and protect it with a bearer token.
+
+**Phase 2 (future, if the server is made private):** Replace direct scraping
+with [Grafana Alloy](https://railway.com/deploy/grafanaalloyrailway) running
+inside the Railway project, which can reach the server over Railway's internal
+network (`server.railway.internal`) and push to Grafana Cloud. See the
+[Alloy section](#future-grafana-alloy-on-railway) at the bottom of this doc
+for the setup notes when that time comes.
 
 ---
 
-## A — Grafana Alloy on Railway (recommended)
+## Setup — Direct Grafana Cloud scrape
 
-Grafana Alloy is a lightweight telemetry collector. Running it as a Railway
-service means it can reach `server.railway.internal:3000` without the server
-needing to be publicly accessible.
+### 1. Create a Grafana Cloud account
 
-### A1. Grafana Cloud — get credentials
+Sign up at [grafana.com](https://grafana.com). The free tier gives 10k active
+series, 50 GB logs, and 14-day retention — more than enough for this game.
 
-1. Create a free account at [grafana.com](https://grafana.com) (10k series, 50 GB logs, 14-day retention — more than enough).
-2. In your Grafana Cloud stack, go to **Connections → Add new connection → Hosted Prometheus metrics**.
-3. Click **Generate now** under *Password / API Token*. Copy the token.
-4. Note the three values on that page:
+### 2. Get a Prometheus API token
 
-| Variable | Example value |
+In your Grafana Cloud stack, go to **Connections → Add new connection →
+Hosted Prometheus metrics**. Click **Generate now** under *Password / API
+Token* and copy the token.
+
+### 3. Set `METRICS_TOKEN` on the Railway server service
+
+Generate a secret and add it to the **server** service's environment variables
+in Railway:
+
+```bash
+openssl rand -hex 32
+```
+
+| Variable | Value |
 |---|---|
-| `GRAFANA_CLOUD_PROM_URL` | `https://prometheus-prod-13-prod-us-east-0.grafana.net/api/prom/push` |
-| `GRAFANA_CLOUD_PROM_USER` | `123456` (numeric user ID) |
-| `GRAFANA_CLOUD_PROM_API_KEY` | The token you just generated |
+| `METRICS_TOKEN` | The hex string from above |
 
-### A2. Deploy Alloy on Railway
+When this variable is set, the server returns `401` to any request that doesn't
+include `Authorization: Bearer <token>`. When unset, the endpoint is open
+(safe for local dev).
 
-Click **[Deploy Grafana Alloy on Railway](https://railway.com/deploy/grafanaalloyrailway)** and select your existing Deck Monsters project when prompted. This adds an **Alloy** service to your project.
+### 4. Add a Prometheus data source in Grafana Cloud
 
-> If the one-click deploy creates a new project instead of adding to an existing one, create a new Railway service manually and use the `grafana/alloy:latest` Docker image.
+1. In your Grafana Cloud stack, go to **Connections → Add new connection → Prometheus**.
+2. Set **URL** to `https://<your-server>.up.railway.app/metrics`.
+3. Under **Custom HTTP headers**, add:
+   - **Header**: `Authorization`
+   - **Value**: `Bearer <your METRICS_TOKEN>`
+4. Set **Scrape interval** to `15s`.
+5. Click **Save & test** — you should see *"Data source is working"*.
 
-### A3. Write the Alloy config
+---
 
-Create a file `infra/alloy/config.alloy` in your repo:
+---
+
+## Future: Grafana Alloy on Railway
+
+If the server is later split into a public-facing gateway and a private API
+(or the `/metrics` path is moved off the public surface entirely), direct
+Grafana Cloud scraping will stop working. At that point, deploy
+[Grafana Alloy](https://railway.com/deploy/grafanaalloyrailway) as a Railway
+service — it runs inside the project, scrapes `server.railway.internal:3000`
+over the private network, and pushes to Grafana Cloud's remote_write endpoint.
+
+### Alloy config (`infra/alloy/config.alloy`)
 
 ```river
-// ── Scrape the server over Railway private networking ─────────────────────
+// Scrape the server over Railway private networking
 prometheus.scrape "deck_monsters_server" {
   targets = [
     {
@@ -52,16 +83,12 @@ prometheus.scrape "deck_monsters_server" {
 
   metrics_path    = "/metrics"
   scrape_interval = "15s"
-
-  // METRICS_TOKEN is optional when scraping over the private network, but
-  // keeping it here means the same config works if the server is later moved
-  // behind a public gateway.
-  bearer_token = env("METRICS_TOKEN")
+  bearer_token    = env("METRICS_TOKEN")
 
   forward_to = [prometheus.remote_write.grafana_cloud.receiver]
 }
 
-// ── Push to Grafana Cloud ─────────────────────────────────────────────────
+// Push to Grafana Cloud
 prometheus.remote_write "grafana_cloud" {
   endpoint {
     url = env("GRAFANA_CLOUD_PROM_URL")
@@ -74,15 +101,7 @@ prometheus.remote_write "grafana_cloud" {
 }
 ```
 
-> **`server.railway.internal`** is Railway's private DNS name for any service
-> named *server* in the same project. If you renamed your server service in
-> Railway, adjust the hostname accordingly. The port is the value of `PORT`
-> on the server (default `3000`).
-
-### A4. Mount the config into the Alloy service
-
-In the Alloy service on Railway, go to **Settings → Config-as-code** and point
-it at a `Dockerfile` that copies your config in:
+Mount this config via a small Dockerfile for the Alloy service:
 
 ```dockerfile
 # infra/alloy/Dockerfile
@@ -91,63 +110,19 @@ COPY config.alloy /etc/alloy/config.alloy
 CMD ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data"]
 ```
 
-Then set **Root directory** to `infra/alloy/` in the service settings.
-
-Alternatively, pass the config inline via the `CONFIG_FILE` environment
-variable if the Railway template supports it — check the template's README.
-
-### A5. Set environment variables on the Alloy service
+Set these env vars on the Alloy service in Railway:
 
 | Variable | Value |
 |---|---|
-| `GRAFANA_CLOUD_PROM_URL` | Prometheus remote_write URL from step A1 |
-| `GRAFANA_CLOUD_PROM_USER` | Numeric user ID from step A1 |
-| `GRAFANA_CLOUD_PROM_API_KEY` | API token from step A1 |
-| `METRICS_TOKEN` | Same value as set on the **server** service (optional for private-network scrape, but keeps the config portable) |
+| `GRAFANA_CLOUD_PROM_URL` | `https://prometheus-prod-XX.grafana.net/api/prom/push` |
+| `GRAFANA_CLOUD_PROM_USER` | Numeric user ID from the Grafana Cloud Prometheus connection page |
+| `GRAFANA_CLOUD_PROM_API_KEY` | API token generated in Grafana Cloud |
+| `METRICS_TOKEN` | Same value as on the server service |
 
-Also set these on the **server** service if not already set:
-
-| Variable | Value |
-|---|---|
-| `METRICS_TOKEN` | A random secret — `openssl rand -hex 32` |
-
-### A6. Verify
-
-After both services redeploy, check Alloy's logs in Railway — you should see
-lines like:
-
-```
-level=info  component=prometheus.scrape targets_discovered=1
-level=info  component=prometheus.remote_write  samples_sent=123
-```
-
-In Grafana Cloud, go to **Explore → Metrics** and type `dm_` — you should see
-your custom metrics populating within a minute.
-
----
-
-## B — Direct Grafana Cloud scrape (simpler)
-
-If the server has a public Railway domain and you're happy to expose `/metrics`
-behind a bearer token, Grafana Cloud can scrape it directly — no extra service
-needed.
-
-### B1. Set `METRICS_TOKEN` on the server
-
-```bash
-openssl rand -hex 32
-# → set this as METRICS_TOKEN in Railway's server service environment variables
-```
-
-### B2. Add a Prometheus data source in Grafana Cloud
-
-1. In your Grafana Cloud stack, go to **Connections → Add new connection → Prometheus**.
-2. Set **URL** to `https://<your-server>.up.railway.app/metrics`.
-3. Under **Custom HTTP headers**, add:
-   - **Header**: `Authorization`
-   - **Value**: `Bearer <your METRICS_TOKEN>`
-4. Set **Scrape interval** to `15s`.
-5. Click **Save & test** — you should see *"Data source is working"*.
+> `server.railway.internal` resolves to the **server** service within the same
+> Railway project. Adjust the hostname if your service has a different name.
+> The Grafana Cloud data source configured in step 4 above can be removed once
+> Alloy is pushing — or kept pointing at the public URL as a fallback.
 
 ---
 
