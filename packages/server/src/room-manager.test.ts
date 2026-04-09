@@ -261,7 +261,7 @@ describe('RoomManager', () => {
 			});
 			const rm2 = new RoomManager(db2 as never, () => {}, deps);
 			// Prime cache
-			(rm2 as any).active.set(roomId, { game: mockGame, eventBus: mockGame.eventBus, lastActivityAt: Date.now() });
+			(rm2 as any).active.set(roomId, { game: mockGame, eventBus: mockGame.eventBus, lastActivityAt: Date.now(), unsubscribePersister: sinon.stub(), unsubscribeMetrics: sinon.stub() });
 
 			await rm2.deleteRoom(OWNER_ID, roomId);
 
