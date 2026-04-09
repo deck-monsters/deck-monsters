@@ -380,6 +380,10 @@ export class Ring extends BaseClass {
 		this.fightTimer = undefined;
 		this.nextFightAt = null;
 		this.endEncounter();
+		for (const { monster, character } of this.contestants) {
+			(monster as { disposeTimers?: () => void })?.disposeTimers?.();
+			(character as { disposeTimers?: () => void })?.disposeTimers?.();
+		}
 		this.contestants = [];
 		this.emit('clear');
 		this.publishState();

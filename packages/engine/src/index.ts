@@ -15,6 +15,13 @@ export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { COMMAND_CATALOG } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 
+/** Test harness and integration helpers (no Slack/HTTP/DB). */
+export * from './testing/index.js';
+
+/** Seeded ring contestants for simulations (used by @deck-monsters/harness). */
+export { randomContestant } from './helpers/bosses.js';
+export type { RandomContestantOptions } from './helpers/bosses.js';
+
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {
 	let gameObj: Record<string, unknown>;
 

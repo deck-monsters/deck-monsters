@@ -1,0 +1,8 @@
+require:
+  - tsx/esm
+  - ./src/test-setup.ts
+extension:
+  - ts
+spec:
+  - src/**/*.test.ts
+timeout: 120000

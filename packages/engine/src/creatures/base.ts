@@ -498,6 +498,18 @@ Battles won: ${this.battles.wins}`;
 			);
 	}
 
+	/**
+	 * Stops background timers (healing tick, respawn wait) so test harnesses and
+	 * disposed Game instances do not keep the Node.js process alive.
+	 */
+	disposeTimers (): void {
+		clearInterval(this.healingInterval);
+		if (this.respawnTimeout !== undefined) {
+			clearTimeout(this.respawnTimeout);
+			this.respawnTimeout = undefined;
+		}
+	}
+
 	edit (channel: ChannelFn): Promise<unknown> {
 		const optionKeys = Object.keys(this.options);
 		return Promise

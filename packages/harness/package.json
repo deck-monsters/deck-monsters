@@ -1,0 +1,25 @@
+{
+  "name": "@deck-monsters/harness",
+  "version": "0.1.0",
+  "description": "Local simulation harness for Deck Monsters — CLI scripts and extended integration scenarios",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc --build",
+    "lint": "eslint src",
+    "test": "mocha --exit",
+    "run": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@deck-monsters/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.0.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^24.6.0",
+    "chai": "^6.2.2",
+    "mocha": "^11.7.4",
+    "tsx": "^4.0.0",
+    "typescript": "^5.9.3"
+  }
+}

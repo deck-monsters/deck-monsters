@@ -149,6 +149,21 @@ export class Game extends BaseClass {
 		this._disposeListeners = [];
 		// Stop ring timers so orphaned Game instances don't keep firing
 		this.ring.dispose();
+		this.exploration.dispose();
+
+		// Creatures use setInterval/setTimeout for passive healing and respawn — clear
+		// them so scripts (harness, tests) can exit without waiting minutes.
+		for (const character of Object.values(this.characters)) {
+			if (character && typeof character.disposeTimers === 'function') {
+				character.disposeTimers();
+			}
+			const monsters = character?.monsters as Array<{ disposeTimers?: () => void }> | undefined;
+			if (monsters) {
+				for (const monster of monsters) {
+					monster.disposeTimers?.();
+				}
+			}
+		}
 	}
 
 	handleCommand({ command, game = this }: { command: string; game?: Game }): any {
