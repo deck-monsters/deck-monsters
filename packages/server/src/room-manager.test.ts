@@ -64,6 +64,7 @@ function makeEngineDeps() {
 		get stateStore() { return _stateStore; },
 		set stateStore(v: unknown) { _stateStore = v; },
 		eventBus: mockEventBus as never,
+		ring: { on: sinon.stub(), off: sinon.stub() } as never,
 		options: {} as Record<string, unknown>,
 		// saveState getter mirrors the real Game implementation
 		get saveState() { return saveStateFn; },
