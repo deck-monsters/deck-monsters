@@ -64,6 +64,7 @@ function makeEngineDeps() {
 		get stateStore() { return _stateStore; },
 		set stateStore(v: unknown) { _stateStore = v; },
 		eventBus: mockEventBus as never,
+		ring: { on: sinon.stub(), off: sinon.stub() } as never,
 		options: {} as Record<string, unknown>,
 		// saveState getter mirrors the real Game implementation
 		get saveState() { return saveStateFn; },
@@ -260,7 +261,7 @@ describe('RoomManager', () => {
 			});
 			const rm2 = new RoomManager(db2 as never, () => {}, deps);
 			// Prime cache
-			(rm2 as any).active.set(roomId, { game: mockGame, eventBus: mockGame.eventBus, lastActivityAt: Date.now() });
+			(rm2 as any).active.set(roomId, { game: mockGame, eventBus: mockGame.eventBus, lastActivityAt: Date.now(), unsubscribePersister: sinon.stub(), unsubscribeMetrics: sinon.stub() });
 
 			await rm2.deleteRoom(OWNER_ID, roomId);
 
