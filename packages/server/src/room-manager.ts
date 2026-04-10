@@ -9,12 +9,36 @@ import {
 	engineReady,
 	getHydratorStatus,
 	createKeyedPromiseQueue,
+	type LeaderboardSortKey,
 } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
-import { rooms, roomMembers, profiles, roomEvents } from './db/schema.js';
+import { rooms, roomMembers, profiles, roomEvents, roomPlayerStats, roomMonsterStats, fightSummaries } from './db/schema.js';
+import { dbRowToGameEvent } from './db/game-event-map.js';
 import type { GameEvent } from '@deck-monsters/engine';
 import { PostgresStateStore } from './state-store.js';
 import { attachEventPersister } from './event-persister.js';
+import { attachFightStatsSubscriber } from './fight-stats-subscriber.js';
+import { attachFightSummaryWriter } from './fight-summary-writer.js';
+import {
+	buildCatchUpText,
+	computeMonsterWinStreaksForRoom,
+	computeWinStreaksForMonsters,
+	formatCatchUpStreakLines,
+	formatGlobalMonsterLeaderboard,
+	formatGlobalPlayerLeaderboard,
+	formatRoomMonsterLeaderboard,
+	formatRoomPlayerLeaderboard,
+	formatSinceLabel,
+	getMemberLastSeen,
+	monsterIdsFromSummaries,
+	queryFightsSince,
+	queryGlobalMonsters,
+	queryGlobalPlayers,
+	queryRoomMonsters,
+	queryRoomPlayers,
+	touchMemberLastSeen,
+	type LeaderboardSort,
+} from './analytics-queries.js';
 import { attachMetricsCollector } from './metrics/collector.js';
 import {
 	roomsCreated,
@@ -32,6 +56,8 @@ interface ActiveRoom {
 	lastActivityAt: number;
 	unsubscribePersister: () => void;
 	unsubscribeMetrics: () => void;
+	unsubscribeFightStats: () => void;
+	unsubscribeFightSummary: () => void;
 }
 
 interface EngineDeps {
@@ -41,31 +67,6 @@ interface EngineDeps {
 
 function generateInviteCode(): string {
 	return randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase();
-}
-
-type DbRoomEvent = {
-	id: number;
-	roomId: string;
-	type: string;
-	scope: string;
-	targetUserId: string | null;
-	payload: unknown;
-	text: string;
-	eventId: string | null;
-	createdAt: Date;
-};
-
-function dbRowToGameEvent(row: DbRoomEvent): GameEvent {
-	return {
-		id: row.eventId ?? `hist:${row.id}`,
-		roomId: row.roomId,
-		timestamp: row.createdAt.getTime(),
-		type: row.type as GameEvent['type'],
-		scope: row.scope as GameEvent['scope'],
-		targetUserId: row.targetUserId ?? undefined,
-		payload: (row.payload ?? {}) as Record<string, unknown>,
-		text: row.text,
-	};
 }
 
 export class RoomManager {
@@ -84,6 +85,47 @@ export class RoomManager {
 	 * Returns a log callback scoped to a room that increments the relevant
 	 * error counter before delegating to the base logger.
 	 */
+	private _attachGameAnalytics(roomId: string, game: Game): void {
+		game.analytics = {
+			fetchRoomPlayerLeaderboard: async (sortBy: LeaderboardSortKey, limit: number) => {
+				const rows = await queryRoomPlayers(this.db, roomId, sortBy as LeaderboardSort, limit);
+				return formatRoomPlayerLeaderboard(`Top ${limit} Players`, rows);
+			},
+			fetchRoomMonsterLeaderboard: async (sortBy: LeaderboardSortKey, limit: number) => {
+				const rows = await queryRoomMonsters(this.db, roomId, sortBy as LeaderboardSort, limit);
+				const streaks = await computeMonsterWinStreaksForRoom(
+					this.db,
+					roomId,
+					rows.map((r) => r.monsterId)
+				);
+				return formatRoomMonsterLeaderboard(`Top ${limit} Monsters`, rows, streaks);
+			},
+			fetchGlobalPlayerLeaderboard: async (sortBy: LeaderboardSortKey, limit: number) => {
+				const rows = await queryGlobalPlayers(this.db, sortBy as LeaderboardSort, limit);
+				return formatGlobalPlayerLeaderboard(`Top ${limit} Players (global)`, rows);
+			},
+			fetchGlobalMonsterLeaderboard: async (sortBy: LeaderboardSortKey, limit: number) => {
+				const rows = await queryGlobalMonsters(this.db, sortBy as LeaderboardSort, limit);
+				return formatGlobalMonsterLeaderboard(`Top ${limit} Monsters (global)`, rows);
+			},
+			catchUp: async (userId: string, since: Date | null) => {
+				let sinceDate = since;
+				if (!sinceDate) {
+					const ls = await getMemberLastSeen(this.db, roomId, userId);
+					sinceDate = ls ?? new Date(Date.now() - 60 * 60 * 1000);
+				}
+				const summaries = await queryFightsSince(this.db, roomId, sinceDate);
+				const label = formatSinceLabel(sinceDate);
+				const ids = monsterIdsFromSummaries(summaries);
+				const streakMap = await computeWinStreaksForMonsters(this.db, roomId, ids);
+				const streakLines = formatCatchUpStreakLines(streakMap, summaries);
+				const { textSummary } = buildCatchUpText(summaries, label, streakLines);
+				await touchMemberLastSeen(this.db, roomId, userId);
+				return textSummary;
+			},
+		};
+	}
+
 	private _makeRoomLogger(roomId: string): (err: unknown) => void {
 		return (err: unknown) => {
 			const ctx = (err as Record<string, unknown> | null)?.context;
@@ -122,7 +164,18 @@ export class RoomManager {
 		const eventBus = game.eventBus;
 		const unsubscribePersister = attachEventPersister(eventBus, this.db, this.log);
 		const unsubscribeMetrics = attachMetricsCollector(eventBus, game.ring, roomId);
-		this.active.set(roomId, { game, eventBus, lastActivityAt: Date.now(), unsubscribePersister, unsubscribeMetrics });
+		const unsubscribeFightStats = attachFightStatsSubscriber(eventBus, this.db, this.log);
+		const unsubscribeFightSummary = attachFightSummaryWriter(eventBus, this.db, this.log);
+		this._attachGameAnalytics(roomId, game);
+		this.active.set(roomId, {
+			game,
+			eventBus,
+			lastActivityAt: Date.now(),
+			unsubscribePersister,
+			unsubscribeMetrics,
+			unsubscribeFightStats,
+			unsubscribeFightSummary,
+		});
 		roomsCreated.inc();
 		roomsActive.set(this.active.size);
 
@@ -193,6 +246,8 @@ export class RoomManager {
 		const activeEntry = this.active.get(roomId);
 		if (activeEntry) {
 			activeEntry.unsubscribeMetrics();
+			activeEntry.unsubscribeFightStats();
+			activeEntry.unsubscribeFightSummary();
 		}
 		this.active.delete(roomId);
 		roomsActive.set(this.active.size);
@@ -218,7 +273,14 @@ export class RoomManager {
 	async getRoomInfo(
 		userId: string,
 		roomId: string
-	): Promise<{ roomId: string; name: string; inviteCode: string; memberCount: number; role: 'owner' | 'member' } | null> {
+	): Promise<{
+		roomId: string;
+		name: string;
+		inviteCode: string;
+		memberCount: number;
+		role: 'owner' | 'member';
+		lastSeenAt: Date | null;
+	} | null> {
 		const rows = await this.db
 			.select({ id: rooms.id, name: rooms.name, inviteCode: rooms.inviteCode })
 			.from(rooms)
@@ -232,7 +294,7 @@ export class RoomManager {
 		const [countRows, memberRows] = await Promise.all([
 			this.db.select({ value: count() }).from(roomMembers).where(eq(roomMembers.roomId, roomId)),
 			this.db
-				.select({ role: roomMembers.role })
+				.select({ role: roomMembers.role, lastSeenAt: roomMembers.lastSeenAt })
 				.from(roomMembers)
 				.where(and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)))
 				.limit(1),
@@ -250,6 +312,7 @@ export class RoomManager {
 			inviteCode: rows[0].inviteCode,
 			memberCount,
 			role,
+			lastSeenAt: memberRows[0].lastSeenAt ?? null,
 		};
 	}
 
@@ -330,6 +393,11 @@ export class RoomManager {
 	}
 
 	async resetRoomState(roomId: string): Promise<void> {
+		await this.db.delete(roomPlayerStats).where(eq(roomPlayerStats.roomId, roomId));
+		await this.db.delete(roomMonsterStats).where(eq(roomMonsterStats.roomId, roomId));
+		await this.db.delete(fightSummaries).where(eq(fightSummaries.roomId, roomId));
+		await this.db.update(rooms).set({ fightCounter: 0, updatedAt: new Date() }).where(eq(rooms.id, roomId));
+
 		// Quarantine current state, start fresh on next load.
 		const rows = await this.db
 			.select({ stateBlob: rooms.stateBlob })
@@ -350,6 +418,8 @@ export class RoomManager {
 		if (entry) {
 			entry.unsubscribePersister();
 			entry.unsubscribeMetrics();
+			entry.unsubscribeFightStats();
+			entry.unsubscribeFightSummary();
 			entry.game.dispose();
 		}
 		this.active.delete(roomId);
@@ -362,6 +432,8 @@ export class RoomManager {
 			// Stop persisting events for this room.
 			entry.unsubscribePersister();
 			entry.unsubscribeMetrics();
+			entry.unsubscribeFightStats();
+			entry.unsubscribeFightSummary();
 			// saveState is a getter returning the bound persist function — call it to flush
 			// any state not yet written by the 30s debounce.
 			entry.game.saveState();
@@ -540,7 +612,18 @@ export class RoomManager {
 		const eventBus = game.eventBus;
 		const unsubscribePersister = attachEventPersister(eventBus, this.db, this.log);
 		const unsubscribeMetrics = attachMetricsCollector(eventBus, game.ring, roomId);
-		const entry: ActiveRoom = { game, eventBus, lastActivityAt: Date.now(), unsubscribePersister, unsubscribeMetrics };
+		const unsubscribeFightStats = attachFightStatsSubscriber(eventBus, this.db, this.log);
+		const unsubscribeFightSummary = attachFightSummaryWriter(eventBus, this.db, this.log);
+		this._attachGameAnalytics(roomId, game);
+		const entry: ActiveRoom = {
+			game,
+			eventBus,
+			lastActivityAt: Date.now(),
+			unsubscribePersister,
+			unsubscribeMetrics,
+			unsubscribeFightStats,
+			unsubscribeFightSummary,
+		};
 		this.active.set(roomId, entry);
 		roomsActive.set(this.active.size);
 		return entry;

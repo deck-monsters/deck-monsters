@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { random, sample } from '../helpers/random.js';
 import { startCase } from '../helpers/start-case.js';
 import { BaseClass } from '../shared/baseClass.js';
@@ -113,6 +115,8 @@ export interface CreatureOptions {
 	bonusDamageDice?: string;
 	/** Reserved for future item/equipment effects that grant bonus INT dice. */
 	bonusIntDice?: string;
+	/** Stable id for analytics / leaderboards (persisted in game state). */
+	stableId?: string;
 	[key: string]: unknown;
 }
 
@@ -176,6 +180,15 @@ class BaseCreature extends BaseClass<CreatureOptions> {
 
 	get icon (): string | undefined {
 		return this.options.icon;
+	}
+
+	get stableId (): string {
+		let id = this.options.stableId as string | undefined;
+		if (!id) {
+			id = randomUUID();
+			this.setOptions({ stableId: id });
+		}
+		return id;
 	}
 
 	get givenName (): string {

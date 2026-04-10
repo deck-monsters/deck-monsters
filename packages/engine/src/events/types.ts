@@ -4,6 +4,7 @@ export type EventType =
 	| 'ring.clear'
 	| 'ring.countdown'
 	| 'ring.fight'
+	| 'ring.fightResolved'
 	| 'ring.win'
 	| 'ring.loss'
 	| 'ring.draw'

@@ -9,6 +9,7 @@ import { RoomEventBus } from './events/index.js';
 import type { GameEvent, EventType, EventScope, EventSubscriber } from './events/index.js';
 
 export { Game, ConnectorAdapter, RoomEventBus };
+export type { GameAnalyticsCallbacks, LeaderboardSortKey } from './game.js';
 export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber };
 export type { StateStore } from './types/state-store.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';

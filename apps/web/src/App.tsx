@@ -7,6 +7,8 @@ import LoginView from './views/LoginView.js';
 import RoomLobbyView from './views/RoomLobbyView.js';
 import RoomSettingsView from './views/RoomSettingsView.js';
 import AccountView from './views/AccountView.js';
+import LeaderboardView from './views/LeaderboardView.js';
+import FightLogView from './views/FightLogView.js';
 import { trpc } from './lib/trpc.js';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -174,6 +176,33 @@ export default function App() {
         element={
           <RequireAuth>
             <AccountWrapper />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/leaderboard"
+        element={
+          <RequireAuth>
+            <LeaderboardView />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/room/:roomId/leaderboard"
+        element={
+          <RequireAuth>
+            <LeaderboardView />
+          </RequireAuth>
+        }
+      />
+
+      <Route
+        path="/room/:roomId/fights"
+        element={
+          <RequireAuth>
+            <FightLogView />
           </RequireAuth>
         }
       />

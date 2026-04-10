@@ -1,10 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { GameEvent } from '@deck-monsters/server/types';
-
-type TrackedEvent = { id: string; data: GameEvent };
 import { trpc } from '../lib/trpc.js';
 import { useHandshake } from '../hooks/useHandshake.js';
+import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
+import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
+import { fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
+import {
+	eventTimestampIso,
+	formatEventHoverTitle,
+	getKeyRingEventMeta,
+} from '../utils/event-time.js';
+
+type TrackedEvent = { id: string; data: GameEvent };
 
 interface RingPaneProps {
   roomId: string;
@@ -31,7 +39,6 @@ function eventClass(type: string): string {
   return 'event-announce';
 }
 
-/** Returns a human-readable countdown string from an epoch-ms timestamp. */
 function formatCountdown(epochMs: number): string {
   const deltaMs = epochMs - Date.now();
   if (deltaMs <= 0) return 'now';
@@ -43,7 +50,53 @@ function formatCountdown(epochMs: number): string {
   return `${minutes}m`;
 }
 
+function KeyRingTimeBadge({ at, label }: { at: Date; label: string }) {
+  const ago = useTimeAgo(at);
+  return (
+    <span className="event-key-meta" aria-hidden="true">
+      <span className="event-key-label">{label}</span>
+      <span className="event-key-time">{ago}</span>
+    </span>
+  );
+}
+
+function LastFightRelativeAgo({ at }: { at: Date }) {
+  const ago = useTimeAgo(at);
+  return <> — {ago}</>;
+}
+
+function LastFightFooter({
+  summary,
+  showRelative,
+}: {
+  summary: FightSummaryLike & { fightNumber: number; endedAt: string | Date };
+  showRelative: boolean;
+}) {
+  const ended = new Date(summary.endedAt);
+  const title = formatEventHoverTitle(ended.getTime());
+  return (
+    <div
+      className="last-fight-footer"
+      style={{
+        padding: '0.35rem 0.75rem',
+        fontSize: '0.8rem',
+        borderTop: '1px solid var(--color-border)',
+        color: 'var(--color-fg-dim)',
+      }}
+      data-event-at={ended.toISOString()}
+      title={title}
+    >
+      <time className="event-sr-only" dateTime={ended.toISOString()}>
+        {title}
+      </time>
+      Last fight: {fightTitleOneLine(summary)} (#{summary.fightNumber})
+      {showRelative ? <LastFightRelativeAgo at={ended} /> : null}
+    </div>
+  );
+}
+
 export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
+  const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -66,6 +119,8 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
 
   // Fetch persistent ring history from DB on mount
   const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
+
+  const { data: lastFight } = trpc.game.recentFights.useQuery({ roomId, limit: 1 });
 
   // Tick every second while a fight or boss timer is active, to keep the badge live
   const [, setTick] = useState(0);
@@ -239,15 +294,40 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
             <p>Waiting for battle events…</p>
           </li>
         )}
-        {events.map((event) => (
-          <li key={event.id} className={`event ${eventClass(event.type)}`}>
-            <time dateTime={new Date(event.timestamp).toISOString()} aria-hidden="true">
-              {new Date(event.timestamp).toLocaleTimeString()}
-            </time>
-            <div className="event-text">{formatEventText(event.text ?? '')}</div>
-          </li>
-        ))}
+        {events.map((event) => {
+          const keyMeta = getKeyRingEventMeta(event);
+          const iso = eventTimestampIso(event.timestamp);
+          const hoverTitle = formatEventHoverTitle(event.timestamp);
+          const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
+          return (
+            <li
+              key={event.id}
+              className={`event ${eventClass(event.type)}`}
+              data-event-at={iso}
+              title={hoverTitle}
+            >
+              <time className="event-sr-only" dateTime={iso}>
+                {hoverTitle}
+              </time>
+              {showKeyColumn ? (
+                <div className="event-row-inner">
+                  <div className="event-text">{formatEventText(event.text ?? '')}</div>
+                  <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
+                </div>
+              ) : (
+                <div className="event-text">{formatEventText(event.text ?? '')}</div>
+              )}
+            </li>
+          );
+        })}
       </ol>
+
+      {lastFight?.[0] && (
+        <LastFightFooter
+          summary={lastFight[0] as FightSummaryLike & { fightNumber: number; endedAt: string }}
+          showRelative={ringKeyTimestampsEnabled}
+        />
+      )}
 
       {!isAtBottom && (
         <button

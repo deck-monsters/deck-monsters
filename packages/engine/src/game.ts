@@ -24,6 +24,29 @@ import type { StateStore } from './types/state-store.js';
 // State save debounce: 30 seconds
 const SAVE_DEBOUNCE_MS = 30_000;
 
+export type LeaderboardSortKey = 'xp' | 'wins' | 'winRate' | 'coins';
+
+/** Optional server-injected analytics (web connector). */
+export interface GameAnalyticsCallbacks {
+	fetchRoomPlayerLeaderboard?: (
+		sortBy: LeaderboardSortKey,
+		limit: number
+	) => Promise<string | null>;
+	fetchRoomMonsterLeaderboard?: (
+		sortBy: LeaderboardSortKey,
+		limit: number
+	) => Promise<string | null>;
+	fetchGlobalPlayerLeaderboard?: (
+		sortBy: LeaderboardSortKey,
+		limit: number
+	) => Promise<string | null>;
+	fetchGlobalMonsterLeaderboard?: (
+		sortBy: LeaderboardSortKey,
+		limit: number
+	) => Promise<string | null>;
+	catchUp?: (userId: string, since: Date | null) => Promise<string | null>;
+}
+
 export class Game extends BaseClass {
 	static eventPrefix = 'game';
 
@@ -33,6 +56,8 @@ export class Game extends BaseClass {
 	roomId: string;
 	stateSaveFunc?: (state: string) => void;
 	stateStore?: StateStore;
+	/** Injected by the API server for DB-backed leaderboards / catch-up. */
+	analytics?: GameAnalyticsCallbacks;
 	private _eventBus: RoomEventBus;
 	private _saveDebounce?: ReturnType<typeof setTimeout>;
 	private _disposeListeners: Array<() => void> = [];
@@ -360,26 +385,68 @@ export class Game extends BaseClass {
 		});
 	}
 
-	lookAtCharacterRankings(channel: any): Promise<unknown> {
+	async lookAtCharacterRankings(channel: any): Promise<unknown> {
+		const text = await this.analytics?.fetchRoomPlayerLeaderboard?.('xp', 5);
+		if (text) {
+			return channel({ announce: text, delay: 'short' });
+		}
+
 		const results = this.getCreatureRankings(Object.values(this.characters));
 
-		return Promise.resolve(
-			channel({
-				announce: `*Top ${results.length} Players by XP:*\n\n\`\`\`\n${results.join('\n')}\n\`\`\`\n`,
-				delay: 'short',
-			})
-		);
+		return channel({
+			announce: `*Top ${results.length} Players by XP:*\n\n\`\`\`\n${results.join('\n')}\n\`\`\`\n`,
+			delay: 'short',
+		});
 	}
 
-	lookAtMonsterRankings(channel: any): Promise<unknown> {
+	async lookAtMonsterRankings(channel: any): Promise<unknown> {
+		const text = await this.analytics?.fetchRoomMonsterLeaderboard?.('xp', 5);
+		if (text) {
+			return channel({ announce: text, delay: 'short' });
+		}
+
 		const results = this.getCreatureRankings(Object.values(this.getAllMonstersLookup()));
 
-		return Promise.resolve(
-			channel({
-				announce: `*Top ${results.length} Monsters by XP:*\n\n\`\`\`\n${results.join('\n')}\n\`\`\`\n`,
-				delay: 'short',
-			})
-		);
+		return channel({
+			announce: `*Top ${results.length} Monsters by XP:*\n\n\`\`\`\n${results.join('\n')}\n\`\`\`\n`,
+			delay: 'short',
+		});
+	}
+
+	async lookAtGlobalCharacterRankings(channel: any): Promise<unknown> {
+		const text = await this.analytics?.fetchGlobalPlayerLeaderboard?.('xp', 5);
+		if (text) {
+			return channel({ announce: text, delay: 'short' });
+		}
+
+		return channel({
+			announce: 'Global rankings are not available in this environment.',
+			delay: 'short',
+		});
+	}
+
+	async lookAtGlobalMonsterRankings(channel: any): Promise<unknown> {
+		const text = await this.analytics?.fetchGlobalMonsterLeaderboard?.('xp', 5);
+		if (text) {
+			return channel({ announce: text, delay: 'short' });
+		}
+
+		return channel({
+			announce: 'Global rankings are not available in this environment.',
+			delay: 'short',
+		});
+	}
+
+	async catchUpCommand(channel: any, userId: string): Promise<unknown> {
+		const text = await this.analytics?.catchUp?.(userId, null);
+		if (text) {
+			return channel({ announce: text, delay: 'short' });
+		}
+
+		return channel({
+			announce: 'Catch-up summaries require the web server.',
+			delay: 'short',
+		});
 	}
 
 	editSelfCharacter(channel: any, character: any): Promise<unknown> {

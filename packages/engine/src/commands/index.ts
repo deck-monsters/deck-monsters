@@ -1,4 +1,5 @@
 import lookAtHandlers from './look-at.js';
+import historyHandlers from './history.js';
 import monsterHandlers from './monster.js';
 import characterHandlers from './character.js';
 import storeHandlers from './store.js';
@@ -91,6 +92,13 @@ export function listen(options: { command?: string; game: any } | null): ((actio
 	return null;
 }
 
+export function registerPreCharacterHandler(
+	matcher: RegExp,
+	action: (options: ActionOptions) => Promise<unknown>
+): void {
+	preCharacterHandlers.push({ matcher, action });
+}
+
 export function registerHandler(
 	matcher: RegExp | ((command: string) => RegExpMatchArray | null),
 	action: (options: any) => Promise<unknown>
@@ -113,10 +121,11 @@ export function registerHandler(
 
 let handlersLoaded = false;
 
-export function loadHandlers(): void {
+export function 	loadHandlers(): void {
 	if (handlersLoaded) return;
 	handlersLoaded = true;
 	preCharacterHandlers.push(helpHandler);
+	historyHandlers();
 	lookAtHandlers(registerHandler);
 	monsterHandlers(registerHandler);
 	characterHandlers(registerHandler);

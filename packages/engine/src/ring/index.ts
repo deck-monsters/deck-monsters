@@ -29,6 +29,14 @@ export interface Contestant {
 	round?: number;
 }
 
+function participantOutcome(contestant: Contestant, deaths: number): 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath' {
+	if (deaths <= 0) return 'draw';
+	if (contestant.monster.destroyed) return 'permaDeath';
+	if (contestant.monster.dead) return 'loss';
+	if (contestant.fled) return 'fled';
+	return 'win';
+}
+
 export class Ring extends BaseClass {
 	static eventPrefix = 'ring';
 
@@ -679,10 +687,15 @@ export class Ring extends BaseClass {
 			},
 		});
 
+		const xpBefore = contestants.map(c => c.monster.xp as number);
 		contestants.forEach(contestant => {
-			const { userId } = contestant;
-
 			this.awardMonsterXP(contestant, contestants);
+		});
+		const xpGained = contestants.map((c, i) => (c.monster.xp as number) - (xpBefore[i] ?? 0));
+
+		contestants.forEach((contestant, i) => {
+			const { userId } = contestant;
+			const xpDelta = xpGained[i] ?? 0;
 
 			if (deaths > 0) {
 				if (contestant.monster.dead) {
@@ -694,7 +707,7 @@ export class Ring extends BaseClass {
 							scope: 'private',
 							targetUserId: userId,
 							text: `${contestant.monster.givenName} was too badly injured to be revived.`,
-							payload: { contestant },
+							payload: { contestant, xpGained: xpDelta },
 						});
 					} else {
 						this.eventBus.publish({
@@ -702,7 +715,7 @@ export class Ring extends BaseClass {
 							scope: 'private',
 							targetUserId: userId,
 							text: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
-							payload: { contestant },
+							payload: { contestant, xpGained: xpDelta },
 						});
 					}
 				} else if (contestant.fled) {
@@ -711,7 +724,7 @@ export class Ring extends BaseClass {
 						scope: 'private',
 						targetUserId: userId,
 						text: `${contestant.monster.givenName} lived to fight another day!`,
-						payload: { contestant },
+						payload: { contestant, xpGained: xpDelta },
 					});
 				} else {
 					contestant.won = true;
@@ -721,7 +734,7 @@ export class Ring extends BaseClass {
 						scope: 'private',
 						targetUserId: userId,
 						text: `${contestant.monster.identity} is victorious!`,
-						payload: { contestant },
+						payload: { contestant, xpGained: xpDelta },
 					});
 				}
 			} else {
@@ -730,9 +743,70 @@ export class Ring extends BaseClass {
 					scope: 'private',
 					targetUserId: userId,
 					text: 'The fight ended in a draw.',
-					payload: { contestant },
+					payload: { contestant, xpGained: xpDelta },
 				});
 			}
+		});
+
+		let winnerMonsterId: string | undefined;
+		let winnerMonsterName: string | undefined;
+		let winnerOwnerUserId: string | undefined;
+		let loserMonsterId: string | undefined;
+		let loserMonsterName: string | undefined;
+		let loserOwnerUserId: string | undefined;
+		if (contestants.length === 2 && deaths > 0) {
+			const w = contestants.find(c => c.won);
+			const l = contestants.find(c => c.lost);
+			if (w && l) {
+				winnerMonsterId = w.monster.stableId;
+				winnerMonsterName = w.monster.givenName;
+				winnerOwnerUserId = w.userId;
+				loserMonsterId = l.monster.stableId;
+				loserMonsterName = l.monster.givenName;
+				loserOwnerUserId = l.userId;
+			}
+		}
+
+		const participants = contestants.map((c, i) => {
+			const m = c.monster;
+			const ch = c.character;
+			return {
+				monsterId: m.stableId as string,
+				monsterName: m.givenName as string,
+				monsterType: (m.constructor?.name ?? 'Monster') as string,
+				ownerUserId: c.userId as string,
+				ownerDisplayName: (ch.givenName ?? ch.name ?? '') as string,
+				outcome: participantOutcome(c, deaths),
+				xpGained: xpGained[i] ?? 0,
+				level: m.level as number,
+			};
+		});
+
+		const fightOutcome =
+			deaths <= 0
+				? 'draw'
+				: contestants.some(c => c.monster.destroyed)
+					? 'permaDeath'
+					: contestants.some(c => c.fled)
+						? 'fled'
+						: 'win';
+
+		this.eventBus.publish({
+			type: 'ring.fightResolved',
+			scope: 'public',
+			text: `Fight resolved (${fightOutcome})`,
+			payload: {
+				rounds,
+				deaths,
+				outcome: fightOutcome,
+				participants,
+				winnerMonsterId,
+				winnerMonsterName,
+				winnerOwnerUserId,
+				loserMonsterId,
+				loserMonsterName,
+				loserOwnerUserId,
+			},
 		});
 
 		this.emit('fightConcludes', {
