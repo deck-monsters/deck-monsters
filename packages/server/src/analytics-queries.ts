@@ -307,7 +307,7 @@ export async function queryGlobalMonsters(
 				monster_id,
 				max(display_name) as dn,
 				max(monster_type) as mt,
-				max(owner_user_id) as oid,
+				max(owner_user_id::text) as oid,
 				sum(xp)::bigint as txp,
 				max(level)::bigint as tlv,
 				sum(wins)::bigint as tw,

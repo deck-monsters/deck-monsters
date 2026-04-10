@@ -487,7 +487,7 @@ export function createRouter(roomManager: RoomManager) {
 			.input(
 				z.object({
 					roomId: z.string().uuid(),
-					limit: z.number().min(1).max(50).optional(),
+					limit: z.number().min(1).max(100).optional(),
 					before: z.string().datetime().optional(),
 				})
 			)
