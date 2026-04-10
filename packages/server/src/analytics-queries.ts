@@ -545,7 +545,7 @@ export function buildCatchUpText(
 	return { fightCount: summaries.length, textSummary: lines.join('\n') };
 }
 
-const STREAK_MIN = 3;
+export const STREAK_MIN = 3;
 const STREAK_LOOKBACK = 80;
 
 /** Count consecutive wins for `monsterId` from most recent fights (fights ordered endedAt DESC). */
@@ -572,17 +572,21 @@ export function monsterIdsFromSummaries(summaries: FightSummaryRow[]): string[] 
 }
 
 /**
- * Current win streak for each monster (most recent fights first). Only monsters with streak >= minStreak are returned.
+ * Compute current consecutive-win streaks for the given monsters in a room.
+ *
+ * Fetches the last `STREAK_LOOKBACK` fights once, then counts consecutive wins
+ * per monster in memory. When `minStreak > 0` only monsters that meet the
+ * threshold are included in the returned map; callers that need all values
+ * (including zero) should pass `minStreak = 0` (the default).
  */
-export async function computeWinStreaksForMonsters(
+export async function computeMonsterWinStreaks(
 	db: Db,
 	roomId: string,
 	monsterIds: string[],
-	minStreak = STREAK_MIN
+	minStreak = 0
 ): Promise<Map<string, number>> {
 	const out = new Map<string, number>();
 	if (monsterIds.length === 0) return out;
-
 	const recent = await queryRecentFights(db, roomId, STREAK_LOOKBACK);
 	for (const mid of monsterIds) {
 		const streak = winStreakFromRecentFights(recent, mid);
@@ -610,21 +614,6 @@ export function formatCatchUpStreakLines(
 		lines.push(`${name} is on a ${n}-fight winning streak.`);
 	}
 	return lines;
-}
-
-/** Win streak for leaderboard rows — uses recent fights once. */
-export async function computeMonsterWinStreaksForRoom(
-	db: Db,
-	roomId: string,
-	monsterIds: string[]
-): Promise<Map<string, number>> {
-	const out = new Map<string, number>();
-	if (monsterIds.length === 0) return out;
-	const recent = await queryRecentFights(db, roomId, STREAK_LOOKBACK);
-	for (const mid of monsterIds) {
-		out.set(mid, winStreakFromRecentFights(recent, mid));
-	}
-	return out;
 }
 
 export async function loadFightEventsForSummary(

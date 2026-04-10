@@ -20,13 +20,13 @@ import {
 	queryRoomMonsters,
 	queryRoomPlayers,
 	buildCatchUpText,
-	computeMonsterWinStreaksForRoom,
-	computeWinStreaksForMonsters,
+	computeMonsterWinStreaks,
 	formatCatchUpStreakLines,
 	formatSinceLabel,
 	getMemberLastSeen,
 	monsterIdsFromSummaries,
 	queryFightsSince,
+	STREAK_MIN,
 	touchMemberLastSeen,
 	type LeaderboardSort,
 } from '../analytics-queries.js';
@@ -87,7 +87,7 @@ export function createRouter(roomManager: RoomManager) {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const limit = input.limit ?? 25;
 				const rows = await queryRoomMonsters(db, input.roomId, (input.sortBy ?? 'xp') as LeaderboardSort, limit);
-				const streaks = await computeMonsterWinStreaksForRoom(
+				const streaks = await computeMonsterWinStreaks(
 					db,
 					input.roomId,
 					rows.map((r) => r.monsterId)
@@ -546,7 +546,7 @@ export function createRouter(roomManager: RoomManager) {
 				const summaries = await queryFightsSince(db, input.roomId, sinceDate);
 				const label = formatSinceLabel(sinceDate);
 				const ids = monsterIdsFromSummaries(summaries);
-				const streakMap = await computeWinStreaksForMonsters(db, input.roomId, ids);
+				const streakMap = await computeMonsterWinStreaks(db, input.roomId, ids, STREAK_MIN);
 				const streakLines = formatCatchUpStreakLines(streakMap, summaries);
 				const { fightCount, textSummary } = buildCatchUpText(summaries, label, streakLines);
 				if (input.touchLastSeen !== false) {
