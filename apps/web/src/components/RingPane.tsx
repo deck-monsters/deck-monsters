@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { GameEvent } from '@deck-monsters/server/types';
-
-type TrackedEvent = { id: string; data: GameEvent };
 import { trpc } from '../lib/trpc.js';
 import { useHandshake } from '../hooks/useHandshake.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
@@ -13,6 +11,8 @@ import {
 	formatEventHoverTitle,
 	getKeyRingEventMeta,
 } from '../utils/event-time.js';
+
+type TrackedEvent = { id: string; data: GameEvent };
 
 interface RingPaneProps {
   roomId: string;

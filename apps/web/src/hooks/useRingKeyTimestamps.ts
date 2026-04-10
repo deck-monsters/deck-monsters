@@ -15,7 +15,11 @@ export function useRingKeyTimestamps() {
 	const [ringKeyTimestampsEnabled, setState] = useState(readStored);
 
 	const setRingKeyTimestampsEnabled = useCallback((next: boolean) => {
-		localStorage.setItem(STORAGE_KEY, next ? '1' : '0');
+		if (next) {
+			localStorage.setItem(STORAGE_KEY, '1');
+		} else {
+			localStorage.removeItem(STORAGE_KEY);
+		}
 		setState(next);
 	}, []);
 
