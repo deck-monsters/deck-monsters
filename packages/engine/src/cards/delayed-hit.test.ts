@@ -89,7 +89,7 @@ ${customHit.stats}`);
 		return delayedHit
 			.play(player, target, ring)
 			.then(() => expect(ring.encounterEffects.length).to.equal(1))
-			.then(() => new Promise<void>(resolve => setTimeout(resolve, 1)))
+			.then(() => new Promise<void>(resolve => setTimeout(resolve, 10)))
 			.then(() => {
 				expect(target.hp).to.equal(previousTargetHP);
 				expect(player.hp).to.equal(previousPlayerHP);
@@ -97,7 +97,7 @@ ${customHit.stats}`);
 			})
 			.then(() => delayedHit.play(player, target, ring))
 			.then(() => expect(ring.encounterEffects.length).to.equal(2))
-			.then(() => new Promise<void>(resolve => setTimeout(resolve, 1)))
+			.then(() => new Promise<void>(resolve => setTimeout(resolve, 10)))
 			.then(() => {
 				expect(target.hp).to.equal(previousTargetHP);
 				expect(player.hp).to.equal(previousPlayerHP);
