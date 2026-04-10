@@ -29,12 +29,16 @@ This guide covers setting up both from scratch and connecting them.
 
 ### Configure Auth URLs
 
+Supabase redirects users back to your app after OAuth sign-in. You need to tell it which URLs are allowed.
+
+If you have **custom domains set up** (see section 2e), use those. If you're deploying for the first time and only have Railway-generated URLs, use those for now — you can update these later.
+
 In **Authentication → URL Configuration**, set:
 
 | Setting | Value |
 |---|---|
-| **Site URL** | `https://<your-web-service>.up.railway.app` (your Railway web domain) |
-| **Redirect URLs** | Add `https://<your-web-service>.up.railway.app/**` and `http://localhost:5173/**` |
+| **Site URL** | `https://deck-monsters.com` (or your Railway web URL if no custom domain yet) |
+| **Redirect URLs** | Add each allowed origin, e.g.:<br>`https://deck-monsters.com/**`<br>`https://www.deck-monsters.com/**`<br>`https://<web>.up.railway.app/**`<br>`http://localhost:5173/**` |
 
 The Site URL is where Supabase redirects users after OAuth. If left as `localhost`, production OAuth flows will send users to your local machine.
 
@@ -145,7 +149,7 @@ Then go to **Variables** and add:
 |---|---|
 | `VITE_SUPABASE_URL` | Your Supabase project URL (e.g., `https://xxxx.supabase.co`) |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase Publishable key (`sb_publishable_...`) |
-| `VITE_SERVER_URL` | _(leave blank for now — fill in after deploying the Server service)_ |
+| `VITE_SERVER_URL` | `https://server.deck-monsters.com` once custom domains are set up (see 2e); otherwise the Server service's Railway URL |
 
 ### 2c. Service: Server (API)
 
@@ -169,7 +173,7 @@ Then go to **Variables** and add:
 | `SUPABASE_PUBLISHABLE_KEY` | Your Supabase Publishable key (`sb_publishable_...`) |
 | `SUPABASE_SECRET_KEY` | Your Supabase Secret key (`sb_secret_...`) — bypasses RLS, keep secret |
 | `CONNECTOR_SERVICE_TOKEN` | A secret token shared with all connectors — generate with `openssl rand -hex 32` |
-| `CORS_ORIGINS` | Comma-separated allowed origins, e.g. `https://<web>.up.railway.app,http://localhost:5173` |
+| `CORS_ORIGINS` | Comma-separated allowed origins. Once custom domains are set up (see 2e): `https://deck-monsters.com,https://www.deck-monsters.com,http://localhost:5173`. Before custom domains, use your Railway web URL, e.g. `https://<web>.up.railway.app,http://localhost:5173` |
 
 Once the build completes, verify the server is running:
 
@@ -185,6 +189,66 @@ Now that both services are deployed and have public URLs:
 1. Go to the **Web** service → **Variables**
 2. Set `VITE_SERVER_URL` to the Server service's public Railway URL (e.g., `https://<server>.up.railway.app`)
 3. Redeploy the Web service (Railway will trigger this automatically when you save the variable)
+
+If you have custom domains (see 2e), set `VITE_SERVER_URL` to `https://server.deck-monsters.com` instead.
+
+### 2e. Custom Domains
+
+Railway assigns each service a `*.up.railway.app` subdomain by default. The production deployment uses custom domains:
+
+| Service | Custom domain |
+|---|---|
+| **Web** | `deck-monsters.com` |
+| **Server** | `server.deck-monsters.com` |
+
+Optional Web aliases (assign all to the same Web service): `www.deck-monsters.com`, `web.deck-monsters.com`. Railway serves all of them without further config — there is no automatic redirect between them, so if you care about canonical URLs, handle that at the DNS/CDN layer (e.g., a Cloudflare redirect rule from `www.` → apex).
+
+#### Assign custom domains in Railway
+
+For each domain you want to add:
+
+1. Go to the service in the Railway dashboard → **Settings → Networking**
+2. Click **Add Custom Domain** and type the domain (e.g., `server.deck-monsters.com`)
+3. Railway shows the **CNAME target** to set at your DNS provider (e.g., `<region>.railway.app`)
+4. Add that CNAME record at your DNS registrar/provider
+5. Railway will automatically provision a TLS certificate via Let's Encrypt once the DNS propagates (usually within a few minutes)
+
+Repeat for each domain: `deck-monsters.com`, and any aliases.
+
+> **Apex domain (`deck-monsters.com`) note:** Some DNS providers don't support CNAME records at the apex. If yours doesn't, use their proprietary equivalent — Cloudflare's CNAME-flattening, Route 53's ALIAS record, or similar. Railway's domain setup page will note if a different record type is needed.
+
+#### Update configuration after adding custom domains
+
+Once both custom domains are live, update these values across your services:
+
+**Web service → Variables:**
+
+| Variable | New value |
+|---|---|
+| `VITE_SERVER_URL` | `https://server.deck-monsters.com` |
+
+Redeploy the Web service after saving.
+
+**Server service → Variables:**
+
+| Variable | New value |
+|---|---|
+| `CORS_ORIGINS` | `https://deck-monsters.com,https://www.deck-monsters.com,http://localhost:5173` |
+
+Add `https://web.deck-monsters.com` to `CORS_ORIGINS` if you're using that alias too. The server picks up the new value on next deploy or restart — no code change needed.
+
+**Discord connector → Variables:**
+
+| Variable | New value |
+|---|---|
+| `SERVER_URL` | `https://server.deck-monsters.com` |
+
+**Supabase → Authentication → URL Configuration:**
+
+| Setting | New value |
+|---|---|
+| **Site URL** | `https://deck-monsters.com` |
+| **Redirect URLs** | Add `https://deck-monsters.com/**` and `https://www.deck-monsters.com/**` (keep the Railway URL and localhost entries too) |
 
 ---
 
@@ -239,7 +303,7 @@ Go to **Variables** and add:
 | `DISCORD_TOKEN` | Your bot token from the Discord developer portal |
 | `DISCORD_CLIENT_ID` | Your application's client ID |
 | `DATABASE_URL` | Same Supabase transaction pooler URL as the server |
-| `SERVER_URL` | The Server service's public Railway URL (e.g., `https://<server>.up.railway.app`) |
+| `SERVER_URL` | `https://server.deck-monsters.com` (or the Railway-generated URL before custom domains are set up) |
 | `CONNECTOR_SERVICE_TOKEN` | Same token set on the Server service |
 
 ---
@@ -317,12 +381,14 @@ The local Supabase Studio is at `http://localhost:54323` — use it to inspect t
 | `SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase Publishable key (`sb_publishable_...`) — safe for client-side use with RLS enabled |
 | `SUPABASE_SECRET_KEY` | Yes | Supabase Secret key (`sb_secret_...`) — used by `ensureConnectorUser` to create auth users; bypasses RLS, never expose publicly |
 | `CONNECTOR_SERVICE_TOKEN` | Yes | Shared secret for authenticating connector-to-server service calls (set in both the server and each connector's env) |
+| `CORS_ORIGINS` | No | Comma-separated list of allowed CORS origins for the server. Defaults to `http://localhost:5173`. Production example: `https://deck-monsters.com,https://www.deck-monsters.com,http://localhost:5173` |
 | `PORT` | No | HTTP port, defaults to `3000` (server only) |
 | `HOST` | No | Bind address, defaults to `0.0.0.0` (server only) |
 | `NODE_ENV` | No | `production` or `development` |
 | `DISCORD_TOKEN` | Connector | Discord bot token (Discord connector only) |
 | `DISCORD_CLIENT_ID` | Connector | Discord application client ID (Discord connector only) |
-| `SERVER_URL` | Connector | Base URL of the API server, used by the Discord connector for service calls |
+| `SERVER_URL` | Connector | Base URL of the API server, used by the Discord connector for service calls. Production: `https://server.deck-monsters.com` |
+| `VITE_SERVER_URL` | Web | Base URL of the API server, baked in at build time by Vite. Production: `https://server.deck-monsters.com`. Leave empty in dev (Vite proxy handles `/trpc` locally) |
 
 ---
 
