@@ -350,6 +350,18 @@ export async function queryGlobalMonsters(
 	}));
 }
 
+/** Shape of each participant object inside fight_summaries.participants. */
+export type FightParticipant = {
+	monsterId: string;
+	monsterName: string;
+	monsterType: string;
+	ownerUserId: string;
+	ownerDisplayName: string;
+	outcome: 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath';
+	xpGained: number;
+	level: number;
+};
+
 export type FightSummaryRow = {
 	id: number;
 	roomId: string;
@@ -357,6 +369,7 @@ export type FightSummaryRow = {
 	startedAt: Date;
 	endedAt: Date;
 	outcome: string;
+	// 1v1 convenience fields — null for fights with 3+ contestants.
 	winnerMonsterId: string | null;
 	winnerMonsterName: string | null;
 	winnerOwnerUserId: string | null;
@@ -367,7 +380,7 @@ export type FightSummaryRow = {
 	winnerXpGained: number;
 	loserXpGained: number;
 	cardDropName: string | null;
-	participants: unknown;
+	participants: FightParticipant[];
 };
 
 export async function queryRecentFights(
@@ -407,16 +420,17 @@ export async function queryMonsterFightHistory(
 	monsterId: string,
 	limit: number
 ): Promise<FightSummaryRow[]> {
+	// Use JSONB containment to find all fights where this monster appeared as a
+	// participant, regardless of how many contestants there were. This covers both
+	// 1v1 fights (where winnerMonsterId / loserMonsterId are set) and multi-monster
+	// fights (where those columns are null but participants[] always has everyone).
 	return db
 		.select()
 		.from(fightSummaries)
 		.where(
 			and(
 				eq(fightSummaries.roomId, roomId),
-				or(
-					eq(fightSummaries.winnerMonsterId, monsterId),
-					eq(fightSummaries.loserMonsterId, monsterId)
-				)
+				sql`${fightSummaries.participants} @> ${JSON.stringify([{ monsterId }])}::jsonb`
 			)
 		)
 		.orderBy(desc(fightSummaries.endedAt))
@@ -459,6 +473,47 @@ export function formatSinceLabel(d: Date): string {
 	return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
 }
 
+function nameList(names: string[]): string {
+	if (names.length === 0) return 'Unknown';
+	if (names.length === 1) return names[0]!;
+	if (names.length === 2) return `${names[0]} and ${names[1]}`;
+	return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+}
+
+function fightLine(s: FightSummaryRow): string {
+	const ps = s.participants;
+	let line = `Fight #${s.fightNumber} — `;
+
+	if (s.outcome === 'draw') {
+		// All participants drew — list everyone.
+		const names = ps.length > 0 ? ps.map(p => p.monsterName) : [s.winnerMonsterName ?? 'Unknown', s.loserMonsterName ?? 'Unknown'];
+		line += `Draw between ${nameList(names)}`;
+	} else if (s.outcome === 'fled') {
+		// Someone fled — show who survived vs who fled.
+		const fled = ps.filter(p => p.outcome === 'fled').map(p => p.monsterName);
+		const survived = ps.filter(p => p.outcome === 'win').map(p => p.monsterName);
+		if (fled.length > 0 && ps.length > 0) {
+			line += survived.length > 0
+				? `${nameList(fled)} fled from ${nameList(survived)}`
+				: `${nameList(fled)} fled`;
+		} else {
+			line += `${s.winnerMonsterName ?? 'Unknown'} fled from ${s.loserMonsterName ?? 'Unknown'}`;
+		}
+	} else {
+		// win or permaDeath — one or more winners, one or more losers.
+		const winners = ps.length > 0 ? ps.filter(p => p.outcome === 'win').map(p => p.monsterName) : [];
+		const losers = ps.length > 0 ? ps.filter(p => p.outcome === 'loss' || p.outcome === 'permaDeath').map(p => p.monsterName) : [];
+		const perished = ps.length > 0 ? ps.filter(p => p.outcome === 'permaDeath').map(p => p.monsterName) : [];
+		const w = winners.length > 0 ? nameList(winners) : s.winnerMonsterName ?? 'Unknown';
+		const l = losers.length > 0 ? nameList(losers) : s.loserMonsterName ?? 'Unknown';
+		line += `${w} defeated ${l} in ${s.roundCount} round(s)`;
+		if (perished.length > 0) line += `  ☠ ${nameList(perished)} perished`;
+	}
+
+	if (s.cardDropName) line += ` (card drop: ${s.cardDropName})`;
+	return line;
+}
+
 export function buildCatchUpText(
 	summaries: FightSummaryRow[],
 	sinceLabel: string
@@ -469,20 +524,7 @@ export function buildCatchUpText(
 
 	const lines: string[] = [`Since you were last here (${sinceLabel}):\n`];
 	for (const s of summaries) {
-		const w = s.winnerMonsterName ?? 'Unknown';
-		const l = s.loserMonsterName ?? 'Unknown';
-		let line = `Fight #${s.fightNumber} — `;
-		if (s.outcome === 'draw') {
-			line += `Draw between ${w} and ${l}`;
-		} else if (s.outcome === 'fled') {
-			line += `${w} fled from ${l}`;
-		} else if (s.outcome === 'permaDeath') {
-			line += `${w} defeated ${l} in ${s.roundCount} round(s)  ☠ ${l} perished`;
-		} else {
-			line += `${w} defeated ${l} in ${s.roundCount} round(s)`;
-		}
-		if (s.cardDropName) line += ` (card drop: ${s.cardDropName})`;
-		lines.push(line);
+		lines.push(fightLine(s));
 	}
 
 	return { fightCount: summaries.length, textSummary: lines.join('\n') };

@@ -44,31 +44,34 @@ fight_summaries: {
   loserMonsterName: text,
   loserOwnerUserId: uuid,
   roundCount: integer not null,
-  winnerXpGained: integer not null default 0,
-  loserXpGained: integer not null default 0,
+  winnerXpGained: integer not null default 0,  // 0 for multi-monster fights (see participants)
+  loserXpGained: integer not null default 0,   // 0 for multi-monster fights (see participants)
   cardDropName: text,                    // null if no card dropped
-  notableCards: text[],                  // card types played that caused significant effects
-  startEventId: bigint references room_events(id),
-  endEventId: bigint references room_events(id),
+  notableCards: text[],                  // reserved; not yet populated
+  participants: jsonb not null default '[]',  // always populated; all N contestants with outcome+xp
 }
-// index on (roomId, endedAt) — for "recent fights in room X" queries
-// index on (roomId, winnerMonsterId) — for per-monster history queries
-// index on (roomId, loserMonsterId)
+// B-tree index on (roomId, endedAt) — "recent fights in room X"
+// B-tree index on (roomId, winnerMonsterId), (roomId, loserMonsterId) — 1v1 fast path
+// GIN index on participants — JSONB containment queries for monster fight history
 ```
 
-`fightNumber` is a monotonically increasing counter per room, stored on the `rooms` table or derived from a `room_fight_counter` sequence. It gives fights a stable human-readable identity ("Fight #42").
+**1v1 vs multi-monster**: `winnerMonsterId`/`loserMonsterId` are convenience columns populated only when `contestants.length === 2` and there is a clear winner/loser. For fights with 3+ contestants (or draws in any size fight), they are null. The `participants` array is always fully populated and is the authoritative source for all fight queries. `queryMonsterFightHistory` uses a JSONB containment query (`participants @> '[{"monsterId":"..."}]'`) so it correctly finds multi-monster fights.
+
+`fightNumber` is a monotonically increasing counter per room stored on `rooms.fight_counter`, atomically incremented in a transaction when writing each summary. It gives fights a stable human-readable identity ("Fight #42").
 
 ### Population: FightSummaryWriter
 
-A server-side event subscriber (`packages/server/src/fight-summary-writer.ts`) watches the event stream and assembles fight summaries:
+`packages/server/src/fight-summary-writer.ts` watches the event stream:
 
-1. On `ring.fight` event: record fight start (timestamp, participants from payload).
-2. On each `card.played` event: accumulate notable cards (e.g., cards dealing ≥ 50% of a creature's HP in one hit).
-3. On `ring.win`, `ring.draw`, `ring.fled`, or `ring.permaDeath` event: write the completed `fight_summary` row.
+1. On `ring.fight` (start event — `eventName !== 'fightConcludes'`): record `startedAt` in an in-memory `pendingByRoom` map.
+2. On `ring.cardDrop` (public): stash the card drop name on the pending record.
+3. On `ring.fightResolved`: atomically increment `rooms.fight_counter`, write the `fight_summaries` row.
 
-The subscriber is stateful per room — it holds an in-memory pending fight record while the fight is in progress. This state is reconstructed on server restart from recent `room_events` (any `ring.fight` event without a subsequent outcome event means a fight was interrupted; mark it as abandoned or simply skip it).
+The subscriber is stateful per process — `pendingByRoom` is not persisted. A server restart during a fight means `startedAt` falls back to `endedAt` (the fight is still recorded; only its duration is lost). See the Pending section for the interrupted-fight edge case.
 
-**Why not derive summaries from `room_events` at query time?** For ad-hoc queries with low volume it would work, but it requires joining and scanning potentially many event rows per fight. Pre-computing summaries is cheaper at read time and allows indexes on fight attributes (outcome, winner, loser) without scanning the raw event log.
+**Why not derive summaries from `room_events` at query time?** For ad-hoc queries with low volume it would work, but it requires joining and scanning many event rows per fight. Pre-computing summaries is cheaper at read time and allows efficient indexes on fight outcome and participants.
+
+**`notableCards` not yet populated**: the current `FightSummaryWriter` doesn't track `card.played` events. This field is reserved for a future pass that identifies "turning point" cards (e.g., cards dealing ≥ 50% of a creature's max HP in one hit).
 
 ### API: tRPC Procedures
 
@@ -116,16 +119,19 @@ Example output:
 ```
 Since you were last here (3 hours ago):
 
-Fight #38 — Stonefang defeated Whisperwind in 4 rounds
+Fight #38 — Stonefang defeated Whisperwind in 4 round(s)
 Fight #39 — Mirebell fled from The Horned Terror
 Fight #40 — Draw between Copperclaw and The Horned Terror
-Fight #41 — Stonefang defeated Mirebell in 6 rounds  ☠ Mirebell perished
-Fight #42 — Stonefang defeated Copperclaw in 3 rounds (card drop: Brain Drain)
-
-Stonefang is on a 3-fight winning streak.
+Fight #41 — Stonefang defeated Mirebell in 6 round(s)  ☠ Mirebell perished
+Fight #42 — Stonefang defeated Copperclaw in 3 round(s) (card drop: Brain Drain)
 ```
 
-The summary highlights win streaks, perma-deaths, and card drops because those are the things players actually care about after a long absence.
+For a 3-monster fight the winner line lists all parties:
+```
+Fight #43 — Stonefang defeated Mirebell and Copperclaw in 5 round(s)
+```
+
+The summary highlights perma-deaths and card drops. Win streaks are a planned addition (see Pending).
 
 If nothing happened: "No fights since you were last here."
 
@@ -223,7 +229,8 @@ Both are populated from ring outcome events. The `FightStatsSubscriber` from `13
 ### Database
 - [x] Add `fight_summaries` table to Drizzle schema + Supabase migration
 - [x] Add `lastSeenAt` column to `room_members` table
-- [x] Add index on `fight_summaries(roomId, endedAt)` and per-monster indexes
+- [x] Add index on `fight_summaries(roomId, endedAt)` and per-monster B-tree indexes
+- [x] Add GIN index on `fight_summaries.participants` for JSONB containment queries (`queryMonsterFightHistory`)
 
 ### Server
 - [x] Implement `FightSummaryWriter` — stateful event subscriber that assembles and writes fight summaries
@@ -243,9 +250,13 @@ Both are populated from ring outcome events. The `FightStatsSubscriber` from `13
 - [x] Add "last fight" one-liner ticker to the bottom of the Ring pane
 - [x] Implement expandable fight detail view (card-by-card breakdown from raw events)
 
+## Pending
+
+- [ ] **Win streak in catch-up text**: the design doc example shows "Stonefang is on a 3-fight winning streak." at the end of a catch-up summary. Not yet implemented. Strategy: query the last N `fight_summaries` for each monster that appeared in the catch-up window, check for a consecutive-win run, append a streak line for any monster with 3+ consecutive wins. Compute at query time from `fight_summaries` — no new counter needed.
+- [ ] **Streak on the Fight Log UI**: once streak logic exists, surface it in the fight log (e.g., badge on a monster's name when it has an active streak).
+
 ## Open Questions
 
-- **How long to retain fight summaries?** The raw `room_events` table has an open question about retention policy (7 days suggested in `02-backend-hosting.md`). Fight summaries are smaller and more valuable to keep longer — 30 or 90 days seems right. Decide during implementation.
-- **Streak tracking**: "Stonefang is on a 3-fight winning streak" is compelling UX. Where does the current streak live — computed from recent `fight_summaries` at query time (simple, slightly expensive), or maintained as a counter on `room_monster_stats` (cheap to read, stateful)? Leaning toward computing it at query time for the first version.
-- **Interrupted fights**: if the server restarts mid-fight, the `FightSummaryWriter`'s in-memory pending fight state is lost. These fights should be marked as abandoned (not win/loss/draw) rather than silently omitted. Add an `'abandoned'` outcome variant.
-- **Multi-monster rings**: the current engine supports 2–12 monsters in the ring. Fight summaries assume 1v1 (winner + loser). Multi-monster fights need a richer participant array. Design the schema with this in mind even if the first implementation only handles 1v1 — use an array of participant objects rather than separate winner/loser columns.
+- **How long to retain fight summaries?** Fight summaries are smaller than raw events and more valuable for historical browsing. 30–90 days is a reasonable default; decide when setting up the retention job for `room_events`.
+- **Interrupted fights**: if the server restarts mid-fight, `FightSummaryWriter`'s in-memory `pendingByRoom` map is lost. Currently the summary is still written on `ring.fightResolved`, but `startedAt` falls back to `endedAt` (zero-duration fight). The fight IS recorded; only the "card-by-card breakdown" event query will be empty. An `'abandoned'` outcome variant isn't needed right now, but the zero-duration signal can be used in a future UI to flag such fights.
+- **Multi-monster fight display in web UI**: the `FightLogPage` currently shows "X vs Y" (1v1 framing). For 3+ contestant fights, the UI needs to render all participants from the `participants` array rather than just `winnerMonsterName`/`loserMonsterName`. The underlying data is there; this is a UI-only fix.

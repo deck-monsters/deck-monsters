@@ -66,3 +66,7 @@ create index if not exists fight_summaries_room_loser_monster_idx
 
 create unique index if not exists fight_summaries_room_fight_number_key
   on public.fight_summaries (room_id, fight_number);
+
+-- GIN index for JSONB containment queries on participants (e.g. monster fight history).
+create index if not exists fight_summaries_participants_gin_idx
+  on public.fight_summaries using gin (participants);

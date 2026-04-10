@@ -185,13 +185,14 @@ The backfill runs as a one-off script, not as part of the regular server startup
 - [x] Write one-time backfill script to seed tables from existing state blobs
 
 ### Server
-- [x] Implement `FightStatsSubscriber` — listens to `ring.win`, `ring.loss`, `ring.draw`, `ring.fled`, `ring.xp`, `ring.cardDrop` and upserts stats tables
+- [x] Implement `FightStatsSubscriber` — listens to `ring.fightResolved` (W/L/draw/XP for all participants) and `ring.xp` (coins only, to avoid double-counting XP) and upserts stats tables
 - [x] Register `FightStatsSubscriber` alongside `EventPersister` in server startup
 - [x] Add `leaderboard` tRPC router with `roomPlayers`, `roomMonsters`, `globalPlayers`, `globalMonsters` procedures
 - [x] Update `lookAtCharacterRankings` and `lookAtMonsterRankings` in `Game` to read from DB (via `RoomManager`) instead of in-memory sort
 
 ### Engine / Commands
 - [x] Add "leaderboard", "global leaderboard", "top players", "top monsters" command aliases in `commands/history.ts`
+- [x] Add "global monster leaderboard" / "look at global monster rankings" command aliases
 
 ### Web UI
 - [x] Add "Leaderboard" link/tab to top navigation header
@@ -199,8 +200,12 @@ The backfill runs as a one-off script, not as part of the regular server startup
 - [x] Wire `LeaderboardPage` to tRPC `leaderboard.*` procedures
 - [x] Pre-select "This Room" scope when navigating from a room context
 
+## Pending
+
+- [ ] **Win streak in leaderboard**: surface current winning streak per monster (see 14-fight-stats.md for streak tracking design). Once streaks are computed, add a streak column to the monster leaderboard.
+- [ ] **Win rate denominator in UI**: currently W / (W + L), draws excluded. Make this explicit in the leaderboard table header or a tooltip so players aren't surprised.
+
 ## Open Questions
 
 - **Global leaderboard privacy**: should players be able to opt out of appearing in the global leaderboard? Easy to add a `profileVisibility` flag on `profiles`. Probably not needed for a private game server, but worth noting.
-- **Win rate denominator**: should "win rate" exclude draws? Current thinking: W / (W + L), draws excluded from the denominator. Make it explicit in the UI.
-- **Monster identity across resets**: monster IDs are stable within a room's lifetime, but if a room is reset, old stats for those monster IDs become orphaned. Two options: soft-delete old stats on reset, or just let them accumulate (stale data is fine). Leaning toward clear on room reset.
+- **Monster identity across resets**: monster IDs are stable within a room's lifetime, but if a room is reset, old stats for those monster IDs become orphaned. Currently cleared on reset (`resetRoomState` in `RoomManager`). Verify this is working and document it.
