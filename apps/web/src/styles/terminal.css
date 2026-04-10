@@ -96,8 +96,64 @@
   white-space: pre-wrap;
 }
 
-.event time {
-  display: none; /* hidden by default; accessible to screen readers */
+.event-row-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.event .event-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-key-meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  color: var(--color-fg-dim);
+  max-width: 42%;
+  text-align: right;
+}
+
+.event-key-label {
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.event-key-time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.event-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Absolute time for assistive tech — same clip pattern as .event-sr-only */
+.event time.event-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .event p,

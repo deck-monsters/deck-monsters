@@ -4,8 +4,14 @@ import type { GameEvent } from '@deck-monsters/server/types';
 type TrackedEvent = { id: string; data: GameEvent };
 import { trpc } from '../lib/trpc.js';
 import { useHandshake } from '../hooks/useHandshake.js';
+import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
 import { fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
+import {
+	eventTimestampIso,
+	formatEventHoverTitle,
+	getKeyRingEventMeta,
+} from '../utils/event-time.js';
 
 interface RingPaneProps {
   roomId: string;
@@ -32,16 +38,6 @@ function eventClass(type: string): string {
   return 'event-announce';
 }
 
-/** Returns a human-readable countdown string from an epoch-ms timestamp. */
-function relAgo(d: Date): string {
-  const s = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (s < 120) return `${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 120) return `${m} min ago`;
-  const h = Math.floor(m / 60);
-  return `${h}h ago`;
-}
-
 function formatCountdown(epochMs: number): string {
   const deltaMs = epochMs - Date.now();
   if (deltaMs <= 0) return 'now';
@@ -51,6 +47,44 @@ function formatCountdown(epochMs: number): string {
   const minutes = Math.ceil((totalSeconds % 3600) / 60);
   if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
+}
+
+function KeyRingTimeBadge({ at, label }: { at: Date; label: string }) {
+  const ago = useTimeAgo(at);
+  return (
+    <span className="event-key-meta" aria-hidden="true">
+      <span className="event-key-label">{label}</span>
+      <span className="event-key-time">{ago}</span>
+    </span>
+  );
+}
+
+function LastFightFooter({
+  summary,
+}: {
+  summary: FightSummaryLike & { fightNumber: number; endedAt: string | Date };
+}) {
+  const ended = new Date(summary.endedAt);
+  const ago = useTimeAgo(ended);
+  const title = formatEventHoverTitle(ended.getTime());
+  return (
+    <div
+      className="last-fight-footer"
+      style={{
+        padding: '0.35rem 0.75rem',
+        fontSize: '0.8rem',
+        borderTop: '1px solid var(--color-border)',
+        color: 'var(--color-fg-dim)',
+      }}
+      data-event-at={ended.toISOString()}
+      title={title}
+    >
+      <time className="event-sr-only" dateTime={ended.toISOString()}>
+        {title}
+      </time>
+      Last fight: {fightTitleOneLine(summary)} (#{summary.fightNumber}) — {ago}
+    </div>
+  );
 }
 
 export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
@@ -251,28 +285,33 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
             <p>Waiting for battle events…</p>
           </li>
         )}
-        {events.map((event) => (
-          <li key={event.id} className={`event ${eventClass(event.type)}`}>
-            <time dateTime={new Date(event.timestamp).toISOString()} aria-hidden="true">
-              {new Date(event.timestamp).toLocaleTimeString()}
-            </time>
-            <div className="event-text">{formatEventText(event.text ?? '')}</div>
-          </li>
-        ))}
+        {events.map((event) => {
+          const keyMeta = getKeyRingEventMeta(event);
+          const iso = eventTimestampIso(event.timestamp);
+          const hoverTitle = formatEventHoverTitle(event.timestamp);
+          return (
+            <li
+              key={event.id}
+              className={`event ${eventClass(event.type)}`}
+              data-event-at={iso}
+              title={hoverTitle}
+            >
+              <time className="event-sr-only" dateTime={iso}>
+                {hoverTitle}
+              </time>
+              <div className="event-row-inner">
+                <div className="event-text">{formatEventText(event.text ?? '')}</div>
+                {keyMeta && (
+                  <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ol>
 
       {lastFight?.[0] && (
-        <div
-          style={{
-            padding: '0.35rem 0.75rem',
-            fontSize: '0.8rem',
-            borderTop: '1px solid var(--color-border)',
-            color: 'var(--color-fg-dim)',
-          }}
-        >
-          Last fight: {fightTitleOneLine(lastFight[0] as FightSummaryLike)} (#{lastFight[0].fightNumber}) —{' '}
-          {relAgo(new Date(lastFight[0].endedAt))}
-        </div>
+        <LastFightFooter summary={lastFight[0] as FightSummaryLike & { fightNumber: number; endedAt: string }} />
       )}
 
       {!isAtBottom && (
