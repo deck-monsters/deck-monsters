@@ -97,6 +97,18 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           <Link to="/rooms" className="btn" style={{ fontSize: '0.8rem' }}>
             Rooms
           </Link>
+          <Link
+            to={roomId ? `/room/${roomId}/leaderboard` : '/leaderboard'}
+            className="btn"
+            style={{ fontSize: '0.8rem' }}
+          >
+            Leaderboard
+          </Link>
+          {roomId && (
+            <Link to={`/room/${roomId}/fights`} className="btn" style={{ fontSize: '0.8rem' }}>
+              Fight log
+            </Link>
+          )}
           <Link to="/account" className="btn" style={{ fontSize: '0.8rem' }}>
             Account
           </Link>
@@ -160,6 +172,18 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             onClick={(e) => e.stopPropagation()}
           >
             <Link to="/rooms" className="btn" onClick={() => setMenuOpen(false)}>Rooms</Link>
+            <Link
+              to={roomId ? `/room/${roomId}/leaderboard` : '/leaderboard'}
+              className="btn"
+              onClick={() => setMenuOpen(false)}
+            >
+              Leaderboard
+            </Link>
+            {roomId && (
+              <Link to={`/room/${roomId}/fights`} className="btn" onClick={() => setMenuOpen(false)}>
+                Fight log
+              </Link>
+            )}
             <Link to="/account" className="btn" onClick={() => setMenuOpen(false)}>Account</Link>
             <button
               className="btn"

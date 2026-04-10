@@ -32,6 +32,15 @@ function eventClass(type: string): string {
 }
 
 /** Returns a human-readable countdown string from an epoch-ms timestamp. */
+function relAgo(d: Date): string {
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 120) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 120) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
 function formatCountdown(epochMs: number): string {
   const deltaMs = epochMs - Date.now();
   if (deltaMs <= 0) return 'now';
@@ -66,6 +75,8 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
 
   // Fetch persistent ring history from DB on mount
   const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
+
+  const { data: lastFight } = trpc.game.recentFights.useQuery({ roomId, limit: 1 });
 
   // Tick every second while a fight or boss timer is active, to keep the badge live
   const [, setTick] = useState(0);
@@ -246,8 +257,22 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
             </time>
             <div className="event-text">{formatEventText(event.text ?? '')}</div>
           </li>
-        ))}
+        )        )}
       </ol>
+
+      {lastFight?.[0] && (
+        <div
+          style={{
+            padding: '0.35rem 0.75rem',
+            fontSize: '0.8rem',
+            borderTop: '1px solid var(--color-border)',
+            color: 'var(--color-fg-dim)',
+          }}
+        >
+          Last fight: {lastFight[0].winnerMonsterName ?? '?'} vs {lastFight[0].loserMonsterName ?? '?'} (#{lastFight[0].fightNumber}) —{' '}
+          {relAgo(new Date(lastFight[0].endedAt))}
+        </div>
+      )}
 
       {!isAtBottom && (
         <button

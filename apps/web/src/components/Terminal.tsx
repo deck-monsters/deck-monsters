@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import RingPane from './RingPane.js';
 import ConsolePane from './ConsolePane.js';
 import PaneDivider from './PaneDivider.js';
+import CatchUpBanner from './CatchUpBanner.js';
 
 type TabId = 'ring' | 'console';
 
@@ -71,6 +72,8 @@ export default function Terminal({ roomId }: TerminalProps) {
       data-layout={isSideBySide ? 'side-by-side' : 'tabbed'}
     >
       {/* Tab bar — only visible on narrow screens */}
+      <CatchUpBanner roomId={roomId} />
+
       {!isSideBySide && (
         <div className="terminal-tabs" role="tablist" aria-label="Switch panes">
           <button

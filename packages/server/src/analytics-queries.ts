@@ -1,0 +1,509 @@
+import { and, asc, desc, eq, gte, inArray, lte, lt, or, sql } from 'drizzle-orm';
+
+import type { Db } from './db/index.js';
+import {
+	fightSummaries,
+	profiles,
+	roomEvents,
+	roomMonsterStats,
+	roomPlayerStats,
+	roomMembers,
+} from './db/schema.js';
+import type { GameEvent } from '@deck-monsters/engine';
+import { dbRowToGameEvent } from './db/game-event-map.js';
+
+export type LeaderboardSort = 'xp' | 'wins' | 'winRate' | 'coins';
+
+export function formatRoomPlayerLeaderboard(title: string, rows: Awaited<ReturnType<typeof queryRoomPlayers>>): string {
+	const lines = rows.map((r, i) => {
+		const wr = Math.round(r.winRate * 100);
+		return `${i + 1}. ${r.displayName}   ${r.xp} XP   ${r.wins}W ${r.losses}L ${wr}%`;
+	});
+	return `*${title}*\n\n\`\`\`\n${lines.join('\n') || '(no data yet)'}\n\`\`\`\n`;
+}
+
+export function formatRoomMonsterLeaderboard(title: string, rows: Awaited<ReturnType<typeof queryRoomMonsters>>): string {
+	const lines = rows.map((r, i) => {
+		const wr = Math.round(r.winRate * 100);
+		const owner = r.ownerName ? ` (${r.ownerName})` : '';
+		return `${i + 1}. ${r.displayName}${owner}   ${r.monsterType}   ${r.xp} XP L${r.level}   ${r.wins}W ${r.losses}L ${wr}%`;
+	});
+	return `*${title}*\n\n\`\`\`\n${lines.join('\n') || '(no data yet)'}\n\`\`\`\n`;
+}
+
+export function formatGlobalPlayerLeaderboard(title: string, rows: Awaited<ReturnType<typeof queryGlobalPlayers>>): string {
+	const lines = rows.map((r, i) => {
+		const wr = Math.round(r.winRate * 100);
+		return `${i + 1}. ${r.displayName}   ${r.xp} XP   ${r.wins}W ${r.losses}L ${wr}%   rooms: ${r.roomCount}`;
+	});
+	return `*${title}*\n\n\`\`\`\n${lines.join('\n') || '(no data yet)'}\n\`\`\`\n`;
+}
+
+export function formatGlobalMonsterLeaderboard(title: string, rows: Awaited<ReturnType<typeof queryGlobalMonsters>>): string {
+	const lines = rows.map((r, i) => {
+		const wr = Math.round(r.winRate * 100);
+		const owner = r.ownerName ? ` (${r.ownerName})` : '';
+		return `${i + 1}. ${r.displayName}${owner}   ${r.monsterType}   ${r.xp} XP L${r.level}   ${r.wins}W ${r.losses}L ${wr}%`;
+	});
+	return `*${title}*\n\n\`\`\`\n${lines.join('\n') || '(no data yet)'}\n\`\`\`\n`;
+}
+
+function winRateExpr() {
+	return sql<number>`case when (${roomPlayerStats.wins} + ${roomPlayerStats.losses}) > 0
+		then ${roomPlayerStats.wins}::float / (${roomPlayerStats.wins} + ${roomPlayerStats.losses})
+		else 0 end`;
+}
+
+function monsterWinRateExpr() {
+	return sql<number>`case when (${roomMonsterStats.wins} + ${roomMonsterStats.losses}) > 0
+		then ${roomMonsterStats.wins}::float / (${roomMonsterStats.wins} + ${roomMonsterStats.losses})
+		else 0 end`;
+}
+
+export async function queryRoomPlayers(
+	db: Db,
+	roomId: string,
+	sortBy: LeaderboardSort,
+	limit: number
+): Promise<
+	Array<{
+		displayName: string;
+		xp: number;
+		wins: number;
+		losses: number;
+		draws: number;
+		winRate: number;
+		coinsEarned: number;
+	}>
+> {
+	const orderBy =
+		sortBy === 'wins'
+			? desc(roomPlayerStats.wins)
+			: sortBy === 'coins'
+				? desc(roomPlayerStats.coinsEarned)
+				: sortBy === 'winRate'
+					? desc(winRateExpr())
+					: desc(roomPlayerStats.xp);
+
+	const rows = await db
+		.select({
+			displayName: profiles.displayName,
+			xp: roomPlayerStats.xp,
+			wins: roomPlayerStats.wins,
+			losses: roomPlayerStats.losses,
+			draws: roomPlayerStats.draws,
+			coinsEarned: roomPlayerStats.coinsEarned,
+			winRate: winRateExpr().as('wr'),
+		})
+		.from(roomPlayerStats)
+		.innerJoin(profiles, eq(roomPlayerStats.userId, profiles.id))
+		.where(eq(roomPlayerStats.roomId, roomId))
+		.orderBy(orderBy)
+		.limit(limit);
+
+	return rows.map((r) => ({
+		displayName: r.displayName,
+		xp: r.xp,
+		wins: r.wins,
+		losses: r.losses,
+		draws: r.draws,
+		coinsEarned: r.coinsEarned,
+		winRate: Number(r.winRate),
+	}));
+}
+
+export async function queryRoomMonsters(
+	db: Db,
+	roomId: string,
+	sortBy: LeaderboardSort,
+	limit: number
+): Promise<
+	Array<{
+		displayName: string;
+		monsterType: string;
+		ownerName: string | null;
+		xp: number;
+		level: number;
+		wins: number;
+		losses: number;
+		draws: number;
+		winRate: number;
+	}>
+> {
+	const orderBy =
+		sortBy === 'wins'
+			? desc(roomMonsterStats.wins)
+			: sortBy === 'coins'
+				? desc(roomMonsterStats.xp)
+				: sortBy === 'winRate'
+					? desc(monsterWinRateExpr())
+					: desc(roomMonsterStats.xp);
+
+	const rows = await db
+		.select({
+			displayName: roomMonsterStats.displayName,
+			monsterType: roomMonsterStats.monsterType,
+			ownerId: roomMonsterStats.ownerUserId,
+			xp: roomMonsterStats.xp,
+			level: roomMonsterStats.level,
+			wins: roomMonsterStats.wins,
+			losses: roomMonsterStats.losses,
+			draws: roomMonsterStats.draws,
+			winRate: monsterWinRateExpr().as('mwr'),
+		})
+		.from(roomMonsterStats)
+		.where(eq(roomMonsterStats.roomId, roomId))
+		.orderBy(orderBy)
+		.limit(limit);
+
+	const ownerIds = [...new Set(rows.map((r) => r.ownerId).filter(Boolean))] as string[];
+	const names = new Map<string, string>();
+	if (ownerIds.length > 0) {
+		const profs = await db
+			.select({ id: profiles.id, displayName: profiles.displayName })
+			.from(profiles)
+			.where(inArray(profiles.id, ownerIds));
+		for (const p of profs) names.set(p.id, p.displayName);
+	}
+
+	return rows.map((r) => ({
+		displayName: r.displayName,
+		monsterType: r.monsterType,
+		ownerName: r.ownerId ? (names.get(r.ownerId) ?? null) : null,
+		xp: r.xp,
+		level: r.level,
+		wins: r.wins,
+		losses: r.losses,
+		draws: r.draws,
+		winRate: Number(r.winRate),
+	}));
+}
+
+export async function queryGlobalPlayers(
+	db: Db,
+	sortBy: LeaderboardSort,
+	limit: number
+): Promise<
+	Array<{
+		displayName: string;
+		xp: number;
+		wins: number;
+		losses: number;
+		draws: number;
+		winRate: number;
+		coinsEarned: number;
+		roomCount: number;
+	}>
+> {
+	const orderBy =
+		sortBy === 'wins'
+			? 'tw desc'
+			: sortBy === 'coins'
+				? 'tc desc'
+				: sortBy === 'winRate'
+					? 'gwr desc'
+					: 'txp desc';
+
+	const rows = await db.execute(sql`
+		select
+			p.display_name as "displayName",
+			agg.txp::int as xp,
+			agg.tw::int as wins,
+			agg.tl::int as losses,
+			agg.td::int as draws,
+			agg.tc::int as "coinsEarned",
+			agg.rc::int as "roomCount",
+			agg.gwr::float8 as "winRate"
+		from (
+			select
+				user_id,
+				sum(xp)::bigint as txp,
+				sum(wins)::bigint as tw,
+				sum(losses)::bigint as tl,
+				sum(draws)::bigint as td,
+				sum(coins_earned)::bigint as tc,
+				count(distinct room_id)::bigint as rc,
+				case
+					when sum(wins + losses) > 0 then sum(wins)::float / sum(wins + losses)
+					else 0
+				end as gwr
+			from room_player_stats
+			group by user_id
+		) agg
+		inner join profiles p on p.id = agg.user_id
+		order by ${sql.raw(orderBy)}
+		limit ${limit}
+	`);
+
+	const out = rows.rows as Array<{
+		displayName: string;
+		xp: number;
+		wins: number;
+		losses: number;
+		draws: number;
+		coinsEarned: number;
+		roomCount: number;
+		winRate: number;
+	}>;
+
+	return out.map((r) => ({
+		displayName: r.displayName,
+		xp: Number(r.xp),
+		wins: Number(r.wins),
+		losses: Number(r.losses),
+		draws: Number(r.draws),
+		coinsEarned: Number(r.coinsEarned),
+		roomCount: Number(r.roomCount),
+		winRate: Number(r.winRate),
+	}));
+}
+
+export async function queryGlobalMonsters(
+	db: Db,
+	sortBy: LeaderboardSort,
+	limit: number
+): Promise<
+	Array<{
+		displayName: string;
+		monsterType: string;
+		ownerName: string | null;
+		xp: number;
+		level: number;
+		wins: number;
+		losses: number;
+		draws: number;
+		winRate: number;
+	}>
+> {
+	const orderBy =
+		sortBy === 'wins'
+			? 'tw desc'
+			: sortBy === 'winRate'
+				? 'gwr desc'
+				: 'txp desc';
+
+	const rows = await db.execute(sql`
+		select
+			gm.dn as "displayName",
+			gm.mt as "monsterType",
+			gm.oid as "ownerId",
+			gm.txp::int as xp,
+			gm.tlv::int as level,
+			gm.tw::int as wins,
+			gm.tl::int as losses,
+			gm.td::int as draws,
+			gm.gwr::float8 as "winRate"
+		from (
+			select
+				monster_id,
+				max(display_name) as dn,
+				max(monster_type) as mt,
+				max(owner_user_id) as oid,
+				sum(xp)::bigint as txp,
+				max(level)::bigint as tlv,
+				sum(wins)::bigint as tw,
+				sum(losses)::bigint as tl,
+				sum(draws)::bigint as td,
+				case
+					when sum(wins + losses) > 0 then sum(wins)::float / sum(wins + losses)
+					else 0
+				end as gwr
+			from room_monster_stats
+			group by monster_id
+		) gm
+		order by ${sql.raw(orderBy)}
+		limit ${limit}
+	`);
+
+	const raw = rows.rows as Array<{
+		displayName: string;
+		monsterType: string;
+		ownerId: string | null;
+		xp: number;
+		level: number;
+		wins: number;
+		losses: number;
+		draws: number;
+		winRate: number;
+	}>;
+
+	const ownerIds = [...new Set(raw.map((r) => r.ownerId).filter(Boolean))] as string[];
+	const names = new Map<string, string>();
+	if (ownerIds.length > 0) {
+		const profs = await db
+			.select({ id: profiles.id, displayName: profiles.displayName })
+			.from(profiles)
+			.where(inArray(profiles.id, ownerIds));
+		for (const p of profs) names.set(p.id, p.displayName);
+	}
+
+	return raw.map((r) => ({
+		displayName: r.displayName,
+		monsterType: r.monsterType,
+		ownerName: r.ownerId ? (names.get(r.ownerId) ?? null) : null,
+		xp: Number(r.xp),
+		level: Number(r.level),
+		wins: Number(r.wins),
+		losses: Number(r.losses),
+		draws: Number(r.draws),
+		winRate: Number(r.winRate),
+	}));
+}
+
+export type FightSummaryRow = {
+	id: number;
+	roomId: string;
+	fightNumber: number;
+	startedAt: Date;
+	endedAt: Date;
+	outcome: string;
+	winnerMonsterId: string | null;
+	winnerMonsterName: string | null;
+	winnerOwnerUserId: string | null;
+	loserMonsterId: string | null;
+	loserMonsterName: string | null;
+	loserOwnerUserId: string | null;
+	roundCount: number;
+	winnerXpGained: number;
+	loserXpGained: number;
+	cardDropName: string | null;
+	participants: unknown;
+};
+
+export async function queryRecentFights(
+	db: Db,
+	roomId: string,
+	limit: number,
+	before?: Date
+): Promise<FightSummaryRow[]> {
+	const cond = before
+		? and(eq(fightSummaries.roomId, roomId), lt(fightSummaries.endedAt, before))
+		: eq(fightSummaries.roomId, roomId);
+
+	return db
+		.select()
+		.from(fightSummaries)
+		.where(cond)
+		.orderBy(desc(fightSummaries.endedAt))
+		.limit(limit) as Promise<FightSummaryRow[]>;
+}
+
+export async function queryFightByNumber(
+	db: Db,
+	roomId: string,
+	fightNumber: number
+): Promise<(FightSummaryRow & { startedAt: Date; endedAt: Date }) | undefined> {
+	const rows = await db
+		.select()
+		.from(fightSummaries)
+		.where(and(eq(fightSummaries.roomId, roomId), eq(fightSummaries.fightNumber, fightNumber)))
+		.limit(1);
+	return rows[0] as (FightSummaryRow & { startedAt: Date; endedAt: Date }) | undefined;
+}
+
+export async function queryMonsterFightHistory(
+	db: Db,
+	roomId: string,
+	monsterId: string,
+	limit: number
+): Promise<FightSummaryRow[]> {
+	return db
+		.select()
+		.from(fightSummaries)
+		.where(
+			and(
+				eq(fightSummaries.roomId, roomId),
+				or(
+					eq(fightSummaries.winnerMonsterId, monsterId),
+					eq(fightSummaries.loserMonsterId, monsterId)
+				)
+			)
+		)
+		.orderBy(desc(fightSummaries.endedAt))
+		.limit(limit) as Promise<FightSummaryRow[]>;
+}
+
+export async function queryFightsSince(db: Db, roomId: string, since: Date): Promise<FightSummaryRow[]> {
+	return db
+		.select()
+		.from(fightSummaries)
+		.where(and(eq(fightSummaries.roomId, roomId), gte(fightSummaries.endedAt, since)))
+		.orderBy(fightSummaries.endedAt) as Promise<FightSummaryRow[]>;
+}
+
+export async function getMemberLastSeen(
+	db: Db,
+	roomId: string,
+	userId: string
+): Promise<Date | null> {
+	const rows = await db
+		.select({ lastSeenAt: roomMembers.lastSeenAt })
+		.from(roomMembers)
+		.where(and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)))
+		.limit(1);
+	return rows[0]?.lastSeenAt ?? null;
+}
+
+export async function touchMemberLastSeen(db: Db, roomId: string, userId: string): Promise<void> {
+	await db
+		.update(roomMembers)
+		.set({ lastSeenAt: new Date() })
+		.where(and(eq(roomMembers.roomId, roomId), eq(roomMembers.userId, userId)));
+}
+
+export function formatSinceLabel(d: Date): string {
+	const ms = Date.now() - d.getTime();
+	const mins = Math.round(ms / 60000);
+	if (mins < 120) return `${mins} minutes ago`;
+	const hrs = Math.floor(mins / 60);
+	return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
+}
+
+export function buildCatchUpText(
+	summaries: FightSummaryRow[],
+	sinceLabel: string
+): { fightCount: number; textSummary: string } {
+	if (summaries.length === 0) {
+		return { fightCount: 0, textSummary: 'No fights since you were last here.' };
+	}
+
+	const lines: string[] = [`Since you were last here (${sinceLabel}):\n`];
+	for (const s of summaries) {
+		const w = s.winnerMonsterName ?? 'Unknown';
+		const l = s.loserMonsterName ?? 'Unknown';
+		let line = `Fight #${s.fightNumber} — `;
+		if (s.outcome === 'draw') {
+			line += `Draw between ${w} and ${l}`;
+		} else if (s.outcome === 'fled') {
+			line += `${w} fled from ${l}`;
+		} else if (s.outcome === 'permaDeath') {
+			line += `${w} defeated ${l} in ${s.roundCount} round(s)  ☠ ${l} perished`;
+		} else {
+			line += `${w} defeated ${l} in ${s.roundCount} round(s)`;
+		}
+		if (s.cardDropName) line += ` (card drop: ${s.cardDropName})`;
+		lines.push(line);
+	}
+
+	return { fightCount: summaries.length, textSummary: lines.join('\n') };
+}
+
+export async function loadFightEventsForSummary(
+	db: Db,
+	roomId: string,
+	startedAt: Date,
+	endedAt: Date
+): Promise<GameEvent[]> {
+	const rows = await db
+		.select()
+		.from(roomEvents)
+		.where(
+			and(
+				eq(roomEvents.roomId, roomId),
+				gte(roomEvents.createdAt, startedAt),
+				lte(roomEvents.createdAt, endedAt)
+			)
+		)
+		.orderBy(asc(roomEvents.id));
+	return rows.map(dbRowToGameEvent);
+}

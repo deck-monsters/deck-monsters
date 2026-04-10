@@ -2,7 +2,7 @@
 
 **Category**: Feature  
 **Priority**: Medium (post-launch)  
-**Status**: Not started
+**Status**: In progress (core implementation landed)
 
 ## Background
 
@@ -180,24 +180,24 @@ The backfill runs as a one-off script, not as part of the regular server startup
 ## Tasks
 
 ### Database
-- [ ] Add `room_player_stats` table to Drizzle schema + Supabase migration
-- [ ] Add `room_monster_stats` table to Drizzle schema + Supabase migration
-- [ ] Write one-time backfill script to seed tables from existing state blobs
+- [x] Add `room_player_stats` table to Drizzle schema + Supabase migration
+- [x] Add `room_monster_stats` table to Drizzle schema + Supabase migration
+- [x] Write one-time backfill script to seed tables from existing state blobs
 
 ### Server
-- [ ] Implement `FightStatsSubscriber` — listens to `ring.win`, `ring.loss`, `ring.draw`, `ring.fled`, `ring.xp`, `ring.cardDrop` and upserts stats tables
-- [ ] Register `FightStatsSubscriber` alongside `EventPersister` in server startup
-- [ ] Add `leaderboard` tRPC router with `roomPlayers`, `roomMonsters`, `globalPlayers`, `globalMonsters` procedures
-- [ ] Update `lookAtCharacterRankings` and `lookAtMonsterRankings` in `Game` to read from DB (via `RoomManager`) instead of in-memory sort
+- [x] Implement `FightStatsSubscriber` — listens to `ring.win`, `ring.loss`, `ring.draw`, `ring.fled`, `ring.xp`, `ring.cardDrop` and upserts stats tables
+- [x] Register `FightStatsSubscriber` alongside `EventPersister` in server startup
+- [x] Add `leaderboard` tRPC router with `roomPlayers`, `roomMonsters`, `globalPlayers`, `globalMonsters` procedures
+- [x] Update `lookAtCharacterRankings` and `lookAtMonsterRankings` in `Game` to read from DB (via `RoomManager`) instead of in-memory sort
 
 ### Engine / Commands
-- [ ] Add "leaderboard", "global leaderboard", "top players", "top monsters" command aliases to `commands/look-at.ts`
+- [x] Add "leaderboard", "global leaderboard", "top players", "top monsters" command aliases in `commands/history.ts`
 
 ### Web UI
-- [ ] Add "Leaderboard" link/tab to top navigation header
-- [ ] Implement `LeaderboardPage` component (scope toggle, type toggle, sort dropdown, table)
-- [ ] Wire `LeaderboardPage` to tRPC `leaderboard.*` procedures
-- [ ] Pre-select "This Room" scope when navigating from a room context
+- [x] Add "Leaderboard" link/tab to top navigation header
+- [x] Implement `LeaderboardPage` component (scope toggle, type toggle, sort dropdown, table)
+- [x] Wire `LeaderboardPage` to tRPC `leaderboard.*` procedures
+- [x] Pre-select "This Room" scope when navigating from a room context
 
 ## Open Questions
 

@@ -261,7 +261,15 @@ describe('RoomManager', () => {
 			});
 			const rm2 = new RoomManager(db2 as never, () => {}, deps);
 			// Prime cache
-			(rm2 as any).active.set(roomId, { game: mockGame, eventBus: mockGame.eventBus, lastActivityAt: Date.now(), unsubscribePersister: sinon.stub(), unsubscribeMetrics: sinon.stub() });
+			(rm2 as any).active.set(roomId, {
+				game: mockGame,
+				eventBus: mockGame.eventBus,
+				lastActivityAt: Date.now(),
+				unsubscribePersister: sinon.stub(),
+				unsubscribeMetrics: sinon.stub(),
+				unsubscribeFightStats: sinon.stub(),
+				unsubscribeFightSummary: sinon.stub(),
+			});
 
 			await rm2.deleteRoom(OWNER_ID, roomId);
 
@@ -293,7 +301,7 @@ describe('RoomManager', () => {
 				selectResults: [
 					[{ id: ROOM_ID, name: 'My Room', inviteCode: INVITE }],
 					[{ value: 3 }],     // count query (Promise.all[0])
-					[{ role: 'owner' }], // member role query (Promise.all[1])
+					[{ role: 'owner', lastSeenAt: null }], // member role query (Promise.all[1])
 				],
 			});
 			const { deps } = makeEngineDeps();
@@ -307,6 +315,7 @@ describe('RoomManager', () => {
 				inviteCode: INVITE,
 				memberCount: 3,
 				role: 'owner',
+				lastSeenAt: null,
 			});
 		});
 

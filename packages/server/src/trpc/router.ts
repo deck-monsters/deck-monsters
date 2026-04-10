@@ -9,6 +9,23 @@ import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
 import { commandsTotal, wsConnectionsActive } from '../metrics/index.js';
+import { db } from '../db/index.js';
+import {
+	loadFightEventsForSummary,
+	queryFightByNumber,
+	queryMonsterFightHistory,
+	queryRecentFights,
+	queryGlobalMonsters,
+	queryGlobalPlayers,
+	queryRoomMonsters,
+	queryRoomPlayers,
+	buildCatchUpText,
+	formatSinceLabel,
+	getMemberLastSeen,
+	queryFightsSince,
+	touchMemberLastSeen,
+	type LeaderboardSort,
+} from '../analytics-queries.js';
 
 export type AppRouter = ReturnType<typeof createRouter>;
 
@@ -26,7 +43,108 @@ const BUILD_VERSION = process.env['BUILD_VERSION'] ?? 'dev';
 // on the same Game (see packages/engine/src/helpers/room-engine-queue.ts).
 export const activeFlows = new Set<string>();
 
+const sortBySchema = z.enum(['xp', 'wins', 'winRate', 'coins']);
+
 export function createRouter(roomManager: RoomManager) {
+	const leaderboardRouter = t.router({
+		roomPlayers: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					limit: z.number().min(1).max(50).optional(),
+					sortBy: sortBySchema.optional(),
+				})
+			)
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const limit = input.limit ?? 25;
+				const rows = await queryRoomPlayers(db, input.roomId, (input.sortBy ?? 'xp') as LeaderboardSort, limit);
+				return rows.map((r, i) => ({
+					rank: i + 1,
+					displayName: r.displayName,
+					xp: r.xp,
+					wins: r.wins,
+					losses: r.losses,
+					draws: r.draws,
+					winRate: r.winRate,
+					coinsEarned: r.coinsEarned,
+				}));
+			}),
+
+		roomMonsters: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					limit: z.number().min(1).max(50).optional(),
+					sortBy: sortBySchema.optional(),
+				})
+			)
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const limit = input.limit ?? 25;
+				const rows = await queryRoomMonsters(db, input.roomId, (input.sortBy ?? 'xp') as LeaderboardSort, limit);
+				return rows.map((r, i) => ({
+					rank: i + 1,
+					displayName: r.displayName,
+					monsterType: r.monsterType,
+					ownerName: r.ownerName,
+					xp: r.xp,
+					level: r.level,
+					wins: r.wins,
+					losses: r.losses,
+					draws: r.draws,
+					winRate: r.winRate,
+				}));
+			}),
+
+		globalPlayers: protectedProcedure
+			.input(
+				z.object({
+					limit: z.number().min(1).max(50).optional(),
+					sortBy: sortBySchema.optional(),
+				})
+			)
+			.query(async ({ input }) => {
+				const limit = input.limit ?? 25;
+				const rows = await queryGlobalPlayers(db, (input.sortBy ?? 'xp') as LeaderboardSort, limit);
+				return rows.map((r, i) => ({
+					rank: i + 1,
+					displayName: r.displayName,
+					xp: r.xp,
+					wins: r.wins,
+					losses: r.losses,
+					draws: r.draws,
+					winRate: r.winRate,
+					coinsEarned: r.coinsEarned,
+					roomCount: r.roomCount,
+				}));
+			}),
+
+		globalMonsters: protectedProcedure
+			.input(
+				z.object({
+					limit: z.number().min(1).max(50).optional(),
+					sortBy: sortBySchema.optional(),
+				})
+			)
+			.query(async ({ input }) => {
+				const limit = input.limit ?? 25;
+				const rows = await queryGlobalMonsters(db, (input.sortBy ?? 'xp') as LeaderboardSort, limit);
+				return rows.map((r, i) => ({
+					rank: i + 1,
+					displayName: r.displayName,
+					monsterType: r.monsterType,
+					ownerName: r.ownerName,
+					xp: r.xp,
+					level: r.level,
+					wins: r.wins,
+					losses: r.losses,
+					draws: r.draws,
+					winRate: r.winRate,
+				}));
+			}),
+	});
+
 	const roomRouter = t.router({
 		create: protectedProcedure
 			.input(z.object({ name: z.string().min(1).max(100) }))
@@ -182,6 +300,8 @@ export function createRouter(roomManager: RoomManager) {
 
 				// TODO: emit quick_actions event after command completes with contextual suggestions
 
+				void touchMemberLastSeen(db, input.roomId, ctx.userId).catch(() => {});
+
 				commandsTotal.inc({ room_id: input.roomId, result: 'ok' });
 				return { ok: true, commandId };
 				} catch (err) {
@@ -261,6 +381,7 @@ export function createRouter(roomManager: RoomManager) {
 			)
 			.subscription(async function* ({ input, ctx, signal }) {
 			await roomManager.assertMember(ctx.userId, input.roomId);
+			void touchMemberLastSeen(db, input.roomId, ctx.userId).catch(() => {});
 			const eventBus = await roomManager.getEventBus(input.roomId);
 			const game = await roomManager.getGame(input.roomId);
 			const ring = game.ring;
@@ -350,6 +471,75 @@ export function createRouter(roomManager: RoomManager) {
 					wsConnectionsActive.dec({ room_id: input.roomId });
 				}
 			}),
+
+		recentFights: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					limit: z.number().min(1).max(50).optional(),
+					before: z.string().datetime().optional(),
+				})
+			)
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const limit = input.limit ?? 10;
+				const before = input.before ? new Date(input.before) : undefined;
+				return queryRecentFights(db, input.roomId, limit, before);
+			}),
+
+		fight: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					fightNumber: z.number().int().positive(),
+				})
+			)
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const summary = await queryFightByNumber(db, input.roomId, input.fightNumber);
+				if (!summary) throw new TRPCError({ code: 'NOT_FOUND' });
+				const events = await loadFightEventsForSummary(db, input.roomId, summary.startedAt, summary.endedAt);
+				return { summary, events };
+			}),
+
+		monsterFightHistory: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterId: z.string().min(1),
+					limit: z.number().min(1).max(50).optional(),
+				})
+			)
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				return queryMonsterFightHistory(db, input.roomId, input.monsterId, input.limit ?? 10);
+			}),
+
+		catchUp: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					since: z.string().datetime().optional(),
+					touchLastSeen: z.boolean().optional(),
+				})
+			)
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				let sinceDate: Date;
+				if (input.since) {
+					sinceDate = new Date(input.since);
+				} else {
+					const ls = await getMemberLastSeen(db, input.roomId, ctx.userId);
+					sinceDate = ls ?? new Date(Date.now() - 60 * 60 * 1000);
+				}
+				const summaries = await queryFightsSince(db, input.roomId, sinceDate);
+				const label = formatSinceLabel(sinceDate);
+				const { fightCount, textSummary } = buildCatchUpText(summaries, label);
+				if (input.touchLastSeen !== false) {
+					await touchMemberLastSeen(db, input.roomId, ctx.userId);
+				}
+				return { fightCount, summaries, textSummary };
+			}),
 	});
 
 	const adminRouter = t.router({
@@ -387,6 +577,7 @@ export function createRouter(roomManager: RoomManager) {
 	return t.router({
 		room: roomRouter,
 		game: gameRouter,
+		leaderboard: leaderboardRouter,
 		admin: adminRouter,
 		auth: authRouter,
 		health: t.procedure.query(() => ({

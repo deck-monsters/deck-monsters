@@ -2,7 +2,7 @@
 
 **Category**: Feature  
 **Priority**: Medium (post-launch)  
-**Status**: Not started
+**Status**: In progress (core implementation landed)
 
 ## Background
 
@@ -221,27 +221,27 @@ Both are populated from ring outcome events. The `FightStatsSubscriber` from `13
 ## Tasks
 
 ### Database
-- [ ] Add `fight_summaries` table to Drizzle schema + Supabase migration
-- [ ] Add `lastSeenAt` column to `room_members` table
-- [ ] Add index on `fight_summaries(roomId, endedAt)` and per-monster indexes
+- [x] Add `fight_summaries` table to Drizzle schema + Supabase migration
+- [x] Add `lastSeenAt` column to `room_members` table
+- [x] Add index on `fight_summaries(roomId, endedAt)` and per-monster indexes
 
 ### Server
-- [ ] Implement `FightSummaryWriter` — stateful event subscriber that assembles and writes fight summaries
-- [ ] Register `FightSummaryWriter` in server startup alongside `EventPersister` and `FightStatsSubscriber`
-- [ ] Update `lastSeenAt` in `room_members` on each `game.command` mutation and `game.ringFeed` subscription
-- [ ] Add `fightStats` tRPC procedures: `recentFights`, `fight`, `monsterFightHistory`, `catchUp`
-- [ ] Ensure `ring.win` / `ring.loss` / `ring.draw` / `ring.fled` / `ring.permaDeath` payloads carry structured participant data; update announcement modules if needed
+- [x] Implement `FightSummaryWriter` — stateful event subscriber that assembles and writes fight summaries
+- [x] Register `FightSummaryWriter` in server startup alongside `EventPersister` and `FightStatsSubscriber`
+- [x] Update `lastSeenAt` in `room_members` on each `game.command` mutation and `game.ringFeed` subscription
+- [x] Add `fightStats` tRPC procedures: `recentFights`, `fight`, `monsterFightHistory`, `catchUp`
+- [x] Ensure `ring.win` / `ring.loss` / `ring.draw` / `ring.fled` / `ring.permaDeath` payloads carry structured participant data; update announcement modules if needed
 
 ### Engine / Commands
-- [ ] Add "what happened", "catch me up", "show recent fights", "show fight history" command aliases
-- [ ] Implement the catch-up text command handler — calls `catchUp` API, formats and emits the text summary
+- [x] Add "what happened", "catch me up", "show recent fights", "show fight history" command aliases
+- [x] Implement the catch-up text command handler — calls `catchUp` API, formats and emits the text summary
 
 ### Web UI
-- [ ] Add "Fight Log" tab/link to top navigation header
-- [ ] Implement `FightLogPage` component — paginated list of fight summaries, expandable rows
-- [ ] Implement inline catch-up banner shown on room join after absence (threshold: > 30 min away, > 0 fights)
-- [ ] Add "last fight" one-liner ticker to the bottom of the Ring pane
-- [ ] Implement expandable fight detail view (card-by-card breakdown from raw events)
+- [x] Add "Fight Log" tab/link to top navigation header
+- [x] Implement `FightLogPage` component — paginated list of fight summaries, expandable rows
+- [x] Implement inline catch-up banner shown on room join after absence (threshold: > 30 min away, > 0 fights)
+- [x] Add "last fight" one-liner ticker to the bottom of the Ring pane
+- [x] Implement expandable fight detail view (card-by-card breakdown from raw events)
 
 ## Open Questions
 
