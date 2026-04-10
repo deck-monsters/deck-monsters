@@ -6,7 +6,7 @@
  *   pnpm --filter @deck-monsters/harness run run -- [options]
  *
  * Options:
- *   --scenario <id>   Which scenario to run (default: ring-two-bosses)
+ *   --scenario <id>   ring-two-bosses | concurrent-look-monsters
  *   --seed <n>        Optional Math.random seed (mulberry32) for reproducible fights
  *   --verbose         Print each public event on its own line with seq + type
  */
@@ -65,8 +65,15 @@ async function main(): Promise<void> {
 				await runRingTwoBosses(game);
 				break;
 			}
+			case 'concurrent-look-monsters': {
+				const { runConcurrentLookMonsters } = await import(
+					'./scenarios/concurrent-look-monsters.js'
+				);
+				await runConcurrentLookMonsters(game);
+				break;
+			}
 			default:
-				throw new Error(`Unknown scenario: ${scenario} (try: ring-two-bosses)`);
+				throw new Error(`Unknown scenario: ${scenario} (try: ring-two-bosses, concurrent-look-monsters)`);
 		}
 
 		if (verbose) {

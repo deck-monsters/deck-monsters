@@ -7,6 +7,7 @@
 import Game from '../game.js';
 import { RoomEventBus } from '../events/index.js';
 import type { GameEvent } from '../events/index.js';
+import { createKeyedPromiseQueue } from '../helpers/room-engine-queue.js';
 
 // ---------------------------------------------------------------------------
 // No-op state store — prevents the 30s debounce timer from firing in tests
@@ -192,4 +193,14 @@ export async function runCommand(
 	});
 
 	return { channel, result };
+}
+
+/**
+ * Returns a function that mirrors production `RoomManager.runSerializedEngineWork`:
+ * only one in-flight command chain per `roomId` at a time. Use in harness scenarios
+ * that fire `runCommand` in parallel against one `Game`.
+ */
+export function createRoomCommandRunner(): (roomId: string, fn: () => Promise<unknown>) => Promise<unknown> {
+	const run = createKeyedPromiseQueue();
+	return (roomId: string, fn: () => Promise<unknown>) => run(roomId, fn);
 }

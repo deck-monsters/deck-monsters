@@ -40,5 +40,5 @@ All test suites mock external dependencies (database, Discord API, Supabase). No
 To exercise the core game engine without any services:
 
 ```bash
-node --input-type=module -e "import { Game } from './packages/engine/dist/index.js'; const g = new Game(() => {}, {}, console.log); console.log('Engine OK'); g.dispose(); process.exit(0);"
+node --input-type=module -e "import { Game } from './packages/engine/dist/index.js'; const g = new Game({}, console.log); console.log('Engine OK'); g.dispose(); process.exit(0);"
 ```

@@ -21,7 +21,7 @@ export function capturePublicFeed(eventBus: RoomEventBus, subscriberId: string):
 	const unsubscribe = eventBus.subscribe(subscriberId, {
 		deliver(event: GameEvent) {
 			if (event.scope !== 'public') return;
-			events.push(Object.assign(event, { seq: seq++ }));
+			events.push({ ...event, seq: seq++ });
 		},
 	});
 
