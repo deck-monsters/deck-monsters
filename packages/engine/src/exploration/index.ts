@@ -29,6 +29,7 @@ export class Exploration extends BaseClass {
 	};
 
 	log: (err: unknown) => void;
+	private explorationTimer?: ReturnType<typeof setTimeout>;
 
 	constructor(
 		_eventBusOrChannelManager: unknown,
@@ -40,6 +41,14 @@ export class Exploration extends BaseClass {
 		this.log = log;
 
 		this.startExplorationTimer();
+	}
+
+	/** Clears the recurring exploration timer so Game.dispose() can exit cleanly. */
+	dispose(): void {
+		if (this.explorationTimer !== undefined) {
+			clearTimeout(this.explorationTimer);
+			this.explorationTimer = undefined;
+		}
 	}
 
 	get environment(): any {
@@ -123,7 +132,8 @@ And whither then ${monster.pronouns.he} cannot say.`,
 	startExplorationTimer(): void {
 		const exploration = this;
 
-		setTimeout(() => {
+		this.explorationTimer = setTimeout(() => {
+			this.explorationTimer = undefined;
 			exploration.doExploration();
 			exploration.startExplorationTimer();
 		}, ONE_MINUTE);

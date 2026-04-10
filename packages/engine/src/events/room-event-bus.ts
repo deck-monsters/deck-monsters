@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 
 import type { GameEvent, EventSubscriber, EventScope, EventType } from './types.js';
 
+// TODO(ordering): When a client reconnects with a lastEventId that has already
+// been evicted from this buffer, getEventsSince() returns [] with no signal
+// that history was truncated.  The client silently presents an incomplete
+// replay.  Fix: return a synthetic gap event (or throw a typed error) when
+// lastEventId is not found, so clients can show "you missed some events".
 const RING_BUFFER_SIZE = 200;
 
 type PublishInput = {

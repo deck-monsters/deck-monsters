@@ -2,7 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
 import { eq, and, count, gte, desc } from 'drizzle-orm';
 
-import { Game, RoomEventBus, restoreGame, engineReady, getHydratorStatus } from '@deck-monsters/engine';
+import {
+	Game,
+	RoomEventBus,
+	restoreGame,
+	engineReady,
+	getHydratorStatus,
+	createKeyedPromiseQueue,
+} from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { rooms, roomMembers, profiles, roomEvents } from './db/schema.js';
 import type { GameEvent } from '@deck-monsters/engine';
@@ -64,6 +71,8 @@ function dbRowToGameEvent(row: DbRoomEvent): GameEvent {
 export class RoomManager {
 	private active = new Map<string, ActiveRoom>();
 	private loading = new Map<string, Promise<ActiveRoom>>();
+	/** One in-flight engine command chain per room — prevents interleaved game state / ring feed. */
+	private readonly runEngineCommand = createKeyedPromiseQueue();
 
 	constructor(
 		private readonly db: Db,
@@ -309,6 +318,15 @@ export class RoomManager {
 		const entry = await this._getOrLoad(roomId);
 		entry.lastActivityAt = Date.now();
 		return entry.eventBus;
+	}
+
+	/**
+	 * Runs engine work for a room **one chain at a time**. All `game.command` actions
+	 * must use this so two users cannot interleave `handleCommand` / ring combat on
+	 * the same `Game` instance.
+	 */
+	runSerializedEngineWork<T>(roomId: string, fn: () => Promise<T>): Promise<T> {
+		return this.runEngineCommand(roomId, fn);
 	}
 
 	async resetRoomState(roomId: string): Promise<void> {
