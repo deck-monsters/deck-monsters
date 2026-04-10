@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { trpc } from '../lib/trpc.js';
 import AppShell from '../components/AppShell.js';
+import { fightSubtitle, fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
 
 function relTime(d: Date): string {
   const s = Math.floor((Date.now() - d.getTime()) / 1000);
@@ -22,9 +23,31 @@ export default function FightLogView() {
   );
 
   const fights = trpc.game.recentFights.useQuery(
-    { roomId: roomId ?? '', limit: 20 },
+    { roomId: roomId ?? '', limit: 80 },
     { enabled: !!roomId }
   );
+
+  const streakByMonsterId = useMemo(() => {
+    const list = fights.data ?? [];
+    const ids = new Set<string>();
+    for (const f of list) {
+      for (const p of (f as FightSummaryLike).participants ?? []) {
+        if (p.monsterId) ids.add(p.monsterId);
+      }
+    }
+    const map = new Map<string, number>();
+    for (const id of ids) {
+      let n = 0;
+      for (const f of list) {
+        const p = (f as FightSummaryLike).participants?.find((x) => x.monsterId === id);
+        if (!p) continue;
+        if (p.outcome === 'win') n += 1;
+        else break;
+      }
+      map.set(id, n);
+    }
+    return map;
+  }, [fights.data]);
 
   const detail = trpc.game.fight.useQuery(
     { roomId: roomId ?? '', fightNumber: expanded ?? 0 },
@@ -49,7 +72,16 @@ export default function FightLogView() {
         {fights.isLoading && <p style={{ color: 'var(--color-fg-dim)' }}>Loading…</p>}
 
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          {(fights.data ?? []).map((f) => (
+          {(fights.data ?? []).map((f) => {
+            const fs = f as FightSummaryLike;
+            const winners = (fs.participants ?? []).filter((p) => p.outcome === 'win');
+            const streakNotes = winners
+              .map((w) => {
+                const s = streakByMonsterId.get(w.monsterId) ?? 0;
+                return s >= 3 ? `${w.monsterName}: ${s}-fight streak` : null;
+              })
+              .filter(Boolean) as string[];
+            return (
             <li
               key={f.id}
               style={{
@@ -72,18 +104,19 @@ export default function FightLogView() {
               >
                 <div style={{ fontWeight: 600 }}>
                   #{f.fightNumber}{' '}
-                  {f.winnerMonsterName ?? '?'} vs {f.loserMonsterName ?? '?'}{' '}
+                  {fightTitleOneLine(fs)}{' '}
                   <span style={{ color: 'var(--color-fg-dim)', fontWeight: 400, fontSize: '0.85rem' }}>
                     {relTime(new Date(f.endedAt))}
                   </span>
                 </div>
                 <div style={{ fontSize: '0.9rem', marginTop: '0.25rem' }}>
-                  {f.outcome === 'draw' && 'Draw'}
-                  {f.outcome === 'fled' && `${f.winnerMonsterName} fled`}
-                  {f.outcome === 'permaDeath' && `${f.winnerMonsterName} won — permadeath`}
-                  {f.outcome === 'win' && `${f.winnerMonsterName} won in ${f.roundCount} rounds`}
-                  {f.cardDropName && ` · Card: ${f.cardDropName}`}
+                  {fightSubtitle(fs)}
                 </div>
+                {streakNotes.length > 0 && (
+                  <div style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: 'var(--color-accent)' }}>
+                    {streakNotes.join(' · ')}
+                  </div>
+                )}
               </button>
               {expanded === f.fightNumber && detail.data && (
                 <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', fontFamily: 'var(--font-mono, monospace)' }}>
@@ -99,7 +132,8 @@ export default function FightLogView() {
                 </div>
               )}
             </li>
-          ))}
+            );
+          })}
         </ul>
       </div>
     </AppShell>

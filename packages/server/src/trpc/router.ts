@@ -20,8 +20,12 @@ import {
 	queryRoomMonsters,
 	queryRoomPlayers,
 	buildCatchUpText,
+	computeMonsterWinStreaksForRoom,
+	computeWinStreaksForMonsters,
+	formatCatchUpStreakLines,
 	formatSinceLabel,
 	getMemberLastSeen,
+	monsterIdsFromSummaries,
 	queryFightsSince,
 	touchMemberLastSeen,
 	type LeaderboardSort,
@@ -83,8 +87,14 @@ export function createRouter(roomManager: RoomManager) {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const limit = input.limit ?? 25;
 				const rows = await queryRoomMonsters(db, input.roomId, (input.sortBy ?? 'xp') as LeaderboardSort, limit);
+				const streaks = await computeMonsterWinStreaksForRoom(
+					db,
+					input.roomId,
+					rows.map((r) => r.monsterId)
+				);
 				return rows.map((r, i) => ({
 					rank: i + 1,
+					monsterId: r.monsterId,
 					displayName: r.displayName,
 					monsterType: r.monsterType,
 					ownerName: r.ownerName,
@@ -94,6 +104,7 @@ export function createRouter(roomManager: RoomManager) {
 					losses: r.losses,
 					draws: r.draws,
 					winRate: r.winRate,
+					winStreak: streaks.get(r.monsterId) ?? 0,
 				}));
 			}),
 
@@ -534,7 +545,10 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const summaries = await queryFightsSince(db, input.roomId, sinceDate);
 				const label = formatSinceLabel(sinceDate);
-				const { fightCount, textSummary } = buildCatchUpText(summaries, label);
+				const ids = monsterIdsFromSummaries(summaries);
+				const streakMap = await computeWinStreaksForMonsters(db, input.roomId, ids);
+				const streakLines = formatCatchUpStreakLines(streakMap, summaries);
+				const { fightCount, textSummary } = buildCatchUpText(summaries, label, streakLines);
 				if (input.touchLastSeen !== false) {
 					await touchMemberLastSeen(db, input.roomId, ctx.userId);
 				}

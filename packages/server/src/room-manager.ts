@@ -21,12 +21,16 @@ import { attachFightStatsSubscriber } from './fight-stats-subscriber.js';
 import { attachFightSummaryWriter } from './fight-summary-writer.js';
 import {
 	buildCatchUpText,
+	computeMonsterWinStreaksForRoom,
+	computeWinStreaksForMonsters,
+	formatCatchUpStreakLines,
 	formatGlobalMonsterLeaderboard,
 	formatGlobalPlayerLeaderboard,
 	formatRoomMonsterLeaderboard,
 	formatRoomPlayerLeaderboard,
 	formatSinceLabel,
 	getMemberLastSeen,
+	monsterIdsFromSummaries,
 	queryFightsSince,
 	queryGlobalMonsters,
 	queryGlobalPlayers,
@@ -89,7 +93,12 @@ export class RoomManager {
 			},
 			fetchRoomMonsterLeaderboard: async (sortBy: LeaderboardSortKey, limit: number) => {
 				const rows = await queryRoomMonsters(this.db, roomId, sortBy as LeaderboardSort, limit);
-				return formatRoomMonsterLeaderboard(`Top ${limit} Monsters`, rows);
+				const streaks = await computeMonsterWinStreaksForRoom(
+					this.db,
+					roomId,
+					rows.map((r) => r.monsterId)
+				);
+				return formatRoomMonsterLeaderboard(`Top ${limit} Monsters`, rows, streaks);
 			},
 			fetchGlobalPlayerLeaderboard: async (sortBy: LeaderboardSortKey, limit: number) => {
 				const rows = await queryGlobalPlayers(this.db, sortBy as LeaderboardSort, limit);
@@ -107,7 +116,10 @@ export class RoomManager {
 				}
 				const summaries = await queryFightsSince(this.db, roomId, sinceDate);
 				const label = formatSinceLabel(sinceDate);
-				const { textSummary } = buildCatchUpText(summaries, label);
+				const ids = monsterIdsFromSummaries(summaries);
+				const streakMap = await computeWinStreaksForMonsters(this.db, roomId, ids);
+				const streakLines = formatCatchUpStreakLines(streakMap, summaries);
+				const { textSummary } = buildCatchUpText(summaries, label, streakLines);
 				await touchMemberLastSeen(this.db, roomId, userId);
 				return textSummary;
 			},

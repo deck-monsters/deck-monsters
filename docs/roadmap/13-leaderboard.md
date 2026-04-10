@@ -202,8 +202,8 @@ The backfill runs as a one-off script, not as part of the regular server startup
 
 ## Pending
 
-- [ ] **Win streak in leaderboard**: surface current winning streak per monster (see 14-fight-stats.md for streak tracking design). Once streaks are computed, add a streak column to the monster leaderboard.
-- [ ] **Win rate denominator in UI**: currently W / (W + L), draws excluded. Make this explicit in the leaderboard table header or a tooltip so players aren't surprised.
+- [x] **Win streak in leaderboard**: room monster leaderboard shows consecutive wins from the last 80 fights (`winStreak` column + badge when ≥3); text leaderboard includes `streak N` when > 0.
+- [x] **Win rate denominator in UI**: table headers use tooltips explaining W÷(W+L), draws excluded.
 
 ## Open Questions
 

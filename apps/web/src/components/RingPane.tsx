@@ -5,6 +5,7 @@ type TrackedEvent = { id: string; data: GameEvent };
 import { trpc } from '../lib/trpc.js';
 import { useHandshake } from '../hooks/useHandshake.js';
 import { formatEventText } from '../utils/format-event-text.js';
+import { fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
 
 interface RingPaneProps {
   roomId: string;
@@ -257,7 +258,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
             </time>
             <div className="event-text">{formatEventText(event.text ?? '')}</div>
           </li>
-        )        )}
+        ))}
       </ol>
 
       {lastFight?.[0] && (
@@ -269,7 +270,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
             color: 'var(--color-fg-dim)',
           }}
         >
-          Last fight: {lastFight[0].winnerMonsterName ?? '?'} vs {lastFight[0].loserMonsterName ?? '?'} (#{lastFight[0].fightNumber}) —{' '}
+          Last fight: {fightTitleOneLine(lastFight[0] as FightSummaryLike)} (#{lastFight[0].fightNumber}) —{' '}
           {relAgo(new Date(lastFight[0].endedAt))}
         </div>
       )}

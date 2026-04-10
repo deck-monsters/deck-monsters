@@ -22,11 +22,17 @@ export function formatRoomPlayerLeaderboard(title: string, rows: Awaited<ReturnT
 	return `*${title}*\n\n\`\`\`\n${lines.join('\n') || '(no data yet)'}\n\`\`\`\n`;
 }
 
-export function formatRoomMonsterLeaderboard(title: string, rows: Awaited<ReturnType<typeof queryRoomMonsters>>): string {
+export function formatRoomMonsterLeaderboard(
+	title: string,
+	rows: Awaited<ReturnType<typeof queryRoomMonsters>>,
+	streakByMonsterId?: Map<string, number>
+): string {
 	const lines = rows.map((r, i) => {
 		const wr = Math.round(r.winRate * 100);
 		const owner = r.ownerName ? ` (${r.ownerName})` : '';
-		return `${i + 1}. ${r.displayName}${owner}   ${r.monsterType}   ${r.xp} XP L${r.level}   ${r.wins}W ${r.losses}L ${wr}%`;
+		const streak = streakByMonsterId?.get(r.monsterId);
+		const streakStr = streak !== undefined && streak > 0 ? `   streak ${streak}` : '';
+		return `${i + 1}. ${r.displayName}${owner}   ${r.monsterType}   ${r.xp} XP L${r.level}   ${r.wins}W ${r.losses}L ${wr}%${streakStr}`;
 	});
 	return `*${title}*\n\n\`\`\`\n${lines.join('\n') || '(no data yet)'}\n\`\`\`\n`;
 }
@@ -119,6 +125,7 @@ export async function queryRoomMonsters(
 	limit: number
 ): Promise<
 	Array<{
+		monsterId: string;
 		displayName: string;
 		monsterType: string;
 		ownerName: string | null;
@@ -141,6 +148,7 @@ export async function queryRoomMonsters(
 
 	const rows = await db
 		.select({
+			monsterId: roomMonsterStats.monsterId,
 			displayName: roomMonsterStats.displayName,
 			monsterType: roomMonsterStats.monsterType,
 			ownerId: roomMonsterStats.ownerUserId,
@@ -167,6 +175,7 @@ export async function queryRoomMonsters(
 	}
 
 	return rows.map((r) => ({
+		monsterId: r.monsterId,
 		displayName: r.displayName,
 		monsterType: r.monsterType,
 		ownerName: r.ownerId ? (names.get(r.ownerId) ?? null) : null,
@@ -516,7 +525,8 @@ function fightLine(s: FightSummaryRow): string {
 
 export function buildCatchUpText(
 	summaries: FightSummaryRow[],
-	sinceLabel: string
+	sinceLabel: string,
+	streakLines?: string[]
 ): { fightCount: number; textSummary: string } {
 	if (summaries.length === 0) {
 		return { fightCount: 0, textSummary: 'No fights since you were last here.' };
@@ -527,7 +537,94 @@ export function buildCatchUpText(
 		lines.push(fightLine(s));
 	}
 
+	if (streakLines && streakLines.length > 0) {
+		lines.push('');
+		for (const sl of streakLines) lines.push(sl);
+	}
+
 	return { fightCount: summaries.length, textSummary: lines.join('\n') };
+}
+
+const STREAK_MIN = 3;
+const STREAK_LOOKBACK = 80;
+
+/** Count consecutive wins for `monsterId` from most recent fights (fights ordered endedAt DESC). */
+export function winStreakFromRecentFights(fights: FightSummaryRow[], monsterId: string): number {
+	let n = 0;
+	for (const f of fights) {
+		const p = f.participants?.find((x) => x.monsterId === monsterId);
+		if (!p) continue;
+		if (p.outcome === 'win') n += 1;
+		else break;
+	}
+	return n;
+}
+
+/** Unique monster IDs that appear in these summaries (any outcome). */
+export function monsterIdsFromSummaries(summaries: FightSummaryRow[]): string[] {
+	const s = new Set<string>();
+	for (const row of summaries) {
+		for (const p of row.participants ?? []) {
+			if (p.monsterId) s.add(p.monsterId);
+		}
+	}
+	return [...s];
+}
+
+/**
+ * Current win streak for each monster (most recent fights first). Only monsters with streak >= minStreak are returned.
+ */
+export async function computeWinStreaksForMonsters(
+	db: Db,
+	roomId: string,
+	monsterIds: string[],
+	minStreak = STREAK_MIN
+): Promise<Map<string, number>> {
+	const out = new Map<string, number>();
+	if (monsterIds.length === 0) return out;
+
+	const recent = await queryRecentFights(db, roomId, STREAK_LOOKBACK);
+	for (const mid of monsterIds) {
+		const streak = winStreakFromRecentFights(recent, mid);
+		if (streak >= minStreak) out.set(mid, streak);
+	}
+	return out;
+}
+
+export function formatCatchUpStreakLines(
+	streaks: Map<string, number>,
+	summaries: FightSummaryRow[]
+): string[] {
+	if (streaks.size === 0) return [];
+	const nameById = new Map<string, string>();
+	for (const row of summaries) {
+		for (const p of row.participants ?? []) {
+			if (p.monsterId && !nameById.has(p.monsterId)) {
+				nameById.set(p.monsterId, p.monsterName);
+			}
+		}
+	}
+	const lines: string[] = [];
+	for (const [mid, n] of streaks) {
+		const name = nameById.get(mid) ?? 'A monster';
+		lines.push(`${name} is on a ${n}-fight winning streak.`);
+	}
+	return lines;
+}
+
+/** Win streak for leaderboard rows — uses recent fights once. */
+export async function computeMonsterWinStreaksForRoom(
+	db: Db,
+	roomId: string,
+	monsterIds: string[]
+): Promise<Map<string, number>> {
+	const out = new Map<string, number>();
+	if (monsterIds.length === 0) return out;
+	const recent = await queryRecentFights(db, roomId, STREAK_LOOKBACK);
+	for (const mid of monsterIds) {
+		out.set(mid, winStreakFromRecentFights(recent, mid));
+	}
+	return out;
 }
 
 export async function loadFightEventsForSummary(

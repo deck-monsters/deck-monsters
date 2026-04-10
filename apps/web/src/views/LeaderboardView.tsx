@@ -124,7 +124,12 @@ export default function LeaderboardView() {
                 <th style={{ padding: '0.35rem' }}>W</th>
                 <th style={{ padding: '0.35rem' }}>L</th>
                 <th style={{ padding: '0.35rem' }}>D</th>
-                <th style={{ padding: '0.35rem' }}>Win %</th>
+                <th
+                  style={{ padding: '0.35rem' }}
+                  title="Wins ÷ (wins + losses). Draws excluded."
+                >
+                  Win %
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -153,19 +158,45 @@ export default function LeaderboardView() {
                 <th style={{ padding: '0.35rem' }}>Owner</th>
                 <th style={{ padding: '0.35rem' }}>XP</th>
                 <th style={{ padding: '0.35rem' }}>Lv</th>
-                <th style={{ padding: '0.35rem' }}>Win %</th>
+                <th
+                  style={{ padding: '0.35rem' }}
+                  title="Wins ÷ (wins + losses). Draws excluded."
+                >
+                  Win %
+                </th>
+                <th style={{ padding: '0.35rem' }} title="Consecutive wins in recent fights (this room)">
+                  Streak
+                </th>
               </tr>
             </thead>
             <tbody>
               {(roomMonsters.data ?? []).map((r) => (
                 <tr key={r.rank} style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <td style={{ padding: '0.35rem' }}>{r.rank}</td>
-                  <td style={{ padding: '0.35rem' }}>{r.displayName}</td>
+                  <td style={{ padding: '0.35rem' }}>
+                    {r.displayName}
+                    {r.winStreak >= 3 && (
+                      <span
+                        style={{
+                          marginLeft: '0.35rem',
+                          fontSize: '0.75rem',
+                          padding: '0.1rem 0.35rem',
+                          borderRadius: 4,
+                          background: 'var(--color-accent-muted, rgba(255,200,0,0.15))',
+                          color: 'var(--color-accent)',
+                        }}
+                        title="Active win streak"
+                      >
+                        {r.winStreak}W
+                      </span>
+                    )}
+                  </td>
                   <td style={{ padding: '0.35rem' }}>{r.monsterType}</td>
                   <td style={{ padding: '0.35rem' }}>{r.ownerName ?? '—'}</td>
                   <td style={{ padding: '0.35rem' }}>{r.xp}</td>
                   <td style={{ padding: '0.35rem' }}>{r.level}</td>
                   <td style={{ padding: '0.35rem' }}>{pct(r.winRate)}</td>
+                  <td style={{ padding: '0.35rem' }}>{r.winStreak > 0 ? r.winStreak : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -180,7 +211,12 @@ export default function LeaderboardView() {
                 <th style={{ padding: '0.35rem' }}>Name</th>
                 <th style={{ padding: '0.35rem' }}>XP</th>
                 <th style={{ padding: '0.35rem' }}>Rooms</th>
-                <th style={{ padding: '0.35rem' }}>Win %</th>
+                <th
+                  style={{ padding: '0.35rem' }}
+                  title="Wins ÷ (wins + losses), aggregated across rooms. Draws excluded."
+                >
+                  Win %
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -206,7 +242,12 @@ export default function LeaderboardView() {
                 <th style={{ padding: '0.35rem' }}>Type</th>
                 <th style={{ padding: '0.35rem' }}>Owner</th>
                 <th style={{ padding: '0.35rem' }}>XP</th>
-                <th style={{ padding: '0.35rem' }}>Win %</th>
+                <th
+                  style={{ padding: '0.35rem' }}
+                  title="Wins ÷ (wins + losses), aggregated across rooms. Draws excluded."
+                >
+                  Win %
+                </th>
               </tr>
             </thead>
             <tbody>

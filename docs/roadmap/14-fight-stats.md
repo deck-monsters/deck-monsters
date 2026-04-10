@@ -252,8 +252,9 @@ Both are populated from ring outcome events. The `FightStatsSubscriber` from `13
 
 ## Pending
 
-- [ ] **Win streak in catch-up text**: the design doc example shows "Stonefang is on a 3-fight winning streak." at the end of a catch-up summary. Not yet implemented. Strategy: query the last N `fight_summaries` for each monster that appeared in the catch-up window, check for a consecutive-win run, append a streak line for any monster with 3+ consecutive wins. Compute at query time from `fight_summaries` — no new counter needed.
-- [ ] **Streak on the Fight Log UI**: once streak logic exists, surface it in the fight log (e.g., badge on a monster's name when it has an active streak).
+- [x] **Win streak in catch-up text**: appended after the fight list for monsters with ≥3 consecutive wins (computed from recent `fight_summaries` for monsters in the catch-up window).
+- [x] **Streak on the Fight Log UI**: winners with an active streak ≥3 show a note under the row; recent fights query uses limit 80 for streak computation client-side.
+- [x] **Multi-monster fight display in web UI**: `FightLogView` and ring “last fight” line use `participants` via `fight-display.ts` helpers when 3+ contestants.
 
 ## Open Questions
 
