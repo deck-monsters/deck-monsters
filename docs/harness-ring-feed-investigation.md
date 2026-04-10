@@ -17,33 +17,24 @@ The legacy **`battlefield.js`** demo exercised an older API surface and did not 
 
 ### 1. Concurrent engine entry points — confirmed root cause
 
-The tRPC router's `game.command` handler fires the engine action without awaiting it:
+The tRPC router's `game.command` handler still **returns immediately** (the HTTP response does not wait for the full interactive flow). The engine action is scheduled with `void roomManager.runSerializedEngineWork(roomId, () => action(...))`.
 
-```typescript
-// packages/server/src/trpc/router.ts
-void action({ channel, channelName, isAdmin, isDM, user })
-    .catch((err) => { ... })
-    .finally(() => { activeFlows.delete(flowKey); });
-
-return { ok: true, commandId };  // returns immediately
-```
-
-The `activeFlows` lock key is `${roomId}:${userId}` — **per-user, not per-room**. This means:
+The `activeFlows` lock key is `${roomId}:${userId}` — **per-user** (prevents one user from stacking commands while a prompt is open). **Before the per-room queue**, that alone meant:
 
 - User A and User B can both call `game.handleCommand()` on the **same `Game` instance** simultaneously with no throttling between them.
 - Each command's async chain (`ring.fight()` / `card.play()` / `eventBus.publish()`) runs concurrently.
 - Events from User A's fight narration and User B's command response interleave freely in the event bus.
 
-**This is the primary cause of out-of-order narration.** The fix is a per-room lock:
+**This is the primary cause of out-of-order narration.**
 
-```typescript
-// Change the lock key from:
-const flowKey = `${input.roomId}:${ctx.userId}`;
-// To:
-const flowKey = input.roomId;
-```
+### Fix shipped: per-room engine queue (not replacing the per-user `activeFlows` key)
 
-This serializes all commands in a room, eliminating concurrent Game access. The trade-off — User B waits for User A's command to complete — is acceptable because interactive commands resolve in seconds. The ring's own auto-fight timer is unaffected since `startFightTimer` fires independently of the command path.
+We keep **`activeFlows`** keyed by `${roomId}:${userId}` so a single user cannot start a second command before finishing prompts. We **add** serialization for all engine work in a room:
+
+- `createKeyedPromiseQueue()` in `@deck-monsters/engine` — chains async work by key.
+- `RoomManager.runSerializedEngineWork(roomId, fn)` wraps every `game.command` action so **only one command chain runs per room at a time**, regardless of user.
+
+Ring auto-fights (`setTimeout` → `ring.fight()`) still run outside the HTTP command path; if those ever need to be ordered with commands, that would be a separate change.
 
 ### 2. Async combat loop widens the interleave window
 
@@ -85,7 +76,9 @@ Future harness scenarios should assert on **semantic event ordering** (e.g. that
 
 | Area | Role |
 |------|------|
-| `packages/server/src/trpc/router.ts` | `game.command` — fire-and-forget actions, per-user `activeFlows` lock (needs to become per-room) |
+| `packages/server/src/trpc/router.ts` | `game.command` — actions wrapped in `runSerializedEngineWork(roomId)`; per-user `activeFlows` unchanged |
+| `packages/server/src/room-manager.ts` | `runSerializedEngineWork` — per-room promise queue |
+| `packages/engine/src/helpers/room-engine-queue.ts` | `createKeyedPromiseQueue` |
 | `packages/engine/src/events/room-event-bus.ts` | Synchronous fan-out; order is correct locally but ring buffer (`RING_BUFFER_SIZE = 200`) causes silent truncation on reconnect |
 | `packages/server/src/trpc/router.ts` (`ringFeed`) | WebSocket subscription queue; reconnect path uses `getEventsSince(lastEventId)` with no gap signal |
 | `packages/engine/src/ring/index.ts` | `fight()` — long async chain with `setTimeout` delays between each card play |
@@ -96,8 +89,8 @@ Future harness scenarios should assert on **semantic event ordering** (e.g. that
 
 | Issue | Status | Next step |
 |-------|--------|-----------|
-| Per-user lock allows concurrent Game access | **Root cause, unresolved** | Change `activeFlows` key to `roomId` only |
-| Async fight delays widen interleave window | Resolved by per-room lock above | — |
+| Per-user lock allows concurrent Game access | **Addressed** | `runSerializedEngineWork` serializes all command actions per room |
+| Async fight delays widen interleave window | **Mitigated for commands** | No other user's command interleaves; ring timer fights still async |
 | Ring buffer truncation silent on reconnect | **Unresolved** | Send `gap` event when `lastEventId` is not in buffer |
 | Weak timestamp ordering | Mitigated by synchronous delivery; only affects reconnect gaps | Addressed alongside ring buffer fix |
 | Process-exit timer leaks | **Addressed in this PR** | Monitor for remaining leaks |

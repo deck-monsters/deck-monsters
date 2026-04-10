@@ -15,6 +15,7 @@ import {
 	createTestGame,
 	createAutoResponder,
 	runCommand,
+	createRoomCommandRunner,
 } from '../shared/test-helpers.js';
 
 // ---------------------------------------------------------------------------
@@ -203,23 +204,27 @@ describe('integration: command flow', function () {
 		});
 	});
 
-	describe('concurrent commands (engine level)', () => {
-		it('does not corrupt state when two different users send commands simultaneously', async () => {
-			const game = createTestGame();
+	describe('concurrent commands (production-style serialization)', () => {
+		it('does not corrupt state when two users send commands in parallel with per-room queue', async () => {
+			const game = createTestGame('integration-room');
+			const run = createRoomCommandRunner();
 
 			const responderA = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
 			const responderB = createAutoResponder(game.eventBus, USER_B, NEW_CHARACTER_ANSWERS);
 
-			// Run both commands in parallel — they should not interfere with each other
+			// Same pattern as RoomManager.runSerializedEngineWork + game.command
 			await Promise.all([
-				runCommand(game, { command: 'look at monsters', userId: USER_A, userName: 'Athena' }),
-				runCommand(game, { command: 'look at monsters', userId: USER_B, userName: 'Hermes' }),
+				run(game.roomId, () =>
+					runCommand(game, { command: 'look at monsters', userId: USER_A, userName: 'Athena' })
+				),
+				run(game.roomId, () =>
+					runCommand(game, { command: 'look at monsters', userId: USER_B, userName: 'Hermes' })
+				),
 			]);
 
 			responderA.unsubscribe();
 			responderB.unsubscribe();
 
-			// Each user should have their own independent character
 			expect(game.characters[USER_A]?.givenName).to.equal('Athena');
 			expect(game.characters[USER_B]?.givenName).to.equal('Hermes');
 		});

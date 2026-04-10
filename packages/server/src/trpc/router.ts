@@ -20,6 +20,10 @@ const BUILD_VERSION = process.env['BUILD_VERSION'] ?? 'dev';
 // While a command flow is in progress for a given user+room, further commands
 // are rejected with a friendly message so users know to answer the prompt first.
 // Exported so it can be inspected in unit tests.
+//
+// Engine work is additionally serialized **per room** via
+// `RoomManager.runSerializedEngineWork` so two users cannot interleave commands
+// on the same Game (see packages/engine/src/helpers/room-engine-queue.ts).
 export const activeFlows = new Set<string>();
 
 export function createRouter(roomManager: RoomManager) {
@@ -152,13 +156,19 @@ export function createRouter(roomManager: RoomManager) {
 				// sendPrompt calls that can take minutes. Awaiting here would hold the
 				// HTTP connection open until the entire flow completes or times out.
 				// Instead, we return immediately; all output arrives via ringFeed.
-				void action({
-					channel,
-					channelName: input.channelName,
-					isAdmin,
-					isDM: input.isDM,
-					user: { id: ctx.userId, name: displayName },
-				})
+				//
+				// Serialize all engine work per room so two users cannot interleave
+				// handleCommand / ring combat on the same Game (fixes out-of-order ring feed).
+				void roomManager
+					.runSerializedEngineWork(input.roomId, () =>
+						action({
+							channel,
+							channelName: input.channelName,
+							isAdmin,
+							isDM: input.isDM,
+							user: { id: ctx.userId, name: displayName },
+						})
+					)
 					.catch((err: unknown) => {
 						// Prompt timeouts are expected when users abandon a flow.
 						const msg = err instanceof Error ? err.message : String(err);

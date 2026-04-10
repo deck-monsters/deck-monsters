@@ -21,6 +21,7 @@ export * from './testing/index.js';
 /** Seeded ring contestants for simulations (used by @deck-monsters/harness). */
 export { randomContestant } from './helpers/bosses.js';
 export type { RandomContestantOptions } from './helpers/bosses.js';
+export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {
 	let gameObj: Record<string, unknown>;
