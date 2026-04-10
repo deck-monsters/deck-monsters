@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 import { useTheme, type Theme } from '../hooks/useTheme.js';
+import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 
 const THEME_LABELS: Record<Theme, string> = {
   phosphor: 'Phosphor (green on black)',
@@ -11,6 +12,7 @@ const THEME_LABELS: Record<Theme, string> = {
 export default function AccountView() {
   const { user, signOut } = useAuth();
   const { theme, setTheme, validThemes } = useTheme();
+  const { ringKeyTimestampsEnabled, setRingKeyTimestampsEnabled } = useRingKeyTimestamps();
   const navigate = useNavigate();
 
   async function handleSignOut() {
@@ -80,6 +82,41 @@ export default function AccountView() {
               </label>
             ))}
           </div>
+        </div>
+
+        <div className="form-group" style={{ marginTop: '1rem' }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.6rem',
+              cursor: 'pointer',
+              padding: '0.3rem 0',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={ringKeyTimestampsEnabled}
+              onChange={(e) => setRingKeyTimestampsEnabled(e.target.checked)}
+              style={{ accentColor: 'var(--color-accent)', marginTop: '0.15rem' }}
+            />
+            <span>
+              <span style={{ color: 'var(--color-fg-bright)' }}>Show key event times in the Ring</span>
+              <span
+                style={{
+                  display: 'block',
+                  marginTop: '0.25rem',
+                  fontSize: '0.8rem',
+                  color: 'var(--color-fg-dim)',
+                  lineHeight: 1.45,
+                }}
+              >
+                When on, join/leave/fight start/end show a small label and “time ago” on the right.
+                Off by default for a single-column terminal look and narrow screens. Hover any line for
+                the exact time; off does not remove that.
+              </span>
+            </span>
+          </label>
         </div>
       </div>
 

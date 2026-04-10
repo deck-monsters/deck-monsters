@@ -4,6 +4,7 @@ import type { GameEvent } from '@deck-monsters/server/types';
 type TrackedEvent = { id: string; data: GameEvent };
 import { trpc } from '../lib/trpc.js';
 import { useHandshake } from '../hooks/useHandshake.js';
+import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
 import { fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
@@ -59,13 +60,19 @@ function KeyRingTimeBadge({ at, label }: { at: Date; label: string }) {
   );
 }
 
+function LastFightRelativeAgo({ at }: { at: Date }) {
+  const ago = useTimeAgo(at);
+  return <> — {ago}</>;
+}
+
 function LastFightFooter({
   summary,
+  showRelative,
 }: {
   summary: FightSummaryLike & { fightNumber: number; endedAt: string | Date };
+  showRelative: boolean;
 }) {
   const ended = new Date(summary.endedAt);
-  const ago = useTimeAgo(ended);
   const title = formatEventHoverTitle(ended.getTime());
   return (
     <div
@@ -82,12 +89,14 @@ function LastFightFooter({
       <time className="event-sr-only" dateTime={ended.toISOString()}>
         {title}
       </time>
-      Last fight: {fightTitleOneLine(summary)} (#{summary.fightNumber}) — {ago}
+      Last fight: {fightTitleOneLine(summary)} (#{summary.fightNumber})
+      {showRelative ? <LastFightRelativeAgo at={ended} /> : null}
     </div>
   );
 }
 
 export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
+  const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -289,6 +298,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
           const keyMeta = getKeyRingEventMeta(event);
           const iso = eventTimestampIso(event.timestamp);
           const hoverTitle = formatEventHoverTitle(event.timestamp);
+          const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
           return (
             <li
               key={event.id}
@@ -299,19 +309,24 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
               <time className="event-sr-only" dateTime={iso}>
                 {hoverTitle}
               </time>
-              <div className="event-row-inner">
-                <div className="event-text">{formatEventText(event.text ?? '')}</div>
-                {keyMeta && (
+              {showKeyColumn ? (
+                <div className="event-row-inner">
+                  <div className="event-text">{formatEventText(event.text ?? '')}</div>
                   <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="event-text">{formatEventText(event.text ?? '')}</div>
+              )}
             </li>
           );
         })}
       </ol>
 
       {lastFight?.[0] && (
-        <LastFightFooter summary={lastFight[0] as FightSummaryLike & { fightNumber: number; endedAt: string }} />
+        <LastFightFooter
+          summary={lastFight[0] as FightSummaryLike & { fightNumber: number; endedAt: string }}
+          showRelative={ringKeyTimestampsEnabled}
+        />
       )}
 
       {!isAtBottom && (

@@ -20,7 +20,11 @@
 
 Private outcome events (`ring.win`, etc.) are not in the public feed; fight **end** is visible as `ring.fight` with `fightConcludes` or as `announce` lines—UI keys off `ring.fight` + payload first.
 
-## Placement options (chosen default: **D**)
+## Optional key-event column (default **off**)
+
+The flex “meta column” is **opt-in** under **Account → Appearance → “Show key event times in the Ring”** (`localStorage` key `deck-monsters-ring-key-timestamps`). Default **off** so the feed stays a **single monospace column** (text-adventure feel) and narrow layouts are not squeezed. **Hover metadata** (`data-event-at`, `title`) remains on **every** row regardless.
+
+## Placement options (chosen when enabled: **D**)
 
 **A. Right-aligned meta column**  
 Small column on the right: `2m ago` only for key rows. Clean scan line; may compete with scrollbars on narrow panes.
@@ -37,7 +41,7 @@ Flex row: message `flex: 1`, key-meta `flex-shrink: 0` with `timeago` + optional
 **E. Left gutter icon + time**  
 Narrow left column with a dot or icon for key events only. Strong visual rhythm; slightly more layout work.
 
-We implement **D** with **tooltip (`title`) + `data-event-at` on every `<li>`** for all events, and inline `timeago` only for **key** events.
+When the toggle is on, we use **D** with **tooltip (`title`) + `data-event-at` on every `<li>`** for all events, and inline `timeago` only for **key** events. The last-fight footer shows **timeago** only when the same toggle is on; otherwise it shows fight title + number only (hover still has exact end time).
 
 ## Metadata (HTML)
 
