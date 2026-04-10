@@ -50,9 +50,11 @@ Every feed item:
 - `data-event-at="{ISO8601}"` — machine-readable instant (event `timestamp` ms → ISO).
 - `title="{locale absolute string}"` — full date/time on hover (e.g. `Intl.DateTimeFormat` with `dateStyle` + `timeStyle`).
 
-Key-event inline span (optional):
+Key-event inline span (when toggle is on):
 
-- `class="event-key-timeago"` for potential `timeago.js` `render()` hooks later.
+- `class="event-key-meta"` — flex column wrapper (label + time)
+- `class="event-key-label"` — uppercased short label (e.g. `JOINED`)
+- `class="event-key-time"` — tabular-nums timeago string
 
 ## Updating relative strings
 
@@ -70,3 +72,5 @@ Key-event inline span (optional):
 - [x] Add `timeago.js` to `apps/web`
 - [x] `useTimeAgo` + `formatEventHoverTitle` using `Intl.DateTimeFormat`
 - [x] `RingPane`: `data-event-at` + `title` on every row; inline timeago for key events only (`ring.add`, `ring.remove`, `ring.fight` start/end)
+- [x] Opt-in toggle under Account → Appearance (`useRingKeyTimestamps`, `localStorage` key `deck-monsters-ring-key-timestamps`)
+- [x] Last-fight footer shows timeago only when toggle is on; hover title always present
