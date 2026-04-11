@@ -43,6 +43,7 @@ import {
 	type LeaderboardSort,
 } from './analytics-queries.js';
 import { attachMetricsCollector } from './metrics/collector.js';
+import { attachDebugEventLogger } from './debug-event-logger.js';
 import {
 	roomsCreated,
 	roomsActive,
@@ -61,6 +62,7 @@ interface ActiveRoom {
 	unsubscribeMetrics: () => void;
 	unsubscribeFightStats: () => void;
 	unsubscribeFightSummary: () => void;
+	unsubscribeDebugLogger: () => void;
 }
 
 interface EngineDeps {
@@ -171,6 +173,7 @@ export class RoomManager {
 		const unsubscribeMetrics = attachMetricsCollector(eventBus, game.ring, roomId);
 		const unsubscribeFightStats = attachFightStatsSubscriber(eventBus, this.db, this.log);
 		const unsubscribeFightSummary = attachFightSummaryWriter(eventBus, this.db, this.log);
+		const unsubscribeDebugLogger = attachDebugEventLogger(eventBus, game.ring, roomId);
 		this._attachGameAnalytics(roomId, game);
 		this.active.set(roomId, {
 			game,
@@ -180,6 +183,7 @@ export class RoomManager {
 			unsubscribeMetrics,
 			unsubscribeFightStats,
 			unsubscribeFightSummary,
+			unsubscribeDebugLogger,
 		});
 		roomsCreated.inc();
 		roomsActive.set(this.active.size);
@@ -257,6 +261,7 @@ export class RoomManager {
 			activeEntry.unsubscribeMetrics();
 			activeEntry.unsubscribeFightStats();
 			activeEntry.unsubscribeFightSummary();
+			activeEntry.unsubscribeDebugLogger();
 		}
 		this.active.delete(roomId);
 		roomsActive.set(this.active.size);
@@ -430,6 +435,7 @@ export class RoomManager {
 			entry.unsubscribeMetrics();
 			entry.unsubscribeFightStats();
 			entry.unsubscribeFightSummary();
+			entry.unsubscribeDebugLogger();
 			entry.game.dispose();
 		}
 		this.active.delete(roomId);
@@ -445,6 +451,7 @@ export class RoomManager {
 			entry.unsubscribeMetrics();
 			entry.unsubscribeFightStats();
 			entry.unsubscribeFightSummary();
+			entry.unsubscribeDebugLogger();
 			// saveState is a getter returning the bound persist function — call it to flush
 			// any state not yet written by the 30s debounce.
 			entry.game.saveState();
@@ -651,6 +658,7 @@ export class RoomManager {
 		const unsubscribeMetrics = attachMetricsCollector(eventBus, game.ring, roomId);
 		const unsubscribeFightStats = attachFightStatsSubscriber(eventBus, this.db, this.log);
 		const unsubscribeFightSummary = attachFightSummaryWriter(eventBus, this.db, this.log);
+		const unsubscribeDebugLogger = attachDebugEventLogger(eventBus, game.ring, roomId);
 		this._attachGameAnalytics(roomId, game);
 		const entry: ActiveRoom = {
 			game,
@@ -660,6 +668,7 @@ export class RoomManager {
 			unsubscribeMetrics,
 			unsubscribeFightStats,
 			unsubscribeFightSummary,
+			unsubscribeDebugLogger,
 		};
 		this.active.set(roomId, entry);
 		roomsActive.set(this.active.size);
