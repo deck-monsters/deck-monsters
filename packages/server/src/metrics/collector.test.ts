@@ -18,7 +18,7 @@ function readTurnGapSampleCount(roomId: string): Promise<number> {
 	return turnGapMs.get().then((metric) =>
 		metric.values.find(
 			(value) =>
-				value.metricName.endsWith('_count') &&
+				(value.metricName ?? '').endsWith('_count') &&
 				value.labels?.room_id === roomId &&
 				!('le' in (value.labels ?? {}))
 		)?.value ?? 0
