@@ -13,6 +13,7 @@
  */
 import type { RoomEventBus, GameEvent } from '@deck-monsters/engine';
 import { createLogger, isDebugEnabled, isTraceEnabled } from './logger.js';
+import { extractRingAddContestant } from './ring-event-args.js';
 
 const log = createLogger('events');
 
@@ -213,8 +214,8 @@ export function attachDebugEventLogger(
 	// 'bossWillSpawn' fires 2 minutes before the boss appears.
 
 	const onAdd = (...args: unknown[]) => {
-		const data = args[0] as { contestant: { isBoss?: boolean; monster?: { givenName?: string }; character?: { name?: string }; userId?: string } };
-		const { contestant } = data;
+		const contestant = extractRingAddContestant(args);
+		if (!contestant) return;
 		log.debug(contestant.isBoss ? 'boss entered ring' : 'monster entered ring', {
 			roomId,
 			monster: contestant.monster?.givenName,
