@@ -1,21 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const createWSClientMock = vi.fn();
-const wsLinkMock = vi.fn();
-const httpBatchLinkMock = vi.fn();
-const splitLinkMock = vi.fn();
-const createClientMock = vi.fn();
+const mocks = vi.hoisted(() => ({
+  createWSClientMock: vi.fn(),
+  wsLinkMock: vi.fn(),
+  httpBatchLinkMock: vi.fn(),
+  splitLinkMock: vi.fn(),
+  createClientMock: vi.fn(),
+}));
 
 vi.mock('@trpc/client', () => ({
-  createWSClient: createWSClientMock,
-  wsLink: wsLinkMock,
-  httpBatchLink: httpBatchLinkMock,
-  splitLink: splitLinkMock,
+  createWSClient: mocks.createWSClientMock,
+  wsLink: mocks.wsLinkMock,
+  httpBatchLink: mocks.httpBatchLinkMock,
+  splitLink: mocks.splitLinkMock,
 }));
 
 vi.mock('@trpc/react-query', () => ({
   createTRPCReact: () => ({
-    createClient: createClientMock,
+    createClient: mocks.createClientMock,
   }),
 }));
 
@@ -23,20 +25,20 @@ import { createTRPCClient, reconnectWsClient, setTRPCToken } from './trpc.js';
 
 describe('lib/trpc', () => {
   beforeEach(() => {
-    createWSClientMock.mockReset();
-    wsLinkMock.mockReset();
-    httpBatchLinkMock.mockReset();
-    splitLinkMock.mockReset();
-    createClientMock.mockReset();
+    mocks.createWSClientMock.mockReset();
+    mocks.wsLinkMock.mockReset();
+    mocks.httpBatchLinkMock.mockReset();
+    mocks.splitLinkMock.mockReset();
+    mocks.createClientMock.mockReset();
     reconnectWsClient();
 
-    createWSClientMock.mockImplementation(() => ({
+    mocks.createWSClientMock.mockImplementation(() => ({
       close: vi.fn(),
     }));
-    wsLinkMock.mockReturnValue({ type: 'ws-link' });
-    httpBatchLinkMock.mockReturnValue({ type: 'http-link' });
-    splitLinkMock.mockImplementation((opts) => opts.true);
-    createClientMock.mockReturnValue({ ok: true });
+    mocks.wsLinkMock.mockReturnValue({ type: 'ws-link' });
+    mocks.httpBatchLinkMock.mockReturnValue({ type: 'http-link' });
+    mocks.splitLinkMock.mockImplementation((opts) => opts.true);
+    mocks.createClientMock.mockReturnValue({ ok: true });
     setTRPCToken(null);
   });
 
@@ -44,9 +46,9 @@ describe('lib/trpc', () => {
     setTRPCToken('token-one');
     createTRPCClient();
 
-    expect(createWSClientMock).toHaveBeenCalledTimes(1);
+    expect(mocks.createWSClientMock).toHaveBeenCalledTimes(1);
 
-    const firstClient = createWSClientMock.mock.results[0]?.value as { close: ReturnType<typeof vi.fn> };
+    const firstClient = mocks.createWSClientMock.mock.results[0]?.value as { close: ReturnType<typeof vi.fn> };
     reconnectWsClient();
 
     expect(firstClient.close).toHaveBeenCalledTimes(1);
@@ -54,8 +56,8 @@ describe('lib/trpc', () => {
     setTRPCToken('token-two');
     createTRPCClient();
 
-    expect(createWSClientMock).toHaveBeenCalledTimes(2);
-    const secondUrlFactory = createWSClientMock.mock.calls[1]?.[0]?.url as () => string;
+    expect(mocks.createWSClientMock).toHaveBeenCalledTimes(2);
+    const secondUrlFactory = mocks.createWSClientMock.mock.calls[1]?.[0]?.url as () => string;
     expect(secondUrlFactory()).toContain('token-two');
   });
 });
