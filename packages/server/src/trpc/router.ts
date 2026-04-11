@@ -369,7 +369,18 @@ export function createRouter(roomManager: RoomManager) {
 					requestId: input.requestId,
 				});
 				const eventBus = await roomManager.getEventBus(input.roomId);
-				eventBus.respondToPrompt(input.requestId, input.answer, ctx.userId);
+				const handled = eventBus.respondToPrompt(input.requestId, input.answer, ctx.userId);
+				if (!handled) {
+					const pendingPrompt = eventBus.getPendingPromptForUser(ctx.userId);
+					throw new TRPCError({
+						code: 'PRECONDITION_FAILED',
+						message: 'Prompt is no longer active. Please answer the latest prompt.',
+						cause: {
+							requestId: input.requestId,
+							pendingPromptRequestId: pendingPrompt?.requestId ?? null,
+						},
+					});
+				}
 				return { ok: true };
 			}),
 

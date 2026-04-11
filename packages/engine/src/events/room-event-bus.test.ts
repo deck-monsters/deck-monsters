@@ -11,7 +11,8 @@ describe('RoomEventBus prompt ownership validation', () => {
 		// Peek at the requestId from pendingPrompts (internal state)
 		const requestId = [...(bus as any).pendingPrompts.keys()][0] as string;
 
-		bus.respondToPrompt(requestId, 'blue', 'user-a');
+		const handled = bus.respondToPrompt(requestId, 'blue', 'user-a');
+		expect(handled).to.equal(true);
 
 		return promptPromise.then((answer) => {
 			expect(answer).to.equal('blue');
@@ -29,7 +30,8 @@ describe('RoomEventBus prompt ownership validation', () => {
 		const requestId = [...(bus as any).pendingPrompts.keys()][0] as string;
 
 		// Wrong caller — should be ignored
-		bus.respondToPrompt(requestId, 'red', 'user-b');
+		const handled = bus.respondToPrompt(requestId, 'red', 'user-b');
+		expect(handled).to.equal(false);
 
 		// Give a tick to let any spurious resolution happen
 		await new Promise(r => setTimeout(r, 20));
@@ -67,11 +69,18 @@ describe('RoomEventBus prompt ownership validation', () => {
 		const promptPromise = bus.sendPrompt('user-a', 'Q?', [], 5000);
 
 		const requestId = [...(bus as any).pendingPrompts.keys()][0] as string;
-		bus.respondToPrompt(requestId, 'yes');
+		const handled = bus.respondToPrompt(requestId, 'yes');
+		expect(handled).to.equal(true);
 
 		return promptPromise.then((answer) => {
 			expect(answer).to.equal('yes');
 		});
+	});
+
+	it('returns false when requestId is stale or unknown', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const handled = bus.respondToPrompt('missing-request-id', 'yes', 'user-a');
+		expect(handled).to.equal(false);
 	});
 });
 

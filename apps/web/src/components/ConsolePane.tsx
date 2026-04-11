@@ -85,13 +85,13 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
 
-  // Always undefined — the server delivers the last 100 events on connect and
-  // seenRef handles deduplication with DB history. Previously this was set from
-  // the history effect, but changing a subscription input restarts the WebSocket.
-  const subLastEventId: string | undefined = undefined;
+  // Resume cursor for reconnects. Updated only on errors so we don't restart
+  // the subscription on every event.
+  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
+  const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
 
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
@@ -104,7 +104,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
   // Fetch persistent console history from DB on mount
   const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
-  const { data: pendingPrompt } = trpc.game.pendingPrompt.useQuery(
+  const { data: pendingPrompt, refetch: refetchPendingPrompt } = trpc.game.pendingPrompt.useQuery(
     { roomId },
     { enabled: !!roomId },
   );
@@ -269,6 +269,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         // Keep-alive ping from server — no UI action needed
         if (event.type === 'heartbeat') return;
 
+        latestTrackedEventIdRef.current = tracked.id;
+
         if (seenRef.current.has(tracked.id)) return;
         seenRef.current.add(tracked.id);
 
@@ -373,6 +375,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           });
         }
         setReconnecting(true);
+        setSubLastEventId(latestTrackedEventIdRef.current);
       },
     }
   );
@@ -484,8 +487,17 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
     try {
       await respondToPrompt.mutateAsync({ roomId, requestId, answer });
-    } catch {
-      // Silent — the prompt is already visually resolved
+    } catch (err) {
+      addConsoleEvent({
+        id: `sys-${Date.now()}`,
+        type: 'system',
+        text: `! ${err instanceof Error ? err.message : 'Prompt is no longer active'}`,
+      });
+      // Recover latest pending prompt snapshot after stale requestId races.
+      const latest = await refetchPendingPrompt();
+      if (latest.data) {
+        upsertPendingPrompt(latest.data);
+      }
     } finally {
       inputRef.current?.focus();
     }

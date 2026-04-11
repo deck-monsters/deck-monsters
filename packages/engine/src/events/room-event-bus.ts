@@ -173,13 +173,17 @@ export class RoomEventBus {
 		}
 	}
 
-	respondToPrompt(requestId: string, answer: string, callerId?: string): void {
+	respondToPrompt(requestId: string, answer: string, callerId?: string): boolean {
 		const pending = this.pendingPrompts.get(requestId);
-		if (pending) {
-			if (callerId && pending.userId !== callerId) return;
-			clearTimeout(pending.timer);
-			this.pendingPrompts.delete(requestId);
-			pending.resolve(answer);
-		}
+		if (!pending) return false;
+		if (callerId && pending.userId !== callerId) return false;
+		clearTimeout(pending.timer);
+		this.pendingPrompts.delete(requestId);
+		pending.resolve(answer);
+		return true;
+	}
+
+	hasPendingPrompt(requestId: string): boolean {
+		return this.pendingPrompts.has(requestId);
 	}
 }

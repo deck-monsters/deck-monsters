@@ -599,7 +599,8 @@ export class Ring extends BaseClass {
 					.play(player, proposedTarget, ring, getAllActiveContestants())
 					.then(() => {
 						if (getAllActiveContestants().length > 1) {
-							return new Promise<void>(r => setTimeout(r, veryShortDelay())).then(() => next());
+							const waitMs = veryShortDelay();
+							return new Promise<void>(r => setTimeout(r, waitMs)).then(() => next());
 						}
 
 						return Promise.resolve().then(() => resolve(playerContestant));
@@ -644,7 +645,8 @@ export class Ring extends BaseClass {
 						activeContestants = allActiveContestants;
 					}
 
-					setTimeout(() => next(), shortDelay());
+					const waitMs = shortDelay();
+					setTimeout(() => next(), waitMs);
 				}
 			});
 
