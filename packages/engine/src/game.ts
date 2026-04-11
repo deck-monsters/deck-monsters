@@ -129,7 +129,17 @@ export class Game extends BaseClass {
 		const ringContestantRefs = this.ring.contestants
 			.filter(c => !c.isBoss)
 			.map(c => ({ userId: c.userId, stableId: c.monster.stableId }));
-		this.setOptions({ ringContestantRefs } as any);
+		// Avoid setOptions() here: it emits stateChange which would re-schedule another
+		// debounced save and create an unintended save loop.
+		if (ringContestantRefs.length > 0) {
+			this.optionsStore = {
+				...this.optionsStore,
+				ringContestantRefs,
+			};
+		} else {
+			const { ringContestantRefs: _omit, ...rest } = this.optionsStore as any;
+			this.optionsStore = rest;
+		}
 
 		const buffer = zlib.gzipSync(JSON.stringify(this));
 		const string = buffer.toString('base64');
