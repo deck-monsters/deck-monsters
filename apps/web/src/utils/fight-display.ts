@@ -15,22 +15,25 @@ export type FightSummaryLike = {
   participants: FightParticipantLike[];
 };
 
+/** Join a list of names with natural-language "and". */
 function nameList(names: string[]): string {
   if (names.length === 0) return '?';
   if (names.length === 1) return names[0]!;
-  if (names.length === 2) return `${names[0]} vs ${names[1]}`;
-  return `${names.slice(0, -1).join(', ')}, vs ${names[names.length - 1]}`;
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
 
-/** One-line title: e.g. "A vs B" or "A, B vs C, D" for multi-monster. */
+/**
+ * One-line title: "A vs B" for 1v1, "A vs B vs C" for multi-monster.
+ * Always uses the participants array when available (covers draws and multi-monster
+ * fights where winnerMonsterName / loserMonsterName are null).
+ */
 export function fightTitleOneLine(f: FightSummaryLike): string {
   const ps = f.participants ?? [];
-  if (ps.length <= 2 && f.winnerMonsterName && f.loserMonsterName) {
-    return `${f.winnerMonsterName} vs ${f.loserMonsterName}`;
+  if (ps.length > 0) {
+    return ps.map((p) => p.monsterName).join(' vs ');
   }
-  if (ps.length >= 3) {
-    return nameList(ps.map((p) => p.monsterName));
-  }
+  // Fallback for legacy rows that pre-date the participants column.
   return `${f.winnerMonsterName ?? '?'} vs ${f.loserMonsterName ?? '?'}`;
 }
 
