@@ -11,7 +11,8 @@ describe('RoomEventBus prompt ownership validation', () => {
 		// Peek at the requestId from pendingPrompts (internal state)
 		const requestId = [...(bus as any).pendingPrompts.keys()][0] as string;
 
-		bus.respondToPrompt(requestId, 'blue', 'user-a');
+		const handled = bus.respondToPrompt(requestId, 'blue', 'user-a');
+		expect(handled).to.equal(true);
 
 		return promptPromise.then((answer) => {
 			expect(answer).to.equal('blue');
@@ -29,7 +30,8 @@ describe('RoomEventBus prompt ownership validation', () => {
 		const requestId = [...(bus as any).pendingPrompts.keys()][0] as string;
 
 		// Wrong caller — should be ignored
-		bus.respondToPrompt(requestId, 'red', 'user-b');
+		const handled = bus.respondToPrompt(requestId, 'red', 'user-b');
+		expect(handled).to.equal(false);
 
 		// Give a tick to let any spurious resolution happen
 		await new Promise(r => setTimeout(r, 20));
@@ -67,11 +69,18 @@ describe('RoomEventBus prompt ownership validation', () => {
 		const promptPromise = bus.sendPrompt('user-a', 'Q?', [], 5000);
 
 		const requestId = [...(bus as any).pendingPrompts.keys()][0] as string;
-		bus.respondToPrompt(requestId, 'yes');
+		const handled = bus.respondToPrompt(requestId, 'yes');
+		expect(handled).to.equal(true);
 
 		return promptPromise.then((answer) => {
 			expect(answer).to.equal('yes');
 		});
+	});
+
+	it('returns false when requestId is stale or unknown', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const handled = bus.respondToPrompt('missing-request-id', 'yes', 'user-a');
+		expect(handled).to.equal(false);
 	});
 });
 
@@ -122,5 +131,29 @@ describe('RoomEventBus sendPrompt payload', () => {
 		const requestId = requestEvent.payload.requestId;
 		bus.cancelPrompt(requestId, 'user-a');
 		return p.then((a) => expect(a).to.equal('__cancelled__'));
+	});
+});
+
+describe('RoomEventBus pending prompt snapshots', () => {
+	it('returns pending prompt details for a specific user', async () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const p = bus.sendPrompt('user-a', 'Choose one', ['0', '1'], 90_000);
+
+		const pending = bus.getPendingPromptForUser('user-a');
+		expect(pending).to.deep.equal({
+			requestId: pending?.requestId,
+			question: 'Choose one',
+			choices: ['0', '1'],
+			timeoutSeconds: 90,
+		});
+		expect(pending?.requestId).to.be.a('string').and.not.empty;
+
+		bus.cancelPrompt(pending!.requestId, 'user-a');
+		await p;
+	});
+
+	it('returns null when the user has no pending prompts', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		expect(bus.getPendingPromptForUser('nobody')).to.equal(null);
 	});
 });

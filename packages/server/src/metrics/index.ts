@@ -70,6 +70,14 @@ export const battleRoundDurationMs = new Histogram({
 	registers: [registry],
 });
 
+export const turnGapMs = new Histogram({
+	name: 'dm_turn_gap_ms',
+	help: 'Elapsed time between consecutive card.played events within an encounter (ms)',
+	labelNames: ['room_id'] as const,
+	buckets: [250, 500, 1_000, 1_500, 2_000, 3_000, 5_000, 8_000],
+	registers: [registry],
+});
+
 // ── Battle event counters ──────────────────────────────────────────────────
 
 export const battlesStarted = new Counter({

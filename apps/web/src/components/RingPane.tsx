@@ -117,13 +117,13 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     nextBossSpawnAt: null,
     monsterCount: 0,
   });
-  // Always undefined — the server delivers the last 100 events on connect and
-  // seenRef handles deduplication with DB history. Previously this was set from
-  // the history effect, but changing a subscription input restarts the WebSocket,
-  // causing a burst of duplicate events mid-stream.
-  const subLastEventId: string | undefined = undefined;
+  // Resume cursor for reconnects. We keep this stable during normal streaming,
+  // and only update it on connection errors so we don't restart the subscription
+  // on every incoming event.
+  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const seenRef = useRef(new Set<string>());
+  const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
   const { handleHandshakeEvent } = useHandshake();
 
@@ -213,6 +213,8 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
         // Keep-alive ping from server — no UI action needed
         if (event.type === 'heartbeat') return;
 
+        latestTrackedEventIdRef.current = tracked.id;
+
         // ring.state is a state-sync signal — update timers but don't show in the feed
         if (event.type === 'ring.state') {
           const s = event.payload as unknown as TimerState;
@@ -234,6 +236,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
       onError() {
         setConnected(false);
         setReconnecting(true);
+        setSubLastEventId(latestTrackedEventIdRef.current);
       },
     }
   );

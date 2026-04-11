@@ -231,29 +231,32 @@ export function createRouter(roomManager: RoomManager) {
 				const isAdmin = role === 'owner';
 				const game = await roomManager.getGame(input.roomId);
 				const eventBus = await roomManager.getEventBus(input.roomId);
-				const action = game.handleCommand({ command: input.command });
-
-				if (!action) {
-					log.debug('command not recognized', { roomId: input.roomId, command: input.command });
-					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
-					return { ok: false, message: 'Command not recognized' };
-				}
 
 				// Prevent concurrent interactive flows for the same user+room.
 				// The engine is not designed for concurrent access — interleaved prompt
 				// flows corrupt game state and produce nonsensical UX.
 				const flowKey = `${input.roomId}:${ctx.userId}`;
 				if (activeFlows.has(flowKey)) {
+					const pendingPrompt = eventBus.getPendingPromptForUser(ctx.userId);
 					log.debug('command blocked — flow already in progress', {
 						roomId: input.roomId,
 						userId: ctx.userId,
 						command: input.command,
+						pendingPromptRequestId: pendingPrompt?.requestId,
 					});
 					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
 					return {
 						ok: false,
 						message: 'A command is already in progress — answer the current prompt first.',
+						pendingPrompt,
 					};
+				}
+				const action = game.handleCommand({ command: input.command });
+
+				if (!action) {
+					log.debug('command not recognized', { roomId: input.roomId, command: input.command });
+					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
+					return { ok: false, message: 'Command not recognized' };
 				}
 				activeFlows.add(flowKey);
 				log.debug('command dispatched', { roomId: input.roomId, userId: ctx.userId, isAdmin });
@@ -366,7 +369,18 @@ export function createRouter(roomManager: RoomManager) {
 					requestId: input.requestId,
 				});
 				const eventBus = await roomManager.getEventBus(input.roomId);
-				eventBus.respondToPrompt(input.requestId, input.answer, ctx.userId);
+				const handled = eventBus.respondToPrompt(input.requestId, input.answer, ctx.userId);
+				if (!handled) {
+					const pendingPrompt = eventBus.getPendingPromptForUser(ctx.userId);
+					throw new TRPCError({
+						code: 'PRECONDITION_FAILED',
+						message: 'Prompt is no longer active. Please answer the latest prompt.',
+						cause: {
+							requestId: input.requestId,
+							pendingPromptRequestId: pendingPrompt?.requestId ?? null,
+						},
+					});
+				}
 				return { ok: true };
 			}),
 
@@ -437,6 +451,14 @@ export function createRouter(roomManager: RoomManager) {
 			.input(z.object({ roomId: z.string().uuid() }))
 			.query(async ({ input, ctx }) => {
 				return roomManager.getConsoleHistory(ctx.userId, input.roomId);
+			}),
+
+		pendingPrompt: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const eventBus = await roomManager.getEventBus(input.roomId);
+				return eventBus.getPendingPromptForUser(ctx.userId);
 			}),
 
 		ringFeed: protectedProcedure

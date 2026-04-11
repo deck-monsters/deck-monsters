@@ -25,6 +25,13 @@ interface ActivePrompt {
   arrivedAt: number;
 }
 
+interface PendingPromptSnapshot {
+  requestId: string;
+  question: string;
+  choices: string[];
+  timeoutSeconds?: number;
+}
+
 interface ConsoleEvent {
   id: string;
   type: 'announce' | 'input' | 'system' | 'prompt' | 'tombstone';
@@ -52,6 +59,18 @@ interface ConsolePaneProps {
   onEvent?: (event: unknown) => void;
 }
 
+function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.requestId === 'string'
+    && typeof entry.question === 'string'
+    && Array.isArray(entry.choices)
+    && entry.choices.every(choice => typeof choice === 'string')
+    && (entry.timeoutSeconds === undefined || typeof entry.timeoutSeconds === 'number')
+  );
+}
+
 export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePaneProps) {
   const { user } = useAuth();
   const { handleHandshakeEvent } = useHandshake();
@@ -66,13 +85,13 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
 
-  // Always undefined — the server delivers the last 100 events on connect and
-  // seenRef handles deduplication with DB history. Previously this was set from
-  // the history effect, but changing a subscription input restarts the WebSocket.
-  const subLastEventId: string | undefined = undefined;
+  // Resume cursor for reconnects. Updated only on errors so we don't restart
+  // the subscription on every event.
+  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
+  const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
 
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
@@ -85,6 +104,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
   // Fetch persistent console history from DB on mount
   const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
+  const { data: pendingPrompt, refetch: refetchPendingPrompt } = trpc.game.pendingPrompt.useQuery(
+    { roomId },
+    { enabled: !!roomId },
+  );
 
   // Apply DB history once — pre-populate seenRef and seed stable subscription lastEventId.
   useEffect(() => {
@@ -180,6 +203,55 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     setConsoleEvents(prev => [...prev, ev]);
   }
 
+  const upsertPendingPrompt = useCallback((prompt: PendingPromptSnapshot) => {
+    setConsoleEvents(prev => {
+      const existingIndex = prev.findIndex(ev => ev.promptData?.requestId === prompt.requestId);
+      if (existingIndex === -1) {
+        return [
+          ...prev,
+          {
+            id: `prompt-resume-${prompt.requestId}`,
+            type: 'prompt',
+            text: prompt.question,
+            promptData: {
+              requestId: prompt.requestId,
+              question: prompt.question,
+              choices: prompt.choices,
+              timedOut: false,
+              cancelled: false,
+              selectedAnswer: null,
+              timeoutSeconds: prompt.timeoutSeconds,
+              arrivedAt: Date.now(),
+            },
+          },
+        ];
+      }
+
+      return prev.map((ev, index) => {
+        if (index !== existingIndex || !ev.promptData) return ev;
+        return {
+          ...ev,
+          text: prompt.question,
+          promptData: {
+            ...ev.promptData,
+            question: prompt.question,
+            choices: prompt.choices,
+            timedOut: false,
+            cancelled: false,
+            selectedAnswer: null,
+            timeoutSeconds: prompt.timeoutSeconds ?? ev.promptData.timeoutSeconds,
+          },
+        };
+      });
+    });
+    setActivePromptId(prompt.requestId);
+  }, []);
+
+  useEffect(() => {
+    if (!pendingPrompt) return;
+    upsertPendingPrompt(pendingPrompt);
+  }, [pendingPrompt, upsertPendingPrompt]);
+
   trpc.game.ringFeed.useSubscription(
     { roomId, lastEventId: subLastEventId },
     {
@@ -196,6 +268,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
         // Keep-alive ping from server — no UI action needed
         if (event.type === 'heartbeat') return;
+
+        latestTrackedEventIdRef.current = tracked.id;
 
         if (seenRef.current.has(tracked.id)) return;
         seenRef.current.add(tracked.id);
@@ -301,6 +375,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           });
         }
         setReconnecting(true);
+        setSubLastEventId(latestTrackedEventIdRef.current);
       },
     }
   );
@@ -368,11 +443,17 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
       if (!result.ok) {
         const msg = 'message' in result ? result.message : 'Command failed';
+        const blockedPrompt = 'pendingPrompt' in result && isPendingPromptSnapshot(result.pendingPrompt)
+          ? result.pendingPrompt
+          : null;
         addConsoleEvent({
           id: `sys-${Date.now()}`,
           type: 'system',
           text: `! ${msg}`,
         });
+        if (blockedPrompt) {
+          upsertPendingPrompt(blockedPrompt);
+        }
         // If blocked by an in-progress flow, offer a force-cancel shortcut
         if (typeof msg === 'string' && msg.includes('already in progress')) {
           addConsoleEvent({
@@ -406,8 +487,17 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
     try {
       await respondToPrompt.mutateAsync({ roomId, requestId, answer });
-    } catch {
-      // Silent — the prompt is already visually resolved
+    } catch (err) {
+      addConsoleEvent({
+        id: `sys-${Date.now()}`,
+        type: 'system',
+        text: `! ${err instanceof Error ? err.message : 'Prompt is no longer active'}`,
+      });
+      // Recover latest pending prompt snapshot after stale requestId races.
+      const latest = await refetchPendingPrompt();
+      if (latest.data) {
+        upsertPendingPrompt(latest.data);
+      }
     } finally {
       inputRef.current?.focus();
     }

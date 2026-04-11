@@ -25,6 +25,9 @@ export class RoomEventBus {
 		reject: (err: Error) => void;
 		timer: ReturnType<typeof setTimeout>;
 		userId: string;
+		question: string;
+		choices: string[];
+		timeoutMs: number;
 	}>();
 
 	constructor(public readonly roomId: string) {}
@@ -97,7 +100,15 @@ export class RoomEventBus {
 				reject(new Error(`Prompt timed out after ${timeoutMs}ms`));
 			}, timeoutMs);
 
-			this.pendingPrompts.set(requestId, { resolve, reject, timer, userId });
+			this.pendingPrompts.set(requestId, {
+				resolve,
+				reject,
+				timer,
+				userId,
+				question,
+				choices,
+				timeoutMs,
+			});
 
 			this.publish({
 				type: 'prompt.request',
@@ -107,6 +118,25 @@ export class RoomEventBus {
 				payload: { requestId, question, choices, timeoutSeconds: Math.round(timeoutMs / 1000) },
 			});
 		});
+	}
+
+	getPendingPromptForUser(userId: string): {
+		requestId: string;
+		question: string;
+		choices: string[];
+		timeoutSeconds: number;
+	} | null {
+		for (const [requestId, pending] of this.pendingPrompts) {
+			if (pending.userId === userId) {
+				return {
+					requestId,
+					question: pending.question,
+					choices: pending.choices,
+					timeoutSeconds: Math.round(pending.timeoutMs / 1000),
+				};
+			}
+		}
+		return null;
 	}
 
 	cancelAllUserPrompts(userId: string): void {
@@ -143,13 +173,13 @@ export class RoomEventBus {
 		}
 	}
 
-	respondToPrompt(requestId: string, answer: string, callerId?: string): void {
+	respondToPrompt(requestId: string, answer: string, callerId?: string): boolean {
 		const pending = this.pendingPrompts.get(requestId);
-		if (pending) {
-			if (callerId && pending.userId !== callerId) return;
-			clearTimeout(pending.timer);
-			this.pendingPrompts.delete(requestId);
-			pending.resolve(answer);
-		}
+		if (!pending) return false;
+		if (callerId && pending.userId !== callerId) return false;
+		clearTimeout(pending.timer);
+		this.pendingPrompts.delete(requestId);
+		pending.resolve(answer);
+		return true;
 	}
 }

@@ -1,9 +1,32 @@
-const VERY_SHORT_DELAY = 1000;
-const SHORT_DELAY = 1500;
-const MEDIUM_DELAY = 2000;
-const LONG_DELAY = 3000;
-
 export const ONE_MINUTE = 60000;
+
+type DelayKind = 'very_short' | 'short' | 'medium' | 'long';
+
+// Preserve existing behavior by default:
+// - very_short: 1000–2000ms (midpoint 1500)
+// - short:      1500–3000ms (midpoint 2250)
+// - medium:     2000–4000ms (midpoint 3000)
+// - long:       3000–6000ms (midpoint 4500)
+const DEFAULT_MIDPOINTS: Record<DelayKind, number> = {
+	very_short: 1500,
+	short: 2250,
+	medium: 3000,
+	long: 4500,
+};
+
+const MIDPOINT_ENV: Record<DelayKind, string> = {
+	very_short: 'DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS',
+	short: 'DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS',
+	medium: 'DECK_MONSTERS_MEDIUM_DELAY_MIDPOINT_MS',
+	long: 'DECK_MONSTERS_LONG_DELAY_MIDPOINT_MS',
+};
+
+const CAP_ENV: Record<DelayKind, string> = {
+	very_short: 'DECK_MONSTERS_VERY_SHORT_DELAY_CAP_MS',
+	short: 'DECK_MONSTERS_SHORT_DELAY_CAP_MS',
+	medium: 'DECK_MONSTERS_MEDIUM_DELAY_CAP_MS',
+	long: 'DECK_MONSTERS_LONG_DELAY_CAP_MS',
+};
 
 // When DECK_MONSTERS_SKIP_DELAYS=1 all delay functions return 0.  Set this in
 // test environments so fight tests complete in milliseconds instead of seconds.
@@ -11,19 +34,87 @@ export const ONE_MINUTE = 60000;
 // test-setup file that is evaluated before any spec file runs.
 const skip = (): boolean => !!process.env.DECK_MONSTERS_SKIP_DELAYS;
 
-// 1000–2000 ms — used between player turns in ring combat for natural pacing.
-// Same ±50% variance pattern as the other delays.
-export const veryShortDelay = (): number =>
-	skip() ? 0 : Math.ceil(Math.random() * VERY_SHORT_DELAY) + VERY_SHORT_DELAY;
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+	if (!value) return fallback;
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+	return parsed;
+};
 
-export const shortDelay = (): number =>
-	skip() ? 0 : Math.ceil(Math.random() * SHORT_DELAY) + SHORT_DELAY;
+const parseFloatWithDefault = (value: string | undefined, fallback: number): number => {
+	if (!value) return fallback;
+	const parsed = Number.parseFloat(value);
+	return Number.isFinite(parsed) ? parsed : fallback;
+};
 
-export const mediumDelay = (): number =>
-	skip() ? 0 : Math.ceil(Math.random() * MEDIUM_DELAY) + MEDIUM_DELAY;
+const getMidpoint = (kind: DelayKind): number =>
+	parsePositiveInt(process.env[MIDPOINT_ENV[kind]], DEFAULT_MIDPOINTS[kind]);
 
-export const longDelay = (): number =>
-	skip() ? 0 : Math.ceil(Math.random() * LONG_DELAY) + LONG_DELAY;
+const getCap = (kind: DelayKind): number | undefined => {
+	const value = process.env[CAP_ENV[kind]];
+	if (!value) return undefined;
+	const parsed = Number.parseInt(value, 10);
+	if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
+	return parsed;
+};
+
+const getRangeFromMidpoint = (midpoint: number): { min: number; max: number } => ({
+	min: Math.max(1, Math.round(midpoint * (2 / 3))),
+	max: Math.max(1, Math.round(midpoint * (4 / 3))),
+});
+
+const sampleInRange = (min: number, max: number): number => {
+	const span = max - min + 1;
+	return Math.floor(Math.random() * span) + min;
+};
+
+const applyRoundShaping = (delayMs: number, round: number): number => {
+	// Optional pacing controls (disabled by default):
+	// factor = 1 + step * (round - 1), clamped to [minFactor, maxFactor].
+	// Example: step=-0.08 speeds later rounds; step=+0.08 slows later rounds.
+	const step = parseFloatWithDefault(
+		process.env.DECK_MONSTERS_DELAY_ROUND_FACTOR_STEP,
+		0
+	);
+	if (step === 0 || round <= 1) return delayMs;
+
+	const minFactor = parseFloatWithDefault(
+		process.env.DECK_MONSTERS_DELAY_ROUND_MIN_FACTOR,
+		0.25
+	);
+	const maxFactor = parseFloatWithDefault(
+		process.env.DECK_MONSTERS_DELAY_ROUND_MAX_FACTOR,
+		2
+	);
+	const lower = Math.min(minFactor, maxFactor);
+	const upper = Math.max(minFactor, maxFactor);
+	const rawFactor = 1 + step * (round - 1);
+	const factor = Math.min(upper, Math.max(lower, rawFactor));
+	return Math.max(0, Math.round(delayMs * factor));
+};
+
+const delayFor = (kind: DelayKind, round = 1): number => {
+	if (skip()) return 0;
+	const midpoint = getMidpoint(kind);
+	const { min, max } = getRangeFromMidpoint(midpoint);
+	const sampled = sampleInRange(min, max);
+	const shaped = applyRoundShaping(sampled, round);
+	const cap = getCap(kind);
+	if (!cap) return shaped;
+	return Math.min(shaped, cap);
+};
+
+export const veryShortDelay = (round = 1): number =>
+	delayFor('very_short', round);
+
+export const shortDelay = (round = 1): number =>
+	delayFor('short', round);
+
+export const mediumDelay = (round = 1): number =>
+	delayFor('medium', round);
+
+export const longDelay = (round = 1): number =>
+	delayFor('long', round);
 
 const delayTimes = {
 	veryShortDelay,
