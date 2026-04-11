@@ -66,6 +66,51 @@ describe('game.ts', () => {
 		}
 	});
 
+	it('does not schedule recursive saves while persisting ring contestants', () => {
+		const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+		const game = new Game();
+		const saveStateStub = sinon.stub();
+
+		try {
+			game.ring.contestants = [
+				{
+					userId: 'user-1',
+					character: { givenName: 'Hero' },
+					monster: { stableId: 'monster-1', givenName: 'Fang' },
+				},
+				{
+					userId: 'boss-1',
+					isBoss: true,
+					character: { givenName: 'Boss' },
+					monster: { stableId: 'boss-monster', givenName: 'Big Boss' },
+				},
+			] as any;
+
+			game.saveState = saveStateStub;
+			game.emit('stateChange');
+
+			clock.tick(31_000);
+			expect(saveStateStub.calledOnce).to.equal(true);
+
+			// Advance another debounce window without new state changes: no extra save.
+			clock.tick(31_000);
+			expect(saveStateStub.calledOnce).to.equal(true);
+
+			const arg = saveStateStub.firstCall.args[0] as string;
+			const decoded = zlib.gunzipSync(Buffer.from(arg, 'base64')).toString();
+			const persisted = JSON.parse(decoded) as {
+				options?: { ringContestantRefs?: Array<{ userId: string; stableId: string }> };
+			};
+
+			expect(persisted.options?.ringContestantRefs).to.deep.equal([
+				{ userId: 'user-1', stableId: 'monster-1' },
+			]);
+		} finally {
+			game.saveState = undefined;
+			clock.restore();
+		}
+	});
+
 	it('can draw a card', () => {
 		const game = new Game();
 		const card = game.drawCard({ useless: 'option' });

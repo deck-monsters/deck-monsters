@@ -83,6 +83,28 @@ export class Game extends BaseClass {
 		this.initializeEvents();
 		loadHandlers();
 
+		// Re-populate ring contestants that were in the ring before the last server restart.
+		// The ring itself is not serialized (it's a runtime property), so we store minimal
+		// {userId, stableId} refs in game options and re-hydrate them here.
+		const ringContestantRefs = (options as any).ringContestantRefs as
+			Array<{ userId: string; stableId: string }> | undefined;
+		if (ringContestantRefs?.length) {
+			const characters = (this.options as any).characters as Record<string, any> | undefined;
+			const restored: import('./ring/index.js').Contestant[] = [];
+			for (const { userId, stableId } of ringContestantRefs) {
+				const character = characters?.[userId];
+				const monster = (character?.monsters as any[] | undefined)
+					?.find((m: any) => m.stableId === stableId);
+				if (character && monster) {
+					restored.push({ monster, character, userId });
+				}
+			}
+			if (restored.length > 0) {
+				this.ring.contestants = restored;
+				this.ring.startFightTimer();
+			}
+		}
+
 		this.emit('initialized');
 	}
 
@@ -103,6 +125,22 @@ export class Game extends BaseClass {
 	}
 
 	private persistState(): void {
+		// Snapshot non-boss contestant refs so the ring can be restored after a server restart.
+		const ringContestantRefs = this.ring.contestants
+			.filter(c => !c.isBoss)
+			.map(c => ({ userId: c.userId, stableId: c.monster.stableId }));
+		// Avoid setOptions() here: it emits stateChange which would re-schedule another
+		// debounced save and create an unintended save loop.
+		if (ringContestantRefs.length > 0) {
+			this.optionsStore = {
+				...this.optionsStore,
+				ringContestantRefs,
+			};
+		} else {
+			const { ringContestantRefs: _omit, ...rest } = this.optionsStore as any;
+			this.optionsStore = rest;
+		}
+
 		const buffer = zlib.gzipSync(JSON.stringify(this));
 		const string = buffer.toString('base64');
 

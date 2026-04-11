@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Virtuoso } from 'react-virtuoso';
+import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
 import { useHandshake } from '../hooks/useHandshake.js';
@@ -96,6 +98,12 @@ function LastFightFooter({
   );
 }
 
+// Virtuoso List component — renders as <ol> for semantic HTML.
+// Cast through any because Virtuoso's List type expects HTMLDivElement internally.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const FeedList = React.forwardRef<any, any>((props, ref) => <ol {...props} ref={ref} />);
+FeedList.displayName = 'FeedList';
+
 export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   const [events, setEvents] = useState<GameEvent[]>([]);
@@ -113,9 +121,8 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   // Passing a ref directly causes tRPC to restart the subscription on every state
   // change (HAR showed 6 subscriptions in 0.5s). Using useState keeps the input stable.
   const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
-  const feedRef = useRef<HTMLOListElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const seenRef = useRef(new Set<string>());
-  const autoFollowRef = useRef(true);
   const historyApplied = useRef(false);
   const { handleHandshakeEvent } = useHandshake();
 
@@ -173,48 +180,22 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     if (last?.id && !last.id.startsWith('hist:')) {
       setSubLastEventId(last.id);
     }
-    // Scroll to bottom after history loads so we start at the latest message
+    // Jump to bottom after history loads (instant, no animation)
     requestAnimationFrame(() => {
-      if (feedRef.current) {
-        feedRef.current.scrollTop = feedRef.current.scrollHeight;
-      }
+      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
     });
   }, [history]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      requestAnimationFrame(() => {
-        if (feedRef.current) {
-          feedRef.current.scrollTop = feedRef.current.scrollHeight;
-          autoFollowRef.current = true;
-          setIsAtBottom(true);
-        }
-      });
+      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      setIsAtBottom(true);
     }
   }, [isActive]);
 
-  // Keep the feed pinned during live fights unless the user scrolls up.
-  useEffect(() => {
-    if (autoFollowRef.current && feedRef.current) {
-      feedRef.current.scrollTop = feedRef.current.scrollHeight;
-      setIsAtBottom(true);
-    }
-  }, [events]);
-
-  const handleScroll = useCallback(() => {
-    const el = feedRef.current;
-    if (!el) return;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
-    autoFollowRef.current = atBottom;
-    setIsAtBottom(atBottom);
-  }, []);
-
   const scrollToBottom = useCallback(() => {
-    if (feedRef.current) {
-      feedRef.current.scrollTop = feedRef.current.scrollHeight;
-    }
-    autoFollowRef.current = true;
+    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
     setIsAtBottom(true);
   }, []);
 
@@ -290,28 +271,30 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
         </div>
       )}
 
-      <ol
-        ref={feedRef}
+      <Virtuoso
+        ref={virtuosoRef}
         className="event-feed"
         role="log"
         aria-live="polite"
         aria-label="Ring events"
-        onScroll={handleScroll}
         tabIndex={0}
-      >
-        {events.length === 0 && (
-          <li className="event event-system">
-            <p>Waiting for battle events…</p>
-          </li>
-        )}
-        {events.map((event) => {
+        data={events}
+        followOutput="smooth"
+        components={{
+          List: FeedList,
+          EmptyPlaceholder: () => (
+            <li className="event event-system">
+              <p>Waiting for battle events…</p>
+            </li>
+          ),
+        }}
+        itemContent={(_, event) => {
           const keyMeta = getKeyRingEventMeta(event);
           const iso = eventTimestampIso(event.timestamp);
           const hoverTitle = formatEventHoverTitle(event.timestamp);
           const showKeyColumn = ringKeyTimestampsEnabled && keyMeta;
           return (
             <li
-              key={event.id}
               className={`event ${eventClass(event.type)}`}
               data-event-at={iso}
               title={hoverTitle}
@@ -329,8 +312,9 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
               )}
             </li>
           );
-        })}
-      </ol>
+        }}
+        atBottomStateChange={(atBottom) => setIsAtBottom(atBottom)}
+      />
 
       {lastFight?.[0] && (
         <LastFightFooter

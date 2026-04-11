@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
+import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
 
 type TrackedEvent = { id: string; data: GameEvent };
@@ -66,7 +68,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
   // Stable subscription input — set once from history, never changed on re-renders.
   const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
-  const feedRef = useRef<HTMLOListElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
@@ -125,41 +127,22 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     if (last?.id && !last.id.startsWith('hist:')) {
       setSubLastEventId(last.id);
     }
-    // Scroll to bottom after history loads so we start at the latest message
+    // Jump to bottom after history loads (instant, no animation)
     requestAnimationFrame(() => {
-      if (feedRef.current) {
-        feedRef.current.scrollTop = feedRef.current.scrollHeight;
-      }
+      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
     });
   }, [history]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      requestAnimationFrame(() => {
-        if (feedRef.current) {
-          feedRef.current.scrollTop = feedRef.current.scrollHeight;
-          setIsAtBottom(true);
-        }
-      });
+      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      setIsAtBottom(true);
     }
   }, [isActive]);
 
-  // Auto-scroll when new events arrive
-  useEffect(() => {
-    if (isAtBottom && feedRef.current) {
-      feedRef.current.scrollTop = feedRef.current.scrollHeight;
-    }
-  }, [consoleEvents, isAtBottom]);
-
-  const handleScroll = useCallback(() => {
-    const el = feedRef.current;
-    if (!el) return;
-    setIsAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 50);
-  }, []);
-
   const scrollToBottom = useCallback(() => {
-    if (feedRef.current) feedRef.current.scrollTop = feedRef.current.scrollHeight;
+    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
     setIsAtBottom(true);
   }, []);
 
@@ -515,24 +498,29 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         )}
       </header>
 
-      <ol
-        ref={feedRef}
+      <Virtuoso
+        ref={virtuosoRef}
         className="event-feed"
         role="log"
         aria-live="polite"
         aria-label="Console messages"
-        onScroll={handleScroll}
         tabIndex={0}
-      >
-        {consoleEvents.length === 0 && (
-          <li className="event event-system">
-            <p>Type a command below to start. Try: <em>look at monsters</em></p>
-          </li>
-        )}
-        {consoleEvents.map((ev) => {
+        data={consoleEvents}
+        followOutput="smooth"
+        components={{
+          // Cast through any because Virtuoso's List type expects HTMLDivElement internally.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          List: React.forwardRef<any, any>((props, ref) => <ol {...props} ref={ref} />),
+          EmptyPlaceholder: () => (
+            <li className="event event-system">
+              <p>Type a command below to start. Try: <em>look at monsters</em></p>
+            </li>
+          ),
+        }}
+        itemContent={(_, ev) => {
           if (ev.type === 'prompt' && ev.promptData) {
             return (
-              <li key={ev.id} className="event">
+              <li className="event">
                 <InlineChoices
                   requestId={ev.promptData.requestId}
                   question={ev.promptData.question}
@@ -553,12 +541,13 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
             );
           }
           return (
-            <li key={ev.id} className={`event event-${ev.type}`}>
+            <li className={`event event-${ev.type}`}>
               <div className="event-text">{formatEventText(ev.text ?? '')}</div>
             </li>
           );
-        })}
-      </ol>
+        }}
+        atBottomStateChange={(atBottom) => setIsAtBottom(atBottom)}
+      />
 
       {!isAtBottom && (
         <button
