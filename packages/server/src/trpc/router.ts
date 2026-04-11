@@ -544,20 +544,25 @@ export function createRouter(roomManager: RoomManager) {
 						// prevents load-balancer idle timeouts (typically 30–60 s).
 						let heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 						await new Promise<void>((res) => {
-							resolve = () => {
-								if (heartbeatTimer !== null) { clearTimeout(heartbeatTimer); heartbeatTimer = null; }
+							let settled = false;
+							let onAbort: (() => void) | null = null;
+
+							const finish = () => {
+								if (settled) return;
+								settled = true;
+								resolve = null;
+								if (heartbeatTimer !== null) {
+									clearTimeout(heartbeatTimer);
+									heartbeatTimer = null;
+								}
+								if (onAbort) signal?.removeEventListener('abort', onAbort);
 								res();
 							};
-							heartbeatTimer = setTimeout(() => {
-								resolve = null;
-								heartbeatTimer = null;
-								res();
-							}, 20_000);
-							signal?.addEventListener('abort', () => {
-								resolve = null;
-								if (heartbeatTimer !== null) { clearTimeout(heartbeatTimer); heartbeatTimer = null; }
-								res();
-							}, { once: true });
+
+							onAbort = () => finish();
+							resolve = finish;
+							heartbeatTimer = setTimeout(finish, 20_000);
+							signal?.addEventListener('abort', onAbort, { once: true });
 						});
 
 						// If the queue is still empty after the wait it was a 20-s timeout —
