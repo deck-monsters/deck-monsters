@@ -58,6 +58,7 @@ describe('./cards/survival-knife.ts', () => {
 		const player = new Basilisk({ name: 'player' });
 		const target = new Basilisk({ name: 'target' });
 		(player as any).hp = 1;
+		const before = (player as any).hp;
 
 		const ring: any = {
 			contestants: [{ monster: player }, { monster: target }],
@@ -65,13 +66,28 @@ describe('./cards/survival-knife.ts', () => {
 		};
 
 		const healEffectSpy = sinon.spy((survivalKnife as any).healCard, 'effect');
+		const checkSuccessStub = sinon.stub(HealCard.prototype, 'checkSuccess').returns({
+			curseOfLoki: false,
+			healRoll: { result: 5 },
+			result: 5,
+			strokeOfLuck: false,
+			success: true,
+		});
 
 		return survivalKnife
 			.play(player, target, ring, ring.contestants)
 			.then(() => {
-				expect((player as any).hp).to.be.above(1);
+				expect((player as any).hp).to.be.above(before);
 				expect(healEffectSpy.callCount).to.equal(1);
 			})
-			.then(() => healEffectSpy.restore());
+			.then(() => {
+				healEffectSpy.restore();
+				checkSuccessStub.restore();
+			})
+			.catch((err: unknown) => {
+				healEffectSpy.restore();
+				checkSuccessStub.restore();
+				throw err;
+			});
 	});
 });
