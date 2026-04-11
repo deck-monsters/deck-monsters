@@ -10,13 +10,16 @@ import type { RoomEventBus } from '@deck-monsters/engine';
 import type { GameEvent } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { roomEvents } from './db/schema.js';
+import { createLogger, isTraceEnabled } from './logger.js';
+
+const log = createLogger('event-persister');
 
 const SUBSCRIBER_ID_PREFIX = 'db-persister';
 
 export function attachEventPersister(
 	eventBus: RoomEventBus,
 	db: Db,
-	log: (err: unknown) => void = () => {}
+	onError: (err: unknown) => void = () => {}
 ): () => void {
 	const subscriberId = `${SUBSCRIBER_ID_PREFIX}:${eventBus.roomId}`;
 
@@ -27,6 +30,14 @@ export function attachEventPersister(
 	return eventBus.subscribe(subscriberId, {
 		deliver(event: GameEvent) {
 			if (EPHEMERAL_TYPES.has(event.type)) return;
+			if (isTraceEnabled) {
+				log.trace('persisting event', {
+					roomId: event.roomId,
+					type: event.type,
+					scope: event.scope,
+					eventId: event.id,
+				});
+			}
 			db.insert(roomEvents)
 				.values({
 					roomId: event.roomId,
@@ -38,7 +49,7 @@ export function attachEventPersister(
 					eventId: event.id,
 				})
 				.onConflictDoNothing()
-				.catch((err: unknown) => log(err));
+				.catch((err: unknown) => onError(err));
 		},
 	});
 }

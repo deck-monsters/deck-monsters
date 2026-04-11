@@ -7,6 +7,9 @@ import { sql } from 'drizzle-orm';
 import type { RoomEventBus, GameEvent } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { roomMonsterStats, roomPlayerStats } from './db/schema.js';
+import { createLogger } from './logger.js';
+
+const log = createLogger('fight-stats');
 
 type Participant = {
 	monsterId: string;
@@ -70,6 +73,8 @@ async function handleFightResolved(db: Db, event: GameEvent): Promise<void> {
 	};
 	const participants = payload.participants;
 	if (!participants?.length) return;
+
+	log.debug('updating fight stats', { roomId, participantCount: participants.length });
 
 	for (const p of participants) {
 		const { wins, losses, draws } = outcomeToPlayerDelta(p.outcome);
@@ -137,6 +142,8 @@ async function handleXpCoinsOnly(db: Db, event: GameEvent): Promise<void> {
 	const coinsGained = payload.coinsGained ?? 0;
 	const userId = payload.contestant?.userId;
 	if (coinsGained <= 0 || !userId) return;
+
+	log.trace('updating coin stats from ring.xp', { roomId: event.roomId, userId, coinsGained });
 
 	await db
 		.insert(roomPlayerStats)

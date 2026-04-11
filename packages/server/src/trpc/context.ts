@@ -1,5 +1,8 @@
 import type { CreateFastifyContextOptions } from '@trpc/server/adapters/fastify';
 import { jwtVerify, createRemoteJWKSet } from 'jose';
+import { createLogger } from '../logger.js';
+
+const log = createLogger('auth');
 
 export interface Context {
 	userId: string | null;
@@ -59,17 +62,26 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 		return null;
 	})();
 
-	const rawToken = authHeader?.startsWith('Bearer ')
-		? authHeader.slice(7)
+	const tokenSource = authHeader?.startsWith('Bearer ')
+		? 'bearer-header'
+		: queryToken
+			? 'query-param'
+			: null;
+	const rawToken = tokenSource === 'bearer-header'
+		? authHeader!.slice(7)
 		: queryToken;
 
 	if (!rawToken) {
+		log.trace('no token present, anonymous request', { serviceTokenValid });
 		return { userId: null, serviceTokenValid };
 	}
+
+	log.debug('verifying JWT', { source: tokenSource });
 
 	try {
 		const keySet = getJWKS();
 		if (!keySet) {
+			log.debug('SUPABASE_URL not configured — skipping JWT verification');
 			throw new Error('SUPABASE_URL is not configured');
 		}
 
@@ -83,10 +95,13 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 			clockTolerance: 60,
 		});
 		const sub = payload.sub;
+		const userId = typeof sub === 'string' ? sub : null;
 
-		return { userId: typeof sub === 'string' ? sub : null, serviceTokenValid };
+		log.debug('JWT verified', { userId, source: tokenSource });
+		return { userId, serviceTokenValid };
 	} catch (err) {
-		console.error('[auth] JWT verification failed:', err instanceof Error ? err.message : err);
+		const message = err instanceof Error ? err.message : String(err);
+		log.warn('JWT verification failed', { source: tokenSource, error: message });
 		return { userId: null, serviceTokenValid };
 	}
 }

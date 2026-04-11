@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
 import { eq, and, count, gte, desc } from 'drizzle-orm';
+import { createLogger } from './logger.js';
+
+const log = createLogger('room-manager');
 
 import {
 	Game,
@@ -143,6 +146,8 @@ export class RoomManager {
 		const roomId = randomUUID();
 		const inviteCode = generateInviteCode();
 
+		log.debug('creating room', { roomId, name, ownerId });
+
 		await this.db.insert(rooms).values({
 			id: roomId,
 			name,
@@ -179,6 +184,7 @@ export class RoomManager {
 		roomsCreated.inc();
 		roomsActive.set(this.active.size);
 
+		log.info('room created', { roomId, name, ownerId, inviteCode });
 		return { roomId, inviteCode };
 	}
 
@@ -242,6 +248,8 @@ export class RoomManager {
 			throw new TRPCError({ code: 'FORBIDDEN', message: 'Only the room owner can delete it' });
 		}
 
+		log.info('deleting room', { roomId, requestedBy: userId, wasActive: this.active.has(roomId) });
+
 		// Remove from memory first — no state flush needed since the DB row is being deleted.
 		const activeEntry = this.active.get(roomId);
 		if (activeEntry) {
@@ -255,6 +263,7 @@ export class RoomManager {
 
 		// Cascade deletes room_members and room_events.
 		await this.db.delete(rooms).where(eq(rooms.id, roomId));
+		log.debug('room deleted from DB', { roomId });
 	}
 
 	async listRoomsForUser(userId: string): Promise<Array<{ roomId: string; name: string; role: string }>> {
@@ -430,6 +439,7 @@ export class RoomManager {
 	async unloadRoom(roomId: string): Promise<void> {
 		const entry = this.active.get(roomId);
 		if (entry) {
+			log.debug('unloading room', { roomId, idleMs: Date.now() - entry.lastActivityAt });
 			// Stop persisting events for this room.
 			entry.unsubscribePersister();
 			entry.unsubscribeMetrics();
@@ -454,6 +464,11 @@ export class RoomManager {
 				promises.push(this.unloadRoom(roomId));
 			}
 		}
+		log.debug('idle room sweep', {
+			activeRooms: this.active.size,
+			sweeping: promises.length,
+			idleThresholdMs,
+		});
 		await Promise.all(promises);
 	}
 
@@ -541,11 +556,18 @@ export class RoomManager {
 
 	private _getOrLoad(roomId: string): Promise<ActiveRoom> {
 		const cached = this.active.get(roomId);
-		if (cached) return Promise.resolve(cached);
+		if (cached) {
+			log.trace('room cache hit', { roomId });
+			return Promise.resolve(cached);
+		}
 
 		const inflight = this.loading.get(roomId);
-		if (inflight) return inflight;
+		if (inflight) {
+			log.trace('room load already in flight, joining', { roomId });
+			return inflight;
+		}
 
+		log.debug('room not in cache, loading from DB', { roomId });
 		const promise = this._loadRoom(roomId).finally(() => {
 			this.loading.delete(roomId);
 		});
@@ -568,6 +590,10 @@ export class RoomManager {
 				failedHydrators,
 				message: 'Some hydrators are still stubs — card hydration may be broken.',
 			});
+			log.warn('hydrator stubs detected — card hydration may be broken', {
+				roomId,
+				failedHydrators,
+			});
 		}
 
 		// Re-check the cache in case it was populated while we were waiting
@@ -584,6 +610,9 @@ export class RoomManager {
 			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
 		}
 
+		const hasBlob = !!rows[0].stateBlob;
+		log.debug('loading room from DB', { roomId, hasStateBlob: hasBlob });
+
 		const stateStore = new PostgresStateStore(this.db);
 		const roomLog = this._makeRoomLogger(roomId);
 		let game: Game;
@@ -592,10 +621,16 @@ export class RoomManager {
 			try {
 				game = this.deps.restoreGame(rows[0].stateBlob, roomLog);
 				(game.options as Record<string, unknown>).roomId = roomId;
+				log.debug('room restored from state blob', { roomId });
 			} catch (err) {
 				// Hydration failed — quarantine the bad blob so it can be inspected,
 				// then start a fresh game so the room is usable again immediately.
 				roomHydrationFailures.inc({ room_id: roomId });
+				const message = err instanceof Error ? err.message : String(err);
+				log.error('room hydration failed, quarantining blob and starting fresh', {
+					roomId,
+					error: message,
+				});
 				this.log(err);
 				await this.db.update(rooms).set({
 					stateBlob: null,
@@ -605,6 +640,7 @@ export class RoomManager {
 				game = new this.deps.Game({ roomId }, roomLog);
 			}
 		} else {
+			log.debug('no state blob found, starting fresh game', { roomId });
 			game = new this.deps.Game({ roomId }, roomLog);
 		}
 
@@ -627,6 +663,7 @@ export class RoomManager {
 		};
 		this.active.set(roomId, entry);
 		roomsActive.set(this.active.size);
+		log.info('room loaded and active', { roomId, restored: hasBlob, activeRooms: this.active.size });
 		return entry;
 	}
 }
