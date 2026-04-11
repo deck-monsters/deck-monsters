@@ -419,7 +419,7 @@ export function createRouter(roomManager: RoomManager) {
 				);
 
 				return monsters
-					.map((monster: any) => ({
+					.map((monster: { givenName?: unknown; dead?: unknown }) => ({
 						name: String(monster?.givenName ?? '').trim(),
 						dead: Boolean(monster?.dead),
 						inRing: inRing.has(monster),
@@ -441,7 +441,7 @@ export function createRouter(roomManager: RoomManager) {
 				);
 
 				return monsters
-					.map((monster: any) => ({
+					.map((monster: { givenName?: unknown; dead?: unknown }) => ({
 						name: String(monster?.givenName ?? '').trim(),
 						dead: Boolean(monster?.dead),
 						inRing: inRing.has(monster),
