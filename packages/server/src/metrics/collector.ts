@@ -28,6 +28,7 @@ import {
 	monstersInRing,
 	promptTimeouts,
 } from './index.js';
+import { extractRingAddContestant } from '../ring-event-args.js';
 
 // The ring countdown fires FIGHT_DELAY ms before combat starts.
 // We record the countdown timestamp and add this offset to get the
@@ -36,8 +37,8 @@ const FIGHT_DELAY_MS = 60_000;
 
 // Duck-typed interface — only the EventEmitter methods we actually use.
 interface RingLike {
-	on(event: 'add', listener: (data: { contestant: { isBoss?: boolean } }) => void): unknown;
-	off(event: 'add', listener: (data: { contestant: { isBoss?: boolean } }) => void): unknown;
+	on(event: 'add', listener: (...args: unknown[]) => void): unknown;
+	off(event: 'add', listener: (...args: unknown[]) => void): unknown;
 }
 
 type FightContestant = {
@@ -146,8 +147,9 @@ export function attachMetricsCollector(
 	// Boss spawns: detected via the ring's internal EventEmitter since bosses
 	// don't have a separate external event. ring.emit('add', { contestant })
 	// fires for every monster added including bosses.
-	const onRingAdd = (data: { contestant: { isBoss?: boolean } }) => {
-		if (data.contestant.isBoss) {
+	const onRingAdd = (...args: unknown[]) => {
+		const contestant = extractRingAddContestant(args);
+		if (contestant?.isBoss) {
 			bossSpawns.inc({ room_id: roomId });
 		}
 	};
