@@ -498,7 +498,7 @@ export function createRouter(roomManager: RoomManager) {
 						}
 					}
 				} else {
-					const recent = eventBus.getRecentEvents(20);
+					const recent = eventBus.getRecentEvents(100);
 					for (const event of recent) {
 						if (
 							event.scope === 'public' ||
@@ -539,10 +539,42 @@ export function createRouter(roomManager: RoomManager) {
 							yield tracked(event.id, event);
 						}
 
+						// Wait for an event or 20 s, whichever comes first.
+						// The 20-second timeout sends a keep-alive heartbeat frame that
+						// prevents load-balancer idle timeouts (typically 30–60 s).
+						let heartbeatTimer: ReturnType<typeof setTimeout> | null = null;
 						await new Promise<void>((res) => {
-							resolve = res;
-							signal?.addEventListener('abort', () => res(), { once: true });
+							resolve = () => {
+								if (heartbeatTimer !== null) { clearTimeout(heartbeatTimer); heartbeatTimer = null; }
+								res();
+							};
+							heartbeatTimer = setTimeout(() => {
+								resolve = null;
+								heartbeatTimer = null;
+								res();
+							}, 20_000);
+							signal?.addEventListener('abort', () => {
+								resolve = null;
+								if (heartbeatTimer !== null) { clearTimeout(heartbeatTimer); heartbeatTimer = null; }
+								res();
+							}, { once: true });
 						});
+
+						// If the queue is still empty after the wait it was a 20-s timeout —
+						// yield a private heartbeat frame so the TCP/WS connection stays alive.
+						if (queue.length === 0 && !signal?.aborted) {
+							const hbId = `heartbeat-${Date.now()}-${ctx.userId}`;
+							yield tracked(hbId, {
+								id: hbId,
+								roomId: input.roomId,
+								timestamp: Date.now(),
+								type: 'heartbeat' as EventType,
+								scope: 'private' as EventScope,
+								targetUserId: ctx.userId,
+								text: '',
+								payload: {},
+							});
+						}
 					}
 				} finally {
 					unsubscribe();

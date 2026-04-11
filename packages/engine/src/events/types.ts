@@ -20,7 +20,8 @@ export type EventType =
 	| 'prompt.cancel'
 	| 'quick_actions'
 	| 'system'
-	| 'handshake';
+	| 'handshake'
+	| 'heartbeat';
 
 export type EventScope = 'public' | 'private';
 
