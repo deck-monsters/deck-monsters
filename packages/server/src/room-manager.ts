@@ -245,6 +245,7 @@ export class RoomManager {
 		// Remove from memory first — no state flush needed since the DB row is being deleted.
 		const activeEntry = this.active.get(roomId);
 		if (activeEntry) {
+			activeEntry.unsubscribePersister();
 			activeEntry.unsubscribeMetrics();
 			activeEntry.unsubscribeFightStats();
 			activeEntry.unsubscribeFightSummary();
