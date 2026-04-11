@@ -42,4 +42,28 @@ describe('useCommandAutocomplete', () => {
       expect(equip.insertValue).not.toContain(']');
     }
   });
+
+  it('suggests monster-name command variants for send/revive placeholders', () => {
+    const { result } = renderHook(() => useCommandAutocomplete('send e', true, {
+      monsterNames: ['Elm', 'Westley'],
+      sendableMonsterNames: ['Elm'],
+      deadMonsterNames: ['Westley'],
+    }));
+    const labels = result.current.map(s => s.label.toLowerCase());
+    const inserts = result.current.map(s => s.insertValue.toLowerCase());
+
+    expect(labels).toContain('send elm to the ring');
+    expect(inserts).toContain('send elm to the ring');
+  });
+
+  it('suggests revive commands only when a dead monster name is available', () => {
+    const { result } = renderHook(() => useCommandAutocomplete('revive', true, {
+      monsterNames: ['Elm', 'Westley'],
+      sendableMonsterNames: ['Elm'],
+      deadMonsterNames: ['Westley'],
+    }));
+    const labels = result.current.map(s => s.label.toLowerCase());
+    expect(labels).toContain('revive westley');
+    expect(labels).not.toContain('revive elm');
+  });
 });

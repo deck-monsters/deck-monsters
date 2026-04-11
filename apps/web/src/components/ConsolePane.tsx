@@ -34,6 +34,12 @@ interface QuickAction {
   command: string;
 }
 
+interface MonsterAutocompleteRow {
+  name: string;
+  dead: boolean;
+  inRing: boolean;
+}
+
 interface ConsolePaneProps {
   roomId: string;
   isActive: boolean;
@@ -171,7 +177,20 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     setIsAtBottom(true);
   }, []);
 
-  const suggestions = useCommandAutocomplete(inputValue, !activePromptId && !inputLocked);
+  const { data: myMonsters = [] } = trpc.game.myMonsters.useQuery(
+    { roomId },
+    { enabled: !!roomId },
+  );
+  const monsterRows = myMonsters as MonsterAutocompleteRow[];
+  const suggestions = useCommandAutocomplete(
+    inputValue,
+    !activePromptId && !inputLocked,
+    {
+      monsterNames: monsterRows.map((m) => m.name),
+      deadMonsterNames: monsterRows.filter((m) => m.dead).map((m) => m.name),
+      sendableMonsterNames: monsterRows.filter((m) => !m.dead && !m.inRing).map((m) => m.name),
+    }
+  );
 
   const sendCommand = trpc.game.command.useMutation();
   const respondToPrompt = trpc.game.respondToPrompt.useMutation();
