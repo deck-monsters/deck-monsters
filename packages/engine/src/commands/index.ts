@@ -121,7 +121,7 @@ export function registerHandler(
 
 let handlersLoaded = false;
 
-export function 	loadHandlers(): void {
+export function loadHandlers(): void {
 	if (handlersLoaded) return;
 	handlersLoaded = true;
 	preCharacterHandlers.push(helpHandler);

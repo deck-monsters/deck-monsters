@@ -88,6 +88,29 @@ See [CLAUDE.md](CLAUDE.md) for the full action method list and deeper architectu
 pnpm install
 ```
 
+### One-command local bootstrap (Supabase + env + test user)
+
+```bash
+pnpm setup:local
+```
+
+This script now bootstraps the full local environment by:
+- installing workspace dependencies
+- ensuring a working container runtime (Docker recommended; Podman fallback supported)
+- starting/resetting local Supabase
+- writing `.env.local`, `packages/server/.env.local`, and `apps/web/.env.local`
+- creating a reusable local auth test user (default: `localtester@example.com`)
+
+Common options:
+
+```bash
+bash scripts/setup-local.sh --runtime docker
+bash scripts/setup-local.sh --runtime podman
+bash scripts/setup-local.sh --skip-seed-user
+bash scripts/setup-local.sh --seed-user-email you@example.com --seed-user-password 'strong-password'
+bash scripts/setup-local.sh --dry-run
+```
+
 ### Test
 
 ```bash

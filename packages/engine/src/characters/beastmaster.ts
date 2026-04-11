@@ -432,7 +432,7 @@ class Beastmaster extends BaseCharacter {
 				if (monster.cards.length < monster.cardSlots) {
 					return Promise.reject(
 						channel({
-							announce: 'Only an evil master would send their monster into battle with enough cards.',
+							announce: 'Only an evil master would send their monster into battle without enough cards.',
 						}),
 					);
 				}

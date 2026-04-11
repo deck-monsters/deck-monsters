@@ -79,6 +79,8 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 			audience: 'authenticated',
 			// Verify the issuer so tokens from other Supabase projects are rejected.
 			issuer: `${process.env['SUPABASE_URL']}/auth/v1`,
+			// Allow minor clock skew between API host and auth provider.
+			clockTolerance: 60,
 		});
 		const sub = payload.sub;
 

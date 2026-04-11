@@ -26,6 +26,13 @@ export function setTRPCToken(token: string | null): void {
   // errors when onAuthStateChange fired multiple times during the OAuth flow.
 }
 
+export function reconnectWsClient(): void {
+  if (wsClient) {
+    wsClient.close();
+    wsClient = null;
+  }
+}
+
 function getServerUrl(): string {
   return import.meta.env['VITE_SERVER_URL'] as string ?? '';
 }

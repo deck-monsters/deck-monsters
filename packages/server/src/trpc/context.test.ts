@@ -81,14 +81,19 @@ describe('trpc/context.ts', () => {
 		}
 	});
 
-	async function signJwt(sub: string): Promise<string> {
+	async function signJwt(
+		sub: string,
+		options?: { issuedAt?: number; expiresInSeconds?: number },
+	): Promise<string> {
+		const issuedAt = options?.issuedAt ?? Math.floor(Date.now() / 1000);
+		const expiresInSeconds = options?.expiresInSeconds ?? 3600;
 		return new SignJWT({ sub })
 			.setProtectedHeader({ alg: 'RS256', kid: 'test-key' })
 			.setAudience('authenticated')
 			// Matches the issuer expected by createContext: `${SUPABASE_URL}/auth/v1`
 			.setIssuer('https://test.supabase.co/auth/v1')
-			.setIssuedAt()
-			.setExpirationTime('1h')
+			.setIssuedAt(issuedAt)
+			.setExpirationTime(issuedAt + expiresInSeconds)
 			.sign(privateKey);
 	}
 
@@ -138,6 +143,15 @@ describe('trpc/context.ts', () => {
 				makeCtxOpts(makeReq({ authorization: 'Bearer not.a.valid.jwt' }))
 			);
 			expect(ctx.userId).to.be.null;
+		});
+
+		it('accepts a token slightly past exp when within clock tolerance', async () => {
+			const now = Math.floor(Date.now() / 1000);
+			const token = await signJwt('user-skew', { issuedAt: now - 90, expiresInSeconds: 70 });
+			const ctx = await createContext(
+				makeCtxOpts(makeReq({ authorization: `Bearer ${token}` }))
+			);
+			expect(ctx.userId).to.equal('user-skew');
 		});
 
 		it('returns null userId when SUPABASE_URL is not configured', async () => {
