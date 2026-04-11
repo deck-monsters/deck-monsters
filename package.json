@@ -30,7 +30,8 @@
     "lint": "turbo run lint",
     "test:watch": "cd packages/engine && npm run test:watch",
     "test:coverage": "cd packages/engine && npm run test:coverage",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "setup:local": "bash scripts/setup-local.sh"
   },
   "repository": {
     "type": "git",
