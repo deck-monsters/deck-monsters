@@ -1,7 +1,7 @@
-const VERY_SHORT_DELAY = 250;
-const SHORT_DELAY = 1000;
-const MEDIUM_DELAY = 1600;
-const LONG_DELAY = 2200;
+const VERY_SHORT_DELAY = 1000;
+const SHORT_DELAY = 1500;
+const MEDIUM_DELAY = 2000;
+const LONG_DELAY = 3000;
 
 export const ONE_MINUTE = 60000;
 
@@ -11,7 +11,7 @@ export const ONE_MINUTE = 60000;
 // test-setup file that is evaluated before any spec file runs.
 const skip = (): boolean => !!process.env.DECK_MONSTERS_SKIP_DELAYS;
 
-// 150–300 ms — used between player turns in ring combat for natural pacing.
+// 1000–2000 ms — used between player turns in ring combat for natural pacing.
 // Same ±50% variance pattern as the other delays.
 export const veryShortDelay = (): number =>
 	skip() ? 0 : Math.ceil(Math.random() * VERY_SHORT_DELAY) + VERY_SHORT_DELAY;

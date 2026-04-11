@@ -117,10 +117,11 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     nextBossSpawnAt: null,
     monsterCount: 0,
   });
-  // Stable subscription input — set once from history, never changed on re-renders.
-  // Passing a ref directly causes tRPC to restart the subscription on every state
-  // change (HAR showed 6 subscriptions in 0.5s). Using useState keeps the input stable.
-  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
+  // Always undefined — the server delivers the last 100 events on connect and
+  // seenRef handles deduplication with DB history. Previously this was set from
+  // the history effect, but changing a subscription input restarts the WebSocket,
+  // causing a burst of duplicate events mid-stream.
+  const subLastEventId: string | undefined = undefined;
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
@@ -174,12 +175,6 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
       return merged;
     });
 
-    const last = dedupedHistory[dedupedHistory.length - 1];
-    // Only use event UUIDs (not the hist:N fallback) as lastEventId — the
-    // subscription's getEventsSince only understands in-memory UUIDs.
-    if (last?.id && !last.id.startsWith('hist:')) {
-      setSubLastEventId(last.id);
-    }
     // Jump to bottom after history loads (instant, no animation)
     requestAnimationFrame(() => {
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
@@ -214,6 +209,9 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
           if (hs.ringState) setTimerState(hs.ringState as TimerState);
           return;
         }
+
+        // Keep-alive ping from server — no UI action needed
+        if (event.type === 'heartbeat') return;
 
         // ring.state is a state-sync signal — update timers but don't show in the feed
         if (event.type === 'ring.state') {

@@ -52,6 +52,16 @@ export class Ring extends BaseClass {
 	/** Epoch ms when the next fight will start, or null if no fight timer is active. */
 	nextFightAt: number | null = null;
 
+	/**
+	 * Stub satisfying legacy card code that calls `ring.channelManager.sendMessages()`.
+	 * In the TypeScript connector all messaging goes through the eventBus; this shim
+	 * prevents crashes in cards like Berserk and Flee that call it unconditionally.
+	 */
+	readonly channelManager = {
+		sendMessages: (): Promise<void> => Promise.resolve(),
+		queueMessage: (): Promise<void> => Promise.resolve(),
+	};
+
 	constructor(
 		eventBus: RoomEventBus,
 		{ spawnBosses = true, ...options }: Record<string, any> = {},

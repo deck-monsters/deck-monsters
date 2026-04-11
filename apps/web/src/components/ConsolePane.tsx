@@ -66,8 +66,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
 
-  // Stable subscription input — set once from history, never changed on re-renders.
-  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
+  // Always undefined — the server delivers the last 100 events on connect and
+  // seenRef handles deduplication with DB history. Previously this was set from
+  // the history effect, but changing a subscription input restarts the WebSocket.
+  const subLastEventId: string | undefined = undefined;
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
@@ -122,10 +124,6 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         }
         return merged;
       });
-    }
-    const last = dedupedHistory[dedupedHistory.length - 1];
-    if (last?.id && !last.id.startsWith('hist:')) {
-      setSubLastEventId(last.id);
     }
     // Jump to bottom after history loads (instant, no animation)
     requestAnimationFrame(() => {
@@ -195,6 +193,9 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           setReconnecting(false);
           return;
         }
+
+        // Keep-alive ping from server — no UI action needed
+        if (event.type === 'heartbeat') return;
 
         if (seenRef.current.has(tracked.id)) return;
         seenRef.current.add(tracked.id);
