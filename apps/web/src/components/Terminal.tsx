@@ -16,9 +16,6 @@ export default function Terminal({ roomId }: TerminalProps) {
   const [ringWidthFraction, setRingWidthFraction] = useState(0.5);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Track tab scroll positions so they're preserved on tab switch
-  const scrollPosRef = useRef<Record<TabId, number>>({ ring: 0, console: 0 });
-
   // Detect layout breakpoint
   useEffect(() => {
     const observer = new ResizeObserver(entries => {
