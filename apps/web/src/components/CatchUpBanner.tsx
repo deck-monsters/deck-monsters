@@ -1,9 +1,14 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { trpc } from '../lib/trpc.js';
 
 const THIRTY_MIN_MS = 30 * 60 * 1000;
+const AUTO_CLOSE_MS = 30_000;
 
 export default function CatchUpBanner({ roomId }: { roomId: string }) {
+  const [dismissed, setDismissed] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
+
   const { data: room } = trpc.room.info.useQuery({ roomId });
   const lastSeen = room?.lastSeenAt ? new Date(room.lastSeenAt as string) : null;
   const since = lastSeen ? lastSeen.toISOString() : undefined;
@@ -15,17 +20,42 @@ export default function CatchUpBanner({ roomId }: { roomId: string }) {
     }
   );
 
-  if (!lastSeen) return null;
-  const awayMs = Date.now() - lastSeen.getTime();
-  if (awayMs <= THIRTY_MIN_MS) return null;
-  if (!catchUp.data || catchUp.data.fightCount <= 0) return null;
+  const visible =
+    !dismissed &&
+    !!lastSeen &&
+    Date.now() - lastSeen.getTime() > THIRTY_MIN_MS &&
+    !!catchUp.data &&
+    catchUp.data.fightCount > 0;
 
+  useEffect(() => {
+    if (!visible) return;
+
+    const timer = setTimeout(() => setDismissed(true), AUTO_CLOSE_MS);
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (bannerRef.current && !bannerRef.current.contains(e.target as Node)) {
+        setDismissed(true);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const awayMs = Date.now() - lastSeen!.getTime();
   const hours = Math.floor(awayMs / 3600000);
   const mins = Math.floor((awayMs % 3600000) / 60000);
   const label = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
 
   return (
     <div
+      ref={bannerRef}
       style={{
         margin: '0 1rem 0.75rem',
         padding: '0.75rem 1rem',
@@ -35,7 +65,7 @@ export default function CatchUpBanner({ roomId }: { roomId: string }) {
         fontSize: '0.9rem',
       }}
     >
-      You were away for {label}. {catchUp.data.fightCount} fight{catchUp.data.fightCount === 1 ? '' : 's'} happened.{' '}
+      You were away for {label}. {catchUp.data!.fightCount} fight{catchUp.data!.fightCount === 1 ? '' : 's'} happened.{' '}
       <Link to={`/room/${roomId}/fights`} style={{ color: 'var(--color-accent)' }}>
         See what you missed
       </Link>
