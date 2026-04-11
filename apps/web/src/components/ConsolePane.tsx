@@ -25,6 +25,13 @@ interface ActivePrompt {
   arrivedAt: number;
 }
 
+interface PendingPromptSnapshot {
+  requestId: string;
+  question: string;
+  choices: string[];
+  timeoutSeconds?: number;
+}
+
 interface ConsoleEvent {
   id: string;
   type: 'announce' | 'input' | 'system' | 'prompt' | 'tombstone';
@@ -50,6 +57,18 @@ interface ConsolePaneProps {
   isActive: boolean;
   /** Called with each incoming private event so Terminal can track lastEventId */
   onEvent?: (event: unknown) => void;
+}
+
+function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot {
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.requestId === 'string'
+    && typeof entry.question === 'string'
+    && Array.isArray(entry.choices)
+    && entry.choices.every(choice => typeof choice === 'string')
+    && (entry.timeoutSeconds === undefined || typeof entry.timeoutSeconds === 'number')
+  );
 }
 
 export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePaneProps) {
@@ -85,6 +104,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
   // Fetch persistent console history from DB on mount
   const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
+  const { data: pendingPrompt } = trpc.game.pendingPrompt.useQuery(
+    { roomId },
+    { enabled: !!roomId },
+  );
 
   // Apply DB history once — pre-populate seenRef and seed stable subscription lastEventId.
   useEffect(() => {
@@ -179,6 +202,55 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   function addConsoleEvent(ev: ConsoleEvent) {
     setConsoleEvents(prev => [...prev, ev]);
   }
+
+  const upsertPendingPrompt = useCallback((prompt: PendingPromptSnapshot) => {
+    setConsoleEvents(prev => {
+      const existingIndex = prev.findIndex(ev => ev.promptData?.requestId === prompt.requestId);
+      if (existingIndex === -1) {
+        return [
+          ...prev,
+          {
+            id: `prompt-resume-${prompt.requestId}`,
+            type: 'prompt',
+            text: prompt.question,
+            promptData: {
+              requestId: prompt.requestId,
+              question: prompt.question,
+              choices: prompt.choices,
+              timedOut: false,
+              cancelled: false,
+              selectedAnswer: null,
+              timeoutSeconds: prompt.timeoutSeconds,
+              arrivedAt: Date.now(),
+            },
+          },
+        ];
+      }
+
+      return prev.map((ev, index) => {
+        if (index !== existingIndex || !ev.promptData) return ev;
+        return {
+          ...ev,
+          text: prompt.question,
+          promptData: {
+            ...ev.promptData,
+            question: prompt.question,
+            choices: prompt.choices,
+            timedOut: false,
+            cancelled: false,
+            selectedAnswer: null,
+            timeoutSeconds: prompt.timeoutSeconds ?? ev.promptData.timeoutSeconds,
+          },
+        };
+      });
+    });
+    setActivePromptId(prompt.requestId);
+  }, []);
+
+  useEffect(() => {
+    if (!pendingPrompt) return;
+    upsertPendingPrompt(pendingPrompt);
+  }, [pendingPrompt, upsertPendingPrompt]);
 
   trpc.game.ringFeed.useSubscription(
     { roomId, lastEventId: subLastEventId },
@@ -368,11 +440,17 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
       if (!result.ok) {
         const msg = 'message' in result ? result.message : 'Command failed';
+        const blockedPrompt = 'pendingPrompt' in result && isPendingPromptSnapshot(result.pendingPrompt)
+          ? result.pendingPrompt
+          : null;
         addConsoleEvent({
           id: `sys-${Date.now()}`,
           type: 'system',
           text: `! ${msg}`,
         });
+        if (blockedPrompt) {
+          upsertPendingPrompt(blockedPrompt);
+        }
         // If blocked by an in-progress flow, offer a force-cancel shortcut
         if (typeof msg === 'string' && msg.includes('already in progress')) {
           addConsoleEvent({

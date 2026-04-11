@@ -124,3 +124,27 @@ describe('RoomEventBus sendPrompt payload', () => {
 		return p.then((a) => expect(a).to.equal('__cancelled__'));
 	});
 });
+
+describe('RoomEventBus pending prompt snapshots', () => {
+	it('returns pending prompt details for a specific user', async () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const p = bus.sendPrompt('user-a', 'Choose one', ['0', '1'], 90_000);
+
+		const pending = bus.getPendingPromptForUser('user-a');
+		expect(pending).to.deep.equal({
+			requestId: pending?.requestId,
+			question: 'Choose one',
+			choices: ['0', '1'],
+			timeoutSeconds: 90,
+		});
+		expect(pending?.requestId).to.be.a('string').and.not.empty;
+
+		bus.cancelPrompt(pending!.requestId, 'user-a');
+		await p;
+	});
+
+	it('returns null when the user has no pending prompts', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		expect(bus.getPendingPromptForUser('nobody')).to.equal(null);
+	});
+});
