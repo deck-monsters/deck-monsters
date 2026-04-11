@@ -427,28 +427,6 @@ export function createRouter(roomManager: RoomManager) {
 					.filter((monster: { name: string }) => monster.name.length > 0);
 			}),
 
-		autocompleteMonsters: protectedProcedure
-			.input(z.object({ roomId: z.string().uuid() }))
-			.query(async ({ input, ctx }) => {
-				await roomManager.assertMember(ctx.userId, input.roomId);
-				const game = await roomManager.getGame(input.roomId);
-				const character = game.characters?.[ctx.userId];
-				const monsters = Array.isArray(character?.monsters) ? character.monsters : [];
-				const inRing = new Set(
-					game.ring.contestants
-						.filter((contestant) => contestant?.userId === ctx.userId && !contestant?.isBoss)
-						.map((contestant) => contestant?.monster)
-				);
-
-				return monsters
-					.map((monster: { givenName?: unknown; dead?: unknown }) => ({
-						name: String(monster?.givenName ?? '').trim(),
-						dead: Boolean(monster?.dead),
-						inRing: inRing.has(monster),
-					}))
-					.filter((monster: { name: string }) => monster.name.length > 0);
-			}),
-
 		ringHistory: protectedProcedure
 			.input(z.object({ roomId: z.string().uuid() }))
 			.query(async ({ input, ctx }) => {

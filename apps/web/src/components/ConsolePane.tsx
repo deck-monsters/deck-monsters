@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import type { GameEvent } from '@deck-monsters/server/types';
 
 type TrackedEvent = { id: string; data: GameEvent };
@@ -40,6 +40,8 @@ interface MonsterAutocompleteRow {
   dead: boolean;
   inRing: boolean;
 }
+
+const EMPTY_MONSTERS: MonsterAutocompleteRow[] = [];
 
 interface ConsolePaneProps {
   roomId: string;
@@ -161,18 +163,30 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     setIsAtBottom(true);
   }, []);
 
-  const { data: myMonsters = [] } = trpc.game.myMonsters.useQuery(
+  const { data: myMonsters } = trpc.game.myMonsters.useQuery(
     { roomId },
     { enabled: !!roomId },
   );
-  const monsterRows = myMonsters as MonsterAutocompleteRow[];
+  const monsterRows = (myMonsters ?? EMPTY_MONSTERS) as MonsterAutocompleteRow[];
+  const monsterNames = useMemo(
+    () => monsterRows.map((m) => m.name),
+    [monsterRows]
+  );
+  const deadMonsterNames = useMemo(
+    () => monsterRows.filter((m) => m.dead).map((m) => m.name),
+    [monsterRows]
+  );
+  const sendableMonsterNames = useMemo(
+    () => monsterRows.filter((m) => !m.dead && !m.inRing).map((m) => m.name),
+    [monsterRows]
+  );
   const suggestions = useCommandAutocomplete(
     inputValue,
     !activePromptId && !inputLocked,
     {
-      monsterNames: monsterRows.map((m) => m.name),
-      deadMonsterNames: monsterRows.filter((m) => m.dead).map((m) => m.name),
-      sendableMonsterNames: monsterRows.filter((m) => !m.dead && !m.inRing).map((m) => m.name),
+      monsterNames,
+      deadMonsterNames,
+      sendableMonsterNames,
     }
   );
 
