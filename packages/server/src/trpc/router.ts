@@ -260,6 +260,19 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 
+				// Persist a user-input echo event so console history can show
+				// previously submitted commands after reload.
+				eventBus.publish({
+					type: 'system',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: input.command,
+					payload: {
+						consoleInput: true,
+						causedByCommandId: commandId,
+					},
+				});
+
 				// Channel callback: all output (announcements and prompts) goes through
 				// the event bus so the web client receives it via the ringFeed WebSocket.
 				//
@@ -390,6 +403,28 @@ export function createRouter(roomManager: RoomManager) {
 			.input(z.object({ roomId: z.string().uuid() }))
 			.query(async ({ input, ctx }) => {
 				return roomManager.getRingState(ctx.userId, input.roomId);
+			}),
+
+		myMonsters: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const game = await roomManager.getGame(input.roomId);
+				const character = game.characters?.[ctx.userId];
+				const monsters = Array.isArray(character?.monsters) ? character.monsters : [];
+				const inRing = new Set(
+					game.ring.contestants
+						.filter((contestant) => contestant?.userId === ctx.userId && !contestant?.isBoss)
+						.map((contestant) => contestant?.monster)
+				);
+
+				return monsters
+					.map((monster: { givenName?: unknown; dead?: unknown }) => ({
+						name: String(monster?.givenName ?? '').trim(),
+						dead: Boolean(monster?.dead),
+						inRing: inRing.has(monster),
+					}))
+					.filter((monster: { name: string }) => monster.name.length > 0);
 			}),
 
 		ringHistory: protectedProcedure

@@ -11,6 +11,7 @@ import {
 	formatEventHoverTitle,
 	getKeyRingEventMeta,
 } from '../utils/event-time.js';
+import { shouldRenderRingEvent } from '../utils/ring-feed-events.js';
 
 type TrackedEvent = { id: string; data: GameEvent };
 
@@ -114,6 +115,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
   const feedRef = useRef<HTMLOListElement>(null);
   const seenRef = useRef(new Set<string>());
+  const autoFollowRef = useRef(true);
   const historyApplied = useRef(false);
   const { handleHandshakeEvent } = useHandshake();
 
@@ -150,13 +152,15 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
       seenRef.current.add(ev.id);
     }
 
+    const visibleHistory = dedupedHistory.filter(shouldRenderRingEvent);
+
     // Merge history with any live events that arrived before history loaded.
     // Live events take priority over history events with the same ID.
     setEvents(prev => {
-      if (prev.length === 0) return dedupedHistory;
+      if (prev.length === 0) return visibleHistory;
       const liveById = new Map(prev.map(ev => [ev.id, ev]));
-      const merged: GameEvent[] = dedupedHistory.map(ev => liveById.get(ev.id) ?? ev);
-      const historyIds = new Set(dedupedHistory.map(ev => ev.id));
+      const merged: GameEvent[] = visibleHistory.map(ev => liveById.get(ev.id) ?? ev);
+      const historyIds = new Set(visibleHistory.map(ev => ev.id));
       for (const ev of prev) {
         if (!historyIds.has(ev.id)) merged.push(ev);
       }
@@ -183,23 +187,26 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
       requestAnimationFrame(() => {
         if (feedRef.current) {
           feedRef.current.scrollTop = feedRef.current.scrollHeight;
+          autoFollowRef.current = true;
           setIsAtBottom(true);
         }
       });
     }
   }, [isActive]);
 
-  // Auto-scroll to bottom when new events arrive, if the user hasn't scrolled up
+  // Keep the feed pinned during live fights unless the user scrolls up.
   useEffect(() => {
-    if (isAtBottom && feedRef.current) {
+    if (autoFollowRef.current && feedRef.current) {
       feedRef.current.scrollTop = feedRef.current.scrollHeight;
+      setIsAtBottom(true);
     }
-  }, [events, isAtBottom]);
+  }, [events]);
 
   const handleScroll = useCallback(() => {
     const el = feedRef.current;
     if (!el) return;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+    autoFollowRef.current = atBottom;
     setIsAtBottom(atBottom);
   }, []);
 
@@ -207,6 +214,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     if (feedRef.current) {
       feedRef.current.scrollTop = feedRef.current.scrollHeight;
     }
+    autoFollowRef.current = true;
     setIsAtBottom(true);
   }, []);
 
@@ -232,6 +240,8 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
           setTimerState({ nextFightAt: s.nextFightAt, nextBossSpawnAt: s.nextBossSpawnAt, monsterCount: s.monsterCount });
           return;
         }
+
+        if (!shouldRenderRingEvent(event)) return;
 
         // Only show public events in the Ring pane
         if (event.scope !== 'public') return;
