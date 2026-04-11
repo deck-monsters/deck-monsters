@@ -18,8 +18,8 @@ const log = createLogger('events');
 
 // Duck-typed interface — matches metrics/collector.ts so we can share the same ring reference.
 interface RingLike {
-	on(event: string, listener: (...args: any[]) => void): unknown;
-	off(event: string, listener: (...args: any[]) => void): unknown;
+	on(event: string, listener: (...args: unknown[]) => void): unknown;
+	off(event: string, listener: (...args: unknown[]) => void): unknown;
 }
 
 export function attachDebugEventLogger(
@@ -212,7 +212,8 @@ export function attachDebugEventLogger(
 	// for every monster that enters — including player monsters and boss spawns.
 	// 'bossWillSpawn' fires 2 minutes before the boss appears.
 
-	const onAdd = (data: { contestant: { isBoss?: boolean; monster?: { givenName?: string }; character?: { name?: string }; userId?: string } }) => {
+	const onAdd = (...args: unknown[]) => {
+		const data = args[0] as { contestant: { isBoss?: boolean; monster?: { givenName?: string }; character?: { name?: string }; userId?: string } };
 		const { contestant } = data;
 		log.debug(contestant.isBoss ? 'boss entered ring' : 'monster entered ring', {
 			roomId,
@@ -223,10 +224,11 @@ export function attachDebugEventLogger(
 		});
 	};
 
-	const onBossWillSpawn = (data: { delay?: number }) => {
+	const onBossWillSpawn = (...args: unknown[]) => {
+		const data = args[0] as { delay?: number } | undefined;
 		log.debug('boss will spawn soon', {
 			roomId,
-			inMs: data.delay ?? 120000,
+			inMs: data?.delay ?? 120000,
 		});
 	};
 
