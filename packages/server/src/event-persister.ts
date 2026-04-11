@@ -54,6 +54,7 @@ export function attachEventPersister(
 							eventId: event.id,
 						})
 						.onConflictDoNothing()
+						.then(() => undefined)
 				)
 				.catch((err: unknown) => onError(err));
 		},

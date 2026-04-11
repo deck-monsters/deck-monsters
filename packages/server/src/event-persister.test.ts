@@ -19,6 +19,10 @@ function deferred<T>() {
 	return { promise, resolve, reject };
 }
 
+async function flushMacrotask(): Promise<void> {
+	await new Promise<void>((resolve) => setImmediate(resolve));
+}
+
 describe('event persister', () => {
 	it('writes events to DB in publish order even with async inserts', async () => {
 		const eventBus = new RoomEventBus('room-1');
@@ -61,21 +65,23 @@ describe('event persister', () => {
 			payload: {},
 		});
 
+		await flushMacrotask();
+
 		// Only the first insert should have started due to serialization.
 		expect(insertOrder.map((r) => r.eventId)).to.deep.equal([e1.id]);
 		expect(activeInserts).to.equal(1);
 
 		dbCompletes[0]?.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await flushMacrotask();
+		await flushMacrotask();
 
 		// Second insert starts only after first resolves.
 		expect(insertOrder.map((r) => r.eventId)).to.deep.equal([e1.id, e2.id]);
 		expect(activeInserts).to.equal(1);
 
 		dbCompletes[1]?.resolve();
-		await Promise.resolve();
-		await Promise.resolve();
+		await flushMacrotask();
+		await flushMacrotask();
 		expect(activeInserts).to.equal(0);
 	});
 });

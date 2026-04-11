@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'chai';
+import { expect } from 'chai';
 
 import { dbRowToGameEvent } from './game-event-map.js';
 
