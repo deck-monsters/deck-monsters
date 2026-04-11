@@ -10,6 +10,7 @@ import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
 import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 import { formatEventText } from '../utils/format-event-text.js';
+import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
 
 interface ActivePrompt {
   requestId: string;
@@ -45,23 +46,6 @@ interface ConsolePaneProps {
   isActive: boolean;
   /** Called with each incoming private event so Terminal can track lastEventId */
   onEvent?: (event: unknown) => void;
-}
-
-/** Convert a historical GameEvent to a ConsoleEvent for display. Returns null for event types
- *  that don't produce a feed entry (quick_actions, prompt.cancel) or that are handled
- *  interactively (active prompts are not reconstructed from history). */
-function historyEventToConsoleEvent(event: { id: string; type: string; text: string; payload: Record<string, unknown> }): ConsoleEvent | null {
-  if (event.type === 'announce' || event.type === 'system') {
-    return { id: event.id, type: event.type as 'announce' | 'system', text: event.text };
-  }
-  if (event.type === 'prompt.request') {
-    // Show the question text as a plain announce — don't reconstruct interactive state
-    return { id: event.id, type: 'announce', text: event.text || (event.payload as any)?.question || '' };
-  }
-  if (event.type === 'prompt.timeout') {
-    return { id: event.id, type: 'tombstone', text: event.text };
-  }
-  return null;
 }
 
 export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePaneProps) {
@@ -114,7 +98,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     const historyConsoleEvents: ConsoleEvent[] = [];
     for (const ev of dedupedHistory) {
       seenRef.current.add(ev.id);
-      const consoleEv = historyEventToConsoleEvent(ev as any);
+      const consoleEv = mapConsoleHistoryEvent(ev as any);
       if (consoleEv) historyConsoleEvents.push(consoleEv);
     }
 
@@ -224,6 +208,16 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         if (!isPrivate && !isPublicSystem) return;
 
         onEvent?.(event);
+
+        const payload = event.payload as Record<string, unknown>;
+        if (event.type === 'system' && payload.consoleInput) {
+          addConsoleEvent({
+            id: event.id,
+            type: 'input',
+            text: event.text,
+          });
+          return;
+        }
 
         if (event.type === 'announce' || event.type === 'system') {
           addConsoleEvent({

@@ -260,6 +260,19 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 
+				// Persist a user-input echo event so console history can show
+				// previously submitted commands after reload.
+				eventBus.publish({
+					type: 'system',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: input.command,
+					payload: {
+						consoleInput: true,
+						causedByCommandId: commandId,
+					},
+				});
+
 				// Channel callback: all output (announcements and prompts) goes through
 				// the event bus so the web client receives it via the ringFeed WebSocket.
 				//
