@@ -24,7 +24,7 @@ describe('metrics collector ring add listener', () => {
 			subscribe: () => () => {},
 		} satisfies Pick<RoomEventBus, 'subscribe'>;
 		const ring = new EventEmitter();
-		const cleanup = attachMetricsCollector(eventBus as RoomEventBus, ring as any, ROOM_ID);
+		const cleanup = attachMetricsCollector(eventBus as unknown as RoomEventBus, ring as any, ROOM_ID);
 
 		expect(() => ring.emit('add', 'Ring', ring, { contestant: { isBoss: true } })).to.not.throw();
 		expect(() => ring.emit('add', 'Ring', ring, { contestant: { isBoss: false } })).to.not.throw();
