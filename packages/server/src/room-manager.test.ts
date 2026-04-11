@@ -269,6 +269,7 @@ describe('RoomManager', () => {
 				unsubscribeMetrics: sinon.stub(),
 				unsubscribeFightStats: sinon.stub(),
 				unsubscribeFightSummary: sinon.stub(),
+				unsubscribeDebugLogger: sinon.stub(),
 			});
 
 			await rm2.deleteRoom(OWNER_ID, roomId);

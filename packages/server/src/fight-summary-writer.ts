@@ -7,6 +7,9 @@ import { eq, sql } from 'drizzle-orm';
 import type { RoomEventBus, GameEvent } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { fightSummaries, rooms } from './db/schema.js';
+import { createLogger } from './logger.js';
+
+const log = createLogger('fight-summary');
 
 type Pending = {
 	startedAt: Date;
@@ -48,9 +51,9 @@ function onRingFight(roomId: string, event: GameEvent): void {
 	const payload = event.payload as { eventName?: string };
 	if (payload.eventName === 'fightConcludes') return;
 
-	pendingByRoom.set(roomId, {
-		startedAt: new Date(event.timestamp),
-	});
+	const startedAt = new Date(event.timestamp);
+	pendingByRoom.set(roomId, { startedAt });
+	log.debug('fight start recorded', { roomId, eventName: payload.eventName, startedAt: startedAt.toISOString() });
 }
 
 function onCardDrop(roomId: string, event: GameEvent): void {
@@ -94,6 +97,15 @@ async function onFightResolved(db: Db, roomId: string, event: GameEvent): Promis
 	const endedAt = new Date(event.timestamp);
 	const startedAt = pending?.startedAt ?? endedAt;
 
+	if (!pending) {
+		log.warn('ring.fightResolved received with no pending fight start — duration will be zero', {
+			roomId,
+			outcome: payload.outcome,
+		});
+	}
+
+	const durationMs = endedAt.getTime() - startedAt.getTime();
+
 	await db.transaction(async (tx) => {
 		const rows = await tx
 			.update(rooms)
@@ -124,6 +136,16 @@ async function onFightResolved(db: Db, roomId: string, event: GameEvent): Promis
 			cardDropName: pending?.cardDropName ?? null,
 			notableCards: null,
 			participants: payload.participants ?? [],
+		});
+
+		log.debug('fight summary written', {
+			roomId,
+			fightNumber,
+			outcome: payload.outcome,
+			rounds: payload.rounds,
+			durationMs,
+			winner: payload.winnerMonsterName,
+			loser: payload.loserMonsterName,
 		});
 	});
 }

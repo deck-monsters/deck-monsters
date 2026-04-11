@@ -8,9 +8,11 @@ import { RoomManager } from './room-manager.js';
 import { createRouter } from './trpc/router.js';
 import { createContext } from './trpc/context.js';
 import { registry } from './metrics/index.js';
+import { createLogger } from './logger.js';
 
 const PORT = parseInt(process.env['PORT'] ?? '3000', 10);
 const HOST = process.env['HOST'] ?? '0.0.0.0';
+const LOG_LEVEL = process.env['LOG_LEVEL'] ?? 'info';
 
 // Comma-separated list of allowed origins, e.g. "https://app.example.com,http://localhost:5173"
 const CORS_ORIGINS = (process.env['CORS_ORIGINS'] ?? 'http://localhost:5173')
@@ -22,10 +24,22 @@ const CORS_ORIGINS = (process.env['CORS_ORIGINS'] ?? 'http://localhost:5173')
 collectDefaultMetrics({ register: registry });
 
 const METRICS_TOKEN = process.env['METRICS_TOKEN'];
+const log = createLogger('server');
 
 async function start(): Promise<void> {
+	// LOG_LEVEL controls both our structured logger and Fastify's built-in Pino logger
+	// so HTTP request logs honour the same threshold as application logs.
 	const fastify = Fastify({
-		logger: true,
+		logger: { level: LOG_LEVEL },
+	});
+
+	log.debug('server starting', {
+		port: PORT,
+		host: HOST,
+		logLevel: LOG_LEVEL,
+		corsOrigins: CORS_ORIGINS,
+		metricsTokenSet: !!METRICS_TOKEN,
+		buildVersion: process.env['BUILD_VERSION'] ?? 'dev',
 	});
 
 	await fastify.register(cors, {
@@ -39,6 +53,7 @@ async function start(): Promise<void> {
 
 	const SWEEP_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 	setInterval(() => {
+		log.debug('idle room sweep triggered');
 		roomManager.sweepIdleRooms().catch((err: unknown) => {
 			fastify.log.error(err, 'sweepIdleRooms failed');
 		});
@@ -71,7 +86,7 @@ async function start(): Promise<void> {
 	});
 
 	await fastify.listen({ port: PORT, host: HOST });
-	fastify.log.info(`Server listening at http://${HOST}:${PORT}`);
+	log.info('server listening', { url: `http://${HOST}:${PORT}` });
 }
 
 start().catch((err: unknown) => {

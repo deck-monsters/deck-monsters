@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto';
 
 import { z } from 'zod';
 import { TRPCError, tracked } from '@trpc/server';
+import { createLogger } from '../logger.js';
+
+const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
 import { t } from './trpc.js';
@@ -215,6 +218,12 @@ export function createRouter(roomManager: RoomManager) {
 			)
 			.mutation(async ({ input, ctx }) => {
 				try {
+				log.debug('command received', {
+					roomId: input.roomId,
+					userId: ctx.userId,
+					command: input.command,
+					isDM: input.isDM,
+				});
 				const [role, displayName] = await Promise.all([
 					roomManager.getMemberRole(ctx.userId, input.roomId),
 					roomManager.getDisplayName(ctx.userId),
@@ -225,6 +234,7 @@ export function createRouter(roomManager: RoomManager) {
 				const action = game.handleCommand({ command: input.command });
 
 				if (!action) {
+					log.debug('command not recognized', { roomId: input.roomId, command: input.command });
 					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
 					return { ok: false, message: 'Command not recognized' };
 				}
@@ -234,6 +244,11 @@ export function createRouter(roomManager: RoomManager) {
 				// flows corrupt game state and produce nonsensical UX.
 				const flowKey = `${input.roomId}:${ctx.userId}`;
 				if (activeFlows.has(flowKey)) {
+					log.debug('command blocked — flow already in progress', {
+						roomId: input.roomId,
+						userId: ctx.userId,
+						command: input.command,
+					});
 					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
 					return {
 						ok: false,
@@ -241,6 +256,7 @@ export function createRouter(roomManager: RoomManager) {
 					};
 				}
 				activeFlows.add(flowKey);
+				log.debug('command dispatched', { roomId: input.roomId, userId: ctx.userId, isAdmin });
 
 				const commandId = randomUUID();
 
@@ -331,6 +347,11 @@ export function createRouter(roomManager: RoomManager) {
 			)
 			.mutation(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
+				log.debug('prompt response received', {
+					roomId: input.roomId,
+					userId: ctx.userId,
+					requestId: input.requestId,
+				});
 				const eventBus = await roomManager.getEventBus(input.roomId);
 				eventBus.respondToPrompt(input.requestId, input.answer, ctx.userId);
 				return { ok: true };
@@ -392,6 +413,11 @@ export function createRouter(roomManager: RoomManager) {
 			)
 			.subscription(async function* ({ input, ctx, signal }) {
 			await roomManager.assertMember(ctx.userId, input.roomId);
+			log.debug('ringFeed subscription opened', {
+				roomId: input.roomId,
+				userId: ctx.userId,
+				lastEventId: input.lastEventId,
+			});
 			void touchMemberLastSeen(db, input.roomId, ctx.userId).catch(() => {});
 			const eventBus = await roomManager.getEventBus(input.roomId);
 			const game = await roomManager.getGame(input.roomId);
@@ -469,6 +495,12 @@ export function createRouter(roomManager: RoomManager) {
 					while (!signal?.aborted) {
 						while (queue.length > 0) {
 							const event = queue.shift()!;
+							log.trace('ringFeed delivering event', {
+								roomId: input.roomId,
+								userId: ctx.userId,
+								eventType: event.type,
+								eventId: event.id,
+							});
 							yield tracked(event.id, event);
 						}
 
@@ -480,6 +512,10 @@ export function createRouter(roomManager: RoomManager) {
 				} finally {
 					unsubscribe();
 					wsConnectionsActive.dec({ room_id: input.roomId });
+					log.debug('ringFeed subscription closed', {
+						roomId: input.roomId,
+						userId: ctx.userId,
+					});
 				}
 			}),
 
