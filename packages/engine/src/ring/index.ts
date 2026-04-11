@@ -483,6 +483,16 @@ export class Ring extends BaseClass {
 		if (!this.startEncounter()) return Promise.resolve();
 
 		const contestants = [...this.contestants];
+
+		// Publish fight-start event so server-side subscribers (e.g. fight-summary-writer)
+		// can record the accurate startedAt timestamp for this fight.
+		this.eventBus.publish({
+			type: 'ring.fight',
+			scope: 'public',
+			text: `Fight begins with ${contestants.length} contestants`,
+			payload: { contestants, eventName: 'fightBegins' },
+		});
+
 		const isActiveContestant = (contestant: Contestant | undefined): boolean =>
 			!!(contestant && !contestant.monster.dead && !contestant.monster.fled);
 		const getActiveContestants = (currentContestants: Contestant[]): Contestant[] =>
