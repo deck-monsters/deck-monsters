@@ -83,7 +83,6 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--pane-padding);
-  scroll-behavior: smooth;
 }
 
 .event-feed:focus {

@@ -95,7 +95,7 @@ export function respawn (self: BaseCreature, immediate?: boolean): number {
 			self.respawnTimeout = undefined;
 			self.respawnTimeoutBegan = undefined as unknown as number;
 			self.emit('respawn');
-		}, timeoutLength);
+		}, self.respawnTimeoutLength);
 	}
 
 	return self.respawnTimeoutBegan + timeoutLength;
