@@ -182,8 +182,4 @@ export class RoomEventBus {
 		pending.resolve(answer);
 		return true;
 	}
-
-	hasPendingPrompt(requestId: string): boolean {
-		return this.pendingPrompts.has(requestId);
-	}
 }

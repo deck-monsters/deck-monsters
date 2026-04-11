@@ -213,15 +213,15 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
         // Keep-alive ping from server — no UI action needed
         if (event.type === 'heartbeat') return;
 
+        latestTrackedEventIdRef.current = tracked.id;
+
         // ring.state is a state-sync signal — update timers but don't show in the feed
         if (event.type === 'ring.state') {
-          latestTrackedEventIdRef.current = tracked.id;
           const s = event.payload as unknown as TimerState;
           setTimerState({ nextFightAt: s.nextFightAt, nextBossSpawnAt: s.nextBossSpawnAt, monsterCount: s.monsterCount });
           return;
         }
 
-        latestTrackedEventIdRef.current = tracked.id;
         if (!shouldRenderRingEvent(event)) return;
 
         // Only show public events in the Ring pane
