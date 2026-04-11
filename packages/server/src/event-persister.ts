@@ -22,6 +22,7 @@ export function attachEventPersister(
 	onError: (err: unknown) => void = () => {}
 ): () => void {
 	const subscriberId = `${SUBSCRIBER_ID_PREFIX}:${eventBus.roomId}`;
+	let writeQueue = Promise.resolve();
 
 	// Event types that are transient state-sync signals and should not be
 	// persisted to the history table — they have no replay value.
@@ -38,17 +39,22 @@ export function attachEventPersister(
 					eventId: event.id,
 				});
 			}
-			db.insert(roomEvents)
-				.values({
-					roomId: event.roomId,
-					type: event.type,
-					scope: event.scope,
-					targetUserId: event.targetUserId ?? null,
-					payload: event.payload as Record<string, unknown>,
-					text: event.text,
-					eventId: event.id,
-				})
-				.onConflictDoNothing()
+			// Preserve persistence order even when DB latency varies between writes.
+			// This keeps history replay stable across browser reloads.
+			writeQueue = writeQueue
+				.then(() =>
+					db.insert(roomEvents)
+						.values({
+							roomId: event.roomId,
+							type: event.type,
+							scope: event.scope,
+							targetUserId: event.targetUserId ?? null,
+							payload: event.payload as Record<string, unknown>,
+							text: event.text,
+							eventId: event.id,
+						})
+						.onConflictDoNothing()
+				)
 				.catch((err: unknown) => onError(err));
 		},
 	});
