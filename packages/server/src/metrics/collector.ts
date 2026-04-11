@@ -17,6 +17,7 @@ import {
 	battleMinMonsterLevel,
 	battleMaxMonsterLevel,
 	battleRoundDurationMs,
+	turnGapMs,
 	battlesStarted,
 	battlesCompleted,
 	playerWins,
@@ -53,17 +54,29 @@ export function attachMetricsCollector(
 	// Track the timestamp of the most recent countdown per room so we can
 	// calculate combat duration when ring.fight fires.
 	let countdownAt: number | undefined;
+	// Track spacing between consecutive card.played events inside a fight.
+	let previousCardPlayedAt: number | undefined;
 
 	const unsubscribeEventBus = eventBus.subscribe(`metrics:${roomId}`, {
 		deliver(event: GameEvent) {
 			switch (event.type) {
 				case 'ring.countdown': {
 					countdownAt = event.timestamp;
+					previousCardPlayedAt = undefined;
 					battlesStarted.inc({ room_id: roomId });
 					break;
 				}
 
 				case 'ring.fight': {
+					const eventName = (event.payload as { eventName?: string }).eventName;
+					if (eventName === 'fightBegins') {
+						previousCardPlayedAt = undefined;
+						break;
+					}
+					// For backward compatibility, treat missing eventName as fight completion.
+					if (eventName && eventName !== 'fightConcludes') {
+						break;
+					}
 					battlesCompleted.inc({ room_id: roomId });
 
 					const payload = event.payload as {
@@ -110,6 +123,22 @@ export function attachMetricsCollector(
 					}
 					break;
 				}
+
+				case 'card.played': {
+					if (previousCardPlayedAt !== undefined) {
+						const gap = event.timestamp - previousCardPlayedAt;
+						if (gap >= 0) {
+							turnGapMs.observe({ room_id: roomId }, gap);
+						}
+					}
+					previousCardPlayedAt = event.timestamp;
+					break;
+				}
+
+				case 'ring.fightResolved':
+				case 'ring.clear':
+					previousCardPlayedAt = undefined;
+					break;
 
 				case 'ring.win':
 					playerWins.inc({ room_id: roomId });
