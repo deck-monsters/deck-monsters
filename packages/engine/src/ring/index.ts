@@ -20,6 +20,8 @@ const BOSS_SPAWN_MAX_DELAY_MS = 2_100_000; // 35 min
 const BOSS_SPAWN_BEGINNER_MIN_DELAY_MS = 720_000; // 12 min
 const BOSS_SPAWN_BEGINNER_MAX_DELAY_MS = 1_320_000; // 22 min
 const BEGINNER_LEVEL_THRESHOLD = 2;
+/** Max XP for bosses in beginner rooms — keeps boss level aligned with `BEGINNER_LEVEL_THRESHOLD` (level 2 caps at 149 XP). */
+const BEGINNER_BOSS_MAX_XP = 149;
 
 export interface Contestant {
 	monster: any;
@@ -911,8 +913,16 @@ export class Ring extends BaseClass {
 		return levels.length > 0 && levels.every(level => level <= BEGINNER_LEVEL_THRESHOLD);
 	}
 
+	/**
+	 * Beginner *room* timing and boss scaling: all player monsters are beginner-level, or there are
+	 * no player monsters in the ring yet (empty ring still uses beginner boss pacing — not full random).
+	 */
+	private isBeginnerBossContext(): boolean {
+		return this.hasOnlyBeginnerPlayers() || this.getPlayerMonsterLevels().length === 0;
+	}
+
 	private getBossSpawnOuterDelayMs(): number {
-		if (this.hasOnlyBeginnerPlayers()) {
+		if (this.isBeginnerBossContext()) {
 			return random(BOSS_SPAWN_BEGINNER_MIN_DELAY_MS, BOSS_SPAWN_BEGINNER_MAX_DELAY_MS);
 		}
 		return random(BOSS_SPAWN_MIN_DELAY_MS, BOSS_SPAWN_MAX_DELAY_MS);
@@ -920,8 +930,13 @@ export class Ring extends BaseClass {
 
 	private getSpawnedBossContestant(): Contestant {
 		const playerContestants = this.contestants.filter(contestant => !contestant.isBoss);
-		if (!this.hasOnlyBeginnerPlayers() || playerContestants.length === 0) {
+		if (!this.isBeginnerBossContext()) {
 			return randomContestant();
+		}
+
+		if (playerContestants.length === 0) {
+			// Same band as avg XP 0 when players are present: roughly level 0–1 bosses.
+			return randomContestant({ xp: random(0, 40) });
 		}
 
 		const averagePlayerXp = Math.round(
@@ -932,7 +947,7 @@ export class Ring extends BaseClass {
 		);
 		const minBossXp = Math.max(0, averagePlayerXp - 20);
 		const maxBossXp = Math.max(minBossXp, averagePlayerXp + 40);
-		const scaledBossXp = random(minBossXp, maxBossXp);
+		const scaledBossXp = Math.min(random(minBossXp, maxBossXp), BEGINNER_BOSS_MAX_XP);
 
 		return randomContestant({ xp: scaledBossXp });
 	}

@@ -152,6 +152,36 @@ describe('ring/index.ts', () => {
 			expect(boss).to.not.be.undefined;
 			expect(boss!.monster.level).to.be.at.most(2);
 		});
+
+		it('does not spawn high-level bosses on an empty beginner ring (timer-driven case)', () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			const boss = ring.spawnBoss();
+			expect(boss).to.not.be.undefined;
+			expect(boss!.monster.level).to.be.at.most(2);
+		});
+
+		it('caps beginner-room boss XP when average player XP is high within beginner levels', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			// Level 2 monsters (XP 100–149): 14 wins => 140 XP each; average 140 => unscaled band would reach ~180 XP (level 3+).
+			const beginnerA = randomContestant({
+				isBoss: false,
+				battles: { total: 20, wins: 14, losses: 6 },
+			});
+			const beginnerB = randomContestant({
+				isBoss: false,
+				battles: { total: 20, wins: 14, losses: 6 },
+			});
+
+			ring.addMonster(beginnerA);
+			ring.addMonster(beginnerB);
+
+			const boss = ring.spawnBoss();
+			expect(boss).to.not.be.undefined;
+			expect(boss!.monster.level).to.be.at.most(2);
+		});
 	});
 
 	describe('fightConcludes', () => {
