@@ -49,12 +49,32 @@ import { announceXPGain } from './xpGain.js';
 import { announceLevelUp } from './level-up.js';
 import type { RoomEventBus } from '../events/index.js';
 
-function createRoomScopedEventGuard(game: any): (...args: any[]) => boolean {
+const MAX_OWNERSHIP_WALK_DEPTH = 3;
+
+type RoomScopedCharacter = {
+	monsters?: unknown[];
+	items?: unknown[];
+	deck?: unknown[];
+};
+
+type RoomScopedGame = {
+	eventBus: RoomEventBus;
+	ring: {
+		on: (event: string, listener: (...args: any[]) => void) => (...args: any[]) => void;
+		off: (event: string, listener: (...args: any[]) => void) => void;
+	};
+	exploration: unknown;
+	characters?: Record<string, RoomScopedCharacter | undefined>;
+	on: (event: string, listener: (...args: any[]) => void) => (...args: any[]) => void;
+	off: (event: string, listener: (...args: any[]) => void) => void;
+};
+
+function createRoomScopedEventGuard(game: RoomScopedGame): (...args: any[]) => boolean {
 	const ownsDirectly = (value: unknown): boolean => {
 		if (!value || typeof value !== 'object') return false;
 		if (value === game || value === game.ring || value === game.exploration) return true;
 
-		const characters = Object.values((game.characters ?? {}) as Record<string, any>);
+		const characters = Object.values(game.characters ?? {});
 		for (const character of characters) {
 			if (value === character) return true;
 
@@ -80,11 +100,14 @@ function createRoomScopedEventGuard(game: any): (...args: any[]) => boolean {
 	};
 
 	return (...args: any[]): boolean => {
+		// Hot path: the emitting instance is almost always a top-level argument.
+		if (args.some((arg) => ownsDirectly(arg))) return true;
+
 		const visited = new WeakSet<object>();
 
 		const walk = (value: unknown, depth: number): boolean => {
 			if (ownsDirectly(value)) return true;
-			if (depth >= 3 || !value || typeof value !== 'object') return false;
+			if (depth >= MAX_OWNERSHIP_WALK_DEPTH || !value || typeof value !== 'object') return false;
 
 			if (visited.has(value)) return false;
 			visited.add(value);
@@ -104,7 +127,7 @@ function createRoomScopedEventGuard(game: any): (...args: any[]) => boolean {
 	};
 }
 
-export function initialize(game: any): () => void {
+export function initialize(game: RoomScopedGame): () => void {
 	const eb: RoomEventBus = game.eventBus;
 	const isRoomScopedEvent = createRoomScopedEventGuard(game);
 
@@ -140,8 +163,10 @@ export function initialize(game: any): () => void {
 		{ event: 'potion.used', listener: wrapGameEvent(announceItemUsed) },
 		{
 			event: 'creature.levelUp',
-			listener: (_className: string, _instance: any, { monster, level }: { monster: any; level: number }) =>
-				announceLevelUp(eb, monster, level),
+			listener: wrapGameEvent(
+				(_eb, _className: string, _instance: any, { monster, level }: { monster: any; level: number }) =>
+					announceLevelUp(_eb, monster, level)
+			),
 		},
 		{ event: 'scroll.narration', listener: wrapGameEvent(announceNarration) },
 		{ event: 'scroll.used', listener: wrapGameEvent(announceItemUsed) },
