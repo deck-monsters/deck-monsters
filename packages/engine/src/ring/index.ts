@@ -20,8 +20,30 @@ const BOSS_SPAWN_MAX_DELAY_MS = 2_100_000; // 35 min
 const BOSS_SPAWN_BEGINNER_MIN_DELAY_MS = 720_000; // 12 min
 const BOSS_SPAWN_BEGINNER_MAX_DELAY_MS = 1_320_000; // 22 min
 const BEGINNER_LEVEL_THRESHOLD = 2;
-/** Max XP for bosses in beginner rooms — keeps boss level aligned with `BEGINNER_LEVEL_THRESHOLD` (level 2 caps at 149 XP). */
-const BEGINNER_BOSS_MAX_XP = 149;
+const BOSS_FULL_RANDOM_WEIGHT_PERCENT = 20;
+const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 30;
+
+/**
+ * Calculates the max XP that still maps to `targetLevel` via `getLevel()`.
+ * Level 0 cap is 49, level 1 cap is 99, level 2 cap is 149, etc.
+ */
+const getXpCapForLevel = (targetLevel: number): number => {
+	if (targetLevel <= 0) return 49;
+
+	let prevPrevThreshold = 0;
+	let prevThreshold = 50;
+	let level = 0;
+	while (level <= targetLevel) {
+		const threshold = prevPrevThreshold + prevThreshold;
+		if (level === targetLevel) return threshold - 1;
+
+		prevPrevThreshold = prevThreshold;
+		prevThreshold = threshold;
+		level += 1;
+	}
+
+	return 49;
+};
 
 export interface Contestant {
 	monster: any;
@@ -928,28 +950,36 @@ export class Ring extends BaseClass {
 		return random(BOSS_SPAWN_MIN_DELAY_MS, BOSS_SPAWN_MAX_DELAY_MS);
 	}
 
+	private determineBossLevelCap(playerLevels: number[], roll: number): number | undefined {
+		if (roll <= BOSS_FULL_RANDOM_WEIGHT_PERCENT) {
+			return undefined;
+		}
+
+		if (playerLevels.length <= 0) {
+			return 0;
+		}
+
+		const highestLevel = Math.max(...playerLevels);
+		if (roll <= BOSS_FULL_RANDOM_WEIGHT_PERCENT + BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT) {
+			return Math.max(0, highestLevel + 1);
+		}
+
+		const averageLevel = playerLevels.reduce((sum, level) => sum + level, 0) / playerLevels.length;
+		return Math.max(0, Math.floor(averageLevel));
+	}
+
+	private getBossLevelCap(): number | undefined {
+		return this.determineBossLevelCap(this.getPlayerMonsterLevels(), random(1, 100));
+	}
+
 	private getSpawnedBossContestant(): Contestant {
-		const playerContestants = this.contestants.filter(contestant => !contestant.isBoss);
-		if (!this.isBeginnerBossContext()) {
+		const levelCap = this.getBossLevelCap();
+		if (levelCap === undefined) {
 			return randomContestant();
 		}
 
-		if (playerContestants.length === 0) {
-			// Same band as avg XP 0 when players are present: roughly level 0–1 bosses.
-			return randomContestant({ xp: random(0, 40) });
-		}
-
-		const averagePlayerXp = Math.round(
-			playerContestants.reduce(
-				(sum, contestant) => sum + Number(contestant.monster?.xp ?? 0),
-				0
-			) / playerContestants.length
-		);
-		const minBossXp = Math.max(0, averagePlayerXp - 20);
-		const maxBossXp = Math.max(minBossXp, averagePlayerXp + 40);
-		const scaledBossXp = Math.min(random(minBossXp, maxBossXp), BEGINNER_BOSS_MAX_XP);
-
-		return randomContestant({ xp: scaledBossXp });
+		const maxXp = getXpCapForLevel(levelCap);
+		return randomContestant({ xp: random(0, maxXp) });
 	}
 
 	startBossTimer(): void {

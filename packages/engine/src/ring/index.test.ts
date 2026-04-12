@@ -133,54 +133,49 @@ describe('ring/index.ts', () => {
 			expect(contestant).to.be.undefined;
 		});
 
-		it('spawns lower-level bosses when only beginner monsters are present', () => {
+		it('uses weighted cap bands from room monster levels', () => {
 			const game = new Game();
 			const ring = game.getRing();
-			const beginnerA = randomContestant({
-				isBoss: false,
-				battles: { total: 0, wins: 0, losses: 0 },
-			});
-			const beginnerB = randomContestant({
-				isBoss: false,
-				battles: { total: 0, wins: 0, losses: 0 },
-			});
+			const determineBossLevelCap = (ring as any).determineBossLevelCap.bind(ring);
 
-			ring.addMonster(beginnerA);
-			ring.addMonster(beginnerB);
-
-			const boss = ring.spawnBoss();
-			expect(boss).to.not.be.undefined;
-			expect(boss!.monster.level).to.be.at.most(2);
+			// 20%: keep full random distribution (no cap).
+			expect(determineBossLevelCap([0, 1, 2], 1)).to.equal(undefined);
+			expect(determineBossLevelCap([0, 1, 2], 20)).to.equal(undefined);
+			// 30%: cap at highest level + 1.
+			expect(determineBossLevelCap([0, 1, 2], 21)).to.equal(3);
+			expect(determineBossLevelCap([0, 1, 2], 50)).to.equal(3);
+			// 50%: cap at floor(average level).
+			expect(determineBossLevelCap([0, 1, 2], 51)).to.equal(1);
+			expect(determineBossLevelCap([0, 1, 2], 100)).to.equal(1);
 		});
 
-		it('does not spawn high-level bosses on an empty beginner ring (timer-driven case)', () => {
+		it('treats empty-room capped bands as level 0', () => {
 			const game = new Game();
 			const ring = game.getRing();
+			const determineBossLevelCap = (ring as any).determineBossLevelCap.bind(ring);
 
-			const boss = ring.spawnBoss();
-			expect(boss).to.not.be.undefined;
-			expect(boss!.monster.level).to.be.at.most(2);
+			expect(determineBossLevelCap([], 20)).to.equal(undefined);
+			expect(determineBossLevelCap([], 21)).to.equal(0);
+			expect(determineBossLevelCap([], 100)).to.equal(0);
 		});
 
-		it('caps beginner-room boss XP when average player XP is high within beginner levels', () => {
+		it('caps spawned boss level when cap strategy applies', () => {
 			const game = new Game();
 			const ring = game.getRing();
-			// Level 2 monsters (XP 100–149): 14 wins => 140 XP each; average 140 => unscaled band would reach ~180 XP (level 3+).
-			const beginnerA = randomContestant({
-				isBoss: false,
-				battles: { total: 20, wins: 14, losses: 6 },
-			});
-			const beginnerB = randomContestant({
-				isBoss: false,
-				battles: { total: 20, wins: 14, losses: 6 },
-			});
 
-			ring.addMonster(beginnerA);
-			ring.addMonster(beginnerB);
+			const capOneStub = sinon.stub(ring as any, 'getBossLevelCap').returns(1);
+			const lowBoss = ring.spawnBoss();
+			expect(lowBoss).to.not.be.undefined;
+			expect(lowBoss!.monster.level).to.be.at.most(1);
+			capOneStub.restore();
 
-			const boss = ring.spawnBoss();
-			expect(boss).to.not.be.undefined;
-			expect(boss!.monster.level).to.be.at.most(2);
+			ring.clearRing();
+
+			const capThreeStub = sinon.stub(ring as any, 'getBossLevelCap').returns(3);
+			const midBoss = ring.spawnBoss();
+			expect(midBoss).to.not.be.undefined;
+			expect(midBoss!.monster.level).to.be.at.most(3);
+			capThreeStub.restore();
 		});
 	});
 
