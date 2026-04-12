@@ -48,6 +48,7 @@ interface MonsterAutocompleteRow {
   name: string;
   dead: boolean;
   inRing: boolean;
+  battlesTotal: number;
 }
 
 const EMPTY_MONSTERS: MonsterAutocompleteRow[] = [];
@@ -91,9 +92,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [reconnecting, setReconnecting] = useState(false);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
-  const [ftuxComplete, setFtuxComplete] = useState(
-    () => typeof localStorage !== 'undefined' && localStorage.getItem('ftuxComplete') === 'true'
-  );
+  const [ftuxComplete, setFtuxComplete] = useState(false);
   const [hasFoughtFirstFight, setHasFoughtFirstFight] = useState(false);
 
   // Resume cursor for reconnects. Updated only on errors so we don't restart
@@ -104,6 +103,17 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const seenRef = useRef(new Set<string>());
   const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
+  const ftuxStorageKey = useMemo(
+    () => (user?.id ? `ftuxComplete:${user.id}` : 'ftuxComplete'),
+    [user?.id]
+  );
+
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return;
+    if (localStorage.getItem(ftuxStorageKey) === 'true') {
+      setFtuxComplete(true);
+    }
+  }, [ftuxStorageKey]);
 
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
   useEffect(() => {
@@ -207,6 +217,18 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const hasMonsters = monsterRows.length > 0;
   const hasMonsterInRing = monsterRows.some((m) => m.inRing);
   const hasDeadMonster = monsterRows.some((m) => m.dead);
+  const hasBattleExperiencedMonsters = monsterRows.some((m) => m.battlesTotal > 0);
+  const hasRingOutcomeHistory = useMemo(
+    () => (history ?? []).some((ev) => MONSTER_REFRESH_EVENT_TYPES.has(ev.type)),
+    [history]
+  );
+  const isEstablishedRoomState = hasBattleExperiencedMonsters || hasRingOutcomeHistory || monsterRows.length > 1;
+
+  useEffect(() => {
+    if (ftuxComplete || !isEstablishedRoomState || typeof localStorage === 'undefined') return;
+    setFtuxComplete(true);
+    localStorage.setItem(ftuxStorageKey, 'true');
+  }, [ftuxComplete, ftuxStorageKey, isEstablishedRoomState]);
 
   type FtuxPhase = 'spawn' | 'equip_send' | 'waiting' | 'post_fight' | 'hidden';
   const ftuxPhase = useMemo((): FtuxPhase => {
@@ -222,6 +244,24 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const ftuxSendableName = sendableMonsterNames[0] ?? monsterNames.find((n) => !deadMonsterNames.includes(n)) ?? '';
   const ftuxInRingName = monsterRows.find((m) => m.inRing)?.name ?? '';
   const ftuxDeadName = deadMonsterNames[0] ?? '';
+  const ftuxAction = useMemo((): { label: string; command: string } | null => {
+    switch (ftuxPhase) {
+      case 'spawn':
+        return { label: 'spawn a monster', command: 'spawn a monster' };
+      case 'equip_send':
+        return ftuxSendableName
+          ? { label: `equip ${ftuxSendableName}`, command: `equip ${ftuxSendableName}` }
+          : { label: 'look at monsters', command: 'look at monsters' };
+      case 'waiting':
+        return { label: 'look at ring', command: 'look at ring' };
+      case 'post_fight':
+        return ftuxDeadName
+          ? { label: `revive ${ftuxDeadName}`, command: `revive ${ftuxDeadName}` }
+          : { label: 'look at monsters', command: 'look at monsters' };
+      default:
+        return null;
+    }
+  }, [ftuxDeadName, ftuxPhase, ftuxSendableName]);
 
   const sendCommand = trpc.game.command.useMutation();
   const respondToPrompt = trpc.game.respondToPrompt.useMutation();
@@ -585,7 +625,9 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
   function dismissFtux() {
     setFtuxComplete(true);
-    localStorage.setItem('ftuxComplete', 'true');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(ftuxStorageKey, 'true');
+    }
   }
 
   const placeholder = activePromptId
@@ -702,9 +744,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
       {ftuxPhase !== 'hidden' && (
         <section
-          className="quick-actions"
+          className="ftux-guide"
           aria-label="Getting started guide"
-          style={{ marginBottom: '0.75rem', position: 'relative' }}
         >
           <button
             onClick={dismissFtux}
@@ -725,44 +766,38 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           >
             ✕
           </button>
-          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--color-fg-dim)' }}>
+          <p className="ftux-guide-copy">
             {ftuxPhase === 'spawn' && 'Welcome, Beastmaster. Spawn your first monster to begin your journey.'}
             {ftuxPhase === 'equip_send' && `Outfit ${ftuxSendableName} with cards, then send them into battle.`}
             {ftuxPhase === 'waiting' && `${ftuxInRingName} is in the ring. Fights begin once there are 2 or more monsters.`}
             {ftuxPhase === 'post_fight' && `${ftuxDeadName} has fallen. Revive them to fight again.`}
           </p>
-          {ftuxPhase === 'spawn' && (
-            <>
-              <button className="quick-action-chip" onClick={() => handleQuickAction('spawn a monster')}>
-                spawn a monster
+          {ftuxAction && (
+            <div className="ftux-guide-actions">
+              <button className="quick-action-chip" onClick={() => handleQuickAction(ftuxAction.command)}>
+                {ftuxAction.label}
               </button>
-              <button className="quick-action-chip" onClick={() => handleQuickAction('look at player handbook')}>
-                look at player handbook
-              </button>
-            </>
+            </div>
           )}
           {ftuxPhase === 'equip_send' && (
-            <>
-              <button className="quick-action-chip" onClick={() => handleQuickAction(`equip ${ftuxSendableName}`)}>
-                equip {ftuxSendableName}
-              </button>
-              <button className="quick-action-chip" onClick={() => handleQuickAction(`send ${ftuxSendableName} to the ring`)}>
-                send {ftuxSendableName} to the ring
-              </button>
-              <button className="quick-action-chip" onClick={() => handleQuickAction('look at ring')}>
-                look at ring
-              </button>
-            </>
-          )}
-          {ftuxPhase === 'waiting' && (
-            <button className="quick-action-chip" onClick={() => handleQuickAction('look at ring')}>
-              look at ring
-            </button>
+            <p className="ftux-guide-hint">
+              Once equipped, run <code>send {ftuxSendableName || '[monster]'} to the ring</code>.
+            </p>
           )}
           {ftuxPhase === 'post_fight' && (
-            <button className="quick-action-chip" onClick={() => handleQuickAction(`revive ${ftuxDeadName}`)}>
-              revive {ftuxDeadName}
-            </button>
+            <p className="ftux-guide-hint">
+              Dead monsters can still be inspected with <code>look at monsters</code>.
+            </p>
+          )}
+          {ftuxPhase === 'waiting' && (
+            <p className="ftux-guide-hint">
+              Add another monster to start fights faster.
+            </p>
+          )}
+          {ftuxPhase === 'spawn' && (
+            <p className="ftux-guide-hint">
+              Need help first? Try <code>look at player handbook</code>.
+            </p>
           )}
         </section>
       )}

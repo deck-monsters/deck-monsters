@@ -242,6 +242,44 @@
   color: var(--color-fg);
 }
 
+.ftux-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem var(--pane-padding);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.ftux-guide-copy {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-fg-dim);
+}
+
+.ftux-guide-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ftux-guide .quick-action-chip {
+  width: 100%;
+  text-align: left;
+  white-space: normal;
+}
+
+.ftux-guide-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-fg-dim);
+}
+
+.ftux-guide-hint code {
+  color: var(--color-fg);
+}
+
 /* Command input dock */
 .command-dock {
   border-top: 1px solid var(--color-border);
