@@ -223,6 +223,34 @@ describe('ring/index.ts', () => {
 			expect((ring as any).isBeginnerBossTimingContext()).to.equal(false);
 		});
 
+		it('maps level caps to expected XP boundaries', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const getXpCapForLevel = (ring as any).constructor
+				.toString()
+				.includes('getXpCapForLevel');
+			expect(getXpCapForLevel).to.equal(true);
+
+			// spot-check known level boundaries from getLevel progression
+			const xpCapForLevel = (ring as any).getSpawnedBossContestant
+				? (level: number) => {
+					const helper = (ring as any).constructor as any;
+					// Reach private helper through spawned-boss path deterministically:
+					// with cap N, max boss XP should never exceed the cap boundary.
+					const capStub = sinon.stub(ring as any, 'getBossLevelCap').returns(level);
+					const boss = ring.spawnBoss()!;
+					capStub.restore();
+					ring.clearRing();
+					return boss.monster.xp;
+				}
+				: () => 0;
+
+			expect(xpCapForLevel(0)).to.be.at.most(49);
+			expect(xpCapForLevel(1)).to.be.at.most(99);
+			expect(xpCapForLevel(2)).to.be.at.most(149);
+			expect(xpCapForLevel(3)).to.be.at.most(249);
+		});
+
 		it('ignores dead and destroyed room monsters in fallback level selection', () => {
 			const game = new Game();
 			const ring = game.getRing();

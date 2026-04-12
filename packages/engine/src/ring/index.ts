@@ -30,11 +30,26 @@ const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 30;
  */
 const getXpCapForLevel = (targetLevel: number): number => {
 	const normalizedLevel = Math.max(0, Math.floor(targetLevel));
-	let xp = 0;
-	while (getLevel(xp + 1) <= normalizedLevel) {
-		xp += 1;
+	let lower = 0;
+	let upper = 1;
+
+	// Expand the search window until it strictly exceeds the target level.
+	while (getLevel(upper) <= normalizedLevel) {
+		lower = upper;
+		upper *= 2;
 	}
-	return xp;
+
+	// Binary search for the highest XP whose computed level is still <= target.
+	while (lower + 1 < upper) {
+		const mid = Math.floor((lower + upper) / 2);
+		if (getLevel(mid) <= normalizedLevel) {
+			lower = mid;
+		} else {
+			upper = mid;
+		}
+	}
+
+	return lower;
 };
 
 export interface Contestant {
