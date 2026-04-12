@@ -111,6 +111,15 @@ describe('trpc/context.ts', () => {
 			expect(ctx.userId).to.equal('user-abc');
 		});
 
+		it('extracts userId when SUPABASE_URL has trailing slash', async () => {
+			process.env['SUPABASE_URL'] = 'https://test.supabase.co/';
+			const token = await signJwt('user-trailing-slash');
+			const ctx = await createContext(
+				makeCtxOpts(makeReq({ authorization: `Bearer ${token}` }))
+			);
+			expect(ctx.userId).to.equal('user-trailing-slash');
+		});
+
 		it('extracts userId from ?token= query param (WebSocket fallback via req.query)', async () => {
 			const token = await signJwt('user-ws');
 			const ctx = await createContext(

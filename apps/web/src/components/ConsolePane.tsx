@@ -205,8 +205,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     }
   );
   const hasMonsters = monsterRows.length > 0;
-  const hasMonsterInRing = monsterRows.some(m => m.inRing);
-  const hasDeadMonster = monsterRows.some(m => m.dead);
+  const hasMonsterInRing = monsterRows.some((m) => m.inRing);
+  const hasDeadMonster = monsterRows.some((m) => m.dead);
 
   type FtuxPhase = 'spawn' | 'equip_send' | 'waiting' | 'post_fight' | 'hidden';
   const ftuxPhase = useMemo((): FtuxPhase => {
@@ -218,9 +218,9 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     return 'equip_send';
   }, [ftuxComplete, hasMonsters, hasMonsterInRing, hasFoughtFirstFight, hasDeadMonster]);
 
-  // Monster names used by FTUX chips — pick first available in each category
-  const ftuxSendableName = sendableMonsterNames[0] ?? monsterNames.find(n => !deadMonsterNames.includes(n)) ?? '';
-  const ftuxInRingName = monsterRows.find(m => m.inRing)?.name ?? '';
+  // Monster names used by FTUX chips — pick first available in each category.
+  const ftuxSendableName = sendableMonsterNames[0] ?? monsterNames.find((n) => !deadMonsterNames.includes(n)) ?? '';
+  const ftuxInRingName = monsterRows.find((m) => m.inRing)?.name ?? '';
   const ftuxDeadName = deadMonsterNames[0] ?? '';
 
   const sendCommand = trpc.game.command.useMutation();
@@ -733,11 +733,11 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           </p>
           {ftuxPhase === 'spawn' && (
             <>
-              <button className="quick-action-chip" onClick={() => handleQuickAction('spawn monster')}>
-                spawn monster
+              <button className="quick-action-chip" onClick={() => handleQuickAction('spawn a monster')}>
+                spawn a monster
               </button>
-              <button className="quick-action-chip" onClick={() => handleQuickAction('look at handbook')}>
-                look at handbook
+              <button className="quick-action-chip" onClick={() => handleQuickAction('look at player handbook')}>
+                look at player handbook
               </button>
             </>
           )}
