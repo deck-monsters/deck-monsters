@@ -56,6 +56,42 @@ describe('game.ts', () => {
 		}
 	});
 
+	it('does not mirror card-play announcements across active rooms', async () => {
+		const roomA = new Game({ roomId: 'room-a' });
+		const roomB = new Game({ roomId: 'room-b' });
+		const roomAEvents: Array<{ type: string }> = [];
+		const roomBEvents: Array<{ type: string }> = [];
+
+		roomA.eventBus.subscribe('room-a-card-spy', {
+			deliver: (event) => roomAEvents.push({ type: event.type }),
+		});
+		roomB.eventBus.subscribe('room-b-card-spy', {
+			deliver: (event) => roomBEvents.push({ type: event.type }),
+		});
+
+		try {
+			const { HitCard } = await import('./cards/hit.js');
+			const Basilisk = (await import('./monsters/basilisk.js')).default;
+			const Beastmaster = (await import('./characters/beastmaster.js')).default;
+
+			const card = new HitCard();
+			const monster = new Basilisk({ name: 'Room A Monster' });
+			monster.cards = [card];
+
+			const character = new Beastmaster({ name: 'Room A Trainer' });
+			character.addMonster(monster);
+			roomA.characters['room-a-user'] = character;
+
+			card.emit('played', { player: monster });
+
+			expect(roomAEvents.some((event) => event.type === 'card.played')).to.equal(true);
+			expect(roomBEvents.some((event) => event.type === 'card.played')).to.equal(false);
+		} finally {
+			roomA.dispose();
+			roomB.dispose();
+		}
+	});
+
 	it('can look at the ring', () => {
 		const game = new Game();
 		const lookStub = sinon.stub(game.ring, 'look');
