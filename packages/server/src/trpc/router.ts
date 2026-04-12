@@ -433,10 +433,14 @@ export function createRouter(roomManager: RoomManager) {
 				);
 
 				return monsters
-					.map((monster: { givenName?: unknown; dead?: unknown }) => ({
+					.map((monster: { givenName?: unknown; dead?: unknown; battles?: { total?: unknown } }) => ({
 						name: String(monster?.givenName ?? '').trim(),
 						dead: Boolean(monster?.dead),
 						inRing: inRing.has(monster),
+						battlesTotal:
+							typeof monster?.battles?.total === 'number' && Number.isFinite(monster.battles.total)
+								? monster.battles.total
+								: 0,
 					}))
 					.filter((monster: { name: string }) => monster.name.length > 0);
 			}),
