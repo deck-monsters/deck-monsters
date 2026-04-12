@@ -14,11 +14,17 @@ let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 let cachedUrl: string | null = null;
 let jwksOverride: ReturnType<typeof createRemoteJWKSet> | null = null;
 
-function getJWKS(): ReturnType<typeof createRemoteJWKSet> | null {
+function normalizeSupabaseUrl(raw: string | undefined): string | null {
+	if (!raw) return null;
+	const trimmed = raw.trim();
+	if (!trimmed) return null;
+	return trimmed.replace(/\/+$/, '');
+}
+
+function getJWKS(supabaseUrl: string | null): ReturnType<typeof createRemoteJWKSet> | null {
 	if (jwksOverride !== null) return jwksOverride;
-	const supabaseUrl = process.env['SUPABASE_URL'];
 	if (!supabaseUrl) return null;
-	const url = new URL('/auth/v1/.well-known/jwks.json', supabaseUrl).toString();
+	const url = new URL('/auth/v1/.well-known/jwks.json', `${supabaseUrl}/`).toString();
 	if (url !== cachedUrl) {
 		jwks = createRemoteJWKSet(new URL(url));
 		cachedUrl = url;
@@ -79,8 +85,9 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 	log.debug('verifying JWT', { source: tokenSource });
 
 	try {
-		const keySet = getJWKS();
-		if (!keySet) {
+		const supabaseUrl = normalizeSupabaseUrl(process.env['SUPABASE_URL']);
+		const keySet = getJWKS(supabaseUrl);
+		if (!keySet || !supabaseUrl) {
 			log.debug('SUPABASE_URL not configured — skipping JWT verification');
 			throw new Error('SUPABASE_URL is not configured');
 		}
@@ -90,7 +97,7 @@ export async function createContext({ req }: CreateFastifyContextOptions): Promi
 			// audience verification when the aud claim is present.
 			audience: 'authenticated',
 			// Verify the issuer so tokens from other Supabase projects are rejected.
-			issuer: `${process.env['SUPABASE_URL']}/auth/v1`,
+			issuer: `${supabaseUrl}/auth/v1`,
 			// Allow minor clock skew between API host and auth provider.
 			clockTolerance: 60,
 		});

@@ -13,6 +13,13 @@ const MAX_BOSSES = 5;
 const MAX_MONSTERS = 12;
 const MIN_MONSTERS = 2;
 const FIGHT_DELAY = 60000;
+const BOSS_WARNING_DELAY_MS = 120000;
+const BOSS_DESPAWN_DELAY_MS = 600000;
+const BOSS_SPAWN_MIN_DELAY_MS = 1_200_000; // 20 min
+const BOSS_SPAWN_MAX_DELAY_MS = 2_100_000; // 35 min
+const BOSS_SPAWN_BEGINNER_MIN_DELAY_MS = 720_000; // 12 min
+const BOSS_SPAWN_BEGINNER_MAX_DELAY_MS = 1_320_000; // 22 min
+const BEGINNER_LEVEL_THRESHOLD = 2;
 
 export interface Contestant {
 	monster: any;
@@ -892,12 +899,50 @@ export class Ring extends BaseClass {
 		contestant.monster.emit('fled', { contestant });
 	}
 
+	private getPlayerMonsterLevels(): number[] {
+		return this.contestants
+			.filter(contestant => !contestant.isBoss)
+			.map(contestant => Number(contestant.monster?.level ?? 0))
+			.filter(level => Number.isFinite(level) && level >= 0);
+	}
+
+	private hasOnlyBeginnerPlayers(): boolean {
+		const levels = this.getPlayerMonsterLevels();
+		return levels.length > 0 && levels.every(level => level <= BEGINNER_LEVEL_THRESHOLD);
+	}
+
+	private getBossSpawnOuterDelayMs(): number {
+		if (this.hasOnlyBeginnerPlayers()) {
+			return random(BOSS_SPAWN_BEGINNER_MIN_DELAY_MS, BOSS_SPAWN_BEGINNER_MAX_DELAY_MS);
+		}
+		return random(BOSS_SPAWN_MIN_DELAY_MS, BOSS_SPAWN_MAX_DELAY_MS);
+	}
+
+	private getSpawnedBossContestant(): Contestant {
+		const playerContestants = this.contestants.filter(contestant => !contestant.isBoss);
+		if (!this.hasOnlyBeginnerPlayers() || playerContestants.length === 0) {
+			return randomContestant();
+		}
+
+		const averagePlayerXp = Math.round(
+			playerContestants.reduce(
+				(sum, contestant) => sum + Number(contestant.monster?.xp ?? 0),
+				0
+			) / playerContestants.length
+		);
+		const minBossXp = Math.max(0, averagePlayerXp - 20);
+		const maxBossXp = Math.max(minBossXp, averagePlayerXp + 40);
+		const scaledBossXp = random(minBossXp, maxBossXp);
+
+		return randomContestant({ xp: scaledBossXp });
+	}
+
 	startBossTimer(): void {
 		const ring = this;
 
 		if (this.spawnBosses) {
-			const outerDelay = random(2100000, 3480000); // 35–58 min
-			this.nextBossSpawnAt = Date.now() + outerDelay + 120000; // includes 2-min warn window
+			const outerDelay = this.getBossSpawnOuterDelayMs();
+			this.nextBossSpawnAt = Date.now() + outerDelay + BOSS_WARNING_DELAY_MS;
 			this.publishState();
 
 			this.bossTimer = setTimeout(() => {
@@ -907,7 +952,7 @@ export class Ring extends BaseClass {
 					0
 				);
 				if (!ring.inEncounter && numberOfBossesInRing < MAX_BOSSES) {
-					ring.emit('bossWillSpawn', { delay: 120000 });
+					ring.emit('bossWillSpawn', { delay: BOSS_WARNING_DELAY_MS });
 				}
 
 				this.bossTimer = setTimeout(() => {
@@ -918,7 +963,7 @@ export class Ring extends BaseClass {
 						ring.spawnBoss();
 					}
 					ring.startBossTimer();
-				}, 120000);
+				}, BOSS_WARNING_DELAY_MS);
 			}, outerDelay);
 		}
 	}
@@ -930,7 +975,7 @@ export class Ring extends BaseClass {
 		);
 
 		if (!this.inEncounter && numberOfBossesInRing < MAX_BOSSES) {
-			const contestant = randomContestant();
+			const contestant = this.getSpawnedBossContestant();
 
 			this.addMonster(contestant);
 
@@ -938,7 +983,7 @@ export class Ring extends BaseClass {
 				const ring = this;
 				setTimeout(() => {
 					ring.removeBoss(contestant);
-				}, 600000);
+				}, BOSS_DESPAWN_DELAY_MS);
 			}
 
 			return contestant;

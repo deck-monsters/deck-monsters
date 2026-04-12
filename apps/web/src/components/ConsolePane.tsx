@@ -51,6 +51,13 @@ interface MonsterAutocompleteRow {
 }
 
 const EMPTY_MONSTERS: MonsterAutocompleteRow[] = [];
+const MONSTER_REFRESH_EVENT_TYPES = new Set([
+  'ring.win',
+  'ring.loss',
+  'ring.draw',
+  'ring.fled',
+  'ring.permaDeath',
+]);
 
 interface ConsolePaneProps {
   roomId: string;
@@ -84,6 +91,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [reconnecting, setReconnecting] = useState(false);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
+  const [ftuxComplete, setFtuxComplete] = useState(
+    () => typeof localStorage !== 'undefined' && localStorage.getItem('ftuxComplete') === 'true'
+  );
+  const [hasFoughtFirstFight, setHasFoughtFirstFight] = useState(false);
 
   // Resume cursor for reconnects. Updated only on errors so we don't restart
   // the subscription on every event.
@@ -167,7 +178,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     setIsAtBottom(true);
   }, []);
 
-  const { data: myMonsters } = trpc.game.myMonsters.useQuery(
+  const { data: myMonsters, refetch: refetchMyMonsters } = trpc.game.myMonsters.useQuery(
     { roomId },
     { enabled: !!roomId },
   );
@@ -193,6 +204,24 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
       sendableMonsterNames,
     }
   );
+  const hasMonsters = monsterRows.length > 0;
+  const hasMonsterInRing = monsterRows.some((m) => m.inRing);
+  const hasDeadMonster = monsterRows.some((m) => m.dead);
+
+  type FtuxPhase = 'spawn' | 'equip_send' | 'waiting' | 'post_fight' | 'hidden';
+  const ftuxPhase = useMemo((): FtuxPhase => {
+    if (ftuxComplete) return 'hidden';
+    if (!hasMonsters) return 'spawn';
+    if (hasFoughtFirstFight && !hasDeadMonster) return 'hidden';
+    if (hasFoughtFirstFight && hasDeadMonster) return 'post_fight';
+    if (hasMonsterInRing) return 'waiting';
+    return 'equip_send';
+  }, [ftuxComplete, hasMonsters, hasMonsterInRing, hasFoughtFirstFight, hasDeadMonster]);
+
+  // Monster names used by FTUX chips — pick first available in each category.
+  const ftuxSendableName = sendableMonsterNames[0] ?? monsterNames.find((n) => !deadMonsterNames.includes(n)) ?? '';
+  const ftuxInRingName = monsterRows.find((m) => m.inRing)?.name ?? '';
+  const ftuxDeadName = deadMonsterNames[0] ?? '';
 
   const sendCommand = trpc.game.command.useMutation();
   const respondToPrompt = trpc.game.respondToPrompt.useMutation();
@@ -280,6 +309,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         if (!isPrivate && !isPublicSystem) return;
 
         onEvent?.(event);
+        if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {
+          void refetchMyMonsters();
+          setHasFoughtFirstFight(true);
+        }
 
         const payload = event.payload as Record<string, unknown>;
         if (event.type === 'system' && payload.consoleInput) {
@@ -427,13 +460,6 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     setInputValue('');
     setInputLocked(true);
 
-    // Echo the command back into the feed
-    addConsoleEvent({
-      id: `input-${Date.now()}`,
-      type: 'input',
-      text: command,
-    });
-
     try {
       const result = await sendCommand.mutateAsync({
         roomId,
@@ -462,6 +488,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
             text: '-- type "cancel" or click Cancel on the active prompt to abort it --',
           });
         }
+      } else {
+        void refetchMyMonsters();
       }
     } catch (err) {
       addConsoleEvent({
@@ -499,6 +527,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         upsertPendingPrompt(latest.data);
       }
     } finally {
+      void refetchMyMonsters();
       inputRef.current?.focus();
     }
   }
@@ -552,6 +581,11 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   function handleQuickAction(command: string) {
     setQuickActions([]);
     void handleSubmitCommand(command);
+  }
+
+  function dismissFtux() {
+    setFtuxComplete(true);
+    localStorage.setItem('ftuxComplete', 'true');
   }
 
   const placeholder = activePromptId
@@ -664,6 +698,73 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
             </button>
           ))}
         </nav>
+      )}
+
+      {ftuxPhase !== 'hidden' && (
+        <section
+          className="quick-actions"
+          aria-label="Getting started guide"
+          style={{ marginBottom: '0.75rem', position: 'relative' }}
+        >
+          <button
+            onClick={dismissFtux}
+            aria-label="Dismiss guide"
+            title="Dismiss guide"
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--color-fg-dim)',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              padding: '0 0.25rem',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--color-fg-dim)' }}>
+            {ftuxPhase === 'spawn' && 'Welcome, Beastmaster. Spawn your first monster to begin your journey.'}
+            {ftuxPhase === 'equip_send' && `Outfit ${ftuxSendableName} with cards, then send them into battle.`}
+            {ftuxPhase === 'waiting' && `${ftuxInRingName} is in the ring. Fights begin once there are 2 or more monsters.`}
+            {ftuxPhase === 'post_fight' && `${ftuxDeadName} has fallen. Revive them to fight again.`}
+          </p>
+          {ftuxPhase === 'spawn' && (
+            <>
+              <button className="quick-action-chip" onClick={() => handleQuickAction('spawn a monster')}>
+                spawn a monster
+              </button>
+              <button className="quick-action-chip" onClick={() => handleQuickAction('look at player handbook')}>
+                look at player handbook
+              </button>
+            </>
+          )}
+          {ftuxPhase === 'equip_send' && (
+            <>
+              <button className="quick-action-chip" onClick={() => handleQuickAction(`equip ${ftuxSendableName}`)}>
+                equip {ftuxSendableName}
+              </button>
+              <button className="quick-action-chip" onClick={() => handleQuickAction(`send ${ftuxSendableName} to the ring`)}>
+                send {ftuxSendableName} to the ring
+              </button>
+              <button className="quick-action-chip" onClick={() => handleQuickAction('look at ring')}>
+                look at ring
+              </button>
+            </>
+          )}
+          {ftuxPhase === 'waiting' && (
+            <button className="quick-action-chip" onClick={() => handleQuickAction('look at ring')}>
+              look at ring
+            </button>
+          )}
+          {ftuxPhase === 'post_fight' && (
+            <button className="quick-action-chip" onClick={() => handleQuickAction(`revive ${ftuxDeadName}`)}>
+              revive {ftuxDeadName}
+            </button>
+          )}
+        </section>
       )}
 
       <form
