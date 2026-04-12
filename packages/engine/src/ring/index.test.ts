@@ -133,7 +133,7 @@ describe('ring/index.ts', () => {
 			expect(contestant).to.be.undefined;
 		});
 
-		it('uses weighted cap bands from room monster levels', () => {
+		it('uses weighted cap bands from selected level source', () => {
 			const game = new Game();
 			const ring = game.getRing();
 			const determineBossLevelCap = (ring as any).determineBossLevelCap.bind(ring);
@@ -147,6 +147,60 @@ describe('ring/index.ts', () => {
 			// 50%: cap at floor(average level).
 			expect(determineBossLevelCap([0, 1, 2], 51)).to.equal(1);
 			expect(determineBossLevelCap([0, 1, 2], 100)).to.equal(1);
+		});
+
+		it('falls back to room monster levels when no player monsters are in the ring', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const roomMonsterA = randomContestant({
+				isBoss: false,
+				battles: { total: 30, wins: 26, losses: 4 },
+			});
+			const roomMonsterB = randomContestant({
+				isBoss: false,
+				battles: { total: 20, wins: 14, losses: 6 },
+			});
+			game.characters = {
+				roomA: roomMonsterA.character,
+				roomB: roomMonsterB.character,
+			} as any;
+
+			const determineStub = sinon.stub(ring as any, 'determineBossLevelCap').returns(0);
+			(ring as any).getBossLevelCap();
+
+			const selectedLevels = [...(determineStub.firstCall.args[0] as number[])].sort((a, b) => a - b);
+			const roomLevels = [roomMonsterA.monster.level, roomMonsterB.monster.level].sort((a, b) => a - b);
+			expect(selectedLevels).to.deep.equal(roomLevels);
+		});
+
+		it('prefers ring monster levels over room levels when ring has players', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const highRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 60, wins: 55, losses: 5 },
+			});
+			game.characters = {
+				highRoom: highRoomMonster.character,
+			} as any;
+
+			const ringMonsterA = randomContestant({
+				isBoss: false,
+				battles: { total: 2, wins: 1, losses: 1 },
+			});
+			const ringMonsterB = randomContestant({
+				isBoss: false,
+				battles: { total: 0, wins: 0, losses: 0 },
+			});
+			ring.addMonster(ringMonsterA);
+			ring.addMonster(ringMonsterB);
+
+			const determineStub = sinon.stub(ring as any, 'determineBossLevelCap').returns(0);
+			(ring as any).getBossLevelCap();
+
+			const selectedLevels = [...(determineStub.firstCall.args[0] as number[])].sort((a, b) => a - b);
+			const ringLevels = [ringMonsterA.monster.level, ringMonsterB.monster.level].sort((a, b) => a - b);
+			expect(selectedLevels).to.deep.equal(ringLevels);
 		});
 
 		it('treats empty-room capped bands as level 0', () => {

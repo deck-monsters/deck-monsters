@@ -74,6 +74,7 @@ export class Ring extends BaseClass {
 	log: (err: unknown) => void;
 	spawnBosses: boolean;
 	eventBus: RoomEventBus;
+	private readonly roomMonsterLevelsProvider?: () => number[];
 	inEncounter: boolean = false;
 	encounter?: Record<string, any>;
 	fightTimer?: ReturnType<typeof setTimeout>;
@@ -95,7 +96,11 @@ export class Ring extends BaseClass {
 
 	constructor(
 		eventBus: RoomEventBus,
-		{ spawnBosses = true, ...options }: Record<string, any> = {},
+		{
+			spawnBosses = true,
+			getRoomMonsterLevels,
+			...options
+		}: { spawnBosses?: boolean; getRoomMonsterLevels?: () => number[]; [key: string]: unknown } = {},
 		log: (err: unknown) => void = () => {}
 	) {
 		super(options);
@@ -103,6 +108,7 @@ export class Ring extends BaseClass {
 		this.log = log;
 		this.spawnBosses = spawnBosses;
 		this.eventBus = eventBus;
+		this.roomMonsterLevelsProvider = getRoomMonsterLevels;
 		if (!Array.isArray((this.options as any).battles)) {
 			this.setOptions({ battles: [] } as any);
 		}
@@ -930,8 +936,21 @@ export class Ring extends BaseClass {
 			.filter(level => Number.isFinite(level) && level >= 0);
 	}
 
+	private getRoomMonsterLevels(): number[] {
+		const levels = this.roomMonsterLevelsProvider?.() ?? [];
+		return levels
+			.map(level => Number(level))
+			.filter(level => Number.isFinite(level) && level >= 0);
+	}
+
+	private getPreferredBossScalingLevels(): number[] {
+		const ringLevels = this.getPlayerMonsterLevels();
+		if (ringLevels.length > 0) return ringLevels;
+		return this.getRoomMonsterLevels();
+	}
+
 	private hasOnlyBeginnerPlayers(): boolean {
-		const levels = this.getPlayerMonsterLevels();
+		const levels = this.getPreferredBossScalingLevels();
 		return levels.length > 0 && levels.every(level => level <= BEGINNER_LEVEL_THRESHOLD);
 	}
 
@@ -940,7 +959,7 @@ export class Ring extends BaseClass {
 	 * no player monsters in the ring yet (empty ring still uses beginner boss pacing — not full random).
 	 */
 	private isBeginnerBossContext(): boolean {
-		return this.hasOnlyBeginnerPlayers() || this.getPlayerMonsterLevels().length === 0;
+		return this.hasOnlyBeginnerPlayers() || this.getPreferredBossScalingLevels().length === 0;
 	}
 
 	private getBossSpawnOuterDelayMs(): number {
@@ -969,7 +988,7 @@ export class Ring extends BaseClass {
 	}
 
 	private getBossLevelCap(): number | undefined {
-		return this.determineBossLevelCap(this.getPlayerMonsterLevels(), random(1, 100));
+		return this.determineBossLevelCap(this.getPreferredBossScalingLevels(), random(1, 100));
 	}
 
 	private getSpawnedBossContestant(): Contestant {
