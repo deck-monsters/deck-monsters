@@ -75,7 +75,10 @@ export class Game extends BaseClass {
 
 		this.ring = new Ring(
 			this._eventBus,
-			{ spawnBosses: (this.options as any).spawnBosses },
+			{
+				spawnBosses: (this.options as any).spawnBosses,
+				getRoomMonsterLevels: () => this.getRoomMonsterLevels(),
+			},
 			this.log
 		);
 		this.exploration = new Exploration(this._eventBus as any, {}, this.log);
@@ -168,6 +171,16 @@ export class Game extends BaseClass {
 
 	set characters(characters: Record<string, any>) {
 		this.setOptions({ characters } as any);
+	}
+
+	private getRoomMonsterLevels(): number[] {
+		return Object.values(this.characters)
+			.flatMap((character: any) =>
+				Array.isArray(character?.monsters) ? character.monsters : []
+			)
+			.filter((monster: any) => monster && !monster.dead && !monster.destroyed)
+			.map((monster: any) => Number(monster?.level ?? 0))
+			.filter((level: number) => Number.isFinite(level) && level >= 0);
 	}
 
 	get saveState(): () => void {

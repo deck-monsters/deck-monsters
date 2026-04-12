@@ -1,23 +1,40 @@
 import { signedNumber } from '../helpers/signed-number.js';
 import type { RoomEventBus } from '../events/index.js';
 
-interface RollResult {
-	naturalRoll: { result: number };
-	bonusResult: number;
-	modifier: number;
+type RollFlags = {
 	primaryDice?: string;
 	strokeOfLuck?: boolean;
 	curseOfLoki?: boolean;
+};
+
+type RollWithParts = RollFlags & {
+	naturalRoll: { result: number };
+	bonusResult: number;
+	modifier: number;
+	result?: number | string;
+};
+
+type RollWithResultOnly = RollFlags & {
 	result: number | string;
-}
+	naturalRoll?: { result?: number };
+	bonusResult?: number;
+	modifier?: number;
+};
+
+type RollResult = RollWithParts | RollWithResultOnly;
 
 interface RolledOpts {
 	outcome?: string;
 	reason: string;
-	roll: RollResult;
+	roll?: RollResult;
 	vs?: number | string;
 	who: any;
 }
+
+const toNumber = (value: unknown, fallback = 0): number => {
+	const parsed = Number(value);
+	return Number.isFinite(parsed) ? parsed : fallback;
+};
 
 export function announceRolled(
 	eb: RoomEventBus,
@@ -25,19 +42,32 @@ export function announceRolled(
 	monster: any,
 	{ outcome, reason, roll, vs, who }: RolledOpts,
 ): void {
-	let rollDesc = `${roll.naturalRoll.result}${signedNumber(roll.bonusResult)}${signedNumber(roll.modifier)}`;
-	if (roll.primaryDice) rollDesc = `${rollDesc} on ${roll.primaryDice}`;
+	const naturalRoll = toNumber(roll?.naturalRoll?.result);
+	const bonusResult = toNumber(roll?.bonusResult);
+	const modifier = toNumber(roll?.modifier);
+	const fallbackResult = naturalRoll + bonusResult + modifier;
+	const result = roll?.result ?? fallbackResult;
+	const hasDetailedRollDescription = roll?.naturalRoll?.result !== undefined ||
+		roll?.bonusResult !== undefined ||
+		roll?.modifier !== undefined ||
+		!!roll?.primaryDice;
 
-	const text = `${who.givenName} rolled _${rollDesc}_ ${reason}`;
+	let rollDesc = hasDetailedRollDescription
+		? `${naturalRoll}${signedNumber(bonusResult)}${signedNumber(modifier)}`
+		: `${result}`;
+	if (roll?.primaryDice) rollDesc = `${rollDesc} on ${roll.primaryDice}`;
+
+	const whoName = who?.givenName ?? 'Someone';
+	const text = `${whoName} rolled _${rollDesc}_ ${reason}`;
 
 	const vsMsg = vs ? ` v ${vs}` : '';
-	let rollResult: string = roll.strokeOfLuck ? 'Nat 20!' : String(roll.result);
-	if (roll.curseOfLoki) rollResult = 'Crit Fail!';
+	let rollResult: string = roll?.strokeOfLuck ? 'Nat 20!' : String(result);
+	if (roll?.curseOfLoki) rollResult = 'Crit Fail!';
 
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
 		text: `${text}\n🎲 *${rollResult}${vsMsg}*${outcome ? `\n    ${outcome}` : ''}\n `,
-		payload: { roll, who, outcome },
+		payload: { roll: roll ?? { result }, who, outcome },
 	});
 }

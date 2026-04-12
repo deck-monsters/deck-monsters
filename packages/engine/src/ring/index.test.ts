@@ -133,54 +133,181 @@ describe('ring/index.ts', () => {
 			expect(contestant).to.be.undefined;
 		});
 
-		it('spawns lower-level bosses when only beginner monsters are present', () => {
+		it('uses weighted cap bands from selected level source', () => {
 			const game = new Game();
 			const ring = game.getRing();
-			const beginnerA = randomContestant({
-				isBoss: false,
-				battles: { total: 0, wins: 0, losses: 0 },
-			});
-			const beginnerB = randomContestant({
-				isBoss: false,
-				battles: { total: 0, wins: 0, losses: 0 },
-			});
+			const determineBossLevelCap = (ring as any).determineBossLevelCap.bind(ring);
 
-			ring.addMonster(beginnerA);
-			ring.addMonster(beginnerB);
-
-			const boss = ring.spawnBoss();
-			expect(boss).to.not.be.undefined;
-			expect(boss!.monster.level).to.be.at.most(2);
+			// 20%: keep full random distribution (no cap).
+			expect(determineBossLevelCap([0, 1, 2], 1)).to.equal(undefined);
+			expect(determineBossLevelCap([0, 1, 2], 20)).to.equal(undefined);
+			// 30%: cap at highest level + 1.
+			expect(determineBossLevelCap([0, 1, 2], 21)).to.equal(3);
+			expect(determineBossLevelCap([0, 1, 2], 50)).to.equal(3);
+			// 50%: cap at floor(average level).
+			expect(determineBossLevelCap([0, 1, 2], 51)).to.equal(1);
+			expect(determineBossLevelCap([0, 1, 2], 100)).to.equal(1);
 		});
 
-		it('does not spawn high-level bosses on an empty beginner ring (timer-driven case)', () => {
+		it('falls back to room monster levels when no player monsters are in the ring', () => {
 			const game = new Game();
 			const ring = game.getRing();
-
-			const boss = ring.spawnBoss();
-			expect(boss).to.not.be.undefined;
-			expect(boss!.monster.level).to.be.at.most(2);
-		});
-
-		it('caps beginner-room boss XP when average player XP is high within beginner levels', () => {
-			const game = new Game();
-			const ring = game.getRing();
-			// Level 2 monsters (XP 100–149): 14 wins => 140 XP each; average 140 => unscaled band would reach ~180 XP (level 3+).
-			const beginnerA = randomContestant({
+			const roomMonsterA = randomContestant({
+				isBoss: false,
+				battles: { total: 30, wins: 26, losses: 4 },
+			});
+			const roomMonsterB = randomContestant({
 				isBoss: false,
 				battles: { total: 20, wins: 14, losses: 6 },
 			});
-			const beginnerB = randomContestant({
+			game.characters = {
+				roomA: roomMonsterA.character,
+				roomB: roomMonsterB.character,
+			} as any;
+
+			const determineStub = sinon.stub(ring as any, 'determineBossLevelCap').returns(0);
+			(ring as any).getBossLevelCap();
+
+			const selectedLevels = [...(determineStub.firstCall.args[0] as number[])].sort((a, b) => a - b);
+			const roomLevels = [roomMonsterA.monster.level, roomMonsterB.monster.level].sort((a, b) => a - b);
+			expect(selectedLevels).to.deep.equal(roomLevels);
+		});
+
+		it('prefers ring monster levels over room levels when ring has players', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const highRoomMonster = randomContestant({
 				isBoss: false,
-				battles: { total: 20, wins: 14, losses: 6 },
+				battles: { total: 60, wins: 55, losses: 5 },
 			});
+			game.characters = {
+				highRoom: highRoomMonster.character,
+			} as any;
 
-			ring.addMonster(beginnerA);
-			ring.addMonster(beginnerB);
+			const ringMonsterA = randomContestant({
+				isBoss: false,
+				battles: { total: 2, wins: 1, losses: 1 },
+			});
+			const ringMonsterB = randomContestant({
+				isBoss: false,
+				battles: { total: 0, wins: 0, losses: 0 },
+			});
+			ring.addMonster(ringMonsterA);
+			ring.addMonster(ringMonsterB);
 
-			const boss = ring.spawnBoss();
-			expect(boss).to.not.be.undefined;
-			expect(boss!.monster.level).to.be.at.most(2);
+			const determineStub = sinon.stub(ring as any, 'determineBossLevelCap').returns(0);
+			(ring as any).getBossLevelCap();
+
+			const selectedLevels = [...(determineStub.firstCall.args[0] as number[])].sort((a, b) => a - b);
+			const ringLevels = [ringMonsterA.monster.level, ringMonsterB.monster.level].sort((a, b) => a - b);
+			expect(selectedLevels).to.deep.equal(ringLevels);
+		});
+
+		it('uses ring-only levels for boss spawn timing context', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const highRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 80, wins: 75, losses: 5 },
+			});
+			game.characters = { highRoom: highRoomMonster.character } as any;
+
+			// Ring is empty, so timing remains beginner-paced regardless of room roster.
+			expect((ring as any).isBeginnerBossTimingContext()).to.equal(true);
+
+			const highRingMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 80, wins: 75, losses: 5 },
+			});
+			ring.addMonster(highRingMonster);
+			expect((ring as any).isBeginnerBossTimingContext()).to.equal(false);
+		});
+
+		it('maps level caps to expected XP boundaries', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const getXpCapForLevel = (ring as any).constructor
+				.toString()
+				.includes('getXpCapForLevel');
+			expect(getXpCapForLevel).to.equal(true);
+
+			// spot-check known level boundaries from getLevel progression
+			const xpCapForLevel = (ring as any).getSpawnedBossContestant
+				? (level: number) => {
+					const helper = (ring as any).constructor as any;
+					// Reach private helper through spawned-boss path deterministically:
+					// with cap N, max boss XP should never exceed the cap boundary.
+					const capStub = sinon.stub(ring as any, 'getBossLevelCap').returns(level);
+					const boss = ring.spawnBoss()!;
+					capStub.restore();
+					ring.clearRing();
+					return boss.monster.xp;
+				}
+				: () => 0;
+
+			expect(xpCapForLevel(0)).to.be.at.most(49);
+			expect(xpCapForLevel(1)).to.be.at.most(99);
+			expect(xpCapForLevel(2)).to.be.at.most(149);
+			expect(xpCapForLevel(3)).to.be.at.most(249);
+		});
+
+		it('ignores dead and destroyed room monsters in fallback level selection', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const aliveRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 0, wins: 0, losses: 0 },
+			});
+			const deadRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 60, wins: 55, losses: 5 },
+			});
+			const destroyedRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 90, wins: 85, losses: 5 },
+			});
+			deadRoomMonster.monster.hp = 0;
+			destroyedRoomMonster.monster.hp = -999;
+			game.characters = {
+				aliveRoom: aliveRoomMonster.character,
+				deadRoom: deadRoomMonster.character,
+				destroyedRoom: destroyedRoomMonster.character,
+			} as any;
+
+			const determineStub = sinon.stub(ring as any, 'determineBossLevelCap').returns(0);
+			(ring as any).getBossLevelCap();
+
+			const selectedLevels = determineStub.firstCall.args[0] as number[];
+			expect(selectedLevels).to.deep.equal([aliveRoomMonster.monster.level]);
+		});
+
+		it('treats empty-room capped bands as level 0', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const determineBossLevelCap = (ring as any).determineBossLevelCap.bind(ring);
+
+			expect(determineBossLevelCap([], 20)).to.equal(undefined);
+			expect(determineBossLevelCap([], 21)).to.equal(0);
+			expect(determineBossLevelCap([], 100)).to.equal(0);
+		});
+
+		it('caps spawned boss level when cap strategy applies', () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			const capOneStub = sinon.stub(ring as any, 'getBossLevelCap').returns(1);
+			const lowBoss = ring.spawnBoss();
+			expect(lowBoss).to.not.be.undefined;
+			expect(lowBoss!.monster.level).to.be.at.most(1);
+			capOneStub.restore();
+
+			ring.clearRing();
+
+			const capThreeStub = sinon.stub(ring as any, 'getBossLevelCap').returns(3);
+			const midBoss = ring.spawnBoss();
+			expect(midBoss).to.not.be.undefined;
+			expect(midBoss!.monster.level).to.be.at.most(3);
+			capThreeStub.restore();
 		});
 	});
 
