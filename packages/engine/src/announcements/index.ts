@@ -75,23 +75,29 @@ function createRoomScopedEventGuard(game: RoomScopedGame): (...args: any[]) => b
 		if (value === game || value === game.ring || value === game.exploration) return true;
 
 		const characters = Object.values(game.characters ?? {});
-		for (const character of characters) {
+		for (const character of characters as Array<RoomScopedCharacter | undefined>) {
 			if (value === character) return true;
 
-			const monsters = Array.isArray(character?.monsters) ? character.monsters : [];
+			const monsters: unknown[] = Array.isArray(character?.monsters) ? character.monsters : [];
 			if (monsters.includes(value)) return true;
 
-			const charItems = Array.isArray(character?.items) ? character.items : [];
+			const charItems: unknown[] = Array.isArray(character?.items) ? character.items : [];
 			if (charItems.includes(value)) return true;
 
-			const deck = Array.isArray(character?.deck) ? character.deck : [];
+			const deck: unknown[] = Array.isArray(character?.deck) ? character.deck : [];
 			if (deck.includes(value)) return true;
 
 			for (const monster of monsters) {
-				const cards = Array.isArray(monster?.cards) ? monster.cards : [];
+				const cards: unknown[] =
+					monster && typeof monster === 'object' && Array.isArray((monster as any).cards)
+						? (monster as any).cards
+						: [];
 				if (cards.includes(value)) return true;
 
-				const items = Array.isArray(monster?.items) ? monster.items : [];
+				const items: unknown[] =
+					monster && typeof monster === 'object' && Array.isArray((monster as any).items)
+						? (monster as any).items
+						: [];
 				if (items.includes(value)) return true;
 			}
 		}
