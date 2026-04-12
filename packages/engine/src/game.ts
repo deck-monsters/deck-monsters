@@ -178,6 +178,7 @@ export class Game extends BaseClass {
 			.flatMap((character: any) =>
 				Array.isArray(character?.monsters) ? character.monsters : []
 			)
+			.filter((monster: any) => monster && !monster.dead && !monster.destroyed)
 			.map((monster: any) => Number(monster?.level ?? 0))
 			.filter((level: number) => Number.isFinite(level) && level >= 0);
 	}

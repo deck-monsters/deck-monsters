@@ -203,6 +203,56 @@ describe('ring/index.ts', () => {
 			expect(selectedLevels).to.deep.equal(ringLevels);
 		});
 
+		it('uses ring-only levels for boss spawn timing context', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const highRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 80, wins: 75, losses: 5 },
+			});
+			game.characters = { highRoom: highRoomMonster.character } as any;
+
+			// Ring is empty, so timing remains beginner-paced regardless of room roster.
+			expect((ring as any).isBeginnerBossTimingContext()).to.equal(true);
+
+			const highRingMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 80, wins: 75, losses: 5 },
+			});
+			ring.addMonster(highRingMonster);
+			expect((ring as any).isBeginnerBossTimingContext()).to.equal(false);
+		});
+
+		it('ignores dead and destroyed room monsters in fallback level selection', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const aliveRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 0, wins: 0, losses: 0 },
+			});
+			const deadRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 60, wins: 55, losses: 5 },
+			});
+			const destroyedRoomMonster = randomContestant({
+				isBoss: false,
+				battles: { total: 90, wins: 85, losses: 5 },
+			});
+			deadRoomMonster.monster.hp = 0;
+			destroyedRoomMonster.monster.hp = -999;
+			game.characters = {
+				aliveRoom: aliveRoomMonster.character,
+				deadRoom: deadRoomMonster.character,
+				destroyedRoom: destroyedRoomMonster.character,
+			} as any;
+
+			const determineStub = sinon.stub(ring as any, 'determineBossLevelCap').returns(0);
+			(ring as any).getBossLevelCap();
+
+			const selectedLevels = determineStub.firstCall.args[0] as number[];
+			expect(selectedLevels).to.deep.equal([aliveRoomMonster.monster.level]);
+		});
+
 		it('treats empty-room capped bands as level 0', () => {
 			const game = new Game();
 			const ring = game.getRing();

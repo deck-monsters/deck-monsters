@@ -1,15 +1,27 @@
 import { signedNumber } from '../helpers/signed-number.js';
 import type { RoomEventBus } from '../events/index.js';
 
-interface RollResult {
-	naturalRoll?: { result?: number };
-	bonusResult?: number;
-	modifier?: number;
+type RollFlags = {
 	primaryDice?: string;
 	strokeOfLuck?: boolean;
 	curseOfLoki?: boolean;
+};
+
+type RollWithParts = RollFlags & {
+	naturalRoll: { result: number };
+	bonusResult: number;
+	modifier: number;
 	result?: number | string;
-}
+};
+
+type RollWithResultOnly = RollFlags & {
+	result: number | string;
+	naturalRoll?: { result?: number };
+	bonusResult?: number;
+	modifier?: number;
+};
+
+type RollResult = RollWithParts | RollWithResultOnly;
 
 interface RolledOpts {
 	outcome?: string;

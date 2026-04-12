@@ -4,6 +4,7 @@ import { actionCard, monsterCard } from '../helpers/card.js';
 import { calculateXP } from '../helpers/experience.js';
 import { getTarget } from '../helpers/targeting-strategies.js';
 import { randomContestant } from '../helpers/bosses.js';
+import { getLevel } from '../helpers/levels.js';
 import { sortCardsAlphabetically } from '../cards/helpers/sort.js';
 import { shortDelay, veryShortDelay } from '../helpers/delay-times.js';
 import { uniqueCards } from '../cards/helpers/unique-cards.js';
@@ -28,21 +29,12 @@ const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 30;
  * Level 0 cap is 49, level 1 cap is 99, level 2 cap is 149, etc.
  */
 const getXpCapForLevel = (targetLevel: number): number => {
-	if (targetLevel <= 0) return 49;
-
-	let prevPrevThreshold = 0;
-	let prevThreshold = 50;
-	let level = 0;
-	while (level <= targetLevel) {
-		const threshold = prevPrevThreshold + prevThreshold;
-		if (level === targetLevel) return threshold - 1;
-
-		prevPrevThreshold = prevThreshold;
-		prevThreshold = threshold;
-		level += 1;
+	const normalizedLevel = Math.max(0, Math.floor(targetLevel));
+	let xp = 0;
+	while (getLevel(xp + 1) <= normalizedLevel) {
+		xp += 1;
 	}
-
-	return 49;
+	return xp;
 };
 
 export interface Contestant {
@@ -949,21 +941,17 @@ export class Ring extends BaseClass {
 		return this.getRoomMonsterLevels();
 	}
 
-	private hasOnlyBeginnerPlayers(): boolean {
-		const levels = this.getPreferredBossScalingLevels();
-		return levels.length > 0 && levels.every(level => level <= BEGINNER_LEVEL_THRESHOLD);
-	}
-
 	/**
-	 * Beginner *room* timing and boss scaling: all player monsters are beginner-level, or there are
-	 * no player monsters in the ring yet (empty ring still uses beginner boss pacing — not full random).
+	 * Boss timing remains ring-focused so room-level fallback only changes boss level
+	 * selection, not spawn cadence. If the ring is empty we keep beginner pacing.
 	 */
-	private isBeginnerBossContext(): boolean {
-		return this.hasOnlyBeginnerPlayers() || this.getPreferredBossScalingLevels().length === 0;
+	private isBeginnerBossTimingContext(): boolean {
+		const ringLevels = this.getPlayerMonsterLevels();
+		return ringLevels.length === 0 || ringLevels.every(level => level <= BEGINNER_LEVEL_THRESHOLD);
 	}
 
 	private getBossSpawnOuterDelayMs(): number {
-		if (this.isBeginnerBossContext()) {
+		if (this.isBeginnerBossTimingContext()) {
 			return random(BOSS_SPAWN_BEGINNER_MIN_DELAY_MS, BOSS_SPAWN_BEGINNER_MAX_DELAY_MS);
 		}
 		return random(BOSS_SPAWN_MIN_DELAY_MS, BOSS_SPAWN_MAX_DELAY_MS);
@@ -975,6 +963,7 @@ export class Ring extends BaseClass {
 		}
 
 		if (playerLevels.length <= 0) {
+			// When no ring/room monsters are known, capped branches collapse to beginner cap.
 			return 0;
 		}
 
