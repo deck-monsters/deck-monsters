@@ -33,6 +33,29 @@ describe('game.ts', () => {
 		expect(game.getRing()).to.equal(game.ring);
 	});
 
+	it('keeps ring announcements scoped to the room that emitted them', () => {
+		const roomA = new Game({ roomId: 'room-a' });
+		const roomB = new Game({ roomId: 'room-b' });
+		const roomAEvents: Array<{ type: string }> = [];
+		const roomBEvents: Array<{ type: string }> = [];
+
+		roomA.eventBus.subscribe('room-a-spy', {
+			deliver: (event) => roomAEvents.push({ type: event.type }),
+		});
+		roomB.eventBus.subscribe('room-b-spy', {
+			deliver: (event) => roomBEvents.push({ type: event.type }),
+		});
+
+		try {
+			roomA.ring.emit('bossWillSpawn', { delay: 120_000 });
+			expect(roomAEvents.some((event) => event.type === 'announce')).to.equal(true);
+			expect(roomBEvents.some((event) => event.type === 'announce')).to.equal(false);
+		} finally {
+			roomA.dispose();
+			roomB.dispose();
+		}
+	});
+
 	it('can look at the ring', () => {
 		const game = new Game();
 		const lookStub = sinon.stub(game.ring, 'look');

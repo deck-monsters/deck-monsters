@@ -55,7 +55,7 @@ export function initialize(game: any): () => void {
 	const wrap = (fn: (eb: RoomEventBus, ...args: any[]) => void) =>
 		(...args: any[]) => fn(eb, ...args);
 
-	const events: Array<{ event: string; listener: (...args: any[]) => void }> = [
+	const gameEvents: Array<{ event: string; listener: (...args: any[]) => void }> = [
 		{ event: 'card.effect', listener: wrap(announceEffect) },
 		{ event: 'card.miss', listener: wrap(announceMiss) },
 		{ event: 'card.narration', listener: wrap(announceNarration) },
@@ -73,32 +73,42 @@ export function initialize(game: any): () => void {
 		{ event: 'item.used', listener: wrap(announceItemUsed) },
 		{ event: 'potion.narration', listener: wrap(announceNarration) },
 		{ event: 'potion.used', listener: wrap(announceItemUsed) },
-		{ event: 'ring.add', listener: wrap(announceContestant) },
-		{ event: 'ring.bossWillSpawn', listener: wrap(announceBossWillSpawn) },
-		{ event: 'ring.endOfDeck', listener: wrap(announceEndOfDeck) },
-		{ event: 'ring.fight', listener: wrap(announceFight) },
-		{ event: 'ring.fightConcludes', listener: wrap(announceFightConcludes) },
-		{ event: 'ring.gainedXP', listener: wrap(announceXPGain) },
 		{
 			event: 'creature.levelUp',
 			listener: (_className: string, _instance: any, { monster, level }: { monster: any; level: number }) =>
 				announceLevelUp(eb, monster, level),
 		},
-		{ event: 'ring.narration', listener: wrap(announceNarration) },
-		{ event: 'ring.remove', listener: wrap(announceContestantLeave) },
-		{ event: 'ring.roundComplete', listener: wrap(announceNextRound) },
-		{ event: 'ring.startTurn', listener: wrap(announceNextTurn) },
-		{ event: 'ring.playerTurnBegin', listener: wrap(announceTurnBegin) },
 		{ event: 'scroll.narration', listener: wrap(announceNarration) },
 		{ event: 'scroll.used', listener: wrap(announceItemUsed) },
+	];
+
+	// Ring events must be bound to this room's ring instance (not game/global),
+	// otherwise the global emitter path can mirror ring announcements across rooms.
+	const ringEvents: Array<{ event: string; listener: (...args: any[]) => void }> = [
+		{ event: 'add', listener: wrap(announceContestant) },
+		{ event: 'bossWillSpawn', listener: wrap(announceBossWillSpawn) },
+		{ event: 'endOfDeck', listener: wrap(announceEndOfDeck) },
+		{ event: 'fight', listener: wrap(announceFight) },
+		{ event: 'fightConcludes', listener: wrap(announceFightConcludes) },
+		{ event: 'gainedXP', listener: wrap(announceXPGain) },
+		{ event: 'narration', listener: wrap(announceNarration) },
+		{ event: 'remove', listener: wrap(announceContestantLeave) },
+		{ event: 'roundComplete', listener: wrap(announceNextRound) },
+		{ event: 'startTurn', listener: wrap(announceNextTurn) },
+		{ event: 'playerTurnBegin', listener: wrap(announceTurnBegin) },
 	];
 
 	// Collect bound listeners so they can be removed on dispose
 	const registered: Array<{ event: string; bound: (...args: any[]) => void }> = [];
 
-	events.forEach(({ event, listener }) => {
+	gameEvents.forEach(({ event, listener }) => {
 		const bound = game.on(event, listener);
 		registered.push({ event, bound });
+	});
+
+	ringEvents.forEach(({ event, listener }) => {
+		const bound = game.ring.on(event, listener);
+		registered.push({ event: `ring.${event}`, bound });
 	});
 
 	// heal is special: ring is passed as an extra argument before the standard args
@@ -109,6 +119,12 @@ export function initialize(game: any): () => void {
 	registered.push({ event: 'creature.heal', bound: boundHeal });
 
 	return () => {
-		registered.forEach(({ event, bound }) => game.off(event, bound));
+		registered.forEach(({ event, bound }) => {
+			if (event.startsWith('ring.')) {
+				game.ring.off(event.replace(/^ring\./, ''), bound);
+				return;
+			}
+			game.off(event, bound);
+		});
 	};
 }

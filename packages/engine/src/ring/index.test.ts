@@ -132,6 +132,26 @@ describe('ring/index.ts', () => {
 			expect(ring.contestants.length).to.equal(1);
 			expect(contestant).to.be.undefined;
 		});
+
+		it('spawns lower-level bosses when only beginner monsters are present', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const beginnerA = randomContestant({
+				isBoss: false,
+				battles: { total: 0, wins: 0, losses: 0 },
+			});
+			const beginnerB = randomContestant({
+				isBoss: false,
+				battles: { total: 0, wins: 0, losses: 0 },
+			});
+
+			ring.addMonster(beginnerA);
+			ring.addMonster(beginnerB);
+
+			const boss = ring.spawnBoss();
+			expect(boss).to.not.be.undefined;
+			expect(boss!.monster.level).to.be.at.most(2);
+		});
 	});
 
 	describe('fightConcludes', () => {

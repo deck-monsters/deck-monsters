@@ -51,6 +51,13 @@ interface MonsterAutocompleteRow {
 }
 
 const EMPTY_MONSTERS: MonsterAutocompleteRow[] = [];
+const MONSTER_REFRESH_EVENT_TYPES = new Set([
+  'ring.win',
+  'ring.loss',
+  'ring.draw',
+  'ring.fled',
+  'ring.permaDeath',
+]);
 
 interface ConsolePaneProps {
   roomId: string;
@@ -167,7 +174,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     setIsAtBottom(true);
   }, []);
 
-  const { data: myMonsters } = trpc.game.myMonsters.useQuery(
+  const { data: myMonsters, refetch: refetchMyMonsters } = trpc.game.myMonsters.useQuery(
     { roomId },
     { enabled: !!roomId },
   );
@@ -192,6 +199,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
       deadMonsterNames,
       sendableMonsterNames,
     }
+  );
+  const showFtux = useMemo(
+    () => (history?.length ?? 0) === 0 && consoleEvents.length === 0 && monsterRows.length === 0,
+    [history, consoleEvents.length, monsterRows.length]
   );
 
   const sendCommand = trpc.game.command.useMutation();
@@ -280,6 +291,9 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         if (!isPrivate && !isPublicSystem) return;
 
         onEvent?.(event);
+        if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {
+          void refetchMyMonsters();
+        }
 
         const payload = event.payload as Record<string, unknown>;
         if (event.type === 'system' && payload.consoleInput) {
@@ -427,13 +441,6 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     setInputValue('');
     setInputLocked(true);
 
-    // Echo the command back into the feed
-    addConsoleEvent({
-      id: `input-${Date.now()}`,
-      type: 'input',
-      text: command,
-    });
-
     try {
       const result = await sendCommand.mutateAsync({
         roomId,
@@ -462,6 +469,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
             text: '-- type "cancel" or click Cancel on the active prompt to abort it --',
           });
         }
+      } else {
+        void refetchMyMonsters();
       }
     } catch (err) {
       addConsoleEvent({
@@ -499,6 +508,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         upsertPendingPrompt(latest.data);
       }
     } finally {
+      void refetchMyMonsters();
       inputRef.current?.focus();
     }
   }
@@ -664,6 +674,36 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
             </button>
           ))}
         </nav>
+      )}
+
+      {showFtux && (
+        <section
+          className="quick-actions"
+          aria-label="Getting started guide"
+          style={{ marginBottom: '0.75rem' }}
+        >
+          <p
+            style={{
+              margin: '0 0 0.5rem 0',
+              fontSize: '0.85rem',
+              color: 'var(--color-fg-dim)',
+            }}
+          >
+            New here? Start by spawning a monster, then send it to the ring.
+          </p>
+          <button className="quick-action-chip" onClick={() => setInputValue('spawn monster')}>
+            spawn monster
+          </button>
+          <button className="quick-action-chip" onClick={() => setInputValue('look at monsters')}>
+            look at monsters
+          </button>
+          <button className="quick-action-chip" onClick={() => setInputValue('send [monster] to the ring')}>
+            send [monster] to the ring
+          </button>
+          <button className="quick-action-chip" onClick={() => setInputValue('look at handbook')}>
+            look at handbook
+          </button>
+        </section>
       )}
 
       <form
