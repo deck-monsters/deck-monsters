@@ -8,6 +8,7 @@ import { BaseCard } from './cards/base.js';
 import Ring from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
 import { engineReady } from './helpers/engine-ready.js';
+import { globalSemaphore } from './helpers/semaphore.js';
 
 describe('game.ts', () => {
 	afterEach(() => {
@@ -80,9 +81,9 @@ describe('game.ts', () => {
 
 			const character = new Beastmaster({ name: 'Room A Trainer' });
 			character.addMonster(monster);
-			roomA.characters['room-a-user'] = character;
+			roomA.characters = { ...roomA.characters, 'room-a-user': character };
 
-			card.emit('played', { player: monster });
+			globalSemaphore.emit('card.played', card.name, card, { player: monster });
 
 			expect(roomAEvents.some((event) => event.type === 'card.played')).to.equal(true);
 			expect(roomBEvents.some((event) => event.type === 'card.played')).to.equal(false);
