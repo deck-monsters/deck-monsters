@@ -8,6 +8,7 @@ import { BaseCard } from './cards/base.js';
 import Ring from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
 import { engineReady } from './helpers/engine-ready.js';
+import { globalSemaphore } from './helpers/semaphore.js';
 
 describe('game.ts', () => {
 	afterEach(() => {
@@ -50,6 +51,107 @@ describe('game.ts', () => {
 			roomA.ring.emit('bossWillSpawn', { delay: 120_000 });
 			expect(roomAEvents.some((event) => event.type === 'announce')).to.equal(true);
 			expect(roomBEvents.some((event) => event.type === 'announce')).to.equal(false);
+		} finally {
+			roomA.dispose();
+			roomB.dispose();
+		}
+	});
+
+	it('does not mirror card-play announcements across active rooms', async () => {
+		const roomA = new Game({ roomId: 'room-a' });
+		const roomB = new Game({ roomId: 'room-b' });
+		const roomAEvents: Array<{ type: string; text: string }> = [];
+		const roomBEvents: Array<{ type: string; text: string }> = [];
+
+		roomA.eventBus.subscribe('room-a-card-spy', {
+			deliver: (event) => roomAEvents.push({ type: event.type, text: event.text ?? '' }),
+		});
+		roomB.eventBus.subscribe('room-b-card-spy', {
+			deliver: (event) => roomBEvents.push({ type: event.type, text: event.text ?? '' }),
+		});
+
+		try {
+			const { HitCard } = await import('./cards/hit.js');
+			const Basilisk = (await import('./monsters/basilisk.js')).default;
+			const Beastmaster = (await import('./characters/beastmaster.js')).default;
+
+			const card = new HitCard();
+			const monster = new Basilisk({ name: 'Room A Monster' });
+			monster.cards = [card];
+
+			const character = new Beastmaster({ name: 'Room A Trainer' });
+			character.addMonster(monster);
+			roomA.characters = { ...roomA.characters, 'room-a-user': character };
+
+			globalSemaphore.emit('card.played', card.name, card, { player: monster });
+
+			expect(roomAEvents.some((event) => event.type === 'card.played')).to.equal(true);
+			expect(roomBEvents.some((event) => event.type === 'card.played')).to.equal(false);
+		} finally {
+			roomA.dispose();
+			roomB.dispose();
+		}
+	});
+
+	it('does not mirror level-up announcements across active rooms', async () => {
+		const roomA = new Game({ roomId: 'room-a' });
+		const roomB = new Game({ roomId: 'room-b' });
+		const roomAEvents: Array<{ type: string; text: string }> = [];
+		const roomBEvents: Array<{ type: string; text: string }> = [];
+
+		roomA.eventBus.subscribe('room-a-levelup-spy', {
+			deliver: (event) => roomAEvents.push({ type: event.type, text: event.text ?? '' }),
+		});
+		roomB.eventBus.subscribe('room-b-levelup-spy', {
+			deliver: (event) => roomBEvents.push({ type: event.type, text: event.text ?? '' }),
+		});
+
+		try {
+			const Basilisk = (await import('./monsters/basilisk.js')).default;
+			const Beastmaster = (await import('./characters/beastmaster.js')).default;
+
+			const monster = new Basilisk({ name: 'Room A Leveler' });
+			const character = new Beastmaster({ name: 'Room A Trainer' });
+			character.addMonster(monster);
+			roomA.characters = { ...roomA.characters, 'room-a-user': character };
+
+			globalSemaphore.emit('creature.levelUp', monster.name, monster, { monster, level: 2 });
+
+			expect(roomAEvents.some((event) => event.text.includes('has reached level 2'))).to.equal(true);
+			expect(roomBEvents.some((event) => event.text.includes('has reached level 2'))).to.equal(false);
+		} finally {
+			roomA.dispose();
+			roomB.dispose();
+		}
+	});
+
+	it('does not mirror heal announcements across active rooms', async () => {
+		const roomA = new Game({ roomId: 'room-a' });
+		const roomB = new Game({ roomId: 'room-b' });
+		const roomAEvents: Array<{ type: string; text: string }> = [];
+		const roomBEvents: Array<{ type: string; text: string }> = [];
+
+		roomA.eventBus.subscribe('room-a-heal-spy', {
+			deliver: (event) => roomAEvents.push({ type: event.type, text: event.text ?? '' }),
+		});
+		roomB.eventBus.subscribe('room-b-heal-spy', {
+			deliver: (event) => roomBEvents.push({ type: event.type, text: event.text ?? '' }),
+		});
+
+		try {
+			const Basilisk = (await import('./monsters/basilisk.js')).default;
+			const Beastmaster = (await import('./characters/beastmaster.js')).default;
+
+			const monster = new Basilisk({ name: 'Room A Healer' });
+			const character = new Beastmaster({ name: 'Room A Trainer' });
+			character.addMonster(monster);
+			roomA.characters = { ...roomA.characters, 'room-a-user': character };
+			roomA.ring.contestants = [{ monster, character, userId: 'room-a-user' }] as any;
+
+			globalSemaphore.emit('creature.heal', monster.name, monster, { amount: 2 });
+
+			expect(roomAEvents.some((event) => event.text.includes('healed 2 hp'))).to.equal(true);
+			expect(roomBEvents.some((event) => event.text.includes('healed 2 hp'))).to.equal(false);
 		} finally {
 			roomA.dispose();
 			roomB.dispose();

@@ -49,53 +49,149 @@ import { announceXPGain } from './xpGain.js';
 import { announceLevelUp } from './level-up.js';
 import type { RoomEventBus } from '../events/index.js';
 
-export function initialize(game: any): () => void {
-	const eb: RoomEventBus = game.eventBus;
+const MAX_OWNERSHIP_WALK_DEPTH = 3;
 
-	const wrap = (fn: (eb: RoomEventBus, ...args: any[]) => void) =>
+type RoomScopedCharacter = {
+	monsters?: unknown[];
+	items?: unknown[];
+	deck?: unknown[];
+};
+
+type RoomScopedGame = {
+	eventBus: RoomEventBus;
+	ring: {
+		on: (event: string, listener: (...args: any[]) => void) => (...args: any[]) => void;
+		off: (event: string, listener: (...args: any[]) => void) => void;
+	};
+	exploration: unknown;
+	characters?: Record<string, RoomScopedCharacter | undefined>;
+	on: (event: string, listener: (...args: any[]) => void) => (...args: any[]) => void;
+	off: (event: string, listener: (...args: any[]) => void) => void;
+};
+
+function createRoomScopedEventGuard(game: RoomScopedGame): (...args: any[]) => boolean {
+	const ownsDirectly = (value: unknown): boolean => {
+		if (!value || typeof value !== 'object') return false;
+		if (value === game || value === game.ring || value === game.exploration) return true;
+
+		const characters = Object.values(game.characters ?? {});
+		for (const character of characters as Array<RoomScopedCharacter | undefined>) {
+			if (value === character) return true;
+
+			const monsters: unknown[] = Array.isArray(character?.monsters) ? character.monsters : [];
+			if (monsters.includes(value)) return true;
+
+			const charItems: unknown[] = Array.isArray(character?.items) ? character.items : [];
+			if (charItems.includes(value)) return true;
+
+			const deck: unknown[] = Array.isArray(character?.deck) ? character.deck : [];
+			if (deck.includes(value)) return true;
+
+			for (const monster of monsters) {
+				const cards: unknown[] =
+					monster && typeof monster === 'object' && Array.isArray((monster as any).cards)
+						? (monster as any).cards
+						: [];
+				if (cards.includes(value)) return true;
+
+				const items: unknown[] =
+					monster && typeof monster === 'object' && Array.isArray((monster as any).items)
+						? (monster as any).items
+						: [];
+				if (items.includes(value)) return true;
+			}
+		}
+
+		return false;
+	};
+
+	return (...args: any[]): boolean => {
+		// Hot path: the emitting instance is almost always a top-level argument.
+		if (args.some((arg) => ownsDirectly(arg))) return true;
+
+		const visited = new WeakSet<object>();
+
+		const walk = (value: unknown, depth: number): boolean => {
+			if (ownsDirectly(value)) return true;
+			if (depth >= MAX_OWNERSHIP_WALK_DEPTH || !value || typeof value !== 'object') return false;
+
+			if (visited.has(value)) return false;
+			visited.add(value);
+
+			if (Array.isArray(value)) {
+				return value.some((entry) => walk(entry, depth + 1));
+			}
+
+			for (const nestedValue of Object.values(value as Record<string, unknown>)) {
+				if (walk(nestedValue, depth + 1)) return true;
+			}
+
+			return false;
+		};
+
+		return args.some((arg) => walk(arg, 0));
+	};
+}
+
+export function initialize(game: RoomScopedGame): () => void {
+	const eb: RoomEventBus = game.eventBus;
+	const isRoomScopedEvent = createRoomScopedEventGuard(game);
+
+	// game.on(...) listeners are wired to the process-wide semaphore, so we must
+	// explicitly gate events to entities owned by this specific room/game.
+	const wrapGameEvent = (fn: (eb: RoomEventBus, ...args: any[]) => void) =>
+		(...args: any[]) => {
+			if (!isRoomScopedEvent(...args)) return;
+			fn(eb, ...args);
+		};
+
+	// ring.on(...) listeners are already instance-scoped and do not need guarding.
+	const wrapRingEvent = (fn: (eb: RoomEventBus, ...args: any[]) => void) =>
 		(...args: any[]) => fn(eb, ...args);
 
 	const gameEvents: Array<{ event: string; listener: (...args: any[]) => void }> = [
-		{ event: 'card.effect', listener: wrap(announceEffect) },
-		{ event: 'card.miss', listener: wrap(announceMiss) },
-		{ event: 'card.narration', listener: wrap(announceNarration) },
-		{ event: 'card.played', listener: wrap(announceCardPlayed) },
-		{ event: 'card.rolled', listener: wrap(announceRolled) },
-		{ event: 'card.stay', listener: wrap(announceStay) },
-		{ event: 'cardDrop', listener: wrap(announceCardDrop) },
-		{ event: 'creature.die', listener: wrap(announceDeath) },
-		{ event: 'creature.hit', listener: wrap(announceHit) },
-		{ event: 'creature.leave', listener: wrap(announceLeave) },
-		{ event: 'creature.modifier', listener: wrap(announceModifier) },
-		{ event: 'creature.narration', listener: wrap(announceNarration) },
-		{ event: 'gainedXP', listener: wrap(announceXPGain) },
-		{ event: 'item.narration', listener: wrap(announceNarration) },
-		{ event: 'item.used', listener: wrap(announceItemUsed) },
-		{ event: 'potion.narration', listener: wrap(announceNarration) },
-		{ event: 'potion.used', listener: wrap(announceItemUsed) },
+		{ event: 'card.effect', listener: wrapGameEvent(announceEffect) },
+		{ event: 'card.miss', listener: wrapGameEvent(announceMiss) },
+		{ event: 'card.narration', listener: wrapGameEvent(announceNarration) },
+		{ event: 'card.played', listener: wrapGameEvent(announceCardPlayed) },
+		{ event: 'card.rolled', listener: wrapGameEvent(announceRolled) },
+		{ event: 'card.stay', listener: wrapGameEvent(announceStay) },
+		{ event: 'cardDrop', listener: wrapGameEvent(announceCardDrop) },
+		{ event: 'creature.die', listener: wrapGameEvent(announceDeath) },
+		{ event: 'creature.hit', listener: wrapGameEvent(announceHit) },
+		{ event: 'creature.leave', listener: wrapGameEvent(announceLeave) },
+		{ event: 'creature.modifier', listener: wrapGameEvent(announceModifier) },
+		{ event: 'creature.narration', listener: wrapGameEvent(announceNarration) },
+		{ event: 'gainedXP', listener: wrapGameEvent(announceXPGain) },
+		{ event: 'item.narration', listener: wrapGameEvent(announceNarration) },
+		{ event: 'item.used', listener: wrapGameEvent(announceItemUsed) },
+		{ event: 'potion.narration', listener: wrapGameEvent(announceNarration) },
+		{ event: 'potion.used', listener: wrapGameEvent(announceItemUsed) },
 		{
 			event: 'creature.levelUp',
-			listener: (_className: string, _instance: any, { monster, level }: { monster: any; level: number }) =>
-				announceLevelUp(eb, monster, level),
+			listener: wrapGameEvent(
+				(_eb, _className: string, _instance: any, { monster, level }: { monster: any; level: number }) =>
+					announceLevelUp(_eb, monster, level)
+			),
 		},
-		{ event: 'scroll.narration', listener: wrap(announceNarration) },
-		{ event: 'scroll.used', listener: wrap(announceItemUsed) },
+		{ event: 'scroll.narration', listener: wrapGameEvent(announceNarration) },
+		{ event: 'scroll.used', listener: wrapGameEvent(announceItemUsed) },
 	];
 
 	// Ring events must be bound to this room's ring instance (not game/global),
 	// otherwise the global emitter path can mirror ring announcements across rooms.
 	const ringEvents: Array<{ event: string; listener: (...args: any[]) => void }> = [
-		{ event: 'add', listener: wrap(announceContestant) },
-		{ event: 'bossWillSpawn', listener: wrap(announceBossWillSpawn) },
-		{ event: 'endOfDeck', listener: wrap(announceEndOfDeck) },
-		{ event: 'fight', listener: wrap(announceFight) },
-		{ event: 'fightConcludes', listener: wrap(announceFightConcludes) },
-		{ event: 'gainedXP', listener: wrap(announceXPGain) },
-		{ event: 'narration', listener: wrap(announceNarration) },
-		{ event: 'remove', listener: wrap(announceContestantLeave) },
-		{ event: 'roundComplete', listener: wrap(announceNextRound) },
-		{ event: 'startTurn', listener: wrap(announceNextTurn) },
-		{ event: 'playerTurnBegin', listener: wrap(announceTurnBegin) },
+		{ event: 'add', listener: wrapRingEvent(announceContestant) },
+		{ event: 'bossWillSpawn', listener: wrapRingEvent(announceBossWillSpawn) },
+		{ event: 'endOfDeck', listener: wrapRingEvent(announceEndOfDeck) },
+		{ event: 'fight', listener: wrapRingEvent(announceFight) },
+		{ event: 'fightConcludes', listener: wrapRingEvent(announceFightConcludes) },
+		{ event: 'gainedXP', listener: wrapRingEvent(announceXPGain) },
+		{ event: 'narration', listener: wrapRingEvent(announceNarration) },
+		{ event: 'remove', listener: wrapRingEvent(announceContestantLeave) },
+		{ event: 'roundComplete', listener: wrapRingEvent(announceNextRound) },
+		{ event: 'startTurn', listener: wrapRingEvent(announceNextTurn) },
+		{ event: 'playerTurnBegin', listener: wrapRingEvent(announceTurnBegin) },
 	];
 
 	// Collect bound listeners so they can be removed on dispose
@@ -113,6 +209,7 @@ export function initialize(game: any): () => void {
 
 	// heal is special: ring is passed as an extra argument before the standard args
 	const healListener = (...args: any[]) => {
+		if (!isRoomScopedEvent(...args)) return;
 		(announceHeal as (...a: any[]) => void)(eb, game.ring, ...args);
 	};
 	const boundHeal = game.on('creature.heal', healListener);
