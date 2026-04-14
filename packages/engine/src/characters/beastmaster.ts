@@ -401,20 +401,19 @@ class Beastmaster extends BaseCharacter {
 		});
 	}
 
-	lookAtInventory(channel: ChannelWithManager): Promise<void> {
+	async lookAtInventory(channel: ChannelWithManager): Promise<void> {
 		const hasItems =
 			this.items.length > 0 ||
 			this.monsters.some(monster => (monster as any).items?.length > 0);
 
-		return Promise.resolve()
-			.then(() => this.lookAtCardInventory(channel as ChannelFn))
-			.then(() => {
-				if (!hasItems) {
-					return channel({ announce: 'Items:\n  (none)' });
-				}
+		await this.lookAtCardInventory(channel as ChannelFn);
 
-				return this.lookAtItems(channel);
-			});
+		if (!hasItems) {
+			await channel({ announce: 'Items:\n  (none)' });
+			return;
+		}
+
+		await this.lookAtItems(channel);
 	}
 
 	private findMonsterByName(monsterName: string): BaseMonster | undefined {
