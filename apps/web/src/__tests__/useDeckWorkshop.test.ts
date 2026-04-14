@@ -92,11 +92,11 @@ describe('useDeckWorkshop', () => {
   it('throws when room is missing for mutation calls', async () => {
     const { result } = renderHook(() => useDeckWorkshop(undefined));
 
-    await expect(
+    expect(() =>
       result.current.equipCards({
         monsterName: 'Stonefang',
         cardNames: ['Hit'],
       }),
-    ).rejects.toThrow('Room not selected');
+    ).toThrow('Room not selected');
   });
 });

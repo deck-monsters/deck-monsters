@@ -148,7 +148,7 @@ describe('trpc/router card management procedures', () => {
 	});
 
 	it('routes game.equipCards through character.equipCards and returns summary', async () => {
-		let receivedInput: Record<string, unknown> | null = null;
+		let receivedInput: Record<string, unknown> | undefined;
 		const equipCards = async (input: Record<string, unknown>) => {
 			receivedInput = input;
 			return {
@@ -176,10 +176,12 @@ describe('trpc/router card management procedures', () => {
 			cardNames: ['Hit', 'Heal'],
 		});
 
-		expect(receivedInput).to.not.equal(null);
-		expect(receivedInput?.monsterName).to.equal('Stonefang');
-		expect(receivedInput?.cardNames).to.deep.equal(['Hit', 'Heal']);
-		expect(receivedInput?.replaceAll).to.equal(false);
+		expect(receivedInput).to.not.equal(undefined);
+		if (!receivedInput) throw new Error('Expected equipCards to be called');
+		const callInput = receivedInput;
+		expect(callInput.monsterName).to.equal('Stonefang');
+		expect(callInput.cardNames).to.deep.equal(['Hit', 'Heal']);
+		expect(callInput.replaceAll).to.equal(false);
 		expect(result).to.deep.equal({
 			equippedCount: 1,
 			requestedCount: 2,
