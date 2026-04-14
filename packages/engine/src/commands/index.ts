@@ -3,6 +3,7 @@ import historyHandlers from './history.js';
 import monsterHandlers from './monster.js';
 import characterHandlers from './character.js';
 import storeHandlers from './store.js';
+import presetHandlers from './presets.js';
 import { helpHandler } from './help.js';
 import { commandInputSchema } from '../schemas/command.js';
 
@@ -128,6 +129,7 @@ export function loadHandlers(): void {
 	historyHandlers();
 	lookAtHandlers(registerHandler);
 	monsterHandlers(registerHandler);
+	presetHandlers(registerHandler);
 	characterHandlers(registerHandler);
 	storeHandlers(registerHandler);
 }

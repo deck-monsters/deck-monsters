@@ -1,7 +1,7 @@
 import type { registerHandler } from './index.js';
 
 const LOOK_AT_REGEX =
-	/look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|cards|card|deck|item|items|ring|dmg)?( .+)?$/i;
+	/look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|card inventory|all cards|inventory|cards|card|deck|item|items|ring|dmg)?( .+)?$/i;
 
 function lookAtAction({ channel, character, game, results }: any): Promise<unknown> {
 	return Promise.resolve()
@@ -13,6 +13,11 @@ function lookAtAction({ channel, character, game, results }: any): Promise<unkno
 				case 'deck':
 				case 'cards':
 					return character.lookAtCards(channel, thing);
+				case 'card inventory':
+				case 'all cards':
+					return character.lookAtCardInventory(channel);
+				case 'inventory':
+					return character.lookAtInventory(channel);
 				case 'ring': {
 					const summary = thing === 'summary';
 					return game.lookAtRing(channel, undefined, true, summary);

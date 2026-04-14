@@ -34,6 +34,150 @@ import {
 	type LeaderboardSort,
 } from '../analytics-queries.js';
 
+type InventoryMonsterSummary = {
+	name: string;
+	type: string;
+	level: number;
+	inRing: boolean;
+	inEncounter: boolean;
+	cardSlots: number;
+	cards: string[];
+	presets: Record<string, string[]>;
+};
+
+type InventorySummary = {
+	monsters: InventoryMonsterSummary[];
+	unequippedDeck: string[];
+	items: {
+		character: string[];
+		monsters: Array<{ monsterName: string; items: string[] }>;
+	};
+};
+
+const getDisplayName = (entity: unknown): string => {
+	if (!entity || typeof entity !== 'object') return 'Unknown';
+	const entry = entity as Record<string, unknown>;
+	const byItemType = typeof entry.itemType === 'string' ? entry.itemType : undefined;
+	const byCardType = typeof entry.cardType === 'string' ? entry.cardType : undefined;
+	const byName = typeof entry.name === 'string' ? entry.name : undefined;
+	return byItemType ?? byCardType ?? byName ?? 'Unknown';
+};
+
+const summarizeInventory = ({
+	character,
+	inRing,
+}: {
+	character: Record<string, unknown>;
+	inRing: Set<unknown>;
+}): InventorySummary => {
+	const monsters = Array.isArray(character.monsters) ? character.monsters : [];
+	const deck = Array.isArray(character.deck) ? character.deck : [];
+	const items = Array.isArray(character.items) ? character.items : [];
+
+	const monsterSummaries = monsters
+		.map((monster) => {
+			const record = (monster ?? {}) as Record<string, unknown>;
+			const cards = Array.isArray(record.cards) ? record.cards : [];
+			const presetsRaw = (record.options as Record<string, unknown> | undefined)?.presets;
+			const presets = Object.entries(
+				(typeof presetsRaw === 'object' && presetsRaw !== null
+					? presetsRaw
+					: {}) as Record<string, unknown>,
+			).reduce<Record<string, string[]>>((all, [presetName, presetCards]) => {
+				if (!Array.isArray(presetCards)) return all;
+				all[presetName] = presetCards
+					.filter((card): card is string => typeof card === 'string')
+					.slice();
+				return all;
+			}, {});
+
+			const name = typeof record.givenName === 'string' ? record.givenName.trim() : '';
+			if (!name) return null;
+
+			return {
+				name,
+				type:
+					typeof record.creatureType === 'string'
+						? record.creatureType
+						: 'Unknown',
+				level:
+					typeof record.level === 'number' && Number.isFinite(record.level)
+						? record.level
+						: 0,
+				inRing: inRing.has(monster),
+				inEncounter: Boolean(record.inEncounter),
+				cardSlots:
+					typeof record.cardSlots === 'number' && Number.isFinite(record.cardSlots)
+						? record.cardSlots
+						: 0,
+				cards: cards.map((card) => getDisplayName(card)),
+				presets,
+			} satisfies InventoryMonsterSummary;
+		})
+		.filter((monster): monster is InventoryMonsterSummary => monster !== null);
+
+	const monsterItems = monsterSummaries.map((monsterSummary) => {
+		const monster = monsters.find(
+			(entry) =>
+				(entry as Record<string, unknown> | undefined)?.givenName ===
+				monsterSummary.name,
+		) as Record<string, unknown> | undefined;
+		const monsterInventory = Array.isArray(monster?.items) ? monster.items : [];
+		return {
+			monsterName: monsterSummary.name,
+			items: monsterInventory.map((item) => getDisplayName(item)),
+		};
+	});
+
+	return {
+		monsters: monsterSummaries,
+		unequippedDeck: deck.map((card) => getDisplayName(card)),
+		items: {
+			character: items.map((item) => getDisplayName(item)),
+			monsters: monsterItems,
+		},
+	};
+};
+
+const getMonsterCardsByName = ({
+	character,
+	monsterName,
+}: {
+	character: Record<string, unknown>;
+	monsterName: string;
+}): string[] => {
+	const monsters = Array.isArray(character.monsters) ? character.monsters : [];
+	const match = monsters.find((monster) => {
+		const name = (monster as Record<string, unknown> | undefined)?.givenName;
+		return typeof name === 'string' && name.toLowerCase() === monsterName.toLowerCase();
+	}) as Record<string, unknown> | undefined;
+	const cards = Array.isArray(match?.cards) ? match.cards : [];
+	return cards.map((card) => getDisplayName(card));
+};
+
+const publishPrivateAnnouncement = ({
+	eventBus,
+	userId,
+	text,
+	operation,
+}: {
+	eventBus: { publish: (event: GameEvent) => GameEvent } | { publish: (event: any) => any };
+	userId: string;
+	text: string;
+	operation: string;
+}): void => {
+	eventBus.publish({
+		type: 'announce',
+		scope: 'private',
+		targetUserId: userId,
+		text,
+		payload: {
+			source: 'workshop',
+			operation,
+		},
+	});
+};
+
 export type AppRouter = ReturnType<typeof createRouter>;
 
 // Increment when the client<->server protocol changes in a breaking way.
@@ -51,6 +195,43 @@ const BUILD_VERSION = process.env['BUILD_VERSION'] ?? 'dev';
 export const activeFlows = new Set<string>();
 
 const sortBySchema = z.enum(['xp', 'wins', 'winRate', 'coins']);
+
+type SilentChannelMessage = {
+	announce?: string;
+	question?: string;
+	choices?: Record<string, unknown> | string[];
+};
+
+function createSilentChannel({
+	eventBus,
+	userId,
+	commandId,
+}: {
+	eventBus: { publish: (event: GameEvent) => unknown };
+	userId: string;
+	commandId: string;
+}) {
+	return async ({ announce, question }: SilentChannelMessage): Promise<unknown> => {
+		if (question) {
+			throw new TRPCError({
+				code: 'BAD_REQUEST',
+				message: 'Interactive prompts are not supported for this operation.',
+			});
+		}
+
+		if (announce) {
+			eventBus.publish({
+				type: 'announce',
+				scope: 'private',
+				targetUserId: userId,
+				text: announce,
+				payload: { causedByCommandId: commandId, silent: true },
+			});
+		}
+
+		return undefined;
+	};
+}
 
 export function createRouter(roomManager: RoomManager) {
 	const leaderboardRouter = t.router({
@@ -443,6 +624,404 @@ export function createRouter(roomManager: RoomManager) {
 								: 0,
 					}))
 					.filter((monster: { name: string }) => monster.name.length > 0);
+			}),
+
+		myInventory: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const game = await roomManager.getGame(input.roomId);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character !== 'object') {
+					return {
+						monsters: [],
+						unequippedDeck: [],
+						items: { character: [], monsters: [] },
+					} satisfies InventorySummary;
+				}
+
+				const inRing = new Set(
+					game.ring.contestants
+						.filter((contestant) => contestant?.userId === ctx.userId && !contestant?.isBoss)
+						.map((contestant) => contestant?.monster)
+				);
+
+				return summarizeInventory({
+					character: character as Record<string, unknown>,
+					inRing,
+				});
+			}),
+
+		unequipCard: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					cardName: z.string().min(1),
+					count: z.number().int().min(1).max(9).optional(),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.unequipCard !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+					character.unequipCard({
+						channel,
+						cardName: input.cardName,
+						monsterName: input.monsterName,
+						count: input.count,
+					}),
+				);
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: { operation: 'unequipCard', ...result },
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Unequipped ${result.removedCount} ${input.cardName} from ${result.monsterName}.`,
+					operation: 'unequipCard',
+				});
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.monsterName,
+						}),
+					},
+				});
+				return result;
+			}),
+
+		unequipAll: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.unequipAll !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+					character.unequipAll({
+						channel,
+						monsterName: input.monsterName,
+					}),
+				);
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: { operation: 'unequipAll', ...result },
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Cleared ${result.monsterName} (${result.removedCount} cards returned).`,
+					operation: 'unequipAll',
+				});
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.monsterName,
+						}),
+					},
+				});
+				return result;
+			}),
+
+		equipCards: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					cardNames: z.array(z.string().min(1)).min(1),
+					replaceAll: z.boolean().optional(),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.equipMonster !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				await roomManager.runSerializedEngineWork(input.roomId, async () => {
+					if (input.replaceAll && typeof character.unequipAll === 'function') {
+						await character.unequipAll({
+							channel,
+							monsterName: input.monsterName,
+						});
+					}
+
+					await character.equipMonster({
+						channel,
+						monsterName: input.monsterName,
+						cardSelection: input.cardNames,
+					});
+				});
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						operation: 'equipCards',
+						monsterName: input.monsterName,
+						cardNames: input.cardNames,
+					},
+				});
+
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Equipped ${input.monsterName} with ${input.cardNames.join(', ')}.`,
+					operation: 'equipCards',
+				});
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: input.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: input.monsterName,
+						}),
+					},
+				});
+				return { ok: true };
+			}),
+
+		moveCard: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					cardName: z.string().min(1),
+					fromMonsterName: z.string().min(1),
+					toMonsterName: z.string().min(1),
+					count: z.number().int().min(1).max(9).optional(),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.moveCard !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+					character.moveCard({
+						channel,
+						cardName: input.cardName,
+						fromMonsterName: input.fromMonsterName,
+						toMonsterName: input.toMonsterName,
+						count: input.count,
+					}),
+				);
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: { operation: 'moveCard', ...result },
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Moved ${result.movedCount} ${input.cardName} from ${result.fromMonsterName} to ${result.toMonsterName}.`,
+					operation: 'moveCard',
+				});
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.fromMonsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.fromMonsterName,
+						}),
+					},
+				});
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.toMonsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.toMonsterName,
+						}),
+					},
+				});
+				return result;
+			}),
+
+		savePreset: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					presetName: z.string().min(1).max(32),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.savePreset !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+					character.savePreset({
+						channel,
+						monsterName: input.monsterName,
+						presetName: input.presetName,
+					}),
+				);
+				return result;
+			}),
+
+		loadPreset: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					presetName: z.string().min(1).max(32),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.loadPreset !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+					character.loadPreset({
+						channel,
+						monsterName: input.monsterName,
+						presetName: input.presetName,
+					}),
+				);
+				eventBus.publish({
+					type: 'card.presetLoaded',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: result,
+				});
+				eventBus.publish({
+					type: 'card.equipped',
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: input.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: input.monsterName,
+						}),
+					},
+				});
+				return {
+					equippedCount: result.equipped,
+					requestedCount: result.requested,
+					skippedCards: result.skippedCards,
+				};
+			}),
+
+		deletePreset: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					presetName: z.string().min(1).max(32),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.deletePreset !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+					character.deletePreset({
+						channel,
+						monsterName: input.monsterName,
+						presetName: input.presetName,
+					}),
+				);
+				return result;
 			}),
 
 		ringHistory: protectedProcedure
