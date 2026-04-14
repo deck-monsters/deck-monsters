@@ -68,12 +68,15 @@ export default function WorkshopView() {
     try {
       setError(null);
       if (source.kind === 'inventory' && target.kind === 'monster') {
-        await equipCards({
+        const result = await equipCards({
           monsterName: target.monsterName,
           cardNames: [cardName],
           replaceAll: false,
         });
-        setMessage(`Equipped ${cardName} on ${target.monsterName}.`);
+        const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
+        setMessage(
+          `Equipped ${target.monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`,
+        );
         return;
       }
 

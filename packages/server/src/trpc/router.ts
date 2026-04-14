@@ -802,33 +802,20 @@ export function createRouter(roomManager: RoomManager) {
 					roomManager.getEventBus(input.roomId),
 				]);
 				const character = game.characters?.[ctx.userId];
-				if (!character || typeof character.equipMonster !== 'function') {
+				if (!character || typeof character.equipCards !== 'function') {
 					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
 				}
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await roomManager.runSerializedEngineWork(input.roomId, async () => {
-					if (input.replaceAll && typeof character.unequipAll === 'function') {
-						await character.unequipAll({
-							channel,
-							monsterName: input.monsterName,
-						});
-					}
-
-					await character.equipMonster({
+				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+					character.equipCards({
 						channel,
 						monsterName: input.monsterName,
-						cardSelection: input.cardNames,
-					});
-					return {
-						monsterName: input.monsterName,
-						cards: getMonsterCardsByName({
-							character: character as Record<string, unknown>,
-							monsterName: input.monsterName,
-						}),
-					};
-				}) as { monsterName: string; cards: string[] };
+						cardNames: input.cardNames,
+						replaceAll: input.replaceAll ?? false,
+					}),
+				) as { equipped: number; requested: number; skippedCards: string[]; monsterName: string };
 				eventBus.publish({
 					type: 'card.equipped' as EventType,
 					scope: 'private',
@@ -836,15 +823,21 @@ export function createRouter(roomManager: RoomManager) {
 					text: '',
 					payload: {
 						operation: 'equipCards',
-						monsterName: input.monsterName,
+						monsterName: result.monsterName,
 						cardNames: input.cardNames,
+						equippedCount: result.equipped,
+						requestedCount: result.requested,
+						skippedCards: result.skippedCards,
 					},
 				});
 
+				const skippedText = result.skippedCards.length > 0
+					? ` Skipped: ${result.skippedCards.join(', ')}.`
+					: '';
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: `Equipped ${input.monsterName} with ${input.cardNames.join(', ')}.`,
+					text: `Equipped ${result.monsterName}: ${result.equipped}/${result.requested}.${skippedText}`,
 					operation: 'equipCards',
 				});
 				eventBus.publish({
@@ -854,10 +847,17 @@ export function createRouter(roomManager: RoomManager) {
 					text: '',
 					payload: {
 						monsterName: result.monsterName,
-						cards: result.cards,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.monsterName,
+						}),
 					},
 				});
-				return { ok: true };
+				return {
+					equippedCount: result.equipped,
+					requestedCount: result.requested,
+					skippedCards: result.skippedCards,
+				};
 			}),
 
 		moveCard: protectedProcedure

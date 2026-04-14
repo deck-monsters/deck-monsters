@@ -1,4 +1,4 @@
-import { abbreviateCardName, classifyCard, getCardEmoji } from '../utils/cards.js';
+import { abbreviateCardName, getCardClass, getCardEmoji } from '../utils/cards.js';
 
 export type WorkshopCardLocation =
   | { kind: 'inventory' }
@@ -25,7 +25,7 @@ export default function CardSlot({
   onDropCard,
   onTapSlot,
 }: CardSlotProps) {
-  const cardClass = cardName ? classifyCard(cardName) : 'utility';
+  const cardClass = cardName ? getCardClass(cardName) : 'utility';
 
   async function handleDrop(event: React.DragEvent<HTMLButtonElement>) {
     if (disabled) return;
@@ -67,7 +67,7 @@ export default function CardSlot({
     <button
       type="button"
       className={[
-        'card-slot',
+        'workshop-card-slot',
         cardName ? `class-${cardClass}` : 'empty',
         isDropActive ? 'drop-over' : '',
         selected ? 'selected' : '',
@@ -86,9 +86,9 @@ export default function CardSlot({
     >
       {cardName ? (
         <>
-          <span className="card-slot-icon">{getCardEmoji(cardName)}</span>
-          <span className="card-slot-name">{abbreviateCardName(cardName)}</span>
-          <span className="card-slot-class">{cardClass}</span>
+          <span className="workshop-card-icon">{getCardEmoji(cardName)}</span>
+          <span className="workshop-card-name">{abbreviateCardName(cardName)}</span>
+          <span className="workshop-card-class">{cardClass}</span>
         </>
       ) : (
         <span>[+]</span>

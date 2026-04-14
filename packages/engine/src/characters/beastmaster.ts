@@ -40,6 +40,10 @@ const getCardName = (card: CardInstance): string =>
 	(card as any).cardType ?? (card as any).itemType ?? (card as any).name ?? 'Unknown';
 const isSameCardName = (card: CardInstance, cardName: string): boolean =>
 	getCardName(card).toLowerCase() === cardName.toLowerCase();
+const announceAndThrow = async (channel: ChannelFn, announce: string): Promise<never> => {
+	await channel({ announce });
+	throw new Error(announce);
+};
 
 class Beastmaster extends BaseCharacter {
 	constructor(options: Record<string, unknown> = {}) {
@@ -467,11 +471,10 @@ class Beastmaster extends BaseCharacter {
 			)
 			.then((monster) => {
 				if (monster.inEncounter) {
-					return Promise.reject(
-						channel({
-							announce: `You cannot unequip cards from ${monster.givenName} while they are fighting!`,
-						}),
-					) as unknown as { removedCount: number; monsterName: string };
+					return announceAndThrow(
+						channel,
+						`You cannot unequip cards from ${monster.givenName} while they are fighting!`,
+					);
 				}
 
 				const remainingCards = [...monster.cards];
@@ -486,9 +489,7 @@ class Beastmaster extends BaseCharacter {
 				}
 
 				if (removedCards.length < 1) {
-					return Promise.reject(
-						channel({ announce: `${monster.givenName} is not holding ${cardName}.` }),
-					) as unknown as { removedCount: number; monsterName: string };
+					return announceAndThrow(channel, `${monster.givenName} is not holding ${cardName}.`);
 				}
 
 				monster.cards = remainingCards;
@@ -524,17 +525,14 @@ class Beastmaster extends BaseCharacter {
 			)
 			.then((monster) => {
 				if (monster.inEncounter) {
-					return Promise.reject(
-						channel({
-							announce: `You cannot clear ${monster.givenName}'s deck while they are fighting!`,
-						}),
-					) as unknown as { removedCount: number; monsterName: string };
+					return announceAndThrow(
+						channel,
+						`You cannot clear ${monster.givenName}'s deck while they are fighting!`,
+					);
 				}
 
 				if (monster.cards.length < 1) {
-					return Promise.reject(
-						channel({ announce: `${monster.givenName} already has an empty deck.` }),
-					) as unknown as { removedCount: number; monsterName: string };
+					return announceAndThrow(channel, `${monster.givenName} already has an empty deck.`);
 				}
 
 				const previousCards = [...monster.cards];
@@ -571,24 +569,16 @@ class Beastmaster extends BaseCharacter {
 		const toMonster = this.findMonsterByName(toMonsterName);
 
 		if (!fromMonster) {
-			return Promise.reject(
-				channel({ announce: `I can find no monster named ${fromMonsterName}.` }),
-			) as Promise<{ movedCount: number; fromMonsterName: string; toMonsterName: string }>;
+			return announceAndThrow(channel, `I can find no monster named ${fromMonsterName}.`);
 		}
 		if (!toMonster) {
-			return Promise.reject(
-				channel({ announce: `I can find no monster named ${toMonsterName}.` }),
-			) as Promise<{ movedCount: number; fromMonsterName: string; toMonsterName: string }>;
+			return announceAndThrow(channel, `I can find no monster named ${toMonsterName}.`);
 		}
 		if (fromMonster === toMonster) {
-			return Promise.reject(
-				channel({ announce: 'Choose two different monsters for move operations.' }),
-			) as Promise<{ movedCount: number; fromMonsterName: string; toMonsterName: string }>;
+			return announceAndThrow(channel, 'Choose two different monsters for move operations.');
 		}
 		if (fromMonster.inEncounter || toMonster.inEncounter) {
-			return Promise.reject(
-				channel({ announce: 'Cards cannot be moved while a monster is in battle.' }),
-			) as Promise<{ movedCount: number; fromMonsterName: string; toMonsterName: string }>;
+			return announceAndThrow(channel, 'Cards cannot be moved while a monster is in battle.');
 		}
 
 		const sourceCards = [...fromMonster.cards];
@@ -625,11 +615,7 @@ class Beastmaster extends BaseCharacter {
 
 		if (movedCount < 1) {
 			const reason = blockedBy || `${fromMonster.givenName} is not holding ${cardName}.`;
-			return Promise.reject(channel({ announce: reason })) as Promise<{
-				movedCount: number;
-				fromMonsterName: string;
-				toMonsterName: string;
-			}>;
+			return announceAndThrow(channel, reason);
 		}
 
 		fromMonster.cards = sourceCards;
@@ -688,16 +674,10 @@ class Beastmaster extends BaseCharacter {
 			)
 			.then((monster) => {
 				if (monster.inEncounter) {
-					return Promise.reject(
-						channel({
-							announce: `You cannot equip ${monster.givenName} while they are fighting!`,
-						}),
-					) as unknown as {
-						equipped: number;
-						requested: number;
-						skippedCards: string[];
-						monsterName: string;
-					};
+					return announceAndThrow(
+						channel,
+						`You cannot equip ${monster.givenName} while they are fighting!`,
+					);
 				}
 
 				const requested = cardNames.length;
@@ -764,10 +744,7 @@ class Beastmaster extends BaseCharacter {
 	}): Promise<{ presetName: string; monsterName: string }> {
 		const trimmedName = presetName.trim();
 		if (!trimmedName) {
-			return Promise.reject(channel({ announce: 'Preset name is required.' })) as Promise<{
-				presetName: string;
-				monsterName: string;
-			}>;
+			return announceAndThrow(channel, 'Preset name is required.');
 		}
 
 		return Promise.resolve()
@@ -782,11 +759,10 @@ class Beastmaster extends BaseCharacter {
 				const presets = this.getMonsterPresets(monster);
 				const hasPreset = Object.prototype.hasOwnProperty.call(presets, trimmedName);
 				if (!hasPreset && Object.keys(presets).length >= MAX_PRESETS) {
-					return Promise.reject(
-						channel({
-							announce: `${monster.givenName} already has ${MAX_PRESETS} presets. Delete one before saving another.`,
-						}),
-					) as unknown as { presetName: string; monsterName: string };
+					return announceAndThrow(
+						channel,
+						`${monster.givenName} already has ${MAX_PRESETS} presets. Delete one before saving another.`,
+					);
 				}
 
 				const nextPresets = {
@@ -818,13 +794,7 @@ class Beastmaster extends BaseCharacter {
 	}): Promise<{ equipped: number; requested: number; skippedCards: string[]; presetName: string; monsterName: string }> {
 		const trimmedName = presetName.trim();
 		if (!trimmedName) {
-			return Promise.reject(channel({ announce: 'Preset name is required.' })) as Promise<{
-				equipped: number;
-				requested: number;
-				skippedCards: string[];
-				presetName: string;
-				monsterName: string;
-			}>;
+			return announceAndThrow(channel, 'Preset name is required.');
 		}
 
 		return Promise.resolve()
@@ -837,33 +807,19 @@ class Beastmaster extends BaseCharacter {
 			)
 			.then((monster) => {
 				if (monster.inEncounter) {
-					return Promise.reject(
-						channel({
-							announce: `You cannot load presets for ${monster.givenName} while they are fighting!`,
-						}),
-					) as unknown as {
-						equipped: number;
-						requested: number;
-						skippedCards: string[];
-						presetName: string;
-						monsterName: string;
-					};
+					return announceAndThrow(
+						channel,
+						`You cannot load presets for ${monster.givenName} while they are fighting!`,
+					);
 				}
 
 				const presets = this.getMonsterPresets(monster);
 				const requestedCards = presets[trimmedName];
 				if (!requestedCards) {
-					return Promise.reject(
-						channel({
-							announce: `No preset named "${trimmedName}" exists for ${monster.givenName}.`,
-						}),
-					) as unknown as {
-						equipped: number;
-						requested: number;
-						skippedCards: string[];
-						presetName: string;
-						monsterName: string;
-					};
+					return announceAndThrow(
+						channel,
+						`No preset named "${trimmedName}" exists for ${monster.givenName}.`,
+					);
 				}
 
 				const oldCards = [...monster.cards];
@@ -926,10 +882,7 @@ class Beastmaster extends BaseCharacter {
 	}): Promise<{ presetName: string; monsterName: string }> {
 		const trimmedName = presetName.trim();
 		if (!trimmedName) {
-			return Promise.reject(channel({ announce: 'Preset name is required.' })) as Promise<{
-				presetName: string;
-				monsterName: string;
-			}>;
+			return announceAndThrow(channel, 'Preset name is required.');
 		}
 
 		return Promise.resolve()
@@ -943,11 +896,10 @@ class Beastmaster extends BaseCharacter {
 			.then((monster) => {
 				const presets = this.getMonsterPresets(monster);
 				if (!Object.prototype.hasOwnProperty.call(presets, trimmedName)) {
-					return Promise.reject(
-						channel({
-							announce: `No preset named "${trimmedName}" exists for ${monster.givenName}.`,
-						}),
-					) as unknown as { presetName: string; monsterName: string };
+					return announceAndThrow(
+						channel,
+						`No preset named "${trimmedName}" exists for ${monster.givenName}.`,
+					);
 				}
 
 				const nextPresets = { ...presets };

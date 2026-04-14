@@ -146,4 +146,44 @@ describe('trpc/router card management procedures', () => {
 			skippedCards: ['Heal'],
 		});
 	});
+
+	it('routes game.equipCards through character.equipCards and returns summary', async () => {
+		let receivedInput: Record<string, unknown> | null = null;
+		const equipCards = async (input: Record<string, unknown>) => {
+			receivedInput = input;
+			return {
+				equipped: 1,
+				requested: 2,
+				skippedCards: ['Heal'],
+				monsterName: 'Stonefang',
+			};
+		};
+
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({
+				characters: { [USER_ID]: { equipCards } },
+			}),
+			getEventBus: async () => ({ publish: () => undefined }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.equipCards({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			cardNames: ['Hit', 'Heal'],
+		});
+
+		expect(receivedInput).to.not.equal(null);
+		expect(receivedInput?.monsterName).to.equal('Stonefang');
+		expect(receivedInput?.cardNames).to.deep.equal(['Hit', 'Heal']);
+		expect(receivedInput?.replaceAll).to.equal(false);
+		expect(result).to.deep.equal({
+			equippedCount: 1,
+			requestedCount: 2,
+			skippedCards: ['Heal'],
+		});
+	});
 });

@@ -28,23 +28,6 @@ export function getCardClass(name: string): CardClass {
   return 'utility';
 }
 
-export function classifyCard(name: string): CardClass {
-  return getCardClass(name);
-}
-
-export function getCardClassColorVar(cardClass: CardClass): string {
-  switch (cardClass) {
-    case 'melee':
-      return '--workshop-card-melee';
-    case 'magic':
-      return '--workshop-card-magic';
-    case 'heal':
-      return '--workshop-card-heal';
-    default:
-      return '--color-border';
-  }
-}
-
 export function getCardIcon(cardClass: CardClass): string {
   switch (cardClass) {
     case 'melee':

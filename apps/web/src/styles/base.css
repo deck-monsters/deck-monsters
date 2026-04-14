@@ -347,6 +347,31 @@ button {
   cursor: pointer;
 }
 
+.workshop-card-slot.drop-over {
+  border-color: var(--color-accent);
+}
+
+.workshop-card-slot.selected {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.workshop-card-slot.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.workshop-card-slot.class-melee {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+}
+
+.workshop-card-slot.class-heal {
+  border-color: color-mix(in srgb, var(--color-success) 55%, var(--color-border));
+}
+
+.workshop-card-slot.class-magic {
+  border-color: color-mix(in srgb, var(--color-fg-bright) 45%, var(--color-border));
+}
+
 .workshop-card-icon {
   font-size: 1rem;
   line-height: 1;
