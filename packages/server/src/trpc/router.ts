@@ -54,6 +54,18 @@ type InventorySummary = {
 	};
 };
 
+type PublishableEvent = {
+	type: EventType;
+	scope: EventScope;
+	text: string;
+	payload: Record<string, unknown>;
+	targetUserId?: string;
+};
+
+type EventBusPublisher = {
+	publish: (event: PublishableEvent) => unknown;
+};
+
 const getDisplayName = (entity: unknown): string => {
 	if (!entity || typeof entity !== 'object') return 'Unknown';
 	const entry = entity as Record<string, unknown>;
@@ -161,7 +173,7 @@ const publishPrivateAnnouncement = ({
 	text,
 	operation,
 }: {
-	eventBus: { publish: (event: GameEvent) => GameEvent } | { publish: (event: any) => any };
+	eventBus: EventBusPublisher;
 	userId: string;
 	text: string;
 	operation: string;
@@ -207,7 +219,7 @@ function createSilentChannel({
 	userId,
 	commandId,
 }: {
-	eventBus: { publish: (event: GameEvent) => unknown };
+	eventBus: EventBusPublisher;
 	userId: string;
 	commandId: string;
 }) {
@@ -681,13 +693,17 @@ export function createRouter(roomManager: RoomManager) {
 						monsterName: input.monsterName,
 						count: input.count,
 					}),
-				);
+				) as { removedCount: number; monsterName: string };
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
-					payload: { operation: 'unequipCard', ...result },
+					payload: {
+						operation: 'unequipCard',
+						removedCount: result.removedCount,
+						monsterName: result.monsterName,
+					},
 				});
 				publishPrivateAnnouncement({
 					eventBus,
@@ -696,7 +712,7 @@ export function createRouter(roomManager: RoomManager) {
 					operation: 'unequipCard',
 				});
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
@@ -736,13 +752,17 @@ export function createRouter(roomManager: RoomManager) {
 						channel,
 						monsterName: input.monsterName,
 					}),
-				);
+				) as { removedCount: number; monsterName: string };
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
-					payload: { operation: 'unequipAll', ...result },
+					payload: {
+						operation: 'unequipAll',
+						removedCount: result.removedCount,
+						monsterName: result.monsterName,
+					},
 				});
 				publishPrivateAnnouncement({
 					eventBus,
@@ -751,7 +771,7 @@ export function createRouter(roomManager: RoomManager) {
 					operation: 'unequipAll',
 				});
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
@@ -788,7 +808,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				await roomManager.runSerializedEngineWork(input.roomId, async () => {
+				const result = await roomManager.runSerializedEngineWork(input.roomId, async () => {
 					if (input.replaceAll && typeof character.unequipAll === 'function') {
 						await character.unequipAll({
 							channel,
@@ -801,9 +821,16 @@ export function createRouter(roomManager: RoomManager) {
 						monsterName: input.monsterName,
 						cardSelection: input.cardNames,
 					});
-				});
+					return {
+						monsterName: input.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: input.monsterName,
+						}),
+					};
+				}) as { monsterName: string; cards: string[] };
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
@@ -821,16 +848,13 @@ export function createRouter(roomManager: RoomManager) {
 					operation: 'equipCards',
 				});
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
 					payload: {
-						monsterName: input.monsterName,
-						cards: getMonsterCardsByName({
-							character: character as Record<string, unknown>,
-							monsterName: input.monsterName,
-						}),
+						monsterName: result.monsterName,
+						cards: result.cards,
 					},
 				});
 				return { ok: true };
@@ -867,13 +891,18 @@ export function createRouter(roomManager: RoomManager) {
 						toMonsterName: input.toMonsterName,
 						count: input.count,
 					}),
-				);
+				) as { movedCount: number; fromMonsterName: string; toMonsterName: string };
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
-					payload: { operation: 'moveCard', ...result },
+					payload: {
+						operation: 'moveCard',
+						movedCount: result.movedCount,
+						fromMonsterName: result.fromMonsterName,
+						toMonsterName: result.toMonsterName,
+					},
 				});
 				publishPrivateAnnouncement({
 					eventBus,
@@ -882,7 +911,7 @@ export function createRouter(roomManager: RoomManager) {
 					operation: 'moveCard',
 				});
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
@@ -895,7 +924,7 @@ export function createRouter(roomManager: RoomManager) {
 					},
 				});
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
@@ -966,16 +995,16 @@ export function createRouter(roomManager: RoomManager) {
 						monsterName: input.monsterName,
 						presetName: input.presetName,
 					}),
-				);
+				) as { equipped: number; requested: number; skippedCards: string[] };
 				eventBus.publish({
-					type: 'card.presetLoaded',
+					type: 'card.presetLoaded' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',
 					payload: result,
 				});
 				eventBus.publish({
-					type: 'card.equipped',
+					type: 'card.equipped' as EventType,
 					scope: 'private',
 					targetUserId: ctx.userId,
 					text: '',

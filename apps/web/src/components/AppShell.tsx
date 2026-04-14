@@ -105,6 +105,11 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             Leaderboard
           </Link>
           {roomId && (
+            <Link to={`/room/${roomId}/workshop`} className="btn" style={{ fontSize: '0.8rem' }}>
+              Workshop
+            </Link>
+          )}
+          {roomId && (
             <Link to={`/room/${roomId}/fights`} className="btn" style={{ fontSize: '0.8rem' }}>
               Fight log
             </Link>
@@ -179,6 +184,11 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             >
               Leaderboard
             </Link>
+            {roomId && (
+              <Link to={`/room/${roomId}/workshop`} className="btn" onClick={() => setMenuOpen(false)}>
+                Workshop
+              </Link>
+            )}
             {roomId && (
               <Link to={`/room/${roomId}/fights`} className="btn" onClick={() => setMenuOpen(false)}>
                 Fight log
