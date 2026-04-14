@@ -34,7 +34,7 @@ export default function MonsterWorkshopPanel({
   onLoadPreset,
   onDeletePreset,
 }: MonsterPanelProps) {
-  const locked = monster.inRing || monster.inEncounter;
+  const locked = monster.inEncounter;
   const slots = useMemo(() => {
     const total = Math.max(monster.cardSlots, 1);
     return Array.from({ length: total }, (_, idx) => monster.cards[idx] ?? null);
