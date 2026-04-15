@@ -284,10 +284,10 @@ ensure_container_runtime() {
   esac
 }
 
-extract_status_value() {
-  local label="$1"
-  local text="$2"
-  printf '%s\n' "$text" | awk -F': ' -v k="$label" '$1 ~ k {print $2; exit}'
+extract_json_value() {
+  local key="$1"
+  local json="$2"
+  printf '%s\n' "$json" | grep -o "\"${key}\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | head -1 | sed 's/.*":\s*"//;s/"$//'
 }
 
 seed_local_user() {
@@ -305,10 +305,12 @@ seed_local_user() {
 
   has_cmd curl || die "curl is required to seed local auth users."
 
+  # Auth API needs the JWT anon key (not the publishable key) for apikey header
+  local api_key="${ANON_KEY:-$BEST_PUBLISHABLE}"
   local response
   response=$(
     curl -sS -X POST "http://localhost:54321/auth/v1/signup" \
-      -H "apikey: ${ANON_KEY}" \
+      -H "apikey: ${api_key}" \
       -H "Content-Type: application/json" \
       -d "$payload"
   ) || die "Failed to call local Supabase auth signup endpoint."
@@ -393,21 +395,27 @@ run_pipe_yes npx supabase db reset
 
 log "Reading local Supabase credentials"
 if ((DRY_RUN)); then
-  STATUS=$'API URL: http://localhost:54321\nanon key: eyJexample-anon\nservice_role key: eyJexample-service'
+  STATUS='{"API_URL":"http://localhost:54321","ANON_KEY":"eyJexample-anon","SERVICE_ROLE_KEY":"eyJexample-service","PUBLISHABLE_KEY":"sb_publishable_example","SECRET_KEY":"sb_secret_example","DB_URL":"postgresql://postgres:postgres@127.0.0.1:54322/postgres"}'
 else
-  STATUS="$(npx supabase status 2>/dev/null)"
+  STATUS="$(npx supabase status --output json 2>/dev/null)"
 fi
 
-ANON_KEY="$(extract_status_value "anon key" "$STATUS")"
-SERVICE_KEY="$(extract_status_value "service_role key" "$STATUS")"
+ANON_KEY="$(extract_json_value "ANON_KEY" "$STATUS")"
+SERVICE_ROLE_KEY="$(extract_json_value "SERVICE_ROLE_KEY" "$STATUS")"
+PUBLISHABLE_KEY="$(extract_json_value "PUBLISHABLE_KEY" "$STATUS")"
+SECRET_KEY="$(extract_json_value "SECRET_KEY" "$STATUS")"
 
-if [[ -z "${ANON_KEY}" || -z "${SERVICE_KEY}" ]]; then
-  printf 'Supabase status output:\n%s\n' "$STATUS" >&2
-  die "Could not extract anon/service_role keys from 'supabase status'."
+# Use publishable key when available, fall back to anon key for older CLI versions
+BEST_PUBLISHABLE="${PUBLISHABLE_KEY:-$ANON_KEY}"
+BEST_SECRET="${SECRET_KEY:-$SERVICE_ROLE_KEY}"
+
+if [[ -z "${BEST_PUBLISHABLE}" || -z "${SERVICE_ROLE_KEY}" ]]; then
+  printf 'Supabase status JSON:\n%s\n' "$STATUS" >&2
+  die "Could not extract keys from 'supabase status --output json'."
 fi
 
-printf '    anon key:         %s...\n' "${ANON_KEY:0:20}"
-printf '    service_role key: %s...\n' "${SERVICE_KEY:0:20}"
+printf '    publishable key:  %s...\n' "${BEST_PUBLISHABLE:0:30}"
+printf '    service_role key: %s...\n' "${SERVICE_ROLE_KEY:0:20}"
 
 log "Writing .env.local files"
 if ((DRY_RUN)); then
@@ -418,25 +426,30 @@ if ((DRY_RUN)); then
     printf '[dry-run] write %s\n' ".env.local.runtime"
   fi
 else
+API_URL="$(extract_json_value "API_URL" "$STATUS")"
+DB_URL="$(extract_json_value "DB_URL" "$STATUS")"
+API_URL="${API_URL:-http://127.0.0.1:54321}"
+DB_URL="${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
+
 cat > .env.local <<EOF
-DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
-SUPABASE_URL=http://localhost:54321
-SUPABASE_PUBLISHABLE_KEY=${ANON_KEY}
-SUPABASE_SECRET_KEY=${SERVICE_KEY}
+DATABASE_URL=${DB_URL}
+SUPABASE_URL=${API_URL}
+SUPABASE_PUBLISHABLE_KEY=${BEST_PUBLISHABLE}
+SUPABASE_SECRET_KEY=${BEST_SECRET}
 CONNECTOR_SERVICE_TOKEN=dev-service-token
 EOF
 
 cat > packages/server/.env.local <<EOF
-DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
-SUPABASE_URL=http://localhost:54321
-SUPABASE_PUBLISHABLE_KEY=${ANON_KEY}
-SUPABASE_SECRET_KEY=${SERVICE_KEY}
+DATABASE_URL=${DB_URL}
+SUPABASE_URL=${API_URL}
+SUPABASE_PUBLISHABLE_KEY=${BEST_PUBLISHABLE}
+SUPABASE_SECRET_KEY=${BEST_SECRET}
 CONNECTOR_SERVICE_TOKEN=dev-service-token
 EOF
 
 cat > apps/web/.env.local <<EOF
-VITE_SUPABASE_URL=http://localhost:54321
-VITE_SUPABASE_PUBLISHABLE_KEY=${ANON_KEY}
+VITE_SUPABASE_URL=${API_URL}
+VITE_SUPABASE_PUBLISHABLE_KEY=${BEST_PUBLISHABLE}
 VITE_SERVER_URL=
 EOF
 
