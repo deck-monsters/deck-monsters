@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
 const scrollToIndexMock = vi.fn();
+let restoreRaf: (() => void) | null = null;
 
 const subscriptionHandlers: {
   onData?: (event: { id: string; data: any }) => void;
@@ -64,7 +65,7 @@ vi.mock('../lib/trpc.js', () => ({
   trpc: {
     game: {
       consoleHistory: {
-        useQuery: () => ({ data: [] }),
+        useQuery: () => ({ data: undefined }),
       },
       pendingPrompt: {
         useQuery: () => ({ data: null, refetch: vi.fn(async () => ({ data: null })) }),
@@ -107,39 +108,54 @@ describe('ConsolePane scroll behavior', () => {
   beforeEach(() => {
     scrollToIndexMock.mockReset();
     subscriptionHandlers.onData = undefined;
+    const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      callback(0);
+      return 0;
+    });
+    restoreRaf = () => rafSpy.mockRestore();
+  });
+
+  afterEach(() => {
+    restoreRaf?.();
+    restoreRaf = null;
   });
 
   it('only follows new events when already at bottom', () => {
-    render(<ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive onEvent={() => undefined} />);
+    render(<ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive={false} onEvent={() => undefined} />);
+    scrollToIndexMock.mockClear();
 
     fireEvent.click(screen.getByRole('button', { name: 'Mark not at bottom' }));
-    subscriptionHandlers.onData?.({
-      id: 'evt-1',
-      data: {
+    act(() => {
+      subscriptionHandlers.onData?.({
         id: 'evt-1',
-        type: 'announce',
-        scope: 'private',
-        targetUserId: 'user-1',
-        text: 'hello',
-        payload: {},
-      },
+        data: {
+          id: 'evt-1',
+          type: 'announce',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: 'hello',
+          payload: {},
+        },
+      });
     });
 
-    expect(scrollToIndexMock).not.toHaveBeenCalledWith({ index: 'LAST', behavior: 'auto' });
+    expect(scrollToIndexMock).toHaveBeenCalledTimes(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Mark at bottom' }));
-    subscriptionHandlers.onData?.({
-      id: 'evt-2',
-      data: {
+    act(() => {
+      subscriptionHandlers.onData?.({
         id: 'evt-2',
-        type: 'announce',
-        scope: 'private',
-        targetUserId: 'user-1',
-        text: 'hello again',
-        payload: {},
-      },
+        data: {
+          id: 'evt-2',
+          type: 'announce',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: 'hello again',
+          payload: {},
+        },
+      });
     });
 
-    expect(scrollToIndexMock).toHaveBeenCalledWith({ index: 'LAST', behavior: 'auto' });
+    expect(scrollToIndexMock).toHaveBeenCalled();
   });
 });

@@ -161,6 +161,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
       { kind: 'monster', monsterName: 'Stonefang' },
       'Hit',
       'Stonefang:0',
+      0,
     );
   });
 
@@ -197,6 +198,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
       { kind: 'monster', monsterName: 'Stonefang' },
       'Heal',
       'Stonefang:1',
+      1,
     );
     expect(onTapSlot).not.toHaveBeenCalled();
   });

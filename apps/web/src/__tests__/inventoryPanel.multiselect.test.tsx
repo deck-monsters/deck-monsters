@@ -18,7 +18,7 @@ describe('InventoryPanel multi-select behavior', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Heal' }));
-    expect(onSelectCard).toHaveBeenCalledWith({ kind: 'inventory' }, 'Heal', 'inventory:1');
+    expect(onSelectCard).toHaveBeenCalledWith({ kind: 'inventory' }, 'Heal', 'inventory:1', 1);
     expect(onTapSlot).not.toHaveBeenCalled();
   });
 });

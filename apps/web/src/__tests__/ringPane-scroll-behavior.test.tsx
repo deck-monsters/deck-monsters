@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import RingPane from '../components/RingPane.js';
 
@@ -85,25 +85,30 @@ describe('RingPane scroll follow behavior', () => {
 
     expect(typeof subscriptionCallbacks.onData).toBe('function');
     if (!subscriptionCallbacks.onData) throw new Error('subscription callback missing');
+    const onData = subscriptionCallbacks.onData;
 
     const atBottomHandler = setAtBottomState[0];
     expect(typeof atBottomHandler).toBe('function');
     if (!atBottomHandler) throw new Error('atBottomStateChange missing');
 
     // Simulate user scrolling up.
-    atBottomHandler(false);
+    act(() => {
+      atBottomHandler(false);
+    });
 
     scrollToIndexMock.mockClear();
-    subscriptionCallbacks.onData({
-      id: 'ev-1',
-      data: {
-        id: 'event-1',
-        type: 'announce',
-        scope: 'public',
-        text: 'new public event',
-        payload: {},
-        timestamp: Date.now(),
-      },
+    act(() => {
+      onData({
+        id: 'ev-1',
+        data: {
+          id: 'event-1',
+          type: 'announce',
+          scope: 'public',
+          text: 'new public event',
+          payload: {},
+          timestamp: Date.now(),
+        },
+      });
     });
 
     expect(scrollToIndexMock).not.toHaveBeenCalledWith(
