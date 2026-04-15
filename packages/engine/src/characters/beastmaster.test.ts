@@ -134,6 +134,24 @@ describe('characters/beastmaster', () => {
 		expect(toMonster.cards.map(card => card.cardType)).to.deep.equal(['Blink', 'Hit']);
 	});
 
+	it('reorders a monster hand by moving a card to a new index', async () => {
+		const beastmaster = new Beastmaster();
+		const monster = makeMonster('Stonefang', [makeCard('Hit'), makeCard('Heal'), makeCard('Blink')]);
+		beastmaster.monsters = [monster as any];
+
+		const result = await beastmaster.reorderCards({
+			channel: channelStub,
+			monsterName: 'Stonefang',
+			fromIndex: 0,
+			toIndex: 2,
+		});
+
+		expect(result.monsterName).to.equal('Stonefang');
+		expect(result.fromIndex).to.equal(0);
+		expect(result.toIndex).to.equal(2);
+		expect(monster.cards.map(card => card.cardType)).to.deep.equal(['Heal', 'Blink', 'Hit']);
+	});
+
 	it('saves, loads, and deletes presets', async () => {
 		const beastmaster = new Beastmaster();
 		const monster = makeMonster('Stonefang', [makeCard('Hit'), makeCard('Heal')]);

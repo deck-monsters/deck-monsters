@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => {
     savePresetUseMutation: vi.fn(defaultMutation),
     loadPresetUseMutation: vi.fn(defaultMutation),
     deletePresetUseMutation: vi.fn(defaultMutation),
+    reorderCardsUseMutation: vi.fn(defaultMutation),
   };
 });
 
@@ -54,6 +55,7 @@ vi.mock('../lib/trpc.js', () => ({
       savePreset: { useMutation: mocks.savePresetUseMutation },
       loadPreset: { useMutation: mocks.loadPresetUseMutation },
       deletePreset: { useMutation: mocks.deletePresetUseMutation },
+      reorderCards: { useMutation: mocks.reorderCardsUseMutation },
     },
   },
 }));

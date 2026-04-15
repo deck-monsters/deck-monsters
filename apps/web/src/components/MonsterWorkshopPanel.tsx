@@ -17,7 +17,12 @@ type MonsterPanelProps = {
   };
   showSelectionHint: boolean;
   selectedCards: Array<{ location: WorkshopCardLocation; cardName: string; selectionId: string }>;
-  onDropCard: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
+  onDropCard: (
+    source: WorkshopCardLocation,
+    cardName: string,
+    sourceSelectionId?: string,
+    targetSelectionId?: string,
+  ) => Promise<void> | void;
   onTapSlot: (target: WorkshopCardLocation) => void;
   onSelectCard: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
   onUnequipAll: () => void;
@@ -137,7 +142,9 @@ export default function MonsterWorkshopPanel({
               disabled={locked}
               onSelectCard={onSelectCard}
               onTapSlot={onTapSlot}
-              onDropCard={onDropCard}
+              onDropCard={(source, droppedCardName, sourceSelectionId) =>
+                onDropCard(source, droppedCardName, sourceSelectionId, selectionId)
+              }
             />
           );
         })}

@@ -110,6 +110,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [connected, setConnected] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
+  const shouldFollowOutputRef = useRef(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
   // No HTTP polling needed.
   const [timerState, setTimerState] = useState<TimerState>({
@@ -175,10 +176,12 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
       return merged;
     });
 
-    // Jump to bottom after history loads (instant, no animation)
-    requestAnimationFrame(() => {
-      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
-    });
+    if (shouldFollowOutputRef.current) {
+      // Jump to bottom after history loads only when auto-follow is enabled.
+      requestAnimationFrame(() => {
+        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      });
+    }
   }, [history]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
@@ -186,12 +189,14 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     if (isActive) {
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       setIsAtBottom(true);
+      shouldFollowOutputRef.current = true;
     }
   }, [isActive]);
 
   const scrollToBottom = useCallback(() => {
     virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
     setIsAtBottom(true);
+    shouldFollowOutputRef.current = true;
   }, []);
 
   trpc.game.ringFeed.useSubscription(
@@ -280,7 +285,9 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
         aria-label="Ring events"
         tabIndex={0}
         data={events}
-        followOutput="smooth"
+        followOutput={(atBottom) =>
+          shouldFollowOutputRef.current || atBottom ? 'smooth' : false
+        }
         components={{
           List: FeedList,
           EmptyPlaceholder: () => (
@@ -314,7 +321,14 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
             </li>
           );
         }}
-        atBottomStateChange={(atBottom) => setIsAtBottom(atBottom)}
+        atBottomStateChange={(atBottom) => {
+          setIsAtBottom(atBottom);
+          if (atBottom) {
+            shouldFollowOutputRef.current = true;
+            return;
+          }
+          shouldFollowOutputRef.current = false;
+        }}
       />
 
       {lastFight?.[0] && (

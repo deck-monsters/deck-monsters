@@ -38,6 +38,7 @@ const workshopMock = vi.hoisted(() => ({
   unequipCard: vi.fn(async () => ({ removedCount: 1, monsterName: 'Stonefang' })),
   unequipAll: vi.fn(async () => ({ removedCount: 0, monsterName: 'Stonefang' })),
   moveCard: vi.fn(async () => ({ movedCount: 1, fromMonsterName: 'Stonefang', toMonsterName: 'Emberclaw' })),
+  reorderCards: vi.fn(async () => ({ monsterName: 'Stonefang', cards: ['Hit'] })),
   savePreset: vi.fn(async () => undefined),
   loadPreset: vi.fn(async () => ({ equippedCount: 0, requestedCount: 0, skippedCards: [] as string[] })),
   deletePreset: vi.fn(async () => undefined),
@@ -88,13 +89,20 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
     compatibilityHint,
     onToggleFilter,
     isFilterTarget,
+    onReorderCard,
   }: {
     monster: { name: string };
     showSelectionHint: boolean;
-    onDropCard: (source: { kind: 'inventory' }, cardName: string) => Promise<void> | void;
+    onDropCard: (
+      source: { kind: 'inventory' | 'monster'; monsterName?: string },
+      cardName: string,
+      sourceSelectionId?: string,
+      targetSelectionId?: string,
+    ) => Promise<void> | void;
     compatibilityHint?: 'none' | 'eligible' | 'ineligible';
     onToggleFilter?: () => void;
     isFilterTarget?: boolean;
+    onReorderCard?: (sourceSelectionId: string, targetSelectionId: string) => Promise<void> | void;
   }) => (
     <section>
       <div data-testid={`hint-${monster.name}`}>{showSelectionHint ? 'hint-on' : 'hint-off'}</div>
@@ -108,6 +116,18 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
         onClick={() => void onDropCard({ kind: 'inventory' }, 'Hit')}
       >
         Drop on {monster.name}
+      </button>
+      <button
+        type="button"
+        onClick={() => void onDropCard({ kind: 'monster', monsterName: monster.name }, 'Hit', `${monster.name}:0`, `${monster.name}:1`)}
+      >
+        Reorder on {monster.name}
+      </button>
+      <button
+        type="button"
+        onClick={() => void onReorderCard?.(`${monster.name}:0`, `${monster.name}:1`)}
+      >
+        Reorder via callback {monster.name}
       </button>
     </section>
   ),
@@ -179,5 +199,18 @@ describe('WorkshopView review regressions', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear inventory filter' }));
     expect(screen.getByTestId('inventory-filter-name')).toHaveTextContent('none');
+  });
+
+  it('handles same-monster reorder drops through reorderCards mutation', async () => {
+    renderWorkshop();
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder on Stonefang' }));
+
+    await waitFor(() => {
+      expect(workshopMock.reorderCards).toHaveBeenCalledWith({
+        monsterName: 'Stonefang',
+        fromIndex: 0,
+        toIndex: 1,
+      });
+    });
   });
 });

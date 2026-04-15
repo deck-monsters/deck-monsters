@@ -988,6 +988,67 @@ export function createRouter(roomManager: RoomManager) {
 				return result;
 			}),
 
+		reorderCards: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					fromIndex: z.number().int().min(0),
+					toIndex: z.number().int().min(0),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.reorderCards !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await runSerializedMutation(input.roomId, () =>
+					character.reorderCards({
+						channel,
+						monsterName: input.monsterName,
+						fromIndex: input.fromIndex,
+						toIndex: input.toIndex,
+					}),
+				) as { monsterName: string; fromIndex: number; toIndex: number; cards: string[] };
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						operation: 'reorderCards',
+						monsterName: result.monsterName,
+						fromIndex: result.fromIndex,
+						toIndex: result.toIndex,
+					},
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Reordered ${result.monsterName}'s deck (${result.fromIndex + 1} → ${result.toIndex + 1}).`,
+					operation: 'reorderCards',
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.monsterName,
+						cards: result.cards,
+					},
+				});
+				return result;
+			}),
+
 		savePreset: protectedProcedure
 			.input(
 				z.object({

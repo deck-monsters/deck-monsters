@@ -2,16 +2,17 @@ export const ONE_MINUTE = 60000;
 
 type DelayKind = 'very_short' | 'short' | 'medium' | 'long';
 
-// Preserve existing behavior by default:
-// - very_short: 1000–2000ms (midpoint 1500)
-// - short:      1500–3000ms (midpoint 2250)
-// - medium:     2000–4000ms (midpoint 3000)
-// - long:       3000–6000ms (midpoint 4500)
+// Default pacing values (roughly doubled from legacy) to make ring fights easier
+// to follow in live feeds:
+// - very_short: 2000–4000ms (midpoint 3000)
+// - short:      3000–6000ms (midpoint 4500)
+// - medium:     4000–8000ms (midpoint 6000)
+// - long:       6000–12000ms (midpoint 9000)
 const DEFAULT_MIDPOINTS: Record<DelayKind, number> = {
-	very_short: 1500,
-	short: 2250,
-	medium: 3000,
-	long: 4500,
+	very_short: 3000,
+	short: 4500,
+	medium: 6000,
+	long: 9000,
 };
 
 const MIDPOINT_ENV: Record<DelayKind, string> = {

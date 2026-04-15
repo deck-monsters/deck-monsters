@@ -62,6 +62,7 @@ export function useDeckWorkshop(roomId?: string) {
   const savePresetMutation = trpc.game.savePreset.useMutation(mutationOptions);
   const loadPresetMutation = trpc.game.loadPreset.useMutation(mutationOptions);
   const deletePresetMutation = trpc.game.deletePreset.useMutation(mutationOptions);
+  const reorderCardsMutation = trpc.game.reorderCards.useMutation(mutationOptions);
 
   const inventory = (inventoryQuery.data ?? EMPTY_INVENTORY) as WorkshopInventory;
   const monsters = inventory.monsters ?? [];
@@ -76,6 +77,7 @@ export function useDeckWorkshop(roomId?: string) {
       unequipAllMutation.isPending ||
       equipCardsMutation.isPending ||
       moveCardMutation.isPending ||
+      reorderCardsMutation.isPending ||
       savePresetMutation.isPending ||
       loadPresetMutation.isPending ||
       deletePresetMutation.isPending,
@@ -85,6 +87,7 @@ export function useDeckWorkshop(roomId?: string) {
       inventoryQuery.isFetching,
       loadPresetMutation.isPending,
       moveCardMutation.isPending,
+      reorderCardsMutation.isPending,
       savePresetMutation.isPending,
       unequipAllMutation.isPending,
       unequipCardMutation.isPending,
@@ -104,6 +107,7 @@ export function useDeckWorkshop(roomId?: string) {
       unequipAllMutation.error?.message ??
       equipCardsMutation.error?.message ??
       moveCardMutation.error?.message ??
+      reorderCardsMutation.error?.message ??
       savePresetMutation.error?.message ??
       loadPresetMutation.error?.message ??
       deletePresetMutation.error?.message,
@@ -128,6 +132,14 @@ export function useDeckWorkshop(roomId?: string) {
     }) => {
       if (!roomId) throw new Error('Room not selected');
       return moveCardMutation.mutateAsync({ roomId, ...input });
+    },
+    reorderCards: (input: {
+      monsterName: string;
+      fromIndex: number;
+      toIndex: number;
+    }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return reorderCardsMutation.mutateAsync({ roomId, ...input });
     },
     savePreset: (input: { monsterName: string; presetName: string }) => {
       if (!roomId) throw new Error('Room not selected');

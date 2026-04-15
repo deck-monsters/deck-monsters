@@ -630,6 +630,70 @@ class Beastmaster extends BaseCharacter {
 		}));
 	}
 
+	reorderCards({
+		monsterName,
+		fromIndex,
+		toIndex,
+		channel,
+	}: {
+		monsterName: string;
+		fromIndex: number;
+		toIndex: number;
+		channel: ChannelFn;
+	}): Promise<{ monsterName: string; movedCard: string; fromIndex: number; toIndex: number; cards: string[] }> {
+		const monster = this.findMonsterByName(monsterName);
+		if (!monster) {
+			return announceAndThrow(channel, `I can find no monster named ${monsterName}.`);
+		}
+		if (monster.inEncounter) {
+			return announceAndThrow(channel, `You cannot reorder ${monster.givenName}'s cards while they are fighting!`);
+		}
+
+		const cards = [...monster.cards];
+		if (cards.length < 2) {
+			return announceAndThrow(channel, `${monster.givenName} needs at least 2 cards to reorder.`);
+		}
+
+		const from = Number.isInteger(fromIndex) ? fromIndex : Number.parseInt(String(fromIndex), 10);
+		const to = Number.isInteger(toIndex) ? toIndex : Number.parseInt(String(toIndex), 10);
+		if (!Number.isFinite(from) || !Number.isFinite(to)) {
+			return announceAndThrow(channel, 'Card reorder indices must be valid numbers.');
+		}
+		if (from < 0 || from >= cards.length || to < 0 || to >= cards.length) {
+			return announceAndThrow(
+				channel,
+				`Card reorder indices must be between 0 and ${cards.length - 1}.`,
+			);
+		}
+		if (from === to) {
+			const names = cards.map(card => getCardName(card));
+			return Promise.resolve(channel({
+				announce: `${monster.givenName}'s card order is unchanged.`,
+			})).then(() => ({
+				monsterName: monster.givenName,
+				movedCard: getCardName(cards[from]),
+				fromIndex: from,
+				toIndex: to,
+				cards: names,
+			}));
+		}
+
+		const movedCard = cards.splice(from, 1)[0];
+		cards.splice(to, 0, movedCard);
+		monster.cards = cards;
+		const names = cards.map(card => getCardName(card));
+
+		return Promise.resolve(channel({
+			announce: `Reordered ${monster.givenName}'s deck: moved ${getCardName(movedCard)} from slot ${from + 1} to ${to + 1}.`,
+		})).then(() => ({
+			monsterName: monster.givenName,
+			movedCard: getCardName(movedCard),
+			fromIndex: from,
+			toIndex: to,
+			cards: names,
+		}));
+	}
+
 	moveCards({
 		cardNames,
 		fromMonsterName,

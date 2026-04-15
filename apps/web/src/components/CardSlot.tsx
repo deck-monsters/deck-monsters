@@ -12,8 +12,17 @@ interface CardSlotProps {
   disabled?: boolean;
   incompatible?: boolean;
   selected?: boolean;
-  onSelectCard?: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
-  onDropCard?: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
+  onSelectCard?: (
+    location: WorkshopCardLocation,
+    cardName: string,
+    selectionId: string,
+    slotIndex?: number,
+  ) => void;
+  onDropCard?: (
+    source: WorkshopCardLocation,
+    cardName: string,
+    sourceSelectionId?: string,
+  ) => Promise<void> | void;
   onTapSlot?: (target: WorkshopCardLocation) => Promise<void> | void;
 }
 
@@ -37,8 +46,12 @@ export default function CardSlot({
     if (!payload) return;
     event.preventDefault();
     try {
-      const parsed = JSON.parse(payload) as { location: WorkshopCardLocation; cardName: string };
-      await onDropCard?.(parsed.location, parsed.cardName);
+      const parsed = JSON.parse(payload) as {
+        location: WorkshopCardLocation;
+        cardName: string;
+        selectionId?: string;
+      };
+      await onDropCard?.(parsed.location, parsed.cardName, parsed.selectionId);
     } catch {
       // Ignore malformed payloads.
     }
@@ -53,7 +66,7 @@ export default function CardSlot({
     if (!cardName || disabled) return;
     event.dataTransfer.setData(
       'application/x-deck-monsters-card',
-      JSON.stringify({ location, cardName }),
+      JSON.stringify({ location, cardName, selectionId }),
     );
     event.dataTransfer.effectAllowed = 'move';
   }
@@ -61,7 +74,9 @@ export default function CardSlot({
   async function handleClick() {
     if (disabled) return;
     if (cardName) {
-      onSelectCard?.(location, cardName, selectionId);
+      const slotFromSelectionId = Number.parseInt(selectionId.split(':').at(-1) ?? '', 10);
+      const slotIndex = Number.isFinite(slotFromSelectionId) ? slotFromSelectionId : undefined;
+      onSelectCard?.(location, cardName, selectionId, slotIndex);
       return;
     }
     await onTapSlot?.(location);

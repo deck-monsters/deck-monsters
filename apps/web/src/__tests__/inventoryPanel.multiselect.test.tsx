@@ -11,7 +11,7 @@ describe('InventoryPanel multi-select behavior', () => {
       <InventoryPanel
         cards={['Hit', 'Heal']}
         selectedCards={[{ location: { kind: 'inventory' }, cardName: 'Hit', selectionId: 'inventory:0' }]}
-        onDropCard={() => undefined}
+        onDropCard={() => Promise.resolve()}
         onTapSlot={onTapSlot}
         onSelectCard={onSelectCard}
       />,

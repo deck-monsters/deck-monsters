@@ -7,7 +7,11 @@ interface InventoryPanelProps {
     cardName: string;
     selectionId: string;
   }>;
-  onDropCard: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
+  onDropCard: (
+    source: WorkshopCardLocation,
+    cardName: string,
+    targetSelectionId?: string,
+  ) => Promise<void> | void;
   onTapSlot: () => Promise<void> | void;
   onSelectCard: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
   activeMonsterFilterName?: string | null;
@@ -85,8 +89,12 @@ export default function InventoryPanel({
           const payload = event.dataTransfer.getData('application/x-deck-monsters-card');
           if (!payload) return;
           try {
-            const parsed = JSON.parse(payload) as { location: WorkshopCardLocation; cardName: string };
-            void onDropCard(parsed.location, parsed.cardName);
+            const parsed = JSON.parse(payload) as {
+              location: WorkshopCardLocation;
+              cardName: string;
+              selectionId?: string;
+            };
+            void onDropCard(parsed.location, parsed.cardName, parsed.selectionId);
           } catch {
             // Ignore malformed payloads.
           }

@@ -32,6 +32,7 @@ export default function WorkshopView() {
     unequipCard,
     unequipAll,
     moveCard,
+    reorderCards,
     savePreset,
     loadPreset,
     deletePreset,
@@ -115,11 +116,10 @@ export default function WorkshopView() {
     source: WorkshopCardLocation,
     target: WorkshopCardLocation,
     cardName: string,
+    sourceSelectionId?: string,
+    targetSelectionId?: string,
   ) {
     if (!roomId) return;
-    if (source.kind === 'monster' && target.kind === 'monster' && source.monsterName === target.monsterName) {
-      return;
-    }
     setSelectedCards([]);
 
     try {
@@ -148,6 +148,19 @@ export default function WorkshopView() {
       }
 
       if (source.kind === 'monster' && target.kind === 'monster') {
+        if (source.monsterName === target.monsterName) {
+          const sourceIndex = Number.parseInt(sourceSelectionId?.split(':').pop() ?? '', 10);
+          const targetIndex = Number.parseInt(targetSelectionId?.split(':').pop() ?? '', 10);
+          if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex)) return;
+          if (sourceIndex === targetIndex) return;
+          await reorderCards({
+            monsterName: source.monsterName,
+            fromIndex: sourceIndex,
+            toIndex: targetIndex,
+          });
+          setMessage(`Reordered ${source.monsterName}'s deck.`);
+          return;
+        }
         await moveCard({
           cardName,
           fromMonsterName: source.monsterName,
@@ -316,8 +329,14 @@ export default function WorkshopView() {
               monster={monster}
               selectedCards={selectedCards}
               showSelectionHint={selectedCards.length > 0}
-              onDropCard={(source, cardName) =>
-                handleDrop(source, { kind: 'monster', monsterName: monster.name }, cardName)
+              onDropCard={(source, cardName, sourceSelectionId, targetSelectionId) =>
+                handleDrop(
+                  source,
+                  { kind: 'monster', monsterName: monster.name },
+                  cardName,
+                  sourceSelectionId,
+                  targetSelectionId,
+                )
               }
               onTapSlot={(target) => {
                 void handleSlotClick(target);

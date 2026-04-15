@@ -228,4 +228,48 @@ describe('trpc/router card management procedures', () => {
 			skippedCards: ['Heal'],
 		});
 	});
+
+	it('routes game.reorderCards through character.reorderCards', async () => {
+		let receivedInput: Record<string, unknown> | undefined;
+		const reorderCards = async (input: Record<string, unknown>) => {
+			receivedInput = input;
+			return {
+				monsterName: 'Stonefang',
+				fromIndex: 0,
+				toIndex: 1,
+				cards: ['Heal', 'Hit'],
+			};
+		};
+
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({
+				characters: { [USER_ID]: { reorderCards } },
+			}),
+			getEventBus: async () => ({ publish: () => undefined }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.reorderCards({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			fromIndex: 0,
+			toIndex: 1,
+		});
+
+		expect(receivedInput).to.not.equal(undefined);
+		if (!receivedInput) throw new Error('Expected reorderCards to be called');
+		const callInput = receivedInput;
+		expect(callInput.monsterName).to.equal('Stonefang');
+		expect(callInput.fromIndex).to.equal(0);
+		expect(callInput.toIndex).to.equal(1);
+		expect(result).to.deep.equal({
+			monsterName: 'Stonefang',
+			fromIndex: 0,
+			toIndex: 1,
+			cards: ['Heal', 'Hit'],
+		});
+	});
 });

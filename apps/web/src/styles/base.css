@@ -439,6 +439,10 @@ button {
   text-align: center;
   font-size: 0.74rem;
   line-height: 1.2;
+  width: 100%;
+  max-width: 100%;
+  color: var(--color-fg);
+  white-space: normal;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
