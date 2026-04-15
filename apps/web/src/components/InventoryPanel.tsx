@@ -5,10 +5,11 @@ interface InventoryPanelProps {
   selectedCard: {
     location: WorkshopCardLocation;
     cardName: string;
+    selectionId: string;
   } | null;
   onDropCard: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
   onTapSlot: () => Promise<void> | void;
-  onSelectCard: (location: WorkshopCardLocation, cardName: string) => void;
+  onSelectCard: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
 }
 
 export default function InventoryPanel({
@@ -31,20 +32,24 @@ export default function InventoryPanel({
         <div className="workshop-empty-state">No unequipped cards.</div>
       ) : (
         <div className="workshop-card-grid inventory-grid">
-          {cards.map((cardName, index) => (
+          {cards.map((cardName, index) => {
+            const selectionId = `inventory:${index}`;
+            return (
             <CardSlot
               key={`${cardName}-${index}`}
               location={location}
+              selectionId={selectionId}
               cardName={cardName}
               selected={
                 selectedCard?.location.kind === 'inventory' &&
-                selectedCard.cardName === cardName
+                selectedCard.selectionId === selectionId
               }
               hasActiveSelection={Boolean(selectedCard)}
               onTapSlot={() => onTapSlot()}
               onSelectCard={onSelectCard}
             />
-          ))}
+            );
+          })}
         </div>
       )}
 

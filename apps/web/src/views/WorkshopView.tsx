@@ -9,6 +9,7 @@ import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 type SelectionState = {
   location: WorkshopCardLocation;
   cardName: string;
+  selectionId: string;
 } | null;
 
 export default function WorkshopView() {
@@ -111,8 +112,8 @@ export default function WorkshopView() {
     await handleDrop(payload.location, target, payload.cardName);
   }
 
-  function handleSelect(location: WorkshopCardLocation, cardName: string) {
-    setSelected({ location, cardName });
+  function handleSelect(location: WorkshopCardLocation, cardName: string, selectionId: string) {
+    setSelected({ location, cardName, selectionId });
   }
 
   async function handleSavePreset(monsterName: string, presetName: string) {
@@ -186,7 +187,7 @@ export default function WorkshopView() {
               onTapSlot={(target) => {
                 void handleSlotClick(target);
               }}
-              onSelectCard={(location, cardName) => handleSelect(location, cardName)}
+              onSelectCard={(location, cardName, selectionId) => handleSelect(location, cardName, selectionId)}
               onSavePreset={(presetName) => {
                 void handleSavePreset(monster.name, presetName);
               }}
@@ -207,7 +208,7 @@ export default function WorkshopView() {
           onTapSlot={() => {
             void handleSlotClick({ kind: 'inventory' });
           }}
-          onSelectCard={(location, cardName) => handleSelect(location, cardName)}
+          onSelectCard={(location, cardName, selectionId) => handleSelect(location, cardName, selectionId)}
         />
       </div>
     </AppShell>

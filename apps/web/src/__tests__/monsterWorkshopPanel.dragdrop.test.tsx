@@ -93,7 +93,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
           cards: ['Hit'],
         }}
         showSelectionHint
-        selectedCard={{ location: { kind: 'inventory' }, cardName: 'Heal' }}
+        selectedCard={{ location: { kind: 'inventory' }, cardName: 'Heal', selectionId: 'inventory:0' }}
         onDropCard={() => undefined}
         onTapSlot={onTapSlot}
         onSelectCard={onSelectCard}
@@ -106,5 +106,32 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Hit' }));
     expect(onTapSlot).toHaveBeenCalledWith({ kind: 'monster', monsterName: 'Stonefang' });
     expect(onSelectCard).not.toHaveBeenCalled();
+  });
+
+  it('only highlights the selected slot when duplicate card names exist', () => {
+    render(
+      <MonsterWorkshopPanel
+        monster={{
+          ...baseMonster,
+          cardSlots: 2,
+          cards: ['Hit', 'Hit'],
+        }}
+        showSelectionHint={false}
+        selectedCard={{
+          location: { kind: 'monster', monsterName: 'Stonefang' },
+          cardName: 'Hit',
+          selectionId: 'Stonefang:0',
+        }}
+        onDropCard={() => undefined}
+        onTapSlot={() => undefined}
+        onSelectCard={() => undefined}
+        onSavePreset={() => undefined}
+        onLoadPreset={() => undefined}
+        onDeletePreset={() => undefined}
+      />,
+    );
+
+    const selectedButtons = document.querySelectorAll('.workshop-card-slot.selected');
+    expect(selectedButtons).toHaveLength(1);
   });
 });

@@ -14,10 +14,10 @@ type MonsterPanelProps = {
     presets: Record<string, string[]>;
   };
   showSelectionHint: boolean;
-  selectedCard: { location: WorkshopCardLocation; cardName: string } | null;
+  selectedCard: { location: WorkshopCardLocation; cardName: string; selectionId: string } | null;
   onDropCard: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
   onTapSlot: (target: WorkshopCardLocation) => void;
-  onSelectCard: (location: WorkshopCardLocation, cardName: string) => void;
+  onSelectCard: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
   onSavePreset: (presetName: string) => void;
   onLoadPreset: (presetName: string) => void;
   onDeletePreset: (presetName: string) => void;
@@ -68,17 +68,17 @@ export default function MonsterWorkshopPanel({
             kind: 'monster',
             monsterName: monster.name,
           };
+          const selectionId = `${monster.name}:${idx}`;
           return (
             <CardSlot
               key={`${monster.name}-${idx}`}
               cardName={cardName}
               location={location}
+              selectionId={selectionId}
               isDropActive={false}
               selected={
                 !!selectedCard &&
-                selectedCard.location.kind === 'monster' &&
-                selectedCard.location.monsterName === monster.name &&
-                selectedCard.cardName === cardName
+                selectedCard.selectionId === selectionId
               }
               hasActiveSelection={Boolean(selectedCard)}
               disabled={locked}
