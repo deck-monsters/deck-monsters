@@ -12,6 +12,7 @@ interface CardSlotProps {
   disabled?: boolean;
   selected?: boolean;
   hasActiveSelection?: boolean;
+  preferSelection?: boolean;
   onSelectCard?: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
   onDropCard?: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
   onTapSlot?: (target: WorkshopCardLocation) => Promise<void> | void;
@@ -25,6 +26,7 @@ export default function CardSlot({
   disabled = false,
   selected = false,
   hasActiveSelection = false,
+  preferSelection = false,
   onSelectCard,
   onDropCard,
   onTapSlot,
@@ -60,7 +62,7 @@ export default function CardSlot({
 
   async function handleClick() {
     if (disabled) return;
-    if (cardName && !hasActiveSelection) {
+    if (cardName && (!hasActiveSelection || preferSelection)) {
       onSelectCard?.(location, cardName, selectionId);
       return;
     }

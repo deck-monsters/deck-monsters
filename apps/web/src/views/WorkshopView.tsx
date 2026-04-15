@@ -10,11 +10,11 @@ type SelectionState = {
   location: WorkshopCardLocation;
   cardName: string;
   selectionId: string;
-} | null;
+};
 
 export default function WorkshopView() {
   const { roomId } = useParams<{ roomId: string }>();
-  const [selected, setSelected] = useState<SelectionState>(null);
+  const [selectedCards, setSelectedCards] = useState<SelectionState[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +27,7 @@ export default function WorkshopView() {
     latestError,
     equipCards,
     unequipCard,
+    unequipAll,
     moveCard,
     savePreset,
     loadPreset,
@@ -52,9 +53,35 @@ export default function WorkshopView() {
   }, [latestError]);
 
   const selectedMonsterName = useMemo(() => {
-    if (!selected || selected.location.kind !== 'monster') return null;
-    return selected.location.monsterName;
-  }, [selected]);
+    if (selectedCards.length < 1) return null;
+    const first = selectedCards[0];
+    if (first.location.kind !== 'monster') return null;
+    const sameMonster = selectedCards.every(
+      (selection) =>
+        selection.location.kind === 'monster' &&
+        selection.location.monsterName === first.location.monsterName,
+    );
+    return sameMonster ? first.location.monsterName : null;
+  }, [selectedCards]);
+
+  const selectedSummary = useMemo(() => {
+    if (selectedCards.length < 1) return '';
+    const grouped = selectedCards.reduce<Record<string, number>>((all, selection) => {
+      all[selection.cardName] = (all[selection.cardName] ?? 0) + 1;
+      return all;
+    }, {});
+    return Object.entries(grouped)
+      .map(([cardName, count]) => (count > 1 ? `${cardName} ×${count}` : cardName))
+      .join(', ');
+  }, [selectedCards]);
+
+  function groupSelectionByCardName(selection: SelectionState[]): Array<{ cardName: string; count: number }> {
+    const grouped = selection.reduce<Record<string, number>>((all, entry) => {
+      all[entry.cardName] = (all[entry.cardName] ?? 0) + 1;
+      return all;
+    }, {});
+    return Object.entries(grouped).map(([cardName, count]) => ({ cardName, count }));
+  }
 
   async function handleDrop(
     source: WorkshopCardLocation,
@@ -105,15 +132,101 @@ export default function WorkshopView() {
     }
   }
 
+  async function handleBatchMove(selection: SelectionState[], target: WorkshopCardLocation) {
+    if (!roomId || selection.length < 1) return;
+    const source = selection[0].location;
+    const grouped = groupSelectionByCardName(selection);
+
+    if (source.kind === 'inventory' && target.kind === 'monster') {
+      const result = await equipCards({
+        monsterName: target.monsterName,
+        cardNames: selection.map((entry) => entry.cardName),
+        replaceAll: false,
+      });
+      const skipped = result.skippedCards.length > 0 ? ` Skipped: ${result.skippedCards.join(', ')}.` : '';
+      setMessage(`Equipped ${target.monsterName} (${result.equippedCount}/${result.requestedCount}).${skipped}`);
+      return;
+    }
+
+    if (source.kind === 'monster' && target.kind === 'inventory') {
+      let removedCount = 0;
+      for (const { cardName, count } of grouped) {
+        const result = await unequipCard({
+          monsterName: source.monsterName,
+          cardName,
+          count,
+        });
+        removedCount += result.removedCount;
+      }
+      setMessage(`Unequipped ${removedCount} cards from ${source.monsterName}.`);
+      return;
+    }
+
+    if (source.kind === 'monster' && target.kind === 'monster') {
+      if (source.monsterName === target.monsterName) return;
+
+      let movedCount = 0;
+      for (const { cardName, count } of grouped) {
+        const result = await moveCard({
+          cardName,
+          fromMonsterName: source.monsterName,
+          toMonsterName: target.monsterName,
+          count,
+        });
+        movedCount += result.movedCount;
+      }
+      setMessage(`Moved ${movedCount} cards to ${target.monsterName}.`);
+    }
+  }
+
   async function handleSlotClick(target: WorkshopCardLocation) {
-    if (!selected || !roomId) return;
-    const payload = selected;
-    setSelected(null);
-    await handleDrop(payload.location, target, payload.cardName);
+    if (selectedCards.length < 1 || !roomId) return;
+    const payload = [...selectedCards];
+    setSelectedCards([]);
+    try {
+      setError(null);
+      await handleBatchMove(payload, target);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Action failed');
+    }
   }
 
   function handleSelect(location: WorkshopCardLocation, cardName: string, selectionId: string) {
-    setSelected({ location, cardName, selectionId });
+    setSelectedCards((previous) => {
+      const existing = previous.find((entry) => entry.selectionId === selectionId);
+      if (existing) {
+        return previous.filter((entry) => entry.selectionId !== selectionId);
+      }
+
+      if (previous.length < 1) {
+        return [{ location, cardName, selectionId }];
+      }
+
+      const first = previous[0];
+      const sameKind = first.location.kind === location.kind;
+      const sameMonsterSource =
+        first.location.kind !== 'monster' ||
+        (location.kind === 'monster' && first.location.monsterName === location.monsterName);
+
+      if (!sameKind || !sameMonsterSource) {
+        return [{ location, cardName, selectionId }];
+      }
+
+      return [...previous, { location, cardName, selectionId }];
+    });
+  }
+
+  async function handleUnequipAll(monsterName: string) {
+    if (!roomId) return;
+    if (!window.confirm(`Unequip all cards from ${monsterName}?`)) return;
+    try {
+      setError(null);
+      const result = await unequipAll({ monsterName });
+      setSelectedCards([]);
+      setMessage(`Cleared ${result.monsterName} (${result.removedCount} cards returned).`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not clear deck');
+    }
   }
 
   async function handleSavePreset(monsterName: string, presetName: string) {
@@ -161,16 +274,20 @@ export default function WorkshopView() {
             <p>Manage equipped and unequipped cards in one view.</p>
           </div>
           <button className="btn" onClick={() => void refresh()} disabled={!roomId || loading || busy}>
-            Refresh
+            Sync
           </button>
         </div>
 
         {message && <div className="success-msg">{message}</div>}
         {error && <div className="error-msg">{error}</div>}
         {busy && <div className="workshop-banner">Applying changes…</div>}
-        {selected?.location.kind === 'inventory' && (
+        {selectedCards.length > 0 && (
           <div className="workshop-mobile-hint">
-            {selected.cardName} selected. Tap a monster slot to equip, or tap inventory to cancel.
+            {selectedCards.length} selected: {selectedSummary}. Tap destination slot or inventory drop zone.
+            {' '}
+            <button type="button" className="btn workshop-inline-btn" onClick={() => setSelectedCards([])}>
+              Clear
+            </button>
           </div>
         )}
 
@@ -179,8 +296,8 @@ export default function WorkshopView() {
             <MonsterWorkshopPanel
               key={monster.name}
               monster={monster}
-              selectedCard={selected}
-              showSelectionHint={Boolean(selected) && selectedMonsterName === monster.name}
+              selectedCards={selectedCards}
+              showSelectionHint={selectedCards.length > 0 && selectedMonsterName === monster.name}
               onDropCard={(source, cardName) =>
                 handleDrop(source, { kind: 'monster', monsterName: monster.name }, cardName)
               }
@@ -188,6 +305,9 @@ export default function WorkshopView() {
                 void handleSlotClick(target);
               }}
               onSelectCard={(location, cardName, selectionId) => handleSelect(location, cardName, selectionId)}
+              onUnequipAll={() => {
+                void handleUnequipAll(monster.name);
+              }}
               onSavePreset={(presetName) => {
                 void handleSavePreset(monster.name, presetName);
               }}
@@ -203,7 +323,7 @@ export default function WorkshopView() {
 
         <InventoryPanel
           cards={unequippedDeck}
-          selectedCard={selected}
+          selectedCards={selectedCards}
           onDropCard={(source, cardName) => handleDrop(source, { kind: 'inventory' }, cardName)}
           onTapSlot={() => {
             void handleSlotClick({ kind: 'inventory' });

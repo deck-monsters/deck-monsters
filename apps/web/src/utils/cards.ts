@@ -5,19 +5,18 @@ const MAGIC_KEYWORDS = ['blink', 'blast', 'mesmer', 'sandstorm', 'curse', 'coil'
 export type CardClass = 'melee' | 'magic' | 'heal' | 'utility';
 
 export function abbreviateCardName(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed) return '';
-  if (trimmed.length <= 8) return trimmed;
+  const normalized = name.trim().replace(/\s+/g, ' ');
+  if (!normalized) return '';
+  if (normalized.length <= 12) return normalized;
 
-  const parts = trimmed.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return `${parts[0].slice(0, 7)}…`;
-  if (parts.length === 2) {
-    return `${parts[0].slice(0, 3)}${parts[1][0] ?? ''}`;
-  }
+  const parts = normalized.split(' ').filter(Boolean);
+  if (parts.length === 1) return `${parts[0].slice(0, 11)}…`;
+  if (parts.length === 2) return `${parts[0].slice(0, 4)} ${parts[1].slice(0, 4)}…`;
+
   return parts
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('')
-    .slice(0, 5);
+    .slice(0, 3)
+    .map((part) => part.slice(0, 3))
+    .join(' ');
 }
 
 export function getCardClass(name: string): CardClass {
