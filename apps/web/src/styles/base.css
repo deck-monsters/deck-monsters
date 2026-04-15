@@ -262,9 +262,28 @@ button {
   gap: 0.75rem;
 }
 
-.workshop-monster-header h3 {
+.workshop-monster-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.workshop-monster-filter-btn {
   font-size: 0.95rem;
   color: var(--color-fg-bright);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0.05rem 0.2rem;
+  text-align: left;
+}
+
+.workshop-monster-filter-btn:hover {
+  border-color: var(--color-border);
+}
+
+.workshop-monster-filter-btn.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .workshop-monster-header p {
@@ -320,7 +339,7 @@ button {
 .workshop-section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
@@ -332,6 +351,18 @@ button {
 
 .workshop-section-header span {
   font-size: 0.75rem;
+  color: var(--color-fg-dim);
+}
+
+.workshop-inventory-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.workshop-filter-summary {
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
   color: var(--color-fg-dim);
 }
 
@@ -380,6 +411,11 @@ button {
 .workshop-card-slot.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.workshop-card-slot.incompatible {
+  opacity: 0.35;
+  border-style: dashed;
 }
 
 .workshop-card-slot.class-melee {
@@ -459,6 +495,39 @@ button {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
+}
+
+.workshop-filter-hint {
+  font-size: 0.72rem;
+  color: var(--color-accent);
+}
+
+.workshop-compatibility-hint {
+  font-size: 0.72rem;
+}
+
+.workshop-compatibility-hint.eligible {
+  color: var(--color-success);
+}
+
+.workshop-compatibility-hint.ineligible {
+  color: var(--color-fg-dim);
+}
+
+.workshop-monster-panel.filter-active {
+  opacity: 0.72;
+}
+
+.workshop-monster-panel.filter-active.filter-target {
+  opacity: 1;
+}
+
+.workshop-monster-panel.compatibility-eligible {
+  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+}
+
+.workshop-monster-panel.compatibility-ineligible {
+  border-color: color-mix(in srgb, var(--color-fg-dim) 50%, var(--color-border));
 }
 
 .workshop-inline-btn {

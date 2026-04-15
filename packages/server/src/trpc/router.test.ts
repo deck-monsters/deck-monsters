@@ -62,11 +62,23 @@ describe('trpc/router card management procedures', () => {
 			cards: [{ cardType: 'Hit' }],
 			items: [{ itemType: 'Potion' }],
 			options: { presets: { aggro: ['Hit'] } },
+			canHoldCard: (card: { cardType?: string }) => card.cardType !== 'Blink',
+		};
+		const supportMonster = {
+			givenName: 'Mirebell',
+			creatureType: 'Jinn',
+			level: 2,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: { presets: {} },
+			canHoldCard: (card: { cardType?: string }) => card.cardType === 'Blink',
 		};
 		const game = {
 			characters: {
 				[USER_ID]: {
-					monsters: [targetMonster],
+					monsters: [targetMonster, supportMonster],
 					deck: [{ cardType: 'Blink' }],
 					items: [{ itemType: 'Scroll' }],
 				},
@@ -82,13 +94,16 @@ describe('trpc/router card management procedures', () => {
 		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
 		const result = await caller.game.myInventory({ roomId: ROOM_ID });
 
-		expect(result.monsters).to.have.length(1);
+		expect(result.monsters).to.have.length(2);
 		expect(result.monsters[0]).to.include({
 			name: 'Stonefang',
 			type: 'Basilisk',
 			inRing: true,
 		});
 		expect(result.unequippedDeck).to.deep.equal(['Blink']);
+		expect(result.cardCompatibility).to.deep.equal({
+			Blink: ['Mirebell'],
+		});
 		expect(result.items.character).to.deep.equal(['Scroll']);
 	});
 

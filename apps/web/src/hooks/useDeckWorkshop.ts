@@ -15,6 +15,7 @@ type WorkshopMonster = {
 type WorkshopInventory = {
   monsters: WorkshopMonster[];
   unequippedDeck: string[];
+  cardCompatibility: Record<string, string[]>;
   items: {
     character: string[];
     monsters: Array<{ monsterName: string; items: string[] }>;
@@ -24,6 +25,7 @@ type WorkshopInventory = {
 const EMPTY_INVENTORY: WorkshopInventory = {
   monsters: [],
   unequippedDeck: [],
+  cardCompatibility: {},
   items: {
     character: [],
     monsters: [],
@@ -64,6 +66,7 @@ export function useDeckWorkshop(roomId?: string) {
   const inventory = (inventoryQuery.data ?? EMPTY_INVENTORY) as WorkshopInventory;
   const monsters = inventory.monsters ?? [];
   const unequippedDeck = inventory.unequippedDeck ?? [];
+  const cardCompatibility = inventory.cardCompatibility ?? {};
 
   const loading = roomQuery.isLoading || inventoryQuery.isLoading;
   const busy = useMemo(
@@ -93,6 +96,7 @@ export function useDeckWorkshop(roomId?: string) {
     inventory,
     monsters,
     unequippedDeck,
+    cardCompatibility,
     loading,
     busy,
     latestError:

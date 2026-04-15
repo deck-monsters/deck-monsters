@@ -68,7 +68,7 @@ describe('useDeckWorkshop', () => {
       isLoading: false,
     });
     mocks.myInventoryUseQuery.mockReturnValue({
-      data: { monsters: [], unequippedDeck: [], items: { character: [], monsters: [] } },
+      data: { monsters: [], unequippedDeck: [], cardCompatibility: {}, items: { character: [], monsters: [] } },
       isLoading: false,
       isFetching: false,
       refetch: vi.fn(),

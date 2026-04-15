@@ -10,6 +10,7 @@ interface CardSlotProps {
   cardName: string | null;
   isDropActive?: boolean;
   disabled?: boolean;
+  incompatible?: boolean;
   selected?: boolean;
   onSelectCard?: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
   onDropCard?: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
@@ -22,6 +23,7 @@ export default function CardSlot({
   cardName,
   isDropActive = false,
   disabled = false,
+  incompatible = false,
   selected = false,
   onSelectCard,
   onDropCard,
@@ -74,6 +76,7 @@ export default function CardSlot({
         isDropActive ? 'drop-over' : '',
         selected ? 'selected' : '',
         disabled ? 'disabled' : '',
+        incompatible ? 'incompatible' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -83,8 +86,8 @@ export default function CardSlot({
       onDragOver={handleDragOver}
       onDrop={(event) => void handleDrop(event)}
       onClick={() => void handleClick()}
-      title={cardName ?? 'Empty slot'}
-      aria-label={cardName ?? 'Empty slot'}
+      title={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot'}
+      aria-label={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot'}
     >
       {cardName ? (
         <>

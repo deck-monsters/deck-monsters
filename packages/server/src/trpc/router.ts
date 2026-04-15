@@ -48,6 +48,7 @@ type InventoryMonsterSummary = {
 type InventorySummary = {
 	monsters: InventoryMonsterSummary[];
 	unequippedDeck: string[];
+	cardCompatibility: Record<string, string[]>;
 	items: {
 		character: string[];
 		monsters: Array<{ monsterName: string; items: string[] }>;
@@ -75,6 +76,20 @@ const getDisplayName = (entity: unknown): string => {
 	return byItemType ?? byCardType ?? byName ?? 'Unknown';
 };
 
+const canMonsterHoldCard = (monster: unknown, card: unknown): boolean => {
+	if (!monster || typeof monster !== 'object') return false;
+	const canHoldCard = (monster as { canHoldCard?: unknown }).canHoldCard;
+	if (typeof canHoldCard !== 'function') {
+		// Test doubles and legacy snapshots may not provide this function.
+		return true;
+	}
+	try {
+		return Boolean(canHoldCard.call(monster, card));
+	} catch {
+		return false;
+	}
+};
+
 const summarizeInventory = ({
 	character,
 	inRing,
@@ -86,7 +101,7 @@ const summarizeInventory = ({
 	const deck = Array.isArray(character.deck) ? character.deck : [];
 	const items = Array.isArray(character.items) ? character.items : [];
 
-	const monsterSummaries = monsters
+	const monsterEntries = monsters
 		.map((monster) => {
 			const record = (monster ?? {}) as Record<string, unknown>;
 			const cards = Array.isArray(record.cards) ? record.cards : [];
@@ -107,43 +122,64 @@ const summarizeInventory = ({
 			if (!name) return null;
 
 			return {
-				name,
-				type:
-					typeof record.creatureType === 'string'
-						? record.creatureType
-						: 'Unknown',
-				level:
-					typeof record.level === 'number' && Number.isFinite(record.level)
-						? record.level
-						: 0,
-				inRing: inRing.has(monster),
-				inEncounter: Boolean(record.inEncounter),
-				cardSlots:
-					typeof record.cardSlots === 'number' && Number.isFinite(record.cardSlots)
-						? record.cardSlots
-						: 0,
-				cards: cards.map((card) => getDisplayName(card)),
-				presets,
-			} satisfies InventoryMonsterSummary;
+				monster,
+				summary: {
+					name,
+					type:
+						typeof record.creatureType === 'string'
+							? record.creatureType
+							: 'Unknown',
+					level:
+						typeof record.level === 'number' && Number.isFinite(record.level)
+							? record.level
+							: 0,
+					inRing: inRing.has(monster),
+					inEncounter: Boolean(record.inEncounter),
+					cardSlots:
+						typeof record.cardSlots === 'number' && Number.isFinite(record.cardSlots)
+							? record.cardSlots
+							: 0,
+					cards: cards.map((card) => getDisplayName(card)),
+					presets,
+				} satisfies InventoryMonsterSummary,
+			};
 		})
-		.filter((monster): monster is InventoryMonsterSummary => monster !== null);
+		.filter(
+			(
+				monsterEntry,
+			): monsterEntry is { monster: unknown; summary: InventoryMonsterSummary } =>
+				monsterEntry !== null,
+		);
 
-	const monsterItems = monsterSummaries.map((monsterSummary) => {
-		const monster = monsters.find(
-			(entry) =>
-				(entry as Record<string, unknown> | undefined)?.givenName ===
-				monsterSummary.name,
-		) as Record<string, unknown> | undefined;
-		const monsterInventory = Array.isArray(monster?.items) ? monster.items : [];
+	const monsterSummaries = monsterEntries.map((entry) => entry.summary);
+
+	const monsterItems = monsterEntries.map((entry) => {
+		const monster = (entry.monster ?? {}) as Record<string, unknown>;
+		const monsterInventory = Array.isArray(monster.items) ? monster.items : [];
 		return {
-			monsterName: monsterSummary.name,
+			monsterName: entry.summary.name,
 			items: monsterInventory.map((item) => getDisplayName(item)),
 		};
 	});
 
+	const cardCompatibility = deck.reduce<Record<string, string[]>>((all, card) => {
+		const cardName = getDisplayName(card);
+		if (!all[cardName]) {
+			all[cardName] = [];
+		}
+		for (const entry of monsterEntries) {
+			if (!canMonsterHoldCard(entry.monster, card)) continue;
+			if (!all[cardName]?.includes(entry.summary.name)) {
+				all[cardName]?.push(entry.summary.name);
+			}
+		}
+		return all;
+	}, {});
+
 	return {
 		monsters: monsterSummaries,
 		unequippedDeck: deck.map((card) => getDisplayName(card)),
+		cardCompatibility,
 		items: {
 			character: items.map((item) => getDisplayName(item)),
 			monsters: monsterItems,
@@ -660,6 +696,7 @@ export function createRouter(roomManager: RoomManager) {
 					return {
 						monsters: [],
 						unequippedDeck: [],
+						cardCompatibility: {},
 						items: { character: [], monsters: [] },
 					} satisfies InventorySummary;
 				}
