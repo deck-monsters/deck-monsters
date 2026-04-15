@@ -45,6 +45,7 @@ function callMonsterOutOfTheRingAction({
 	game,
 	isDM,
 	results,
+	user,
 }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));
@@ -54,7 +55,7 @@ function callMonsterOutOfTheRingAction({
 		const { monsterName } = cleanArgs({ monsterName: results[1] });
 
 		return character
-			.callMonsterOutOfTheRing({ monsterName, ring: game.getRing(), channel, channelName })
+			.callMonsterOutOfTheRing({ monsterName, ring: game.getRing(), channel, channelName, userId: user?.id })
 			.catch((err: unknown) => game.log(err));
 	});
 }

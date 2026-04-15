@@ -2,7 +2,6 @@ import { SlashCommandBuilder } from 'discord.js';
 import type { ChatInputCommandInteraction, AutocompleteInteraction } from 'discord.js';
 import type { SlashCommand, CommandContext } from './index.js';
 import { resolveUser, dispatchCommand } from './helpers.js';
-import { ensureConnectorUser } from '@deck-monsters/server/auth/connector-users';
 
 export const equip: SlashCommand = {
 	data: new SlashCommandBuilder()
@@ -40,25 +39,25 @@ export const equip: SlashCommand = {
 
 	async autocomplete(interaction: AutocompleteInteraction, ctx: CommandContext): Promise<void> {
 		const focused = interaction.options.getFocused().toLowerCase();
-		const guildId = interaction.guildId ?? `dm-${interaction.user.id}`;
 
 		try {
-			const supabaseUserId = await ensureConnectorUser(
-				'discord',
-				interaction.user.id,
-				interaction.user.username
+			const { supabaseUserId, roomId } = await resolveUser(
+				interaction as unknown as ChatInputCommandInteraction,
+				ctx
 			);
-
-			const roomId = await ctx.guildRoomManager.getOrCreateDefaultRoom(guildId, supabaseUserId);
 			const game = await ctx.roomManager.getGame(roomId);
-			const character = game.characters?.[supabaseUserId];
-			const monsterNames: string[] = character?.monsters?.map((m: { name: string }) => m.name) ?? [];
-
-			const filtered = monsterNames
-				.filter((name) => name.toLowerCase().includes(focused))
-				.slice(0, 25);
-
-			await interaction.respond(filtered.map((name) => ({ name, value: name })));
+			const character = await game.getCharacter({
+				channel: null,
+				id: supabaseUserId,
+				name: interaction.user.username,
+			});
+			const names: string[] = character.monsters
+				? (character.monsters as Array<{ givenName: string }>)
+						.map((m) => m.givenName)
+						.filter((n) => n.toLowerCase().includes(focused))
+						.slice(0, 25)
+				: [];
+			await interaction.respond(names.map((n) => ({ name: n, value: n })));
 		} catch {
 			await interaction.respond([]);
 		}

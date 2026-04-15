@@ -57,7 +57,9 @@ export async function dispatchCommand(
 		channel,
 		channelName: interaction.channelId ?? 'discord',
 		isAdmin: role === 'owner',
-		isDM: !interaction.guildId,
+		// Discord slash commands are always scoped to a specific user and reply
+		// ephemerally, so they behave as DMs regardless of where they're invoked.
+		isDM: true,
 		user: { id: supabaseUserId, name: interaction.user.username },
 	});
 
