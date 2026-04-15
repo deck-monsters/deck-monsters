@@ -8,8 +8,9 @@ describe('abbreviateCardName', () => {
 	});
 
 	it('shortens multi-word card names', () => {
-		expect(abbreviateCardName('Adrenaline Rush')).toBe('AdrR');
-		expect(abbreviateCardName('Battle Focus')).toBe('BatF');
+		expect(abbreviateCardName('Adrenaline Rush')).toBe('Adre Rush…');
+		expect(abbreviateCardName('Battle Focus')).toBe('Battle Focus');
+		expect(abbreviateCardName('Curse of Loki')).toBe('Cur of Lok');
 	});
 });
 

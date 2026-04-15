@@ -14,10 +14,11 @@ type MonsterPanelProps = {
     presets: Record<string, string[]>;
   };
   showSelectionHint: boolean;
-  selectedCard: { location: WorkshopCardLocation; cardName: string; selectionId: string } | null;
+  selectedCards: Array<{ location: WorkshopCardLocation; cardName: string; selectionId: string }>;
   onDropCard: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
   onTapSlot: (target: WorkshopCardLocation) => void;
   onSelectCard: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
+  onUnequipAll: () => void;
   onSavePreset: (presetName: string) => void;
   onLoadPreset: (presetName: string) => void;
   onDeletePreset: (presetName: string) => void;
@@ -26,10 +27,11 @@ type MonsterPanelProps = {
 export default function MonsterWorkshopPanel({
   monster,
   showSelectionHint,
-  selectedCard,
+  selectedCards,
   onDropCard,
   onTapSlot,
   onSelectCard,
+  onUnequipAll,
   onSavePreset,
   onLoadPreset,
   onDeletePreset,
@@ -55,6 +57,18 @@ export default function MonsterWorkshopPanel({
           <span>{monster.cards.length}/{monster.cardSlots} slots</span>
         </div>
       </div>
+      <div className="workshop-monster-actions">
+        <button
+          type="button"
+          className="btn workshop-btn-icon"
+          disabled={locked || monster.cards.length < 1}
+          title={`Unequip all cards from ${monster.name}`}
+          aria-label={`Unequip all cards from ${monster.name}`}
+          onClick={() => onUnequipAll()}
+        >
+          ⟲
+        </button>
+      </div>
 
       {locked && (
         <p className="workshop-warning">
@@ -76,11 +90,7 @@ export default function MonsterWorkshopPanel({
               location={location}
               selectionId={selectionId}
               isDropActive={false}
-              selected={
-                !!selectedCard &&
-                selectedCard.selectionId === selectionId
-              }
-              hasActiveSelection={Boolean(selectedCard)}
+              selected={selectedCards.some((selectedCard) => selectedCard.selectionId === selectionId)}
               disabled={locked}
               onSelectCard={onSelectCard}
               onTapSlot={onTapSlot}
@@ -101,7 +111,7 @@ export default function MonsterWorkshopPanel({
 
       {showSelectionHint && (
         <div className="workshop-mobile-hint">
-          Tap destination slot or inventory to move selected card.
+          Tap destination slot (or inventory) to move selected cards.
         </div>
       )}
     </section>

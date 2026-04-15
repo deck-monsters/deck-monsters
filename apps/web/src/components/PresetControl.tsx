@@ -65,7 +65,7 @@ export default function PresetControl({
         <input
           type="text"
           className="workshop-input"
-          placeholder="Save as..."
+          placeholder="Store as..."
           value={newPresetName}
           disabled={disabled}
           onChange={(event) => setNewPresetName(event.target.value)}
@@ -82,7 +82,7 @@ export default function PresetControl({
             setSelectedPreset(name);
           }}
         >
-          Save
+          Store
         </button>
       </div>
     </div>

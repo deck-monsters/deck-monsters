@@ -2,11 +2,11 @@ import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
 
 interface InventoryPanelProps {
   cards: string[];
-  selectedCard: {
+  selectedCards: Array<{
     location: WorkshopCardLocation;
     cardName: string;
     selectionId: string;
-  } | null;
+  }>;
   onDropCard: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
   onTapSlot: () => Promise<void> | void;
   onSelectCard: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
@@ -14,13 +14,12 @@ interface InventoryPanelProps {
 
 export default function InventoryPanel({
   cards,
-  selectedCard,
+  selectedCards,
   onDropCard,
   onTapSlot,
   onSelectCard,
 }: InventoryPanelProps) {
   const location: WorkshopCardLocation = { kind: 'inventory' };
-
   return (
     <section className="workshop-inventory">
       <header className="workshop-section-header">
@@ -40,11 +39,11 @@ export default function InventoryPanel({
               location={location}
               selectionId={selectionId}
               cardName={cardName}
-              selected={
-                selectedCard?.location.kind === 'inventory' &&
-                selectedCard.selectionId === selectionId
-              }
-              hasActiveSelection={Boolean(selectedCard)}
+              selected={selectedCards.some(
+                (selectedCard) =>
+                  selectedCard.location.kind === 'inventory' &&
+                  selectedCard.selectionId === selectionId,
+              )}
               onTapSlot={() => onTapSlot()}
               onSelectCard={onSelectCard}
             />

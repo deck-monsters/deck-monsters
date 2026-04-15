@@ -23,10 +23,11 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
           cards: [],
         }}
         showSelectionHint={false}
-        selectedCard={null}
+        selectedCards={[]}
         onDropCard={onDropCard}
         onTapSlot={() => undefined}
         onSelectCard={() => undefined}
+        onUnequipAll={() => undefined}
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
@@ -69,10 +70,11 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
           cards: [],
         }}
         showSelectionHint={false}
-        selectedCard={null}
+        selectedCards={[]}
         onDropCard={onDropCard}
         onTapSlot={() => undefined}
         onSelectCard={() => undefined}
+        onUnequipAll={() => undefined}
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
@@ -83,7 +85,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
     expect(targetSlot).toHaveAttribute('disabled');
   });
 
-  it('treats occupied slot taps as destination taps when a card is selected', () => {
+  it('keeps occupied slot taps as selection toggles for same-source cards', () => {
     const onTapSlot = vi.fn();
     const onSelectCard = vi.fn();
     render(
@@ -93,10 +95,11 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
           cards: ['Hit'],
         }}
         showSelectionHint
-        selectedCard={{ location: { kind: 'inventory' }, cardName: 'Heal', selectionId: 'inventory:0' }}
+        selectedCards={[{ location: { kind: 'inventory' }, cardName: 'Heal', selectionId: 'inventory:0' }]}
         onDropCard={() => undefined}
         onTapSlot={onTapSlot}
         onSelectCard={onSelectCard}
+        onUnequipAll={() => undefined}
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
@@ -104,8 +107,49 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Hit' }));
-    expect(onTapSlot).toHaveBeenCalledWith({ kind: 'monster', monsterName: 'Stonefang' });
-    expect(onSelectCard).not.toHaveBeenCalled();
+    expect(onTapSlot).not.toHaveBeenCalled();
+    expect(onSelectCard).toHaveBeenCalledWith(
+      { kind: 'monster', monsterName: 'Stonefang' },
+      'Hit',
+      'Stonefang:0',
+    );
+  });
+
+  it('allows multi-select from the same monster source', () => {
+    const onTapSlot = vi.fn();
+    const onSelectCard = vi.fn();
+    render(
+      <MonsterWorkshopPanel
+        monster={{
+          ...baseMonster,
+          cardSlots: 2,
+          cards: ['Hit', 'Heal'],
+        }}
+        showSelectionHint
+        selectedCards={[
+          {
+            location: { kind: 'monster', monsterName: 'Stonefang' },
+            cardName: 'Hit',
+            selectionId: 'Stonefang:0',
+          },
+        ]}
+        onDropCard={() => undefined}
+        onTapSlot={onTapSlot}
+        onSelectCard={onSelectCard}
+        onUnequipAll={() => undefined}
+        onSavePreset={() => undefined}
+        onLoadPreset={() => undefined}
+        onDeletePreset={() => undefined}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Heal' }));
+    expect(onSelectCard).toHaveBeenCalledWith(
+      { kind: 'monster', monsterName: 'Stonefang' },
+      'Heal',
+      'Stonefang:1',
+    );
+    expect(onTapSlot).not.toHaveBeenCalled();
   });
 
   it('only highlights the selected slot when duplicate card names exist', () => {
@@ -117,14 +161,15 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
           cards: ['Hit', 'Hit'],
         }}
         showSelectionHint={false}
-        selectedCard={{
+        selectedCards={[{
           location: { kind: 'monster', monsterName: 'Stonefang' },
           cardName: 'Hit',
           selectionId: 'Stonefang:0',
-        }}
+        }]}
         onDropCard={() => undefined}
         onTapSlot={() => undefined}
         onSelectCard={() => undefined}
+        onUnequipAll={() => undefined}
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
@@ -133,5 +178,29 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
 
     const selectedButtons = document.querySelectorAll('.workshop-card-slot.selected');
     expect(selectedButtons).toHaveLength(1);
+  });
+
+  it('calls unequip-all action from reset button', () => {
+    const onUnequipAll = vi.fn();
+    render(
+      <MonsterWorkshopPanel
+        monster={{
+          ...baseMonster,
+          cards: ['Hit'],
+        }}
+        showSelectionHint={false}
+        selectedCards={[]}
+        onDropCard={() => undefined}
+        onTapSlot={() => undefined}
+        onSelectCard={() => undefined}
+        onUnequipAll={onUnequipAll}
+        onSavePreset={() => undefined}
+        onLoadPreset={() => undefined}
+        onDeletePreset={() => undefined}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Unequip all cards from Stonefang' }));
+    expect(onUnequipAll).toHaveBeenCalledTimes(1);
   });
 });
