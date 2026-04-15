@@ -214,6 +214,17 @@ button {
 /* Header nav/hamburger visibility */
 .header-hamburger { display: none; }
 
+.workshop-view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .workshop-header {
   display: flex;
   justify-content: space-between;
