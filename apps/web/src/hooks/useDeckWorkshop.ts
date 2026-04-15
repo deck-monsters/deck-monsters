@@ -15,6 +15,7 @@ type WorkshopMonster = {
 type WorkshopInventory = {
   monsters: WorkshopMonster[];
   unequippedDeck: string[];
+  cardCompatibility: Record<string, string[]>;
   items: {
     character: string[];
     monsters: Array<{ monsterName: string; items: string[] }>;
@@ -24,6 +25,7 @@ type WorkshopInventory = {
 const EMPTY_INVENTORY: WorkshopInventory = {
   monsters: [],
   unequippedDeck: [],
+  cardCompatibility: {},
   items: {
     character: [],
     monsters: [],
@@ -60,10 +62,12 @@ export function useDeckWorkshop(roomId?: string) {
   const savePresetMutation = trpc.game.savePreset.useMutation(mutationOptions);
   const loadPresetMutation = trpc.game.loadPreset.useMutation(mutationOptions);
   const deletePresetMutation = trpc.game.deletePreset.useMutation(mutationOptions);
+  const reorderCardsMutation = trpc.game.reorderCards.useMutation(mutationOptions);
 
   const inventory = (inventoryQuery.data ?? EMPTY_INVENTORY) as WorkshopInventory;
   const monsters = inventory.monsters ?? [];
   const unequippedDeck = inventory.unequippedDeck ?? [];
+  const cardCompatibility = inventory.cardCompatibility ?? {};
 
   const loading = roomQuery.isLoading || inventoryQuery.isLoading;
   const busy = useMemo(
@@ -73,6 +77,7 @@ export function useDeckWorkshop(roomId?: string) {
       unequipAllMutation.isPending ||
       equipCardsMutation.isPending ||
       moveCardMutation.isPending ||
+      reorderCardsMutation.isPending ||
       savePresetMutation.isPending ||
       loadPresetMutation.isPending ||
       deletePresetMutation.isPending,
@@ -82,6 +87,7 @@ export function useDeckWorkshop(roomId?: string) {
       inventoryQuery.isFetching,
       loadPresetMutation.isPending,
       moveCardMutation.isPending,
+      reorderCardsMutation.isPending,
       savePresetMutation.isPending,
       unequipAllMutation.isPending,
       unequipCardMutation.isPending,
@@ -93,6 +99,7 @@ export function useDeckWorkshop(roomId?: string) {
     inventory,
     monsters,
     unequippedDeck,
+    cardCompatibility,
     loading,
     busy,
     latestError:
@@ -100,6 +107,7 @@ export function useDeckWorkshop(roomId?: string) {
       unequipAllMutation.error?.message ??
       equipCardsMutation.error?.message ??
       moveCardMutation.error?.message ??
+      reorderCardsMutation.error?.message ??
       savePresetMutation.error?.message ??
       loadPresetMutation.error?.message ??
       deletePresetMutation.error?.message,
@@ -124,6 +132,14 @@ export function useDeckWorkshop(roomId?: string) {
     }) => {
       if (!roomId) throw new Error('Room not selected');
       return moveCardMutation.mutateAsync({ roomId, ...input });
+    },
+    reorderCards: (input: {
+      monsterName: string;
+      fromIndex: number;
+      toIndex: number;
+    }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return reorderCardsMutation.mutateAsync({ roomId, ...input });
     },
     savePreset: (input: { monsterName: string; presetName: string }) => {
       if (!roomId) throw new Error('Room not selected');

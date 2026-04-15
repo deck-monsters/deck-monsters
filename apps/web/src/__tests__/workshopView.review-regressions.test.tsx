@@ -28,6 +28,9 @@ const workshopMock = vi.hoisted(() => ({
     },
   ],
   unequippedDeck: ['Hit'],
+  cardCompatibility: {
+    Hit: ['Stonefang'],
+  },
   loading: false,
   busy: false,
   latestError: null as string | null,
@@ -35,6 +38,7 @@ const workshopMock = vi.hoisted(() => ({
   unequipCard: vi.fn(async () => ({ removedCount: 1, monsterName: 'Stonefang' })),
   unequipAll: vi.fn(async () => ({ removedCount: 0, monsterName: 'Stonefang' })),
   moveCard: vi.fn(async () => ({ movedCount: 1, fromMonsterName: 'Stonefang', toMonsterName: 'Emberclaw' })),
+  reorderCards: vi.fn(async () => ({ monsterName: 'Stonefang', cards: ['Hit'] })),
   savePreset: vi.fn(async () => undefined),
   loadPreset: vi.fn(async () => ({ equippedCount: 0, requestedCount: 0, skippedCards: [] as string[] })),
   deletePreset: vi.fn(async () => undefined),
@@ -50,13 +54,30 @@ vi.mock('../components/AppShell.js', () => ({
 }));
 
 vi.mock('../components/InventoryPanel.js', () => ({
-  default: ({ onSelectCard }: { onSelectCard: (location: { kind: 'inventory' }, cardName: string, selectionId: string) => void }) => (
-    <button
-      type="button"
-      onClick={() => onSelectCard({ kind: 'inventory' }, 'Hit', 'inventory:0')}
-    >
-      Select inventory card
-    </button>
+  default: ({
+    onSelectCard,
+    activeMonsterFilterName,
+    onClearMonsterFilter,
+    isCardUnavailable,
+  }: {
+    onSelectCard: (location: { kind: 'inventory' }, cardName: string, selectionId: string) => void;
+    activeMonsterFilterName?: string | null;
+    onClearMonsterFilter?: () => void;
+    isCardUnavailable?: (cardName: string) => boolean;
+  }) => (
+    <div>
+      <div data-testid="inventory-filter-name">{activeMonsterFilterName ?? 'none'}</div>
+      <div data-testid="inventory-hit-unavailable">{String(isCardUnavailable?.('Hit') ?? false)}</div>
+      <button
+        type="button"
+        onClick={() => onSelectCard({ kind: 'inventory' }, 'Hit', 'inventory:0')}
+      >
+        Select inventory card
+      </button>
+      <button type="button" onClick={() => onClearMonsterFilter?.()}>
+        Clear inventory filter
+      </button>
+    </div>
   ),
 }));
 
@@ -65,18 +86,48 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
     monster,
     showSelectionHint,
     onDropCard,
+    compatibilityHint,
+    onToggleFilter,
+    isFilterTarget,
+    onReorderCard,
   }: {
     monster: { name: string };
     showSelectionHint: boolean;
-    onDropCard: (source: { kind: 'inventory' }, cardName: string) => Promise<void> | void;
+    onDropCard: (
+      source: { kind: 'inventory' | 'monster'; monsterName?: string },
+      cardName: string,
+      sourceSelectionId?: string,
+      targetSelectionId?: string,
+    ) => Promise<void> | void;
+    compatibilityHint?: 'none' | 'eligible' | 'ineligible';
+    onToggleFilter?: () => void;
+    isFilterTarget?: boolean;
+    onReorderCard?: (sourceSelectionId: string, targetSelectionId: string) => Promise<void> | void;
   }) => (
     <section>
       <div data-testid={`hint-${monster.name}`}>{showSelectionHint ? 'hint-on' : 'hint-off'}</div>
+      <div data-testid={`compat-${monster.name}`}>{compatibilityHint ?? 'none'}</div>
+      <div data-testid={`filter-target-${monster.name}`}>{isFilterTarget ? 'yes' : 'no'}</div>
+      <button type="button" onClick={() => onToggleFilter?.()}>
+        Toggle filter {monster.name}
+      </button>
       <button
         type="button"
         onClick={() => void onDropCard({ kind: 'inventory' }, 'Hit')}
       >
         Drop on {monster.name}
+      </button>
+      <button
+        type="button"
+        onClick={() => void onDropCard({ kind: 'monster', monsterName: monster.name }, 'Hit', `${monster.name}:0`, `${monster.name}:1`)}
+      >
+        Reorder on {monster.name}
+      </button>
+      <button
+        type="button"
+        onClick={() => void onReorderCard?.(`${monster.name}:0`, `${monster.name}:1`)}
+      >
+        Reorder via callback {monster.name}
       </button>
     </section>
   ),
@@ -105,6 +156,8 @@ describe('WorkshopView review regressions', () => {
 
     expect(screen.getByTestId('hint-Stonefang')).toHaveTextContent('hint-on');
     expect(screen.getByTestId('hint-Emberclaw')).toHaveTextContent('hint-on');
+    expect(screen.getByTestId('compat-Stonefang')).toHaveTextContent('eligible');
+    expect(screen.getByTestId('compat-Emberclaw')).toHaveTextContent('ineligible');
   });
 
   it('clears selected banner after drag/drop actions', async () => {
@@ -131,6 +184,33 @@ describe('WorkshopView review regressions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Drop on Stonefang' }));
     await waitFor(() => {
       expect(screen.queryByText(/1 selected:/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it('toggles monster filter and forwards filter state to inventory', () => {
+    renderWorkshop();
+    expect(screen.getByTestId('inventory-filter-name')).toHaveTextContent('none');
+    expect(screen.getByTestId('inventory-hit-unavailable')).toHaveTextContent('false');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle filter Emberclaw' }));
+    expect(screen.getByTestId('inventory-filter-name')).toHaveTextContent('Emberclaw');
+    expect(screen.getByTestId('inventory-hit-unavailable')).toHaveTextContent('true');
+    expect(screen.getByTestId('filter-target-Emberclaw')).toHaveTextContent('yes');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear inventory filter' }));
+    expect(screen.getByTestId('inventory-filter-name')).toHaveTextContent('none');
+  });
+
+  it('handles same-monster reorder drops through reorderCards mutation', async () => {
+    renderWorkshop();
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder on Stonefang' }));
+
+    await waitFor(() => {
+      expect(workshopMock.reorderCards).toHaveBeenCalledWith({
+        monsterName: 'Stonefang',
+        fromIndex: 0,
+        toIndex: 1,
+      });
     });
   });
 });

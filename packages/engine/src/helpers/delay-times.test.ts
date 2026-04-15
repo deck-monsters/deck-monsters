@@ -34,12 +34,12 @@ describe('delay-times', () => {
 
 	it('keeps default ranges unchanged when no env overrides are set', () => {
 		Math.random = () => 0;
-		expect(veryShortDelay()).to.equal(1000);
-		expect(shortDelay()).to.equal(1500);
-
-		Math.random = () => 0.999999;
 		expect(veryShortDelay()).to.equal(2000);
 		expect(shortDelay()).to.equal(3000);
+
+		Math.random = () => 0.999999;
+		expect(veryShortDelay()).to.equal(4000);
+		expect(shortDelay()).to.equal(6000);
 	});
 
 	it('uses midpoint env vars to derive min and max ranges', () => {
@@ -61,8 +61,8 @@ describe('delay-times', () => {
 		process.env.DECK_MONSTERS_DELAY_ROUND_MAX_FACTOR = '1.2';
 
 		Math.random = () => 0;
-		// Base veryShort min is 1000ms. Round 3 => factor 1 + 0.5 * 2 = 2.0, capped to 1.2.
-		expect(veryShortDelay(3)).to.equal(1200);
+		// Base veryShort min is 2000ms. Round 3 => factor 1 + 0.5 * 2 = 2.0, capped to 1.2.
+		expect(veryShortDelay(3)).to.equal(2400);
 	});
 
 	it('returns zero delays when delay skipping is enabled', () => {

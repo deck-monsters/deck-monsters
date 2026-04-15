@@ -10,9 +10,19 @@ interface CardSlotProps {
   cardName: string | null;
   isDropActive?: boolean;
   disabled?: boolean;
+  incompatible?: boolean;
   selected?: boolean;
-  onSelectCard?: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
-  onDropCard?: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
+  onSelectCard?: (
+    location: WorkshopCardLocation,
+    cardName: string,
+    selectionId: string,
+    slotIndex?: number,
+  ) => void;
+  onDropCard?: (
+    source: WorkshopCardLocation,
+    cardName: string,
+    sourceSelectionId?: string,
+  ) => Promise<void> | void;
   onTapSlot?: (target: WorkshopCardLocation) => Promise<void> | void;
 }
 
@@ -22,6 +32,7 @@ export default function CardSlot({
   cardName,
   isDropActive = false,
   disabled = false,
+  incompatible = false,
   selected = false,
   onSelectCard,
   onDropCard,
@@ -35,8 +46,12 @@ export default function CardSlot({
     if (!payload) return;
     event.preventDefault();
     try {
-      const parsed = JSON.parse(payload) as { location: WorkshopCardLocation; cardName: string };
-      await onDropCard?.(parsed.location, parsed.cardName);
+      const parsed = JSON.parse(payload) as {
+        location: WorkshopCardLocation;
+        cardName: string;
+        selectionId?: string;
+      };
+      await onDropCard?.(parsed.location, parsed.cardName, parsed.selectionId);
     } catch {
       // Ignore malformed payloads.
     }
@@ -51,7 +66,7 @@ export default function CardSlot({
     if (!cardName || disabled) return;
     event.dataTransfer.setData(
       'application/x-deck-monsters-card',
-      JSON.stringify({ location, cardName }),
+      JSON.stringify({ location, cardName, selectionId }),
     );
     event.dataTransfer.effectAllowed = 'move';
   }
@@ -59,7 +74,9 @@ export default function CardSlot({
   async function handleClick() {
     if (disabled) return;
     if (cardName) {
-      onSelectCard?.(location, cardName, selectionId);
+      const slotFromSelectionId = Number.parseInt(selectionId.split(':').at(-1) ?? '', 10);
+      const slotIndex = Number.isFinite(slotFromSelectionId) ? slotFromSelectionId : undefined;
+      onSelectCard?.(location, cardName, selectionId, slotIndex);
       return;
     }
     await onTapSlot?.(location);
@@ -74,6 +91,7 @@ export default function CardSlot({
         isDropActive ? 'drop-over' : '',
         selected ? 'selected' : '',
         disabled ? 'disabled' : '',
+        incompatible ? 'incompatible' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -83,8 +101,8 @@ export default function CardSlot({
       onDragOver={handleDragOver}
       onDrop={(event) => void handleDrop(event)}
       onClick={() => void handleClick()}
-      title={cardName ?? 'Empty slot'}
-      aria-label={cardName ?? 'Empty slot'}
+      title={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot'}
+      aria-label={cardName ? (incompatible ? `${cardName} (not usable for current filter)` : cardName) : 'Empty slot'}
     >
       {cardName ? (
         <>

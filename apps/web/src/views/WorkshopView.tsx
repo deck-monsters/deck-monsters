@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import AppShell from '../components/AppShell.js';
 import InventoryPanel from '../components/InventoryPanel.js';
@@ -16,6 +16,7 @@ export type SelectionState = {
 export default function WorkshopView() {
   const { roomId } = useParams<{ roomId: string }>();
   const [selectedCards, setSelectedCards] = useState<SelectionState[]>([]);
+  const [activeMonsterFilter, setActiveMonsterFilter] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,6 +24,7 @@ export default function WorkshopView() {
     roomName,
     monsters,
     unequippedDeck,
+    cardCompatibility,
     loading,
     busy,
     latestError,
@@ -30,6 +32,7 @@ export default function WorkshopView() {
     unequipCard,
     unequipAll,
     moveCard,
+    reorderCards,
     savePreset,
     loadPreset,
     deletePreset,
@@ -53,6 +56,51 @@ export default function WorkshopView() {
     setError(latestError);
   }, [latestError]);
 
+  useEffect(() => {
+    if (!activeMonsterFilter) return;
+    if (monsters.some((monster) => monster.name === activeMonsterFilter)) return;
+    setActiveMonsterFilter(null);
+  }, [activeMonsterFilter, monsters]);
+
+  const normalizedCompatibility = useMemo(() => {
+    const all = new Map<string, Set<string>>();
+    for (const [cardName, compatibleMonsters] of Object.entries(cardCompatibility)) {
+      all.set(
+        cardName.trim().toLowerCase(),
+        new Set(compatibleMonsters.map((monsterName) => monsterName.trim().toLowerCase())),
+      );
+    }
+    return all;
+  }, [cardCompatibility]);
+
+  const isCardCompatibleWithMonster = useCallback((cardName: string, monsterName: string): boolean => {
+    const compatibleMonsters = normalizedCompatibility.get(cardName.trim().toLowerCase());
+    if (!compatibleMonsters) return true;
+    return compatibleMonsters.has(monsterName.trim().toLowerCase());
+  }, [normalizedCompatibility]);
+
+  useEffect(() => {
+    if (!activeMonsterFilter) return;
+    setSelectedCards((previous) =>
+      previous.filter((entry) => {
+        if (entry.location.kind !== 'inventory') return true;
+        return isCardCompatibleWithMonster(entry.cardName, activeMonsterFilter);
+      }),
+    );
+  }, [activeMonsterFilter, isCardCompatibleWithMonster]);
+
+  const selectedInventoryCardName = useMemo(() => {
+    if (selectedCards.length !== 1) return null;
+    const selection = selectedCards[0];
+    if (!selection || selection.location.kind !== 'inventory') return null;
+    return selection.cardName;
+  }, [selectedCards]);
+
+  const compatibleCardCount = useMemo(() => {
+    if (!activeMonsterFilter) return null;
+    return unequippedDeck.filter((cardName) => isCardCompatibleWithMonster(cardName, activeMonsterFilter)).length;
+  }, [activeMonsterFilter, isCardCompatibleWithMonster, unequippedDeck]);
+
   const selectedSummary = useMemo(() => {
     if (selectedCards.length < 1) return '';
     const grouped = selectedCards.reduce<Record<string, number>>((all, selection) => {
@@ -68,11 +116,10 @@ export default function WorkshopView() {
     source: WorkshopCardLocation,
     target: WorkshopCardLocation,
     cardName: string,
+    sourceSelectionId?: string,
+    targetSelectionId?: string,
   ) {
     if (!roomId) return;
-    if (source.kind === 'monster' && target.kind === 'monster' && source.monsterName === target.monsterName) {
-      return;
-    }
     setSelectedCards([]);
 
     try {
@@ -101,6 +148,19 @@ export default function WorkshopView() {
       }
 
       if (source.kind === 'monster' && target.kind === 'monster') {
+        if (source.monsterName === target.monsterName) {
+          const sourceIndex = Number.parseInt(sourceSelectionId?.split(':').pop() ?? '', 10);
+          const targetIndex = Number.parseInt(targetSelectionId?.split(':').pop() ?? '', 10);
+          if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex)) return;
+          if (sourceIndex === targetIndex) return;
+          await reorderCards({
+            monsterName: source.monsterName,
+            fromIndex: sourceIndex,
+            toIndex: targetIndex,
+          });
+          setMessage(`Reordered ${source.monsterName}'s deck.`);
+          return;
+        }
         await moveCard({
           cardName,
           fromMonsterName: source.monsterName,
@@ -161,10 +221,9 @@ export default function WorkshopView() {
     }
   }
 
-  function isSameSource(a: WorkshopCardLocation, b: WorkshopCardLocation): boolean {
-    if (a.kind !== b.kind) return false;
-    if (a.kind === 'inventory') return true;
-    return b.kind === 'monster' && a.monsterName === b.monsterName;
+  function handleToggleMonsterFilter(monsterName: string) {
+    setSelectedCards([]);
+    setActiveMonsterFilter((previous) => (previous === monsterName ? null : monsterName));
   }
 
   async function handleSlotClick(target: WorkshopCardLocation) {
@@ -270,8 +329,14 @@ export default function WorkshopView() {
               monster={monster}
               selectedCards={selectedCards}
               showSelectionHint={selectedCards.length > 0}
-              onDropCard={(source, cardName) =>
-                handleDrop(source, { kind: 'monster', monsterName: monster.name }, cardName)
+              onDropCard={(source, cardName, sourceSelectionId, targetSelectionId) =>
+                handleDrop(
+                  source,
+                  { kind: 'monster', monsterName: monster.name },
+                  cardName,
+                  sourceSelectionId,
+                  targetSelectionId,
+                )
               }
               onTapSlot={(target) => {
                 void handleSlotClick(target);
@@ -289,6 +354,14 @@ export default function WorkshopView() {
               onDeletePreset={(presetName) => {
                 void handleDeletePreset(monster.name, presetName);
               }}
+              isFilterActive={Boolean(activeMonsterFilter)}
+              isFilterTarget={activeMonsterFilter === monster.name}
+              compatibilityHint={
+                selectedInventoryCardName
+                  ? (isCardCompatibleWithMonster(selectedInventoryCardName, monster.name) ? 'eligible' : 'ineligible')
+                  : 'none'
+              }
+              onToggleFilter={() => handleToggleMonsterFilter(monster.name)}
             />
           ))}
         </div>
@@ -296,6 +369,12 @@ export default function WorkshopView() {
         <InventoryPanel
           cards={unequippedDeck}
           selectedCards={selectedCards}
+          activeMonsterFilterName={activeMonsterFilter}
+          compatibleCardCount={compatibleCardCount}
+          onClearMonsterFilter={() => setActiveMonsterFilter(null)}
+          isCardUnavailable={(cardName) =>
+            activeMonsterFilter ? !isCardCompatibleWithMonster(cardName, activeMonsterFilter) : false
+          }
           onDropCard={(source, cardName) => handleDrop(source, { kind: 'inventory' }, cardName)}
           onTapSlot={() => {
             void handleSlotClick({ kind: 'inventory' });

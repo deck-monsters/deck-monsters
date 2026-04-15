@@ -11,14 +11,14 @@ describe('InventoryPanel multi-select behavior', () => {
       <InventoryPanel
         cards={['Hit', 'Heal']}
         selectedCards={[{ location: { kind: 'inventory' }, cardName: 'Hit', selectionId: 'inventory:0' }]}
-        onDropCard={() => undefined}
+        onDropCard={() => Promise.resolve()}
         onTapSlot={onTapSlot}
         onSelectCard={onSelectCard}
       />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Heal' }));
-    expect(onSelectCard).toHaveBeenCalledWith({ kind: 'inventory' }, 'Heal', 'inventory:1');
+    expect(onSelectCard).toHaveBeenCalledWith({ kind: 'inventory' }, 'Heal', 'inventory:1', 1);
     expect(onTapSlot).not.toHaveBeenCalled();
   });
 });

@@ -13,6 +13,7 @@ import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 import { formatEventText } from '../utils/format-event-text.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
+import { useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
 interface ActivePrompt {
   requestId: string;
@@ -103,6 +104,9 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const seenRef = useRef(new Set<string>());
   const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
+  const previousConsoleLengthRef = useRef(0);
+  const shouldScrollOnAppendRef = useRef(false);
+  const autoScroll = useFeedAutoScroll();
   const ftuxStorageKey = useMemo(
     () => (user?.id ? `ftuxComplete:${user.id}` : 'ftuxComplete'),
     [user?.id]
@@ -172,21 +176,24 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     // Jump to bottom after history loads (instant, no animation)
     requestAnimationFrame(() => {
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      autoScroll.resetToBottom();
     });
-  }, [history]);
+  }, [history, autoScroll]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       setIsAtBottom(true);
+      autoScroll.resetToBottom();
     }
-  }, [isActive]);
+  }, [isActive, autoScroll]);
 
   const scrollToBottom = useCallback(() => {
     virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
     setIsAtBottom(true);
-  }, []);
+    autoScroll.enable();
+  }, [autoScroll]);
 
   const { data: myMonsters, refetch: refetchMyMonsters } = trpc.game.myMonsters.useQuery(
     { roomId },
@@ -269,8 +276,20 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const cancelFlowMutation = trpc.game.cancelFlow.useMutation();
 
   function addConsoleEvent(ev: ConsoleEvent) {
+    shouldScrollOnAppendRef.current = autoScroll.shouldFollowRef.current;
     setConsoleEvents(prev => [...prev, ev]);
   }
+
+  useEffect(() => {
+    const hasNewEvent = consoleEvents.length > previousConsoleLengthRef.current;
+    if (hasNewEvent && shouldScrollOnAppendRef.current) {
+      requestAnimationFrame(() => {
+        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
+      });
+    }
+    shouldScrollOnAppendRef.current = false;
+    previousConsoleLengthRef.current = consoleEvents.length;
+  }, [consoleEvents.length]);
 
   const upsertPendingPrompt = useCallback((prompt: PendingPromptSnapshot) => {
     setConsoleEvents(prev => {
@@ -673,7 +692,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         aria-label="Console messages"
         tabIndex={0}
         data={consoleEvents}
-        followOutput="smooth"
+        followOutput={false}
         components={{
           // Cast through any because Virtuoso's List type expects HTMLDivElement internally.
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -713,7 +732,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
             </li>
           );
         }}
-        atBottomStateChange={(atBottom) => setIsAtBottom(atBottom)}
+        atBottomStateChange={(atBottom) => {
+          setIsAtBottom(atBottom);
+          autoScroll.onAtBottomChange(atBottom);
+        }}
       />
 
       {!isAtBottom && (

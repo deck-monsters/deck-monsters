@@ -56,7 +56,23 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
         {roomName && (
           <>
             <span style={{ color: 'var(--color-fg-dim)' }}>/</span>
-            <span style={{ color: 'var(--color-fg)', fontSize: '0.9rem' }}>{roomName}</span>
+            {roomId ? (
+              <Link
+                to={`/room/${roomId}`}
+                style={{
+                  color: 'var(--color-fg)',
+                  fontSize: '0.9rem',
+                  textDecoration: 'none',
+                  borderBottom: '1px solid transparent',
+                }}
+                title="Back to Ring and Console"
+                aria-label={`Back to ${roomName} terminal`}
+              >
+                {roomName}
+              </Link>
+            ) : (
+              <span style={{ color: 'var(--color-fg)', fontSize: '0.9rem' }}>{roomName}</span>
+            )}
             {roomId && (
               <Link
                 to={`/room/${roomId}/settings`}
@@ -84,6 +100,11 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
           style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}
           aria-label="Main navigation"
         >
+          {roomId && (
+            <Link to={`/room/${roomId}`} className="btn" style={{ fontSize: '0.8rem' }}>
+              Terminal
+            </Link>
+          )}
           <button
             className="btn"
             style={{ fontSize: '0.8rem' }}
@@ -177,6 +198,11 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
             onClick={(e) => e.stopPropagation()}
           >
             <Link to="/rooms" className="btn" onClick={() => setMenuOpen(false)}>Rooms</Link>
+            {roomId && (
+              <Link to={`/room/${roomId}`} className="btn" onClick={() => setMenuOpen(false)}>
+                Terminal
+              </Link>
+            )}
             <Link
               to={roomId ? `/room/${roomId}/leaderboard` : '/leaderboard'}
               className="btn"

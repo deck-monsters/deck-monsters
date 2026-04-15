@@ -56,7 +56,56 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
     fireEvent.drop(targetSlot, { dataTransfer });
 
     expect(onDropCard).toHaveBeenCalledTimes(1);
-    expect(onDropCard).toHaveBeenCalledWith({ kind: 'inventory' }, 'Hit');
+    expect(onDropCard).toHaveBeenCalledWith({ kind: 'inventory' }, 'Hit', undefined, 'Stonefang:0');
+  });
+
+  it('passes slot index to drop handler for reorder support', async () => {
+    const onDropCard = vi.fn(async () => undefined);
+    render(
+      <MonsterWorkshopPanel
+        monster={{
+          ...baseMonster,
+          cardSlots: 2,
+          cards: ['Hit', null as unknown as string],
+        }}
+        showSelectionHint={false}
+        selectedCards={[]}
+        onDropCard={onDropCard}
+        onTapSlot={() => undefined}
+        onSelectCard={() => undefined}
+        onUnequipAll={() => undefined}
+        onSavePreset={() => undefined}
+        onLoadPreset={() => undefined}
+        onDeletePreset={() => undefined}
+      />,
+    );
+
+    const targetSlots = screen.getAllByRole('button', { name: 'Empty slot' });
+    const targetSlot = targetSlots[0];
+    const dataTransfer = {
+      store: {} as Record<string, string>,
+      setData(type: string, value: string) {
+        this.store[type] = value;
+      },
+      getData(type: string) {
+        return this.store[type] ?? '';
+      },
+      effectAllowed: 'none',
+    };
+    dataTransfer.setData(
+      'application/x-deck-monsters-card',
+      JSON.stringify({ location: { kind: 'monster', monsterName: 'Stonefang' }, cardName: 'Hit' }),
+    );
+
+    fireEvent.dragOver(targetSlot, { dataTransfer });
+    fireEvent.drop(targetSlot, { dataTransfer });
+
+    expect(onDropCard).toHaveBeenCalledWith(
+      { kind: 'monster', monsterName: 'Stonefang' },
+      'Hit',
+      undefined,
+      'Stonefang:1',
+    );
   });
 
   it('keeps monster slots locked during an encounter', () => {
@@ -112,6 +161,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
       { kind: 'monster', monsterName: 'Stonefang' },
       'Hit',
       'Stonefang:0',
+      0,
     );
   });
 
@@ -148,6 +198,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
       { kind: 'monster', monsterName: 'Stonefang' },
       'Heal',
       'Stonefang:1',
+      1,
     );
     expect(onTapSlot).not.toHaveBeenCalled();
   });

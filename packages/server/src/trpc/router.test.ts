@@ -62,11 +62,23 @@ describe('trpc/router card management procedures', () => {
 			cards: [{ cardType: 'Hit' }],
 			items: [{ itemType: 'Potion' }],
 			options: { presets: { aggro: ['Hit'] } },
+			canHoldCard: (card: { cardType?: string }) => card.cardType !== 'Blink',
+		};
+		const supportMonster = {
+			givenName: 'Mirebell',
+			creatureType: 'Jinn',
+			level: 2,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: { presets: {} },
+			canHoldCard: (card: { cardType?: string }) => card.cardType === 'Blink',
 		};
 		const game = {
 			characters: {
 				[USER_ID]: {
-					monsters: [targetMonster],
+					monsters: [targetMonster, supportMonster],
 					deck: [{ cardType: 'Blink' }],
 					items: [{ itemType: 'Scroll' }],
 				},
@@ -82,13 +94,16 @@ describe('trpc/router card management procedures', () => {
 		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
 		const result = await caller.game.myInventory({ roomId: ROOM_ID });
 
-		expect(result.monsters).to.have.length(1);
+		expect(result.monsters).to.have.length(2);
 		expect(result.monsters[0]).to.include({
 			name: 'Stonefang',
 			type: 'Basilisk',
 			inRing: true,
 		});
 		expect(result.unequippedDeck).to.deep.equal(['Blink']);
+		expect(result.cardCompatibility).to.deep.equal({
+			Blink: ['Mirebell'],
+		});
 		expect(result.items.character).to.deep.equal(['Scroll']);
 	});
 
@@ -211,6 +226,64 @@ describe('trpc/router card management procedures', () => {
 			equippedCount: 1,
 			requestedCount: 2,
 			skippedCards: ['Heal'],
+		});
+	});
+
+	it('routes game.reorderCards through character.reorderCards', async () => {
+		let receivedInput: Record<string, unknown> | undefined;
+		const publishedEvents: Array<{ type?: unknown; payload?: Record<string, unknown> }> = [];
+		const reorderCards = async (input: Record<string, unknown>) => {
+			receivedInput = input;
+			return {
+				monsterName: 'Stonefang',
+				fromIndex: 0,
+				toIndex: 1,
+				cards: ['Heal', 'Hit'],
+			};
+		};
+
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({
+				characters: { [USER_ID]: { reorderCards } },
+			}),
+			getEventBus: async () => ({
+				publish: (event: { type?: unknown; payload?: Record<string, unknown> }) => {
+					publishedEvents.push(event);
+				},
+			}),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.reorderCards({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			fromIndex: 0,
+			toIndex: 1,
+		});
+
+		expect(receivedInput).to.not.equal(undefined);
+		if (!receivedInput) throw new Error('Expected reorderCards to be called');
+		const callInput = receivedInput;
+		expect(callInput.monsterName).to.equal('Stonefang');
+		expect(callInput.fromIndex).to.equal(0);
+		expect(callInput.toIndex).to.equal(1);
+		expect(result).to.deep.equal({
+			monsterName: 'Stonefang',
+			fromIndex: 0,
+			toIndex: 1,
+			cards: ['Heal', 'Hit'],
+		});
+		const cardEquippedEvents = publishedEvents.filter((event) => event.type === 'card.equipped');
+		expect(cardEquippedEvents).to.have.length(1);
+		expect(cardEquippedEvents[0]?.payload).to.deep.equal({
+			operation: 'reorderCards',
+			monsterName: 'Stonefang',
+			fromIndex: 0,
+			toIndex: 1,
+			cards: ['Heal', 'Hit'],
 		});
 	});
 });
