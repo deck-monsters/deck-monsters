@@ -69,6 +69,8 @@ pnpm --filter @deck-monsters/web dev      # port 5173, proxies /trpc to :3000
 
 Sign in at `http://localhost:5173` using `$TEST_USERNAME` / `$TEST_PASSWORD`.
 
+**Important**: The server does **not** auto-load `.env.local` — you must `source` it into the shell before starting `pnpm --filter @deck-monsters/server dev`. The web app (Vite) does auto-load `apps/web/.env.local`.
+
 #### Path B — Local Supabase (requires Docker)
 
 Runs a full local Supabase stack (Postgres, Auth, Studio) in Docker containers.
