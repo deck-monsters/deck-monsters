@@ -987,11 +987,13 @@ class Beastmaster extends BaseCharacter {
 		ring,
 		channel,
 		channelName,
+		userId,
 	}: {
 		monsterName?: string;
 		ring: any;
 		channel: ChannelFn;
 		channelName?: string;
+		userId?: string;
 	}): Promise<unknown> {
 		const monsters = ring.getMonsters(this);
 
@@ -1014,7 +1016,7 @@ class Beastmaster extends BaseCharacter {
 				}),
 			)
 			.then((monsterInRing: BaseMonster) =>
-				ring.removeMonster({ monster: monsterInRing, character: this, channel, channelName }),
+				ring.removeMonster({ monster: monsterInRing, character: this, channel, channelName, userId }),
 			);
 	}
 
