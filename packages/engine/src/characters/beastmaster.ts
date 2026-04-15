@@ -8,8 +8,10 @@ import { spawn, equip } from '../monsters/index.js';
 import TENSE from '../helpers/tense.js';
 import transferItems from '../items/helpers/transfer.js';
 import useItems from '../items/helpers/use.js';
+import { getItemKey } from '../items/helpers/counts.js';
 import { formatRelative } from '../helpers/time.js';
 import { eachSeries } from '../helpers/promise.js';
+import { MAX_PRESETS } from '../constants/card-management.js';
 import type { ChannelFn, ChannelWithManager, CardInstance, ItemInstance } from '../creatures/base.js';
 import type BaseMonster from '../monsters/base.js';
 
@@ -30,6 +32,18 @@ export const beastmasterReady = loadHelpers().catch((err) => {
 });
 
 const DEFAULT_MONSTER_SLOTS = 7;
+
+const MAX_CARD_COPIES_IN_HAND = 4;
+
+const normalize = (value: string): string => value.trim().toLowerCase();
+const getCardName = (card: CardInstance): string =>
+	(card as any).cardType ?? (card as any).itemType ?? (card as any).name ?? 'Unknown';
+const isSameCardName = (card: CardInstance, cardName: string): boolean =>
+	getCardName(card).toLowerCase() === cardName.toLowerCase();
+const announceAndThrow = async (channel: ChannelFn, announce: string): Promise<never> => {
+	await channel({ announce });
+	throw new Error(announce);
+};
 
 class Beastmaster extends BaseCharacter {
 	constructor(options: Record<string, unknown> = {}) {
@@ -352,6 +366,556 @@ class Beastmaster extends BaseCharacter {
 					).then(() => super.lookAtItems(channel as any, (monster as any).items));
 				}),
 			);
+	}
+
+	lookAtCardInventory(channel: ChannelFn): Promise<void> {
+		const lines: string[] = ['Your Card Inventory', '===================', ''];
+
+		this.monsters.forEach((monster) => {
+			lines.push(
+				`${monster.givenName} [${monster.creatureType}, L${monster.level}]  ${monster.cards.length}/${monster.cardSlots} slots`,
+			);
+
+			if (monster.cards.length < 1) {
+				lines.push('  (empty)');
+			} else {
+				monster.cards.forEach((card, index) => {
+					lines.push(`  ${index + 1}) ${getCardName(card)}`);
+				});
+			}
+
+			lines.push('');
+		});
+
+		const deckCounts = this.deck.reduce<Record<string, number>>((counts, card) => {
+			const key = getItemKey(card);
+			counts[key] = (counts[key] ?? 0) + 1;
+			return counts;
+		}, {});
+
+		const deckList = Object.entries(deckCounts)
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([name, count]) => (count > 1 ? `${name} x${count}` : name));
+
+		lines.push(`Unequipped (${this.deck.length} cards)`);
+		lines.push(deckList.length > 0 ? `  ${deckList.join(', ')}` : '  (none)');
+
+		return Promise.resolve().then(() => {
+			channel({ announce: lines.join('\n') });
+		});
+	}
+
+	async lookAtInventory(channel: ChannelWithManager): Promise<void> {
+		const hasItems =
+			this.items.length > 0 ||
+			this.monsters.some(monster => (monster as any).items?.length > 0);
+
+		await this.lookAtCardInventory(channel as ChannelFn);
+
+		if (!hasItems) {
+			await channel({ announce: 'Items:\n  (none)' });
+			return;
+		}
+
+		await this.lookAtItems(channel);
+	}
+
+	private findMonsterByName(monsterName: string): BaseMonster | undefined {
+		return this.monsters.find(monster => normalize(monster.givenName) === normalize(monsterName));
+	}
+
+	private getMonsterPresets(monster: BaseMonster): Record<string, string[]> {
+		const presets = ((monster.options as Record<string, unknown>).presets ??
+			{}) as Record<string, string[]>;
+		return Object.entries(presets).reduce<Record<string, string[]>>((all, [name, cards]) => {
+			if (!Array.isArray(cards)) return all;
+			all[name] = cards.filter(card => typeof card === 'string');
+			return all;
+		}, {});
+	}
+
+	getPresets(monsterName?: string): Record<string, string[]> | Record<string, Record<string, string[]>> {
+		if (monsterName) {
+			const monster = this.findMonsterByName(monsterName);
+			if (!monster) return {};
+			return this.getMonsterPresets(monster);
+		}
+
+		return this.monsters.reduce<Record<string, Record<string, string[]>>>((all, monster) => {
+			all[monster.givenName] = this.getMonsterPresets(monster);
+			return all;
+		}, {});
+	}
+
+	unequipCard({
+		cardName,
+		monsterName,
+		count = 1,
+		channel,
+	}: {
+		cardName: string;
+		monsterName?: string;
+		count?: number;
+		channel: ChannelFn;
+	}): Promise<{ removedCount: number; monsterName: string }> {
+		const removeCount = Math.max(Number(count) || 1, 1);
+
+		return Promise.resolve()
+			.then(() =>
+				this.chooseMonster({
+					channel,
+					monsterName,
+					action: 'unequip from',
+					reason: "you don't appear to have a monster by that name.",
+				}),
+			)
+			.then((monster) => {
+				if (monster.inEncounter) {
+					return announceAndThrow(
+						channel,
+						`You cannot unequip cards from ${monster.givenName} while they are fighting!`,
+					);
+				}
+
+				const remainingCards = [...monster.cards];
+				const removedCards: CardInstance[] = [];
+
+				while (removedCards.length < removeCount) {
+					const cardIndex = remainingCards.findIndex(card =>
+						isSameCardName(card, cardName),
+					);
+					if (cardIndex < 0) break;
+					removedCards.push(remainingCards.splice(cardIndex, 1)[0]);
+				}
+
+				if (removedCards.length < 1) {
+					return announceAndThrow(channel, `${monster.givenName} is not holding ${cardName}.`);
+				}
+
+				monster.cards = remainingCards;
+				removedCards.forEach(card => this.addCard(card));
+
+				return Promise.resolve(channel({
+					announce: `Unequipped ${removedCards.length} ${cardName}${removedCards.length === 1 ? '' : ' cards'} from ${monster.givenName}.`,
+				})).then(
+					() =>
+						({
+							removedCount: removedCards.length,
+							monsterName: monster.givenName,
+						}) as { removedCount: number; monsterName: string },
+				);
+			});
+	}
+
+	unequipAll({
+		monsterName,
+		channel,
+	}: {
+		monsterName?: string;
+		channel: ChannelFn;
+	}): Promise<{ removedCount: number; monsterName: string }> {
+		return Promise.resolve()
+			.then(() =>
+				this.chooseMonster({
+					channel,
+					monsterName,
+					action: 'clear',
+					reason: "you don't appear to have a monster by that name.",
+				}),
+			)
+			.then((monster) => {
+				if (monster.inEncounter) {
+					return announceAndThrow(
+						channel,
+						`You cannot clear ${monster.givenName}'s deck while they are fighting!`,
+					);
+				}
+
+				if (monster.cards.length < 1) {
+					return announceAndThrow(channel, `${monster.givenName} already has an empty deck.`);
+				}
+
+				const previousCards = [...monster.cards];
+				monster.cards = [];
+				previousCards.forEach(card => this.addCard(card));
+
+				return Promise.resolve(channel({
+					announce: `${monster.givenName}'s deck has been cleared (${previousCards.length} cards returned).`,
+				})).then(
+					() =>
+						({
+							removedCount: previousCards.length,
+							monsterName: monster.givenName,
+						}) as { removedCount: number; monsterName: string },
+				);
+			});
+	}
+
+	moveCard({
+		cardName,
+		fromMonsterName,
+		toMonsterName,
+		count = 1,
+		channel,
+	}: {
+		cardName: string;
+		fromMonsterName: string;
+		toMonsterName: string;
+		count?: number;
+		channel: ChannelFn;
+	}): Promise<{ movedCount: number; fromMonsterName: string; toMonsterName: string }> {
+		const moveCount = Math.max(Number(count) || 1, 1);
+		const fromMonster = this.findMonsterByName(fromMonsterName);
+		const toMonster = this.findMonsterByName(toMonsterName);
+
+		if (!fromMonster) {
+			return announceAndThrow(channel, `I can find no monster named ${fromMonsterName}.`);
+		}
+		if (!toMonster) {
+			return announceAndThrow(channel, `I can find no monster named ${toMonsterName}.`);
+		}
+		if (fromMonster === toMonster) {
+			return announceAndThrow(channel, 'Choose two different monsters for move operations.');
+		}
+		if (fromMonster.inEncounter || toMonster.inEncounter) {
+			return announceAndThrow(channel, 'Cards cannot be moved while a monster is in battle.');
+		}
+
+		const sourceCards = [...fromMonster.cards];
+		const targetCards = [...toMonster.cards];
+		let movedCount = 0;
+		let blockedBy = '';
+
+		while (movedCount < moveCount) {
+			const cardIndex = sourceCards.findIndex(card => isSameCardName(card, cardName));
+			if (cardIndex < 0) break;
+
+			const card = sourceCards[cardIndex];
+			const targetCount = targetCards.filter(
+				existing => getItemKey(existing) === getItemKey(card),
+			).length;
+
+			if (targetCards.length >= toMonster.cardSlots) {
+				blockedBy = `${toMonster.givenName} has no free slots.`;
+				break;
+			}
+			if (!toMonster.canHoldCard(card)) {
+				blockedBy = `${toMonster.givenName} cannot hold ${getCardName(card)}.`;
+				break;
+			}
+			if (targetCount >= MAX_CARD_COPIES_IN_HAND) {
+				blockedBy = `${toMonster.givenName} already has ${MAX_CARD_COPIES_IN_HAND} copies of ${getCardName(card)}.`;
+				break;
+			}
+
+			sourceCards.splice(cardIndex, 1);
+			targetCards.push(card);
+			movedCount += 1;
+		}
+
+		if (movedCount < 1) {
+			const reason = blockedBy || `${fromMonster.givenName} is not holding ${cardName}.`;
+			return announceAndThrow(channel, reason);
+		}
+
+		fromMonster.cards = sourceCards;
+		toMonster.cards = targetCards;
+
+		return Promise.resolve(channel({
+			announce: `Moved ${movedCount} ${cardName}${movedCount === 1 ? '' : ' cards'} from ${fromMonster.givenName} to ${toMonster.givenName}.${blockedBy ? ` ${blockedBy}` : ''}`,
+		})).then(() => ({
+			movedCount,
+			fromMonsterName: fromMonster.givenName,
+			toMonsterName: toMonster.givenName,
+		}));
+	}
+
+	moveCards({
+		cardNames,
+		fromMonsterName,
+		toMonsterName,
+		channel,
+	}: {
+		cardNames: string[];
+		fromMonsterName: string;
+		toMonsterName: string;
+		channel: ChannelFn;
+	}): Promise<{ movedCards: string[] }> {
+		const movedCards: string[] = [];
+
+		return eachSeries(cardNames, (cardName: string) =>
+			this.moveCard({ cardName, fromMonsterName, toMonsterName, channel })
+				.then(() => {
+					movedCards.push(cardName);
+				})
+				.catch(() => undefined),
+		).then(() => ({ movedCards }));
+	}
+
+	equipCards({
+		monsterName,
+		cardNames,
+		replaceAll = false,
+		channel,
+	}: {
+		monsterName?: string;
+		cardNames: string[];
+		replaceAll?: boolean;
+		channel: ChannelFn;
+	}): Promise<{ equipped: number; requested: number; skippedCards: string[]; monsterName: string }> {
+		return Promise.resolve()
+			.then(() =>
+				this.chooseMonster({
+					channel,
+					monsterName,
+					action: 'equip',
+					reason: "you don't appear to have a monster by that name.",
+				}),
+			)
+			.then((monster) => {
+				if (monster.inEncounter) {
+					return announceAndThrow(
+						channel,
+						`You cannot equip ${monster.givenName} while they are fighting!`,
+					);
+				}
+
+				const requested = cardNames.length;
+				const skippedCards: string[] = [];
+				let deck = [...this.deck];
+				let nextCards = replaceAll ? [] : [...monster.cards];
+
+				if (replaceAll) {
+					monster.cards.forEach(card => this.addCard(card));
+					deck = [...this.deck];
+				}
+
+				cardNames.forEach((cardName) => {
+					if (nextCards.length >= monster.cardSlots) {
+						skippedCards.push(cardName);
+						return;
+					}
+
+					const cardIndex = deck.findIndex(card =>
+						isSameCardName(card, cardName) && monster.canHoldCard(card),
+					);
+					if (cardIndex < 0) {
+						skippedCards.push(cardName);
+						return;
+					}
+
+					const selectedCard = deck[cardIndex];
+					const cardCount = nextCards.filter(
+						card => getItemKey(card) === getItemKey(selectedCard),
+					).length;
+					if (cardCount >= MAX_CARD_COPIES_IN_HAND) {
+						skippedCards.push(cardName);
+						return;
+					}
+
+					nextCards.push(deck.splice(cardIndex, 1)[0]);
+				});
+
+				this.deck = deck;
+				monster.cards = nextCards;
+
+				const equipped = requested - skippedCards.length;
+				const summary = {
+					equipped,
+					requested,
+					skippedCards,
+					monsterName: monster.givenName,
+				};
+
+				return Promise.resolve(channel({
+					announce: `Equipped ${monster.givenName}: ${equipped}/${requested}${skippedCards.length > 0 ? ` (skipped: ${skippedCards.join(', ')})` : ''}.`,
+				})).then(() => summary);
+			});
+	}
+
+	savePreset({
+		presetName,
+		monsterName,
+		channel,
+	}: {
+		presetName: string;
+		monsterName?: string;
+		channel: ChannelFn;
+	}): Promise<{ presetName: string; monsterName: string }> {
+		const trimmedName = presetName.trim();
+		if (!trimmedName) {
+			return announceAndThrow(channel, 'Preset name is required.');
+		}
+
+		return Promise.resolve()
+			.then(() =>
+				this.chooseMonster({
+					channel,
+					monsterName,
+					action: 'save a preset for',
+				}),
+			)
+			.then((monster) => {
+				const presets = this.getMonsterPresets(monster);
+				const hasPreset = Object.prototype.hasOwnProperty.call(presets, trimmedName);
+				if (!hasPreset && Object.keys(presets).length >= MAX_PRESETS) {
+					return announceAndThrow(
+						channel,
+						`${monster.givenName} already has ${MAX_PRESETS} presets. Delete one before saving another.`,
+					);
+				}
+
+				const nextPresets = {
+					...presets,
+					[trimmedName]: monster.cards.map(card => getCardName(card)),
+				};
+				monster.setOptions({ presets: nextPresets });
+
+				return Promise.resolve(channel({
+					announce: `Saved preset "${trimmedName}" for ${monster.givenName}.`,
+				})).then(
+					() =>
+						({
+							presetName: trimmedName,
+							monsterName: monster.givenName,
+						}) as { presetName: string; monsterName: string },
+				);
+			});
+	}
+
+	loadPreset({
+		presetName,
+		monsterName,
+		channel,
+	}: {
+		presetName: string;
+		monsterName?: string;
+		channel: ChannelFn;
+	}): Promise<{ equipped: number; requested: number; skippedCards: string[]; presetName: string; monsterName: string }> {
+		const trimmedName = presetName.trim();
+		if (!trimmedName) {
+			return announceAndThrow(channel, 'Preset name is required.');
+		}
+
+		return Promise.resolve()
+			.then(() =>
+				this.chooseMonster({
+					channel,
+					monsterName,
+					action: 'load a preset for',
+				}),
+			)
+			.then((monster) => {
+				if (monster.inEncounter) {
+					return announceAndThrow(
+						channel,
+						`You cannot load presets for ${monster.givenName} while they are fighting!`,
+					);
+				}
+
+				const presets = this.getMonsterPresets(monster);
+				const requestedCards = presets[trimmedName];
+				if (!requestedCards) {
+					return announceAndThrow(
+						channel,
+						`No preset named "${trimmedName}" exists for ${monster.givenName}.`,
+					);
+				}
+
+				const oldCards = [...monster.cards];
+				oldCards.forEach(card => this.addCard(card));
+
+				let deck = [...this.deck];
+				const nextCards: CardInstance[] = [];
+				const skippedCards: string[] = [];
+
+				requestedCards.forEach((requestedCard) => {
+					if (nextCards.length >= monster.cardSlots) {
+						skippedCards.push(requestedCard);
+						return;
+					}
+
+					const selectedCount = nextCards.filter(
+						card => getItemKey(card) === requestedCard,
+					).length;
+					if (selectedCount >= MAX_CARD_COPIES_IN_HAND) {
+						skippedCards.push(requestedCard);
+						return;
+					}
+
+					const cardIndex = deck.findIndex(card =>
+						isSameCardName(card, requestedCard) && monster.canHoldCard(card),
+					);
+					if (cardIndex < 0) {
+						skippedCards.push(requestedCard);
+						return;
+					}
+
+					nextCards.push(deck.splice(cardIndex, 1)[0]);
+				});
+
+				this.deck = deck;
+				monster.cards = nextCards;
+
+				const summary = {
+					equipped: nextCards.length,
+					requested: requestedCards.length,
+					skippedCards,
+					presetName: trimmedName,
+					monsterName: monster.givenName,
+				};
+
+				return Promise.resolve(channel({
+					announce: `Loaded preset "${trimmedName}" on ${monster.givenName}: equipped ${summary.equipped}/${summary.requested}${skippedCards.length > 0 ? ` (skipped: ${skippedCards.join(', ')})` : ''}.`,
+				})).then(() => summary);
+			});
+	}
+
+	deletePreset({
+		presetName,
+		monsterName,
+		channel,
+	}: {
+		presetName: string;
+		monsterName?: string;
+		channel: ChannelFn;
+	}): Promise<{ presetName: string; monsterName: string }> {
+		const trimmedName = presetName.trim();
+		if (!trimmedName) {
+			return announceAndThrow(channel, 'Preset name is required.');
+		}
+
+		return Promise.resolve()
+			.then(() =>
+				this.chooseMonster({
+					channel,
+					monsterName,
+					action: 'delete a preset for',
+				}),
+			)
+			.then((monster) => {
+				const presets = this.getMonsterPresets(monster);
+				if (!Object.prototype.hasOwnProperty.call(presets, trimmedName)) {
+					return announceAndThrow(
+						channel,
+						`No preset named "${trimmedName}" exists for ${monster.givenName}.`,
+					);
+				}
+
+				const nextPresets = { ...presets };
+				delete nextPresets[trimmedName];
+				monster.setOptions({ presets: nextPresets });
+
+				return Promise.resolve(channel({
+					announce: `Deleted preset "${trimmedName}" for ${monster.givenName}.`,
+				})).then(
+					() =>
+						({
+							presetName: trimmedName,
+							monsterName: monster.givenName,
+						}) as { presetName: string; monsterName: string },
+				);
+			});
 	}
 
 	callMonsterOutOfTheRing({

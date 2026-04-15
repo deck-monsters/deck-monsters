@@ -26,9 +26,21 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 
 	// Cards
 	{ command: 'look at cards', description: 'View all cards in your deck', category: 'cards' },
+	{ command: 'look at card inventory', description: 'View equipped and unequipped cards together', category: 'cards' },
+	{ command: 'look at all cards', description: 'Alias for card inventory', category: 'cards' },
+	{ command: 'look at inventory', description: 'View all cards and items across your character and monsters', category: 'cards' },
 	{ command: 'look at [card name]', description: 'View details about a specific card', category: 'cards', example: 'look at Hit' },
 	{ command: 'look at card [card name]', description: 'View details about a specific card', category: 'cards', example: 'look at card Heal' },
 	{ command: 'look at deck', description: 'View your full card deck', category: 'cards' },
+	{ command: 'unequip [card] from [monster]', description: 'Remove a card from a monster back to your deck', category: 'cards', example: 'unequip Hit from Fluffy' },
+	{ command: 'unequip [count] [card] from [monster]', description: 'Remove multiple copies of a card from a monster', category: 'cards', example: 'unequip 2 Hit from Fluffy' },
+	{ command: 'unequip all from [monster]', description: "Clear a monster's full deck back to your inventory", category: 'cards', example: 'unequip all from Fluffy' },
+	{ command: 'move [card] from [monster A] to [monster B]', description: 'Move a card directly between monsters', category: 'cards', example: 'move Hit from Fluffy to Fang' },
+	{ command: 'move [count] [card] from [monster A] to [monster B]', description: 'Move multiple copies directly between monsters', category: 'cards', example: 'move 2 Hit from Fluffy to Fang' },
+	{ command: 'save preset [name] for [monster]', description: "Save a monster's current deck as a preset", category: 'cards', example: 'save preset tank for Fluffy' },
+	{ command: 'load preset [name] on [monster]', description: 'Load a preset onto a monster', category: 'cards', example: 'load preset tank on Fluffy' },
+	{ command: 'look at presets for [monster]', description: 'List saved presets for a monster', category: 'cards', example: 'look at presets for Fluffy' },
+	{ command: 'delete preset [name] for [monster]', description: 'Delete a saved preset', category: 'cards', example: 'delete preset tank for Fluffy' },
 
 	// Items
 	{ command: 'look at items', description: 'View your items', category: 'items' },

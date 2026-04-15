@@ -1,4 +1,5 @@
 export * from './card-classes.js';
+export * from './card-management.js';
 export * from './coins.js';
 export * from './creature-classes.js';
 export * from './creature-types.js';

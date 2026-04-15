@@ -8,8 +8,25 @@ const cleanArgs = (args: Record<string, any> = {}): Record<string, any> => {
 		delete args.monsterName;
 	}
 
+	if (typeof args.fromMonsterName === 'string') {
+		args.fromMonsterName = args.fromMonsterName.trim().replace(/^monster\s+/i, '');
+	}
+
+	if (typeof args.toMonsterName === 'string') {
+		args.toMonsterName = args.toMonsterName.trim().replace(/^monster\s+/i, '');
+	}
+
 	if (args.cardSelection) {
 		args.cardSelection = getArray(args.cardSelection);
+	}
+
+	if (args.cardName && typeof args.cardName === 'string') {
+		args.cardName = args.cardName.trim();
+	}
+
+	if (args.count !== undefined) {
+		const parsedCount = Number(args.count);
+		args.count = Number.isFinite(parsedCount) ? parsedCount : undefined;
 	}
 
 	if (args.itemSelection) {
@@ -70,7 +87,7 @@ function editMonsterAction({ channel, game, isAdmin, results }: any): Promise<un
 	});
 }
 
-const EQUIP_REGEX = /equip (?:a )?(.+?)(?: with (.+?))?$/i;
+const EQUIP_REGEX = /^equip (?:a )?(.+?)(?: with (.+?))?$/i;
 function equipMonsterAction({ channel, character, game, isDM, results }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));
@@ -84,6 +101,60 @@ function equipMonsterAction({ channel, character, game, isDM, results }: any): P
 
 		return character
 			.equipMonster({ channel, cardSelection, monsterName })
+			.catch((err: unknown) => game.log(err));
+	});
+}
+
+const UNEQUIP_CARD_REGEX = /unequip (?:(\d+) )?(.+?) from (?:a )?(.+?)$/i;
+function unequipCardAction({ channel, character, game, isDM, results }: any): Promise<unknown> {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
+	return Promise.resolve().then(() => {
+		const { cardName, count, monsterName } = cleanArgs({
+			count: results[1],
+			cardName: results[2],
+			monsterName: results[3],
+		});
+
+		return character
+			.unequipCard({ channel, cardName, count, monsterName })
+			.catch((err: unknown) => game.log(err));
+	});
+}
+
+const UNEQUIP_ALL_REGEX = /(?:unequip all from|clear deck) (?:a )?(.+?)$/i;
+function unequipAllAction({ channel, character, game, isDM, results }: any): Promise<unknown> {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
+	return Promise.resolve().then(() => {
+		const { monsterName } = cleanArgs({ monsterName: results[1] });
+
+		return character
+			.unequipAll({ channel, monsterName })
+			.catch((err: unknown) => game.log(err));
+	});
+}
+
+const MOVE_CARD_REGEX = /move (?:(\d+) )?(.+?) from (?:a )?(.+?) to (?:a )?(.+?)$/i;
+function moveCardAction({ channel, character, game, isDM, results }: any): Promise<unknown> {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
+	return Promise.resolve().then(() => {
+		const { cardName, count, fromMonsterName, toMonsterName } = cleanArgs({
+			count: results[1],
+			cardName: results[2],
+			fromMonsterName: results[3],
+			toMonsterName: results[4],
+		});
+
+		return character
+			.moveCard({ channel, cardName, count, fromMonsterName, toMonsterName })
 			.catch((err: unknown) => game.log(err));
 	});
 }
@@ -243,6 +314,9 @@ export default function monsterHandlers(
 	registerHandlerFn(DISMISS_REGEX, dismissMonsterAction);
 	registerHandlerFn(EDIT_REGEX, editMonsterAction);
 	registerHandlerFn(EQUIP_REGEX, equipMonsterAction);
+	registerHandlerFn(UNEQUIP_CARD_REGEX, unequipCardAction);
+	registerHandlerFn(UNEQUIP_ALL_REGEX, unequipAllAction);
+	registerHandlerFn(MOVE_CARD_REGEX, moveCardAction);
 	registerHandlerFn(GIVE_ITEMS_TO_MONSTER_REGEX, giveItemsToMonsterAction);
 	registerHandlerFn(REVIVE_REGEX, reviveMonsterAction);
 	registerHandlerFn(SEND_MONSTER_EXPLORING_REGEX, sendMonsterExploringAction);

@@ -14,6 +14,8 @@ export type EventType =
 	| 'ring.cardDrop'
 	| 'ring.state'
 	| 'card.played'
+	| 'card.equipped'
+	| 'card.presetLoaded'
 	| 'announce'
 	| 'prompt.request'
 	| 'prompt.timeout'

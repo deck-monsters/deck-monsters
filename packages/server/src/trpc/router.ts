@@ -34,6 +34,162 @@ import {
 	type LeaderboardSort,
 } from '../analytics-queries.js';
 
+type InventoryMonsterSummary = {
+	name: string;
+	type: string;
+	level: number;
+	inRing: boolean;
+	inEncounter: boolean;
+	cardSlots: number;
+	cards: string[];
+	presets: Record<string, string[]>;
+};
+
+type InventorySummary = {
+	monsters: InventoryMonsterSummary[];
+	unequippedDeck: string[];
+	items: {
+		character: string[];
+		monsters: Array<{ monsterName: string; items: string[] }>;
+	};
+};
+
+type PublishableEvent = {
+	type: EventType;
+	scope: EventScope;
+	text: string;
+	payload: Record<string, unknown>;
+	targetUserId?: string;
+};
+
+type EventBusPublisher = {
+	publish: (event: PublishableEvent) => unknown;
+};
+
+const getDisplayName = (entity: unknown): string => {
+	if (!entity || typeof entity !== 'object') return 'Unknown';
+	const entry = entity as Record<string, unknown>;
+	const byItemType = typeof entry.itemType === 'string' ? entry.itemType : undefined;
+	const byCardType = typeof entry.cardType === 'string' ? entry.cardType : undefined;
+	const byName = typeof entry.name === 'string' ? entry.name : undefined;
+	return byItemType ?? byCardType ?? byName ?? 'Unknown';
+};
+
+const summarizeInventory = ({
+	character,
+	inRing,
+}: {
+	character: Record<string, unknown>;
+	inRing: Set<unknown>;
+}): InventorySummary => {
+	const monsters = Array.isArray(character.monsters) ? character.monsters : [];
+	const deck = Array.isArray(character.deck) ? character.deck : [];
+	const items = Array.isArray(character.items) ? character.items : [];
+
+	const monsterSummaries = monsters
+		.map((monster) => {
+			const record = (monster ?? {}) as Record<string, unknown>;
+			const cards = Array.isArray(record.cards) ? record.cards : [];
+			const presetsRaw = (record.options as Record<string, unknown> | undefined)?.presets;
+			const presets = Object.entries(
+				(typeof presetsRaw === 'object' && presetsRaw !== null
+					? presetsRaw
+					: {}) as Record<string, unknown>,
+			).reduce<Record<string, string[]>>((all, [presetName, presetCards]) => {
+				if (!Array.isArray(presetCards)) return all;
+				all[presetName] = presetCards
+					.filter((card): card is string => typeof card === 'string')
+					.slice();
+				return all;
+			}, {});
+
+			const name = typeof record.givenName === 'string' ? record.givenName.trim() : '';
+			if (!name) return null;
+
+			return {
+				name,
+				type:
+					typeof record.creatureType === 'string'
+						? record.creatureType
+						: 'Unknown',
+				level:
+					typeof record.level === 'number' && Number.isFinite(record.level)
+						? record.level
+						: 0,
+				inRing: inRing.has(monster),
+				inEncounter: Boolean(record.inEncounter),
+				cardSlots:
+					typeof record.cardSlots === 'number' && Number.isFinite(record.cardSlots)
+						? record.cardSlots
+						: 0,
+				cards: cards.map((card) => getDisplayName(card)),
+				presets,
+			} satisfies InventoryMonsterSummary;
+		})
+		.filter((monster): monster is InventoryMonsterSummary => monster !== null);
+
+	const monsterItems = monsterSummaries.map((monsterSummary) => {
+		const monster = monsters.find(
+			(entry) =>
+				(entry as Record<string, unknown> | undefined)?.givenName ===
+				monsterSummary.name,
+		) as Record<string, unknown> | undefined;
+		const monsterInventory = Array.isArray(monster?.items) ? monster.items : [];
+		return {
+			monsterName: monsterSummary.name,
+			items: monsterInventory.map((item) => getDisplayName(item)),
+		};
+	});
+
+	return {
+		monsters: monsterSummaries,
+		unequippedDeck: deck.map((card) => getDisplayName(card)),
+		items: {
+			character: items.map((item) => getDisplayName(item)),
+			monsters: monsterItems,
+		},
+	};
+};
+
+const getMonsterCardsByName = ({
+	character,
+	monsterName,
+}: {
+	character: Record<string, unknown>;
+	monsterName: string;
+}): string[] => {
+	const monsters = Array.isArray(character.monsters) ? character.monsters : [];
+	const match = monsters.find((monster) => {
+		const name = (monster as Record<string, unknown> | undefined)?.givenName;
+		return typeof name === 'string' && name.toLowerCase() === monsterName.toLowerCase();
+	}) as Record<string, unknown> | undefined;
+	const cards = Array.isArray(match?.cards) ? match.cards : [];
+	return cards.map((card) => getDisplayName(card));
+};
+
+const publishPrivateAnnouncement = ({
+	eventBus,
+	userId,
+	text,
+	operation,
+}: {
+	eventBus: EventBusPublisher;
+	userId: string;
+	text: string;
+	operation: string;
+}): void => {
+	eventBus.publish({
+		type: 'announce',
+		scope: 'private',
+		targetUserId: userId,
+		text,
+		payload: {
+			source: 'workshop',
+			operation,
+		},
+	});
+};
+
 export type AppRouter = ReturnType<typeof createRouter>;
 
 // Increment when the client<->server protocol changes in a breaking way.
@@ -52,7 +208,56 @@ export const activeFlows = new Set<string>();
 
 const sortBySchema = z.enum(['xp', 'wins', 'winRate', 'coins']);
 
+type SilentChannelMessage = {
+	announce?: string;
+	question?: string;
+	choices?: Record<string, unknown> | string[];
+};
+
+function createSilentChannel({
+	eventBus,
+	userId,
+	commandId,
+}: {
+	eventBus: EventBusPublisher;
+	userId: string;
+	commandId: string;
+}) {
+	return async ({ announce, question }: SilentChannelMessage): Promise<unknown> => {
+		if (question) {
+			throw new TRPCError({
+				code: 'BAD_REQUEST',
+				message: 'Interactive prompts are not supported for this operation.',
+			});
+		}
+
+		if (announce) {
+			eventBus.publish({
+				type: 'announce',
+				scope: 'private',
+				targetUserId: userId,
+				text: announce,
+				payload: { causedByCommandId: commandId, silent: true },
+			});
+		}
+
+		return undefined;
+	};
+}
+
 export function createRouter(roomManager: RoomManager) {
+	const runSerializedMutation = async <T>(roomId: string, fn: () => Promise<T>): Promise<T> => {
+		try {
+			return await roomManager.runSerializedEngineWork(roomId, fn);
+		} catch (err) {
+			if (err instanceof TRPCError) throw err;
+			throw new TRPCError({
+				code: 'BAD_REQUEST',
+				message: err instanceof Error ? err.message : 'Operation failed',
+			});
+		}
+	};
+
 	const leaderboardRouter = t.router({
 		roomPlayers: protectedProcedure
 			.input(
@@ -443,6 +648,421 @@ export function createRouter(roomManager: RoomManager) {
 								: 0,
 					}))
 					.filter((monster: { name: string }) => monster.name.length > 0);
+			}),
+
+		myInventory: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const game = await roomManager.getGame(input.roomId);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character !== 'object') {
+					return {
+						monsters: [],
+						unequippedDeck: [],
+						items: { character: [], monsters: [] },
+					} satisfies InventorySummary;
+				}
+
+				const inRing = new Set(
+					game.ring.contestants
+						.filter((contestant) => contestant?.userId === ctx.userId && !contestant?.isBoss)
+						.map((contestant) => contestant?.monster)
+				);
+
+				return summarizeInventory({
+					character: character as Record<string, unknown>,
+					inRing,
+				});
+			}),
+
+		unequipCard: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					cardName: z.string().min(1),
+					count: z.number().int().min(1).max(9).optional(),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.unequipCard !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await runSerializedMutation(input.roomId, () =>
+					character.unequipCard({
+						channel,
+						cardName: input.cardName,
+						monsterName: input.monsterName,
+						count: input.count,
+					}),
+				) as { removedCount: number; monsterName: string };
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						operation: 'unequipCard',
+						removedCount: result.removedCount,
+						monsterName: result.monsterName,
+					},
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Unequipped ${result.removedCount} ${input.cardName} from ${result.monsterName}.`,
+					operation: 'unequipCard',
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.monsterName,
+						}),
+					},
+				});
+				return result;
+			}),
+
+		unequipAll: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.unequipAll !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await runSerializedMutation(input.roomId, () =>
+					character.unequipAll({
+						channel,
+						monsterName: input.monsterName,
+					}),
+				) as { removedCount: number; monsterName: string };
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						operation: 'unequipAll',
+						removedCount: result.removedCount,
+						monsterName: result.monsterName,
+					},
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Cleared ${result.monsterName} (${result.removedCount} cards returned).`,
+					operation: 'unequipAll',
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.monsterName,
+						}),
+					},
+				});
+				return result;
+			}),
+
+		equipCards: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					cardNames: z.array(z.string().min(1)).min(1),
+					replaceAll: z.boolean().optional(),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.equipCards !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await runSerializedMutation(input.roomId, () =>
+					character.equipCards({
+						channel,
+						monsterName: input.monsterName,
+						cardNames: input.cardNames,
+						replaceAll: input.replaceAll ?? false,
+					}),
+				) as { equipped: number; requested: number; skippedCards: string[]; monsterName: string };
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						operation: 'equipCards',
+						monsterName: result.monsterName,
+						cardNames: input.cardNames,
+						equippedCount: result.equipped,
+						requestedCount: result.requested,
+						skippedCards: result.skippedCards,
+					},
+				});
+
+				const skippedText = result.skippedCards.length > 0
+					? ` Skipped: ${result.skippedCards.join(', ')}.`
+					: '';
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Equipped ${result.monsterName}: ${result.equipped}/${result.requested}.${skippedText}`,
+					operation: 'equipCards',
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.monsterName,
+						}),
+					},
+				});
+				return {
+					equippedCount: result.equipped,
+					requestedCount: result.requested,
+					skippedCards: result.skippedCards,
+				};
+			}),
+
+		moveCard: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					cardName: z.string().min(1),
+					fromMonsterName: z.string().min(1),
+					toMonsterName: z.string().min(1),
+					count: z.number().int().min(1).max(9).optional(),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.moveCard !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await runSerializedMutation(input.roomId, () =>
+					character.moveCard({
+						channel,
+						cardName: input.cardName,
+						fromMonsterName: input.fromMonsterName,
+						toMonsterName: input.toMonsterName,
+						count: input.count,
+					}),
+				) as { movedCount: number; fromMonsterName: string; toMonsterName: string };
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						operation: 'moveCard',
+						movedCount: result.movedCount,
+						fromMonsterName: result.fromMonsterName,
+						toMonsterName: result.toMonsterName,
+					},
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: `Moved ${result.movedCount} ${input.cardName} from ${result.fromMonsterName} to ${result.toMonsterName}.`,
+					operation: 'moveCard',
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.fromMonsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.fromMonsterName,
+						}),
+					},
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: result.toMonsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: result.toMonsterName,
+						}),
+					},
+				});
+				return result;
+			}),
+
+		savePreset: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					presetName: z.string().min(1).max(32),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.savePreset !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await runSerializedMutation(input.roomId, () =>
+					character.savePreset({
+						channel,
+						monsterName: input.monsterName,
+						presetName: input.presetName,
+					}),
+				);
+				return result;
+			}),
+
+		loadPreset: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					presetName: z.string().min(1).max(32),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.loadPreset !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await runSerializedMutation(input.roomId, () =>
+					character.loadPreset({
+						channel,
+						monsterName: input.monsterName,
+						presetName: input.presetName,
+					}),
+				) as { equipped: number; requested: number; skippedCards: string[] };
+				eventBus.publish({
+					type: 'card.presetLoaded' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: result,
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: input.monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: input.monsterName,
+						}),
+					},
+				});
+				return {
+					equippedCount: result.equipped,
+					requestedCount: result.requested,
+					skippedCards: result.skippedCards,
+				};
+			}),
+
+		deletePreset: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					presetName: z.string().min(1).max(32),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.deletePreset !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const result = await runSerializedMutation(input.roomId, () =>
+					character.deletePreset({
+						channel,
+						monsterName: input.monsterName,
+						presetName: input.presetName,
+					}),
+				);
+				return result;
 			}),
 
 		ringHistory: protectedProcedure
