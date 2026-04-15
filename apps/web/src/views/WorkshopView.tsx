@@ -52,19 +52,6 @@ export default function WorkshopView() {
     setError(latestError);
   }, [latestError]);
 
-  const selectedMonsterName = useMemo(() => {
-    if (selectedCards.length < 1) return null;
-    const first = selectedCards[0];
-    if (first.location.kind !== 'monster') return null;
-    const firstMonsterName = first.location.monsterName;
-    const sameMonster = selectedCards.every(
-      (selection) =>
-        selection.location.kind === 'monster' &&
-        selection.location.monsterName === firstMonsterName,
-    );
-    return sameMonster ? firstMonsterName : null;
-  }, [selectedCards]);
-
   const selectedSummary = useMemo(() => {
     if (selectedCards.length < 1) return '';
     const grouped = selectedCards.reduce<Record<string, number>>((all, selection) => {
@@ -93,6 +80,7 @@ export default function WorkshopView() {
     if (source.kind === 'monster' && target.kind === 'monster' && source.monsterName === target.monsterName) {
       return;
     }
+    setSelectedCards([]);
 
     try {
       setError(null);
@@ -309,7 +297,7 @@ export default function WorkshopView() {
               key={monster.name}
               monster={monster}
               selectedCards={selectedCards}
-              showSelectionHint={selectedCards.length > 0 && selectedMonsterName === monster.name}
+              showSelectionHint={selectedCards.length > 0}
               onDropCard={(source, cardName) =>
                 handleDrop(source, { kind: 'monster', monsterName: monster.name }, cardName)
               }
