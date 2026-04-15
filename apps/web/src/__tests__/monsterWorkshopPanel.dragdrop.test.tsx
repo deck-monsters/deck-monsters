@@ -85,7 +85,7 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
     expect(targetSlot).toHaveAttribute('disabled');
   });
 
-  it('treats occupied slot taps as destination taps when a card is selected', () => {
+  it('keeps occupied slot taps as selection toggles for same-source cards', () => {
     const onTapSlot = vi.fn();
     const onSelectCard = vi.fn();
     render(
@@ -107,8 +107,12 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Hit' }));
-    expect(onTapSlot).toHaveBeenCalledWith({ kind: 'monster', monsterName: 'Stonefang' });
-    expect(onSelectCard).not.toHaveBeenCalled();
+    expect(onTapSlot).not.toHaveBeenCalled();
+    expect(onSelectCard).toHaveBeenCalledWith(
+      { kind: 'monster', monsterName: 'Stonefang' },
+      'Hit',
+      'Stonefang:0',
+    );
   });
 
   it('allows multi-select from the same monster source', () => {

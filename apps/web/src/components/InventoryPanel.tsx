@@ -20,9 +20,6 @@ export default function InventoryPanel({
   onSelectCard,
 }: InventoryPanelProps) {
   const location: WorkshopCardLocation = { kind: 'inventory' };
-  const preferSelection =
-    selectedCards.length < 1 || selectedCards[0]?.location.kind === 'inventory';
-
   return (
     <section className="workshop-inventory">
       <header className="workshop-section-header">
@@ -47,8 +44,6 @@ export default function InventoryPanel({
                   selectedCard.location.kind === 'inventory' &&
                   selectedCard.selectionId === selectionId,
               )}
-              hasActiveSelection={selectedCards.length > 0}
-              preferSelection={preferSelection}
               onTapSlot={() => onTapSlot()}
               onSelectCard={onSelectCard}
             />

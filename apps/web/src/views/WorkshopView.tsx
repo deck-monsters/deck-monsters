@@ -56,12 +56,13 @@ export default function WorkshopView() {
     if (selectedCards.length < 1) return null;
     const first = selectedCards[0];
     if (first.location.kind !== 'monster') return null;
+    const firstMonsterName = first.location.monsterName;
     const sameMonster = selectedCards.every(
       (selection) =>
         selection.location.kind === 'monster' &&
-        selection.location.monsterName === first.location.monsterName,
+        selection.location.monsterName === firstMonsterName,
     );
-    return sameMonster ? first.location.monsterName : null;
+    return sameMonster ? firstMonsterName : null;
   }, [selectedCards]);
 
   const selectedSummary = useMemo(() => {
@@ -71,7 +72,7 @@ export default function WorkshopView() {
       return all;
     }, {});
     return Object.entries(grouped)
-      .map(([cardName, count]) => (count > 1 ? `${cardName} ×${count}` : cardName))
+      .map(([cardName, count]) => (count > 1 ? `${cardName} x${count}` : cardName))
       .join(', ');
   }, [selectedCards]);
 
@@ -179,8 +180,19 @@ export default function WorkshopView() {
     }
   }
 
+  function isSameSource(a: WorkshopCardLocation, b: WorkshopCardLocation): boolean {
+    if (a.kind !== b.kind) return false;
+    if (a.kind === 'inventory') return true;
+    return b.kind === 'monster' && a.monsterName === b.monsterName;
+  }
+
   async function handleSlotClick(target: WorkshopCardLocation) {
     if (selectedCards.length < 1 || !roomId) return;
+    const firstSource = selectedCards[0]?.location;
+    if (firstSource && isSameSource(firstSource, target)) {
+      setSelectedCards([]);
+      return;
+    }
     const payload = [...selectedCards];
     setSelectedCards([]);
     try {

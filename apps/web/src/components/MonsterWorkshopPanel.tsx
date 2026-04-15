@@ -37,10 +37,6 @@ export default function MonsterWorkshopPanel({
   onDeletePreset,
 }: MonsterPanelProps) {
   const locked = monster.inEncounter;
-  const preferSelection =
-    selectedCards.length < 1 ||
-    (selectedCards[0]?.location.kind === 'monster' &&
-      selectedCards[0].location.monsterName === monster.name);
   const slots = useMemo(() => {
     const total = Math.max(monster.cardSlots, 1);
     return Array.from({ length: total }, (_, idx) => monster.cards[idx] ?? null);
@@ -95,8 +91,6 @@ export default function MonsterWorkshopPanel({
               selectionId={selectionId}
               isDropActive={false}
               selected={selectedCards.some((selectedCard) => selectedCard.selectionId === selectionId)}
-              hasActiveSelection={selectedCards.length > 0}
-              preferSelection={preferSelection}
               disabled={locked}
               onSelectCard={onSelectCard}
               onTapSlot={onTapSlot}
