@@ -115,6 +115,31 @@ describe('trpc/router card management procedures', () => {
 		expect(result).to.deep.equal({ removedCount: 1, monsterName: 'Stonefang' });
 	});
 
+	it('maps engine mutation failures to BAD_REQUEST errors with message', async () => {
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({
+				characters: { [USER_ID]: { unequipCard: async () => ({}) } },
+			}),
+			getEventBus: async () => ({ publish: () => undefined }),
+			runSerializedEngineWork: async () => {
+				throw new Error('Cannot unequip while in encounter');
+			},
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const err = await caller.game.unequipCard({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			cardName: 'Hit',
+		}).catch((e: unknown) => e);
+
+		expect(err).to.be.instanceOf(TRPCError);
+		expect((err as TRPCError).code).to.equal('BAD_REQUEST');
+		expect((err as TRPCError).message).to.equal('Cannot unequip while in encounter');
+	});
+
 	it('returns transformed loadPreset result', async () => {
 		const loadPreset = async () => ({
 			equipped: 2,

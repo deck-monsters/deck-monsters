@@ -40,6 +40,8 @@ export default function InventoryPanel({
                 selectedCard?.location.kind === 'inventory' &&
                 selectedCard.cardName === cardName
               }
+              hasActiveSelection={Boolean(selectedCard)}
+              onTapSlot={() => onTapSlot()}
               onSelectCard={onSelectCard}
             />
           ))}

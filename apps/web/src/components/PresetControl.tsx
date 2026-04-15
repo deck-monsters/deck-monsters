@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 interface PresetControlProps {
+  monsterName: string;
   presets: Record<string, string[]>;
   onLoad: (presetName: string) => Promise<void> | void;
   onSave: (presetName: string) => Promise<void> | void;
@@ -9,12 +10,15 @@ interface PresetControlProps {
 }
 
 export default function PresetControl({
+  monsterName,
   presets,
   onLoad,
   onSave,
   onDelete,
   disabled = false,
 }: PresetControlProps) {
+  const baseId = useId();
+  const selectId = `${baseId}-${monsterName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'monster'}-preset-select`;
   const [selectedPreset, setSelectedPreset] = useState('');
   const [newPresetName, setNewPresetName] = useState('');
 
@@ -22,12 +26,12 @@ export default function PresetControl({
 
   return (
     <div className="workshop-presets">
-      <label className="workshop-subheading" htmlFor="preset-select">
+      <label className="workshop-subheading" htmlFor={selectId}>
         Presets
       </label>
       <div className="workshop-preset-row">
         <select
-          id="preset-select"
+          id={selectId}
           className="workshop-select"
           value={selectedPreset}
           disabled={disabled}

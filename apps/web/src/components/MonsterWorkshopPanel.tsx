@@ -13,7 +13,7 @@ type MonsterPanelProps = {
     cards: string[];
     presets: Record<string, string[]>;
   };
-  selectedMonsterName: string | null;
+  showSelectionHint: boolean;
   selectedCard: { location: WorkshopCardLocation; cardName: string } | null;
   onDropCard: (source: WorkshopCardLocation, cardName: string) => Promise<void> | void;
   onTapSlot: (target: WorkshopCardLocation) => void;
@@ -25,7 +25,7 @@ type MonsterPanelProps = {
 
 export default function MonsterWorkshopPanel({
   monster,
-  selectedMonsterName,
+  showSelectionHint,
   selectedCard,
   onDropCard,
   onTapSlot,
@@ -80,6 +80,7 @@ export default function MonsterWorkshopPanel({
                 selectedCard.location.monsterName === monster.name &&
                 selectedCard.cardName === cardName
               }
+              hasActiveSelection={Boolean(selectedCard)}
               disabled={locked}
               onSelectCard={onSelectCard}
               onTapSlot={onTapSlot}
@@ -91,13 +92,14 @@ export default function MonsterWorkshopPanel({
 
       <PresetControl
         presets={monster.presets ?? {}}
+        monsterName={monster.name}
         onLoad={onLoadPreset}
         onSave={onSavePreset}
         onDelete={onDeletePreset}
         disabled={locked}
       />
 
-      {selectedMonsterName === monster.name && (
+      {showSelectionHint && (
         <div className="workshop-mobile-hint">
           Tap destination slot or inventory to move selected card.
         </div>

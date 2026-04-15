@@ -246,6 +246,18 @@ function createSilentChannel({
 }
 
 export function createRouter(roomManager: RoomManager) {
+	const runSerializedMutation = async <T>(roomId: string, fn: () => Promise<T>): Promise<T> => {
+		try {
+			return await roomManager.runSerializedEngineWork(roomId, fn);
+		} catch (err) {
+			if (err instanceof TRPCError) throw err;
+			throw new TRPCError({
+				code: 'BAD_REQUEST',
+				message: err instanceof Error ? err.message : 'Operation failed',
+			});
+		}
+	};
+
 	const leaderboardRouter = t.router({
 		roomPlayers: protectedProcedure
 			.input(
@@ -686,7 +698,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, () =>
 					character.unequipCard({
 						channel,
 						cardName: input.cardName,
@@ -747,7 +759,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, () =>
 					character.unequipAll({
 						channel,
 						monsterName: input.monsterName,
@@ -808,7 +820,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, () =>
 					character.equipCards({
 						channel,
 						monsterName: input.monsterName,
@@ -883,7 +895,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, () =>
 					character.moveCard({
 						channel,
 						cardName: input.cardName,
@@ -959,7 +971,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, () =>
 					character.savePreset({
 						channel,
 						monsterName: input.monsterName,
@@ -989,7 +1001,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, () =>
 					character.loadPreset({
 						channel,
 						monsterName: input.monsterName,
@@ -1043,7 +1055,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await roomManager.runSerializedEngineWork(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, () =>
 					character.deletePreset({
 						channel,
 						monsterName: input.monsterName,

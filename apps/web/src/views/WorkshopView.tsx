@@ -167,6 +167,11 @@ export default function WorkshopView() {
         {message && <div className="success-msg">{message}</div>}
         {error && <div className="error-msg">{error}</div>}
         {busy && <div className="workshop-banner">Applying changes…</div>}
+        {selected?.location.kind === 'inventory' && (
+          <div className="workshop-mobile-hint">
+            {selected.cardName} selected. Tap a monster slot to equip, or tap inventory to cancel.
+          </div>
+        )}
 
         <div className="workshop-monster-row">
           {monsters.map((monster) => (
@@ -174,7 +179,7 @@ export default function WorkshopView() {
               key={monster.name}
               monster={monster}
               selectedCard={selected}
-              selectedMonsterName={selectedMonsterName}
+              showSelectionHint={Boolean(selected) && selectedMonsterName === monster.name}
               onDropCard={(source, cardName) =>
                 handleDrop(source, { kind: 'monster', monsterName: monster.name }, cardName)
               }
