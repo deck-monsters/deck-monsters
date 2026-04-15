@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { WorkshopCardLocation } from '../components/CardSlot.js';
+import {
+  groupSelectionByCardName,
+  isSameSource,
+  toggleWorkshopSelection,
+  type WorkshopSelectionState,
+} from '../utils/workshop-selection.js';
 
 type SelectionState = {
   location: WorkshopCardLocation;
@@ -7,36 +13,8 @@ type SelectionState = {
   selectionId: string;
 };
 
-function isSameSource(a: WorkshopCardLocation, b: WorkshopCardLocation): boolean {
-  if (a.kind !== b.kind) return false;
-  if (a.kind === 'inventory') return true;
-  return b.kind === 'monster' && a.monsterName === b.monsterName;
-}
-
-function toggleSelection(
-  previous: SelectionState[],
-  next: { location: WorkshopCardLocation; cardName: string; selectionId: string },
-): SelectionState[] {
-  const existing = previous.find((entry) => entry.selectionId === next.selectionId);
-  if (existing) {
-    return previous.filter((entry) => entry.selectionId !== next.selectionId);
-  }
-
-  if (previous.length < 1) {
-    return [next];
-  }
-
-  const first = previous[0];
-  const sameKind = first.location.kind === next.location.kind;
-  const sameMonsterSource =
-    first.location.kind !== 'monster' ||
-    (next.location.kind === 'monster' && first.location.monsterName === next.location.monsterName);
-
-  if (!sameKind || !sameMonsterSource) {
-    return [next];
-  }
-
-  return [...previous, next];
+function asWorkshopSelection(selection: SelectionState[]): WorkshopSelectionState[] {
+  return selection;
 }
 
 describe('workshop selection state', () => {
@@ -54,7 +32,7 @@ describe('workshop selection state', () => {
       },
     ];
 
-    const next = toggleSelection(previous, {
+    const next = toggleWorkshopSelection(asWorkshopSelection(previous), {
       location: { kind: 'monster', monsterName: 'Stonefang' },
       cardName: 'Blink',
       selectionId: 'Stonefang:0',
@@ -83,7 +61,7 @@ describe('workshop selection state', () => {
       },
     ];
 
-    const next = toggleSelection(previous, {
+    const next = toggleWorkshopSelection(asWorkshopSelection(previous), {
       location: { kind: 'monster', monsterName: 'Stonefang' },
       cardName: 'Heal',
       selectionId: 'Stonefang:1',
@@ -126,5 +104,18 @@ describe('workshop selection state', () => {
         { kind: 'monster', monsterName: 'Stonefang' },
       ),
     ).toBe(true);
+  });
+
+  it('groups selection entries by card name', () => {
+    const grouped = groupSelectionByCardName([
+      { location: { kind: 'inventory' }, cardName: 'Hit', selectionId: 'inventory:0' },
+      { location: { kind: 'inventory' }, cardName: 'Hit', selectionId: 'inventory:1' },
+      { location: { kind: 'inventory' }, cardName: 'Heal', selectionId: 'inventory:2' },
+    ]);
+
+    expect(grouped).toEqual([
+      { cardName: 'Hit', count: 2 },
+      { cardName: 'Heal', count: 1 },
+    ]);
   });
 });

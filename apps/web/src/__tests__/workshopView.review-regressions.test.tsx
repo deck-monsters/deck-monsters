@@ -119,4 +119,18 @@ describe('WorkshopView review regressions', () => {
       expect(screen.queryByText(/1 selected:/i)).not.toBeInTheDocument();
     });
   });
+
+  it('keeps selection banner when clicking same-source destination area', async () => {
+    renderWorkshop();
+    fireEvent.click(screen.getByRole('button', { name: 'Select inventory card' }));
+
+    expect(screen.getByText(/1 selected:/i)).toBeInTheDocument();
+
+    // Clicking an inventory-source target now keeps selection state;
+    // only card taps should toggle/off or swap source.
+    fireEvent.click(screen.getByRole('button', { name: 'Drop on Stonefang' }));
+    await waitFor(() => {
+      expect(screen.queryByText(/1 selected:/i)).not.toBeInTheDocument();
+    });
+  });
 });

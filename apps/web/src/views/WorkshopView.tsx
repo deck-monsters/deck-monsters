@@ -5,8 +5,9 @@ import InventoryPanel from '../components/InventoryPanel.js';
 import MonsterWorkshopPanel from '../components/MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from '../components/CardSlot.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
+import { groupSelectionByCardName, isSameSource, toggleWorkshopSelection } from '../utils/workshop-selection.js';
 
-type SelectionState = {
+export type SelectionState = {
   location: WorkshopCardLocation;
   cardName: string;
   selectionId: string;
@@ -62,14 +63,6 @@ export default function WorkshopView() {
       .map(([cardName, count]) => (count > 1 ? `${cardName} x${count}` : cardName))
       .join(', ');
   }, [selectedCards]);
-
-  function groupSelectionByCardName(selection: SelectionState[]): Array<{ cardName: string; count: number }> {
-    const grouped = selection.reduce<Record<string, number>>((all, entry) => {
-      all[entry.cardName] = (all[entry.cardName] ?? 0) + 1;
-      return all;
-    }, {});
-    return Object.entries(grouped).map(([cardName, count]) => ({ cardName, count }));
-  }
 
   async function handleDrop(
     source: WorkshopCardLocation,
@@ -178,7 +171,7 @@ export default function WorkshopView() {
     if (selectedCards.length < 1 || !roomId) return;
     const firstSource = selectedCards[0]?.location;
     if (firstSource && isSameSource(firstSource, target)) {
-      setSelectedCards([]);
+      setMessage('Selection unchanged. Tap cards to add/remove, then tap another zone to move.');
       return;
     }
     const payload = [...selectedCards];
@@ -192,28 +185,7 @@ export default function WorkshopView() {
   }
 
   function handleSelect(location: WorkshopCardLocation, cardName: string, selectionId: string) {
-    setSelectedCards((previous) => {
-      const existing = previous.find((entry) => entry.selectionId === selectionId);
-      if (existing) {
-        return previous.filter((entry) => entry.selectionId !== selectionId);
-      }
-
-      if (previous.length < 1) {
-        return [{ location, cardName, selectionId }];
-      }
-
-      const first = previous[0];
-      const sameKind = first.location.kind === location.kind;
-      const sameMonsterSource =
-        first.location.kind !== 'monster' ||
-        (location.kind === 'monster' && first.location.monsterName === location.monsterName);
-
-      if (!sameKind || !sameMonsterSource) {
-        return [{ location, cardName, selectionId }];
-      }
-
-      return [...previous, { location, cardName, selectionId }];
-    });
+    setSelectedCards((previous) => toggleWorkshopSelection(previous, { location, cardName, selectionId }));
   }
 
   async function handleUnequipAll(monsterName: string) {
