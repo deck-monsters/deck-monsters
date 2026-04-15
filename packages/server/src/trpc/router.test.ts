@@ -231,6 +231,7 @@ describe('trpc/router card management procedures', () => {
 
 	it('routes game.reorderCards through character.reorderCards', async () => {
 		let receivedInput: Record<string, unknown> | undefined;
+		const publishedEvents: Array<{ type?: unknown; payload?: Record<string, unknown> }> = [];
 		const reorderCards = async (input: Record<string, unknown>) => {
 			receivedInput = input;
 			return {
@@ -246,7 +247,11 @@ describe('trpc/router card management procedures', () => {
 			getGame: async () => ({
 				characters: { [USER_ID]: { reorderCards } },
 			}),
-			getEventBus: async () => ({ publish: () => undefined }),
+			getEventBus: async () => ({
+				publish: (event: { type?: unknown; payload?: Record<string, unknown> }) => {
+					publishedEvents.push(event);
+				},
+			}),
 			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
 		} as unknown as Parameters<typeof createRouter>[0];
 
@@ -266,6 +271,15 @@ describe('trpc/router card management procedures', () => {
 		expect(callInput.fromIndex).to.equal(0);
 		expect(callInput.toIndex).to.equal(1);
 		expect(result).to.deep.equal({
+			monsterName: 'Stonefang',
+			fromIndex: 0,
+			toIndex: 1,
+			cards: ['Heal', 'Hit'],
+		});
+		const cardEquippedEvents = publishedEvents.filter((event) => event.type === 'card.equipped');
+		expect(cardEquippedEvents).to.have.length(1);
+		expect(cardEquippedEvents[0]?.payload).to.deep.equal({
+			operation: 'reorderCards',
 			monsterName: 'Stonefang',
 			fromIndex: 0,
 			toIndex: 1,

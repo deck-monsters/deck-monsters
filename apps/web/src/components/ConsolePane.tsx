@@ -104,6 +104,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const seenRef = useRef(new Set<string>());
   const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
+  const previousConsoleLengthRef = useRef(0);
+  const shouldScrollOnAppendRef = useRef(false);
   const autoScroll = useFeedAutoScroll();
   const ftuxStorageKey = useMemo(
     () => (user?.id ? `ftuxComplete:${user.id}` : 'ftuxComplete'),
@@ -274,16 +276,20 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const cancelFlowMutation = trpc.game.cancelFlow.useMutation();
 
   function addConsoleEvent(ev: ConsoleEvent) {
-    setConsoleEvents(prev => {
-      const next = [...prev, ev];
-      if (autoScroll.shouldFollowRef.current) {
-        requestAnimationFrame(() => {
-          virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-        });
-      }
-      return next;
-    });
+    shouldScrollOnAppendRef.current = autoScroll.shouldFollowRef.current;
+    setConsoleEvents(prev => [...prev, ev]);
   }
+
+  useEffect(() => {
+    const hasNewEvent = consoleEvents.length > previousConsoleLengthRef.current;
+    if (hasNewEvent && shouldScrollOnAppendRef.current) {
+      requestAnimationFrame(() => {
+        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
+      });
+    }
+    shouldScrollOnAppendRef.current = false;
+    previousConsoleLengthRef.current = consoleEvents.length;
+  }, [consoleEvents.length]);
 
   const upsertPendingPrompt = useCallback((prompt: PendingPromptSnapshot) => {
     setConsoleEvents(prev => {

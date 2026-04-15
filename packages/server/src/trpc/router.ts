@@ -55,6 +55,13 @@ type InventorySummary = {
 	};
 };
 
+const reorderCardsResultSchema = z.object({
+	monsterName: z.string().min(1),
+	fromIndex: z.number().int().min(0),
+	toIndex: z.number().int().min(0),
+	cards: z.array(z.string()),
+});
+
 type PublishableEvent = {
 	type: EventType;
 	scope: EventScope;
@@ -1010,26 +1017,15 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const rawResult = await runSerializedMutation(input.roomId, () =>
 					character.reorderCards({
 						channel,
 						monsterName: input.monsterName,
 						fromIndex: input.fromIndex,
 						toIndex: input.toIndex,
 					}),
-				) as { monsterName: string; fromIndex: number; toIndex: number; cards: string[] };
-				eventBus.publish({
-					type: 'card.equipped' as EventType,
-					scope: 'private',
-					targetUserId: ctx.userId,
-					text: '',
-					payload: {
-						operation: 'reorderCards',
-						monsterName: result.monsterName,
-						fromIndex: result.fromIndex,
-						toIndex: result.toIndex,
-					},
-				});
+				);
+				const result = reorderCardsResultSchema.parse(rawResult);
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
@@ -1042,7 +1038,10 @@ export function createRouter(roomManager: RoomManager) {
 					targetUserId: ctx.userId,
 					text: '',
 					payload: {
+						operation: 'reorderCards',
 						monsterName: result.monsterName,
+						fromIndex: result.fromIndex,
+						toIndex: result.toIndex,
 						cards: result.cards,
 					},
 				});
