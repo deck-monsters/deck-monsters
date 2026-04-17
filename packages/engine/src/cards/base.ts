@@ -1,6 +1,7 @@
 import { BaseItem, type BaseItemOptions, type BaseItemStatic } from '../items/base.js';
 import { mapSeries } from '../helpers/promise.js';
 import { ATTACK_PHASE, DEFENSE_PHASE, GLOBAL_PHASE } from '../constants/phases.js';
+import { subEventDelay } from '../helpers/delay-times.js';
 
 export interface CardOptions extends Omit<BaseItemOptions, 'flavors'> {
 	cardClass?: string[];
@@ -83,45 +84,43 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 		return !!(this.cardClass && this.cardClass.includes(cardClass));
 	}
 
-	applyEffects(
+	async applyEffects(
 		player: any,
 		proposedTarget: any,
 		ring: any,
 		activeContestants: any[]
-	): any {
+	): Promise<any> {
 		let card: any = this.clone();
 
 		if (activeContestants) {
-			card = activeContestants.reduce(
-				(contestantCard: any, contestant: any) =>
-					contestant.monster.encounterEffects.reduce((effectCard: any, effect: any) => {
-						const modifiedCard = effect({
-							activeContestants,
-							card: effectCard,
-							phase:
-								contestant.monster === player ? ATTACK_PHASE : DEFENSE_PHASE,
-							player,
-							ring,
-							proposedTarget,
-						});
-						return modifiedCard || effectCard;
-					}, contestantCard),
-				card
-			);
+			for (const contestant of activeContestants) {
+				for (const effect of contestant.monster.encounterEffects) {
+					const modifiedCard = await effect({
+						activeContestants,
+						card,
+						phase:
+							contestant.monster === player ? ATTACK_PHASE : DEFENSE_PHASE,
+						player,
+						ring,
+						proposedTarget,
+					});
+					card = modifiedCard || card;
+				}
+			}
 		}
 
 		if (ring && ring.encounterEffects) {
-			card = ring.encounterEffects.reduce((currentCard: any, effect: any) => {
-				const modifiedCard = effect({
+			for (const effect of ring.encounterEffects) {
+				const modifiedCard = await effect({
 					activeContestants,
-					card: currentCard,
+					card,
 					phase: GLOBAL_PHASE,
 					player,
 					ring,
 					proposedTarget,
 				});
-				return modifiedCard || currentCard;
-			}, card);
+				card = modifiedCard || card;
+			}
 		}
 
 		this.new = card;
@@ -157,17 +156,19 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 		shouldApplyEffects = true
 	): Promise<any> {
 		if (shouldApplyEffects) {
-			const card = this.applyEffects(
+			return this.applyEffects(
 				player,
 				proposedTarget,
 				ring,
 				activeContestants
+			).then(card =>
+				card.play(player, proposedTarget, ring, activeContestants, false)
 			);
-			return card.play(player, proposedTarget, ring, activeContestants, false);
 		}
 
-		return Promise.resolve().then(() => {
+		return Promise.resolve().then(async () => {
 			this.emit('played', { player });
+			await subEventDelay();
 
 			const targets = this.getTargets(
 				player,

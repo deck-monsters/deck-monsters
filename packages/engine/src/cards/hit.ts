@@ -1,4 +1,5 @@
 import { BaseCard, type CardOptions } from './base.js';
+import { subEventDelay } from '../helpers/delay-times.js';
 import { chance } from '../helpers/chance.js';
 import { ABUNDANT } from '../helpers/probabilities.js';
 import { ALMOST_NOTHING } from '../helpers/costs.js';
@@ -130,17 +131,20 @@ export class HitCard extends BaseCard<HitCardOptions> {
 		return damageRoll;
 	}
 
-	effect(player: any, target: any, ring: any, _activeContestants?: any): any {
+	async effect(player: any, target: any, ring: any, _activeContestants?: any): Promise<any> {
 		const { attackRoll, success, strokeOfLuck, curseOfLoki } = this.hitCheck(
 			player,
 			target
 		);
+		await subEventDelay();
 
 		if (success) {
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
+			await subEventDelay();
 			return target.hit(damageRoll.result, player, this);
 		} else if (curseOfLoki) {
 			const damageRoll = this.rollForDamage(target, player);
+			await subEventDelay();
 			return player.hit(damageRoll.result, target, this);
 		}
 
@@ -150,6 +154,7 @@ export class HitCard extends BaseCard<HitCardOptions> {
 			player,
 			target,
 		});
+		await subEventDelay();
 
 		return !target.dead;
 	}

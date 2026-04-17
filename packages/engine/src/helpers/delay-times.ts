@@ -117,11 +117,24 @@ export const mediumDelay = (round = 1): number =>
 export const longDelay = (round = 1): number =>
 	delayFor('long', round);
 
+const DEFAULT_SUB_EVENT_MS = 1000;
+
+export const subEventDelay = (): Promise<void> => {
+	if (skip()) return Promise.resolve();
+	const midpoint = parsePositiveInt(
+		process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS,
+		DEFAULT_SUB_EVENT_MS
+	);
+	const { min, max } = getRangeFromMidpoint(midpoint);
+	return new Promise(r => setTimeout(r, sampleInRange(min, max)));
+};
+
 const delayTimes = {
 	veryShortDelay,
 	shortDelay,
 	mediumDelay,
 	longDelay,
+	subEventDelay,
 	ONE_MINUTE
 };
 

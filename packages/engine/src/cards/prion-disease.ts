@@ -64,7 +64,7 @@ export class PrionDiseaseCard extends BaseCard {
 		}) as any[]).map(({ monster }: any) => monster);
 	}
 
-	effect(player: any, target: any): any {
+	async effect(player: any, target: any): Promise<any> {
 		const hpChange = this.getHPModifier(player, target);
 		let narration = `
 　　∧,,,∧
@@ -102,9 +102,9 @@ export class PrionDiseaseCard extends BaseCard {
 		this.emit('narration', { narration });
 
 		if (hpChange < 0) {
-			return target.hit(-hpChange, player, this);
+			return await target.hit(-hpChange, player, this);
 		} else if (hpChange > 0) {
-			return target.heal(hpChange, player, this);
+			return await target.heal(hpChange, player, this);
 		}
 
 		return true;

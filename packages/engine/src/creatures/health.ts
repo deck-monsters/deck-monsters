@@ -1,6 +1,7 @@
 import { capitalize } from '../helpers/capitalize.js';
 import { MELEE } from '../constants/card-classes.js';
 import { TIME_TO_RESURRECT_MS } from '../constants/timing.js';
+import { subEventDelay } from '../helpers/delay-times.js';
 import type { BaseCreature, CardInstance, HitLogEntry } from './base.js';
 
 // Duck-type guard: real creatures have `emit`; the synthetic `{ identityWithHp: 'mysterious causes' }` object does not.
@@ -9,7 +10,7 @@ function isRealCreature (assailant: unknown): assailant is BaseCreature {
 		typeof (assailant as Record<string, unknown>).emit === 'function';
 }
 
-export function hit (self: BaseCreature, damage = 0, assailant?: BaseCreature, card?: CardInstance): boolean {
+export async function hit (self: BaseCreature, damage = 0, assailant?: BaseCreature, card?: CardInstance): Promise<boolean> {
 	const hitLog: HitLogEntry[] = (self.encounterModifiers.hitLog as HitLogEntry[]) || [];
 	hitLog.unshift({ assailant, damage, card, when: Date.now() });
 	self.encounterModifiers.hitLog = hitLog;
@@ -22,6 +23,7 @@ export function hit (self: BaseCreature, damage = 0, assailant?: BaseCreature, c
 		self.emit('narration', {
 			narration: `${self.givenName} was braced for a hit, and was able to absorb ${damage} damage. ${capitalize(self.pronouns.his)} ac boost is now ${self.encounterModifiers.ac}.`
 		});
+		await subEventDelay();
 	} else {
 		let adjustedDamage = damage;
 
@@ -30,6 +32,7 @@ export function hit (self: BaseCreature, damage = 0, assailant?: BaseCreature, c
 			self.emit('narration', {
 				narration: `${self.givenName} was braced for a hit, and was able to absorb ${self.encounterModifiers.ac} damage. ${capitalize(self.pronouns.his)} ac boost is now 0.`
 			});
+			await subEventDelay();
 			(self.encounterModifiers as Record<string, unknown>).ac = 0;
 		}
 
@@ -38,6 +41,7 @@ export function hit (self: BaseCreature, damage = 0, assailant?: BaseCreature, c
 		self.hp = newHP;
 
 		self.emit('hit', { assailant, card, damage: adjustedDamage, newHP, prevHp: originalHP });
+		await subEventDelay();
 
 		if (originalHP > 0 && self.hp <= 0) {
 			return self.die(assailant);
@@ -47,7 +51,7 @@ export function hit (self: BaseCreature, damage = 0, assailant?: BaseCreature, c
 	return !self.dead;
 }
 
-export function heal (self: BaseCreature, amount = 0): boolean {
+export async function heal (self: BaseCreature, amount = 0): Promise<boolean> {
 	const hp = self.hp + amount;
 	const originalHP = self.hp;
 
@@ -60,6 +64,7 @@ export function heal (self: BaseCreature, amount = 0): boolean {
 	}
 
 	self.emit('heal', { amount, hp, prevHp: originalHP });
+	await subEventDelay();
 
 	if (hp <= 0) {
 		return self.die(self);
@@ -68,7 +73,7 @@ export function heal (self: BaseCreature, amount = 0): boolean {
 	return true;
 }
 
-export function die (self: BaseCreature, assailant?: BaseCreature): boolean {
+export async function die (self: BaseCreature, assailant?: BaseCreature): Promise<boolean> {
 	if (self.hp > 0) self.hp = 0;
 
 	if (isRealCreature(assailant)) {
@@ -76,6 +81,7 @@ export function die (self: BaseCreature, assailant?: BaseCreature): boolean {
 			if (assailant !== (self as unknown as BaseCreature)) assailant.killed = self;
 			self.killedBy = assailant;
 			self.emit('die', { destroyed: self.destroyed, assailant });
+			await subEventDelay();
 		}
 	}
 

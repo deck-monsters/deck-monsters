@@ -167,22 +167,23 @@ Turns immobilized resets on curse of loki.
 
 		return mesmerize
 			.play(player, basilisk, ring, ring.contestants)
-			.then(() => {
+			.then(async () => {
 				expect(basilisk.encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
 				checkSuccessStub.returns({ success: true, strokeOfLuck: true, curseOfLoki: false });
 
-				const card = basilisk.encounterEffects.reduce((currentCard: any, effect: any) => {
-					const modifiedCard = effect({
+				let card = new HitCard();
+				for (const effect of basilisk.encounterEffects) {
+					const modifiedCard = await effect({
 						activeContestants: [basilisk, player],
-						card: currentCard,
+						card,
 						phase: ATTACK_PHASE,
 						player,
 						ring,
 						basilisk,
 					});
-					return modifiedCard || currentCard;
-				}, new HitCard());
+					card = modifiedCard || card;
+				}
 
 				return card.play(basilisk, player, ring, ring.contestants).then(() => {
 					expect(player.hp).to.be.below(playerBeforeHP);

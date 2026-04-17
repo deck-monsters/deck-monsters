@@ -367,9 +367,9 @@ Battles won: ${this.battles.wins}`;
 
 	get destroyed (): boolean { return this.hp < -this.bloodiedValue; }
 
-	hit (damage = 0, assailant?: BaseCreature, card?: CardInstance): boolean { return hit(this, damage, assailant, card); }
-	heal (amount = 0): boolean { return heal(this, amount); }
-	die (assailant?: BaseCreature): boolean { return die(this, assailant); }
+	hit (damage = 0, assailant?: BaseCreature, card?: CardInstance): Promise<boolean> { return hit(this, damage, assailant, card); }
+	heal (amount = 0): Promise<boolean> { return heal(this, amount); }
+	die (assailant?: BaseCreature): Promise<boolean> { return die(this, assailant); }
 	respawn (immediate?: boolean): number { return respawn(this, immediate); }
 
 	get respawnTimeoutBegan (): number {

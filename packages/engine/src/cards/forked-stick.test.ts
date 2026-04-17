@@ -184,24 +184,25 @@ Turns immobilized resets on curse of loki.
 
 		return forkedStick
 			.play(player, target, ring, ring.contestants)
-			.then(() => {
+			.then(async () => {
 				expect((target as any).encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
 				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
 
 				expect((forkedStick as any).getFreedomThreshold(player, target)).to.equal(9);
 
-				const card = (target as any).encounterEffects.reduce((currentCard: any, effect: any) => {
-					const modifiedCard = effect({
+				let card = new HitCard();
+				for (const effect of (target as any).encounterEffects) {
+					const modifiedCard = await effect({
 						activeContestants: [target, player],
-						card: currentCard,
+						card,
 						phase: ATTACK_PHASE,
 						player,
 						ring,
 						target,
 					});
-					return modifiedCard || currentCard;
-				}, new HitCard());
+					card = modifiedCard || card;
+				}
 
 				return card.play(target, player, ring, ring.contestants).then(() => {
 					expect((forkedStick as any).getFreedomThreshold(player, target)).to.equal(6);
@@ -238,24 +239,25 @@ Turns immobilized resets on curse of loki.
 
 		return forkedStick
 			.play(player, target, ring, ring.contestants)
-			.then(() => {
+			.then(async () => {
 				expect((target as any).encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 				expect(getAttackRollImmobilizeSpy.callCount).to.equal(1);
 				expect(getFreedomRollImmobilizeSpy.callCount).to.equal(0);
 				expect(getImmobilizeRollImmobilizeSpy.callCount).to.equal(1);
 				expect(getAttackRollHitSpy.callCount).to.equal(0);
 
-				const card = (target as any).encounterEffects.reduce((currentCard: any, effect: any) => {
-					const modifiedCard = effect({
+				let card = new HitCard();
+				for (const effect of (target as any).encounterEffects) {
+					const modifiedCard = await effect({
 						activeContestants: [target, player],
-						card: currentCard,
+						card,
 						phase: ATTACK_PHASE,
 						player,
 						ring,
 						target,
 					});
-					return modifiedCard || currentCard;
-				}, new HitCard());
+					card = modifiedCard || card;
+				}
 
 				return card.play(target, player, ring, ring.contestants).then(() => {
 					expect(getAttackRollImmobilizeSpy.callCount).to.equal(1);
@@ -292,23 +294,24 @@ Turns immobilized resets on curse of loki.
 
 		return forkedStick
 			.play(player, target, ring, ring.contestants)
-			.then(() => {
+			.then(async () => {
 				expect((target as any).encounterEffects[0].effectType).to.equal('ImmobilizeEffect');
 
 				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
 				(player as any).dead = true;
 
-				const card = (target as any).encounterEffects.reduce((currentCard: any, effect: any) => {
-					const modifiedCard = effect({
+				let card = new HitCard();
+				for (const effect of (target as any).encounterEffects) {
+					const modifiedCard = await effect({
 						activeContestants: [target, player],
-						card: currentCard,
+						card,
 						phase: ATTACK_PHASE,
 						player,
 						ring,
 						target,
 					});
-					return modifiedCard || currentCard;
-				}, new HitCard());
+					card = modifiedCard || card;
+				}
 
 				return card.play(target, player, ring, ring.contestants).then(() => {
 					checkSuccessStub.restore();
