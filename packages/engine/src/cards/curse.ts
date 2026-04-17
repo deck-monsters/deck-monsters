@@ -93,7 +93,7 @@ export class CurseCard extends HitCard {
 		});
 	}
 
-	override effect(player: any, target: any, ring: any, _activeContestants?: any): any {
+	override async effect(player: any, target: any, ring: any, _activeContestants?: any): Promise<any> {
 		const preCursedPropValue = target[this.cursedProp];
 		let curseAmount = Math.abs(this.curseAmount);
 		const postCursedPropValue = preCursedPropValue - curseAmount;
@@ -113,7 +113,7 @@ export class CurseCard extends HitCard {
 			this.emit('narration', {
 				narration: this.getCurseOverflowNarrative(player, target),
 			});
-			target.hit(
+			await target.hit(
 				Math.min(hpCurseOverflow, max(this.damageDice)),
 				player,
 				this
@@ -128,7 +128,7 @@ export class CurseCard extends HitCard {
 		}
 
 		if (this.hasChanceToHit) {
-			return super.effect(player, target, ring);
+			return await super.effect(player, target, ring);
 		}
 		return !target.dead;
 	}

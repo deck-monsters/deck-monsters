@@ -9,8 +9,8 @@ export class DeathCard extends BaseDiscoveryCard {
 		return (this as any).flavor;
 	}
 
-	effect(_environment: any, monster: any): boolean {
-		monster.die(_environment);
+	async effect(_environment: any, monster: any): Promise<boolean> {
+		await monster.die(_environment);
 
 		return !monster.dead;
 	}

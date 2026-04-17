@@ -1,9 +1,10 @@
 import { expect } from 'chai';
 
-import { shortDelay, veryShortDelay } from './delay-times.js';
+import { shortDelay, subEventDelay, veryShortDelay } from './delay-times.js';
 
 const DELAY_ENV_KEYS = [
 	'DECK_MONSTERS_SKIP_DELAYS',
+	'DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS',
 	'DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS',
 	'DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS',
 	'DECK_MONSTERS_DELAY_ROUND_FACTOR_STEP',
@@ -70,5 +71,22 @@ describe('delay-times', () => {
 		Math.random = () => 0.999999;
 		expect(veryShortDelay(9)).to.equal(0);
 		expect(shortDelay(9)).to.equal(0);
+	});
+
+	it('subEventDelay resolves immediately when skipping', async () => {
+		process.env.DECK_MONSTERS_SKIP_DELAYS = '1';
+		const start = Date.now();
+		await subEventDelay();
+		expect(Date.now() - start).to.be.lessThan(50);
+	});
+
+	it('subEventDelay waits ~1000ms by default when not skipping', async () => {
+		process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS = '1000';
+		Math.random = () => 0;
+		const start = Date.now();
+		await subEventDelay();
+		const elapsed = Date.now() - start;
+		expect(elapsed).to.be.at.least(650);
+		expect(elapsed).to.be.at.most(1400);
 	});
 });

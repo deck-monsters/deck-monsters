@@ -89,7 +89,7 @@ export class BlinkCard extends CurseCard {
 		});
 
 		if (attackSuccess.success) {
-			const blinkEffect = ({ card, phase }: any) => {
+			const blinkEffect = async ({ card, phase }: any) => {
 				const { effect } = card;
 
 				if (effect && phase === DEFENSE_PHASE) {
@@ -157,10 +157,10 @@ export class BlinkCard extends CurseCard {
 							who: blinkPlayer,
 						});
 
-						blinkTarget.hit(hpToSteal.result, blinkPlayer, this);
-						blinkPlayer.heal(hpToSteal.result, blinkTarget, this);
+						await blinkTarget.hit(hpToSteal.result, blinkPlayer, this);
+						await blinkPlayer.heal(hpToSteal.result, blinkTarget, this);
 
-						super.effect(blinkPlayer, blinkTarget, ring);
+						await super.effect(blinkPlayer, blinkTarget, ring);
 						blinkPlayer.setModifier(this.cursedProp, xpToSteal.result);
 
 						card.play = () => Promise.resolve(true);

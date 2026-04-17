@@ -228,7 +228,7 @@ ${ongoingDamageText}`;
 
 	getImmobilizeEffect(player: any, target: any, ring: any, _activeContestants?: any): any {
 		const immobilize = this;
-		const ImmobilizeEffect = ({ card, phase }: any) => {
+		const ImmobilizeEffect = async ({ card, phase }: any) => {
 			if (phase === ATTACK_PHASE) {
 				if (!player.dead) {
 					this.emit('effect', {
@@ -270,7 +270,7 @@ ${ongoingDamageText}`;
 							(effect: any) => effect.effectType !== 'ImmobilizeEffect'
 						);
 						if (strokeOfLuck && target !== player) {
-							player.hit(2, target, this);
+							await player.hit(2, target, this);
 						}
 					} else {
 						target.encounterModifiers.immobilizedTurns =
@@ -279,7 +279,7 @@ ${ongoingDamageText}`;
 							this.emit('narration', {
 								narration: `${target.givenName} takes ongoing damage from being ${this.actions.IMMOBILIZED}`,
 							});
-							target.hit(this.ongoingDamage, player, this);
+							await target.hit(this.ongoingDamage, player, this);
 						}
 						card.play = () => Promise.resolve(!target.dead);
 					}

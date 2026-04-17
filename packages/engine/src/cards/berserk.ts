@@ -115,13 +115,13 @@ export class BerserkCard extends HitCard {
 		});
 	}
 
-	effectLoop(
+	async effectLoop(
 		iteration: number,
 		player: any,
 		target: any,
 		ring: any,
 		activeContestants: any
-	): any {
+	): Promise<any> {
 		this.iterations = iteration;
 
 		if (iteration > 2) this.increaseFatigue();
@@ -151,7 +151,7 @@ export class BerserkCard extends HitCard {
 			if (
 				this.cumulativeComboDamage <= Math.floor(target.maxHp / 2)
 			) {
-				target.hit(damage, player, this);
+				await target.hit(damage, player, this);
 			} else {
 				this.emit('narration', {
 					narration: `HUMILIATION! ${iteration} hits`,
@@ -200,12 +200,12 @@ export class BerserkCard extends HitCard {
 			.then(() => !target.dead);
 	}
 
-	override effect(
+	override async effect(
 		player: any,
 		target: any,
 		ring: any,
 		activeContestants?: any
-	): any {
+	): Promise<any> {
 		this.resetCard();
 		this.cumulativeComboDamage = 0;
 		return this.effectLoop(1, player, target, ring, activeContestants);

@@ -198,13 +198,13 @@ describe('./helpers/targeting-strategies.ts', () => {
 			expect(target).to.equal(defaultTarget);
 		});
 
-		it('targets the player who hit you last', () => {
+		it('targets the player who hit you last', async () => {
 			const { playerContestant, level1, contestants } = getContestants();
 
 			const hit = new HitCard();
 
-			playerContestant.monster.hit(1, level1.monster, hit);
-			playerContestant.monster.hit(1, playerContestant.monster, hit);
+			await playerContestant.monster.hit(1, level1.monster, hit);
+			await playerContestant.monster.hit(1, playerContestant.monster, hit);
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,
@@ -217,13 +217,13 @@ describe('./helpers/targeting-strategies.ts', () => {
 	});
 
 	describe('TARGET_PLAYER_WHO_HIT_YOU_LAST_ACCORDING_TO_HANS', () => {
-		it('targets the player who hit you last', () => {
+		it('targets the player who hit you last', async () => {
 			const { playerContestant, level3, contestants } = getContestants();
 
 			const hit = new HitCard();
 
-			playerContestant.monster.hit(1, level3.monster, hit);
-			playerContestant.monster.hit(1, playerContestant.monster, hit);
+			await playerContestant.monster.hit(1, level3.monster, hit);
+			await playerContestant.monster.hit(1, playerContestant.monster, hit);
 
 			const target = targetingStrategies.getTarget({
 				playerContestant,

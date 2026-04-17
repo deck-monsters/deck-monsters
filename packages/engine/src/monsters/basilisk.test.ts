@@ -62,16 +62,16 @@ describe('monsters/basilisk', () => {
 		expect(basilisk.destroyed).to.equal(true);
 	});
 
-	it('can be hit', () => {
+	it('can be hit', async () => {
 		const basilisk = new Basilisk();
 		const beforeHP = basilisk.hp;
 
-		basilisk.hit(1, basilisk);
+		await basilisk.hit(1, basilisk);
 
 		expect(basilisk.hp).to.equal(beforeHP - 1);
 	});
 
-	it('can die from being hit', () => {
+	it('can die from being hit', async () => {
 		const basilisk = new Basilisk();
 		const basiliskProto = Object.getPrototypeOf(basilisk);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
@@ -81,7 +81,7 @@ describe('monsters/basilisk', () => {
 
 		expect(basilisk.dead).to.equal(false);
 
-		basilisk.hit(1, basilisk);
+		await basilisk.hit(1, basilisk);
 
 		expect(dieSpy.calledOnce).to.equal(true);
 		expect(basilisk.dead).to.equal(true);
@@ -89,7 +89,7 @@ describe('monsters/basilisk', () => {
 		dieSpy.restore();
 	});
 
-	it('does not re-die if already dead', () => {
+	it('does not re-die if already dead', async () => {
 		const basilisk = new Basilisk();
 		const basiliskProto = Object.getPrototypeOf(basilisk);
 		const creatureProto = Object.getPrototypeOf(basiliskProto);
@@ -97,11 +97,11 @@ describe('monsters/basilisk', () => {
 
 		expect(dieSpy.called).to.equal(false);
 
-		basilisk.die();
+		await basilisk.die();
 		expect(dieSpy.calledOnce).to.equal(true);
 		expect(basilisk.dead).to.equal(true);
 
-		basilisk.hit(1, basilisk);
+		await basilisk.hit(1, basilisk);
 		expect(dieSpy.calledOnce).to.equal(true);
 		expect(basilisk.hp).to.equal(-1);
 

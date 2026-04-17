@@ -17,11 +17,11 @@ export class BaseDiscoveryCard extends BaseCard {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	override play(environment: any, monster: any): any {
-		return this.effect(environment, monster);
+	override play(environment: any, monster: any): Promise<any> {
+		return Promise.resolve(this.effect(environment, monster));
 	}
 
-	effect(_environment: any, _monster: any): boolean {
+	effect(_environment: any, _monster: any): boolean | Promise<boolean> {
 		return true;
 	}
 }

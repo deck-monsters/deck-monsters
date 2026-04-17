@@ -165,7 +165,7 @@ export class HornGore extends ImmobilizeCard {
 		});
 	}
 
-	gore(player: any, target: any, hornNumber: number): any {
+	async gore(player: any, target: any, hornNumber: number): Promise<any> {
 		const { attackRoll, success, strokeOfLuck, curseOfLoki } = this.hitCheck(
 			player,
 			target,
@@ -177,10 +177,10 @@ export class HornGore extends ImmobilizeCard {
 			const { dexModifier } = player.encounterModifiers;
 			player.encounterModifiers.dexModifier = dexModifier > 0 ? dexModifier + 1 : 1;
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
-			target.hit(damageRoll.result, player, this);
+			await target.hit(damageRoll.result, player, this);
 		} else if (curseOfLoki) {
 			const damageRoll = this.rollForDamage(target, player);
-			player.hit(damageRoll.result, target, this);
+			await player.hit(damageRoll.result, target, this);
 		}
 
 		return { attackRoll, success, strokeOfLuck, curseOfLoki };
@@ -219,17 +219,17 @@ export class HornGore extends ImmobilizeCard {
 		return immobilizeSuccess;
 	}
 
-	override effect(
+	override async effect(
 		player: any,
 		target: any,
 		ring: any,
 		activeContestants: any
-	): any {
+	): Promise<any> {
 		const originalDexModifier = player.encounterModifiers.dexModifier;
 
 		this.resetImmobilizeStrength();
-		const horn1 = this.gore(player, target, 1);
-		const horn2 = this.gore(player, target, 2);
+		const horn1 = await this.gore(player, target, 1);
+		const horn2 = await this.gore(player, target, 2);
 		const chanceToImmobilize = horn1.success || horn2.success;
 
 		player.encounterModifiers.dexModifier = originalDexModifier;

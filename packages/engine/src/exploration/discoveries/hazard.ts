@@ -91,8 +91,8 @@ export class HazardCard extends BaseDiscoveryCard {
 		return { hazards: damageFlavors[number] };
 	}
 
-	effect(_environment: any, monster: any): boolean {
-		monster.hit(this.damage, _environment, this);
+	async effect(_environment: any, monster: any): Promise<boolean> {
+		await monster.hit(this.damage, _environment, this);
 
 		return !monster.dead;
 	}

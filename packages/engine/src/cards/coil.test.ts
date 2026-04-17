@@ -75,7 +75,7 @@ Turns immobilized resets on curse of loki.
 
 		return coil
 			.play(player, target, ring, ring.contestants)
-			.then(() => {
+			.then(async () => {
 				expect((target as any).encounterEffects.length).to.equal(1);
 				expect((target as any).hp).to.be.below(startingTargetHP);
 				ongoingHP = (target as any).hp;
@@ -83,19 +83,20 @@ Turns immobilized resets on curse of loki.
 
 				checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
 
-				const card = (target as any).encounterEffects.reduce((currentCard: any, effect: any) => {
-					const modifiedCard = effect({
+				let card = new HitCard();
+				for (const effect of (target as any).encounterEffects) {
+					const modifiedCard = await effect({
 						activeContestants: [target, player],
-						card: currentCard,
+						card,
 						phase: ATTACK_PHASE,
 						player,
 						ring,
 						target,
 					});
-					return modifiedCard || currentCard;
-				}, new HitCard());
+					card = modifiedCard || card;
+				}
 
-				return card.play(target, player, ring, ring.contestants).then(() => {
+				return card.play(target, player, ring, ring.contestants).then(async () => {
 					expect((target as any).hp).to.equal(ongoingHP - 1);
 					ongoingHP = (target as any).hp;
 					expect((player as any).hp).to.equal(startingPlayerHP);
@@ -103,17 +104,18 @@ Turns immobilized resets on curse of loki.
 
 					checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 
-					const newcard = (target as any).encounterEffects.reduce((currentCard: any, effect: any) => {
-						const modifiedCard = effect({
+					let newcard = new HitCard();
+					for (const effect of (target as any).encounterEffects) {
+						const modifiedCard = await effect({
 							activeContestants: [target, player],
-							card: currentCard,
+							card: newcard,
 							phase: ATTACK_PHASE,
 							player,
 							ring,
 							target,
 						});
-						return modifiedCard || currentCard;
-					}, new HitCard());
+						newcard = modifiedCard || newcard;
+					}
 
 					return newcard.play(target, player, ring, ring.contestants).then(() => {
 						checkSuccessStub.restore();

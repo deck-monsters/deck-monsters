@@ -95,7 +95,7 @@ export class BoostCard extends BaseCard<BoostCardOptions> {
 		return `${target.givenName}'s ${this.boostedProp} boosts have been maxed out. Boost will be granted to hp instead.`;
 	}
 
-	effect(player: any, target: any): any {
+	async effect(player: any, target: any): Promise<any> {
 		const preBoostedPropValue = target[this.boostedProp];
 		let { boostAmount } = this;
 		const postBoostedPropValue = preBoostedPropValue + boostAmount;
@@ -115,7 +115,7 @@ export class BoostCard extends BaseCard<BoostCardOptions> {
 			this.emit('narration', {
 				narration: this.getBoostOverflowNarrative(player, target),
 			});
-			player.heal(hpBoostOverflow, target, this);
+			await player.heal(hpBoostOverflow, target, this);
 		}
 
 		if (boostAmount > 0) {
