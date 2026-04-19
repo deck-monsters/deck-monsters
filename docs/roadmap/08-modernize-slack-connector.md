@@ -1,8 +1,8 @@
 # Modernize Slack Connector (Jane)
 
 **Category**: Maintenance / Connector  
-**Priority**: Low (deferred — ships after Discord and web connectors are stable)  
-**Status**: Not started
+**Priority**: Deferred indefinitely  
+**Status**: Not started — see roadmap README for rationale
 
 ## Background: Jane
 
