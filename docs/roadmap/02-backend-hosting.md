@@ -2,7 +2,7 @@
 
 **Category**: Infrastructure  
 **Priority**: High (required by all connector work)  
-**Status**: Mostly complete — hosting decision made; event bus, engine refactoring, S3 removal, Drizzle schema, Supabase migration, `StateStore`, `RoomManager`, tRPC router, Fastify server, Docker, deployment docs, and `room_events` persistence are done. Remaining: create Supabase project (manual) and configure Railway (manual).
+**Status**: Done — all infrastructure is live in production. Supabase project provisioned, Railway deployment running, deck-monsters.com live. Event bus, engine refactoring, Drizzle schema, RoomManager, tRPC router, Fastify server, Docker multi-stage build, and all deployment docs complete.
 
 ## Background
 
@@ -383,7 +383,7 @@ PORT                       # HTTP + WebSocket port (Railway injects this; defaul
 ### Database and State Storage — Done
 - [x] ~~Add Drizzle ORM + `drizzle-kit` for migrations~~ (`packages/server/src/db/schema.ts`, `packages/server/drizzle.config.ts`)
 - [x] ~~Define initial database schema~~ (`profiles`, `user_connectors`, `rooms`, `room_events`, `room_members` — in `db/schema.ts` + `supabase/migrations/20260101000000_initial.sql`)
-- [ ] Create Supabase project and configure connection *(requires manual setup — see `docs/deployment.md`)*
+- [x] ~~Create Supabase project and configure connection~~ (production Supabase project live)
 - [x] ~~Set up database trigger to create `profiles` row on Supabase Auth signup~~ (in initial migration SQL)
 - [x] ~~Implement `StateStore` interface in the engine~~ (`packages/engine/src/types/state-store.ts`, exported from `@deck-monsters/engine`)
 - [x] ~~Implement Postgres adapter for `StateStore`~~ (`packages/server/src/state-store.ts` — `PostgresStateStore` writes to `rooms.state_blob`)
@@ -400,7 +400,7 @@ PORT                       # HTTP + WebSocket port (Railway injects this; defaul
 - [x] ~~Set up Supabase CLI for local development~~ (`supabase/config.toml`, `supabase/migrations/` directory created; run `supabase start` to boot local stack)
 - [x] ~~Evaluate Supabase CLI migrations alongside `drizzle-kit`~~ (decided: Supabase CLI owns DDL via `supabase/migrations/`; Drizzle is for type-safe queries only — `drizzle.config.ts` points to the same migrations folder)
 - [x] ~~Write deployment docs for Railway~~ (`docs/deployment.md` — full guide: Supabase project setup, schema push, auth providers, Railway deploy, env vars, health check)
-- [ ] Configure Railway environment variables and deploy *(requires manual Railway + Supabase project setup)*
+- [x] ~~Configure Railway environment variables and deploy~~ (running in production at deck-monsters.com)
 
 ## Open Questions
 

@@ -2,7 +2,7 @@
 
 **Category**: Feature  
 **Priority**: High (required for web and multi-server Discord)  
-**Status**: Phase 1 complete (server code) — connector integration and web UI deferred
+**Status**: Done — server code, web UI (room lobby, room settings, invite codes), and Discord room commands (`/create-room`, `/join-room`) all shipped. Slack deferred indefinitely.
 
 ## Background
 
@@ -95,8 +95,8 @@ This mapping lives in the connector, not the database schema — a room is just 
 - [x] Design and implement `RoomManager` class (lazy loading, state restore, event bus wiring)
 - [x] Add room CRUD to the tRPC API (create, join, leave, list, info, delete)
 - [x] Implement lazy loading / unloading of rooms (`_getOrLoad`, `unloadRoom`, `sweepIdleRooms`)
-- [ ] Add room management UI to web app _(deferred → roadmap 06)_
-- [ ] Add room join/leave/create commands to Discord connector _(deferred → roadmap 05)_
+- [x] ~~Add room management UI to web app~~ (room lobby, room settings, invite code copy — live at deck-monsters.com)
+- [x] ~~Add room join/leave/create commands to Discord connector~~ (`/create-room` and `/join-room` slash commands implemented)
 - [ ] Add room management to Slack connector _(deferred → roadmap 08)_
 - [x] Implement invite code generation and redemption
 - [x] Handle room cleanup (idle rooms: `sweepIdleRooms` with 10-minute sweep interval; owner leaves: FORBIDDEN guard in `leaveRoom`; owner deletes: `deleteRoom`)

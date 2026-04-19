@@ -2,7 +2,7 @@
 
 **Category**: Feature / Engine + Web  
 **Priority**: High  
-**Status**: Proposed  
+**Status**: Done — card workshop shipped at `/workshop`  
 **Related**: `06a-web-app.md` (two-pane terminal), `01-modernize-stack.md` (TypeScript engine)
 
 ---
@@ -333,41 +333,41 @@ Both paths converge on the same Beastmaster methods. The web workshop is not a p
 
 ### Engine
 
-- [ ] `lookAtInventory` and `lookAtCardInventory` methods on Beastmaster
-- [ ] `unequipCard` (single + count form) and `unequipAll` methods
-- [ ] `moveCard` and `moveCards` methods
-- [ ] `savePreset`, `loadPreset`, `deletePreset`, `getPresets` methods
-- [ ] `MAX_PRESETS` constant
-- [ ] `card.equipped` and `card.presetLoaded` event types
-- [ ] `UNEQUIP_CARD_REGEX`, `UNEQUIP_ALL_REGEX`, `MOVE_CARD_REGEX` command regexes in `monster.ts`
-- [ ] New `presets.ts` command file with save/load/delete/look-at handlers
-- [ ] `LOOK_AT_REGEX` update in `look-at.ts` for inventory / card inventory / all cards
-- [ ] `COMMAND_CATALOG` additions for help text
-- [ ] Tests for all new Beastmaster methods
-- [ ] Tests for all new command regexes
+- [x] ~~`lookAtInventory` and `lookAtCardInventory` methods on Beastmaster~~
+- [x] ~~`unequipCard` (single + count form) and `unequipAll` methods~~
+- [x] ~~`moveCard` and `moveCards` methods~~
+- [x] ~~`savePreset`, `loadPreset`, `deletePreset`, `getPresets` methods~~
+- [x] ~~`MAX_PRESETS` constant~~
+- [x] ~~`card.equipped` and `card.presetLoaded` event types~~
+- [x] ~~`UNEQUIP_CARD_REGEX`, `UNEQUIP_ALL_REGEX`, `MOVE_CARD_REGEX` command regexes in `monster.ts`~~
+- [x] ~~New `presets.ts` command file with save/load/delete/look-at handlers~~
+- [x] ~~`LOOK_AT_REGEX` update in `look-at.ts` for inventory / card inventory / all cards~~
+- [x] ~~`COMMAND_CATALOG` additions for help text~~
+- [x] ~~Tests for all new Beastmaster methods~~
+- [x] ~~Tests for all new command regexes~~
 
 ### Server
 
-- [ ] `game.myInventory` query procedure
-- [ ] `game.unequipCard` mutation procedure
-- [ ] `game.unequipAll` mutation procedure
-- [ ] `game.equipCards` mutation procedure (with `replaceAll` flag)
-- [ ] `game.moveCard` mutation procedure
-- [ ] `game.savePreset` mutation procedure
-- [ ] `game.loadPreset` mutation procedure
-- [ ] `game.deletePreset` mutation procedure
-- [ ] Tests for all new tRPC procedures
+- [x] ~~`game.myInventory` query procedure~~
+- [x] ~~`game.unequipCard` mutation procedure~~
+- [x] ~~`game.unequipAll` mutation procedure~~
+- [x] ~~`game.equipCards` mutation procedure (with `replaceAll` flag)~~
+- [x] ~~`game.moveCard` mutation procedure~~
+- [x] ~~`game.savePreset` mutation procedure~~
+- [x] ~~`game.loadPreset` mutation procedure~~
+- [x] ~~`game.deletePreset` mutation procedure~~
+- [x] ~~Tests for all new tRPC procedures~~
 
 ### Web
 
-- [ ] `WorkshopView` route + AppShell nav link
-- [ ] `MonsterWorkshopPanel` component
-- [ ] `CardSlot` component (draggable card + empty slot variant)
-- [ ] `InventoryPanel` component
-- [ ] `PresetControl` component
-- [ ] `useDeckWorkshop` hook (tRPC integration + optimistic updates)
-- [ ] `abbreviateCardName` utility
-- [ ] HTML5 Drag and Drop + mobile tap-to-select fallback
-- [ ] `inRing` warning banner + slot locking
-- [ ] Optimistic UI updates + error toast + snap-back
-- [ ] CSS: card color coding by class, drop-valid animation, incompatible-target overlay
+- [x] ~~`WorkshopView` route + AppShell nav link~~
+- [x] ~~`MonsterWorkshopPanel` component~~
+- [x] ~~`CardSlot` component (draggable card + empty slot variant)~~
+- [x] ~~`InventoryPanel` component~~
+- [x] ~~`PresetControl` component~~
+- [x] ~~`useDeckWorkshop` hook (tRPC integration + optimistic updates)~~
+- [x] ~~`abbreviateCardName` utility~~
+- [x] ~~HTML5 Drag and Drop + mobile tap-to-select fallback~~
+- [x] ~~`inRing` warning banner + slot locking~~
+- [x] ~~Optimistic UI updates + error toast + snap-back~~
+- [x] ~~CSS: card color coding by class, drop-valid animation, incompatible-target overlay~~
