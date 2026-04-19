@@ -2,9 +2,42 @@
 
 **Category**: Bug / Tech Debt  
 **Priority**: High (fix before major new development)  
-**Status**: Mostly complete — 12 of 14 items resolved (PR [#286](https://github.com/deck-monsters/deck-monsters/pull/286) and TypeScript migration). Two remaining items are low-priority cleanup.
+**Status**: Mostly complete — 12 of 14 original items resolved (PR [#286](https://github.com/deck-monsters/deck-monsters/pull/286) and TypeScript migration). Two new active bugs added (fight log sync, console history).
 
-## Known Bugs
+## Active Bugs
+
+### 15. Fight log not updating with new data — HIGH
+
+The fight log page (web app `/room/:roomId/fights`) shows the correct state at initial load but does not reflect new fights as they complete. After a fight finishes, the log remains stale until the user manually refreshes.
+
+Likely causes:
+- The tRPC subscription or Supabase Realtime listener for `fight_summaries` is not wired to the fight log query cache, so new rows are written to the database but the client is never notified
+- Alternatively, the `FightSummaryWriter` is writing correctly but the tRPC procedure is cached without invalidation on insert
+
+**Investigation path**: Confirm `fight_summaries` rows appear in the DB immediately after a fight ends. If yes, the bug is client-side (subscription not invalidating the query). If not, trace from `FightSummaryWriter` through the event bus to the DB write.
+
+**Status**: Open.
+
+---
+
+### 16. Console pane missing historical data after returning — HIGH
+
+When a player navigates away from the web app and returns (or reconnects after a disconnect), the console pane is empty — it only shows events that arrive after reconnection. Events that occurred while the player was absent are not replayed.
+
+The reconnection-with-replay path was planned in `06a-web-app.md` (Phase 1: "reconnection with replay") but is apparently not delivering historical events in practice.
+
+Likely causes:
+- The replay cursor (last-seen event ID or timestamp) is not being sent on reconnect, so the server doesn't know what to replay
+- Or the server-side replay query is not being triggered when a WebSocket/SSE client reconnects
+- The tRPC subscription for room events may start from "now" rather than from the last-received event
+
+**Investigation path**: Check the WebSocket reconnect handler in the web app — does it send a `since` parameter? Check the tRPC subscription procedure — does it accept and honor a `since` cursor? If both exist, check that they are wired together.
+
+**Status**: Open.
+
+---
+
+## Known Bugs (original list)
 
 ### 1. "Barely blocked" message fires incorrectly (upstream #181)
 
@@ -97,6 +130,8 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 
 ## Tasks
 
+- [ ] Fix fight log not updating after new fights complete (#15)
+- [ ] Fix console pane not replaying history on reconnect (#16)
 - [ ] Audit and differentiate `DMG.md` vs `CARDS.md`; add how-to-run section (upstream #265) — build headers differentiated, full content pass still todo
 - [ ] Continue incremental decomposition of `creatures/base.ts`
 - [x] ~~Fix "barely blocked" threshold~~ (already correct in TS migration)

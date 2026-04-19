@@ -1,8 +1,8 @@
 # Native Mobile App (iOS + Android)
 
 **Category**: Feature / Connector  
-**Priority**: Low (deferred — ships after Discord and web connectors are stable)  
-**Status**: Not started
+**Priority**: Deferred indefinitely  
+**Status**: Not started — see roadmap README for rationale
 
 ## Overview
 

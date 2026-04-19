@@ -2,198 +2,252 @@
 
 ## Project Overview
 
-Deck Monsters is a turn-based monster-battling RPG game engine (think Pokémon meets deck-building). Players spawn monsters, equip them with action card decks, and send them into an auto-battling arena. The engine is platform-agnostic and designed to be driven by external connector adapters (Slack, Discord, web, mobile, etc.).
+Deck Monsters is a turn-based monster-battling RPG game engine (think Pokémon meets deck-building). Players spawn monsters, equip them with action card decks, and send them into an auto-battling arena. The engine is platform-agnostic and driven by external connector adapters (Discord, web, and others).
 
-Originally built to run inside a private Slack workspace. The project is being revived with modern infrastructure, new connectors (Discord, web, mobile), auth, and multi-group/room support.
+Originally built to run inside a private Slack workspace (via a Hubot bot named Jane). The project has been revived with a modern TypeScript monorepo, Supabase + Railway hosting, Discord and web connectors, auth, and multi-room support.
 
 ## Repository Layout
 
+pnpm monorepo managed by Turborepo:
+
 ```
-index.js               # Public API: Game, restoreGame, resetGame, getOptions
-game.js                # Main Game class (orchestrator, state serialization)
-commands/              # Natural language command parser (handleCommand dispatch)
-cards/                 # 60+ action card types; base.js is the card base class
-monsters/              # 5 monster types (Basilisk, Gladiator, Jinn, Minotaur, Weeping Angel)
-creatures/base.js      # BaseCreature — core combat/stat logic (~2000 lines, monolithic)
-characters/            # Player character (Beastmaster) + hydration helpers
-items/                 # 25+ items: potions, scrolls, store inventory
-ring/                  # Battle arena (2–12 monsters, auto-battle every 60s)
-exploration/           # Monster exploration system (hazards, death cards)
-channel/               # ChannelManager: message queue + batching for adapters
-helpers/               # XP, leveling, targeting, delay-times, AWS backup
-constants/             # Stats, coin values, creature types, card classes
-announcements/         # Message generation for game events
-build/                 # Doc generation scripts (card catalog, probabilities)
-shared/                # BaseClass, test utilities (test-setup.js)
+packages/
+  engine/          # @deck-monsters/engine — core game logic (TypeScript, ESM)
+  server/          # @deck-monsters/server — Fastify + tRPC API, RoomManager, event persistence
+  connector-discord/  # @deck-monsters/connector-discord — Discord.js v14 slash commands
+  harness/         # @deck-monsters/harness — CLI battle harness and integration test scenarios
+  shared-ui/       # @deck-monsters/shared-ui — CSS custom properties, shared theme tokens
+
+apps/
+  web/             # @deck-monsters/web — Vite + vanilla TS web app (terminal aesthetic)
+
+supabase/          # Supabase migrations and local dev config
+scripts/           # Repo-level setup scripts (setup:local, etc.)
+docs/              # Architecture docs, roadmap, archive
+  roadmap/         # All roadmap docs + README.md index
+  room-scoping.md  # Critical architectural rule — read this
+```
+
+### Engine source layout (`packages/engine/src/`)
+
+```
+index.ts           # Public API: Game, restoreGame, resetGame, getOptions
+game.ts            # Main Game class (orchestrator, state serialization)
+commands/          # Text command parser: monster, character, look-at, store, presets, history, help
+cards/             # 60+ action card types; base class in cards/base.ts
+monsters/          # 5 monster types (Basilisk, Gladiator, Jinn, Minotaur, Weeping Angel)
+creatures/base.ts  # BaseCreature — core combat/stat logic (~977 lines, being decomposed)
+characters/        # Beastmaster player character + hydration helpers
+items/             # 25+ items: potions, scrolls, store inventory
+ring/              # Battle arena (2–12 monsters, auto-battle every 60s)
+channel/           # ChannelManager: message queue + batching for adapters
+helpers/           # XP, leveling, targeting, timing, AWS backup
+constants/         # Stats, coin values, creature types, card classes, timing
+announcements/     # Message generation for game events
+events/            # GameEvent types
+schemas/           # Zod schemas for state deserialization and validation
 ```
 
 ## Tech Stack
 
-**Current (legacy JS)**
-- **Runtime**: Node.js v8 (EOL — being upgraded to v22)
-- **Key libs**: bluebird (promises), lodash (utilities), roll (dice), node-emoji, moment, word-wrap
-- **State persistence**: gzip+base64 → external adapter callback + AWS S3 backup (throttled 5 min)
-- **Testing**: Mocha via `@salesforce-mc/devtest` (internal Salesforce package — being replaced)
-- **Linting**: ESLint with Salesforce SFMC config (being replaced)
-
-**Target (TypeScript revival)**
-- **Language**: TypeScript (strict mode, ESM, Node.js v22)
-- **Testing**: Vitest (Jest-compatible API, native TS + ESM support, much faster)
+- **Runtime**: Node.js v22 LTS
+- **Language**: TypeScript (strict mode, ESM throughout)
 - **Monorepo**: pnpm workspaces + Turborepo
-- **Database**: Drizzle ORM + PostgreSQL
-- **API**: tRPC (type-safe end-to-end for web + mobile clients)
-- **Runtime validation**: Zod (state deserialization, incoming command validation)
+- **Database**: Supabase (Postgres) + Drizzle ORM
+- **API**: Fastify + tRPC (type-safe end-to-end)
+- **Auth**: Supabase Auth — JWT validation, Discord OAuth, web email/password
+- **Hosting**: Railway (server + Discord connector), Supabase (DB + Auth + Realtime)
+- **Testing**: Mocha (engine, server, discord, harness) + Vitest (web)
 - **Linting**: `@typescript-eslint` + Prettier
-
-## How the Game Engine Works
-
-### Adapter Pattern
-The engine has **no Slack/Discord/HTTP code**. Connectors instantiate the game and provide two things:
-1. A `publicChannel` callback — the engine calls this to broadcast ring events to everyone
-2. A `privateChannel` callback — the engine calls this to DM a specific player
-
-Both callbacks share the same signature: `({ announce, question?, choices?, delay? }) => Promise`
-
-- `{ announce }` — fire-and-forget message (most calls)
-- `{ question, choices }` — interactive prompt; the connector must ask the user and resolve with their answer. Used during multi-step flows like equipping a monster or shopping.
-
-```javascript
-const { Game, restoreGame } = require('deck-monsters')
-
-// publicChannel is called for ring broadcasts
-const publicChannel = ({ announce }) => postToChannel('#ring', announce)
-
-// privateChannel is called for DMs; must also handle interactive questions
-const privateChannel = ({ announce, question, choices }) => {
-  if (announce) return sendDM(userId, announce)
-  if (question) return promptUser(userId, question, choices) // must return Promise<answer>
-}
-
-// Initialize
-const game = savedState
-  ? restoreGame(publicChannel, savedState, log)
-  : new Game(publicChannel, {}, log)
-
-// Wire up state persistence
-game.saveState = (state) => db.save(state) // called automatically on stateChange
-
-// Dispatch a command (chat-style connectors)
-const action = game.handleCommand({ command: 'send a monster to the ring' })
-if (action) await action({ channel: privateChannel, channelName, isAdmin, isDM, user })
-```
-
-### `handleCommand` — now in the engine (`commands/`)
-
-`game.handleCommand({ command })` parses a natural language string and returns an action function, or `null` if the command isn't recognized. The action function is then called with `{ channel, channelName, isAdmin, isDM, user }`:
-
-The command system is modular — handlers live in `commands/` and are loaded at startup via `loadHandlers()`:
-- `commands/monster.js` — spawn, equip, ring, explore, dismiss, revive, look at monster(s)
-- `commands/character.js` — look at character, rankings, edit character
-- `commands/look-at.js` — look at card, item, handbook, ring
-- `commands/store.js` — buy, sell
-
-An **alias** feature exists for admin debugging: `"<command> as <name>"` runs as a different character (admin-only).
-
-New connectors can register additional commands via `registerHandler(matcher, action)`.
-
-### `getCharacter()` — gets or creates a player's Character
-
-`game.getCharacter({ channel, id, name, type, gender, icon })` resolves with a Character object. Connectors using `handleCommand` don't need to call this directly — the command system calls it internally. Direct calls are only needed if bypassing the command system (e.g., REST endpoints mapping individual actions).
-
-### State Serialization
-
-```javascript
-// `game.saveState` is a getter/setter pair:
-
-// Setting it stores the save function:
-game.saveState = (base64GzipString) => db.save(base64GzipString)
-
-// Getting it returns a function that serializes and calls the stored function:
-//   zlib.gzipSync(JSON.stringify(game)) → base64 → stateSaveFunc() + aws.save()
-// The engine calls this.saveState() automatically on every 'stateChange' event.
-
-// Restore from saved state:
-restoreGame(publicChannel, base64GzipString, logger)
-// Hydrates characters → monsters → cards → items recursively
-```
-
-Jane stored state in Hubot Brain (Redis) as primary storage; S3 was a safety-net backup. For the revival, Postgres is the primary store and S3 backup is optional.
-
-### Game Loop
-1. Monsters join ring → `ring.addMonster()`
-2. ≥2 monsters triggers `startFightTimer()` (encounter every 60s)
-3. Each encounter: monsters play next card in their deck (wraps when exhausted)
-4. Cards resolve: 1d20 + bonuses vs AC for hit, then damage/effects
-5. Victory/Loss/Flee events → XP + coins awarded, possible card drop
-6. Ring loops; players can swap/update decks between fights
-
-### Channel Manager
-The engine queues and batches outgoing messages (3000-char max per batch) to respect platform rate limits. The connector's `publicChannel` callback is called with already-batched strings. Jane additionally added a 1200ms delay between messages; new connectors should implement similar pacing appropriate to their platform.
+- **CI**: GitHub Actions — typecheck + lint + tests on every push and PR
 
 ## Development Commands
 
 ```bash
-# Current (JS/legacy)
-npm test              # Run all Mocha tests (requires @salesforce-mc/devtest)
-node ./build          # Regenerate CARDS.md / DMG.md / probability docs
-node battlefield.js   # CLI demo (ring combat)
+# Build all packages (required before first test run on a fresh checkout)
+pnpm build
 
-# Target (TypeScript/pnpm monorepo)
-pnpm test             # vitest run (all packages)
-pnpm test:watch       # vitest --watch
-pnpm test:coverage    # vitest run --coverage
-pnpm build            # tsc --build (all packages via Turborepo)
+# Test everything
+pnpm test
+
+# Per-package
+pnpm --filter @deck-monsters/engine test
+pnpm --filter @deck-monsters/server test
+pnpm --filter @deck-monsters/web test       # Vitest
+
+# Watch mode (web)
+pnpm --filter @deck-monsters/web test:watch
+
+# Type-check all packages
+pnpm typecheck
+
+# Lint
+pnpm lint
+
+# Local Supabase stack (requires Docker)
+pnpm setup:local --skip-install   # starts Supabase, runs migrations, seeds test user, writes .env.local files
+
+# Start server + web app (after sourcing env)
+set -a && source .env.local && set +a
+pnpm --filter @deck-monsters/server dev   # port 3000
+pnpm --filter @deck-monsters/web dev      # port 5173
+
+# Regenerate CARDS.md / DMG.md / probability docs
+node ./build
 ```
+
+> **Important**: `pnpm build` must run before `pnpm test` on a fresh checkout. The server, discord, and web packages import from `@deck-monsters/engine` via its `dist/` output.
 
 ## Environment Variables
 
+### Server (`packages/server`)
+
 | Variable | Purpose |
 |----------|---------|
-| `HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID` | S3 backup credentials |
-| `HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` | S3 backup credentials |
+| `DATABASE_URL` | Postgres connection string |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_PUBLISHABLE_KEY` | Supabase publishable API key |
+| `SUPABASE_SECRET_KEY` | Supabase service role key |
+| `CONNECTOR_SERVICE_TOKEN` | Inter-service auth token (Discord connector → server) |
+| `PORT` | Server port (default: 3000) |
+| `CORS_ORIGINS` | Comma-separated allowed origins (default: `http://localhost:5173`) |
 
-Note: AWS env var naming is Hubot-legacy and should be generalized.
+### Web app (`apps/web`)
 
-## Known Issues / Technical Debt
+| Variable | Purpose |
+|----------|---------|
+| `VITE_SUPABASE_URL` | Same as `SUPABASE_URL` but Vite-prefixed |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Same as `SUPABASE_PUBLISHABLE_KEY` but Vite-prefixed |
+| `VITE_SERVER_URL` | tRPC server URL (blank = same origin via Vite proxy) |
 
-- `creatures/base.js` is ~2000 lines and handles too many concerns — split into attack, defense, items
-- `cards/hit.js` has an unused `curseOfLoki` variable (dead code or incomplete feature)
-- `DMG.md` and `CARDS.md` are near-duplicates — consolidate
-- Battle arrays are not persisted (`ring.battles = []` — history lost on restart)
-- AWS env var names are Hubot-specific (`HUBOT_DECK_MONSTERS_*`); needs generalization
-- Node.js 8 is EOL — upgrading to v22 LTS
-- No CI configuration exists
-- `@salesforce-mc/devtest` is an internal Salesforce test runner — being replaced with Vitest
+### Engine (optional)
 
-## Archived Features
+| Variable | Purpose |
+|----------|---------|
+| `DECK_MONSTERS_AWS_ACCESS_KEY_ID` | S3 backup credentials (optional) |
+| `DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` | S3 backup credentials (optional) |
 
-- **Exploration system** (`exploration/`) — monster expeditions (find loot, hazards, death cards). Archived for the revival; the core game is the ring combat. See `docs/archive/exploration-system.md`.
+> The old `HUBOT_DECK_MONSTERS_AWS_*` names are still accepted with a deprecation warning for backward compatibility.
+
+## How the Game Engine Works
+
+### Adapter Pattern
+
+The engine has no Discord/HTTP/database code. Connectors instantiate the game and provide two callbacks:
+
+1. `publicChannel` — broadcasts ring events to the whole room
+2. `privateChannel` — sends a DM to a specific player; also handles interactive prompts
+
+Both share the same signature: `({ announce, question?, choices?, delay? }) => Promise<string | void>`
+
+- `{ announce }` — fire-and-forget message
+- `{ question, choices }` — interactive prompt; the connector must present choices to the user and resolve with their answer
+
+```ts
+import { Game, restoreGame } from '@deck-monsters/engine'
+
+const publicChannel = ({ announce }) => postToChannel(roomChannel, announce)
+
+const privateChannel = ({ announce, question, choices }) => {
+  if (announce) return sendDM(userId, announce)
+  if (question) return promptUser(userId, question, choices) // resolves with user's answer
+}
+
+const game = savedState
+  ? restoreGame(publicChannel, savedState, log)
+  : new Game(publicChannel, {}, log)
+
+game.saveState = (state) => db.save(state) // engine calls this on every stateChange
+
+// Dispatch a text command
+const action = game.handleCommand({ command: 'send a monster to the ring' })
+if (action) await action({ channel: privateChannel, channelName, isAdmin, isDM, user })
+```
+
+### `handleCommand`
+
+`game.handleCommand({ command })` parses a natural language string and returns an action function, or `null`. Command handlers live in `packages/engine/src/commands/`:
+
+- `monster.ts` — spawn, equip, ring, dismiss, revive, look at monster(s)
+- `character.ts` — look at character, rankings, edit character
+- `look-at.ts` — look at card, item, handbook, ring
+- `store.ts` — buy, sell
+- `presets.ts` — save/load/delete deck presets
+- `history.ts` — catch-up fight history text command
+- `help.ts` — in-game help
+- `catalog.ts` — card catalog lookup
+
+Admin alias feature: `"<command> as <name>"` runs a command as another character (admin-only). New connectors can register additional commands via `registerHandler(matcher, action)`.
+
+### Game Loop
+
+1. Monsters join ring → `ring.addMonster()`
+2. ≥2 monsters triggers `startFightTimer()` (encounter every 60s)
+3. Each encounter: monsters play next card in their deck (wraps when exhausted)
+4. Cards resolve: 1d20 + modifiers vs AC for hit check, then damage/effects
+5. Victory/Loss/Flee events → XP + coins awarded, possible card drop
+6. Ring loops; players can swap/update decks between fights
+
+### State Serialization
+
+Game state is gzip+base64 encoded JSON, stored in Postgres (primary) and optionally S3 (backup). `game.saveState` is a getter/setter:
+
+```ts
+// Store the save function
+game.saveState = (base64GzipString) => db.save(base64GzipString)
+// Engine calls this.saveState() automatically on every 'stateChange' event
+
+// Restore
+restoreGame(publicChannel, base64GzipString, logger)
+// Hydrates: characters → monsters → cards → items (recursive)
+```
+
+### Channel Manager
+
+The engine batches outgoing messages (3000-char max per batch) to respect platform rate limits. Connectors should implement appropriate pacing — Discord uses interaction followups; the original Slack connector used 1200ms delays between messages.
+
+### Event Bus
+
+The server maintains a `GameEvent` stream per room. Events flow:
+
+```
+Game (engine) → publicChannel callback → server subscriber → Supabase Realtime / tRPC subscription → web/Discord clients
+```
+
+`FightSummaryWriter` persists fight results to `fight_summaries`. `FightStatsSubscriber` updates `room_player_stats` and `room_monster_stats` for the leaderboard.
+
+## Critical Architecture Rule: Room-Level Scoping
+
+**All game state, events, database queries, and API calls must be scoped to a room.**
+
+Every DB query on game data needs a `where room_id = ?` clause. Every tRPC procedure must validate room membership before returning data. Every event emission carries a `roomId`; every subscriber filters by it. WebSocket/SSE subscriptions must be gated to the current room and torn down when navigating away.
+
+See [`docs/room-scoping.md`](docs/room-scoping.md) for the full rule with code examples, a code-review checklist, and a table of common failure patterns. Past bugs have been caused by missing room filters — treat this as a hard constraint, not a guideline.
 
 ## Architecture Notes for New Connectors
 
-See "How the Game Engine Works" above for the full API details. Quick checklist:
-
 1. Implement the channel callback: `({ announce, question?, choices?, delay? }) => Promise`
-   - `announce` — post the string to the channel/DM; return after sending
-   - `question` + `choices` — prompt the user and resolve with their text answer; timeout after ~2 minutes
-2. Initialize the game: `restoreGame(publicChannel, savedState, log)` or `new Game(publicChannel, {}, log)`
-3. Set the save function: `game.saveState = (state) => db.save(state)` — engine calls this automatically
-4. For chat-style connectors: strip the bot prefix, call `game.handleCommand({ command })`, then call the returned action with `{ channel, channelName, isAdmin, isDM, user }`
-5. For slash command / REST / button connectors: call `game.getCharacter({ channel, id, name })` directly and invoke the specific action method
+   - `announce` — post to channel/DM; return after sending
+   - `question` + `choices` — prompt the user; resolve with their text answer (timeout ~2 min)
+2. Initialize: `restoreGame(publicChannel, savedState, log)` or `new Game(publicChannel, {}, log)`
+3. Set the save function: `game.saveState = (state) => db.save(state)`
+4. For chat-style connectors: strip bot prefix → `game.handleCommand({ command })` → call returned action with `{ channel, channelName, isAdmin, isDM, user }`
+5. For slash command / REST connectors: call `game.getCharacter({ channel, id, name })` directly, then invoke specific action methods
+6. Connect to the server's event bus (via `CONNECTOR_SERVICE_TOKEN`) to receive and forward `GameEvent` objects to platform channels
 
-The `question`/`choices` pattern is used during interactive multi-step flows (choosing which monster to equip, which item to buy, etc.). Connectors that only support one-shot commands (e.g., REST endpoints) will need to either break these into separate requests or trigger a guided flow via DM.
+## Known Issues
 
-## Planned Enhancements
+- **Fight log not updating** — the web fight log page goes stale after initial load; new fights don't appear without a manual refresh. Subscription or cache invalidation is not wired correctly. (#15 in `docs/roadmap/10-bug-fixes.md`)
+- **Console missing history on reconnect** — the console pane doesn't replay events from while the user was away. The reconnect-with-replay path exists but isn't delivering historical data. (#16 in `docs/roadmap/10-bug-fixes.md`)
+- **`creatures/base.ts` still large** — ~977 lines after the TypeScript migration (down from ~2000). Continue incremental decomposition into `creatures/combat.ts`, `creatures/stats.ts`, etc.
+- **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet.
 
-See `docs/roadmap/` for detailed plans. Summary:
+## Archived / Deferred
 
-- TypeScript migration + Vitest + monorepo (pnpm + Turborepo) — `01-modernize-stack.md`
-- Postgres state storage + tRPC API + containerized hosting — `02-backend-hosting.md`
-- Auth system (JWT, OAuth) — `03-auth-and-identity.md`
-- Multi-room/group support — `04-multi-room-groups.md`
-- Discord connector (discord.js v14, slash commands) — `05-discord-connector.md`
-- Web app (Fastify + React + WebSocket ring feed) — `06-web-app.md`
-- Mobile app (React Native + Expo, iOS + Android) — `07-mobile-app.md`
-- Modernize Slack connector (Bolt SDK, remove Hubot) — `08-modernize-slack-connector.md`
-- Simple graphics/sprites for web and mobile — `09-graphics.md`
-- Bug fixes and code quality — `10-bug-fixes.md`
+- **Exploration system** (`exploration/`) — monster expeditions (find loot, hazards, death cards). Archived for the revival; the core game is ring combat. See `docs/archive/exploration-system.md`.
+- **Mobile app** — React Native + Expo. Deferred indefinitely. The tRPC API is mobile-compatible when the time comes. See `docs/roadmap/07-mobile-app.md`.
+- **Slack connector** — Bolt SDK modernization of Jane/Hubot. Deferred indefinitely. See `docs/roadmap/08-modernize-slack-connector.md`.
+
+## Roadmap
+
+See [`docs/roadmap/README.md`](docs/roadmap/README.md) for the full picture — status of every area, what's done, what's active, what's next in priority order, and what's deferred indefinitely.

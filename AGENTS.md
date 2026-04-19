@@ -11,6 +11,7 @@ pnpm monorepo with Turborepo. See `README.md` for the full command reference.
 | `@deck-monsters/engine` | `packages/engine` | Mocha |
 | `@deck-monsters/server` | `packages/server` | Mocha |
 | `@deck-monsters/connector-discord` | `packages/connector-discord` | Mocha |
+| `@deck-monsters/harness` | `packages/harness` | Mocha |
 | `@deck-monsters/web` | `apps/web` | Vitest |
 | `@deck-monsters/shared-ui` | `packages/shared-ui` | (no tests) |
 
@@ -118,3 +119,16 @@ The local Supabase auth server issues JWTs with `iss: "http://127.0.0.1:54321/au
 ```bash
 node --input-type=module -e "import { Game } from './packages/engine/dist/index.js'; const g = new Game({}, console.log); console.log('Engine OK'); g.dispose(); process.exit(0);"
 ```
+
+### Critical rule: room-level scoping
+
+Every database query on game data must include a `room_id` filter. Every tRPC procedure must validate room membership before returning data. Every event emission carries a `roomId`; every subscriber must filter by it. WebSocket/SSE subscriptions must be gated to the current room.
+
+Missing a room filter is a recurring source of bugs. See [`docs/room-scoping.md`](docs/room-scoping.md) for the full rule, code examples (right vs. wrong patterns), a code-review checklist, and a table of common failure symptoms.
+
+### Active known bugs
+
+Two open bugs in the real-time data layer — do not close or work around without fixing the root cause:
+
+- **Fight log stale after new fights** — the fight log page (`/room/:roomId/fights`) doesn't update when new fights complete. Subscription or query-cache invalidation is broken. See bug #15 in `docs/roadmap/10-bug-fixes.md`.
+- **Console missing history on reconnect** — the console pane doesn't replay events from while the user was away. The reconnect-with-replay path exists but isn't delivering historical data. See bug #16 in `docs/roadmap/10-bug-fixes.md`.
