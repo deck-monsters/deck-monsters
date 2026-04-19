@@ -98,10 +98,16 @@ Small icons for each card class (melee, healing, control, boost, utility) for th
 
 ## What NOT to Do
 
-- Don't add animations to the ring feed
+- Don't add animations to the ring feed in the default theme
 - Don't replace the text cards with custom visual components — the monospace format is the identity
 - Don't add a heavy visual theme that competes with the text
 - Don't add graphics at the expense of launch speed — ship without sprites first, add later
+
+## Theme-Gated Pixel Art (see separate doc)
+
+One exception to the "no animations" rule: a dedicated retro/SNES theme can layer pixel art fight animations on top of the text feed as progressive enhancement. The default terminal theme and all other themes remain purely text-based.
+
+See [`17-pixel-art-fight-animations.md`](17-pixel-art-fight-animations.md) for the full plan, including the Canvas sprite-sheet approach, event → animation mapping, and asset pipeline using Aseprite and PixelLab.
 
 ## The Mobile Wrapping Problem
 
