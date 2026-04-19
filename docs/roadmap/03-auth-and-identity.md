@@ -2,7 +2,7 @@
 
 **Category**: Feature / Security  
 **Priority**: High (required for web and Discord connectors)  
-**Status**: Phase 1 complete (code) — JWT validation, connector identity mapping, and web app auth UI are implemented; Supabase project provisioning remains manual.
+**Status**: Phase 1 + Phase 2 done — Discord OAuth, Google OAuth, and web email/password all live at deck-monsters.com. Apple OAuth not yet configured (optional). Phase 3 (Slack identity linking) deferred indefinitely.
 
 ## Background
 
@@ -145,8 +145,8 @@ A Supabase database trigger creates the `profiles` row automatically when a new 
 ## Tasks
 
 ### Phase 1 — Discord + Web
-- [ ] Create Supabase project, enable email/password and Discord OAuth providers _(manual infra — not automated)_
-- [ ] Configure Discord OAuth app (client ID, secret, redirect URI) in Supabase dashboard _(manual infra — not automated)_
+- [x] ~~Create Supabase project, enable email/password and Discord OAuth providers~~ (live in production)
+- [x] ~~Configure Discord OAuth app (client ID, secret, redirect URI) in Supabase dashboard~~ (live in production)
 - [x] Implement JWT validation middleware in `packages/server` (tRPC `protectedProcedure`) _(done in 01/02)_
 - [x] Create `profiles` table and signup trigger in Supabase _(done in 01/02)_
 - [x] Create `user_connectors` table _(done in 01/02)_
@@ -155,13 +155,13 @@ A Supabase database trigger creates the `profiles` row automatically when a new 
 - [x] Add auth to tRPC WebSocket connections (JWT on connect via `?token=` query param fallback in `packages/server/src/trpc/context.ts`)
 
 ### Phase 2 — Google + Apple OAuth
-- [ ] Enable Google OAuth in Supabase dashboard _(manual infra — not automated)_
-- [ ] Configure Google OAuth app (client ID, secret, redirect URI) in Google Cloud Console _(manual infra — not automated)_
+- [x] ~~Enable Google OAuth in Supabase dashboard~~ (live in production)
+- [x] ~~Configure Google OAuth app (client ID, secret, redirect URI) in Google Cloud Console~~ (live in production)
 - [x] Add Google login button to web app
-- [ ] Enable Apple OAuth in Supabase dashboard _(manual infra — not automated)_
-- [ ] Configure Apple Services ID, Key, and redirect URI in Apple Developer Portal _(manual infra — not automated)_
+- [ ] Enable Apple OAuth in Supabase dashboard _(optional — not yet configured)_
+- [ ] Configure Apple Services ID, Key, and redirect URI in Apple Developer Portal _(optional — not yet configured)_
 - [x] Add Apple login button to web app
-- [ ] Test account linking when same email is used across providers
+- [ ] Test account linking when same email is used across providers _(good to verify explicitly)_
 
 ### Phase 3 — Slack + Identity Linking
 - [ ] Enable Slack OAuth in Supabase dashboard

@@ -2,7 +2,7 @@
 
 **Category**: Feature  
 **Priority**: Medium (post-launch)  
-**Status**: In progress (core implementation landed)
+**Status**: Done
 
 ## Background
 

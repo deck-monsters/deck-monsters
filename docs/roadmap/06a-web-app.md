@@ -2,7 +2,7 @@
 
 **Category**: Feature / Connector  
 **Priority**: High  
-**Status**: In progress — `06-web-app.md` describes the previous implementation; this document supersedes it with a revised vision. The old implementation is preserved as reference material while the rebuild takes shape.
+**Status**: Done — live at deck-monsters.com. All three phases complete. `apps/web-legacy` removed.
 
 ---
 

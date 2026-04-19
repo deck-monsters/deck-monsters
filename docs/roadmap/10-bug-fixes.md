@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt  
 **Priority**: High (fix before major new development)  
-**Status**: Mostly complete — 12 of 14 original items resolved (PR [#286](https://github.com/deck-monsters/deck-monsters/pull/286) and TypeScript migration). Two new active bugs added (fight log sync, console history).
+**Status**: Active — 12 of 14 original items resolved. Four open bugs: fight log sync (#15), console history on reconnect (#16), event ring buffer gap detection (#17), and quick actions emission (#18). Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
 
 ## Active Bugs
 
@@ -32,6 +32,30 @@ Likely causes:
 - The tRPC subscription for room events may start from "now" rather than from the last-received event
 
 **Investigation path**: Check the WebSocket reconnect handler in the web app — does it send a `since` parameter? Check the tRPC subscription procedure — does it accept and honor a `since` cursor? If both exist, check that they are wired together.
+
+**Status**: Open.
+
+---
+
+### 17. Event ring buffer gap not signalled — MEDIUM
+
+When a client reconnects with a `lastEventId` that has been evicted from the in-memory ring buffer (200-event cap, `packages/engine/src/events/room-event-bus.ts`), `getEventsSince()` returns an empty array silently. The client presents an incomplete replay with no indication that events were missed.
+
+This is a direct contributing cause of bug #16 — for short disconnects the buffer is sufficient, but for longer absences (buffer evicted) the fallback to DB never fires.
+
+**Fix needed**: When `lastEventId` is not found in the ring buffer, fall back to querying `room_events` in the database for the events since that ID. If the database also doesn't have them (older than retention window), emit a synthetic gap event so the client can show "some events were missed while you were away" rather than silently presenting a truncated stream.
+
+**Status**: Open. Related to #16.
+
+---
+
+### 18. Quick actions suggestions not emitted after commands — MEDIUM
+
+A TODO comment in `packages/server/src/trpc/router.ts` marks an unimplemented path: contextual `quick_actions` events should be emitted after each game command completes, populating the suggestions strip in the web console. Currently no `quick_actions` events arrive from the server after commands complete.
+
+The web app already handles `quick_actions` events correctly — the suggestions strip is wired up — but it stays empty because the server never sends suggestions.
+
+**Fix needed**: After `game.handleCommand` + action resolves, determine contextual suggestions (e.g. "look at ring", "look at monsters", "buy") based on game state and emit a `quick_actions` event to the requesting user's private channel.
 
 **Status**: Open.
 
@@ -132,6 +156,8 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 
 - [ ] Fix fight log not updating after new fights complete (#15)
 - [ ] Fix console pane not replaying history on reconnect (#16)
+- [ ] Fix event ring buffer gap not signalled on reconnect (#17, contributes to #16)
+- [ ] Wire quick actions event emission after game commands (#18)
 - [ ] Audit and differentiate `DMG.md` vs `CARDS.md`; add how-to-run section (upstream #265) — build headers differentiated, full content pass still todo
 - [ ] Continue incremental decomposition of `creatures/base.ts`
 - [x] ~~Fix "barely blocked" threshold~~ (already correct in TS migration)
