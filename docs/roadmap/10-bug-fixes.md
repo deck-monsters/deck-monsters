@@ -6,17 +6,20 @@
 
 ## Active Bugs
 
-### 15. Fight log not updating with new data — HIGH
+### 15. Fights not being written to fight_summaries — HIGH
 
-The fight log page (web app `/room/:roomId/fights`) shows the correct state at initial load but does not reflect new fights as they complete. After a fight finishes, the log remains stale until the user manually refreshes.
+New fights are not appearing in the fight log at all — the problem is on the **write side**, not the UI refresh side. The `FightSummaryWriter` subscribes to `ring.fightResolved` and performs a DB insert, but there are several places where the insert can fail silently and the fight is lost permanently.
 
-Likely causes:
-- The tRPC subscription or Supabase Realtime listener for `fight_summaries` is not wired to the fight log query cache, so new rows are written to the database but the client is never notified
-- Alternatively, the `FightSummaryWriter` is writing correctly but the tRPC procedure is cached without invalidation on insert
+**Confirmed failure paths (in `packages/server/src/fight-summary-writer.ts`):**
 
-**Investigation path**: Confirm `fight_summaries` rows appear in the DB immediately after a fight ends. If yes, the bug is client-side (subscription not invalidating the query). If not, trace from `FightSummaryWriter` through the event bus to the DB write.
+1. **Data deleted before write** (line ~69): `pendingByRoom.delete(roomId)` runs synchronously before the async DB transaction completes. If the transaction throws, the `startedAt` timestamp and pending data are permanently lost.
+2. **Errors silently swallowed** (line ~44): `void onFightResolved(...).catch(log)` — any DB error (constraint violation, connection failure, type mismatch) is only logged, never retried or escalated. The fight disappears without a trace beyond a log line.
+3. **Possible UUID type mismatch**: `winnerOwnerUserId` / `loserOwnerUserId` are UUID columns in Postgres. If `ownerUserId` in the ring event payload is a non-UUID string (e.g. a Discord snowflake ID), the insert fails with a type error — silently swallowed per point 2.
+4. **Concurrent fight race**: `pendingByRoom` is a plain `Map`. If two fights in the same room finish in close succession, the second `fightBegins` can overwrite the first's `startedAt`, and both `fightResolved` handlers operate on the same map entry.
 
-**Status**: Open.
+The UI-side query (`queryRecentFights` in `analytics-queries.ts`) is simple and correct — if rows exist, they appear. The issue is that rows are not being created.
+
+**Status**: Open. See GitHub issue for full plan.
 
 ---
 
