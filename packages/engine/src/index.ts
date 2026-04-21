@@ -26,6 +26,7 @@ export type { RandomContestantOptions } from './helpers/bosses.js';
 export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
 export { getLevel } from './helpers/levels.js';
 export type { Contestant } from './ring/index.js';
+export { getXpCapForLevel } from './ring/index.js';
 export { allMonsters } from './monsters/index.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {

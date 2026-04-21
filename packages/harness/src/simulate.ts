@@ -1,6 +1,6 @@
 /**
  * Programmatic N-fight simulation for balance / mechanics validation.
- * `./set-env.js` must load before the engine (argv/env PRNG seeding for lazy helpers).
+ * `./set-env.js` must load before the engine (env PRNG seeding for lazy helpers).
  */
 
 import './set-env.js';
@@ -10,10 +10,11 @@ import {
 	createTestGame,
 	engineReady,
 	getCardClassByTypeName,
+	getXpCapForLevel,
 	randomContestant,
 	type Contestant,
 } from '@deck-monsters/engine';
-import { getXpCapForLevel } from './xp-for-level.js';
+import { mulberry32 } from './rng.js';
 
 /** Monotonic id so concurrent `simulate()` calls never share eventBus subscriber keys. */
 let harnessSimRunSeq = 0;
@@ -49,16 +50,12 @@ export interface SimResult {
 interface FightResolvedPayload {
 	rounds?: number;
 	outcome?: string;
-	participants?: Array<{ monsterName: string; outcome: string }>;
-}
-
-function mulberry32(a: number): () => number {
-	return () => {
-		let t = (a += 0x6d2b79f5);
-		t = Math.imul(t ^ (t >>> 15), t | 1);
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
+	participants?: Array<{
+		monsterId: string;
+		monsterName: string;
+		outcome: string;
+		ownerUserId?: string;
+	}>;
 }
 
 const MONSTER_TYPES: Record<string, SimMonsterType> = {
@@ -161,6 +158,26 @@ function aggregateDamagePerCard(sums: Map<string, { total: number; count: number
 	return out;
 }
 
+function pushWinCounts(
+	winCounts: Map<string, number>,
+	stableIdToLabel: Map<string, string>,
+	p: FightResolvedPayload,
+): void {
+	const parts = p.participants ?? [];
+	for (const part of parts) {
+		if (part.outcome !== 'win') continue;
+		const label =
+			stableIdToLabel.get(part.monsterId) ??
+			(winCounts.has(part.monsterName) ? part.monsterName : undefined);
+		if (!label) {
+			throw new Error(
+				`simulate: could not map winner stableId=${part.monsterId} name=${part.monsterName} to a sim slot`,
+			);
+		}
+		winCounts.set(label, (winCounts.get(label) ?? 0) + 1);
+	}
+}
+
 /**
  * Run `config.fights` ring encounters with the given monster lineup (2+ monsters).
  * Reuses one `Game` for the whole batch (fast) while registering each fight's characters
@@ -176,9 +193,13 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		throw new Error('simulate() requires fights >= 1');
 	}
 
+	const prevRing = process.env.DECK_MONSTERS_DETERMINISTIC_RING;
+	const prevDraw = process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
+	process.env.DECK_MONSTERS_DETERMINISTIC_RING = '1';
+	process.env.DECK_MONSTERS_DETERMINISTIC_DRAW = '1';
+
 	await engineReady;
 
-	// Per-call fight/build RNG (lazy helpers already used `Math.random` from set-env / env).
 	const prevRandom = Math.random;
 	if (seed !== undefined) {
 		Math.random = mulberry32(seed);
@@ -195,6 +216,9 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	const game: Game = createTestGame(`${roomId}-batch`, { characters: {} });
 	const ring = game.getRing();
 
+	const charMap = game as unknown as { characters: Record<string, unknown> };
+	const stableIdToLabel = new Map<string, string>();
+
 	const unsubFight = game.eventBus.subscribe(`sim-fight:${subscriberRunId}:${roomId}`, {
 		deliver(ev: GameEvent) {
 			if (ev.type !== 'ring.fightResolved') return;
@@ -205,12 +229,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				draws += 1;
 				return;
 			}
-			const parts = p.participants ?? [];
-			for (const part of parts) {
-				if (part.outcome === 'win') {
-					winCounts.set(part.monsterName, (winCounts.get(part.monsterName) ?? 0) + 1);
-				}
-			}
+			pushWinCounts(winCounts, stableIdToLabel, p);
 		},
 	});
 
@@ -220,8 +239,6 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		},
 	});
 
-	const charMap = game as unknown as { characters: Record<string, unknown> };
-
 	try {
 		for (let f = 0; f < fights; f++) {
 			ring.clearRing();
@@ -229,10 +246,12 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 			const contestants = monsters.map((m, i) => {
 				const type = typeof m.type === 'string' ? parseMonsterType(m.type) : (m.type as SimMonsterType);
 				const c = buildContestant(type, m.level, m.deck, m.statSeed, f);
+				const label = names[i]!;
 				c.monster.setOptions({
-					name: names[i]!,
+					name: label,
 					stableId: `harness-sim-${roomId}-${f}-m${i}`,
 				});
+				stableIdToLabel.set(c.monster.stableId as string, label);
 				return c;
 			});
 
@@ -260,6 +279,9 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				await ring.fight();
 			} finally {
 				removeHitListeners();
+				for (const c of contestants) {
+					stableIdToLabel.delete(c.monster.stableId as string);
+				}
 				for (const uid of simUserIds) {
 					delete charMap.characters[uid];
 				}
@@ -270,6 +292,16 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		unsubDrop();
 		game.dispose();
 		Math.random = prevRandom;
+		if (prevRing === undefined) {
+			delete process.env.DECK_MONSTERS_DETERMINISTIC_RING;
+		} else {
+			process.env.DECK_MONSTERS_DETERMINISTIC_RING = prevRing;
+		}
+		if (prevDraw === undefined) {
+			delete process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
+		} else {
+			process.env.DECK_MONSTERS_DETERMINISTIC_DRAW = prevDraw;
+		}
 	}
 
 	const winRates: Record<string, number> = {};

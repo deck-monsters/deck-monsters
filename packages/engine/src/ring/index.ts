@@ -28,7 +28,7 @@ const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 30;
  * Calculates the max XP that still maps to `targetLevel` via `getLevel()`.
  * Level 0 cap is 49, level 1 cap is 99, level 2 cap is 149, etc.
  */
-const getXpCapForLevel = (targetLevel: number): number => {
+export const getXpCapForLevel = (targetLevel: number): number => {
 	const normalizedLevel = Math.max(0, Math.floor(targetLevel));
 	let lower = 0;
 	let upper = 1;
