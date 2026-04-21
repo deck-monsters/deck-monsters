@@ -1,12 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import type { GameEvent, EventSubscriber, EventScope, EventType } from './types.js';
+import type { GameEvent, EventSubscriber, EventScope, EventType, EventsSinceResult } from './types.js';
 
-// TODO(ordering): When a client reconnects with a lastEventId that has already
-// been evicted from this buffer, getEventsSince() returns [] with no signal
-// that history was truncated.  The client silently presents an incomplete
-// replay.  Fix: return a synthetic gap event (or throw a typed error) when
-// lastEventId is not found, so clients can show "you missed some events".
 const RING_BUFFER_SIZE = 200;
 
 type PublishInput = {
@@ -70,9 +65,18 @@ export class RoomEventBus {
 		this.subscribers.delete(id);
 	}
 
-	getEventsSince(eventId: string): GameEvent[] {
+	getEventsSince(eventId: string): EventsSinceResult {
 		const idx = this.eventLog.findIndex(e => e.id === eventId);
-		return idx === -1 ? [] : this.eventLog.slice(idx + 1);
+		if (idx !== -1) {
+			return { events: this.eventLog.slice(idx + 1), truncated: false, upToDate: false };
+		}
+		// Fresh room after restart (or no events yet): do not treat as buffer truncation.
+		if (this.eventLog.length === 0) {
+			return { events: [], truncated: false, upToDate: false };
+		}
+		const newestId = this.eventLog.at(-1)?.id;
+		const isAhead = newestId !== undefined && eventId > newestId;
+		return { events: [], truncated: !isAhead, upToDate: isAhead };
 	}
 
 	getRecentEvents(count: number): GameEvent[] {

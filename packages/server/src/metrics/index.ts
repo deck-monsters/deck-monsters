@@ -189,6 +189,27 @@ export const fightErrors = new Counter({
 	registers: [registry],
 });
 
+export const fightSummaryWriteFailures = new Counter({
+	name: 'dm_fight_summary_write_failures_total',
+	help: 'Failed inserts into fight_summaries (after retries, pending state preserved)',
+	labelNames: ['room_id'] as const,
+	registers: [registry],
+});
+
+export const ringFeedReplayFromDbTotal = new Counter({
+	name: 'dm_ring_feed_replay_from_db_total',
+	help: 'ringFeed reconnects that loaded history from room_events after ring-buffer miss',
+	labelNames: ['room_id'] as const,
+	registers: [registry],
+});
+
+export const ringFeedReplayGapTotal = new Counter({
+	name: 'dm_ring_feed_replay_gap_total',
+	help: 'ringFeed reconnects where DB had no rows after lastEventId (retention gap)',
+	labelNames: ['room_id'] as const,
+	registers: [registry],
+});
+
 export const roomHydrationFailures = new Counter({
 	name: 'dm_room_hydration_failures_total',
 	help: 'State blob hydration failures (blob quarantined, fresh game started)',

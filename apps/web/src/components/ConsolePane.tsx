@@ -383,6 +383,15 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           return;
         }
 
+        if (event.type === 'system.gap') {
+          addConsoleEvent({
+            id: event.id,
+            type: 'system',
+            text: event.text,
+          });
+          return;
+        }
+
         if (event.type === 'announce' || event.type === 'system') {
           addConsoleEvent({
             id: event.id,

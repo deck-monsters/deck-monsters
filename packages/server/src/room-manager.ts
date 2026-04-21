@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
-import { eq, and, count, gte, desc } from 'drizzle-orm';
+import { eq, and, count, gte, desc, gt, or, asc } from 'drizzle-orm';
 import { createLogger } from './logger.js';
 
 const log = createLogger('room-manager');
@@ -518,6 +518,82 @@ export class RoomManager {
 		}
 
 		return rows.reverse().map(dbRowToGameEvent);
+	}
+
+	/**
+	 * Events after `lastEventId` for ringFeed replay when the in-memory ring buffer
+	 * no longer contains the cursor. Uses `room_events`; event ids are `${Date.now()}-…`
+	 * so lexicographic `event_id` ordering matches time order when the anchor row is missing.
+	 */
+	async getEventsSinceForRingFeed(
+		userId: string,
+		roomId: string,
+		lastEventId: string,
+		limit = 500
+	): Promise<GameEvent[]> {
+		await this.assertMember(userId, roomId);
+
+		const visibility = or(
+			eq(roomEvents.scope, 'public'),
+			and(eq(roomEvents.scope, 'private'), eq(roomEvents.targetUserId, userId))
+		);
+
+		const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+		const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+		// Anchor lookup uses event_id; migrations define room_events_room_id_event_id_key
+		// (unique on room_id, event_id) and room_events_event_id_idx for efficient resolution.
+		const anchor = await this.db
+			.select({ id: roomEvents.id })
+			.from(roomEvents)
+			.where(and(eq(roomEvents.roomId, roomId), eq(roomEvents.eventId, lastEventId)))
+			.limit(1);
+
+		const afterId = anchor[0]?.id;
+
+		if (afterId !== undefined) {
+			const rows = await this.db
+				.select()
+				.from(roomEvents)
+				.where(and(eq(roomEvents.roomId, roomId), visibility, gt(roomEvents.id, afterId)))
+				.orderBy(asc(roomEvents.id))
+				.limit(limit);
+			return rows.map(dbRowToGameEvent);
+		}
+
+		let rows = await this.db
+			.select()
+			.from(roomEvents)
+			.where(
+				and(
+					eq(roomEvents.roomId, roomId),
+					visibility,
+					gte(roomEvents.createdAt, cutoff24h),
+					gt(roomEvents.eventId, lastEventId)
+				)
+			)
+			.orderBy(asc(roomEvents.id))
+			.limit(limit);
+
+		if (rows.length > 0) {
+			return rows.map(dbRowToGameEvent);
+		}
+
+		rows = await this.db
+			.select()
+			.from(roomEvents)
+			.where(
+				and(
+					eq(roomEvents.roomId, roomId),
+					visibility,
+					gte(roomEvents.createdAt, cutoff7d),
+					gt(roomEvents.eventId, lastEventId)
+				)
+			)
+			.orderBy(asc(roomEvents.id))
+			.limit(limit);
+
+		return rows.map(dbRowToGameEvent);
 	}
 
 	async getConsoleHistory(userId: string, roomId: string): Promise<GameEvent[]> {

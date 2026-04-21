@@ -25,4 +25,8 @@ describe('shouldRenderRingEvent', () => {
     expect(shouldRenderRingEvent(event('ring.fight'))).to.equal(true);
     expect(shouldRenderRingEvent(event('ring.xp'))).to.equal(true);
   });
+
+  it('hides private reconnect gap notice', () => {
+    expect(shouldRenderRingEvent(event('system.gap'))).to.equal(false);
+  });
 });

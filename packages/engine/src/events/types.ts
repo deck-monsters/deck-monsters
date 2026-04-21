@@ -1,4 +1,5 @@
 export type EventType =
+	| 'system.gap'
 	| 'ring.add'
 	| 'ring.remove'
 	| 'ring.clear'
@@ -45,4 +46,16 @@ export interface GameEvent {
 export interface EventSubscriber {
 	userId?: string;
 	deliver: (event: GameEvent) => void;
+}
+
+/** Result of resolving missed events relative to an in-memory ring buffer cursor. */
+export interface EventsSinceResult {
+	events: GameEvent[];
+	/** `lastEventId` was evicted from the buffer — callers should fall back to durable storage. */
+	truncated: boolean;
+	/**
+	 * Cursor is newer than anything still in the buffer (client already caught up).
+	 * When true with an empty `events` array, this is not a truncation miss.
+	 */
+	upToDate: boolean;
 }
