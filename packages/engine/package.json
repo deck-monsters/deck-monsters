@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build && cp -r src/vendor dist/vendor",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "mocha",
@@ -24,7 +24,6 @@
     "fantasy-names": "^1.1.2",
     "grab-color-names": "^1.1.2",
     "node-emoji": "^1.8.1",
-    "roll": "^1.2.0",
     "word-wrap": "^1.2.3",
     "zod": "^4.3.6"
   },

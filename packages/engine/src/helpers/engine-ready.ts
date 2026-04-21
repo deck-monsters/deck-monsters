@@ -19,16 +19,21 @@ import { spawnHelpersReady } from '../monsters/helpers/spawn.js';
 import { equipHelpersReady } from '../monsters/helpers/equip.js';
 import { monsterHydrateReady, getMonsterHydratorStatus } from '../monsters/helpers/hydrate.js';
 
-export const engineReady: Promise<void> = Promise.all([
-	randomReady,
-	hydrateHelpersReady,
-	createHelperReady,
-	characterBaseReady,
-	beastmasterReady,
-	spawnHelpersReady,
-	equipHelpersReady,
-	monsterHydrateReady,
-]).then(() => undefined);
+/**
+ * Await lazy helpers in a fixed order. `Promise.all` caused non-deterministic
+ * interleaving of `Math.random()` during parallel module loads, which broke
+ * seeded harness simulations that swap `Math.random` before this gate.
+ */
+export const engineReady: Promise<void> = (async () => {
+	await randomReady;
+	await hydrateHelpersReady;
+	await createHelperReady;
+	await characterBaseReady;
+	await beastmasterReady;
+	await spawnHelpersReady;
+	await equipHelpersReady;
+	await monsterHydrateReady;
+})();
 
 /**
  * Returns the current hydrator status for all lazy-loaded helpers.

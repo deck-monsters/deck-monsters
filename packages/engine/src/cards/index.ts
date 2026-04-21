@@ -62,4 +62,5 @@ export { hydrateCard, hydrateDeck } from './helpers/hydrate.js';
 export { sortCardsAlphabetically } from './helpers/sort.js';
 export { getInitialDeck, fillDeck, getMinimumDeck } from './helpers/deck.js';
 export { all } from './helpers/all.js';
+export { getCardClassByTypeName } from './helpers/get-card-class-by-type-name.js';
 export { DEFAULT_MINIMUM_CARDS } from './helpers/constants.js';
