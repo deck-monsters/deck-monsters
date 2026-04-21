@@ -541,6 +541,8 @@ export class RoomManager {
 		const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 		const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+		// Anchor lookup uses event_id; migrations define room_events_room_id_event_id_key
+		// (unique on room_id, event_id) and room_events_event_id_idx for efficient resolution.
 		const anchor = await this.db
 			.select({ id: roomEvents.id })
 			.from(roomEvents)
@@ -580,15 +582,18 @@ export class RoomManager {
 		rows = await this.db
 			.select()
 			.from(roomEvents)
-			.where(and(eq(roomEvents.roomId, roomId), visibility, gte(roomEvents.createdAt, cutoff7d)))
-			.orderBy(desc(roomEvents.id))
+			.where(
+				and(
+					eq(roomEvents.roomId, roomId),
+					visibility,
+					gte(roomEvents.createdAt, cutoff7d),
+					gt(roomEvents.eventId, lastEventId)
+				)
+			)
+			.orderBy(asc(roomEvents.id))
 			.limit(limit);
 
-		return rows
-			.reverse()
-			.map(dbRowToGameEvent)
-			.filter(e => e.id > lastEventId)
-			.slice(0, limit);
+		return rows.map(dbRowToGameEvent);
 	}
 
 	async getConsoleHistory(userId: string, roomId: string): Promise<GameEvent[]> {

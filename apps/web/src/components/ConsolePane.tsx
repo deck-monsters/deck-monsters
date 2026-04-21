@@ -365,8 +365,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         // Only process events targeted to this user
         const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
         const isPublicSystem = event.scope === 'public' && event.type === 'system';
-        const isGapNotice = event.type === 'system.gap' && isPrivate;
-        if (!isPrivate && !isPublicSystem && !isGapNotice) return;
+        if (!isPrivate && !isPublicSystem) return;
 
         onEvent?.(event);
         if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {

@@ -70,6 +70,10 @@ export class RoomEventBus {
 		if (idx !== -1) {
 			return { events: this.eventLog.slice(idx + 1), truncated: false, upToDate: false };
 		}
+		// Fresh room after restart (or no events yet): do not treat as buffer truncation.
+		if (this.eventLog.length === 0) {
+			return { events: [], truncated: false, upToDate: false };
+		}
 		const newestId = this.eventLog.at(-1)?.id;
 		const isAhead = newestId !== undefined && eventId > newestId;
 		return { events: [], truncated: !isAhead, upToDate: isAhead };

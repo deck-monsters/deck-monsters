@@ -211,4 +211,12 @@ describe('RoomEventBus getEventsSince', () => {
 		expect(r.truncated).to.equal(false);
 		expect(r.upToDate).to.equal(true);
 	});
+
+	it('does not mark truncated when the buffer is empty (fresh bus)', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const r = bus.getEventsSince('any-cursor');
+		expect(r.events).to.have.length(0);
+		expect(r.truncated).to.equal(false);
+		expect(r.upToDate).to.equal(false);
+	});
 });

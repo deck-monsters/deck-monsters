@@ -19,11 +19,15 @@ import { RoomManager } from './room-manager.js';
  */
 function makeSelectChain(result: unknown[]) {
 	const limitStub = sinon.stub().resolves(result);
-	const whereResult = Object.assign(Promise.resolve(result), { limit: limitStub });
+	const orderByStub = sinon.stub().returns({ limit: limitStub });
+	const whereResult = Object.assign(Promise.resolve(result), {
+		limit: limitStub,
+		orderBy: orderByStub,
+	});
 	const whereStub = sinon.stub().returns(whereResult);
 	const innerJoinStub = sinon.stub().returns({ where: whereStub });
 	const fromStub = sinon.stub().returns({ where: whereStub, innerJoin: innerJoinStub });
-	return { from: fromStub };
+	return { from: fromStub, _orderByStub: orderByStub };
 }
 
 interface DbStubOpts {
@@ -481,6 +485,95 @@ describe('RoomManager', () => {
 			expect((rm as any).active.has(roomA)).to.be.false;
 			expect((rm as any).active.has(roomB)).to.be.true;
 			expect(saveStateFn.calledOnce).to.be.true;
+		});
+	});
+
+	describe('getEventsSinceForRingFeed', () => {
+		const memberRow = [{ roomId: ROOM_ID, userId: USER_ID, role: 'member' }];
+
+		const sampleEventRow = (overrides: Partial<{
+			id: number;
+			eventId: string | null;
+			scope: string;
+			targetUserId: string | null;
+			type: string;
+			text: string;
+			payload: Record<string, unknown>;
+		}> = {}) => ({
+			id: overrides.id ?? 10,
+			roomId: ROOM_ID,
+			type: overrides.type ?? 'announce',
+			scope: overrides.scope ?? 'public',
+			targetUserId: overrides.targetUserId ?? null,
+			payload: overrides.payload ?? {},
+			text: overrides.text ?? 'hi',
+			eventId: overrides.eventId ?? '2000-aaaaaaaa',
+			createdAt: new Date(),
+		});
+
+		it('uses id > anchor when anchor row exists', async () => {
+			const anchor = [{ id: 5 }];
+			const replay = [
+				sampleEventRow({ id: 6, eventId: '2001-bbbbbbbb', text: 'after' }),
+			];
+			const db = makeDbStub({ selectResults: [memberRow, anchor, replay] });
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const events = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '1999-anchor', 500);
+
+			expect(events).to.have.length(1);
+			expect(events[0]!.text).to.equal('after');
+			expect(events[0]!.id).to.equal('2001-bbbbbbbb');
+		});
+
+		it('queries by event_id > lastEventId when anchor is missing (24h window)', async () => {
+			const replay = [
+				sampleEventRow({ id: 2, eventId: '2001-bbbbbbbb' }),
+			];
+			const db = makeDbStub({ selectResults: [memberRow, [], replay] });
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const events = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '2000-aaaaaaaa', 500);
+
+			expect(events).to.have.length(1);
+			expect(events[0]!.id).to.equal('2001-bbbbbbbb');
+		});
+
+		it('falls back to 7d window with event_id filter when 24h returns nothing', async () => {
+			const replay = [
+				sampleEventRow({ id: 3, eventId: '1999-olddddd' }),
+			];
+			const db = makeDbStub({ selectResults: [memberRow, [], [], replay] });
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const events = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '1998-cursorrr', 500);
+
+			expect(events).to.have.length(1);
+			expect(events[0]!.id).to.equal('1999-olddddd');
+		});
+
+		it('includes private events only for the requesting user', async () => {
+			const replay = [
+				sampleEventRow({
+					id: 7,
+					eventId: '2002-cccccccc',
+					scope: 'private',
+					targetUserId: USER_ID,
+					text: 'dm',
+				}),
+			];
+			const db = makeDbStub({ selectResults: [memberRow, [], replay] });
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const events = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '2000-aaaaaaaa', 500);
+
+			expect(events).to.have.length(1);
+			expect(events[0]!.scope).to.equal('private');
+			expect(events[0]!.targetUserId).to.equal(USER_ID);
 		});
 	});
 });

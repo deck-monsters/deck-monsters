@@ -81,7 +81,6 @@ export function attachFightSummaryWriter(
 							stack,
 							pgCode: pg,
 						});
-						legacyLog(err);
 					}
 				});
 			}
