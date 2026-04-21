@@ -74,9 +74,23 @@ export class RoomEventBus {
 		if (this.eventLog.length === 0) {
 			return { events: [], truncated: false, upToDate: false };
 		}
-		const newestId = this.eventLog.at(-1)?.id;
-		const isAhead = newestId !== undefined && eventId > newestId;
-		return { events: [], truncated: !isAhead, upToDate: isAhead };
+		const parseTs = (id: string): number => {
+			const dash = id.indexOf('-');
+			if (dash === -1) return 0;
+			const n = Number(id.slice(0, dash));
+			return Number.isFinite(n) ? n : 0;
+		};
+		const oldest = this.eventLog[0]!;
+		const newest = this.eventLog[this.eventLog.length - 1]!;
+		const cursorTs = parseTs(eventId);
+		if (cursorTs > parseTs(newest.id)) {
+			return { events: [], truncated: false, upToDate: true };
+		}
+		if (cursorTs < parseTs(oldest.id)) {
+			return { events: [], truncated: true, upToDate: false };
+		}
+		// Missing id whose timestamp falls inside the retained window — treat as eviction.
+		return { events: [], truncated: true, upToDate: false };
 	}
 
 	getRecentEvents(count: number): GameEvent[] {

@@ -3,7 +3,9 @@ import { isProbable } from '../../helpers/is-probable.js';
 import all from './all.js';
 
 export const draw = (options: Record<string, unknown> = {}, creature?: any): any => {
-	let deck = shuffle([...all]);
+	let deck = process.env.DECK_MONSTERS_DETERMINISTIC_DRAW
+		? [...all].sort((a: any, b: any) => String(a.name).localeCompare(String(b.name)))
+		: shuffle([...all]);
 
 	if (creature) {
 		deck = deck.filter((Card: any) => creature.canHoldCard(Card));

@@ -13,6 +13,7 @@ export type { GameAnalyticsCallbacks, LeaderboardSortKey } from './game.js';
 export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult };
 export type { StateStore } from './types/state-store.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
+export { getCardClassByTypeName } from './cards/index.js';
 export { COMMAND_CATALOG } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 
@@ -23,6 +24,10 @@ export * from './testing/index.js';
 export { randomContestant } from './helpers/bosses.js';
 export type { RandomContestantOptions } from './helpers/bosses.js';
 export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
+export { getLevel } from './helpers/levels.js';
+export type { Contestant } from './ring/index.js';
+export { getXpCapForLevel } from './ring/index.js';
+export { allMonsters } from './monsters/index.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {
 	let gameObj: Record<string, unknown>;
