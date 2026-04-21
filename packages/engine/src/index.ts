@@ -6,11 +6,11 @@ import Game from './game.js';
 import type { ChannelCallback } from './channel/index.js';
 import { ConnectorAdapter } from './channel/index.js';
 import { RoomEventBus } from './events/index.js';
-import type { GameEvent, EventType, EventScope, EventSubscriber } from './events/index.js';
+import type { GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult } from './events/index.js';
 
 export { Game, ConnectorAdapter, RoomEventBus };
 export type { GameAnalyticsCallbacks, LeaderboardSortKey } from './game.js';
-export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber };
+export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult };
 export type { StateStore } from './types/state-store.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { COMMAND_CATALOG } from './commands/catalog.js';

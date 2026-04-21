@@ -11,7 +11,12 @@ import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
-import { commandsTotal, wsConnectionsActive } from '../metrics/index.js';
+import {
+	commandsTotal,
+	wsConnectionsActive,
+	ringFeedReplayFromDbTotal,
+	ringFeedReplayGapTotal,
+} from '../metrics/index.js';
 import { db } from '../db/index.js';
 import {
 	loadFightEventsForSummary,
@@ -1231,7 +1236,34 @@ export function createRouter(roomManager: RoomManager) {
 
 				// Deliver any missed events since the last received event ID.
 				if (input.lastEventId) {
-					const missed = eventBus.getEventsSince(input.lastEventId);
+					const { events: buffered, truncated, upToDate } = eventBus.getEventsSince(
+						input.lastEventId
+					);
+					let missed: GameEvent[] = buffered;
+					if (truncated && !upToDate) {
+						missed = await roomManager.getEventsSinceForRingFeed(
+							ctx.userId,
+							input.roomId,
+							input.lastEventId
+						);
+						if (missed.length > 0) {
+							ringFeedReplayFromDbTotal.inc({ room_id: input.roomId });
+						} else {
+							ringFeedReplayGapTotal.inc({ room_id: input.roomId });
+							const gapId = `system-gap-${Date.now()}-${randomUUID().slice(0, 8)}`;
+							const gapEvent: GameEvent = {
+								id: gapId,
+								roomId: input.roomId,
+								timestamp: Date.now(),
+								type: 'system.gap' as EventType,
+								scope: 'private' as EventScope,
+								targetUserId: ctx.userId,
+								text: '── Some events were missed while you were away. ──',
+								payload: { reason: 'buffer_or_retention' },
+							};
+							yield tracked(gapId, gapEvent);
+						}
+					}
 					for (const event of missed) {
 						if (
 							event.scope === 'public' ||

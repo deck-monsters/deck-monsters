@@ -31,4 +31,19 @@ describe('mapConsoleHistoryEvent', () => {
       text: '-- reconnecting --',
     });
   });
+
+  it('maps system.gap to a system row', () => {
+    const mapped = mapConsoleHistoryEvent({
+      id: 'gap-1',
+      type: 'system.gap',
+      text: '── missed ──',
+      payload: { reason: 'buffer_or_retention' },
+    });
+
+    expect(mapped).toEqual({
+      id: 'gap-1',
+      type: 'system',
+      text: '── missed ──',
+    });
+  });
 });

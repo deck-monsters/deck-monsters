@@ -1,6 +1,6 @@
 /**
  * Assembles fight_summaries rows from ring.fight (start) + ring.fightResolved + ring.cardDrop.
- * Best-effort: errors are logged, not propagated.
+ * Best-effort: errors are logged and counted in metrics; pending fight metadata is kept until a successful write.
  */
 import { eq, sql } from 'drizzle-orm';
 
@@ -8,6 +8,7 @@ import type { RoomEventBus, GameEvent } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { fightSummaries, rooms } from './db/schema.js';
 import { createLogger } from './logger.js';
+import { fightSummaryWriteFailures } from './metrics/index.js';
 
 const log = createLogger('fight-summary');
 
@@ -18,10 +19,32 @@ type Pending = {
 
 const pendingByRoom = new Map<string, Pending>();
 
+/** Serialize fight-summary writes per room so concurrent fightResolved handlers do not corrupt pending state. */
+const fightSummaryWriteQueues = new Map<string, Promise<void>>();
+
+function enqueueFightSummaryWrite(roomId: string, fn: () => Promise<void>): void {
+	const prev = fightSummaryWriteQueues.get(roomId) ?? Promise.resolve();
+	const next = prev
+		.catch(() => {
+			/* continue the chain after a prior failure */
+		})
+		.then(fn);
+	fightSummaryWriteQueues.set(roomId, next);
+}
+
+/** Accept any UUID-shaped hex so non-v4 profile IDs still pass; rejects Discord snowflakes etc. */
+const UUID_HEX_RE =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function profileUuidOrNull(value: string | undefined): string | null {
+	if (!value || !UUID_HEX_RE.test(value)) return null;
+	return value;
+}
+
 export function attachFightSummaryWriter(
 	eventBus: RoomEventBus,
 	db: Db,
-	log: (err: unknown) => void = () => {}
+	legacyLog: (err: unknown) => void = () => {}
 ): () => void {
 	const roomId = eventBus.roomId;
 	const subscriberId = `fight-summary:${roomId}`;
@@ -32,7 +55,8 @@ export function attachFightSummaryWriter(
 				try {
 					onRingFight(roomId, event);
 				} catch (err) {
-					log(err);
+					legacyLog(err);
+					log.error('fight-summary-writer: onRingFight threw', { err, roomId });
 				}
 				return;
 			}
@@ -41,7 +65,25 @@ export function attachFightSummaryWriter(
 				return;
 			}
 			if (event.type === 'ring.fightResolved') {
-				void onFightResolved(db, roomId, event).catch(log);
+				enqueueFightSummaryWrite(roomId, async () => {
+					try {
+						await onFightResolved(db, roomId, event);
+					} catch (err) {
+						fightSummaryWriteFailures.inc({ room_id: roomId });
+						const stack = err instanceof Error ? err.stack : undefined;
+						const pg =
+							err && typeof err === 'object' && 'code' in err
+								? String((err as { code?: unknown }).code)
+								: undefined;
+						log.error('fight-summary-writer: failed to write fight summary', {
+							err,
+							roomId,
+							stack,
+							pgCode: pg,
+						});
+						legacyLog(err);
+					}
+				});
 			}
 		},
 	});
@@ -66,7 +108,6 @@ function onCardDrop(roomId: string, event: GameEvent): void {
 
 async function onFightResolved(db: Db, roomId: string, event: GameEvent): Promise<void> {
 	const pending = pendingByRoom.get(roomId);
-	pendingByRoom.delete(roomId);
 
 	const payload = event.payload as {
 		rounds: number;
@@ -126,10 +167,10 @@ async function onFightResolved(db: Db, roomId: string, event: GameEvent): Promis
 			outcome: payload.outcome,
 			winnerMonsterId: payload.winnerMonsterId ?? null,
 			winnerMonsterName: payload.winnerMonsterName ?? null,
-			winnerOwnerUserId: payload.winnerOwnerUserId ?? null,
+			winnerOwnerUserId: profileUuidOrNull(payload.winnerOwnerUserId),
 			loserMonsterId: payload.loserMonsterId ?? null,
 			loserMonsterName: payload.loserMonsterName ?? null,
-			loserOwnerUserId: payload.loserOwnerUserId ?? null,
+			loserOwnerUserId: profileUuidOrNull(payload.loserOwnerUserId),
 			roundCount: payload.rounds,
 			winnerXpGained: winnerXp,
 			loserXpGained: loserXp,
@@ -148,4 +189,6 @@ async function onFightResolved(db: Db, roomId: string, event: GameEvent): Promis
 			loser: payload.loserMonsterName,
 		});
 	});
+
+	pendingByRoom.delete(roomId);
 }

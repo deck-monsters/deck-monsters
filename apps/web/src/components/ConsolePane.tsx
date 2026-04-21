@@ -365,7 +365,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         // Only process events targeted to this user
         const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
         const isPublicSystem = event.scope === 'public' && event.type === 'system';
-        if (!isPrivate && !isPublicSystem) return;
+        const isGapNotice = event.type === 'system.gap' && isPrivate;
+        if (!isPrivate && !isPublicSystem && !isGapNotice) return;
 
         onEvent?.(event);
         if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {
@@ -378,6 +379,15 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
           addConsoleEvent({
             id: event.id,
             type: 'input',
+            text: event.text,
+          });
+          return;
+        }
+
+        if (event.type === 'system.gap') {
+          addConsoleEvent({
+            id: event.id,
+            type: 'system',
             text: event.text,
           });
           return;

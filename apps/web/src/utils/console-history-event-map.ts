@@ -18,6 +18,9 @@ export function mapConsoleHistoryEvent(event: ConsoleHistoryEvent): ConsoleHisto
   if (event.type === 'system' && payload.consoleInput) {
     return { id: event.id, type: 'input', text: event.text };
   }
+  if (event.type === 'system.gap') {
+    return { id: event.id, type: 'system', text: event.text };
+  }
   if (event.type === 'announce' || event.type === 'system') {
     return { id: event.id, type: event.type as 'announce' | 'system', text: event.text };
   }

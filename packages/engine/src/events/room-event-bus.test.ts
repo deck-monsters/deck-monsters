@@ -157,3 +157,58 @@ describe('RoomEventBus pending prompt snapshots', () => {
 		expect(bus.getPendingPromptForUser('nobody')).to.equal(null);
 	});
 });
+
+describe('RoomEventBus getEventsSince', () => {
+	it('returns slice after id when cursor is in the buffer', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const a = bus.publish({
+			type: 'announce',
+			scope: 'public',
+			text: 'a',
+			payload: {},
+		});
+		const b = bus.publish({
+			type: 'announce',
+			scope: 'public',
+			text: 'b',
+			payload: {},
+		});
+		const c = bus.publish({
+			type: 'announce',
+			scope: 'public',
+			text: 'c',
+			payload: {},
+		});
+		const r = bus.getEventsSince(a.id);
+		expect(r.truncated).to.equal(false);
+		expect(r.upToDate).to.equal(false);
+		expect(r.events.map(e => e.id)).to.deep.equal([b.id, c.id]);
+	});
+
+	it('marks truncated when id was evicted and cursor is behind newest', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const oldIds: string[] = [];
+		for (let i = 0; i < 210; i++) {
+			const e = bus.publish({
+				type: 'announce',
+				scope: 'public',
+				text: `m${i}`,
+				payload: {},
+			});
+			if (i === 0) oldIds.push(e.id);
+		}
+		const r = bus.getEventsSince(oldIds[0]!);
+		expect(r.events).to.have.length(0);
+		expect(r.truncated).to.equal(true);
+		expect(r.upToDate).to.equal(false);
+	});
+
+	it('marks upToDate when cursor is lexicographically newer than buffer tail', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		bus.publish({ type: 'announce', scope: 'public', text: 'x', payload: {} });
+		const r = bus.getEventsSince('9999999999999-zzzzzzzz');
+		expect(r.events).to.have.length(0);
+		expect(r.truncated).to.equal(false);
+		expect(r.upToDate).to.equal(true);
+	});
+});
