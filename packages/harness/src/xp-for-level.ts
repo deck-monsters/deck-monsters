@@ -1,3 +1,4 @@
+import './set-env.js';
 import { getLevel } from '@deck-monsters/engine';
 
 /**

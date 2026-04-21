@@ -3,6 +3,7 @@
  * Same matchup at levels 1, 5, 10, 15, 20 to spot scaling drift.
  */
 
+import '../sim-env.js';
 import '../set-env.js';
 import { engineReady } from '@deck-monsters/engine';
 import { simulate } from '../simulate.js';

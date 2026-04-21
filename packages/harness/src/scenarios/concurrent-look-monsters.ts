@@ -4,6 +4,7 @@
  * `RoomManager.runSerializedEngineWork`), command chains do not interleave.
  */
 
+import '../set-env.js';
 import type { Game } from '@deck-monsters/engine';
 import {
 	createAutoResponder,

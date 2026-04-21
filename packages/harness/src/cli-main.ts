@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Local simulation CLI — no HTTP, no DB.
+ * Loaded after `cli-entry.ts` + `set-env.js` (see `cli-entry.ts` for seed bootstrap).
  *
  * Usage:
  *   pnpm --filter @deck-monsters/harness run run -- [options]
@@ -93,23 +94,8 @@ function parseSimulateArgs(argv: string[]): SimulateCliArgs {
 	return { monsters, fights, seed, output, verbose };
 }
 
-/** Deterministic replacement for Math.random when --seed is passed. */
-function mulberry32(a: number): () => number {
-	return () => {
-		let t = (a += 0x6d2b79f5);
-		t = Math.imul(t ^ (t >>> 15), t | 1);
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
-}
-
 async function runScenarioMode(argv: string[]): Promise<void> {
 	const { scenario, seed, verbose } = parseScenarioArgs(argv);
-
-	if (seed !== undefined) {
-		const rnd = mulberry32(seed);
-		Math.random = rnd;
-	}
 
 	const game = createTestGame(`harness-${scenario}`);
 	const feed = capturePublicFeed(game.eventBus, `harness-cli:${scenario}`);

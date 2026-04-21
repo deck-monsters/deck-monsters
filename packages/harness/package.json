@@ -8,8 +8,8 @@
     "build": "tsc --build",
     "lint": "eslint src",
     "test": "mocha --exit",
-    "run": "tsx src/cli.ts",
-    "simulate": "tsx src/cli.ts simulate",
+    "run": "tsx src/cli-entry.ts",
+    "simulate": "tsx src/cli-entry.ts simulate",
     "sim:winrates": "node dist/scripts/sim-winrates.js",
     "sim:cardpower": "node dist/scripts/sim-cardpower.js",
     "sim:levelscaling": "node dist/scripts/sim-levelscaling.js"

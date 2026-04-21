@@ -3,6 +3,7 @@
  * Used by harness tests: print one JSON line of simulate() output then exit.
  * Run from package root: `node dist/scripts/repro-sim-seed.js`
  */
+import './repro-seed-env.js';
 import '../set-env.js';
 import { engineReady } from '@deck-monsters/engine';
 import { simulate } from '../simulate.js';

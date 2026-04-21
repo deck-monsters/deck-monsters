@@ -3,6 +3,7 @@
  * Average damage dealt per card type over many fights; highlights top/bottom 10%.
  */
 
+import '../sim-env.js';
 import '../set-env.js';
 import { engineReady } from '@deck-monsters/engine';
 import { simulate } from '../simulate.js';

@@ -4,6 +4,7 @@
  * Run manually before balance merges (not in CI).
  */
 
+import '../sim-env.js';
 import '../set-env.js';
 import { engineReady } from '@deck-monsters/engine';
 import { parseMonsterType, simulate, type SimMonsterSpec } from '../simulate.js';

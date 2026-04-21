@@ -1,8 +1,9 @@
 /**
  * Programmatic N-fight simulation for balance / mechanics validation.
- * Import `./set-env.js` before this module loads the engine.
+ * `./set-env.js` must load before the engine (argv/env PRNG seeding for lazy helpers).
  */
 
+import './set-env.js';
 import type { Game, GameEvent } from '@deck-monsters/engine';
 import {
 	allMonsters,
@@ -131,19 +132,17 @@ function installHitDamageCapture(
 
 	for (const { monster } of contestants) {
 		const m = monster as HitMonster;
-		const bound = m.on(
-			'hit',
-			(_className: string, _self: unknown, ev: { card?: { cardType?: string; name?: string }; damage?: number }) => {
-				const dmg = typeof ev?.damage === 'number' ? ev.damage : 0;
-				if (dmg <= 0) return;
-				const card = ev?.card;
-				const key = (card?.cardType || card?.name || 'unknown') as string;
-				const cur = sums.get(key) ?? { total: 0, count: 0 };
-				cur.total += dmg;
-				cur.count += 1;
-				sums.set(key, cur);
-			},
-		);
+		const bound = m.on('hit', (...args: unknown[]) => {
+			const ev = args[2] as { card?: { cardType?: string; name?: string }; damage?: number };
+			const dmg = typeof ev?.damage === 'number' ? ev.damage : 0;
+			if (dmg <= 0) return;
+			const card = ev?.card;
+			const key = (card?.cardType || card?.name || 'unknown') as string;
+			const cur = sums.get(key) ?? { total: 0, count: 0 };
+			cur.total += dmg;
+			cur.count += 1;
+			sums.set(key, cur);
+		});
 		listeners.push({ monster: m, bound });
 	}
 
@@ -177,15 +176,13 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		throw new Error('simulate() requires fights >= 1');
 	}
 
+	await engineReady;
+
+	// Per-call fight/build RNG (lazy helpers already used `Math.random` from set-env / env).
 	const prevRandom = Math.random;
 	if (seed !== undefined) {
 		Math.random = mulberry32(seed);
 	}
-
-	// `engineReady` loads lazy helpers that call `Math.random` (names, colors, `draw()`, …).
-	// Those draws must be part of the seeded stream so two runs with the same `--seed`
-	// burn identical RNG prefixes before the first fight.
-	await engineReady;
 
 	const names = monsters.map((_, i) => `Sim ${i + 1}`);
 	const winCounts = new Map<string, number>();

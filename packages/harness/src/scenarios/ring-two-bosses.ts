@@ -4,6 +4,7 @@
  * so combat resolves quickly (see cli.ts).
  */
 
+import '../set-env.js';
 import type { Game } from '@deck-monsters/engine';
 import { randomContestant } from '@deck-monsters/engine';
 
