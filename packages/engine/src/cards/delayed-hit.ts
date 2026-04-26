@@ -1,4 +1,5 @@
 import { HitCard } from './hit.js';
+import { hitLogTimestamp } from '../helpers/delay-times.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
 
@@ -29,7 +30,7 @@ export class DelayedHit extends HitCard {
 		delayingTarget: any,
 		ring: any
 	): any {
-		let whenPlayed = Date.now();
+		let whenPlayed = hitLogTimestamp();
 		const him =
 			delayingPlayer !== delayingTarget
 				? delayingTarget.givenName

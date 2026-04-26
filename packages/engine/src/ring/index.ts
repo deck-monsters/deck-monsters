@@ -6,7 +6,7 @@ import { getTarget } from '../helpers/targeting-strategies.js';
 import { randomContestant } from '../helpers/bosses.js';
 import { getLevel } from '../helpers/levels.js';
 import { sortCardsAlphabetically } from '../cards/helpers/sort.js';
-import { shortDelay, subEventDelay, veryShortDelay } from '../helpers/delay-times.js';
+import { delaysAreSkipped, shortDelay, subEventDelay, veryShortDelay } from '../helpers/delay-times.js';
 import { uniqueCards } from '../cards/helpers/unique-cards.js';
 import type { RoomEventBus } from '../events/index.js';
 
@@ -28,7 +28,7 @@ const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 30;
  * Calculates the max XP that still maps to `targetLevel` via `getLevel()`.
  * Level 0 cap is 49, level 1 cap is 99, level 2 cap is 149, etc.
  */
-const getXpCapForLevel = (targetLevel: number): number => {
+export const getXpCapForLevel = (targetLevel: number): number => {
 	const normalizedLevel = Math.max(0, Math.floor(targetLevel));
 	let lower = 0;
 	let upper = 1;
@@ -270,7 +270,9 @@ export class Ring extends BaseClass {
 				isBoss,
 			};
 
-			this.contestants = shuffle([...this.contestants, contestant]);
+			this.contestants = process.env.DECK_MONSTERS_DETERMINISTIC_RING
+				? [...this.contestants, contestant]
+				: shuffle([...this.contestants, contestant]);
 
 			// Pre-flight: warn if any card is a plain object without a play() method.
 			// This surfaces hydration failures before the fight starts rather than mid-combat.
@@ -632,7 +634,11 @@ export class Ring extends BaseClass {
 						cardJSON: JSON.stringify(card)?.slice(0, 300),
 					});
 					if (getAllActiveContestants().length > 1) {
-						setTimeout(() => next(), veryShortDelay(round));
+						if (delaysAreSkipped()) {
+							queueMicrotask(() => next());
+						} else {
+							setTimeout(() => next(), veryShortDelay(round));
+						}
 					} else {
 						resolve(playerContestant);
 					}
@@ -643,6 +649,9 @@ export class Ring extends BaseClass {
 					.play(player, proposedTarget, ring, getAllActiveContestants())
 					.then(() => {
 						if (getAllActiveContestants().length > 1) {
+							if (delaysAreSkipped()) {
+								return subEventDelay().then(() => next());
+							}
 							return new Promise<void>(r => setTimeout(r, 0))
 								.then(() => subEventDelay())
 								.then(() => next());
@@ -660,6 +669,9 @@ export class Ring extends BaseClass {
 						});
 						// Skip the failed card and continue the fight rather than crashing
 						if (getAllActiveContestants().length > 1) {
+							if (delaysAreSkipped()) {
+								return subEventDelay().then(() => next());
+							}
 							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() => next());
 						}
 						return Promise.resolve().then(() => resolve(playerContestant));
@@ -691,7 +703,11 @@ export class Ring extends BaseClass {
 					}
 
 					const waitMs = shortDelay(round);
-					setTimeout(() => next(), waitMs);
+					if (delaysAreSkipped()) {
+						queueMicrotask(() => next());
+					} else {
+						setTimeout(() => next(), waitMs);
+					}
 				}
 			});
 
