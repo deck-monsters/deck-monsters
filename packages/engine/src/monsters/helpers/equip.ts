@@ -153,16 +153,16 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 			if (cardSelection) {
 				const remainingItems = [...nowRemainingCards];
 				selectedCards = cardSelection.reduce((selection: CardInstance[], cardType: string) => {
+					const wanted = cardType.trim().toLowerCase();
 					const cardIndex = remainingItems.findIndex(
-						(potential: CardInstance) =>
-							(potential.cardType as string)?.toLowerCase() === cardType.toLowerCase(),
+						(potential: CardInstance) => getItemKey(potential).toLowerCase() === wanted,
 					);
 
 					if (cardIndex >= 0) {
 						const selectedCard = remainingItems.splice(cardIndex, 1)[0];
 						selection.push(selectedCard);
 					} else {
-						channel({ announce: `${monster.givenName} can not hold ${cardType.toLowerCase()}` });
+						channel({ announce: `${monster.givenName} can not hold ${cardType.trim().toLowerCase()}` });
 					}
 
 					return selection;

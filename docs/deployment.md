@@ -42,6 +42,21 @@ In **Authentication → URL Configuration**, set:
 
 The Site URL is where Supabase redirects users after OAuth. If left as `localhost`, production OAuth flows will send users to your local machine.
 
+#### Email password reset (forgot password)
+
+If the web client uses Supabase **`resetPasswordForEmail`** with a redirect back to the SPA, register that path on each public origin. The app callback is typically **`/reset-password`** (same origin as the static site).
+
+In **Authentication → URL Configuration → Redirect URLs**, add the exact reset path for every environment users might open the link from, for example:
+
+| Environment | Example redirect URL entry |
+|---|---|
+| Production | `https://deck-monsters.com/reset-password` |
+| Production `www` | `https://www.deck-monsters.com/reset-password` |
+| Railway web (pre–custom domain) | `https://<web>.up.railway.app/reset-password` |
+| Local Vite | `http://localhost:5173/reset-password` |
+
+You can use a wildcard on the path if your Supabase project allows it (e.g. `https://deck-monsters.com/**` already covers `/reset-password`). If reset emails fail or the link lands on an error from Supabase, the redirect URL is almost always missing from this list.
+
 ### Enable Auth providers
 
 In the project dashboard, go to **Authentication → Providers**:
@@ -248,7 +263,7 @@ Add `https://web.deck-monsters.com` to `CORS_ORIGINS` if you're using that alias
 | Setting | New value |
 |---|---|
 | **Site URL** | `https://deck-monsters.com` |
-| **Redirect URLs** | Add `https://deck-monsters.com/**` and `https://www.deck-monsters.com/**` (keep the Railway URL and localhost entries too) |
+| **Redirect URLs** | Add `https://deck-monsters.com/**` and `https://www.deck-monsters.com/**` (keep the Railway URL and localhost entries too). Ensure **email password reset** paths are covered (see [Email password reset](#email-password-reset-forgot-password) above). |
 
 ---
 

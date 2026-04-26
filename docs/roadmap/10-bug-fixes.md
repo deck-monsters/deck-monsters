@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt  
 **Priority**: High (fix before major new development)  
-**Status**: Active — 12 of 14 original items resolved. Four open bugs: fight log sync (#15), console history on reconnect (#16), event ring buffer gap detection (#17), and quick actions emission (#18). Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
+**Status**: Active — 12 of 14 original items resolved. Five open bugs: fight log sync (#15), console history on reconnect (#16), event ring buffer gap detection (#17), quick actions emission (#18), and deck equip batch flakiness (#19). Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
 
 ## Active Bugs
 
@@ -61,6 +61,26 @@ The web app already handles `quick_actions` events correctly — the suggestions
 **Fix needed**: After `game.handleCommand` + action resolves, determine contextual suggestions (e.g. "look at ring", "look at monsters", "buy") based on game state and emit a `quick_actions` event to the requesting user's private channel.
 
 **Status**: Open.
+
+---
+
+### 19. Deck equip flaky with batches (workshop + console) — MEDIUM (investigation)
+
+**Symptoms reported**: Equipping one card at a time works; multi-card flows (workshop multi-select / drag batch, console `equip … with "A", "B"` or interactive multi-pick) fail more often. Suspected escaping or “multiple bugs.”
+
+**Findings (code review, not yet reproduced in a single E2E run):**
+
+1. **Workshop batch = many rapid tRPC mutations** — `handleBatchMove` in `apps/web/src/views/WorkshopView.tsx` runs `unequipCard` / `moveCard` in a `for` loop (sequential `await`), but **`equipCards` is one mutation with an array** (good). Unequip-many and monster→monster batch moves still issue **N separate mutations**; each `onSuccess` invalidates `game.myInventory` + `game.myMonsters`, so the UI can refetch between calls while later mutations assume prior state. That can surface as “skipped” cards, wrong counts, or racey errors under latency.
+
+2. **Console interactive equip vs typed `equipCards`** — Engine `Beastmaster.equipCards` matches names with `isSameCardName` (**case-insensitive**, `getCardName` / `cardType`). The older **`equipMonster` + `cardSelection` path** in `packages/engine/src/monsters/helpers/equip.ts` used strict `(potential.cardType as string)?.toLowerCase() === cardType.toLowerCase()` and did **not** use `getItemKey`. Card types whose display key differs from `cardType`, or case-only mismatches vs inventory, could skip cards silently while `equip X with "…"` via `equipCards` works. **Aligned in code**: `equip.ts` now resolves each requested name with the same key logic as the rest of the character.
+
+3. **`getArray` parsing** (`packages/engine/src/helpers/get-array.ts`) — Comma / JSON parsing for `equip M with …` is brittle for names containing **apostrophes** inside single-quoted strings and for ambiguous comma splits. Worth fuzz-testing; prefer quoted segments for odd card names.
+
+4. **InlineChoices + `chooseItems`** — Multi-select sends comma-separated **indices**; engine parses with `getArray`. Trailing spaces are fine; edge cases (manual text entry into the console instead of chips) could still produce odd splits.
+
+**Suggested next steps**: (a) Reproduce with network throttling on workshop batch unequip / cross-monster move. (b) Consider a single **`moveCards`-style batch RPC** or server-side queue for workshop “N cards” to avoid inter-mutation refetch races. (c) Add harness tests for `equip … with` strings with special characters.
+
+**Status**: Open — investigation documented; partial engine fix for (2) shipped alongside this note.
 
 ---
 
