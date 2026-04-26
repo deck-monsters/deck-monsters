@@ -59,5 +59,7 @@ jobs:
       - run: pnpm install --frozen-lockfile=false
       # Build engine first — server and connector-discord tests import from engine/dist
       - run: pnpm --filter @deck-monsters/engine run build
+      # Harness tests spawn `dist/scripts/repro-sim-seed.js` (compiled output).
+      - run: pnpm --filter @deck-monsters/harness run build
       - run: pnpm run test
       - run: pnpm --filter @deck-monsters/web run test

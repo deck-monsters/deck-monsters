@@ -35,6 +35,18 @@ const CAP_ENV: Record<DelayKind, string> = {
 // test-setup file that is evaluated before any spec file runs.
 const skip = (): boolean => !!process.env.DECK_MONSTERS_SKIP_DELAYS;
 
+/** True when `DECK_MONSTERS_SKIP_DELAYS` is set (harness / tests): pacing timers are zeroed. */
+export const delaysAreSkipped = (): boolean => skip();
+
+let hitLogMonotonic = 0;
+
+/**
+ * Timestamps for `hitLog` entries. Realtime uses `Date.now()`; harness mode uses a
+ * monotonic counter so `DelayedHit` and similar effects do not depend on wall-clock
+ * ordering (which breaks reproducible simulations).
+ */
+export const hitLogTimestamp = (): number => (skip() ? ++hitLogMonotonic : Date.now());
+
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
 	if (!value) return fallback;
 	const parsed = Number.parseInt(value, 10);

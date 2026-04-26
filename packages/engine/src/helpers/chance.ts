@@ -1,6 +1,17 @@
-import Roll from 'roll';
+import { createRequire } from 'node:module';
 
-const dice = new Roll();
+const requireRoll = createRequire(import.meta.url);
+// Vendored `roll` (MIT) — patched for nested-roll safety; see `src/vendor/roll/index.js`.
+type RollInstance = {
+	roll(
+		input: string | Record<string, unknown>,
+		invokedByParse?: boolean,
+	): { result: number; calculations: unknown; rolled: unknown };
+};
+const RollCtor = requireRoll('../vendor/roll/index.js') as new (rng?: () => number) => RollInstance;
+
+/** One `Roll` per `chance.roll` so primary + bonus dice share one scratch stack safely. */
+const createDice = (): RollInstance => new RollCtor(() => Math.random());
 
 export interface RollDetails {
 	primaryDice: string;
@@ -22,6 +33,10 @@ export interface RollOptions {
 
 export const chance = {
 	roll({ primaryDice, modifier = 0, bonusDice, crit }: RollOptions): RollDetails {
+		// One `Roll` instance per operation: nested primary+bonus must share state; the
+		// upstream package also keeps fragile module-level scratch — never interleave
+		// two instances in the same logical roll.
+		const dice = createDice();
 		const naturalRoll = dice.roll(primaryDice);
 		const bonusResult = bonusDice ? dice.roll(bonusDice).result : 0;
 
@@ -57,7 +72,7 @@ export const chance = {
 	},
 
 	percent(): number {
-		return dice.roll('d%').result;
+		return createDice().roll('d%').result;
 	}
 };
 

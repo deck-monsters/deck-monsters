@@ -7,25 +7,42 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  /** True after the user lands from a password recovery email link (or recovery hash is present). */
+  passwordRecovery: boolean;
   signInWithDiscord: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<string | null>;
   signUpWithEmail: (email: string, password: string) => Promise<string | null>;
+  sendPasswordResetEmail: (email: string) => Promise<string | null>;
+  updatePassword: (newPassword: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function urlHasRecoveryType(): boolean {
+  if (typeof window === 'undefined') return false;
+  const fromHash = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type');
+  if (fromHash === 'recovery') return true;
+  const fromQuery = new URLSearchParams(window.location.search).get('type');
+  return fromQuery === 'recovery';
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession()
+    supabase.auth
+      .getSession()
       .then(({ data }) => {
         setSession(data.session);
         setTRPCToken(data.session?.access_token ?? null);
+        if (data.session && urlHasRecoveryType()) {
+          setPasswordRecovery(true);
+        }
       })
       .catch(() => {
         // Ignore network errors — session stays null, user sees login page
@@ -35,6 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       setTRPCToken(s?.access_token ?? null);
+      if (event === 'PASSWORD_RECOVERY' || (event === 'INITIAL_SESSION' && s && urlHasRecoveryType())) {
+        setPasswordRecovery(true);
+      }
+      if (event === 'SIGNED_OUT') {
+        setPasswordRecovery(false);
+      }
       if (event === 'TOKEN_REFRESHED') {
         reconnectWsClient();
       }
@@ -74,7 +97,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error?.message ?? null;
   }
 
+  async function sendPasswordResetEmail(email: string): Promise<string | null> {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return error?.message ?? null;
+  }
+
+  async function updatePassword(newPassword: string): Promise<string | null> {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (!error) {
+      setPasswordRecovery(false);
+    }
+    return error?.message ?? null;
+  }
+
   async function signOut() {
+    setPasswordRecovery(false);
     await supabase.auth.signOut();
   }
 
@@ -84,11 +123,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         user: session?.user ?? null,
         loading,
+        passwordRecovery,
         signInWithDiscord,
         signInWithGoogle,
         signInWithApple,
         signInWithEmail,
         signUpWithEmail,
+        sendPasswordResetEmail,
+        updatePassword,
         signOut,
       }}
     >
