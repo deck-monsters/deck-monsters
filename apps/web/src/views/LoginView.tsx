@@ -2,10 +2,17 @@ import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 
-type Mode = 'signin' | 'signup';
+type Mode = 'signin' | 'signup' | 'forgot';
 
 export default function LoginView() {
-  const { session, signInWithDiscord, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const {
+    session,
+    signInWithDiscord,
+    signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    sendPasswordResetEmail,
+  } = useAuth();
 
   // Already authenticated — skip the login form
   if (session) return <Navigate to="/rooms" replace />;
@@ -22,10 +29,14 @@ export default function LoginView() {
     setMessage(null);
     setLoading(true);
 
-    const err =
-      mode === 'signin'
-        ? await signInWithEmail(email, password)
-        : await signUpWithEmail(email, password);
+    let err: string | null = null;
+    if (mode === 'signin') {
+      err = await signInWithEmail(email, password);
+    } else if (mode === 'signup') {
+      err = await signUpWithEmail(email, password);
+    } else {
+      err = await sendPasswordResetEmail(email);
+    }
 
     setLoading(false);
 
@@ -33,6 +44,8 @@ export default function LoginView() {
       setError(err);
     } else if (mode === 'signup') {
       setMessage('Check your email to confirm your account.');
+    } else if (mode === 'forgot') {
+      setMessage('If an account exists for that email, you will receive a reset link shortly.');
     }
   }
 
@@ -119,17 +132,19 @@ export default function LoginView() {
                 autoComplete="email"
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="login-password">Password</label>
-              <input
-                id="login-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-              />
-            </div>
+            {mode !== 'forgot' && (
+              <div className="form-group">
+                <label htmlFor="login-password">Password</label>
+                <input
+                  id="login-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                />
+              </div>
+            )}
 
             <button
               type="submit"
@@ -137,15 +152,47 @@ export default function LoginView() {
               style={{ width: '100%', justifyContent: 'center' }}
               disabled={loading}
             >
-              {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+              {loading
+                ? 'Please wait…'
+                : mode === 'signin'
+                  ? 'Sign in'
+                  : mode === 'signup'
+                    ? 'Create account'
+                    : 'Send reset link'}
             </button>
           </form>
 
+          {mode === 'signin' && (
+            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-fg-dim)', marginTop: 8 }}>
+              <button
+                type="button"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-accent)',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: 'inherit',
+                  fontFamily: 'inherit',
+                }}
+                onClick={() => {
+                  setMode('forgot');
+                  setError(null);
+                  setMessage(null);
+                  setPassword('');
+                }}
+              >
+                Forgot password?
+              </button>
+            </p>
+          )}
+
           <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--color-fg-dim)', marginTop: 12 }}>
-            {mode === 'signin' ? (
+            {mode === 'forgot' ? (
               <>
-                No account?{' '}
+                Remember your password?{' '}
                 <button
+                  type="button"
                   style={{
                     background: 'none',
                     border: 'none',
@@ -155,7 +202,34 @@ export default function LoginView() {
                     fontSize: 'inherit',
                     fontFamily: 'inherit',
                   }}
-                  onClick={() => { setMode('signup'); setError(null); }}
+                  onClick={() => {
+                    setMode('signin');
+                    setError(null);
+                    setMessage(null);
+                  }}
+                >
+                  Sign in
+                </button>
+              </>
+            ) : mode === 'signin' ? (
+              <>
+                No account?{' '}
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--color-accent)',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: 'inherit',
+                    fontFamily: 'inherit',
+                  }}
+                  onClick={() => {
+                    setMode('signup');
+                    setError(null);
+                    setMessage(null);
+                  }}
                 >
                   Create one
                 </button>
@@ -164,6 +238,7 @@ export default function LoginView() {
               <>
                 Already have an account?{' '}
                 <button
+                  type="button"
                   style={{
                     background: 'none',
                     border: 'none',
@@ -173,7 +248,11 @@ export default function LoginView() {
                     fontSize: 'inherit',
                     fontFamily: 'inherit',
                   }}
-                  onClick={() => { setMode('signin'); setError(null); }}
+                  onClick={() => {
+                    setMode('signin');
+                    setError(null);
+                    setMessage(null);
+                  }}
                 >
                   Sign in
                 </button>
