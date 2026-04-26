@@ -68,19 +68,23 @@ The web app already handles `quick_actions` events correctly — the suggestions
 
 **Symptoms reported**: Equipping one card at a time works; multi-card flows (workshop multi-select / drag batch, console `equip … with "A", "B"` or interactive multi-pick) fail more often. Suspected escaping or “multiple bugs.”
 
-**Findings (code review, not yet reproduced in a single E2E run):**
+**Findings (code review + server paths):**
 
-1. **Workshop batch = many rapid tRPC mutations** — `handleBatchMove` in `apps/web/src/views/WorkshopView.tsx` runs `unequipCard` / `moveCard` in a `for` loop (sequential `await`), but **`equipCards` is one mutation with an array** (good). Unequip-many and monster→monster batch moves still issue **N separate mutations**; each `onSuccess` invalidates `game.myInventory` + `game.myMonsters`, so the UI can refetch between calls while later mutations assume prior state. That can surface as “skipped” cards, wrong counts, or racey errors under latency.
+1. **Server serialization (same room)** — Every card-management tRPC mutation runs inside `runSerializedMutation` → `RoomManager.runSerializedEngineWork` → `createKeyedPromiseQueue()` per `roomId`. **Sequential `await` calls from one browser tab cannot interleave** with each other on the engine object; state stays consistent. **Another tab or client** in the same room can still enqueue work between your mutations — rare for one user, possible for shared-room testing.
 
-2. **Console interactive equip vs typed `equipCards`** — Engine `Beastmaster.equipCards` matches names with `isSameCardName` (**case-insensitive**, `getCardName` / `cardType`). The older **`equipMonster` + `cardSelection` path** in `packages/engine/src/monsters/helpers/equip.ts` used strict `(potential.cardType as string)?.toLowerCase() === cardType.toLowerCase()` and did **not** use `getItemKey`. Card types whose display key differs from `cardType`, or case-only mismatches vs inventory, could skip cards silently while `equip X with "…"` via `equipCards` works. **Aligned in code**: `equip.ts` now resolves each requested name with the same key logic as the rest of the character.
+2. **Workshop batch + React Query** — `handleBatchMove` still runs **N mutations** for batch unequip / cross-monster move (`unequipCard` / `moveCard` in a loop). Each success **invalidates** `myInventory` / `myMonsters`, so the UI may **refetch between steps**. That usually causes **stale selection or flicker**, not wrong server state, unless the user acts again on outdated UI. **`equipCards` and `loadPreset` are single mutations** (good). Mitigations: batch RPC for multi-unequip / multi-move, or `mutateAsync` + single `invalidate` after the loop (defer invalidation in `useDeckWorkshop`).
 
-3. **`getArray` parsing** (`packages/engine/src/helpers/get-array.ts`) — Comma / JSON parsing for `equip M with …` is brittle for names containing **apostrophes** inside single-quoted strings and for ambiguous comma splits. Worth fuzz-testing; prefer quoted segments for odd card names.
+3. **`loadPreset` copy cap (real bug, fixed)** — In `Beastmaster.loadPreset`, per-slot duplicate enforcement used `getItemKey(card) === requestedCard` (raw string from preset). **`equipCards` uses `getItemKey` on both sides** (via `selectedCard`). Presets saved via `savePreset` use `getCardName` (normal casing), but **legacy or edited presets** with different casing meant `selectedCount` stayed **0** for every entry, so **`MAX_CARD_COPIES_IN_HAND` never tripped** — you could exceed the per-card copy limit when loading a preset. **Fixed**: compare `normalize(getItemKey(card))` to `normalize(String(requestedCard))`.
 
-4. **InlineChoices + `chooseItems`** — Multi-select sends comma-separated **indices**; engine parses with `getArray`. Trailing spaces are fine; edge cases (manual text entry into the console instead of chips) could still produce odd splits.
+4. **Console interactive equip vs typed `equipCards`** — `equipMonster` + `cardSelection` in `packages/engine/src/monsters/helpers/equip.ts` used strict `cardType` equality; **`equipCards` / `isSameCardName`** are more forgiving. **Aligned**: `cardSelection` resolution now uses `getItemKey` + trimmed lowercase.
 
-**Suggested next steps**: (a) Reproduce with network throttling on workshop batch unequip / cross-monster move. (b) Consider a single **`moveCards`-style batch RPC** or server-side queue for workshop “N cards” to avoid inter-mutation refetch races. (c) Add harness tests for `equip … with` strings with special characters.
+5. **`getArray` parsing** (`packages/engine/src/helpers/get-array.ts`) — For `equip M with …`, strings wrapped in **double quotes** split only on `"(?:[\s,]|or|and)+"` — a card name containing **`"`** inside the list breaks parsing. Single-quoted lists split on `'(?:[\s,]|or|and)+'` — names with **`'`** (apostrophe) as delimiter are unsafe. Unquoted fallback strips **all** quotes via `/([^"']+)/`, which can mangle names that include quotes. Prefer JSON array input for exotic names; worth a doc note in player-facing help.
 
-**Status**: Open — investigation documented; partial engine fix for (2) shipped alongside this note.
+6. **InlineChoices + `chooseItems`** — Multi-select answers are comma-separated **indices** parsed by `getArray`; typed free-text answers in the console could still misfire if they do not match expected patterns.
+
+**Suggested next steps**: (a) Optional **batch `unequipMany` / `moveMany` tRPC** + deferred invalidation to reduce workshop flicker. (b) Harness / unit tests for `getArray` with apostrophe card names and for preset load with mixed-case duplicate keys. (c) Reproduce multi-tab same-room if issues persist.
+
+**Status**: Open for UX / batch API work; **preset copy-limit and `equip.ts` name matching** addressed in engine.
 
 ---
 

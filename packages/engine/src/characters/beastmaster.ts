@@ -899,8 +899,9 @@ class Beastmaster extends BaseCharacter {
 						return;
 					}
 
+					const requestedKey = normalize(String(requestedCard));
 					const selectedCount = nextCards.filter(
-						card => getItemKey(card) === requestedCard,
+						card => normalize(getItemKey(card)) === requestedKey,
 					).length;
 					if (selectedCount >= MAX_CARD_COPIES_IN_HAND) {
 						skippedCards.push(requestedCard);

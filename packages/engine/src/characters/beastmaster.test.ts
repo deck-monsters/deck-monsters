@@ -207,4 +207,35 @@ describe('characters/beastmaster', () => {
 		expect(loadResult.requested).to.equal(2);
 		expect(loadResult.skippedCards).to.deep.equal(['Heal']);
 	});
+
+	it('loadPreset enforces max copies per card when preset strings differ in case from cardType', async () => {
+		const beastmaster = new Beastmaster();
+		const monster = makeMonster('Stonefang', []) as ReturnType<typeof makeMonster> & {
+			options: Record<string, unknown>;
+		};
+		monster.options = {
+			presets: {
+				many: ['hit', 'hit', 'hit', 'hit', 'hit'],
+			},
+		};
+		beastmaster.monsters = [monster as any];
+		beastmaster.deck = [
+			makeCard('Hit'),
+			makeCard('Hit'),
+			makeCard('Hit'),
+			makeCard('Hit'),
+			makeCard('Hit'),
+		];
+
+		const loadResult = await beastmaster.loadPreset({
+			channel: channelStub,
+			presetName: 'many',
+			monsterName: 'Stonefang',
+		});
+
+		expect(loadResult.equipped).to.equal(4);
+		expect(loadResult.requested).to.equal(5);
+		expect(loadResult.skippedCards).to.deep.equal(['hit']);
+		expect(monster.cards.map(c => c.cardType)).to.deep.equal(['Hit', 'Hit', 'Hit', 'Hit']);
+	});
 });

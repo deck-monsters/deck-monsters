@@ -44,7 +44,7 @@ The Site URL is where Supabase redirects users after OAuth. If left as `localhos
 
 #### Email password reset (forgot password)
 
-If the web client uses Supabase **`resetPasswordForEmail`** with a redirect back to the SPA, register that path on each public origin. The app callback is typically **`/reset-password`** (same origin as the static site).
+The web app calls **`resetPasswordForEmail`** with **`redirectTo: {origin}/reset-password`** (`apps/web/src/lib/auth-context.tsx`). Register that path on each public origin the user might open the email link from.
 
 In **Authentication → URL Configuration → Redirect URLs**, add the exact reset path for every environment users might open the link from, for example:
 
