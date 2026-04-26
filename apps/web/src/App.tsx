@@ -4,6 +4,7 @@ import { useAuth } from './lib/auth-context.js';
 import AppShell from './components/AppShell.js';
 import Terminal from './components/Terminal.js';
 import LoginView from './views/LoginView.js';
+import ResetPasswordView from './views/ResetPasswordView.js';
 import RoomLobbyView from './views/RoomLobbyView.js';
 import RoomSettingsView from './views/RoomSettingsView.js';
 import AccountView from './views/AccountView.js';
@@ -144,6 +145,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginView />} />
+      <Route path="/reset-password" element={<ResetPasswordView />} />
 
       <Route
         path="/rooms"
