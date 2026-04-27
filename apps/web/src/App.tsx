@@ -69,7 +69,9 @@ function RoomSettingsWrapper() {
 
   return (
     <AppShell roomName={room?.name} roomId={roomId}>
-      <RoomSettingsView />
+      <div style={{ overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch' }}>
+        <RoomSettingsView />
+      </div>
     </AppShell>
   );
 }

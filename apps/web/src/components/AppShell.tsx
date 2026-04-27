@@ -240,7 +240,15 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
         </div>
       )}
 
-      <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <main
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {children}
       </main>
 
