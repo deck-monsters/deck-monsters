@@ -159,8 +159,17 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 					);
 
 					if (cardIndex >= 0) {
-						const selectedCard = remainingItems.splice(cardIndex, 1)[0];
-						selection.push(selectedCard);
+						const selectedCard = remainingItems[cardIndex];
+						const alreadySelected = selection.filter(
+							card => getItemKey(card) === getItemKey(selectedCard),
+						).length;
+
+						if (alreadySelected >= MAX_CARD_COPIES_IN_HAND) {
+							channel({ announce: `You may not equip more than ${MAX_CARD_COPIES_IN_HAND} copies of ${cardType.trim()}.` });
+						} else {
+							remainingItems.splice(cardIndex, 1);
+							selection.push(selectedCard);
+						}
 					} else {
 						channel({ announce: `${monster.givenName} can not hold ${cardType.trim().toLowerCase()}` });
 					}

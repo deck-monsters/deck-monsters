@@ -28,9 +28,24 @@ const getArray = (string: unknown, commaSeparated = false): string[] | null => {
 	} catch {
 		match = string.match(/([^"']+)/);
 
-		return match![1]
-			.replace(/[\s]+(?:or|and)[\s]+/i, ' ')
-			.split(/(?:[\s,])+/);
+		if (!match) return null;
+
+		const cleaned = match[1].trim();
+		if (!cleaned) return null;
+
+		// Comma-separated: split on commas (handles "Hit, Heal" and "0,1,2")
+		if (cleaned.includes(',')) {
+			return cleaned.split(/\s*,\s*/).filter(Boolean);
+		}
+
+		// All digits and whitespace: numeric index selection, split on whitespace
+		if (/^[\d\s]+$/.test(cleaned)) {
+			return cleaned.split(/\s+/).filter(Boolean);
+		}
+
+		// Single item — card names that contain spaces (e.g. "Fight or Flight")
+		// need commas or double-quotes to separate multiple selections.
+		return [cleaned];
 	}
 };
 
