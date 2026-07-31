@@ -241,7 +241,7 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 
 ## Known Issues
 
-- **Card shop is a process-wide singleton** — every room shares one shop inventory/closing time, violating the room-scoping rule. Needs a design decision before implementation. (#26 in `docs/roadmap/10-bug-fixes.md`)
+- **Card shop is a process-wide singleton** — every room shares one shop inventory/closing time, violating the room-scoping rule. Design decided (per-room shop, persisted in room state, 6-hour refresh aligned to America/Chicago clock boundaries) but not yet implemented. (#26 in `docs/roadmap/10-bug-fixes.md`)
 - **`creatures/base.ts` still large** — ~977 lines after the TypeScript migration (down from ~2000). Continue incremental decomposition into `creatures/combat.ts`, `creatures/stats.ts`, etc.
 - **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet.
 

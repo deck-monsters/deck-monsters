@@ -19,7 +19,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [06a — Web App](06a-web-app.md) | Terminal UI, ring feed, lobby, rooms | ✅ Done — live at deck-monsters.com |
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — batch-equip UX, shop scoping design decision, 2 cleanup items |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — batch-equip UX, per-room shop scoping (design decided), 2 cleanup items |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | 🔧 Active — deployed, not heavily used; admin role + tests remaining |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | 🔧 Active — sync bugs being fixed |
@@ -50,7 +50,7 @@ Everything below shipped and is not expected to need revisiting:
 - **Fight stats** — `fight_summaries` table, `FightSummaryWriter`, catch-up text command, web fight log page with expandable detail, last-fight ticker in ring pane
 - **Card workshop** — full card management shipped: unequip/move commands, preset save/load/delete, drag-and-drop web workshop at `/workshop`
 - **Battle history persistence** — stored in `options.battles`, capped at 20, survives restarts
-- **Bug fixes** — the large majority of tracked items are resolved; see `10b-bugs-fixed.md` for the archive. Open items (batch-equip UX, card shop room-scoping design decision, DMG/CARDS content pass, `creatures/base.ts` decomposition) are tracked in `10-bug-fixes.md`
+- **Bug fixes** — the large majority of tracked items are resolved; see `10b-bugs-fixed.md` for the archive. Open items (batch-equip UX, per-room card shop scoping — design decided, not yet implemented, DMG/CARDS content pass, `creatures/base.ts` decomposition) are tracked in `10-bug-fixes.md`
 
 ---
 
@@ -61,7 +61,7 @@ Real-time sync bugs (fight log not updating, console missing reconnect history, 
 ### 1. Batch-equip UX and card shop room-scoping (10-bug-fixes.md)
 
 - **Batch equip UX** (#19) — workshop multi-select/drag batch and console multi-card equip still feel flakier than one-at-a-time equips; root-cause engine bugs are fixed, remaining work is a batch tRPC mutation + deferred cache invalidation.
-- **Card shop is a process-wide singleton** (#26) — every room shares one shop inventory/closing time, violating the room-scoping rule. Needs a design decision before implementation.
+- **Card shop is a process-wide singleton** (#26) — every room shares one shop inventory/closing time, violating the room-scoping rule. Design decided: per-room shop, persisted in room state, refreshing every 6 hours aligned to America/Chicago clock boundaries. Implementation not yet started.
 
 ### 2. Discord connector polish (05-discord-connector.md)
 

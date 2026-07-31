@@ -128,6 +128,6 @@ Missing a room filter is a recurring source of bugs. See [`docs/room-scoping.md`
 
 ### Active known bugs
 
-- **Card shop is a process-wide singleton** — every room shares one shop inventory and closing time (`packages/engine/src/items/store/shop.ts`), violating the room-scoping rule above. Needs a design decision (per-room shop vs. intentionally shared) before implementation. See bug #26 in `docs/roadmap/10-bug-fixes.md`.
+- **Card shop is a process-wide singleton** — every room shares one shop inventory and closing time (`packages/engine/src/items/store/shop.ts`), violating the room-scoping rule above. Design decided (per-room shop, persisted in room state, 6-hour refresh aligned to America/Chicago clock boundaries) but not yet implemented. See bug #26 in `docs/roadmap/10-bug-fixes.md`.
 
 Previously listed here and now fixed: fight log stale after new fights (#15 — the root cause was write-side races and dropped retries in `fight-summary-writer.ts`, not query-cache invalidation) and console history missing on reconnect (#16/#17 — the engine's cold ring buffer reported "nothing missed" instead of triggering the durable-storage replay). See `docs/roadmap/10b-bugs-fixed.md` for full write-ups.

@@ -1,8 +1,8 @@
 # Bug Fixes and Code Quality
 
 **Category**: Bug / Tech Debt
-**Priority**: Medium (one item is blocked on a design decision; the rest is UX polish and ongoing cleanup)
-**Status**: Active. Everything already fixed has moved to [`10b-bugs-fixed.md`](10b-bugs-fixed.md) — read that doc for history and root causes. What's left here: #19 (batch-equip UX work), #26 (card shop singleton, needs a design decision before implementation), two ongoing cleanup items (#3 DMG/CARDS content differentiation, #5 `creatures/base.ts` decomposition), and a handful of smaller open observations.
+**Priority**: Medium (#26's design is decided and ready to implement; the rest is UX polish and ongoing cleanup)
+**Status**: Active. Everything already fixed has moved to [`10b-bugs-fixed.md`](10b-bugs-fixed.md) — read that doc for history and root causes. What's left here: #19 (batch-equip UX work), #26 (card shop singleton — design decided, implementation not started), two ongoing cleanup items (#3 DMG/CARDS content differentiation, #5 `creatures/base.ts` decomposition), and a handful of smaller open observations.
 
 ## Open Bugs
 
@@ -26,13 +26,24 @@ The engine-side root causes found during investigation (preset copy-limit bug, `
 
 ---
 
-### 26. Card shop is a single process-wide singleton shared by every room — RECORDED, not fixed
+### 26. Card shop is a single process-wide singleton shared by every room — DESIGN DECIDED, not yet implemented
 
-`packages/engine/src/items/store/shop.ts`'s `getShop()` is a module-level `throttle()`-wrapped function with a single `currentShop` variable, regenerated once per 8 hours **for the entire process**, not per room. Every room on a multi-room server currently shares the exact same shop inventory, closing time, and prices — one room buying out an item affects every other room's shop simultaneously. This directly conflicts with `CLAUDE.md`'s "Critical Architecture Rule: Room-Level Scoping" ("All game state … must be scoped to a room … treat this as a hard constraint, not a guideline").
+`packages/engine/src/items/store/shop.ts`'s `getShop()` is a module-level `throttle()`-wrapped function with a single `currentShop` variable, regenerated once per 8 hours **for the entire process**, not per room. Every room on a multi-room server currently shares the exact same shop inventory, closing time, and prices — one room buying out an item affects every other room's shop simultaneously (purchases really do mutate the shared `shop.items`/`shop.cards`/`shop.backRoom` arrays via `.splice()` in `buy.ts`). This directly conflicts with `CLAUDE.md`'s "Critical Architecture Rule: Room-Level Scoping" ("All game state … must be scoped to a room … treat this as a hard constraint, not a guideline"). Likely a leftover from the original single-workspace Slack bot design, never revisited during the multi-room revival.
 
-Likely a leftover from the original single-workspace Slack bot design, never revisited during the multi-room revival. Not fixed here — it needs a design decision (per-room shop keyed by `roomId`? shared shop but per-room purchase tracking? intentionally shared as a "world event"?) rather than a mechanical patch, and touches `buy.ts`/`sell.ts`'s call sites plus whatever surfaces the shop to connectors.
+**Design decision (2026-07-31)**:
 
-**Status**: Open — needs a design decision before implementation.
+1. **Per-room shop.** Each room gets its own independently generated inventory, name, adjective, prices, and closing time. No cross-room sharing of stock or state.
+2. **Persisted in room state**, not regenerated purely in-memory. The shop becomes part of the room's `Game` options (same pattern as battle history, #4 in `10b-bugs-fixed.md`) — included via `setOptions({ shop })`, serialized in `toJSON()`, and restored by `restoreGame()`. This means a room's shop survives idle-unload/reload and server restarts instead of resetting.
+3. **Refresh cadence: every 6 hours, aligned to fixed wall-clock boundaries** — 00:00, 06:00, 12:00, 18:00 — in **America/Chicago (US Central)** time, since the codebase has no existing server-timezone convention to reuse (`helpers/time.ts` formats in `en-US` but is timezone-naive). This replaces the current "8 hours after last generation" throttle model: instead of a duration-based throttle, the shop computes the next clock boundary and regenerates when that boundary is crossed (needs DST-aware handling since Central time observes CST/CDT — use `Intl.DateTimeFormat` with `timeZone: 'America/Chicago'` rather than a fixed UTC offset). All rooms' shops refresh in sync at the same wall-clock moments, but each still generates its own independent inventory.
+
+**Not yet implemented.** Follow-up work (tracked in Tasks below):
+
+- Replace the module-level `throttle()`-wrapped singleton in `shop.ts` with a pure function that takes the room's current stored shop (or `undefined`) and the current time, and returns either the existing shop (if still before the next 6-hour boundary) or a freshly generated one.
+- Add `shop` to `Game`'s room-scoped options (schema, `toJSON`, `restoreGame` hydration — likely a new Zod schema in `schemas/`).
+- Update `buy.ts`/`sell.ts` call sites to read/write the room's shop instance instead of importing the singleton `getShop` function directly, and to persist the mutated shop back via `setOptions` after a purchase so a bought-out item survives room reload.
+- Compute the next 6-hour Central-time boundary (DST-safe) as the new `closingTime` when generating.
+
+**Status**: Design decided — see above. Implementation not started.
 
 ---
 
@@ -64,7 +75,7 @@ Reduced from ~2000 lines during the TypeScript migration (see #5 in `10b-bugs-fi
 
 - [ ] Batch RPC (`unequipMany` / `moveMany`) + deferred invalidation to reduce workshop flicker (#19)
 - [ ] Harness/unit tests for `getArray` with apostrophe card names and mixed-case preset duplicate keys (#19)
-- [ ] Decide on and implement per-room (or intentionally shared) card shop scoping (#26)
+- [ ] Implement per-room, persisted, 6-hour-Central-time-aligned card shop scoping — design decided, see #26
 - [ ] Audit and differentiate `DMG.md` vs `CARDS.md` full content; add how-to-run section (upstream #265) (#3)
 - [ ] Continue incremental decomposition of `creatures/base.ts` (#5)
 - [ ] Await `equip.ts`'s fire-and-forget rejection announces if message ordering ever becomes an issue
