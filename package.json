@@ -31,6 +31,7 @@
     "test:watch": "cd packages/engine && npm run test:watch",
     "test:coverage": "cd packages/engine && npm run test:coverage",
     "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
     "setup:local": "bash scripts/setup-local.sh"
   },
   "repository": {

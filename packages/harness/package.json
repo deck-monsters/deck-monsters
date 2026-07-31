@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "mocha --exit",
     "run": "tsx src/cli-entry.ts",

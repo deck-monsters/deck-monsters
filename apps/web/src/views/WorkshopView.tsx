@@ -197,7 +197,10 @@ export default function WorkshopView() {
         monsterName: source.monsterName,
         cards: grouped,
       });
-      setMessage(`Unequipped ${result.removedCount} cards from ${source.monsterName}.`);
+      const skipped = result.failures.length > 0
+        ? ` Skipped: ${result.failures.map((f) => f.cardName).join(', ')}.`
+        : '';
+      setMessage(`Unequipped ${result.removedCount} cards from ${source.monsterName}.${skipped}`);
       return;
     }
 
@@ -209,7 +212,10 @@ export default function WorkshopView() {
         toMonsterName: target.monsterName,
         cards: grouped,
       });
-      setMessage(`Moved ${result.movedCount} cards to ${target.monsterName}.`);
+      const skipped = result.failures.length > 0
+        ? ` Skipped: ${result.failures.map((f) => f.cardName).join(', ')}.`
+        : '';
+      setMessage(`Moved ${result.movedCount} cards to ${target.monsterName}.${skipped}`);
     }
   }
 

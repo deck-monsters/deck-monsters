@@ -63,8 +63,13 @@ Would you like to sell? (yes/no)`
 			})
 				.then((answer: string = '') => {
 					if (answer.toLowerCase() === 'yes') {
-						const newCards = [...shop.cards];
-						const newItems = [...shop.items];
+						// Re-read the shop at commit time — see the matching comment in
+						// buy.ts. Building this mutation on the pre-prompt snapshot would
+						// discard any purchase another room member made while this flow
+						// waited on its prompts.
+						const currentShop = host.shop;
+						const newCards = [...currentShop.cards];
+						const newItems = [...currentShop.items];
 
 						choices.forEach((choice: any) => {
 							if (choice.cardType) {
@@ -76,7 +81,7 @@ Would you like to sell? (yes/no)`
 							}
 						});
 
-						host.commitShop({ ...shop, cards: newCards, items: newItems });
+						host.commitShop({ ...currentShop, cards: newCards, items: newItems });
 
 						character.coins += value;
 

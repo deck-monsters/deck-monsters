@@ -83,7 +83,7 @@ const COINS_AND_SHOP = `
 
 Earn coins by winning (and even losing) battles. Spend them at the shop to expand your card pool and buy items.
 
-The merchant changes every 8 hours, so prices and stock rotate. Never sell to the shop for less than a card is worth — shop prices are always lower than face value, but some merchants are fairer than others.
+The merchant changes every 6 hours, so prices and stock rotate. Each room has its own merchant, so what's in stock next door has nothing to do with what's in stock here. Never sell to the shop for less than a card is worth — shop prices are always lower than face value, but some merchants are fairer than others.
 
    visit the shop         — browse and buy
    sell to the shop       — sell cards or items

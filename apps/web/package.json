@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "start": "serve dist -s -l tcp://0.0.0.0:${PORT:-3000}",
     "lint": "eslint src",

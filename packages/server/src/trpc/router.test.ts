@@ -190,7 +190,58 @@ describe('trpc/router card management procedures', () => {
 			{ cardName: 'Hit', count: 2 },
 			{ cardName: 'Heal', count: 1 },
 		]);
-		expect(result).to.deep.equal({ removedCount: 3, monsterName: 'Stonefang' });
+		expect(result).to.deep.equal({ removedCount: 3, monsterName: 'Stonefang', failures: [] });
+	});
+
+	it('unequipMany reports per-card failures instead of throwing away a partial batch', async () => {
+		// A batch is not atomic: if a later card fails, the earlier ones stay
+		// unequipped. Throwing here would leave the client showing stale inventory
+		// (its cache only invalidates on success) next to an error message.
+		const unequipCard = async ({ cardName }: { cardName: string }) => {
+			if (cardName === 'Heal') throw new Error('Cannot unequip while in encounter');
+			return { removedCount: 1, monsterName: 'Stonefang' };
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.unequipMany({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			cards: [{ cardName: 'Hit' }, { cardName: 'Heal' }, { cardName: 'Blink' }],
+		});
+
+		expect(result.removedCount).to.equal(2);
+		expect(result.failures).to.deep.equal([
+			{ cardName: 'Heal', reason: 'Cannot unequip while in encounter' },
+		]);
+	});
+
+	it('unequipMany still throws when the whole batch fails and nothing changed', async () => {
+		const unequipCard = async () => {
+			throw new Error('Cannot unequip while in encounter');
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const err = await caller.game
+			.unequipMany({ roomId: ROOM_ID, monsterName: 'Stonefang', cards: [{ cardName: 'Hit' }] })
+			.catch((e: unknown) => e);
+
+		expect(err).to.be.instanceOf(TRPCError);
+		expect((err as TRPCError).code).to.equal('BAD_REQUEST');
+		expect((err as TRPCError).message).to.equal('Cannot unequip while in encounter');
 	});
 
 	it('runs game.moveMany as a single serialized lane and aggregates movedCount', async () => {
@@ -233,6 +284,7 @@ describe('trpc/router card management procedures', () => {
 			movedCount: 3,
 			fromMonsterName: 'Stonefang',
 			toMonsterName: 'Mirebell',
+			failures: [],
 		});
 	});
 

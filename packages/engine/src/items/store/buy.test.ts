@@ -71,6 +71,86 @@ describe('./items/store/buy.ts', () => {
 		});
 	});
 
+	it('commits against the shop as it is at commit time, not the pre-prompt snapshot', async () => {
+		// Two members of a room browse at once: their command actions run in
+		// separate per-user lanes, so this flow's prompts interleave with the
+		// other's purchase. Committing a mutation of the snapshot captured before
+		// the prompts would resurrect the item the other player already bought.
+		const myItem = { name: 'Bandage', itemType: 'Bandage', cost: 10 };
+		const theirItem = { name: 'Potion', itemType: 'Potion', cost: 5 };
+		const staleShop: Shop = { ...defaultShop, items: [myItem, theirItem] };
+		// The other player's purchase lands while this flow is awaiting prompts.
+		const shopAfterTheirPurchase: Shop = { ...defaultShop, items: [myItem] };
+
+		let shopReads = 0;
+		const host: ShopHost & { commitShop: sinon.SinonStub } = {
+			get shop() {
+				shopReads += 1;
+				return shopReads === 1 ? staleShop : shopAfterTheirPurchase;
+			},
+			commitShop: sinon.stub()
+		};
+
+		const character = {
+			givenName: 'Character',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 500,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		channelStub.resolves();
+		channelStub.onCall(0).resolves('1');
+		channelStub.onCall(1).resolves('Bandage');
+		channelStub.onCall(3).resolves('yes');
+
+		await buyItems({ character, channel: channelStub, host });
+
+		expect(host.commitShop.calledOnce).to.equal(true);
+		const committed = host.commitShop.firstCall.args[0] as Shop;
+		// Only my purchase is removed; the other player's is not resurrected.
+		expect(committed.items).to.deep.equal([]);
+	});
+
+	it('does not charge for stock that sold out while the player was deciding', async () => {
+		const wantedItem = { name: 'Bandage', itemType: 'Bandage', cost: 10 };
+		const staleShop: Shop = { ...defaultShop, items: [wantedItem] };
+		const shopAfterSellout: Shop = { ...defaultShop, items: [] };
+
+		let shopReads = 0;
+		const host: ShopHost & { commitShop: sinon.SinonStub } = {
+			get shop() {
+				shopReads += 1;
+				return shopReads === 1 ? staleShop : shopAfterSellout;
+			},
+			commitShop: sinon.stub()
+		};
+
+		const character = {
+			givenName: 'Character',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 500,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		channelStub.resolves();
+		channelStub.onCall(0).resolves('1');
+		channelStub.onCall(1).resolves('Bandage');
+		channelStub.onCall(3).resolves('yes');
+
+		await buyItems({ character, channel: channelStub, host });
+
+		expect(character.coins).to.equal(500);
+		expect(character.addItem.called).to.equal(false);
+		expect(host.commitShop.called).to.equal(false);
+		expect(channelStub.calledWith(sinon.match({ announce: sinon.match(/sold while you were deciding/) }))).to.equal(true);
+	});
+
 	it('removes a purchased item from the shop and commits the updated shop', async () => {
 		const purchasedItem = { name: 'Bandage', itemType: 'Bandage', cost: 10 };
 		const remainingItem = { name: 'Potion', itemType: 'Potion', cost: 5 };

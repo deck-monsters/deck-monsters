@@ -1093,21 +1093,40 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const { removedCount, monsterName } = await runSerializedMutation(input.roomId, ctx.userId, async () => {
+				// A batch is not atomic — the engine has no transaction to roll back to,
+				// so a card failing partway through leaves the earlier ones already
+				// unequipped. Collect per-card failures and keep going rather than
+				// throwing, so the events below still fire and the client still
+				// invalidates its cache; otherwise the user sees an error next to
+				// inventory that silently changed underneath them.
+				const { removedCount, monsterName, failures } = await runSerializedMutation(input.roomId, ctx.userId, async () => {
 					let removedCount = 0;
 					let monsterName = input.monsterName;
+					const failures: Array<{ cardName: string; reason: string }> = [];
 					for (const { cardName, count } of input.cards) {
-						const result = (await character.unequipCard({
-							channel,
-							cardName,
-							monsterName: input.monsterName,
-							count,
-						})) as { removedCount: number; monsterName: string };
-						removedCount += result.removedCount;
-						monsterName = result.monsterName;
+						try {
+							const result = (await character.unequipCard({
+								channel,
+								cardName,
+								monsterName: input.monsterName,
+								count,
+							})) as { removedCount: number; monsterName: string };
+							removedCount += result.removedCount;
+							monsterName = result.monsterName;
+						} catch (err) {
+							failures.push({
+								cardName,
+								reason: err instanceof Error ? err.message : 'Failed to unequip',
+							});
+						}
 					}
-					return { removedCount, monsterName };
+					return { removedCount, monsterName, failures };
 				});
+				// Nothing changed and something went wrong — surface it as a real error
+				// instead of reporting a successful no-op.
+				if (removedCount === 0 && failures.length > 0) {
+					throw new TRPCError({ code: 'BAD_REQUEST', message: failures[0]!.reason });
+				}
 				eventBus.publish({
 					type: 'card.equipped' as EventType,
 					scope: 'private',
@@ -1122,7 +1141,9 @@ export function createRouter(roomManager: RoomManager) {
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: `Unequipped ${removedCount} cards from ${monsterName}.`,
+					text: failures.length > 0
+						? `Unequipped ${removedCount} cards from ${monsterName}. Could not unequip: ${failures.map((f) => f.cardName).join(', ')}.`
+						: `Unequipped ${removedCount} cards from ${monsterName}.`,
 					operation: 'unequipMany',
 				});
 				eventBus.publish({
@@ -1138,7 +1159,7 @@ export function createRouter(roomManager: RoomManager) {
 						}),
 					},
 				});
-				return { removedCount, monsterName };
+				return { removedCount, monsterName, failures };
 			}),
 
 		moveMany: protectedProcedure
@@ -1170,28 +1191,40 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const { movedCount, fromMonsterName, toMonsterName } = await runSerializedMutation(
+				// Not atomic — see the matching comment in unequipMany.
+				const { movedCount, fromMonsterName, toMonsterName, failures } = await runSerializedMutation(
 					input.roomId,
 					ctx.userId,
 					async () => {
 						let movedCount = 0;
 						let fromMonsterName = input.fromMonsterName;
 						let toMonsterName = input.toMonsterName;
+						const failures: Array<{ cardName: string; reason: string }> = [];
 						for (const { cardName, count } of input.cards) {
-							const result = (await character.moveCard({
-								channel,
-								cardName,
-								fromMonsterName: input.fromMonsterName,
-								toMonsterName: input.toMonsterName,
-								count,
-							})) as { movedCount: number; fromMonsterName: string; toMonsterName: string };
-							movedCount += result.movedCount;
-							fromMonsterName = result.fromMonsterName;
-							toMonsterName = result.toMonsterName;
+							try {
+								const result = (await character.moveCard({
+									channel,
+									cardName,
+									fromMonsterName: input.fromMonsterName,
+									toMonsterName: input.toMonsterName,
+									count,
+								})) as { movedCount: number; fromMonsterName: string; toMonsterName: string };
+								movedCount += result.movedCount;
+								fromMonsterName = result.fromMonsterName;
+								toMonsterName = result.toMonsterName;
+							} catch (err) {
+								failures.push({
+									cardName,
+									reason: err instanceof Error ? err.message : 'Failed to move',
+								});
+							}
 						}
-						return { movedCount, fromMonsterName, toMonsterName };
+						return { movedCount, fromMonsterName, toMonsterName, failures };
 					},
 				);
+				if (movedCount === 0 && failures.length > 0) {
+					throw new TRPCError({ code: 'BAD_REQUEST', message: failures[0]!.reason });
+				}
 				eventBus.publish({
 					type: 'card.equipped' as EventType,
 					scope: 'private',
@@ -1207,7 +1240,9 @@ export function createRouter(roomManager: RoomManager) {
 				publishPrivateAnnouncement({
 					eventBus,
 					userId: ctx.userId,
-					text: `Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}.`,
+					text: failures.length > 0
+						? `Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}. Could not move: ${failures.map((f) => f.cardName).join(', ')}.`
+						: `Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}.`,
 					operation: 'moveMany',
 				});
 				eventBus.publish({
@@ -1236,7 +1271,7 @@ export function createRouter(roomManager: RoomManager) {
 						}),
 					},
 				});
-				return { movedCount, fromMonsterName, toMonsterName };
+				return { movedCount, fromMonsterName, toMonsterName, failures };
 			}),
 
 		reorderCards: protectedProcedure

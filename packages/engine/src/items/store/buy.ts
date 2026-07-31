@@ -1,6 +1,7 @@
 import chooseItems from '../helpers/choose.js';
 import getClosingTime from './closing-time.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
+import { getFinalItemChoices } from '../../helpers/choices.js';
 import type { ShopHost } from './shop.js';
 
 // Card choosing is referenced via any until cards module is ready
@@ -105,39 +106,90 @@ That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in
 Would you like to buy them? (yes/no)`
 			})
 				.then((answer: string = '') => {
-					if (answer.toLowerCase() === 'yes') {
-						character.coins -= value;
-
-						let remainingCards = [...shop.cards];
-						let remainingItems = [...shop.items];
-						let remainingBackRoom = [...shop.backRoom];
-
-						choices.forEach((choice: any) => {
-							if (choice.cardType) {
-								remainingCards = remainingCards.filter((c: any) => c !== choice);
-								character.addCard(choice);
-							} else {
-								remainingItems = remainingItems.filter((i: any) => i !== choice);
-								character.addItem(choice);
-							}
-
-							remainingBackRoom = remainingBackRoom.filter((i: any) => i !== choice);
-						});
-
-						host.commitShop({
-							...shop,
-							cards: remainingCards,
-							items: remainingItems,
-							backRoom: remainingBackRoom
-						});
-
-						return channel({
-							announce:
-`Sold! Thank you for your purchase, ${character.givenName}. It was a pleasure doing business with you.`
-						});
+					if (answer.toLowerCase() !== 'yes') {
+						return channel({ announce: "Good day, then. You won't find a better price anywhere these days I'm afraid." });
 					}
 
-					return channel({ announce: "Good day, then. You won't find a better price anywhere these days I'm afraid." });
+					// Re-read the shop at commit time. This flow has been awaiting user
+					// prompts (potentially for minutes), and other members of the room
+					// buy and sell in their own concurrency lanes meanwhile — see
+					// docs/engine-concurrency-and-timing.md. Committing a mutation built
+					// on the snapshot captured before those prompts would clobber their
+					// purchases, resurrect already-sold stock, or overwrite a shop that
+					// has since rotated past its closing time.
+					const currentShop = host.shop;
+					const remainingCards = [...currentShop.cards];
+					const remainingItems = [...currentShop.items];
+					const remainingBackRoom = [...currentShop.backRoom];
+
+					const purchased: any[] = [];
+					const soldOut: any[] = [];
+
+					choices.forEach((choice: any) => {
+						const pool = choice.cardType ? remainingCards : remainingItems;
+						const poolIndex = pool.indexOf(choice);
+
+						if (poolIndex > -1) {
+							pool.splice(poolIndex, 1);
+							purchased.push(choice);
+							return;
+						}
+
+						const backRoomIndex = remainingBackRoom.indexOf(choice);
+						if (backRoomIndex > -1) {
+							remainingBackRoom.splice(backRoomIndex, 1);
+							purchased.push(choice);
+							return;
+						}
+
+						soldOut.push(choice);
+					});
+
+					const soldOutNotice = soldOut.length > 0
+						? channel({
+							announce:
+`Sorry — ${getFinalItemChoices(soldOut)} sold while you were deciding. ${soldOut.length === 1 ? "It's" : "They're"} no longer available.`
+						})
+						: Promise.resolve();
+
+					if (purchased.length < 1) {
+						return Promise.resolve(soldOutNotice).then(() =>
+							channel({ announce: 'Nothing left to sell you today, I\'m afraid.' })
+						);
+					}
+
+					const finalValue = purchased.reduce(
+						(total: number, choice: any) => total + Math.round(choice.cost * priceOffset),
+						0
+					);
+
+					if (finalValue > character.coins) {
+						return Promise.resolve(soldOutNotice).then(() =>
+							channel({ announce: `That'll be ${finalValue} coins — which you no longer have. Come back when you do.` })
+						);
+					}
+
+					character.coins -= finalValue;
+
+					purchased.forEach((choice: any) => {
+						if (choice.cardType) {
+							character.addCard(choice);
+						} else {
+							character.addItem(choice);
+						}
+					});
+
+					host.commitShop({
+						...currentShop,
+						cards: remainingCards,
+						items: remainingItems,
+						backRoom: remainingBackRoom
+					});
+
+					return Promise.resolve(soldOutNotice).then(() => channel({
+						announce:
+`Sold! Thank you for your purchase, ${character.givenName}. It was a pleasure doing business with you.`
+					}));
 				})
 				.then(() => channel({
 					announce:

@@ -493,7 +493,12 @@ function fightLine(s: FightSummaryRow): string {
 	const ps = s.participants;
 	let line = `Fight #${s.fightNumber} — `;
 
-	if (s.outcome === 'draw') {
+	if (s.outcome === 'cancelled') {
+		// Errored mid-combat: the ring was cleared without a result, so there are
+		// no participants to name. Must be handled before the win/permaDeath
+		// branch below, which would otherwise render "Unknown defeated Unknown".
+		line += 'Cancelled — the fight ended in an unexpected error';
+	} else if (s.outcome === 'draw') {
 		// All participants drew — list everyone.
 		const names = ps.length > 0 ? ps.map(p => p.monsterName) : [s.winnerMonsterName ?? 'Unknown', s.loserMonsterName ?? 'Unknown'];
 		line += `Draw between ${nameList(names)}`;

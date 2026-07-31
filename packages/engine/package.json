@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "tsc --build && node ./scripts/copy-vendor.mjs",
+    "typecheck": "tsc --build",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "test": "mocha",
