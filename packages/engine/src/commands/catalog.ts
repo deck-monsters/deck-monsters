@@ -11,7 +11,7 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 	// Monsters
 	{ command: 'spawn monster', description: 'Spawn a new monster', category: 'monsters' },
 	{ command: 'equip [monster]', description: 'Equip a monster with cards from your deck', category: 'monsters', example: 'equip Fluffy' },
-	{ command: 'equip [monster] with "Card", "Card"', description: 'Equip a monster with specific cards', category: 'monsters', example: 'equip Fluffy with "Hit", "Hit", "Heal"' },
+	{ command: 'equip [monster] with "Card", "Card"', description: 'Equip a monster with specific cards. For a card name containing a quote character, use a JSON array instead: [\"Card\"]', category: 'monsters', example: 'equip Fluffy with "Hit", "Hit", "Heal"' },
 	{ command: 'dismiss [monster]', description: 'Release a monster', category: 'monsters', example: 'dismiss Fluffy' },
 	{ command: 'revive [monster]', description: 'Revive a dead monster', category: 'monsters', example: 'revive Fluffy' },
 	{ command: 'look at monsters', description: 'View all your monsters', category: 'monsters' },

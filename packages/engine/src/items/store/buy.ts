@@ -1,6 +1,7 @@
 import chooseItems from '../helpers/choose.js';
-import getShop from './shop.js';
 import getClosingTime from './closing-time.js';
+import { announceAndThrow } from '../../helpers/announce-and-throw.js';
+import type { ShopHost } from './shop.js';
 
 // Card choosing is referenced via any until cards module is ready
 type ChooseCards = (opts: { cards: any[]; channel: any; showPrice?: boolean; priceOffset?: number }) => Promise<any[]>;
@@ -24,13 +25,15 @@ const addOwnershipToChoiceQuestion = (character: any, items: any[]) =>
 const buyItems = ({
 	character,
 	channel,
+	host,
 	chooseCards
 }: {
 	character: any;
 	channel: any;
+	host: ShopHost;
 	chooseCards?: ChooseCards;
 }): Promise<void> => {
-	const shop = getShop();
+	const shop = host.shop;
 
 	const { cards, items, backRoom } = shop;
 	const numberOfItems = items.length === 1 ? '1 item' : `${items.length} items`;
@@ -55,20 +58,20 @@ We have ${numberOfItems} and ${numberOfCards}. Which would you like to see?
 			let priceOffset = shop.priceOffset * 2;
 
 			if (Number(answer) === 1) {
-				if (items.length < 1) return Promise.reject(channel({ announce: "We don't have any items here." }));
+				if (items.length < 1) return announceAndThrow(channel, "We don't have any items here.");
 
 			return chooseItems({ items, channel, showPrice: true, priceOffset, getQuestion: addOwnershipToChoiceQuestion(character, items) })
 				.then((choices: any[]) => ({ choices, priceOffset }));
 			} else if (Number(answer) === 2) {
-				if (cards.length < 1) return Promise.reject(channel({ announce: "We don't have any cards here." }));
+				if (cards.length < 1) return announceAndThrow(channel, "We don't have any cards here.");
 
-				if (!chooseCards) return Promise.reject(channel({ announce: "Cards are not available." }));
+				if (!chooseCards) return announceAndThrow(channel, "Cards are not available.");
 
 				return chooseCards({ cards, channel, showPrice: true, priceOffset: shop.priceOffset * 2 })
 					.then((choices: any[]) => ({ choices, priceOffset }));
 			}
 
-			if (backRoom.length < 1) return Promise.reject(channel({ announce: "Sorry, pal. That area's closed." }));
+			if (backRoom.length < 1) return announceAndThrow(channel, "Sorry, pal. That area's closed.");
 
 			priceOffset = shop.backRoomOffset;
 
@@ -88,12 +91,11 @@ But of course, ${character.givenName}. We have something really special in stock
 			);
 
 			if (value > character.coins) {
-				return Promise.reject(channel({
-					announce:
-`The proprietor of ${shop.name} eyes ${character.givenName} disdainfully.
+				return announceAndThrow(channel,
+					`The proprietor of ${shop.name} eyes ${character.givenName} disdainfully.
 
 That'll be ${value} coins, but by the looks of things I _highly_ doubt that's in your price range.`
-				}));
+				);
 			}
 
 			return channel({
@@ -106,21 +108,27 @@ Would you like to buy them? (yes/no)`
 					if (answer.toLowerCase() === 'yes') {
 						character.coins -= value;
 
+						let remainingCards = [...shop.cards];
+						let remainingItems = [...shop.items];
+						let remainingBackRoom = [...shop.backRoom];
+
 						choices.forEach((choice: any) => {
 							if (choice.cardType) {
-								const index = shop.cards.indexOf(choice);
-								if (index > -1) shop.cards.splice(index, 1);
-
+								remainingCards = remainingCards.filter((c: any) => c !== choice);
 								character.addCard(choice);
 							} else {
-								const index = shop.items.indexOf(choice);
-								if (index > -1) shop.items.splice(index, 1);
-
+								remainingItems = remainingItems.filter((i: any) => i !== choice);
 								character.addItem(choice);
 							}
 
-							const index = shop.backRoom.indexOf(choice);
-							if (index > -1) shop.backRoom.splice(index, 1);
+							remainingBackRoom = remainingBackRoom.filter((i: any) => i !== choice);
+						});
+
+						host.commitShop({
+							...shop,
+							cards: remainingCards,
+							items: remainingItems,
+							backRoom: remainingBackRoom
 						});
 
 						return channel({

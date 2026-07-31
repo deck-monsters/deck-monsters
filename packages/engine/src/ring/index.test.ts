@@ -661,5 +661,47 @@ describe('ring/index.ts', () => {
 			expect(fightWarnings.length, 'should log invalid-card guard warnings during fight').to.be.above(0);
 			expect((fightWarnings[0] as any).typeof_play).to.equal('undefined');
 		});
+
+		it('publishes a cancelled ring.fightResolved event when the fight errors mid-combat', async () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			const contestant1 = randomContestant({ isBoss: false });
+			const contestant2 = randomContestant({ isBoss: false });
+			ring.addMonster(contestant1);
+			ring.addMonster(contestant2);
+
+			const publishedEvents: any[] = [];
+			ring.eventBus.subscribe('test-subscriber', {
+				deliver: (event: any) => publishedEvents.push(event),
+			});
+
+			// Force the outer .catch path deterministically without depending on
+			// exactly where in a real fight an error might originate.
+			const originalFightConcludes = ring.fightConcludes.bind(ring);
+			ring.fightConcludes = () => {
+				throw new Error('simulated mid-fight failure');
+			};
+
+			try {
+				let caughtError: unknown;
+				try {
+					await ring.fight();
+				} catch (err) {
+					caughtError = err;
+				}
+				expect(caughtError, 'fight() should swallow the error, not throw').to.be.undefined;
+
+				const cancelled = publishedEvents.find(
+					(e) => e.type === 'ring.fightResolved' && e.payload?.outcome === 'cancelled'
+				);
+				expect(cancelled, 'a cancelled ring.fightResolved event should have been published').to.exist;
+				expect(cancelled.payload.participants).to.deep.equal([]);
+				expect(cancelled.payload.deaths).to.equal(0);
+				expect(ring.contestants.length, 'ring should be cleared after the error').to.equal(0);
+			} finally {
+				ring.fightConcludes = originalFightConcludes;
+			}
+		});
 	});
 });

@@ -56,9 +56,11 @@ export function useDeckWorkshop(roomId?: string) {
 
   const mutationOptions = { onSuccess: invalidateWorkshop } as const;
   const unequipCardMutation = trpc.game.unequipCard.useMutation(mutationOptions);
+  const unequipManyMutation = trpc.game.unequipMany.useMutation(mutationOptions);
   const unequipAllMutation = trpc.game.unequipAll.useMutation(mutationOptions);
   const equipCardsMutation = trpc.game.equipCards.useMutation(mutationOptions);
   const moveCardMutation = trpc.game.moveCard.useMutation(mutationOptions);
+  const moveManyMutation = trpc.game.moveMany.useMutation(mutationOptions);
   const savePresetMutation = trpc.game.savePreset.useMutation(mutationOptions);
   const loadPresetMutation = trpc.game.loadPreset.useMutation(mutationOptions);
   const deletePresetMutation = trpc.game.deletePreset.useMutation(mutationOptions);
@@ -74,9 +76,11 @@ export function useDeckWorkshop(roomId?: string) {
     () =>
       inventoryQuery.isFetching ||
       unequipCardMutation.isPending ||
+      unequipManyMutation.isPending ||
       unequipAllMutation.isPending ||
       equipCardsMutation.isPending ||
       moveCardMutation.isPending ||
+      moveManyMutation.isPending ||
       reorderCardsMutation.isPending ||
       savePresetMutation.isPending ||
       loadPresetMutation.isPending ||
@@ -87,10 +91,12 @@ export function useDeckWorkshop(roomId?: string) {
       inventoryQuery.isFetching,
       loadPresetMutation.isPending,
       moveCardMutation.isPending,
+      moveManyMutation.isPending,
       reorderCardsMutation.isPending,
       savePresetMutation.isPending,
       unequipAllMutation.isPending,
       unequipCardMutation.isPending,
+      unequipManyMutation.isPending,
     ],
   );
 
@@ -104,9 +110,11 @@ export function useDeckWorkshop(roomId?: string) {
     busy,
     latestError:
       unequipCardMutation.error?.message ??
+      unequipManyMutation.error?.message ??
       unequipAllMutation.error?.message ??
       equipCardsMutation.error?.message ??
       moveCardMutation.error?.message ??
+      moveManyMutation.error?.message ??
       reorderCardsMutation.error?.message ??
       savePresetMutation.error?.message ??
       loadPresetMutation.error?.message ??
@@ -120,6 +128,13 @@ export function useDeckWorkshop(roomId?: string) {
       if (!roomId) throw new Error('Room not selected');
       return unequipCardMutation.mutateAsync({ roomId, ...input });
     },
+    unequipMany: (input: {
+      monsterName: string;
+      cards: Array<{ cardName: string; count?: number }>;
+    }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return unequipManyMutation.mutateAsync({ roomId, ...input });
+    },
     unequipAll: (input: { monsterName: string }) => {
       if (!roomId) throw new Error('Room not selected');
       return unequipAllMutation.mutateAsync({ roomId, ...input });
@@ -132,6 +147,14 @@ export function useDeckWorkshop(roomId?: string) {
     }) => {
       if (!roomId) throw new Error('Room not selected');
       return moveCardMutation.mutateAsync({ roomId, ...input });
+    },
+    moveMany: (input: {
+      fromMonsterName: string;
+      toMonsterName: string;
+      cards: Array<{ cardName: string; count?: number }>;
+    }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return moveManyMutation.mutateAsync({ roomId, ...input });
     },
     reorderCards: (input: {
       monsterName: string;

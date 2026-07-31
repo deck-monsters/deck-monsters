@@ -1,6 +1,7 @@
 import type BaseMonster from '../base.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import { getItemKey } from '../../items/helpers/counts.js';
+import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => any;
@@ -55,9 +56,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 
 	const checkEncounter = (arg?: unknown) => {
 		if (monster.inEncounter) {
-			return Promise.reject(
-				channel({ announce: `You cannot equip ${monster.givenName} while they are fighting!` }),
-			);
+			return announceAndThrow(channel, `You cannot equip ${monster.givenName} while they are fighting!`);
 		}
 		return Promise.resolve(arg);
 	};
@@ -135,13 +134,11 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 		.then(checkEncounter)
 		.then(() => {
 			if (cardSlots <= 0) {
-				return Promise.reject(
-					channel({ announce: 'You have no card slots available!' }),
-				);
+				return announceAndThrow(channel, 'You have no card slots available!');
 			}
 
 			if (deck.length <= 0) {
-				return Promise.reject(channel({ announce: 'Your deck is empty!' }));
+				return announceAndThrow(channel, 'Your deck is empty!');
 			}
 
 			const nowRemainingCards = _sortCardsAlphabetically(
@@ -150,6 +147,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 			const nowRemainingSlots = cardSlots - cards.length;
 
 			let selectedCards: CardInstance[] | undefined;
+			const selectionMessages: string[] = [];
 			if (cardSelection) {
 				const remainingItems = [...nowRemainingCards];
 				selectedCards = cardSelection.reduce((selection: CardInstance[], cardType: string) => {
@@ -165,20 +163,24 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 						).length;
 
 						if (alreadySelected >= MAX_CARD_COPIES_IN_HAND) {
-							channel({ announce: `You may not equip more than ${MAX_CARD_COPIES_IN_HAND} copies of ${cardType.trim()}.` });
+							selectionMessages.push(`You may not equip more than ${MAX_CARD_COPIES_IN_HAND} copies of ${cardType.trim()}.`);
 						} else {
 							remainingItems.splice(cardIndex, 1);
 							selection.push(selectedCard);
 						}
 					} else {
-						channel({ announce: `${monster.givenName} can not hold ${cardType.trim().toLowerCase()}` });
+						selectionMessages.push(`${monster.givenName} can not hold ${cardType.trim().toLowerCase()}`);
 					}
 
 					return selection;
 				}, []);
 			}
 
-			return addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards, selectedCards });
+			return Promise.resolve()
+				.then(() => (selectionMessages.length > 0
+					? channel({ announce: selectionMessages.join('\n') })
+					: undefined))
+				.then(() => addCard({ remainingSlots: nowRemainingSlots, remainingCards: nowRemainingCards, selectedCards }));
 		})
 		.then(checkEncounter)
 		.then(() => {

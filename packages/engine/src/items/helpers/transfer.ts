@@ -1,6 +1,7 @@
 import { getFinalItemChoices } from '../../helpers/choices.js';
 import { sortItemsAlphabetically } from './sort.js';
 import chooseItems from './choose.js';
+import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 
 interface TransferOptions {
 	from: any;
@@ -12,15 +13,11 @@ interface TransferOptions {
 const transferItems = ({ from, to, itemSelection, channel }: TransferOptions): Promise<void> => {
 	const checkEncounter = (arg?: any): Promise<any> => {
 		if (to.inEncounter) {
-			return Promise.reject(channel({
-				announce: `You cannot give items to ${to.givenName} while they are fighting!`
-			}));
+			return announceAndThrow(channel, `You cannot give items to ${to.givenName} while they are fighting!`);
 		}
 
 		if (from.inEncounter) {
-			return Promise.reject(channel({
-				announce: `You cannot remove items from ${from.givenName} while they are fighting!`
-			}));
+			return announceAndThrow(channel, `You cannot remove items from ${from.givenName} while they are fighting!`);
 		}
 
 		return Promise.resolve(arg);
@@ -35,9 +32,7 @@ const transferItems = ({ from, to, itemSelection, channel }: TransferOptions): P
 			);
 
 			if (items.length < 1) {
-				return Promise.reject(channel({
-					announce: `${from.givenName} doesn't have any items that ${to.givenName} can use.`
-				}));
+				return announceAndThrow(channel, `${from.givenName} doesn't have any items that ${to.givenName} can use.`);
 			}
 
 			if (itemSelection && itemSelection.length > 0) {
@@ -64,9 +59,7 @@ const transferItems = ({ from, to, itemSelection, channel }: TransferOptions): P
 			const remainingSlots = itemSlots - currentItemCount;
 
 			if (remainingSlots < 1) {
-				return Promise.reject(channel({
-					announce: `${to.givenName} doesn't have space for any more items!`
-				}));
+				return announceAndThrow(channel, `${to.givenName} doesn't have space for any more items!`);
 			}
 
 			let currentItemDescription: string;

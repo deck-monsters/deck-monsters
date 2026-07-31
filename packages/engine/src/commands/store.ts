@@ -7,7 +7,7 @@ function buyItemsAction({ channel, character, game, isDM }: any): Promise<unknow
 	}
 
 	return Promise.resolve()
-		.then(() => character.buyItems(channel))
+		.then(() => character.buyItems(channel, game))
 		.catch((err: unknown) => game.log(err));
 }
 
@@ -18,7 +18,7 @@ function sellItemsAction({ channel, character, game, isDM }: any): Promise<unkno
 	}
 
 	return Promise.resolve()
-		.then(() => character.sellItems(channel))
+		.then(() => character.sellItems(channel, game))
 		.catch((err: unknown) => game.log(err));
 }
 

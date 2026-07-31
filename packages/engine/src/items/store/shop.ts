@@ -1,7 +1,7 @@
 import fantasyNames from 'fantasy-names';
 import { random, sample } from '../../helpers/random.js';
-import { throttle } from '../../helpers/throttle.js';
 import { getBackRoom, getCards, getItems } from './stock.js';
+import { nextShopBoundary } from './refresh-boundary.js';
 import PRONOUNS, { type PronounSet } from '../../helpers/pronouns.js';
 
 const genders = Object.keys(PRONOUNS) as Array<keyof typeof PRONOUNS>;
@@ -18,8 +18,6 @@ const ADJECTIVES = [
 	'small, round'
 ];
 
-const EIGHT_HOURS = 28800000;
-
 export interface Shop {
 	adjective: string;
 	backRoom: any[];
@@ -32,22 +30,28 @@ export interface Shop {
 	pronouns: PronounSet;
 }
 
-let currentShop: Shop | undefined;
+/** Room-scoped owner of a shop instance — satisfied by `Game`. See docs/room-scoping.md. */
+export interface ShopHost {
+	shop: Shop;
+	commitShop(shop: Shop): void;
+}
 
-const getShop = throttle((): Shop => {
-	currentShop = {
-		adjective: sample(ADJECTIVES) ?? ADJECTIVES[0],
-		backRoom: getBackRoom(),
-		backRoomOffset: random(5.5, 9.5),
-		cards: getCards(),
-		closingTime: new Date(Date.now() + EIGHT_HOURS),
-		items: getItems(),
-		name: fantasyNames('places', 'magic_shops') as string,
-		priceOffset: random(0.6, 0.9),
-		pronouns: PRONOUNS[sample(genders) ?? 'male']
-	};
+export const generateShop = (now: number = Date.now()): Shop => ({
+	adjective: sample(ADJECTIVES) ?? ADJECTIVES[0],
+	backRoom: getBackRoom(),
+	backRoomOffset: random(5.5, 9.5),
+	cards: getCards(),
+	closingTime: nextShopBoundary(now),
+	items: getItems(),
+	name: fantasyNames('places', 'magic_shops') as string,
+	priceOffset: random(0.6, 0.9),
+	pronouns: PRONOUNS[sample(genders) ?? 'male']
+});
 
-	return currentShop;
-}, EIGHT_HOURS);
+/** Returns the stored shop while it's still open, otherwise a freshly generated one. */
+export const resolveShop = (stored: Shop | undefined, now: number = Date.now()): Shop => {
+	if (stored && Number(new Date(stored.closingTime)) > now) return stored;
+	return generateShop(now);
+};
 
-export default getShop;
+export default resolveShop;

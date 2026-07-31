@@ -12,6 +12,7 @@ import { getItemKey } from '../items/helpers/counts.js';
 import { formatRelative } from '../helpers/time.js';
 import { eachSeries } from '../helpers/promise.js';
 import { MAX_PRESETS } from '../constants/card-management.js';
+import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import type { ChannelFn, ChannelWithManager, CardInstance, ItemInstance } from '../creatures/base.js';
 import type BaseMonster from '../monsters/base.js';
 
@@ -40,10 +41,6 @@ const getCardName = (card: CardInstance): string =>
 	(card as any).cardType ?? (card as any).itemType ?? (card as any).name ?? 'Unknown';
 const isSameCardName = (card: CardInstance, cardName: string): boolean =>
 	getCardName(card).toLowerCase() === cardName.toLowerCase();
-const announceAndThrow = async (channel: ChannelFn, announce: string): Promise<never> => {
-	await channel({ announce });
-	throw new Error(announce);
-};
 
 class Beastmaster extends BaseCharacter {
 	constructor(options: Record<string, unknown> = {}) {
@@ -146,9 +143,7 @@ class Beastmaster extends BaseCharacter {
 				});
 		}
 
-		return Promise.reject(
-			channel({ announce: "You're all out space for new monsters!" }),
-		) as unknown as Promise<BaseMonster>;
+		return announceAndThrow(channel, "You're all out space for new monsters!");
 	}
 
 	chooseMonster({
@@ -166,9 +161,7 @@ class Beastmaster extends BaseCharacter {
 	}): Promise<BaseMonster> {
 		return Promise.resolve(monsters.length).then((numberOfMonsters) => {
 			if (numberOfMonsters <= 0) {
-				return Promise.reject(
-					channel({ announce: `You don't have any monsters to ${action}.` }),
-				) as unknown as BaseMonster;
+				return announceAndThrow(channel, `You don't have any monsters to ${action}.`);
 			} else if (monsterName) {
 				const monster = monsters.find(
 					m => m.givenName.toLowerCase() === monsterName.toLowerCase(),
@@ -176,11 +169,7 @@ class Beastmaster extends BaseCharacter {
 
 				if (monster) return monster;
 
-				return Promise.reject(
-					channel({
-						announce: `${monsterName} is not able to ${TENSE[action]?.PAST ?? action} right now, because ${reason}`,
-					}),
-				) as unknown as BaseMonster;
+				return announceAndThrow(channel, `${monsterName} is not able to ${TENSE[action]?.PAST ?? action} right now, because ${reason}`);
 			} else if (numberOfMonsters === 1) {
 				return monsters[0];
 			}
@@ -210,11 +199,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return Promise.reject(
-						channel({
-							announce: "You don't have any monsters to equip! You'll need to spawn one first.",
-						}),
-					) as unknown as BaseMonster;
+					return announceAndThrow(channel, "You don't have any monsters to equip! You'll need to spawn one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'equip' });
 			})
@@ -239,11 +224,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return Promise.reject(
-						channel({
-							announce: "You don't have any monsters to give items to! You'll need to spawn one first.",
-						}),
-					) as unknown as BaseMonster;
+					return announceAndThrow(channel, "You don't have any monsters to give items to! You'll need to spawn one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'give items to' });
 			})
@@ -268,11 +249,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return Promise.reject(
-						channel({
-							announce: "You don't have any monsters to take items from! You'll need to spawn one first.",
-						}),
-					) as unknown as BaseMonster;
+					return announceAndThrow(channel, "You don't have any monsters to take items from! You'll need to spawn one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'take items from' });
 			})
@@ -999,11 +976,7 @@ class Beastmaster extends BaseCharacter {
 		const monsters = ring.getMonsters(this);
 
 		if (monsters.length <= 0) {
-			return Promise.reject(
-				channel({
-					announce: "It doesn't look like any of your monsters are in the ring right now.",
-				}),
-			);
+			return announceAndThrow(channel, "It doesn't look like any of your monsters are in the ring right now.");
 		}
 
 		return Promise.resolve()
@@ -1042,15 +1015,9 @@ class Beastmaster extends BaseCharacter {
 
 		return Promise.resolve(monsters.length).then((numberOfMonsters) => {
 			if (alreadyInRing && alreadyInRing.length > 0) {
-				return Promise.reject(
-					channel({ announce: 'You already have a monster in the ring!' }),
-				);
+				return announceAndThrow(channel, 'You already have a monster in the ring!');
 			} else if (numberOfMonsters <= 0) {
-				return Promise.reject(
-					channel({
-						announce: "You don't have any living monsters to send into battle. Spawn one first, or wait for your dead monsters to revive.",
-					}),
-				);
+				return announceAndThrow(channel, "You don't have any living monsters to send into battle. Spawn one first, or wait for your dead monsters to revive.");
 			}
 
 			return this.chooseMonster({
@@ -1061,11 +1028,7 @@ class Beastmaster extends BaseCharacter {
 				reason: "you don't appear to have a monster by that name.",
 			}).then((monster: BaseMonster) => {
 				if (monster.cards.length < monster.cardSlots) {
-					return Promise.reject(
-						channel({
-							announce: 'Only an evil master would send their monster into battle without enough cards.',
-						}),
-					);
+					return announceAndThrow(channel, 'Only an evil master would send their monster into battle without enough cards.');
 				}
 				return ring.addMonster({ monster, character, userId });
 			});
@@ -1084,9 +1047,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return Promise.reject(
-						channel({ announce: "You don't have any monsters eligible for dismissal." }),
-					) as unknown as BaseMonster;
+					return announceAndThrow(channel, "You don't have any monsters eligible for dismissal.");
 				}
 				return this.chooseMonster({
 					channel,
@@ -1119,9 +1080,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return Promise.reject(
-						channel({ announce: "You don't have any monsters to revive." }),
-					) as unknown as BaseMonster;
+					return announceAndThrow(channel, "You don't have any monsters to revive.");
 				}
 				return this.chooseMonster({
 					channel,

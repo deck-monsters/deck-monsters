@@ -30,8 +30,10 @@ export default function WorkshopView() {
     latestError,
     equipCards,
     unequipCard,
+    unequipMany,
     unequipAll,
     moveCard,
+    moveMany,
     reorderCards,
     savePreset,
     loadPreset,
@@ -191,33 +193,23 @@ export default function WorkshopView() {
     }
 
     if (source.kind === 'monster' && target.kind === 'inventory') {
-      let removedCount = 0;
-      for (const { cardName, count } of grouped) {
-        const result = await unequipCard({
-          monsterName: source.monsterName,
-          cardName,
-          count,
-        });
-        removedCount += result.removedCount;
-      }
-      setMessage(`Unequipped ${removedCount} cards from ${source.monsterName}.`);
+      const result = await unequipMany({
+        monsterName: source.monsterName,
+        cards: grouped,
+      });
+      setMessage(`Unequipped ${result.removedCount} cards from ${source.monsterName}.`);
       return;
     }
 
     if (source.kind === 'monster' && target.kind === 'monster') {
       if (source.monsterName === target.monsterName) return;
 
-      let movedCount = 0;
-      for (const { cardName, count } of grouped) {
-        const result = await moveCard({
-          cardName,
-          fromMonsterName: source.monsterName,
-          toMonsterName: target.monsterName,
-          count,
-        });
-        movedCount += result.movedCount;
-      }
-      setMessage(`Moved ${movedCount} cards to ${target.monsterName}.`);
+      const result = await moveMany({
+        fromMonsterName: source.monsterName,
+        toMonsterName: target.monsterName,
+        cards: grouped,
+      });
+      setMessage(`Moved ${result.movedCount} cards to ${target.monsterName}.`);
     }
   }
 

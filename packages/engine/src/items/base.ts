@@ -1,5 +1,6 @@
 import { BaseClass, type BaseClassOptions } from '../shared/baseClass.js';
 import { itemCard } from '../helpers/card.js';
+import { announceAndThrow } from '../helpers/announce-and-throw.js';
 
 export interface BaseItemOptions extends BaseClassOptions {
 	icon?: string;
@@ -91,9 +92,7 @@ export class BaseItem<TOptions extends BaseItemOptions = BaseItemOptions> extend
 			.then(({ channelManager }: any = {}) => channelManager?.sendMessages())
 			.then(() => {
 				if (!this.usableWithoutMonster && !monster) {
-					return Promise.reject(channel({
-						announce: `${this.itemType} must be used on a monster.`
-					}));
+					return announceAndThrow(channel, `${this.itemType} must be used on a monster.`);
 				}
 
 				this.emit('used', {

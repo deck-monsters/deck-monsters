@@ -36,7 +36,7 @@ game.ts            # Main Game class (orchestrator, state serialization)
 commands/          # Text command parser: monster, character, look-at, store, presets, history, help
 cards/             # 60+ action card types; base class in cards/base.ts
 monsters/          # 5 monster types (Basilisk, Gladiator, Jinn, Minotaur, Weeping Angel)
-creatures/base.ts  # BaseCreature — core combat/stat logic (~977 lines, being decomposed)
+creatures/base.ts  # BaseCreature — core combat/stat logic (~420 lines; stats/health/encounter/items/edit/types extracted into sibling modules)
 characters/        # Beastmaster player character + hydration helpers
 items/             # 25+ items: potions, scrolls, store inventory
 ring/              # Battle arena (2–12 monsters, auto-battle every 60s)
@@ -241,11 +241,9 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 
 ## Known Issues
 
-- **Card shop is a process-wide singleton** — every room shares one shop inventory/closing time, violating the room-scoping rule. Design decided (per-room shop, persisted in room state, 6-hour refresh aligned to America/Chicago clock boundaries) but not yet implemented. (#26 in `docs/roadmap/10-bug-fixes.md`)
-- **`creatures/base.ts` still large** — ~977 lines after the TypeScript migration (down from ~2000). Continue incremental decomposition into `creatures/combat.ts`, `creatures/stats.ts`, etc.
-- **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet.
+- **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet. (#3 in `docs/roadmap/10-bug-fixes.md`)
 
-Previously listed here and now fixed (see `docs/roadmap/10b-bugs-fixed.md` for root causes): fight log not updating (#15 — write-side races and dropped retries in the fight-summary writer, not UI cache invalidation) and console history missing on reconnect (#16/#17 — the engine's cold ring buffer suppressed the durable-storage replay fallback).
+Previously listed here and now fixed (see `docs/roadmap/10b-bugs-fixed.md` for root causes): fight log not updating (#15 — write-side races and dropped retries in the fight-summary writer, not UI cache invalidation), console history missing on reconnect (#16/#17 — the engine's cold ring buffer suppressed the durable-storage replay fallback), the card shop being a process-wide singleton instead of room-scoped (#26), and batch-equip UX flakiness (#19).
 
 ## Archived / Deferred
 

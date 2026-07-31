@@ -1,5 +1,6 @@
 import { itemCard } from '../helpers/card.js';
 import { eachSeries } from '../helpers/promise.js';
+import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import type { BaseCreature, ItemInstance, ChannelFn, ChannelWithManager } from './base.js';
 
 // ---------------------------------------------------------------------------
@@ -91,9 +92,7 @@ export function useItem (self: BaseCreature, { channel, channelName, character =
 	return Promise.resolve()
 		.then(() => {
 			if (monster && monster.inEncounter && !monster.items.find((potentialItem: ItemInstance) => _isMatchingItem(potentialItem, item))) {
-				return Promise.reject(channel({
-					announce: `${monster.givenName} doesn't seem to be holding that item.`
-				}));
+				return announceAndThrow(channel, `${monster.givenName} doesn't seem to be holding that item.`);
 			}
 
 			return item.use({ channel, channelName, character, monster });

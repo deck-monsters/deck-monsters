@@ -6,6 +6,8 @@ import { characterCard, monsterCard } from '../helpers/card.js';
 import { HERO } from '../constants/creature-classes.js';
 import buyItems from '../items/store/buy.js';
 import sellItems from '../items/store/sell.js';
+import type { ShopHost } from '../items/store/shop.js';
+import { announceAndThrow } from '../helpers/announce-and-throw.js';
 
 // Lazy-load cards helpers to avoid circular dependency
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -132,9 +134,7 @@ class BaseCharacter extends BaseCreature {
 			return Promise.resolve().then(() => { channel({ announce: monstersDisplay }); });
 		}
 
-		return Promise.reject(
-			channel({ announce: 'You do not currently have any monsters.', delay: 'short' }),
-		);
+		return announceAndThrow(channel, 'You do not currently have any monsters.', { delay: 'short' });
 	}
 
 	lookAtCards(channel: ChannelFn): Promise<void> {
@@ -153,12 +153,12 @@ class BaseCharacter extends BaseCreature {
 		return Promise.resolve().then(() => { channel({ announce: `Cards:\n${numbered}` }); });
 	}
 
-	sellItems(channel: ChannelFn): Promise<void> {
-		return sellItems({ character: this as any, channel: channel as any });
+	sellItems(channel: ChannelFn, host: ShopHost): Promise<void> {
+		return sellItems({ character: this as any, channel: channel as any, host });
 	}
 
-	buyItems(channel: ChannelFn): Promise<void> {
-		return buyItems({ character: this as any, channel: channel as any });
+	buyItems(channel: ChannelFn, host: ShopHost): Promise<void> {
+		return buyItems({ character: this as any, channel: channel as any, host });
 	}
 }
 

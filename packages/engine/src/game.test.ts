@@ -432,6 +432,73 @@ describe('game.ts', () => {
 		});
 	});
 
+	describe('shop', () => {
+		before(async () => {
+			await engineReady;
+		});
+
+		it('generates a shop lazily on first access', () => {
+			const game = new Game({ roomId: 'shop-lazy-test' });
+
+			const shop = game.shop;
+
+			expect(shop.name).to.be.a('string');
+			expect(shop.items).to.be.an('array');
+		});
+
+		it('returns the same shop on repeated access before it closes', () => {
+			const game = new Game({ roomId: 'shop-stable-test' });
+
+			const first = game.shop;
+			const second = game.shop;
+
+			expect(second).to.equal(first);
+		});
+
+		it('round-trips the shop through save/restore, including closingTime and stock', () => {
+			const game = new Game({ roomId: 'shop-restore-test' });
+			const shop = game.shop;
+
+			const serialized = JSON.stringify(game);
+			const restoredGame = restoreGame(serialized);
+
+			expect(restoredGame.shop.name).to.equal(shop.name);
+			expect(restoredGame.shop.adjective).to.equal(shop.adjective);
+			expect(restoredGame.shop.closingTime).to.be.instanceOf(Date);
+			expect(restoredGame.shop.closingTime.getTime()).to.equal(shop.closingTime.getTime());
+			expect(restoredGame.shop.items.length).to.equal(shop.items.length);
+		});
+
+		it('gives each room its own independent shop', () => {
+			const roomA = new Game({ roomId: 'shop-room-a' });
+			const roomB = new Game({ roomId: 'shop-room-b' });
+
+			// Buying out room A's shop must never affect room B's.
+			const shopA = roomA.shop;
+			roomA.commitShop({ ...shopA, items: [] });
+
+			expect(roomA.shop.items).to.have.lengthOf(0);
+			expect(roomB.shop.items.length).to.be.above(0);
+		});
+
+		it('regenerates a fresh shop once the stored one has passed its closing time', () => {
+			const clock = sinon.useFakeTimers({ toFake: ['Date'] });
+
+			try {
+				const game = new Game({ roomId: 'shop-refresh-test' });
+				const original = game.shop;
+
+				clock.tick(original.closingTime.getTime() - Date.now() + 1);
+
+				const refreshed = game.shop;
+				expect(refreshed).to.not.equal(original);
+				expect(refreshed.closingTime.getTime()).to.be.above(original.closingTime.getTime());
+			} finally {
+				clock.restore();
+			}
+		});
+	});
+
 	describe('getCharacter Player-name auto-update', () => {
 		it('updates givenName when existing character has placeholder "Player" name', async () => {
 			const game = new Game();

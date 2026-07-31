@@ -20,7 +20,7 @@ Verified along the way: the `ring.cardDrop` enrichment chain is sound — `annou
 
 Covered by 7 new tests in `fight-summary-writer.test.ts` (happy path, UUID guard, the cross-fight race, retry-then-success, retry exhaustion, restart-mid-fight, fightConcludes filtering).
 
-**Known residual gap (accepted)**: a fight that errors mid-combat takes `Ring.fight()`'s `.catch` path, which clears the ring without publishing `ring.fightResolved` — cancelled fights intentionally never reach history. A server restart mid-fight likewise loses that fight.
+**Residual gap, since closed**: a fight that errored mid-combat used to take `Ring.fight()`'s `.catch` path without publishing `ring.fightResolved`, so cancelled fights never reached history. Fixed on 2026-07-31 — see the cancelled-fight entry below. A server restart mid-fight still loses that fight (out of scope; no in-flight fight state survives a restart today).
 
 **Status**: Fixed.
 
@@ -144,6 +144,50 @@ Unused `or` import in `analytics-queries.ts` (was the only lint warning in the s
 
 ---
 
+### 26. Card shop is a single process-wide singleton shared by every room — FIXED
+
+`packages/engine/src/items/store/shop.ts`'s `getShop()` was a module-level `throttle()`-wrapped function with a single `currentShop` variable, regenerated once per 8 hours **for the entire process**, not per room. Every room on a multi-room server shared the exact same shop inventory, closing time, and prices — one room buying out an item mutated the shared `shop.items`/`shop.cards`/`shop.backRoom` arrays via `.splice()`/`.push()` in `buy.ts`/`sell.ts`, affecting every other room simultaneously. This directly conflicted with `CLAUDE.md`'s room-scoping rule.
+
+**Fixed** per the design decided 2026-07-31:
+
+1. **Per-room shop.** `shop.ts` is now pure — `generateShop(now)` builds a shop and `resolveShop(stored, now)` returns the stored shop while it's still open or generates a fresh one. `Game.shop` (a new getter/`commitShop()` setter on `Game`, mirroring the existing `characters` accessor) resolves and persists the room's own instance; two `Game`s never share state.
+2. **Persisted in room state.** `shop` is a `Game` option — round-tripped through `toJSON()`/`restoreGame()` like `characters`/`ringContestantRefs`. (The design doc's original precedent, `Ring.battles`, turned out not to actually be serialized — `Ring` is constructed with no persisted options — so `Game.characters` was the real pattern to copy.) New `items/store/hydrate.ts` rehydrates `items`/`backRoom` via `hydrateItems`, `cards` via `hydrateDeck`, and reconstructs `closingTime` as a `Date` (a raw string would make `closing-time.ts`'s `Number(closingTime)` arithmetic silently produce `NaN`).
+3. **Refresh cadence: 6 hours, aligned to 00:00/06:00/12:00/18:00 America/Chicago.** New `items/store/refresh-boundary.ts` computes the next boundary via `Intl.DateTimeFormat` with `timeZone: 'America/Chicago'` (DST-safe at the moment of computation; a boundary whose window a DST transition falls inside can be off by an hour and self-corrects at the next refresh — accepted).
+4. **`buy.ts`/`sell.ts`** no longer import a singleton — they take a `host: ShopHost` (`{ shop, commitShop }`, satisfied by `Game`) threaded from `commands/store.ts` → `character.buyItems(channel, game)`/`sellItems(channel, game)`. Purchases/sales build new arrays and call `host.commitShop(...)` instead of `.splice()`/`.push()`-ing the shared arrays in place, then persist automatically via `setOptions`.
+5. **Discord `/shop`, `/buy`, `/sell`** were found to be silently broken during this work — none of the three dispatched a command string matching the engine's `BUY_REGEX`/`SELL_REGEX` (`/shop` dispatched `'shop'`, `/buy` dispatched `` `buy ${item}` ``), so every invocation replied "The shop is unavailable right now." Fixed alongside the room-scoping work: all three now dispatch `'visit the shop'` / `'sell to the shop'`; `/buy` and `/sell` dropped their now-meaningless required `item` option since the underlying flow is interactive.
+
+Covered by `refresh-boundary.test.ts` (CST/CDT/DST-transition boundaries), a rewritten `shop.test.ts` (pure-function semantics replacing the old throttle-timing tests), `buy.test.ts`/`sell.test.ts` (shop mutation via `commitShop`, previously untested), and `game.test.ts` (shop round-trip through `restoreGame`, and two `Game`s getting independent shops).
+
+**Status**: Fixed.
+
+---
+
+### 19. Deck equip flaky with batches (workshop + console) — FIXED
+
+The engine-side root causes (preset copy-limit bug, `equip.ts` name-matching mismatch) were fixed first — see the entry above. The remaining UX/batch-API work is now also done:
+
+1. **Workshop batch + React Query.** `unequipMany`/`moveMany` tRPC procedures were added, mirroring `unequipCard`/`moveCard` but looping the engine calls **inside a single `runSerializedMutation`** and publishing one aggregated result instead of N. `WorkshopView.tsx`'s `handleBatchMove` now calls one of these once per batch instead of looping `unequipCard`/`moveCard`, so `useDeckWorkshop`'s `onSuccess` invalidation fires once, not N times — no more mid-batch refetch/flicker.
+2. **`getArray` parsing.** No card or item name in the game currently contains an apostrophe or embedded quote (checked every `cardType`/`itemType`), so this was a latent risk, not a live bug. Added regression tests (`get-array.test.ts`) locking in the current behavior: single- and double-quoted lists and JSON arrays all handle an apostrophe-containing name correctly; the unquoted comma-separated fallback does **not** (truncates at the apostrophe, since it treats `'` the same as `"` when stripping quote characters) — documented as a known limitation, with the `equip … with [...]` catalog entry now noting JSON array form for exotic names.
+3. **Mixed-case duplicate preset keys** — already covered by an existing test (`beastmaster.test.ts`: "loadPreset enforces max copies per card when preset strings differ in case from cardType"), no new test needed.
+
+**Status**: Fixed.
+
+---
+
+### Cleanup items found alongside #19/#26 — FIXED
+
+Five smaller observations from the #19/#26 investigation, all addressed on 2026-07-31:
+
+- **`equip.ts` fire-and-forget announces.** The typed-selection (`cardSelection`) reduce in `monsters/helpers/equip.ts` now collects rejection messages into an array during the (still-synchronous) reduce, then `await`s one combined `channel({ announce })` before calling `addCard(...)` — deterministic ordering, one message instead of N unawaited ones.
+- **`Promise.reject(channel({ announce }))` idiom.** This rejects with a *Promise* as the reason, which logs as `[object Promise]`. Promoted the existing `chooseItems`-adjacent `announceAndThrow` (previously local to `characters/beastmaster.ts`) to `helpers/announce-and-throw.ts` and replaced every remaining call site across the engine — `items/store/buy.ts`, `items/store/sell.ts`, `items/helpers/transfer.ts`, `items/helpers/use.ts`, `items/base.ts`, `creatures/items.ts`, `monsters/helpers/equip.ts`, `game.ts` (all its "I can find no X" look-up guards), and `characters/base.ts`/`characters/beastmaster.ts` (all their "you don't have any monsters to…" preconditions) — roughly 30 sites in total, more than the handful originally spotted.
+- **`fight()` error path drops history.** `Ring.fight()`'s `.catch` now publishes a terminal `ring.fightResolved` event with `outcome: 'cancelled'`, `participants: []`, `deaths: 0`, and the round reached, before clearing the ring — so `FightSummaryWriter`'s pending `ring.fight` start (published when the fight began) resolves instead of leaking, and a cancelled fight now appears in the fight log. `FightStatsSubscriber` already no-ops on empty `participants`, so no change needed there. Web's `fight-display.ts` gained a `'cancelled'` outcome branch. Covered by a new `ring/index.test.ts` test that forces the catch path and asserts the event.
+- **`activeFlows` rejection message.** Both the `command` mutation's "flow already in progress" response and `runSerializedMutation`'s `PRECONDITION_FAILED` now check `eventBus.getPendingPromptForUser(...)`: with a pending prompt, the message stays "answer the current prompt first"; without one (command queued but not yet prompting), it now reads "Still processing your previous command — try again in a moment." Covered by new `router.test.ts` tests for both branches.
+- **Test-tooling gotcha, not a product bug** (documented, not "fixed" — nothing to change in product code): mixing a static top-level import and a dynamic `await import()` of the *same* module within one `tsx`-transformed mocha run can silently produce two separate module instances (confirmed for `helpers/semaphore.ts` — its module body evaluated twice, yielding two different `globalSemaphore` `EventEmitter`s). A test that relies on `someDynamicallyImportedInstance.emit(...)` reaching a statically-imported listener can fail with the event simply vanishing. Prefer static imports for classes whose own `BaseClass.emit()` needs to reach engine-wide listeners in a test. Not reachable in the real compiled build — only ever an artifact of the test transform.
+
+**Status**: Fixed (four of five; the fifth is a documented test-tooling caveat, not a code change).
+
+---
+
 ## Other Resolved Items
 
 ### 1. "Barely blocked" message fires incorrectly (upstream #181)
@@ -170,11 +214,11 @@ The Dungeon Master Guide should contain different content (game master / advance
 
 **Status**: Fixed. Battle history now stored via `setOptions({ battles })` and capped at the last 20 fights. Because it lives in `options`, it is automatically included in `BaseClass.toJSON()` and restored when `restoreGame()` is called. A `get battles()` accessor provides read access. A future event bus (`room_events`) could supplement this with a full persistent log.
 
-### 5 (partial). `creatures/base.ts` size reduction — TypeScript migration pass
+### 5. `creatures/base.ts` size reduction — FIXED
 
-Reduced from ~2000 lines to ~977 lines during the TypeScript migration by extracting focused logic. It still handles attack resolution, defense, item effects, stat modifiers, healing, and more in a single file.
+Reduced from ~2000 lines to ~977 lines during the TypeScript migration by extracting focused logic (`stats.ts`, `health.ts`, `encounter.ts`, `items.ts`). By the time this pass revisited it, attack/defense resolution already lived in `health.ts`/`cards/` — there was no "combat" logic left in `base.ts` to extract into a `creatures/combat.ts`, so a further pass extracted the two things that actually had content: `creatures/types.ts` (the ~100 lines of exported interfaces/type aliases — `CardInstance`, `CreatureOptions`, `Encounter`, `ChannelFn`, etc. — re-exported from `base.ts` via `export * from './types.js'` so no downstream import changes) and `creatures/edit.ts` (`editSelf`/`edit`, following the existing free-function-taking-the-creature pattern already used by `health.ts`/`items.ts`). `base.ts` is now ~420 lines of getters/setters and thin one-line delegation to sibling modules.
 
-**Status**: This reduction is done. Continued incremental decomposition (`creatures/combat.ts`, `creatures/stats.ts`, etc.) is tracked as open work in `10-bug-fixes.md` (#5).
+**Status**: Fixed.
 
 ### 6. Hardcoded time constants — Done
 
@@ -251,3 +295,12 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Draw announcement at round 10 (PR #286)
 - [x] Preset load copy-limit bug fixed (mixed-case duplicate keys, #19)
 - [x] `equip.ts` cardSelection name matching aligned with `equipCards` (#19)
+- [x] Batch `unequipMany`/`moveMany` tRPC + deferred invalidation to remove workshop flicker (#19)
+- [x] `getArray` regression tests for apostrophe card names + JSON array recommendation (#19)
+- [x] Implement per-room, persisted, 6-hour-Central-time-aligned card shop scoping (#26)
+- [x] Fix broken Discord `/shop`, `/buy`, `/sell` slash-command dispatch strings (found alongside #26)
+- [x] Continue incremental decomposition of `creatures/base.ts` (`types.ts` + `edit.ts` extracted, #5)
+- [x] Await `equip.ts`'s fire-and-forget rejection announces
+- [x] Replace remaining `Promise.reject(channel({ announce }))` call sites with announce-then-real-`Error`
+- [x] Publish a terminal `cancelled` event from `fight()`'s `.catch` path
+- [x] Distinguish "still processing your previous command" from "answer the current prompt first" in `activeFlows` rejection messages

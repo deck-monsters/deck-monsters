@@ -19,7 +19,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [06a — Web App](06a-web-app.md) | Terminal UI, ring feed, lobby, rooms | ✅ Done — live at deck-monsters.com |
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — batch-equip UX, per-room shop scoping (design decided), 2 cleanup items |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — one item left: DMG/CARDS content pass (#3) |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | 🔧 Active — deployed, not heavily used; admin role + tests remaining |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | 🔧 Active — sync bugs being fixed |
@@ -50,20 +50,15 @@ Everything below shipped and is not expected to need revisiting:
 - **Fight stats** — `fight_summaries` table, `FightSummaryWriter`, catch-up text command, web fight log page with expandable detail, last-fight ticker in ring pane
 - **Card workshop** — full card management shipped: unequip/move commands, preset save/load/delete, drag-and-drop web workshop at `/workshop`
 - **Battle history persistence** — stored in `options.battles`, capped at 20, survives restarts
-- **Bug fixes** — the large majority of tracked items are resolved; see `10b-bugs-fixed.md` for the archive. Open items (batch-equip UX, per-room card shop scoping — design decided, not yet implemented, DMG/CARDS content pass, `creatures/base.ts` decomposition) are tracked in `10-bug-fixes.md`
+- **Bug fixes** — nearly everything tracked is resolved; see `10b-bugs-fixed.md` for the archive, including batch-equip UX (#19) and per-room card shop scoping (#26). The one open item (DMG/CARDS content pass, #3) is tracked in `10-bug-fixes.md`
 
 ---
 
 ## Active Work — In Order of Priority
 
-Real-time sync bugs (fight log not updating, console missing reconnect history, event ring buffer gap not signalled) and quick actions not emitted after commands are all fixed — see `10b-bugs-fixed.md` (#15–#18).
+Real-time sync bugs (fight log not updating, console missing reconnect history, event ring buffer gap not signalled), quick actions not emitted after commands, batch-equip UX, and card shop room-scoping are all fixed — see `10b-bugs-fixed.md` (#15–#19, #26).
 
-### 1. Batch-equip UX and card shop room-scoping (10-bug-fixes.md)
-
-- **Batch equip UX** (#19) — workshop multi-select/drag batch and console multi-card equip still feel flakier than one-at-a-time equips; root-cause engine bugs are fixed, remaining work is a batch tRPC mutation + deferred cache invalidation.
-- **Card shop is a process-wide singleton** (#26) — every room shares one shop inventory/closing time, violating the room-scoping rule. Design decided: per-room shop, persisted in room state, refreshing every 6 hours aligned to America/Chicago clock boundaries. Implementation not yet started.
-
-### 2. Discord connector polish (05-discord-connector.md)
+### 1. Discord connector polish (05-discord-connector.md)
 
 The connector is deployed but has not been heavily used or tested in production. Remaining work before it can be considered solid:
 
@@ -71,15 +66,15 @@ The connector is deployed but has not been heavily used or tested in production.
 - Slash command integration tests
 - `/preset` command for saved deck presets (the engine support exists; needs the slash command wired up)
 
-### 3. Balance & mechanics (11-balance-and-mechanics.md)
+### 2. Balance & mechanics (11-balance-and-mechanics.md)
 
 Design doc is ready. Blocked on a battle simulation harness for safe regression testing. Key items: crit fail for all cards, stat variance reform, initiative rolls, saving throws. Start by building the sim harness, then iterate.
 
-### 4. New content backlog (12-new-content-backlog.md)
+### 3. New content backlog (12-new-content-backlog.md)
 
 New cards (10+ designs documented), two new monster types (Time Lord / Wizard, Bureaucrat / Cleric), equipment slots, adventures/job board, tournaments. Post-launch, driven by player demand.
 
-### 5. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
+### 4. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
 
 A fun post-launch enhancement: a retro SNES theme that layers pixel art fight animations on top of the text ring feed. All other themes stay clean and text-only — this is pure progressive enhancement. The animation module only loads when the SNES theme is active, so there's no cost for everyone else. Monster sprites (one idle + attack + hit + faint per monster type) can be generated with PixelLab and refined in Aseprite. See `docs/pixel-art-animations-in-js.md` for the full technical reference.
 
