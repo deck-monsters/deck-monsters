@@ -224,6 +224,10 @@ Every DB query on game data needs a `where room_id = ?` clause. Every tRPC proce
 
 See [`docs/room-scoping.md`](docs/room-scoping.md) for the full rule with code examples, a code-review checklist, and a table of common failure patterns. Past bugs have been caused by missing room filters — treat this as a hard constraint, not a guideline.
 
+## Critical Architecture Rule: Concurrency, Timing, and Prompt Flows
+
+Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive prompt lifecycle interact in non-obvious ways and have caused the most persistent production bugs (fights flying by, commands appearing ignored, multi-step flows crashing). Before touching `helpers/delay-times.ts`, `ring/index.ts` pacing, `events/room-event-bus.ts` prompts, or the server command pipeline in `trpc/router.ts`, read [`docs/engine-concurrency-and-timing.md`](docs/engine-concurrency-and-timing.md). Key invariants: interactive command actions run fire-and-forget in a per-`roomId:userId` lane (never room-wide — that starves other users); awaited workshop mutations must stay prompt-free; the `PROMPT_CANCELLED` sentinel must be translated to `PromptCancelledError` before reaching game code.
+
 ## Architecture Notes for New Connectors
 
 1. Implement the channel callback: `({ announce, question?, choices?, delay? }) => Promise`
