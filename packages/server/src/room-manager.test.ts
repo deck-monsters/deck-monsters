@@ -68,7 +68,7 @@ function makeEngineDeps() {
 		get stateStore() { return _stateStore; },
 		set stateStore(v: unknown) { _stateStore = v; },
 		eventBus: mockEventBus as never,
-		ring: { on: sinon.stub(), off: sinon.stub() } as never,
+		ring: { on: sinon.stub(), off: sinon.stub(), inEncounter: false } as never,
 		options: {} as Record<string, unknown>,
 		// saveState getter mirrors the real Game implementation
 		get saveState() { return saveStateFn; },
@@ -438,6 +438,25 @@ describe('RoomManager', () => {
 
 			// Should not throw
 			await expect(rm.unloadRoom('nonexistent-id')).to.be.fulfilled;
+		});
+
+		it('does not unload a room with a fight in progress, leaving it active for the next sweep', async () => {
+			// Regression: unloading mid-fight detaches this room's event bus
+			// subscribers (persister, fight-summary writer, stats) while the fight's
+			// own untracked setTimeout chain keeps running — the fight's
+			// announcements, stats, and summary row are silently lost.
+			const { deps, mockGame, saveStateFn } = makeEngineDeps();
+			const db = makeDbStub();
+			const rm = new RoomManager(db as never, () => {}, deps);
+			const { roomId } = await rm.createRoom(OWNER_ID, 'Room');
+
+			(mockGame.ring as unknown as { inEncounter: boolean }).inEncounter = true;
+
+			await rm.unloadRoom(roomId);
+
+			expect(saveStateFn.called).to.be.false;
+			expect(mockGame.dispose.called).to.be.false;
+			expect((rm as any).active.has(roomId)).to.be.true;
 		});
 	});
 

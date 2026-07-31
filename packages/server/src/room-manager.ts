@@ -445,6 +445,17 @@ export class RoomManager {
 	async unloadRoom(roomId: string): Promise<void> {
 		const entry = this.active.get(roomId);
 		if (entry) {
+			if (entry.game.ring.inEncounter) {
+				// A fight is running against this room's event bus subscribers (stats,
+				// fight-summary writer, persister). Unloading now would detach them
+				// mid-fight — announcements, stats, and the fight summary would be
+				// lost — while the untracked setTimeout chain inside Ring.fight()
+				// keeps running regardless of Game.dispose(). Leave the room active;
+				// the next sweep (10 min later, see index.ts SWEEP_INTERVAL_MS) will
+				// retry once the fight has ended.
+				log.debug('skipping idle unload — fight in progress, will retry next sweep', { roomId });
+				return;
+			}
 			log.debug('unloading room', { roomId, idleMs: Date.now() - entry.lastActivityAt });
 			// Stop persisting events for this room.
 			entry.unsubscribePersister();

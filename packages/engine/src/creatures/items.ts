@@ -54,7 +54,12 @@ export function removeItem (self: BaseCreature, itemToRemove: ItemInstance): Ite
 	const itemIndex = self.items.findIndex((item: ItemInstance) => _isMatchingItem(item, itemToRemove));
 
 	if (itemIndex >= 0) {
-		const foundItem = self.items.splice(itemIndex, 1)[0];
+		// Go through the `items` setter (setOptions) like addItem does — an in-place
+		// splice on the live array never emits `stateChange`, so a removed item could
+		// still show up after a restart if nothing else changed the creature's state.
+		const remaining = [...self.items];
+		const foundItem = remaining.splice(itemIndex, 1)[0]!;
+		self.items = remaining;
 
 		if (foundItem.onRemoved) foundItem.onRemoved(self);
 

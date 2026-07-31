@@ -9,6 +9,10 @@ import Ring from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
 import { engineReady } from './helpers/engine-ready.js';
 import { globalSemaphore } from './helpers/semaphore.js';
+import { XP_PER_VICTORY, XP_PER_DEFEAT } from './helpers/experience.js';
+import { COINS_PER_VICTORY, COINS_PER_DEFEAT } from './constants/coins.js';
+import Basilisk from './monsters/basilisk.js';
+import Beastmaster from './characters/beastmaster.js';
 
 describe('game.ts', () => {
 	afterEach(() => {
@@ -155,6 +159,111 @@ describe('game.ts', () => {
 		} finally {
 			roomA.dispose();
 			roomB.dispose();
+		}
+	});
+
+	it('does not double-award XP, coins, or a card drop from another room\'s win (creature.win cross-room leakage)', () => {
+		// Regression: Game.initializeEvents() bound handleWinner/handleLoser/
+		// handlePermaDeath/handleFled directly to `creature.*` — the ONLY
+		// creature.* listeners in the engine that skipped the room-scoping guard
+		// applied everywhere else in announcements/index.ts. Every loaded Game
+		// instance shares one process-wide semaphore for these events, so a single
+		// win anywhere used to grant its reward once per currently-loaded room.
+		//
+		// Basilisk/Beastmaster are imported statically (module top-level) here
+		// rather than via dynamic import(): under this test runner's on-the-fly TS
+		// transform, a dynamically-imported class's own module graph is a
+		// SEPARATE instance from one reached via a static import, so its BaseClass
+		// methods bind to a different (duplicate) globalSemaphore EventEmitter
+		// than Game's listeners are registered on — the emitted event would
+		// never reach them at all. That split is a test-tooling artifact of
+		// mixing static and dynamic ESM imports of the same file within one
+		// process, not something that can happen in the real compiled build.
+		const roomA = new Game({ roomId: 'room-a' });
+		const roomB = new Game({ roomId: 'room-b' });
+
+		try {
+			const monster = new Basilisk({ name: 'Winner' });
+			const character = new Beastmaster({ name: 'Room A Trainer' });
+			character.addMonster(monster);
+			roomA.characters = { ...roomA.characters, 'room-a-user': character };
+
+			const xpBefore = character.xp;
+			const coinsBefore = character.coins;
+			const deckLengthBefore = character.deck.length;
+
+			const contestant = { character, monster, userId: 'room-a-user' };
+			monster.emit('win', { contestant });
+
+			expect(character.xp).to.equal(xpBefore + XP_PER_VICTORY);
+			expect(character.coins).to.equal(coinsBefore + COINS_PER_VICTORY);
+			expect(character.deck.length).to.equal(deckLengthBefore + 1);
+		} finally {
+			roomA.dispose();
+			roomB.dispose();
+		}
+	});
+
+	it('awards the permaDeath consolation reward exactly once, scoped to the owning room', () => {
+		// Regression, two bugs in one: (1) Ring.handlePermaDeath never called
+		// `contestant.monster.emit('permaDeath', ...)` like its win/loss/fled
+		// siblings do, so Game.handlePermaDeath's listener never fired at all —
+		// a permanently destroyed monster granted its owner no reward whatsoever.
+		// (2) once reachable, the same cross-room leakage as the win test above
+		// would double-award it per loaded room without the guard.
+		const roomA = new Game({ roomId: 'room-a' });
+		const roomB = new Game({ roomId: 'room-b' });
+
+		try {
+			const monster = new Basilisk({ name: 'Destroyed' });
+			const character = new Beastmaster({ name: 'Room A Trainer' });
+			character.addMonster(monster);
+			roomA.characters = { ...roomA.characters, 'room-a-user': character };
+
+			const xpBefore = character.xp;
+			const coinsBefore = character.coins;
+
+			const contestant = { character, monster, userId: 'room-a-user' };
+			monster.emit('permaDeath', { contestant });
+
+			expect(character.xp).to.equal(xpBefore + XP_PER_DEFEAT * 2);
+			expect(character.coins).to.equal(coinsBefore + COINS_PER_DEFEAT * 2);
+		} finally {
+			roomA.dispose();
+			roomB.dispose();
+		}
+	});
+
+	it('does not let another room\'s activity reset this room\'s save debounce timer', () => {
+		// Regression: setOptions() broadcast `stateChange` on the process-wide
+		// globalSemaphore with zero arguments, so Game's listener (also bound on
+		// globalSemaphore) could not tell which room changed and rescheduled its
+		// own save on every mutation anywhere in the process. On a busy multi-room
+		// server this could keep resetting a quiet room's debounce indefinitely.
+		const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+		const roomA = new Game({ roomId: 'room-a' });
+		const roomB = new Game({ roomId: 'room-b' });
+		const saveA = sinon.stub();
+
+		try {
+			roomA.saveState = saveA;
+
+			roomA.emit('stateChange'); // schedules room A's save for t=30s
+
+			// Room B mutates state every second for 25 seconds — if this leaked
+			// across rooms it would keep resetting room A's 30s debounce timer.
+			for (let i = 0; i < 25; i += 1) {
+				clock.tick(1_000);
+				roomB.emit('stateChange');
+			}
+
+			clock.tick(6_000); // t=31s: room A's own t=0 change should have flushed
+			expect(saveA.calledOnce).to.equal(true);
+		} finally {
+			roomA.saveState = undefined;
+			roomB.dispose();
+			roomA.dispose();
+			clock.restore();
 		}
 	});
 
@@ -354,6 +463,34 @@ describe('game.ts', () => {
 			const char2 = await game.getCharacter({ channel, id: 'user-2', name: 'RealName' });
 			// 'Custom Hero' !== 'Player', so no override should happen
 			expect((char2 as any).givenName).to.equal('Custom Hero'); // unchanged
+		});
+
+		it('emits stateChange when a brand-new character is created, so a save is scheduled', async () => {
+			// Regression: `game.characters[id] = character` is a direct mutation of
+			// the options-backed characters map, bypassing setOptions() — no
+			// stateChange fired from the assignment itself. The new character's own
+			// constructor does emit a global stateChange, but at that point it isn't
+			// in game.characters yet, so the room-scoped guard (added alongside this
+			// fix) would not attribute it to this game either way. Without the
+			// explicit emit added to getCharacter, a freshly created character could
+			// be silently lost if the server restarted before anything else in the
+			// room changed.
+			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+			const game = new Game();
+			const saveStateStub = sinon.stub();
+			const channel = sinon.stub().resolves('0');
+
+			try {
+				game.saveState = saveStateStub;
+
+				await game.getCharacter({ channel, id: 'user-3', name: 'Player' });
+
+				clock.tick(31_000);
+				expect(saveStateStub.calledOnce).to.equal(true);
+			} finally {
+				game.saveState = undefined;
+				clock.restore();
+			}
 		});
 	});
 });

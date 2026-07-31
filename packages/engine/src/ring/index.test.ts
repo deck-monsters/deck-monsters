@@ -67,6 +67,37 @@ describe('ring/index.ts', () => {
 				.then(() => expect(ring.monsterIsInRing(monster)).to.equal(false));
 		});
 
+		it('removes one of several contestants via the setter, not an in-place splice', () => {
+			// Regression: removeMonster used to `.splice()` the array returned by the
+			// `contestants` getter directly, so partial removals (ring not emptied)
+			// never went through `setOptions()` and so never emitted `stateChange` —
+			// a monster withdrawn from a still-populated ring could still be listed in
+			// the last-persisted ringContestantRefs and get resurrected on restart.
+			const game = new Game();
+			const ring = game.getRing();
+
+			const character1 = new Beastmaster();
+			const monster1 = new Basilisk();
+			character1.addMonster(monster1);
+			const character2 = new Beastmaster();
+			const monster2 = new Basilisk();
+			character2.addMonster(monster2);
+
+			ring.addMonster({ monster: monster1, character: character1, userId: 'user-1' });
+			ring.addMonster({ monster: monster2, character: character2, userId: 'user-2' });
+			expect(ring.contestants.length).to.equal(2);
+
+			const contestantsBeforeRemoval = ring.contestants;
+
+			return ring
+				.removeMonster({ monster: monster1, character: character1, userId: 'user-1' })
+				.then(() => {
+					expect(ring.contestants.length).to.equal(1);
+					expect(ring.contestants).to.not.equal(contestantsBeforeRemoval);
+					expect(ring.monsterIsInRing(monster2)).to.equal(true);
+				});
+		});
+
 		it('cannot be removed while an encounter is in progress', async () => {
 			const game = new Game();
 			const ring = game.getRing();
@@ -111,6 +142,44 @@ describe('ring/index.ts', () => {
 			return ring.removeBoss(contestant).then(() =>
 				expect(ring.contestants.length).to.equal(0)
 			);
+		});
+
+		it('cancels pending boss despawn timers on dispose', () => {
+			// Regression: the despawn setTimeout scheduled in spawnBoss() was never
+			// stored anywhere, so Ring.dispose() could not cancel it — an orphaned
+			// timer would fire against an already-disposed ring after the room
+			// unloaded.
+			//
+			// spawnBoss() only schedules a despawn timer on a 50/50 coin flip
+			// (`random(1)`), so we retry rather than pinning Math.random — pinning it
+			// globally breaks the recursive probability-retry loop in
+			// cards/helpers/draw.ts (`if (!Card) return draw(...)`), which never
+			// terminates once every card's probability check returns the same fixed
+			// result. clearRing() between attempts doesn't touch bossDespawnTimers
+			// (only dispose() does), so any attempt landing heads is enough — the
+			// ~2^-50 chance every one of 50 flips misses is negligible.
+			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+			try {
+				const game = new Game();
+				const ring = game.getRing();
+				const removeBossSpy = sinon.spy(ring, 'removeBoss');
+
+				for (let attempt = 0; attempt < 50; attempt += 1) {
+					ring.clearRing();
+					ring.spawnBoss();
+				}
+				expect((ring as any).bossDespawnTimers.size).to.be.greaterThan(0);
+
+				game.dispose();
+
+				// Well past BOSS_DESPAWN_DELAY_MS (10 minutes) — if any timer survived
+				// dispose(), removeBoss would fire here.
+				clock.tick(11 * 60 * 1000);
+
+				expect(removeBossSpy.called).to.equal(false);
+			} finally {
+				clock.restore();
+			}
 		});
 
 		it('will not spawn a boss if an encounter is in progress', () => {
@@ -308,6 +377,30 @@ describe('ring/index.ts', () => {
 			expect(midBoss).to.not.be.undefined;
 			expect(midBoss!.monster.level).to.be.at.most(3);
 			capThreeStub.restore();
+		});
+	});
+
+	describe('outcome handlers', () => {
+		it('handlePermaDeath emits creature.permaDeath on the monster, like its win/loss/fled siblings', () => {
+			// Regression: handlePermaDeath was missing the `contestant.monster.emit(...)`
+			// call that handleWinner/handleLoser/handleFled all have. Game listens for
+			// the global `creature.permaDeath` broadcast (via BaseClass.emit's
+			// `${eventPrefix}.${event}` convention) to award the permaDeath consolation
+			// XP/coins — without this emit, that listener never fired, so a
+			// permanently destroyed monster granted its owner no reward at all.
+			const game = new Game();
+			const ring = game.getRing();
+
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+
+			const emitSpy = sinon.spy(monster, 'emit');
+			const contestant = { character, monster, userId: 'user-1' };
+
+			ring.handlePermaDeath({ contestant });
+
+			expect(emitSpy.calledWith('permaDeath', { contestant })).to.equal(true);
 		});
 	});
 

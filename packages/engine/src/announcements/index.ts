@@ -57,7 +57,7 @@ type RoomScopedCharacter = {
 	deck?: unknown[];
 };
 
-type RoomScopedGame = {
+export type RoomScopedGame = {
 	eventBus: RoomEventBus;
 	ring: {
 		on: (event: string, listener: (...args: any[]) => void) => (...args: any[]) => void;
@@ -69,35 +69,59 @@ type RoomScopedGame = {
 	off: (event: string, listener: (...args: any[]) => void) => void;
 };
 
-function createRoomScopedEventGuard(game: RoomScopedGame): (...args: any[]) => boolean {
+/**
+ * Reads a possibly-array property straight from a BaseClass instance's raw
+ * `optionsStore`, bypassing its public getter entirely.
+ *
+ * Several getters here (notably `BaseCharacter.cards`/`.deck`) lazily
+ * initialize themselves on first read when the backing option is still
+ * unset — e.g. `get cards() { if (deck is empty) this.deck = getInitialDeck() }`.
+ * That assignment itself calls `setOptions()`, which broadcasts `stateChange`
+ * globally and synchronously. If this guard's ownership check reads one of
+ * those getters *while already inside* that same lazy-init (e.g. because one
+ * of the newly-constructed starter cards' own constructor just fired another
+ * `stateChange`), the still-unset backing field re-triggers the lazy init
+ * again before the outer call ever gets to finish it — unbounded recursion
+ * ending in a stack overflow. Reading the raw store is a pure, side-effect-free
+ * lookup, so it can never re-enter anything. It also is not merely equivalent to
+ * the getter but strictly safer for this use: while genuinely unset the array
+ * is empty either way, so returning `[]` here is exactly as correct as
+ * triggering the lazy default.
+ */
+const rawArray = (value: unknown, key: string): unknown[] => {
+	const store = (value as { optionsStore?: Record<string, unknown> } | undefined)?.optionsStore;
+	const arr = store?.[key];
+	return Array.isArray(arr) ? arr : [];
+};
+
+export function createRoomScopedEventGuard(game: RoomScopedGame): (...args: any[]) => boolean {
 	const ownsDirectly = (value: unknown): boolean => {
 		if (!value || typeof value !== 'object') return false;
 		if (value === game || value === game.ring || value === game.exploration) return true;
 
-		const characters = Object.values(game.characters ?? {});
+		// `game.characters` itself lazily initializes on first read too, but that
+		// path is self-limiting (only fires once); the deck/cards reads below are
+		// not, so all five reads here consistently avoid the live getters.
+		const characters = Object.values(
+			(game as unknown as { optionsStore?: Record<string, unknown> }).optionsStore?.['characters'] ?? {}
+		);
 		for (const character of characters as Array<RoomScopedCharacter | undefined>) {
 			if (value === character) return true;
 
-			const monsters: unknown[] = Array.isArray(character?.monsters) ? character.monsters : [];
+			const monsters = rawArray(character, 'monsters');
 			if (monsters.includes(value)) return true;
 
-			const charItems: unknown[] = Array.isArray(character?.items) ? character.items : [];
+			const charItems = rawArray(character, 'items');
 			if (charItems.includes(value)) return true;
 
-			const deck: unknown[] = Array.isArray(character?.deck) ? character.deck : [];
+			const deck = rawArray(character, 'deck');
 			if (deck.includes(value)) return true;
 
 			for (const monster of monsters) {
-				const cards: unknown[] =
-					monster && typeof monster === 'object' && Array.isArray((monster as any).cards)
-						? (monster as any).cards
-						: [];
+				const cards = rawArray(monster, 'cards');
 				if (cards.includes(value)) return true;
 
-				const items: unknown[] =
-					monster && typeof monster === 'object' && Array.isArray((monster as any).items)
-						? (monster as any).items
-						: [];
+				const items = rawArray(monster, 'items');
 				if (items.includes(value)) return true;
 			}
 		}

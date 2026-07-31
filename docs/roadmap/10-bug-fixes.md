@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt  
 **Priority**: High (fix before major new development)  
-**Status**: Active — original bugs #15–#18 and #20 all resolved. Newly recorded during the fix pass: #21–#24 (see below). Previously resolved: console history on reconnect (#16), event ring buffer gap detection (#17), quick actions emission (#18), engine timing/sync/multi-step crashes (#20), and the engine half of deck equip batch flakiness (#19 — batch RPC / UI flicker work still open). Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
+**Status**: Active — #15–#18 and #20–#25 all resolved, including a critical cross-room reward-duplication bug (#25) found and fixed while wiring up #23. One new item recorded but not yet fixed: #26 (card shop is a process-wide singleton, needs a design decision). #19's engine-side bugs are fixed; its batch-RPC/UI-flicker UX work is still open. Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
 
 ## Active Bugs
 
@@ -96,23 +96,71 @@ Three long-standing complaints traced to root causes and fixed together:
 
 ## Newly Recorded (code-reading pass, 2026-07-31)
 
-Spotted while fixing #15/#16/#17/#18/#20 — recorded for triage, not yet fixed unless noted.
+Spotted while fixing #15/#16/#17/#18/#20. #21–#24 were logged for later triage and are now fixed. Fixing #23 required chasing down two more serious bugs it would otherwise have exposed/interacted with — #25 (a real cross-room reward-duplication bug, unrelated to #23 itself) and a reentrancy hazard in the room-scoping guard used by #23's fix — both described below and fixed in the same pass.
 
-### 21. Idle-room sweep can orphan an in-progress fight — MEDIUM
+### 21. Idle-room sweep can orphan an in-progress fight — FIXED
 
-`RoomManager.sweepIdleRooms` → `unloadRoom` never checks `ring.inEncounter`. `Game.dispose()` clears `fightTimer`/`bossTimer`, but the fight loop itself (`doAction` in `ring/index.ts`) advances via untracked anonymous `setTimeout` chains — so a fight in progress at sweep time keeps running to completion against an event bus whose DB subscribers were just detached: announcements, stats, and the fight summary all vanish, while the game object continues mutating state after its final flush. Narrow window in practice (`lastActivityAt` is touched by every command, and fights start 60s after the last ring change), but boss spawns plus a watching-only audience can hit it. **Suggested fix**: skip unloading rooms where `ring.inEncounter` is true (re-sweep later), and/or give `doAction` a disposal flag the chain checks between steps.
+`RoomManager.sweepIdleRooms` → `unloadRoom` never checked `ring.inEncounter`. `Game.dispose()` clears `fightTimer`/`bossTimer`, but the fight loop itself (`doAction` in `ring/index.ts`) advances via untracked anonymous `setTimeout` chains — so a fight in progress at sweep time kept running to completion against an event bus whose DB subscribers had just been detached: announcements, stats, and the fight summary would all be lost.
 
-### 22. Boss despawn timer is never tracked or disposed — LOW
+**Fixed**: `unloadRoom` now checks `entry.game.ring.inEncounter` first and leaves the room active (no dispose, no cache eviction) when a fight is running, logging that the unload was skipped. Since `unloadRoom`'s only production caller is the 10-minute idle sweep (`packages/server/src/index.ts`), the room simply gets retried on the next sweep — ample time for any fight to finish. Covered by a new test in `room-manager.test.ts`.
 
-`Ring.spawnBoss()` arms a 10-minute `setTimeout(removeBoss)` that is not stored on the instance, so `Ring.dispose()` cannot clear it. After a room unloads, the orphaned timer fires against the disposed ring (harmless state-wise since `removeBoss` re-checks, but it publishes to a detached bus and keeps harness/test processes alive). Store the handle and clear it in `dispose()` alongside `fightTimer`/`bossTimer`.
+**Status**: Fixed.
 
-### 23. Cross-room stateChange save amplification — LOW (perf)
+### 22. Boss despawn timer is never tracked or disposed — FIXED
 
-`Game` passes the process-wide `globalSemaphore` to `BaseClass`, so `this.on('stateChange', …)` in `initializeEvents` hears **every** `stateChange` from **every** room and creature in the process. Each fires `scheduleSave()` in *all* loaded games. Correctness holds (each game serializes only its own state, debounced 30s), but on a busy multi-room server this is O(rooms × changes) redundant save scheduling. The announcements module already solves this exact problem with `createRoomScopedEventGuard` — the save listener should be wrapped the same way.
+`Ring.spawnBoss()` arms a 10-minute `setTimeout(removeBoss)` on a 50/50 coin flip, but the handle was never stored, so `Ring.dispose()` couldn't clear it — an orphaned timer would fire against an already-disposed ring after the room unloaded.
 
-### 24. Direct mutations bypass the stateChange persistence signal — LOW
+**Fixed**: pending despawn timers are tracked in a `bossDespawnTimers` Set on the `Ring` instance, added when scheduled and removed when they fire; `dispose()` now clears all of them alongside `fightTimer`/`bossTimer`. Also hardened the despawn callback with `.catch(() => {})` — `removeBoss` → `removeMonster` rejects if the boss is no longer in the ring (e.g. cleared by an intervening fight), which was an unhandled-rejection risk before. Covered by a new test that forces the despawn branch via retry (not by pinning `Math.random`, which breaks the recursive card-probability retry in `cards/helpers/draw.ts` — see the test's comment for why).
 
-Two spots mutate `options`-backed structures in place instead of via `setOptions`, so no `stateChange` fires from the mutation itself: `Game.getCharacter` (`game.characters[id] = character`) and `Ring.removeMonster` (`contestants.splice`). In practice a save is usually scheduled soon after by adjacent activity (and #23 currently papers over it process-wide), but if #23 is ever fixed these become real "lost on restart" windows. Emit `stateChange` explicitly at both sites.
+**Status**: Fixed.
+
+### 23. Cross-room stateChange save amplification — FIXED
+
+`Game` passes the process-wide `globalSemaphore` to `BaseClass`, so `this.on('stateChange', …)` in `initializeEvents` heard **every** `stateChange` from **every** room and creature in the process and rescheduled *this* room's 30s save debounce each time. Beyond wasted work, this was a real correctness risk on a busy server: another room's continuous activity could keep resetting a quiet room's debounce indefinitely, delaying its actual flush well past 30s.
+
+**Fixed**: `setOptions()` now passes the mutating instance to the broadcast (`globalSemaphore.emit('stateChange', this)`, previously zero args), and `Game.initializeEvents()` wraps the `stateChange` listener with `createRoomScopedEventGuard` (now exported from `announcements/index.ts`) exactly like every other cross-cutting `creature.*` listener already was — **except it wasn't**, see #25. Covered by a new test proving 25 seconds of another room's activity does not delay this room's own save past its original 30s mark.
+
+Fixing this exposed two further bugs, both fixed in the same pass — see #25 and the reentrancy note below.
+
+**Status**: Fixed.
+
+### 24. Direct mutations bypass the stateChange persistence signal — FIXED
+
+Two spots mutated `options`-backed structures in place instead of via `setOptions`, so no `stateChange` fired from the mutation itself — harmless while #23 made *every* mutation anywhere trigger *every* room's save regardless, but a real "lost/resurrected on restart" risk once #23 scopes saves correctly:
+
+- **`Game.getCharacter`** — `game.characters[id] = character` for a newly created character. **Fixed**: an explicit `game.emit('stateChange')` after the assignment.
+- **`Ring.removeMonster`** — `this.contestants.splice(...)` mutated the live array in place; a monster withdrawn from a still-populated ring (not emptying it, so `clearRing()` never ran either) left the last-persisted `ringContestantRefs` unchanged, meaning **the withdrawn monster could be resurrected into the ring on the next restart**. **Fixed**: builds a new array and assigns through the `contestants` setter, matching the pattern `addMonster` already used.
+- **Found while auditing the rest of the codebase for the same pattern**: `creatures/items.ts`'s `removeItem` had the identical bug (`self.items.splice(...)` in place, unlike its sibling `addItem` which already went through the setter) — a removed item could similarly reappear after a restart. **Fixed** the same way. A broader sweep of `.splice()`/`.push()` call sites across the engine (`characters/beastmaster.ts`'s equip/move/reorder/preset paths, `items/helpers/transfer.ts`, `items/helpers/use.ts`) found only local-copy patterns (`[...creature.field]` before mutating) — no other instances.
+
+**Status**: Fixed.
+
+### 25. Cross-room reward duplication via unscoped `creature.win`/`loss`/`permaDeath`/`fled` listeners — FIXED (CRITICAL, found while fixing #23)
+
+While wiring the room-scoping guard onto `stateChange` (#23), the same `Game.initializeEvents()` method turned out to already have **four** listeners with the identical unscoped-`globalSemaphore` problem, pre-dating this work and far more severe: `creature.win` → `handleWinner`, `creature.loss` → `handleLoser`, `creature.permaDeath` → `handlePermaDeath`, `creature.fled` → `handleFled`. These were the *only* `creature.*` listeners in the whole engine that skipped the `createRoomScopedEventGuard` wrapping every other cross-cutting listener in `announcements/index.ts` already uses.
+
+**Impact**: `Ring.handleWinner()` calls `contestant.monster.emit('win', {contestant})`, which — via `BaseClass.emit`'s `${eventPrefix}.${event}` broadcast — fires on the single process-wide `globalSemaphore`. Every currently-loaded `Game` instance's `handleWinner` ran against the *same* `contestant` object. On a server with N active rooms, a single fight's outcome in any one room granted its owner's character XP, coins, **and drew and appended N separate cards to their deck** — once per other loaded room, not once. The more concurrent rooms a deployment has, the worse the multiplication. This is likely the single most severe correctness bug found in this whole pass, and it had zero test coverage (no existing test ever constructed two simultaneous `Game` instances and checked a reward outcome).
+
+**Fixed**: wrapped all four listeners (plus `stateChange`) with the same `wrapGameEvent`/`isRoomScopedEvent` guard in `Game.initializeEvents()`. Covered by two new end-to-end tests in `game.test.ts` that construct two rooms, fire a real `monster.emit('win'|'permaDeath', …)`, and assert the reward applied exactly once to the owning room's character.
+
+**Bonus find in the same area**: `Ring.handlePermaDeath()` was missing the `contestant.monster.emit('permaDeath', {contestant})` call that its win/loss/fled siblings all have — a plain omission. Since `Game.handlePermaDeath` only listens for that broadcast, this meant **a permanently destroyed monster granted its owner no reward at all**, not even the ordinary loss amount, let alone the intended double "consolation" XP/coins for a permanent death. **Fixed**: added the missing emit, mirroring the sibling handlers exactly. Covered by a new `ring/index.test.ts` test asserting the emit now happens, plus the `game.test.ts` end-to-end permaDeath-reward test above (which would have failed with zero reward before this fix, and double reward before the #23/#25 guard fix).
+
+**Status**: Fixed.
+
+### Reentrancy hazard exposed by the #23 guard — FIXED
+
+Wiring `createRoomScopedEventGuard` onto `stateChange` (the most frequently-fired event in the engine — it fires on *every* `setOptions()` call, including from inside other objects' constructors) surfaced a latent bug in the guard itself: `ownsDirectly()` checked ownership by reading `character.deck`/`character.monsters`/`character.items`/`monster.cards`/`monster.items` — **live getters**, several of which (`BaseCharacter.cards`/`.deck` specifically) lazily initialize themselves on first read by calling `this.deck = getInitialDeck()`, which itself calls `setOptions()`, which broadcasts another `stateChange` **synchronously, mid-computation**. If the guard's ownership check for *that* re-entrant broadcast reads the *same still-uninitialized* `character.deck` again, it retriggers the lazy init again before the outer call ever finishes — unbounded recursion ending in a stack overflow. This was reachable in production any time a brand-new character's first card draw happened while any `Game` instance's guarded `stateChange` listener was active (i.e. always, once #23 shipped) — caught immediately by the new #25 reward tests, which construct exactly this scenario (a freshly-built character whose deck has never been read).
+
+**Fixed**: `ownsDirectly()` now reads straight from each instance's raw `optionsStore` (`(value as {optionsStore}).optionsStore?.[key]`) instead of the public getters — a pure, side-effect-free lookup that can never re-enter anything, and behaviorally equivalent for matching purposes (an array that's still unset genuinely cannot contain whatever is being checked against it either way). Applied to all five reads in `ownsDirectly` plus `game.characters`'s own (self-limiting, but fixed for consistency).
+
+**Status**: Fixed. This is exactly the kind of side-effecting-getter trap that's easy to reintroduce — see the new doc comment on `rawArray` in `announcements/index.ts` before adding any new ownership checks there.
+
+### 26. Card shop is a single process-wide singleton shared by every room — RECORDED, not fixed
+
+`packages/engine/src/items/store/shop.ts`'s `getShop()` is a module-level `throttle()`-wrapped function with a single `currentShop` variable, regenerated once per 8 hours **for the entire process**, not per room. Every room on a multi-room server currently shares the exact same shop inventory, closing time, and prices — one room buying out an item affects every other room's shop simultaneously. This directly conflicts with `CLAUDE.md`'s "Critical Architecture Rule: Room-Level Scoping" ("All game state … must be scoped to a room … treat this as a hard constraint, not a guideline").
+
+Likely a leftover from the original single-workspace Slack bot design, never revisited during the multi-room revival. Not fixed here — it needs a design decision (per-room shop keyed by `roomId`? shared shop but per-room purchase tracking? intentionally shared as a "world event"?) rather than a mechanical patch, and touches `buy.ts`/`sell.ts`'s call sites plus whatever surfaces the shop to connectors.
+
+**Status**: Open — needs a design decision before implementation.
 
 ### Smaller observations / streamlining suggestions
 
@@ -120,6 +168,7 @@ Two spots mutate `options`-backed structures in place instead of via `setOptions
 - **`Promise.reject(channel({ announce }))` idiom** (store buy, `game.ts` look-ups, equip preconditions): rejects with a *Promise* as the reason, which stringifies as `[object Promise]` in any error log. Prefer announcing first, then rejecting with a real `Error`. (Already fixed in `chooseItems` — #20.)
 - **`fight()` error path drops history**: see #15 residual note — if cancelled fights should appear in the fight log as `cancelled`, publish a terminal event from the `.catch` path.
 - **`activeFlows` rejection message** can mislead: when a user's command is *queued* (not prompting), the "answer the current prompt first" message returns `pendingPrompt: null`. Consider a distinct "still processing your previous command" message when there is no pending prompt.
+- **Test-tooling gotcha, not a product bug**: mixing a static top-level import and a dynamic `await import()` of the *same* module within one `tsx`-transformed mocha run can silently produce two separate module instances (confirmed for `helpers/semaphore.ts` — its module body evaluated twice, yielding two different `globalSemaphore` `EventEmitter`s). A test that relies on `someDynamicallyImportedInstance.emit(...)` reaching a statically-imported listener can fail with the event simply vanishing. Fix is to import consistently (prefer static imports for classes whose own `BaseClass.emit()` needs to reach engine-wide listeners in a test). Not reachable in the real compiled build — only ever an artifact of the test transform.
 - Fixed in passing: unused `or` import in `analytics-queries.ts` (was the only lint warning in the server package).
 
 ## Known Bugs (original list)
@@ -216,7 +265,12 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 ## Tasks
 
 - [x] ~~Fix fight log not updating after new fights complete~~ (done — pending-snapshot race + retries, #15)
-- [ ] Triage newly recorded #21–#24 (idle-sweep orphaned fights, boss timer disposal, save amplification, missed stateChange)
+- [x] ~~Fix idle-sweep orphaning in-progress fights~~ (done — `unloadRoom` checks `ring.inEncounter`, #21)
+- [x] ~~Dispose pending boss despawn timers~~ (done — `bossDespawnTimers` Set, #22)
+- [x] ~~Fix cross-room stateChange save amplification~~ (done — room-scoped guard on the listener, #23)
+- [x] ~~Fix direct mutations bypassing stateChange~~ (done — `getCharacter`, `Ring.removeMonster`, `removeItem`, #24)
+- [x] ~~Fix cross-room reward duplication (creature.win/loss/permaDeath/fled)~~ (done — CRITICAL, found while fixing #23, #25)
+- [ ] Decide on and implement per-room (or intentionally shared) card shop scoping (#26)
 - [x] ~~Fix console pane not replaying history on reconnect~~ (done — cold-buffer DB fallback, #16/#17)
 - [x] ~~Fix event ring buffer gap not signalled on reconnect~~ (done — `EventsSinceResult.status`, #17)
 - [x] ~~Wire quick actions event emission after game commands~~ (done — `server/src/quick-actions.ts`, #18)

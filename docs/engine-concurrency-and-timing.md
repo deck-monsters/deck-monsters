@@ -147,20 +147,63 @@ builder must never throw, since it runs inside the command pipeline. Suggestions
 are emitted on both success and failure paths and are deliberately not
 persisted.
 
-## 7. Other timing machinery worth knowing
+## 7. The global semaphore and room-scoped guarding (read before adding ANY `game.on(...)` listener)
+
+All `Game`/creature/card/item/ring events ride one **process-wide**
+`EventEmitter` (`helpers/semaphore.ts`'s `globalSemaphore`). `Game` is
+constructed with `super(options, globalSemaphore)`, so **any** `this.on(...)`
+registered inside `Game` (directly, or via `BaseClass.on`) receives **every**
+matching event from **every** loaded room and creature in the process, not
+just this one. `Ring`/`Monster`/`Character` instances default to their own
+private `EventEmitter` instead, so this only bites listeners registered
+directly on `Game`.
+
+**Every listener `Game.initializeEvents()` registers on a `creature.*` or
+`stateChange` event MUST be wrapped with `createRoomScopedEventGuard`**
+(exported from `announcements/index.ts`) before doing anything with its
+arguments. This was a real, shipped bug: the reward-granting listeners
+(`creature.win`/`loss`/`permaDeath`/`fled` → `handleWinner`/etc.) were
+unwrapped for a long time, so a single fight's outcome granted its reward
+once *per currently-loaded room on the server* — XP, coins, and drawn cards
+all multiplied by room count. `stateChange` had the same gap (see below).
+`announcements/index.ts`'s own listeners were already correctly guarded; if
+you add a new `Game`-level listener, follow that pattern, not the
+now-fixed-but-easy-to-regress shortcut.
+
+**The guard itself must stay side-effect-free.** `createRoomScopedEventGuard`
+decides ownership by checking whether the emitted arguments are (or contain)
+one of this game's own characters/monsters/cards/items. It reads a raw
+`optionsStore` value for each of those (`rawArray()` in
+`announcements/index.ts`), deliberately **not** the public getters
+(`character.deck`, `monster.cards`, etc.). Several of those getters lazily
+initialize themselves on first read by calling `setOptions()` internally
+(e.g. `BaseCharacter.cards` builds a starter deck the first time it's
+touched) — and `setOptions()` broadcasts `stateChange` synchronously. Reading
+one of those getters from inside the guard, while already inside another
+`stateChange` broadcast triggered by that same lazy init, re-enters the
+still-uninitialized getter and recurses without bound until the stack
+overflows. This is exactly the failure mode a fresh character's first card
+draw hits if the guard is ever changed back to reading live getters — keep
+new ownership checks reading `optionsStore` directly.
 
 - **Fight timer**: `startFightTimer()` clears and restarts the 60s countdown
   on every ring add/remove — the fight fires 60s after the *last* membership
   change (legacy behavior, intentional). `nextFightAt` / `nextBossSpawnAt` are
   published via `ring.state` events for client countdowns.
 - **State saves**: `Game.scheduleSave()` debounces 30s off `stateChange`
-  events; `RoomManager.unloadRoom` flushes via `game.saveState()`. Direct
-  mutation of `options`-backed arrays (e.g. `contestants.splice`) does not
-  emit `stateChange` — use `setOptions` if persistence matters.
-- **Global semaphore**: all `Game`/creature events ride one process-wide
-  emitter (`helpers/semaphore.ts`). `announcements/index.ts` gates listeners
-  by ownership (`createRoomScopedEventGuard`) so multi-room servers don't
-  cross-announce. Ring listeners are instance-scoped and skip the guard.
-- **Timers must be disposed**: `Game.dispose()` → `Ring.dispose()` +
-  per-creature `disposeTimers()`. Any new `setTimeout`/`setInterval` on a
-  long-lived object needs a dispose path or unloaded rooms keep firing.
+  events, now correctly room-scoped (see above) so one room's activity can't
+  keep resetting another's debounce indefinitely. Any direct mutation of an
+  `options`-backed array (e.g. `contestants.splice`, `items.splice`) instead
+  of going through its setter skips `setOptions()` and so never emits
+  `stateChange` — always build a new array and assign through the setter
+  (`ring.contestants = updated`, `creature.items = remaining`, …) if the
+  mutation needs to survive a restart. `RoomManager.unloadRoom` also flushes
+  via `game.saveState()` before eviction, and now refuses to unload a room
+  whose `ring.inEncounter` is true — a fight in progress keeps the room in
+  the active cache until the next sweep.
+- **Timers must be disposed AND tracked**: `Game.dispose()` → `Ring.dispose()`
+  + per-creature `disposeTimers()`. Any new `setTimeout`/`setInterval` on a
+  long-lived object needs both a stored handle *and* a dispose path — a timer
+  that exists only as an anonymous closure (no handle kept anywhere) cannot
+  be cancelled later no matter how thorough `dispose()` is. `Ring`'s
+  `bossDespawnTimers` Set is the pattern to copy for anything similar.
