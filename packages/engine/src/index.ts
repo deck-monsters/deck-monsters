@@ -5,10 +5,10 @@ import { gameStateSchema } from './schemas/state.js';
 import Game from './game.js';
 import type { ChannelCallback } from './channel/index.js';
 import { ConnectorAdapter } from './channel/index.js';
-import { RoomEventBus } from './events/index.js';
+import { RoomEventBus, PROMPT_CANCELLED, PromptCancelledError } from './events/index.js';
 import type { GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult } from './events/index.js';
 
-export { Game, ConnectorAdapter, RoomEventBus };
+export { Game, ConnectorAdapter, RoomEventBus, PROMPT_CANCELLED, PromptCancelledError };
 export type { GameAnalyticsCallbacks, LeaderboardSortKey } from './game.js';
 export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult };
 export type { StateStore } from './types/state-store.js';

@@ -4,6 +4,22 @@ import type { GameEvent, EventSubscriber, EventScope, EventType, EventsSinceResu
 
 const RING_BUFFER_SIZE = 200;
 
+/**
+ * Sentinel answer used to resolve a pending prompt when the user cancels the
+ * flow. Consumers (connector channel wrappers, choice helpers) must translate
+ * this into a `PromptCancelledError` so it never leaks into game flows as a
+ * literal answer string.
+ */
+export const PROMPT_CANCELLED = '__cancelled__';
+
+/** Thrown by channel wrappers when the user cancels an interactive flow. */
+export class PromptCancelledError extends Error {
+	constructor(message = 'Prompt cancelled by user') {
+		super(message);
+		this.name = 'PromptCancelledError';
+	}
+}
+
 type PublishInput = {
 	type: EventType;
 	scope: EventScope;
@@ -169,7 +185,7 @@ export class RoomEventBus {
 					text: 'Action cancelled.',
 					payload: { requestId },
 				});
-				pending.resolve('__cancelled__');
+				pending.resolve(PROMPT_CANCELLED);
 			}
 		}
 	}
@@ -187,7 +203,7 @@ export class RoomEventBus {
 				text: 'Action cancelled.',
 				payload: { requestId },
 			});
-			pending.resolve('__cancelled__');
+			pending.resolve(PROMPT_CANCELLED);
 		}
 	}
 

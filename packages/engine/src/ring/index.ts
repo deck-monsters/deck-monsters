@@ -652,9 +652,12 @@ export class Ring extends BaseClass {
 							if (delaysAreSkipped()) {
 								return subEventDelay().then(() => next());
 							}
-							return new Promise<void>(r => setTimeout(r, 0))
-								.then(() => subEventDelay())
-								.then(() => next());
+							// Pace card-to-card transitions with the configured very-short
+							// delay (2–4s) so live feeds can be followed; sub-events within
+							// a card already pace themselves via subEventDelay().
+							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() =>
+								next()
+							);
 						}
 
 						return Promise.resolve().then(() => resolve(playerContestant));

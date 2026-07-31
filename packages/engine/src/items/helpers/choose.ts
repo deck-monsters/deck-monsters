@@ -1,6 +1,6 @@
 import { getItemChoices, getItemChoicesWithPrice, getFinalItemChoices } from '../../helpers/choices.js';
 import { getArray } from '../../helpers/get-array.js';
-import { reduceSeries } from '../../helpers/promise.js';
+import { PROMPT_CANCELLED, PromptCancelledError } from '../../events/index.js';
 
 import { getItemCounts, getItemCountsWithPrice, getItemKey } from './counts.js';
 
@@ -46,31 +46,60 @@ const chooseItems = ({
 			choices: Object.keys(itemCatalog),
 		}))
 		.then((answer: unknown) => {
-			const selectedItemIndexes = getArray(answer) ?? [];
+			// A cancelled flow resolves the prompt with a sentinel — abort cleanly
+			// instead of treating it as a selection.
+			if (answer === PROMPT_CANCELLED) {
+				throw new PromptCancelledError();
+			}
+
+			const selectedTokens = getArray(answer) ?? [];
+			const catalogKeys = Object.keys(itemCatalog);
 			const remainingItems = [...items];
+			const selectedItems: any[] = [];
+			const invalidTokens: string[] = [];
 
-			return reduceSeries(selectedItemIndexes, (selection: any[], index: string) => {
-				const itemType = Object.keys(itemCatalog)[Number(index)];
-				const itemIndex = remainingItems.findIndex(
-					(potentialItem: any) => getItemKey(potentialItem) === itemType
-				);
+			// Selections may be the displayed numeric indices or the item names
+			// themselves (case-insensitive). Invalid entries are skipped with a
+			// notice rather than aborting the whole flow.
+			selectedTokens.forEach((token: unknown) => {
+				const trimmed = String(token).trim();
+				if (!trimmed) return;
 
-				if (itemIndex >= 0) {
-					const selectedItem = remainingItems.splice(itemIndex, 1)[0];
-					selection.push(selectedItem);
-				} else {
-					return Promise.reject(channel({
-						announce: `Invalid selection: ${itemType || index}`
-					}));
+				let itemType: string | undefined = /^\d+$/.test(trimmed)
+					? catalogKeys[Number(trimmed)]
+					: undefined;
+				if (itemType === undefined) {
+					itemType = catalogKeys.find(key => key.toLowerCase() === trimmed.toLowerCase());
 				}
 
-				return selection;
-			}, [])
-				.then((selectedItems: any[]) =>
+				const itemIndex = itemType === undefined
+					? -1
+					: remainingItems.findIndex(
+						(potentialItem: any) => getItemKey(potentialItem) === itemType
+					);
+
+				if (itemIndex >= 0) {
+					selectedItems.push(remainingItems.splice(itemIndex, 1)[0]);
+				} else {
+					invalidTokens.push(trimmed);
+				}
+			});
+
+			return Promise.resolve()
+				.then(() => {
+					if (invalidTokens.length > 0) {
+						return channel({
+							announce: `Skipped ${invalidTokens.length > 1 ? 'invalid selections' : 'an invalid selection'}: ${invalidTokens.join(', ')}`
+						});
+					}
+					return undefined;
+				})
+				.then(() =>
 					channel({
 						announce: getResult({ selectedItems })
-					}).then(() => selectedItems)
-				);
+					})
+				)
+				.then(() => selectedItems);
 		});
 };
 

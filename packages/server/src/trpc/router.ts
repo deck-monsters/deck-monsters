@@ -7,6 +7,7 @@ import { createLogger } from '../logger.js';
 const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
+import { PROMPT_CANCELLED, PromptCancelledError } from '@deck-monsters/engine';
 import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
@@ -294,7 +295,17 @@ function createSilentChannel({
 }
 
 export function createRouter(roomManager: RoomManager) {
-	const runSerializedMutation = async <T>(roomId: string, fn: () => Promise<T>): Promise<T> => {
+	const runSerializedMutation = async <T>(roomId: string, userId: string, fn: () => Promise<T>): Promise<T> => {
+		// Interactive console flows run in a per-user lane (see the `command`
+		// mutation) and can wait minutes on prompt answers. Workshop mutations
+		// must not interleave with that user's in-flight flow — fail fast with
+		// a clear message instead of silently mutating shared state mid-flow.
+		if (activeFlows.has(`${roomId}:${userId}`)) {
+			throw new TRPCError({
+				code: 'PRECONDITION_FAILED',
+				message: 'A console command is in progress — answer or cancel its prompt first.',
+			});
+		}
 		try {
 			return await roomManager.runSerializedEngineWork(roomId, fn);
 		} catch (err) {
@@ -549,7 +560,14 @@ export function createRouter(roomManager: RoomManager) {
 								? choices
 								: Object.keys(choices)
 							: [];
-						return eventBus.sendPrompt(ctx.userId, question, choiceKeys);
+						const answer = await eventBus.sendPrompt(ctx.userId, question, choiceKeys);
+						// Cancelled flows resolve with a sentinel — abort the action
+						// chain instead of handing '__cancelled__' to game code as an
+						// answer (it would be parsed as a card/monster selection).
+						if (answer === PROMPT_CANCELLED) {
+							throw new PromptCancelledError();
+						}
+						return answer;
 					}
 
 					if (announce) {
@@ -571,10 +589,14 @@ export function createRouter(roomManager: RoomManager) {
 				// HTTP connection open until the entire flow completes or times out.
 				// Instead, we return immediately; all output arrives via ringFeed.
 				//
-				// Serialize all engine work per room so two users cannot interleave
-				// handleCommand / ring combat on the same Game (fixes out-of-order ring feed).
+				// Serialize per room AND user. A room-wide lane would let one user's
+				// interactive flow (which can wait minutes on prompt answers) starve
+				// every other member's commands in the room. Same-user ordering is
+				// what actually matters for state consistency here: `activeFlows`
+				// already prevents concurrent flows for one user, and workshop
+				// mutations fail fast while the user has a flow in progress.
 				void roomManager
-					.runSerializedEngineWork(input.roomId, () =>
+					.runSerializedEngineWork(`${input.roomId}:${ctx.userId}`, () =>
 						action({
 							channel,
 							channelName: input.channelName,
@@ -584,9 +606,13 @@ export function createRouter(roomManager: RoomManager) {
 						})
 					)
 					.catch((err: unknown) => {
-						// Prompt timeouts are expected when users abandon a flow.
+						// Prompt timeouts and cancellations are expected when users
+						// abandon or cancel a flow — not errors.
+						const isCancelled =
+							err instanceof PromptCancelledError ||
+							(err instanceof Error && err.name === 'PromptCancelledError');
 						const msg = err instanceof Error ? err.message : String(err);
-						if (!msg.includes('Prompt timed out')) {
+						if (!isCancelled && !msg.includes('Prompt timed out')) {
 							roomManager['log']?.(err);
 						}
 					})
@@ -747,7 +773,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.unequipCard({
 						channel,
 						cardName: input.cardName,
@@ -808,7 +834,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.unequipAll({
 						channel,
 						monsterName: input.monsterName,
@@ -869,7 +895,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.equipCards({
 						channel,
 						monsterName: input.monsterName,
@@ -944,7 +970,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.moveCard({
 						channel,
 						cardName: input.cardName,
@@ -1022,7 +1048,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const rawResult = await runSerializedMutation(input.roomId, () =>
+				const rawResult = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.reorderCards({
 						channel,
 						monsterName: input.monsterName,
@@ -1073,7 +1099,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.savePreset({
 						channel,
 						monsterName: input.monsterName,
@@ -1103,7 +1129,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.loadPreset({
 						channel,
 						monsterName: input.monsterName,
@@ -1157,7 +1183,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.deletePreset({
 						channel,
 						monsterName: input.monsterName,
