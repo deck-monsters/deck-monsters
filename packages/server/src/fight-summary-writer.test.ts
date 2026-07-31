@@ -180,6 +180,27 @@ describe('fight summary writer', () => {
 		expect(errors).to.have.length(1);
 	});
 
+	it('detaching cancels a queued retry so no write lands after a room reset', async () => {
+		// Regression (review of #15): resetRoomState() detaches the writer, clears
+		// fight_summaries, and zeroes the fight counter — but a write sitting in
+		// its retry backoff used to survive detach and land afterwards, inserting
+		// a pre-reset fight and incrementing the fresh counter.
+		const { db, inserted, state } = makeDb();
+		const bus = new RoomEventBus(ROOM_ID);
+		const detach = attachFightSummaryWriter(bus, db as never, () => {}, { retryDelaysMs: [50] });
+		state.failuresRemaining = 1; // first attempt fails → 50ms backoff
+
+		publishFightBegins(bus);
+		publishFightResolved(bus);
+		// Let the first attempt fail, then detach during the backoff window.
+		await new Promise<void>((resolve) => setTimeout(resolve, 15));
+		detach();
+		// Wait well past the backoff — the retry must not fire.
+		await new Promise<void>((resolve) => setTimeout(resolve, 120));
+
+		expect(inserted).to.have.length(0);
+	});
+
 	it('writes with zero duration when no fight start was seen (restart mid-fight)', async () => {
 		const { db, inserted } = makeDb();
 		const bus = new RoomEventBus(ROOM_ID);

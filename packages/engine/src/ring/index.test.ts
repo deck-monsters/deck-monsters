@@ -547,6 +547,42 @@ describe('ring/index.ts', () => {
 			expect(caughtError, 'fight() should not throw').to.be.undefined;
 		});
 
+		it('runs a full fight through the real (non-skipped) pacing path', async function () {
+			// Regression (bug doc #20): the normal card-play path used to pace with
+			// subEventDelay instead of the configured veryShortDelay, and — because
+			// the whole test suite runs with DECK_MONSTERS_SKIP_DELAYS=1 — the
+			// non-skip branches had zero coverage, so the wrong delay call could not
+			// be caught by any test. This exercises the real timer path end to end
+			// with midpoints shrunk to a few milliseconds so it stays fast.
+			this.timeout(10_000);
+
+			const prevSkip = process.env.DECK_MONSTERS_SKIP_DELAYS;
+			delete process.env.DECK_MONSTERS_SKIP_DELAYS;
+			process.env.DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS = '3';
+			process.env.DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS = '3';
+			process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS = '2';
+
+			const game = new Game();
+			try {
+				const ring = game.getRing();
+
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+				await ring.fight();
+
+				// A completed fight clears the ring and ends the encounter.
+				expect(ring.inEncounter).to.equal(false);
+				expect(ring.contestants.length).to.equal(0);
+			} finally {
+				process.env.DECK_MONSTERS_SKIP_DELAYS = prevSkip;
+				delete process.env.DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS;
+				delete process.env.DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS;
+				delete process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS;
+				game.dispose();
+			}
+		});
+
 		it('cards on monsters spawned via randomContestant all have play() methods', () => {
 			const contestant = randomContestant({ isBoss: false });
 

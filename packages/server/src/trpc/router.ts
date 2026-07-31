@@ -246,15 +246,22 @@ export type AppRouter = ReturnType<typeof createRouter>;
 const PROTOCOL_VERSION = 1;
 const BUILD_VERSION = process.env['BUILD_VERSION'] ?? 'dev';
 
-// Per-user active-flow lock.  Key = `${roomId}:${userId}`.
-// While a command flow is in progress for a given user+room, further commands
-// are rejected with a friendly message so users know to answer the prompt first.
-// Exported so it can be inspected in unit tests.
+// Per-user active-flow lock.  Key = `${roomId}:${userId}`, value = the owning
+// flow's commandId. While a command flow is in progress for a given user+room,
+// further commands are rejected with a friendly message so users know to
+// answer the prompt first. Exported so it can be inspected in unit tests.
 //
-// Engine work is additionally serialized **per room** via
-// `RoomManager.runSerializedEngineWork` so two users cannot interleave commands
-// on the same Game (see packages/engine/src/helpers/room-engine-queue.ts).
-export const activeFlows = new Set<string>();
+// The value is an ownership token, not just presence: a flow's `.finally()`
+// only clears the lock if it still owns it. Without that check there is a
+// cancellation race — `cancelFlow` deletes the key immediately, so if command
+// B starts before cancelled command A's promise chain settles, A's
+// unconditional cleanup would delete B's freshly-taken lock and let a third
+// command run concurrently with B.
+//
+// Engine work is additionally serialized per `${roomId}:${userId}` lane via
+// `RoomManager.runSerializedEngineWork` (see the `command` mutation below and
+// packages/engine/src/helpers/room-engine-queue.ts).
+export const activeFlows = new Map<string, string>();
 
 const sortBySchema = z.enum(['xp', 'wins', 'winRate', 'coins']);
 
@@ -523,10 +530,11 @@ export function createRouter(roomManager: RoomManager) {
 					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
 					return { ok: false, message: 'Command not recognized' };
 				}
-				activeFlows.add(flowKey);
-				log.debug('command dispatched', { roomId: input.roomId, userId: ctx.userId, isAdmin });
-
 				const commandId = randomUUID();
+				// The commandId doubles as the flow-lock ownership token — see the
+				// activeFlows declaration for why cleanup must be ownership-checked.
+				activeFlows.set(flowKey, commandId);
+				log.debug('command dispatched', { roomId: input.roomId, userId: ctx.userId, isAdmin });
 
 				// Persist a user-input echo event so console history can show
 				// previously submitted commands after reload.
@@ -638,7 +646,12 @@ export function createRouter(roomManager: RoomManager) {
 						}
 					})
 					.finally(() => {
-						activeFlows.delete(flowKey);
+						// Only clear the lock this flow still owns. After a cancelFlow,
+						// a newer command may hold the key with its own token — deleting
+						// unconditionally here would release that newer flow's lock.
+						if (activeFlows.get(flowKey) === commandId) {
+							activeFlows.delete(flowKey);
+						}
 					});
 
 
@@ -1284,67 +1297,12 @@ export function createRouter(roomManager: RoomManager) {
 			};
 			yield tracked(handshakeId, handshakeEvent);
 
-				// Deliver any missed events since the last received event ID.
-				if (input.lastEventId) {
-					const { events: buffered, truncated, upToDate, status } = eventBus.getEventsSince(
-						input.lastEventId
-					);
-					let missed: GameEvent[] = buffered;
-					if (truncated && !upToDate) {
-						missed = await roomManager.getEventsSinceForRingFeed(
-							ctx.userId,
-							input.roomId,
-							input.lastEventId
-						);
-						log.debug('ringFeed replaying from durable storage', {
-							roomId: input.roomId,
-							userId: ctx.userId,
-							status,
-							replayed: missed.length,
-						});
-						if (missed.length > 0) {
-							ringFeedReplayFromDbTotal.inc({ room_id: input.roomId });
-						} else if (status === 'evicted') {
-							// Only warn when events demonstrably passed through the buffer
-							// while the room stayed loaded. A cold buffer with no stored
-							// events means the room was simply idle (the usual case after a
-							// deploy) — warning there would cry wolf on every restart.
-							ringFeedReplayGapTotal.inc({ room_id: input.roomId });
-							const gapId = `${Date.now()}-gap-${randomUUID().slice(0, 8)}`;
-							const gapEvent: GameEvent = {
-								id: gapId,
-								roomId: input.roomId,
-								timestamp: Date.now(),
-								type: 'system.gap' as EventType,
-								scope: 'private' as EventScope,
-								targetUserId: ctx.userId,
-								text: '── Some events were missed while you were away. ──',
-								payload: { reason: 'buffer_or_retention' },
-							};
-							yield tracked(gapId, gapEvent);
-						}
-					}
-					for (const event of missed) {
-						if (
-							event.scope === 'public' ||
-							event.targetUserId === ctx.userId
-						) {
-							yield tracked(event.id, event);
-						}
-					}
-				} else {
-					const recent = eventBus.getRecentEvents(100);
-					for (const event of recent) {
-						if (
-							event.scope === 'public' ||
-							event.targetUserId === ctx.userId
-						) {
-							yield tracked(event.id, event);
-						}
-					}
-				}
-
-				// Stream live events until the client disconnects.
+				// Attach the live subscriber BEFORE computing the replay. Events
+				// published while the replay is being assembled (the DB fallback is
+				// async) buffer into `queue`; anything the replay also covers is
+				// dropped from the buffer via `replayedIds` when the live loop drains.
+				// Subscribing after the replay snapshot left a window where those
+				// in-between events were simply lost.
 				const queue: GameEvent[] = [];
 				let resolve: (() => void) | null = null;
 
@@ -1360,11 +1318,100 @@ export function createRouter(roomManager: RoomManager) {
 					}
 				);
 
+				// Ids yielded during replay — bounded by the replay caps below, so this
+				// set stays small for the life of the subscription.
+				const replayedIds = new Set<string>();
+
+				// The try/finally must open before the replay: the subscriber is now
+				// attached, so a throw during the (async) replay has to reach the
+				// finally's unsubscribe() or the subscriber would leak.
 				wsConnectionsActive.inc({ room_id: input.roomId });
 				try {
+
+				const emitGapEvent = function* (reason: string) {
+					ringFeedReplayGapTotal.inc({ room_id: input.roomId });
+					const gapId = `${Date.now()}-gap-${randomUUID().slice(0, 8)}`;
+					const gapEvent: GameEvent = {
+						id: gapId,
+						roomId: input.roomId,
+						timestamp: Date.now(),
+						type: 'system.gap' as EventType,
+						scope: 'private' as EventScope,
+						targetUserId: ctx.userId,
+						text: '── Some events were missed while you were away. ──',
+						payload: { reason },
+					};
+					yield tracked(gapId, gapEvent);
+				};
+
+				// Deliver any missed events since the last received event ID.
+				if (input.lastEventId) {
+					const { events: buffered, truncated, upToDate, status } = eventBus.getEventsSince(
+						input.lastEventId
+					);
+					let missed: GameEvent[] = buffered;
+					let replayLimitReached = false;
+					if (truncated && !upToDate) {
+						const replay = await roomManager.getEventsSinceForRingFeed(
+							ctx.userId,
+							input.roomId,
+							input.lastEventId
+						);
+						missed = replay.events;
+						replayLimitReached = replay.limitReached;
+						log.debug('ringFeed replaying from durable storage', {
+							roomId: input.roomId,
+							userId: ctx.userId,
+							status,
+							replayed: missed.length,
+							limitReached: replayLimitReached,
+						});
+						if (missed.length > 0) {
+							ringFeedReplayFromDbTotal.inc({ room_id: input.roomId });
+						} else if (status === 'evicted') {
+							// Only warn when events demonstrably passed through the buffer
+							// while the room stayed loaded. A cold buffer with no stored
+							// events means the room was simply idle (the usual case after a
+							// deploy) — warning there would cry wolf on every restart.
+							yield* emitGapEvent('buffer_or_retention');
+						}
+					}
+					for (const event of missed) {
+						if (
+							event.scope === 'public' ||
+							event.targetUserId === ctx.userId
+						) {
+							replayedIds.add(event.id);
+							yield tracked(event.id, event);
+						}
+					}
+					if (replayLimitReached) {
+						// The replay hit its hard cap, so events between the last replayed
+						// row and "now" were silently skipped — say so rather than
+						// presenting a truncated stream as complete.
+						yield* emitGapEvent('replay_limit');
+					}
+				} else {
+					const recent = eventBus.getRecentEvents(100);
+					for (const event of recent) {
+						if (
+							event.scope === 'public' ||
+							event.targetUserId === ctx.userId
+						) {
+							replayedIds.add(event.id);
+							yield tracked(event.id, event);
+						}
+					}
+				}
+
+					// Stream live events until the client disconnects.
 					while (!signal?.aborted) {
 						while (queue.length > 0) {
 							const event = queue.shift()!;
+							// Events published while the replay was being assembled were
+							// captured by both the subscriber and (possibly) the replay
+							// itself — skip the buffered copy of anything already yielded.
+							if (replayedIds.has(event.id)) continue;
 							log.trace('ringFeed delivering event', {
 								roomId: input.roomId,
 								userId: ctx.userId,

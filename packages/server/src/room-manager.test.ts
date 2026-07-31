@@ -539,7 +539,7 @@ describe('RoomManager', () => {
 			const { deps } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 
-			const events = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '1999-anchor', 500);
+			const { events } = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '1999-anchor', 500);
 
 			expect(events).to.have.length(1);
 			expect(events[0]!.text).to.equal('after');
@@ -554,7 +554,7 @@ describe('RoomManager', () => {
 			const { deps } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 
-			const events = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '2000-aaaaaaaa', 500);
+			const { events } = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '2000-aaaaaaaa', 500);
 
 			expect(events).to.have.length(1);
 			expect(events[0]!.id).to.equal('2001-bbbbbbbb');
@@ -568,7 +568,7 @@ describe('RoomManager', () => {
 			const { deps } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 
-			const events = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '1998-cursorrr', 500);
+			const { events } = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '1998-cursorrr', 500);
 
 			expect(events).to.have.length(1);
 			expect(events[0]!.id).to.equal('1999-olddddd');
@@ -588,11 +588,62 @@ describe('RoomManager', () => {
 			const { deps } = makeEngineDeps();
 			const rm = new RoomManager(db as never, () => {}, deps);
 
-			const events = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '2000-aaaaaaaa', 500);
+			const { events } = await rm.getEventsSinceForRingFeed(USER_ID, ROOM_ID, '2000-aaaaaaaa', 500);
 
 			expect(events).to.have.length(1);
 			expect(events[0]!.scope).to.equal('private');
 			expect(events[0]!.targetUserId).to.equal(USER_ID);
+		});
+
+		it('paginates past a full first page, advancing the cursor to the last returned id', async () => {
+			// Regression (review of #16/#17): a single fixed-limit query silently
+			// dropped everything past the first page for long absences.
+			const db = makeDbStub({ selectResults: [memberRow] });
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const page = (ids: string[]) =>
+				ids.map((id) => ({ id, type: 'announce', scope: 'public', text: id, payload: {}, timestamp: 1 }));
+			const cursors: string[] = [];
+			const pages = [page(['2001-a', '2002-b']), page(['2003-c', '2004-d']), page(['2005-e'])];
+			sinon.stub(rm, '_fetchRingFeedPage').callsFake(async (_u, _r, cursor: string) => {
+				cursors.push(cursor);
+				return pages.shift() as never;
+			});
+
+			const { events, limitReached } = await rm.getEventsSinceForRingFeed(
+				USER_ID,
+				ROOM_ID,
+				'2000-cursor',
+				2,
+				100
+			);
+
+			expect(events.map((e) => e.id)).to.deep.equal(['2001-a', '2002-b', '2003-c', '2004-d', '2005-e']);
+			expect(limitReached).to.equal(false);
+			// Each subsequent page anchors on the previous page's last event id.
+			expect(cursors).to.deep.equal(['2000-cursor', '2002-b', '2004-d']);
+		});
+
+		it('reports limitReached when the total cap is hit with rows still remaining', async () => {
+			const db = makeDbStub({ selectResults: [memberRow] });
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const fullPage = (prefix: string) =>
+				[1, 2].map((n) => ({ id: `${prefix}-${n}`, type: 'announce', scope: 'public', text: '', payload: {}, timestamp: 1 }));
+			sinon.stub(rm, '_fetchRingFeedPage').callsFake(async () => fullPage(String(Date.now())) as never);
+
+			const { events, limitReached } = await rm.getEventsSinceForRingFeed(
+				USER_ID,
+				ROOM_ID,
+				'2000-cursor',
+				2,
+				4
+			);
+
+			expect(events).to.have.length(4);
+			expect(limitReached).to.equal(true);
 		});
 	});
 });

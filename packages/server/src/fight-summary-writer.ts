@@ -64,8 +64,18 @@ export function attachFightSummaryWriter(
 	const roomId = eventBus.roomId;
 	const subscriberId = `fight-summary:${roomId}`;
 
+	// Set by the detach function. Queued/retrying writes check this between
+	// steps so no write can land after the room is unloaded or reset —
+	// `resetRoomState()` clears fight_summaries and zeroes the fight counter,
+	// and a retry surviving past that point would insert a pre-reset fight and
+	// increment the fresh counter. (A transaction already in flight at the
+	// moment of detach can still commit; the flag closes the retry-backoff
+	// window, which is the part that spans seconds.)
+	let detached = false;
+
 	const writeWithRetries = async (event: GameEvent, pending: Pending | undefined): Promise<void> => {
 		for (let attempt = 0; ; attempt++) {
+			if (detached) return;
 			try {
 				await onFightResolved(db, roomId, event, pending);
 				return;
@@ -128,10 +138,11 @@ export function attachFightSummaryWriter(
 
 	return () => {
 		unsubscribe();
-		// Drop per-room state so long-lived servers don't accumulate entries for
-		// every room ever loaded. An in-flight write chain settles on its own; a
-		// re-attach starts a fresh chain, which is safe because rooms are only
-		// unloaded when idle (no fight can be resolving at that moment).
+		// Cancel queued/retrying writes (see `detached` above) and drop per-room
+		// state so long-lived servers don't accumulate entries for every room
+		// ever loaded. A re-attach creates a fresh closure with its own flag, so
+		// only this attachment's writes are cancelled.
+		detached = true;
 		pendingByRoom.delete(roomId);
 		fightSummaryWriteQueues.delete(roomId);
 	};

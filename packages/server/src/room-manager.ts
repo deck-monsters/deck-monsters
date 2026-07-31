@@ -535,15 +535,45 @@ export class RoomManager {
 	 * Events after `lastEventId` for ringFeed replay when the in-memory ring buffer
 	 * no longer contains the cursor. Uses `room_events`; event ids are `${Date.now()}-…`
 	 * so lexicographic `event_id` ordering matches time order when the anchor row is missing.
+	 *
+	 * Paginates internally: a single fixed-limit query silently dropped everything
+	 * past the first `pageSize` rows for long absences. Each page's last event id is
+	 * a real row, so subsequent pages always resolve via the fast anchor path.
+	 * `limitReached` is true when `maxTotal` was hit with rows still remaining —
+	 * callers should surface a gap to the user rather than presenting the truncated
+	 * replay as complete.
 	 */
 	async getEventsSinceForRingFeed(
 		userId: string,
 		roomId: string,
 		lastEventId: string,
-		limit = 500
-	): Promise<GameEvent[]> {
+		pageSize = 500,
+		maxTotal = 2000
+	): Promise<{ events: GameEvent[]; limitReached: boolean }> {
 		await this.assertMember(userId, roomId);
 
+		const events: GameEvent[] = [];
+		let cursor = lastEventId;
+		for (;;) {
+			const page = await this._fetchRingFeedPage(userId, roomId, cursor, pageSize);
+			events.push(...page);
+			if (page.length < pageSize) {
+				return { events, limitReached: false };
+			}
+			if (events.length >= maxTotal) {
+				return { events, limitReached: true };
+			}
+			cursor = page[page.length - 1]!.id;
+		}
+	}
+
+	/** One page of the ringFeed replay query — see getEventsSinceForRingFeed. */
+	async _fetchRingFeedPage(
+		userId: string,
+		roomId: string,
+		lastEventId: string,
+		limit: number
+	): Promise<GameEvent[]> {
 		const visibility = or(
 			eq(roomEvents.scope, 'public'),
 			and(eq(roomEvents.scope, 'private'), eq(roomEvents.targetUserId, userId))
