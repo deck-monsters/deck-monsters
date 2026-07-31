@@ -26,7 +26,14 @@ export function attachEventPersister(
 
 	// Event types that are transient state-sync signals and should not be
 	// persisted to the history table — they have no replay value.
-	const EPHEMERAL_TYPES = new Set(['ring.state', 'handshake', 'system.gap']);
+	// `quick_actions` is included because suggestions describe the game state at
+	// one instant; replaying an old set would surface chips that no longer apply.
+	const EPHEMERAL_TYPES = new Set([
+		'ring.state',
+		'handshake',
+		'system.gap',
+		'quick_actions',
+	]);
 
 	return eventBus.subscribe(subscriberId, {
 		deliver(event: GameEvent) {

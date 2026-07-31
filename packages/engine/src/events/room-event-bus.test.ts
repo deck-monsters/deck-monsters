@@ -212,11 +212,25 @@ describe('RoomEventBus getEventsSince', () => {
 		expect(r.upToDate).to.equal(true);
 	});
 
-	it('does not mark truncated when the buffer is empty (fresh bus)', () => {
+	it('requests durable-storage fallback when the buffer is empty (cold bus)', () => {
+		// A cold buffer means the room was reloaded after a restart/eviction. The
+		// cursor is unresolvable from memory, so callers must consult the DB rather
+		// than silently replaying nothing.
 		const bus = new RoomEventBus(ROOM_ID);
 		const r = bus.getEventsSince('any-cursor');
 		expect(r.events).to.have.length(0);
-		expect(r.truncated).to.equal(false);
+		expect(r.truncated).to.equal(true);
 		expect(r.upToDate).to.equal(false);
+		expect(r.status).to.equal('cold');
+	});
+
+	it('reports status for each cursor resolution outcome', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const a = bus.publish({ type: 'announce', scope: 'public', text: 'a', payload: {} });
+		bus.publish({ type: 'announce', scope: 'public', text: 'b', payload: {} });
+
+		expect(bus.getEventsSince(a.id).status).to.equal('found');
+		expect(bus.getEventsSince('9999999999999-zzzzzzzz').status).to.equal('ahead');
+		expect(bus.getEventsSince('1-aaaaaaaa').status).to.equal('evicted');
 	});
 });

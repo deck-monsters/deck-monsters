@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt  
 **Priority**: High (fix before major new development)  
-**Status**: Active — 12 of 14 original items resolved. Five open bugs: fight log sync (#15), console history on reconnect (#16), event ring buffer gap detection (#17), quick actions emission (#18), and deck equip batch flakiness (#19). Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
+**Status**: Active — one open bug: fight log sync (#15). Resolved: console history on reconnect (#16), event ring buffer gap detection (#17), quick actions emission (#18), engine timing/sync/multi-step crashes (#20), and the engine half of deck equip batch flakiness (#19 — batch RPC / UI flicker work still open). Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
 
 ## Active Bugs
 
@@ -23,44 +23,34 @@ The UI-side query (`queryRecentFights` in `analytics-queries.ts`) is simple and 
 
 ---
 
-### 16. Console pane missing historical data after returning — HIGH
+### 16 & 17. Reconnect replay dropped across restarts / gap not signalled — FIXED
 
-When a player navigates away from the web app and returns (or reconnects after a disconnect), the console pane is empty — it only shows events that arrive after reconnection. Events that occurred while the player was absent are not replayed.
+Both bugs had the same root cause, and it was on the **server**, not the client. The web panes were already correct: each tracks the last received event id (skipping `handshake`/`heartbeat` frames) and re-subscribes with it as `lastEventId` on error, and both `system.gap` and DB-backed history queries were already handled in the UI.
 
-The reconnection-with-replay path was planned in `06a-web-app.md` (Phase 1: "reconnection with replay") but is apparently not delivering historical events in practice.
+`RoomEventBus.getEventsSince()` returned `{ truncated: false }` whenever its in-memory ring buffer was **empty**, with the comment "Fresh room after restart … do not treat as buffer truncation." But an empty buffer is exactly the state after a server restart or an idle-room eviction — the single most common reason a player returns to a stale pane. Because `truncated` was false, `ringFeed`'s durable-storage fallback (`getEventsSinceForRingFeed`) never ran, so the client silently received **nothing** for the entire period it was away, and no gap marker either.
 
-Likely causes:
-- The replay cursor (last-seen event ID or timestamp) is not being sent on reconnect, so the server doesn't know what to replay
-- Or the server-side replay query is not being triggered when a WebSocket/SSE client reconnects
-- The tRPC subscription for room events may start from "now" rather than from the last-received event
+**Fixed** by separating "can memory resolve this cursor?" from "should we warn the user?". `EventsSinceResult` now carries a `status` of `found` / `ahead` / `evicted` / `cold`:
 
-**Investigation path**: Check the WebSocket reconnect handler in the web app — does it send a `since` parameter? Check the tRPC subscription procedure — does it accept and honor a `since` cursor? If both exist, check that they are wired together.
+- `cold` (buffer empty after restart/eviction) → `truncated: true`, so the DB replay runs. An empty DB result is *not* reported as a gap — an idle room is why it was evicted, and warning there would fire on every deploy.
+- `evicted` (cursor aged out while the room stayed loaded) → DB replay runs, and an empty result **does** emit `system.gap`, because events demonstrably passed through the buffer.
 
-**Status**: Open.
+Also hardened: the synthetic frames the router yields but never persists (`handshake`, `heartbeat`, the gap marker) now use the same `${epochMs}-${suffix}` id shape as real events. The old `system-gap-…` / `heartbeat-…` ids put the timestamp in the second segment, so if a client ever echoed one back as its cursor, both the in-memory timestamp parse and the DB's lexicographic `event_id` comparison would fail to resolve it — producing a permanent no-replay-plus-gap-warning loop on every subsequent reconnect.
 
----
+Covered by tests in `packages/engine/src/events/room-event-bus.test.ts` (status per outcome) and `packages/server/src/trpc/router.test.ts` (all three replay paths end-to-end through the subscription).
 
-### 17. Event ring buffer gap not signalled — MEDIUM
-
-When a client reconnects with a `lastEventId` that has been evicted from the in-memory ring buffer (200-event cap, `packages/engine/src/events/room-event-bus.ts`), `getEventsSince()` returns an empty array silently. The client presents an incomplete replay with no indication that events were missed.
-
-This is a direct contributing cause of bug #16 — for short disconnects the buffer is sufficient, but for longer absences (buffer evicted) the fallback to DB never fires.
-
-**Fix needed**: When `lastEventId` is not found in the ring buffer, fall back to querying `room_events` in the database for the events since that ID. If the database also doesn't have them (older than retention window), emit a synthetic gap event so the client can show "some events were missed while you were away" rather than silently presenting a truncated stream.
-
-**Status**: Open. Related to #16.
+**Status**: Fixed.
 
 ---
 
-### 18. Quick actions suggestions not emitted after commands — MEDIUM
+### 18. Quick actions suggestions not emitted after commands — FIXED
 
-A TODO comment in `packages/server/src/trpc/router.ts` marks an unimplemented path: contextual `quick_actions` events should be emitted after each game command completes, populating the suggestions strip in the web console. Currently no `quick_actions` events arrive from the server after commands complete.
+The web console's chip strip was fully wired (`quick_actions` → `setQuickActions` → clickable chips that dispatch the command) but the server never emitted the event; only a TODO sat in `router.ts`.
 
-The web app already handles `quick_actions` events correctly — the suggestions strip is wired up — but it stays empty because the server never sends suggestions.
+**Fixed**: added `packages/server/src/quick-actions.ts` — a pure, defensively-typed `buildQuickActions(game, userId)` that reads character/monster/ring state and returns up to four `{ label, command }` suggestions ordered by likely next move: spawn (no monsters) → look at the ring (own monster fighting) → send an idle monster → revive a dead one → equip when unequipped cards exist → look at monsters / visit the shop. Commands are drawn from `COMMAND_CATALOG` syntax so every chip dispatches a command the parser actually accepts, and equip/send are only offered for monsters outside the ring (the engine rejects equipping a fighting monster).
 
-**Fix needed**: After `game.handleCommand` + action resolves, determine contextual suggestions (e.g. "look at ring", "look at monsters", "buy") based on game state and emit a `quick_actions` event to the requesting user's private channel.
+Emitted after the command action settles — success *or* failure — so suggestions reflect the state the user is looking at; wrapped in try/catch so a suggestion bug can never break the command pipeline. `quick_actions` was added to the event persister's `EPHEMERAL_TYPES`: suggestions describe one instant, and replaying a stale set would surface chips that no longer apply. 11 unit tests in `quick-actions.test.ts`.
 
-**Status**: Open.
+**Status**: Fixed.
 
 ---
 
@@ -196,9 +186,9 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 ## Tasks
 
 - [ ] Fix fight log not updating after new fights complete (#15)
-- [ ] Fix console pane not replaying history on reconnect (#16)
-- [ ] Fix event ring buffer gap not signalled on reconnect (#17, contributes to #16)
-- [ ] Wire quick actions event emission after game commands (#18)
+- [x] ~~Fix console pane not replaying history on reconnect~~ (done — cold-buffer DB fallback, #16/#17)
+- [x] ~~Fix event ring buffer gap not signalled on reconnect~~ (done — `EventsSinceResult.status`, #17)
+- [x] ~~Wire quick actions event emission after game commands~~ (done — `server/src/quick-actions.ts`, #18)
 - [ ] Audit and differentiate `DMG.md` vs `CARDS.md`; add how-to-run section (upstream #265) — build headers differentiated, full content pass still todo
 - [ ] Continue incremental decomposition of `creatures/base.ts`
 - [x] ~~Fix "barely blocked" threshold~~ (already correct in TS migration)

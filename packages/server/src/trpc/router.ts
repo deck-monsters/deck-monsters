@@ -8,6 +8,7 @@ const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
 import { PROMPT_CANCELLED, PromptCancelledError } from '@deck-monsters/engine';
+import { buildQuickActions } from '../quick-actions.js';
 import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
@@ -616,11 +617,30 @@ export function createRouter(roomManager: RoomManager) {
 							roomManager['log']?.(err);
 						}
 					})
+					.then(() => {
+						// Contextual suggestions for the console chip strip. Emitted after
+						// the flow settles (success or failure) so they reflect the state
+						// the user is actually looking at. Never let this throw into the
+						// pipeline — suggestions are a nicety, not part of the command.
+						try {
+							const actions = buildQuickActions(game, ctx.userId);
+							if (actions.length > 0) {
+								eventBus.publish({
+									type: 'quick_actions' as EventType,
+									scope: 'private',
+									targetUserId: ctx.userId,
+									text: '',
+									payload: { actions, causedByCommandId: commandId },
+								});
+							}
+						} catch (err: unknown) {
+							roomManager['log']?.(err);
+						}
+					})
 					.finally(() => {
 						activeFlows.delete(flowKey);
 					});
 
-				// TODO: emit quick_actions event after command completes with contextual suggestions
 
 				void touchMemberLastSeen(db, input.roomId, ctx.userId).catch(() => {});
 
@@ -1237,7 +1257,11 @@ export function createRouter(roomManager: RoomManager) {
 			// without needing a separate HTTP poll.
 			// Use a unique id per subscription invocation so no dedup layer (tRPC
 			// client, seenRef, etc.) can swallow the handshake on reconnect.
-			const handshakeId = `handshake-${Date.now()}`;
+			// Synthetic (non-persisted) frames still use the `${epochMs}-${suffix}` id
+			// shape that real events use. Cursor resolution parses that leading
+			// timestamp, so a client that echoes one of these ids back as its
+			// `lastEventId` still resolves by time instead of becoming unmatchable.
+			const handshakeId = `${Date.now()}-handshake`;
 			const handshakeEvent: GameEvent = {
 				id: handshakeId,
 				roomId: input.roomId,
@@ -1262,7 +1286,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				// Deliver any missed events since the last received event ID.
 				if (input.lastEventId) {
-					const { events: buffered, truncated, upToDate } = eventBus.getEventsSince(
+					const { events: buffered, truncated, upToDate, status } = eventBus.getEventsSince(
 						input.lastEventId
 					);
 					let missed: GameEvent[] = buffered;
@@ -1272,11 +1296,21 @@ export function createRouter(roomManager: RoomManager) {
 							input.roomId,
 							input.lastEventId
 						);
+						log.debug('ringFeed replaying from durable storage', {
+							roomId: input.roomId,
+							userId: ctx.userId,
+							status,
+							replayed: missed.length,
+						});
 						if (missed.length > 0) {
 							ringFeedReplayFromDbTotal.inc({ room_id: input.roomId });
-						} else {
+						} else if (status === 'evicted') {
+							// Only warn when events demonstrably passed through the buffer
+							// while the room stayed loaded. A cold buffer with no stored
+							// events means the room was simply idle (the usual case after a
+							// deploy) — warning there would cry wolf on every restart.
 							ringFeedReplayGapTotal.inc({ room_id: input.roomId });
-							const gapId = `system-gap-${Date.now()}-${randomUUID().slice(0, 8)}`;
+							const gapId = `${Date.now()}-gap-${randomUUID().slice(0, 8)}`;
 							const gapEvent: GameEvent = {
 								id: gapId,
 								roomId: input.roomId,
@@ -1369,7 +1403,7 @@ export function createRouter(roomManager: RoomManager) {
 						// If the queue is still empty after the wait it was a 20-s timeout —
 						// yield a private heartbeat frame so the TCP/WS connection stays alive.
 						if (queue.length === 0 && !signal?.aborted) {
-							const hbId = `heartbeat-${Date.now()}-${ctx.userId}`;
+							const hbId = `${Date.now()}-heartbeat`;
 							yield tracked(hbId, {
 								id: hbId,
 								roomId: input.roomId,

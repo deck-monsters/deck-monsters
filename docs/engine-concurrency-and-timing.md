@@ -101,7 +101,53 @@ typo; an empty selection falls through to the caller, which re-prompts
 plus `Promise.reject(channel({announce}))` — note that idiom rejects with a
 *Promise* as the reason, which logs as `[object Promise]`; don't add new uses.
 
-## 5. Other timing machinery worth knowing
+## 5. Reconnect replay (`ringFeed`)
+
+Clients resume the event stream with a cursor. Three layers cooperate, and the
+failure mode when they disagree is silent (the user sees an empty pane), so be
+careful here.
+
+- **Client** (`ConsolePane.tsx` / `RingPane.tsx`): each pane keeps
+  `latestTrackedEventIdRef` updated on every event **except** `handshake` and
+  `heartbeat` (those are transport frames, not stream positions), and on
+  `onError` copies it into the subscription input so the reconnect carries a
+  cursor. DB-backed history (`consoleHistory` / `ringHistory`) is fetched once
+  on mount and merged under a `historyApplied` guard — it covers page loads,
+  not reconnects.
+- **In-memory buffer** (`RoomEventBus.getEventsSince`): a 200-event ring buffer
+  per room. Returns a `status` — `found`, `ahead`, `evicted`, or `cold` — and
+  `truncated: true` for anything memory cannot resolve.
+- **Durable fallback** (`RoomManager.getEventsSinceForRingFeed`): resolves the
+  cursor to a `room_events` row, then returns everything after it; if the anchor
+  row is missing it falls back to a lexicographic `event_id` comparison inside a
+  24h-then-7d window.
+
+**Invariants**:
+1. `cold` (empty buffer after a restart or idle eviction) MUST still hit durable
+   storage — this was the #16/#17 bug — but MUST NOT raise a `system.gap`
+   warning when storage is also empty, or every deploy shows a false alarm.
+   `evicted` is the opposite: an empty result there means real events were lost.
+2. Any id a client might echo back as a cursor MUST start with `${epochMs}-`.
+   Both resolution layers key off that leading timestamp (`parseTs`, and
+   Postgres text ordering on `event_id`). Synthetic frames — `handshake`,
+   `heartbeat`, the gap marker — follow this shape even though they are never
+   persisted, so a stray cursor degrades to a time-based match instead of
+   becoming permanently unresolvable.
+3. Events with no replay value belong in the persister's `EPHEMERAL_TYPES`
+   (`ring.state`, `handshake`, `system.gap`, `quick_actions`). Anything added
+   there is invisible to the DB fallback — fine for state-sync signals, wrong
+   for anything the console renders as history.
+
+## 6. Quick actions (`packages/server/src/quick-actions.ts`)
+
+`buildQuickActions(game, userId)` produces the console's chip strip after each
+command settles. Two rules: every `command` string must be real parser syntax
+(chips dispatch verbatim — keep them aligned with `COMMAND_CATALOG`), and the
+builder must never throw, since it runs inside the command pipeline. Suggestions
+are emitted on both success and failure paths and are deliberately not
+persisted.
+
+## 7. Other timing machinery worth knowing
 
 - **Fight timer**: `startFightTimer()` clears and restarts the 60s countdown
   on every ring add/remove — the fight fires 60s after the *last* membership

@@ -84,11 +84,21 @@ export class RoomEventBus {
 	getEventsSince(eventId: string): EventsSinceResult {
 		const idx = this.eventLog.findIndex(e => e.id === eventId);
 		if (idx !== -1) {
-			return { events: this.eventLog.slice(idx + 1), truncated: false, upToDate: false };
+			return {
+				events: this.eventLog.slice(idx + 1),
+				truncated: false,
+				upToDate: false,
+				status: 'found',
+			};
 		}
-		// Fresh room after restart (or no events yet): do not treat as buffer truncation.
+		// Cold buffer: the room was loaded fresh (server restart or idle eviction),
+		// so memory cannot resolve the cursor. Callers must consult durable storage —
+		// returning `truncated: false` here silently dropped every reconnect replay
+		// across a restart, which is the single most common way to "return and see
+		// nothing". `status` lets callers skip the gap warning when storage is empty,
+		// since an idle room is exactly why it was evicted in the first place.
 		if (this.eventLog.length === 0) {
-			return { events: [], truncated: false, upToDate: false };
+			return { events: [], truncated: true, upToDate: false, status: 'cold' };
 		}
 		const parseTs = (id: string): number => {
 			const dash = id.indexOf('-');
@@ -100,13 +110,13 @@ export class RoomEventBus {
 		const newest = this.eventLog[this.eventLog.length - 1]!;
 		const cursorTs = parseTs(eventId);
 		if (cursorTs > parseTs(newest.id)) {
-			return { events: [], truncated: false, upToDate: true };
+			return { events: [], truncated: false, upToDate: true, status: 'ahead' };
 		}
 		if (cursorTs < parseTs(oldest.id)) {
-			return { events: [], truncated: true, upToDate: false };
+			return { events: [], truncated: true, upToDate: false, status: 'evicted' };
 		}
 		// Missing id whose timestamp falls inside the retained window — treat as eviction.
-		return { events: [], truncated: true, upToDate: false };
+		return { events: [], truncated: true, upToDate: false, status: 'evicted' };
 	}
 
 	getRecentEvents(count: number): GameEvent[] {

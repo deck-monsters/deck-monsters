@@ -287,3 +287,112 @@ describe('trpc/router card management procedures', () => {
 		});
 	});
 });
+
+describe('trpc/router ringFeed replay', () => {
+	type Frame = { id: string; data: { type: string; text: string } };
+
+	// `tracked(id, event)` surfaces as an [id, event] tuple through createCaller.
+	const unwrap = (frame: unknown): Frame['data'] =>
+		(Array.isArray(frame) ? frame[1] : frame) as Frame['data'];
+
+	const makeEvent = (id: string, text: string) => ({
+		id,
+		roomId: ROOM_ID,
+		timestamp: Date.now(),
+		type: 'announce',
+		scope: 'public',
+		text,
+		payload: {},
+	});
+
+	/**
+	 * Builds a roomManager whose in-memory cursor lookup returns `sinceResult` and
+	 * whose durable-storage fallback returns `storedEvents`. The live subscription
+	 * immediately delivers a sentinel so the frame after replay is deterministic.
+	 */
+	const makeRoomManager = (
+		sinceResult: Record<string, unknown>,
+		storedEvents: unknown[]
+	) =>
+		({
+			assertMember: async () => undefined,
+			getEventBus: async () => ({
+				getEventsSince: () => sinceResult,
+				getRecentEvents: () => [],
+				subscribe: (_id: string, sub: { deliver: (e: unknown) => void }) => {
+					sub.deliver(makeEvent('9999999999999-live', 'live'));
+					return () => {};
+				},
+			}),
+			getGame: async () => ({
+				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [] },
+			}),
+			getEventsSinceForRingFeed: async () => storedEvents,
+		}) as unknown as Parameters<typeof createRouter>[0];
+
+	const collect = async (
+		roomManager: Parameters<typeof createRouter>[0],
+		frameCount: number
+	) => {
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const iterator = (await caller.game.ringFeed({
+			roomId: ROOM_ID,
+			lastEventId: '1712835000000-cursor',
+		})) as AsyncGenerator<unknown>;
+
+		const frames: Array<Frame['data']> = [];
+		try {
+			for (let i = 0; i < frameCount; i++) {
+				const next = await iterator.next();
+				if (next.done) break;
+				frames.push(unwrap(next.value));
+			}
+		} finally {
+			await iterator.return?.(undefined);
+		}
+		return frames;
+	};
+
+	it('replays from durable storage when the buffer is cold after a restart', async () => {
+		// Regression: a cold buffer used to report truncated=false, so the DB
+		// fallback never ran and reconnects across a restart replayed nothing.
+		const roomManager = makeRoomManager(
+			{ events: [], truncated: true, upToDate: false, status: 'cold' },
+			[makeEvent('1712835000001-a', 'missed one'), makeEvent('1712835000002-b', 'missed two')]
+		);
+
+		const frames = await collect(roomManager, 3);
+
+		expect(frames[0]?.type).to.equal('handshake');
+		expect(frames.map((f) => f.text)).to.include('missed one');
+		expect(frames.map((f) => f.text)).to.include('missed two');
+		expect(frames.map((f) => f.type)).to.not.include('system.gap');
+	});
+
+	it('warns about a gap when events were evicted and storage has nothing', async () => {
+		const roomManager = makeRoomManager(
+			{ events: [], truncated: true, upToDate: false, status: 'evicted' },
+			[]
+		);
+
+		const frames = await collect(roomManager, 2);
+
+		expect(frames[0]?.type).to.equal('handshake');
+		expect(frames[1]?.type).to.equal('system.gap');
+	});
+
+	it('does not warn about a gap when a cold buffer has nothing to replay', async () => {
+		// The common case after a deploy: the room was idle, so an empty replay is
+		// expected and must not surface a "you missed events" banner.
+		const roomManager = makeRoomManager(
+			{ events: [], truncated: true, upToDate: false, status: 'cold' },
+			[]
+		);
+
+		const frames = await collect(roomManager, 2);
+
+		expect(frames[0]?.type).to.equal('handshake');
+		expect(frames[1]?.text).to.equal('live');
+	});
+});
