@@ -2,24 +2,26 @@
 
 **Category**: Bug / Tech Debt  
 **Priority**: High (fix before major new development)  
-**Status**: Active — one open bug: fight log sync (#15). Resolved: console history on reconnect (#16), event ring buffer gap detection (#17), quick actions emission (#18), engine timing/sync/multi-step crashes (#20), and the engine half of deck equip batch flakiness (#19 — batch RPC / UI flicker work still open). Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
+**Status**: Active — original bugs #15–#18 and #20 all resolved. Newly recorded during the fix pass: #21–#24 (see below). Previously resolved: console history on reconnect (#16), event ring buffer gap detection (#17), quick actions emission (#18), engine timing/sync/multi-step crashes (#20), and the engine half of deck equip batch flakiness (#19 — batch RPC / UI flicker work still open). Two low-priority cleanup items remain (#3 DMG/CARDS, #5 creatures/base.ts).
 
 ## Active Bugs
 
-### 15. Fights not being written to fight_summaries — HIGH
+### 15. Fights not being written to fight_summaries — FIXED
 
-New fights are not appearing in the fight log at all — the problem is on the **write side**, not the UI refresh side. The `FightSummaryWriter` subscribes to `ring.fightResolved` and performs a DB insert, but there are several places where the insert can fail silently and the fight is lost permanently.
+Of the four failure paths originally documented, two had already been addressed in a prior hardening pass (per-room write serialization; `profileUuidOrNull` guard for non-UUID owner ids such as Discord snowflakes) and two remained:
 
-**Confirmed failure paths (in `packages/server/src/fight-summary-writer.ts`):**
+1. **Cross-fight pending race (path 4, only half-fixed)** — writes were serialized, but `pendingByRoom` was still *read inside* the queued async write and deleted after it. If fight B's `fightBegins` arrived while fight A's write was queued (slow transaction, retry backoff, boss fights), A picked up B's `startedAt` (wrong duration) and A's post-write cleanup deleted B's pending — so B then wrote with zero duration and a spurious warning. **Fixed**: the pending snapshot is captured and cleared *synchronously* at `ring.fightResolved` delivery time and passed into the queued write, so each fight is permanently paired with its own start.
+2. **No retry (path 2, partially addressed)** — failures were logged with a metric but the row was still dropped forever on any transient DB hiccup. **Fixed**: bounded retries with short backoff (default 1s, 5s; injectable for tests). The failure metric and error log now fire only when retries are exhausted — i.e. when a row is actually lost.
 
-1. **Data deleted before write** (line ~69): `pendingByRoom.delete(roomId)` runs synchronously before the async DB transaction completes. If the transaction throws, the `startedAt` timestamp and pending data are permanently lost.
-2. **Errors silently swallowed** (line ~44): `void onFightResolved(...).catch(log)` — any DB error (constraint violation, connection failure, type mismatch) is only logged, never retried or escalated. The fight disappears without a trace beyond a log line.
-3. **Possible UUID type mismatch**: `winnerOwnerUserId` / `loserOwnerUserId` are UUID columns in Postgres. If `ownerUserId` in the ring event payload is a non-UUID string (e.g. a Discord snowflake ID), the insert fails with a type error — silently swallowed per point 2.
-4. **Concurrent fight race**: `pendingByRoom` is a plain `Map`. If two fights in the same room finish in close succession, the second `fightBegins` can overwrite the first's `startedAt`, and both `fightResolved` handlers operate on the same map entry.
+Also fixed: the module-level `pendingByRoom` / `fightSummaryWriteQueues` maps were never cleaned when rooms unloaded, growing one entry per room ever seen for the life of the server. The detach function returned by `attachFightSummaryWriter` now clears both.
 
-The UI-side query (`queryRecentFights` in `analytics-queries.ts`) is simple and correct — if rows exist, they appear. The issue is that rows are not being created.
+Verified along the way: the `ring.cardDrop` enrichment chain is sound — `announceCardDrop` publishes with the exact type/scope/payload key the writer matches, and card drops are emitted synchronously during the `fightConcludes` contestant loop, *before* `ring.fightResolved` is published, so the snapshot always contains them.
 
-**Status**: Open. See GitHub issue for full plan.
+Covered by 7 new tests in `fight-summary-writer.test.ts` (happy path, UUID guard, the cross-fight race, retry-then-success, retry exhaustion, restart-mid-fight, fightConcludes filtering).
+
+**Known residual gap (accepted)**: a fight that errors mid-combat takes `Ring.fight()`'s `.catch` path, which clears the ring without publishing `ring.fightResolved` — cancelled fights intentionally never reach history. A server restart mid-fight likewise loses that fight.
+
+**Status**: Fixed.
 
 ---
 
@@ -91,6 +93,34 @@ Three long-standing complaints traced to root causes and fixed together:
 **Status**: Fixed. The full mental model of how pacing, serialization lanes, `activeFlows`, and the prompt lifecycle interact is documented in [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) — read it before changing any of these systems.
 
 ---
+
+## Newly Recorded (code-reading pass, 2026-07-31)
+
+Spotted while fixing #15/#16/#17/#18/#20 — recorded for triage, not yet fixed unless noted.
+
+### 21. Idle-room sweep can orphan an in-progress fight — MEDIUM
+
+`RoomManager.sweepIdleRooms` → `unloadRoom` never checks `ring.inEncounter`. `Game.dispose()` clears `fightTimer`/`bossTimer`, but the fight loop itself (`doAction` in `ring/index.ts`) advances via untracked anonymous `setTimeout` chains — so a fight in progress at sweep time keeps running to completion against an event bus whose DB subscribers were just detached: announcements, stats, and the fight summary all vanish, while the game object continues mutating state after its final flush. Narrow window in practice (`lastActivityAt` is touched by every command, and fights start 60s after the last ring change), but boss spawns plus a watching-only audience can hit it. **Suggested fix**: skip unloading rooms where `ring.inEncounter` is true (re-sweep later), and/or give `doAction` a disposal flag the chain checks between steps.
+
+### 22. Boss despawn timer is never tracked or disposed — LOW
+
+`Ring.spawnBoss()` arms a 10-minute `setTimeout(removeBoss)` that is not stored on the instance, so `Ring.dispose()` cannot clear it. After a room unloads, the orphaned timer fires against the disposed ring (harmless state-wise since `removeBoss` re-checks, but it publishes to a detached bus and keeps harness/test processes alive). Store the handle and clear it in `dispose()` alongside `fightTimer`/`bossTimer`.
+
+### 23. Cross-room stateChange save amplification — LOW (perf)
+
+`Game` passes the process-wide `globalSemaphore` to `BaseClass`, so `this.on('stateChange', …)` in `initializeEvents` hears **every** `stateChange` from **every** room and creature in the process. Each fires `scheduleSave()` in *all* loaded games. Correctness holds (each game serializes only its own state, debounced 30s), but on a busy multi-room server this is O(rooms × changes) redundant save scheduling. The announcements module already solves this exact problem with `createRoomScopedEventGuard` — the save listener should be wrapped the same way.
+
+### 24. Direct mutations bypass the stateChange persistence signal — LOW
+
+Two spots mutate `options`-backed structures in place instead of via `setOptions`, so no `stateChange` fires from the mutation itself: `Game.getCharacter` (`game.characters[id] = character`) and `Ring.removeMonster` (`contestants.splice`). In practice a save is usually scheduled soon after by adjacent activity (and #23 currently papers over it process-wide), but if #23 is ever fixed these become real "lost on restart" windows. Emit `stateChange` explicitly at both sites.
+
+### Smaller observations / streamlining suggestions
+
+- **`equip.ts` fire-and-forget announces**: in the typed-selection path (`cardSelection` reduce), rejection notices are sent via unawaited `channel({ announce })` calls, so their ordering relative to the surrounding flow messages is not guaranteed. Harmless today; worth awaiting if message order ever matters.
+- **`Promise.reject(channel({ announce }))` idiom** (store buy, `game.ts` look-ups, equip preconditions): rejects with a *Promise* as the reason, which stringifies as `[object Promise]` in any error log. Prefer announcing first, then rejecting with a real `Error`. (Already fixed in `chooseItems` — #20.)
+- **`fight()` error path drops history**: see #15 residual note — if cancelled fights should appear in the fight log as `cancelled`, publish a terminal event from the `.catch` path.
+- **`activeFlows` rejection message** can mislead: when a user's command is *queued* (not prompting), the "answer the current prompt first" message returns `pendingPrompt: null`. Consider a distinct "still processing your previous command" message when there is no pending prompt.
+- Fixed in passing: unused `or` import in `analytics-queries.ts` (was the only lint warning in the server package).
 
 ## Known Bugs (original list)
 
@@ -185,7 +215,8 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 
 ## Tasks
 
-- [ ] Fix fight log not updating after new fights complete (#15)
+- [x] ~~Fix fight log not updating after new fights complete~~ (done — pending-snapshot race + retries, #15)
+- [ ] Triage newly recorded #21–#24 (idle-sweep orphaned fights, boss timer disposal, save amplification, missed stateChange)
 - [x] ~~Fix console pane not replaying history on reconnect~~ (done — cold-buffer DB fallback, #16/#17)
 - [x] ~~Fix event ring buffer gap not signalled on reconnect~~ (done — `EventsSinceResult.status`, #17)
 - [x] ~~Wire quick actions event emission after game commands~~ (done — `server/src/quick-actions.ts`, #18)
