@@ -18,107 +18,24 @@ import { getMaxModifications, getPreBattlePropValue, getProp, getModifier } from
 import { startEncounter, endEncounter, getEncounterModifiers, setEncounterModifiers, getEncounterEffects, setEncounterEffects, getFled, setFled, getRound, setRound, getKilledBy, setKilledBy, getKilled, appendKilled, setModifier, leaveCombat } from './encounter.js';
 import { hit, heal, die, respawn } from './health.js';
 import { addItem, removeItem, giveItem, useItem, lookAtItems } from './items.js';
+import { editSelf, edit } from './edit.js';
+import type {
+	CardInstance,
+	ItemInstance,
+	BattleRecord,
+	EncounterModifiers,
+	Encounter,
+	PronounSet,
+	ChannelFn,
+	CreatureOptions,
+} from './types.js';
 
 // ---------------------------------------------------------------------------
-// Types
+// Types — see creatures/types.ts (re-exported here so existing `from './base.js'`
+// imports across the engine keep working unchanged).
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type CardInstance = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ItemInstance = any;
-
-export interface BattleRecord {
-	wins: number;
-	losses: number;
-	total: number;
-}
-
-export interface HitLogEntry {
-	assailant: BaseCreature | undefined;
-	damage: number;
-	card: CardInstance | undefined;
-	when: number;
-}
-
-export interface EncounterModifiers {
-	[key: string]: unknown;
-	hitLog?: HitLogEntry[];
-	ac?: number;
-}
-
-export interface Encounter {
-	ring?: unknown;
-	modifiers?: EncounterModifiers;
-	effects?: unknown[];
-	fled?: boolean;
-	round?: number;
-	killedBy?: BaseCreature;
-	killedCreatures?: BaseCreature[];
-}
-
-export interface PronounSet {
-	he: string;
-	him: string;
-	his: string;
-}
-
-export interface ChannelManager {
-	queueMessage: (opts: { announce: string; channel: unknown; channelName: string }) => Promise<void> | void;
-	sendMessages: () => Promise<void> | void;
-}
-
-export interface ChannelWithManager {
-	channelManager: ChannelManager;
-	channelName: string;
-	(message: ChannelMessage): Promise<unknown> | unknown;
-}
-
-export interface ChannelMessage {
-	announce?: string;
-	question?: string;
-	choices?: string[] | Record<string, unknown>;
-	delay?: number | string;
-	[key: string]: unknown;
-}
-
-export type ChannelFn = ((message: ChannelMessage) => Promise<unknown> | unknown) & Partial<ChannelWithManager>;
-
-export interface CreatureOptions {
-	name?: string;
-	icon?: string;
-	xp?: number;
-	hp?: number;
-	ac?: number;
-	str?: number;
-	dex?: number;
-	int?: number;
-	gender?: string;
-	cards?: CardInstance[];
-	items?: ItemInstance[];
-	coins?: number;
-	team?: string | undefined;
-	targetingStrategy?: string | undefined;
-	acVariance?: number;
-	hpVariance?: number;
-	battles?: BattleRecord;
-	modifiers?: Record<string, unknown>;
-	respawnTimeoutBegan?: number;
-	isBoss?: boolean;
-	description?: string;
-	dexModifier?: number;
-	strModifier?: number;
-	intModifier?: number;
-	/** Reserved for future item/equipment effects that grant bonus attack dice. */
-	bonusAttackDice?: string;
-	/** Reserved for future item/equipment effects that grant bonus damage dice. */
-	bonusDamageDice?: string;
-	/** Reserved for future item/equipment effects that grant bonus INT dice. */
-	bonusIntDice?: string;
-	/** Stable id for analytics / leaderboards (persisted in game state). */
-	stableId?: string;
-	[key: string]: unknown;
-}
+export * from './types.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -475,41 +392,10 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	// ---------------------------------------------------------------------------
-	// Edit
+	// Edit — delegated to creatures/edit.ts
 	// ---------------------------------------------------------------------------
 
-	editSelf (channel: ChannelFn): Promise<unknown> {
-		const allowedKeys = ['givenName', 'icon'] as const;
-		type AllowedKey = typeof allowedKeys[number];
-
-		return Promise.resolve()
-			.then(() => channel({
-				question:
-`Which field would you like to update?
-
-0) Name (currently: ${this.givenName})
-1) Icon/color (currently: ${this.icon})`,
-				choices: [`Name (currently: ${this.givenName})`, `Icon/color (currently: ${this.icon})`]
-			}))
-			.then((answer: unknown) => {
-				const key: AllowedKey = Number(answer) === 0 ? 'givenName' : 'icon';
-				const current = this.options[key];
-				return (channel({
-					question: `The current value of ${key} is ${JSON.stringify(current)}. What would you like the new value to be?`
-				}) as Promise<string>).then((strVal: string) => ({ key, oldVal: current, newVal: strVal.trim() }));
-			})
-			.then(({ key, oldVal, newVal }: { key: AllowedKey; oldVal: unknown; newVal: string }) =>
-				(channel({
-					question: `Update ${key} from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}? (yes/no)`
-				}) as Promise<string>).then((answer = '') => {
-					if (answer.toLowerCase() === 'yes') {
-						this.setOptions({ [key]: newVal });
-						return channel({ announce: 'Change saved.' });
-					}
-					return channel({ announce: 'Change reverted.' });
-				})
-			);
-	}
+	editSelf (channel: ChannelFn): Promise<unknown> { return editSelf(this, channel); }
 
 	/**
 	 * Stops background timers (healing tick, respawn wait) so test harnesses and
@@ -523,45 +409,7 @@ Battles won: ${this.battles.wins}`;
 		}
 	}
 
-	edit (channel: ChannelFn): Promise<unknown> {
-		const optionKeys = Object.keys(this.options);
-		return Promise
-			.resolve()
-			.then(() => (this as unknown as Record<string, unknown>).look && (this as unknown as { look: (ch: ChannelFn) => unknown }).look(channel))
-			.then(() => channel({
-				question: `Which attribute would you like to edit?`,
-				choices: optionKeys.map(key => `${key} (${JSON.stringify(this.options[key])})`)
-			}))
-			.then(index => optionKeys[index as unknown as number])
-			.then(key => (channel({
-				question:
-`The current value of ${key} is ${JSON.stringify(this.options[key])}. What would you like the new value of ${key} to be?`
-			}) as Promise<string>)
-				.then((strVal: string) => {
-					const oldVal = this.options[key];
-					let newVal: unknown;
-
-					try {
-						newVal = JSON.parse(strVal);
-					} catch (ex) {
-						newVal = +strVal;
-						if (isNaN(newVal as number)) newVal = strVal;
-					}
-
-					return { key, oldVal, newVal };
-				}))
-			.then(({ key, oldVal, newVal }: { key: string; oldVal: unknown; newVal: unknown }) => (channel({
-				question:
-`The value of ${key} has been updated from ${JSON.stringify(oldVal)} to ${JSON.stringify(newVal)}. Would you like to keep this change? (yes/no)`
-			}) as Promise<string>)
-				.then((answer = '') => {
-					if (answer.toLowerCase() === 'yes') {
-						this.setOptions({ [key]: newVal });
-						return channel({ announce: 'Change saved.' });
-					}
-					return channel({ announce: 'Change reverted.' });
-				}));
-	}
+	edit (channel: ChannelFn): Promise<unknown> { return edit(this, channel); }
 }
 
 BaseCreature.eventPrefix = 'creature';

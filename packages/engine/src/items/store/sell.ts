@@ -1,19 +1,22 @@
 import chooseItems from '../helpers/choose.js';
-import getShop from './shop.js';
 import getClosingTime from './closing-time.js';
+import { announceAndThrow } from '../../helpers/announce-and-throw.js';
+import type { ShopHost } from './shop.js';
 
 type ChooseCards = (opts: { cards: any[]; channel: any; showPrice?: boolean; priceOffset?: number }) => Promise<any[]>;
 
 const sellItems = ({
 	character,
 	channel,
+	host,
 	chooseCards
 }: {
 	character: any;
 	channel: any;
+	host: ShopHost;
 	chooseCards?: ChooseCards;
 }): Promise<void> => {
-	const shop = getShop();
+	const shop = host.shop;
 
 	const { cards, items } = character;
 	const numberOfItems = items.length === 1 ? '1 item' : `${items.length} items`;
@@ -35,14 +38,14 @@ You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 		}))
 		.then((answer: string | number = '') => {
 			if (Number(answer) === 1) {
-				if (items.length < 1) return Promise.reject(channel({ announce: "You don't have any items." }));
+				if (items.length < 1) return announceAndThrow(channel, "You don't have any items.");
 
 				return chooseItems({ items, channel });
 			}
 
-			if (cards.length < 1) return Promise.reject(channel({ announce: "You don't have any cards." }));
+			if (cards.length < 1) return announceAndThrow(channel, "You don't have any cards.");
 
-			if (!chooseCards) return Promise.reject(channel({ announce: "Card selling is not available." }));
+			if (!chooseCards) return announceAndThrow(channel, "Card selling is not available.");
 
 			return chooseCards({ cards, channel, showPrice: true, priceOffset: shop.priceOffset });
 		})
@@ -60,15 +63,25 @@ Would you like to sell? (yes/no)`
 			})
 				.then((answer: string = '') => {
 					if (answer.toLowerCase() === 'yes') {
+						// Re-read the shop at commit time — see the matching comment in
+						// buy.ts. Building this mutation on the pre-prompt snapshot would
+						// discard any purchase another room member made while this flow
+						// waited on its prompts.
+						const currentShop = host.shop;
+						const newCards = [...currentShop.cards];
+						const newItems = [...currentShop.items];
+
 						choices.forEach((choice: any) => {
 							if (choice.cardType) {
-								shop.cards.push(choice);
+								newCards.push(choice);
 								character.removeCard(choice);
 							} else {
-								shop.items.push(choice);
+								newItems.push(choice);
 								character.removeItem(choice);
 							}
 						});
+
+						host.commitShop({ ...currentShop, cards: newCards, items: newItems });
 
 						character.coins += value;
 

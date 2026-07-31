@@ -87,7 +87,7 @@ const generatePlayerHandbook = (output) => {
 
     ## The Shop
 
-    Every 8 hours the current merchant will pack up and leave and a new merchant will come to town for you to do business with.
+    Every 6 hours the current merchant will pack up and leave and a new merchant will come to town for you to do business with. Each room has its own merchant, so what's for sale next door has nothing to do with what's for sale here.
 
     Each merchant has their own pricing, so be a shrewd businessman, and make sure you are getting a good deal. The shop will never give you as much as your card is worth, but that doesn't mean you have to get ripped off either.
 

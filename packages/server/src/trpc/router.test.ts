@@ -155,6 +155,139 @@ describe('trpc/router card management procedures', () => {
 		expect((err as TRPCError).message).to.equal('Cannot unequip while in encounter');
 	});
 
+	it('runs game.unequipMany as a single serialized lane and aggregates removedCount', async () => {
+		const calls: Array<{ cardName: string; count?: number }> = [];
+		const unequipCard = async ({ cardName, count }: { cardName: string; count?: number }) => {
+			calls.push({ cardName, count });
+			return { removedCount: count ?? 1, monsterName: 'Stonefang' };
+		};
+		let serializedCallCount = 0;
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({
+				characters: { [USER_ID]: { unequipCard } },
+			}),
+			getEventBus: async () => ({ publish: () => undefined }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => {
+				serializedCallCount += 1;
+				return fn();
+			},
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.unequipMany({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			cards: [
+				{ cardName: 'Hit', count: 2 },
+				{ cardName: 'Heal', count: 1 },
+			],
+		});
+
+		expect(serializedCallCount).to.equal(1);
+		expect(calls).to.deep.equal([
+			{ cardName: 'Hit', count: 2 },
+			{ cardName: 'Heal', count: 1 },
+		]);
+		expect(result).to.deep.equal({ removedCount: 3, monsterName: 'Stonefang', failures: [] });
+	});
+
+	it('unequipMany reports per-card failures instead of throwing away a partial batch', async () => {
+		// A batch is not atomic: if a later card fails, the earlier ones stay
+		// unequipped. Throwing here would leave the client showing stale inventory
+		// (its cache only invalidates on success) next to an error message.
+		const unequipCard = async ({ cardName }: { cardName: string }) => {
+			if (cardName === 'Heal') throw new Error('Cannot unequip while in encounter');
+			return { removedCount: 1, monsterName: 'Stonefang' };
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.unequipMany({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			cards: [{ cardName: 'Hit' }, { cardName: 'Heal' }, { cardName: 'Blink' }],
+		});
+
+		expect(result.removedCount).to.equal(2);
+		expect(result.failures).to.deep.equal([
+			{ cardName: 'Heal', reason: 'Cannot unequip while in encounter' },
+		]);
+	});
+
+	it('unequipMany still throws when the whole batch fails and nothing changed', async () => {
+		const unequipCard = async () => {
+			throw new Error('Cannot unequip while in encounter');
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const err = await caller.game
+			.unequipMany({ roomId: ROOM_ID, monsterName: 'Stonefang', cards: [{ cardName: 'Hit' }] })
+			.catch((e: unknown) => e);
+
+		expect(err).to.be.instanceOf(TRPCError);
+		expect((err as TRPCError).code).to.equal('BAD_REQUEST');
+		expect((err as TRPCError).message).to.equal('Cannot unequip while in encounter');
+	});
+
+	it('runs game.moveMany as a single serialized lane and aggregates movedCount', async () => {
+		const calls: Array<{ cardName: string; count?: number }> = [];
+		const moveCard = async ({ cardName, count }: { cardName: string; count?: number }) => {
+			calls.push({ cardName, count });
+			return { movedCount: count ?? 1, fromMonsterName: 'Stonefang', toMonsterName: 'Mirebell' };
+		};
+		let serializedCallCount = 0;
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({
+				characters: { [USER_ID]: { moveCard } },
+			}),
+			getEventBus: async () => ({ publish: () => undefined }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => {
+				serializedCallCount += 1;
+				return fn();
+			},
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.moveMany({
+			roomId: ROOM_ID,
+			fromMonsterName: 'Stonefang',
+			toMonsterName: 'Mirebell',
+			cards: [
+				{ cardName: 'Hit', count: 2 },
+				{ cardName: 'Heal', count: 1 },
+			],
+		});
+
+		expect(serializedCallCount).to.equal(1);
+		expect(calls).to.deep.equal([
+			{ cardName: 'Hit', count: 2 },
+			{ cardName: 'Heal', count: 1 },
+		]);
+		expect(result).to.deep.equal({
+			movedCount: 3,
+			fromMonsterName: 'Stonefang',
+			toMonsterName: 'Mirebell',
+			failures: [],
+		});
+	});
+
 	it('returns transformed loadPreset result', async () => {
 		const loadPreset = async () => ({
 			equipped: 2,
@@ -478,7 +611,7 @@ describe('trpc/router command dispatch and flow locking', () => {
 		const roomManager = {
 			assertMember: async () => undefined,
 			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
-			getEventBus: async () => ({ publish: () => undefined }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
 			runSerializedEngineWork: async (_key: string, fn: () => Promise<unknown>) => fn(),
 		} as unknown as Parameters<typeof createRouter>[0];
 		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
@@ -491,6 +624,31 @@ describe('trpc/router command dispatch and flow locking', () => {
 
 		expect(err).to.be.instanceOf(TRPCError);
 		expect((err as TRPCError).code).to.equal('PRECONDITION_FAILED');
+		expect((err as TRPCError).message).to.equal('Still processing your previous command — try again in a moment.');
+	});
+
+	it('reports the "answer the prompt" message when a console flow has a pending prompt', async () => {
+		const unequipCard = async () => ({ removedCount: 1, monsterName: 'Stonefang' });
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({
+				publish: () => undefined,
+				getPendingPromptForUser: () => ({ requestId: 'req-1', question: 'Q', choices: ['0'], timeoutSeconds: 120 }),
+			}),
+			runSerializedEngineWork: async (_key: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		activeFlows.set(flowKey, 'some-flow');
+
+		const err = await caller.game
+			.unequipCard({ roomId: ROOM_ID, monsterName: 'Stonefang', cardName: 'Hit' })
+			.catch((e: unknown) => e);
+
+		expect(err).to.be.instanceOf(TRPCError);
+		expect((err as TRPCError).code).to.equal('PRECONDITION_FAILED');
+		expect((err as TRPCError).message).to.equal('A console command is in progress — answer or cancel its prompt first.');
 	});
 
 	it('a cancelled flow settling late does not release a newer flow\'s lock', async () => {

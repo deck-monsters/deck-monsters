@@ -1,6 +1,7 @@
 import { sortItemsAlphabetically } from './sort.js';
 import chooseItems from './choose.js';
 import { mapSeries } from '../../helpers/promise.js';
+import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 
 interface UseItemsOptions {
 	channel: any;
@@ -31,9 +32,7 @@ const useItems = ({ channel, character, itemSelection, monster, use }: UseItemsO
 			}
 
 			if (items.length < 1) {
-				return Promise.reject(channel({
-					announce: `${character.givenName} doesn't have any items that ${character.pronouns.he} can use on ${targetStr}.`
-				}));
+				return announceAndThrow(channel, `${character.givenName} doesn't have any items that ${character.pronouns.he} can use on ${targetStr}.`);
 			}
 
 			if (itemSelection && itemSelection.length > 0) {
@@ -74,9 +73,7 @@ const useItems = ({ channel, character, itemSelection, monster, use }: UseItemsO
 					return selectedItems;
 				}
 
-				return Promise.reject(
-					channel({ announce: 'You know what they always say, "An item saved is an item earned."' })
-				);
+				return announceAndThrow(channel, 'You know what they always say, "An item saved is an item earned."');
 			})
 		)
 		.then((selectedItems: any[]) =>

@@ -97,3 +97,4 @@ When reviewing any PR that touches game data, ask:
 | Player can read another room's data via API | tRPC procedure not checking room membership |
 | Character changes in one room affect another | Character loaded globally, not room-scoped |
 | Real-time feed receives events after navigating rooms | Old WebSocket subscription not torn down on room change |
+| Buying/selling in one room's shop changes another room's stock | Shop state read from a module-level singleton instead of the room's `Game` instance (fixed for the card shop — see `docs/roadmap/10b-bugs-fixed.md` #26; `Game.shop`/`commitShop()` is the pattern to follow for any similar per-room mutable resource) |

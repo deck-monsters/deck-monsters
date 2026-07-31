@@ -5,6 +5,7 @@ export const gameStateSchema = z
 		options: z
 			.object({
 				characters: z.record(z.string(), z.unknown()).optional(),
+				shop: z.record(z.string(), z.unknown()).optional(),
 			})
 			.passthrough()
 			.optional(),

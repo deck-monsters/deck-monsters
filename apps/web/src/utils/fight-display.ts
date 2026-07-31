@@ -3,7 +3,7 @@
 export type FightParticipantLike = {
   monsterId: string;
   monsterName: string;
-  outcome: 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath';
+  outcome: 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath' | 'cancelled';
 };
 
 export type FightSummaryLike = {
@@ -33,12 +33,18 @@ export function fightTitleOneLine(f: FightSummaryLike): string {
   if (ps.length > 0) {
     return ps.map((p) => p.monsterName).join(' vs ');
   }
+  if (f.outcome === 'cancelled') {
+    return 'Cancelled fight';
+  }
   // Fallback for legacy rows that pre-date the participants column.
   return `${f.winnerMonsterName ?? '?'} vs ${f.loserMonsterName ?? '?'}`;
 }
 
 export function fightSubtitle(f: FightSummaryLike): string {
   const ps = f.participants ?? [];
+  if (f.outcome === 'cancelled') {
+    return 'Fight cancelled — an unexpected error cleared the ring';
+  }
   if (f.outcome === 'draw') {
     const names = ps.length > 0 ? ps.map((p) => p.monsterName) : [];
     return names.length ? `Draw — ${nameList(names)}` : 'Draw';

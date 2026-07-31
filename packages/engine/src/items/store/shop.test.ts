@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import getShop from './shop.js';
+import { generateShop, resolveShop } from './shop.js';
 
 describe('./items/store/shop.ts', () => {
 	let clock: sinon.SinonFakeTimers;
@@ -14,32 +14,46 @@ describe('./items/store/shop.ts', () => {
 		clock.restore();
 	});
 
-	it('can generate a shop', () => {
-		const shop = getShop();
+	describe('generateShop', () => {
+		it('can generate a shop', () => {
+			const shop = generateShop(Date.now());
 
-		expect(shop.name).to.be.a('string');
-		expect(shop.adjective).to.be.a('string');
-		expect(shop.priceOffset).to.be.below(1);
-		expect(shop.backRoomOffset).to.be.below(10);
-		expect(shop.items.length).to.be.above(4);
-		expect(shop.items.length).to.be.below(21);
-		expect(shop.pronouns).to.be.an('object');
+			expect(shop.name).to.be.a('string');
+			expect(shop.adjective).to.be.a('string');
+			expect(shop.priceOffset).to.be.below(1);
+			expect(shop.backRoomOffset).to.be.below(10);
+			expect(shop.items.length).to.be.above(4);
+			expect(shop.items.length).to.be.below(21);
+			expect(shop.pronouns).to.be.an('object');
+			expect(shop.closingTime).to.be.instanceOf(Date);
+			expect(shop.closingTime.getTime()).to.be.above(Date.now());
+		});
 	});
 
-	it('gets the same shop within 8 hours', () => {
-		const shop1 = getShop();
-		const shop2 = getShop();
+	describe('resolveShop', () => {
+		it('returns a freshly generated shop when there is no stored shop', () => {
+			const shop = resolveShop(undefined, Date.now());
 
-		expect(shop1).to.equal(shop2);
-	});
+			expect(shop.name).to.be.a('string');
+		});
 
-	it('gets a different shop after 8 hours', () => {
-		const shop1 = getShop();
+		it('returns the stored shop while it is still before its closing time', () => {
+			const stored = generateShop(Date.now());
+			const laterButStillOpen = stored.closingTime.getTime() - 1;
 
-		clock.tick(28800001);
+			const resolved = resolveShop(stored, laterButStillOpen);
 
-		const shop2 = getShop();
+			expect(resolved).to.equal(stored);
+		});
 
-		expect(shop1).to.not.equal(shop2);
+		it('returns a fresh shop once the stored shop has passed its closing time', () => {
+			const stored = generateShop(Date.now());
+			const afterClosing = stored.closingTime.getTime() + 1;
+
+			const resolved = resolveShop(stored, afterClosing);
+
+			expect(resolved).to.not.equal(stored);
+			expect(resolved.closingTime.getTime()).to.be.above(afterClosing);
+		});
 	});
 });

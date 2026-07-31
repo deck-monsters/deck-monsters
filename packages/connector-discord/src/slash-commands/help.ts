@@ -11,7 +11,8 @@ const HELP_TEXT = `
 \`/ring [monster]\` — Send a monster into the ring to fight
 \`/explore [monster]\` — Send a monster exploring
 \`/shop\` — Visit the shop to browse items
-\`/buy [item]\` — Buy an item from the shop
+\`/buy\` — Buy items from the shop
+\`/sell\` — Sell cards or items to the shop
 \`/use [item] [target]\` — Use an item on a monster or yourself
 \`/status\` — View your character and monster status
 \`/monsters\` — List all your monsters

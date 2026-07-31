@@ -67,7 +67,7 @@ const player = await game.getCharacter({ channel: privateChannel, id: userId, na
 await player.spawnMonster({ /* prompts user interactively via privateChannel */ })
 await player.sendMonsterToTheRing({ monsterName: 'Fang' })
 await player.equipMonster({ monsterName: 'Fang', cardSelection: [...] })
-await player.buyItems()   // interactive: shows shop, prompts for selection
+await player.buyItems(privateChannel, game)  // interactive: shows the room's shop, prompts for selection
 await player.lookAt('basilisk')
 ```
 

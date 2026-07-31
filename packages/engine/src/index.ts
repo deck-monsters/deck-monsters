@@ -1,6 +1,7 @@
 import zlib from 'node:zlib';
 
 import { hydrateCharacter } from './characters/index.js';
+import { hydrateShop } from './items/store/hydrate.js';
 import { gameStateSchema } from './schemas/state.js';
 import Game from './game.js';
 import type { ChannelCallback } from './channel/index.js';
@@ -71,6 +72,16 @@ export const getOptions = (gameJSON: string | Record<string, unknown>): Record<s
 		},
 		{}
 	);
+
+	if (options.shop) {
+		try {
+			options.shop = hydrateShop(options.shop as Record<string, unknown>);
+		} catch (err) {
+			// A corrupt shop shouldn't take down the rest of the room's state —
+			// drop it and let Game.shop regenerate a fresh one on next access.
+			delete options.shop;
+		}
+	}
 
 	return options;
 };

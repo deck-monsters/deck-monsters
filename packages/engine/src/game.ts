@@ -20,6 +20,8 @@ import { playerHandbook } from './build/player-handbook.js';
 import { Ring } from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
 import type { StateStore } from './types/state-store.js';
+import { resolveShop, type Shop } from './items/store/shop.js';
+import { announceAndThrow } from './helpers/announce-and-throw.js';
 
 // State save debounce: 30 seconds
 const SAVE_DEBOUNCE_MS = 30_000;
@@ -171,6 +173,22 @@ export class Game extends BaseClass {
 
 	set characters(characters: Record<string, any>) {
 		this.setOptions({ characters } as any);
+	}
+
+	/** Room-scoped shop — see docs/room-scoping.md. Regenerates itself past its closing time. */
+	get shop(): Shop {
+		const stored = (this.options as any).shop as Shop | undefined;
+		const resolved = resolveShop(stored, Date.now());
+
+		if (resolved !== stored) {
+			this.commitShop(resolved);
+		}
+
+		return resolved;
+	}
+
+	commitShop(shop: Shop): void {
+		this.setOptions({ shop } as any);
 	}
 
 	private getRoomMonsterLevels(): number[] {
@@ -443,12 +461,7 @@ export class Game extends BaseClass {
 			if (character) return character.look(channel, isSelf);
 		}
 
-		return Promise.reject(
-			channel({
-				announce: `I can find no character by the name of ${characterName}.`,
-				delay: 'short',
-			})
-		);
+		return announceAndThrow(channel, `I can find no character by the name of ${characterName}.`, { delay: 'short' });
 	}
 
 	getCreatureRankings(creatures: any[], top = 5): string[] {
@@ -534,7 +547,7 @@ export class Game extends BaseClass {
 
 	editSelfCharacter(channel: any, character: any): Promise<unknown> {
 		if (character) return character.editSelf(channel);
-		return Promise.reject(channel({ announce: 'Could not find your character.', delay: 'short' }));
+		return announceAndThrow(channel, 'Could not find your character.', { delay: 'short' });
 	}
 
 	editCharacter(channel: any, characterName: string): Promise<unknown> {
@@ -544,12 +557,7 @@ export class Game extends BaseClass {
 			if (character) return character.edit(channel);
 		}
 
-		return Promise.reject(
-			channel({
-				announce: `I can find no character by the name of ${characterName}.`,
-				delay: 'short',
-			})
-		);
+		return announceAndThrow(channel, `I can find no character by the name of ${characterName}.`, { delay: 'short' });
 	}
 
 	lookAtMonster(channel: any, monsterName: string, character: any): Promise<unknown> {
@@ -561,12 +569,7 @@ export class Game extends BaseClass {
 			if (monster) return monster.look(channel, ownsMonster);
 		}
 
-		return Promise.reject(
-			channel({
-				announce: `I can find no monster by the name of ${monsterName}.`,
-				delay: 'short',
-			})
-		);
+		return announceAndThrow(channel, `I can find no monster by the name of ${monsterName}.`, { delay: 'short' });
 	}
 
 	editMonster(channel: any, monsterName: string): Promise<unknown> {
@@ -577,12 +580,7 @@ export class Game extends BaseClass {
 			if (monster) return monster.edit(channel);
 		}
 
-		return Promise.reject(
-			channel({
-				announce: `I can find no monster by the name of ${monsterName}.`,
-				delay: 'short',
-			})
-		);
+		return announceAndThrow(channel, `I can find no monster by the name of ${monsterName}.`, { delay: 'short' });
 	}
 
 	lookAtCard(channel: any, cardName: string): Promise<unknown> {
@@ -596,12 +594,7 @@ export class Game extends BaseClass {
 			}
 		}
 
-		return Promise.reject(
-			channel({
-				announce: `Sorry, we don't carry ${cardName} cards here.`,
-				delay: 'short',
-			})
-		);
+		return announceAndThrow(channel, `Sorry, we don't carry ${cardName} cards here.`, { delay: 'short' });
 	}
 
 	lookAtItem(channel: any, itemName: string): Promise<unknown> {
@@ -615,12 +608,7 @@ export class Game extends BaseClass {
 			}
 		}
 
-		return Promise.reject(
-			channel({
-				announce: `Sorry, we don't carry ${itemName} here.`,
-				delay: 'short',
-			})
-		);
+		return announceAndThrow(channel, `Sorry, we don't carry ${itemName} here.`, { delay: 'short' });
 	}
 
 	getCardProbabilities(): unknown {
@@ -679,9 +667,7 @@ export class Game extends BaseClass {
 			}
 		}
 
-		return Promise.reject(
-			channel({ announce: `I don't see a ${thing} here.`, delay: 'short' })
-		);
+		return announceAndThrow(channel, `I don't see a ${thing} here.`, { delay: 'short' });
 	}
 
 	drawCard(options: Record<string, unknown>, monster?: any): any {

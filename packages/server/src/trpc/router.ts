@@ -309,9 +309,13 @@ export function createRouter(roomManager: RoomManager) {
 		// must not interleave with that user's in-flight flow — fail fast with
 		// a clear message instead of silently mutating shared state mid-flow.
 		if (activeFlows.has(`${roomId}:${userId}`)) {
+			const eventBus = await roomManager.getEventBus(roomId);
+			const pendingPrompt = eventBus.getPendingPromptForUser(userId);
 			throw new TRPCError({
 				code: 'PRECONDITION_FAILED',
-				message: 'A console command is in progress — answer or cancel its prompt first.',
+				message: pendingPrompt
+					? 'A console command is in progress — answer or cancel its prompt first.'
+					: 'Still processing your previous command — try again in a moment.',
 			});
 		}
 		try {
@@ -519,7 +523,9 @@ export function createRouter(roomManager: RoomManager) {
 					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
 					return {
 						ok: false,
-						message: 'A command is already in progress — answer the current prompt first.',
+						message: pendingPrompt
+							? 'A command is already in progress — answer the current prompt first.'
+							: 'Still processing your previous command — try again in a moment.',
 						pendingPrompt,
 					};
 				}
@@ -1057,6 +1063,215 @@ export function createRouter(roomManager: RoomManager) {
 					},
 				});
 				return result;
+			}),
+
+		unequipMany: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					monsterName: z.string().min(1),
+					cards: z
+						.array(
+							z.object({
+								cardName: z.string().min(1),
+								count: z.number().int().min(1).max(9).optional(),
+							}),
+						)
+						.min(1),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.unequipCard !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				// A batch is not atomic — the engine has no transaction to roll back to,
+				// so a card failing partway through leaves the earlier ones already
+				// unequipped. Collect per-card failures and keep going rather than
+				// throwing, so the events below still fire and the client still
+				// invalidates its cache; otherwise the user sees an error next to
+				// inventory that silently changed underneath them.
+				const { removedCount, monsterName, failures } = await runSerializedMutation(input.roomId, ctx.userId, async () => {
+					let removedCount = 0;
+					let monsterName = input.monsterName;
+					const failures: Array<{ cardName: string; reason: string }> = [];
+					for (const { cardName, count } of input.cards) {
+						try {
+							const result = (await character.unequipCard({
+								channel,
+								cardName,
+								monsterName: input.monsterName,
+								count,
+							})) as { removedCount: number; monsterName: string };
+							removedCount += result.removedCount;
+							monsterName = result.monsterName;
+						} catch (err) {
+							failures.push({
+								cardName,
+								reason: err instanceof Error ? err.message : 'Failed to unequip',
+							});
+						}
+					}
+					return { removedCount, monsterName, failures };
+				});
+				// Nothing changed and something went wrong — surface it as a real error
+				// instead of reporting a successful no-op.
+				if (removedCount === 0 && failures.length > 0) {
+					throw new TRPCError({ code: 'BAD_REQUEST', message: failures[0]!.reason });
+				}
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						operation: 'unequipMany',
+						removedCount,
+						monsterName,
+					},
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: failures.length > 0
+						? `Unequipped ${removedCount} cards from ${monsterName}. Could not unequip: ${failures.map((f) => f.cardName).join(', ')}.`
+						: `Unequipped ${removedCount} cards from ${monsterName}.`,
+					operation: 'unequipMany',
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName,
+						}),
+					},
+				});
+				return { removedCount, monsterName, failures };
+			}),
+
+		moveMany: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					fromMonsterName: z.string().min(1),
+					toMonsterName: z.string().min(1),
+					cards: z
+						.array(
+							z.object({
+								cardName: z.string().min(1),
+								count: z.number().int().min(1).max(9).optional(),
+							}),
+						)
+						.min(1),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.moveCard !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				// Not atomic — see the matching comment in unequipMany.
+				const { movedCount, fromMonsterName, toMonsterName, failures } = await runSerializedMutation(
+					input.roomId,
+					ctx.userId,
+					async () => {
+						let movedCount = 0;
+						let fromMonsterName = input.fromMonsterName;
+						let toMonsterName = input.toMonsterName;
+						const failures: Array<{ cardName: string; reason: string }> = [];
+						for (const { cardName, count } of input.cards) {
+							try {
+								const result = (await character.moveCard({
+									channel,
+									cardName,
+									fromMonsterName: input.fromMonsterName,
+									toMonsterName: input.toMonsterName,
+									count,
+								})) as { movedCount: number; fromMonsterName: string; toMonsterName: string };
+								movedCount += result.movedCount;
+								fromMonsterName = result.fromMonsterName;
+								toMonsterName = result.toMonsterName;
+							} catch (err) {
+								failures.push({
+									cardName,
+									reason: err instanceof Error ? err.message : 'Failed to move',
+								});
+							}
+						}
+						return { movedCount, fromMonsterName, toMonsterName, failures };
+					},
+				);
+				if (movedCount === 0 && failures.length > 0) {
+					throw new TRPCError({ code: 'BAD_REQUEST', message: failures[0]!.reason });
+				}
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						operation: 'moveMany',
+						movedCount,
+						fromMonsterName,
+						toMonsterName,
+					},
+				});
+				publishPrivateAnnouncement({
+					eventBus,
+					userId: ctx.userId,
+					text: failures.length > 0
+						? `Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}. Could not move: ${failures.map((f) => f.cardName).join(', ')}.`
+						: `Moved ${movedCount} cards from ${fromMonsterName} to ${toMonsterName}.`,
+					operation: 'moveMany',
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: fromMonsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: fromMonsterName,
+						}),
+					},
+				});
+				eventBus.publish({
+					type: 'card.equipped' as EventType,
+					scope: 'private',
+					targetUserId: ctx.userId,
+					text: '',
+					payload: {
+						monsterName: toMonsterName,
+						cards: getMonsterCardsByName({
+							character: character as Record<string, unknown>,
+							monsterName: toMonsterName,
+						}),
+					},
+				});
+				return { movedCount, fromMonsterName, toMonsterName, failures };
 			}),
 
 		reorderCards: protectedProcedure

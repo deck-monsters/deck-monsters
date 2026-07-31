@@ -87,4 +87,33 @@ describe('./helpers/get-array.ts', () => {
 	it('can get an array from double-quoted list with "or" separators', () => {
 		expect(getArray('"Hit" "Heal"')).to.deep.equal(['Hit', 'Heal']);
 	});
+
+	// Regression guards for #19: no card/item name in the game currently contains
+	// an apostrophe or quote, so these document intended behavior for future content.
+	describe('names containing an apostrophe', () => {
+		it('splits a single-quoted list correctly ("Wizard\'s Fire" survives intact)', () => {
+			expect(getArray("'Wizard's Fire' 'Hit'")).to.deep.equal(["Wizard's Fire", 'Hit']);
+		});
+
+		it('splits a double-quoted list correctly', () => {
+			expect(getArray('"Wizard\'s Fire" "Hit"')).to.deep.equal(["Wizard's Fire", 'Hit']);
+		});
+
+		it('splits a JSON array correctly — the recommended form for exotic names', () => {
+			expect(getArray('["Wizard\'s Fire", "Hit"]')).to.deep.equal(["Wizard's Fire", 'Hit']);
+		});
+
+		it('known limitation: unquoted comma-separated input truncates at the apostrophe', () => {
+			// The unquoted fallback treats ' the same as " (both are quote characters to
+			// strip), so it stops at the first apostrophe instead of the first comma.
+			// Prefer a JSON array (see above) or a double-quoted list for names like this.
+			expect(getArray("Wizard's Fire, Hit")).to.deep.equal(['Wizard']);
+		});
+	});
+
+	it('known limitation: an embedded double-quote inside a JSON array entry breaks parsing', () => {
+		// Valid JSON requires escaping an embedded " (\\"), so an unescaped one is not
+		// valid JSON and getArray falls back to matching leading non-quote characters.
+		expect(getArray('["Say "Hi" Card", "Hit"]')).to.deep.equal(['[']);
+	});
 });

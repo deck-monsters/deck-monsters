@@ -742,6 +742,20 @@ export class Ring extends BaseClass {
 				'The fight has been cancelled due to an unexpected error. The ring has been cleared.',
 				{}
 			);
+			// Publish a terminal event so FightSummaryWriter's pending 'ring.fight'
+			// start (published above) doesn't linger forever, and so a cancelled
+			// fight shows up in the fight log instead of vanishing silently.
+			this.eventBus.publish({
+				type: 'ring.fightResolved',
+				scope: 'public',
+				text: 'Fight cancelled due to an unexpected error',
+				payload: {
+					rounds: round,
+					deaths: 0,
+					outcome: 'cancelled',
+					participants: [],
+				},
+			});
 			this.clearRing();
 		});
 	}

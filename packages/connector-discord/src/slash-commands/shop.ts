@@ -15,7 +15,7 @@ export const shop: SlashCommand = {
 
 		const recognized = await dispatchCommand(
 			interaction,
-			'shop',
+			'visit the shop',
 			ctx,
 			supabaseUserId,
 			roomId
