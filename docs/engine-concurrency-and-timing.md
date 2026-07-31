@@ -3,7 +3,7 @@
 Read this before touching fight pacing, the command pipeline, or anything that
 awaits user input. These systems interact in non-obvious ways and have caused
 the most persistent production bugs (fights flying by, commands appearing
-ignored, multi-step flows crashing). See `docs/roadmap/10-bug-fixes.md` #20 for
+ignored, multi-step flows crashing). See `docs/roadmap/10b-bugs-fixed.md` #20 for
 the incident history.
 
 ## 1. Fight pacing (`packages/engine/src/helpers/delay-times.ts`)

@@ -245,7 +245,7 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 - **`creatures/base.ts` still large** — ~977 lines after the TypeScript migration (down from ~2000). Continue incremental decomposition into `creatures/combat.ts`, `creatures/stats.ts`, etc.
 - **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet.
 
-Previously listed here and now fixed (see `docs/roadmap/10-bug-fixes.md` for root causes): fight log not updating (#15 — write-side races and dropped retries in the fight-summary writer, not UI cache invalidation) and console history missing on reconnect (#16/#17 — the engine's cold ring buffer suppressed the durable-storage replay fallback).
+Previously listed here and now fixed (see `docs/roadmap/10b-bugs-fixed.md` for root causes): fight log not updating (#15 — write-side races and dropped retries in the fight-summary writer, not UI cache invalidation) and console history missing on reconnect (#16/#17 — the engine's cold ring buffer suppressed the durable-storage replay fallback).
 
 ## Archived / Deferred
 
