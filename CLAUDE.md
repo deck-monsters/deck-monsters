@@ -224,6 +224,10 @@ Every DB query on game data needs a `where room_id = ?` clause. Every tRPC proce
 
 See [`docs/room-scoping.md`](docs/room-scoping.md) for the full rule with code examples, a code-review checklist, and a table of common failure patterns. Past bugs have been caused by missing room filters — treat this as a hard constraint, not a guideline.
 
+## Critical Architecture Rule: Concurrency, Timing, and Prompt Flows
+
+Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive prompt lifecycle interact in non-obvious ways and have caused the most persistent production bugs (fights flying by, commands appearing ignored, multi-step flows crashing). Before touching `helpers/delay-times.ts`, `ring/index.ts` pacing, `events/room-event-bus.ts` prompts, or the server command pipeline in `trpc/router.ts`, read [`docs/engine-concurrency-and-timing.md`](docs/engine-concurrency-and-timing.md). Key invariants: interactive command actions run fire-and-forget in a per-`roomId:userId` lane (never room-wide — that starves other users); awaited workshop mutations must stay prompt-free; the `PROMPT_CANCELLED` sentinel must be translated to `PromptCancelledError` before reaching game code.
+
 ## Architecture Notes for New Connectors
 
 1. Implement the channel callback: `({ announce, question?, choices?, delay? }) => Promise`
@@ -237,10 +241,11 @@ See [`docs/room-scoping.md`](docs/room-scoping.md) for the full rule with code e
 
 ## Known Issues
 
-- **Fight log not updating** — the web fight log page goes stale after initial load; new fights don't appear without a manual refresh. Subscription or cache invalidation is not wired correctly. (#15 in `docs/roadmap/10-bug-fixes.md`)
-- **Console missing history on reconnect** — the console pane doesn't replay events from while the user was away. The reconnect-with-replay path exists but isn't delivering historical data. (#16 in `docs/roadmap/10-bug-fixes.md`)
+- **Card shop is a process-wide singleton** — every room shares one shop inventory/closing time, violating the room-scoping rule. Needs a design decision before implementation. (#26 in `docs/roadmap/10-bug-fixes.md`)
 - **`creatures/base.ts` still large** — ~977 lines after the TypeScript migration (down from ~2000). Continue incremental decomposition into `creatures/combat.ts`, `creatures/stats.ts`, etc.
 - **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet.
+
+Previously listed here and now fixed (see `docs/roadmap/10-bug-fixes.md` for root causes): fight log not updating (#15 — write-side races and dropped retries in the fight-summary writer, not UI cache invalidation) and console history missing on reconnect (#16/#17 — the engine's cold ring buffer suppressed the durable-storage replay fallback).
 
 ## Archived / Deferred
 

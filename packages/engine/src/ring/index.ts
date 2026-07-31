@@ -86,6 +86,8 @@ export class Ring extends BaseClass {
 	encounter?: Record<string, any>;
 	fightTimer?: ReturnType<typeof setTimeout>;
 	bossTimer?: ReturnType<typeof setTimeout>;
+	/** Pending per-boss despawn timers, so `dispose()` can cancel all of them. */
+	private readonly bossDespawnTimers = new Set<ReturnType<typeof setTimeout>>();
 	/** Epoch ms when the next boss will enter the ring (including the 2-min announcement window), or null if no timer is running. */
 	nextBossSpawnAt: number | null = null;
 	/** Epoch ms when the next fight will start, or null if no fight timer is active. */
@@ -230,9 +232,15 @@ export class Ring extends BaseClass {
 				return contestant;
 			})
 			.then((contestant: Contestant) => {
-				const contestantIndex = this.contestants.indexOf(contestant);
-
-				this.contestants.splice(contestantIndex, 1);
+				// Go through the `contestants` setter (setOptions) rather than mutating
+				// the live array in place: an in-place splice never emits `stateChange`,
+				// so a monster withdrawn without any other room activity afterward could
+				// still be listed in the last-persisted `ringContestantRefs` and get
+				// re-hydrated back into the ring on the next restart.
+				const updated = [...this.contestants];
+				const contestantIndex = updated.indexOf(contestant);
+				updated.splice(contestantIndex, 1);
+				this.contestants = updated;
 
 				if (this.contestants.length < 1) {
 					this.clearRing();
@@ -456,6 +464,10 @@ export class Ring extends BaseClass {
 	dispose(): void {
 		clearTimeout(this.fightTimer);
 		clearTimeout(this.bossTimer);
+		for (const timer of this.bossDespawnTimers) {
+			clearTimeout(timer);
+		}
+		this.bossDespawnTimers.clear();
 		this.fightTimer = undefined;
 		this.bossTimer = undefined;
 		this.nextFightAt = null;
@@ -652,9 +664,12 @@ export class Ring extends BaseClass {
 							if (delaysAreSkipped()) {
 								return subEventDelay().then(() => next());
 							}
-							return new Promise<void>(r => setTimeout(r, 0))
-								.then(() => subEventDelay())
-								.then(() => next());
+							// Pace card-to-card transitions with the configured very-short
+							// delay (2–4s) so live feeds can be followed; sub-events within
+							// a card already pace themselves via subEventDelay().
+							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() =>
+								next()
+							);
 						}
 
 						return Promise.resolve().then(() => resolve(playerContestant));
@@ -937,6 +952,13 @@ export class Ring extends BaseClass {
 		contestant.character.dropMonster(contestant.monster);
 		contestant.character.addLoss();
 		this.emit('permaDeath', { contestant });
+		// Unlike the win/loss/fled siblings above, this call was previously missing —
+		// Game.initializeEvents() listens for the global `creature.permaDeath`
+		// broadcast (emitted via BaseClass.emit's `${eventPrefix}.${event}` naming) to
+		// award the player's permaDeath consolation XP/coins in Game.handlePermaDeath.
+		// Without this line that listener never fired, so a permanently destroyed
+		// monster granted its owner no reward at all — not even a normal loss amount.
+		contestant.monster.emit('permaDeath', { contestant });
 	}
 
 	handleTied({ contestant }: { contestant: Contestant }): void {
@@ -1066,9 +1088,14 @@ export class Ring extends BaseClass {
 
 			if (random(1)) {
 				const ring = this;
-				setTimeout(() => {
-					ring.removeBoss(contestant);
+				const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
+					ring.bossDespawnTimers.delete(timer);
+					// removeMonster() (called via removeBoss) rejects if the boss is no
+					// longer in the ring (e.g. the ring was cleared by a fight) — that is
+					// expected here since this timer isn't cancelled on clearRing().
+					ring.removeBoss(contestant).catch(() => {});
 				}, BOSS_DESPAWN_DELAY_MS);
+				this.bossDespawnTimers.add(timer);
 			}
 
 			return contestant;

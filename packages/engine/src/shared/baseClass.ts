@@ -82,7 +82,13 @@ export class BaseClass<TOptions extends BaseClassOptions = BaseClassOptions> {
 		this.optionsStore = optionsStore;
 
 		this.emit('updated');
-		globalSemaphore.emit('stateChange');
+		// Broadcast globally (not via `this.emit`, which would only reach same-prefix
+		// listeners) so any BaseClass instance's mutation can trigger a save on its
+		// owning Game — nested creature/card/item state has no other way to signal
+		// "the enclosing game needs a save". Pass `this` so room-scoped listeners
+		// (see Game.initializeEvents / createRoomScopedEventGuard) can tell whether
+		// this particular mutation belongs to them before reacting to it.
+		globalSemaphore.emit('stateChange', this);
 	}
 
 	emit(event: string, ...args: unknown[]): void {

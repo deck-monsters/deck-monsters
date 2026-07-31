@@ -10,7 +10,7 @@ import { globalSemaphore } from './helpers/semaphore.js';
 import { listen, loadHandlers } from './commands/index.js';
 import { sortByXP } from './helpers/sort.js';
 import { XP_PER_VICTORY, XP_PER_DEFEAT } from './helpers/experience.js';
-import { initialize as initializeAnnouncements } from './announcements/index.js';
+import { initialize as initializeAnnouncements, createRoomScopedEventGuard } from './announcements/index.js';
 import { BaseClass } from './shared/baseClass.js';
 import cardOdds from './card-odds.json' with { type: 'json' };
 import { dungeonMasterGuide } from './build/dungeon-master-guide.js';
@@ -198,11 +198,34 @@ export class Game extends BaseClass {
 	initializeEvents(): void {
 		const disposeAnnouncements = initializeAnnouncements(this);
 
-		const boundWin = this.on('creature.win', this.handleWinner.bind(this));
-		const boundLoss = this.on('creature.loss', this.handleLoser.bind(this));
-		const boundPermaDeath = this.on('creature.permaDeath', this.handlePermaDeath.bind(this));
-		const boundFled = this.on('creature.fled', this.handleFled.bind(this));
-		const boundStateChange = this.on('stateChange', () => this.scheduleSave());
+		// `creature.win` / `creature.loss` / `creature.permaDeath` / `creature.fled`
+		// and `stateChange` are all broadcast on the process-wide globalSemaphore
+		// (see BaseClass.emit / setOptions) — not scoped to any one room. Without
+		// this guard, one room's fight outcome would double-award XP/coins/card
+		// drops on every OTHER loaded Game instance's identical listener (this was
+		// a real, previously-unguarded bug: reward-granting handlers here were the
+		// only creature.* listeners in the engine that skipped the room-scoping
+		// applied everywhere else in announcements/index.ts), and any unrelated
+		// room's state change would reset every other room's save debounce timer.
+		const isRoomScopedEvent = createRoomScopedEventGuard(this);
+		const wrapGameEvent =
+			<F extends (...args: any[]) => void>(fn: F): F =>
+				((...args: any[]) => {
+					if (!isRoomScopedEvent(...args)) return;
+					fn(...args);
+				}) as F;
+
+		const boundWin = this.on('creature.win', wrapGameEvent(this.handleWinner.bind(this)));
+		const boundLoss = this.on('creature.loss', wrapGameEvent(this.handleLoser.bind(this)));
+		const boundPermaDeath = this.on(
+			'creature.permaDeath',
+			wrapGameEvent(this.handlePermaDeath.bind(this))
+		);
+		const boundFled = this.on('creature.fled', wrapGameEvent(this.handleFled.bind(this)));
+		const boundStateChange = this.on(
+			'stateChange',
+			wrapGameEvent(() => this.scheduleSave())
+		);
 
 		this._disposeListeners = [
 			disposeAnnouncements,
@@ -338,6 +361,15 @@ export class Game extends BaseClass {
 				}).then((character: any) => {
 					game.characters[id] = character;
 
+					// Direct mutation of the options-backed characters map: bypasses
+					// setOptions(), so no `stateChange` fires from this assignment alone.
+					// The new character's own constructor already triggers a `stateChange`
+					// globally, but at that point it isn't in `game.characters` yet, so
+					// the room-scoped guard added above would not attribute it to this
+					// game — without this explicit emit, a freshly created character
+					// could be silently lost if the server restarts before any other
+					// state in this room changes.
+					game.emit('stateChange');
 					game.emit('characterCreated', { character });
 
 					return character;

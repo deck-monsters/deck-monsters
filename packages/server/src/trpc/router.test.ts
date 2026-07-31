@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
 
-import { createRouter } from './router.js';
+import { createRouter, activeFlows } from './router.js';
 
 const ROOM_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
 const USER_ID = '11111111-2222-3333-4444-555555555555';
@@ -285,5 +285,361 @@ describe('trpc/router card management procedures', () => {
 			toIndex: 1,
 			cards: ['Heal', 'Hit'],
 		});
+	});
+});
+
+describe('trpc/router ringFeed replay', () => {
+	type Frame = { id: string; data: { type: string; text: string } };
+
+	// `tracked(id, event)` surfaces as an [id, event] tuple through createCaller.
+	const unwrap = (frame: unknown): Frame['data'] =>
+		(Array.isArray(frame) ? frame[1] : frame) as Frame['data'];
+
+	const makeEvent = (id: string, text: string) => ({
+		id,
+		roomId: ROOM_ID,
+		timestamp: Date.now(),
+		type: 'announce',
+		scope: 'public',
+		text,
+		payload: {},
+	});
+
+	/**
+	 * Builds a roomManager whose in-memory cursor lookup returns `sinceResult` and
+	 * whose durable-storage fallback returns `storedEvents`. The live subscription
+	 * immediately delivers a sentinel so the frame after replay is deterministic.
+	 */
+	const makeRoomManager = (
+		sinceResult: Record<string, unknown>,
+		storedEvents: unknown[]
+	) =>
+		({
+			assertMember: async () => undefined,
+			getEventBus: async () => ({
+				getEventsSince: () => sinceResult,
+				getRecentEvents: () => [],
+				subscribe: (_id: string, sub: { deliver: (e: unknown) => void }) => {
+					sub.deliver(makeEvent('9999999999999-live', 'live'));
+					return () => {};
+				},
+			}),
+			getGame: async () => ({
+				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [] },
+			}),
+			getEventsSinceForRingFeed: async () => ({ events: storedEvents, limitReached: false }),
+		}) as unknown as Parameters<typeof createRouter>[0];
+
+	const collect = async (
+		roomManager: Parameters<typeof createRouter>[0],
+		frameCount: number
+	) => {
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const iterator = (await caller.game.ringFeed({
+			roomId: ROOM_ID,
+			lastEventId: '1712835000000-cursor',
+		})) as AsyncGenerator<unknown>;
+
+		const frames: Array<Frame['data']> = [];
+		try {
+			for (let i = 0; i < frameCount; i++) {
+				const next = await iterator.next();
+				if (next.done) break;
+				frames.push(unwrap(next.value));
+			}
+		} finally {
+			await iterator.return?.(undefined);
+		}
+		return frames;
+	};
+
+	it('replays from durable storage when the buffer is cold after a restart', async () => {
+		// Regression: a cold buffer used to report truncated=false, so the DB
+		// fallback never ran and reconnects across a restart replayed nothing.
+		const roomManager = makeRoomManager(
+			{ events: [], truncated: true, upToDate: false, status: 'cold' },
+			[makeEvent('1712835000001-a', 'missed one'), makeEvent('1712835000002-b', 'missed two')]
+		);
+
+		const frames = await collect(roomManager, 3);
+
+		expect(frames[0]?.type).to.equal('handshake');
+		expect(frames.map((f) => f.text)).to.include('missed one');
+		expect(frames.map((f) => f.text)).to.include('missed two');
+		expect(frames.map((f) => f.type)).to.not.include('system.gap');
+	});
+
+	it('warns about a gap when events were evicted and storage has nothing', async () => {
+		const roomManager = makeRoomManager(
+			{ events: [], truncated: true, upToDate: false, status: 'evicted' },
+			[]
+		);
+
+		const frames = await collect(roomManager, 2);
+
+		expect(frames[0]?.type).to.equal('handshake');
+		expect(frames[1]?.type).to.equal('system.gap');
+	});
+
+	it('does not warn about a gap when a cold buffer has nothing to replay', async () => {
+		// The common case after a deploy: the room was idle, so an empty replay is
+		// expected and must not surface a "you missed events" banner.
+		const roomManager = makeRoomManager(
+			{ events: [], truncated: true, upToDate: false, status: 'cold' },
+			[]
+		);
+
+		const frames = await collect(roomManager, 2);
+
+		expect(frames[0]?.type).to.equal('handshake');
+		expect(frames[1]?.text).to.equal('live');
+	});
+});
+
+describe('trpc/router command dispatch and flow locking', () => {
+	const flowKey = `${ROOM_ID}:${USER_ID}`;
+
+	function deferred<T = void>() {
+		let resolve!: (value: T) => void;
+		const promise = new Promise<T>((res) => {
+			resolve = res;
+		});
+		return { promise, resolve };
+	}
+
+	/**
+	 * roomManager double for the `command` mutation. `action` is what
+	 * game.handleCommand returns; `lanes` records every runSerializedEngineWork
+	 * key; `published` records every eventBus.publish.
+	 */
+	function makeCommandRoomManager(action: (opts: unknown) => Promise<unknown>) {
+		const lanes: string[] = [];
+		const published: Array<{ type: string }> = [];
+		const roomManager = {
+			assertMember: async () => undefined,
+			getMemberRole: async () => 'member',
+			getDisplayName: async () => 'Player',
+			getGame: async () => ({
+				handleCommand: () => action,
+				characters: {},
+				ring: { contestants: [] },
+			}),
+			getEventBus: async () => ({
+				publish: (event: { type: string }) => published.push(event),
+				getPendingPromptForUser: () => null,
+				cancelAllUserPrompts: () => undefined,
+			}),
+			runSerializedEngineWork: async (laneKey: string, fn: () => Promise<unknown>) => {
+				lanes.push(laneKey);
+				return fn();
+			},
+		} as unknown as Parameters<typeof createRouter>[0];
+		return { roomManager, lanes, published };
+	}
+
+	const settleTicks = async (count = 4) => {
+		for (let i = 0; i < count; i++) {
+			await new Promise<void>((resolve) => setImmediate(resolve));
+		}
+	};
+
+	afterEach(() => {
+		activeFlows.clear();
+	});
+
+	it('serializes command actions in a per-user lane, not room-wide', async () => {
+		// Regression (bug doc #20): a room-wide lane let one user's minutes-long
+		// interactive flow starve every other member's commands.
+		const { roomManager, lanes } = makeCommandRoomManager(async () => undefined);
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const result = await caller.game.command({ roomId: ROOM_ID, command: 'look at ring' });
+		await settleTicks();
+
+		expect(result.ok).to.equal(true);
+		expect(lanes).to.deep.equal([`${ROOM_ID}:${USER_ID}`]);
+	});
+
+	it('emits quick_actions to the user after the command action settles', async () => {
+		const { roomManager, published } = makeCommandRoomManager(async () => undefined);
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		await caller.game.command({ roomId: ROOM_ID, command: 'look at ring' });
+		await settleTicks();
+
+		expect(published.some((event) => event.type === 'quick_actions')).to.equal(true);
+	});
+
+	it('rejects workshop mutations while the caller has a console flow in progress', async () => {
+		// Regression (bug doc #20): workshop mutations used to queue behind the
+		// flow (hanging the HTTP request for minutes) instead of failing fast.
+		const unequipCard = async () => ({ removedCount: 1, monsterName: 'Stonefang' });
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({ publish: () => undefined }),
+			runSerializedEngineWork: async (_key: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		activeFlows.set(flowKey, 'some-flow');
+
+		const err = await caller.game
+			.unequipCard({ roomId: ROOM_ID, monsterName: 'Stonefang', cardName: 'Hit' })
+			.catch((e: unknown) => e);
+
+		expect(err).to.be.instanceOf(TRPCError);
+		expect((err as TRPCError).code).to.equal('PRECONDITION_FAILED');
+	});
+
+	it('a cancelled flow settling late does not release a newer flow\'s lock', async () => {
+		// Regression (review of #20): cancelFlow deletes the key immediately; if
+		// command B starts before cancelled command A's promise chain settles,
+		// A's unconditional .finally() used to delete B's freshly-taken lock,
+		// letting a third command run concurrently with B.
+		const flowA = deferred();
+		const flowB = deferred();
+		const { roomManager: rmA } = makeCommandRoomManager(() => flowA.promise);
+		const callerA = createRouter(rmA).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const dispatchA = await callerA.game.command({ roomId: ROOM_ID, command: 'spawn monster' });
+		expect(dispatchA.ok).to.equal(true);
+		expect(activeFlows.has(flowKey)).to.equal(true);
+
+		// User cancels flow A (the router's cancelFlow force-clears the lock).
+		await callerA.game.cancelFlow({ roomId: ROOM_ID });
+		expect(activeFlows.has(flowKey)).to.equal(false);
+
+		// Command B starts while A's action promise is still unsettled.
+		const { roomManager: rmB } = makeCommandRoomManager(() => flowB.promise);
+		const callerB = createRouter(rmB).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const dispatchB = await callerB.game.command({ roomId: ROOM_ID, command: 'spawn monster' });
+		expect(dispatchB.ok).to.equal(true);
+		const tokenB = activeFlows.get(flowKey);
+		expect(tokenB).to.be.a('string');
+
+		// A finally settles — its cleanup must NOT release B's lock.
+		flowA.resolve();
+		await settleTicks();
+		expect(activeFlows.get(flowKey)).to.equal(tokenB);
+
+		// When B settles, its own cleanup releases the lock normally.
+		flowB.resolve();
+		await settleTicks();
+		expect(activeFlows.has(flowKey)).to.equal(false);
+	});
+});
+
+describe('trpc/router ringFeed live-subscription race', () => {
+	const unwrapFrame = (frame: unknown): { id: string; type: string; text: string } =>
+		(Array.isArray(frame) ? frame[1] : frame) as { id: string; type: string; text: string };
+
+	const makeEvent = (id: string, text: string) => ({
+		id,
+		roomId: ROOM_ID,
+		timestamp: Date.now(),
+		type: 'announce',
+		scope: 'public',
+		text,
+		payload: {},
+	});
+
+	it('subscribes before replaying and dedups events captured by both', async () => {
+		// Regression (review of #16/#17): the live subscriber used to attach only
+		// after the replay finished, so events published during the (async) DB
+		// replay were lost. Now the subscriber attaches first and buffered
+		// duplicates of replayed events are dropped on drain.
+		const order: string[] = [];
+		const replayed = makeEvent('1712835000005-replayed', 'covered by replay');
+		const inBetween = makeEvent('1712835000006-between', 'published during replay');
+
+		const roomManager = {
+			assertMember: async () => undefined,
+			getEventBus: async () => ({
+				getEventsSince: () => {
+					order.push('getEventsSince');
+					return { events: [], truncated: true, upToDate: false, status: 'cold' };
+				},
+				getRecentEvents: () => [],
+				subscribe: (_id: string, sub: { deliver: (e: unknown) => void }) => {
+					order.push('subscribe');
+					// Simulate events arriving while the replay is being assembled:
+					// one that the replay will also return, one that only the live
+					// subscription sees.
+					sub.deliver(replayed);
+					sub.deliver(inBetween);
+					return () => {};
+				},
+			}),
+			getGame: async () => ({
+				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [] },
+			}),
+			getEventsSinceForRingFeed: async () => ({ events: [replayed], limitReached: false }),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const iterator = (await caller.game.ringFeed({
+			roomId: ROOM_ID,
+			lastEventId: '1712835000000-cursor',
+		})) as AsyncGenerator<unknown>;
+
+		const frames: Array<{ id: string; type: string; text: string }> = [];
+		try {
+			for (let i = 0; i < 3; i++) {
+				const next = await iterator.next();
+				if (next.done) break;
+				frames.push(unwrapFrame(next.value));
+			}
+		} finally {
+			await iterator.return?.(undefined);
+		}
+
+		expect(order[0]).to.equal('subscribe');
+		expect(order).to.include('getEventsSince');
+		expect(frames[0]?.type).to.equal('handshake');
+		// The replayed event appears exactly once, then the in-between live event.
+		expect(frames.filter((f) => f.id === replayed.id)).to.have.length(1);
+		expect(frames.some((f) => f.id === inBetween.id)).to.equal(true);
+	});
+
+	it('emits a gap marker when the DB replay hits its hard cap', async () => {
+		const events = [makeEvent('1712835000001-a', 'one'), makeEvent('1712835000002-b', 'two')];
+		const roomManager = {
+			assertMember: async () => undefined,
+			getEventBus: async () => ({
+				getEventsSince: () => ({ events: [], truncated: true, upToDate: false, status: 'evicted' }),
+				getRecentEvents: () => [],
+				subscribe: () => () => {},
+			}),
+			getGame: async () => ({
+				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [] },
+			}),
+			getEventsSinceForRingFeed: async () => ({ events, limitReached: true }),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const iterator = (await caller.game.ringFeed({
+			roomId: ROOM_ID,
+			lastEventId: '1712835000000-cursor',
+		})) as AsyncGenerator<unknown>;
+
+		const frames: Array<{ type: string }> = [];
+		try {
+			for (let i = 0; i < 4; i++) {
+				const next = await iterator.next();
+				if (next.done) break;
+				frames.push(unwrapFrame(next.value));
+			}
+		} finally {
+			await iterator.return?.(undefined);
+		}
+
+		expect(frames.map((f) => f.type)).to.deep.equal([
+			'handshake',
+			'announce',
+			'announce',
+			'system.gap',
+		]);
 	});
 });

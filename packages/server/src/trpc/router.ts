@@ -7,6 +7,8 @@ import { createLogger } from '../logger.js';
 const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
+import { PROMPT_CANCELLED, PromptCancelledError } from '@deck-monsters/engine';
+import { buildQuickActions } from '../quick-actions.js';
 import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
@@ -244,15 +246,22 @@ export type AppRouter = ReturnType<typeof createRouter>;
 const PROTOCOL_VERSION = 1;
 const BUILD_VERSION = process.env['BUILD_VERSION'] ?? 'dev';
 
-// Per-user active-flow lock.  Key = `${roomId}:${userId}`.
-// While a command flow is in progress for a given user+room, further commands
-// are rejected with a friendly message so users know to answer the prompt first.
-// Exported so it can be inspected in unit tests.
+// Per-user active-flow lock.  Key = `${roomId}:${userId}`, value = the owning
+// flow's commandId. While a command flow is in progress for a given user+room,
+// further commands are rejected with a friendly message so users know to
+// answer the prompt first. Exported so it can be inspected in unit tests.
 //
-// Engine work is additionally serialized **per room** via
-// `RoomManager.runSerializedEngineWork` so two users cannot interleave commands
-// on the same Game (see packages/engine/src/helpers/room-engine-queue.ts).
-export const activeFlows = new Set<string>();
+// The value is an ownership token, not just presence: a flow's `.finally()`
+// only clears the lock if it still owns it. Without that check there is a
+// cancellation race — `cancelFlow` deletes the key immediately, so if command
+// B starts before cancelled command A's promise chain settles, A's
+// unconditional cleanup would delete B's freshly-taken lock and let a third
+// command run concurrently with B.
+//
+// Engine work is additionally serialized per `${roomId}:${userId}` lane via
+// `RoomManager.runSerializedEngineWork` (see the `command` mutation below and
+// packages/engine/src/helpers/room-engine-queue.ts).
+export const activeFlows = new Map<string, string>();
 
 const sortBySchema = z.enum(['xp', 'wins', 'winRate', 'coins']);
 
@@ -294,7 +303,17 @@ function createSilentChannel({
 }
 
 export function createRouter(roomManager: RoomManager) {
-	const runSerializedMutation = async <T>(roomId: string, fn: () => Promise<T>): Promise<T> => {
+	const runSerializedMutation = async <T>(roomId: string, userId: string, fn: () => Promise<T>): Promise<T> => {
+		// Interactive console flows run in a per-user lane (see the `command`
+		// mutation) and can wait minutes on prompt answers. Workshop mutations
+		// must not interleave with that user's in-flight flow — fail fast with
+		// a clear message instead of silently mutating shared state mid-flow.
+		if (activeFlows.has(`${roomId}:${userId}`)) {
+			throw new TRPCError({
+				code: 'PRECONDITION_FAILED',
+				message: 'A console command is in progress — answer or cancel its prompt first.',
+			});
+		}
 		try {
 			return await roomManager.runSerializedEngineWork(roomId, fn);
 		} catch (err) {
@@ -511,10 +530,11 @@ export function createRouter(roomManager: RoomManager) {
 					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
 					return { ok: false, message: 'Command not recognized' };
 				}
-				activeFlows.add(flowKey);
-				log.debug('command dispatched', { roomId: input.roomId, userId: ctx.userId, isAdmin });
-
 				const commandId = randomUUID();
+				// The commandId doubles as the flow-lock ownership token — see the
+				// activeFlows declaration for why cleanup must be ownership-checked.
+				activeFlows.set(flowKey, commandId);
+				log.debug('command dispatched', { roomId: input.roomId, userId: ctx.userId, isAdmin });
 
 				// Persist a user-input echo event so console history can show
 				// previously submitted commands after reload.
@@ -549,7 +569,14 @@ export function createRouter(roomManager: RoomManager) {
 								? choices
 								: Object.keys(choices)
 							: [];
-						return eventBus.sendPrompt(ctx.userId, question, choiceKeys);
+						const answer = await eventBus.sendPrompt(ctx.userId, question, choiceKeys);
+						// Cancelled flows resolve with a sentinel — abort the action
+						// chain instead of handing '__cancelled__' to game code as an
+						// answer (it would be parsed as a card/monster selection).
+						if (answer === PROMPT_CANCELLED) {
+							throw new PromptCancelledError();
+						}
+						return answer;
 					}
 
 					if (announce) {
@@ -571,10 +598,14 @@ export function createRouter(roomManager: RoomManager) {
 				// HTTP connection open until the entire flow completes or times out.
 				// Instead, we return immediately; all output arrives via ringFeed.
 				//
-				// Serialize all engine work per room so two users cannot interleave
-				// handleCommand / ring combat on the same Game (fixes out-of-order ring feed).
+				// Serialize per room AND user. A room-wide lane would let one user's
+				// interactive flow (which can wait minutes on prompt answers) starve
+				// every other member's commands in the room. Same-user ordering is
+				// what actually matters for state consistency here: `activeFlows`
+				// already prevents concurrent flows for one user, and workshop
+				// mutations fail fast while the user has a flow in progress.
 				void roomManager
-					.runSerializedEngineWork(input.roomId, () =>
+					.runSerializedEngineWork(`${input.roomId}:${ctx.userId}`, () =>
 						action({
 							channel,
 							channelName: input.channelName,
@@ -584,17 +615,45 @@ export function createRouter(roomManager: RoomManager) {
 						})
 					)
 					.catch((err: unknown) => {
-						// Prompt timeouts are expected when users abandon a flow.
+						// Prompt timeouts and cancellations are expected when users
+						// abandon or cancel a flow — not errors.
+						const isCancelled =
+							err instanceof PromptCancelledError ||
+							(err instanceof Error && err.name === 'PromptCancelledError');
 						const msg = err instanceof Error ? err.message : String(err);
-						if (!msg.includes('Prompt timed out')) {
+						if (!isCancelled && !msg.includes('Prompt timed out')) {
+							roomManager['log']?.(err);
+						}
+					})
+					.then(() => {
+						// Contextual suggestions for the console chip strip. Emitted after
+						// the flow settles (success or failure) so they reflect the state
+						// the user is actually looking at. Never let this throw into the
+						// pipeline — suggestions are a nicety, not part of the command.
+						try {
+							const actions = buildQuickActions(game, ctx.userId);
+							if (actions.length > 0) {
+								eventBus.publish({
+									type: 'quick_actions' as EventType,
+									scope: 'private',
+									targetUserId: ctx.userId,
+									text: '',
+									payload: { actions, causedByCommandId: commandId },
+								});
+							}
+						} catch (err: unknown) {
 							roomManager['log']?.(err);
 						}
 					})
 					.finally(() => {
-						activeFlows.delete(flowKey);
+						// Only clear the lock this flow still owns. After a cancelFlow,
+						// a newer command may hold the key with its own token — deleting
+						// unconditionally here would release that newer flow's lock.
+						if (activeFlows.get(flowKey) === commandId) {
+							activeFlows.delete(flowKey);
+						}
 					});
 
-				// TODO: emit quick_actions event after command completes with contextual suggestions
 
 				void touchMemberLastSeen(db, input.roomId, ctx.userId).catch(() => {});
 
@@ -747,7 +806,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.unequipCard({
 						channel,
 						cardName: input.cardName,
@@ -808,7 +867,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.unequipAll({
 						channel,
 						monsterName: input.monsterName,
@@ -869,7 +928,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.equipCards({
 						channel,
 						monsterName: input.monsterName,
@@ -944,7 +1003,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.moveCard({
 						channel,
 						cardName: input.cardName,
@@ -1022,7 +1081,7 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const rawResult = await runSerializedMutation(input.roomId, () =>
+				const rawResult = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.reorderCards({
 						channel,
 						monsterName: input.monsterName,
@@ -1073,7 +1132,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.savePreset({
 						channel,
 						monsterName: input.monsterName,
@@ -1103,7 +1162,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.loadPreset({
 						channel,
 						monsterName: input.monsterName,
@@ -1157,7 +1216,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				const result = await runSerializedMutation(input.roomId, () =>
+				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.deletePreset({
 						channel,
 						monsterName: input.monsterName,
@@ -1211,7 +1270,11 @@ export function createRouter(roomManager: RoomManager) {
 			// without needing a separate HTTP poll.
 			// Use a unique id per subscription invocation so no dedup layer (tRPC
 			// client, seenRef, etc.) can swallow the handshake on reconnect.
-			const handshakeId = `handshake-${Date.now()}`;
+			// Synthetic (non-persisted) frames still use the `${epochMs}-${suffix}` id
+			// shape that real events use. Cursor resolution parses that leading
+			// timestamp, so a client that echoes one of these ids back as its
+			// `lastEventId` still resolves by time instead of becoming unmatchable.
+			const handshakeId = `${Date.now()}-handshake`;
 			const handshakeEvent: GameEvent = {
 				id: handshakeId,
 				roomId: input.roomId,
@@ -1234,57 +1297,12 @@ export function createRouter(roomManager: RoomManager) {
 			};
 			yield tracked(handshakeId, handshakeEvent);
 
-				// Deliver any missed events since the last received event ID.
-				if (input.lastEventId) {
-					const { events: buffered, truncated, upToDate } = eventBus.getEventsSince(
-						input.lastEventId
-					);
-					let missed: GameEvent[] = buffered;
-					if (truncated && !upToDate) {
-						missed = await roomManager.getEventsSinceForRingFeed(
-							ctx.userId,
-							input.roomId,
-							input.lastEventId
-						);
-						if (missed.length > 0) {
-							ringFeedReplayFromDbTotal.inc({ room_id: input.roomId });
-						} else {
-							ringFeedReplayGapTotal.inc({ room_id: input.roomId });
-							const gapId = `system-gap-${Date.now()}-${randomUUID().slice(0, 8)}`;
-							const gapEvent: GameEvent = {
-								id: gapId,
-								roomId: input.roomId,
-								timestamp: Date.now(),
-								type: 'system.gap' as EventType,
-								scope: 'private' as EventScope,
-								targetUserId: ctx.userId,
-								text: '── Some events were missed while you were away. ──',
-								payload: { reason: 'buffer_or_retention' },
-							};
-							yield tracked(gapId, gapEvent);
-						}
-					}
-					for (const event of missed) {
-						if (
-							event.scope === 'public' ||
-							event.targetUserId === ctx.userId
-						) {
-							yield tracked(event.id, event);
-						}
-					}
-				} else {
-					const recent = eventBus.getRecentEvents(100);
-					for (const event of recent) {
-						if (
-							event.scope === 'public' ||
-							event.targetUserId === ctx.userId
-						) {
-							yield tracked(event.id, event);
-						}
-					}
-				}
-
-				// Stream live events until the client disconnects.
+				// Attach the live subscriber BEFORE computing the replay. Events
+				// published while the replay is being assembled (the DB fallback is
+				// async) buffer into `queue`; anything the replay also covers is
+				// dropped from the buffer via `replayedIds` when the live loop drains.
+				// Subscribing after the replay snapshot left a window where those
+				// in-between events were simply lost.
 				const queue: GameEvent[] = [];
 				let resolve: (() => void) | null = null;
 
@@ -1300,11 +1318,100 @@ export function createRouter(roomManager: RoomManager) {
 					}
 				);
 
+				// Ids yielded during replay — bounded by the replay caps below, so this
+				// set stays small for the life of the subscription.
+				const replayedIds = new Set<string>();
+
+				// The try/finally must open before the replay: the subscriber is now
+				// attached, so a throw during the (async) replay has to reach the
+				// finally's unsubscribe() or the subscriber would leak.
 				wsConnectionsActive.inc({ room_id: input.roomId });
 				try {
+
+				const emitGapEvent = function* (reason: string) {
+					ringFeedReplayGapTotal.inc({ room_id: input.roomId });
+					const gapId = `${Date.now()}-gap-${randomUUID().slice(0, 8)}`;
+					const gapEvent: GameEvent = {
+						id: gapId,
+						roomId: input.roomId,
+						timestamp: Date.now(),
+						type: 'system.gap' as EventType,
+						scope: 'private' as EventScope,
+						targetUserId: ctx.userId,
+						text: '── Some events were missed while you were away. ──',
+						payload: { reason },
+					};
+					yield tracked(gapId, gapEvent);
+				};
+
+				// Deliver any missed events since the last received event ID.
+				if (input.lastEventId) {
+					const { events: buffered, truncated, upToDate, status } = eventBus.getEventsSince(
+						input.lastEventId
+					);
+					let missed: GameEvent[] = buffered;
+					let replayLimitReached = false;
+					if (truncated && !upToDate) {
+						const replay = await roomManager.getEventsSinceForRingFeed(
+							ctx.userId,
+							input.roomId,
+							input.lastEventId
+						);
+						missed = replay.events;
+						replayLimitReached = replay.limitReached;
+						log.debug('ringFeed replaying from durable storage', {
+							roomId: input.roomId,
+							userId: ctx.userId,
+							status,
+							replayed: missed.length,
+							limitReached: replayLimitReached,
+						});
+						if (missed.length > 0) {
+							ringFeedReplayFromDbTotal.inc({ room_id: input.roomId });
+						} else if (status === 'evicted') {
+							// Only warn when events demonstrably passed through the buffer
+							// while the room stayed loaded. A cold buffer with no stored
+							// events means the room was simply idle (the usual case after a
+							// deploy) — warning there would cry wolf on every restart.
+							yield* emitGapEvent('buffer_or_retention');
+						}
+					}
+					for (const event of missed) {
+						if (
+							event.scope === 'public' ||
+							event.targetUserId === ctx.userId
+						) {
+							replayedIds.add(event.id);
+							yield tracked(event.id, event);
+						}
+					}
+					if (replayLimitReached) {
+						// The replay hit its hard cap, so events between the last replayed
+						// row and "now" were silently skipped — say so rather than
+						// presenting a truncated stream as complete.
+						yield* emitGapEvent('replay_limit');
+					}
+				} else {
+					const recent = eventBus.getRecentEvents(100);
+					for (const event of recent) {
+						if (
+							event.scope === 'public' ||
+							event.targetUserId === ctx.userId
+						) {
+							replayedIds.add(event.id);
+							yield tracked(event.id, event);
+						}
+					}
+				}
+
+					// Stream live events until the client disconnects.
 					while (!signal?.aborted) {
 						while (queue.length > 0) {
 							const event = queue.shift()!;
+							// Events published while the replay was being assembled were
+							// captured by both the subscriber and (possibly) the replay
+							// itself — skip the buffered copy of anything already yielded.
+							if (replayedIds.has(event.id)) continue;
 							log.trace('ringFeed delivering event', {
 								roomId: input.roomId,
 								userId: ctx.userId,
@@ -1343,7 +1450,7 @@ export function createRouter(roomManager: RoomManager) {
 						// If the queue is still empty after the wait it was a 20-s timeout —
 						// yield a private heartbeat frame so the TCP/WS connection stays alive.
 						if (queue.length === 0 && !signal?.aborted) {
-							const hbId = `heartbeat-${Date.now()}-${ctx.userId}`;
+							const hbId = `${Date.now()}-heartbeat`;
 							yield tracked(hbId, {
 								id: hbId,
 								roomId: input.roomId,
