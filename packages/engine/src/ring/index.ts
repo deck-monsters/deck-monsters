@@ -4,6 +4,11 @@ import { actionCard, monsterCard } from '../helpers/card.js';
 import { calculateXP } from '../helpers/experience.js';
 import { getTarget } from '../helpers/targeting-strategies.js';
 import { randomContestant } from '../helpers/bosses.js';
+import {
+	buildRingEventContext,
+	selectRingEvent,
+	type RingEventDefinition,
+} from './ring-events.js';
 import { getLevel } from '../helpers/levels.js';
 import { sortCardsAlphabetically } from '../cards/helpers/sort.js';
 import { delaysAreSkipped, shortDelay, subEventDelay, veryShortDelay } from '../helpers/delay-times.js';
@@ -23,6 +28,11 @@ const BOSS_SPAWN_BEGINNER_MAX_DELAY_MS = 1_320_000; // 22 min
 const BEGINNER_LEVEL_THRESHOLD = 2;
 const BOSS_FULL_RANDOM_WEIGHT_PERCENT = 20;
 const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 30;
+/** Chance that arming a fight countdown also rolls a ring event. */
+const RING_EVENT_CHANCE_PERCENT = 25;
+
+/** Why the ring is refusing another boss right now. */
+export type BossRefusalReason = 'in_encounter' | 'boss_cap' | 'ring_full';
 
 /**
  * Calculates the max XP that still maps to `targetLevel` via `getLevel()`.
@@ -57,6 +67,14 @@ export interface Contestant {
 	character: any;
 	userId: string;
 	isBoss?: boolean;
+	/**
+	 * Per-encounter overrides applied by a ring event. These live on the contestant rather
+	 * than the monster because `monster.team` / `monster.targetingStrategy` are
+	 * `options`-backed and would persist into the room's state blob. `clearRing()` wipes
+	 * contestants after every fight, so these are inherently temporary.
+	 */
+	team?: string;
+	targetingStrategy?: string;
 	won?: boolean;
 	lost?: boolean;
 	fled?: boolean;
@@ -80,6 +98,7 @@ export class Ring extends BaseClass {
 
 	log: (err: unknown) => void;
 	spawnBosses: boolean;
+	ringEventsEnabled: boolean;
 	eventBus: RoomEventBus;
 	private readonly roomMonsterLevelsProvider?: () => number[];
 	inEncounter: boolean = false;
@@ -92,6 +111,12 @@ export class Ring extends BaseClass {
 	nextBossSpawnAt: number | null = null;
 	/** Epoch ms when the next fight will start, or null if no fight timer is active. */
 	nextFightAt: number | null = null;
+	/**
+	 * Ring event in force for the upcoming fight, if any. A plain instance field (like
+	 * `inEncounter`) so it is never serialized; rolled by `startFightTimer()`, applied by
+	 * `startEncounter()`, cleared by `clearRing()`.
+	 */
+	ringEvent?: RingEventDefinition;
 
 	/**
 	 * Stub satisfying legacy card code that calls `ring.channelManager.sendMessages()`.
@@ -107,15 +132,22 @@ export class Ring extends BaseClass {
 		eventBus: RoomEventBus,
 		{
 			spawnBosses = true,
+			ringEvents = true,
 			getRoomMonsterLevels,
 			...options
-		}: { spawnBosses?: boolean; getRoomMonsterLevels?: () => number[]; [key: string]: unknown } = {},
+		}: {
+			spawnBosses?: boolean;
+			ringEvents?: boolean;
+			getRoomMonsterLevels?: () => number[];
+			[key: string]: unknown;
+		} = {},
 		log: (err: unknown) => void = () => {}
 	) {
 		super(options);
 
 		this.log = log;
 		this.spawnBosses = spawnBosses;
+		this.ringEventsEnabled = ringEvents;
 		this.eventBus = eventBus;
 		this.roomMonsterLevelsProvider = getRoomMonsterLevels;
 		if (!Array.isArray((this.options as any).battles)) {
@@ -264,11 +296,18 @@ export class Ring extends BaseClass {
 		character,
 		userId,
 		isBoss,
+		deferFightTimer,
 	}: {
 		monster: any;
 		character: any;
 		userId: string;
 		isBoss?: boolean;
+		/**
+		 * Skip the `startFightTimer()` call. Only used when the caller is already inside
+		 * `startFightTimer()` (the Gauntlet ring event) — re-entering it there would arm a
+		 * second, untracked fight timer on top of the one the outer call is about to set.
+		 */
+		deferFightTimer?: boolean;
 	}): void {
 		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
 			const contestant: Contestant = {
@@ -300,12 +339,8 @@ export class Ring extends BaseClass {
 				}
 			}
 
-			if (this.contestants.length > MAX_MONSTERS) {
-				this.clearRing();
-			} else {
-				this.emit('add', { contestant });
-				this.startFightTimer();
-			}
+			this.emit('add', { contestant });
+			if (!deferFightTimer) this.startFightTimer();
 		} else {
 			this.pub(
 				'announce',
@@ -413,6 +448,11 @@ export class Ring extends BaseClass {
 
 		this.inEncounter = true;
 		this.encounter = {};
+
+		// Apply the ring event against the final roster — contestants may have joined or
+		// withdrawn since it was rolled during the countdown.
+		this.ringEvent?.apply(this.contestants);
+
 		this.contestants.forEach(({ userId, monster }) => {
 			monster.startEncounter(this);
 
@@ -451,6 +491,7 @@ export class Ring extends BaseClass {
 		clearTimeout(this.fightTimer);
 		this.fightTimer = undefined;
 		this.nextFightAt = null;
+		this.ringEvent = undefined;
 		this.endEncounter();
 		for (const { monster, character } of this.contestants) {
 			(monster as { disposeTimers?: () => void })?.disposeTimers?.();
@@ -502,6 +543,8 @@ export class Ring extends BaseClass {
 		const { contestants, numberOfMonstersInRing } = getPlayerContestants();
 
 		if (numberOfMonstersInRing >= MIN_MONSTERS) {
+			this.rollRingEvent();
+
 			contestants.forEach(({ userId }) =>
 				this.pub(
 					'ring.countdown',
@@ -619,11 +662,41 @@ export class Ring extends BaseClass {
 
 					this.emit('playerTurnBegin', { contestant: playerContestant, round });
 
-					const targetContestant = getTarget({
+					const targetResult = getTarget({
 						contestants: getAllActiveContestants(),
 						playerContestant,
-						strategy: playerContestant.monster.targetingStrategy,
-					}) as Contestant;
+						// A ring event's override beats the monster's own scroll-assigned strategy.
+						strategy:
+							playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
+						// Blood Feud drops team alignment for everyone.
+						...(this.ringEvent?.freeForAll ? { team: false as const } : {}),
+					});
+					// TARGET_ALL_CONTESTANTS resolves to an array rather than a single contestant.
+					// No monster should carry it as a strategy, but now that ring events assign
+					// strategies programmatically, fall back rather than dereference undefined.
+					const targetContestant = (
+						Array.isArray(targetResult) ? targetResult[0] : targetResult
+					) as Contestant | undefined;
+
+					if (!targetContestant) {
+						this.log({
+							context: 'ring.fight.noTarget',
+							monsterName: player.givenName,
+							strategy:
+								playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
+						});
+						if (getAllActiveContestants().length > 1) {
+							if (delaysAreSkipped()) {
+								queueMicrotask(() => next());
+							} else {
+								setTimeout(() => next(), veryShortDelay(round));
+							}
+						} else {
+							resolve(playerContestant);
+						}
+						return;
+					}
+
 					const { monster: proposedTarget } = targetContestant;
 
 					playerContestant.round = round;
@@ -866,13 +939,23 @@ export class Ring extends BaseClass {
 		let loserMonsterId: string | undefined;
 		let loserMonsterName: string | undefined;
 		let loserOwnerUserId: string | undefined;
-		if (contestants.length === 2 && deaths > 0) {
-			const w = contestants.find(c => c.won);
-			const l = contestants.find(c => c.lost);
-			if (w && l) {
+		if (deaths > 0) {
+			// Attribute by outcome rather than by contestant count. The old `length === 2`
+			// gate meant every multi-party fight lost its winner/loser entirely — which ring
+			// events (multi-boss gauntlets, team battles) now make the common case. Stay
+			// conservative: only claim an identity when exactly one contestant holds it.
+			const winners = contestants.filter(c => c.won);
+			const losers = contestants.filter(c => c.lost);
+
+			if (winners.length === 1) {
+				const [w] = winners;
 				winnerMonsterId = w.monster.stableId;
 				winnerMonsterName = w.monster.givenName;
 				winnerOwnerUserId = w.userId;
+			}
+
+			if (losers.length === 1) {
+				const [l] = losers;
 				loserMonsterId = l.monster.stableId;
 				loserMonsterName = l.monster.givenName;
 				loserOwnerUserId = l.userId;
@@ -911,6 +994,7 @@ export class Ring extends BaseClass {
 				rounds,
 				deaths,
 				outcome: fightOutcome,
+				ringEvent: this.ringEvent?.name ?? null,
 				participants,
 				winnerMonsterId,
 				winnerMonsterName,
@@ -1058,6 +1142,52 @@ export class Ring extends BaseClass {
 		return randomContestant({ xp: random(0, maxXp) });
 	}
 
+	/** Bosses currently in the ring. */
+	get bossCount(): number {
+		return this.contestants.reduce(
+			(total, contestant) => total + (contestant.isBoss ? 1 : 0),
+			0
+		);
+	}
+
+	/**
+	 * Whether another boss can enter the ring right now, and why not if it can't. Callers
+	 * that charge the player for a summon should check this *before* spending the charge.
+	 */
+	canAcceptBoss(): { ok: true } | { ok: false; reason: BossRefusalReason } {
+		if (this.inEncounter) return { ok: false, reason: 'in_encounter' };
+		if (this.bossCount >= MAX_BOSSES) return { ok: false, reason: 'boss_cap' };
+		if (this.contestants.length >= MAX_MONSTERS) return { ok: false, reason: 'ring_full' };
+		return { ok: true };
+	}
+
+	/**
+	 * Rolls for a ring event while the fight countdown is being armed.
+	 *
+	 * Only rolls when no event is already in force, which is what stops the Gauntlet's boss
+	 * spawns from recursing back into another roll. Spawns are deferred so the enclosing
+	 * `startFightTimer()` arms exactly one fight timer for the final roster.
+	 */
+	private rollRingEvent(): void {
+		if (!this.ringEventsEnabled) return;
+		// Same escape hatch as the contestant shuffle above: a ring event is a randomness
+		// source, so reproducible runs (tests, the harness, the balance sim) need it off.
+		if (process.env.DECK_MONSTERS_DETERMINISTIC_RING) return;
+		if (this.ringEvent || this.inEncounter) return;
+		if (random(1, 100) > RING_EVENT_CHANCE_PERCENT) return;
+
+		const ringEvent = selectRingEvent(buildRingEventContext(this.contestants));
+		if (!ringEvent) return;
+
+		this.ringEvent = ringEvent;
+		this.emit('ringEvent', { ringEvent });
+
+		for (let i = 0; i < (ringEvent.extraBosses ?? 0); i++) {
+			if (!this.canAcceptBoss().ok) break;
+			this.spawnBoss({ deferFightTimer: true });
+		}
+	}
+
 	startBossTimer(): void {
 		const ring = this;
 
@@ -1068,11 +1198,11 @@ export class Ring extends BaseClass {
 
 			this.bossTimer = setTimeout(() => {
 				this.bossTimer = undefined;
-				const numberOfBossesInRing = ring.contestants.reduce(
-					(total, contestant) => total + (contestant.isBoss ? 1 : 0),
-					0
-				);
-				if (!ring.inEncounter && numberOfBossesInRing < MAX_BOSSES) {
+				// Whether the ring could take a boss when the warning was due. If it couldn't,
+				// no warning goes out — so the spawn two minutes later must be suppressed too,
+				// or a fight ending inside the warning window produces an unannounced boss.
+				const wasWarned = ring.canAcceptBoss().ok;
+				if (wasWarned) {
 					ring.emit('bossWillSpawn', { delay: BOSS_WARNING_DELAY_MS });
 				}
 
@@ -1080,7 +1210,7 @@ export class Ring extends BaseClass {
 					this.bossTimer = undefined;
 					ring.nextBossSpawnAt = null;
 					ring.publishState();
-					if (!ring.inEncounter) {
+					if (wasWarned) {
 						ring.spawnBoss();
 					}
 					ring.startBossTimer();
@@ -1089,37 +1219,36 @@ export class Ring extends BaseClass {
 		}
 	}
 
-	spawnBoss(): Contestant | undefined {
-		const numberOfBossesInRing = this.contestants.reduce(
-			(total, contestant) => total + (contestant.isBoss ? 1 : 0),
-			0
-		);
+	spawnBoss({ deferFightTimer }: { deferFightTimer?: boolean } = {}): Contestant | undefined {
+		if (!this.canAcceptBoss().ok) return undefined;
 
-		if (!this.inEncounter && numberOfBossesInRing < MAX_BOSSES) {
-			const contestant = this.getSpawnedBossContestant();
+		const contestant = this.getSpawnedBossContestant();
 
-			this.addMonster(contestant);
+		this.addMonster({ ...contestant, deferFightTimer });
 
-			if (random(1)) {
-				const ring = this;
-				const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
-					ring.bossDespawnTimers.delete(timer);
-					// removeMonster() (called via removeBoss) rejects if the boss is no
-					// longer in the ring (e.g. the ring was cleared by a fight) — that is
-					// expected here since this timer isn't cancelled on clearRing().
-					ring.removeBoss(contestant).catch(() => {});
-				}, BOSS_DESPAWN_DELAY_MS);
-				this.bossDespawnTimers.add(timer);
-			}
-
-			return contestant;
+		if (random(1)) {
+			const ring = this;
+			const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
+				ring.bossDespawnTimers.delete(timer);
+				// removeMonster() (called via removeBoss) rejects if the boss is no
+				// longer in the ring (e.g. the ring was cleared by a fight) — that is
+				// expected here since this timer isn't cancelled on clearRing().
+				ring.removeBoss(contestant).catch(() => {});
+			}, BOSS_DESPAWN_DELAY_MS);
+			this.bossDespawnTimers.add(timer);
 		}
 
-		return undefined;
+		return contestant;
 	}
 
 	removeBoss(contestant: Contestant): Promise<void> {
-		if (!this.inEncounter && this.contestants.length === 1) {
+		// Despawn whenever no player monster is left to fight, not just when this boss is the
+		// sole contestant. Two or more bosses alone never trigger a fight either (they count
+		// as one monster for the quorum in startFightTimer), so the old `length === 1` check
+		// let an idle ring silently accumulate bosses up to MAX_BOSSES forever.
+		const hasPlayerContestants = this.contestants.some(({ isBoss }) => !isBoss);
+
+		if (!this.inEncounter && !hasPlayerContestants) {
 			return this.removeMonster(contestant as any);
 		}
 

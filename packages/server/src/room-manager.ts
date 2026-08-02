@@ -12,6 +12,8 @@ import {
 	engineReady,
 	getHydratorStatus,
 	createKeyedPromiseQueue,
+	summonAllowance,
+	BOSS_SUMMON_LIMIT,
 	type LeaderboardSortKey,
 } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
@@ -493,14 +495,27 @@ export class RoomManager {
 	async getRingState(
 		userId: string,
 		roomId: string
-	): Promise<{ nextBossSpawnAt: number | null; nextFightAt: number | null; monsterCount: number }> {
+	): Promise<{
+		nextBossSpawnAt: number | null;
+		nextFightAt: number | null;
+		monsterCount: number;
+		bossSummonsRemaining: number;
+		bossSummonLimit: number;
+		bossSummonResetAt: number | null;
+	}> {
 		await this.assertMember(userId, roomId);
 		const game = await this.getGame(roomId);
 		const ring = game.ring;
+		// Per-user, so it belongs on this membership-checked query rather than in the public
+		// `ring.state` event, which broadcasts to the whole room.
+		const allowance = summonAllowance(game.bossSummons, userId);
 		return {
 			nextBossSpawnAt: ring.nextBossSpawnAt,
 			nextFightAt: ring.nextFightAt,
 			monsterCount: ring.contestants.length,
+			bossSummonsRemaining: allowance.remaining,
+			bossSummonLimit: BOSS_SUMMON_LIMIT,
+			bossSummonResetAt: allowance.nextAvailableAt,
 		};
 	}
 

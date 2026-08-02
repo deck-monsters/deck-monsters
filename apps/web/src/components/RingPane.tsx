@@ -133,6 +133,13 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
 
   const { data: lastFight } = trpc.game.recentFights.useQuery({ roomId, limit: 1 });
 
+  // Boss summon charges are per-user, so unlike the timers they come from this
+  // membership-checked query rather than the public ring.state broadcast.
+  const { data: ringState, refetch: refetchRingState } = trpc.game.ringState.useQuery(
+    { roomId },
+    { refetchInterval: 60_000 }
+  );
+
   // Tick every second while a fight or boss timer is active, to keep the badge live
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -235,6 +242,11 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
         if (seenRef.current.has(tracked.id)) return;
         seenRef.current.add(tracked.id);
 
+        // Ring membership changed — a summon may have been spent, so refresh the charges.
+        if (event.type === 'ring.add' || event.type === 'ring.clear') {
+          void refetchRingState();
+        }
+
         setEvents(prev => [...prev, event]);
         onEvent?.(event);
       },
@@ -255,6 +267,10 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     timerBadge = `boss in ~${formatCountdown(timerState.nextBossSpawnAt)}`;
   }
 
+  const summonBadge = ringState
+    ? `summons ${ringState.bossSummonsRemaining}/${ringState.bossSummonLimit}`
+    : null;
+
   return (
     <section
       className={`terminal-pane${isActive ? ' active' : ''}`}
@@ -265,6 +281,14 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
         {timerBadge && (
           <span className="pane-header-timer" title="Time until next ring event">
             {timerBadge}
+          </span>
+        )}
+        {summonBadge && (
+          <span
+            className="pane-header-timer"
+            title="Boss summons you have left today — type `summon a boss` to use one"
+          >
+            {summonBadge}
           </span>
         )}
         {!connected && !reconnecting && <span style={{ color: 'var(--color-fg-dim)' }}>connecting…</span>}

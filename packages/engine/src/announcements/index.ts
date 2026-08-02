@@ -22,8 +22,10 @@ export { announceRolled } from './rolled.js';
 export { announceStay } from './stay.js';
 export { announceXPGain } from './xpGain.js';
 export { announceLevelUp } from './level-up.js';
+export { announceRingEvent } from './ringEvent.js';
 
 import { announceBossWillSpawn } from './bossWillSpawn.js';
+import { announceRingEvent } from './ringEvent.js';
 import { announceCard as announceCardPlayed } from './card-played.js';
 import { announceCardDrop } from './cardDrop.js';
 import { announceContestant } from './contestant.js';
@@ -213,6 +215,7 @@ export function initialize(game: RoomScopedGame): () => void {
 		{ event: 'gainedXP', listener: wrapRingEvent(announceXPGain) },
 		{ event: 'narration', listener: wrapRingEvent(announceNarration) },
 		{ event: 'remove', listener: wrapRingEvent(announceContestantLeave) },
+		{ event: 'ringEvent', listener: wrapRingEvent(announceRingEvent) },
 		{ event: 'roundComplete', listener: wrapRingEvent(announceNextRound) },
 		{ event: 'startTurn', listener: wrapRingEvent(announceNextTurn) },
 		{ event: 'playerTurnBegin', listener: wrapRingEvent(announceTurnBegin) },

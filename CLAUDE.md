@@ -1,5 +1,39 @@
 # CLAUDE.md — Deck Monsters
 
+## Standing Instructions
+
+These apply to every task in this repo, not just the one you were asked to do.
+
+1. **Fix what you find.** While working, watch for small bugs, dead branches, missing guards,
+   and copy-paste drift in the code you touch or read. Roll the fix into the same change
+   rather than leaving it — the codebase gets better incrementally. Anything too big to
+   absorb goes in `docs/roadmap/10-bug-fixes.md` with a root-cause note.
+2. **Update the docs as you go.** A behaviour change that isn't reflected in the architecture
+   docs is half-finished. Update the relevant doc in the same change, and add a new one under
+   `docs/` when you build a subsystem that future work will need context on. Record fixed
+   bugs (with root causes, not just symptoms) in `docs/roadmap/10b-bugs-fixed.md`, and keep
+   `docs/roadmap/README.md`'s status table current.
+3. **Link new docs from here.** Add them to the Architecture Docs table below so they are
+   discoverable without a search.
+4. **Explain the "why".** Comments and docs in this repo lean toward recording *why* a
+   constraint exists — several were written after a production bug. Preserve that; when you
+   fix something subtle, leave a note saying what broke, so nobody re-introduces it.
+
+## Architecture Docs
+
+Read the relevant doc *before* changing code in its area — each one exists because something
+non-obvious bit us before.
+
+| Doc | Read before touching |
+|-----|----------------------|
+| [`docs/room-scoping.md`](docs/room-scoping.md) | Any game state, DB query, tRPC procedure, or event subscription. **Hard constraint, not a guideline.** |
+| [`docs/engine-concurrency-and-timing.md`](docs/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, `events/room-event-bus.ts` prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |
+| [`docs/boss-encounters.md`](docs/boss-encounters.md) | Bosses, boss summoning, ring events, teams, or targeting strategies |
+| [`docs/observability.md`](docs/observability.md) | Metrics, logging, or Grafana dashboards |
+| [`docs/local-testing-guidelines.md`](docs/local-testing-guidelines.md) | Manual end-to-end verification (includes reusable local test rooms) |
+| [`docs/deployment.md`](docs/deployment.md) | Railway/Supabase deployment or environment configuration |
+| [`docs/roadmap/README.md`](docs/roadmap/README.md) | Planning work — the authoritative status index |
+
 ## Project Overview
 
 Deck Monsters is a turn-based monster-battling RPG game engine (think Pokémon meets deck-building). Players spawn monsters, equip them with action card decks, and send them into an auto-battling arena. The engine is platform-agnostic and driven by external connector adapters (Discord, web, and others).

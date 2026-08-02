@@ -28,6 +28,15 @@ export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
 export { getLevel } from './helpers/levels.js';
 export type { Contestant } from './ring/index.js';
 export { getXpCapForLevel } from './ring/index.js';
+export {
+	BOSS_SUMMON_LIMIT,
+	BOSS_SUMMON_WINDOW_MS,
+	recordSummon,
+	summonAllowance,
+} from './helpers/boss-summons.js';
+export type { BossSummonLedger, SummonAllowance } from './helpers/boss-summons.js';
+export { RING_EVENTS, getRingEvent, selectRingEvent } from './ring/ring-events.js';
+export type { RingEventDefinition, RingEventId } from './ring/ring-events.js';
 export { allMonsters } from './monsters/index.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {

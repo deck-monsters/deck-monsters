@@ -201,6 +201,23 @@ new ownership checks reading `optionsStore` directly.
   via `game.saveState()` before eviction, and now refuses to unload a room
   whose `ring.inEncounter` is true — a fight in progress keeps the room in
   the active cache until the next sweep.
+- **Ring events**: `Ring.rollRingEvent()` fires from inside `startFightTimer()` when the
+  countdown arms, and **only when `this.ringEvent == null`**. That guard is load-bearing —
+  the Gauntlet event calls `spawnBoss()`, which re-enters `startFightTimer()` via
+  `addMonster()`, so without it the roll recurses. Those spawns pass
+  `addMonster({ deferFightTimer: true })` for the same reason: a nested `startFightTimer()`
+  arms a second timer that the enclosing call then orphans, and one countdown fires two
+  fights. The event is applied in `startEncounter()` (against the final roster) and cleared in
+  `clearRing()`. `DECK_MONSTERS_DETERMINISTIC_RING=1` disables the roll along with the
+  contestant shuffle; both test setups set it. See
+  [`boss-encounters.md`](boss-encounters.md).
+- **The boss summon quota is enforced in the engine command handler, not the router**, and its
+  check-then-record must stay **synchronous with no `await` in between**. The web path runs
+  commands inside the per-user lane, but the Discord connector's `dispatchCommand`
+  (`connector-discord/src/slash-commands/helpers.ts`) calls `game.handleCommand()` directly
+  and `await`s the action — **no `activeFlows` entry and no `runSerializedEngineWork` lane at
+  all**. Anything that must hold for every connector belongs in the handler; anything that
+  relies on the lane silently does not apply to Discord.
 - **Timers must be disposed AND tracked**: `Game.dispose()` → `Ring.dispose()`
   + per-creature `disposeTimers()`. Any new `setTimeout`/`setInterval` on a
   long-lived object needs both a stored handle *and* a dispose path — a timer

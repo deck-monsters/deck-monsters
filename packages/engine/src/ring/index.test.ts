@@ -7,6 +7,7 @@ import Beastmaster from '../characters/beastmaster.js';
 import Game from '../game.js';
 import { RoomEventBus } from '../events/index.js';
 import { engineReady } from '../helpers/engine-ready.js';
+import { ALLIANCE_TEAM, RING_EVENTS } from './ring-events.js';
 
 describe('ring/index.ts', () => {
 	before(async () => {
@@ -377,6 +378,166 @@ describe('ring/index.ts', () => {
 			expect(midBoss).to.not.be.undefined;
 			expect(midBoss!.monster.level).to.be.at.most(3);
 			capThreeStub.restore();
+		});
+
+		it('despawns a boss when no player monsters are left, not only when it is alone', () => {
+			// Regression: removeBoss() used to require `contestants.length === 1`. Two or more
+			// bosses alone therefore never despawned — and never fought either, since
+			// startFightTimer counts all bosses as a single monster for the quorum — so an
+			// idle ring silently filled up with bosses and stayed clogged.
+			const game = new Game();
+			const ring = game.getRing();
+
+			const first = ring.spawnBoss()!;
+			ring.spawnBoss();
+			expect(ring.contestants.length).to.equal(2);
+
+			return ring.removeBoss(first).then(() => {
+				expect(ring.contestants.length).to.equal(1);
+			});
+		});
+
+		it('does not despawn a boss while a player monster is still in the ring', () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			const bossContestant = ring.spawnBoss()!;
+
+			return ring.removeBoss(bossContestant).then(() => {
+				expect(ring.contestants.length).to.equal(2);
+			});
+		});
+
+		it('suppresses an unannounced spawn when the warning could not be sent', () => {
+			// Regression: the two-minute warning was gated on the ring being able to take a
+			// boss, but the spawn two minutes later re-checked only `inEncounter`. A fight
+			// that ended inside the warning window produced a boss nobody was warned about.
+			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+			try {
+				const game = new Game({ spawnBosses: true } as any);
+				const ring = game.getRing();
+
+				// Ring is mid-encounter when the warning is due, so no warning goes out.
+				ring.inEncounter = true;
+				const warnSpy = sinon.spy();
+				ring.on('bossWillSpawn', warnSpy);
+				const spawnSpy = sinon.spy(ring, 'spawnBoss');
+
+				// Past the longest outer delay (35 min) and the 2 min warning window.
+				clock.tick(40 * 60 * 1000);
+				// The fight ends before the spawn would have fired.
+				ring.inEncounter = false;
+				clock.tick(3 * 60 * 1000);
+
+				expect(warnSpy.called).to.equal(false);
+				expect(spawnSpy.called).to.equal(false);
+
+				game.dispose();
+			} finally {
+				clock.restore();
+			}
+		});
+	});
+
+	describe('ring events', () => {
+		const ringEventFor = (id: string) => {
+			const found = RING_EVENTS.find(event => event.id === id);
+			if (!found) throw new Error(`no ring event ${id}`);
+			return found;
+		};
+
+		const addPlayer = (ring: any, name: string) => {
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: name });
+			return { character, monster };
+		};
+
+		it('is cleared when the ring is cleared', () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.ringEvent = ringEventFor('blood-feud');
+			ring.clearRing();
+
+			expect(ring.ringEvent).to.equal(undefined);
+		});
+
+		it('applies contestant overrides at encounter start without touching the monsters', () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			ring.spawnBoss();
+
+			ring.ringEvent = ringEventFor('common-cause');
+			ring.startEncounter();
+
+			const players = ring.contestants.filter(c => !c.isBoss);
+			expect(players.length).to.equal(2);
+			for (const contestant of players) {
+				expect(contestant.team).to.equal(ALLIANCE_TEAM);
+				// The persisted creature options must be untouched.
+				expect(contestant.monster.team).to.equal(undefined);
+			}
+		});
+
+		it('never re-rolls while an event is already in force', () => {
+			// The guard is what stops the Gauntlet's own boss spawns — which re-enter
+			// startFightTimer via addMonster — from rolling a second event.
+			const game = new Game();
+			const ring = game.getRing();
+
+			addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+
+			const selected = ringEventFor('blood-feud');
+			ring.ringEvent = selected;
+
+			// Lift the determinism switch so the roll is genuinely reachable here.
+			const deterministic = process.env.DECK_MONSTERS_DETERMINISTIC_RING;
+			delete process.env.DECK_MONSTERS_DETERMINISTIC_RING;
+			try {
+				for (let attempt = 0; attempt < 50; attempt += 1) {
+					(ring as any).rollRingEvent();
+				}
+			} finally {
+				process.env.DECK_MONSTERS_DETERMINISTIC_RING = deterministic;
+			}
+
+			expect(ring.ringEvent).to.equal(selected);
+			game.dispose();
+		});
+
+		it('does not arm a fight timer for a deferred add', () => {
+			// The Gauntlet spawns from inside startFightTimer(). Without deferFightTimer the
+			// nested addMonster() would arm a second timer that the outer call then orphans,
+			// so the same countdown would fire two fights.
+			const game = new Game();
+			const ring = game.getRing();
+
+			addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			expect(ring.nextFightAt).to.be.a('number');
+
+			const armedAt = ring.nextFightAt;
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-3', deferFightTimer: true });
+
+			expect(ring.contestants.length).to.equal(3);
+			// Untouched: the enclosing startFightTimer() owns the timer.
+			expect(ring.nextFightAt).to.equal(armedAt);
+
+			game.dispose();
 		});
 	});
 

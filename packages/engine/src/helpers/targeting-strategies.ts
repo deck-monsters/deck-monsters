@@ -72,7 +72,17 @@ export interface Contestant {
 	monster: ContestantMonster;
 	character: { team?: string };
 	isBoss?: boolean;
+	/**
+	 * Per-encounter team override set by a ring event. Beats `monster.team` and
+	 * `character.team` so an event can re-align the ring without writing to persisted
+	 * creature options. See `ring/ring-events.ts`.
+	 */
+	team?: string;
 }
+
+/** Team a contestant fights for, most specific source first. */
+const teamOf = (contestant: Contestant): string | undefined =>
+	contestant.team || contestant.monster.team || contestant.character.team;
 
 interface GetTargetOptions {
 	contestants?: Contestant[];
@@ -109,8 +119,7 @@ export const getTarget = ({
 
 	const resolvedPlayerContestant = playerContestant!;
 
-	const playerTeam =
-		team || resolvedPlayerContestant.monster.team || resolvedPlayerContestant.character.team;
+	const playerTeam = team || teamOf(resolvedPlayerContestant);
 	if (team === undefined && playerTeam) {
 		return getTarget({
 			contestants,
@@ -127,9 +136,7 @@ export const getTarget = ({
 			const filteredContestants = contestants.filter((contestant) => {
 				if (contestant === resolvedPlayerContestant) return !ignoreSelf;
 
-				const contestantTeam =
-					contestant.monster.team || contestant.character.team;
-				if (team && contestantTeam === team) return false;
+				if (team && teamOf(contestant) === team) return false;
 
 				found = true;
 				return true;
@@ -378,7 +385,11 @@ export const getTarget = ({
 			const currentIndex = allContestants.indexOf(resolvedPlayerContestant);
 			let previousIndex = currentIndex - 1;
 
-			if (previousIndex < 0) previousIndex = contestants.length - 1;
+			// Wrap around `allContestants` (the team-filtered list), not the raw `contestants`
+			// input. In any team fight the filtered list is shorter, so wrapping on the input
+			// length indexed past the end and returned `undefined`. TARGET_NEXT_PLAYER below
+			// has always got this right.
+			if (previousIndex < 0) previousIndex = allContestants.length - 1;
 
 			return allContestants[previousIndex];
 		}

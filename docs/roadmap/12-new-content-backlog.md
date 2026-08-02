@@ -176,6 +176,8 @@ With the event bus, tournament brackets and results naturally become `GameEvent`
 
 XP formula adjustments for team combat (multiple players' monsters vs. a single powerful opponent or NPC boss). Currently XP doesn't scale well for team scenarios.
 
+**Partially addressed.** Team battles now actually happen: the Ring Events system (Common Cause, House War, Blood Feud — see [`docs/boss-encounters.md`](../boss-encounters.md)) assigns per-encounter teams, and players can pull a boss in on demand with `summon a boss`. `calculateXP` already counts cross-team opponents (`helpers/experience.ts`), so team fights award *something* sensible, but **the formula pass is still open** — it was deliberately left out of the ring-events work to keep that change focused. Now that team fights are reachable in normal play, this is worth doing with the balance-sim harness (11-balance-and-mechanics.md).
+
 ### The King's Sentence (upstream #275)
 
 End-of-battle mechanic for large group encounters (4+ players defeating a boss whose combined level exceeds theirs):

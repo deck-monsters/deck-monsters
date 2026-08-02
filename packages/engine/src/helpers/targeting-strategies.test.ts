@@ -273,4 +273,86 @@ describe('./helpers/targeting-strategies.ts', () => {
 			expect(target.monster.givenName).to.equal(level1.monster.givenName);
 		});
 	});
+	describe('teams', () => {
+		it('prefers a contestant-level team override over the monster and character teams', () => {
+			// Ring events set `contestant.team` so they never write to persisted creature
+			// options. The override has to win, or the event would have no effect.
+			const { playerContestant, level1, level2, level3, contestants } = getContestants();
+
+			playerContestant.monster.team = 'Gryffindor';
+			level1.monster.team = 'Gryffindor';
+			level2.monster.team = 'Gryffindor';
+			level3.monster.team = 'Gryffindor';
+
+			// Everyone shares a monster team, so only the overrides distinguish sides.
+			playerContestant.team = 'Red';
+			level3.team = 'Red';
+			level1.team = 'Blue';
+			level2.team = 'Blue';
+
+			const targets = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_ALL_CONTESTANTS
+			}) as typeof contestants;
+
+			const names = targets.map(({ monster }) => monster.givenName);
+			expect(names).to.not.include(level3.monster.givenName);
+			expect(names).to.include(level1.monster.givenName);
+			expect(names).to.include(level2.monster.givenName);
+		});
+
+		it('falls back to a free-for-all when everyone left is a teammate', () => {
+			const { playerContestant, level1, level2, level3, contestants } = getContestants();
+
+			for (const contestant of [playerContestant, level1, level2, level3]) {
+				contestant.team = 'Red';
+			}
+
+			const targets = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_ALL_CONTESTANTS
+			}) as typeof contestants;
+
+			expect(targets.length).to.equal(3);
+		});
+	});
+
+	describe('TARGET_PREVIOUS_PLAYER', () => {
+		it('gets the previous target in order of play', () => {
+			const { playerContestant, level2, contestants } = getContestants();
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_PREVIOUS_PLAYER
+			}) as typeof level2;
+
+			expect(target.monster.givenName).to.equal(level2.monster.givenName);
+		});
+
+		it('wraps around the team-filtered list, not the raw contestant list', () => {
+			// Regression: the wraparound used `contestants.length` (unfiltered). In a team
+			// fight the filtered list is shorter, so the index ran past the end and the
+			// strategy returned `undefined` — a crash waiting to happen mid-fight.
+			const { playerContestant, level1, level2, level3, contestants } = getContestants();
+
+			// Filter out everyone but level1, leaving the player at index 0 of the filtered
+			// list so the previous index wraps.
+			playerContestant.team = 'Red';
+			level2.team = 'Blue';
+			level3.team = 'Blue';
+			level1.team = 'Blue';
+
+			const target = targetingStrategies.getTarget({
+				playerContestant,
+				contestants,
+				strategy: targetingStrategies.TARGET_PREVIOUS_PLAYER
+			}) as typeof level1;
+
+			expect(target).to.not.equal(undefined);
+			expect(target.monster.givenName).to.be.a('string');
+		});
+	});
 });

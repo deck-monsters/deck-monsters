@@ -198,6 +198,124 @@ Five smaller observations from the #19/#26 investigation, all addressed on 2026-
 
 ---
 
+### 27. Boss participants abort every leaderboard write for the fight — FIXED (found while building boss summoning)
+
+`packages/server/src/fight-stats-subscriber.ts`'s `handleFightResolved` wrote each
+`ring.fightResolved` participant's `ownerUserId` straight into `room_player_stats.user_id`
+(`uuid`, FK → `profiles`). Boss contestants carry the sentinel `userId: 'boss'`
+(`engine/src/helpers/bosses.ts`), so the insert threw. Because the participants were processed
+in a sequential `for … await` loop and the whole function was only `.catch(log)`-ed at the
+subscription site, **the first boss row aborted every remaining participant's stats** — and
+since `Ring.addMonster` shuffles contestants, the boss's position was random, so a boss in
+slot 0 dropped the entire fight. The net effect: the room leaderboard silently ignored every
+fight a boss took part in, which is most of them in a quiet room. `fight-summary-writer.ts`
+already defended against the same sentinel via a local `profileUuidOrNull`, which is why fight
+summaries looked fine while the leaderboard drifted.
+
+**Fixed**: the uuid guard moved to a shared `packages/server/src/db/profile-id.ts`
+(`profileUuidOrNull` / `isProfileUuid` / `UUID_HEX_RE`) and is now applied by all three
+subscribers. Participants without a profile owner are skipped (a disposable boss belongs on
+no leaderboard), and each participant's writes are wrapped in their own try/catch so one bad
+row can never cost anybody else their stats. `handleXpCoinsOnly` got the same guard. Covered
+by `fight-stats-subscriber.test.ts`, whose Db double rejects non-uuid values the way Postgres
+does and asserts a boss in slot 0 no longer costs the players behind it.
+
+**Status**: Fixed.
+
+---
+
+### 28. Boss win/loss events silently failed to persist — FIXED
+
+`event-persister.ts` wrote `targetUserId: event.targetUserId ?? null` into
+`room_events.target_user_id` (`uuid`). Private boss `ring.win` / `ring.loss` events are
+published with `targetUserId: 'boss'` (`ring/index.ts`), so each one threw and was dropped
+with an error log. Less damaging than #27 — the write queue's `.catch` kept subsequent writes
+going, and the lost events were boss-private ones nobody reads — but it produced a steady
+trickle of error noise on every boss fight. **Fixed** with the same shared
+`profileUuidOrNull` guard.
+
+**Status**: Fixed.
+
+---
+
+### 29. `TARGET_PREVIOUS_PLAYER` returns `undefined` in team fights — FIXED
+
+`helpers/targeting-strategies.ts` wrapped its previous-index lookup with
+`contestants.length` — the *unfiltered* input — instead of `allContestants.length`, the
+team-filtered list it was actually indexing into. `TARGET_NEXT_PLAYER` had always used the
+filtered length correctly. Any fight where teams removed a contestant from the candidate list
+made the filtered list shorter, so the wraparound indexed past the end and the strategy
+returned `undefined`, which `Ring.fight()` immediately dereferenced. Latent until now (only
+the Sorting Hat scroll ever assigned a team), and load-bearing the moment ring events started
+assigning teams. **Fixed**, with a regression test.
+
+**Status**: Fixed.
+
+---
+
+### 30. An idle ring could clog with bosses forever — FIXED
+
+`Ring.removeBoss()` only despawned a boss when `contestants.length === 1`. Two or more bosses
+alone therefore never despawned — and never fought either, because `startFightTimer()` counts
+all bosses collectively as one monster for the two-monster quorum. So a room left alone could
+accumulate bosses up to `MAX_BOSSES` and sit there permanently, with the ring showing a crowd
+and nothing ever happening. **Fixed**: `removeBoss` now despawns whenever no *player* monster
+is left in the ring. Covered by two new tests (despawns with bosses only; does not despawn
+while a player is present).
+
+**Status**: Fixed.
+
+---
+
+### 31. Bosses could spawn with no warning — FIXED
+
+`Ring.startBossTimer()` gated the two-minute `bossWillSpawn` warning on
+`!inEncounter && bossCount < MAX_BOSSES`, but the inner timer that actually spawned re-checked
+only `inEncounter`. The condition was therefore evaluated twice, two minutes apart: a fight
+that ended inside the warning window produced a boss nobody had been warned about. **Fixed**:
+capacity is evaluated once, when the warning is due, and the same decision gates the spawn.
+The check itself moved into a reusable `Ring.canAcceptBoss()`, which the summon command also
+uses to refuse without spending a charge. Covered by a regression test.
+
+**Status**: Fixed.
+
+---
+
+### 32. Multi-party fights lost winner and loser attribution — FIXED
+
+`Ring.fightConcludes()` only populated `winnerMonsterId` / `loserMonsterId` (and their name
+and owner fields) when `contestants.length === 2`. Every fight with three or more
+contestants — already possible with multiple bosses, and now routine with ring events — wrote
+a `fight_summaries` row and a `ring.fightResolved` payload with no winner or loser at all.
+**Fixed**: attribution is derived from the outcome flags rather than the contestant count,
+and stays conservative — an identity is only claimed when exactly one contestant holds it, so
+genuinely ambiguous fights are still left blank rather than guessed at.
+
+**Status**: Fixed.
+
+---
+
+### 33. Small cleanups alongside the above
+
+- **Dead branch in `Ring.addMonster`**: `if (this.contestants.length > MAX_MONSTERS)` sat
+  inside a block already guarded by `< MAX_MONSTERS`, so it was unreachable. Removed.
+- **`calculateXP` crash guard**: `helpers/experience.ts` read `opponents[0].monster.givenName`
+  without checking `opponents.length`. Unreachable today (fights need two contestants) but a
+  one-line guard now.
+- **Unhandled `TARGET_ALL_CONTESTANTS` in `Ring.fight()`**: `getTarget()` returns a
+  `Contestant[]` for that strategy while every other returns a single contestant, and the
+  fight loop cast unconditionally. Harmless while only scrolls assigned strategies; now that
+  ring events assign them programmatically, the loop handles the array case and logs +
+  skips a turn rather than dereferencing `undefined`.
+- **Admin `spawn a boss` was invisible to the player**: it rejected with a bare
+  `Promise.reject(new Error(...))`, which the router's `.catch` swallows, so a non-admin got
+  no feedback at all. Switched to `announceAndThrow`, the pattern the rest of the codebase
+  already uses.
+
+**Status**: Fixed.
+
+---
+
 ## Other Resolved Items
 
 ### 1. "Barely blocked" message fires incorrectly (upstream #181)
@@ -285,6 +403,13 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Fix fight log not updating after new fights complete (pending-snapshot race + retries, #15)
 - [x] Fix idle-sweep orphaning in-progress fights (`unloadRoom` checks `ring.inEncounter`, #21)
 - [x] Dispose pending boss despawn timers (`bossDespawnTimers` Set, #22)
+- [x] Guard every `uuid` write path against the `'boss'` sentinel (`db/profile-id.ts`, #27/#28)
+- [x] Isolate per-participant fight-stat writes so one bad row can't abort the rest (#27)
+- [x] Fix `TARGET_PREVIOUS_PLAYER` wraparound to use the team-filtered list (#29)
+- [x] Despawn bosses when no player monster remains, not only when alone (#30)
+- [x] Make the boss spawn warning and the spawn itself agree (`canAcceptBoss()`, #31)
+- [x] Derive winner/loser attribution from outcomes so multi-party fights keep it (#32)
+- [x] Remove the unreachable `MAX_MONSTERS` branch in `addMonster`; guard `calculateXP` and the `getTarget` array case; surface `spawn a boss`'s admin refusal (#33)
 - [x] Fix cross-room stateChange save amplification (room-scoped guard on the listener, #23)
 - [x] Fix direct mutations bypassing stateChange (`getCharacter`, `Ring.removeMonster`, `removeItem`, #24)
 - [x] Fix cross-room reward duplication (creature.win/loss/permaDeath/fled) (CRITICAL, found while fixing #23, #25)

@@ -17,6 +17,7 @@ import { eq, sql } from 'drizzle-orm';
 import type { RoomEventBus, GameEvent } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { fightSummaries, rooms } from './db/schema.js';
+import { profileUuidOrNull } from './db/profile-id.js';
 import { createLogger } from './logger.js';
 import { fightSummaryWriteFailures } from './metrics/index.js';
 
@@ -42,15 +43,6 @@ function enqueueFightSummaryWrite(roomId: string, fn: () => Promise<void>): void
 		})
 		.then(fn);
 	fightSummaryWriteQueues.set(roomId, next);
-}
-
-/** Accept any UUID-shaped hex so non-v4 profile IDs still pass; rejects Discord snowflakes etc. */
-const UUID_HEX_RE =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function profileUuidOrNull(value: string | undefined): string | null {
-	if (!value || !UUID_HEX_RE.test(value)) return null;
-	return value;
 }
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -175,6 +167,8 @@ async function onFightResolved(
 		rounds: number;
 		deaths: number;
 		outcome: string;
+		/** Name of the ring event in force for this fight, if any. */
+		ringEvent?: string | null;
 		participants?: unknown[];
 		winnerMonsterId?: string;
 		winnerMonsterName?: string;
@@ -238,6 +232,7 @@ async function onFightResolved(
 			loserXpGained: loserXp,
 			cardDropName: pending?.cardDropName ?? null,
 			notableCards: null,
+			ringEvent: payload.ringEvent ?? null,
 			participants: payload.participants ?? [],
 		});
 

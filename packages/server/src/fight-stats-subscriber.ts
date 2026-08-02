@@ -7,6 +7,7 @@ import { sql } from 'drizzle-orm';
 import type { RoomEventBus, GameEvent } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { roomMonsterStats, roomPlayerStats } from './db/schema.js';
+import { profileUuidOrNull } from './db/profile-id.js';
 import { createLogger } from './logger.js';
 
 const log = createLogger('fight-stats');
@@ -77,59 +78,79 @@ async function handleFightResolved(db: Db, event: GameEvent): Promise<void> {
 	log.debug('updating fight stats', { roomId, participantCount: participants.length });
 
 	for (const p of participants) {
+		// Bosses are not players: they carry the sentinel `ownerUserId: 'boss'`, which is not
+		// a uuid, so writing it to room_player_stats.user_id (uuid, FK -> profiles) throws.
+		// This used to abort the whole sequential loop, silently dropping the stats of every
+		// participant after the boss — and since ring order is shuffled, a boss in the first
+		// slot dropped the entire fight. Leaderboards were quietly missing all boss fights.
+		const ownerUserId = profileUuidOrNull(p.ownerUserId);
+
+		// Boss monsters are disposable and have no place on a leaderboard either, so a
+		// participant without a profile owner is skipped entirely.
+		if (!ownerUserId) continue;
+
 		const { wins, losses, draws } = outcomeToPlayerDelta(p.outcome);
 		const pd = outcomeToMonsterDelta(p.outcome);
 
-		await db
-			.insert(roomPlayerStats)
-			.values({
-				roomId,
-				userId: p.ownerUserId,
-				xp: p.xpGained,
-				wins,
-				losses,
-				draws,
-				coinsEarned: 0,
-			})
-			.onConflictDoUpdate({
-				target: [roomPlayerStats.roomId, roomPlayerStats.userId],
-				set: {
-					xp: sql`${roomPlayerStats.xp} + ${p.xpGained}`,
-					wins: sql`${roomPlayerStats.wins} + ${wins}`,
-					losses: sql`${roomPlayerStats.losses} + ${losses}`,
-					draws: sql`${roomPlayerStats.draws} + ${draws}`,
-					updatedAt: new Date(),
-				},
-			});
+		// Per-participant isolation, so one bad row can never cost anybody else their stats.
+		try {
+			await db
+				.insert(roomPlayerStats)
+				.values({
+					roomId,
+					userId: ownerUserId,
+					xp: p.xpGained,
+					wins,
+					losses,
+					draws,
+					coinsEarned: 0,
+				})
+				.onConflictDoUpdate({
+					target: [roomPlayerStats.roomId, roomPlayerStats.userId],
+					set: {
+						xp: sql`${roomPlayerStats.xp} + ${p.xpGained}`,
+						wins: sql`${roomPlayerStats.wins} + ${wins}`,
+						losses: sql`${roomPlayerStats.losses} + ${losses}`,
+						draws: sql`${roomPlayerStats.draws} + ${draws}`,
+						updatedAt: new Date(),
+					},
+				});
 
-		await db
-			.insert(roomMonsterStats)
-			.values({
-				roomId,
-				monsterId: p.monsterId,
-				ownerUserId: p.ownerUserId,
-				displayName: p.monsterName,
-				monsterType: p.monsterType,
-				xp: p.xpGained,
-				level: p.level,
-				wins: pd.wins,
-				losses: pd.losses,
-				draws: pd.draws,
-			})
-			.onConflictDoUpdate({
-				target: [roomMonsterStats.roomId, roomMonsterStats.monsterId],
-				set: {
-					ownerUserId: p.ownerUserId,
+			await db
+				.insert(roomMonsterStats)
+				.values({
+					roomId,
+					monsterId: p.monsterId,
+					ownerUserId,
 					displayName: p.monsterName,
 					monsterType: p.monsterType,
-					xp: sql`${roomMonsterStats.xp} + ${p.xpGained}`,
+					xp: p.xpGained,
 					level: p.level,
-					wins: sql`${roomMonsterStats.wins} + ${pd.wins}`,
-					losses: sql`${roomMonsterStats.losses} + ${pd.losses}`,
-					draws: sql`${roomMonsterStats.draws} + ${pd.draws}`,
-					updatedAt: new Date(),
-				},
+					wins: pd.wins,
+					losses: pd.losses,
+					draws: pd.draws,
+				})
+				.onConflictDoUpdate({
+					target: [roomMonsterStats.roomId, roomMonsterStats.monsterId],
+					set: {
+						ownerUserId,
+						displayName: p.monsterName,
+						monsterType: p.monsterType,
+						xp: sql`${roomMonsterStats.xp} + ${p.xpGained}`,
+						level: p.level,
+						wins: sql`${roomMonsterStats.wins} + ${pd.wins}`,
+						losses: sql`${roomMonsterStats.losses} + ${pd.losses}`,
+						draws: sql`${roomMonsterStats.draws} + ${pd.draws}`,
+						updatedAt: new Date(),
+					},
+				});
+		} catch (err) {
+			log.error('failed to record participant fight stats', {
+				roomId,
+				monsterId: p.monsterId,
+				err,
 			});
+		}
 	}
 }
 
@@ -140,7 +161,8 @@ async function handleXpCoinsOnly(db: Db, event: GameEvent): Promise<void> {
 		contestant?: { userId?: string };
 	};
 	const coinsGained = payload.coinsGained ?? 0;
-	const userId = payload.contestant?.userId;
+	// Same boss-sentinel guard as handleFightResolved — 'boss' is not a profile uuid.
+	const userId = profileUuidOrNull(payload.contestant?.userId);
 	if (coinsGained <= 0 || !userId) return;
 
 	log.trace('updating coin stats from ring.xp', { roomId: event.roomId, userId, coinsGained });

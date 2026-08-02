@@ -4,6 +4,12 @@
 // the var at call time, so this is safe even after module load).
 process.env.DECK_MONSTERS_SKIP_DELAYS = '1';
 
+// Keep the ring deterministic: no contestant shuffle on add, and no random ring-event
+// rolls when a fight countdown arms. Without this, a 25% chance of (say) the Gauntlet
+// pulling two extra bosses into the ring makes any test that counts contestants flaky.
+// Tests that want a ring event set `ring.ringEvent` directly.
+process.env.DECK_MONSTERS_DETERMINISTIC_RING = '1';
+
 import { use as chaiUse } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import sinonChai from 'sinon-chai';

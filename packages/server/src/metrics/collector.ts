@@ -26,10 +26,12 @@ import {
 	playerFled,
 	monsterPermDeaths,
 	bossSpawns,
+	bossSummons,
+	ringEvents,
 	monstersInRing,
 	promptTimeouts,
 } from './index.js';
-import { extractRingAddContestant } from '../ring-event-args.js';
+import { extractRingAddContestant, extractRingEvent } from '../ring-event-args.js';
 
 // The ring countdown fires FIGHT_DELAY ms before combat starts.
 // We record the countdown timestamp and add this offset to get the
@@ -37,9 +39,11 @@ import { extractRingAddContestant } from '../ring-event-args.js';
 const FIGHT_DELAY_MS = 60_000;
 
 // Duck-typed interface — only the EventEmitter methods we actually use.
+type RingMetricEvent = 'add' | 'bossSummoned' | 'ringEvent';
+
 interface RingLike {
-	on(event: 'add', listener: (...args: unknown[]) => void): unknown;
-	off(event: 'add', listener: (...args: unknown[]) => void): unknown;
+	on(event: RingMetricEvent, listener: (...args: unknown[]) => void): unknown;
+	off(event: RingMetricEvent, listener: (...args: unknown[]) => void): unknown;
 }
 
 type FightContestant = {
@@ -183,11 +187,28 @@ export function attachMetricsCollector(
 		}
 	};
 
+	// Player-initiated summons and ring events ride the ring's own emitter for the same
+	// reason boss spawns do — neither has a distinct external event type.
+	const onBossSummoned = () => {
+		bossSummons.inc({ room_id: roomId });
+	};
+
+	const onRingEvent = (...args: unknown[]) => {
+		const ringEvent = extractRingEvent(args);
+		if (ringEvent?.id) {
+			ringEvents.inc({ room_id: roomId, event: ringEvent.id });
+		}
+	};
+
 	ring.on('add', onRingAdd);
+	ring.on('bossSummoned', onBossSummoned);
+	ring.on('ringEvent', onRingEvent);
 
 	return () => {
 		unsubscribeEventBus();
 		ring.off('add', onRingAdd);
+		ring.off('bossSummoned', onBossSummoned);
+		ring.off('ringEvent', onRingEvent);
 		// Reset the ring gauge to 0 when the room is unloaded so stale
 		// values don't linger after a restart.
 		monstersInRing.set({ room_id: roomId }, 0);

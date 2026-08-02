@@ -157,6 +157,8 @@ export const fightSummaries = pgTable(
 		loserXpGained: integer('loser_xp_gained').notNull().default(0),
 		cardDropName: text('card_drop_name'),
 		notableCards: text('notable_cards').array(),
+		/** Name of the ring event in force for this fight (see engine `ring/ring-events.ts`). */
+		ringEvent: text('ring_event'),
 		participants: jsonb('participants').$type<unknown[]>().notNull().default([]),
 		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 	},

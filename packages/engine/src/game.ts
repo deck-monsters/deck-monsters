@@ -21,6 +21,7 @@ import { Ring } from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
 import type { StateStore } from './types/state-store.js';
 import { resolveShop, type Shop } from './items/store/shop.js';
+import type { BossSummonLedger } from './helpers/boss-summons.js';
 import { announceAndThrow } from './helpers/announce-and-throw.js';
 
 // State save debounce: 30 seconds
@@ -79,6 +80,7 @@ export class Game extends BaseClass {
 			this._eventBus,
 			{
 				spawnBosses: (this.options as any).spawnBosses,
+				ringEvents: (this.options as any).ringEvents,
 				getRoomMonsterLevels: () => this.getRoomMonsterLevels(),
 			},
 			this.log
@@ -189,6 +191,21 @@ export class Game extends BaseClass {
 
 	commitShop(shop: Shop): void {
 		this.setOptions({ shop } as any);
+	}
+
+	/**
+	 * Room-scoped boss summon ledger — see `helpers/boss-summons.ts`.
+	 *
+	 * Deliberately a pure read, unlike `shop` above: pruning here would call `setOptions()`,
+	 * which broadcasts `stateChange` synchronously. Expired entries are pruned by
+	 * `recordSummon()` instead. See `docs/engine-concurrency-and-timing.md` §7.
+	 */
+	get bossSummons(): BossSummonLedger {
+		return ((this.options as any).bossSummons as BossSummonLedger | undefined) ?? {};
+	}
+
+	set bossSummons(bossSummons: BossSummonLedger) {
+		this.setOptions({ bossSummons } as any);
 	}
 
 	private getRoomMonsterLevels(): number[] {

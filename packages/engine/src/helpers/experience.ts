@@ -98,8 +98,10 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 		let levelText: string;
 		if (opponents.length > 1) {
 			levelText = `${contestants.length - 1} opponents at an ${levelDescription}`;
-		} else {
+		} else if (opponents.length === 1) {
 			levelText = `${opponents[0].monster.givenName} (${levelDescription})`;
+		} else {
+			levelText = 'no remaining opponents';
 		}
 
 		reasonList.push(

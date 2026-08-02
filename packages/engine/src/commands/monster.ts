@@ -1,4 +1,12 @@
 import getArray from '../helpers/get-array.js';
+import { announceAndThrow } from '../helpers/announce-and-throw.js';
+import { formatRelative } from '../helpers/time.js';
+import {
+	BOSS_SUMMON_LIMIT,
+	recordSummon,
+	summonAllowance,
+} from '../helpers/boss-summons.js';
+import { getRingEvent, RING_EVENTS } from '../ring/ring-events.js';
 import type { registerHandler } from './index.js';
 
 const cleanArgs = (args: Record<string, any> = {}): Record<string, any> => {
@@ -262,12 +270,120 @@ function spawnAction({ channel, character, game, isDM, ...options }: any): Promi
 }
 
 const SPAWN_BOSS_REGEX = /spawn (?:a )?boss$/i;
-function spawnBossAction({ game, isAdmin }: any): Promise<unknown> {
+function spawnBossAction({ channel, game, isAdmin }: any): Promise<unknown> {
 	if (!isAdmin) {
-		return Promise.reject(new Error('Only admins can spawn bosses'));
+		// announceAndThrow rather than a bare reject: the router's `.catch` swallows the
+		// rejection, so a bare reject leaves the player staring at a console that ignored them.
+		return announceAndThrow(channel, 'Only admins can spawn bosses.');
 	}
 
 	return Promise.resolve(game.getRing()).then((ring: any) => ring.spawnBoss());
+}
+
+const BOSS_REFUSAL_MESSAGES: Record<string, string> = {
+	in_encounter: 'A fight is already underway — wait for it to finish before summoning a boss.',
+	boss_cap: 'There are already as many bosses in the ring as it can hold.',
+	ring_full: 'The ring is full! Wait until the current battle is over and try again.',
+};
+
+const SUMMON_BOSS_REGEX = /summon (?:a )?boss$/i;
+function summonBossAction({ channel, character, game, isDM, user }: any): Promise<unknown> {
+	if (!isDM) {
+		return Promise.reject(new Error('Please talk to me in a direct message'));
+	}
+
+	return Promise.resolve().then(() => {
+		const ring = game.getRing();
+		const userId = user?.id;
+
+		if (!userId) {
+			return announceAndThrow(channel, 'I could not work out who you are.');
+		}
+
+		const hasMonsterInRing = ring.contestants.some(
+			(contestant: any) => contestant.character === character && !contestant.isBoss
+		);
+		if (!hasMonsterInRing) {
+			return announceAndThrow(
+				channel,
+				'You need a monster in the ring before you can summon a boss. Try `send [monster] to the ring` first.'
+			);
+		}
+
+		const capacity = ring.canAcceptBoss();
+		if (!capacity.ok) {
+			return announceAndThrow(
+				channel,
+				BOSS_REFUSAL_MESSAGES[capacity.reason] ?? 'The ring cannot take another boss right now.'
+			);
+		}
+
+		// Check and record in one synchronous run, with no await in between. On the web path
+		// this also sits inside the per-user engine lane, but the Discord connector calls
+		// game.handleCommand() directly with no lane at all — so atomicity has to come from
+		// here. See docs/engine-concurrency-and-timing.md.
+		const now = Date.now();
+		const allowance = summonAllowance(game.bossSummons, userId, now);
+
+		if (!allowance.allowed) {
+			return announceAndThrow(
+				channel,
+				`You have used all ${BOSS_SUMMON_LIMIT} of your boss summons for today. Your next summon unlocks ${formatRelative(allowance.nextAvailableAt ?? now, now)}.`
+			);
+		}
+
+		const contestant = ring.spawnBoss();
+		if (!contestant) {
+			// Belt and braces — nothing above yields, so this cannot lose a race. Bail before
+			// spending the charge rather than burning it on a boss that never arrived.
+			return announceAndThrow(
+				channel,
+				'The ring cannot take another boss right now. Your summon has not been used.'
+			);
+		}
+
+		game.bossSummons = recordSummon(game.bossSummons, userId, now);
+
+		const remaining = allowance.remaining - 1;
+		const { monster } = contestant;
+
+		ring.emit('bossSummoned', { userId, contestant });
+
+		ring.eventBus.publish({
+			type: 'announce',
+			scope: 'public',
+			text: `${character.givenName ?? 'A beastmaster'} has summoned a boss into the ring!`,
+			payload: { summonedBy: userId },
+		});
+
+		return channel({
+			announce: `⚔️ You summoned ${monster.identity} — a ${monster.displayLevel} ${monster.creatureType}!\n\nYou have ${remaining} boss ${remaining === 1 ? 'summon' : 'summons'} left today.`,
+		});
+	});
+}
+
+const TRIGGER_RING_EVENT_REGEX = /trigger (?:ring )?event (.+)$/i;
+function triggerRingEventAction({ channel, game, isAdmin, results }: any): Promise<unknown> {
+	if (!isAdmin) {
+		return announceAndThrow(channel, 'Only admins can trigger ring events.');
+	}
+
+	return Promise.resolve().then(() => {
+		const ringEvent = getRingEvent(String(results[1] ?? ''));
+
+		if (!ringEvent) {
+			return announceAndThrow(
+				channel,
+				`Unknown ring event. Known events: ${RING_EVENTS.map(event => event.id).join(', ')}.`
+			);
+		}
+
+		const ring = game.getRing();
+		ring.ringEvent = ringEvent;
+		ring.emit('ringEvent', { ringEvent });
+
+		return channel({ announce: `Ring event forced: ${ringEvent.name}.` });
+	});
 }
 
 const TAKE_ITEMS_FROM_MONSTER_REGEX = /take (?:(?:an )?items?|(.+?)?) from (?:a )?(.+?)$/i;
@@ -324,6 +440,8 @@ export default function monsterHandlers(
 	registerHandlerFn(SEND_MONSTER_TO_THE_RING_REGEX, sendMonsterToTheRingAction);
 	registerHandlerFn(SPAWN_REGEX, spawnAction);
 	registerHandlerFn(SPAWN_BOSS_REGEX, spawnBossAction);
+	registerHandlerFn(SUMMON_BOSS_REGEX, summonBossAction);
+	registerHandlerFn(TRIGGER_RING_EVENT_REGEX, triggerRingEventAction);
 	registerHandlerFn(TAKE_ITEMS_FROM_MONSTER_REGEX, takeItemsFromMonsterAction);
 	registerHandlerFn(USE_ITEMS_ON_MONSTER_REGEX, useItemsOnMonsterAction);
 }
