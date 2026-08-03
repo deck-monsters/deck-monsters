@@ -134,10 +134,12 @@ export const RING_EVENTS: RingEventDefinition[] = [
 		 * Pure two-house player event: fight ends when one house is eliminated. Every surviving
 		 * member of the victorious house is recorded as a winner.
 		 *
-		 * Bosses are excluded from eligibility: each boss contestant is its own unnamed faction
-		 * (userId: 'boss' → no shared team). In last-team mode an incidental boss faction would
-		 * remain after one house falls, blocking the win condition. Common Cause is the
-		 * boss-vs-player team event.
+		 * Bosses are excluded from eligibility so this stays a two-sided war. Bosses all share
+		 * one faction (`monster.team === 'Boss'`, and `userId === 'boss'` behind it), so adding
+		 * them would not break the win condition — `factionOf` collapses them into a single
+		 * third side — but it would turn a duel between two houses into a three-way elimination
+		 * that only ends once two whole factions are wiped out. Common Cause is the
+		 * boss-vs-player team event; keep House War player-only.
 		 */
 		victoryMode: 'last-team',
 		eligible: ({ playerCount, bossCount }) => playerCount >= 3 && bossCount === 0,
