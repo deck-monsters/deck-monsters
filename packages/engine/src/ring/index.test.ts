@@ -1370,7 +1370,9 @@ describe('ring/index.ts', () => {
 			const cardIndexByCard = new WeakMap<object, number>();
 			for (const { monster } of ring.contestants) {
 				monster.hp = 10_000;
-				monster.cards.forEach((card, index) => cardIndexByCard.set(card, index));
+				monster.cards.forEach((card: { play: (...args: unknown[]) => unknown }, index: number) =>
+					cardIndexByCard.set(card, index)
+				);
 				for (const card of monster.cards) {
 					const originalPlay = card.play.bind(card);
 					card.play = ((...args: Parameters<typeof card.play>) => {
