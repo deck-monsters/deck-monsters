@@ -179,7 +179,7 @@ export class DiscordBot {
 				this.db
 			);
 
-			const roomId = await this.guildRoomManager.getOrCreateDefaultRoom(guildId, supabaseUserId);
+			const roomId = await this.guildRoomManager.resolveRoomForUser(guildId, supabaseUserId);
 			const game = await this.roomManager.getGame(roomId);
 
 			const action = game.handleCommand({ command: commandText });

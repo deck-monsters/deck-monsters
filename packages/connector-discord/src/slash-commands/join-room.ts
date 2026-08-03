@@ -16,9 +16,14 @@ export const joinRoom: SlashCommand = {
 
 		const { supabaseUserId } = await resolveUser(interaction, ctx);
 		const inviteCode = interaction.options.getString('code', true);
+		const guildId = interaction.guildId ?? `dm-${interaction.user.id}`;
 
 		try {
-			const { roomId } = await ctx.guildRoomManager.joinRoomByCode(supabaseUserId, inviteCode);
+			const { roomId } = await ctx.guildRoomManager.joinRoomByCode(
+				guildId,
+				supabaseUserId,
+				inviteCode
+			);
 			await interaction.editReply({
 				content: `✅ Joined room \`${roomId}\`!`,
 				components: [],

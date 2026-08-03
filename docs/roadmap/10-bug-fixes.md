@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium — content pass plus Discord/concurrency follow-ups from the 2026-08-03 audit.
-**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #64, #65–#69, #71, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#63, #70, #72–#73 (audit follow-ups that need a design pass).
+**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #64, #65–#69, #70–#72, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#63, #73 (audit follow-ups that need a design pass).
 
 ## Code Quality Issues
 
@@ -47,18 +47,6 @@ Per-user lanes mean two members of the same room can mutate one shared `Game` in
 
 **Action**: Lift subscription (or at least cursor tracking) to `Terminal` and fan out events to both panes.
 
-### 70. Guild default-room creation race
-
-`guild_rooms` PK is `(guild_id, room_id)` with no uniqueness on `is_default`. Concurrent first-time `getOrCreateDefaultRoom` calls can create two default rooms for one guild.
-
-**Action**: Unique partial index on `(guild_id) WHERE is_default`, plus transactional create-or-get.
-
-### 72. Discord always targets the guild default room
-
-`resolveUser` always calls `getOrCreateDefaultRoom`. `/join-room` adds membership elsewhere, but subsequent slash commands still hit the default room.
-
-**Action**: Track per-user active room for the guild (or require an explicit room option on commands).
-
 ### 73. Test harness lane key does not match production
 
 `createRoomCommandRunner` serializes by `roomId` only; production console commands use `${roomId}:${userId}`. Integration tests can hide cross-user interleaving.
@@ -81,6 +69,4 @@ Per-user lanes mean two members of the same room can mutate one shared `Game` in
 - [ ] Workshop ↔ console same-user interleave guard (#61)
 - [ ] Decide room-wide vs per-user engine serialization for multi-player (#62)
 - [ ] Unify web `ringFeed` subscription / cursor (#63)
-- [ ] Guild default-room uniqueness (#70)
-- [ ] Discord active-room tracking (#72)
 - [ ] Align test harness lanes with production (#73)

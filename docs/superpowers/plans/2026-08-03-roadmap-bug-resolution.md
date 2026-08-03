@@ -92,14 +92,14 @@
 - Modify: create/join room commands and tests
 - Update roadmap
 
-- [ ] Add failing tests for concurrent default creation and active-room selection after join/create.
-- [ ] Add a unique partial index for one default per guild.
-- [ ] Add a room-scoped, persistent `(guildId,userId) -> roomId` active-room mapping with foreign keys/cascade.
-- [ ] Make default creation tolerate the uniqueness race by re-selecting the winner and cleaning up any losing orphan room.
-- [ ] Make `/join-room` and `/create-room` select the resulting room; `resolveUser` uses active room then default.
-- [ ] Validate membership before returning an active room; fall back safely when stale.
-- [ ] Run server/Discord targeted and full tests.
-- [ ] Commit.
+- [x] Add failing tests for concurrent default creation and active-room selection after join/create.
+- [x] Add a unique partial index for one default per guild.
+- [x] Add a room-scoped, persistent `(guildId,userId) -> roomId` active-room mapping with foreign keys/cascade.
+- [x] Make default creation tolerate the uniqueness race by re-selecting the winner and cleaning up any losing orphan room.
+- [x] Make `/join-room` and `/create-room` select the resulting room; `resolveUser` uses active room then default.
+- [x] Validate membership before returning an active room; fall back safely when stale.
+- [x] Run server/Discord targeted and full tests.
+- [x] Commit.
 
 ## Task 6: Coordinate same-user workshop and console mutations; document cross-user policy (#61, #62)
 

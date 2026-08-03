@@ -9,7 +9,7 @@ export interface ResolvedUser {
 
 /**
  * Ensures a Supabase user record exists for the Discord user and resolves
- * (or auto-creates) the default room for the guild.
+ * their active room for the guild (falling back to the guild default).
  */
 export async function resolveUser(
 	interaction: ChatInputCommandInteraction,
@@ -23,7 +23,7 @@ export async function resolveUser(
 	);
 
 	const guildId = interaction.guildId ?? `dm-${interaction.user.id}`;
-	const roomId = await ctx.guildRoomManager.getOrCreateDefaultRoom(guildId, supabaseUserId);
+	const roomId = await ctx.guildRoomManager.resolveRoomForUser(guildId, supabaseUserId);
 
 	return { supabaseUserId, roomId };
 }

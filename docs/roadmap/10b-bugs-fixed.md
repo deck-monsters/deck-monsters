@@ -1099,6 +1099,30 @@ Covered by tests in `room-manager.test.ts` (dispose-on-delete; controlled deferr
 
 ---
 
+### 70. Guild default-room creation race — FIXED
+
+`guild_rooms` PK is `(guild_id, room_id)` with no uniqueness on `is_default`. Concurrent first-time `getOrCreateDefaultRoom` calls could create two default rooms for one guild.
+
+**Fixed**: unique partial index `guild_rooms_one_default_per_guild_idx` on `(guild_id) WHERE is_default = true` (migration demotes any pre-existing extras). `getOrCreateDefaultRoom` catches unique violations (`23505`), deletes the losing orphan via `RoomManager.deleteRoom`, re-selects the winning default, and ensures membership there.
+
+Covered by `on unique default race: returns winner and deletes orphan via RoomManager` in `guild-room-manager.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 72. Discord always targeted the guild default room — FIXED
+
+`resolveUser` always called `getOrCreateDefaultRoom`. `/join-room` / `/create-room` changed membership elsewhere, but subsequent slash and free-text commands still hit the default.
+
+**Fixed**: `guild_user_active_rooms` persists `(guild_id, supabase user_id) → room_id` with FK to `guild_rooms` (cascade). `/create-room` and `/join-room` select the resulting room; `resolveUser` and free-text dispatch use `resolveRoomForUser`, which returns a validated active room (guild mapping + membership) or falls back to the guild default and repairs the mapping.
+
+Covered by GuildRoomManager resolve/active/join/create tests plus `helpers.test.ts` and `room-commands.test.ts`.
+
+**Status**: Fixed.
+
+---
+
 ### 65. `hydrateDeck` alphabetical re-sort — investigated, not a combat bug
 
 `hydrateDeck` sorts alphabetically after hydrate. Ring combat uses equipped `monster.cards[cardIndex]` order, which is restored by `monsters/helpers/hydrate.ts` without sorting — so fight outcomes are not scrambled by inventory sort.
