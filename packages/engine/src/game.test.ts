@@ -599,7 +599,7 @@ describe('game.ts', () => {
 			// (PostgresStateStore) rather than a stateSaveFunc callback. stateStore.save() is
 			// called immediately inside persistState() — not via setImmediate like stateSaveFunc —
 			// so the durability guarantee holds on the production code path too.
-			// See docs/roadmap/10b-bugs-fixed.md #39/#41.
+			// See docs/roadmap/10b-bugs-fixed.md #39 (stateStore.save follow-up).
 			const userId = 'user-durable-store';
 			const ts = Date.now();
 			const roomId = 'test-room-durability';

@@ -11,6 +11,7 @@ import type { GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResu
 
 export { Game, ConnectorAdapter, RoomEventBus, PROMPT_CANCELLED, PromptCancelledError };
 export { CommandRefusalError } from './helpers/command-refusal-error.js';
+export { announceAndThrow } from './helpers/announce-and-throw.js';
 export type { GameAnalyticsCallbacks, LeaderboardSortKey } from './game.js';
 export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult };
 export type { StateStore } from './types/state-store.js';

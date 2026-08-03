@@ -118,10 +118,12 @@ export class DiscordBot {
 		try {
 			await command.execute(interaction, ctx);
 		} catch (err) {
-			// CommandRefusalError = expected user-facing refusal (quota, precondition, etc.).
-			// Show the exact message already announced. Do not log — it is not an error.
-			// Unexpected infrastructure errors fall through to the generic message and are logged.
-			const isRefusal = err instanceof CommandRefusalError;
+			// Expected user-facing refusal (quota, precondition, etc.) — detect via the
+			// isCommandRefusal sentinel rather than instanceof so the check survives package
+			// and runtime boundary mismatches (e.g. duplicate module instantiation in tests).
+			// Refusals: show the exact message that was already announced; do not log.
+			// Unexpected infrastructure errors: log and show a generic fallback.
+			const isRefusal = (err as any)?.isCommandRefusal === true;
 			if (!isRefusal) this.log(err);
 			const content = isRefusal
 				? (err as CommandRefusalError).message

@@ -435,18 +435,23 @@ one daily charge.
 **Fixed** with a minimal pending/finalized mechanism: a second ledger `bossSummonsPending`
 is written alongside `bossSummons` in the same synchronous block. When the fight actually
 begins (`ring.fight` / `fightBegins` via the event bus), `bossSummonsPending` is cleared and
-`persistState()` is called immediately (via `setImmediate` — one event loop tick, not the
-30 s debounce) so the cleared state reaches disk before any subsequent restart can see it.
-`Game`'s constructor calls `_refundPendingBossSummons()` before `initializeEvents`, which
-uses `refundPendingSummons` (a new pure helper in `helpers/boss-summons.ts`) to strip the
-pending timestamps from `bossSummons` and clear the pending ledger. A restart in the 30–60 s
-window therefore gives the charge back.
+`persistState()` is called immediately — not on the 30 s debounce. `persistState()` then
+dispatches to the registered storage backend: the production `stateStore.save()` is invoked
+synchronously inside `persistState()` itself, while the legacy `stateSaveFunc` callback is
+scheduled one event-loop tick later via `setImmediate`; either way the cleared state reaches
+disk well before the next debounce window. `Game`'s constructor calls
+`_refundPendingBossSummons()` before `initializeEvents`, which uses `refundPendingSummons`
+(a new pure helper in `helpers/boss-summons.ts`) to strip the pending timestamps from
+`bossSummons` and clear the pending ledger. A restart in the 30–60 s window therefore gives
+the charge back.
 
 **Durability detail (Grok follow-up)**: the original implementation used `setOptions()` to
 clear `bossSummonsPending`, which scheduled a 30 s debounced save. A restart in that 30 s
 window could load the still-pending state and incorrectly refund a charge that was already
 used. Fixed by writing directly to `optionsStore` (no `stateChange` emission) and calling
-`persistState()` immediately on `fightBegins`.
+`persistState()` immediately on `fightBegins`. The `persistState()` call is unconditional on
+the storage backend: `stateStore.save()` fires synchronously on the call stack; `stateSaveFunc`
+fires after one `setImmediate` tick — either is orders of magnitude faster than the 30 s debounce.
 
 The schema is backward-compatible (`bossSummonsPending` lives in `Game.options`, and the Zod
 schema's `passthrough()` accepts it without migration). Bosses remain ephemeral — only the
@@ -454,11 +459,14 @@ quota entry is affected. Ordinary pre-fight player actions cannot accidentally g
 summons because they do not touch `bossSummonsPending`.
 
 Covered by new tests in `helpers/boss-summons.test.ts` (addPendingSummon, refundPendingSummons
-pure-helper behavior) and `game.test.ts` (serialization round-trip: pending cleared
-after fight starts via setImmediate; pending refunded on restore before fight; backward compat
-with no bossSummonsPending field; production-shaped `stateStore.save` durability: verifies that
-`persistState()` calls `stateStore.save()` immediately — not via setImmediate like the legacy
-`stateSaveFunc` path — so the cleared state reaches the DB before any debounce delay).
+pure-helper behavior) and `game.test.ts`:
+- `stateSaveFunc` path (legacy/test): pending cleared after `fightBegins`; save fires after one
+  `setImmediate` tick (verified by yielding with a second `setImmediate`); restored game retains charge.
+- `stateStore.save` path (production): pending cleared synchronously inside `persistState()` on
+  `fightBegins`; `stateStore.save()` is invoked on the call stack without a `setImmediate` yield
+  (verified immediately after `eventBus.publish()`); restored game retains charge.
+- Backward-compat: no `bossSummonsPending` field → charge is preserved, nothing refunded.
+- Refund on restore: pending present → charge is refunded.
 
 **Status**: Fixed.
 
@@ -546,10 +554,13 @@ from server-side error logs (the message was already delivered to the web consol
 bus before the throw). The fix is shared: every slash command that uses `dispatchCommand` (or
 whose action throws `CommandRefusalError`) benefits automatically.
 
-Covered by 4 new tests in `connector-discord/src/__tests__/bot.test.ts`: expected refusal shows
-exact message without logging; unexpected error shows generic message with logging; correct
-path (reply vs. editReply) used depending on deferred state; blocked-DM scenario still shows
-the refusal on the interaction.
+Covered by tests in `engine/src/helpers/announce-and-throw.test.ts` (direct unit test: channel
+receives the message, `CommandRefusalError` is thrown — not plain `Error` — and carries the exact
+text) and `connector-discord/src/__tests__/bot.test.ts` (4 integration-level tests): exact message
+shown without logging on `CommandRefusalError`; generic message plus log on unexpected error; correct
+`reply` vs `editReply` path depending on deferred state; blocked-DM scenario where `announceAndThrow`
+is called through a channel that silently resolves — interaction always shows the exact refusal text,
+and the detection uses the `isCommandRefusal` sentinel so instanceof boundary mismatches are handled.
 
 **Status**: Fixed.
 
@@ -708,7 +719,7 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Clear `ringEvent` when quorum drops in `startFightTimer()`; fresh event rolled when quorum later restored (#37)
 - [x] Prioritize `contestant.team` over `monster.team`/`character.team` in `calculateXP` (#38)
 - [x] Fix boss summon restart gap: `bossSummonsPending` ledger refunded on restore before fight start (#39)
-- [x] Add production-shaped `stateStore.save` durability test for `bossSummonsPending` finalization (#39 follow-up, #41)
+- [x] Add production-shaped `stateStore.save` durability test for `bossSummonsPending` finalization (#39 follow-up)
 - [x] Fix `doAction` infinite recursion in last-team mode with ≥2 same-faction survivors (`ring/index.ts`, #40)
 - [x] Fix admin `trigger ring event` overwriting an already-armed event (`activateRingEvent()` guard, #41)
 - [x] Fix Discord `/summon-boss` expected refusals masked by "Something went wrong" (`CommandRefusalError`, #42)

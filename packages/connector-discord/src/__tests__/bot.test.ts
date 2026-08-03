@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { DiscordBot } from '../bot.js';
-import { CommandRefusalError } from '@deck-monsters/engine';
+import { CommandRefusalError, announceAndThrow } from '@deck-monsters/engine';
 
 // ---------------------------------------------------------------------------
 // Minimal stub factories
@@ -23,13 +23,12 @@ function makeInteraction(commandName: string, deferred = true) {
 }
 
 function makeBot(logSpy: sinon.SinonSpy) {
-	const bot = new DiscordBot(
+	return new DiscordBot(
 		{} as any, // roomManager — not called in handleSlashCommand
 		{} as any, // guildRoomManager — not called in handleSlashCommand
 		{} as any, // db — not called in handleSlashCommand
 		logSpy
 	);
-	return bot;
 }
 
 // ---------------------------------------------------------------------------
@@ -101,26 +100,57 @@ describe('DiscordBot slash command error handling', () => {
 		expect(interaction.editReply.called).to.be.false;
 	});
 
-	it('blocked DM path: CommandRefusalError still shows message on interaction even if DM fails', async () => {
-		// This is the canonical blocked-DM scenario: the private channel callback's sendDm
-		// is silently swallowed, but the CommandRefusalError still carries the message through
-		// to the interaction editReply — so the user always sees the refusal.
+	it('blocked DM path: real announceAndThrow through a silent channel still shows message on the interaction', async () => {
+		// Production scenario: the private channel callback's sendDm is silently suppressed
+		// (DMs are blocked or the user is not cached). The channel resolves with undefined —
+		// exactly what buildPrivateChannel.sendDm does on a discord.js fetch failure.
+		// announceAndThrow awaits this silent channel, then throws CommandRefusalError.
+		// handleSlashCommand must edit the deferred interaction with the exact refusal text.
 		const logSpy = sinon.spy();
 		const bot = makeBot(logSpy);
 
 		const refusalMessage = 'A fight is already underway — wait for it to finish before summoning a boss.';
+
 		(bot as any).commands.set('summon-boss', {
 			data: { name: 'summon-boss' },
 			execute: async () => {
-				// Simulate: sendDm silently suppressed (DMs blocked), then error propagates
-				throw new CommandRefusalError(refusalMessage);
+				// Real announceAndThrow through a channel that silently drops the DM
+				// (identical behavior to buildPrivateChannel.sendDm when DMs are blocked).
+				const blockedChannel = async () => undefined;
+				await announceAndThrow(blockedChannel, refusalMessage);
 			},
 		});
 
 		const interaction = makeInteraction('summon-boss', /* deferred */ true);
 		await (bot as any).handleSlashCommand(interaction);
 
-		// Refusal message must appear on the interaction even though the DM was lost
+		// Refusal message must appear on the interaction even though the DM was silently lost
+		expect(interaction.editReply.calledOnce).to.be.true;
+		expect(interaction.editReply.firstCall.args[0]).to.deep.include({ content: refusalMessage });
+		expect(logSpy.called).to.be.false;
+	});
+
+	it('isCommandRefusal sentinel: detects refusal even when instanceof fails across module boundaries', async () => {
+		// Guard against duplicate module instantiation (e.g. different dist vs src resolution
+		// in tests or when engine is bundled differently). The bot uses the isCommandRefusal
+		// property sentinel, so an object that carries the property but is not instanceof
+		// CommandRefusalError in *this* realm is still treated as a refusal.
+		const logSpy = sinon.spy();
+		const bot = makeBot(logSpy);
+
+		const refusalMessage = 'Ring is at capacity.';
+		// Simulate a foreign-realm CommandRefusalError: plain object with isCommandRefusal=true
+		const foreignRefusal = Object.assign(new Error(refusalMessage), { isCommandRefusal: true });
+
+		(bot as any).commands.set('summon-boss', {
+			data: { name: 'summon-boss' },
+			execute: async () => { throw foreignRefusal; },
+		});
+
+		const interaction = makeInteraction('summon-boss', /* deferred */ true);
+		await (bot as any).handleSlashCommand(interaction);
+
+		// The sentinel-based guard must recognize it as a refusal
 		expect(interaction.editReply.calledOnce).to.be.true;
 		expect(interaction.editReply.firstCall.args[0]).to.deep.include({ content: refusalMessage });
 		expect(logSpy.called).to.be.false;

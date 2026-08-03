@@ -626,10 +626,11 @@ export function createRouter(roomManager: RoomManager) {
 						const isCancelled =
 							err instanceof PromptCancelledError ||
 							(err instanceof Error && err.name === 'PromptCancelledError');
-						// CommandRefusalError = expected user-facing refusal. The message was
-						// already sent to the web console via channel({ announce }) before the
-						// throw, so there is nothing more to do — just don't log it as an error.
-						const isRefusal = err instanceof CommandRefusalError;
+						// Expected user-facing refusal. The message was already sent to the web
+						// console via channel({ announce }) before the throw. Detected via the
+						// isCommandRefusal sentinel rather than instanceof to survive package/runtime
+						// boundary mismatches. Nothing more to do — don't log as an error.
+						const isRefusal = (err as any)?.isCommandRefusal === true;
 						const msg = err instanceof Error ? err.message : String(err);
 						if (!isCancelled && !isRefusal && !msg.includes('Prompt timed out')) {
 							roomManager['log']?.(err);

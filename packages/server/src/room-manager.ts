@@ -580,7 +580,7 @@ export class RoomManager {
 				// exist — the DB may have had exactly that many. Probe for one more row to
 				// distinguish "exactly at the cap with nothing further" (limitReached: false)
 				// from "cap exceeded with rows still in the DB" (limitReached: true).
-				// See docs/roadmap/10b-bugs-fixed.md #40.
+				// See docs/roadmap/10b-bugs-fixed.md #43.
 				const probe = await this._fetchRingFeedPage(
 					userId,
 					roomId,
