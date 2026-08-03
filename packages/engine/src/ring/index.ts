@@ -553,6 +553,10 @@ export class Ring extends BaseClass {
 			(monster as { disposeTimers?: () => void })?.disposeTimers?.();
 			(character as { disposeTimers?: () => void })?.disposeTimers?.();
 		}
+		for (const timer of this.bossDespawnTimers) {
+			clearTimeout(timer);
+		}
+		this.bossDespawnTimers.clear();
 		this.contestants = [];
 		this.emit('clear');
 		this.publishState();
@@ -733,20 +737,21 @@ export class Ring extends BaseClass {
 				return;
 			}
 
-			if (activeContestants.length <= 1) {
+			// Only rebuild when the local batch is empty. A single remaining
+			// contestant still needs to play their card at the current index;
+			// after they act, the next invocation hits this empty-batch path.
+			// (The old length===1 branch prepended the survivor onto globalActive,
+			// which already contained them — duplicates that skewed turn order.
+			// Assigning `activeContestants = globalActive` here and falling through
+			// is also wrong: it makes someone who already acted replay this index
+			// while the true survivor is skipped.)
+			if (activeContestants.length === 0) {
 				nextCardIndex += 1;
-
-				if (activeContestants.length === 1) {
-					// One local-batch survivor but other factions still in the fight
-					// globally: rebuild the batch so they can all keep playing.
-					activeContestants = [...activeContestants, ...globalActive];
-				} else {
-					// Batch exhausted — rebuild from the global active list and
-					// continue to the next card index.
-					activeContestants = globalActive;
-					next();
-					return;
-				}
+				// Batch exhausted — rebuild from the global active list and
+				// continue to the next card index.
+				activeContestants = globalActive;
+				next();
+				return;
 			}
 
 				const playerContestant = activeContestants.shift()!;
@@ -1432,8 +1437,8 @@ export class Ring extends BaseClass {
 			const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
 				ring.bossDespawnTimers.delete(timer);
 				// removeMonster() (called via removeBoss) rejects if the boss is no
-				// longer in the ring (e.g. the ring was cleared by a fight) — that is
-				// expected here since this timer isn't cancelled on clearRing().
+				// longer in the ring — defensive catch for races where the timer
+				// fires in the same tick as clearRing()/dispose() draining the set.
 				ring.removeBoss(contestant).catch(() => {});
 			}, BOSS_DESPAWN_DELAY_MS);
 			this.bossDespawnTimers.add(timer);

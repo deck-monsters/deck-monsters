@@ -97,6 +97,7 @@ export default function Terminal({ roomId }: TerminalProps) {
       )}
 
       <RingPane
+        key={roomId}
         roomId={roomId}
         isActive={isSideBySide || activeTab === 'ring'}
         onEvent={handleEvent}
@@ -110,6 +111,7 @@ export default function Terminal({ roomId }: TerminalProps) {
       )}
 
       <ConsolePane
+        key={roomId}
         roomId={roomId}
         isActive={isSideBySide || activeTab === 'console'}
         onEvent={handleEvent}

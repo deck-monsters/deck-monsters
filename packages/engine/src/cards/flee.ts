@@ -33,7 +33,9 @@ export class FleeCard extends BaseCard {
 				modifier: target.dexModifier,
 				crit: true,
 			});
-			const { success } = this.checkSuccess(fleeRoll, 10);
+			// checkSuccess uses strict `<` (tie goes to defender). Pass 9 so a
+			// natural 10 succeeds, matching the "10 or higher" narration.
+			const { success } = this.checkSuccess(fleeRoll, 9);
 
 			this.emit('rolled', {
 				reason: 'and needs 10 or higher to flee.',

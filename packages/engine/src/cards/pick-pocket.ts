@@ -35,11 +35,19 @@ export class PickPocketCard extends BaseCard {
 			ring,
 		}) as any).monster;
 
-		const randomCard = (randomHelpers.sample(
-			mostExperienced.cards.filter(
-				(card: any) => !['Pick Pocket'].includes(card.cardType)
-			)
-		) as any).clone();
+		const stealable = mostExperienced.cards.filter(
+			(card: any) => !['Pick Pocket'].includes(card.cardType)
+		);
+		const sampled = randomHelpers.sample(stealable) as { clone?: () => any } | undefined;
+
+		if (!sampled?.clone) {
+			this.emit('narration', {
+				narration: `${player.givenName} reaches into ${mostExperienced.givenName}'s pocket... but finds it empty.`,
+			});
+			return Promise.resolve(true);
+		}
+
+		const randomCard = sampled.clone();
 
 		this.emit('narration', {
 			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName}`,

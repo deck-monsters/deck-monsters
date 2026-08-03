@@ -128,6 +128,6 @@ Missing a room filter is a recurring source of bugs. See [`docs/room-scoping.md`
 
 ### Active known bugs
 
-- **Card shop is a process-wide singleton** — every room shares one shop inventory and closing time (`packages/engine/src/items/store/shop.ts`), violating the room-scoping rule above. Design decided (per-room shop, persisted in room state, 6-hour refresh aligned to America/Chicago clock boundaries) but not yet implemented. See bug #26 in `docs/roadmap/10-bug-fixes.md`.
+See [`docs/roadmap/10-bug-fixes.md`](docs/roadmap/10-bug-fixes.md) for the open list (#3 content pass, plus audit follow-ups #59–#73: Discord free-text prompts / serialization, workshop↔console interleave, dual `ringFeed`, hydrate deck order, etc.).
 
-Previously listed here and now fixed: fight log stale after new fights (#15 — the root cause was write-side races and dropped retries in `fight-summary-writer.ts`, not query-cache invalidation) and console history missing on reconnect (#16/#17 — the engine's cold ring buffer reported "nothing missed" instead of triggering the durable-storage replay). See `docs/roadmap/10b-bugs-fixed.md` for full write-ups.
+Previously listed here and now fixed: card shop process-wide singleton (#26), fight log stale after new fights (#15), console history missing on reconnect (#16/#17), and the 2026-08-03 audit fixes (#51–#58: XP floor, Flee threshold, Pick Pocket crash, ring batch dupes, boss despawn timers, Discord auto-join, prompt sentinel, web room bleed). See `docs/roadmap/10b-bugs-fixed.md`.

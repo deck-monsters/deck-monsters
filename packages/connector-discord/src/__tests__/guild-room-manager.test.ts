@@ -40,6 +40,7 @@ function makeRoomManagerStub(roomId = 'room-abc', inviteCode = 'INV12345') {
 	return {
 		createRoom: sinon.stub().resolves({ roomId, inviteCode }),
 		joinRoom: sinon.stub().resolves({ roomId }),
+		ensureMember: sinon.stub().resolves(),
 	};
 }
 
@@ -54,10 +55,11 @@ describe('GuildRoomManager', () => {
 			const rm = makeRoomManagerStub();
 
 			const mgr = new GuildRoomManager(db as any, rm as any);
-			const result = await mgr.getOrCreateDefaultRoom('guild-1', 'bot-user');
+			const result = await mgr.getOrCreateDefaultRoom('guild-1', 'user-1');
 
 			expect(result).to.equal('existing-room');
 			expect(rm.createRoom.called).to.be.false;
+			expect(rm.ensureMember.calledOnceWith('user-1', 'existing-room')).to.be.true;
 		});
 
 		it('creates a room and inserts guild_rooms row when none exists', async () => {
@@ -66,11 +68,13 @@ describe('GuildRoomManager', () => {
 			const rm = makeRoomManagerStub('new-room-id', 'CODE0001');
 
 			const mgr = new GuildRoomManager(db as any, rm as any);
-			const result = await mgr.getOrCreateDefaultRoom('guild-2', 'bot-user');
+			const result = await mgr.getOrCreateDefaultRoom('guild-2', 'user-1');
 
 			expect(result).to.equal('new-room-id');
 			expect(rm.createRoom.calledOnce).to.be.true;
+			expect(rm.createRoom.calledWith('user-1', 'Guild guild-2')).to.be.true;
 			expect(db.insert.calledOnce).to.be.true;
+			expect(rm.ensureMember.calledOnceWith('user-1', 'new-room-id')).to.be.true;
 
 			const insertedValues = db._stubs.valuesStub.firstCall.args[0];
 			expect(insertedValues.guildId).to.equal('guild-2');

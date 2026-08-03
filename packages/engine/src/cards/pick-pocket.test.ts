@@ -142,4 +142,28 @@ describe('./cards/pick-pocket.ts', () => {
 			);
 		});
 	});
+
+	it('does not throw when the target has an empty stealable deck', () => {
+		const pickPocket = new PickPocketCard();
+
+		const player = new Gladiator({ name: 'player' });
+		const target = new Gladiator({ name: 'target' });
+
+		(player as any).xp = 0;
+		(target as any).xp = 1000;
+		(target as any).cards = [new PickPocketCard(), new PickPocketCard()];
+
+		const ring: any = {
+			contestants: [
+				{ character: {}, monster: player },
+				{ character: {}, monster: target },
+			],
+			channelManager: { sendMessages: () => Promise.resolve() },
+			encounterEffects: [],
+		};
+
+		return expect(
+			pickPocket.play(player, target, ring, ring.contestants)
+		).to.eventually.be.fulfilled;
+	});
 });

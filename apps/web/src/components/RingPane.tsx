@@ -183,6 +183,12 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
       return merged;
     });
 
+    if (dedupedHistory.length > 0) {
+      const lastId = dedupedHistory[dedupedHistory.length - 1]!.id;
+      setSubLastEventId(lastId);
+      latestTrackedEventIdRef.current = lastId;
+    }
+
     if (shouldFollowOutputRef.current) {
       // Jump to bottom after history loads only when auto-follow is enabled.
       requestAnimationFrame(() => {
@@ -224,6 +230,12 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
 
         // Keep-alive ping from server — no UI action needed
         if (event.type === 'heartbeat') return;
+
+        // Defense in depth: drop events from another room (handshake/heartbeat
+        // may omit roomId — only filter when it is a non-empty string).
+        if (typeof event.roomId === 'string' && event.roomId !== '' && event.roomId !== roomId) {
+          return;
+        }
 
         latestTrackedEventIdRef.current = tracked.id;
 

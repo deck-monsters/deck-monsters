@@ -21,18 +21,22 @@ export class GuildRoomManager {
 	/**
 	 * Returns the default room ID for a guild.
 	 * Auto-creates a room and the guild_rooms row on the first call.
-	 * `botUserId` is the Supabase user ID for the bot itself (used as owner).
+	 * `userId` is the Discord user's Supabase id who is interacting
+	 * (used as owner when creating, and always ensured as a room member).
 	 */
-	async getOrCreateDefaultRoom(guildId: string, botUserId: string): Promise<string> {
+	async getOrCreateDefaultRoom(guildId: string, userId: string): Promise<string> {
 		const [existing] = await this.db
 			.select({ roomId: guildRooms.roomId })
 			.from(guildRooms)
 			.where(and(eq(guildRooms.guildId, guildId), eq(guildRooms.isDefault, true)))
 			.limit(1);
 
-		if (existing) return existing.roomId;
+		if (existing) {
+			await this.roomManager.ensureMember(userId, existing.roomId);
+			return existing.roomId;
+		}
 
-		const { roomId } = await this.roomManager.createRoom(botUserId, `Guild ${guildId}`);
+		const { roomId } = await this.roomManager.createRoom(userId, `Guild ${guildId}`);
 
 		await this.db.insert(guildRooms).values({
 			guildId,
@@ -41,6 +45,8 @@ export class GuildRoomManager {
 			channelId: null,
 		});
 
+		// Owner was inserted at create time; ensureMember is idempotent.
+		await this.roomManager.ensureMember(userId, roomId);
 		return roomId;
 	}
 

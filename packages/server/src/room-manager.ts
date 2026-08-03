@@ -206,7 +206,16 @@ export class RoomManager {
 		}
 
 		const roomId = row[0].id;
+		await this.ensureMember(userId, roomId);
+		return { roomId };
+	}
 
+	/**
+	 * Ensures `userId` has a `room_members` row for `roomId`.
+	 * No-op when already a member; otherwise inserts with role `'member'`.
+	 * Idempotent — safe to call for room owners who were inserted at create time.
+	 */
+	async ensureMember(userId: string, roomId: string): Promise<void> {
 		const existing = await this.db
 			.select()
 			.from(roomMembers)
@@ -216,8 +225,6 @@ export class RoomManager {
 		if (!existing[0]) {
 			await this.db.insert(roomMembers).values({ roomId, userId, role: 'member' });
 		}
-
-		return { roomId };
 	}
 
 	async leaveRoom(userId: string, roomId: string): Promise<void> {

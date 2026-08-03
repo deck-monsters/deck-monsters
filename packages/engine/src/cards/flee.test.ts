@@ -60,4 +60,19 @@ describe('./cards/flee.ts', () => {
 			expect(result).to.equal(true)
 		);
 	});
+
+	it('calls checkSuccess with targetNumber 9 so a roll of 10 succeeds', () => {
+		const flee = new FleeCard();
+		const checkSuccessSpy = sinon.spy(flee, 'checkSuccess');
+
+		const player = new Basilisk({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+
+		(player as any).hp = 2;
+
+		return flee.play(player, target, ring, [{ monster: player }]).then(() => {
+			expect(checkSuccessSpy.calledOnce).to.equal(true);
+			expect(checkSuccessSpy.firstCall.args[1]).to.equal(9);
+		});
+	});
 });

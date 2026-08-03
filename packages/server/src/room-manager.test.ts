@@ -183,6 +183,39 @@ describe('RoomManager', () => {
 		});
 	});
 
+	// ---- ensureMember ----
+
+	describe('ensureMember', () => {
+		it('inserts a member row when user is not already a member', async () => {
+			const db = makeDbStub({
+				selectResults: [[]], // no existing membership
+			});
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			await rm.ensureMember(USER_ID, ROOM_ID);
+
+			expect(db._stubs.insertStub.calledOnce).to.be.true;
+			expect(db._stubs.valuesStub.firstCall.args[0]).to.deep.equal({
+				roomId: ROOM_ID,
+				userId: USER_ID,
+				role: 'member',
+			});
+		});
+
+		it('is a no-op when user is already a member', async () => {
+			const db = makeDbStub({
+				selectResults: [[{ roomId: ROOM_ID, userId: USER_ID, role: 'owner' }]],
+			});
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			await rm.ensureMember(USER_ID, ROOM_ID);
+
+			expect(db._stubs.insertStub.called).to.be.false;
+		});
+	});
+
 	// ---- leaveRoom ----
 
 	describe('leaveRoom', () => {

@@ -87,6 +87,8 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
 
   const [consoleEvents, setConsoleEvents] = useState<ConsoleEvent[]>([]);
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
+  const activePromptIdRef = useRef<string | null>(null);
+  activePromptIdRef.current = activePromptId;
   const [inputValue, setInputValue] = useState('');
   const [inputLocked, setInputLocked] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -173,6 +175,13 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         return merged;
       });
     }
+
+    if (dedupedHistory.length > 0) {
+      const lastId = dedupedHistory[dedupedHistory.length - 1]!.id;
+      setSubLastEventId(lastId);
+      latestTrackedEventIdRef.current = lastId;
+    }
+
     // Jump to bottom after history loads (instant, no animation)
     requestAnimationFrame(() => {
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
@@ -357,6 +366,12 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
         // Keep-alive ping from server — no UI action needed
         if (event.type === 'heartbeat') return;
 
+        // Defense in depth: drop events from another room (handshake/heartbeat
+        // may omit roomId — only filter when it is a non-empty string).
+        if (typeof event.roomId === 'string' && event.roomId !== '' && event.roomId !== roomId) {
+          return;
+        }
+
         latestTrackedEventIdRef.current = tracked.id;
 
         if (seenRef.current.has(tracked.id)) return;
@@ -435,7 +450,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
               ? { ...ev, promptData: { ...ev.promptData!, timedOut: true } }
               : ev
           ));
-          if (activePromptId === requestId) {
+          if (activePromptIdRef.current === requestId) {
             setActivePromptId(null);
             setInputLocked(false);
           }
@@ -454,7 +469,7 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
               ? { ...ev, promptData: { ...ev.promptData!, cancelled: true } }
               : ev
           ));
-          if (activePromptId === requestId) {
+          if (activePromptIdRef.current === requestId) {
             setActivePromptId(null);
             setInputLocked(false);
           }

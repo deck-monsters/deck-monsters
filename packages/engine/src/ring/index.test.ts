@@ -158,9 +158,8 @@ describe('ring/index.ts', () => {
 			// globally breaks the recursive probability-retry loop in
 			// cards/helpers/draw.ts (`if (!Card) return draw(...)`), which never
 			// terminates once every card's probability check returns the same fixed
-			// result. clearRing() between attempts doesn't touch bossDespawnTimers
-			// (only dispose() does), so any attempt landing heads is enough — the
-			// ~2^-50 chance every one of 50 flips misses is negligible.
+			// result. Retries clear via clearRing() (which must also drain the set —
+			// see the clearRing regression below); any attempt landing heads is enough.
 			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
 			try {
 				const game = new Game();
@@ -170,6 +169,7 @@ describe('ring/index.ts', () => {
 				for (let attempt = 0; attempt < 50; attempt += 1) {
 					ring.clearRing();
 					ring.spawnBoss();
+					if ((ring as any).bossDespawnTimers.size > 0) break;
 				}
 				expect((ring as any).bossDespawnTimers.size).to.be.greaterThan(0);
 
@@ -180,6 +180,40 @@ describe('ring/index.ts', () => {
 				clock.tick(11 * 60 * 1000);
 
 				expect(removeBossSpy.called).to.equal(false);
+			} finally {
+				clock.restore();
+			}
+		});
+
+		it('cancels pending boss despawn timers on clearRing', () => {
+			// Regression: dispose() cleared bossDespawnTimers, but clearRing() did not.
+			// After a fight (or an explicit clear) an orphaned despawn timer could still
+			// fire removeBoss against a ring that had already moved on.
+			//
+			// spawnBoss() only schedules a despawn timer on a 50/50 coin flip
+			// (`random(1)`), so we retry rather than pinning Math.random — same reason
+			// as the dispose() regression above.
+			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+			try {
+				const game = new Game();
+				const ring = game.getRing();
+				const removeBossSpy = sinon.spy(ring, 'removeBoss');
+
+				for (let attempt = 0; attempt < 50; attempt += 1) {
+					ring.clearRing();
+					ring.spawnBoss();
+					if ((ring as any).bossDespawnTimers.size > 0) break;
+				}
+				expect((ring as any).bossDespawnTimers.size).to.be.greaterThan(0);
+
+				ring.clearRing();
+
+				expect((ring as any).bossDespawnTimers.size).to.equal(0);
+
+				clock.tick(11 * 60 * 1000);
+				expect(removeBossSpy.called).to.equal(false);
+
+				game.dispose();
 			} finally {
 				clock.restore();
 			}
@@ -1309,6 +1343,64 @@ describe('ring/index.ts', () => {
 			}
 
 			expect(caughtError, 'fight() should not throw').to.be.undefined;
+		});
+
+		it('does not let a contestant replay the same card index when the turn batch rebuilds', async function () {
+			// Regression: when the local turn batch shrank to one survivor, doAction rebuilt
+			// with `[...activeContestants, ...globalActive]`. globalActive already included
+			// that survivor, so they appeared twice. The tempting "fix" of assigning
+			// `activeContestants = globalActive` and falling through is worse — the survivor
+			// never acts and the fight can spin until OOM. The correct fix is to let the
+			// length-1 batch play normally and only rebuild when the batch is empty (same
+			// as the length-0 branch).
+			//
+			// High HP keeps all three alive so every card-index wave hits the rebuild path;
+			// three contestants guarantees a length-1 local batch after the first two act.
+			this.timeout(5000);
+
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+			const names = ring.contestants.map(({ monster }) => monster.givenName);
+			const playsByMonster = new Map<string, number[]>();
+			const cardIndexByCard = new WeakMap<object, number>();
+			for (const { monster } of ring.contestants) {
+				monster.hp = 10_000;
+				monster.cards.forEach((card, index) => cardIndexByCard.set(card, index));
+				for (const card of monster.cards) {
+					const originalPlay = card.play.bind(card);
+					card.play = ((...args: Parameters<typeof card.play>) => {
+						const cardIndex = cardIndexByCard.get(card);
+						if (cardIndex !== undefined) {
+							const key = monster.givenName;
+							const prior = playsByMonster.get(key) ?? [];
+							expect(
+								prior,
+								`${key} replayed card index ${cardIndex}`
+							).to.not.include(cardIndex);
+							prior.push(cardIndex);
+							playsByMonster.set(key, prior);
+						}
+						return originalPlay(...args);
+					}) as typeof card.play;
+				}
+			}
+
+			await ring.fight();
+
+			// Every contestant must have acted at card index 0 — proves the length-1
+			// survivor was not skipped by a premature globalActive rebuild+advance.
+			for (const name of names) {
+				expect(
+					playsByMonster.get(name),
+					`${name} should have played card index 0`
+				).to.include(0);
+			}
+			game.dispose();
 		});
 
 		it('runs a full fight through the real (non-skipped) pacing path', async function () {

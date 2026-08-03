@@ -931,3 +931,91 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Complete free-for-all docs: describe primary targeting layer in `Ring.fight()` and fix empty label typo (#48)
 - [x] Evict stale ring events on roster change: `rollRingEvent()` re-checks eligibility; admin force refuses ineligible events with actionable message (#49)
 - [x] Tighten `isLastTeamFledWin` to require exactly one active non-fled faction; extract `factionOf()` to module level for shared use (#50)
+- [x] XP getter no longer floors at 1 — first award was +1 too high (#51)
+- [x] Flee “10 or higher” matches checkSuccess (pass threshold 9) (#52)
+- [x] Pick Pocket empty stealable deck narrates and no-ops instead of throwing (#53)
+- [x] Ring fight batch rebuild no longer duplicates contestants / skews turns (#54)
+- [x] `clearRing()` cancels pending boss despawn timers (#55)
+- [x] Discord guild users auto-joined to default room via `ensureMember` (#56)
+- [x] `respondToPrompt` rejects the `PROMPT_CANCELLED` sentinel as a client answer (#57)
+- [x] Web room navigation remounts panes, filters by `event.roomId`, seeds history cursor, fixes stale prompt id (#58)
+
+---
+
+### 51. XP getter floored at 1 — FIXED
+
+`getProp()` applied `Math.max(prop, 1)` to every property, including XP. A new monster with `options.xp = 0` (`STARTING_XP`) read as `1`, so the first `monster.xp += N` stored `N + 1`. Combat stats correctly keep the floor of 1.
+
+**Fixed**: XP bypasses the floor; `getPreBattlePropValue` for XP uses nullish coalescing. Covered by `creatures/stats.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 52. Flee roll of exactly 10 failed — FIXED
+
+`checkSuccess` uses strict `<` (tie goes to defender). Flee narrated “needs 10 or higher” but called `checkSuccess(roll, 10)`, so a natural 10 failed. Immobilize already compensates by narrating `threshold + 1`.
+
+**Fixed**: Flee passes threshold `9` so a roll of 10 succeeds, matching the narration. Covered by a spy assertion in `flee.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 53. Pick Pocket crashed on empty stealable deck — FIXED
+
+`randomHelpers.sample(...).clone()` threw when the highest-XP opponent’s deck was empty or only contained Pick Pocket.
+
+**Fixed**: Narrate an empty pocket and resolve successfully without playing a stolen card. Covered by `pick-pocket.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 54. Ring fight batch rebuild duplicated contestants — FIXED
+
+When the local turn batch had one survivor but others remained globally active, the code rebuilt as `[...activeContestants, ...globalActive]`, duplicating the survivor and skewing turn order.
+
+**Fixed**: Only rebuild when the local batch is empty (`activeContestants = globalActive`); a sole remaining contestant plays normally. Covered by a three-contestant fight regression in `ring/index.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 55. Boss despawn timers survived `clearRing()` — FIXED
+
+`dispose()` cleared `bossDespawnTimers`; `clearRing()` did not. A fight that cleared the ring could still fire a stale `removeBoss` later.
+
+**Fixed**: `clearRing()` clears despawn timers the same way as `dispose()`. Covered by `ring/index.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 56. Discord guild members not in `room_members` — FIXED
+
+Only the first Discord user to trigger room creation was inserted into `room_members`. Later users shared the guild default `roomId` but failed `getMemberRole` (FORBIDDEN) on slash commands; free-text commands skipped membership entirely.
+
+**Fixed**: `RoomManager.ensureMember` (idempotent); `GuildRoomManager.getOrCreateDefaultRoom` always ensures the interacting user is a member. Free-text and autocomplete paths that resolve the default room pick this up automatically. Covered by server + discord guild-room-manager tests.
+
+**Status**: Fixed.
+
+---
+
+### 57. `PROMPT_CANCELLED` could reach game code via `respondToPrompt` — FIXED
+
+Clients could submit the literal sentinel `__cancelled__` as a prompt answer; the router forwarded it verbatim, bypassing the channel-wrapper translation to `PromptCancelledError`.
+
+**Fixed**: `respondToPrompt` returns `false` when the answer is `PROMPT_CANCELLED` (prompt stays pending). Cancel remains `cancelPrompt` / `cancelAllUserPrompts` only. Covered by `room-event-bus.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 58. Web room navigation bled state between rooms — FIXED
+
+Navigating `/room/A` → `/room/B` reused pane instances: `historyApplied` stayed true, history for B never loaded, and live events had no `event.roomId` guard. History also never seeded the subscription cursor despite comments saying it should. Console timeout/cancel handlers closed over a stale `activePromptId`.
+
+**Fixed**: `key={roomId}` on Ring/Console panes; filter events whose `roomId` mismatches; seed `subLastEventId` / `latestTrackedEventIdRef` from history; `activePromptIdRef` for timeout/cancel clearing.
+
+**Status**: Fixed.

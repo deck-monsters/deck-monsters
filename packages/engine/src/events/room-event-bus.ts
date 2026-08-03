@@ -218,6 +218,9 @@ export class RoomEventBus {
 	}
 
 	respondToPrompt(requestId: string, answer: string, callerId?: string): boolean {
+		// Clients must call cancelPrompt to cancel — never resolve with the
+		// sentinel as a literal answer (it would leak into game flows).
+		if (answer === PROMPT_CANCELLED) return false;
 		const pending = this.pendingPrompts.get(requestId);
 		if (!pending) return false;
 		if (callerId && pending.userId !== callerId) return false;
