@@ -177,6 +177,7 @@ describe('equip helpers', () => {
 		it('keeps prompting when the first selection is empty (nothing to commit yet)', async () => {
 			const deck = [makeCard('Hit'), makeCard('Heal')];
 			const monster = makeMonster(2) as any;
+			const announcements: string[] = [];
 			let promptRound = 0;
 
 			const channel = async ({
@@ -187,7 +188,10 @@ describe('equip helpers', () => {
 				question?: string;
 				choices?: string[];
 			}) => {
-				if (announce) return undefined;
+				if (announce) {
+					announcements.push(announce);
+					return undefined;
+				}
 				if (question) {
 					promptRound += 1;
 					if (promptRound === 1) return ''; // empty — should re-prompt, not finish
@@ -205,6 +209,7 @@ describe('equip helpers', () => {
 
 			expect(promptRound).to.equal(2);
 			expect(result).to.have.length(2);
+			expect(announcements).not.to.include('You selected no cards.');
 		});
 
 		it('still trims an oversized interactive batch to the remaining slot count', async () => {
@@ -227,9 +232,20 @@ describe('equip helpers', () => {
 		it('does not finish when "done" is entered at the first prompt', async () => {
 			const deck = [makeCard('Hit'), makeCard('Heal')];
 			const monster = makeMonster(2) as any;
+			const announcements: string[] = [];
 			let promptRound = 0;
 
-			const channel = async ({ question }: { announce?: string; question?: string }) => {
+			const channel = async ({
+				announce,
+				question,
+			}: {
+				announce?: string;
+				question?: string;
+			}) => {
+				if (announce) {
+					announcements.push(announce);
+					return undefined;
+				}
 				if (!question) return undefined;
 				promptRound += 1;
 				if (promptRound === 1) return 'done';
@@ -245,6 +261,8 @@ describe('equip helpers', () => {
 
 			expect(promptRound).to.equal(2);
 			expect(result).to.have.length(2);
+			expect(announcements).not.to.include('Skipped an invalid selection: done');
+			expect(announcements).not.to.include('You selected no cards.');
 		});
 
 		for (const finishAlias of ['finished', 'enough', 'stop']) {
@@ -274,9 +292,20 @@ describe('equip helpers', () => {
 		it('keeps an intentionally empty continuation as a partial-batch finish', async () => {
 			const deck = [makeCard('Hit'), makeCard('Heal'), makeCard('Blast')];
 			const monster = makeMonster(3) as any;
+			const announcements: string[] = [];
 			let promptRound = 0;
 
-			const channel = async ({ question }: { announce?: string; question?: string }) => {
+			const channel = async ({
+				announce,
+				question,
+			}: {
+				announce?: string;
+				question?: string;
+			}) => {
+				if (announce) {
+					announcements.push(announce);
+					return undefined;
+				}
 				if (!question) return undefined;
 				promptRound += 1;
 				return promptRound === 1 ? '0' : '';
@@ -290,6 +319,7 @@ describe('equip helpers', () => {
 
 			expect(promptRound).to.equal(2);
 			expect(result).to.have.length(1);
+			expect(announcements).not.to.include('You selected no cards.');
 		});
 
 		it('rolls back the partial batch when the continuation prompt is cancelled', async () => {

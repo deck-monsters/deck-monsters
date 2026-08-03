@@ -43,9 +43,11 @@ export const equipHelpersReady = loadHelpers().catch((err) => {
 });
 
 const MAX_CARD_COPIES_IN_HAND = 4;
-const FINISH_EQUIPPING = Symbol('finish-equipping');
+const EQUIP_CONTROL_ANSWER = Symbol('equip-control-answer');
 const isFinishAnswer = (answer: unknown): boolean =>
 	/^(done|finished|enough|stop)$/i.test(String(answer ?? '').trim());
+const isEquipControlAnswer = (answer: unknown): boolean =>
+	String(answer ?? '').trim().length === 0 || isFinishAnswer(answer);
 
 interface EquipOptions {
 	deck: CardInstance[];
@@ -108,13 +110,13 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 					return base;
 				};
 
-				// Finish is flow control, not an empty card selection. Reject with an
-				// internal sentinel so chooseCards never emits its empty-result announce.
+				// Empty and finish answers control this multi-prompt equip flow rather than
+				// selecting cards. Bypass chooseCards so it does not announce chooser feedback.
 				const channelForChoose: ChannelFn = (opts) => {
 					if (!opts.question) return channel(opts);
 					return Promise.resolve(channel(opts)).then((answer) => {
-						if (cards.length > 0 && isFinishAnswer(answer)) {
-							throw FINISH_EQUIPPING;
+						if (isEquipControlAnswer(answer)) {
+							throw EQUIP_CONTROL_ANSWER;
 						}
 						return answer as string;
 					});
@@ -125,7 +127,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 					channel: channelForChoose,
 					getQuestion,
 				}).catch((err: unknown) => {
-					if (err === FINISH_EQUIPPING) return [];
+					if (err === EQUIP_CONTROL_ANSWER) return [];
 					throw err;
 				});
 			})
