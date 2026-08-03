@@ -55,7 +55,7 @@ Per-user console lanes mean two members of the same room can mutate one shared `
 
 **Action**: Lift subscription (or at least cursor tracking) to `Terminal` and fan out events to both panes.
 
-### 63. Dual `ringFeed` subscriptions per web client
+## Investigated — not bugs (left for the record)
 
 - **Discord `registerUser` subscriber “leak”** — `RoomEventBus.subscribe` uses a `Map.set` by id; re-register replaces the previous subscriber.
 - **`fight-stats-subscriber` `log.error`** — the module-level `createLogger` is used inside handlers; the `(err) => void` parameter only shadows inside `attachFightStatsSubscriber` for `.catch(log)`.

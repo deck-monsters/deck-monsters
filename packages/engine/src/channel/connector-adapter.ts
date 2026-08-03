@@ -1,4 +1,5 @@
 import type { RoomEventBus, GameEvent } from '../events/index.js';
+import { PROMPT_CANCELLED } from '../events/index.js';
 import type { ChannelCallback } from './index.js';
 
 /**
@@ -33,6 +34,17 @@ export class ConnectorAdapter {
 		});
 	}
 
+	private settlePromptCancelled(requestId: string, userId: string, err?: unknown): void {
+		this.eventBus.cancelPrompt(requestId, userId);
+		if (err !== undefined && this.onChannelError) {
+			try {
+				this.onChannelError(err);
+			} catch {
+				// Callback failures must not prevent settlement or surface as unhandled rejections.
+			}
+		}
+	}
+
 	private handlePrivateEvent(userId: string, event: GameEvent): void {
 		if (event.type === 'prompt.request') {
 			const channel = this.privateChannels.get(userId);
@@ -45,18 +57,22 @@ export class ConnectorAdapter {
 			};
 			void channel({ announce: '', question, choices: choices as any })
 				.then((answer: unknown) => {
+					if (answer === PROMPT_CANCELLED) {
+						this.settlePromptCancelled(requestId, userId);
+						return;
+					}
 					if (typeof answer === 'string') {
 						this.eventBus.respondToPrompt(requestId, answer);
 						return;
 					}
-					this.onChannelError?.(
+					this.settlePromptCancelled(
+						requestId,
+						userId,
 						new Error('Connector channel resolved with non-string answer'),
 					);
-					this.eventBus.cancelPrompt(requestId, userId);
 				})
 				.catch((err: unknown) => {
-					this.onChannelError?.(err);
-					this.eventBus.cancelPrompt(requestId, userId);
+					this.settlePromptCancelled(requestId, userId, err);
 				});
 			return;
 		}

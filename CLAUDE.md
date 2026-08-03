@@ -276,7 +276,7 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 ## Known Issues
 
 - **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet. (#3 in `docs/roadmap/10-bug-fixes.md`)
-- **Audit follow-ups** — dual `ringFeed`, harness lane alignment, and ConnectorAdapter swallowed prompt rejections are tracked as #63 / #73 / #78 in `docs/roadmap/10-bug-fixes.md`.
+- **Audit follow-ups** — dual `ringFeed` (#63) remains open in `docs/roadmap/10-bug-fixes.md`; harness lane alignment (#73) and ConnectorAdapter prompt cancellation (#78) are fixed — see `10b-bugs-fixed.md`.
 
 Previously listed here and now fixed (see `docs/roadmap/10b-bugs-fixed.md` for root causes): fight log not updating (#15), console history missing on reconnect (#16/#17), card shop room-scoping (#26), batch-equip UX (#19), Discord free-text prompts / serialization (#59/#60), workshop↔console same-user guard (#61), and the 2026-08-03 audit fixes (#51–#58, #74–#77).
 
