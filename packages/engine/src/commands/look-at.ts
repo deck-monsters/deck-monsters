@@ -3,7 +3,7 @@ import type { registerHandler } from './index.js';
 const LOOK_AT_REGEX =
 	/look (?:at )?(?:the )?(monster(?:s)? manual|player(?:s)? handbook|(?:dungeon master(?:s)|dm)? guide|monsters in|monsters|monster|character|cards in|card inventory|all cards|inventory|cards|card|deck|item|items|ring|dmg)?( .+)?$/i;
 
-function lookAtAction({ channel, character, game, results }: any): Promise<unknown> {
+function lookAtAction({ channel, character, game, results, user }: any): Promise<unknown> {
 	return Promise.resolve()
 		.then(() => {
 			const type = (results[1] || '').trim().toLowerCase();
@@ -20,17 +20,17 @@ function lookAtAction({ channel, character, game, results }: any): Promise<unkno
 					return character.lookAtInventory(channel);
 				case 'ring': {
 					const summary = thing === 'summary';
-					return game.lookAtRing(channel, undefined, true, summary);
+					return game.lookAtRing(user.id, undefined, true, summary);
 				}
 				case 'monsters in': {
 					thing = thing.replace(/the /i, '');
 					const ringName = thing === 'ring' ? undefined : thing;
-					return game.lookAtRing(channel, ringName, false);
+					return game.lookAtRing(user.id, ringName, false);
 				}
 				case 'cards in': {
 					thing = thing.replace(/the /i, '');
 					const ringName = thing === 'ring' ? undefined : thing;
-					return game.lookAtRingCards(channel, ringName);
+					return game.lookAtRingCards(user.id, ringName);
 				}
 				case 'monsters': {
 					const inDetail = thing === 'in detail';

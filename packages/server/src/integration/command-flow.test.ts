@@ -18,6 +18,7 @@ import {
 	createRoomCommandRunner,
 } from '../shared/test-helpers.js';
 import { BOSS_SUMMON_LIMIT, summonAllowance, allMonsters } from '@deck-monsters/engine';
+import type { GameEvent } from '@deck-monsters/engine';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -330,6 +331,99 @@ describe('integration: command flow', function () {
 			const cancelEvent = events.find(e => e.type === 'prompt.cancel');
 			expect(cancelEvent, 'prompt.cancel event should be published').to.exist;
 			expect(cancelEvent?.targetUserId).to.equal(USER_A);
+		});
+	});
+
+	describe('look at the ring', () => {
+		const ringLookAnnounces = (events: GameEvent[]) =>
+			events.filter(
+				(e) =>
+					e.type === 'announce' &&
+					e.scope === 'private' &&
+					e.targetUserId === USER_A,
+			);
+
+		it('announces an empty ring to the requesting user via the event bus', async () => {
+			const game = createTestGame();
+			const eventsA: GameEvent[] = [];
+			const eventsB: GameEvent[] = [];
+
+			const unsubA = game.eventBus.subscribe('look-ring-empty-a', {
+				userId: USER_A,
+				deliver: (e) => eventsA.push(e),
+			});
+			const unsubB = game.eventBus.subscribe('look-ring-empty-b', {
+				userId: USER_B,
+				deliver: (e) => eventsB.push(e),
+			});
+
+			const responder = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
+			await runCommand(game, { command: 'look at the ring', userId: USER_A, isDM: true });
+			responder.unsubscribe();
+			unsubA();
+			unsubB();
+
+			const announces = ringLookAnnounces(eventsA);
+			expect(announces.length, 'should publish private announces to USER_A').to.be.above(0);
+			for (const ev of announces) {
+				expect(ev.scope).to.equal('private');
+				expect(ev.targetUserId).to.equal(USER_A);
+			}
+			const text = announces.map((e) => e.text).join('\n');
+			expect(text, 'empty ring message').to.match(/empty/i);
+
+			const leakedToB = eventsB.filter(
+				(e) =>
+					e.scope === 'private' &&
+					e.type === 'announce' &&
+					e.text?.toLowerCase().includes('empty'),
+			);
+			expect(leakedToB, 'USER_B must not receive private ring look announces').to.have.length(0);
+		});
+
+		it('announces ring contestants to the requesting user via the event bus', async () => {
+			const game = createTestGame();
+			const eventsA: GameEvent[] = [];
+			const eventsB: GameEvent[] = [];
+
+			const unsubA = game.eventBus.subscribe('look-ring-contestants-a', {
+				userId: USER_A,
+				deliver: (e) => eventsA.push(e),
+			});
+			const unsubB = game.eventBus.subscribe('look-ring-contestants-b', {
+				userId: USER_B,
+				deliver: (e) => eventsB.push(e),
+			});
+
+			// Character + monster, then seed the ring (same pattern as summon-a-boss tests).
+			const spawnAnswers = [...NEW_CHARACTER_ANSWERS, ...SPAWN_ANSWERS];
+			const spawner = createAutoResponder(game.eventBus, USER_A, spawnAnswers);
+			await runCommand(game, { command: 'spawn a monster', userId: USER_A, isDM: true });
+			spawner.unsubscribe();
+
+			const character = game.characters[USER_A];
+			const monster = character.monsters[0];
+			game.ring.addMonster({ monster, character, userId: USER_A });
+
+			// Ignore spawn/add public traffic; only assert look-at-ring delivery.
+			eventsA.length = 0;
+			eventsB.length = 0;
+
+			await runCommand(game, { command: 'look at the ring', userId: USER_A, isDM: true });
+			unsubA();
+			unsubB();
+
+			const announces = ringLookAnnounces(eventsA);
+			expect(announces.length, 'should publish private announces to USER_A').to.be.above(0);
+			for (const ev of announces) {
+				expect(ev.scope).to.equal('private');
+				expect(ev.targetUserId).to.equal(USER_A);
+			}
+			const text = announces.map((e) => e.text).join('\n');
+			expect(text, 'should mention contestants').to.match(/contestant/i);
+			expect(text, 'should mention the monster name').to.include('Fang');
+
+			expect(eventsB, 'USER_B must not receive look-at-ring events').to.have.length(0);
 		});
 	});
 
