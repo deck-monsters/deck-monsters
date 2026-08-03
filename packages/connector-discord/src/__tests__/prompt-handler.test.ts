@@ -1,21 +1,27 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { PromptHandler } from '../prompt-handler.js';
+import {
+	discordActiveFlows,
+	runDiscordCommandAction,
+} from '../command-flow.js';
 
 // ---------------------------------------------------------------------------
 // Mock discord.js interaction + message component collector
 // ---------------------------------------------------------------------------
 
 function makeCollector(
-	opts: { collectChoice?: string; timeout?: boolean } = {}
+	opts: { collectChoice?: string; timeout?: boolean; updateRejects?: boolean } = {}
 ) {
 	const listeners: Record<string, ((...args: unknown[]) => void)[]> = {};
+	const stop = sinon.stub();
 
 	const collector = {
 		on: sinon.stub().callsFake((event: string, fn: (...args: unknown[]) => void) => {
 			listeners[event] = listeners[event] ?? [];
 			listeners[event].push(fn);
 		}),
+		stop,
 		_emit(event: string, ...args: unknown[]) {
 			for (const fn of listeners[event] ?? []) fn(...args);
 		},
@@ -31,7 +37,9 @@ function makeCollector(
 			const mockBtnInteraction = {
 				customId: opts.collectChoice,
 				user: { id: 'user-1' },
-				update: sinon.stub().resolves(),
+				update: opts.updateRejects
+					? sinon.stub().rejects(new Error('Interaction already acknowledged'))
+					: sinon.stub().resolves(),
 			};
 			collector._emit('collect', mockBtnInteraction);
 			collector._emit('end', { size: 1 });
@@ -41,8 +49,8 @@ function makeCollector(
 	return collector;
 }
 
-function makeMessage(collectorChoice?: string, timeout = false) {
-	const collector = makeCollector({ collectChoice: collectorChoice, timeout });
+function makeMessage(collectorChoice?: string, timeout = false, updateRejects = false) {
+	const collector = makeCollector({ collectChoice: collectorChoice, timeout, updateRejects });
 
 	return {
 		createMessageComponentCollector: sinon.stub().returns(collector),
@@ -59,7 +67,10 @@ function makeInteraction(message: ReturnType<typeof makeMessage>) {
 // ---------------------------------------------------------------------------
 
 describe('PromptHandler', () => {
-	afterEach(() => sinon.restore());
+	afterEach(() => {
+		sinon.restore();
+		discordActiveFlows.clear();
+	});
 
 	it('sends a follow-up with buttons and resolves with the chosen option', async () => {
 		const msg = makeMessage('2');
@@ -80,6 +91,22 @@ describe('PromptHandler', () => {
 		expect(followUpArgs.ephemeral).to.be.true;
 		// Should have a components array with at least one row
 		expect(followUpArgs.components).to.have.length(1);
+	});
+
+	it('resolves with the chosen option when btnInteraction.update rejects', async () => {
+		const msg = makeMessage('fire', false, true);
+		const interaction = makeInteraction(msg);
+
+		const handler = new PromptHandler();
+		const answer = await handler.sendPrompt(
+			interaction as any,
+			'Which card?',
+			['fire', 'ice']
+		);
+
+		expect(answer).to.equal('fire');
+		const collector = msg.createMessageComponentCollector.returnValues[0];
+		expect(collector.stop.called).to.be.true;
 	});
 
 	it('rejects when the prompt times out', async () => {
@@ -315,5 +342,24 @@ describe('PromptHandler', () => {
 			expect((err as Error).message).to.match(/timed out/i);
 			expect(onTimeout.calledOnce).to.be.true;
 		}
+	});
+
+	it('button prompt still releases discord flow lock when update rejects', async () => {
+		const msg = makeMessage('yes', false, true);
+		const interaction = makeInteraction(msg);
+		const handler = new PromptHandler();
+		const roomManager = {
+			runSerializedEngineWork: async (_laneKey: string, fn: () => Promise<unknown>) => fn(),
+		};
+
+		await runDiscordCommandAction({
+			roomManager,
+			roomId: 'room-1',
+			userId: 'user-1',
+			action: async () =>
+				handler.sendPrompt(interaction as any, 'Confirm?', ['yes', 'no']),
+		});
+
+		expect(discordActiveFlows.has('room-1:user-1')).to.equal(false);
 	});
 });

@@ -1259,3 +1259,37 @@ Covered by `does not materialize encounter state when reading encounterModifiers
 **Fixed**: `useRingFeed` / `RingFeedProvider` in `Terminal` owns the single subscription, shared monotonic reconnect cursor (skips `handshake`/`heartbeat`; advances by leading epoch on live events and history seeds; `onError` resumes from the latest tracked id), room guard, and handshake. Live events fan out once to pane listeners via `useRingFeedListener` (`useLayoutEffect` registration + pending buffer so early frames are not dropped; listener identity is ref-stable so callback churn cannot restart the subscription). Each pane keeps its own DB history fetch, merge/dedup (`seenRef`), and filters. Room navigation resets the shared cursor and tears down the old subscription input. Covered by `useRingFeed.test.ts`, `ring-feed-cursor.test.ts`, and `terminal-ring-feed.test.tsx`.
 
 **Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §5.
+
+---
+
+## Whole-branch review hardening (2026-08-03)
+
+Follow-up fixes from the Task 11 whole-branch review (`bba4b89` → `HEAD`). These harden edge cases found after the main audit pass; they do not reopen archived bugs.
+
+### 79. Discord button collector hung when `interaction.update` failed — FIXED
+
+`collectButtonResponse` awaited `btnInteraction.update()` before resolving. When Discord rejected the update (e.g. interaction already acknowledged), the promise never settled; `end` returned early because `collected.size > 0`, leaving `discordActiveFlows` locked.
+
+**Fixed**: settle on collect immediately (preserve `customId`), `collector.stop` best-effort, and fire `update` without blocking settlement. Timeout/cancel paths use the same `settle` guard as free-text collectors. Covered by `prompt-handler.test.ts` (update rejection + flow-lock release).
+
+**Status**: Fixed.
+
+---
+
+### 80. Concurrent `guild_rooms` mapping insert race — FIXED
+
+`_ensureGuildRoomMapping` used check-then-insert without handling a concurrent inserter winning the `(guild_id, room_id)` PK race, surfacing `23505` to callers.
+
+**Fixed**: `isGuildRoomMappingUniqueViolation` recognizes only `guild_rooms_pkey` (or matching detail); same-mapping races are treated as success. Unrelated `23505` (e.g. one-default-per-guild index) still propagate. Covered by `guild-room-manager.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 81. `createSubRoom` left orphan rooms on mapping insert failure — FIXED
+
+If `guild_rooms` insert failed after `RoomManager.createRoom`, the new room row remained with no guild mapping.
+
+**Fixed**: on non-recoverable insert failure, `deleteRoom(ownerId, roomId)` removes only the just-created orphan. Cleanup failure throws an actionable error with both mapping and cleanup causes. PK races on the mapping are idempotent (no delete). Covered by `guild-room-manager.test.ts`.
+
+**Status**: Fixed.

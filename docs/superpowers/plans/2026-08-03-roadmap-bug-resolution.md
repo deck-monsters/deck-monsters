@@ -28,13 +28,13 @@
 - Add/modify tests near those modules
 - Update: `docs/roadmap/10-bug-fixes.md`, `docs/roadmap/10b-bugs-fixed.md`
 
-- [ ] Add a failing test proving a dead contestant without `killedBy` receives no “last one standing” XP.
-- [ ] Add a failing test proving a read of `encounterModifiers` outside combat does not create `self.encounter`.
-- [ ] Change XP calculation so survivor XP is only for living survivors/fleers.
-- [ ] Return a shared immutable empty modifier view on reads; materialize encounter modifiers only on writes.
-- [ ] Run targeted engine tests, then the full engine suite.
-- [ ] Archive #67/#68 as fixed.
-- [ ] Commit.
+- [x] Add a failing test proving a dead contestant without `killedBy` receives no “last one standing” XP.
+- [x] Add a failing test proving a read of `encounterModifiers` outside combat does not create `self.encounter`.
+- [x] Change XP calculation so survivor XP is only for living survivors/fleers.
+- [x] Return a shared immutable empty modifier view on reads; materialize encounter modifiers only on writes.
+- [x] Run targeted engine tests, then the full engine suite.
+- [x] Archive #67/#68 as fixed.
+- [x] Commit.
 
 ## Task 2: Preserve unknown cards without random mutation; close stale order/crit items (#65, #66, #69)
 
@@ -45,13 +45,13 @@
 - Modify: player/DM documentation for best-roll crit semantics
 - Update roadmap archives
 
-- [ ] Add failing tests proving unknown serialized cards are not replaced randomly and serialize back with their original identity.
-- [ ] Implement an inert, visible unknown-card placeholder that cannot crash combat and retains original serialized data for repair.
-- [ ] Add regression coverage proving equipped monster card order already survives hydrate unchanged.
-- [ ] Keep character inventory alphabetical behavior; rewrite #65 as investigated/not a combat bug.
-- [ ] Document that Lucky Strike/Rehit/Horn Swipe apply critical success/failure to the selected roll; close #69 as intentional.
-- [ ] Run targeted and full engine tests.
-- [ ] Commit.
+- [x] Add failing tests proving unknown serialized cards are not replaced randomly and serialize back with their original identity.
+- [x] Implement an inert, visible unknown-card placeholder that cannot crash combat and retains original serialized data for repair.
+- [x] Add regression coverage proving equipped monster card order already survives hydrate unchanged.
+- [x] Keep character inventory alphabetical behavior; rewrite #65 as investigated/not a combat bug.
+- [x] Document that Lucky Strike/Rehit/Horn Swipe apply critical success/failure to the selected roll; close #69 as intentional.
+- [x] Run targeted and full engine tests.
+- [x] Commit.
 
 ## Task 3: Add bounded ordered retries to event persistence (#64)
 
@@ -61,12 +61,12 @@
 - Reuse patterns from: `packages/server/src/fight-summary-writer.ts`
 - Update roadmap
 
-- [ ] Add failing tests for retry-then-success, exhaustion, preserved order, and detach during backoff.
-- [ ] Implement bounded injectable backoff while retaining the single write queue.
-- [ ] Ensure detach prevents delayed writes from surviving room unload/delete.
-- [ ] Emit/log failure only after retries are exhausted.
-- [ ] Run targeted and full server tests.
-- [ ] Commit.
+- [x] Add failing tests for retry-then-success, exhaustion, preserved order, and detach during backoff.
+- [x] Implement bounded injectable backoff while retaining the single write queue.
+- [x] Ensure detach prevents delayed writes from surviving room unload/delete.
+- [x] Emit/log failure only after retries are exhausted.
+- [x] Run targeted and full server tests.
+- [x] Commit.
 
 ## Task 4: Prevent deleted-room resurrection and dispose deleted games (#71)
 
@@ -144,11 +144,11 @@
 - Modify: harness/engine integration tests
 - Update roadmap
 
-- [ ] Add failing tests for per-user lane keys and cancellation sentinel translation.
-- [ ] Change the command runner API to include `userId` (or add a production-shaped helper and migrate callers).
-- [ ] Translate `PROMPT_CANCELLED` to `PromptCancelledError` in test channels.
-- [ ] Run engine and harness suites.
-- [ ] Commit.
+- [x] Add failing tests for per-user lane keys and cancellation sentinel translation.
+- [x] Change the command runner API to include `userId` (or add a production-shaped helper and migrate callers).
+- [x] Translate `PROMPT_CANCELLED` to `PromptCancelledError` in test channels.
+- [x] Run engine and harness suites.
+- [x] Commit.
 
 ## Task 9: Unify the web ring feed subscription and cursor (#63)
 

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { GuildRoomManager } from '../guild-room-manager.js';
+import { GuildRoomManager, isGuildRoomMappingUniqueViolation } from '../guild-room-manager.js';
 
 // ---------------------------------------------------------------------------
 // Drizzle stub helpers (mirrors the pattern used in packages/server tests)
@@ -271,6 +271,53 @@ describe('GuildRoomManager', () => {
 			});
 			expect(db._stubs.onConflictDoUpdateStub.calledOnce).to.be.true;
 		});
+
+		it('deletes the orphan room when guild_rooms insert fails after createRoom', async () => {
+			const db = makeDbStub([], {
+				insertRejects: [Object.assign(new Error('connection reset'), { code: '57P01' })],
+			});
+			const rm = makeRoomManagerStub('orphan-sub', 'SUBFAIL1');
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			await expectRejection(
+				() => mgr.createSubRoom('guild-3', 'owner-id', 'Friends Room'),
+				/connection reset/
+			);
+
+			expect(rm.createRoom.calledOnce).to.be.true;
+			expect(rm.deleteRoom.calledOnceWith('owner-id', 'orphan-sub')).to.be.true;
+			expect(db.insert.calledOnce).to.be.true;
+		});
+
+		it('throws an actionable error when mapping insert and orphan cleanup both fail', async () => {
+			const db = makeDbStub([], {
+				insertRejects: [Object.assign(new Error('connection reset'), { code: '57P01' })],
+			});
+			const rm = makeRoomManagerStub('orphan-sub', 'SUBFAIL1');
+			rm.deleteRoom.rejects(new Error('FORBIDDEN: not owner'));
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			const err = (await expectRejection(
+				() => mgr.createSubRoom('guild-3', 'owner-id', 'Friends Room'),
+				/orphan|cleanup|connection reset/i
+			)) as Error;
+
+			expect(rm.deleteRoom.calledOnceWith('owner-id', 'orphan-sub')).to.be.true;
+			expect(err.cause).to.exist;
+		});
+
+		it('does not delete a different room when cleanup targets only the new orphan', async () => {
+			const db = makeDbStub([], {
+				insertRejects: [Object.assign(new Error('disk full'), { code: '53100' })],
+			});
+			const rm = makeRoomManagerStub('brand-new-room', 'CODE9999');
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			await expectRejection(() => mgr.createSubRoom('guild-3', 'owner-id', 'X'));
+
+			expect(rm.deleteRoom.calledOnce).to.be.true;
+			expect(rm.deleteRoom.firstCall.args[1]).to.equal('brand-new-room');
+		});
 	});
 
 	describe('listGuildRooms', () => {
@@ -369,6 +416,39 @@ describe('GuildRoomManager', () => {
 				isDefault: false,
 			});
 		});
+
+		it('treats concurrent guild_rooms PK insert as success when mapping already exists', async () => {
+			const db = makeDbStub([[], []], {
+				insertRejects: [
+					makeUniqueViolation({
+						constraint: 'guild_rooms_pkey',
+						detail: 'Key (guild_id, room_id)=(guild-1, joined-room) already exists.',
+					}),
+				],
+			});
+			const rm = makeRoomManagerStub('joined-room');
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			const result = await mgr.joinRoomByCode('guild-1', 'user-1', 'INVITE1');
+
+			expect(result.roomId).to.equal('joined-room');
+			expect(db.insert.calledTwice).to.be.true;
+		});
+
+		it('re-throws unrelated 23505 from guild mapping insert', async () => {
+			const db = makeDbStub([[]], {
+				insertRejects: [
+					makeUniqueViolation({
+						constraint: DEFAULT_UNIQUE_INDEX,
+						detail: 'Key (guild_id)=(guild-1) already exists.',
+					}),
+				],
+			});
+			const rm = makeRoomManagerStub('joined-room');
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			await expectRejection(() => mgr.joinRoomByCode('guild-1', 'user-1', 'INVITE1'));
+		});
 	});
 
 	describe('resolveRoomForUser', () => {
@@ -419,6 +499,27 @@ describe('GuildRoomManager', () => {
 				roomId: 'room-9',
 			});
 			expect(db._stubs.onConflictDoUpdateStub.calledOnce).to.be.true;
+		});
+	});
+
+	describe('isGuildRoomMappingUniqueViolation', () => {
+		it('returns true for guild_rooms_pkey 23505', () => {
+			expect(
+				isGuildRoomMappingUniqueViolation(
+					makeUniqueViolation({
+						constraint: 'guild_rooms_pkey',
+						detail: 'Key (guild_id, room_id)=(g, r) already exists.',
+					})
+				)
+			).to.equal(true);
+		});
+
+		it('returns false for the one-default-per-guild index', () => {
+			expect(
+				isGuildRoomMappingUniqueViolation(
+					makeUniqueViolation({ constraint: DEFAULT_UNIQUE_INDEX })
+				)
+			).to.equal(false);
 		});
 	});
 });

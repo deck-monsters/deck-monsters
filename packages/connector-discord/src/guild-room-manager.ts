@@ -14,6 +14,9 @@ type Db = NodePgDatabase<typeof schema>;
 /** Partial unique index enforcing one default room per Discord guild. */
 export const GUILD_DEFAULT_UNIQUE_INDEX = 'guild_rooms_one_default_per_guild_idx';
 
+/** Primary key on (guild_id, room_id) for guild room mappings. */
+export const GUILD_ROOMS_PK = 'guild_rooms_pkey';
+
 const DEFAULT_WINNER_RETRY_DELAYS_MS = [0, 25, 50, 100] as const;
 
 export interface GuildRoomInfo {
@@ -55,6 +58,28 @@ export function isDefaultRoomUniqueViolation(err: unknown): boolean {
 
 	const haystack = `${String(e.detail ?? '')} ${String(e.message ?? '')}`;
 	return haystack.includes(GUILD_DEFAULT_UNIQUE_INDEX);
+}
+
+/**
+ * True only for the guild_rooms (guild_id, room_id) PK unique violation.
+ * Unrelated 23505s (e.g. one-default-per-guild index) return false.
+ */
+export function isGuildRoomMappingUniqueViolation(err: unknown): boolean {
+	if (typeof err !== 'object' || err === null) return false;
+	const e = err as {
+		code?: unknown;
+		constraint?: unknown;
+		detail?: unknown;
+		message?: unknown;
+	};
+	if (e.code !== '23505') return false;
+
+	if (typeof e.constraint === 'string' && e.constraint === GUILD_ROOMS_PK) {
+		return true;
+	}
+
+	const haystack = `${String(e.detail ?? '')} ${String(e.message ?? '')}`;
+	return haystack.includes(GUILD_ROOMS_PK) || haystack.includes('(guild_id, room_id)');
 }
 
 export class GuildRoomManager {
@@ -132,12 +157,24 @@ export class GuildRoomManager {
 	): Promise<{ roomId: string; inviteCode: string }> {
 		const { roomId, inviteCode } = await this.roomManager.createRoom(ownerId, name);
 
-		await this.db.insert(guildRooms).values({
-			guildId,
-			roomId,
-			isDefault: false,
-			channelId: null,
-		});
+		try {
+			await this._insertGuildRoomMapping(guildId, roomId);
+		} catch (err) {
+			if (isGuildRoomMappingUniqueViolation(err)) {
+				// Concurrent mapper won the insert race — mapping already exists.
+			} else {
+				try {
+					await this.roomManager.deleteRoom(ownerId, roomId);
+				} catch (cleanupErr) {
+					const wrapped = new Error(
+						`Failed to create guild room mapping for room ${roomId} in guild ${guildId} and delete orphan`,
+						{ cause: { mapping: err, cleanup: cleanupErr } }
+					);
+					throw wrapped;
+				}
+				throw err;
+			}
+		}
 
 		await this.setActiveRoom(guildId, ownerId, roomId);
 
@@ -307,6 +344,15 @@ export class GuildRoomManager {
 
 		if (existing) return;
 
+		try {
+			await this._insertGuildRoomMapping(guildId, roomId);
+		} catch (err) {
+			if (isGuildRoomMappingUniqueViolation(err)) return;
+			throw err;
+		}
+	}
+
+	private async _insertGuildRoomMapping(guildId: string, roomId: string): Promise<void> {
 		await this.db.insert(guildRooms).values({
 			guildId,
 			roomId,

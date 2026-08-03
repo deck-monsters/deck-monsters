@@ -116,18 +116,34 @@ async function collectButtonResponse(
 	return new Promise<string>((resolve, reject) => {
 		let settled = false;
 
-		collector.on('collect', async (btnInteraction: ButtonInteraction) => {
-			// Acknowledge the button click and disable all buttons
-			const disabledRow = buildDisabledRow(choices, btnInteraction.customId);
-			await btnInteraction.update({ components: [disabledRow] });
+		const settle = (fn: () => void) => {
+			if (settled) return;
 			settled = true;
-			resolve(btnInteraction.customId);
+			fn();
+		};
+
+		collector.on('collect', (btnInteraction: ButtonInteraction) => {
+			const choice = btnInteraction.customId;
+			settle(() => {
+				collector.stop?.('answered');
+				resolve(choice);
+			});
+
+			// Best-effort UI ack — must not block settling or flow release.
+			const disabledRow = buildDisabledRow(choices, choice);
+			void btnInteraction.update({ components: [disabledRow] }).catch(() => undefined);
 		});
 
-		collector.on('end', (collected) => {
-			if (settled || collected.size > 0) return;
-			onTimeout?.();
-			reject(new Error('Prompt timed out — no response within the allowed time.'));
+		collector.on('end', (_collected, reason) => {
+			if (settled) return;
+			settle(() => {
+				if (reason === 'cancelled' || reason === 'cancel') {
+					reject(new PromptCancelledError());
+					return;
+				}
+				onTimeout?.();
+				reject(new Error('Prompt timed out — no response within the allowed time.'));
+			});
 		});
 	});
 }
@@ -161,7 +177,7 @@ async function collectTextResponse(
 
 		collector.on('collect', (message) => {
 			settle(() => {
-				collector.stop('answered');
+				collector.stop?.('answered');
 				resolve(message.content);
 			});
 		});
