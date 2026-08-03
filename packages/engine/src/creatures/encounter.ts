@@ -1,5 +1,21 @@
 import type { BaseCreature, EncounterModifiers } from './base.js';
 
+const EMPTY_ENCOUNTER_MODIFIERS: Readonly<EncounterModifiers> = Object.freeze({});
+
+function emptyEncounterModifiersView (self: BaseCreature): EncounterModifiers {
+	return new Proxy(EMPTY_ENCOUNTER_MODIFIERS, {
+		get (_target, prop) {
+			if (prop === 'then') return undefined;
+			return undefined;
+		},
+		set (_target, prop, value) {
+			const modifiers = { [String(prop)]: value } as EncounterModifiers;
+			setEncounterModifiers(self, modifiers);
+			return true;
+		},
+	}) as EncounterModifiers;
+}
+
 export function startEncounter (self: BaseCreature, ring: unknown): void {
 	self.inEncounter = true;
 	self.encounter = { ring };
@@ -18,7 +34,7 @@ export function endEncounter (self: BaseCreature): import('./base.js').Encounter
 }
 
 export function getEncounterModifiers (self: BaseCreature): EncounterModifiers {
-	if (!self.encounter) self.encounter = {};
+	if (!self.encounter) return emptyEncounterModifiersView(self);
 	if (!self.encounter.modifiers) self.encounter.modifiers = {};
 	return self.encounter.modifiers as EncounterModifiers;
 }

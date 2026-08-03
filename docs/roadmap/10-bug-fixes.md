@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium — content pass plus Discord/concurrency follow-ups from the 2026-08-03 audit.
-**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#73 (audit follow-ups that need a design pass).
+**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #67–#68, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#66, #69–#73 (audit follow-ups that need a design pass).
 
 ## Code Quality Issues
 
@@ -65,18 +65,6 @@ Per-user lanes mean two members of the same room can mutate one shared `Game` in
 
 **Action**: Fail closed, quarantine the card, or preserve a stub with the original name for admin repair — never silently replace with a random card.
 
-### 67. Dead monsters without `killedBy` can get “last one standing” XP
-
-`die()` only sets `killedBy` when `assailant` is a real creature. Synthetic / admin death paths leave it unset; `calculateXP` then takes the survivor branch.
-
-**Action**: Treat `monster.dead && !killedBy` as a defeat with no survivor XP (or always set a sentinel `killedBy`).
-
-### 68. `getEncounterModifiers()` materializes encounter state outside combat
-
-Reading `encounterModifiers` creates `self.encounter` even when not in a fight, which can confuse `inEncounter` / serialization boundaries.
-
-**Action**: Return a read-only empty object when `!self.encounter` instead of allocating.
-
 ### 69. Lucky Strike / Rehit can ignore Curse of Loki on discarded rolls
 
 Only the “winning” roll’s crit flags are used. A natural 1 on a discarded first roll does not trigger Curse of Loki.
@@ -124,8 +112,6 @@ A load that already read the DB row can finish after `deleteRoom` removed the `a
 - [ ] Event persister retries (#64)
 - [ ] Preserve equipped deck order on hydrate (#65)
 - [ ] Fail closed on unknown card hydrate (#66)
-- [ ] XP for deaths without `killedBy` (#67)
-- [ ] Lazy `getEncounterModifiers` (#68)
 - [ ] Lucky Strike / Rehit curse semantics (#69)
 - [ ] Guild default-room uniqueness (#70)
 - [ ] `deleteRoom` / `_loadRoom` race (#71)

@@ -1070,3 +1070,27 @@ Hardening on #51. Removing `Math.max(prop, 1)` for XP was correct (it made a fre
 **Fixed**: `getProp` floors XP at 0 rather than 1 — fails safe without reintroducing the off-by-one.
 
 **Status**: Fixed.
+
+---
+
+### 67. Dead monsters without `killedBy` can get “last one standing” XP — FIXED
+
+`die()` only sets `killedBy` when the assailant is a real creature (`isRealCreature`). Environmental / synthetic death paths leave it unset. `calculateXP` treated “no `killedBy`” as the survivor branch, so a dead contestant could earn last-one-standing XP.
+
+**Fixed**: survivor XP (last-one-standing or flee bonus) now runs only when `contestant.fled` or `!monster.dead`. Dead contestants without `killedBy` still receive kill / killed-by / rounds-survived XP as before, but no survivor bonus.
+
+Covered by `assigns no last-one-standing XP when dead without killedBy (#67)` in `helpers/experience.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 68. `getEncounterModifiers()` materializes encounter state outside combat — FIXED
+
+Reading `monster.encounterModifiers` called `getEncounterModifiers`, which allocated `self.encounter = { modifiers: {} }` even when the creature was not in a fight. That phantom encounter polluted serialization boundaries and could make `inEncounter` checks ambiguous.
+
+**Fixed**: when `!self.encounter`, the getter returns a shared read-only empty view (a `Proxy` over a frozen `{}` that materializes `self.encounter.modifiers` only on property writes). Reads no longer allocate; writes during combat still work because `startEncounter` has already created `self.encounter`, and out-of-combat writes (e.g. `hit()` logging) materialize on first assignment.
+
+Covered by `does not materialize encounter state when reading encounterModifiers outside combat (#68)` and `materializes encounter modifiers on write after a read-only empty view` in `creatures/encounter.test.ts`.
+
+**Status**: Fixed.

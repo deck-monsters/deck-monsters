@@ -114,6 +114,26 @@ describe('./helpers/experience.ts', () => {
 		});
 
 		describe('calculate XP for loser', () => {
+			it('assigns no last-one-standing XP when dead without killedBy (#67)', () => {
+				const contestant1 = {
+					monster: { level: 1, givenName: 'fred', displayLevel: 'level 1' },
+					character: {}
+				};
+				const contestant2 = {
+					monster: { level: 1, dead: true },
+					character: {}
+				};
+
+				const contestants = [contestant1, contestant2];
+
+				const { gainedXP, reasons } = calculateXP(contestant2, contestants);
+				expect(gainedXP).to.equal(0);
+				expect(reasons).to.not.include('last one standing');
+				expect(reasons).to.equal(
+					'Gained no XP for lasting 1 rounds in battle against 1 opponent'
+				);
+			});
+
 			it('assigns 1 XP if level 1 monster is killed by same level monster', () => {
 				const contestant1 = {
 					monster: { level: 1, givenName: 'fred' },
