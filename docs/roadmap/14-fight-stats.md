@@ -2,7 +2,7 @@
 
 **Category**: Feature  
 **Priority**: Medium (post-launch)  
-**Status**: In progress (core implementation landed)
+**Status**: Done — core implementation shipped (fight summaries, catch-up feed, web fight log). Optional enhancements remain in the doc's open questions.
 
 ## Background
 

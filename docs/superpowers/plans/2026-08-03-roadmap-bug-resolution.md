@@ -173,12 +173,12 @@
 - Modify/add build tests
 - Update all roadmap indexes and active-known-bug docs
 
-- [ ] Add a content/build test proving DM-only sections do not appear in CARDS.
-- [ ] Add a concise “How to run the game” section and advanced rules/mechanics material to DMG generation.
-- [ ] Regenerate documentation with `node ./build`.
-- [ ] Remove resolved items from active bug tasks and archive each with root cause/tests.
-- [ ] Run documentation/build checks.
-- [ ] Commit.
+- [x] Add a content/build test proving DM-only sections do not appear in CARDS.
+- [x] Add a concise “How to run the game” section and advanced rules/mechanics material to DMG generation.
+- [x] Regenerate documentation with `pnpm run build:docs`.
+- [x] Remove resolved items from active bug tasks and archive each with root cause/tests.
+- [x] Run documentation/build checks.
+- [x] Commit.
 
 ## Task 11: Whole-branch review and final verification
 

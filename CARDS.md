@@ -1,4 +1,3 @@
-
 ```
 			.------..------..------..------..------.
 			|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
@@ -63,7 +62,6 @@ Turkey Thigh
 Vengeful Rampage
 Whiskey Shot
 Wooden Spear
-
 
 ```
 ==================================
@@ -760,7 +758,6 @@ The Annals of Qin Shi Huang
 The Tale of Sir Robin According to Clever Hans
 The Tale of Sir Robin
 Sorting Hat
-
 
 ```
 ==================================

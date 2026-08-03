@@ -156,7 +156,7 @@ node battlefield.js   # ring combat demo
 ### Regenerate Docs
 
 ```bash
-pnpm run build:docs   # rebuilds CARDS.md, DMG.md, MONSTERS.md, PLAYER_HANDBOOK.md, cards.html
+pnpm run build:docs   # builds engine, then regenerates CARDS.md, DMG.md, MONSTERS.md, PLAYER_HANDBOOK.md, cards.html
 ```
 
 ---
@@ -167,7 +167,8 @@ pnpm run build:docs   # rebuilds CARDS.md, DMG.md, MONSTERS.md, PLAYER_HANDBOOK.
 |------|---------|
 | [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) | All player commands + sample deck builds by level |
 | [MONSTERS.md](MONSTERS.md) | Monster types and stat distributions |
-| [CARDS.md](CARDS.md) | Full card catalog with levels, descriptions, and MSRP |
+| [CARDS.md](CARDS.md) | Player-facing card catalog (name, description, rarity) |
+| [DMG.md](DMG.md) | Dungeon Master / operator reference (stats, pacing, concurrency) |
 | [CLAUDE.md](CLAUDE.md) | Codebase guide for AI-assisted development |
 | [docs/roadmap/](docs/roadmap/) | Detailed plans for each planned enhancement |
 

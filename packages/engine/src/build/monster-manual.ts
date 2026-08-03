@@ -6,7 +6,7 @@ import {
 
 type ChannelFn = (opts: { announce: string }) => Promise<unknown>;
 
-function buildMonsterEntry(Monster: any): string {
+export function buildMonsterEntry(Monster: any): string {
 	const instance = new Monster();
 	const m = Monster as any;
 

@@ -804,11 +804,20 @@ The original doc flagged `curseOfLoki` as an unused variable. Investigation show
 
 **Status**: Not a bug — removed from the bug list. Documenting the Curse of Loki mechanic in the player handbook or DMG is a nice-to-have, not tracked here.
 
-### 3 (partial). `DMG.md` and `CARDS.md` are near-duplicates — build headers differentiated
+### 3. `DMG.md` and `CARDS.md` content differentiation — FIXED
 
-The Dungeon Master Guide should contain different content (game master / advanced info) than the player-facing card reference. `build/card-catalogue.js` now generates a player-facing reference ("Player Reference: Cards available in the game — name, description, cost, and rarity"), while `build/dungeon-master-guide.js` generates a game master reference ("Full card stats, modifier math, damage-per-turn tables"). The headers differentiate the purpose.
+Both files were near-duplicates: verbose card stats appeared in both, and the DMG lacked operator-facing material.
 
-**Status**: Headers fixed. The remaining full-content differentiation pass and the how-to-run-the-game section are tracked as open work in `10-bug-fixes.md` (#3).
+**Fixed** (2026-08-03):
+
+1. **Root build consumes engine `dist/`.** `pnpm run build:docs` runs `pnpm --filter @deck-monsters/engine build` first, then `node ./build/index.js`. All imports resolve through `packages/engine/dist/…` — not `src/*.js`.
+2. **Shared generators in `packages/engine/src/build/`.** `root-docs.ts` drives `DMG.md`, `CARDS.md`, `MONSTERS.md`, `PLAYER_HANDBOOK.md`, and `cards.html`. In-game `look at dm guide` uses the same DM sections via `dungeon-master-guide.ts`.
+3. **DM-only sections** (absent from `CARDS.md`): How to Run a Session (web + Discord connectors), Fight Pacing, Admin Commands, Stats Reference with per-monster-type modifiers, Combat Math, Operator Concurrency Notes.
+4. **Player-facing `CARDS.md`** uses non-verbose card formatting (description + rarity only; no DPT / hit-chance tables).
+5. **Deterministic `MONSTERS.md`** — stat-range reference per type instead of random sample instances (reproducible `build:docs` runs leave git clean).
+6. **Automated test** in `packages/engine/src/build/root-docs.test.ts`: DM-only markers present in DMG only; verbose DPT tables in DMG only; byte-identical output across consecutive generations.
+
+**Status**: Fixed.
 
 ### 4. Battle history not persisted
 
@@ -945,7 +954,7 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] `fightOutcome` keeps permaDeath / fled labels on inconclusive fights; `isDraw` derived from it (#74 follow-up)
 - [x] Bad Batch "no effect on other cards" test no longer depends on Heal's 1% crit branches (#75)
 - [x] Boss warning-suppression test pins the outer delay instead of observing re-armed cycles (#76)
-- [x] XP floors at 0 so a negative encounter modifier can't drive it negative (#77)
+- [x] Differentiate DMG vs CARDS content; add how-to-run + operator sections; deterministic doc generation (#3)
 
 ---
 

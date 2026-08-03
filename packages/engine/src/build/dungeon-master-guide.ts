@@ -6,8 +6,15 @@ import {
 	BASE_AC, BASE_DEX, BASE_HP, BASE_INT, BASE_STR,
 	AC_VARIANCE, HP_VARIANCE,
 } from '../constants/stats.js';
+import { eachSeries } from '../helpers/promise.js';
+import {
+	FIGHT_PACING,
+	HOW_TO_RUN_SESSION,
+	OPERATOR_CONCURRENCY,
+} from './dm-only-sections.js';
 
 type ChannelFn = (opts: { announce: string }) => Promise<unknown>;
+export type DocOutputFn = (section: string) => Promise<void> | void;
 
 const DMG_HEADER = `
 ╔══════════════════════════════════╗
@@ -75,21 +82,27 @@ Stat curses (from cards like Soften, Concussion, Molasses)
 cap at -3 per level; further penalties come out of HP instead.
 `.trim();
 
-export const dungeonMasterGuide = async ({ channel }: { channel: ChannelFn }): Promise<void> => {
-	await channel({ announce: DMG_HEADER });
-	await channel({ announce: ADMIN_COMMANDS });
-	await channel({ announce: STATS_REFERENCE });
-	await channel({ announce: COMBAT_MATH });
+export const generateDungeonMasterGuide = async (output: DocOutputFn): Promise<void> => {
+	await output(DMG_HEADER);
+	await output(HOW_TO_RUN_SESSION);
+	await output(FIGHT_PACING);
+	await output(ADMIN_COMMANDS);
+	await output(STATS_REFERENCE);
+	await output(COMBAT_MATH);
+	await output(OPERATOR_CONCURRENCY);
 
-	await channel({ announce: `── Card Catalog (verbose) ────────────\n${allCards.map((Card: any) => (Card as any).cardType ?? '').join(', ')}` });
-	for (const Card of allCards) {
-		await channel({ announce: actionCard(new (Card as any)(), true) });
-	}
+	const cardList = allCards.map((Card: { cardType?: string }) => Card.cardType ?? '').join('\n');
+	const itemList = allItems.map((Item: { itemType?: string }) => Item.itemType ?? '').join(', ');
 
-	await channel({ announce: `── Item Catalog ──────────────────────\n${allItems.map((Item: any) => (Item as any).itemType ?? '').join(', ')}` });
-	for (const Item of allItems) {
-		await channel({ announce: itemCard(new (Item as any)(), true) });
-	}
+	await output(`── Card Catalog (verbose) ────────────\n${cardList}`);
+	await eachSeries(allCards, Card => output(actionCard(new Card(), true)));
+	await output(`── Item Catalog ──────────────────────\n${itemList}`);
+	await eachSeries(allItems, Item => output(itemCard(new Item(), true)));
 };
+
+export const dungeonMasterGuide = async ({ channel }: { channel: ChannelFn }): Promise<void> =>
+	generateDungeonMasterGuide(async section => {
+		await channel({ announce: section });
+	});
 
 export default dungeonMasterGuide;

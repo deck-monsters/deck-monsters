@@ -126,8 +126,8 @@ set -a && source .env.local && set +a
 pnpm --filter @deck-monsters/server dev   # port 3000
 pnpm --filter @deck-monsters/web dev      # port 5173
 
-# Regenerate CARDS.md / DMG.md / probability docs
-node ./build
+# Regenerate CARDS.md / DMG.md / probability docs (builds engine first)
+pnpm run build:docs
 ```
 
 > **Important**: `pnpm build` must run before `pnpm test` on a fresh checkout. The server, discord, and web packages import from `@deck-monsters/engine` via its `dist/` output.
@@ -275,9 +275,7 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 
 ## Known Issues
 
-- **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet. (#3 in `docs/roadmap/10-bug-fixes.md`)
-
-Previously listed here and now fixed (see `docs/roadmap/10b-bugs-fixed.md` for root causes): fight log not updating (#15), console history missing on reconnect (#16/#17), card shop room-scoping (#26), batch-equip UX (#19), Discord free-text prompts / serialization (#59/#60), workshop↔console same-user guard (#61), dual web `ringFeed` (#63), harness lane alignment (#73), ConnectorAdapter prompt cancellation (#78), and the 2026-08-03 audit fixes (#51–#58, #74–#77).
+No active tracked bugs. Previously listed items are fixed — see `docs/roadmap/10b-bugs-fixed.md` for root causes, including DMG/CARDS content differentiation (#3), fight log not updating (#15), console history missing on reconnect (#16/#17), card shop room-scoping (#26), batch-equip UX (#19), Discord free-text prompts / serialization (#59/#60), workshop↔console same-user guard (#61), dual web `ringFeed` (#63), harness lane alignment (#73), ConnectorAdapter prompt cancellation (#78), and the 2026-08-03 audit fixes (#51–#58, #74–#77).
 
 ## Archived / Deferred
 

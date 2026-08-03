@@ -23,7 +23,7 @@
     ]
   },
   "scripts": {
-    "build:docs": "node --import ./packages/engine/node_modules/tsx/dist/esm/index.cjs ./build/index.js",
+    "build:docs": "pnpm --filter @deck-monsters/engine build && node ./build/index.js",
     "build": "turbo run build",
     "dev": "turbo run build --watch",
     "lint:fix": "turbo run lint:fix",
