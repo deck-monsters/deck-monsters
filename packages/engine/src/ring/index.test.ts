@@ -1176,6 +1176,56 @@ describe('ring/index.ts', () => {
 			game.dispose();
 		});
 
+		it('round-cap with deaths but multiple living factions is a draw, not a multi-faction win', () => {
+			// The round-10 empty-deck path announces a draw then calls fightConcludes with
+			// lastContestant=undefined. If anyone died earlier, the old hasOutcome=deaths>0
+			// path marked EVERY living contestant as won — including both remaining factions.
+			const game = new Game();
+			const ring = game.getRing();
+
+			const c1 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c2 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c3 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+
+			ring.addMonster(c1);
+			ring.addMonster(c2);
+			ring.addMonster(c3);
+
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';
+
+			// One Gryffindor died; both factions still have a living member.
+			ring.contestants[1]!.monster.dead = true;
+			ring.contestants[1]!.monster.hp = 0;
+			ring.contestants[1]!.monster.killedBy = ring.contestants[2]!.monster;
+
+			ring.ringEvent = { ...RING_EVENTS.find(e => e.id === 'common-cause')!, apply: () => {} };
+
+			const resolved: Array<{ outcome?: string }> = [];
+			const unsub = ring.eventBus.subscribe('round-cap-outcome', {
+				deliver: (event) => {
+					if (event.type === 'ring.fightResolved') {
+						resolved.push(event.payload as { outcome?: string });
+					}
+				},
+			});
+
+			ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
+			unsub();
+
+			const p0 = ring.findContestant(c1.character, c1.monster)!;
+			const p1 = ring.findContestant(c2.character, c2.monster)!;
+			const p2 = ring.findContestant(c3.character, c3.monster)!;
+
+			expect(p1.lost, 'dead contestant is still a loss').to.equal(true);
+			expect(p0.won, 'Gryffindor survivor must not win while Slytherin lives').to.equal(undefined);
+			expect(p2.won, 'Slytherin survivor must not win while Gryffindor lives').to.equal(undefined);
+			expect(resolved[0]?.outcome, 'fightResolved outcome').to.equal('draw');
+
+			game.dispose();
+		});
+
 		it('can calculate xp when a monster flees', () => {
 			const game = new Game();
 			const ring = game.getRing();

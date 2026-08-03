@@ -939,6 +939,7 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Discord guild users auto-joined to default room via `ensureMember` (#56)
 - [x] `respondToPrompt` rejects the `PROMPT_CANCELLED` sentinel as a client answer (#57)
 - [x] Web room navigation remounts panes, filters by `event.roomId`, seeds history cursor, fixes stale prompt id (#58)
+- [x] Round-cap / inconclusive fights no longer award wins to every living faction (#74)
 
 ---
 
@@ -964,7 +965,7 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 
 ### 53. Pick Pocket crashed on empty stealable deck — FIXED
 
-`randomHelpers.sample(...).clone()` threw when the highest-XP opponent’s deck was empty or only contained Pick Pocket.
+`randomHelpers.sample(...).clone()` threw when the highest-XP opponent’s deck was empty or only contained Pick Pocket. Independently confirmed during PR #358 verification: harnesses that sent unequipped `new Basilisk()` monsters into the ring saw 30–90% fight cancellations with `Cannot read properties of undefined (reading 'clone')`; fully decked `randomContestant` monsters did not. That cancel path was this crash bubbling to `Ring.fight()`’s `.catch`.
 
 **Fixed**: Narrate an empty pocket and resolve successfully without playing a stolen card. Covered by `pick-pocket.test.ts`.
 
@@ -1017,5 +1018,15 @@ Clients could submit the literal sentinel `__cancelled__` as a prompt answer; th
 Navigating `/room/A` → `/room/B` reused pane instances: `historyApplied` stayed true, history for B never loaded, and live events had no `event.roomId` guard. History also never seeded the subscription cursor despite comments saying it should. Console timeout/cancel handlers closed over a stale `activePromptId`.
 
 **Fixed**: `key={roomId}` on Ring/Console panes; filter events whose `roomId` mismatches; seed `subLastEventId` / `latestTrackedEventIdRef` from history; `activePromptIdRef` for timeout/cancel clearing.
+
+**Status**: Fixed.
+
+---
+
+### 74. Round-cap / inconclusive fights awarded wins to every living faction — FIXED
+
+Flagged during PR #358 verification: a 10-round-cap fight could end with `outcome=win`, multiple winners, and survivors still alive on both sides. Root cause: `fightConcludes` treated `deaths > 0` as a decisive outcome and marked **every** living non-fled contestant as `won`, with no check that only one contestant (classic) or one faction (last-team) remained. The round-10 empty-deck path announced a draw then still hit that path.
+
+**Fixed**: Wins require a decisive survivor set — last-team: exactly one living faction (or the existing fled-with-zero-deaths path); classic: `deaths > 0` and exactly one living contestant. Inconclusive ends (round-cap with multiple living factions/individuals) publish draws for survivors while dead contestants still record as losses. Covered by `round-cap with deaths but multiple living factions…` in `ring/index.test.ts`.
 
 **Status**: Fixed.

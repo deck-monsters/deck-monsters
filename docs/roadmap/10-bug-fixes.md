@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium — content pass plus Discord/concurrency follow-ups from the 2026-08-03 audit.
-**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58). What's open here: #3 (DMG/CARDS content) and #59–#73 (audit follow-ups that need a design pass).
+**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #74). What's open here: #3 (DMG/CARDS content) and #59–#73 (audit follow-ups that need a design pass).
 
 ## Code Quality Issues
 

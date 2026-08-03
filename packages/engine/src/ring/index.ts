@@ -114,13 +114,16 @@ function factionOf(c: Contestant): string {
 function participantOutcome(
 	contestant: Contestant,
 	deaths: number,
-	isLastTeamFledWin: boolean
+	hasDecisiveWinner: boolean
 ): 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath' {
-	if (deaths <= 0 && !isLastTeamFledWin) return 'draw';
 	if (contestant.monster.destroyed) return 'permaDeath';
-	if (contestant.monster.dead) return 'loss';
+	if (contestant.monster.dead) return deaths > 0 || hasDecisiveWinner ? 'loss' : 'draw';
 	if (contestant.fled) return 'fled';
-	return 'win';
+	// Living survivors only count as winners when the fight actually decided a victor
+	// (one last contestant, or one last team). Round-cap / inconclusive ends are draws
+	// even if someone died earlier — otherwise both remaining factions get "win".
+	if (hasDecisiveWinner) return 'win';
+	return 'draw';
 }
 
 export class Ring extends BaseClass {
@@ -983,6 +986,24 @@ export class Ring extends BaseClass {
 			return activeFactions.size === 1;
 		})();
 
+		// A decisive win requires an actual last contestant / last team — not merely
+		// "someone died." The round-10 empty-deck path announces a draw with
+		// lastContestant=undefined; if deaths>0 and multiple factions (or multiple
+		// individuals) are still alive, awarding win to every survivor produced the
+		// absurd fight-log outcome "win with survivors on both sides."
+		const living = contestants.filter(c => !c.monster.dead && !c.fled);
+		const isLastTeam = this.ringEvent?.victoryMode === 'last-team';
+		// Classic (last-contestant) mode only records a win when someone actually died and
+		// exactly one contestant remains — a pure flee with zero deaths stays a draw for
+		// W/L (XP still flows through calculateXP). Last-team mode wins whenever exactly
+		// one living faction remains (including the fled-with-zero-deaths path above).
+		const hasDecisiveWinner =
+			isLastTeamFledWin ||
+			(living.length > 0 &&
+				(isLastTeam
+					? new Set(living.map(factionOf)).size === 1
+					: deaths > 0 && living.length === 1));
+
 		// Emit for battle history
 		this.eventBus.publish({
 			type: 'ring.fight',
@@ -1008,50 +1029,45 @@ export class Ring extends BaseClass {
 			const { userId } = contestant;
 			const xpDelta = xpGained[i] ?? 0;
 
-			// A fight has a non-draw outcome when someone died (legacy path) OR when it is a
-			// last-team event where all opponents fled with no deaths.
-			const hasOutcome = deaths > 0 || isLastTeamFledWin;
+			if (contestant.monster.dead) {
+				// Deaths are always losses, even on an otherwise inconclusive (draw) fight.
+				contestant.lost = true;
 
-			if (hasOutcome) {
-				if (contestant.monster.dead) {
-					contestant.lost = true;
-
-					if (contestant.monster.destroyed) {
-						this.eventBus.publish({
-							type: 'ring.permaDeath',
-							scope: 'private',
-							targetUserId: userId,
-							text: `${contestant.monster.givenName} was too badly injured to be revived.`,
-							payload: { contestant, xpGained: xpDelta },
-						});
-					} else {
-						this.eventBus.publish({
-							type: 'ring.loss',
-							scope: 'private',
-							targetUserId: userId,
-							text: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
-							payload: { contestant, xpGained: xpDelta },
-						});
-					}
-				} else if (contestant.fled) {
+				if (contestant.monster.destroyed) {
 					this.eventBus.publish({
-						type: 'ring.fled',
+						type: 'ring.permaDeath',
 						scope: 'private',
 						targetUserId: userId,
-						text: `${contestant.monster.givenName} lived to fight another day!`,
+						text: `${contestant.monster.givenName} was too badly injured to be revived.`,
 						payload: { contestant, xpGained: xpDelta },
 					});
 				} else {
-					contestant.won = true;
-
 					this.eventBus.publish({
-						type: 'ring.win',
+						type: 'ring.loss',
 						scope: 'private',
 						targetUserId: userId,
-						text: `${contestant.monster.identity} is victorious!`,
+						text: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
 						payload: { contestant, xpGained: xpDelta },
 					});
 				}
+			} else if (contestant.fled) {
+				this.eventBus.publish({
+					type: 'ring.fled',
+					scope: 'private',
+					targetUserId: userId,
+					text: `${contestant.monster.givenName} lived to fight another day!`,
+					payload: { contestant, xpGained: xpDelta },
+				});
+			} else if (hasDecisiveWinner) {
+				contestant.won = true;
+
+				this.eventBus.publish({
+					type: 'ring.win',
+					scope: 'private',
+					targetUserId: userId,
+					text: `${contestant.monster.identity} is victorious!`,
+					payload: { contestant, xpGained: xpDelta },
+				});
 			} else {
 				this.eventBus.publish({
 					type: 'ring.draw',
@@ -1069,7 +1085,7 @@ export class Ring extends BaseClass {
 		let loserMonsterId: string | undefined;
 		let loserMonsterName: string | undefined;
 		let loserOwnerUserId: string | undefined;
-		if (deaths > 0 || isLastTeamFledWin) {
+		if (hasDecisiveWinner || deaths > 0) {
 			// Attribute by outcome rather than by contestant count. The old `length === 2`
 			// gate meant every multi-party fight lost its winner/loser entirely — which ring
 			// events (multi-boss gauntlets, team battles) now make the common case. Stay
@@ -1101,20 +1117,19 @@ export class Ring extends BaseClass {
 				monsterType: (m.constructor?.name ?? 'Monster') as string,
 				ownerUserId: c.userId as string,
 				ownerDisplayName: (ch.givenName ?? ch.name ?? '') as string,
-				outcome: participantOutcome(c, deaths, isLastTeamFledWin),
+				outcome: participantOutcome(c, deaths, hasDecisiveWinner),
 				xpGained: xpGained[i] ?? 0,
 				level: m.level as number,
 			};
 		});
 
-		const fightOutcome =
-			deaths <= 0 && !isLastTeamFledWin
-				? 'draw'
-				: contestants.some(c => c.monster.destroyed)
-					? 'permaDeath'
-					: contestants.some(c => c.fled)
-						? 'fled'
-						: 'win';
+		const fightOutcome = !hasDecisiveWinner
+			? 'draw'
+			: contestants.some(c => c.monster.destroyed)
+				? 'permaDeath'
+				: contestants.some(c => c.fled)
+					? 'fled'
+					: 'win';
 
 		this.eventBus.publish({
 			type: 'ring.fightResolved',
