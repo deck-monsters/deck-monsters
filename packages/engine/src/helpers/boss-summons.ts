@@ -80,3 +80,52 @@ export const recordSummon = (
 
 	return next;
 };
+
+/**
+ * Adds a timestamp to the pending ledger without pruning. Used alongside `recordSummon`
+ * so a restart can identify charges that were recorded but whose encounter never started.
+ * See docs/boss-encounters.md §3 for the restart-gap problem.
+ */
+export const addPendingSummon = (
+	pending: BossSummonLedger | undefined,
+	userId: string,
+	timestamp: number
+): BossSummonLedger => {
+	const next: BossSummonLedger = { ...(pending ?? {}) };
+	next[userId] = [...(next[userId] ?? []), timestamp];
+	return next;
+};
+
+/**
+ * Refunds pending summons from the main ledger. Called at game restore time: any summon
+ * that is still pending (encounter never started before the restart) had its charge
+ * consumed but the boss vanished, so we give the charge back.
+ *
+ * Returns both the refunded ledger and a cleared pending ledger.
+ */
+export const refundPendingSummons = (
+	ledger: BossSummonLedger,
+	pending: BossSummonLedger
+): { ledger: BossSummonLedger; pending: BossSummonLedger } => {
+	if (Object.keys(pending).length === 0) {
+		return { ledger, pending };
+	}
+
+	const refunded: BossSummonLedger = { ...ledger };
+
+	for (const [userId, pendingTimestamps] of Object.entries(pending)) {
+		if (!Array.isArray(pendingTimestamps) || pendingTimestamps.length === 0) continue;
+
+		const pendingSet = new Set(pendingTimestamps as number[]);
+		const current = refunded[userId] ?? [];
+		const remaining = current.filter((ts: number) => !pendingSet.has(ts));
+
+		if (remaining.length > 0) {
+			refunded[userId] = remaining;
+		} else {
+			delete refunded[userId];
+		}
+	}
+
+	return { ledger: refunded, pending: {} };
+};

@@ -36,6 +36,20 @@ export interface RingEventContext {
 	playerCount: number;
 }
 
+/**
+ * How combat ends for this event:
+ * - `'last-contestant'` (default): fight ends when ≤1 active contestant remains.
+ * - `'last-team'`: fight ends when all remaining active contestants belong to one faction.
+ *   Every surviving member of that faction wins. Teamless contestants are each their own
+ *   faction, so they can never trigger a last-team victory with a teammate.
+ *
+ * `team` on a contestant (from `apply()`) is still used only for target filtering, not
+ * for victory determination in last-contestant mode. Setting `victoryMode: 'last-team'`
+ * is what makes Common Cause and House War end when one side is eliminated rather than
+ * when only a single monster survives.
+ */
+export type VictoryMode = 'last-contestant' | 'last-team';
+
 export interface RingEventDefinition {
 	id: RingEventId;
 	name: string;
@@ -46,6 +60,11 @@ export interface RingEventDefinition {
 	extraBosses?: number;
 	/** When true, targeting resolves with `team: false` — teams are ignored entirely. */
 	freeForAll?: boolean;
+	/**
+	 * Victory condition override. Defaults to `'last-contestant'` when absent (standard
+	 * free-for-all). Team events (Common Cause, House War) use `'last-team'`.
+	 */
+	victoryMode?: VictoryMode;
 	eligible(context: RingEventContext): boolean;
 	apply(contestants: RingEventContestant[]): void;
 }
@@ -92,6 +111,12 @@ export const RING_EVENTS: RingEventDefinition[] = [
 		banner:
 			'🤝  COMMON CAUSE — the beastmasters call a truce. Every summoned monster stands together against the bosses.',
 		weight: 20,
+		/**
+		 * Pure team event: fight ends when all bosses are eliminated (the Alliance wins)
+		 * or all Alliance members are dead (bosses win). Every surviving Alliance member
+		 * is recorded as a winner.
+		 */
+		victoryMode: 'last-team',
 		eligible: ({ playerCount, bossCount }) => playerCount >= 2 && bossCount >= 1,
 		apply: (contestants) => {
 			for (const player of players(contestants)) {
@@ -105,6 +130,11 @@ export const RING_EVENTS: RingEventDefinition[] = [
 		banner:
 			'⚔️  HOUSE WAR — the ring splits into two warbands. Choose your side, or have it chosen for you.',
 		weight: 15,
+		/**
+		 * Pure team event: fight ends when one house is eliminated. Every surviving member
+		 * of the victorious house is recorded as a winner.
+		 */
+		victoryMode: 'last-team',
 		eligible: ({ playerCount }) => playerCount >= 3,
 		apply: (contestants) => {
 			const houses = shuffle(Object.values(TEAMS) as string[]).slice(0, 2);

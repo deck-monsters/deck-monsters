@@ -3,6 +3,7 @@ import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import { formatRelative } from '../helpers/time.js';
 import {
 	BOSS_SUMMON_LIMIT,
+	addPendingSummon,
 	recordSummon,
 	summonAllowance,
 } from '../helpers/boss-summons.js';
@@ -343,6 +344,11 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 		}
 
 		game.bossSummons = recordSummon(game.bossSummons, userId, now);
+		// Mark as pending so a process restart before the fight starts can refund this
+		// charge — the boss is ephemeral and would vanish, but the spent charge would
+		// not. Cleared when the encounter begins (Game.initializeEvents / ring.fight).
+		// See docs/boss-encounters.md §3 (Finding 6 — restart-gap fix).
+		game.bossSummonsPending = addPendingSummon(game.bossSummonsPending, userId, now);
 
 		const remaining = allowance.remaining - 1;
 		const { monster } = contestant;
@@ -379,8 +385,24 @@ function triggerRingEventAction({ channel, game, isAdmin, results }: any): Promi
 		}
 
 		const ring = game.getRing();
-		ring.ringEvent = ringEvent;
-		ring.emit('ringEvent', { ringEvent });
+
+		// Refuse during an encounter — the event would never be applied (apply() fires in
+		// startEncounter() against the final roster, which already happened) and we would
+		// record an event that has no effect, confusing the fight log. See docs/boss-encounters.md §4.
+		if (ring.inEncounter) {
+			return announceAndThrow(
+				channel,
+				'Cannot force a ring event while an encounter is in progress — the event would have no effect.'
+			);
+		}
+
+		// Use the same centralized activation path as the natural roll so both paths are
+		// identical: announcement emitted, extra bosses spawned (Gauntlet), metrics fired.
+		ring.activateRingEvent(ringEvent);
+		// Re-arm the fight timer so the newly-spawned bosses (if any) are included in the
+		// countdown roster. rollRingEvent() is guarded by `if (this.ringEvent)` so it will
+		// not re-roll the event we just set.
+		ring.startFightTimer();
 
 		return channel({ announce: `Ring event forced: ${ringEvent.name}.` });
 	});

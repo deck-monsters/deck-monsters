@@ -8,6 +8,7 @@ import Game from '../game.js';
 import { RoomEventBus } from '../events/index.js';
 import { engineReady } from '../helpers/engine-ready.js';
 import { ALLIANCE_TEAM, RING_EVENTS } from './ring-events.js';
+import { getTarget, TARGET_NEXT_PLAYER } from '../helpers/targeting-strategies.js';
 
 describe('ring/index.ts', () => {
 	before(async () => {
@@ -459,6 +460,51 @@ describe('ring/index.ts', () => {
 			return { character, monster };
 		};
 
+		describe('activateRingEvent (Finding 3 — centralized activation)', () => {
+			it('activateRingEvent sets ringEvent, emits ringEvent, spawns extraBosses', () => {
+				const game = new Game();
+				const ring = game.getRing();
+
+				addPlayer(ring, 'user-1');
+
+			const emitted: any[] = [];
+			// BaseClass.emit prepends (className, instance) before the payload, so the
+			// listener signature is (className, ring, payload).
+			ring.on('ringEvent', (_className: string, _ring: any, data: any) => emitted.push(data));
+
+			const gauntlet = ringEventFor('gauntlet');
+			const before = ring.contestants.length;
+			ring.activateRingEvent(gauntlet);
+
+			expect(ring.ringEvent).to.equal(gauntlet);
+			expect(emitted.length).to.equal(1);
+			expect(emitted[0].ringEvent).to.equal(gauntlet);
+				// Gauntlet spawns up to 2 extra bosses
+				expect(ring.contestants.length).to.be.greaterThan(before);
+				game.dispose();
+			});
+
+			it('activateRingEvent for non-boss event emits once, no extra spawns', () => {
+				const game = new Game();
+				const ring = game.getRing();
+
+				addPlayer(ring, 'user-1');
+				addPlayer(ring, 'user-2');
+				ring.spawnBoss();
+
+			const emitted: any[] = [];
+			// BaseClass.emit prepends (className, instance) before the payload.
+			ring.on('ringEvent', (_className: string, _ring: any, data: any) => emitted.push(data));
+			const before = ring.contestants.length;
+
+				ring.activateRingEvent(ringEventFor('common-cause'));
+
+				expect(emitted.length).to.equal(1);
+				expect(ring.contestants.length).to.equal(before); // no extra spawns
+				game.dispose();
+			});
+		});
+
 		it('is cleared when the ring is cleared', () => {
 			const game = new Game();
 			const ring = game.getRing();
@@ -516,6 +562,61 @@ describe('ring/index.ts', () => {
 			game.dispose();
 		});
 
+		describe('quorum drop clears ring event (Finding 4)', () => {
+			it('clears the ring event when quorum drops below minimum', () => {
+				const game = new Game();
+				const ring = game.getRing();
+
+				addPlayer(ring, 'user-1');
+				addPlayer(ring, 'user-2');
+				// Manually set a ring event (as if it had been rolled)
+				ring.ringEvent = ringEventFor('blood-feud');
+
+				// Remove one player — drops below quorum
+				const { character, monster } = ring.contestants[0]!;
+				return ring
+					.removeMonster({ monster, character, userId: ring.contestants[0]!.userId })
+					.then(() => {
+						expect(ring.contestants.length).to.equal(1);
+						expect(ring.ringEvent).to.equal(undefined);
+						game.dispose();
+					});
+			});
+
+			it('preserves ring event when quorum is maintained after membership change', () => {
+				const game = new Game();
+				const ring = game.getRing();
+
+				addPlayer(ring, 'user-1');
+				addPlayer(ring, 'user-2');
+				const event = ringEventFor('blood-feud');
+				ring.ringEvent = event;
+
+				// Add a third player — quorum still met, event should remain
+				addPlayer(ring, 'user-3');
+
+				expect(ring.ringEvent).to.equal(event);
+				game.dispose();
+			});
+
+			it('clears the ring event when the ring becomes completely empty', () => {
+				const game = new Game();
+				const ring = game.getRing();
+
+				const { character: c1, monster: m1 } = addPlayer(ring, 'user-1');
+				addPlayer(ring, 'user-2');
+				ring.ringEvent = ringEventFor('common-cause');
+
+				// Remove first player, leaving 1 (below quorum) — event cleared
+				return ring
+					.removeMonster({ monster: m1, character: c1, userId: 'user-1' })
+					.then(() => {
+						expect(ring.ringEvent).to.equal(undefined);
+						game.dispose();
+					});
+			});
+		});
+
 		it('does not arm a fight timer for a deferred add', () => {
 			// The Gauntlet spawns from inside startFightTimer(). Without deferFightTimer the
 			// nested addMonster() would arm a second timer that the outer call then orphans,
@@ -562,6 +663,53 @@ describe('ring/index.ts', () => {
 			ring.handlePermaDeath({ contestant });
 
 			expect(emitSpy.calledWith('permaDeath', { contestant })).to.equal(true);
+		});
+	});
+
+	describe('encounterFreeForAll targeting policy (Finding 2)', () => {
+		it('getTarget with ring.encounterFreeForAll=true ignores contestant.team and targets across teams', () => {
+			// Three contestants: p1 and p2 share a team, p3 is on a different team.
+			// Without freeForAll, p1 can only target p3 (p2 is a teammate).
+			// With freeForAll, p1 can target any other contestant.
+			const p1 = { monster: { xp: 10 }, character: {}, team: 'Gryffindor' };
+			const p2 = { monster: { xp: 20 }, character: {}, team: 'Gryffindor' };
+			const p3 = { monster: { xp: 5 }, character: {}, team: 'Slytherin' };
+			const contestants = [p1, p2, p3] as any;
+
+			// Without freeForAll: TARGET_NEXT_PLAYER for p1 (Gryffindor) skips p2 (same team)
+			// and returns p3 (the next non-team member)
+			const normalTarget = getTarget({
+				contestants,
+				playerContestant: p1 as any,
+				strategy: TARGET_NEXT_PLAYER,
+				ring: { encounterFreeForAll: false },
+			});
+			expect(normalTarget).to.equal(p3); // only non-team opponent
+
+			// With freeForAll: teams are ignored, p2 becomes a valid target
+			const freeForAllTarget = getTarget({
+				contestants,
+				playerContestant: p1 as any,
+				strategy: TARGET_NEXT_PLAYER,
+				ring: { encounterFreeForAll: true },
+			});
+			// freeForAll removes team filtering, so next after p1 (index 0) is p2 (index 1)
+			expect(freeForAllTarget).to.equal(p2);
+		});
+
+		it('getTarget without ring param uses normal team filtering', () => {
+			const p1 = { monster: { xp: 10 }, character: {}, team: 'Gryffindor' };
+			const p2 = { monster: { xp: 20 }, character: {}, team: 'Gryffindor' };
+			const p3 = { monster: { xp: 5 }, character: {}, team: 'Slytherin' };
+			const contestants = [p1, p2, p3] as any;
+
+			const target = getTarget({
+				contestants,
+				playerContestant: p1 as any,
+				strategy: TARGET_NEXT_PLAYER,
+				// no ring param
+			});
+			expect(target).to.equal(p3); // teammate p2 skipped
 		});
 	});
 
@@ -674,6 +822,60 @@ describe('ring/index.ts', () => {
 			expect(contestant2.won).to.be.undefined;
 			expect(contestant1.monster.xp).to.equal(prevXP1 + 2);
 			expect(contestant2.monster.xp).to.equal(prevXP2 + 4);
+		});
+	});
+
+	describe('last-team victory mode (Finding 1)', () => {
+		it('all surviving members of the winning faction get won=true when last-team event is active', async () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			// Set up house-war style: two contestants on team-A, one on team-B
+			const c1 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c2 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c3 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+
+			ring.addMonster(c1);
+			ring.addMonster(c2);
+			ring.addMonster(c3);
+
+			// Apply house-war team overrides manually (like the event would)
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';
+
+			// Set a last-team ring event
+			ring.ringEvent = RING_EVENTS.find(e => e.id === 'house-war')!;
+
+			// Kill c3 (Slytherin) — now only Gryffindor remains
+			ring.contestants[2]!.monster.hp = 0;
+
+			ring.fightConcludes({ lastContestant: ring.contestants[0]!, rounds: 2 });
+
+			// Both Gryffindor contestants should be winners
+			const p0 = ring.findContestant(c1.character, c1.monster)!;
+			const p1 = ring.findContestant(c2.character, c2.monster)!;
+			const p2 = ring.findContestant(c3.character, c3.monster)!;
+
+			expect(p0.won).to.equal(true);
+			expect(p1.won).to.equal(true);
+			expect(p2.won).to.equal(undefined);
+			expect(p2.lost).to.equal(true);
+
+			game.dispose();
+		});
+
+		it('encounterFreeForAll is true when blood-feud event is active', () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			expect(ring.encounterFreeForAll).to.equal(false);
+			ring.ringEvent = RING_EVENTS.find(e => e.id === 'blood-feud')!;
+			expect(ring.encounterFreeForAll).to.equal(true);
+			ring.ringEvent = RING_EVENTS.find(e => e.id === 'common-cause')!;
+			expect(ring.encounterFreeForAll).to.equal(false);
+
+			game.dispose();
 		});
 	});
 

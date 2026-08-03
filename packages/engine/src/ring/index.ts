@@ -566,11 +566,19 @@ export class Ring extends BaseClass {
 				}
 			}, FIGHT_DELAY);
 		} else if (numberOfMonstersInRing <= 0) {
+			// Quorum gone: abort any queued event so a future roster cannot inherit a stale
+			// event that was rolled for a completely different set of contestants.
+			// See docs/boss-encounters.md §4 (Finding 4 — quorum-drop guard).
+			this.ringEvent = undefined;
 			this.emit('narration', {
 				narration: 'The ring is quiet save for the faint sound of footsteps fleeing into the distance.',
 			});
 			this.publishState();
 		} else {
+			// Below quorum but not empty: same reasoning — clear the event. If quorum is
+			// restored later, startFightTimer() re-runs and rolls a fresh event for whoever
+			// is actually in the ring at that point.
+			this.ringEvent = undefined;
 			const needed = MIN_MONSTERS - numberOfMonstersInRing;
 			const monster = needed > 1 ? 'monsters' : 'monster';
 			const join = needed > 1 ? 'join' : 'joins';
@@ -614,6 +622,36 @@ export class Ring extends BaseClass {
 		const anyContestantsHaveCardsLeft = (currentContestants: Contestant[]): boolean =>
 			getContestantsWithCardsLeft(currentContestants).length > 0;
 
+		/**
+		 * Returns the faction label for a contestant: contestant-level team override first
+		 * (from a ring event like Common Cause/House War), then monster.team, then
+		 * character.team, then the contestant's own userId (teamless = own faction).
+		 */
+		const factionOf = (c: Contestant): string =>
+			c.team ||
+			(c.monster as any).team ||
+			(c.character as any).team ||
+			c.userId;
+
+		/**
+		 * True when last-team victory mode is active AND all remaining active contestants
+		 * are in the same faction. An empty active list is not a last-team victory (it is
+		 * a draw or clean sweep, handled by the existing length ≤ 1 path).
+		 */
+		const isLastTeamVictory = (active: Contestant[]): boolean => {
+			if (this.ringEvent?.victoryMode !== 'last-team') return false;
+			if (active.length === 0) return false;
+			const factions = new Set(active.map(factionOf));
+			return factions.size === 1;
+		};
+
+		/**
+		 * True when the fight should continue — more than one active contestant remains
+		 * AND (in last-team mode) they are still from multiple factions.
+		 */
+		const fightContinues = (active: Contestant[]): boolean =>
+			active.length > 1 && !isLastTeamVictory(active);
+
 		this.emit('fight', { contestants });
 
 		let round = 1;
@@ -633,13 +671,16 @@ export class Ring extends BaseClass {
 					resolve(doAction({ currentContestants: activeContestants, cardIndex: nextCardIndex }));
 				};
 
-				if (activeContestants.length <= 1) {
+				const globalActive = getAllActiveContestants();
+				if (activeContestants.length <= 1 || isLastTeamVictory(globalActive)) {
 					nextCardIndex += 1;
 
-					if (activeContestants.length === 1) {
-						activeContestants = [...activeContestants, ...getAllActiveContestants()];
+					// Rebuild only when: exactly 1 survivor in the local batch AND the
+					// global fight is not over (no last-team victory, more factions remain).
+					if (activeContestants.length === 1 && !isLastTeamVictory(globalActive)) {
+						activeContestants = [...activeContestants, ...globalActive];
 					} else {
-						activeContestants = getAllActiveContestants();
+						activeContestants = globalActive;
 						next();
 						return;
 					}
@@ -678,47 +719,14 @@ export class Ring extends BaseClass {
 						Array.isArray(targetResult) ? targetResult[0] : targetResult
 					) as Contestant | undefined;
 
-					if (!targetContestant) {
-						this.log({
-							context: 'ring.fight.noTarget',
-							monsterName: player.givenName,
-							strategy:
-								playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
-						});
-						if (getAllActiveContestants().length > 1) {
-							if (delaysAreSkipped()) {
-								queueMicrotask(() => next());
-							} else {
-								setTimeout(() => next(), veryShortDelay(round));
-							}
-						} else {
-							resolve(playerContestant);
-						}
-						return;
-					}
-
-					const { monster: proposedTarget } = targetContestant;
-
-					playerContestant.round = round;
-
-					fightLog.push(
-						`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`
-					);
-
-				// Guard: if card is a plain object (hydration failure), skip it gracefully.
-				if (typeof card.play !== 'function') {
+				if (!targetContestant) {
 					this.log({
-						context: 'ring.fight.invalidCard',
+						context: 'ring.fight.noTarget',
 						monsterName: player.givenName,
-						monsterConstructor: player?.constructor?.name,
-						cardIndex,
-						cardConstructor: card?.constructor?.name ?? 'unknown',
-						cardKeys: Object.keys(card),
-						cardName: card?.name,
-						typeof_play: typeof card?.play,
-						cardJSON: JSON.stringify(card)?.slice(0, 300),
+						strategy:
+							playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
 					});
-					if (getAllActiveContestants().length > 1) {
+					if (fightContinues(getAllActiveContestants())) {
 						if (delaysAreSkipped()) {
 							queueMicrotask(() => next());
 						} else {
@@ -730,40 +738,73 @@ export class Ring extends BaseClass {
 					return;
 				}
 
-				card
-					.play(player, proposedTarget, ring, getAllActiveContestants())
-					.then(() => {
-						if (getAllActiveContestants().length > 1) {
-							if (delaysAreSkipped()) {
-								return subEventDelay().then(() => next());
-							}
-							// Pace card-to-card transitions with the configured very-short
-							// delay (2–4s) so live feeds can be followed; sub-events within
-							// a card already pace themselves via subEventDelay().
-							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() =>
-								next()
-							);
-						}
+					const { monster: proposedTarget } = targetContestant;
 
-						return Promise.resolve().then(() => resolve(playerContestant));
-					})
-					.catch((ex: unknown) => {
-						this.log({
-							err: ex,
-							context: 'card.play',
-							card: card.name,
-							player: player.givenName,
-							target: proposedTarget.givenName,
-						});
-						// Skip the failed card and continue the fight rather than crashing
-						if (getAllActiveContestants().length > 1) {
-							if (delaysAreSkipped()) {
-								return subEventDelay().then(() => next());
-							}
-							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() => next());
+					playerContestant.round = round;
+
+					fightLog.push(
+						`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`
+					);
+
+			// Guard: if card is a plain object (hydration failure), skip it gracefully.
+			if (typeof card.play !== 'function') {
+				this.log({
+					context: 'ring.fight.invalidCard',
+					monsterName: player.givenName,
+					monsterConstructor: player?.constructor?.name,
+					cardIndex,
+					cardConstructor: card?.constructor?.name ?? 'unknown',
+					cardKeys: Object.keys(card),
+					cardName: card?.name,
+					typeof_play: typeof card?.play,
+					cardJSON: JSON.stringify(card)?.slice(0, 300),
+				});
+				if (fightContinues(getAllActiveContestants())) {
+					if (delaysAreSkipped()) {
+						queueMicrotask(() => next());
+					} else {
+						setTimeout(() => next(), veryShortDelay(round));
+					}
+				} else {
+					resolve(playerContestant);
+				}
+				return;
+			}
+
+			card
+				.play(player, proposedTarget, ring, getAllActiveContestants())
+				.then(() => {
+					if (fightContinues(getAllActiveContestants())) {
+						if (delaysAreSkipped()) {
+							return subEventDelay().then(() => next());
 						}
-						return Promise.resolve().then(() => resolve(playerContestant));
+						// Pace card-to-card transitions with the configured very-short
+						// delay (2–4s) so live feeds can be followed; sub-events within
+						// a card already pace themselves via subEventDelay().
+						return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() =>
+							next()
+						);
+					}
+
+					return Promise.resolve().then(() => resolve(playerContestant));
+				})
+				.catch((ex: unknown) => {
+					this.log({
+						err: ex,
+						context: 'card.play',
+						card: card.name,
+						player: player.givenName,
+						target: proposedTarget.givenName,
 					});
+					// Skip the failed card and continue the fight rather than crashing
+					if (fightContinues(getAllActiveContestants())) {
+						if (delaysAreSkipped()) {
+							return subEventDelay().then(() => next());
+						}
+						return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() => next());
+					}
+					return Promise.resolve().then(() => resolve(playerContestant));
+				});
 				} else {
 					this.emit('endOfDeck', { contestant: playerContestant, round });
 
@@ -1162,6 +1203,35 @@ export class Ring extends BaseClass {
 	}
 
 	/**
+	 * Whether the current ring event is a free-for-all (Blood Feud). Cards that call
+	 * `getTarget` internally pass `ring` to it; this getter provides the policy without
+	 * requiring cards to know about specific event names. See docs/boss-encounters.md §5.
+	 */
+	get encounterFreeForAll(): boolean {
+		return this.ringEvent?.freeForAll === true;
+	}
+
+	/**
+	 * Activates a ring event: sets it, emits the `ringEvent` announcement (consumed by
+	 * the announcements module and the metrics collector), and spawns any extra bosses
+	 * declared by the event (e.g. the Gauntlet's two bosses) with `deferFightTimer: true`
+	 * so they don't arm a second fight timer on top of the one the caller manages.
+	 *
+	 * This is the single activation path shared by the natural roll (inside
+	 * `startFightTimer`) and the admin `trigger ring event` command — keeping both
+	 * paths identical prevents them from drifting apart. See docs/boss-encounters.md §4.
+	 */
+	activateRingEvent(ringEvent: RingEventDefinition): void {
+		this.ringEvent = ringEvent;
+		this.emit('ringEvent', { ringEvent });
+
+		for (let i = 0; i < (ringEvent.extraBosses ?? 0); i++) {
+			if (!this.canAcceptBoss().ok) break;
+			this.spawnBoss({ deferFightTimer: true });
+		}
+	}
+
+	/**
 	 * Rolls for a ring event while the fight countdown is being armed.
 	 *
 	 * Only rolls when no event is already in force, which is what stops the Gauntlet's boss
@@ -1179,13 +1249,7 @@ export class Ring extends BaseClass {
 		const ringEvent = selectRingEvent(buildRingEventContext(this.contestants));
 		if (!ringEvent) return;
 
-		this.ringEvent = ringEvent;
-		this.emit('ringEvent', { ringEvent });
-
-		for (let i = 0; i < (ringEvent.extraBosses ?? 0); i++) {
-			if (!this.canAcceptBoss().ok) break;
-			this.spawnBoss({ deferFightTimer: true });
-		}
+		this.activateRingEvent(ringEvent);
 	}
 
 	startBossTimer(): void {

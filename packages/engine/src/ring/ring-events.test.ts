@@ -158,4 +158,26 @@ describe('ring/ring-events.ts', () => {
 			expect(getRingEvent('nonsense')).to.equal(undefined);
 		});
 	});
+
+	describe('victoryMode (Finding 1)', () => {
+		it('Common Cause is a last-team event', () => {
+			expect(eventById('common-cause').victoryMode).to.equal('last-team');
+		});
+
+		it('House War is a last-team event', () => {
+			expect(eventById('house-war').victoryMode).to.equal('last-team');
+		});
+
+		it('Blood Feud has no victoryMode override — defaults to last-contestant', () => {
+			expect(eventById('blood-feud').victoryMode).to.equal(undefined);
+		});
+
+		it('Gauntlet has no victoryMode override — defaults to last-contestant', () => {
+			expect(eventById('gauntlet').victoryMode).to.equal(undefined);
+		});
+
+		it('The Reckoning has no victoryMode override — defaults to last-contestant', () => {
+			expect(eventById('the-reckoning').victoryMode).to.equal(undefined);
+		});
+	});
 });

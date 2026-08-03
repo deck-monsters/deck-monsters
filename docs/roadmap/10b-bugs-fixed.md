@@ -316,6 +316,143 @@ genuinely ambiguous fights are still left blank rather than guessed at.
 
 ---
 
+---
+
+### 34. Common Cause and House War fights kept going after one faction survived — FIXED
+
+`Ring.fight()`'s doAction loop used a uniform `active.length <= 1` condition to decide when
+combat was over. In events like Common Cause (all players vs one boss) or House War (two
+player factions), the "last contestant standing" criterion is wrong: combat should end once
+all remaining active contestants belong to one faction, even if several of them survive.
+
+**Fixed** with an explicit `victoryMode` field on `RingEventDefinition` (`'last-contestant'
+| 'last-team'`, default `last-contestant`). Common Cause and House War are marked
+`last-team`. `Ring.fight()` now calls `isLastTeamVictory(activeContestants)` — which checks
+`ringEvent.victoryMode === 'last-team'` and then checks that all active contestants map to
+the same faction via `factionOf()` — and resolves the fight when it returns `true`. Every
+surviving faction member is marked `won: true` in `fightResolved` participants, so the fight
+log and leaderboard both reflect team victories correctly.
+
+Covered by new tests in `ring/index.test.ts` (last-team ends combat when one faction
+survives; all survivors marked won) and `ring/ring-events.test.ts` (victoryMode values per
+event).
+
+**Status**: Fixed.
+
+---
+
+### 35. Blood Feud's free-for-all did not apply to cards that call getTarget internally — FIXED
+
+The `freeForAll` flag set on Blood Feud's `RingEventDefinition` was only consumed by
+`Ring.fight()` when selecting the initial proposed target. Cards that call `getTarget()`
+internally — Blast, Enthrall, Fists of Villainy, Fists of Virtue, Pick Pocket — used their
+own team filtering and still excluded team-mates, so Blood Feud's "all enemies, no allies"
+intent was only partially enforced.
+
+**Fixed** centrally: `getTarget()` in `helpers/targeting-strategies.ts` now accepts an
+optional `ring?: { encounterFreeForAll?: boolean }`. If `ring.encounterFreeForAll` is `true`,
+`getTarget` forces `team: false` before any further resolution, making free-for-all apply to
+every target selection in the encounter without modifying each card. The five affected cards
+now pass the ring instance through. `Ring.encounterFreeForAll` is a getter:
+`this.ringEvent?.freeForAll === true`. Normal team targeting is unaffected outside Blood Feud.
+
+Covered by new tests in `ring/index.test.ts` (encounterFreeForAll reflects ringEvent).
+
+**Status**: Fixed.
+
+---
+
+### 36. Admin `trigger ring event` diverged from natural activation — FIXED
+
+The admin `trigger ring event <id>` command set `ring.ringEvent` directly and called
+`startFightTimer()`, while the natural path (inside `rollRingEvent`) additionally emitted the
+`ringEvent` announcement, spawned the Gauntlet's extra bosses, and let the enclosing timer
+arm exactly once. The two paths could drift independently as new ring events were added.
+
+**Fixed** by centralizing activation in `Ring.activateRingEvent(ringEvent: RingEventDefinition)`:
+sets `this.ringEvent`, emits `ringEvent` (consumed by `announcements/ringEvent.ts` and the
+metrics collector), and spawns any `extraBosses` with `deferFightTimer: true`. Both
+`rollRingEvent()` and the admin command now call this method exclusively. The admin command
+also refuses when a fight is already in progress (returning an error announce) and does not
+record an unapplied event.
+
+Covered by new tests in `ring/index.test.ts` (activateRingEvent sets ringEvent, emits once,
+spawns extraBosses for the Gauntlet; non-boss event emits once, no extra spawns; refuses
+during an encounter).
+
+**Status**: Fixed.
+
+---
+
+### 37. Ring event persisted past a quorum drop, contaminating a later roster — FIXED
+
+A ring event rolled for a valid multi-player roster (e.g. 3 players → House War) was never
+cleared when players subsequently left before the fight fired. The remaining solo player,
+joined later by a stranger, would inherit the House War event from a completely different
+group.
+
+**Fixed**: `startFightTimer()` now clears `this.ringEvent = undefined` in both the
+"quorum gone" branch (ring totally empty) and the "below quorum but not empty" branch (ring
+has at least one monster but not enough for a fight). If quorum is later restored,
+`startFightTimer()` re-runs and `rollRingEvent()` rolls a fresh event for whoever is actually
+in the ring. The event is preserved when the countdown is immediately re-armed with a valid
+roster (the `if (this.ringEvent)` guard in `rollRingEvent` prevents overwriting a still-valid
+event in the same arm).
+
+Covered by new tests in `ring/index.test.ts` (ringEvent cleared when player leaves and
+quorum drops; preserved when quorum immediately re-arms after a membership change).
+
+**Status**: Fixed.
+
+---
+
+### 38. XP team calculations ignored contestant-level ring-event overrides — FIXED
+
+`calculateXP` in `helpers/experience.ts` counted opponents by comparing `monster.team` and
+`character.team`. Ring events like Common Cause assign teams at the `contestant.team` level
+(the override field on `Contestant`, which is intentionally ephemeral — see the hard rule in
+`docs/boss-encounters.md §4`). `monster.team` and `character.team` are never written by a
+ring event. So XP math counted team-mates as opponents during Common Cause fights, inflating
+XP rewards.
+
+**Fixed**: `calculateXP` now resolves a contestant's team as `contestant.team ||
+monster.team || character.team`, prioritizing the ring-event override. Covered by new tests
+in `helpers/experience.test.ts` that distinguish same-team allies (via contestant override)
+from opponents.
+
+**Status**: Fixed.
+
+---
+
+### 39. Boss summon charge consumed but boss lost on process restart — FIXED
+
+`summon a boss` atomically checks the quota and records the charge in `game.bossSummons`,
+then calls `ring.addMonster()`, which re-arms the 60 s fight countdown. If the process
+restarted in that 30–60 s window the ephemeral boss vanished (bosses are never serialized)
+while the charge remained in the persisted `bossSummons` ledger — a permanent net loss of
+one daily charge.
+
+**Fixed** with a minimal pending/finalized mechanism: a second ledger `bossSummonsPending`
+is written alongside `bossSummons` in the same synchronous block. When the fight actually
+begins (`ring.fight` / `fightBegins` via the event bus), `bossSummonsPending` is cleared —
+the charge is finalized. `Game`'s constructor calls `_refundPendingBossSummons()` before
+`initializeEvents`, which uses `refundPendingSummons` (a new pure helper in
+`helpers/boss-summons.ts`) to strip the pending timestamps from `bossSummons` and clear
+the pending ledger. A restart in the 30–60 s window therefore gives the charge back.
+
+The schema is backward-compatible (`bossSummonsPending` lives in `Game.options`, and the Zod
+schema's `passthrough()` accepts it without migration). Bosses remain ephemeral — only the
+quota entry is affected. Ordinary pre-fight player actions cannot accidentally grant duplicate
+summons because they do not touch `bossSummonsPending`.
+
+Covered by new tests in `helpers/boss-summons.test.ts` (addPendingSummon, refundPendingSummons
+pure-helper behavior) and `ring/index.test.ts` (serialization round-trip: pending cleared
+after fight starts; pending refunded on restore before fight).
+
+**Status**: Fixed.
+
+---
+
 ## Other Resolved Items
 
 ### 1. "Barely blocked" message fires incorrectly (upstream #181)
@@ -439,3 +576,9 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Replace remaining `Promise.reject(channel({ announce }))` call sites with announce-then-real-`Error`
 - [x] Publish a terminal `cancelled` event from `fight()`'s `.catch` path
 - [x] Distinguish "still processing your previous command" from "answer the current prompt first" in `activeFlows` rejection messages
+- [x] Add `victoryMode: 'last-team'` to Common Cause and House War; `Ring.fight()` ends combat when one faction survives and marks all survivors won (#34)
+- [x] Centralize Blood Feud's free-for-all in `getTarget()` via optional `ring` param; pass ring from Blast, Enthrall, Fists, Pick Pocket (#35)
+- [x] Centralize ring event activation in `Ring.activateRingEvent()`; admin `trigger ring event` now uses same path, refuses during encounter (#36)
+- [x] Clear `ringEvent` when quorum drops in `startFightTimer()`; fresh event rolled when quorum later restored (#37)
+- [x] Prioritize `contestant.team` over `monster.team`/`character.team` in `calculateXP` (#38)
+- [x] Fix boss summon restart gap: `bossSummonsPending` ledger refunded on restore before fight start (#39)

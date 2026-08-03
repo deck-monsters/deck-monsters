@@ -27,6 +27,13 @@ interface Contestant {
 	killedBy?: Monster;
 	fled?: boolean;
 	rounds?: number;
+	/**
+	 * Per-encounter team override set by a ring event (e.g. Common Cause, House War).
+	 * Takes precedence over `monster.team` and `character.team` for XP opponent counting,
+	 * so teammate-vs-opponent XP bonuses respect the event's faction assignments rather
+	 * than persisted creature options. See docs/boss-encounters.md §5.
+	 */
+	team?: string;
 }
 
 export interface XPResult {
@@ -113,12 +120,17 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 
 	let numOpponents = 0;
 	if (contestants.length > 2) {
-		const contestantTeam = monster.team || contestant.character.team;
+		// Contestant-level team override (from ring events like Common Cause/House War)
+		// takes precedence over monster.team and character.team so that XP bonuses for
+		// fighting across factions correctly reflect the event's team assignments rather
+		// than persisted creature options. See docs/boss-encounters.md §5.
+		const contestantTeam = contestant.team || monster.team || contestant.character.team;
 		if (!contestantTeam) {
 			numOpponents += contestants.length - 1;
 		} else {
 			numOpponents += contestants.reduce((result, opponent) => {
-				const opponentTeam = opponent.monster.team || opponent.character.team;
+				if (opponent.monster === monster) return result; // skip self
+				const opponentTeam = opponent.team || opponent.monster.team || opponent.character.team;
 
 				if (contestantTeam !== opponentTeam) {
 					return result + 1;

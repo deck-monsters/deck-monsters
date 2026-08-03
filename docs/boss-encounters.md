@@ -112,7 +112,8 @@ Admins keep the separate, unlimited `spawn a boss` (hidden from `COMMAND_CATALOG
 
 The ledger is `game.options.bossSummons` (`Record<userId, epochMs[]>`), exposed as
 `Game.bossSummons` and manipulated by the pure helpers in
-`packages/engine/src/helpers/boss-summons.ts` (`summonAllowance`, `recordSummon`).
+`packages/engine/src/helpers/boss-summons.ts` (`summonAllowance`, `recordSummon`,
+`addPendingSummon`, `refundPendingSummons`).
 
 **The check is enforced in the engine command handler, not the tRPC router.** The Discord
 connector's `dispatchCommand` (`connector-discord/src/slash-commands/helpers.ts`) calls
@@ -130,6 +131,34 @@ Two rules follow from that:
   prune-on-read; pruning happens inside `recordSummon`. A getter that calls `setOptions()`
   broadcasts `stateChange` synchronously, which is exactly the re-entrancy hazard described
   in `engine-concurrency-and-timing.md` §7.
+
+### The restart-gap fix: pending summons
+
+There is a 30–60 s window between `summon a boss` recording the charge and the fight
+starting (the boss is added to the ring, which re-arms the countdown). If the process
+restarts inside that window the ephemeral boss vanishes, but the charge was already written
+to `bossSummons`. Without a remedy, a successful summon followed by an immediate restart
+permanently consumes a daily charge for nothing.
+
+**Fix**: a second ledger `game.bossSummonsPending` (`Record<userId, epochMs[]>`) mirrors only
+the timestamps recorded since the last fight started. The flow is:
+
+1. `summon a boss` records the timestamp in both `bossSummons` (the main quota ledger, via
+   `recordSummon`) and `bossSummonsPending` (via `addPendingSummon`), atomically in the same
+   synchronous block.
+2. When a fight actually begins (`ring.fight` / `fightBegins` event), `initializeEvents`
+   clears `bossSummonsPending`. The boss is now firmly in play and the charge is spent.
+3. `Game`'s constructor (before `initializeEvents`) calls `_refundPendingBossSummons()`,
+   which calls `refundPendingSummons` to remove from `bossSummons` any timestamps still in
+   `bossSummonsPending`, then clears the pending ledger. A restart in step 1–2's window
+   therefore gives the charge back automatically.
+
+Bosses are not made persistent by this design — they remain ephemeral. Only the quota entry
+is affected. The schema is backward-compatible: `bossSummonsPending` lives in `Game.options`
+alongside `bossSummons` and the Zod schema's `passthrough()` accepts it without migration.
+
+Ordinary pre-fight player actions (adding another monster to the ring, summoning an item)
+cannot grant duplicate summons because neither touches `bossSummonsPending`.
 
 ### Command behaviour
 
@@ -171,15 +200,40 @@ Note that summoning calls `addMonster()`, which restarts the 60 s countdown — 
 A ring event is a random encounter modifier rolled while the fight countdown is arming.
 Defined declaratively in `packages/engine/src/ring/ring-events.ts`.
 
-| Event | Effect | Eligible when |
-|---|---|---|
-| **The Gauntlet** | Pulls up to 2 extra bosses into the ring | ≥1 player |
-| **Blood Feud** | Free-for-all — teams ignored, and bosses turn on each other | ≥3 contestants |
-| **Common Cause** | Every player joins `ALLIANCE_TEAM`; players only hit bosses | ≥2 players and ≥1 boss |
-| **House War** | Players split round-robin across two Sorting Hat houses | ≥3 players |
-| **The Reckoning** | Bosses switch to `TARGET_HIGHEST_XP_PLAYER` — they hunt the strongest | ≥1 boss, ≥2 players |
+| Event | Effect | Victory mode | Eligible when |
+|---|---|---|---|
+| **The Gauntlet** | Pulls up to 2 extra bosses into the ring | `last-contestant` (default) | ≥1 player |
+| **Blood Feud** | Free-for-all — teams ignored, and bosses turn on each other | `last-contestant` (default) | ≥3 contestants |
+| **Common Cause** | Every player joins `ALLIANCE_TEAM`; players only hit bosses | `last-team` | ≥2 players and ≥1 boss |
+| **House War** | Players split round-robin across two Sorting Hat houses | `last-team` | ≥3 players |
+| **The Reckoning** | Bosses switch to `TARGET_HIGHEST_XP_PLAYER` — they hunt the strongest | `last-contestant` (default) | ≥1 boss, ≥2 players |
 
 `RING_EVENT_CHANCE_PERCENT` is 25.
+
+### Victory modes: `last-contestant` vs `last-team`
+
+`RingEventDefinition` carries an optional `victoryMode` field (`'last-contestant' | 'last-team'`).
+The default is `last-contestant` — the original semantics: last monster standing wins.
+
+`last-team` is for events where the narrative is about factions rather than individuals:
+
+- Combat ends when all active contestants belong to **one faction**.
+- A faction is determined by `contestant.team` (ring-event override first), then
+  `monster.team`, then `character.team`, then the contestant's own `userId` (every
+  unaffiliated monster is its own faction).
+- **Every surviving member** of the winning faction is marked `won: true`. This is the
+  critical difference from `last-contestant`, where at most one monster wins.
+- An empty active list falls through to the existing draw/clean-sweep logic, which counts
+  deaths and uses `fightResolved` correctly.
+
+Common Cause and House War both use `last-team`. Blood Feud, The Gauntlet, and The Reckoning
+do not — in those events the team assignments are either absent or irrelevant to when combat
+ends, and individual survival is the right measure.
+
+**Important distinction**: `team` on a contestant controls _targeting allegiance_ (who can be
+selected as an attack target); `victoryMode` controls _when the fight ends_. These are
+orthogonal: Blood Feud uses `freeForAll` (ignores team for targeting) but keeps
+`last-contestant` victory; Common Cause uses team targeting AND `last-team` victory.
 
 ### The hard rule: overrides go on the `Contestant`, never on the monster
 
@@ -199,17 +253,42 @@ per-encounter. There is a test asserting `apply()` leaves the monster untouched 
 1. **Roll** — `startFightTimer()`, at the moment the countdown is armed, and **only when
    `this.ringEvent == null`**. That guard is load-bearing: the Gauntlet's `spawnBoss()` calls
    re-enter `startFightTimer()` via `addMonster()`, and without it the roll would recurse.
-2. **Spawn** — Gauntlet's extra bosses are added with `deferFightTimer: true`. Without that
+2. **Activate** — Both natural rolls and the admin `trigger ring event` command call the
+   single `Ring.activateRingEvent(ringEvent)` method. It sets `this.ringEvent`, emits
+   `ringEvent`, and spawns any `extraBosses` with `deferFightTimer: true`. Using one path
+   prevents natural and admin activations from drifting apart.
+3. **Spawn** — Gauntlet's extra bosses are added with `deferFightTimer: true`. Without that
    flag the nested `addMonster()` arms a second fight timer that the enclosing
    `startFightTimer()` then orphans, and the same countdown fires two fights.
-3. **Announce** — `ring.emit('ringEvent', { ringEvent })` → `announcements/ringEvent.ts`
+4. **Announce** — `ring.emit('ringEvent', { ringEvent })` → `announcements/ringEvent.ts`
    publishes a public `announce`. Deliberately *not* a new `EventType`: `announce` already
    renders in the web console and ring feed, already survives a reload (it is not in the
    persister's `EPHEMERAL_TYPES`), and already reaches Discord.
-4. **Apply** — `startEncounter()` calls `ringEvent.apply(this.contestants)` against the final
+5. **Apply** — `startEncounter()` calls `ringEvent.apply(this.contestants)` against the final
    roster, since contestants may have joined or left during the countdown.
-5. **Record** — the event's name rides `ring.fightResolved` → `fight_summaries.ring_event`.
-6. **Clear** — `clearRing()` sets `ringEvent = undefined`.
+6. **Record** — the event's name rides `ring.fightResolved` → `fight_summaries.ring_event`.
+7. **Clear** — `clearRing()` sets `ringEvent = undefined`. `startFightTimer()` also clears
+   `ringEvent` when the quorum drops below `MIN_MONSTERS` — see the quorum-drop guard below.
+
+### Quorum-drop guard
+
+Before this fix, a ring event rolled for a valid roster (e.g. 3 players → House War) persisted
+on `this.ringEvent` even if all but one player then left before the fight fired. The sole
+remaining player, joined later by a different player, would inherit the House War event from a
+completely different roster.
+
+`startFightTimer()` now clears `this.ringEvent` whenever quorum is not met. If quorum is
+later restored, `startFightTimer()` runs again and rolls a fresh event for the players actually
+in the ring. The event is preserved when the countdown is immediately re-armed with a valid
+roster (i.e. `ringEvent` is already set and the `rollRingEvent()` guard `if (this.ringEvent)`
+prevents overwriting it within the same arm).
+
+### Admin `trigger ring event`
+
+`trigger ring event <id|name>` (admin-only, hidden from the catalog) calls
+`Ring.activateRingEvent()` directly, producing the same announcement, boss spawns (for the
+Gauntlet), and metric as a natural roll. If a fight is already in progress, the command
+refuses and does not record the event.
 
 ### Determinism
 
@@ -222,14 +301,13 @@ equivalent.
 ### Adding a new ring event
 
 1. Add a `RingEventDefinition` to `RING_EVENTS`. Keep `apply()` pure over the contestant array.
-2. Anything beyond contestant overrides (extra spawns, and so on) belongs as a declarative
-   field consumed by `Ring.rollRingEvent()`, not as a side effect inside `apply()`.
-3. Never assign `TARGET_ALL_CONTESTANTS` as a monster strategy — it resolves to an *array*.
+2. Set `victoryMode: 'last-team'` if the event is fundamentally faction-based. Leave it unset
+   (defaults to `last-contestant`) for events where individual survival is the right measure.
+3. Anything beyond contestant overrides (extra spawns, and so on) belongs as a declarative
+   field consumed by `Ring.activateRingEvent()`, not as a side effect inside `apply()`.
+4. Never assign `TARGET_ALL_CONTESTANTS` as a monster strategy — it resolves to an *array*.
    `Ring.fight()` guards against it, but the guard is a safety net, not a licence.
-4. Add eligibility and apply tests to `ring/ring-events.test.ts`.
-
-Admins can force one with `trigger ring event <id|name>` (hidden from the catalog, like
-`spawn a boss`).
+5. Add eligibility, apply, and victoryMode tests to `ring/ring-events.test.ts`.
 
 ---
 
@@ -248,6 +326,41 @@ knowing:
   `undefined` — a fixed bug worth not reintroducing.
 - Outside ring events, the only things that set a team are the Sorting Hat scroll and boss
   creation; the only things that set a strategy are the targeting scrolls in `items/scrolls/`.
+
+### Team allegiance vs. victory mode (these are orthogonal)
+
+`team` on a contestant controls **targeting allegiance** — who can be chosen as an attack
+target. `victoryMode` on a `RingEventDefinition` controls **when the fight ends**. The two
+concepts interact but are independent:
+
+| Event | Team targeting | Victory mode |
+|---|---|---|
+| Common Cause | Players share `ALLIANCE_TEAM`; ignore bosses as targets | `last-team` — fight ends when one faction survives |
+| House War | Players split across two named houses | `last-team` — fight ends when one house survives |
+| Blood Feud | `freeForAll: true` — teams ignored for targeting | `last-contestant` — last monster standing wins |
+| The Gauntlet / The Reckoning / none | Normal team rules | `last-contestant` — last monster standing wins |
+
+### Centralized free-for-all policy (Blood Feud)
+
+Before this fix, Blood Feud's `freeForAll` flag was only applied to the initial target
+selection in `Ring.fight()`. Cards that call `getTarget()` internally (Blast, Enthrall,
+Fists of Villainy, Fists of Virtue, Pick Pocket, etc.) used their own team filtering, so
+team-mates were still excluded from their targeting during a Blood Feud — contrary to the
+event's intent.
+
+**Fix**: `getTarget()` accepts an optional `ring?: { encounterFreeForAll?: boolean }`. Cards
+that call `getTarget` internally now pass the ring instance. If `ring.encounterFreeForAll` is
+`true`, `getTarget` forces `team: false` for that call, making free-for-all apply uniformly.
+`Ring.encounterFreeForAll` is a getter that returns `this.ringEvent?.freeForAll === true`.
+Normal team targeting is unaffected outside a Blood Feud encounter.
+
+### XP calculations and contestant-level team overrides
+
+`calculateXP` in `helpers/experience.ts` determines opponent count by checking whether two
+contestants are on the same team. It now prioritizes `contestant.team` (the ring-event
+override) over `monster.team` and `character.team`. Without this, Common Cause's team
+override was invisible to XP math — players on the same alliance team still counted each
+other as opponents.
 
 ---
 

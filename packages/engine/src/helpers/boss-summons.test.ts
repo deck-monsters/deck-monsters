@@ -5,6 +5,8 @@ import {
 	BOSS_SUMMON_WINDOW_MS,
 	recordSummon,
 	summonAllowance,
+	addPendingSummon,
+	refundPendingSummons,
 	type BossSummonLedger,
 } from './boss-summons.js';
 
@@ -93,5 +95,58 @@ describe('helpers/boss-summons.ts', () => {
 		} as unknown as BossSummonLedger;
 
 		expect(summonAllowance(ledger, USER, NOW).used).to.equal(1);
+	});
+
+	describe('pending summons (Finding 6 — restart-gap refund)', () => {
+		it('refundPendingSummons removes pending timestamps from the main ledger', () => {
+			const main: BossSummonLedger = { [USER]: [NOW, NOW + 1000] };
+			const pending: BossSummonLedger = { [USER]: [NOW + 1000] }; // second summon is pending
+
+			const { ledger: refunded, pending: clearedPending } = refundPendingSummons(main, pending);
+
+			expect(refunded[USER]).to.deep.equal([NOW]); // only the finalized one remains
+			expect(clearedPending[USER]).to.equal(undefined); // pending cleared
+		});
+
+		it('refundPendingSummons returns unchanged ledger when there are no pending summons', () => {
+			const main: BossSummonLedger = { [USER]: [NOW, NOW + 1000] };
+			const pending: BossSummonLedger = {};
+
+			const { ledger: refunded } = refundPendingSummons(main, pending);
+
+			expect(refunded[USER]).to.deep.equal([NOW, NOW + 1000]);
+		});
+
+		it('refundPendingSummons handles a user whose entire ledger entry is pending', () => {
+			const main: BossSummonLedger = { [USER]: [NOW] };
+			const pending: BossSummonLedger = { [USER]: [NOW] };
+
+			const { ledger: refunded } = refundPendingSummons(main, pending);
+
+			expect(refunded[USER]).to.equal(undefined);
+		});
+
+		it('refundPendingSummons does not affect other users', () => {
+			const main: BossSummonLedger = { [USER]: [NOW], [OTHER_USER]: [NOW + 500] };
+			const pending: BossSummonLedger = { [USER]: [NOW] };
+
+			const { ledger: refunded } = refundPendingSummons(main, pending);
+
+			expect(refunded[USER]).to.equal(undefined);
+			expect(refunded[OTHER_USER]).to.deep.equal([NOW + 500]);
+		});
+
+		it('addPendingSummon adds a timestamp to the pending ledger', () => {
+			const pending = addPendingSummon(undefined, USER, NOW);
+
+			expect(pending[USER]).to.deep.equal([NOW]);
+		});
+
+		it('addPendingSummon accumulates multiple pending summons', () => {
+			let pending = addPendingSummon(undefined, USER, NOW);
+			pending = addPendingSummon(pending, USER, NOW + 1000);
+
+			expect(pending[USER]).to.deep.equal([NOW, NOW + 1000]);
+		});
 	});
 });

@@ -32,6 +32,7 @@ export class PickPocketCard extends BaseCard {
 			contestants: activeContestants,
 			playerMonster: player,
 			strategy: TARGET_HIGHEST_XP_PLAYER,
+			ring,
 		}) as any).monster;
 
 		const randomCard = (randomHelpers.sample(

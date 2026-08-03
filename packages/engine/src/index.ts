@@ -36,7 +36,7 @@ export {
 } from './helpers/boss-summons.js';
 export type { BossSummonLedger, SummonAllowance } from './helpers/boss-summons.js';
 export { RING_EVENTS, getRingEvent, selectRingEvent } from './ring/ring-events.js';
-export type { RingEventDefinition, RingEventId } from './ring/ring-events.js';
+export type { RingEventDefinition, RingEventId, VictoryMode } from './ring/ring-events.js';
 export { allMonsters } from './monsters/index.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {

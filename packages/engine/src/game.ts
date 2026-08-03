@@ -22,6 +22,7 @@ import { RoomEventBus } from './events/index.js';
 import type { StateStore } from './types/state-store.js';
 import { resolveShop, type Shop } from './items/store/shop.js';
 import type { BossSummonLedger } from './helpers/boss-summons.js';
+import { refundPendingSummons } from './helpers/boss-summons.js';
 import { announceAndThrow } from './helpers/announce-and-throw.js';
 
 // State save debounce: 30 seconds
@@ -86,6 +87,13 @@ export class Game extends BaseClass {
 			this.log
 		);
 		this.exploration = new Exploration(this._eventBus as any, {}, this.log);
+
+		// Refund pending boss summons from before the last restart. Any summon recorded
+		// in the 30–60 s window between `summon a boss` and the fight starting had its
+		// charge spent but the ephemeral boss vanished with the process. We give the charge
+		// back before any player-facing code can see the ledger.
+		// See docs/boss-encounters.md §3 (Finding 6 — restart-gap fix).
+		this._refundPendingBossSummons();
 
 		this.initializeEvents();
 		loadHandlers();
@@ -208,6 +216,45 @@ export class Game extends BaseClass {
 		this.setOptions({ bossSummons } as any);
 	}
 
+	/**
+	 * Pending boss summons: timestamps recorded in `bossSummons` but whose encounter
+	 * has not yet started. If the process restarts before the encounter begins, the boss
+	 * vanishes (bosses are ephemeral) but the charge was already spent — this ledger
+	 * lets the constructor refund those charges on restore. Cleared when a fight starts.
+	 * See docs/boss-encounters.md §3 (Finding 6 — restart-gap fix).
+	 */
+	get bossSummonsPending(): BossSummonLedger {
+		return ((this.options as any).bossSummonsPending as BossSummonLedger | undefined) ?? {};
+	}
+
+	set bossSummonsPending(bossSummonsPending: BossSummonLedger) {
+		this.setOptions({ bossSummonsPending } as any);
+	}
+
+	/**
+	 * Removes pending boss summon timestamps from the main ledger and clears the pending
+	 * ledger. Called once at construction time (before `initializeEvents`) so any restart
+	 * that caught a summon mid-flight gives the charge back.
+	 *
+	 * Writes via `optionsStore` directly to avoid emitting `stateChange` during
+	 * construction — listeners are not yet attached at this point.
+	 */
+	private _refundPendingBossSummons(): void {
+		const pending = (this.options as any).bossSummonsPending as BossSummonLedger | undefined;
+		if (!pending || Object.keys(pending).length === 0) return;
+
+		const main = (this.options as any).bossSummons as BossSummonLedger | undefined ?? {};
+		const { ledger: refunded, pending: cleared } = refundPendingSummons(main, pending);
+
+		// Mutate optionsStore directly: setOptions() would emit stateChange which is
+		// not desirable during construction before listeners are wired up.
+		this.optionsStore = {
+			...this.optionsStore,
+			bossSummons: refunded,
+			bossSummonsPending: cleared,
+		};
+	}
+
 	private getRoomMonsterLevels(): number[] {
 		return Object.values(this.characters)
 			.flatMap((character: any) =>
@@ -262,6 +309,20 @@ export class Game extends BaseClass {
 			wrapGameEvent(() => this.scheduleSave())
 		);
 
+		// Finalize pending boss summons when a fight actually starts. This completes the
+		// restart-gap fix: once the encounter begins, the boss is firmly in play and the
+		// charge is genuinely spent — pending can be cleared so a subsequent restart won't
+		// mistakenly refund it. See docs/boss-encounters.md §3.
+		const unsubBossFinalizer = this._eventBus.subscribe('game-boss-summon-finalizer', {
+			deliver: (event) => {
+				if (event.type === 'ring.fight' && (event.payload as any)?.eventName === 'fightBegins') {
+					if (Object.keys(this.bossSummonsPending).length > 0) {
+						this.bossSummonsPending = {};
+					}
+				}
+			},
+		});
+
 		this._disposeListeners = [
 			disposeAnnouncements,
 			() => this.off('creature.win', boundWin),
@@ -269,6 +330,7 @@ export class Game extends BaseClass {
 			() => this.off('creature.permaDeath', boundPermaDeath),
 			() => this.off('creature.fled', boundFled),
 			() => this.off('stateChange', boundStateChange),
+			unsubBossFinalizer,
 		];
 	}
 
