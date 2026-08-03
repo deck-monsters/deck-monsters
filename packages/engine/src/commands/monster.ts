@@ -64,7 +64,7 @@ function callMonsterOutOfTheRingAction({
 		const { monsterName } = cleanArgs({ monsterName: results[1] });
 
 		return character
-			.callMonsterOutOfTheRing({ monsterName, ring: game.getRing(), channel, channelName, userId: user?.id })
+			.callMonsterOutOfTheRing({ monsterName, ring: game.getRing(), channel, channelName, userId: user.id })
 			.catch((err: unknown) => game.log(err));
 	});
 }
@@ -253,7 +253,7 @@ function sendMonsterToTheRingAction({
 				ring: game.getRing(),
 				channel,
 				channelName,
-				userId: user?.id,
+				userId: user.id,
 			})
 			.catch((err: unknown) => game.log(err));
 	});

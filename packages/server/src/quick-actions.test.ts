@@ -4,6 +4,9 @@ import { buildQuickActions } from './quick-actions.js';
 
 const USER = 'user-1';
 
+const makeCards = (count: number): Array<{ cardType: string }> =>
+	Array.from({ length: count }, (_, i) => ({ cardType: `Card${i}` }));
+
 const makeGame = (
 	character: Record<string, unknown> | undefined,
 	contestants: Array<{ userId?: string; monster?: unknown; isBoss?: boolean }> = []
@@ -26,10 +29,39 @@ describe('buildQuickActions', () => {
 		expect(actions[0]?.command).to.equal('spawn monster');
 	});
 
-	it('offers to send an idle monster into the ring', () => {
-		const monster = { givenName: 'Fluffy' };
+	it('does not suggest send when the monster has no cards equipped', () => {
+		const monster = { givenName: 'Fluffy', cards: [] };
+		const actions = buildQuickActions(makeGame({ monsters: [monster], deck: [] }), USER);
+		expect(actions.map((a) => a.command)).to.not.include('send Fluffy to the ring');
+	});
+
+	it('does not suggest send when the monster has fewer cards than slots', () => {
+		const monster = { givenName: 'Fluffy', cards: makeCards(3) };
+		const actions = buildQuickActions(makeGame({ monsters: [monster], deck: [] }), USER);
+		expect(actions.map((a) => a.command)).to.not.include('send Fluffy to the ring');
+	});
+
+	it('suggests send when the monster has a full default deck (9 cards)', () => {
+		const monster = { givenName: 'Fluffy', cards: makeCards(9) };
 		const actions = buildQuickActions(makeGame({ monsters: [monster], deck: [] }), USER);
 		expect(actions.map((a) => a.command)).to.include('send Fluffy to the ring');
+	});
+
+	it('suggests send when cards meet a custom cardSlots count', () => {
+		const monster = { givenName: 'Fluffy', cards: makeCards(2), cardSlots: 2 };
+		const actions = buildQuickActions(makeGame({ monsters: [monster], deck: [] }), USER);
+		expect(actions.map((a) => a.command)).to.include('send Fluffy to the ring');
+	});
+
+	it('suggests equip instead of send when idle monsters are not deck-ready but unequipped cards exist', () => {
+		const monster = { givenName: 'Fluffy', cards: [] };
+		const actions = buildQuickActions(
+			makeGame({ monsters: [monster], deck: [{ cardType: 'Hit' }] }),
+			USER
+		);
+		const commands = actions.map((a) => a.command);
+		expect(commands).to.include('equip Fluffy');
+		expect(commands).to.not.include('send Fluffy to the ring');
 	});
 
 	it('offers the ring view instead of a send for a monster already fighting', () => {
@@ -79,7 +111,7 @@ describe('buildQuickActions', () => {
 	});
 
 	it('ignores ring contestants belonging to other players', () => {
-		const mine = { givenName: 'Fluffy' };
+		const mine = { givenName: 'Fluffy', cards: makeCards(9) };
 		const theirs = { givenName: 'Rex' };
 		const game = makeGame({ monsters: [mine], deck: [] }, [
 			{ userId: 'someone-else', monster: theirs },
@@ -93,8 +125,8 @@ describe('buildQuickActions', () => {
 		const game = makeGame(
 			{
 				monsters: [
-					{ givenName: 'InRing' },
-					{ givenName: 'Idle' },
+					{ givenName: 'InRing', cards: makeCards(9) },
+					{ givenName: 'Idle', cards: makeCards(9) },
 					{ givenName: 'Dead', dead: true },
 				],
 				deck: [{ cardType: 'Hit' }],

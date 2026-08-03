@@ -20,6 +20,7 @@ export interface QuickAction {
 }
 
 const MAX_QUICK_ACTIONS = 4;
+const DEFAULT_CARD_SLOTS = 9;
 
 type LooseRecord = Record<string, unknown>;
 
@@ -43,6 +44,14 @@ const isDead = (monster: unknown): boolean =>
 
 const isDestroyed = (monster: unknown): boolean =>
 	Boolean((monster as LooseRecord | undefined)?.destroyed);
+
+const cardSlots = (monster: unknown): number => {
+	const slots = (monster as LooseRecord | undefined)?.cardSlots;
+	return typeof slots === 'number' && slots > 0 ? slots : DEFAULT_CARD_SLOTS;
+};
+
+const isDeckReady = (monster: unknown): boolean =>
+	asArray((monster as LooseRecord | undefined)?.cards).length >= cardSlots(monster);
 
 /** Defensive read — this runs inside the command pipeline and must never throw. */
 const summonsRemaining = (game: QuickActionsGame, userId: string): number => {
@@ -95,7 +104,8 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 	const deadRevivable = monsters.filter(
 		(monster) => isDead(monster) && !isDestroyed(monster)
 	);
-	const readyToSend = living.filter((monster) => !ringMonsters.has(monster));
+	const idleOutOfRing = living.filter((monster) => !ringMonsters.has(monster));
+	const readyToSend = idleOutOfRing.filter(isDeckReady);
 	const hasMonsterInRing = living.some((monster) => ringMonsters.has(monster));
 	const unequippedCards = asArray(character.deck).length;
 
@@ -129,7 +139,7 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 
 	// Equipping is rejected while a monster is fighting, so only offer it for a
 	// monster that is out of the ring.
-	const nextToEquip = readyToSend[0];
+	const nextToEquip = idleOutOfRing[0];
 	if (unequippedCards > 0 && nextToEquip) {
 		add(`Equip ${monsterName(nextToEquip)}`, `equip ${monsterName(nextToEquip)}`);
 	}
