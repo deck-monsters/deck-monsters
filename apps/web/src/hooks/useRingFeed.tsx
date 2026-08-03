@@ -2,13 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
 } from 'react';
 import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
+import { shouldAdvanceEventCursor } from '../utils/ring-feed-cursor.js';
 import { useHandshake } from './useHandshake.js';
 
 export type TrackedRingFeedEvent = { id: string; data: GameEvent };
@@ -18,7 +19,11 @@ export type RingFeedApi = {
   reconnecting: boolean;
   /** Register a pane listener. Returns unsubscribe. Listener identity may change freely. */
   subscribe: (listener: (tracked: TrackedRingFeedEvent) => void) => () => void;
-  /** Seed reconnect cursor from DB history when no live/persisted id is tracked yet. */
+  /**
+   * Seed / advance the reconnect cursor from a DB history tail.
+   * Monotonic by leading epoch timestamp — never moves backwards or overwrites
+   * a newer live cursor.
+   */
   seedCursor: (eventId: string) => void;
 };
 
@@ -38,6 +43,9 @@ export function useRingFeed(roomId: string): RingFeedApi {
   const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
   const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const listenersRef = useRef(new Set<(tracked: TrackedRingFeedEvent) => void>());
+  // Events that arrive before any pane listener is registered (e.g. sync delivery
+  // during the subscribe call in render) are buffered and flushed on subscribe.
+  const pendingEventsRef = useRef<TrackedRingFeedEvent[]>([]);
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
 
@@ -52,26 +60,47 @@ export function useRingFeed(roomId: string): RingFeedApi {
     setReconnecting(false);
     latestTrackedEventIdRef.current = undefined;
     listenersRef.current.clear();
+    pendingEventsRef.current = [];
   }
+
+  const advanceTrackedCursor = useCallback((eventId: string) => {
+    if (!shouldAdvanceEventCursor(eventId, latestTrackedEventIdRef.current)) return false;
+    latestTrackedEventIdRef.current = eventId;
+    return true;
+  }, []);
+
+  const fanOut = useCallback((tracked: TrackedRingFeedEvent) => {
+    if (listenersRef.current.size === 0) {
+      pendingEventsRef.current.push(tracked);
+      return;
+    }
+    for (const listener of listenersRef.current) {
+      listener(tracked);
+    }
+    // Live delivery reached current listeners; drop the startup buffer so we
+    // do not replay stale frames to future subscribers.
+    pendingEventsRef.current = [];
+  }, []);
 
   const subscribe = useCallback((listener: (tracked: TrackedRingFeedEvent) => void) => {
     listenersRef.current.add(listener);
+    // Replay buffered frames to each registrant so a second pane that layout-
+    // registers after the first still sees the early handshake/live event.
+    for (const tracked of pendingEventsRef.current) {
+      listener(tracked);
+    }
     return () => {
       listenersRef.current.delete(listener);
     };
   }, []);
 
   const seedCursor = useCallback((eventId: string) => {
-    if (latestTrackedEventIdRef.current !== undefined) return;
-    latestTrackedEventIdRef.current = eventId;
-    setSubLastEventId(eventId);
-  }, []);
-
-  const fanOut = useCallback((tracked: TrackedRingFeedEvent) => {
-    for (const listener of listenersRef.current) {
-      listener(tracked);
-    }
-  }, []);
+    if (!advanceTrackedCursor(eventId)) return;
+    setSubLastEventId((prev) => {
+      if (!shouldAdvanceEventCursor(eventId, prev)) return prev;
+      return eventId;
+    });
+  }, [advanceTrackedCursor]);
 
   trpc.game.ringFeed.useSubscription(
     { roomId, lastEventId: subLastEventId },
@@ -101,7 +130,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
           return;
         }
 
-        latestTrackedEventIdRef.current = tracked.id;
+        advanceTrackedCursor(tracked.id);
         fanOut(tracked);
       },
       onError() {
@@ -137,6 +166,8 @@ export function useRingFeedContext(): RingFeedApi {
 /**
  * Subscribe a pane to the shared feed. Uses a ref so listener identity changes
  * do not resubscribe or restart the underlying tRPC subscription.
+ * Registers in useLayoutEffect so listeners exist before the parent's
+ * useEffect-based tRPC subscription can deliver the first frame.
  */
 export function useRingFeedListener(
   listener: (tracked: TrackedRingFeedEvent) => void,
@@ -145,7 +176,7 @@ export function useRingFeedListener(
   const listenerRef = useRef(listener);
   listenerRef.current = listener;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     return subscribe((tracked) => {
       listenerRef.current(tracked);
     });

@@ -44,7 +44,7 @@ vi.mock('../components/CommandSuggestions.js', () => ({
 }));
 
 vi.mock('../components/InlineChoices.js', () => ({
-  default: () => null,
+  default: ({ question }: { question: string }) => <div>{question}</div>,
 }));
 
 vi.mock('../components/CatchUpBanner.js', () => ({
@@ -104,7 +104,7 @@ vi.mock('react-virtuoso', () => {
     Virtuoso: React.forwardRef(
       (
         props: {
-          data?: Array<{ text?: string; id?: string }>;
+          data?: Array<{ text?: string; id?: string; promptData?: unknown }>;
           itemContent?: (index: number, item: { text?: string }) => React.ReactNode;
           'aria-label'?: string;
         },
@@ -133,36 +133,45 @@ function latestCall() {
   return call;
 }
 
+function installResizeObserver(fireWidth?: number) {
+  class MockResizeObserver {
+    private cb: ResizeObserverCallback;
+    constructor(cb: ResizeObserverCallback) {
+      this.cb = cb;
+    }
+    observe() {
+      if (fireWidth === undefined) return;
+      this.cb(
+        [{ contentRect: { width: fireWidth } } as ResizeObserverEntry],
+        this as unknown as ResizeObserver,
+      );
+    }
+    unobserve() {}
+    disconnect() {}
+  }
+  window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+}
+
 describe('Terminal shared ringFeed subscription (#63)', () => {
   beforeEach(() => {
     subscriptionCalls.length = 0;
-    // Force side-by-side layout so both panes mount as active.
-    class MockResizeObserver {
-      private cb: ResizeObserverCallback;
-      constructor(cb: ResizeObserverCallback) {
-        this.cb = cb;
-      }
-      observe() {
-        this.cb(
-          [{ contentRect: { width: 1200 } } as ResizeObserverEntry],
-          this as unknown as ResizeObserver,
-        );
-      }
-      unobserve() {}
-      disconnect() {}
-    }
-    window.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+  });
+
+  it('opens exactly one ringFeed subscription per Terminal (non-StrictMode)', () => {
+    // Do not fire ResizeObserver — a single render must mean a single subscribe call.
+    installResizeObserver(undefined);
+    render(<Terminal roomId="room-one" />);
+    expect(subscriptionCalls).toHaveLength(1);
+    expect(subscriptionCalls[0]?.input).toEqual({ roomId: 'room-one', lastEventId: undefined });
   });
 
   it('uses one ringFeed subscription and delivers events to both pane handlers', () => {
+    installResizeObserver(1200);
     render(<Terminal roomId="room-shared" />);
 
-    // One subscription call site per Terminal render — not one per pane.
-    // Dual pane subscriptions would leave two distinct live inputs on the same room.
     expect(subscriptionCalls.length).toBeGreaterThanOrEqual(1);
-    const uniqueRooms = new Set(subscriptionCalls.map((c) => c.input.roomId));
-    expect(uniqueRooms.size).toBe(1);
-    expect([...uniqueRooms][0]).toBe('room-shared');
+    expect(new Set(subscriptionCalls.map((c) => c.input.roomId)).size).toBe(1);
+    expect(new Set(subscriptionCalls.map((c) => JSON.stringify(c.input))).size).toBe(1);
 
     act(() => {
       latestCall().onData?.({
@@ -179,13 +188,18 @@ describe('Terminal shared ringFeed subscription (#63)', () => {
             buildVersion: 'dev',
             serverTime: new Date().toISOString(),
             yourUserId: 'user-1',
-            ringState: { nextFightAt: null, nextBossSpawnAt: null, monsterCount: 0 },
+            ringState: {
+              nextFightAt: Date.now() + 45_000,
+              nextBossSpawnAt: null,
+              monsterCount: 2,
+            },
           },
         },
       });
     });
-    // Handshake must not advance the shared cursor (would restart the subscription).
     expect(latestCall().input.lastEventId).toBeUndefined();
+    // Handshake timer payload must still reach RingPane.
+    expect(screen.getByText(/fight in/i)).toBeTruthy();
 
     act(() => {
       latestCall().onData?.({
@@ -217,13 +231,55 @@ describe('Terminal shared ringFeed subscription (#63)', () => {
 
     expect(screen.getByText('A basilisk enters the ring')).toBeTruthy();
     expect(screen.getByText('You hear private news')).toBeTruthy();
-
-    // Live events also must not restart the subscription input (cursor updates only on error).
     expect(latestCall().input).toEqual({ roomId: 'room-shared', lastEventId: undefined });
-    expect(new Set(subscriptionCalls.map((c) => JSON.stringify(c.input))).size).toBe(1);
+  });
+
+  it('delivers private prompt and quick_actions to ConsolePane', () => {
+    installResizeObserver(1200);
+    render(<Terminal roomId="room-console" />);
+
+    act(() => {
+      latestCall().onData?.({
+        id: 'prompt-1',
+        data: {
+          id: 'prompt-1',
+          roomId: 'room-console',
+          timestamp: Date.now(),
+          type: 'prompt.request',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: 'Pick a color',
+          payload: {
+            requestId: 'req-1',
+            question: 'Pick a color',
+            choices: ['red', 'blue'],
+            timeoutSeconds: 30,
+          },
+        },
+      });
+      latestCall().onData?.({
+        id: 'qa-1',
+        data: {
+          id: 'qa-1',
+          roomId: 'room-console',
+          timestamp: Date.now(),
+          type: 'quick_actions',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: '',
+          payload: {
+            actions: [{ label: 'look at ring', command: 'look at ring' }],
+          },
+        },
+      });
+    });
+
+    expect(screen.getByText('Pick a color')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'look at ring' })).toBeTruthy();
   });
 
   it('reconnects from the shared cursor and resets on room change', () => {
+    installResizeObserver(1200);
     const { rerender } = render(<Terminal roomId="room-a" />);
 
     act(() => {
