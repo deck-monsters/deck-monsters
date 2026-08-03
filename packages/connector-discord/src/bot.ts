@@ -57,7 +57,10 @@ export class DiscordBot {
 		if (existing) return existing;
 
 		const { GuildRoomSubscription } = await import('./guild-room-subscription.js');
-		const announcementChannelId = await this.guildRoomManager.getAnnouncementChannel(guildId);
+		const announcementChannelId = await this.guildRoomManager.getAnnouncementChannel(
+			guildId,
+			roomId
+		);
 		const eventBus = await this.roomManager.getEventBus(roomId);
 
 		const sub = new GuildRoomSubscription(

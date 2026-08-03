@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { resolveUser } from '../slash-commands/helpers.js';
+import { resolveUser, resolveConnectorUserId } from '../slash-commands/helpers.js';
 
 function makeSelectChain(result: unknown[]) {
 	const limitStub = sinon.stub().resolves(result);
@@ -10,12 +10,10 @@ function makeSelectChain(result: unknown[]) {
 	return { from: fromStub };
 }
 
-describe('resolveUser', () => {
+describe('resolveUser / resolveConnectorUserId', () => {
 	afterEach(() => sinon.restore());
 
-	it('resolves the guild/user active room (not always the default)', async () => {
-		// ensureConnectorUser short-circuits when a connector row already exists —
-		// no Supabase admin client needed.
+	it('resolveUser resolves the guild/user active room (not always the default)', async () => {
 		const db = {
 			select: sinon.stub().callsFake(() => makeSelectChain([{ userId: 'supabase-user-1' }])),
 		};
@@ -45,5 +43,28 @@ describe('resolveUser', () => {
 		expect(guildRoomManager.resolveRoomForUser.calledOnceWith('guild-abc', 'supabase-user-1')).to
 			.be.true;
 		expect(guildRoomManager.getOrCreateDefaultRoom.called).to.be.false;
+	});
+
+	it('resolveConnectorUserId returns the supabase id without resolving a room', async () => {
+		const db = {
+			select: sinon.stub().callsFake(() => makeSelectChain([{ userId: 'supabase-user-1' }])),
+		};
+		const guildRoomManager = {
+			resolveRoomForUser: sinon.stub().resolves('should-not-be-called'),
+		};
+		const interaction = {
+			user: { id: 'discord-snowflake-1', username: 'Alice' },
+			guildId: 'guild-abc',
+		};
+		const ctx = {
+			db: db as any,
+			guildRoomManager: guildRoomManager as any,
+			roomManager: {} as any,
+			bot: {} as any,
+		};
+
+		const userId = await resolveConnectorUserId(interaction as any, ctx as any);
+		expect(userId).to.equal('supabase-user-1');
+		expect(guildRoomManager.resolveRoomForUser.called).to.be.false;
 	});
 });

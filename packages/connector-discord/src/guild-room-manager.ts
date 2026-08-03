@@ -11,26 +11,64 @@ import type { RoomManager } from '@deck-monsters/server/room-manager';
 
 type Db = NodePgDatabase<typeof schema>;
 
+/** Partial unique index enforcing one default room per Discord guild. */
+export const GUILD_DEFAULT_UNIQUE_INDEX = 'guild_rooms_one_default_per_guild_idx';
+
+const DEFAULT_WINNER_RETRY_DELAYS_MS = [0, 25, 50, 100] as const;
+
 export interface GuildRoomInfo {
 	roomId: string;
 	isDefault: boolean;
 	channelId: string | null;
 }
 
-function isUniqueViolation(err: unknown): boolean {
-	return (
-		typeof err === 'object' &&
-		err !== null &&
-		'code' in err &&
-		(err as { code: unknown }).code === '23505'
-	);
+export interface GuildRoomManagerOptions {
+	/** Injectable delay used between winner re-selection attempts (tests inject a no-op). */
+	wait?: (ms: number) => Promise<void>;
+	/** Delays before each winner select attempt; index 0 is the immediate first try. */
+	winnerRetryDelaysMs?: readonly number[];
+}
+
+function defaultWait(ms: number): Promise<void> {
+	if (ms <= 0) return Promise.resolve();
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * True only for the one-default-per-guild unique index violation.
+ * Prefers Postgres `constraint`; falls back to detail/message when the driver omits it.
+ * Unrelated 23505s (e.g. guild_rooms PK) return false.
+ */
+export function isDefaultRoomUniqueViolation(err: unknown): boolean {
+	if (typeof err !== 'object' || err === null) return false;
+	const e = err as {
+		code?: unknown;
+		constraint?: unknown;
+		detail?: unknown;
+		message?: unknown;
+	};
+	if (e.code !== '23505') return false;
+
+	if (typeof e.constraint === 'string' && e.constraint === GUILD_DEFAULT_UNIQUE_INDEX) {
+		return true;
+	}
+
+	const haystack = `${String(e.detail ?? '')} ${String(e.message ?? '')}`;
+	return haystack.includes(GUILD_DEFAULT_UNIQUE_INDEX);
 }
 
 export class GuildRoomManager {
+	private readonly wait: (ms: number) => Promise<void>;
+	private readonly winnerRetryDelaysMs: readonly number[];
+
 	constructor(
 		private readonly db: Db,
-		private readonly roomManager: RoomManager
-	) {}
+		private readonly roomManager: RoomManager,
+		opts: GuildRoomManagerOptions = {}
+	) {
+		this.wait = opts.wait ?? defaultWait;
+		this.winnerRetryDelaysMs = opts.winnerRetryDelaysMs ?? DEFAULT_WINNER_RETRY_DELAYS_MS;
+	}
 
 	/**
 	 * Returns the default room ID for a guild.
@@ -57,12 +95,20 @@ export class GuildRoomManager {
 				channelId: null,
 			});
 		} catch (err) {
-			if (!isUniqueViolation(err)) throw err;
+			if (!isDefaultRoomUniqueViolation(err)) throw err;
 
 			// Another creator won the default slot — remove our orphan and join theirs.
-			await this.roomManager.deleteRoom(userId, roomId);
+			try {
+				await this.roomManager.deleteRoom(userId, roomId);
+			} catch (cleanupErr) {
+				const wrapped = new Error(
+					`Failed to delete orphan room ${roomId} after default race for guild ${guildId}`,
+					{ cause: cleanupErr }
+				);
+				throw wrapped;
+			}
 
-			const winner = await this._findDefaultRoom(guildId);
+			const winner = await this._findDefaultRoomWithRetry(guildId);
 			if (!winner) {
 				throw new Error(`Default room race lost for guild ${guildId} but no winner found`);
 			}
@@ -124,12 +170,12 @@ export class GuildRoomManager {
 			.where(and(eq(guildRooms.guildId, guildId), eq(guildRooms.roomId, roomId)));
 	}
 
-	/** Returns the announcement channel ID for the default room, if set. */
-	async getAnnouncementChannel(guildId: string): Promise<string | null> {
+	/** Returns the announcement channel ID for a specific guild-room mapping, if set. */
+	async getAnnouncementChannel(guildId: string, roomId: string): Promise<string | null> {
 		const [row] = await this.db
 			.select({ channelId: guildRooms.channelId })
 			.from(guildRooms)
-			.where(and(eq(guildRooms.guildId, guildId), eq(guildRooms.isDefault, true)))
+			.where(and(eq(guildRooms.guildId, guildId), eq(guildRooms.roomId, roomId)))
 			.limit(1);
 
 		return row?.channelId ?? null;
@@ -200,6 +246,22 @@ export class GuildRoomManager {
 			.where(and(eq(guildRooms.guildId, guildId), eq(guildRooms.isDefault, true)))
 			.limit(1);
 		return existing?.roomId ?? null;
+	}
+
+	/**
+	 * Re-selects the winning default with a short bounded retry to tolerate
+	 * commit visibility lag after a unique-index race.
+	 */
+	private async _findDefaultRoomWithRetry(guildId: string): Promise<string | null> {
+		for (let i = 0; i < this.winnerRetryDelaysMs.length; i++) {
+			const delay = this.winnerRetryDelaysMs[i] ?? 0;
+			if (i > 0 || delay > 0) {
+				await this.wait(delay);
+			}
+			const found = await this._findDefaultRoom(guildId);
+			if (found) return found;
+		}
+		return null;
 	}
 
 	/**

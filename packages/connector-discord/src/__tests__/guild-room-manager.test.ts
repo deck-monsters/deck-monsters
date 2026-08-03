@@ -20,11 +20,22 @@ function makeSelectChain(result: unknown[]) {
 	return { from: fromStub };
 }
 
-function makeUniqueViolation(detail = 'Key (guild_id)=(g) already exists.') {
-	return Object.assign(new Error(`duplicate key value violates unique constraint`), {
-		code: '23505',
-		detail,
-	});
+const DEFAULT_UNIQUE_INDEX = 'guild_rooms_one_default_per_guild_idx';
+
+function makeUniqueViolation(
+	opts: { constraint?: string | null; detail?: string; message?: string; code?: string } = {}
+) {
+	const constraint =
+		opts.constraint === null ? undefined : (opts.constraint ?? DEFAULT_UNIQUE_INDEX);
+	const err: Record<string, unknown> = {
+		code: opts.code ?? '23505',
+		detail: opts.detail ?? `Key (guild_id)=(g) already exists.`,
+		message:
+			opts.message ??
+			`duplicate key value violates unique constraint "${constraint ?? DEFAULT_UNIQUE_INDEX}"`,
+	};
+	if (constraint !== undefined) err.constraint = constraint;
+	return Object.assign(new Error(String(err.message)), err);
 }
 
 function makeDbStub(selectResultsQueue: unknown[][] = [], opts: { insertRejects?: unknown[] } = {}) {
@@ -72,6 +83,21 @@ function makeRoomManagerStub(roomId = 'room-abc', inviteCode = 'INV12345') {
 	};
 }
 
+async function expectRejection(
+	fn: () => Promise<unknown>,
+	messagePattern?: RegExp
+): Promise<unknown> {
+	try {
+		await fn();
+		expect.fail('expected promise to reject');
+	} catch (err) {
+		if (messagePattern) {
+			expect(String((err as Error).message ?? err)).to.match(messagePattern);
+		}
+		return err;
+	}
+}
+
 // ---------------------------------------------------------------------------
 
 describe('GuildRoomManager', () => {
@@ -91,7 +117,6 @@ describe('GuildRoomManager', () => {
 		});
 
 		it('creates a room and inserts guild_rooms row when none exists', async () => {
-			// First select returns empty (no existing row)
 			const db = makeDbStub([[]]);
 			const rm = makeRoomManagerStub('new-room-id', 'CODE0001');
 
@@ -112,10 +137,8 @@ describe('GuildRoomManager', () => {
 		});
 
 		it('on unique default race: returns winner and deletes orphan via RoomManager', async () => {
-			// 1) no existing default
-			// 2) after unique violation, re-select finds the winning default
 			const db = makeDbStub([[], [{ roomId: 'winner-room' }]], {
-				insertRejects: [makeUniqueViolation()],
+				insertRejects: [makeUniqueViolation({ constraint: DEFAULT_UNIQUE_INDEX })],
 			});
 			const rm = makeRoomManagerStub('orphan-room', 'ORPHAN01');
 
@@ -126,6 +149,93 @@ describe('GuildRoomManager', () => {
 			expect(rm.createRoom.calledOnceWith('user-loser', 'Guild guild-race')).to.be.true;
 			expect(rm.deleteRoom.calledOnceWith('user-loser', 'orphan-room')).to.be.true;
 			expect(rm.ensureMember.calledOnceWith('user-loser', 'winner-room')).to.be.true;
+		});
+
+		it('treats default-index violation identified via message when constraint is absent', async () => {
+			const db = makeDbStub([[], [{ roomId: 'winner-room' }]], {
+				insertRejects: [
+					makeUniqueViolation({
+						constraint: null,
+						message: `duplicate key value violates unique constraint "${DEFAULT_UNIQUE_INDEX}"`,
+					}),
+				],
+			});
+			const rm = makeRoomManagerStub('orphan-room');
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			const result = await mgr.getOrCreateDefaultRoom('guild-race', 'user-loser');
+			expect(result).to.equal('winner-room');
+			expect(rm.deleteRoom.calledOnce).to.be.true;
+		});
+
+		it('re-throws unrelated 23505 such as the (guild_id, room_id) PK', async () => {
+			const db = makeDbStub([[]], {
+				insertRejects: [
+					makeUniqueViolation({
+						constraint: 'guild_rooms_pkey',
+						detail: 'Key (guild_id, room_id)=(g, r) already exists.',
+						message: 'duplicate key value violates unique constraint "guild_rooms_pkey"',
+					}),
+				],
+			});
+			const rm = makeRoomManagerStub('orphan-room');
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			await expectRejection(() => mgr.getOrCreateDefaultRoom('guild-race', 'user-1'));
+			expect(rm.deleteRoom.called).to.be.false;
+		});
+
+		it('re-throws non-23505 insert errors without deleting the orphan', async () => {
+			const db = makeDbStub([[]], {
+				insertRejects: [Object.assign(new Error('connection reset'), { code: '57P01' })],
+			});
+			const rm = makeRoomManagerStub('orphan-room');
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			await expectRejection(
+				() => mgr.getOrCreateDefaultRoom('guild-race', 'user-1'),
+				/connection reset/
+			);
+			expect(rm.deleteRoom.called).to.be.false;
+		});
+
+		it('retries winner re-selection across a short bounded wait when first select is empty', async () => {
+			// 1) no existing default before create
+			// 2–3) post-race selects empty (visibility lag)
+			// 4) winner appears
+			const db = makeDbStub([[], [], [], [{ roomId: 'winner-room' }]], {
+				insertRejects: [makeUniqueViolation({ constraint: DEFAULT_UNIQUE_INDEX })],
+			});
+			const rm = makeRoomManagerStub('orphan-room');
+			const waits: number[] = [];
+			const wait = async (ms: number) => {
+				waits.push(ms);
+			};
+
+			const mgr = new GuildRoomManager(db as any, rm as any, {
+				wait,
+				winnerRetryDelaysMs: [0, 10, 20],
+			});
+			const result = await mgr.getOrCreateDefaultRoom('guild-race', 'user-loser');
+
+			expect(result).to.equal('winner-room');
+			expect(waits).to.deep.equal([10, 20]);
+			expect(rm.deleteRoom.calledOnceWith('user-loser', 'orphan-room')).to.be.true;
+		});
+
+		it('propagates orphan cleanup failures instead of swallowing them', async () => {
+			const db = makeDbStub([[], [{ roomId: 'winner-room' }]], {
+				insertRejects: [makeUniqueViolation({ constraint: DEFAULT_UNIQUE_INDEX })],
+			});
+			const rm = makeRoomManagerStub('orphan-room');
+			rm.deleteRoom.rejects(new Error('FORBIDDEN: not owner'));
+
+			const mgr = new GuildRoomManager(db as any, rm as any);
+			await expectRejection(
+				() => mgr.getOrCreateDefaultRoom('guild-race', 'user-loser'),
+				/orphan|cleanup|FORBIDDEN/i
+			);
+			expect(rm.ensureMember.called).to.be.false;
 		});
 	});
 
@@ -152,7 +262,6 @@ describe('GuildRoomManager', () => {
 			const mgr = new GuildRoomManager(db as any, rm as any);
 			await mgr.createSubRoom('guild-3', 'owner-id', 'Friends Room');
 
-			// guild_rooms insert + active-room upsert
 			expect(db.insert.calledTwice).to.be.true;
 			const activeValues = db._stubs.valuesStub.secondCall.args[0];
 			expect(activeValues).to.include({
@@ -195,30 +304,39 @@ describe('GuildRoomManager', () => {
 	});
 
 	describe('getAnnouncementChannel', () => {
-		it('returns null when no channel is set', async () => {
+		it('returns null when no channel is set for that guild room', async () => {
 			const db = makeDbStub([[{ channelId: null }]]);
 			const rm = makeRoomManagerStub();
 
 			const mgr = new GuildRoomManager(db as any, rm as any);
-			const result = await mgr.getAnnouncementChannel('guild-6');
+			const result = await mgr.getAnnouncementChannel('guild-6', 'room-default');
 
 			expect(result).to.be.null;
 		});
 
-		it('returns the channel ID when set', async () => {
+		it('returns the channel ID for the requested guild room', async () => {
 			const db = makeDbStub([[{ channelId: 'ch-55' }]]);
 			const rm = makeRoomManagerStub();
 
 			const mgr = new GuildRoomManager(db as any, rm as any);
-			const result = await mgr.getAnnouncementChannel('guild-7');
+			const result = await mgr.getAnnouncementChannel('guild-7', 'room-sub');
 
 			expect(result).to.equal('ch-55');
+		});
+
+		it('queries by guildId and roomId for two rooms in one guild', async () => {
+			const db = makeDbStub([[{ channelId: 'ch-default' }], [{ channelId: 'ch-sub' }]]);
+			const rm = makeRoomManagerStub();
+			const mgr = new GuildRoomManager(db as any, rm as any);
+
+			expect(await mgr.getAnnouncementChannel('guild-1', 'room-default')).to.equal('ch-default');
+			expect(await mgr.getAnnouncementChannel('guild-1', 'room-sub')).to.equal('ch-sub');
+			expect(db.select.calledTwice).to.be.true;
 		});
 	});
 
 	describe('joinRoomByCode', () => {
 		it('joins, ensures guild mapping, and selects the room as active', async () => {
-			// select: existing guild_rooms mapping for (guild, room)
 			const db = makeDbStub([[{ roomId: 'joined-room' }]]);
 			const rm = makeRoomManagerStub('joined-room');
 
@@ -227,7 +345,6 @@ describe('GuildRoomManager', () => {
 
 			expect(result.roomId).to.equal('joined-room');
 			expect(rm.joinRoom.calledWith('user-1', 'INVITE1')).to.be.true;
-			// active-room upsert
 			expect(db.insert.calledOnce).to.be.true;
 			const activeValues = db._stubs.valuesStub.firstCall.args[0];
 			expect(activeValues).to.include({
@@ -238,14 +355,12 @@ describe('GuildRoomManager', () => {
 		});
 
 		it('inserts a non-default guild_rooms row when the joined room is not yet mapped', async () => {
-			// no existing guild mapping
 			const db = makeDbStub([[]]);
 			const rm = makeRoomManagerStub('joined-room');
 
 			const mgr = new GuildRoomManager(db as any, rm as any);
 			await mgr.joinRoomByCode('guild-1', 'user-1', 'INVITE1');
 
-			// guild_rooms insert + active-room upsert
 			expect(db.insert.calledTwice).to.be.true;
 			const guildValues = db._stubs.valuesStub.firstCall.args[0];
 			expect(guildValues).to.include({
@@ -270,8 +385,6 @@ describe('GuildRoomManager', () => {
 		});
 
 		it('falls back to guild default and repairs active mapping when membership is stale', async () => {
-			// 1) validated active select → empty (stale / left / unmapped)
-			// 2) default room select → existing default
 			const db = makeDbStub([[], [{ roomId: 'default-room' }]]);
 			const rm = makeRoomManagerStub();
 
@@ -280,7 +393,6 @@ describe('GuildRoomManager', () => {
 
 			expect(result).to.equal('default-room');
 			expect(rm.ensureMember.calledOnceWith('user-1', 'default-room')).to.be.true;
-			// repair: upsert active → default
 			expect(db.insert.calledOnce).to.be.true;
 			const activeValues = db._stubs.valuesStub.firstCall.args[0];
 			expect(activeValues).to.include({

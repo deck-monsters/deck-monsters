@@ -2,14 +2,19 @@
 -- Persist each user's active room per guild (#72).
 
 -- Demote extra defaults so the unique partial index can be created safely.
--- Keep the first row per guild (stable by room_id) as the sole default.
+-- Retain the oldest room (by rooms.created_at) as the sole default per guild;
+-- room_id is a tie-breaker only when created_at ties.
 WITH ranked AS (
   SELECT
-    guild_id,
-    room_id,
-    ROW_NUMBER() OVER (PARTITION BY guild_id ORDER BY room_id) AS rn
-  FROM public.guild_rooms
-  WHERE is_default = true
+    gr.guild_id,
+    gr.room_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY gr.guild_id
+      ORDER BY r.created_at ASC NULLS LAST, gr.room_id ASC
+    ) AS rn
+  FROM public.guild_rooms gr
+  INNER JOIN public.rooms r ON r.id = gr.room_id
+  WHERE gr.is_default = true
 )
 UPDATE public.guild_rooms gr
 SET is_default = false

@@ -8,6 +8,22 @@ export interface ResolvedUser {
 }
 
 /**
+ * Ensures a Supabase user record exists for the Discord user.
+ * Does not resolve or mutate active-room selection.
+ */
+export async function resolveConnectorUserId(
+	interaction: ChatInputCommandInteraction,
+	ctx: CommandContext
+): Promise<string> {
+	return ensureConnectorUser(
+		'discord',
+		interaction.user.id,
+		interaction.user.username,
+		ctx.db
+	);
+}
+
+/**
  * Ensures a Supabase user record exists for the Discord user and resolves
  * their active room for the guild (falling back to the guild default).
  */
@@ -15,12 +31,7 @@ export async function resolveUser(
 	interaction: ChatInputCommandInteraction,
 	ctx: CommandContext
 ): Promise<ResolvedUser> {
-	const supabaseUserId = await ensureConnectorUser(
-		'discord',
-		interaction.user.id,
-		interaction.user.username,
-		ctx.db
-	);
+	const supabaseUserId = await resolveConnectorUserId(interaction, ctx);
 
 	const guildId = interaction.guildId ?? `dm-${interaction.user.id}`;
 	const roomId = await ctx.guildRoomManager.resolveRoomForUser(guildId, supabaseUserId);
