@@ -6,9 +6,12 @@ import {
 	type ButtonInteraction,
 	type ChatInputCommandInteraction,
 	type Client,
+	type DMChannel,
 	type Message,
 	type MessageComponentInteraction,
+	type TextChannel,
 } from 'discord.js';
+import { PromptCancelledError } from '@deck-monsters/engine';
 
 const PROMPT_TIMEOUT_MS = 120_000; // 2 minutes — matches engine default
 
@@ -56,6 +59,24 @@ export class PromptHandler {
 		const reply = await dm.send({ content: question, components: [row] });
 		return collectButtonResponse(reply, discordUserId, choices, timeoutMs, onTimeout);
 	}
+
+	/**
+	 * Asks a free-text question over DM and collects the user's next message.
+	 * Used when the engine calls `channel({ question })` without choices
+	 * (spawn name/color, character creation, etc.).
+	 */
+	async sendFreeTextDmPrompt(
+		client: Client,
+		discordUserId: string,
+		question: string,
+		timeoutMs = PROMPT_TIMEOUT_MS,
+		onTimeout?: () => void
+	): Promise<string> {
+		const user = await client.users.fetch(discordUserId);
+		const dm = await user.createDM();
+		await dm.send({ content: question });
+		return collectTextResponse(dm, discordUserId, timeoutMs, onTimeout);
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -93,19 +114,68 @@ async function collectButtonResponse(
 	});
 
 	return new Promise<string>((resolve, reject) => {
+		let settled = false;
+
 		collector.on('collect', async (btnInteraction: ButtonInteraction) => {
 			// Acknowledge the button click and disable all buttons
 			const disabledRow = buildDisabledRow(choices, btnInteraction.customId);
 			await btnInteraction.update({ components: [disabledRow] });
+			settled = true;
 			resolve(btnInteraction.customId);
 		});
 
 		collector.on('end', (collected) => {
-			if (collected.size === 0) {
-				// Notify the caller so it can clear engine bus state
+			if (settled || collected.size > 0) return;
+			onTimeout?.();
+			reject(new Error('Prompt timed out — no response within the allowed time.'));
+		});
+	});
+}
+
+/**
+ * Collects the next DM text message from the expected Discord user only.
+ * Unrelated users / other channels are filtered out. Cleans up on answer,
+ * timeout, or explicit collector stop (cancel).
+ */
+async function collectTextResponse(
+	channel: DMChannel | TextChannel,
+	userId: string,
+	timeoutMs: number,
+	onTimeout?: () => void
+): Promise<string> {
+	const channelId = channel.id;
+	const collector = channel.createMessageCollector({
+		filter: (message) => message.author.id === userId && message.channelId === channelId,
+		max: 1,
+		time: timeoutMs,
+	});
+
+	return new Promise<string>((resolve, reject) => {
+		let settled = false;
+
+		const settle = (fn: () => void) => {
+			if (settled) return;
+			settled = true;
+			fn();
+		};
+
+		collector.on('collect', (message) => {
+			settle(() => {
+				collector.stop('answered');
+				resolve(message.content);
+			});
+		});
+
+		collector.on('end', (collected, reason) => {
+			if (settled) return;
+			settle(() => {
+				if (reason === 'cancelled' || reason === 'cancel') {
+					reject(new PromptCancelledError());
+					return;
+				}
 				onTimeout?.();
 				reject(new Error('Prompt timed out — no response within the allowed time.'));
-			}
+			});
 		});
 	});
 }

@@ -15,8 +15,13 @@ import type { RoomManager } from '@deck-monsters/server/room-manager';
 import type { GuildRoomManager } from './guild-room-manager.js';
 import type { GuildRoomSubscription } from './guild-room-subscription.js';
 import { loadCommands, type CommandContext } from './slash-commands/index.js';
+import { dispatchFreeTextCommand } from './slash-commands/helpers.js';
 import { ensureConnectorUser } from '@deck-monsters/server/auth/connector-users';
 import { isCommandRefusal } from '@deck-monsters/engine';
+import {
+	DiscordFlowBusyError,
+	isExpectedDiscordFlowAbort,
+} from './command-flow.js';
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -121,16 +126,28 @@ export class DiscordBot {
 		try {
 			await command.execute(interaction, ctx);
 		} catch (err) {
-			// Expected user-facing refusal (quota, precondition, etc.) — detect via the
-			// isCommandRefusal type guard rather than instanceof so the check survives
-			// package and runtime boundary mismatches (see engine/helpers/command-refusal-error.ts).
-			// Refusals: show the exact message that was already announced; do not log.
-			// Unexpected infrastructure errors: log and show a generic fallback.
+			// Prompt timeout / cancel: expected when users abandon a flow — do not
+			// log or overwrite the interaction with a generic error.
+			if (
+				!(err instanceof DiscordFlowBusyError) &&
+				!(err instanceof Error && err.name === 'DiscordFlowBusyError') &&
+				isExpectedDiscordFlowAbort(err) &&
+				!isCommandRefusal(err)
+			) {
+				return;
+			}
+
+			// Expected user-facing refusal / busy-flow — detect via type guard /
+			// name rather than instanceof alone so checks survive package boundaries.
 			const isRefusal = isCommandRefusal(err);
-			if (!isRefusal) this.log(err);
-			const content = isRefusal
-				? err.message
-				: 'Something went wrong. Please try again.';
+			const isBusy =
+				err instanceof DiscordFlowBusyError ||
+				(err instanceof Error && err.name === 'DiscordFlowBusyError');
+			if (!isRefusal && !isBusy) this.log(err);
+			const content =
+				isRefusal || isBusy
+					? (err as Error).message
+					: 'Something went wrong. Please try again.';
 			if (interaction.deferred || interaction.replied) {
 				await interaction.editReply({ content }).catch(() => {});
 			} else {
@@ -183,27 +200,28 @@ export class DiscordBot {
 			);
 
 			const roomId = await this.guildRoomManager.resolveRoomForUser(guildId, supabaseUserId);
-			const game = await this.roomManager.getGame(roomId);
+			const recognized = await dispatchFreeTextCommand({
+				ctx: this.buildContext(),
+				message,
+				commandText,
+				supabaseUserId,
+				roomId,
+				isDM,
+			});
 
-			const action = game.handleCommand({ command: commandText });
-			if (!action) {
+			if (!recognized) {
 				await message.reply('Command not recognized. Try `/help` for a list of commands.');
+			}
+		} catch (err) {
+			if (isExpectedDiscordFlowAbort(err)) {
+				const isBusy =
+					err instanceof DiscordFlowBusyError ||
+					(err instanceof Error && err.name === 'DiscordFlowBusyError');
+				if (isBusy) {
+					await message.reply((err as Error).message).catch(() => {});
+				}
 				return;
 			}
-
-			const sub = await this.getOrCreateSubscription(guildId, roomId);
-			sub.registerUserFromMessage(message.author.id, supabaseUserId);
-
-			const channel = sub.buildPrivateChannel(message.author.id);
-
-			await action({
-				channel,
-				channelName: message.channelId,
-				isAdmin: false,
-				isDM,
-				user: { id: supabaseUserId, name: message.author.username },
-			});
-		} catch (err) {
 			this.log(err);
 			await message.reply('Something went wrong processing your command.').catch(() => {});
 		}

@@ -81,7 +81,10 @@ here. If a future mutation class needs stronger ordering, add it to the room lan
 lane.
 
 **Rules of thumb**: anything that may call `channel({ question })` belongs in
-the per-user lane and must be fire-and-forget. Anything awaited by HTTP must
+the per-user lane and must be fire-and-forget on web (HTTP must not wait).
+Discord may await the action for interaction lifetime, but still uses the same
+`${roomId}:${userId}` lane + connector-local flow lock (`command-flow.ts`);
+prompt collectors must resolve outside that lane. Anything awaited by HTTP must
 be prompt-free and short. Never hold any lane across a user-input wait that
 other requests in the same lane depend on.
 
@@ -231,11 +234,15 @@ new ownership checks reading `optionsStore` directly.
   [`boss-encounters.md`](boss-encounters.md).
 - **The boss summon quota is enforced in the engine command handler, not the router**, and its
   check-then-record must stay **synchronous with no `await` in between**. The web path runs
-  commands inside the per-user lane, but the Discord connector's `dispatchCommand`
-  (`connector-discord/src/slash-commands/helpers.ts`) calls `game.handleCommand()` directly
-  and `await`s the action — **no `activeFlows` entry and no `runSerializedEngineWork` lane at
-  all**. Anything that must hold for every connector belongs in the handler; anything that
-  relies on the lane silently does not apply to Discord.
+  commands inside the per-user lane. Discord slash/DM dispatch (`dispatchCommand` /
+  `dispatchFreeTextCommand` in `connector-discord`) now also uses connector-local
+  `discordActiveFlows` + `runSerializedEngineWork(`${roomId}:${userId}`)` via
+  `command-flow.ts` — same per-user keying as web, with the Discord request allowed to
+  await the action. Prompt answers still arrive outside that lane (DM/button collectors,
+  ConnectorAdapter `respondToPrompt`). Free-text prompts use a filtered DM message
+  collector; `PROMPT_CANCELLED` becomes `PromptCancelledError` before game code.
+  Anything that must hold for every connector still belongs in the engine handler;
+  do not reintroduce room-wide Discord lanes (starves other members — see #20).
 - **Timers must be disposed AND tracked**: `Game.dispose()` → `Ring.dispose()`
   + per-creature `disposeTimers()`. Any new `setTimeout`/`setInterval` on a
   long-lived object needs both a stored handle *and* a dispose path — a timer

@@ -177,3 +177,44 @@ describe('DiscordBot getOrCreateSubscription announcement routing', () => {
 		expect(subDefault).to.not.equal(subSub);
 	});
 });
+
+describe('DiscordBot expected prompt abort handling', () => {
+	afterEach(() => sinon.restore());
+
+	it('does not log PromptCancelledError from slash commands', async () => {
+		const { PromptCancelledError } = await import('@deck-monsters/engine');
+		const logSpy = sinon.spy();
+		const bot = makeBot(logSpy);
+
+		(bot as any).commands.set('spawn', {
+			data: { name: 'spawn' },
+			execute: async () => {
+				throw new PromptCancelledError();
+			},
+		});
+
+		const interaction = makeInteraction('spawn', /* deferred */ true);
+		await (bot as any).handleSlashCommand(interaction);
+
+		expect(logSpy.called).to.be.false;
+		expect(interaction.editReply.called).to.be.false;
+	});
+
+	it('does not log prompt timeout errors from slash commands', async () => {
+		const logSpy = sinon.spy();
+		const bot = makeBot(logSpy);
+
+		(bot as any).commands.set('spawn', {
+			data: { name: 'spawn' },
+			execute: async () => {
+				throw new Error('Prompt timed out — no response within the allowed time.');
+			},
+		});
+
+		const interaction = makeInteraction('spawn', /* deferred */ true);
+		await (bot as any).handleSlashCommand(interaction);
+
+		expect(logSpy.called).to.be.false;
+		expect(interaction.editReply.called).to.be.false;
+	});
+});

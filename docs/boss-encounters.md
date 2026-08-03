@@ -115,18 +115,17 @@ The ledger is `game.options.bossSummons` (`Record<userId, epochMs[]>`), exposed 
 `packages/engine/src/helpers/boss-summons.ts` (`summonAllowance`, `recordSummon`,
 `addPendingSummon`, `refundPendingSummons`).
 
-**The check is enforced in the engine command handler, not the tRPC router.** The Discord
-connector's `dispatchCommand` (`connector-discord/src/slash-commands/helpers.ts`) calls
-`game.handleCommand()` directly — it does not go through `activeFlows` or
-`runSerializedEngineWork`. A router-side limit would be bypassed from Discord. Putting it in
-the handler gives one choke point for every connector, room scoping for free, and no
-migration or RLS policy to write.
+**The check is enforced in the engine command handler, not the tRPC router.** Discord
+slash/DM dispatch also reaches the same handler (via `dispatchCommand` /
+`dispatchFreeTextCommand`). A router-only limit would still be incomplete for any
+connector that talks to the engine directly. Putting it in the handler gives one choke
+point for every connector, room scoping for free, and no migration or RLS policy to write.
 
 Two rules follow from that:
 
-- **Check and record must be synchronous, with no `await` between them.** The web path also
-  runs inside the per-user engine lane, but the Discord path has no lane at all, so
-  atomicity comes from the synchronous run, not from serialization.
+- **Check and record must be synchronous, with no `await` between them.** Web and Discord
+  both serialize interactive commands per `roomId:userId`, but atomicity of the quota
+  check still comes from the synchronous run inside the handler, not from the lane alone.
 - **`Game.bossSummons`'s getter must not write.** Unlike `Game.shop`, it does no
   prune-on-read; pruning happens inside `recordSummon`. A getter that calls `setOptions()`
   broadcasts `stateChange` synchronously, which is exactly the re-entrancy hazard described

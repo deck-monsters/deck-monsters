@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium — content pass plus Discord/concurrency follow-ups from the 2026-08-03 audit.
-**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #64, #65–#69, #70–#72, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#63, #73 (audit follow-ups that need a design pass).
+**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #59–#62, #64, #65–#69, #70–#72, #74–#77). What's open here: #3 (DMG/CARDS content) and #63, #73 (audit follow-ups that need a design pass).
 
 ## Code Quality Issues
 
@@ -17,17 +17,21 @@ Both files still exist at the repository root. The Dungeon Master Guide should c
 
 These were found during a full-stack bug audit. Clear, localized bugs from that pass were fixed as #51–#58 (see `10b-bugs-fixed.md`). The items below need more design, broader test coverage, or intentional product decisions before coding.
 
-### 59. Discord free-text prompts (`question` without `choices`) are dropped
+### 59. Discord free-text prompts (`question` without `choices`) are dropped — FIXED
 
-`GuildRoomSubscription.buildPrivateChannel` only handles `question && choices` (button prompts). Engine flows that ask free-text questions (spawn name/color, character creation) return `undefined` immediately on Discord. The web router supports free-text via `sendPrompt`.
+`GuildRoomSubscription.buildPrivateChannel` only handled `question && choices` (button prompts). Engine flows that ask free-text questions (spawn name/color, character creation) returned `undefined` immediately on Discord.
 
-**Action**: Add a DM text collector or modal path; translate timeout/cancel to `PromptCancelledError` like the web channel wrapper.
+**Fixed**: `PromptHandler.sendFreeTextDmPrompt` collects the next DM via `createMessageCollector`, filtering the exact Discord user + DM channel, cleaning up on answer/timeout/cancel. `buildPrivateChannel` handles `question` without choices, translates `PROMPT_CANCELLED` to `PromptCancelledError`, and preserves button prompts + requestId timeout cancellation. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2 / Discord notes.
 
-### 60. Discord commands bypass engine serialization / `activeFlows`
+**Status**: Fixed. See `10b-bugs-fixed.md`.
 
-Web `command` uses per-user `runSerializedEngineWork` + `activeFlows`. Discord slash/DM paths `await action(...)` directly with no lane and no flow lock. Concurrent commands from the same user (or fights + commands) can interleave on one `Game`.
+### 60. Discord commands bypass engine serialization / `activeFlows` — FIXED
 
-**Action**: Mirror web's per-`roomId:userId` lane and flow lock (or document Discord as intentionally best-effort and add minimal serialization).
+Web `command` uses per-user `runSerializedEngineWork` + `activeFlows`. Discord slash/DM paths previously `await`ed `action(...)` directly with no lane and no flow lock.
+
+**Fixed**: shared `command-flow.ts` coordinator (`discordActiveFlows` ownership tokens + `runDiscordCommandAction`) used by both slash (`dispatchCommand`) and free-text (`dispatchFreeTextCommand`) paths. Actions run in `runSerializedEngineWork(`${roomId}:${userId}`)`; a second same-user flow throws `DiscordFlowBusyError` with actionable text; other users remain independent. Prompt collectors resolve outside the lane. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+**Status**: Fixed. See `10b-bugs-fixed.md`.
 
 ### 61. Workshop mutations and console commands can interleave for the same user — FIXED
 
@@ -68,7 +72,7 @@ Per-user console lanes mean two members of the same room can mutate one shared `
 ## Tasks
 
 - [ ] Audit and differentiate `DMG.md` vs `CARDS.md` full content; add how-to-run section (upstream #265) (#3)
-- [ ] Discord free-text prompt support (#59)
-- [ ] Discord serialization / `activeFlows` parity (#60)
+- [x] Discord free-text prompt support (#59)
+- [x] Discord serialization / `activeFlows` parity (#60)
 - [ ] Unify web `ringFeed` subscription / cursor (#63)
 - [ ] Align test harness lanes with production (#73)

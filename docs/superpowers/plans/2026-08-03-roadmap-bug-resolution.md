@@ -127,15 +127,15 @@
 - Add/modify tests
 - Update concurrency docs and roadmap
 
-- [ ] Add failing tests for a free-text DM answer, timeout/cancel translation, and a second concurrent same-user command.
-- [ ] Implement a filtered Discord DM text collector using existing discord.js APIs.
-- [ ] Ensure collectors accept only the expected Discord user/channel and clean up on timeout.
-- [ ] Translate timeout/cancel to `PromptCancelledError`/expected refusal behavior.
-- [ ] Add connector-local active flow ownership and dispatch actions through `RoomManager.runSerializedEngineWork(`${roomId}:${userId}`, ...)`.
-- [ ] Keep prompt answers outside the lane so they can release the waiting action.
-- [ ] Apply the same coordination to slash and free-text command paths.
-- [ ] Run targeted and full Discord/server tests.
-- [ ] Commit.
+- [x] Add failing tests for a free-text DM answer, timeout/cancel translation, and a second concurrent same-user command.
+- [x] Implement a filtered Discord DM text collector using existing discord.js APIs.
+- [x] Ensure collectors accept only the expected Discord user/channel and clean up on timeout.
+- [x] Translate timeout/cancel to `PromptCancelledError`/expected refusal behavior.
+- [x] Add connector-local active flow ownership and dispatch actions through `RoomManager.runSerializedEngineWork(`${roomId}:${userId}`, ...)`.
+- [x] Keep prompt answers outside the lane so they can release the waiting action.
+- [x] Apply the same coordination to slash and free-text command paths.
+- [x] Run targeted and full Discord/server tests.
+- [x] Commit.
 
 ## Task 8: Align test harness with production command/prompt behavior (#73)
 

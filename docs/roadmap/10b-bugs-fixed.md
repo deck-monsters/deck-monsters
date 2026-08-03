@@ -1147,6 +1147,26 @@ Documented in [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-an
 
 ---
 
+### 59. Discord free-text prompts dropped — FIXED
+
+`GuildRoomSubscription.buildPrivateChannel` only handled `question && choices`. Free-text engine prompts (spawn name/color, character creation) returned `undefined` on Discord.
+
+**Fixed**: `PromptHandler.sendFreeTextDmPrompt` uses a filtered DM `createMessageCollector` (exact user + channel; cleanup on answer/timeout/cancel). `buildPrivateChannel` routes choice-less questions there, translates `PROMPT_CANCELLED` → `PromptCancelledError`, and keeps button prompts + `pendingPromptRequestIds` timeout cancellation for ConnectorAdapter. Covered by `prompt-handler.test.ts` and `guild-room-subscription.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 60. Discord commands bypassed engine serialization / activeFlows — FIXED
+
+Slash and free-text Discord paths `await`ed engine actions with no per-user lane and no flow lock, so concurrent same-user commands could interleave on one `Game`.
+
+**Fixed**: connector-local `command-flow.ts` (`discordActiveFlows` ownership tokens + `runDiscordCommandAction`) shared by `dispatchCommand` and `dispatchFreeTextCommand`. Actions run through `RoomManager.runSerializedEngineWork(`${roomId}:${userId}`)`; a second same-user flow fails fast with `DiscordFlowBusyError`; other users stay independent. The Discord request may await the action, but prompt collectors resolve outside the lane. Expected timeout/cancel/busy aborts are not logged as infrastructure errors. Covered by `command-flow.test.ts`, `helpers.test.ts`, and `bot.test.ts`.
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+---
+
 ### 65. `hydrateDeck` alphabetical re-sort — investigated, not a combat bug
 
 `hydrateDeck` sorts alphabetically after hydrate. Ring combat uses equipped `monster.cards[cardIndex]` order, which is restored by `monsters/helpers/hydrate.ts` without sorting — so fight outcomes are not scrambled by inventory sort.
