@@ -110,5 +110,31 @@ describe('InlineChoices', () => {
       // Order summary should show Blast → Hit
       expect(screen.getByText(/Blast.*→.*Hit/)).toBeTruthy();
     });
+
+    it('shows Done equipping when slots remain after a partial batch', () => {
+      const onAnswer = vi.fn();
+      render(
+        <InlineChoices
+          {...defaultProps}
+          question={'You have 4 of 9 slots remaining, and the following cards:\n\n0) Hit [1]\n\nWhich card(s) would you like to equip next? (or reply "done" to finish with what you have)'}
+          onAnswer={onAnswer}
+        />
+      );
+
+      expect(screen.getByText('Done equipping')).toBeTruthy();
+      fireEvent.click(screen.getByText('Done equipping'));
+      expect(onAnswer).toHaveBeenCalledWith('req-1', 'done');
+    });
+
+    it('hides Done equipping on the first prompt (all slots still open)', () => {
+      render(
+        <InlineChoices
+          {...defaultProps}
+          question={'You have 9 of 9 slots remaining, and the following cards:\n\n0) Hit [1]\n\nWhich card(s) would you like to equip next?'}
+        />
+      );
+
+      expect(screen.queryByText('Done equipping')).toBeNull();
+    });
   });
 });

@@ -95,10 +95,27 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 					[],
 				);
 
-				const getQuestion = ({ cardChoices }: { cardChoices: string }) =>
-					`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:\n\n${cardChoices}\n\nWhich card(s) would you like to equip next?`;
+				const getQuestion = ({ cardChoices }: { cardChoices: string }) => {
+					const base =
+						`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:\n\n${cardChoices}\n\nWhich card(s) would you like to equip next?`;
+					// After a partial batch, offer an explicit finish path (text: "done"; web shows a Done button).
+					if (cards.length > 0) {
+						return `${base} (or reply "done" to finish with what you have)`;
+					}
+					return base;
+				};
 
-				return _chooseCards({ cards: equipableCards, channel, getQuestion });
+				// Map explicit finish answers to an empty selection before chooseCards parses names.
+				const channelForChoose: ChannelFn = (opts) => {
+					if (!opts.question) return channel(opts);
+					return Promise.resolve(channel(opts)).then((answer) => {
+						const text = String(answer ?? '').trim();
+						if (/^(done|finished|enough|stop)$/i.test(text)) return '';
+						return answer as string;
+					});
+				};
+
+				return _chooseCards({ cards: equipableCards, channel: channelForChoose, getQuestion });
 			})
 			.then((result: CardInstance[]) => {
 				const trimmedCards = result.slice(0, remainingSlots);
@@ -122,6 +139,14 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 			if (nowRemainingCards.length <= 0) {
 				return (channel({
 					announce: `You're out of cards to equip, but you've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
+				}) as Promise<unknown>).then(() => cards);
+			}
+
+			// Empty / "done" after a partial selection commits what we have instead of trapping
+			// the player in the fill-remaining-slots loop (cancel would discard the batch).
+			if (trimmedCards.length === 0 && cards.length > 0) {
+				return (channel({
+					announce: `You've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
 				}) as Promise<unknown>).then(() => cards);
 			}
 
