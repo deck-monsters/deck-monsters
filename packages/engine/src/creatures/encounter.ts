@@ -6,11 +6,14 @@ function emptyEncounterModifiersView (self: BaseCreature): EncounterModifiers {
 	return new Proxy(EMPTY_ENCOUNTER_MODIFIERS, {
 		get (_target, prop) {
 			if (prop === 'then') return undefined;
+			const modifiers = self.encounter?.modifiers as Record<string, unknown> | undefined;
+			if (modifiers) return modifiers[prop as string];
 			return undefined;
 		},
 		set (_target, prop, value) {
-			const modifiers = { [String(prop)]: value } as EncounterModifiers;
-			setEncounterModifiers(self, modifiers);
+			if (!self.encounter) self.encounter = {};
+			const modifiers = (self.encounter.modifiers ??= {}) as Record<string, unknown>;
+			modifiers[String(prop)] = value;
 			return true;
 		},
 	}) as EncounterModifiers;

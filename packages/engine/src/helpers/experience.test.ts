@@ -134,6 +134,25 @@ describe('./helpers/experience.ts', () => {
 				);
 			});
 
+			it('still awards kill XP but no survivor XP when dead without killedBy (#67)', () => {
+				const contestant1 = {
+					monster: { level: 1, givenName: 'fred', displayLevel: 'level 1' },
+					character: {}
+				};
+				const contestant2 = {
+					monster: { level: 1, dead: true, givenName: 'env-victim' },
+					character: {},
+					killed: [contestant1.monster]
+				};
+
+				const contestants = [contestant1, contestant2];
+
+				const { gainedXP, reasons } = calculateXP(contestant2, contestants);
+				expect(gainedXP).to.equal(10);
+				expect(reasons).to.include('Gained 10 XP for killing fred (same level)');
+				expect(reasons).to.not.include('last one standing');
+			});
+
 			it('assigns 1 XP if level 1 monster is killed by same level monster', () => {
 				const contestant1 = {
 					monster: { level: 1, givenName: 'fred' },
