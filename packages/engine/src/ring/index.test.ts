@@ -158,9 +158,8 @@ describe('ring/index.ts', () => {
 			// globally breaks the recursive probability-retry loop in
 			// cards/helpers/draw.ts (`if (!Card) return draw(...)`), which never
 			// terminates once every card's probability check returns the same fixed
-			// result. clearRing() between attempts doesn't touch bossDespawnTimers
-			// (only dispose() does), so any attempt landing heads is enough — the
-			// ~2^-50 chance every one of 50 flips misses is negligible.
+			// result. Retries clear via clearRing() (which must also drain the set —
+			// see the clearRing regression below); any attempt landing heads is enough.
 			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
 			try {
 				const game = new Game();
@@ -170,6 +169,7 @@ describe('ring/index.ts', () => {
 				for (let attempt = 0; attempt < 50; attempt += 1) {
 					ring.clearRing();
 					ring.spawnBoss();
+					if ((ring as any).bossDespawnTimers.size > 0) break;
 				}
 				expect((ring as any).bossDespawnTimers.size).to.be.greaterThan(0);
 
@@ -180,6 +180,40 @@ describe('ring/index.ts', () => {
 				clock.tick(11 * 60 * 1000);
 
 				expect(removeBossSpy.called).to.equal(false);
+			} finally {
+				clock.restore();
+			}
+		});
+
+		it('cancels pending boss despawn timers on clearRing', () => {
+			// Regression: dispose() cleared bossDespawnTimers, but clearRing() did not.
+			// After a fight (or an explicit clear) an orphaned despawn timer could still
+			// fire removeBoss against a ring that had already moved on.
+			//
+			// spawnBoss() only schedules a despawn timer on a 50/50 coin flip
+			// (`random(1)`), so we retry rather than pinning Math.random — same reason
+			// as the dispose() regression above.
+			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+			try {
+				const game = new Game();
+				const ring = game.getRing();
+				const removeBossSpy = sinon.spy(ring, 'removeBoss');
+
+				for (let attempt = 0; attempt < 50; attempt += 1) {
+					ring.clearRing();
+					ring.spawnBoss();
+					if ((ring as any).bossDespawnTimers.size > 0) break;
+				}
+				expect((ring as any).bossDespawnTimers.size).to.be.greaterThan(0);
+
+				ring.clearRing();
+
+				expect((ring as any).bossDespawnTimers.size).to.equal(0);
+
+				clock.tick(11 * 60 * 1000);
+				expect(removeBossSpy.called).to.equal(false);
+
+				game.dispose();
 			} finally {
 				clock.restore();
 			}
@@ -424,17 +458,31 @@ describe('ring/index.ts', () => {
 				const game = new Game({ spawnBosses: true } as any);
 				const ring = game.getRing();
 
+				// Pin the outer delay and restart the timer, so the window below covers
+				// exactly one spawn cycle. The real delay is random (12–22 min for a
+				// beginner ring — this one has no monsters) and startBossTimer() re-arms
+				// itself after every cycle, so blindly ticking 40 min ran two or three
+				// cycles and a legitimately re-armed warning could fire inside the
+				// observation window. That failed ~1 run in 5 on an assertion that was
+				// never about re-armed cycles.
+				const OUTER_DELAY_MS = 10 * 60 * 1000;
+				const WARNING_DELAY_MS = 2 * 60 * 1000; // BOSS_WARNING_DELAY_MS
+				clearTimeout((ring as any).bossTimer);
+				(ring as any).bossTimer = undefined;
+				sinon.stub(ring as any, 'getBossSpawnOuterDelayMs').returns(OUTER_DELAY_MS);
+				ring.startBossTimer();
+
 				// Ring is mid-encounter when the warning is due, so no warning goes out.
 				ring.inEncounter = true;
 				const warnSpy = sinon.spy();
 				ring.on('bossWillSpawn', warnSpy);
 				const spawnSpy = sinon.spy(ring, 'spawnBoss');
 
-				// Past the longest outer delay (35 min) and the 2 min warning window.
-				clock.tick(40 * 60 * 1000);
+				// Just past the warning point — not far enough to re-arm a second cycle.
+				clock.tick(OUTER_DELAY_MS + 1000);
 				// The fight ends before the spawn would have fired.
 				ring.inEncounter = false;
-				clock.tick(3 * 60 * 1000);
+				clock.tick(WARNING_DELAY_MS);
 
 				expect(warnSpy.called).to.equal(false);
 				expect(spawnSpy.called).to.equal(false);
@@ -1142,6 +1190,141 @@ describe('ring/index.ts', () => {
 			game.dispose();
 		});
 
+		it('round-cap with deaths but multiple living factions is a draw, not a multi-faction win', () => {
+			// The round-10 empty-deck path announces a draw then calls fightConcludes with
+			// lastContestant=undefined. If anyone died earlier, the old hasOutcome=deaths>0
+			// path marked EVERY living contestant as won — including both remaining factions.
+			const game = new Game();
+			const ring = game.getRing();
+
+			const c1 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c2 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c3 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+
+			ring.addMonster(c1);
+			ring.addMonster(c2);
+			ring.addMonster(c3);
+
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';
+
+			// One Gryffindor died; both factions still have a living member.
+			ring.contestants[1]!.monster.dead = true;
+			ring.contestants[1]!.monster.hp = 0;
+			ring.contestants[1]!.monster.killedBy = ring.contestants[2]!.monster;
+
+			ring.ringEvent = { ...RING_EVENTS.find(e => e.id === 'common-cause')!, apply: () => {} };
+
+			const resolved: Array<{ outcome?: string }> = [];
+			const unsub = ring.eventBus.subscribe('round-cap-outcome', {
+				deliver: (event) => {
+					if (event.type === 'ring.fightResolved') {
+						resolved.push(event.payload as { outcome?: string });
+					}
+				},
+			});
+
+			ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
+			unsub();
+
+			const p0 = ring.findContestant(c1.character, c1.monster)!;
+			const p1 = ring.findContestant(c2.character, c2.monster)!;
+			const p2 = ring.findContestant(c3.character, c3.monster)!;
+
+			expect(p1.lost, 'dead contestant is still a loss').to.equal(true);
+			expect(p0.won, 'Gryffindor survivor must not win while Slytherin lives').to.equal(undefined);
+			expect(p2.won, 'Slytherin survivor must not win while Gryffindor lives').to.equal(undefined);
+			expect(resolved[0]?.outcome, 'fightResolved outcome').to.equal('draw');
+
+			game.dispose();
+		});
+
+		describe('fightOutcome labelling', () => {
+			// Regression: the first cut of #74 gated the whole fightOutcome chain on
+			// hasDecisiveWinner, which downgraded permaDeath and "died + survivor fled"
+			// to 'draw'. Only the final `win` arm may depend on decisiveness — but the
+			// fled arm still needs a `settled` guard so an all-flee/no-death fight stays
+			// a draw. These three cases pin all of that down.
+			function setupFight(): {
+				game: Game;
+				ring: ReturnType<Game['getRing']>;
+				outcomes: Array<{ outcome?: string }>;
+				conclude: () => void;
+			} {
+				const game = new Game();
+				const ring = game.getRing();
+
+				for (let i = 0; i < 3; i += 1) {
+					ring.addMonster(
+						randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } })
+					);
+				}
+
+				const outcomes: Array<{ outcome?: string }> = [];
+				const unsub = ring.eventBus.subscribe('fight-outcome-label', {
+					deliver: (event) => {
+						if (event.type === 'ring.fightResolved') {
+							outcomes.push(event.payload as { outcome?: string });
+						}
+					},
+				});
+
+				return {
+					game,
+					ring,
+					outcomes,
+					conclude: () => {
+						ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
+						unsub();
+					},
+				};
+			}
+
+			it('labels a fight permaDeath even when the ending was inconclusive', () => {
+				const { game, ring, outcomes, conclude } = setupFight();
+
+				// Destroyed monster, but two other contestants are still standing — so the
+				// fight has no decisive winner. permaDeath must still win the label.
+				// `destroyed` is a getter (hp < -bloodiedValue), so drive it via hp.
+				ring.contestants[0]!.monster.dead = true;
+				ring.contestants[0]!.monster.hp = -10_000;
+				expect(ring.contestants[0]!.monster.destroyed, 'setup: monster is destroyed').to.equal(true);
+
+				conclude();
+
+				expect(outcomes[0]?.outcome).to.equal('permaDeath');
+				game.dispose();
+			});
+
+			it('labels a fight fled when someone died and the survivors fled', () => {
+				const { game, ring, outcomes, conclude } = setupFight();
+
+				ring.contestants[0]!.monster.dead = true;
+				ring.contestants[0]!.monster.hp = 0;
+				ring.contestants[1]!.monster.fled = true;
+				ring.contestants[2]!.monster.fled = true;
+
+				conclude();
+
+				expect(outcomes[0]?.outcome).to.equal('fled');
+				game.dispose();
+			});
+
+			it('labels an all-fled fight with no deaths a draw, not fled', () => {
+				const { game, ring, outcomes, conclude } = setupFight();
+
+				for (const contestant of ring.contestants) {
+					contestant.monster.fled = true;
+				}
+
+				conclude();
+
+				expect(outcomes[0]?.outcome).to.equal('draw');
+				game.dispose();
+			});
+		});
+
 		it('can calculate xp when a monster flees', () => {
 			const game = new Game();
 			const ring = game.getRing();
@@ -1309,6 +1492,66 @@ describe('ring/index.ts', () => {
 			}
 
 			expect(caughtError, 'fight() should not throw').to.be.undefined;
+		});
+
+		it('does not let a contestant replay the same card index when the turn batch rebuilds', async function () {
+			// Regression: when the local turn batch shrank to one survivor, doAction rebuilt
+			// with `[...activeContestants, ...globalActive]`. globalActive already included
+			// that survivor, so they appeared twice. The tempting "fix" of assigning
+			// `activeContestants = globalActive` and falling through is worse — the survivor
+			// never acts and the fight can spin until OOM. The correct fix is to let the
+			// length-1 batch play normally and only rebuild when the batch is empty (same
+			// as the length-0 branch).
+			//
+			// High HP keeps all three alive so every card-index wave hits the rebuild path;
+			// three contestants guarantees a length-1 local batch after the first two act.
+			this.timeout(5000);
+
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+			const names = ring.contestants.map(({ monster }) => monster.givenName);
+			const playsByMonster = new Map<string, number[]>();
+			const cardIndexByCard = new WeakMap<object, number>();
+			for (const { monster } of ring.contestants) {
+				monster.hp = 10_000;
+				monster.cards.forEach((card: { play: (...args: unknown[]) => unknown }, index: number) =>
+					cardIndexByCard.set(card, index)
+				);
+				for (const card of monster.cards) {
+					const originalPlay = card.play.bind(card);
+					card.play = ((...args: Parameters<typeof card.play>) => {
+						const cardIndex = cardIndexByCard.get(card);
+						if (cardIndex !== undefined) {
+							const key = monster.givenName;
+							const prior = playsByMonster.get(key) ?? [];
+							expect(
+								prior,
+								`${key} replayed card index ${cardIndex}`
+							).to.not.include(cardIndex);
+							prior.push(cardIndex);
+							playsByMonster.set(key, prior);
+						}
+						return originalPlay(...args);
+					}) as typeof card.play;
+				}
+			}
+
+			await ring.fight();
+
+			// Every contestant must have acted at card index 0 — proves the length-1
+			// survivor was not skipped by a premature globalActive rebuild+advance.
+			for (const name of names) {
+				expect(
+					playsByMonster.get(name),
+					`${name} should have played card index 0`
+				).to.include(0);
+			}
+			game.dispose();
 		});
 
 		it('runs a full fight through the real (non-skipped) pacing path', async function () {

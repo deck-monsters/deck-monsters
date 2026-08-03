@@ -72,7 +72,7 @@ describe('@deck-monsters/harness', () => {
 		expect(out1).to.equal(out2);
 	});
 
-	it('concurrent-look-monsters completes with two characters (serialized like production)', async function () {
+	it('concurrent-look-monsters completes with two characters (per-user lanes like production)', async function () {
 		this.timeout(30_000);
 
 		const game = createTestGame('harness-concurrent-room');

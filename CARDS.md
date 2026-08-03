@@ -1,4 +1,3 @@
-
 ```
 			.------..------..------..------..------.
 			|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
@@ -9,7 +8,7 @@
 ```
 
 *The Card Catalogue (Player Reference):*
-Cards available in the game — name, description, cost, and rarity.
+Name, description, and rarity for every card and item in the game.
 
 Adrenaline Rush
 Bad Batch
@@ -63,7 +62,6 @@ Turkey Thigh
 Vengeful Rampage
 Whiskey Shot
 Wooden Spear
-
 
 ```
 ==================================
@@ -760,7 +758,6 @@ The Annals of Qin Shi Huang
 The Tale of Sir Robin According to Clever Hans
 The Tale of Sir Robin
 Sorting Hat
-
 
 ```
 ==================================

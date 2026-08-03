@@ -1,6 +1,7 @@
 import type BaseMonster from '../base.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import { getItemKey } from '../../items/helpers/counts.js';
+import { matchesCardLookupName } from '../../cards/helpers/matches-lookup-name.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,6 +43,11 @@ export const equipHelpersReady = loadHelpers().catch((err) => {
 });
 
 const MAX_CARD_COPIES_IN_HAND = 4;
+const EQUIP_CONTROL_ANSWER = Symbol('equip-control-answer');
+const isFinishAnswer = (answer: unknown): boolean =>
+	/^(done|finished|enough|stop)$/i.test(String(answer ?? '').trim());
+const isEquipControlAnswer = (answer: unknown): boolean =>
+	String(answer ?? '').trim().length === 0 || isFinishAnswer(answer);
 
 interface EquipOptions {
 	deck: CardInstance[];
@@ -94,10 +100,36 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 					[],
 				);
 
-				const getQuestion = ({ cardChoices }: { cardChoices: string }) =>
-					`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:\n\n${cardChoices}\n\nWhich card(s) would you like to equip next?`;
+				const getQuestion = ({ cardChoices }: { cardChoices: string }) => {
+					const base =
+						`You have ${remainingSlots} of ${cardSlots} slots remaining, and the following cards:\n\n${cardChoices}\n\nWhich card(s) would you like to equip next?`;
+					// After a partial batch, offer an explicit finish path (text: "done"; web shows a Done button).
+					if (cards.length > 0) {
+						return `${base} (or reply "done" to finish with what you have)`;
+					}
+					return base;
+				};
 
-				return _chooseCards({ cards: equipableCards, channel, getQuestion });
+				// Empty and finish answers control this multi-prompt equip flow rather than
+				// selecting cards. Bypass chooseCards so it does not announce chooser feedback.
+				const channelForChoose: ChannelFn = (opts) => {
+					if (!opts.question) return channel(opts);
+					return Promise.resolve(channel(opts)).then((answer) => {
+						if (isEquipControlAnswer(answer)) {
+							throw EQUIP_CONTROL_ANSWER;
+						}
+						return answer as string;
+					});
+				};
+
+				return _chooseCards({
+					cards: equipableCards,
+					channel: channelForChoose,
+					getQuestion,
+				}).catch((err: unknown) => {
+					if (err === EQUIP_CONTROL_ANSWER) return [];
+					throw err;
+				});
 			})
 			.then((result: CardInstance[]) => {
 				const trimmedCards = result.slice(0, remainingSlots);
@@ -106,23 +138,31 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 
 				cards.push(...trimmedCards);
 
-			if (trimmedCards.length < result.length) {
-				return (channel({
-					announce: `You've run out of slots, but you've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
-				}) as Promise<unknown>).then(() => cards);
-			}
+				if (trimmedCards.length < result.length) {
+					return (channel({
+						announce: `You've run out of slots, but you've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
+					}) as Promise<unknown>).then(() => cards);
+				}
 
-			if (nowRemainingSlots <= 0) {
-				return (channel({
-					announce: `You've filled your slots with the following cards:\n\n${_getFinalCardChoices(cards)}`,
-				}) as Promise<unknown>).then(() => cards);
-			}
+				if (nowRemainingSlots <= 0) {
+					return (channel({
+						announce: `You've filled your slots with the following cards:\n\n${_getFinalCardChoices(cards)}`,
+					}) as Promise<unknown>).then(() => cards);
+				}
 
-			if (nowRemainingCards.length <= 0) {
-				return (channel({
-					announce: `You're out of cards to equip, but you've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
-				}) as Promise<unknown>).then(() => cards);
-			}
+				if (nowRemainingCards.length <= 0) {
+					return (channel({
+						announce: `You're out of cards to equip, but you've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
+					}) as Promise<unknown>).then(() => cards);
+				}
+
+				// An empty continuation remains an intentional partial-batch finish;
+				// cancellation rejects earlier and therefore leaves monster.cards unchanged.
+				if (trimmedCards.length === 0 && cards.length > 0) {
+					return (channel({
+						announce: `You've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
+					}) as Promise<unknown>).then(() => cards);
+				}
 
 				return addCard({
 					remainingSlots: nowRemainingSlots,
@@ -153,7 +193,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 				selectedCards = cardSelection.reduce((selection: CardInstance[], cardType: string) => {
 					const wanted = cardType.trim().toLowerCase();
 					const cardIndex = remainingItems.findIndex(
-						(potential: CardInstance) => getItemKey(potential).toLowerCase() === wanted,
+						(potential: CardInstance) => matchesCardLookupName(potential, wanted),
 					);
 
 					if (cardIndex >= 0) {

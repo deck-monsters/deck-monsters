@@ -51,19 +51,43 @@ Three coordination mechanisms exist. Know which one you are touching:
    interactive flow legitimately holds its lane for minutes while waiting on
    `sendPrompt` answers. Keying by room alone starves every other member's
    commands (this was a real production bug — "the game ignores my commands").
+   Harness helpers mirror this via `createRoomCommandRunner(roomId, userId, …)`;
+   use `createRoomWideCommandRunner` only when you explicitly need room-wide
+   serialization (workshop-style mutations).
 
-3. **Per-room workshop lane** — non-interactive card-management mutations
-   (`equipCards`, `unequipCard`, `moveCard`, `reorderCards`, presets, …) run
-   through `runSerializedMutation(roomId, userId, …)`, which serializes
-   per-room AND first rejects with `PRECONDITION_FAILED` if the caller has an
-   `activeFlows` entry. Rationale: these are awaited HTTP calls that must never
-   (a) hang behind a minutes-long interactive flow, nor (b) interleave with the
-   caller's own in-flight flow mutating the same deck. Silent channels
+3. **Per-room workshop lane + same-user guards** — non-interactive card-management
+   mutations (`equipCards`, `unequipCard`, `moveCard`, `reorderCards`, presets, …)
+   run through `runSerializedMutation(roomId, userId, …)`, which:
+   - serializes per-room via `runSerializedEngineWork(roomId, …)` (short,
+     prompt-free work shared across members);
+   - rejects with `PRECONDITION_FAILED` if the caller has an `activeFlows`
+     entry (workshop must not interleave with the caller's console flow);
+   - acquires `activePromptFreeMutations` (`roomId:userId`, ownership token)
+     synchronously before any `await` and releases in `.finally()` — a second
+     workshop call from the same user fails fast instead of queueing behind
+     itself in the room lane.
+   The `command` mutation checks `activePromptFreeMutations` before taking
+   `activeFlows`, so a slow workshop HTTP call blocks the same user's console
+   dispatch without affecting other members. Silent channels
    (`createSilentChannel`) throw on any `question` — workshop paths must stay
    non-interactive.
 
+**Cross-user policy (#62)**: per-user console lanes mean two members can mutate
+the same `Game` concurrently. That is intentional for interactive flows — each
+user's prompts only block themselves. Workshop mutations that touch shared room
+state (ring roster, shop, etc.) retain the room-wide lane so those classes stay
+serialized. Ring fights also run outside server lanes (timer chain in
+`Ring.fight()`). Full room-wide serialization for every mutation would reintroduce
+the starvation bug from #20; the current split is a deliberate trade-off documented
+here. If a future mutation class needs stronger ordering, add it to the room lane
+(or a dedicated guard) rather than moving console commands back to a room-wide
+lane.
+
 **Rules of thumb**: anything that may call `channel({ question })` belongs in
-the per-user lane and must be fire-and-forget. Anything awaited by HTTP must
+the per-user lane and must be fire-and-forget on web (HTTP must not wait).
+Discord may await the action for interaction lifetime, but still uses the same
+`${roomId}:${userId}` lane + connector-local flow lock (`command-flow.ts`);
+prompt collectors must resolve outside that lane. Anything awaited by HTTP must
 be prompt-free and short. Never hold any lane across a user-input wait that
 other requests in the same lane depend on.
 
@@ -88,6 +112,15 @@ engine) immediately after `sendPrompt` resolves, and the fire-and-forget catch
 suppresses that error like a timeout. `items/helpers/choose.ts` has a
 defensive check too. If you build a new connector channel that awaits
 `sendPrompt` (directly or via `ConnectorAdapter`), replicate the translation.
+`createTestChannel` in `packages/engine/src/testing/index.ts` mirrors the same
+translation for harness/integration tests.
+
+`ConnectorAdapter` delivers `prompt.request` events to registered private
+channels. On channel rejection or a non-string resolution it must call
+`cancelPrompt` so `sendPrompt` settles promptly (via the cancel sentinel) rather
+than hanging until the 120s timeout. Pass an optional `onChannelError` callback
+to surface connector failures without unhandled rejections — the adapter never
+treats `undefined` or other non-strings as user answers.
 
 ## 4. Multi-step selection parsing (`packages/engine/src/items/helpers/choose.ts`)
 
@@ -107,13 +140,7 @@ Clients resume the event stream with a cursor. Three layers cooperate, and the
 failure mode when they disagree is silent (the user sees an empty pane), so be
 careful here.
 
-- **Client** (`ConsolePane.tsx` / `RingPane.tsx`): each pane keeps
-  `latestTrackedEventIdRef` updated on every event **except** `handshake` and
-  `heartbeat` (those are transport frames, not stream positions), and on
-  `onError` copies it into the subscription input so the reconnect carries a
-  cursor. DB-backed history (`consoleHistory` / `ringHistory`) is fetched once
-  on mount and merged under a `historyApplied` guard — it covers page loads,
-  not reconnects.
+- **Client** (`apps/web/src/hooks/useRingFeed.tsx`, consumed by `Terminal` → `RingPane` / `ConsolePane`): one `ringFeed` subscription per Terminal/room owns the shared reconnect cursor. The cursor updates on every event **except** `handshake` and `heartbeat` (transport frames, not stream positions), advancing only when `shouldAdvanceEventCursor` says the new id’s leading epoch is at least as new; `onError` copies it into the subscription input so reconnect carries a cursor. Handshake / protocol reload runs once in this hook, then events fan out to pane listeners (listeners register in `useLayoutEffect`; a short pending buffer covers delivery before any listener exists). Each pane still fetches its own DB-backed history (`consoleHistory` / `ringHistory`) once on mount, merges under a `historyApplied` guard, and may `seedCursor` with its history tail — seeds are monotonic across both panes and never overwrite a newer live cursor. History covers page loads, not reconnects.
 - **In-memory buffer** (`RoomEventBus.getEventsSince`): a 200-event ring buffer
   per room. Returns a `status` — `found`, `ahead`, `evicted`, or `cold` — and
   `truncated: true` for anything memory cannot resolve.
@@ -213,11 +240,15 @@ new ownership checks reading `optionsStore` directly.
   [`boss-encounters.md`](boss-encounters.md).
 - **The boss summon quota is enforced in the engine command handler, not the router**, and its
   check-then-record must stay **synchronous with no `await` in between**. The web path runs
-  commands inside the per-user lane, but the Discord connector's `dispatchCommand`
-  (`connector-discord/src/slash-commands/helpers.ts`) calls `game.handleCommand()` directly
-  and `await`s the action — **no `activeFlows` entry and no `runSerializedEngineWork` lane at
-  all**. Anything that must hold for every connector belongs in the handler; anything that
-  relies on the lane silently does not apply to Discord.
+  commands inside the per-user lane. Discord slash/DM dispatch (`dispatchCommand` /
+  `dispatchFreeTextCommand` in `connector-discord`) now also uses connector-local
+  `discordActiveFlows` + `runSerializedEngineWork(`${roomId}:${userId}`)` via
+  `command-flow.ts` — same per-user keying as web, with the Discord request allowed to
+  await the action. Prompt answers still arrive outside that lane (DM/button collectors,
+  ConnectorAdapter `respondToPrompt`). Free-text prompts use a filtered DM message
+  collector; `PROMPT_CANCELLED` becomes `PromptCancelledError` before game code.
+  Anything that must hold for every connector still belongs in the engine handler;
+  do not reintroduce room-wide Discord lanes (starves other members — see #20).
 - **Timers must be disposed AND tracked**: `Game.dispose()` → `Ring.dispose()`
   + per-creature `disposeTimers()`. Any new `setTimeout`/`setInterval` on a
   long-lived object needs both a stored handle *and* a dispose path — a timer

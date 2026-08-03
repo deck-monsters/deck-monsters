@@ -84,7 +84,7 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 				`Gained no XP for being killed by ${contestant.monster.pronouns?.him ?? 'it'}self`
 			);
 		}
-	} else {
+	} else if (contestant.fled || !monster.dead) {
 		const levels = [monster.level];
 		const opponents: Contestant[] = [];
 		contestants.forEach((opponent) => {

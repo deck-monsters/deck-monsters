@@ -1,5 +1,54 @@
 import type { BaseCreature, EncounterModifiers } from './base.js';
 
+/**
+ * Live view over `self.encounter.modifiers` used when the creature is not yet in an
+ * encounter (#68): reads stay side-effect-free, and only a write materializes the
+ * encounter. Every trap re-reads `self.encounter` so a view captured before
+ * `startEncounter()` keeps reporting the truth afterwards.
+ *
+ * The target must stay an extensible plain object. A frozen one is non-extensible,
+ * and the Proxy invariants then forbid `ownKeys` from reporting keys the target does
+ * not have — enumeration would silently return `[]` while `get` returned values, so
+ * `{...modifiers}` and `Object.keys(modifiers)` would disagree with `modifiers.ac`.
+ */
+function emptyEncounterModifiersView (self: BaseCreature): EncounterModifiers {
+	const liveModifiers = (): Record<string, unknown> | undefined =>
+		self.encounter?.modifiers as Record<string, unknown> | undefined;
+
+	return new Proxy({} as Record<string, unknown>, {
+		get (_target, prop) {
+			if (prop === 'then') return undefined;
+			return liveModifiers()?.[prop as string];
+		},
+		set (_target, prop, value) {
+			if (!self.encounter) self.encounter = {};
+			const modifiers = (self.encounter.modifiers ??= {}) as Record<string, unknown>;
+			modifiers[String(prop)] = value;
+			return true;
+		},
+		has (_target, prop) {
+			const modifiers = liveModifiers();
+			return modifiers ? prop in modifiers : false;
+		},
+		deleteProperty (_target, prop) {
+			const modifiers = liveModifiers();
+			if (modifiers) delete modifiers[prop as string];
+			return true;
+		},
+		ownKeys () {
+			return Reflect.ownKeys(liveModifiers() ?? {});
+		},
+		getOwnPropertyDescriptor (_target, prop) {
+			const modifiers = liveModifiers();
+			if (!modifiers) return undefined;
+			const descriptor = Reflect.getOwnPropertyDescriptor(modifiers, prop);
+			// Must report configurable:true — the target does not actually carry these
+			// keys, and a non-configurable report violates the Proxy invariants.
+			return descriptor ? { ...descriptor, configurable: true } : undefined;
+		},
+	}) as EncounterModifiers;
+}
+
 export function startEncounter (self: BaseCreature, ring: unknown): void {
 	self.inEncounter = true;
 	self.encounter = { ring };
@@ -18,7 +67,7 @@ export function endEncounter (self: BaseCreature): import('./base.js').Encounter
 }
 
 export function getEncounterModifiers (self: BaseCreature): EncounterModifiers {
-	if (!self.encounter) self.encounter = {};
+	if (!self.encounter) return emptyEncounterModifiersView(self);
 	if (!self.encounter.modifiers) self.encounter.modifiers = {};
 	return self.encounter.modifiers as EncounterModifiers;
 }

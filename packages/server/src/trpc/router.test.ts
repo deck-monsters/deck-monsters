@@ -1,10 +1,11 @@
 import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
 
-import { createRouter, activeFlows } from './router.js';
+import { createRouter, activeFlows, activePromptFreeMutations } from './router.js';
 
 const ROOM_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
 const USER_ID = '11111111-2222-3333-4444-555555555555';
+const OTHER_USER_ID = '22222222-3333-4444-5555-666666666666';
 
 describe('trpc/router respondToPrompt', () => {
 	it('forwards a valid prompt response', async () => {
@@ -579,6 +580,7 @@ describe('trpc/router command dispatch and flow locking', () => {
 
 	afterEach(() => {
 		activeFlows.clear();
+		activePromptFreeMutations.clear();
 	});
 
 	it('serializes command actions in a per-user lane, not room-wide', async () => {
@@ -649,6 +651,84 @@ describe('trpc/router command dispatch and flow locking', () => {
 		expect(err).to.be.instanceOf(TRPCError);
 		expect((err as TRPCError).code).to.equal('PRECONDITION_FAILED');
 		expect((err as TRPCError).message).to.equal('A console command is in progress — answer or cancel its prompt first.');
+	});
+
+	it('rejects console commands while the same user has a workshop mutation in flight', async () => {
+		const workshop = deferred<{ removedCount: number; monsterName: string }>();
+		const unequipCard = () => workshop.promise;
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_key: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const { roomManager: commandRm } = makeCommandRoomManager(async () => undefined);
+		const commandCaller = createRouter(commandRm).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const workshopCall = caller.game.unequipCard({
+			roomId: ROOM_ID,
+			monsterName: 'Stonefang',
+			cardName: 'Hit',
+		});
+		await settleTicks();
+		expect(activePromptFreeMutations.has(flowKey)).to.equal(true);
+
+		const consoleResult = await commandCaller.game.command({ roomId: ROOM_ID, command: 'look at ring' });
+		expect(consoleResult.ok).to.equal(false);
+		expect(consoleResult.message).to.equal(
+			'A workshop operation is in progress — wait for it to finish before submitting a command.'
+		);
+
+		workshop.resolve({ removedCount: 1, monsterName: 'Stonefang' });
+		await workshopCall;
+		await settleTicks();
+		expect(activePromptFreeMutations.has(flowKey)).to.equal(false);
+	});
+
+	it('allows another user\'s console command while a workshop mutation is in flight', async () => {
+		const workshop = deferred<{ removedCount: number; monsterName: string }>();
+		const unequipCard = () => workshop.promise;
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_key: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const workshopCaller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const { roomManager: otherRm, lanes } = makeCommandRoomManager(async () => undefined);
+		const otherCaller = createRouter(otherRm).createCaller({ userId: OTHER_USER_ID, serviceTokenValid: false });
+
+		void workshopCaller.game.unequipCard({ roomId: ROOM_ID, monsterName: 'Stonefang', cardName: 'Hit' });
+		await settleTicks();
+
+		const consoleResult = await otherCaller.game.command({ roomId: ROOM_ID, command: 'look at ring' });
+		await settleTicks();
+
+		expect(consoleResult.ok).to.equal(true);
+		expect(lanes).to.deep.equal([`${ROOM_ID}:${OTHER_USER_ID}`]);
+
+		workshop.resolve({ removedCount: 1, monsterName: 'Stonefang' });
+		await settleTicks();
+	});
+
+	it('releases the workshop guard when the mutation rejects', async () => {
+		const unequipCard = async () => {
+			throw new Error('deck full');
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: { unequipCard } } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_key: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const err = await caller.game
+			.unequipCard({ roomId: ROOM_ID, monsterName: 'Stonefang', cardName: 'Hit' })
+			.catch((e: unknown) => e);
+		expect(err).to.be.instanceOf(TRPCError);
+		expect(activePromptFreeMutations.has(flowKey)).to.equal(false);
 	});
 
 	it('a cancelled flow settling late does not release a newer flow\'s lock', async () => {

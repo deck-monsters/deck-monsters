@@ -115,40 +115,38 @@ describe('./cards/bad-batch.ts', () => {
 	});
 
 	it('has no effect on other cards', () => {
+		// Assert on the rewrite Bad Batch performs, not on the resulting hp.
+		// HealCard.checkSuccess has 1% Curse of Loki (`result *= -1`) and 1% Stroke
+		// of Luck branches, so playing a Heal and expecting hp to go up made this
+		// test flake — it failed roughly 1 run in 100 with "expected 3 to be above 5"
+		// when the curse turned the heal into 2 points of damage. Bad Batch's actual
+		// contract is that a non-target card comes back untouched, which is
+		// deterministic and a stronger assertion besides.
 		const badBatch = new BadBatchCard();
 
 		const player = new Jinn({ name: 'player' });
 		const target1 = new Jinn({ name: 'target1' });
-		const target2 = new Jinn({ name: 'target2' });
 		const ring: any = {
 			encounterEffects: [],
 			contestants: [
 				{ monster: player },
 				{ monster: target1 },
-				{ monster: target2 },
 			],
 		};
 
-		const playerStartingHp = 5;
-		const target2StartingHp = 5;
-
-		player.hp = playerStartingHp;
-		target2.hp = target2StartingHp;
-
 		const heal = new HealCard();
+		const originalEffect = heal.effect;
 
-		return heal
-			.play(target1, player)
-			.then(() => {
-				expect(target1.hp).to.be.above(playerStartingHp);
-			})
-			.then(() => badBatch.play(player, target1, ring, ring.contestants))
+		return badBatch
+			.play(player, target1, ring, ring.contestants)
 			.then(() => expect(ring.encounterEffects.length).to.equal(1))
 			.then(() => ring.encounterEffects[0]({ card: heal }))
-			.then((modifiedCard: any) => modifiedCard.play(target2, player, ring, ring.contestants))
-			.then(() => {
-				expect(target2.hp).to.be.above(target2StartingHp);
-				expect(ring.encounterEffects.length).to.equal(1);
+			.then((modifiedCard: any) => {
+				expect(modifiedCard, 'card is returned unchanged').to.equal(heal);
+				expect(modifiedCard.effect, 'effect is not rewritten').to.equal(originalEffect);
+				// A non-target card must not consume the pending effect — it stays
+				// armed for the next Whiskey Shot or Scotch.
+				expect(ring.encounterEffects.length, 'effect stays armed').to.equal(1);
 			});
 	});
 

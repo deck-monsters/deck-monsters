@@ -18,6 +18,11 @@ These apply to every task in this repo, not just the one you were asked to do.
 4. **Explain the "why".** Comments and docs in this repo lean toward recording *why* a
    constraint exists — several were written after a production bug. Preserve that; when you
    fix something subtle, leave a note saying what broke, so nobody re-introduces it.
+5. **Checkpoint after each task.** On multi-step or subagent-driven work, commit (and push
+   the feature branch) as soon as each discrete task lands — for example after a subagent
+   finishes an implementation task, after a review-fix round, or after a verification
+   pass updates docs. Do not batch an entire roadmap into one late commit. Small, reviewable
+   commits keep progress recoverable if a later step fails or the session ends early.
 
 ## Architecture Docs
 
@@ -126,8 +131,8 @@ set -a && source .env.local && set +a
 pnpm --filter @deck-monsters/server dev   # port 3000
 pnpm --filter @deck-monsters/web dev      # port 5173
 
-# Regenerate CARDS.md / DMG.md / probability docs
-node ./build
+# Regenerate CARDS.md / DMG.md / probability docs (builds engine first)
+pnpm run build:docs
 ```
 
 > **Important**: `pnpm build` must run before `pnpm test` on a fresh checkout. The server, discord, and web packages import from `@deck-monsters/engine` via its `dist/` output.
@@ -275,9 +280,7 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 
 ## Known Issues
 
-- **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet. (#3 in `docs/roadmap/10-bug-fixes.md`)
-
-Previously listed here and now fixed (see `docs/roadmap/10b-bugs-fixed.md` for root causes): fight log not updating (#15 — write-side races and dropped retries in the fight-summary writer, not UI cache invalidation), console history missing on reconnect (#16/#17 — the engine's cold ring buffer suppressed the durable-storage replay fallback), the card shop being a process-wide singleton instead of room-scoped (#26), and batch-equip UX flakiness (#19).
+No active tracked bugs. Previously listed items are fixed — see `docs/roadmap/10b-bugs-fixed.md` for root causes, including DMG/CARDS content differentiation (#3), fight log not updating (#15), console history missing on reconnect (#16/#17), card shop room-scoping (#26), batch-equip UX (#19), Discord free-text prompts / serialization (#59/#60), workshop↔console same-user guard (#61), dual web `ringFeed` (#63), harness lane alignment (#73), ConnectorAdapter prompt cancellation (#78), and the 2026-08-03 audit fixes (#51–#58, #74–#84).
 
 ## Archived / Deferred
 

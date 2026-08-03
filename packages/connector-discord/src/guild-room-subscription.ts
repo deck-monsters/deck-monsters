@@ -5,7 +5,7 @@ import {
 	type TextChannel,
 	ChannelType,
 } from 'discord.js';
-import { ConnectorAdapter } from '@deck-monsters/engine';
+import { ConnectorAdapter, PROMPT_CANCELLED, PromptCancelledError } from '@deck-monsters/engine';
 import type { RoomEventBus, ChannelCallback, GameEvent } from '@deck-monsters/engine';
 import { eq, and } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -134,14 +134,17 @@ export class GuildRoomSubscription {
 		supabaseUserId?: string
 	): ChannelCallback {
 		return async ({ announce, question, choices }) => {
-			// Interactive prompt
-			if (question && choices) {
+			// Interactive prompt — with or without choices (free-text when empty)
+			if (question) {
 				const choiceKeys = Array.isArray(choices)
 					? choices
-					: Object.keys(choices);
+					: choices
+						? Object.keys(choices)
+						: [];
 
 				// Build an onTimeout callback that clears the engine bus pending prompt
-				// when the Discord button collector times out.
+				// when the Discord collector times out (preserves ConnectorAdapter
+				// requestId cancellation tracking).
 				const resolvedSupabaseId =
 					supabaseUserId ?? this.discordToSupabase.get(discordUserId);
 				const onTimeout = resolvedSupabaseId
@@ -154,19 +157,34 @@ export class GuildRoomSubscription {
 					}
 					: undefined;
 
-				const activeInteraction =
-					interaction ?? this.activeInteractions.get(discordUserId);
+				let answer: string;
 
-				if (activeInteraction) {
-					return this.promptHandler.sendPrompt(
-						activeInteraction, question, choiceKeys, undefined, onTimeout
+				if (choiceKeys.length > 0) {
+					const activeInteraction =
+						interaction ?? this.activeInteractions.get(discordUserId);
+
+					if (activeInteraction) {
+						answer = await this.promptHandler.sendPrompt(
+							activeInteraction, question, choiceKeys, undefined, onTimeout
+						);
+					} else {
+						// Fallback for message-based commands: send buttons via DM
+						answer = await this.promptHandler.sendDmPrompt(
+							this.client, discordUserId, question, choiceKeys, undefined, onTimeout
+						);
+					}
+				} else {
+					// Free-text question (no choices) — DM text collector
+					answer = await this.promptHandler.sendFreeTextDmPrompt(
+						this.client, discordUserId, question, undefined, onTimeout
 					);
 				}
 
-				// Fallback for message-based commands: send buttons via DM
-				return this.promptHandler.sendDmPrompt(
-					this.client, discordUserId, question, choiceKeys, undefined, onTimeout
-				);
+				// Cancel sentinel must never reach game code as an answer.
+				if (answer === PROMPT_CANCELLED) {
+					throw new PromptCancelledError();
+				}
+				return answer;
 			}
 
 			// Announcement → DM
@@ -185,6 +203,19 @@ export class GuildRoomSubscription {
 	registerUserFromMessage(discordUserId: string, supabaseUserId: string): void {
 		this.supabaseToDiscord.set(supabaseUserId, discordUserId);
 		this.discordToSupabase.set(discordUserId, supabaseUserId);
+
+		// Same requestId tracker as registerUser — needed so free-text prompt
+		// timeouts can cancel the engine bus pending prompt.
+		this.eventBus.subscribe(`discord-prompt-tracker-${supabaseUserId}`, {
+			userId: supabaseUserId,
+			deliver: (event: GameEvent) => {
+				if (event.type === 'prompt.request') {
+					const { requestId } = event.payload as { requestId: string };
+					this.pendingPromptRequestIds.set(supabaseUserId, requestId);
+				}
+			},
+		});
+
 		const privateChannel = this.buildPrivateChannel(discordUserId, undefined, supabaseUserId);
 		this.adapter?.registerUser(supabaseUserId, privateChannel);
 	}

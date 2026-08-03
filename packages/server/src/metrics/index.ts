@@ -210,6 +210,13 @@ export const fightSummaryWriteFailures = new Counter({
 	registers: [registry],
 });
 
+export const eventPersistFailures = new Counter({
+	name: 'dm_event_persist_failures_total',
+	help: 'Failed inserts into room_events (after retries)',
+	labelNames: ['room_id'] as const,
+	registers: [registry],
+});
+
 export const ringFeedReplayFromDbTotal = new Counter({
 	name: 'dm_ring_feed_replay_from_db_total',
 	help: 'ringFeed reconnects that loaded history from room_events after ring-buffer miss',

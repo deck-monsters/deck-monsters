@@ -142,4 +142,43 @@ describe('./cards/pick-pocket.ts', () => {
 			);
 		});
 	});
+
+	it('does not throw when the target has an empty stealable deck', () => {
+		const pickPocket = new PickPocketCard();
+
+		const player = new Gladiator({ name: 'player' });
+		const target = new Gladiator({ name: 'target' });
+
+		(player as any).xp = 0;
+		(target as any).xp = 1000;
+		// Only Pick Pocket cards, which are filtered out — nothing left to steal.
+		(target as any).cards = [new PickPocketCard(), new PickPocketCard()];
+		const playerCardsBefore = [...(player as any).cards];
+
+		const ring: any = {
+			contestants: [
+				{ character: {}, monster: player },
+				{ character: {}, monster: target },
+			],
+			channelManager: { sendMessages: () => Promise.resolve() },
+			encounterEffects: [],
+		};
+
+		const narrations: string[] = [];
+		pickPocket.on('narration', (_className: any, _card: any, { narration }: any) =>
+			narrations.push(narration)
+		);
+
+		return pickPocket.play(player, target, ring, ring.contestants).then((result) => {
+			expect(result, 'resolves successfully').to.equal(true);
+			// Guard against the fix degenerating into a silent no-op: the empty pocket
+			// must be narrated, and no card may change hands.
+			expect(
+				narrations.some(n => n.includes('empty')),
+				`expected an empty-pocket narration, got: ${JSON.stringify(narrations)}`
+			).to.equal(true);
+			expect((player as any).cards).to.deep.equal(playerCardsBefore);
+			expect((target as any).cards.length, 'target keeps its cards').to.equal(2);
+		});
+	});
 });

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import type { SlashCommand, CommandContext } from './index.js';
-import { resolveUser } from './helpers.js';
+import { resolveConnectorUserId } from './helpers.js';
 
 export const joinRoom: SlashCommand = {
 	data: new SlashCommandBuilder()
@@ -14,11 +14,16 @@ export const joinRoom: SlashCommand = {
 	async execute(interaction: ChatInputCommandInteraction, ctx: CommandContext): Promise<void> {
 		await interaction.deferReply({ ephemeral: true });
 
-		const { supabaseUserId } = await resolveUser(interaction, ctx);
+		const supabaseUserId = await resolveConnectorUserId(interaction, ctx);
 		const inviteCode = interaction.options.getString('code', true);
+		const guildId = interaction.guildId ?? `dm-${interaction.user.id}`;
 
 		try {
-			const { roomId } = await ctx.guildRoomManager.joinRoomByCode(supabaseUserId, inviteCode);
+			const { roomId } = await ctx.guildRoomManager.joinRoomByCode(
+				guildId,
+				supabaseUserId,
+				inviteCode
+			);
 			await interaction.editReply({
 				content: `✅ Joined room \`${roomId}\`!`,
 				components: [],

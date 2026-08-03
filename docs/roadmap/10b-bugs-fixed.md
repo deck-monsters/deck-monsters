@@ -59,12 +59,12 @@ Emitted after the command action settles — success *or* failure — so suggest
 
 ### 19 (partial). Deck equip flaky with batches — engine-side bugs fixed
 
-Full investigation notes and the still-open batch-UX work are in `10-bug-fixes.md` (#19). Two concrete engine bugs found during that investigation were fixed:
+Two concrete engine bugs found during that investigation were fixed:
 
 1. **`loadPreset` copy cap (real bug, fixed)** — In `Beastmaster.loadPreset`, per-slot duplicate enforcement used `getItemKey(card) === requestedCard` (raw string from preset). **`equipCards` uses `getItemKey` on both sides** (via `selectedCard`). Presets saved via `savePreset` use `getCardName` (normal casing), but **legacy or edited presets** with different casing meant `selectedCount` stayed **0** for every entry, so **`MAX_CARD_COPIES_IN_HAND` never tripped** — you could exceed the per-card copy limit when loading a preset. **Fixed**: compare `normalize(getItemKey(card))` to `normalize(String(requestedCard))`.
 2. **Console interactive equip vs typed `equipCards`** — `equipMonster` + `cardSelection` in `packages/engine/src/monsters/helpers/equip.ts` used strict `cardType` equality; **`equipCards` / `isSameCardName`** are more forgiving. **Aligned**: `cardSelection` resolution now uses `getItemKey` + trimmed lowercase.
 
-**Status**: Fixed (these two items only — see #19 in `10-bug-fixes.md` for what's still open).
+**Status**: Fixed (engine-side bugs below; full batch-UX work completed in the #19 entry later in this archive).
 
 ---
 
@@ -194,7 +194,7 @@ Five smaller observations from the #19/#26 investigation, all addressed on 2026-
 
 - **`pnpm typecheck` did not exist.** `CLAUDE.md` documented it as a development command, but no package defined a `typecheck` script, so the command failed outright and CI's type-checking had to be reproduced by hand as per-package `tsc --noEmit` invocations. Added a `typecheck` script to all five packages plus a root `turbo run typecheck` (with `dependsOn: ["^build"]`, since the non-engine packages type-check against `engine/dist`).
 - **`README.md`'s engine example** called `player.buyItems()` with no arguments; the per-room shop work made `channel` and the `ShopHost` required, so a JavaScript consumer copying it would dereference `host.shop` on `undefined`. Updated to `player.buyItems(privateChannel, game)`.
-- **Player handbook said the merchant rotates every 8 hours**, which was the old throttle period — it is 6 now, and per-room. Fixed in both generators (`packages/engine/src/build/player-handbook.ts` for the in-game `look at player handbook`, and `build/player-handbook.js` for `PLAYER_HANDBOOK.md`) and regenerated.
+- **Player handbook said the merchant rotates every 8 hours**, which was the old throttle period — it is 6 now, and per-room. Fixed in `packages/engine/src/build/player-handbook-content.ts` (shared by in-game `look at player handbook` and root `PLAYER_HANDBOOK.md`) and regenerated.
 
 ---
 
@@ -804,11 +804,20 @@ The original doc flagged `curseOfLoki` as an unused variable. Investigation show
 
 **Status**: Not a bug — removed from the bug list. Documenting the Curse of Loki mechanic in the player handbook or DMG is a nice-to-have, not tracked here.
 
-### 3 (partial). `DMG.md` and `CARDS.md` are near-duplicates — build headers differentiated
+### 3. `DMG.md` and `CARDS.md` content differentiation — FIXED
 
-The Dungeon Master Guide should contain different content (game master / advanced info) than the player-facing card reference. `build/card-catalogue.js` now generates a player-facing reference ("Player Reference: Cards available in the game — name, description, cost, and rarity"), while `build/dungeon-master-guide.js` generates a game master reference ("Full card stats, modifier math, damage-per-turn tables"). The headers differentiate the purpose.
+Both files were near-duplicates: verbose card stats appeared in both, and the DMG lacked operator-facing material.
 
-**Status**: Headers fixed. The remaining full-content differentiation pass and the how-to-run-the-game section are tracked as open work in `10-bug-fixes.md` (#3).
+**Fixed** (2026-08-03):
+
+1. **Root build consumes engine `dist/`.** `pnpm run build:docs` runs `pnpm --filter @deck-monsters/engine build` first, then `node ./build/index.js`. All imports resolve through `packages/engine/dist/…` — not `src/*.js`.
+2. **Shared generators in `packages/engine/src/build/`.** `root-docs.ts` drives `DMG.md`, `CARDS.md`, `MONSTERS.md`, `PLAYER_HANDBOOK.md`, and `cards.html`. In-game `look at dm guide` uses the same DM sections via `dungeon-master-guide.ts`.
+3. **DM-only sections** (absent from `CARDS.md`): How to Run a Session (web + Discord connectors), Fight Pacing, Admin Commands, Stats Reference with per-monster-type modifiers, Combat Math, Operator Concurrency Notes.
+4. **Player-facing `CARDS.md`** uses non-verbose card formatting (description + rarity only; no DPT / hit-chance tables).
+5. **Deterministic `MONSTERS.md`** — stat-range reference per type instead of random sample instances (reproducible `build:docs` runs leave git clean).
+6. **Automated test** in `packages/engine/src/build/root-docs.test.ts`: DM-only markers present in DMG only; verbose DPT tables in DMG only; byte-identical output across consecutive generations.
+
+**Status**: Fixed.
 
 ### 4. Battle history not persisted
 
@@ -931,3 +940,395 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Complete free-for-all docs: describe primary targeting layer in `Ring.fight()` and fix empty label typo (#48)
 - [x] Evict stale ring events on roster change: `rollRingEvent()` re-checks eligibility; admin force refuses ineligible events with actionable message (#49)
 - [x] Tighten `isLastTeamFledWin` to require exactly one active non-fled faction; extract `factionOf()` to module level for shared use (#50)
+- [x] XP getter no longer floors at 1 — first award was +1 too high (#51)
+- [x] Flee “10 or higher” matches checkSuccess (pass threshold 9) (#52)
+- [x] Pick Pocket empty stealable deck narrates and no-ops instead of throwing (#53)
+- [x] Ring fight batch rebuild no longer duplicates contestants / skews turns (#54)
+- [x] `clearRing()` cancels pending boss despawn timers (#55)
+- [x] Discord guild users auto-joined to default room via `ensureMember` (#56)
+- [x] `respondToPrompt` rejects the `PROMPT_CANCELLED` sentinel as a client answer (#57)
+- [x] Web room navigation remounts panes, filters by `event.roomId`, seeds history cursor, fixes stale prompt id (#58)
+- [x] Event persister retries transient `room_events` insert failures before dropping (#64)
+- [x] `deleteRoom` disposes active games and invalidates in-flight loads so deleted rooms cannot resurrect in memory (#71)
+- [x] Round-cap / inconclusive fights no longer award wins to every living faction (#74)
+- [x] `fightOutcome` keeps permaDeath / fled labels on inconclusive fights; `isDraw` derived from it (#74 follow-up)
+- [x] Bad Batch "no effect on other cards" test no longer depends on Heal's 1% crit branches (#75)
+- [x] Boss warning-suppression test pins the outer delay instead of observing re-armed cycles (#76)
+- [x] XP floors at 0 so a negative encounter modifier can't drive it negative (#77)
+- [x] Empty `encounterModifiers` view enumerates consistently with its reads (#83)
+- [x] `ConnectorAdapter` re-checks `targetUserId` before prompting a user (#84)
+- [x] Differentiate DMG vs CARDS content; add how-to-run + operator sections; deterministic doc generation (#3)
+
+---
+
+### 51. XP getter floored at 1 — FIXED
+
+`getProp()` applied `Math.max(prop, 1)` to every property, including XP. A new monster with `options.xp = 0` (`STARTING_XP`) read as `1`, so the first `monster.xp += N` stored `N + 1`. Combat stats correctly keep the floor of 1.
+
+**Fixed**: XP bypasses the floor; `getPreBattlePropValue` for XP uses nullish coalescing. Covered by `creatures/stats.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 52. Flee roll of exactly 10 failed — FIXED
+
+`checkSuccess` uses strict `<` (tie goes to defender). Flee narrated “needs 10 or higher” but called `checkSuccess(roll, 10)`, so a natural 10 failed. Immobilize already compensates by narrating `threshold + 1`.
+
+**Fixed**: Flee passes threshold `9` so a roll of 10 succeeds, matching the narration. Covered by a spy assertion in `flee.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 53. Pick Pocket crashed on empty stealable deck — FIXED
+
+`randomHelpers.sample(...).clone()` threw when the highest-XP opponent’s deck was empty or only contained Pick Pocket. Independently confirmed during PR #358 verification: harnesses that sent unequipped `new Basilisk()` monsters into the ring saw 30–90% fight cancellations with `Cannot read properties of undefined (reading 'clone')`; fully decked `randomContestant` monsters did not. That cancel path was this crash bubbling to `Ring.fight()`’s `.catch`.
+
+**Fixed**: Narrate an empty pocket and resolve successfully without playing a stolen card. Covered by `pick-pocket.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 54. Ring fight batch rebuild duplicated contestants — FIXED
+
+When the local turn batch had one survivor but others remained globally active, the code rebuilt as `[...activeContestants, ...globalActive]`, duplicating the survivor and skewing turn order.
+
+**Fixed**: Only rebuild when the local batch is empty (`activeContestants = globalActive`); a sole remaining contestant plays normally. Covered by a three-contestant fight regression in `ring/index.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 55. Boss despawn timers survived `clearRing()` — FIXED
+
+`dispose()` cleared `bossDespawnTimers`; `clearRing()` did not. A fight that cleared the ring could still fire a stale `removeBoss` later.
+
+**Fixed**: `clearRing()` clears despawn timers the same way as `dispose()`. Covered by `ring/index.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 56. Discord guild members not in `room_members` — FIXED
+
+Only the first Discord user to trigger room creation was inserted into `room_members`. Later users shared the guild default `roomId` but failed `getMemberRole` (FORBIDDEN) on slash commands; free-text commands skipped membership entirely.
+
+**Fixed**: `RoomManager.ensureMember` (idempotent); `GuildRoomManager.getOrCreateDefaultRoom` always ensures the interacting user is a member. Free-text and autocomplete paths that resolve the default room pick this up automatically. Covered by server + discord guild-room-manager tests.
+
+**Status**: Fixed.
+
+---
+
+### 57. `PROMPT_CANCELLED` could reach game code via `respondToPrompt` — FIXED
+
+Clients could submit the literal sentinel `__cancelled__` as a prompt answer; the router forwarded it verbatim, bypassing the channel-wrapper translation to `PromptCancelledError`.
+
+**Fixed**: `respondToPrompt` returns `false` when the answer is `PROMPT_CANCELLED` (prompt stays pending). Cancel remains `cancelPrompt` / `cancelAllUserPrompts` only. Covered by `room-event-bus.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 58. Web room navigation bled state between rooms — FIXED
+
+Navigating `/room/A` → `/room/B` reused pane instances: `historyApplied` stayed true, history for B never loaded, and live events had no `event.roomId` guard. History also never seeded the subscription cursor despite comments saying it should. Console timeout/cancel handlers closed over a stale `activePromptId`.
+
+**Fixed**: `key={roomId}` on Ring/Console panes; filter events whose `roomId` mismatches; seed `subLastEventId` / `latestTrackedEventIdRef` from history; `activePromptIdRef` for timeout/cancel clearing.
+
+**Status**: Fixed.
+
+---
+
+### 74. Round-cap / inconclusive fights awarded wins to every living faction — FIXED
+
+Flagged during PR #358 verification: a 10-round-cap fight could end with `outcome=win`, multiple winners, and survivors still alive on both sides. Root cause: `fightConcludes` treated `deaths > 0` as a decisive outcome and marked **every** living non-fled contestant as `won`, with no check that only one contestant (classic) or one faction (last-team) remained. The round-10 empty-deck path announced a draw then still hit that path.
+
+**Fixed**: Wins require a decisive survivor set — last-team: exactly one living faction (or the existing fled-with-zero-deaths path); classic: `deaths > 0` and exactly one living contestant. Inconclusive ends (round-cap with multiple living factions/individuals) publish draws for survivors while dead contestants still record as losses. Covered by `round-cap with deaths but multiple living factions…` in `ring/index.test.ts`.
+
+**Follow-up (PR #361 review)**: the first cut over-applied the decisiveness test and left three loose ends, all fixed in the same PR:
+
+- **`fightOutcome` swallowed two conclusive results.** Gating the whole label chain on `hasDecisiveWinner` downgraded a permanently destroyed monster, and "someone died, the survivors fled", to `draw`. Only the final `win` arm may depend on decisiveness. `permaDeath` now leads the chain (matching `participantOutcome`, which checks `destroyed` first), and the `fled` arm is guarded by `settled = deaths > 0 || hasDecisiveWinner` so an all-fled/no-death fight is still a draw rather than a flee. Three cases pinned by the `fightOutcome labelling` block in `ring/index.test.ts`.
+- **`isDraw` still used the old predicate.** The `fightConcludes` emit passed `isDraw: deaths <= 0`, so `announcements/fightConcludes.ts` announced "with N dead" for a fight every other record classed a draw. Now derived as `fightOutcome === 'draw'` — one source of truth, so the announcement can't drift from the fight log again.
+- **Dead branch in `participantOutcome`.** `deaths` is `deadContestants.length`, so a dead contestant guarantees `deaths > 0` and the `'draw'` arm was unreachable. Collapsed to `return 'loss'` and the now-unused `deaths` parameter dropped.
+
+**Status**: Fixed.
+
+---
+
+### 75. Flaky test: Bad Batch "has no effect on other cards" — FIXED
+
+`cards/bad-batch.test.ts` played a real `HealCard` and asserted the target's hp went *up*. `HealCard.checkSuccess` has a 1% Curse of Loki branch that flips the roll (`result *= -1`) and a 1% Stroke of Luck branch, so the test failed roughly 1 run in 100 with `expected 3 to be above 5` — the curse turned the heal into 2 points of damage. The assertion was never about healing: Bad Batch's contract is that a *non-target* card (anything but Whiskey Shot / Scotch) comes back untouched.
+
+**Fixed**: Assert on the rewrite instead of the hp — the card is returned by identity, `card.effect` is not replaced, and the pending encounter effect stays armed for the next booze card. Deterministic, and a stronger assertion than the hp check it replaces.
+
+**Status**: Fixed.
+
+---
+
+### 76. Flaky test: boss spawn warning suppression — FIXED
+
+`ring/index.test.ts` "suppresses an unannounced spawn when the warning could not be sent" set `inEncounter = true`, ticked a fake clock 40 minutes, dropped `inEncounter`, ticked 3 more, and asserted no warning fired. But `startBossTimer()` re-arms itself after every cycle with a *random* outer delay — 12–22 min for a beginner ring, which this one is (no monsters). Forty minutes therefore ran two or three full cycles, and a legitimately re-armed warning could land inside the final 3-minute window. Failed ~1 run in 5.
+
+**Fixed**: Pin the outer delay via a stub on `getBossSpawnOuterDelayMs`, restart the timer, and size the window to exactly one cycle. The test now exercises the thing it names — a warning suppressed mid-encounter must also suppress the spawn two minutes later — instead of accidentally observing later cycles. Verified over 20 consecutive suite runs.
+
+**Status**: Fixed.
+
+---
+
+### 77. XP could be driven below zero after the floor was removed — FIXED
+
+Hardening on #51. Removing `Math.max(prop, 1)` for XP was correct (it made a fresh monster read `1` and the first award land +1 high), but it also removed the only guard against a *negative* `encounterModifiers.xp` pushing a monster's XP below zero. No such modifier exists today, so this was unreachable rather than live.
+
+**Fixed**: `getProp` floors XP at 0 rather than 1 — fails safe without reintroducing the off-by-one.
+
+**Status**: Fixed.
+
+---
+
+### 64. Failed event persistence is silently dropped — FIXED
+
+`event-persister.ts` logged insert failures via the `onError` callback on the first transient DB hiccup and continued with no retry. Permanent holes in `room_events` caused reconnect gaps and stale history.
+
+**Fixed**: bounded retries with short backoff (default 1s, 5s; injectable for tests), matching the `fight-summary-writer` pattern. Writes stay serialized on the existing per-attachment queue so publish order is preserved through retries. The detach function sets a `detached` flag checked between attempts so delayed retries cannot land after room unload/delete. The `onError` callback and `dm_event_persist_failures_total` metric fire only when retries are exhausted.
+
+Covered by 5 new tests in `event-persister.test.ts` (retry-then-success, exhaustion, no error on transient success, order preserved across retries, detach during backoff).
+
+**Status**: Fixed.
+
+---
+
+### 71. `deleteRoom` vs concurrent `_loadRoom` could resurrect a deleted room — FIXED
+
+A `_loadRoom` that had already read the DB row could finish after `deleteRoom` removed the `active` entry and deleted the DB row, then `active.set` a ghost room. Independently, `deleteRoom` unsubscribed event-bus handlers but never called `game.dispose()`, so ring timers and semaphore listeners could outlive the deleted room.
+
+**Fixed**: a per-room `loadEpoch` bumped on delete; `_loadRoom` captures the epoch at start and refuses to publish into `active` (disposing any freshly constructed game / attached subscribers) when the epoch changed. `deleteRoom` now uses the same detach helper as unload/reset (`unsubscribe*` + `dispose`). Concurrent load deduplication via the `loading` map and its `finally` cleanup are preserved; the epoch entry is dropped once no in-flight load needs it. No second DB existence query is required for the race.
+
+Covered by tests in `room-manager.test.ts` (dispose-on-delete; controlled deferred-load race that must not resurrect).
+
+**Status**: Fixed.
+
+---
+
+### 70. Guild default-room creation race — FIXED
+
+`guild_rooms` PK is `(guild_id, room_id)` with no uniqueness on `is_default`. Concurrent first-time `getOrCreateDefaultRoom` calls could create two default rooms for one guild.
+
+**Fixed**: unique partial index `guild_rooms_one_default_per_guild_idx` on `(guild_id) WHERE is_default = true` (migration demotes any pre-existing extras). `getOrCreateDefaultRoom` catches unique violations (`23505`), deletes the losing orphan via `RoomManager.deleteRoom`, re-selects the winning default, and ensures membership there.
+
+Covered by `on unique default race: returns winner and deletes orphan via RoomManager` in `guild-room-manager.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 72. Discord always targeted the guild default room — FIXED
+
+`resolveUser` always called `getOrCreateDefaultRoom`. `/join-room` / `/create-room` changed membership elsewhere, but subsequent slash and free-text commands still hit the default.
+
+**Fixed**: `guild_user_active_rooms` persists `(guild_id, supabase user_id) → room_id` with FK to `guild_rooms` (cascade). `/create-room` and `/join-room` select the resulting room; `resolveUser` and free-text dispatch use `resolveRoomForUser`, which returns a validated active room (guild mapping + membership) or falls back to the guild default and repairs the mapping.
+
+Covered by GuildRoomManager resolve/active/join/create tests plus `helpers.test.ts` and `room-commands.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 61. Workshop ↔ console same-user interleave — FIXED
+
+Workshop mutations used the room-wide engine lane; console commands used a per-user lane. `activeFlows` blocked workshop when the caller had a console flow in progress, but not the reverse — a Workshop UI `equipCards` could run while the same user's console equip flow was still in flight, interleaving deck mutations.
+
+**Fixed**: `activePromptFreeMutations` (`roomId:userId`, ownership token) is acquired synchronously at the start of `runSerializedMutation` and released in `.finally()`. The `command` mutation checks it before taking `activeFlows`, rejecting with a clear message when a workshop operation is in flight. Other users are unaffected. A second concurrent workshop call from the same user also fails fast instead of queueing behind itself in the room lane.
+
+Covered by `router.test.ts` (deferred workshop, same-user console rejection, other-user acceptance, cleanup on resolve/reject).
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+---
+
+### 62. Cross-user concurrent engine access on web — DECIDED
+
+Per-user console lanes mean two members of the same room can mutate one shared `Game` in parallel. Ring fights also run outside server lanes (timer chain). Multi-player rooms have a real race surface for deck/ring mutations.
+
+**Decision**: Keep per-user lanes for interactive console flows (prevents #20 starvation). Workshop mutations that touch shared room state retain the room-wide lane. Cross-user prompt flows remain concurrent by design; fights remain outside lanes. Revisit only if a specific mutation class needs stronger ordering — add it to the room lane rather than moving console commands room-wide.
+
+Documented in [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+**Status**: Decided and documented.
+
+---
+
+### 59. Discord free-text prompts dropped — FIXED
+
+`GuildRoomSubscription.buildPrivateChannel` only handled `question && choices`. Free-text engine prompts (spawn name/color, character creation) returned `undefined` on Discord.
+
+**Fixed**: `PromptHandler.sendFreeTextDmPrompt` uses a filtered DM `createMessageCollector` (exact user + channel; cleanup on answer/timeout/cancel). `buildPrivateChannel` routes choice-less questions there, translates `PROMPT_CANCELLED` → `PromptCancelledError`, and keeps button prompts + `pendingPromptRequestIds` timeout cancellation for ConnectorAdapter. Covered by `prompt-handler.test.ts` and `guild-room-subscription.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 60. Discord commands bypassed engine serialization / activeFlows — FIXED
+
+Slash and free-text Discord paths `await`ed engine actions with no per-user lane and no flow lock, so concurrent same-user commands could interleave on one `Game`.
+
+**Fixed**: connector-local `command-flow.ts` (`discordActiveFlows` ownership tokens + `runDiscordCommandAction`) shared by `dispatchCommand` and `dispatchFreeTextCommand`. Actions run through `RoomManager.runSerializedEngineWork(`${roomId}:${userId}`)`; a second same-user flow fails fast with `DiscordFlowBusyError`; other users stay independent. The Discord request may await the action, but prompt collectors resolve outside the lane. Expected timeout/cancel/busy aborts are not logged as infrastructure errors. Covered by `command-flow.test.ts`, `helpers.test.ts`, and `bot.test.ts`.
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+---
+
+### 65. `hydrateDeck` alphabetical re-sort — investigated, not a combat bug
+
+`hydrateDeck` sorts alphabetically after hydrate. Ring combat uses equipped `monster.cards[cardIndex]` order, which is restored by `monsters/helpers/hydrate.ts` without sorting — so fight outcomes are not scrambled by inventory sort.
+
+Character inventory intentionally sorts the same way live `addCard` does (`characters/base.ts` → `sortCardsAlphabetically`). Preserving raw JSON order for character decks would diverge from the in-session UX.
+
+Regression coverage: `preserves equipped card play order on hydrate (not alphabetical) (#65)` in `monsters/helpers/hydrate.test.ts`; inventory sort retained in `cards/helpers/hydrate.test.ts`.
+
+**Status**: Investigated — not a combat bug. Alphabetical inventory sort kept by design.
+
+---
+
+### 66. Unknown card names on restore became a random draw — FIXED
+
+`hydrateCard` fell through to `draw({}, monster)` when the card class was missing, so renames/removals silently mutated saved decks into unrelated random cards.
+
+**Fixed**: unknown class names hydrate to an inert `UnknownCard` placeholder (`cards/helpers/unknown-card.ts`) that keeps the original serialized `name`/`options`, remains visible as `Unknown Card (…)`, plays as a combat no-op (including the default `applyEffects` path), and serializes back with the original identity for repair. Repair lookup (`matchesCardLookupName`) accepts both the visible `cardType` and the original serialized class name; normal cards still match `cardType` only. Malformed payloads missing a `name` still hydrate to an inert placeholder (name defaults to `"Unknown"`) rather than a random draw. Character `hydrateDeck` still alphabetizes inventory; equipped monster order is unchanged. Covered by Game `restoreGame` round-trip coverage in `game.test.ts`.
+
+Covered by tests in `cards/helpers/unknown-card.test.ts`, `cards/helpers/hydrate.test.ts`, `monsters/helpers/hydrate.test.ts`, and `game.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 69. Lucky Strike / Rehit discarded-roll Curse of Loki — intentional
+
+Multi-roll cards (Lucky Strike, Horn Swipe, Rehit) apply Stroke of Luck / Curse of Loki only to the selected roll. A natural 1 (or 20) on a discarded roll does not crit — matching the card text (“use the best/selected roll”).
+
+**Documented**: card `stats` strings, in-game player handbook / DMG combat math, `PLAYER_HANDBOOK.md`, and `DMG.md` now state that discarded rolls do not crit.
+
+**Status**: Closed as intentional product behavior.
+
+---
+
+### 67. Dead monsters without `killedBy` can get “last one standing” XP — FIXED
+
+`die()` only sets `killedBy` when the assailant is a real creature (`isRealCreature`). Environmental / synthetic death paths leave it unset. `calculateXP` treated “no `killedBy`” as the survivor branch, so a dead contestant could earn last-one-standing XP.
+
+**Fixed**: survivor XP (last-one-standing or flee bonus) now runs only when `contestant.fled` or `!monster.dead`. Dead contestants without `killedBy` still receive kill / killed-by / rounds-survived XP as before, but no survivor bonus.
+
+Covered by `assigns no last-one-standing XP when dead without killedBy (#67)` in `helpers/experience.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 68. `getEncounterModifiers()` materializes encounter state outside combat — FIXED
+
+Reading `monster.encounterModifiers` called `getEncounterModifiers`, which allocated `self.encounter = { modifiers: {} }` even when the creature was not in a fight. That phantom encounter polluted serialization boundaries and could make `inEncounter` checks ambiguous.
+
+**Fixed**: when `!self.encounter`, the getter returns a shared read-only empty view (a `Proxy` over a frozen `{}` that materializes `self.encounter.modifiers` only on property writes). Reads no longer allocate; writes during combat still work because `startEncounter` has already created `self.encounter`, and out-of-combat writes (e.g. `hit()` logging) materialize on first assignment.
+
+Covered by `does not materialize encounter state when reading encounterModifiers outside combat (#68)` and `materializes encounter modifiers on write after a read-only empty view` in `creatures/encounter.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 73. Test harness lane key did not match production — FIXED
+
+`createRoomCommandRunner` serialized by `roomId` only; production console commands use `${roomId}:${userId}`. Integration tests could hide cross-user starvation.
+
+**Fixed**: `createRoomCommandRunner` now keys lanes as `${roomId}:${userId}`; `createRoomWideCommandRunner` is the explicitly named room-only helper for workshop-style paths. `createTestChannel` translates `PROMPT_CANCELLED` → `PromptCancelledError` like the tRPC router. Covered by `testing/testing.test.ts`, `server/src/integration/command-flow.test.ts`, and the harness concurrent-look-monsters scenario.
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+---
+
+### 78. ConnectorAdapter swallowed channel rejection / non-string answers — FIXED
+
+`ConnectorAdapter` delivered `prompt.request` to private channels but only called `respondToPrompt` for string answers; rejections were caught and ignored, leaving `sendPrompt` pending until the 120s bus timeout.
+
+**Fixed**: on channel rejection or non-string resolution, `ConnectorAdapter` calls `cancelPrompt` so the bus prompt settles promptly. Optional `onChannelError` callback surfaces connector failures without unhandled rejections. `registerUser` now subscribes with the target `userId` so private `prompt.request` / announce events are actually delivered (the adapter's prior catch-all subscriber could not see private events). Covered by `channel/connector-adapter.test.ts`.
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §3.
+
+### 63. Dual `ringFeed` subscriptions per web client — FIXED
+
+`RingPane` and `ConsolePane` each opened `trpc.game.ringFeed.useSubscription` with separate reconnect cursors and each ran `useHandshake`, so one Terminal meant two server subscribers, double reconnect replay, and diverging panes after a partial reconnect.
+
+**Fixed**: `useRingFeed` / `RingFeedProvider` in `Terminal` owns the single subscription, shared monotonic reconnect cursor (skips `handshake`/`heartbeat`; advances by leading epoch on live events and history seeds; `onError` resumes from the latest tracked id), room guard, and handshake. Live events fan out once to pane listeners via `useRingFeedListener` (`useLayoutEffect` registration + pending buffer so early frames are not dropped; listener identity is ref-stable so callback churn cannot restart the subscription). Each pane keeps its own DB history fetch, merge/dedup (`seenRef`), and filters. Room navigation resets the shared cursor and tears down the old subscription input. Covered by `useRingFeed.test.ts`, `ring-feed-cursor.test.ts`, and `terminal-ring-feed.test.tsx`.
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §5.
+
+---
+
+## Whole-branch review hardening (2026-08-03)
+
+Follow-up fixes from the Task 11 whole-branch review (`bba4b89` → `HEAD`). These harden edge cases found after the main audit pass; they do not reopen archived bugs.
+
+### 79. Discord button collector hung when `interaction.update` failed — FIXED
+
+`collectButtonResponse` awaited `btnInteraction.update()` before resolving. When Discord rejected the update (e.g. interaction already acknowledged), the promise never settled; `end` returned early because `collected.size > 0`, leaving `discordActiveFlows` locked.
+
+**Fixed**: settle on collect immediately (preserve `customId`), `collector.stop` best-effort, and fire `update` without blocking settlement. Timeout/cancel paths use the same `settle` guard as free-text collectors. Covered by `prompt-handler.test.ts` (update rejection + flow-lock release).
+
+**Status**: Fixed.
+
+---
+
+### 80. Concurrent `guild_rooms` mapping insert race — FIXED
+
+`_ensureGuildRoomMapping` used check-then-insert without handling a concurrent inserter winning the `(guild_id, room_id)` PK race, surfacing `23505` to callers.
+
+**Fixed**: `isGuildRoomMappingUniqueViolation` recognizes only `guild_rooms_pkey` (or matching detail); same-mapping races are treated as success. Unrelated `23505` (e.g. one-default-per-guild index) still propagate. Covered by `guild-room-manager.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 81. `createSubRoom` left orphan rooms on mapping insert failure — FIXED
+
+If `guild_rooms` insert failed after `RoomManager.createRoom`, the new room row remained with no guild mapping.
+
+**Fixed**: on non-recoverable insert failure, `deleteRoom(ownerId, roomId)` removes only the just-created orphan. Cleanup failure throws an actionable error with both mapping and cleanup causes. PK races on the mapping are idempotent (no delete). Covered by `guild-room-manager.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 82. Interactive equip flow could not finish a partial batch cleanly — FIXED
+
+The interactive equip loop required players to fill every remaining slot or cancel the flow, which discarded the in-progress batch. Adding a finish response exposed a follow-up UX bug: `done` was converted to an empty selection and passed through the shared card chooser, so it announced `You selected no cards.` immediately before the committed-card summary.
+
+**Fixed**: follow-up equip prompts accept `done`, `finished`, `enough`, and `stop`; the web prompt shows **Done equipping** only after a partial batch. Explicit finish answers now bypass card-selection parsing and its empty-result announcement. A truly empty first response still re-prompts, an empty continuation retains the partial-finish behavior, and cancellation still rejects before `monster.cards` is assigned so the batch rolls back. Existing slot and four-copy limits are unchanged.
+
+Covered by `monsters/helpers/equip.test.ts` (clean finish announcement, first-prompt guard, aliases, empty-response behavior, cancellation rollback, slot/copy limits) and `InlineChoices.test.tsx` (follow-up-only Done button and submitted finish response).
+
+**Status**: Fixed.
+
+---
+
+### 83. Empty `encounterModifiers` view enumerated as empty mid-encounter — FIXED
+
+Follow-up review of #68. The lazy view returned by `getEncounterModifiers()` when a creature has no encounter proxied a **frozen** target. `Object.freeze({})` is non-extensible, and the Proxy invariants then forbid an `ownKeys` trap from reporting keys the target does not own — so no such trap could be added. The result: a view captured before `startEncounter()` kept forwarding single-property reads correctly (`view.ac === 3`) while `Object.keys(view)`, `{...view}`, and `'ac' in view` all reported nothing. Any caller that enumerated rather than reading one property at a time would silently see no modifiers at all.
+
+Unreachable in shipped code — `BaseCreature.modifiers` re-reads `this.encounterModifiers` on every access, so it never holds a stale view — but a silent-wrong-answer trap for the next caller that stores one.
+
+**Fixed**: proxy an extensible plain object and trap `has`, `ownKeys`, `deleteProperty`, and `getOwnPropertyDescriptor` (reporting `configurable: true`, as the invariants require when the target does not carry the key). Reads, writes, and enumeration now all resolve against the live `self.encounter.modifiers`. Covered by two regression tests in `creatures/encounter.test.ts` — one asserting enumeration agrees with reads across `startEncounter()`, one asserting enumeration alone still does not materialize an encounter.
+
+**Status**: Fixed.
+
+---
+
+### 84. `ConnectorAdapter` prompt routing relied solely on the bus filter — FIXED
+
+Follow-up review of #78. Moving prompt handling to per-user subscriptions dropped the old `event.targetUserId` check: `handlePrivateEvent` prompted `userId` for any `prompt.request` it received. `RoomEventBus.publish` delivers to a subscriber when the event is public **or** `subscriber.userId === targetUserId`, so a `prompt.request` published with `scope: 'public'` would reach every registered user's subscriber and prompt all of them, with their answers racing into `respondToPrompt`.
+
+Safe in practice — `sendPrompt` is the only publisher and always uses `scope: 'private'` — but the guard that made it safe independently of that invariant was gone.
+
+**Fixed**: re-check `event.targetUserId === userId` before prompting. Restores defense in depth without changing the per-user subscription model.
+
+**Status**: Fixed.

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import type { SlashCommand, CommandContext } from './index.js';
-import { resolveUser } from './helpers.js';
+import { resolveConnectorUserId } from './helpers.js';
 
 export const createRoom: SlashCommand = {
 	data: new SlashCommandBuilder()
@@ -14,7 +14,7 @@ export const createRoom: SlashCommand = {
 	async execute(interaction: ChatInputCommandInteraction, ctx: CommandContext): Promise<void> {
 		await interaction.deferReply({ ephemeral: true });
 
-		const { supabaseUserId } = await resolveUser(interaction, ctx);
+		const supabaseUserId = await resolveConnectorUserId(interaction, ctx);
 		const name = interaction.options.getString('name', true);
 		const guildId = interaction.guildId ?? `dm-${interaction.user.id}`;
 

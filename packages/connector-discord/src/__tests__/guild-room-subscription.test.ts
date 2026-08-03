@@ -256,4 +256,105 @@ describe('GuildRoomSubscription', () => {
 		expect(answer).to.equal('option-b');
 		expect(dmSend.calledOnce).to.be.true;
 	});
+
+	it('buildPrivateChannel collects free-text DM answers when question has no choices', async () => {
+		const textCollector = {
+			on: sinon.stub().callsFake((event: string, fn: (...args: unknown[]) => void) => {
+				if (event === 'collect') {
+					setImmediate(() => {
+						fn({
+							author: { id: 'discord-42' },
+							channelId: 'dm-1',
+							content: 'Aurora',
+						});
+					});
+				} else if (event === 'end') {
+					setImmediate(() => fn({ size: 1 }, 'limit'));
+				}
+			}),
+			stop: sinon.stub(),
+		};
+		const dmChannel = {
+			id: 'dm-1',
+			send: sinon.stub().resolves({}),
+			createMessageCollector: sinon.stub().returns(textCollector),
+		};
+		const user = { createDM: sinon.stub().resolves(dmChannel) };
+		const client = makeDiscordClient();
+		client.users.fetch = sinon.stub().resolves(user) as any;
+
+		const eventBus = makeEventBus();
+		const db = makeDbStub();
+
+		const sub = new GuildRoomSubscription(
+			client as any,
+			eventBus as any,
+			'guild-1',
+			'room-1',
+			null,
+			db as any
+		);
+		sub.start();
+
+		const channel = sub.buildPrivateChannel('discord-42', undefined, 'supabase-abc');
+		const answer = await channel({ announce: '', question: 'What would you like to name them?' });
+
+		expect(answer).to.equal('Aurora');
+		expect(dmChannel.send.calledOnce).to.be.true;
+		expect(dmChannel.createMessageCollector.calledOnce).to.be.true;
+	});
+
+	it('buildPrivateChannel throws PromptCancelledError when free-text answer is the cancel sentinel', async () => {
+		const { PROMPT_CANCELLED, PromptCancelledError } = await import('@deck-monsters/engine');
+		const textCollector = {
+			on: sinon.stub().callsFake((event: string, fn: (...args: unknown[]) => void) => {
+				if (event === 'collect') {
+					setImmediate(() => {
+						fn({
+							author: { id: 'discord-42' },
+							channelId: 'dm-1',
+							content: PROMPT_CANCELLED,
+						});
+					});
+				} else if (event === 'end') {
+					setImmediate(() => fn({ size: 1 }, 'limit'));
+				}
+			}),
+			stop: sinon.stub(),
+		};
+		const dmChannel = {
+			id: 'dm-1',
+			send: sinon.stub().resolves({}),
+			createMessageCollector: sinon.stub().returns(textCollector),
+		};
+		const user = { createDM: sinon.stub().resolves(dmChannel) };
+		const client = makeDiscordClient();
+		client.users.fetch = sinon.stub().resolves(user) as any;
+
+		const eventBus = makeEventBus();
+		const db = makeDbStub();
+
+		const sub = new GuildRoomSubscription(
+			client as any,
+			eventBus as any,
+			'guild-1',
+			'room-1',
+			null,
+			db as any
+		);
+		sub.start();
+
+		const channel = sub.buildPrivateChannel('discord-42');
+		try {
+			await channel({ announce: '', question: 'Name?' });
+			expect.fail('Should have thrown PromptCancelledError');
+		} catch (err) {
+			expect(err).to.be.instanceOf(Error);
+			expect((err as Error).name).to.equal('PromptCancelledError');
+			// Prefer name over instanceof — package boundary duplicates can break instanceof.
+			expect(err).to.satisfy(
+				(e: unknown) => e instanceof PromptCancelledError || (e instanceof Error && e.name === 'PromptCancelledError')
+			);
+		}
+	});
 });

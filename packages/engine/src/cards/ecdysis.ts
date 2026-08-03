@@ -36,7 +36,7 @@ export class EcdysisCard extends BaseCard<EcdysisCardOptions> {
 	}
 
 	get stats(): string {
-		return this.boosts.map(boost => `Boost: ${boost.prop} +${boost.amount}`).join('\r');
+		return this.boosts.map(boost => `Boost: ${boost.prop} +${boost.amount}`).join('\n');
 	}
 
 	override getTargets(player: any): any[] {

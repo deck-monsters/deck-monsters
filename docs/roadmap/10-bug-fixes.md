@@ -1,18 +1,24 @@
 # Bug Fixes and Code Quality
 
 **Category**: Bug / Tech Debt
-**Priority**: Low — the only remaining item is a content-writing task, not an engineering one.
-**Status**: Active, but nearly empty. Everything else has moved to [`10b-bugs-fixed.md`](10b-bugs-fixed.md) — read that doc for history and root causes. What's left here: #3 (DMG/CARDS content differentiation).
+**Priority**: Medium
+**Status**: Archive — all tracked items from the 2026-08-03 audit pass are resolved. See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73, #74–#84).
 
-## Code Quality Issues
+## Active Items
 
-### 3. `DMG.md` and `CARDS.md` are near-duplicates — content pass still open
+None. The DMG/CARDS content differentiation pass (#3) is complete — see `10b-bugs-fixed.md`.
 
-Both files still exist at the repository root. The Dungeon Master Guide should contain different content (game master / advanced info) than the player-facing card reference. The build script headers are already differentiated — see #3 in `10b-bugs-fixed.md`.
+## Investigated — not bugs (left for the record)
 
-**Status**: Open. Regenerating the `.md` files requires running `node ./build` after further content differentiation.
-**Action**: Fully differentiate DMG vs. CARDS content (not just headers). Consider adding a how-to-run-the-game section to DMG per upstream #265.
+- **Discord `registerUser` subscriber “leak”** — `RoomEventBus.subscribe` uses a `Map.set` by id; re-register replaces the previous subscriber.
+- **`fight-stats-subscriber` `log.error`** — the module-level `createLogger` is used inside handlers; the `(err) => void` parameter only shadows inside `attachFightStatsSubscriber` for `.catch(log)`.
+- **`activeFlows` check-then-set race** — no `await` between `has` and `set` on the Node event loop, so concurrent HTTP handlers cannot interleave there.
+- **`hydrateDeck` alphabetical sort (#65)** — intentional for character inventory UX (mirrors live `addCard`); equipped monster card order is already preserved by `monsters/helpers/hydrate.ts`. See `10b-bugs-fixed.md`.
+- **Lucky Strike / Rehit / Horn Swipe discarded-roll crits (#69)** — intentional: Stroke of Luck / Curse of Loki apply only to the selected roll. Documented in player/DM materials. See `10b-bugs-fixed.md`.
 
 ## Tasks
 
-- [ ] Audit and differentiate `DMG.md` vs `CARDS.md` full content; add how-to-run section (upstream #265) (#3)
+- [x] Audit and differentiate `DMG.md` vs `CARDS.md` full content; add how-to-run section (upstream #265) (#3)
+- [x] Discord free-text prompt support (#59)
+- [x] Discord serialization / `activeFlows` parity (#60)
+- [x] Unify web `ringFeed` subscription / cursor (#63)

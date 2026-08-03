@@ -1,6 +1,6 @@
-import { randomCharacter } from '../packages/engine/src/characters/index.js';
-import { all as Monsters } from '../packages/engine/src/monsters/index.js';
-import { all as Cards } from '../packages/engine/src/cards/index.js';
+import { randomCharacter } from '../packages/engine/dist/characters/index.js';
+import { all as Monsters } from '../packages/engine/dist/monsters/index.js';
+import { all as Cards } from '../packages/engine/dist/cards/index.js';
 
 function getCardDPT () {
 	const levels = [1, 5, 10, 15, 25];

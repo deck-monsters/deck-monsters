@@ -3,6 +3,7 @@ import RingPane from './RingPane.js';
 import ConsolePane from './ConsolePane.js';
 import PaneDivider from './PaneDivider.js';
 import CatchUpBanner from './CatchUpBanner.js';
+import { RingFeedProvider } from '../hooks/useRingFeed.js';
 
 type TabId = 'ring' | 'console';
 
@@ -58,10 +59,6 @@ export default function Terminal({ roomId }: TerminalProps) {
     }
   }, []);
 
-  const handleEvent = useCallback((_event: unknown) => {
-    // Future: track lastEventId across both panes for reconnect
-  }, []);
-
   return (
     <div
       ref={containerRef}
@@ -96,24 +93,26 @@ export default function Terminal({ roomId }: TerminalProps) {
         </div>
       )}
 
-      <RingPane
-        roomId={roomId}
-        isActive={isSideBySide || activeTab === 'ring'}
-        onEvent={handleEvent}
-      />
-
-      {isSideBySide && (
-        <PaneDivider
-          onResize={handleResize}
-          containerRef={containerRef}
+      <RingFeedProvider roomId={roomId}>
+        <RingPane
+          key={`ring-${roomId}`}
+          roomId={roomId}
+          isActive={isSideBySide || activeTab === 'ring'}
         />
-      )}
 
-      <ConsolePane
-        roomId={roomId}
-        isActive={isSideBySide || activeTab === 'console'}
-        onEvent={handleEvent}
-      />
+        {isSideBySide && (
+          <PaneDivider
+            onResize={handleResize}
+            containerRef={containerRef}
+          />
+        )}
+
+        <ConsolePane
+          key={`console-${roomId}`}
+          roomId={roomId}
+          isActive={isSideBySide || activeTab === 'console'}
+        />
+      </RingFeedProvider>
     </div>
   );
 }

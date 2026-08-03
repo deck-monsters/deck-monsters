@@ -115,18 +115,17 @@ The ledger is `game.options.bossSummons` (`Record<userId, epochMs[]>`), exposed 
 `packages/engine/src/helpers/boss-summons.ts` (`summonAllowance`, `recordSummon`,
 `addPendingSummon`, `refundPendingSummons`).
 
-**The check is enforced in the engine command handler, not the tRPC router.** The Discord
-connector's `dispatchCommand` (`connector-discord/src/slash-commands/helpers.ts`) calls
-`game.handleCommand()` directly — it does not go through `activeFlows` or
-`runSerializedEngineWork`. A router-side limit would be bypassed from Discord. Putting it in
-the handler gives one choke point for every connector, room scoping for free, and no
-migration or RLS policy to write.
+**The check is enforced in the engine command handler, not the tRPC router.** Discord
+slash/DM dispatch also reaches the same handler (via `dispatchCommand` /
+`dispatchFreeTextCommand`). A router-only limit would still be incomplete for any
+connector that talks to the engine directly. Putting it in the handler gives one choke
+point for every connector, room scoping for free, and no migration or RLS policy to write.
 
 Two rules follow from that:
 
-- **Check and record must be synchronous, with no `await` between them.** The web path also
-  runs inside the per-user engine lane, but the Discord path has no lane at all, so
-  atomicity comes from the synchronous run, not from serialization.
+- **Check and record must be synchronous, with no `await` between them.** Web and Discord
+  both serialize interactive commands per `roomId:userId`, but atomicity of the quota
+  check still comes from the synchronous run inside the handler, not from the lane alone.
 - **`Game.bossSummons`'s getter must not write.** Unlike `Game.shop`, it does no
   prune-on-read; pruning happens inside `recordSummon`. A getter that calls `setOptions()`
   broadcasts `stateChange` synchronously, which is exactly the re-entrancy hazard described
@@ -254,10 +253,44 @@ The default is `last-contestant` — the original semantics: last monster standi
 - A faction is determined by `contestant.team` (ring-event override first), then
   `monster.team`, then `character.team`, then the contestant's own `userId` (every
   unaffiliated monster is its own faction).
-- **Every surviving member** of the winning faction is marked `won: true`. This is the
-  critical difference from `last-contestant`, where at most one monster wins.
+- **Every surviving member** of the winning faction is marked `won: true` — but only when
+  the fight actually *decided* a winner (see below). This is the critical difference from
+  `last-contestant`, where at most one monster wins.
 - An empty active list falls through to the existing draw/clean-sweep logic, which counts
   deaths and uses `fightResolved` correctly.
+
+#### Deciding a winner, and labelling the outcome
+
+A death is not a victory. `fightConcludes` computes `hasDecisiveWinner` before it labels
+anything:
+
+- **`last-team`**: exactly one living (non-dead, non-fled) faction remains — or the
+  fled-with-zero-deaths path, where every opposing faction fled.
+- **`last-contestant`**: someone died *and* exactly one living contestant remains.
+
+Without that, a round-cap fight that ended with survivors on both sides marked **every**
+living contestant `won: true`, producing fight-log entries reading "win" with winners on
+two opposing teams (bug #74).
+
+The fight-level `outcome` on `ring.fightResolved` follows a deliberate precedence, and only
+its final arm depends on decisiveness:
+
+| Condition | `outcome` |
+|---|---|
+| Any contestant `destroyed` | `permaDeath` |
+| Anyone fled **and** (a death occurred or a winner was decided) | `fled` |
+| A decisive winner | `win` |
+| Otherwise | `draw` |
+
+`permaDeath` leads because a permanent destruction is the most significant fact about the
+fight, and it matches `participantOutcome`, which checks `destroyed` first. The `fled` arm
+needs its guard so an all-fled/no-death fight stays a `draw` rather than reading as a flee
+victory. `isDraw` on the `fightConcludes` emit is derived from this same value, so the
+public announcement can never disagree with the fight log.
+
+Per-participant outcomes are independent of the fight label: a dead contestant always
+records `loss`, a fled contestant always records `fled`, and survivors record `win` only
+when `hasDecisiveWinner` — otherwise `draw`.
 
 Common Cause and House War both use `last-team`. Blood Feud, The Gauntlet, and The Reckoning
 do not — in those events the team assignments are either absent or irrelevant to when combat

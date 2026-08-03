@@ -9,8 +9,11 @@ import {
 	boolean,
 	primaryKey,
 	unique,
+	uniqueIndex,
 	index,
+	foreignKey,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 export const profiles = pgTable('profiles', {
 	id: uuid('id').primaryKey(),
@@ -77,7 +80,37 @@ export const guildRooms = pgTable(
 		channelId: text('channel_id'),
 		isDefault: boolean('is_default').notNull().default(true),
 	},
-	(t) => [primaryKey({ columns: [t.guildId, t.roomId] })]
+	(t) => [
+		primaryKey({ columns: [t.guildId, t.roomId] }),
+		uniqueIndex('guild_rooms_one_default_per_guild_idx')
+			.on(t.guildId)
+			.where(sql`${t.isDefault} = true`),
+	]
+);
+
+/**
+ * Per Discord-guild active room for a canonical Supabase user.
+ * PK is (guild_id, user_id); room must belong to the guild via guild_rooms.
+ */
+export const guildUserActiveRooms = pgTable(
+	'guild_user_active_rooms',
+	{
+		guildId: text('guild_id').notNull(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => profiles.id, { onDelete: 'cascade' }),
+		roomId: uuid('room_id').notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		primaryKey({ columns: [t.guildId, t.userId] }),
+		index('guild_user_active_rooms_room_id_idx').on(t.roomId),
+		foreignKey({
+			columns: [t.guildId, t.roomId],
+			foreignColumns: [guildRooms.guildId, guildRooms.roomId],
+			name: 'guild_user_active_rooms_guild_id_room_id_fkey',
+		}).onDelete('cascade'),
+	]
 );
 
 export const roomMembers = pgTable(

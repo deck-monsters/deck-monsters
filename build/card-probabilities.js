@@ -1,7 +1,7 @@
-import { startCase } from '../packages/engine/src/helpers/start-case.js';
-import { draw } from '../packages/engine/src/cards/index.js';
-import { randomCharacter } from '../packages/engine/src/characters/index.js';
-import { all as Monsters } from '../packages/engine/src/monsters/index.js';
+import { startCase } from '../packages/engine/dist/helpers/start-case.js';
+import { draw } from '../packages/engine/dist/cards/index.js';
+import { randomCharacter } from '../packages/engine/dist/characters/index.js';
+import { all as Monsters } from '../packages/engine/dist/monsters/index.js';
 
 function getCardProbabilities () {
 	const levels = [1, 5, 10, 15, 25];

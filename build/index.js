@@ -1,19 +1,32 @@
 /* eslint-disable no-console */
 import { writeFileSync } from 'fs';
 
-import cardCatalogue from './card-catalogue.js';
-import cardCatalogueAsHTML from './card-catalogue-as-html.js';
-import dungeonMasterGuide from './dungeon-master-guide.js';
 import getCardDPT from './card-odds.js';
 import getCardProbabilities from './card-probabilities.js';
-import monsterManual from './monster-manual.js';
-import playerHandbook from './player-handbook.js';
+
+const ENGINE_DIST = '../packages/engine/dist/build/root-docs.js';
 
 const writeToFile = (name, string, suffix = 'md') =>
 	writeFileSync(`${name}.${suffix}`, string);
 
+const loadGenerateRootDocs = async () => {
+	try {
+		const mod = await import(ENGINE_DIST);
+
+		return mod.generateRootDocs;
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err);
+		console.error(
+			'Build failed: could not load engine doc generators from packages/engine/dist.\n' +
+			'Run `pnpm run build:docs` (builds the engine, then generates docs) or `pnpm --filter @deck-monsters/engine build` first.\n' +
+			`Underlying error: ${message}`
+		);
+		process.exit(1);
+	}
+};
+
 Promise.resolve()
-	.then(() => {
+	.then(async () => {
 		if (process.argv[2] === '--calculate-stats') {
 			console.log('Calculating card stats, this will take some time...');
 			writeToFile('card-odds', JSON.stringify(getCardDPT(), null, 2), 'json');
@@ -21,31 +34,9 @@ Promise.resolve()
 		} else {
 			console.log('Skipping stats calculation. Pass --calculate-stats to re-calculate card stats.');
 		}
-	})
-	.then(() => {
-		const content = [];
-		return dungeonMasterGuide({ output: section => content.push(section) })
-			.then(() => writeToFile('DMG', content.join('\n')));
-	})
-	.then(() => {
-		const content = [];
-		return cardCatalogue({ output: section => content.push(section) })
-			.then(() => writeToFile('CARDS', content.join('\n')));
-	})
-	.then(() => {
-		const content = [];
-		return monsterManual({ output: section => content.push(section) })
-			.then(() => writeToFile('MONSTERS', content.join('\n')));
-	})
-	.then(() => {
-		const content = [];
-		return playerHandbook({ output: section => content.push(section) })
-			.then(() => writeToFile('PLAYER_HANDBOOK', content.join('\n')));
-	})
-	.then(() => {
-		const content = [];
-		return cardCatalogueAsHTML({ output: section => content.push(section) })
-			.then(() => writeToFile('cards', content.join('\n'), 'html'));
+
+		const generateRootDocs = await loadGenerateRootDocs();
+		await generateRootDocs(writeToFile);
 	})
 	.then(() => {
 		console.log('Done!');
@@ -53,5 +44,6 @@ Promise.resolve()
 	})
 	.catch((err) => {
 		console.error('Build failed:', err);
+		console.error('Try `pnpm run build:docs` from the repository root.');
 		process.exit(1);
 	});

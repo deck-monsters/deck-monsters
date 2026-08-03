@@ -16,7 +16,7 @@ describe('./cards/ecdysis.ts', () => {
 	});
 
 	it('can be instantiated with defaults', () => {
-		const stats = 'Boost: dex +1\rBoost: str +1';
+		const stats = 'Boost: dex +1\nBoost: str +1';
 
 		expect(ecdysisCard).to.be.an.instanceof(EcdysisCard);
 		expect(ecdysisCard.cardType).to.equal('Ecdysis');
@@ -41,7 +41,7 @@ describe('./cards/ecdysis.ts', () => {
 			],
 		} as any);
 
-		const stats = 'Boost: dex +20\rBoost: str +20';
+		const stats = 'Boost: dex +20\nBoost: str +20';
 
 		expect(customEcdysisCard).to.be.an.instanceof(EcdysisCard);
 		expect(customEcdysisCard.icon).to.equal('🆙');

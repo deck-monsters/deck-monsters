@@ -1,129 +1,205 @@
+╔══════════════════════════════════╗
+║     PLAYER HANDBOOK              ║
+║     Deck Monsters                ║
+╚══════════════════════════════════╝
 
-```
-     ____    ___
-    /\  _`\ /\_ \
-    \ \ \L\ \//\ \      __     __  __     __   _ __
-     \ \ ,__/ \ \ \   /'__`\  /\ \/\ \  /'__`\/\`'__\
-      \ \ \/   \_\ \_/\ \L\.\_\ \ \_\ \/\  __/\ \ \/
-       \ \_\   /\____\ \__/.\_\\/`____ \ \____\\ \_\
-        \/_/   \/____/\/__/\/_/ `/___/> \/____/ \/_/
-                                   /\___/
-                                   \/__/
-     __  __                       __  __                      __
-    /\ \/\ \                     /\ \/\ \                    /\ \
-    \ \ \_\ \     __      ___    \_\ \ \ \____    ___     ___\ \ \/'\
-     \ \  _  \  /'__`\  /' _ `\  /'_` \ \ '__`\  / __`\  / __`\ \ , <
-      \ \ \ \ \/\ \L\.\_/\ \/\ \/\ \L\ \ \ \L\ \/\ \L\ \/\ \L\ \ \ \\`\
-       \ \_\ \_\ \__/.\_\ \_\ \_\ \___,_\ \_,__/\ \____/\ \____/\ \_\ \_\
-        \/_/\/_/\/__/\/_/\/_/\/_/\/__,_ /\/___/  \/___/  \/___/  \/_/\/_/
+Welcome to Deck Monsters — the monster capturing, deck-building, turn-based RPG.
 
+You capture monsters to fight for you. Build their decks, send them into the ring, and watch them battle automatically. Earn coins and XP to grow stronger.
 
+Choose your cards wisely, good luck, and have fun!
 
-    Welcome to Deck Monsters, the monster capturing, deck-building, turn based RPG.
+── Getting Started ──────────────────
 
-    In this game, you (the player) will capture monsters to fight for you. Use your card pool to build each monster's deck before you send it into battle.
+1) Spawn a monster
+   spawn monster
 
-    During battle, your monster will play each card one at a time in the order in which you placed it in the monster's deck. When the monster gets to the end of its deck, it starts back at the beginning of the deck again.
+2) Equip it with cards from your deck
+   equip [monster name]
 
-    Choose your cards wisely, good luck, and have fun!
+   Or specify cards directly:
+   equip [monster name] with "Hit", "Heal", "Hit"
 
-    # Commands:
+3) Send it to the ring
+   send [monster name] to the ring
 
-    ## Monsters
+That's it — your monster will fight automatically once the battle begins.
 
-    `spawn monster` - Spawns a new monster
+── The Ring ─────────────────────────
 
-    `equip monster` - Select a monster and equip it with cards
+The ring is the auto-battle arena. Once 2 or more monsters are present, a fight starts every 60 seconds.
 
-    `equip [monster name]` - Equip provided monster with cards
+The ring holds up to 12 monsters at once. Monsters battle in turn order, each playing the next card in their deck. When the deck runs out it loops back to the beginning.
 
-    `look at monsters` - Looks at your monsters
+Call your monster back at any time:
+   summon [monster name] from the ring
 
-    `look at monsters in detail` - Looks at your monsters with their description
+Check who's fighting:
+   look at the ring
 
-    `look at [monster name]` - Look at specified monster (yours or another player's)
+── XP and Leveling ──────────────────
 
-    ## The Ring
+Monsters earn XP from every battle, win or lose. More XP unlocks higher-level cards.
 
-    The glorious crucible of your monster's destiny.
+Level thresholds (XP required):
+  Beginner: 0–49 XP
+  Level 1: 50+ XP
+  Level 2: 100+ XP
+  Level 3: 150+ XP
+  Level 4: 250+ XP
+  Level 5: 400+ XP
+  Level 6: 650+ XP
+  Level 7: 1050+ XP
 
-    `send monster to the ring` - Select a monster and send it to the ring
+Higher levels unlock more powerful cards in the shop and allow you to equip better equipment.
 
-    `send [monster name] to the ring` - Send provided monster to the ring
+── Your Deck & Cards ─────────────────
 
-    `summon [monster name] from the ring` - Calls provided monster back from the ring
+Your card pool is shared across all your monsters. You can hold up to 4 copies of any individual card.
 
-    `look at the ring` - Take a peak at the ring to see which monsters are there and who sent them
+When equipping, the order matters — your monster plays cards in the order you set them. A good deck mixes attack, defense, and recovery cards.
 
-    ## Cards
+Some cards roll more than once (Lucky Strike, Horn Swipe, Rehit). Critical success (natural 20) and Curse of Loki (natural 1) apply only to the roll the card keeps — a discarded roll never crits.
 
-    `look at cards` - Look at your cards
+   look at cards          — see your full deck
+   look at [card name]    — inspect a specific card
 
-    `look at [card name]` - Look at specified card
+Items work similarly. You can carry up to 3 items, and give up to 3 more to each monster. Items used mid-battle must be pre-assigned to the monster before the fight.
 
-    ## Items
+── Coins and the Shop ───────────────
 
-    You can hold up to 3 items + 3 per monster under your care. In addition, your monsters can each hold 3 items. Items can be used on yourself or your monsters between battles, but a monster can only use an item during battle that you gave them ahead of time.
+Earn coins by winning (and even losing) battles. Spend them at the shop to expand your card pool and buy items.
 
-    `look at items` - Look at your items
+The merchant changes every 6 hours, so prices and stock rotate. Each room has its own merchant, so what's in stock next door has nothing to do with what's in stock here. Never sell to the shop for less than a card is worth — shop prices are always lower than face value, but some merchants are fairer than others.
 
-    `look at [item name]` - Look at specified item
+   visit the shop         — browse and buy
+   sell to the shop       — sell cards or items
 
-    `use item` - Use one of your items on yourself
+── All Commands ─────────────────────
 
-    `use [item name]` - Use the provided item on yourself
+Deck Monsters — Commands
 
-    Any of these can be used with [item name] and/or [monster name] as a shortcut to specify the item and/or monster.
+-- Monsters --
+  spawn monster
+    Spawn a new monster
+  equip [monster]
+    Equip a monster with cards from your deck
+  equip [monster] with "Card", "Card"
+    Equip a monster with specific cards. For a card name containing a quote character, use a JSON array instead: ["Card"]
+  dismiss [monster]
+    Release a monster
+  revive [monster]
+    Revive a dead monster
+  look at monsters
+    View all your monsters
+  look at monsters in detail
+    View your monsters with full stats
+  look at [monster]
+    View a specific monster's stats
 
-    `give item to monster` - Give an item to the provided monster
+-- The Ring --
+  send [monster] to the ring
+    Send a monster into battle
+  send monster to the ring
+    Select a monster and send to the ring
+  summon [monster] from the ring
+    Call a monster back from battle
+  summon a boss
+    Call a boss into the ring to fight your monster (3 per day)
+  look at the ring
+    See which monsters are currently fighting
 
-    `take item from monster` - Take an item from one of your monsters
+-- Cards --
+  look at cards
+    View all cards in your deck
+  look at card inventory
+    View equipped and unequipped cards together
+  look at all cards
+    Alias for card inventory
+  look at inventory
+    View all cards and items across your character and monsters
+  look at [card name]
+    View details about a specific card
+  look at card [card name]
+    View details about a specific card
+  look at deck
+    View your full card deck
+  unequip [card] from [monster]
+    Remove a card from a monster back to your deck
+  unequip [count] [card] from [monster]
+    Remove multiple copies of a card from a monster
+  unequip all from [monster]
+    Clear a monster's full deck back to your inventory
+  move [card] from [monster A] to [monster B]
+    Move a card directly between monsters
+  move [count] [card] from [monster A] to [monster B]
+    Move multiple copies directly between monsters
+  save preset [name] for [monster]
+    Save a monster's current deck as a preset
+  load preset [name] on [monster]
+    Load a preset onto a monster
+  look at presets for [monster]
+    List saved presets for a monster
+  delete preset [name] for [monster]
+    Delete a saved preset
 
-    `use item on monster` - Use one of your items on yourself
+-- Items --
+  look at items
+    View your items
+  look at [item name]
+    View details about a specific item
+  use item
+    Use one of your items on yourself
+  use [item] on [monster]
+    Use an item on one of your monsters
+  give item to [monster]
+    Give an item to a monster to carry
+  take item from [monster]
+    Retrieve an item from a monster
 
-    ## The Shop
+-- The Shop --
+  visit the shop
+    Browse and buy items from the merchant
+  sell to the shop
+    Sell cards or items to the merchant
 
-    Every 6 hours the current merchant will pack up and leave and a new merchant will come to town for you to do business with. Each room has its own merchant, so what's for sale next door has nothing to do with what's for sale here.
+-- Your Character --
+  edit my character
+    Edit your character's name and icon
+  look at character
+    View your character stats and info
 
-    Each merchant has their own pricing, so be a shrewd businessman, and make sure you are getting a good deal. The shop will never give you as much as your card is worth, but that doesn't mean you have to get ripped off either.
+-- Reference --
+  help
+    Show this command reference
+  look at player handbook
+    Read the full player handbook
+  look at monster manual
+    Browse all monster types
+  look at dm guide
+    Read the dungeon master guide
 
-    `visit the shop` - Lets you visit the shop to make a purchase
+── Example Deck Builds ───────────────
 
-    `sell to the shop` - Lets you sell items to the shop
+Here are some starting strategies by monster type and level. When hidden, use stat boost or healing cards. When your opponent is immobilized, it's a great time to play non-damaging cards since they can't attack you between turns.
 
-    ## Your Character
+Minotaur (Level 1):
+  equip [monster] with "Horn Gore", "Delayed Hit", "Delayed Hit", "Heal", "Hit", "Hit", "Hit", "Hit", "Heal"
 
-    `edit my character` - Edit your character's name and icon
+Gladiator (Level 1):
+  equip [monster] with "Soften", "Forked Stick", "Battle Focus", "Camouflage Vest", "Heal", "Delayed Hit", "Delayed Hit", "Forked Stick", "Survival Knife", "Wooden Spear"
 
-    # Basic Build Strategies
+Jinn (Level 2):
+  equip [monster] with "Sandstorm", "Enchanted Faceswap", "Lucky Strike", "Forked Stick", "Soften", "Delayed Hit", "Forked Stick", "Delayed Hit", "Heal"
 
-    Here are some examples of basic build strategies by class and level. When you are hidden, playing a card that affects other players will reveal you to them, so that's a great time to play your Delayed Hit, stat boost, or healing cards. Another opportune time to play non-damaging cards is while your opponent is immobilized since they can't attack you between your card plays if they don't break free.
+Basilisk (Level 3):
+  equip [monster] with "Constrict", "Thick Skin", "Delayed Hit", "Coil", "Whiskey Shot", "Delayed Hit", "Berserk", "Hit Harder", "Hit"
 
-    ## Minotaur Level 1
+Weeping Angel (Level 4):
+  equip [monster] with "Blink", "Delayed Hit", "Delayed Hit", "Mesmerize", "Scotch", "Blast", "Blast", "Pick Pocket", "Random Play"
 
-    `equip [monster] with "Horn Gore", "Delayed Hit", "Delayed Hit", "Heal", "Hit", "Hit", "Hit", "Hit", "Heal"`
+Minotaur (Level 5):
+  equip [monster] with "Camouflage Vest", "Delayed Hit", "Delayed Hit", "Soften", "Forked Metal Rod", "Horn Gore", "Turkey Thigh", "Hit Harder", "Berserk"
 
-    ## Gladiator Level 1
-
-    `equip [monster] with "Soften", "Forked Stick", "Battle Focus", "Camouflage Vest", "Heal", "Delayed Hit", "Delayed Hit", "Forked Stick", "Survival Knife", "Wooden Spear"`
-
-    ## Jinn Level 2
-
-    `equip [monster] with "Sandstorm", "Enchanted Faceswap", "Lucky Strike", "Forked Stick", "Soften", "Delayed Hit", "Forked Stick", "Delayed Hit", "Heal"`
-
-    ## Basilisk Level 3
-
-    `equip [monster] with "Constrict", "Thick Skin", "Delayed Hit", "Coil", "Whiskey Shot", "Delayed Hit", "Berserk", "Hit Harder", "Hit"`
-
-    ## Weeping Angel Level 4
-
-    `equip [monster] with "Blink", "Delayed Hit", "Delayed Hit", "Mesmerize", "Scotch", "Blast", "Blast", "Pick Pocket", "Random Play"`
-
-    ## Minotaur Level 5
-
-    `equip [monster] with "Camouflage Vest", "Delayed Hit", "Delayed Hit", "Soften", "Forked Metal Rod", "Horn Gore", "Turkey Thigh", "Hit Harder", "Berserk"`
-
-    ## Gladiator Level 6
-
-    `equip [monster] with "Camouflage Vest", "Basic Shield", "Delayed Hit", "Forked Metal Rod", "Camouflage Vest", "Scotch", "Delayed Hit", "Lucky Strike", "Battle Focus"`
-```
+Gladiator (Level 6):
+  equip [monster] with "Camouflage Vest", "Basic Shield", "Delayed Hit", "Forked Metal Rod", "Camouflage Vest", "Scotch", "Delayed Hit", "Lucky Strike", "Battle Focus"

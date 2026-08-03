@@ -1,4 +1,3 @@
-
 ```
 			██████╗ ███╗   ███╗ ██████╗
 			██╔══██╗████╗ ████║██╔════╝
@@ -10,6 +9,133 @@
 *Dungeon Master Guide (Game Master Reference):*
 Full card stats, modifier math, damage-per-turn tables, and probability breakdowns.
 
+Multi-roll attacks (Lucky Strike, Horn Swipe, Rehit): when a card rolls
+more than once and keeps only one result, Stroke of Luck / Curse of Loki
+apply to the selected roll only — discarded natural 20s/1s do not crit.
+```
+
+╔══════════════════════════════════╗
+║     DUNGEON MASTER GUIDE         ║
+║     Deck Monsters                ║
+╚══════════════════════════════════╝
+
+Full card stats, modifier math, damage-per-turn tables, and probability breakdowns.
+── How to Run a Session ──────────────
+
+Deck Monsters runs as a room-scoped game engine behind connector adapters.
+Each room has its own persisted game state, shop inventory, and event stream.
+
+Web (deck-monsters.com):
+  • Players sign in, join or create a room from the lobby, then use the
+    Console pane for text commands and the Ring pane for the live fight feed.
+  • The Workshop page supports drag-and-drop deck management; console commands
+    remain available for the same operations.
+  • Room Settings (gear icon) lets room owners reset game state or manage members.
+
+Discord:
+  • Each guild maps to one or more rooms. Slash commands (/spawn, /ring, /equip,
+    /shop, /status, /create-room, /join-room, …) and free-text DMs both dispatch
+    into the same engine command parser.
+  • Interactive prompts arrive as DM button menus or free-text collectors; players
+    must be able to receive DMs from the bot for multi-step flows.
+  • /create-room and /join-room set the caller's active room for subsequent commands.
+
+Starting a session:
+  1) Ensure the server process is running with database connectivity configured.
+  2) Load or create the target room (web navigation or Discord guild default).
+  3) Players spawn monsters, equip decks, and send fighters to the ring.
+  4) Once 2+ monsters are in the ring, the fight timer arms automatically.
+
+State saves debounce (~30 s) on engine mutations; fights and prompts do not block saves.
+── Fight Pacing ──────────────────────
+
+Ring quorum: fights require at least 2 monsters in the ring (up to
+12). When quorum is met, a 60-second countdown
+re-arms after each encounter.
+
+During a fight:
+  • Each contestant plays the next card in its deck (wraps when exhausted).
+  • Card-to-card pacing uses veryShortDelay (~2–4 s between plays in production).
+  • Round transitions use shortDelay (~3–6 s).
+  • Sub-event pacing within a single card play (~1 s between roll/hit/damage) is
+    separate and much shorter — do not confuse the two layers.
+
+Tests and harness runs set DECK_MONSTERS_SKIP_DELAYS=1 to zero all timers.
+Operators may tune midpoints via DECK_MONSTERS_*_DELAY_MIDPOINT_MS env vars
+(see packages/engine/src/helpers/delay-times.ts); no secrets are required.
+
+Ring fights run on an internal timer chain outside server command lanes — they
+interleave with player commands by design.
+── Admin Commands ────────────────────
+
+Run any command as another player (admin only):
+  [command] as [player name]
+  Example: spawn monster as Alice
+
+Reset the room's game state from the Room Settings page (gear icon in the header).
+── Stats Reference ───────────────────
+
+Spawn formulas (match engine):
+  hpVariance = random(0, 5) + typeHpOffset
+  acVariance = random(0, 2) + typeAcOffset
+  HP at level L = 28 + hpVariance + min(L × 3, 61)
+  AC at level L = 5 + acVariance + min(L, 12)
+
+Base spawn ranges (type offset 0, before per-type modifiers):
+  HP: 28–33
+  AC: 5–7
+  STR: 5  DEX: 5  INT: 5
+
+Per-monster-type modifiers (spawn, level 0):
+  Basilisk (Barbarian)
+    HP: 30–35  AC: 7–9
+    STR +2  DEX -1  INT +1
+  Gladiator (Fighter)
+    HP: 31–36  AC: 5–7
+    STR +1  DEX +1  INT +0
+  Jinn (Bard)
+    HP: 28–33  AC: 7–9
+    STR +0  DEX +1  INT +1
+  Minotaur (Barbarian)
+    HP: 32–37  AC: 4–6
+    STR +2  DEX +1  INT -1
+  Weeping Angel (Cleric)
+    HP: 29–34  AC: 6–8
+    STR -1  DEX +1  INT +2
+── Combat Math ───────────────────────
+
+To hit:    roll 1d20 + attacker modifier vs target stat
+A roll of 20 is always a stroke of luck (extra effect).
+A roll of 1 is always a curse of loki (bad effect).
+
+Multi-roll attacks (Lucky Strike, Horn Swipe, Rehit): when a card rolls
+more than once and keeps only one result, Stroke of Luck / Curse of Loki
+apply to the selected roll only — discarded natural 20s/1s do not crit.
+
+Damage:    varies by card (1d4, 1d6, 1d8, 2d4, 2d6...)
+Modifiers: STR/DEX/INT bonuses added based on card class
+
+AC boost cards absorb melee damage before HP is reduced.
+Stat curses (from cards like Soften, Concussion, Molasses)
+cap at -3 per level; further penalties come out of HP instead.
+── Operator Concurrency Notes ────────
+
+These rules prevent "commands ignored" and workshop/console interleaving bugs.
+Full detail: docs/engine-concurrency-and-timing.md
+
+  • Interactive console commands serialize per roomId:userId — never room-wide.
+    A user's multi-prompt flow must not starve other members.
+  • Workshop mutations (equip, presets, …) use a room-wide lane plus a same-user
+    guard so they cannot interleave with that user's active console flow.
+  • activeFlows: at most one interactive console flow per user per room.
+  • Ring fights are not awaited by the server and are not inside any lane.
+  • Cross-user console commands may run concurrently on the shared Game — intentional.
+    Shared mutations (shop, ring roster) stay on the room lane.
+  • Never put a user-input wait inside a room-wide serialized lane.
+
+Discord mirrors web lane keys via connector-local flow locks; prompt collectors
+resolve outside the lane so answers can release waiting actions.
+── Card Catalog (verbose) ────────────
 Adrenaline Rush
 Bad Batch
 Basic Shield
@@ -62,8 +188,6 @@ Turkey Thigh
 Vengeful Rampage
 Whiskey Shot
 Wooden Spear
-```
-
 
 ```
 ==================================
@@ -1026,7 +1150,10 @@ Wooden Spear
 
  Hit: 1d20 vs str / Damage: 1d6
  Roll twice for hit. Use the best 
- roll.
+ roll. Stroke of Luck and Curse 
+ of Loki apply only to the 
+ selected roll (discarded rolls 
+ do not crit).
 
  Level: 2
  Usable by: Minotaur
@@ -1106,7 +1233,10 @@ Wooden Spear
 
  Hit: 1d20 vs ac / Damage: 1d6
  Roll twice for hit. Use the best 
- roll.
+ roll. Stroke of Luck and Curse 
+ of Loki apply only to the 
+ selected roll (discarded rolls 
+ do not crit).
 
  Level: 2
  Usable by: Bard, Cleric, Fighter
@@ -1288,7 +1418,10 @@ Wooden Spear
  Hit: 1d20 vs ac / Damage: 1d6
  Roll for attack, if you roll 
  less than 10, roll again and use 
- the second roll no matter what.
+ the second roll no matter what. 
+ Stroke of Luck and Curse of Loki 
+ apply only to the selected roll 
+ (discarded rolls do not crit).
 
  Level: 2
  Usable by: Cleric, Fighter
@@ -1510,31 +1643,8 @@ Wooden Spear
 ==================================
 ```
 
-```
-*The Item Catalogue:*
-
-Chocolate Bar
-Potion of Healing
-Pokecen
-Spin Up
-Swiss Chocolate
-Chaos Theory for Beginners According to Clever Hans
-Chaos Theory for Beginners
-The Way of the Cobra Kai According to Clever Hans
-The Way of the Cobra Kai
-House Lannister According To Clever Hans
-House Lannister
-The Ballad of La Carambada According to Clever Hans
-The Ballad of La Carambada
-Lottery Ticket
-The Gospel According to Clever Hans
-The Gospel According to Parsifal
-The Annals of Qin Shi Huang According to Clever Hans
-The Annals of Qin Shi Huang
-The Tale of Sir Robin According to Clever Hans
-The Tale of Sir Robin
-Sorting Hat
-```
+── Item Catalog ──────────────────────
+Chocolate Bar, Potion of Healing, Pokecen, Spin Up, Swiss Chocolate, Chaos Theory for Beginners According to Clever Hans, Chaos Theory for Beginners, The Way of the Cobra Kai According to Clever Hans, The Way of the Cobra Kai, House Lannister According To Clever Hans, House Lannister, The Ballad of La Carambada According to Clever Hans, The Ballad of La Carambada, Lottery Ticket, The Gospel According to Clever Hans, The Gospel According to Parsifal, The Annals of Qin Shi Huang According to Clever Hans, The Annals of Qin Shi Huang, The Tale of Sir Robin According to Clever Hans, The Tale of Sir Robin, Sorting Hat
 
 ```
 ==================================

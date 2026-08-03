@@ -1,9 +1,31 @@
 import { expect } from 'chai';
-import { RoomEventBus } from './room-event-bus.js';
+import { PROMPT_CANCELLED, RoomEventBus } from './room-event-bus.js';
 
 const ROOM_ID = 'test-room';
 
 describe('RoomEventBus prompt ownership validation', () => {
+	it('respondToPrompt rejects PROMPT_CANCELLED and leaves the prompt pending', async () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		let resolved = false;
+		const promptPromise = bus.sendPrompt('user-a', 'What color?', [], 5000);
+		promptPromise.then(() => { resolved = true; }).catch(() => {});
+
+		const requestId = [...(bus as any).pendingPrompts.keys()][0] as string;
+
+		const handled = bus.respondToPrompt(requestId, PROMPT_CANCELLED, 'user-a');
+		expect(handled).to.equal(false);
+		expect((bus as any).pendingPrompts.has(requestId)).to.be.true;
+
+		await new Promise(r => setTimeout(r, 20));
+		expect(resolved).to.be.false;
+
+		// Prompt remains answerable with a real answer after the reject.
+		const answered = bus.respondToPrompt(requestId, 'blue', 'user-a');
+		expect(answered).to.equal(true);
+		const answer = await promptPromise;
+		expect(answer).to.equal('blue');
+	});
+
 	it('respondToPrompt resolves for the correct caller', () => {
 		const bus = new RoomEventBus(ROOM_ID);
 		const promptPromise = bus.sendPrompt('user-a', 'What color?', [], 5000);

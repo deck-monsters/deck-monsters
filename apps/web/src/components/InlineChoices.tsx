@@ -20,6 +20,15 @@ function isMultiSelect(question: string): boolean {
   return /one or more|card\(s\)|item\(s\)/i.test(question);
 }
 
+/** True when the equip loop already committed a partial batch and offers an early finish. */
+function canFinishPartialEquip(question: string): boolean {
+  const match = question.match(/You have (\d+) of (\d+) slots remaining/i);
+  if (!match) return false;
+  const remaining = Number(match[1]);
+  const total = Number(match[2]);
+  return Number.isFinite(remaining) && Number.isFinite(total) && remaining < total;
+}
+
 /**
  * Parse per-index max counts from the engine's question text.
  * The engine formats choices as "0) CardName [3]\n1) OtherCard [1]" (via getItemChoices).
@@ -121,6 +130,12 @@ export default function InlineChoices({
     onAnswer(requestId, selectionOrder.join(', '));
   }
 
+  function handleDoneEquipping() {
+    onAnswer(requestId, 'done');
+  }
+
+  const showDoneEquipping = multi && canFinishPartialEquip(question);
+
   return (
     <div className="event-prompt">
       <p className="prompt-question">{question}</p>
@@ -219,6 +234,22 @@ export default function InlineChoices({
           >
             Equip {selectionOrder.length > 0 ? `${selectionOrder.length} card${selectionOrder.length !== 1 ? 's' : ''}` : 'cards'}
           </button>
+          {showDoneEquipping && (
+            <button
+              onClick={handleDoneEquipping}
+              style={{
+                padding: '0.3rem 0.75rem',
+                background: 'transparent',
+                border: '1px solid var(--color-accent)',
+                color: 'var(--color-fg-bright)',
+                fontFamily: 'var(--font-family)',
+                fontSize: 'var(--font-size)',
+                cursor: 'pointer',
+              }}
+            >
+              Done equipping
+            </button>
+          )}
           {selectionOrder.length > 0 && (
             <span style={{ fontSize: '0.75rem', color: 'var(--color-fg-dim)' }}>
               Order: {selectionOrder.map(i => choices[i]).join(' → ')}

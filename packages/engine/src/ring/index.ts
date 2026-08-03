@@ -113,14 +113,18 @@ function factionOf(c: Contestant): string {
 
 function participantOutcome(
 	contestant: Contestant,
-	deaths: number,
-	isLastTeamFledWin: boolean
+	hasDecisiveWinner: boolean
 ): 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath' {
-	if (deaths <= 0 && !isLastTeamFledWin) return 'draw';
 	if (contestant.monster.destroyed) return 'permaDeath';
+	// A dead contestant is always counted in `deaths` (it is `deadContestants.length`),
+	// so death is unconditionally a loss — even on an otherwise inconclusive fight.
 	if (contestant.monster.dead) return 'loss';
 	if (contestant.fled) return 'fled';
-	return 'win';
+	// Living survivors only count as winners when the fight actually decided a victor
+	// (one last contestant, or one last team). Round-cap / inconclusive ends are draws
+	// even if someone died earlier — otherwise both remaining factions get "win".
+	if (hasDecisiveWinner) return 'win';
+	return 'draw';
 }
 
 export class Ring extends BaseClass {
@@ -553,6 +557,10 @@ export class Ring extends BaseClass {
 			(monster as { disposeTimers?: () => void })?.disposeTimers?.();
 			(character as { disposeTimers?: () => void })?.disposeTimers?.();
 		}
+		for (const timer of this.bossDespawnTimers) {
+			clearTimeout(timer);
+		}
+		this.bossDespawnTimers.clear();
 		this.contestants = [];
 		this.emit('clear');
 		this.publishState();
@@ -719,35 +727,36 @@ export class Ring extends BaseClass {
 					resolve(doAction({ currentContestants: activeContestants, cardIndex: nextCardIndex }));
 				};
 
-			const globalActive = getAllActiveContestants();
+				const globalActive = getAllActiveContestants();
 
-			// Check last-team victory BEFORE the batch-rebuild logic so we never
-			// recurse. With ≥2 same-faction survivors the old combined condition
-			// `activeContestants.length <= 1 || isLastTeamVictory(globalActive)`
-			// always fell into the else-branch and called next(), which called
-			// doAction again, which called next() again — infinite recursion.
-			if (isLastTeamVictory(globalActive)) {
-				// One faction stands. Resolve without recursion; fightConcludes
-				// marks every living contestant as won. No single lastContestant.
-				resolve(undefined);
-				return;
-			}
+				// Check last-team victory BEFORE the batch-rebuild logic so we never
+				// recurse. With ≥2 same-faction survivors the old combined condition
+				// `activeContestants.length <= 1 || isLastTeamVictory(globalActive)`
+				// always fell into the else-branch and called next(), which called
+				// doAction again, which called next() again — infinite recursion.
+				if (isLastTeamVictory(globalActive)) {
+					// One faction stands. Resolve without recursion; fightConcludes
+					// marks every living contestant as won. No single lastContestant.
+					resolve(undefined);
+					return;
+				}
 
-			if (activeContestants.length <= 1) {
-				nextCardIndex += 1;
-
-				if (activeContestants.length === 1) {
-					// One local-batch survivor but other factions still in the fight
-					// globally: rebuild the batch so they can all keep playing.
-					activeContestants = [...activeContestants, ...globalActive];
-				} else {
+				// Only rebuild when the local batch is empty. A single remaining
+				// contestant still needs to play their card at the current index;
+				// after they act, the next invocation hits this empty-batch path.
+				// (The old length===1 branch prepended the survivor onto globalActive,
+				// which already contained them — duplicates that skewed turn order.
+				// Assigning `activeContestants = globalActive` here and falling through
+				// is also wrong: it makes someone who already acted replay this index
+				// while the true survivor is skipped.)
+				if (activeContestants.length === 0) {
+					nextCardIndex += 1;
 					// Batch exhausted — rebuild from the global active list and
 					// continue to the next card index.
 					activeContestants = globalActive;
 					next();
 					return;
 				}
-			}
 
 				const playerContestant = activeContestants.shift()!;
 				const { monster: player } = playerContestant;
@@ -978,6 +987,24 @@ export class Ring extends BaseClass {
 			return activeFactions.size === 1;
 		})();
 
+		// A decisive win requires an actual last contestant / last team — not merely
+		// "someone died." The round-10 empty-deck path announces a draw with
+		// lastContestant=undefined; if deaths>0 and multiple factions (or multiple
+		// individuals) are still alive, awarding win to every survivor produced the
+		// absurd fight-log outcome "win with survivors on both sides."
+		const living = contestants.filter(c => !c.monster.dead && !c.fled);
+		const isLastTeam = this.ringEvent?.victoryMode === 'last-team';
+		// Classic (last-contestant) mode only records a win when someone actually died and
+		// exactly one contestant remains — a pure flee with zero deaths stays a draw for
+		// W/L (XP still flows through calculateXP). Last-team mode wins whenever exactly
+		// one living faction remains (including the fled-with-zero-deaths path above).
+		const hasDecisiveWinner =
+			isLastTeamFledWin ||
+			(living.length > 0 &&
+				(isLastTeam
+					? new Set(living.map(factionOf)).size === 1
+					: deaths > 0 && living.length === 1));
+
 		// Emit for battle history
 		this.eventBus.publish({
 			type: 'ring.fight',
@@ -1003,50 +1030,45 @@ export class Ring extends BaseClass {
 			const { userId } = contestant;
 			const xpDelta = xpGained[i] ?? 0;
 
-			// A fight has a non-draw outcome when someone died (legacy path) OR when it is a
-			// last-team event where all opponents fled with no deaths.
-			const hasOutcome = deaths > 0 || isLastTeamFledWin;
+			if (contestant.monster.dead) {
+				// Deaths are always losses, even on an otherwise inconclusive (draw) fight.
+				contestant.lost = true;
 
-			if (hasOutcome) {
-				if (contestant.monster.dead) {
-					contestant.lost = true;
-
-					if (contestant.monster.destroyed) {
-						this.eventBus.publish({
-							type: 'ring.permaDeath',
-							scope: 'private',
-							targetUserId: userId,
-							text: `${contestant.monster.givenName} was too badly injured to be revived.`,
-							payload: { contestant, xpGained: xpDelta },
-						});
-					} else {
-						this.eventBus.publish({
-							type: 'ring.loss',
-							scope: 'private',
-							targetUserId: userId,
-							text: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
-							payload: { contestant, xpGained: xpDelta },
-						});
-					}
-				} else if (contestant.fled) {
+				if (contestant.monster.destroyed) {
 					this.eventBus.publish({
-						type: 'ring.fled',
+						type: 'ring.permaDeath',
 						scope: 'private',
 						targetUserId: userId,
-						text: `${contestant.monster.givenName} lived to fight another day!`,
+						text: `${contestant.monster.givenName} was too badly injured to be revived.`,
 						payload: { contestant, xpGained: xpDelta },
 					});
 				} else {
-					contestant.won = true;
-
 					this.eventBus.publish({
-						type: 'ring.win',
+						type: 'ring.loss',
 						scope: 'private',
 						targetUserId: userId,
-						text: `${contestant.monster.identity} is victorious!`,
+						text: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
 						payload: { contestant, xpGained: xpDelta },
 					});
 				}
+			} else if (contestant.fled) {
+				this.eventBus.publish({
+					type: 'ring.fled',
+					scope: 'private',
+					targetUserId: userId,
+					text: `${contestant.monster.givenName} lived to fight another day!`,
+					payload: { contestant, xpGained: xpDelta },
+				});
+			} else if (hasDecisiveWinner) {
+				contestant.won = true;
+
+				this.eventBus.publish({
+					type: 'ring.win',
+					scope: 'private',
+					targetUserId: userId,
+					text: `${contestant.monster.identity} is victorious!`,
+					payload: { contestant, xpGained: xpDelta },
+				});
 			} else {
 				this.eventBus.publish({
 					type: 'ring.draw',
@@ -1064,7 +1086,7 @@ export class Ring extends BaseClass {
 		let loserMonsterId: string | undefined;
 		let loserMonsterName: string | undefined;
 		let loserOwnerUserId: string | undefined;
-		if (deaths > 0 || isLastTeamFledWin) {
+		if (hasDecisiveWinner || deaths > 0) {
 			// Attribute by outcome rather than by contestant count. The old `length === 2`
 			// gate meant every multi-party fight lost its winner/loser entirely — which ring
 			// events (multi-boss gauntlets, team battles) now make the common case. Stay
@@ -1096,20 +1118,28 @@ export class Ring extends BaseClass {
 				monsterType: (m.constructor?.name ?? 'Monster') as string,
 				ownerUserId: c.userId as string,
 				ownerDisplayName: (ch.givenName ?? ch.name ?? '') as string,
-				outcome: participantOutcome(c, deaths, isLastTeamFledWin),
+				outcome: participantOutcome(c, hasDecisiveWinner),
 				xpGained: xpGained[i] ?? 0,
 				level: m.level as number,
 			};
 		});
 
-		const fightOutcome =
-			deaths <= 0 && !isLastTeamFledWin
-				? 'draw'
-				: contestants.some(c => c.monster.destroyed)
-					? 'permaDeath'
-					: contestants.some(c => c.fled)
-						? 'fled'
-						: 'win';
+		// Only the final `win` arm should depend on decisiveness — gating the whole chain
+		// on it (as the first cut of #74 did) silently downgraded two conclusive outcomes
+		// to 'draw': a permanently destroyed monster, and "someone died, the survivor
+		// fled". Both are real results and were labelled correctly before #74.
+		//
+		// `settled` is what keeps the fled arm honest: a fight where everyone fled and
+		// nobody died is still a draw, not a flee. permaDeath needs no such guard —
+		// destroyed implies dead, so `deaths > 0` already holds.
+		const settled = deaths > 0 || hasDecisiveWinner;
+		const fightOutcome = contestants.some(c => c.monster.destroyed)
+			? 'permaDeath'
+			: settled && contestants.some(c => c.fled)
+				? 'fled'
+				: hasDecisiveWinner
+					? 'win'
+					: 'draw';
 
 		this.eventBus.publish({
 			type: 'ring.fightResolved',
@@ -1134,7 +1164,11 @@ export class Ring extends BaseClass {
 			contestants,
 			deadContestants,
 			deaths,
-			isDraw: deaths <= 0,
+			// Derived from fightOutcome so the announcement can never disagree with the
+			// fight log. The old `deaths <= 0` made a round-cap fight with deaths but
+			// survivors on both sides announce "with N dead" while every other record
+			// classed it a draw (#74).
+			isDraw: fightOutcome === 'draw',
 			lastContestant,
 			rounds,
 		});
@@ -1432,8 +1466,8 @@ export class Ring extends BaseClass {
 			const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
 				ring.bossDespawnTimers.delete(timer);
 				// removeMonster() (called via removeBoss) rejects if the boss is no
-				// longer in the ring (e.g. the ring was cleared by a fight) — that is
-				// expected here since this timer isn't cancelled on clearRing().
+				// longer in the ring — defensive catch for races where the timer
+				// fires in the same tick as clearRing()/dispose() draining the set.
 				ring.removeBoss(contestant).catch(() => {});
 			}, BOSS_DESPAWN_DELAY_MS);
 			this.bossDespawnTimers.add(timer);
