@@ -1222,3 +1222,23 @@ Reading `monster.encounterModifiers` called `getEncounterModifiers`, which alloc
 Covered by `does not materialize encounter state when reading encounterModifiers outside combat (#68)` and `materializes encounter modifiers on write after a read-only empty view` in `creatures/encounter.test.ts`.
 
 **Status**: Fixed.
+
+---
+
+### 73. Test harness lane key did not match production — FIXED
+
+`createRoomCommandRunner` serialized by `roomId` only; production console commands use `${roomId}:${userId}`. Integration tests could hide cross-user starvation.
+
+**Fixed**: `createRoomCommandRunner` now keys lanes as `${roomId}:${userId}`; `createRoomWideCommandRunner` is the explicitly named room-only helper for workshop-style paths. `createTestChannel` translates `PROMPT_CANCELLED` → `PromptCancelledError` like the tRPC router. Covered by `testing/testing.test.ts`, `server/src/integration/command-flow.test.ts`, and the harness concurrent-look-monsters scenario.
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+---
+
+### 78. ConnectorAdapter swallowed channel rejection / non-string answers — FIXED
+
+`ConnectorAdapter` delivered `prompt.request` to private channels but only called `respondToPrompt` for string answers; rejections were caught and ignored, leaving `sendPrompt` pending until the 120s bus timeout.
+
+**Fixed**: on channel rejection or non-string resolution, `ConnectorAdapter` calls `cancelPrompt` so the bus prompt settles promptly. Optional `onChannelError` callback surfaces connector failures without unhandled rejections. `registerUser` now subscribes with the target `userId` so private `prompt.request` / announce events are actually delivered (the adapter's prior catch-all subscriber could not see private events). Covered by `channel/connector-adapter.test.ts`.
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §3.

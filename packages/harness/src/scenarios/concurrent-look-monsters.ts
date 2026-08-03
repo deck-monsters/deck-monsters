@@ -1,7 +1,8 @@
 /**
  * Simulates two users sending `look at monsters` at the same time against one room.
- * When wrapped with `createRoomCommandRunner` (same pattern as production
- * `RoomManager.runSerializedEngineWork`), command chains do not interleave.
+ * When wrapped with `createRoomCommandRunner` (production-shaped
+ * `${roomId}:${userId}` lanes), same-user chains serialize while different users
+ * run independently.
  */
 
 import '../set-env.js';
@@ -25,14 +26,14 @@ export async function runConcurrentLookMonsters(game: Game): Promise<void> {
 
 	try {
 		await Promise.all([
-			run(roomId, () =>
+			run(roomId, USER_A, () =>
 				runCommand(game, {
 					command: 'look at monsters',
 					userId: USER_A,
 					userName: 'Alice',
 				})
 			),
-			run(roomId, () =>
+			run(roomId, USER_B, () =>
 				runCommand(game, {
 					command: 'look at monsters',
 					userId: USER_B,

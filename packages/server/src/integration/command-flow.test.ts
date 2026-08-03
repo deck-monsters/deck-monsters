@@ -206,26 +206,54 @@ describe('integration: command flow', function () {
 	});
 
 	describe('concurrent commands (production-style serialization)', () => {
-		it('does not corrupt state when two users send commands in parallel with per-room queue', async () => {
+		it('serializes same-user commands through the per-user lane key', async () => {
 			const game = createTestGame('integration-room');
 			const run = createRoomCommandRunner();
+			const order: string[] = [];
+
+			const responder = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
+
+			await Promise.all([
+				run(game.roomId, USER_A, async () => {
+					order.push('a-start');
+					await runCommand(game, { command: 'look at monsters', userId: USER_A, userName: 'Athena' });
+					order.push('a-end');
+				}),
+				run(game.roomId, USER_A, async () => {
+					order.push('b');
+				}),
+			]);
+
+			responder.unsubscribe();
+			expect(order).to.deep.equal(['a-start', 'a-end', 'b']);
+		});
+
+		it('allows cross-user commands to run in parallel with per-user lanes', async () => {
+			const game = createTestGame('integration-room');
+			const run = createRoomCommandRunner();
+			const events: string[] = [];
 
 			const responderA = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
 			const responderB = createAutoResponder(game.eventBus, USER_B, NEW_CHARACTER_ANSWERS);
 
-			// Same pattern as RoomManager.runSerializedEngineWork + game.command
 			await Promise.all([
-				run(game.roomId, () =>
-					runCommand(game, { command: 'look at monsters', userId: USER_A, userName: 'Athena' })
-				),
-				run(game.roomId, () =>
-					runCommand(game, { command: 'look at monsters', userId: USER_B, userName: 'Hermes' })
-				),
+				run(game.roomId, USER_A, async () => {
+					events.push('a-start');
+					await new Promise(r => setTimeout(r, 15));
+					await runCommand(game, { command: 'look at monsters', userId: USER_A, userName: 'Athena' });
+					events.push('a-end');
+				}),
+				run(game.roomId, USER_B, async () => {
+					events.push('b');
+					await runCommand(game, { command: 'look at monsters', userId: USER_B, userName: 'Hermes' });
+				}),
 			]);
 
 			responderA.unsubscribe();
 			responderB.unsubscribe();
 
+			expect(events).to.include.members(['a-start', 'b']);
+			expect(events.indexOf('b')).to.be.lessThan(events.indexOf('a-end')!);
 			expect(game.characters[USER_A]?.givenName).to.equal('Athena');
 			expect(game.characters[USER_B]?.givenName).to.equal('Hermes');
 		});

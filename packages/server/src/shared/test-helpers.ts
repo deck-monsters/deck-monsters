@@ -9,6 +9,7 @@ export {
 	createAutoResponder,
 	runCommand,
 	createRoomCommandRunner,
+	createRoomWideCommandRunner,
 } from '@deck-monsters/engine';
 
 export type { ChannelMessage, TestChannel, AutoResponder } from '@deck-monsters/engine';

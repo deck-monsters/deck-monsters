@@ -51,6 +51,9 @@ Three coordination mechanisms exist. Know which one you are touching:
    interactive flow legitimately holds its lane for minutes while waiting on
    `sendPrompt` answers. Keying by room alone starves every other member's
    commands (this was a real production bug — "the game ignores my commands").
+   Harness helpers mirror this via `createRoomCommandRunner(roomId, userId, …)`;
+   use `createRoomWideCommandRunner` only when you explicitly need room-wide
+   serialization (workshop-style mutations).
 
 3. **Per-room workshop lane + same-user guards** — non-interactive card-management
    mutations (`equipCards`, `unequipCard`, `moveCard`, `reorderCards`, presets, …)
@@ -109,6 +112,15 @@ engine) immediately after `sendPrompt` resolves, and the fire-and-forget catch
 suppresses that error like a timeout. `items/helpers/choose.ts` has a
 defensive check too. If you build a new connector channel that awaits
 `sendPrompt` (directly or via `ConnectorAdapter`), replicate the translation.
+`createTestChannel` in `packages/engine/src/testing/index.ts` mirrors the same
+translation for harness/integration tests.
+
+`ConnectorAdapter` delivers `prompt.request` events to registered private
+channels. On channel rejection or a non-string resolution it must call
+`cancelPrompt` so `sendPrompt` settles promptly (via the cancel sentinel) rather
+than hanging until the 120s timeout. Pass an optional `onChannelError` callback
+to surface connector failures without unhandled rejections — the adapter never
+treats `undefined` or other non-strings as user answers.
 
 ## 4. Multi-step selection parsing (`packages/engine/src/items/helpers/choose.ts`)
 

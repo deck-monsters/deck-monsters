@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium — content pass plus Discord/concurrency follow-ups from the 2026-08-03 audit.
-**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #59–#62, #64, #65–#69, #70–#72, #74–#77). What's open here: #3 (DMG/CARDS content) and #63, #73, #78 (audit follow-ups that need a design pass).
+**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #59–#62, #64, #65–#69, #70–#72, #73, #74–#78). What's open here: #3 (DMG/CARDS content) and #63 (audit follow-up that needs a design pass).
 
 ## Code Quality Issues
 
@@ -55,25 +55,7 @@ Per-user console lanes mean two members of the same room can mutate one shared `
 
 **Action**: Lift subscription (or at least cursor tracking) to `Terminal` and fan out events to both panes.
 
-### 73. Test harness lane key does not match production
-
-`createRoomCommandRunner` serializes by `roomId` only; production console commands use `${roomId}:${userId}`. Integration tests can hide cross-user interleaving.
-
-**Action**: Align harness helpers with production lane keys and `PROMPT_CANCELLED` translation in `createTestChannel`.
-
-### 78. ConnectorAdapter swallows channel rejection / non-string answers — leaves bus prompt pending
-
-`ConnectorAdapter` delivers `prompt.request` by calling the user's private channel, then:
-- `.then`: only `respondToPrompt` when the answer is a `string` (non-string resolves leave the pending prompt untouched);
-- `.catch(() => {})`: channel rejections (timeout, `PromptCancelledError`, DM failures) are swallowed.
-
-Callers waiting on `eventBus.sendPrompt` therefore stay pending until the bus timeout (default 120s) instead of settling promptly. Direct Discord slash/DM channel awaits are unaffected; this hits the adapter path (event-bus-driven prompts for connectors).
-
-**Action**: On channel rejection or non-string resolution, cancel the pending prompt (or reject the sendPrompt waiter) without resolving `PROMPT_CANCELLED` into game code as an answer — mirror the web channel wrapper / Discord `buildPrivateChannel` translation. Add engine unit coverage before changing behavior.
-
-**Status**: Open. Tracked from Task 7 Discord review; not fixed in that pass (prefer tracking over a speculative cancel path).
-
-## Investigated — not bugs (left for the record)
+### 63. Dual `ringFeed` subscriptions per web client
 
 - **Discord `registerUser` subscriber “leak”** — `RoomEventBus.subscribe` uses a `Map.set` by id; re-register replaces the previous subscriber.
 - **`fight-stats-subscriber` `log.error`** — the module-level `createLogger` is used inside handlers; the `(err) => void` parameter only shadows inside `attachFightStatsSubscriber` for `.catch(log)`.
@@ -87,5 +69,3 @@ Callers waiting on `eventBus.sendPrompt` therefore stay pending until the bus ti
 - [x] Discord free-text prompt support (#59)
 - [x] Discord serialization / `activeFlows` parity (#60)
 - [ ] Unify web `ringFeed` subscription / cursor (#63)
-- [ ] Align test harness lanes with production (#73)
-- [ ] ConnectorAdapter: cancel pending prompt on channel reject / non-string answer (#78)

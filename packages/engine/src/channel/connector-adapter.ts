@@ -12,47 +12,57 @@ import type { ChannelCallback } from './index.js';
  * Private events are routed to the registered per-user privateChannel.
  * PromptRequest events are delivered to the user's channel with { question, choices }.
  */
+export type ConnectorAdapterChannelErrorHandler = (err: unknown) => void;
+
 export class ConnectorAdapter {
 	private privateChannels = new Map<string, ChannelCallback>();
+	private userUnsubs = new Map<string, () => void>();
 
 	constructor(
 		private readonly eventBus: RoomEventBus,
 		private readonly publicChannel: ChannelCallback,
-		private readonly subscriberId = 'connector-adapter'
+		private readonly subscriberId = 'connector-adapter',
+		private readonly onChannelError?: ConnectorAdapterChannelErrorHandler,
 	) {
 		eventBus.subscribe(subscriberId, {
 			deliver: (event: GameEvent) => {
-				this.handleEvent(event);
-			}
+				if (event.scope === 'public') {
+					void this.publicChannel({ announce: event.text });
+				}
+			},
 		});
 	}
 
-	private handleEvent(event: GameEvent): void {
+	private handlePrivateEvent(userId: string, event: GameEvent): void {
 		if (event.type === 'prompt.request') {
-			if (event.targetUserId) {
-				const channel = this.privateChannels.get(event.targetUserId);
-				if (channel) {
-					const { question, choices, requestId } = event.payload as {
-						question: string;
-						choices: string[];
-						requestId: string;
-					};
-					void channel({ announce: '', question, choices: choices as any })
-						.then((answer: unknown) => {
-							if (typeof answer === 'string') {
-								this.eventBus.respondToPrompt(requestId, answer);
-							}
-						})
-						.catch(() => {});
-				}
-			}
+			const channel = this.privateChannels.get(userId);
+			if (!channel) return;
+
+			const { question, choices, requestId } = event.payload as {
+				question: string;
+				choices: string[];
+				requestId: string;
+			};
+			void channel({ announce: '', question, choices: choices as any })
+				.then((answer: unknown) => {
+					if (typeof answer === 'string') {
+						this.eventBus.respondToPrompt(requestId, answer);
+						return;
+					}
+					this.onChannelError?.(
+						new Error('Connector channel resolved with non-string answer'),
+					);
+					this.eventBus.cancelPrompt(requestId, userId);
+				})
+				.catch((err: unknown) => {
+					this.onChannelError?.(err);
+					this.eventBus.cancelPrompt(requestId, userId);
+				});
 			return;
 		}
 
-		if (event.scope === 'public') {
-			void this.publicChannel({ announce: event.text });
-		} else if (event.scope === 'private' && event.targetUserId) {
-			const channel = this.privateChannels.get(event.targetUserId);
+		if (event.scope === 'private') {
+			const channel = this.privateChannels.get(userId);
 			if (channel) {
 				void channel({ announce: event.text });
 			}
@@ -60,15 +70,29 @@ export class ConnectorAdapter {
 	}
 
 	registerUser(userId: string, channel: ChannelCallback): void {
+		this.unregisterUser(userId);
 		this.privateChannels.set(userId, channel);
+		const unsub = this.eventBus.subscribe(`${this.subscriberId}:${userId}`, {
+			userId,
+			deliver: (event: GameEvent) => {
+				this.handlePrivateEvent(userId, event);
+			},
+		});
+		this.userUnsubs.set(userId, unsub);
 	}
 
 	unregisterUser(userId: string): void {
+		this.userUnsubs.get(userId)?.();
+		this.userUnsubs.delete(userId);
 		this.privateChannels.delete(userId);
 	}
 
 	dispose(): void {
 		this.eventBus.unsubscribe(this.subscriberId);
+		for (const unsub of this.userUnsubs.values()) {
+			unsub();
+		}
+		this.userUnsubs.clear();
 		this.privateChannels.clear();
 	}
 }

@@ -5,7 +5,7 @@
  */
 
 import Game from '../game.js';
-import { RoomEventBus } from '../events/index.js';
+import { PROMPT_CANCELLED, PromptCancelledError, RoomEventBus } from '../events/index.js';
 import type { GameEvent } from '../events/index.js';
 import { createKeyedPromiseQueue } from '../helpers/room-engine-queue.js';
 
@@ -76,7 +76,13 @@ export function createTestChannel(eventBus: RoomEventBus, userId: string): TestC
 					? choices
 					: Object.keys(choices)
 				: [];
-			return eventBus.sendPrompt(userId, question, choiceKeys);
+			const answer = await eventBus.sendPrompt(userId, question, choiceKeys);
+			// Mirror the tRPC router / Discord channel wrappers — the cancel
+			// sentinel must never reach game code as a literal answer string.
+			if (answer === PROMPT_CANCELLED) {
+				throw new PromptCancelledError();
+			}
+			return answer;
 		}
 
 		if (announce) {
@@ -196,11 +202,29 @@ export async function runCommand(
 }
 
 /**
- * Returns a function that mirrors production `RoomManager.runSerializedEngineWork`:
- * only one in-flight command chain per `roomId` at a time. Use in harness scenarios
- * that fire `runCommand` in parallel against one `Game`.
+ * Returns a function that mirrors production `RoomManager.runSerializedEngineWork`
+ * for console commands: one in-flight chain per `${roomId}:${userId}`. Cross-user
+ * commands in the same room may run concurrently; same-user commands serialize.
  */
-export function createRoomCommandRunner(): (roomId: string, fn: () => Promise<unknown>) => Promise<unknown> {
+export function createRoomCommandRunner(): (
+	roomId: string,
+	userId: string,
+	fn: () => Promise<unknown>,
+) => Promise<unknown> {
+	const run = createKeyedPromiseQueue();
+	return (roomId: string, userId: string, fn: () => Promise<unknown>) =>
+		run(`${roomId}:${userId}`, fn);
+}
+
+/**
+ * Room-wide serialization helper — mirrors workshop / mutation lanes that use
+ * `runSerializedEngineWork(roomId, …)` only. Do **not** use this for interactive
+ * console flows; it would hide cross-user starvation bugs (#73).
+ */
+export function createRoomWideCommandRunner(): (
+	roomId: string,
+	fn: () => Promise<unknown>,
+) => Promise<unknown> {
 	const run = createKeyedPromiseQueue();
 	return (roomId: string, fn: () => Promise<unknown>) => run(roomId, fn);
 }
