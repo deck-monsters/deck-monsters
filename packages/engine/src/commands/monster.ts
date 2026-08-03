@@ -422,8 +422,8 @@ function triggerRingEventAction({ channel, game, isAdmin, results }: any): Promi
 
 		ring.activateRingEvent(ringEvent);
 		// Re-arm the fight timer so the newly-spawned bosses (if any) are included in the
-		// countdown roster. rollRingEvent() is guarded by `if (this.ringEvent)` so it will
-		// not re-roll the event we just set.
+		// countdown roster. rollRingEvent()'s eligibility re-check will find the event still
+		// eligible (we just verified it above) and short-circuit, so no re-roll occurs.
 		ring.startFightTimer();
 
 		return channel({ announce: `Ring event forced: ${ringEvent.name}.` });

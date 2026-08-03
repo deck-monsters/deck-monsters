@@ -283,9 +283,33 @@ per-encounter. There is a test asserting `apply()` leaves the monster untouched 
 
 ### Lifecycle
 
-1. **Roll** — `startFightTimer()`, at the moment the countdown is armed, and **only when
-   `this.ringEvent == null`**. That guard is load-bearing: the Gauntlet's `spawnBoss()` calls
-   re-enter `startFightTimer()` via `addMonster()`, and without it the roll would recurse.
+1. **Roll** — `rollRingEvent()`, called inside `startFightTimer()` when quorum is met, runs
+   in three phases (in order):
+
+   a. **Eligibility re-check** (runs in all modes, including deterministic/test): if an
+      event is already armed, check whether it is still eligible for the current roster via
+      `ringEvent.eligible(buildRingEventContext(contestants))`. If eligible → return
+      immediately, preserving the armed event with no re-roll. If ineligible → clear it
+      silently (no public announcement, just a log entry) and fall through. This handles
+      mid-countdown roster changes — e.g. a boss joining after House War was rolled makes it
+      ineligible.
+
+   b. **Randomness gates**: bail if `ringEventsEnabled` is false,
+      `DECK_MONSTERS_DETERMINISTIC_RING` is set, `inEncounter` is true, or the random roll
+      does not beat `RING_EVENT_CHANCE_PERCENT`.
+
+   c. **Select**: call `selectRingEvent(buildRingEventContext(contestants))` and activate
+      the result via `activateRingEvent()`.
+
+   The eligibility re-check (phase a) is a correctness invariant, not a randomness source,
+   which is why it precedes the determinism guard. In test mode, clearing a stale event still
+   happens; only phase c (the new roll) is suppressed.
+
+   The Gauntlet's `spawnBoss()` calls re-enter `startFightTimer()` via `addMonster()`. Those
+   boss contestants carry `team: 'Boss'` which the Gauntlet's own eligibility check already
+   accounts for, so the eligibility re-check short-circuits correctly and no second event is
+   rolled.
+
 2. **Activate** — Both natural rolls and the admin `trigger ring event` command call the
    single `Ring.activateRingEvent(ringEvent)` method. It first checks `this.ringEvent`: if one
    is already armed, it returns immediately (log entry, no emission, no boss spawn) so
@@ -314,10 +338,11 @@ remaining player, joined later by a different player, would inherit the House Wa
 completely different roster.
 
 `startFightTimer()` now clears `this.ringEvent` whenever quorum is not met. If quorum is
-later restored, `startFightTimer()` runs again and rolls a fresh event for the players actually
-in the ring. The event is preserved when the countdown is immediately re-armed with a valid
-roster (i.e. `ringEvent` is already set and the `rollRingEvent()` guard `if (this.ringEvent)`
-prevents overwriting it within the same arm).
+later restored, `startFightTimer()` runs again and `rollRingEvent()` executes the eligibility
+re-check (phase a above): an armed event that is still valid for the new roster is preserved;
+one that has become ineligible (e.g. a remaining player left and a different event was rolled
+for a roster that no longer exists) is cleared. Only if nothing is armed does a fresh roll
+occur.
 
 ### Admin `trigger ring event`
 
@@ -333,6 +358,11 @@ announce the reason and do not record the event:
 - **Event already queued** — overwriting would re-run boss-spawn side effects and confuse the
   fight log. The command responds: `"A <EventName> is already queued — the new event was not
   applied."`
+- **Roster ineligible** — the requested event's `eligible()` predicate returns false for the
+  current contestants (e.g. `trigger ring event house-war` with a boss in the ring). The
+  command responds: `"<EventName> cannot be forced right now — the current roster does not
+  meet its requirements (need: <event-id>)."` No public announcement is emitted, no boss is
+  spawned, no metric is recorded. The refusal message is private to the admin's channel only.
 
 ### Determinism
 
