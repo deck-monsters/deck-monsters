@@ -22,6 +22,7 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 	{ command: 'send [monster] to the ring', description: 'Send a monster into battle', category: 'ring', example: 'send Fluffy to the ring' },
 	{ command: 'send monster to the ring', description: 'Select a monster and send to the ring', category: 'ring' },
 	{ command: 'summon [monster] from the ring', description: 'Call a monster back from battle', category: 'ring', example: 'summon Fluffy from the ring' },
+	{ command: 'summon a boss', description: 'Call a boss into the ring to fight your monster (3 per day)', category: 'ring' },
 	{ command: 'look at the ring', description: 'See which monsters are currently fighting', category: 'ring' },
 
 	// Cards

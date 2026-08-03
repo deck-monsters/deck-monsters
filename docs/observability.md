@@ -153,7 +153,9 @@ All custom metrics are prefixed `dm_` and carry a `service="deck-monsters"` defa
 | `dm_player_draws_total` | Counter | Draws |
 | `dm_player_fled_total` | Counter | Monsters that fled |
 | `dm_monster_perm_deaths_total` | Counter | Permanent deaths |
-| `dm_boss_spawns_total` | Counter | Boss spawns |
+| `dm_boss_spawns_total` | Counter | Boss spawns (timer, admin, player summon, or ring event) |
+| `dm_boss_summons_total` | Counter | Bosses summoned by players (`summon a boss`) |
+| `dm_ring_events_total` | Counter | Ring events triggered; label: `event` (`gauntlet` / `blood-feud` / `common-cause` / `house-war` / `the-reckoning`) |
 | `dm_monsters_in_ring` | Gauge | Monsters currently in the ring |
 
 ### Rooms & commands

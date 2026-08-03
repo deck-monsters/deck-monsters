@@ -10,6 +10,7 @@ import type { DiscordBot } from '../bot.js';
 import type { GuildRoomManager } from '../guild-room-manager.js';
 
 import { spawn } from './spawn.js';
+import { summonBoss } from './summon-boss.js';
 import { ring } from './ring.js';
 import { equip } from './equip.js';
 import { explore } from './explore.js';
@@ -43,6 +44,7 @@ export interface SlashCommand {
 export function loadCommands(): Map<string, SlashCommand> {
 	const commands: SlashCommand[] = [
 		spawn,
+		summonBoss,
 		ring,
 		equip,
 		explore,

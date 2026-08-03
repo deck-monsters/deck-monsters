@@ -645,5 +645,76 @@ describe('RoomManager', () => {
 			expect(events).to.have.length(4);
 			expect(limitReached).to.equal(true);
 		});
+
+		it('limitReached is false when the replay contains exactly maxTotal events and no additional row exists', async () => {
+			// Off-by-one regression (#43): the old code returned limitReached:true whenever
+			// total events reached the cap AND the last page was full, even if the DB had no
+			// further rows. The fix probes for one more row before deciding.
+			const db = makeDbStub({ selectResults: [memberRow] });
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const makeEvent = (id: string) =>
+				({ id, type: 'announce', scope: 'public', text: '', payload: {}, timestamp: 1 });
+
+			const probeCalls: { cursor: string; limit: number }[] = [];
+			sinon.stub(rm, '_fetchRingFeedPage').callsFake(
+				async (_u: string, _r: string, cursor: string, limit: number) => {
+					probeCalls.push({ cursor, limit });
+					if (cursor === '2000-cursor') return [makeEvent('2001-a'), makeEvent('2002-b')] as never;
+					if (cursor === '2002-b') return [makeEvent('2003-c'), makeEvent('2004-d')] as never;
+					// Probe after cap — nothing more in DB
+					return [] as never;
+				}
+			);
+
+			const { events, limitReached } = await rm.getEventsSinceForRingFeed(
+				USER_ID,
+				ROOM_ID,
+				'2000-cursor',
+				2,   // pageSize
+				4    // maxTotal — exactly 4 events exist
+			);
+
+			expect(events).to.have.length(4);
+			expect(limitReached).to.equal(false);
+			// The probe must target the last event in the final page with limit=1
+			const probeCall = probeCalls[probeCalls.length - 1]!;
+			expect(probeCall).to.deep.equal({ cursor: '2004-d', limit: 1 });
+		});
+
+		it('limitReached is true when cap+1 events exist (probe finds one more row)', async () => {
+			// Companion to the exactly-at-cap case: when there IS a row beyond the cap,
+			// limitReached must be true and the extra event must NOT appear in the output.
+			const db = makeDbStub({ selectResults: [memberRow] });
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const makeEvent = (id: string) =>
+				({ id, type: 'announce', scope: 'public', text: '', payload: {}, timestamp: 1 });
+
+			sinon.stub(rm, '_fetchRingFeedPage').callsFake(
+				async (_u: string, _r: string, cursor: string, limit: number) => {
+					if (cursor === '2000-cursor') return [makeEvent('2001-a'), makeEvent('2002-b')] as never;
+					if (cursor === '2002-b') return [makeEvent('2003-c'), makeEvent('2004-d')] as never;
+					// Probe: one more row exists beyond the cap
+					if (cursor === '2004-d' && limit === 1) return [makeEvent('2005-e')] as never;
+					return [] as never;
+				}
+			);
+
+			const { events, limitReached } = await rm.getEventsSinceForRingFeed(
+				USER_ID,
+				ROOM_ID,
+				'2000-cursor',
+				2,   // pageSize
+				4    // maxTotal
+			);
+
+			expect(events).to.have.length(4);
+			expect(limitReached).to.equal(true);
+			// The probe event must NOT appear in the output
+			expect(events.map((e) => e.id)).to.not.include('2005-e');
+		});
 	});
 });

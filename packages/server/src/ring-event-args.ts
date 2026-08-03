@@ -29,3 +29,23 @@ export function extractRingAddContestant(args: unknown[]): RingAddContestant | u
 	const directPayload = asRingAddPayload(args[0]);
 	return directPayload?.contestant;
 }
+
+type RingEventDescriptor = { id?: string; name?: string };
+type RingEventPayload = { ringEvent?: RingEventDescriptor };
+
+function asRingEventPayload(value: unknown): RingEventPayload | undefined {
+	if (!value || typeof value !== 'object') return undefined;
+	if (!('ringEvent' in value)) return undefined;
+	return value as RingEventPayload;
+}
+
+/** Same dual-shape handling as `extractRingAddContestant`, for the `ringEvent` ring event. */
+export function extractRingEvent(args: unknown[]): RingEventDescriptor | undefined {
+	if (args.length <= 0) return undefined;
+
+	const baseClassPayload = asRingEventPayload(args[2]);
+	if (baseClassPayload?.ringEvent) return baseClassPayload.ringEvent;
+
+	const directPayload = asRingEventPayload(args[0]);
+	return directPayload?.ringEvent;
+}

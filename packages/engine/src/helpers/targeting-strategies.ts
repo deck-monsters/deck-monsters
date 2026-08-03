@@ -72,6 +72,24 @@ export interface Contestant {
 	monster: ContestantMonster;
 	character: { team?: string };
 	isBoss?: boolean;
+	/**
+	 * Per-encounter team override set by a ring event. Beats `monster.team` and
+	 * `character.team` so an event can re-align the ring without writing to persisted
+	 * creature options. See `ring/ring-events.ts`.
+	 */
+	team?: string;
+}
+
+/** Team a contestant fights for, most specific source first. */
+const teamOf = (contestant: Contestant): string | undefined =>
+	contestant.team || contestant.monster.team || contestant.character.team;
+
+/**
+ * Minimal ring interface needed for the per-encounter targeting policy. Using a structural
+ * type avoids a circular dependency (ring/index.ts imports from targeting-strategies.ts).
+ */
+export interface EncounterTargetingRing {
+	encounterFreeForAll?: boolean;
 }
 
 interface GetTargetOptions {
@@ -81,6 +99,13 @@ interface GetTargetOptions {
 	playerMonster?: ContestantMonster;
 	strategy?: string;
 	team?: string | false;
+	/**
+	 * Optional ring reference for centralized encounter-level targeting policy.
+	 * When `ring.encounterFreeForAll` is true (Blood Feud), team filtering is
+	 * bypassed at the entry point so all cards honour the policy without each
+	 * card needing to know about Blood Feud. See docs/boss-encounters.md §5.
+	 */
+	ring?: EncounterTargetingRing;
 }
 
 export const getTarget = ({
@@ -89,8 +114,27 @@ export const getTarget = ({
 	playerContestant,
 	playerMonster,
 	strategy = TARGET_NEXT_PLAYER,
-	team
+	team,
+	ring,
 }: GetTargetOptions): Contestant | Contestant[] => {
+	// Centralized encounter targeting policy: when a Blood Feud (or any freeForAll event)
+	// is active, force team: false so all cards — including those that call getTarget
+	// internally — ignore team allegiances without each card needing to know about the
+	// policy. The ring param is intentionally NOT threaded through recursive calls;
+	// converting to team: false at the entry point is sufficient because all recursive
+	// calls ultimately resolve back to the switch statement with the team already set.
+	if (ring?.encounterFreeForAll && team !== false) {
+		return getTarget({
+			contestants,
+			ignoreSelf,
+			playerContestant,
+			playerMonster,
+			strategy,
+			team: false,
+			// ring intentionally omitted: policy resolved, no further interception needed
+		});
+	}
+
 	if (!playerContestant && playerMonster) {
 		const foundPlayerContestant = contestants.find(
 			({ monster }) => monster === playerMonster
@@ -109,8 +153,7 @@ export const getTarget = ({
 
 	const resolvedPlayerContestant = playerContestant!;
 
-	const playerTeam =
-		team || resolvedPlayerContestant.monster.team || resolvedPlayerContestant.character.team;
+	const playerTeam = team || teamOf(resolvedPlayerContestant);
 	if (team === undefined && playerTeam) {
 		return getTarget({
 			contestants,
@@ -127,9 +170,7 @@ export const getTarget = ({
 			const filteredContestants = contestants.filter((contestant) => {
 				if (contestant === resolvedPlayerContestant) return !ignoreSelf;
 
-				const contestantTeam =
-					contestant.monster.team || contestant.character.team;
-				if (team && contestantTeam === team) return false;
+				if (team && teamOf(contestant) === team) return false;
 
 				found = true;
 				return true;
@@ -378,7 +419,11 @@ export const getTarget = ({
 			const currentIndex = allContestants.indexOf(resolvedPlayerContestant);
 			let previousIndex = currentIndex - 1;
 
-			if (previousIndex < 0) previousIndex = contestants.length - 1;
+			// Wrap around `allContestants` (the team-filtered list), not the raw `contestants`
+			// input. In any team fight the filtered list is shorter, so wrapping on the input
+			// length indexed past the end and returned `undefined`. TARGET_NEXT_PLAYER below
+			// has always got this right.
+			if (previousIndex < 0) previousIndex = allContestants.length - 1;
 
 			return allContestants[previousIndex];
 		}

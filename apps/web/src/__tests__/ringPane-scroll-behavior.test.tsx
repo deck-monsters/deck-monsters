@@ -33,6 +33,9 @@ vi.mock('../lib/trpc.js', () => ({
       recentFights: {
         useQuery: () => ({ data: [] }),
       },
+      ringState: {
+        useQuery: () => ({ data: undefined, refetch: () => Promise.resolve() }),
+      },
       ringFeed: {
         useSubscription: (_input: unknown, callbacks: { onData?: (tracked: { id: string; data: unknown }) => void; onError?: () => void }) => {
           subscriptionCallbacks.onData = callbacks.onData;

@@ -12,6 +12,8 @@ import {
 	engineReady,
 	getHydratorStatus,
 	createKeyedPromiseQueue,
+	summonAllowance,
+	BOSS_SUMMON_LIMIT,
 	type LeaderboardSortKey,
 } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
@@ -493,14 +495,27 @@ export class RoomManager {
 	async getRingState(
 		userId: string,
 		roomId: string
-	): Promise<{ nextBossSpawnAt: number | null; nextFightAt: number | null; monsterCount: number }> {
+	): Promise<{
+		nextBossSpawnAt: number | null;
+		nextFightAt: number | null;
+		monsterCount: number;
+		bossSummonsRemaining: number;
+		bossSummonLimit: number;
+		bossSummonResetAt: number | null;
+	}> {
 		await this.assertMember(userId, roomId);
 		const game = await this.getGame(roomId);
 		const ring = game.ring;
+		// Per-user, so it belongs on this membership-checked query rather than in the public
+		// `ring.state` event, which broadcasts to the whole room.
+		const allowance = summonAllowance(game.bossSummons, userId);
 		return {
 			nextBossSpawnAt: ring.nextBossSpawnAt,
 			nextFightAt: ring.nextFightAt,
 			monsterCount: ring.contestants.length,
+			bossSummonsRemaining: allowance.remaining,
+			bossSummonLimit: BOSS_SUMMON_LIMIT,
+			bossSummonResetAt: allowance.nextAvailableAt,
 		};
 	}
 
@@ -561,7 +576,18 @@ export class RoomManager {
 				return { events, limitReached: false };
 			}
 			if (events.length >= maxTotal) {
-				return { events, limitReached: true };
+				// We hit the cap on a full page. A full page does not guarantee more rows
+				// exist — the DB may have had exactly that many. Probe for one more row to
+				// distinguish "exactly at the cap with nothing further" (limitReached: false)
+				// from "cap exceeded with rows still in the DB" (limitReached: true).
+				// See docs/roadmap/10b-bugs-fixed.md #43.
+				const probe = await this._fetchRingFeedPage(
+					userId,
+					roomId,
+					page[page.length - 1]!.id,
+					1
+				);
+				return { events, limitReached: probe.length > 0 };
 			}
 			cursor = page[page.length - 1]!.id;
 		}

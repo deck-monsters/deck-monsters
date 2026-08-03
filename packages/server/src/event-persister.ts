@@ -10,6 +10,7 @@ import type { RoomEventBus } from '@deck-monsters/engine';
 import type { GameEvent } from '@deck-monsters/engine';
 import type { Db } from './db/index.js';
 import { roomEvents } from './db/schema.js';
+import { profileUuidOrNull } from './db/profile-id.js';
 import { createLogger, isTraceEnabled } from './logger.js';
 
 const log = createLogger('event-persister');
@@ -55,7 +56,9 @@ export function attachEventPersister(
 							roomId: event.roomId,
 							type: event.type,
 							scope: event.scope,
-							targetUserId: event.targetUserId ?? null,
+							// 'boss' is not a profile uuid — boss win/loss events carry it as their
+						// target. Writing it to a uuid column throws and the event is lost.
+						targetUserId: profileUuidOrNull(event.targetUserId),
 							payload: event.payload as Record<string, unknown>,
 							text: event.text,
 							eventId: event.id,

@@ -346,6 +346,97 @@ describe('./helpers/experience.ts', () => {
 		});
 	});
 
+	describe('contestant-level team override (Finding 5)', () => {
+		it('uses contestant.team before monster.team for opponent counting — exact assertion', () => {
+			// Three contestants: A and B are allies via contestant.team but have DIFFERENT
+			// monster.team values. C is the enemy.
+			//
+			// With the fix (contestant.team priority):
+			//   contestantTeam(A) = 'RedTeam'
+			//   B.opponentTeam    = 'RedTeam'  → same → not an opponent
+			//   C.opponentTeam    = 'BlueTeam' → different → opponent
+			//   numOpponents = 1 → opponentModifier = (3-1) + 1 = 3
+			//   A (alive, killed C) XP = kill(10) + lastStanding(3) + modifier(3) = 16
+			//
+			// Without the fix (monster.team priority — old behavior):
+			//   contestantTeam(A) = 'MonsterA'   (monster.team)
+			//   B.opponentTeam    = 'MonsterB'   (different monster.team) → opponent
+			//   C.opponentTeam    = undefined     → different from 'MonsterA' → opponent
+			//   numOpponents = 2 → opponentModifier = (3-1) + 2 = 4
+			//   A XP = kill(10) + lastStanding(3) + modifier(4) = 17
+			const cA = {
+				monster: { level: 1, givenName: 'Alpha', displayLevel: 'level 1', team: 'MonsterA' },
+				character: {},
+				team: 'RedTeam',     // contestant.team wins over monster.team
+			};
+			const cB = {
+				monster: { level: 1, team: 'MonsterB' }, // deliberately different from A's monster.team
+				character: {},
+				team: 'RedTeam',     // but same contestant.team as A → they are allies
+			};
+			const cC = {
+				monster: { level: 1, dead: true },
+				character: {},
+				team: 'BlueTeam',
+			};
+			(cA as any).killed = [(cC as any).monster];
+			(cC as any).killedBy = (cA as any).monster;
+
+			const contestants = [cA, cB, cC] as Parameters<typeof calculateXP>[1];
+			const { gainedXP: xpA } = calculateXP(cA as Parameters<typeof calculateXP>[0], contestants);
+
+			// 16 with the fix; 17 without it (monster.team leaks B as an opponent)
+			expect(xpA, 'contestant.team must win over monster.team for opponent counting').to.equal(16);
+		});
+
+		it('prefers contestant.team over monster.team when both are present — exact assertion', () => {
+			// A has contestant.team = 'OverrideTeam', monster.team = 'SharedMonsterTeam'.
+			// B has contestant.team = 'EnemyTeam',    monster.team = 'SharedMonsterTeam'.
+			//
+			// Without the fix: both have the same monster.team → treated as teammates →
+			// numOpponents = 0 for a 2-contestant fight (contestants.length = 2, so the
+			// numOpponents block doesn't run) — but for a 3-contestant fight the team
+			// mismatch is visible. Add a neutral C to make contestants.length > 2.
+			//
+			// With fix (contestant.team):
+			//   A's contestantTeam = 'OverrideTeam'
+			//   B's opponentTeam   = 'EnemyTeam'   → DIFFERENT → opponent (numOpponents += 1)
+			//   C's opponentTeam   = 'NeutralTeam'  → DIFFERENT → opponent (numOpponents += 1)
+			//   numOpponents = 2 → opponentModifier = (3-1) + 2 = 4
+			//   A (alive, killed B) XP = kill(10) + lastStanding(3) + modifier(4) = 17
+			//
+			// Without fix (monster.team):
+			//   A's contestantTeam = 'SharedMonsterTeam'
+			//   B's opponentTeam   = 'SharedMonsterTeam' → SAME → teammate (not opponent!)
+			//   C's opponentTeam   = undefined → DIFFERENT → opponent (numOpponents = 1)
+			//   numOpponents = 1 → opponentModifier = (3-1) + 1 = 3
+			//   A XP = kill(10) + lastStanding(3) + modifier(3) = 16
+			const cA = {
+				monster: { level: 1, givenName: 'Alpha', displayLevel: 'level 1', team: 'SharedMonsterTeam' },
+				character: {},
+				team: 'OverrideTeam',
+			};
+			const cB = {
+				monster: { level: 1, dead: true, team: 'SharedMonsterTeam' },
+				character: {},
+				team: 'EnemyTeam',
+			};
+			const cC = {
+				monster: { level: 1 },
+				character: {},
+				team: 'NeutralTeam',
+			};
+			(cA as any).killed = [(cB as any).monster];
+			(cB as any).killedBy = (cA as any).monster;
+
+			const contestants = [cA, cB, cC] as Parameters<typeof calculateXP>[1];
+			const { gainedXP: xpA } = calculateXP(cA as Parameters<typeof calculateXP>[0], contestants);
+
+			// 17 with fix; 16 without it (monster.team incorrectly treats B as A's teammate)
+			expect(xpA, 'contestant.team override must make B count as opponent, not teammate').to.equal(17);
+		});
+	});
+
 	describe('calculateXP in 5:5 battles', () => {
 		it('assigns proper xp to winners and losers if one beats all', () => {
 			const contestant1 = { monster: { level: 1, dead: true }, character: {} };

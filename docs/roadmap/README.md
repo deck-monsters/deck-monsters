@@ -19,6 +19,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [06a — Web App](06a-web-app.md) | Terminal UI, ring feed, lobby, rooms | ✅ Done — live at deck-monsters.com |
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
+| [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
 | [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — one item left: DMG/CARDS content pass (#3) |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | 🔧 Active — deployed, not heavily used; admin role + tests remaining |
@@ -50,13 +51,14 @@ Everything below shipped and is not expected to need revisiting:
 - **Fight stats** — `fight_summaries` table, `FightSummaryWriter`, catch-up text command, web fight log page with expandable detail, last-fight ticker in ring pane
 - **Card workshop** — full card management shipped: unequip/move commands, preset save/load/delete, drag-and-drop web workshop at `/workshop`
 - **Battle history persistence** — stored in `options.battles`, capped at 20, survives restarts
-- **Bug fixes** — nearly everything tracked is resolved; see `10b-bugs-fixed.md` for the archive, including batch-equip UX (#19) and per-room card shop scoping (#26). The one open item (DMG/CARDS content pass, #3) is tracked in `10-bug-fixes.md`
+- **Boss encounters** — player boss summoning (3 per rolling 24h, per room) and Ring Events: random encounter modifiers that trigger multi-boss gauntlets, free-for-alls, player alliances, and team battles by surfacing the engine's existing team/targeting machinery. `victoryMode: 'last-team'` for Common Cause and House War: combat ends when one faction survives and all survivors win. Centralized activation (`Ring.activateRingEvent`), quorum-drop event clearing, free-for-all centralized in `getTarget`, contestant-level XP team overrides, and restart-gap fix for the boss summon quota (`bossSummonsPending`). Documented in [`docs/boss-encounters.md`](../boss-encounters.md)
+- **Bug fixes** — nearly everything tracked is resolved; see `10b-bugs-fixed.md` for the archive, including batch-equip UX (#19), per-room card shop scoping (#26), the boss-sentinel leaderboard data loss found while building boss summoning (#27–#33), the combat/event findings addressed in PR #358 (#34–#39), the PR review follow-ups: `doAction` last-team recursion (#40), `activateRingEvent` guard (#41), Discord expected refusals masked by generic error (#42), `getEventsSinceForRingFeed limitReached` off-by-one (#43), Discord's import-time `DATABASE_URL` coupling (#44), House War boss-exclusion (#45), last-team fled-win (#46), player-summoned boss pre-fight refund (#47–#48), queued event eviction on roster change (#49), and `isLastTeamFledWin` single-faction tightening (#50). The one open item (DMG/CARDS content pass, #3) is tracked in `10-bug-fixes.md`
 
 ---
 
 ## Active Work — In Order of Priority
 
-Real-time sync bugs (fight log not updating, console missing reconnect history, event ring buffer gap not signalled), quick actions not emitted after commands, batch-equip UX, and card shop room-scoping are all fixed — see `10b-bugs-fixed.md` (#15–#19, #26).
+Real-time sync bugs (fight log not updating, console missing reconnect history, event ring buffer gap not signalled), quick actions not emitted after commands, batch-equip UX, and card shop room-scoping are all fixed — see `10b-bugs-fixed.md` (#15–#19, #26). Discord expected-refusal masking, `getEventsSinceForRingFeed limitReached` off-by-one, and the connector's import-time `DATABASE_URL` coupling are also fixed (#42–#44). The final PR review wave fixed House War/last-team correctness, player-summoned boss pre-fight refund, stale ring event eviction on roster changes, and `isLastTeamFledWin` over-triggering (#45–#50).
 
 ### 1. Discord connector polish (05-discord-connector.md)
 

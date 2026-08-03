@@ -21,6 +21,8 @@ import { Ring } from './ring/index.js';
 import { RoomEventBus } from './events/index.js';
 import type { StateStore } from './types/state-store.js';
 import { resolveShop, type Shop } from './items/store/shop.js';
+import type { BossSummonLedger } from './helpers/boss-summons.js';
+import { refundPendingSummons } from './helpers/boss-summons.js';
 import { announceAndThrow } from './helpers/announce-and-throw.js';
 
 // State save debounce: 30 seconds
@@ -79,11 +81,27 @@ export class Game extends BaseClass {
 			this._eventBus,
 			{
 				spawnBosses: (this.options as any).spawnBosses,
+				ringEvents: (this.options as any).ringEvents,
 				getRoomMonsterLevels: () => this.getRoomMonsterLevels(),
 			},
 			this.log
 		);
+
+		// Refund the exact summon charge when a player-summoned boss is removed before a
+		// fight starts (last player withdrew, or despawn timer fired with no players).
+		// Writes directly to optionsStore + calls persistState() immediately so the refund
+		// survives a subsequent restart. See docs/boss-encounters.md §3.
+		this.ring.onSummonedBossRemoved = (userId: string, timestamp: number) => {
+			this._refundSingleBossSummon(userId, timestamp);
+		};
 		this.exploration = new Exploration(this._eventBus as any, {}, this.log);
+
+		// Refund pending boss summons from before the last restart. Any summon recorded
+		// in the 30–60 s window between `summon a boss` and the fight starting had its
+		// charge spent but the ephemeral boss vanished with the process. We give the charge
+		// back before any player-facing code can see the ledger.
+		// See docs/boss-encounters.md §3 (Finding 6 — restart-gap fix).
+		this._refundPendingBossSummons();
 
 		this.initializeEvents();
 		loadHandlers();
@@ -191,6 +209,104 @@ export class Game extends BaseClass {
 		this.setOptions({ shop } as any);
 	}
 
+	/**
+	 * Room-scoped boss summon ledger — see `helpers/boss-summons.ts`.
+	 *
+	 * Deliberately a pure read, unlike `shop` above: pruning here would call `setOptions()`,
+	 * which broadcasts `stateChange` synchronously. Expired entries are pruned by
+	 * `recordSummon()` instead. See `docs/engine-concurrency-and-timing.md` §7.
+	 */
+	get bossSummons(): BossSummonLedger {
+		return ((this.options as any).bossSummons as BossSummonLedger | undefined) ?? {};
+	}
+
+	set bossSummons(bossSummons: BossSummonLedger) {
+		this.setOptions({ bossSummons } as any);
+	}
+
+	/**
+	 * Pending boss summons: timestamps recorded in `bossSummons` but whose encounter
+	 * has not yet started. If the process restarts before the encounter begins, the boss
+	 * vanishes (bosses are ephemeral) but the charge was already spent — this ledger
+	 * lets the constructor refund those charges on restore. Cleared when a fight starts.
+	 * See docs/boss-encounters.md §3 (Finding 6 — restart-gap fix).
+	 */
+	get bossSummonsPending(): BossSummonLedger {
+		return ((this.options as any).bossSummonsPending as BossSummonLedger | undefined) ?? {};
+	}
+
+	set bossSummonsPending(bossSummonsPending: BossSummonLedger) {
+		this.setOptions({ bossSummonsPending } as any);
+	}
+
+	/**
+	 * Refunds one specific summon timestamp in-process: removes it from both `bossSummons`
+	 * and `bossSummonsPending`, then persists immediately. Called by the ring's
+	 * `onSummonedBossRemoved` when a player-summoned boss is removed before a fight starts
+	 * (last player withdrew, or despawn timer fired). Idempotent — a timestamp already gone
+	 * is a no-op. Does NOT use setOptions() to avoid emitting stateChange mid-flight.
+	 * See docs/boss-encounters.md §3.
+	 */
+	private _refundSingleBossSummon(userId: string, timestamp: number): void {
+		const removeTs = (
+			ledger: BossSummonLedger,
+			uid: string,
+			ts: number
+		): BossSummonLedger => {
+			const existing = ledger[uid];
+			if (!existing) return ledger;
+			const filtered = existing.filter((t: number) => t !== ts);
+			if (filtered.length === existing.length) return ledger; // not found → no-op
+			const next = { ...ledger };
+			if (filtered.length > 0) {
+				next[uid] = filtered;
+			} else {
+				delete next[uid];
+			}
+			return next;
+		};
+
+		const main = (this.options as any).bossSummons as BossSummonLedger | undefined ?? {};
+		const pending = (this.options as any).bossSummonsPending as BossSummonLedger | undefined ?? {};
+
+		const refundedMain = removeTs(main, userId, timestamp);
+		const refundedPending = removeTs(pending, userId, timestamp);
+
+		// Only persist when something actually changed
+		if (refundedMain !== main || refundedPending !== pending) {
+			this.optionsStore = {
+				...this.optionsStore,
+				bossSummons: refundedMain,
+				bossSummonsPending: refundedPending,
+			};
+			this.persistState();
+		}
+	}
+
+	/**
+	 * Removes pending boss summon timestamps from the main ledger and clears the pending
+	 * ledger. Called once at construction time (before `initializeEvents`) so any restart
+	 * that caught a summon mid-flight gives the charge back.
+	 *
+	 * Writes via `optionsStore` directly to avoid emitting `stateChange` during
+	 * construction — listeners are not yet attached at this point.
+	 */
+	private _refundPendingBossSummons(): void {
+		const pending = (this.options as any).bossSummonsPending as BossSummonLedger | undefined;
+		if (!pending || Object.keys(pending).length === 0) return;
+
+		const main = (this.options as any).bossSummons as BossSummonLedger | undefined ?? {};
+		const { ledger: refunded, pending: cleared } = refundPendingSummons(main, pending);
+
+		// Mutate optionsStore directly: setOptions() would emit stateChange which is
+		// not desirable during construction before listeners are wired up.
+		this.optionsStore = {
+			...this.optionsStore,
+			bossSummons: refunded,
+			bossSummonsPending: cleared,
+		};
+	}
+
 	private getRoomMonsterLevels(): number[] {
 		return Object.values(this.characters)
 			.flatMap((character: any) =>
@@ -245,6 +361,34 @@ export class Game extends BaseClass {
 			wrapGameEvent(() => this.scheduleSave())
 		);
 
+		// Finalize pending boss summons when a fight actually starts. This completes the
+		// restart-gap fix: once the encounter begins, the boss is firmly in play and the
+		// charge is genuinely spent — pending can be cleared so a subsequent restart won't
+		// mistakenly refund it. See docs/boss-encounters.md §3.
+		//
+		// Durability requirement: the cleared pending state must be written to disk
+		// immediately (not via the 30s debounce). If the process dies between this
+		// fightBegins event and the next debounced flush, the still-pending entry would
+		// survive in the saved blob and cause a spurious refund on the next restore.
+		// We bypass setOptions/stateChange and call persistState() directly — the same
+		// pattern used in _refundPendingBossSummons() during construction.
+		const unsubBossFinalizer = this._eventBus.subscribe('game-boss-summon-finalizer', {
+			deliver: (event) => {
+				if (event.type === 'ring.fight' && (event.payload as any)?.eventName === 'fightBegins') {
+					if (Object.keys(this.bossSummonsPending).length > 0) {
+						// Write directly — no stateChange emission, no debounce reset.
+						this.optionsStore = {
+							...this.optionsStore,
+							bossSummonsPending: {},
+						};
+						// Immediate flush so the cleared state survives a restart in the
+						// 30–60 s window before the next debounced save would have fired.
+						this.persistState();
+					}
+				}
+			},
+		});
+
 		this._disposeListeners = [
 			disposeAnnouncements,
 			() => this.off('creature.win', boundWin),
@@ -252,6 +396,7 @@ export class Game extends BaseClass {
 			() => this.off('creature.permaDeath', boundPermaDeath),
 			() => this.off('creature.fled', boundFled),
 			() => this.off('stateChange', boundStateChange),
+			unsubBossFinalizer,
 		];
 	}
 

@@ -17,6 +17,7 @@ import {
 	runCommand,
 	createRoomCommandRunner,
 } from '../shared/test-helpers.js';
+import { BOSS_SUMMON_LIMIT, summonAllowance, allMonsters } from '@deck-monsters/engine';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -345,6 +346,97 @@ describe('integration: command flow', function () {
 			responder.unsubscribe();
 
 			expect(answer).to.equal('0');
+		});
+	});
+	describe('summon a boss', () => {
+		// Puts a real character with a monster in the ring, which is the precondition the
+		// command enforces. Going through the full spawn/equip/send flow would add a dozen
+		// scripted prompts without exercising anything this test is about.
+		// Refusals go through announceAndThrow: they announce to the channel and then
+		// reject, exactly as the tRPC router sees them (the router swallows the rejection).
+		const runSummon = async (game: ReturnType<typeof createTestGame>, userId: string) => {
+			try {
+				const { channel } = await runCommand(game, {
+					command: 'summon a boss',
+					userId,
+					isDM: true,
+				});
+				return channel.announces.join('\n');
+			} catch (err) {
+				return (err as Error).message;
+			}
+		};
+
+		const seedRing = async (game: ReturnType<typeof createTestGame>) => {
+			const responder = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
+			await runCommand(game, { command: 'look at monsters', userId: USER_A, isDM: true });
+			responder.unsubscribe();
+
+			const character = (game as any).characters[USER_A];
+			const Monster = allMonsters[0] as new (...args: unknown[]) => any;
+			const monster = new Monster();
+			character.addMonster(monster);
+			game.ring.addMonster({ monster, character, userId: USER_A });
+
+			return character;
+		};
+
+		it('refuses when the player has no monster in the ring', async () => {
+			const game = createTestGame();
+			const responder = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
+			await runCommand(game, { command: 'look at monsters', userId: USER_A, isDM: true });
+			responder.unsubscribe();
+
+			const output = await runSummon(game, USER_A);
+
+			expect(output).to.include('need a monster in the ring');
+			expect(game.ring.contestants.filter((c) => c.isBoss).length).to.equal(0);
+			game.dispose();
+		});
+
+		it('allows the daily limit and then refuses with a reset time', async () => {
+			const game = createTestGame();
+			await seedRing(game);
+
+			for (let i = 0; i < BOSS_SUMMON_LIMIT; i++) {
+				expect(await runSummon(game, USER_A), `summon ${i + 1} should succeed`).to.include(
+					'You summoned',
+				);
+			}
+
+			const output = await runSummon(game, USER_A);
+			expect(output).to.include('all 3 of your boss summons');
+			expect(output).to.include('unlocks');
+			expect(summonAllowance(game.bossSummons, USER_A).remaining).to.equal(0);
+			game.dispose();
+		});
+
+		it('does not spend a charge when the ring refuses the boss', async () => {
+			const game = createTestGame();
+			await seedRing(game);
+
+			// A fight in progress is the common refusal — it must be free.
+			game.ring.inEncounter = true;
+
+			const output = await runSummon(game, USER_A);
+
+			expect(output).to.include('fight is already underway');
+			expect(summonAllowance(game.bossSummons, USER_A).remaining).to.equal(BOSS_SUMMON_LIMIT);
+			game.ring.inEncounter = false;
+			game.dispose();
+		});
+
+		it('keeps quotas independent between players', async () => {
+			const game = createTestGame();
+			await seedRing(game);
+
+			for (let i = 0; i < BOSS_SUMMON_LIMIT; i++) {
+				await runSummon(game, USER_A);
+			}
+
+			expect(summonAllowance(game.bossSummons, USER_A).remaining).to.equal(0);
+			expect(summonAllowance(game.bossSummons, USER_B).remaining).to.equal(BOSS_SUMMON_LIMIT);
+			game.dispose();
 		});
 	});
 });

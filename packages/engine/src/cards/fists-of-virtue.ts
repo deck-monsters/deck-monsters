@@ -28,7 +28,7 @@ export class FistsOfVirtueCard extends HitCard {
 	override getTargets(
 		player: any,
 		_proposedTarget: any,
-		_ring: any,
+		ring: any,
 		activeContestants: any
 	): any[] {
 		return [
@@ -36,6 +36,7 @@ export class FistsOfVirtueCard extends HitCard {
 				contestants: activeContestants,
 				playerMonster: player,
 				strategy: TARGET_HIGHEST_HP_PLAYER,
+				ring,
 			}) as any).monster,
 		];
 	}

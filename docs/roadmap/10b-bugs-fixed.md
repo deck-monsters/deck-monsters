@@ -198,6 +198,598 @@ Five smaller observations from the #19/#26 investigation, all addressed on 2026-
 
 ---
 
+### 27. Boss participants abort every leaderboard write for the fight — FIXED (found while building boss summoning)
+
+`packages/server/src/fight-stats-subscriber.ts`'s `handleFightResolved` wrote each
+`ring.fightResolved` participant's `ownerUserId` straight into `room_player_stats.user_id`
+(`uuid`, FK → `profiles`). Boss contestants carry the sentinel `userId: 'boss'`
+(`engine/src/helpers/bosses.ts`), so the insert threw. Because the participants were processed
+in a sequential `for … await` loop and the whole function was only `.catch(log)`-ed at the
+subscription site, **the first boss row aborted every remaining participant's stats** — and
+since `Ring.addMonster` shuffles contestants, the boss's position was random, so a boss in
+slot 0 dropped the entire fight. The net effect: the room leaderboard silently ignored every
+fight a boss took part in, which is most of them in a quiet room. `fight-summary-writer.ts`
+already defended against the same sentinel via a local `profileUuidOrNull`, which is why fight
+summaries looked fine while the leaderboard drifted.
+
+**Fixed**: the uuid guard moved to a shared `packages/server/src/db/profile-id.ts`
+(`profileUuidOrNull` / `isProfileUuid` / `UUID_HEX_RE`) and is now applied by all three
+subscribers. Participants without a profile owner are skipped (a disposable boss belongs on
+no leaderboard), and each participant's writes are wrapped in their own try/catch so one bad
+row can never cost anybody else their stats. `handleXpCoinsOnly` got the same guard. Covered
+by `fight-stats-subscriber.test.ts`, whose Db double rejects non-uuid values the way Postgres
+does and asserts a boss in slot 0 no longer costs the players behind it.
+
+**Status**: Fixed.
+
+---
+
+### 28. Boss win/loss events silently failed to persist — FIXED
+
+`event-persister.ts` wrote `targetUserId: event.targetUserId ?? null` into
+`room_events.target_user_id` (`uuid`). Private boss `ring.win` / `ring.loss` events are
+published with `targetUserId: 'boss'` (`ring/index.ts`), so each one threw and was dropped
+with an error log. Less damaging than #27 — the write queue's `.catch` kept subsequent writes
+going, and the lost events were boss-private ones nobody reads — but it produced a steady
+trickle of error noise on every boss fight. **Fixed** with the same shared
+`profileUuidOrNull` guard.
+
+**Status**: Fixed.
+
+---
+
+### 29. `TARGET_PREVIOUS_PLAYER` returns `undefined` in team fights — FIXED
+
+`helpers/targeting-strategies.ts` wrapped its previous-index lookup with
+`contestants.length` — the *unfiltered* input — instead of `allContestants.length`, the
+team-filtered list it was actually indexing into. `TARGET_NEXT_PLAYER` had always used the
+filtered length correctly. Any fight where teams removed a contestant from the candidate list
+made the filtered list shorter, so the wraparound indexed past the end and the strategy
+returned `undefined`, which `Ring.fight()` immediately dereferenced. Latent until now (only
+the Sorting Hat scroll ever assigned a team), and load-bearing the moment ring events started
+assigning teams. **Fixed**, with a regression test.
+
+**Status**: Fixed.
+
+---
+
+### 30. An idle ring could clog with bosses forever — FIXED
+
+`Ring.removeBoss()` only despawned a boss when `contestants.length === 1`. Two or more bosses
+alone therefore never despawned — and never fought either, because `startFightTimer()` counts
+all bosses collectively as one monster for the two-monster quorum. So a room left alone could
+accumulate bosses up to `MAX_BOSSES` and sit there permanently, with the ring showing a crowd
+and nothing ever happening. **Fixed**: `removeBoss` now despawns whenever no *player* monster
+is left in the ring. Covered by two new tests (despawns with bosses only; does not despawn
+while a player is present).
+
+**Status**: Fixed.
+
+---
+
+### 31. Bosses could spawn with no warning — FIXED
+
+`Ring.startBossTimer()` gated the two-minute `bossWillSpawn` warning on
+`!inEncounter && bossCount < MAX_BOSSES`, but the inner timer that actually spawned re-checked
+only `inEncounter`. The condition was therefore evaluated twice, two minutes apart: a fight
+that ended inside the warning window produced a boss nobody had been warned about. **Fixed**:
+capacity is evaluated once, when the warning is due, and the same decision gates the spawn.
+The check itself moved into a reusable `Ring.canAcceptBoss()`, which the summon command also
+uses to refuse without spending a charge. Covered by a regression test.
+
+**Status**: Fixed.
+
+---
+
+### 32. Multi-party fights lost winner and loser attribution — FIXED
+
+`Ring.fightConcludes()` only populated `winnerMonsterId` / `loserMonsterId` (and their name
+and owner fields) when `contestants.length === 2`. Every fight with three or more
+contestants — already possible with multiple bosses, and now routine with ring events — wrote
+a `fight_summaries` row and a `ring.fightResolved` payload with no winner or loser at all.
+**Fixed**: attribution is derived from the outcome flags rather than the contestant count,
+and stays conservative — an identity is only claimed when exactly one contestant holds it, so
+genuinely ambiguous fights are still left blank rather than guessed at.
+
+**Status**: Fixed.
+
+---
+
+### 33. Small cleanups alongside the above
+
+- **Dead branch in `Ring.addMonster`**: `if (this.contestants.length > MAX_MONSTERS)` sat
+  inside a block already guarded by `< MAX_MONSTERS`, so it was unreachable. Removed.
+- **`calculateXP` crash guard**: `helpers/experience.ts` read `opponents[0].monster.givenName`
+  without checking `opponents.length`. Unreachable today (fights need two contestants) but a
+  one-line guard now.
+- **Unhandled `TARGET_ALL_CONTESTANTS` in `Ring.fight()`**: `getTarget()` returns a
+  `Contestant[]` for that strategy while every other returns a single contestant, and the
+  fight loop cast unconditionally. Harmless while only scrolls assigned strategies; now that
+  ring events assign them programmatically, the loop handles the array case and logs +
+  skips a turn rather than dereferencing `undefined`.
+- **Admin `spawn a boss` was invisible to the player**: it rejected with a bare
+  `Promise.reject(new Error(...))`, which the router's `.catch` swallows, so a non-admin got
+  no feedback at all. Switched to `announceAndThrow`, the pattern the rest of the codebase
+  already uses.
+
+**Status**: Fixed.
+
+---
+
+---
+
+### 34. Common Cause and House War fights kept going after one faction survived — FIXED
+
+`Ring.fight()`'s doAction loop used a uniform `active.length <= 1` condition to decide when
+combat was over. In events like Common Cause (all players vs one boss) or House War (two
+player factions), the "last contestant standing" criterion is wrong: combat should end once
+all remaining active contestants belong to one faction, even if several of them survive.
+
+**Fixed** with an explicit `victoryMode` field on `RingEventDefinition` (`'last-contestant'
+| 'last-team'`, default `last-contestant`). Common Cause and House War are marked
+`last-team`. `Ring.fight()` now calls `isLastTeamVictory(activeContestants)` — which checks
+`ringEvent.victoryMode === 'last-team'` and then checks that all active contestants map to
+the same faction via `factionOf()` — and resolves the fight when it returns `true`. Every
+surviving faction member is marked `won: true` in `fightResolved` participants, so the fight
+log and leaderboard both reflect team victories correctly.
+
+Covered by new tests in `ring/index.test.ts` (last-team ends combat when one faction
+survives; all survivors marked won) and `ring/ring-events.test.ts` (victoryMode values per
+event).
+
+**Status**: Fixed.
+
+---
+
+### 35. Blood Feud's free-for-all did not apply to cards that call getTarget internally — FIXED
+
+The `freeForAll` flag set on Blood Feud's `RingEventDefinition` was only consumed by
+`Ring.fight()` when selecting the initial proposed target. Cards that call `getTarget()`
+internally — Blast, Enthrall, Fists of Villainy, Fists of Virtue, Pick Pocket — used their
+own team filtering and still excluded team-mates, so Blood Feud's "all enemies, no allies"
+intent was only partially enforced.
+
+**Fixed** centrally: `getTarget()` in `helpers/targeting-strategies.ts` now accepts an
+optional `ring?: { encounterFreeForAll?: boolean }`. If `ring.encounterFreeForAll` is `true`,
+`getTarget` forces `team: false` before any further resolution, making free-for-all apply to
+every target selection in the encounter without modifying each card. The five affected cards
+now pass the ring instance through. `Ring.encounterFreeForAll` is a getter:
+`this.ringEvent?.freeForAll === true`. Normal team targeting is unaffected outside Blood Feud.
+
+Covered by new tests in `ring/index.test.ts` (encounterFreeForAll reflects ringEvent).
+
+**Status**: Fixed.
+
+---
+
+### 36. Admin `trigger ring event` diverged from natural activation — FIXED
+
+The admin `trigger ring event <id>` command set `ring.ringEvent` directly and called
+`startFightTimer()`, while the natural path (inside `rollRingEvent`) additionally emitted the
+`ringEvent` announcement, spawned the Gauntlet's extra bosses, and let the enclosing timer
+arm exactly once. The two paths could drift independently as new ring events were added.
+
+**Fixed** by centralizing activation in `Ring.activateRingEvent(ringEvent: RingEventDefinition)`:
+sets `this.ringEvent`, emits `ringEvent` (consumed by `announcements/ringEvent.ts` and the
+metrics collector), and spawns any `extraBosses` with `deferFightTimer: true`. Both
+`rollRingEvent()` and the admin command now call this method exclusively. The admin command
+also refuses when a fight is already in progress (returning an error announce) and does not
+record an unapplied event.
+
+Covered by new tests in `ring/index.test.ts` (activateRingEvent sets ringEvent, emits once,
+spawns extraBosses for the Gauntlet; non-boss event emits once, no extra spawns; refuses
+during an encounter).
+
+**Status**: Fixed.
+
+---
+
+### 37. Ring event persisted past a quorum drop, contaminating a later roster — FIXED
+
+A ring event rolled for a valid multi-player roster (e.g. 3 players → House War) was never
+cleared when players subsequently left before the fight fired. The remaining solo player,
+joined later by a stranger, would inherit the House War event from a completely different
+group.
+
+**Fixed**: `startFightTimer()` now clears `this.ringEvent = undefined` in both the
+"quorum gone" branch (ring totally empty) and the "below quorum but not empty" branch (ring
+has at least one monster but not enough for a fight). If quorum is later restored,
+`startFightTimer()` re-runs and `rollRingEvent()` rolls a fresh event for whoever is actually
+in the ring. The event is preserved when the countdown is immediately re-armed with a valid
+roster (the `if (this.ringEvent)` guard in `rollRingEvent` prevents overwriting a still-valid
+event in the same arm).
+
+Covered by new tests in `ring/index.test.ts` (ringEvent cleared when player leaves and
+quorum drops; preserved when quorum immediately re-arms after a membership change).
+
+**Status**: Fixed.
+
+---
+
+### 38. XP team calculations ignored contestant-level ring-event overrides — FIXED
+
+`calculateXP` in `helpers/experience.ts` counted opponents by comparing `monster.team` and
+`character.team`. Ring events like Common Cause assign teams at the `contestant.team` level
+(the override field on `Contestant`, which is intentionally ephemeral — see the hard rule in
+`docs/boss-encounters.md §4`). `monster.team` and `character.team` are never written by a
+ring event. So XP math counted team-mates as opponents during Common Cause fights, inflating
+XP rewards.
+
+**Fixed**: `calculateXP` now resolves a contestant's team as `contestant.team ||
+monster.team || character.team`, prioritizing the ring-event override. Covered by new tests
+in `helpers/experience.test.ts` that distinguish same-team allies (via contestant override)
+from opponents.
+
+**Status**: Fixed.
+
+---
+
+### 39. Boss summon charge consumed but boss lost on process restart — FIXED
+
+`summon a boss` atomically checks the quota and records the charge in `game.bossSummons`,
+then calls `ring.addMonster()`, which re-arms the 60 s fight countdown. If the process
+restarted in that 30–60 s window the ephemeral boss vanished (bosses are never serialized)
+while the charge remained in the persisted `bossSummons` ledger — a permanent net loss of
+one daily charge.
+
+**Fixed** with a minimal pending/finalized mechanism: a second ledger `bossSummonsPending`
+is written alongside `bossSummons` in the same synchronous block. When the fight actually
+begins (`ring.fight` / `fightBegins` via the event bus), `bossSummonsPending` is cleared and
+`persistState()` is called immediately — not on the 30 s debounce. `persistState()` then
+dispatches to the registered storage backend: the production `stateStore.save()` is invoked
+synchronously inside `persistState()` itself, while the legacy `stateSaveFunc` callback is
+scheduled one event-loop tick later via `setImmediate`; either way the cleared state reaches
+disk well before the next debounce window. `Game`'s constructor calls
+`_refundPendingBossSummons()` before `initializeEvents`, which uses `refundPendingSummons`
+(a new pure helper in `helpers/boss-summons.ts`) to strip the pending timestamps from
+`bossSummons` and clear the pending ledger. A restart in the 30–60 s window therefore gives
+the charge back.
+
+**Durability detail (Grok follow-up)**: the original implementation used `setOptions()` to
+clear `bossSummonsPending`, which scheduled a 30 s debounced save. A restart in that 30 s
+window could load the still-pending state and incorrectly refund a charge that was already
+used. Fixed by writing directly to `optionsStore` (no `stateChange` emission) and calling
+`persistState()` immediately on `fightBegins`. The `persistState()` call is unconditional on
+the storage backend: `stateStore.save()` fires synchronously on the call stack; `stateSaveFunc`
+fires after one `setImmediate` tick — either is orders of magnitude faster than the 30 s debounce.
+
+The schema is backward-compatible (`bossSummonsPending` lives in `Game.options`, and the Zod
+schema's `passthrough()` accepts it without migration). Bosses remain ephemeral — only the
+quota entry is affected. Ordinary pre-fight player actions cannot accidentally grant duplicate
+summons because they do not touch `bossSummonsPending`.
+
+Covered by new tests in `helpers/boss-summons.test.ts` (addPendingSummon, refundPendingSummons
+pure-helper behavior) and `game.test.ts`:
+- `stateSaveFunc` path (legacy/test): pending cleared after `fightBegins`; save fires after one
+  `setImmediate` tick (verified by yielding with a second `setImmediate`); restored game retains charge.
+- `stateStore.save` path (production): pending cleared synchronously inside `persistState()` on
+  `fightBegins`; `stateStore.save()` is invoked on the call stack without a `setImmediate` yield
+  (verified immediately after `eventBus.publish()`); restored game retains charge.
+- Backward-compat: no `bossSummonsPending` field → charge is preserved, nothing refunded.
+- Refund on restore: pending present → charge is refunded.
+
+**Status**: Fixed.
+
+---
+
+### 40. `doAction` infinite recursion in last-team mode with ≥2 same-faction survivors — FIXED
+
+In `ring/index.ts`, the combined condition at the top of `doAction` was:
+
+```typescript
+if (activeContestants.length <= 1 || isLastTeamVictory(globalActive)) {
+    ...
+    } else {
+        activeContestants = globalActive;
+        next(); // ← recursive call to doAction
+    }
+}
+```
+
+When `isLastTeamVictory(globalActive)` was true AND the batch had ≥2 survivors (all same
+faction), the nested condition `activeContestants.length === 1 && !isLastTeamVictory(...)` was
+always false, so the `else` branch called `next()`, which called `doAction` again with the
+same state — infinite Promise-chain recursion. The recursion eventually overflowed the call
+stack, which `ring.fight()`'s `.catch()` silently swallowed by calling `clearRing()` instead
+of `fightConcludes()`. No contestant ever received `won = true`.
+
+**Fixed** by separating the two cases:
+
+```typescript
+if (isLastTeamVictory(globalActive)) {
+    resolve(undefined); // terminate immediately — no recursion
+    return;
+}
+if (activeContestants.length <= 1) {
+    // normal batch-rebuild logic (unchanged)
+}
+```
+
+Covered by a new regression test in `ring/index.test.ts` (`fight() resolves without
+recursion: allied survivors both get won=true`) that sets up 3 contestants (2 allied, 1 dead
+enemy), runs `fight()`, and verifies both survivors have `won === true` — impossible if the
+stack overflow took the `.catch()` path.
+
+**Status**: Fixed.
+
+---
+
+### 41. Admin `trigger ring event` could overwrite an already-armed event — FIXED
+
+`ring.activateRingEvent()` had no guard against repeat activation. An admin calling
+`trigger ring event <id>` while a different event was already queued would overwrite it and
+re-run its side effects (boss spawns, announcements, metrics). Natural rolls were safe because
+`rollRingEvent()` bails on `if (this.ringEvent)`, but the admin command path bypassed that.
+
+**Fixed**: `activateRingEvent()` now returns immediately (with a log entry) if `this.ringEvent`
+is already set. The command handler in `commands/monster.ts` additionally checks `ring.ringEvent`
+before calling `activateRingEvent()` and surfaces a user-facing refusal:
+`"A <EventName> is already queued — the new event was not applied."`.
+
+Covered by a new test in `ring/index.test.ts` that arms one event, attempts to arm a second,
+and verifies the first is unchanged and the `ringEvent` emission count remains 1.
+
+**Status**: Fixed.
+
+---
+
+### 42. Discord `/summon-boss` expected refusals swallowed by generic error handler — FIXED
+
+`announceAndThrow` called `channel({ announce })` to send the refusal message, then threw a
+plain `Error`. In the Discord connector, this propagated through `dispatchCommand` to
+`DiscordBot.handleSlashCommand`'s catch block, which always replaced the error with
+`"Something went wrong. Please try again."` — hiding the actual reason (quota exhausted, no
+monster in ring, fight active, boss/ring cap). On the web console path the message was visible
+(the `channel()` call fired before the throw and posted to the event bus), but the Discord path
+had a second problem: `channel({ announce })` sends a DM, which is silently discarded if the
+player has DMs blocked — so both the DM and the ephemeral interaction became useless.
+
+**Fixed** with a new `CommandRefusalError` class (`engine/src/helpers/command-refusal-error.ts`)
+and a corresponding export from the engine. `announceAndThrow` now throws `CommandRefusalError`
+instead of plain `Error`. `DiscordBot.handleSlashCommand` catches `CommandRefusalError` and
+edits the deferred ephemeral interaction with `err.message` — the exact refusal text — rather
+than the generic fallback. Unexpected infrastructure errors still fall through to the generic
+message and are logged. The router's fire-and-forget `.catch()` also suppresses `CommandRefusalError`
+from server-side error logs (the message was already delivered to the web console via the event
+bus before the throw). The fix is shared: every slash command that uses `dispatchCommand` (or
+whose action throws `CommandRefusalError`) benefits automatically.
+
+Covered by tests in `engine/src/helpers/announce-and-throw.test.ts` (direct unit test: channel
+receives the message, `CommandRefusalError` is thrown — not plain `Error` — and carries the exact
+text) and `connector-discord/src/__tests__/bot.test.ts` (4 integration-level tests): exact message
+shown without logging on `CommandRefusalError`; generic message plus log on unexpected error; correct
+`reply` vs `editReply` path depending on deferred state; blocked-DM scenario where `announceAndThrow`
+is called through a channel that silently resolves — interaction always shows the exact refusal text,
+and the detection uses the `isCommandRefusal` sentinel so instanceof boundary mismatches are handled.
+
+**Status**: Fixed.
+
+---
+
+### 43. `getEventsSinceForRingFeed` returns `limitReached: true` when the replay contains exactly `maxTotal` events and no more exist — FIXED
+
+The pagination loop in `RoomManager.getEventsSinceForRingFeed` returned `limitReached: true`
+whenever the accumulated event count hit `maxTotal` AND the last page was full (`page.length ===
+pageSize`). A full page meant "the DB returned as many rows as we asked for", not "there are more
+rows after this". If the room had exactly `maxTotal` events (e.g. exactly 2000) the last full
+page was also the last page in the DB — but the loop returned `limitReached: true` and the
+client displayed a spurious "replay truncated" gap marker.
+
+**Fixed** by probing for one additional row after hitting the cap. When `events.length >= maxTotal`
+and the last page was full, `_fetchRingFeedPage` is called once more with `limit: 1` anchored
+at the last event's id. If the probe returns 0 rows, `limitReached: false` (no more events);
+if it returns 1 row, `limitReached: true` (rows beyond the cap exist). The probe row is never
+included in the output. All other guarantees are unchanged: membership validation, public/private
+visibility filtering, cursor ordering, and the `maxTotal` output cap.
+
+Covered by 2 new tests in `room-manager.test.ts`: "exactly at cap → false" verifies the probe
+fires and returns false when the DB has nothing after the last page; "cap+1 → true" verifies
+the probe finds the extra row and returns true without including it in the output.
+
+**Status**: Fixed.
+
+---
+
+### 44. Discord connector tests required `DATABASE_URL` during module collection — FIXED
+
+`auth/connector-users.ts` imported the server's default database singleton at module evaluation
+time to provide a default function argument. Importing `DiscordBot` therefore evaluated
+`server/db/index.ts` before any connector test ran, even though the connector injects its own
+database. In environments without server configuration, Mocha failed during collection with
+`DATABASE_URL environment variable is required`.
+
+**Fixed** by resolving the server singleton lazily only for callers that omit a database and by
+passing the connector's injected database through both message and slash-command paths. A
+subprocess regression test imports `DiscordBot` with `DATABASE_URL` explicitly absent.
+
+**Status**: Fixed.
+
+---
+
+### 45. House War was eligible with bosses present — FIXED
+
+`House War`'s eligibility check was `playerCount >= 3` with no constraint on bosses. In
+`last-team` mode bosses form their own explicit `Boss` faction: every boss character carries
+`team: 'Boss'` (set by `BOSS_TEAM` in `helpers/bosses.ts`), so `factionOf()` resolves them
+all to the same `'Boss'` string. Once one player house was eliminated the surviving bosses
+would still be active as the `Boss` faction, blocking the one-faction win condition from
+ever firing — the fight would have to continue to last-contestant or draw instead of
+resolving cleanly on house elimination.
+
+**Fixed**: eligibility is now `playerCount >= 3 && bossCount === 0`. Common Cause remains the
+dedicated boss-vs-player team event. The banner comment was updated to record the reason.
+
+Covered by a new test in `ring/ring-events.test.ts` (`rejects House War when bosses are
+present`).
+
+**Status**: Fixed.
+
+---
+
+### 46. Last-team mode drew when all opponents fled and nobody died — FIXED
+
+`fightConcludes()` determined whether a fight had a non-draw outcome solely by counting
+deaths. In a `last-team` event where all opponents fled (zero deaths), the entire roster
+received draw outcomes — no contestant ever got `won: true`, and no `ring.win` event was
+published.
+
+**Fixed**: `fightConcludes()` now computes `isLastTeamFledWin`:
+```
+deaths === 0
+  && ringEvent.victoryMode === 'last-team'
+  && contestants.some(c => c.fled)
+  && activeSurvivors.length > 0
+  && new Set(activeSurvivors.map(factionOf)).size === 1
+```
+where `activeSurvivors = contestants.filter(c => !c.monster.dead && !c.fled)`.
+
+The one-active-faction requirement mirrors `isLastTeamVictory` exactly: if Slytherin flees
+but Hufflepuff is still fighting alongside Gryffindor, two factions remain active and the
+flag is false (fight concludes as a draw). Only when all opponents have fled *and* every
+surviving, non-fled contestant belongs to the same faction does the flag trigger.
+
+When the flag is set, surviving (non-dead, non-fled) contestants are marked `won: true` and
+receive `ring.win`; fled contestants receive `ring.fled` (not loss — they escaped without
+dying); and `participantOutcome` correctly returns `'win'` for survivors. The overall
+`fightOutcome` in `ring.fightResolved` is `'fled'` (one faction fled) rather than `'draw'`.
+`last-contestant` fights are unaffected — the flag requires `victoryMode === 'last-team'`
+to be set.
+
+`factionOf()` is extracted to module level so both `Ring.fight()` (for `isLastTeamVictory`)
+and `Ring.fightConcludes()` (for `isLastTeamFledWin`) share the same resolution logic.
+
+Covered by two new tests in `ring/index.test.ts`:
+- `fightConcludes` unit test: three contestants, Gryffindor (2) vs Slytherin (1 fled), zero
+  deaths → both Gryffindors win, Slytherin does not lose.
+- `fight()` integration test: exercises the full `ring.fight()` path so that
+  `lastContestant === undefined` (as `doAction` resolves on `isLastTeamVictory`) and the
+  zero-deaths fled outcome propagates end-to-end.
+
+**Status**: Fixed.
+
+---
+
+### 47. Player-summoned bosses not refunded when removed pre-fight — FIXED
+
+`summon a boss` recorded a charge in `bossSummons` + `bossSummonsPending`, but there was no
+path to cancel that charge if the boss was removed from the ring before a fight started. Two
+scenarios caused this:
+
+1. **Last player withdraws** — the boss is left waiting alone; `removeBoss` (which only acts
+   when `!hasPlayerContestants`) would do nothing unless explicitly called; the charge was
+   spent for nothing.
+2. **Despawn timer fires** — the 10-minute despawn timer calls `removeBoss`, which now
+   correctly refunds if no players are present, but previously had no refund path.
+
+**Fix — three-layer approach**:
+
+1. `Contestant` gained optional `summonedByUserId?: string` and `summonedAt?: number` fields,
+   set by `summonBossAction` when calling `ring.spawnBoss({ summonedByUserId, summonedAt })`.
+   These are ephemeral (live on the contestant, never serialized).
+2. `Ring` gained an optional `onSummonedBossRemoved?: (userId, timestamp) => void` callback.
+   `removeBoss()` invokes it when a player-summoned boss (`ringContestant.summonedByUserId`)
+   is about to be removed with no players in the ring.
+3. `Game` wires the callback to `_refundSingleBossSummon(userId, timestamp)`, a new private
+   method that removes the timestamp from both ledgers using direct `optionsStore` mutation
+   (no `stateChange` broadcast) and calls `persistState()` immediately. Idempotent — a
+   timestamp already absent is a no-op.
+4. `removeMonster()` now proactively removes player-summoned bosses when the last player
+   withdraws (rather than waiting for their 10-minute despawn timers), so refunds land within
+   the same event-loop turn as the withdrawal — not up to 10 minutes later.
+
+Timer/admin/Gauntlet bosses (no `summonedByUserId`) are unaffected.
+
+Covered by four new tests in `ring/index.test.ts` (`player-summoned boss refund`):
+- Last player withdraws → summoned boss removed, both ledgers cleared.
+- Player still present → `removeBoss` no-ops, ledgers unchanged.
+- Despawn timer fires with no players → boss removed, ledgers cleared.
+- Timer/admin boss removed with no players → unrelated ledger entries unchanged.
+
+**Status**: Fixed.
+
+---
+
+### 48. `docs/boss-encounters.md` free-for-all centralization description was incomplete — FIXED
+
+The "Centralized free-for-all policy (Blood Feud)" section described only the card-level
+retargeting fix (the `ring.encounterFreeForAll` getter). The primary targeting path —
+`Ring.fight()` explicitly passing `team: false` to `getTarget()` on each card play — was
+not documented, making the two-layer design non-obvious and the comment "before this fix,
+only applied to initial target selection" somewhat misleading.
+
+**Fixed**: the section now explicitly describes both layers:
+
+1. **Primary targeting** (`Ring.fight()`): checks `ringEvent.freeForAll` directly and
+   passes `team: false` for the per-turn `getTarget()` call.
+2. **Card-level retargeting** (Blast, Enthrall, etc.): passes the ring instance through
+   to `getTarget()`; the `ring.encounterFreeForAll` getter forces `team: false` there.
+
+Also fixed: a typo left the numbered list item label empty (`**Primary targeting** ():`).
+Corrected to `(**Primary targeting** (`Ring.fight()`):)`.
+
+**Status**: Fixed.
+
+---
+
+### 49. Armed ring events not evicted when the roster made them ineligible — FIXED
+
+After a ring event was rolled during a fight countdown, a later roster change (e.g. a boss
+joining mid-countdown) could leave an ineligible event armed. `rollRingEvent()` bailed out
+early on `if (this.ringEvent) return` without checking whether the event was still valid.
+The fight would then apply House War with a boss present — three factions, no clean
+last-team win.
+
+Two failure modes:
+1. **Natural path**: boss joins or player leaves → `addMonster`/`removeMonster` → `startFightTimer` → `rollRingEvent` → early return → stale House War applied.
+2. **Admin force path**: `trigger ring event house-war` with a boss in the ring — the command would set the event, announce it, spawn any extra bosses, and record a metric even though the roster could never produce a clean two-house outcome.
+
+**Fixed**:
+
+- `rollRingEvent()` now re-checks eligibility *before* the deterministic/events-disabled
+  guards (it is a correctness invariant, not a randomness gate). If the armed event is
+  ineligible for the current roster it is cleared and the normal re-roll path runs (which is
+  suppressed in deterministic/test mode, leaving `ringEvent = undefined` — the right outcome).
+- `triggerRingEventAction` (`commands/monster.ts`) computes `buildRingEventContext` against
+  the current ring and refuses with an actionable message — including the event id — before
+  calling `activateRingEvent`. No announcement, no metric, no boss spawn on refusal.
+
+Covered by two new tests in `ring/index.test.ts` (`ineligible-event eviction on roster change`):
+- House War armed then boss joins → ringEvent cleared, countdown still armed.
+- Admin force House War with boss present → throws, no announcement or emit.
+
+**Status**: Fixed.
+
+---
+
+### 50. `isLastTeamFledWin` fired when only some opponents had fled — FIXED
+
+The `isLastTeamFledWin` computation in `fightConcludes()` checked
+`contestants.some(c => c.fled)` — any flee was sufficient. If Slytherin fled but Hufflepuff
+was still fighting alongside Gryffindor, two factions remained active. The flag incorrectly
+resolved to `true`, crowning the Gryffindors as winners when the fight should have been a
+draw (Hufflepuff never lost).
+
+Additionally, the faction resolution used a different closure in `fight()` (`factionOf` local
+arrow function) than was available in `fightConcludes()`. The two could drift apart if either
+was edited independently.
+
+**Fixed**:
+
+- `factionOf()` is extracted to a module-level function (before the `Ring` class) so both
+  `Ring.fight()` and `Ring.fightConcludes()` share identical faction resolution.
+- `isLastTeamFledWin` now mirrors `isLastTeamVictory`: after excluding dead and fled
+  contestants, the surviving active set must all belong to exactly one faction
+  (`new Set(activeSurvivors.map(factionOf)).size === 1`). If multiple factions remain active,
+  the flag is false and `fightConcludes` issues draws.
+
+Covered by a new test in `ring/index.test.ts`: two Gryffindors + one Slytherin (fled) + one
+Hufflepuff (alive) → no winner for any contestant; the genuine all-opponents-fled case
+continues to pass.
+
+**Status**: Fixed.
+
+---
+
 ## Other Resolved Items
 
 ### 1. "Barely blocked" message fires incorrectly (upstream #181)
@@ -285,6 +877,13 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Fix fight log not updating after new fights complete (pending-snapshot race + retries, #15)
 - [x] Fix idle-sweep orphaning in-progress fights (`unloadRoom` checks `ring.inEncounter`, #21)
 - [x] Dispose pending boss despawn timers (`bossDespawnTimers` Set, #22)
+- [x] Guard every `uuid` write path against the `'boss'` sentinel (`db/profile-id.ts`, #27/#28)
+- [x] Isolate per-participant fight-stat writes so one bad row can't abort the rest (#27)
+- [x] Fix `TARGET_PREVIOUS_PLAYER` wraparound to use the team-filtered list (#29)
+- [x] Despawn bosses when no player monster remains, not only when alone (#30)
+- [x] Make the boss spawn warning and the spawn itself agree (`canAcceptBoss()`, #31)
+- [x] Derive winner/loser attribution from outcomes so multi-party fights keep it (#32)
+- [x] Remove the unreachable `MAX_MONSTERS` branch in `addMonster`; guard `calculateXP` and the `getTarget` array case; surface `spawn a boss`'s admin refusal (#33)
 - [x] Fix cross-room stateChange save amplification (room-scoped guard on the listener, #23)
 - [x] Fix direct mutations bypassing stateChange (`getCharacter`, `Ring.removeMonster`, `removeItem`, #24)
 - [x] Fix cross-room reward duplication (creature.win/loss/permaDeath/fled) (CRITICAL, found while fixing #23, #25)
@@ -314,3 +913,21 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Replace remaining `Promise.reject(channel({ announce }))` call sites with announce-then-real-`Error`
 - [x] Publish a terminal `cancelled` event from `fight()`'s `.catch` path
 - [x] Distinguish "still processing your previous command" from "answer the current prompt first" in `activeFlows` rejection messages
+- [x] Add `victoryMode: 'last-team'` to Common Cause and House War; `Ring.fight()` ends combat when one faction survives and marks all survivors won (#34)
+- [x] Centralize Blood Feud's free-for-all in `getTarget()` via optional `ring` param; pass ring from Blast, Enthrall, Fists, Pick Pocket (#35)
+- [x] Centralize ring event activation in `Ring.activateRingEvent()`; admin `trigger ring event` now uses same path, refuses during encounter (#36)
+- [x] Clear `ringEvent` when quorum drops in `startFightTimer()`; fresh event rolled when quorum later restored (#37)
+- [x] Prioritize `contestant.team` over `monster.team`/`character.team` in `calculateXP` (#38)
+- [x] Fix boss summon restart gap: `bossSummonsPending` ledger refunded on restore before fight start (#39)
+- [x] Add production-shaped `stateStore.save` durability test for `bossSummonsPending` finalization (#39 follow-up)
+- [x] Fix `doAction` infinite recursion in last-team mode with ≥2 same-faction survivors (`ring/index.ts`, #40)
+- [x] Fix admin `trigger ring event` overwriting an already-armed event (`activateRingEvent()` guard, #41)
+- [x] Fix Discord `/summon-boss` expected refusals masked by "Something went wrong" (`CommandRefusalError`, #42)
+- [x] Fix `getEventsSinceForRingFeed limitReached` off-by-one: probe for one more row at the cap boundary (#43)
+- [x] Remove Discord connector's import-time dependency on server `DATABASE_URL` (#44)
+- [x] Exclude bosses from House War eligibility (`bossCount === 0`) to keep it a pure two-house player event (#45)
+- [x] Fix last-team mode draw when all opponents fled with zero deaths (`isLastTeamFledWin`, #46)
+- [x] Refund player-summoned boss charges removed pre-fight (`onSummonedBossRemoved` callback + `_refundSingleBossSummon`, #47)
+- [x] Complete free-for-all docs: describe primary targeting layer in `Ring.fight()` and fix empty label typo (#48)
+- [x] Evict stale ring events on roster change: `rollRingEvent()` re-checks eligibility; admin force refuses ineligible events with actionable message (#49)
+- [x] Tighten `isLastTeamFledWin` to require exactly one active non-fled faction; extract `factionOf()` to module level for shared use (#50)

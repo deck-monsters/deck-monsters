@@ -136,6 +136,20 @@ export const bossSpawns = new Counter({
 	registers: [registry],
 });
 
+export const bossSummons = new Counter({
+	name: 'dm_boss_summons_total',
+	help: 'Total bosses summoned by players',
+	labelNames: ['room_id'] as const,
+	registers: [registry],
+});
+
+export const ringEvents = new Counter({
+	name: 'dm_ring_events_total',
+	help: 'Total ring events triggered',
+	labelNames: ['room_id', 'event'] as const,
+	registers: [registry],
+});
+
 // ── Ring state ─────────────────────────────────────────────────────────────
 
 export const monstersInRing = new Gauge({

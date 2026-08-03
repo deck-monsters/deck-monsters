@@ -16,6 +16,7 @@ import type { GuildRoomManager } from './guild-room-manager.js';
 import type { GuildRoomSubscription } from './guild-room-subscription.js';
 import { loadCommands, type CommandContext } from './slash-commands/index.js';
 import { ensureConnectorUser } from '@deck-monsters/server/auth/connector-users';
+import { isCommandRefusal } from '@deck-monsters/engine';
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -117,8 +118,16 @@ export class DiscordBot {
 		try {
 			await command.execute(interaction, ctx);
 		} catch (err) {
-			this.log(err);
-			const content = 'Something went wrong. Please try again.';
+			// Expected user-facing refusal (quota, precondition, etc.) — detect via the
+			// isCommandRefusal type guard rather than instanceof so the check survives
+			// package and runtime boundary mismatches (see engine/helpers/command-refusal-error.ts).
+			// Refusals: show the exact message that was already announced; do not log.
+			// Unexpected infrastructure errors: log and show a generic fallback.
+			const isRefusal = isCommandRefusal(err);
+			if (!isRefusal) this.log(err);
+			const content = isRefusal
+				? err.message
+				: 'Something went wrong. Please try again.';
 			if (interaction.deferred || interaction.replied) {
 				await interaction.editReply({ content }).catch(() => {});
 			} else {
@@ -166,7 +175,8 @@ export class DiscordBot {
 			const supabaseUserId = await ensureConnectorUser(
 				'discord',
 				message.author.id,
-				message.author.username
+				message.author.username,
+				this.db
 			);
 
 			const roomId = await this.guildRoomManager.getOrCreateDefaultRoom(guildId, supabaseUserId);

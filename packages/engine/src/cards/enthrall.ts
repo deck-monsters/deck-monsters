@@ -96,6 +96,7 @@ export class EnthrallCard extends ImmobilizeCard {
 			contestants: activeContestants,
 			playerMonster: target,
 			strategy: TARGET_ALL_CONTESTANTS,
+			ring,
 		}) as any[]).map(({ monster }: any) => monster);
 
 		return mapSeries(targets, (newTarget: any) =>

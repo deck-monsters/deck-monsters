@@ -18,7 +18,8 @@ export async function resolveUser(
 	const supabaseUserId = await ensureConnectorUser(
 		'discord',
 		interaction.user.id,
-		interaction.user.username
+		interaction.user.username,
+		ctx.db
 	);
 
 	const guildId = interaction.guildId ?? `dm-${interaction.user.id}`;

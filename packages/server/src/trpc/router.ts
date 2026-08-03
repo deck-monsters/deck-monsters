@@ -7,7 +7,7 @@ import { createLogger } from '../logger.js';
 const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
-import { PROMPT_CANCELLED, PromptCancelledError } from '@deck-monsters/engine';
+import { PROMPT_CANCELLED, PromptCancelledError, isCommandRefusal } from '@deck-monsters/engine';
 import { buildQuickActions } from '../quick-actions.js';
 import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
@@ -626,8 +626,13 @@ export function createRouter(roomManager: RoomManager) {
 						const isCancelled =
 							err instanceof PromptCancelledError ||
 							(err instanceof Error && err.name === 'PromptCancelledError');
+						// Expected user-facing refusal. The message was already sent to the web
+						// console via channel({ announce }) before the throw. Detected via the
+						// isCommandRefusal type guard (sentinel-based, survives package/runtime
+						// boundary mismatches). Nothing more to do — don't log as an error.
+						const isRefusal = isCommandRefusal(err);
 						const msg = err instanceof Error ? err.message : String(err);
-						if (!isCancelled && !msg.includes('Prompt timed out')) {
+						if (!isCancelled && !isRefusal && !msg.includes('Prompt timed out')) {
 							roomManager['log']?.(err);
 						}
 					})

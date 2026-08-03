@@ -59,13 +59,14 @@ export class BlastCard extends BaseCard<BlastCardOptions> {
 	override getTargets(
 		player: any,
 		_proposedTarget: any,
-		_ring: any,
+		ring: any,
 		activeContestants: any
 	): any[] {
 		return (getTarget({
 			contestants: activeContestants,
 			playerMonster: player,
 			strategy: TARGET_ALL_CONTESTANTS,
+			ring,
 		}) as any[]).map(({ monster }: any) => monster);
 	}
 

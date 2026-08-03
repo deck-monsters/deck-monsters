@@ -24,7 +24,7 @@ export class FistsOfVillainyCard extends HitCard {
 	override getTargets(
 		player: any,
 		_proposedTarget: any,
-		_ring: any,
+		ring: any,
 		activeContestants: any
 	): any[] {
 		return [
@@ -32,6 +32,7 @@ export class FistsOfVillainyCard extends HitCard {
 				contestants: activeContestants,
 				playerMonster: player,
 				strategy: TARGET_LOWEST_HP_PLAYER,
+				ring,
 			}) as any).monster,
 		];
 	}

@@ -12,6 +12,8 @@
  * throwing inside the command pipeline.
  */
 
+import { summonAllowance, type BossSummonLedger } from '@deck-monsters/engine';
+
 export interface QuickAction {
 	label: string;
 	command: string;
@@ -23,6 +25,7 @@ type LooseRecord = Record<string, unknown>;
 
 type QuickActionsGame = {
 	characters?: Record<string, unknown>;
+	bossSummons?: BossSummonLedger;
 	ring?: {
 		contestants?: Array<{ userId?: string; monster?: unknown; isBoss?: boolean }>;
 	};
@@ -40,6 +43,15 @@ const isDead = (monster: unknown): boolean =>
 
 const isDestroyed = (monster: unknown): boolean =>
 	Boolean((monster as LooseRecord | undefined)?.destroyed);
+
+/** Defensive read — this runs inside the command pipeline and must never throw. */
+const summonsRemaining = (game: QuickActionsGame, userId: string): number => {
+	try {
+		return summonAllowance(game?.bossSummons, userId).remaining;
+	} catch {
+		return 0;
+	}
+};
 
 export function buildQuickActions(game: QuickActionsGame, userId: string): QuickAction[] {
 	const actions: QuickAction[] = [];
@@ -89,6 +101,19 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 
 	// Ordered by how likely each is to be the player's actual next move.
 	if (hasMonsterInRing) {
+		// Waiting in an empty ring is the single most common dead end, so offer the summon
+		// ahead of everything else — but only when there is nothing to fight and the player
+		// still has a charge left.
+		const contestants = asArray(game?.ring?.contestants);
+		const hasOpponent = contestants.some((contestant) => {
+			const entry = contestant as LooseRecord;
+			return entry?.isBoss || entry?.userId !== userId;
+		});
+
+		if (!hasOpponent && summonsRemaining(game, userId) > 0) {
+			add('Summon a boss', 'summon a boss');
+		}
+
 		add('Look at the ring', 'look at the ring');
 	}
 

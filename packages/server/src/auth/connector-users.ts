@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import { eq, and } from 'drizzle-orm';
-import { db as defaultDb } from '../db/index.js';
 import { userConnectors } from '../db/schema.js';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from '../db/schema.js';
@@ -31,9 +30,14 @@ export async function ensureConnectorUser(
 	connectorType: string,
 	externalId: string,
 	displayName: string,
-	database: Db = defaultDb
+	database?: Db
 ): Promise<string> {
-	const [existing] = await database
+	// Loading the server DB singleton at module evaluation time made every consumer of this
+	// helper require DATABASE_URL just to import it. Connectors inject their DB; server callers
+	// that omit it still resolve the singleton on first use.
+	const resolvedDatabase = database ?? (await import('../db/index.js')).db;
+
+	const [existing] = await resolvedDatabase
 		.select({ userId: userConnectors.userId })
 		.from(userConnectors)
 		.where(
@@ -57,7 +61,7 @@ export async function ensureConnectorUser(
 
 	const userId = data.user.id;
 
-	await database.insert(userConnectors).values({ userId, connectorType, externalId });
+	await resolvedDatabase.insert(userConnectors).values({ userId, connectorType, externalId });
 
 	return userId;
 }
