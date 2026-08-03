@@ -7,7 +7,7 @@ import {
 	recordSummon,
 	summonAllowance,
 } from '../helpers/boss-summons.js';
-import { getRingEvent, RING_EVENTS } from '../ring/ring-events.js';
+import { buildRingEventContext, getRingEvent, RING_EVENTS } from '../ring/ring-events.js';
 import type { registerHandler } from './index.js';
 
 const cleanArgs = (args: Record<string, any> = {}): Record<string, any> => {
@@ -407,6 +407,16 @@ function triggerRingEventAction({ channel, game, isAdmin, results }: any): Promi
 			return announceAndThrow(
 				channel,
 				`A ${ring.ringEvent.name} is already queued — the new event was not applied.`
+			);
+		}
+
+		// Refuse if the event is ineligible for the current roster — same eligibility
+		// criteria as a natural roll. No announcement, no metric, no boss spawn.
+		const context = buildRingEventContext(ring.contestants);
+		if (!ringEvent.eligible(context)) {
+			return announceAndThrow(
+				channel,
+				`${ringEvent.name} cannot be forced right now — the current roster does not meet its requirements (need: ${ringEvent.id}).`
 			);
 		}
 

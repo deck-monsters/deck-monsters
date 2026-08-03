@@ -568,11 +568,14 @@ describe('ring/index.ts', () => {
 		it('never re-rolls while an event is already in force', () => {
 			// The guard is what stops the Gauntlet's own boss spawns — which re-enter
 			// startFightTimer via addMonster — from rolling a second event.
+			// Blood Feud requires contestants.length >= 3, so we need 3 players for the
+			// event to remain eligible across the rollRingEvent() calls.
 			const game = new Game();
 			const ring = game.getRing();
 
 			addPlayer(ring, 'user-1');
 			addPlayer(ring, 'user-2');
+			addPlayer(ring, 'user-3');
 
 			const selected = ringEventFor('blood-feud');
 			ring.ringEvent = selected;
@@ -644,6 +647,80 @@ describe('ring/index.ts', () => {
 						expect(ring.ringEvent).to.equal(undefined);
 						game.dispose();
 					});
+			});
+		});
+
+		describe('ineligible-event eviction on roster change (PR review finding)', () => {
+			it('clears House War when a boss joins making it ineligible, without re-rolling in deterministic mode', () => {
+				// House War requires bossCount === 0. A boss joining mid-countdown makes it
+				// ineligible. rollRingEvent() must detect this, clear the event (correctness
+				// invariant — not randomness), and not re-roll in deterministic mode.
+				const game = new Game();
+				const ring = game.getRing();
+
+				addPlayer(ring, 'user-1');
+				addPlayer(ring, 'user-2');
+				addPlayer(ring, 'user-3');
+				ring.ringEvent = ringEventFor('house-war');
+				expect(ring.ringEvent?.id, 'pre-condition: house-war armed').to.equal('house-war');
+
+				// Boss joins → addMonster → startFightTimer → rollRingEvent → eligibility check
+				ring.spawnBoss();
+
+				// House War must be cleared; deterministic mode suppresses a re-roll so ringEvent is gone.
+				expect(ring.ringEvent?.id, 'House War must be cleared').to.not.equal('house-war');
+				// Quorum is still met (3 players + boss) → fight countdown must remain armed.
+				expect(ring.nextFightAt, 'countdown must still be armed').to.be.a('number');
+
+				game.dispose();
+			});
+
+			it('admin trigger refuses an event the current roster cannot satisfy, with no side effects', async () => {
+				// House War (bossCount === 0) cannot be forced when a boss is in the ring.
+				// The command must refuse with an actionable message, set no ringEvent, and
+				// emit no ringEvent event (no announcement, no metric, no boss spawn).
+				const game = new Game();
+				const ring = game.getRing();
+
+				addPlayer(ring, 'user-1');
+				addPlayer(ring, 'user-2');
+				addPlayer(ring, 'user-3');
+				ring.spawnBoss(); // makes House War ineligible
+
+				// Pre-register the admin character so getCharacter() skips creation prompts.
+				// Without this, game.getCharacter() tries to create a character by asking the
+				// channel for type/gender/name, the test channel returns undefined, and the
+				// action is never reached — meaning no refusal announcement is recorded.
+				game.characters['admin-id'] = new Beastmaster();
+
+				const announces: string[] = [];
+				const channel = (opts: any): Promise<void> => {
+					if (opts.announce) announces.push(String(opts.announce));
+					return Promise.resolve();
+				};
+				const emitted: any[] = [];
+				ring.on('ringEvent', (_className: string, _r: any, data: any) => emitted.push(data));
+
+				const action = game.handleCommand({ command: 'trigger ring event house-war' });
+				expect(action, 'command should be recognized').to.not.equal(null);
+
+				let threw = false;
+				try {
+					await action!({
+						channel,
+						channelName: 'test',
+						isAdmin: true,
+						isDM: false,
+						user: { id: 'admin-id', name: 'Admin' },
+					});
+				} catch { threw = true; }
+
+				expect(threw, 'must refuse with announce+throw').to.equal(true);
+				expect(announces.length, 'must announce the reason').to.be.above(0);
+				expect(ring.ringEvent, 'ringEvent must not be set').to.equal(undefined);
+				expect(emitted.length, 'ringEvent must not be emitted').to.equal(0);
+
+				game.dispose();
 			});
 		});
 
@@ -1018,6 +1095,49 @@ describe('ring/index.ts', () => {
 			// Slytherin fled but was not killed
 			expect(p2.won, 'Slytherin must not win').to.equal(undefined);
 			expect(p2.lost, 'Slytherin must not have lost (no death)').to.equal(undefined);
+
+			game.dispose();
+		});
+
+		it('partial flight in last-team mode (multiple living factions remain) produces a draw, not a fled-win', () => {
+			// Regression: isLastTeamFledWin must require the active survivors to all belong
+			// to exactly one faction. With Slytherin fled but Hufflepuff still alive, two
+			// factions remain active (Gryffindor + Hufflepuff) → no winner, draw for all.
+			const game = new Game();
+			const ring = game.getRing();
+
+			const c1 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c2 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c3 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c4 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+
+			ring.addMonster(c1);
+			ring.addMonster(c2);
+			ring.addMonster(c3);
+			ring.addMonster(c4);
+
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';  // flees — but Hufflepuff still active
+			ring.contestants[3]!.team = 'Hufflepuff'; // still fighting
+
+			ring.contestants[2]!.monster.fled = true;
+
+			ring.ringEvent = { ...RING_EVENTS.find(e => e.id === 'house-war')!, apply: () => {} };
+
+			ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
+
+			const p0 = ring.findContestant(c1.character, c1.monster)!;
+			const p1 = ring.findContestant(c2.character, c2.monster)!;
+			const p2 = ring.findContestant(c3.character, c3.monster)!;
+			const p3 = ring.findContestant(c4.character, c4.monster)!;
+
+			// Gryffindor and Hufflepuff are both active factions → nobody wins
+			expect(p0.won, 'Gryffindor 1: two factions remain, must not win').to.equal(undefined);
+			expect(p1.won, 'Gryffindor 2: two factions remain, must not win').to.equal(undefined);
+			expect(p2.won, 'Slytherin: fled, must not win').to.equal(undefined);
+			expect(p2.lost, 'Slytherin: fled without dying, must not lose').to.equal(undefined);
+			expect(p3.won, 'Hufflepuff: two factions remain, must not win').to.equal(undefined);
 
 			game.dispose();
 		});

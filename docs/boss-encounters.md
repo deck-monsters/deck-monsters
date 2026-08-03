@@ -132,6 +132,30 @@ Two rules follow from that:
   broadcasts `stateChange` synchronously, which is exactly the re-entrancy hazard described
   in `engine-concurrency-and-timing.md` §7.
 
+### Live pre-fight refund: last player withdraws or boss despawns
+
+When the last player leaves the ring during the countdown, any player-summoned boss that was
+waiting for that fight would never reach `fightBegins` — leaving the summoner's charge
+permanently spent for nothing. The engine handles this in two layers:
+
+**Contestant tagging**: `summonBossAction` passes `summonedByUserId` and `summonedAt` to
+`ring.spawnBoss()`, which stores them on the ephemeral `Contestant` object (not in
+`bossSummons` — purely in-memory). Timer- and admin-spawned bosses do not carry these fields.
+
+**Proactive removal**: `Ring.removeMonster()` checks whether removing a player would leave
+zero player contestants. If so, every player-summoned boss (identified by `summonedByUserId`)
+is immediately removed from the ring and the `Ring.onSummonedBossRemoved(userId, timestamp)`
+callback fires. `Game`'s constructor wires this callback to `_refundSingleBossSummon`, which
+removes the matching timestamp from both `bossSummons` and `bossSummonsPending` and calls
+`persistState()` immediately — so the refund is on disk before any subsequent restart.
+
+**Despawn timer path**: If a summoned boss's own despawn timer fires while no player is in
+the ring, `Ring.removeBoss()` detects `summonedByUserId` and fires the same callback.
+
+Duplicate-refund guard: `_refundSingleBossSummon` uses the exact timestamp as the key. Once
+removed, a second call for the same timestamp is a no-op (timestamp not found → no write, no
+`persistState`). The rolling quota and room scoping are unaffected.
+
 ### The restart-gap fix: pending summons
 
 There is a 30–60 s window between `summon a boss` recording the charge and the fight
@@ -157,6 +181,10 @@ the timestamps recorded since the last fight started. The flow is:
    which calls `refundPendingSummons` to remove from `bossSummons` any timestamps still in
    `bossSummonsPending`, then clears the pending ledger. A restart in step 1–2's window
    therefore gives the charge back automatically.
+
+The two mechanisms are complementary: the live path covers withdrawals and despawns that
+happen while the server is running; the restart path covers process crashes between summon
+and `fightBegins`. Together they ensure no player is charged for a boss that never fought.
 
 Bosses are not made persistent by this design — they remain ephemeral. Only the quota entry
 is affected. The schema is backward-compatible: `bossSummonsPending` lives in `Game.options`

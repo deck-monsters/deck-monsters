@@ -609,10 +609,12 @@ subprocess regression test imports `DiscordBot` with `DATABASE_URL` explicitly a
 ### 45. House War was eligible with bosses present — FIXED
 
 `House War`'s eligibility check was `playerCount >= 3` with no constraint on bosses. In
-`last-team` mode the boss is its own unnamed faction (every boss contestant carries
-`userId: 'boss'`). Once one player house was eliminated the surviving bosses would still be
-active, blocking the one-faction win condition from ever firing — the fight would have to
-continue to last-contestant or draw instead of resolving cleanly on house elimination.
+`last-team` mode bosses form their own explicit `Boss` faction: every boss character carries
+`team: 'Boss'` (set by `BOSS_TEAM` in `helpers/bosses.ts`), so `factionOf()` resolves them
+all to the same `'Boss'` string. Once one player house was eliminated the surviving bosses
+would still be active as the `Boss` faction, blocking the one-faction win condition from
+ever firing — the fight would have to continue to last-contestant or draw instead of
+resolving cleanly on house elimination.
 
 **Fixed**: eligibility is now `playerCount >= 3 && bossCount === 0`. Common Cause remains the
 dedicated boss-vs-player team event. The banner comment was updated to record the reason.
@@ -633,14 +635,28 @@ published.
 
 **Fixed**: `fightConcludes()` now computes `isLastTeamFledWin`:
 ```
-deaths === 0 && ringEvent.victoryMode === 'last-team' && contestants.some(c => c.fled)
+deaths === 0
+  && ringEvent.victoryMode === 'last-team'
+  && contestants.some(c => c.fled)
+  && activeSurvivors.length > 0
+  && new Set(activeSurvivors.map(factionOf)).size === 1
 ```
-When this flag is set, surviving (non-dead, non-fled) contestants are marked `won: true` and
+where `activeSurvivors = contestants.filter(c => !c.monster.dead && !c.fled)`.
+
+The one-active-faction requirement mirrors `isLastTeamVictory` exactly: if Slytherin flees
+but Hufflepuff is still fighting alongside Gryffindor, two factions remain active and the
+flag is false (fight concludes as a draw). Only when all opponents have fled *and* every
+surviving, non-fled contestant belongs to the same faction does the flag trigger.
+
+When the flag is set, surviving (non-dead, non-fled) contestants are marked `won: true` and
 receive `ring.win`; fled contestants receive `ring.fled` (not loss — they escaped without
-dying); and `participantOutcome` correctly returns `'win'` for survivors.  The overall
+dying); and `participantOutcome` correctly returns `'win'` for survivors. The overall
 `fightOutcome` in `ring.fightResolved` is `'fled'` (one faction fled) rather than `'draw'`.
 `last-contestant` fights are unaffected — the flag requires `victoryMode === 'last-team'`
 to be set.
+
+`factionOf()` is extracted to module level so both `Ring.fight()` (for `isLastTeamVictory`)
+and `Ring.fightConcludes()` (for `isLastTeamFledWin`) share the same resolution logic.
 
 Covered by two new tests in `ring/index.test.ts`:
 - `fightConcludes` unit test: three contestants, Gryffindor (2) vs Slytherin (1 fled), zero
@@ -710,6 +726,65 @@ only applied to initial target selection" somewhat misleading.
 
 Also fixed: a typo left the numbered list item label empty (`**Primary targeting** ():`).
 Corrected to `(**Primary targeting** (`Ring.fight()`):)`.
+
+**Status**: Fixed.
+
+---
+
+### 49. Armed ring events not evicted when the roster made them ineligible — FIXED
+
+After a ring event was rolled during a fight countdown, a later roster change (e.g. a boss
+joining mid-countdown) could leave an ineligible event armed. `rollRingEvent()` bailed out
+early on `if (this.ringEvent) return` without checking whether the event was still valid.
+The fight would then apply House War with a boss present — three factions, no clean
+last-team win.
+
+Two failure modes:
+1. **Natural path**: boss joins or player leaves → `addMonster`/`removeMonster` → `startFightTimer` → `rollRingEvent` → early return → stale House War applied.
+2. **Admin force path**: `trigger ring event house-war` with a boss in the ring — the command would set the event, announce it, spawn any extra bosses, and record a metric even though the roster could never produce a clean two-house outcome.
+
+**Fixed**:
+
+- `rollRingEvent()` now re-checks eligibility *before* the deterministic/events-disabled
+  guards (it is a correctness invariant, not a randomness gate). If the armed event is
+  ineligible for the current roster it is cleared and the normal re-roll path runs (which is
+  suppressed in deterministic/test mode, leaving `ringEvent = undefined` — the right outcome).
+- `triggerRingEventAction` (`commands/monster.ts`) computes `buildRingEventContext` against
+  the current ring and refuses with an actionable message — including the event id — before
+  calling `activateRingEvent`. No announcement, no metric, no boss spawn on refusal.
+
+Covered by two new tests in `ring/index.test.ts` (`ineligible-event eviction on roster change`):
+- House War armed then boss joins → ringEvent cleared, countdown still armed.
+- Admin force House War with boss present → throws, no announcement or emit.
+
+**Status**: Fixed.
+
+---
+
+### 50. `isLastTeamFledWin` fired when only some opponents had fled — FIXED
+
+The `isLastTeamFledWin` computation in `fightConcludes()` checked
+`contestants.some(c => c.fled)` — any flee was sufficient. If Slytherin fled but Hufflepuff
+was still fighting alongside Gryffindor, two factions remained active. The flag incorrectly
+resolved to `true`, crowning the Gryffindors as winners when the fight should have been a
+draw (Hufflepuff never lost).
+
+Additionally, the faction resolution used a different closure in `fight()` (`factionOf` local
+arrow function) than was available in `fightConcludes()`. The two could drift apart if either
+was edited independently.
+
+**Fixed**:
+
+- `factionOf()` is extracted to a module-level function (before the `Ring` class) so both
+  `Ring.fight()` and `Ring.fightConcludes()` share identical faction resolution.
+- `isLastTeamFledWin` now mirrors `isLastTeamVictory`: after excluding dead and fled
+  contestants, the surviving active set must all belong to exactly one faction
+  (`new Set(activeSurvivors.map(factionOf)).size === 1`). If multiple factions remain active,
+  the flag is false and `fightConcludes` issues draws.
+
+Covered by a new test in `ring/index.test.ts`: two Gryffindors + one Slytherin (fled) + one
+Hufflepuff (alive) → no winner for any contestant; the genuine all-opponents-fled case
+continues to pass.
 
 **Status**: Fixed.
 
@@ -854,3 +929,5 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Fix last-team mode draw when all opponents fled with zero deaths (`isLastTeamFledWin`, #46)
 - [x] Refund player-summoned boss charges removed pre-fight (`onSummonedBossRemoved` callback + `_refundSingleBossSummon`, #47)
 - [x] Complete free-for-all docs: describe primary targeting layer in `Ring.fight()` and fix empty label typo (#48)
+- [x] Evict stale ring events on roster change: `rollRingEvent()` re-checks eligibility; admin force refuses ineligible events with actionable message (#49)
+- [x] Tighten `isLastTeamFledWin` to require exactly one active non-fled faction; extract `factionOf()` to module level for shared use (#50)

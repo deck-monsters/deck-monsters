@@ -94,6 +94,23 @@ export interface Contestant {
 	summonedAt?: number;
 }
 
+/**
+ * Returns the faction label for a contestant: contestant-level team override first
+ * (from a ring event like Common Cause/House War), then monster.team, then
+ * character.team, then the contestant's own userId (teamless = own faction).
+ *
+ * Extracted to module level so both `Ring.fight()` (for isLastTeamVictory) and
+ * `Ring.fightConcludes()` (for isLastTeamFledWin) can share the exact same logic.
+ */
+function factionOf(c: Contestant): string {
+	return (
+		c.team ||
+		(c.monster as any).team ||
+		(c.character as any).team ||
+		c.userId
+	);
+}
+
 function participantOutcome(
 	contestant: Contestant,
 	deaths: number,
@@ -661,16 +678,8 @@ export class Ring extends BaseClass {
 		const anyContestantsHaveCardsLeft = (currentContestants: Contestant[]): boolean =>
 			getContestantsWithCardsLeft(currentContestants).length > 0;
 
-		/**
-		 * Returns the faction label for a contestant: contestant-level team override first
-		 * (from a ring event like Common Cause/House War), then monster.team, then
-		 * character.team, then the contestant's own userId (teamless = own faction).
-		 */
-		const factionOf = (c: Contestant): string =>
-			c.team ||
-			(c.monster as any).team ||
-			(c.character as any).team ||
-			c.userId;
+		// Use the module-level factionOf helper so fight() and fightConcludes() share
+		// identical faction resolution logic.
 
 		/**
 		 * True when last-team victory mode is active AND all remaining active contestants
@@ -952,14 +961,22 @@ export class Ring extends BaseClass {
 		});
 		const deaths = deadContestants.length;
 
-		// Detect "last-team win via fled opponents" — all opponents fled but nobody died.
-		// In this case the surviving faction is the winner even though deaths === 0.
-		// Without this flag, the deaths <= 0 gate would issue draws for the entire roster,
-		// and no contestant would ever receive won = true.
-		const isLastTeamFledWin =
-			this.ringEvent?.victoryMode === 'last-team' &&
-			deaths <= 0 &&
-			contestants.some(c => c.fled);
+		// Detect "last-team win via fled opponents" — all opponents fled but nobody died,
+		// leaving exactly one surviving faction. Uses the same factionOf logic as
+		// isLastTeamVictory so the two are consistent.
+		//
+		// Must require exactly one active (non-dead, non-fled) faction, not merely any
+		// flee. If Slytherin flees but Hufflepuff is still fighting alongside Gryffindor,
+		// two factions remain — isLastTeamFledWin must be false and the fight is a draw.
+		const isLastTeamFledWin = (() => {
+			if (this.ringEvent?.victoryMode !== 'last-team') return false;
+			if (deaths > 0) return false;
+			if (!contestants.some(c => c.fled)) return false;
+			const activeSurvivors = contestants.filter(c => !c.monster.dead && !c.fled);
+			if (activeSurvivors.length === 0) return false;
+			const activeFactions = new Set(activeSurvivors.map(factionOf));
+			return activeFactions.size === 1;
+		})();
 
 		// Emit for battle history
 		this.eventBus.publish({
@@ -1324,16 +1341,37 @@ export class Ring extends BaseClass {
 	/**
 	 * Rolls for a ring event while the fight countdown is being armed.
 	 *
-	 * Only rolls when no event is already in force, which is what stops the Gauntlet's boss
-	 * spawns from recursing back into another roll. Spawns are deferred so the enclosing
-	 * `startFightTimer()` arms exactly one fight timer for the final roster.
+	 * Only rolls when no event is already in force (after the eligibility re-check below),
+	 * which is what stops the Gauntlet's boss spawns from recursing back into another roll.
+	 * Spawns are deferred so the enclosing `startFightTimer()` arms exactly one fight timer.
+	 *
+	 * Eligibility re-check (correctness invariant, not randomness):
+	 * A roster change during the countdown can invalidate an armed event — e.g. House War
+	 * requires bossCount === 0, so a boss joining mid-countdown must clear it. This check
+	 * runs before the deterministic/ringEventsEnabled guards so it applies even in test mode.
 	 */
 	private rollRingEvent(): void {
+		// If an event is already armed, verify it is still eligible for the current roster.
+		// A roster change (boss joins, player leaves/rejoins) can make a previously-valid
+		// event ineligible. Clear it so a fresh roll happens below (or nothing, in
+		// deterministic/events-disabled mode — either is correct; the stale event is gone).
+		if (this.ringEvent) {
+			if (this.ringEvent.eligible(buildRingEventContext(this.contestants))) {
+				return; // Still valid — keep the armed event, do not re-roll.
+			}
+			// Stale — clear before attempting a re-roll.
+			this.log({
+				context: 'ring.rollRingEvent.ineligibleRosterChange',
+				cleared: this.ringEvent.id,
+			});
+			this.ringEvent = undefined;
+		}
+
 		if (!this.ringEventsEnabled) return;
-		// Same escape hatch as the contestant shuffle above: a ring event is a randomness
-		// source, so reproducible runs (tests, the harness, the balance sim) need it off.
+		// Same escape hatch as the contestant shuffle: ring events are a randomness source,
+		// so reproducible runs (tests, harness, balance sim) need them off.
 		if (process.env.DECK_MONSTERS_DETERMINISTIC_RING) return;
-		if (this.ringEvent || this.inEncounter) return;
+		if (this.inEncounter) return;
 		if (random(1, 100) > RING_EVENT_CHANCE_PERCENT) return;
 
 		const ringEvent = selectRingEvent(buildRingEventContext(this.contestants));
