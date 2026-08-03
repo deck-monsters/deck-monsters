@@ -11,7 +11,10 @@ node_modules/
 *.sw*
 .idea/
 .vscode/
-.cursor/
+.cursor/*
+!.cursor/environment.json
+!.cursor/cloud-agent-install.sh
+!.cursor/cloud-agent-start.sh
 
 # FILESYSTEM
 .DS_Store
