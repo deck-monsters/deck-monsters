@@ -1242,3 +1242,11 @@ Covered by `does not materialize encounter state when reading encounterModifiers
 **Fixed**: on channel rejection or non-string resolution, `ConnectorAdapter` calls `cancelPrompt` so the bus prompt settles promptly. Optional `onChannelError` callback surfaces connector failures without unhandled rejections. `registerUser` now subscribes with the target `userId` so private `prompt.request` / announce events are actually delivered (the adapter's prior catch-all subscriber could not see private events). Covered by `channel/connector-adapter.test.ts`.
 
 **Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §3.
+
+### 63. Dual `ringFeed` subscriptions per web client — FIXED
+
+`RingPane` and `ConsolePane` each opened `trpc.game.ringFeed.useSubscription` with separate reconnect cursors and each ran `useHandshake`, so one Terminal meant two server subscribers, double reconnect replay, and diverging panes after a partial reconnect.
+
+**Fixed**: `useRingFeed` / `RingFeedProvider` in `Terminal` owns the single subscription, shared cursor (skips `handshake`/`heartbeat`; advances on live events; `onError` resumes from the latest tracked id), room guard, and handshake. Live events fan out once to pane listeners via `useRingFeedListener` (listener identity is ref-stable so callback churn cannot restart the subscription). Each pane keeps its own DB history fetch, merge/dedup (`seenRef`), and filters. Room navigation resets the shared cursor and tears down the old subscription input. Covered by `useRingFeed.test.ts` and `terminal-ring-feed.test.tsx`.
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §5.

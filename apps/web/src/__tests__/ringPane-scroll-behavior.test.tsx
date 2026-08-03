@@ -1,20 +1,20 @@
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
+import {
+  RingFeedContext,
+  type RingFeedApi,
+  type TrackedRingFeedEvent,
+} from '../hooks/useRingFeed.js';
 import RingPane from '../components/RingPane.js';
-
-const subscriptionCallbacks: {
-  onData?: (tracked: { id: string; data: unknown }) => void;
-  onError?: () => void;
-} = {};
 
 const scrollToIndexMock = vi.fn();
 const setAtBottomState: Array<(atBottom: boolean) => void> = [];
+const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
 
-vi.mock('../hooks/useHandshake.js', () => ({
-  useHandshake: () => ({
-    handleHandshakeEvent: vi.fn(),
-  }),
-}));
+function pushEvent(tracked: TrackedRingFeedEvent) {
+  for (const listener of listeners) listener(tracked);
+}
 
 vi.mock('../hooks/useRingKeyTimestamps.js', () => ({
   useRingKeyTimestamps: () => ({ ringKeyTimestampsEnabled: false }),
@@ -35,12 +35,6 @@ vi.mock('../lib/trpc.js', () => ({
       },
       ringState: {
         useQuery: () => ({ data: undefined, refetch: () => Promise.resolve() }),
-      },
-      ringFeed: {
-        useSubscription: (_input: unknown, callbacks: { onData?: (tracked: { id: string; data: unknown }) => void; onError?: () => void }) => {
-          subscriptionCallbacks.onData = callbacks.onData;
-          subscriptionCallbacks.onError = callbacks.onError;
-        },
       },
     },
   },
@@ -82,13 +76,30 @@ vi.mock('react-virtuoso', () => {
   };
 });
 
+function TestFeed({ children }: { children: ReactNode }) {
+  const value: RingFeedApi = {
+    connected: true,
+    reconnecting: false,
+    seedCursor: () => undefined,
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+  return <RingFeedContext.Provider value={value}>{children}</RingFeedContext.Provider>;
+}
+
 describe('RingPane scroll follow behavior', () => {
   it('does not auto-scroll when user has scrolled away from bottom', () => {
-    render(<RingPane roomId="room-123" isActive onEvent={() => undefined} />);
-
-    expect(typeof subscriptionCallbacks.onData).toBe('function');
-    if (!subscriptionCallbacks.onData) throw new Error('subscription callback missing');
-    const onData = subscriptionCallbacks.onData;
+    listeners.clear();
+    setAtBottomState.length = 0;
+    render(
+      <TestFeed>
+        <RingPane roomId="room-123" isActive />
+      </TestFeed>,
+    );
 
     const atBottomHandler = setAtBottomState[0];
     expect(typeof atBottomHandler).toBe('function');
@@ -101,7 +112,7 @@ describe('RingPane scroll follow behavior', () => {
 
     scrollToIndexMock.mockClear();
     act(() => {
-      onData({
+      pushEvent({
         id: 'ev-1',
         data: {
           id: 'event-1',
@@ -110,6 +121,7 @@ describe('RingPane scroll follow behavior', () => {
           text: 'new public event',
           payload: {},
           timestamp: Date.now(),
+          roomId: 'room-123',
         },
       });
     });

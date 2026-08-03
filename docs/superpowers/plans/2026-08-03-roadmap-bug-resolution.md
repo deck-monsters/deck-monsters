@@ -159,12 +159,12 @@
 - Add/modify Vitest component tests
 - Update roadmap
 
-- [ ] Add a failing test proving one `ringFeed` subscription serves both panes.
-- [ ] Lift subscription, shared cursor, room guard, handshake handling, and reconnect ownership to `Terminal`/a shared hook.
-- [ ] Keep pane-specific filtering/rendering/history merge logic; fan out each live event once.
-- [ ] Ensure room navigation tears down the old subscription and resets cursor/history state.
-- [ ] Run full web tests.
-- [ ] Commit.
+- [x] Add a failing test proving one `ringFeed` subscription serves both panes.
+- [x] Lift subscription, shared cursor, room guard, handshake handling, and reconnect ownership to `Terminal`/a shared hook.
+- [x] Keep pane-specific filtering/rendering/history merge logic; fan out each live event once.
+- [x] Ensure room navigation tears down the old subscription and resets cursor/history state.
+- [x] Run full web tests.
+- [x] Commit.
 
 ## Task 10: Differentiate DMG/CARDS content and finalize roadmap (#3)
 

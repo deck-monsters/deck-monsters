@@ -1,12 +1,10 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
-import type { GameEvent } from '@deck-monsters/server/types';
 
-type TrackedEvent = { id: string; data: GameEvent };
 import { trpc } from '../lib/trpc.js';
 import { useAuth } from '../lib/auth-context.js';
-import { useHandshake } from '../hooks/useHandshake.js';
+import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useCommandInsert } from '../lib/command-insert-context.js';
 import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
 import CommandSuggestions from './CommandSuggestions.js';
@@ -64,8 +62,6 @@ const MONSTER_REFRESH_EVENT_TYPES = new Set([
 interface ConsolePaneProps {
   roomId: string;
   isActive: boolean;
-  /** Called with each incoming private event so Terminal can track lastEventId */
-  onEvent?: (event: unknown) => void;
 }
 
 function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot {
@@ -80,9 +76,8 @@ function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot
   );
 }
 
-export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePaneProps) {
+export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
   const { user } = useAuth();
-  const { handleHandshakeEvent } = useHandshake();
   const { registerInsertFn } = useCommandInsert();
 
   const [consoleEvents, setConsoleEvents] = useState<ConsoleEvent[]>([]);
@@ -91,15 +86,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [inputValue, setInputValue] = useState('');
   const [inputLocked, setInputLocked] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [reconnecting, setReconnecting] = useState(false);
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [suggestionIndex, setSuggestionIndex] = useState(-1);
   const [ftuxComplete, setFtuxComplete] = useState(false);
   const [hasFoughtFirstFight, setHasFoughtFirstFight] = useState(false);
-
-  // Resume cursor for reconnects. Updated only on errors so we don't restart
-  // the subscription on every event.
-  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
 
   // The prompt timeout/cancel handlers live in a subscription callback that closes over
   // the render in which it was created, so reading `activePromptId` there went stale and
@@ -111,10 +101,10 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
-  const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
   const previousConsoleLengthRef = useRef(0);
   const shouldScrollOnAppendRef = useRef(false);
+  const reconnectNoticeShownRef = useRef(false);
   const autoScroll = useFeedAutoScroll();
   const ftuxStorageKey = useMemo(
     () => (user?.id ? `ftuxComplete:${user.id}` : 'ftuxComplete'),
@@ -142,65 +132,6 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     { roomId },
     { enabled: !!roomId },
   );
-
-  // Apply DB history once — pre-populate seenRef and seed stable subscription lastEventId.
-  useEffect(() => {
-    if (!history || historyApplied.current) return;
-    historyApplied.current = true;
-
-    // Deduplicate history by event ID (handles legacy duplicate rows in DB)
-    const seen = new Set<string>();
-    const dedupedHistory: typeof history = [];
-    for (const ev of history) {
-      if (!seen.has(ev.id)) {
-        seen.add(ev.id);
-        dedupedHistory.push(ev);
-      }
-    }
-
-    const historyConsoleEvents: ConsoleEvent[] = [];
-    for (const ev of dedupedHistory) {
-      seenRef.current.add(ev.id);
-      const consoleEv = mapConsoleHistoryEvent(ev as any);
-      if (consoleEv) historyConsoleEvents.push(consoleEv);
-    }
-
-    if (historyConsoleEvents.length > 0) {
-      // Merge history with any live events that arrived before history loaded.
-      // Live events take priority over history events with the same ID.
-      setConsoleEvents(prev => {
-        const liveById = new Map(prev.map(ev => [ev.id, ev]));
-        const merged: ConsoleEvent[] = historyConsoleEvents.map(
-          ev => liveById.get(ev.id) ?? ev
-        );
-        // Append any live events not already in history (arrived after the
-        // most recent history item's timestamp).
-        const historyIds = new Set(historyConsoleEvents.map(ev => ev.id));
-        for (const ev of prev) {
-          if (!historyIds.has(ev.id)) merged.push(ev);
-        }
-        return merged;
-      });
-    }
-
-    // Seed the resume cursor from history so a reconnect doesn't restart from the
-    // beginning. Only when no live event has been tracked yet: history resolves
-    // asynchronously, so by the time it lands the subscription may already have seen
-    // newer events, and overwriting the cursor with the older history tail would make
-    // the next reconnect replay everything in between (harmless thanks to seenRef,
-    // but a pointless round-trip).
-    if (dedupedHistory.length > 0 && latestTrackedEventIdRef.current === undefined) {
-      const lastId = dedupedHistory[dedupedHistory.length - 1]!.id;
-      setSubLastEventId(lastId);
-      latestTrackedEventIdRef.current = lastId;
-    }
-
-    // Jump to bottom after history loads (instant, no animation)
-    requestAnimationFrame(() => {
-      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
-      autoScroll.resetToBottom();
-    });
-  }, [history, autoScroll]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
@@ -362,152 +293,195 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
     upsertPendingPrompt(pendingPrompt);
   }, [pendingPrompt, upsertPendingPrompt]);
 
-  trpc.game.ringFeed.useSubscription(
-    { roomId, lastEventId: subLastEventId },
-    {
-      onData(tracked: TrackedEvent) {
-        const event = tracked.data;
+  const onLiveEvent = useCallback((tracked: TrackedRingFeedEvent) => {
+    const event = tracked.data;
 
-        // Handshake must always be processed — signals new or reconnected subscription.
-        // Must come before seenRef dedup since the server uses a stable 'handshake' ID.
-        if (event.type === 'handshake') {
-          handleHandshakeEvent(event);
-          setReconnecting(false);
-          return;
-        }
-
-        // Keep-alive ping from server — no UI action needed
-        if (event.type === 'heartbeat') return;
-
-        // Defense in depth: drop events from another room (handshake/heartbeat
-        // may omit roomId — only filter when it is a non-empty string).
-        if (typeof event.roomId === 'string' && event.roomId !== '' && event.roomId !== roomId) {
-          return;
-        }
-
-        latestTrackedEventIdRef.current = tracked.id;
-
-        if (seenRef.current.has(tracked.id)) return;
-        seenRef.current.add(tracked.id);
-
-        // Only process events targeted to this user
-        const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
-        const isPublicSystem = event.scope === 'public' && event.type === 'system';
-        if (!isPrivate && !isPublicSystem) return;
-
-        onEvent?.(event);
-        if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {
-          void refetchMyMonsters();
-          setHasFoughtFirstFight(true);
-        }
-
-        const payload = event.payload as Record<string, unknown>;
-        if (event.type === 'system' && payload.consoleInput) {
-          addConsoleEvent({
-            id: event.id,
-            type: 'input',
-            text: event.text,
-          });
-          return;
-        }
-
-        if (event.type === 'system.gap') {
-          addConsoleEvent({
-            id: event.id,
-            type: 'system',
-            text: event.text,
-          });
-          return;
-        }
-
-        if (event.type === 'announce' || event.type === 'system') {
-          addConsoleEvent({
-            id: event.id,
-            type: event.type === 'system' ? 'system' : 'announce',
-            text: event.text,
-          });
-          return;
-        }
-
-        if (event.type === 'prompt.request') {
-          const payload = event.payload as {
-            requestId: string;
-            question: string;
-            choices: string[];
-            timeoutSeconds?: number;
-          };
-          const promptData: ActivePrompt = {
-            requestId: payload.requestId,
-            question: payload.question,
-            choices: payload.choices,
-            timedOut: false,
-            cancelled: false,
-            selectedAnswer: null,
-            timeoutSeconds: payload.timeoutSeconds,
-            arrivedAt: Date.now(),
-          };
-          addConsoleEvent({
-            id: event.id,
-            type: 'prompt',
-            text: payload.question,
-            promptData,
-          });
-          setActivePromptId(payload.requestId);
-          return;
-        }
-
-        if (event.type === 'prompt.timeout') {
-          const { requestId } = event.payload as { requestId: string };
-          setConsoleEvents(prev => prev.map(ev =>
-            ev.promptData?.requestId === requestId
-              ? { ...ev, promptData: { ...ev.promptData!, timedOut: true } }
-              : ev
-          ));
-          if (activePromptIdRef.current === requestId) {
-            setActivePromptId(null);
-            setInputLocked(false);
-          }
-          addConsoleEvent({
-            id: event.id,
-            type: 'tombstone',
-            text: event.text,
-          });
-          return;
-        }
-
-        if (event.type === 'prompt.cancel') {
-          const { requestId } = event.payload as { requestId: string };
-          setConsoleEvents(prev => prev.map(ev =>
-            ev.promptData?.requestId === requestId
-              ? { ...ev, promptData: { ...ev.promptData!, cancelled: true } }
-              : ev
-          ));
-          if (activePromptIdRef.current === requestId) {
-            setActivePromptId(null);
-            setInputLocked(false);
-          }
-          return;
-        }
-
-        if (event.type === 'quick_actions') {
-          const { actions } = event.payload as { actions: QuickAction[] };
-          setQuickActions(actions ?? []);
-          return;
-        }
-      },
-      onError() {
-        if (!reconnecting) {
-          addConsoleEvent({
-            id: `sys-${Date.now()}`,
-            type: 'system',
-            text: '-- reconnecting --',
-          });
-        }
-        setReconnecting(true);
-        setSubLastEventId(latestTrackedEventIdRef.current);
-      },
+    // Handshake is owned by the shared feed (protocol reload once). Pane only
+    // needs to clear its reconnect notice flag when the connection recovers.
+    if (event.type === 'handshake') {
+      reconnectNoticeShownRef.current = false;
+      return;
     }
-  );
+
+    if (seenRef.current.has(tracked.id)) return;
+    seenRef.current.add(tracked.id);
+
+    // Only process events targeted to this user
+    const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
+    const isPublicSystem = event.scope === 'public' && event.type === 'system';
+    if (!isPrivate && !isPublicSystem) return;
+
+    if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {
+      void refetchMyMonsters();
+      setHasFoughtFirstFight(true);
+    }
+
+    const payload = event.payload as Record<string, unknown>;
+    if (event.type === 'system' && payload.consoleInput) {
+      addConsoleEvent({
+        id: event.id,
+        type: 'input',
+        text: event.text,
+      });
+      return;
+    }
+
+    if (event.type === 'system.gap') {
+      addConsoleEvent({
+        id: event.id,
+        type: 'system',
+        text: event.text,
+      });
+      return;
+    }
+
+    if (event.type === 'announce' || event.type === 'system') {
+      addConsoleEvent({
+        id: event.id,
+        type: event.type === 'system' ? 'system' : 'announce',
+        text: event.text,
+      });
+      return;
+    }
+
+    if (event.type === 'prompt.request') {
+      const promptPayload = event.payload as {
+        requestId: string;
+        question: string;
+        choices: string[];
+        timeoutSeconds?: number;
+      };
+      const promptData: ActivePrompt = {
+        requestId: promptPayload.requestId,
+        question: promptPayload.question,
+        choices: promptPayload.choices,
+        timedOut: false,
+        cancelled: false,
+        selectedAnswer: null,
+        timeoutSeconds: promptPayload.timeoutSeconds,
+        arrivedAt: Date.now(),
+      };
+      addConsoleEvent({
+        id: event.id,
+        type: 'prompt',
+        text: promptPayload.question,
+        promptData,
+      });
+      setActivePromptId(promptPayload.requestId);
+      return;
+    }
+
+    if (event.type === 'prompt.timeout') {
+      const { requestId } = event.payload as { requestId: string };
+      setConsoleEvents(prev => prev.map(ev =>
+        ev.promptData?.requestId === requestId
+          ? { ...ev, promptData: { ...ev.promptData!, timedOut: true } }
+          : ev
+      ));
+      if (activePromptIdRef.current === requestId) {
+        setActivePromptId(null);
+        setInputLocked(false);
+      }
+      addConsoleEvent({
+        id: event.id,
+        type: 'tombstone',
+        text: event.text,
+      });
+      return;
+    }
+
+    if (event.type === 'prompt.cancel') {
+      const { requestId } = event.payload as { requestId: string };
+      setConsoleEvents(prev => prev.map(ev =>
+        ev.promptData?.requestId === requestId
+          ? { ...ev, promptData: { ...ev.promptData!, cancelled: true } }
+          : ev
+      ));
+      if (activePromptIdRef.current === requestId) {
+        setActivePromptId(null);
+        setInputLocked(false);
+      }
+      return;
+    }
+
+    if (event.type === 'quick_actions') {
+      const { actions } = event.payload as { actions: QuickAction[] };
+      setQuickActions(actions ?? []);
+    }
+  }, [refetchMyMonsters, user?.id]);
+
+  const { reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
+
+  useEffect(() => {
+    if (!reconnecting) {
+      reconnectNoticeShownRef.current = false;
+      return;
+    }
+    if (reconnectNoticeShownRef.current) return;
+    reconnectNoticeShownRef.current = true;
+    addConsoleEvent({
+      id: `sys-${Date.now()}`,
+      type: 'system',
+      text: '-- reconnecting --',
+    });
+  }, [reconnecting]);
+
+  // Apply DB history once — pre-populate seenRef and seed shared subscription lastEventId.
+  useEffect(() => {
+    if (!history || historyApplied.current) return;
+    historyApplied.current = true;
+
+    // Deduplicate history by event ID (handles legacy duplicate rows in DB)
+    const seen = new Set<string>();
+    const dedupedHistory: typeof history = [];
+    for (const ev of history) {
+      if (!seen.has(ev.id)) {
+        seen.add(ev.id);
+        dedupedHistory.push(ev);
+      }
+    }
+
+    const historyConsoleEvents: ConsoleEvent[] = [];
+    for (const ev of dedupedHistory) {
+      seenRef.current.add(ev.id);
+      const consoleEv = mapConsoleHistoryEvent(ev as any);
+      if (consoleEv) historyConsoleEvents.push(consoleEv);
+    }
+
+    if (historyConsoleEvents.length > 0) {
+      // Merge history with any live events that arrived before history loaded.
+      // Live events take priority over history events with the same ID.
+      setConsoleEvents(prev => {
+        const liveById = new Map(prev.map(ev => [ev.id, ev]));
+        const merged: ConsoleEvent[] = historyConsoleEvents.map(
+          ev => liveById.get(ev.id) ?? ev
+        );
+        // Append any live events not already in history (arrived after the
+        // most recent history item's timestamp).
+        const historyIds = new Set(historyConsoleEvents.map(ev => ev.id));
+        for (const ev of prev) {
+          if (!historyIds.has(ev.id)) merged.push(ev);
+        }
+        return merged;
+      });
+    }
+
+    // Seed the shared resume cursor from history so a reconnect doesn't restart from
+    // the beginning. Only when no live event has been tracked yet: history resolves
+    // asynchronously, so by the time it lands the subscription may already have seen
+    // newer events, and overwriting the cursor with the older history tail would make
+    // the next reconnect replay everything in between (harmless thanks to seenRef,
+    // but a pointless round-trip).
+    if (dedupedHistory.length > 0) {
+      seedCursor(dedupedHistory[dedupedHistory.length - 1]!.id);
+    }
+
+    // Jump to bottom after history loads (instant, no animation)
+    requestAnimationFrame(() => {
+      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      autoScroll.resetToBottom();
+    });
+  }, [history, autoScroll, seedCursor]);
 
   async function handleCancelPrompt(requestId: string) {
     // Optimistically hide the countdown and tombstone the prompt immediately

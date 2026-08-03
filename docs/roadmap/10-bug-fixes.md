@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium — content pass plus Discord/concurrency follow-ups from the 2026-08-03 audit.
-**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #59–#62, #64, #65–#69, #70–#72, #73, #74–#78). What's open here: #3 (DMG/CARDS content) and #63 (audit follow-up that needs a design pass).
+**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #59–#62, #63, #64, #65–#69, #70–#72, #73, #74–#78). What's open here: #3 (DMG/CARDS content).
 
 ## Code Quality Issues
 
@@ -49,12 +49,6 @@ Per-user console lanes mean two members of the same room can mutate one shared `
 
 **Status**: Decided and documented.
 
-### 63. Dual `ringFeed` subscriptions per web client
-
-`RingPane` and `ConsolePane` each subscribe independently with separate cursors/`seenRef`. Double server subscribers, double replay on connect, panes can diverge after partial reconnect. `Terminal.tsx` still has a TODO for unified tracking.
-
-**Action**: Lift subscription (or at least cursor tracking) to `Terminal` and fan out events to both panes.
-
 ## Investigated — not bugs (left for the record)
 
 - **Discord `registerUser` subscriber “leak”** — `RoomEventBus.subscribe` uses a `Map.set` by id; re-register replaces the previous subscriber.
@@ -68,4 +62,4 @@ Per-user console lanes mean two members of the same room can mutate one shared `
 - [ ] Audit and differentiate `DMG.md` vs `CARDS.md` full content; add how-to-run section (upstream #265) (#3)
 - [x] Discord free-text prompt support (#59)
 - [x] Discord serialization / `activeFlows` parity (#60)
-- [ ] Unify web `ringFeed` subscription / cursor (#63)
+- [x] Unify web `ringFeed` subscription / cursor (#63)

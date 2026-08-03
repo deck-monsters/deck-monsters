@@ -3,7 +3,7 @@ import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
-import { useHandshake } from '../hooks/useHandshake.js';
+import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
@@ -15,13 +15,9 @@ import {
 } from '../utils/event-time.js';
 import { shouldRenderRingEvent } from '../utils/ring-feed-events.js';
 
-type TrackedEvent = { id: string; data: GameEvent };
-
 interface RingPaneProps {
   roomId: string;
   isActive: boolean;
-  /** Called with each incoming event so Terminal can track lastEventId */
-  onEvent?: (event: unknown) => void;
 }
 
 interface TimerState {
@@ -104,12 +100,10 @@ function LastFightFooter({
 const FeedList = React.forwardRef<any, any>((props, ref) => <ol {...props} ref={ref} />);
 FeedList.displayName = 'FeedList';
 
-export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
+export default function RingPane({ roomId, isActive }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [connected, setConnected] = useState(false);
-  const [reconnecting, setReconnecting] = useState(false);
   const shouldFollowOutputRef = useRef(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
   // No HTTP polling needed.
@@ -118,15 +112,9 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     nextBossSpawnAt: null,
     monsterCount: 0,
   });
-  // Resume cursor for reconnects. We keep this stable during normal streaming,
-  // and only update it on connection errors so we don't restart the subscription
-  // on every incoming event.
-  const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const seenRef = useRef(new Set<string>());
-  const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const historyApplied = useRef(false);
-  const { handleHandshakeEvent } = useHandshake();
 
   // Fetch persistent ring history from DB on mount
   const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
@@ -148,7 +136,42 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     return () => clearInterval(id);
   }, [timerState.nextFightAt, timerState.nextBossSpawnAt]);
 
-  // Apply DB history once — pre-populate seenRef and seed the stable subscription
+  const onLiveEvent = useCallback((tracked: TrackedRingFeedEvent) => {
+    const event = tracked.data;
+
+    if (event.type === 'handshake') {
+      // Seed timer state from the handshake payload so we have instant values
+      const hs = event.payload as { ringState?: unknown };
+      if (hs.ringState) setTimerState(hs.ringState as TimerState);
+      return;
+    }
+
+    // ring.state is a state-sync signal — update timers but don't show in the feed
+    if (event.type === 'ring.state') {
+      const s = event.payload as unknown as TimerState;
+      setTimerState({ nextFightAt: s.nextFightAt, nextBossSpawnAt: s.nextBossSpawnAt, monsterCount: s.monsterCount });
+      return;
+    }
+
+    if (!shouldRenderRingEvent(event)) return;
+
+    // Only show public events in the Ring pane
+    if (event.scope !== 'public') return;
+
+    if (seenRef.current.has(tracked.id)) return;
+    seenRef.current.add(tracked.id);
+
+    // Ring membership changed — a summon may have been spent, so refresh the charges.
+    if (event.type === 'ring.add' || event.type === 'ring.clear') {
+      void refetchRingState();
+    }
+
+    setEvents(prev => [...prev, event]);
+  }, [refetchRingState]);
+
+  const { connected, reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
+
+  // Apply DB history once — pre-populate seenRef and seed the shared subscription
   // lastEventId so the live subscription skips already-delivered events.
   useEffect(() => {
     if (!history || historyApplied.current) return;
@@ -183,14 +206,12 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
       return merged;
     });
 
-    // Seed the resume cursor from history so a reconnect doesn't restart from the
-    // beginning. Only when no live event has been tracked yet — see the matching
-    // comment in ConsolePane: history lands asynchronously, and clobbering a newer
-    // live cursor with the older history tail just forces a redundant replay.
-    if (dedupedHistory.length > 0 && latestTrackedEventIdRef.current === undefined) {
-      const lastId = dedupedHistory[dedupedHistory.length - 1]!.id;
-      setSubLastEventId(lastId);
-      latestTrackedEventIdRef.current = lastId;
+    // Seed the shared resume cursor from history so a reconnect doesn't restart from
+    // the beginning. Only when no live event has been tracked yet — history lands
+    // asynchronously, and clobbering a newer live cursor with the older history tail
+    // just forces a redundant replay.
+    if (dedupedHistory.length > 0) {
+      seedCursor(dedupedHistory[dedupedHistory.length - 1]!.id);
     }
 
     if (shouldFollowOutputRef.current) {
@@ -199,7 +220,7 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
         virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       });
     }
-  }, [history]);
+  }, [history, seedCursor]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
@@ -215,64 +236,6 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
     setIsAtBottom(true);
     shouldFollowOutputRef.current = true;
   }, []);
-
-  trpc.game.ringFeed.useSubscription(
-    { roomId, lastEventId: subLastEventId },
-    {
-      onData(tracked: TrackedEvent) {
-        const event = tracked.data;
-
-        if (event.type === 'handshake') {
-          handleHandshakeEvent(event);
-          setConnected(true);
-          setReconnecting(false);
-          // Seed timer state from the handshake payload so we have instant values
-          const hs = event.payload as { ringState?: unknown };
-          if (hs.ringState) setTimerState(hs.ringState as TimerState);
-          return;
-        }
-
-        // Keep-alive ping from server — no UI action needed
-        if (event.type === 'heartbeat') return;
-
-        // Defense in depth: drop events from another room (handshake/heartbeat
-        // may omit roomId — only filter when it is a non-empty string).
-        if (typeof event.roomId === 'string' && event.roomId !== '' && event.roomId !== roomId) {
-          return;
-        }
-
-        latestTrackedEventIdRef.current = tracked.id;
-
-        // ring.state is a state-sync signal — update timers but don't show in the feed
-        if (event.type === 'ring.state') {
-          const s = event.payload as unknown as TimerState;
-          setTimerState({ nextFightAt: s.nextFightAt, nextBossSpawnAt: s.nextBossSpawnAt, monsterCount: s.monsterCount });
-          return;
-        }
-
-        if (!shouldRenderRingEvent(event)) return;
-
-        // Only show public events in the Ring pane
-        if (event.scope !== 'public') return;
-
-        if (seenRef.current.has(tracked.id)) return;
-        seenRef.current.add(tracked.id);
-
-        // Ring membership changed — a summon may have been spent, so refresh the charges.
-        if (event.type === 'ring.add' || event.type === 'ring.clear') {
-          void refetchRingState();
-        }
-
-        setEvents(prev => [...prev, event]);
-        onEvent?.(event);
-      },
-      onError() {
-        setConnected(false);
-        setReconnecting(true);
-        setSubLastEventId(latestTrackedEventIdRef.current);
-      },
-    }
-  );
 
   // Compute the timer badge inline — tick state re-renders every second to keep it current
   let timerBadge: string | null = null;

@@ -1,13 +1,19 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
+import {
+  RingFeedContext,
+  type RingFeedApi,
+  type TrackedRingFeedEvent,
+} from '../hooks/useRingFeed.js';
 
 const scrollToIndexMock = vi.fn();
 let restoreRaf: (() => void) | null = null;
+const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
 
-const subscriptionHandlers: {
-  onData?: (event: { id: string; data: any }) => void;
-} = {};
+function pushEvent(tracked: TrackedRingFeedEvent) {
+  for (const listener of listeners) listener(tracked);
+}
 
 vi.mock('react-virtuoso', () => {
   const React = require('react');
@@ -37,12 +43,6 @@ vi.mock('../lib/auth-context.js', () => ({
   useAuth: () => ({ user: { id: 'user-1' } }),
 }));
 
-vi.mock('../hooks/useHandshake.js', () => ({
-  useHandshake: () => ({
-    handleHandshakeEvent: () => undefined,
-  }),
-}));
-
 vi.mock('../lib/command-insert-context.js', () => ({
   useCommandInsert: () => ({
     registerInsertFn: () => undefined,
@@ -53,11 +53,11 @@ vi.mock('../hooks/useCommandAutocomplete.js', () => ({
   useCommandAutocomplete: () => [],
 }));
 
-vi.mock('./CommandSuggestions.js', () => ({
+vi.mock('../components/CommandSuggestions.js', () => ({
   default: () => null,
 }));
 
-vi.mock('./InlineChoices.js', () => ({
+vi.mock('../components/InlineChoices.js', () => ({
   default: () => null,
 }));
 
@@ -85,11 +85,6 @@ vi.mock('../lib/trpc.js', () => ({
       cancelFlow: {
         useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }),
       },
-      ringFeed: {
-        useSubscription: (_input: unknown, handlers: { onData?: (event: { id: string; data: any }) => void }) => {
-          subscriptionHandlers.onData = handlers.onData;
-        },
-      },
     },
   },
 }));
@@ -104,10 +99,25 @@ vi.mock('../utils/console-history-event-map.js', () => ({
 
 import ConsolePane from '../components/ConsolePane.js';
 
+function TestFeed({ children }: { children: ReactNode }) {
+  const value: RingFeedApi = {
+    connected: true,
+    reconnecting: false,
+    seedCursor: () => undefined,
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+  return <RingFeedContext.Provider value={value}>{children}</RingFeedContext.Provider>;
+}
+
 describe('ConsolePane scroll behavior', () => {
   beforeEach(() => {
     scrollToIndexMock.mockReset();
-    subscriptionHandlers.onData = undefined;
+    listeners.clear();
     const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
       callback(0);
       return 0;
@@ -121,12 +131,16 @@ describe('ConsolePane scroll behavior', () => {
   });
 
   it('only follows new events when already at bottom', () => {
-    render(<ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive={false} onEvent={() => undefined} />);
+    render(
+      <TestFeed>
+        <ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive={false} />
+      </TestFeed>,
+    );
     scrollToIndexMock.mockClear();
 
     fireEvent.click(screen.getByRole('button', { name: 'Mark not at bottom' }));
     act(() => {
-      subscriptionHandlers.onData?.({
+      pushEvent({
         id: 'evt-1',
         data: {
           id: 'evt-1',
@@ -135,6 +149,8 @@ describe('ConsolePane scroll behavior', () => {
           targetUserId: 'user-1',
           text: 'hello',
           payload: {},
+          timestamp: Date.now(),
+          roomId: '11111111-1111-1111-1111-111111111111',
         },
       });
     });
@@ -143,7 +159,7 @@ describe('ConsolePane scroll behavior', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Mark at bottom' }));
     act(() => {
-      subscriptionHandlers.onData?.({
+      pushEvent({
         id: 'evt-2',
         data: {
           id: 'evt-2',
@@ -152,6 +168,8 @@ describe('ConsolePane scroll behavior', () => {
           targetUserId: 'user-1',
           text: 'hello again',
           payload: {},
+          timestamp: Date.now(),
+          roomId: '11111111-1111-1111-1111-111111111111',
         },
       });
     });
