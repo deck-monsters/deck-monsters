@@ -182,8 +182,8 @@
 
 ## Task 11: Whole-branch review and final verification
 
-- [ ] Generate a branch review package from `bba4b89` to `HEAD`.
-- [ ] Run a Cursor Grok or Composer whole-branch review for correctness, room scoping, concurrency, and test quality.
-- [ ] Fix and re-review every Critical/Important finding.
-- [ ] Run `pnpm build`, `pnpm typecheck`, `pnpm lint`, and `pnpm test`.
-- [ ] Push all commits and update PR #361 with fixes, closed/tracked decisions, and test evidence.
+- [x] Generate a branch review package from `bba4b89` to `HEAD`.
+- [x] Run a Cursor Grok or Composer whole-branch review for correctness, room scoping, concurrency, and test quality.
+- [x] Fix and re-review every Critical/Important finding.
+- [x] Run `pnpm build`, `pnpm typecheck`, `pnpm lint`, and `pnpm test`.
+- [x] Push all commits and update PR #361 with fixes, closed/tracked decisions, and test evidence.
