@@ -20,6 +20,7 @@ export interface QuickAction {
 }
 
 const MAX_QUICK_ACTIONS = 4;
+const DEFAULT_CARD_SLOTS = 9;
 
 type LooseRecord = Record<string, unknown>;
 
@@ -43,6 +44,14 @@ const isDead = (monster: unknown): boolean =>
 
 const isDestroyed = (monster: unknown): boolean =>
 	Boolean((monster as LooseRecord | undefined)?.destroyed);
+
+const cardSlots = (monster: unknown): number => {
+	const slots = (monster as LooseRecord | undefined)?.cardSlots;
+	return typeof slots === 'number' && slots > 0 ? slots : DEFAULT_CARD_SLOTS;
+};
+
+const isDeckReady = (monster: unknown): boolean =>
+	asArray((monster as LooseRecord | undefined)?.cards).length >= cardSlots(monster);
 
 /** Defensive read — this runs inside the command pipeline and must never throw. */
 const summonsRemaining = (game: QuickActionsGame, userId: string): number => {
@@ -82,21 +91,27 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 		];
 	}
 
-	const ringMonsters = new Set(
-		asArray(game?.ring?.contestants)
-			.filter((contestant) => {
-				const entry = contestant as LooseRecord;
-				return entry?.userId === userId && !entry?.isBoss;
-			})
+	const contestants = asArray(game?.ring?.contestants);
+	const myContestants = contestants.filter((contestant) => {
+		const entry = contestant as LooseRecord;
+		return entry?.userId === userId && !entry?.isBoss;
+	});
+	const ringMonsters = new Set<unknown>(
+		myContestants
 			.map((contestant) => (contestant as LooseRecord).monster)
+			.filter((monster) => monster !== undefined && monster !== null)
 	);
 
 	const living = monsters.filter((monster) => !isDead(monster) && !isDestroyed(monster));
 	const deadRevivable = monsters.filter(
 		(monster) => isDead(monster) && !isDestroyed(monster)
 	);
-	const readyToSend = living.filter((monster) => !ringMonsters.has(monster));
-	const hasMonsterInRing = living.some((monster) => ringMonsters.has(monster));
+	const idleOutOfRing = living.filter((monster) => !ringMonsters.has(monster));
+	const readyToSend = idleOutOfRing.filter(isDeckReady);
+	// `sendMonsterToTheRing` refuses while *any* of this character's contestants is in
+	// the ring — including one that just died there and has not been cleared yet. Match
+	// that condition exactly, or the chips offer a send the engine will always refuse.
+	const hasMonsterInRing = myContestants.length > 0;
 	const unequippedCards = asArray(character.deck).length;
 
 	// Ordered by how likely each is to be the player's actual next move.
@@ -104,7 +119,6 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 		// Waiting in an empty ring is the single most common dead end, so offer the summon
 		// ahead of everything else — but only when there is nothing to fight and the player
 		// still has a charge left.
-		const contestants = asArray(game?.ring?.contestants);
 		const hasOpponent = contestants.some((contestant) => {
 			const entry = contestant as LooseRecord;
 			return entry?.isBoss || entry?.userId !== userId;
@@ -117,7 +131,8 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 		add('Look at the ring', 'look at the ring');
 	}
 
-	const nextToSend = readyToSend[0];
+	// Engine allows only one of the player's monsters in the ring at a time.
+	const nextToSend = !hasMonsterInRing ? readyToSend[0] : undefined;
 	if (nextToSend) {
 		add(`Send ${monsterName(nextToSend)} to the ring`, `send ${monsterName(nextToSend)} to the ring`);
 	}
@@ -128,8 +143,10 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 	}
 
 	// Equipping is rejected while a monster is fighting, so only offer it for a
-	// monster that is out of the ring.
-	const nextToEquip = readyToSend[0];
+	// monster that is out of the ring. Prefer one that still needs cards — pointing the
+	// chip at an already deck-ready monster wastes the suggestion when a bare monster is
+	// the thing actually blocking a send.
+	const nextToEquip = idleOutOfRing.find((monster) => !isDeckReady(monster)) ?? idleOutOfRing[0];
 	if (unequippedCards > 0 && nextToEquip) {
 		add(`Equip ${monsterName(nextToEquip)}`, `equip ${monsterName(nextToEquip)}`);
 	}
