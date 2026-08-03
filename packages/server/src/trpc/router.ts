@@ -263,6 +263,28 @@ const BUILD_VERSION = process.env['BUILD_VERSION'] ?? 'dev';
 // packages/engine/src/helpers/room-engine-queue.ts).
 export const activeFlows = new Map<string, string>();
 
+// One prompt-free mutation (workshop equip/unequip/presets, etc.) per user per
+// room. Console dispatch checks this before starting an interactive flow so a
+// slow workshop HTTP call cannot interleave with a console equip flow for the
+// same user. Workshop acquires synchronously before any await and releases in
+// `.finally()` with the same ownership-token pattern as `activeFlows`.
+export const activePromptFreeMutations = new Map<string, string>();
+
+function tryAcquirePromptFreeMutation(flowKey: string): string | null {
+	if (activePromptFreeMutations.has(flowKey)) {
+		return null;
+	}
+	const token = randomUUID();
+	activePromptFreeMutations.set(flowKey, token);
+	return token;
+}
+
+function releasePromptFreeMutation(flowKey: string, token: string): void {
+	if (activePromptFreeMutations.get(flowKey) === token) {
+		activePromptFreeMutations.delete(flowKey);
+	}
+}
+
 const sortBySchema = z.enum(['xp', 'wins', 'winRate', 'coins']);
 
 type SilentChannelMessage = {
@@ -304,11 +326,12 @@ function createSilentChannel({
 
 export function createRouter(roomManager: RoomManager) {
 	const runSerializedMutation = async <T>(roomId: string, userId: string, fn: () => Promise<T>): Promise<T> => {
+		const flowKey = `${roomId}:${userId}`;
 		// Interactive console flows run in a per-user lane (see the `command`
 		// mutation) and can wait minutes on prompt answers. Workshop mutations
 		// must not interleave with that user's in-flight flow — fail fast with
 		// a clear message instead of silently mutating shared state mid-flow.
-		if (activeFlows.has(`${roomId}:${userId}`)) {
+		if (activeFlows.has(flowKey)) {
 			const eventBus = await roomManager.getEventBus(roomId);
 			const pendingPrompt = eventBus.getPendingPromptForUser(userId);
 			throw new TRPCError({
@@ -316,6 +339,13 @@ export function createRouter(roomManager: RoomManager) {
 				message: pendingPrompt
 					? 'A console command is in progress — answer or cancel its prompt first.'
 					: 'Still processing your previous command — try again in a moment.',
+			});
+		}
+		const mutationToken = tryAcquirePromptFreeMutation(flowKey);
+		if (!mutationToken) {
+			throw new TRPCError({
+				code: 'PRECONDITION_FAILED',
+				message: 'A workshop operation is already in progress — try again in a moment.',
 			});
 		}
 		try {
@@ -326,6 +356,8 @@ export function createRouter(roomManager: RoomManager) {
 				code: 'BAD_REQUEST',
 				message: err instanceof Error ? err.message : 'Operation failed',
 			});
+		} finally {
+			releasePromptFreeMutation(flowKey, mutationToken);
 		}
 	};
 
@@ -527,6 +559,19 @@ export function createRouter(roomManager: RoomManager) {
 							? 'A command is already in progress — answer the current prompt first.'
 							: 'Still processing your previous command — try again in a moment.',
 						pendingPrompt,
+					};
+				}
+				if (activePromptFreeMutations.has(flowKey)) {
+					log.debug('command blocked — workshop mutation in progress', {
+						roomId: input.roomId,
+						userId: ctx.userId,
+						command: input.command,
+					});
+					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
+					return {
+						ok: false,
+						message:
+							'A workshop operation is in progress — wait for it to finish before submitting a command.',
 					};
 				}
 				const action = game.handleCommand({ command: input.command });

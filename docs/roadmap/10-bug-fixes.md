@@ -29,17 +29,21 @@ Web `command` uses per-user `runSerializedEngineWork` + `activeFlows`. Discord s
 
 **Action**: Mirror web's per-`roomId:userId` lane and flow lock (or document Discord as intentionally best-effort and add minimal serialization).
 
-### 61. Workshop mutations and console commands can interleave for the same user
+### 61. Workshop mutations and console commands can interleave for the same user — FIXED
 
-Workshop paths use a **room-wide** lane; console commands use a **per-user** lane. `activeFlows` blocks workshop when a console flow is active, but not the reverse — Workshop UI `equipCards` can run while a console equip flow is in flight.
+Workshop paths used a **room-wide** lane; console commands used a **per-user** lane. `activeFlows` blocked workshop when a console flow was active, but not the reverse — Workshop UI `equipCards` could run while a console equip flow was in flight for the same user.
 
-**Action**: Shared `${roomId}:${userId}` lane for both, or block console dispatch while a workshop mutation from the same user is in flight.
+**Fixed**: `activePromptFreeMutations` (`roomId:userId`, ownership token) is acquired synchronously at the start of `runSerializedMutation` and released in `.finally()`. The `command` mutation checks it before taking `activeFlows`, rejecting with a clear message when a workshop operation is in flight. Other users are unaffected. Covered by `router.test.ts` (deferred workshop, same-user console rejection, other-user acceptance, cleanup on resolve/reject).
 
-### 62. Cross-user concurrent engine access on web
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
 
-Per-user lanes mean two members of the same room can mutate one shared `Game` in parallel. Ring fights also run outside server lanes (timer chain). Multi-player rooms have a real race surface for deck/ring mutations.
+### 62. Cross-user concurrent engine access on web — DECIDED
 
-**Action**: Decide whether room-wide serialization (with careful prompt lane exceptions) is required, or which mutation classes must be room-serialized.
+Per-user console lanes mean two members of the same room can mutate one shared `Game` in parallel. Ring fights also run outside server lanes (timer chain). Multi-player rooms have a real race surface for deck/ring mutations.
+
+**Decision**: Keep per-user lanes for interactive console flows (prevents #20 starvation). Workshop mutations that touch shared room state retain the room-wide lane. Cross-user prompt flows remain concurrent by design; fights remain outside lanes. Documented in [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2. Revisit only if a specific mutation class needs stronger ordering — add it to the room lane rather than moving console commands room-wide.
+
+**Status**: Decided and documented.
 
 ### 63. Dual `ringFeed` subscriptions per web client
 
@@ -66,7 +70,5 @@ Per-user lanes mean two members of the same room can mutate one shared `Game` in
 - [ ] Audit and differentiate `DMG.md` vs `CARDS.md` full content; add how-to-run section (upstream #265) (#3)
 - [ ] Discord free-text prompt support (#59)
 - [ ] Discord serialization / `activeFlows` parity (#60)
-- [ ] Workshop ↔ console same-user interleave guard (#61)
-- [ ] Decide room-wide vs per-user engine serialization for multi-player (#62)
 - [ ] Unify web `ringFeed` subscription / cursor (#63)
 - [ ] Align test harness lanes with production (#73)

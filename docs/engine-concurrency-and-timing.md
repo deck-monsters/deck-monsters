@@ -52,15 +52,33 @@ Three coordination mechanisms exist. Know which one you are touching:
    `sendPrompt` answers. Keying by room alone starves every other member's
    commands (this was a real production bug — "the game ignores my commands").
 
-3. **Per-room workshop lane** — non-interactive card-management mutations
-   (`equipCards`, `unequipCard`, `moveCard`, `reorderCards`, presets, …) run
-   through `runSerializedMutation(roomId, userId, …)`, which serializes
-   per-room AND first rejects with `PRECONDITION_FAILED` if the caller has an
-   `activeFlows` entry. Rationale: these are awaited HTTP calls that must never
-   (a) hang behind a minutes-long interactive flow, nor (b) interleave with the
-   caller's own in-flight flow mutating the same deck. Silent channels
+3. **Per-room workshop lane + same-user guards** — non-interactive card-management
+   mutations (`equipCards`, `unequipCard`, `moveCard`, `reorderCards`, presets, …)
+   run through `runSerializedMutation(roomId, userId, …)`, which:
+   - serializes per-room via `runSerializedEngineWork(roomId, …)` (short,
+     prompt-free work shared across members);
+   - rejects with `PRECONDITION_FAILED` if the caller has an `activeFlows`
+     entry (workshop must not interleave with the caller's console flow);
+   - acquires `activePromptFreeMutations` (`roomId:userId`, ownership token)
+     synchronously before any `await` and releases in `.finally()` — a second
+     workshop call from the same user fails fast instead of queueing behind
+     itself in the room lane.
+   The `command` mutation checks `activePromptFreeMutations` before taking
+   `activeFlows`, so a slow workshop HTTP call blocks the same user's console
+   dispatch without affecting other members. Silent channels
    (`createSilentChannel`) throw on any `question` — workshop paths must stay
    non-interactive.
+
+**Cross-user policy (#62)**: per-user console lanes mean two members can mutate
+the same `Game` concurrently. That is intentional for interactive flows — each
+user's prompts only block themselves. Workshop mutations that touch shared room
+state (ring roster, shop, etc.) retain the room-wide lane so those classes stay
+serialized. Ring fights also run outside server lanes (timer chain in
+`Ring.fight()`). Full room-wide serialization for every mutation would reintroduce
+the starvation bug from #20; the current split is a deliberate trade-off documented
+here. If a future mutation class needs stronger ordering, add it to the room lane
+(or a dedicated guard) rather than moving console commands back to a room-wide
+lane.
 
 **Rules of thumb**: anything that may call `channel({ question })` belongs in
 the per-user lane and must be fire-and-forget. Anything awaited by HTTP must

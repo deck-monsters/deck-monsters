@@ -1123,6 +1123,30 @@ Covered by GuildRoomManager resolve/active/join/create tests plus `helpers.test.
 
 ---
 
+### 61. Workshop ↔ console same-user interleave — FIXED
+
+Workshop mutations used the room-wide engine lane; console commands used a per-user lane. `activeFlows` blocked workshop when the caller had a console flow in progress, but not the reverse — a Workshop UI `equipCards` could run while the same user's console equip flow was still in flight, interleaving deck mutations.
+
+**Fixed**: `activePromptFreeMutations` (`roomId:userId`, ownership token) is acquired synchronously at the start of `runSerializedMutation` and released in `.finally()`. The `command` mutation checks it before taking `activeFlows`, rejecting with a clear message when a workshop operation is in flight. Other users are unaffected. A second concurrent workshop call from the same user also fails fast instead of queueing behind itself in the room lane.
+
+Covered by `router.test.ts` (deferred workshop, same-user console rejection, other-user acceptance, cleanup on resolve/reject).
+
+**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+---
+
+### 62. Cross-user concurrent engine access on web — DECIDED
+
+Per-user console lanes mean two members of the same room can mutate one shared `Game` in parallel. Ring fights also run outside server lanes (timer chain). Multi-player rooms have a real race surface for deck/ring mutations.
+
+**Decision**: Keep per-user lanes for interactive console flows (prevents #20 starvation). Workshop mutations that touch shared room state retain the room-wide lane. Cross-user prompt flows remain concurrent by design; fights remain outside lanes. Revisit only if a specific mutation class needs stronger ordering — add it to the room lane rather than moving console commands room-wide.
+
+Documented in [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+
+**Status**: Decided and documented.
+
+---
+
 ### 65. `hydrateDeck` alphabetical re-sort — investigated, not a combat bug
 
 `hydrateDeck` sorts alphabetically after hydrate. Ring combat uses equipped `monster.cards[cardIndex]` order, which is restored by `monsters/helpers/hydrate.ts` without sorting — so fight outcomes are not scrambled by inventory sort.

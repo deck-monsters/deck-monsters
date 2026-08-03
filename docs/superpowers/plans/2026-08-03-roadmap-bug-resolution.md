@@ -109,13 +109,13 @@
 - Modify: `docs/engine-concurrency-and-timing.md`
 - Update roadmap
 
-- [ ] Add a failing test where workshop work is already running and the same user's console command attempts to start.
-- [ ] Add a narrow same-user prompt-free mutation guard shared by workshop and console dispatch.
-- [ ] Preserve the room-wide workshop lane for short shared mutations and per-user console lane for prompt flows.
-- [ ] Explicitly document that cross-user prompt flows remain concurrent by design; shared mutation classes retain room-wide protection; fights remain outside lanes.
-- [ ] Correct stale `RoomManager.runSerializedEngineWork` documentation.
-- [ ] Run targeted and full server tests.
-- [ ] Commit.
+- [x] Add a failing test where workshop work is already running and the same user's console command attempts to start.
+- [x] Add a narrow same-user prompt-free mutation guard shared by workshop and console dispatch.
+- [x] Preserve the room-wide workshop lane for short shared mutations and per-user console lane for prompt flows.
+- [x] Explicitly document that cross-user prompt flows remain concurrent by design; shared mutation classes retain room-wide protection; fights remain outside lanes.
+- [x] Correct stale `RoomManager.runSerializedEngineWork` documentation.
+- [x] Run targeted and full server tests.
+- [x] Commit.
 
 ## Task 7: Support Discord free-text prompts and command serialization (#59, #60)
 

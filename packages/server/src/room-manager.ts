@@ -441,12 +441,15 @@ export class RoomManager {
 	}
 
 	/**
-	 * Runs engine work for a room **one chain at a time**. All `game.command` actions
-	 * must use this so two users cannot interleave `handleCommand` / ring combat on
-	 * the same `Game` instance.
+	 * Runs engine work on the room's engine-command queue. The `laneKey` argument
+	 * selects which queue: workshop mutations pass `roomId` (room-wide, short,
+	 * prompt-free work); console commands pass `${roomId}:${userId}` (per-user,
+	 * may hold the lane across prompt waits). This method does not itself enforce
+	 * cross-user ordering — callers choose the lane key for their coordination
+	 * needs. See `docs/engine-concurrency-and-timing.md`.
 	 */
-	runSerializedEngineWork<T>(roomId: string, fn: () => Promise<T>): Promise<T> {
-		return this.runEngineCommand(roomId, fn);
+	runSerializedEngineWork<T>(laneKey: string, fn: () => Promise<T>): Promise<T> {
+		return this.runEngineCommand(laneKey, fn);
 	}
 
 	async resetRoomState(roomId: string): Promise<void> {
