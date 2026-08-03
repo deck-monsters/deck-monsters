@@ -75,22 +75,33 @@ Run any command as another player (admin only):
 Reset the room's game state from the Room Settings page (gear icon in the header).
 ── Stats Reference ───────────────────
 
-Base stats (all monsters start here):
-  HP:  23–33 (base 28 ± 5)
-  AC:  3–7 (base 5 ± 2)
+Spawn formulas (match engine):
+  hpVariance = random(0, 5) + typeHpOffset
+  acVariance = random(0, 2) + typeAcOffset
+  HP at level L = 28 + hpVariance + min(L × 3, 61)
+  AC at level L = 5 + acVariance + min(L, 12)
+
+Base spawn ranges (type offset 0, before per-type modifiers):
+  HP: 28–33
+  AC: 5–7
   STR: 5  DEX: 5  INT: 5
 
-Per-monster-type modifiers:
+Per-monster-type modifiers (spawn, level 0):
   Basilisk (Barbarian)
-    HP: 26–30  AC: 3–7  STR +2  DEX -1  INT +1
+    HP: 30–35  AC: 7–9
+    STR +2  DEX -1  INT +1
   Gladiator (Fighter)
-    HP: 25–31  AC: 3–7  STR +1  DEX +1  INT +0
+    HP: 31–36  AC: 5–7
+    STR +1  DEX +1  INT +0
   Jinn (Bard)
-    HP: 28–28  AC: 3–7  STR +0  DEX +1  INT +1
+    HP: 28–33  AC: 7–9
+    STR +0  DEX +1  INT +1
   Minotaur (Barbarian)
-    HP: 24–32  AC: 6–4  STR +2  DEX +1  INT -1
+    HP: 32–37  AC: 4–6
+    STR +2  DEX +1  INT -1
   Weeping Angel (Cleric)
-    HP: 27–29  AC: 4–6  STR -1  DEX +1  INT +2
+    HP: 29–34  AC: 6–8
+    STR -1  DEX +1  INT +2
 ── Combat Math ───────────────────────
 
 To hit:    roll 1d20 + attacker modifier vs target stat

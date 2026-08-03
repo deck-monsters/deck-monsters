@@ -59,12 +59,12 @@ Emitted after the command action settles — success *or* failure — so suggest
 
 ### 19 (partial). Deck equip flaky with batches — engine-side bugs fixed
 
-Full investigation notes and the still-open batch-UX work are in `10-bug-fixes.md` (#19). Two concrete engine bugs found during that investigation were fixed:
+Two concrete engine bugs found during that investigation were fixed:
 
 1. **`loadPreset` copy cap (real bug, fixed)** — In `Beastmaster.loadPreset`, per-slot duplicate enforcement used `getItemKey(card) === requestedCard` (raw string from preset). **`equipCards` uses `getItemKey` on both sides** (via `selectedCard`). Presets saved via `savePreset` use `getCardName` (normal casing), but **legacy or edited presets** with different casing meant `selectedCount` stayed **0** for every entry, so **`MAX_CARD_COPIES_IN_HAND` never tripped** — you could exceed the per-card copy limit when loading a preset. **Fixed**: compare `normalize(getItemKey(card))` to `normalize(String(requestedCard))`.
 2. **Console interactive equip vs typed `equipCards`** — `equipMonster` + `cardSelection` in `packages/engine/src/monsters/helpers/equip.ts` used strict `cardType` equality; **`equipCards` / `isSameCardName`** are more forgiving. **Aligned**: `cardSelection` resolution now uses `getItemKey` + trimmed lowercase.
 
-**Status**: Fixed (these two items only — see #19 in `10-bug-fixes.md` for what's still open).
+**Status**: Fixed (engine-side bugs below; full batch-UX work completed in the #19 entry later in this archive).
 
 ---
 
@@ -194,7 +194,7 @@ Five smaller observations from the #19/#26 investigation, all addressed on 2026-
 
 - **`pnpm typecheck` did not exist.** `CLAUDE.md` documented it as a development command, but no package defined a `typecheck` script, so the command failed outright and CI's type-checking had to be reproduced by hand as per-package `tsc --noEmit` invocations. Added a `typecheck` script to all five packages plus a root `turbo run typecheck` (with `dependsOn: ["^build"]`, since the non-engine packages type-check against `engine/dist`).
 - **`README.md`'s engine example** called `player.buyItems()` with no arguments; the per-room shop work made `channel` and the `ShopHost` required, so a JavaScript consumer copying it would dereference `host.shop` on `undefined`. Updated to `player.buyItems(privateChannel, game)`.
-- **Player handbook said the merchant rotates every 8 hours**, which was the old throttle period — it is 6 now, and per-room. Fixed in both generators (`packages/engine/src/build/player-handbook.ts` for the in-game `look at player handbook`, and `build/player-handbook.js` for `PLAYER_HANDBOOK.md`) and regenerated.
+- **Player handbook said the merchant rotates every 8 hours**, which was the old throttle period — it is 6 now, and per-room. Fixed in `packages/engine/src/build/player-handbook-content.ts` (shared by in-game `look at player handbook` and root `PLAYER_HANDBOOK.md`) and regenerated.
 
 ---
 

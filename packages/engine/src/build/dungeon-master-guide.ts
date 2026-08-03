@@ -2,19 +2,33 @@ import { actionCard, itemCard } from '../helpers/card.js';
 import allCards from '../cards/helpers/all.js';
 import allItems from '../items/helpers/all.js';
 import allMonsters from '../monsters/helpers/all.js';
-import {
-	BASE_AC, BASE_DEX, BASE_HP, BASE_INT, BASE_STR,
-	AC_VARIANCE, HP_VARIANCE,
-} from '../constants/stats.js';
 import { eachSeries } from '../helpers/promise.js';
 import {
-	FIGHT_PACING,
+	FIGHT_PACING_OPERATOR,
+	FIGHT_PACING_PUBLIC,
 	HOW_TO_RUN_SESSION,
 	OPERATOR_CONCURRENCY,
 } from './dm-only-sections.js';
+import {
+	baseSpawnAcRange,
+	baseSpawnHpRange,
+	formatNumericRange,
+	formatStatLine,
+	getMonsterTypeOffsets,
+	STAT_RANGE_FORMULA_NOTE,
+} from './monster-stat-ranges.js';
+import {
+	BASE_DEX,
+	BASE_INT,
+	BASE_STR,
+} from '../constants/stats.js';
 
 type ChannelFn = (opts: { announce: string }) => Promise<unknown>;
 export type DocOutputFn = (section: string) => Promise<void> | void;
+
+export type DmgGuideOptions = {
+	includeOperatorSections?: boolean;
+};
 
 const DMG_HEADER = `
 ╔══════════════════════════════════╗
@@ -35,33 +49,27 @@ Run any command as another player (admin only):
 Reset the room's game state from the Room Settings page (gear icon in the header).
 `.trim();
 
-const STATS_REFERENCE = (() => {
-	const sign = (n: number): string => n >= 0 ? `+${n}` : `${n}`;
-
-	const monsterLines = allMonsters.map((Monster: any) => {
-		const instance = new Monster();
-		const dexMod: number = instance.options?.dexModifier ?? 0;
-		const strMod: number = instance.options?.strModifier ?? 0;
-		const intMod: number = instance.options?.intModifier ?? 0;
-		const hpVar: number = (Monster as any).hpVariance ?? HP_VARIANCE;
-		const acVar: number = (Monster as any).acVariance ?? AC_VARIANCE;
-		const type: string = (Monster as any).creatureType ?? instance.creatureType ?? Monster.name;
-		const cls: string = (Monster as any).class ?? '—';
-		return `  ${type} (${cls})\n    HP: ${BASE_HP - hpVar}–${BASE_HP + hpVar}  AC: ${BASE_AC - acVar}–${BASE_AC + acVar}  STR ${sign(strMod)}  DEX ${sign(dexMod)}  INT ${sign(intMod)}`;
-	}).join('\n');
+const buildStatsReference = (): string => {
+	const spawnHp = baseSpawnHpRange();
+	const spawnAc = baseSpawnAcRange();
+	const monsterLines = allMonsters
+		.map((Monster: new (...args: any[]) => any) => formatStatLine(getMonsterTypeOffsets(Monster), 0))
+		.join('\n');
 
 	return `
 ── Stats Reference ───────────────────
 
-Base stats (all monsters start here):
-  HP:  ${BASE_HP - HP_VARIANCE}–${BASE_HP + HP_VARIANCE} (base ${BASE_HP} ± ${HP_VARIANCE})
-  AC:  ${BASE_AC - AC_VARIANCE}–${BASE_AC + AC_VARIANCE} (base ${BASE_AC} ± ${AC_VARIANCE})
+${STAT_RANGE_FORMULA_NOTE}
+
+Base spawn ranges (type offset 0, before per-type modifiers):
+  HP: ${formatNumericRange(spawnHp)}
+  AC: ${formatNumericRange(spawnAc)}
   STR: ${BASE_STR}  DEX: ${BASE_DEX}  INT: ${BASE_INT}
 
-Per-monster-type modifiers:
+Per-monster-type modifiers (spawn, level 0):
 ${monsterLines}
 `.trim();
-})();
+};
 
 const COMBAT_MATH = `
 ── Combat Math ───────────────────────
@@ -82,14 +90,43 @@ Stat curses (from cards like Soften, Concussion, Molasses)
 cap at -3 per level; further penalties come out of HP instead.
 `.trim();
 
-export const generateDungeonMasterGuide = async (output: DocOutputFn): Promise<void> => {
+export const collectDungeonMasterGuideSections = async (
+	options: DmgGuideOptions = {}
+): Promise<string[]> => {
+	const sections: string[] = [];
+	const output: DocOutputFn = section => {
+		sections.push(section);
+	};
+
+	await generateDungeonMasterGuide(output, options);
+
+	return sections;
+};
+
+export const collectDungeonMasterGuideMarkdown = async (
+	options: DmgGuideOptions = {}
+): Promise<string> => (await collectDungeonMasterGuideSections(options)).join('\n');
+
+export const generateDungeonMasterGuide = async (
+	output: DocOutputFn,
+	{ includeOperatorSections = false }: DmgGuideOptions = {}
+): Promise<void> => {
 	await output(DMG_HEADER);
-	await output(HOW_TO_RUN_SESSION);
-	await output(FIGHT_PACING);
+
+	if (includeOperatorSections) {
+		await output(HOW_TO_RUN_SESSION);
+		await output(FIGHT_PACING_OPERATOR);
+	} else {
+		await output(FIGHT_PACING_PUBLIC);
+	}
+
 	await output(ADMIN_COMMANDS);
-	await output(STATS_REFERENCE);
+	await output(buildStatsReference());
 	await output(COMBAT_MATH);
-	await output(OPERATOR_CONCURRENCY);
+
+	if (includeOperatorSections) {
+		await output(OPERATOR_CONCURRENCY);
+	}
 
 	const cardList = allCards.map((Card: { cardType?: string }) => Card.cardType ?? '').join('\n');
 	const itemList = allItems.map((Item: { itemType?: string }) => Item.itemType ?? '').join(', ');
@@ -103,6 +140,6 @@ export const generateDungeonMasterGuide = async (output: DocOutputFn): Promise<v
 export const dungeonMasterGuide = async ({ channel }: { channel: ChannelFn }): Promise<void> =>
 	generateDungeonMasterGuide(async section => {
 		await channel({ announce: section });
-	});
+	}, { includeOperatorSections: false });
 
 export default dungeonMasterGuide;

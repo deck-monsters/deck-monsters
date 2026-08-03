@@ -1,14 +1,23 @@
-const FIGHT_DELAY_SECONDS = 60;
-const MIN_MONSTERS = 2;
-const MAX_MONSTERS = 12;
+import { FIGHT_DELAY_SECONDS, MAX_MONSTERS, MIN_MONSTERS } from './player-handbook-content.js';
 
-/** Section titles and phrases that must appear only in DM-facing docs (DMG), never CARDS. */
+/** Section titles present in root DMG.md but never in CARDS.md. */
 export const DM_ONLY_MARKERS = [
 	'How to Run a Session',
 	'Operator Concurrency Notes',
 	'── Admin Commands',
 	'Per-monster-type modifiers',
 	'Card-to-card pacing',
+] as const;
+
+/** Internal operator markers that must not appear in the in-game `look at dm guide` output. */
+export const FILE_ONLY_OPERATOR_MARKERS = [
+	'How to Run a Session',
+	'Operator Concurrency Notes',
+	'DECK_MONSTERS_SKIP_DELAYS',
+	'DECK_MONSTERS_',
+	'activeFlows',
+	'roomId:userId',
+	'Ensure the server process is running',
 ] as const;
 
 export const HOW_TO_RUN_SESSION = `
@@ -41,7 +50,7 @@ Starting a session:
 State saves debounce (~30 s) on engine mutations; fights and prompts do not block saves.
 `.trim();
 
-export const FIGHT_PACING = `
+export const FIGHT_PACING_OPERATOR = `
 ── Fight Pacing ──────────────────────
 
 Ring quorum: fights require at least ${MIN_MONSTERS} monsters in the ring (up to
@@ -61,6 +70,18 @@ Operators may tune midpoints via DECK_MONSTERS_*_DELAY_MIDPOINT_MS env vars
 
 Ring fights run on an internal timer chain outside server command lanes — they
 interleave with player commands by design.
+`.trim();
+
+export const FIGHT_PACING_PUBLIC = `
+── Fight Pacing ──────────────────────
+
+Ring quorum: fights require at least ${MIN_MONSTERS} monsters in the ring (up to
+${MAX_MONSTERS}). When quorum is met, a ${FIGHT_DELAY_SECONDS}-second countdown
+re-arms after each encounter.
+
+During a fight each contestant plays the next card in its deck (wraps when
+exhausted). Card-to-card transitions are paced for readability in live feeds;
+sub-event pacing within a single card play is much shorter.
 `.trim();
 
 export const OPERATOR_CONCURRENCY = `

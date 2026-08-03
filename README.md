@@ -17,7 +17,7 @@ The project is being revived with new connectors (Discord, web, mobile) and mode
 
 The game has 5 monster types, 60+ action cards across 4 classes (melee, healing, control, utility), and 25+ items. Monsters level up with experience, and stronger cards unlock at higher levels.
 
-See [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) for all commands and sample deck builds, [MONSTERS.md](MONSTERS.md) for monster stats, and [CARDS.md](CARDS.md) for the full card catalog.
+See [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) for all commands and sample deck builds, [MONSTERS.md](MONSTERS.md) for monster stats, and [CARDS.md](CARDS.md) for the player-facing card and item reference.
 
 ---
 
@@ -167,7 +167,7 @@ pnpm run build:docs   # builds engine, then regenerates CARDS.md, DMG.md, MONSTE
 |------|---------|
 | [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) | All player commands + sample deck builds by level |
 | [MONSTERS.md](MONSTERS.md) | Monster types and stat distributions |
-| [CARDS.md](CARDS.md) | Player-facing card catalog (name, description, rarity) |
+| [CARDS.md](CARDS.md) | Player-facing card and item reference (name, description, rarity) |
 | [DMG.md](DMG.md) | Dungeon Master / operator reference (stats, pacing, concurrency) |
 | [CLAUDE.md](CLAUDE.md) | Codebase guide for AI-assisted development |
 | [docs/roadmap/](docs/roadmap/) | Detailed plans for each planned enhancement |
