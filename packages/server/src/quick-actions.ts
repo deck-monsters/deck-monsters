@@ -127,7 +127,8 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 		add('Look at the ring', 'look at the ring');
 	}
 
-	const nextToSend = readyToSend[0];
+	// Engine allows only one of the player's monsters in the ring at a time.
+	const nextToSend = !hasMonsterInRing ? readyToSend[0] : undefined;
 	if (nextToSend) {
 		add(`Send ${monsterName(nextToSend)} to the ring`, `send ${monsterName(nextToSend)} to the ring`);
 	}

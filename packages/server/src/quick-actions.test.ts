@@ -74,6 +74,18 @@ describe('buildQuickActions', () => {
 		expect(commands).to.not.include('send Fluffy to the ring');
 	});
 
+	it('does not suggest send for a second monster when one is already in the ring', () => {
+		const inRing = { givenName: 'Fluffy', cards: makeCards(9) };
+		const idle = { givenName: 'Rex', cards: makeCards(9) };
+		const game = makeGame({ monsters: [inRing, idle], deck: [] }, [
+			{ userId: USER, monster: inRing },
+		]);
+		const commands = buildQuickActions(game, USER).map((a) => a.command);
+		expect(commands).to.include('look at the ring');
+		expect(commands).to.not.include('send Rex to the ring');
+		expect(commands).to.not.include('send Fluffy to the ring');
+	});
+
 	it('offers to revive a dead monster', () => {
 		const game = makeGame({
 			monsters: [{ givenName: 'Fluffy', dead: true }],
