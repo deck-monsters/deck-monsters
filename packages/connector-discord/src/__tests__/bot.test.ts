@@ -218,3 +218,165 @@ describe('DiscordBot expected prompt abort handling', () => {
 		expect(interaction.editReply.called).to.be.false;
 	});
 });
+
+describe('DiscordBot handleMessage free-text error parity', () => {
+	afterEach(() => {
+		sinon.restore();
+		return import('../command-flow.js').then(({ discordActiveFlows }) => {
+			discordActiveFlows.clear();
+		});
+	});
+
+	function makeSelectChain(result: unknown[]) {
+		const limitStub = sinon.stub().resolves(result);
+		const whereResult = Object.assign(Promise.resolve(result), { limit: limitStub });
+		const whereStub = sinon.stub().returns(whereResult);
+		const fromStub = sinon.stub().returns({ where: whereStub });
+		return { from: fromStub };
+	}
+
+	function makeDbWithExistingUser(userId = 'supabase-user-1') {
+		return {
+			select: sinon.stub().callsFake(() => makeSelectChain([{ userId }])),
+		};
+	}
+
+	function makeDmMessage(content: string) {
+		return {
+			author: { bot: false, id: 'discord-user-1', username: 'TestUser' },
+			content,
+			guildId: null as string | null,
+			channelId: 'dm-1',
+			reply: sinon.stub().resolves(),
+		};
+	}
+
+	async function makeHandleMessageBot(
+		logSpy: sinon.SinonSpy,
+		action: () => Promise<unknown>
+	) {
+		const handleCommand = sinon.stub().returns(action);
+		const bot = makeBot(logSpy, {
+			db: makeDbWithExistingUser(),
+			guildRoomManager: {
+				resolveRoomForUser: sinon.stub().resolves('room-abc'),
+			},
+			roomManager: {
+				getGame: sinon.stub().resolves({ handleCommand }),
+				getMemberRole: sinon.stub().resolves('member'),
+				runSerializedEngineWork: async (_key: string, fn: () => Promise<unknown>) => fn(),
+			},
+		});
+		sinon.stub(bot, 'getOrCreateSubscription').resolves({
+			registerUserFromMessage: sinon.stub(),
+			buildPrivateChannel: sinon.stub().returns(async () => undefined),
+		} as any);
+		return bot;
+	}
+
+	it('replies with CommandRefusalError text and does not log', async () => {
+		const { CommandRefusalError } = await import('@deck-monsters/engine');
+		const refusalMessage = 'You need a monster in the ring before you can summon a boss.';
+		const logSpy = sinon.spy();
+		const bot = await makeHandleMessageBot(logSpy, async () => {
+			throw new CommandRefusalError(refusalMessage);
+		});
+		const message = makeDmMessage('summon a boss');
+
+		await (bot as any).handleMessage(message);
+
+		expect(message.reply.calledOnce).to.be.true;
+		expect(message.reply.firstCall.args[0]).to.equal(refusalMessage);
+		expect(logSpy.called).to.be.false;
+	});
+
+	it('replies with busy-flow text when a same-user flow is already active', async () => {
+		const { busyFlowMessage } = await import('../command-flow.js');
+		let release!: () => void;
+		const held = new Promise<void>((resolve) => {
+			release = resolve;
+		});
+
+		let calls = 0;
+		const handleCommand = sinon.stub().callsFake(() => {
+			calls += 1;
+			if (calls === 1) return async () => held;
+			return async () => undefined;
+		});
+
+		const logSpy = sinon.spy();
+		const bot = makeBot(logSpy, {
+			db: makeDbWithExistingUser(),
+			guildRoomManager: {
+				resolveRoomForUser: sinon.stub().resolves('room-abc'),
+			},
+			roomManager: {
+				getGame: sinon.stub().resolves({ handleCommand }),
+				getMemberRole: sinon.stub().resolves('member'),
+				runSerializedEngineWork: async (_key: string, fn: () => Promise<unknown>) => fn(),
+			},
+		});
+		sinon.stub(bot, 'getOrCreateSubscription').resolves({
+			registerUserFromMessage: sinon.stub(),
+			buildPrivateChannel: sinon.stub().returns(async () => undefined),
+		} as any);
+
+		const first = (bot as any).handleMessage(makeDmMessage('spawn'));
+		await new Promise((r) => setImmediate(r));
+
+		const second = makeDmMessage('look at ring');
+		await (bot as any).handleMessage(second);
+
+		expect(second.reply.calledOnce).to.be.true;
+		expect(second.reply.firstCall.args[0]).to.equal(busyFlowMessage);
+		expect(logSpy.called).to.be.false;
+
+		release();
+		await first;
+	});
+
+	it('stays silent (no reply, no log) on PromptCancelledError', async () => {
+		const { PromptCancelledError } = await import('@deck-monsters/engine');
+		const logSpy = sinon.spy();
+		const bot = await makeHandleMessageBot(logSpy, async () => {
+			throw new PromptCancelledError();
+		});
+		const message = makeDmMessage('spawn');
+
+		await (bot as any).handleMessage(message);
+
+		expect(message.reply.called).to.be.false;
+		expect(logSpy.called).to.be.false;
+	});
+
+	it('stays silent (no reply, no log) on prompt timeout', async () => {
+		const logSpy = sinon.spy();
+		const bot = await makeHandleMessageBot(logSpy, async () => {
+			throw new Error('Prompt timed out — no response within the allowed time.');
+		});
+		const message = makeDmMessage('spawn');
+
+		await (bot as any).handleMessage(message);
+
+		expect(message.reply.called).to.be.false;
+		expect(logSpy.called).to.be.false;
+	});
+
+	it('logs unexpected errors and replies with generic text', async () => {
+		const logSpy = sinon.spy();
+		const unexpected = new Error('DB connection lost');
+		const bot = await makeHandleMessageBot(logSpy, async () => {
+			throw unexpected;
+		});
+		const message = makeDmMessage('spawn');
+
+		await (bot as any).handleMessage(message);
+
+		expect(logSpy.calledOnce).to.be.true;
+		expect(logSpy.firstCall.args[0]).to.equal(unexpected);
+		expect(message.reply.calledOnce).to.be.true;
+		expect(message.reply.firstCall.args[0]).to.equal(
+			'Something went wrong processing your command.'
+		);
+	});
+});

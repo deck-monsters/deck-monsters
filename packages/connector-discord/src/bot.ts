@@ -213,13 +213,21 @@ export class DiscordBot {
 				await message.reply('Command not recognized. Try `/help` for a list of commands.');
 			}
 		} catch (err) {
-			if (isExpectedDiscordFlowAbort(err)) {
-				const isBusy =
-					err instanceof DiscordFlowBusyError ||
-					(err instanceof Error && err.name === 'DiscordFlowBusyError');
-				if (isBusy) {
-					await message.reply((err as Error).message).catch(() => {});
-				}
+			// Mirror slash handling: refusals and busy flows surface their message;
+			// prompt cancel/timeout are silent expected aborts; everything else is logged.
+			const isBusy =
+				err instanceof DiscordFlowBusyError ||
+				(err instanceof Error && err.name === 'DiscordFlowBusyError');
+			const isRefusal = isCommandRefusal(err);
+			if (
+				isExpectedDiscordFlowAbort(err) &&
+				!isBusy &&
+				!isRefusal
+			) {
+				return;
+			}
+			if (isBusy || isRefusal) {
+				await message.reply((err as Error).message).catch(() => {});
 				return;
 			}
 			this.log(err);
