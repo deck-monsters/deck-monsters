@@ -345,31 +345,54 @@ describe('integration: command flow', function () {
 
 		it('announces an empty ring to the requesting user via the event bus', async () => {
 			const game = createTestGame();
-			const events: GameEvent[] = [];
+			const eventsA: GameEvent[] = [];
+			const eventsB: GameEvent[] = [];
 
-			const unsub = game.eventBus.subscribe('look-ring-empty', {
+			const unsubA = game.eventBus.subscribe('look-ring-empty-a', {
 				userId: USER_A,
-				deliver: (e) => events.push(e),
+				deliver: (e) => eventsA.push(e),
+			});
+			const unsubB = game.eventBus.subscribe('look-ring-empty-b', {
+				userId: USER_B,
+				deliver: (e) => eventsB.push(e),
 			});
 
 			const responder = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
 			await runCommand(game, { command: 'look at the ring', userId: USER_A, isDM: true });
 			responder.unsubscribe();
-			unsub();
+			unsubA();
+			unsubB();
 
-			const announces = ringLookAnnounces(events);
+			const announces = ringLookAnnounces(eventsA);
 			expect(announces.length, 'should publish private announces to USER_A').to.be.above(0);
+			for (const ev of announces) {
+				expect(ev.scope).to.equal('private');
+				expect(ev.targetUserId).to.equal(USER_A);
+			}
 			const text = announces.map((e) => e.text).join('\n');
 			expect(text, 'empty ring message').to.match(/empty/i);
+
+			const leakedToB = eventsB.filter(
+				(e) =>
+					e.scope === 'private' &&
+					e.type === 'announce' &&
+					e.text?.toLowerCase().includes('empty'),
+			);
+			expect(leakedToB, 'USER_B must not receive private ring look announces').to.have.length(0);
 		});
 
 		it('announces ring contestants to the requesting user via the event bus', async () => {
 			const game = createTestGame();
-			const events: GameEvent[] = [];
+			const eventsA: GameEvent[] = [];
+			const eventsB: GameEvent[] = [];
 
-			const unsub = game.eventBus.subscribe('look-ring-contestants', {
+			const unsubA = game.eventBus.subscribe('look-ring-contestants-a', {
 				userId: USER_A,
-				deliver: (e) => events.push(e),
+				deliver: (e) => eventsA.push(e),
+			});
+			const unsubB = game.eventBus.subscribe('look-ring-contestants-b', {
+				userId: USER_B,
+				deliver: (e) => eventsB.push(e),
 			});
 
 			// Character + monster, then seed the ring (same pattern as summon-a-boss tests).
@@ -382,14 +405,25 @@ describe('integration: command flow', function () {
 			const monster = character.monsters[0];
 			game.ring.addMonster({ monster, character, userId: USER_A });
 
-			await runCommand(game, { command: 'look at the ring', userId: USER_A, isDM: true });
-			unsub();
+			// Ignore spawn/add public traffic; only assert look-at-ring delivery.
+			eventsA.length = 0;
+			eventsB.length = 0;
 
-			const announces = ringLookAnnounces(events);
+			await runCommand(game, { command: 'look at the ring', userId: USER_A, isDM: true });
+			unsubA();
+			unsubB();
+
+			const announces = ringLookAnnounces(eventsA);
 			expect(announces.length, 'should publish private announces to USER_A').to.be.above(0);
+			for (const ev of announces) {
+				expect(ev.scope).to.equal('private');
+				expect(ev.targetUserId).to.equal(USER_A);
+			}
 			const text = announces.map((e) => e.text).join('\n');
 			expect(text, 'should mention contestants').to.match(/contestant/i);
 			expect(text, 'should mention the monster name').to.include('Fang');
+
+			expect(eventsB, 'USER_B must not receive look-at-ring events').to.have.length(0);
 		});
 	});
 
