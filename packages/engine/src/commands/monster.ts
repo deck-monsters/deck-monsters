@@ -398,6 +398,15 @@ function triggerRingEventAction({ channel, game, isAdmin, results }: any): Promi
 
 		// Use the same centralized activation path as the natural roll so both paths are
 		// identical: announcement emitted, extra bosses spawned (Gauntlet), metrics fired.
+		// activateRingEvent() itself guards against overwriting an already-armed event
+		// (returns silently after logging). Surface a user-facing refusal here too.
+		if (ring.ringEvent) {
+			return announceAndThrow(
+				channel,
+				`A ${ring.ringEvent.name} is already queued — the new event was not applied.`
+			);
+		}
+
 		ring.activateRingEvent(ringEvent);
 		// Re-arm the fight timer so the newly-spawned bosses (if any) are included in the
 		// countdown roster. rollRingEvent() is guarded by `if (this.ringEvent)` so it will

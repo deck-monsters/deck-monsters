@@ -552,12 +552,112 @@ describe('game.ts', () => {
 
 				await game.getCharacter({ channel, id: 'user-3', name: 'Player' });
 
-				clock.tick(31_000);
-				expect(saveStateStub.calledOnce).to.equal(true);
-			} finally {
-				game.saveState = undefined;
-				clock.restore();
-			}
+			clock.tick(31_000);
+			expect(saveStateStub.calledOnce).to.equal(true);
+		} finally {
+			game.saveState = undefined;
+			clock.restore();
+		}
+	});
+	});
+
+	describe('boss summon pending — serialization/restore (Findings 1 & 4)', () => {
+		it('refunds pending summons on restore when no encounter began', () => {
+			const userId = 'user-refund';
+			const ts = Date.now();
+
+			// Simulate a game that had a pending summon but no fight started
+			const game = new Game({
+				bossSummons: { [userId]: [ts] },
+				bossSummonsPending: { [userId]: [ts] },
+			});
+
+			// Constructor calls _refundPendingBossSummons — pending should be cleared
+			// and the charge refunded
+			expect((game as any).bossSummons[userId]).to.be.undefined;
+			expect(Object.keys((game as any).bossSummonsPending).length).to.equal(0);
+			game.dispose();
+		});
+
+		it('does not refund if bossSummonsPending is absent (backward compat)', () => {
+			const userId = 'user-compat';
+			const ts = Date.now();
+
+			// Old game state with no bossSummonsPending field
+			const game = new Game({
+				bossSummons: { [userId]: [ts] },
+				// no bossSummonsPending
+			});
+
+			// Charge must be preserved — nothing to refund
+			expect((game as any).bossSummons[userId]).to.deep.equal([ts]);
+			game.dispose();
+		});
+
+		it('finalization is durable: clearing pending saves at next event loop tick, before debounce, so a restart cannot refund an already-used charge', async () => {
+			// Critical (Finding 1): the in-memory clear of bossSummonsPending on
+			// fightBegins was not persisted immediately; only the 30s debounce would
+			// flush it. A restart before the debounce left the pending entry in the
+			// saved state, so the next restore would incorrectly refund the charge.
+			//
+			// Fix: when fightBegins fires, write to optionsStore directly (no
+			// stateChange) then call persistState() immediately. persistState() flushes
+			// via setImmediate (one event loop tick) rather than the 30s debounce.
+			const userId = 'user-durable';
+			const ts = Date.now();
+
+			const saves: string[] = [];
+			const game = new Game({
+				bossSummons: { [userId]: [ts] },
+				bossSummonsPending: { [userId]: [ts] },
+			});
+			// After construction the refund has already run (pending from before restart).
+			// Now simulate a NEW summon and check finalization durability.
+			// Re-add the pending entry as if a fresh summon just occurred:
+			(game as any).optionsStore = {
+				...(game as any).optionsStore,
+				bossSummons: { [userId]: [ts] },
+				bossSummonsPending: { [userId]: [ts] },
+			};
+
+			// Wire a save function that captures serialized state
+			game.saveState = (state: string) => saves.push(state);
+
+			// Simulate a fightBegins event — this should schedule a save immediately
+			// (not wait for the 30s debounce). persistState() uses setImmediate, so
+			// the callback fires at the next event loop tick, not synchronously.
+			game.eventBus.publish({
+				type: 'ring.fight',
+				scope: 'public',
+				text: 'Fight begins',
+				payload: { eventName: 'fightBegins' },
+			});
+
+			// Yield to let the setImmediate callback fire
+			await new Promise<void>(resolve => setImmediate(resolve));
+
+			// The finalization must have saved BEFORE the debounce window (30s)
+			expect(saves.length, 'persistState must fire at next event-loop tick, not via 30s debounce').to.be.above(0);
+
+			// The saved state must NOT contain bossSummonsPending with the charge
+			const lastSave = saves[saves.length - 1]!;
+			const decoded = JSON.parse(
+				zlib.gunzipSync(Buffer.from(lastSave, 'base64')).toString()
+			);
+			const pendingInSave = decoded?.options?.bossSummonsPending;
+			const pendingEntries = pendingInSave ? Object.keys(pendingInSave) : [];
+			expect(pendingEntries.length, 'saved state must have empty bossSummonsPending').to.equal(0);
+
+			// Restoring from this save must NOT refund the charge
+			const restoredGame = restoreGame(lastSave);
+			expect(
+				(restoredGame as any).bossSummons[userId],
+				'charge must be preserved after restore — it was genuinely spent'
+			).to.deep.equal([ts]);
+
+			game.saveState = undefined;
+			game.dispose();
+			restoredGame.dispose();
 		});
 	});
 });

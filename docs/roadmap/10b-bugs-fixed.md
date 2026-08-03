@@ -434,11 +434,19 @@ one daily charge.
 
 **Fixed** with a minimal pending/finalized mechanism: a second ledger `bossSummonsPending`
 is written alongside `bossSummons` in the same synchronous block. When the fight actually
-begins (`ring.fight` / `fightBegins` via the event bus), `bossSummonsPending` is cleared —
-the charge is finalized. `Game`'s constructor calls `_refundPendingBossSummons()` before
-`initializeEvents`, which uses `refundPendingSummons` (a new pure helper in
-`helpers/boss-summons.ts`) to strip the pending timestamps from `bossSummons` and clear
-the pending ledger. A restart in the 30–60 s window therefore gives the charge back.
+begins (`ring.fight` / `fightBegins` via the event bus), `bossSummonsPending` is cleared and
+`persistState()` is called immediately (via `setImmediate` — one event loop tick, not the
+30 s debounce) so the cleared state reaches disk before any subsequent restart can see it.
+`Game`'s constructor calls `_refundPendingBossSummons()` before `initializeEvents`, which
+uses `refundPendingSummons` (a new pure helper in `helpers/boss-summons.ts`) to strip the
+pending timestamps from `bossSummons` and clear the pending ledger. A restart in the 30–60 s
+window therefore gives the charge back.
+
+**Durability detail (Grok follow-up)**: the original implementation used `setOptions()` to
+clear `bossSummonsPending`, which scheduled a 30 s debounced save. A restart in that 30 s
+window could load the still-pending state and incorrectly refund a charge that was already
+used. Fixed by writing directly to `optionsStore` (no `stateChange` emission) and calling
+`persistState()` immediately on `fightBegins`.
 
 The schema is backward-compatible (`bossSummonsPending` lives in `Game.options`, and the Zod
 schema's `passthrough()` accepts it without migration). Bosses remain ephemeral — only the
@@ -446,8 +454,70 @@ quota entry is affected. Ordinary pre-fight player actions cannot accidentally g
 summons because they do not touch `bossSummonsPending`.
 
 Covered by new tests in `helpers/boss-summons.test.ts` (addPendingSummon, refundPendingSummons
-pure-helper behavior) and `ring/index.test.ts` (serialization round-trip: pending cleared
-after fight starts; pending refunded on restore before fight).
+pure-helper behavior) and `game.test.ts` (serialization round-trip: pending cleared
+after fight starts via setImmediate; pending refunded on restore before fight; backward compat
+with no bossSummonsPending field).
+
+**Status**: Fixed.
+
+---
+
+### 40. `doAction` infinite recursion in last-team mode with ≥2 same-faction survivors — FIXED
+
+In `ring/index.ts`, the combined condition at the top of `doAction` was:
+
+```typescript
+if (activeContestants.length <= 1 || isLastTeamVictory(globalActive)) {
+    ...
+    } else {
+        activeContestants = globalActive;
+        next(); // ← recursive call to doAction
+    }
+}
+```
+
+When `isLastTeamVictory(globalActive)` was true AND the batch had ≥2 survivors (all same
+faction), the nested condition `activeContestants.length === 1 && !isLastTeamVictory(...)` was
+always false, so the `else` branch called `next()`, which called `doAction` again with the
+same state — infinite Promise-chain recursion. The recursion eventually overflowed the call
+stack, which `ring.fight()`'s `.catch()` silently swallowed by calling `clearRing()` instead
+of `fightConcludes()`. No contestant ever received `won = true`.
+
+**Fixed** by separating the two cases:
+
+```typescript
+if (isLastTeamVictory(globalActive)) {
+    resolve(undefined); // terminate immediately — no recursion
+    return;
+}
+if (activeContestants.length <= 1) {
+    // normal batch-rebuild logic (unchanged)
+}
+```
+
+Covered by a new regression test in `ring/index.test.ts` (`fight() resolves without
+recursion: allied survivors both get won=true`) that sets up 3 contestants (2 allied, 1 dead
+enemy), runs `fight()`, and verifies both survivors have `won === true` — impossible if the
+stack overflow took the `.catch()` path.
+
+**Status**: Fixed.
+
+---
+
+### 41. Admin `trigger ring event` could overwrite an already-armed event — FIXED
+
+`ring.activateRingEvent()` had no guard against repeat activation. An admin calling
+`trigger ring event <id>` while a different event was already queued would overwrite it and
+re-run its side effects (boss spawns, announcements, metrics). Natural rolls were safe because
+`rollRingEvent()` bails on `if (this.ringEvent)`, but the admin command path bypassed that.
+
+**Fixed**: `activateRingEvent()` now returns immediately (with a log entry) if `this.ringEvent`
+is already set. The command handler in `commands/monster.ts` additionally checks `ring.ringEvent`
+before calling `activateRingEvent()` and surfaces a user-facing refusal:
+`"A <EventName> is already queued — the new event was not applied."`.
+
+Covered by a new test in `ring/index.test.ts` that arms one event, attempts to arm a second,
+and verifies the first is unchanged and the `ringEvent` emission count remains 1.
 
 **Status**: Fixed.
 

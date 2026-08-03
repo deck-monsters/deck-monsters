@@ -503,6 +503,35 @@ describe('ring/index.ts', () => {
 				expect(ring.contestants.length).to.equal(before); // no extra spawns
 				game.dispose();
 			});
+
+			it('refuses to overwrite an already-armed event and does not re-emit (Finding 7)', () => {
+				// Repeat admin activation must be refused: overwriting would re-run
+				// side effects (boss spawns, announcements) and confuse the fight log.
+				const game = new Game();
+				const ring = game.getRing();
+
+				addPlayer(ring, 'user-1');
+				addPlayer(ring, 'user-2');
+
+				const emitted: any[] = [];
+				ring.on('ringEvent', (_className: string, _r: any, data: any) => emitted.push(data));
+
+				const bloodFeud = ringEventFor('blood-feud');
+				const commonCause = ringEventFor('common-cause');
+
+				ring.activateRingEvent(bloodFeud);
+				expect(ring.ringEvent).to.equal(bloodFeud);
+				expect(emitted.length).to.equal(1);
+
+				// Second call with a different event — should be refused
+				ring.activateRingEvent(commonCause);
+
+				// Event must NOT have been overwritten and must NOT have been re-emitted
+				expect(ring.ringEvent).to.equal(bloodFeud);
+				expect(emitted.length).to.equal(1);
+
+				game.dispose();
+			});
 		});
 
 		it('is cleared when the ring is cleared', () => {
@@ -634,11 +663,54 @@ describe('ring/index.ts', () => {
 			character.addMonster(monster);
 			ring.addMonster({ monster, character, userId: 'user-3', deferFightTimer: true });
 
-			expect(ring.contestants.length).to.equal(3);
-			// Untouched: the enclosing startFightTimer() owns the timer.
-			expect(ring.nextFightAt).to.equal(armedAt);
+		expect(ring.contestants.length).to.equal(3);
+		// Untouched: the enclosing startFightTimer() owns the timer.
+		expect(ring.nextFightAt).to.equal(armedAt);
 
-			game.dispose();
+		game.dispose();
+	});
+
+		describe('admin trigger — refuses during encounter (Finding 6)', () => {
+			it('refuses and neither emits ringEvent nor records it when encounter is in progress', async () => {
+				const game = new Game();
+				const ring = game.getRing();
+
+				addPlayer(ring, 'user-1');
+				addPlayer(ring, 'user-2');
+
+				const emitted: any[] = [];
+				ring.on('ringEvent', (_className: string, _r: any, data: any) => emitted.push(data));
+
+				ring.inEncounter = true;
+
+				const announces: string[] = [];
+				const channel = (opts: any): Promise<void> => {
+					if (opts.announce) announces.push(String(opts.announce));
+					return Promise.resolve();
+				};
+
+				const action = game.handleCommand({ command: 'trigger ring event blood-feud' });
+				expect(action, 'command should match').to.not.equal(null);
+
+				let threw = false;
+				try {
+					await action!({
+						channel,
+						channelName: 'test',
+						isAdmin: true,
+						isDM: false,
+						user: 'admin',
+					});
+				} catch {
+					threw = true;
+				}
+
+				expect(threw, 'command should reject/announce refusal').to.equal(true);
+				expect(ring.ringEvent, 'ringEvent must remain unset').to.equal(undefined);
+				expect(emitted.length, 'ringEvent event must not be emitted').to.equal(0);
+
+				game.dispose();
+			});
 		});
 	});
 
@@ -826,6 +898,63 @@ describe('ring/index.ts', () => {
 	});
 
 	describe('last-team victory mode (Finding 1)', () => {
+		it('fight() resolves without recursion: allied survivors both get won=true (Finding 2)', async function () {
+			// Regression (Critical #2): the top-of-doAction last-team branch unconditionally
+			// called next() when isLastTeamVictory was true, even with ≥2 same-faction
+			// survivors in the batch. This produced infinite Promise-chained recursion that
+			// eventually overflowed the stack — fight() caught it and called clearRing()
+			// instead of fightConcludes(), so no contestant ever got won=true.
+			//
+			// The fix resolves immediately (not via next()) when isLastTeamVictory fires.
+			// Test: both allies must get won=true; fightConcludes must run (not just catch).
+			//
+			// NOTE: ring.addMonster() creates a NEW contestant object (not the same reference
+			// as the value passed in), so we capture ring.contestants[] refs AFTER all adds.
+			this.timeout(5000);
+
+			const houseWar = RING_EVENTS.find(e => e.id === 'house-war')!;
+
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+			// Assign teams — [0] and [1] share a faction, [2] is the enemy.
+			// (Shuffle may reorder, but we assign by slot so the indices stay meaningful.)
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';
+
+			// Kill the enemy (Slytherin) before the fight: isLastTeamVictory fires from
+			// the very first doAction invocation (hp=0 → monster.dead → filtered out).
+			ring.contestants[2]!.monster.hp = 0;
+
+			// Capture contestant references BEFORE fight() clears the ring.
+			// fightConcludes sets .won on these objects; clearRing() empties the array.
+			const gryffindor1 = ring.contestants[0]!;
+			const gryffindor2 = ring.contestants[1]!;
+			const slytherin = ring.contestants[2]!;
+
+			// Use a custom last-team event whose apply() is a no-op. The real
+			// houseWar.apply() would overwrite the manual team assignments above
+			// when startEncounter() calls ringEvent.apply(this.contestants), which
+			// would randomize teams and break the deterministic test setup.
+			ring.ringEvent = { ...houseWar, apply: () => {} };
+
+			await ring.fight();
+
+			// fightConcludes must have run: both Gryffindors are winners, Slytherin is a loser.
+			// With the bug, stack overflow → catch → clearRing() ran first — won was never set.
+			expect(gryffindor1.won, 'Gryffindor survivor 1 must be a winner').to.equal(true);
+			expect(gryffindor2.won, 'Gryffindor survivor 2 must be a winner').to.equal(true);
+			expect(slytherin.lost, 'Slytherin must be a loser').to.equal(true);
+			expect(ring.inEncounter, 'encounter must be over').to.equal(false);
+
+			game.dispose();
+		});
+
 		it('all surviving members of the winning faction get won=true when last-team event is active', async () => {
 			const game = new Game();
 			const ring = game.getRing();

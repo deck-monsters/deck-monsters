@@ -313,11 +313,25 @@ export class Game extends BaseClass {
 		// restart-gap fix: once the encounter begins, the boss is firmly in play and the
 		// charge is genuinely spent — pending can be cleared so a subsequent restart won't
 		// mistakenly refund it. See docs/boss-encounters.md §3.
+		//
+		// Durability requirement: the cleared pending state must be written to disk
+		// immediately (not via the 30s debounce). If the process dies between this
+		// fightBegins event and the next debounced flush, the still-pending entry would
+		// survive in the saved blob and cause a spurious refund on the next restore.
+		// We bypass setOptions/stateChange and call persistState() directly — the same
+		// pattern used in _refundPendingBossSummons() during construction.
 		const unsubBossFinalizer = this._eventBus.subscribe('game-boss-summon-finalizer', {
 			deliver: (event) => {
 				if (event.type === 'ring.fight' && (event.payload as any)?.eventName === 'fightBegins') {
 					if (Object.keys(this.bossSummonsPending).length > 0) {
-						this.bossSummonsPending = {};
+						// Write directly — no stateChange emission, no debounce reset.
+						this.optionsStore = {
+							...this.optionsStore,
+							bossSummonsPending: {},
+						};
+						// Immediate flush so the cleared state survives a restart in the
+						// 30–60 s window before the next debounced save would have fired.
+						this.persistState();
 					}
 				}
 			},

@@ -147,7 +147,12 @@ the timestamps recorded since the last fight started. The flow is:
    `recordSummon`) and `bossSummonsPending` (via `addPendingSummon`), atomically in the same
    synchronous block.
 2. When a fight actually begins (`ring.fight` / `fightBegins` event), `initializeEvents`
-   clears `bossSummonsPending`. The boss is now firmly in play and the charge is spent.
+   clears `bossSummonsPending` by writing directly to `optionsStore` (no `stateChange`
+   emission) and immediately calls `persistState()`, which flushes via `setImmediate` (one
+   event loop tick — not the 30 s debounce). This ensures the cleared pending state reaches
+   disk before any subsequent restart can see it. Without the immediate flush, a restart in
+   the 30 s debounce window would load the old state (pending still set) and incorrectly
+   refund a charge that was already used.
 3. `Game`'s constructor (before `initializeEvents`) calls `_refundPendingBossSummons()`,
    which calls `refundPendingSummons` to remove from `bossSummons` any timestamps still in
    `bossSummonsPending`, then clears the pending ledger. A restart in step 1–2's window
@@ -254,9 +259,12 @@ per-encounter. There is a test asserting `apply()` leaves the monster untouched 
    `this.ringEvent == null`**. That guard is load-bearing: the Gauntlet's `spawnBoss()` calls
    re-enter `startFightTimer()` via `addMonster()`, and without it the roll would recurse.
 2. **Activate** — Both natural rolls and the admin `trigger ring event` command call the
-   single `Ring.activateRingEvent(ringEvent)` method. It sets `this.ringEvent`, emits
-   `ringEvent`, and spawns any `extraBosses` with `deferFightTimer: true`. Using one path
-   prevents natural and admin activations from drifting apart.
+   single `Ring.activateRingEvent(ringEvent)` method. It first checks `this.ringEvent`: if one
+   is already armed, it returns immediately (log entry, no emission, no boss spawn) so
+   activation is idempotent and repeat calls cannot overwrite or re-emit. Otherwise it sets
+   `this.ringEvent`, emits `ringEvent`, and spawns any `extraBosses` with
+   `deferFightTimer: true`. Using one path prevents natural and admin activations from
+   drifting apart.
 3. **Spawn** — Gauntlet's extra bosses are added with `deferFightTimer: true`. Without that
    flag the nested `addMonster()` arms a second fight timer that the enclosing
    `startFightTimer()` then orphans, and the same countdown fires two fights.
@@ -287,8 +295,16 @@ prevents overwriting it within the same arm).
 
 `trigger ring event <id|name>` (admin-only, hidden from the catalog) calls
 `Ring.activateRingEvent()` directly, producing the same announcement, boss spawns (for the
-Gauntlet), and metric as a natural roll. If a fight is already in progress, the command
-refuses and does not record the event.
+Gauntlet), and metric as a natural roll. Two refusal conditions are enforced, both of which
+announce the reason and do not record the event:
+
+- **Encounter in progress** — the event would be applied too late (apply fires in
+  `startEncounter()` against the final roster, which has already run). The command responds:
+  `"Cannot force a ring event while an encounter is in progress — the event would have no
+  effect."`
+- **Event already queued** — overwriting would re-run boss-spawn side effects and confuse the
+  fight log. The command responds: `"A <EventName> is already queued — the new event was not
+  applied."`
 
 ### Determinism
 

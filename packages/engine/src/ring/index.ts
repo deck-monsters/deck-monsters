@@ -671,20 +671,35 @@ export class Ring extends BaseClass {
 					resolve(doAction({ currentContestants: activeContestants, cardIndex: nextCardIndex }));
 				};
 
-				const globalActive = getAllActiveContestants();
-				if (activeContestants.length <= 1 || isLastTeamVictory(globalActive)) {
-					nextCardIndex += 1;
+			const globalActive = getAllActiveContestants();
 
-					// Rebuild only when: exactly 1 survivor in the local batch AND the
-					// global fight is not over (no last-team victory, more factions remain).
-					if (activeContestants.length === 1 && !isLastTeamVictory(globalActive)) {
-						activeContestants = [...activeContestants, ...globalActive];
-					} else {
-						activeContestants = globalActive;
-						next();
-						return;
-					}
+			// Check last-team victory BEFORE the batch-rebuild logic so we never
+			// recurse. With ≥2 same-faction survivors the old combined condition
+			// `activeContestants.length <= 1 || isLastTeamVictory(globalActive)`
+			// always fell into the else-branch and called next(), which called
+			// doAction again, which called next() again — infinite recursion.
+			if (isLastTeamVictory(globalActive)) {
+				// One faction stands. Resolve without recursion; fightConcludes
+				// marks every living contestant as won. No single lastContestant.
+				resolve(undefined);
+				return;
+			}
+
+			if (activeContestants.length <= 1) {
+				nextCardIndex += 1;
+
+				if (activeContestants.length === 1) {
+					// One local-batch survivor but other factions still in the fight
+					// globally: rebuild the batch so they can all keep playing.
+					activeContestants = [...activeContestants, ...globalActive];
+				} else {
+					// Batch exhausted — rebuild from the global active list and
+					// continue to the next card index.
+					activeContestants = globalActive;
+					next();
+					return;
 				}
+			}
 
 				const playerContestant = activeContestants.shift()!;
 				const { monster: player } = playerContestant;
@@ -746,66 +761,66 @@ export class Ring extends BaseClass {
 						`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`
 					);
 
-			// Guard: if card is a plain object (hydration failure), skip it gracefully.
-			if (typeof card.play !== 'function') {
-				this.log({
-					context: 'ring.fight.invalidCard',
-					monsterName: player.givenName,
-					monsterConstructor: player?.constructor?.name,
-					cardIndex,
-					cardConstructor: card?.constructor?.name ?? 'unknown',
-					cardKeys: Object.keys(card),
-					cardName: card?.name,
-					typeof_play: typeof card?.play,
-					cardJSON: JSON.stringify(card)?.slice(0, 300),
-				});
-				if (fightContinues(getAllActiveContestants())) {
-					if (delaysAreSkipped()) {
-						queueMicrotask(() => next());
-					} else {
-						setTimeout(() => next(), veryShortDelay(round));
-					}
-				} else {
-					resolve(playerContestant);
-				}
-				return;
-			}
-
-			card
-				.play(player, proposedTarget, ring, getAllActiveContestants())
-				.then(() => {
-					if (fightContinues(getAllActiveContestants())) {
-						if (delaysAreSkipped()) {
-							return subEventDelay().then(() => next());
-						}
-						// Pace card-to-card transitions with the configured very-short
-						// delay (2–4s) so live feeds can be followed; sub-events within
-						// a card already pace themselves via subEventDelay().
-						return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() =>
-							next()
-						);
-					}
-
-					return Promise.resolve().then(() => resolve(playerContestant));
-				})
-				.catch((ex: unknown) => {
+				// Guard: if card is a plain object (hydration failure), skip it gracefully.
+				if (typeof card.play !== 'function') {
 					this.log({
-						err: ex,
-						context: 'card.play',
-						card: card.name,
-						player: player.givenName,
-						target: proposedTarget.givenName,
+						context: 'ring.fight.invalidCard',
+						monsterName: player.givenName,
+						monsterConstructor: player?.constructor?.name,
+						cardIndex,
+						cardConstructor: card?.constructor?.name ?? 'unknown',
+						cardKeys: Object.keys(card),
+						cardName: card?.name,
+						typeof_play: typeof card?.play,
+						cardJSON: JSON.stringify(card)?.slice(0, 300),
 					});
-					// Skip the failed card and continue the fight rather than crashing
 					if (fightContinues(getAllActiveContestants())) {
 						if (delaysAreSkipped()) {
-							return subEventDelay().then(() => next());
+							queueMicrotask(() => next());
+						} else {
+							setTimeout(() => next(), veryShortDelay(round));
 						}
-						return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() => next());
+					} else {
+						resolve(playerContestant);
 					}
-					return Promise.resolve().then(() => resolve(playerContestant));
-				});
-				} else {
+					return;
+				}
+
+				card
+					.play(player, proposedTarget, ring, getAllActiveContestants())
+					.then(() => {
+						if (fightContinues(getAllActiveContestants())) {
+							if (delaysAreSkipped()) {
+								return subEventDelay().then(() => next());
+							}
+							// Pace card-to-card transitions with the configured very-short
+							// delay (2–4s) so live feeds can be followed; sub-events within
+							// a card already pace themselves via subEventDelay().
+							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() =>
+								next()
+							);
+						}
+
+						return Promise.resolve().then(() => resolve(playerContestant));
+					})
+					.catch((ex: unknown) => {
+						this.log({
+							err: ex,
+							context: 'card.play',
+							card: card.name,
+							player: player.givenName,
+							target: proposedTarget.givenName,
+						});
+						// Skip the failed card and continue the fight rather than crashing
+						if (fightContinues(getAllActiveContestants())) {
+							if (delaysAreSkipped()) {
+								return subEventDelay().then(() => next());
+							}
+							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() => next());
+						}
+						return Promise.resolve().then(() => resolve(playerContestant));
+					});
+			} else {
 					this.emit('endOfDeck', { contestant: playerContestant, round });
 
 					player.emptyHanded = true;
@@ -1222,6 +1237,20 @@ export class Ring extends BaseClass {
 	 * paths identical prevents them from drifting apart. See docs/boss-encounters.md §4.
 	 */
 	activateRingEvent(ringEvent: RingEventDefinition): void {
+		// Guard against repeat activation: overwriting an already-armed event would
+		// re-run its side effects (boss spawns, announcements, metrics) and corrupt
+		// the fight log. Natural rolls never reach here twice (rollRingEvent() bails
+		// when this.ringEvent is set), so this guard is primarily for the admin
+		// "trigger ring event" command path. See docs/boss-encounters.md §4.
+		if (this.ringEvent) {
+			this.log({
+				context: 'ring.activateRingEvent.alreadyArmed',
+				existing: this.ringEvent.id,
+				refused: ringEvent.id,
+			});
+			return;
+		}
+
 		this.ringEvent = ringEvent;
 		this.emit('ringEvent', { ringEvent });
 
