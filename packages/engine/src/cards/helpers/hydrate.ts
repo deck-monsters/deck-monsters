@@ -1,7 +1,7 @@
 import { sortCardsAlphabetically } from './sort.js';
 import all from './all.js';
-import { draw } from './draw.js';
 import { isMatchingCard } from './is-matching.js';
+import { UnknownCard } from './unknown-card.js';
 
 export interface CardObj {
 	name: string;
@@ -10,7 +10,7 @@ export interface CardObj {
 
 export const hydrateCard = (
 	cardObj: CardObj,
-	monster?: any,
+	_monster?: any,
 	deck: any[] = []
 ): any => {
 	const existingCard = deck.find(card => isMatchingCard(card, cardObj));
@@ -19,7 +19,8 @@ export const hydrateCard = (
 	const Card = all.find(({ name }) => name === cardObj.name);
 	if (Card) return new (Card as any)(cardObj.options);
 
-	return draw({}, monster);
+	// Never silently replace missing classes with a random draw — keep identity for repair.
+	return new UnknownCard(cardObj);
 };
 
 export const hydrateDeck = (

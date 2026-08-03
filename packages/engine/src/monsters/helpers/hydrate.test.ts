@@ -104,6 +104,52 @@ describe('monsters/helpers/hydrate.ts', () => {
 
 			expect(monster.cards.length).to.be.above(0);
 		});
+
+		it('preserves equipped card play order on hydrate (not alphabetical) (#65)', () => {
+			const monsterObj = {
+				name: 'Basilisk',
+				options: {
+					cards: [
+						{ name: 'FleeCard', options: {} },
+						{ name: 'HitCard', options: {} },
+						{ name: 'HealCard', options: {} },
+					],
+				},
+			};
+
+			const monster = hydrateMonster(monsterObj);
+
+			expect(monster.cards.map((card: any) => card.name)).to.deep.equal([
+				'FleeCard',
+				'HitCard',
+				'HealCard',
+			]);
+		});
+
+		it('preserves unknown equipped cards without random replacement (#66)', () => {
+			const monsterObj = {
+				name: 'Basilisk',
+				options: {
+					cards: [
+						{ name: 'HitCard', options: {} },
+						{ name: 'LegacyRemovedCard', options: { kept: 'yes' } },
+						{ name: 'FleeCard', options: {} },
+					],
+				},
+			};
+
+			const monster = hydrateMonster(monsterObj);
+
+			expect(monster.cards.map((card: any) => card.name)).to.deep.equal([
+				'HitCard',
+				'LegacyRemovedCard',
+				'FleeCard',
+			]);
+			expect(monster.cards[1].toJSON()).to.deep.equal({
+				name: 'LegacyRemovedCard',
+				options: { kept: 'yes' },
+			});
+		});
 	});
 
 	describe('monsterHydrateReady', () => {

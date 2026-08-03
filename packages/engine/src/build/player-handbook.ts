@@ -72,6 +72,8 @@ Your card pool is shared across all your monsters. You can hold up to 4 copies o
 
 When equipping, the order matters — your monster plays cards in the order you set them. A good deck mixes attack, defense, and recovery cards.
 
+Some cards roll more than once (Lucky Strike, Horn Swipe, Rehit). Critical success (natural 20) and Curse of Loki (natural 1) apply only to the roll the card keeps — a discarded roll never crits.
+
    look at cards          — see your full deck
    look at [card name]    — inspect a specific card
 

@@ -59,6 +59,7 @@ export { WoodenSpearCard } from './wooden-spear.js';
 
 export { draw } from './helpers/draw.js';
 export { hydrateCard, hydrateDeck } from './helpers/hydrate.js';
+export { UnknownCard } from './helpers/unknown-card.js';
 export { sortCardsAlphabetically } from './helpers/sort.js';
 export { getInitialDeck, fillDeck, getMinimumDeck } from './helpers/deck.js';
 export { all } from './helpers/all.js';

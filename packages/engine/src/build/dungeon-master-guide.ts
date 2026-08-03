@@ -63,6 +63,10 @@ To hit:    roll 1d20 + attacker modifier vs target stat
 A roll of 20 is always a stroke of luck (extra effect).
 A roll of 1 is always a curse of loki (bad effect).
 
+Multi-roll attacks (Lucky Strike, Horn Swipe, Rehit): when a card rolls
+more than once and keeps only one result, Stroke of Luck / Curse of Loki
+apply to the selected roll only — discarded natural 20s/1s do not crit.
+
 Damage:    varies by card (1d4, 1d6, 1d8, 2d4, 2d6...)
 Modifiers: STR/DEX/INT bonuses added based on card class
 

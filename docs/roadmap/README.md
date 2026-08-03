@@ -20,7 +20,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
 | [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — #3 content pass + audit follow-ups #59–#73 |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — #3 content pass + audit follow-ups #59–#64, #70–#73 |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | 🔧 Active — deployed, not heavily used; admin role + tests remaining |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | 🔧 Active — sync bugs being fixed |
@@ -52,13 +52,13 @@ Everything below shipped and is not expected to need revisiting:
 - **Card workshop** — full card management shipped: unequip/move commands, preset save/load/delete, drag-and-drop web workshop at `/workshop`
 - **Battle history persistence** — stored in `options.battles`, capped at 20, survives restarts
 - **Boss encounters** — player boss summoning (3 per rolling 24h, per room) and Ring Events: random encounter modifiers that trigger multi-boss gauntlets, free-for-alls, player alliances, and team battles by surfacing the engine's existing team/targeting machinery. `victoryMode: 'last-team'` for Common Cause and House War: combat ends when one faction survives and all survivors win. Centralized activation (`Ring.activateRingEvent`), quorum-drop event clearing, free-for-all centralized in `getTarget`, contestant-level XP team overrides, and restart-gap fix for the boss summon quota (`bossSummonsPending`). Documented in [`docs/boss-encounters.md`](../boss-encounters.md)
-- **Bug fixes** — most tracked items are resolved; see `10b-bugs-fixed.md` for the archive, including batch-equip UX (#19), per-room card shop scoping (#26), boss-sentinel leaderboard fixes (#27–#33), combat/event findings (#34–#50), and the 2026-08-03 audit fixes (#51–#58, #74–#77: XP floor, Flee threshold, Pick Pocket crash, ring batch duplicates, boss despawn timers on `clearRing`, Discord guild auto-join, `PROMPT_CANCELLED` reject, web room-navigation bleed, round-cap multi-faction false wins, fight-outcome labelling, two flaky tests). Open work (DMG/CARDS content pass #3 plus audit follow-ups #59–#73) is tracked in `10-bug-fixes.md`
+- **Bug fixes** — most tracked items are resolved; see `10b-bugs-fixed.md` for the archive, including batch-equip UX (#19), per-room card shop scoping (#26), boss-sentinel leaderboard fixes (#27–#33), combat/event findings (#34–#50), and the 2026-08-03 audit fixes (#51–#58, #65–#69, #74–#77: XP floor, Flee threshold, Pick Pocket crash, ring batch duplicates, boss despawn timers on `clearRing`, Discord guild auto-join, `PROMPT_CANCELLED` reject, web room-navigation bleed, round-cap multi-faction false wins, fight-outcome labelling, two flaky tests, unknown-card hydrate preservation, inventory/order audit closures). Open work (DMG/CARDS content pass #3 plus audit follow-ups #59–#64, #70–#73) is tracked in `10-bug-fixes.md`
 
 ---
 
 ## Active Work — In Order of Priority
 
-Real-time sync bugs, quick actions, batch-equip UX, and card shop room-scoping are fixed — see `10b-bugs-fixed.md` (#15–#19, #26). Discord/combat PR review waves (#42–#50) and the 2026-08-03 audit fixes (#51–#58, #74–#77) are also archived there. Remaining audit follow-ups (#59–#73) live in `10-bug-fixes.md`.
+Real-time sync bugs, quick actions, batch-equip UX, and card shop room-scoping are fixed — see `10b-bugs-fixed.md` (#15–#19, #26). Discord/combat PR review waves (#42–#50) and the 2026-08-03 audit fixes (#51–#58, #65–#69, #74–#77) are also archived there. Remaining audit follow-ups (#59–#64, #70–#73) live in `10-bug-fixes.md`.
 
 ### 1. Discord connector polish (05-discord-connector.md)
 

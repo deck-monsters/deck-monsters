@@ -13,7 +13,7 @@ describe('./cards/horn-swipe.ts', () => {
 		expect((hornSwipe as any).targetProp).to.equal('str');
 		expect((hornSwipe as any).damageDice).to.equal('1d6');
 		expect((HornSwipeCard as any).description).to.equal('Swing your horns at your opponent.');
-		expect(hornSwipe.stats).to.equal('Hit: 1d20 vs str / Damage: 1d6\nRoll twice for hit. Use the best roll.');
+		expect(hornSwipe.stats).to.equal('Hit: 1d20 vs str / Damage: 1d6\nRoll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).');
 	});
 
 	it('can be instantiated with options', () => {

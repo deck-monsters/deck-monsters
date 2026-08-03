@@ -23,9 +23,17 @@ describe('cards/helpers/hydrate.ts', () => {
 			}
 		});
 
-		it('falls back to draw() for an unknown card name and still returns a playable card', () => {
-			const card = hydrateCard({ name: 'NonExistentCard_XYZ', options: {} });
+		it('preserves unknown card identity instead of replacing with a random draw (#66)', () => {
+			const cardObj = {
+				name: 'NonExistentCard_XYZ',
+				options: { icon: '🧪', used: 1 },
+			};
 
+			const card = hydrateCard(cardObj);
+
+			expect(card.name).to.equal('NonExistentCard_XYZ');
+			expect(card.toJSON()).to.deep.equal(cardObj);
+			expect(card.cardType).to.include('Unknown');
 			expect(card.play).to.be.a('function');
 		});
 
@@ -77,20 +85,29 @@ describe('cards/helpers/hydrate.ts', () => {
 			}
 		});
 
-		it('returns all playable cards even when a plain object without a name is present', () => {
-			// Simulates a serialised card whose name is unrecognised — should fall through
-			// to draw() and still return something playable
+		it('keeps character inventory alphabetical while preserving unknown card identity (#65/#66)', () => {
 			const deckJSON = [
 				{ name: 'HitCard', options: {} },
-				{ name: 'UNKNOWN_CARD_THAT_DOES_NOT_EXIST', options: {} },
+				{ name: 'UNKNOWN_CARD_THAT_DOES_NOT_EXIST', options: { kept: true } },
+				{ name: 'FleeCard', options: {} },
 			];
 
 			const deck = hydrateDeck(deckJSON);
 
-			expect(deck).to.have.length(2);
-			for (const card of deck) {
-				expect(card.play).to.be.a('function');
-			}
+			expect(deck).to.have.length(3);
+			expect(deck.map((card: any) => card.cardType)).to.deep.equal(
+				[...deck].sort((a: any, b: any) =>
+					String(a.cardType).localeCompare(String(b.cardType))
+				).map((card: any) => card.cardType)
+			);
+
+			const unknown = deck.find((card: any) => String(card.name) === 'UNKNOWN_CARD_THAT_DOES_NOT_EXIST');
+			expect(unknown).to.exist;
+			expect(unknown.toJSON()).to.deep.equal({
+				name: 'UNKNOWN_CARD_THAT_DOES_NOT_EXIST',
+				options: { kept: true },
+			});
+			expect(unknown.cardType).to.include('Unknown');
 		});
 	});
 });

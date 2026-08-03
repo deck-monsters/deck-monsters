@@ -1073,6 +1073,40 @@ Hardening on #51. Removing `Math.max(prop, 1)` for XP was correct (it made a fre
 
 ---
 
+### 65. `hydrateDeck` alphabetical re-sort — investigated, not a combat bug
+
+`hydrateDeck` sorts alphabetically after hydrate. Ring combat uses equipped `monster.cards[cardIndex]` order, which is restored by `monsters/helpers/hydrate.ts` without sorting — so fight outcomes are not scrambled by inventory sort.
+
+Character inventory intentionally sorts the same way live `addCard` does (`characters/base.ts` → `sortCardsAlphabetically`). Preserving raw JSON order for character decks would diverge from the in-session UX.
+
+Regression coverage: `preserves equipped card play order on hydrate (not alphabetical) (#65)` in `monsters/helpers/hydrate.test.ts`; inventory sort retained in `cards/helpers/hydrate.test.ts`.
+
+**Status**: Investigated — not a combat bug. Alphabetical inventory sort kept by design.
+
+---
+
+### 66. Unknown card names on restore became a random draw — FIXED
+
+`hydrateCard` fell through to `draw({}, monster)` when the card class was missing, so renames/removals silently mutated saved decks into unrelated random cards.
+
+**Fixed**: unknown class names hydrate to an inert `UnknownCard` placeholder (`cards/helpers/unknown-card.ts`) that keeps the original serialized `name`/`options`, remains visible as `Unknown Card (…)`, plays as a combat no-op, and serializes back with the original identity for repair. Character `hydrateDeck` still alphabetizes inventory; equipped monster order is unchanged.
+
+Covered by tests in `cards/helpers/unknown-card.test.ts`, `cards/helpers/hydrate.test.ts`, and `monsters/helpers/hydrate.test.ts`.
+
+**Status**: Fixed.
+
+---
+
+### 69. Lucky Strike / Rehit discarded-roll Curse of Loki — intentional
+
+Multi-roll cards (Lucky Strike, Horn Swipe, Rehit) apply Stroke of Luck / Curse of Loki only to the selected roll. A natural 1 (or 20) on a discarded roll does not crit — matching the card text (“use the best/selected roll”).
+
+**Documented**: card `stats` strings, in-game player handbook / DMG combat math, `PLAYER_HANDBOOK.md`, and `DMG.md` now state that discarded rolls do not crit.
+
+**Status**: Closed as intentional product behavior.
+
+---
+
 ### 67. Dead monsters without `killedBy` can get “last one standing” XP — FIXED
 
 `die()` only sets `killedBy` when the assailant is a real creature (`isRealCreature`). Environmental / synthetic death paths leave it unset. `calculateXP` treated “no `killedBy`” as the survivor branch, so a dead contestant could earn last-one-standing XP.

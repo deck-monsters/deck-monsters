@@ -20,7 +20,7 @@ export class Rehit extends HitCard {
 	}
 
 	override get stats(): string {
-		return `${super.stats}\nRoll for attack, if you roll less than 10, roll again and use the second roll no matter what.`;
+		return `${super.stats}\nRoll for attack, if you roll less than 10, roll again and use the second roll no matter what. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).`;
 	}
 
 	override hitCheck(player: any, target: any): any {

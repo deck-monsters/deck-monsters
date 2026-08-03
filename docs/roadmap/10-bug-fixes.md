@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium — content pass plus Discord/concurrency follow-ups from the 2026-08-03 audit.
-**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #67–#68, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#66, #69–#73 (audit follow-ups that need a design pass).
+**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #65–#69, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#64, #70–#73 (audit follow-ups that need a design pass).
 
 ## Code Quality Issues
 
@@ -53,24 +53,6 @@ Per-user lanes mean two members of the same room can mutate one shared `Game` in
 
 **Action**: Bounded retries (same pattern as fight-summary-writer) before dropping; metric on exhaustion.
 
-### 65. `hydrateDeck` re-sorts alphabetically — deck play order not preserved
-
-`cards/helpers/hydrate.ts` alphabetically sorts after hydrate. Ring combat uses `player.cards[cardIndex]` in array order, so restore/restart can change fight outcomes vs the saved deck order.
-
-**Action**: Confirm whether alphabetical order is intentional for inventory UX; if not, preserve saved order for equipped decks (sort only for display catalogs).
-
-### 66. Unknown card names on restore become a random draw
-
-`hydrateCard` falls through to `draw({}, monster)` when the card class is missing. Renames/removals silently mutate decks.
-
-**Action**: Fail closed, quarantine the card, or preserve a stub with the original name for admin repair — never silently replace with a random card.
-
-### 69. Lucky Strike / Rehit can ignore Curse of Loki on discarded rolls
-
-Only the “winning” roll’s crit flags are used. A natural 1 on a discarded first roll does not trigger Curse of Loki.
-
-**Action**: Product decision — keep “best of N ignores discarded crit fails” or apply curse if *any* roll is a natural 1.
-
 ### 70. Guild default-room creation race
 
 `guild_rooms` PK is `(guild_id, room_id)` with no uniqueness on `is_default`. Concurrent first-time `getOrCreateDefaultRoom` calls can create two default rooms for one guild.
@@ -100,6 +82,8 @@ A load that already read the DB row can finish after `deleteRoom` removed the `a
 - **Discord `registerUser` subscriber “leak”** — `RoomEventBus.subscribe` uses a `Map.set` by id; re-register replaces the previous subscriber.
 - **`fight-stats-subscriber` `log.error`** — the module-level `createLogger` is used inside handlers; the `(err) => void` parameter only shadows inside `attachFightStatsSubscriber` for `.catch(log)`.
 - **`activeFlows` check-then-set race** — no `await` between `has` and `set` on the Node event loop, so concurrent HTTP handlers cannot interleave there.
+- **`hydrateDeck` alphabetical sort (#65)** — intentional for character inventory UX (mirrors live `addCard`); equipped monster card order is already preserved by `monsters/helpers/hydrate.ts`. See `10b-bugs-fixed.md`.
+- **Lucky Strike / Rehit / Horn Swipe discarded-roll crits (#69)** — intentional: Stroke of Luck / Curse of Loki apply only to the selected roll. Documented in player/DM materials. See `10b-bugs-fixed.md`.
 
 ## Tasks
 
@@ -110,9 +94,6 @@ A load that already read the DB row can finish after `deleteRoom` removed the `a
 - [ ] Decide room-wide vs per-user engine serialization for multi-player (#62)
 - [ ] Unify web `ringFeed` subscription / cursor (#63)
 - [ ] Event persister retries (#64)
-- [ ] Preserve equipped deck order on hydrate (#65)
-- [ ] Fail closed on unknown card hydrate (#66)
-- [ ] Lucky Strike / Rehit curse semantics (#69)
 - [ ] Guild default-room uniqueness (#70)
 - [ ] `deleteRoom` / `_loadRoom` race (#71)
 - [ ] Discord active-room tracking (#72)

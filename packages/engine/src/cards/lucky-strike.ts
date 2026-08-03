@@ -33,7 +33,7 @@ export class LuckyStrike extends HitCard {
 	}
 
 	override get stats(): string {
-		return `${super.stats}\nRoll twice for hit. Use the best roll.`;
+		return `${super.stats}\nRoll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).`;
 	}
 
 	override getAttackRoll(player: any): any {

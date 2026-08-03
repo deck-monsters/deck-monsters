@@ -16,7 +16,7 @@ describe('./cards/lucky-strike.ts', () => {
 		expect((LuckyStrike as any).description).to.equal(
 			"A man in a jester's hat smiles at you from the crowd. You feel... Lucky for some reason. Or perhaps feel the unluckiness of your opponent..."
 		);
-		expect(luckyStrike.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d6\nRoll twice for hit. Use the best roll.');
+		expect(luckyStrike.stats).to.equal('Hit: 1d20 vs ac / Damage: 1d6\nRoll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply only to the selected roll (discarded rolls do not crit).');
 	});
 
 	it('can be instantiated with options', () => {

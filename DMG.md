@@ -1026,7 +1026,10 @@ Wooden Spear
 
  Hit: 1d20 vs str / Damage: 1d6
  Roll twice for hit. Use the best 
- roll.
+ roll. Stroke of Luck and Curse of 
+ Loki apply only to the selected 
+ roll (discarded rolls do not 
+ crit).
 
  Level: 2
  Usable by: Minotaur
@@ -1106,7 +1109,10 @@ Wooden Spear
 
  Hit: 1d20 vs ac / Damage: 1d6
  Roll twice for hit. Use the best 
- roll.
+ roll. Stroke of Luck and Curse of 
+ Loki apply only to the selected 
+ roll (discarded rolls do not 
+ crit).
 
  Level: 2
  Usable by: Bard, Cleric, Fighter
@@ -1288,7 +1294,10 @@ Wooden Spear
  Hit: 1d20 vs ac / Damage: 1d6
  Roll for attack, if you roll 
  less than 10, roll again and use 
- the second roll no matter what.
+ the second roll no matter what. 
+ Stroke of Luck and Curse of Loki 
+ apply only to the selected roll 
+ (discarded rolls do not crit).
 
  Level: 2
  Usable by: Cleric, Fighter
