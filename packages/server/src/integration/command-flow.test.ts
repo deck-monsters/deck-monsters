@@ -18,6 +18,7 @@ import {
 	createRoomCommandRunner,
 } from '../shared/test-helpers.js';
 import { BOSS_SUMMON_LIMIT, summonAllowance, allMonsters } from '@deck-monsters/engine';
+import type { GameEvent } from '@deck-monsters/engine';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -330,6 +331,65 @@ describe('integration: command flow', function () {
 			const cancelEvent = events.find(e => e.type === 'prompt.cancel');
 			expect(cancelEvent, 'prompt.cancel event should be published').to.exist;
 			expect(cancelEvent?.targetUserId).to.equal(USER_A);
+		});
+	});
+
+	describe('look at the ring', () => {
+		const ringLookAnnounces = (events: GameEvent[]) =>
+			events.filter(
+				(e) =>
+					e.type === 'announce' &&
+					e.scope === 'private' &&
+					e.targetUserId === USER_A,
+			);
+
+		it('announces an empty ring to the requesting user via the event bus', async () => {
+			const game = createTestGame();
+			const events: GameEvent[] = [];
+
+			const unsub = game.eventBus.subscribe('look-ring-empty', {
+				userId: USER_A,
+				deliver: (e) => events.push(e),
+			});
+
+			const responder = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
+			await runCommand(game, { command: 'look at the ring', userId: USER_A, isDM: true });
+			responder.unsubscribe();
+			unsub();
+
+			const announces = ringLookAnnounces(events);
+			expect(announces.length, 'should publish private announces to USER_A').to.be.above(0);
+			const text = announces.map((e) => e.text).join('\n');
+			expect(text, 'empty ring message').to.match(/empty/i);
+		});
+
+		it('announces ring contestants to the requesting user via the event bus', async () => {
+			const game = createTestGame();
+			const events: GameEvent[] = [];
+
+			const unsub = game.eventBus.subscribe('look-ring-contestants', {
+				userId: USER_A,
+				deliver: (e) => events.push(e),
+			});
+
+			// Character + monster, then seed the ring (same pattern as summon-a-boss tests).
+			const spawnAnswers = [...NEW_CHARACTER_ANSWERS, ...SPAWN_ANSWERS];
+			const spawner = createAutoResponder(game.eventBus, USER_A, spawnAnswers);
+			await runCommand(game, { command: 'spawn a monster', userId: USER_A, isDM: true });
+			spawner.unsubscribe();
+
+			const character = game.characters[USER_A];
+			const monster = character.monsters[0];
+			game.ring.addMonster({ monster, character, userId: USER_A });
+
+			await runCommand(game, { command: 'look at the ring', userId: USER_A, isDM: true });
+			unsub();
+
+			const announces = ringLookAnnounces(events);
+			expect(announces.length, 'should publish private announces to USER_A').to.be.above(0);
+			const text = announces.map((e) => e.text).join('\n');
+			expect(text, 'should mention contestants').to.match(/contestant/i);
+			expect(text, 'should mention the monster name').to.include('Fang');
 		});
 	});
 
