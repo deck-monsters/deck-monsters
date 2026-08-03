@@ -939,6 +939,7 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Discord guild users auto-joined to default room via `ensureMember` (#56)
 - [x] `respondToPrompt` rejects the `PROMPT_CANCELLED` sentinel as a client answer (#57)
 - [x] Web room navigation remounts panes, filters by `event.roomId`, seeds history cursor, fixes stale prompt id (#58)
+- [x] Event persister retries transient `room_events` insert failures before dropping (#64)
 - [x] Round-cap / inconclusive fights no longer award wins to every living faction (#74)
 - [x] `fightOutcome` keeps permaDeath / fled labels on inconclusive fights; `isDraw` derived from it (#74 follow-up)
 - [x] Bad Batch "no effect on other cards" test no longer depends on Heal's 1% crit branches (#75)
@@ -1068,6 +1069,18 @@ Flagged during PR #358 verification: a 10-round-cap fight could end with `outcom
 Hardening on #51. Removing `Math.max(prop, 1)` for XP was correct (it made a fresh monster read `1` and the first award land +1 high), but it also removed the only guard against a *negative* `encounterModifiers.xp` pushing a monster's XP below zero. No such modifier exists today, so this was unreachable rather than live.
 
 **Fixed**: `getProp` floors XP at 0 rather than 1 — fails safe without reintroducing the off-by-one.
+
+**Status**: Fixed.
+
+---
+
+### 64. Failed event persistence is silently dropped — FIXED
+
+`event-persister.ts` logged insert failures via the `onError` callback on the first transient DB hiccup and continued with no retry. Permanent holes in `room_events` caused reconnect gaps and stale history.
+
+**Fixed**: bounded retries with short backoff (default 1s, 5s; injectable for tests), matching the `fight-summary-writer` pattern. Writes stay serialized on the existing per-attachment queue so publish order is preserved through retries. The detach function sets a `detached` flag checked between attempts so delayed retries cannot land after room unload/delete. The `onError` callback and `dm_event_persist_failures_total` metric fire only when retries are exhausted.
+
+Covered by 5 new tests in `event-persister.test.ts` (retry-then-success, exhaustion, no error on transient success, order preserved across retries, detach during backoff).
 
 **Status**: Fixed.
 
