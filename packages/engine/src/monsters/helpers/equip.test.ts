@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { equipMonster, equipHelpersReady } from './equip.js';
 import { getItemKey } from '../../items/helpers/counts.js';
+import { PROMPT_CANCELLED } from '../../events/index.js';
 
 describe('equip helpers', () => {
 	before(async () => {
@@ -129,6 +130,7 @@ describe('equip helpers', () => {
 			];
 			const monster = makeMonster(4) as any;
 			const questions: string[] = [];
+			const announcements: string[] = [];
 			let promptRound = 0;
 
 			const channel = async ({
@@ -139,7 +141,10 @@ describe('equip helpers', () => {
 				question?: string;
 				choices?: string[];
 			}) => {
-				if (announce) return undefined;
+				if (announce) {
+					announcements.push(announce);
+					return undefined;
+				}
 				if (question) {
 					questions.push(question);
 					promptRound += 1;
@@ -166,6 +171,7 @@ describe('equip helpers', () => {
 			// chooseCards catalogs alphabetically: Blast, Flee, Heal, Hit → indices 0,1
 			expect(result.map((c: { cardType: string }) => c.cardType)).to.deep.equal(['Blast', 'Flee']);
 			expect(monster.cards).to.have.length(2);
+			expect(announcements).not.to.include('You selected no cards.');
 		});
 
 		it('keeps prompting when the first selection is empty (nothing to commit yet)', async () => {
@@ -199,6 +205,116 @@ describe('equip helpers', () => {
 
 			expect(promptRound).to.equal(2);
 			expect(result).to.have.length(2);
+		});
+
+		it('still trims an oversized interactive batch to the remaining slot count', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal'), makeCard('Blast')];
+			const monster = makeMonster(2) as any;
+
+			const channel = async ({ question }: { announce?: string; question?: string }) =>
+				question ? '0, 1, 2' : undefined;
+
+			const result = await equipMonster({
+				deck: deck as any,
+				monster,
+				channel: channel as any,
+			});
+
+			expect(result).to.have.length(2);
+			expect(monster.cards).to.have.length(2);
+		});
+
+		it('does not finish when "done" is entered at the first prompt', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal')];
+			const monster = makeMonster(2) as any;
+			let promptRound = 0;
+
+			const channel = async ({ question }: { announce?: string; question?: string }) => {
+				if (!question) return undefined;
+				promptRound += 1;
+				if (promptRound === 1) return 'done';
+				if (promptRound === 2) return '0, 1';
+				throw new Error(`unexpected prompt round ${promptRound}`);
+			};
+
+			const result = await equipMonster({
+				deck: deck as any,
+				monster,
+				channel: channel as any,
+			});
+
+			expect(promptRound).to.equal(2);
+			expect(result).to.have.length(2);
+		});
+
+		for (const finishAlias of ['finished', 'enough', 'stop']) {
+			it(`commits a partial batch with the "${finishAlias}" finish alias`, async () => {
+				const deck = [makeCard('Hit'), makeCard('Heal'), makeCard('Blast')];
+				const monster = makeMonster(3) as any;
+				let promptRound = 0;
+
+				const channel = async ({ question }: { announce?: string; question?: string }) => {
+					if (!question) return undefined;
+					promptRound += 1;
+					return promptRound === 1 ? '0' : finishAlias;
+				};
+
+				const result = await equipMonster({
+					deck: deck as any,
+					monster,
+					channel: channel as any,
+				});
+
+				expect(promptRound).to.equal(2);
+				expect(result).to.have.length(1);
+				expect(monster.cards).to.deep.equal(result);
+			});
+		}
+
+		it('keeps an intentionally empty continuation as a partial-batch finish', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal'), makeCard('Blast')];
+			const monster = makeMonster(3) as any;
+			let promptRound = 0;
+
+			const channel = async ({ question }: { announce?: string; question?: string }) => {
+				if (!question) return undefined;
+				promptRound += 1;
+				return promptRound === 1 ? '0' : '';
+			};
+
+			const result = await equipMonster({
+				deck: deck as any,
+				monster,
+				channel: channel as any,
+			});
+
+			expect(promptRound).to.equal(2);
+			expect(result).to.have.length(1);
+		});
+
+		it('rolls back the partial batch when the continuation prompt is cancelled', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal'), makeCard('Blast')];
+			const originalCards = [makeCard('Flee')];
+			const monster = makeMonster(3) as any;
+			monster.cards = originalCards;
+			let promptRound = 0;
+
+			const channel = async ({ question }: { announce?: string; question?: string }) => {
+				if (!question) return undefined;
+				promptRound += 1;
+				return promptRound === 1 ? '0' : PROMPT_CANCELLED;
+			};
+
+			const err = await equipMonster({
+				deck: deck as any,
+				monster,
+				channel: channel as any,
+			}).catch((error: unknown) => error);
+
+			expect((err as Error).name).to.equal('PromptCancelledError');
+			expect(promptRound).to.equal(2);
+			expect(monster.cards).to.equal(originalCards);
+			expect(monster.cards.map((card: { cardType: string }) => card.cardType)).to.deep.equal(['Flee']);
 		});
 	});
 });

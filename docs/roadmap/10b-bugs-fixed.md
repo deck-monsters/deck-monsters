@@ -1293,3 +1293,15 @@ If `guild_rooms` insert failed after `RoomManager.createRoom`, the new room row 
 **Fixed**: on non-recoverable insert failure, `deleteRoom(ownerId, roomId)` removes only the just-created orphan. Cleanup failure throws an actionable error with both mapping and cleanup causes. PK races on the mapping are idempotent (no delete). Covered by `guild-room-manager.test.ts`.
 
 **Status**: Fixed.
+
+---
+
+### 82. Interactive equip flow could not finish a partial batch cleanly — FIXED
+
+The interactive equip loop required players to fill every remaining slot or cancel the flow, which discarded the in-progress batch. Adding a finish response exposed a follow-up UX bug: `done` was converted to an empty selection and passed through the shared card chooser, so it announced `You selected no cards.` immediately before the committed-card summary.
+
+**Fixed**: follow-up equip prompts accept `done`, `finished`, `enough`, and `stop`; the web prompt shows **Done equipping** only after a partial batch. Explicit finish answers now bypass card-selection parsing and its empty-result announcement. A truly empty first response still re-prompts, an empty continuation retains the partial-finish behavior, and cancellation still rejects before `monster.cards` is assigned so the batch rolls back. Existing slot and four-copy limits are unchanged.
+
+Covered by `monsters/helpers/equip.test.ts` (clean finish announcement, first-prompt guard, aliases, empty-response behavior, cancellation rollback, slot/copy limits) and `InlineChoices.test.tsx` (follow-up-only Done button and submitted finish response).
+
+**Status**: Fixed.
