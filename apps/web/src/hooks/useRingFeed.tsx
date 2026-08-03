@@ -77,8 +77,12 @@ export function useRingFeed(roomId: string): RingFeedApi {
     for (const listener of listenersRef.current) {
       listener(tracked);
     }
-    // Live delivery reached current listeners; drop the startup buffer so we
-    // do not replay stale frames to future subscribers.
+    // Live delivery reached current listeners; drop the startup buffer so we do not
+    // replay stale frames to future subscribers. This means the buffer only covers
+    // frames that arrive while *no* pane is registered — once any pane is listening,
+    // a later registrant gets live events only. Safe because both panes register in
+    // the same commit's useLayoutEffect, before the tRPC subscription's useEffect can
+    // deliver anything.
     pendingEventsRef.current = [];
   }, []);
 

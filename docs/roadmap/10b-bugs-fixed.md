@@ -954,6 +954,9 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] `fightOutcome` keeps permaDeath / fled labels on inconclusive fights; `isDraw` derived from it (#74 follow-up)
 - [x] Bad Batch "no effect on other cards" test no longer depends on Heal's 1% crit branches (#75)
 - [x] Boss warning-suppression test pins the outer delay instead of observing re-armed cycles (#76)
+- [x] XP floors at 0 so a negative encounter modifier can't drive it negative (#77)
+- [x] Empty `encounterModifiers` view enumerates consistently with its reads (#83)
+- [x] `ConnectorAdapter` re-checks `targetUserId` before prompting a user (#84)
 - [x] Differentiate DMG vs CARDS content; add how-to-run + operator sections; deterministic doc generation (#3)
 
 ---
@@ -1303,5 +1306,29 @@ The interactive equip loop required players to fill every remaining slot or canc
 **Fixed**: follow-up equip prompts accept `done`, `finished`, `enough`, and `stop`; the web prompt shows **Done equipping** only after a partial batch. Explicit finish answers now bypass card-selection parsing and its empty-result announcement. A truly empty first response still re-prompts, an empty continuation retains the partial-finish behavior, and cancellation still rejects before `monster.cards` is assigned so the batch rolls back. Existing slot and four-copy limits are unchanged.
 
 Covered by `monsters/helpers/equip.test.ts` (clean finish announcement, first-prompt guard, aliases, empty-response behavior, cancellation rollback, slot/copy limits) and `InlineChoices.test.tsx` (follow-up-only Done button and submitted finish response).
+
+**Status**: Fixed.
+
+---
+
+### 83. Empty `encounterModifiers` view enumerated as empty mid-encounter — FIXED
+
+Follow-up review of #68. The lazy view returned by `getEncounterModifiers()` when a creature has no encounter proxied a **frozen** target. `Object.freeze({})` is non-extensible, and the Proxy invariants then forbid an `ownKeys` trap from reporting keys the target does not own — so no such trap could be added. The result: a view captured before `startEncounter()` kept forwarding single-property reads correctly (`view.ac === 3`) while `Object.keys(view)`, `{...view}`, and `'ac' in view` all reported nothing. Any caller that enumerated rather than reading one property at a time would silently see no modifiers at all.
+
+Unreachable in shipped code — `BaseCreature.modifiers` re-reads `this.encounterModifiers` on every access, so it never holds a stale view — but a silent-wrong-answer trap for the next caller that stores one.
+
+**Fixed**: proxy an extensible plain object and trap `has`, `ownKeys`, `deleteProperty`, and `getOwnPropertyDescriptor` (reporting `configurable: true`, as the invariants require when the target does not carry the key). Reads, writes, and enumeration now all resolve against the live `self.encounter.modifiers`. Covered by two regression tests in `creatures/encounter.test.ts` — one asserting enumeration agrees with reads across `startEncounter()`, one asserting enumeration alone still does not materialize an encounter.
+
+**Status**: Fixed.
+
+---
+
+### 84. `ConnectorAdapter` prompt routing relied solely on the bus filter — FIXED
+
+Follow-up review of #78. Moving prompt handling to per-user subscriptions dropped the old `event.targetUserId` check: `handlePrivateEvent` prompted `userId` for any `prompt.request` it received. `RoomEventBus.publish` delivers to a subscriber when the event is public **or** `subscriber.userId === targetUserId`, so a `prompt.request` published with `scope: 'public'` would reach every registered user's subscriber and prompt all of them, with their answers racing into `respondToPrompt`.
+
+Safe in practice — `sendPrompt` is the only publisher and always uses `scope: 'private'` — but the guard that made it safe independently of that invariant was gone.
+
+**Fixed**: re-check `event.targetUserId === userId` before prompting. Restores defense in depth without changing the per-user subscription model.
 
 **Status**: Fixed.

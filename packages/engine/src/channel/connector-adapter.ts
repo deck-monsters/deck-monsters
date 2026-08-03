@@ -47,6 +47,12 @@ export class ConnectorAdapter {
 
 	private handlePrivateEvent(userId: string, event: GameEvent): void {
 		if (event.type === 'prompt.request') {
+			// The bus already routes private events only to the matching subscriber, but
+			// it also delivers every *public* event to all of them. Re-check the target so
+			// a prompt.request published with public scope could never fan out and prompt
+			// every registered user, with their answers racing each other.
+			if (event.targetUserId !== userId) return;
+
 			const channel = this.privateChannels.get(userId);
 			if (!channel) return;
 

@@ -66,4 +66,33 @@ describe('creatures/encounter', () => {
 		expect(view.healModifier).to.equal(4);
 		expect(monster.encounterModifiers.healModifier).to.equal(4);
 	});
+
+	it('keeps enumeration consistent with reads on a view held across startEncounter', () => {
+		// Regression: the empty view proxied a frozen target with no ownKeys trap, so
+		// spreading or Object.keys()-ing a view captured before the encounter began
+		// returned nothing while `view.ac` returned the real value. Any caller that
+		// enumerated instead of reading a single prop would silently see no modifiers.
+		const monster = makeBasilisk();
+		const view = monster.encounterModifiers;
+
+		monster.startEncounter({});
+		monster.encounterModifiers.ac = 3;
+		monster.encounterModifiers.str = -1;
+
+		expect(view.ac, 'read through the held view').to.equal(3);
+		expect(Object.keys(view).sort()).to.deep.equal(['ac', 'str']);
+		expect({ ...view }).to.deep.equal({ ac: 3, str: -1 });
+		expect('ac' in view).to.equal(true);
+		expect('dexModifier' in view).to.equal(false);
+	});
+
+	it('reports no keys while there is still no encounter', () => {
+		const monster = makeBasilisk();
+		const view = monster.encounterModifiers;
+
+		expect(Object.keys(view)).to.deep.equal([]);
+		expect({ ...view }).to.deep.equal({});
+		// Enumerating must not have materialized the encounter.
+		expect(monster.encounter).to.equal(undefined);
+	});
 });

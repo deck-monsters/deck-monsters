@@ -139,4 +139,4 @@ Missing a room filter is a recurring source of bugs. See [`docs/room-scoping.md`
 
 ### Active known bugs
 
-None tracked in `docs/roadmap/10-bug-fixes.md` — the 2026-08-03 audit pass (#3, #51–#78) is archived in `docs/roadmap/10b-bugs-fixed.md`.
+None tracked in `docs/roadmap/10-bug-fixes.md` — the 2026-08-03 audit pass (#3, #51–#84) is archived in `docs/roadmap/10b-bugs-fixed.md`.
