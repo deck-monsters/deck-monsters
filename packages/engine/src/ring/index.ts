@@ -83,10 +83,23 @@ export interface Contestant {
 	rounds?: number;
 	encounter?: any;
 	round?: number;
+	/**
+	 * Tracks a player-initiated summon: set when `summon a boss` creates this contestant.
+	 * If the boss is removed before a fight starts (last player withdraws, despawn timer
+	 * fires) the charge recorded in `bossSummons` should be refunded — the game's
+	 * `onSummonedBossRemoved` callback handles that. Not set for timer/admin/Gauntlet bosses.
+	 * Ephemeral: lives on the contestant only; never persisted (bosses are not serialized).
+	 */
+	summonedByUserId?: string;
+	summonedAt?: number;
 }
 
-function participantOutcome(contestant: Contestant, deaths: number): 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath' {
-	if (deaths <= 0) return 'draw';
+function participantOutcome(
+	contestant: Contestant,
+	deaths: number,
+	isLastTeamFledWin: boolean
+): 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath' {
+	if (deaths <= 0 && !isLastTeamFledWin) return 'draw';
 	if (contestant.monster.destroyed) return 'permaDeath';
 	if (contestant.monster.dead) return 'loss';
 	if (contestant.fled) return 'fled';
@@ -288,6 +301,25 @@ export class Ring extends BaseClass {
 				);
 
 				this.startFightTimer();
+
+				// When the last player leaves, proactively remove player-summoned bosses
+				// so their charges are refunded immediately rather than waiting for the
+				// 10-minute despawn timer. Non-summoned (timer/admin/Gauntlet) bosses are
+				// left for their own timers. No-op during encounters (rejected above).
+				if (!contestant.isBoss) {
+					const hasPlayers = this.contestants.some(c => !c.isBoss);
+					if (!hasPlayers) {
+						const summonedBosses = this.contestants.filter(
+							c => c.isBoss && c.summonedByUserId !== undefined
+						);
+						if (summonedBosses.length > 0) {
+							return summonedBosses.reduce(
+								(p, boss) => p.then(() => this.removeBoss(boss)),
+								Promise.resolve() as Promise<void>
+							);
+						}
+					}
+				}
 			});
 	}
 
@@ -297,6 +329,8 @@ export class Ring extends BaseClass {
 		userId,
 		isBoss,
 		deferFightTimer,
+		summonedByUserId,
+		summonedAt,
 	}: {
 		monster: any;
 		character: any;
@@ -308,6 +342,9 @@ export class Ring extends BaseClass {
 		 * second, untracked fight timer on top of the one the outer call is about to set.
 		 */
 		deferFightTimer?: boolean;
+		/** Set when this is a player-summoned boss — used to trigger a charge refund if the boss is removed pre-fight. */
+		summonedByUserId?: string;
+		summonedAt?: number;
 	}): void {
 		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
 			const contestant: Contestant = {
@@ -315,6 +352,8 @@ export class Ring extends BaseClass {
 				character,
 				userId,
 				isBoss,
+				...(summonedByUserId !== undefined ? { summonedByUserId } : {}),
+				...(summonedAt !== undefined ? { summonedAt } : {}),
 			};
 
 			this.contestants = process.env.DECK_MONSTERS_DETERMINISTIC_RING
@@ -913,6 +952,15 @@ export class Ring extends BaseClass {
 		});
 		const deaths = deadContestants.length;
 
+		// Detect "last-team win via fled opponents" — all opponents fled but nobody died.
+		// In this case the surviving faction is the winner even though deaths === 0.
+		// Without this flag, the deaths <= 0 gate would issue draws for the entire roster,
+		// and no contestant would ever receive won = true.
+		const isLastTeamFledWin =
+			this.ringEvent?.victoryMode === 'last-team' &&
+			deaths <= 0 &&
+			contestants.some(c => c.fled);
+
 		// Emit for battle history
 		this.eventBus.publish({
 			type: 'ring.fight',
@@ -938,7 +986,11 @@ export class Ring extends BaseClass {
 			const { userId } = contestant;
 			const xpDelta = xpGained[i] ?? 0;
 
-			if (deaths > 0) {
+			// A fight has a non-draw outcome when someone died (legacy path) OR when it is a
+			// last-team event where all opponents fled with no deaths.
+			const hasOutcome = deaths > 0 || isLastTeamFledWin;
+
+			if (hasOutcome) {
 				if (contestant.monster.dead) {
 					contestant.lost = true;
 
@@ -995,7 +1047,7 @@ export class Ring extends BaseClass {
 		let loserMonsterId: string | undefined;
 		let loserMonsterName: string | undefined;
 		let loserOwnerUserId: string | undefined;
-		if (deaths > 0) {
+		if (deaths > 0 || isLastTeamFledWin) {
 			// Attribute by outcome rather than by contestant count. The old `length === 2`
 			// gate meant every multi-party fight lost its winner/loser entirely — which ring
 			// events (multi-boss gauntlets, team battles) now make the common case. Stay
@@ -1027,14 +1079,14 @@ export class Ring extends BaseClass {
 				monsterType: (m.constructor?.name ?? 'Monster') as string,
 				ownerUserId: c.userId as string,
 				ownerDisplayName: (ch.givenName ?? ch.name ?? '') as string,
-				outcome: participantOutcome(c, deaths),
+				outcome: participantOutcome(c, deaths, isLastTeamFledWin),
 				xpGained: xpGained[i] ?? 0,
 				level: m.level as number,
 			};
 		});
 
 		const fightOutcome =
-			deaths <= 0
+			deaths <= 0 && !isLastTeamFledWin
 				? 'draw'
 				: contestants.some(c => c.monster.destroyed)
 					? 'permaDeath'
@@ -1218,6 +1270,15 @@ export class Ring extends BaseClass {
 	}
 
 	/**
+	 * Called when a player-summoned boss is removed before a fight starts (last player
+	 * withdrew, or despawn timer fired with no players in ring). The game wires this to
+	 * `_refundSingleBossSummon(userId, timestamp)` so the charge is returned from the
+	 * `bossSummons` and `bossSummonsPending` ledgers. Not set for timer/admin/Gauntlet bosses.
+	 * See docs/boss-encounters.md §3.
+	 */
+	onSummonedBossRemoved?: (userId: string, timestamp: number) => void;
+
+	/**
 	 * Whether the current ring event is a free-for-all (Blood Feud). Cards that call
 	 * `getTarget` internally pass `ring` to it; this getter provides the policy without
 	 * requiring cards to know about specific event names. See docs/boss-encounters.md §5.
@@ -1312,12 +1373,21 @@ export class Ring extends BaseClass {
 		}
 	}
 
-	spawnBoss({ deferFightTimer }: { deferFightTimer?: boolean } = {}): Contestant | undefined {
+	spawnBoss({
+		deferFightTimer,
+		summonedByUserId,
+		summonedAt,
+	}: {
+		deferFightTimer?: boolean;
+		/** Set by `summon a boss` so a pre-fight removal can refund the charge. */
+		summonedByUserId?: string;
+		summonedAt?: number;
+	} = {}): Contestant | undefined {
 		if (!this.canAcceptBoss().ok) return undefined;
 
 		const contestant = this.getSpawnedBossContestant();
 
-		this.addMonster({ ...contestant, deferFightTimer });
+		this.addMonster({ ...contestant, deferFightTimer, summonedByUserId, summonedAt });
 
 		if (random(1)) {
 			const ring = this;
@@ -1342,6 +1412,15 @@ export class Ring extends BaseClass {
 		const hasPlayerContestants = this.contestants.some(({ isBoss }) => !isBoss);
 
 		if (!this.inEncounter && !hasPlayerContestants) {
+			// For player-summoned bosses: find the actual ring contestant (which carries the
+			// summonedByUserId set in addMonster) and refund before removal.
+			const ringContestant = this.findContestant(contestant.character, contestant.monster);
+			if (
+				ringContestant?.summonedByUserId !== undefined &&
+				ringContestant?.summonedAt !== undefined
+			) {
+				this.onSummonedBossRemoved?.(ringContestant.summonedByUserId, ringContestant.summonedAt);
+			}
 			return this.removeMonster(contestant as any);
 		}
 

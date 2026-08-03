@@ -52,6 +52,24 @@ describe('ring/ring-events.ts', () => {
 			).to.equal(true);
 		});
 
+		it('rejects House War when bosses are present — boss faction cannot be split across houses', () => {
+			// In last-team mode the boss faction (userId: 'boss') is its own faction distinct from
+			// both houses. After one house is eliminated the surviving boss(es) would still be active,
+			// preventing the last-team win condition from ever triggering cleanly. House War is a pure
+			// two-house player event; Common Cause is the boss-vs-player team event.
+			const houseWar = eventById('house-war');
+
+			// 3 players + 1 boss → ineligible
+			expect(
+				houseWar.eligible(buildRingEventContext([player(), player(), player(), boss()]))
+			).to.equal(false);
+
+			// 3 players, no bosses → eligible
+			expect(
+				houseWar.eligible(buildRingEventContext([player(), player(), player()]))
+			).to.equal(true);
+		});
+
 		it('gates The Reckoning on a boss with more than one player to choose between', () => {
 			const reckoning = eventById('the-reckoning');
 

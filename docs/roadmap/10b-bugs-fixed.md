@@ -606,6 +606,115 @@ subprocess regression test imports `DiscordBot` with `DATABASE_URL` explicitly a
 
 ---
 
+### 45. House War was eligible with bosses present — FIXED
+
+`House War`'s eligibility check was `playerCount >= 3` with no constraint on bosses. In
+`last-team` mode the boss is its own unnamed faction (every boss contestant carries
+`userId: 'boss'`). Once one player house was eliminated the surviving bosses would still be
+active, blocking the one-faction win condition from ever firing — the fight would have to
+continue to last-contestant or draw instead of resolving cleanly on house elimination.
+
+**Fixed**: eligibility is now `playerCount >= 3 && bossCount === 0`. Common Cause remains the
+dedicated boss-vs-player team event. The banner comment was updated to record the reason.
+
+Covered by a new test in `ring/ring-events.test.ts` (`rejects House War when bosses are
+present`).
+
+**Status**: Fixed.
+
+---
+
+### 46. Last-team mode drew when all opponents fled and nobody died — FIXED
+
+`fightConcludes()` determined whether a fight had a non-draw outcome solely by counting
+deaths. In a `last-team` event where all opponents fled (zero deaths), the entire roster
+received draw outcomes — no contestant ever got `won: true`, and no `ring.win` event was
+published.
+
+**Fixed**: `fightConcludes()` now computes `isLastTeamFledWin`:
+```
+deaths === 0 && ringEvent.victoryMode === 'last-team' && contestants.some(c => c.fled)
+```
+When this flag is set, surviving (non-dead, non-fled) contestants are marked `won: true` and
+receive `ring.win`; fled contestants receive `ring.fled` (not loss — they escaped without
+dying); and `participantOutcome` correctly returns `'win'` for survivors.  The overall
+`fightOutcome` in `ring.fightResolved` is `'fled'` (one faction fled) rather than `'draw'`.
+`last-contestant` fights are unaffected — the flag requires `victoryMode === 'last-team'`
+to be set.
+
+Covered by two new tests in `ring/index.test.ts`:
+- `fightConcludes` unit test: three contestants, Gryffindor (2) vs Slytherin (1 fled), zero
+  deaths → both Gryffindors win, Slytherin does not lose.
+- `fight()` integration test: exercises the full `ring.fight()` path so that
+  `lastContestant === undefined` (as `doAction` resolves on `isLastTeamVictory`) and the
+  zero-deaths fled outcome propagates end-to-end.
+
+**Status**: Fixed.
+
+---
+
+### 47. Player-summoned bosses not refunded when removed pre-fight — FIXED
+
+`summon a boss` recorded a charge in `bossSummons` + `bossSummonsPending`, but there was no
+path to cancel that charge if the boss was removed from the ring before a fight started. Two
+scenarios caused this:
+
+1. **Last player withdraws** — the boss is left waiting alone; `removeBoss` (which only acts
+   when `!hasPlayerContestants`) would do nothing unless explicitly called; the charge was
+   spent for nothing.
+2. **Despawn timer fires** — the 10-minute despawn timer calls `removeBoss`, which now
+   correctly refunds if no players are present, but previously had no refund path.
+
+**Fix — three-layer approach**:
+
+1. `Contestant` gained optional `summonedByUserId?: string` and `summonedAt?: number` fields,
+   set by `summonBossAction` when calling `ring.spawnBoss({ summonedByUserId, summonedAt })`.
+   These are ephemeral (live on the contestant, never serialized).
+2. `Ring` gained an optional `onSummonedBossRemoved?: (userId, timestamp) => void` callback.
+   `removeBoss()` invokes it when a player-summoned boss (`ringContestant.summonedByUserId`)
+   is about to be removed with no players in the ring.
+3. `Game` wires the callback to `_refundSingleBossSummon(userId, timestamp)`, a new private
+   method that removes the timestamp from both ledgers using direct `optionsStore` mutation
+   (no `stateChange` broadcast) and calls `persistState()` immediately. Idempotent — a
+   timestamp already absent is a no-op.
+4. `removeMonster()` now proactively removes player-summoned bosses when the last player
+   withdraws (rather than waiting for their 10-minute despawn timers), so refunds land within
+   the same event-loop turn as the withdrawal — not up to 10 minutes later.
+
+Timer/admin/Gauntlet bosses (no `summonedByUserId`) are unaffected.
+
+Covered by four new tests in `ring/index.test.ts` (`player-summoned boss refund`):
+- Last player withdraws → summoned boss removed, both ledgers cleared.
+- Player still present → `removeBoss` no-ops, ledgers unchanged.
+- Despawn timer fires with no players → boss removed, ledgers cleared.
+- Timer/admin boss removed with no players → unrelated ledger entries unchanged.
+
+**Status**: Fixed.
+
+---
+
+### 48. `docs/boss-encounters.md` free-for-all centralization description was incomplete — FIXED
+
+The "Centralized free-for-all policy (Blood Feud)" section described only the card-level
+retargeting fix (the `ring.encounterFreeForAll` getter). The primary targeting path —
+`Ring.fight()` explicitly passing `team: false` to `getTarget()` on each card play — was
+not documented, making the two-layer design non-obvious and the comment "before this fix,
+only applied to initial target selection" somewhat misleading.
+
+**Fixed**: the section now explicitly describes both layers:
+
+1. **Primary targeting** (`Ring.fight()`): checks `ringEvent.freeForAll` directly and
+   passes `team: false` for the per-turn `getTarget()` call.
+2. **Card-level retargeting** (Blast, Enthrall, etc.): passes the ring instance through
+   to `getTarget()`; the `ring.encounterFreeForAll` getter forces `team: false` there.
+
+Also fixed: a typo left the numbered list item label empty (`**Primary targeting** ():`).
+Corrected to `(**Primary targeting** (`Ring.fight()`):)`.
+
+**Status**: Fixed.
+
+---
+
 ## Other Resolved Items
 
 ### 1. "Barely blocked" message fires incorrectly (upstream #181)
@@ -741,3 +850,7 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Fix Discord `/summon-boss` expected refusals masked by "Something went wrong" (`CommandRefusalError`, #42)
 - [x] Fix `getEventsSinceForRingFeed limitReached` off-by-one: probe for one more row at the cap boundary (#43)
 - [x] Remove Discord connector's import-time dependency on server `DATABASE_URL` (#44)
+- [x] Exclude bosses from House War eligibility (`bossCount === 0`) to keep it a pure two-house player event (#45)
+- [x] Fix last-team mode draw when all opponents fled with zero deaths (`isLastTeamFledWin`, #46)
+- [x] Refund player-summoned boss charges removed pre-fight (`onSummonedBossRemoved` callback + `_refundSingleBossSummon`, #47)
+- [x] Complete free-for-all docs: describe primary targeting layer in `Ring.fight()` and fix empty label typo (#48)

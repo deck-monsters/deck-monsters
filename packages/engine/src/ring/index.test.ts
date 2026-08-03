@@ -9,6 +9,7 @@ import { RoomEventBus } from '../events/index.js';
 import { engineReady } from '../helpers/engine-ready.js';
 import { ALLIANCE_TEAM, RING_EVENTS } from './ring-events.js';
 import { getTarget, TARGET_NEXT_PLAYER } from '../helpers/targeting-strategies.js';
+import { addPendingSummon, recordSummon } from '../helpers/boss-summons.js';
 
 describe('ring/index.ts', () => {
 	before(async () => {
@@ -738,6 +739,116 @@ describe('ring/index.ts', () => {
 		});
 	});
 
+	describe('player-summoned boss refund (PR review finding)', () => {
+		const SUMMON_TS = 1_700_000_000_000;
+
+		const addPlayer = (ring: any, userId: string) => {
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId });
+			return { character, monster };
+		};
+
+		it('refunds charge when last player withdraws and summoned boss is removed', async () => {
+			const game = new Game();
+			const ring = game.getRing();
+
+			const { character, monster } = addPlayer(ring, 'user-1');
+
+			// Spawn with summoner info
+			const bossContestant = ring.spawnBoss({ summonedByUserId: 'user-1', summonedAt: SUMMON_TS });
+			expect(bossContestant, 'boss should spawn').to.not.be.undefined;
+			expect(ring.contestants.length).to.equal(2);
+
+			// Set up ledger as if summonBossAction had run
+			game.bossSummons = recordSummon(undefined, 'user-1', SUMMON_TS);
+			game.bossSummonsPending = addPendingSummon(undefined, 'user-1', SUMMON_TS);
+			expect(game.bossSummons['user-1']).to.deep.equal([SUMMON_TS]);
+			expect(game.bossSummonsPending['user-1']).to.deep.equal([SUMMON_TS]);
+
+			// Remove the last player — summoned boss should be removed and charge refunded
+			await ring.removeMonster({ monster, character, userId: 'user-1' });
+
+			expect(ring.contestants.length, 'ring should be empty').to.equal(0);
+			expect(game.bossSummons['user-1'], 'main ledger charge should be refunded').to.equal(undefined);
+			expect(game.bossSummonsPending['user-1'], 'pending ledger should be cleared').to.equal(undefined);
+
+			game.dispose();
+		});
+
+		it('does not refund when a player is still present (fight will happen normally)', async () => {
+			// removeBoss() is a no-op when hasPlayerContestants — no refund should fire
+			const game = new Game();
+			const ring = game.getRing();
+
+			addPlayer(ring, 'user-1');
+			const bossContestant = ring.spawnBoss({ summonedByUserId: 'user-2', summonedAt: SUMMON_TS });
+			expect(bossContestant, 'boss should spawn').to.not.be.undefined;
+
+			game.bossSummons = recordSummon(undefined, 'user-2', SUMMON_TS);
+			game.bossSummonsPending = addPendingSummon(undefined, 'user-2', SUMMON_TS);
+
+			// Attempt despawn (e.g. timer fires) while player is still present
+			await ring.removeBoss(bossContestant!);
+
+			// Boss remains (no removal)
+			expect(ring.contestants.length, 'boss + player still present').to.equal(2);
+			// Ledger unchanged — no refund
+			expect(game.bossSummons['user-2']).to.deep.equal([SUMMON_TS]);
+			expect(game.bossSummonsPending['user-2']).to.deep.equal([SUMMON_TS]);
+
+			game.dispose();
+		});
+
+		it('refunds when despawn timer fires with no players in ring (direct removeBoss call)', async () => {
+			// The despawn timer calls ring.removeBoss(contestant). When no players remain,
+			// removeBoss removes the boss and must call the refund callback.
+			const game = new Game();
+			const ring = game.getRing();
+
+			// Spawn with no players — boss enters an empty ring
+			const bossContestant = ring.spawnBoss({ summonedByUserId: 'user-1', summonedAt: SUMMON_TS });
+			expect(bossContestant, 'boss should spawn').to.not.be.undefined;
+
+			game.bossSummons = recordSummon(undefined, 'user-1', SUMMON_TS);
+			game.bossSummonsPending = addPendingSummon(undefined, 'user-1', SUMMON_TS);
+
+			// Simulate despawn timer: removeBoss with no players in ring
+			await ring.removeBoss(bossContestant!);
+
+			expect(ring.contestants.length, 'boss removed').to.equal(0);
+			expect(game.bossSummons['user-1'], 'main ledger charge refunded').to.equal(undefined);
+			expect(game.bossSummonsPending['user-1'], 'pending ledger cleared').to.equal(undefined);
+
+			game.dispose();
+		});
+
+		it('timer/admin boss removed when no players leaves ledger unchanged', async () => {
+			// Bosses without summonedByUserId must not trigger any refund
+			const game = new Game();
+			const ring = game.getRing();
+
+			// Timer boss — no summoner info
+			const bossContestant = ring.spawnBoss();
+			expect(bossContestant, 'timer boss should spawn').to.not.be.undefined;
+
+			// Some other user has charges in the ledger
+			game.bossSummons = recordSummon(undefined, 'user-1', SUMMON_TS);
+			game.bossSummonsPending = addPendingSummon(undefined, 'user-1', SUMMON_TS);
+
+			await ring.removeBoss(bossContestant!);
+
+			// Boss removed (no players present)
+			expect(ring.contestants.length, 'timer boss removed').to.equal(0);
+			// Ledger untouched — no refund for timer bosses
+			expect(game.bossSummons['user-1']).to.deep.equal([SUMMON_TS]);
+			expect(game.bossSummonsPending['user-1']).to.deep.equal([SUMMON_TS]);
+
+			game.dispose();
+		});
+	});
+
 	describe('encounterFreeForAll targeting policy (Finding 2)', () => {
 		it('getTarget with ring.encounterFreeForAll=true ignores contestant.team and targets across teams', () => {
 			// Three contestants: p1 and p2 share a team, p3 is on a different team.
@@ -868,6 +979,47 @@ describe('ring/index.ts', () => {
 			expect(contestant2.won).to.equal(true);
 			expect(contestant1.monster.xp).to.equal(prevXP1 + 1);
 			expect(contestant2.monster.xp).to.equal(prevXP2 + 24);
+		});
+
+		it('last-team event: zero deaths with fled opponents — surviving faction wins, not draws', () => {
+			// Regression: in last-team mode when all opponents flee (no deaths), fightConcludes
+			// fell into the deaths<=0 branch and issued draw for everyone — no contestant won.
+			// Surviving faction members should win; fled faction members should have fled outcome.
+			const game = new Game();
+			const ring = game.getRing();
+
+			const c1 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c2 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+			const c3 = randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } });
+
+			ring.addMonster(c1);
+			ring.addMonster(c2);
+			ring.addMonster(c3);
+
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';
+
+			// Slytherin flees — no deaths
+			ring.contestants[2]!.monster.fled = true;
+
+			// Use a last-team event whose apply() is a no-op so manual team assignments survive
+			ring.ringEvent = { ...RING_EVENTS.find(e => e.id === 'house-war')!, apply: () => {} };
+
+			ring.fightConcludes({ lastContestant: undefined, rounds: 2 });
+
+			const p0 = ring.findContestant(c1.character, c1.monster)!;
+			const p1 = ring.findContestant(c2.character, c2.monster)!;
+			const p2 = ring.findContestant(c3.character, c3.monster)!;
+
+			// Gryffindor survivors must win (not draw)
+			expect(p0.won, 'Gryffindor 1 must win').to.equal(true);
+			expect(p1.won, 'Gryffindor 2 must win').to.equal(true);
+			// Slytherin fled but was not killed
+			expect(p2.won, 'Slytherin must not win').to.equal(undefined);
+			expect(p2.lost, 'Slytherin must not have lost (no death)').to.equal(undefined);
+
+			game.dispose();
 		});
 
 		it('can calculate xp when a monster flees', () => {
@@ -1073,6 +1225,57 @@ describe('ring/index.ts', () => {
 				delete process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS;
 				game.dispose();
 			}
+		});
+
+		it('last-team fight: fled opponents with zero deaths → surviving faction wins, encounter ends cleanly', async function () {
+			// Regression companion to the fightConcludes unit test above: exercise the full
+			// ring.fight() path so fightConcludes receives lastContestant=undefined (as doAction
+			// resolves when isLastTeamVictory fires) and the zero-deaths fled outcome propagates
+			// end-to-end.
+			//
+			// Problem: monster.startEncounter() (called by Ring.startEncounter inside fight())
+			// resets monster.encounter to { ring }, clearing any pre-set fled flag. So we stub
+			// Slytherin's startEncounter to re-apply fled immediately after the reset so that
+			// isActiveContestant() sees it as inactive when doAction() first runs.
+			this.timeout(5000);
+
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';
+
+			const refs = {
+				g1: ring.contestants[0]!,
+				g2: ring.contestants[1]!,
+				sl: ring.contestants[2]!,
+			};
+
+			// Stub Slytherin's startEncounter so that after the real reset, the fled flag is
+			// restored — causing isActiveContestant to filter it out when doAction runs.
+			const slMonster = refs.sl.monster;
+			const origStartEncounter = slMonster.startEncounter.bind(slMonster);
+			sinon.stub(slMonster, 'startEncounter').callsFake((r: any) => {
+				origStartEncounter(r); // resets encounter to { ring }
+				slMonster.fled = true;  // re-apply immediately
+			});
+
+			ring.ringEvent = { ...RING_EVENTS.find(e => e.id === 'house-war')!, apply: () => {} };
+
+			await ring.fight();
+
+			expect(refs.g1.won, 'Gryffindor 1 must win').to.equal(true);
+			expect(refs.g2.won, 'Gryffindor 2 must win').to.equal(true);
+			expect(refs.sl.won, 'Slytherin must not win').to.equal(undefined);
+			expect(refs.sl.lost, 'Slytherin must not have lost (no death)').to.equal(undefined);
+			expect(ring.inEncounter, 'encounter must be over').to.equal(false);
+
+			game.dispose();
 		});
 
 		it('cards on monsters spawned via randomContestant all have play() methods', () => {

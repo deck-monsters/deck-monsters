@@ -128,14 +128,19 @@ export const RING_EVENTS: RingEventDefinition[] = [
 		id: 'house-war',
 		name: 'House War',
 		banner:
-			'⚔️  HOUSE WAR — the ring splits into two warbands. Choose your side, or have it chosen for you.',
+			'⚔️  HOUSE WAR — the beastmasters split into two rival houses. May the strongest house stand.',
 		weight: 15,
 		/**
-		 * Pure team event: fight ends when one house is eliminated. Every surviving member
-		 * of the victorious house is recorded as a winner.
+		 * Pure two-house player event: fight ends when one house is eliminated. Every surviving
+		 * member of the victorious house is recorded as a winner.
+		 *
+		 * Bosses are excluded from eligibility: each boss contestant is its own unnamed faction
+		 * (userId: 'boss' → no shared team). In last-team mode an incidental boss faction would
+		 * remain after one house falls, blocking the win condition. Common Cause is the
+		 * boss-vs-player team event.
 		 */
 		victoryMode: 'last-team',
-		eligible: ({ playerCount }) => playerCount >= 3,
+		eligible: ({ playerCount, bossCount }) => playerCount >= 3 && bossCount === 0,
 		apply: (contestants) => {
 			const houses = shuffle(Object.values(TEAMS) as string[]).slice(0, 2);
 			players(contestants).forEach((player, index) => {

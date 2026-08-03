@@ -333,7 +333,10 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 			);
 		}
 
-		const contestant = ring.spawnBoss();
+		// Pass summoner identity to the contestant so a pre-fight removal (last player
+		// withdraws, despawn timer fires) can refund this exact charge via the ring's
+		// onSummonedBossRemoved callback. See docs/boss-encounters.md §3.
+		const contestant = ring.spawnBoss({ summonedByUserId: userId, summonedAt: now });
 		if (!contestant) {
 			// Belt and braces — nothing above yields, so this cannot lose a race. Bail before
 			// spending the charge rather than burning it on a boss that never arrived.

@@ -86,6 +86,14 @@ export class Game extends BaseClass {
 			},
 			this.log
 		);
+
+		// Refund the exact summon charge when a player-summoned boss is removed before a
+		// fight starts (last player withdrew, or despawn timer fired with no players).
+		// Writes directly to optionsStore + calls persistState() immediately so the refund
+		// survives a subsequent restart. See docs/boss-encounters.md §3.
+		this.ring.onSummonedBossRemoved = (userId: string, timestamp: number) => {
+			this._refundSingleBossSummon(userId, timestamp);
+		};
 		this.exploration = new Exploration(this._eventBus as any, {}, this.log);
 
 		// Refund pending boss summons from before the last restart. Any summon recorded
@@ -229,6 +237,50 @@ export class Game extends BaseClass {
 
 	set bossSummonsPending(bossSummonsPending: BossSummonLedger) {
 		this.setOptions({ bossSummonsPending } as any);
+	}
+
+	/**
+	 * Refunds one specific summon timestamp in-process: removes it from both `bossSummons`
+	 * and `bossSummonsPending`, then persists immediately. Called by the ring's
+	 * `onSummonedBossRemoved` when a player-summoned boss is removed before a fight starts
+	 * (last player withdrew, or despawn timer fired). Idempotent — a timestamp already gone
+	 * is a no-op. Does NOT use setOptions() to avoid emitting stateChange mid-flight.
+	 * See docs/boss-encounters.md §3.
+	 */
+	private _refundSingleBossSummon(userId: string, timestamp: number): void {
+		const removeTs = (
+			ledger: BossSummonLedger,
+			uid: string,
+			ts: number
+		): BossSummonLedger => {
+			const existing = ledger[uid];
+			if (!existing) return ledger;
+			const filtered = existing.filter((t: number) => t !== ts);
+			if (filtered.length === existing.length) return ledger; // not found → no-op
+			const next = { ...ledger };
+			if (filtered.length > 0) {
+				next[uid] = filtered;
+			} else {
+				delete next[uid];
+			}
+			return next;
+		};
+
+		const main = (this.options as any).bossSummons as BossSummonLedger | undefined ?? {};
+		const pending = (this.options as any).bossSummonsPending as BossSummonLedger | undefined ?? {};
+
+		const refundedMain = removeTs(main, userId, timestamp);
+		const refundedPending = removeTs(pending, userId, timestamp);
+
+		// Only persist when something actually changed
+		if (refundedMain !== main || refundedPending !== pending) {
+			this.optionsStore = {
+				...this.optionsStore,
+				bossSummons: refundedMain,
+				bossSummonsPending: refundedPending,
+			};
+			this.persistState();
+		}
 	}
 
 	/**

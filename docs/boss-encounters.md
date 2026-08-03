@@ -210,7 +210,7 @@ Defined declaratively in `packages/engine/src/ring/ring-events.ts`.
 | **The Gauntlet** | Pulls up to 2 extra bosses into the ring | `last-contestant` (default) | ≥1 player |
 | **Blood Feud** | Free-for-all — teams ignored, and bosses turn on each other | `last-contestant` (default) | ≥3 contestants |
 | **Common Cause** | Every player joins `ALLIANCE_TEAM`; players only hit bosses | `last-team` | ≥2 players and ≥1 boss |
-| **House War** | Players split round-robin across two Sorting Hat houses | `last-team` | ≥3 players |
+| **House War** | Players split round-robin across two Sorting Hat houses | `last-team` | ≥3 players **and 0 bosses** |
 | **The Reckoning** | Bosses switch to `TARGET_HIGHEST_XP_PLAYER` — they hunt the strongest | `last-contestant` (default) | ≥1 boss, ≥2 players |
 
 `RING_EVENT_CHANCE_PERCENT` is 25.
@@ -352,7 +352,7 @@ concepts interact but are independent:
 | Event | Team targeting | Victory mode |
 |---|---|---|
 | Common Cause | Players share `ALLIANCE_TEAM`; ignore bosses as targets | `last-team` — fight ends when one faction survives |
-| House War | Players split across two named houses | `last-team` — fight ends when one house survives |
+| House War | Players split across two named houses (bosses excluded — see §4) | `last-team` — fight ends when one house survives |
 | Blood Feud | `freeForAll: true` — teams ignored for targeting | `last-contestant` — last monster standing wins |
 | The Gauntlet / The Reckoning / none | Normal team rules | `last-contestant` — last monster standing wins |
 
@@ -364,11 +364,21 @@ Fists of Villainy, Fists of Virtue, Pick Pocket, etc.) used their own team filte
 team-mates were still excluded from their targeting during a Blood Feud — contrary to the
 event's intent.
 
-**Fix**: `getTarget()` accepts an optional `ring?: { encounterFreeForAll?: boolean }`. Cards
-that call `getTarget` internally now pass the ring instance. If `ring.encounterFreeForAll` is
-`true`, `getTarget` forces `team: false` for that call, making free-for-all apply uniformly.
-`Ring.encounterFreeForAll` is a getter that returns `this.ringEvent?.freeForAll === true`.
-Normal team targeting is unaffected outside a Blood Feud encounter.
+**Fix — two-layer approach**:
+
+1. **Primary targeting** (`Ring.fight()`): for each card play, `Ring.fight()` checks
+   `ringEvent.freeForAll` directly and explicitly passes `team: false` to `getTarget()`.
+   This is the per-turn target selection that happens once per card.
+
+2. **Card-level retargeting** (Blast, Enthrall, Fists of Villainy, Fists of Virtue, Pick Pocket,
+   etc.): cards that call `getTarget()` internally now pass the ring instance. `getTarget()`
+   accepts an optional `ring?: { encounterFreeForAll?: boolean }` parameter; if
+   `ring.encounterFreeForAll` is `true`, it forces `team: false` for that call.
+   `Ring.encounterFreeForAll` is a getter: `this.ringEvent?.freeForAll === true`.
+
+Both layers are needed because the primary targeting call in `Ring.fight()` and the secondary
+calls inside cards are separate `getTarget()` invocations. Normal team targeting is unaffected
+outside a Blood Feud encounter.
 
 ### XP calculations and contestant-level team overrides
 
