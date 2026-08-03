@@ -22,6 +22,10 @@ const generateDungeonMasterGuide = (output) => {
 *Dungeon Master Guide (Game Master Reference):*
 Full card stats, modifier math, damage-per-turn tables, and probability breakdowns.
 
+Multi-roll attacks (Lucky Strike, Horn Swipe, Rehit): when a card rolls
+more than once and keeps only one result, Stroke of Luck / Curse of Loki
+apply to the selected roll only — discarded natural 20s/1s do not crit.
+
 ${cardList.join('\n')}
 \`\`\`
 `;

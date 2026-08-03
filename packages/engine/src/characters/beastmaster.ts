@@ -9,6 +9,7 @@ import TENSE from '../helpers/tense.js';
 import transferItems from '../items/helpers/transfer.js';
 import useItems from '../items/helpers/use.js';
 import { getItemKey } from '../items/helpers/counts.js';
+import { matchesCardLookupName } from '../cards/helpers/matches-lookup-name.js';
 import { formatRelative } from '../helpers/time.js';
 import { eachSeries } from '../helpers/promise.js';
 import { MAX_PRESETS } from '../constants/card-management.js';
@@ -40,7 +41,7 @@ const normalize = (value: string): string => value.trim().toLowerCase();
 const getCardName = (card: CardInstance): string =>
 	(card as any).cardType ?? (card as any).itemType ?? (card as any).name ?? 'Unknown';
 const isSameCardName = (card: CardInstance, cardName: string): boolean =>
-	getCardName(card).toLowerCase() === cardName.toLowerCase();
+	matchesCardLookupName(card as any, cardName);
 
 class Beastmaster extends BaseCharacter {
 	constructor(options: Record<string, unknown> = {}) {

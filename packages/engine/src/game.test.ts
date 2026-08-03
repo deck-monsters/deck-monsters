@@ -430,6 +430,44 @@ describe('game.ts', () => {
 				).to.equal('function');
 			}
 		});
+
+		it('round-trips an unknown equipped card through restoreGame without random replacement (#66)', async () => {
+			const game = new Game({ roomId: 'restore-unknown-card-test' });
+
+			const Basilisk = (await import('./monsters/basilisk.js')).default;
+			const { HitCard } = await import('./cards/hit.js');
+			const { UnknownCard } = await import('./cards/helpers/unknown-card.js');
+			const Beastmaster = (await import('./characters/beastmaster.js')).default;
+
+			const unknownPayload = {
+				name: 'LegacyRemovedCard',
+				options: { icon: '🧪', kept: 'yes', used: 3 },
+			};
+			const monster = new Basilisk({ name: 'Relic' });
+			monster.cards = [
+				new HitCard(),
+				new UnknownCard(unknownPayload),
+				new HitCard(),
+			];
+			const character = new Beastmaster({ name: 'Archivist' });
+			character.addMonster(monster);
+			game.characters['user-unknown'] = character;
+
+			const restoredGame = restoreGame(JSON.stringify(game));
+			const restoredMonster = restoredGame.characters['user-unknown']?.monsters[0];
+
+			expect(restoredMonster.cards).to.have.length(3);
+			expect(restoredMonster.cards.map((card: any) => card.name)).to.deep.equal([
+				'HitCard',
+				'LegacyRemovedCard',
+				'HitCard',
+			]);
+
+			const restoredUnknown = restoredMonster.cards[1];
+			expect(restoredUnknown).to.be.instanceOf(UnknownCard);
+			expect(restoredUnknown.toJSON()).to.deep.equal(unknownPayload);
+			expect(typeof restoredUnknown.play).to.equal('function');
+		});
 	});
 
 	describe('shop', () => {

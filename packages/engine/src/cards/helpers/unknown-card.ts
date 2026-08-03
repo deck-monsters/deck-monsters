@@ -1,7 +1,7 @@
 import { BaseCard, type CardOptions } from '../base.js';
 
 export interface UnknownCardSource {
-	name: string;
+	name?: string;
 	options?: Record<string, unknown>;
 }
 

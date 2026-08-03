@@ -1089,9 +1089,9 @@ Regression coverage: `preserves equipped card play order on hydrate (not alphabe
 
 `hydrateCard` fell through to `draw({}, monster)` when the card class was missing, so renames/removals silently mutated saved decks into unrelated random cards.
 
-**Fixed**: unknown class names hydrate to an inert `UnknownCard` placeholder (`cards/helpers/unknown-card.ts`) that keeps the original serialized `name`/`options`, remains visible as `Unknown Card (…)`, plays as a combat no-op, and serializes back with the original identity for repair. Character `hydrateDeck` still alphabetizes inventory; equipped monster order is unchanged.
+**Fixed**: unknown class names hydrate to an inert `UnknownCard` placeholder (`cards/helpers/unknown-card.ts`) that keeps the original serialized `name`/`options`, remains visible as `Unknown Card (…)`, plays as a combat no-op (including the default `applyEffects` path), and serializes back with the original identity for repair. Repair lookup (`matchesCardLookupName`) accepts both the visible `cardType` and the original serialized class name; normal cards still match `cardType` only. Malformed payloads missing a `name` still hydrate to an inert placeholder (name defaults to `"Unknown"`) rather than a random draw. Character `hydrateDeck` still alphabetizes inventory; equipped monster order is unchanged. Covered by Game `restoreGame` round-trip coverage in `game.test.ts`.
 
-Covered by tests in `cards/helpers/unknown-card.test.ts`, `cards/helpers/hydrate.test.ts`, and `monsters/helpers/hydrate.test.ts`.
+Covered by tests in `cards/helpers/unknown-card.test.ts`, `cards/helpers/hydrate.test.ts`, `monsters/helpers/hydrate.test.ts`, and `game.test.ts`.
 
 **Status**: Fixed.
 

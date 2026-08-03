@@ -4,7 +4,7 @@ import { isMatchingCard } from './is-matching.js';
 import { UnknownCard } from './unknown-card.js';
 
 export interface CardObj {
-	name: string;
+	name?: string;
 	options?: Record<string, unknown>;
 }
 
@@ -13,14 +13,19 @@ export const hydrateCard = (
 	_monster?: any,
 	deck: any[] = []
 ): any => {
-	const existingCard = deck.find(card => isMatchingCard(card, cardObj));
-	if (existingCard) return existingCard;
+	if (cardObj?.name) {
+		const existingCard = deck.find(card =>
+			isMatchingCard(card, cardObj as { name: string })
+		);
+		if (existingCard) return existingCard;
 
-	const Card = all.find(({ name }) => name === cardObj.name);
-	if (Card) return new (Card as any)(cardObj.options);
+		const Card = all.find(({ name }) => name === cardObj.name);
+		if (Card) return new (Card as any)(cardObj.options);
+	}
 
 	// Never silently replace missing classes with a random draw — keep identity for repair.
-	return new UnknownCard(cardObj);
+	// Malformed payloads without a name also stay as an inert UnknownCard.
+	return new UnknownCard(cardObj ?? {});
 };
 
 export const hydrateDeck = (

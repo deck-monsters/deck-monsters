@@ -1,6 +1,7 @@
 import type BaseMonster from '../base.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import { getItemKey } from '../../items/helpers/counts.js';
+import { matchesCardLookupName } from '../../cards/helpers/matches-lookup-name.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,7 +154,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 				selectedCards = cardSelection.reduce((selection: CardInstance[], cardType: string) => {
 					const wanted = cardType.trim().toLowerCase();
 					const cardIndex = remainingItems.findIndex(
-						(potential: CardInstance) => getItemKey(potential).toLowerCase() === wanted,
+						(potential: CardInstance) => matchesCardLookupName(potential, wanted),
 					);
 
 					if (cardIndex >= 0) {
