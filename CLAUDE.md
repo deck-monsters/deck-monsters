@@ -18,6 +18,11 @@ These apply to every task in this repo, not just the one you were asked to do.
 4. **Explain the "why".** Comments and docs in this repo lean toward recording *why* a
    constraint exists — several were written after a production bug. Preserve that; when you
    fix something subtle, leave a note saying what broke, so nobody re-introduces it.
+5. **Checkpoint after each task.** On multi-step or subagent-driven work, commit (and push
+   the feature branch) as soon as each discrete task lands — for example after a subagent
+   finishes an implementation task, after a review-fix round, or after a verification
+   pass updates docs. Do not batch an entire roadmap into one late commit. Small, reviewable
+   commits keep progress recoverable if a later step fails or the session ends early.
 
 ## Architecture Docs
 

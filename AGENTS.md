@@ -15,6 +15,17 @@ pnpm monorepo with Turborepo. See `README.md` for the full command reference.
 | `@deck-monsters/web` | `apps/web` | Vitest |
 | `@deck-monsters/shared-ui` | `packages/shared-ui` | (no tests) |
 
+### Checkpoint commits during multi-task / subagent work
+
+When driving a plan with subagents (or any multi-step implementation), **commit and push to the feature branch after each completed task** — not only at the end of the run. Typical checkpoints:
+
+1. Subagent finishes an implementation task (tests + code green for that task)
+2. Review-fix round lands
+3. Docs / roadmap status updates for that task
+4. Final verification (build/typecheck/lint/test) before declaring done
+
+Prefer one focused commit per task over a single mega-commit. This matches the Cursor Cloud agent instruction to checkpoint along the way and keeps PRs reviewable if the session is interrupted.
+
 ### Build before test (important)
 
 `pnpm build` **must** run before `pnpm test` on a fresh checkout. The `server`, `connector-discord`, and `web` packages import from `@deck-monsters/engine` via its `dist/` output. Without the build, tests fail with `ERR_MODULE_NOT_FOUND`.
