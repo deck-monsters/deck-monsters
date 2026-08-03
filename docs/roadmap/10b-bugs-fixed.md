@@ -456,7 +456,9 @@ summons because they do not touch `bossSummonsPending`.
 Covered by new tests in `helpers/boss-summons.test.ts` (addPendingSummon, refundPendingSummons
 pure-helper behavior) and `game.test.ts` (serialization round-trip: pending cleared
 after fight starts via setImmediate; pending refunded on restore before fight; backward compat
-with no bossSummonsPending field).
+with no bossSummonsPending field; production-shaped `stateStore.save` durability: verifies that
+`persistState()` calls `stateStore.save()` immediately — not via setImmediate like the legacy
+`stateSaveFunc` path — so the cleared state reaches the DB before any debounce delay).
 
 **Status**: Fixed.
 
@@ -518,6 +520,60 @@ before calling `activateRingEvent()` and surfaces a user-facing refusal:
 
 Covered by a new test in `ring/index.test.ts` that arms one event, attempts to arm a second,
 and verifies the first is unchanged and the `ringEvent` emission count remains 1.
+
+**Status**: Fixed.
+
+---
+
+### 42. Discord `/summon-boss` expected refusals swallowed by generic error handler — FIXED
+
+`announceAndThrow` called `channel({ announce })` to send the refusal message, then threw a
+plain `Error`. In the Discord connector, this propagated through `dispatchCommand` to
+`DiscordBot.handleSlashCommand`'s catch block, which always replaced the error with
+`"Something went wrong. Please try again."` — hiding the actual reason (quota exhausted, no
+monster in ring, fight active, boss/ring cap). On the web console path the message was visible
+(the `channel()` call fired before the throw and posted to the event bus), but the Discord path
+had a second problem: `channel({ announce })` sends a DM, which is silently discarded if the
+player has DMs blocked — so both the DM and the ephemeral interaction became useless.
+
+**Fixed** with a new `CommandRefusalError` class (`engine/src/helpers/command-refusal-error.ts`)
+and a corresponding export from the engine. `announceAndThrow` now throws `CommandRefusalError`
+instead of plain `Error`. `DiscordBot.handleSlashCommand` catches `CommandRefusalError` and
+edits the deferred ephemeral interaction with `err.message` — the exact refusal text — rather
+than the generic fallback. Unexpected infrastructure errors still fall through to the generic
+message and are logged. The router's fire-and-forget `.catch()` also suppresses `CommandRefusalError`
+from server-side error logs (the message was already delivered to the web console via the event
+bus before the throw). The fix is shared: every slash command that uses `dispatchCommand` (or
+whose action throws `CommandRefusalError`) benefits automatically.
+
+Covered by 4 new tests in `connector-discord/src/__tests__/bot.test.ts`: expected refusal shows
+exact message without logging; unexpected error shows generic message with logging; correct
+path (reply vs. editReply) used depending on deferred state; blocked-DM scenario still shows
+the refusal on the interaction.
+
+**Status**: Fixed.
+
+---
+
+### 43. `getEventsSinceForRingFeed` returns `limitReached: true` when the replay contains exactly `maxTotal` events and no more exist — FIXED
+
+The pagination loop in `RoomManager.getEventsSinceForRingFeed` returned `limitReached: true`
+whenever the accumulated event count hit `maxTotal` AND the last page was full (`page.length ===
+pageSize`). A full page meant "the DB returned as many rows as we asked for", not "there are more
+rows after this". If the room had exactly `maxTotal` events (e.g. exactly 2000) the last full
+page was also the last page in the DB — but the loop returned `limitReached: true` and the
+client displayed a spurious "replay truncated" gap marker.
+
+**Fixed** by probing for one additional row after hitting the cap. When `events.length >= maxTotal`
+and the last page was full, `_fetchRingFeedPage` is called once more with `limit: 1` anchored
+at the last event's id. If the probe returns 0 rows, `limitReached: false` (no more events);
+if it returns 1 row, `limitReached: true` (rows beyond the cap exist). The probe row is never
+included in the output. All other guarantees are unchanged: membership validation, public/private
+visibility filtering, cursor ordering, and the `maxTotal` output cap.
+
+Covered by 2 new tests in `room-manager.test.ts`: "exactly at cap → false" verifies the probe
+fires and returns false when the DB has nothing after the last page; "cap+1 → true" verifies
+the probe finds the extra row and returns true without including it in the output.
 
 **Status**: Fixed.
 
@@ -652,3 +708,8 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Clear `ringEvent` when quorum drops in `startFightTimer()`; fresh event rolled when quorum later restored (#37)
 - [x] Prioritize `contestant.team` over `monster.team`/`character.team` in `calculateXP` (#38)
 - [x] Fix boss summon restart gap: `bossSummonsPending` ledger refunded on restore before fight start (#39)
+- [x] Add production-shaped `stateStore.save` durability test for `bossSummonsPending` finalization (#39 follow-up, #41)
+- [x] Fix `doAction` infinite recursion in last-team mode with ≥2 same-faction survivors (`ring/index.ts`, #40)
+- [x] Fix admin `trigger ring event` overwriting an already-armed event (`activateRingEvent()` guard, #41)
+- [x] Fix Discord `/summon-boss` expected refusals masked by "Something went wrong" (`CommandRefusalError`, #42)
+- [x] Fix `getEventsSinceForRingFeed limitReached` off-by-one: probe for one more row at the cap boundary (#43)

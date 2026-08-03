@@ -576,7 +576,18 @@ export class RoomManager {
 				return { events, limitReached: false };
 			}
 			if (events.length >= maxTotal) {
-				return { events, limitReached: true };
+				// We hit the cap on a full page. A full page does not guarantee more rows
+				// exist — the DB may have had exactly that many. Probe for one more row to
+				// distinguish "exactly at the cap with nothing further" (limitReached: false)
+				// from "cap exceeded with rows still in the DB" (limitReached: true).
+				// See docs/roadmap/10b-bugs-fixed.md #40.
+				const probe = await this._fetchRingFeedPage(
+					userId,
+					roomId,
+					page[page.length - 1]!.id,
+					1
+				);
+				return { events, limitReached: probe.length > 0 };
 			}
 			cursor = page[page.length - 1]!.id;
 		}

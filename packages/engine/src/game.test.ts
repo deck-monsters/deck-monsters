@@ -594,6 +594,74 @@ describe('game.ts', () => {
 			game.dispose();
 		});
 
+		it('finalization is durable via stateStore.save (production path): save is called at persistState() time, before the debounce window, with cleared bossSummonsPending', async () => {
+			// Companion to the stateSaveFunc test below. The server attaches a StateStore
+			// (PostgresStateStore) rather than a stateSaveFunc callback. stateStore.save() is
+			// called immediately inside persistState() — not via setImmediate like stateSaveFunc —
+			// so the durability guarantee holds on the production code path too.
+			// See docs/roadmap/10b-bugs-fixed.md #39/#41.
+			const userId = 'user-durable-store';
+			const ts = Date.now();
+			const roomId = 'test-room-durability';
+
+			const savedStates: Array<{ roomId: string; state: string }> = [];
+			const mockStore = {
+				save: async (rid: string, state: string) => { savedStates.push({ roomId: rid, state }); },
+				load: async () => null,
+			};
+
+			const game = new Game({
+				roomId,
+				bossSummons: { [userId]: [ts] },
+				bossSummonsPending: { [userId]: [ts] },
+			});
+
+			// After construction, refund already ran (pending from before restart).
+			// Re-add the pending entry as if a fresh summon just occurred:
+			(game as any).optionsStore = {
+				...(game as any).optionsStore,
+				bossSummons: { [userId]: [ts] },
+				bossSummonsPending: { [userId]: [ts] },
+			};
+
+			// Wire the production-shaped stateStore (not the saveState / stateSaveFunc path)
+			game.stateStore = mockStore;
+
+			// Simulate fightBegins — the boss-summon finalizer subscribes to this event
+			game.eventBus.publish({
+				type: 'ring.fight',
+				scope: 'public',
+				text: 'Fight begins',
+				payload: { eventName: 'fightBegins' },
+			});
+
+			// stateStore.save() is called synchronously by persistState() (no setImmediate).
+			// The async save body runs synchronously up to its first await (which doesn't
+			// exist in the mock), so savedStates is populated before publish() returns.
+			expect(savedStates.length, 'stateStore.save must be called at persistState() time').to.be.above(0);
+
+			const lastSaved = savedStates[savedStates.length - 1]!;
+			expect(lastSaved.roomId).to.equal(roomId);
+
+			const decoded = JSON.parse(
+				zlib.gunzipSync(Buffer.from(lastSaved.state, 'base64')).toString()
+			);
+			const pendingInSave = decoded?.options?.bossSummonsPending;
+			const pendingEntries = pendingInSave ? Object.keys(pendingInSave) : [];
+			expect(pendingEntries.length, 'stateStore save must have empty bossSummonsPending').to.equal(0);
+
+			// Restoring from this save must NOT refund the charge
+			const restoredGame = restoreGame(lastSaved.state);
+			expect(
+				(restoredGame as any).bossSummons[userId],
+				'charge must be preserved after restore — it was genuinely spent'
+			).to.deep.equal([ts]);
+
+			game.stateStore = undefined;
+			game.dispose();
+			restoredGame.dispose();
+		});
+
 		it('finalization is durable: clearing pending saves at next event loop tick, before debounce, so a restart cannot refund an already-used charge', async () => {
 			// Critical (Finding 1): the in-memory clear of bossSummonsPending on
 			// fightBegins was not persisted immediately; only the 30s debounce would
