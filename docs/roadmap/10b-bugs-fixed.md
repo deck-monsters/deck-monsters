@@ -1332,3 +1332,18 @@ Safe in practice — `sendPrompt` is the only publisher and always uses `scope: 
 **Fixed**: re-check `event.targetUserId === userId` before prompting. Restores defense in depth without changing the per-user subscription model.
 
 **Status**: Fixed.
+
+---
+
+### 85. Quick-action chips suggested sends the engine always refuses — FIXED
+
+`buildQuickActions` offered `send {name} to the ring` for any living monster that was not already a ring contestant. The engine's `sendMonsterToTheRing` refuses in two further cases the chip builder did not model:
+
+1. `monster.cards.length < monster.cardSlots` → *"Only an evil master would send their monster into battle without enough cards."* Because characters are room-scoped, a player fully set up in rooms A and B still has a freshly spawned, empty-decked monster in room C — exactly where the chip was most likely to be clicked.
+2. `ring.contestants` already holds a contestant for that character → *"You already have a monster in the ring!"* The chip builder's `hasMonsterInRing` was computed over **living** monsters only, so a monster that died in the ring but had not yet been cleared left the guard false and a second send was offered.
+
+**Fixed**: `readyToSend` is gated on a new `isDeckReady()` (`cards.length >= cardSlots`, defaulting to 9 when the field is missing on a partially hydrated entity), and `hasMonsterInRing` is derived from the player's ring contestants directly rather than from their living monsters — mirroring the engine's `contestant.character === character` test. The equip chip now targets the first idle monster that still needs cards, so it points at whatever is actually blocking the send instead of at an already-equipped monster. `send` / `call out of the ring` also pass `user.id` rather than `user?.id`, so a missing id fails loudly instead of turning private countdown and full-ring announces public (same hardening as the `look at the ring` fix).
+
+Covered by `server/src/quick-actions.test.ts` — deck readiness at default and custom slot counts, equip-instead-of-send, second monster while one is in the ring, dead-contestant-still-in-ring, and equip targeting.
+
+**Status**: Fixed.

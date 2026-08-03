@@ -61,3 +61,16 @@ node --input-type=module -e "import { Game } from './packages/engine/dist/index.
 - Send when 9 cards or `cardSlots: 2` with 2 cards
 - Equip (not Send) when living idle monster lacks deck but `character.deck` has cards
 - Existing ring/other-player tests updated to use deck-ready monsters where Send is expected
+
+## Review follow-up (2026-08-03)
+
+Two gaps found reviewing the first pass:
+
+| Issue | Fix |
+|-------|-----|
+| `hasMonsterInRing` counted only **living** monsters, so a monster that died in the ring (still a contestant) let a doomed second Send be suggested — the engine refuses on `contestant.character === character` regardless of `dead` | Derive `hasMonsterInRing` (and `ringMonsters`) from the player's non-boss ring contestants directly |
+| Equip chip targeted `idleOutOfRing[0]`, which can be an already deck-ready monster while a bare one is the actual blocker | Target the first idle monster that is not deck-ready, falling back to the first idle one |
+
+Tests added: dead-contestant-still-in-ring, equip targeting. Full suite: `pnpm build && pnpm test` — all packages passing (server 139, web 91).
+
+Also recorded as bug #85 in `docs/roadmap/10b-bugs-fixed.md`.

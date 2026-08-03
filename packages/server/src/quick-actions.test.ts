@@ -86,6 +86,26 @@ describe('buildQuickActions', () => {
 		expect(commands).to.not.include('send Fluffy to the ring');
 	});
 
+	it('does not suggest send while a dead monster is still in the ring', () => {
+		// The engine refuses on any contestant belonging to the character, dead or alive.
+		const fallen = { givenName: 'Fluffy', dead: true, cards: makeCards(9) };
+		const idle = { givenName: 'Rex', cards: makeCards(9) };
+		const game = makeGame({ monsters: [fallen, idle], deck: [] }, [
+			{ userId: USER, monster: fallen },
+		]);
+		const commands = buildQuickActions(game, USER).map((a) => a.command);
+		expect(commands).to.not.include('send Rex to the ring');
+	});
+
+	it('targets equip at a monster that still needs cards', () => {
+		const equipped = { givenName: 'Fluffy', cards: makeCards(9) };
+		const bare = { givenName: 'Rex', cards: [] };
+		const game = makeGame({ monsters: [equipped, bare], deck: [{ cardType: 'Hit' }] });
+		const commands = buildQuickActions(game, USER).map((a) => a.command);
+		expect(commands).to.include('equip Rex');
+		expect(commands).to.not.include('equip Fluffy');
+	});
+
 	it('offers to revive a dead monster', () => {
 		const game = makeGame({
 			monsters: [{ givenName: 'Fluffy', dead: true }],
