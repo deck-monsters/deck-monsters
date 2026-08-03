@@ -14,3 +14,23 @@ export class CommandRefusalError extends Error {
 		this.name = 'CommandRefusalError';
 	}
 }
+
+/**
+ * Type guard that identifies command refusals without relying on instanceof.
+ *
+ * Using instanceof can fail when the same module is instantiated more than once
+ * (e.g. different dist vs. src resolution paths, bundler splits, or test
+ * environments). The `isCommandRefusal` sentinel is a plain property, so it
+ * survives any package/runtime boundary.
+ *
+ * Always prefer this function over bare `instanceof CommandRefusalError` in
+ * connector and server code.
+ */
+export function isCommandRefusal(error: unknown): error is CommandRefusalError {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		'isCommandRefusal' in error &&
+		(error as { isCommandRefusal: unknown }).isCommandRefusal === true
+	);
+}

@@ -1,7 +1,11 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { announceAndThrow } from './announce-and-throw.js';
-import { CommandRefusalError } from './command-refusal-error.js';
+import { CommandRefusalError, isCommandRefusal } from './command-refusal-error.js';
+
+// ---------------------------------------------------------------------------
+// announceAndThrow behaviour
+// ---------------------------------------------------------------------------
 
 describe('announceAndThrow', () => {
 	afterEach(() => sinon.restore());
@@ -40,13 +44,14 @@ describe('announceAndThrow', () => {
 		expect((caught as Error).message).to.equal(message);
 	});
 
-	it('sets isCommandRefusal sentinel to true on the thrown error', async () => {
+	it('sets isCommandRefusal sentinel to true — verified via the type guard', async () => {
 		const channel = sinon.stub().resolves();
 
 		let caught: unknown;
 		await announceAndThrow(channel, 'any').catch((e) => { caught = e; });
 
-		expect((caught as any).isCommandRefusal).to.equal(true);
+		// Use the exported type guard rather than (err as any) to avoid `as any` in tests
+		expect(isCommandRefusal(caught)).to.equal(true);
 	});
 
 	it('passes extra fields through to the channel call', async () => {
@@ -67,5 +72,43 @@ describe('announceAndThrow', () => {
 		await announceAndThrow(channel, 'msg').catch(() => { order.push('throw'); });
 
 		expect(order).to.deep.equal(['channel', 'throw']);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// isCommandRefusal type guard
+// ---------------------------------------------------------------------------
+
+describe('isCommandRefusal', () => {
+	it('returns true for a CommandRefusalError instance', () => {
+		expect(isCommandRefusal(new CommandRefusalError('msg'))).to.be.true;
+	});
+
+	it('returns true for a cross-boundary object with isCommandRefusal: true (sentinel compatible)', () => {
+		// Simulates a CommandRefusalError from a different module realm (different dist copy,
+		// bundler chunk) where instanceof would return false.
+		const foreign = Object.assign(new Error('msg'), { isCommandRefusal: true as const });
+		expect(isCommandRefusal(foreign)).to.be.true;
+	});
+
+	it('returns false for a plain Error without the sentinel', () => {
+		expect(isCommandRefusal(new Error('plain'))).to.be.false;
+	});
+
+	it('returns false for null', () => {
+		expect(isCommandRefusal(null)).to.be.false;
+	});
+
+	it('returns false for undefined', () => {
+		expect(isCommandRefusal(undefined)).to.be.false;
+	});
+
+	it('returns false for a string', () => {
+		expect(isCommandRefusal('just a string')).to.be.false;
+	});
+
+	it('returns false when isCommandRefusal property is not exactly true', () => {
+		const almost = Object.assign(new Error('msg'), { isCommandRefusal: 1 });
+		expect(isCommandRefusal(almost)).to.be.false;
 	});
 });
