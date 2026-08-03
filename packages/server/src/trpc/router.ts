@@ -7,7 +7,7 @@ import { createLogger } from '../logger.js';
 const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
-import { PROMPT_CANCELLED, PromptCancelledError, CommandRefusalError } from '@deck-monsters/engine';
+import { PROMPT_CANCELLED, PromptCancelledError } from '@deck-monsters/engine';
 import { buildQuickActions } from '../quick-actions.js';
 import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';

@@ -647,7 +647,7 @@ describe('RoomManager', () => {
 		});
 
 		it('limitReached is false when the replay contains exactly maxTotal events and no additional row exists', async () => {
-			// Off-by-one regression (#40): the old code returned limitReached:true whenever
+			// Off-by-one regression (#43): the old code returned limitReached:true whenever
 			// total events reached the cap AND the last page was full, even if the DB had no
 			// further rows. The fix probes for one more row before deciding.
 			const db = makeDbStub({ selectResults: [memberRow] });
