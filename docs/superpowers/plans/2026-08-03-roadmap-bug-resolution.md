@@ -75,12 +75,12 @@
 - Modify: `packages/server/src/room-manager.test.ts`
 - Update roadmap
 
-- [ ] Add a controlled deferred-load regression test for delete racing `_loadRoom`.
-- [ ] Add a test proving `deleteRoom` disposes active games/subscribers/timers.
-- [ ] Add a deletion generation/tombstone (or equivalent) so stale loads cannot publish to `active`.
-- [ ] Ensure failed/stale loaded games are disposed.
-- [ ] Run targeted and full server tests.
-- [ ] Commit.
+- [x] Add a controlled deferred-load regression test for delete racing `_loadRoom`.
+- [x] Add a test proving `deleteRoom` disposes active games/subscribers/timers.
+- [x] Add a deletion generation/tombstone (or equivalent) so stale loads cannot publish to `active`.
+- [x] Ensure failed/stale loaded games are disposed.
+- [x] Run targeted and full server tests.
+- [x] Commit.
 
 ## Task 5: Enforce one Discord default room and persist each user's active room (#70, #72)
 

@@ -314,6 +314,107 @@ describe('RoomManager', () => {
 			// Cache should be empty — getGame would now call _getOrLoad and hit DB
 			expect((rm2 as any).active.has(roomId)).to.be.false;
 		});
+
+		it('disposes the active game and detaches all subscribers exactly once', async () => {
+			// Regression (#71): deleteRoom used to unsubscribe but skip game.dispose(),
+			// leaving ring timers / semaphore listeners alive after the DB row was gone.
+			const { deps, mockGame } = makeEngineDeps();
+			const db = makeDbStub({
+				selectResults: [[{ ownerId: OWNER_ID }]],
+			});
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const unsubscribePersister = sinon.stub();
+			const unsubscribeMetrics = sinon.stub();
+			const unsubscribeFightStats = sinon.stub();
+			const unsubscribeFightSummary = sinon.stub();
+			const unsubscribeDebugLogger = sinon.stub();
+
+			(rm as any).active.set(ROOM_ID, {
+				game: mockGame,
+				eventBus: mockGame.eventBus,
+				lastActivityAt: Date.now(),
+				unsubscribePersister,
+				unsubscribeMetrics,
+				unsubscribeFightStats,
+				unsubscribeFightSummary,
+				unsubscribeDebugLogger,
+			});
+
+			await rm.deleteRoom(OWNER_ID, ROOM_ID);
+
+			expect(unsubscribePersister.calledOnce).to.be.true;
+			expect(unsubscribeMetrics.calledOnce).to.be.true;
+			expect(unsubscribeFightStats.calledOnce).to.be.true;
+			expect(unsubscribeFightSummary.calledOnce).to.be.true;
+			expect(unsubscribeDebugLogger.calledOnce).to.be.true;
+			expect(mockGame.dispose.calledOnce).to.be.true;
+			expect((rm as any).active.has(ROOM_ID)).to.be.false;
+		});
+
+		it('does not resurrect a deleted room into active when delete races an in-flight load', async () => {
+			// Regression (#71): _loadRoom can finish after deleteRoom removed the DB row
+			// and active entry, then active.set a ghost room with live timers/subscribers.
+			let releaseLoadSelect!: (rows: unknown[]) => void;
+			const loadSelectPromise = new Promise<unknown[]>((resolve) => {
+				releaseLoadSelect = resolve;
+			});
+
+			let selectIdx = 0;
+			const selectStub = sinon.stub().callsFake(() => {
+				selectIdx += 1;
+				if (selectIdx === 1) {
+					// _loadRoom stateBlob query — held until after deleteRoom completes
+					const limitStub = sinon.stub().returns(loadSelectPromise);
+					const orderByStub = sinon.stub().returns({ limit: limitStub });
+					const whereResult = Object.assign(new Promise(() => {}), {
+						limit: limitStub,
+						orderBy: orderByStub,
+					});
+					const whereStub = sinon.stub().returns(whereResult);
+					const fromStub = sinon.stub().returns({
+						where: whereStub,
+						innerJoin: sinon.stub(),
+					});
+					return { from: fromStub };
+				}
+				// deleteRoom owner lookup
+				return makeSelectChain([{ ownerId: OWNER_ID }]);
+			});
+
+			const deleteWhereStub = sinon.stub().resolves([]);
+			const db = {
+				select: selectStub,
+				insert: sinon.stub().returns({ values: sinon.stub().resolves([]) }),
+				delete: sinon.stub().returns({ where: deleteWhereStub }),
+				update: sinon.stub().returns({ set: sinon.stub().returns({ where: sinon.stub().resolves([]) }) }),
+			};
+
+			const { deps, mockGame, GameStub } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const loadPromise = rm.getGame(ROOM_ID);
+
+			// getGame awaits engineReady before _loadRoom — poll until the deferred select is held.
+			const deadline = Date.now() + 2000;
+			while (!selectStub.called && Date.now() < deadline) {
+				await new Promise((r) => setTimeout(r, 10));
+			}
+			expect(selectStub.calledOnce).to.be.true;
+
+			await rm.deleteRoom(OWNER_ID, ROOM_ID);
+
+			// Pre-delete snapshot: room still appeared to exist when the load began.
+			releaseLoadSelect([{ stateBlob: null }]);
+
+			const err = await loadPromise.catch((e: unknown) => e);
+			expect(err).to.be.instanceOf(TRPCError);
+			expect((err as TRPCError).code).to.equal('NOT_FOUND');
+			expect((rm as any).active.has(ROOM_ID)).to.be.false;
+			expect((rm as any).loading.has(ROOM_ID)).to.be.false;
+			expect(GameStub.calledOnce).to.be.true;
+			expect(mockGame.dispose.calledOnce).to.be.true;
+		});
 	});
 
 	// ---- listRoomsForUser ----

@@ -79,6 +79,12 @@ function generateInviteCode(): string {
 export class RoomManager {
 	private active = new Map<string, ActiveRoom>();
 	private loading = new Map<string, Promise<ActiveRoom>>();
+	/**
+	 * Monotonic per-room epoch bumped when a room is deleted. In-flight `_loadRoom`
+	 * captures the epoch at start and refuses to publish into `active` if it changed —
+	 * avoiding a second DB existence query while still invalidating stale loads (#71).
+	 */
+	private loadEpoch = new Map<string, number>();
 	/** One in-flight engine command chain per room — prevents interleaved game state / ring feed. */
 	private readonly runEngineCommand = createKeyedPromiseQueue();
 
@@ -87,6 +93,27 @@ export class RoomManager {
 		private readonly log: (err: unknown) => void = () => {},
 		private readonly deps: EngineDeps = { Game, restoreGame }
 	) {}
+
+	private _currentLoadEpoch(roomId: string): number {
+		return this.loadEpoch.get(roomId) ?? 0;
+	}
+
+	private _invalidateLoads(roomId: string): void {
+		this.loadEpoch.set(roomId, this._currentLoadEpoch(roomId) + 1);
+	}
+
+	/** Detach subscribers and dispose the game. Callers remove the `active` entry themselves. */
+	private _detachRoomEntry(entry: ActiveRoom, { flushState = false } = {}): void {
+		entry.unsubscribePersister();
+		entry.unsubscribeMetrics();
+		entry.unsubscribeFightStats();
+		entry.unsubscribeFightSummary();
+		entry.unsubscribeDebugLogger();
+		if (flushState) {
+			entry.game.saveState();
+		}
+		entry.game.dispose();
+	}
 
 	/**
 	 * Returns a log callback scoped to a room that increments the relevant
@@ -263,14 +290,14 @@ export class RoomManager {
 
 		log.info('deleting room', { roomId, requestedBy: userId, wasActive: this.active.has(roomId) });
 
+		// Invalidate any in-flight _loadRoom before evicting — a load that already
+		// read the DB row must not publish back into `active` after we delete (#71).
+		this._invalidateLoads(roomId);
+
 		// Remove from memory first — no state flush needed since the DB row is being deleted.
 		const activeEntry = this.active.get(roomId);
 		if (activeEntry) {
-			activeEntry.unsubscribePersister();
-			activeEntry.unsubscribeMetrics();
-			activeEntry.unsubscribeFightStats();
-			activeEntry.unsubscribeFightSummary();
-			activeEntry.unsubscribeDebugLogger();
+			this._detachRoomEntry(activeEntry);
 		}
 		this.active.delete(roomId);
 		roomsActive.set(this.active.size);
@@ -278,6 +305,12 @@ export class RoomManager {
 		// Cascade deletes room_members and room_events.
 		await this.db.delete(rooms).where(eq(rooms.id, roomId));
 		log.debug('room deleted from DB', { roomId });
+
+		// Epoch only needed while a load started under the old generation may still
+		// be finishing; drop it once nothing is in flight for this id.
+		if (!this.loading.has(roomId)) {
+			this.loadEpoch.delete(roomId);
+		}
 	}
 
 	async listRoomsForUser(userId: string): Promise<Array<{ roomId: string; name: string; role: string }>> {
@@ -440,12 +473,7 @@ export class RoomManager {
 		// Evict from active cache so next load starts fresh.
 		const entry = this.active.get(roomId);
 		if (entry) {
-			entry.unsubscribePersister();
-			entry.unsubscribeMetrics();
-			entry.unsubscribeFightStats();
-			entry.unsubscribeFightSummary();
-			entry.unsubscribeDebugLogger();
-			entry.game.dispose();
+			this._detachRoomEntry(entry);
 		}
 		this.active.delete(roomId);
 		roomsActive.set(this.active.size);
@@ -466,18 +494,8 @@ export class RoomManager {
 				return;
 			}
 			log.debug('unloading room', { roomId, idleMs: Date.now() - entry.lastActivityAt });
-			// Stop persisting events for this room.
-			entry.unsubscribePersister();
-			entry.unsubscribeMetrics();
-			entry.unsubscribeFightStats();
-			entry.unsubscribeFightSummary();
-			entry.unsubscribeDebugLogger();
-			// saveState is a getter returning the bound persist function — call it to flush
-			// any state not yet written by the 30s debounce.
-			entry.game.saveState();
-			// Remove globalSemaphore listeners and stop ring timers so orphaned game
-			// instances don't keep firing after the room is evicted from memory.
-			entry.game.dispose();
+			// Flush pending debounce writes, then detach subscribers / dispose timers.
+			this._detachRoomEntry(entry, { flushState: true });
 		}
 		this.active.delete(roomId);
 		roomsActive.set(this.active.size);
@@ -727,12 +745,19 @@ export class RoomManager {
 		log.debug('room not in cache, loading from DB', { roomId });
 		const promise = this._loadRoom(roomId).finally(() => {
 			this.loading.delete(roomId);
+			// Drop deletion epoch once no concurrent load needs it (room stays deleted).
+			if (!this.active.has(roomId)) {
+				this.loadEpoch.delete(roomId);
+			}
 		});
 		this.loading.set(roomId, promise);
 		return promise;
 	}
 
 	private async _loadRoom(roomId: string): Promise<ActiveRoom> {
+		// Capture before any await so a deleteRoom during this load can invalidate us.
+		const epochAtStart = this._currentLoadEpoch(roomId);
+
 		// Verify all lazy hydrators resolved — if any are still stubs, card hydration
 		// will produce plain objects and fights will crash.
 		const hydratorStatus = getHydratorStatus();
@@ -801,6 +826,14 @@ export class RoomManager {
 			game = new this.deps.Game({ roomId }, roomLog);
 		}
 
+		// Deleted during/after the DB read (or during quarantine await) — dispose the
+		// orphan Game before attaching subscribers (#71).
+		if (this._currentLoadEpoch(roomId) !== epochAtStart) {
+			game.dispose();
+			log.info('discarded stale room load after deletion', { roomId });
+			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
+		}
+
 		game.stateStore = stateStore;
 
 		const eventBus = game.eventBus;
@@ -820,6 +853,15 @@ export class RoomManager {
 			unsubscribeFightSummary,
 			unsubscribeDebugLogger,
 		};
+
+		// Final gate: never publish a deleted room into `active` (covers a delete that
+		// landed between the post-construct check and here).
+		if (this._currentLoadEpoch(roomId) !== epochAtStart) {
+			this._detachRoomEntry(entry);
+			log.info('discarded stale room load after deletion', { roomId });
+			throw new TRPCError({ code: 'NOT_FOUND', message: 'Room not found' });
+		}
+
 		this.active.set(roomId, entry);
 		roomsActive.set(this.active.size);
 		log.info('room loaded and active', { roomId, restored: hasBlob, activeRooms: this.active.size });

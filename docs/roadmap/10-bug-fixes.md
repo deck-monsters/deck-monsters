@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium — content pass plus Discord/concurrency follow-ups from the 2026-08-03 audit.
-**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #64, #65–#69, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#63, #70–#73 (audit follow-ups that need a design pass).
+**Status**: Active. Fixed items from this pass are archived in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) (#51–#58, #64, #65–#69, #71, #74–#77). What's open here: #3 (DMG/CARDS content) and #59–#63, #70, #72–#73 (audit follow-ups that need a design pass).
 
 ## Code Quality Issues
 
@@ -53,12 +53,6 @@ Per-user lanes mean two members of the same room can mutate one shared `Game` in
 
 **Action**: Unique partial index on `(guild_id) WHERE is_default`, plus transactional create-or-get.
 
-### 71. `deleteRoom` vs concurrent `_loadRoom` can resurrect a deleted room in memory
-
-A load that already read the DB row can finish after `deleteRoom` removed the `active` entry and DB row, then `active.set` a ghost room.
-
-**Action**: Recheck room existence (or a generation token) before inserting into `active`.
-
 ### 72. Discord always targets the guild default room
 
 `resolveUser` always calls `getOrCreateDefaultRoom`. `/join-room` adds membership elsewhere, but subsequent slash commands still hit the default room.
@@ -88,6 +82,5 @@ A load that already read the DB row can finish after `deleteRoom` removed the `a
 - [ ] Decide room-wide vs per-user engine serialization for multi-player (#62)
 - [ ] Unify web `ringFeed` subscription / cursor (#63)
 - [ ] Guild default-room uniqueness (#70)
-- [ ] `deleteRoom` / `_loadRoom` race (#71)
 - [ ] Discord active-room tracking (#72)
 - [ ] Align test harness lanes with production (#73)

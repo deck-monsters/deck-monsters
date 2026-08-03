@@ -940,6 +940,7 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] `respondToPrompt` rejects the `PROMPT_CANCELLED` sentinel as a client answer (#57)
 - [x] Web room navigation remounts panes, filters by `event.roomId`, seeds history cursor, fixes stale prompt id (#58)
 - [x] Event persister retries transient `room_events` insert failures before dropping (#64)
+- [x] `deleteRoom` disposes active games and invalidates in-flight loads so deleted rooms cannot resurrect in memory (#71)
 - [x] Round-cap / inconclusive fights no longer award wins to every living faction (#74)
 - [x] `fightOutcome` keeps permaDeath / fled labels on inconclusive fights; `isDraw` derived from it (#74 follow-up)
 - [x] Bad Batch "no effect on other cards" test no longer depends on Heal's 1% crit branches (#75)
@@ -1081,6 +1082,18 @@ Hardening on #51. Removing `Math.max(prop, 1)` for XP was correct (it made a fre
 **Fixed**: bounded retries with short backoff (default 1s, 5s; injectable for tests), matching the `fight-summary-writer` pattern. Writes stay serialized on the existing per-attachment queue so publish order is preserved through retries. The detach function sets a `detached` flag checked between attempts so delayed retries cannot land after room unload/delete. The `onError` callback and `dm_event_persist_failures_total` metric fire only when retries are exhausted.
 
 Covered by 5 new tests in `event-persister.test.ts` (retry-then-success, exhaustion, no error on transient success, order preserved across retries, detach during backoff).
+
+**Status**: Fixed.
+
+---
+
+### 71. `deleteRoom` vs concurrent `_loadRoom` could resurrect a deleted room — FIXED
+
+A `_loadRoom` that had already read the DB row could finish after `deleteRoom` removed the `active` entry and deleted the DB row, then `active.set` a ghost room. Independently, `deleteRoom` unsubscribed event-bus handlers but never called `game.dispose()`, so ring timers and semaphore listeners could outlive the deleted room.
+
+**Fixed**: a per-room `loadEpoch` bumped on delete; `_loadRoom` captures the epoch at start and refuses to publish into `active` (disposing any freshly constructed game / attached subscribers) when the epoch changed. `deleteRoom` now uses the same detach helper as unload/reset (`unsubscribe*` + `dispose`). Concurrent load deduplication via the `loading` map and its `finally` cleanup are preserved; the epoch entry is dropped once no in-flight load needs it. No second DB existence query is required for the race.
+
+Covered by tests in `room-manager.test.ts` (dispose-on-delete; controlled deferred-load race that must not resurrect).
 
 **Status**: Fixed.
 
