@@ -58,9 +58,12 @@ export function getProp (self: BaseCreature, targetProp: string): number {
 	let prop = getPreBattlePropValue(self, targetProp) ?? 0;
 	prop += Math.min((self.encounterModifiers[targetProp] as number) || 0, getMaxModifications(self, targetProp));
 
-	// XP can be 0 (STARTING_XP); combat stats floor at 1.
+	// XP can be 0 (STARTING_XP), so it must not use the combat-stat floor of 1 —
+	// that made a fresh monster read xp 1 and the first award land +1 high. It still
+	// floors at 0: no encounterModifiers.xp exists today, but a negative one must
+	// never be able to drive a monster's XP below zero.
 	if (targetProp === 'xp') {
-		return prop;
+		return Math.max(prop, 0);
 	}
 
 	return Math.max(prop, 1);

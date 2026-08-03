@@ -940,6 +940,10 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] `respondToPrompt` rejects the `PROMPT_CANCELLED` sentinel as a client answer (#57)
 - [x] Web room navigation remounts panes, filters by `event.roomId`, seeds history cursor, fixes stale prompt id (#58)
 - [x] Round-cap / inconclusive fights no longer award wins to every living faction (#74)
+- [x] `fightOutcome` keeps permaDeath / fled labels on inconclusive fights; `isDraw` derived from it (#74 follow-up)
+- [x] Bad Batch "no effect on other cards" test no longer depends on Heal's 1% crit branches (#75)
+- [x] Boss warning-suppression test pins the outer delay instead of observing re-armed cycles (#76)
+- [x] XP floors at 0 so a negative encounter modifier can't drive it negative (#77)
 
 ---
 
@@ -1028,5 +1032,41 @@ Navigating `/room/A` → `/room/B` reused pane instances: `historyApplied` staye
 Flagged during PR #358 verification: a 10-round-cap fight could end with `outcome=win`, multiple winners, and survivors still alive on both sides. Root cause: `fightConcludes` treated `deaths > 0` as a decisive outcome and marked **every** living non-fled contestant as `won`, with no check that only one contestant (classic) or one faction (last-team) remained. The round-10 empty-deck path announced a draw then still hit that path.
 
 **Fixed**: Wins require a decisive survivor set — last-team: exactly one living faction (or the existing fled-with-zero-deaths path); classic: `deaths > 0` and exactly one living contestant. Inconclusive ends (round-cap with multiple living factions/individuals) publish draws for survivors while dead contestants still record as losses. Covered by `round-cap with deaths but multiple living factions…` in `ring/index.test.ts`.
+
+**Follow-up (PR #361 review)**: the first cut over-applied the decisiveness test and left three loose ends, all fixed in the same PR:
+
+- **`fightOutcome` swallowed two conclusive results.** Gating the whole label chain on `hasDecisiveWinner` downgraded a permanently destroyed monster, and "someone died, the survivors fled", to `draw`. Only the final `win` arm may depend on decisiveness. `permaDeath` now leads the chain (matching `participantOutcome`, which checks `destroyed` first), and the `fled` arm is guarded by `settled = deaths > 0 || hasDecisiveWinner` so an all-fled/no-death fight is still a draw rather than a flee. Three cases pinned by the `fightOutcome labelling` block in `ring/index.test.ts`.
+- **`isDraw` still used the old predicate.** The `fightConcludes` emit passed `isDraw: deaths <= 0`, so `announcements/fightConcludes.ts` announced "with N dead" for a fight every other record classed a draw. Now derived as `fightOutcome === 'draw'` — one source of truth, so the announcement can't drift from the fight log again.
+- **Dead branch in `participantOutcome`.** `deaths` is `deadContestants.length`, so a dead contestant guarantees `deaths > 0` and the `'draw'` arm was unreachable. Collapsed to `return 'loss'` and the now-unused `deaths` parameter dropped.
+
+**Status**: Fixed.
+
+---
+
+### 75. Flaky test: Bad Batch "has no effect on other cards" — FIXED
+
+`cards/bad-batch.test.ts` played a real `HealCard` and asserted the target's hp went *up*. `HealCard.checkSuccess` has a 1% Curse of Loki branch that flips the roll (`result *= -1`) and a 1% Stroke of Luck branch, so the test failed roughly 1 run in 100 with `expected 3 to be above 5` — the curse turned the heal into 2 points of damage. The assertion was never about healing: Bad Batch's contract is that a *non-target* card (anything but Whiskey Shot / Scotch) comes back untouched.
+
+**Fixed**: Assert on the rewrite instead of the hp — the card is returned by identity, `card.effect` is not replaced, and the pending encounter effect stays armed for the next booze card. Deterministic, and a stronger assertion than the hp check it replaces.
+
+**Status**: Fixed.
+
+---
+
+### 76. Flaky test: boss spawn warning suppression — FIXED
+
+`ring/index.test.ts` "suppresses an unannounced spawn when the warning could not be sent" set `inEncounter = true`, ticked a fake clock 40 minutes, dropped `inEncounter`, ticked 3 more, and asserted no warning fired. But `startBossTimer()` re-arms itself after every cycle with a *random* outer delay — 12–22 min for a beginner ring, which this one is (no monsters). Forty minutes therefore ran two or three full cycles, and a legitimately re-armed warning could land inside the final 3-minute window. Failed ~1 run in 5.
+
+**Fixed**: Pin the outer delay via a stub on `getBossSpawnOuterDelayMs`, restart the timer, and size the window to exactly one cycle. The test now exercises the thing it names — a warning suppressed mid-encounter must also suppress the spawn two minutes later — instead of accidentally observing later cycles. Verified over 20 consecutive suite runs.
+
+**Status**: Fixed.
+
+---
+
+### 77. XP could be driven below zero after the floor was removed — FIXED
+
+Hardening on #51. Removing `Math.max(prop, 1)` for XP was correct (it made a fresh monster read `1` and the first award land +1 high), but it also removed the only guard against a *negative* `encounterModifiers.xp` pushing a monster's XP below zero. No such modifier exists today, so this was unreachable rather than live.
+
+**Fixed**: `getProp` floors XP at 0 rather than 1 — fails safe without reintroducing the off-by-one.
 
 **Status**: Fixed.

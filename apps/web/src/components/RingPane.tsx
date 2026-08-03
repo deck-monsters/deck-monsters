@@ -183,7 +183,11 @@ export default function RingPane({ roomId, isActive, onEvent }: RingPaneProps) {
       return merged;
     });
 
-    if (dedupedHistory.length > 0) {
+    // Seed the resume cursor from history so a reconnect doesn't restart from the
+    // beginning. Only when no live event has been tracked yet — see the matching
+    // comment in ConsolePane: history lands asynchronously, and clobbering a newer
+    // live cursor with the older history tail just forces a redundant replay.
+    if (dedupedHistory.length > 0 && latestTrackedEventIdRef.current === undefined) {
       const lastId = dedupedHistory[dedupedHistory.length - 1]!.id;
       setSubLastEventId(lastId);
       latestTrackedEventIdRef.current = lastId;

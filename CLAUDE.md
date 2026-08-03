@@ -278,7 +278,7 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 - **`DMG.md` / `CARDS.md` differentiation** — build scripts differentiate the headers but a full content pass distinguishing DM-facing vs. player-facing content hasn't happened yet. (#3 in `docs/roadmap/10-bug-fixes.md`)
 - **Audit follow-ups** — Discord free-text prompts / serialization, workshop↔console interleave, dual `ringFeed`, hydrate deck order, and related items are tracked as #59–#73 in `docs/roadmap/10-bug-fixes.md`.
 
-Previously listed here and now fixed (see `docs/roadmap/10b-bugs-fixed.md` for root causes): fight log not updating (#15), console history missing on reconnect (#16/#17), card shop room-scoping (#26), batch-equip UX (#19), and the 2026-08-03 audit fixes (#51–#58).
+Previously listed here and now fixed (see `docs/roadmap/10b-bugs-fixed.md` for root causes): fight log not updating (#15), console history missing on reconnect (#16/#17), card shop room-scoping (#26), batch-equip UX (#19), and the 2026-08-03 audit fixes (#51–#58, #74–#77).
 
 ## Archived / Deferred
 

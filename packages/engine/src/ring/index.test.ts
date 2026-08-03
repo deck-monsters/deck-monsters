@@ -458,17 +458,31 @@ describe('ring/index.ts', () => {
 				const game = new Game({ spawnBosses: true } as any);
 				const ring = game.getRing();
 
+				// Pin the outer delay and restart the timer, so the window below covers
+				// exactly one spawn cycle. The real delay is random (12–22 min for a
+				// beginner ring — this one has no monsters) and startBossTimer() re-arms
+				// itself after every cycle, so blindly ticking 40 min ran two or three
+				// cycles and a legitimately re-armed warning could fire inside the
+				// observation window. That failed ~1 run in 5 on an assertion that was
+				// never about re-armed cycles.
+				const OUTER_DELAY_MS = 10 * 60 * 1000;
+				const WARNING_DELAY_MS = 2 * 60 * 1000; // BOSS_WARNING_DELAY_MS
+				clearTimeout((ring as any).bossTimer);
+				(ring as any).bossTimer = undefined;
+				sinon.stub(ring as any, 'getBossSpawnOuterDelayMs').returns(OUTER_DELAY_MS);
+				ring.startBossTimer();
+
 				// Ring is mid-encounter when the warning is due, so no warning goes out.
 				ring.inEncounter = true;
 				const warnSpy = sinon.spy();
 				ring.on('bossWillSpawn', warnSpy);
 				const spawnSpy = sinon.spy(ring, 'spawnBoss');
 
-				// Past the longest outer delay (35 min) and the 2 min warning window.
-				clock.tick(40 * 60 * 1000);
+				// Just past the warning point — not far enough to re-arm a second cycle.
+				clock.tick(OUTER_DELAY_MS + 1000);
 				// The fight ends before the spawn would have fired.
 				ring.inEncounter = false;
-				clock.tick(3 * 60 * 1000);
+				clock.tick(WARNING_DELAY_MS);
 
 				expect(warnSpy.called).to.equal(false);
 				expect(spawnSpy.called).to.equal(false);
@@ -1224,6 +1238,91 @@ describe('ring/index.ts', () => {
 			expect(resolved[0]?.outcome, 'fightResolved outcome').to.equal('draw');
 
 			game.dispose();
+		});
+
+		describe('fightOutcome labelling', () => {
+			// Regression: the first cut of #74 gated the whole fightOutcome chain on
+			// hasDecisiveWinner, which downgraded permaDeath and "died + survivor fled"
+			// to 'draw'. Only the final `win` arm may depend on decisiveness — but the
+			// fled arm still needs a `settled` guard so an all-flee/no-death fight stays
+			// a draw. These three cases pin all of that down.
+			function setupFight(): {
+				game: Game;
+				ring: ReturnType<Game['getRing']>;
+				outcomes: Array<{ outcome?: string }>;
+				conclude: () => void;
+			} {
+				const game = new Game();
+				const ring = game.getRing();
+
+				for (let i = 0; i < 3; i += 1) {
+					ring.addMonster(
+						randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } })
+					);
+				}
+
+				const outcomes: Array<{ outcome?: string }> = [];
+				const unsub = ring.eventBus.subscribe('fight-outcome-label', {
+					deliver: (event) => {
+						if (event.type === 'ring.fightResolved') {
+							outcomes.push(event.payload as { outcome?: string });
+						}
+					},
+				});
+
+				return {
+					game,
+					ring,
+					outcomes,
+					conclude: () => {
+						ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
+						unsub();
+					},
+				};
+			}
+
+			it('labels a fight permaDeath even when the ending was inconclusive', () => {
+				const { game, ring, outcomes, conclude } = setupFight();
+
+				// Destroyed monster, but two other contestants are still standing — so the
+				// fight has no decisive winner. permaDeath must still win the label.
+				// `destroyed` is a getter (hp < -bloodiedValue), so drive it via hp.
+				ring.contestants[0]!.monster.dead = true;
+				ring.contestants[0]!.monster.hp = -10_000;
+				expect(ring.contestants[0]!.monster.destroyed, 'setup: monster is destroyed').to.equal(true);
+
+				conclude();
+
+				expect(outcomes[0]?.outcome).to.equal('permaDeath');
+				game.dispose();
+			});
+
+			it('labels a fight fled when someone died and the survivors fled', () => {
+				const { game, ring, outcomes, conclude } = setupFight();
+
+				ring.contestants[0]!.monster.dead = true;
+				ring.contestants[0]!.monster.hp = 0;
+				ring.contestants[1]!.monster.fled = true;
+				ring.contestants[2]!.monster.fled = true;
+
+				conclude();
+
+				expect(outcomes[0]?.outcome).to.equal('fled');
+				game.dispose();
+			});
+
+			it('labels an all-fled fight with no deaths a draw, not fled', () => {
+				const { game, ring, outcomes, conclude } = setupFight();
+
+				for (const contestant of ring.contestants) {
+					contestant.monster.fled = true;
+				}
+
+				conclude();
+
+				expect(outcomes[0]?.outcome).to.equal('draw');
+				game.dispose();
+			});
 		});
 
 		it('can calculate xp when a monster flees', () => {

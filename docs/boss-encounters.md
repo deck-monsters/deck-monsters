@@ -254,10 +254,44 @@ The default is `last-contestant` — the original semantics: last monster standi
 - A faction is determined by `contestant.team` (ring-event override first), then
   `monster.team`, then `character.team`, then the contestant's own `userId` (every
   unaffiliated monster is its own faction).
-- **Every surviving member** of the winning faction is marked `won: true`. This is the
-  critical difference from `last-contestant`, where at most one monster wins.
+- **Every surviving member** of the winning faction is marked `won: true` — but only when
+  the fight actually *decided* a winner (see below). This is the critical difference from
+  `last-contestant`, where at most one monster wins.
 - An empty active list falls through to the existing draw/clean-sweep logic, which counts
   deaths and uses `fightResolved` correctly.
+
+#### Deciding a winner, and labelling the outcome
+
+A death is not a victory. `fightConcludes` computes `hasDecisiveWinner` before it labels
+anything:
+
+- **`last-team`**: exactly one living (non-dead, non-fled) faction remains — or the
+  fled-with-zero-deaths path, where every opposing faction fled.
+- **`last-contestant`**: someone died *and* exactly one living contestant remains.
+
+Without that, a round-cap fight that ended with survivors on both sides marked **every**
+living contestant `won: true`, producing fight-log entries reading "win" with winners on
+two opposing teams (bug #74).
+
+The fight-level `outcome` on `ring.fightResolved` follows a deliberate precedence, and only
+its final arm depends on decisiveness:
+
+| Condition | `outcome` |
+|---|---|
+| Any contestant `destroyed` | `permaDeath` |
+| Anyone fled **and** (a death occurred or a winner was decided) | `fled` |
+| A decisive winner | `win` |
+| Otherwise | `draw` |
+
+`permaDeath` leads because a permanent destruction is the most significant fact about the
+fight, and it matches `participantOutcome`, which checks `destroyed` first. The `fled` arm
+needs its guard so an all-fled/no-death fight stays a `draw` rather than reading as a flee
+victory. `isDraw` on the `fightConcludes` emit is derived from this same value, so the
+public announcement can never disagree with the fight log.
+
+Per-participant outcomes are independent of the fight label: a dead contestant always
+records `loss`, a fled contestant always records `fled`, and survivors record `win` only
+when `hasDecisiveWinner` — otherwise `draw`.
 
 Common Cause and House War both use `last-team`. Blood Feud, The Gauntlet, and The Reckoning
 do not — in those events the team assignments are either absent or irrelevant to when combat

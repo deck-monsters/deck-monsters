@@ -130,4 +130,4 @@ Missing a room filter is a recurring source of bugs. See [`docs/room-scoping.md`
 
 See [`docs/roadmap/10-bug-fixes.md`](docs/roadmap/10-bug-fixes.md) for the open list (#3 content pass, plus audit follow-ups #59–#73: Discord free-text prompts / serialization, workshop↔console interleave, dual `ringFeed`, hydrate deck order, etc.).
 
-Previously listed here and now fixed: card shop process-wide singleton (#26), fight log stale after new fights (#15), console history missing on reconnect (#16/#17), and the 2026-08-03 audit fixes (#51–#58: XP floor, Flee threshold, Pick Pocket crash, ring batch dupes, boss despawn timers, Discord auto-join, prompt sentinel, web room bleed). See `docs/roadmap/10b-bugs-fixed.md`.
+Previously listed here and now fixed: card shop process-wide singleton (#26), fight log stale after new fights (#15), console history missing on reconnect (#16/#17), and the 2026-08-03 audit fixes (#51–#58, #74–#77: XP floor, Flee threshold, Pick Pocket crash, ring batch dupes, boss despawn timers, Discord auto-join, prompt sentinel, web room bleed, fight-outcome labelling, two flaky tests). See `docs/roadmap/10b-bugs-fixed.md`.

@@ -88,7 +88,6 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   const [consoleEvents, setConsoleEvents] = useState<ConsoleEvent[]>([]);
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
   const activePromptIdRef = useRef<string | null>(null);
-  activePromptIdRef.current = activePromptId;
   const [inputValue, setInputValue] = useState('');
   const [inputLocked, setInputLocked] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -101,6 +100,14 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
   // Resume cursor for reconnects. Updated only on errors so we don't restart
   // the subscription on every event.
   const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
+
+  // The prompt timeout/cancel handlers live in a subscription callback that closes over
+  // the render in which it was created, so reading `activePromptId` there went stale and
+  // left the input locked. Mirror it into a ref — written in an effect rather than during
+  // render, so the render stays pure under StrictMode's double-invocation.
+  useEffect(() => {
+    activePromptIdRef.current = activePromptId;
+  }, [activePromptId]);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
@@ -176,7 +183,13 @@ export default function ConsolePane({ roomId, isActive, onEvent }: ConsolePanePr
       });
     }
 
-    if (dedupedHistory.length > 0) {
+    // Seed the resume cursor from history so a reconnect doesn't restart from the
+    // beginning. Only when no live event has been tracked yet: history resolves
+    // asynchronously, so by the time it lands the subscription may already have seen
+    // newer events, and overwriting the cursor with the older history tail would make
+    // the next reconnect replay everything in between (harmless thanks to seenRef,
+    // but a pointless round-trip).
+    if (dedupedHistory.length > 0 && latestTrackedEventIdRef.current === undefined) {
       const lastId = dedupedHistory[dedupedHistory.length - 1]!.id;
       setSubLastEventId(lastId);
       latestTrackedEventIdRef.current = lastId;
