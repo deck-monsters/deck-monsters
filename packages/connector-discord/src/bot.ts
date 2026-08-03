@@ -175,7 +175,8 @@ export class DiscordBot {
 			const supabaseUserId = await ensureConnectorUser(
 				'discord',
 				message.author.id,
-				message.author.username
+				message.author.username,
+				this.db
 			);
 
 			const roomId = await this.guildRoomManager.getOrCreateDefaultRoom(guildId, supabaseUserId);

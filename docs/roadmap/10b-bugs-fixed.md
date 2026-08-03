@@ -590,6 +590,22 @@ the probe finds the extra row and returns true without including it in the outpu
 
 ---
 
+### 44. Discord connector tests required `DATABASE_URL` during module collection — FIXED
+
+`auth/connector-users.ts` imported the server's default database singleton at module evaluation
+time to provide a default function argument. Importing `DiscordBot` therefore evaluated
+`server/db/index.ts` before any connector test ran, even though the connector injects its own
+database. In environments without server configuration, Mocha failed during collection with
+`DATABASE_URL environment variable is required`.
+
+**Fixed** by resolving the server singleton lazily only for callers that omit a database and by
+passing the connector's injected database through both message and slash-command paths. A
+subprocess regression test imports `DiscordBot` with `DATABASE_URL` explicitly absent.
+
+**Status**: Fixed.
+
+---
+
 ## Other Resolved Items
 
 ### 1. "Barely blocked" message fires incorrectly (upstream #181)
@@ -724,3 +740,4 @@ When a fight reaches round 10 without a winner, the draw/stalemate announcement 
 - [x] Fix admin `trigger ring event` overwriting an already-armed event (`activateRingEvent()` guard, #41)
 - [x] Fix Discord `/summon-boss` expected refusals masked by "Something went wrong" (`CommandRefusalError`, #42)
 - [x] Fix `getEventsSinceForRingFeed limitReached` off-by-one: probe for one more row at the cap boundary (#43)
+- [x] Remove Discord connector's import-time dependency on server `DATABASE_URL` (#44)
