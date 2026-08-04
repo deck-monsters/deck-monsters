@@ -10,6 +10,10 @@ import { createFastifyOptions, FASTIFY_MAX_PARAM_LENGTH } from './fastify-option
  * Builds a path like the web Terminal's room-mount batch:
  * room.info,game.ringHistory,game.recentFights,game.ringState,
  * game.consoleHistory,game.pendingPrompt,game.myMonsters (~114 chars).
+ *
+ * Hardcoded on purpose: documents the production path that crossed Fastify's
+ * default maxParamLength. An 8th room-mount query won't auto-update this list;
+ * headroom vs 5000 makes that low risk.
  */
 function terminalBatchPath(): string {
 	return [
@@ -40,6 +44,12 @@ function buildMiniRouter() {
 	});
 }
 
+function batchUrl(baseUrl: string, path: string, roomId: string, procedureCount: number): string {
+	const input: Record<string, { roomId: string }> = {};
+	for (let i = 0; i < procedureCount; i++) input[String(i)] = { roomId };
+	return `${baseUrl}/trpc/${path}?batch=1&input=${encodeURIComponent(JSON.stringify(input))}`;
+}
+
 async function withServer(
 	fastifyOpts: FastifyServerOptions,
 	run: (baseUrl: string) => Promise<void>,
@@ -65,40 +75,31 @@ async function withServer(
 describe('Fastify tRPC batch path length', () => {
 	const roomId = '11483952-4af5-48dd-bebe-605f22189e1c';
 	const path = terminalBatchPath();
+	const procedureCount = path.split(',').length;
 
 	it('documents that the Terminal batch path exceeds Fastify’s default maxParamLength', () => {
 		expect(path.length).to.be.greaterThan(100);
 		expect(path.length).to.be.lessThan(FASTIFY_MAX_PARAM_LENGTH);
 	});
 
+	// Framework-behavior fixture: Fastify defaults to maxParamLength 100. If that
+	// default ever rises above our Terminal path length, this fails even though
+	// createFastifyOptions still works — keep it as documentation of why we raise.
 	it('404s the Terminal batch under Fastify defaults (regression fixture)', async () => {
 		await withServer({ logger: false }, async (baseUrl) => {
-			const input: Record<string, { roomId: string }> = {};
-			for (let i = 0; i < 7; i++) input[String(i)] = { roomId };
-			const url =
-				`${baseUrl}/trpc/${path}?batch=1&input=${encodeURIComponent(JSON.stringify(input))}`;
-			const res = await fetch(url);
+			const res = await fetch(batchUrl(baseUrl, path, roomId, procedureCount));
 			expect(res.status).to.equal(404);
 		});
 	});
 
-	it('serves the Terminal batch when maxParamLength follows tRPC Fastify guidance', async () => {
-		expect(createFastifyOptions('silent').routerOptions.maxParamLength).to.equal(
-			FASTIFY_MAX_PARAM_LENGTH,
-		);
-		const opts: FastifyServerOptions = {
-			logger: false,
-			routerOptions: { maxParamLength: FASTIFY_MAX_PARAM_LENGTH },
-		};
-		await withServer(opts, async (baseUrl) => {
-			const input: Record<string, { roomId: string }> = {};
-			for (let i = 0; i < 7; i++) input[String(i)] = { roomId };
-			const url =
-				`${baseUrl}/trpc/${path}?batch=1&input=${encodeURIComponent(JSON.stringify(input))}`;
-			const res = await fetch(url);
+	it('serves the Terminal batch when configured via createFastifyOptions', async () => {
+		// Production path: createFastifyOptions sets maxParamLength. logger:false
+		// only quiets Pino in the test process.
+		await withServer({ ...createFastifyOptions('silent'), logger: false }, async (baseUrl) => {
+			const res = await fetch(batchUrl(baseUrl, path, roomId, procedureCount));
 			expect(res.status).to.equal(200);
 			const body = (await res.json()) as Array<{ result?: { data?: { ok?: boolean } } }>;
-			expect(body).to.have.length(7);
+			expect(body).to.have.length(procedureCount);
 			for (const entry of body) {
 				expect(entry.result?.data?.ok).to.equal(true);
 			}
