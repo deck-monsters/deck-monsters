@@ -423,3 +423,6 @@ Run `supabase db push --linked` (production) or `supabase db reset` (local) to a
 
 **Docker build fails on `pnpm install --frozen-lockfile`**
 The `pnpm-lock.yaml` is out of sync with package manifests. Run `pnpm install` locally and commit the updated lockfile.
+
+**Room page loads but HTTP tRPC batches 404 (`Route GET:/trpc/room.info,game.…`)**
+Fastify defaults to `maxParamLength: 100`. tRPC `httpBatchLink` puts comma-joined procedure names in that path param; the Terminal room mount’s 7-query batch is ~114 characters, so Fastify 404s the whole batch before tRPC runs (WebSocket subscriptions can still connect). The server sets `routerOptions.maxParamLength: 5000` via `createFastifyOptions` — do not remove it. See `docs/roadmap/10b-bugs-fixed.md` (#86).

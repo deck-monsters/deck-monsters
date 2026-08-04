@@ -1347,3 +1347,19 @@ Safe in practice — `sendPrompt` is the only publisher and always uses `scope: 
 Covered by `server/src/quick-actions.test.ts` — deck readiness at default and custom slot counts, equip-instead-of-send, second monster while one is in the ring, dead-contestant-still-in-ring, and equip targeting.
 
 **Status**: Fixed.
+
+---
+
+### 86. Room Terminal HTTP batch 404s under Fastify default `maxParamLength` — FIXED
+
+Opening a room (e.g. production Game Night) issued one `httpBatchLink` GET for seven procedures:
+
+`room.info,game.ringHistory,game.recentFights,game.ringState,game.consoleHistory,game.pendingPrompt,game.myMonsters`
+
+That path is **114 characters**. Fastify’s default `maxParamLength` is **100**, so the framework returned its own `404 Route GET:/trpc/…` **before** the tRPC plugin ran. Single-procedure and short batches still worked; the WebSocket `ringFeed` subscription still connected — so the UI looked half-alive (boss timer via WS) while history, prompts, and monster autocomplete stayed empty / flaky. Non-members separately saw sustained `403 Not a member of this room` and a permanent “RECONNECTING…” banner; that is membership gating, not this bug.
+
+**Why it showed up after recent PRs**: room-mount query count grew (ring history + recent fights + console history + pending prompt + myMonsters + …) until the joined batch path crossed 100 characters. Not a bad deploy of game state — the blob and memberships for Game Night were intact.
+
+**Fixed**: server bootstrap uses `createFastifyOptions` with `routerOptions.maxParamLength: 5000` (official `@trpc/server` Fastify adapter guidance). Documented in `docs/deployment.md` troubleshooting. Regression coverage in `packages/server/src/fastify-batch-path.test.ts` (default Fastify 404s the Terminal path; configured options serve it).
+
+**Status**: Fixed.

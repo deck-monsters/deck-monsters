@@ -2,7 +2,7 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Archive — all tracked items from the 2026-08-03 audit pass are resolved. See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73, #74–#84).
+**Status**: Archive — all tracked items from the 2026-08-03 audit pass are resolved. See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73, #74–#85, #86).
 
 ## Active Items
 
