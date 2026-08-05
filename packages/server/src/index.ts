@@ -9,6 +9,7 @@ import { createRouter } from './trpc/router.js';
 import { createContext } from './trpc/context.js';
 import { registry } from './metrics/index.js';
 import { createLogger } from './logger.js';
+import { createFastifyOptions } from './fastify-options.js';
 
 const PORT = parseInt(process.env['PORT'] ?? '3000', 10);
 const HOST = process.env['HOST'] ?? '0.0.0.0';
@@ -29,9 +30,8 @@ const log = createLogger('server');
 async function start(): Promise<void> {
 	// LOG_LEVEL controls both our structured logger and Fastify's built-in Pino logger
 	// so HTTP request logs honour the same threshold as application logs.
-	const fastify = Fastify({
-		logger: { level: LOG_LEVEL },
-	});
+	// maxParamLength: see createFastifyOptions — required for tRPC httpBatchLink.
+	const fastify = Fastify(createFastifyOptions(LOG_LEVEL));
 
 	log.debug('server starting', {
 		port: PORT,
