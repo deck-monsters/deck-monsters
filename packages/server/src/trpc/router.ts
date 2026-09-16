@@ -45,6 +45,7 @@ type InventoryMonsterSummary = {
 	name: string;
 	type: string;
 	level: number;
+	dead: boolean;
 	inRing: boolean;
 	inEncounter: boolean;
 	cardSlots: number;
@@ -210,6 +211,7 @@ const summarizeInventory = ({
 						typeof record.level === 'number' && Number.isFinite(record.level)
 							? record.level
 							: 0,
+					dead: Boolean(record.dead),
 					inRing: inRing.has(monster),
 					inEncounter: Boolean(record.inEncounter),
 					cardSlots:
@@ -907,6 +909,54 @@ export function createRouter(roomManager: RoomManager) {
 					character: character as Record<string, unknown>,
 					inRing,
 				});
+			}),
+
+		reviveMonster: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid(), monsterName: z.string().min(1) }))
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.reviveMonster !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const monster = await runSerializedMutation(input.roomId, ctx.userId, () =>
+					character.reviveMonster({ monsterName: input.monsterName, channel }),
+				) as { givenName?: unknown };
+				return { ok: true as const, monsterName: String(monster?.givenName ?? input.monsterName) };
+			}),
+
+		sendMonsterToRing: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid(), monsterName: z.string().min(1) }))
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.sendMonsterToTheRing !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				await runSerializedMutation(input.roomId, ctx.userId, () =>
+					character.sendMonsterToTheRing({
+						monsterName: input.monsterName,
+						ring: game.ring,
+						channel,
+						channelName: 'web',
+						userId: ctx.userId,
+					}),
+				);
+				return { ok: true as const, monsterName: input.monsterName };
 			}),
 
 		unequipCard: protectedProcedure

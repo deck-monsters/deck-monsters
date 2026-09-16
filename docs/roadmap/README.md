@@ -25,7 +25,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
-| [20 — Workspace Layout](20-workspace-layout.md) | Switchable second pane: console ↔ workshop | 🔧 Active — phases 1–2 done (extraction + the pane); phase 3 (responsive) is next |
+| [20 — Workspace Layout](20-workspace-layout.md) | Surfaces in two switchable pane slots | 🔧 Active — phases 3/5 code-complete; Phase 4 + visual sign-off remain |
 | [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 📋 Proposed — items audit actionable now |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
@@ -88,7 +88,10 @@ beyond just "console ↔ workshop" to a `SurfaceId` registry so a future fight l
 leaderboard costs one entry, not a rewrite) are done. The two pane slots, the per-slot
 `PaneSelector`, `Cmd/Ctrl+1/2/3`, and `dm:paneSlots` persistence live in `Terminal.tsx`.
 The underestimated cost is phase 3, next up, since the workshop is a wide multi-column
-layout being asked to work at half a laptop pane and at 393px.
+layout being asked to work at half a laptop pane and at 393px. The remaining plan is now
+split into implementation work packages and exit gates: responsive layout and unified pane
+chrome (phase 3), the rest of the monster-management hub (phase 4), then fight-log and
+leaderboard surfaces (phase 5).
 
 ### 4. New content backlog (12-new-content-backlog.md)
 
@@ -121,4 +124,3 @@ React Native + Expo for iOS and Android. The tRPC API is already mobile-compatib
 ### Slack Connector (08-modernize-slack-connector.md)
 
 Modernizing Jane (the original Hubot/Slack bot) with the Bolt SDK and the new event bus. Slack is not the focus of the revival. Deferred indefinitely; can be revisited if there is a specific workspace that wants to run the game.
-

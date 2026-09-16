@@ -543,6 +543,72 @@ describe('trpc/router card management procedures', () => {
 	});
 });
 
+describe('trpc/router monster lifecycle procedures', () => {
+	it('revives only the authenticated member\'s monster in the requested room', async () => {
+		const calls: unknown[] = [];
+		const character = {
+			reviveMonster: async (input: unknown) => {
+				calls.push(input);
+				return { givenName: 'Stonefang' };
+			},
+		};
+		const roomManager = {
+			assertMember: async (userId: string, roomId: string) => {
+				expect(userId).to.equal(USER_ID);
+				expect(roomId).to.equal(ROOM_ID);
+			},
+			getGame: async (roomId: string) => {
+				expect(roomId).to.equal(ROOM_ID);
+				return { characters: { [USER_ID]: character } };
+			},
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (roomId: string, fn: () => Promise<unknown>) => {
+				expect(roomId).to.equal(ROOM_ID);
+				return fn();
+			},
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.reviveMonster({ roomId: ROOM_ID, monsterName: 'Stonefang' });
+
+		expect(result).to.deep.equal({ ok: true, monsterName: 'Stonefang' });
+		expect(calls).to.have.length(1);
+		expect(calls[0]).to.include({ monsterName: 'Stonefang' });
+	});
+
+	it('sends through the requested room ring with authenticated ownership', async () => {
+		let sent: Record<string, unknown> | undefined;
+		const ring = { contestants: [] };
+		const character = {
+			sendMonsterToTheRing: async (input: Record<string, unknown>) => { sent = input; },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: character }, ring }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		await caller.game.sendMonsterToRing({ roomId: ROOM_ID, monsterName: 'Stonefang' });
+
+		expect(sent).to.include({ monsterName: 'Stonefang', ring, userId: USER_ID });
+	});
+
+	it('checks room membership before loading lifecycle state', async () => {
+		let loaded = false;
+		const roomManager = {
+			assertMember: async () => { throw new TRPCError({ code: 'FORBIDDEN' }); },
+			getGame: async () => { loaded = true; return {}; },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const error = await caller.game.sendMonsterToRing({ roomId: ROOM_ID, monsterName: 'Stonefang' }).catch((err) => err);
+		expect(error).to.be.instanceOf(TRPCError);
+		expect(loaded).to.equal(false);
+	});
+});
+
 describe('trpc/router ringFeed replay', () => {
 	type Frame = { id: string; data: { type: string; text: string } };
 

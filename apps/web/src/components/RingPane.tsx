@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
@@ -26,6 +26,7 @@ import FeedList from './FeedList.js';
 interface RingPaneProps {
   roomId: string;
   isActive: boolean;
+  headerActions?: ReactNode;
 }
 
 interface TimerState {
@@ -123,7 +124,7 @@ function LastFightFooter({
 }
 
 
-export default function RingPane({ roomId, isActive }: RingPaneProps) {
+export default function RingPane({ roomId, isActive, headerActions }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -390,6 +391,7 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
         )}
         {!connected && !reconnecting && <span style={{ color: 'var(--color-fg-dim)' }}>connecting…</span>}
         {reconnecting && <span style={{ color: 'var(--color-accent)' }}>reconnecting…</span>}
+        {headerActions && <span className="pane-header-actions">{headerActions}</span>}
       </header>
 
       {reconnecting && (

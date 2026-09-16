@@ -1,7 +1,9 @@
-import { createElement, type ReactElement } from 'react';
+import { createElement, type ReactElement, type ReactNode } from 'react';
 import RingPane from './RingPane.js';
 import ConsolePane from './ConsolePane.js';
 import WorkshopPanel from './WorkshopPanel.js';
+import FightLogPanel from './FightLogPanel.js';
+import LeaderboardPanel from './LeaderboardPanel.js';
 
 /**
  * The set of surfaces `Terminal` can place into a pane slot (or, on a narrow screen, show
@@ -11,11 +13,12 @@ import WorkshopPanel from './WorkshopPanel.js';
  * here; the tab bar, both `PaneSelector`s and the keyboard shortcuts all read this table
  * rather than hard-coding a surface list of their own.
  */
-export type SurfaceId = 'ring' | 'console' | 'workshop';
+export type SurfaceId = 'ring' | 'console' | 'workshop' | 'fights' | 'leaderboard';
 
 export interface SurfaceRenderProps {
   roomId: string;
   isActive: boolean;
+  headerActions?: ReactNode;
 }
 
 export interface SurfaceDefinition {
@@ -44,19 +47,31 @@ export const SURFACES: SurfaceDefinition[] = [
     id: 'ring',
     label: 'The Ring',
     route: undefined,
-    render: ({ roomId, isActive }) => createElement(RingPane, { roomId, isActive }),
+    render: ({ roomId, isActive, headerActions }) => createElement(RingPane, { roomId, isActive, headerActions }),
   },
   {
     id: 'console',
     label: 'Console',
     route: undefined,
-    render: ({ roomId, isActive }) => createElement(ConsolePane, { roomId, isActive }),
+    render: ({ roomId, isActive, headerActions }) => createElement(ConsolePane, { roomId, isActive, headerActions }),
   },
   {
     id: 'workshop',
     label: 'Workshop',
     route: (roomId) => `/room/${roomId}/workshop`,
-    render: ({ roomId }) => createElement(WorkshopPanel, { roomId }),
+    render: ({ roomId, headerActions }) => createElement(WorkshopPanel, { roomId, headerActions }),
+  },
+  {
+    id: 'fights',
+    label: 'Fights',
+    route: (roomId) => `/room/${roomId}/fights`,
+    render: ({ roomId, headerActions }) => createElement(FightLogPanel, { roomId, headerActions }),
+  },
+  {
+    id: 'leaderboard',
+    label: 'Leaders',
+    route: (roomId) => `/room/${roomId}/leaderboard`,
+    render: ({ roomId, headerActions }) => createElement(LeaderboardPanel, { roomId, initialScope: 'room', headerActions }),
   },
 ];
 
