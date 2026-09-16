@@ -10,7 +10,7 @@ export function announceBossWillSpawn(
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `A boss will enter the ring ${formatRelative(add(Date.now(), delay))}`,
+		text: `A boss will enter the ring ${formatRelative(add(Date.now(), delay))}.`,
 		payload: { delay },
 	});
 }
