@@ -48,30 +48,65 @@ maintain. Two implementations of the same surface is the drift risk this project
 already been bitten by elsewhere (see the duplicated event-visibility predicate,
 `10b-bugs-fixed.md` #109).
 
-### 3.2 Pane model
+### 3.2 Pane model — surfaces in slots
 
-`Terminal` gains `secondPane: 'console' | 'workshop'`, independent of `activeTab`.
+The first draft pinned the ring and made only the second pane selectable. That was two
+mechanisms where one will do. What we are actually building is **a tab interface**: a set
+of *surfaces*, and one or two visible *slots* to put them in.
 
-- **Side-by-side (≥1024px)**: ring, divider, then whichever second pane is selected. The
-  grid stays three columns — workshop and console occupy the same slot.
-- **Tabbed (<1024px)**: three tabs — The Ring / Console / Workshop. `activeTab` becomes
-  `'ring' | 'console' | 'workshop'`; `secondPane` follows it when a non-ring tab is chosen
-  so the two models stay coherent when the viewport crosses the breakpoint.
+```
+type SurfaceId = 'ring' | 'console' | 'workshop';   // later: 'fights', 'leaderboard'
+slots: [SurfaceId, SurfaceId]                        // wide:  both rendered
+slots[activeSlot]                                    // narrow: one rendered
+```
+
+- **Side-by-side (≥1024px)**: two slots, each with its own selector. Default
+  `['ring', 'console']`, which is today's layout.
+- **Tabbed (<1024px)**: one slot; the tab bar lists every surface. This is already a tab
+  bar — it just grows from two entries to three.
+
+**This generalisation is the point, not a flourish.** One `PaneSelector` component used
+once per slot replaces a bespoke second-pane switcher, and the fight log and leaderboard —
+today full-page routes with exactly the workshop's problem, that you must leave the feed to
+read them — become surfaces later for free, with no further layout work.
+
+**Guard rails, because two free slots can get confusing:**
+
+- **No duplicates.** A surface already shown in one slot is not offered in the other's
+  selector. Two copies of the console is never what anyone meant.
+- **The ring stays the default left slot** and is what a fresh viewer sees. Freedom to move
+  it is not a reason to make losing it the default.
+- **Per-slot persistence** (§3.5), so a layout you chose is the layout you return to.
+- If a future surface must never be hidden during a fight, that is a property of *that*
+  surface, not a reason to special-case the ring now.
+
+**Cost to keep honest:** this is more state than a pinned ring, and "where did my feed go"
+is a real failure mode. The mitigation is the defaults and the no-duplicates rule, not a
+warning dialog. If in play it turns out people lose the ring and dislike it, pinning slot 0
+is a one-line change on top of this model — whereas the reverse, generalising a pinned
+design later, is not.
 
 ### 3.3 The switch control
 
 The tab bar is hidden above 1024px, so side-by-side needs its own control. Put a **small
-segmented control in the second pane's header** (`Console | Workshop`), which is where the
-thing it switches lives. Not in the global nav — this is a pane-local choice.
+selector in each pane's header**, showing which surface that slot holds and offering the
+others (minus whatever the sibling slot is showing). Pane-local, because it is a
+pane-local choice — not in the global nav.
+
+Keep it quiet. The pane header is already carrying a timer badge and a summons counter on
+the ring; a heavy segmented control there would crowd them. A compact control that reads as
+part of the header chrome is the target.
 
 ### 3.4 Keyboard
 
-`Cmd/Ctrl+3` selects the workshop, matching the existing 1/2 shortcuts. In side-by-side it
-sets `secondPane`; in tabbed it sets `activeTab`.
+`Cmd/Ctrl+1/2/3` map to ring / console / workshop, extending today's 1 and 2. In tabbed
+mode a shortcut selects that surface. In side-by-side it should select the surface **into
+the slot that does not already show it**, preferring slot 1 — so `Cmd+3` from the default
+layout puts the workshop where the console was and leaves the ring alone.
 
 ### 3.5 Persistence
 
-Remember `secondPane` per viewer in `localStorage`, following the
+Remember **both slots** per viewer in `localStorage`, following the
 `dm:ringRosterCollapsed` precedent in `RingPane.tsx` — same key shape (`dm:secondPane`),
 same try/catch around every access, same "a blocked store is not an error" comment.
 
@@ -135,9 +170,11 @@ precedes them.
 
 ## 7. Resolved decisions
 
-1. **The ring pane is pinned, not swappable.** It is the thing you are watching, and a
-   second axis of choice buys little for the complexity. Revisit only if a concrete second
-   candidate (the fight log, say) earns it.
+1. **Both slots are swappable** (revised — see §3.2). The first draft pinned the ring;
+   the owner's read that "it's almost a tab interface we're building" is correct, and
+   generalising to surfaces-in-slots removes a special case rather than adding one. It also
+   makes the fight log and leaderboard — which have exactly the workshop's problem — free
+   to add later. Guarded by a no-duplicates rule and a ring-left default, not by a dialog.
 2. **No warning when switching away from a live fight on a phone.** The tab bar stays
    visible, the feed is not lost, and a confirm dialog on a tab press would be worse than
    the problem. The ring feed also replays on return.
