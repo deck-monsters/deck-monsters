@@ -1,0 +1,146 @@
+# Player Agency, Items, and the Empirical Case
+
+**Category**: Design / Mechanics
+**Priority**: Medium — the items audit (§3) is actionable now; the rest needs the balance sim harness
+**Status**: 📋 Proposed
+
+This doc exists because a research pass on what makes tabletop RPGs enjoyable was brought
+into the project, and applying it to an auto-battler turned out to need a clearer statement
+of what Deck Monsters' fun actually *is*. The mechanics proposals follow from that.
+
+---
+
+## 1. The design frame: commitment, then surrender
+
+Deck Monsters is hands-off during a fight on purpose, and the pleasure is closer to a bet
+than to a battle. You do the thinking up front — which cards, in which order, on which
+monster — and then you release it and cannot intervene. The strategy is real and grows
+with level as the card pool opens up; the outcome is not yours to steer.
+
+**This is a feature, and it should be protected rather than "fixed".** The obvious reading
+of the motivation literature is that a player with no moment-to-moment control lacks
+autonomy and will enjoy the game less. That reading is wrong, and the distinction matters
+enough to write down: Self-Determination Theory's autonomy need is about **volition** —
+acting from your own choices — not about continuous control. A deck you agonised over is a
+high-autonomy act. The fight is the consequence of it.
+
+What the frame does imply is that **the build phase has to carry the whole weight of
+agency**, because it is the only place agency lives. Anything that makes deck-building
+shallower, or that hides the connection between a build decision and a fight outcome, costs
+more here than it would in a game where you could compensate with live play.
+
+---
+
+## 2. What the research supports, and how far it transfers
+
+Source: *What Makes D&D Fun for Kids — Evidence-Based Revisions to a Family Starter Kit*
+(internal research pass, Sept 2026), summarising Self-Determination Theory, flow theory,
+TTRPG player-experience work, and practitioner accounts.
+
+**Transfers well.** The strongest source — Ryan, Rigby & Przybylski, "The Motivational Pull
+of Video Games" (*Motivation and Emotion* 30(4), 2006) — is **video-game** research. For the
+kids' tabletop kit it was an extrapolation; for us it is closer to the original setting. Its
+finding is that autonomy, competence and relatedness each independently predict enjoyment.
+
+- **Autonomy** → deck-building (§1). Already strong.
+- **Competence** → the felt experience of getting better. The research flags this as the
+  need most often under-weighted, and it is where Deck Monsters has the most unclaimed
+  ground: the game records a great deal about a monster and shows the player almost none of
+  it.
+- **Relatedness** → a shared room watching the same fight. Already strong.
+- **Attachment** (from Liapis & Denisova's TTRPG-PX components, and the single most
+  consistent finding in the practitioner accounts) → named monsters, individual
+  descriptions, permadeath, per-monster records. Strong foundations, thinly surfaced.
+
+**Does not transfer.** Roughly half the source document is about running a table for
+6–8-year-olds with a human DM: tactile puzzles, picture menus for non-readers, the Three
+Clue Rule, "say yes or roll the dice". We have no DM, no puzzles, and adult players. Those
+findings are not evidence for anything here and should not be cited as if they were.
+
+**Caveats to carry.** The document rates its own kids'-play evidence as "observed pattern,
+not proof" and notes the player-type taxonomies are heuristics, not validated instruments.
+Treat the SDT spine as load-bearing and everything downstream as a hypothesis worth
+testing — ideally against the balance sim harness (`11-balance-and-mechanics.md`) rather
+than shipped on faith.
+
+---
+
+## 3. Items: the lever that already exists
+
+**Finding: items are the one real-time control in the game, and the web client has no
+surface for them at all.**
+
+### What is already true
+
+- **Items are usable mid-fight.** `beastmaster.useItems` carries **no `inEncounter`
+  guard**, which is conspicuous: `equipMonster`, `moveCard`, `giveItems`, `takeItems` and
+  `reviveMonster` all check `monster.inEncounter` and refuse. Whether that omission was
+  deliberate or accidental, the effect is that items are the only inventory action allowed
+  while a fight is running.
+- **Targeting is already player-controlled, via scrolls.** `items/scrolls/targeting.ts`
+  sets `monster.targetingStrategy` in its `action()`, and there are seven strategies shipped
+  — Cobra Kai, House Lannister, Sir Robin, Parsifal, Qin Shi Huang, La Carambada, Chaos
+  Theory — each with an "according to Clever Hans" variant, plus the Sorting Hat. The
+  strategy then prints on the monster's stat card as `Strategy: …`.
+- **The inventory is substantial**: ~5 potions (healing, Pokécen, spin-up, two chocolate
+  bars) and ~15 scrolls, with rarity and cost tiers.
+
+### What is missing
+
+- **No web UI whatsoever.** `InventoryPanel.tsx` is the deck workshop — cards only. There is
+  no item list, no use affordance, no quick action, and `use <item> on <monster>` does not
+  appear in the command reference. On the web the entire item system is discoverable only by
+  already knowing it exists.
+- **The use flow fights the clock.** `useItems` routes through `chooseMonster`, an
+  interactive prompt. Using a healing potion during a fight means noticing low HP on the
+  roster, typing a command, and answering prompts while the fight advances on its own
+  timers. The mechanic is real-time; the interface is not.
+- **No feedback loop.** Nothing tells a player that an item *would have* helped, or that a
+  targeting scroll changed an outcome.
+
+### Proposals
+
+1. **Surface items in the web client.** An items panel beside the deck workshop, and a
+   one-tap "use" affordance on the ring pane while a fight is live. This is the highest
+   value-to-effort item in this doc: the engine, the commands and the persistence all exist.
+2. **Make mid-fight use a first-class, bounded action.** If items are to be the live lever,
+   the flow should be one tap with no prompt chain — and the design question to settle
+   first is whether that is *too* strong. A bounded budget (one item per fight per player,
+   say) would keep the commitment-then-surrender frame intact while giving the player one
+   real decision under pressure. **This wants the sim harness before it ships.**
+3. **Decide the `inEncounter` question deliberately.** Right now items are usable mid-fight
+   by omission rather than by a stated rule. Either document it as intended and design
+   around it, or add the guard. Leaving it ambiguous means balance work can silently
+   invalidate itself.
+4. **Teach targeting scrolls.** They are the most interesting strategic item in the game and
+   are nearly invisible. Surfacing the current `Strategy:` on the roster, and explaining what
+   a scroll changed when it is read, would make an existing system legible.
+
+---
+
+## 4. Competence and attachment: surfacing what the game already records
+
+Both are cheap, because the data exists and is simply not shown.
+
+1. **Per-monster records** — best hit, longest win streak, nemesis (the monster that has
+   beaten it most). `announceHit` now publishes `damage`/`assailantName` (10b #110), so best-hit
+   tracking has a source. Competence made visible.
+2. **A memorial for the dead.** Permadeath currently just removes a monster. A graveyard
+   listing what each one did is the cheapest possible attachment feature, and permadeath is
+   what gives it weight.
+3. **Earned titles** derived from what a monster actually did ("the Thrice-Fled", "Boss-Slayer"),
+   rather than assigned. Attachment and competence in one.
+4. **Reward mix.** The practitioner finding that "things" beat money is the weakest transfer
+   in this doc — it is an observation about children — but the underlying point, that a named
+   card drop is more memorable than a coin total, is worth testing against the drop tables.
+
+---
+
+## 5. What not to do
+
+- **Do not add live combat control beyond a bounded item action.** It would dissolve the
+  frame in §1, which is the thing that makes this game itself.
+- **Do not cite the kids'-play findings as evidence for adult player behaviour.** Cite SDT
+  for the motivational claims and mark the rest as hypothesis.
+- **Do not ship balance changes from this doc without the sim harness.** See
+  `11-balance-and-mechanics.md`.

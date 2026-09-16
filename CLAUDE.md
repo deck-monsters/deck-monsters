@@ -38,6 +38,7 @@ non-obvious bit us before.
 | [`docs/local-testing-guidelines.md`](docs/local-testing-guidelines.md) | Manual end-to-end verification (includes reusable local test rooms) |
 | [`docs/deployment.md`](docs/deployment.md) | Railway/Supabase deployment or environment configuration |
 | [`docs/roadmap/18-live-ring-roster.md`](docs/roadmap/18-live-ring-roster.md) | The ring roster panel, `ring.state` payload, or `Ring.publishState()` call sites |
+| [`docs/roadmap/19-player-agency-and-items.md`](docs/roadmap/19-player-agency-and-items.md) | Items, targeting scrolls, deck-building agency, or any "should the player control this?" question |
 | [`docs/roadmap/README.md`](docs/roadmap/README.md) | Planning work — the authoritative status index |
 
 ## Project Overview

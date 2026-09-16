@@ -25,6 +25,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
+| [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 📋 Proposed — items audit actionable now |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
 | [09 — Graphics](09-graphics.md) | Sprites, icons, optional visual polish | 📋 Post-launch, low priority |
@@ -67,11 +68,21 @@ Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/
 
 Design doc is ready. Blocked on a battle simulation harness for safe regression testing. Key items: crit fail for all cards, stat variance reform, initiative rolls, saving throws. Start by building the sim harness, then iterate.
 
-### 2. New content backlog (12-new-content-backlog.md)
+### 2. Player agency and items (19-player-agency-and-items.md)
+
+Written after a research pass on what makes RPGs enjoyable. States the design frame — the
+fight is hands-off on purpose, and the pleasure is commitment then surrender — and audits
+the one real-time lever the game already has. Key finding: **items are usable mid-fight
+(no `inEncounter` guard, unlike every other inventory action) and the web client has no
+item UI at all.** Targeting scrolls already let players set `targetingStrategy`; they are
+nearly invisible. Surfacing items on the web is the highest value-to-effort item; anything
+that changes their power wants the sim harness first.
+
+### 3. New content backlog (12-new-content-backlog.md)
 
 New cards (10+ designs documented), two new monster types (Time Lord / Wizard, Bureaucrat / Cleric), equipment slots, adventures/job board, tournaments. Post-launch, driven by player demand.
 
-### 3. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
+### 4. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
 
 A fun post-launch enhancement: a retro SNES theme that layers pixel art fight animations on top of the text ring feed. All other themes stay clean and text-only — this is pure progressive enhancement. The animation module only loads when the SNES theme is active, so there's no cost for everyone else. Monster sprites (one idle + attack + hit + faint per monster type) can be generated with PixelLab and refined in Aseprite. See `docs/pixel-art-animations-in-js.md` for the full technical reference.
 
