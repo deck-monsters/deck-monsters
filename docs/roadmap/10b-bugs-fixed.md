@@ -2042,3 +2042,37 @@ a monospace feed's whole look is the straight left column — the ragged result 
 broken rather than emphasised.
 
 **Status**: Shipped.
+
+---
+
+### 111. The item help taught the opposite of the rule — FIXED
+
+Shipped and caught within the same session, by a review pass rather than by tests.
+
+`help.ts`'s `ITEMS_NOTE` and `CommandReference.tsx`'s items banner were written to fix the
+game's least-discoverable mechanic — that items still work once a fight starts. They said
+so with no caveat: *"you can still use items on it"*.
+
+**Root cause**: the copy was written one commit **before** the underlying rule was
+corrected (#110's follow-up), and was never revisited when it was. The real rule is that
+`items/helpers/use.ts` restricts the usable pool to `monster.items` once the monster is in
+an encounter, and `items/helpers/transfer.ts` blocks handing anything over then — so only
+what a monster carried into the ring is usable.
+
+The result was worse than silence: a player who read the help reached for a pocket potion
+mid-fight and got `"doesn't have any items that … can use on Fluffy"` with no explanation.
+The one piece of copy written specifically to teach this mechanic was teaching it backwards.
+
+**Why the tests did not catch it**: they asserted that `'mid-fight'` and
+`'Targeting scrolls'` appeared in the output. That passes on accurate *and* misleading
+wording alike — the assertion proved the text existed, not that it was true. Both tests now
+assert the caveat itself, which is the part a regression would drop.
+
+**Fixed**: both surfaces lead with the constraint and name the remedy — what a monster takes
+into the ring is what it has, so stock it first with `give [item] to [monster]`.
+
+**Lesson worth keeping**: when a rule is corrected, grep for the player-facing copy that
+described it. The code comment, the roadmap and the help text were three separate
+statements of the same fact, and only two got fixed.
+
+**Status**: Fixed.

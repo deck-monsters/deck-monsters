@@ -151,9 +151,13 @@ unmounting the pane — unmounting would throw away the state this decision exis
 The moment the same surface can be open as a pane *and* at its full-page route, those are
 two independent instances — a selection made in one is invisible in the other, and
 `refetchInterval` being per-observer doubles the polling. Neither is a bug today, because
-nothing double-mounts yet. Before Phase 2 ships alongside the route, decide one of: lift
-that state into `useDeckWorkshop` (or a small shared store) so both instances agree, or
-accept divergence and say so in the UI. Do not discover this in play.
+nothing double-mounts yet.
+
+**Still open, and now the nearest sharp edge.** Phase 2 has shipped, so the Workshop can
+sit in a pane *and* be opened at `/room/:roomId/workshop` in another tab. Decide one of:
+lift that state into `useDeckWorkshop` (or a small shared store) so both instances agree,
+or accept divergence and say so in the UI. Whoever starts Phase 3 should settle this first
+— it is cheaper to decide than to debug from a player's "my selection vanished".
 
 ## 4. The hidden cost: the workshop is a wide layout
 
@@ -205,7 +209,14 @@ Two implementation notes for whoever extracts the next surface (Phase 5):
   `.terminal-pane` class so the divider finds a real match even when the workshop is the
   one on the left. Worth revisiting if `PaneDivider` is ever touched for its own reasons.
 
-**Phase 3 — responsive.** The §4 work, driven by container queries, at three widths: wide
+**Phase 3 — responsive, plus one debt from Phase 2.** The pane selector currently sits in a
+slim `.terminal-slot-header` strip *above* each surface, rather than inside
+`RingPane`/`ConsolePane`'s own `.pane-header`, because those files were out of scope when
+the slots were built. The result is two stacked header rows on the ring and console, which
+is a real cost at phone height. Folding the selector into each surface's own header belongs
+with this phase, since it is the same responsive pass.
+
+Then the §4 work, driven by container queries, at three widths: wide
 laptop, half-pane laptop, phone.
 
 **Phase 4 — the rest of the hub** (roadmap 19 §6): items panel, spawn/revive/send, shop.
@@ -215,6 +226,33 @@ precedes them.
 **Phase 5 — more surfaces.** Extract `FightLogPanel` and `LeaderboardPanel` from their
 existing views by the Phase 1 pattern and add them to the registry. Cheap once the model
 exists, and the payoff of §3.1 generalising rather than special-casing the workshop.
+
+## 5a. Contracts established in Phase 2 — do not undo these
+
+Two things look incidental and are not. Both were introduced deliberately in review, so a
+future reader who "tidies" them will reintroduce a real bug.
+
+**1. `PaneDivider` addresses the slot, not the surface.** The divider reads the left pane's
+width to compute a drag's starting fraction. It used to find it with
+`querySelector('.terminal-pane')`, which worked only because Ring and Console happen to
+render that class — the Workshop renders `.workshop-view`, so with the Workshop on the left
+the divider would have measured nothing. Each slot wrapper now carries
+`data-pane-slot={index}` and the divider queries `[data-pane-slot="0"]`.
+
+An earlier attempt stamped `.terminal-pane` onto the slot-0 wrapper instead. That nested a
+pane inside a pane and avoided a double border only by accident of an unrelated
+`.terminal-pane:last-child` rule. Do not reach for the class again: `.terminal-slot`
+already carries every rule `.terminal-pane` was contributing, and the divider's dependency
+is on the *slot*, which is what the attribute names.
+
+**2. The mounted-surface array is ordered slot 0, slot 1, then hidden.** The original reason
+(the divider's first-match `querySelector`) no longer applies after contract 1. It is kept
+for a reason that does: **DOM order is keyboard focus and screen-reader reading order**, and
+`gridColumn` positions the slots visually without moving them in the tree. Without the
+ordering, Tab reaches the right-hand pane first whenever the slots are swapped.
+
+React reconciles by `key`, so reordering moves the existing DOM node rather than remounting
+it — which is also what keeps pane state alive across a swap.
 
 ## 6. Test plan
 

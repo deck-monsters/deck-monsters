@@ -2,7 +2,8 @@
 
 **Category**: Design / Mechanics
 **Priority**: Medium — the items audit (§3) is actionable now; the rest needs the balance sim harness
-**Status**: 📋 Proposed
+**Status**: 🔧 Active — the items panel and the discoverability copy have shipped; the
+`use item` procedure and the ring-pane affordance have not
 
 This doc exists because a research pass on what makes tabletop RPGs enjoyable was brought
 into the project, and applying it to an auto-battler turned out to need a clearer statement
@@ -343,3 +344,34 @@ compatibility which degrades to `true`). A missing `expired` degrades to `false`
 needs updating to the shape above, plus the actual three-tier item list UI (tap affordance,
 dimming, reason text) described in this section. Not done in this change — see the router
 change for the server half.
+
+---
+
+## 8. State at the end of the September 2026 session
+
+**Shipped**
+- Items are documented for players at last, in both the engine help and the web command
+  reference — including the constraint, after an earlier draft stated only the headline and
+  taught the opposite (`10b-bugs-fixed.md` #111).
+- `myInventory` returns `ItemSummary` objects (name, `expired`, `stats`, `usableOnMonsters`,
+  `usableOnCharacter`) with usability computed server-side by the engine's own `canUseItem`.
+- `utils/item-tiers.ts` — pure, tested tier classifier and sort, implementing §7.
+- `components/ItemsPanel.tsx` — mounted in the workshop, which had never mentioned items.
+
+**Not shipped, and the next real work**
+1. **There is no `use item` tRPC procedure.** The panel is display-only. This is the single
+   blocker on the whole mid-fight story: without it the web client cannot use an item at
+   all, whatever the list shows.
+2. **The prompt chain.** `use <item> on <monster>` routes through `chooseMonster`, an
+   interactive prompt. Mid-fight that means typing and answering questions while the fight
+   advances on timers. One tap, no prompts, is the target (§7). Removing the chain is not a
+   balance change and does not need the sim harness; changing how *much* can be used is and
+   does.
+3. **The ring-pane affordance** (§6 item 1) — the list's real home. It needs 1 and 2 first.
+
+**Open questions for whoever picks this up**
+- The tier-2 reason strings (`'Not in the ring.'`, `'Not carried into the ring.'`,
+  `'Not usable right now.'`) are centralised as exported constants in `item-tiers.ts` and
+  were written by implementation, not chosen by the owner. Worth a read-through.
+- §4's competence/attachment work (per-monster records, a memorial, earned titles) is
+  untouched and independent of everything above.
