@@ -2,8 +2,8 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Active — three open items from the September 2026 live-play pass, plus nine
-open items (#98–#106) from the September 16 2026 mobile UI pass triaged at the bottom of
+**Status**: Active — three open items from the September 2026 live-play pass, plus ten
+open items (#98–#107) from the September 16 2026 mobile UI pass triaged at the bottom of
 this doc. Everything earlier is resolved; see [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for
 the full archive (#3, #51–#58, #59–#73, #74–#85, #86–#97).
 
@@ -80,7 +80,7 @@ turn banner down, but it is the one place the feed still starts as a wall.
 
 ## September 16 2026 mobile UI pass — triage (OPEN, none fixed yet)
 
-Nine findings from eight iPhone screenshots of deck-monsters.com, saved alongside this doc in
+Ten findings from eight iPhone screenshots of deck-monsters.com, saved alongside this doc in
 [`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). This section is the analysis
 only — **no code was changed**. #98–#101 are layout/rendering; #102–#106 are the *content* of the messages themselves —
 what they say, whether it is true, and whether one event produces one message.
@@ -241,24 +241,48 @@ arrival (#102) so one action produces one message. Note `ring.spawnBoss` is also
 by the timer (`ring/index.ts:1548`) and by ring events (`:1479`), so the summoner clause
 belongs at the call site, not inside `spawnBoss`.
 
-### 104. "was summoned from the ring" says the opposite of what happened — VERIFIED
+### 104. The ring-exit line does not match the command that causes it — WORDING, OWNER DECIDED THE CONSTRAINTS
 
 `06-ring-summon-sequence.png`: `Dalfi (dalfe, Cow/beef) was summoned from the ring by
-⛄ Thunder Smasher.` Summoning is what you do *into* a ring. The monster left.
+⛄ Thunder Smasher.`
 
-**Root cause**: `announcements/contestantLeave.ts:14`. Wording only — the event itself
-(`ring.remove`) is correct. `withdrew from the ring` / `was withdrawn from the ring` reads
-right and keeps the beastmaster's agency.
+**Not the bug it first looked like.** "Summon" is defensible here — you summon someone
+*out* to where you are, and `summon` is one of the verbs the command itself accepts. The
+problem is narrower: `summoned from the ring` is the awkward phrasing of that idea, and it
+collides head-on with the boss `summon a boss` vocabulary in the same feed.
 
-Two further asymmetries with the join line worth fixing in the same pass, since the two
-messages are a matched pair a reader tries to connect:
+**"Dismissed" is ruled out**, and not merely on taste. `dismiss` is an existing command
+(`DISMISS_REGEX`, `commands/monster.ts:72`) and `beastmaster.ts:1101` shows it is
+**permanent and only legal on dead monsters** — it calls `dropMonster` and announces
+`has been dismissed from your pack.` Reusing the word for a live monster stepping out of
+the ring would make a reversible move read as a permanent roster deletion.
 
-- **Joining names the species, leaving names the individual.** Join says
-  `An enraged Minotaur`, leave says `Dalfi`. Nothing in the feed links the two, so on a
-  busy ring you cannot tell which arrival a departure cancels. One of them should carry
-  both, and it should be the same one each time.
-- **Two spellings of the same value.** Leave uses `character.identity`; join builds
-  `${character.icon} ${character.givenName}` by hand. They should agree.
+**The vocabulary already exists.** The command is
+`CALL_MONSTER_OUT_OF_THE_RING_REGEX` (`commands/monster.ts:47`) —
+`/(?:remove|call|fetch|bring|summon) (.+?) (?:from|out of) (?:the )?(?:ring|battle)/` —
+and the method is `callMonsterOutOfTheRing`. Its opposite is
+`send (.+?) (?:to|into) (?:the )?(?:ring|battle)`. So the canonical player phrasings are
+**"send X to the ring"** and **"call X out of the ring"**, and the feed should use them.
+
+Two candidates, each optimising a different thing:
+
+1. `Dalfi was called out of the ring by ⛄ Thunder Smasher.` — mirrors the command the
+   player types, so the feed teaches the command. Keeps the "called out to where you are"
+   sense the owner wanted. **Recommended.**
+2. `Dalfi left the ring at the behest of ⛄ Thunder Smasher.` — mirrors the join line
+   (`has entered the ring at the behest of …`) word for word, which is the strongest fix
+   for the matched-pair problem below.
+
+**Still open regardless of which is chosen**: joining names the species
+(`An enraged Minotaur`) and leaving names the individual (`Dalfi`), so nothing links a
+departure to the arrival it cancels. Cheapest fix is to let the leave line carry both
+(`Dalfi, a Minotaur, was called out of the ring by …`). And the two lines spell the
+beastmaster differently — leave uses `character.identity`, join builds
+`${character.icon} ${character.givenName}` by hand.
+
+**Unrelated, needs an owner answer**: the name renders as `Dalfi (dalfe, Cow/beef)`. If
+that etymology is baked into `givenName` it will follow the monster into every message,
+the roster and the leaderboard. Worth confirming it is intended.
 
 ### 105. The boss warning is the only ring line with no full stop — VERIFIED
 
@@ -280,3 +304,41 @@ not enumerate drops those monsters from the line.
 
 **Fix**: build the sentence from all participants, or append a remainder clause, so the
 subtitle always accounts for everyone named in the title.
+
+### 107. Nothing marks a restart in the feed, so unrelated fights run together — OWNER-REQUESTED
+
+Visible in `02-ring-clipped-prose.png`, where a stat card ending `Battles fought: 0 /
+Battles won: 0` sits directly above an unrelated Minotaur arrival with 95 battles behind
+it. Two monsters from two different sessions, abutting with nothing between them.
+
+A restart is a real discontinuity, not just a quiet patch: the fight loop is a
+promise/timer chain (`docs/engine-concurrency-and-timing.md` §1) and **does not survive a
+process restart**, so a fight can stop mid-round and the next thing in the feed is
+whatever happened after the room reloaded.
+
+**Hook point**: `RoomManager._loadRoom` (`room-manager.ts:767`) restores from
+`rows[0].stateBlob` via `restoreGame`. That is the one place that knows a room came back
+from cold. Note it fires for **two** causes — a genuine server restart *and* a lazy reload
+after an idle unload (`unloadRoom`, idle sweeps). Both leave a real gap in the feed, so
+marking both is probably right, but it means the marker is "the room was asleep", not
+strictly "the server restarted".
+
+**Two designs, and the cheaper one is probably better:**
+
+- **Server-emitted marker.** Publish a `system` event on restore-from-blob. Accurate about
+  *why* the gap exists. Costs: must be persisted or it will not survive the very reload it
+  documents; it also goes to Discord, which has no scrollback problem to solve; and it only
+  marks restarts from the day it ships.
+- **Client-side gap divider.** Events already carry timestamps, and `RingPane` already
+  merges history with live events. Render a rule between any two consecutive events more
+  than N minutes apart. No engine change, no new persisted event, **works retroactively on
+  all existing history**, fixes idle gaps and overnight gaps with the same rule, and lives
+  in the only surface that actually has the problem. Costs: it says "time passed", not
+  "the game restarted".
+
+Doing the client-side divider first is the recommendation; add the server marker only if
+naming the *cause* turns out to matter.
+
+**Not** covered by `CatchUpBanner.tsx` — that is a dismissible overlay keyed to the
+*viewer's* `lastSeenAt`, about the reader having been away. This is about the game itself
+having stopped, and belongs inline in the feed.
