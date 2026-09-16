@@ -72,17 +72,27 @@ surface for them at all.**
 
 ### What is already true
 
-- **Items are usable mid-fight, deliberately.** `beastmaster.useItems` carries **no
-  `inEncounter` guard**, where `equipMonster`, `moveCard`, `giveItems`, `takeItems` and
-  `reviveMonster` all check `monster.inEncounter` and refuse. This is **intended, planned
-  behaviour and item power is balanced around it** (owner, Sept 2026) — items are the one
-  lever a player still holds once a fight is running, and the single real-time decision in
-  a game that is otherwise commitment-then-surrender.
+- **Items are usable mid-fight, deliberately — but only the ones the monster is already
+  carrying.** This was first written up as "items are usable mid-fight" full stop, which is
+  wrong in a way that changes the whole design, so the correction is recorded rather than
+  quietly patched.
 
-  **Adding a guard here would not be a tidy-up.** It would delete the game's only
-  in-fight decision and change combat balance. The method now carries a comment saying so,
-  because the inconsistency with its five neighbours reads as an oversight and invites
-  exactly that "fix".
+  `beastmaster.useItems` carries no `inEncounter` guard, where `equipMonster`, `moveCard`,
+  `giveItemsToMonster`, `takeItemsFromMonster` and `reviveMonster` all refuse. **The guard
+  exists one level down.** `items/helpers/use.ts` builds the usable pool from
+  `monster.items` alone while `monster.inEncounter`, adding the character's own items only
+  when the monster is *not* in an encounter — and `items/helpers/transfer.ts` refuses to
+  move items to or from a monster in an encounter.
+
+  So: **what a monster carries into the ring is what it can use.** Mid-fight use is
+  intended and balanced around (owner, Sept 2026), and the in-game handbook already says
+  so — *"Items used mid-battle must be pre-assigned to the monster before the fight"* —
+  which is accurate.
+
+  This makes the design better, not smaller. Stocking a monster before it fights is a
+  commitment decision in its own right, exactly like building its deck: the real-time lever
+  is bounded by foresight. That is the commitment-then-surrender frame (§1) applied twice,
+  not an exception to it.
 - **Targeting is already player-controlled, via scrolls.** `items/scrolls/targeting.ts`
   sets `monster.targetingStrategy` in its `action()`, and there are seven strategies shipped
   — Cobra Kai, House Lannister, Sir Robin, Parsifal, Qin Shi Huang, La Carambada, Chaos
@@ -122,7 +132,11 @@ surface for them at all.**
    are the one thing they can still do once the fight starts. That is the single most
    valuable piece of missing documentation in the game, because it is the mechanic most
    likely to be missed entirely.
-4. **Teach targeting scrolls.** They are the most interesting strategic item in the game and
+4. **Surface the pre-fight stocking decision.** Since a monster can only use what it
+   carried in, "give items to this monster" is a build-phase decision with the same weight
+   as equipping cards — and the workshop does not mention items at all. This is a stronger
+   argument for the items panel than convenience.
+5. **Teach targeting scrolls.** They are the most interesting strategic item in the game and
    are nearly invisible. Surfacing the current `Strategy:` on the roster, and explaining what
    a scroll changed when it is read, would make an existing system legible.
 
@@ -244,9 +258,14 @@ harness. Changing *how much* can be used (a per-fight budget) is, and should.
 
 ### Resolved: what counts as tier 1 mid-fight
 
-**Tier 1 requires `canUseItem` AND a sensible target right now**: outside a fight, any owned
-monster; during a fight, a monster that is actually in the ring. A benched monster drops to
-tier 2 while a fight runs — dimmed, still listed, still explicable.
+**Tier 1 requires `canUseItem` AND a target the engine will actually accept right now.**
+Outside a fight: any owned monster, drawing on both the monster's items and the character's.
+**During a fight: only items the fighting monster is already carrying** — `use.ts` excludes
+the character's own items while `inEncounter`, so a pocket healing potion is genuinely not
+usable, and showing it as tier 1 would be a lie the engine then refuses.
+
+A benched monster, and any item in the character's pocket during a fight, drop to tier 2 —
+dimmed, still listed, with the reason shown.
 
 This is a *sort*, never a prohibition. The `use <item> on <monster>` command keeps working on
 any monster it always worked on; the list only changes what it puts in front of you. That
@@ -255,18 +274,62 @@ implementation.
 
 Owner framing, worth keeping: using an item on a monster outside the ring mid-fight is
 "technically fine but in practice odd and likely a mistake". So tier 2 during a fight should
-say **why** it is dimmed — "not in the ring" — rather than being silently greyed. A dimmed
+say **why** it is dimmed — "not in the ring", or "not carried into the ring" for a pocket
+item — rather than being silently greyed. A dimmed
 row with no reason reads as a bug; a dimmed row with a reason reads as the game looking out
 for you. The tap should still be possible for the player who means it.
 
 ### Data the list needs, and what the API gives it today
 
-`myInventory` already returns items, but only as **names**:
-`items: { character: string[]; monsters: Array<{ monsterName, items: string[] }> }`
-(`summarizeInventory`, `trpc/router.ts`). That is not enough to render the three tiers.
+**Shipped (server side).** `myInventory` (`summarizeInventory`, `packages/server/src/trpc/router.ts`)
+now returns items as `ItemSummary` objects instead of bare name strings:
 
-The summary needs, per item: a stable display name, `expired`, uses remaining (the engine's
-`item.stats` already renders "Usable 1 time." / "N times" / "All used up!"), and which of the
-player's monsters it is usable on (`monster.canUseItem(item)` / `character.canUseItem(item)`).
-Computing usability **server-side** keeps one definition of "usable" rather than
-reimplementing `canUseItem` in TypeScript in the browser.
+```ts
+type ItemSummary = {
+	displayName: string;
+	expired: boolean;
+	stats: string; // engine's own "Usable 1 time." / "N times" / "All used up!"
+	usableOnMonsters: string[]; // player's monster names that pass canUseItem(item) right now
+	usableOnCharacter: boolean; // character.canUseItem(item), for usableWithoutMonster items
+};
+
+items: {
+	character: ItemSummary[];
+	monsters: Array<{ monsterName: string; items: ItemSummary[] }>;
+};
+```
+
+Usability is computed **server-side**, once, via a `canUseItemSafe(entity, item)` helper that
+calls the entity's own `monster.canUseItem(item)` / `character.canUseItem(item)` — the same
+predicate `items/helpers/use.ts` uses to build its selectable list — so there is one
+definition of "usable" and the client never reimplements the rule. `InventoryMonsterSummary` already carries `inRing`.
+
+**Deriving the tiers — note which list an item came from.** The summary separates
+`items.character` from `items.monsters[].items`, and that separation is what encodes the
+mid-fight rule above: while a monster is in an encounter, only items in *its* list are
+usable at all. So:
+
+- **tier 1, during a fight**: the item is in `items.monsters[<fighting monster>].items`,
+  `usableOnMonsters` includes that monster, and it is not `expired`. A `items.character`
+  item is **never** tier 1 during a fight, whatever `usableOnMonsters` says — `use.ts` will
+  refuse it, and offering a tap that the engine then rejects is worse than dimming it.
+- **tier 1, outside a fight**: either list, `usableOnMonsters` includes the chosen monster.
+- **tier 2**: usable in principle but not right now — a pocket item during a fight, or a
+  benched monster's item. Show the reason.
+- **tier 3**: `expired`.
+
+`usableOnMonsters` answers "can this item apply to this creature", which is necessary but
+not sufficient; the list an item lives in answers "can it be reached from here".
+
+Degradation, matching `canMonsterHoldCard`'s existing style: a missing `canUseItem` degrades to
+`false` (never claim an item is usable when the engine can't confirm it — this drives a live
+tap-to-use affordance, so a false positive is worse than a false negative, unlike card-slot
+compatibility which degrades to `true`). A missing `expired` degrades to `false`. A missing
+`stats` getter degrades to `'All used up!'` when `expired` is true, else
+`'Usable an unlimited number of times.'`. `canUseItem` throwing is caught and treated as `false`.
+
+**Still open (web side).** `apps/web/src/hooks/useDeckWorkshop.ts` has its own local
+`InventorySummary`-shaped type with `items: { character: string[]; monsters: [...] }` that
+needs updating to the shape above, plus the actual three-tier item list UI (tap affordance,
+dimming, reason text) described in this section. Not done in this change — see the router
+change for the server half.

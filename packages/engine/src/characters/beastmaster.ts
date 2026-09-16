@@ -299,18 +299,25 @@ class Beastmaster extends BaseCharacter {
 	}
 
 	/**
-	 * Use items, including **during a fight**.
+	 * Use items, including **during a fight** — but only ones the monster is already
+	 * carrying.
 	 *
-	 * The missing `monster.inEncounter` guard here is deliberate, and is the reason this
-	 * method looks inconsistent with its neighbours: `equipMonster`, `moveCard`,
-	 * `giveItems`, `takeItems` and `reviveMonster` all refuse while a monster is in an
-	 * encounter. Items are the one exception on purpose.
+	 * There is no `monster.inEncounter` guard here, unlike `equipMonster`, `moveCard`,
+	 * `giveItemsToMonster`, `takeItemsFromMonster` and `reviveMonster`, which all refuse
+	 * outright. That is deliberate: items are the single lever a player still holds once a
+	 * fight is running, and item power is balanced on the assumption they can be used then.
 	 *
-	 * Deck Monsters is hands-off once a fight starts — you commit a deck and then watch —
-	 * so items are the single lever a player still holds mid-fight, and their power is
-	 * balanced on the assumption that they can be used then. Adding a guard here would not
-	 * be a tidy-up; it would remove the game's only real-time decision and change combat
-	 * balance. See `docs/roadmap/19-player-agency-and-items.md`.
+	 * **The guard exists, one level down, and it is the interesting part.** `items/helpers/
+	 * use.ts` builds the usable pool from `monster.items` alone while `monster.inEncounter`,
+	 * adding the character's own items only when the monster is NOT in an encounter. And
+	 * `items/helpers/transfer.ts` refuses to move items to or from a monster in an
+	 * encounter. So mid-fight you can use what the monster took into the ring with it, and
+	 * nothing else.
+	 *
+	 * That makes stocking a monster before it fights a commitment decision in its own
+	 * right, exactly like building its deck — which is the game's shape, not an accident.
+	 * Do not "fix" the apparent inconsistency here: it would remove the game's only
+	 * real-time decision. See `docs/roadmap/19-player-agency-and-items.md` §3.
 	 */
 	useItems({
 		channel,
