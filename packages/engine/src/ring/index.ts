@@ -1225,6 +1225,12 @@ export class Ring extends BaseClass {
 			contestants,
 			deadContestants,
 			deaths,
+			// The announcement names the winner from this. Derived from the same
+			// `c.won` flags that drive the fight log and leaderboard, so the banner
+			// can never disagree with the recorded result.
+			winners: contestants
+				.filter(c => c.won)
+				.map(c => ({ monsterName: c.monster.givenName as string, team: c.team ?? null })),
 			// Derived from fightOutcome so the announcement can never disagree with the
 			// fight log. The old `deaths <= 0` made a round-cap fight with deaths but
 			// survivors on both sides announce "with N dead" while every other record

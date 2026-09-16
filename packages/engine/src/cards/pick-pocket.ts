@@ -7,6 +7,7 @@ import {
 	TARGET_HIGHEST_XP_PLAYER,
 	getTarget,
 } from '../helpers/targeting-strategies.js';
+import { playNestedCard } from './helpers/nested-play.js';
 
 export class PickPocketCard extends BaseCard {
 	static cardClass = [MELEE];
@@ -50,10 +51,17 @@ export class PickPocketCard extends BaseCard {
 		const randomCard = sampled.clone();
 
 		this.emit('narration', {
-			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName}`,
+			narration: `${player.givenName} steals a card from the hand of ${mostExperienced.givenName} — and plays it as their own...`,
 		});
 
-		return randomCard.play(player, proposedTarget, ring, activeContestants);
+		// The steal is already narrated above, so this only needs the pacing beat.
+		return playNestedCard({
+			card: randomCard,
+			player,
+			proposedTarget,
+			ring,
+			activeContestants,
+		});
 	}
 }
 

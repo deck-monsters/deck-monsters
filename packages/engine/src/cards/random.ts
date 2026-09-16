@@ -2,6 +2,7 @@ import { BaseCard, type CardOptions } from './base.js';
 import { PSYCHIC } from '../constants/card-classes.js';
 import { COMMON } from '../helpers/probabilities.js';
 import { ALMOST_NOTHING } from '../helpers/costs.js';
+import { playNestedCard } from './helpers/nested-play.js';
 
 export type DrawFn = (options: Record<string, unknown>, creature?: any) => any;
 
@@ -31,15 +32,36 @@ export class RandomCard extends BaseCard {
 	): Promise<any> {
 		this.emit('played', { player });
 
+		// Narrated and paced via playNestedCard: without it the drawn card's own
+		// announcement landed immediately after this one with nothing saying the two
+		// were connected, so the feed read as the same monster playing twice in a row.
+		const narration = `The ancient scraps crumble in ${player.givenName}'s hands — and reassemble into something else...`;
+
 		if (randomCardHelpers.draw) {
 			const randomCard = randomCardHelpers.draw(this.options as any, player);
-			return Promise.resolve(randomCard.play(player, proposedTarget, ring, activeContestants));
+			return playNestedCard({
+				card: randomCard,
+				player,
+				proposedTarget,
+				ring,
+				activeContestants,
+				narration,
+				emit: (event, payload) => this.emit(event, payload),
+			});
 		}
 
 		// Lazy import to avoid circular dependency (random → draw → all → random)
 		return import('./helpers/draw.js').then(({ draw }) => {
 			const randomCard = draw(this.options as any, player);
-			return randomCard.play(player, proposedTarget, ring, activeContestants);
+			return playNestedCard({
+				card: randomCard,
+				player,
+				proposedTarget,
+				ring,
+				activeContestants,
+				narration,
+				emit: (event, payload) => this.emit(event, payload),
+			});
 		});
 	}
 }

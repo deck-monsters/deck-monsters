@@ -1433,6 +1433,47 @@ describe('ring/index.ts', () => {
 	});
 
 	describe('last-team victory mode (Finding 1)', () => {
+		it('names the surviving team in the concluding banner (real fight, end to end)', async function () {
+			// The ring always knew who won, but announceFightConcludes ignored it and the
+			// public banner only reported the body count. Asserts the winners actually
+			// reach the published text, not just the contestant flags.
+			this.timeout(5000);
+
+			const houseWar = RING_EVENTS.find(e => e.id === 'house-war')!;
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';
+			ring.contestants[2]!.monster.hp = 0;
+
+			const survivors = [ring.contestants[0]!.monster.givenName, ring.contestants[1]!.monster.givenName];
+
+			const announced: string[] = [];
+			ring.eventBus.subscribe('winner-probe', {
+				deliver: (event: { type: string; text?: string }) => {
+					if (event.type === 'announce' && String(event.text ?? '').includes('The fight concluded')) {
+						announced.push(String(event.text));
+					}
+				},
+			} as never);
+
+			ring.ringEvent = { ...houseWar, apply: () => {} };
+
+			await ring.fight();
+
+			expect(announced, 'a conclusion banner must be published').to.have.lengthOf(1);
+			expect(announced[0]).to.include('🏆 Gryffindor wins!');
+			survivors.forEach(name => expect(announced[0]).to.include(name));
+
+			game.dispose();
+		});
+
 		it('fight() resolves without recursion: allied survivors both get won=true (Finding 2)', async function () {
 			// Regression (Critical #2): the top-of-doAction last-team branch unconditionally
 			// called next() when isLastTeamVictory was true, even with ≥2 same-faction

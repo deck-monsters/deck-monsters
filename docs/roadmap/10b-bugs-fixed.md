@@ -1402,3 +1402,72 @@ Because both groups were non-greedy, the **first** separator split the command. 
 Covered by a regression test in `commands/card-management.test.ts` asserting both the ` for ` and ` on ` cases split on the last separator.
 
 **Status**: Fixed.
+
+---
+
+### 89. Nested card plays dumped un-paced card boxes and read as repeated turns — FIXED
+
+Two cards put another card into play: `Random Play` draws one, `Pick Pocket` clones one from
+the highest-XP opponent. Both did it by calling `innerCard.play(...)` **directly**.
+
+Consequences in a live feed:
+
+1. **No pacing.** `doAction` in `ring/index.ts` paces card-to-card transitions with
+   `veryShortDelay(round)` (midpoint 3s), but a nested play inherited none of that. The inner
+   card emitted its full announcement — a ten-line ASCII card box — immediately after the
+   outer card's. A `Random Play` that drew `Pick Pocket`, which then stole a `Delayed Hit`,
+   emitted **three** card boxes plus their roll lines inside the window normally given to one
+   card. On a phone that is a screen-and-a-half of text appearing at once.
+2. **Nothing marked it as a chain.** The nested card announced with the identical
+   `"<player> lays down the following card:"` wording as a top-level play, so the feed read as
+   one monster taking three turns in a row. `Random Play` was the worst case: it emitted no
+   narration at all, so two card boxes appeared back to back with nothing connecting them.
+
+This is the same class of regression `docs/engine-concurrency-and-timing.md` §1 warns about
+(a past change used `subEventDelay` between card plays and made fights scroll past in
+seconds) — except nested plays had no pacing at all, so they were worse than that regression.
+
+**Fixed**: a shared `cards/helpers/nested-play.ts` (`playNestedCard`) gives a summoned card
+the same `veryShortDelay(round)` beat the main loop gives a normal card-to-card transition,
+and emits the narration explaining why another card is in play before it resolves. `Random
+Play` narrates the scraps reassembling; `Pick Pocket` already narrated the steal, so it only
+takes the pacing beat. Skip mode (`DECK_MONSTERS_SKIP_DELAYS`) resolves without a real timer,
+matching how `doAction`'s continuation paths are treated, so tests and the harness stay fast.
+
+Covered by `cards/helpers/nested-play.test.ts` — context forwarding, narration ordering
+(narration before play), no narration when the caller already narrated, no wall-clock delay in
+skip mode, and `Random Play` narrating its chain.
+
+**Status**: Fixed.
+
+---
+
+### 90. The fight conclusion banner never said who won — FIXED
+
+The concluding announcement read only `"The fight concluded with 4 dead after 2 rounds!"`. In
+a five-way fight that omits the single most interesting fact: players had to scroll back
+through the kill lines and work out by elimination who was still standing.
+
+The information was never missing — `ring/index.ts` computes `hasDecisiveWinner`, `living`,
+`lastContestant`, and sets `contestant.won`, all of which already drive the fight log, the
+leaderboard, XP awards and the `ring.fightResolved` payload (`winnerMonsterName`). The
+`fightConcludes` event even passed `lastContestant` to the announcement — which simply
+ignored it and rendered the body count alone.
+
+**Root cause**: the announcement was written against the death/round counters and never
+updated when winner derivation was added for the fight log, so the one surface players
+actually read during a fight was the only one that did not report the result.
+
+**Fixed**: `Ring.fightConcludes` passes the `won` contestants (name + team) into the
+`fightConcludes` event, and `announceFightConcludes` prefixes the banner with them — derived
+from the same `c.won` flags as the fight log, so the banner can never disagree with the
+recorded result. Handles one winner (`🏆 Mamu wins!`), a team win under the `last-team`
+victory mode used by Common Cause and House War (`🏆 Alliance wins! (Mamu, Rivian)`),
+multiple unaffiliated winners, and draws (no winner line).
+
+Covered by `announcements/fightConcludes.test.ts` (all five shapes plus round-word
+pluralisation) and an end-to-end assertion in `ring/index.test.ts` that runs a real
+`ring.fight()` and checks the winner reaches the **published** banner text, not just the
+contestant flags.
+
+**Status**: Fixed.

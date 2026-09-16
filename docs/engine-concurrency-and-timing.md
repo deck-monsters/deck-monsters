@@ -29,6 +29,17 @@ continuation path to `doAction` (there are several: played, invalid card, play
 error, end-of-deck), give it the same pacing treatment as its siblings — in
 skip mode use `queueMicrotask`/resolved promise, otherwise a real timer.
 
+**The same invariant applies to cards that play other cards.** `Random Play`
+(draws a card) and `Pick Pocket` (clones an opponent's) put a second card into
+play within one turn. They must route it through `playNestedCard`
+(`cards/helpers/nested-play.ts`), which applies the same `veryShortDelay(round)`
+beat and emits a narration line explaining the chain. Calling `inner.play(...)`
+directly — which is what they originally did — emits the inner card's full
+ten-line announcement immediately after the outer card's, so a Random Play →
+Pick Pocket → Delayed Hit chain dumps three card boxes into the feed inside one
+card's window, and reads as the same monster taking three turns in a row (#89).
+Any future card that plays another card belongs on this helper.
+
 Note: the fight is a promise/timer chain, **not** awaited by anything in the
 server. `Ring.fightTimer` fires `fight()` from a `setTimeout` completely
 outside the server's serialization lanes (below). Fights interleave with
