@@ -47,6 +47,19 @@ const workshopMock = vi.hoisted(() => ({
   refresh: vi.fn(async () => undefined),
 }));
 
+// WorkshopView resolves the room's name for AppShell directly from `room.info`, the way
+// FightLogView and LeaderboardView do, rather than through useDeckWorkshop — see the
+// comment in the view for why. That makes the tRPC client a dependency of this render.
+vi.mock('../lib/trpc.js', () => ({
+  trpc: {
+    room: {
+      info: {
+        useQuery: () => ({ data: { name: workshopMock.roomName } }),
+      },
+    },
+  },
+}));
+
 vi.mock('../hooks/useDeckWorkshop.js', () => ({
   useDeckWorkshop: () => workshopMock,
 }));
