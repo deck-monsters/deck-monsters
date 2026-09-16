@@ -2,8 +2,8 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Active — three open items from the September 2026 live-play pass, plus ten
-open items (#98–#107) from the September 16 2026 mobile UI pass triaged at the bottom of
+**Status**: Active — three open items from the September 2026 live-play pass, plus eleven
+open items (#98–#108) from the September 16 2026 mobile UI pass triaged at the bottom of
 this doc. Everything earlier is resolved; see [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for
 the full archive (#3, #51–#58, #59–#73, #74–#85, #86–#97).
 
@@ -80,7 +80,7 @@ turn banner down, but it is the one place the feed still starts as a wall.
 
 ## September 16 2026 mobile UI pass — triage (OPEN, none fixed yet)
 
-Ten findings from eight iPhone screenshots of deck-monsters.com, saved alongside this doc in
+Eleven findings from eight iPhone screenshots of deck-monsters.com, saved alongside this doc in
 [`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). This section is the analysis
 only — **no code was changed**. #98–#101 are layout/rendering; #102–#106 are the *content* of the messages themselves —
 what they say, whether it is true, and whether one event produces one message.
@@ -305,40 +305,77 @@ not enumerate drops those monsters from the line.
 **Fix**: build the sentence from all participants, or append a remainder clause, so the
 subtitle always accounts for everyone named in the title.
 
-### 107. Nothing marks a restart in the feed, so unrelated fights run together — OWNER-REQUESTED
+### 107. Nothing marks a break in the feed, so unrelated sessions run together — OWNER-DESIGNED
 
 Visible in `02-ring-clipped-prose.png`, where a stat card ending `Battles fought: 0 /
 Battles won: 0` sits directly above an unrelated Minotaur arrival with 95 battles behind
 it. Two monsters from two different sessions, abutting with nothing between them.
 
-A restart is a real discontinuity, not just a quiet patch: the fight loop is a
-promise/timer chain (`docs/engine-concurrency-and-timing.md` §1) and **does not survive a
-process restart**, so a fight can stop mid-round and the next thing in the feed is
-whatever happened after the room reloaded.
+**A timestamp-gap divider was proposed and rejected — record why, so it is not
+re-proposed.** The idea was to draw a rule between any two events more than N minutes
+apart. It does not work: the boss spawn window is **20–35 minutes**
+(`BOSS_SPAWN_MIN/MAX_DELAY_MS`, `docs/boss-encounters.md` §Tuning), and a ring with nobody
+in it is silent by design. A quiet evening would be shredded into dividers, and the
+marker would come to mean "nothing happened", which is the opposite of what it is for.
 
-**Hook point**: `RoomManager._loadRoom` (`room-manager.ts:767`) restores from
-`rows[0].stateBlob` via `restoreGame`. That is the one place that knows a room came back
-from cold. Note it fires for **two** causes — a genuine server restart *and* a lazy reload
-after an idle unload (`unloadRoom`, idle sweeps). Both leave a real gap in the feed, so
-marking both is probably right, but it means the marker is "the room was asleep", not
-strictly "the server restarted".
+**The real signals are already in the client**, and each is exact:
 
-**Two designs, and the cheaper one is probably better:**
+| Divider | Signal | Where |
+|---|---|---|
+| `—— you joined here ——` | the history/live boundary | `RingPane`'s `historyApplied` effect already has `game.ringHistory` on one side and live events on the other |
+| `—— connection lost ——` | `onError` | `useRingFeed.tsx:141` — already sets `reconnecting`, already drives the "reconnecting…" banner |
+| `—— reconnected ——` | the `handshake` on the resumed subscription | `useRingFeed.tsx:115` |
 
-- **Server-emitted marker.** Publish a `system` event on restore-from-blob. Accurate about
-  *why* the gap exists. Costs: must be persisted or it will not survive the very reload it
-  documents; it also goes to Discord, which has no scrollback problem to solve; and it only
-  marks restarts from the day it ships.
-- **Client-side gap divider.** Events already carry timestamps, and `RingPane` already
-  merges history with live events. Render a rule between any two consecutive events more
-  than N minutes apart. No engine change, no new persisted event, **works retroactively on
-  all existing history**, fixes idle gaps and overnight gaps with the same rule, and lives
-  in the only surface that actually has the problem. Costs: it says "time passed", not
-  "the game restarted".
+No inference, no threshold to tune, and each marks something that genuinely happened to
+*this reader*.
 
-Doing the client-side divider first is the recommendation; add the server marker only if
-naming the *cause* turns out to matter.
+**Refinement worth taking: bracket the events you missed.** On reconnect the client
+re-subscribes with a resume cursor (`setSubLastEventId(latestTrackedEventIdRef.current)`)
+and the server replays from it. The handshake arrives *before* that replay, so a
+`reconnected` marker drawn at handshake time would sit above events that happened during
+the outage. Putting it *after* the replayed batch instead makes the pair read:
+
+```
+—— connection lost ——
+     … the fights you missed, replayed …
+—— reconnected ——
+```
+
+which is both chronologically true and more useful — it tells the reader exactly which
+messages they did not watch live. This is cheap because
+`getEventsSinceForRingFeed` (`room-manager.ts:596`) already computes the replay as a
+**bounded array before streaming it**, so the count can ride along in the handshake
+payload (which already carries `ringState` and `yourUserId`) and the client can close the
+bracket after N events.
+
+**These markers are per-viewer and must not be persisted.** "You lost connection" is not
+a fact about the room, so they stay client-side, never enter `room_events`, and never
+reach Discord — which has no scrollback problem to solve.
+
+**Implementation note**: `RingPane`'s `events` is typed `GameEvent[]` and fed straight to
+Virtuoso. Markers need either a union item type or a parallel "draw a divider before this
+id" set; the union is cleaner but touches `itemContent` and the dedupe path.
 
 **Not** covered by `CatchUpBanner.tsx` — that is a dismissible overlay keyed to the
-*viewer's* `lastSeenAt`, about the reader having been away. This is about the game itself
-having stopped, and belongs inline in the feed.
+viewer's `lastSeenAt`, about the reader having been away. This is an inline divider in the
+feed itself.
+
+### 108. Nothing watches for the heartbeat stopping — VERIFIED
+
+Prerequisite for #107's `connection lost` divider, and a live bug in its own right.
+
+The server sends `heartbeat` keep-alive events and the client discards them
+(`useRingFeed.tsx:125`, `if (event.type === 'heartbeat') return;`). **Nothing tracks their
+absence** — there is no watchdog timer anywhere in the hook. So `connected` only flips
+false when the transport itself raises `onError`.
+
+A connection that dies silently — the common case when a phone or iPad is backgrounded,
+or on a network that blackholes rather than resets — therefore leaves the app believing it
+is connected, showing no "reconnecting…" banner, and quietly missing events until
+something else forces an error. The heartbeat exists precisely to make this detectable and
+is currently being thrown away.
+
+**Fix**: record the last heartbeat timestamp and treat "no heartbeat for >2× the server's
+interval" as a disconnect, driving the same `setConnected(false)` / `setReconnecting(true)`
+path as `onError`. Improves the existing banner immediately, and #107's divider depends on
+the drop being noticed at all.
