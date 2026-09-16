@@ -2,17 +2,24 @@ export const ONE_MINUTE = 60000;
 
 type DelayKind = 'very_short' | 'short' | 'medium' | 'long';
 
-// Default pacing values (roughly doubled from legacy) to make ring fights easier
-// to follow in live feeds:
-// - very_short: 2000–4000ms (midpoint 3000)
-// - short:      3000–6000ms (midpoint 4500)
-// - medium:     4000–8000ms (midpoint 6000)
-// - long:       6000–12000ms (midpoint 9000)
+// Default pacing values, tuned so a live ring feed can actually be read on a phone.
+//
+// Raised ~1.7x from the previous set (3000/4500/6000/9000) after watching real
+// games: a single card play emits 5–7 narration lines *plus* a ten-line ASCII card
+// box, so at 3s card-to-card a card's full resolution filled a phone screen faster
+// than it could be read. Each kind keeps its [⅔·mid, 4/3·mid] sampling window.
+// - very_short: 3400–6800ms (midpoint 5100) — card to card
+// - short:      5100–10200ms (midpoint 7650) — round to round
+// - medium:     6800–13600ms (midpoint 10200)
+// - long:       10200–20400ms (midpoint 15300)
+//
+// Every value is overridable per-kind via the DECK_MONSTERS_*_DELAY_MIDPOINT_MS /
+// _CAP_MS env vars, so pacing can be dialled live without a deploy.
 const DEFAULT_MIDPOINTS: Record<DelayKind, number> = {
-	very_short: 3000,
-	short: 4500,
-	medium: 6000,
-	long: 9000,
+	very_short: 5100,
+	short: 7650,
+	medium: 10200,
+	long: 15300,
 };
 
 const MIDPOINT_ENV: Record<DelayKind, string> = {
@@ -129,7 +136,10 @@ export const mediumDelay = (round = 1): number =>
 export const longDelay = (round = 1): number =>
 	delayFor('long', round);
 
-const DEFAULT_SUB_EVENT_MS = 1000;
+// Sub-event pacing within a single card play (roll → hit → damage → death). Raised
+// from 1000ms alongside the between-beat midpoints above: these are the lines that
+// actually carry the fight's detail, so they were the ones scrolling past unread.
+const DEFAULT_SUB_EVENT_MS = 1700;
 
 export const subEventDelay = (): Promise<void> => {
 	if (skip()) return Promise.resolve();

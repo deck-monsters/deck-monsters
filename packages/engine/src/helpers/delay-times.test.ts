@@ -33,14 +33,16 @@ describe('delay-times', () => {
 		}
 	});
 
-	it('keeps default ranges unchanged when no env overrides are set', () => {
+	it('samples the default ranges from the shipped midpoints when no env overrides are set', () => {
+		// Defaults are 5100 / 7650 (raised ~1.7x so live feeds are readable on a phone);
+		// each range is [⅔·midpoint, 4/3·midpoint].
 		Math.random = () => 0;
-		expect(veryShortDelay()).to.equal(2000);
-		expect(shortDelay()).to.equal(3000);
+		expect(veryShortDelay()).to.equal(3400);
+		expect(shortDelay()).to.equal(5100);
 
 		Math.random = () => 0.999999;
-		expect(veryShortDelay()).to.equal(4000);
-		expect(shortDelay()).to.equal(6000);
+		expect(veryShortDelay()).to.equal(6800);
+		expect(shortDelay()).to.equal(10200);
 	});
 
 	it('uses midpoint env vars to derive min and max ranges', () => {
@@ -62,8 +64,9 @@ describe('delay-times', () => {
 		process.env.DECK_MONSTERS_DELAY_ROUND_MAX_FACTOR = '1.2';
 
 		Math.random = () => 0;
-		// Base veryShort min is 2000ms. Round 3 => factor 1 + 0.5 * 2 = 2.0, capped to 1.2.
-		expect(veryShortDelay(3)).to.equal(2400);
+		// Base veryShort min is 3400ms (⅔ of the 5100 default midpoint). Round 3 =>
+		// factor 1 + 0.5 * 2 = 2.0, capped to 1.2 => 4080ms.
+		expect(veryShortDelay(3)).to.equal(4080);
 	});
 
 	it('returns zero delays when delay skipping is enabled', () => {
@@ -80,7 +83,9 @@ describe('delay-times', () => {
 		expect(Date.now() - start).to.be.lessThan(50);
 	});
 
-	it('subEventDelay waits ~1000ms by default when not skipping', async () => {
+	// Sets the midpoint explicitly, so this covers the env override rather than the
+	// shipped default (1700ms).
+	it('subEventDelay honours its midpoint env var when not skipping', async () => {
 		process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS = '1000';
 		Math.random = () => 0;
 		const start = Date.now();
