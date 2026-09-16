@@ -2,7 +2,7 @@
 
 **Category**: Feature / Connector  
 **Priority**: High (first connector to ship)  
-**Status**: Substantially complete — core infrastructure, event bus bridging, prompt handling, guild-room management, embed wiring, and slash command surface are implemented. Remaining: admin role support, `/preset`, slash command tests, and deployment hardening.
+**Status**: Complete — core infrastructure, event bus bridging, prompt handling, guild-room management, embed wiring, and the full slash command surface (including `/preset`) are implemented, with admin role support and slash command test coverage. Remaining: production hardening through real-world use.
 
 ## Overview
 
@@ -87,8 +87,9 @@ Additionally, the connector can support free-text commands via a `dm <command>` 
 - [x] Wire up rich embed builders — `buildMonsterCardEmbed` and `buildCardDisplayEmbed` are now called from `guild-room-subscription.ts`
 - [x] Add missing slash commands: `/sell`, `/dismiss`, `/revive`
 - [x] Handle `/explore` gracefully (exploration system is archived — returns "coming soon")
-- [ ] Add admin support — commands currently pass `isAdmin: false`; guild owner/admin role detection needed
-- [ ] Write tests for slash command handlers (`src/slash-commands/` have no test coverage)
+- [x] Add admin support — `dispatchCommand` / `dispatchFreeTextCommand` resolve the caller's room membership via `roomManager.getMemberRole` and pass `isAdmin: role === 'owner'`, matching the web path in `trpc/router.ts`
+- [x] Add `/preset` slash command — `save` / `load` / `delete` / `list` subcommands with monster and preset-name autocomplete (`src/slash-commands/preset.ts`)
+- [x] Write tests for slash command handlers — `__tests__/preset-command.test.ts` (dispatch grammar, failure path, autocomplete), plus existing `helpers.test.ts` and `room-commands.test.ts`
 - [x] Write setup/deployment docs for server admins adding the bot to their guild _(added to `docs/deployment.md` section 3)_
 
 ## Auth Integration

@@ -8,6 +8,7 @@ const HELP_TEXT = `
 **Slash Commands**
 \`/spawn [type] [name]\` — Spawn a new monster
 \`/equip [monster]\` — Equip cards onto one of your monsters
+\`/preset [save|load|delete|list]\` — Manage a monster's saved deck presets
 \`/ring [monster]\` — Send a monster into the ring to fight
 \`/explore [monster]\` — Send a monster exploring
 \`/shop\` — Visit the shop to browse items
@@ -16,9 +17,13 @@ const HELP_TEXT = `
 \`/use [item] [target]\` — Use an item on a monster or yourself
 \`/status\` — View your character and monster status
 \`/monsters\` — List all your monsters
+\`/dismiss [monster]\` — Permanently dismiss one of your monsters
+\`/revive [monster]\` — Revive a dead monster
 \`/ring-status\` — Show current ring contestants
+\`/summon-boss\` — Summon a boss into the ring
 \`/create-room [name]\` — Create a new game room
 \`/join-room [code]\` — Join a room by invite code
+\`/set-announcement-channel\` — Choose where ring events are posted
 
 **Text Commands**
 You can also type commands directly in DMs, or prefix them with \`dm\` in a server channel:
@@ -36,6 +41,10 @@ You can also type commands directly in DMs, or prefix them with \`dm\` in a serv
 \`dm look at <card|item|monster> <name>\`
 \`dm look at cards\`
 \`dm look at player handbook\`
+\`dm save preset <preset name> for <monster name>\`
+\`dm load preset <preset name> on <monster name>\`
+\`dm delete preset <preset name> for <monster name>\`
+\`dm look at presets\`
 `.trim();
 
 export const help: SlashCommand = {

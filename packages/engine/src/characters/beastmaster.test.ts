@@ -184,6 +184,59 @@ describe('characters/beastmaster', () => {
 		expect(beastmaster.getPresets('Stonefang')).to.deep.equal({});
 	});
 
+	it('resolves preset names case-insensitively across connectors', async () => {
+		// The text command parser lowercases the whole command, while the web
+		// workshop passes presetName verbatim. A preset saved as "Aggro" in the
+		// workshop used to be unreachable from `load preset aggro on ...`.
+		const beastmaster = new Beastmaster();
+		const monster = makeMonster('Stonefang', [makeCard('Hit'), makeCard('Heal')]);
+		beastmaster.monsters = [monster as any];
+
+		await beastmaster.savePreset({
+			channel: channelStub,
+			presetName: 'Aggro',
+			monsterName: 'Stonefang',
+		});
+
+		monster.cards = [];
+		beastmaster.deck = [makeCard('Hit'), makeCard('Heal')];
+		const loadResult = await beastmaster.loadPreset({
+			channel: channelStub,
+			presetName: 'aggro',
+			monsterName: 'Stonefang',
+		});
+		expect(loadResult.equipped).to.equal(2);
+
+		await beastmaster.deletePreset({
+			channel: channelStub,
+			presetName: 'AGGRO',
+			monsterName: 'Stonefang',
+		});
+		expect(beastmaster.getPresets('Stonefang')).to.deep.equal({});
+	});
+
+	it('re-saving under different casing updates the existing preset in place', async () => {
+		const beastmaster = new Beastmaster();
+		const monster = makeMonster('Stonefang', [makeCard('Hit')]);
+		beastmaster.monsters = [monster as any];
+
+		await beastmaster.savePreset({
+			channel: channelStub,
+			presetName: 'Aggro',
+			monsterName: 'Stonefang',
+		});
+		monster.cards = [makeCard('Heal')];
+		await beastmaster.savePreset({
+			channel: channelStub,
+			presetName: 'aggro',
+			monsterName: 'Stonefang',
+		});
+
+		const presets = beastmaster.getPresets('Stonefang') as Record<string, string[]>;
+		expect(Object.keys(presets)).to.deep.equal(['Aggro']);
+		expect(presets.Aggro).to.deep.equal(['Heal']);
+	});
+
 	it('returns skipped cards when loading an incomplete preset', async () => {
 		const beastmaster = new Beastmaster();
 		const monster = makeMonster('Stonefang', [makeCard('Hit'), makeCard('Heal')]);

@@ -1,5 +1,11 @@
 import type { registerHandler } from './index.js';
 
+// The preset-name capture is greedy so the LAST separator splits the command.
+// With a lazy capture, `save preset tank for bosses for Stonefang` parsed as
+// preset "tank" / monster "bosses for Stonefang". A separator word is far more
+// likely inside a player-chosen preset name than inside a monster's given name,
+// which is the single trailing token, so splitting on the last one is correct.
+
 const cleanMonsterName = (monsterName?: string): string | undefined => {
 	if (!monsterName || monsterName === 'monster') return undefined;
 	return monsterName.trim().replace(/^monster\s+/i, '');
@@ -7,7 +13,7 @@ const cleanMonsterName = (monsterName?: string): string | undefined => {
 
 const cleanPresetName = (presetName?: string): string => (presetName ?? '').trim();
 
-const SAVE_PRESET_REGEX = /save preset (.+?) for (?:a )?(.+?)$/i;
+const SAVE_PRESET_REGEX = /save preset (.+) for (?:a )?(.+?)$/i;
 function savePresetAction({ channel, character, game, isDM, results }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));
@@ -24,7 +30,7 @@ function savePresetAction({ channel, character, game, isDM, results }: any): Pro
 		.catch((err: unknown) => game.log(err));
 }
 
-const LOAD_PRESET_REGEX = /load preset (.+?) on (?:a )?(.+?)$/i;
+const LOAD_PRESET_REGEX = /load preset (.+) on (?:a )?(.+?)$/i;
 function loadPresetAction({ channel, character, game, isDM, results }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));
@@ -41,7 +47,7 @@ function loadPresetAction({ channel, character, game, isDM, results }: any): Pro
 		.catch((err: unknown) => game.log(err));
 }
 
-const DELETE_PRESET_REGEX = /delete preset (.+?) for (?:a )?(.+?)$/i;
+const DELETE_PRESET_REGEX = /delete preset (.+) for (?:a )?(.+?)$/i;
 function deletePresetAction({ channel, character, game, isDM, results }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));

@@ -1363,3 +1363,42 @@ That path is **114 characters**. Fastify’s default `maxParamLength` is **100**
 **Fixed**: server bootstrap uses `createFastifyOptions` with `routerOptions.maxParamLength: 5000` (official `@trpc/server` Fastify adapter guidance). Documented in `docs/deployment.md` troubleshooting. Regression coverage in `packages/server/src/fastify-batch-path.test.ts` (default Fastify 404s the Terminal path; configured options serve it).
 
 **Status**: Fixed.
+
+---
+
+### 87. Presets saved in the web workshop were unreachable from text / Discord commands — FIXED
+
+Preset names reached the engine with two different casings depending on the connector:
+
+- The text command parser lowercases the **entire** command string (`commands/index.ts` — `command = command.trim().toLowerCase()`), so `load preset Aggro on Stonefang` arrived as `aggro`.
+- The web workshop calls `game.savePreset` through tRPC, which passes `presetName` **verbatim**, so a preset created there was stored under the key `Aggro`.
+
+`loadPreset` and `deletePreset` then looked the name up with an exact, case-sensitive key test (`presets[trimmedName]` / `hasOwnProperty`). A preset saved as `Aggro` in the workshop therefore answered *"No preset named "aggro" exists for Stonefang"* from a DM or Discord — the preset was visible in `look at presets` but could never be loaded or deleted from a chat connector. Saving the same name from both surfaces also produced two near-duplicate presets (`Aggro` and `aggro`) that each counted against the `MAX_PRESETS` cap.
+
+**Root cause**: preset keys are player-authored free text, but one connector normalizes case and the other does not — so storage keys and lookup keys came from different namespaces. The engine is the only shared layer, so the reconciliation belongs there rather than in either connector.
+
+**Fixed**: a private `resolvePresetKey` helper on `Beastmaster` resolves a requested name to the key it is actually stored under, comparing with the existing `normalize` (trim + lowercase). `loadPreset` and `deletePreset` resolve through it; `savePreset` reuses a case-insensitively matching existing key so re-saving under different casing updates the preset in place instead of creating a duplicate. Stored keys keep their original casing for display.
+
+Covered by two tests in `characters/beastmaster.test.ts` (cross-connector save/load/delete casing round-trip; re-save under different casing updates in place).
+
+**Status**: Fixed.
+
+---
+
+### 88. Preset commands mis-parsed preset names containing the separator word — FIXED
+
+The preset text commands captured the preset name lazily:
+
+```
+/save preset (.+?) for (?:a )?(.+?)$/i
+```
+
+Because both groups were non-greedy, the **first** separator split the command. `save preset tank for bosses for Stonefang` parsed as preset `tank` / monster `bosses for Stonefang` — the monster lookup then failed, and the player got a monster-choice prompt or an error for a command that read perfectly well. `load preset hold on on Stonefang` failed the same way on ` on `.
+
+**Root cause**: the grammar is ambiguous when the player's preset name contains the separator, and lazy matching resolves that ambiguity in the wrong direction. The monster name is always the single trailing token, whereas a preset name is arbitrary player-authored text — so the **last** separator is the correct split point, not the first.
+
+**Fixed**: the preset-name group is now greedy (`(.+)`) in `SAVE_PRESET_REGEX`, `LOAD_PRESET_REGEX`, and `DELETE_PRESET_REGEX`, so the trailing monster group claims only the final segment. A comment in `commands/presets.ts` records why, so the lazy form is not "tidied" back in.
+
+Covered by a regression test in `commands/card-management.test.ts` asserting both the ` for ` and ` on ` cases split on the last separator.
+
+**Status**: Fixed.

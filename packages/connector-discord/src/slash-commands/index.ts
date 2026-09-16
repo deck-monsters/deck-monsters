@@ -13,6 +13,7 @@ import { spawn } from './spawn.js';
 import { summonBoss } from './summon-boss.js';
 import { ring } from './ring.js';
 import { equip } from './equip.js';
+import { preset } from './preset.js';
 import { explore } from './explore.js';
 import { shop } from './shop.js';
 import { buy } from './buy.js';
@@ -47,6 +48,7 @@ export function loadCommands(): Map<string, SlashCommand> {
 		summonBoss,
 		ring,
 		equip,
+		preset,
 		explore,
 		shop,
 		buy,

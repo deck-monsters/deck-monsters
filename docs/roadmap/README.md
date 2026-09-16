@@ -1,6 +1,6 @@
 # Deck Monsters — Roadmap
 
-**Last updated**: April 2026
+**Last updated**: September 2026
 
 This directory tracks all planned, active, and completed work on the Deck Monsters revival.
 Each document covers one area; this README is the authoritative index of status and priority.
@@ -22,7 +22,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
 | [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | ✅ Archive — all audit items resolved |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
-| [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | 🔧 Active — deployed, not heavily used; admin role + tests remaining |
+| [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
@@ -44,7 +44,7 @@ Everything below shipped and is not expected to need revisiting:
 - **Hosting architecture** — Drizzle ORM + tRPC API + Fastify server + Docker multi-stage build; deployment docs complete
 - **Auth** — Supabase Auth + JWT validation; `user_connectors` table; Discord auto-creation; web email/password; Google OAuth; Discord OAuth — all live
 - **RoomManager** — lazy load/unload, invite codes, idle room sweeps, room-scoped character data
-- **Discord connector** — slash commands (`/spawn`, `/ring`, `/equip`, `/shop`, `/buy`, `/sell`, `/use`, `/status`, `/monsters`, `/dismiss`, `/revive`, `/ring-status`, `/create-room`, `/join-room`, `/help`), event bus bridging, button/select-menu prompts, guild-room mapping, embed rendering
+- **Discord connector** — slash commands (`/spawn`, `/ring`, `/equip`, `/preset`, `/shop`, `/buy`, `/sell`, `/use`, `/status`, `/monsters`, `/dismiss`, `/revive`, `/ring-status`, `/summon-boss`, `/create-room`, `/join-room`, `/set-announcement-channel`, `/help`), event bus bridging, button/select-menu prompts, guild-room mapping, embed rendering, admin role detection (guild room owner → `isAdmin`), slash command test coverage
 - **Web app** — all three phases complete and live at deck-monsters.com: terminal aesthetic, ring pane, console pane, inline choices, quick-action suggestions, responsive layout, tab shortcuts, room lobby, room settings, account page, theme picker (phosphor + amber + CRT toggle), mobile input dock, accessibility pass, reduced-motion/contrast support; `apps/web-legacy` removed
 - **Ring feed timestamps** — `timeago.js` integration, absolute-time hover tooltips, key-event markers, opt-in toggle in Account settings
 - **Leaderboard** — `room_player_stats` / `room_monster_stats` tables, `FightStatsSubscriber`, tRPC procedures, win-streak tracking, web leaderboard page
@@ -52,31 +52,23 @@ Everything below shipped and is not expected to need revisiting:
 - **Card workshop** — full card management shipped: unequip/move commands, preset save/load/delete, drag-and-drop web workshop at `/workshop`
 - **Battle history persistence** — stored in `options.battles`, capped at 20, survives restarts
 - **Boss encounters** — player boss summoning (3 per rolling 24h, per room) and Ring Events: random encounter modifiers that trigger multi-boss gauntlets, free-for-alls, player alliances, and team battles by surfacing the engine's existing team/targeting machinery. `victoryMode: 'last-team'` for Common Cause and House War: combat ends when one faction survives and all survivors win. Centralized activation (`Ring.activateRingEvent`), quorum-drop event clearing, free-for-all centralized in `getTarget`, contestant-level XP team overrides, and restart-gap fix for the boss summon quota (`bossSummonsPending`). Documented in [`docs/boss-encounters.md`](../boss-encounters.md)
-- **Bug fixes** — all tracked audit items resolved; see `10b-bugs-fixed.md` for the archive, including DMG/CARDS content differentiation (#3), batch-equip UX (#19), per-room card shop scoping (#26), boss-sentinel leaderboard fixes (#27–#33), combat/event findings (#34–#50), the 2026-08-03 audit fixes (#51–#58, #59–#63, #64, #65–#69, #70–#73, #74–#85), and Fastify tRPC batch `maxParamLength` 404s (#86).
+- **Bug fixes** — all tracked audit items resolved; see `10b-bugs-fixed.md` for the archive, including DMG/CARDS content differentiation (#3), batch-equip UX (#19), per-room card shop scoping (#26), boss-sentinel leaderboard fixes (#27–#33), combat/event findings (#34–#50), the 2026-08-03 audit fixes (#51–#58, #59–#63, #64, #65–#69, #70–#73, #74–#85), Fastify tRPC batch `maxParamLength` 404s (#86), and the preset casing / parsing fixes (#87–#88).
 
 ---
 
 ## Active Work — In Order of Priority
 
-Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. `10-bug-fixes.md` has no remaining active items.
+Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too. `10-bug-fixes.md` has no remaining active items.
 
-### 1. Discord connector polish (05-discord-connector.md)
-
-The connector is deployed but has not been heavily used or tested in production. Remaining work before it can be considered solid:
-
-- Admin role support — map Discord guild owner/admin role → `isAdmin: true` in commands; currently hardcoded `false`
-- Slash command integration tests
-- `/preset` command for saved deck presets (the engine support exists; needs the slash command wired up)
-
-### 2. Balance & mechanics (11-balance-and-mechanics.md)
+### 1. Balance & mechanics (11-balance-and-mechanics.md)
 
 Design doc is ready. Blocked on a battle simulation harness for safe regression testing. Key items: crit fail for all cards, stat variance reform, initiative rolls, saving throws. Start by building the sim harness, then iterate.
 
-### 3. New content backlog (12-new-content-backlog.md)
+### 2. New content backlog (12-new-content-backlog.md)
 
 New cards (10+ designs documented), two new monster types (Time Lord / Wizard, Bureaucrat / Cleric), equipment slots, adventures/job board, tournaments. Post-launch, driven by player demand.
 
-### 4. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
+### 3. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
 
 A fun post-launch enhancement: a retro SNES theme that layers pixel art fight animations on top of the text ring feed. All other themes stay clean and text-only — this is pure progressive enhancement. The animation module only loads when the SNES theme is active, so there's no cost for everyone else. Monster sprites (one idle + attack + hit + faint per monster type) can be generated with PixelLab and refined in Aseprite. See `docs/pixel-art-animations-in-js.md` for the full technical reference.
 
