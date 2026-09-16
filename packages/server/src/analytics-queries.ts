@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, lte, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte, lt, or, sql } from 'drizzle-orm';
 
 import type { Db } from './db/index.js';
 import {
@@ -621,12 +621,32 @@ export function formatCatchUpStreakLines(
 	return lines;
 }
 
+/**
+ * Events for one fight, as the given viewer may see them.
+ *
+ * `room_events` carries no fight id, so a fight's events are resolved by time window —
+ * every event between the summary's `startedAt` and `endedAt`. That window also catches
+ * whatever else the room published while the fight ran, including **private** events
+ * addressed to individual players, which the persister stores with their `scope` and
+ * `targetUserId`.
+ *
+ * `viewerUserId` is therefore not optional bookkeeping: without it this returned every
+ * player's private fight narration — their XP and coin awards, their prompts — to any
+ * room member who expanded that fight in the fight log. The predicate is the same one
+ * `_fetchRingFeedPage` uses for the ringFeed replay; the two must not drift.
+ */
 export async function loadFightEventsForSummary(
 	db: Db,
 	roomId: string,
+	viewerUserId: string,
 	startedAt: Date,
 	endedAt: Date
 ): Promise<GameEvent[]> {
+	const visibility = or(
+		eq(roomEvents.scope, 'public'),
+		and(eq(roomEvents.scope, 'private'), eq(roomEvents.targetUserId, viewerUserId))
+	);
+
 	const rows = await db
 		.select()
 		.from(roomEvents)
@@ -634,7 +654,8 @@ export async function loadFightEventsForSummary(
 			and(
 				eq(roomEvents.roomId, roomId),
 				gte(roomEvents.createdAt, startedAt),
-				lte(roomEvents.createdAt, endedAt)
+				lte(roomEvents.createdAt, endedAt),
+				visibility
 			)
 		)
 		.orderBy(asc(roomEvents.id));

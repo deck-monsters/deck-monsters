@@ -1779,7 +1779,13 @@ export function createRouter(roomManager: RoomManager) {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const summary = await queryFightByNumber(db, input.roomId, input.fightNumber);
 				if (!summary) throw new TRPCError({ code: 'NOT_FOUND' });
-				const events = await loadFightEventsForSummary(db, input.roomId, summary.startedAt, summary.endedAt);
+				const events = await loadFightEventsForSummary(
+					db,
+					input.roomId,
+					ctx.userId,
+					summary.startedAt,
+					summary.endedAt
+				);
 				return { summary, events };
 			}),
 

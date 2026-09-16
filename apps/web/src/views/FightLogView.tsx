@@ -121,7 +121,7 @@ export default function FightLogView() {
               </button>
               {expanded === f.fightNumber && detail.data && (
                 <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', fontFamily: 'var(--font-mono, monospace)' }}>
-                  <p style={{ marginBottom: '0.35rem', color: 'var(--color-fg-dim)' }}>Event trace (same window)</p>
+                  <p style={{ marginBottom: '0.35rem', color: 'var(--color-fg-dim)' }}>Events during this fight</p>
                   <ol style={{ maxHeight: 240, overflow: 'auto', paddingLeft: '1rem' }}>
                     {detail.data.events.map((ev) => (
                       <li key={ev.id} style={{ marginBottom: '0.25rem' }}>
