@@ -21,6 +21,14 @@ const BOSS_TEAM = 'Boss';
 // -> { monster, character, userId: 'boss', isBoss: true }
 ```
 
+> **The generated owner is never shown to players.** `randomCharacter` gives a boss a
+> plausible-looking beastmaster name, and the announcement layer used to credit it — so
+> every boss arrival named a player who does not exist, and a timer-spawned boss claimed a
+> player had sent it in when nobody had. Boss announcements now credit the house instead
+> (`RING_PATRON` in `constants/lore.ts`, rendered `👑 The Editor`), and the ring roster
+> reports `owner: null` for a boss. See `docs/roadmap/10b-bugs-fixed.md` #102. The
+> generated character itself is unchanged — it still carries the boss's stats and team.
+
 Boss-specific behaviour is applied in `characters/helpers/random.ts` (`randomCharacter`):
 
 - `monster.targetingStrategy = TARGET_HUMAN_PLAYER_WEAK` — bosses attack players, not bosses.

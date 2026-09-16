@@ -2,10 +2,10 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Active — three open items from the September 2026 live-play pass, plus two
-open judgement calls (#101, #104) from the September 16 2026 mobile UI pass at the bottom
-of this doc. Everything earlier is resolved; see [`10b-bugs-fixed.md`](10b-bugs-fixed.md)
-for the full archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#108).
+**Status**: Active — three open items from the September 2026 live-play pass. The
+September 16 2026 mobile UI pass is fully resolved (#98–#110). See
+[`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73,
+#74–#85, #86–#97, #98–#110).
 
 ## Active Items
 
@@ -78,77 +78,16 @@ turn banner down, but it is the one place the feed still starts as a wall.
 
 ---
 
-## September 16 2026 mobile UI pass — two open judgement calls
+## September 16 2026 mobile UI pass — all resolved
 
-Eight iPhone screenshots of a live Game Night room produced eleven findings
-(#98–#108). Nine are fixed — see [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for each root
-cause. The two below are **not defects**; both are decisions about the game's voice that
-need an owner, and the research is recorded so neither has to be re-derived.
+Eight iPhone screenshots of a live Game Night room produced eleven findings (#98–#108),
+plus #109 and #110 found while working them. All are resolved — see
+[`10b-bugs-fixed.md`](10b-bugs-fixed.md) for each root cause, including the two rejected
+designs worth not re-proposing: a timestamp-gap feed divider (the 20–35 min boss spawn
+window makes a long pause the feed's normal resting state) and reusing "dismissed" for a
+ring exit (it is an existing command, permanent and legal only on dead monsters).
 
 Screenshots: [`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/).
-
-### 101. Turn-banner glyphs render as tofu boxes — VERIFIED (codepoint identified)
-
-`08-fightlog-trace-tofu.png` shows a row of missing-glyph boxes before `round 1, turn 1`.
-
-**Root cause**: the banner divider is 21 dice characters —
-
-```
-\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂\n
-```
-
-`announcements/nextTurn.ts:18` and `announcements/nextRound.ts:12`. These are
-U+2680–U+2685 (DIE FACE-1 … DIE FACE-6), which **JetBrains Mono does not ship**. The
-browser falls back per-glyph and draws tofu. The count matches the screenshot exactly.
-
-**Two decisions, not one.** The rendering fix is a font fallback or a character the font
-has. But the *content* question is whether a 21-glyph divider earns its place at all: it
-wraps to two full lines on a phone, on **every turn**, immediately after #97 cut turn
-banners by 45% for exactly this reason. Deleting it is probably the better fix, and is
-the one that needs a human call — it is a deliberate piece of the game's voice.
-
-### 104. The ring-exit line does not match the command that causes it — WORDING, OWNER DECIDED THE CONSTRAINTS
-
-`06-ring-summon-sequence.png`: `Dalfi (dalfe, Cow/beef) was summoned from the ring by
-⛄ Thunder Smasher.`
-
-**Not the bug it first looked like.** "Summon" is defensible here — you summon someone
-*out* to where you are, and `summon` is one of the verbs the command itself accepts. The
-problem is narrower: `summoned from the ring` is the awkward phrasing of that idea, and it
-collides head-on with the boss `summon a boss` vocabulary in the same feed.
-
-**"Dismissed" is ruled out**, and not merely on taste. `dismiss` is an existing command
-(`DISMISS_REGEX`, `commands/monster.ts:72`) and `beastmaster.ts:1101` shows it is
-**permanent and only legal on dead monsters** — it calls `dropMonster` and announces
-`has been dismissed from your pack.` Reusing the word for a live monster stepping out of
-the ring would make a reversible move read as a permanent roster deletion.
-
-**The vocabulary already exists.** The command is
-`CALL_MONSTER_OUT_OF_THE_RING_REGEX` (`commands/monster.ts:47`) —
-`/(?:remove|call|fetch|bring|summon) (.+?) (?:from|out of) (?:the )?(?:ring|battle)/` —
-and the method is `callMonsterOutOfTheRing`. Its opposite is
-`send (.+?) (?:to|into) (?:the )?(?:ring|battle)`. So the canonical player phrasings are
-**"send X to the ring"** and **"call X out of the ring"**, and the feed should use them.
-
-Two candidates, each optimising a different thing:
-
-1. `Dalfi was called out of the ring by ⛄ Thunder Smasher.` — mirrors the command the
-   player types, so the feed teaches the command. Keeps the "called out to where you are"
-   sense the owner wanted. **Recommended.**
-2. `Dalfi left the ring at the behest of ⛄ Thunder Smasher.` — mirrors the join line
-   (`has entered the ring at the behest of …`) word for word, which is the strongest fix
-   for the matched-pair problem below.
-
-**Still open regardless of which is chosen**: joining names the species
-(`An enraged Minotaur`) and leaving names the individual (`Dalfi`), so nothing links a
-departure to the arrival it cancels. Cheapest fix is to let the leave line carry both
-(`Dalfi, a Minotaur, was called out of the ring by …`). And the two lines spell the
-beastmaster differently — leave uses `character.identity`, join builds
-`${character.icon} ${character.givenName}` by hand.
-
-**Unrelated, needs an owner answer**: the name renders as `Dalfi (dalfe, Cow/beef)`. If
-that etymology is baked into `givenName` it will follow the monster into every message,
-the roster and the leaderboard. Worth confirming it is intended.
 
 ### Observed and deliberately not filed
 

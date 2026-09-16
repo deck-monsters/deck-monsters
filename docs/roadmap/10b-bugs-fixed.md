@@ -1773,11 +1773,55 @@ footer, so it was visible in both.
 
 ---
 
-### 101 / 104 — still open
+### 101. The turn banner opened with 21 unrenderable glyphs — FIXED
 
-The `⚀ ⚁ ⚂` turn-banner divider (#101) and the ring-exit wording (#104) are both
-judgement calls about the game's voice. They stay in `10-bug-fixes.md` with the research
-behind each, including the codepoints and the reason "dismissed" cannot be reused.
+Both `nextTurn.ts` and `nextRound.ts` opened with
+`⚀ ⚁ ⚂ ⚃ ⚄ ⚅ …` — 21 characters in U+2680–U+2685 (DIE FACE-1 … DIE FACE-6).
+
+**Root cause**: JetBrains Mono does not ship die-face glyphs, so the browser fell back
+per-glyph and drew tofu boxes. At ~41 characters the row also wrapped to two lines on a
+phone — on **every turn**, one change after #97 cut turn banners by 45% for exactly that
+reason.
+
+**Fixed**: 🎲 is an *emoji*, not a symbol-block codepoint, so it renders from the system
+emoji font. The dice motif survives at one glyph instead of twenty-one:
+`🎲  round 1, turn 1`. Rounds are rarer and get the heavier beat — a rule plus the 🏁
+flag. `banners.test.ts` asserts no dice-face codepoint survives in either banner and that
+no banner line exceeds a phone width.
+
+**Status**: Fixed.
+
+---
+
+### 104. The ring-exit line described the opposite of what happened — FIXED
+
+`Dalfi was summoned from the ring by ⛄ Thunder Smasher.` You summon something *in*.
+
+**Rejected, and worth recording**: "dismissed". `dismiss` is an existing command
+(`DISMISS_REGEX`) and `beastmaster.ts` shows it is **permanent and legal only on dead
+monsters** — it calls `dropMonster`. Reusing the word for a live monster stepping out of
+the ring would make a reversible move read as a permanent roster deletion.
+
+**Fixed** as part of a wider reframe, because the line could not be settled alone. The
+player side read as livestock handling — a beastmaster with a *pack*, *sending* monsters
+in. The arrival and departure lines are now a deliberate **minimal pair**: same sentence
+shape, opposite consent.
+
+| | |
+|---|---|
+| player, in | `A<adj> <type> answers the call of <icon> <name>.` |
+| player, out | `<name> is called back from the ring by <identity>.` |
+| boss, in | `A<adj> <type> enters the ring at the behest of 👑 The Editor.` |
+| boss, out | `<name> is recalled to the gates by 👑 The Editor.` |
+
+A player's monster comes willingly and is called back; a boss is commanded. "Call" is one
+verb across both halves of the player pair, and it is the verb the command itself uses
+(`call <monster> out of the ring`), so the feed teaches the command.
+
+Also dropped the last of the ownership language: a dead monster is `laid to rest` rather
+than `dismissed from your pack`.
+
+**Status**: Fixed.
 
 ---
 
@@ -1796,12 +1840,21 @@ Worst for a **timer-spawned** boss, where no player was involved at all and the 
 told the room someone had sent it in. The screenshot is exactly that case: `A boss will
 enter the ring in 2 minutes` immediately precedes it, so it is the 20–35 min spawn timer.
 
-**Fixed**: `announceContestant` branches on `contestant.isBoss` and drops the owner clause
-entirely. A boss simply enters the ring; the roster's `BOSS` tag and the card's
-`Team: Boss` already say what it is, and who summoned a *player*-summoned boss is now said
-by the summon line that precedes it (#103).
+**Fixed**, in two passes. The first branched `announceContestant` on `contestant.isBoss`
+and dropped the owner clause entirely — a boss simply entered the ring.
 
-**Status**: Fixed.
+**Superseded**: dropping the clause removed the lie but also removed the sense that
+*something* sent the boss, which is what an arrival line is for. Bosses are now credited
+to the house instead: `RING_PATRON` in `constants/lore.ts`, rendered `👑 The Editor`.
+The name is the Roman term rather than a pun — the *editor muneris* sponsored the games,
+set the programme and gave the signal, which is exactly the role. It is one constant so
+the house can be renamed in a single line.
+
+The same pass found the bug **also existed on departures**: `announceContestantLeave`
+credited the generated owner too, so a despawning boss named a beastmaster who does not
+exist. Departures branch the same way (`is recalled to the gates by 👑 The Editor`).
+
+**Status**: Fixed. Covered by `contestant.test.ts` and `contestantLeave.test.ts`.
 
 ---
 
@@ -1925,3 +1978,67 @@ Found as a prerequisite for #107 — a `connection lost` divider is only as good
 client's ability to notice the drop.
 
 **Status**: Fixed.
+
+---
+
+### 109. The fight log leaked other players' private events — FIXED
+
+Found by asking why the fight log's event trace was labelled "Event trace (same window)".
+
+**Root cause**: `room_events` carries no fight id, so a fight's events are resolved by
+**time window** — everything between the summary's `startedAt` and `endedAt`. That is what
+"same window" was hedging about. But the window also catches **private** events addressed
+to individual players, which `event-persister.ts` stores complete with their `scope` and
+`targetUserId`, and `loadFightEventsForSummary` filtered on neither.
+
+So any room member who expanded a fight in the fight log received every other player's
+private fight narration from that window — their XP and coin awards, their prompts.
+`assertMember` gated the *room*; nothing gated the events within it. Room membership is
+not entitlement to another member's private events.
+
+**Fixed**: the query now takes the viewer and applies the same visibility predicate the
+ringFeed replay uses. That predicate was duplicated in two files with a comment asking
+them not to drift; it now lives once in `db/event-visibility.ts` as `eventVisibilityFor`,
+which is where any future `room_events` query on behalf of a viewer belongs. The label is
+now "Events during this fight" — what the panel shows, rather than a hedge about how it is
+computed.
+
+Covered by `analytics-queries.fight-events.test.ts`, which walks the drizzle predicate and
+asserts it references `scope` and `target_user_id` and binds the caller — no database
+required.
+
+**Status**: Fixed. A new failure pattern for `docs/room-scoping.md`: scoped to the room
+but not to the viewer.
+
+---
+
+### 110. Fight highlights in the console — NEW FEATURE
+
+While a fight runs the ring feed scrolls past at reading pace and the console sat idle. It
+now calls out the few moments worth looking up for: natural 20s, critical failures, a hit
+that really landed, a kill, a monster fleeing. The ring still shows everything — this is
+emphasis, not a second feed, so the classifier is deliberately stingy.
+
+**Classification reads payloads, never prose.** Matching flavour text would break the
+moment anyone rewrote a string. Rolls already carried the engine's own `strokeOfLuck` /
+`curseOfLoki` flags; deaths and flights have their own event types.
+
+**Hits did not.** `announceHit` published `payload: {}` — the one number the event is
+*about* was recoverable only by parsing the sentence. It now carries `damage`, `prevHp`,
+`hp`, `maxHp`, `bloodied`, `monsterName` and `assailantName`.
+
+**A big hit is judged against the attacker, not the target.** The first rule used a ratio
+of the *target's* max health and rewarded the wrong thing: a level 6 boss chipping a
+beginner clears a quarter of their health constantly, while a beginner landing the best
+hit of its short life on that boss barely moves the bar. A hit is big when it is at least
+1.5× that attacker's own running average this session, with an absolute floor so a ratio
+cannot make 1 → 2 damage a "150% outlier". The baseline is session-scoped and in memory:
+the comparison should be against what *this viewer* has watched, and a stale
+cross-session average would judge the opening hits of a fight against monsters long gone.
+
+**Presentation**: the tag stacks *above* its line. Inline, tags of differing widths
+(`NAT 20` / `CRIT FAIL` / `BIG HIT`) each pushed their text to a different left edge, and
+a monospace feed's whole look is the straight left column — the ragged result read as
+broken rather than emphasised.
+
+**Status**: Shipped.
