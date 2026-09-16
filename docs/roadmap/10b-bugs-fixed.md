@@ -1687,3 +1687,241 @@ live hp/ac preserved, full card again on monster switch, team shown) and two
 `monsterTurnLine` cases.
 
 **Status**: Fixed.
+
+---
+
+## September 16 2026 mobile UI pass (#98–#108)
+
+Eight iPhone screenshots of a live Game Night room, triaged in two passes: first the
+layout, then what the messages actually said. Screenshots are kept in
+[`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). #101 and #104 remain open in
+`10-bug-fixes.md` — both are judgement calls about the game's voice, not defects.
+
+Verified by tests and static render only. There is no live app in the dev container
+(`pnpm setup:local` needs Docker/Supabase), so none of these was observed in a browser.
+
+---
+
+### 98. Both feeds clipped their own right-hand edge — FIXED
+
+The console read `You summoned 🐗 Seeskane Orcbane — a level Minotaur!` with the level
+number simply gone, and the ring feed lost the last word of long lines
+(`…has entered the ring at the`). It looked like missing data. It was layout.
+
+**Root cause**: `.event-feed` is the class handed to `<Virtuoso>`, so it lands on the
+library's **scroller**, and it carried `padding: var(--pane-padding)`. react-virtuoso
+styles that scroller `position: relative` and nests a viewport inside it with
+`position: absolute; top: 0; width: 100%` (`dist/index.mjs:2503` and `:2613`). For an
+absolutely positioned box the containing block is the ancestor's **padding box**, so
+`width: 100%` resolved to *content + left padding + right padding* — 2 × 0.75rem wider
+than the visible area — and `overflow-x: hidden` sliced the overflow away silently.
+
+The left gutter looked right throughout, which is what made it read as a data bug: an
+abspos box with no `left` starts at its static position, *inside* the padding. Only the
+right-hand side ran over.
+
+**Fixed**: padding moved to the `<ol>` (`.event-feed-list`), a normal-flow child that
+measures against the content box, with `.event-feed-empty` covering the empty placeholder
+that renders outside the list. `feed-layout.test.ts` asserts `.event-feed` declares no
+padding and that the gutters live on the list, with the reasoning inline so a future
+change does not quietly reintroduce it.
+
+**Also fixed alongside**: `ConsolePane` built its Virtuoso `List` component inline in the
+`components` prop, so every render produced a new component identity and remounted the
+entire virtualized list.
+
+**Status**: Fixed.
+
+---
+
+### 99. Engine markup was printed literally — FIXED
+
+The fight log's event trace showed `*It's Santi Brainer's turn.*` with the asterisks and
+a bare ``` fence.
+
+**Root cause**, in two layers:
+
+1. `FightLogView.tsx` rendered `ev.text.slice(0, 200)` as a plain text node. Every other
+   surface routes engine text through `utils/format-event-text.tsx`; the fight log was
+   never wired to it.
+2. That formatter only ever handled ``` fences. The engine writes for Slack and emits
+   `*bold*` and `_italic_` constantly — **every roll** is `rolled _13 +4 on 1d20_` — so
+   those delimiters were being printed verbatim in the ring and console feeds too. The
+   fight log made an existing gap visible rather than creating one.
+
+**Fixed**: the formatter now renders both inline forms, deliberately **not** inside fenced
+blocks, where `*` and `_` are ASCII card-box drawing characters rather than formatting. A
+delimiter touching a word character is left alone so `room_player_stats` keeps its
+underscores; boundaries are checked either side of the match rather than with lookbehind,
+which Safari only gained in 16.4 and the players are on iPads.
+
+`truncateEventText` replaces the raw slice: the old one cut mid-word
+(`A powerful, gold, deser…`) and could cut *inside* a ``` fence, leaving it unbalanced so
+everything after it rendered as one runaway card panel.
+
+**Status**: Fixed. 10 cases in `format-event-text.test.tsx`.
+
+---
+
+### 100. Every one-round fight read "in 1 rounds" — FIXED
+
+**Root cause**: `utils/fight-display.ts` interpolated `in ${f.roundCount} rounds` at two
+call sites with no singular branch. Shared by the fight log and the ring pane's last-fight
+footer, so it was visible in both.
+
+**Status**: Fixed via a `pluralize` helper.
+
+---
+
+### 101 / 104 — still open
+
+The `⚀ ⚁ ⚂` turn-banner divider (#101) and the ring-exit wording (#104) are both
+judgement calls about the game's voice. They stay in `10-bug-fixes.md` with the research
+behind each, including the codepoints and the reason "dismissed" cannot be reused.
+
+---
+
+### 102. Every boss arrival credited a beastmaster who does not exist — FIXED
+
+The feed said `A ferocious Weeping Angel has entered the ring at the behest of
+🎡 Gorgeous Protector.` There is no such player.
+
+**Root cause**: `announcements/contestant.ts` is the single join announcement for *every*
+contestant and rendered `${character.icon} ${character.givenName}` — the monster's owner.
+Bosses are handed a **randomly generated owner** by `characters/helpers/random.ts`
+(`randomCharacter`) under `userId: 'boss'` (`docs/boss-encounters.md` §1). So the line
+invented a plausible-looking beastmaster and attributed the boss to them.
+
+Worst for a **timer-spawned** boss, where no player was involved at all and the feed still
+told the room someone had sent it in. The screenshot is exactly that case: `A boss will
+enter the ring in 2 minutes` immediately precedes it, so it is the 20–35 min spawn timer.
+
+**Fixed**: `announceContestant` branches on `contestant.isBoss` and drops the owner clause
+entirely. A boss simply enters the ring; the roster's `BOSS` tag and the card's
+`Team: Boss` already say what it is, and who summoned a *player*-summoned boss is now said
+by the summon line that precedes it (#103).
+
+**Status**: Fixed.
+
+---
+
+### 103. A player-summoned boss was announced twice, out of order, under two names — FIXED
+
+One `summon a boss` produced:
+
+```
+An enraged Minotaur has entered the ring at the behest of 🎎 Incredible Swan.
+[ ~15-line Seeskane Orcbane stat card ]
+Tweettypography has summoned a boss into the ring!
+```
+
+Two public messages naming two different beastmasters, only one of whom is real (#102
+explains the other), with the explanation arriving last.
+
+**Root cause**: `commands/monster.ts` called `ring.spawnBoss(...)` — which runs
+`addMonster` → `announceContestant` and publishes the arrival **together with the stat
+card** — and only afterwards published `${character.givenName} has summoned a boss into
+the ring!`. Separated by a card block, the second line read as a second, unrelated summon
+rather than as the explanation for the one above it.
+
+**Fixed**: the summon line publishes first. Safe to reorder — the existing
+`canAcceptBoss()` check upstream is the only reason `spawnBoss` returns undefined, and
+nothing between them yields, so this cannot announce a summon that then fails to happen.
+`summon-boss-order.test.ts` records publish order and the spawn on one timeline and
+asserts the ordering, plus that the line is published exactly once.
+
+**Status**: Fixed.
+
+---
+
+### 105. The boss warning was the only ring line with no full stop — FIXED
+
+`announcements/bossWillSpawn.ts`. One character.
+
+**Status**: Fixed.
+
+---
+
+### 106. A three-monster fight's summary silently dropped a contestant — FIXED
+
+`#8 Everest vs Ford vs Death Blood` was summarised `Everest fled from Ford`.
+
+**Root cause**: `fightSubtitle`'s `fled` branch built its sentence from only two
+participant outcomes, `fled` and `win`. A third monster finishing with `loss` matched
+neither filter and vanished — from a summary whose own title named it.
+
+**Fixed**: any outcome the branch does not enumerate is now listed rather than filtered
+away, so the subtitle always accounts for everyone in the title.
+
+**Status**: Fixed.
+
+---
+
+### 107. Nothing marked a break in the feed, so unrelated sessions ran together — FIXED
+
+A stat card ending `Battles fought: 0` sat directly above an unrelated Minotaur arrival
+with 95 battles behind it: two sessions abutting with nothing between them.
+
+**Rejected design, recorded so it is not re-proposed**: a divider between any two events
+more than N minutes apart. The boss spawn window is **20–35 minutes**
+(`BOSS_SPAWN_MIN/MAX_DELAY_MS`) and an empty ring is silent by design, so a long pause is
+the feed's normal resting state. A gap rule would shred a quiet evening into dividers and
+come to mean "nothing happened", which is the opposite of the point.
+
+**Fixed** with three dividers, each from a signal the client already has *exactly*:
+
+| Divider | Signal |
+|---|---|
+| `you joined here` | the history/live boundary in `RingPane`'s history merge |
+| `connection lost` | the subscription's `onError` |
+| `reconnected` | the handshake on the resumed subscription |
+
+**The reconnect marker is held back rather than drawn at handshake time.** On reconnect
+the client resubscribes with a resume cursor and the server replays from it — but the
+handshake arrives *before* that replay, while the replayed events carry timestamps from
+*during* the outage. Drawing the divider immediately would put it above the very events
+the reader missed. It is instead emitted before the first event that actually postdates
+the reconnect, which brackets the gap correctly using data already on the wire, with no
+protocol change:
+
+```
+—— connection lost ——
+     … the fights you missed, replayed …
+—— reconnected ——
+```
+
+**Markers are per-viewer and never persisted.** "You lost connection" is not a fact about
+the room, so they must not enter `room_events` or reach Discord, which has no scrollback
+problem to solve. They are modelled as synthetic `GameEvent`s so they flow through the
+feed's existing dedupe and virtualization unchanged, and are only ever added by the pane,
+never by the subscription — so they cannot leak into the resume cursor.
+`shouldAppendMarker` refuses to stack two dividers in a row or open the feed with one.
+
+Not covered by `CatchUpBanner.tsx`, which is a dismissible overlay keyed to the viewer's
+`lastSeenAt` — about the reader having been away, not the game having stopped.
+
+**Status**: Fixed.
+
+---
+
+### 108. Nothing watched for the heartbeat stopping — FIXED
+
+**Root cause**: the server sends a keep-alive `heartbeat` every 20s
+(`trpc/router.ts`) and the client discarded it with
+`if (event.type === 'heartbeat') return;`. **Nothing tracked their absence** — there was
+no watchdog anywhere in `useRingFeed`. So `connected` only flipped false when the
+transport itself raised `onError`.
+
+A connection that dies silently — a backgrounded phone or iPad, or a network that
+blackholes rather than resets — therefore left the app believing it was connected: no
+"reconnecting…" banner, no resubscribe, and events quietly missed. The heartbeat exists
+precisely to make this detectable and was being thrown away.
+
+**Fixed**: any inbound frame re-arms a watchdog; 2.5× the server interval without one
+takes the same path as `onError`, resuming from the last event id rather than replaying
+from the beginning. Both paths share `handleConnectionLost` so they cannot drift.
+
+Found as a prerequisite for #107 — a `connection lost` divider is only as good as the
+client's ability to notice the drop.
+
+**Status**: Fixed.

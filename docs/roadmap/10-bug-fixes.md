@@ -2,10 +2,10 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Active — three open items from the September 2026 live-play pass, plus eleven
-open items (#98–#108) from the September 16 2026 mobile UI pass triaged at the bottom of
-this doc. Everything earlier is resolved; see [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for
-the full archive (#3, #51–#58, #59–#73, #74–#85, #86–#97).
+**Status**: Active — three open items from the September 2026 live-play pass, plus two
+open judgement calls (#101, #104) from the September 16 2026 mobile UI pass at the bottom
+of this doc. Everything earlier is resolved; see [`10b-bugs-fixed.md`](10b-bugs-fixed.md)
+for the full archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#108).
 
 ## Active Items
 
@@ -78,86 +78,14 @@ turn banner down, but it is the one place the feed still starts as a wall.
 
 ---
 
-## September 16 2026 mobile UI pass — triage (OPEN, none fixed yet)
+## September 16 2026 mobile UI pass — two open judgement calls
 
-Eleven findings from eight iPhone screenshots of deck-monsters.com, saved alongside this doc in
-[`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). This section is the analysis
-only — **no code was changed**. #98–#101 are layout/rendering; #102–#106 are the *content* of the messages themselves —
-what they say, whether it is true, and whether one event produces one message.
-Numbering continues from #97; move each item to
-`10b-bugs-fixed.md` with its root cause as it is fixed.
+Eight iPhone screenshots of a live Game Night room produced eleven findings
+(#98–#108). Nine are fixed — see [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for each root
+cause. The two below are **not defects**; both are decisions about the game's voice that
+need an owner, and the research is recorded so neither has to be re-derived.
 
-Verification status is stated per item. There is no live app in the dev container
-(`pnpm setup:local` needs Docker/Supabase), so "verified" below means *read against
-source*, never *observed in a running browser*.
-
-### 98. Feed text is clipped off the right edge of both panes — HIGH CONFIDENCE
-
-Visible in `02-ring-clipped-prose.png` ("…has entered the ring at the" — the trailing
-word is sliced by the screen edge) and `03-console-clipped-level.png`, where
-`You summoned 🐗 Seeskane Orcbane — a level Minotaur!` is missing its level number:
-the `6` is clipped, and `Minotaur!` wraps to the next line. The roster on the same
-screen reads `lvl 6`, so the number *is* in the payload. Note the asymmetry in every
-screenshot — there is clear padding on the left, and none on the right.
-
-**Root cause (verified against `react-virtuoso@4.18.4` source, not guessed).**
-`.event-feed` (`terminal.css:95`) is the class we hand to `<Virtuoso>`, so it lands on
-the library's **scroller** element, and it carries `padding: var(--pane-padding)`
-(0.75rem). Virtuoso's scroller style (`dist/index.mjs:2503`, `lr`) adds
-`position: relative`, and the viewport it nests inside it
-(`dist/index.mjs:2613`, style factory `Jt`) is:
-
-```js
-{ height: "100%", position: "absolute", top: 0, width: "100%" }
-```
-
-For an absolutely positioned box the containing block is the nearest positioned
-ancestor's **padding box**, so `width: 100%` resolves to *content width + left padding
-+ right padding*. With `left` unspecified the viewport starts at its static position
-(inside the left padding, which is why the left gutter looks right) and then runs
-`2 × 0.75rem` too wide, off the right-hand side, where `overflow-x: hidden` on the
-scroller silently cuts it. At a 16px root that is 24px — comfortably a short word or a
-digit on a phone. `height: 100%` has the same defect vertically; it is just less
-visible because that axis scrolls.
-
-**Proposed fix**: never put padding on a Virtuoso scroller. Drop the padding from
-`.event-feed` and move it onto the in-flow `<ol>` (`FeedList`, defined in both
-`RingPane.tsx` and `ConsolePane.tsx`) — a normal-flow child measures against the
-content box and is immune to this. Check the `EmptyPlaceholder` `<li>` in both panes
-still looks inset afterwards. This affects **both feeds**, since both pass
-`className="event-feed"`.
-
-**Not yet done**: confirming the rendered box widths. Worth a `renderToStaticMarkup`
-+ real-CSS harness test, or simply a regression test asserting `.event-feed` carries
-no horizontal padding, with a comment pointing at this entry.
-
-### 99. Fight-log event trace renders raw engine markup — VERIFIED
-
-`07-fightlog-trace-raw-markup.png` shows the expanded trace printing
-`*It's Santi Brainer's turn.*` with literal asterisks, and
-``plays the following monster: ``` `` with a literal fence.
-
-**Root cause**: `FightLogView.tsx:127` renders `{ev.text.slice(0, 200)}` directly as a
-text node. Every other surface routes engine text through
-`utils/format-event-text.tsx`, which strips the ``` fences into `.event-card-block`
-panels. The fight log was never wired to it.
-
-Two sub-problems worth fixing together:
-- The 200-char `slice` cuts mid-word and mid-fence (`A powerful, gold, deser…`), so a
-  truncated trace can end inside a code block.
-- `format-event-text.tsx` only handles ``` fences — it does **not** handle `*bold*` or
-  `_italic_`, despite those being all over engine output (`*It's X's turn.*`, and the
-  `_13 +4 on 1d20_` roll blocks quoted in open item 2 above). So routing the fight log
-  through it fixes the fences but leaves the asterisks. Extending the formatter is a
-  change to the main feeds too, and should be done deliberately with tests.
-
-### 100. Round count is not pluralized — VERIFIED
-
-`07-fightlog-trace-raw-markup.png`: `Dragon Blood won vs Stary in 1 rounds`.
-
-**Root cause**: `utils/fight-display.ts:64` and `:71` interpolate
-`in ${f.roundCount} rounds` with no singular branch. Both call sites need it; the
-same string feeds the ring pane's last-fight footer via `fightTitleOneLine`.
+Screenshots: [`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/).
 
 ### 101. Turn-banner glyphs render as tofu boxes — VERIFIED (codepoint identified)
 
@@ -178,68 +106,6 @@ has. But the *content* question is whether a 21-glyph divider earns its place at
 wraps to two full lines on a phone, on **every turn**, immediately after #97 cut turn
 banners by 45% for exactly this reason. Deleting it is probably the better fix, and is
 the one that needs a human call — it is a deliberate piece of the game's voice.
-
-### Observed and deliberately not filed
-
-- **`↓ Latest` sits over feed text** (`05-ring-sammael-card.png`). It is
-  `position: absolute` with `opacity: 0.9` and no backdrop, so the card box shows
-  through. Arguably intended; listed in case it is not.
-- **Roster eats 40% of a phone screen** (`01-ring-roster-boss.png`). Two contestants
-  plus the header leave a small feed window. `max-height: 40%` / 32% under
-  `max-height: 600px` is working as specified — flagging the *specification*, not a
-  defect.
-- **`boss in ~17m` vs a feed line reading `A boss will enter the ring in 2 minutes`**
-  (`06-ring-summon-sequence.png`). The feed line is historical text from an earlier
-  timer; the header is live. Not a mismatch.
-
-### 102. Every boss arrival credits a beastmaster who does not exist — VERIFIED
-
-`06-ring-summon-sequence.png`: `A ferocious Weeping Angel has entered the ring at the
-behest of 🎡 Gorgeous Protector.` There is no player called Gorgeous Protector. The same
-screen shows `02-ring-clipped-prose.png`'s `at the behest of 🎎 Incredible Swan`.
-
-**Root cause**: `announcements/contestant.ts:16` is the single join announcement for
-*every* contestant, and it renders `${character.icon} ${character.givenName}` — the
-monster's owner. Bosses are given a **randomly generated owner** by
-`characters/helpers/random.ts` (`randomCharacter`) under `userId: 'boss'`
-(`docs/boss-encounters.md` §1). So the join line invents a plausible-looking player name
-and attributes the boss to them.
-
-This is worst for a **timer-spawned** boss, where no player was involved at all: the feed
-states that a named beastmaster sent it in. `06-ring-summon-sequence.png` is exactly that
-case — `A boss will enter the ring in 2 minutes` immediately precedes it, so it is the
-20–35 min spawn timer, not a summon.
-
-**Fix**: branch in `announceContestant` on `contestant.isBoss` and use boss-appropriate
-wording with no owner clause at all (the ring already knows it is a boss — the roster
-renders a `BOSS` tag from the same data).
-
-### 103. A player-summoned boss is announced twice, out of order, under two names — VERIFIED
-
-`02-ring-clipped-prose.png` and `01-ring-roster-boss.png` are consecutive views of one
-event (countdowns `fight in 24s` then `fight in 19s`). Read together, the feed says:
-
-```
-An enraged Minotaur has entered the ring at the behest of 🎎 Incredible Swan.
-[ Seeskane Orcbane stat card ]
-Tweettypography has summoned a boss into the ring!
-```
-
-`03-console-clipped-level.png` confirms the viewer, Tweettypography, ran `summon a boss`
-and got Seeskane Orcbane. So one action produces two public messages naming **two
-different beastmasters**, only one of whom is real (#102 explains the other).
-
-**Root cause**: `commands/monster.ts` calls `ring.spawnBoss(...)` at line 339, which runs
-`addMonster` → `announceContestant` and publishes the arrival plus the full stat card.
-Only afterwards, at line 361, does it publish
-`${character.givenName} has summoned a boss into the ring!`. The line that *explains* the
-event therefore lands after the event and after a ~15-line card, which is why it reads as
-a second, unrelated summon.
-
-**Fix**: publish the summon line before `spawnBoss`, and fold the attribution into the
-arrival (#102) so one action produces one message. Note `ring.spawnBoss` is also called
-by the timer (`ring/index.ts:1548`) and by ring events (`:1479`), so the summoner clause
-belongs at the call site, not inside `spawnBoss`.
 
 ### 104. The ring-exit line does not match the command that causes it — WORDING, OWNER DECIDED THE CONSTRAINTS
 
@@ -284,98 +150,15 @@ beastmaster differently — leave uses `character.identity`, join builds
 that etymology is baked into `givenName` it will follow the monster into every message,
 the roster and the leaderboard. Worth confirming it is intended.
 
-### 105. The boss warning is the only ring line with no full stop — VERIFIED
+### Observed and deliberately not filed
 
-`announcements/bossWillSpawn.ts:13`:
-`A boss will enter the ring ${formatRelative(add(Date.now(), delay))}` — no terminal
-period, where every line around it in `06-ring-summon-sequence.png` has one. One
-character.
-
-### 106. A three-monster fight's summary silently drops a contestant — VERIFIED
-
-`07-fightlog-trace-raw-markup.png`: `#8 Everest vs Ford vs Death Blood` is summarised
-`Everest fled from Ford`. Death Blood is in the title and absent from the outcome.
-
-**Root cause**: `utils/fight-display.ts` `fightSubtitle`, the `fled` branch, builds its
-sentence from only two participant outcomes — `fled` and `win`. A third monster that
-finished with `loss` matches neither filter and vanishes. `permaDeath` (`win` + `permaDeath`)
-and `win` (`win` + `loss`) have the same shape, so any outcome combination the branch does
-not enumerate drops those monsters from the line.
-
-**Fix**: build the sentence from all participants, or append a remainder clause, so the
-subtitle always accounts for everyone named in the title.
-
-### 107. Nothing marks a break in the feed, so unrelated sessions run together — OWNER-DESIGNED
-
-Visible in `02-ring-clipped-prose.png`, where a stat card ending `Battles fought: 0 /
-Battles won: 0` sits directly above an unrelated Minotaur arrival with 95 battles behind
-it. Two monsters from two different sessions, abutting with nothing between them.
-
-**A timestamp-gap divider was proposed and rejected — record why, so it is not
-re-proposed.** The idea was to draw a rule between any two events more than N minutes
-apart. It does not work: the boss spawn window is **20–35 minutes**
-(`BOSS_SPAWN_MIN/MAX_DELAY_MS`, `docs/boss-encounters.md` §Tuning), and a ring with nobody
-in it is silent by design. A quiet evening would be shredded into dividers, and the
-marker would come to mean "nothing happened", which is the opposite of what it is for.
-
-**The real signals are already in the client**, and each is exact:
-
-| Divider | Signal | Where |
-|---|---|---|
-| `—— you joined here ——` | the history/live boundary | `RingPane`'s `historyApplied` effect already has `game.ringHistory` on one side and live events on the other |
-| `—— connection lost ——` | `onError` | `useRingFeed.tsx:141` — already sets `reconnecting`, already drives the "reconnecting…" banner |
-| `—— reconnected ——` | the `handshake` on the resumed subscription | `useRingFeed.tsx:115` |
-
-No inference, no threshold to tune, and each marks something that genuinely happened to
-*this reader*.
-
-**Refinement worth taking: bracket the events you missed.** On reconnect the client
-re-subscribes with a resume cursor (`setSubLastEventId(latestTrackedEventIdRef.current)`)
-and the server replays from it. The handshake arrives *before* that replay, so a
-`reconnected` marker drawn at handshake time would sit above events that happened during
-the outage. Putting it *after* the replayed batch instead makes the pair read:
-
-```
-—— connection lost ——
-     … the fights you missed, replayed …
-—— reconnected ——
-```
-
-which is both chronologically true and more useful — it tells the reader exactly which
-messages they did not watch live. This is cheap because
-`getEventsSinceForRingFeed` (`room-manager.ts:596`) already computes the replay as a
-**bounded array before streaming it**, so the count can ride along in the handshake
-payload (which already carries `ringState` and `yourUserId`) and the client can close the
-bracket after N events.
-
-**These markers are per-viewer and must not be persisted.** "You lost connection" is not
-a fact about the room, so they stay client-side, never enter `room_events`, and never
-reach Discord — which has no scrollback problem to solve.
-
-**Implementation note**: `RingPane`'s `events` is typed `GameEvent[]` and fed straight to
-Virtuoso. Markers need either a union item type or a parallel "draw a divider before this
-id" set; the union is cleaner but touches `itemContent` and the dedupe path.
-
-**Not** covered by `CatchUpBanner.tsx` — that is a dismissible overlay keyed to the
-viewer's `lastSeenAt`, about the reader having been away. This is an inline divider in the
-feed itself.
-
-### 108. Nothing watches for the heartbeat stopping — VERIFIED
-
-Prerequisite for #107's `connection lost` divider, and a live bug in its own right.
-
-The server sends `heartbeat` keep-alive events and the client discards them
-(`useRingFeed.tsx:125`, `if (event.type === 'heartbeat') return;`). **Nothing tracks their
-absence** — there is no watchdog timer anywhere in the hook. So `connected` only flips
-false when the transport itself raises `onError`.
-
-A connection that dies silently — the common case when a phone or iPad is backgrounded,
-or on a network that blackholes rather than resets — therefore leaves the app believing it
-is connected, showing no "reconnecting…" banner, and quietly missing events until
-something else forces an error. The heartbeat exists precisely to make this detectable and
-is currently being thrown away.
-
-**Fix**: record the last heartbeat timestamp and treat "no heartbeat for >2× the server's
-interval" as a disconnect, driving the same `setConnected(false)` / `setReconnecting(true)`
-path as `onError`. Improves the existing banner immediately, and #107's divider depends on
-the drop being noticed at all.
+- **`↓ Latest` sits over feed text** (`05-ring-sammael-card.png`). It is
+  `position: absolute` with `opacity: 0.9` and no backdrop, so the card box shows
+  through. Arguably intended; listed in case it is not.
+- **Roster eats 40% of a phone screen** (`01-ring-roster-boss.png`). Two contestants
+  plus the header leave a small feed window. `max-height: 40%` / 32% under
+  `max-height: 600px` is working as specified — flagging the *specification*, not a
+  defect.
+- **`boss in ~17m` vs a feed line reading `A boss will enter the ring in 2 minutes`**
+  (`06-ring-summon-sequence.png`). The feed line is historical text from an earlier
+  timer; the header is live. Not a mismatch.
