@@ -1555,3 +1555,101 @@ an emptied deck stays empty, equipping the entire deck does not mint a new one, 
 restored legacy character is marked on first read.
 
 **Status**: Fixed.
+
+---
+
+### 93. `↓ Latest` button rendered over the wrong pane in side-by-side view — FIXED
+
+`.jump-to-bottom` is `position: absolute`, but `.terminal-pane` never established a
+positioning context, so it resolved against `.terminal-shell` — the **whole two-pane
+grid**. `right: 1rem` therefore meant "1rem from the right edge of the entire terminal",
+putting the Ring feed's jump button on top of the Console pane. It looked correct on
+narrow screens only because the single visible pane fills the shell there.
+
+The vertical offset was wrong for the Ring pane too: `bottom: calc(var(--input-height) +
+0.75rem)` reserves room for the command input dock, which lives inside the **Console**
+pane. The Ring pane has no input — it has the last-fight footer, whose height varies with
+wrapping — so the button floated too high and still overlapped the footer on a long
+"Last fight: A vs B vs C…" line.
+
+**Fixed**: `.terminal-pane` is now `position: relative`, and both panes wrap their feed in
+a `.pane-feed-area` (`position: relative; flex: 1; min-height: 0`). The button anchors to
+the bottom of the *feed*, so it clears whatever follows — the Ring pane's footer, the
+Console pane's quick actions and input dock — without hard-coding either height. The
+Console pane's inline `bottom` override, which existed to compensate for the same
+mis-anchoring, is gone.
+
+**Status**: Fixed.
+
+---
+
+### 94. Rejected commands were never echoed, so the console showed an orphaned error — FIXED
+
+The `command` mutation published its user-input echo event **after** the
+`game.handleCommand` recognition check, so only *recognized* commands were echoed. A
+rejected command produced a bare `Command not recognized` line with no record of what was
+typed — and because the preceding echo belonged to an earlier, successful command, the
+console read as though *that* command had failed.
+
+This is not cosmetic: it makes the console actively misleading, and a screenshot of it
+unreadable even to someone who knows the code. It cost real time diagnosing a report of
+`send <monster> to the ring` "not being recognized" — the command parses fine; the visible
+echo was a different, successful command, and the input that was actually rejected had
+never been recorded.
+
+**Fixed**: the echo is published before the recognition check, so every submitted command
+appears in the console whether or not it is understood.
+
+**Status**: Fixed.
+
+---
+
+### 95. Player email addresses were shown as in-game names — FIXED
+
+`handle_new_user` fills `profiles.display_name` with
+`coalesce(display_name, full_name, email, '')`
+(`supabase/migrations/20260403000000_fix_profile_trigger.sql`). A web signup that never
+set a display name therefore got their **full email address** as their profile name,
+which `RoomManager.getDisplayName` handed to `game.getCharacter` as the character's
+`givenName` — and from there into fight narration, the leaderboard and, most visibly, the
+ring roster's owner line, where it sat on screen for every member of the room for the
+whole fight.
+
+**Root cause**: the email is a reasonable *last-resort* seed for a profile row, but
+nothing masked it on the way out to other players. Adding the roster made an existing
+leak continuously visible rather than creating it.
+
+**Fixed**, in two places because the address is both produced and stored:
+
+1. `publicDisplayName` (`packages/server/src/public-display-name.ts`) reduces an email to
+   its local part, dropping any plus-address suffix, and `getDisplayName` routes through
+   it — so an address never reaches a client. A name that merely contains `@` (e.g.
+   `@stary`) is left alone.
+2. Characters created before the fix already have the address saved as `givenName`, and
+   the engine's existing name-healing branch only replaced the literal `'Player'`.
+   `Game.getCharacter` now also heals a stored name that looks like an email, using the
+   server-resolved one. Deliberately narrow: a player who renamed themselves with `edit
+   character` keeps that name, since neither healed form can be produced that way.
+
+Covered by `server/src/public-display-name.test.ts` (8 cases including plus-addressing,
+multi-dot domains, and non-email `@` handles) and three `game.test.ts` cases for healing.
+
+**Remaining**: rows already written to `room_player_stats.display_name` keep their old
+value until the next fight updates them, and the profile trigger still seeds new rows from
+the email. Neither is now visible to other players, but changing the trigger default is a
+migration worth doing separately.
+
+**Status**: Fixed.
+
+---
+
+### 96. Ring roster showed "Lvl 0" for beginner monsters — FIXED
+
+`describeLevels` treats level 0 as `'beginner'`, and the monster stat card prints
+`Level: beginner`. The roster rendered the raw number, so a fresh monster read `Lvl 0`
+next to a card saying `beginner` — contradicting the rest of the game's vocabulary.
+
+**Fixed**: `formatLevel` in `RingRoster.tsx` renders `beginner` for level 0 and `lvl N`
+otherwise.
+
+**Status**: Fixed.

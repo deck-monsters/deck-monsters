@@ -695,6 +695,7 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
         )}
       </header>
 
+      <div className="pane-feed-area">
       <Virtuoso
         ref={virtuosoRef}
         className="event-feed"
@@ -754,11 +755,11 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
           className="jump-to-bottom"
           onClick={scrollToBottom}
           aria-label="Jump to latest messages"
-          style={{ bottom: 'calc(var(--input-height) + 3.5rem)' }}
         >
           ↓ Latest
         </button>
       )}
+      </div>
 
       {quickActions.length > 0 && (
         <nav className="quick-actions" aria-label="Quick action suggestions">

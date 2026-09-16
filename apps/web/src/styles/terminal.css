@@ -47,6 +47,10 @@
   overflow: hidden;
   border-right: 1px solid var(--color-border);
   min-width: 0; /* prevent grid blowout */
+  /* Positioning context for anything absolutely placed inside a pane. Without it
+     `.jump-to-bottom` resolved against `.terminal-shell` — the whole two-pane grid —
+     so in side-by-side view the Ring feed's button rendered over the Console pane. */
+  position: relative;
 }
 
 .terminal-pane:last-child {
@@ -74,6 +78,17 @@
   margin-left: auto;
   margin-right: 0.75rem;
   text-transform: none;
+}
+
+/* Wraps the scrollable feed so `.jump-to-bottom` can sit at the bottom of the
+   *feed*, above the pane's footer / quick actions / input dock, instead of guessing
+   their combined height with a hard-coded offset. */
+.pane-feed-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Event feed — the scrollable list of game events */
@@ -333,7 +348,9 @@
 /* Scroll-to-bottom button */
 .jump-to-bottom {
   position: absolute;
-  bottom: calc(var(--input-height) + 0.75rem);
+  /* Relative to `.pane-feed-area`, so it clears the Ring pane's last-fight footer and
+     the Console pane's quick actions + input dock without knowing either height. */
+  bottom: 0.75rem;
   right: 1rem;
   background: var(--color-choice-hover);
   border: 1px solid var(--color-border);

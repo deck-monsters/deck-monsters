@@ -767,3 +767,39 @@ describe('game.ts', () => {
 		});
 	});
 });
+
+describe('Game.getCharacter name healing', () => {
+	// Character creation prompts for type / gender / icon; answer the first choice
+	// for each so these tests exercise only the name-healing branch.
+	const silentChannel = (async (opts: { question?: string }) =>
+		opts?.question ? '0' : undefined) as never;
+	it('replaces a stored email address with the server-resolved display name', async () => {
+		// A web signup that never set a display name had `display_name` defaulted to
+		// their email, which became the character's givenName and was printed in the
+		// public ring roster and fight narration.
+		const game = new Game();
+		const character = await game.getCharacter({
+			channel: silentChannel,
+			id: 'user-1',
+			name: 'david+levy@brainerbanker.com',
+		});
+		expect(character.givenName).to.equal('David+levy@brainerbanker.com');
+
+		const healed = await game.getCharacter({ channel: silentChannel, id: 'user-1', name: 'David' });
+		expect(healed.givenName).to.equal('David');
+	});
+
+	it('still heals the generic Player fallback', async () => {
+		const game = new Game();
+		await game.getCharacter({ channel: silentChannel, id: 'user-2', name: 'Player' });
+		const healed = await game.getCharacter({ channel: silentChannel, id: 'user-2', name: 'Ada' });
+		expect(healed.givenName).to.equal('Ada');
+	});
+
+	it('never overwrites a name the player chose in game', async () => {
+		const game = new Game();
+		await game.getCharacter({ channel: silentChannel, id: 'user-3', name: 'Santi Brainer' });
+		const again = await game.getCharacter({ channel: silentChannel, id: 'user-3', name: 'Something Else' });
+		expect(again.givenName).to.equal('Santi Brainer');
+	});
+});
