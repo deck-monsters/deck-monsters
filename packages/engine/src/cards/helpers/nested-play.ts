@@ -1,4 +1,4 @@
-import { veryShortDelay, delaysAreSkipped } from '../../helpers/delay-times.js';
+import { veryShortDelay, delaysAreSkipped, remainingGapMs } from '../../helpers/delay-times.js';
 
 /**
  * Plays a card that another card put into play (Random Play's drawn card, Pick
@@ -55,7 +55,9 @@ export function playNestedCard({
 
 	const paced = delaysAreSkipped()
 		? Promise.resolve()
-		: new Promise<void>(resolve => setTimeout(resolve, veryShortDelay(round)));
+		: new Promise<void>(resolve =>
+				setTimeout(resolve, remainingGapMs(veryShortDelay(round)))
+			);
 
 	return paced.then(() => card.play(player, proposedTarget, ring, activeContestants));
 }
