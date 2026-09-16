@@ -2,8 +2,8 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Active — three open items from the September 2026 live-play pass, plus four
-open items (#98–#101) from the September 16 2026 mobile UI pass triaged at the bottom of
+**Status**: Active — three open items from the September 2026 live-play pass, plus nine
+open items (#98–#106) from the September 16 2026 mobile UI pass triaged at the bottom of
 this doc. Everything earlier is resolved; see [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for
 the full archive (#3, #51–#58, #59–#73, #74–#85, #86–#97).
 
@@ -80,9 +80,11 @@ turn banner down, but it is the one place the feed still starts as a wall.
 
 ## September 16 2026 mobile UI pass — triage (OPEN, none fixed yet)
 
-Eight iPhone screenshots of deck-monsters.com, saved alongside this doc in
+Nine findings from eight iPhone screenshots of deck-monsters.com, saved alongside this doc in
 [`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). This section is the analysis
-only — **no code was changed**. Numbering continues from #97; move each item to
+only — **no code was changed**. #98–#101 are layout/rendering; #102–#106 are the *content* of the messages themselves —
+what they say, whether it is true, and whether one event produces one message.
+Numbering continues from #97; move each item to
 `10b-bugs-fixed.md` with its root cause as it is fixed.
 
 Verification status is stated per item. There is no live app in the dev container
@@ -157,18 +159,25 @@ Two sub-problems worth fixing together:
 `in ${f.roundCount} rounds` with no singular branch. Both call sites need it; the
 same string feeds the ring pane's last-fight footer via `fightTitleOneLine`.
 
-### 101. Turn-banner glyphs render as tofu boxes — NEEDS VERIFICATION
+### 101. Turn-banner glyphs render as tofu boxes — VERIFIED (codepoint identified)
 
-`08-fightlog-trace-tofu.png` shows the round/turn banner as a row of missing-glyph
-boxes (`□ ⊠ ⊞ …`) before `round 1, turn 1`. The engine emits some decorative
-character the bundled JetBrains Mono has no glyph for; the browser falls back and
-draws tofu.
+`08-fightlog-trace-tofu.png` shows a row of missing-glyph boxes before `round 1, turn 1`.
 
-**Not verified**: which codepoint. Next step is to find the banner string in
-`packages/engine/src/announcements/` and check it against the font's coverage, rather
-than assume. Fix is either a glyph the font actually ships or an explicit emoji
-fallback in `--font-family`. Note this is the *collapsed* banner from #97, so the
-character survives into current output.
+**Root cause**: the banner divider is 21 dice characters —
+
+```
+\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂\n
+```
+
+`announcements/nextTurn.ts:18` and `announcements/nextRound.ts:12`. These are
+U+2680–U+2685 (DIE FACE-1 … DIE FACE-6), which **JetBrains Mono does not ship**. The
+browser falls back per-glyph and draws tofu. The count matches the screenshot exactly.
+
+**Two decisions, not one.** The rendering fix is a font fallback or a character the font
+has. But the *content* question is whether a 21-glyph divider earns its place at all: it
+wraps to two full lines on a phone, on **every turn**, immediately after #97 cut turn
+banners by 45% for exactly this reason. Deleting it is probably the better fix, and is
+the one that needs a human call — it is a deliberate piece of the game's voice.
 
 ### Observed and deliberately not filed
 
@@ -182,3 +191,92 @@ character survives into current output.
 - **`boss in ~17m` vs a feed line reading `A boss will enter the ring in 2 minutes`**
   (`06-ring-summon-sequence.png`). The feed line is historical text from an earlier
   timer; the header is live. Not a mismatch.
+
+### 102. Every boss arrival credits a beastmaster who does not exist — VERIFIED
+
+`06-ring-summon-sequence.png`: `A ferocious Weeping Angel has entered the ring at the
+behest of 🎡 Gorgeous Protector.` There is no player called Gorgeous Protector. The same
+screen shows `02-ring-clipped-prose.png`'s `at the behest of 🎎 Incredible Swan`.
+
+**Root cause**: `announcements/contestant.ts:16` is the single join announcement for
+*every* contestant, and it renders `${character.icon} ${character.givenName}` — the
+monster's owner. Bosses are given a **randomly generated owner** by
+`characters/helpers/random.ts` (`randomCharacter`) under `userId: 'boss'`
+(`docs/boss-encounters.md` §1). So the join line invents a plausible-looking player name
+and attributes the boss to them.
+
+This is worst for a **timer-spawned** boss, where no player was involved at all: the feed
+states that a named beastmaster sent it in. `06-ring-summon-sequence.png` is exactly that
+case — `A boss will enter the ring in 2 minutes` immediately precedes it, so it is the
+20–35 min spawn timer, not a summon.
+
+**Fix**: branch in `announceContestant` on `contestant.isBoss` and use boss-appropriate
+wording with no owner clause at all (the ring already knows it is a boss — the roster
+renders a `BOSS` tag from the same data).
+
+### 103. A player-summoned boss is announced twice, out of order, under two names — VERIFIED
+
+`02-ring-clipped-prose.png` and `01-ring-roster-boss.png` are consecutive views of one
+event (countdowns `fight in 24s` then `fight in 19s`). Read together, the feed says:
+
+```
+An enraged Minotaur has entered the ring at the behest of 🎎 Incredible Swan.
+[ Seeskane Orcbane stat card ]
+Tweettypography has summoned a boss into the ring!
+```
+
+`03-console-clipped-level.png` confirms the viewer, Tweettypography, ran `summon a boss`
+and got Seeskane Orcbane. So one action produces two public messages naming **two
+different beastmasters**, only one of whom is real (#102 explains the other).
+
+**Root cause**: `commands/monster.ts` calls `ring.spawnBoss(...)` at line 339, which runs
+`addMonster` → `announceContestant` and publishes the arrival plus the full stat card.
+Only afterwards, at line 361, does it publish
+`${character.givenName} has summoned a boss into the ring!`. The line that *explains* the
+event therefore lands after the event and after a ~15-line card, which is why it reads as
+a second, unrelated summon.
+
+**Fix**: publish the summon line before `spawnBoss`, and fold the attribution into the
+arrival (#102) so one action produces one message. Note `ring.spawnBoss` is also called
+by the timer (`ring/index.ts:1548`) and by ring events (`:1479`), so the summoner clause
+belongs at the call site, not inside `spawnBoss`.
+
+### 104. "was summoned from the ring" says the opposite of what happened — VERIFIED
+
+`06-ring-summon-sequence.png`: `Dalfi (dalfe, Cow/beef) was summoned from the ring by
+⛄ Thunder Smasher.` Summoning is what you do *into* a ring. The monster left.
+
+**Root cause**: `announcements/contestantLeave.ts:14`. Wording only — the event itself
+(`ring.remove`) is correct. `withdrew from the ring` / `was withdrawn from the ring` reads
+right and keeps the beastmaster's agency.
+
+Two further asymmetries with the join line worth fixing in the same pass, since the two
+messages are a matched pair a reader tries to connect:
+
+- **Joining names the species, leaving names the individual.** Join says
+  `An enraged Minotaur`, leave says `Dalfi`. Nothing in the feed links the two, so on a
+  busy ring you cannot tell which arrival a departure cancels. One of them should carry
+  both, and it should be the same one each time.
+- **Two spellings of the same value.** Leave uses `character.identity`; join builds
+  `${character.icon} ${character.givenName}` by hand. They should agree.
+
+### 105. The boss warning is the only ring line with no full stop — VERIFIED
+
+`announcements/bossWillSpawn.ts:13`:
+`A boss will enter the ring ${formatRelative(add(Date.now(), delay))}` — no terminal
+period, where every line around it in `06-ring-summon-sequence.png` has one. One
+character.
+
+### 106. A three-monster fight's summary silently drops a contestant — VERIFIED
+
+`07-fightlog-trace-raw-markup.png`: `#8 Everest vs Ford vs Death Blood` is summarised
+`Everest fled from Ford`. Death Blood is in the title and absent from the outcome.
+
+**Root cause**: `utils/fight-display.ts` `fightSubtitle`, the `fled` branch, builds its
+sentence from only two participant outcomes — `fled` and `win`. A third monster that
+finished with `loss` matches neither filter and vanishes. `permaDeath` (`win` + `permaDeath`)
+and `win` (`win` + `loss`) have the same shape, so any outcome combination the branch does
+not enumerate drops those monsters from the line.
+
+**Fix**: build the sentence from all participants, or append a remainder clause, so the
+subtitle always accounts for everyone named in the title.
