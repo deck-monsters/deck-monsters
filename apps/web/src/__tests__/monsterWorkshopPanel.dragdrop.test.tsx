@@ -6,6 +6,7 @@ const baseMonster = {
   name: 'Stonefang',
   type: 'Basilisk',
   level: 3,
+  dead: false,
   inRing: true,
   inEncounter: false,
   cardSlots: 1,
@@ -31,6 +32,8 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
+        onRevive={() => undefined}
+        onSendToRing={() => undefined}
       />,
     );
 
@@ -77,6 +80,8 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
+        onRevive={() => undefined}
+        onSendToRing={() => undefined}
       />,
     );
 
@@ -127,6 +132,8 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
+        onRevive={() => undefined}
+        onSendToRing={() => undefined}
       />,
     );
 
@@ -152,6 +159,8 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
+        onRevive={() => undefined}
+        onSendToRing={() => undefined}
       />,
     );
 
@@ -190,6 +199,8 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
+        onRevive={() => undefined}
+        onSendToRing={() => undefined}
       />,
     );
 
@@ -224,6 +235,8 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
+        onRevive={() => undefined}
+        onSendToRing={() => undefined}
       />,
     );
 
@@ -248,6 +261,8 @@ describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
         onSavePreset={() => undefined}
         onLoadPreset={() => undefined}
         onDeletePreset={() => undefined}
+        onRevive={() => undefined}
+        onSendToRing={() => undefined}
       />,
     );
 

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -33,12 +34,21 @@ vi.mock('../lib/trpc.js', () => ({
 // so tests can prove state survives a slot swap (i.e. the surface was not remounted).
 function makeSurfaceMock(label: string) {
   return {
-    default: ({ roomId, isActive }: { roomId: string; isActive?: boolean }) => {
+    default: ({
+      roomId,
+      isActive,
+      headerActions,
+    }: {
+      roomId: string;
+      isActive?: boolean;
+      headerActions?: ReactNode;
+    }) => {
       const React = require('react');
       const [count, setCount] = React.useState(0);
       return (
         <div data-testid={`surface-${label}`} data-room={roomId} data-active={String(isActive)}>
           <span>{label} content</span>
+          {headerActions}
           <button onClick={() => setCount((c: number) => c + 1)}>{label} bump ({count})</button>
         </div>
       );
@@ -49,22 +59,33 @@ function makeSurfaceMock(label: string) {
 vi.mock('../components/RingPane.js', () => makeSurfaceMock('ring'));
 vi.mock('../components/ConsolePane.js', () => makeSurfaceMock('console'));
 vi.mock('../components/WorkshopPanel.js', () => ({
-  default: ({ roomId }: { roomId: string }) => {
+  default: ({ roomId, headerActions }: { roomId: string; headerActions?: ReactNode }) => {
     const React = require('react');
     const [count, setCount] = React.useState(0);
     return (
       <div data-testid="surface-workshop" data-room={roomId}>
         <span>workshop content</span>
+        {headerActions}
         <button onClick={() => setCount((c: number) => c + 1)}>workshop bump ({count})</button>
       </div>
     );
   },
 }));
+vi.mock('../components/FightLogPanel.js', () => makeSurfaceMock('fights'));
+vi.mock('../components/LeaderboardPanel.js', () => makeSurfaceMock('leaderboard'));
 
 import Terminal from '../components/Terminal.js';
 
 function renderTerminal(roomId = 'room-1') {
   return render(
+    <MemoryRouter>
+      <Terminal roomId={roomId} />
+    </MemoryRouter>
+  );
+}
+
+function terminal(roomId = 'room-1') {
+  return (
     <MemoryRouter>
       <Terminal roomId={roomId} />
     </MemoryRouter>
@@ -93,7 +114,7 @@ function installResizeObserver(width: number) {
   };
 }
 
-function pressShortcut(key: '1' | '2' | '3') {
+function pressShortcut(key: '1' | '2' | '3' | '4' | '5') {
   fireEvent.keyDown(document, { key, ctrlKey: true });
 }
 
@@ -128,10 +149,18 @@ describe('Terminal pane slots (Phase 2 — docs/roadmap/20-workspace-layout.md)'
 
     // Left slot shows ring; its own value must stay selectable, but it must not offer
     // console again — that is the sibling (right) slot's surface.
-    expect(leftOptions.sort()).toEqual(['ring', 'workshop']);
+    expect(leftOptions.sort()).toEqual(['fights', 'leaderboard', 'ring', 'workshop']);
     // Right slot shows console; it must not offer ring again — that is the sibling
     // (left) slot's surface.
-    expect(rightOptions.sort()).toEqual(['console', 'workshop']);
+    expect(rightOptions.sort()).toEqual(['console', 'fights', 'leaderboard', 'workshop']);
+  });
+
+  it('puts host actions in each visible surface and never renders the removed extra header row', () => {
+    installResizeObserver(1200);
+    renderTerminal();
+
+    expect(document.querySelector('.terminal-slot-header')).toBeNull();
+    expect(screen.getAllByRole('combobox')).toHaveLength(2);
   });
 
   it('switching a slot via its selector shows the new surface and hides the old one', () => {
@@ -171,6 +200,49 @@ describe('Terminal pane slots (Phase 2 — docs/roadmap/20-workspace-layout.md)'
     const workshopTab = screen.getByRole('tab', { name: 'Workshop' });
     expect(workshopTab.getAttribute('aria-selected')).toBe('true');
     expect(screen.getByTestId('surface-workshop').closest('.terminal-slot')).toHaveClass('active');
+    expect(screen.getByRole('link', { name: 'Open Workshop as a full page' })).toHaveAttribute(
+      'href',
+      '/room/room-1/workshop'
+    );
+    expect(screen.queryByRole('combobox')).toBeNull();
+  });
+
+  it.each([['4', 'Fights'], ['5', 'Leaders']] as const)('Cmd/Ctrl+%s lazily mounts %s', (key, label) => {
+    installResizeObserver(600);
+    renderTerminal();
+    expect(screen.queryByTestId(`surface-${key === '4' ? 'fights' : 'leaderboard'}`)).toBeNull();
+    pressShortcut(key);
+    expect(screen.getByRole('tab', { name: label }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByTestId(`surface-${key === '4' ? 'fights' : 'leaderboard'}`)).toBeTruthy();
+  });
+
+  it('does not briefly mount optional surfaces for a newly selected room', () => {
+    installResizeObserver(600);
+    const view = render(terminal('room-1'));
+    pressShortcut('4');
+    expect(screen.getByTestId('surface-fights')).toHaveAttribute('data-room', 'room-1');
+    pressShortcut('2');
+    expect(screen.getByTestId('surface-fights').closest('.terminal-slot')).toHaveAttribute('hidden');
+
+    view.rerender(terminal('room-2'));
+
+    expect(screen.queryByTestId('surface-fights')).toBeNull();
+    expect(screen.getByTestId('surface-ring')).toHaveAttribute('data-room', 'room-2');
+  });
+
+  it('connects narrow tabs to tabpanels and marks inactive panels hidden', () => {
+    installResizeObserver(600);
+    renderTerminal();
+
+    const ringTab = screen.getByRole('tab', { name: 'The Ring' });
+    const ringPanel = document.getElementById(ringTab.getAttribute('aria-controls')!);
+    expect(ringPanel).toHaveAttribute('role', 'tabpanel');
+    expect(ringPanel).toHaveAttribute('aria-labelledby', ringTab.id);
+    expect(ringPanel).toHaveAttribute('hidden');
+
+    const consoleTab = screen.getByRole('tab', { name: 'Console' });
+    const consolePanel = document.getElementById(consoleTab.getAttribute('aria-controls')!);
+    expect(consolePanel).not.toHaveAttribute('hidden');
   });
 
   it('tapping a tab already shown in the other slot flips slots without duplicating it', () => {
@@ -237,6 +309,23 @@ describe('Terminal pane slots (Phase 2 — docs/roadmap/20-workspace-layout.md)'
     ro.fireWidth(1200);
     expect(screen.getByTestId('surface-ring')).toBeTruthy();
     expect(screen.getByTestId('surface-workshop')).toBeTruthy();
+  });
+
+  it('keeps workshop state when it occupies slot 0 across both breakpoint directions', () => {
+    window.localStorage.setItem(PANE_SLOTS_KEY, JSON.stringify(['workshop', 'console']));
+    const ro = installResizeObserver(1200);
+    renderTerminal();
+
+    const bump = () => screen.getByRole('button', { name: /workshop bump/, hidden: true });
+    fireEvent.click(bump());
+    expect(bump()).toHaveTextContent('(1)');
+
+    ro.fireWidth(600);
+    fireEvent.click(screen.getByRole('tab', { name: 'Workshop' }));
+    expect(bump()).toHaveTextContent('(1)');
+
+    ro.fireWidth(1200);
+    expect(bump()).toHaveTextContent('(1)');
   });
 
   it('does not unmount a surface when it is swapped out of a slot (state survives)', () => {

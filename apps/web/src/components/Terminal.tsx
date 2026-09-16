@@ -76,7 +76,7 @@ function placeSurfaceTabbed(
   return { slots: next, activeSlot };
 }
 
-const SHORTCUT_KEYS: Record<string, number> = { '1': 0, '2': 1, '3': 2 };
+const SHORTCUT_KEYS = new Map(SURFACES.map((surface, index) => [String(index + 1), surface.id]));
 
 function orderedMountedSurfaces(
   surfaces: typeof SURFACES,
@@ -111,6 +111,13 @@ export default function Terminal({ roomId }: TerminalProps) {
   const slotsRef = useRef(slots);
   slotsRef.current = slots;
   const roomIdRef = useRef(roomId);
+  // Effects run after render. On a route change, rendering the previous room's
+  // `everMounted` set once would mount every previously visited surface with the new
+  // room id and start its queries before the reset effect can run. Gate the render
+  // synchronously as well as resetting the retained state below.
+  const mountedInCurrentRoom = roomIdRef.current === roomId
+    ? everMounted
+    : new Set<SurfaceId>(slots);
 
   // A room switch must not carry over a previous room's "has this been shown" state —
   // see docs/room-scoping.md. Terminal itself is not remounted on room change (the parent
@@ -149,16 +156,14 @@ export default function Terminal({ roomId }: TerminalProps) {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (!(e.metaKey || e.ctrlKey)) return;
-      const index = SHORTCUT_KEYS[e.key];
-      if (index === undefined) return;
-      const surface = SURFACES[index];
-      if (!surface) return;
+      const surfaceId = SHORTCUT_KEYS.get(e.key);
+      if (!surfaceId) return;
       e.preventDefault();
-      markMounted(surface.id);
+      markMounted(surfaceId);
       if (isSideBySide) {
-        setSlots((prev) => placeSurfaceSideBySide(surface.id, prev));
+        setSlots((prev) => placeSurfaceSideBySide(surfaceId, prev));
       } else {
-        const result = placeSurfaceTabbed(surface.id, slots, activeSlot);
+        const result = placeSurfaceTabbed(surfaceId, slots, activeSlot);
         setSlots(result.slots);
         setActiveSlot(result.activeSlot);
       }
@@ -247,7 +252,7 @@ export default function Terminal({ roomId }: TerminalProps) {
           on a slot swap moves the existing DOM node rather than remounting it — pane state
           (workshop selection, console scroll) survives.
         */}
-        {orderedMountedSurfaces(SURFACES, slots, everMounted).map((surface) => {
+        {orderedMountedSurfaces(SURFACES, slots, mountedInCurrentRoom).map((surface) => {
           const slotIndex = slots.indexOf(surface.id) as -1 | 0 | 1;
           const visible = isVisible(surface.id);
           const siblingSurfaceId = slotIndex === -1 ? undefined : slots[slotIndex === 0 ? 1 : 0];
@@ -272,28 +277,39 @@ export default function Terminal({ roomId }: TerminalProps) {
               data-pane-slot={slotIndex >= 0 ? slotIndex : undefined}
               className={`terminal-slot${visible ? ' active' : ''}`}
               style={style}
+              role={!isSideBySide ? 'tabpanel' : undefined}
+              aria-labelledby={!isSideBySide ? `tab-${surface.id}` : undefined}
+              hidden={!visible}
             >
-              <div className="terminal-slot-header">
-                {isSideBySide && slotIndex !== -1 && siblingSurfaceId && (
-                  <PaneSelector
-                    value={surface.id}
-                    excludeSurfaceId={siblingSurfaceId}
-                    onChange={(next) => handleSlotSelect(slotIndex, next)}
-                    slotLabel={slotIndex === 0 ? 'left pane' : 'right pane'}
-                  />
-                )}
-                {surface.route && (
-                  <Link
-                    className="pane-open-full"
-                    to={surface.route(roomId)}
-                    aria-label={`Open ${surface.label} as a full page`}
-                    title={`Open ${surface.label} as a full page`}
-                  >
-                    ⤢
-                  </Link>
-                )}
-              </div>
-              <div className="terminal-slot-body">{surface.render({ roomId, isActive: visible })}</div>
+              {surface.render({
+                roomId,
+                isActive: visible,
+                // Hidden, previously mounted surfaces must not leave focusable host
+                // controls in the accessibility tree. Narrow mode retains just the
+                // route action because surface choice lives in the tab bar.
+                headerActions: visible ? (
+                  <>
+                    {isSideBySide && slotIndex !== -1 && siblingSurfaceId && (
+                      <PaneSelector
+                        value={surface.id}
+                        excludeSurfaceId={siblingSurfaceId}
+                        onChange={(next) => handleSlotSelect(slotIndex, next)}
+                        slotLabel={slotIndex === 0 ? 'left pane' : 'right pane'}
+                      />
+                    )}
+                    {surface.route && (
+                      <Link
+                        className="pane-open-full"
+                        to={surface.route(roomId)}
+                        aria-label={`Open ${surface.label} as a full page`}
+                        title={`Open ${surface.label} as a full page`}
+                      >
+                        ⤢
+                      </Link>
+                    )}
+                  </>
+                ) : undefined,
+              })}
             </div>
           );
         })}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
@@ -14,9 +14,10 @@ export type SelectionState = {
 
 export type WorkshopPanelProps = {
   roomId: string | undefined;
+  headerActions?: ReactNode;
 };
 
-export default function WorkshopPanel({ roomId }: WorkshopPanelProps) {
+export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelProps) {
   const [selectedCards, setSelectedCards] = useState<SelectionState[]>([]);
   const [activeMonsterFilter, setActiveMonsterFilter] = useState<string | null>(null);
   const inventoryRef = useRef<HTMLDivElement>(null);
@@ -41,8 +42,31 @@ export default function WorkshopPanel({ roomId }: WorkshopPanelProps) {
     savePreset,
     loadPreset,
     deletePreset,
+    reviveMonster,
+    sendMonsterToRing,
     refresh,
   } = useDeckWorkshop(roomId);
+
+  async function handleRevive(monsterName: string) {
+    try {
+      setError(null);
+      await reviveMonster({ monsterName });
+      setMessage(`${monsterName} has begun to revive.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Revive failed');
+    }
+  }
+
+  async function handleSendToRing(monsterName: string) {
+    if (!window.confirm(`Send ${monsterName} to the ring in this room?`)) return;
+    try {
+      setError(null);
+      await sendMonsterToRing({ monsterName });
+      setMessage(`${monsterName} was sent to the ring.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Send failed');
+    }
+  }
 
   useEffect(() => {
     if (!message) return;
@@ -320,13 +344,16 @@ export default function WorkshopPanel({ roomId }: WorkshopPanelProps) {
           <h1>Deck Workshop</h1>
           <p>Manage equipped and unequipped cards in one view.</p>
         </div>
-        <button className="btn" onClick={() => void refresh()} disabled={!roomId || loading || busy}>
-          Sync
-        </button>
+        <div className="workshop-header-actions">
+          <button className="btn" onClick={() => void refresh()} disabled={!roomId || loading || busy}>
+            Sync
+          </button>
+          {headerActions}
+        </div>
       </div>
 
-      {message && <div className="success-msg">{message}</div>}
-      {error && <div className="error-msg">{error}</div>}
+      {message && <div className="success-msg" role="status" aria-live="polite">{message}</div>}
+      {error && <div className="error-msg" role="alert">{error}</div>}
       {busy && <div className="workshop-banner">Applying changes…</div>}
       {selectedCards.length > 0 && (
         <div className="workshop-mobile-hint">
@@ -361,6 +388,9 @@ export default function WorkshopPanel({ roomId }: WorkshopPanelProps) {
             onUnequipAll={() => {
               void handleUnequipAll(monster.name);
             }}
+            onRevive={() => void handleRevive(monster.name)}
+            onSendToRing={() => void handleSendToRing(monster.name)}
+            busy={busy}
             onSavePreset={(presetName) => {
               void handleSavePreset(monster.name, presetName);
             }}

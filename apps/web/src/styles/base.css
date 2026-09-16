@@ -215,6 +215,8 @@ button {
 .header-hamburger { display: none; }
 
 .workshop-view {
+  container-name: workshop;
+  container-type: inline-size;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -230,6 +232,10 @@ button {
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
+}
+
+.workshop-header-actions {
+  flex: 0 0 auto;
 }
 
 .workshop-header h1 {
@@ -646,14 +652,59 @@ button {
   font-size: 0.75rem;
 }
 
-@media (max-width: 700px) {
+@container workshop (max-width: 900px) {
+  .workshop-monster-row {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline mandatory;
+    padding-bottom: 0.35rem;
+  }
+
+  .workshop-monster-panel {
+    flex: 0 0 min(82cqw, 32rem);
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .workshop-card-grid { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); }
+}
+
+@container workshop (max-width: 520px) {
   .workshop-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
+  .workshop-header-actions { justify-content: space-between; flex-wrap: wrap; }
+  .workshop-section-header,
+  .workshop-item-row-main,
+  .workshop-item-row-meta,
+  .workshop-preset-row { flex-wrap: wrap; }
+  .workshop-select,
+  .workshop-input { min-width: min(100%, 12rem); }
+  .workshop-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workshop-monster-panel { flex-basis: min(88cqw, 25rem); }
+  .workshop-header-actions .btn,
+  .workshop-inline-btn,
+  .workshop-panel-actions .btn { min-height: 44px; }
   .workshop-panel-actions {
-    flex-direction: column;
+    flex-wrap: wrap;
   }
+}
+
+@container workshop (max-width: 280px) {
+  .workshop-card-grid { grid-template-columns: 1fr; }
+}
+
+.workshop-monster-title,
+.workshop-monster-header,
+.workshop-inventory,
+.workshop-section-header > *,
+.workshop-item-row,
+.workshop-item-row-main > *,
+.workshop-item-row-meta > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Mobile layout — narrow screens */

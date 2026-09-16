@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => {
   const inventoryInvalidate = vi.fn(async () => undefined);
   const monstersInvalidate = vi.fn(async () => undefined);
+  const ringStateInvalidate = vi.fn(async () => undefined);
   const roomInfoUseQuery = vi.fn();
   const myInventoryUseQuery = vi.fn();
   const defaultMutation = vi.fn((options?: { onSuccess?: () => Promise<void> }) => ({
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => {
   return {
     inventoryInvalidate,
     monstersInvalidate,
+    ringStateInvalidate,
     roomInfoUseQuery,
     myInventoryUseQuery,
     unequipCardUseMutation: vi.fn(defaultMutation),
@@ -30,6 +32,8 @@ const mocks = vi.hoisted(() => {
     loadPresetUseMutation: vi.fn(defaultMutation),
     deletePresetUseMutation: vi.fn(defaultMutation),
     reorderCardsUseMutation: vi.fn(defaultMutation),
+    reviveMonsterUseMutation: vi.fn(defaultMutation),
+    sendMonsterToRingUseMutation: vi.fn(defaultMutation),
   };
 });
 
@@ -39,6 +43,7 @@ vi.mock('../lib/trpc.js', () => ({
       game: {
         myInventory: { invalidate: mocks.inventoryInvalidate },
         myMonsters: { invalidate: mocks.monstersInvalidate },
+        ringState: { invalidate: mocks.ringStateInvalidate },
       },
     }),
     room: {
@@ -60,6 +65,8 @@ vi.mock('../lib/trpc.js', () => ({
       loadPreset: { useMutation: mocks.loadPresetUseMutation },
       deletePreset: { useMutation: mocks.deletePresetUseMutation },
       reorderCards: { useMutation: mocks.reorderCardsUseMutation },
+      reviveMonster: { useMutation: mocks.reviveMonsterUseMutation },
+      sendMonsterToRing: { useMutation: mocks.sendMonsterToRingUseMutation },
     },
   },
 }));

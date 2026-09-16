@@ -58,18 +58,9 @@
 }
 
 /*
-  Wraps a surface (ring/console/workshop) placed in a pane slot. Phase 1 (see
-  docs/roadmap/20-workspace-layout.md) made every surface a plain, layout-agnostic
-  component, so none of them render their own "which surface is this / open full page"
-  chrome — that has to live in the host. `Terminal` is the pane host, so this wrapper adds
-  a slim strip above the surface's own content rather than reaching inside RingPane's or
-  ConsolePane's existing header (which already carries a timer badge and summons counter —
-  crowding it was the thing §3.3 asked us not to do) or WorkshopPanel (which has no header
-  concept at all).
-
-  This is now the actual grid item in `.terminal-shell`; `.terminal-pane` (still rendered
-  by RingPane/ConsolePane themselves) lives one level deeper and just fills the space this
-  wrapper leaves it via `.terminal-slot-body`.
+  Grid item for whichever surface occupies a pane slot. The host supplies selector/route
+  controls through each surface's headerActions placement slot, so no second toolbar is
+  needed here. This wrapper remains the divider boundary and visibility owner.
 */
 .terminal-slot {
   display: flex;
@@ -78,17 +69,7 @@
   border-right: 1px solid var(--color-border);
   min-width: 0; /* prevent grid blowout */
   position: relative;
-}
-
-.terminal-slot-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  padding: 0.15rem var(--pane-padding);
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-  background: var(--color-bg);
+  container-type: inline-size;
 }
 
 .pane-selector {
@@ -118,17 +99,7 @@
   color: var(--color-accent);
 }
 
-.terminal-slot-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* The surface itself (`.terminal-pane` or `.workshop-view`) — stretch it to fill the
-   slot below the strip above. */
-.terminal-slot-body > * {
+.terminal-slot > * {
   flex: 1;
   min-height: 0;
 }
@@ -144,6 +115,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.pane-header-actions,
+.workshop-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.pane-header-actions {
+  margin-left: auto;
 }
 
 /* Ring timer badge shown in the pane header */
@@ -502,7 +485,11 @@
     display: flex;
     grid-column: 1;
     grid-row: 1;
+    overflow-x: auto;
+    scrollbar-width: thin;
   }
+
+  .terminal-tab { flex: 0 0 auto; min-width: max-content; }
 
   .pane-divider {
     display: none;
@@ -775,3 +762,42 @@
 .event-highlight-bigHit .highlight-tag { color: var(--color-accent); }
 
 .event-highlight-flee { border-left-color: var(--color-fg-dim); }
+
+/* Layout-agnostic route/pane surfaces. Their inline size is determined by a draggable
+   slot, so responsiveness must follow the container rather than the viewport. */
+.surface-panel-host {
+  container: surface / inline-size;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.surface-panel {
+  width: min(100%, 960px);
+  height: 100%;
+  margin: 0 auto;
+  padding: 1.5rem;
+  overflow-y: auto;
+  min-width: 0;
+}
+.surface-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.surface-panel-actions { display: flex; align-items: center; gap: .4rem; flex: 0 0 auto; }
+.surface-panel h1 { margin: 0; font-size: 1.25rem; color: var(--color-fg-bright); }
+.surface-muted { color: var(--color-fg-dim); }
+.fight-log-list { list-style: none; padding: 0; margin: 0; }
+.fight-log-card { border: 1px solid var(--color-border); border-radius: 6px; padding: .75rem; margin-bottom: .5rem; background: var(--color-bg-elevated, var(--color-bg)); }
+.fight-log-summary { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; display: grid; gap: .25rem; overflow-wrap: anywhere; }
+.fight-log-summary:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+.fight-streak { color: var(--color-accent); font-size: .8rem; }
+.fight-log-detail { margin-top: .75rem; font-size: .85rem; font-family: var(--font-mono, monospace); overflow-wrap: anywhere; }
+.fight-log-detail ol { max-height: 15rem; overflow: auto; padding-left: 1.5rem; }
+.leaderboard-table-region { max-width: 100%; overflow-x: auto; outline-offset: -2px; }
+.leaderboard-table-region:focus-visible { outline: 2px solid var(--color-accent); }
+.leaderboard-table-region table { min-width: 40rem; display: table; }
+
+@container surface (max-width: 520px) {
+  .surface-panel { padding: .75rem; }
+  .surface-panel-heading { align-items: flex-start; }
+  .surface-panel h1 { font-size: 1.05rem; }
+  .fight-log-card { padding: .6rem; }
+}

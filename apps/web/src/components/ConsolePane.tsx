@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 
@@ -70,6 +70,7 @@ const MONSTER_REFRESH_EVENT_TYPES = new Set([
 interface ConsolePaneProps {
   roomId: string;
   isActive: boolean;
+  headerActions?: ReactNode;
 }
 
 function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot {
@@ -84,7 +85,7 @@ function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot
   );
 }
 
-export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
+export default function ConsolePane({ roomId, isActive, headerActions }: ConsolePaneProps) {
   const { user } = useAuth();
   const { registerInsertFn } = useCommandInsert();
 
@@ -719,6 +720,7 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
             Cancel action
           </button>
         )}
+        {headerActions && <span className="pane-header-actions">{headerActions}</span>}
       </header>
 
       <div className="pane-feed-area">

@@ -9,6 +9,7 @@ type MonsterPanelProps = {
     name: string;
     type: string;
     level: number;
+    dead: boolean;
     inRing: boolean;
     inEncounter: boolean;
     cardSlots: number;
@@ -26,6 +27,9 @@ type MonsterPanelProps = {
   onTapSlot: (target: WorkshopCardLocation) => void;
   onSelectCard: (location: WorkshopCardLocation, cardName: string, selectionId: string) => void;
   onUnequipAll: () => void;
+  onRevive: () => void;
+  onSendToRing: () => void;
+  busy?: boolean;
   onSavePreset: (presetName: string) => void;
   onLoadPreset: (presetName: string) => void;
   onDeletePreset: (presetName: string) => void;
@@ -43,6 +47,9 @@ export default function MonsterWorkshopPanel({
   onTapSlot,
   onSelectCard,
   onUnequipAll,
+  onRevive,
+  onSendToRing,
+  busy = false,
   onSavePreset,
   onLoadPreset,
   onDeletePreset,
@@ -97,10 +104,24 @@ export default function MonsterWorkshopPanel({
         </div>
       </div>
       <div className="workshop-monster-actions">
+        {monster.dead ? (
+          <button type="button" className="btn" disabled={busy || monster.inEncounter} onClick={onRevive}>
+            Revive
+          </button>
+        ) : !monster.inRing ? (
+          <button
+            type="button"
+            className="btn"
+            disabled={busy || monster.cards.length < monster.cardSlots}
+            onClick={onSendToRing}
+          >
+            Send to ring
+          </button>
+        ) : null}
         <button
           type="button"
           className="btn workshop-btn-icon"
-          disabled={locked || monster.cards.length < 1}
+          disabled={busy || locked || monster.cards.length < 1}
           title={`Unequip all cards from ${monster.name}`}
           aria-label={`Unequip all cards from ${monster.name}`}
           onClick={() => onUnequipAll()}

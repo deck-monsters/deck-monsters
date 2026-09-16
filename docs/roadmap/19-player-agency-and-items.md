@@ -2,8 +2,8 @@
 
 **Category**: Design / Mechanics
 **Priority**: Medium — the items audit (§3) is actionable now; the rest needs the balance sim harness
-**Status**: 🔧 Active — the items panel and the discoverability copy have shipped; the
-`use item` procedure and the ring-pane affordance have not
+**Status**: 🔧 Active — the items panel, discoverability copy, revive and send-to-ring
+actions have shipped; item use, prompt-free spawn and the room shop have not
 
 This doc exists because a research pass on what makes tabletop RPGs enjoyable was brought
 into the project, and applying it to an auto-battler turned out to need a clearer statement
@@ -191,14 +191,18 @@ Today the workshop is cards-only, and everything else is a typed command.
 - **An explicit "Equip N to `<monster>`" button** appears when a monster is highlighted and
   cards are selected. Drag-and-drop and tap-a-slot both worked already, but neither
   announces itself; on a phone the only discoverable way to equip was to know the gesture.
+- **Revive and send-to-ring are typed Workshop actions.** Both validate room membership,
+  resolve the authenticated player's character, serialize through the prompt-free mutation
+  lane and delegate eligibility to the engine. Send-to-ring confirms the monster and room.
 
 ### Next, in order
 
 1. **Items panel + a use affordance on the ring pane.** Highest value-to-effort in this
    doc: engine, commands and persistence all exist, and it is the mechanic most likely to be
    missed entirely (§3). Spec in §7.
-2. **Spawn / revive / send to ring from the workshop.** `send to the ring` is room-visible
-   and consequential, so it wants a confirm step; spawn and revive do not.
+2. **Finish lifecycle actions: prompt-free spawn.** Revive and send-to-ring have shipped;
+   spawn still needs an authoritative non-interactive engine operation rather than replaying
+   the console prompt flow from React.
 3. **Shop.** Browse and buy. Note the per-room scoping rule — the card shop is room-scoped
    (`Game.shop` / `commitShop()`, `10b-bugs-fixed.md` #26) and any UI must respect it.
 4. **Command reference parity.** Every action the workshop gains should also be listed as

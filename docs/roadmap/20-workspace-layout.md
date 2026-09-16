@@ -2,7 +2,7 @@
 
 **Category**: Web UX / Information architecture
 **Priority**: High — the workshop being a separate route is a live friction point during fights
-**Status**: 🔧 Active — phases 1–2 done, phase 3 (responsive) next
+**Status**: 🔧 Active — phases 1–3 and 5 code-complete; Phase 4 and visual validation remain
 
 ## 1. The problem
 
@@ -153,11 +153,19 @@ two independent instances — a selection made in one is invisible in the other,
 `refetchInterval` being per-observer doubles the polling. Neither is a bug today, because
 nothing double-mounts yet.
 
-**Still open, and now the nearest sharp edge.** Phase 2 has shipped, so the Workshop can
-sit in a pane *and* be opened at `/room/:roomId/workshop` in another tab. Decide one of:
-lift that state into `useDeckWorkshop` (or a small shared store) so both instances agree,
-or accept divergence and say so in the UI. Whoever starts Phase 3 should settle this first
-— it is cheaper to decide than to debug from a player's "my selection vanished".
+**Decision for Phase 3: transient UI state is instance-local.** A pane and a full-page
+Workshop opened in another browser tab are separate workspaces. Card data still converges
+through the server and tRPC invalidation/refetch, but selections, filters, notices and scroll
+position do not cross a browser-tab boundary. Do not introduce `BroadcastChannel`, storage
+events or a global store for ephemeral drag state. The full-page control navigates in the
+current tab; it does not imply that an in-progress selection will transfer. Label it as
+navigation ("Open Workshop full page"), not as a pop-out. This keeps the ownership rule
+simple and avoids synchronising stale selection IDs after either instance mutates a deck.
+
+The query cost is bounded separately: Terminal's `everMounted` gate means the Workshop is
+not mounted or polled until first use. Once used, it remains mounted for state preservation.
+Two actual browser tabs may each poll; that is normal per-tab application behaviour and is
+not a reason to couple their UI state.
 
 ## 4. The hidden cost: the workshop is a wide layout
 
@@ -209,23 +217,20 @@ Two implementation notes for whoever extracts the next surface (Phase 5):
   `.terminal-pane` class so the divider finds a real match even when the workshop is the
   one on the left. Worth revisiting if `PaneDivider` is ever touched for its own reasons.
 
-**Phase 3 — responsive, plus one debt from Phase 2.** The pane selector currently sits in a
-slim `.terminal-slot-header` strip *above* each surface, rather than inside
-`RingPane`/`ConsolePane`'s own `.pane-header`, because those files were out of scope when
-the slots were built. The result is two stacked header rows on the ring and console, which
-is a real cost at phone height. Folding the selector into each surface's own header belongs
-with this phase, since it is the same responsive pass.
+**Phase 3 — responsive workshop and unified pane chrome. Code-complete.** The surfaces now accept
+host-owned header actions, the duplicate slot header is gone, and the Workshop responds to
+its own container with compact, pane and roomy presentations. Automated coverage is green;
+the 1440px, ~700px, 393px and 200%-zoom manual checks in 3D still require sign-off.
 
-Then the §4 work, driven by container queries, at three widths: wide
-laptop, half-pane laptop, phone.
+**Phase 4 — finish the monster-management hub. In progress** (roadmap 19 §6). The display-only item
+panel has already shipped, so the remaining work is item use, spawn/revive/send, shop and
+command-reference parity. Typed, room-scoped revive and send-to-ring actions have shipped;
+item use, spawn and the shop remain. Detailed as work packages 4A–4D in §5c.
 
-**Phase 4 — the rest of the hub** (roadmap 19 §6): items panel, spawn/revive/send, shop.
-These become tractable only once there is a pane to put them in, which is why this doc
-precedes them.
-
-**Phase 5 — more surfaces.** Extract `FightLogPanel` and `LeaderboardPanel` from their
-existing views by the Phase 1 pattern and add them to the registry. Cheap once the model
-exists, and the payoff of §3.1 generalising rather than special-casing the workshop.
+**Phase 5 — more surfaces. Code-complete.** `FightLogPanel` and `LeaderboardPanel` were extracted from their
+existing views by the Phase 1 pattern, made container-responsive, and added to the registry.
+Leaderboard tables use labelled, keyboard-focusable scroll regions. Detailed as work
+packages 5A–5C in §5d.
 
 ## 5a. Contracts established in Phase 2 — do not undo these
 
@@ -253,6 +258,211 @@ ordering, Tab reaches the right-hand pane first whenever the slots are swapped.
 
 React reconciles by `key`, so reordering moves the existing DOM node rather than remounting
 it — which is also what keeps pane state alive across a swap.
+
+## 5b. Phase 3 implementation plan — responsive workshop and pane chrome
+
+Ship Phase 3 as two focused commits (3A–3B, then 3C–3D) so the structural header change is
+reviewable independently from the visual breakpoint work.
+
+### 3A. Establish a host-actions contract and remove the extra header row
+
+The selector and full-page link are host concerns, but rendering a second header merely to
+keep that ownership pure wastes vertical space. Extend `SurfaceRenderProps` with an optional
+`headerActions: ReactNode`. `Terminal` still constructs the `PaneSelector` and full-page
+link; each surface only exposes a placement slot in its existing header:
+
+- `RingPane` and `ConsolePane` render the node at the trailing edge of `.pane-header`;
+- `WorkshopPanel` renders it in `.workshop-header`;
+- route hosts omit it, so the same surface remains usable full-page;
+- hidden, previously mounted surfaces receive no interactive header actions; and
+- narrow mode continues to use the tab bar, with only the full-page action in the active
+  surface header. Do not render a hidden focusable selector.
+
+Delete `.terminal-slot-header` after all three surfaces accept the contract. Keep
+`.terminal-slot` and `.terminal-slot-body`: they are still the layout, visibility and
+divider boundary. Preserve the `data-pane-slot` contract and mounted-surface DOM ordering
+from §5a.
+
+**Acceptance:** one visual header row per surface; selector labels remain associated with
+"left pane"/"right pane"; the open-full-page link has a text-equivalent accessible name;
+tab order is left slot then right slot; all Phase 2 slot tests remain green.
+
+### 3B. Make the Workshop respond to its container
+
+Set `container-type: inline-size` on the Workshop's host (`.workshop-view` is sufficient;
+name the container if rules could otherwise bind to an unintended ancestor). Replace the
+Workshop's viewport media queries with container queries. Use content-driven thresholds,
+validated at the required examples, rather than treating 700px and 393px as magic viewport
+breakpoints:
+
+- **roomy (roughly 900px+)**: keep the current wrapping monster cards and inventory grid;
+- **pane (roughly 520–900px)**: make monster panels a single horizontal, snap-scrollable
+  row so each monster remains a useful width; tighten padding and card-grid minimums;
+- **compact (below roughly 520px)**: stack header/summary controls, make all controls meet
+  the existing coarse-pointer target rules, use two card columns where they fit and one
+  only when necessary, and keep explicit tap-to-select/equip usable without drag-and-drop.
+
+Every flex/grid child that contains player or monster text needs `min-width: 0` and an
+intentional wrapping rule. Horizontal scrolling is allowed only for the labelled monster
+rail; the Workshop root, inventory, presets, item rows and card grid must not overflow.
+Do not key these rules to `.terminal-slot`: the full-page host must exercise the identical
+component CSS.
+
+### 3C. Preserve behaviour through resize and room changes
+
+Add regression coverage for crossing 1024px in both directions with Workshop selected,
+including a surface held in slot 0. Assert that the selected surface and local selection
+survive a resize (the node is hidden/moved, not remounted). Then switch `roomId` and assert
+that the old Workshop instance is removed and the new room's query inputs are used. All
+new tRPC calls and invalidations must continue carrying that `roomId`.
+
+### 3D. Visual and accessibility verification
+
+Create a deterministic test fixture with multiple monsters, long names, a full deck,
+presets and all three item tiers. Capture the Workshop at a 1440px full page, an
+approximately 700px slot (also drag the divider narrower and wider), and a 393px viewport.
+At each size verify: no document/root horizontal overflow; monster rail is the only planned
+horizontal scroller; focus indicators are not clipped; keyboard and touch-equivalent
+actions remain available; and zoom at 200% does not hide actions.
+
+**Phase 3 exit gate:** behaviour tests, web typecheck/lint/build, and the three visual
+checks pass; the screenshots are attached to the PR. Do not begin Phase 4 to paper over a
+layout defect discovered here.
+
+## 5c. Phase 4 implementation plan — finish the management hub
+
+Phase 4 is ordered by dependency and risk, not by where controls happen to render. Each
+mutation needs server authorization, room membership validation, room-scoped cache
+invalidation, pending/error UI, and a focused server + web test before its button ships.
+
+### 4A. Item use end to end
+
+Add a typed `use item` tRPC procedure that delegates to the existing engine operation
+rather than duplicating usability rules. Its input identifies `roomId`, item and target;
+the server obtains the acting character from authenticated room membership. Return a
+structured result suitable for an immediate notice and invalidate the room inventory and
+live ring state as applicable.
+
+Turn eligible `ItemsPanel` rows into explicit use actions. Before a fight, allow valid
+character/monster targets; during a fight, show only actions the server says are usable by
+that monster from its carried inventory. Put the same compact action in the live ring
+roster/pane so emergency use is one interaction rather than a console prompt chain. Treat
+server validation as authoritative if state changes between render and click.
+
+### 4B. Monster lifecycle actions
+
+Expose typed procedures/UI for spawn and revive, then send-to-ring. Reuse engine command
+methods and their validation; do not recreate costs, eligibility or encounter rules in
+React. Spawn and revive can submit directly with clear pending state. Sending to the ring
+must show a confirmation naming the monster and room because it is room-visible and
+consequential. Refresh Workshop inventory and ring state after success.
+
+Keep action placement contextual: monster-specific actions belong on
+`MonsterWorkshopPanel`; spawn belongs at Workshop level. Empty/loading/error states must be
+usable at compact widths established in Phase 3.
+
+### 4C. Room-scoped shop
+
+First expose a read model containing room shop stock, prices, affordability and enough item
+metadata to render without importing engine internals into the web app. Every read and buy
+mutation includes `roomId`, validates membership, and operates on that room's `Game.shop` /
+`commitShop()` state. Render browse/buy inside the Workshop with explicit quantity,
+balance, pending state and a post-purchase inventory refresh. Selling is not required by
+this phase unless separately specified; do not silently grow scope while implementing buy.
+
+Add a two-room isolation test: stock changes and purchases in room A neither read nor
+invalidate room B. This is a release-blocking application of the room-scoping rule.
+
+### 4D. Parity, feedback and integration
+
+Update the command reference alongside each new web action, not in a cleanup sweep. Add
+success/error announcements with `aria-live`; prevent duplicate submission while pending;
+and exercise the full hub at all Phase 3 widths. The console remains supported, but the
+acceptance journey is command-free: spawn a monster, prepare cards/items, revive if needed,
+confirm sending it to the ring, use an eligible item, and buy from the current room's shop.
+
+**Phase 4 exit gate:** that command-free journey passes; mutation authorization and
+room-isolation tests pass; roadmap 19's remaining item-use and hub bullets can be marked
+shipped.
+
+## 5d. Phase 5 implementation plan — fight log and leaderboard surfaces
+
+Do these as two extraction commits followed by one registry/integration commit. Avoid a
+single change that mixes component extraction, table redesign and five-surface slot state.
+
+### 5A. Extract layout-agnostic panels
+
+- Move fight-log query/state/rendering to `FightLogPanel({ roomId, headerActions? })`.
+  `FightLogView` becomes `useParams` + room shell + panel, retaining its no-room fallback.
+- Move leaderboard query/state/rendering to
+  `LeaderboardPanel({ roomId?, initialScope?, headerActions? })`. The global
+  `/leaderboard` route remains supported; the pane always receives a room and defaults to
+  room scope. `LeaderboardView` becomes a thin host.
+- Replace the views' large inline layout/style blocks with named classes owned by the
+  surfaces. This is prerequisite responsive work, not cosmetic cleanup.
+
+The existing routes and deep-link behaviour are compatibility requirements. Existing
+fight expansion and leaderboard filter state stays local to each mounted surface and
+survives pane switches under the Phase 2 mounting contract.
+
+### 5B. Make both panels container-responsive
+
+Fight cards may stack naturally, but expanded events need bounded internal scrolling and
+long text wrapping. Leaderboard tables cannot assume 960px: use a labelled scroll region
+for the full table or a compact row/card representation under a container query. Keep all
+columns and headers accessible; never hide data solely with CSS. Verify both surfaces at
+the same full-page, half-pane and phone widths as Phase 3.
+
+### 5C. Register and integrate
+
+Add `fights` and `leaderboard` to `SurfaceId` and `SURFACES`, including room routes and
+labels. Replace the fixed three-entry shortcut map with a registry-derived lookup. Assign
+`Cmd/Ctrl+4` to fights and `Cmd/Ctrl+5` to leaderboard, expose the shortcut in control
+help, and ensure five tabs remain usable on 393px (scrollable tablist or compact labels;
+do not squeeze unreadable buttons).
+
+Migrate persisted `dm:paneSlots` defensively: valid old two-slot values continue to load,
+unknown/removed IDs fall back to defaults, and the no-duplicates rule still holds. Preserve
+lazy first mount so adding two surfaces does not issue fight/leaderboard queries on every
+room visit. Add tests for registry order, shortcuts 1–5, selectors, lazy mount, state
+survival, route links and room switch.
+
+**Phase 5 exit gate:** all five surfaces can occupy either slot without duplicates; each
+has a working full-page route where applicable; hidden never-opened surfaces do no data
+work; and keyboard, focus, responsive and room-scoping checks pass.
+
+## 5e. Delivery order and dependency summary
+
+1. **3A–3B:** header contract + container CSS (unblocks reliable pane UI).
+2. **3C–3D:** lifecycle tests + visual/a11y proof (closes Phase 3).
+3. **4A:** item-use API and both Workshop/Ring affordances (highest player value).
+4. **4B:** spawn/revive/send lifecycle actions.
+5. **4C–4D:** room-scoped shop, parity and end-to-end hub acceptance (closes Phase 4).
+6. **5A:** extract Fight Log and Leaderboard separately.
+7. **5B–5C:** responsive presentations + registry integration (closes Phase 5).
+
+Phase 4 depends on Phase 3's compact component contract. Phase 5 depends on Phase 3's
+header-actions contract, but not on Phase 4; it can be scheduled independently after Phase
+3 if product priority changes. No remaining phase depends on the balance simulation
+harness because none changes combat balance.
+
+## 5f. Current state, review findings and next work
+
+| Area | State | Remaining work |
+|---|---|---|
+| Phase 3 header/responsive contract | Code-complete | Capture the 3D width and 200%-zoom evidence before visual sign-off. |
+| Phase 4A item use | Not started | Add an authoritative prompt-free engine operation, then room-scoped tRPC and Workshop/Ring actions. |
+| Phase 4B lifecycle | Partial | Revive and confirmed send-to-ring shipped; prompt-free spawn remains. |
+| Phase 4C shop | Not started | Add room-scoped read/buy APIs and the required two-room isolation test. |
+| Phase 4D parity | Not started | Command reference, command-free journey, and final responsive/a11y pass depend on 4A–4C. |
+| Phase 5 panels | Code-complete | Pair manual full-page/pane/phone verification with the Phase 3 visual pass. |
+
+The post-implementation reviews found and fixed four issues: stale lazy surfaces briefly
+querying a newly selected room; incomplete tab/tabpanel semantics; panel container rules
+that did not reliably apply on full-page routes; and leaderboard overflow moving the whole
+surface instead of a labelled, focusable table region. Regression coverage now protects
+the room transition, accessibility relationship and panel structure. Item use, spawn, shop
+and the command-free acceptance journey remain functional gaps, so this roadmap stays Active.
 
 ## 6. Test plan
 

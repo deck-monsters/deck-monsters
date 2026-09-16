@@ -6,6 +6,7 @@ type WorkshopMonster = {
   name: string;
   type: string;
   level: number;
+  dead: boolean;
   inRing: boolean;
   inEncounter: boolean;
   cardSlots: number;
@@ -66,6 +67,13 @@ export function useDeckWorkshop(roomId?: string) {
   const loadPresetMutation = trpc.game.loadPreset.useMutation(mutationOptions);
   const deletePresetMutation = trpc.game.deletePreset.useMutation(mutationOptions);
   const reorderCardsMutation = trpc.game.reorderCards.useMutation(mutationOptions);
+  const reviveMonsterMutation = trpc.game.reviveMonster.useMutation(mutationOptions);
+  const sendMonsterToRingMutation = trpc.game.sendMonsterToRing.useMutation({
+    onSuccess: async () => {
+      await invalidateWorkshop();
+      if (roomId) await utils.game.ringState.invalidate({ roomId });
+    },
+  });
 
   const inventory = (inventoryQuery.data ?? EMPTY_INVENTORY) as WorkshopInventory;
   const monsters = inventory.monsters ?? [];
@@ -86,9 +94,13 @@ export function useDeckWorkshop(roomId?: string) {
       reorderCardsMutation.isPending ||
       savePresetMutation.isPending ||
       loadPresetMutation.isPending ||
-      deletePresetMutation.isPending,
+      deletePresetMutation.isPending ||
+      reviveMonsterMutation.isPending ||
+      sendMonsterToRingMutation.isPending,
     [
       deletePresetMutation.isPending,
+      reviveMonsterMutation.isPending,
+      sendMonsterToRingMutation.isPending,
       equipCardsMutation.isPending,
       inventoryQuery.isFetching,
       loadPresetMutation.isPending,
@@ -121,8 +133,18 @@ export function useDeckWorkshop(roomId?: string) {
       reorderCardsMutation.error?.message ??
       savePresetMutation.error?.message ??
       loadPresetMutation.error?.message ??
-      deletePresetMutation.error?.message,
+      deletePresetMutation.error?.message ??
+      reviveMonsterMutation.error?.message ??
+      sendMonsterToRingMutation.error?.message,
     refresh: () => inventoryQuery.refetch(),
+    reviveMonster: (input: { monsterName: string }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return reviveMonsterMutation.mutateAsync({ roomId, ...input });
+    },
+    sendMonsterToRing: (input: { monsterName: string }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return sendMonsterToRingMutation.mutateAsync({ roomId, ...input });
+    },
     equipCards: (input: { monsterName: string; cardNames: string[]; replaceAll?: boolean }) => {
       if (!roomId) throw new Error('Room not selected');
       return equipCardsMutation.mutateAsync({ roomId, ...input });
