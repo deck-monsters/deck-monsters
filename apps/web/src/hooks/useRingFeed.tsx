@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -27,6 +28,18 @@ export type RingFeedApi = {
   seedCursor: (eventId: string) => void;
 };
 
+/**
+ * How long to wait for *any* frame before treating the connection as dead.
+ *
+ * The server sends a keep-alive `heartbeat` every 20s (`trpc/router.ts`). Nothing used
+ * to watch for those stopping, so `connected` only flipped when the transport itself
+ * raised an error — and a connection that dies silently (a backgrounded phone, a network
+ * that blackholes rather than resets) left the app showing no "reconnecting…" banner
+ * while quietly missing events. 2.5x the interval tolerates a late frame without
+ * declaring a healthy connection dead.
+ */
+export const HEARTBEAT_TIMEOUT_MS = 50_000;
+
 export const RingFeedContext = createContext<RingFeedApi | null>(null);
 
 /**
@@ -48,6 +61,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
   const pendingEventsRef = useRef<TrackedRingFeedEvent[]>([]);
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
+  const heartbeatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset shared cursor / connection flags when navigating to another room.
   // Adjust state during render so the subscription input never briefly carries
@@ -62,6 +76,30 @@ export function useRingFeed(roomId: string): RingFeedApi {
     listenersRef.current.clear();
     pendingEventsRef.current = [];
   }
+
+  /**
+   * Mark the subscription dead and re-subscribe from the last event we saw. Shared by
+   * the transport's own `onError` and the heartbeat watchdog so both produce identical
+   * state and the same resume cursor.
+   */
+  const handleConnectionLost = useCallback(() => {
+    setConnected(false);
+    setReconnecting(true);
+    setSubLastEventId(latestTrackedEventIdRef.current);
+  }, []);
+
+  /** Restart the watchdog. Called for every inbound frame, heartbeats included. */
+  const noteFrameReceived = useCallback(() => {
+    if (heartbeatTimerRef.current !== null) clearTimeout(heartbeatTimerRef.current);
+    heartbeatTimerRef.current = setTimeout(handleConnectionLost, HEARTBEAT_TIMEOUT_MS);
+  }, [handleConnectionLost]);
+
+  useEffect(
+    () => () => {
+      if (heartbeatTimerRef.current !== null) clearTimeout(heartbeatTimerRef.current);
+    },
+    []
+  );
 
   const advanceTrackedCursor = useCallback((eventId: string) => {
     if (!shouldAdvanceEventCursor(eventId, latestTrackedEventIdRef.current)) return false;
@@ -112,6 +150,10 @@ export function useRingFeed(roomId: string): RingFeedApi {
       onData(tracked: TrackedRingFeedEvent) {
         const event = tracked.data;
 
+        // Any frame proves the connection is alive — arm the watchdog before anything
+        // else, including for the frame types dropped below.
+        noteFrameReceived();
+
         if (event.type === 'handshake') {
           handleHandshakeRef.current(event);
           setConnected(true);
@@ -138,9 +180,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
         fanOut(tracked);
       },
       onError() {
-        setConnected(false);
-        setReconnecting(true);
-        setSubLastEventId(latestTrackedEventIdRef.current);
+        handleConnectionLost();
       },
     },
   );
