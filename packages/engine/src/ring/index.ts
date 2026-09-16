@@ -62,6 +62,24 @@ export const getXpCapForLevel = (targetLevel: number): number => {
 	return lower;
 };
 
+/** One contestant's live stats, as broadcast on `ring.state` for the roster UI. */
+export interface RingContestantSnapshot {
+	name: string;
+	icon: string;
+	creatureType: string;
+	level: number;
+	hp: number;
+	maxHp: number;
+	ac: number;
+	dead: boolean;
+	isBoss: boolean;
+	team: string | null;
+	/** Owning player's display name; null for bosses, which have no owner. */
+	owner: string | null;
+	/** Owning player's user id, so a client can highlight "your" monsters. */
+	userId: string | null;
+}
+
 export interface Contestant {
 	monster: any;
 	character: any;
@@ -524,6 +542,9 @@ export class Ring extends BaseClass {
 			);
 		});
 
+		// Surface the starting board (and inEncounter) before the first card lands.
+		this.publishState();
+
 		return true;
 	}
 
@@ -531,6 +552,38 @@ export class Ring extends BaseClass {
 		this.contestants.forEach(contestant => contestant.monster.endEncounter());
 		this.inEncounter = false;
 		delete this.encounter;
+		// Post-fight HP is what players check between rounds; publish the final board.
+		this.publishState();
+	}
+
+	/**
+	 * Live per-contestant stats for the ring roster UI.
+	 *
+	 * The narration already reports HP and AC, but only as prose scattered through
+	 * the feed ("Aqim has 40HP"), so following a multi-monster fight meant scrolling
+	 * back and reconstructing the board by hand — unreadable on a phone. This is the
+	 * same data `look at monsters in the ring` prints, shaped for a client to render
+	 * as a persistent panel.
+	 *
+	 * `ac` is read through the live getter so per-encounter boosts are reflected as
+	 * they change; `team` and `targetingStrategy` come off the contestant rather than
+	 * the monster because ring events set them per-encounter (see `Contestant`).
+	 */
+	contestantSnapshots(): RingContestantSnapshot[] {
+		return this.contestants.map(({ monster, character, userId, isBoss, team }) => ({
+			name: monster.givenName,
+			icon: monster.icon ?? '',
+			creatureType: monster.creatureType,
+			level: monster.level,
+			hp: monster.hp,
+			maxHp: monster.maxHp,
+			ac: monster.ac,
+			dead: monster.dead,
+			isBoss: Boolean(isBoss),
+			team: team ?? null,
+			owner: isBoss ? null : (character?.givenName ?? null),
+			userId: isBoss ? null : (userId ?? null),
+		}));
 	}
 
 	/** Publish current ring timer state to all connected clients via the event bus. */
@@ -543,6 +596,8 @@ export class Ring extends BaseClass {
 				nextFightAt: this.nextFightAt,
 				nextBossSpawnAt: this.nextBossSpawnAt,
 				monsterCount: this.contestants.length,
+				inEncounter: this.inEncounter,
+				contestants: this.contestantSnapshots(),
 			},
 		});
 	}
@@ -846,6 +901,12 @@ export class Ring extends BaseClass {
 				card
 					.play(player, proposedTarget, ring, getAllActiveContestants())
 					.then(() => {
+						// Push the board after every resolved card so the roster's HP/AC
+						// track the narration. One publish per card matches the feed's own
+						// card-to-card pacing (veryShortDelay below), so this adds no
+						// meaningful traffic next to the announce lines already going out.
+						this.publishState();
+
 						if (fightContinues(getAllActiveContestants())) {
 							if (delaysAreSkipped()) {
 								return subEventDelay().then(() => next());

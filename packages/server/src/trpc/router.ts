@@ -1557,6 +1557,15 @@ export function createRouter(roomManager: RoomManager) {
 						nextFightAt: ring.nextFightAt,
 						nextBossSpawnAt: ring.nextBossSpawnAt,
 						monsterCount: ring.contestants.length,
+						inEncounter: Boolean(ring.inEncounter),
+						// Same shape as the `ring.state` broadcast, so the roster renders
+						// immediately on connect instead of staying blank until the next
+						// card resolves. Guarded because the handshake bootstraps the whole
+						// ringFeed subscription — a throw here would take down the feed, and
+						// an empty roster (which the next ring.state repairs) is a far better
+						// failure mode than no connection at all.
+						contestants:
+							typeof ring.contestantSnapshots === 'function' ? ring.contestantSnapshots() : [],
 					},
 				},
 			};

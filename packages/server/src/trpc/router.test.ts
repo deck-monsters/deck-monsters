@@ -459,7 +459,7 @@ describe('trpc/router ringFeed replay', () => {
 				},
 			}),
 			getGame: async () => ({
-				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [] },
+				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [], inEncounter: false, contestantSnapshots: () => [] },
 			}),
 			getEventsSinceForRingFeed: async () => ({ events: storedEvents, limitReached: false }),
 		}) as unknown as Parameters<typeof createRouter>[0];
@@ -811,7 +811,7 @@ describe('trpc/router ringFeed live-subscription race', () => {
 				},
 			}),
 			getGame: async () => ({
-				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [] },
+				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [], inEncounter: false, contestantSnapshots: () => [] },
 			}),
 			getEventsSinceForRingFeed: async () => ({ events: [replayed], limitReached: false }),
 		} as unknown as Parameters<typeof createRouter>[0];
@@ -851,7 +851,7 @@ describe('trpc/router ringFeed live-subscription race', () => {
 				subscribe: () => () => {},
 			}),
 			getGame: async () => ({
-				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [] },
+				ring: { nextFightAt: null, nextBossSpawnAt: null, contestants: [], inEncounter: false, contestantSnapshots: () => [] },
 			}),
 			getEventsSinceForRingFeed: async () => ({ events, limitReached: true }),
 		} as unknown as Parameters<typeof createRouter>[0];

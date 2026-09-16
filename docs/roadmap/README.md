@@ -16,6 +16,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [03 — Auth & Identity](03-auth-and-identity.md) | JWT, Supabase Auth, Discord + Google OAuth | ✅ Phase 1 + 2 done; Apple deferred |
 | [04 — Multi-Room/Groups](04-multi-room-groups.md) | RoomManager, invite codes, web UI, Discord | ✅ Done |
 | [15 — Ring Feed Timestamps](15-ring-feed-timestamps.md) | `timeago.js`, hover tooltips | ✅ Done |
+| [18 — Live Ring Roster](18-live-ring-roster.md) | Live HP/AC scoreboard during fights | ✅ Done |
 | [06a — Web App](06a-web-app.md) | Terminal UI, ring feed, lobby, rooms | ✅ Done — live at deck-monsters.com |
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
@@ -46,6 +47,7 @@ Everything below shipped and is not expected to need revisiting:
 - **RoomManager** — lazy load/unload, invite codes, idle room sweeps, room-scoped character data
 - **Discord connector** — slash commands (`/spawn`, `/ring`, `/equip`, `/preset`, `/shop`, `/buy`, `/sell`, `/use`, `/status`, `/monsters`, `/dismiss`, `/revive`, `/ring-status`, `/summon-boss`, `/create-room`, `/join-room`, `/set-announcement-channel`, `/help`), event bus bridging, button/select-menu prompts, guild-room mapping, embed rendering, admin role detection (guild room owner → `isAdmin`), slash command test coverage
 - **Web app** — all three phases complete and live at deck-monsters.com: terminal aesthetic, ring pane, console pane, inline choices, quick-action suggestions, responsive layout, tab shortcuts, room lobby, room settings, account page, theme picker (phosphor + amber + CRT toggle), mobile input dock, accessibility pass, reduced-motion/contrast support; `apps/web-legacy` removed
+- **Live ring roster** — a persistent scoreboard above the ring feed showing every contestant's live HP (bar + numbers), AC, level, team/boss tag and owner, pushed on the existing `ring.state` broadcast after each resolved card. Collapsible, per-viewer preference remembered
 - **Ring feed timestamps** — `timeago.js` integration, absolute-time hover tooltips, key-event markers, opt-in toggle in Account settings
 - **Leaderboard** — `room_player_stats` / `room_monster_stats` tables, `FightStatsSubscriber`, tRPC procedures, win-streak tracking, web leaderboard page
 - **Fight stats** — `fight_summaries` table, `FightSummaryWriter`, catch-up text command, web fight log page with expandable detail, last-fight ticker in ring pane

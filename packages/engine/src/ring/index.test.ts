@@ -28,6 +28,86 @@ describe('ring/index.ts', () => {
 		expect(ring.eventBus).to.be.instanceOf(RoomEventBus);
 	});
 
+	describe('contestantSnapshots', () => {
+		it('reports live per-contestant stats for the roster UI', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster({ name: 'Ada' });
+			const monster = new Basilisk({ name: 'Stonefang' });
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			const [snapshot] = ring.contestantSnapshots();
+
+			expect(snapshot!.name).to.equal('Stonefang');
+			expect(snapshot!.creatureType).to.equal(monster.creatureType);
+			expect(snapshot!.maxHp).to.equal(monster.maxHp);
+			expect(snapshot!.hp).to.equal(monster.hp);
+			expect(snapshot!.ac).to.equal(monster.ac);
+			expect(snapshot!.dead).to.equal(false);
+			expect(snapshot!.isBoss).to.equal(false);
+			expect(snapshot!.userId).to.equal('user-1');
+			expect(snapshot!.owner).to.equal(character.givenName);
+		});
+
+		it('tracks damage so the roster follows the fight', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			monster.hp = monster.maxHp - 5;
+			const [afterHit] = ring.contestantSnapshots();
+			expect(afterHit!.hp).to.equal(monster.maxHp - 5);
+			expect(afterHit!.dead).to.equal(false);
+
+			monster.hp = 0;
+			const [afterDeath] = ring.contestantSnapshots();
+			expect(afterDeath!.dead).to.equal(true);
+		});
+
+		it('publishes contestants on ring.state so clients can render without polling', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster();
+			const monster = new Basilisk({ name: 'Stonefang' });
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			const published: Array<Record<string, unknown>> = [];
+			sinon.stub(ring.eventBus, 'publish').callsFake(((event: Record<string, unknown>) => {
+				published.push(event);
+				return event;
+			}) as unknown as typeof ring.eventBus.publish);
+
+			ring.publishState();
+
+			expect(published).to.have.lengthOf(1);
+			const payload = published[0]!.payload as {
+				contestants: Array<{ name: string }>;
+				monsterCount: number;
+			};
+			expect(payload.monsterCount).to.equal(1);
+			expect(payload.contestants.map(c => c.name)).to.deep.equal(['Stonefang']);
+		});
+
+		it('omits owner identity for bosses, which have no owning player', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1', isBoss: true });
+
+			const [snapshot] = ring.contestantSnapshots();
+			expect(snapshot!.isBoss).to.equal(true);
+			expect(snapshot!.owner).to.equal(null);
+			expect(snapshot!.userId).to.equal(null);
+		});
+	});
+
 	describe('monsters', () => {
 		it('can be added', () => {
 			const game = new Game();

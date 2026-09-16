@@ -14,6 +14,7 @@ import {
 	getKeyRingEventMeta,
 } from '../utils/event-time.js';
 import { shouldRenderRingEvent } from '../utils/ring-feed-events.js';
+import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 
 interface RingPaneProps {
   roomId: string;
@@ -24,6 +25,19 @@ interface TimerState {
   nextFightAt: number | null;
   nextBossSpawnAt: number | null;
   monsterCount: number;
+  inEncounter?: boolean;
+  contestants?: RingContestantSnapshot[];
+}
+
+const ROSTER_COLLAPSED_KEY = 'dm:ringRosterCollapsed';
+
+function readRosterCollapsed(): boolean {
+  try {
+    return window.localStorage.getItem(ROSTER_COLLAPSED_KEY) === '1';
+  } catch {
+    // Private mode / blocked storage — default to expanded.
+    return false;
+  }
 }
 
 const RING_TYPES = new Set([
@@ -111,7 +125,22 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
     nextFightAt: null,
     nextBossSpawnAt: null,
     monsterCount: 0,
+    contestants: [],
   });
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [rosterCollapsed, setRosterCollapsed] = useState(readRosterCollapsed);
+
+  const toggleRoster = useCallback(() => {
+    setRosterCollapsed(prev => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(ROSTER_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        // Preference is a convenience only — ignore storage failures.
+      }
+      return next;
+    });
+  }, []);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
@@ -141,15 +170,22 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
 
     if (event.type === 'handshake') {
       // Seed timer state from the handshake payload so we have instant values
-      const hs = event.payload as { ringState?: unknown };
+      const hs = event.payload as { ringState?: unknown; yourUserId?: string };
       if (hs.ringState) setTimerState(hs.ringState as TimerState);
+      if (hs.yourUserId) setMyUserId(hs.yourUserId);
       return;
     }
 
     // ring.state is a state-sync signal — update timers but don't show in the feed
     if (event.type === 'ring.state') {
       const s = event.payload as unknown as TimerState;
-      setTimerState({ nextFightAt: s.nextFightAt, nextBossSpawnAt: s.nextBossSpawnAt, monsterCount: s.monsterCount });
+      setTimerState({
+        nextFightAt: s.nextFightAt,
+        nextBossSpawnAt: s.nextBossSpawnAt,
+        monsterCount: s.monsterCount,
+        inEncounter: s.inEncounter,
+        contestants: s.contestants ?? [],
+      });
       return;
     }
 
@@ -246,6 +282,13 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
     timerBadge = `boss in ~${formatCountdown(timerState.nextBossSpawnAt)}`;
   }
 
+  // ring.state pushes are authoritative once they start arriving; the ringState
+  // query seeds the roster on mount (and after a reconnect drops pushed state).
+  const rosterContestants: RingContestantSnapshot[] =
+    timerState.contestants && timerState.contestants.length > 0
+      ? timerState.contestants
+      : ((ringState as { contestants?: RingContestantSnapshot[] } | undefined)?.contestants ?? []);
+
   const summonBadge = ringState
     ? `summons ${ringState.bossSummonsRemaining}/${ringState.bossSummonLimit}`
     : null;
@@ -279,6 +322,13 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
           -- reconnecting --
         </div>
       )}
+
+      <RingRoster
+        contestants={rosterContestants}
+        myUserId={myUserId}
+        collapsed={rosterCollapsed}
+        onToggle={toggleRoster}
+      />
 
       <Virtuoso
         ref={virtuosoRef}
