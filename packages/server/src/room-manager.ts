@@ -20,6 +20,7 @@ import type { Db } from './db/index.js';
 import { rooms, roomMembers, profiles, roomEvents, roomPlayerStats, roomMonsterStats, fightSummaries } from './db/schema.js';
 import { dbRowToGameEvent } from './db/game-event-map.js';
 import type { GameEvent, RingContestantSnapshot } from '@deck-monsters/engine';
+import { publicDisplayName } from './public-display-name.js';
 import { PostgresStateStore } from './state-store.js';
 import { attachEventPersister } from './event-persister.js';
 import { attachFightStatsSubscriber } from './fight-stats-subscriber.js';
@@ -409,7 +410,9 @@ export class RoomManager {
 			.where(eq(profiles.id, userId))
 			.limit(1);
 
-		return rows[0]?.displayName ?? 'Player';
+		// Masked so an unset display name — which the profile trigger fills with the
+		// user's email — cannot reach the ring feed or leaderboard as a real address.
+		return publicDisplayName(rows[0]?.displayName);
 	}
 
 	async getMemberRole(userId: string, roomId: string): Promise<'owner' | 'member'> {

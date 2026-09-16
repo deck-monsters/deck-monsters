@@ -330,6 +330,7 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
         onToggle={toggleRoster}
       />
 
+      <div className="pane-feed-area">
       <Virtuoso
         ref={virtuosoRef}
         className="event-feed"
@@ -384,13 +385,6 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
         }}
       />
 
-      {lastFight?.[0] && (
-        <LastFightFooter
-          summary={lastFight[0] as FightSummaryLike & { fightNumber: number; endedAt: string }}
-          showRelative={ringKeyTimestampsEnabled}
-        />
-      )}
-
       {!isAtBottom && (
         <button
           className="jump-to-bottom"
@@ -399,6 +393,14 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
         >
           ↓ Latest
         </button>
+      )}
+      </div>
+
+      {lastFight?.[0] && (
+        <LastFightFooter
+          summary={lastFight[0] as FightSummaryLike & { fightNumber: number; endedAt: string }}
+          showRelative={ringKeyTimestampsEnabled}
+        />
       )}
     </section>
   );

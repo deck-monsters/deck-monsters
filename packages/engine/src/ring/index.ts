@@ -11,9 +11,19 @@ import {
 } from './ring-events.js';
 import { getLevel } from '../helpers/levels.js';
 import { sortCardsAlphabetically } from '../cards/helpers/sort.js';
-import { delaysAreSkipped, shortDelay, subEventDelay, veryShortDelay } from '../helpers/delay-times.js';
+import { delaysAreSkipped, groupedBeatMs, remainingGapMs, shortDelay, subEventDelay, subEventDelayMs, veryShortDelay } from '../helpers/delay-times.js';
 import { uniqueCards } from '../cards/helpers/unique-cards.js';
 import type { RoomEventBus } from '../events/index.js';
+
+/**
+ * A single reading beat, sized by the message just published. Used between the turn
+ * banner and the card box, which otherwise arrive in the same tick. Resolves without a
+ * timer in skip mode, matching the other continuation paths in `doAction`.
+ */
+const turnBeat = (): Promise<void> =>
+	delaysAreSkipped()
+		? Promise.resolve()
+		: new Promise<void>(resolve => setTimeout(resolve, subEventDelayMs()));
 
 const MAX_BOSSES = 5;
 const MAX_MONSTERS = 12;
@@ -898,8 +908,14 @@ export class Ring extends BaseClass {
 					return;
 				}
 
-				card
-					.play(player, proposedTarget, ring, getAllActiveContestants())
+				// Let the turn banner land before the card box does. `playerTurnBegin`
+				// publishes the player's monster stat card — measured at 19–34 rendered
+				// lines — and `card.play` immediately publishes another ten-line card box,
+				// so the two arrived together with a 0.0s gap: forty-odd lines at once,
+				// followed by the whole pause. Sized by `subEventDelayMs`, which scales
+				// with the banner just emitted, so a long stat card buys more reading time.
+				turnBeat()
+					.then(() => card.play(player, proposedTarget, ring, getAllActiveContestants()))
 					.then(() => {
 						// Push the board after every resolved card so the roster's HP/AC
 						// track the narration. One publish per card matches the feed's own
@@ -912,11 +928,15 @@ export class Ring extends BaseClass {
 								return subEventDelay().then(() => next());
 							}
 							// Pace card-to-card transitions with the configured very-short
-							// delay (2–4s) so live feeds can be followed; sub-events within
-							// a card already pace themselves via subEventDelay().
-							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() =>
-								next()
-							);
+							// delay so live feeds can be followed; sub-events within a card
+							// already pace themselves via subEventDelay(). `remainingGapMs`
+							// subtracts the pause the card's final sub-event just took, so
+							// the boundary is that delay rather than the sum of both — the
+							// stacked version measured 6.8s at p90 and up to 10.3s, landing
+							// straight after the damage result.
+							return new Promise<void>(r =>
+								setTimeout(r, remainingGapMs(veryShortDelay(round)))
+							).then(() => next());
 						}
 
 						return Promise.resolve().then(() => resolve(playerContestant));
@@ -934,7 +954,9 @@ export class Ring extends BaseClass {
 							if (delaysAreSkipped()) {
 								return subEventDelay().then(() => next());
 							}
-							return new Promise<void>(r => setTimeout(r, veryShortDelay(round))).then(() => next());
+							return new Promise<void>(r =>
+								setTimeout(r, remainingGapMs(veryShortDelay(round)))
+							).then(() => next());
 						}
 						return Promise.resolve().then(() => resolve(playerContestant));
 					});
@@ -944,7 +966,11 @@ export class Ring extends BaseClass {
 					player.emptyHanded = true;
 
 					const allActiveContestants = getAllActiveContestants();
+					// Only a genuine round rollover earns the round-sized gap. Reaching the
+					// end of one contestant's deck is a one-line housekeeping notice.
+					let roundRolledOver = false;
 					if (!anyContestantsHaveCardsLeft(allActiveContestants)) {
+						roundRolledOver = true;
 						this.emit('roundComplete', { contestants, round });
 
 						if (round === 10) {
@@ -964,7 +990,22 @@ export class Ring extends BaseClass {
 						activeContestants = allActiveContestants;
 					}
 
-					const waitMs = shortDelay(round);
+					// Same de-stacking as the card-to-card gap above: the banner has just
+					// been emitted, so wait only the remainder of the target gap.
+					//
+					// A round rollover is a real beat and gets the round-sized delay. A
+					// plain "X is out of cards" is not: it used to take the same gap, so a
+					// fight where several contestants emptied their decks in a row produced
+					// consecutive 9–10s waits separated by a single line of text — measured
+					// as the longest pauses in the whole feed, and reading as a stall.
+					// "X is out of cards" lines belong together: several contestants empty
+					// their decks back to back, and giving each one a full gap drip-fed the
+					// feed with consecutive 9–10s waits separated by a single line. They
+					// now arrive as a group on a short beat, and the real pause comes once,
+					// after the group, at the round rollover that follows it.
+					const waitMs = roundRolledOver
+						? remainingGapMs(shortDelay(round))
+						: remainingGapMs(groupedBeatMs());
 					if (delaysAreSkipped()) {
 						queueMicrotask(() => next());
 					} else {

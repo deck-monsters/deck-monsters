@@ -2,11 +2,61 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Archive — all tracked items from the 2026-08-03 audit pass are resolved. See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73, #74–#85, #86).
+**Status**: Active — three open items from the September 2026 live-play pass (below). Everything earlier is resolved; see [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73, #74–#85, #86–#97).
 
 ## Active Items
 
-None. The DMG/CARDS content differentiation pass (#3) is complete — see `10b-bugs-fixed.md`.
+Found during the September 2026 live-play review. None is player-blocking; each is
+recorded with a root cause so it can be picked up without re-deriving the analysis.
+
+### 1. `profiles.display_name` still defaults to the user's email (follow-up to #95)
+
+`handle_new_user` seeds `display_name` with
+`coalesce(display_name, full_name, new.email, '')`
+(`supabase/migrations/20260403000000_fix_profile_trigger.sql`). A web signup that never
+sets a display name therefore still gets their email address stored as their profile
+name.
+
+`publicDisplayName` now masks it on every read path, so it is no longer *shown* to other
+players, and `Game.getCharacter` heals character names already saved with an address. But
+the underlying column keeps storing real email addresses as display names, which is the
+wrong thing to persist and one missed call site away from leaking again.
+
+**Fix**: a migration changing the trigger's fallback to something non-identifying (a
+generated handle, or the email local part), plus a one-off `update` for existing rows
+where `display_name` matches an email pattern. Deliberately left out of #95 because it is
+a data migration against live auth rows and deserves its own change.
+
+Related: rows already written to `room_player_stats.display_name` keep their old value
+until the next fight updates them. Those are masked on read too, so this is cosmetic
+history rather than an active leak.
+
+### 2. Some cards emit two roll blocks in the same tick
+
+Measured in the pacing pass: a few cards publish two roll announcements with a 0.0s gap
+between them, so both land at once. Seen with the pin / break-free flow —
+
+```
+5.9s  M00 rolled _13 +4 on 1d20_ to see if it pins M01.
+0.0s  M00 rolled _13 -1 on 1d20_ vs M01's dex (6) to determine if the hit was a success.
+```
+
+and again with `is currently ⑂ pinned by` followed immediately by the break-free roll.
+These are card-level `emit` calls with no `subEventDelay` between them, so the
+content-aware pacing added in #89's follow-up never gets a chance to space them.
+
+Much smaller than the turn-banner problem (#97) — two three-line blocks rather than forty
+lines — so it was left alone rather than touching every card individually. The general
+fix is a minimum gap enforced centrally, which means making publication async and is a
+real change to `RoomEventBus`; worth doing only if more cards show the pattern.
+
+### 3. The fight feed opens with a burst
+
+The first three messages of a fight (fight banner, separator, first turn banner) publish
+in the same tick before any pacing applies. Minor, and far less visible since #97 cut the
+turn banner down, but it is the one place the feed still starts as a wall.
+
+
 
 ## Investigated — not bugs (left for the record)
 

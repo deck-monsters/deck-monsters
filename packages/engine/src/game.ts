@@ -539,13 +539,28 @@ export class Game extends BaseClass {
 				});
 			}
 
-			// If the character was created with the generic 'Player' fallback name
-			// (before server-side display name resolution), update it silently.
-			if (
-				existingCharacter.givenName === 'Player' &&
-				name &&
-				name !== 'Player'
-			) {
+			// Heal a stored name that should never have been persisted, using the
+			// server-resolved one. Two cases:
+			//
+			// 1. The generic 'Player' fallback, saved before server-side display name
+			//    resolution existed.
+			// 2. An email address. Connectors resolve a player's name from their profile,
+			//    and a web signup that never set a display name had `display_name`
+			//    defaulted to their email — which then became the character's `givenName`
+			//    and was printed in the public ring roster, fight narration and the
+			//    leaderboard. The server masks this at the source now, but characters
+			//    created before that keep the address in saved state until it is replaced
+			//    here. Deliberately narrow: a player who renamed themselves in-game keeps
+			//    that name, because neither case can be produced by `edit character`.
+			const storedName = String(existingCharacter.givenName ?? '');
+			const looksLikeEmail = (value: string): boolean => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+			const shouldHealName =
+				!!name &&
+				name !== 'Player' &&
+				name !== storedName &&
+				(storedName === 'Player' || looksLikeEmail(storedName));
+
+			if (shouldHealName) {
 				existingCharacter.setOptions({ name });
 				game.emit('stateChange', { character: existingCharacter });
 			}

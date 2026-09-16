@@ -36,6 +36,44 @@ continuation path to `doAction` (there are several: played, invalid card, play
 error, end-of-deck), give it the same pacing treatment as its siblings — in
 skip mode use `queueMicrotask`/resolved promise, otherwise a real timer.
 
+### Content-aware pacing (measured, not guessed)
+
+Pacing is shaped by **what was just shown**, not by a fixed interval. `RoomEventBus.publish`
+reports every public message to `helpers/pacing-context.ts`; the delay helpers read it back.
+
+Three rules, each added to fix something measured on real fights:
+
+1. **The pause scales with the message just emitted.** `subEventDelayMs()` multiplies the
+   base midpoint by `1 + perLine × (lines − 1)`, capped. Before this, pacing was
+   *inverted*: the average pause was 3.7s after a one-line result but only 1.6s after a
+   block of 4+ lines — so the ten-line ASCII card box, the one thing that needs reading
+   time, got the shortest pause.
+2. **Gaps do not stack.** `remainingGapMs(target)` subtracts time already elapsed since the
+   last message, so a boundary gap is the intended delay rather than the intended delay
+   *plus* whatever pause the previous beat ended with. Card-to-card, round-to-round and
+   nested-card transitions all go through it. Stacked, these measured 6.8s at p90 and up to
+   10.3s, landing directly after the most interesting line in the fight — the damage
+   result. `remainingGapMs` also clamps to `DECK_MONSTERS_MAX_FEED_GAP_MS` (8s): a beat is
+   only a beat if the reader still expects something next.
+3. **Lines that belong together arrive together, then take one pause.** Several contestants
+   running out of cards is one event, not N. They are separated by `groupedBeatMs()` (~0.7s)
+   and the real pause comes once, at the round rollover that follows. Giving each its own
+   full gap drip-fed the feed with consecutive 9–10s waits separated by a single line.
+
+A turn also gets an explicit beat between the turn banner and the card box (`turnBeat` in
+`ring/index.ts`). `playerTurnBegin` publishes the player's monster stat card — 19–34
+rendered lines — and `card.play` immediately publishes another ten-line box, so the two
+arrived in the same tick: forty-odd lines at once, followed by the whole pause.
+
+Measured across 8 simulated fights, before → after: mean gap 2.41s → 3.26s, p90 5.7s →
+5.8s, **max 10.1s → 8.1s**, and the pause after 4+ lines went from 1.6s (the shortest) to
+4.5s (the longest). The goal is that the feed reads like a game being played rather than
+text scrolling past, so total fight length was allowed to grow.
+
+`packages/harness` can reproduce this: run fights with the delay midpoints divided by a
+constant and multiply the measured gaps back up — ordering and relative sizing are
+unaffected, and a whole fight completes in seconds.
+
 **The same invariant applies to cards that play other cards.** `Random Play`
 (draws a card) and `Pick Pocket` (clones an opponent's) put a second card into
 play within one turn. They must route it through `playNestedCard`

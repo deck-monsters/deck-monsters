@@ -575,20 +575,16 @@ export function createRouter(roomManager: RoomManager) {
 					};
 				}
 				const action = game.handleCommand({ command: input.command });
-
-				if (!action) {
-					log.debug('command not recognized', { roomId: input.roomId, command: input.command });
-					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
-					return { ok: false, message: 'Command not recognized' };
-				}
 				const commandId = randomUUID();
-				// The commandId doubles as the flow-lock ownership token — see the
-				// activeFlows declaration for why cleanup must be ownership-checked.
-				activeFlows.set(flowKey, commandId);
-				log.debug('command dispatched', { roomId: input.roomId, userId: ctx.userId, isAdmin });
 
 				// Persist a user-input echo event so console history can show
 				// previously submitted commands after reload.
+				//
+				// Echoed BEFORE the recognition check, so a rejected command is echoed too.
+				// It used to be published only on the success path, which left the console
+				// showing a bare "Command not recognized" with no record of what was
+				// rejected — indistinguishable from the *previous* (successful) command
+				// having failed, and impossible to debug from a screenshot.
 				eventBus.publish({
 					type: 'system',
 					scope: 'private',
@@ -599,6 +595,16 @@ export function createRouter(roomManager: RoomManager) {
 						causedByCommandId: commandId,
 					},
 				});
+
+				if (!action) {
+					log.debug('command not recognized', { roomId: input.roomId, command: input.command });
+					commandsTotal.inc({ room_id: input.roomId, result: 'rejected' });
+					return { ok: false, message: 'Command not recognized' };
+				}
+				// The commandId doubles as the flow-lock ownership token — see the
+				// activeFlows declaration for why cleanup must be ownership-checked.
+				activeFlows.set(flowKey, commandId);
+				log.debug('command dispatched', { roomId: input.roomId, userId: ctx.userId, isAdmin });
 
 				// Channel callback: all output (announcements and prompts) goes through
 				// the event bus so the web client receives it via the ringFeed WebSocket.

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { GameEvent, EventSubscriber, EventScope, EventType, EventsSinceResult } from './types.js';
+import { noteEmitted } from '../helpers/pacing-context.js';
 
 const RING_BUFFER_SIZE = 200;
 
@@ -54,6 +55,14 @@ export class RoomEventBus {
 		this.eventLog.push(fullEvent);
 		if (this.eventLog.length > RING_BUFFER_SIZE) {
 			this.eventLog.shift();
+		}
+
+		// Feed pacing reads the size of the last message shown so a long card box gets a
+		// longer pause than a one-line result. Only public ring traffic counts: private
+		// DMs and prompt plumbing are not what the ring feed is pacing against, and
+		// `ring.state` carries no text. See helpers/pacing-context.ts.
+		if (fullEvent.scope === 'public' && fullEvent.type !== 'ring.state') {
+			noteEmitted(String(fullEvent.text ?? ''));
 		}
 
 		for (const subscriber of this.subscribers.values()) {

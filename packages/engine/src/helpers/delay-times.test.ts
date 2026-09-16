@@ -34,15 +34,16 @@ describe('delay-times', () => {
 	});
 
 	it('samples the default ranges from the shipped midpoints when no env overrides are set', () => {
-		// Defaults are 5100 / 7650 (raised ~1.7x so live feeds are readable on a phone);
-		// each range is [⅔·midpoint, 4/3·midpoint].
+		// Defaults are 5100 (card to card) and 6000 (round to round); each range is
+		// [⅔·midpoint, 4/3·midpoint]. `short` was lowered from 7650 because round
+		// transitions were measured as the longest gaps in a live feed.
 		Math.random = () => 0;
 		expect(veryShortDelay()).to.equal(3400);
-		expect(shortDelay()).to.equal(5100);
+		expect(shortDelay()).to.equal(4000);
 
 		Math.random = () => 0.999999;
 		expect(veryShortDelay()).to.equal(6800);
-		expect(shortDelay()).to.equal(10200);
+		expect(shortDelay()).to.equal(8000);
 	});
 
 	it('uses midpoint env vars to derive min and max ranges', () => {

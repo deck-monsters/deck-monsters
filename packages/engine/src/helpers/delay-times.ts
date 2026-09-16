@@ -1,3 +1,5 @@
+import { lastEmittedShape, msSinceLastEmit } from './pacing-context.js';
+
 export const ONE_MINUTE = 60000;
 
 type DelayKind = 'very_short' | 'short' | 'medium' | 'long';
@@ -9,15 +11,21 @@ type DelayKind = 'very_short' | 'short' | 'medium' | 'long';
 // box, so at 3s card-to-card a card's full resolution filled a phone screen faster
 // than it could be read. Each kind keeps its [⅔·mid, 4/3·mid] sampling window.
 // - very_short: 3400–6800ms (midpoint 5100) — card to card
-// - short:      5100–10200ms (midpoint 7650) — round to round
+// - short:      4000–8000ms (midpoint 6000) — round to round
 // - medium:     6800–13600ms (midpoint 10200)
 // - long:       10200–20400ms (midpoint 15300)
+//
+// `short` was lowered from 7650 after measuring real fights: round transitions were the
+// longest gaps in the feed at 9–10s, which reads as the game having stalled rather than
+// as a beat between rounds. Round boundaries are now de-stacked as well (see
+// `remainingGapMs`), so the wait is the delay itself rather than the delay plus the
+// pause the round banner already took.
 //
 // Every value is overridable per-kind via the DECK_MONSTERS_*_DELAY_MIDPOINT_MS /
 // _CAP_MS env vars, so pacing can be dialled live without a deploy.
 const DEFAULT_MIDPOINTS: Record<DelayKind, number> = {
 	very_short: 5100,
-	short: 7650,
+	short: 6000,
 	medium: 10200,
 	long: 15300,
 };
@@ -139,16 +147,96 @@ export const longDelay = (round = 1): number =>
 // Sub-event pacing within a single card play (roll → hit → damage → death). Raised
 // from 1000ms alongside the between-beat midpoints above: these are the lines that
 // actually carry the fight's detail, so they were the ones scrolling past unread.
+//
+// The midpoint is the pause for a ONE-LINE message. Longer messages scale up from it —
+// see `readingScale`.
 const DEFAULT_SUB_EVENT_MS = 1700;
 
-export const subEventDelay = (): Promise<void> => {
-	if (skip()) return Promise.resolve();
+/**
+ * Multiplier applied to the sub-event pause based on how much was just shown.
+ *
+ * A ten-line ASCII card box takes far longer to read than "🎲 *4*", but both used to
+ * get exactly the same pause. Measured across real fights, that made the pause after a
+ * message *inversely* proportional to its length (3.7s after one line, 1.6s after four
+ * or more). Each extra line adds a fraction of the base pause, capped so a very long
+ * block — a monster stat card, the fight banner — cannot stall the feed.
+ *
+ * Tunable via `DECK_MONSTERS_READING_SCALE_PER_LINE` and `_MAX`; set the per-line value
+ * to 0 to restore flat pacing.
+ */
+const readingScale = (): number => {
+	const shape = lastEmittedShape();
+	if (!shape) return 1;
+
+	const perLine = parseFloatWithDefault(
+		process.env.DECK_MONSTERS_READING_SCALE_PER_LINE,
+		0.22
+	);
+	const maxScale = parseFloatWithDefault(process.env.DECK_MONSTERS_READING_SCALE_MAX, 2.6);
+	if (perLine <= 0) return 1;
+
+	const extraLines = Math.max(0, shape.lines - 1);
+	return Math.min(maxScale, 1 + perLine * extraLines);
+};
+
+/** Sub-event pause in ms, scaled by the size of the message just shown. */
+export const subEventDelayMs = (): number => {
+	if (skip()) return 0;
 	const midpoint = parsePositiveInt(
 		process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS,
 		DEFAULT_SUB_EVENT_MS
 	);
 	const { min, max } = getRangeFromMidpoint(midpoint);
-	return new Promise(r => setTimeout(r, sampleInRange(min, max)));
+	return Math.round(sampleInRange(min, max) * readingScale());
+};
+
+export const subEventDelay = (): Promise<void> => {
+	if (skip()) return Promise.resolve();
+	return new Promise(r => setTimeout(r, subEventDelayMs()));
+};
+
+/**
+ * A short beat for lines that belong to the same group — several contestants running
+ * out of cards, for example. Long enough that they do not arrive as one indivisible
+ * block, short enough that the group reads as a single unit with the real pause coming
+ * after it rather than being drip-fed one 9-second gap at a time.
+ */
+const DEFAULT_GROUPED_BEAT_MS = 700;
+
+export const groupedBeatMs = (): number => {
+	if (skip()) return 0;
+	const midpoint = parsePositiveInt(
+		process.env.DECK_MONSTERS_GROUPED_BEAT_MS,
+		DEFAULT_GROUPED_BEAT_MS
+	);
+	const { min, max } = getRangeFromMidpoint(midpoint);
+	return sampleInRange(min, max);
+};
+
+/**
+ * How long still to wait to make the gap since the last message reach `targetMs`.
+ *
+ * Between-beat delays (card to card, round to round) used to be *added* to the pause a
+ * card had already taken after its final sub-event, so the boundary gap was the sum of
+ * both: measured at 6.8s (p90) and up to 10.3s, landing right after the most
+ * interesting line in the fight — the damage result. Subtracting the elapsed time makes
+ * the boundary gap exactly the intended delay rather than the intended delay plus
+ * whatever the card happened to end with.
+ */
+/**
+ * Hard ceiling on any single gap in the feed. Sampled ranges and round shaping can
+ * combine into waits long enough that the fight reads as having stalled rather than as
+ * having paused; a beat is only a beat if the reader still expects something next.
+ */
+const DEFAULT_MAX_FEED_GAP_MS = 8000;
+
+export const remainingGapMs = (targetMs: number): number => {
+	if (skip()) return 0;
+	const ceiling = parsePositiveInt(
+		process.env.DECK_MONSTERS_MAX_FEED_GAP_MS,
+		DEFAULT_MAX_FEED_GAP_MS
+	);
+	return Math.min(ceiling, Math.max(0, targetMs - msSinceLastEmit()));
 };
 
 const delayTimes = {

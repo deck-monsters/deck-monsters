@@ -40,6 +40,16 @@ export function hpBand(ratio: number): 'healthy' | 'hurt' | 'critical' {
   return 'critical';
 }
 
+/**
+ * Level 0 is not a level — it is how the engine represents a monster that has not
+ * earned any XP yet. `describeLevels` renders it as "beginner" and the monster stat
+ * card shows "Level: beginner", so a roster reading "lvl 0" contradicted the rest of
+ * the game.
+ */
+export function formatLevel(level: number): string {
+  return level > 0 ? `lvl ${level}` : 'beginner';
+}
+
 function ContestantRow({
   contestant,
   isMine,
@@ -94,7 +104,7 @@ function ContestantRow({
       </div>
 
       <div className="roster-row-sub">
-        {contestant.creatureType} · lvl {contestant.level}
+        {contestant.creatureType} · {formatLevel(contestant.level)}
         {contestant.owner ? ` · ${contestant.owner}` : ''}
       </div>
     </li>
