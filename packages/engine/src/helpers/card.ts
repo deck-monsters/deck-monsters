@@ -35,6 +35,10 @@ interface MonsterLike {
 	individualDescription?: string;
 	stats?: string;
 	rankings?: string;
+	hp?: number;
+	maxHp?: number;
+	ac?: number;
+	displayLevel?: string;
 }
 
 interface CharacterLike {
@@ -168,6 +172,32 @@ export const monsterCard = (monster: MonsterLike, verbose = true): string =>
 		rankings: monster.rankings,
 		verbose
 	});
+
+/**
+ * One-line stand-in for `monsterCard`, used when a monster takes a turn it has already
+ * taken this fight.
+ *
+ * The turn banner used to print a full stat card every single turn. The "repeat" form
+ * was not actually shorter — `formatCard` only swaps which of description/stats it
+ * shows, so a repeat still rendered the whole ~15-line block, and in a two-monster fight
+ * (turns alternate, so every turn is a repeat for that contestant) the feed was mostly
+ * stat cards. Measured at 19–34 rendered lines per turn.
+ *
+ * Everything in that block except hp and ac is static for the length of a fight and was
+ * already shown when the monster first appeared, so the repeat keeps only the values
+ * that actually change. Deliberately not dropped entirely: the web app has the live
+ * roster panel, but Discord does not, and this is where those players read current hp.
+ */
+export const monsterTurnLine = (monster: MonsterLike, team?: string): string => {
+	const hp = typeof monster.hp === 'number' && typeof monster.maxHp === 'number'
+		? ` — ${monster.hp}/${monster.maxHp} hp`
+		: '';
+	const ac = typeof monster.ac === 'number' ? ` · ac ${monster.ac}` : '';
+	const level = monster.displayLevel ? ` · ${monster.displayLevel}` : '';
+	const teamLabel = team ? ` · ${team}` : '';
+
+	return `${monster.icon ?? ''} ${monster.givenName ?? ''}${hp}${ac}${level}${teamLabel}`.trim();
+};
 
 export const characterCard = (character: CharacterLike, verbose = true): string =>
 	formatCard({

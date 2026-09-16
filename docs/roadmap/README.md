@@ -21,7 +21,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
 | [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | ✅ Archive — all audit items resolved |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 3 non-blocking items from the Sept 2026 live-play pass |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
@@ -55,13 +55,13 @@ Everything below shipped and is not expected to need revisiting:
 - **Card workshop** — full card management shipped: unequip/move commands, preset save/load/delete, drag-and-drop web workshop at `/workshop`
 - **Battle history persistence** — stored in `options.battles`, capped at 20, survives restarts
 - **Boss encounters** — player boss summoning (3 per rolling 24h, per room) and Ring Events: random encounter modifiers that trigger multi-boss gauntlets, free-for-alls, player alliances, and team battles by surfacing the engine's existing team/targeting machinery. `victoryMode: 'last-team'` for Common Cause and House War: combat ends when one faction survives and all survivors win. Centralized activation (`Ring.activateRingEvent`), quorum-drop event clearing, free-for-all centralized in `getTarget`, contestant-level XP team overrides, and restart-gap fix for the boss summon quota (`bossSummonsPending`). Documented in [`docs/boss-encounters.md`](../boss-encounters.md)
-- **Bug fixes** — all tracked audit items resolved; see `10b-bugs-fixed.md` for the archive, including DMG/CARDS content differentiation (#3), batch-equip UX (#19), per-room card shop scoping (#26), boss-sentinel leaderboard fixes (#27–#33), combat/event findings (#34–#50), the 2026-08-03 audit fixes (#51–#58, #59–#63, #64, #65–#69, #70–#73, #74–#85), Fastify tRPC batch `maxParamLength` 404s (#86), the preset casing / parsing fixes (#87–#88), nested card-play pacing (#89), the missing fight-winner banner (#90), the equip deck-accounting / starting-deck refill bugs (#91–#92), and the jump-button / command-echo / email-display / beginner-level fixes (#93–#96).
+- **Bug fixes** — all tracked audit items resolved; see `10b-bugs-fixed.md` for the archive, including DMG/CARDS content differentiation (#3), batch-equip UX (#19), per-room card shop scoping (#26), boss-sentinel leaderboard fixes (#27–#33), combat/event findings (#34–#50), the 2026-08-03 audit fixes (#51–#58, #59–#63, #64, #65–#69, #70–#73, #74–#85), Fastify tRPC batch `maxParamLength` 404s (#86), the preset casing / parsing fixes (#87–#88), nested card-play pacing (#89), the missing fight-winner banner (#90), the equip deck-accounting / starting-deck refill bugs (#91–#92), the jump-button / command-echo / email-display / beginner-level fixes (#93–#96), and the turn-banner collapse (#97).
 
 ---
 
 ## Active Work — In Order of Priority
 
-Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too. `10-bug-fixes.md` has no remaining active items.
+Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too, along with the September 2026 live-play fixes (#89–#97). `10-bug-fixes.md` now carries three open non-blocking items from that pass: the email-defaulted profile name migration (follow-up to #95), cards that emit two roll blocks in the same tick, and the burst of messages at the very start of a fight.
 
 ### 1. Balance & mechanics (11-balance-and-mechanics.md)
 

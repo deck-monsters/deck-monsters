@@ -95,3 +95,22 @@ Not built, no demand yet:
 - Per-contestant status effects (conditions like "braced", stat boosts) as inline chips
 - Damage-taken flash on the bar when HP drops
 - Sparkline of HP across the fight, in the fight log detail view
+
+## Feed readability (September 2026)
+
+The roster was the first half of making a live fight followable; the second half was the
+feed itself. Two measured changes, both documented in
+[`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md):
+
+- **Content-aware pacing.** Pauses now scale with the message just published, gaps no
+  longer stack at beat boundaries, and no single gap exceeds 8s. Before: the pause after a
+  4+ line block averaged 1.6s while a one-line result got 3.7s — exactly backwards.
+- **Turn banner collapse (#97).** The banner reprinted the full monster stat card every
+  turn, accounting for 47% of every line in the feed. A repeat turn is now one line
+  carrying the values that change. Total feed text fell 45%.
+
+Both were measured with `packages/harness`: run fights with the delay midpoints divided by
+a constant, capture the public bus with timestamps, and multiply the gaps back up.
+Ordering and relative sizing are unaffected and a whole fight completes in seconds. Worth
+re-running that way before changing pacing again — the original inversion was invisible by
+inspection and obvious in one table.

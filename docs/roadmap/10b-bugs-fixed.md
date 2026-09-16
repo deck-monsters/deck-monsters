@@ -1653,3 +1653,37 @@ next to a card saying `beginner` — contradicting the rest of the game's vocabu
 otherwise.
 
 **Status**: Fixed.
+
+---
+
+### 97. Turn banner reprinted the full monster stat card every turn — FIXED
+
+`announceTurnBegin` rendered `monsterCard(monster, contestant.lastMonsterPlayed !== monster)`,
+intending a full card on a monster's first turn and something shorter afterwards. The
+"shorter" form was not shorter: `formatCard` only swaps *which* of `description` / `stats`
+it renders, so a repeat still printed the whole ~15-line stat block. In a two-monster
+fight, turns alternate and every turn after the first is a repeat, so the feed was mostly
+stat cards — and the ten-line card box for the card being played lands immediately after
+the banner, so the two together dominated the screen.
+
+Measured across 8 simulated fights: turn banners were **353 messages totalling 6,320
+lines — 47% of every line in the feed**, averaging 17.9 rendered lines each.
+
+**Fixed**: the full card prints only the first time a monster acts in a fight. A repeat
+turn gets `monsterTurnLine` — one line carrying the name plus the values that actually
+change (`🐍 Killer Killer — 30/35 hp · ac 7 · beginner`, plus the team when a ring event
+assigned one). Everything else in the block is static for the length of a fight and was
+already shown when the monster first appeared. Deliberately not dropped altogether: the
+web app has the live roster panel, but Discord does not, and this is where those players
+read current hp.
+
+After: 304 messages totalling 1,376 lines — 19% of feed lines, 4.5 lines each. **Total
+feed text fell 13,387 → 7,384 lines across the same 8 fights (-45%).** Mean gap between
+messages also fell 3.23s → 2.89s, because content-aware pacing (#89 follow-up) gives
+shorter messages proportionally shorter pauses — less text *and* a quicker read.
+
+Covered by `announcements/playerTurnBegin.test.ts` (full card first, collapse on repeat,
+live hp/ac preserved, full card again on monster switch, team shown) and two
+`monsterTurnLine` cases.
+
+**Status**: Fixed.
