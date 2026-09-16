@@ -14,6 +14,12 @@ import {
 	getKeyRingEventMeta,
 } from '../utils/event-time.js';
 import { shouldRenderRingEvent } from '../utils/ring-feed-events.js';
+import {
+	createFeedMarker,
+	feedMarkerKind,
+	isFeedMarker,
+	shouldAppendMarker,
+} from '../utils/feed-markers.js';
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 
 interface RingPaneProps {
@@ -146,6 +152,13 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
+  // True once the first handshake has landed, so a later handshake is a *re*connect.
+  const hasConnectedRef = useRef(false);
+  // Set when a reconnect handshake arrives. The replayed catch-up arrives after the
+  // handshake but carries timestamps from *during* the outage, so drawing "reconnected"
+  // at handshake time would put it above events the reader actually missed. Holding it
+  // until the first genuinely-new event lands closes the bracket in the right place.
+  const pendingReconnectAtRef = useRef<number | null>(null);
 
   // Fetch persistent ring history from DB on mount
   const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
@@ -175,6 +188,8 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
       const hs = event.payload as { ringState?: unknown; yourUserId?: string };
       if (hs.ringState) setTimerState(hs.ringState as TimerState);
       if (hs.yourUserId) setMyUserId(hs.yourUserId);
+      if (hasConnectedRef.current) pendingReconnectAtRef.current = Date.now();
+      hasConnectedRef.current = true;
       return;
     }
 
@@ -204,10 +219,28 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
       void refetchRingState();
     }
 
-    setEvents(prev => [...prev, event]);
+    setEvents(prev => {
+      const pendingAt = pendingReconnectAtRef.current;
+      // Replayed catch-up events are older than the reconnect, so they sort above the
+      // marker; the first event that actually postdates it closes the bracket.
+      if (pendingAt !== null && event.timestamp >= pendingAt) {
+        pendingReconnectAtRef.current = null;
+        if (shouldAppendMarker(prev)) {
+          return [...prev, createFeedMarker('reconnected', pendingAt), event];
+        }
+      }
+      return [...prev, event];
+    });
   }, [refetchRingState]);
 
   const { connected, reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
+
+  // Draw the divider the moment the connection drops, so the reader can see where the
+  // feed stopped being live rather than discovering a hole in it later.
+  useEffect(() => {
+    if (!reconnecting) return;
+    setEvents(prev => (shouldAppendMarker(prev) ? [...prev, createFeedMarker('disconnected')] : prev));
+  }, [reconnecting]);
 
   // Apply DB history once — pre-populate seenRef and seed the shared subscription
   // lastEventId so the live subscription skips already-delivered events.
@@ -234,10 +267,16 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
     // Merge history with any live events that arrived before history loaded.
     // Live events take priority over history events with the same ID.
     setEvents(prev => {
-      if (prev.length === 0) return visibleHistory;
+      // Everything above this line happened before the page was opened. Without it a
+      // stat card from a previous session abuts an unrelated fight from this one.
+      const boundary = visibleHistory.length > 0 ? [createFeedMarker('joined')] : [];
+
+      if (prev.length === 0) return [...visibleHistory, ...boundary];
+
       const liveById = new Map(prev.map(ev => [ev.id, ev]));
       const merged: GameEvent[] = visibleHistory.map(ev => liveById.get(ev.id) ?? ev);
       const historyIds = new Set(visibleHistory.map(ev => ev.id));
+      merged.push(...boundary);
       for (const ev of prev) {
         if (!historyIds.has(ev.id)) merged.push(ev);
       }
@@ -353,6 +392,13 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
           ),
         }}
         itemContent={(_, event) => {
+          if (isFeedMarker(event)) {
+            return (
+              <li className={`feed-marker feed-marker-${feedMarkerKind(event) ?? 'joined'}`}>
+                <span>{event.text}</span>
+              </li>
+            );
+          }
           const keyMeta = getKeyRingEventMeta(event);
           const iso = eventTimestampIso(event.timestamp);
           const hoverTitle = formatEventHoverTitle(event.timestamp);

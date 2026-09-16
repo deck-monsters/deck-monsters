@@ -619,3 +619,38 @@
     max-height: 32%;
   }
 }
+
+/* ── Feed dividers ──────────────────────────────────────────────────────────
+   Client-side markers for breaks the reader lived through: where they opened the
+   page, and where the connection dropped and came back. Deliberately quiet — a
+   divider is punctuation, not an event. See 10b-bugs-fixed.md #107. */
+.feed-marker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-fg-dim);
+  white-space: nowrap;
+}
+
+.feed-marker::before,
+.feed-marker::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* A dropped connection is the one worth noticing; the others are orientation. */
+.feed-marker-disconnected {
+  color: var(--color-error);
+}
+
+.feed-marker-disconnected::before,
+.feed-marker-disconnected::after {
+  background: var(--color-error);
+  opacity: 0.4;
+}
