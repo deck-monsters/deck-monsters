@@ -91,12 +91,30 @@
   flex-direction: column;
 }
 
-/* Event feed — the scrollable list of game events */
+/* Event feed — the scrollable list of game events.
+
+   NO PADDING HERE. This class lands on react-virtuoso's *scroller*, which it styles
+   `position: relative`, and the viewport it nests inside is `position: absolute;
+   width: 100%`. For an absolutely positioned box `width: 100%` resolves against the
+   containing block's *padding* box, so any horizontal padding here made the viewport
+   2x that padding wider than the visible area and `overflow-x: hidden` silently sliced
+   the right-hand edge off every line — losing a short word, or the level number in
+   "a level 6 Minotaur". Padding belongs on `.event-feed-list`, which is a normal-flow
+   child and measures against the content box. See 10b-bugs-fixed.md #98. */
 .event-feed {
   list-style: none;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* The <ol> Virtuoso renders inside the viewport. Carries the feed's gutters. */
+.event-feed-list {
+  padding: var(--pane-padding);
+}
+
+/* The empty placeholder renders outside `.event-feed-list`, so it needs its own gutter. */
+.event-feed-empty {
   padding: var(--pane-padding);
 }
 

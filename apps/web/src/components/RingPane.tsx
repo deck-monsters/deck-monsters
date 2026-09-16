@@ -111,7 +111,9 @@ function LastFightFooter({
 // Virtuoso List component — renders as <ol> for semantic HTML.
 // Cast through any because Virtuoso's List type expects HTMLDivElement internally.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const FeedList = React.forwardRef<any, any>((props, ref) => <ol {...props} ref={ref} />);
+const FeedList = React.forwardRef<any, any>((props, ref) => (
+  <ol {...props} ref={ref} className="event-feed-list" />
+));
 FeedList.displayName = 'FeedList';
 
 export default function RingPane({ roomId, isActive }: RingPaneProps) {
@@ -345,7 +347,7 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
         components={{
           List: FeedList,
           EmptyPlaceholder: () => (
-            <li className="event event-system">
+            <li className="event event-system event-feed-empty">
               <p>Waiting for battle events…</p>
             </li>
           ),

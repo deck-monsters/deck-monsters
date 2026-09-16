@@ -76,6 +76,17 @@ function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot
   );
 }
 
+// Virtuoso List component — renders as <ol> for semantic HTML, and carries the feed's
+// gutters (see `.event-feed-list`; padding must not sit on the scroller). Defined at
+// module scope: an inline component gets a fresh identity on every render, which
+// remounts the whole virtualized list and loses its scroll position.
+// Cast through any because Virtuoso's List type expects HTMLDivElement internally.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const FeedList = React.forwardRef<any, any>((props, ref) => (
+  <ol {...props} ref={ref} className="event-feed-list" />
+));
+FeedList.displayName = 'ConsoleFeedList';
+
 export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
   const { user } = useAuth();
   const { registerInsertFn } = useCommandInsert();
@@ -706,11 +717,9 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
         data={consoleEvents}
         followOutput={false}
         components={{
-          // Cast through any because Virtuoso's List type expects HTMLDivElement internally.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          List: React.forwardRef<any, any>((props, ref) => <ol {...props} ref={ref} />),
+          List: FeedList,
           EmptyPlaceholder: () => (
-            <li className="event event-system">
+            <li className="event event-system event-feed-empty">
               <p>Type a command below to start. Try: <em>look at monsters</em></p>
             </li>
           ),
