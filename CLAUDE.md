@@ -281,7 +281,7 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 
 ## Known Issues
 
-No active tracked bugs. Previously listed items are fixed — see `docs/roadmap/10b-bugs-fixed.md` for root causes, including DMG/CARDS content differentiation (#3), fight log not updating (#15), console history missing on reconnect (#16/#17), card shop room-scoping (#26), batch-equip UX (#19), Discord free-text prompts / serialization (#59/#60), workshop↔console same-user guard (#61), dual web `ringFeed` (#63), harness lane alignment (#73), ConnectorAdapter prompt cancellation (#78), the 2026-08-03 audit fixes (#51–#58, #74–#85), Fastify tRPC batch `maxParamLength` 404s (#86), the preset casing / command-parsing fixes (#87–#88), nested card-play pacing (#89), and the missing fight-winner banner (#90).
+No active tracked bugs. Previously listed items are fixed — see `docs/roadmap/10b-bugs-fixed.md` for root causes, including DMG/CARDS content differentiation (#3), fight log not updating (#15), console history missing on reconnect (#16/#17), card shop room-scoping (#26), batch-equip UX (#19), Discord free-text prompts / serialization (#59/#60), workshop↔console same-user guard (#61), dual web `ringFeed` (#63), harness lane alignment (#73), ConnectorAdapter prompt cancellation (#78), the 2026-08-03 audit fixes (#51–#58, #74–#85), Fastify tRPC batch `maxParamLength` 404s (#86), the preset casing / command-parsing fixes (#87–#88), nested card-play pacing (#89), the missing fight-winner banner (#90), and the equip deck-accounting / starting-deck refill bugs (#91–#92).
 
 ## Archived / Deferred
 

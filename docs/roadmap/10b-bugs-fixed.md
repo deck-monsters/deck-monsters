@@ -1471,3 +1471,87 @@ pluralisation) and an end-to-end assertion in `ring/index.test.ts` that runs a r
 contestant flags.
 
 **Status**: Fixed.
+
+---
+
+### 91. Console `equip` never removed cards from the character deck — FIXED
+
+`character.deck` is the **unequipped pool**. `unequipAll` returns a monster's cards to it
+via `addCard`; `equipCards` (the web workshop path) and `loadPreset` both splice equipped
+cards out of it. The console `equip` command was the one path that did neither:
+`Beastmaster.equipMonster` delegates to `monsters/helpers/equip.ts`, which assigns
+`monster.cards` but holds no reference to the character, so equipped cards stayed in the
+deck as well — and the very same card **instances** sat in both places at once.
+
+Two consequences:
+
+1. **Unbounded duplication.** Every console `equip` → `clear deck` cycle permanently
+   duplicated the equipped cards: equipping left them in the deck, and clearing added them
+   back a second time. Measured on a three-card deck: 3 → 5 → 7 across two cycles, growing
+   without bound in the persisted state blob and bloating the equip prompt's card list
+   (which is rendered into a single question message) on every cycle.
+2. **Aliased instances.** Because the deck kept the same objects the monster was holding,
+   the workshop still offered an equipped card as available, and equipping it onto a second
+   monster left one card instance shared between two monsters' hands.
+
+**Root cause**: the deck-as-unequipped-pool invariant lived in three call sites
+(`unequipAll`, `equipCards`, `loadPreset`) and was simply never applied to the fourth. The
+split between `Beastmaster.equipMonster` (has the character) and the `equip` helper (has the
+monster) is what let it go unnoticed — the helper cannot maintain an invariant it has no
+access to.
+
+**Fixed**: `Beastmaster.equipMonster` now reconciles the deck after the helper resolves, via
+a private `reconcileDeckAfterEquip`: equipped cards are removed from the deck and anything
+the monster previously held but no longer holds is returned through `addCard` (which sorts
+and emits `cardAdded`, exactly as `unequipAll` does). Removal is **by object identity, not
+by name** — duplicate card types are legitimate (up to four copies per hand), so matching by
+name would evict the wrong instance. The return path checks identity before re-adding, so a
+deck already corrupted by this bug converges as monsters are re-equipped rather than
+degrading further.
+
+Covered by `characters/equip-deck-accounting.test.ts` — removal from the deck, the
+no-shared-instance invariant, card conservation across three equip → clear cycles, cards
+returned when a monster is re-equipped with something else, and sort order preserved.
+
+**Status**: Fixed.
+
+---
+
+### 92. An emptied deck silently refilled itself with a whole new starting deck — FIXED
+
+`BaseCharacter.cards` lazily granted a character's starting deck:
+
+```ts
+if (this.options.deck === undefined || (this.options.deck as CardInstance[]).length <= 0) {
+    this.deck = _getInitialDeck(undefined, this);
+}
+```
+
+The constructor always seeds `{ deck: [] }`, so `deck === undefined` was never true in
+practice — the `length <= 0` test was what actually granted new characters their deck. But
+that test cannot distinguish **"never had a deck"** from **"spent or equipped every card"**,
+so any legitimately emptied deck refilled itself with a complete new starting deck on the
+very next read. An unbounded card fountain: empty your deck, read it again, get a free one.
+
+It stayed largely latent only because of #91 — the console `equip` never removed cards from
+the deck, so a player could not easily empty it. Fixing #91 made an empty deck reachable in
+normal play and would have turned this latent bug into a live exploit, so the two had to be
+fixed together.
+
+**Fixed**: an explicit `deckInitialized` option records the grant, so an empty deck stays
+empty. The flag is also set when a **non-empty** deck is read, which is what covers
+characters saved before the flag existed: they are marked on their first deck read, while
+they still hold cards, and so can never reach the refill path by emptying the deck later.
+The flag is set *before* `_getInitialDeck` runs, deliberately — that assignment calls
+`setOptions`, which broadcasts `stateChange` synchronously, and a listener reading this
+getter mid-init previously re-entered it and recursed until the stack overflowed (see the
+`rawArray` docblock in `announcements/index.ts`). With the flag set first, a re-entrant read
+returns the empty array instead of re-triggering the grant, so this is strictly safer than
+the old shape. `state.ts` schemas are `.passthrough()` and `BaseClass.toJSON` serializes the
+whole options store, so the flag persists across save/restore with no migration.
+
+Covered by `characters/equip-deck-accounting.test.ts` — a new character still gets a deck,
+an emptied deck stays empty, equipping the entire deck does not mint a new one, and a
+restored legacy character is marked on first read.
+
+**Status**: Fixed.

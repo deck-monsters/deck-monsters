@@ -61,13 +61,48 @@ class BaseCharacter extends BaseCreature {
 		}
 	}
 
+	/**
+	 * Lazily mints a character's starting deck — **once**, not whenever the deck is empty.
+	 *
+	 * The old test was `deck === undefined || deck.length <= 0`. Because the constructor
+	 * always seeds `{ deck: [] }`, the length check was what actually granted new
+	 * characters their deck — but it could not tell "never had a deck" apart from
+	 * "spent or equipped every card", so any legitimately emptied deck silently refilled
+	 * itself with a whole new starting deck on the next read. That is an unbounded card
+	 * fountain: equip your entire deck onto a monster, read the deck again, get a free
+	 * one. It stayed mostly latent only because the console `equip` never removed cards
+	 * from the deck (#91) — fixing that made an empty deck reachable in normal play.
+	 *
+	 * `deckInitialized` records the grant explicitly, so an empty deck stays empty.
+	 * It is set *before* `_getInitialDeck` runs deliberately: that assignment calls
+	 * `setOptions`, which broadcasts `stateChange` synchronously, and a listener that
+	 * reads this getter mid-init used to re-enter it and recurse until the stack blew
+	 * (see the `rawArray` docblock in `announcements/index.ts`). With the flag set
+	 * first, a re-entrant read returns the empty array instead of re-triggering.
+	 *
+	 * Characters saved before this flag existed have no `deckInitialized`. One empty
+	 * read after upgrade still refills — matching today's behaviour exactly once — and
+	 * marks them from then on.
+	 */
 	get cards(): CardInstance[] {
-		if (
-			this.options.deck === undefined ||
-			(this.options.deck as CardInstance[]).length <= 0
-		) {
+		const deck = this.options.deck as CardInstance[] | undefined;
+
+		// A non-empty deck is itself proof the grant already happened. Marking here (not
+		// only when minting) is what covers characters saved before this flag existed:
+		// they get flagged on their first deck read, while they still hold cards, so they
+		// can never reach the refill path later by legitimately emptying the deck.
+		if (deck !== undefined && deck.length > 0) {
+			if (this.options.deckInitialized !== true) {
+				this.setOptions({ deckInitialized: true });
+			}
+			return deck;
+		}
+
+		if (!this.options.deckInitialized) {
+			this.setOptions({ deckInitialized: true });
 			this.deck = _getInitialDeck(undefined, this);
 		}
+
 		return (this.options.deck as CardInstance[]) || [];
 	}
 
