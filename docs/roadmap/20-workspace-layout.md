@@ -133,12 +133,14 @@ precedes them.
 - **Phase 3**: render the workshop at 1440px, ~700px and 393px and check no horizontal
   overflow — the same failure class as `10b-bugs-fixed.md` #98.
 
-## 7. Open questions
+## 7. Resolved decisions
 
-1. Should the **ring** pane also be swappable (e.g. ring ↔ fight log), or is pinning it
-   the point? Pinning is simpler and matches "the thing you are watching".
-2. On a phone, should tapping "Workshop" from a live fight warn that you will stop seeing
-   the feed, or is the third tab enough? Leaning: enough — the tab bar stays visible.
-3. Does `/room/:roomId/workshop` stay a full page, or redirect into the terminal with the
-   workshop pane selected? Keeping both is cheap once §3.1 is done, and full-page is still
-   the better surface for a long deck-building session.
+1. **The ring pane is pinned, not swappable.** It is the thing you are watching, and a
+   second axis of choice buys little for the complexity. Revisit only if a concrete second
+   candidate (the fight log, say) earns it.
+2. **No warning when switching away from a live fight on a phone.** The tab bar stays
+   visible, the feed is not lost, and a confirm dialog on a tab press would be worse than
+   the problem. The ring feed also replays on return.
+3. **`/room/:roomId/workshop` stays a full page.** Once §3.1 extracts `WorkshopPanel`, the
+   route costs one thin wrapper, deep links keep working, and full-page remains the better
+   surface for a long deck-building session.

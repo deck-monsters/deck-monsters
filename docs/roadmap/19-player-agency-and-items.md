@@ -242,8 +242,25 @@ tier 1 should resolve target and item together and dispatch directly.
 Removing the prompt chain is **not** a balance change and should not wait for the sim
 harness. Changing *how much* can be used (a per-fight budget) is, and should.
 
-### Open question
+### Resolved: what counts as tier 1 mid-fight
 
-Whether a monster must be **in the ring** to be a tier-1 target mid-fight, or whether any
-owned monster qualifies. `canUseItem` answers "can this item apply to this creature", not
-"is this a sensible target right now". Needs an owner decision before build.
+**Tier 1 requires `canUseItem` AND a sensible target right now**: outside a fight, any owned
+monster; during a fight, a monster that is actually in the ring. A benched monster drops to
+tier 2 while a fight runs — dimmed, still listed, still explicable.
+
+This is a *sort*, never a prohibition. The `use <item> on <monster>` command keeps working on
+any monster it always worked on; the list only changes what it puts in front of you. That
+distinction is the whole reason the spec sorts rather than filters, and it must survive
+implementation.
+
+### Data the list needs, and what the API gives it today
+
+`myInventory` already returns items, but only as **names**:
+`items: { character: string[]; monsters: Array<{ monsterName, items: string[] }> }`
+(`summarizeInventory`, `trpc/router.ts`). That is not enough to render the three tiers.
+
+The summary needs, per item: a stable display name, `expired`, uses remaining (the engine's
+`item.stats` already renders "Usable 1 time." / "N times" / "All used up!"), and which of the
+player's monsters it is usable on (`monster.canUseItem(item)` / `character.canUseItem(item)`).
+Computing usability **server-side** keeps one definition of "usable" rather than
+reimplementing `canUseItem` in TypeScript in the browser.
