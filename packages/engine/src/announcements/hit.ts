@@ -60,9 +60,12 @@ export function announceHit(
 		text: `${flavorText}\n\n${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*\n`,
 		// This used to publish an empty payload, so the one number the event is *about*
 		// was recoverable only by parsing the prose. Consumers that want to weigh a hit —
-		// the web console's fight highlights, and anything after it — need the figures,
-		// and `maxHp` in particular: 9 damage is a scratch on a boss and near-lethal on a
-		// beginner, so significance is a ratio, not a constant.
+		// the web console's fight highlights, and anything after it — need the figures
+		// rather than a regex over flavour text that any rewrite would break.
+		//
+		// `assailantName` is what makes a hit judgeable: significance is measured against
+		// what *that attacker* usually manages, not against the target's health. See
+		// apps/web/src/utils/fight-highlights.ts.
 		payload: {
 			damage,
 			prevHp,

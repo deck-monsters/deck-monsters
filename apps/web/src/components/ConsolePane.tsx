@@ -10,7 +10,11 @@ import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
 import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 import { formatEventText } from '../utils/format-event-text.js';
-import { classifyHighlight, type FightHighlight } from '../utils/fight-highlights.js';
+import {
+  classifyHighlight,
+  createDamageHistory,
+  type FightHighlight,
+} from '../utils/fight-highlights.js';
 import FeedList from './FeedList.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
 import { useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
@@ -85,6 +89,9 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
   const { registerInsertFn } = useCommandInsert();
 
   const [consoleEvents, setConsoleEvents] = useState<ConsoleEvent[]>([]);
+  // Per-attacker damage baseline for the "big hit" highlight. A ref, not state: it feeds
+  // a classification decision and must never itself trigger a render.
+  const damageHistoryRef = useRef(createDamageHistory());
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
   const activePromptIdRef = useRef<string | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -315,7 +322,8 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
     // shows everything — this is emphasis, not a second feed.
     const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
     const isPublicSystem = event.scope === 'public' && event.type === 'system';
-    const fightHighlight = event.scope === 'public' ? classifyHighlight(event) : null;
+    const fightHighlight =
+      event.scope === 'public' ? classifyHighlight(event, damageHistoryRef.current) : null;
 
     if (fightHighlight) {
       addConsoleEvent({

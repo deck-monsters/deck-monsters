@@ -24,12 +24,59 @@ export interface FightHighlight {
 }
 
 /**
- * A hit counts as big at a quarter of the target's maximum health. Significance has to be
- * a ratio: 9 damage is a scratch on a 53hp boss and nearly half of a beginner. The floor
- * stops a tiny-maxHp edge case from making routine chip damage look dramatic.
+ * A hit is big when it is big **for the monster that threw it** — not relative to whoever
+ * it landed on.
+ *
+ * Measuring against the target's max health was the first attempt and it rewards the
+ * wrong thing: a level 6 boss chipping a beginner clears a quarter of their health
+ * constantly, while a scrappy beginner landing the best hit of its short life on that
+ * boss barely moves the bar. The moment worth calling out is the second one. So the test
+ * is against the attacker's own running average this session.
  */
-export const BIG_HIT_RATIO = 0.25;
+export const BIG_HIT_MULTIPLE = 1.5;
+
+/**
+ * An absolute floor, because a ratio alone makes 1 → 2 damage a "150% outlier". Nothing
+ * this small is a highlight whatever the attacker usually manages.
+ */
 export const BIG_HIT_FLOOR = 5;
+
+/**
+ * Per-attacker damage seen so far, used to judge a hit against that attacker's own norm.
+ *
+ * Deliberately session-scoped and in memory: it is a display heuristic, not game state.
+ * It starts empty every time the pane mounts, which is correct — the baseline should be
+ * what *this viewer* has watched, and a stale cross-session average would make the first
+ * hits of a fight judge themselves against monsters long gone.
+ */
+export interface DamageHistory {
+	/** True when `damage` stands out against what this attacker has managed before. */
+	isStandout(attacker: string | null, damage: number): boolean;
+	record(attacker: string | null, damage: number): void;
+}
+
+export function createDamageHistory(): DamageHistory {
+	const totals = new Map<string, { hits: number; total: number }>();
+
+	return {
+		isStandout(attacker, damage) {
+			if (damage < BIG_HIT_FLOOR) return false;
+			if (!attacker) return false;
+			const seen = totals.get(attacker);
+			// The first hit has nothing to be compared against. Staying quiet is better
+			// than guessing: a fight only needs one swing before the baseline is real.
+			if (!seen || seen.hits === 0) return false;
+			return damage >= (seen.total / seen.hits) * BIG_HIT_MULTIPLE;
+		},
+		record(attacker, damage) {
+			if (!attacker || !Number.isFinite(damage) || damage <= 0) return;
+			const seen = totals.get(attacker) ?? { hits: 0, total: 0 };
+			seen.hits += 1;
+			seen.total += damage;
+			totals.set(attacker, seen);
+		},
+	};
+}
 
 const LABELS: Record<HighlightKind, string> = {
 	nat20: 'NAT 20',
@@ -47,13 +94,10 @@ function asNumber(value: unknown): number | null {
 	return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-export function isBigHit(damage: number | null, maxHp: number | null): boolean {
-	if (damage === null || damage <= 0) return false;
-	if (maxHp === null || maxHp <= 0) return damage >= BIG_HIT_FLOOR;
-	return damage >= Math.max(BIG_HIT_FLOOR, maxHp * BIG_HIT_RATIO);
-}
-
-export function classifyHighlight(event: GameEvent): FightHighlight | null {
+export function classifyHighlight(
+	event: GameEvent,
+	history?: DamageHistory,
+): FightHighlight | null {
 	if (event.type === 'ring.fled') return highlight('flee');
 	if (event.type === 'ring.permaDeath') return highlight('kill');
 
@@ -76,7 +120,14 @@ export function classifyHighlight(event: GameEvent): FightHighlight | null {
 	// `destroyed` flag, which together are unique to it.
 	if ('destroyed' in payload && 'assailant' in payload) return highlight('kill');
 
-	if (isBigHit(asNumber(payload.damage), asNumber(payload.maxHp))) return highlight('bigHit');
+	const damage = asNumber(payload.damage);
+	if (damage !== null) {
+		const attacker = typeof payload.assailantName === 'string' ? payload.assailantName : null;
+		// Judge before recording, so a hit is never compared against itself.
+		const standout = history?.isStandout(attacker, damage) ?? false;
+		history?.record(attacker, damage);
+		if (standout) return highlight('bigHit');
+	}
 
 	return null;
 }

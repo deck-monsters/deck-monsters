@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BIG_HIT_FLOOR,
   classifyHighlight,
-  isBigHit,
+  createDamageHistory,
 } from '../utils/fight-highlights.js';
 
 function ev(overrides: Record<string, unknown>) {
@@ -63,30 +63,56 @@ describe('classifyHighlight (#110)', () => {
   });
 });
 
-describe('isBigHit', () => {
-  // Significance is a ratio: the same number is a scratch on a boss and near-lethal
-  // on a beginner.
-  it('scales with the target rather than using a flat number', () => {
-    expect(isBigHit(9, 53)).toBe(false); // boss: under a quarter
-    expect(isBigHit(9, 33)).toBe(true); // beginner: over a quarter
+describe('a big hit is big FOR THE ATTACKER (#110)', () => {
+  const hit = (assailantName: string, damage: number) =>
+    ev({ payload: { assailantName, damage } });
+
+  it('says nothing about an attacker it has never seen', () => {
+    // One swing is not a baseline. Staying quiet beats guessing.
+    const history = createDamageHistory();
+    expect(classifyHighlight(hit('Res', 12), history)).toBe(null);
   });
 
-  it('ignores chip damage even on a tiny target', () => {
-    expect(isBigHit(2, 4)).toBe(false);
-    expect(isBigHit(BIG_HIT_FLOOR - 1, 8)).toBe(false);
+  it("flags a beginner's best swing even though it barely dents a boss", () => {
+    // The whole point of the change: measured against the boss's 53 max hp this would
+    // never have qualified, but 9 is more than half again what Res normally manages.
+    const history = createDamageHistory();
+    classifyHighlight(hit('Res', 4), history);
+    classifyHighlight(hit('Res', 5), history);
+    expect(classifyHighlight(hit('Res', 9), history)?.kind).toBe('bigHit');
   });
 
-  it('falls back to the floor when maxHp is unknown', () => {
-    expect(isBigHit(BIG_HIT_FLOOR, null)).toBe(true);
-    expect(isBigHit(1, null)).toBe(false);
+  it("ignores a boss's routine hit even though it is a bigger number", () => {
+    const history = createDamageHistory();
+    classifyHighlight(hit('Seeskane Orcbane', 12), history);
+    classifyHighlight(hit('Seeskane Orcbane', 14), history);
+    expect(classifyHighlight(hit('Seeskane Orcbane', 13), history)).toBe(null);
   });
 
-  it('ignores zero and negative damage', () => {
-    expect(isBigHit(0, 33)).toBe(false);
-    expect(isBigHit(-5, 33)).toBe(false);
+  it('keeps each attacker on its own baseline', () => {
+    const history = createDamageHistory();
+    classifyHighlight(hit('Seeskane Orcbane', 14), history);
+    classifyHighlight(hit('Res', 4), history);
+    // 8 is routine for the boss and a standout for Res.
+    expect(classifyHighlight(hit('Seeskane Orcbane', 8), history)).toBe(null);
+    expect(classifyHighlight(hit('Res', 8), history)?.kind).toBe('bigHit');
   });
 
-  it('is reachable through classifyHighlight', () => {
-    expect(classifyHighlight(ev({ payload: { damage: 20, maxHp: 33 } }))?.kind).toBe('bigHit');
+  it('never flags chip damage, however far above an attacker\'s average', () => {
+    const history = createDamageHistory();
+    classifyHighlight(hit('Res', 1), history);
+    classifyHighlight(hit('Res', 1), history);
+    expect(classifyHighlight(hit('Res', BIG_HIT_FLOOR - 1), history)).toBe(null);
+  });
+
+  it('judges a hit before recording it, so it never compares against itself', () => {
+    const history = createDamageHistory();
+    classifyHighlight(hit('Res', 4), history);
+    // 20 must be judged against the average of {4}, not of {4, 20}.
+    expect(classifyHighlight(hit('Res', 20), history)?.kind).toBe('bigHit');
+  });
+
+  it('does nothing when no history is supplied', () => {
+    expect(classifyHighlight(hit('Res', 40))).toBe(null);
   });
 });
