@@ -35,18 +35,41 @@ choice appears as a third tab.
 
 ## 3. Design
 
-### 3.1 One workshop implementation, two hosts
+### 3.1 One implementation per surface, two hosts
 
-Do **not** build a second workshop for the pane. Extract the body of `WorkshopView` into
-`components/WorkshopPanel.tsx` taking `roomId` as a prop, then:
+**Every surface can be viewed full page *or* as a pane.** That is a property of the host,
+not of the surface: a surface is a plain component taking `roomId`; a route renders it
+inside `AppShell`, and a slot renders it inside `.terminal-pane`. Neither host knows
+anything special about which surface it holds.
 
-- `views/WorkshopView.tsx` → `AppShell` + `<WorkshopPanel roomId={fromParams} />`
-- `components/Terminal.tsx` → `<WorkshopPanel roomId={roomId} />` inside a `.terminal-pane`
+```
+components/WorkshopPanel.tsx     surface  (roomId prop, layout-agnostic)
+views/WorkshopView.tsx           host: route     AppShell + surface
+components/Terminal.tsx          host: pane      .terminal-pane + surface
+```
 
-The route stays working, deep links keep working, and there is exactly one workshop to
-maintain. Two implementations of the same surface is the drift risk this project has
-already been bitten by elsewhere (see the duplicated event-visibility predicate,
-`10b-bugs-fixed.md` #109).
+Do **not** build a second copy for the pane. Two implementations of one surface is the
+drift risk this project has already been bitten by — see the duplicated event-visibility
+predicate that leaked private events (`10b-bugs-fixed.md` #109).
+
+**This applies to every surface, not just the workshop.** The fight log and the leaderboard
+are already routes (`/room/:roomId/fights`, `/room/:roomId/leaderboard`) with exactly the
+workshop's problem: you must leave the feed to read them. Each becomes a pane by the same
+cheap extraction, and keeps its full-page route.
+
+**Consequence for the components**: a surface must not assume it owns the viewport. Use
+container queries, not viewport media queries (§4) — the same component renders at 1440px
+as a page and at ~400px as a phone pane.
+
+**Affordance**: a pane header gets an "open full page" control linking to that surface's
+route. The reverse (full page → "open as pane") is nice-to-have, not required, since the
+terminal is one click away.
+
+### 3.1a Surface registry
+
+One table maps `SurfaceId` to its component, label, icon and route. The tab bar, both pane
+selectors, and the keyboard shortcuts all read from it, so adding a surface later is one
+entry rather than four edits. Keep it in `components/surfaces.ts`.
 
 ### 3.2 Pane model — surfaces in slots
 
@@ -153,6 +176,10 @@ laptop, half-pane laptop, phone.
 These become tractable only once there is a pane to put them in, which is why this doc
 precedes them.
 
+**Phase 5 — more surfaces.** Extract `FightLogPanel` and `LeaderboardPanel` from their
+existing views by the Phase 1 pattern and add them to the registry. Cheap once the model
+exists, and the payoff of §3.1 generalising rather than special-casing the workshop.
+
 ## 6. Test plan
 
 - **Phase 1**: existing `workshopView.review-regressions.test.tsx` and
@@ -178,6 +205,8 @@ precedes them.
 2. **No warning when switching away from a live fight on a phone.** The tab bar stays
    visible, the feed is not lost, and a confirm dialog on a tab press would be worse than
    the problem. The ring feed also replays on return.
-3. **`/room/:roomId/workshop` stays a full page.** Once §3.1 extracts `WorkshopPanel`, the
-   route costs one thin wrapper, deep links keep working, and full-page remains the better
-   surface for a long deck-building session.
+3. **Every surface keeps a full-page route AND becomes available as a pane** (revised —
+   see §3.1). Full page stays the better surface for a long deck-building session or for
+   reading a fight log properly; the pane is for glancing without leaving the feed. Since a
+   surface is just a component, supporting both costs one thin route wrapper each — and it
+   is why surfaces must be layout-agnostic.
