@@ -15,6 +15,14 @@ export type FightSummaryLike = {
   participants: FightParticipantLike[];
 };
 
+/**
+ * Pluralize a count's noun. The fight log read "won vs Stary in 1 rounds" for every
+ * one-round fight, which is most of them.
+ */
+function pluralize(count: number, singular: string): string {
+  return `${count} ${singular}${count === 1 ? '' : 's'}`;
+}
+
 /** Join a list of names with natural-language "and". */
 function nameList(names: string[]): string {
   if (names.length === 0) return '?';
@@ -52,23 +60,31 @@ export function fightSubtitle(f: FightSummaryLike): string {
   if (f.outcome === 'fled') {
     const fled = ps.filter((p) => p.outcome === 'fled').map((p) => p.monsterName);
     const survived = ps.filter((p) => p.outcome === 'win').map((p) => p.monsterName);
-    if (fled.length && survived.length) return `${nameList(fled)} fled from ${nameList(survived)}`;
-    if (fled.length) return `${nameList(fled)} fled`;
-    return `${f.winnerMonsterName ?? '?'} fled`;
+    // Anyone who neither fled nor won still fought, and the title names them. Listing
+    // only the two headline outcomes dropped the third monster of a three-way fight
+    // out of a summary whose own title said "A vs B vs C".
+    const alsoFought = ps
+      .filter((p) => p.outcome !== 'fled' && p.outcome !== 'win')
+      .map((p) => p.monsterName);
+    const others = alsoFought.length ? ` · also fought: ${nameList(alsoFought)}` : '';
+    if (fled.length && survived.length)
+      return `${nameList(fled)} fled from ${nameList(survived)}${others}`;
+    if (fled.length) return `${nameList(fled)} fled${others}`;
+    return `${f.winnerMonsterName ?? '?'} fled${others}`;
   }
   if (f.outcome === 'permaDeath') {
     const winners = ps.filter((p) => p.outcome === 'win').map((p) => p.monsterName);
     const dead = ps.filter((p) => p.outcome === 'permaDeath').map((p) => p.monsterName);
     const w = winners.length ? nameList(winners) : f.winnerMonsterName ?? '?';
     const d = dead.length ? nameList(dead) : f.loserMonsterName ?? '?';
-    return `${w} won in ${f.roundCount} rounds — ☠ ${d} perished`;
+    return `${w} won in ${pluralize(f.roundCount, 'round')} — ☠ ${d} perished`;
   }
   if (f.outcome === 'win') {
     const winners = ps.filter((p) => p.outcome === 'win').map((p) => p.monsterName);
     const losers = ps.filter((p) => p.outcome === 'loss').map((p) => p.monsterName);
     const w = winners.length ? nameList(winners) : f.winnerMonsterName ?? '?';
     const l = losers.length ? nameList(losers) : f.loserMonsterName ?? '?';
-    let s = `${w} won vs ${l} in ${f.roundCount} rounds`;
+    let s = `${w} won vs ${l} in ${pluralize(f.roundCount, 'round')}`;
     if (f.cardDropName) s += ` · Card: ${f.cardDropName}`;
     return s;
   }
