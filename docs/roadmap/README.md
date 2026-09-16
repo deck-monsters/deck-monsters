@@ -25,6 +25,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
+| [20 — Workspace Layout](20-workspace-layout.md) | Switchable second pane: console ↔ workshop | 📋 Planned — phase 1 is a behaviour-neutral extraction |
 | [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 📋 Proposed — items audit actionable now |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
@@ -78,11 +79,20 @@ item UI at all.** Targeting scrolls already let players set `targetingStrategy`;
 nearly invisible. Surfacing items on the web is the highest value-to-effort item; anything
 that changes their power wants the sim harness first.
 
-### 3. New content backlog (12-new-content-backlog.md)
+### 3. Workspace layout (20-workspace-layout.md)
+
+The workshop is a separate route, so changing a deck means leaving the ring feed — worst
+right after watching a monster lose, which is when you most want to. Plan makes the second
+pane switchable between console and workshop (a third tab on phones), with one workshop
+implementation shared by the route and the pane. Phase 1 is a behaviour-neutral extraction
+provable by the existing tests; the underestimated cost is phase 3, since the workshop is a
+wide multi-column layout being asked to work at half a laptop pane and at 393px.
+
+### 4. New content backlog (12-new-content-backlog.md)
 
 New cards (10+ designs documented), two new monster types (Time Lord / Wizard, Bureaucrat / Cleric), equipment slots, adventures/job board, tournaments. Post-launch, driven by player demand.
 
-### 4. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
+### 5. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
 
 A fun post-launch enhancement: a retro SNES theme that layers pixel art fight animations on top of the text ring feed. All other themes stay clean and text-only — this is pure progressive enhancement. The animation module only loads when the SNES theme is active, so there's no cost for everyone else. Monster sprites (one idle + attack + hit + faint per monster type) can be generated with PixelLab and refined in Aseprite. See `docs/pixel-art-animations-in-js.md` for the full technical reference.
 

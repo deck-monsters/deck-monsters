@@ -181,10 +181,69 @@ Today the workshop is cards-only, and everything else is a typed command.
 
 1. **Items panel + a use affordance on the ring pane.** Highest value-to-effort in this
    doc: engine, commands and persistence all exist, and it is the mechanic most likely to be
-   missed entirely (§3).
+   missed entirely (§3). Spec in §7.
 2. **Spawn / revive / send to ring from the workshop.** `send to the ring` is room-visible
    and consequential, so it wants a confirm step; spawn and revive do not.
 3. **Shop.** Browse and buy. Note the per-room scoping rule — the card shop is room-scoped
    (`Game.shop` / `commitShop()`, `10b-bugs-fixed.md` #26) and any UI must respect it.
 4. **Command reference parity.** Every action the workshop gains should also be listed as
    the command it maps to, so the console stays learnable rather than becoming legacy.
+
+---
+
+## 7. Spec: the item list
+
+### Sort, do not filter, and never add a mode
+
+The obvious designs are "show only what I can use now" or "show everything". A toggle
+between them was considered and **rejected**: a toggle is a *mode*, and this list's primary
+home is the ring pane during a live fight. If you open it in the wrong mode you pay to
+notice and pay again to correct, at the one moment the game gives you no slack. Modes are
+worst exactly where this one would live.
+
+The workshop already solved the same problem a third way. `isCardUnavailable` does not hide
+incompatible cards — it renders them at `opacity: 0.35` with a dashed border
+(`.workshop-card-slot.incompatible`) and puts a count in the header,
+*"Showing cards usable by Stonefang (3/12)"*. Nothing is hidden, so you still learn what
+exists; what you can act on is unmistakable at a glance; and there is no control to operate.
+
+**The item list follows that pattern, plus an ordering.** One list, sorted, dim what does
+not apply:
+
+| Tier | Meaning | Rendering |
+|---|---|---|
+| 1 | Usable now on a valid target | Full opacity, tappable |
+| 2 | Owned, but not usable here | Dimmed, not tappable, reason on hover/long-press |
+| 3 | Spent | Dimmed further, "All used up!" |
+
+Header count reads *"4 usable now (9 items)"*.
+
+Tier 3 earns its place: a spent scroll should not vanish, because "you had this and it is
+gone" is information, and it is exactly what a filter would throw away.
+
+### The predicates already exist
+
+- **Usability**: `monster.canUseItem(item)` and `character.canUseItem(item)`, used by
+  `items/helpers/use.ts` to build the selectable list. The UI should use the same predicate
+  rather than inventing a parallel rule.
+- **Spent**: `item.expired` — a derived getter, `used >= numberOfUses`
+  (`items/potions/base.ts`). Expired items **stay in inventory**; `item.stats` renders
+  `'All used up!'`. So tier 3 is real and reachable, not hypothetical.
+- **Uses left**: `item.stats` already renders "Usable 1 time." / "N times", so the list has
+  a ready-made secondary line.
+
+### Mid-fight flow
+
+One tap, no prompt chain. Today `use <item> on <monster>` routes through `chooseMonster`,
+an interactive prompt, so using a healing potion means noticing low HP, typing a command
+and answering questions while the fight advances on its own timers. Tapping an item in
+tier 1 should resolve target and item together and dispatch directly.
+
+Removing the prompt chain is **not** a balance change and should not wait for the sim
+harness. Changing *how much* can be used (a per-fight budget) is, and should.
+
+### Open question
+
+Whether a monster must be **in the ring** to be a tier-1 target mid-fight, or whether any
+owned monster qualifies. `canUseItem` answers "can this item apply to this creature", not
+"is this a sensible target right now". Needs an owner decision before build.

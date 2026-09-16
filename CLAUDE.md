@@ -39,6 +39,7 @@ non-obvious bit us before.
 | [`docs/deployment.md`](docs/deployment.md) | Railway/Supabase deployment or environment configuration |
 | [`docs/roadmap/18-live-ring-roster.md`](docs/roadmap/18-live-ring-roster.md) | The ring roster panel, `ring.state` payload, or `Ring.publishState()` call sites |
 | [`docs/roadmap/19-player-agency-and-items.md`](docs/roadmap/19-player-agency-and-items.md) | Items, targeting scrolls, deck-building agency, or any "should the player control this?" question |
+| [`docs/roadmap/20-workspace-layout.md`](docs/roadmap/20-workspace-layout.md) | `Terminal.tsx` panes, the 1024px breakpoint, tabs, the pane divider, or moving a surface between a route and a pane |
 | [`docs/roadmap/README.md`](docs/roadmap/README.md) | Planning work — the authoritative status index |
 
 ## Project Overview
