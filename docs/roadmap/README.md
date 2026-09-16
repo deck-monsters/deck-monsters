@@ -21,7 +21,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
 | [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 3 non-blocking items from the Sept 2026 live-play pass |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 3 non-blocking items from the Sept 2026 live-play pass, plus 4 triaged mobile UI bugs (#98–#101) |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
@@ -61,7 +61,7 @@ Everything below shipped and is not expected to need revisiting:
 
 ## Active Work — In Order of Priority
 
-Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too, along with the September 2026 live-play fixes (#89–#97). `10-bug-fixes.md` now carries three open non-blocking items from that pass: the email-defaulted profile name migration (follow-up to #95), cards that emit two roll blocks in the same tick, and the burst of messages at the very start of a fight.
+Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too, along with the September 2026 live-play fixes (#89–#97). `10-bug-fixes.md` now carries three open non-blocking items from that pass: the email-defaulted profile name migration (follow-up to #95), cards that emit two roll blocks in the same tick, and the burst of messages at the very start of a fight. It also carries a **September 16 2026 mobile UI triage** (#98–#101, none fixed yet): feed text clipped off the right edge of both panes because `.event-feed`'s padding sits on the Virtuoso scroller whose absolutely-positioned viewport resolves `width:100%` against the padding box (#98); the fight-log event trace rendering raw engine markup (#99); unpluralized `in 1 rounds` (#100); and tofu glyphs in the turn banner (#101). Screenshots are in `assets/ui-bugs-2026-09/`.
 
 ### 1. Balance & mechanics (11-balance-and-mechanics.md)
 
