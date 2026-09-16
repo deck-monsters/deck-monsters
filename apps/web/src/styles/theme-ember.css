@@ -1,0 +1,40 @@
+/* ── Ember: red-on-black CRT ──
+   Modelled on red gas-plasma displays (the amber theme's hotter sibling) rather
+   than a pure #ff0000, which vibrates badly against black and is punishing to
+   read for the length of a fight.
+
+   Every value below was checked for contrast against --color-bg. Body text
+   (--color-fg) is 7.29:1 (AAA); the dimmest text token, --color-fg-dim, is
+   4.71:1 and --color-system is 5.12:1, both clearing WCAG AA for body text.
+
+   The HP-bar ramp needs care in a red theme: the ring roster colours its bars
+   with --color-success / --color-accent / --color-error, and in a monochrome red
+   palette a red "critical" bar risks being indistinguishable from a red "healthy"
+   one. These three are therefore chosen to fall monotonically in *luminance*
+   (0.793 → 0.487 → 0.234), not merely in hue, so a draining health bar reads as
+   draining in greyscale and for a red-blind viewer — cream → amber → red. */
+
+[data-theme='ember'] {
+  --color-bg: #12060a;              /* Near-black with a red cast */
+  --color-fg: #ff6f61;              /* Ember red — body text, 7.29:1 */
+  --color-fg-bright: #ffb3a7;       /* Heated to near-white — emphasis, 11.61:1 */
+  --color-fg-dim: #b3665d;          /* Cooling ember — secondary text, 4.71:1 */
+  --color-accent: #ffa62b;          /* Flame amber — timers, boss tags, 10.17:1 */
+  --color-system: #a37676;          /* Ash — system messages, 5.12:1 */
+  --color-error: #ff2e2e;           /* Pure red — errors, critical HP */
+  --color-success: #ffe3b0;         /* White-hot — success, healthy HP, 15.97:1 */
+  --color-prompt-glyph: var(--color-accent);
+  --color-border: #3d1a1f;          /* Banked coal */
+  --color-input-bg: #1a080d;
+  --color-choice-hover: #2a0f14;
+  --color-choice-selected: #40161d;
+  /* Ring-roster health bar. Deliberately its own ramp rather than reusing
+     --color-success/--color-accent/--color-error: those carry unrelated semantic
+     meanings and are not ordered by brightness, so a bar built from them could read
+     "hurt" darker than "critical". These fall monotonically in luminance with a real
+     step between stages, so a draining bar reads as draining in greyscale and for a
+     colour-blind viewer, not by hue alone. Enforced by theme-palettes.test.ts. */
+  --color-hp-healthy: #ffe3b0;
+  --color-hp-hurt: #ffa62b;
+  --color-hp-critical: #ff2e2e;
+}

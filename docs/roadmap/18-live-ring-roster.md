@@ -61,8 +61,15 @@ staying blank until the first card of the next fight resolves. The handshake als
 `contestants` for the same reason. Collapse state persists in `localStorage`
 (`dm:ringRosterCollapsed`), wrapped in try/catch — blocked storage defaults to expanded.
 
-Colours use existing theme tokens (`--color-success` / `--color-accent` / `--color-error`)
-so all four themes pick it up with no per-theme work. The bar transition is disabled under
+Health-bar colours come from **dedicated** `--color-hp-healthy` / `--color-hp-hurt` /
+`--color-hp-critical` tokens, defined per theme. The first cut reused the semantic
+`--color-success` / `--color-accent` / `--color-error`, which was wrong: those carry
+unrelated meanings and are not ordered by brightness, so in phosphor (the default) and
+street-fighter the "hurt" colour was actually *darker* than "critical" and the bar read
+backwards. Each theme's ramp now falls monotonically in luminance with a visible step
+between stages, so a draining bar reads as draining in greyscale and for a colour-blind
+viewer rather than by hue alone. `apps/web/src/__tests__/theme-palettes.test.ts` enforces
+this for every theme file, along with token completeness and WCAG contrast. The bar transition is disabled under
 `prefers-reduced-motion`. The panel is capped at 40% pane height (32% on short viewports)
 and scrolls internally, so a 12-monster boss gauntlet can never crowd out the feed.
 

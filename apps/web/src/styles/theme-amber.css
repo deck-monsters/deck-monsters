@@ -13,4 +13,13 @@
   --color-input-bg: #0d0900;
   --color-choice-hover: #1a1000;
   --color-choice-selected: #2a1800;
+  /* Ring-roster health bar. Deliberately its own ramp rather than reusing
+     --color-success/--color-accent/--color-error: those carry unrelated semantic
+     meanings and are not ordered by brightness, so a bar built from them could read
+     "hurt" darker than "critical". These fall monotonically in luminance with a real
+     step between stages, so a draining bar reads as draining in greyscale and for a
+     colour-blind viewer, not by hue alone. Enforced by theme-palettes.test.ts. */
+  --color-hp-healthy: #ffd060;
+  --color-hp-hurt: #ff8c1a;
+  --color-hp-critical: #c42a10;
 }

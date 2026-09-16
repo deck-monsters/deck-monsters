@@ -550,9 +550,11 @@
   transition: width 0.3s ease-out;
 }
 
-.roster-bar-healthy { background: var(--color-success); }
-.roster-bar-hurt    { background: var(--color-accent); }
-.roster-bar-critical { background: var(--color-error); }
+/* Dedicated ramp tokens, with the old semantic colours as a fallback so a theme
+   that has not defined them still renders something sensible. */
+.roster-bar-healthy  { background: var(--color-hp-healthy, var(--color-success)); }
+.roster-bar-hurt     { background: var(--color-hp-hurt, var(--color-accent)); }
+.roster-bar-critical { background: var(--color-hp-critical, var(--color-error)); }
 
 .roster-row-dead {
   opacity: 0.45;

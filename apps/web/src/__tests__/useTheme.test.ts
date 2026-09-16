@@ -58,6 +58,18 @@ describe('useTheme', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBe('street-fighter');
   });
 
+  it('sets data-theme="ember" and persists it', () => {
+    const { result } = renderHook(() => useTheme());
+    act(() => result.current.setTheme('ember'));
+    expect(document.documentElement.getAttribute('data-theme')).toBe('ember');
+    expect(localStorage.getItem(STORAGE_KEY)).toBe('ember');
+  });
+
+  it('includes ember in validThemes', () => {
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.validThemes).toContain('ember');
+  });
+
   it('includes street-fighter in validThemes', () => {
     const { result } = renderHook(() => useTheme());
     expect(result.current.validThemes).toContain('street-fighter');
