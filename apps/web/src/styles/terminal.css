@@ -654,3 +654,41 @@
   background: var(--color-error);
   opacity: 0.4;
 }
+
+/* ── Fight highlights ───────────────────────────────────────────────────────
+   The few battle moments surfaced in the console while the ring feed scrolls
+   past. The ring shows everything; these are the ones worth looking up for.
+   See 10b-bugs-fixed.md #110. */
+.event-highlight {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  border-left: 2px solid var(--color-border);
+  padding-left: 0.5rem;
+}
+
+.highlight-tag {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  white-space: nowrap;
+  color: var(--color-fg-dim);
+}
+
+/* A natural 20 and a kill are the loudest; a crit fail is loud but not good news. */
+.event-highlight-nat20 { border-left-color: var(--color-hp-healthy, var(--color-success)); }
+.event-highlight-nat20 .highlight-tag { color: var(--color-hp-healthy, var(--color-success)); }
+
+.event-highlight-critFail { border-left-color: var(--color-hp-hurt, var(--color-accent)); }
+.event-highlight-critFail .highlight-tag { color: var(--color-hp-hurt, var(--color-accent)); }
+
+.event-highlight-kill { border-left-color: var(--color-error); }
+.event-highlight-kill .highlight-tag { color: var(--color-error); }
+
+.event-highlight-bigHit { border-left-color: var(--color-accent); }
+.event-highlight-bigHit .highlight-tag { color: var(--color-accent); }
+
+.event-highlight-flee { border-left-color: var(--color-fg-dim); }

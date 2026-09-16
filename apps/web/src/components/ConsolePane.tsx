@@ -10,6 +10,7 @@ import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
 import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 import { formatEventText } from '../utils/format-event-text.js';
+import { classifyHighlight, type FightHighlight } from '../utils/fight-highlights.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
 import { useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
@@ -33,9 +34,11 @@ interface PendingPromptSnapshot {
 
 interface ConsoleEvent {
   id: string;
-  type: 'announce' | 'input' | 'system' | 'prompt' | 'tombstone';
+  type: 'announce' | 'input' | 'system' | 'prompt' | 'tombstone' | 'highlight';
   text: string;
   promptData?: ActivePrompt;
+  /** Set on 'highlight' rows — the tag rendered beside the line. */
+  highlight?: FightHighlight;
 }
 
 interface QuickAction {
@@ -317,9 +320,23 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
     if (seenRef.current.has(tracked.id)) return;
     seenRef.current.add(tracked.id);
 
-    // Only process events targeted to this user
+    // Only process events targeted to this user, plus the handful of public battle
+    // moments worth calling out while the ring feed scrolls past. The ring pane still
+    // shows everything — this is emphasis, not a second feed.
     const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
     const isPublicSystem = event.scope === 'public' && event.type === 'system';
+    const fightHighlight = event.scope === 'public' ? classifyHighlight(event) : null;
+
+    if (fightHighlight) {
+      addConsoleEvent({
+        id: event.id,
+        type: 'highlight',
+        text: event.text ?? '',
+        highlight: fightHighlight,
+      });
+      return;
+    }
+
     if (!isPrivate && !isPublicSystem) return;
 
     if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {
@@ -744,6 +761,14 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
                     timeoutSeconds={ev.promptData.timeoutSeconds}
                   />
                 )}
+              </li>
+            );
+          }
+          if (ev.type === 'highlight' && ev.highlight) {
+            return (
+              <li className={`event event-highlight event-highlight-${ev.highlight.kind}`}>
+                <span className="highlight-tag">{ev.highlight.label}</span>
+                <div className="event-text">{formatEventText(ev.text ?? '')}</div>
               </li>
             );
           }

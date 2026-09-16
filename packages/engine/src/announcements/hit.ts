@@ -58,6 +58,19 @@ export function announceHit(
 		type: 'announce',
 		scope: 'public',
 		text: `${flavorText}\n\n${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*\n`,
-		payload: {},
+		// This used to publish an empty payload, so the one number the event is *about*
+		// was recoverable only by parsing the prose. Consumers that want to weigh a hit —
+		// the web console's fight highlights, and anything after it — need the figures,
+		// and `maxHp` in particular: 9 damage is a scratch on a boss and near-lethal on a
+		// beginner, so significance is a ratio, not a constant.
+		payload: {
+			damage,
+			prevHp,
+			hp: monster.hp,
+			maxHp: monster.maxHp,
+			bloodied: Boolean(monster.bloodied),
+			monsterName: monster.givenName,
+			assailantName: assailant?.givenName,
+		},
 	});
 }
