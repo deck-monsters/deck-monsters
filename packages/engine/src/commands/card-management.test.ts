@@ -125,4 +125,30 @@ describe('commands/card-management', () => {
 		expect(character.getPresets.calledOnceWith('stonefang')).to.equal(true);
 		expect(privateChannel.called).to.equal(true);
 	});
+
+	it('splits preset commands on the last separator so preset names may contain it', async () => {
+		// Regression: a lazy capture parsed `save preset tank for bosses for
+		// Stonefang` as preset "tank" / monster "bosses for Stonefang".
+		const privateChannel = sinon.stub().resolves(undefined);
+		const character = makeCharacter({});
+		const game = {
+			getCharacter: sinon.stub().resolves(character),
+			log: sinon.stub(),
+		};
+
+		const saveAction = listen({ command: 'save preset tank for bosses for Stonefang', game });
+		const loadAction = listen({ command: 'load preset hold on on Stonefang', game });
+
+		await saveAction!({ ...makeActionOptions(game), channel: privateChannel });
+		await loadAction!({ ...makeActionOptions(game), channel: privateChannel });
+
+		expect(character.savePreset.firstCall.args[0]).to.include({
+			presetName: 'tank for bosses',
+			monsterName: 'stonefang',
+		});
+		expect(character.loadPreset.firstCall.args[0]).to.include({
+			presetName: 'hold on',
+			monsterName: 'stonefang',
+		});
+	});
 });

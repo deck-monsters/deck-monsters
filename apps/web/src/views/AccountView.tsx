@@ -6,6 +6,7 @@ import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 const THEME_LABELS: Record<Theme, string> = {
   phosphor: 'Phosphor (green on black)',
   amber: 'Amber (orange on black)',
+  ember: 'Ember (red on black)',
   'street-fighter': 'Street Fighter (SNES, 1992)',
 };
 

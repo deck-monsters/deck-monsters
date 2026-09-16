@@ -424,3 +424,163 @@
   color: var(--color-accent);
   border-bottom-color: var(--color-accent);
 }
+
+/* ── Ring roster — live scoreboard for monsters currently in the ring ──
+   HP/AC appear in the narration too, but only as prose spread through the feed.
+   This keeps the whole board visible while a fight runs, which is the difference
+   between following and not following a multi-monster fight on a phone.
+   Colours come from theme tokens so every theme picks it up automatically. */
+.ring-roster {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-input-bg);
+  /* Never let a big roster crowd out the feed — it scrolls internally instead. */
+  max-height: 40%;
+  display: flex;
+  flex-direction: column;
+}
+
+.roster-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--color-fg-dim);
+  font-family: inherit;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  padding: 0.35rem var(--pane-padding);
+  cursor: pointer;
+}
+
+.roster-toggle:hover {
+  color: var(--color-fg);
+}
+
+.roster-toggle:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--pane-padding) 0.4rem;
+  overflow-y: auto;
+  display: grid;
+  /* Two-up on wide panes, single column on phones. */
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.3rem 0.75rem;
+}
+
+.roster-row {
+  padding: 0.2rem 0;
+  font-size: 0.78rem;
+  min-width: 0;
+}
+
+.roster-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.roster-name {
+  color: var(--color-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster-row-mine .roster-name {
+  color: var(--color-fg-bright);
+}
+
+.roster-numbers {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.roster-hp {
+  color: var(--color-fg);
+}
+
+.roster-ac,
+.roster-row-sub {
+  color: var(--color-fg-dim);
+}
+
+.roster-row-sub {
+  font-size: 0.68rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster-tag {
+  margin-left: 0.4rem;
+  padding: 0 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-fg-dim);
+}
+
+.roster-tag-boss {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.roster-bar-track {
+  height: 4px;
+  margin: 0.15rem 0;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.roster-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease-out;
+}
+
+/* Dedicated ramp tokens, with the old semantic colours as a fallback so a theme
+   that has not defined them still renders something sensible. */
+.roster-bar-healthy  { background: var(--color-hp-healthy, var(--color-success)); }
+.roster-bar-hurt     { background: var(--color-hp-hurt, var(--color-accent)); }
+.roster-bar-critical { background: var(--color-hp-critical, var(--color-error)); }
+
+.roster-row-dead {
+  opacity: 0.45;
+}
+
+.roster-row-dead .roster-name {
+  text-decoration: line-through;
+}
+
+.roster-dead-text {
+  color: var(--color-error);
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+/* The bar animation is decorative — respect a reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  .roster-bar-fill {
+    transition: none;
+  }
+}
+
+/* On short viewports (phone landscape, split panes) give the feed more room. */
+@media (max-height: 600px) {
+  .ring-roster {
+    max-height: 32%;
+  }
+}

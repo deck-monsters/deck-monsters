@@ -19,7 +19,7 @@ import {
 import type { Db } from './db/index.js';
 import { rooms, roomMembers, profiles, roomEvents, roomPlayerStats, roomMonsterStats, fightSummaries } from './db/schema.js';
 import { dbRowToGameEvent } from './db/game-event-map.js';
-import type { GameEvent } from '@deck-monsters/engine';
+import type { GameEvent, RingContestantSnapshot } from '@deck-monsters/engine';
 import { PostgresStateStore } from './state-store.js';
 import { attachEventPersister } from './event-persister.js';
 import { attachFightStatsSubscriber } from './fight-stats-subscriber.js';
@@ -527,6 +527,8 @@ export class RoomManager {
 		nextBossSpawnAt: number | null;
 		nextFightAt: number | null;
 		monsterCount: number;
+		inEncounter: boolean;
+		contestants: RingContestantSnapshot[];
 		bossSummonsRemaining: number;
 		bossSummonLimit: number;
 		bossSummonResetAt: number | null;
@@ -541,6 +543,8 @@ export class RoomManager {
 			nextBossSpawnAt: ring.nextBossSpawnAt,
 			nextFightAt: ring.nextFightAt,
 			monsterCount: ring.contestants.length,
+			inEncounter: ring.inEncounter,
+			contestants: ring.contestantSnapshots(),
 			bossSummonsRemaining: allowance.remaining,
 			bossSummonLimit: BOSS_SUMMON_LIMIT,
 			bossSummonResetAt: allowance.nextAvailableAt,

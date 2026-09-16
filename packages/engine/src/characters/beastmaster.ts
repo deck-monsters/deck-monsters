@@ -204,11 +204,48 @@ class Beastmaster extends BaseCharacter {
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'equip' });
 			})
-			.then(monster =>
-				equip({ deck: this.deck, monster, cardSelection, channel })
+			.then((monster) => {
+				const previousCards = [...monster.cards];
+
+				return equip({ deck: this.deck, monster, cardSelection, channel })
+					.then(() => this.reconcileDeckAfterEquip(monster, previousCards))
 					.then(() => channel({ announce: `${monster.givenName} is good to go!` }))
-					.then(() => monster),
-			);
+					.then(() => monster);
+			});
+	}
+
+	/**
+	 * Moves the cards a monster just equipped out of the character's deck, and returns
+	 * anything it was holding but no longer holds.
+	 *
+	 * `character.deck` is the **unequipped pool** — `unequipAll` returns cards to it via
+	 * `addCard`, and `equipCards` (web workshop) and `loadPreset` both splice equipped
+	 * cards out of it. The console `equip` command was the one path that never did:
+	 * `monsters/helpers/equip.ts` assigns `monster.cards` but has no reference to the
+	 * character, so the equipped cards stayed in the deck as well. The very same card
+	 * *instances* then sat in both places.
+	 *
+	 * That made every console equip → `clear deck` cycle permanently duplicate cards:
+	 * equipping left them in the deck, and clearing added them back a second time. A
+	 * three-card deck became five, then seven, growing without bound in the saved state
+	 * and bloating the equip prompt's card list on every cycle (#91).
+	 *
+	 * Removal is by object identity, not by name: duplicate card types are legitimate
+	 * (up to four copies per hand), so matching by name would evict the wrong instance.
+	 * The return path also checks identity before re-adding, so a deck already corrupted
+	 * by this bug is not corrupted further — it converges as monsters are re-equipped.
+	 */
+	private reconcileDeckAfterEquip(monster: BaseMonster, previousCards: CardInstance[]): void {
+		const equipped = monster.cards as CardInstance[];
+
+		// Filtering preserves the deck's existing alphabetical order.
+		this.deck = this.deck.filter(card => !equipped.includes(card));
+
+		// `addCard` sorts on insert and emits `cardAdded`, so returns behave exactly as
+		// they do in `unequipAll`.
+		previousCards.forEach((card) => {
+			if (!equipped.includes(card) && !this.deck.includes(card)) this.addCard(card);
+		});
 	}
 
 	giveItemsToMonster({
@@ -410,6 +447,27 @@ class Beastmaster extends BaseCharacter {
 			all[name] = cards.filter(card => typeof card === 'string');
 			return all;
 		}, {});
+	}
+
+	/**
+	 * Resolves a preset name to the key it is actually stored under, ignoring
+	 * case and surrounding whitespace.
+	 *
+	 * Preset names reach the engine two ways with different casing: the text
+	 * command parser lowercases the whole command string (see
+	 * `commands/index.ts`), while the web workshop passes the tRPC input
+	 * verbatim. A preset saved as "Aggro" in the workshop was therefore
+	 * invisible to `load preset aggro on ...` from Discord or a DM, because
+	 * lookups were exact-match on the stored key. Resolve case-insensitively so
+	 * a preset is reachable from every connector regardless of where it was
+	 * saved.
+	 */
+	private resolvePresetKey(
+		presets: Record<string, string[]>,
+		presetName: string
+	): string | undefined {
+		const target = normalize(presetName);
+		return Object.keys(presets).find(key => normalize(key) === target);
 	}
 
 	getPresets(monsterName?: string): Record<string, string[]> | Record<string, Record<string, string[]>> {
@@ -799,8 +857,10 @@ class Beastmaster extends BaseCharacter {
 			)
 			.then((monster) => {
 				const presets = this.getMonsterPresets(monster);
-				const hasPreset = Object.prototype.hasOwnProperty.call(presets, trimmedName);
-				if (!hasPreset && Object.keys(presets).length >= MAX_PRESETS) {
+				// Reuse the existing key so re-saving under different casing updates
+				// the preset in place instead of creating a near-duplicate.
+				const existingKey = this.resolvePresetKey(presets, trimmedName);
+				if (!existingKey && Object.keys(presets).length >= MAX_PRESETS) {
 					return announceAndThrow(
 						channel,
 						`${monster.givenName} already has ${MAX_PRESETS} presets. Delete one before saving another.`,
@@ -809,7 +869,7 @@ class Beastmaster extends BaseCharacter {
 
 				const nextPresets = {
 					...presets,
-					[trimmedName]: monster.cards.map(card => getCardName(card)),
+					[existingKey ?? trimmedName]: monster.cards.map(card => getCardName(card)),
 				};
 				monster.setOptions({ presets: nextPresets });
 
@@ -856,7 +916,8 @@ class Beastmaster extends BaseCharacter {
 				}
 
 				const presets = this.getMonsterPresets(monster);
-				const requestedCards = presets[trimmedName];
+				const presetKey = this.resolvePresetKey(presets, trimmedName);
+				const requestedCards = presetKey === undefined ? undefined : presets[presetKey];
 				if (!requestedCards) {
 					return announceAndThrow(
 						channel,
@@ -938,7 +999,8 @@ class Beastmaster extends BaseCharacter {
 			)
 			.then((monster) => {
 				const presets = this.getMonsterPresets(monster);
-				if (!Object.prototype.hasOwnProperty.call(presets, trimmedName)) {
+				const presetKey = this.resolvePresetKey(presets, trimmedName);
+				if (presetKey === undefined) {
 					return announceAndThrow(
 						channel,
 						`No preset named "${trimmedName}" exists for ${monster.givenName}.`,
@@ -946,7 +1008,7 @@ class Beastmaster extends BaseCharacter {
 				}
 
 				const nextPresets = { ...presets };
-				delete nextPresets[trimmedName];
+				delete nextPresets[presetKey];
 				monster.setOptions({ presets: nextPresets });
 
 				return Promise.resolve(channel({

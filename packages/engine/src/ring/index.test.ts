@@ -28,6 +28,86 @@ describe('ring/index.ts', () => {
 		expect(ring.eventBus).to.be.instanceOf(RoomEventBus);
 	});
 
+	describe('contestantSnapshots', () => {
+		it('reports live per-contestant stats for the roster UI', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster({ name: 'Ada' });
+			const monster = new Basilisk({ name: 'Stonefang' });
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			const [snapshot] = ring.contestantSnapshots();
+
+			expect(snapshot!.name).to.equal('Stonefang');
+			expect(snapshot!.creatureType).to.equal(monster.creatureType);
+			expect(snapshot!.maxHp).to.equal(monster.maxHp);
+			expect(snapshot!.hp).to.equal(monster.hp);
+			expect(snapshot!.ac).to.equal(monster.ac);
+			expect(snapshot!.dead).to.equal(false);
+			expect(snapshot!.isBoss).to.equal(false);
+			expect(snapshot!.userId).to.equal('user-1');
+			expect(snapshot!.owner).to.equal(character.givenName);
+		});
+
+		it('tracks damage so the roster follows the fight', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			monster.hp = monster.maxHp - 5;
+			const [afterHit] = ring.contestantSnapshots();
+			expect(afterHit!.hp).to.equal(monster.maxHp - 5);
+			expect(afterHit!.dead).to.equal(false);
+
+			monster.hp = 0;
+			const [afterDeath] = ring.contestantSnapshots();
+			expect(afterDeath!.dead).to.equal(true);
+		});
+
+		it('publishes contestants on ring.state so clients can render without polling', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster();
+			const monster = new Basilisk({ name: 'Stonefang' });
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			const published: Array<Record<string, unknown>> = [];
+			sinon.stub(ring.eventBus, 'publish').callsFake(((event: Record<string, unknown>) => {
+				published.push(event);
+				return event;
+			}) as unknown as typeof ring.eventBus.publish);
+
+			ring.publishState();
+
+			expect(published).to.have.lengthOf(1);
+			const payload = published[0]!.payload as {
+				contestants: Array<{ name: string }>;
+				monsterCount: number;
+			};
+			expect(payload.monsterCount).to.equal(1);
+			expect(payload.contestants.map(c => c.name)).to.deep.equal(['Stonefang']);
+		});
+
+		it('omits owner identity for bosses, which have no owning player', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1', isBoss: true });
+
+			const [snapshot] = ring.contestantSnapshots();
+			expect(snapshot!.isBoss).to.equal(true);
+			expect(snapshot!.owner).to.equal(null);
+			expect(snapshot!.userId).to.equal(null);
+		});
+	});
+
 	describe('monsters', () => {
 		it('can be added', () => {
 			const game = new Game();
@@ -1353,6 +1433,47 @@ describe('ring/index.ts', () => {
 	});
 
 	describe('last-team victory mode (Finding 1)', () => {
+		it('names the surviving team in the concluding banner (real fight, end to end)', async function () {
+			// The ring always knew who won, but announceFightConcludes ignored it and the
+			// public banner only reported the body count. Asserts the winners actually
+			// reach the published text, not just the contestant flags.
+			this.timeout(5000);
+
+			const houseWar = RING_EVENTS.find(e => e.id === 'house-war')!;
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+			ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+			ring.contestants[0]!.team = 'Gryffindor';
+			ring.contestants[1]!.team = 'Gryffindor';
+			ring.contestants[2]!.team = 'Slytherin';
+			ring.contestants[2]!.monster.hp = 0;
+
+			const survivors = [ring.contestants[0]!.monster.givenName, ring.contestants[1]!.monster.givenName];
+
+			const announced: string[] = [];
+			ring.eventBus.subscribe('winner-probe', {
+				deliver: (event: { type: string; text?: string }) => {
+					if (event.type === 'announce' && String(event.text ?? '').includes('The fight concluded')) {
+						announced.push(String(event.text));
+					}
+				},
+			} as never);
+
+			ring.ringEvent = { ...houseWar, apply: () => {} };
+
+			await ring.fight();
+
+			expect(announced, 'a conclusion banner must be published').to.have.lengthOf(1);
+			expect(announced[0]).to.include('🏆 Gryffindor wins!');
+			survivors.forEach(name => expect(announced[0]).to.include(name));
+
+			game.dispose();
+		});
+
 		it('fight() resolves without recursion: allied survivors both get won=true (Finding 2)', async function () {
 			// Regression (Critical #2): the top-of-doAction last-team branch unconditionally
 			// called next() when isLastTeamVictory was true, even with ≥2 same-faction

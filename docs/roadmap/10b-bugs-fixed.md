@@ -1363,3 +1363,195 @@ That path is **114 characters**. Fastify’s default `maxParamLength` is **100**
 **Fixed**: server bootstrap uses `createFastifyOptions` with `routerOptions.maxParamLength: 5000` (official `@trpc/server` Fastify adapter guidance). Documented in `docs/deployment.md` troubleshooting. Regression coverage in `packages/server/src/fastify-batch-path.test.ts` (default Fastify 404s the Terminal path; configured options serve it).
 
 **Status**: Fixed.
+
+---
+
+### 87. Presets saved in the web workshop were unreachable from text / Discord commands — FIXED
+
+Preset names reached the engine with two different casings depending on the connector:
+
+- The text command parser lowercases the **entire** command string (`commands/index.ts` — `command = command.trim().toLowerCase()`), so `load preset Aggro on Stonefang` arrived as `aggro`.
+- The web workshop calls `game.savePreset` through tRPC, which passes `presetName` **verbatim**, so a preset created there was stored under the key `Aggro`.
+
+`loadPreset` and `deletePreset` then looked the name up with an exact, case-sensitive key test (`presets[trimmedName]` / `hasOwnProperty`). A preset saved as `Aggro` in the workshop therefore answered *"No preset named "aggro" exists for Stonefang"* from a DM or Discord — the preset was visible in `look at presets` but could never be loaded or deleted from a chat connector. Saving the same name from both surfaces also produced two near-duplicate presets (`Aggro` and `aggro`) that each counted against the `MAX_PRESETS` cap.
+
+**Root cause**: preset keys are player-authored free text, but one connector normalizes case and the other does not — so storage keys and lookup keys came from different namespaces. The engine is the only shared layer, so the reconciliation belongs there rather than in either connector.
+
+**Fixed**: a private `resolvePresetKey` helper on `Beastmaster` resolves a requested name to the key it is actually stored under, comparing with the existing `normalize` (trim + lowercase). `loadPreset` and `deletePreset` resolve through it; `savePreset` reuses a case-insensitively matching existing key so re-saving under different casing updates the preset in place instead of creating a duplicate. Stored keys keep their original casing for display.
+
+Covered by two tests in `characters/beastmaster.test.ts` (cross-connector save/load/delete casing round-trip; re-save under different casing updates in place).
+
+**Status**: Fixed.
+
+---
+
+### 88. Preset commands mis-parsed preset names containing the separator word — FIXED
+
+The preset text commands captured the preset name lazily:
+
+```
+/save preset (.+?) for (?:a )?(.+?)$/i
+```
+
+Because both groups were non-greedy, the **first** separator split the command. `save preset tank for bosses for Stonefang` parsed as preset `tank` / monster `bosses for Stonefang` — the monster lookup then failed, and the player got a monster-choice prompt or an error for a command that read perfectly well. `load preset hold on on Stonefang` failed the same way on ` on `.
+
+**Root cause**: the grammar is ambiguous when the player's preset name contains the separator, and lazy matching resolves that ambiguity in the wrong direction. The monster name is always the single trailing token, whereas a preset name is arbitrary player-authored text — so the **last** separator is the correct split point, not the first.
+
+**Fixed**: the preset-name group is now greedy (`(.+)`) in `SAVE_PRESET_REGEX`, `LOAD_PRESET_REGEX`, and `DELETE_PRESET_REGEX`, so the trailing monster group claims only the final segment. A comment in `commands/presets.ts` records why, so the lazy form is not "tidied" back in.
+
+Covered by a regression test in `commands/card-management.test.ts` asserting both the ` for ` and ` on ` cases split on the last separator.
+
+**Status**: Fixed.
+
+---
+
+### 89. Nested card plays dumped un-paced card boxes and read as repeated turns — FIXED
+
+Two cards put another card into play: `Random Play` draws one, `Pick Pocket` clones one from
+the highest-XP opponent. Both did it by calling `innerCard.play(...)` **directly**.
+
+Consequences in a live feed:
+
+1. **No pacing.** `doAction` in `ring/index.ts` paces card-to-card transitions with
+   `veryShortDelay(round)` (midpoint 3s), but a nested play inherited none of that. The inner
+   card emitted its full announcement — a ten-line ASCII card box — immediately after the
+   outer card's. A `Random Play` that drew `Pick Pocket`, which then stole a `Delayed Hit`,
+   emitted **three** card boxes plus their roll lines inside the window normally given to one
+   card. On a phone that is a screen-and-a-half of text appearing at once.
+2. **Nothing marked it as a chain.** The nested card announced with the identical
+   `"<player> lays down the following card:"` wording as a top-level play, so the feed read as
+   one monster taking three turns in a row. `Random Play` was the worst case: it emitted no
+   narration at all, so two card boxes appeared back to back with nothing connecting them.
+
+This is the same class of regression `docs/engine-concurrency-and-timing.md` §1 warns about
+(a past change used `subEventDelay` between card plays and made fights scroll past in
+seconds) — except nested plays had no pacing at all, so they were worse than that regression.
+
+**Fixed**: a shared `cards/helpers/nested-play.ts` (`playNestedCard`) gives a summoned card
+the same `veryShortDelay(round)` beat the main loop gives a normal card-to-card transition,
+and emits the narration explaining why another card is in play before it resolves. `Random
+Play` narrates the scraps reassembling; `Pick Pocket` already narrated the steal, so it only
+takes the pacing beat. Skip mode (`DECK_MONSTERS_SKIP_DELAYS`) resolves without a real timer,
+matching how `doAction`'s continuation paths are treated, so tests and the harness stay fast.
+
+Covered by `cards/helpers/nested-play.test.ts` — context forwarding, narration ordering
+(narration before play), no narration when the caller already narrated, no wall-clock delay in
+skip mode, and `Random Play` narrating its chain.
+
+**Status**: Fixed.
+
+---
+
+### 90. The fight conclusion banner never said who won — FIXED
+
+The concluding announcement read only `"The fight concluded with 4 dead after 2 rounds!"`. In
+a five-way fight that omits the single most interesting fact: players had to scroll back
+through the kill lines and work out by elimination who was still standing.
+
+The information was never missing — `ring/index.ts` computes `hasDecisiveWinner`, `living`,
+`lastContestant`, and sets `contestant.won`, all of which already drive the fight log, the
+leaderboard, XP awards and the `ring.fightResolved` payload (`winnerMonsterName`). The
+`fightConcludes` event even passed `lastContestant` to the announcement — which simply
+ignored it and rendered the body count alone.
+
+**Root cause**: the announcement was written against the death/round counters and never
+updated when winner derivation was added for the fight log, so the one surface players
+actually read during a fight was the only one that did not report the result.
+
+**Fixed**: `Ring.fightConcludes` passes the `won` contestants (name + team) into the
+`fightConcludes` event, and `announceFightConcludes` prefixes the banner with them — derived
+from the same `c.won` flags as the fight log, so the banner can never disagree with the
+recorded result. Handles one winner (`🏆 Mamu wins!`), a team win under the `last-team`
+victory mode used by Common Cause and House War (`🏆 Alliance wins! (Mamu, Rivian)`),
+multiple unaffiliated winners, and draws (no winner line).
+
+Covered by `announcements/fightConcludes.test.ts` (all five shapes plus round-word
+pluralisation) and an end-to-end assertion in `ring/index.test.ts` that runs a real
+`ring.fight()` and checks the winner reaches the **published** banner text, not just the
+contestant flags.
+
+**Status**: Fixed.
+
+---
+
+### 91. Console `equip` never removed cards from the character deck — FIXED
+
+`character.deck` is the **unequipped pool**. `unequipAll` returns a monster's cards to it
+via `addCard`; `equipCards` (the web workshop path) and `loadPreset` both splice equipped
+cards out of it. The console `equip` command was the one path that did neither:
+`Beastmaster.equipMonster` delegates to `monsters/helpers/equip.ts`, which assigns
+`monster.cards` but holds no reference to the character, so equipped cards stayed in the
+deck as well — and the very same card **instances** sat in both places at once.
+
+Two consequences:
+
+1. **Unbounded duplication.** Every console `equip` → `clear deck` cycle permanently
+   duplicated the equipped cards: equipping left them in the deck, and clearing added them
+   back a second time. Measured on a three-card deck: 3 → 5 → 7 across two cycles, growing
+   without bound in the persisted state blob and bloating the equip prompt's card list
+   (which is rendered into a single question message) on every cycle.
+2. **Aliased instances.** Because the deck kept the same objects the monster was holding,
+   the workshop still offered an equipped card as available, and equipping it onto a second
+   monster left one card instance shared between two monsters' hands.
+
+**Root cause**: the deck-as-unequipped-pool invariant lived in three call sites
+(`unequipAll`, `equipCards`, `loadPreset`) and was simply never applied to the fourth. The
+split between `Beastmaster.equipMonster` (has the character) and the `equip` helper (has the
+monster) is what let it go unnoticed — the helper cannot maintain an invariant it has no
+access to.
+
+**Fixed**: `Beastmaster.equipMonster` now reconciles the deck after the helper resolves, via
+a private `reconcileDeckAfterEquip`: equipped cards are removed from the deck and anything
+the monster previously held but no longer holds is returned through `addCard` (which sorts
+and emits `cardAdded`, exactly as `unequipAll` does). Removal is **by object identity, not
+by name** — duplicate card types are legitimate (up to four copies per hand), so matching by
+name would evict the wrong instance. The return path checks identity before re-adding, so a
+deck already corrupted by this bug converges as monsters are re-equipped rather than
+degrading further.
+
+Covered by `characters/equip-deck-accounting.test.ts` — removal from the deck, the
+no-shared-instance invariant, card conservation across three equip → clear cycles, cards
+returned when a monster is re-equipped with something else, and sort order preserved.
+
+**Status**: Fixed.
+
+---
+
+### 92. An emptied deck silently refilled itself with a whole new starting deck — FIXED
+
+`BaseCharacter.cards` lazily granted a character's starting deck:
+
+```ts
+if (this.options.deck === undefined || (this.options.deck as CardInstance[]).length <= 0) {
+    this.deck = _getInitialDeck(undefined, this);
+}
+```
+
+The constructor always seeds `{ deck: [] }`, so `deck === undefined` was never true in
+practice — the `length <= 0` test was what actually granted new characters their deck. But
+that test cannot distinguish **"never had a deck"** from **"spent or equipped every card"**,
+so any legitimately emptied deck refilled itself with a complete new starting deck on the
+very next read. An unbounded card fountain: empty your deck, read it again, get a free one.
+
+It stayed largely latent only because of #91 — the console `equip` never removed cards from
+the deck, so a player could not easily empty it. Fixing #91 made an empty deck reachable in
+normal play and would have turned this latent bug into a live exploit, so the two had to be
+fixed together.
+
+**Fixed**: an explicit `deckInitialized` option records the grant, so an empty deck stays
+empty. The flag is also set when a **non-empty** deck is read, which is what covers
+characters saved before the flag existed: they are marked on their first deck read, while
+they still hold cards, and so can never reach the refill path by emptying the deck later.
+The flag is set *before* `_getInitialDeck` runs, deliberately — that assignment calls
+`setOptions`, which broadcasts `stateChange` synchronously, and a listener reading this
+getter mid-init previously re-entered it and recursed until the stack overflowed (see the
+`rawArray` docblock in `announcements/index.ts`). With the flag set first, a re-entrant read
+returns the empty array instead of re-triggering the grant, so this is strictly safer than
+the old shape. `state.ts` schemas are `.passthrough()` and `BaseClass.toJSON` serializes the
+whole options store, so the flag persists across save/restore with no migration.
+
+Covered by `characters/equip-deck-accounting.test.ts` — a new character still gets a deck,
+an emptied deck stays empty, equipping the entire deck does not mint a new one, and a
+restored legacy character is marked on first read.
+
+**Status**: Fixed.

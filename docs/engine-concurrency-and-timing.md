@@ -11,12 +11,19 @@ the incident history.
 All fight pacing flows through one module. There are two kinds of delay:
 
 - **`veryShortDelay` / `shortDelay` / `mediumDelay` / `longDelay`** — pacing
-  *between* game beats (card-to-card, round-to-round). Midpoints are 3s / 4.5s /
-  6s / 9s, sampled uniformly in [⅔·mid, 4/3·mid], overridable per-kind via
-  `DECK_MONSTERS_*_DELAY_MIDPOINT_MS` / `_CAP_MS` env vars.
-- **`subEventDelay`** — ~1s pacing between sub-events *within* a single card
+  *between* game beats (card-to-card, round-to-round). Midpoints are 5.1s /
+  7.65s / 10.2s / 15.3s, sampled uniformly in [⅔·mid, 4/3·mid], overridable
+  per-kind via `DECK_MONSTERS_*_DELAY_MIDPOINT_MS` / `_CAP_MS` env vars.
+- **`subEventDelay`** — ~1.7s pacing between sub-events *within* a single card
   play (roll → hit → damage → death). Used inside `cards/hit.ts`,
   `cards/base.ts`, `creatures/health.ts`.
+
+These were raised ~1.7x from 3s / 4.5s / 6s / 9s / 1s after watching live games:
+one card play emits 5–7 narration lines *plus* a ten-line ASCII card box, so a
+card's full resolution outran a phone screen. Fights do not overlap at the
+slower pace — `startFightTimer` arms a **one-shot** `setTimeout` that is re-armed
+after each fight, and `startEncounter()` refuses to start while `inEncounter`,
+so a long fight simply delays the next one rather than racing it.
 
 `DECK_MONSTERS_SKIP_DELAYS=1` zeroes everything (tests/harness). It is checked
 at **call time**, not module load time, so test setup files can set it late.
@@ -28,6 +35,17 @@ plays, which made whole fights scroll past in seconds. If you add a new
 continuation path to `doAction` (there are several: played, invalid card, play
 error, end-of-deck), give it the same pacing treatment as its siblings — in
 skip mode use `queueMicrotask`/resolved promise, otherwise a real timer.
+
+**The same invariant applies to cards that play other cards.** `Random Play`
+(draws a card) and `Pick Pocket` (clones an opponent's) put a second card into
+play within one turn. They must route it through `playNestedCard`
+(`cards/helpers/nested-play.ts`), which applies the same `veryShortDelay(round)`
+beat and emits a narration line explaining the chain. Calling `inner.play(...)`
+directly — which is what they originally did — emits the inner card's full
+ten-line announcement immediately after the outer card's, so a Random Play →
+Pick Pocket → Delayed Hit chain dumps three card boxes into the feed inside one
+card's window, and reads as the same monster taking three turns in a row (#89).
+Any future card that plays another card belongs on this helper.
 
 Note: the fight is a promise/timer chain, **not** awaited by anything in the
 server. `Ring.fightTimer` fires `fight()` from a `setTimeout` completely

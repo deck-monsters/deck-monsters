@@ -16,7 +16,7 @@ export default function AppShell({ children, roomName, roomId }: AppShellProps) 
   const { theme, setTheme, validThemes } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const THEME_ICON: Record<string, string> = { phosphor: '🟢', amber: '🟡', 'street-fighter': '🕹️' };
+  const THEME_ICON: Record<string, string> = { phosphor: '🟢', amber: '🟡', ember: '🔴', 'street-fighter': '🕹️' };
   const nextTheme = validThemes[(validThemes.indexOf(theme) + 1) % validThemes.length];
   const [refOpen, setRefOpen] = useState(false);
   const { insertCommand } = useCommandInsert();
