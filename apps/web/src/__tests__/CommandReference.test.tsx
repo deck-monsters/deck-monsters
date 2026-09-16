@@ -44,4 +44,19 @@ describe('CommandReference', () => {
     fireEvent.click(screen.getByText('Handbook'));
     expect(onInsertCommand).toHaveBeenCalledWith('look at player handbook');
   });
+
+  it('states that items can still be used mid-fight', () => {
+    render(<CommandReference {...defaultProps} />);
+    expect(screen.getByText(/one thing you can still do once a fight starts/)).toBeTruthy();
+  });
+
+  it('mentions targeting scrolls and where the current strategy shows up', () => {
+    render(<CommandReference {...defaultProps} />);
+    expect(screen.getByText(/Targeting scrolls change who a monster attacks/)).toBeTruthy();
+  });
+
+  it('lists the use-item-on-monster command', () => {
+    render(<CommandReference {...defaultProps} />);
+    expect(screen.getByText('use [item] on [monster]')).toBeTruthy();
+  });
 });

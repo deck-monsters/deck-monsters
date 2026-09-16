@@ -56,4 +56,23 @@ describe('COMMAND_CATALOG', () => {
 		expect(announcements.length).to.be.greaterThan(0);
 		expect(announcements[0]).to.include('spawn monster');
 	});
+
+	it('states that items can still be used mid-fight', async () => {
+		const action = listen({ command: 'help', game: {} });
+		expect(action).to.not.be.null;
+
+		const announcements: string[] = [];
+		await action!({
+			channel: ({ announce }: { announce?: string }) => {
+				if (announce) announcements.push(announce);
+				return Promise.resolve('');
+			},
+			channelName: 'test',
+			isDM: true,
+			user: { id: 'u1', name: 'Tester' },
+		});
+
+		expect(announcements[0]).to.include('mid-fight');
+		expect(announcements[0]).to.include('Targeting scrolls');
+	});
 });
