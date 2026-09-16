@@ -57,6 +57,82 @@
   border-right: none;
 }
 
+/*
+  Wraps a surface (ring/console/workshop) placed in a pane slot. Phase 1 (see
+  docs/roadmap/20-workspace-layout.md) made every surface a plain, layout-agnostic
+  component, so none of them render their own "which surface is this / open full page"
+  chrome — that has to live in the host. `Terminal` is the pane host, so this wrapper adds
+  a slim strip above the surface's own content rather than reaching inside RingPane's or
+  ConsolePane's existing header (which already carries a timer badge and summons counter —
+  crowding it was the thing §3.3 asked us not to do) or WorkshopPanel (which has no header
+  concept at all).
+
+  This is now the actual grid item in `.terminal-shell`; `.terminal-pane` (still rendered
+  by RingPane/ConsolePane themselves) lives one level deeper and just fills the space this
+  wrapper leaves it via `.terminal-slot-body`.
+*/
+.terminal-slot {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--color-border);
+  min-width: 0; /* prevent grid blowout */
+  position: relative;
+}
+
+.terminal-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  padding: 0.15rem var(--pane-padding);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background: var(--color-bg);
+}
+
+.pane-selector {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-dim);
+  font-family: var(--font-family);
+  font-size: 0.7rem;
+  padding: 0.1rem 0.3rem;
+  cursor: pointer;
+}
+
+.pane-selector:hover {
+  color: var(--color-fg);
+  border-color: var(--color-fg-dim);
+}
+
+.pane-open-full {
+  color: var(--color-fg-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.1rem 0.2rem;
+}
+
+.pane-open-full:hover {
+  color: var(--color-accent);
+}
+
+.terminal-slot-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* The surface itself (`.terminal-pane` or `.workshop-view`) — stretch it to fill the
+   slot below the strip above. */
+.terminal-slot-body > * {
+  flex: 1;
+  min-height: 0;
+}
+
 .pane-header {
   padding: 0.35rem var(--pane-padding);
   border-bottom: 1px solid var(--color-border);
@@ -432,14 +508,14 @@
     display: none;
   }
 
-  .terminal-pane {
+  .terminal-slot {
     display: none;
     grid-column: 1;
     grid-row: 2;
     border-right: none;
   }
 
-  .terminal-pane.active {
+  .terminal-slot.active {
     display: flex;
   }
 }

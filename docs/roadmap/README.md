@@ -25,7 +25,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
-| [20 — Workspace Layout](20-workspace-layout.md) | Switchable second pane: console ↔ workshop | 📋 Planned — phase 1 is a behaviour-neutral extraction |
+| [20 — Workspace Layout](20-workspace-layout.md) | Switchable second pane: console ↔ workshop | 🔧 Active — phases 1–2 done (extraction + the pane); phase 3 (responsive) is next |
 | [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 📋 Proposed — items audit actionable now |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
@@ -82,11 +82,13 @@ that changes their power wants the sim harness first.
 ### 3. Workspace layout (20-workspace-layout.md)
 
 The workshop is a separate route, so changing a deck means leaving the ring feed — worst
-right after watching a monster lose, which is when you most want to. Plan makes the second
-pane switchable between console and workshop (a third tab on phones), with one workshop
-implementation shared by the route and the pane. Phase 1 is a behaviour-neutral extraction
-provable by the existing tests; the underestimated cost is phase 3, since the workshop is a
-wide multi-column layout being asked to work at half a laptop pane and at 393px.
+right after watching a monster lose, which is when you most want to. Phase 1 (behaviour-
+neutral extraction of `WorkshopPanel`) and phase 2 (surfaces-in-slots — see §3.2, generalised
+beyond just "console ↔ workshop" to a `SurfaceId` registry so a future fight log or
+leaderboard costs one entry, not a rewrite) are done. The two pane slots, the per-slot
+`PaneSelector`, `Cmd/Ctrl+1/2/3`, and `dm:paneSlots` persistence live in `Terminal.tsx`.
+The underestimated cost is phase 3, next up, since the workshop is a wide multi-column
+layout being asked to work at half a laptop pane and at 393px.
 
 ### 4. New content backlog (12-new-content-backlog.md)
 

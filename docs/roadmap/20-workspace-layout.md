@@ -2,7 +2,7 @@
 
 **Category**: Web UX / Information architecture
 **Priority**: High — the workshop being a separate route is a live friction point during fights
-**Status**: 📋 Planned
+**Status**: 🔧 Active — phases 1–2 done, phase 3 (responsive) next
 
 ## 1. The problem
 
@@ -130,8 +130,10 @@ layout puts the workshop where the console was and leaves the ring alone.
 ### 3.5 Persistence
 
 Remember **both slots** per viewer in `localStorage`, following the
-`dm:ringRosterCollapsed` precedent in `RingPane.tsx` — same key shape (`dm:secondPane`),
-same try/catch around every access, same "a blocked store is not an error" comment.
+`dm:ringRosterCollapsed` precedent in `RingPane.tsx` — same try/catch around every access,
+same "a blocked store is not an error" comment. Shipped as `dm:paneSlots` (not
+`dm:secondPane` as drafted here — the model moved from "a pinned ring + a switchable second
+pane" to two independently swappable slots per §3.2, and the key name follows that).
 
 ### 3.6 Mounting
 
@@ -175,8 +177,33 @@ width is now a function of the divider position, not the window.
 **Phase 1 — extract, no behaviour change.** `WorkshopPanel` component; `WorkshopView`
 becomes a thin wrapper. Existing workshop tests must pass untouched. Ship this alone.
 
-**Phase 2 — the pane.** `secondPane` state, the segmented control, `Cmd/Ctrl+3`, the third
-tab, localStorage persistence. Workshop renders inside `.terminal-pane`.
+**Phase 2 — the pane. Done.** `slots: [SurfaceId, SurfaceId]` state in `Terminal.tsx`,
+`PaneSelector` per slot, `Cmd/Ctrl+1/2/3`, the third tab, `dm:paneSlots` persistence.
+`components/surfaces.ts` holds the `SurfaceId` registry (§3.1a) the tab bar, both
+selectors and the shortcuts all read.
+
+Two implementation notes for whoever extracts the next surface (Phase 5):
+
+- **The pane header lives in `Terminal.tsx`, not inside each surface.** §3.3 describes the
+  selector as living "in each pane's header", but `RingPane` and `ConsolePane` already
+  render their own `<header class="pane-header">` internally, and reaching into either to
+  splice in a selector would have meant two implementations agreeing on layout again — the
+  exact drift §3.1 warns about. Instead `Terminal` wraps every surface in a `.terminal-slot`
+  (the actual grid item now) with its own slim `.terminal-slot-header` above the surface's
+  own content, carrying the `PaneSelector` (side-by-side only) and the "open full page"
+  link. It reads as an extra thin toolbar row on ring/console, not as a redesign of their
+  header — but it is a second header-shaped element stacked above the first, which is a
+  real, visible deviation from "in each pane's header" worth knowing about before it
+  surprises someone.
+- **`PaneDivider.tsx` was left untouched** (out of scope for this phase) but assumes the
+  left pane is `document.querySelector('.terminal-pane')`'s first match, which only the
+  ring and console (not the workshop) render as their own root class. `Terminal` keeps this
+  working two ways rather than editing the divider: it renders slot 0's surface first in
+  the DOM (slot assignment reorders a stable-keyed list rather than the fixed
+  ring/console/workshop tab order, so React moves the existing node instead of remounting
+  it — state survives), and it stamps the slot 0 wrapper itself with an extra
+  `.terminal-pane` class so the divider finds a real match even when the workshop is the
+  one on the left. Worth revisiting if `PaneDivider` is ever touched for its own reasons.
 
 **Phase 3 — responsive.** The §4 work, driven by container queries, at three widths: wide
 laptop, half-pane laptop, phone.
@@ -194,9 +221,12 @@ exists, and the payoff of §3.1 generalising rather than special-casing the work
 - **Phase 1**: existing `workshopView.review-regressions.test.tsx` and
   `inventoryPanel.equip.test.tsx` pass with no edits. That is the proof the extraction was
   behaviour-neutral.
-- **Phase 2**: `secondPane` defaults to console; switching preserves console scroll
-  position and workshop selection; `Cmd/Ctrl+3` works in both layouts; the choice survives
-  a reload; a blocked `localStorage` still renders.
+- **Phase 2 — done, see `apps/web/src/__tests__/terminal-panes.test.tsx`**: default slots
+  (`['ring', 'console']`); the no-duplicates rule on each `PaneSelector`; switching a slot;
+  `Cmd/Ctrl+3` in both layouts (including the "already in the other slot" case, which flips
+  the active slot rather than duplicating); persistence round-trips through `localStorage`;
+  a blocked `localStorage` still renders; a swapped-out surface is hidden, not unmounted
+  (state survives the round trip).
 - **Crossing the breakpoint** with the workshop selected leaves the workshop selected.
 - **Room switch** remounts the workshop pane (keyed by `roomId`) and does not leak the
   previous room's monsters — the room-scoping rule (`docs/room-scoping.md`) applies to a
