@@ -253,6 +253,12 @@ any monster it always worked on; the list only changes what it puts in front of 
 distinction is the whole reason the spec sorts rather than filters, and it must survive
 implementation.
 
+Owner framing, worth keeping: using an item on a monster outside the ring mid-fight is
+"technically fine but in practice odd and likely a mistake". So tier 2 during a fight should
+say **why** it is dimmed — "not in the ring" — rather than being silently greyed. A dimmed
+row with no reason reads as a bug; a dimmed row with a reason reads as the game looking out
+for you. The tap should still be possible for the player who means it.
+
 ### Data the list needs, and what the API gives it today
 
 `myInventory` already returns items, but only as **names**:
