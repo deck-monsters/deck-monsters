@@ -298,6 +298,20 @@ class Beastmaster extends BaseCharacter {
 			);
 	}
 
+	/**
+	 * Use items, including **during a fight**.
+	 *
+	 * The missing `monster.inEncounter` guard here is deliberate, and is the reason this
+	 * method looks inconsistent with its neighbours: `equipMonster`, `moveCard`,
+	 * `giveItems`, `takeItems` and `reviveMonster` all refuse while a monster is in an
+	 * encounter. Items are the one exception on purpose.
+	 *
+	 * Deck Monsters is hands-off once a fight starts — you commit a deck and then watch —
+	 * so items are the single lever a player still holds mid-fight, and their power is
+	 * balanced on the assumption that they can be used then. Adding a guard here would not
+	 * be a tidy-up; it would remove the game's only real-time decision and change combat
+	 * balance. See `docs/roadmap/19-player-agency-and-items.md`.
+	 */
 	useItems({
 		channel,
 		channelName,

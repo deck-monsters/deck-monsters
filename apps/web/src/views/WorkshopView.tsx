@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import AppShell from '../components/AppShell.js';
 import InventoryPanel from '../components/InventoryPanel.js';
@@ -17,6 +17,7 @@ export default function WorkshopView() {
   const { roomId } = useParams<{ roomId: string }>();
   const [selectedCards, setSelectedCards] = useState<SelectionState[]>([]);
   const [activeMonsterFilter, setActiveMonsterFilter] = useState<string | null>(null);
+  const inventoryRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -221,7 +222,23 @@ export default function WorkshopView() {
 
   function handleToggleMonsterFilter(monsterName: string) {
     setSelectedCards([]);
-    setActiveMonsterFilter((previous) => (previous === monsterName ? null : monsterName));
+    const next = activeMonsterFilter === monsterName ? null : monsterName;
+    setActiveMonsterFilter(next);
+
+    // Tapping a monster filters the *inventory*, which sits below the monster row and is
+    // off-screen on a phone — so the tap changed something the player could not see, and
+    // read as doing nothing at all. Bring the thing that changed into view.
+    if (!next) return;
+    const reduceMotion =
+      typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() => {
+      inventoryRef.current?.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    });
   }
 
   async function handleSlotClick(target: WorkshopCardLocation) {
@@ -364,6 +381,7 @@ export default function WorkshopView() {
           ))}
         </div>
 
+        <div ref={inventoryRef}>
         <InventoryPanel
           cards={unequippedDeck}
           selectedCards={selectedCards}
@@ -378,7 +396,15 @@ export default function WorkshopView() {
             void handleSlotClick({ kind: 'inventory' });
           }}
           onSelectCard={(location, cardName, selectionId) => handleSelect(location, cardName, selectionId)}
+          onEquipSelected={
+            activeMonsterFilter
+              ? () => {
+                  void handleSlotClick({ kind: 'monster', monsterName: activeMonsterFilter });
+                }
+              : undefined
+          }
         />
+        </div>
       </div>
     </AppShell>
   );

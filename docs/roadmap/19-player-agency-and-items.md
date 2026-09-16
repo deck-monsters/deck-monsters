@@ -72,11 +72,17 @@ surface for them at all.**
 
 ### What is already true
 
-- **Items are usable mid-fight.** `beastmaster.useItems` carries **no `inEncounter`
-  guard**, which is conspicuous: `equipMonster`, `moveCard`, `giveItems`, `takeItems` and
-  `reviveMonster` all check `monster.inEncounter` and refuse. Whether that omission was
-  deliberate or accidental, the effect is that items are the only inventory action allowed
-  while a fight is running.
+- **Items are usable mid-fight, deliberately.** `beastmaster.useItems` carries **no
+  `inEncounter` guard**, where `equipMonster`, `moveCard`, `giveItems`, `takeItems` and
+  `reviveMonster` all check `monster.inEncounter` and refuse. This is **intended, planned
+  behaviour and item power is balanced around it** (owner, Sept 2026) — items are the one
+  lever a player still holds once a fight is running, and the single real-time decision in
+  a game that is otherwise commitment-then-surrender.
+
+  **Adding a guard here would not be a tidy-up.** It would delete the game's only
+  in-fight decision and change combat balance. The method now carries a comment saying so,
+  because the inconsistency with its five neighbours reads as an oversight and invites
+  exactly that "fix".
 - **Targeting is already player-controlled, via scrolls.** `items/scrolls/targeting.ts`
   sets `monster.targetingStrategy` in its `action()`, and there are seven strategies shipped
   — Cobra Kai, House Lannister, Sir Robin, Parsifal, Qin Shi Huang, La Carambada, Chaos
@@ -103,15 +109,19 @@ surface for them at all.**
 1. **Surface items in the web client.** An items panel beside the deck workshop, and a
    one-tap "use" affordance on the ring pane while a fight is live. This is the highest
    value-to-effort item in this doc: the engine, the commands and the persistence all exist.
-2. **Make mid-fight use a first-class, bounded action.** If items are to be the live lever,
-   the flow should be one tap with no prompt chain — and the design question to settle
-   first is whether that is *too* strong. A bounded budget (one item per fight per player,
-   say) would keep the commitment-then-surrender frame intact while giving the player one
-   real decision under pressure. **This wants the sim harness before it ships.**
-3. **Decide the `inEncounter` question deliberately.** Right now items are usable mid-fight
-   by omission rather than by a stated rule. Either document it as intended and design
-   around it, or add the guard. Leaving it ambiguous means balance work can silently
-   invalidate itself.
+2. **Make mid-fight use a first-class action.** The flow should be one tap from the ring
+   pane with no prompt chain: today it routes through `chooseMonster`, an interactive
+   prompt, so using a healing potion means noticing low HP, typing a command and answering
+   questions while the fight advances on its own timers. The mechanic is real-time; the
+   interface is not. Any change to *how much* can be used (a per-fight budget, say) is a
+   balance change and wants the sim harness — but removing the prompt chain is not, and
+   should not wait for it.
+3. **Document mid-fight use as a rule of the game, not an implementation detail.** Now
+   settled as intended (above) and recorded at the call site. What remains is player-facing:
+   nothing in the help text, the command reference or the web UI tells a player that items
+   are the one thing they can still do once the fight starts. That is the single most
+   valuable piece of missing documentation in the game, because it is the mechanic most
+   likely to be missed entirely.
 4. **Teach targeting scrolls.** They are the most interesting strategic item in the game and
    are nearly invisible. Surfacing the current `Strategy:` on the roster, and explaining what
    a scroll changed when it is read, would make an existing system legible.
@@ -144,3 +154,37 @@ Both are cheap, because the data exists and is simply not shown.
   for the motivational claims and mark the rest as hypothesis.
 - **Do not ship balance changes from this doc without the sim harness.** See
   `11-balance-and-mechanics.md`.
+
+---
+
+## 6. The workshop as a monster-management hub
+
+**Decision (owner, Sept 2026): the workshop becomes where a web player manages monsters** —
+decks, spawning, reviving, sending to the ring, plus items and the shop. The console stays
+for power users and for Discord parity, but a web player should never need to know a command
+exists. That is the target; the steps below are ordered by confidence, not by size.
+
+Today the workshop is cards-only, and everything else is a typed command.
+
+### Shipped
+
+- **Tapping a monster now scrolls the inventory into view.** The tap already set
+  `activeMonsterFilter` and filtered the inventory to compatible cards — but the inventory
+  sits below the monster row and is off-screen on a phone, so the filter applied where the
+  player could not see it and the tap read as doing nothing. Respects
+  `prefers-reduced-motion`.
+- **An explicit "Equip N to `<monster>`" button** appears when a monster is highlighted and
+  cards are selected. Drag-and-drop and tap-a-slot both worked already, but neither
+  announces itself; on a phone the only discoverable way to equip was to know the gesture.
+
+### Next, in order
+
+1. **Items panel + a use affordance on the ring pane.** Highest value-to-effort in this
+   doc: engine, commands and persistence all exist, and it is the mechanic most likely to be
+   missed entirely (§3).
+2. **Spawn / revive / send to ring from the workshop.** `send to the ring` is room-visible
+   and consequential, so it wants a confirm step; spawn and revive do not.
+3. **Shop.** Browse and buy. Note the per-room scoping rule — the card shop is room-scoped
+   (`Game.shop` / `commitShop()`, `10b-bugs-fixed.md` #26) and any UI must respect it.
+4. **Command reference parity.** Every action the workshop gains should also be listed as
+   the command it maps to, so the console stays learnable rather than becoming legacy.

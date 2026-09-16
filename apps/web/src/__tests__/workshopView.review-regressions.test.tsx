@@ -216,3 +216,54 @@ describe('WorkshopView review regressions', () => {
     });
   });
 });
+
+describe('WorkshopView: the workshop should not change things silently', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('scrolls the inventory into view when a monster is tapped', () => {
+    // Tapping a monster filters the inventory, which sits below the monster row and is
+    // off-screen on a phone — so the filter applied where the player could not see it and
+    // the tap read as doing nothing at all.
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const raf = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb: FrameRequestCallback) => {
+        cb(0);
+        return 0;
+      });
+
+    try {
+      renderWorkshop();
+      fireEvent.click(screen.getByRole('button', { name: 'Toggle filter Stonefang' }));
+      expect(scrollIntoView).toHaveBeenCalled();
+    } finally {
+      raf.mockRestore();
+    }
+  });
+
+  it('does not scroll when the filter is being turned off', () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const raf = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb: FrameRequestCallback) => {
+        cb(0);
+        return 0;
+      });
+
+    try {
+      renderWorkshop();
+      const toggle = screen.getByRole('button', { name: 'Toggle filter Stonefang' });
+      fireEvent.click(toggle);
+      scrollIntoView.mockClear();
+      fireEvent.click(toggle);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      raf.mockRestore();
+    }
+  });
+
+});
