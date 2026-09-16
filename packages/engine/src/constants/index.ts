@@ -4,6 +4,7 @@ export * from './coins.js';
 export * from './creature-classes.js';
 export * from './creature-types.js';
 export * from './effect-types.js';
+export * from './lore.js';
 export * from './phases.js';
 export * from './stats.js';
 export * from './teams.js';

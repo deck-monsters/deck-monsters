@@ -1125,7 +1125,7 @@ class Beastmaster extends BaseCharacter {
 				return monster;
 			})
 		.then((monster: BaseMonster) =>
-			(channel({ announce: `${monster.givenName} has been dismissed from your pack.` }) as Promise<unknown>).then(
+			(channel({ announce: `${monster.givenName} has been laid to rest.` }) as Promise<unknown>).then(
 				() => monster,
 			),
 		);

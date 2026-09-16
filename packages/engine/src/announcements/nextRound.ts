@@ -9,7 +9,9 @@ export function announceNextRound(
 	eb.publish({
 		type: 'announce',
 		scope: 'public',
-		text: `\n⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂ ⚃ ⚄ ⚅ ⚀ ⚁ ⚂\n\n🏁       round ${round + 1}\n`,
+		// A rule plus the flag. Rounds are rarer than turns, so this is the heavier of the
+		// two banners — see nextTurn.ts for why the dice went away.
+		text: `\n--------------------\n🏁  round ${round + 1}\n`,
 		payload: { round },
 	});
 }
