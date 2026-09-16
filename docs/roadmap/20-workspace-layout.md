@@ -144,6 +144,15 @@ always-mounted workshop fetches for every player on every room load, whether or 
 open it. Measure it. If it matters, gate the queries on "has ever been shown" rather than
 unmounting the pane — unmounting would throw away the state this decision exists to keep.
 
+**The other half of that cost, found in review**: `WorkshopPanel` keeps `selectedCards`,
+`activeMonsterFilter`, `message`, `error` and `inventoryRef` in local `useState`/`useRef`.
+The moment the same surface can be open as a pane *and* at its full-page route, those are
+two independent instances — a selection made in one is invisible in the other, and
+`refetchInterval` being per-observer doubles the polling. Neither is a bug today, because
+nothing double-mounts yet. Before Phase 2 ships alongside the route, decide one of: lift
+that state into `useDeckWorkshop` (or a small shared store) so both instances agree, or
+accept divergence and say so in the UI. Do not discover this in play.
+
 ## 4. The hidden cost: the workshop is a wide layout
 
 This is the part most likely to be underestimated. `WorkshopView` assumes a full-page

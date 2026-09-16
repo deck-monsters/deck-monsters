@@ -31,6 +31,10 @@ const workshopMock = vi.hoisted(() => ({
   cardCompatibility: {
     Hit: ['Stonefang'],
   },
+  items: {
+    character: [] as never[],
+    monsters: [] as never[],
+  },
   loading: false,
   busy: false,
   latestError: null as string | null,

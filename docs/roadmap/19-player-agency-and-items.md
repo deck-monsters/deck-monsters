@@ -264,6 +264,10 @@ Outside a fight: any owned monster, drawing on both the monster's items and the 
 the character's own items while `inEncounter`, so a pocket healing potion is genuinely not
 usable, and showing it as tier 1 would be a lie the engine then refuses.
 
+**The gate is `inEncounter`, not `inRing`** — a distinction worth keeping straight. A monster
+waiting in the ring for the next fight to start is *not* in an encounter, so pocket items
+still reach it. The window closes when the fighting does, not when it steps in.
+
 A benched monster, and any item in the character's pocket during a fight, drop to tier 2 —
 dimmed, still listed, with the reason shown.
 
@@ -320,6 +324,12 @@ usable at all. So:
 
 `usableOnMonsters` answers "can this item apply to this creature", which is necessary but
 not sufficient; the list an item lives in answers "can it be reached from here".
+
+**Shipped**: `apps/web/src/utils/item-tiers.ts` implements this as a pure, tested classifier
+(tier, reason string, sort), and `components/ItemsPanel.tsx` renders it inside the workshop —
+the first time the workshop has mentioned items at all. Display-only for now: there is no
+`use item` tRPC procedure, and inventing one was out of scope. That is the next step, along
+with the ring-pane affordance (§7 "Mid-fight flow").
 
 Degradation, matching `canMonsterHoldCard`'s existing style: a missing `canUseItem` degrades to
 `false` (never claim an item is usable when the engine can't confirm it — this drives a live

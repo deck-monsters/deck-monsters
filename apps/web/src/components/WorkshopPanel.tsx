@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InventoryPanel from './InventoryPanel.js';
+import ItemsPanel from './ItemsPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
@@ -26,6 +27,7 @@ export default function WorkshopPanel({ roomId }: WorkshopPanelProps) {
     monsters,
     unequippedDeck,
     cardCompatibility,
+    items,
     loading,
     busy,
     latestError,
@@ -404,6 +406,8 @@ export default function WorkshopPanel({ roomId }: WorkshopPanelProps) {
         }
       />
       </div>
+
+      <ItemsPanel items={items} monsters={monsters} />
     </div>
   );
 }

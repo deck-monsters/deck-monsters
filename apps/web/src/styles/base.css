@@ -546,6 +546,80 @@ button {
   font-size: 0.8rem;
 }
 
+/*
+ * Items panel (roadmap/19-player-agency-and-items.md §7). Follows the card inventory's
+ * existing visual language exactly: tier !== 1 gets the same treatment as
+ * `.workshop-card-slot.incompatible` — dim + dashed border, never hidden — plus a reason
+ * line, because a dimmed row with no reason reads as a bug (§7).
+ */
+.workshop-items {
+  border: 1px solid var(--color-border);
+  padding: 0.75rem;
+  background: var(--color-input-bg);
+  margin-top: 0.75rem;
+}
+
+.workshop-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workshop-item-row {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: 0.4rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.workshop-item-row.tier-1 {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+}
+
+/* Same rule as `.workshop-card-slot.incompatible`: dim + dashed, never hidden. */
+.workshop-item-row.incompatible {
+  opacity: 0.35;
+  border-style: dashed;
+}
+
+.workshop-item-row.tier-3 {
+  opacity: 0.25;
+}
+
+.workshop-item-row-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.workshop-item-name {
+  font-size: 0.82rem;
+  color: var(--color-fg-bright);
+}
+
+.workshop-item-source {
+  font-size: 0.68rem;
+  color: var(--color-fg-dim);
+}
+
+.workshop-item-row-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.68rem;
+  color: var(--color-fg-dim);
+}
+
+.workshop-item-reason {
+  color: var(--color-accent);
+}
+
 .monster-workshop-panel.in-ring,
 .workshop-monster-panel.in-ring {
   border-color: var(--color-accent);

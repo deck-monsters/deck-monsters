@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { trpc } from '../lib/trpc.js';
+import type { ItemSummary } from '../utils/item-tiers.js';
 
 type WorkshopMonster = {
   name: string;
@@ -17,8 +18,8 @@ type WorkshopInventory = {
   unequippedDeck: string[];
   cardCompatibility: Record<string, string[]>;
   items: {
-    character: string[];
-    monsters: Array<{ monsterName: string; items: string[] }>;
+    character: ItemSummary[];
+    monsters: Array<{ monsterName: string; items: ItemSummary[] }>;
   };
 };
 
@@ -70,6 +71,7 @@ export function useDeckWorkshop(roomId?: string) {
   const monsters = inventory.monsters ?? [];
   const unequippedDeck = inventory.unequippedDeck ?? [];
   const cardCompatibility = inventory.cardCompatibility ?? {};
+  const items = inventory.items ?? EMPTY_INVENTORY.items;
 
   const loading = roomQuery.isLoading || inventoryQuery.isLoading;
   const busy = useMemo(
@@ -106,6 +108,7 @@ export function useDeckWorkshop(roomId?: string) {
     monsters,
     unequippedDeck,
     cardCompatibility,
+    items,
     loading,
     busy,
     latestError:
