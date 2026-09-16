@@ -196,8 +196,9 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
                       lineHeight: 1.4,
                     }}
                   >
-                    Items are the one thing you can still do once a fight starts — everything
-                    else has to be decided before a monster goes to the ring.
+                    A monster can still use items once a fight starts — but only ones it is
+                    already carrying. Nothing can be handed over mid-fight, so stock it up
+                    before it goes to the ring.
                     <br />
                     Targeting scrolls change who a monster attacks; its stat card shows the
                     current Strategy.
