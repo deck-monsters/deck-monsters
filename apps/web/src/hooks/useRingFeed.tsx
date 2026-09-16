@@ -75,6 +75,13 @@ export function useRingFeed(roomId: string): RingFeedApi {
     latestTrackedEventIdRef.current = undefined;
     listenersRef.current.clear();
     pendingEventsRef.current = [];
+    // The previous room's watchdog must die with it. RingFeedProvider is not re-keyed
+    // per room, so a timer left armed here fires later against the *new* room and drops
+    // a healthy connection into "reconnecting…", which only a real handshake clears.
+    if (heartbeatTimerRef.current !== null) {
+      clearTimeout(heartbeatTimerRef.current);
+      heartbeatTimerRef.current = null;
+    }
   }
 
   /**

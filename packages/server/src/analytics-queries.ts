@@ -11,6 +11,7 @@ import {
 } from './db/schema.js';
 import type { GameEvent } from '@deck-monsters/engine';
 import { dbRowToGameEvent } from './db/game-event-map.js';
+import { eventVisibilityFor } from './db/event-visibility.js';
 
 export type LeaderboardSort = 'xp' | 'wins' | 'winRate' | 'coins';
 
@@ -632,8 +633,7 @@ export function formatCatchUpStreakLines(
  *
  * `viewerUserId` is therefore not optional bookkeeping: without it this returned every
  * player's private fight narration — their XP and coin awards, their prompts — to any
- * room member who expanded that fight in the fight log. The predicate is the same one
- * `_fetchRingFeedPage` uses for the ringFeed replay; the two must not drift.
+ * room member who expanded that fight in the fight log.
  */
 export async function loadFightEventsForSummary(
 	db: Db,
@@ -642,11 +642,6 @@ export async function loadFightEventsForSummary(
 	startedAt: Date,
 	endedAt: Date
 ): Promise<GameEvent[]> {
-	const visibility = or(
-		eq(roomEvents.scope, 'public'),
-		and(eq(roomEvents.scope, 'private'), eq(roomEvents.targetUserId, viewerUserId))
-	);
-
 	const rows = await db
 		.select()
 		.from(roomEvents)
@@ -655,7 +650,7 @@ export async function loadFightEventsForSummary(
 				eq(roomEvents.roomId, roomId),
 				gte(roomEvents.createdAt, startedAt),
 				lte(roomEvents.createdAt, endedAt),
-				visibility
+				eventVisibilityFor(viewerUserId)
 			)
 		)
 		.orderBy(asc(roomEvents.id));

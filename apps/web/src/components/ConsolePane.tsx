@@ -11,6 +11,7 @@ import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 import { formatEventText } from '../utils/format-event-text.js';
 import { classifyHighlight, type FightHighlight } from '../utils/fight-highlights.js';
+import FeedList from './FeedList.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
 import { useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
@@ -78,17 +79,6 @@ function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot
     && (entry.timeoutSeconds === undefined || typeof entry.timeoutSeconds === 'number')
   );
 }
-
-// Virtuoso List component — renders as <ol> for semantic HTML, and carries the feed's
-// gutters (see `.event-feed-list`; padding must not sit on the scroller). Defined at
-// module scope: an inline component gets a fresh identity on every render, which
-// remounts the whole virtualized list and loses its scroll position.
-// Cast through any because Virtuoso's List type expects HTMLDivElement internally.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const FeedList = React.forwardRef<any, any>((props, ref) => (
-  <ol {...props} ref={ref} className="event-feed-list" />
-));
-FeedList.displayName = 'ConsoleFeedList';
 
 export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
   const { user } = useAuth();

@@ -19,6 +19,7 @@ import {
 import type { Db } from './db/index.js';
 import { rooms, roomMembers, profiles, roomEvents, roomPlayerStats, roomMonsterStats, fightSummaries } from './db/schema.js';
 import { dbRowToGameEvent } from './db/game-event-map.js';
+import { eventVisibilityFor } from './db/event-visibility.js';
 import type { GameEvent, RingContestantSnapshot } from '@deck-monsters/engine';
 import { publicDisplayName } from './public-display-name.js';
 import { PostgresStateStore } from './state-store.js';
@@ -635,10 +636,7 @@ export class RoomManager {
 		lastEventId: string,
 		limit: number
 	): Promise<GameEvent[]> {
-		const visibility = or(
-			eq(roomEvents.scope, 'public'),
-			and(eq(roomEvents.scope, 'private'), eq(roomEvents.targetUserId, userId))
-		);
+		const visibility = eventVisibilityFor(userId);
 
 		const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
 		const cutoff7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);

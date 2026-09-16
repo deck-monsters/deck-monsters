@@ -21,6 +21,7 @@ import {
 	shouldAppendMarker,
 } from '../utils/feed-markers.js';
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
+import FeedList from './FeedList.js';
 
 interface RingPaneProps {
   roomId: string;
@@ -36,6 +37,13 @@ interface TimerState {
 }
 
 const ROSTER_COLLAPSED_KEY = 'dm:ringRosterCollapsed';
+
+/**
+ * How long to wait after a reconnect for the replayed catch-up to land before drawing the
+ * "reconnected" divider anyway. Long enough for a burst of replayed events to arrive in
+ * one go, short enough that the bracket never looks abandoned.
+ */
+const RECONNECT_MARKER_GRACE_MS = 2_500;
 
 function readRosterCollapsed(): boolean {
   try {
@@ -114,13 +122,6 @@ function LastFightFooter({
   );
 }
 
-// Virtuoso List component — renders as <ol> for semantic HTML.
-// Cast through any because Virtuoso's List type expects HTMLDivElement internally.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const FeedList = React.forwardRef<any, any>((props, ref) => (
-  <ol {...props} ref={ref} className="event-feed-list" />
-));
-FeedList.displayName = 'FeedList';
 
 export default function RingPane({ roomId, isActive }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
@@ -137,6 +138,35 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
   });
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [rosterCollapsed, setRosterCollapsed] = useState(readRosterCollapsed);
+
+  // Close the "connection lost" bracket. Called either by the first event that postdates
+  // the reconnect, or by a grace timer — whichever comes first.
+  //
+  // The timer is not belt-and-braces, it is the guarantee. Waiting on a qualifying event
+  // alone leaves the bracket open forever in two real cases: a quiet ring, where nothing
+  // public may follow a reconnect for minutes; and clock skew, where a server timestamp
+  // can trail the client `Date.now()` captured at handshake so the comparison never
+  // becomes true. Either would leave a "connection lost" divider dangling over a feed
+  // that had in fact recovered — worse than no divider at all.
+  const flushReconnectMarker = useCallback(() => {
+    if (reconnectMarkerTimerRef.current !== null) {
+      clearTimeout(reconnectMarkerTimerRef.current);
+      reconnectMarkerTimerRef.current = null;
+    }
+    const pendingAt = pendingReconnectAtRef.current;
+    if (pendingAt === null) return;
+    pendingReconnectAtRef.current = null;
+    setEvents(prev =>
+      shouldAppendMarker(prev) ? [...prev, createFeedMarker('reconnected', pendingAt)] : prev
+    );
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (reconnectMarkerTimerRef.current !== null) clearTimeout(reconnectMarkerTimerRef.current);
+    },
+    []
+  );
 
   const toggleRoster = useCallback(() => {
     setRosterCollapsed(prev => {
@@ -159,6 +189,7 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
   // at handshake time would put it above events the reader actually missed. Holding it
   // until the first genuinely-new event lands closes the bracket in the right place.
   const pendingReconnectAtRef = useRef<number | null>(null);
+  const reconnectMarkerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch persistent ring history from DB on mount
   const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
@@ -188,7 +219,16 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
       const hs = event.payload as { ringState?: unknown; yourUserId?: string };
       if (hs.ringState) setTimerState(hs.ringState as TimerState);
       if (hs.yourUserId) setMyUserId(hs.yourUserId);
-      if (hasConnectedRef.current) pendingReconnectAtRef.current = Date.now();
+      if (hasConnectedRef.current) {
+        pendingReconnectAtRef.current = Date.now();
+        if (reconnectMarkerTimerRef.current !== null) {
+          clearTimeout(reconnectMarkerTimerRef.current);
+        }
+        reconnectMarkerTimerRef.current = setTimeout(
+          flushReconnectMarker,
+          RECONNECT_MARKER_GRACE_MS
+        );
+      }
       hasConnectedRef.current = true;
       return;
     }
@@ -219,19 +259,13 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
       void refetchRingState();
     }
 
-    setEvents(prev => {
-      const pendingAt = pendingReconnectAtRef.current;
-      // Replayed catch-up events are older than the reconnect, so they sort above the
-      // marker; the first event that actually postdates it closes the bracket.
-      if (pendingAt !== null && event.timestamp >= pendingAt) {
-        pendingReconnectAtRef.current = null;
-        if (shouldAppendMarker(prev)) {
-          return [...prev, createFeedMarker('reconnected', pendingAt), event];
-        }
-      }
-      return [...prev, event];
-    });
-  }, [refetchRingState]);
+    // Replayed catch-up events are older than the reconnect, so they sort above the
+    // marker; the first event that actually postdates it closes the bracket early.
+    const pendingAt = pendingReconnectAtRef.current;
+    if (pendingAt !== null && event.timestamp >= pendingAt) flushReconnectMarker();
+
+    setEvents(prev => [...prev, event]);
+  }, [refetchRingState, flushReconnectMarker]);
 
   const { connected, reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
 

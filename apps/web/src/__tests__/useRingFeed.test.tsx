@@ -439,3 +439,44 @@ describe('useRingFeed: heartbeat watchdog (#108)', () => {
     }
   });
 });
+
+describe('useRingFeed: the watchdog belongs to its room (#108)', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+
+  it('does not let a previous room\'s watchdog drop the new room\'s connection', () => {
+    // RingFeedProvider is not re-keyed per room, so a timer left armed across a switch
+    // fires against the new room and strands a healthy feed in "reconnecting…", which
+    // only a real handshake clears.
+    vi.useFakeTimers();
+    try {
+      const { result, rerender } = renderHook(
+        ({ roomId }: { roomId: string }) => {
+          useRingFeed(roomId);
+          return useRingFeedContextForTest();
+        },
+        {
+          wrapper,
+          initialProps: { roomId: 'room-a' },
+        }
+      );
+
+      act(() => {
+        latestCall().onData?.({ id: 'e1', data: makeEvent({ id: 'e1', type: 'handshake' }) });
+      });
+
+      // Switch rooms with the watchdog armed, then let the old timer's deadline pass.
+      act(() => {
+        rerender({ roomId: 'room-b' });
+      });
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+
+      expect(result.current.reconnecting).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

@@ -659,16 +659,23 @@
    The few battle moments surfaced in the console while the ring feed scrolls
    past. The ring shows everything; these are the ones worth looking up for.
    See 10b-bugs-fixed.md #110. */
+/* The tag sits ABOVE the text, not beside it. Inline, tags of differing widths
+   (NAT 20 / CRIT FAIL / BIG HIT) each pushed their line to a different left edge, and a
+   monospace feed's whole look is the straight left column — the ragged result read as
+   broken rather than emphasised. Stacked, every highlight's text starts where every
+   other line of the feed starts. */
 .event-highlight {
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
   border-left: 2px solid var(--color-border);
   padding-left: 0.5rem;
 }
 
 .highlight-tag {
   flex-shrink: 0;
+  align-self: flex-start;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   padding: 0.05rem 0.3rem;

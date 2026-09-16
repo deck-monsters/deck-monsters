@@ -1125,6 +1125,12 @@ class Beastmaster extends BaseCharacter {
 				return monster;
 			})
 		.then((monster: BaseMonster) =>
+			// "Dismissed from your pack" was kennel language for what is always a *dead*
+			// monster (this command filters on `monster.dead`), and it carried the game's
+			// last bit of livestock framing on the player side. "Laid to rest" suits
+			// permadeath and matches the companion voice the ring narration now uses —
+			// a beastmaster calls monsters in and calls them back, rather than owning
+			// stock. See 10b-bugs-fixed.md #104.
 			(channel({ announce: `${monster.givenName} has been laid to rest.` }) as Promise<unknown>).then(
 				() => monster,
 			),
