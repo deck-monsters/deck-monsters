@@ -61,9 +61,10 @@ describe('trpc/router card management procedures', () => {
 			inEncounter: false,
 			cardSlots: 9,
 			cards: [{ cardType: 'Hit' }],
-			items: [{ itemType: 'Potion' }],
+			items: [{ itemType: 'Potion', expired: false, stats: 'Usable 1 time.' }],
 			options: { presets: { aggro: ['Hit'] } },
 			canHoldCard: (card: { cardType?: string }) => card.cardType !== 'Blink',
+			canUseItem: (item: { itemType?: string }) => item.itemType !== 'Scroll',
 		};
 		const supportMonster = {
 			givenName: 'Mirebell',
@@ -75,13 +76,15 @@ describe('trpc/router card management procedures', () => {
 			items: [],
 			options: { presets: {} },
 			canHoldCard: (card: { cardType?: string }) => card.cardType === 'Blink',
+			canUseItem: (item: { itemType?: string }) => item.itemType !== 'Scroll',
 		};
 		const game = {
 			characters: {
 				[USER_ID]: {
 					monsters: [targetMonster, supportMonster],
 					deck: [{ cardType: 'Blink' }],
-					items: [{ itemType: 'Scroll' }],
+					items: [{ itemType: 'Scroll', expired: false, stats: 'Usable an unlimited number of times.' }],
+					canUseItem: () => false,
 				},
 			},
 			ring: { contestants: [{ userId: USER_ID, isBoss: false, monster: targetMonster }] },
@@ -105,7 +108,125 @@ describe('trpc/router card management procedures', () => {
 		expect(result.cardCompatibility).to.deep.equal({
 			Blink: ['Mirebell'],
 		});
-		expect(result.items.character).to.deep.equal(['Scroll']);
+		expect(result.items.character).to.deep.equal([
+			{
+				displayName: 'Scroll',
+				expired: false,
+				stats: 'Usable an unlimited number of times.',
+				// Neither monster's canUseItem accepts a Scroll, and the character's own
+				// canUseItem always returns false in this fixture.
+				usableOnMonsters: [],
+				usableOnCharacter: false,
+			},
+		]);
+		expect(result.items.monsters).to.deep.equal([
+			{
+				monsterName: 'Stonefang',
+				items: [
+					{
+						displayName: 'Potion',
+						expired: false,
+						stats: 'Usable 1 time.',
+						usableOnMonsters: ['Stonefang', 'Mirebell'],
+						usableOnCharacter: false,
+					},
+				],
+			},
+			{ monsterName: 'Mirebell', items: [] },
+		]);
+	});
+
+	it('degrades gracefully when an item is missing canUseItem/expired (test doubles, legacy snapshots)', async () => {
+		const bareMonster = {
+			givenName: 'Stonefang',
+			creatureType: 'Basilisk',
+			level: 1,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			// No canHoldCard, no canUseItem — matches the "legacy snapshot" case
+			// `canMonsterHoldCard` already defends against.
+		};
+		const game = {
+			characters: {
+				[USER_ID]: {
+					monsters: [bareMonster],
+					deck: [],
+					// A bare item object with neither `canUseItem`'s caller side (n/a here) nor
+					// `expired`/`stats` getters.
+					items: [{ itemType: 'MysteryScroll' }],
+					// No canUseItem on the character either.
+				},
+			},
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.items.character).to.deep.equal([
+			{
+				displayName: 'MysteryScroll',
+				expired: false,
+				stats: 'Usable an unlimited number of times.',
+				usableOnMonsters: [],
+				usableOnCharacter: false,
+			},
+		]);
+	});
+
+	it('returns an empty items summary when a monster/character canUseItem throws', async () => {
+		const throwingMonster = {
+			givenName: 'Stonefang',
+			creatureType: 'Basilisk',
+			level: 1,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			canUseItem: () => {
+				throw new Error('boom');
+			},
+		};
+		const game = {
+			characters: {
+				[USER_ID]: {
+					monsters: [throwingMonster],
+					deck: [],
+					items: [{ itemType: 'Scroll', expired: true }],
+					canUseItem: () => {
+						throw new Error('boom');
+					},
+				},
+			},
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const router = createRouter(roomManager);
+		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.items.character).to.deep.equal([
+			{
+				displayName: 'Scroll',
+				expired: true,
+				stats: 'All used up!',
+				usableOnMonsters: [],
+				usableOnCharacter: false,
+			},
+		]);
 	});
 
 	it('runs game.unequipCard via serialized engine work', async () => {
