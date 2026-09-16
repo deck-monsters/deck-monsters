@@ -31,6 +31,10 @@ const workshopMock = vi.hoisted(() => ({
   cardCompatibility: {
     Hit: ['Stonefang'],
   },
+  items: {
+    character: [] as never[],
+    monsters: [] as never[],
+  },
   loading: false,
   busy: false,
   latestError: null as string | null,
@@ -45,6 +49,19 @@ const workshopMock = vi.hoisted(() => ({
   loadPreset: vi.fn(async () => ({ equippedCount: 0, requestedCount: 0, skippedCards: [] as string[] })),
   deletePreset: vi.fn(async () => undefined),
   refresh: vi.fn(async () => undefined),
+}));
+
+// WorkshopView resolves the room's name for AppShell directly from `room.info`, the way
+// FightLogView and LeaderboardView do, rather than through useDeckWorkshop — see the
+// comment in the view for why. That makes the tRPC client a dependency of this render.
+vi.mock('../lib/trpc.js', () => ({
+  trpc: {
+    room: {
+      info: {
+        useQuery: () => ({ data: { name: workshopMock.roomName } }),
+      },
+    },
+  },
 }));
 
 vi.mock('../hooks/useDeckWorkshop.js', () => ({
@@ -215,4 +232,55 @@ describe('WorkshopView review regressions', () => {
       });
     });
   });
+});
+
+describe('WorkshopView: the workshop should not change things silently', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('scrolls the inventory into view when a monster is tapped', () => {
+    // Tapping a monster filters the inventory, which sits below the monster row and is
+    // off-screen on a phone — so the filter applied where the player could not see it and
+    // the tap read as doing nothing at all.
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const raf = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb: FrameRequestCallback) => {
+        cb(0);
+        return 0;
+      });
+
+    try {
+      renderWorkshop();
+      fireEvent.click(screen.getByRole('button', { name: 'Toggle filter Stonefang' }));
+      expect(scrollIntoView).toHaveBeenCalled();
+    } finally {
+      raf.mockRestore();
+    }
+  });
+
+  it('does not scroll when the filter is being turned off', () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    const raf = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((cb: FrameRequestCallback) => {
+        cb(0);
+        return 0;
+      });
+
+    try {
+      renderWorkshop();
+      const toggle = screen.getByRole('button', { name: 'Toggle filter Stonefang' });
+      fireEvent.click(toggle);
+      scrollIntoView.mockClear();
+      fireEvent.click(toggle);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      raf.mockRestore();
+    }
+  });
+
 });

@@ -97,4 +97,5 @@ When reviewing any PR that touches game data, ask:
 | Player can read another room's data via API | tRPC procedure not checking room membership |
 | Character changes in one room affect another | Character loaded globally, not room-scoped |
 | Real-time feed receives events after navigating rooms | Old WebSocket subscription not torn down on room change |
+| A player sees another player's private events (DM narration, XP awards, prompts) | Query scoped to `room_id` but not to the **viewer**. Room membership is not entitlement to a member's private events — a `room_events` read on someone's behalf also needs `eventVisibilityFor(userId)` (`db/event-visibility.ts`). This is how the fight log leaked private narration: its events are resolved by *time window*, and the window caught everyone's. See `docs/roadmap/10b-bugs-fixed.md` #109 |
 | Buying/selling in one room's shop changes another room's stock | Shop state read from a module-level singleton instead of the room's `Game` instance (fixed for the card shop — see `docs/roadmap/10b-bugs-fixed.md` #26; `Game.shop`/`commitShop()` is the pattern to follow for any similar per-room mutable resource) |

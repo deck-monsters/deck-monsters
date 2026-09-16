@@ -177,6 +177,33 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
                 >
                   {CATEGORY_LABELS[cat].toUpperCase()}
                 </div>
+                {/*
+                  Fights are otherwise hands-off once a monster is in the ring — no
+                  re-equipping, no calling it back and in again. Items are the deliberate
+                  exception: `useItems` has no `inEncounter` guard, on purpose, because items
+                  are meant to be the one real-time decision in the game (see
+                  docs/roadmap/19-player-agency-and-items.md §3). That's easy to never
+                  discover, so the items panel says so directly instead of leaving it
+                  implicit in the command list.
+                */}
+                {cat === 'items' && (
+                  <div
+                    style={{
+                      padding: '0.5rem 1rem',
+                      fontSize: '0.75rem',
+                      color: 'var(--color-fg-dim)',
+                      borderBottom: '1px solid var(--color-border)',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    A monster can still use items once a fight starts — but only ones it is
+                    already carrying. Nothing can be handed over mid-fight, so stock it up
+                    before it goes to the ring.
+                    <br />
+                    Targeting scrolls change who a monster attacks; its stat card shows the
+                    current Strategy.
+                  </div>
+                )}
                 {entries.map((entry) => (
                   <button
                     key={entry.command}

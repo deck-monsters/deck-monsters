@@ -21,10 +21,12 @@ Each document covers one area; this README is the authoritative index of status 
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
 | [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 3 non-blocking items from the Sept 2026 live-play pass |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 3 non-blocking items from the Sept 2026 live-play pass, plus 2 open judgement calls (#101, #104) |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
+| [20 — Workspace Layout](20-workspace-layout.md) | Switchable second pane: console ↔ workshop | 🔧 Active — phases 1–2 done (extraction + the pane); phase 3 (responsive) is next |
+| [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 📋 Proposed — items audit actionable now |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
 | [09 — Graphics](09-graphics.md) | Sprites, icons, optional visual polish | 📋 Post-launch, low priority |
@@ -55,23 +57,44 @@ Everything below shipped and is not expected to need revisiting:
 - **Card workshop** — full card management shipped: unequip/move commands, preset save/load/delete, drag-and-drop web workshop at `/workshop`
 - **Battle history persistence** — stored in `options.battles`, capped at 20, survives restarts
 - **Boss encounters** — player boss summoning (3 per rolling 24h, per room) and Ring Events: random encounter modifiers that trigger multi-boss gauntlets, free-for-alls, player alliances, and team battles by surfacing the engine's existing team/targeting machinery. `victoryMode: 'last-team'` for Common Cause and House War: combat ends when one faction survives and all survivors win. Centralized activation (`Ring.activateRingEvent`), quorum-drop event clearing, free-for-all centralized in `getTarget`, contestant-level XP team overrides, and restart-gap fix for the boss summon quota (`bossSummonsPending`). Documented in [`docs/boss-encounters.md`](../boss-encounters.md)
-- **Bug fixes** — all tracked audit items resolved; see `10b-bugs-fixed.md` for the archive, including DMG/CARDS content differentiation (#3), batch-equip UX (#19), per-room card shop scoping (#26), boss-sentinel leaderboard fixes (#27–#33), combat/event findings (#34–#50), the 2026-08-03 audit fixes (#51–#58, #59–#63, #64, #65–#69, #70–#73, #74–#85), Fastify tRPC batch `maxParamLength` 404s (#86), the preset casing / parsing fixes (#87–#88), nested card-play pacing (#89), the missing fight-winner banner (#90), the equip deck-accounting / starting-deck refill bugs (#91–#92), the jump-button / command-echo / email-display / beginner-level fixes (#93–#96), and the turn-banner collapse (#97).
+- **Bug fixes** — all tracked audit items resolved; see `10b-bugs-fixed.md` for the archive, including DMG/CARDS content differentiation (#3), batch-equip UX (#19), per-room card shop scoping (#26), boss-sentinel leaderboard fixes (#27–#33), combat/event findings (#34–#50), the 2026-08-03 audit fixes (#51–#58, #59–#63, #64, #65–#69, #70–#73, #74–#85), Fastify tRPC batch `maxParamLength` 404s (#86), the preset casing / parsing fixes (#87–#88), nested card-play pacing (#89), the missing fight-winner banner (#90), the equip deck-accounting / starting-deck refill bugs (#91–#92), the jump-button / command-echo / email-display / beginner-level fixes (#93–#96), the turn-banner collapse (#97), and the September 16 2026 mobile UI pass (#98–#110), which also produced the ring's current voice — players call their monsters in, the house (`👑 The Editor`) commands bosses.
 
 ---
 
 ## Active Work — In Order of Priority
 
-Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too, along with the September 2026 live-play fixes (#89–#97). `10-bug-fixes.md` now carries three open non-blocking items from that pass: the email-defaulted profile name migration (follow-up to #95), cards that emit two roll blocks in the same tick, and the burst of messages at the very start of a fight.
+Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too, along with the September 2026 live-play fixes (#89–#97). `10-bug-fixes.md` now carries three open non-blocking items from that pass: the email-defaulted profile name migration (follow-up to #95), cards that emit two roll blocks in the same tick, and the burst of messages at the very start of a fight. The **September 16 2026 mobile UI pass** (#98–#110) is fully archived in `10b-bugs-fixed.md`. Layout and rendering: feed text clipped off the right edge of both panes because `.event-feed`'s padding sat on the Virtuoso scroller, whose absolutely-positioned viewport resolves `width:100%` against the padding box (#98); engine `*bold*` / `_italic_` markup printed literally everywhere, not just in the fight log (#99); `in 1 rounds` (#100); the turn banner's 21 unrenderable dice glyphs (#101). Voice: every boss arrival **and departure** credited a randomly generated beastmaster who does not exist, now the house — `👑 The Editor` (#102); a player-summoned boss announced twice, out of order, under two names (#103); the ring-exit line said the opposite of what happened, resolved as part of a wider reframe where a player's monster *answers a call* and a boss is *commanded* (#104); a missing full stop (#105); a three-monster fight's summary dropping a contestant its own title named (#106). Feed and connection: dividers marking where the reader joined and lost connection (#107) and a heartbeat watchdog so a silently dead connection is noticed (#108). Found along the way: the fight log returned **other players' private events**, because a fight's events are resolved by time window and the query filtered on room and time but not on viewer (#109); and console fight highlights, which required `announceHit` to stop publishing an empty payload (#110). Screenshots are in `assets/ui-bugs-2026-09/`.
 
 ### 1. Balance & mechanics (11-balance-and-mechanics.md)
 
 Design doc is ready. Blocked on a battle simulation harness for safe regression testing. Key items: crit fail for all cards, stat variance reform, initiative rolls, saving throws. Start by building the sim harness, then iterate.
 
-### 2. New content backlog (12-new-content-backlog.md)
+### 2. Player agency and items (19-player-agency-and-items.md)
+
+Written after a research pass on what makes RPGs enjoyable. States the design frame — the
+fight is hands-off on purpose, and the pleasure is commitment then surrender — and audits
+the one real-time lever the game already has. Key finding: **items are usable mid-fight
+(no `inEncounter` guard, unlike every other inventory action) and the web client has no
+item UI at all.** Targeting scrolls already let players set `targetingStrategy`; they are
+nearly invisible. Surfacing items on the web is the highest value-to-effort item; anything
+that changes their power wants the sim harness first.
+
+### 3. Workspace layout (20-workspace-layout.md)
+
+The workshop is a separate route, so changing a deck means leaving the ring feed — worst
+right after watching a monster lose, which is when you most want to. Phase 1 (behaviour-
+neutral extraction of `WorkshopPanel`) and phase 2 (surfaces-in-slots — see §3.2, generalised
+beyond just "console ↔ workshop" to a `SurfaceId` registry so a future fight log or
+leaderboard costs one entry, not a rewrite) are done. The two pane slots, the per-slot
+`PaneSelector`, `Cmd/Ctrl+1/2/3`, and `dm:paneSlots` persistence live in `Terminal.tsx`.
+The underestimated cost is phase 3, next up, since the workshop is a wide multi-column
+layout being asked to work at half a laptop pane and at 393px.
+
+### 4. New content backlog (12-new-content-backlog.md)
 
 New cards (10+ designs documented), two new monster types (Time Lord / Wizard, Bureaucrat / Cleric), equipment slots, adventures/job board, tournaments. Post-launch, driven by player demand.
 
-### 3. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
+### 5. Pixel art fight animations — SNES theme (17-pixel-art-fight-animations.md)
 
 A fun post-launch enhancement: a retro SNES theme that layers pixel art fight animations on top of the text ring feed. All other themes stay clean and text-only — this is pure progressive enhancement. The animation module only loads when the SNES theme is active, so there's no cost for everyone else. Monster sprites (one idle + attack + hit + faint per monster type) can be generated with PixelLab and refined in Aseprite. See `docs/pixel-art-animations-in-js.md` for the full technical reference.
 

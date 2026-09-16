@@ -44,4 +44,23 @@ describe('CommandReference', () => {
     fireEvent.click(screen.getByText('Handbook'));
     expect(onInsertCommand).toHaveBeenCalledWith('look at player handbook');
   });
+
+  it('states that items can still be used mid-fight, and the catch', () => {
+    render(<CommandReference {...defaultProps} />);
+    // Both halves matter. The headline alone ("you can use items mid-fight") is what an
+    // earlier draft said, and it sends a player to try a pocket potion that
+    // items/helpers/use.ts will refuse — worse than saying nothing at all.
+    expect(screen.getByText(/can still use items once a fight starts/)).toBeTruthy();
+    expect(screen.getByText(/only ones it is\s+already carrying/)).toBeTruthy();
+  });
+
+  it('mentions targeting scrolls and where the current strategy shows up', () => {
+    render(<CommandReference {...defaultProps} />);
+    expect(screen.getByText(/Targeting scrolls change who a monster attacks/)).toBeTruthy();
+  });
+
+  it('lists the use-item-on-monster command', () => {
+    render(<CommandReference {...defaultProps} />);
+    expect(screen.getByText('use [item] on [monster]')).toBeTruthy();
+  });
 });

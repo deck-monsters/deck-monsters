@@ -58,6 +58,22 @@ export function announceHit(
 		type: 'announce',
 		scope: 'public',
 		text: `${flavorText}\n\n${monster.icon} *${bloodied}${monster.givenName} has ${only}${monster.hp}HP.*\n`,
-		payload: {},
+		// This used to publish an empty payload, so the one number the event is *about*
+		// was recoverable only by parsing the prose. Consumers that want to weigh a hit —
+		// the web console's fight highlights, and anything after it — need the figures
+		// rather than a regex over flavour text that any rewrite would break.
+		//
+		// `assailantName` is what makes a hit judgeable: significance is measured against
+		// what *that attacker* usually manages, not against the target's health. See
+		// apps/web/src/utils/fight-highlights.ts.
+		payload: {
+			damage,
+			prevHp,
+			hp: monster.hp,
+			maxHp: monster.maxHp,
+			bloodied: Boolean(monster.bloodied),
+			monsterName: monster.givenName,
+			assailantName: assailant?.givenName,
+		},
 	});
 }

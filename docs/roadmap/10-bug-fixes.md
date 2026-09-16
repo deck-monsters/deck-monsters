@@ -2,7 +2,10 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Active — three open items from the September 2026 live-play pass (below). Everything earlier is resolved; see [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73, #74–#85, #86–#97).
+**Status**: Active — three open items from the September 2026 live-play pass. The
+September 16 2026 mobile UI pass is fully resolved (#98–#110). See
+[`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73,
+#74–#85, #86–#97, #98–#110).
 
 ## Active Items
 
@@ -72,3 +75,29 @@ turn banner down, but it is the one place the feed still starts as a wall.
 - [x] Discord free-text prompt support (#59)
 - [x] Discord serialization / `activeFlows` parity (#60)
 - [x] Unify web `ringFeed` subscription / cursor (#63)
+
+---
+
+## September 16 2026 mobile UI pass — all resolved
+
+Eight iPhone screenshots of a live Game Night room produced eleven findings (#98–#108),
+plus #109 and #110 found while working them. All are resolved — see
+[`10b-bugs-fixed.md`](10b-bugs-fixed.md) for each root cause, including the two rejected
+designs worth not re-proposing: a timestamp-gap feed divider (the 20–35 min boss spawn
+window makes a long pause the feed's normal resting state) and reusing "dismissed" for a
+ring exit (it is an existing command, permanent and legal only on dead monsters).
+
+Screenshots: [`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/).
+
+### Observed and deliberately not filed
+
+- **`↓ Latest` sits over feed text** (`05-ring-sammael-card.png`). It is
+  `position: absolute` with `opacity: 0.9` and no backdrop, so the card box shows
+  through. Arguably intended; listed in case it is not.
+- **Roster eats 40% of a phone screen** (`01-ring-roster-boss.png`). Two contestants
+  plus the header leave a small feed window. `max-height: 40%` / 32% under
+  `max-height: 600px` is working as specified — flagging the *specification*, not a
+  defect.
+- **`boss in ~17m` vs a feed line reading `A boss will enter the ring in 2 minutes`**
+  (`06-ring-summon-sequence.png`). The feed line is historical text from an earlier
+  timer; the header is live. Not a mismatch.

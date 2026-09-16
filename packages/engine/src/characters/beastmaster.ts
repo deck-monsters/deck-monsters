@@ -298,6 +298,27 @@ class Beastmaster extends BaseCharacter {
 			);
 	}
 
+	/**
+	 * Use items, including **during a fight** — but only ones the monster is already
+	 * carrying.
+	 *
+	 * There is no `monster.inEncounter` guard here, unlike `equipMonster`, `moveCard`,
+	 * `giveItemsToMonster`, `takeItemsFromMonster` and `reviveMonster`, which all refuse
+	 * outright. That is deliberate: items are the single lever a player still holds once a
+	 * fight is running, and item power is balanced on the assumption they can be used then.
+	 *
+	 * **The guard exists, one level down, and it is the interesting part.** `items/helpers/
+	 * use.ts` builds the usable pool from `monster.items` alone while `monster.inEncounter`,
+	 * adding the character's own items only when the monster is NOT in an encounter. And
+	 * `items/helpers/transfer.ts` refuses to move items to or from a monster in an
+	 * encounter. So mid-fight you can use what the monster took into the ring with it, and
+	 * nothing else.
+	 *
+	 * That makes stocking a monster before it fights a commitment decision in its own
+	 * right, exactly like building its deck — which is the game's shape, not an accident.
+	 * Do not "fix" the apparent inconsistency here: it would remove the game's only
+	 * real-time decision. See `docs/roadmap/19-player-agency-and-items.md` §3.
+	 */
 	useItems({
 		channel,
 		channelName,
@@ -1125,7 +1146,13 @@ class Beastmaster extends BaseCharacter {
 				return monster;
 			})
 		.then((monster: BaseMonster) =>
-			(channel({ announce: `${monster.givenName} has been dismissed from your pack.` }) as Promise<unknown>).then(
+			// "Dismissed from your pack" was kennel language for what is always a *dead*
+			// monster (this command filters on `monster.dead`), and it carried the game's
+			// last bit of livestock framing on the player side. "Laid to rest" suits
+			// permadeath and matches the companion voice the ring narration now uses —
+			// a beastmaster calls monsters in and calls them back, rather than owning
+			// stock. See 10b-bugs-fixed.md #104.
+			(channel({ announce: `${monster.givenName} has been laid to rest.` }) as Promise<unknown>).then(
 				() => monster,
 			),
 		);

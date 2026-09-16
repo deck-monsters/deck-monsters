@@ -14,7 +14,14 @@ import {
 	getKeyRingEventMeta,
 } from '../utils/event-time.js';
 import { shouldRenderRingEvent } from '../utils/ring-feed-events.js';
+import {
+	createFeedMarker,
+	feedMarkerKind,
+	isFeedMarker,
+	shouldAppendMarker,
+} from '../utils/feed-markers.js';
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
+import FeedList from './FeedList.js';
 
 interface RingPaneProps {
   roomId: string;
@@ -30,6 +37,13 @@ interface TimerState {
 }
 
 const ROSTER_COLLAPSED_KEY = 'dm:ringRosterCollapsed';
+
+/**
+ * How long to wait after a reconnect for the replayed catch-up to land before drawing the
+ * "reconnected" divider anyway. Long enough for a burst of replayed events to arrive in
+ * one go, short enough that the bracket never looks abandoned.
+ */
+const RECONNECT_MARKER_GRACE_MS = 2_500;
 
 function readRosterCollapsed(): boolean {
   try {
@@ -108,11 +122,6 @@ function LastFightFooter({
   );
 }
 
-// Virtuoso List component — renders as <ol> for semantic HTML.
-// Cast through any because Virtuoso's List type expects HTMLDivElement internally.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const FeedList = React.forwardRef<any, any>((props, ref) => <ol {...props} ref={ref} />);
-FeedList.displayName = 'FeedList';
 
 export default function RingPane({ roomId, isActive }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
@@ -130,6 +139,35 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
   const [myUserId, setMyUserId] = useState<string | null>(null);
   const [rosterCollapsed, setRosterCollapsed] = useState(readRosterCollapsed);
 
+  // Close the "connection lost" bracket. Called either by the first event that postdates
+  // the reconnect, or by a grace timer — whichever comes first.
+  //
+  // The timer is not belt-and-braces, it is the guarantee. Waiting on a qualifying event
+  // alone leaves the bracket open forever in two real cases: a quiet ring, where nothing
+  // public may follow a reconnect for minutes; and clock skew, where a server timestamp
+  // can trail the client `Date.now()` captured at handshake so the comparison never
+  // becomes true. Either would leave a "connection lost" divider dangling over a feed
+  // that had in fact recovered — worse than no divider at all.
+  const flushReconnectMarker = useCallback(() => {
+    if (reconnectMarkerTimerRef.current !== null) {
+      clearTimeout(reconnectMarkerTimerRef.current);
+      reconnectMarkerTimerRef.current = null;
+    }
+    const pendingAt = pendingReconnectAtRef.current;
+    if (pendingAt === null) return;
+    pendingReconnectAtRef.current = null;
+    setEvents(prev =>
+      shouldAppendMarker(prev) ? [...prev, createFeedMarker('reconnected', pendingAt)] : prev
+    );
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (reconnectMarkerTimerRef.current !== null) clearTimeout(reconnectMarkerTimerRef.current);
+    },
+    []
+  );
+
   const toggleRoster = useCallback(() => {
     setRosterCollapsed(prev => {
       const next = !prev;
@@ -144,6 +182,14 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
+  // True once the first handshake has landed, so a later handshake is a *re*connect.
+  const hasConnectedRef = useRef(false);
+  // Set when a reconnect handshake arrives. The replayed catch-up arrives after the
+  // handshake but carries timestamps from *during* the outage, so drawing "reconnected"
+  // at handshake time would put it above events the reader actually missed. Holding it
+  // until the first genuinely-new event lands closes the bracket in the right place.
+  const pendingReconnectAtRef = useRef<number | null>(null);
+  const reconnectMarkerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Fetch persistent ring history from DB on mount
   const { data: history } = trpc.game.ringHistory.useQuery({ roomId });
@@ -173,6 +219,17 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
       const hs = event.payload as { ringState?: unknown; yourUserId?: string };
       if (hs.ringState) setTimerState(hs.ringState as TimerState);
       if (hs.yourUserId) setMyUserId(hs.yourUserId);
+      if (hasConnectedRef.current) {
+        pendingReconnectAtRef.current = Date.now();
+        if (reconnectMarkerTimerRef.current !== null) {
+          clearTimeout(reconnectMarkerTimerRef.current);
+        }
+        reconnectMarkerTimerRef.current = setTimeout(
+          flushReconnectMarker,
+          RECONNECT_MARKER_GRACE_MS
+        );
+      }
+      hasConnectedRef.current = true;
       return;
     }
 
@@ -202,10 +259,22 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
       void refetchRingState();
     }
 
+    // Replayed catch-up events are older than the reconnect, so they sort above the
+    // marker; the first event that actually postdates it closes the bracket early.
+    const pendingAt = pendingReconnectAtRef.current;
+    if (pendingAt !== null && event.timestamp >= pendingAt) flushReconnectMarker();
+
     setEvents(prev => [...prev, event]);
-  }, [refetchRingState]);
+  }, [refetchRingState, flushReconnectMarker]);
 
   const { connected, reconnecting, seedCursor } = useRingFeedListener(onLiveEvent);
+
+  // Draw the divider the moment the connection drops, so the reader can see where the
+  // feed stopped being live rather than discovering a hole in it later.
+  useEffect(() => {
+    if (!reconnecting) return;
+    setEvents(prev => (shouldAppendMarker(prev) ? [...prev, createFeedMarker('disconnected')] : prev));
+  }, [reconnecting]);
 
   // Apply DB history once — pre-populate seenRef and seed the shared subscription
   // lastEventId so the live subscription skips already-delivered events.
@@ -232,10 +301,16 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
     // Merge history with any live events that arrived before history loaded.
     // Live events take priority over history events with the same ID.
     setEvents(prev => {
-      if (prev.length === 0) return visibleHistory;
+      // Everything above this line happened before the page was opened. Without it a
+      // stat card from a previous session abuts an unrelated fight from this one.
+      const boundary = visibleHistory.length > 0 ? [createFeedMarker('joined')] : [];
+
+      if (prev.length === 0) return [...visibleHistory, ...boundary];
+
       const liveById = new Map(prev.map(ev => [ev.id, ev]));
       const merged: GameEvent[] = visibleHistory.map(ev => liveById.get(ev.id) ?? ev);
       const historyIds = new Set(visibleHistory.map(ev => ev.id));
+      merged.push(...boundary);
       for (const ev of prev) {
         if (!historyIds.has(ev.id)) merged.push(ev);
       }
@@ -345,12 +420,19 @@ export default function RingPane({ roomId, isActive }: RingPaneProps) {
         components={{
           List: FeedList,
           EmptyPlaceholder: () => (
-            <li className="event event-system">
+            <li className="event event-system event-feed-empty">
               <p>Waiting for battle events…</p>
             </li>
           ),
         }}
         itemContent={(_, event) => {
+          if (isFeedMarker(event)) {
+            return (
+              <li className={`feed-marker feed-marker-${feedMarkerKind(event) ?? 'joined'}`}>
+                <span>{event.text}</span>
+              </li>
+            );
+          }
           const keyMeta = getKeyRingEventMeta(event);
           const iso = eventTimestampIso(event.timestamp);
           const hoverTitle = formatEventHoverTitle(event.timestamp);

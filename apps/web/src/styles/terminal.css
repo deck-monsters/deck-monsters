@@ -57,6 +57,82 @@
   border-right: none;
 }
 
+/*
+  Wraps a surface (ring/console/workshop) placed in a pane slot. Phase 1 (see
+  docs/roadmap/20-workspace-layout.md) made every surface a plain, layout-agnostic
+  component, so none of them render their own "which surface is this / open full page"
+  chrome — that has to live in the host. `Terminal` is the pane host, so this wrapper adds
+  a slim strip above the surface's own content rather than reaching inside RingPane's or
+  ConsolePane's existing header (which already carries a timer badge and summons counter —
+  crowding it was the thing §3.3 asked us not to do) or WorkshopPanel (which has no header
+  concept at all).
+
+  This is now the actual grid item in `.terminal-shell`; `.terminal-pane` (still rendered
+  by RingPane/ConsolePane themselves) lives one level deeper and just fills the space this
+  wrapper leaves it via `.terminal-slot-body`.
+*/
+.terminal-slot {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--color-border);
+  min-width: 0; /* prevent grid blowout */
+  position: relative;
+}
+
+.terminal-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  padding: 0.15rem var(--pane-padding);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background: var(--color-bg);
+}
+
+.pane-selector {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-dim);
+  font-family: var(--font-family);
+  font-size: 0.7rem;
+  padding: 0.1rem 0.3rem;
+  cursor: pointer;
+}
+
+.pane-selector:hover {
+  color: var(--color-fg);
+  border-color: var(--color-fg-dim);
+}
+
+.pane-open-full {
+  color: var(--color-fg-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.1rem 0.2rem;
+}
+
+.pane-open-full:hover {
+  color: var(--color-accent);
+}
+
+.terminal-slot-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* The surface itself (`.terminal-pane` or `.workshop-view`) — stretch it to fill the
+   slot below the strip above. */
+.terminal-slot-body > * {
+  flex: 1;
+  min-height: 0;
+}
+
 .pane-header {
   padding: 0.35rem var(--pane-padding);
   border-bottom: 1px solid var(--color-border);
@@ -91,12 +167,30 @@
   flex-direction: column;
 }
 
-/* Event feed — the scrollable list of game events */
+/* Event feed — the scrollable list of game events.
+
+   NO PADDING HERE. This class lands on react-virtuoso's *scroller*, which it styles
+   `position: relative`, and the viewport it nests inside is `position: absolute;
+   width: 100%`. For an absolutely positioned box `width: 100%` resolves against the
+   containing block's *padding* box, so any horizontal padding here made the viewport
+   2x that padding wider than the visible area and `overflow-x: hidden` silently sliced
+   the right-hand edge off every line — losing a short word, or the level number in
+   "a level 6 Minotaur". Padding belongs on `.event-feed-list`, which is a normal-flow
+   child and measures against the content box. See 10b-bugs-fixed.md #98. */
 .event-feed {
   list-style: none;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* The <ol> Virtuoso renders inside the viewport. Carries the feed's gutters. */
+.event-feed-list {
+  padding: var(--pane-padding);
+}
+
+/* The empty placeholder renders outside `.event-feed-list`, so it needs its own gutter. */
+.event-feed-empty {
   padding: var(--pane-padding);
 }
 
@@ -414,14 +508,14 @@
     display: none;
   }
 
-  .terminal-pane {
+  .terminal-slot {
     display: none;
     grid-column: 1;
     grid-row: 2;
     border-right: none;
   }
 
-  .terminal-pane.active {
+  .terminal-slot.active {
     display: flex;
   }
 }
@@ -601,3 +695,83 @@
     max-height: 32%;
   }
 }
+
+/* ── Feed dividers ──────────────────────────────────────────────────────────
+   Client-side markers for breaks the reader lived through: where they opened the
+   page, and where the connection dropped and came back. Deliberately quiet — a
+   divider is punctuation, not an event. See 10b-bugs-fixed.md #107. */
+.feed-marker {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-fg-dim);
+  white-space: nowrap;
+}
+
+.feed-marker::before,
+.feed-marker::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* A dropped connection is the one worth noticing; the others are orientation. */
+.feed-marker-disconnected {
+  color: var(--color-error);
+}
+
+.feed-marker-disconnected::before,
+.feed-marker-disconnected::after {
+  background: var(--color-error);
+  opacity: 0.4;
+}
+
+/* ── Fight highlights ───────────────────────────────────────────────────────
+   The few battle moments surfaced in the console while the ring feed scrolls
+   past. The ring shows everything; these are the ones worth looking up for.
+   See 10b-bugs-fixed.md #110. */
+/* The tag sits ABOVE the text, not beside it. Inline, tags of differing widths
+   (NAT 20 / CRIT FAIL / BIG HIT) each pushed their line to a different left edge, and a
+   monospace feed's whole look is the straight left column — the ragged result read as
+   broken rather than emphasised. Stacked, every highlight's text starts where every
+   other line of the feed starts. */
+.event-highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  border-left: 2px solid var(--color-border);
+  padding-left: 0.5rem;
+}
+
+.highlight-tag {
+  flex-shrink: 0;
+  align-self: flex-start;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  white-space: nowrap;
+  color: var(--color-fg-dim);
+}
+
+/* A natural 20 and a kill are the loudest; a crit fail is loud but not good news. */
+.event-highlight-nat20 { border-left-color: var(--color-hp-healthy, var(--color-success)); }
+.event-highlight-nat20 .highlight-tag { color: var(--color-hp-healthy, var(--color-success)); }
+
+.event-highlight-critFail { border-left-color: var(--color-hp-hurt, var(--color-accent)); }
+.event-highlight-critFail .highlight-tag { color: var(--color-hp-hurt, var(--color-accent)); }
+
+.event-highlight-kill { border-left-color: var(--color-error); }
+.event-highlight-kill .highlight-tag { color: var(--color-error); }
+
+.event-highlight-bigHit { border-left-color: var(--color-accent); }
+.event-highlight-bigHit .highlight-tag { color: var(--color-accent); }
+
+.event-highlight-flee { border-left-color: var(--color-fg-dim); }

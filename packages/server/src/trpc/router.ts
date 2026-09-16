@@ -52,13 +52,30 @@ type InventoryMonsterSummary = {
 	presets: Record<string, string[]>;
 };
 
+// Per-item summary for the web item list (roadmap/19-player-agency-and-items.md §7).
+// Usability is computed here, once, from the engine's own `canUseItem` predicate so the
+// client never has to reimplement the rule — see `canUseItemSafe` below.
+type ItemSummary = {
+	displayName: string;
+	expired: boolean;
+	// The engine's own rendered uses-remaining text ("Usable 1 time." / "N times" /
+	// "All used up!") so the client doesn't need to reconstruct it from numberOfUses/used.
+	stats: string;
+	// Names of the player's own monsters this item currently passes `canUseItem` for.
+	// Combined with `InventoryMonsterSummary.inRing`, the client can sort into the three
+	// tiers (usable now / owned-but-not-here / spent) without any game-rule knowledge.
+	usableOnMonsters: string[];
+	// Whether the character can use this item on themself (`usableWithoutMonster` items).
+	usableOnCharacter: boolean;
+};
+
 type InventorySummary = {
 	monsters: InventoryMonsterSummary[];
 	unequippedDeck: string[];
 	cardCompatibility: Record<string, string[]>;
 	items: {
-		character: string[];
-		monsters: Array<{ monsterName: string; items: string[] }>;
+		character: ItemSummary[];
+		monsters: Array<{ monsterName: string; items: ItemSummary[] }>;
 	};
 };
 
@@ -102,6 +119,52 @@ const canMonsterHoldCard = (monster: unknown, card: unknown): boolean => {
 	} catch {
 		return false;
 	}
+};
+
+// Mirrors `canMonsterHoldCard`'s defensive pattern: test doubles and legacy save-state
+// snapshots do not always provide `canUseItem`. Unlike `canMonsterHoldCard` (which degrades
+// to `true` because cards are assumed compatible until proven otherwise), this degrades to
+// `false` — an item list must never claim an item is usable somewhere the engine can't
+// confirm, since that claim drives a live "tap to use" affordance in a fight.
+const canUseItemSafe = (entity: unknown, item: unknown): boolean => {
+	if (!entity || typeof entity !== 'object') return false;
+	const canUseItem = (entity as { canUseItem?: unknown }).canUseItem;
+	if (typeof canUseItem !== 'function') {
+		return false;
+	}
+	try {
+		return Boolean(canUseItem.call(entity, item));
+	} catch {
+		return false;
+	}
+};
+
+const summarizeItem = (
+	item: unknown,
+	monsterEntries: Array<{ monster: unknown; summary: InventoryMonsterSummary }>,
+	character: unknown,
+): ItemSummary => {
+	const record = (item ?? {}) as Record<string, unknown>;
+	// `expired` is a derived getter (`used >= numberOfUses`) on real items; a test double or
+	// legacy snapshot missing it is treated as "not expired" rather than throwing or hiding
+	// the item, matching the file's degrade-to-sensible-default style.
+	const expired = typeof record.expired === 'boolean' ? record.expired : false;
+	const stats =
+		typeof record.stats === 'string'
+			? record.stats
+			: expired
+				? 'All used up!'
+				: 'Usable an unlimited number of times.';
+
+	return {
+		displayName: getDisplayName(item),
+		expired,
+		stats,
+		usableOnMonsters: monsterEntries
+			.filter((entry) => canUseItemSafe(entry.monster, item))
+			.map((entry) => entry.summary.name),
+		usableOnCharacter: canUseItemSafe(character, item),
+	};
 };
 
 const summarizeInventory = ({
@@ -172,7 +235,7 @@ const summarizeInventory = ({
 		const monsterInventory = Array.isArray(monster.items) ? monster.items : [];
 		return {
 			monsterName: entry.summary.name,
-			items: monsterInventory.map((item) => getDisplayName(item)),
+			items: monsterInventory.map((item) => summarizeItem(item, monsterEntries, character)),
 		};
 	});
 
@@ -195,7 +258,7 @@ const summarizeInventory = ({
 		unequippedDeck: deck.map((card) => getDisplayName(card)),
 		cardCompatibility,
 		items: {
-			character: items.map((item) => getDisplayName(item)),
+			character: items.map((item) => summarizeItem(item, monsterEntries, character)),
 			monsters: monsterItems,
 		},
 	};
@@ -1779,7 +1842,13 @@ export function createRouter(roomManager: RoomManager) {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const summary = await queryFightByNumber(db, input.roomId, input.fightNumber);
 				if (!summary) throw new TRPCError({ code: 'NOT_FOUND' });
-				const events = await loadFightEventsForSummary(db, input.roomId, summary.startedAt, summary.endedAt);
+				const events = await loadFightEventsForSummary(
+					db,
+					input.roomId,
+					ctx.userId,
+					summary.startedAt,
+					summary.endedAt
+				);
 				return { summary, events };
 			}),
 

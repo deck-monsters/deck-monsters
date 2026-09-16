@@ -3,11 +3,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 import type { GameEvent } from '@deck-monsters/server/types';
 import {
+  HEARTBEAT_TIMEOUT_MS,
+  RingFeedContext,
   RingFeedProvider,
   useRingFeed,
   useRingFeedListener,
+  type RingFeedApi,
   type TrackedRingFeedEvent,
 } from '../hooks/useRingFeed.js';
+import { useContext } from 'react';
+
+/** Reads the provider's live api object, including the connection flags. */
+function useRingFeedContextForTest(): RingFeedApi {
+  const ctx = useContext(RingFeedContext);
+  if (!ctx) throw new Error('no RingFeedContext');
+  return ctx;
+}
 
 type TrackedEvent = { id: string; data: GameEvent };
 
@@ -350,5 +361,122 @@ describe('useRingFeed', () => {
     });
     rerender();
     expect(latestCall().input.lastEventId).toBe('300-live');
+  });
+});
+
+describe('useRingFeed: heartbeat watchdog (#108)', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+
+  it('treats silence longer than the heartbeat timeout as a lost connection', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'e1', data: makeEvent({ id: 'e1', type: 'handshake' }) });
+      });
+      expect(result.current.connected).toBe(true);
+
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+
+      // Nothing errored — the socket is simply silent, which is what a backgrounded
+      // phone or a blackholing network looks like.
+      expect(result.current.connected).toBe(false);
+      expect(result.current.reconnecting).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the connection alive while heartbeats keep arriving', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'e1', data: makeEvent({ id: 'e1', type: 'handshake' }) });
+      });
+
+      // Three intervals' worth of silence, broken by a heartbeat each time.
+      for (let i = 0; i < 3; i += 1) {
+        act(() => {
+          vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS - 5_000);
+          latestCall().onData?.({
+            id: `hb${i}`,
+            data: makeEvent({ id: `hb${i}`, type: 'heartbeat' }),
+          });
+        });
+      }
+
+      expect(result.current.connected).toBe(true);
+      expect(result.current.reconnecting).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('resumes from the last event it saw, not from the beginning', () => {
+    vi.useFakeTimers();
+    try {
+      renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'e1', data: makeEvent({ id: 'e1', type: 'handshake' }) });
+        latestCall().onData?.({ id: '900-aaaa', data: makeEvent({ id: '900-aaaa', type: 'announce' }) });
+      });
+
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+
+      expect(latestCall().input.lastEventId).toBe('900-aaaa');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('useRingFeed: the watchdog belongs to its room (#108)', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+
+  it('does not let a previous room\'s watchdog drop the new room\'s connection', () => {
+    // RingFeedProvider is not re-keyed per room, so a timer left armed across a switch
+    // fires against the new room and strands a healthy feed in "reconnecting…", which
+    // only a real handshake clears.
+    vi.useFakeTimers();
+    try {
+      const { result, rerender } = renderHook(
+        ({ roomId }: { roomId: string }) => {
+          useRingFeed(roomId);
+          return useRingFeedContextForTest();
+        },
+        {
+          wrapper,
+          initialProps: { roomId: 'room-a' },
+        }
+      );
+
+      act(() => {
+        latestCall().onData?.({ id: 'e1', data: makeEvent({ id: 'e1', type: 'handshake' }) });
+      });
+
+      // Switch rooms with the watchdog armed, then let the old timer's deadline pass.
+      act(() => {
+        rerender({ roomId: 'room-b' });
+      });
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+
+      expect(result.current.reconnecting).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

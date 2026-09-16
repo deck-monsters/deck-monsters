@@ -56,4 +56,33 @@ describe('COMMAND_CATALOG', () => {
 		expect(announcements.length).to.be.greaterThan(0);
 		expect(announcements[0]).to.include('spawn monster');
 	});
+
+	it('states that items can still be used mid-fight', async () => {
+		const action = listen({ command: 'help', game: {} });
+		expect(action).to.not.be.null;
+
+		const announcements: string[] = [];
+		await action!({
+			channel: ({ announce }: { announce?: string }) => {
+				if (announce) announcements.push(announce);
+				return Promise.resolve('');
+			},
+			channelName: 'test',
+			isDM: true,
+			user: { id: 'u1', name: 'Tester' },
+		});
+
+		expect(announcements[0]).to.include('mid-fight');
+		expect(announcements[0]).to.include('Targeting scrolls');
+
+		// The caveat is the load-bearing half. `items/helpers/use.ts` restricts the usable
+		// pool to `monster.items` while the monster is in an encounter, and
+		// `items/helpers/transfer.ts` blocks handing anything over then — so help that
+		// promises "you can use items mid-fight" without saying "only ones it already
+		// carries" sends a player to try a pocket potion and be refused with no
+		// explanation. That is worse than saying nothing, and an earlier draft of this
+		// copy did exactly that. Assert the caveat, not just the headline.
+		expect(announcements[0]).to.match(/already carrying/i);
+		expect(announcements[0]).to.match(/give \[item\] to \[monster\]/i);
+	});
 });

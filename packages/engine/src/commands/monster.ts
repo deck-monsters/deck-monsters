@@ -333,13 +333,24 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 			);
 		}
 
+		// Publish BEFORE spawnBoss. spawnBoss -> addMonster -> announceContestant emits the
+		// arrival together with a ~15-line stat card, so a summon line published afterwards
+		// landed below the card and read as a second, unrelated summon rather than as the
+		// explanation for the one above it. Safe to announce first: `canAcceptBoss()` above
+		// is the only reason spawnBoss returns undefined, and nothing in between yields.
+		ring.eventBus.publish({
+			type: 'announce',
+			scope: 'public',
+			text: `${character.givenName ?? 'A beastmaster'} has summoned a boss into the ring!`,
+			payload: { summonedBy: userId },
+		});
+
 		// Pass summoner identity to the contestant so a pre-fight removal (last player
 		// withdraws, despawn timer fires) can refund this exact charge via the ring's
 		// onSummonedBossRemoved callback. See docs/boss-encounters.md §3.
 		const contestant = ring.spawnBoss({ summonedByUserId: userId, summonedAt: now });
 		if (!contestant) {
-			// Belt and braces — nothing above yields, so this cannot lose a race. Bail before
-			// spending the charge rather than burning it on a boss that never arrived.
+			// Belt and braces — see the capacity check above.
 			return announceAndThrow(
 				channel,
 				'The ring cannot take another boss right now. Your summon has not been used.'
@@ -357,13 +368,6 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 		const { monster } = contestant;
 
 		ring.emit('bossSummoned', { userId, contestant });
-
-		ring.eventBus.publish({
-			type: 'announce',
-			scope: 'public',
-			text: `${character.givenName ?? 'A beastmaster'} has summoned a boss into the ring!`,
-			payload: { summonedBy: userId },
-		});
 
 		return channel({
 			announce: `⚔️ You summoned ${monster.identity} — a ${monster.displayLevel} ${monster.creatureType}!\n\nYou have ${remaining} boss ${remaining === 1 ? 'summon' : 'summons'} left today.`,

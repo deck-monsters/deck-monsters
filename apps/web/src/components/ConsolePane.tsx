@@ -10,6 +10,12 @@ import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
 import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 import { formatEventText } from '../utils/format-event-text.js';
+import {
+  classifyHighlight,
+  createDamageHistory,
+  type FightHighlight,
+} from '../utils/fight-highlights.js';
+import FeedList from './FeedList.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
 import { useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
@@ -33,9 +39,11 @@ interface PendingPromptSnapshot {
 
 interface ConsoleEvent {
   id: string;
-  type: 'announce' | 'input' | 'system' | 'prompt' | 'tombstone';
+  type: 'announce' | 'input' | 'system' | 'prompt' | 'tombstone' | 'highlight';
   text: string;
   promptData?: ActivePrompt;
+  /** Set on 'highlight' rows — the tag rendered beside the line. */
+  highlight?: FightHighlight;
 }
 
 interface QuickAction {
@@ -81,6 +89,9 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
   const { registerInsertFn } = useCommandInsert();
 
   const [consoleEvents, setConsoleEvents] = useState<ConsoleEvent[]>([]);
+  // Per-attacker damage baseline for the "big hit" highlight. A ref, not state: it feeds
+  // a classification decision and must never itself trigger a render.
+  const damageHistoryRef = useRef(createDamageHistory());
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
   const activePromptIdRef = useRef<string | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -306,9 +317,24 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
     if (seenRef.current.has(tracked.id)) return;
     seenRef.current.add(tracked.id);
 
-    // Only process events targeted to this user
+    // Only process events targeted to this user, plus the handful of public battle
+    // moments worth calling out while the ring feed scrolls past. The ring pane still
+    // shows everything — this is emphasis, not a second feed.
     const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
     const isPublicSystem = event.scope === 'public' && event.type === 'system';
+    const fightHighlight =
+      event.scope === 'public' ? classifyHighlight(event, damageHistoryRef.current) : null;
+
+    if (fightHighlight) {
+      addConsoleEvent({
+        id: event.id,
+        type: 'highlight',
+        text: event.text ?? '',
+        highlight: fightHighlight,
+      });
+      return;
+    }
+
     if (!isPrivate && !isPublicSystem) return;
 
     if (MONSTER_REFRESH_EVENT_TYPES.has(event.type)) {
@@ -706,11 +732,9 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
         data={consoleEvents}
         followOutput={false}
         components={{
-          // Cast through any because Virtuoso's List type expects HTMLDivElement internally.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          List: React.forwardRef<any, any>((props, ref) => <ol {...props} ref={ref} />),
+          List: FeedList,
           EmptyPlaceholder: () => (
-            <li className="event event-system">
+            <li className="event event-system event-feed-empty">
               <p>Type a command below to start. Try: <em>look at monsters</em></p>
             </li>
           ),
@@ -735,6 +759,14 @@ export default function ConsolePane({ roomId, isActive }: ConsolePaneProps) {
                     timeoutSeconds={ev.promptData.timeoutSeconds}
                   />
                 )}
+              </li>
+            );
+          }
+          if (ev.type === 'highlight' && ev.highlight) {
+            return (
+              <li className={`event event-highlight event-highlight-${ev.highlight.kind}`}>
+                <span className="highlight-tag">{ev.highlight.label}</span>
+                <div className="event-text">{formatEventText(ev.text ?? '')}</div>
               </li>
             );
           }

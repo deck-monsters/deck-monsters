@@ -18,6 +18,13 @@ interface InventoryPanelProps {
   compatibleCardCount?: number | null;
   onClearMonsterFilter?: () => void;
   isCardUnavailable?: (cardName: string) => boolean;
+  /**
+   * Equip the current selection to the highlighted monster. Provided only when a monster
+   * filter is active — drag-and-drop and tap-a-slot both work, but neither announces
+   * itself, so on a phone the only discoverable way to equip was to already know the
+   * gesture.
+   */
+  onEquipSelected?: () => void;
 }
 
 export default function InventoryPanel({
@@ -30,6 +37,7 @@ export default function InventoryPanel({
   compatibleCardCount = null,
   onClearMonsterFilter,
   isCardUnavailable,
+  onEquipSelected,
 }: InventoryPanelProps) {
   const location: WorkshopCardLocation = { kind: 'inventory' };
   return (
@@ -46,6 +54,15 @@ export default function InventoryPanel({
         </div>
         <div className="workshop-inventory-summary">
           <span>{cards.length} unequipped cards</span>
+          {activeMonsterFilterName && onEquipSelected && selectedCards.length > 0 && (
+            <button
+              type="button"
+              className="btn workshop-inline-btn workshop-equip-btn"
+              onClick={() => onEquipSelected()}
+            >
+              Equip {selectedCards.length} to {activeMonsterFilterName}
+            </button>
+          )}
           {activeMonsterFilterName && (
             <button type="button" className="btn workshop-inline-btn" onClick={() => onClearMonsterFilter?.()}>
               Clear filter

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { trpc } from '../lib/trpc.js';
+import { formatEventText, truncateEventText } from '../utils/format-event-text.js';
 import AppShell from '../components/AppShell.js';
 import { fightSubtitle, fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
 
@@ -120,12 +121,12 @@ export default function FightLogView() {
               </button>
               {expanded === f.fightNumber && detail.data && (
                 <div style={{ marginTop: '0.75rem', fontSize: '0.85rem', fontFamily: 'var(--font-mono, monospace)' }}>
-                  <p style={{ marginBottom: '0.35rem', color: 'var(--color-fg-dim)' }}>Event trace (same window)</p>
+                  <p style={{ marginBottom: '0.35rem', color: 'var(--color-fg-dim)' }}>Events during this fight</p>
                   <ol style={{ maxHeight: 240, overflow: 'auto', paddingLeft: '1rem' }}>
                     {detail.data.events.map((ev) => (
                       <li key={ev.id} style={{ marginBottom: '0.25rem' }}>
-                        <span style={{ color: 'var(--color-fg-dim)' }}>{ev.type}</span> — {ev.text.slice(0, 200)}
-                        {ev.text.length > 200 ? '…' : ''}
+                        <span style={{ color: 'var(--color-fg-dim)' }}>{ev.type}</span> —{' '}
+                        {formatEventText(truncateEventText(ev.text, 200))}
                       </li>
                     ))}
                   </ol>

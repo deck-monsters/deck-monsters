@@ -1687,3 +1687,392 @@ live hp/ac preserved, full card again on monster switch, team shown) and two
 `monsterTurnLine` cases.
 
 **Status**: Fixed.
+
+---
+
+## September 16 2026 mobile UI pass (#98–#108)
+
+Eight iPhone screenshots of a live Game Night room, triaged in two passes: first the
+layout, then what the messages actually said. Screenshots are kept in
+[`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). #101 and #104 remain open in
+`10-bug-fixes.md` — both are judgement calls about the game's voice, not defects.
+
+Verified by tests and static render only. There is no live app in the dev container
+(`pnpm setup:local` needs Docker/Supabase), so none of these was observed in a browser.
+
+---
+
+### 98. Both feeds clipped their own right-hand edge — FIXED
+
+The console read `You summoned 🐗 Seeskane Orcbane — a level Minotaur!` with the level
+number simply gone, and the ring feed lost the last word of long lines
+(`…has entered the ring at the`). It looked like missing data. It was layout.
+
+**Root cause**: `.event-feed` is the class handed to `<Virtuoso>`, so it lands on the
+library's **scroller**, and it carried `padding: var(--pane-padding)`. react-virtuoso
+styles that scroller `position: relative` and nests a viewport inside it with
+`position: absolute; top: 0; width: 100%` (`dist/index.mjs:2503` and `:2613`). For an
+absolutely positioned box the containing block is the ancestor's **padding box**, so
+`width: 100%` resolved to *content + left padding + right padding* — 2 × 0.75rem wider
+than the visible area — and `overflow-x: hidden` sliced the overflow away silently.
+
+The left gutter looked right throughout, which is what made it read as a data bug: an
+abspos box with no `left` starts at its static position, *inside* the padding. Only the
+right-hand side ran over.
+
+**Fixed**: padding moved to the `<ol>` (`.event-feed-list`), a normal-flow child that
+measures against the content box, with `.event-feed-empty` covering the empty placeholder
+that renders outside the list. `feed-layout.test.ts` asserts `.event-feed` declares no
+padding and that the gutters live on the list, with the reasoning inline so a future
+change does not quietly reintroduce it.
+
+**Also fixed alongside**: `ConsolePane` built its Virtuoso `List` component inline in the
+`components` prop, so every render produced a new component identity and remounted the
+entire virtualized list.
+
+**Status**: Fixed.
+
+---
+
+### 99. Engine markup was printed literally — FIXED
+
+The fight log's event trace showed `*It's Santi Brainer's turn.*` with the asterisks and
+a bare ``` fence.
+
+**Root cause**, in two layers:
+
+1. `FightLogView.tsx` rendered `ev.text.slice(0, 200)` as a plain text node. Every other
+   surface routes engine text through `utils/format-event-text.tsx`; the fight log was
+   never wired to it.
+2. That formatter only ever handled ``` fences. The engine writes for Slack and emits
+   `*bold*` and `_italic_` constantly — **every roll** is `rolled _13 +4 on 1d20_` — so
+   those delimiters were being printed verbatim in the ring and console feeds too. The
+   fight log made an existing gap visible rather than creating one.
+
+**Fixed**: the formatter now renders both inline forms, deliberately **not** inside fenced
+blocks, where `*` and `_` are ASCII card-box drawing characters rather than formatting. A
+delimiter touching a word character is left alone so `room_player_stats` keeps its
+underscores; boundaries are checked either side of the match rather than with lookbehind,
+which Safari only gained in 16.4 and the players are on iPads.
+
+`truncateEventText` replaces the raw slice: the old one cut mid-word
+(`A powerful, gold, deser…`) and could cut *inside* a ``` fence, leaving it unbalanced so
+everything after it rendered as one runaway card panel.
+
+**Status**: Fixed. 10 cases in `format-event-text.test.tsx`.
+
+---
+
+### 100. Every one-round fight read "in 1 rounds" — FIXED
+
+**Root cause**: `utils/fight-display.ts` interpolated `in ${f.roundCount} rounds` at two
+call sites with no singular branch. Shared by the fight log and the ring pane's last-fight
+footer, so it was visible in both.
+
+**Status**: Fixed via a `pluralize` helper.
+
+---
+
+### 101. The turn banner opened with 21 unrenderable glyphs — FIXED
+
+Both `nextTurn.ts` and `nextRound.ts` opened with
+`⚀ ⚁ ⚂ ⚃ ⚄ ⚅ …` — 21 characters in U+2680–U+2685 (DIE FACE-1 … DIE FACE-6).
+
+**Root cause**: JetBrains Mono does not ship die-face glyphs, so the browser fell back
+per-glyph and drew tofu boxes. At ~41 characters the row also wrapped to two lines on a
+phone — on **every turn**, one change after #97 cut turn banners by 45% for exactly that
+reason.
+
+**Fixed**: 🎲 is an *emoji*, not a symbol-block codepoint, so it renders from the system
+emoji font. The dice motif survives at one glyph instead of twenty-one:
+`🎲  round 1, turn 1`. Rounds are rarer and get the heavier beat — a rule plus the 🏁
+flag. `banners.test.ts` asserts no dice-face codepoint survives in either banner and that
+no banner line exceeds a phone width.
+
+**Status**: Fixed.
+
+---
+
+### 104. The ring-exit line described the opposite of what happened — FIXED
+
+`Dalfi was summoned from the ring by ⛄ Thunder Smasher.` You summon something *in*.
+
+**Rejected, and worth recording**: "dismissed". `dismiss` is an existing command
+(`DISMISS_REGEX`) and `beastmaster.ts` shows it is **permanent and legal only on dead
+monsters** — it calls `dropMonster`. Reusing the word for a live monster stepping out of
+the ring would make a reversible move read as a permanent roster deletion.
+
+**Fixed** as part of a wider reframe, because the line could not be settled alone. The
+player side read as livestock handling — a beastmaster with a *pack*, *sending* monsters
+in. The arrival and departure lines are now a deliberate **minimal pair**: same sentence
+shape, opposite consent.
+
+| | |
+|---|---|
+| player, in | `A<adj> <type> answers the call of <icon> <name>.` |
+| player, out | `<name> is called back from the ring by <identity>.` |
+| boss, in | `A<adj> <type> enters the ring at the behest of 👑 The Editor.` |
+| boss, out | `<name> is recalled to the gates by 👑 The Editor.` |
+
+A player's monster comes willingly and is called back; a boss is commanded. "Call" is one
+verb across both halves of the player pair, and it is the verb the command itself uses
+(`call <monster> out of the ring`), so the feed teaches the command.
+
+Also dropped the last of the ownership language: a dead monster is `laid to rest` rather
+than `dismissed from your pack`.
+
+**Status**: Fixed.
+
+---
+
+### 102. Every boss arrival credited a beastmaster who does not exist — FIXED
+
+The feed said `A ferocious Weeping Angel has entered the ring at the behest of
+🎡 Gorgeous Protector.` There is no such player.
+
+**Root cause**: `announcements/contestant.ts` is the single join announcement for *every*
+contestant and rendered `${character.icon} ${character.givenName}` — the monster's owner.
+Bosses are handed a **randomly generated owner** by `characters/helpers/random.ts`
+(`randomCharacter`) under `userId: 'boss'` (`docs/boss-encounters.md` §1). So the line
+invented a plausible-looking beastmaster and attributed the boss to them.
+
+Worst for a **timer-spawned** boss, where no player was involved at all and the feed still
+told the room someone had sent it in. The screenshot is exactly that case: `A boss will
+enter the ring in 2 minutes` immediately precedes it, so it is the 20–35 min spawn timer.
+
+**Fixed**, in two passes. The first branched `announceContestant` on `contestant.isBoss`
+and dropped the owner clause entirely — a boss simply entered the ring.
+
+**Superseded**: dropping the clause removed the lie but also removed the sense that
+*something* sent the boss, which is what an arrival line is for. Bosses are now credited
+to the house instead: `RING_PATRON` in `constants/lore.ts`, rendered `👑 The Editor`.
+The name is the Roman term rather than a pun — the *editor muneris* sponsored the games,
+set the programme and gave the signal, which is exactly the role. It is one constant so
+the house can be renamed in a single line.
+
+The same pass found the bug **also existed on departures**: `announceContestantLeave`
+credited the generated owner too, so a despawning boss named a beastmaster who does not
+exist. Departures branch the same way (`is recalled to the gates by 👑 The Editor`).
+
+**Status**: Fixed. Covered by `contestant.test.ts` and `contestantLeave.test.ts`.
+
+---
+
+### 103. A player-summoned boss was announced twice, out of order, under two names — FIXED
+
+One `summon a boss` produced:
+
+```
+An enraged Minotaur has entered the ring at the behest of 🎎 Incredible Swan.
+[ ~15-line Seeskane Orcbane stat card ]
+Tweettypography has summoned a boss into the ring!
+```
+
+Two public messages naming two different beastmasters, only one of whom is real (#102
+explains the other), with the explanation arriving last.
+
+**Root cause**: `commands/monster.ts` called `ring.spawnBoss(...)` — which runs
+`addMonster` → `announceContestant` and publishes the arrival **together with the stat
+card** — and only afterwards published `${character.givenName} has summoned a boss into
+the ring!`. Separated by a card block, the second line read as a second, unrelated summon
+rather than as the explanation for the one above it.
+
+**Fixed**: the summon line publishes first. Safe to reorder — the existing
+`canAcceptBoss()` check upstream is the only reason `spawnBoss` returns undefined, and
+nothing between them yields, so this cannot announce a summon that then fails to happen.
+`summon-boss-order.test.ts` records publish order and the spawn on one timeline and
+asserts the ordering, plus that the line is published exactly once.
+
+**Status**: Fixed.
+
+---
+
+### 105. The boss warning was the only ring line with no full stop — FIXED
+
+`announcements/bossWillSpawn.ts`. One character.
+
+**Status**: Fixed.
+
+---
+
+### 106. A three-monster fight's summary silently dropped a contestant — FIXED
+
+`#8 Everest vs Ford vs Death Blood` was summarised `Everest fled from Ford`.
+
+**Root cause**: `fightSubtitle`'s `fled` branch built its sentence from only two
+participant outcomes, `fled` and `win`. A third monster finishing with `loss` matched
+neither filter and vanished — from a summary whose own title named it.
+
+**Fixed**: any outcome the branch does not enumerate is now listed rather than filtered
+away, so the subtitle always accounts for everyone in the title.
+
+**Status**: Fixed.
+
+---
+
+### 107. Nothing marked a break in the feed, so unrelated sessions ran together — FIXED
+
+A stat card ending `Battles fought: 0` sat directly above an unrelated Minotaur arrival
+with 95 battles behind it: two sessions abutting with nothing between them.
+
+**Rejected design, recorded so it is not re-proposed**: a divider between any two events
+more than N minutes apart. The boss spawn window is **20–35 minutes**
+(`BOSS_SPAWN_MIN/MAX_DELAY_MS`) and an empty ring is silent by design, so a long pause is
+the feed's normal resting state. A gap rule would shred a quiet evening into dividers and
+come to mean "nothing happened", which is the opposite of the point.
+
+**Fixed** with three dividers, each from a signal the client already has *exactly*:
+
+| Divider | Signal |
+|---|---|
+| `you joined here` | the history/live boundary in `RingPane`'s history merge |
+| `connection lost` | the subscription's `onError` |
+| `reconnected` | the handshake on the resumed subscription |
+
+**The reconnect marker is held back rather than drawn at handshake time.** On reconnect
+the client resubscribes with a resume cursor and the server replays from it — but the
+handshake arrives *before* that replay, while the replayed events carry timestamps from
+*during* the outage. Drawing the divider immediately would put it above the very events
+the reader missed. It is instead emitted before the first event that actually postdates
+the reconnect, which brackets the gap correctly using data already on the wire, with no
+protocol change:
+
+```
+—— connection lost ——
+     … the fights you missed, replayed …
+—— reconnected ——
+```
+
+**Markers are per-viewer and never persisted.** "You lost connection" is not a fact about
+the room, so they must not enter `room_events` or reach Discord, which has no scrollback
+problem to solve. They are modelled as synthetic `GameEvent`s so they flow through the
+feed's existing dedupe and virtualization unchanged, and are only ever added by the pane,
+never by the subscription — so they cannot leak into the resume cursor.
+`shouldAppendMarker` refuses to stack two dividers in a row or open the feed with one.
+
+Not covered by `CatchUpBanner.tsx`, which is a dismissible overlay keyed to the viewer's
+`lastSeenAt` — about the reader having been away, not the game having stopped.
+
+**Status**: Fixed.
+
+---
+
+### 108. Nothing watched for the heartbeat stopping — FIXED
+
+**Root cause**: the server sends a keep-alive `heartbeat` every 20s
+(`trpc/router.ts`) and the client discarded it with
+`if (event.type === 'heartbeat') return;`. **Nothing tracked their absence** — there was
+no watchdog anywhere in `useRingFeed`. So `connected` only flipped false when the
+transport itself raised `onError`.
+
+A connection that dies silently — a backgrounded phone or iPad, or a network that
+blackholes rather than resets — therefore left the app believing it was connected: no
+"reconnecting…" banner, no resubscribe, and events quietly missed. The heartbeat exists
+precisely to make this detectable and was being thrown away.
+
+**Fixed**: any inbound frame re-arms a watchdog; 2.5× the server interval without one
+takes the same path as `onError`, resuming from the last event id rather than replaying
+from the beginning. Both paths share `handleConnectionLost` so they cannot drift.
+
+Found as a prerequisite for #107 — a `connection lost` divider is only as good as the
+client's ability to notice the drop.
+
+**Status**: Fixed.
+
+---
+
+### 109. The fight log leaked other players' private events — FIXED
+
+Found by asking why the fight log's event trace was labelled "Event trace (same window)".
+
+**Root cause**: `room_events` carries no fight id, so a fight's events are resolved by
+**time window** — everything between the summary's `startedAt` and `endedAt`. That is what
+"same window" was hedging about. But the window also catches **private** events addressed
+to individual players, which `event-persister.ts` stores complete with their `scope` and
+`targetUserId`, and `loadFightEventsForSummary` filtered on neither.
+
+So any room member who expanded a fight in the fight log received every other player's
+private fight narration from that window — their XP and coin awards, their prompts.
+`assertMember` gated the *room*; nothing gated the events within it. Room membership is
+not entitlement to another member's private events.
+
+**Fixed**: the query now takes the viewer and applies the same visibility predicate the
+ringFeed replay uses. That predicate was duplicated in two files with a comment asking
+them not to drift; it now lives once in `db/event-visibility.ts` as `eventVisibilityFor`,
+which is where any future `room_events` query on behalf of a viewer belongs. The label is
+now "Events during this fight" — what the panel shows, rather than a hedge about how it is
+computed.
+
+Covered by `analytics-queries.fight-events.test.ts`, which walks the drizzle predicate and
+asserts it references `scope` and `target_user_id` and binds the caller — no database
+required.
+
+**Status**: Fixed. A new failure pattern for `docs/room-scoping.md`: scoped to the room
+but not to the viewer.
+
+---
+
+### 110. Fight highlights in the console — NEW FEATURE
+
+While a fight runs the ring feed scrolls past at reading pace and the console sat idle. It
+now calls out the few moments worth looking up for: natural 20s, critical failures, a hit
+that really landed, a kill, a monster fleeing. The ring still shows everything — this is
+emphasis, not a second feed, so the classifier is deliberately stingy.
+
+**Classification reads payloads, never prose.** Matching flavour text would break the
+moment anyone rewrote a string. Rolls already carried the engine's own `strokeOfLuck` /
+`curseOfLoki` flags; deaths and flights have their own event types.
+
+**Hits did not.** `announceHit` published `payload: {}` — the one number the event is
+*about* was recoverable only by parsing the sentence. It now carries `damage`, `prevHp`,
+`hp`, `maxHp`, `bloodied`, `monsterName` and `assailantName`.
+
+**A big hit is judged against the attacker, not the target.** The first rule used a ratio
+of the *target's* max health and rewarded the wrong thing: a level 6 boss chipping a
+beginner clears a quarter of their health constantly, while a beginner landing the best
+hit of its short life on that boss barely moves the bar. A hit is big when it is at least
+1.5× that attacker's own running average this session, with an absolute floor so a ratio
+cannot make 1 → 2 damage a "150% outlier". The baseline is session-scoped and in memory:
+the comparison should be against what *this viewer* has watched, and a stale
+cross-session average would judge the opening hits of a fight against monsters long gone.
+
+**Presentation**: the tag stacks *above* its line. Inline, tags of differing widths
+(`NAT 20` / `CRIT FAIL` / `BIG HIT`) each pushed their text to a different left edge, and
+a monospace feed's whole look is the straight left column — the ragged result read as
+broken rather than emphasised.
+
+**Status**: Shipped.
+
+---
+
+### 111. The item help taught the opposite of the rule — FIXED
+
+Shipped and caught within the same session, by a review pass rather than by tests.
+
+`help.ts`'s `ITEMS_NOTE` and `CommandReference.tsx`'s items banner were written to fix the
+game's least-discoverable mechanic — that items still work once a fight starts. They said
+so with no caveat: *"you can still use items on it"*.
+
+**Root cause**: the copy was written one commit **before** the underlying rule was
+corrected (#110's follow-up), and was never revisited when it was. The real rule is that
+`items/helpers/use.ts` restricts the usable pool to `monster.items` once the monster is in
+an encounter, and `items/helpers/transfer.ts` blocks handing anything over then — so only
+what a monster carried into the ring is usable.
+
+The result was worse than silence: a player who read the help reached for a pocket potion
+mid-fight and got `"doesn't have any items that … can use on Fluffy"` with no explanation.
+The one piece of copy written specifically to teach this mechanic was teaching it backwards.
+
+**Why the tests did not catch it**: they asserted that `'mid-fight'` and
+`'Targeting scrolls'` appeared in the output. That passes on accurate *and* misleading
+wording alike — the assertion proved the text existed, not that it was true. Both tests now
+assert the caveat itself, which is the part a regression would drop.
+
+**Fixed**: both surfaces lead with the constraint and name the remedy — what a monster takes
+into the ring is what it has, so stock it first with `give [item] to [monster]`.
+
+**Lesson worth keeping**: when a rule is corrected, grep for the player-facing copy that
+described it. The code comment, the roadmap and the help text were three separate
+statements of the same fact, and only two got fixed.
+
+**Status**: Fixed.

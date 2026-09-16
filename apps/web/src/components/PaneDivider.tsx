@@ -22,7 +22,10 @@ export default function PaneDivider({ onResize, containerRef }: PaneDividerProps
     const container = containerRef.current;
     if (container) {
       const totalWidth = container.clientWidth;
-      const ringPane = container.querySelector('.terminal-pane') as HTMLElement | null;
+      // The left *slot*, not whatever surface is inside it. Terminal stamps
+      // `data-pane-slot` on each slot wrapper; keying off a surface's own class broke the
+      // moment a surface without that class (the Workshop) could sit on the left.
+      const ringPane = container.querySelector('[data-pane-slot="0"]') as HTMLElement | null;
       if (ringPane) {
         const fraction = ringPane.clientWidth / totalWidth;
         startFractionRef.current = fraction;
