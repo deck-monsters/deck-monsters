@@ -692,6 +692,26 @@ button {
   color: var(--color-fg-dim);
 }
 
+/*
+  The target picker plus the button is the widest thing in a row. At phone width the
+  `.workshop-select` min-width of 12rem plus the button overflowed the row entirely,
+  hanging the button outside the panel border — so the group wraps, and the select is
+  allowed to shrink rather than holding a width the row cannot give it.
+*/
+.workshop-item-use {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.workshop-item-use .workshop-select {
+  min-width: 0;
+  flex: 1 1 7rem;
+}
+
 .workshop-item-reason {
   color: var(--color-accent);
 }

@@ -2,8 +2,9 @@
 
 **Category**: Design / Mechanics
 **Priority**: Medium — the items audit (§3) is actionable now; the rest needs the balance sim harness
-**Status**: 🔧 Active — the items panel, discoverability copy, revive and send-to-ring
-actions have shipped; item use, prompt-free spawn and the room shop have not
+**Status**: 🔧 Active — the items panel, discoverability copy, revive, send-to-ring and
+item use itself have shipped; the ring-pane affordance, the feedback loop, prompt-free
+spawn and the room shop have not
 
 This doc exists because a research pass on what makes tabletop RPGs enjoyable was brought
 into the project, and applying it to an auto-battler turned out to need a clearer statement
@@ -362,16 +363,55 @@ change for the server half.
 - `utils/item-tiers.ts` — pure, tested tier classifier and sort, implementing §7.
 - `components/ItemsPanel.tsx` — mounted in the workshop, which had never mentioned items.
 
+- **`game.useItem`** — the prompt-free tRPC procedure, following the
+  `reviveMonster`/`sendMonsterToRing` pattern (`runSerializedMutation` + silent channel +
+  `assertMember`). An absent `monsterName` means "use on the character"; the engine skips
+  the monster lookup entirely in that case.
+- **The prompt chain is gone for API callers.** `items/helpers/use.ts` takes `confirmed`,
+  which skips *only* the "Are you sure?" question. That question was unconditional — it
+  fired even when the item was named explicitly — and it is what made item use impossible
+  from a mutation, where no prompt can be answered. Discord and the console still ask.
+  Which items are usable, and the mid-fight narrowing to `monster.items`, stay in the engine
+  helper so the rule has one home rather than a server-side copy that can drift.
+- **A real use button on every tier-1 row**, with a target picker when more than one target
+  is valid. Targets come from `resolveUseTargets`, derived from the same facts that set the
+  tier, so the button cannot offer a target the engine will refuse. The web confirm is what
+  stands in for the engine's prompt.
+
+**Three things review caught in the first cut, worth keeping straight**
+
+- **`canUseItem` is only `canHoldItem`** — a compatibility check, with no runtime
+  conditions in it. A tier-1 classification therefore does *not* prove the item's action
+  can run: Spin Up refuses a living monster, a healing potion refuses a dead one. The engine
+  declines and does **not** consume the item, so nothing is wasted, but the first cut
+  reported success anyway. `useItem` now returns `applied`, and the panel says "had no
+  effect … it was not used up" rather than claiming a use. Mirroring each item's conditions
+  client-side was the alternative and would have drifted from the engine immediately.
+- **The same item type can sit in both pools.** With a monster out of an encounter the pool
+  is `[...monster.items, ...character.items]` and a name match takes the first hit, so
+  clicking the pocket row spent the copy stocked on the monster. The click now carries
+  `itemSource`; chat callers, who cannot express it, keep first-match behaviour.
+- **An item can ask its own question.** `SortingHat.action` prompts for a team, and
+  `useItem`'s channel rejects prompts — so the panel was advertising an item that could only
+  ever fail after the confirm. Items now declare `requiresPrompt`, and the panel dims those
+  with a reason pointing at the console. Supporting item-driven prompts over tRPC is real
+  work and belongs with the ring-pane affordance, not before it.
+
 **Not shipped, and the next real work**
-1. **There is no `use item` tRPC procedure.** The panel is display-only. This is the single
-   blocker on the whole mid-fight story: without it the web client cannot use an item at
-   all, whatever the list shows.
-2. **The prompt chain.** `use <item> on <monster>` routes through `chooseMonster`, an
-   interactive prompt. Mid-fight that means typing and answering questions while the fight
-   advances on timers. One tap, no prompts, is the target (§7). Removing the chain is not a
-   balance change and does not need the sim harness; changing how *much* can be used is and
-   does.
-3. **The ring-pane affordance** (§6 item 1) — the list's real home. It needs 1 and 2 first.
+0. **Item-driven prompts over tRPC.** The Sorting Hat is the only item that prompts today,
+   and it is currently unusable from the web by design rather than by accident. Supporting it
+   means carrying a choice into the mutation, or a two-step call. Wants doing alongside the
+   ring-pane affordance, since both are about acting without leaving the fight.
+1. **The ring-pane affordance** (§6 item 1) — the list's real home, and the actual one-tap
+   mid-fight lever. The workshop panel is the *pre-fight stocking* decision; reaching for a
+   potion while a fight is running still means leaving the ring feed for the workshop, or
+   putting the workshop in the other pane. Now unblocked: the procedure and the
+   target resolution it needs both exist and are tested.
+2. **No feedback loop** (§6 item 5, untouched). Nothing tells a player that an item *would
+   have* helped, or what a targeting scroll changed. This is the "teach the mechanic by
+   showing its effect" half of the story, and it is independent of the UI work above.
+3. **Per-fight budgets or any change to item power** — still wants the sim harness first,
+   as §6 item 2 says. Nothing above changes how much can be used, only how it is reached.
 
 **Open questions for whoever picks this up**
 - The tier-2 reason strings (`'Not in the ring.'`, `'Not carried into the ring.'`,

@@ -3,6 +3,8 @@ import {
   buildTieredItemList,
   classifyItem,
   compareTieredItems,
+  resolveUseTargets,
+  REASON_NEEDS_A_CHOICE,
   REASON_NOT_CARRIED_INTO_RING,
   REASON_NOT_IN_RING,
   REASON_NOT_USABLE_RIGHT_NOW,
@@ -229,6 +231,118 @@ describe('buildTieredItemList', () => {
       tier: 2,
       reason: REASON_NOT_CARRIED_INTO_RING,
       item: { displayName: 'Pocket Elixir' },
+    });
+  });
+
+  /**
+   * The button must never offer a target the engine will refuse, so targets come from the
+   * same facts that set the tier rather than from a second reading of the rules.
+   */
+  describe('resolveUseTargets', () => {
+    const benched: TierMonsterState = { name: 'Emberclaw', inRing: false, inEncounter: false };
+    const fighting: TierMonsterState = { name: 'Stonefang', inRing: true, inEncounter: true };
+
+    it('offers nothing for an item that is not usable now', () => {
+      const entry = classifyItem(item({ expired: true }), { kind: 'character' }, [benched]);
+      expect(resolveUseTargets(entry, [benched])).toEqual([]);
+    });
+
+    it("targets only the carrying monster for that monster's own item", () => {
+      // Mid-fight the engine narrows the pool to `monster.items`, so there is no other target.
+      const entry = classifyItem(
+        item({ displayName: 'Carried Bandage', usableOnMonsters: ['Stonefang', 'Emberclaw'] }),
+        { kind: 'monster', monsterName: 'Stonefang' },
+        [fighting, benched],
+      );
+      expect(resolveUseTargets(entry, [fighting, benched])).toEqual([
+        { kind: 'monster', monsterName: 'Stonefang' },
+      ]);
+    });
+
+    it('offers the character for a pocket item usable on them', () => {
+      const entry = classifyItem(item({ usableOnCharacter: true }), { kind: 'character' }, []);
+      expect(resolveUseTargets(entry, [])).toEqual([{ kind: 'character' }]);
+    });
+
+    it('offers every benched monster for a pocket item — the ordinary case', () => {
+      const other: TierMonsterState = { name: 'Grix', inRing: false, inEncounter: false };
+      const entry = classifyItem(
+        item({ usableOnMonsters: ['Emberclaw', 'Grix'] }),
+        { kind: 'character' },
+        [benched, other],
+      );
+      expect(resolveUseTargets(entry, [benched, other])).toEqual([
+        { kind: 'monster', monsterName: 'Emberclaw' },
+        { kind: 'monster', monsterName: 'Grix' },
+      ]);
+    });
+
+    it('excludes a monster that is mid-fight, which can only reach what it carried in', () => {
+      const entry = classifyItem(
+        item({ usableOnMonsters: ['Stonefang', 'Emberclaw'] }),
+        { kind: 'character' },
+        [fighting, benched],
+      );
+      expect(resolveUseTargets(entry, [fighting, benched])).toEqual([
+        { kind: 'monster', monsterName: 'Emberclaw' },
+      ]);
+    });
+
+    it('offers both the character and a monster when the item suits either', () => {
+      const entry = classifyItem(
+        item({ usableOnCharacter: true, usableOnMonsters: ['Emberclaw'] }),
+        { kind: 'character' },
+        [benched],
+      );
+      expect(resolveUseTargets(entry, [benched])).toEqual([
+        { kind: 'character' },
+        { kind: 'monster', monsterName: 'Emberclaw' },
+      ]);
+    });
+  });
+
+  /**
+   * An item whose own action asks a question cannot run on the prompt-free channel
+   * `game.useItem` uses, so it must not read as usable here. Codex review on #372.
+   */
+  describe('items that ask their own question', () => {
+    it('dims them with a reason rather than offering them', () => {
+      const entry = classifyItem(
+        item({ displayName: 'Sorting Hat', usableOnCharacter: true, requiresPrompt: true }),
+        { kind: 'character' },
+        [],
+      );
+
+      expect(entry.tier).toBe(2);
+      expect(entry.reason).toBe(REASON_NEEDS_A_CHOICE);
+    });
+
+    it('offers no targets for one', () => {
+      const entry = classifyItem(
+        item({ usableOnCharacter: true, requiresPrompt: true }),
+        { kind: 'character' },
+        [],
+      );
+
+      expect(resolveUseTargets(entry, [])).toEqual([]);
+    });
+
+    it('still shows a spent one as spent — expired outranks everything', () => {
+      const entry = classifyItem(
+        item({ expired: true, requiresPrompt: true }),
+        { kind: 'character' },
+        [],
+      );
+
+      expect(entry.tier).toBe(3);
+    });
+
+    it('treats a payload without the field as non-interactive', () => {
+      // An older cached `myInventory` response predates `requiresPrompt`; degrading to
+      // "not interactive" keeps ordinary items usable rather than hiding all of them.
+      const entry = classifyItem(item({ usableOnCharacter: true }), { kind: 'character' }, []);
+
+      expect(entry.tier).toBe(1);
     });
   });
 });

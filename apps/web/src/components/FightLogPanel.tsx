@@ -63,9 +63,19 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
         </button>
         {open && detail.data && <div className="fight-log-detail">
           <p className="surface-muted">Events during this fight</p>
+          {/*
+            The scroll container is this wrapper, not the <ol>. A list whose markers are
+            `list-style-position: outside` paints them in its padding box, and WebKit clips
+            them when that same element is a scroll container — reported from iOS as
+            numbers sliced in half (`l.`, `?.`). Blink does not, which is why a Chromium
+            render could not reproduce it. Separating the two removes the precondition
+            instead of relying on either engine's behaviour. See 10-bug-fixes.md G.
+          */}
+          <div className="fight-log-events">
           <ol>{detail.data.events.map((event) => <li key={event.id}>
             <span className="surface-muted">{event.type}</span> — {formatEventText(truncateEventText(event.text, 200))}
           </li>)}</ol>
+          </div>
         </div>}
       </li>;
     })}</ul>

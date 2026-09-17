@@ -4,6 +4,7 @@ import PaneDivider from './PaneDivider.js';
 import PaneSelector from './PaneSelector.js';
 import CatchUpBanner from './CatchUpBanner.js';
 import { RingFeedProvider } from '../hooks/useRingFeed.js';
+import { useCommandInsert } from '../lib/command-insert-context.js';
 import { DEFAULT_SLOTS, SURFACES, isSurfaceId, type SurfaceId } from './surfaces.js';
 
 interface TerminalProps {
@@ -93,6 +94,7 @@ function orderedMountedSurfaces(
 }
 
 export default function Terminal({ roomId }: TerminalProps) {
+  const { registerRevealSurface } = useCommandInsert();
   const [slots, setSlots] = useState<[SurfaceId, SurfaceId]>(readStoredSlots);
   // Which slot the tab bar shows on a narrow screen. Defaults to slot 1 (console in the
   // default layout), matching the tabbed view's pre-existing default before surfaces were
@@ -110,6 +112,10 @@ export default function Terminal({ roomId }: TerminalProps) {
   const [everMounted, setEverMounted] = useState<Set<SurfaceId>>(() => new Set(slots));
   const slotsRef = useRef(slots);
   slotsRef.current = slots;
+  const activeSlotRef = useRef(activeSlot);
+  activeSlotRef.current = activeSlot;
+  const isSideBySideRef = useRef(isSideBySide);
+  isSideBySideRef.current = isSideBySide;
   const roomIdRef = useRef(roomId);
   // Effects run after render. On a route change, rendering the previous room's
   // `everMounted` set once would mount every previously visited surface with the new
@@ -181,6 +187,33 @@ export default function Terminal({ roomId }: TerminalProps) {
     },
     [markMounted, slots, activeSlot]
   );
+
+  /*
+   * How a deep link into a surface actually shows it. Before the slots work the console was
+   * always on screen, so the handbook's quick links could insert a command and assume it
+   * would be seen; now the console competes for two slots and may not be in either. See
+   * 10-bug-fixes.md H.
+   *
+   * Reads layout state through refs so the registered function stays correct without
+   * re-registering on every slot change.
+   */
+  const revealSurface = useCallback(
+    (surfaceId: SurfaceId) => {
+      markMounted(surfaceId);
+      if (isSideBySideRef.current) {
+        setSlots((prev) => placeSurfaceSideBySide(surfaceId, prev));
+        return;
+      }
+      const result = placeSurfaceTabbed(surfaceId, slotsRef.current, activeSlotRef.current);
+      setSlots(result.slots);
+      setActiveSlot(result.activeSlot);
+    },
+    [markMounted]
+  );
+
+  useEffect(() => {
+    registerRevealSurface(revealSurface);
+  }, [registerRevealSurface, revealSurface]);
 
   const handleSlotSelect = useCallback(
     (slotIndex: 0 | 1, surfaceId: SurfaceId) => {

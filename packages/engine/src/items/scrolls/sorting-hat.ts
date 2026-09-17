@@ -12,6 +12,7 @@ export class SortingHat extends BaseScroll {
 	static level: number;
 	static cost: number;
 	static usableWithoutMonster: boolean;
+	static requiresPrompt: boolean;
 
 	constructor({ icon = '🎩' }: { icon?: string } = {}) {
 		super({ icon });
@@ -70,6 +71,8 @@ And just like that the ${this.itemType} is gone and ${publicNarration}`;
 	}
 }
 
+// `action` asks which team, so this one cannot be used through a prompt-free channel.
+SortingHat.requiresPrompt = true;
 SortingHat.itemType = 'Sorting Hat';
 SortingHat.probability = ABUNDANT.probability;
 SortingHat.numberOfUses = 1;

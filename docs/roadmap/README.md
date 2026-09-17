@@ -26,7 +26,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
 | [20 — Workspace Layout](20-workspace-layout.md) | Surfaces in two switchable pane slots | 🔧 Active — phases 3/5 code-complete; Phase 4 + visual sign-off remain |
-| [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 🔧 Active — items panel, revive and send-to-ring shipped; item use and the room shop remain |
+| [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 🔧 Active — items panel, revive, send-to-ring and item use shipped; the ring-pane affordance and the room shop remain |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
 | [09 — Graphics](09-graphics.md) | Sprites, icons, optional visual polish | 📋 Post-launch, low priority |
@@ -76,10 +76,11 @@ fight is hands-off on purpose, and the pleasure is commitment then surrender —
 the one real-time lever the game already has. Key finding: **items are usable mid-fight by
 design, but only the ones the monster is already carrying** — `use.ts` narrows the pool to
 `monster.items` while `inEncounter`, so the real lever is what you equipped before the bell.
-The web client now lists items (`ItemsPanel`), but there is still no `use item` procedure,
-so nothing can be *used* from the browser yet. Targeting scrolls already let players set
-`targetingStrategy`; they are nearly invisible. Anything that changes item power wants the
-sim harness first.
+The web client lists items (`ItemsPanel`) and can now use them (`game.useItem`), so the
+lever is reachable from the browser at last. What remains is where you reach for it: the
+one-tap affordance belongs on the *ring pane* during a live fight, not only in the
+workshop. Targeting scrolls already let players set `targetingStrategy`; they are nearly
+invisible. Anything that changes item *power* wants the sim harness first.
 
 ### 3. Workspace layout (20-workspace-layout.md)
 

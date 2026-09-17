@@ -114,4 +114,76 @@ ${customHit.stats}`);
 				expect(hitCheckStub.callCount).to.equal(1);
 			});
 	});
+
+	/**
+	 * A delayed hit lands out of turn, several turns after it was played. Reported as
+	 * confusing when it triggers: nothing in the feed tied the counter-attack back to the
+	 * card that set it up. See 10b-bugs-fixed.md #130.
+	 */
+	describe('reading a delayed hit in the feed', () => {
+		it('marks the setup line with the card icon, like the payoff lines', () => {
+			const narrations: string[] = [];
+			const card = new DelayedHit();
+			card.on('narration', (_klass: unknown, _card: unknown, { narration }: { narration: string }) =>
+				narrations.push(narration));
+
+			const player = {
+				givenName: 'Stonefang',
+				pronouns: { he: 'he', him: 'him', his: 'his' },
+				encounterModifiers: {},
+			};
+			card.effect(player as never, player as never, { encounterEffects: [] } as never);
+
+			expect(narrations[0]).to.contain(card.icon);
+		});
+
+		/**
+		 * The reported confusion, precisely: you play the card and see it in the feed like
+		 * any other, and then turns later the effect fires in the middle of someone else's
+		 * attack. Without the card named at that moment, "responds to the blow" reads as a
+		 * spontaneous reaction and the feed never answers why it happened.
+		 */
+		it('names the card at the moment it fires, not just when it is played', () => {
+			const narrations: string[] = [];
+			const onNarration = (
+				_klass: unknown,
+				_card: unknown,
+				{ narration }: { narration: string },
+			) => narrations.push(narration);
+			delayedHit.on('narration', onNarration);
+
+			return delayedHit
+				.play(player, player, ring)
+				.then(() => ring.encounterEffects[0]({ phase: DEFENSE_PHASE, ring, card: hit }))
+				// `target` strikes `player`, which is what springs the delayed hit.
+				.then(() => hit.play(target, player, ring))
+				.then(() => {
+					const trigger = narrations.find(line => line.includes('finds its moment'));
+					expect(trigger, 'expected a trigger narration').to.not.equal(undefined);
+					expect(trigger).to.contain(delayedHit.cardType);
+					expect(trigger).to.contain(target.givenName);
+				})
+				.finally(() => delayedHit.off('narration', onNarration));
+		});
+
+		it('does not open a narration with a blank line', () => {
+			// It was the only card in the directory that did, which showed up as stray
+			// vertical space in the feed.
+			const narrations: string[] = [];
+			const card = new DelayedHit();
+			card.on('narration', (_klass: unknown, _card: unknown, { narration }: { narration: string }) =>
+				narrations.push(narration));
+
+			const player = {
+				givenName: 'Stonefang',
+				pronouns: { he: 'he', him: 'him', his: 'his' },
+				encounterModifiers: {},
+			};
+			card.effect(player as never, player as never, { encounterEffects: [] } as never);
+
+			for (const narration of narrations) {
+				expect(narration.startsWith('\n')).to.equal(false);
+			}
+		});
+	});
 });

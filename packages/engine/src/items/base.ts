@@ -19,6 +19,14 @@ export interface BaseItemStatic {
 	probability?: number;
 	flavors?: string[];
 	usableWithoutMonster?: boolean;
+	/**
+	 * This item's `action` asks the player a question of its own, beyond the generic
+	 * confirmation. Such an item can only be used where a prompt can be answered — the
+	 * console or Discord — never through a prompt-free API caller, whose channel rejects
+	 * questions. Declared here so a caller can tell *before* offering the item, rather
+	 * than finding out when the use fails. See docs/roadmap/19-player-agency-and-items.md.
+	 */
+	requiresPrompt?: boolean;
 	notForSale?: boolean;
 	neverForSale?: boolean;
 }
@@ -85,6 +93,10 @@ export class BaseItem<TOptions extends BaseItemOptions = BaseItemOptions> extend
 
 	get usableWithoutMonster(): boolean {
 		return !!(this.constructor as unknown as BaseItemStatic).usableWithoutMonster;
+	}
+
+	get requiresPrompt(): boolean {
+		return !!(this.constructor as unknown as BaseItemStatic).requiresPrompt;
 	}
 
 	use({ channel, channelName, character, monster }: UseOptions): Promise<any> {

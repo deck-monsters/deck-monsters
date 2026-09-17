@@ -23,6 +23,14 @@ export interface ItemSummary {
   stats: string;
   usableOnMonsters: string[];
   usableOnCharacter: boolean;
+  /**
+   * The item's own action asks a question of its own (the Sorting Hat asks which team).
+   * `game.useItem` runs on a prompt-free channel that rejects questions, so offering one of
+   * these as usable here means confirming and then failing, every time. Optional so an
+   * older cached payload without the field degrades to "not interactive" rather than
+   * hiding a usable item.
+   */
+  requiresPrompt?: boolean;
 }
 
 /** The minimal per-monster state the tier classifier needs. */
@@ -49,6 +57,7 @@ export interface TieredItem {
 export const REASON_NOT_IN_RING = 'Not in the ring.';
 export const REASON_NOT_CARRIED_INTO_RING = 'Not carried into the ring.';
 export const REASON_NOT_USABLE_RIGHT_NOW = 'Not usable right now.';
+export const REASON_NEEDS_A_CHOICE = 'Asks a question — use it from the console.';
 
 /**
  * Classify a single item summary into a tier, given the source list it came from and the
@@ -67,6 +76,13 @@ export function classifyItem(
   // "used up" is a fact about the item, not about where it is right now.
   if (item.expired) {
     return { item, source, tier: 3, reason: null };
+  }
+
+  // An item that asks its own question cannot be used from here at all: the mutation's
+  // channel rejects prompts. It is still owned and still usable elsewhere, so it dims with
+  // a reason and a route out rather than vanishing.
+  if (item.requiresPrompt) {
+    return { item, source, tier: 2, reason: REASON_NEEDS_A_CHOICE };
   }
 
   const byName = new Map(monsters.map((monster) => [monster.name, monster]));
@@ -111,6 +127,41 @@ export function classifyItem(
   }
 
   return { item, source, tier: 2, reason: REASON_NOT_USABLE_RIGHT_NOW };
+}
+
+/** Where a use would land. `character` carries no monster name — see the `useItem` procedure. */
+export type UseTarget = { kind: 'character' } | { kind: 'monster'; monsterName: string };
+
+/**
+ * The valid targets for using this item right now, derived from the same facts that decided
+ * its tier — so the button can never offer a target the engine will refuse.
+ *
+ * A monster's own carried item only ever targets that monster: once it is `inEncounter` the
+ * engine narrows the usable pool to `monster.items`, and off the bench using one monster's
+ * item on another is the "odd and likely a mistake" case §7 dims rather than forbids.
+ *
+ * A pocket item can have several targets, which is the ordinary case — a healing potion and
+ * three benched monsters. Anything mid-fight is excluded: a fighting monster can only reach
+ * what it carried in.
+ */
+export function resolveUseTargets(entry: TieredItem, monsters: TierMonsterState[]): UseTarget[] {
+  if (entry.tier !== 1) return [];
+
+  if (entry.source.kind === 'monster') {
+    return [{ kind: 'monster', monsterName: entry.source.monsterName }];
+  }
+
+  const byName = new Map(monsters.map((monster) => [monster.name, monster]));
+  const targets: UseTarget[] = [];
+
+  if (entry.item.usableOnCharacter) targets.push({ kind: 'character' });
+
+  for (const name of entry.item.usableOnMonsters) {
+    const monster = byName.get(name);
+    if (monster && !monster.inEncounter) targets.push({ kind: 'monster', monsterName: name });
+  }
+
+  return targets;
 }
 
 /**

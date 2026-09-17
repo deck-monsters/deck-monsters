@@ -46,7 +46,9 @@ export class DelayedHit extends HitCard {
 			if (play) {
 				card.play = (...args: any[]) =>
 					play.call(card, ...args).then((result: any) => {
-						if (!delayingTarget.encounterModifiers.timeShifted === true) {
+						// Was `!timeShifted === true`, which parses as `(!timeShifted) === true`
+						// — the same test, written as though it were comparing to `true`.
+						if (!delayingTarget.encounterModifiers.timeShifted) {
 							const lastHitByOther =
 								delayingTarget.encounterModifiers.hitLog &&
 								delayingTarget.encounterModifiers.hitLog.find(
@@ -59,13 +61,25 @@ export class DelayedHit extends HitCard {
 										encounterEffect !== delayedHitEffect
 								);
 
+								/*
+								 * Both lines name the card, because this is the one card whose
+								 * effect lands on a turn that is not its own. The reader saw it
+								 * played several turns ago and then, out of nowhere, a hit
+								 * resolves in the middle of someone else's attack. Without the
+								 * card named, "responds to the blow" reads as a spontaneous
+								 * reaction and the obvious question — why is this happening? —
+								 * has no answer in the feed.
+								 *
+								 * `cardType` rather than a literal, so a subclass narrates as
+								 * itself. See 10b-bugs-fixed.md #131.
+								 */
 								if (delayingTarget.dead) {
 									this.emit('narration', {
-										narration: `\n${this.icon} With ${his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: with ${his} dying breath, ${delayingPlayer.pronouns.he} avenges the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
 									});
 								} else {
 									this.emit('narration', {
-										narration: `\n${this.icon} ${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: ${delayingPlayer.pronouns.he} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
 									});
 								}
 
@@ -85,8 +99,15 @@ export class DelayedHit extends HitCard {
 			return card;
 		};
 
+		/*
+		 * Carries the card's icon like both payoff lines below it. It did not, so the only
+		 * thing tying "spreads his focus" to a counter-attack several turns later was the
+		 * reader remembering it — and a hit that lands out of turn with nothing linking it
+		 * back reads as the feed misbehaving. Reported as delayed hits being confusing when
+		 * they trigger. See 10b-bugs-fixed.md #130.
+		 */
 		this.emit('narration', {
-			narration: `${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${his} enemy to reveal themselves.`,
+			narration: `${this.icon} ${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${his} enemy to reveal themselves.`,
 		});
 
 		ring.encounterEffects = [...ring.encounterEffects, delayedHitEffect];

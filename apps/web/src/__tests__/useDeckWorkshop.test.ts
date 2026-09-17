@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => {
     reorderCardsUseMutation: vi.fn(defaultMutation),
     reviveMonsterUseMutation: vi.fn(defaultMutation),
     sendMonsterToRingUseMutation: vi.fn(defaultMutation),
+    useItemUseMutation: vi.fn(defaultMutation),
   };
 });
 
@@ -67,6 +68,7 @@ vi.mock('../lib/trpc.js', () => ({
       reorderCards: { useMutation: mocks.reorderCardsUseMutation },
       reviveMonster: { useMutation: mocks.reviveMonsterUseMutation },
       sendMonsterToRing: { useMutation: mocks.sendMonsterToRingUseMutation },
+      useItem: { useMutation: mocks.useItemUseMutation },
     },
   },
 }));

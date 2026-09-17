@@ -68,6 +68,11 @@ type ItemSummary = {
 	usableOnMonsters: string[];
 	// Whether the character can use this item on themself (`usableWithoutMonster` items).
 	usableOnCharacter: boolean;
+	// This item's own action asks a question (the Sorting Hat asks which team), so it can
+	// only be used where a prompt can be answered. `useItem` runs on a prompt-free channel
+	// that rejects questions, so the client must not offer these as usable from the web —
+	// it would confirm and then fail every time.
+	requiresPrompt: boolean;
 };
 
 type InventorySummary = {
@@ -165,6 +170,7 @@ const summarizeItem = (
 			.filter((entry) => canUseItemSafe(entry.monster, item))
 			.map((entry) => entry.summary.name),
 		usableOnCharacter: canUseItemSafe(character, item),
+		requiresPrompt: typeof record.requiresPrompt === 'boolean' ? record.requiresPrompt : false,
 	};
 };
 
@@ -959,6 +965,76 @@ export function createRouter(roomManager: RoomManager) {
 				return { ok: true as const, monsterName: input.monsterName };
 			}),
 
+		/**
+		 * The mid-fight lever, finally reachable from the browser. See
+		 * docs/roadmap/19-player-agency-and-items.md §8, where the absence of this procedure
+		 * was the single blocker on the whole items story — the web client could list items
+		 * but not use one.
+		 *
+		 * `confirmed: true` is what makes it possible at all: `useItems` otherwise asks
+		 * "Are you sure?" unconditionally, and a prompt cannot be answered inside a mutation.
+		 * The web client's own confirmation stands in for it. Which items are usable, and the
+		 * narrowing to `monster.items` once a monster is in an encounter, stay in the engine
+		 * helper rather than being re-derived here, so the rule has one home.
+		 *
+		 * `monsterName` absent means "use on the character" — the engine skips the monster
+		 * lookup entirely in that case, so the prompt-free path holds for both.
+		 */
+		useItem: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					itemName: z.string().min(1),
+					monsterName: z.string().min(1).optional(),
+					// Disambiguates a type held both in the character's pocket and on the
+					// target monster — without it the engine's name match takes the monster's
+					// copy, spending an item the player deliberately stocked.
+					itemSource: z.enum(['character', 'monster']).optional(),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.useItems !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const results = (await runSerializedMutation(input.roomId, ctx.userId, () =>
+					character.useItems({
+						channel,
+						channelName: 'web',
+						confirmed: true,
+						itemSelection: [input.itemName],
+						itemSource: input.itemSource,
+						monsterName: input.monsterName,
+					}),
+				)) as unknown;
+
+				/*
+				 * An item whose conditions are not met returns `false` from its `action` and is
+				 * deliberately not consumed — Spin Up on a living monster, a healing potion on a
+				 * dead one. `canUseItem` is only a compatibility check (it is `canHoldItem`), so
+				 * neither the client's tier nor this procedure can know in advance. Reporting
+				 * `ok` regardless told the player the item was used when nothing happened.
+				 */
+				const applied = Array.isArray(results)
+					? results.some((result) => result !== false)
+					: results !== false;
+
+				return {
+					ok: true as const,
+					applied,
+					itemName: input.itemName,
+					monsterName: input.monsterName,
+				};
+			}),
+
 		unequipCard: protectedProcedure
 			.input(
 				z.object({
@@ -1635,6 +1711,14 @@ export function createRouter(roomManager: RoomManager) {
 				z.object({
 					roomId: z.string().uuid(),
 					lastEventId: z.string().optional(),
+					/*
+					 * Ignored here on purpose. The client bumps it when its heartbeat watchdog
+					 * gives up, so the resume is a *different* subscription input even when the
+					 * cursor has not moved — otherwise the retry is deduplicated and the client
+					 * waits forever for a handshake that is never requested. See
+					 * 10b-bugs-fixed.md #127.
+					 */
+					resumeAttempt: z.number().int().nonnegative().optional(),
 				})
 			)
 			.subscription(async function* ({ input, ctx, signal }) {

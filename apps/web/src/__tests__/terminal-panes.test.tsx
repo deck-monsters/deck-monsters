@@ -75,11 +75,14 @@ vi.mock('../components/FightLogPanel.js', () => makeSurfaceMock('fights'));
 vi.mock('../components/LeaderboardPanel.js', () => makeSurfaceMock('leaderboard'));
 
 import Terminal from '../components/Terminal.js';
+import { CommandInsertProvider } from '../lib/command-insert-context.js';
 
 function renderTerminal(roomId = 'room-1') {
   return render(
     <MemoryRouter>
-      <Terminal roomId={roomId} />
+      <CommandInsertProvider>
+        <Terminal roomId={roomId} />
+      </CommandInsertProvider>
     </MemoryRouter>
   );
 }
@@ -87,7 +90,9 @@ function renderTerminal(roomId = 'room-1') {
 function terminal(roomId = 'room-1') {
   return (
     <MemoryRouter>
-      <Terminal roomId={roomId} />
+      <CommandInsertProvider>
+        <Terminal roomId={roomId} />
+      </CommandInsertProvider>
     </MemoryRouter>
   );
 }
@@ -355,14 +360,14 @@ describe('Terminal pane slots (Phase 2 — docs/roadmap/20-workspace-layout.md)'
     installResizeObserver(1200);
     const { rerender } = render(
       <MemoryRouter>
-        <Terminal roomId="room-a" />
+        <CommandInsertProvider><Terminal roomId="room-a" /></CommandInsertProvider>
       </MemoryRouter>
     );
     expect(screen.getByTestId('surface-ring').getAttribute('data-room')).toBe('room-a');
 
     rerender(
       <MemoryRouter>
-        <Terminal roomId="room-b" />
+        <CommandInsertProvider><Terminal roomId="room-b" /></CommandInsertProvider>
       </MemoryRouter>
     );
     expect(screen.getByTestId('surface-ring').getAttribute('data-room')).toBe('room-b');

@@ -2318,3 +2318,303 @@ vertical bars. The tap target has to be a button that draws nothing, with the ma
 See `docs/roadmap/20-workspace-layout.md` §5g.
 
 **Status**: Fixed.
+
+---
+
+### 123. The item use controls hung outside the panel — FIXED
+
+Found while rendering the new use affordance (#124 work) at phone width, before it shipped.
+
+**Root cause**: `.workshop-select` carries `min-width: min(100%, 12rem)` inside the 520px
+container query. On a row with a target picker *and* a use button, 12rem plus the button
+exceeded the row, and because the group did not wrap, the button rendered outside the
+panel's own border. Measured in Chromium at 393px.
+
+**Fixed**: the use group wraps, and the picker may shrink inside it rather than holding a
+width the row cannot give. Guarded by a CSS assertion test, since jsdom cannot measure
+layout — the same limitation that let #114, #116 and #122 through.
+
+**Status**: Fixed.
+
+---
+
+### 124. Every line but two still credited a boss to an invented beastmaster — FIXED
+
+**Confirmed from a screenshot**: with `Zhizzi [BOSS]` in the ring, the feed read
+`It's Hopewing's turn.`, and a fight-log entry read `It's Santi Brainer's turn.`
+
+**Root cause**: #102 fixed this at the two call sites it was reported from — boss arrival
+and departure — by substituting `👑 The Editor` there. The invented name was still being
+*generated*, so every other site that reads an owner's `givenName` kept printing it: the
+turn banner (`announcements/playerTurnBegin.ts`), and `ownerDisplayName` on every persisted
+fight participant. Patching call sites one at a time was always going to leave the next one
+broken.
+
+**Fixed** at the source, as the reporter suggested: `randomCharacter` now names the
+generated owner after the house when `isBoss`, so `givenName` and `icon` are already correct
+wherever they are read — including sites nobody has enumerated. An explicit name still wins,
+so a caller can stage a named antagonist, and the boss *monster* keeps its own generated
+name; only the owner is the house.
+
+This makes #102's substitution redundant rather than adding a third special case. It is left
+in place as belt-and-braces, producing the same string.
+
+Verified end to end against the built engine: a generated boss owner is `👑 The Editor`, its
+monster keeps its own name, ordinary characters are unaffected, and `{ name: 'Lady Vex' }`
+still wins. Existing saved bosses keep their old names until the next summon generates a new
+one; no migration, since bosses are generated per summon.
+
+**Status**: Fixed.
+
+---
+
+### 125. Fight-log list markers sliced in half on iOS — FIXED (unconfirmed on device)
+
+**Root cause (probable, not demonstrated)**: `.fight-log-detail ol` was both the list and
+the scroll container (`max-height` + `overflow: auto`), while its markers are
+`list-style-position: outside` and so are painted in its padding box. WebKit clips markers in
+that position when the element is a scrollport; Blink does not.
+
+**Honest limitation**: Chromium does not reproduce this. The real component with the real
+stylesheets at 393px renders `1. 2. 3. 4.` correctly — `padding-left: 24px`,
+`scrollWidth === clientWidth` — including with the wide pre-#101 dice-glyph text the
+reporting screenshot contains. The reporter is on iOS Safari, and this environment has no
+WebKit to check against.
+
+**Fixed** by moving `max-height`/`overflow` onto a `.fight-log-events` wrapper so the `<ol>`
+is never a scrollport. This removes the precondition instead of depending on how either
+engine treats markers inside one, so it is the right shape of fix whichever engine was at
+fault — but it has not been seen to fix anything, and wants confirmation on a real iPhone.
+
+See the standing limitation recorded under `10-bug-fixes.md` G: all visual verification here
+is Chromium-only, so a clean render is not evidence that a reported visual bug is absent.
+
+**Status**: Fixed in code; unconfirmed on device.
+
+---
+
+### 126. Handbook quick links did nothing when the console was not in a slot — FIXED
+
+**Root cause**: `insertCommand` was `insertFnRef.current?.(command)`, and only `ConsolePane`
+sets that ref, on mount. Before the surfaces-in-slots work the console was always on screen,
+so the optional chain never mattered. Once the console became one of five surfaces competing
+for two slots, the handbook's quick links ("Monster Manual", "Handbook", "Card List") had two
+ways to fail: with the console in neither slot the click did nothing at all and the reference
+panel simply closed, and with the console mounted but not the active tab the command ran
+somewhere the player could not see.
+
+The general lesson, worth keeping: a deep link into a surface must now *ask for that surface
+to be shown*. It can no longer assume the surface it targets is on screen, and a silent
+optional chain turns that assumption into a no-op rather than an error.
+
+**Fixed**: `Terminal` registers a `revealSurface` function with the command-insert context,
+and `insertCommand` calls it for the console before inserting. Because revealing takes a
+render, a command arriving with no console registered is held and flushed by the next
+`registerInsertFn` instead of being dropped — and flushed exactly once, since `ConsolePane`
+re-registers on re-render and replaying would re-run the command.
+
+Generalised to `revealSurface(surfaceId)` rather than a console special case: that is the
+shape every future deep link needs.
+
+**Status**: Fixed.
+
+---
+
+### 127. "Reconnecting" on a healthy connection, and it never cleared — FIXED
+
+Two defects, which together produced exactly what was reported: the banner appearing with
+no disconnect, and no "reconnected" line after it.
+
+**Why it tripped**: `HEARTBEAT_TIMEOUT_MS` is enforced with a `setTimeout`, and a locked
+phone or backgrounded tab has its timers throttled or frozen. A timeout that came due while
+suspended fires the instant the page is shown again, so the watchdog reported a dead
+connection purely because time had passed in the background. No frames can arrive while the
+page is suspended whether the socket is healthy or not, so silence across a background
+period is not evidence of anything. #108's own test comment said a backgrounded phone
+"looks like" a blackholing network — true, and that is precisely why the watchdog cannot
+treat them the same.
+
+**Why it never cleared**: giving up called `setSubLastEventId(latestTrackedEventIdRef.current)`
+and nothing else. In a quiet room the cursor has not advanced since the last subscribe, so
+that assigns the value it already holds. React bails out on an unchanged value, the
+subscription input stays identical, tRPC does not re-subscribe, and the handshake that sets
+`reconnecting` back to false is never requested. The recovery path silently did nothing in
+exactly the case the watchdog fires in.
+
+**Fixed**: on `visibilitychange` to visible the watchdog is re-armed with a fresh full
+interval, so a genuinely dead connection still trips it one interval later while a return
+from the background does not. And a resume bumps a `resumeAttempt` counter carried in the
+subscription input, so the retry is always a distinct input and cannot be deduplicated. The
+server takes the field and ignores it; its only job is to make the resume observable.
+
+**Status**: Fixed.
+
+---
+
+### 128. A stranded "connection lost" divider with the feed scrolling past it — FIXED
+
+Reported with a screenshot after #127 was written but before it deployed: `CONNECTION LOST`
+in the ring feed, then a boss announcement, a monster entering, and a card — all *after* the
+divider, with no "reconnected" line. The reporter's summary was exact: it is not only the
+banner that gets stranded.
+
+**Root cause**, and it is a third defect distinct from #127's two: `reconnecting` cleared
+only on a handshake. When the watchdog trips on a subscription that was never actually dead
+— which #127's first half explains — that subscription keeps delivering events perfectly
+well, and the app stays in "reconnecting" while displaying them. The feed then reads as
+something that broke and kept going.
+
+The divider made it worse by being asymmetric: it *opened* on the `reconnecting` flag but
+*closed* on a handshake. Any recovery that did not involve a handshake could therefore open
+one and never close it.
+
+**Fixed** in two matching halves:
+- A frame is proof the connection is alive, whatever kind of frame it is. Any inbound frame
+  now clears `reconnecting` and sets `connected`, via functional updaters that return the
+  previous value unchanged so a healthy feed does not re-render once per frame.
+- Whatever opens the divider closes it: `RingPane` draws "reconnected" on the
+  `reconnecting` true→false transition as well as on a handshake, through the same grace
+  timer, with `shouldAppendMarker` preventing a double.
+
+Together with #127 this covers all three ways the pair could go wrong: tripping when nothing
+was wrong, never re-subscribing, and never clearing while plainly connected.
+
+**Status**: Fixed.
+
+---
+
+### 129. The console fought the reader's scroll — FIXED (unconfirmed on device)
+
+**Root cause**: the console set `followOutput={false}` and drove its own scrolling — every
+append ran `scrollToIndex({ index: 'LAST', behavior: 'smooth' })` inside a
+`requestAnimationFrame`. An imperative smooth scroll is not cancel-aware. It keeps animating
+while the reader drags against it, and during a fight the next event schedules another
+before the previous has landed, so the view is pulled back to the bottom over and over. From
+the reader's side the console simply will not scroll up.
+
+The ring pane has always used Virtuoso's own `followOutput`, which stops following the
+instant the reader leaves the bottom. That asymmetry is why only one pane was reported, and
+it is the evidence the diagnosis rests on.
+
+**Fixed** by converging the console onto `followOutput`, with the same policy the ring uses:
+follow when at the bottom, or when `enable()` has forced it so a command you just sent
+scrolls into view. The behavioural contract is unchanged — "follow new output only when
+already at the bottom" — only the mechanism.
+
+The test for that contract was pinning the *mechanism* (an imperative `scrollToIndex` per
+append) rather than the behaviour, so it was rewritten to ask what the follow-output policy
+decides, plus a guard that an append schedules no scroll of its own.
+
+**Unconfirmed on device**: the failure is a touch drag racing a scroll animation, which
+neither jsdom nor a headless Chromium render reproduces. See the standing limitation under
+`10-bug-fixes.md` G.
+
+**Status**: Fixed in code; unconfirmed on device.
+
+---
+
+### 130. A delayed hit landed with nothing tying it to the card that armed it — FIXED
+
+**Root cause**: `DelayedHit` plays on one turn and resolves on a later one, when someone
+else strikes. Both of its payoff narrations carry the card's 🤛; the setup line did not. So
+a reader saw an unremarkable "X spreads his focus across the battlefield", and then, turns
+later, a hit landing outside the normal turn order with only the reader's memory connecting
+the two. Out-of-turn damage with no visible cause reads as the feed misbehaving rather than
+as a card working.
+
+**Fixed**: the setup line carries the icon too, so the same mark opens and closes the
+sequence. Deliberately the smallest change that makes the link visible — no new wording,
+since whether the trigger line should *name* the card is a voice decision and no card in the
+engine currently names itself in narration.
+
+**Found alongside it** (part of the "odd spacing" report): `delayed-hit.ts` held the only two
+narrations in `cards/` that opened with a literal `\n`, which the feed rendered as stray
+vertical space. Copy-paste drift — the other cards do not do it. Confirmed by sweeping the
+directory.
+
+**Also cleaned up while in there**: the trigger guard read
+`!delayingTarget.encounterModifiers.timeShifted === true`, which parses as
+`(!timeShifted) === true` — the same test, written as though comparing to `true`. Behaviour
+unchanged; it now says what it means.
+
+**Status**: Fixed.
+
+---
+
+### 131. A delayed hit fired with no stated cause — FIXED
+
+Follow-up to #130, after the reporter pinned the confusion exactly: *"you play and see the
+card in the feed like normal but then later the effect kicks in when someone else attacks
+you. That later invocation is what can be confusing as to why it is happening."*
+
+#130 had added the card's icon to the setup line so the same mark opened and closed the
+sequence. That helps a reader who is looking for the link; it does not answer the question
+being asked at the moment the hit lands. The trigger line read "X immediately responds to the
+blow Y gave him" — which describes a spontaneous reaction, not a card resolving.
+
+**Fixed**: both trigger lines name the card.
+
+```
+🤛 Stonefang spreads her focus across the battlefield, waiting for her enemy to reveal themselves.
+…
+🤛 Stonefang's Delayed Hit finds its moment: she immediately responds to the blow Emberclaw gave her.
+```
+
+Uses `this.cardType` rather than a literal, so a subclass narrates as itself.
+
+**Why this is not a new house style**: `DelayedHit` is the only card whose effect resolves on
+a turn that is not its own. Every other card resolves where it is played, so the reader infers
+the cause from position in the feed and a self-naming line would be noise. The exception
+exists because the inference is unavailable here, not because naming is generally better.
+
+Verified by driving the real trigger path — register the encounter effect, have the other
+monster strike, assert the narration names the card and the assailant — rather than by
+asserting on the template.
+
+**Status**: Fixed.
+
+---
+
+### 132. The console still re-pinned to the bottom — #129 fixed only half of it — FIXED
+
+Found by Codex on the re-review of #372, and it is the more important of the two: #129's fix
+was incomplete.
+
+**Root cause**: `useFeedAutoScroll()` returned a fresh object literal on every render. Its
+callbacks were memoised; the object holding them was not. `ConsolePane` depends on that
+object in `useEffect(…, [isActive, autoScroll])`, so the effect re-ran on *every* render —
+and appending a console event renders. For an active console that meant
+`scrollToIndex({ index: 'LAST' })` plus `resetToBottom()` on every incoming event, so a
+reader who had scrolled up was dragged back down by the next one.
+
+That is the same symptom as #129, arriving through the "became active" path rather than the
+append path. Removing the imperative scroll from the append path left this one untouched,
+which is why the console would still have fought the reader after #129.
+
+**Fixed**: `useFeedAutoScroll` memoises its return value, so the effect runs when `isActive`
+actually changes — its stated purpose — and not on every render.
+
+**The general lesson**: an unmemoised object returned from a hook is not a style question
+once a consumer puts it in a dependency array. It silently converts "when this changes" into
+"every render", and the effect here was one that moves the reader's viewport.
+
+**Status**: Fixed.
+
+---
+
+### 133. A dead console swallowed the next handbook quick link — FIXED
+
+Also from the #372 re-review, against #126's fix.
+
+**Root cause**: `registerInsertFn` had no unregister. When a console unmounted — on a room
+change, with the console in neither retained slot — its setter stayed in `insertFnRef`.
+`insertCommand` then took the deliver-now branch, called into an unmounted component, and
+therefore did *not* store the command as pending. The console that mounted a moment later
+found nothing waiting for it, so the quick link did nothing: exactly the bug #126 set out to
+fix, reintroduced through the stale-registration path.
+
+**Fixed**: registration returns an unregister, and `ConsolePane`'s effect returns it as
+cleanup. The unregister clears the ref only when it still points at that same registration,
+so an older console's cleanup cannot clobber a newer console's.
+
+**Status**: Fixed.

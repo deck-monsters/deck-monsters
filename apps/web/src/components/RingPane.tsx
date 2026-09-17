@@ -277,6 +277,29 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
     setEvents(prev => (shouldAppendMarker(prev) ? [...prev, createFeedMarker('disconnected')] : prev));
   }, [reconnecting]);
 
+  /*
+   * Close the divider whenever the connection is proven alive again, not only when a
+   * handshake says so. The pair used to be asymmetric — opened by the `reconnecting` flag,
+   * closed by a handshake — so any recovery without one left "connection lost" stranded in
+   * the feed with events scrolling past it, which reads as a feed that broke and kept
+   * going. Symmetry is the fix: whatever opens the divider closes it.
+   *
+   * Still routed through the same grace timer, because replayed catch-up events carry
+   * timestamps from during the outage and would otherwise sort above the marker.
+   * `shouldAppendMarker` keeps this from doubling up with the handshake path.
+   * See 10b-bugs-fixed.md #128.
+   */
+  const wasReconnectingRef = useRef(false);
+  useEffect(() => {
+    const wasReconnecting = wasReconnectingRef.current;
+    wasReconnectingRef.current = reconnecting;
+    if (reconnecting || !wasReconnecting) return;
+
+    pendingReconnectAtRef.current ??= Date.now();
+    if (reconnectMarkerTimerRef.current !== null) clearTimeout(reconnectMarkerTimerRef.current);
+    reconnectMarkerTimerRef.current = setTimeout(flushReconnectMarker, RECONNECT_MARKER_GRACE_MS);
+  }, [reconnecting, flushReconnectMarker]);
+
   // Apply DB history once — pre-populate seenRef and seed the shared subscription
   // lastEventId so the live subscription skips already-delivered events.
   useEffect(() => {
