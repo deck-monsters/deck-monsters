@@ -5,7 +5,7 @@ import type { GameEvent } from '@deck-monsters/server/types';
 type TrackedEvent = { id: string; data: GameEvent };
 
 const subscriptionCalls: Array<{
-  input: { roomId: string; lastEventId?: string };
+  input: { roomId: string; lastEventId?: string; resumeAttempt?: number };
   onData?: (tracked: TrackedEvent) => void;
   onError?: () => void;
 }> = [];
@@ -87,7 +87,7 @@ vi.mock('../lib/trpc.js', () => ({
       cancelFlow: { useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }) },
       ringFeed: {
         useSubscription: (
-          input: { roomId: string; lastEventId?: string },
+          input: { roomId: string; lastEventId?: string; resumeAttempt?: number },
           opts: { onData?: (tracked: TrackedEvent) => void; onError?: () => void },
         ) => {
           subscriptionCalls.push({
@@ -165,7 +165,7 @@ describe('Terminal shared ringFeed subscription (#63)', () => {
     installResizeObserver(undefined);
     render(<Terminal roomId="room-one" />);
     expect(subscriptionCalls).toHaveLength(1);
-    expect(subscriptionCalls[0]?.input).toEqual({ roomId: 'room-one', lastEventId: undefined });
+    expect(subscriptionCalls[0]?.input).toEqual({ roomId: 'room-one', lastEventId: undefined, resumeAttempt: 0 });
   });
 
   it('uses one ringFeed subscription and delivers events to both pane handlers', () => {
@@ -234,7 +234,7 @@ describe('Terminal shared ringFeed subscription (#63)', () => {
 
     expect(screen.getByText('A basilisk enters the ring')).toBeTruthy();
     expect(screen.getByText('You hear private news')).toBeTruthy();
-    expect(latestCall().input).toEqual({ roomId: 'room-shared', lastEventId: undefined });
+    expect(latestCall().input).toEqual({ roomId: 'room-shared', lastEventId: undefined, resumeAttempt: 0 });
   });
 
   it('delivers private prompt and quick_actions to ConsolePane', () => {
@@ -301,9 +301,9 @@ describe('Terminal shared ringFeed subscription (#63)', () => {
       latestCall().onError?.();
     });
 
-    expect(latestCall().input).toEqual({ roomId: 'room-a', lastEventId: 'evt-keep' });
+    expect(latestCall().input).toEqual({ roomId: 'room-a', lastEventId: 'evt-keep', resumeAttempt: 1 });
 
     rerender(<Terminal roomId="room-b" />);
-    expect(latestCall().input).toEqual({ roomId: 'room-b', lastEventId: undefined });
+    expect(latestCall().input).toEqual({ roomId: 'room-b', lastEventId: undefined, resumeAttempt: 0 });
   });
 });

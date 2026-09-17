@@ -2417,3 +2417,34 @@ Generalised to `revealSurface(surfaceId)` rather than a console special case: th
 shape every future deep link needs.
 
 **Status**: Fixed.
+
+---
+
+### 127. "Reconnecting" on a healthy connection, and it never cleared — FIXED
+
+Two defects, which together produced exactly what was reported: the banner appearing with
+no disconnect, and no "reconnected" line after it.
+
+**Why it tripped**: `HEARTBEAT_TIMEOUT_MS` is enforced with a `setTimeout`, and a locked
+phone or backgrounded tab has its timers throttled or frozen. A timeout that came due while
+suspended fires the instant the page is shown again, so the watchdog reported a dead
+connection purely because time had passed in the background. No frames can arrive while the
+page is suspended whether the socket is healthy or not, so silence across a background
+period is not evidence of anything. #108's own test comment said a backgrounded phone
+"looks like" a blackholing network — true, and that is precisely why the watchdog cannot
+treat them the same.
+
+**Why it never cleared**: giving up called `setSubLastEventId(latestTrackedEventIdRef.current)`
+and nothing else. In a quiet room the cursor has not advanced since the last subscribe, so
+that assigns the value it already holds. React bails out on an unchanged value, the
+subscription input stays identical, tRPC does not re-subscribe, and the handshake that sets
+`reconnecting` back to false is never requested. The recovery path silently did nothing in
+exactly the case the watchdog fires in.
+
+**Fixed**: on `visibilitychange` to visible the watchdog is re-armed with a fresh full
+interval, so a genuinely dead connection still trips it one interval later while a return
+from the background does not. And a resume bumps a `resumeAttempt` counter carried in the
+subscription input, so the retry is always a distinct input and cannot be deduplicated. The
+server takes the field and ignores it; its only job is to make the resume observable.
+
+**Status**: Fixed.

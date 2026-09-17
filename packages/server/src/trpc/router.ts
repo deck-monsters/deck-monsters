@@ -1711,6 +1711,14 @@ export function createRouter(roomManager: RoomManager) {
 				z.object({
 					roomId: z.string().uuid(),
 					lastEventId: z.string().optional(),
+					/*
+					 * Ignored here on purpose. The client bumps it when its heartbeat watchdog
+					 * gives up, so the resume is a *different* subscription input even when the
+					 * cursor has not moved — otherwise the retry is deduplicated and the client
+					 * waits forever for a handshake that is never requested. See
+					 * 10b-bugs-fixed.md #127.
+					 */
+					resumeAttempt: z.number().int().nonnegative().optional(),
 				})
 			)
 			.subscription(async function* ({ input, ctx, signal }) {

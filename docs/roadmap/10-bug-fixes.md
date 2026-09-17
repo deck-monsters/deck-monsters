@@ -4,8 +4,8 @@
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#126). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#126).
+post-merge passes (#112–#127). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#127).
 
 ## Active Items
 
@@ -142,14 +142,27 @@ character's name itself** so every downstream announcement inherits it, rather t
 each site that prints an owner name. That would make #102's call-site fix redundant rather
 than adding a third special case. Worth doing as the real fix.
 
-### D. "reconnecting" appears with no disconnect, and no reconnect line follows
+### D. "reconnecting" appears with no disconnect, and no reconnect line follows — FIXED (#127)
 
 **Confirmed from a screenshot**: `-- reconnecting --` at the foot of a console that is
-otherwise live and up to date. Suspect a false positive in the heartbeat watchdog added in
-#108 (`HEARTBEAT_TIMEOUT_MS = 50_000`): a quiet period with no events and no heartbeat would
-trip it even though the connection is fine. The missing "reconnected" divider suggests the
-marker is written on the watchdog firing but the recovery path never runs, because nothing
-actually dropped.
+otherwise live and up to date.
+
+**Two separate defects, both confirmed in code** — the report describes the pair of them:
+
+1. *Why it tripped.* A locked phone or a switched-away tab has its timers throttled or
+   frozen, and a `setTimeout` that came due while suspended fires the moment the page is
+   shown again. The watchdog therefore reported a dead connection purely because time had
+   passed in the background — which is not evidence of anything, since no frames can arrive
+   while the page is suspended whether the socket is healthy or not.
+2. *Why it never cleared.* Resuming was `setSubLastEventId(latestTrackedEventIdRef.current)`
+   alone. In a quiet room the cursor has not moved since the last subscribe, so that sets
+   the value it already had; React bails out, the subscription input is unchanged, tRPC
+   never re-subscribes, and the handshake that clears `reconnecting` is never requested.
+   The banner sticks forever on a working connection.
+
+**Fixed as #127**: the watchdog is re-armed with a fresh interval when the page becomes
+visible rather than acting on a timer that expired in the background, and a resume bumps a
+`resumeAttempt` counter so the input always differs and the retry cannot be deduplicated.
 
 ### E. Delayed-hit cards are confusing when they trigger
 

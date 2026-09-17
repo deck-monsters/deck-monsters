@@ -54,6 +54,17 @@ export function useRingFeed(roomId: string): RingFeedApi {
   const [connected, setConnected] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
   const [subLastEventId, setSubLastEventId] = useState<string | undefined>(undefined);
+  /*
+   * Bumped on every give-up so a resume always produces a *different* subscription input.
+   *
+   * Resuming used to be `setSubLastEventId(latestTrackedEventIdRef.current)` alone, which
+   * is a no-op whenever the cursor has not moved since the last subscribe — which is
+   * exactly the quiet-room case the watchdog fires in. React bails out on an unchanged
+   * value, the input stays identical, tRPC never re-subscribes, no handshake ever arrives,
+   * and `reconnecting` stays true forever: the banner the reporter saw with a connection
+   * that was working fine and no "reconnected" line after it. See 10-bug-fixes.md D.
+   */
+  const [resumeAttempt, setResumeAttempt] = useState(0);
   const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
   const listenersRef = useRef(new Set<(tracked: TrackedRingFeedEvent) => void>());
   // Events that arrive before any pane listener is registered (e.g. sync delivery
@@ -70,6 +81,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
   if (cursorRoomId !== roomId) {
     setCursorRoomId(roomId);
     setSubLastEventId(undefined);
+    setResumeAttempt(0);
     setConnected(false);
     setReconnecting(false);
     latestTrackedEventIdRef.current = undefined;
@@ -93,6 +105,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
     setConnected(false);
     setReconnecting(true);
     setSubLastEventId(latestTrackedEventIdRef.current);
+    setResumeAttempt((attempt) => attempt + 1);
   }, []);
 
   /** Restart the watchdog. Called for every inbound frame, heartbeats included. */
@@ -100,6 +113,30 @@ export function useRingFeed(roomId: string): RingFeedApi {
     if (heartbeatTimerRef.current !== null) clearTimeout(heartbeatTimerRef.current);
     heartbeatTimerRef.current = setTimeout(handleConnectionLost, HEARTBEAT_TIMEOUT_MS);
   }, [handleConnectionLost]);
+
+  /*
+   * A phone that locks, or a tab switched away from, has its timers throttled or frozen —
+   * and a `setTimeout` that came due while suspended fires the moment the page is shown
+   * again. The watchdog then reports a dead connection purely because time passed with the
+   * page in the background, which is not evidence of anything: no frames can arrive while
+   * the page is suspended whether the socket is healthy or not.
+   *
+   * So on becoming visible, give the connection a fresh full interval to prove itself
+   * instead of acting on a timer that expired in the background. A genuinely dead
+   * connection still trips it one interval later. See 10-bug-fixes.md D.
+   */
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    function onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return;
+      if (heartbeatTimerRef.current === null) return;
+      noteFrameReceived();
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [noteFrameReceived]);
 
   useEffect(
     () => () => {
@@ -152,7 +189,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
   }, [advanceTrackedCursor]);
 
   trpc.game.ringFeed.useSubscription(
-    { roomId, lastEventId: subLastEventId },
+    { roomId, lastEventId: subLastEventId, resumeAttempt },
     {
       onData(tracked: TrackedRingFeedEvent) {
         const event = tracked.data;

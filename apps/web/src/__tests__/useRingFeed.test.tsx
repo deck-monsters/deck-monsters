@@ -23,7 +23,7 @@ function useRingFeedContextForTest(): RingFeedApi {
 type TrackedEvent = { id: string; data: GameEvent };
 
 const subscriptionCalls: Array<{
-  input: { roomId: string; lastEventId?: string };
+  input: { roomId: string; lastEventId?: string; resumeAttempt?: number };
   onData?: (tracked: TrackedEvent) => void;
   onError?: () => void;
 }> = [];
@@ -45,7 +45,7 @@ vi.mock('../lib/trpc.js', () => ({
     game: {
       ringFeed: {
         useSubscription: (
-          input: { roomId: string; lastEventId?: string },
+          input: { roomId: string; lastEventId?: string; resumeAttempt?: number },
           opts: { onData?: (tracked: TrackedEvent) => void; onError?: () => void },
         ) => {
           subscriptionCalls.push({
@@ -109,7 +109,7 @@ describe('useRingFeed', () => {
     const { result } = renderHook(() => useRingFeed('room-a'));
 
     expect(subscriptionCalls).toHaveLength(1);
-    expect(latestCall().input).toEqual({ roomId: 'room-a', lastEventId: undefined });
+    expect(latestCall().input).toEqual({ roomId: 'room-a', lastEventId: undefined, resumeAttempt: 0 });
 
     const ringHandler = vi.fn();
     const consoleHandler = vi.fn();
@@ -296,7 +296,8 @@ describe('useRingFeed', () => {
 
     rerender({ roomId: 'room-b' });
 
-    expect(latestCall().input).toEqual({ roomId: 'room-b', lastEventId: undefined });
+    // resumeAttempt resets with the room, like the cursor and the watchdog.
+    expect(latestCall().input).toEqual({ roomId: 'room-b', lastEventId: undefined, resumeAttempt: 0 });
 
     listener.mockClear();
     act(() => {
@@ -383,8 +384,9 @@ describe('useRingFeed: heartbeat watchdog (#108)', () => {
         vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
       });
 
-      // Nothing errored — the socket is simply silent, which is what a backgrounded
-      // phone or a blackholing network looks like.
+      // Nothing errored — the socket is simply silent, which is what a blackholing
+      // network looks like. (A backgrounded phone looks the same but is not evidence of
+      // anything; see the visibility tests below.)
       expect(result.current.connected).toBe(false);
       expect(result.current.reconnecting).toBe(true);
     } finally {
@@ -476,6 +478,140 @@ describe('useRingFeed: the watchdog belongs to its room (#108)', () => {
 
       expect(result.current.reconnecting).toBe(false);
     } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+/**
+ * The reporter saw "-- reconnecting --" on a console that was working fine, with no
+ * "reconnected" line after it. Two separate defects produced that, and both are covered
+ * here. See 10-bug-fixes.md D and 10b-bugs-fixed.md #127.
+ */
+describe('useRingFeed: recovering from a watchdog trip', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+
+  it('re-subscribes even when the cursor has not moved', () => {
+    // The stuck case: resuming only set `lastEventId`, which in a quiet room is the value
+    // it already had. React bails out on an unchanged value, so the subscription input
+    // never changed, tRPC never re-subscribed, and no handshake ever arrived to clear the
+    // banner.
+    vi.useFakeTimers();
+    try {
+      renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'h1', data: makeEvent({ id: 'h1', type: 'handshake' }) });
+      });
+
+      const before = subscriptionCalls.length;
+      const inputBefore = { ...latestCall().input };
+
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+
+      expect(subscriptionCalls.length).toBeGreaterThan(before);
+      expect(latestCall().input).not.toEqual(inputBefore);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('clears the banner once the resumed subscription hands shakes', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'h1', data: makeEvent({ id: 'h1', type: 'handshake' }) });
+      });
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+      expect(result.current.reconnecting).toBe(true);
+
+      act(() => {
+        latestCall().onData?.({ id: 'h2', data: makeEvent({ id: 'h2', type: 'handshake' }) });
+      });
+
+      expect(result.current.reconnecting).toBe(false);
+      expect(result.current.connected).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+/**
+ * A locked phone has its timers frozen, and a `setTimeout` that came due while suspended
+ * fires the instant the page is shown again — so the watchdog reported a dead connection
+ * purely because time passed in the background. No frames can arrive while the page is
+ * suspended whether the socket is healthy or not, so that is not evidence of anything.
+ */
+describe('useRingFeed: returning from the background', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+
+  function setVisibility(state: 'visible' | 'hidden') {
+    Object.defineProperty(document, 'visibilityState', { value: state, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }
+
+  it('gives the connection a fresh interval instead of tripping on a stale timer', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'h1', data: makeEvent({ id: 'h1', type: 'handshake' }) });
+      });
+
+      // Most of the interval passes with the page hidden, then it comes back.
+      act(() => {
+        setVisibility('hidden');
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS - 1_000);
+        setVisibility('visible');
+      });
+
+      // The old timer would have fired 1s later; the fresh one has the full interval.
+      act(() => {
+        vi.advanceTimersByTime(5_000);
+      });
+
+      expect(result.current.reconnecting).toBe(false);
+      expect(result.current.connected).toBe(true);
+    } finally {
+      setVisibility('visible');
+      vi.useRealTimers();
+    }
+  });
+
+  it('still reports a genuinely dead connection one interval later', () => {
+    // The grace is one interval, not immunity.
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'h1', data: makeEvent({ id: 'h1', type: 'handshake' }) });
+      });
+
+      act(() => {
+        setVisibility('hidden');
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS - 1_000);
+        setVisibility('visible');
+      });
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+
+      expect(result.current.reconnecting).toBe(true);
+    } finally {
+      setVisibility('visible');
       vi.useRealTimers();
     }
   });
