@@ -2293,3 +2293,28 @@ of reflowing.
 drops to 2-up in a very narrow pane.
 
 **Status**: Fixed.
+
+---
+
+### 122. Nothing said a player had a second monster on a phone — FIXED
+
+**Root cause**: below 900px `.workshop-monster-row` becomes a scroll-snapped carousel, and
+the only indication that more monsters existed was the ~44px sliver of the next panel
+poking past the right edge. Cut mid-word (`Fo…`, `Wee…`, `PRE…`), it reads as a rendering
+fault rather than an affordance — it was reported as one. A player with two monsters could
+reasonably conclude the page was broken rather than scrollable.
+
+**Fixed**: `.workshop-monster-dots` — one marker per monster, current one filled, shown only
+with more than one monster and only inside the container query that makes the row scroll.
+The dots are buttons that scroll their monster into view (honouring
+`prefers-reduced-motion`) and are labelled with the monster's name rather than "2 of 3".
+
+Worth recording, because it cost a render cycle to catch: the first attempt sized the
+button itself and used `border-block: 18px solid transparent` for the 44px tap target. The
+1px inline borders then ran the full height of the border box, so the dots rendered as tall
+vertical bars. The tap target has to be a button that draws nothing, with the marker on a
+`::before`. Invisible to jsdom; caught by screenshotting Chromium at 393px.
+
+See `docs/roadmap/20-workspace-layout.md` §5g.
+
+**Status**: Fixed.

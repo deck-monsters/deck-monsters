@@ -497,3 +497,37 @@ and the command-free acceptance journey remain functional gaps, so this roadmap 
    reading a fight log properly; the pane is for glancing without leaving the feed. Since a
    surface is just a component, supporting both costs one thin route wrapper each — and it
    is why surfaces must be layout-agnostic.
+
+
+## 5g. The monster carousel and its position indicator
+
+Below the 900px container breakpoint `.workshop-monster-row` stops being a grid and
+becomes a scroll-snapped horizontal carousel: each `.workshop-monster-panel` takes
+`min(82cqw, 32rem)` — `min(88cqw, 25rem)` below 520px — so a phone shows one panel and a
+roughly 44px sliver of the next.
+
+That sliver was doing two jobs badly. It was the only signal that a player had more than
+one monster, and because it cuts the neighbour mid-word (`Fo…`, `Wee…`, `PRE…`) it read as
+a rendering fault rather than as an affordance — it was reported as one.
+
+`.workshop-monster-dots` now carries that job: one marker per monster, the current one
+filled, rendered only when there is more than one monster and only inside the same
+`@container workshop (max-width: 900px)` block that makes the row scroll. Above that
+width every panel is already on screen and there is nothing to indicate.
+
+Three things about it are deliberate and worth keeping:
+
+- **The dots are buttons, not decoration.** Tapping one scrolls that monster into view,
+  honouring `prefers-reduced-motion`. A position indicator you cannot act on adds a row of
+  pixels and no capability.
+- **Each is labelled with its monster's name**, not "2 of 3". The name is what a player is
+  navigating by; the ordinal is not information they have.
+- **The button is the 44px tap target and draws nothing** — the visible marker is a
+  `::before`. Sizing the button itself does not work: a border drawn for the marker wraps
+  the whole tap target, which renders the dots as tall vertical bars. That was caught in
+  Chromium at 393px and is exactly the kind of defect the unit tests cannot see.
+
+The active dot tracks scroll position by measuring which panel sits nearest the row's left
+edge, which is where `scroll-snap-align: start` parks them. It is a scroll listener rather
+than an `IntersectionObserver` because the answer wanted is "which panel is snapped", not
+"which panels intersect" — with a peeking neighbour, two panels always intersect.
