@@ -61,13 +61,25 @@ export class DelayedHit extends HitCard {
 										encounterEffect !== delayedHitEffect
 								);
 
+								/*
+								 * Both lines name the card, because this is the one card whose
+								 * effect lands on a turn that is not its own. The reader saw it
+								 * played several turns ago and then, out of nowhere, a hit
+								 * resolves in the middle of someone else's attack. Without the
+								 * card named, "responds to the blow" reads as a spontaneous
+								 * reaction and the obvious question — why is this happening? —
+								 * has no answer in the feed.
+								 *
+								 * `cardType` rather than a literal, so a subclass narrates as
+								 * itself. See 10b-bugs-fixed.md #131.
+								 */
 								if (delayingTarget.dead) {
 									this.emit('narration', {
-										narration: `${this.icon} With ${his} dying breath, ${delayingPlayer.givenName} avenges the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: with ${his} dying breath, ${delayingPlayer.pronouns.he} avenges the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
 									});
 								} else {
 									this.emit('narration', {
-										narration: `${this.icon} ${delayingPlayer.givenName} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: ${delayingPlayer.pronouns.he} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
 									});
 								}
 

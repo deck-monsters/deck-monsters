@@ -2538,3 +2538,37 @@ directory.
 unchanged; it now says what it means.
 
 **Status**: Fixed.
+
+---
+
+### 131. A delayed hit fired with no stated cause — FIXED
+
+Follow-up to #130, after the reporter pinned the confusion exactly: *"you play and see the
+card in the feed like normal but then later the effect kicks in when someone else attacks
+you. That later invocation is what can be confusing as to why it is happening."*
+
+#130 had added the card's icon to the setup line so the same mark opened and closed the
+sequence. That helps a reader who is looking for the link; it does not answer the question
+being asked at the moment the hit lands. The trigger line read "X immediately responds to the
+blow Y gave him" — which describes a spontaneous reaction, not a card resolving.
+
+**Fixed**: both trigger lines name the card.
+
+```
+🤛 Stonefang spreads her focus across the battlefield, waiting for her enemy to reveal themselves.
+…
+🤛 Stonefang's Delayed Hit finds its moment: she immediately responds to the blow Emberclaw gave her.
+```
+
+Uses `this.cardType` rather than a literal, so a subclass narrates as itself.
+
+**Why this is not a new house style**: `DelayedHit` is the only card whose effect resolves on
+a turn that is not its own. Every other card resolves where it is played, so the reader infers
+the cause from position in the feed and a self-naming line would be noise. The exception
+exists because the inference is unavailable here, not because naming is generally better.
+
+Verified by driving the real trigger path — register the encounter effect, have the other
+monster strike, assert the narration names the card and the assailant — rather than by
+asserting on the template.
+
+**Status**: Fixed.

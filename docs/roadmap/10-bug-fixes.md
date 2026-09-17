@@ -4,8 +4,8 @@
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#130). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#130).
+post-merge passes (#112–#131). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#131).
 
 ## Active Items
 
@@ -202,7 +202,7 @@ opened by the flag, closed by a handshake — so any recovery without one strand
 Fixed as #128: any frame is proof of life and clears the state, and whatever opens the
 divider closes it.
 
-### E. Delayed-hit cards are confusing when they trigger — PARTLY FIXED (#130)
+### E. Delayed-hit cards are confusing when they trigger — FIXED (#130, #131)
 
 A card whose effect lands on a later turn produces its hit with no line tying it back to the
 card that caused it, so the damage appears to come from nowhere.
@@ -217,10 +217,25 @@ memory connected a counter-attack several turns later to the card that armed it.
 the sequence. That is the smallest change that makes the connection visible, and it invents
 no new wording.
 
-**Still open, and a voice call for the owner**: whether the trigger line should *name* the
-card outright ("Delayed Hit — X immediately responds…"). No card in the engine currently
-names itself in narration, so doing it here would start a convention, and conventions about
-the game's voice belong to the owner rather than to whoever is fixing the bug.
+**Then clarified by the reporter**, which settled the open voice question: *"you play and see
+the card in the feed like normal but then later the effect kicks in when someone else attacks
+you. That later invocation is what can be confusing as to why it is happening."* The setup is
+legible — the card is right there in the feed. It is the payoff, landing mid-way through
+someone else's attack, that had no stated cause.
+
+**Fixed as #131**: both trigger lines name the card. The feed now reads
+
+```
+🤛 Stonefang spreads her focus across the battlefield, waiting for her enemy to reveal themselves.
+…
+🤛 Stonefang's Delayed Hit finds its moment: she immediately responds to the blow Emberclaw gave her.
+```
+
+This is the first card in the engine to name itself in narration. That is a deliberate
+exception rather than a new house style: `DelayedHit` is the only card whose effect resolves
+on a turn that is not its own, so it is the only one where the reader cannot infer the cause
+from position in the feed. A card that resolves when played does not need to announce what it
+is — the card is already on screen.
 
 ### I. Opening a surface in a pane vs. full screen is confusing and inconsistent
 
