@@ -107,3 +107,73 @@ Screenshots: [`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/).
 - **`boss in ~17m` vs a feed line reading `A boss will enter the ring in 2 minutes`**
   (`06-ring-summon-sequence.png`). The feed line is historical text from an earlier
   timer; the header is live. Not a mismatch.
+
+---
+
+## September 17 2026 live-play batch (reported, not yet fixed)
+
+Reported from a phone session after #371 deployed. Recorded verbatim-ish with what is
+known so far; several are intermittent and need reproduction before a cause is claimed.
+Numbering continues in `10b-bugs-fixed.md` as each is resolved.
+
+### A. Ring feed sometimes lacks the "↓ Latest" jump button
+
+Intermittent. The button is present in some screenshots and absent in others with the feed
+scrolled up. Suspect the `atBottom` state the button keys off is not re-evaluated when
+content grows while the user is already scrolled up — Virtuoso reports `atBottom` from the
+last scroll event, and an append that happens with no scroll may leave it stale.
+
+### B. Console refuses to scroll up at all, sometimes
+
+Reported as "at least sometimes". If the feed is pinned to the bottom by a `followOutput`
+that re-fires on every append, a user scrolling up during an active fight would be dragged
+back down on the next event and read as "will not scroll". The ring pane does not show
+this, which is itself a clue — the two panes configure Virtuoso differently.
+
+### C. The boss's turn banner still names a generated beastmaster
+
+**Confirmed from a screenshot**: with `Zhizzi [BOSS]` in the ring, the feed reads
+`It's Hopewing's turn.` — and in a fight-log entry, `It's Santi Brainer's turn.` #102 fixed
+boss *arrival and departure* to credit the house (`👑 The Editor`), but the turn banner is a
+separate announcement and still reads the generated owner's `givenName`.
+
+The reporter's larger suggestion, which is the better fix: **change the generated
+character's name itself** so every downstream announcement inherits it, rather than patching
+each site that prints an owner name. That would make #102's call-site fix redundant rather
+than adding a third special case. Worth doing as the real fix.
+
+### D. "reconnecting" appears with no disconnect, and no reconnect line follows
+
+**Confirmed from a screenshot**: `-- reconnecting --` at the foot of a console that is
+otherwise live and up to date. Suspect a false positive in the heartbeat watchdog added in
+#108 (`HEARTBEAT_TIMEOUT_MS = 50_000`): a quiet period with no events and no heartbeat would
+trip it even though the connection is fine. The missing "reconnected" divider suggests the
+marker is written on the watchdog firing but the recovery path never runs, because nothing
+actually dropped.
+
+### E. Delayed-hit cards are confusing when they trigger
+
+A card whose effect lands on a later turn produces its hit with no line tying it back to the
+card that caused it, so the damage appears to come from nowhere. Wants a contextual
+announcement naming the originating card at trigger time.
+
+### F. Odd spacing in some messages
+
+Extra blank lines, and indentation that does not line up, in certain feed messages. Needs
+specific examples captured before chasing — the card-display block and the turn banner are
+the likeliest suspects given their history (#97, #101).
+
+### G. Ordered-list markers clipped in the fight-log event history
+
+**Confirmed from a screenshot**: the numbers in a fight's "Events during this fight" list
+render as `l.`, `?.`, `3.`, `4.` — the left half of each marker is sliced off.
+`.fight-log-detail ol` has `padding-left: 1.5rem` *and* `overflow: auto`; list markers are
+painted in the padding box, so a scroll container clips them.
+
+### H. The handbook's monster-manual button lands on an empty pane
+
+**Reported**: from the help view, the monster-manual button navigates to where the console
+used to be, but with the tabbed layout the console may not be in a slot, and the button does
+not select it. The user lands on whatever surface happens to be mounted. A regression from
+the surfaces-in-slots work (roadmap 20) — deep links into a surface must now *select* it,
+not assume it is visible.
