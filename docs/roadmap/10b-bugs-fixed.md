@@ -2572,3 +2572,49 @@ monster strike, assert the narration names the card and the assailant — rather
 asserting on the template.
 
 **Status**: Fixed.
+
+---
+
+### 132. The console still re-pinned to the bottom — #129 fixed only half of it — FIXED
+
+Found by Codex on the re-review of #372, and it is the more important of the two: #129's fix
+was incomplete.
+
+**Root cause**: `useFeedAutoScroll()` returned a fresh object literal on every render. Its
+callbacks were memoised; the object holding them was not. `ConsolePane` depends on that
+object in `useEffect(…, [isActive, autoScroll])`, so the effect re-ran on *every* render —
+and appending a console event renders. For an active console that meant
+`scrollToIndex({ index: 'LAST' })` plus `resetToBottom()` on every incoming event, so a
+reader who had scrolled up was dragged back down by the next one.
+
+That is the same symptom as #129, arriving through the "became active" path rather than the
+append path. Removing the imperative scroll from the append path left this one untouched,
+which is why the console would still have fought the reader after #129.
+
+**Fixed**: `useFeedAutoScroll` memoises its return value, so the effect runs when `isActive`
+actually changes — its stated purpose — and not on every render.
+
+**The general lesson**: an unmemoised object returned from a hook is not a style question
+once a consumer puts it in a dependency array. It silently converts "when this changes" into
+"every render", and the effect here was one that moves the reader's viewport.
+
+**Status**: Fixed.
+
+---
+
+### 133. A dead console swallowed the next handbook quick link — FIXED
+
+Also from the #372 re-review, against #126's fix.
+
+**Root cause**: `registerInsertFn` had no unregister. When a console unmounted — on a room
+change, with the console in neither retained slot — its setter stayed in `insertFnRef`.
+`insertCommand` then took the deliver-now branch, called into an unmounted component, and
+therefore did *not* store the command as pending. The console that mounted a moment later
+found nothing waiting for it, so the quick link did nothing: exactly the bug #126 set out to
+fix, reintroduced through the stale-registration path.
+
+**Fixed**: registration returns an unregister, and `ConsolePane`'s effect returns it as
+cleanup. The unregister clears the ref only when it still points at that same registration,
+so an older console's cleanup cannot clobber a newer console's.
+
+**Status**: Fixed.

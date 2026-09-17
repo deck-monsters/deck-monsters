@@ -4,8 +4,8 @@
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#131). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#131).
+post-merge passes (#112–#133). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#133).
 
 ## Active Items
 
@@ -151,7 +151,10 @@ has always used Virtuoso's own `followOutput`, which stops following the moment 
 leaves the bottom — hence the asymmetry.
 
 **Fixed as #129** by converging the console onto `followOutput`, keeping the same contract
-(follow only when already at the bottom). **Unconfirmed on device**: the failure is a touch
+(follow only when already at the bottom) — **and as #132**, which is the half #129 missed: an
+unmemoised `useFeedAutoScroll()` return value made the `[isActive, autoScroll]` effect re-run
+every render, re-pinning an active console to the bottom on each incoming event through a
+different path. **Unconfirmed on device**: the failure is a touch
 drag racing a scroll animation, which neither jsdom nor a headless Chromium render
 reproduces. The reasoning rests on the pane asymmetry, which is evidence, not proof.
 

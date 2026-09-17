@@ -26,13 +26,19 @@ function Harness({
   return (
     <div>
       <button onClick={() => registerRevealSurface(onReveal)}>register host</button>
+      {/* A fresh closure per registration, as a new ConsolePane instance would be. */}
       {registerConsole && (
-        <button onClick={() => registerInsertFn(onInsert)}>register console</button>
+        <button onClick={() => { unregister = registerInsertFn((cmd) => onInsert(cmd)); }}>
+          register console
+        </button>
       )}
+      <button onClick={() => unregister?.()}>unmount console</button>
       <button onClick={() => insertCommand('look at monster manual')}>insert</button>
     </div>
   );
 }
+
+let unregister: (() => void) | undefined;
 
 const click = (name: string) => act(() => { screen.getByText(name).click(); });
 
@@ -138,5 +144,50 @@ describe('inserting a command reveals the console first', () => {
     click('insert');
 
     expect(onInsert).toHaveBeenCalledWith('look at monster manual');
+  });
+
+  /**
+   * The P2 from review: registration had no cleanup, so an unmounted console's setter stayed
+   * in the ref — after a room change, say, with the console in neither retained slot.
+   * `insertCommand` then took the deliver-now branch, called into a dead component, and did
+   * not hold the command, so the console mounting moments later got nothing.
+   * See 10b-bugs-fixed.md #133.
+   */
+  it('holds the command when the registered console has gone away', () => {
+    const onInsert = vi.fn();
+    render(
+      <CommandInsertProvider>
+        <Harness onInsert={onInsert} onReveal={vi.fn()} registerConsole />
+      </CommandInsertProvider>,
+    );
+
+    click('register console');
+    click('unmount console');
+    click('insert');
+
+    // Nothing was called into, and nothing was thrown away.
+    expect(onInsert).not.toHaveBeenCalled();
+
+    click('register console');
+
+    expect(onInsert).toHaveBeenCalledWith('look at monster manual');
+  });
+
+  it("does not let an old console's cleanup clobber a newer registration", () => {
+    const older = vi.fn();
+    render(
+      <CommandInsertProvider>
+        <Harness onInsert={older} onReveal={vi.fn()} registerConsole />
+      </CommandInsertProvider>,
+    );
+
+    click('register console');
+    const staleUnregister = unregister;
+    click('register console');
+    act(() => staleUnregister?.());
+
+    click('insert');
+
+    expect(older).toHaveBeenCalledWith('look at monster manual');
   });
 });

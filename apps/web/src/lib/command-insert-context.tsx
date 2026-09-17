@@ -1,10 +1,11 @@
-import { createContext, useContext, useRef, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, type ReactNode } from 'react';
 
 import type { SurfaceId } from '../components/surfaces.js';
 
 interface CommandInsertContextValue {
   insertCommand: (command: string) => void;
-  registerInsertFn: (fn: (command: string) => void) => void;
+  /** Returns an unregister function; the console must call it on unmount. */
+  registerInsertFn: (fn: (command: string) => void) => () => void;
   /**
    * Lets the surface host (`Terminal`) say how to bring a surface into view. Registered
    * rather than imported so this context stays independent of the layout that happens to
@@ -31,7 +32,7 @@ export function CommandInsertProvider({ children }: { children: ReactNode }) {
    * console, then hold the command until a console actually registers. See
    * 10-bug-fixes.md H.
    */
-  function registerInsertFn(fn: (command: string) => void) {
+  const registerInsertFn = useCallback((fn: (command: string) => void) => {
     insertFnRef.current = fn;
 
     const pending = pendingCommandRef.current;
@@ -39,13 +40,25 @@ export function CommandInsertProvider({ children }: { children: ReactNode }) {
       pendingCommandRef.current = null;
       fn(pending);
     }
-  }
 
-  function registerRevealSurface(fn: (surfaceId: SurfaceId) => void) {
+    /*
+     * Registration without an unregister left a dead console's setter in the ref after it
+     * unmounted — on a room change, say, when the console is in neither retained slot.
+     * `insertCommand` would then take the deliver-now branch, call into an unmounted
+     * component, and *not* hold the command; the console that mounted moments later got
+     * nothing. Only clear when the ref still points at this registration, so a newer
+     * console's is never clobbered by an older one's cleanup. See 10b-bugs-fixed.md #133.
+     */
+    return () => {
+      if (insertFnRef.current === fn) insertFnRef.current = null;
+    };
+  }, []);
+
+  const registerRevealSurface = useCallback((fn: (surfaceId: SurfaceId) => void) => {
     revealFnRef.current = fn;
-  }
+  }, []);
 
-  function insertCommand(command: string) {
+  const insertCommand = useCallback((command: string) => {
     // Commands run in the console, so that is what has to be on screen to see the answer.
     revealFnRef.current?.('console');
 
@@ -56,15 +69,15 @@ export function CommandInsertProvider({ children }: { children: ReactNode }) {
 
     // No console yet. The reveal above should mount one; `registerInsertFn` flushes this.
     pendingCommandRef.current = command;
-  }
+  }, []);
 
-  return (
-    <CommandInsertContext.Provider
-      value={{ insertCommand, registerInsertFn, registerRevealSurface }}
-    >
-      {children}
-    </CommandInsertContext.Provider>
+  // Stable, so consumers can depend on these in effects without re-running every render.
+  const value = useMemo(
+    () => ({ insertCommand, registerInsertFn, registerRevealSurface }),
+    [insertCommand, registerInsertFn, registerRevealSurface]
   );
+
+  return <CommandInsertContext.Provider value={value}>{children}</CommandInsertContext.Provider>;
 }
 
 export function useCommandInsert(): CommandInsertContextValue {

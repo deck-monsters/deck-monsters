@@ -198,4 +198,58 @@ describe('ConsolePane scroll behavior', () => {
 
     expect(scrollToIndexMock).not.toHaveBeenCalled();
   });
+
+  /**
+   * The P1 from review: `useFeedAutoScroll()` returned a fresh object each render, so the
+   * `[isActive, autoScroll]` effect re-ran on *every* render — and appending a console event
+   * renders. An active console the reader had scrolled up was therefore re-pinned to the
+   * bottom by the next event, which is the #129 symptom arriving through a different path.
+   * See 10b-bugs-fixed.md #132.
+   */
+  it('does not re-pin an active console to the bottom on every append', () => {
+    render(
+      <TestFeed>
+        <ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive />
+      </TestFeed>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark not at bottom' }));
+    scrollToIndexMock.mockClear();
+
+    act(() => {
+      pushEvent({
+        id: 'evt-active',
+        data: {
+          id: 'evt-active',
+          type: 'announce',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: 'a new line arrives',
+          payload: {},
+          timestamp: Date.now(),
+          roomId: '11111111-1111-1111-1111-111111111111',
+        },
+      });
+    });
+
+    expect(scrollToIndexMock).not.toHaveBeenCalled();
+  });
+
+  it('still jumps to the bottom when the pane becomes active', () => {
+    // The effect's actual purpose, which must survive the dependency fix.
+    const { rerender } = render(
+      <TestFeed>
+        <ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive={false} />
+      </TestFeed>,
+    );
+    scrollToIndexMock.mockClear();
+
+    rerender(
+      <TestFeed>
+        <ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive />
+      </TestFeed>,
+    );
+
+    expect(scrollToIndexMock).toHaveBeenCalled();
+  });
 });

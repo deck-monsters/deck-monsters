@@ -130,7 +130,9 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   // Register command-insert function so external callers (CommandReference, etc.) can populate the input
   useEffect(() => {
-    registerInsertFn((command: string) => {
+    // The unregister matters: without it a dead console's setter stays registered and
+    // swallows the next quick link. See 10b-bugs-fixed.md #133.
+    return registerInsertFn((command: string) => {
       setInputValue(command);
       inputRef.current?.focus();
     });
