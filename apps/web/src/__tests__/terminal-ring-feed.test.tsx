@@ -32,6 +32,9 @@ vi.mock('../lib/auth-context.js', () => ({
 vi.mock('../lib/command-insert-context.js', () => ({
   useCommandInsert: () => ({
     registerInsertFn: () => undefined,
+    // Terminal registers how to reveal a surface so handbook deep links can show the
+    // console — see 10b-bugs-fixed.md #126. Not exercised here, but it must exist.
+    registerRevealSurface: () => undefined,
   }),
 }));
 

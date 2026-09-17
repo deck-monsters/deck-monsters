@@ -4,8 +4,8 @@
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#125). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#125).
+post-merge passes (#112–#126). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#126).
 
 ## Active Items
 
@@ -193,10 +193,21 @@ bug does not exist. Where a WebKit-specific cause is suspected, prefer a fix tha
 the precondition over one that depends on layout behaviour, and say plainly that it is
 unconfirmed.
 
-### H. The handbook's monster-manual button lands on an empty pane
+### H. The handbook's monster-manual button lands on an empty pane — FIXED (#126)
 
 **Reported**: from the help view, the monster-manual button navigates to where the console
 used to be, but with the tabbed layout the console may not be in a slot, and the button does
-not select it. The user lands on whatever surface happens to be mounted. A regression from
-the surfaces-in-slots work (roadmap 20) — deep links into a surface must now *select* it,
-not assume it is visible.
+not select it.
+
+**Confirmed in code.** `insertCommand` was `insertFnRef.current?.(command)` — an optional
+chain on a ref that only `ConsolePane` sets on mount. Two failure modes followed, and the
+report describes both: with the console in no slot the click did nothing at all and the
+panel just closed; with the console mounted but not the active tab the command ran where
+nobody could see it. Before the slots work the console was always on screen, so the ref was
+always set and the assumption held.
+
+**Fixed as #126**: the host (`Terminal`) registers how to reveal a surface, and
+`insertCommand` asks for the console before inserting. Revealing is not instant, so a
+command with no console yet is held and flushed by the next `registerInsertFn` rather than
+dropped. Generalised to `revealSurface(surfaceId)` rather than a console special case, since
+this is the shape every future deep link needs.

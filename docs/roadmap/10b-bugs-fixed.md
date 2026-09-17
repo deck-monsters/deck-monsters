@@ -2390,3 +2390,30 @@ See the standing limitation recorded under `10-bug-fixes.md` G: all visual verif
 is Chromium-only, so a clean render is not evidence that a reported visual bug is absent.
 
 **Status**: Fixed in code; unconfirmed on device.
+
+---
+
+### 126. Handbook quick links did nothing when the console was not in a slot — FIXED
+
+**Root cause**: `insertCommand` was `insertFnRef.current?.(command)`, and only `ConsolePane`
+sets that ref, on mount. Before the surfaces-in-slots work the console was always on screen,
+so the optional chain never mattered. Once the console became one of five surfaces competing
+for two slots, the handbook's quick links ("Monster Manual", "Handbook", "Card List") had two
+ways to fail: with the console in neither slot the click did nothing at all and the reference
+panel simply closed, and with the console mounted but not the active tab the command ran
+somewhere the player could not see.
+
+The general lesson, worth keeping: a deep link into a surface must now *ask for that surface
+to be shown*. It can no longer assume the surface it targets is on screen, and a silent
+optional chain turns that assumption into a no-op rather than an error.
+
+**Fixed**: `Terminal` registers a `revealSurface` function with the command-insert context,
+and `insertCommand` calls it for the console before inserting. Because revealing takes a
+render, a command arriving with no console registered is held and flushed by the next
+`registerInsertFn` instead of being dropped — and flushed exactly once, since `ConsolePane`
+re-registers on re-render and replaying would re-run the command.
+
+Generalised to `revealSurface(surfaceId)` rather than a console special case: that is the
+shape every future deep link needs.
+
+**Status**: Fixed.
