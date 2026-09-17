@@ -322,26 +322,38 @@ button {
   padding: 0.2rem 0.5rem;
 }
 
+/*
+  The label used to be absolutely positioned over the fill, in `--color-fg-bright` on an
+  `--color-accent` background: 1.02:1 in phosphor, 1.14:1 in ember, 1.65:1 in amber — all
+  of them two light pastels on each other, so the meter read as a solid coloured block
+  with no text. It failed hardest at a full deck, where the fill covers the whole label.
+  Text on a variable-width fill cannot be made readable with one colour, so the count now
+  sits beside the bar on the panel background instead. See 10b-bugs-fixed.md #120.
+*/
 .workshop-slot-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   min-width: 98px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  position: relative;
-  height: 14px;
-}
-
-.workshop-slot-meter > div {
-  background: var(--color-accent);
-  height: 100%;
 }
 
 .workshop-slot-meter > span {
-  position: absolute;
-  inset: 0;
-  text-align: center;
   font-size: 0.62rem;
-  line-height: 14px;
-  color: var(--color-fg-bright);
+  color: var(--color-fg-dim);
+  white-space: nowrap;
+}
+
+.workshop-slot-meter-track {
+  flex: 1;
+  min-width: 2rem;
+  height: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.workshop-slot-meter-track > div {
+  background: var(--color-accent);
+  height: 100%;
 }
 
 .workshop-slot-grid {
@@ -696,7 +708,14 @@ button {
   .workshop-preset-row { flex-wrap: wrap; }
   .workshop-select,
   .workshop-input { min-width: min(100%, 12rem); }
-  .workshop-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /*
+    3-up, matching `.workshop-slot-grid` in the monster panel directly above it. At 2-up
+    the inventory's cards were half again as wide as the equipped slots they get dragged
+    onto — the same card at two sizes on one screen — and 20 unequipped cards became ten
+    tall rows to scroll past. The monster panel proves 3-up is legible here: its columns
+    are ~85px against the inventory's ~112px. See 10b-bugs-fixed.md #121.
+  */
+  .workshop-card-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .workshop-monster-panel { flex-basis: min(88cqw, 25rem); }
   .workshop-header-actions .btn,
   .workshop-inline-btn,
@@ -708,6 +727,13 @@ button {
 
 @container workshop (max-width: 280px) {
   .workshop-card-grid { grid-template-columns: 1fr; }
+  /*
+    `.workshop-slot-grid`'s three `minmax(70px, …)` columns need 222px plus the panel's
+    own padding, which a pane this narrow does not have — so it was overflowing rather
+    than reflowing. It had no narrow-width rule at all because the container queries were
+    written for the inventory grid only.
+  */
+  .workshop-slot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .workshop-monster-title,

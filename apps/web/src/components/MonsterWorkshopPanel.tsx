@@ -107,9 +107,24 @@ export default function MonsterWorkshopPanel({
             {monster.type}, L{monster.level}
           </p>
         </div>
-        <div className="workshop-slot-meter" aria-label={`${monster.cards.length} of ${monster.cardSlots} slots used`}>
-          <div style={{ width: `${usagePct}%` }} />
+        {/*
+          The count sits beside the bar, not on top of it. Overlaid, it was drawn in
+          `--color-fg-bright` over an `--color-accent` fill — 1.02:1 contrast in the
+          phosphor theme, i.e. invisible, and worst at a full deck where the fill reaches
+          the whole label. See 10b-bugs-fixed.md #120.
+        */}
+        <div className="workshop-slot-meter">
           <span>{monster.cards.length}/{monster.cardSlots} slots</span>
+          <div
+            className="workshop-slot-meter-track"
+            role="progressbar"
+            aria-valuenow={monster.cards.length}
+            aria-valuemin={0}
+            aria-valuemax={monster.cardSlots}
+            aria-label={`${monster.cards.length} of ${monster.cardSlots} slots used`}
+          >
+            <div style={{ width: `${usagePct}%` }} />
+          </div>
         </div>
       </div>
       <div className="workshop-monster-actions">
