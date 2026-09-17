@@ -114,4 +114,47 @@ ${customHit.stats}`);
 				expect(hitCheckStub.callCount).to.equal(1);
 			});
 	});
+
+	/**
+	 * A delayed hit lands out of turn, several turns after it was played. Reported as
+	 * confusing when it triggers: nothing in the feed tied the counter-attack back to the
+	 * card that set it up. See 10b-bugs-fixed.md #130.
+	 */
+	describe('reading a delayed hit in the feed', () => {
+		it('marks the setup line with the card icon, like the payoff lines', () => {
+			const narrations: string[] = [];
+			const card = new DelayedHit();
+			card.on('narration', (_klass: unknown, _card: unknown, { narration }: { narration: string }) =>
+				narrations.push(narration));
+
+			const player = {
+				givenName: 'Stonefang',
+				pronouns: { he: 'he', him: 'him', his: 'his' },
+				encounterModifiers: {},
+			};
+			card.effect(player as never, player as never, { encounterEffects: [] } as never);
+
+			expect(narrations[0]).to.contain(card.icon);
+		});
+
+		it('does not open a narration with a blank line', () => {
+			// It was the only card in the directory that did, which showed up as stray
+			// vertical space in the feed.
+			const narrations: string[] = [];
+			const card = new DelayedHit();
+			card.on('narration', (_klass: unknown, _card: unknown, { narration }: { narration: string }) =>
+				narrations.push(narration));
+
+			const player = {
+				givenName: 'Stonefang',
+				pronouns: { he: 'he', him: 'him', his: 'his' },
+				encounterModifiers: {},
+			};
+			card.effect(player as never, player as never, { encounterEffects: [] } as never);
+
+			for (const narration of narrations) {
+				expect(narration.startsWith('\n')).to.equal(false);
+			}
+		});
+	});
 });

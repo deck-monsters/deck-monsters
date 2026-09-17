@@ -2510,3 +2510,31 @@ neither jsdom nor a headless Chromium render reproduces. See the standing limita
 `10-bug-fixes.md` G.
 
 **Status**: Fixed in code; unconfirmed on device.
+
+---
+
+### 130. A delayed hit landed with nothing tying it to the card that armed it — FIXED
+
+**Root cause**: `DelayedHit` plays on one turn and resolves on a later one, when someone
+else strikes. Both of its payoff narrations carry the card's 🤛; the setup line did not. So
+a reader saw an unremarkable "X spreads his focus across the battlefield", and then, turns
+later, a hit landing outside the normal turn order with only the reader's memory connecting
+the two. Out-of-turn damage with no visible cause reads as the feed misbehaving rather than
+as a card working.
+
+**Fixed**: the setup line carries the icon too, so the same mark opens and closes the
+sequence. Deliberately the smallest change that makes the link visible — no new wording,
+since whether the trigger line should *name* the card is a voice decision and no card in the
+engine currently names itself in narration.
+
+**Found alongside it** (part of the "odd spacing" report): `delayed-hit.ts` held the only two
+narrations in `cards/` that opened with a literal `\n`, which the feed rendered as stray
+vertical space. Copy-paste drift — the other cards do not do it. Confirmed by sweeping the
+directory.
+
+**Also cleaned up while in there**: the trigger guard read
+`!delayingTarget.encounterModifiers.timeShifted === true`, which parses as
+`(!timeShifted) === true` — the same test, written as though comparing to `true`. Behaviour
+unchanged; it now says what it means.
+
+**Status**: Fixed.

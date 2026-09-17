@@ -4,8 +4,8 @@
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#129). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#129).
+post-merge passes (#112–#130). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#130).
 
 ## Active Items
 
@@ -202,11 +202,25 @@ opened by the flag, closed by a handshake — so any recovery without one strand
 Fixed as #128: any frame is proof of life and clears the state, and whatever opens the
 divider closes it.
 
-### E. Delayed-hit cards are confusing when they trigger
+### E. Delayed-hit cards are confusing when they trigger — PARTLY FIXED (#130)
 
 A card whose effect lands on a later turn produces its hit with no line tying it back to the
-card that caused it, so the damage appears to come from nowhere. Wants a contextual
-announcement naming the originating card at trigger time.
+card that caused it, so the damage appears to come from nowhere.
+
+**What was actually there.** `DelayedHit` does narrate on trigger — "X immediately responds
+to the blow Y gave him", or a dying-breath variant — so the announcement is not missing
+outright. What was missing is the *link*: both payoff lines carry the card's 🤛, and the
+setup line ("spreads his focus across the battlefield") did not. Nothing but the reader's
+memory connected a counter-attack several turns later to the card that armed it.
+
+**Fixed as #130**: the setup line carries the icon too, so the same mark opens and closes
+the sequence. That is the smallest change that makes the connection visible, and it invents
+no new wording.
+
+**Still open, and a voice call for the owner**: whether the trigger line should *name* the
+card outright ("Delayed Hit — X immediately responds…"). No card in the engine currently
+names itself in narration, so doing it here would start a convention, and conventions about
+the game's voice belong to the owner rather than to whoever is fixing the bug.
 
 ### I. Opening a surface in a pane vs. full screen is confusing and inconsistent
 
@@ -222,11 +236,21 @@ be revealed). Nothing ties them together into one model a player could state in 
 Worth designing as a whole rather than patched further; see `20-workspace-layout.md`, whose
 §3 surfaces-in-slots model this would revisit. **Do not start without the owner's direction.**
 
-### F. Odd spacing in some messages
+### F. Odd spacing in some messages — ONE INSTANCE FIXED (#130), rest open
 
-Extra blank lines, and indentation that does not line up, in certain feed messages. Needs
-specific examples captured before chasing — the card-display block and the turn banner are
-the likeliest suspects given their history (#97, #101).
+Extra blank lines, and indentation that does not line up, in certain feed messages.
+
+**One confirmed instance, fixed**: `DelayedHit` was the only card in `cards/` whose
+narrations opened with a literal `\n` — two of them — which the feed rendered as stray
+vertical space before the line. Copy-paste drift rather than intent; the other ~60 cards do
+not do it. Swept the directory to confirm it was the only one.
+
+**Rest still open.** No other specific example has been captured. The card-display block and
+the turn banner remain the likeliest suspects given their history (#97, #101), and the
+indentation half of the report is unexplained — the fight-log list markers (G) turned out to
+be a separate WebKit issue, not indentation. Worth capturing a screenshot of a *specific*
+message that looks wrong rather than sweeping, since a sweep already found the one obvious
+case.
 
 ### G. Ordered-list markers clipped in the fight-log event history — FIXED (#125), unconfirmed on device
 
