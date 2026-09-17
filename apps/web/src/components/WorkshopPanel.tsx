@@ -46,6 +46,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     deletePreset,
     reviveMonster,
     sendMonsterToRing,
+    useItem,
     refresh,
   } = useDeckWorkshop(roomId);
 
@@ -67,6 +68,18 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       setMessage(`${monsterName} was sent to the ring.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Send failed');
+    }
+  }
+
+  async function handleUseItem({ itemName, monsterName }: { itemName: string; monsterName?: string }) {
+    // ItemsPanel already confirmed, which is what lets the server skip the engine's own
+    // "Are you sure?" prompt — see `items/helpers/use.ts`.
+    try {
+      setError(null);
+      await useItem({ itemName, monsterName });
+      setMessage(monsterName ? `Used ${itemName} on ${monsterName}.` : `Used ${itemName}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not use that item');
     }
   }
 
@@ -507,7 +520,12 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       />
       </div>
 
-      <ItemsPanel items={items} monsters={monsters} />
+      <ItemsPanel
+        items={items}
+        monsters={monsters}
+        busy={busy}
+        onUseItem={(input) => void handleUseItem(input)}
+      />
     </div>
   );
 }

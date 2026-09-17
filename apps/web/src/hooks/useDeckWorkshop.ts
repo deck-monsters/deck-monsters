@@ -68,6 +68,14 @@ export function useDeckWorkshop(roomId?: string) {
   const deletePresetMutation = trpc.game.deletePreset.useMutation(mutationOptions);
   const reorderCardsMutation = trpc.game.reorderCards.useMutation(mutationOptions);
   const reviveMonsterMutation = trpc.game.reviveMonster.useMutation(mutationOptions);
+  // Using an item can change a live fight (a heal mid-encounter), so the ring state is
+  // refreshed alongside the inventory rather than waiting for the next poll.
+  const useItemMutation = trpc.game.useItem.useMutation({
+    onSuccess: async () => {
+      await invalidateWorkshop();
+      if (roomId) await utils.game.ringState.invalidate({ roomId });
+    },
+  });
   const sendMonsterToRingMutation = trpc.game.sendMonsterToRing.useMutation({
     onSuccess: async () => {
       await invalidateWorkshop();
@@ -96,10 +104,12 @@ export function useDeckWorkshop(roomId?: string) {
       loadPresetMutation.isPending ||
       deletePresetMutation.isPending ||
       reviveMonsterMutation.isPending ||
+      useItemMutation.isPending ||
       sendMonsterToRingMutation.isPending,
     [
       deletePresetMutation.isPending,
       reviveMonsterMutation.isPending,
+      useItemMutation.isPending,
       sendMonsterToRingMutation.isPending,
       equipCardsMutation.isPending,
       inventoryQuery.isFetching,
@@ -135,6 +145,7 @@ export function useDeckWorkshop(roomId?: string) {
       loadPresetMutation.error?.message ??
       deletePresetMutation.error?.message ??
       reviveMonsterMutation.error?.message ??
+      useItemMutation.error?.message ??
       sendMonsterToRingMutation.error?.message,
     refresh: () => inventoryQuery.refetch(),
     reviveMonster: (input: { monsterName: string }) => {
@@ -144,6 +155,10 @@ export function useDeckWorkshop(roomId?: string) {
     sendMonsterToRing: (input: { monsterName: string }) => {
       if (!roomId) throw new Error('Room not selected');
       return sendMonsterToRingMutation.mutateAsync({ roomId, ...input });
+    },
+    useItem: (input: { itemName: string; monsterName?: string }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return useItemMutation.mutateAsync({ roomId, ...input });
     },
     equipCards: (input: { monsterName: string; cardNames: string[]; replaceAll?: boolean }) => {
       if (!roomId) throw new Error('Room not selected');

@@ -113,6 +113,41 @@ export function classifyItem(
   return { item, source, tier: 2, reason: REASON_NOT_USABLE_RIGHT_NOW };
 }
 
+/** Where a use would land. `character` carries no monster name — see the `useItem` procedure. */
+export type UseTarget = { kind: 'character' } | { kind: 'monster'; monsterName: string };
+
+/**
+ * The valid targets for using this item right now, derived from the same facts that decided
+ * its tier — so the button can never offer a target the engine will refuse.
+ *
+ * A monster's own carried item only ever targets that monster: once it is `inEncounter` the
+ * engine narrows the usable pool to `monster.items`, and off the bench using one monster's
+ * item on another is the "odd and likely a mistake" case §7 dims rather than forbids.
+ *
+ * A pocket item can have several targets, which is the ordinary case — a healing potion and
+ * three benched monsters. Anything mid-fight is excluded: a fighting monster can only reach
+ * what it carried in.
+ */
+export function resolveUseTargets(entry: TieredItem, monsters: TierMonsterState[]): UseTarget[] {
+  if (entry.tier !== 1) return [];
+
+  if (entry.source.kind === 'monster') {
+    return [{ kind: 'monster', monsterName: entry.source.monsterName }];
+  }
+
+  const byName = new Map(monsters.map((monster) => [monster.name, monster]));
+  const targets: UseTarget[] = [];
+
+  if (entry.item.usableOnCharacter) targets.push({ kind: 'character' });
+
+  for (const name of entry.item.usableOnMonsters) {
+    const monster = byName.get(name);
+    if (monster && !monster.inEncounter) targets.push({ kind: 'monster', monsterName: name });
+  }
+
+  return targets;
+}
+
 /**
  * Sort comparator: tier ascending (1 before 2 before 3), then alphabetically by display
  * name within a tier, so re-renders don't jitter row order as unrelated state changes.

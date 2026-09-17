@@ -2318,3 +2318,20 @@ vertical bars. The tap target has to be a button that draws nothing, with the ma
 See `docs/roadmap/20-workspace-layout.md` §5g.
 
 **Status**: Fixed.
+
+---
+
+### 123. The item use controls hung outside the panel — FIXED
+
+Found while rendering the new use affordance (#124 work) at phone width, before it shipped.
+
+**Root cause**: `.workshop-select` carries `min-width: min(100%, 12rem)` inside the 520px
+container query. On a row with a target picker *and* a use button, 12rem plus the button
+exceeded the row, and because the group did not wrap, the button rendered outside the
+panel's own border. Measured in Chromium at 393px.
+
+**Fixed**: the use group wraps, and the picker may shrink inside it rather than holding a
+width the row cannot give. Guarded by a CSS assertion test, since jsdom cannot measure
+layout — the same limitation that let #114, #116 and #122 through.
+
+**Status**: Fixed.

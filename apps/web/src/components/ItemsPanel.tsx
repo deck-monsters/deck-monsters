@@ -1,4 +1,12 @@
-import { buildTieredItemList, type ItemSummary, type TierMonsterState, type TieredItem } from '../utils/item-tiers.js';
+import { useState } from 'react';
+import {
+  buildTieredItemList,
+  resolveUseTargets,
+  type ItemSummary,
+  type TierMonsterState,
+  type TieredItem,
+  type UseTarget,
+} from '../utils/item-tiers.js';
 
 export type ItemsPanelMonster = TierMonsterState;
 
@@ -8,16 +16,26 @@ interface ItemsPanelProps {
     monsters: Array<{ monsterName: string; items: ItemSummary[] }>;
   };
   monsters: ItemsPanelMonster[];
+  busy?: boolean;
+  onUseItem?: (input: { itemName: string; monsterName?: string }) => void;
 }
 
 function sourceLabel(source: TieredItem['source']): string {
   return source.kind === 'character' ? 'Your pocket' : source.monsterName;
 }
 
+function targetLabel(target: UseTarget): string {
+  return target.kind === 'character' ? 'yourself' : target.monsterName;
+}
+
 function tierTitle(entry: TieredItem): string {
   const parts = [entry.item.displayName, entry.item.stats];
   if (entry.reason) parts.push(entry.reason);
   return parts.join(' — ');
+}
+
+function rowKey(entry: TieredItem, index: number): string {
+  return `${sourceLabel(entry.source)}-${entry.item.displayName}-${index}`;
 }
 
 /**
@@ -27,15 +45,31 @@ function tierTitle(entry: TieredItem): string {
  * already uses for `.workshop-card-slot.incompatible` (dim + dashed border), plus a reason
  * for why, because a dimmed row with no reason reads as a bug.
  *
- * Display-only for now: there is no `use item` tRPC mutation yet (only the generic
- * `game.command` text pipeline), and the one-tap mid-fight affordance from §7 is explicitly
- * a later step (the ring pane, not the workshop). This panel gives the pre-fight stocking
- * decision — "what did I actually carry into the ring" — the visibility §6/§7 call for.
+ * Tier-1 rows now carry a real use button, backed by the `game.useItem` mutation. The
+ * targets it offers come from `resolveUseTargets`, derived from the same facts that set the
+ * tier, so the button cannot offer a target the engine will refuse. The confirm is what
+ * lets the server pass `confirmed: true` and skip the engine's own prompt — see
+ * `items/helpers/use.ts`.
+ *
+ * Still to come (§7): the one-tap affordance on the *ring pane* during a live fight. This
+ * panel is the pre-fight stocking decision; that one is the mid-fight lever.
  */
-export default function ItemsPanel({ items, monsters }: ItemsPanelProps) {
+export default function ItemsPanel({ items, monsters, busy, onUseItem }: ItemsPanelProps) {
   const tiered = buildTieredItemList(items, monsters);
   const usableNowCount = tiered.filter((entry) => entry.tier === 1).length;
   const totalCount = tiered.length;
+  // Only set for rows with more than one valid target; a single-target row needs no picker.
+  const [chosenTarget, setChosenTarget] = useState<Record<string, string>>({});
+
+  function handleUse(entry: TieredItem, target: UseTarget) {
+    if (!onUseItem) return;
+    const itemName = entry.item.displayName;
+    if (!window.confirm(`Use ${itemName} on ${targetLabel(target)}?`)) return;
+    onUseItem({
+      itemName,
+      monsterName: target.kind === 'monster' ? target.monsterName : undefined,
+    });
+  }
 
   return (
     <section className="workshop-items">
@@ -52,29 +86,71 @@ export default function ItemsPanel({ items, monsters }: ItemsPanelProps) {
         <div className="workshop-empty-state">No items yet.</div>
       ) : (
         <ul className="workshop-item-list">
-          {tiered.map((entry, index) => (
-            <li
-              key={`${sourceLabel(entry.source)}-${entry.item.displayName}-${index}`}
-              className={[
-                'workshop-item-row',
-                `tier-${entry.tier}`,
-                entry.tier !== 1 ? 'incompatible' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              title={tierTitle(entry)}
-              aria-disabled={entry.tier !== 1}
-            >
-              <div className="workshop-item-row-main">
-                <span className="workshop-item-name">{entry.item.displayName}</span>
-                <span className="workshop-item-source">{sourceLabel(entry.source)}</span>
-              </div>
-              <div className="workshop-item-row-meta">
-                <span className="workshop-item-stats">{entry.item.stats}</span>
-                {entry.reason && <span className="workshop-item-reason">{entry.reason}</span>}
-              </div>
-            </li>
-          ))}
+          {tiered.map((entry, index) => {
+            const key = rowKey(entry, index);
+            const targets = resolveUseTargets(entry, monsters);
+            const selectedKey = chosenTarget[key] ?? (targets[0] ? targetLabel(targets[0]) : '');
+            const target = targets.find((candidate) => targetLabel(candidate) === selectedKey) ?? targets[0];
+
+            return (
+              <li
+                key={key}
+                className={[
+                  'workshop-item-row',
+                  `tier-${entry.tier}`,
+                  entry.tier !== 1 ? 'incompatible' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                title={tierTitle(entry)}
+                aria-disabled={entry.tier !== 1}
+              >
+                <div className="workshop-item-row-main">
+                  <span className="workshop-item-name">{entry.item.displayName}</span>
+                  <span className="workshop-item-source">{sourceLabel(entry.source)}</span>
+                </div>
+                <div className="workshop-item-row-meta">
+                  <span className="workshop-item-stats">{entry.item.stats}</span>
+                  {entry.reason && <span className="workshop-item-reason">{entry.reason}</span>}
+                  {onUseItem && target && (
+                    <span className="workshop-item-use">
+                      {targets.length > 1 && (
+                        <select
+                          className="workshop-select"
+                          aria-label={`Target for ${entry.item.displayName}`}
+                          value={selectedKey}
+                          disabled={busy}
+                          onChange={(event) =>
+                            setChosenTarget((current) => ({ ...current, [key]: event.target.value }))
+                          }
+                        >
+                          {targets.map((candidate) => (
+                            <option key={targetLabel(candidate)} value={targetLabel(candidate)}>
+                              {targetLabel(candidate)}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {/*
+                        Visible text stays "Use" — the row already names the item — but a
+                        screen reader hears a list of identical "Use" buttons without the
+                        label, which is the classic ambiguous-button-name problem.
+                      */}
+                      <button
+                        type="button"
+                        className="btn workshop-inline-btn"
+                        disabled={busy}
+                        aria-label={`Use ${entry.item.displayName} on ${targetLabel(target)}`}
+                        onClick={() => handleUse(entry, target)}
+                      >
+                        Use
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
