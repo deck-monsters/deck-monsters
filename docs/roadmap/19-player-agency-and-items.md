@@ -378,7 +378,30 @@ change for the server half.
   tier, so the button cannot offer a target the engine will refuse. The web confirm is what
   stands in for the engine's prompt.
 
+**Three things review caught in the first cut, worth keeping straight**
+
+- **`canUseItem` is only `canHoldItem`** — a compatibility check, with no runtime
+  conditions in it. A tier-1 classification therefore does *not* prove the item's action
+  can run: Spin Up refuses a living monster, a healing potion refuses a dead one. The engine
+  declines and does **not** consume the item, so nothing is wasted, but the first cut
+  reported success anyway. `useItem` now returns `applied`, and the panel says "had no
+  effect … it was not used up" rather than claiming a use. Mirroring each item's conditions
+  client-side was the alternative and would have drifted from the engine immediately.
+- **The same item type can sit in both pools.** With a monster out of an encounter the pool
+  is `[...monster.items, ...character.items]` and a name match takes the first hit, so
+  clicking the pocket row spent the copy stocked on the monster. The click now carries
+  `itemSource`; chat callers, who cannot express it, keep first-match behaviour.
+- **An item can ask its own question.** `SortingHat.action` prompts for a team, and
+  `useItem`'s channel rejects prompts — so the panel was advertising an item that could only
+  ever fail after the confirm. Items now declare `requiresPrompt`, and the panel dims those
+  with a reason pointing at the console. Supporting item-driven prompts over tRPC is real
+  work and belongs with the ring-pane affordance, not before it.
+
 **Not shipped, and the next real work**
+0. **Item-driven prompts over tRPC.** The Sorting Hat is the only item that prompts today,
+   and it is currently unusable from the web by design rather than by accident. Supporting it
+   means carrying a choice into the mutation, or a two-step call. Wants doing alongside the
+   ring-pane affordance, since both are about acting without leaving the fight.
 1. **The ring-pane affordance** (§6 item 1) — the list's real home, and the actual one-tap
    mid-fight lever. The workshop panel is the *pre-fight stocking* decision; reaching for a
    potion while a fight is running still means leaving the ring feed for the workshop, or

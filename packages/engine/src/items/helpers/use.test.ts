@@ -180,4 +180,77 @@ describe('./items/helpers/use.ts', () => {
 			expect(useStub.calledOnce).to.equal(true);
 		});
 	});
+
+	/**
+	 * Both pools can hold the same item type. The pool is `[...monster.items,
+	 * ...character.items]` and a name match takes the first hit, so without a source the
+	 * monster's copy is spent even when the player clicked the one in their pocket.
+	 * Reported by Codex review on #372.
+	 */
+	describe('itemSource', () => {
+		it("takes the character's copy when the character's row was clicked", () => {
+			const character = makeCharacter();
+			const monster = makeMonster();
+			const pocketCopy = new ChaosTheoryScroll();
+			const stockedCopy = new ChaosTheoryScroll();
+			character.items = [pocketCopy];
+			monster.items = [stockedCopy];
+			const useStub = sinon.stub().resolves();
+
+			return useItems({
+				channel: channelStub,
+				character,
+				confirmed: true,
+				itemSelection: ['chaos theory for beginners'],
+				itemSource: 'character',
+				monster,
+				use: useStub
+			}).then(() => {
+				expect(useStub.firstCall.args[0].item).to.equal(pocketCopy);
+			});
+		});
+
+		it("takes the monster's copy when the monster's row was clicked", () => {
+			const character = makeCharacter();
+			const monster = makeMonster();
+			const pocketCopy = new ChaosTheoryScroll();
+			const stockedCopy = new ChaosTheoryScroll();
+			character.items = [pocketCopy];
+			monster.items = [stockedCopy];
+			const useStub = sinon.stub().resolves();
+
+			return useItems({
+				channel: channelStub,
+				character,
+				confirmed: true,
+				itemSelection: ['chaos theory for beginners'],
+				itemSource: 'monster',
+				monster,
+				use: useStub
+			}).then(() => {
+				expect(useStub.firstCall.args[0].item).to.equal(stockedCopy);
+			});
+		});
+
+		it('keeps first-match behaviour when no source is named, for chat callers', () => {
+			const character = makeCharacter();
+			const monster = makeMonster();
+			const pocketCopy = new ChaosTheoryScroll();
+			const stockedCopy = new ChaosTheoryScroll();
+			character.items = [pocketCopy];
+			monster.items = [stockedCopy];
+			const useStub = sinon.stub().resolves();
+
+			return useItems({
+				channel: channelStub,
+				character,
+				confirmed: true,
+				itemSelection: ['chaos theory for beginners'],
+				monster,
+				use: useStub
+			}).then(() => {
+				expect(useStub.firstCall.args[0].item).to.equal(stockedCopy);
+			});
+		});
+	});
 });

@@ -4,6 +4,7 @@ import {
   classifyItem,
   compareTieredItems,
   resolveUseTargets,
+  REASON_NEEDS_A_CHOICE,
   REASON_NOT_CARRIED_INTO_RING,
   REASON_NOT_IN_RING,
   REASON_NOT_USABLE_RIGHT_NOW,
@@ -297,6 +298,51 @@ describe('buildTieredItemList', () => {
         { kind: 'character' },
         { kind: 'monster', monsterName: 'Emberclaw' },
       ]);
+    });
+  });
+
+  /**
+   * An item whose own action asks a question cannot run on the prompt-free channel
+   * `game.useItem` uses, so it must not read as usable here. Codex review on #372.
+   */
+  describe('items that ask their own question', () => {
+    it('dims them with a reason rather than offering them', () => {
+      const entry = classifyItem(
+        item({ displayName: 'Sorting Hat', usableOnCharacter: true, requiresPrompt: true }),
+        { kind: 'character' },
+        [],
+      );
+
+      expect(entry.tier).toBe(2);
+      expect(entry.reason).toBe(REASON_NEEDS_A_CHOICE);
+    });
+
+    it('offers no targets for one', () => {
+      const entry = classifyItem(
+        item({ usableOnCharacter: true, requiresPrompt: true }),
+        { kind: 'character' },
+        [],
+      );
+
+      expect(resolveUseTargets(entry, [])).toEqual([]);
+    });
+
+    it('still shows a spent one as spent — expired outranks everything', () => {
+      const entry = classifyItem(
+        item({ expired: true, requiresPrompt: true }),
+        { kind: 'character' },
+        [],
+      );
+
+      expect(entry.tier).toBe(3);
+    });
+
+    it('treats a payload without the field as non-interactive', () => {
+      // An older cached `myInventory` response predates `requiresPrompt`; degrading to
+      // "not interactive" keeps ordinary items usable rather than hiding all of them.
+      const entry = classifyItem(item({ usableOnCharacter: true }), { kind: 'character' }, []);
+
+      expect(entry.tier).toBe(1);
     });
   });
 });

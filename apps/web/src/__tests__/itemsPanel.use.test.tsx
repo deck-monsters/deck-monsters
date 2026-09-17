@@ -46,7 +46,11 @@ describe('ItemsPanel use affordance', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Use Healing Potion on Emberclaw/i }));
 
-    expect(onUseItem).toHaveBeenCalledWith({ itemName: 'Healing Potion', monsterName: 'Emberclaw' });
+    expect(onUseItem).toHaveBeenCalledWith({
+      itemName: 'Healing Potion',
+      monsterName: 'Emberclaw',
+      itemSource: 'character',
+    });
   });
 
   it('sends no monsterName when the target is the player themself', () => {
@@ -63,7 +67,11 @@ describe('ItemsPanel use affordance', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Use Lottery Ticket/i }));
 
-    expect(onUseItem).toHaveBeenCalledWith({ itemName: 'Lottery Ticket', monsterName: undefined });
+    expect(onUseItem).toHaveBeenCalledWith({
+      itemName: 'Lottery Ticket',
+      monsterName: undefined,
+      itemSource: 'character',
+    });
   });
 
   it('asks before spending an item, which is what lets the server skip the engine prompt', () => {
@@ -97,7 +105,11 @@ describe('ItemsPanel use affordance', () => {
     fireEvent.change(picker, { target: { value: 'Grix' } });
     fireEvent.click(screen.getByRole('button', { name: /Use Healing Potion on Grix/i }));
 
-    expect(onUseItem).toHaveBeenCalledWith({ itemName: 'Healing Potion', monsterName: 'Grix' });
+    expect(onUseItem).toHaveBeenCalledWith({
+      itemName: 'Healing Potion',
+      monsterName: 'Grix',
+      itemSource: 'character',
+    });
   });
 
   it('offers no button on a row that cannot be used right now', () => {
@@ -137,6 +149,86 @@ describe('ItemsPanel use affordance', () => {
     );
 
     expect(screen.getByRole('button', { name: /Use Healing Potion/i }).hasAttribute('disabled')).toBe(true);
+  });
+});
+
+/**
+ * Both pools can hold the same item type, and the engine's name match takes the monster's
+ * copy first — so a click on the pocket row without a source spends the one deliberately
+ * stocked on the monster. Codex review on #372.
+ */
+describe('the clicked row decides which copy is spent', () => {
+  beforeEach(() => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("names the monster as the source when the monster's own row is used", () => {
+    const onUseItem = vi.fn();
+    const inRing: TierMonsterState = { name: 'Stonefang', inRing: true, inEncounter: true };
+    render(
+      <ItemsPanel
+        items={{
+          character: [],
+          monsters: [
+            { monsterName: 'Stonefang', items: [item({ displayName: 'Carried Bandage', usableOnMonsters: ['Stonefang'] })] },
+          ],
+        }}
+        monsters={[inRing]}
+        onUseItem={onUseItem}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Use Carried Bandage on Stonefang/i }));
+
+    expect(onUseItem).toHaveBeenCalledWith({
+      itemName: 'Carried Bandage',
+      monsterName: 'Stonefang',
+      itemSource: 'monster',
+    });
+  });
+});
+
+/**
+ * The Sorting Hat's own action asks which team. `game.useItem` runs on a channel that
+ * rejects questions, so offering it here meant confirming and then failing every time.
+ * Codex review on #372.
+ */
+describe('items that ask their own question are not offered here', () => {
+  it('dims an interactive item and says where it can be used', () => {
+    render(
+      <ItemsPanel
+        items={{
+          ...noItems,
+          character: [item({ displayName: 'Sorting Hat', usableOnCharacter: true, requiresPrompt: true })],
+        }}
+        monsters={[]}
+        onUseItem={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /^Use/i })).toBeNull();
+    expect(screen.getByText(/Asks a question/i)).toBeTruthy();
+  });
+
+  it('still offers a non-interactive item beside it', () => {
+    render(
+      <ItemsPanel
+        items={{
+          ...noItems,
+          character: [
+            item({ displayName: 'Sorting Hat', usableOnCharacter: true, requiresPrompt: true }),
+            item({ displayName: 'Lottery Ticket', usableOnCharacter: true }),
+          ],
+        }}
+        monsters={[]}
+        onUseItem={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /Use Lottery Ticket/i })).toBeTruthy();
   });
 });
 

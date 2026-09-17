@@ -71,13 +71,32 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     }
   }
 
-  async function handleUseItem({ itemName, monsterName }: { itemName: string; monsterName?: string }) {
+  async function handleUseItem({
+    itemName,
+    monsterName,
+    itemSource,
+  }: {
+    itemName: string;
+    monsterName?: string;
+    itemSource: 'character' | 'monster';
+  }) {
     // ItemsPanel already confirmed, which is what lets the server skip the engine's own
     // "Are you sure?" prompt — see `items/helpers/use.ts`.
     try {
       setError(null);
-      await useItem({ itemName, monsterName });
-      setMessage(monsterName ? `Used ${itemName} on ${monsterName}.` : `Used ${itemName}.`);
+      const result = await useItem({ itemName, monsterName, itemSource });
+      const on = monsterName ? ` on ${monsterName}` : '';
+      /*
+       * `applied` is false when the item's own conditions were not met — Spin Up on a
+       * living monster, a healing potion on a dead one. The engine declines and does not
+       * spend the item; saying "Used it" would be a lie, and the player would wonder why
+       * nothing changed.
+       */
+      setMessage(
+        result?.applied === false
+          ? `${itemName} had no effect${on} right now — it was not used up.`
+          : `Used ${itemName}${on}.`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not use that item');
     }

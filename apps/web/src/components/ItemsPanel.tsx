@@ -17,7 +17,11 @@ interface ItemsPanelProps {
   };
   monsters: ItemsPanelMonster[];
   busy?: boolean;
-  onUseItem?: (input: { itemName: string; monsterName?: string }) => void;
+  onUseItem?: (input: {
+    itemName: string;
+    monsterName?: string;
+    itemSource: 'character' | 'monster';
+  }) => void;
 }
 
 function sourceLabel(source: TieredItem['source']): string {
@@ -68,6 +72,9 @@ export default function ItemsPanel({ items, monsters, busy, onUseItem }: ItemsPa
     onUseItem({
       itemName,
       monsterName: target.kind === 'monster' ? target.monsterName : undefined,
+      // Which row was clicked. Both pools can hold the same item type, and without this the
+      // engine's name match takes the monster's copy — spending one deliberately stocked.
+      itemSource: entry.source.kind,
     });
   }
 

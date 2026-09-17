@@ -68,6 +68,11 @@ type ItemSummary = {
 	usableOnMonsters: string[];
 	// Whether the character can use this item on themself (`usableWithoutMonster` items).
 	usableOnCharacter: boolean;
+	// This item's own action asks a question (the Sorting Hat asks which team), so it can
+	// only be used where a prompt can be answered. `useItem` runs on a prompt-free channel
+	// that rejects questions, so the client must not offer these as usable from the web —
+	// it would confirm and then fail every time.
+	requiresPrompt: boolean;
 };
 
 type InventorySummary = {
@@ -165,6 +170,7 @@ const summarizeItem = (
 			.filter((entry) => canUseItemSafe(entry.monster, item))
 			.map((entry) => entry.summary.name),
 		usableOnCharacter: canUseItemSafe(character, item),
+		requiresPrompt: typeof record.requiresPrompt === 'boolean' ? record.requiresPrompt : false,
 	};
 };
 
@@ -980,6 +986,10 @@ export function createRouter(roomManager: RoomManager) {
 					roomId: z.string().uuid(),
 					itemName: z.string().min(1),
 					monsterName: z.string().min(1).optional(),
+					// Disambiguates a type held both in the character's pocket and on the
+					// target monster — without it the engine's name match takes the monster's
+					// copy, spending an item the player deliberately stocked.
+					itemSource: z.enum(['character', 'monster']).optional(),
 				}),
 			)
 			.mutation(async ({ input, ctx }) => {
@@ -995,16 +1005,34 @@ export function createRouter(roomManager: RoomManager) {
 
 				const commandId = randomUUID();
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
-				await runSerializedMutation(input.roomId, ctx.userId, () =>
+				const results = (await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.useItems({
 						channel,
 						channelName: 'web',
 						confirmed: true,
 						itemSelection: [input.itemName],
+						itemSource: input.itemSource,
 						monsterName: input.monsterName,
 					}),
-				);
-				return { ok: true as const, itemName: input.itemName, monsterName: input.monsterName };
+				)) as unknown;
+
+				/*
+				 * An item whose conditions are not met returns `false` from its `action` and is
+				 * deliberately not consumed — Spin Up on a living monster, a healing potion on a
+				 * dead one. `canUseItem` is only a compatibility check (it is `canHoldItem`), so
+				 * neither the client's tier nor this procedure can know in advance. Reporting
+				 * `ok` regardless told the player the item was used when nothing happened.
+				 */
+				const applied = Array.isArray(results)
+					? results.some((result) => result !== false)
+					: results !== false;
+
+				return {
+					ok: true as const,
+					applied,
+					itemName: input.itemName,
+					monsterName: input.monsterName,
+				};
 			}),
 
 		unequipCard: protectedProcedure

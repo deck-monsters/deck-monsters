@@ -325,6 +325,7 @@ class Beastmaster extends BaseCharacter {
 		confirmed,
 		isMonsterItem,
 		itemSelection,
+		itemSource,
 		monsterName,
 	}: {
 		channel: ChannelFn;
@@ -333,8 +334,16 @@ class Beastmaster extends BaseCharacter {
 		confirmed?: boolean;
 		isMonsterItem?: boolean;
 		itemSelection?: string[];
+		/** See `items/helpers/use.ts` — disambiguates a type held in both pools. */
+		itemSource?: 'character' | 'monster';
 		monsterName?: string;
-	}): Promise<void> {
+		/**
+		 * Resolves with each used item's `action` result. An item whose conditions are not
+		 * met (Spin Up on a living monster, a healing potion on a dead one) returns `false`
+		 * and is deliberately *not* consumed, so a caller that reports success regardless
+		 * tells the player something happened when nothing did.
+		 */
+	}): Promise<unknown[]> {
 		return Promise.resolve()
 			.then(() => {
 				if (monsterName || isMonsterItem) {
@@ -351,6 +360,7 @@ class Beastmaster extends BaseCharacter {
 					character: this as any,
 					confirmed,
 					itemSelection,
+					itemSource,
 					monster: monster as any,
 					use: (options: any) => this.useItem({ channelName, ...options }),
 				}),

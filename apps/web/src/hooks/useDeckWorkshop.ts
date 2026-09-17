@@ -156,7 +156,11 @@ export function useDeckWorkshop(roomId?: string) {
       if (!roomId) throw new Error('Room not selected');
       return sendMonsterToRingMutation.mutateAsync({ roomId, ...input });
     },
-    useItem: (input: { itemName: string; monsterName?: string }) => {
+    useItem: (input: {
+      itemName: string;
+      monsterName?: string;
+      itemSource?: 'character' | 'monster';
+    }) => {
       if (!roomId) throw new Error('Room not selected');
       return useItemMutation.mutateAsync({ roomId, ...input });
     },

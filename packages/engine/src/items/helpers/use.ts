@@ -17,22 +17,36 @@ interface UseItemsOptions {
 	 * to `monster.items`, stay here so there is one source of truth for the rule.
 	 */
 	confirmed?: boolean;
+	/**
+	 * Which pool to take the named item from when both hold the same type.
+	 *
+	 * With a monster that is not in an encounter the pool is
+	 * `[...monster.items, ...character.items]`, and a name match takes the first hit — the
+	 * monster's copy — even when the caller meant the one in the character's pocket. A UI
+	 * that shows *where* each item lives (the web items panel does) then spends the wrong
+	 * one, consuming a copy deliberately stocked on a monster. Naming the source removes
+	 * the ambiguity; leaving it unset keeps the old first-match behaviour for chat callers,
+	 * who have no way to express it.
+	 */
+	itemSource?: 'character' | 'monster';
 	itemSelection?: string[];
 	monster?: any;
 	use: (opts: { channel: any; isMonsterItem: boolean; item: any; monster?: any }) => Promise<any>;
 }
 
-const useItems = ({ channel, character, confirmed, itemSelection, monster, use }: UseItemsOptions): Promise<any> =>
+const useItems = ({ channel, character, confirmed, itemSelection, itemSource, monster, use }: UseItemsOptions): Promise<any> =>
 	Promise.resolve()
 		.then(() => {
 			let items: any[];
 			let targetStr: string;
 
 			if (monster) {
-				items = [...monster.items];
+				items = itemSource === 'character' ? [] : [...monster.items];
 
 				if (!monster.inEncounter) {
-					items = [...items, ...character.items.filter((item: any) => monster.canUseItem(item))];
+					if (itemSource !== 'monster') {
+						items = [...items, ...character.items.filter((item: any) => monster.canUseItem(item))];
+					}
 					targetStr = monster.givenName;
 				} else {
 					targetStr = `${monster.givenName} while ${monster.pronouns.he} is in an encounter`;

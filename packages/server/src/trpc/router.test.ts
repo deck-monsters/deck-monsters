@@ -117,6 +117,7 @@ describe('trpc/router card management procedures', () => {
 				// canUseItem always returns false in this fixture.
 				usableOnMonsters: [],
 				usableOnCharacter: false,
+				requiresPrompt: false,
 			},
 		]);
 		expect(result.items.monsters).to.deep.equal([
@@ -129,6 +130,7 @@ describe('trpc/router card management procedures', () => {
 						stats: 'Usable 1 time.',
 						usableOnMonsters: ['Stonefang', 'Mirebell'],
 						usableOnCharacter: false,
+						requiresPrompt: false,
 					},
 				],
 			},
@@ -178,6 +180,7 @@ describe('trpc/router card management procedures', () => {
 				stats: 'Usable an unlimited number of times.',
 				usableOnMonsters: [],
 				usableOnCharacter: false,
+				requiresPrompt: false,
 			},
 		]);
 	});
@@ -225,6 +228,7 @@ describe('trpc/router card management procedures', () => {
 				stats: 'All used up!',
 				usableOnMonsters: [],
 				usableOnCharacter: false,
+				requiresPrompt: false,
 			},
 		]);
 	});
@@ -641,6 +645,7 @@ describe('trpc/router useItem', () => {
 
 		expect(result).to.deep.equal({
 			ok: true,
+			applied: true,
 			itemName: 'Healing Potion',
 			monsterName: 'Stonefang',
 		});
@@ -722,6 +727,71 @@ describe('trpc/router useItem', () => {
 		await caller.game.useItem({ roomId: ROOM_ID, itemName: 'Healing Potion' });
 
 		expect(spy.assertedRoom).to.equal(ROOM_ID);
+	});
+
+	/**
+	 * `canUseItem` is a compatibility check (it is `canHoldItem`), so neither the client's
+	 * tier nor this procedure knows whether the item's own conditions hold. Spin Up on a
+	 * living monster returns false and is deliberately not consumed — reporting plain `ok`
+	 * told the player it was used when nothing happened. Codex review on #372.
+	 */
+	it('reports applied: false when the item declined to act', async () => {
+		const character = { useItems: async () => [false] };
+		const caller = createRouter(makeRoomManager(character)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		const result = await caller.game.useItem({
+			roomId: ROOM_ID,
+			itemName: 'Spin Up',
+			monsterName: 'Stonefang',
+		});
+
+		expect(result.applied).to.equal(false);
+	});
+
+	it('reports applied: true when the item did something', async () => {
+		const character = { useItems: async () => [true] };
+		const caller = createRouter(makeRoomManager(character)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		const result = await caller.game.useItem({ roomId: ROOM_ID, itemName: 'Healing Potion' });
+
+		expect(result.applied).to.equal(true);
+	});
+
+	it('treats a non-boolean result as applied, since most items return a use count', async () => {
+		const character = { useItems: async () => [1] };
+		const caller = createRouter(makeRoomManager(character)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		const result = await caller.game.useItem({ roomId: ROOM_ID, itemName: 'Lottery Ticket' });
+
+		expect(result.applied).to.equal(true);
+	});
+
+	it('passes the clicked row through as itemSource', async () => {
+		// Both pools can hold the same type; without this the engine spends the monster's.
+		let used: Record<string, unknown> | undefined;
+		const character = { useItems: async (input: Record<string, unknown>) => { used = input; return [true]; } };
+		const caller = createRouter(makeRoomManager(character)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		await caller.game.useItem({
+			roomId: ROOM_ID,
+			itemName: 'Chaos Theory for Beginners',
+			monsterName: 'Stonefang',
+			itemSource: 'character',
+		});
+
+		expect(used?.itemSource).to.equal('character');
 	});
 
 	it('404s when the user has no character in the room', async () => {
