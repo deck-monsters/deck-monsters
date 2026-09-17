@@ -2076,3 +2076,178 @@ described it. The code comment, the roadmap and the help text were three separat
 statements of the same fact, and only two got fixed.
 
 **Status**: Fixed.
+
+---
+
+### 112. Every leaderboard showed players' raw email addresses — FIXED
+
+Visible on the live site: the room player board listed `david+leyo@brainermail.com`,
+plus-address and all, to every member of the room.
+
+**Root cause**: `profiles.display_name` is seeded from the user's email by the
+`handle_new_user` trigger, so a player who never set a name has their address stored there.
+#95 added `publicDisplayName` and wired it into `RoomManager.getDisplayName`, which covers
+names flowing *into the game*. But `analytics-queries.ts` reads
+`profiles.display_name` **straight out of the database** for all four leaderboards — room
+players, room monsters' owners, global players, global monsters' owners — and none of them
+masked it.
+
+`10-bug-fixes.md` claimed these rows were "masked on read too, so this is cosmetic history
+rather than an active leak." **That claim was wrong**, and it is why the leak survived #95:
+the follow-up item said the remaining exposure was already handled. A leaderboard is the
+widest audience any name in this game reaches.
+
+**Fixed**: all four queries route through `publicDisplayName`. The two owner lookups mask
+as the name goes *into* the id→name map, so every read of that map is safe by
+construction. Monster names are deliberately left alone — those are player-chosen, not
+derived from an account.
+
+Covered by `analytics-queries.names.test.ts`, which pins the masking contract and counts
+the call sites: the failure mode is a *missing* call at one of four separate queries, which
+a behavioural test would only catch for whichever query it happened to cover.
+
+**Status**: Fixed.
+
+---
+
+### 113. The workshop collapsed to a 6px sliver with no monsters — FIXED
+
+A player with cards but no monsters saw the workshop header, then a thin grey strip, then
+their inventory. It read as a broken layout.
+
+**Root cause**: `.workshop-monster-row` renders a bare `monsters.map(...)` with no empty
+state. With zero monsters the row is an empty flex container, and #369's container query
+gave it `padding-bottom: 0.35rem` — **measured at exactly 6px tall in Chromium at 393px**.
+Before that container query the empty row was 0px and simply invisible, so the padding did
+not cause the gap, it made an existing one visible.
+
+Worth noting what it costs: this is the *first* thing a brand-new player sees. A deck of
+cards, nothing to put them on, no hint that spawning is the next step, and no way to spawn
+from this surface.
+
+**Fixed**: an explicit empty state that names the command (`spawn a monster`) and does not
+flash while the query is still loading. The row is not rendered at all when it would be
+empty.
+
+Diagnosed by rendering the real CSS in headless Chromium at 393px and measuring — the CSS
+is correct in both hosts (panels lay out at 325×211 and scroll horizontally), which is what
+ruled out a styling regression and pointed at the empty case.
+
+**Correction**: this was found while investigating a "the workshop does not render
+correctly" report, and was wrongly assumed to *be* that report. It is not — the reporter
+had monsters, so this branch never ran for them. The measurement above only ever covered
+a row short enough not to overflow, which is why it came back clean. What they were seeing
+is #116. The empty state stands on its own; the inference from it did not.
+
+**Status**: Fixed.
+
+---
+
+### 114. Leaderboard columns were clipped off the right edge — FIXED
+
+On a phone the board showed `#` and `Name` and nothing else — not XP, wins, losses or
+draws, which are the numbers it exists to show.
+
+**Root cause**: the table is wider than a phone, and its wrapper
+(`.leaderboard-table-region`) announces itself as a scrollable region — `role="region"`,
+`tabIndex={0}`, an aria-label reading "Scrollable…" — but **had no CSS at all**. Nothing
+made it scroll, so the overflow was simply clipped.
+
+**Fixed**: the region scrolls horizontally, with the rank and name columns pinned so they
+stay readable while the numbers scroll under them, and a focus ring since it is keyboard
+reachable by design.
+
+**Status**: Fixed.
+
+---
+
+### 115. "Send to ring" asked for confirmation, then failed — FIXED
+
+Raised by Codex review on #369 and verified against the engine.
+
+**Root cause**: the button was disabled only on `!monster.inRing`, i.e. based on *this*
+monster. `Beastmaster.sendMonsterToTheRing` computes
+`ring.contestants.filter(c => c.character === character)` and rejects if it is non-empty —
+so **any** of the player's monsters in the ring blocks every other one, and a dead
+contestant awaiting cleanup blocks too. Every benched monster therefore offered an enabled
+button, raised a `window.confirm`, and then failed with "You already have a monster in the
+ring!".
+
+**Fixed**: the button is disabled when any owned monster is a contestant, and carries the
+reason — one at a time, or "needs a full deck" — because a disabled control with no
+explanation reads as a bug rather than a rule.
+
+**Status**: Fixed.
+
+---
+
+### 116. The workshop crushed its own monster row instead of scrolling — FIXED
+
+The bug actually behind the "workshop does not render correctly" report on #369. #113
+(below) was found while looking for it and is real, but it only fires with **zero**
+monsters — the reporter had monsters, so that fix never touched what they were seeing.
+
+**Root cause**: `.workshop-view` is both the scroll container (`overflow-y: auto`) and a
+flex column. Flex items shrink before a scroll container ever scrolls. Once the content
+exceeded the viewport — which happens at phone width, where the card grid drops to two
+columns and the inventory grows tall — the monster row was shrunk from the 433px its
+panels need down to 142px, and the panel contents (header, actions, card grid, presets)
+spilled out of the 136px box over the inventory below. Measured in Chromium at 393px:
+`scrollHeight === clientHeight`, so the scrollbar never appeared at all. It looked like
+overlapping, clipped panels rather than a page that needed scrolling.
+
+The wider lesson: `overflow-y: auto` on a flex column is a half-written rule. The shrink
+has to be turned off explicitly or the scroll never happens.
+
+**Fixed**: `.workshop-view > * { flex: 0 0 auto; }`, with a regression test asserting both
+halves of the pair (the column/overflow declarations and the pinned children), since a
+jsdom test cannot measure layout.
+
+**Status**: Fixed.
+
+---
+
+### 117. Fight summaries shipped raw emails to every room member — FIXED
+
+Same class as #112, in the query the #112 fix did not touch.
+
+**Root cause**: `fight_summaries.participants[].ownerDisplayName` is written by the engine
+from `character.givenName` (`ring/index.ts`), which for a web signup that never chose a
+name is the raw email `handle_new_user` seeded. `queryRecentFights`, `queryFightByNumber`,
+`queryMonsterFightHistory` and `queryFightsSince` all `select()` the row and return it
+whole, so the address reached every room member's fight log and catch-up payload. No web
+component renders the field today, which is why it was invisible — but it was in the
+response body, and "nothing renders it yet" is not a privacy boundary.
+
+**Fixed**: one `maskFightParticipants` helper applied on the way out of all four queries,
+mirroring what #112 did for the leaderboards.
+
+**Status**: Fixed.
+
+---
+
+### 118. The room member list leaked the same emails — FIXED
+
+**Root cause**: `RoomManager.getRoomMembers` selects `profiles.displayName` raw and
+returns it to any member calling `room.members`. `RoomManager.getDisplayName`, two
+functions below it in the same file, already masks and carries a comment explaining why;
+this query was simply missed.
+
+**Fixed**: masked through `publicDisplayName`, like its neighbour.
+
+**Status**: Fixed.
+
+---
+
+### 119. Fight log and leaderboard rendered a bare frame when empty — FIXED
+
+**Root cause**: both panels map straight over their result array with no zero-row branch.
+An empty room showed "Fight log" and nothing else; the leaderboard showed column headers
+over no rows. Pre-existing — the pre-extraction `FightLogView`/`LeaderboardView` had the
+same gap and #369's extraction carried it forward — but it is the first thing a new room
+shows, which is the worst possible moment for a surface to look broken.
+
+**Fixed**: both name what produces rows (send two monsters to the ring) rather than just
+reporting emptiness. Same reasoning as #113's workshop empty state.
+
+**Status**: Fixed.

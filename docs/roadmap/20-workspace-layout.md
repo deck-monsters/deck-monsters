@@ -450,12 +450,12 @@ harness because none changes combat balance.
 
 | Area | State | Remaining work |
 |---|---|---|
-| Phase 3 header/responsive contract | Code-complete | Capture the 3D width and 200%-zoom evidence before visual sign-off. |
+| Phase 3 header/responsive contract | Code-complete | Capture the 3D width and 200%-zoom evidence before visual sign-off. Post-"code-complete" this pass still found #113 (zero-monster workshop collapsing to a 6px strip) and #116 (the workshop crushing its own monster row instead of scrolling, at phone width) — both exactly what the pending visual sign-off exists to catch, and both invisible to the unit tests. |
 | Phase 4A item use | Not started | Add an authoritative prompt-free engine operation, then room-scoped tRPC and Workshop/Ring actions. |
-| Phase 4B lifecycle | Partial | Revive and confirmed send-to-ring shipped; prompt-free spawn remains. |
+| Phase 4B lifecycle | Partial | Revive and confirmed send-to-ring shipped; prompt-free spawn remains. "Shipped" did not mean "worked": #115 found send-to-ring confirming and then failing whenever any other owned monster was already in the ring, because the button checked only the monster being sent. |
 | Phase 4C shop | Not started | Add room-scoped read/buy APIs and the required two-room isolation test. |
 | Phase 4D parity | Not started | Command reference, command-free journey, and final responsive/a11y pass depend on 4A–4C. |
-| Phase 5 panels | Code-complete | Pair manual full-page/pane/phone verification with the Phase 3 visual pass. |
+| Phase 5 panels | Code-complete | Pair manual full-page/pane/phone verification with the Phase 3 visual pass. The same gap produced #114 (the leaderboard's "scrollable" region had the `role`, `tabIndex` and aria-label but no CSS) and #119 (fight log and leaderboard rendering a bare frame with no rows and no empty state). |
 
 The post-implementation reviews found and fixed four issues: stale lazy surfaces briefly
 querying a newly selected room; incomplete tab/tabpanel semantics; panel container rules

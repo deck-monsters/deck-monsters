@@ -193,7 +193,7 @@ Today the workshop is cards-only, and everything else is a typed command.
   announces itself; on a phone the only discoverable way to equip was to know the gesture.
 - **Revive and send-to-ring are typed Workshop actions.** Both validate room membership,
   resolve the authenticated player's character, serialize through the prompt-free mutation
-  lane and delegate eligibility to the engine. Send-to-ring confirms the monster and room.
+  lane and delegate eligibility to the engine. Send-to-ring confirms the monster and room. Its confirm-then-fail case — any other owned monster already in the ring, or a dead contestant still awaiting cleanup — is now caught client-side, disabling the button with the reason rather than failing after the confirm; see `10b-bugs-fixed.md` #115.
 
 ### Next, in order
 

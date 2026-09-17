@@ -493,6 +493,47 @@ describe('RoomManager', () => {
 		});
 	});
 
+	/**
+	 * The member list is readable by every member of the room, and `profiles.display_name`
+	 * is seeded from the user's email by `handle_new_user` — so an unmasked read here
+	 * broadcasts addresses exactly the way the leaderboards did (#112). See
+	 * 10b-bugs-fixed.md #118.
+	 */
+	describe('getRoomMembers', () => {
+		it('masks an email-defaulted display name', async () => {
+			const db = makeDbStub({
+				selectResults: [
+					[
+						{
+							userId: USER_ID,
+							displayName: 'david+leyo@brainermail.com',
+							role: 'member',
+							joinedAt: new Date(),
+						},
+					],
+				],
+			});
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const members = await rm.getRoomMembers(ROOM_ID);
+			expect(members[0]!.displayName).to.equal('david');
+		});
+
+		it('leaves a chosen display name alone', async () => {
+			const db = makeDbStub({
+				selectResults: [
+					[{ userId: USER_ID, displayName: 'Santi Brainer', role: 'member', joinedAt: new Date() }],
+				],
+			});
+			const { deps } = makeEngineDeps();
+			const rm = new RoomManager(db as never, () => {}, deps);
+
+			const members = await rm.getRoomMembers(ROOM_ID);
+			expect(members[0]!.displayName).to.equal('Santi Brainer');
+		});
+	});
+
 	// ---- getGame / _getOrLoad ----
 
 	describe('getGame', () => {

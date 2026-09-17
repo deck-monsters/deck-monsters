@@ -30,6 +30,14 @@ type MonsterPanelProps = {
   onRevive: () => void;
   onSendToRing: () => void;
   busy?: boolean;
+  /**
+   * Whether ANY of this player's monsters is already a contestant — not just this one.
+   * `Beastmaster.sendMonsterToTheRing` rejects on `contestants.filter(c => c.character ===
+   * character)`, so one monster in the ring blocks every other, and a dead contestant
+   * awaiting cleanup blocks too. Without this the button stayed enabled, asked for
+   * confirmation, and then failed. See 10b-bugs-fixed.md #115.
+   */
+  anotherMonsterInRing?: boolean;
   onSavePreset: (presetName: string) => void;
   onLoadPreset: (presetName: string) => void;
   onDeletePreset: (presetName: string) => void;
@@ -50,6 +58,7 @@ export default function MonsterWorkshopPanel({
   onRevive,
   onSendToRing,
   busy = false,
+  anotherMonsterInRing = false,
   onSavePreset,
   onLoadPreset,
   onDeletePreset,
@@ -112,7 +121,16 @@ export default function MonsterWorkshopPanel({
           <button
             type="button"
             className="btn"
-            disabled={busy || monster.cards.length < monster.cardSlots}
+            disabled={busy || anotherMonsterInRing || monster.cards.length < monster.cardSlots}
+            // A disabled control with no reason reads as a bug rather than a rule, so say
+            // which rule is stopping you.
+            title={
+              anotherMonsterInRing
+                ? 'You already have a monster in the ring — only one at a time.'
+                : monster.cards.length < monster.cardSlots
+                  ? `${monster.name} needs a full deck before entering the ring.`
+                  : `Send ${monster.name} to the ring`
+            }
             onClick={onSendToRing}
           >
             Send to ring
