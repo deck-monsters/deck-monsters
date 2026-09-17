@@ -132,7 +132,12 @@ describe('useRingFeed', () => {
     expect(consoleHandler).toHaveBeenCalledTimes(1);
     expect(ringHandler).toHaveBeenCalledWith(tracked);
     expect(consoleHandler).toHaveBeenCalledWith(tracked);
-    expect(subscriptionCalls).toHaveLength(1);
+
+    // The guard this test exists for (#63) is *one subscription*, not one call: the mock
+    // records a call per render, and the first live frame legitimately flips `connected`
+    // true, which renders. What must never happen is a second, distinct subscription —
+    // real tRPC does not re-subscribe on an identical input.
+    expect(new Set(subscriptionCalls.map((call) => JSON.stringify(call.input))).size).toBe(1);
   });
 
   it('registers layout listeners in time for early microtask subscription delivery', async () => {
@@ -612,6 +617,64 @@ describe('useRingFeed: returning from the background', () => {
       expect(result.current.reconnecting).toBe(true);
     } finally {
       setVisibility('visible');
+      vi.useRealTimers();
+    }
+  });
+});
+
+/**
+ * A stranded "connection lost" divider with events still scrolling past it, reported from
+ * a live phone session. The watchdog had tripped on a subscription that was never dead, and
+ * `reconnecting` cleared only on a handshake — so the still-healthy subscription went on
+ * delivering events while the app insisted it was reconnecting. See 10b-bugs-fixed.md #128.
+ */
+describe('useRingFeed: a frame is proof the connection is alive', () => {
+  function wrapper({ children }: { children: ReactNode }) {
+    return <RingFeedProvider roomId="room-a">{children}</RingFeedProvider>;
+  }
+
+  it('clears a spurious reconnecting state on any frame, not just a handshake', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'h1', data: makeEvent({ id: 'h1', type: 'handshake' }) });
+      });
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+      expect(result.current.reconnecting).toBe(true);
+
+      // The original subscription was never dead and keeps delivering.
+      act(() => {
+        latestCall().onData?.({ id: 'e1', data: makeEvent({ id: 'e1', type: 'ring.add' }) });
+      });
+
+      expect(result.current.reconnecting).toBe(false);
+      expect(result.current.connected).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('counts a heartbeat as proof too — it is a frame like any other', () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useRingFeedContextForTest(), { wrapper });
+
+      act(() => {
+        latestCall().onData?.({ id: 'h1', data: makeEvent({ id: 'h1', type: 'handshake' }) });
+      });
+      act(() => {
+        vi.advanceTimersByTime(HEARTBEAT_TIMEOUT_MS + 1_000);
+      });
+      act(() => {
+        latestCall().onData?.({ id: 'hb', data: makeEvent({ id: 'hb', type: 'heartbeat' }) });
+      });
+
+      expect(result.current.reconnecting).toBe(false);
+    } finally {
       vi.useRealTimers();
     }
   });

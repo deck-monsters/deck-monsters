@@ -198,10 +198,21 @@ export function useRingFeed(roomId: string): RingFeedApi {
         // else, including for the frame types dropped below.
         noteFrameReceived();
 
+        /*
+         * And that proof is not limited to handshakes. `reconnecting` used to clear only on
+         * one, so a spurious watchdog trip on a subscription that was never actually dead
+         * left the app "reconnecting" while it went on delivering events — a stranded
+         * "connection lost" divider with the feed scrolling past it. A frame in hand beats
+         * a timer's opinion. See 10b-bugs-fixed.md #128.
+         */
+        // Functional updaters that return the previous value when nothing has changed, so
+        // the common case (a healthy feed) bails out of re-rendering rather than churning
+        // once per frame.
+        setConnected((wasConnected) => (wasConnected ? wasConnected : true));
+        setReconnecting((wasReconnecting) => (wasReconnecting ? false : wasReconnecting));
+
         if (event.type === 'handshake') {
           handleHandshakeRef.current(event);
-          setConnected(true);
-          setReconnecting(false);
           // Fan out so RingPane can seed timer state from the handshake payload.
           fanOut(tracked);
           return;

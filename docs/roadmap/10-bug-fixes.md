@@ -4,8 +4,8 @@
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#127). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#127).
+post-merge passes (#112–#128). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#128).
 
 ## Active Items
 
@@ -164,11 +164,38 @@ otherwise live and up to date.
 visible rather than acting on a timer that expired in the background, and a resume bumps a
 `resumeAttempt` counter so the input always differs and the retry cannot be deduplicated.
 
+### D2. A stranded "connection lost" divider — FIXED (#128)
+
+Follow-up report to D, with a screenshot: `CONNECTION LOST` in the ring feed with a boss
+announcement, a monster entering and a card all *after* it, and no "reconnected" line.
+
+A third defect beyond D's two: `reconnecting` cleared only on a handshake, so a watchdog
+trip on a subscription that was never dead left the app "reconnecting" while that same
+subscription went on delivering events. The divider compounded it by being asymmetric —
+opened by the flag, closed by a handshake — so any recovery without one stranded it.
+
+Fixed as #128: any frame is proof of life and clears the state, and whatever opens the
+divider closes it.
+
 ### E. Delayed-hit cards are confusing when they trigger
 
 A card whose effect lands on a later turn produces its hit with no line tying it back to the
 card that caused it, so the damage appears to come from nowhere. Wants a contextual
 announcement naming the originating card at trigger time.
+
+### I. Opening a surface in a pane vs. full screen is confusing and inconsistent
+
+**Reported, and deliberately not being worked on yet** — the reporter wants to think about
+the shape first.
+
+The current mechanism grew in pieces: a surface can be reached from a tab, from the pane
+selector, from a `Cmd/Ctrl+N` shortcut, from its own route, and from the per-pane "open full
+page" link — and which of those are available depends on whether the viewport is above or
+below the 1024px breakpoint. #126 added a sixth path (a deep link that asks for a surface to
+be revealed). Nothing ties them together into one model a player could state in a sentence.
+
+Worth designing as a whole rather than patched further; see `20-workspace-layout.md`, whose
+§3 surfaces-in-slots model this would revisit. **Do not start without the owner's direction.**
 
 ### F. Odd spacing in some messages
 

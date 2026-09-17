@@ -2448,3 +2448,35 @@ subscription input, so the retry is always a distinct input and cannot be dedupl
 server takes the field and ignores it; its only job is to make the resume observable.
 
 **Status**: Fixed.
+
+---
+
+### 128. A stranded "connection lost" divider with the feed scrolling past it — FIXED
+
+Reported with a screenshot after #127 was written but before it deployed: `CONNECTION LOST`
+in the ring feed, then a boss announcement, a monster entering, and a card — all *after* the
+divider, with no "reconnected" line. The reporter's summary was exact: it is not only the
+banner that gets stranded.
+
+**Root cause**, and it is a third defect distinct from #127's two: `reconnecting` cleared
+only on a handshake. When the watchdog trips on a subscription that was never actually dead
+— which #127's first half explains — that subscription keeps delivering events perfectly
+well, and the app stays in "reconnecting" while displaying them. The feed then reads as
+something that broke and kept going.
+
+The divider made it worse by being asymmetric: it *opened* on the `reconnecting` flag but
+*closed* on a handshake. Any recovery that did not involve a handshake could therefore open
+one and never close it.
+
+**Fixed** in two matching halves:
+- A frame is proof the connection is alive, whatever kind of frame it is. Any inbound frame
+  now clears `reconnecting` and sets `connected`, via functional updaters that return the
+  previous value unchanged so a healthy feed does not re-render once per frame.
+- Whatever opens the divider closes it: `RingPane` draws "reconnected" on the
+  `reconnecting` true→false transition as well as on a handshake, through the same grace
+  timer, with `shouldAppendMarker` preventing a double.
+
+Together with #127 this covers all three ways the pair could go wrong: tripping when nothing
+was wrong, never re-subscribing, and never clearing while plainly connected.
+
+**Status**: Fixed.
