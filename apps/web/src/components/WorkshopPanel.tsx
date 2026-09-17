@@ -365,6 +365,22 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         </div>
       )}
 
+      {!loading && monsters.length === 0 ? (
+        /*
+          With no monsters the row collapsed to a 6px ghost strip — its container-query
+          `padding-bottom` and nothing else — which read as a broken layout rather than an
+          empty state. Worse, it is what a brand-new player sees first: a deck of cards and
+          nothing to put them on, with no hint that spawning is the next step and no way to
+          do it from here. Measured at 393px; see 10b-bugs-fixed.md #113.
+        */
+        <div className="workshop-empty-state workshop-no-monsters">
+          <p>No monsters yet — cards need a monster to live on.</p>
+          <p className="workshop-empty-hint">
+            Spawn one from the console with <code>spawn a monster</code>, then come back to
+            build its deck.
+          </p>
+        </div>
+      ) : (
       <div className="workshop-monster-row">
         {monsters.map((monster) => (
           <MonsterWorkshopPanel
@@ -390,6 +406,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             }}
             onRevive={() => void handleRevive(monster.name)}
             onSendToRing={() => void handleSendToRing(monster.name)}
+            anotherMonsterInRing={monsters.some((other) => other.inRing)}
             busy={busy}
             onSavePreset={(presetName) => {
               void handleSavePreset(monster.name, presetName);
@@ -411,6 +428,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           />
         ))}
       </div>
+      )}
 
       <div ref={inventoryRef}>
       <InventoryPanel

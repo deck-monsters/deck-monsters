@@ -31,8 +31,14 @@ where `display_name` matches an email pattern. Deliberately left out of #95 beca
 a data migration against live auth rows and deserves its own change.
 
 Related: rows already written to `room_player_stats.display_name` keep their old value
-until the next fight updates them. Those are masked on read too, so this is cosmetic
-history rather than an active leak.
+until the next fight updates them.
+
+**Correction (Sept 17 2026).** This section previously said those rows were "masked on read
+too, so this is cosmetic history rather than an active leak". That was **wrong**, and the
+claim is why the leak survived: `analytics-queries.ts` read `profiles.display_name` raw for
+all four leaderboards, and a live board was showing a full plus-addressed email to the whole
+room. Fixed as #112. The trigger migration below is still outstanding — masking on read is a
+guard, not a reason to keep storing addresses as display names.
 
 ### 2. Some cards emit two roll blocks in the same tick
 

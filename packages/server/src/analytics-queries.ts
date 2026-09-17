@@ -12,6 +12,7 @@ import {
 import type { GameEvent } from '@deck-monsters/engine';
 import { dbRowToGameEvent } from './db/game-event-map.js';
 import { eventVisibilityFor } from './db/event-visibility.js';
+import { publicDisplayName } from './public-display-name.js';
 
 export type LeaderboardSort = 'xp' | 'wins' | 'winRate' | 'coins';
 
@@ -109,7 +110,11 @@ export async function queryRoomPlayers(
 		.limit(limit);
 
 	return rows.map((r) => ({
-		displayName: r.displayName,
+		// `profiles.display_name` is seeded from the user's email by `handle_new_user`, so a
+		// player who never set a name has their address stored there. Every leaderboard is
+		// shown to the whole room, which makes this the widest audience any name reaches.
+		// See 10b-bugs-fixed.md #112.
+		displayName: publicDisplayName(r.displayName),
 		xp: r.xp,
 		wins: r.wins,
 		losses: r.losses,
@@ -172,7 +177,8 @@ export async function queryRoomMonsters(
 			.select({ id: profiles.id, displayName: profiles.displayName })
 			.from(profiles)
 			.where(inArray(profiles.id, ownerIds));
-		for (const p of profs) names.set(p.id, p.displayName);
+		// Masked as it goes into the map, so every read of it is safe by construction.
+		for (const p of profs) names.set(p.id, publicDisplayName(p.displayName));
 	}
 
 	return rows.map((r) => ({
@@ -257,7 +263,7 @@ export async function queryGlobalPlayers(
 	}>;
 
 	return out.map((r) => ({
-		displayName: r.displayName,
+		displayName: publicDisplayName(r.displayName),
 		xp: Number(r.xp),
 		wins: Number(r.wins),
 		losses: Number(r.losses),
@@ -344,7 +350,8 @@ export async function queryGlobalMonsters(
 			.select({ id: profiles.id, displayName: profiles.displayName })
 			.from(profiles)
 			.where(inArray(profiles.id, ownerIds));
-		for (const p of profs) names.set(p.id, p.displayName);
+		// Masked as it goes into the map, so every read of it is safe by construction.
+		for (const p of profs) names.set(p.id, publicDisplayName(p.displayName));
 	}
 
 	return raw.map((r) => ({

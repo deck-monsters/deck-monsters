@@ -2076,3 +2076,99 @@ described it. The code comment, the roadmap and the help text were three separat
 statements of the same fact, and only two got fixed.
 
 **Status**: Fixed.
+
+---
+
+### 112. Every leaderboard showed players' raw email addresses — FIXED
+
+Visible on the live site: the room player board listed `david+leyo@brainermail.com`,
+plus-address and all, to every member of the room.
+
+**Root cause**: `profiles.display_name` is seeded from the user's email by the
+`handle_new_user` trigger, so a player who never set a name has their address stored there.
+#95 added `publicDisplayName` and wired it into `RoomManager.getDisplayName`, which covers
+names flowing *into the game*. But `analytics-queries.ts` reads
+`profiles.display_name` **straight out of the database** for all four leaderboards — room
+players, room monsters' owners, global players, global monsters' owners — and none of them
+masked it.
+
+`10-bug-fixes.md` claimed these rows were "masked on read too, so this is cosmetic history
+rather than an active leak." **That claim was wrong**, and it is why the leak survived #95:
+the follow-up item said the remaining exposure was already handled. A leaderboard is the
+widest audience any name in this game reaches.
+
+**Fixed**: all four queries route through `publicDisplayName`. The two owner lookups mask
+as the name goes *into* the id→name map, so every read of that map is safe by
+construction. Monster names are deliberately left alone — those are player-chosen, not
+derived from an account.
+
+Covered by `analytics-queries.names.test.ts`, which pins the masking contract and counts
+the call sites: the failure mode is a *missing* call at one of four separate queries, which
+a behavioural test would only catch for whichever query it happened to cover.
+
+**Status**: Fixed.
+
+---
+
+### 113. The workshop collapsed to a 6px sliver with no monsters — FIXED
+
+A player with cards but no monsters saw the workshop header, then a thin grey strip, then
+their inventory. It read as a broken layout.
+
+**Root cause**: `.workshop-monster-row` renders a bare `monsters.map(...)` with no empty
+state. With zero monsters the row is an empty flex container, and #369's container query
+gave it `padding-bottom: 0.35rem` — **measured at exactly 6px tall in Chromium at 393px**.
+Before that container query the empty row was 0px and simply invisible, so the padding did
+not cause the gap, it made an existing one visible.
+
+Worth noting what it costs: this is the *first* thing a brand-new player sees. A deck of
+cards, nothing to put them on, no hint that spawning is the next step, and no way to spawn
+from this surface.
+
+**Fixed**: an explicit empty state that names the command (`spawn a monster`) and does not
+flash while the query is still loading. The row is not rendered at all when it would be
+empty.
+
+Diagnosed by rendering the real CSS in headless Chromium at 393px and measuring — the CSS
+is correct in both hosts (panels lay out at 325×211 and scroll horizontally), which is what
+ruled out a styling regression and pointed at the empty case.
+
+**Status**: Fixed.
+
+---
+
+### 114. Leaderboard columns were clipped off the right edge — FIXED
+
+On a phone the board showed `#` and `Name` and nothing else — not XP, wins, losses or
+draws, which are the numbers it exists to show.
+
+**Root cause**: the table is wider than a phone, and its wrapper
+(`.leaderboard-table-region`) announces itself as a scrollable region — `role="region"`,
+`tabIndex={0}`, an aria-label reading "Scrollable…" — but **had no CSS at all**. Nothing
+made it scroll, so the overflow was simply clipped.
+
+**Fixed**: the region scrolls horizontally, with the rank and name columns pinned so they
+stay readable while the numbers scroll under them, and a focus ring since it is keyboard
+reachable by design.
+
+**Status**: Fixed.
+
+---
+
+### 115. "Send to ring" asked for confirmation, then failed — FIXED
+
+Raised by Codex review on #369 and verified against the engine.
+
+**Root cause**: the button was disabled only on `!monster.inRing`, i.e. based on *this*
+monster. `Beastmaster.sendMonsterToTheRing` computes
+`ring.contestants.filter(c => c.character === character)` and rejects if it is non-empty —
+so **any** of the player's monsters in the ring blocks every other one, and a dead
+contestant awaiting cleanup blocks too. Every benched monster therefore offered an enabled
+button, raised a `window.confirm`, and then failed with "You already have a monster in the
+ring!".
+
+**Fixed**: the button is disabled when any owned monster is a contestant, and carries the
+reason — one at a time, or "needs a full deck" — because a disabled control with no
+explanation reads as a bug rather than a rule.
+
+**Status**: Fixed.

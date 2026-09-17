@@ -735,3 +735,73 @@ button {
     --color-bg: #000000;
   }
 }
+
+/* ── Workshop: no monsters yet ──────────────────────────────────────────────
+   The monster row is a flex/grid container with no empty state of its own, so
+   with zero monsters it collapsed to a 6px strip of container-query padding —
+   which reads as a broken layout, and is the very first thing a new player
+   sees. See 10b-bugs-fixed.md #113. */
+.workshop-no-monsters {
+  border: 1px dashed var(--color-border);
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.workshop-no-monsters p {
+  margin: 0;
+}
+
+.workshop-empty-hint {
+  font-size: 0.75rem;
+}
+
+.workshop-empty-hint code {
+  color: var(--color-fg);
+}
+
+/* ── Leaderboard ────────────────────────────────────────────────────────────
+   The table is wider than a phone. Its wrapper announces itself as a
+   scrollable region (role + tabIndex) but carried no styles at all, so the
+   columns past "Name" — XP, W, L, D, the very numbers the board exists to
+   show — were simply clipped off the right edge. See #114. */
+.leaderboard-table-region {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.leaderboard-table-region:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.leaderboard-table-region th,
+.leaderboard-table-region td {
+  white-space: nowrap;
+}
+
+/* Keep the rank and name readable while the numbers scroll under them. */
+.leaderboard-table-region th:nth-child(-n + 2),
+.leaderboard-table-region td:nth-child(-n + 2) {
+  position: sticky;
+  background: var(--color-bg);
+}
+
+.leaderboard-table-region th:first-child,
+.leaderboard-table-region td:first-child {
+  left: 0;
+}
+
+.leaderboard-table-region th:nth-child(2),
+.leaderboard-table-region td:nth-child(2) {
+  left: 2.25rem;
+}
+
+/* Native radios render as system blue-on-white, which is jarring against a
+   phosphor terminal. `accent-color` retints the control the browser already
+   draws rather than rebuilding it, so the hit target and a11y stay intact. */
+.leaderboard-panel input[type='radio'],
+.leaderboard-panel input[type='checkbox'] {
+  accent-color: var(--color-accent);
+}
