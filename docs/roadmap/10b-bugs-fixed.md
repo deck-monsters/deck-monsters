@@ -2335,3 +2335,58 @@ width the row cannot give. Guarded by a CSS assertion test, since jsdom cannot m
 layout — the same limitation that let #114, #116 and #122 through.
 
 **Status**: Fixed.
+
+---
+
+### 124. Every line but two still credited a boss to an invented beastmaster — FIXED
+
+**Confirmed from a screenshot**: with `Zhizzi [BOSS]` in the ring, the feed read
+`It's Hopewing's turn.`, and a fight-log entry read `It's Santi Brainer's turn.`
+
+**Root cause**: #102 fixed this at the two call sites it was reported from — boss arrival
+and departure — by substituting `👑 The Editor` there. The invented name was still being
+*generated*, so every other site that reads an owner's `givenName` kept printing it: the
+turn banner (`announcements/playerTurnBegin.ts`), and `ownerDisplayName` on every persisted
+fight participant. Patching call sites one at a time was always going to leave the next one
+broken.
+
+**Fixed** at the source, as the reporter suggested: `randomCharacter` now names the
+generated owner after the house when `isBoss`, so `givenName` and `icon` are already correct
+wherever they are read — including sites nobody has enumerated. An explicit name still wins,
+so a caller can stage a named antagonist, and the boss *monster* keeps its own generated
+name; only the owner is the house.
+
+This makes #102's substitution redundant rather than adding a third special case. It is left
+in place as belt-and-braces, producing the same string.
+
+Verified end to end against the built engine: a generated boss owner is `👑 The Editor`, its
+monster keeps its own name, ordinary characters are unaffected, and `{ name: 'Lady Vex' }`
+still wins. Existing saved bosses keep their old names until the next summon generates a new
+one; no migration, since bosses are generated per summon.
+
+**Status**: Fixed.
+
+---
+
+### 125. Fight-log list markers sliced in half on iOS — FIXED (unconfirmed on device)
+
+**Root cause (probable, not demonstrated)**: `.fight-log-detail ol` was both the list and
+the scroll container (`max-height` + `overflow: auto`), while its markers are
+`list-style-position: outside` and so are painted in its padding box. WebKit clips markers in
+that position when the element is a scrollport; Blink does not.
+
+**Honest limitation**: Chromium does not reproduce this. The real component with the real
+stylesheets at 393px renders `1. 2. 3. 4.` correctly — `padding-left: 24px`,
+`scrollWidth === clientWidth` — including with the wide pre-#101 dice-glyph text the
+reporting screenshot contains. The reporter is on iOS Safari, and this environment has no
+WebKit to check against.
+
+**Fixed** by moving `max-height`/`overflow` onto a `.fight-log-events` wrapper so the `<ol>`
+is never a scrollport. This removes the precondition instead of depending on how either
+engine treats markers inside one, so it is the right shape of fix whichever engine was at
+fault — but it has not been seen to fix anything, and wants confirmation on a real iPhone.
+
+See the standing limitation recorded under `10-bug-fixes.md` G: all visual verification here
+is Chromium-only, so a clean render is not evidence that a reported visual bug is absent.
+
+**Status**: Fixed in code; unconfirmed on device.

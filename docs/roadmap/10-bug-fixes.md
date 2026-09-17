@@ -4,8 +4,8 @@
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#123). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#123).
+post-merge passes (#112–#125). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#125).
 
 ## Active Items
 
@@ -130,7 +130,7 @@ that re-fires on every append, a user scrolling up during an active fight would 
 back down on the next event and read as "will not scroll". The ring pane does not show
 this, which is itself a clue — the two panes configure Virtuoso differently.
 
-### C. The boss's turn banner still names a generated beastmaster
+### C. The boss's turn banner still names a generated beastmaster — FIXED (#124)
 
 **Confirmed from a screenshot**: with `Zhizzi [BOSS]` in the ring, the feed reads
 `It's Hopewing's turn.` — and in a fight-log entry, `It's Santi Brainer's turn.` #102 fixed
@@ -163,12 +163,35 @@ Extra blank lines, and indentation that does not line up, in certain feed messag
 specific examples captured before chasing — the card-display block and the turn banner are
 the likeliest suspects given their history (#97, #101).
 
-### G. Ordered-list markers clipped in the fight-log event history
+### G. Ordered-list markers clipped in the fight-log event history — FIXED (#125), unconfirmed on device
 
 **Confirmed from a screenshot**: the numbers in a fight's "Events during this fight" list
 render as `l.`, `?.`, `3.`, `4.` — the left half of each marker is sliced off.
-`.fight-log-detail ol` has `padding-left: 1.5rem` *and* `overflow: auto`; list markers are
-painted in the padding box, so a scroll container clips them.
+
+**Correction.** This section first stated the cause as settled: `.fight-log-detail ol` has
+`padding-left: 1.5rem` *and* `overflow: auto`, so the scroll container clips markers painted
+in its padding box. That explanation is probably right about the *mechanism* but was written
+without reproducing it, and **Chromium does not reproduce it at all** — the real component
+with the real stylesheets at 393px renders `1. 2. 3. 4.` correctly, with
+`padding-left: 24px` and no horizontal overflow, including with the wide pre-#101 dice-glyph
+text the screenshot contains.
+
+The reporter is on iOS Safari. WebKit is known to clip `list-style-position: outside`
+markers when the list is itself a scroll container; Blink does not. That difference is the
+likeliest explanation, and it is one this environment cannot demonstrate either way.
+
+**Fixed as #125** by moving the scroll container to a wrapper (`.fight-log-events`) so the
+`<ol>` is never a scrollport — this removes the precondition rather than relying on either
+engine's behaviour, and is correct regardless of which was at fault. **Still needs
+confirmation on a real iPhone**: it has not been observed failing, or passing, here.
+
+**Standing limitation this exposed.** Every visual verification in this repo is done by
+rendering in headless Chromium, because there is no live app in the agent environment. The
+players are on iOS Safari. Rendering-engine-specific bugs are therefore invisible to that
+method by construction, and a clean Chromium render is not evidence that a reported visual
+bug does not exist. Where a WebKit-specific cause is suspected, prefer a fix that removes
+the precondition over one that depends on layout behaviour, and say plainly that it is
+unconfirmed.
 
 ### H. The handbook's monster-manual button lands on an empty pane
 

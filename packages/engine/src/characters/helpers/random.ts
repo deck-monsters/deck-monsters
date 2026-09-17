@@ -2,6 +2,7 @@ import { random, sample, shuffle } from '../../helpers/random.js';
 import { XP_PER_VICTORY } from '../../helpers/experience.js';
 import { TARGET_HUMAN_PLAYER_WEAK } from '../../helpers/targeting-strategies.js';
 import Beastmaster from '../beastmaster.js';
+import { RING_PATRON_ICON, RING_PATRON_NAME } from '../../constants/lore.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => any;
@@ -99,6 +100,26 @@ const randomCharacter = ({
 		return monster;
 	});
 
+	/*
+	 * Every boss belongs to the house, so the house is who it is generated as — not a
+	 * beastmaster invented on the spot and then papered over at each announcement.
+	 *
+	 * #102 fixed boss arrivals and departures by substituting the patron at those two call
+	 * sites, which left every *other* line still printing the invented name: the turn banner
+	 * read "It's Hopewing's turn." with a boss in the ring, and fight summaries recorded the
+	 * same. Naming the character itself means `givenName` and `icon` are already right
+	 * wherever they are read, including sites nobody has thought of yet.
+	 *
+	 * An explicit name or icon still wins, so a caller can stage a named antagonist.
+	 * Only the owner is named this way — the boss monster keeps its own generated name.
+	 */
+	const bossOwnerIdentity = isBoss
+		? {
+				name: options.name ?? RING_PATRON_NAME,
+				icon: options.icon ?? RING_PATRON_ICON,
+			}
+		: {};
+
 	const character = new Beastmaster({
 		battles: resolvedBattles,
 		icon,
@@ -106,6 +127,7 @@ const randomCharacter = ({
 		monsters,
 		xp,
 		...options,
+		...bossOwnerIdentity,
 	});
 
 	let cleanBossDeck: (deck: any[]) => any[];
