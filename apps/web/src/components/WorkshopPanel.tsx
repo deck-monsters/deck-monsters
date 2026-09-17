@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
+import ShopPanel, { type ShopStockItem } from './ShopPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
@@ -31,6 +32,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     unequippedDeck,
     cardCompatibility,
     items,
+    shop,
     loading,
     busy,
     latestError,
@@ -47,6 +49,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     reviveMonster,
     sendMonsterToRing,
     useItem,
+    buyShopItem,
     refresh,
   } = useDeckWorkshop(roomId);
 
@@ -99,6 +102,21 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not use that item');
+    }
+  }
+
+  async function handleBuyShopItem(item: ShopStockItem) {
+    if (!window.confirm(`Buy ${item.displayName} for ${item.price} coins?`)) return;
+    try {
+      setError(null);
+      const result = await buyShopItem({
+        section: item.section,
+        stockIndex: item.stockIndex,
+        expectedItemType: item.displayName,
+      });
+      setMessage(`Bought ${result.itemName} for ${result.price} coins. ${result.remainingCoins} coins remain.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not complete that purchase');
     }
   }
 
@@ -545,6 +563,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         busy={busy}
         onUseItem={(input) => void handleUseItem(input)}
       />
+      <ShopPanel shop={shop} busy={busy} onBuy={(item) => void handleBuyShopItem(item)} />
     </div>
   );
 }

@@ -75,6 +75,13 @@ Some cards roll more than once (Lucky Strike, Horn Swipe, Rehit). Critical succe
    look at [card name]    — inspect a specific card
 
 Items work similarly. You can carry up to 3 items, and give up to 3 more to each monster. Items used mid-battle must be pre-assigned to the monster before the fight.
+
+   look at items                — see every item and who carries it
+   give [item] to [monster]     — stock a monster before battle
+   take [item] from [monster]   — return it to your pocket
+   use [item] on [monster]      — use it (even mid-fight, if carried in)
+
+On the web, the Workshop shows valid targets and remaining uses. During your monster's fight, open "Use an item" below the ring roster for a one-step action.
 `.trim();
 
 export const COINS_AND_SHOP = `
@@ -86,6 +93,8 @@ The merchant changes every 6 hours, so prices and stock rotate. Each room has it
 
    visit the shop         — browse and buy
    sell to the shop       — sell cards or items
+
+The web Workshop shows live room stock, your balance, affordability, owned counts, rare back-room goods and direct purchase buttons. Selling still uses the guided console flow.
 `.trim();
 
 export const BUILD_STRATEGIES = `

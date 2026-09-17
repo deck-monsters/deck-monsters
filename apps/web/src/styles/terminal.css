@@ -781,6 +781,11 @@
   min-width: 0;
 }
 .surface-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.ring-items { border-bottom: 1px solid var(--color-border); padding: 0.45rem 0.75rem; background: var(--color-input-bg); font-size: 0.78rem; }
+.ring-items summary { cursor: pointer; color: var(--color-accent); font-weight: 700; }
+.ring-items p { margin: 0.35rem 0; color: var(--color-fg-dim); }
+.ring-items-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ring-items-message { color: var(--color-fg-bright) !important; }
 .surface-panel-actions { display: flex; align-items: center; gap: .4rem; flex: 0 0 auto; }
 .surface-panel h1 { margin: 0; font-size: 1.25rem; color: var(--color-fg-bright); }
 .surface-muted { color: var(--color-fg-dim); }

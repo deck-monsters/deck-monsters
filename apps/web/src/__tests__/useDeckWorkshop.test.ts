@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => {
   const ringStateInvalidate = vi.fn(async () => undefined);
   const roomInfoUseQuery = vi.fn();
   const myInventoryUseQuery = vi.fn();
+  const shopUseQuery = vi.fn();
   const defaultMutation = vi.fn((options?: { onSuccess?: () => Promise<void> }) => ({
     isPending: false,
     error: null,
@@ -22,6 +23,8 @@ const mocks = vi.hoisted(() => {
     ringStateInvalidate,
     roomInfoUseQuery,
     myInventoryUseQuery,
+    shopUseQuery,
+    buyShopItemUseMutation: vi.fn(defaultMutation),
     unequipCardUseMutation: vi.fn(defaultMutation),
     unequipManyUseMutation: vi.fn(defaultMutation),
     unequipAllUseMutation: vi.fn(defaultMutation),
@@ -56,6 +59,8 @@ vi.mock('../lib/trpc.js', () => ({
       myInventory: {
         useQuery: mocks.myInventoryUseQuery,
       },
+      shop: { useQuery: mocks.shopUseQuery },
+      buyShopItem: { useMutation: mocks.buyShopItemUseMutation },
       unequipCard: { useMutation: mocks.unequipCardUseMutation },
       unequipMany: { useMutation: mocks.unequipManyUseMutation },
       unequipAll: { useMutation: mocks.unequipAllUseMutation },
@@ -87,6 +92,12 @@ describe('useDeckWorkshop', () => {
       isLoading: false,
       isFetching: false,
       refetch: vi.fn(),
+    });
+    mocks.shopUseQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      refetch: vi.fn(async () => undefined),
     });
   });
 

@@ -7,7 +7,13 @@ import { createLogger } from '../logger.js';
 const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
-import { PROMPT_CANCELLED, PromptCancelledError, isCommandRefusal } from '@deck-monsters/engine';
+import {
+	PROMPT_CANCELLED,
+	PromptCancelledError,
+	isCommandRefusal,
+	purchaseShopItem,
+	type ShopItemSection,
+} from '@deck-monsters/engine';
 import { buildQuickActions } from '../quick-actions.js';
 import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
@@ -85,6 +91,17 @@ type InventorySummary = {
 	};
 };
 
+type ShopItemSummary = {
+	stockIndex: number;
+	section: ShopItemSection;
+	displayName: string;
+	description: string;
+	stats: string;
+	price: number;
+	affordable: boolean;
+	ownedCount: number;
+};
+
 const reorderCardsResultSchema = z.object({
 	monsterName: z.string().min(1),
 	fromIndex: z.number().int().min(0),
@@ -111,6 +128,50 @@ const getDisplayName = (entity: unknown): string => {
 	const byCardType = typeof entry.cardType === 'string' ? entry.cardType : undefined;
 	const byName = typeof entry.name === 'string' ? entry.name : undefined;
 	return byItemType ?? byCardType ?? byName ?? 'Unknown';
+};
+
+type SummarizableShop = {
+	name: unknown;
+	adjective: unknown;
+	closingTime: string | number | Date;
+	priceOffset: number;
+	backRoomOffset: number;
+	items: unknown[];
+	backRoom: unknown[];
+};
+
+const summarizeShop = (
+	game: { shop: SummarizableShop },
+	character: { items?: unknown[]; coins?: number },
+) => {
+	const shop = game.shop;
+	const ownedItems = Array.isArray(character?.items) ? character.items : [];
+	const coins = typeof character?.coins === 'number' ? character.coins : 0;
+	const summarizeStock = (section: ShopItemSection, stock: unknown[], offset: number): ShopItemSummary[] =>
+		stock.map((item, stockIndex) => {
+			const record = (item ?? {}) as Record<string, unknown>;
+			const displayName = getDisplayName(item);
+			const price = Math.round((typeof record.cost === 'number' ? record.cost : 0) * offset);
+			return {
+				stockIndex,
+				section,
+				displayName,
+				description: typeof record.description === 'string' ? record.description : '',
+				stats: typeof record.stats === 'string' ? record.stats : '',
+				price,
+				affordable: price <= coins,
+				ownedCount: ownedItems.filter((owned: unknown) => getDisplayName(owned) === displayName).length,
+			};
+		});
+
+	return {
+		name: String(shop.name),
+		adjective: String(shop.adjective),
+		closingTime: new Date(shop.closingTime).toISOString(),
+		coins,
+		items: summarizeStock('items', shop.items, shop.priceOffset * 2),
+		backRoom: summarizeStock('backRoom', shop.backRoom, shop.backRoomOffset),
+	};
 };
 
 const canMonsterHoldCard = (monster: unknown, card: unknown): boolean => {
@@ -915,6 +976,56 @@ export function createRouter(roomManager: RoomManager) {
 					character: character as Record<string, unknown>,
 					inRing,
 				});
+			}),
+
+		shop: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const game = await roomManager.getGame(input.roomId);
+				const character = game.characters?.[ctx.userId];
+				if (!character) {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+				// `Game.shop` may rotate and persist expired stock even though this is an HTTP
+				// query. Serialize that write with purchases so two first reads after the same
+				// boundary cannot generate competing merchants and overwrite each other.
+				return roomManager.runSerializedEngineWork(input.roomId, async () =>
+					summarizeShop(game, character),
+				);
+			}),
+
+		buyShopItem: protectedProcedure
+			.input(z.object({
+				roomId: z.string().uuid(),
+				section: z.enum(['items', 'backRoom']),
+				stockIndex: z.number().int().min(0),
+				expectedItemType: z.string().min(1),
+			}))
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const game = await roomManager.getGame(input.roomId);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.addItem !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const result = await runSerializedMutation(input.roomId, ctx.userId, async () =>
+					purchaseShopItem({
+						character,
+						host: game,
+						section: input.section,
+						stockIndex: input.stockIndex,
+						expectedItemType: input.expectedItemType,
+					}),
+				);
+
+				return {
+					ok: true as const,
+					itemName: getDisplayName(result.item),
+					price: result.price,
+					remainingCoins: result.remainingCoins,
+				};
 			}),
 
 		reviveMonster: protectedProcedure

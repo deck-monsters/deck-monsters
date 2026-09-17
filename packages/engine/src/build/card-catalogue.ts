@@ -7,7 +7,8 @@ export type DocOutputFn = (section: string) => Promise<void> | void;
 
 const CARD_CATALOGUE_HEADER = `
 *The Card Catalogue (Player Reference):*
-Name, description, and rarity for every card and item in the game.
+Name, description, and rarity for every card and item in the game. For item rules, use
+timing, inventory limits, targeting strategies and the shop, see [ITEMS.md](ITEMS.md).
 `.trim();
 
 export const generateCardCatalogue = async (output: DocOutputFn): Promise<void> => {
