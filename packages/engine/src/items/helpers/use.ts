@@ -6,12 +6,23 @@ import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 interface UseItemsOptions {
 	channel: any;
 	character: any;
+	/**
+	 * Skip the "Are you sure?" prompt. The prompt exists because in a chat client the only
+	 * thing between a typo and a spent item is that question — there is no button to not
+	 * press. A caller that already got a deliberate confirmation from its own UI (the web
+	 * client's use button) has nothing left to ask, and asking anyway is what made item use
+	 * impossible from the browser: prompts cannot be answered inside a tRPC mutation.
+	 *
+	 * This skips only the confirmation. Which items are usable, and the mid-fight narrowing
+	 * to `monster.items`, stay here so there is one source of truth for the rule.
+	 */
+	confirmed?: boolean;
 	itemSelection?: string[];
 	monster?: any;
 	use: (opts: { channel: any; isMonsterItem: boolean; item: any; monster?: any }) => Promise<any>;
 }
 
-const useItems = ({ channel, character, itemSelection, monster, use }: UseItemsOptions): Promise<any> =>
+const useItems = ({ channel, character, confirmed, itemSelection, monster, use }: UseItemsOptions): Promise<any> =>
 	Promise.resolve()
 		.then(() => {
 			let items: any[];
@@ -36,7 +47,7 @@ const useItems = ({ channel, character, itemSelection, monster, use }: UseItemsO
 			}
 
 			if (itemSelection && itemSelection.length > 0) {
-				return itemSelection.reduce((selectedItems: any[], itemType: string) => {
+				const selected = itemSelection.reduce((selectedItems: any[], itemType: string) => {
 					const itemIndex = items.findIndex(
 						(potentialItem: any) => potentialItem.itemType.toLowerCase() === itemType.toLowerCase()
 					);
@@ -52,6 +63,18 @@ const useItems = ({ channel, character, itemSelection, monster, use }: UseItemsO
 
 					return selectedItems;
 				}, []);
+
+				// Nothing matched. Previously this fell through to the confirmation and then a
+				// no-op `mapSeries([])`, so the caller was told the use succeeded while nothing
+				// happened — invisible in chat, and a lie to an API caller.
+				if (selected.length < 1) {
+					return announceAndThrow(
+						channel,
+						`${character.givenName} can not use ${itemSelection.join(', ').toLowerCase()} on ${targetStr}.`
+					);
+				}
+
+				return selected;
 			}
 
 			items = sortItemsAlphabetically(items);
@@ -65,8 +88,10 @@ const useItems = ({ channel, character, itemSelection, monster, use }: UseItemsO
 				getQuestion
 			});
 		})
-		.then((selectedItems: any[]) =>
-			channel({
+		.then((selectedItems: any[]) => {
+			if (confirmed) return selectedItems;
+
+			return channel({
 				question: 'Are you sure? (yes/no)'
 			}).then((answer: string = '') => {
 				if (answer.toLowerCase() === 'yes') {
@@ -74,8 +99,8 @@ const useItems = ({ channel, character, itemSelection, monster, use }: UseItemsO
 				}
 
 				return announceAndThrow(channel, 'You know what they always say, "An item saved is an item earned."');
-			})
-		)
+			});
+		})
 		.then((selectedItems: any[]) =>
 			mapSeries(selectedItems, (item: any) =>
 				use({ channel, isMonsterItem: !!monster || !item.usableWithoutMonster, item, monster })

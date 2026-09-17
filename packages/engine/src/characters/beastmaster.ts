@@ -322,12 +322,15 @@ class Beastmaster extends BaseCharacter {
 	useItems({
 		channel,
 		channelName,
+		confirmed,
 		isMonsterItem,
 		itemSelection,
 		monsterName,
 	}: {
 		channel: ChannelFn;
 		channelName?: string;
+		/** See `items/helpers/use.ts` — set by callers whose UI already confirmed. */
+		confirmed?: boolean;
 		isMonsterItem?: boolean;
 		itemSelection?: string[];
 		monsterName?: string;
@@ -346,6 +349,7 @@ class Beastmaster extends BaseCharacter {
 				useItems({
 					channel: channel as any,
 					character: this as any,
+					confirmed,
 					itemSelection,
 					monster: monster as any,
 					use: (options: any) => this.useItem({ channelName, ...options }),
