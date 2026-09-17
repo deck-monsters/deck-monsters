@@ -3,9 +3,9 @@
 **Category**: Bug / Tech Debt
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
-September 16 2026 mobile UI pass is fully resolved (#98–#110). See
-[`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive (#3, #51–#58, #59–#73,
-#74–#85, #86–#97, #98–#110).
+September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
+post-merge pass (#112–#119). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#119).
 
 ## Active Items
 

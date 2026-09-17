@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { expect } from 'chai';
 
+import { maskFightParticipants, type FightParticipant } from './analytics-queries.js';
 import { publicDisplayName } from './public-display-name.js';
 
 /**
@@ -47,14 +48,55 @@ describe('analytics-queries applies the mask at every name site', () => {
 		// MONSTER names, which are player-chosen and must not be masked.
 		const src = readFileSync(join(process.cwd(), 'src/analytics-queries.ts'), 'utf8');
 		const calls = src.match(/publicDisplayName\(/g) ?? [];
+		// Five, not four: the fifth is `maskFightParticipants`, which covers the four fight
+		// queries that leaked the same emails through `participants[].ownerDisplayName`
+		// (#117) — a site the #112 fix missed precisely because this count stopped at the
+		// leaderboards.
 		expect(
 			calls.length,
-			'expected publicDisplayName at all four leaderboard name sites',
-		).to.equal(4);
+			'expected publicDisplayName at the four leaderboard name sites plus the fight-participant masker',
+		).to.equal(5);
 	});
 
 	it('imports the masker rather than reimplementing it', () => {
 		const src = readFileSync(join(process.cwd(), 'src/analytics-queries.ts'), 'utf8');
 		expect(src).to.include("from './public-display-name.js'");
+	});
+});
+
+/**
+ * The engine writes `participants[].ownerDisplayName` from `character.givenName`, so a
+ * player who never chose a name has their email inside every fight row — and fight rows go
+ * to every member of the room through the fight log and the catch-up payload. No component
+ * renders the field today, which is exactly why it survived the #112 sweep. See
+ * 10b-bugs-fixed.md #117.
+ */
+describe('fight participants are masked before they leave the server', () => {
+	const row = (owner: string) => ({
+		fightNumber: 1,
+		participants: [
+			{ monsterId: 'm1', monsterName: 'Stonefang', ownerDisplayName: owner } as FightParticipant,
+		],
+	});
+
+	it('masks an email owner name', () => {
+		expect(maskFightParticipants(row('david+leyo@brainermail.com')).participants[0]!.ownerDisplayName).to.equal(
+			'david',
+		);
+	});
+
+	it('leaves the monster name alone — those are player-chosen', () => {
+		expect(maskFightParticipants(row('dave@example.com')).participants[0]!.monsterName).to.equal('Stonefang');
+	});
+
+	it('does not mutate the row it was given', () => {
+		const original = row('dave@example.com');
+		maskFightParticipants(original);
+		expect(original.participants[0]!.ownerDisplayName).to.equal('dave@example.com');
+	});
+
+	it('survives a row whose participants column is not an array', () => {
+		const broken = { participants: null } as unknown as { participants: FightParticipant[] };
+		expect(() => maskFightParticipants(broken)).to.not.throw();
 	});
 });

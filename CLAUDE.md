@@ -61,7 +61,7 @@ packages/
   shared-ui/       # @deck-monsters/shared-ui — CSS custom properties, shared theme tokens
 
 apps/
-  web/             # @deck-monsters/web — Vite + vanilla TS web app (terminal aesthetic)
+  web/             # @deck-monsters/web — Vite + React (TS) web app (terminal aesthetic)
 
 supabase/          # Supabase migrations and local dev config
 scripts/           # Repo-level setup scripts (setup:local, etc.)

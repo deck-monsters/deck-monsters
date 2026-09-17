@@ -227,6 +227,20 @@ button {
   gap: 0.75rem;
 }
 
+/*
+  `.workshop-view` is a scroll container *and* a flex column, and flex items shrink before
+  a scroll container scrolls. With enough content to overflow — a phone-width viewport,
+  where the card grid drops to two columns and the inventory grows tall — the monster row
+  was shrunk from the 433px its panels need down to 142px, and the panel contents spilled
+  out over the inventory below instead of the view scrolling. Measured in Chromium at
+  393px: `scrollHeight === clientHeight`, i.e. the scrollbar never appeared at all.
+  Pinning every child to its natural height is what makes the `overflow-y: auto` above
+  real. See 10b-bugs-fixed.md #116.
+*/
+.workshop-view > * {
+  flex: 0 0 auto;
+}
+
 .workshop-header {
   display: flex;
   justify-content: space-between;

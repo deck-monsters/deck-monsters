@@ -37,6 +37,19 @@ export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room
     { enabled: scope === 'global' && kind === 'monsters' }
   );
 
+  // Which of the four queries the current scope/kind pair is actually showing. Only this
+  // one's emptiness is worth reporting; the other three are disabled.
+  const active =
+    kind === 'players'
+      ? scope === 'room'
+        ? roomPlayers
+        : globalPlayers
+      : scope === 'room'
+        ? roomMonsters
+        : globalMonsters;
+  const showEmpty =
+    !active.isLoading && (scope === 'global' || !!roomId) && (active.data ?? []).length === 0;
+
   const loading =
     roomPlayers.isLoading ||
     roomMonsters.isLoading ||
@@ -109,6 +122,19 @@ export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room
         )}
 
         {loading && <p style={{ color: 'var(--color-fg-dim)' }}>Loading…</p>}
+
+        {/*
+          Before this, an empty result set rendered column headers over nothing — a table
+          that looks broken rather than one that is simply waiting for fights. Same class
+          as the workshop's empty monster row (#113). See 10b-bugs-fixed.md #119.
+        */}
+        {showEmpty && (
+          <p style={{ color: 'var(--color-fg-dim)' }}>
+            {scope === 'room'
+              ? 'No ranked fights in this room yet — rankings fill in once monsters start fighting.'
+              : 'No ranked fights anywhere yet.'}
+          </p>
+        )}
 
         {kind === 'players' && scope === 'room' && roomId && (
           <LeaderboardTableRegion label="Scrollable room player rankings"><table aria-label="Room player rankings" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>

@@ -389,7 +389,11 @@ export class RoomManager {
 			.innerJoin(profiles, eq(roomMembers.userId, profiles.id))
 			.where(eq(roomMembers.roomId, roomId));
 
-		return rows;
+		// Same leak as the leaderboards (#112) and the fight log (#117): a web signup that
+		// never chose a name has their email in `profiles.display_name`, and this list is
+		// readable by every member of the room. `getDisplayName` below already masks for
+		// exactly this reason; this query was the one that did not. See 10b-bugs-fixed.md #118.
+		return rows.map((r) => ({ ...r, displayName: publicDisplayName(r.displayName) }));
 	}
 
 	async assertMember(userId: string, roomId: string): Promise<void> {

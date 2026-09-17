@@ -21,12 +21,12 @@ Each document covers one area; this README is the authoritative index of status 
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
 | [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 3 non-blocking items from the Sept 2026 live-play pass, plus 2 open judgement calls (#101, #104) |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 3 non-blocking items from the Sept 2026 live-play pass |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
 | [20 — Workspace Layout](20-workspace-layout.md) | Surfaces in two switchable pane slots | 🔧 Active — phases 3/5 code-complete; Phase 4 + visual sign-off remain |
-| [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 📋 Proposed — items audit actionable now |
+| [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 🔧 Active — items panel, revive and send-to-ring shipped; item use and the room shop remain |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
 | [09 — Graphics](09-graphics.md) | Sprites, icons, optional visual polish | 📋 Post-launch, low priority |
@@ -73,11 +73,13 @@ Design doc is ready. Blocked on a battle simulation harness for safe regression 
 
 Written after a research pass on what makes RPGs enjoyable. States the design frame — the
 fight is hands-off on purpose, and the pleasure is commitment then surrender — and audits
-the one real-time lever the game already has. Key finding: **items are usable mid-fight
-(no `inEncounter` guard, unlike every other inventory action) and the web client has no
-item UI at all.** Targeting scrolls already let players set `targetingStrategy`; they are
-nearly invisible. Surfacing items on the web is the highest value-to-effort item; anything
-that changes their power wants the sim harness first.
+the one real-time lever the game already has. Key finding: **items are usable mid-fight by
+design, but only the ones the monster is already carrying** — `use.ts` narrows the pool to
+`monster.items` while `inEncounter`, so the real lever is what you equipped before the bell.
+The web client now lists items (`ItemsPanel`), but there is still no `use item` procedure,
+so nothing can be *used* from the browser yet. Targeting scrolls already let players set
+`targetingStrategy`; they are nearly invisible. Anything that changes item power wants the
+sim harness first.
 
 ### 3. Workspace layout (20-workspace-layout.md)
 

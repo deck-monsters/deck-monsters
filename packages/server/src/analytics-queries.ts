@@ -400,6 +400,24 @@ export type FightSummaryRow = {
 	participants: FightParticipant[];
 };
 
+/**
+ * `participants[].ownerDisplayName` is written by the engine from the character's
+ * `givenName` (`ring/index.ts`), which for a web signup that never chose a name is the
+ * raw email `handle_new_user` seeded — the same leak as the leaderboards (#112), on a
+ * different query. Fight rows are handed to every member of the room, so mask on the way
+ * out rather than at each render point. See 10b-bugs-fixed.md #117.
+ */
+export function maskFightParticipants<T extends { participants: FightParticipant[] }>(row: T): T {
+	if (!Array.isArray(row.participants)) return row;
+	return {
+		...row,
+		participants: row.participants.map((p) => ({
+			...p,
+			ownerDisplayName: publicDisplayName(p.ownerDisplayName),
+		})),
+	};
+}
+
 export async function queryRecentFights(
 	db: Db,
 	roomId: string,
@@ -410,12 +428,13 @@ export async function queryRecentFights(
 		? and(eq(fightSummaries.roomId, roomId), lt(fightSummaries.endedAt, before))
 		: eq(fightSummaries.roomId, roomId);
 
-	return db
+	const rows = (await db
 		.select()
 		.from(fightSummaries)
 		.where(cond)
 		.orderBy(desc(fightSummaries.endedAt))
-		.limit(limit) as Promise<FightSummaryRow[]>;
+		.limit(limit)) as FightSummaryRow[];
+	return rows.map(maskFightParticipants);
 }
 
 export async function queryFightByNumber(
@@ -428,7 +447,8 @@ export async function queryFightByNumber(
 		.from(fightSummaries)
 		.where(and(eq(fightSummaries.roomId, roomId), eq(fightSummaries.fightNumber, fightNumber)))
 		.limit(1);
-	return rows[0] as (FightSummaryRow & { startedAt: Date; endedAt: Date }) | undefined;
+	const row = rows[0] as (FightSummaryRow & { startedAt: Date; endedAt: Date }) | undefined;
+	return row && maskFightParticipants(row);
 }
 
 export async function queryMonsterFightHistory(
@@ -441,7 +461,7 @@ export async function queryMonsterFightHistory(
 	// participant, regardless of how many contestants there were. This covers both
 	// 1v1 fights (where winnerMonsterId / loserMonsterId are set) and multi-monster
 	// fights (where those columns are null but participants[] always has everyone).
-	return db
+	const rows = (await db
 		.select()
 		.from(fightSummaries)
 		.where(
@@ -451,15 +471,17 @@ export async function queryMonsterFightHistory(
 			)
 		)
 		.orderBy(desc(fightSummaries.endedAt))
-		.limit(limit) as Promise<FightSummaryRow[]>;
+		.limit(limit)) as FightSummaryRow[];
+	return rows.map(maskFightParticipants);
 }
 
 export async function queryFightsSince(db: Db, roomId: string, since: Date): Promise<FightSummaryRow[]> {
-	return db
+	const rows = (await db
 		.select()
 		.from(fightSummaries)
 		.where(and(eq(fightSummaries.roomId, roomId), gte(fightSummaries.endedAt, since)))
-		.orderBy(fightSummaries.endedAt) as Promise<FightSummaryRow[]>;
+		.orderBy(fightSummaries.endedAt)) as FightSummaryRow[];
+	return rows.map(maskFightParticipants);
 }
 
 export async function getMemberLastSeen(

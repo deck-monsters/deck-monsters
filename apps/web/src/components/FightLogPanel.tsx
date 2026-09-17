@@ -37,6 +37,16 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
   return <div className="surface-panel-host"><section className="surface-panel fight-log-panel">
     <header className="surface-panel-heading"><h1>Fight log</h1><div className="surface-panel-actions">{headerActions}</div></header>
     {fights.isLoading && <p className="surface-muted">Loading…</p>}
+    {/*
+      A room with no fights yet rendered the heading and then nothing at all — the same
+      bare-frame problem as the workshop's empty monster row (#113), and it is what every
+      new room shows first. Say what produces a fight instead. See 10b-bugs-fixed.md #119.
+    */}
+    {!fights.isLoading && (fights.data ?? []).length === 0 && (
+      <p className="surface-muted">
+        No fights yet — send two monsters to the ring and the first one starts on its own.
+      </p>
+    )}
     <ul className="fight-log-list">{(fights.data ?? []).map((fight) => {
       const summary = fight as FightSummaryLike;
       const streaks = (summary.participants ?? []).filter((p) => p.outcome === 'win')
