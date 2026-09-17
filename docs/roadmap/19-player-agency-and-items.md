@@ -400,8 +400,8 @@ change for the server half.
 **Not shipped, and the next real work**
 0. **Item-driven prompts over tRPC.** The Sorting Hat is the only item that prompts today,
    and it is currently unusable from the web by design rather than by accident. Supporting it
-   means carrying a choice into the mutation, or a two-step call. Wants doing alongside the
-   ring-pane affordance, since both are about acting without leaving the fight.
+   means carrying a choice into the mutation, or a two-step call. The ring-pane affordance
+   is now shipped; this remains a separate prompt-transport feature.
 1. **Web selling.** Browse and direct buying now live in the Workshop; selling still uses
    `sell to the shop`, whose multi-select confirmation flow remains first-class in the
    console and Discord.
@@ -422,9 +422,10 @@ change for the server half.
 
 - Added the first dedicated player reference, [`ITEMS.md`](../../ITEMS.md), covering
   inventory limits, use timing, every item family, targeting strategy and room-shop rules.
-- Added an authoritative prompt-free engine purchase operation. Its `(section, index,
-  expected item type)` tuple is an optimistic stock token: under the room serialization
-  lane it either buys that exact copy or refuses stale stock, never a replacement item.
+- Added an authoritative prompt-free engine purchase operation. Its `(shop closing time,
+  section, index, expected item type)` tuple is an optimistic stock token: under the room
+  serialization lane it either buys from the merchant the player saw or refuses rotated or
+  stale stock, never an item from the next shop generation.
 - Added membership-checked, room-scoped `game.shop` and `game.buyShopItem` procedures and a
   Workshop merchant surface with balance, prices, owned counts, affordability, rotation
   time and back-room stock.

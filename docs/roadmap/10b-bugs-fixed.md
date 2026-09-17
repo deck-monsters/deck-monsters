@@ -2618,3 +2618,20 @@ cleanup. The unregister clears the ref only when it still points at that same re
 so an older console's cleanup cannot clobber a newer console's.
 
 **Status**: Fixed.
+
+---
+
+### 134. Naming an item to give selected it but never transferred it — FIXED
+
+Found while reviewing the first-class items/shop work. The interactive `give item to
+[monster]` path selected items and then entered the shared capacity-check and transfer
+tail. The direct `give [item] to [monster]` path returned its selected array immediately,
+skipping that tail entirely. The command could appear to succeed while inventories stayed
+unchanged; it also bypassed the recipient's item-slot check.
+
+**Fixed**: both named and interactive selection now converge before the encounter recheck,
+slot trimming, announcement and transfer. Regression tests cover both the actual named
+transfer and a full recipient, so the documented three-slot stocking rule is enforced for
+the discoverable command as well as the prompt flow.
+
+**Status**: Fixed.

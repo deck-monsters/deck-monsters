@@ -71,8 +71,9 @@ back-room goods cost considerably more.
 
 The Workshop shop shows your coin balance, live stock, price, affordability, how many copies
 you already own, and the rotation time. A purchase is checked again atomically when you
-confirm: if somebody else bought that exact copy or the shop rotated, you are asked to
-refresh rather than receiving a different item. Selling remains available through
+confirm: the shop generation, stock position and item name are checked again. If somebody
+else bought that stock or the shop rotated, you are asked to refresh rather than receiving
+an item from a different listing or merchant. Selling remains available through
 `sell to the shop`; sale prices are lower than face value and vary by merchant.
 
 ## Practical preparation
@@ -86,4 +87,3 @@ refresh rather than receiving a different item. Selling remains available throug
 
 For card order and builds see [CARDS.md](CARDS.md). For complete game rules and commands see
 [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md).
-

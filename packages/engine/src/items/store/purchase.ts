@@ -11,10 +11,11 @@ export interface ShopPurchaseResult {
 /**
  * Prompt-free, atomic shop purchase used by graphical clients.
  *
- * The stock position and expected name form an optimistic stock token: callers may render
- * a shop for as long as they like, but a rotated shop or another player's purchase cannot
- * silently buy a different item from the same position. The host is read only inside the
- * serialized mutation, so every operation commits against the current room-scoped shop.
+	 * The closing boundary, stock position and expected name form an optimistic stock token:
+	 * callers may render a shop for as long as they like, but a rotated shop or another
+	 * player's purchase cannot silently buy an item from a different listing. The host is
+	 * read only inside the serialized mutation, so every operation commits against the
+	 * current room-scoped shop.
  */
 export const purchaseShopItem = ({
 	character,
@@ -22,14 +23,19 @@ export const purchaseShopItem = ({
 	section,
 	stockIndex,
 	expectedItemType,
+	expectedClosingTime,
 }: {
 	character: any;
 	host: ShopHost;
 	section: ShopItemSection;
 	stockIndex: number;
 	expectedItemType: string;
+	expectedClosingTime: string;
 }): ShopPurchaseResult => {
 	const shop = host.shop;
+	if (new Date(shop.closingTime).toISOString() !== expectedClosingTime) {
+		throw new Error('The shop has rotated since you opened it. Refresh the shop and try again.');
+	}
 	const stock = section === 'backRoom' ? shop.backRoom : shop.items;
 	const item = stock[stockIndex];
 
@@ -51,4 +57,3 @@ export const purchaseShopItem = ({
 
 	return { item, price, remainingCoins: character.coins };
 };
-

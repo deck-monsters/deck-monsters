@@ -106,6 +106,10 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   }
 
   async function handleBuyShopItem(item: ShopStockItem) {
+    if (!shop) {
+      setError('The shop is still loading. Try again in a moment.');
+      return;
+    }
     if (!window.confirm(`Buy ${item.displayName} for ${item.price} coins?`)) return;
     try {
       setError(null);
@@ -113,6 +117,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         section: item.section,
         stockIndex: item.stockIndex,
         expectedItemType: item.displayName,
+        expectedClosingTime: shop.closingTime,
       });
       setMessage(`Bought ${result.itemName} for ${result.price} coins. ${result.remainingCoins} coins remain.`);
     } catch (err) {

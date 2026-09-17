@@ -1001,6 +1001,7 @@ export function createRouter(roomManager: RoomManager) {
 				section: z.enum(['items', 'backRoom']),
 				stockIndex: z.number().int().min(0),
 				expectedItemType: z.string().min(1),
+				expectedClosingTime: z.string().datetime(),
 			}))
 			.mutation(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
@@ -1017,6 +1018,7 @@ export function createRouter(roomManager: RoomManager) {
 						section: input.section,
 						stockIndex: input.stockIndex,
 						expectedItemType: input.expectedItemType,
+						expectedClosingTime: input.expectedClosingTime,
 					}),
 				);
 

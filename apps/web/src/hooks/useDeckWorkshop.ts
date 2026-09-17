@@ -99,7 +99,7 @@ export function useDeckWorkshop(roomId?: string) {
   const cardCompatibility = inventory.cardCompatibility ?? {};
   const items = inventory.items ?? EMPTY_INVENTORY.items;
 
-  const loading = roomQuery.isLoading || inventoryQuery.isLoading;
+  const loading = roomQuery.isLoading || inventoryQuery.isLoading || shopQuery.isLoading;
   const busy = useMemo(
     () =>
       inventoryQuery.isFetching ||
@@ -163,7 +163,7 @@ export function useDeckWorkshop(roomId?: string) {
       useItemMutation.error?.message ??
       sendMonsterToRingMutation.error?.message ??
       buyShopItemMutation.error?.message,
-    refresh: () => inventoryQuery.refetch(),
+    refresh: () => Promise.all([inventoryQuery.refetch(), shopQuery.refetch()]),
     reviveMonster: (input: { monsterName: string }) => {
       if (!roomId) throw new Error('Room not selected');
       return reviveMonsterMutation.mutateAsync({ roomId, ...input });
@@ -184,6 +184,7 @@ export function useDeckWorkshop(roomId?: string) {
       section: 'items' | 'backRoom';
       stockIndex: number;
       expectedItemType: string;
+      expectedClosingTime: string;
     }) => {
       if (!roomId) throw new Error('Room not selected');
       return buyShopItemMutation.mutateAsync({ roomId, ...input });

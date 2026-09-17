@@ -29,6 +29,7 @@ describe('./items/store/purchase.ts', () => {
 			section: 'items',
 			stockIndex: 0,
 			expectedItemType: 'Potion of Healing',
+			expectedClosingTime: shop.closingTime.toISOString(),
 		});
 
 		expect(result.price).to.equal(80);
@@ -48,6 +49,7 @@ describe('./items/store/purchase.ts', () => {
 			section: 'backRoom',
 			stockIndex: 0,
 			expectedItemType: 'Sorting Hat',
+			expectedClosingTime: shop.closingTime.toISOString(),
 		});
 
 		const committed = (host.commitShop as sinon.SinonStub).firstCall.args[0] as Shop;
@@ -68,6 +70,7 @@ describe('./items/store/purchase.ts', () => {
 			section: 'items',
 			stockIndex: 0,
 			expectedItemType: 'A Different Item',
+			expectedClosingTime: shop.closingTime.toISOString(),
 		})).to.throw('no longer in stock');
 
 		expect(() => purchaseShopItem({
@@ -76,10 +79,27 @@ describe('./items/store/purchase.ts', () => {
 			section: 'items',
 			stockIndex: 0,
 			expectedItemType: 'Potion of Healing',
+			expectedClosingTime: shop.closingTime.toISOString(),
 		})).to.throw('need 80 coins');
 		expect(character.coins).to.equal(10);
 		expect(addItem.called).to.equal(false);
 		expect(commitShop.called).to.equal(false);
 	});
-});
 
+	it('rejects a token from the previous shop rotation even when the same item is at the same index', () => {
+		const shop = makeShop();
+		const commitShop = sinon.stub();
+		const character = { coins: 100, addItem: sinon.stub() };
+
+		expect(() => purchaseShopItem({
+			character,
+			host: { shop, commitShop },
+			section: 'items',
+			stockIndex: 0,
+			expectedItemType: 'Potion of Healing',
+			expectedClosingTime: new Date(shop.closingTime.getTime() - 1).toISOString(),
+		})).to.throw('shop has rotated');
+		expect(character.addItem.called).to.equal(false);
+		expect(commitShop.called).to.equal(false);
+	});
+});

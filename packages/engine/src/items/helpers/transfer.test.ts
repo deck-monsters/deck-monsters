@@ -68,4 +68,39 @@ describe('./items/helpers/transfer.ts', () => {
 			return expect(to.items.length).to.equal(1);
 		});
 	});
+
+	it('transfers a directly named item instead of only selecting it', async () => {
+		const from = makeCreature({ givenName: 'Character', itemSlots: 12 });
+		from.items = [new LotteryTicket()];
+		const to = makeCreature({ givenName: 'Monster', itemSlots: 3 });
+
+		await transferItems({
+			from,
+			to,
+			channel: channelStub,
+			itemSelection: ['Lottery Ticket'],
+		});
+
+		expect(from.items).to.have.lengthOf(0);
+		expect(to.items).to.have.lengthOf(1);
+		expect(channelStub).to.have.been.calledWithMatch({
+			announce: sinon.match('Character has given Monster'),
+		});
+	});
+
+	it('enforces item slots for directly named transfers', async () => {
+		const from = makeCreature({ givenName: 'Character', itemSlots: 12 });
+		from.items = [new LotteryTicket()];
+		const to = makeCreature({ givenName: 'Monster', itemSlots: 1 });
+		to.items = [new LotteryTicket()];
+
+		await expect(transferItems({
+			from,
+			to,
+			channel: channelStub,
+			itemSelection: ['Lottery Ticket'],
+		})).to.be.rejectedWith("Monster doesn't have space for any more items");
+		expect(from.items).to.have.lengthOf(1);
+		expect(to.items).to.have.lengthOf(1);
+	});
 });
