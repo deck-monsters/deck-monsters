@@ -2480,3 +2480,33 @@ Together with #127 this covers all three ways the pair could go wrong: tripping 
 was wrong, never re-subscribing, and never clearing while plainly connected.
 
 **Status**: Fixed.
+
+---
+
+### 129. The console fought the reader's scroll — FIXED (unconfirmed on device)
+
+**Root cause**: the console set `followOutput={false}` and drove its own scrolling — every
+append ran `scrollToIndex({ index: 'LAST', behavior: 'smooth' })` inside a
+`requestAnimationFrame`. An imperative smooth scroll is not cancel-aware. It keeps animating
+while the reader drags against it, and during a fight the next event schedules another
+before the previous has landed, so the view is pulled back to the bottom over and over. From
+the reader's side the console simply will not scroll up.
+
+The ring pane has always used Virtuoso's own `followOutput`, which stops following the
+instant the reader leaves the bottom. That asymmetry is why only one pane was reported, and
+it is the evidence the diagnosis rests on.
+
+**Fixed** by converging the console onto `followOutput`, with the same policy the ring uses:
+follow when at the bottom, or when `enable()` has forced it so a command you just sent
+scrolls into view. The behavioural contract is unchanged — "follow new output only when
+already at the bottom" — only the mechanism.
+
+The test for that contract was pinning the *mechanism* (an imperative `scrollToIndex` per
+append) rather than the behaviour, so it was rewritten to ask what the follow-output policy
+decides, plus a guard that an append schedules no scroll of its own.
+
+**Unconfirmed on device**: the failure is a touch drag racing a scroll animation, which
+neither jsdom nor a headless Chromium render reproduces. See the standing limitation under
+`10-bug-fixes.md` G.
+
+**Status**: Fixed in code; unconfirmed on device.

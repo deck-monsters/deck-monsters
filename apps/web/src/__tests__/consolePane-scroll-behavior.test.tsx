@@ -15,6 +15,8 @@ function pushEvent(tracked: TrackedRingFeedEvent) {
   for (const listener of listeners) listener(tracked);
 }
 
+let latestFollowOutput: ((atBottom: boolean) => unknown) | undefined;
+
 vi.mock('react-virtuoso', () => {
   const React = require('react');
 
@@ -22,6 +24,11 @@ vi.mock('react-virtuoso', () => {
     React.useImperativeHandle(ref, () => ({
       scrollToIndex: scrollToIndexMock,
     }));
+
+    // The component hands Virtuoso its follow-output policy; capture it so the test can
+    // ask what it decides, rather than watching for an imperative scroll that no longer
+    // happens. See 10b-bugs-fixed.md #129.
+    latestFollowOutput = props.followOutput;
 
     return (
       <div>
@@ -130,15 +137,49 @@ describe('ConsolePane scroll behavior', () => {
     restoreRaf = null;
   });
 
-  it('only follows new events when already at bottom', () => {
+  /**
+   * The contract is unchanged — follow new output only when already at the bottom — but it
+   * is now Virtuoso's `followOutput` that enforces it rather than an imperative
+   * `scrollToIndex` per append. The mechanism matters: an imperative smooth scroll keeps
+   * animating while the reader drags against it, and during a fight each new event queued
+   * another, which is why the console "refused to scroll up". Virtuoso stops following the
+   * moment the reader leaves the bottom. See 10b-bugs-fixed.md #129.
+   */
+  it('follows new output while the reader is at the bottom', () => {
     render(
       <TestFeed>
         <ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive={false} />
       </TestFeed>,
     );
-    scrollToIndexMock.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark at bottom' }));
+
+    expect(latestFollowOutput?.(true)).toBe('smooth');
+  });
+
+  it('stops following once the reader scrolls away from the bottom', () => {
+    render(
+      <TestFeed>
+        <ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive={false} />
+      </TestFeed>,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Mark not at bottom' }));
+
+    expect(latestFollowOutput?.(false)).toBe(false);
+  });
+
+  it('does not chase the feed with an imperative scroll on every append', () => {
+    // The regression guard: an append must not schedule its own scroll. If it does, the
+    // reader is fighting an animation that does not yield.
+    render(
+      <TestFeed>
+        <ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive={false} />
+      </TestFeed>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Mark at bottom' }));
+    scrollToIndexMock.mockClear();
+
     act(() => {
       pushEvent({
         id: 'evt-1',
@@ -155,25 +196,6 @@ describe('ConsolePane scroll behavior', () => {
       });
     });
 
-    expect(scrollToIndexMock).toHaveBeenCalledTimes(0);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Mark at bottom' }));
-    act(() => {
-      pushEvent({
-        id: 'evt-2',
-        data: {
-          id: 'evt-2',
-          type: 'announce',
-          scope: 'private',
-          targetUserId: 'user-1',
-          text: 'hello again',
-          payload: {},
-          timestamp: Date.now(),
-          roomId: '11111111-1111-1111-1111-111111111111',
-        },
-      });
-    });
-
-    expect(scrollToIndexMock).toHaveBeenCalled();
+    expect(scrollToIndexMock).not.toHaveBeenCalled();
   });
 });

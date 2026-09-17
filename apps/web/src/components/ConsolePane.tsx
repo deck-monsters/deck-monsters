@@ -114,8 +114,6 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const inputRef = useRef<HTMLInputElement>(null);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
-  const previousConsoleLengthRef = useRef(0);
-  const shouldScrollOnAppendRef = useRef(false);
   const reconnectNoticeShownRef = useRef(false);
   const autoScroll = useFeedAutoScroll();
   const ftuxStorageKey = useMemo(
@@ -241,20 +239,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const cancelFlowMutation = trpc.game.cancelFlow.useMutation();
 
   function addConsoleEvent(ev: ConsoleEvent) {
-    shouldScrollOnAppendRef.current = autoScroll.shouldFollowRef.current;
     setConsoleEvents(prev => [...prev, ev]);
   }
-
-  useEffect(() => {
-    const hasNewEvent = consoleEvents.length > previousConsoleLengthRef.current;
-    if (hasNewEvent && shouldScrollOnAppendRef.current) {
-      requestAnimationFrame(() => {
-        virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-      });
-    }
-    shouldScrollOnAppendRef.current = false;
-    previousConsoleLengthRef.current = consoleEvents.length;
-  }, [consoleEvents.length]);
 
   const upsertPendingPrompt = useCallback((prompt: PendingPromptSnapshot) => {
     setConsoleEvents(prev => {
@@ -732,7 +718,24 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         aria-label="Console messages"
         tabIndex={0}
         data={consoleEvents}
-        followOutput={false}
+        /*
+         * Virtuoso's own follow-output, matching RingPane. This used to be `false` with the
+         * scroll driven imperatively instead: every append ran
+         * `scrollToIndex({ index: 'LAST', behavior: 'smooth' })` inside a rAF. An imperative
+         * smooth scroll is not cancel-aware — it keeps animating while the reader drags
+         * against it, and during a fight the next event schedules another before the last
+         * has landed, so the view is pulled back down over and over. That reads as a console
+         * that will not scroll up at all, which is how it was reported. The ring pane, which
+         * has always used `followOutput`, was never affected — Virtuoso stops following the
+         * moment the reader leaves the bottom.
+         *
+         * `shouldFollowRef` tracks "is at bottom" and is forced true by `enable()` so a
+         * command you just sent still scrolls into view. Same contract as before: follow new
+         * output only when already at the bottom. See 10b-bugs-fixed.md #129.
+         */
+        followOutput={(atBottom) =>
+          autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
+        }
         components={{
           List: FeedList,
           EmptyPlaceholder: () => (

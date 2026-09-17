@@ -4,8 +4,8 @@
 **Priority**: Medium
 **Status**: Active — three open items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#128). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#128).
+post-merge passes (#112–#129). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
+archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#129).
 
 ## Active Items
 
@@ -116,19 +116,44 @@ Reported from a phone session after #371 deployed. Recorded verbatim-ish with wh
 known so far; several are intermittent and need reproduction before a cause is claimed.
 Numbering continues in `10b-bugs-fixed.md` as each is resolved.
 
-### A. Ring feed sometimes lacks the "↓ Latest" jump button
+### A. Ring feed sometimes lacks the "↓ Latest" jump button — INVESTIGATED, NOT REPRODUCED
 
-Intermittent. The button is present in some screenshots and absent in others with the feed
-scrolled up. Suspect the `atBottom` state the button keys off is not re-evaluated when
-content grows while the user is already scrolled up — Virtuoso reports `atBottom` from the
-last scroll event, and an append that happens with no scroll may leave it stale.
+Intermittent. The button is present in some screenshots and absent in others.
 
-### B. Console refuses to scroll up at all, sometimes
+**What is known.** Both panes render the button from a single `isAtBottom` state, which
+starts `true` and is only ever updated by Virtuoso's `atBottomStateChange`. That callback is
+edge-triggered, so any path that leaves the reader away from the bottom *without* Virtuoso
+firing it leaves the button hidden. That is the shape of the bug; what takes that path is
+not established.
 
-Reported as "at least sometimes". If the feed is pinned to the bottom by a `followOutput`
-that re-fires on every append, a user scrolling up during an active fight would be dragged
-back down on the next event and read as "will not scroll". The ring pane does not show
-this, which is itself a clue — the two panes configure Virtuoso differently.
+**Deliberately not "fixed".** Candidate causes considered and none confirmed: a viewport
+change from collapsing the ring roster; catch-up replay inserting older events above the
+current position; a smooth-scroll animation reporting `atBottom` true while in flight. Each
+is plausible and none is demonstrated, and #113 and #125 are this session's evidence of what
+happens when a cause is asserted from a screenshot without reproducing it.
+
+**To pick this up**: the useful next step is capturing *when* it happens — after a roster
+collapse, after a reconnect replay, or mid-fight — since each points at a different one of
+the above. A fix that re-derives `isAtBottom` from the scroller on content change would
+cover all three, but is worth building only once it is known that one of them is real.
+
+### B. Console refuses to scroll up at all, sometimes — FIXED (#129), unconfirmed on device
+
+Reported as "at least sometimes". The clue in the report was right: the two panes configure
+Virtuoso differently, and only the console shows it.
+
+**Confirmed in code.** The console set `followOutput={false}` and drove the scroll itself —
+every append ran `scrollToIndex({ index: 'LAST', behavior: 'smooth' })` inside a
+`requestAnimationFrame`. An imperative smooth scroll is not cancel-aware: it keeps animating
+while the reader drags against it, and during a fight the next event schedules another
+before the previous has landed, so the view is pulled back down repeatedly. The ring pane
+has always used Virtuoso's own `followOutput`, which stops following the moment the reader
+leaves the bottom — hence the asymmetry.
+
+**Fixed as #129** by converging the console onto `followOutput`, keeping the same contract
+(follow only when already at the bottom). **Unconfirmed on device**: the failure is a touch
+drag racing a scroll animation, which neither jsdom nor a headless Chromium render
+reproduces. The reasoning rests on the pane asymmetry, which is evidence, not proof.
 
 ### C. The boss's turn banner still names a generated beastmaster — FIXED (#124)
 
