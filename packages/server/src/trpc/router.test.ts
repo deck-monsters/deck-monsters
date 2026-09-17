@@ -609,6 +609,135 @@ describe('trpc/router monster lifecycle procedures', () => {
 	});
 });
 
+/**
+ * Items are the one thing a player can still do once the bell rings, and until this
+ * procedure existed the web client could list them but not use one. See
+ * docs/roadmap/19-player-agency-and-items.md §8.
+ */
+describe('trpc/router useItem', () => {
+	const makeRoomManager = (character: unknown, spy?: { assertedRoom?: string }) =>
+		({
+			assertMember: async (_userId: string, roomId: string) => {
+				if (spy) spy.assertedRoom = roomId;
+			},
+			getGame: async () => ({ characters: { [USER_ID]: character }, ring: { contestants: [] } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		}) as unknown as Parameters<typeof createRouter>[0];
+
+	it('uses a named item on a named monster', async () => {
+		let used: Record<string, unknown> | undefined;
+		const character = { useItems: async (input: Record<string, unknown>) => { used = input; } };
+		const caller = createRouter(makeRoomManager(character)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		const result = await caller.game.useItem({
+			roomId: ROOM_ID,
+			itemName: 'Healing Potion',
+			monsterName: 'Stonefang',
+		});
+
+		expect(result).to.deep.equal({
+			ok: true,
+			itemName: 'Healing Potion',
+			monsterName: 'Stonefang',
+		});
+		expect(used).to.include({ monsterName: 'Stonefang' });
+		expect(used?.itemSelection).to.deep.equal(['Healing Potion']);
+	});
+
+	it('confirms on the caller\'s behalf, because a prompt cannot be answered in a mutation', async () => {
+		// Without this the engine asks "Are you sure? (yes/no)" and the silent channel throws.
+		let used: Record<string, unknown> | undefined;
+		const character = { useItems: async (input: Record<string, unknown>) => { used = input; } };
+		const caller = createRouter(makeRoomManager(character)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		await caller.game.useItem({ roomId: ROOM_ID, itemName: 'Healing Potion', monsterName: 'Stonefang' });
+
+		expect(used?.confirmed).to.equal(true);
+	});
+
+	it('uses on the character when no monster is named', async () => {
+		let used: Record<string, unknown> | undefined;
+		const character = { useItems: async (input: Record<string, unknown>) => { used = input; } };
+		const caller = createRouter(makeRoomManager(character)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		await caller.game.useItem({ roomId: ROOM_ID, itemName: 'Lottery Ticket' });
+
+		// Undefined rather than empty-string: the engine branches on truthiness to decide
+		// whether to look up a monster at all.
+		expect(used?.monsterName).to.equal(undefined);
+	});
+
+	it('surfaces an engine refusal as a BAD_REQUEST rather than a 500', async () => {
+		const character = {
+			useItems: async () => { throw new Error('Character can not use that on Stonefang.'); },
+		};
+		const caller = createRouter(makeRoomManager(character)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		const error = await caller.game
+			.useItem({ roomId: ROOM_ID, itemName: 'Nonexistent', monsterName: 'Stonefang' })
+			.catch((err) => err);
+
+		expect(error).to.be.instanceOf(TRPCError);
+		expect((error as TRPCError).code).to.equal('BAD_REQUEST');
+		expect((error as TRPCError).message).to.contain('can not use');
+	});
+
+	it('checks room membership before touching game state', async () => {
+		let loaded = false;
+		const roomManager = {
+			assertMember: async () => { throw new TRPCError({ code: 'FORBIDDEN' }); },
+			getGame: async () => { loaded = true; return {}; },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const error = await caller.game
+			.useItem({ roomId: ROOM_ID, itemName: 'Healing Potion' })
+			.catch((err) => err);
+
+		expect(error).to.be.instanceOf(TRPCError);
+		expect(loaded).to.equal(false);
+	});
+
+	it('scopes the membership check to the requested room', async () => {
+		const spy: { assertedRoom?: string } = {};
+		const character = { useItems: async () => undefined };
+		const caller = createRouter(makeRoomManager(character, spy)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		await caller.game.useItem({ roomId: ROOM_ID, itemName: 'Healing Potion' });
+
+		expect(spy.assertedRoom).to.equal(ROOM_ID);
+	});
+
+	it('404s when the user has no character in the room', async () => {
+		const caller = createRouter(makeRoomManager(undefined)).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		const error = await caller.game
+			.useItem({ roomId: ROOM_ID, itemName: 'Healing Potion' })
+			.catch((err) => err);
+
+		expect((error as TRPCError).code).to.equal('NOT_FOUND');
+	});
+});
+
 describe('trpc/router ringFeed replay', () => {
 	type Frame = { id: string; data: { type: string; text: string } };
 

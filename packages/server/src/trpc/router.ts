@@ -959,6 +959,54 @@ export function createRouter(roomManager: RoomManager) {
 				return { ok: true as const, monsterName: input.monsterName };
 			}),
 
+		/**
+		 * The mid-fight lever, finally reachable from the browser. See
+		 * docs/roadmap/19-player-agency-and-items.md §8, where the absence of this procedure
+		 * was the single blocker on the whole items story — the web client could list items
+		 * but not use one.
+		 *
+		 * `confirmed: true` is what makes it possible at all: `useItems` otherwise asks
+		 * "Are you sure?" unconditionally, and a prompt cannot be answered inside a mutation.
+		 * The web client's own confirmation stands in for it. Which items are usable, and the
+		 * narrowing to `monster.items` once a monster is in an encounter, stay in the engine
+		 * helper rather than being re-derived here, so the rule has one home.
+		 *
+		 * `monsterName` absent means "use on the character" — the engine skips the monster
+		 * lookup entirely in that case, so the prompt-free path holds for both.
+		 */
+		useItem: protectedProcedure
+			.input(
+				z.object({
+					roomId: z.string().uuid(),
+					itemName: z.string().min(1),
+					monsterName: z.string().min(1).optional(),
+				}),
+			)
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const [game, eventBus] = await Promise.all([
+					roomManager.getGame(input.roomId),
+					roomManager.getEventBus(input.roomId),
+				]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.useItems !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const commandId = randomUUID();
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				await runSerializedMutation(input.roomId, ctx.userId, () =>
+					character.useItems({
+						channel,
+						channelName: 'web',
+						confirmed: true,
+						itemSelection: [input.itemName],
+						monsterName: input.monsterName,
+					}),
+				);
+				return { ok: true as const, itemName: input.itemName, monsterName: input.monsterName };
+			}),
+
 		unequipCard: protectedProcedure
 			.input(
 				z.object({
