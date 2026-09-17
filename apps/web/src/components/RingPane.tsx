@@ -22,6 +22,7 @@ import {
 } from '../utils/feed-markers.js';
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 import FeedList from './FeedList.js';
+import RingItemsPanel from './RingItemsPanel.js';
 
 interface RingPaneProps {
   roomId: string;
@@ -391,6 +392,9 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
   const summonBadge = ringState
     ? `summons ${ringState.bossSummonsRemaining}/${ringState.bossSummonLimit}`
     : null;
+  const myFightingMonster = timerState.inEncounter
+    ? rosterContestants.find((contestant) => contestant.userId === myUserId && !contestant.dead)
+    : undefined;
 
   return (
     <section
@@ -429,6 +433,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
         collapsed={rosterCollapsed}
         onToggle={toggleRoster}
       />
+      {myFightingMonster && <RingItemsPanel roomId={roomId} monsterName={myFightingMonster.name} />}
 
       <div className="pane-feed-area">
       <Virtuoso

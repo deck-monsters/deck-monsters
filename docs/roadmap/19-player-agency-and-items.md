@@ -2,9 +2,9 @@
 
 **Category**: Design / Mechanics
 **Priority**: Medium — the items audit (§3) is actionable now; the rest needs the balance sim harness
-**Status**: 🔧 Active — the items panel, discoverability copy, revive, send-to-ring and
-item use itself have shipped; the ring-pane affordance, the feedback loop, prompt-free
-spawn and the room shop have not
+**Status**: 🔧 Active — item documentation, Workshop use, the live ring affordance and the
+room shop have shipped; the feedback loop, prompt-free spawn, web selling and the one
+prompt-driven item remain
 
 This doc exists because a research pass on what makes tabletop RPGs enjoyable was brought
 into the project, and applying it to an auto-battler turned out to need a clearer statement
@@ -198,14 +198,14 @@ Today the workshop is cards-only, and everything else is a typed command.
 
 ### Next, in order
 
-1. **Items panel + a use affordance on the ring pane.** Highest value-to-effort in this
-   doc: engine, commands and persistence all exist, and it is the mechanic most likely to be
-   missed entirely (§3). Spec in §7.
+1. **Items panel + a use affordance on the ring pane. Shipped.** The Workshop supports
+   preparation and the Ring exposes only the fighting monster's carried, usable items.
 2. **Finish lifecycle actions: prompt-free spawn.** Revive and send-to-ring have shipped;
    spawn still needs an authoritative non-interactive engine operation rather than replaying
    the console prompt flow from React.
-3. **Shop.** Browse and buy. Note the per-room scoping rule — the card shop is room-scoped
-   (`Game.shop` / `commitShop()`, `10b-bugs-fixed.md` #26) and any UI must respect it.
+3. **Shop. Shipped for browse and buy.** The Workshop shows the room merchant, rotation,
+   coins, ownership, affordability and back-room stock. Purchases revalidate an optimistic
+   stock token inside the room mutation lane. Selling remains a guided console operation.
 4. **Command reference parity.** Every action the workshop gains should also be listed as
    the command it maps to, so the console stays learnable rather than becoming legacy.
 
@@ -400,13 +400,11 @@ change for the server half.
 **Not shipped, and the next real work**
 0. **Item-driven prompts over tRPC.** The Sorting Hat is the only item that prompts today,
    and it is currently unusable from the web by design rather than by accident. Supporting it
-   means carrying a choice into the mutation, or a two-step call. Wants doing alongside the
-   ring-pane affordance, since both are about acting without leaving the fight.
-1. **The ring-pane affordance** (§6 item 1) — the list's real home, and the actual one-tap
-   mid-fight lever. The workshop panel is the *pre-fight stocking* decision; reaching for a
-   potion while a fight is running still means leaving the ring feed for the workshop, or
-   putting the workshop in the other pane. Now unblocked: the procedure and the
-   target resolution it needs both exist and are tested.
+   means carrying a choice into the mutation, or a two-step call. The ring-pane affordance
+   is now shipped; this remains a separate prompt-transport feature.
+1. **Web selling.** Browse and direct buying now live in the Workshop; selling still uses
+   `sell to the shop`, whose multi-select confirmation flow remains first-class in the
+   console and Discord.
 2. **No feedback loop** (§6 item 5, untouched). Nothing tells a player that an item *would
    have* helped, or what a targeting scroll changed. This is the "teach the mechanic by
    showing its effect" half of the story, and it is independent of the UI work above.
@@ -419,3 +417,18 @@ change for the server half.
   were written by implementation, not chosen by the owner. Worth a read-through.
 - §4's competence/attachment work (per-monster records, a memorial, earned titles) is
   untouched and independent of everything above.
+
+## 9. September 17: shop and live-item completion
+
+- Added the first dedicated player reference, [`ITEMS.md`](../../ITEMS.md), covering
+  inventory limits, use timing, every item family, targeting strategy and room-shop rules.
+- Added an authoritative prompt-free engine purchase operation. Its `(shop closing time,
+  section, index, expected item type)` tuple is an optimistic stock token: under the room
+  serialization lane it either buys from the merchant the player saw or refuses rotated or
+  stale stock, never an item from the next shop generation.
+- Added membership-checked, room-scoped `game.shop` and `game.buyShopItem` procedures and a
+  Workshop merchant surface with balance, prices, owned counts, affordability, rotation
+  time and back-room stock.
+- Added the ring-pane item affordance. It deliberately queries the same inventory read
+  model and only offers compatible items carried by the authenticated player's active
+  monster, preserving the pre-stock rule rather than creating a second item system.

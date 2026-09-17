@@ -49,6 +49,10 @@ export function useDeckWorkshop(roomId?: string) {
       refetchInterval: 30_000,
     },
   );
+  const shopQuery = trpc.game.shop.useQuery(
+    { roomId: validRoomId },
+    { enabled: !!roomId, refetchInterval: 30_000 },
+  );
 
   const invalidateWorkshop = async () => {
     if (!roomId) return;
@@ -57,6 +61,12 @@ export function useDeckWorkshop(roomId?: string) {
   };
 
   const mutationOptions = { onSuccess: invalidateWorkshop } as const;
+  const buyShopItemMutation = trpc.game.buyShopItem.useMutation({
+    onSuccess: async () => {
+      await invalidateWorkshop();
+      if (roomId) await shopQuery.refetch();
+    },
+  });
   const unequipCardMutation = trpc.game.unequipCard.useMutation(mutationOptions);
   const unequipManyMutation = trpc.game.unequipMany.useMutation(mutationOptions);
   const unequipAllMutation = trpc.game.unequipAll.useMutation(mutationOptions);
@@ -89,10 +99,12 @@ export function useDeckWorkshop(roomId?: string) {
   const cardCompatibility = inventory.cardCompatibility ?? {};
   const items = inventory.items ?? EMPTY_INVENTORY.items;
 
-  const loading = roomQuery.isLoading || inventoryQuery.isLoading;
+  const loading = roomQuery.isLoading || inventoryQuery.isLoading || shopQuery.isLoading;
   const busy = useMemo(
     () =>
       inventoryQuery.isFetching ||
+      shopQuery.isFetching ||
+      buyShopItemMutation.isPending ||
       unequipCardMutation.isPending ||
       unequipManyMutation.isPending ||
       unequipAllMutation.isPending ||
@@ -113,6 +125,8 @@ export function useDeckWorkshop(roomId?: string) {
       sendMonsterToRingMutation.isPending,
       equipCardsMutation.isPending,
       inventoryQuery.isFetching,
+      shopQuery.isFetching,
+      buyShopItemMutation.isPending,
       loadPresetMutation.isPending,
       moveCardMutation.isPending,
       moveManyMutation.isPending,
@@ -131,6 +145,7 @@ export function useDeckWorkshop(roomId?: string) {
     unequippedDeck,
     cardCompatibility,
     items,
+    shop: shopQuery.data,
     loading,
     busy,
     latestError:
@@ -146,8 +161,9 @@ export function useDeckWorkshop(roomId?: string) {
       deletePresetMutation.error?.message ??
       reviveMonsterMutation.error?.message ??
       useItemMutation.error?.message ??
-      sendMonsterToRingMutation.error?.message,
-    refresh: () => inventoryQuery.refetch(),
+      sendMonsterToRingMutation.error?.message ??
+      buyShopItemMutation.error?.message,
+    refresh: () => Promise.all([inventoryQuery.refetch(), shopQuery.refetch()]),
     reviveMonster: (input: { monsterName: string }) => {
       if (!roomId) throw new Error('Room not selected');
       return reviveMonsterMutation.mutateAsync({ roomId, ...input });
@@ -163,6 +179,15 @@ export function useDeckWorkshop(roomId?: string) {
     }) => {
       if (!roomId) throw new Error('Room not selected');
       return useItemMutation.mutateAsync({ roomId, ...input });
+    },
+    buyShopItem: (input: {
+      section: 'items' | 'backRoom';
+      stockIndex: number;
+      expectedItemType: string;
+      expectedClosingTime: string;
+    }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return buyShopItemMutation.mutateAsync({ roomId, ...input });
     },
     equipCards: (input: { monsterName: string; cardNames: string[]; replaceAll?: boolean }) => {
       if (!roomId) throw new Error('Room not selected');

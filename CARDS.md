@@ -8,7 +8,8 @@
 ```
 
 *The Card Catalogue (Player Reference):*
-Name, description, and rarity for every card and item in the game.
+Name, description, and rarity for every card and item in the game. For item rules, use
+timing, inventory limits, targeting strategies and the shop, see [ITEMS.md](ITEMS.md).
 
 Adrenaline Rush
 Bad Batch

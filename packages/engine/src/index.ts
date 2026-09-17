@@ -19,6 +19,8 @@ export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { getCardClassByTypeName } from './cards/index.js';
 export { COMMAND_CATALOG } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
+export { purchaseShopItem } from './items/store/purchase.js';
+export type { ShopItemSection, ShopPurchaseResult } from './items/store/purchase.js';
 
 /** Test harness and integration helpers (no Slack/HTTP/DB). */
 export * from './testing/index.js';

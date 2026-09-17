@@ -27,31 +27,12 @@ const transferItems = ({ from, to, itemSelection, channel }: TransferOptions): P
 		.then(checkEncounter)
 		.then(() => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const items: any[] = sortItemsAlphabetically(
+			const items: any[] = sortItemsAlphabetically(
 				from.items.filter((item: any) => to.canHoldItem(item))
 			);
 
 			if (items.length < 1) {
 				return announceAndThrow(channel, `${from.givenName} doesn't have any items that ${to.givenName} can use.`);
-			}
-
-			if (itemSelection && itemSelection.length > 0) {
-				return itemSelection.reduce((selectedItems: any[], itemType: string) => {
-					const itemIndex = items.findIndex(
-						(potentialItem: any) => potentialItem.itemType.toLowerCase() === itemType.toLowerCase()
-					);
-
-					if (itemIndex >= 0) {
-						const selectedItem = items.splice(itemIndex, 1)[0];
-						selectedItems.push(selectedItem);
-					} else {
-						channel({
-							announce: `${to.givenName} can not hold ${itemType.toLowerCase()}.`
-						});
-					}
-
-					return selectedItems;
-				}, []);
 			}
 
 			const { itemSlots } = to;
@@ -62,25 +43,46 @@ const transferItems = ({ from, to, itemSelection, channel }: TransferOptions): P
 				return announceAndThrow(channel, `${to.givenName} doesn't have space for any more items!`);
 			}
 
-			let currentItemDescription: string;
-			if (currentItemCount === 0) {
-				currentItemDescription = 'no items';
-			} else if (currentItemCount === 1) {
-				currentItemDescription = 'one item';
+			let selectedItems: Promise<any[]>;
+			if (itemSelection && itemSelection.length > 0) {
+				selectedItems = Promise.resolve(itemSelection.reduce((selected: any[], itemType: string) => {
+					const itemIndex = items.findIndex(
+						(potentialItem: any) => potentialItem.itemType.toLowerCase() === itemType.toLowerCase()
+					);
+
+					if (itemIndex >= 0) {
+						const selectedItem = items.splice(itemIndex, 1)[0];
+						selected.push(selectedItem);
+					} else {
+						channel({
+							announce: `${to.givenName} can not hold ${itemType.toLowerCase()}.`
+						});
+					}
+
+					return selected;
+				}, []));
 			} else {
-				currentItemDescription = `${currentItemCount} items`;
+				let currentItemDescription: string;
+				if (currentItemCount === 0) {
+					currentItemDescription = 'no items';
+				} else if (currentItemCount === 1) {
+					currentItemDescription = 'one item';
+				} else {
+					currentItemDescription = `${currentItemCount} items`;
+				}
+
+				const getQuestion = ({ itemChoices }: { itemChoices: string }): string =>
+					`${to.givenName} is holding ${currentItemDescription} and has space for ${remainingSlots} more:\n\n${itemChoices}\n\nWhich item(s) should ${from.givenName} give ${to.pronouns.him}?`;
+
+				selectedItems = chooseItems({ items, channel, getQuestion });
 			}
 
-			const getQuestion = ({ itemChoices }: { itemChoices: string }): string =>
-				`${to.givenName} is holding ${currentItemDescription} and has space for ${remainingSlots} more:\n\n${itemChoices}\n\nWhich item(s) should ${from.givenName} give ${to.pronouns.him}?`;
-
-			return chooseItems({
-				items,
-				channel,
-				getQuestion
-			})
+			return selectedItems
 				.then(checkEncounter)
 				.then((selectedItems: any[]) => {
+					if (selectedItems.length < 1) {
+						return announceAndThrow(channel, `No items were selected for ${to.givenName}.`);
+					}
 					const trimmedItems = selectedItems.slice(0, remainingSlots);
 
 					const itemStr = trimmedItems.length === 1 ? 'item' : 'items';

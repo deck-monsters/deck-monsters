@@ -716,6 +716,34 @@ button {
   color: var(--color-accent);
 }
 
+.workshop-shop {
+  border: 1px solid var(--color-border);
+  padding: 0.75rem;
+  background: var(--color-input-bg);
+  margin-top: 0.75rem;
+}
+
+.shop-heading { align-items: flex-start; }
+.shop-heading p { margin: 0.2rem 0; }
+.shop-wallet { color: var(--color-accent); white-space: nowrap; }
+.shop-stock-list { display: grid; gap: 0.4rem; list-style: none; margin: 0; padding: 0; }
+.shop-stock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: 0.55rem;
+}
+.shop-stock-copy { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.6rem; min-width: 0; font-size: 0.74rem; }
+.shop-stock-copy strong { color: var(--color-fg-bright); font-size: 0.82rem; }
+.shop-owned { color: var(--color-accent); }
+.shop-buy-button { flex: 0 0 auto; }
+.shop-back-room { margin-top: 0.75rem; }
+.shop-back-room summary { cursor: pointer; color: var(--color-accent); font-weight: 700; }
+.shop-console-note { color: var(--color-fg-dim); font-size: 0.72rem; margin-bottom: 0; }
+
 .monster-workshop-panel.in-ring,
 .workshop-monster-panel.in-ring {
   border-color: var(--color-accent);
@@ -764,6 +792,8 @@ button {
 }
 
 @container workshop (max-width: 520px) {
+  .shop-stock-row { align-items: stretch; flex-direction: column; }
+  .shop-buy-button { width: 100%; }
   .workshop-header {
     flex-direction: column;
     align-items: stretch;

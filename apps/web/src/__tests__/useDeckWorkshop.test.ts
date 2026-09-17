@@ -7,6 +7,9 @@ const mocks = vi.hoisted(() => {
   const ringStateInvalidate = vi.fn(async () => undefined);
   const roomInfoUseQuery = vi.fn();
   const myInventoryUseQuery = vi.fn();
+  const shopUseQuery = vi.fn();
+  const inventoryRefetch = vi.fn(async () => undefined);
+  const shopRefetch = vi.fn(async () => undefined);
   const defaultMutation = vi.fn((options?: { onSuccess?: () => Promise<void> }) => ({
     isPending: false,
     error: null,
@@ -22,6 +25,10 @@ const mocks = vi.hoisted(() => {
     ringStateInvalidate,
     roomInfoUseQuery,
     myInventoryUseQuery,
+    shopUseQuery,
+    inventoryRefetch,
+    shopRefetch,
+    buyShopItemUseMutation: vi.fn(defaultMutation),
     unequipCardUseMutation: vi.fn(defaultMutation),
     unequipManyUseMutation: vi.fn(defaultMutation),
     unequipAllUseMutation: vi.fn(defaultMutation),
@@ -56,6 +63,8 @@ vi.mock('../lib/trpc.js', () => ({
       myInventory: {
         useQuery: mocks.myInventoryUseQuery,
       },
+      shop: { useQuery: mocks.shopUseQuery },
+      buyShopItem: { useMutation: mocks.buyShopItemUseMutation },
       unequipCard: { useMutation: mocks.unequipCardUseMutation },
       unequipMany: { useMutation: mocks.unequipManyUseMutation },
       unequipAll: { useMutation: mocks.unequipAllUseMutation },
@@ -86,7 +95,13 @@ describe('useDeckWorkshop', () => {
       data: { monsters: [], unequippedDeck: [], cardCompatibility: {}, items: { character: [], monsters: [] } },
       isLoading: false,
       isFetching: false,
-      refetch: vi.fn(),
+      refetch: mocks.inventoryRefetch,
+    });
+    mocks.shopUseQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      refetch: mocks.shopRefetch,
     });
   });
 
@@ -103,6 +118,17 @@ describe('useDeckWorkshop', () => {
     expect(mocks.inventoryInvalidate).toHaveBeenCalledWith({ roomId: 'room-123' });
     expect(mocks.monstersInvalidate).toHaveBeenCalledWith({ roomId: 'room-123' });
   });
+
+  it('refreshes inventory and the rotating shop together', async () => {
+    const { result } = renderHook(() => useDeckWorkshop('room-123'));
+
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    expect(mocks.inventoryRefetch).toHaveBeenCalledOnce();
+    expect(mocks.shopRefetch).toHaveBeenCalledOnce();
+	});
 
   it('throws when room is missing for mutation calls', async () => {
     const { result } = renderHook(() => useDeckWorkshop(undefined));

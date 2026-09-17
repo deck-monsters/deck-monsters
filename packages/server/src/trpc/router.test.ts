@@ -233,6 +233,103 @@ describe('trpc/router card management procedures', () => {
 		]);
 	});
 
+	it('returns a room-scoped shop with prices, ownership and affordability', async () => {
+		const potion = { itemType: 'Potion', cost: 50, description: 'Heals.', stats: 'Usable 1 time.' };
+		const game = {
+			characters: { [USER_ID]: { coins: 75, items: [potion] } },
+			shop: {
+				name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date('2030-01-01T00:00:00Z'),
+				priceOffset: 0.8, backRoomOffset: 5, items: [potion], backRoom: [], cards: [], pronouns: {},
+			},
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		(roomManager as any).runSerializedEngineWork = async (_lane: string, fn: () => Promise<unknown>) => fn();
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.shop({ roomId: ROOM_ID });
+
+		expect(result.coins).to.equal(75);
+		expect(result.items[0]).to.deep.include({
+			stockIndex: 0, section: 'items', displayName: 'Potion', price: 80,
+			affordable: false, ownedCount: 1, description: 'Heals.',
+		});
+	});
+
+	it('buys from the current room shop through the serialized mutation lane', async () => {
+		const potion = { itemType: 'Potion', cost: 50 };
+		const ownedItems: unknown[] = [];
+		const addItem = (owned: unknown) => ownedItems.push(owned);
+		const game = {
+			characters: { [USER_ID]: { coins: 100, items: ownedItems, addItem } },
+			shop: {
+				name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date(Date.now() + 60_000),
+				priceOffset: 0.8, backRoomOffset: 5, items: [potion], backRoom: [], cards: [], pronouns: {},
+			},
+			commitShop(next: any) { game.shop = next; },
+		};
+		const lanes: string[] = [];
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getEventBus: async () => ({ getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (lane: string, fn: () => Promise<unknown>) => {
+				lanes.push(lane);
+				return fn();
+			},
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.buyShopItem({
+			roomId: ROOM_ID, section: 'items', stockIndex: 0, expectedItemType: 'Potion',
+			expectedClosingTime: game.shop.closingTime.toISOString(),
+		});
+
+		expect(result).to.deep.equal({ ok: true, itemName: 'Potion', price: 80, remainingCoins: 20 });
+		expect(game.shop.items).to.deep.equal([]);
+		expect(game.characters[USER_ID].items).to.deep.equal([potion]);
+		expect(lanes).to.deep.equal([ROOM_ID]);
+	});
+
+	it('does not mutate another room when buying an item', async () => {
+		const makeGame = () => {
+			const potion = { itemType: 'Potion', cost: 50 };
+			const owned: unknown[] = [];
+			const game = {
+				characters: { [USER_ID]: { coins: 100, items: owned, addItem: (item: unknown) => owned.push(item) } },
+				shop: {
+					name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date(Date.now() + 60_000),
+					priceOffset: 0.8, backRoomOffset: 5, items: [potion], backRoom: [], cards: [], pronouns: {},
+				},
+				commitShop(next: any) { game.shop = next; },
+			};
+			return game;
+		};
+		const otherRoomId = 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff';
+		const games = { [ROOM_ID]: makeGame(), [otherRoomId]: makeGame() };
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async (roomId: keyof typeof games) => games[roomId],
+			getEventBus: async () => ({ getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_lane: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		await caller.game.buyShopItem({
+			roomId: ROOM_ID,
+			section: 'items',
+			stockIndex: 0,
+			expectedItemType: 'Potion',
+			expectedClosingTime: games[ROOM_ID].shop.closingTime.toISOString(),
+		});
+
+		expect(games[ROOM_ID].shop.items).to.have.lengthOf(0);
+		expect(games[otherRoomId].shop.items).to.have.lengthOf(1);
+		expect(games[otherRoomId].characters[USER_ID].coins).to.equal(100);
+	});
+
 	it('runs game.unequipCard via serialized engine work', async () => {
 		const unequipCard = async () => ({ removedCount: 1, monsterName: 'Stonefang' });
 		const publish = () => undefined;
