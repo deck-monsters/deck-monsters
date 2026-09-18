@@ -2,10 +2,73 @@
 
 **Category**: Game Design / Balance  
 **Priority**: Medium (do before or during launch, before new content)  
-**Status**: Not started — two prerequisite stat calculation bugs were fixed during the TypeScript migration  
+**Status**: Active — two prerequisite stat calculation bugs were fixed during the TypeScript migration; the first economy audit and reward-floor fixes shipped September 18, 2026
 **Source**: Upstream issues tagged with the Balance milestone and related discussions
 
 These are mechanics changes that affect the core game feel. They should be done as a coordinated pass rather than piecemeal, because some of them interact. We should also write a harness which allows us to test mock battles / cards over and over to fine tune the mechanics as they interact, find bugs in their interactions, and resolve issues balance / over powered cards.
+
+---
+
+## Coin Economy and Participation Floor (September 18, 2026)
+
+### Audit findings
+
+The reported symptom — a character that had fought many times still showing zero coins —
+was possible without any persistence failure. The outcome listeners paid **5 coins for a
+win**, **2 for a loss or flee**, and **4 for permanent death**, but the ring's fully
+implemented draw outcome had no game-level reward listener. A player whose completed
+fights resolved as draws could therefore gain battle-count credit while remaining at zero
+coins. The handbook's promise that battles earn coins was too broad for the implementation.
+
+The surrounding prices made that hole especially visible:
+
+- item/card face-value tiers are 10, 20, 30, 50, 80 and 130 coins;
+- ordinary shop purchases use twice the merchant's 0.6–0.9 offset, so the cheapest paid
+  listing costs **12–18 coins** and a 50-coin healing item costs **60–90**;
+- at the old outcome rates, the cheapest listing therefore represented 3–4 wins or 6–9
+  losses, while a draw made no progress at all;
+- wins already include a card drop, so raising only the win payout would widen the gap
+  between successful and struggling/new players.
+
+Items themselves have a sound acquisition/use loop now: the room merchant rotates every
+six hours; the Workshop exposes price, ownership, affordability and direct buying; carried
+items can be used from the live Ring; and the console can sell cards/items. The bottleneck
+was the currency inflow and its legibility, not missing things to buy or use.
+
+### Shipped adjustment
+
+1. **Draws now pay the same consolation reward as losses/flees:** 2 coins and the same
+   character XP. This closes the zero-progress outcome and makes the implementation match
+   the player-facing promise.
+2. **The first completed fight each UTC day pays 5 bonus coins automatically.** This is
+   participation-based rather than a login claim: opening the app does not mint currency,
+   there is no claim button to discover, and a player still contributes a contestant to a
+   completed room fight. The date is stored on the room-scoped character, so the bonus is
+   persistent and independent in each room.
+3. **The reward announcement includes the combined coin amount and names the daily bonus.**
+   Players can now understand why the first payout is larger.
+
+With the daily bonus, a player's first loss/draw/flee of the day pays 7 coins and first win
+pays 10. That does not immediately buy the cheapest marked-up listing, but it guarantees
+visible progress and reduces the cheapest purchase to at most one additional win or three
+additional consolation outcomes. Subsequent fights retain the existing 5/2 rates, limiting
+inflation and preserving wins as the faster path.
+
+### Follow-up plan (needs telemetry and/or the simulation harness)
+
+- [ ] Measure median coins earned, spent and held per active player-room; time from first
+  fight to first purchase; outcome mix (especially draws); and shop stock that expires
+  unaffordable. Review after at least two merchant rotations and again after two weeks.
+- [ ] Add economy scenarios to the battle simulation harness: new-player 1/5/20-fight
+  sessions, expected outcome mixes, purchase-time distributions and currency sinks.
+- [ ] If first-purchase time remains too long, prefer a small starter purse or a
+  first-purchase discount over another permanent increase to win rewards. Both target
+  onboarding without compounding long-term inflation.
+- [ ] Add prompt-free web selling from the existing item/shop roadmap. Selling is already
+  a valid currency source, but console-only discovery makes it a poor answer for web users.
+- [ ] Revisit healing-item prices only with use/outcome telemetry. Their 60–90 coin shop
+  price is much steeper than the entry tier, but lowering it blindly risks making bounded
+  mid-fight intervention routine rather than strategic.
 
 ---
 
