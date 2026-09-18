@@ -2668,3 +2668,18 @@ The implementation already followed this model; regression coverage and the work
 design document now make it a contract rather than an accident.
 
 **Status**: Decided and documented.
+
+---
+
+### 138. Prompt-free spawn passed a gender enum to an index-only helper — FIXED
+
+The Workshop correctly submitted `female` / `male` / `androgynous`, but the engine spawn
+helper treated every gender answer as an array index. A fully specified web spawn therefore
+failed before constructing the monster even though the server mutation's mocked test passed.
+
+**Fixed**: the engine helper accepts either a known enum string (typed callers) or the
+existing numeric choice format (interactive channels), rejects unknown values clearly, and
+has direct helper tests for all three paths. This closes the gap between the mocked router
+test and the real engine call.
+
+**Status**: Fixed.

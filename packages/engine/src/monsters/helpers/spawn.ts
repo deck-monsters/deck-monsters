@@ -150,7 +150,17 @@ const spawnMonster = (
 				});
 			})
 			.then((answer: unknown) => {
-				options.gender = genders[answer as number].toLowerCase();
+				// Interactive channels answer with the selected choice index, while typed
+				// callers (the web Workshop) already have the enum value. Treat a known
+				// string as the value itself before falling back to the legacy index format.
+				const stringAnswer = typeof answer === 'string' ? answer.toLowerCase() : '';
+				const selectedGender = genders.includes(stringAnswer)
+					? stringAnswer
+					: genders[Number(answer)];
+				if (!selectedGender) {
+					throw new Error(`Unknown monster gender: ${String(answer)}`);
+				}
+				options.gender = selectedGender;
 				return options;
 			});
 
