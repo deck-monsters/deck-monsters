@@ -25,7 +25,9 @@ private `ring.xp` events, while the server's room-internal stats subscriber prev
 public events only. Character balances changed correctly, but `coins_earned` never did.
 That delivery bug is fixed in `10b-bugs-fixed.md` #139. Historical earnings cannot be
 reconstructed exactly because spent coins are absent from current balances and the missing
-private events were not persisted; totals resume from new rewards after deployment.
+private events were not persisted. Room loading now also reconciles the projection to at
+least each character's authoritative current balance, repairing existing all-zero rows
+without double-counting newer projected rewards; totals then resume from new rewards.
 
 The surrounding prices made that hole especially visible:
 

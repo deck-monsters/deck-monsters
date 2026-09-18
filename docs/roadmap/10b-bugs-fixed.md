@@ -2701,9 +2701,14 @@ room-internal observers. The fight-stats projection and event persister opt in; 
 player/connector subscribers retain owner-only delivery. Tests prove that a private coin
 reward updates the projection and persistence while remaining invisible to another player.
 
-Existing zero totals cannot be reconstructed exactly: balances omit coins already spent,
-and the missing private events were never persisted. New rewards accumulate correctly from
-deployment onward; the first-fight bonus makes that recovery visible immediately.
+Existing lifetime totals cannot be reconstructed exactly: balances omit coins already
+spent, and the missing private events were never persisted. Leaving every existing row at
+zero was nevertheless not acceptable. On room load, the server now reconciles
+`coins_earned` to at least the authoritative current character balance with a monotonic
+`GREATEST(existing, balance)` upsert. This repairs all-zero/stale projections whenever a
+player still holds coins, never lowers a valid total, and cannot double-count rewards. New
+private reward events then accumulate normally; players whose historical balance was
+already spent remain necessarily undercounted rather than being assigned invented coins.
 
 **Status**: Fixed.
 
