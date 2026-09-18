@@ -133,6 +133,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     // The unregister matters: without it a dead console's setter stays registered and
     // swallows the next quick link. See 10b-bugs-fixed.md #133.
     return registerInsertFn((command: string) => {
+	  if (activePromptIdRef.current) {
+		addConsoleEvent({
+		  id: `sys-prompt-block-${Date.now()}`,
+		  type: 'system',
+		  text: '! Finish or cancel the current question before starting another command.',
+		});
+		return;
+	  }
       setInputValue(command);
       inputRef.current?.focus();
     });
@@ -142,7 +150,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
   const { data: pendingPrompt, refetch: refetchPendingPrompt } = trpc.game.pendingPrompt.useQuery(
     { roomId },
-    { enabled: !!roomId },
+    { enabled: !!roomId, refetchInterval: 3_000 },
   );
 
   // Scroll to bottom when this pane becomes active (tab switch)
@@ -898,6 +906,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         aria-label="Command input"
         style={{ position: 'relative' }}
       >
+		{activePromptId && (
+		  <div className="command-blocked-banner" role="status">
+			<span>A command is waiting for your answer. Command suggestions are paused.</span>
+			<button type="button" className="btn" onClick={() => void handleCancelFlow()}>
+			  Cancel action
+			</button>
+		  </div>
+		)}
         <CommandSuggestions
           suggestions={suggestions}
           activeIndex={suggestionIndex}

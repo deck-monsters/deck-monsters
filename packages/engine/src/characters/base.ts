@@ -122,6 +122,15 @@ class BaseCharacter extends BaseCreature {
 		return `${super.stats}\nCoins: ${this.coins}`;
 	}
 
+	/** UTC calendar day on which this character last received the daily fight bonus. */
+	get lastDailyFightCoinDay(): string | undefined {
+		return this.options.lastDailyFightCoinDay as string | undefined;
+	}
+
+	set lastDailyFightCoinDay(day: string | undefined) {
+		this.setOptions({ lastDailyFightCoinDay: day });
+	}
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	canHold(object: { level?: number }): boolean {
 		return !object.level || object.level <= this.level;

@@ -140,4 +140,32 @@ describe('fight-stats-subscriber.ts', () => {
 
 		expect(inserted).to.have.length(0);
 	});
+
+	it('records coins from private reward events without exposing them to other players', async () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const { db, inserted } = makeDb();
+		const unrelatedDeliveries: unknown[] = [];
+		const unsubscribeStats = attachFightStatsSubscriber(bus, db as never);
+		const unsubscribeOtherPlayer = bus.subscribe('other-player', {
+			userId: PLAYER_TWO,
+			deliver: (event) => unrelatedDeliveries.push(event),
+		});
+
+		bus.publish({
+			type: 'ring.xp',
+			scope: 'private',
+			targetUserId: PLAYER_ONE,
+			text: 'You gained coins.',
+			payload: { coinsGained: 7, contestant: { userId: PLAYER_ONE } },
+		});
+
+		await settle();
+		unsubscribeOtherPlayer();
+		unsubscribeStats();
+
+		const playerRows = inserted.filter((entry) => entry.table === 'room_player_stats');
+		expect(playerRows).to.have.length(1);
+		expect(playerRows[0]?.row).to.include({ userId: PLAYER_ONE, coinsEarned: 7 });
+		expect(unrelatedDeliveries).to.have.length(0);
+	});
 });

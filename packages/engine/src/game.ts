@@ -4,7 +4,12 @@ import { find, reduce } from './helpers/collection.js';
 import { all as cardTypes, draw } from './cards/index.js';
 import { all as itemTypes } from './items/index.js';
 import { allMonsters as monsterTypes } from './monsters/index.js';
-import { COINS_PER_VICTORY, COINS_PER_DEFEAT } from './constants/coins.js';
+import {
+	COINS_PER_VICTORY,
+	COINS_PER_DEFEAT,
+	COINS_PER_DAILY_FIGHT,
+	getUtcDay,
+} from './constants/coins.js';
 import { createCharacter } from './characters/index.js';
 import { globalSemaphore } from './helpers/semaphore.js';
 import { listen, loadHandlers } from './commands/index.js';
@@ -356,6 +361,7 @@ export class Game extends BaseClass {
 			wrapGameEvent(this.handlePermaDeath.bind(this))
 		);
 		const boundFled = this.on('creature.fled', wrapGameEvent(this.handleFled.bind(this)));
+		const boundDraw = this.on('creature.draw', wrapGameEvent(this.handleDraw.bind(this)));
 		const boundStateChange = this.on(
 			'stateChange',
 			wrapGameEvent(() => this.scheduleSave())
@@ -395,6 +401,7 @@ export class Game extends BaseClass {
 			() => this.off('creature.loss', boundLoss),
 			() => this.off('creature.permaDeath', boundPermaDeath),
 			() => this.off('creature.fled', boundFled),
+			() => this.off('creature.draw', boundDraw),
 			() => this.off('stateChange', boundStateChange),
 			unsubBossFinalizer,
 		];
@@ -434,7 +441,7 @@ export class Game extends BaseClass {
 
 	handleWinner(className: string, monster: any, { contestant }: { contestant: any }): void {
 		contestant.character.xp += XP_PER_VICTORY;
-		contestant.character.coins += COINS_PER_VICTORY;
+		const { coinsGained, reasons } = this.awardFightCoins(contestant.character, COINS_PER_VICTORY);
 
 		const card = this.drawCard({}, monster);
 		contestant.character.addCard(card);
@@ -445,44 +452,48 @@ export class Game extends BaseClass {
 			contestant,
 			creature: contestant.character,
 			xpGained: XP_PER_VICTORY,
-			coinsGained: COINS_PER_VICTORY,
+			coinsGained,
+			reasons,
 		});
 	}
 
 	handlePermaDeath(className: string, monster: any, { contestant }: { contestant: any }): void {
 		contestant.character.xp += XP_PER_DEFEAT * 2;
-		contestant.character.coins += COINS_PER_DEFEAT * 2;
+		const { coinsGained, reasons } = this.awardFightCoins(contestant.character, COINS_PER_DEFEAT * 2);
 
 		this.emit('gainedXP', {
 			contestant,
 			creature: contestant.character,
 			xpGained: XP_PER_DEFEAT * 2,
-			coinsGained: COINS_PER_DEFEAT * 2,
+			coinsGained,
+			reasons,
 		});
 	}
 
 	handleLoser(className: string, monster: any, { contestant }: { contestant: any }): void {
 		contestant.character.xp += XP_PER_DEFEAT;
-		contestant.character.coins += COINS_PER_DEFEAT;
+		const { coinsGained, reasons } = this.awardFightCoins(contestant.character, COINS_PER_DEFEAT);
 
 		this.emit('gainedXP', {
 			contestant,
 			creature: contestant.character,
 			xpGained: XP_PER_DEFEAT,
-			coinsGained: COINS_PER_DEFEAT,
+			coinsGained,
+			reasons,
 		});
 	}
 
 	handleFled(className: string, monster: any, { contestant }: { contestant: any }): void {
 		monster.xp += XP_PER_DEFEAT;
 		contestant.character.xp += XP_PER_DEFEAT;
-		contestant.character.coins += COINS_PER_DEFEAT;
+		const { coinsGained, reasons } = this.awardFightCoins(contestant.character, COINS_PER_DEFEAT);
 
 		this.emit('gainedXP', {
 			contestant,
 			creature: contestant.character,
 			xpGained: XP_PER_DEFEAT,
-			coinsGained: COINS_PER_DEFEAT,
+			coinsGained,
+			reasons,
 		});
 
 		this.emit('gainedXP', {
@@ -490,6 +501,33 @@ export class Game extends BaseClass {
 			creature: monster,
 			xpGained: XP_PER_DEFEAT,
 		});
+	}
+
+	handleDraw(className: string, monster: any, { contestant }: { contestant: any }): void {
+		contestant.character.xp += XP_PER_DEFEAT;
+		const { coinsGained, reasons } = this.awardFightCoins(contestant.character, COINS_PER_DEFEAT);
+
+		this.emit('gainedXP', {
+			contestant,
+			creature: contestant.character,
+			xpGained: XP_PER_DEFEAT,
+			coinsGained,
+			reasons,
+		});
+	}
+
+	private awardFightCoins(character: any, outcomeCoins: number): { coinsGained: number; reasons?: string } {
+		const today = getUtcDay();
+		const dailyCoins = character.lastDailyFightCoinDay === today ? 0 : COINS_PER_DAILY_FIGHT;
+
+		if (dailyCoins > 0) character.lastDailyFightCoinDay = today;
+		const coinsGained = outcomeCoins + dailyCoins;
+		character.coins += coinsGained;
+
+		return {
+			coinsGained,
+			reasons: dailyCoins > 0 ? `Daily first-fight bonus: ${dailyCoins} coins.` : undefined,
+		};
 	}
 
 	clearRing(): void {

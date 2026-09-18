@@ -37,6 +37,9 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     spawnOptions,
     loading,
     busy,
+	consoleFlowActive,
+	pendingPrompt,
+	cancelConsoleFlow,
     latestError,
     equipCards,
     unequipCard,
@@ -55,6 +58,16 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     buyShopItem,
     refresh,
   } = useDeckWorkshop(roomId);
+
+	async function handleCancelConsoleFlow() {
+	  try {
+		setError(null);
+		await cancelConsoleFlow();
+		setMessage('Cancelled the waiting console action. Workshop controls are available again.');
+	  } catch (err) {
+		setError(err instanceof Error ? err.message : 'Could not cancel the console action');
+	  }
+	}
 
   async function handleSpawn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -469,7 +482,16 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 
       {message && <div className="success-msg" role="status" aria-live="polite">{message}</div>}
       {error && <div className="error-msg" role="alert">{error}</div>}
-      {busy && <div className="workshop-banner">Applying changes…</div>}
+	  {consoleFlowActive && (
+		<div className="workshop-flow-blocked" role="alert">
+		  <div>
+			<strong>Workshop controls are paused by a Console action.</strong>
+			<p>{pendingPrompt ? 'Answer the waiting question in the Console, or cancel it here.' : 'The previous command is still processing. Workshop controls will unlock when it finishes.'}</p>
+		  </div>
+		  {pendingPrompt && <button className="btn" onClick={() => void handleCancelConsoleFlow()}>Cancel Console action</button>}
+		</div>
+	  )}
+	  {busy && !consoleFlowActive && <div className="workshop-banner">Applying changes…</div>}
       {showSpawn && (
         <form className="workshop-spawn-form" onSubmit={(event) => void handleSpawn(event)}>
           <label>Type<select name="type" defaultValue={spawnOptions.types[0]?.index}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>

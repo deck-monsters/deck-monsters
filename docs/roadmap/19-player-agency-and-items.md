@@ -433,3 +433,17 @@ change for the server half.
 - Added the ring-pane item affordance. It deliberately queries the same inventory read
   model and only offers compatible items carried by the authenticated player's active
   monster, preserving the pre-stock rule rather than creating a second item system.
+
+## 10. September 18: economy audit
+
+The shop/item path was reviewed end to end after a player with many room fights reported a
+zero balance. The item mechanics and new Workshop surfaces were functioning, but draws had
+no character reward listener even though the Ring recorded and emitted the outcome. Draws
+now receive the loss/flee consolation payout, and the first completed fight per UTC day
+adds a small automatic participation bonus. The balance rationale, price comparison,
+telemetry requirements and next adjustments are maintained in
+[`11-balance-and-mechanics.md`](11-balance-and-mechanics.md#coin-economy-and-participation-floor-september-18-2026).
+
+Web selling remains the highest-confidence item-economy follow-up: it exposes an existing
+currency source rather than adding more currency. Price changes and further recurring
+grants should wait for economy telemetry and the simulation harness.

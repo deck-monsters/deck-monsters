@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
   const myInventoryUseQuery = vi.fn();
   const shopUseQuery = vi.fn();
   const spawnOptionsUseQuery = vi.fn();
+	const flowStatusUseQuery = vi.fn();
   const inventoryRefetch = vi.fn(async () => undefined);
   const shopRefetch = vi.fn(async () => undefined);
   const defaultMutation = vi.fn((options?: { onSuccess?: () => Promise<void> }) => ({
@@ -28,6 +29,7 @@ const mocks = vi.hoisted(() => {
     myInventoryUseQuery,
     shopUseQuery,
     spawnOptionsUseQuery,
+	flowStatusUseQuery,
     inventoryRefetch,
     shopRefetch,
     buyShopItemUseMutation: vi.fn(defaultMutation),
@@ -45,6 +47,7 @@ const mocks = vi.hoisted(() => {
     spawnMonsterUseMutation: vi.fn(defaultMutation),
     sendMonsterToRingUseMutation: vi.fn(defaultMutation),
     useItemUseMutation: vi.fn(defaultMutation),
+	cancelFlowUseMutation: vi.fn(defaultMutation),
   };
 });
 
@@ -68,6 +71,8 @@ vi.mock('../lib/trpc.js', () => ({
       },
       shop: { useQuery: mocks.shopUseQuery },
       spawnOptions: { useQuery: mocks.spawnOptionsUseQuery },
+	  flowStatus: { useQuery: mocks.flowStatusUseQuery },
+	  cancelFlow: { useMutation: mocks.cancelFlowUseMutation },
       buyShopItem: { useMutation: mocks.buyShopItemUseMutation },
       unequipCard: { useMutation: mocks.unequipCardUseMutation },
       unequipMany: { useMutation: mocks.unequipManyUseMutation },
@@ -115,6 +120,10 @@ describe('useDeckWorkshop', () => {
       },
       isLoading: false,
     });
+	mocks.flowStatusUseQuery.mockReturnValue({
+	  data: { consoleActive: false, workshopActive: false, pendingPrompt: null },
+	  refetch: vi.fn(async () => undefined),
+	});
   });
 
   it('invalidates inventory and monster queries after successful mutation', async () => {

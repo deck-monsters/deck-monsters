@@ -136,15 +136,15 @@ export class HitCard extends BaseCard<HitCardOptions> {
 			player,
 			target
 		);
-		await subEventDelay();
+		await subEventDelay(ring?.pacingMultiplier);
 
 		if (success) {
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
-			await subEventDelay();
+			await subEventDelay(ring?.pacingMultiplier);
 			return target.hit(damageRoll.result, player, this);
 		} else if (curseOfLoki) {
 			const damageRoll = this.rollForDamage(target, player);
-			await subEventDelay();
+			await subEventDelay(ring?.pacingMultiplier);
 			return player.hit(damageRoll.result, target, this);
 		}
 
@@ -154,7 +154,7 @@ export class HitCard extends BaseCard<HitCardOptions> {
 			player,
 			target,
 		});
-		await subEventDelay();
+		await subEventDelay(ring?.pacingMultiplier);
 
 		return !target.dead;
 	}

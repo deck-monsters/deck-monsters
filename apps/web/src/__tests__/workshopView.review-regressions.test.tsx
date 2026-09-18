@@ -37,6 +37,9 @@ const workshopMock = vi.hoisted(() => ({
   },
   loading: false,
   busy: false,
+	consoleFlowActive: false,
+	pendingPrompt: null as null | { question: string },
+	cancelConsoleFlow: vi.fn(async () => ({ ok: true })),
   latestError: null as string | null,
   equipCards: vi.fn(async () => ({ equippedCount: 1, requestedCount: 1, skippedCards: [] as string[] })),
   unequipCard: vi.fn(async () => ({ removedCount: 1, monsterName: 'Stonefang' })),
@@ -167,7 +170,20 @@ function renderWorkshop() {
 describe('WorkshopView review regressions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+	workshopMock.consoleFlowActive = false;
+	workshopMock.pendingPrompt = null;
   });
+
+	it('makes a blocking Console prompt visible and cancellable from the Workshop', async () => {
+	  workshopMock.consoleFlowActive = true;
+	  workshopMock.pendingPrompt = { question: 'Which cards?' };
+	  renderWorkshop();
+
+	  expect(screen.getByRole('alert')).toHaveTextContent('Workshop controls are paused');
+	  expect(screen.getByRole('alert')).toHaveTextContent('Answer the waiting question');
+	  fireEvent.click(screen.getByRole('button', { name: 'Cancel Console action' }));
+	  await waitFor(() => expect(workshopMock.cancelConsoleFlow).toHaveBeenCalledOnce());
+	});
 
   it('shows monster panel hints for inventory selections', () => {
     renderWorkshop();

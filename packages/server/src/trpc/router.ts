@@ -1852,6 +1852,19 @@ export function createRouter(roomManager: RoomManager) {
 				return eventBus.getPendingPromptForUser(ctx.userId);
 			}),
 
+		flowStatus: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const flowKey = `${input.roomId}:${ctx.userId}`;
+				const eventBus = await roomManager.getEventBus(input.roomId);
+				return {
+					consoleActive: activeFlows.has(flowKey),
+					workshopActive: activePromptFreeMutations.has(flowKey),
+					pendingPrompt: eventBus.getPendingPromptForUser(ctx.userId),
+				};
+			}),
+
 		ringFeed: protectedProcedure
 			.input(
 				z.object({

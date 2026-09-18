@@ -385,6 +385,23 @@
   background: var(--color-bg);
 }
 
+.command-blocked-banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-warning, var(--color-accent));
+  background: var(--color-bg);
+  color: var(--color-fg-bright);
+  font-size: 0.75rem;
+}
+
 .command-dock label {
   color: var(--color-prompt-glyph);
   margin-right: 0.5rem;
