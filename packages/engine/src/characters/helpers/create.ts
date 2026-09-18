@@ -1,5 +1,6 @@
 import PRONOUNS from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
+import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn } from '../../creatures/base.js';
 import type BaseCharacter from '../base.js';
 import allCharacters from './all.js';
@@ -12,6 +13,17 @@ let _getChoices: (arr: string[]) => string = arr =>
 let _getCreatureTypeChoices: (creatures: CharacterConstructor[]) => string = creatures =>
 	creatures.map((c, i) => `${i}) ${(c as any).creatureType ?? c.name}`).join('\n');
 let _randomEmoji: () => string = () => '🎲';
+// Fallback mirrors resolveChoiceIndex until the real helper loads (see loadHelpers below) —
+// accepts either the 0-based index (web) or the case-insensitive label (Discord).
+let _resolveChoiceIndex: (answer: unknown, labels: string[]) => number = (answer, labels) => {
+	const trimmed = String(answer ?? '').trim();
+	if (!trimmed) return -1;
+	if (/^\d+$/.test(trimmed)) {
+		const index = Number(trimmed);
+		return index >= 0 && index < labels.length ? index : -1;
+	}
+	return labels.findIndex(label => label.toLowerCase() === trimmed.toLowerCase());
+};
 
 const loadHelpers = async () => {
 	const [choicesModule, emojiModule] = await Promise.all([
@@ -22,6 +34,7 @@ const loadHelpers = async () => {
 		_getChoices = (choicesModule as any).getChoices ?? _getChoices;
 		_getCreatureTypeChoices =
 			(choicesModule as any).getCreatureTypeChoices ?? _getCreatureTypeChoices;
+		_resolveChoiceIndex = (choicesModule as any).resolveChoiceIndex ?? _resolveChoiceIndex;
 	}
 	if (emojiModule) {
 		const emoji = (emojiModule as any).default ?? emojiModule;
@@ -57,16 +70,29 @@ const createCharacter = (
 		iconChoices.push(_randomEmoji());
 	}
 
-	const askForCreatureType = (): Promise<CharacterConstructor> =>
-		Promise.resolve()
+	const askForCreatureType = (): Promise<CharacterConstructor> => {
+		const creatureTypeLabels = (allCharacters as CharacterConstructor[]).map(c => (c as any).creatureType ?? c.name);
+
+		return Promise.resolve()
 			.then(() => {
 				if (type !== undefined) return type;
 				return channel({
 					question: `Which type of character would you like to be?`,
-					choices: (allCharacters as CharacterConstructor[]).map(c => (c as any).creatureType ?? c.name),
+					choices: creatureTypeLabels,
 				});
 			})
-			.then((answer: unknown) => allCharacters[answer as number] as CharacterConstructor);
+			.then((answer: unknown) => {
+				// The Discord connector answers with the button's label text, never an index
+				// (see docs/prompt-answer-contract.md) — resolve either form and fail loudly
+				// on garbage rather than let `allCharacters[NaN]` return `undefined` silently.
+				const index = _resolveChoiceIndex(answer, creatureTypeLabels);
+				const Character = allCharacters[index] as CharacterConstructor;
+				if (!Character) {
+					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a character type.`);
+				}
+				return Character;
+			});
+	};
 
 	const askForGender = (Character: CharacterConstructor): Promise<Record<string, unknown>> =>
 		Promise.resolve()
@@ -78,7 +104,14 @@ const createCharacter = (
 				});
 			})
 			.then((answer: unknown) => {
-				options.gender = genders[answer as number].toLowerCase();
+				// Same label-or-index ambiguity as askForCreatureType above — resolve it the
+				// same way instead of assuming answer is always a numeric index.
+				const index = _resolveChoiceIndex(answer, genders);
+				const selectedGender = genders[index];
+				if (!selectedGender) {
+					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a gender.`);
+				}
+				options.gender = selectedGender.toLowerCase();
 				return options;
 			});
 
@@ -119,7 +152,13 @@ const createCharacter = (
 				});
 			})
 			.then((answer: unknown) => {
-				options.icon = iconChoices[answer as number];
+				// Same label-or-index ambiguity as askForCreatureType above.
+				const index = _resolveChoiceIndex(answer, iconChoices);
+				const selectedIcon = iconChoices[index];
+				if (!selectedIcon) {
+					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as an avatar choice.`);
+				}
+				options.icon = selectedIcon;
 				return options;
 			});
 

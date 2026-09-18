@@ -1,6 +1,7 @@
 import PRONOUNS from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
 import { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } from '../../constants/creature-types.js';
+import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import type BaseMonster from '../base.js';
 import allMonsters from './all.js';
@@ -13,6 +14,17 @@ let _getChoices: (arr: string[]) => string = arr =>
 	arr.map((c, i) => `${i}) ${c}`).join('\n');
 let _getCreatureTypeChoices: (creatures: MonsterConstructor[]) => string = creatures =>
 	creatures.map((c, i) => `${i}) ${(c as any).creatureType ?? c.name}`).join('\n');
+// Fallback mirrors resolveChoiceIndex until the real helper loads (see loadHelpers below) —
+// accepts either the 0-based index (web) or the case-insensitive label (Discord).
+let _resolveChoiceIndex: (answer: unknown, labels: string[]) => number = (answer, labels) => {
+	const trimmed = String(answer ?? '').trim();
+	if (!trimmed) return -1;
+	if (/^\d+$/.test(trimmed)) {
+		const index = Number(trimmed);
+		return index >= 0 && index < labels.length ? index : -1;
+	}
+	return labels.findIndex(label => label.toLowerCase() === trimmed.toLowerCase());
+};
 
 const loadHelpers = async () => {
 	const choicesModule = await import('../../helpers/choices.js').catch(() => null);
@@ -20,6 +32,7 @@ const loadHelpers = async () => {
 		_getChoices = (choicesModule as any).getChoices ?? _getChoices;
 		_getCreatureTypeChoices =
 			(choicesModule as any).getCreatureTypeChoices ?? _getCreatureTypeChoices;
+		_resolveChoiceIndex = (choicesModule as any).resolveChoiceIndex ?? _resolveChoiceIndex;
 	}
 };
 
@@ -62,20 +75,30 @@ const spawnMonster = (
 		monsterNames = Object.keys(game.getAllMonstersLookup());
 	}
 
-	const askForCreatureType = (): Promise<MonsterConstructor> =>
-		Promise.resolve()
+	const askForCreatureType = (): Promise<MonsterConstructor> => {
+		const creatureTypeLabels = allMonsters.map(m => (m as any).creatureType ?? (m as any).name ?? 'Unknown');
+
+		return Promise.resolve()
 			.then(() => {
 				if (type !== undefined) return type;
 
 				return channel({
 					question: `Which type of monster would you like to spawn?`,
-					choices: allMonsters.map(m => (m as any).creatureType ?? (m as any).name ?? 'Unknown'),
+					choices: creatureTypeLabels,
 				});
 			})
 			.then((answer: unknown) => {
-				const Monster = allMonsters[answer as number];
+				// The Discord connector answers with the button's label text, never an index
+				// (see docs/prompt-answer-contract.md) — resolve either form and fail loudly
+				// on garbage rather than let `allMonsters[NaN]` return `undefined` silently.
+				const index = _resolveChoiceIndex(answer, creatureTypeLabels);
+				const Monster = allMonsters[index];
+				if (!Monster) {
+					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a monster type.`);
+				}
 				return Monster as MonsterConstructor;
 			});
+	};
 
 	const askForName = (
 		Monster: MonsterConstructor,
@@ -150,13 +173,15 @@ const spawnMonster = (
 				});
 			})
 			.then((answer: unknown) => {
-				// Interactive channels answer with the selected choice index, while typed
-				// callers (the web Workshop) already have the enum value. Treat a known
-				// string as the value itself before falling back to the legacy index format.
+				// Interactive channels answer with the selected choice (either the 0-based
+				// index or, on Discord, the label text — see docs/prompt-answer-contract.md),
+				// while typed callers (the web Workshop) already have the enum value. Treat a
+				// known string as the value itself before falling back to resolveChoiceIndex,
+				// which now generalises what used to be this function's own hand-rolled
+				// label-or-index handling — see helpers/choices.ts.
 				const stringAnswer = typeof answer === 'string' ? answer.toLowerCase() : '';
-				const selectedGender = genders.includes(stringAnswer)
-					? stringAnswer
-					: genders[Number(answer)];
+				const index = _resolveChoiceIndex(answer, genders);
+				const selectedGender = genders.includes(stringAnswer) ? stringAnswer : genders[index];
 				if (!selectedGender) {
 					throw new Error(`Unknown monster gender: ${String(answer)}`);
 				}

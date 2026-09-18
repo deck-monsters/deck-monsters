@@ -1,6 +1,8 @@
 import { BaseScroll } from './base.js';
 import { ABUNDANT } from '../../helpers/probabilities.js';
 import { FREE } from '../../helpers/costs.js';
+import { resolveChoiceIndex } from '../../helpers/choices.js';
+import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn } from '../../creatures/base.js';
 import * as teams from '../../constants/teams.js';
 
@@ -43,7 +45,16 @@ export class SortingHat extends BaseScroll {
 				choices: teamChoices
 			}))
 			.then((answer: unknown) => {
-				const team = teamChoices[Number(answer)];
+				// The Discord connector answers with the button's label text, never an index
+				// (see docs/prompt-answer-contract.md). `teamChoices[Number(answer)]` used to
+				// return `undefined` for a Discord answer, and the very next line's
+				// `team.toUpperCase()` threw a TypeError — resolve either form and fail loudly
+				// instead.
+				const index = resolveChoiceIndex(answer, teamChoices);
+				const team = teamChoices[index];
+				if (!team) {
+					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a team.`);
+				}
 
 				const publicNarration = `${givenName} joins the ${team} team.`;
 				const privateNarration = `"Is that so? Well if you're sure... better be ${team.toUpperCase()}!"

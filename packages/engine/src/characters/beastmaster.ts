@@ -20,12 +20,24 @@ import type BaseMonster from '../monsters/base.js';
 // Lazy-load choices helper
 let _getMonsterChoices: (monsters: BaseMonster[]) => string = monsters =>
 	monsters.map((m, i) => `${i}) ${(m as any).givenName ?? m.name}`).join('\n');
+// Fallback mirrors resolveChoiceIndex until the real helper loads (see loadHelpers below) —
+// accepts either the 0-based index (web) or the case-insensitive label (Discord).
+let _resolveChoiceIndex: (answer: unknown, labels: string[]) => number = (answer, labels) => {
+	const trimmed = String(answer ?? '').trim();
+	if (!trimmed) return -1;
+	if (/^\d+$/.test(trimmed)) {
+		const index = Number(trimmed);
+		return index >= 0 && index < labels.length ? index : -1;
+	}
+	return labels.findIndex(label => label.toLowerCase() === trimmed.toLowerCase());
+};
 
 const loadHelpers = async () => {
 	const choicesModule = await import('../helpers/choices.js').catch(() => null);
 	if (choicesModule) {
 		_getMonsterChoices =
 			(choicesModule as any).getMonsterChoices ?? _getMonsterChoices;
+		_resolveChoiceIndex = (choicesModule as any).resolveChoiceIndex ?? _resolveChoiceIndex;
 	}
 };
 
@@ -175,14 +187,27 @@ class Beastmaster extends BaseCharacter {
 				return monsters[0];
 			}
 
+			const monsterLabels = monsters.map((m: any) => m.givenName ?? m.name ?? 'Unknown');
+
 			return Promise.resolve()
 				.then(() =>
 					channel({
 						question: `Which monster would you like to ${action}?`,
-						choices: monsters.map((m: any) => m.givenName ?? m.name ?? 'Unknown'),
+						choices: monsterLabels,
 					}),
 				)
-				.then((answer: unknown) => monsters[answer as number]);
+				.then((answer: unknown) => {
+					// The Discord connector answers with the button's label text, never an
+					// index (see docs/prompt-answer-contract.md) — resolve either form and
+					// fail loudly on garbage rather than let `monsters[NaN]` return
+					// `undefined` silently.
+					const index = _resolveChoiceIndex(answer, monsterLabels);
+					const monster = monsters[index];
+					if (!monster) {
+						return announceAndThrow(channel, `I don't recognize "${String(answer)}" as one of your monsters.`);
+					}
+					return monster;
+				});
 		});
 	}
 
