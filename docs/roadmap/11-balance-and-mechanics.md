@@ -14,11 +14,18 @@ These are mechanics changes that affect the core game feel. They should be done 
 ### Audit findings
 
 The reported symptom — a character that had fought many times still showing zero coins —
-was possible without any persistence failure. The outcome listeners paid **5 coins for a
+had two independent causes. The outcome listeners paid **5 coins for a
 win**, **2 for a loss or flee**, and **4 for permanent death**, but the ring's fully
 implemented draw outcome had no game-level reward listener. A player whose completed
 fights resolved as draws could therefore gain battle-count credit while remaining at zero
 coins. The handbook's promise that battles earn coins was too broad for the implementation.
+
+Separately, an all-zero **leaderboard** was a projection bug, not balance: coin rewards are
+private `ring.xp` events, while the server's room-internal stats subscriber previously saw
+public events only. Character balances changed correctly, but `coins_earned` never did.
+That delivery bug is fixed in `10b-bugs-fixed.md` #139. Historical earnings cannot be
+reconstructed exactly because spent coins are absent from current balances and the missing
+private events were not persisted; totals resume from new rewards after deployment.
 
 The surrounding prices made that hole especially visible:
 

@@ -68,6 +68,7 @@ export class RoomEventBus {
 		for (const subscriber of this.subscribers.values()) {
 			if (
 				fullEvent.scope === 'public' ||
+				subscriber.includePrivate === true ||
 				subscriber.userId === fullEvent.targetUserId
 			) {
 				try {

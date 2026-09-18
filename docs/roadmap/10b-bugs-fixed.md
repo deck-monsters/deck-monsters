@@ -2683,3 +2683,26 @@ has direct helper tests for all three paths. This closes the gap between the moc
 test and the real engine call.
 
 **Status**: Fixed.
+
+---
+
+### 139. Every leaderboard coin total stayed at zero — FIXED
+
+Coin balances in engine state were changing, but the leaderboard's `coins_earned`
+projection never saw those rewards. `ring.xp` reward events are private to the contestant;
+the room event bus correctly delivered private events only to a subscriber with the matching
+`userId`. The fight-stats subscriber has no player identity, so every reward skipped it and
+every stats row retained the database default of zero. The event persister had the same
+blind spot despite promising to persist every event, which also prevented a historical
+reconstruction from durable events.
+
+**Fixed**: the event bus now has an explicit `includePrivate` capability for trusted,
+room-internal observers. The fight-stats projection and event persister opt in; ordinary
+player/connector subscribers retain owner-only delivery. Tests prove that a private coin
+reward updates the projection and persistence while remaining invisible to another player.
+
+Existing zero totals cannot be reconstructed exactly: balances omit coins already spent,
+and the missing private events were never persisted. New rewards accumulate correctly from
+deployment onward; the first-fight bonus makes that recovery visible immediately.
+
+**Status**: Fixed.
