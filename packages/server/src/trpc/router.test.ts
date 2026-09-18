@@ -1245,6 +1245,32 @@ describe('trpc/router command dispatch and flow locking', () => {
 		expect(activePromptFreeMutations.has(flowKey)).to.equal(false);
 	});
 
+	it('reports an active console flow and its waiting prompt to graphical clients', async () => {
+		const pendingPrompt = {
+			requestId: 'prompt-1',
+			question: 'Which card?',
+			choices: ['Hit'],
+			timeoutSeconds: 120,
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getEventBus: async () => ({ getPendingPromptForUser: () => pendingPrompt }),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		activeFlows.set(flowKey, 'command-1');
+
+		try {
+			const status = await caller.game.flowStatus({ roomId: ROOM_ID });
+			expect(status).to.deep.equal({
+				consoleActive: true,
+				workshopActive: false,
+				pendingPrompt,
+			});
+		} finally {
+			activeFlows.delete(flowKey);
+		}
+	});
+
 	it('a cancelled flow settling late does not release a newer flow\'s lock', async () => {
 		// Regression (review of #20): cancelFlow deletes the key immediately; if
 		// command B starts before cancelled command A's promise chain settles,

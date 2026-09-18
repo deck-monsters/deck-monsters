@@ -10,7 +10,11 @@ import { RoomEventBus } from './events/index.js';
 import { engineReady } from './helpers/engine-ready.js';
 import { globalSemaphore } from './helpers/semaphore.js';
 import { XP_PER_VICTORY, XP_PER_DEFEAT } from './helpers/experience.js';
-import { COINS_PER_VICTORY, COINS_PER_DEFEAT } from './constants/coins.js';
+import {
+	COINS_PER_VICTORY,
+	COINS_PER_DEFEAT,
+	COINS_PER_DAILY_FIGHT,
+} from './constants/coins.js';
 import Basilisk from './monsters/basilisk.js';
 import Beastmaster from './characters/beastmaster.js';
 
@@ -196,7 +200,7 @@ describe('game.ts', () => {
 			monster.emit('win', { contestant });
 
 			expect(character.xp).to.equal(xpBefore + XP_PER_VICTORY);
-			expect(character.coins).to.equal(coinsBefore + COINS_PER_VICTORY);
+			expect(character.coins).to.equal(coinsBefore + COINS_PER_VICTORY + COINS_PER_DAILY_FIGHT);
 			expect(character.deck.length).to.equal(deckLengthBefore + 1);
 		} finally {
 			roomA.dispose();
@@ -227,10 +231,41 @@ describe('game.ts', () => {
 			monster.emit('permaDeath', { contestant });
 
 			expect(character.xp).to.equal(xpBefore + XP_PER_DEFEAT * 2);
-			expect(character.coins).to.equal(coinsBefore + COINS_PER_DEFEAT * 2);
+			expect(character.coins).to.equal(coinsBefore + COINS_PER_DEFEAT * 2 + COINS_PER_DAILY_FIGHT);
 		} finally {
 			roomA.dispose();
 			roomB.dispose();
+		}
+	});
+
+	it('rewards draws and grants the fight bonus only once per UTC day', () => {
+		const clock = sinon.useFakeTimers({
+			now: new Date('2026-09-18T23:59:00.000Z'),
+			shouldClearNativeTimers: true,
+		});
+		const game = new Game({ roomId: 'daily-room' });
+
+		try {
+			const monster = new Basilisk({ name: 'Persistent Draw' });
+			const character = new Beastmaster({ name: 'Daily Trainer' });
+			character.addMonster(monster);
+			game.characters = { ...game.characters, user: character };
+			const contestant = { character, monster, userId: 'user' };
+
+			monster.emit('draw', { contestant });
+			expect(character.coins).to.equal(COINS_PER_DEFEAT + COINS_PER_DAILY_FIGHT);
+			expect(character.xp).to.equal(XP_PER_DEFEAT);
+
+			monster.emit('draw', { contestant });
+			expect(character.coins).to.equal((COINS_PER_DEFEAT * 2) + COINS_PER_DAILY_FIGHT);
+
+			clock.tick(2 * 60 * 1000);
+			monster.emit('draw', { contestant });
+			expect(character.coins).to.equal((COINS_PER_DEFEAT * 3) + (COINS_PER_DAILY_FIGHT * 2));
+			expect(character.lastDailyFightCoinDay).to.equal('2026-09-19');
+		} finally {
+			game.dispose();
+			clock.restore();
 		}
 	});
 

@@ -56,7 +56,10 @@ export function playNestedCard({
 	const paced = delaysAreSkipped()
 		? Promise.resolve()
 		: new Promise<void>(resolve =>
-				setTimeout(resolve, remainingGapMs(veryShortDelay(round)))
+				setTimeout(
+					resolve,
+					remainingGapMs(Math.round(veryShortDelay(round) / (ring?.pacingMultiplier ?? 1)))
+				)
 			);
 
 	return paced.then(() => card.play(player, proposedTarget, ring, activeContestants));

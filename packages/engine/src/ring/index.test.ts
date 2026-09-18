@@ -29,6 +29,27 @@ describe('ring/index.ts', () => {
 	});
 
 	describe('contestantSnapshots', () => {
+		it('switches boss-only cleanup to double speed after every human is defeated', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const human = randomContestant({ isBoss: false });
+			const bossOne = randomContestant({ isBoss: true });
+			const bossTwo = randomContestant({ isBoss: true });
+			ring.contestants = [human, bossOne, bossTwo];
+			ring.inEncounter = true;
+
+			expect(ring.pacingMultiplier).to.equal(1);
+			human.monster.hp = 0;
+			expect(ring.pacingMultiplier).to.equal(2);
+			bossTwo.monster.hp = 0;
+			expect(ring.pacingMultiplier).to.equal(2);
+			ring.endEncounter();
+			ring.startEncounter();
+			expect(ring.pacingMultiplier).to.equal(1);
+
+			game.dispose();
+		});
+
 		it('reports live per-contestant stats for the roster UI', () => {
 			const game = new Game();
 			const ring = game.getRing();
@@ -91,6 +112,39 @@ describe('ring/index.ts', () => {
 			};
 			expect(payload.monsterCount).to.equal(1);
 			expect(payload.contestants.map(c => c.name)).to.deep.equal(['Stonefang']);
+		});
+
+		it('publishes HP changes when a card mutates state and then throws', async () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const attacker = randomContestant({ isBoss: false });
+			const target = randomContestant({ isBoss: false });
+			const targetName = target.monster.givenName;
+			attacker.monster.cards = [{
+				name: 'Broken finishing blow',
+				play: async (_player: unknown, victim: { hp: number }) => {
+					victim.hp = 0;
+					throw new Error('after damage');
+				},
+			}];
+			target.monster.cards = [{ name: 'Wait', play: async () => true }];
+			ring.contestants = [attacker, target];
+
+			const states: Array<Array<{ name: string; hp: number; dead: boolean }>> = [];
+			ring.eventBus.subscribe('state-spy', {
+				deliver: (event) => {
+					if (event.type === 'ring.state') {
+						states.push(event.payload.contestants as Array<{ name: string; hp: number; dead: boolean }>);
+					}
+				},
+			});
+
+			await ring.fight();
+
+			expect(states.some(snapshot => snapshot.some(
+				contestant => contestant.name === targetName && contestant.hp === 0 && contestant.dead
+			))).to.equal(true);
+			game.dispose();
 		});
 
 		it('omits owner identity for bosses, which have no owning player', () => {

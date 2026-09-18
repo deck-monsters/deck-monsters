@@ -185,6 +185,22 @@ button {
   font-size: 0.875rem;
 }
 
+.workshop-flow-blocked {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-error);
+  background: var(--color-bg);
+  color: var(--color-fg-bright);
+}
+
+.workshop-flow-blocked p { margin: 0.25rem 0 0; color: var(--color-fg-dim); }
+
 .success-msg {
   background: rgba(136, 204, 68, 0.1);
   border: 1px solid var(--color-success);

@@ -95,6 +95,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const damageHistoryRef = useRef(createDamageHistory());
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
   const activePromptIdRef = useRef<string | null>(null);
+  const consecutiveEmptyPromptPollsRef = useRef(0);
   const [inputValue, setInputValue] = useState('');
   const [inputLocked, setInputLocked] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -133,6 +134,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     // The unregister matters: without it a dead console's setter stays registered and
     // swallows the next quick link. See 10b-bugs-fixed.md #133.
     return registerInsertFn((command: string) => {
+      if (activePromptIdRef.current) {
+        addConsoleEvent({
+          id: `sys-prompt-block-${Date.now()}`,
+          type: 'system',
+          text: '! Finish or cancel the current question before starting another command.',
+        });
+        return;
+      }
       setInputValue(command);
       inputRef.current?.focus();
     });
@@ -140,9 +149,13 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   // Fetch persistent console history from DB on mount
   const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
-  const { data: pendingPrompt, refetch: refetchPendingPrompt } = trpc.game.pendingPrompt.useQuery(
+  const {
+    data: pendingPrompt,
+    dataUpdatedAt: pendingPromptUpdatedAt,
+    refetch: refetchPendingPrompt,
+  } = trpc.game.pendingPrompt.useQuery(
     { roomId },
-    { enabled: !!roomId },
+    { enabled: !!roomId, refetchInterval: 3_000 },
   );
 
   // Scroll to bottom when this pane becomes active (tab switch)
@@ -245,6 +258,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   }
 
   const upsertPendingPrompt = useCallback((prompt: PendingPromptSnapshot) => {
+    consecutiveEmptyPromptPollsRef.current = 0;
     setConsoleEvents(prev => {
       const existingIndex = prev.findIndex(ev => ev.promptData?.requestId === prompt.requestId);
       if (existingIndex === -1) {
@@ -289,9 +303,32 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   }, []);
 
   useEffect(() => {
-    if (!pendingPrompt) return;
-    upsertPendingPrompt(pendingPrompt);
-  }, [pendingPrompt, upsertPendingPrompt]);
+    if (pendingPrompt) {
+      upsertPendingPrompt(pendingPrompt);
+      return;
+    }
+
+    if (!pendingPromptUpdatedAt || !activePromptIdRef.current) {
+      consecutiveEmptyPromptPollsRef.current = 0;
+      return;
+    }
+
+    // A cancel/timeout event can be missed during a reconnect. Require two authoritative
+    // empty polls before clearing so an older in-flight poll cannot erase a prompt that
+    // has only just arrived over the live feed.
+    consecutiveEmptyPromptPollsRef.current += 1;
+    if (consecutiveEmptyPromptPollsRef.current < 2) return;
+
+    const staleRequestId = activePromptIdRef.current;
+    setConsoleEvents(prev => prev.map(ev =>
+      ev.promptData?.requestId === staleRequestId
+        ? { ...ev, promptData: { ...ev.promptData, cancelled: true } }
+        : ev
+    ));
+    setActivePromptId(null);
+    setInputLocked(false);
+    consecutiveEmptyPromptPollsRef.current = 0;
+  }, [pendingPrompt, pendingPromptUpdatedAt, upsertPendingPrompt]);
 
   const onLiveEvent = useCallback((tracked: TrackedRingFeedEvent) => {
     const event = tracked.data;
@@ -898,6 +935,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         aria-label="Command input"
         style={{ position: 'relative' }}
       >
+        {activePromptId && (
+          <div className="command-blocked-banner" role="status">
+            <span>A command is waiting for your answer. Command suggestions are paused.</span>
+            <button type="button" className="btn" onClick={() => void handleCancelFlow()}>
+              Cancel action
+            </button>
+          </div>
+        )}
         <CommandSuggestions
           suggestions={suggestions}
           activeIndex={suggestionIndex}

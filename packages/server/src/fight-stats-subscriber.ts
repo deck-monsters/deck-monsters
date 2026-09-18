@@ -54,6 +54,11 @@ export function attachFightStatsSubscriber(
 	const subscriberId = `fight-stats:${eventBus.roomId}`;
 
 	return eventBus.subscribe(subscriberId, {
+		// Coin rewards are deliberately private player messages. This is a trusted,
+		// room-scoped projection subscriber, so it must observe those events without
+		// pretending to be any one player. Without this opt-in every coins_earned row
+		// stayed at its default zero even though character balances changed correctly.
+		includePrivate: true,
 		deliver(event: GameEvent) {
 			if (event.type === 'ring.fightResolved') {
 				void handleFightResolved(db, event).catch(log);
