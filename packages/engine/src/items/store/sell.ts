@@ -1,9 +1,17 @@
 import chooseItems from '../helpers/choose.js';
 import getClosingTime from './closing-time.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
+import { getChoices, resolveChoiceIndex } from '../../helpers/choices.js';
 import type { ShopHost } from './shop.js';
 
 type ChooseCards = (opts: { cards: any[]; channel: any; showPrice?: boolean; priceOffset?: number }) => Promise<any[]>;
+
+// Single source of truth for both the rendered question text and the dispatch logic below
+// — see resolveChoiceIndex's doc comment (helpers/choices.ts) for why this menu used to
+// route "sell items" to Cards (it dispatched on a literal 1-based `Number(answer) === 1`
+// against a hand-numbered "1) Items / 2) Cards" menu that a 0-based answer never matched;
+// see docs/roadmap/10b-bugs-fixed.md).
+const SELL_MENU_LABELS = ['Items', 'Cards'];
 
 const sellItems = ({
 	character,
@@ -32,22 +40,33 @@ ${getClosingTime(shop)}
 
 You have ${numberOfItems} and ${numberOfCards}. Which would you like to sell?
 
-1) Items
-2) Cards`,
-			choices: [1, 2]
+${getChoices(SELL_MENU_LABELS)}`,
+			choices: SELL_MENU_LABELS
 		}))
 		.then((answer: string | number = '') => {
-			if (Number(answer) === 1) {
+			const selection = resolveChoiceIndex(answer, SELL_MENU_LABELS);
+
+			if (selection === 0) {
+				// Items
 				if (items.length < 1) return announceAndThrow(channel, "You don't have any items.");
 
 				return chooseItems({ items, channel });
 			}
 
-			if (cards.length < 1) return announceAndThrow(channel, "You don't have any cards.");
+			if (selection === 1) {
+				// Cards
+				if (cards.length < 1) return announceAndThrow(channel, "You don't have any cards.");
 
-			if (!chooseCards) return announceAndThrow(channel, "Card selling is not available.");
+				if (!chooseCards) return announceAndThrow(channel, "Card selling is not available.");
 
-			return chooseCards({ cards, channel, showPrice: true, priceOffset: shop.priceOffset });
+				return chooseCards({ cards, channel, showPrice: true, priceOffset: shop.priceOffset });
+			}
+
+			// An unrecognised answer must never silently fall through to a valid branch —
+			// that is exactly how this menu used to sell Cards when the player clicked
+			// Items (see docs/roadmap/10b-bugs-fixed.md). Dispatch explicitly above and
+			// treat anything else as a visible refusal.
+			return announceAndThrow(channel, `Sorry, I didn't understand that. Please choose one of: ${SELL_MENU_LABELS.join(', ')}.`);
 		})
 		.then((choices: any[]) => {
 			const value = choices.reduce(

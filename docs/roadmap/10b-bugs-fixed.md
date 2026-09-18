@@ -2709,7 +2709,6 @@ zero was nevertheless not acceptable. On room load, the server now reconciles
 player still holds coins, never lowers a valid total, and cannot double-count rewards. New
 private reward events then accumulate normally; players whose historical balance was
 already spent remain necessarily undercounted rather than being assigned invented coins.
-
 **Status**: Fixed.
 
 ---
@@ -2763,3 +2762,341 @@ the live cancel/timeout event was missed, without letting one older in-flight po
 newly arrived question.
 
 **Status**: Fixed.
+
+---
+
+### 143. The shop's Items/Cards/Back Room menus were off by one, and one answer silently picked the wrong destination — FIXED
+
+**Symptom**: clicking "1) Items" in the buy-menu prompt landed the player in the Back Room
+instead; clicking "2) Cards" opened Items; clicking "3) Back Room" opened Cards. The sell
+menu had the matching defect — "sell items" always sold cards instead.
+
+**Root cause**: every other prompt in the engine renders its choices with `getChoices`
+(`helpers/choices.ts`), which numbers options 0-based (`0) Foo`, `1) Bar`), and every other
+dispatch site resolves the answer as that same 0-based index — `items/helpers/choose.ts`,
+`creatures/edit.ts`, `monsters/helpers/spawn.ts`, `characters/helpers/create.ts`,
+`characters/beastmaster.ts#chooseMonster`, and `items/scrolls/sorting-hat.ts` were all
+audited and already followed this convention. The web client's `InlineChoices` component
+(`apps/web/src/components/InlineChoices.tsx`) answers with that same 0-based index as a
+string, so this convention is load-bearing, not incidental.
+
+`items/store/buy.ts` and `items/store/sell.ts` were the only two call sites that hand-wrote
+a 1-based numbered menu (`1) Items\n2) Cards\n3) Back Room`) and then dispatched with a
+literal `Number(answer) === 1` / `=== 2` comparison — disagreeing with the question text
+they themselves rendered. Because the final branch in both flows was reached by "none of
+the above matched" rather than by an explicit check, the off-by-one didn't just show the
+wrong menu — it silently routed the request to a *different, valid-looking* destination
+(Back Room, or Cards) with no error and no indication anything had gone wrong. That's what
+let it reach production: a numbering bug that produced a visible "no such option" error
+would have been caught immediately, but one that quietly opens a different, working menu
+looks like normal behavior to the player and passes a superficial test.
+
+The existing tests reinforced the bug rather than catching it: they answered the prompt with
+the same 1-based literal (`'1'`, `'2'`) the hand-written menu's *dispatch* code expected, so
+they exercised the code's self-consistency, not its consistency with the labels it printed
+or with what a connector actually sends back.
+
+**Fixed**:
+- Both menus now render their question text with `getChoices` and pass the same labels
+  array as `choices`, so the printed numbering and the dispatch logic share one source of
+  truth and cannot drift again.
+- Answers are resolved with a new `resolveChoiceIndex(answer, labels)` helper
+  (`helpers/choices.ts`) instead of a hand-written `Number(answer) === N` comparison. It
+  accepts either the 0-based index (what the web client's `InlineChoices` sends) or the
+  choice's label text case-insensitively (what the Discord connector's button `customId`
+  sends back — see `packages/connector-discord/src/prompt-handler.ts`, which resolves with
+  the button's label, never an index). `items/helpers/choose.ts` already accepted both
+  forms for exactly this reason; `resolveChoiceIndex` generalizes that precedent so future
+  hand-dispatched menus don't have to reinvent it.
+- Both flows now dispatch explicitly on every valid choice (`selection === 0`,
+  `=== 1`, `=== 2`) and end with an explicit `announceAndThrow` for anything that doesn't
+  match, instead of letting an unrecognised answer fall through to the last branch. A
+  malformed or stale answer is now a visible refusal, never a silent wrong destination.
+- See `docs/prompt-answer-contract.md` for the protocol this documents (what a connector is
+  expected to send back for a `{ question, choices }` prompt), and the "Prompt/Choices
+  Answer Contract" note in `channel/index.ts` and `events/room-event-bus.ts`.
+- Regression tests in `items/store/buy.test.ts` and `items/store/sell.test.ts` cover: the
+  0-based index for each label reaching the matching branch (not the neighboring one), the
+  Discord-style label answer reaching the same branch, and an unrecognised answer producing
+  the explicit refusal rather than picking a branch. `helpers/choices.test.ts` covers
+  `resolveChoiceIndex` directly (numeric index, numeric type, label case-insensitivity,
+  out-of-range index, and unrecognised/empty answers).
+
+**Status**: Fixed.
+
+---
+
+### 144. The Workshop shop never offered cards for sale — FIXED
+
+**Symptom**: reported as "the shop seems to show different items based on whether you go
+through console or workshop." The console's buy flow (`items/store/buy.ts`) has always
+offered three menus — "Items", "Cards", "Back Room" — but the web Workshop's shop
+(`ShopPanel.tsx`, backed by `router.ts`'s `summarizeShop`) only ever rendered `items` and
+`backRoom`.
+
+**Root cause**: `engine/src/items/store/shop.ts`'s `Shop` holds three independent stock
+pools (`items`, `cards`, `backRoom`), but `summarizeShop` (`packages/server/src/trpc/
+router.ts`) only summarized two of them, and `buyShopItem`'s `purchaseShopItem`
+(`items/store/purchase.ts`) only knew how to complete a purchase from `items`/`backRoom` —
+`ShopItemSection` didn't even have a `'cards'` variant. Any card the room shop had in stock
+was invisible and unbuyable from the web app, full stop.
+
+(At the time of this fix, `items/store/stock.ts#getCards` itself always returns `[]` —
+cards for sale are not yet generated for *new* shops, a separate, pre-existing gap tracked
+in `docs/roadmap/10-bug-fixes.md`. This fix closes the client-parity gap regardless: a
+shop's `cards` pool can be non-empty from state persisted before that stub existed, or once
+`getCards` is fixed, and the two clients reading the same room-scoped `Game.shop` must never
+disagree about what's on sale.)
+
+**Fixed**:
+- `summarizeShop` now also summarizes `shop.cards`, priced at `shop.priceOffset * 2` — the
+  same multiplier the console's `buy.ts` uses for its "Cards" menu (only the back room has
+  its own, steeper `backRoomOffset`). Card ownership counts against `character.deck`, not
+  `character.items` — the two inventories are unrelated, and counting a card against pocket
+  items would always read "own 0" even when the player is carrying several.
+- `ShopItemSection` (engine) and the `buyShopItem` procedure's input schema (server) gained
+  `'cards'` alongside `'items'`/`'backRoom'`. `purchaseShopItem` now buys from `shop.cards`
+  and calls `character.addCard` (not `addItem`) — cards go to the deck, items to the pocket
+  inventory, reusing the same optimistic-concurrency guard (`expectedItemType`,
+  `expectedClosingTime`) the other two sections already had.
+- `ShopPanel.tsx` renders a "Cards for sale" section with the same list/price/owned/
+  affordability treatment as "On the shelves", reusing the existing `.shop-stock-list`/
+  `.shop-stock-row` classes (already responsive down to phone width — no new CSS needed).
+- `useDeckWorkshop.ts`'s `buyShopItem` input type still only allowed `'items' |
+  'backRoom'` — found while wiring the panel through; widened to match.
+- Covered by `items/store/purchase.test.ts` (buy-a-card price/ownership/rejection cases),
+  `trpc/router.test.ts` (shop summary includes cards; buying a card lands it in the deck,
+  not the item list), and `ShopPanel.test.tsx` (renders cards, buys the exact stock token,
+  shows "Sold out." when the section is empty).
+
+**Status**: Fixed (Workshop/console parity). `getCards()` itself returning `[]` for newly
+generated shops is a separate, pre-existing gap — see `docs/roadmap/10-bug-fixes.md`.
+
+---
+
+### 145. The Workshop wallet was invisible on load and up to 30 seconds stale after a fight — FIXED (but see correction: this was NOT the reported bug)
+
+**Symptom**: reported as "I still see only 0 coins in the workshop view."
+
+> **CORRECTION (2026-09-18, after this entry was written).** The conclusion below — that
+> the reported `0` was not a data-integrity bug — is **WRONG**, and the staleness fix this
+> entry describes does not resolve the player's report. The reporter subsequently confirmed
+> 2 wins and 9 losses in the room with no shop purchases, which is at minimum 28 coins
+> (2x5 + 9x2) before any daily bonus, yet the wallet still read 0. The investigation below
+> reasoned from the reward path in isolation and never verified end-to-end that a *real*
+> ring fight credits coins at all; it does not. See the open bug in
+> [`10-bug-fixes.md`](10-bug-fixes.md) ("Fight rewards may never be credited") for the
+> live investigation and the leading hypothesis. The staleness and visibility fixes below
+> are still correct and still worth having — they are just not the bug that was reported.
+
+**Investigation (superseded — see the correction above)**: the reported `0` was not a
+data-integrity bug. `Game.awardFightCoins`
+(`packages/engine/src/game.ts`) mutates `contestant.character.coins`, and `contestant.
+character` is the exact same object reference as `game.characters[userId]` — confirmed by
+tracing `sendMonsterToRing` (`trpc/router.ts` → `beastmaster.ts#sendMonsterToTheRing`, which
+binds `character = this`) and by the existing coverage in `game.test.ts` (the cross-room-
+leakage and daily-bonus tests assert on `character.coins` after emitting the same `win`/
+`draw`/`permaDeath` events the ring emits, using that identical object). Coin persistence
+round-trips correctly too: `coins` lives on `BaseCreature.options` (`creatures/base.ts`),
+and both the state schema (`schemas/state.ts`'s `characters: z.record(z.string(),
+z.unknown())`) and `hydrateCharacter` (`characters/helpers/hydrate.ts`) pass `options`
+through unfiltered. A brand-new character genuinely starts at 0 coins (no starting-coins
+constant sets a higher default), so "0 coins" for a player who has not yet completed a
+fight is correct, not a bug.
+
+The real defect was **staleness and visibility**, not correctness: `useDeckWorkshop.ts`'s
+`shop` query only refreshed on a 30s `refetchInterval`, so a player who just finished a
+fight could watch the coin reward announced in the feed and then wait up to half a minute
+for the Workshop to agree — and the wallet was visible only inside the shop section, below
+the monster row and inventory a player has to scroll past first.
+
+**Fixed**:
+- `WorkshopPanel` now listens for the room's private `ring.xp` event (emitted the instant
+  `awardFightCoins` runs, for every fight outcome — see `Game.handleWinner`/`handleLoser`/
+  `handlePermaDeath`/`handleFled`/`handleDraw`) and calls `refresh()` immediately when one
+  arrives, instead of waiting for the next poll. It reads `RingFeedContext` directly rather
+  than the throwing `useRingFeedListener`, because `WorkshopPanel` renders in two different
+  contexts — inside a `Terminal` pane (which already wraps every pane in
+  `RingFeedProvider`, per `docs/roadmap/20-workspace-layout.md`) and standalone via
+  `WorkshopView`'s full-page route (which did not, until this fix — it now wraps its
+  content in its own `RingFeedProvider`). Missing context is treated as "no live feed
+  here," not an error, so the Workshop still works — just back to polling — wherever it is
+  mounted.
+- The coin balance is now also shown in the Workshop header (`.workshop-wallet`), visible
+  without opening or scrolling to the shop section at all. It renders only once the shop
+  query has actually resolved, so the loading window never displays a misleading "0 coins".
+- Found in passing, not fixed: `.workshop-header-actions`'s mobile rule
+  (`@container workshop (max-width: 520px)`) sets `justify-content: space-between;
+  flex-wrap: wrap;`, but the class is never `display: flex` at any width, so those
+  properties have always been a no-op — the header's buttons wrap via ordinary inline flow
+  instead. Visually close enough that it was never reported, but real dead CSS. Left alone
+  here (making the container an actual flex row is a layout change to a header shared by
+  every Workshop screen, and `docs/roadmap/20-workspace-layout.md` already flags this
+  header as one of the workshop's more mobile-regression-prone surfaces) — tracked in
+  `docs/roadmap/10-bug-fixes.md`.
+- Covered by `workshopPanel.wallet.test.tsx` (header wallet: hidden before the shop query
+  resolves, singular/plural coin wording), `workshopPanel.liveWallet.test.tsx` (refreshes on
+  `ring.xp`, ignores unrelated event types, does not throw without a provider), and the
+  `workshopView.review-regressions.test.tsx` mock update for the new subscription.
+
+**Status**: Fixed (liveness + visibility). No data bug found — see Investigation above.
+
+---
+
+### 146. Six prompt call sites resolved a Discord label answer as `NaN`, and `creatures/edit.ts#editSelf` renamed nothing — FIXED
+
+Follow-up to #143 (item #4 in `10-bug-fixes.md`). The #143 audit found and fixed the two
+call sites that had actually *drifted* from the engine's 0-based `getChoices` convention
+(`items/store/buy.ts` / `sell.ts`). It also found six more call sites that were internally
+consistent with that convention but resolved the answer as a **pure** index —
+`array[Number(answer)]` — and therefore only worked for the web client. The Discord
+connector's buttons answer with the choice's label text, never an index
+(`packages/connector-discord/src/prompt-handler.ts#buildButtonRow`), so `Number("Basilisk")`
+is `NaN` and `array[NaN]` is `undefined`.
+
+**Root cause**: two connectors send different answer shapes for the same `{ question,
+choices }` prompt, and until `docs/prompt-answer-contract.md` was written (as part of #143)
+nothing said so — each call site was written against whichever connector its author had in
+front of them at the time. `spawn.ts#askForGender` already carried an ad hoc label-or-index
+workaround with a comment explaining why; every other site simply assumed an index.
+
+**Fixed** — routed every one of the following through `resolveChoiceIndex(answer, labels)`
+(`helpers/choices.ts`), with an explicit `announceAndThrow` for `-1` in place of letting
+`undefined` fall through to whatever the next line did with it:
+
+- `monsters/helpers/spawn.ts#askForCreatureType` — `allMonsters[answer as number]` was
+  `undefined` on Discord, so spawning a monster failed outright. `askForGender`'s hand-rolled
+  label-or-index handling now delegates to `resolveChoiceIndex` too, so there is exactly one
+  implementation of that logic.
+- `characters/helpers/create.ts#askForCreatureType`, `#askForGender`, `#askForAvatar` — same
+  shape, same fix.
+- `characters/beastmaster.ts#chooseMonster` — `monsters[answer as number]` was `undefined` on
+  Discord, so every flow that asks "which monster" (equip, dismiss, revive, look-at when a
+  player owns more than one) silently failed to resolve a monster.
+- `items/scrolls/sorting-hat.ts` — `teamChoices[Number(answer)]` was `undefined` on Discord,
+  and the very next line called `team.toUpperCase()` on it, throwing a raw `TypeError`
+  instead of any user-facing message. The worst of the six: not a silent no-op like the
+  others, an actual crash.
+- `creatures/edit.ts#edit` — `optionKeys[index as unknown as number]` was `undefined` on
+  Discord, propagating the literal string `"undefined"` into every subsequent question
+  (`The current value of undefined is …`) instead of failing.
+
+**A second, unrelated bug found and fixed in the same file while doing this**:
+`creatures/edit.ts#editSelf`'s "Name" field was hardcoded to the option key `'givenName'`,
+but the actual storage key `BaseCreature` reads from is `name` — the `givenName` getter in
+`creatures/base.ts` reads `this.options.name`, never `this.options.givenName`. Every rename
+through `editSelf` (the single-field "which field would you like to update" flow used by,
+e.g., the `edit myself` command) therefore silently wrote a stray `givenName` option that
+nothing ever read, and the character's or monster's display name never actually changed —
+on either connector, independent of the index/label bug above. Caught by a regression test
+that asserted the renamed value round-tripped through `.givenName` afterward, which failed
+even with a correct numeric-index answer. Fixed by using the real key (`'name'`) while
+keeping the "Name" label unchanged.
+
+**Tests**: `monsters/helpers/spawn.test.ts`, `characters/helpers/create.test.ts` (new),
+`characters/beastmaster.test.ts` (`chooseMonster` describe block, new), `creatures/edit.test.ts`
+(new), and `items/scrolls/sorting-hat.test.ts` each cover, per site: a label answer (Discord
+shape) reaching the right option, an index answer (web shape) reaching the right option, and
+an unrecognised answer producing the explicit refusal rather than a crash or a silently wrong
+pick. `docs/prompt-answer-contract.md` is updated to record these sites as compliant.
+
+**Status**: Fixed.
+
+---
+
+### 147. Shop cards always empty — `getCards()` stubbed to `[]` behind a mis-diagnosed import cycle — FIXED
+
+Item #5 in `10-bug-fixes.md`. `generateShop` (`items/store/shop.ts`) called `getCards()`
+for every room shop, and `getCards()` was `(): any[] => []` — every shop's `cards` pool was
+empty on both the console and the Workshop. The console shop menu's own item count ("We
+have N items and M cards") always printed `M = 0`, and choosing "Cards" dead-ended on "We
+don't have any cards here." The only route to new cards was random post-fight drops; buying
+one was simply not implemented.
+
+**Root cause, and why the stub survived**: the file carried an async `getCardsModule()`
+behind a dynamic `import('../../cards/index.js')`, on the claim — asserted, never checked —
+that a static import would create an import cycle between `items/store` and `cards`.
+`getItems`/`getBackRoom`/`generateShop`/`resolveShop`/`Game#shop` are all synchronous, so
+that async module could never actually be awaited from any of them; `getCards` was
+hard-coded to `[]` specifically because there was no synchronous way to reach the
+dynamically-imported module. The `try/catch` around the dynamic `import()` degraded to
+`{ draw: () => null }` on any failure with no log line — silent by construction, which is
+plausibly why a stubbed-out core feature (buying cards) went unnoticed long enough to ship
+`ITEMS.md` copy and full server/web support (`summarizeShop`, `purchaseShopItem`,
+`ShopPanel.tsx`) around a pool that could never contain anything.
+
+**The cycle claim was checked and is false.** A dependency audit of everything under
+`cards/` (every card file, `cards/base.ts`, and every file under `cards/helpers/`) found
+that cards reach into `items/` only through `items/base.js` and individual
+`items/helpers/*.js` files (`unique-items.js`, `is-matching.js`, `choose.js`) — never
+through `items/index.ts` (the barrel `getCards`/`getItems` already import from for
+`drawItem`/`sortItemsAlphabetically`) and never through `items/store/*`. There is no cycle.
+Proven by actually doing it: `items/store/stock.ts` now statically imports `all`, `draw`,
+and `sortCardsAlphabetically` from `cards/index.js`, `pnpm build` and `pnpm typecheck`
+succeed across all five packages, and the full test suite (817/194/85/4/298 engine/server/
+discord/harness/web) passes. The async `getCardsModule` indirection is deleted.
+
+**Fixed**:
+- `getCards()` draws a real inventory (`DEFAULT_MIN/MAX_CARD_INVENTORY_SIZE`, 4–10 — half
+  of `getItems`'s 5–20 ceiling, because a card is a permanent deck upgrade rather than a
+  consumable and the shop already lists cards in the same choice prompt as items, where a
+  5–20 spread would make an already-long menu unreadable), filtered through the existing
+  `canHoldStandard.canHoldCard` (`!notForSale && !neverForSale`) — previously defined but
+  unused for this pool, same as items.
+- The back room now stocks rare cards too, through `canHoldBackRoom.canHoldCard`
+  (`notForSale && !neverForSale`) — also previously defined and unused. Sized smaller
+  (1–2) than the back room's 1–3 items, priced through the same `backRoomOffset` (5.5–9.5x)
+  as back-room items for consistency; most eligible cards already sit at the PRICEY/
+  EXPENSIVE cost tiers (see `cards/*.ts`), so this is deliberately a rare treat, not a
+  second full shelf.
+- `cards/helpers/draw.ts#draw()` recurses forever if its creature-shaped filter excludes
+  every card in the pool — unlike `drawItem`, it has no floor check, because it was only
+  ever called with a real creature before, whose level gate always leaves *some* eligible
+  card. A shop-stocking filter has no such guarantee. `stock.ts` now checks the eligible
+  pool size up front (`drawEligibleCard`) and mirrors `drawItem`'s null-return contract
+  instead of calling `draw()` on a filter that could exhaust the pool — contained entirely
+  in `stock.ts`, `cards/helpers/draw.ts` itself is untouched.
+- `getBackRoom()`'s mixed items+cards result is sorted as two independently-sorted blocks
+  (items by `itemType`, cards by `cardType`) and concatenated, rather than sorted as one
+  array on either key — items and cards don't share a sort key, so sorting the merged array
+  on `itemType` (or `cardType`) leaves every entry of the other type comparing as
+  `undefined` (always "equal") and stuck in draw order. That silently produces a
+  half-sorted list rather than a visible failure, so it is called out here rather than
+  patched over quietly.
+- A second, related bug found and fixed in the same pass: `items/helpers/counts.ts#getItemCountsWithPrice`
+  keyed strictly on `item.itemType`, so once the back room could contain cards (which have
+  no `itemType`), every card in a priced choice list collapsed under the single key
+  `"undefined"` and was priced/counted together instead of individually. `getItemCounts`
+  (no price) and `getFinalItemChoices` already went through `getItemKey`
+  (`itemType ?? cardType ?? name`); `getItemCountsWithPrice` was the one holdout. Fixed to
+  use the same key.
+- A third, independent bug found while wiring this up end-to-end: `characters/base.ts`'s
+  `buyItems`/`sellItems` methods never passed `chooseCards` to `items/store/buy.ts`/
+  `sell.ts` at all, so even with real stock the console/Discord Cards branch would still
+  have dead-ended — on `buy.ts`'s "Cards are not available." refusal instead of "We don't
+  have any cards here." `characters/base.ts` now statically imports `chooseCards` from
+  `cards/helpers/choose.js` (safe for the same reason as above — nothing under `cards/`
+  imports back into `characters/`) and passes it through on both methods.
+
+**Pricing reality-check against early-game coin income (explicitly asked for, not
+rebalanced here — a concurrent pass owns progression tuning)**: cards use the same cost
+tiers as items (`helpers/costs.ts`: 10/20/30/50/80/130) and flow through the same
+`priceOffset * 2` shelf markup (1.2–1.8x) as items, so the cheapest card costs the same
+12–18 coins as the cheapest item — well inside a new player's reach per
+`11-balance-and-mechanics.md`'s September 18 2026 economy audit (first win pays 10 coins
+with the daily bonus; subsequent wins 5, losses 2, both with a tapering early-fight
+bonus). No pricing problem found on the standard shelf. The back room is intentionally
+steep: PRICEY/EXPENSIVE-tier cards (80/130) at 5.5–9.5x put back-room cards at roughly
+440–1235 coins, matching the existing back-room-item economics exactly (same offset, same
+tiers) — a deliberate rare-treat price, not a new imbalance introduced by this change.
+
+**Tests**: `items/store/stock.test.ts` (`getCards` returns a non-empty, correctly-filtered
+inventory; never leaks a `notForSale`/`neverForSale` card over repeated draws; `getBackRoom`
+includes cards over enough draws), `items/helpers/counts.test.ts` (new — mixed item/card
+pool pricing), and `items/store/buy.test.ts` (new end-to-end case: real `getCards()` stock
+plus the real `chooseCards`, as `characters/base.ts` now wires it, reaches an actual card
+purchase instead of either "not available" refusal).
+
+**Status**: Fixed. `pnpm build`, `pnpm typecheck`, and `pnpm lint` (0 errors) all pass
+repo-wide; `pnpm test` passes all five packages (817 engine / 194 server / 85 discord / 4
+harness / 298 web, all green).

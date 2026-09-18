@@ -6,6 +6,8 @@ const baseMonster = {
   name: 'Stonefang',
   type: 'Basilisk',
   level: 3,
+  xpIntoLevel: 10,
+  xpNeededForLevel: 50,
   dead: false,
   inRing: true,
   inEncounter: false,

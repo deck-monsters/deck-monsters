@@ -10,6 +10,7 @@ import {
 	COINS_PER_DAILY_FIGHT,
 	getUtcDay,
 } from './constants/coins.js';
+import { earlyCoinBonus } from './constants/progression.js';
 import { createCharacter } from './characters/index.js';
 import { globalSemaphore } from './helpers/semaphore.js';
 import { listen, loadHandlers } from './commands/index.js';
@@ -516,17 +517,46 @@ export class Game extends BaseClass {
 		});
 	}
 
-	private awardFightCoins(character: any, outcomeCoins: number): { coinsGained: number; reasons?: string } {
+	/**
+	 * The character shape this needs, declared structurally instead of `any`.
+	 *
+	 * This was `character: any`, which meant a future caller passing the wrong thing —
+	 * a monster instead of `contestant.character`, say — would silently produce
+	 * `undefined + number === NaN` coins with no compiler complaint and no test failure
+	 * until someone noticed a player's balance had gone to NaN. Naming the three fields
+	 * actually used keeps that mistake a type error without coupling this to a concrete
+	 * character class.
+	 */
+	private awardFightCoins(
+		character: {
+			coins: number;
+			lastDailyFightCoinDay?: string;
+			battles?: { total?: number };
+		},
+		outcomeCoins: number
+	): { coinsGained: number; reasons?: string } {
 		const today = getUtcDay();
 		const dailyCoins = character.lastDailyFightCoinDay === today ? 0 : COINS_PER_DAILY_FIGHT;
 
 		if (dailyCoins > 0) character.lastDailyFightCoinDay = today;
-		const coinsGained = outcomeCoins + dailyCoins;
+
+		// `addWin`/`addLoss`/`addDraw` (creatures/base.ts) already ran by the time this
+		// fires — see constants/progression.ts `earlyCoinBonus` docblock — so
+		// `battles.total` already counts the fight being paid for here. Subtract 1 so the
+		// bonus tapers based on fights *before* this one, not including it.
+		const battlesBeforeThisFight = Math.max(0, (character.battles?.total ?? 1) - 1);
+		const bonusCoins = earlyCoinBonus(battlesBeforeThisFight);
+
+		const coinsGained = outcomeCoins + dailyCoins + bonusCoins;
 		character.coins += coinsGained;
+
+		const reasonParts: string[] = [];
+		if (dailyCoins > 0) reasonParts.push(`Daily first-fight bonus: ${dailyCoins} coins.`);
+		if (bonusCoins > 0) reasonParts.push(`New player bonus: ${bonusCoins} coins.`);
 
 		return {
 			coinsGained,
-			reasons: dailyCoins > 0 ? `Daily first-fight bonus: ${dailyCoins} coins.` : undefined,
+			reasons: reasonParts.length > 0 ? reasonParts.join(' ') : undefined,
 		};
 	}
 

@@ -4,12 +4,15 @@ import { purchaseShopItem } from './purchase.js';
 import type { Shop, ShopHost } from './shop.js';
 
 const item = (itemType: string, cost: number) => ({ itemType, cost });
+// Real card instances alias `itemType` to `cardType` (see `cards/base.ts`); this fixture
+// only sets `cardType`, matching the plain-object shape `purchaseShopItem` must also accept.
+const card = (cardType: string, cost: number) => ({ cardType, cost });
 
 const makeShop = (): Shop => ({
 	adjective: 'gilded',
 	backRoom: [item('Sorting Hat', 100)],
 	backRoomOffset: 5,
-	cards: [],
+	cards: [card('Whiskey Shot', 30)],
 	closingTime: new Date(Date.now() + 60_000),
 	items: [item('Potion of Healing', 50), item('Swiss Chocolate', 20)],
 	name: 'The Test Emporium',
@@ -83,6 +86,48 @@ describe('./items/store/purchase.ts', () => {
 		})).to.throw('need 80 coins');
 		expect(character.coins).to.equal(10);
 		expect(addItem.called).to.equal(false);
+		expect(commitShop.called).to.equal(false);
+	});
+
+	it('buys a card at the same price offset as standard items and adds it to the deck, not the item list', () => {
+		const shop = makeShop();
+		const host: ShopHost = { shop, commitShop: sinon.stub() };
+		const character = { coins: 100, addItem: sinon.stub(), addCard: sinon.stub() };
+
+		const result = purchaseShopItem({
+			character,
+			host,
+			section: 'cards',
+			stockIndex: 0,
+			expectedItemType: 'Whiskey Shot',
+			expectedClosingTime: shop.closingTime.toISOString(),
+		});
+
+		// priceOffset (0.8) * 2 = 1.6; 30 * 1.6 = 48 — identical multiplier to a standard item.
+		expect(result.price).to.equal(48);
+		expect(result.remainingCoins).to.equal(52);
+		expect(character.addCard.calledOnceWithExactly(shop.cards[0])).to.equal(true);
+		expect(character.addItem.called).to.equal(false);
+		expect((host.commitShop as sinon.SinonStub).firstCall.args[0].cards).to.deep.equal([]);
+		expect((host.commitShop as sinon.SinonStub).firstCall.args[0].items).to.equal(shop.items);
+	});
+
+	it('rejects a stale card token without mutating the deck or the shop', () => {
+		const shop = makeShop();
+		const commitShop = sinon.stub();
+		const addCard = sinon.stub();
+		const character = { coins: 100, addItem: sinon.stub(), addCard };
+
+		expect(() => purchaseShopItem({
+			character,
+			host: { shop, commitShop },
+			section: 'cards',
+			stockIndex: 0,
+			expectedItemType: 'A Different Card',
+			expectedClosingTime: shop.closingTime.toISOString(),
+		})).to.throw('no longer in stock');
+
+		expect(addCard.called).to.equal(false);
 		expect(commitShop.called).to.equal(false);
 	});
 

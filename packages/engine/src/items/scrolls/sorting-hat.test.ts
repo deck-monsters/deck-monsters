@@ -64,4 +64,34 @@ describe('./items/scrolls/sorting-hat.ts', () => {
 			return expect(monster.team).to.be.a('string');
 		});
 	});
+
+	it('resolves a label answer, the shape the Discord connector sends, instead of throwing', () => {
+		const sortingHat = new SortingHat();
+		const character = makeCharacter({ name: 'Character' });
+
+		// The Discord connector's button customId is the option's label text, never an
+		// index — before resolveChoiceIndex, `teamChoices[Number('Slytherin')]` was
+		// `undefined` and the very next line's `team.toUpperCase()` threw a TypeError.
+		channelStub.resolves('Slytherin');
+
+		return sortingHat.use({ channel: channelStub, channelName, character }).then(() => {
+			expect(character.team).to.equal('Slytherin');
+		});
+	});
+
+	it('rejects an unrecognised team answer instead of crashing on undefined.toUpperCase()', () => {
+		const sortingHat = new SortingHat();
+		const character = makeCharacter({ name: 'Character' });
+
+		channelStub.resolves('Not A Team');
+
+		return sortingHat.use({ channel: channelStub, channelName, character })
+			.then(() => {
+				throw new Error('expected sortingHat.use to reject');
+			})
+			.catch((error: Error) => {
+				expect(error.message).to.include('Not A Team');
+				expect(character.team).to.equal(undefined);
+			});
+	});
 });

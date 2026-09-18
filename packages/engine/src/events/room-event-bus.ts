@@ -230,6 +230,13 @@ export class RoomEventBus {
 	respondToPrompt(requestId: string, answer: string, callerId?: string): boolean {
 		// Clients must call cancelPrompt to cancel — never resolve with the
 		// sentinel as a literal answer (it would leak into game flows).
+		//
+		// `answer` is passed through verbatim to the engine's `channel({ question, choices })`
+		// caller — this bus does not (and must not) assume it's a numeric index. Different
+		// connectors send different shapes here (0-based index string from the web client,
+		// choice label text from Discord); see docs/prompt-answer-contract.md and
+		// `channel/index.ts`'s `ChannelCallback` doc comment for the full contract, and
+		// `helpers/choices.ts#resolveChoiceIndex` for the one place that should decode it.
 		if (answer === PROMPT_CANCELLED) return false;
 		const pending = this.pendingPrompts.get(requestId);
 		if (!pending) return false;

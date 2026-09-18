@@ -8,6 +8,7 @@ import buyItems from '../items/store/buy.js';
 import sellItems from '../items/store/sell.js';
 import type { ShopHost } from '../items/store/shop.js';
 import { announceAndThrow } from '../helpers/announce-and-throw.js';
+import { chooseCards } from '../cards/helpers/choose.js';
 
 // Lazy-load cards helpers to avoid circular dependency
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -198,11 +199,17 @@ class BaseCharacter extends BaseCreature {
 	}
 
 	sellItems(channel: ChannelFn, host: ShopHost): Promise<void> {
-		return sellItems({ character: this as any, channel: channel as any, host });
+		// `chooseCards` wires the console/Discord sell flow's Cards branch to real cards —
+		// without it `sellItems`/`buyItems` always hit the "not available" refusal in
+		// items/store/sell.ts and buy.ts, even once the shop actually stocks cards (see
+		// docs/roadmap/10b-bugs-fixed.md #5). A static import is safe here for the same
+		// reason it is in items/store/stock.ts — nothing under `cards/` imports back into
+		// `characters/`.
+		return sellItems({ character: this as any, channel: channel as any, host, chooseCards: chooseCards as any });
 	}
 
 	buyItems(channel: ChannelFn, host: ShopHost): Promise<void> {
-		return buyItems({ character: this as any, channel: channel as any, host });
+		return buyItems({ character: this as any, channel: channel as any, host, chooseCards: chooseCards as any });
 	}
 }
 

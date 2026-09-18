@@ -1,18 +1,54 @@
+import { earlyXpDiscount } from '../constants/progression.js';
+
 const STARTING_LEVEL = 0;
 
-export const getLevel = (
-	xp = 0,
-	prevPrevThreshold = 0,
-	prevThreshold = 50,
-	level = STARTING_LEVEL
-): number => {
-	const threshold = prevPrevThreshold + prevThreshold;
+/**
+ * Cumulative "full price" XP needed to reach `level`, using the original Fibonacci-
+ * style growth this game has always used: each level's threshold is the sum of the
+ * previous two (seeded 0, 50), i.e. 50, 100, 150, 250, 400, 650, 1050, ...
+ *
+ * This used to be inlined as recursive default parameters on `getLevel` itself
+ * (`prevPrevThreshold`/`prevThreshold`). Pulling it out as its own function is what
+ * makes `earlyXpDiscount` (constants/progression.ts) possible to apply cleanly: we
+ * need the *raw* per-level threshold to discount, not just a running xp/threshold
+ * comparison.
+ */
+const RAW_LEVEL_ONE_THRESHOLD = 50;
 
-	if (xp < threshold) {
-		return level;
+export const rawLevelThreshold = (level: number): number => {
+	if (level <= 0) return 0;
+
+	let prevPrev = 0; // raw[-1]
+	let prev = RAW_LEVEL_ONE_THRESHOLD; // raw[0]
+	let current = prev;
+
+	for (let l = 1; l <= level; l += 1) {
+		current = prevPrev + prev;
+		prevPrev = prev;
+		prev = current;
 	}
 
-	return getLevel(xp, prevThreshold, threshold, level + 1);
+	return current;
+};
+
+/**
+ * Cumulative XP needed to reach `level`, after the early-game discount. Identical to
+ * `rawLevelThreshold` from `EARLY_XP_DISCOUNT_CONVERGE_LEVEL` onward — see
+ * constants/progression.ts for why and by how much the earlier levels are discounted.
+ */
+export const discountedLevelThreshold = (level: number): number => {
+	if (level <= 0) return 0;
+	return Math.round(rawLevelThreshold(level) * earlyXpDiscount(level));
+};
+
+export const getLevel = (xp = 0): number => {
+	let level = STARTING_LEVEL;
+
+	while (xp >= discountedLevelThreshold(level + 1)) {
+		level += 1;
+	}
+
+	return level;
 };
 
 export interface LevelDescription {

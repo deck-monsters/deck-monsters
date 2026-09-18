@@ -10,6 +10,8 @@ const workshopMock = vi.hoisted(() => ({
       name: 'Stonefang',
       type: 'Basilisk',
       level: 3,
+      xpIntoLevel: 10,
+      xpNeededForLevel: 50,
       inRing: false,
       inEncounter: false,
       cardSlots: 2,
@@ -20,6 +22,8 @@ const workshopMock = vi.hoisted(() => ({
       name: 'Emberclaw',
       type: 'Jinn',
       level: 2,
+      xpIntoLevel: 5,
+      xpNeededForLevel: 100,
       inRing: false,
       inEncounter: false,
       cardSlots: 2,
@@ -62,6 +66,15 @@ vi.mock('../lib/trpc.js', () => ({
     room: {
       info: {
         useQuery: () => ({ data: { name: workshopMock.roomName } }),
+      },
+    },
+    // `WorkshopView` now wraps its content in `RingFeedProvider` (so the wallet/inventory
+    // can go live off `ring.xp` events — see WorkshopPanel.tsx), which calls this
+    // subscription on mount. A no-op is enough here: nothing in this file exercises live
+    // feed delivery.
+    game: {
+      ringFeed: {
+        useSubscription: () => undefined,
       },
     },
   },

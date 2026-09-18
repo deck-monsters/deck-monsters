@@ -9,6 +9,8 @@ type MonsterPanelProps = {
     name: string;
     type: string;
     level: number;
+    xpIntoLevel: number;
+    xpNeededForLevel: number;
     dead: boolean;
     inRing: boolean;
     inEncounter: boolean;
@@ -73,6 +75,8 @@ export default function MonsterWorkshopPanel({
     return Array.from({ length: total }, (_, idx) => monster.cards[idx] ?? null);
   }, [monster.cardSlots, monster.cards]);
   const usagePct = Math.min(100, Math.round((monster.cards.length / Math.max(monster.cardSlots, 1)) * 100));
+  const xpNeeded = Math.max(monster.xpNeededForLevel, 1);
+  const xpPct = Math.min(100, Math.max(0, Math.round((monster.xpIntoLevel / xpNeeded) * 100)));
 
   return (
     <section
@@ -125,6 +129,27 @@ export default function MonsterWorkshopPanel({
           >
             <div style={{ width: `${usagePct}%` }} />
           </div>
+        </div>
+      </div>
+      {/*
+        Same "label beside the track, never on it" rule as the slot meter above (and the
+        same reason — 10b-bugs-fixed.md #120): a variable-width fill under white text on
+        the accent colour is unreadable at a full bar. Progress feedback was the #1 ask
+        in the Sept 2026 "levelling feels slow/invisible" feedback (see
+        docs/roadmap/11-balance-and-mechanics.md), so this is worth its own row rather
+        than folding into the slot meter — the two fill at unrelated rates.
+      */}
+      <div className="workshop-xp-meter">
+        <span>Lvl {monster.level} · {monster.xpIntoLevel}/{xpNeeded} xp</span>
+        <div
+          className="workshop-xp-meter-track"
+          role="progressbar"
+          aria-valuenow={monster.xpIntoLevel}
+          aria-valuemin={0}
+          aria-valuemax={xpNeeded}
+          aria-label={`${monster.name} has ${monster.xpIntoLevel} of ${xpNeeded} xp toward level ${monster.level + 1}`}
+        >
+          <div style={{ width: `${xpPct}%` }} />
         </div>
       </div>
       <div className="workshop-monster-actions">
