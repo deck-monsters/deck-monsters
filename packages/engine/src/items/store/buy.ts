@@ -1,8 +1,15 @@
 import chooseItems from '../helpers/choose.js';
 import getClosingTime from './closing-time.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
-import { getFinalItemChoices } from '../../helpers/choices.js';
+import { getChoices, getFinalItemChoices, resolveChoiceIndex } from '../../helpers/choices.js';
 import type { ShopHost } from './shop.js';
+
+// The menu labels are the single source of truth for both the rendered question text and
+// the dispatch logic below — see resolveChoiceIndex's doc comment for why a hand-numbered
+// menu that disagrees with its own dispatch is exactly the bug this replaced (Items/Cards/
+// Back Room were previously off by one, and Back Room was a silent fall-through default —
+// see docs/roadmap/10b-bugs-fixed.md).
+const SHOP_MENU_LABELS = ['Items', 'Cards', 'Back Room'];
 
 // Card choosing is referenced via any until cards module is ready
 type ChooseCards = (opts: { cards: any[]; channel: any; showPrice?: boolean; priceOffset?: number }) => Promise<any[]>;
@@ -50,20 +57,23 @@ ${getClosingTime(shop)}
 
 We have ${numberOfItems} and ${numberOfCards}. Which would you like to see?
 
-1) Items
-2) Cards
-3) Back Room`,
-			choices: [1, 2, 3]
+${getChoices(SHOP_MENU_LABELS)}`,
+			choices: SHOP_MENU_LABELS
 		}))
 		.then((answer: string | number = '') => {
 			let priceOffset = shop.priceOffset * 2;
+			const selection = resolveChoiceIndex(answer, SHOP_MENU_LABELS);
 
-			if (Number(answer) === 1) {
+			if (selection === 0) {
+				// Items
 				if (items.length < 1) return announceAndThrow(channel, "We don't have any items here.");
 
-			return chooseItems({ items, channel, showPrice: true, priceOffset, getQuestion: addOwnershipToChoiceQuestion(character, items) })
-				.then((choices: any[]) => ({ choices, priceOffset }));
-			} else if (Number(answer) === 2) {
+				return chooseItems({ items, channel, showPrice: true, priceOffset, getQuestion: addOwnershipToChoiceQuestion(character, items) })
+					.then((choices: any[]) => ({ choices, priceOffset }));
+			}
+
+			if (selection === 1) {
+				// Cards
 				if (cards.length < 1) return announceAndThrow(channel, "We don't have any cards here.");
 
 				if (!chooseCards) return announceAndThrow(channel, "Cards are not available.");
@@ -72,18 +82,27 @@ We have ${numberOfItems} and ${numberOfCards}. Which would you like to see?
 					.then((choices: any[]) => ({ choices, priceOffset }));
 			}
 
-			if (backRoom.length < 1) return announceAndThrow(channel, "Sorry, pal. That area's closed.");
+			if (selection === 2) {
+				// Back Room
+				if (backRoom.length < 1) return announceAndThrow(channel, "Sorry, pal. That area's closed.");
 
-			priceOffset = shop.backRoomOffset;
+				priceOffset = shop.backRoomOffset;
 
-			return channel({
-				announce:
+				return channel({
+					announce:
 `The proprietor of ${shop.name} ${character.coins > 500 ? 'smiles slightly' : 'pauses for a second'}.
 
 But of course, ${character.givenName}. We have something really special in stock right now.`
-			})
-				.then(() => chooseItems({ items: backRoom, channel, showPrice: true, priceOffset }))
-				.then((choices: any[]) => ({ choices, priceOffset }));
+				})
+					.then(() => chooseItems({ items: backRoom, channel, showPrice: true, priceOffset }))
+					.then((choices: any[]) => ({ choices, priceOffset }));
+			}
+
+			// An unrecognised answer must never silently fall through to a valid branch —
+			// that is exactly how this menu used to route "Items" clicks into the Back Room
+			// (see docs/roadmap/10b-bugs-fixed.md). Dispatch explicitly on every valid
+			// choice above and treat anything else as a visible refusal.
+			return announceAndThrow(channel, `Sorry, I didn't understand that. Please choose one of: ${SHOP_MENU_LABELS.join(', ')}.`);
 		})
 		.then(({ choices, priceOffset }: { choices: any[]; priceOffset: number }) => {
 			const value = choices.reduce(

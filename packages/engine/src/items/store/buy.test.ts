@@ -46,7 +46,7 @@ describe('./items/store/buy.ts', () => {
 			addItem: sinon.stub()
 		};
 
-		channelStub.resolves('1');
+		channelStub.resolves('0');
 
 		return buyItems({ character, channel: channelStub, host: makeHost() }).catch(() => {
 			return expect(channelStub.calledWith(sinon.match({ announce: sinon.match("don't have any items") }))).to.equal(true);
@@ -64,7 +64,7 @@ describe('./items/store/buy.ts', () => {
 			addItem: sinon.stub()
 		};
 
-		channelStub.resolves('2');
+		channelStub.resolves('1');
 
 		return buyItems({ character, channel: channelStub, host: makeHost() }).catch(() => {
 			return expect(channelStub.calledWith(sinon.match({ announce: sinon.match("don't have any cards") }))).to.equal(true);
@@ -102,7 +102,7 @@ describe('./items/store/buy.ts', () => {
 		};
 
 		channelStub.resolves();
-		channelStub.onCall(0).resolves('1');
+		channelStub.onCall(0).resolves('0');
 		channelStub.onCall(1).resolves('Bandage');
 		channelStub.onCall(3).resolves('yes');
 
@@ -139,7 +139,7 @@ describe('./items/store/buy.ts', () => {
 		};
 
 		channelStub.resolves();
-		channelStub.onCall(0).resolves('1');
+		channelStub.onCall(0).resolves('0');
 		channelStub.onCall(1).resolves('Bandage');
 		channelStub.onCall(3).resolves('yes');
 
@@ -168,7 +168,7 @@ describe('./items/store/buy.ts', () => {
 		};
 
 		channelStub.resolves();
-		channelStub.onCall(0).resolves('1');
+		channelStub.onCall(0).resolves('0');
 		channelStub.onCall(1).resolves('Bandage');
 		channelStub.onCall(3).resolves('yes');
 
@@ -180,5 +180,97 @@ describe('./items/store/buy.ts', () => {
 		expect(committed.items).to.deep.equal([remainingItem]);
 		// Original shop object must not have been mutated in place.
 		expect(shop.items).to.deep.equal([purchasedItem, remainingItem]);
+	});
+
+	// Regression test for the shop menu off-by-one: the menu text and the web client both
+	// use 0-based indices ("0) Items"), but the dispatch used to compare against the
+	// 1-based literal `1`, so answering with the index for "Items" fell through to the
+	// Back Room instead. See docs/roadmap/10b-bugs-fixed.md.
+	it('routes the 0-based index for "Items" to the items branch, not the Back Room', () => {
+		const backRoomItem = { name: 'Secret Stash', itemType: 'Secret Stash', cost: 999 };
+		const shop: Shop = { ...defaultShop, items: [], backRoom: [backRoomItem] };
+
+		const character = {
+			givenName: 'Character',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 500,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		// "0" is the index InlineChoices.tsx sends for the first menu entry (Items).
+		channelStub.resolves('0');
+
+		return buyItems({ character, channel: channelStub, host: makeHost(shop) }).catch(() => {
+			// Reaching the items branch (which is empty) throws "don't have any items" —
+			// NOT the Back Room's "special in stock" announcement.
+			expect(channelStub.calledWith(sinon.match({ announce: sinon.match("don't have any items") }))).to.equal(true);
+			expect(channelStub.calledWith(sinon.match({ announce: sinon.match(/special in stock/) }))).to.equal(false);
+		});
+	});
+
+	it('routes the 0-based index for "Cards" to the cards branch, not Items', () => {
+		const item = { name: 'Bandage', itemType: 'Bandage', cost: 10 };
+		const shop: Shop = { ...defaultShop, items: [item], cards: [] };
+
+		const character = {
+			givenName: 'Character',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 500,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		// "1" is the index InlineChoices.tsx sends for the second menu entry (Cards).
+		channelStub.resolves('1');
+
+		return buyItems({ character, channel: channelStub, host: makeHost(shop) }).catch(() => {
+			expect(channelStub.calledWith(sinon.match({ announce: sinon.match("don't have any cards") }))).to.equal(true);
+		});
+	});
+
+	it('routes the Discord button label "Items" to the items branch', () => {
+		const shop: Shop = { ...defaultShop, items: [] };
+
+		const character = {
+			givenName: 'Character',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 500,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		// Discord's PromptHandler resolves with the button's label text, not an index.
+		channelStub.resolves('Items');
+
+		return buyItems({ character, channel: channelStub, host: makeHost(shop) }).catch(() => {
+			expect(channelStub.calledWith(sinon.match({ announce: sinon.match("don't have any items") }))).to.equal(true);
+		});
+	});
+
+	it('rejects an unrecognised answer explicitly instead of silently picking a branch', () => {
+		const shop: Shop = { ...defaultShop, items: [], cards: [], backRoom: [] };
+
+		const character = {
+			givenName: 'Character',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 500,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		channelStub.resolves('nonsense');
+
+		return buyItems({ character, channel: channelStub, host: makeHost(shop) }).catch(() => {
+			expect(channelStub.calledWith(sinon.match({ announce: sinon.match(/didn't understand/) }))).to.equal(true);
+		});
 	});
 });
