@@ -16,28 +16,27 @@ import { MAX_PRESETS } from '../constants/card-management.js';
 import { announceAndThrow } from '../helpers/announce-and-throw.js';
 import type { ChannelFn, ChannelWithManager, CardInstance, ItemInstance } from '../creatures/base.js';
 import type BaseMonster from '../monsters/base.js';
+// The answer contract (0-based index from web, label text from Discord) lives in
+// exactly one place. This used to be a per-file copy behind the lazy loader below,
+// and three copies of a rule that must agree is how the shop menus drifted out of
+// sync in the first place (docs/prompt-answer-contract.md, bug #143). Imported
+// statically: choices.js pulls in only leaf helpers (card, upper-first,
+// probabilities, collection, items/helpers/counts) and never reaches back into
+// monsters/characters, so there is no cycle here for a lazy load to avoid.
+import { resolveChoiceIndex } from '../helpers/choices.js';
 
-// Lazy-load choices helper
+// This formatter stays behind the lazy loader only because the loader (and the
+// readiness promise it exports) is a pre-existing pattern shared with
+// equip.ts/hydrate.ts. There is no circular dependency to avoid here: choices.js
+// reaches only leaf helpers, which is why the static import above is safe.
 let _getMonsterChoices: (monsters: BaseMonster[]) => string = monsters =>
 	monsters.map((m, i) => `${i}) ${(m as any).givenName ?? m.name}`).join('\n');
-// Fallback mirrors resolveChoiceIndex until the real helper loads (see loadHelpers below) —
-// accepts either the 0-based index (web) or the case-insensitive label (Discord).
-let _resolveChoiceIndex: (answer: unknown, labels: string[]) => number = (answer, labels) => {
-	const trimmed = String(answer ?? '').trim();
-	if (!trimmed) return -1;
-	if (/^\d+$/.test(trimmed)) {
-		const index = Number(trimmed);
-		return index >= 0 && index < labels.length ? index : -1;
-	}
-	return labels.findIndex(label => label.toLowerCase() === trimmed.toLowerCase());
-};
 
 const loadHelpers = async () => {
 	const choicesModule = await import('../helpers/choices.js').catch(() => null);
 	if (choicesModule) {
 		_getMonsterChoices =
 			(choicesModule as any).getMonsterChoices ?? _getMonsterChoices;
-		_resolveChoiceIndex = (choicesModule as any).resolveChoiceIndex ?? _resolveChoiceIndex;
 	}
 };
 
@@ -201,7 +200,7 @@ class Beastmaster extends BaseCharacter {
 					// index (see docs/prompt-answer-contract.md) — resolve either form and
 					// fail loudly on garbage rather than let `monsters[NaN]` return
 					// `undefined` silently.
-					const index = _resolveChoiceIndex(answer, monsterLabels);
+					const index = resolveChoiceIndex(answer, monsterLabels);
 					const monster = monsters[index];
 					if (!monster) {
 						return announceAndThrow(channel, `I don't recognize "${String(answer)}" as one of your monsters.`);

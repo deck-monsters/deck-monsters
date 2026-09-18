@@ -5,26 +5,29 @@ import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import type BaseMonster from '../base.js';
 import allMonsters from './all.js';
+// The answer contract (0-based index from web, label text from Discord) lives in
+// exactly one place. This used to be a per-file copy behind the lazy loader below,
+// and three copies of a rule that must agree is how the shop menus drifted out of
+// sync in the first place (docs/prompt-answer-contract.md, bug #143). Imported
+// statically: choices.js pulls in only leaf helpers (card, upper-first,
+// probabilities, collection, items/helpers/counts) and never reaches back into
+// monsters/characters, so there is no cycle here for a lazy load to avoid.
+import { resolveChoiceIndex } from '../../helpers/choices.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MonsterConstructor = new (options?: Record<string, unknown>) => BaseMonster & { [key: string]: any };
 
-// Lazy-load choices helpers to avoid circular dependency
+// These formatters stay behind the lazy loader only because the loader (and the
+// readiness promise it exports, which helpers/engine-ready.ts aggregates) is a
+// pre-existing pattern shared with equip.ts/hydrate.ts. There is no circular
+// dependency to avoid here: choices.js reaches only leaf helpers, which is why the
+// static import above is safe. Collapsing these onto it too is a fine follow-up,
+// but it changes the exported readiness contract, so it is deliberately not done
+// in the same change as the answer-contract de-duplication.
 let _getChoices: (arr: string[]) => string = arr =>
 	arr.map((c, i) => `${i}) ${c}`).join('\n');
 let _getCreatureTypeChoices: (creatures: MonsterConstructor[]) => string = creatures =>
 	creatures.map((c, i) => `${i}) ${(c as any).creatureType ?? c.name}`).join('\n');
-// Fallback mirrors resolveChoiceIndex until the real helper loads (see loadHelpers below) —
-// accepts either the 0-based index (web) or the case-insensitive label (Discord).
-let _resolveChoiceIndex: (answer: unknown, labels: string[]) => number = (answer, labels) => {
-	const trimmed = String(answer ?? '').trim();
-	if (!trimmed) return -1;
-	if (/^\d+$/.test(trimmed)) {
-		const index = Number(trimmed);
-		return index >= 0 && index < labels.length ? index : -1;
-	}
-	return labels.findIndex(label => label.toLowerCase() === trimmed.toLowerCase());
-};
 
 const loadHelpers = async () => {
 	const choicesModule = await import('../../helpers/choices.js').catch(() => null);
@@ -32,7 +35,6 @@ const loadHelpers = async () => {
 		_getChoices = (choicesModule as any).getChoices ?? _getChoices;
 		_getCreatureTypeChoices =
 			(choicesModule as any).getCreatureTypeChoices ?? _getCreatureTypeChoices;
-		_resolveChoiceIndex = (choicesModule as any).resolveChoiceIndex ?? _resolveChoiceIndex;
 	}
 };
 
@@ -91,7 +93,7 @@ const spawnMonster = (
 				// The Discord connector answers with the button's label text, never an index
 				// (see docs/prompt-answer-contract.md) — resolve either form and fail loudly
 				// on garbage rather than let `allMonsters[NaN]` return `undefined` silently.
-				const index = _resolveChoiceIndex(answer, creatureTypeLabels);
+				const index = resolveChoiceIndex(answer, creatureTypeLabels);
 				const Monster = allMonsters[index];
 				if (!Monster) {
 					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a monster type.`);
@@ -180,7 +182,7 @@ const spawnMonster = (
 				// which now generalises what used to be this function's own hand-rolled
 				// label-or-index handling — see helpers/choices.ts.
 				const stringAnswer = typeof answer === 'string' ? answer.toLowerCase() : '';
-				const index = _resolveChoiceIndex(answer, genders);
+				const index = resolveChoiceIndex(answer, genders);
 				const selectedGender = genders.includes(stringAnswer) ? stringAnswer : genders[index];
 				if (!selectedGender) {
 					throw new Error(`Unknown monster gender: ${String(answer)}`);
