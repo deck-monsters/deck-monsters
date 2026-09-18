@@ -25,6 +25,7 @@ interface InventoryPanelProps {
    * gesture.
    */
   onEquipSelected?: () => void;
+  disabled?: boolean;
 }
 
 export default function InventoryPanel({
@@ -38,6 +39,7 @@ export default function InventoryPanel({
   onClearMonsterFilter,
   isCardUnavailable,
   onEquipSelected,
+  disabled = false,
 }: InventoryPanelProps) {
   const location: WorkshopCardLocation = { kind: 'inventory' };
   return (
@@ -58,6 +60,7 @@ export default function InventoryPanel({
             <button
               type="button"
               className="btn workshop-inline-btn workshop-equip-btn"
+              disabled={disabled}
               onClick={() => onEquipSelected()}
             >
               Equip {selectedCards.length} to {activeMonsterFilterName}
@@ -84,7 +87,7 @@ export default function InventoryPanel({
                 location={location}
                 selectionId={selectionId}
                 cardName={cardName}
-                disabled={unavailable}
+                disabled={disabled || unavailable}
                 incompatible={unavailable}
                 selected={selectedCards.some(
                   (selectedCard) =>
@@ -103,6 +106,7 @@ export default function InventoryPanel({
         className="workshop-drop-zone"
         onDrop={(event) => {
           event.preventDefault();
+          if (disabled) return;
           const payload = event.dataTransfer.getData('application/x-deck-monsters-card');
           if (!payload) return;
           try {
@@ -116,13 +120,18 @@ export default function InventoryPanel({
             // Ignore malformed payloads.
           }
         }}
-        onDragOver={(event) => event.preventDefault()}
+        onDragOver={(event) => {
+          if (!disabled) event.preventDefault();
+        }}
         onClick={() => {
+          if (disabled) return;
           void onTapSlot();
         }}
         role="button"
-        tabIndex={0}
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
         onKeyDown={(event) => {
+          if (disabled) return;
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             void onTapSlot();

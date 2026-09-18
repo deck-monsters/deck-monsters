@@ -15,6 +15,34 @@ const baseMonster = {
 };
 
 describe('MonsterWorkshopPanel drag/drop lock behavior', () => {
+	it('disables card slots and preset controls while the workshop is busy', () => {
+		render(
+			<MonsterWorkshopPanel
+				monster={{
+					...baseMonster,
+					cards: ['Hit'],
+					presets: { sturdy: ['Hit'] },
+				}}
+				showSelectionHint={false}
+				selectedCards={[]}
+				onDropCard={() => undefined}
+				onTapSlot={() => undefined}
+				onSelectCard={() => undefined}
+				onUnequipAll={() => undefined}
+				onSavePreset={() => undefined}
+				onLoadPreset={() => undefined}
+				onDeletePreset={() => undefined}
+				onRevive={() => undefined}
+				onSendToRing={() => undefined}
+				busy
+			/>,
+		);
+
+		expect(screen.getByRole('button', { name: 'Hit' })).toBeDisabled();
+		expect(screen.getByRole('combobox', { name: 'Presets' })).toBeDisabled();
+		expect(screen.getByPlaceholderText('Store as...')).toBeDisabled();
+	});
+
   it('allows dropping into monster slots while in ring but not in encounter', async () => {
     const onDropCard = vi.fn(async () => undefined);
     render(

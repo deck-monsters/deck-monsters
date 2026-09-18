@@ -193,7 +193,7 @@ export default function MonsterWorkshopPanel({
               selectionId={selectionId}
               isDropActive={false}
               selected={selectedCards.some((selectedCard) => selectedCard.selectionId === selectionId)}
-              disabled={locked}
+              disabled={busy || locked}
               onSelectCard={onSelectCard}
               onTapSlot={onTapSlot}
               onDropCard={(source, droppedCardName, sourceSelectionId) =>
@@ -210,7 +210,7 @@ export default function MonsterWorkshopPanel({
         onLoad={onLoadPreset}
         onSave={onSavePreset}
         onDelete={onDeletePreset}
-        disabled={locked}
+        disabled={busy || locked}
       />
 
       {showSelectionHint && (

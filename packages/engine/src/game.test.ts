@@ -248,19 +248,28 @@ describe('game.ts', () => {
 		try {
 			const monster = new Basilisk({ name: 'Persistent Draw' });
 			const character = new Beastmaster({ name: 'Daily Trainer' });
+			const opponentMonster = new Basilisk({ name: 'Patient Opponent' });
+			const opponentCharacter = new Beastmaster({ name: 'Opponent Trainer' });
 			character.addMonster(monster);
-			game.characters = { ...game.characters, user: character };
+			opponentCharacter.addMonster(opponentMonster);
+			game.characters = { user: character, opponent: opponentCharacter };
 			const contestant = { character, monster, userId: 'user' };
+			const opponent = {
+				character: opponentCharacter,
+				monster: opponentMonster,
+				userId: 'opponent',
+			};
+			game.ring.contestants = [contestant, opponent] as any;
 
-			monster.emit('draw', { contestant });
+			game.ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
 			expect(character.coins).to.equal(COINS_PER_DEFEAT + COINS_PER_DAILY_FIGHT);
 			expect(character.xp).to.equal(XP_PER_DEFEAT);
 
-			monster.emit('draw', { contestant });
+			game.ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
 			expect(character.coins).to.equal((COINS_PER_DEFEAT * 2) + COINS_PER_DAILY_FIGHT);
 
 			clock.tick(2 * 60 * 1000);
-			monster.emit('draw', { contestant });
+			game.ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
 			expect(character.coins).to.equal((COINS_PER_DEFEAT * 3) + (COINS_PER_DAILY_FIGHT * 2));
 			expect(character.lastDailyFightCoinDay).to.equal('2026-09-19');
 		} finally {

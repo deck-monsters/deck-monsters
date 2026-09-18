@@ -2710,6 +2710,13 @@ player still holds coins, never lowers a valid total, and cannot double-count re
 private reward events then accumulate normally; players whose historical balance was
 already spent remain necessarily undercounted rather than being assigned invented coins.
 
+Follow-up review found the same privacy boundary inside the ring: `ring-internal` dispatches
+win/loss/draw/flee events into the stateful outcome handlers, but had not opted into private
+delivery. Real draw events therefore never reached `handleTied`, even though a unit test that
+emitted `creature.draw` directly passed. The dispatcher is now an explicit trusted private
+subscriber, and the draw reward test exercises `Ring.fightConcludes` rather than bypassing
+that production path.
+
 **Status**: Fixed.
 
 ---
@@ -2761,5 +2768,10 @@ a waiting question from a merely slow command, and can cancel the Console flow i
 Two consecutive empty prompt polls also clear a stale local prompt after a reconnect where
 the live cancel/timeout event was missed, without letting one older in-flight poll erase a
 newly arrived question.
+
+Follow-up review closed two gaps behind that banner: monster card slots and preset controls
+now consume the shared busy state, and the inventory disables selection, equip and drop-zone
+actions too. Mutation handlers also reject stale gestures locally before clearing selection,
+so a control rendered just before flow status changed cannot still send doomed work.
 
 **Status**: Fixed.
