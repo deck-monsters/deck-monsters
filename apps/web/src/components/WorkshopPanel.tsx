@@ -271,7 +271,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     sourceSelectionId?: string,
     targetSelectionId?: string,
   ) {
-    if (!roomId) return;
+    if (!roomId || consoleFlowActive) return;
     setSelectedCards([]);
 
     try {
@@ -327,7 +327,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   }
 
   async function handleBatchMove(selection: SelectionState[], target: WorkshopCardLocation) {
-    if (!roomId || selection.length < 1) return;
+    if (!roomId || consoleFlowActive || selection.length < 1) return;
     const source = selection[0].location;
     const grouped = groupSelectionByCardName(selection);
 
@@ -391,7 +391,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   }
 
   async function handleSlotClick(target: WorkshopCardLocation) {
-    if (selectedCards.length < 1 || !roomId) return;
+    if (selectedCards.length < 1 || !roomId || consoleFlowActive) return;
     const firstSource = selectedCards[0]?.location;
     if (firstSource && isSameSource(firstSource, target)) {
       setMessage('Selection unchanged. Tap cards to add/remove, then tap another zone to move.');
@@ -408,6 +408,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   }
 
   function handleSelect(location: WorkshopCardLocation, cardName: string, selectionId: string) {
+    if (consoleFlowActive) return;
     setSelectedCards((previous) => toggleWorkshopSelection(previous, { location, cardName, selectionId }));
   }
 
@@ -642,6 +643,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         selectedCards={selectedCards}
         activeMonsterFilterName={activeMonsterFilter}
         compatibleCardCount={compatibleCardCount}
+        disabled={busy}
         onClearMonsterFilter={() => setActiveMonsterFilter(null)}
         isCardUnavailable={(cardName) =>
           activeMonsterFilter ? !isCardCompatibleWithMonster(cardName, activeMonsterFilter) : false

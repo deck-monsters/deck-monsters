@@ -42,6 +42,9 @@ describe('ring/index.ts', () => {
 			human.monster.hp = 0;
 			expect(ring.pacingMultiplier).to.equal(2);
 			bossTwo.monster.hp = 0;
+			expect(ring.pacingMultiplier).to.equal(2);
+			ring.endEncounter();
+			ring.startEncounter();
 			expect(ring.pacingMultiplier).to.equal(1);
 
 			game.dispose();

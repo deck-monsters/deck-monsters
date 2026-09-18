@@ -2701,9 +2701,21 @@ room-internal observers. The fight-stats projection and event persister opt in; 
 player/connector subscribers retain owner-only delivery. Tests prove that a private coin
 reward updates the projection and persistence while remaining invisible to another player.
 
-Existing zero totals cannot be reconstructed exactly: balances omit coins already spent,
-and the missing private events were never persisted. New rewards accumulate correctly from
-deployment onward; the first-fight bonus makes that recovery visible immediately.
+Existing lifetime totals cannot be reconstructed exactly: balances omit coins already
+spent, and the missing private events were never persisted. Leaving every existing row at
+zero was nevertheless not acceptable. On room load, the server now reconciles
+`coins_earned` to at least the authoritative current character balance with a monotonic
+`GREATEST(existing, balance)` upsert. This repairs all-zero/stale projections whenever a
+player still holds coins, never lowers a valid total, and cannot double-count rewards. New
+private reward events then accumulate normally; players whose historical balance was
+already spent remain necessarily undercounted rather than being assigned invented coins.
+
+Follow-up review found the same privacy boundary inside the ring: `ring-internal` dispatches
+win/loss/draw/flee events into the stateful outcome handlers, but had not opted into private
+delivery. Real draw events therefore never reached `handleTied`, even though a unit test that
+emitted `creature.draw` directly passed. The dispatcher is now an explicit trusted private
+subscriber, and the draw reward test exercises `Ring.fightConcludes` rather than bypassing
+that production path.
 
 **Status**: Fixed.
 
@@ -2732,7 +2744,8 @@ pauses resolving a result no player could influence. The remaining encounter now
 2× speed whenever at least two active bosses and no active humans remain. The multiplier is
 room-local and derived from live contestants, so simultaneous fights in other rooms retain
 their own pacing. It covers card/turn gaps, nested cards and combat sub-events, then returns
-to 1× when boss-only combat no longer applies.
+to 1× for the next encounter. The speedup is latched through the current fight so defeating
+one of the remaining bosses cannot make the final cleanup slow down again.
 
 **Status**: Fixed.
 
@@ -2752,6 +2765,14 @@ refreshes pending-prompt state, pins an explanation and Cancel action directly a
 input, and refuses command-link insertion while a question is active. The Workshop polls
 the same status, disables its mutation controls, pins a clear blocking banner, distinguishes
 a waiting question from a merely slow command, and can cancel the Console flow in place.
+Two consecutive empty prompt polls also clear a stale local prompt after a reconnect where
+the live cancel/timeout event was missed, without letting one older in-flight poll erase a
+newly arrived question.
+
+Follow-up review closed two gaps behind that banner: monster card slots and preset controls
+now consume the shared busy state, and the inventory disables selection, equip and drop-zone
+actions too. Mutation handlers also reject stale gestures locally before clearing selection,
+so a control rendered just before flow status changed cannot still send doomed work.
 
 **Status**: Fixed.
 

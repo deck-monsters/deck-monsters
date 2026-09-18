@@ -24,7 +24,7 @@ import type { GameEvent, RingContestantSnapshot } from '@deck-monsters/engine';
 import { publicDisplayName } from './public-display-name.js';
 import { PostgresStateStore } from './state-store.js';
 import { attachEventPersister } from './event-persister.js';
-import { attachFightStatsSubscriber } from './fight-stats-subscriber.js';
+import { attachFightStatsSubscriber, reconcilePlayerCoinStats } from './fight-stats-subscriber.js';
 import { attachFightSummaryWriter } from './fight-summary-writer.js';
 import {
 	buildCatchUpText,
@@ -847,6 +847,16 @@ export class RoomManager {
 		}
 
 		game.stateStore = stateStore;
+		// Private reward events were historically invisible to the stats projection. The
+		// restored character balance is an authoritative lower bound for lifetime earnings,
+		// so repair zero/stale rows before exposing this room to leaderboard queries.
+		const restoredCharacters = (game.options as {
+			characters?: Record<string, { coins?: unknown }>;
+		}).characters;
+		await reconcilePlayerCoinStats(this.db, roomId, restoredCharacters).catch((err: unknown) => {
+			this.log(err);
+			log.error('failed to reconcile historical coin projection', { roomId, err });
+		});
 
 		const eventBus = game.eventBus;
 		const unsubscribePersister = attachEventPersister(eventBus, this.db, this.log);

@@ -21,4 +21,28 @@ describe('InventoryPanel multi-select behavior', () => {
     expect(onSelectCard).toHaveBeenCalledWith({ kind: 'inventory' }, 'Heal', 'inventory:1', 1);
     expect(onTapSlot).not.toHaveBeenCalled();
   });
+
+  it('blocks card selection and the unequip drop zone while disabled', () => {
+    const onSelectCard = vi.fn();
+    const onTapSlot = vi.fn();
+    const onDropCard = vi.fn();
+
+    render(
+      <InventoryPanel
+        cards={['Hit']}
+        selectedCards={[]}
+        onDropCard={onDropCard}
+        onTapSlot={onTapSlot}
+        onSelectCard={onSelectCard}
+        disabled
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Hit' })).toBeDisabled();
+    const dropZone = screen.getByRole('button', { name: 'Drop here to unequip from monster' });
+    expect(dropZone).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(dropZone);
+    expect(onTapSlot).not.toHaveBeenCalled();
+    expect(onDropCard).not.toHaveBeenCalled();
+  });
 });

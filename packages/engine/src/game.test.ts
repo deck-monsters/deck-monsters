@@ -257,24 +257,36 @@ describe('game.ts', () => {
 		try {
 			const monster = new Basilisk({ name: 'Persistent Draw' });
 			const character = new Beastmaster({ name: 'Daily Trainer' });
+			const opponentMonster = new Basilisk({ name: 'Patient Opponent' });
+			const opponentCharacter = new Beastmaster({ name: 'Opponent Trainer' });
 			character.addMonster(monster);
-			game.characters = { ...game.characters, user: character };
+			opponentCharacter.addMonster(opponentMonster);
+			game.characters = { user: character, opponent: opponentCharacter };
 			const contestant = { character, monster, userId: 'user' };
+			const opponent = {
+				character: opponentCharacter,
+				monster: opponentMonster,
+				userId: 'opponent',
+			};
+			game.ring.contestants = [contestant, opponent] as any;
 
-			// This test emits 'draw' directly on the monster, bypassing Ring.handleDraw's
-			// character.addDraw(), so `battles.total` stays 0 for all three emits —
-			// earlyCoinBonus(0) applies identically each time (see constants/progression.ts).
+			// Drive the reward through the real production path — Ring.fightConcludes,
+			// which (via handleTied) calls character.addDraw() before emitting — rather
+			// than bypassing it with a direct monster.emit('draw'). addDraw() increments
+			// `battles.total`, but all three fights here land inside the first
+			// EARLY_COIN_BONUS_TIERS bracket (< 5 battles), so the bonus is constant
+			// across all three calls — see constants/progression.ts.
 			const bonus = earlyCoinBonus(0);
 
-			monster.emit('draw', { contestant });
+			game.ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
 			expect(character.coins).to.equal(COINS_PER_DEFEAT + COINS_PER_DAILY_FIGHT + bonus);
 			expect(character.xp).to.equal(XP_PER_DEFEAT);
 
-			monster.emit('draw', { contestant });
+			game.ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
 			expect(character.coins).to.equal((COINS_PER_DEFEAT * 2) + COINS_PER_DAILY_FIGHT + (bonus * 2));
 
 			clock.tick(2 * 60 * 1000);
-			monster.emit('draw', { contestant });
+			game.ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
 			expect(character.coins).to.equal((COINS_PER_DEFEAT * 3) + (COINS_PER_DAILY_FIGHT * 2) + (bonus * 3));
 			expect(character.lastDailyFightCoinDay).to.equal('2026-09-19');
 		} finally {

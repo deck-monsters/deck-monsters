@@ -72,6 +72,46 @@ export function attachFightStatsSubscriber(
 	});
 }
 
+/**
+ * Repair the historical projection from the authoritative room state when a room loads.
+ *
+ * `coinsEarned` is cumulative while a character's balance is net of purchases, so the
+ * balance is only a lower bound. Using GREATEST makes this reconciliation monotonic: it
+ * repairs the old all-zero projection without erasing correctly projected earnings or
+ * double-counting rewards that the live subscriber has already observed.
+ */
+export async function reconcilePlayerCoinStats(
+	db: Db,
+	roomId: string,
+	characters: Record<string, { coins?: unknown }> | undefined
+): Promise<void> {
+	for (const [rawUserId, character] of Object.entries(characters ?? {})) {
+		const userId = profileUuidOrNull(rawUserId);
+		const balance = Number(character?.coins ?? 0);
+		if (!userId || !Number.isFinite(balance) || balance <= 0) continue;
+		const wholeBalance = Math.floor(balance);
+
+		await db
+			.insert(roomPlayerStats)
+			.values({
+				roomId,
+				userId,
+				xp: 0,
+				wins: 0,
+				losses: 0,
+				draws: 0,
+				coinsEarned: wholeBalance,
+			})
+			.onConflictDoUpdate({
+				target: [roomPlayerStats.roomId, roomPlayerStats.userId],
+				set: {
+					coinsEarned: sql`greatest(${roomPlayerStats.coinsEarned}, ${wholeBalance})`,
+					updatedAt: new Date(),
+				},
+			});
+	}
+}
+
 async function handleFightResolved(db: Db, event: GameEvent): Promise<void> {
 	const roomId = event.roomId;
 	const payload = event.payload as {

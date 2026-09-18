@@ -10,6 +10,18 @@ import {
 const scrollToIndexMock = vi.fn();
 let restoreRaf: (() => void) | null = null;
 const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
+const trpcMocks = vi.hoisted(() => ({
+  pendingPromptQuery: {
+    data: null as null | {
+      requestId: string;
+      question: string;
+      choices: string[];
+      timeoutSeconds?: number;
+    },
+    dataUpdatedAt: 0,
+    refetch: vi.fn(async () => ({ data: null })),
+  },
+}));
 
 function pushEvent(tracked: TrackedRingFeedEvent) {
   for (const listener of listeners) listener(tracked);
@@ -75,7 +87,7 @@ vi.mock('../lib/trpc.js', () => ({
         useQuery: () => ({ data: undefined }),
       },
       pendingPrompt: {
-        useQuery: () => ({ data: null, refetch: vi.fn(async () => ({ data: null })) }),
+        useQuery: () => trpcMocks.pendingPromptQuery,
       },
       myMonsters: {
         useQuery: () => ({ data: [] }),
@@ -125,6 +137,8 @@ describe('ConsolePane scroll behavior', () => {
   beforeEach(() => {
     scrollToIndexMock.mockReset();
     listeners.clear();
+    trpcMocks.pendingPromptQuery.data = null;
+    trpcMocks.pendingPromptQuery.dataUpdatedAt = 0;
     const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
       callback(0);
       return 0;
@@ -251,5 +265,40 @@ describe('ConsolePane scroll behavior', () => {
     );
 
     expect(scrollToIndexMock).toHaveBeenCalled();
+  });
+
+  it('unlocks a prompt after reconnect polling confirms it no longer exists', () => {
+    const roomId = '11111111-1111-1111-1111-111111111111';
+    const view = render(
+      <TestFeed>
+        <ConsolePane roomId={roomId} isActive />
+      </TestFeed>,
+    );
+
+    act(() => {
+      pushEvent({
+        id: 'prompt-request',
+        data: {
+          id: 'prompt-request',
+          type: 'prompt.request',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: 'Which card?',
+          payload: { requestId: 'request-1', question: 'Which card?', choices: ['Hit'] },
+          timestamp: Date.now(),
+          roomId,
+        },
+      });
+    });
+    expect(screen.getByText(/Command suggestions are paused/)).toBeInTheDocument();
+
+    trpcMocks.pendingPromptQuery.dataUpdatedAt = 1;
+    view.rerender(<TestFeed><ConsolePane roomId={roomId} isActive /></TestFeed>);
+    expect(screen.getByText(/Command suggestions are paused/)).toBeInTheDocument();
+
+    trpcMocks.pendingPromptQuery.dataUpdatedAt = 2;
+    view.rerender(<TestFeed><ConsolePane roomId={roomId} isActive /></TestFeed>);
+    expect(screen.queryByText(/Command suggestions are paused/)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Type a command…')).toBeEnabled();
   });
 });

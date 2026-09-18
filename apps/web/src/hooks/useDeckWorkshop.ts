@@ -62,22 +62,22 @@ export function useDeckWorkshop(roomId?: string) {
     { roomId: validRoomId },
     { enabled: !!roomId, staleTime: Infinity },
   );
-	const flowStatusQuery = trpc.game.flowStatus.useQuery(
-	  { roomId: validRoomId },
-	  { enabled: !!roomId, refetchInterval: 3_000 },
-	);
-	const cancelFlowMutation = trpc.game.cancelFlow.useMutation({
-	  onSuccess: async () => {
-		await flowStatusQuery.refetch();
-		await invalidateWorkshop();
-	  },
-	});
-
   const invalidateWorkshop = async () => {
     if (!roomId) return;
     await utils.game.myInventory.invalidate({ roomId });
     await utils.game.myMonsters.invalidate({ roomId });
   };
+
+  const flowStatusQuery = trpc.game.flowStatus.useQuery(
+    { roomId: validRoomId },
+    { enabled: !!roomId, refetchInterval: 3_000 },
+  );
+  const cancelFlowMutation = trpc.game.cancelFlow.useMutation({
+    onSuccess: async () => {
+      await flowStatusQuery.refetch();
+      await invalidateWorkshop();
+    },
+  });
 
   const mutationOptions = { onSuccess: invalidateWorkshop } as const;
   const buyShopItemMutation = trpc.game.buyShopItem.useMutation({
@@ -123,7 +123,7 @@ export function useDeckWorkshop(roomId?: string) {
   const consoleFlowActive = flowStatusQuery.data?.consoleActive ?? false;
   const busy = useMemo(
     () =>
-	  consoleFlowActive ||
+      consoleFlowActive ||
       inventoryQuery.isFetching ||
       shopQuery.isFetching ||
       buyShopItemMutation.isPending ||
@@ -142,7 +142,7 @@ export function useDeckWorkshop(roomId?: string) {
       useItemMutation.isPending ||
       sendMonsterToRingMutation.isPending,
     [
-	  consoleFlowActive,
+      consoleFlowActive,
       deletePresetMutation.isPending,
       reviveMonsterMutation.isPending,
       spawnMonsterMutation.isPending,
@@ -174,12 +174,12 @@ export function useDeckWorkshop(roomId?: string) {
     spawnOptions: spawnOptionsQuery.data ?? { types: [], genders: [] },
     loading,
     busy,
-	consoleFlowActive,
-	pendingPrompt: flowStatusQuery.data?.pendingPrompt ?? null,
-	cancelConsoleFlow: async () => {
-	  if (!roomId) throw new Error('Room not selected');
-	  return cancelFlowMutation.mutateAsync({ roomId });
-	},
+    consoleFlowActive,
+    pendingPrompt: flowStatusQuery.data?.pendingPrompt ?? null,
+    cancelConsoleFlow: async () => {
+      if (!roomId) throw new Error('Room not selected');
+      return cancelFlowMutation.mutateAsync({ roomId });
+    },
     latestError:
       unequipCardMutation.error?.message ??
       unequipManyMutation.error?.message ??

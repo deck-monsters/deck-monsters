@@ -156,6 +156,7 @@ function participantOutcome(
 }
 
 export class Ring extends BaseClass {
+	private bossOnlyPacingEngaged = false;
 	static eventPrefix = 'ring';
 
 	log: (err: unknown) => void;
@@ -224,6 +225,9 @@ export class Ring extends BaseClass {
 
 		// Route outcome events back to ring handlers via event bus
 		this.eventBus.subscribe('ring-internal', {
+			// Outcome events are private to their owners. This trusted room-local dispatcher
+			// must still observe them so it can update records and emit creature outcomes.
+			includePrivate: true,
 			deliver: (event) => {
 				if (event.type === 'ring.win') {
 					this.handleWinner({ contestant: (event.payload as any).contestant });
@@ -534,6 +538,7 @@ export class Ring extends BaseClass {
 	startEncounter(): boolean {
 		if (this.inEncounter) return false;
 
+		this.bossOnlyPacingEngaged = false;
 		this.inEncounter = true;
 		this.encounter = {};
 
@@ -596,13 +601,15 @@ export class Ring extends BaseClass {
 		}));
 	}
 
-	/** Boss-only cleanup runs at double pace once no human contestant can still act. */
+	/** Boss-only cleanup stays at double pace once no human contestant can still act. */
 	get pacingMultiplier(): number {
 		if (!this.inEncounter) return 1;
+		if (this.bossOnlyPacingEngaged) return 2;
 		const active = this.contestants.filter(({ monster }) => !monster.dead && !monster.fled);
 		const activeHumans = active.some(contestant => !contestant.isBoss);
 		const activeBosses = active.filter(contestant => contestant.isBoss).length;
-		return !activeHumans && activeBosses >= 2 ? 2 : 1;
+		this.bossOnlyPacingEngaged = !activeHumans && activeBosses >= 2;
+		return this.bossOnlyPacingEngaged ? 2 : 1;
 	}
 
 	private paced(ms: number): number {
@@ -938,7 +945,7 @@ export class Ring extends BaseClass {
 
 						if (fightContinues(getAllActiveContestants())) {
 							if (delaysAreSkipped()) {
-								return subEventDelay().then(() => next());
+								return subEventDelay(this.pacingMultiplier).then(() => next());
 							}
 							// Pace card-to-card transitions with the configured very-short
 							// delay so live feeds can be followed; sub-events within a card
@@ -969,7 +976,7 @@ export class Ring extends BaseClass {
 						// Skip the failed card and continue the fight rather than crashing
 						if (fightContinues(getAllActiveContestants())) {
 							if (delaysAreSkipped()) {
-								return subEventDelay().then(() => next());
+								return subEventDelay(this.pacingMultiplier).then(() => next());
 							}
 							return new Promise<void>(r =>
 								setTimeout(r, remainingGapMs(this.paced(veryShortDelay(round))))

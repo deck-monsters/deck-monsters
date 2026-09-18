@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { RoomEventBus } from '@deck-monsters/engine';
-import { attachFightStatsSubscriber } from './fight-stats-subscriber.js';
+import { attachFightStatsSubscriber, reconcilePlayerCoinStats } from './fight-stats-subscriber.js';
 
 const ROOM_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
 const PLAYER_ONE = '11111111-2222-3333-4444-555555555555';
@@ -17,12 +17,13 @@ type InsertedRow = Record<string, unknown>;
  */
 function makeDb() {
 	const inserted: { table: string; row: InsertedRow }[] = [];
+	const conflictUpdates: unknown[] = [];
 
 	const insertInto = () => ({
 		values(row: InsertedRow) {
 			const table = row.monsterId ? 'room_monster_stats' : 'room_player_stats';
 			const chain = {
-				onConflictDoUpdate: async () => {
+				onConflictDoUpdate: async (options?: unknown) => {
 					// Mirror Postgres: a uuid column rejects the boss sentinel.
 					for (const value of [row.userId, row.ownerUserId]) {
 						if (typeof value === 'string' && !value.includes('-')) {
@@ -30,6 +31,7 @@ function makeDb() {
 						}
 					}
 					inserted.push({ table, row });
+					conflictUpdates.push(options);
 				},
 				then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
 					return chain.onConflictDoUpdate().then(resolve, reject);
@@ -45,7 +47,7 @@ function makeDb() {
 		insert: () => insertInto(),
 	};
 
-	return { db, inserted };
+	return { db, inserted, conflictUpdates };
 }
 
 const participant = (ownerUserId: string, monsterId: string) => ({
@@ -66,6 +68,24 @@ const settle = async (): Promise<void> => {
 };
 
 describe('fight-stats-subscriber.ts', () => {
+	it('repairs zero coin projections from current balances without accepting invalid owners', async () => {
+		const { db, inserted, conflictUpdates } = makeDb();
+
+		await reconcilePlayerCoinStats(db as never, ROOM_ID, {
+			[PLAYER_ONE]: { coins: 19.8 },
+			boss: { coins: 500 },
+			[PLAYER_TWO]: { coins: 0 },
+		});
+
+		expect(inserted).to.have.length(1);
+		expect(inserted[0]?.row).to.include({
+			roomId: ROOM_ID,
+			userId: PLAYER_ONE,
+			coinsEarned: 19,
+		});
+		expect(conflictUpdates).to.have.length(1);
+	});
+
 	it('records every player when a boss is the first participant', async () => {
 		// Regression: participants were written in a sequential `for … await` loop with no
 		// per-row isolation, so the boss sentinel ('boss', not a uuid) threw on the
