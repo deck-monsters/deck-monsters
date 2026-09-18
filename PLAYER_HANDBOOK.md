@@ -84,6 +84,14 @@ The merchant changes every 6 hours, so prices and stock rotate. Each room has it
 
 The web Workshop shows live room stock, your balance, affordability, owned counts, rare back-room goods and direct purchase buttons. Selling still uses the guided console flow.
 
+── Your Character ───────────────────
+
+Your character name and icon are separate from your account profile and belong to the current room. To change either one, enter this in the room Console or in Discord:
+
+   edit my character
+
+Choose Name or Icon/color, enter the new value, and confirm the change. This edits your person — the owner named in ring announcements — rather than one of your monsters.
+
 ── All Commands ─────────────────────
 
 Deck Monsters — Commands
