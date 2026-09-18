@@ -24,6 +24,8 @@ describe('./items/store/shop.ts', () => {
 			expect(shop.backRoomOffset).to.be.below(10);
 			expect(shop.items.length).to.be.above(4);
 			expect(shop.items.length).to.be.below(21);
+			expect(shop.cards.length).to.be.above(0);
+			expect(shop.cards.length).to.be.below(11);
 			expect(shop.pronouns).to.be.an('object');
 			expect(shop.closingTime).to.be.instanceOf(Date);
 			expect(shop.closingTime.getTime()).to.be.above(Date.now());

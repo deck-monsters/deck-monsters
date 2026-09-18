@@ -15,6 +15,7 @@ import {
 	COINS_PER_DEFEAT,
 	COINS_PER_DAILY_FIGHT,
 } from './constants/coins.js';
+import { earlyCoinBonus } from './constants/progression.js';
 import Basilisk from './monsters/basilisk.js';
 import Beastmaster from './characters/beastmaster.js';
 
@@ -200,7 +201,13 @@ describe('game.ts', () => {
 			monster.emit('win', { contestant });
 
 			expect(character.xp).to.equal(xpBefore + XP_PER_VICTORY);
-			expect(character.coins).to.equal(coinsBefore + COINS_PER_VICTORY + COINS_PER_DAILY_FIGHT);
+			// This test emits 'win' directly on the monster, bypassing Ring.handleWinner's
+			// character.addWin(), so `battles.total` never moves off 0 here — the new
+			// early-game coin bonus (constants/progression.ts) is earlyCoinBonus(0) on
+			// every emit in this file, not tapering the way it would in real play.
+			expect(character.coins).to.equal(
+				coinsBefore + COINS_PER_VICTORY + COINS_PER_DAILY_FIGHT + earlyCoinBonus(0)
+			);
 			expect(character.deck.length).to.equal(deckLengthBefore + 1);
 		} finally {
 			roomA.dispose();
@@ -231,7 +238,9 @@ describe('game.ts', () => {
 			monster.emit('permaDeath', { contestant });
 
 			expect(character.xp).to.equal(xpBefore + XP_PER_DEFEAT * 2);
-			expect(character.coins).to.equal(coinsBefore + COINS_PER_DEFEAT * 2 + COINS_PER_DAILY_FIGHT);
+			expect(character.coins).to.equal(
+				coinsBefore + COINS_PER_DEFEAT * 2 + COINS_PER_DAILY_FIGHT + earlyCoinBonus(0)
+			);
 		} finally {
 			roomA.dispose();
 			roomB.dispose();
@@ -261,6 +270,21 @@ describe('game.ts', () => {
 			};
 			game.ring.contestants = [contestant, opponent] as any;
 
+			// This test emits 'draw' directly on the monster, bypassing Ring.handleDraw's
+			// character.addDraw(), so `battles.total` stays 0 for all three emits —
+			// earlyCoinBonus(0) applies identically each time (see constants/progression.ts).
+			const bonus = earlyCoinBonus(0);
+
+			monster.emit('draw', { contestant });
+			expect(character.coins).to.equal(COINS_PER_DEFEAT + COINS_PER_DAILY_FIGHT + bonus);
+			expect(character.xp).to.equal(XP_PER_DEFEAT);
+
+			monster.emit('draw', { contestant });
+			expect(character.coins).to.equal((COINS_PER_DEFEAT * 2) + COINS_PER_DAILY_FIGHT + (bonus * 2));
+
+			clock.tick(2 * 60 * 1000);
+			monster.emit('draw', { contestant });
+			expect(character.coins).to.equal((COINS_PER_DEFEAT * 3) + (COINS_PER_DAILY_FIGHT * 2) + (bonus * 3));
 			game.ring.fightConcludes({ lastContestant: undefined, rounds: 10 });
 			expect(character.coins).to.equal(COINS_PER_DEFEAT + COINS_PER_DAILY_FIGHT);
 			expect(character.xp).to.equal(XP_PER_DEFEAT);

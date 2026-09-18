@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import AppShell from '../components/AppShell.js';
 import WorkshopPanel from '../components/WorkshopPanel.js';
+import { RingFeedProvider } from '../hooks/useRingFeed.js';
 import { trpc } from '../lib/trpc.js';
 
 export type { SelectionState } from '../components/WorkshopPanel.js';
@@ -24,9 +25,15 @@ export default function WorkshopView() {
     { enabled: !!roomId },
   );
 
+  // `WorkshopPanel` optionally listens for `ring.xp` events to keep the wallet and
+  // inventory live rather than up-to-30s stale (see the comment in WorkshopPanel.tsx).
+  // Inside `Terminal` that subscription comes from the shared per-room `RingFeedProvider`;
+  // this standalone route needs its own, since it never mounts `Terminal`.
+  const content = <WorkshopPanel roomId={roomId} />;
+
   return (
     <AppShell roomName={room?.name} roomId={roomId}>
-      <WorkshopPanel roomId={roomId} />
+      {roomId ? <RingFeedProvider roomId={roomId}>{content}</RingFeedProvider> : content}
     </AppShell>
   );
 }

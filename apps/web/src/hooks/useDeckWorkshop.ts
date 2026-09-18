@@ -6,6 +6,11 @@ type WorkshopMonster = {
   name: string;
   type: string;
   level: number;
+  // Progress toward the next level, for the Workshop's level meter — see
+  // docs/roadmap/11-balance-and-mechanics.md "Early progression front-loading" and
+  // MonsterWorkshopPanel.tsx.
+  xpIntoLevel: number;
+  xpNeededForLevel: number;
   dead: boolean;
   inRing: boolean;
   inEncounter: boolean;
@@ -213,7 +218,7 @@ export function useDeckWorkshop(roomId?: string) {
       return useItemMutation.mutateAsync({ roomId, ...input });
     },
     buyShopItem: (input: {
-      section: 'items' | 'backRoom';
+      section: 'items' | 'backRoom' | 'cards';
       stockIndex: number;
       expectedItemType: string;
       expectedClosingTime: string;

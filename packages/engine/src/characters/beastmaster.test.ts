@@ -291,4 +291,42 @@ describe('characters/beastmaster', () => {
 		expect(loadResult.skippedCards).to.deep.equal(['hit']);
 		expect(monster.cards.map(c => c.cardType)).to.deep.equal(['Hit', 'Hit', 'Hit', 'Hit']);
 	});
+
+	describe('chooseMonster', () => {
+		it('resolves a numeric index answer, the shape the web client sends', async () => {
+			const beastmaster = new Beastmaster();
+			const monsters = [makeMonster('Stonefang'), makeMonster('Emberclaw')] as any;
+			channelStub.resolves('1');
+
+			const chosen = await beastmaster.chooseMonster({ channel: channelStub, monsters });
+
+			expect(chosen.givenName).to.equal('Emberclaw');
+		});
+
+		it('resolves a label answer, the shape the Discord connector sends', async () => {
+			const beastmaster = new Beastmaster();
+			const monsters = [makeMonster('Stonefang'), makeMonster('Emberclaw')] as any;
+			channelStub.resolves('Emberclaw');
+
+			const chosen = await beastmaster.chooseMonster({ channel: channelStub, monsters });
+
+			expect(chosen.givenName).to.equal('Emberclaw');
+		});
+
+		it('rejects an unrecognised monster answer instead of picking undefined', async () => {
+			const beastmaster = new Beastmaster();
+			const monsters = [makeMonster('Stonefang'), makeMonster('Emberclaw')] as any;
+			channelStub.resolves('Not A Monster');
+
+			let error: unknown;
+			try {
+				await beastmaster.chooseMonster({ channel: channelStub, monsters });
+			} catch (caught) {
+				error = caught;
+			}
+
+			expect(error).to.be.instanceOf(Error);
+			expect((error as Error).message).to.include('Not A Monster');
+		});
+	});
 });

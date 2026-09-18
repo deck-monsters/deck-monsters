@@ -11,6 +11,7 @@ import {
 	PROMPT_CANCELLED,
 	PromptCancelledError,
 	allMonsters,
+	getXpCapForLevel,
 	isCommandRefusal,
 	purchaseShopItem,
 	type ShopItemSection,
@@ -52,6 +53,12 @@ type InventoryMonsterSummary = {
 	name: string;
 	type: string;
 	level: number;
+	// XP progress toward the next level, for the Workshop's level meter (see
+	// docs/roadmap/11-balance-and-mechanics.md "Early progression front-loading").
+	// `xpIntoLevel`/`xpNeededForLevel` (rather than raw cumulative xp) so the client can
+	// draw a 0-100% bar without re-implementing the engine's level curve.
+	xpIntoLevel: number;
+	xpNeededForLevel: number;
 	dead: boolean;
 	inRing: boolean;
 	inEncounter: boolean;
@@ -139,16 +146,27 @@ type SummarizableShop = {
 	backRoomOffset: number;
 	items: unknown[];
 	backRoom: unknown[];
+	cards: unknown[];
 };
 
 const summarizeShop = (
 	game: { shop: SummarizableShop },
-	character: { items?: unknown[]; coins?: number },
+	character: { items?: unknown[]; deck?: unknown[]; coins?: number },
 ) => {
 	const shop = game.shop;
 	const ownedItems = Array.isArray(character?.items) ? character.items : [];
+	const ownedCards = Array.isArray(character?.deck) ? character.deck : [];
 	const coins = typeof character?.coins === 'number' ? character.coins : 0;
-	const summarizeStock = (section: ShopItemSection, stock: unknown[], offset: number): ShopItemSummary[] =>
+	// `ownershipPool` lets cards count against the character's deck rather than their
+	// pocket items — the two inventories are otherwise unrelated, and counting a card
+	// against `character.items` would always read as "own 0" even when the player is
+	// carrying several.
+	const summarizeStock = (
+		section: ShopItemSection,
+		stock: unknown[],
+		offset: number,
+		ownershipPool: unknown[],
+	): ShopItemSummary[] =>
 		stock.map((item, stockIndex) => {
 			const record = (item ?? {}) as Record<string, unknown>;
 			const displayName = getDisplayName(item);
@@ -161,17 +179,24 @@ const summarizeShop = (
 				stats: typeof record.stats === 'string' ? record.stats : '',
 				price,
 				affordable: price <= coins,
-				ownedCount: ownedItems.filter((owned: unknown) => getDisplayName(owned) === displayName).length,
+				ownedCount: ownershipPool.filter((owned: unknown) => getDisplayName(owned) === displayName).length,
 			};
 		});
+
+	// Cards price at the same offset as standard items (`priceOffset * 2`) — see
+	// `items/store/buy.ts`'s console flow, which uses that identical multiplier whether
+	// the player picked "Items" or "Cards" from the shop menu. Only the back room has its
+	// own steeper offset.
+	const itemsAndCardsOffset = shop.priceOffset * 2;
 
 	return {
 		name: String(shop.name),
 		adjective: String(shop.adjective),
 		closingTime: new Date(shop.closingTime).toISOString(),
 		coins,
-		items: summarizeStock('items', shop.items, shop.priceOffset * 2),
-		backRoom: summarizeStock('backRoom', shop.backRoom, shop.backRoomOffset),
+		items: summarizeStock('items', shop.items, itemsAndCardsOffset, ownedItems),
+		cards: summarizeStock('cards', Array.isArray(shop.cards) ? shop.cards : [], itemsAndCardsOffset, ownedCards),
+		backRoom: summarizeStock('backRoom', shop.backRoom, shop.backRoomOffset, ownedItems),
 	};
 };
 
@@ -267,6 +292,17 @@ const summarizeInventory = ({
 			const name = typeof record.givenName === 'string' ? record.givenName.trim() : '';
 			if (!name) return null;
 
+			const level =
+				typeof record.level === 'number' && Number.isFinite(record.level) ? record.level : 0;
+			const xp = typeof record.xp === 'number' && Number.isFinite(record.xp) ? record.xp : 0;
+			// `getXpCapForLevel(N)` is the highest xp that still maps to level N (see
+			// ring/index.ts) — the floor of the current level's bracket is one past the
+			// previous level's cap, and the bracket's size is what the meter fills toward.
+			const levelFloor = level > 0 ? getXpCapForLevel(level - 1) + 1 : 0;
+			const levelCap = getXpCapForLevel(level);
+			const xpIntoLevel = Math.max(0, xp - levelFloor);
+			const xpNeededForLevel = Math.max(1, levelCap - levelFloor + 1);
+
 			return {
 				monster,
 				summary: {
@@ -275,10 +311,9 @@ const summarizeInventory = ({
 						typeof record.creatureType === 'string'
 							? record.creatureType
 							: 'Unknown',
-					level:
-						typeof record.level === 'number' && Number.isFinite(record.level)
-							? record.level
-							: 0,
+					level,
+					xpIntoLevel,
+					xpNeededForLevel,
 					dead: Boolean(record.dead),
 					inRing: inRing.has(monster),
 					inEncounter: Boolean(record.inEncounter),
@@ -1031,7 +1066,7 @@ export function createRouter(roomManager: RoomManager) {
 		buyShopItem: protectedProcedure
 			.input(z.object({
 				roomId: z.string().uuid(),
-				section: z.enum(['items', 'backRoom']),
+				section: z.enum(['items', 'backRoom', 'cards']),
 				stockIndex: z.number().int().min(0),
 				expectedItemType: z.string().min(1),
 				expectedClosingTime: z.string().datetime(),
@@ -1040,7 +1075,12 @@ export function createRouter(roomManager: RoomManager) {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const game = await roomManager.getGame(input.roomId);
 				const character = game.characters?.[ctx.userId];
-				if (!character || typeof character.addItem !== 'function') {
+				// Cards land on the deck via `addCard`, items via `addItem` — see
+				// `purchaseShopItem`. Require whichever one this purchase will actually call
+				// so a malformed/legacy character object fails fast with NOT_FOUND rather than
+				// throwing deep inside the serialized mutation.
+				const requiredMethod = input.section === 'cards' ? 'addCard' : 'addItem';
+				if (!character || typeof character[requiredMethod] !== 'function') {
 					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
 				}
 

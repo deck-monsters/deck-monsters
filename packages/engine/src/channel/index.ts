@@ -2,6 +2,21 @@ import { BaseClass } from '../shared/baseClass.js';
 import { pauseHelpers } from '../helpers/pause.js';
 import { delay, mapSeries } from '../helpers/promise.js';
 
+/**
+ * Prompt/answer contract (see docs/prompt-answer-contract.md for the full write-up):
+ * when `question` is set together with `choices`, the connector must present each choice
+ * (in order — the engine renders them 0-based, "0) Foo", via `helpers/choices.ts#getChoices`)
+ * and resolve the returned promise with the user's answer.
+ *
+ * The answer may be EITHER the 0-based index as a string (what the web client sends) OR the
+ * choice's label text, case-insensitively (what the Discord connector sends — its buttons
+ * carry the label as `customId` and resolve with that verbatim). Engine code that dispatches
+ * on a `choices` answer must decode it with `resolveChoiceIndex` (helpers/choices.ts) or
+ * equivalent label-or-index matching, never a bare `Number(answer) === N` comparison — that
+ * only recognizes one connector's answer shape and silently mis-routes (or breaks) the other.
+ * `items/store/buy.ts`/`sell.ts` hand-wrote a 1-based menu with exactly that bug; see
+ * docs/roadmap/10b-bugs-fixed.md #143 for what it looked like in production.
+ */
 export type ChannelCallback = (opts: {
 	announce: string;
 	question?: string;

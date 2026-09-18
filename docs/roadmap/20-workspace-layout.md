@@ -189,6 +189,15 @@ width is now a function of the divider position, not the window.
 **Phase 1 — extract, no behaviour change.** `WorkshopPanel` component; `WorkshopView`
 becomes a thin wrapper. Existing workshop tests must pass untouched. Ship this alone.
 
+**Later addition (10b-bugs-fixed.md #145).** `WorkshopPanel` optionally reads
+`RingFeedContext` (via `useContext`, not the throwing `useRingFeedListener`) to refresh the
+wallet/inventory the instant a `ring.xp` event arrives, instead of waiting on its 30s poll.
+Inside a `Terminal` pane that context already exists (every pane sits inside the shared
+`RingFeedProvider`); the standalone `WorkshopView` route did not have one, so it now wraps
+its content in its own `RingFeedProvider`, matching the pane's behaviour. Missing context —
+e.g. a future caller that renders `WorkshopPanel` with neither wrapper — degrades to "no
+live feed", not an error, so this stays optional rather than a hard dependency.
+
 **Phase 2 — the pane. Done.** `slots: [SurfaceId, SurfaceId]` state in `Terminal.tsx`,
 `PaneSelector` per slot, `Cmd/Ctrl+1/2/3`, the third tab, `dm:paneSlots` persistence.
 `components/surfaces.ts` holds the `SurfaceId` registry (§3.1a) the tab bar, both

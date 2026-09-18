@@ -45,9 +45,15 @@ Can reduce xp down to 40, then takes 4 from hp instead.`;
 
 		const player = new Gladiator({ name: 'player' });
 		const target = new Gladiator({ name: 'target' });
-		(target as any).xp = 100;
+		// 66 xp is level 2 and 46 xp (66 - the curse's 20) is level 1 under the
+		// front-loaded early-level curve (helpers/levels.ts / constants/progression.ts):
+		// the old curve's level1/level2 boundary was a round 100xp, which this test used
+		// to sit on either side of (100 -> 80). The boundary moved to 65xp, so the
+		// starting xp moved with it — this test's intent (crossing a level boundary
+		// should reduce modifiers) is unchanged, only the boundary's xp value is.
+		(target as any).xp = 66;
 
-		expect((target as any).xp).to.equal(100);
+		expect((target as any).xp).to.equal(66);
 
 		const startingStrMod = (target as any).strModifier;
 		const startingIntMod = (target as any).intModifier;
@@ -63,7 +69,7 @@ Can reduce xp down to 40, then takes 4 from hp instead.`;
 			expect(startingStrMod).to.be.above((target as any).strModifier);
 			expect(startingIntMod).to.be.above((target as any).intModifier);
 			expect(startingDexMod).to.be.above((target as any).dexModifier);
-			expect((target as any).xp).to.equal(80);
+			expect((target as any).xp).to.equal(46);
 		});
 	});
 });
