@@ -1,6 +1,6 @@
 export type ShopStockItem = {
   stockIndex: number;
-  section: 'items' | 'backRoom';
+  section: 'items' | 'backRoom' | 'cards';
   displayName: string;
   description: string;
   stats: string;
@@ -15,6 +15,7 @@ export type ShopSummary = {
   closingTime: string;
   coins: number;
   items: ShopStockItem[];
+  cards: ShopStockItem[];
   backRoom: ShopStockItem[];
 };
 
@@ -53,6 +54,8 @@ export default function ShopPanel({ shop, busy, onBuy }: ShopPanelProps) {
     </header>
     <h3>On the shelves</h3>
     <StockList items={shop.items} busy={busy} onBuy={onBuy} />
+    <h3>Cards for sale</h3>
+    <StockList items={shop.cards} busy={busy} onBuy={onBuy} />
     <details className="shop-back-room">
       <summary>Back room ({shop.backRoom.length})</summary>
       <p>Rare stock costs more and may not return soon.</p>

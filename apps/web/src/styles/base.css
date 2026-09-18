@@ -268,6 +268,18 @@ button {
   flex: 0 0 auto;
 }
 
+/* Header-level echo of `.shop-wallet` (ShopPanel) — same look, different reach: this one
+   stays visible while scrolling past the monster row and inventory, not just inside the
+   shop section. See docs/roadmap/19-player-agency-and-items.md and 10b-bugs-fixed.md.
+   Margined rather than gapped: `.workshop-header-actions` lays its children out with the
+   browser's default inline flow (it is not a flex container — see the `10-bug-fixes.md`
+   note added alongside this comment), so a `gap` on the parent would do nothing. */
+.workshop-wallet {
+  color: var(--color-accent);
+  white-space: nowrap;
+  margin-right: 0.5rem;
+}
+
 .workshop-header h1 {
   font-size: 1.2rem;
   color: var(--color-fg-bright);
@@ -413,6 +425,40 @@ button {
 
 .workshop-slot-meter-track > div {
   background: var(--color-accent);
+  height: 100%;
+}
+
+/*
+  XP-to-next-level meter (docs/roadmap/11-balance-and-mechanics.md). Same shape as
+  `.workshop-slot-meter` above — label beside the track rather than on the fill, for the
+  same contrast reason as #120 — but its own class so the two meters can never be
+  confused for each other and so this one can use `--color-success` instead of
+  `--color-accent`, keeping "cards equipped" and "xp progress" visually distinct on a
+  card that already shows both.
+*/
+.workshop-xp-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.workshop-xp-meter > span {
+  font-size: 0.62rem;
+  color: var(--color-fg-dim);
+  white-space: nowrap;
+}
+
+.workshop-xp-meter-track {
+  flex: 1;
+  min-width: 2rem;
+  height: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.workshop-xp-meter-track > div {
+  background: var(--color-success);
   height: 100%;
 }
 
