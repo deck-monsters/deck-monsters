@@ -2,7 +2,7 @@
 
 **Category**: Web UX / Information architecture
 **Priority**: High — the workshop being a separate route is a live friction point during fights
-**Status**: 🔧 Active — phases 1–3 and 5 code-complete; Phase 4 and visual validation remain
+**Status**: 🔧 Active — phases 1–5 code-complete; final cross-browser/device visual validation remains
 
 ## 1. The problem
 
@@ -222,10 +222,11 @@ host-owned header actions, the duplicate slot header is gone, and the Workshop r
 its own container with compact, pane and roomy presentations. Automated coverage is green;
 the 1440px, ~700px, 393px and 200%-zoom manual checks in 3D still require sign-off.
 
-**Phase 4 — finish the monster-management hub. In progress** (roadmap 19 §6). Item use now
-ships in both Workshop and Ring, and the room-scoped shop supports browse/buy. Typed revive
-and send-to-ring actions also ship. Prompt-free spawn, web selling and final parity remain.
-Detailed as work packages 4A–4D in §5c.
+**Phase 4 — finish the monster-management hub. Code-complete** (roadmap 19 §6). Item use
+ships in both Workshop and Ring; the room-scoped shop supports browse/buy; and typed spawn,
+revive and send-to-ring actions complete the command-free lifecycle. The spawn form reads
+its type/gender catalog from the server rather than duplicating engine choices. Web selling
+remains optional parity, not an exit requirement. Detailed as work packages 4A–4D in §5c.
 
 **Phase 5 — more surfaces. Code-complete.** `FightLogPanel` and `LeaderboardPanel` were extracted from their
 existing views by the Phase 1 pattern, made container-responsive, and added to the registry.
@@ -452,17 +453,26 @@ harness because none changes combat balance.
 |---|---|---|
 | Phase 3 header/responsive contract | Code-complete | Capture the 3D width and 200%-zoom evidence before visual sign-off. Post-"code-complete" this pass still found #113 (zero-monster workshop collapsing to a 6px strip) and #116 (the workshop crushing its own monster row instead of scrolling, at phone width) — both exactly what the pending visual sign-off exists to catch, and both invisible to the unit tests. |
 | Phase 4A item use | ✅ Done | Prompt-free engine-backed use is available from the Workshop and the fighting monster's carried items appear in the Ring pane. |
-| Phase 4B lifecycle | Partial | Revive and confirmed send-to-ring shipped; prompt-free spawn remains. "Shipped" did not mean "worked": #115 found send-to-ring confirming and then failing whenever any other owned monster was already in the ring, because the button checked only the monster being sent. |
+| Phase 4B lifecycle | ✅ Done | Prompt-free spawn, revive and confirmed send-to-ring have shipped. #115's send-to-ring eligibility regression is covered too. |
 | Phase 4C shop | ✅ Browse/buy shipped | Room-scoped read/buy APIs and the Workshop shop are complete; web selling remains optional parity work. |
-| Phase 4D parity | Not started | Command reference, command-free journey, and final responsive/a11y pass depend on 4A–4C. |
+| Phase 4D parity | ✅ Done | Existing console commands remain in the shared command reference; success/error live regions and pending-state guards ship; hook/component tests exercise the command-free spawn → prepare → revive/send → use → buy journey. |
 | Phase 5 panels | Code-complete | Pair manual full-page/pane/phone verification with the Phase 3 visual pass. The same gap produced #114 (the leaderboard's "scrollable" region had the `role`, `tabIndex` and aria-label but no CSS) and #119 (fight log and leaderboard rendering a bare frame with no rows and no empty state). |
 
 The post-implementation reviews found and fixed four issues: stale lazy surfaces briefly
 querying a newly selected room; incomplete tab/tabpanel semantics; panel container rules
 that did not reliably apply on full-page routes; and leaderboard overflow moving the whole
 surface instead of a labelled, focusable table region. Regression coverage now protects
-the room transition, accessibility relationship and panel structure. Item use, spawn, shop
-and the command-free acceptance journey remain functional gaps, so this roadmap stays Active.
+the room transition, accessibility relationship, panel structure, authoritative spawn
+catalog and command-free lifecycle. Phase 4 is closed. This roadmap stays Active only for
+the manual cross-browser/device visual evidence described above.
+
+**September 17 closeout verification:** monorepo build, full tests, web/server lint and the
+focused Terminal/Workshop suites pass. The agent environment had no browser binary and no
+injected app-auth environment, so it could not honestly capture the required authenticated
+1440px / ~700px / 393px / 200%-zoom screenshots. That evidence remains a named manual gate;
+it is not being silently treated as passed. Because the reported rendering defects came
+from iOS Safari, final sign-off must include a real iPhone/WebKit check rather than relying
+on a Chromium-only screenshot.
 
 ## 6. Test plan
 
@@ -497,6 +507,13 @@ and the command-free acceptance journey remain functional gaps, so this roadmap 
    reading a fight log properly; the pane is for glancing without leaving the feed. Since a
    surface is just a component, supporting both costs one thin route wrapper each — and it
    is why surfaces must be layout-agnostic.
+4. **Navigation reveals; expansion routes** (finalised September 17, #137). Tabs, pane
+   selectors, `Cmd/Ctrl+1–5` and in-app deep links reveal their surface inside the current
+   workspace. The explicitly labelled “Open … as a full page” control is the only in-app
+   action that leaves the workspace. A directly entered/bookmarked full-page URL still
+   opens the standalone route. On mobile, reveal selects the single visible slot rather
+   than silently changing navigation mode. Returning restores the persisted two-slot
+   configuration. `terminal-panes.test.tsx` guards the route boundary and slot persistence.
 
 
 ## 5g. The monster carousel and its position indicator

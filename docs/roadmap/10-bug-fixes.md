@@ -2,17 +2,17 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Active — three open items from the September 2026 live-play pass. The
+**Status**: Active — two open pacing items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
 post-merge passes (#112–#134). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
 archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134).
 
-## Active Items
+## Recently resolved
 
 Found during the September 2026 live-play review. None is player-blocking; each is
 recorded with a root cause so it can be picked up without re-deriving the analysis.
 
-### 1. `profiles.display_name` still defaults to the user's email (follow-up to #95)
+### 1. `profiles.display_name` still defaults to the user's email (follow-up to #95) — FIXED
 
 `handle_new_user` seeds `display_name` with
 `coalesce(display_name, full_name, new.email, '')`
@@ -33,12 +33,18 @@ a data migration against live auth rows and deserves its own change.
 Related: rows already written to `room_player_stats.display_name` keep their old value
 until the next fight updates them.
 
+**Fixed as #135.** New profiles receive a stable pseudonymous handle when metadata has no
+safe name, email-shaped OAuth metadata is rejected too, and an idempotent migration
+replaces existing email-shaped profile names. Read masking remains as defence in depth.
+
 **Correction (Sept 17 2026).** This section previously said those rows were "masked on read
 too, so this is cosmetic history rather than an active leak". That was **wrong**, and the
 claim is why the leak survived: `analytics-queries.ts` read `profiles.display_name` raw for
 all four leaderboards, and a live board was showing a full plus-addressed email to the whole
-room. Fixed as #112. The trigger migration below is still outstanding — masking on read is a
-guard, not a reason to keep storing addresses as display names.
+room. Fixed as #112. The trigger migration then closed the storage-side gap as #135;
+masking on read remains a guard against restored or manually edited legacy data.
+
+## Active Items
 
 ### 2. Some cards emit two roll blocks in the same tick
 
@@ -240,19 +246,23 @@ on a turn that is not its own, so it is the only one where the reader cannot inf
 from position in the feed. A card that resolves when played does not need to announce what it
 is — the card is already on screen.
 
-### I. Opening a surface in a pane vs. full screen is confusing and inconsistent
+### I. Opening a surface in a pane vs. full screen is confusing and inconsistent — DECIDED
 
-**Reported, and deliberately not being worked on yet** — the reporter wants to think about
-the shape first.
+**Resolved as a design decision (#137).** The implementation already had the right pieces;
+what was missing was one stated model and regression coverage tying them together.
 
-The current mechanism grew in pieces: a surface can be reached from a tab, from the pane
+The mechanism grew in pieces: a surface can be reached from a tab, from the pane
 selector, from a `Cmd/Ctrl+N` shortcut, from its own route, and from the per-pane "open full
 page" link — and which of those are available depends on whether the viewport is above or
 below the 1024px breakpoint. #126 added a sixth path (a deep link that asks for a surface to
-be revealed). Nothing ties them together into one model a player could state in a sentence.
+be revealed). Previously, nothing tied them together into one model a player could state
+in a sentence.
 
-Worth designing as a whole rather than patched further; see `20-workspace-layout.md`, whose
-§3 surfaces-in-slots model this would revisit. **Do not start without the owner's direction.**
+The rule is now: tabs, pane selectors, shortcuts and in-app deep links reveal a surface in
+the workspace; only the explicitly labelled "Open … as a full page" action leaves it.
+Entering a full-page URL directly still opens that standalone route. On mobile, reveal means
+selecting the one visible slot rather than changing navigation modes. Returning preserves
+the two persisted slots. See `20-workspace-layout.md` §3.2 and §7.
 
 ### F. Odd spacing in some messages — ONE INSTANCE FIXED (#130), rest open
 

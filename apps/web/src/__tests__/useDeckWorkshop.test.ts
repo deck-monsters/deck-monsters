@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => {
   const roomInfoUseQuery = vi.fn();
   const myInventoryUseQuery = vi.fn();
   const shopUseQuery = vi.fn();
+  const spawnOptionsUseQuery = vi.fn();
   const inventoryRefetch = vi.fn(async () => undefined);
   const shopRefetch = vi.fn(async () => undefined);
   const defaultMutation = vi.fn((options?: { onSuccess?: () => Promise<void> }) => ({
@@ -26,6 +27,7 @@ const mocks = vi.hoisted(() => {
     roomInfoUseQuery,
     myInventoryUseQuery,
     shopUseQuery,
+    spawnOptionsUseQuery,
     inventoryRefetch,
     shopRefetch,
     buyShopItemUseMutation: vi.fn(defaultMutation),
@@ -40,6 +42,7 @@ const mocks = vi.hoisted(() => {
     deletePresetUseMutation: vi.fn(defaultMutation),
     reorderCardsUseMutation: vi.fn(defaultMutation),
     reviveMonsterUseMutation: vi.fn(defaultMutation),
+    spawnMonsterUseMutation: vi.fn(defaultMutation),
     sendMonsterToRingUseMutation: vi.fn(defaultMutation),
     useItemUseMutation: vi.fn(defaultMutation),
   };
@@ -64,6 +67,7 @@ vi.mock('../lib/trpc.js', () => ({
         useQuery: mocks.myInventoryUseQuery,
       },
       shop: { useQuery: mocks.shopUseQuery },
+      spawnOptions: { useQuery: mocks.spawnOptionsUseQuery },
       buyShopItem: { useMutation: mocks.buyShopItemUseMutation },
       unequipCard: { useMutation: mocks.unequipCardUseMutation },
       unequipMany: { useMutation: mocks.unequipManyUseMutation },
@@ -76,6 +80,7 @@ vi.mock('../lib/trpc.js', () => ({
       deletePreset: { useMutation: mocks.deletePresetUseMutation },
       reorderCards: { useMutation: mocks.reorderCardsUseMutation },
       reviveMonster: { useMutation: mocks.reviveMonsterUseMutation },
+      spawnMonster: { useMutation: mocks.spawnMonsterUseMutation },
       sendMonsterToRing: { useMutation: mocks.sendMonsterToRingUseMutation },
       useItem: { useMutation: mocks.useItemUseMutation },
     },
@@ -103,6 +108,13 @@ describe('useDeckWorkshop', () => {
       isFetching: false,
       refetch: mocks.shopRefetch,
     });
+    mocks.spawnOptionsUseQuery.mockReturnValue({
+      data: {
+        types: [{ index: 0, label: 'Basilisk' }, { index: 2, label: 'Jinn' }],
+        genders: ['female', 'male', 'androgynous'],
+      },
+      isLoading: false,
+    });
   });
 
   it('invalidates inventory and monster queries after successful mutation', async () => {
@@ -117,6 +129,46 @@ describe('useDeckWorkshop', () => {
 
     expect(mocks.inventoryInvalidate).toHaveBeenCalledWith({ roomId: 'room-123' });
     expect(mocks.monstersInvalidate).toHaveBeenCalledWith({ roomId: 'room-123' });
+  });
+
+  it('exposes the complete command-free Workshop journey', async () => {
+    const { result } = renderHook(() => useDeckWorkshop('room-123'));
+
+    await act(async () => {
+      await result.current.spawnMonster({
+        type: 2,
+        gender: 'female',
+        name: 'Saffron',
+        color: 'violet smoke',
+      });
+      await result.current.equipCards({ monsterName: 'Saffron', cardNames: ['Hit'] });
+      await result.current.reviveMonster({ monsterName: 'Saffron' });
+      await result.current.sendMonsterToRing({ monsterName: 'Saffron' });
+      await result.current.useItem({ itemName: 'Healing Potion', monsterName: 'Saffron', itemSource: 'monster' });
+      await result.current.buyShopItem({
+        section: 'items',
+        stockIndex: 0,
+        expectedItemType: 'Healing Potion',
+        expectedClosingTime: '2026-09-18T00:00:00.000Z',
+      });
+    });
+
+    expect(mocks.spawnMonsterUseMutation.mock.results[0]?.value.mutateAsync).toHaveBeenCalledWith({
+      roomId: 'room-123', type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke',
+    });
+    expect(mocks.reviveMonsterUseMutation.mock.results[0]?.value.mutateAsync).toHaveBeenCalledWith({
+      roomId: 'room-123', monsterName: 'Saffron',
+    });
+    expect(mocks.sendMonsterToRingUseMutation.mock.results[0]?.value.mutateAsync).toHaveBeenCalledWith({
+      roomId: 'room-123', monsterName: 'Saffron',
+    });
+    expect(mocks.useItemUseMutation.mock.results[0]?.value.mutateAsync).toHaveBeenCalledWith({
+      roomId: 'room-123', itemName: 'Healing Potion', monsterName: 'Saffron', itemSource: 'monster',
+    });
+    expect(mocks.buyShopItemUseMutation.mock.results[0]?.value.mutateAsync).toHaveBeenCalledWith({
+      roomId: 'room-123', section: 'items', stockIndex: 0,
+      expectedItemType: 'Healing Potion', expectedClosingTime: '2026-09-18T00:00:00.000Z',
+    });
   });
 
   it('refreshes inventory and the rotating shop together', async () => {

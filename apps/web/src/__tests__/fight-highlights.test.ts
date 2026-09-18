@@ -27,15 +27,26 @@ describe('classifyHighlight (#110)', () => {
   it('catches a natural 20 with no flag set', () => {
     // A card can roll a 20 without Stroke of Luck being involved.
     expect(
-      classifyHighlight(ev({ payload: { roll: { naturalRoll: { result: 20 } } } }))?.kind
+      classifyHighlight(ev({ payload: { roll: { primaryDice: '1d20', naturalRoll: { result: 20 } } } }))?.kind
     ).toBe('nat20');
   });
 
   it('catches a critical failure both ways', () => {
     expect(classifyHighlight(ev({ payload: { roll: { curseOfLoki: true } } }))?.kind).toBe('critFail');
     expect(
-      classifyHighlight(ev({ payload: { roll: { naturalRoll: { result: 1 } } } }))?.kind
+      classifyHighlight(ev({ payload: { roll: { primaryDice: '1d20', naturalRoll: { result: 1 } } } }))?.kind
     ).toBe('critFail');
+  });
+
+  it('does not call the minimum result on a damage die a critical failure', () => {
+    expect(
+      classifyHighlight(ev({ payload: { roll: { primaryDice: '1d6', naturalRoll: { result: 1 } } } }))
+    ).toBe(null);
+  });
+
+  it('does not infer a critical result when the die is unknown', () => {
+    expect(classifyHighlight(ev({ payload: { roll: { naturalRoll: { result: 1 } } } }))).toBe(null);
+    expect(classifyHighlight(ev({ payload: { roll: { naturalRoll: { result: 20 } } } }))).toBe(null);
   });
 
   it('ignores an ordinary roll', () => {

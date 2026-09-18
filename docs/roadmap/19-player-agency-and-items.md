@@ -3,7 +3,7 @@
 **Category**: Design / Mechanics
 **Priority**: Medium — the items audit (§3) is actionable now; the rest needs the balance sim harness
 **Status**: 🔧 Active — item documentation, Workshop use, the live ring affordance and the
-room shop have shipped; the feedback loop, prompt-free spawn, web selling and the one
+room shop and prompt-free spawn have shipped; the feedback loop, web selling and the one
 prompt-driven item remain
 
 This doc exists because a research pass on what makes tabletop RPGs enjoyable was brought
@@ -200,14 +200,15 @@ Today the workshop is cards-only, and everything else is a typed command.
 
 1. **Items panel + a use affordance on the ring pane. Shipped.** The Workshop supports
    preparation and the Ring exposes only the fighting monster's carried, usable items.
-2. **Finish lifecycle actions: prompt-free spawn.** Revive and send-to-ring have shipped;
-   spawn still needs an authoritative non-interactive engine operation rather than replaying
-   the console prompt flow from React.
+2. **Finish lifecycle actions: prompt-free spawn. Shipped.** The Workshop collects the
+   complete monster details and sends one room-scoped mutation, which calls the engine
+   operation without replaying a console prompt flow from React.
 3. **Shop. Shipped for browse and buy.** The Workshop shows the room merchant, rotation,
    coins, ownership, affordability and back-room stock. Purchases revalidate an optimistic
    stock token inside the room mutation lane. Selling remains a guided console operation.
-4. **Command reference parity.** Every action the workshop gains should also be listed as
-   the command it maps to, so the console stays learnable rather than becoming legacy.
+4. **Command reference parity. Shipped.** Workshop actions retain their existing console
+   commands in the shared engine catalog, so the console remains learnable rather than
+   becoming a legacy surface.
 
 ---
 

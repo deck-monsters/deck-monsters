@@ -24,8 +24,6 @@ Covered by 7 new tests in `fight-summary-writer.test.ts` (happy path, UUID guard
 
 **Status**: Fixed.
 
----
-
 ### 16 & 17. Reconnect replay dropped across restarts / gap not signalled — FIXED
 
 Both bugs had the same root cause, and it was on the **server**, not the client. The web panes were already correct: each tracks the last received event id (skipping `handshake`/`heartbeat` frames) and re-subscribes with it as `lastEventId` on error, and both `system.gap` and DB-backed history queries were already handled in the UI.
@@ -2633,5 +2631,55 @@ unchanged; it also bypassed the recipient's item-slot check.
 slot trimming, announcement and transfer. Regression tests cover both the actual named
 transfer and a full recipient, so the documented three-slot stocking rule is enforced for
 the discoverable command as well as the prompt flow.
+
+**Status**: Fixed.
+
+---
+
+### 135. Profile rows persisted full email addresses as display names — FIXED
+
+The signup trigger stored `new.email` when identity metadata had no name. **Fixed**: it now
+generates a stable pseudonymous handle, rejects email-shaped OAuth metadata, and migrates
+existing email-shaped names. Read masking remains as defence in depth.
+
+**Status**: Fixed.
+
+---
+
+### 136. Minimum damage rolls were highlighted as critical failures — FIXED
+
+The console treated `naturalRoll.result === 1` as a critical failure without checking the
+die, so an ordinary 1 on 1d6 received a `CRIT FAIL` badge. Inferred natural-1/natural-20
+highlights now require `1d20`; explicit engine crit flags remain authoritative.
+
+**Status**: Fixed.
+
+---
+
+### 137. Pane navigation and full-page navigation had no stated model — DECIDED
+
+Six entry points had accumulated around workspace surfaces, making it unclear whether a
+tab, shortcut or deep link should replace a pane or leave the room workspace.
+
+**Decision**: ordinary in-app navigation reveals a surface in the workspace; only the
+explicit “Open … as a full page” action navigates away. Direct standalone URLs remain
+valid, mobile reveal selects its one visible slot, and returning restores persisted slots.
+The implementation already followed this model; regression coverage and the workspace
+design document now make it a contract rather than an accident.
+
+**Status**: Decided and documented.
+
+---
+
+### 138. Prompt-free spawn passed a gender enum to an index-only helper — FIXED
+
+The Workshop correctly submitted `female` / `male` / `androgynous`, but the engine spawn
+helper treated every gender answer as an array index. A fully specified web spawn therefore
+failed before constructing the monster even though the server mutation's mocked test passed.
+
+**Fixed**: the engine helper accepts either a known enum string (typed callers) or the
+existing numeric choice format (interactive channels), rejects unknown values clearly, and
+has direct helper tests for all three paths. This closes the gap between the mocked router
+test and the real engine call.
 
 **Status**: Fixed.

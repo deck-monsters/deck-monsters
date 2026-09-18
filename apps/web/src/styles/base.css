@@ -622,6 +622,19 @@ button {
   font-size: 0.8rem;
 }
 
+.workshop-spawn-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  align-items: end;
+  gap: 0.65rem;
+  border: 1px solid var(--color-border);
+  padding: 0.75rem;
+  background: var(--color-input-bg);
+}
+
+.workshop-spawn-form label { display: grid; gap: 0.25rem; color: var(--color-fg-dim); font-size: 0.75rem; }
+.workshop-spawn-form input, .workshop-spawn-form select { min-width: 0; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-fg); padding: 0.45rem; font: inherit; }
+
 /*
  * Items panel (roadmap/19-player-agency-and-items.md §7). Follows the card inventory's
  * existing visual language exactly: tier !== 1 gets the same treatment as
