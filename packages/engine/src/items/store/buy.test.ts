@@ -3,6 +3,8 @@ import sinon from 'sinon';
 
 import buyItems from './buy.js';
 import type { Shop, ShopHost } from './shop.js';
+import { chooseCards } from '../../cards/helpers/choose.js';
+import { getCards } from './stock.js';
 
 const defaultShop: Shop = {
 	adjective: 'rusty',
@@ -252,6 +254,43 @@ describe('./items/store/buy.ts', () => {
 		return buyItems({ character, channel: channelStub, host: makeHost(shop) }).catch(() => {
 			expect(channelStub.calledWith(sinon.match({ announce: sinon.match("don't have any items") }))).to.equal(true);
 		});
+	});
+
+	// End-to-end regression for the "shop cards are always empty" bug
+	// (docs/roadmap/10b-bugs-fixed.md #5): with real stock from `getCards()` and the real
+	// `chooseCards` wired through (as `characters/base.ts` now does), the Cards branch
+	// must actually reach a card purchase instead of dead-ending on "We don't have any
+	// cards here." or "Cards are not available."
+	it('buys a real card from real shop stock end-to-end instead of dead-ending', async () => {
+		const cards = getCards();
+		expect(cards.length).to.be.above(0);
+
+		const wantedCard = cards[0];
+		const shop: Shop = { ...defaultShop, cards };
+		const host = makeHost(shop);
+
+		const character = {
+			givenName: 'Character',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 100000,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		channelStub.resolves();
+		channelStub.onCall(0).resolves('1'); // "Cards" menu entry
+		channelStub.onCall(1).resolves(wantedCard.cardType); // choose it by name
+		channelStub.onCall(3).resolves('yes'); // confirm purchase
+
+		await buyItems({ character, channel: channelStub, host, chooseCards: chooseCards as any });
+
+		expect(channelStub.calledWith(sinon.match({ announce: sinon.match("don't have any cards") }))).to.equal(false);
+		expect(channelStub.calledWith(sinon.match({ announce: sinon.match('not available') }))).to.equal(false);
+		expect(character.addCard.calledOnce).to.equal(true);
+		expect(character.addCard.firstCall.args[0].cardType).to.equal(wantedCard.cardType);
+		expect(host.commitShop.calledOnce).to.equal(true);
 	});
 
 	it('rejects an unrecognised answer explicitly instead of silently picking a branch', () => {

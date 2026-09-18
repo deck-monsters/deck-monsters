@@ -4,8 +4,11 @@
 **Priority**: Medium
 **Status**: Active — two open pacing items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#134). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134).
+post-merge passes (#112–#134), the shop-menu off-by-one from the prompt-answer-contract
+audit is fixed (#143), item #4 from that same audit — the remaining pure-index prompt
+sites, unproven over Discord — is fixed (#146), and item #5, the shop's always-empty card
+stock, is fixed (#147). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive
+(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147).
 
 ## Recently resolved
 
@@ -71,7 +74,49 @@ The first three messages of a fight (fight banner, separator, first turn banner)
 in the same tick before any pacing applies. Minor, and far less visible since #97 cut the
 turn banner down, but it is the one place the feed still starts as a wall.
 
+### 4. Several prompt sites resolve `answer` as a pure index — unproven over Discord — FIXED
 
+Found while auditing every `channel({ question, choices })` call site for the shop-menu
+off-by-one (#143, `10b-bugs-fixed.md`). `monsters/helpers/spawn.ts#askForCreatureType`,
+`characters/helpers/create.ts#askForCreatureType`/`askForAvatar`,
+`creatures/edit.ts#edit`/`editSelf`, `characters/beastmaster.ts#chooseMonster`, and
+`items/scrolls/sorting-hat.ts` all resolved a choice prompt's answer as `array[Number(answer)]`
+— internally consistent with the engine's 0-based `getChoices` convention (so they did *not*
+reproduce #143's off-by-one), but they assumed the answer was always a numeric index, and the
+Discord connector never sends one (`packages/connector-discord/src/prompt-handler.ts` resolves
+with the button's label `customId`, verbatim).
+
+**Fixed as #146.** Every site now resolves through `resolveChoiceIndex` (`helpers/choices.ts`)
+with an explicit `announceAndThrow` on `-1`, `spawn.ts#askForGender`'s hand-rolled label-or-index
+handling now delegates to the same helper, and a second bug found in the same pass —
+`creatures/edit.ts#editSelf` writing its rename to the wrong option key (`givenName` instead
+of `name`), so renames never actually took effect — is fixed alongside it. See
+`10b-bugs-fixed.md` (#146) for the full root-cause writeup and `docs/prompt-answer-contract.md`
+for the protocol these sites now follow.
+
+### 5. `items/store/stock.ts#getCards` always returns an empty stock list — FIXED
+
+**Fixed as #147.** The claim that this needed an async cards module because of an import
+cycle was checked, not inherited, and turned out to be false — see
+`10b-bugs-fixed.md` #147 for the dependency audit and the fix. `getCards()` now draws real
+stock synchronously, the back room stocks rare cards too, and the console buy/sell flows'
+Cards branch is wired to it end-to-end.
+
+### 6. `.workshop-header-actions` is never `display: flex`, so its mobile rule is dead
+
+Found while adding the header wallet (#145, `10b-bugs-fixed.md`). The
+`@container workshop (max-width: 520px)` rule sets `.workshop-header-actions {
+justify-content: space-between; flex-wrap: wrap; }`, but the class has no `display: flex`
+at any width (`apps/web/src/styles/base.css`) — those two properties have been a no-op
+since they were written. The header's buttons wrap via the browser's default inline flow
+instead, which looks close enough to the intended layout that nobody reported it, but it is
+real dead CSS, not intentional.
+
+**Not fixed here** — turning the container into an actual flex row is a layout change to a
+header shared by every Workshop screen (route and pane), and `docs/roadmap/
+20-workspace-layout.md` already flags this exact header as one of the workshop's more
+mobile-regression-prone surfaces. Worth doing with an explicit before/after check at ~390px
+rather than as a side effect of an unrelated change.
 
 ## Investigated — not bugs (left for the record)
 
