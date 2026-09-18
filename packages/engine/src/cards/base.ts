@@ -168,7 +168,7 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 
 		return Promise.resolve().then(async () => {
 			this.emit('played', { player });
-			await subEventDelay();
+			await subEventDelay(ring?.pacingMultiplier);
 
 			const targets = this.getTargets(
 				player,

@@ -108,6 +108,9 @@ export function attachEventPersister(
 	};
 
 	const unsubscribe = eventBus.subscribe(subscriberId, {
+		// Persistence is a trusted room-internal observer. Private events still retain
+		// their scope and targetUserId in storage, where replay queries enforce access.
+		includePrivate: true,
 		deliver(event: GameEvent) {
 			if (EPHEMERAL_TYPES.has(event.type)) return;
 			if (isTraceEnabled) {

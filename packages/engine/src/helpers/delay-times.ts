@@ -190,9 +190,10 @@ export const subEventDelayMs = (): number => {
 	return Math.round(sampleInRange(min, max) * readingScale());
 };
 
-export const subEventDelay = (): Promise<void> => {
+export const subEventDelay = (speedMultiplier = 1): Promise<void> => {
 	if (skip()) return Promise.resolve();
-	return new Promise(r => setTimeout(r, subEventDelayMs()));
+	const speed = Number.isFinite(speedMultiplier) && speedMultiplier > 0 ? speedMultiplier : 1;
+	return new Promise(r => setTimeout(r, Math.round(subEventDelayMs() / speed)));
 };
 
 /**

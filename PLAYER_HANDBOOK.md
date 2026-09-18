@@ -75,7 +75,7 @@ On the web, the Workshop shows valid targets and remaining uses. During your mon
 
 ── Coins and the Shop ───────────────
 
-Earn coins by winning (and even losing) battles. Spend them at the shop to expand your card pool and buy items.
+Every completed battle pays coins: 5 for a win and 2 for a loss, flee, or draw. Your first completed fight of each UTC day also pays a 5-coin participation bonus (a permanent death pays 4 before that bonus). The daily bonus is automatic — there is nothing to claim. Spend coins at the shop to expand your card pool and buy items.
 
 The merchant changes every 6 hours, so prices and stock rotate. Each room has its own merchant, so what's in stock next door has nothing to do with what's in stock here. Never sell to the shop for less than a card is worth — shop prices are always lower than face value, but some merchants are fairer than others.
 
@@ -83,6 +83,14 @@ The merchant changes every 6 hours, so prices and stock rotate. Each room has it
    sell to the shop       — sell cards or items
 
 The web Workshop shows live room stock, your balance, affordability, owned counts, rare back-room goods and direct purchase buttons. Selling still uses the guided console flow.
+
+── Your Character ───────────────────
+
+Your character name and icon are separate from your account profile and belong to the current room. To change either one, enter this in the room Console or in Discord:
+
+   edit my character
+
+Choose Name or Icon/color, enter the new value, and confirm the change. This edits your person — the owner named in ring announcements — rather than one of your monsters.
 
 ── All Commands ─────────────────────
 

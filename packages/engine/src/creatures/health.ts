@@ -4,6 +4,9 @@ import { TIME_TO_RESURRECT_MS } from '../constants/timing.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import type { BaseCreature, CardInstance, HitLogEntry } from './base.js';
 
+const encounterSpeed = (creature: BaseCreature): number =>
+	(creature.encounter?.ring as { pacingMultiplier?: number } | undefined)?.pacingMultiplier ?? 1;
+
 // Duck-type guard: real creatures have `emit`; the synthetic `{ identityWithHp: 'mysterious causes' }` object does not.
 function isRealCreature (assailant: unknown): assailant is BaseCreature {
 	return assailant !== undefined && assailant !== null &&
@@ -23,7 +26,7 @@ export async function hit (self: BaseCreature, damage = 0, assailant?: BaseCreat
 		self.emit('narration', {
 			narration: `${self.givenName} was braced for a hit, and was able to absorb ${damage} damage. ${capitalize(self.pronouns.his)} ac boost is now ${self.encounterModifiers.ac}.`
 		});
-		await subEventDelay();
+		await subEventDelay(encounterSpeed(self));
 	} else {
 		let adjustedDamage = damage;
 
@@ -32,7 +35,7 @@ export async function hit (self: BaseCreature, damage = 0, assailant?: BaseCreat
 			self.emit('narration', {
 				narration: `${self.givenName} was braced for a hit, and was able to absorb ${self.encounterModifiers.ac} damage. ${capitalize(self.pronouns.his)} ac boost is now 0.`
 			});
-			await subEventDelay();
+			await subEventDelay(encounterSpeed(self));
 			(self.encounterModifiers as Record<string, unknown>).ac = 0;
 		}
 
@@ -41,7 +44,7 @@ export async function hit (self: BaseCreature, damage = 0, assailant?: BaseCreat
 		self.hp = newHP;
 
 		self.emit('hit', { assailant, card, damage: adjustedDamage, newHP, prevHp: originalHP });
-		await subEventDelay();
+		await subEventDelay(encounterSpeed(self));
 
 		if (originalHP > 0 && self.hp <= 0) {
 			return self.die(assailant);
@@ -64,7 +67,7 @@ export async function heal (self: BaseCreature, amount = 0): Promise<boolean> {
 	}
 
 	self.emit('heal', { amount, hp, prevHp: originalHP });
-	await subEventDelay();
+	await subEventDelay(encounterSpeed(self));
 
 	if (hp <= 0) {
 		return self.die(self);
@@ -81,7 +84,7 @@ export async function die (self: BaseCreature, assailant?: BaseCreature): Promis
 			if (assailant !== (self as unknown as BaseCreature)) assailant.killed = self;
 			self.killedBy = assailant;
 			self.emit('die', { destroyed: self.destroyed, assailant });
-			await subEventDelay();
+			await subEventDelay(encounterSpeed(self));
 		}
 	}
 

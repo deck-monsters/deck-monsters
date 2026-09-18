@@ -2683,3 +2683,55 @@ has direct helper tests for all three paths. This closes the gap between the moc
 test and the real engine call.
 
 **Status**: Fixed.
+
+---
+
+### 139. Every leaderboard coin total stayed at zero — FIXED
+
+Coin balances in engine state were changing, but the leaderboard's `coins_earned`
+projection never saw those rewards. `ring.xp` reward events are private to the contestant;
+the room event bus correctly delivered private events only to a subscriber with the matching
+`userId`. The fight-stats subscriber has no player identity, so every reward skipped it and
+every stats row retained the database default of zero. The event persister had the same
+blind spot despite promising to persist every event, which also prevented a historical
+reconstruction from durable events.
+
+**Fixed**: the event bus now has an explicit `includePrivate` capability for trusted,
+room-internal observers. The fight-stats projection and event persister opt in; ordinary
+player/connector subscribers retain owner-only delivery. Tests prove that a private coin
+reward updates the projection and persistence while remaining invisible to another player.
+
+Existing zero totals cannot be reconstructed exactly: balances omit coins already spent,
+and the missing private events were never persisted. New rewards accumulate correctly from
+deployment onward; the first-fight bonus makes that recovery visible immediately.
+
+**Status**: Fixed.
+
+---
+
+### 140. A partially failed card could freeze the live health bars — FIXED
+
+The ring published `ring.state` after a card promise resolved, but not from its recovery
+path. A card that changed HP or AC and then threw still produced narration and the fight
+continued, while the persistent roster kept the snapshot from before that card. This made
+health bars appear stuck near the end of a fight even as subsequent text described newer
+damage and deaths.
+
+**Fixed**: the card-failure path now publishes the resulting board before logging and
+continuing, matching the success path. A regression card deals a finishing blow and then
+throws; the test requires a public snapshot with the victim at zero HP and defeated.
+
+**Status**: Fixed.
+
+---
+
+### 141. Boss-only cleanup kept full spectator pacing — FIXED
+
+Once all human contestants were out, a multi-boss fight could spend many more full reading
+pauses resolving a result no player could influence. The remaining encounter now runs at
+2× speed whenever at least two active bosses and no active humans remain. The multiplier is
+room-local and derived from live contestants, so simultaneous fights in other rooms retain
+their own pacing. It covers card/turn gaps, nested cards and combat sub-events, then returns
+to 1× when boss-only combat no longer applies.
+
+**Status**: Fixed.

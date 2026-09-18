@@ -7,6 +7,8 @@ type InsertCall = {
 	roomId: string;
 	type: string;
 	eventId: string | null;
+	scope?: string;
+	targetUserId?: string | null;
 };
 
 function deferred<T>() {
@@ -62,6 +64,29 @@ async function flushMacrotask(): Promise<void> {
 }
 
 describe('event persister', () => {
+	it('persists private events with their scope and owner intact', async () => {
+		const { db, inserted } = makeDb();
+		const eventBus = new RoomEventBus('room-1');
+		const detach = attachEventPersister(eventBus, db as never);
+
+		eventBus.publish({
+			type: 'ring.xp',
+			scope: 'private',
+			targetUserId: '11111111-2222-3333-4444-555555555555',
+			text: 'private reward',
+			payload: { coinsGained: 7 },
+		});
+
+		await settle(() => inserted.length === 1);
+		detach();
+
+		expect(inserted).to.have.length(1);
+		expect(inserted[0]).to.include({
+			scope: 'private',
+			targetUserId: '11111111-2222-3333-4444-555555555555',
+		});
+	});
+
 	it('writes events to DB in publish order even with async inserts', async () => {
 		const eventBus = new RoomEventBus('room-1');
 		const insertOrder: InsertCall[] = [];

@@ -45,6 +45,11 @@ export interface GameEvent {
 
 export interface EventSubscriber {
 	userId?: string;
+	/**
+	 * Trusted server-side observers may opt into every private event in the room.
+	 * Connectors and clients must use `userId` instead so private events cannot leak.
+	 */
+	includePrivate?: boolean;
 	deliver: (event: GameEvent) => void;
 }
 

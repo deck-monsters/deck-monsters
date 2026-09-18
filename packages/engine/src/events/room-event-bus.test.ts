@@ -3,6 +3,31 @@ import { PROMPT_CANCELLED, RoomEventBus } from './room-event-bus.js';
 
 const ROOM_ID = 'test-room';
 
+describe('RoomEventBus private delivery', () => {
+	it('delivers private events only to their owner and trusted internal observers', () => {
+		const bus = new RoomEventBus(ROOM_ID);
+		const owner: string[] = [];
+		const otherPlayer: string[] = [];
+		const internal: string[] = [];
+
+		bus.subscribe('owner', { userId: 'user-a', deliver: (event) => owner.push(event.text) });
+		bus.subscribe('other', { userId: 'user-b', deliver: (event) => otherPlayer.push(event.text) });
+		bus.subscribe('internal', { includePrivate: true, deliver: (event) => internal.push(event.text) });
+
+		bus.publish({
+			type: 'ring.xp',
+			scope: 'private',
+			targetUserId: 'user-a',
+			text: 'seven coins',
+			payload: { coinsGained: 7 },
+		});
+
+		expect(owner).to.deep.equal(['seven coins']);
+		expect(internal).to.deep.equal(['seven coins']);
+		expect(otherPlayer).to.deep.equal([]);
+	});
+});
+
 describe('RoomEventBus prompt ownership validation', () => {
 	it('respondToPrompt rejects PROMPT_CANCELLED and leaves the prompt pending', async () => {
 		const bus = new RoomEventBus(ROOM_ID);

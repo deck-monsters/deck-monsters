@@ -489,7 +489,18 @@ other as opponents.
 
 ---
 
-## 6. Observability
+## 6. Boss-only cleanup pacing
+
+When an encounter still has at least two active bosses but no active human contestant, the
+remaining boss-versus-boss cleanup runs at **2× speed**. The multiplier is derived from the
+live room-scoped roster rather than persisted state, switches as soon as the last human is
+defeated or flees, and returns to normal when fewer than two bosses remain. It applies to
+turn/card boundaries, nested plays, rolls, hits, damage, healing and death narration; test
+and harness delay-skip mode remains instantaneous.
+
+---
+
+## 7. Observability
 
 | Metric | Meaning |
 |---|---|
