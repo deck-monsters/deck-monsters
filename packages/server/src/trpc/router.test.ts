@@ -645,6 +645,37 @@ describe('trpc/router card management procedures', () => {
 });
 
 describe('trpc/router monster lifecycle procedures', () => {
+	it('exposes the authoritative spawn catalog only to room members', async () => {
+		let assertedRoom: string | undefined;
+		const roomManager = {
+			assertMember: async (_userId: string, roomId: string) => { assertedRoom = roomId; },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const options = await caller.game.spawnOptions({ roomId: ROOM_ID });
+
+		expect(assertedRoom).to.equal(ROOM_ID);
+		expect(options.types.map((type) => type.label)).to.deep.equal([
+			'Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel',
+		]);
+		expect(options.genders).to.deep.equal(['female', 'male', 'androgynous']);
+	});
+
+	it('spawns a fully specified monster without an interactive prompt', async () => {
+		let spawnInput: Record<string, unknown> | undefined;
+		const character = { spawnMonster: async (_channel: unknown, input: Record<string, unknown>) => { spawnInput = input; return { givenName: 'Saffron', creatureType: 'Jinn' }; } };
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: character }, getAllMonstersLookup: () => ({}) }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.spawnMonster({ roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke' });
+		expect(spawnInput).to.include({ type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke' });
+		expect(result).to.deep.equal({ ok: true, monsterName: 'Saffron', monsterType: 'Jinn' });
+	});
+
 	it('revives only the authenticated member\'s monster in the requested room', async () => {
 		const calls: unknown[] = [];
 		const character = {

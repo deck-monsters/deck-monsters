@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
 import ShopPanel, { type ShopStockItem } from './ShopPanel.js';
@@ -26,6 +26,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const [visibleMonsterIndex, setVisibleMonsterIndex] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showSpawn, setShowSpawn] = useState(false);
 
   const {
     monsters,
@@ -33,6 +34,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     cardCompatibility,
     items,
     shop,
+    spawnOptions,
     loading,
     busy,
     latestError,
@@ -46,12 +48,31 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     savePreset,
     loadPreset,
     deletePreset,
+    spawnMonster,
     reviveMonster,
     sendMonsterToRing,
     useItem,
     buyShopItem,
     refresh,
   } = useDeckWorkshop(roomId);
+
+  async function handleSpawn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    try {
+      setError(null);
+      const result = await spawnMonster({
+        type: Number(data.get('type')),
+        gender: String(data.get('gender')) as 'male' | 'female' | 'androgynous',
+        name: String(data.get('name') ?? '').trim(),
+        color: String(data.get('color') ?? '').trim(),
+      });
+      setMessage(`${result.monsterName} the ${result.monsterType} joined your stable.`);
+      setShowSpawn(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not train that monster');
+    }
+  }
 
   async function handleRevive(monsterName: string) {
     try {
@@ -436,6 +457,9 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           <p>Manage equipped and unequipped cards in one view.</p>
         </div>
         <div className="workshop-header-actions">
+          <button className="btn" onClick={() => setShowSpawn((shown) => !shown)} disabled={!roomId || busy}>
+            {showSpawn ? 'Cancel' : 'Train monster'}
+          </button>
           <button className="btn" onClick={() => void refresh()} disabled={!roomId || loading || busy}>
             Sync
           </button>
@@ -446,6 +470,15 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       {message && <div className="success-msg" role="status" aria-live="polite">{message}</div>}
       {error && <div className="error-msg" role="alert">{error}</div>}
       {busy && <div className="workshop-banner">Applying changes…</div>}
+      {showSpawn && (
+        <form className="workshop-spawn-form" onSubmit={(event) => void handleSpawn(event)}>
+          <label>Type<select name="type" defaultValue={spawnOptions.types[0]?.index}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
+          <label>Gender<select name="gender" defaultValue="androgynous">{spawnOptions.genders.map((gender) => <option key={gender} value={gender}>{gender[0]?.toUpperCase()}{gender.slice(1)}</option>)}</select></label>
+          <label>Name<input name="name" required maxLength={40} autoComplete="off" /></label>
+          <label>Appearance<input name="color" required maxLength={100} placeholder="gold and black" /></label>
+          <button type="submit" className="btn" disabled={busy}>Train</button>
+        </form>
+      )}
       {selectedCards.length > 0 && (
         <div className="workshop-mobile-hint">
           {selectedCards.length} selected: {selectedSummary}. Tap destination slot or inventory drop zone.
@@ -467,8 +500,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         <div className="workshop-empty-state workshop-no-monsters">
           <p>No monsters yet — cards need a monster to live on.</p>
           <p className="workshop-empty-hint">
-            Spawn one from the console with <code>spawn a monster</code>, then come back to
-            build its deck.
+            Train one here to start building its deck. The console command is <code>spawn a monster</code>.
           </p>
         </div>
       ) : (

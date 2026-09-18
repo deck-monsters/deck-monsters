@@ -53,6 +53,10 @@ export function useDeckWorkshop(roomId?: string) {
     { roomId: validRoomId },
     { enabled: !!roomId, refetchInterval: 30_000 },
   );
+  const spawnOptionsQuery = trpc.game.spawnOptions.useQuery(
+    { roomId: validRoomId },
+    { enabled: !!roomId, staleTime: Infinity },
+  );
 
   const invalidateWorkshop = async () => {
     if (!roomId) return;
@@ -78,6 +82,7 @@ export function useDeckWorkshop(roomId?: string) {
   const deletePresetMutation = trpc.game.deletePreset.useMutation(mutationOptions);
   const reorderCardsMutation = trpc.game.reorderCards.useMutation(mutationOptions);
   const reviveMonsterMutation = trpc.game.reviveMonster.useMutation(mutationOptions);
+  const spawnMonsterMutation = trpc.game.spawnMonster.useMutation(mutationOptions);
   // Using an item can change a live fight (a heal mid-encounter), so the ring state is
   // refreshed alongside the inventory rather than waiting for the next poll.
   const useItemMutation = trpc.game.useItem.useMutation({
@@ -99,7 +104,7 @@ export function useDeckWorkshop(roomId?: string) {
   const cardCompatibility = inventory.cardCompatibility ?? {};
   const items = inventory.items ?? EMPTY_INVENTORY.items;
 
-  const loading = roomQuery.isLoading || inventoryQuery.isLoading || shopQuery.isLoading;
+  const loading = roomQuery.isLoading || inventoryQuery.isLoading || shopQuery.isLoading || spawnOptionsQuery.isLoading;
   const busy = useMemo(
     () =>
       inventoryQuery.isFetching ||
@@ -116,11 +121,13 @@ export function useDeckWorkshop(roomId?: string) {
       loadPresetMutation.isPending ||
       deletePresetMutation.isPending ||
       reviveMonsterMutation.isPending ||
+      spawnMonsterMutation.isPending ||
       useItemMutation.isPending ||
       sendMonsterToRingMutation.isPending,
     [
       deletePresetMutation.isPending,
       reviveMonsterMutation.isPending,
+      spawnMonsterMutation.isPending,
       useItemMutation.isPending,
       sendMonsterToRingMutation.isPending,
       equipCardsMutation.isPending,
@@ -146,6 +153,7 @@ export function useDeckWorkshop(roomId?: string) {
     cardCompatibility,
     items,
     shop: shopQuery.data,
+    spawnOptions: spawnOptionsQuery.data ?? { types: [], genders: [] },
     loading,
     busy,
     latestError:
@@ -160,10 +168,15 @@ export function useDeckWorkshop(roomId?: string) {
       loadPresetMutation.error?.message ??
       deletePresetMutation.error?.message ??
       reviveMonsterMutation.error?.message ??
+      spawnMonsterMutation.error?.message ??
       useItemMutation.error?.message ??
       sendMonsterToRingMutation.error?.message ??
       buyShopItemMutation.error?.message,
     refresh: () => Promise.all([inventoryQuery.refetch(), shopQuery.refetch()]),
+    spawnMonster: (input: { type: number; gender: 'male' | 'female' | 'androgynous'; name: string; color: string }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return spawnMonsterMutation.mutateAsync({ roomId, ...input });
+    },
     reviveMonster: (input: { monsterName: string }) => {
       if (!roomId) throw new Error('Room not selected');
       return reviveMonsterMutation.mutateAsync({ roomId, ...input });

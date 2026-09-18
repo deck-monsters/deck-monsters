@@ -21,11 +21,11 @@ Each document covers one area; this README is the authoritative index of status 
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
 | [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 3 non-blocking items from the Sept 2026 live-play pass |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 2 non-blocking pacing items from the Sept 2026 live-play pass |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
-| [20 — Workspace Layout](20-workspace-layout.md) | Surfaces in two switchable pane slots | 🔧 Active — phases 3/5 code-complete; Phase 4 + visual sign-off remain |
+| [20 — Workspace Layout](20-workspace-layout.md) | Surfaces in two switchable pane slots | 🔧 Active — phases 1–5 code-complete; device/browser visual sign-off remains |
 | [19 — Player Agency & Items](19-player-agency-and-items.md) | Items as the live lever, targeting scrolls, competence/attachment surfacing | 🔧 Active — first-class item docs, Workshop/Ring use and room shop browse/buy shipped; feedback, prompt-driven web use and web selling remain |
 | [11 — Balance & Mechanics](11-balance-and-mechanics.md) | Stat reform, initiative, saving throws | 📋 Backlog (needs battle sim harness) |
 | [12 — New Content](12-new-content-backlog.md) | Cards, monsters, items, adventures | 📋 Post-launch backlog |
@@ -63,7 +63,7 @@ Everything below shipped and is not expected to need revisiting:
 
 ## Active Work — In Order of Priority
 
-Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too, along with the September 2026 live-play fixes (#89–#97). `10-bug-fixes.md` now carries three open non-blocking items from that pass: the email-defaulted profile name migration (follow-up to #95), cards that emit two roll blocks in the same tick, and the burst of messages at the very start of a fight. The **September 16 2026 mobile UI pass** (#98–#110) is fully archived in `10b-bugs-fixed.md`. Layout and rendering: feed text clipped off the right edge of both panes because `.event-feed`'s padding sat on the Virtuoso scroller, whose absolutely-positioned viewport resolves `width:100%` against the padding box (#98); engine `*bold*` / `_italic_` markup printed literally everywhere, not just in the fight log (#99); `in 1 rounds` (#100); the turn banner's 21 unrenderable dice glyphs (#101). Voice: every boss arrival **and departure** credited a randomly generated beastmaster who does not exist, now the house — `👑 The Editor` (#102); a player-summoned boss announced twice, out of order, under two names (#103); the ring-exit line said the opposite of what happened, resolved as part of a wider reframe where a player's monster *answers a call* and a boss is *commanded* (#104); a missing full stop (#105); a three-monster fight's summary dropping a contestant its own title named (#106). Feed and connection: dividers marking where the reader joined and lost connection (#107) and a heartbeat watchdog so a silently dead connection is noticed (#108). Found along the way: the fight log returned **other players' private events**, because a fight's events are resolved by time window and the query filtered on room and time but not on viewer (#109); and console fight highlights, which required `announceHit` to stop publishing an empty payload (#110). Screenshots are in `assets/ui-bugs-2026-09/`.
+Real-time sync bugs, quick actions, batch-equip UX, card shop room-scoping, DMG/CARDS content differentiation (#3), the 2026-08-03 audit fixes (#51–#85), and Fastify tRPC batch `maxParamLength` 404s (#86) are all archived in `10b-bugs-fixed.md`. The preset casing and parsing fixes (#87–#88) are archived there too, along with the September 2026 live-play fixes (#89–#97). `10-bug-fixes.md` now carries two open non-blocking pacing items from that pass: cards that emit two roll blocks in the same tick, and the burst of messages at the very start of a fight. The email-defaulted profile migration shipped as #135. The **September 16 2026 mobile UI pass** (#98–#110) is fully archived in `10b-bugs-fixed.md`. Layout and rendering: feed text clipped off the right edge of both panes because `.event-feed`'s padding sat on the Virtuoso scroller, whose absolutely-positioned viewport resolves `width:100%` against the padding box (#98); engine `*bold*` / `_italic_` markup printed literally everywhere, not just in the fight log (#99); `in 1 rounds` (#100); the turn banner's 21 unrenderable dice glyphs (#101). Voice: every boss arrival **and departure** credited a randomly generated beastmaster who does not exist, now the house — `👑 The Editor` (#102); a player-summoned boss announced twice, out of order, under two names (#103); the ring-exit line said the opposite of what happened, resolved as part of a wider reframe where a player's monster *answers a call* and a boss is *commanded* (#104); a missing full stop (#105); a three-monster fight's summary dropping a contestant its own title named (#106). Feed and connection: dividers marking where the reader joined and lost connection (#107) and a heartbeat watchdog so a silently dead connection is noticed (#108). Found along the way: the fight log returned **other players' private events**, because a fight's events are resolved by time window and the query filtered on room and time but not on viewer (#109); and console fight highlights, which required `announceHit` to stop publishing an empty payload (#110). Screenshots are in `assets/ui-bugs-2026-09/`.
 
 ### 1. Balance & mechanics (11-balance-and-mechanics.md)
 
@@ -76,25 +76,25 @@ fight is hands-off on purpose, and the pleasure is commitment then surrender —
 the one real-time lever the game already has. Key finding: **items are usable mid-fight by
 design, but only the ones the monster is already carrying** — `use.ts` narrows the pool to
 `monster.items` while `inEncounter`, so the real lever is what you equipped before the bell.
-The web client lists items (`ItemsPanel`) and can now use them (`game.useItem`), so the
-lever is reachable from the browser at last. What remains is where you reach for it: the
-one-tap affordance belongs on the *ring pane* during a live fight, not only in the
-workshop. Targeting scrolls already let players set `targetingStrategy`; they are nearly
-invisible. Anything that changes item *power* wants the sim harness first.
+The web client lists and uses items from the Workshop, while the Ring exposes a one-tap
+affordance for the fighting monster's carried items. What remains is the broader feedback
+loop, web selling and the one item whose own action still requires an interactive prompt.
+Targeting scrolls already let players set `targetingStrategy`; teaching that strategy is a
+separate design opportunity. Anything that changes item *power* wants the sim harness first.
 
 ### 3. Workspace layout (20-workspace-layout.md)
 
-The workshop is a separate route, so changing a deck means leaving the ring feed — worst
-right after watching a monster lose, which is when you most want to. Phase 1 (behaviour-
+The workshop began as a separate route, so changing a deck meant leaving the ring feed —
+worst right after watching a monster lose, which is when you most want to. Phase 1 (behaviour-
 neutral extraction of `WorkshopPanel`) and phase 2 (surfaces-in-slots — see §3.2, generalised
 beyond just "console ↔ workshop" to a `SurfaceId` registry so a future fight log or
 leaderboard costs one entry, not a rewrite) are done. The two pane slots, the per-slot
-`PaneSelector`, `Cmd/Ctrl+1/2/3`, and `dm:paneSlots` persistence live in `Terminal.tsx`.
-The underestimated cost is phase 3, next up, since the workshop is a wide multi-column
-layout being asked to work at half a laptop pane and at 393px. The remaining plan is now
-split into implementation work packages and exit gates: responsive layout and unified pane
-chrome (phase 3), the rest of the monster-management hub (phase 4), then fight-log and
-leaderboard surfaces (phase 5).
+`PaneSelector`, `Cmd/Ctrl+1–5`, and `dm:paneSlots` persistence live in `Terminal.tsx`.
+All five implementation phases are code-complete: responsive pane chrome, the
+monster-management hub, Fight Log and Leaderboard surfaces all ship. The final navigation
+rule is explicit: normal in-app navigation reveals a surface in the workspace; only the
+labelled expand action opens its full-page route. Cross-browser/device visual evidence at
+the documented widths and 200% zoom is the remaining sign-off, not an implementation gap.
 
 ### 4. New content backlog (12-new-content-backlog.md)
 

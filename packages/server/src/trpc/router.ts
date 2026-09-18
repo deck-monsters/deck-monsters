@@ -10,6 +10,7 @@ import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
 import {
 	PROMPT_CANCELLED,
 	PromptCancelledError,
+	allMonsters,
 	isCommandRefusal,
 	purchaseShopItem,
 	type ShopItemSection,
@@ -949,6 +950,38 @@ export function createRouter(roomManager: RoomManager) {
 								: 0,
 					}))
 					.filter((monster: { name: string }) => monster.name.length > 0);
+			}),
+
+		spawnOptions: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				return {
+					types: allMonsters.map((Monster, index) => ({
+						index,
+						label: String((Monster as unknown as { creatureType?: string }).creatureType ?? Monster.name),
+					})),
+					genders: ['female', 'male', 'androgynous'] as const,
+				};
+			}),
+
+		spawnMonster: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid(), type: z.number().int().nonnegative(), gender: z.enum(['male', 'female', 'androgynous']), name: z.string().trim().min(1).max(40), color: z.string().trim().min(1).max(100) }))
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				if (!allMonsters[input.type]) {
+					throw new TRPCError({ code: 'BAD_REQUEST', message: 'That monster type is not available.' });
+				}
+				const [game, eventBus] = await Promise.all([roomManager.getGame(input.roomId), roomManager.getEventBus(input.roomId)]);
+				const character = game.characters?.[ctx.userId];
+				if (!character || typeof character.spawnMonster !== 'function') throw new TRPCError({ code: 'NOT_FOUND', message: 'Create your character before training a monster.' });
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId: randomUUID() });
+				const monster = await runSerializedMutation(input.roomId, ctx.userId, () => {
+					const takenNames = Object.keys(game.getAllMonstersLookup?.() ?? {});
+					if (takenNames.includes(input.name.toLowerCase())) throw new TRPCError({ code: 'CONFLICT', message: 'That monster name is already taken.' });
+					return character.spawnMonster(channel, { type: input.type, gender: input.gender, name: input.name, color: input.color, game });
+				}) as { givenName?: unknown; creatureType?: unknown };
+				return { ok: true as const, monsterName: String(monster?.givenName ?? input.name), monsterType: String(monster?.creatureType ?? '') };
 			}),
 
 		myInventory: protectedProcedure

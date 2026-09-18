@@ -13,12 +13,13 @@ const hookMock = vi.hoisted(() => ({
   unequippedDeck: [] as string[],
   cardCompatibility: {},
   items: { character: [], monsters: [] },
+  spawnOptions: { types: [{ index: 0, label: 'Basilisk' }], genders: ['androgynous'] },
   loading: false,
   busy: false,
   latestError: null as string | null,
   equipCards: vi.fn(), unequipCard: vi.fn(), unequipMany: vi.fn(), unequipAll: vi.fn(),
   moveCard: vi.fn(), moveMany: vi.fn(), reorderCards: vi.fn(), savePreset: vi.fn(),
-  loadPreset: vi.fn(), deletePreset: vi.fn(), reviveMonster: vi.fn(),
+  loadPreset: vi.fn(), deletePreset: vi.fn(), reviveMonster: vi.fn(), spawnMonster: vi.fn(),
   sendMonsterToRing: vi.fn(), refresh: vi.fn(), roomName: 'Test Room',
 }));
 

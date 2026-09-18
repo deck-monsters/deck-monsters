@@ -107,12 +107,22 @@ export function classifyHighlight(
 	// outcomes; the raw natural roll is checked too, because a card can produce a 20 or a
 	// 1 without either flag being set.
 	const roll = payload.roll as
-		| { strokeOfLuck?: boolean; curseOfLoki?: boolean; naturalRoll?: { result?: unknown } }
+		| {
+			primaryDice?: string;
+			strokeOfLuck?: boolean;
+			curseOfLoki?: boolean;
+			naturalRoll?: { result?: unknown };
+		}
 		| undefined;
 	if (roll) {
 		const natural = asNumber(roll.naturalRoll?.result);
-		if (roll.strokeOfLuck === true || natural === 20) return highlight('nat20');
-		if (roll.curseOfLoki === true || natural === 1) return highlight('critFail');
+		// Only an attack/check d20 has natural-1 / natural-20 semantics. Damage, healing,
+		// and other effect rolls carry the same structured `naturalRoll`, so treating their
+		// minimum value as a critical failure labels an ordinary `1 on 1d6` as a fumble.
+		// The explicit engine flags remain authoritative for cards that opt into crits.
+		const isD20 = roll.primaryDice?.replace(/\s/g, '').toLowerCase() === '1d20';
+		if (roll.strokeOfLuck === true || (isD20 && natural === 20)) return highlight('nat20');
+		if (roll.curseOfLoki === true || (isD20 && natural === 1)) return highlight('critFail');
 		return null;
 	}
 

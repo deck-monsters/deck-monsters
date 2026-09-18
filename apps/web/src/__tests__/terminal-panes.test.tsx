@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const PANE_SLOTS_KEY = 'dm:paneSlots';
@@ -77,12 +77,17 @@ vi.mock('../components/LeaderboardPanel.js', () => makeSurfaceMock('leaderboard'
 import Terminal from '../components/Terminal.js';
 import { CommandInsertProvider } from '../lib/command-insert-context.js';
 
+function LocationProbe() {
+  return <output data-testid="location">{useLocation().pathname}</output>;
+}
+
 function renderTerminal(roomId = 'room-1') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[`/room/${roomId}`]}>
       <CommandInsertProvider>
         <Terminal roomId={roomId} />
       </CommandInsertProvider>
+      <LocationProbe />
     </MemoryRouter>
   );
 }
@@ -210,6 +215,18 @@ describe('Terminal pane slots (Phase 2 — docs/roadmap/20-workspace-layout.md)'
       '/room/room-1/workshop'
     );
     expect(screen.queryByRole('combobox')).toBeNull();
+  });
+
+  it('keeps ordinary surface navigation in the workspace and reserves routing for explicit expansion', () => {
+    installResizeObserver(600);
+    renderTerminal();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Workshop' }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/room/room-1');
+
+    fireEvent.click(screen.getByRole('link', { name: 'Open Workshop as a full page' }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/room/room-1/workshop');
+    expect(window.localStorage.getItem(PANE_SLOTS_KEY)).toBe(JSON.stringify(['ring', 'workshop']));
   });
 
   it.each([['4', 'Fights'], ['5', 'Leaders']] as const)('Cmd/Ctrl+%s lazily mounts %s', (key, label) => {

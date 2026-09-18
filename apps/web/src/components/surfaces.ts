@@ -12,6 +12,11 @@ import LeaderboardPanel from './LeaderboardPanel.js';
  * Adding a surface later (fights, leaderboard — see §5 Phase 5) means adding one entry
  * here; the tab bar, both `PaneSelector`s and the keyboard shortcuts all read this table
  * rather than hard-coding a surface list of their own.
+ *
+ * Navigation contract (#137): tabs, selectors, shortcuts and in-app deep links reveal a
+ * surface in the workspace. `route` is only for the explicitly labelled full-page action
+ * (or a URL entered directly); adding a route must not turn ordinary surface selection
+ * into navigation.
  */
 export type SurfaceId = 'ring' | 'console' | 'workshop' | 'fights' | 'leaderboard';
 
