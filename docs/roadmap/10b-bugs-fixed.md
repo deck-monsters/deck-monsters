@@ -2866,11 +2866,23 @@ generated shops is a separate, pre-existing gap — see `docs/roadmap/10-bug-fix
 
 ---
 
-### 145. The Workshop wallet was invisible on load and up to 30 seconds stale after a fight — FIXED
+### 145. The Workshop wallet was invisible on load and up to 30 seconds stale after a fight — FIXED (but see correction: this was NOT the reported bug)
 
 **Symptom**: reported as "I still see only 0 coins in the workshop view."
 
-**Investigation**: the reported `0` was not a data-integrity bug. `Game.awardFightCoins`
+> **CORRECTION (2026-09-18, after this entry was written).** The conclusion below — that
+> the reported `0` was not a data-integrity bug — is **WRONG**, and the staleness fix this
+> entry describes does not resolve the player's report. The reporter subsequently confirmed
+> 2 wins and 9 losses in the room with no shop purchases, which is at minimum 28 coins
+> (2x5 + 9x2) before any daily bonus, yet the wallet still read 0. The investigation below
+> reasoned from the reward path in isolation and never verified end-to-end that a *real*
+> ring fight credits coins at all; it does not. See the open bug in
+> [`10-bug-fixes.md`](10-bug-fixes.md) ("Fight rewards may never be credited") for the
+> live investigation and the leading hypothesis. The staleness and visibility fixes below
+> are still correct and still worth having — they are just not the bug that was reported.
+
+**Investigation (superseded — see the correction above)**: the reported `0` was not a
+data-integrity bug. `Game.awardFightCoins`
 (`packages/engine/src/game.ts`) mutates `contestant.character.coins`, and `contestant.
 character` is the exact same object reference as `game.characters[userId]` — confirmed by
 tracing `sendMonsterToRing` (`trpc/router.ts` → `beastmaster.ts#sendMonsterToTheRing`, which

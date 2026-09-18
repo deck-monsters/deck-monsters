@@ -21,7 +21,7 @@ Each document covers one area; this README is the authoritative index of status 
 | [13 — Leaderboard](13-leaderboard.md) | Player/monster stats, web UI | ✅ Done |
 | [16 — Card Management](16-card-management.md) | Inventory, presets, web workshop | ✅ Done — card workshop shipped |
 | [Boss Encounters](../boss-encounters.md) | Boss summoning, ring events, teams/targeting | ✅ Done — architecture doc, not a roadmap item |
-| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🔧 Active — 2 non-blocking pacing items from the Sept 2026 live-play pass |
+| [10 — Bug Fixes](10-bug-fixes.md) | Open bugs, UX polish, cleanup | 🚨 Active — **item J: fight rewards (coins/xp) may never be credited** (supersedes #145), plus 2 non-blocking pacing items |
 | [10b — Bugs Fixed (Archive)](10b-bugs-fixed.md) | Resolved bugs, historical record | ✅ Archive — nothing to action |
 | [05 — Discord Connector](05-discord-connector.md) | Slash commands, event bus, embeds | ✅ Done — full command surface, admin roles, tests; needs production use |
 | [14 — Fight Stats](14-fight-stats.md) | Fight summaries, catch-up feed | ✅ Done — core shipped; optional enhancements remain |
