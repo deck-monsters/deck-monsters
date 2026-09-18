@@ -225,6 +225,9 @@ export class Ring extends BaseClass {
 
 		// Route outcome events back to ring handlers via event bus
 		this.eventBus.subscribe('ring-internal', {
+			// Outcome events are private to their owners. This trusted room-local dispatcher
+			// must still observe them so it can update records and emit creature outcomes.
+			includePrivate: true,
 			deliver: (event) => {
 				if (event.type === 'ring.win') {
 					this.handleWinner({ contestant: (event.payload as any).contestant });

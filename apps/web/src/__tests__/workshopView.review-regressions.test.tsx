@@ -94,17 +94,20 @@ vi.mock('../components/InventoryPanel.js', () => ({
     activeMonsterFilterName,
     onClearMonsterFilter,
     isCardUnavailable,
+    disabled,
   }: {
     onSelectCard: (location: { kind: 'inventory' }, cardName: string, selectionId: string) => void;
     activeMonsterFilterName?: string | null;
     onClearMonsterFilter?: () => void;
     isCardUnavailable?: (cardName: string) => boolean;
+    disabled?: boolean;
   }) => (
     <div>
       <div data-testid="inventory-filter-name">{activeMonsterFilterName ?? 'none'}</div>
       <div data-testid="inventory-hit-unavailable">{String(isCardUnavailable?.('Hit') ?? false)}</div>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => onSelectCard({ kind: 'inventory' }, 'Hit', 'inventory:0')}
       >
         Select inventory card
@@ -125,6 +128,7 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
     onToggleFilter,
     isFilterTarget,
     onReorderCard,
+    busy,
   }: {
     monster: { name: string };
     showSelectionHint: boolean;
@@ -138,6 +142,7 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
     onToggleFilter?: () => void;
     isFilterTarget?: boolean;
     onReorderCard?: (sourceSelectionId: string, targetSelectionId: string) => Promise<void> | void;
+    busy?: boolean;
   }) => (
     <section>
       <div data-testid={`hint-${monster.name}`}>{showSelectionHint ? 'hint-on' : 'hint-off'}</div>
@@ -148,6 +153,7 @@ vi.mock('../components/MonsterWorkshopPanel.js', () => ({
       </button>
       <button
         type="button"
+        disabled={busy}
         onClick={() => void onDropCard({ kind: 'inventory' }, 'Hit')}
       >
         Drop on {monster.name}
@@ -185,15 +191,19 @@ describe('WorkshopView review regressions', () => {
     vi.clearAllMocks();
 	workshopMock.consoleFlowActive = false;
 	workshopMock.pendingPrompt = null;
+	workshopMock.busy = false;
   });
 
 	it('makes a blocking Console prompt visible and cancellable from the Workshop', async () => {
 	  workshopMock.consoleFlowActive = true;
 	  workshopMock.pendingPrompt = { question: 'Which cards?' };
+	  workshopMock.busy = true;
 	  renderWorkshop();
 
 	  expect(screen.getByRole('alert')).toHaveTextContent('Workshop controls are paused');
 	  expect(screen.getByRole('alert')).toHaveTextContent('Answer the waiting question');
+	  expect(screen.getByRole('button', { name: 'Select inventory card' })).toBeDisabled();
+	  expect(screen.getByRole('button', { name: 'Drop on Stonefang' })).toBeDisabled();
 	  fireEvent.click(screen.getByRole('button', { name: 'Cancel Console action' }));
 	  await waitFor(() => expect(workshopMock.cancelConsoleFlow).toHaveBeenCalledOnce());
 	});
