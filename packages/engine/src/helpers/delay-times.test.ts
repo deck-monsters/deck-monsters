@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 import { shortDelay, subEventDelay, veryShortDelay } from './delay-times.js';
 
@@ -82,6 +83,22 @@ describe('delay-times', () => {
 		const start = Date.now();
 		await subEventDelay();
 		expect(Date.now() - start).to.be.lessThan(50);
+	});
+
+	it('divides sub-event waits by the requested fight speed', async () => {
+		process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS = '900';
+		Math.random = () => 0;
+		const clock = sinon.useFakeTimers();
+		let resolved = false;
+		const waiting = subEventDelay(2).then(() => { resolved = true; });
+
+		await clock.tickAsync(299);
+		expect(resolved).to.equal(false);
+		await clock.tickAsync(1);
+		expect(resolved).to.equal(true);
+
+		await waiting;
+		clock.restore();
 	});
 
 	// Sets the midpoint explicitly, so this covers the env override rather than the

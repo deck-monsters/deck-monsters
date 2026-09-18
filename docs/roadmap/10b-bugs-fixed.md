@@ -2706,3 +2706,32 @@ and the missing private events were never persisted. New rewards accumulate corr
 deployment onward; the first-fight bonus makes that recovery visible immediately.
 
 **Status**: Fixed.
+
+---
+
+### 140. A partially failed card could freeze the live health bars — FIXED
+
+The ring published `ring.state` after a card promise resolved, but not from its recovery
+path. A card that changed HP or AC and then threw still produced narration and the fight
+continued, while the persistent roster kept the snapshot from before that card. This made
+health bars appear stuck near the end of a fight even as subsequent text described newer
+damage and deaths.
+
+**Fixed**: the card-failure path now publishes the resulting board before logging and
+continuing, matching the success path. A regression card deals a finishing blow and then
+throws; the test requires a public snapshot with the victim at zero HP and defeated.
+
+**Status**: Fixed.
+
+---
+
+### 141. Boss-only cleanup kept full spectator pacing — FIXED
+
+Once all human contestants were out, a multi-boss fight could spend many more full reading
+pauses resolving a result no player could influence. The remaining encounter now runs at
+2× speed whenever at least two active bosses and no active humans remain. The multiplier is
+room-local and derived from live contestants, so simultaneous fights in other rooms retain
+their own pacing. It covers card/turn gaps, nested cards and combat sub-events, then returns
+to 1× when boss-only combat no longer applies.
+
+**Status**: Fixed.

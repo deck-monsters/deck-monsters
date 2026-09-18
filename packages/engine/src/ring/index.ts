@@ -20,10 +20,10 @@ import type { RoomEventBus } from '../events/index.js';
  * banner and the card box, which otherwise arrive in the same tick. Resolves without a
  * timer in skip mode, matching the other continuation paths in `doAction`.
  */
-const turnBeat = (): Promise<void> =>
+const turnBeat = (speedMultiplier = 1): Promise<void> =>
 	delaysAreSkipped()
 		? Promise.resolve()
-		: new Promise<void>(resolve => setTimeout(resolve, subEventDelayMs()));
+		: new Promise<void>(resolve => setTimeout(resolve, Math.round(subEventDelayMs() / speedMultiplier)));
 
 const MAX_BOSSES = 5;
 const MAX_MONSTERS = 12;
@@ -596,6 +596,19 @@ export class Ring extends BaseClass {
 		}));
 	}
 
+	/** Boss-only cleanup runs at double pace once no human contestant can still act. */
+	get pacingMultiplier(): number {
+		if (!this.inEncounter) return 1;
+		const active = this.contestants.filter(({ monster }) => !monster.dead && !monster.fled);
+		const activeHumans = active.some(contestant => !contestant.isBoss);
+		const activeBosses = active.filter(contestant => contestant.isBoss).length;
+		return !activeHumans && activeBosses >= 2 ? 2 : 1;
+	}
+
+	private paced(ms: number): number {
+		return Math.round(ms / this.pacingMultiplier);
+	}
+
 	/** Publish current ring timer state to all connected clients via the event bus. */
 	publishState(): void {
 		this.eventBus.publish({
@@ -867,7 +880,7 @@ export class Ring extends BaseClass {
 						if (delaysAreSkipped()) {
 							queueMicrotask(() => next());
 						} else {
-							setTimeout(() => next(), veryShortDelay(round));
+							setTimeout(() => next(), this.paced(veryShortDelay(round)));
 						}
 					} else {
 						resolve(playerContestant);
@@ -900,7 +913,7 @@ export class Ring extends BaseClass {
 						if (delaysAreSkipped()) {
 							queueMicrotask(() => next());
 						} else {
-							setTimeout(() => next(), veryShortDelay(round));
+							setTimeout(() => next(), this.paced(veryShortDelay(round)));
 						}
 					} else {
 						resolve(playerContestant);
@@ -914,7 +927,7 @@ export class Ring extends BaseClass {
 				// so the two arrived together with a 0.0s gap: forty-odd lines at once,
 				// followed by the whole pause. Sized by `subEventDelayMs`, which scales
 				// with the banner just emitted, so a long stat card buys more reading time.
-				turnBeat()
+				turnBeat(this.pacingMultiplier)
 					.then(() => card.play(player, proposedTarget, ring, getAllActiveContestants()))
 					.then(() => {
 						// Push the board after every resolved card so the roster's HP/AC
@@ -935,13 +948,17 @@ export class Ring extends BaseClass {
 							// stacked version measured 6.8s at p90 and up to 10.3s, landing
 							// straight after the damage result.
 							return new Promise<void>(r =>
-								setTimeout(r, remainingGapMs(veryShortDelay(round)))
+								setTimeout(r, remainingGapMs(this.paced(veryShortDelay(round))))
 							).then(() => next());
 						}
 
 						return Promise.resolve().then(() => resolve(playerContestant));
 					})
 					.catch((ex: unknown) => {
+						// Cards can mutate HP/AC before throwing. Publish the resulting board
+						// just as the success path does so a partial failure cannot freeze the
+						// live roster while narration continues with newer values.
+						this.publishState();
 						this.log({
 							err: ex,
 							context: 'card.play',
@@ -955,7 +972,7 @@ export class Ring extends BaseClass {
 								return subEventDelay().then(() => next());
 							}
 							return new Promise<void>(r =>
-								setTimeout(r, remainingGapMs(veryShortDelay(round)))
+								setTimeout(r, remainingGapMs(this.paced(veryShortDelay(round))))
 							).then(() => next());
 						}
 						return Promise.resolve().then(() => resolve(playerContestant));
@@ -1004,8 +1021,8 @@ export class Ring extends BaseClass {
 					// now arrive as a group on a short beat, and the real pause comes once,
 					// after the group, at the round rollover that follows it.
 					const waitMs = roundRolledOver
-						? remainingGapMs(shortDelay(round))
-						: remainingGapMs(groupedBeatMs());
+						? remainingGapMs(this.paced(shortDelay(round)))
+						: remainingGapMs(this.paced(groupedBeatMs()));
 					if (delaysAreSkipped()) {
 						queueMicrotask(() => next());
 					} else {
