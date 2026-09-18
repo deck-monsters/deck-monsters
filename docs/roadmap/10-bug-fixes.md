@@ -2,10 +2,15 @@
 
 **Category**: Bug / Tech Debt
 **Priority**: Medium
-**Status**: Active — two open pacing items from the September 2026 live-play pass. The
+**Status**: Active — **one high-priority open bug: item J, fight rewards (coins and xp) may
+never be credited**, which supersedes the incorrect closure recorded as #145. Plus two open
+pacing items from the September 2026 live-play pass. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
-post-merge passes (#112–#134). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full
-archive (#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134).
+post-merge passes (#112–#134), the shop-menu off-by-one from the prompt-answer-contract
+audit is fixed (#143), item #4 from that same audit — the remaining pure-index prompt
+sites, unproven over Discord — is fixed (#146), and item #5, the shop's always-empty card
+stock, is fixed (#147). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive
+(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147).
 
 ## Recently resolved
 
@@ -71,7 +76,49 @@ The first three messages of a fight (fight banner, separator, first turn banner)
 in the same tick before any pacing applies. Minor, and far less visible since #97 cut the
 turn banner down, but it is the one place the feed still starts as a wall.
 
+### 4. Several prompt sites resolve `answer` as a pure index — unproven over Discord — FIXED
 
+Found while auditing every `channel({ question, choices })` call site for the shop-menu
+off-by-one (#143, `10b-bugs-fixed.md`). `monsters/helpers/spawn.ts#askForCreatureType`,
+`characters/helpers/create.ts#askForCreatureType`/`askForAvatar`,
+`creatures/edit.ts#edit`/`editSelf`, `characters/beastmaster.ts#chooseMonster`, and
+`items/scrolls/sorting-hat.ts` all resolved a choice prompt's answer as `array[Number(answer)]`
+— internally consistent with the engine's 0-based `getChoices` convention (so they did *not*
+reproduce #143's off-by-one), but they assumed the answer was always a numeric index, and the
+Discord connector never sends one (`packages/connector-discord/src/prompt-handler.ts` resolves
+with the button's label `customId`, verbatim).
+
+**Fixed as #146.** Every site now resolves through `resolveChoiceIndex` (`helpers/choices.ts`)
+with an explicit `announceAndThrow` on `-1`, `spawn.ts#askForGender`'s hand-rolled label-or-index
+handling now delegates to the same helper, and a second bug found in the same pass —
+`creatures/edit.ts#editSelf` writing its rename to the wrong option key (`givenName` instead
+of `name`), so renames never actually took effect — is fixed alongside it. See
+`10b-bugs-fixed.md` (#146) for the full root-cause writeup and `docs/prompt-answer-contract.md`
+for the protocol these sites now follow.
+
+### 5. `items/store/stock.ts#getCards` always returns an empty stock list — FIXED
+
+**Fixed as #147.** The claim that this needed an async cards module because of an import
+cycle was checked, not inherited, and turned out to be false — see
+`10b-bugs-fixed.md` #147 for the dependency audit and the fix. `getCards()` now draws real
+stock synchronously, the back room stocks rare cards too, and the console buy/sell flows'
+Cards branch is wired to it end-to-end.
+
+### 6. `.workshop-header-actions` is never `display: flex`, so its mobile rule is dead
+
+Found while adding the header wallet (#145, `10b-bugs-fixed.md`). The
+`@container workshop (max-width: 520px)` rule sets `.workshop-header-actions {
+justify-content: space-between; flex-wrap: wrap; }`, but the class has no `display: flex`
+at any width (`apps/web/src/styles/base.css`) — those two properties have been a no-op
+since they were written. The header's buttons wrap via the browser's default inline flow
+instead, which looks close enough to the intended layout that nobody reported it, but it is
+real dead CSS, not intentional.
+
+**Not fixed here** — turning the container into an actual flex row is a layout change to a
+header shared by every Workshop screen (route and pane), and `docs/roadmap/
+20-workspace-layout.md` already flags this exact header as one of the workshop's more
+mobile-regression-prone surfaces. Worth doing with an explicit before/after check at ~390px
+rather than as a side effect of an unrelated change.
 
 ## Investigated — not bugs (left for the record)
 
@@ -328,3 +375,97 @@ always set and the assumption held.
 command with no console yet is held and flushed by the next `registerInsertFn` rather than
 dropped. Generalised to `revealSurface(surfaceId)` rather than a console special case, since
 this is the shape every future deep link needs.
+
+---
+
+### J. Fight rewards (coins AND xp) may never be credited — OPEN, ACTIVE INVESTIGATION
+
+**Reported**: 2026-09-18. A player with **2 wins and 9 losses** in a room, who had never
+bought anything from the shop, saw `0 coins` in the Workshop. At the shipped rates
+(`COINS_PER_VICTORY` 5, `COINS_PER_DEFEAT` 2) that is at minimum `2*5 + 9*2 = 28` coins
+before any daily bonus or early-fight bonus. So this is a real bug.
+
+**This supersedes the conclusion in [`10b-bugs-fixed.md`](10b-bugs-fixed.md) #145**, which
+wrongly closed the same report as "staleness and visibility only, a new character genuinely
+starts at 0". That investigation reasoned about the reward path in isolation and never
+verified end to end that a real ring fight credits anything. #145's fixes (live wallet
+refresh on `ring.xp`, wallet pinned in the Workshop header) are correct and worth keeping,
+but they are not this bug.
+
+#### What is established
+
+1. **The battle record and the reward path are separate code paths.** `Ring`
+   (`ring/index.ts` ~1320-1355) calls `contestant.character.addWin()` / `addLoss()` /
+   `addDraw()` **directly and unconditionally**, and only *then* emits. So the player's
+   2-9 record is accurate whether or not any reward lands. Do not treat a correct
+   win/loss record as evidence the reward path ran.
+2. **Coins and XP are credited in the same place**, `Game.handleWinner` / `handleLoser` /
+   `handlePermaDeath` / `handleFled` / `handleDraw` (`game.ts` ~443-515). Both
+   `contestant.character.xp += ...` and `awardFightCoins(...)` live inside those handlers.
+3. **Those handlers are gated.** They are wired in `Game.initializeEvents` (`game.ts` ~358)
+   as `this.on('creature.win', wrapGameEvent(this.handleWinner.bind(this)))`, where
+   `wrapGameEvent` drops the event entirely unless `createRoomScopedEventGuard(this)`
+   (`announcements/index.ts` ~99-160) returns true. The guard exists for a good reason —
+   `creature.*` is broadcast on the process-wide `globalSemaphore`, so without it one
+   room's fight would award every other loaded room — but it is a silent filter: a false
+   negative loses the reward with no error, no log, and no test failure.
+
+#### Leading hypothesis
+
+The room-scoping guard returns `false` for real fights in this room, so wins and losses
+record while coins and XP are silently skipped. This fits the symptom exactly.
+
+Mechanically, the guard must find one of the emitted arguments (`className`, `monster`,
+`{ contestant }`) to be an entity it owns, by identity, either directly or by walking up to
+`MAX_OWNERSHIP_WALK_DEPTH = 3`. It looks the entities up via **raw `optionsStore` reads**
+(`rawArray`), deliberately bypassing the public getters to avoid a lazy-init recursion.
+Identity is the fragile part: anything that makes the ring's `contestant.monster` /
+`contestant.character` a *different object* from the one reachable under
+`game.optionsStore.characters` — a `BaseClass.clone()`, a re-hydration after a room
+reload/eviction, a character re-created under a different key — makes the guard return
+false and silently drops every reward.
+
+#### The decisive next diagnostic
+
+**Check whether the affected monsters gained any XP over those 11 fights.** XP and coins are
+credited on the same line of the same gated handler, so:
+
+- **XP is also 0 / no levelling** → the guard (or the event never firing) is almost
+  certainly the cause. Investigate identity of `contestant.character` / `contestant.monster`
+  versus `game.optionsStore.characters` at fight-resolution time in a *reloaded* room, not a
+  freshly constructed one.
+- **XP accrued normally but coins are 0** → the guard is innocent; the bug is specific to
+  `awardFightCoins` or to coin persistence, and the investigation should start there.
+
+This single observation splits the search space in half and should be the first thing done.
+
+#### Ruled out / checked so far
+
+- **Coin persistence looks correct on paper, but is UNVERIFIED end to end.** `coins` is
+  backed by `options.coins` (`creatures/base.ts` ~353), `BaseClass.toJSON` strips only
+  values equal to defaults, and `hydrateCharacter` passes `characterObj.options` through
+  wholesale. Nobody has actually round-tripped a non-zero balance through
+  serialize -> restore and asserted it survives. Do that before trusting it.
+- **The guard does find characters in a simple in-process setup.** A scratch reproduction
+  built a `Game`, assigned `game.characters[uid]`, and confirmed
+  `game.optionsStore.characters` contained both users — so the guard is not trivially broken
+  at construction time. This points at a *situational* failure (post-reload, cloned, or
+  re-keyed entities) rather than an always-on one.
+- **The scratch reproduction did not reach a fight resolution** (the constructed monsters
+  had empty decks, so `ring.fight()` returned with `battles.total` still 0). It therefore
+  neither confirms nor refutes the hypothesis. A correct repro needs monsters with real
+  decks — model it on `packages/harness/src/simulate.ts`, which builds contestants properly
+  and drives `ring.fight()` with `DECK_MONSTERS_DETERMINISTIC_RING=1` to suppress random
+  ring events (an unsuppressed boss spawn crashes `addMonster` on an undefined monster,
+  which is itself worth a look).
+
+#### Why no test caught this
+
+Every existing reward test (`game.test.ts`) drives the handlers by calling
+`monster.emit('win', ...)` (or the `Game` handler) directly, which **bypasses the
+room-scoping guard entirely**. There is no test that runs a real `ring.fight()` to
+completion and asserts the resulting coin and XP balances. That gap is the reason a
+whole-category reward failure can sit behind a green suite — the same shape of gap that let
+the shop-menu off-by-one (#143) survive, where the tests encoded the buggy contract. **Any
+fix for this must include an end-to-end test that runs a real fight and asserts the
+balances**, not another direct-emit test.

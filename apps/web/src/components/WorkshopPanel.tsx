@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
 import ShopPanel, { type ShopStockItem } from './ShopPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
+import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { groupSelectionByCardName, isSameSource, toggleWorkshopSelection } from '../utils/workshop-selection.js';
 
 export type SelectionState = {
@@ -37,6 +38,9 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     spawnOptions,
     loading,
     busy,
+	consoleFlowActive,
+	pendingPrompt,
+	cancelConsoleFlow,
     latestError,
     equipCards,
     unequipCard,
@@ -55,6 +59,47 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     buyShopItem,
     refresh,
   } = useDeckWorkshop(roomId);
+
+  /*
+   * Bug: "I still see only 0 coins in the workshop view." Coins are awarded the instant a
+   * fight resolves (`Game.awardFightCoins`, `packages/engine/src/game.ts`), but the wallet
+   * only ever learned about it from `useDeckWorkshop`'s 30s `refetchInterval` — up to half
+   * a minute of showing a stale (often zero, for a brand-new character) balance right after
+   * the fight a player was watching for. The room already emits a private `ring.xp` event
+   * to the fight's own participant the moment coins are granted (see
+   * `Game.handleWinner`/`handleLoser`/`handlePermaDeath`/`handleFled`/`handleDraw`, and
+   * `fight-stats-subscriber.ts`'s own comment on why that event carries `coinsGained`).
+   * Reusing it here makes the wallet (and the rest of the workshop) live instead of
+   * eventually-consistent, without inventing a second notification path.
+   *
+   * `RingFeedContext` is read directly (not `useRingFeedListener`, which throws outside a
+   * provider) because `WorkshopPanel` renders in two places with different context: inside
+   * a `Terminal` pane, which already wraps every pane in `RingFeedProvider`, and standalone
+   * via `WorkshopView`'s full-page route. Both are legitimate; missing context just means
+   * "no live feed here," so the workshop falls back to its existing poll rather than
+   * throwing.
+   */
+  const ringFeed = useContext(RingFeedContext);
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+  useEffect(() => {
+    if (!ringFeed) return;
+    return ringFeed.subscribe((tracked: TrackedRingFeedEvent) => {
+      if (tracked.data.type === 'ring.xp') {
+        void refreshRef.current();
+      }
+    });
+  }, [ringFeed]);
+
+	async function handleCancelConsoleFlow() {
+	  try {
+		setError(null);
+		await cancelConsoleFlow();
+		setMessage('Cancelled the waiting console action. Workshop controls are available again.');
+	  } catch (err) {
+		setError(err instanceof Error ? err.message : 'Could not cancel the console action');
+	  }
+	}
 
   async function handleSpawn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -457,6 +502,19 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           <p>Manage equipped and unequipped cards in one view.</p>
         </div>
         <div className="workshop-header-actions">
+          {/*
+           * The coin balance used to be visible only inside the shop section, which the
+           * player has to scroll past the monster row and inventory to reach. Surfacing it
+           * here too means a player can see their wallet — and that it just moved after a
+           * fight — without opening the shop at all. `shop` is undefined until the first
+           * shop query resolves, so this renders nothing rather than a misleading "0 coins"
+           * during that brief window.
+           */}
+          {shop && (
+            <strong className="workshop-wallet" title="Coins">
+              {shop.coins} {shop.coins === 1 ? 'coin' : 'coins'}
+            </strong>
+          )}
           <button className="btn" onClick={() => setShowSpawn((shown) => !shown)} disabled={!roomId || busy}>
             {showSpawn ? 'Cancel' : 'Train monster'}
           </button>
@@ -469,7 +527,16 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 
       {message && <div className="success-msg" role="status" aria-live="polite">{message}</div>}
       {error && <div className="error-msg" role="alert">{error}</div>}
-      {busy && <div className="workshop-banner">Applying changes…</div>}
+	  {consoleFlowActive && (
+		<div className="workshop-flow-blocked" role="alert">
+		  <div>
+			<strong>Workshop controls are paused by a Console action.</strong>
+			<p>{pendingPrompt ? 'Answer the waiting question in the Console, or cancel it here.' : 'The previous command is still processing. Workshop controls will unlock when it finishes.'}</p>
+		  </div>
+		  {pendingPrompt && <button className="btn" onClick={() => void handleCancelConsoleFlow()}>Cancel Console action</button>}
+		</div>
+	  )}
+	  {busy && !consoleFlowActive && <div className="workshop-banner">Applying changes…</div>}
       {showSpawn && (
         <form className="workshop-spawn-form" onSubmit={(event) => void handleSpawn(event)}>
           <label>Type<select name="type" defaultValue={spawnOptions.types[0]?.index}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>

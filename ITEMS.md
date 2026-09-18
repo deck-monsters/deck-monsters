@@ -70,11 +70,15 @@ another room's purchases cannot affect yours. Standard prices vary with the merc
 back-room goods cost considerably more.
 
 The Workshop shop shows your coin balance, live stock, price, affordability, how many copies
-you already own, and the rotation time. A purchase is checked again atomically when you
-confirm: the shop generation, stock position and item name are checked again. If somebody
-else bought that stock or the shop rotated, you are asked to refresh rather than receiving
-an item from a different listing or merchant. Selling remains available through
-`sell to the shop`; sale prices are lower than face value and vary by merchant.
+you already own, and the rotation time — for pocket items, cards for sale and the back room
+alike, matching what the console's `visit the shop` flow offers. A purchase is checked again
+atomically when you confirm: the shop generation, stock position and item name are checked
+again. If somebody else bought that stock or the shop rotated, you are asked to refresh
+rather than receiving an item from a different listing or merchant. Buying a card adds it to
+your deck, the same as buying an item adds it to your pocket inventory. Selling remains
+available through `sell to the shop`; sale prices are lower than face value and vary by
+merchant. Your balance is also shown in the Workshop's header, and updates as soon as a
+fight you were in pays out — not only when the shop section itself refreshes.
 
 ## Practical preparation
 

@@ -15,14 +15,23 @@ export const getItemCounts = (items: Array<{ itemType?: string; cardType?: strin
 	}, {});
 
 export const getItemCountsWithPrice = (
-	items: Array<{ itemType: string; cost: number }>,
+	items: Array<{ itemType?: string; cardType?: string; name?: string; cost: number }>,
 	priceOffset: number
 ): Record<string, ItemCountEntry> =>
 	items.reduce<Record<string, ItemCountEntry>>((itemCounts, item) => {
-		if (!itemCounts[item.itemType]) {
-			itemCounts[item.itemType] = { count: 0, cost: Math.round(item.cost * priceOffset) };
+		// Keyed through `getItemKey` (itemType ?? cardType ?? name), not `item.itemType`
+		// directly — the back room mixes items and cards in one pool (see
+		// items/store/stock.ts `getBackRoom`), and every card in that pool has no
+		// `itemType`, so keying on it directly collapsed all of them under the key
+		// `"undefined"` and mispriced them together. `getItemCounts` (no price) and
+		// `getFinalItemChoices` already went through `getItemKey`; this was the one
+		// holdout.
+		const key = getItemKey(item);
+
+		if (!itemCounts[key]) {
+			itemCounts[key] = { count: 0, cost: Math.round(item.cost * priceOffset) };
 		}
 
-		itemCounts[item.itemType].count += 1;
+		itemCounts[key].count += 1;
 		return itemCounts;
 	}, {});

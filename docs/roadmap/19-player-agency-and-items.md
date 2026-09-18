@@ -447,3 +447,47 @@ telemetry requirements and next adjustments are maintained in
 Web selling remains the highest-confidence item-economy follow-up: it exposes an existing
 currency source rather than adding more currency. Price changes and further recurring
 grants should wait for economy telemetry and the simulation harness.
+
+## 11. September 18: shop/wallet parity and liveness follow-up
+
+A second player report — "the shop shows different items depending on console vs.
+Workshop" and "I still see only 0 coins in the Workshop" — turned out to be two different
+things, neither a repeat of §10's reward-listener bug:
+
+- **Shop parity.** `summarizeShop`/`buyShopItem` only ever covered the `items` and
+  `backRoom` stock pools, never `cards`, even though the console's buy flow has always
+  offered all three. The Workshop shop now summarizes and sells `cards` too, at the same
+  price offset and with ownership counted against the character's deck. See
+  `10b-bugs-fixed.md` #144.
+- **Wallet staleness, not a reward bug.** Re-auditing the reward path (the same
+  `contestant.character`/`game.characters[userId]` identity, the same coin-serialization
+  round trip) found no regression of §10's fix — a brand-new character legitimately starts
+  at 0 coins. The Workshop's `shop` query simply only refreshed every 30s, so a coin reward
+  from a fight a player just watched could lag behind by up to that long, and the balance
+  was visible only inside the shop section. The Workshop now refreshes immediately off the
+  room's private `ring.xp` event and shows the balance in its header too. See
+  `10b-bugs-fixed.md` #145.
+
+## 12. September 18: the shop's card pool was always empty
+
+§9 and §11 both describe a `cards` stock pool that was, in fact, never populated:
+`items/store/stock.ts#getCards()` was a hard-coded `(): any[] => []`, so every shop's
+"cards" section — on the console, in `summarizeShop`, everywhere — was empty by
+construction. The console's own shop menu printed "We have N items and 0 cards" and
+choosing Cards always dead-ended on "We don't have any cards here." Buying a card was
+never actually possible; the only route to new cards remained random post-fight drops.
+
+The stub existed behind an asserted-but-unchecked import-cycle claim: cards were reached
+through an async `getCardsModule()` because a static import of `cards/index.js` was
+believed to cycle back through `items/`. A dependency audit found no such cycle — nothing
+under `cards/` imports `items/index.ts` or `items/store/*` — so `stock.ts` now imports the
+cards module statically, same as it already did for `drawItem`. `getCards()` draws a real
+4–10 card shelf (`canHoldStandard`), the back room now stocks 1–2 rare cards too
+(`canHoldBackRoom`, previously defined and unused), and `characters/base.ts`'s
+`buyItems`/`sellItems` — which never passed `chooseCards` through to `items/store/buy.ts`/
+`sell.ts` at all — now do, so the console/Discord Cards branch reaches a real purchase
+instead of a second, different dead end ("Cards are not available."). Pricing was checked
+against the September 18 economy audit (§10) and needs no adjustment: cards use the same
+cost tiers and shelf markup as items, so the cheapest card costs the same 12–18 coins.
+Full root cause, the three bugs found while wiring it up, and the pricing check are in
+`10b-bugs-fixed.md` #147.

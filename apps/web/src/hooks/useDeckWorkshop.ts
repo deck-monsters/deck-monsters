@@ -6,6 +6,11 @@ type WorkshopMonster = {
   name: string;
   type: string;
   level: number;
+  // Progress toward the next level, for the Workshop's level meter — see
+  // docs/roadmap/11-balance-and-mechanics.md "Early progression front-loading" and
+  // MonsterWorkshopPanel.tsx.
+  xpIntoLevel: number;
+  xpNeededForLevel: number;
   dead: boolean;
   inRing: boolean;
   inEncounter: boolean;
@@ -57,6 +62,16 @@ export function useDeckWorkshop(roomId?: string) {
     { roomId: validRoomId },
     { enabled: !!roomId, staleTime: Infinity },
   );
+	const flowStatusQuery = trpc.game.flowStatus.useQuery(
+	  { roomId: validRoomId },
+	  { enabled: !!roomId, refetchInterval: 3_000 },
+	);
+	const cancelFlowMutation = trpc.game.cancelFlow.useMutation({
+	  onSuccess: async () => {
+		await flowStatusQuery.refetch();
+		await invalidateWorkshop();
+	  },
+	});
 
   const invalidateWorkshop = async () => {
     if (!roomId) return;
@@ -105,8 +120,10 @@ export function useDeckWorkshop(roomId?: string) {
   const items = inventory.items ?? EMPTY_INVENTORY.items;
 
   const loading = roomQuery.isLoading || inventoryQuery.isLoading || shopQuery.isLoading || spawnOptionsQuery.isLoading;
+  const consoleFlowActive = flowStatusQuery.data?.consoleActive ?? false;
   const busy = useMemo(
     () =>
+	  consoleFlowActive ||
       inventoryQuery.isFetching ||
       shopQuery.isFetching ||
       buyShopItemMutation.isPending ||
@@ -125,6 +142,7 @@ export function useDeckWorkshop(roomId?: string) {
       useItemMutation.isPending ||
       sendMonsterToRingMutation.isPending,
     [
+	  consoleFlowActive,
       deletePresetMutation.isPending,
       reviveMonsterMutation.isPending,
       spawnMonsterMutation.isPending,
@@ -156,6 +174,12 @@ export function useDeckWorkshop(roomId?: string) {
     spawnOptions: spawnOptionsQuery.data ?? { types: [], genders: [] },
     loading,
     busy,
+	consoleFlowActive,
+	pendingPrompt: flowStatusQuery.data?.pendingPrompt ?? null,
+	cancelConsoleFlow: async () => {
+	  if (!roomId) throw new Error('Room not selected');
+	  return cancelFlowMutation.mutateAsync({ roomId });
+	},
     latestError:
       unequipCardMutation.error?.message ??
       unequipManyMutation.error?.message ??
@@ -194,7 +218,7 @@ export function useDeckWorkshop(roomId?: string) {
       return useItemMutation.mutateAsync({ roomId, ...input });
     },
     buyShopItem: (input: {
-      section: 'items' | 'backRoom';
+      section: 'items' | 'backRoom' | 'cards';
       stockIndex: number;
       expectedItemType: string;
       expectedClosingTime: string;

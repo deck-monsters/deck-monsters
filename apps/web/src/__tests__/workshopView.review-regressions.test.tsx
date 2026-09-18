@@ -10,6 +10,8 @@ const workshopMock = vi.hoisted(() => ({
       name: 'Stonefang',
       type: 'Basilisk',
       level: 3,
+      xpIntoLevel: 10,
+      xpNeededForLevel: 50,
       inRing: false,
       inEncounter: false,
       cardSlots: 2,
@@ -20,6 +22,8 @@ const workshopMock = vi.hoisted(() => ({
       name: 'Emberclaw',
       type: 'Jinn',
       level: 2,
+      xpIntoLevel: 5,
+      xpNeededForLevel: 100,
       inRing: false,
       inEncounter: false,
       cardSlots: 2,
@@ -37,6 +41,9 @@ const workshopMock = vi.hoisted(() => ({
   },
   loading: false,
   busy: false,
+	consoleFlowActive: false,
+	pendingPrompt: null as null | { question: string },
+	cancelConsoleFlow: vi.fn(async () => ({ ok: true })),
   latestError: null as string | null,
   equipCards: vi.fn(async () => ({ equippedCount: 1, requestedCount: 1, skippedCards: [] as string[] })),
   unequipCard: vi.fn(async () => ({ removedCount: 1, monsterName: 'Stonefang' })),
@@ -59,6 +66,15 @@ vi.mock('../lib/trpc.js', () => ({
     room: {
       info: {
         useQuery: () => ({ data: { name: workshopMock.roomName } }),
+      },
+    },
+    // `WorkshopView` now wraps its content in `RingFeedProvider` (so the wallet/inventory
+    // can go live off `ring.xp` events — see WorkshopPanel.tsx), which calls this
+    // subscription on mount. A no-op is enough here: nothing in this file exercises live
+    // feed delivery.
+    game: {
+      ringFeed: {
+        useSubscription: () => undefined,
       },
     },
   },
@@ -167,7 +183,20 @@ function renderWorkshop() {
 describe('WorkshopView review regressions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+	workshopMock.consoleFlowActive = false;
+	workshopMock.pendingPrompt = null;
   });
+
+	it('makes a blocking Console prompt visible and cancellable from the Workshop', async () => {
+	  workshopMock.consoleFlowActive = true;
+	  workshopMock.pendingPrompt = { question: 'Which cards?' };
+	  renderWorkshop();
+
+	  expect(screen.getByRole('alert')).toHaveTextContent('Workshop controls are paused');
+	  expect(screen.getByRole('alert')).toHaveTextContent('Answer the waiting question');
+	  fireEvent.click(screen.getByRole('button', { name: 'Cancel Console action' }));
+	  await waitFor(() => expect(workshopMock.cancelConsoleFlow).toHaveBeenCalledOnce());
+	});
 
   it('shows monster panel hints for inventory selections', () => {
     renderWorkshop();

@@ -1,10 +1,40 @@
 import { expect } from 'chai';
 
 import spawnMonster, { spawnHelpersReady } from './spawn.js';
+import { CommandRefusalError } from '../../helpers/command-refusal-error.js';
 
 describe('monsters/helpers/spawn', () => {
 	before(async () => {
 		await spawnHelpersReady;
+	});
+
+	describe('askForCreatureType (via spawnMonster)', () => {
+		// allMonsters order is [Basilisk, Gladiator, Jinn, Minotaur, WeepingAngel] — index 2 is Jinn.
+		it('resolves a numeric index answer, the shape the web client sends', async () => {
+			const answers = ['2', 'female', 'Saffron', 'violet smoke'];
+			const monster = await spawnMonster(async () => answers.shift());
+
+			expect(monster.creatureType).to.equal('Jinn');
+		});
+
+		it('resolves a label answer, the shape the Discord connector sends', async () => {
+			const answers = ['Jinn', 'female', 'Saffron', 'violet smoke'];
+			const monster = await spawnMonster(async () => answers.shift());
+
+			expect(monster.creatureType).to.equal('Jinn');
+		});
+
+		it('rejects an unrecognised creature type answer instead of spawning undefined', async () => {
+			let error: unknown;
+			try {
+				await spawnMonster(async () => 'Not A Monster');
+			} catch (caught) {
+				error = caught;
+			}
+
+			expect(error).to.be.instanceOf(CommandRefusalError);
+			expect((error as Error).message).to.include('Not A Monster');
+		});
 	});
 
 	it('accepts a supplied gender enum without treating it as a choice index', async () => {

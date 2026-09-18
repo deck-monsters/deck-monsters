@@ -330,6 +330,73 @@ describe('trpc/router card management procedures', () => {
 		expect(games[otherRoomId].characters[USER_ID].coins).to.equal(100);
 	});
 
+	// Regression: the Workshop shop query only summarized `items` and `backRoom`, so cards
+	// on sale (offered via the console's "Cards" menu, `items/store/buy.ts`) were invisible
+	// and unbuyable from the web Workshop. See docs/roadmap/10b-bugs-fixed.md.
+	it('includes cards in the shop summary, priced and owned like the console flow', async () => {
+		const scroll = { cardType: 'Targeting Scroll', cost: 30, description: 'Aim a card.', stats: 'Usable 1 time.' };
+		const game = {
+			characters: { [USER_ID]: { coins: 75, items: [], deck: [scroll] } },
+			shop: {
+				name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date('2030-01-01T00:00:00Z'),
+				priceOffset: 0.8, backRoomOffset: 5, items: [], backRoom: [], cards: [scroll], pronouns: {},
+			},
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		(roomManager as any).runSerializedEngineWork = async (_lane: string, fn: () => Promise<unknown>) => fn();
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.shop({ roomId: ROOM_ID });
+
+		// priceOffset (0.8) * 2 = 1.6 — the same multiplier the summary uses for `items`.
+		expect(result.cards[0]).to.deep.include({
+			stockIndex: 0, section: 'cards', displayName: 'Targeting Scroll', price: 48,
+			affordable: true, ownedCount: 1, description: 'Aim a card.',
+		});
+	});
+
+	it('buys a card through the workshop shop and adds it to the deck, not the item list', async () => {
+		const scroll = { cardType: 'Targeting Scroll', cost: 30 };
+		const ownedItems: unknown[] = [];
+		const ownedDeck: unknown[] = [];
+		const game = {
+			characters: {
+				[USER_ID]: {
+					coins: 100,
+					items: ownedItems,
+					deck: ownedDeck,
+					addItem: (owned: unknown) => ownedItems.push(owned),
+					addCard: (owned: unknown) => ownedDeck.push(owned),
+				},
+			},
+			shop: {
+				name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date(Date.now() + 60_000),
+				priceOffset: 0.8, backRoomOffset: 5, items: [], backRoom: [], cards: [scroll], pronouns: {},
+			},
+			commitShop(next: any) { game.shop = next; },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getEventBus: async () => ({ getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_lane: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.buyShopItem({
+			roomId: ROOM_ID, section: 'cards', stockIndex: 0, expectedItemType: 'Targeting Scroll',
+			expectedClosingTime: game.shop.closingTime.toISOString(),
+		});
+
+		expect(result).to.deep.equal({ ok: true, itemName: 'Targeting Scroll', price: 48, remainingCoins: 52 });
+		expect(game.shop.cards).to.deep.equal([]);
+		expect(ownedDeck).to.deep.equal([scroll]);
+		expect(ownedItems).to.deep.equal([]);
+	});
+
 	it('runs game.unequipCard via serialized engine work', async () => {
 		const unequipCard = async () => ({ removedCount: 1, monsterName: 'Stonefang' });
 		const publish = () => undefined;
@@ -1243,6 +1310,32 @@ describe('trpc/router command dispatch and flow locking', () => {
 			.catch((e: unknown) => e);
 		expect(err).to.be.instanceOf(TRPCError);
 		expect(activePromptFreeMutations.has(flowKey)).to.equal(false);
+	});
+
+	it('reports an active console flow and its waiting prompt to graphical clients', async () => {
+		const pendingPrompt = {
+			requestId: 'prompt-1',
+			question: 'Which card?',
+			choices: ['Hit'],
+			timeoutSeconds: 120,
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getEventBus: async () => ({ getPendingPromptForUser: () => pendingPrompt }),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		activeFlows.set(flowKey, 'command-1');
+
+		try {
+			const status = await caller.game.flowStatus({ roomId: ROOM_ID });
+			expect(status).to.deep.equal({
+				consoleActive: true,
+				workshopActive: false,
+				pendingPrompt,
+			});
+		} finally {
+			activeFlows.delete(flowKey);
+		}
 	});
 
 	it('a cancelled flow settling late does not release a newer flow\'s lock', async () => {
