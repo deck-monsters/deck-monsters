@@ -38,4 +38,50 @@ describe('wall-clock health recovery', () => {
 			monster.disposeTimers();
 		}
 	});
+
+	it('does not bank combat time as passive healing', () => {
+		const clock = sinon.useFakeTimers();
+		const monster = new Jinn({ hp: 5, hpUpdatedAt: Date.now() });
+		try {
+			monster.startEncounter({});
+			clock.tick(5 * TIME_TO_HEAL_MS);
+			monster.endEncounter();
+			clock.tick(TIME_TO_HEAL_MS);
+			expect(monster.hp).to.equal(6);
+		} finally {
+			monster.disposeTimers();
+			clock.restore();
+		}
+	});
+
+	it('does not bank time spent at full health for a later level-up', () => {
+		const clock = sinon.useFakeTimers();
+		const monster = new Jinn();
+		try {
+			const fullHp = monster.hp;
+			clock.tick(20 * TIME_TO_HEAL_MS);
+			monster.xp = 51;
+			expect(monster.maxHp).to.be.greaterThan(fullHp);
+			expect(monster.applyPassiveHealing()).to.equal(0);
+			expect(monster.hp).to.equal(fullHp);
+		} finally {
+			monster.disposeTimers();
+			clock.restore();
+		}
+	});
+
+	it('starts immediate-revival healing when the item revives the monster', () => {
+		const clock = sinon.useFakeTimers();
+		const monster = new Jinn({ hp: 0, xp: 51 });
+		try {
+			monster.respawn();
+			clock.tick(5 * 60_000);
+			monster.respawn(true);
+			clock.tick(0);
+			expect(monster.hp).to.equal(1);
+		} finally {
+			monster.disposeTimers();
+			clock.restore();
+		}
+	});
 });

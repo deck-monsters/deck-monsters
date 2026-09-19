@@ -80,6 +80,18 @@ bootstraps the entire `ringFeed` subscription, so a throw there takes down the f
 that client. An empty roster — which the next `ring.state` repairs within one card — is a
 far better failure mode than no connection.
 
+**Client trust order (fixed 2026-09-19, #152).** `clearRing()` publishes the true final
+board (all deaths, final HP) once a fight ends, then immediately publishes a second, empty
+`ring.state` once contestants are cleared — both intentional. The client's derivation of
+which contestant list to render used `timerState.contestants.length > 0` as a proxy for
+"has a live push arrived yet," which meant that second, legitimately-empty push looked
+identical to "no live push yet" and fell back to the polled `game.ringState` query — a
+snapshot that could be minutes stale. `RingPane.tsx` now tracks whether *any* live push has
+landed with a dedicated ref (`hasLiveTimerStateRef`) and, once true, trusts
+`timerState.contestants` verbatim, including empty. The polled query is a cold-start seed
+only, never a fallback once live data exists — an empty live roster must always win over a
+non-empty stale one.
+
 ## Tests
 
 - `packages/engine/src/ring/index.test.ts` — snapshot contents, damage tracking, death

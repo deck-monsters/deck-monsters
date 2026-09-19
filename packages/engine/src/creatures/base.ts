@@ -222,6 +222,10 @@ Battles won: ${this.battles.wins}`;
 		return amount;
 	}
 
+	resetPassiveHealingClock(now: number = Date.now()): void {
+		this.setOptions({ hpUpdatedAt: now });
+	}
+
 	get level (): number {
 		return getLevel(this.xp);
 	}
@@ -236,7 +240,11 @@ Battles won: ${this.battles.wins}`;
 
 	set xp (xp: number) {
 		const previousLevel = this.level;
+		const wasAtMaxHp = this.hp >= this.maxHp;
 		this.setOptions({ xp });
+		// Time spent at the old maximum cannot become healing merely because leveling
+		// increased the maximum.
+		if (wasAtMaxHp) this.resetPassiveHealingClock();
 		const newLevel = this.level;
 		if (newLevel > previousLevel) {
 			this.emit('levelUp', { monster: this, level: newLevel });

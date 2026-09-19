@@ -96,7 +96,16 @@ export function respawn (self: BaseCreature, immediate?: boolean): number {
 	const timeoutLength = immediate ? 0 : self.level * TIME_TO_RESURRECT_MS;
 
 	if (immediate || !self.respawnTimeout) {
-		self.respawnTimeoutBegan = self.respawnTimeoutBegan || now;
+		if (immediate) {
+			// An instant-revival item starts recovery now, not at the beginning of the
+			// cancelled natural-revival wait. Also cancel that old callback so it cannot
+			// fire a second respawn later.
+			if (self.respawnTimeout !== undefined) clearTimeout(self.respawnTimeout);
+			self.respawnTimeout = undefined;
+			self.respawnTimeoutBegan = now;
+		} else {
+			self.respawnTimeoutBegan = self.respawnTimeoutBegan || now;
+		}
 		self.respawnTimeoutLength = Math.max((self.respawnTimeoutBegan + timeoutLength) - now, 0);
 
 		const reviveAt = self.respawnTimeoutBegan + timeoutLength;

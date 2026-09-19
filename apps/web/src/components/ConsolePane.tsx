@@ -102,6 +102,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const damageHistoryRef = useRef(createDamageHistory());
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
   const activePromptIdRef = useRef<string | null>(null);
+  // requestIds resolved locally (answered, cancelled, or timed out) this session. The 3s
+  // `pendingPrompt` poll can have a request already in flight when one of those happens,
+  // so its response can echo the same requestId as still pending. Checked synchronously
+  // at the point `upsertPendingPrompt` decides whether to (re-)arm `activePromptId` —
+  // deriving this from `consoleEvents` inside a `setState` updater does not work, since
+  // there is no guarantee the updater runs before the code right after the `setState`
+  // call that would need to read it.
+  const resolvedPromptIdsRef = useRef<Set<string>>(new Set());
   const consecutiveEmptyPromptPollsRef = useRef(0);
   const [inputValue, setInputValue] = useState('');
   const [inputLocked, setInputLocked] = useState(false);
@@ -282,6 +290,16 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   const upsertPendingPrompt = useCallback((prompt: PendingPromptSnapshot) => {
     consecutiveEmptyPromptPollsRef.current = 0;
+    // The 3s poll can have a request in flight when the player answers, cancels, or
+    // times out this exact requestId through a live event instead — the poll's response
+    // then echoes the same requestId as still pending. Upserting it unconditionally used
+    // to reset that resolved state back to pending, erasing the "you selected X" feedback
+    // and re-arming `activePromptId`, which reopened the "waiting for your answer" banner
+    // for a prompt the player was, at that moment, literally in the middle of having just
+    // answered. Once a requestId is resolved locally, a stale poll for the same id must
+    // not resurrect it.
+    if (resolvedPromptIdsRef.current.has(prompt.requestId)) return;
+
     setConsoleEvents(prev => {
       const existingIndex = prev.findIndex(ev => ev.promptData?.requestId === prompt.requestId);
       if (existingIndex === -1) {
@@ -343,6 +361,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     if (consecutiveEmptyPromptPollsRef.current < 2) return;
 
     const staleRequestId = activePromptIdRef.current;
+    resolvedPromptIdsRef.current.add(staleRequestId);
     setConsoleEvents(prev => prev.map(ev =>
       ev.promptData?.requestId === staleRequestId
         ? { ...ev, promptData: { ...ev.promptData, cancelled: true } }
@@ -448,6 +467,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     if (event.type === 'prompt.timeout') {
       const { requestId } = event.payload as { requestId: string };
+      resolvedPromptIdsRef.current.add(requestId);
       setConsoleEvents(prev => prev.map(ev =>
         ev.promptData?.requestId === requestId
           ? { ...ev, promptData: { ...ev.promptData!, timedOut: true } }
@@ -467,6 +487,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     if (event.type === 'prompt.cancel') {
       const { requestId } = event.payload as { requestId: string };
+      resolvedPromptIdsRef.current.add(requestId);
       setConsoleEvents(prev => prev.map(ev =>
         ev.promptData?.requestId === requestId
           ? { ...ev, promptData: { ...ev.promptData!, cancelled: true } }
@@ -559,6 +580,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   }, [history, autoScroll, seedCursor]);
 
   async function handleCancelPrompt(requestId: string) {
+    resolvedPromptIdsRef.current.add(requestId);
     // Optimistically hide the countdown and tombstone the prompt immediately
     setConsoleEvents(prev => prev.map(ev =>
       ev.promptData?.requestId === requestId
@@ -574,6 +596,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   }
 
   async function handleCancelFlow() {
+    const optimisticallyResolvedIds = consoleEvents
+      .filter(ev => ev.promptData && !ev.promptData.selectedAnswer && !ev.promptData.timedOut && !ev.promptData.cancelled)
+      .map(ev => ev.promptData!.requestId);
+    for (const id of optimisticallyResolvedIds) resolvedPromptIdsRef.current.add(id);
     // Optimistically cancel all visible unresolved prompts so countdowns hide immediately
     setConsoleEvents(prev => prev.map(ev =>
       ev.promptData && !ev.promptData.selectedAnswer && !ev.promptData.timedOut && !ev.promptData.cancelled
@@ -589,6 +615,11 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       });
       setActivePromptId(null);
     } catch (err) {
+      // The cancel did not actually land — the flow may still be active server-side, so
+      // undo the optimistic resolution marks. A later poll must be free to re-arm it
+      // rather than being blocked by our own guard while its `cancelled: true` UI state
+      // (applied above) has already gone stale.
+      for (const id of optimisticallyResolvedIds) resolvedPromptIdsRef.current.delete(id);
       addConsoleEvent({
         id: `sys-${Date.now()}`,
         type: 'system',
@@ -650,6 +681,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   }
 
   async function handleAnswer(requestId: string, answer: string) {
+    resolvedPromptIdsRef.current.add(requestId);
     // Mark the choice as selected immediately for UI feedback
     setConsoleEvents(prev => prev.map(ev =>
       ev.promptData?.requestId === requestId
@@ -662,6 +694,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       await respondToPrompt.mutateAsync({ roomId, requestId, answer });
       void Promise.all([refetchMyMonsters(), refetchMyInventory()]);
     } catch (err) {
+      // The answer did not actually land — this requestId is not resolved after all.
+      // Undo the optimistic mark so the recovery below (or a later poll) is free to
+      // re-arm it as still pending instead of being silently blocked by our own guard.
+      resolvedPromptIdsRef.current.delete(requestId);
       addConsoleEvent({
         id: `sys-${Date.now()}`,
         type: 'system',
