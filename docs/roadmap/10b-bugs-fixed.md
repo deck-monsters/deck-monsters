@@ -3226,6 +3226,8 @@ errors remain fatal under the script's existing `set -euo pipefail`.
 `bld-20260919-8e276c16-17ef-496b-b22c-76e533c9db5f`, applied the same dpkg
 policy, and confirmed that `fuse3` and `fuse-overlayfs` configured successfully,
 `dpkg --audit` was clean, `/etc/fuse.conf` was unchanged, and Docker started.
+Draft build `bld-20260919-f6f2a3ca-b8b3-41c7-8345-7b933fb6d9ce` then
+completed from a fresh checkout with all five monorepo build tasks passing.
 
 **Status**: Fixed.
 
@@ -3249,6 +3251,7 @@ requiring root-owned global package state.
 
 **Test**: with `node` resolving to `/exec-daemon/node` and npm resolving under
 `~/.nvm`, the implicit global install reproduced `EACCES`; installing with the
-derived NVM prefix succeeded and `railway --version` reported `5.30.3`.
+derived NVM prefix succeeded and `railway --version` reported `5.30.3`. The
+same installation completed without `EACCES` in the successful draft build.
 
 **Status**: Fixed.
