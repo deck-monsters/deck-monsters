@@ -92,6 +92,35 @@ function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot
   );
 }
 
+/**
+ * Reports whether the end of the active prompt (its choice buttons) is on screen.
+ * The waiting banner below the input exists for a prompt the player cannot see
+ * (#142); when the choices are visible it is redundant and covers the input on a
+ * phone. Virtuoso only mounts rows near the viewport, so unmounting is itself a
+ * "not visible" signal; IntersectionObserver refines that for a mounted-but-scrolled
+ * row. Where IntersectionObserver is unavailable, mounted counts as visible.
+ */
+function PromptVisibilitySentinel({ onVisibilityChange }: { onVisibilityChange: (visible: boolean) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      onVisibilityChange(true);
+      return () => onVisibilityChange(false);
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      onVisibilityChange(entry?.isIntersecting ?? false);
+    });
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      onVisibilityChange(false);
+    };
+  }, [onVisibilityChange]);
+  return <div ref={ref} aria-hidden="true" className="prompt-visibility-sentinel" style={{ height: 1 }} />;
+}
+
 export default function ConsolePane({ roomId, isActive, headerActions }: ConsolePaneProps) {
   const { user } = useAuth();
   const { registerInsertFn } = useCommandInsert();
@@ -101,6 +130,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // a classification decision and must never itself trigger a render.
   const damageHistoryRef = useRef(createDamageHistory());
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
+  const [activePromptInView, setActivePromptInView] = useState(false);
   const activePromptIdRef = useRef<string | null>(null);
   // requestIds resolved locally (answered, cancelled, or timed out) this session. The 3s
   // `pendingPrompt` poll can have a request already in flight when one of those happens,
@@ -862,6 +892,9 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
                     timeoutSeconds={ev.promptData.timeoutSeconds}
                   />
                 )}
+                {ev.promptData.requestId === activePromptId && (
+                  <PromptVisibilitySentinel key={ev.promptData.requestId} onVisibilityChange={setActivePromptInView} />
+                )}
               </li>
             );
           }
@@ -994,7 +1027,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         aria-label="Command input"
         style={{ position: 'relative' }}
       >
-        {activePromptId && (
+        {/*
+         * Shown only when the prompt is off-screen: the banner exists to explain a
+         * prompt the player cannot see (#142). When the prompt's own choice buttons
+         * are visible in the feed, this banner is redundant and covers the input on
+         * a phone — the pane header's "Cancel action" button already covers that
+         * case. See 10b-bugs-fixed.md #156.
+         */}
+        {activePromptId && !activePromptInView && (
           <div className="command-blocked-banner" role="status">
             <span>A command is waiting for your answer. Command suggestions are paused.</span>
             <button type="button" className="btn" onClick={() => void handleCancelFlow()}>

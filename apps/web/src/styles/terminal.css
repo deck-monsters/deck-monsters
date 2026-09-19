@@ -385,6 +385,13 @@
   background: var(--color-bg);
 }
 
+.prompt-visibility-sentinel {
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
 .command-blocked-banner {
   position: absolute;
   left: 0;
