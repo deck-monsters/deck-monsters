@@ -68,6 +68,17 @@ describe('characters/beastmaster', () => {
 		expect(beastmaster.monsters).to.not.include(fakeMonster);
 	});
 
+	it('stops a dropped monster\'s background timers', () => {
+		const beastmaster = new Beastmaster();
+		const disposeTimers = sinon.stub();
+		const fakeMonster = { givenName: 'TestMonster', disposeTimers } as any;
+
+		beastmaster.addMonster(fakeMonster);
+		beastmaster.dropMonster(fakeMonster);
+
+		expect(disposeTimers.calledOnce).to.equal(true);
+	});
+
 	it('does not start a second revival for a monster whose timer is already running', async () => {
 		const beastmaster = new Beastmaster();
 		const respawn = sinon.stub();

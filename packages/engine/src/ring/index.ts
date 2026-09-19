@@ -340,6 +340,7 @@ export class Ring extends BaseClass {
 				const contestantIndex = updated.indexOf(contestant);
 				updated.splice(contestantIndex, 1);
 				this.contestants = updated;
+				this.disposeTransientContestant(contestant);
 
 				if (this.contestants.length < 1) {
 					this.clearRing();
@@ -639,9 +640,8 @@ export class Ring extends BaseClass {
 		this.nextFightAt = null;
 		this.ringEvent = undefined;
 		this.endEncounter();
-		for (const { monster, character } of this.contestants) {
-			(monster as { disposeTimers?: () => void })?.disposeTimers?.();
-			(character as { disposeTimers?: () => void })?.disposeTimers?.();
+		for (const contestant of this.contestants) {
+			this.disposeTransientContestant(contestant);
 		}
 		for (const timer of this.bossDespawnTimers) {
 			clearTimeout(timer);
@@ -650,6 +650,23 @@ export class Ring extends BaseClass {
 		this.contestants = [];
 		this.emit('clear');
 		this.publishState();
+	}
+
+	/**
+	 * Stop the background timers of a contestant nobody else owns.
+	 *
+	 * Bosses (and harness sim monsters, which are built as bosses) are created by the
+	 * ring and belong to no beastmaster, so once the ring lets go of them the healing
+	 * interval and any respawn timer would leak forever — `Game.dispose()` never sees
+	 * them. Player monsters are the opposite: they live on in their beastmaster's
+	 * roster and MUST keep healing and reviving after the ring releases them. Disposing
+	 * them here (which every fight did via `clearRing()`) is what left revived monsters
+	 * parked at 1 hp for hours until the room was restored from state (#108).
+	 */
+	private disposeTransientContestant({ monster, character, isBoss }: Contestant): void {
+		if (!isBoss) return;
+		(monster as { disposeTimers?: () => void })?.disposeTimers?.();
+		(character as { disposeTimers?: () => void })?.disposeTimers?.();
 	}
 
 	dispose(): void {

@@ -45,6 +45,12 @@ const isDead = (monster: unknown): boolean =>
 const isDestroyed = (monster: unknown): boolean =>
 	Boolean((monster as LooseRecord | undefined)?.destroyed);
 
+// `Beastmaster.reviveMonster` refuses a monster whose revival timer is already
+// running (#380), so a chip for it would only ever produce "You don't have any
+// monsters to revive." Mirror that filter here.
+const isReviving = (monster: unknown): boolean =>
+	(monster as LooseRecord | undefined)?.respawnTimeout !== undefined;
+
 const cardSlots = (monster: unknown): number => {
 	const slots = (monster as LooseRecord | undefined)?.cardSlots;
 	return typeof slots === 'number' && slots > 0 ? slots : DEFAULT_CARD_SLOTS;
@@ -104,7 +110,7 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 
 	const living = monsters.filter((monster) => !isDead(monster) && !isDestroyed(monster));
 	const deadRevivable = monsters.filter(
-		(monster) => isDead(monster) && !isDestroyed(monster)
+		(monster) => isDead(monster) && !isDestroyed(monster) && !isReviving(monster)
 	);
 	const idleOutOfRing = living.filter((monster) => !ringMonsters.has(monster));
 	const readyToSend = idleOutOfRing.filter(isDeckReady);

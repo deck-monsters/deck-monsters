@@ -114,6 +114,16 @@ describe('buildQuickActions', () => {
 		expect(buildQuickActions(game, USER).map((a) => a.command)).to.include('revive Fluffy');
 	});
 
+	it('does not offer to revive a monster whose revival timer is already running', () => {
+		// Beastmaster.reviveMonster excludes these (#380); the chip would only ever
+		// answer "You don't have any monsters to revive."
+		const game = makeGame({
+			monsters: [{ givenName: 'Fluffy', dead: true, respawnTimeout: {} }],
+			deck: [],
+		});
+		expect(buildQuickActions(game, USER).map((a) => a.command)).to.not.include('revive Fluffy');
+	});
+
 	it('does not offer to revive a permanently destroyed monster', () => {
 		const game = makeGame({
 			monsters: [{ givenName: 'Fluffy', dead: true, destroyed: true }],
