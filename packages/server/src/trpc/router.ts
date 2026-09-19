@@ -101,6 +101,7 @@ type InventorySummary = {
 
 type ShopItemSummary = {
 	stockIndex: number;
+	stockCount: number;
 	section: ShopItemSection;
 	displayName: string;
 	description: string;
@@ -166,13 +167,21 @@ const summarizeShop = (
 		stock: unknown[],
 		offset: number,
 		ownershipPool: unknown[],
-	): ShopItemSummary[] =>
-		stock.map((item, stockIndex) => {
+	): ShopItemSummary[] => {
+		const summaries = new Map<string, ShopItemSummary>();
+		stock.forEach((item, stockIndex) => {
 			const record = (item ?? {}) as Record<string, unknown>;
 			const displayName = getDisplayName(item);
 			const price = Math.round((typeof record.cost === 'number' ? record.cost : 0) * offset);
-			return {
+			const key = `${displayName}\u0000${price}\u0000${String(record.description ?? '')}\u0000${String(record.stats ?? '')}`;
+			const existing = summaries.get(key);
+			if (existing) {
+				existing.stockCount += 1;
+				return;
+			}
+			summaries.set(key, {
 				stockIndex,
+				stockCount: 1,
 				section,
 				displayName,
 				description: typeof record.description === 'string' ? record.description : '',
@@ -180,8 +189,10 @@ const summarizeShop = (
 				price,
 				affordable: price <= coins,
 				ownedCount: ownershipPool.filter((owned: unknown) => getDisplayName(owned) === displayName).length,
-			};
+			});
 		});
+		return [...summaries.values()];
+	};
 
 	// Cards price at the same offset as standard items (`priceOffset * 2`) — see
 	// `items/store/buy.ts`'s console flow, which uses that identical multiplier whether
@@ -541,10 +552,15 @@ export function createRouter(roomManager: RoomManager) {
 			.query(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const limit = input.limit ?? 25;
-				const rows = await queryRoomPlayers(db, input.roomId, (input.sortBy ?? 'xp') as LeaderboardSort, limit);
+				const [rows, game] = await Promise.all([
+					queryRoomPlayers(db, input.roomId, (input.sortBy ?? 'xp') as LeaderboardSort, limit),
+					roomManager.getGame(input.roomId),
+				]);
 				return rows.map((r, i) => ({
 					rank: i + 1,
-					displayName: r.displayName,
+					// Room rankings use the character's current in-game name. Profile names are
+					// only a fallback for players without loaded game state.
+					displayName: String(game.characters?.[r.userId]?.givenName ?? r.displayName),
 					xp: r.xp,
 					wins: r.wins,
 					losses: r.losses,
@@ -565,7 +581,14 @@ export function createRouter(roomManager: RoomManager) {
 			.query(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const limit = input.limit ?? 25;
-				const rows = await queryRoomMonsters(db, input.roomId, (input.sortBy ?? 'xp') as LeaderboardSort, limit);
+				const [rows, game] = await Promise.all([
+					queryRoomMonsters(db, input.roomId, (input.sortBy ?? 'xp') as LeaderboardSort, limit),
+					roomManager.getGame(input.roomId),
+				]);
+				const currentMonsterNames = new Map<string, string>();
+				for (const character of Object.values(game.characters ?? {}) as Array<{ monsters?: Array<{ stableId: string; givenName: string }> }>) {
+					for (const monster of character.monsters ?? []) currentMonsterNames.set(monster.stableId, monster.givenName);
+				}
 				const streaks = await computeMonsterWinStreaks(
 					db,
 					input.roomId,
@@ -574,7 +597,7 @@ export function createRouter(roomManager: RoomManager) {
 				return rows.map((r, i) => ({
 					rank: i + 1,
 					monsterId: r.monsterId,
-					displayName: r.displayName,
+					displayName: currentMonsterNames.get(r.monsterId) ?? r.displayName,
 					monsterType: r.monsterType,
 					ownerName: r.ownerName,
 					xp: r.xp,

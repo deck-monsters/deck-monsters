@@ -68,6 +68,18 @@ describe('characters/beastmaster', () => {
 		expect(beastmaster.monsters).to.not.include(fakeMonster);
 	});
 
+	it('does not start a second revival for a monster whose timer is already running', async () => {
+		const beastmaster = new Beastmaster();
+		const respawn = sinon.stub();
+		beastmaster.addMonster({
+			givenName: 'Toyota', dead: true, inEncounter: false, respawnTimeout: {}, respawn,
+		} as any);
+
+		await expect(beastmaster.reviveMonster({ monsterName: 'Toyota', channel: channelStub }))
+			.to.be.rejectedWith("You don't have any monsters to revive.");
+		expect(respawn.called).to.equal(false);
+	});
+
 	it('can report whether it owns a monster by name', () => {
 		const beastmaster = new Beastmaster();
 		const fakeMonster = { givenName: 'Ragnar' } as any;

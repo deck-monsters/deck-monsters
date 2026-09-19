@@ -1,5 +1,6 @@
 export type ShopStockItem = {
   stockIndex: number;
+  stockCount: number;
   section: 'items' | 'backRoom' | 'cards';
   displayName: string;
   description: string;
@@ -26,7 +27,7 @@ function StockList({ items, busy, onBuy }: { items: ShopStockItem[]; busy?: bool
   return <ul className="shop-stock-list">{items.map((item) => (
     <li key={`${item.section}:${item.stockIndex}:${item.displayName}`} className="shop-stock-row">
       <div className="shop-stock-copy">
-        <strong>{item.displayName}</strong>
+        <strong>{item.displayName}{item.stockCount > 1 && ` ×${item.stockCount}`}</strong>
         {item.ownedCount > 0 && <span className="shop-owned">Own {item.ownedCount}</span>}
         {item.description && <span>{item.description}</span>}
         {item.stats && <span className="workshop-item-stats">{item.stats}</span>}

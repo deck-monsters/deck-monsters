@@ -1203,7 +1203,12 @@ class Beastmaster extends BaseCharacter {
 		monsterName?: string;
 		channel: ChannelFn;
 	}): Promise<BaseMonster> {
-		const monsters = this.monsters.filter(monster => monster.dead && !monster.inEncounter);
+		// A defeated monster remains `dead` until the timer fires. Excluding monsters that
+		// already have a timer prevents repeated commands from announcing that the same
+		// revival has begun again (and from presenting it in the choice list).
+		const monsters = this.monsters.filter(
+			monster => monster.dead && !monster.inEncounter && !monster.respawnTimeout,
+		);
 
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
