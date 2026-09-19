@@ -253,9 +253,27 @@ describe('trpc/router card management procedures', () => {
 
 		expect(result.coins).to.equal(75);
 		expect(result.items[0]).to.deep.include({
-			stockIndex: 0, section: 'items', displayName: 'Potion', price: 80,
+			stockIndex: 0, stockCount: 1, section: 'items', displayName: 'Potion', price: 80,
 			affordable: false, ownedCount: 1, description: 'Heals.',
 		});
+	});
+
+	it('deduplicates equivalent shop stock and reports the number available', async () => {
+		const potion = { itemType: 'Potion', cost: 50, description: 'Heals.' };
+		const game = {
+			characters: { [USER_ID]: { coins: 500, items: [] } },
+			shop: {
+				name: 'Moon Market', adjective: 'quiet', closingTime: new Date('2030-01-01T00:00:00Z'),
+				priceOffset: 1, backRoomOffset: 5, items: [potion, { ...potion }], backRoom: [], cards: [],
+			},
+		};
+		const roomManager = { assertMember: async () => undefined, getGame: async () => game } as any;
+		roomManager.runSerializedEngineWork = async (_lane: string, fn: () => Promise<unknown>) => fn();
+		const result = await createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false })
+			.game.shop({ roomId: ROOM_ID });
+
+		expect(result.items).to.have.lengthOf(1);
+		expect(result.items[0]).to.deep.include({ stockIndex: 0, stockCount: 2, displayName: 'Potion' });
 	});
 
 	it('buys from the current room shop through the serialized mutation lane', async () => {
