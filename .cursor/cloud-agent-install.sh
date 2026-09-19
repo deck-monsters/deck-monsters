@@ -14,7 +14,10 @@ echo "deb [arch=${docker_arch} signed-by=/etc/apt/keyrings/docker.gpg] https://d
   sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
 sudo apt-get update
-sudo apt-get install -y \
+sudo DEBIAN_FRONTEND=noninteractive apt-get \
+  -o Dpkg::Options::="--force-confdef" \
+  -o Dpkg::Options::="--force-confold" \
+  install -y \
   containerd.io \
   docker-buildx-plugin \
   docker-ce \

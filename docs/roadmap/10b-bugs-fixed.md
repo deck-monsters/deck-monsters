@@ -3201,3 +3201,30 @@ prompt by typing, confirms the banner clears, then replays the poll with the sam
 still marked pending and confirms the banner stays closed.
 
 **Status**: Fixed.
+
+### 154. Cloud Agent builds stopped at an unattended `fuse.conf` prompt — FIXED
+
+**Symptom**: every recurring Cloud Agent environment build failed during the
+Docker package installation with `INSTALL_FAILED`. The restored build had
+`fuse3` and `fuse-overlayfs` unpacked but not configured, so dependency setup
+never reached `pnpm install` or the monorepo build.
+
+**Root cause**: the Cloud Agent base image already provides a locally managed
+`/etc/fuse.conf` containing `user_allow_other`. Installing `fuse-overlayfs`
+pulls in `fuse3`, whose package also owns that path. `apt-get install -y` does
+not answer `dpkg` conffile questions; in an unattended environment build the
+prompt received EOF, causing `dpkg` to fail and `apt-get` to exit with code
+100.
+
+**Fixed**: the Cloud Agent install runs `apt-get` with
+`DEBIAN_FRONTEND=noninteractive`, `--force-confdef`, and `--force-confold`.
+Package installation now resolves conffile decisions without a terminal while
+preserving the base image's required `user_allow_other` setting. Other package
+errors remain fatal under the script's existing `set -euo pipefail`.
+
+**Test**: recovered the interrupted package state from failed build
+`bld-20260919-8e276c16-17ef-496b-b22c-76e533c9db5f`, applied the same dpkg
+policy, and confirmed that `fuse3` and `fuse-overlayfs` configured successfully,
+`dpkg --audit` was clean, `/etc/fuse.conf` was unchanged, and Docker started.
+
+**Status**: Fixed.
