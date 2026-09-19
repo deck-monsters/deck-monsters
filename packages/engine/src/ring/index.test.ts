@@ -355,7 +355,7 @@ describe('ring/index.ts', () => {
 		});
 
 		it('keeps passive healing and pending revivals running for monsters the ring releases', () => {
-			// Regression (#108): clearRing() ran every contestant's disposeTimers(), which
+			// Regression (#154): clearRing() ran every contestant's disposeTimers(), which
 			// killed the passive-healing interval and any armed respawn timer on monsters
 			// that live on in their beastmaster's roster. Every fight ends with clearRing(),
 			// so a monster that survived (or was revived after) a fight sat at 1 hp for

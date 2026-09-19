@@ -16,15 +16,32 @@ combat/level-up/instant-revival clock loopholes closed in review) is resolved as
 second September 19 live-play pass found the Ring roster falling back to a stale polled
 snapshot at exactly the moment a fight concluded, and the Console's "waiting for your
 answer" banner reopening itself right after the player answered the very prompt it named —
-both resolved as #152 and #153. The
+both resolved as #152 and #153. A third pass, after a test battle showed the #151 fix had
+not landed in practice, found the real reason a revived monster stayed at 1 hp (every fight's
+`clearRing()` disposed player monsters' healing timers — #154), a Delayed Hit answering a
+turn-old blow after an unrelated Heal (#155), and the waiting banner covering the prompt
+choices it was explaining (#156). The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
 post-merge passes (#112–#134), the shop-menu off-by-one from the prompt-answer-contract
 audit is fixed (#143), item #4 from that same audit — the remaining pure-index prompt
 sites, unproven over Discord — is fixed (#146), and item #5, the shop's always-empty card
 stock, is fixed (#147). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive
-(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#153).
+(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#156).
 
 ## Recently resolved
+
+### September 19 post-battle regressions — FIXED (#154–#156)
+
+A test battle after #380–#382 merged showed a revived monster still at 1 hp hours later.
+#151 had made healing wall-clock based but never restored the healing interval that
+`Ring.clearRing()` — run at the end of every fight — had been disposing on player monsters
+since April; a revived monster therefore healed only when the room was next restored from
+state (#154). The same session confirmed two reports earlier passes had treated as narration
+problems: a Delayed Hit firing after an unrelated Heal because two armed copies checked in
+nesting order and one counter-attack landed after the other's check (#155), and the Console's
+"waiting for your answer" banner rendering over a prompt whose choices were on screen, when
+#142 built it for a prompt the player could not see (#156). Root causes and tests in
+`10b-bugs-fixed.md`.
 
 ### September 19 health-recovery follow-up — FIXED (#151)
 

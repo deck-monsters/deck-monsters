@@ -3200,4 +3200,218 @@ the waiting banner when a stale poll echoes an already-answered prompt": answers
 prompt by typing, confirms the banner clears, then replays the poll with the same requestId
 still marked pending and confirms the banner stays closed.
 
+**Status**: Fixed — but this was not the whole of what the screenshot showed. The same
+capture recurred after this fix landed, and the remaining cause is #156: the banner was
+*designed* to render for the entire unanswered life of a prompt, including while its choice
+buttons are on screen.
+
+### 154. A revived monster sat at 1 hp for hours — every fight killed its healing timer — FIXED
+
+**Symptom**: after a test battle a defeated monster was revived immediately, its revival
+timer ran out, and it was still at 1 hp hours later. This is what PRs #380–#382 were
+reaching for; they made healing wall-clock based (#151), which is why a server restart *did*
+heal such a monster, and then stopped.
+
+**Root cause**: `Ring.clearRing()` — which runs synchronously at the end of every fight, in
+`fight().then(...)` right after `fightConcludes()` — called `disposeTimers()` on every
+contestant's monster and character. `disposeTimers()` is `clearInterval(healingInterval)`
+plus `clearTimeout(respawnTimeout)`. That was added in the April harness commit
+(`3ca267a`) so throwaway simulation monsters would not keep the Node process alive, but
+player monsters are not throwaway: they live on in their beastmaster's roster. So from a
+monster's first fight onward its passive-healing interval was dead. Nothing called
+`applyPassiveHealing()` again until the room was next restored from state, and the
+respawn callback (`hp = 1, hpUpdatedAt = now`) had no interval behind it.
+
+Sequence in the report: fight ends → `clearRing()` disposes Toyota's timers → owner types
+`revive Toyota` → `respawn()` arms a fresh timeout (fine — `respawnTimeout` had been wiped)
+→ timeout fires → 1 hp → no interval → 1 hp forever. #381/#382 never touched this because
+their tests construct monsters directly and never run them through a ring.
+
+**Fixed**: `clearRing()` and `removeMonster()` dispose only *transient* contestants
+(`isBoss`, which also covers harness sim monsters — `buildContestant` marks them bosses).
+Player monsters are torn down by their owners: `Game.dispose()` on room unload, and now
+`Beastmaster.dropMonster()` on dismissal, which previously leaked the dropped monster's
+interval and any pending revival. `disposeTransientContestant()` on `Ring` is the single
+place that decides; see the ownership rule added to `engine-concurrency-and-timing.md`.
+
+**Found alongside it**: the server's quick-action chips still offered `Revive X` for a
+monster whose revival timer was already running. `Beastmaster.reviveMonster` has excluded
+those since #380, so the chip could only answer "You don't have any monsters to revive."
+`quick-actions.ts` now mirrors the same `respawnTimeout` exclusion.
+
+**Tests**: `ring/index.test.ts` — "keeps passive healing and pending revivals running for
+monsters the ring releases" (a wounded and a fallen player monster go through
+`clearRing()`; the wounded one heals on the interval, the fallen one revives on schedule and
+then heals). `beastmaster.test.ts` — "stops a dropped monster's background timers".
+`quick-actions.test.ts` — "does not offer to revive a monster whose revival timer is already
+running".
+
+**Status**: Fixed.
+
+### 155. A Delayed Hit fired after an unrelated card, answering a blow from a turn ago — FIXED
+
+**Symptom** (live capture): Ben Franklin plays Heal and heals himself 3 hp. The next line is
+"🤛 George Washington's Delayed Hit finds its moment: he immediately responds to the blow Ben
+Franklin gave him." Ben gave no blow; he drank. Reported as delayed hits "playing at odd
+times". #130/#131/#149 improved what the payoff *says*; none of them changed *when* it runs.
+
+**Root cause**: the card arms a `ring.encounterEffects` closure that wraps every subsequent
+card's `play()` and, after the play resolves, checks whether the delayer's newest hit from
+someone else is newer than when the card was played. That check is per-wrapper and runs
+once per play. When two Delayed Hits are armed — the default deck carries two copies, so a
+two-monster fight where both decks hold one is routine — `applyEffects` nests the wrappers in
+arming order, so the *earlier*-armed card's check runs before the *later*-armed card's
+counter-attack lands. If that counter is itself the blow the earlier card was waiting for
+(George armed first, Ben armed second, George strikes Ben, Ben's card answers by hitting
+George), George's hit is recorded after George's wrapper already looked. It then sits
+unanswered until the next card anyone plays — a Heal — whose wrapper finds it, fires, and
+narrates it as a response to whatever that card was.
+
+**Fixed**: each armed effect exposes `settle()`; after any wrapped play, `settleDelayedHits`
+runs every armed Delayed Hit in a loop until a full pass fires nothing. A counter that is
+itself a qualifying blow is answered in the same play, immediately after it lands, which is
+what "immediately hit the next player who hits you" says. Terminates because every counter
+removes its own effect.
+
+**Found alongside it**: `hit()` stamped `hitLog` entries with `Date.now()` while the card's
+`whenPlayed` used `hitLogTimestamp()`. Under `DECK_MONSTERS_SKIP_DELAYS` (every test run and
+every harness simulation) the latter is a small monotonic counter, so *every* recorded hit
+looked newer than any Delayed Hit — the card fired on blows that landed before it was
+played. Production was unaffected (both are `Date.now()` there), but the harness has been
+mis-simulating this card since the counter was introduced. `hit()` now uses
+`hitLogTimestamp()`.
+
+**Residual, deliberately left**: Blink's `timeShifted` defers the check without clearing the
+blow, so a hit taken just before a Blink is answered after the Blink ends, on whatever card
+plays next. That is arguably the card working ("delayed"), and no report has named it.
+
+**Test**: `cards/delayed-hit.test.ts` — "answers a blow dealt by another delayed hit in the
+same play, not after the next unrelated card": arms target then player, strikes through the
+real `play()` path, asserts both effects are spent and exactly one payoff fired, then plays a
+Heal and asserts nothing fires.
+
+**Status**: Fixed.
+
+### 156. The "waiting for your answer" banner covered the very choices it was asking about — FIXED
+
+**Symptom**: the shop's Items/Cards/Back Room prompt with its choice buttons on screen and,
+pinned over the bottom of the feed, "A command is waiting for your answer. Command
+suggestions are paused." Reported as the banner "displaying while you're actively trying to
+answer questions for a multi-step command". The same screenshot had already been filed as
+#153, which fixed a real stale-poll race but not this.
+
+**Root cause**: the banner rendered on `activePromptId` alone — for the entire unanswered life
+of every prompt. #142 introduced it because "the prompt could be far above the mobile
+input", i.e. for a prompt the player *cannot see*; but nothing ever checked whether that was
+the case. In the common case (`followOutput` keeps a new prompt as the last row, and the
+banner is `position:absolute; bottom:100%` over the dock) the choices and the banner occupy
+the same band of the screen, so the explanation for an invisible prompt sat on top of a
+perfectly visible one. The header's own `Cancel action` button, gated the same way, made the
+banner's button redundant there too.
+
+**Fixed**: a `PromptVisibilitySentinel` is rendered at the end of the active prompt's row.
+Virtuoso only mounts rows near the viewport, so unmounting is itself a "not visible" signal;
+`IntersectionObserver` refines that for a mounted-but-scrolled row. The banner renders on
+`activePromptId && !activePromptInView`. Where `IntersectionObserver` is unavailable, a
+mounted row counts as visible.
+
+**Test**: `apps/web/src/__tests__/consolePane-prompt-banner.test.tsx` — no banner while the
+choices intersect the viewport; banner once they scroll out and gone again when they return;
+banner for a prompt row Virtuoso has not mounted. The existing scroll-behavior tests never
+mount rows and keep asserting the banner unchanged.
+
+**Status**: Fixed.
+
+### 154. A revived monster sat at 1 hp for hours — every fight killed its healing interval — FIXED
+
+**Symptom**: after PRs #380–#382 (which made passive healing wall-clock based), a live room
+still showed a monster at 1 hp hours after the player had revived it right after the fight.
+Reported as the revive/heal work having made things worse.
+
+**Root cause**: not in the healing code those PRs touched. `Ring.clearRing()` runs
+synchronously at the end of *every* fight (`fight()` → `fightConcludes()` → `clearRing()`),
+and since the April harness commit (`3ca267a`) it called `disposeTimers()` on every
+contestant's monster and character — which `clearInterval`s the passive-healing tick and
+`clearTimeout`s any armed respawn. That is right for bosses, which the ring creates and
+nobody else owns, but player monsters live on in their beastmaster's roster. So a monster's
+healing interval died for good the first time it fought. The sequence the player saw:
+
+1. Fight ends → `clearRing()` → Toyota's `healingInterval` and `respawnTimeout` cleared.
+2. Player types `revive Toyota` → `respawn()` arms a fresh timer (nothing else was pending).
+3. Timer fires → `hp = 1`, `hpUpdatedAt = now` → but nothing ever calls
+   `applyPassiveHealing()` again. 1 hp, indefinitely.
+
+PRs #381/#382 were not wrong, just aimed at the wrong layer: persisting `hpUpdatedAt` and
+catching up on hydration is why a **server restart** did heal the monster — which is also
+why the bug looked intermittent and "fixed" in testing. While the room stayed loaded, the
+only heal source was the interval `clearRing()` had already destroyed.
+
+**Fixed**: `clearRing()` and `removeMonster()` dispose only transient contestants via a new
+`disposeTransientContestant()` (keyed on `isBoss`, which also covers harness sim monsters,
+built as bosses). Player monsters are torn down where they are actually owned:
+`Game.dispose()` (room unload) as before, and now also `Beastmaster.dropMonster()` — a
+dismissed monster used to leak its interval, and could still fire a stale `respawn` on an
+orphan. Ownership rule recorded in `engine-concurrency-and-timing.md`.
+
+**Found alongside**: the server's quick-action chips still offered `Revive X` for a monster
+whose revival timer was already running, even though #380 made `reviveMonster` exclude
+exactly those — tapping the chip answered "You don't have any monsters to revive."
+`quick-actions.ts` now mirrors the engine filter.
+
+**Tests**: `ring/index.test.ts` — "keeps passive healing and pending revivals running for
+monsters the ring releases" (two owned monsters in the ring; `clearRing()`; the wounded one
+heals on the interval and the fallen one's revival fires and then heals — red before the fix
+at exactly Toyota's symptom, `expected 1 to equal 4`). `beastmaster.test.ts` — dropped
+monster's timers are disposed. `quick-actions.test.ts` — no revive chip while reviving.
+
+**Status**: Fixed.
+
+### 155. Delayed Hit answered a blow one turn late, after an unrelated card — FIXED
+
+**Symptom**: a live capture showed Ben Franklin play **Heal** (self, +3 hp), immediately
+followed by "🤛 George Washington's Delayed Hit finds its moment: he immediately responds
+to the blow Ben Franklin gave him." Ben had not struck; he had healed. Reported as delayed
+hits "playing at odd times" — and still happening after the #130/#131/#149 narration fixes,
+which were about *what the line says*, not *when it fires*.
+
+**Root cause**: `DelayedHit` arms a ring-level encounter effect that wraps every subsequent
+card play and, after the play resolves, asks "is the newest hit on me from someone else
+newer than when I was played?" — firing if so. `BaseCard.applyEffects()` applies ring effects
+in arming order, so with two Delayed Hits armed the wrappers nest and the **earlier-armed
+card's check runs before the later-armed card's counter-attack lands**:
+
+```
+target arms Delayed Hit (T), then player arms Delayed Hit (P)
+target strikes player            → chain is P(T(strike))
+  T's check: no blow on target yet            → nothing
+  P's check: target's strike                  → player counters, hits target   ← T missed this
+next card anyone plays (a Heal)
+  T's check: player's counter is newer        → fires, "responds to the blow"
+```
+
+Two monsters each carrying the card (up to four copies per deck) makes this common. Every
+other effect that deals damage (Immobilize's ongoing damage, Blink, Bad Batch) does so
+*inside* the wrapped play, where the post-play check sees it; only another Delayed Hit's
+counter lands after a check has already run.
+
+**Fixed**: each effect exposes `settle()` (the check-and-counter, unchanged in what it does),
+and after any wrapped play `settleDelayedHits(ring)` runs *every* armed Delayed Hit's
+`settle()` in a loop until a full pass fires nothing. A counter that is itself the blow
+another armed card was waiting for is now answered in the same play, right after it lands.
+Terminates because every counter removes its own effect. Nothing about *who* is answered
+changes — still the newest assailant, still the card's own roll.
+
+**Found alongside**: `creatures/health.ts#hit()` stamped `hitLog` entries with `Date.now()`
+while `DelayedHit` stamps `whenPlayed` with `hitLogTimestamp()`, which under
+`DECK_MONSTERS_SKIP_DELAYS` is a small monotonic counter. Every recorded hit therefore
+looked newer than any Delayed Hit in the entire test suite and in every harness simulation:
+the card fired on blows dealt *before* it was played. Production was unaffected (both
+clocks are `Date.now()` there), but the harness has been mis-simulating the card and the
+existing tests could not have caught the ordering bug. Both now use `hitLogTimestamp()`.
+
+**Test**: `cards/delayed-hit.test.ts` — "answers a blow dealt by another delayed hit in the
+same play, not after the next unrelated card": arms target then player, strikes through the
+real `play()` path, asserts both effects are spent and exactly one payoff narration fired,
+then plays a Heal and asserts nothing springs.
+
 **Status**: Fixed.

@@ -661,7 +661,7 @@ export class Ring extends BaseClass {
 	 * them. Player monsters are the opposite: they live on in their beastmaster's
 	 * roster and MUST keep healing and reviving after the ring releases them. Disposing
 	 * them here (which every fight did via `clearRing()`) is what left revived monsters
-	 * parked at 1 hp for hours until the room was restored from state (#108).
+	 * parked at 1 hp for hours until the room was restored from state (#154).
 	 */
 	private disposeTransientContestant({ monster, character, isBoss }: Contestant): void {
 		if (!isBoss) return;
