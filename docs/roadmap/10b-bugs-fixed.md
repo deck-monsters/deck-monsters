@@ -3115,3 +3115,89 @@ purchase instead of either "not available" refusal).
 **Status**: Fixed. `pnpm build`, `pnpm typecheck`, and `pnpm lint` (0 errors) all pass
 repo-wide; `pnpm test` passes all five packages (817 engine / 194 server / 85 discord / 4
 harness / 298 web, all green).
+
+---
+
+### 152. The Ring roster froze on stale numbers right when a fight concluded — FIXED
+
+**Symptom**: a live-play screenshot showed the roster reading "2/3 standing" with a monster
+at 4/31 HP directly under a feed banner announcing that fight had just concluded with 2
+dead. The roster is supposed to be most trustworthy exactly at that moment — see
+`18-live-ring-roster.md` — but instead it showed neither the truly final board nor an empty
+one; it showed an unrelated, older snapshot.
+
+**Root cause**: `Ring.clearRing()` runs after every fight, unconditionally, whether or not
+any contestant survived — the ring always empties and players resend monsters for the next
+one. It publishes the true final board (all deaths, final HP, `inEncounter: false`) via
+`this.endEncounter()`, then immediately publishes a second, empty `ring.state` (`contestants:
+[]`) once `this.contestants` is cleared. Both are correct and intentional on the engine side.
+
+The bug was client-side, in `RingPane.tsx`'s derivation of which contestant list to render:
+
+```ts
+const rosterContestants = timerState.contestants && timerState.contestants.length > 0
+  ? timerState.contestants
+  : (ringState?.contestants ?? []); // the polled `game.ringState` query
+```
+
+This was written to mean "trust live pushes once they start arriving, otherwise seed from
+the poll" (the comment above it said exactly that), but it actually tested
+`.length > 0` — so a **legitimate empty push** (the second one from `clearRing()`) was
+indistinguishable from "no live push has arrived yet," and the roster fell back to
+`ringState`, a `refetchInterval: 60_000` query that could easily hold a snapshot from
+before the fight even started. The true final board (the first push) may have rendered for
+a moment, but the very next push — the empty one, sent synchronously right after — replaced
+it with the stale poll data instead of with the intentional empty roster.
+
+**Fixed**: a `hasLiveTimerStateRef` ref is set the first time any live `ring.state` (handshake
+or push) is applied. Once set, `timerState.contestants` is used verbatim, including when it
+is legitimately empty — the polled query is now only ever a cold-start seed before the first
+live push, never a fallback that can override a live push arriving later.
+
+**Test**: `apps/web/src/__tests__/ringPane-roster-freshness.test.tsx` — seeds a stale query
+snapshot, pushes a live mid-fight `ring.state` with a death and confirms it wins over the
+stale seed, then pushes the empty post-`clearRing()` `ring.state` and confirms the roster
+goes empty rather than reverting to the stale seed.
+
+**Status**: Fixed.
+
+### 153. Answering a Console prompt could re-open its own "waiting for your answer" banner — FIXED
+
+**Symptom**: a live-play screenshot showed the shop's Items/Cards/Back Room prompt with its
+choice buttons visible and, directly below, "A command is waiting for your answer. Command
+suggestions are paused." — for the very prompt the player was in the middle of answering via
+those buttons.
+
+**Root cause**: `ConsolePane` resumes prompts across reconnects with a 3-second
+`pendingPrompt` poll (`trpc.game.pendingPrompt`, added in #142) alongside live
+`prompt.request`/`prompt.timeout`/`prompt.cancel` events. `upsertPendingPrompt` — called from
+both the poll effect and the reconnect handshake — unconditionally reset the matching
+console event's `promptData` (`selectedAnswer: null, timedOut: false, cancelled: false`) and
+re-armed `activePromptId` on every call, with no check for whether that requestId had already
+been resolved locally.
+
+A poll request already in flight when the player clicked a choice (or typed an answer, or
+cancelled the flow) could land *after* `handleAnswer` had already cleared `activePromptId`,
+still carrying the server's old "yes, this prompt is pending" snapshot from before the
+answer was processed. Its stale response then re-armed `activePromptId` for the exact
+requestId the player had just resolved — silently erasing the "you selected X" UI feedback
+in the process — reopening the waiting banner for a prompt that, from the player's
+perspective, was already done.
+
+**Fixed**: a `resolvedPromptIdsRef` set records every requestId resolved locally —
+`handleAnswer`, `handleCancelPrompt`, `handleCancelFlow`, the `prompt.timeout` and
+`prompt.cancel` live-event handlers, and the poll's own two-consecutive-empty-polls
+stale-clear all add to it at the point of resolution. `upsertPendingPrompt` checks the set
+first and returns immediately for an already-resolved requestId, before touching
+`consoleEvents` or `activePromptId` at all. (An earlier version of this fix tried to detect
+"already resolved" by reading `consoleEvents` from inside the `setConsoleEvents` updater and
+branching on it in code that ran immediately after — that does not work, because React does
+not guarantee an updater function runs before the statement following the `setState` call;
+the fix needed a plain ref set synchronously at the point of resolution instead.)
+
+**Test**: `apps/web/src/__tests__/consolePane-scroll-behavior.test.tsx` — "does not reopen
+the waiting banner when a stale poll echoes an already-answered prompt": answers a live
+prompt by typing, confirms the banner clears, then replays the poll with the same requestId
+still marked pending and confirms the banner stays closed.
+
+**Status**: Fixed.

@@ -90,10 +90,13 @@ vi.mock('../lib/trpc.js', () => ({
         useQuery: () => trpcMocks.pendingPromptQuery,
       },
       myMonsters: {
-        useQuery: () => ({ data: [] }),
+        useQuery: () => ({ data: [], refetch: vi.fn(async () => ({ data: [] })) }),
       },
       myInventory: {
-        useQuery: () => ({ data: { items: { character: [], monsters: [] } } }),
+        useQuery: () => ({
+          data: { items: { character: [], monsters: [] } },
+          refetch: vi.fn(async () => ({ data: { items: { character: [], monsters: [] } } })),
+        }),
       },
       command: {
         useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }),
@@ -301,6 +304,61 @@ describe('ConsolePane scroll behavior', () => {
 
     trpcMocks.pendingPromptQuery.dataUpdatedAt = 2;
     view.rerender(<TestFeed><ConsolePane roomId={roomId} isActive /></TestFeed>);
+    expect(screen.queryByText(/Command suggestions are paused/)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Type a command…')).toBeEnabled();
+  });
+
+  /**
+   * A stale response from the 3s `pendingPrompt` poll can land after the player has
+   * already answered this exact requestId — the poll request was in flight before the
+   * answer reached the server. `upsertPendingPrompt` used to overwrite the resolved
+   * prompt back to pending unconditionally, which re-armed `activePromptId` and
+   * reopened the "waiting for your answer" banner for a prompt the player was, at that
+   * moment, literally in the middle of having just answered. See 10b-bugs-fixed.md
+   * (September 2026 follow-up).
+   */
+  it('does not reopen the waiting banner when a stale poll echoes an already-answered prompt', () => {
+    const roomId = '11111111-1111-1111-1111-111111111111';
+    const view = render(
+      <TestFeed>
+        <ConsolePane roomId={roomId} isActive />
+      </TestFeed>,
+    );
+
+    act(() => {
+      pushEvent({
+        id: 'prompt-request',
+        data: {
+          id: 'prompt-request',
+          type: 'prompt.request',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: 'Which would you like to see?',
+          payload: { requestId: 'request-shop-1', question: 'Which would you like to see?', choices: ['Items', 'Cards', 'Back Room'] },
+          timestamp: Date.now(),
+          roomId,
+        },
+      });
+    });
+    expect(screen.getByText(/Command suggestions are paused/)).toBeInTheDocument();
+
+    // Answer it by typing, the same path the free-text/Discord-style answer takes.
+    const input = screen.getByPlaceholderText('Type your answer or click a choice above…');
+    fireEvent.change(input, { target: { value: 'Items' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(screen.queryByText(/Command suggestions are paused/)).not.toBeInTheDocument();
+
+    // A poll that was already in flight when the answer landed now resolves, echoing
+    // the same requestId as still pending.
+    trpcMocks.pendingPromptQuery.data = {
+      requestId: 'request-shop-1',
+      question: 'Which would you like to see?',
+      choices: ['Items', 'Cards', 'Back Room'],
+    };
+    trpcMocks.pendingPromptQuery.dataUpdatedAt = 1;
+    view.rerender(<TestFeed><ConsolePane roomId={roomId} isActive /></TestFeed>);
+
     expect(screen.queryByText(/Command suggestions are paused/)).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText('Type a command…')).toBeEnabled();
   });

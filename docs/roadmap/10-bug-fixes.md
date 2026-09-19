@@ -11,12 +11,18 @@ pass room scoping and replaced dehumanizing androgynous `it/its` pronouns with s
 `they/them/their` is resolved as #149. The review follow-up for inventory cache refresh,
 source-aware item suggestions, generic placeholder cleanup, multi-boss event precedence,
 singular-they agreement, and the CI fake-timer regression is resolved as #150. The
+September 19 health-recovery follow-up (passive healing surviving room downtime, plus the
+combat/level-up/instant-revival clock loopholes closed in review) is resolved as #151. A
+second September 19 live-play pass found the Ring roster falling back to a stale polled
+snapshot at exactly the moment a fight concluded, and the Console's "waiting for your
+answer" banner reopening itself right after the player answered the very prompt it named —
+both resolved as #152 and #153. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
 post-merge passes (#112–#134), the shop-menu off-by-one from the prompt-answer-contract
 audit is fixed (#143), item #4 from that same audit — the remaining pure-index prompt
 sites, unproven over Discord — is fixed (#146), and item #5, the shop's always-empty card
 stock, is fixed (#147). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive
-(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147).
+(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#153).
 
 ## Recently resolved
 

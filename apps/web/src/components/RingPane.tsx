@@ -186,6 +186,13 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
   const historyApplied = useRef(false);
   // True once the first handshake has landed, so a later handshake is a *re*connect.
   const hasConnectedRef = useRef(false);
+  // True once any live ring.state (handshake or push) has been applied to timerState.
+  // Distinguishes "no live data yet, fall back to the polled query" from "a live push
+  // legitimately emptied the roster" (e.g. clearRing() after a fight ends) — both left
+  // timerState.contestants as an empty array, so a length check alone could not tell
+  // them apart and was reverting to a stale polled snapshot right when the fight-end
+  // roster mattered most.
+  const hasLiveTimerStateRef = useRef(false);
   // Set when a reconnect handshake arrives. The replayed catch-up arrives after the
   // handshake but carries timestamps from *during* the outage, so drawing "reconnected"
   // at handshake time would put it above events the reader actually missed. Holding it
@@ -219,7 +226,10 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
     if (event.type === 'handshake') {
       // Seed timer state from the handshake payload so we have instant values
       const hs = event.payload as { ringState?: unknown; yourUserId?: string };
-      if (hs.ringState) setTimerState(hs.ringState as TimerState);
+      if (hs.ringState) {
+        hasLiveTimerStateRef.current = true;
+        setTimerState(hs.ringState as TimerState);
+      }
       if (hs.yourUserId) setMyUserId(hs.yourUserId);
       if (hasConnectedRef.current) {
         pendingReconnectAtRef.current = Date.now();
@@ -238,6 +248,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
     // ring.state is a state-sync signal — update timers but don't show in the feed
     if (event.type === 'ring.state') {
       const s = event.payload as unknown as TimerState;
+      hasLiveTimerStateRef.current = true;
       setTimerState({
         nextFightAt: s.nextFightAt,
         nextBossSpawnAt: s.nextBossSpawnAt,
@@ -383,11 +394,13 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
   }
 
   // ring.state pushes are authoritative once they start arriving; the ringState
-  // query seeds the roster on mount (and after a reconnect drops pushed state).
-  const rosterContestants: RingContestantSnapshot[] =
-    timerState.contestants && timerState.contestants.length > 0
-      ? timerState.contestants
-      : ((ringState as { contestants?: RingContestantSnapshot[] } | undefined)?.contestants ?? []);
+  // query only seeds the roster before the first one lands. An empty live push
+  // (e.g. the ring clearing right after a fight ends) must win over the query too,
+  // or the roster reverts to a stale polled snapshot at exactly the moment — the
+  // fight's conclusion — the display matters most.
+  const rosterContestants: RingContestantSnapshot[] = hasLiveTimerStateRef.current
+    ? (timerState.contestants ?? [])
+    : ((ringState as { contestants?: RingContestantSnapshot[] } | undefined)?.contestants ?? []);
 
   const summonBadge = ringState
     ? `summons ${ringState.bossSummonsRemaining}/${ringState.bossSummonLimit}`
