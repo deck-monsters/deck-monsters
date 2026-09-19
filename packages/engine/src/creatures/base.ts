@@ -74,13 +74,13 @@ class BaseCreature extends BaseClass<CreatureOptions> {
 			throw new Error('The BaseCreature should not be instantiated directly!');
 		}
 
-		this.healingInterval = setInterval(() => {
-			if (this.hp < this.maxHp && !this.inEncounter && !this.dead) this.heal(1);
-		}, TIME_TO_HEAL_MS);
-
 		if (this.respawnTimeoutBegan) {
 			this.respawn();
+		} else {
+			this.applyPassiveHealing();
 		}
+
+		this.healingInterval = setInterval(() => this.applyPassiveHealing(), TIME_TO_HEAL_MS);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -196,7 +196,30 @@ Battles won: ${this.battles.wins}`;
 	}
 
 	set hp (hp: number) {
-		this.setOptions({ hp });
+		this.setOptions({ hp, hpUpdatedAt: Date.now() });
+	}
+
+	/**
+	 * Applies every passive-healing tick that elapsed in wall-clock time. Persisting the
+	 * baseline means sleeping hosts and room unload/reload cycles cannot pause recovery.
+	 */
+	applyPassiveHealing(now: number = Date.now()): number {
+		if (this.inEncounter || this.dead || this.hp >= this.maxHp) return 0;
+		const began = typeof this.options.hpUpdatedAt === 'number' ? this.options.hpUpdatedAt : now;
+		const ticks = Math.floor(Math.max(0, now - began) / TIME_TO_HEAL_MS);
+		if (ticks <= 0) {
+			if (this.options.hpUpdatedAt === undefined) this.setOptions({ hpUpdatedAt: now });
+			return 0;
+		}
+		const previousHp = this.hp;
+		const nextHp = Math.min(this.maxHp, previousHp + ticks);
+		const amount = nextHp - previousHp;
+		this.setOptions({
+			hp: nextHp,
+			hpUpdatedAt: nextHp >= this.maxHp ? now : began + ticks * TIME_TO_HEAL_MS,
+		});
+		if (amount > 0) this.emit('heal', { amount, hp: nextHp, prevHp: previousHp });
+		return amount;
 	}
 
 	get level (): number {
