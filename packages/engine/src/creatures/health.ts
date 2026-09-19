@@ -1,7 +1,7 @@
 import { capitalize } from '../helpers/capitalize.js';
 import { MELEE } from '../constants/card-classes.js';
 import { TIME_TO_HEAL_MS, TIME_TO_RESURRECT_MS } from '../constants/timing.js';
-import { subEventDelay } from '../helpers/delay-times.js';
+import { hitLogTimestamp, subEventDelay } from '../helpers/delay-times.js';
 import type { BaseCreature, CardInstance, HitLogEntry } from './base.js';
 
 const encounterSpeed = (creature: BaseCreature): number =>
@@ -15,7 +15,11 @@ function isRealCreature (assailant: unknown): assailant is BaseCreature {
 
 export async function hit (self: BaseCreature, damage = 0, assailant?: BaseCreature, card?: CardInstance): Promise<boolean> {
 	const hitLog: HitLogEntry[] = (self.encounterModifiers.hitLog as HitLogEntry[]) || [];
-	hitLog.unshift({ assailant, damage, card, when: Date.now() });
+	// Same clock as DelayedHit's `whenPlayed`. Under DECK_MONSTERS_SKIP_DELAYS that clock is
+	// a monotonic counter, so stamping `Date.now()` here made every hit ever recorded look
+	// newer than any Delayed Hit — the card fired on blows that landed before it was played
+	// in every test and harness simulation.
+	hitLog.unshift({ assailant, damage, card, when: hitLogTimestamp() });
 	self.encounterModifiers.hitLog = hitLog;
 
 	const isMelee = card && typeof card.isCardClass === 'function' && card.isCardClass(MELEE);
