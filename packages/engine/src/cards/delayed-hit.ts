@@ -83,12 +83,12 @@ export class DelayedHit extends HitCard {
 								 */
 								if (delayingTarget.dead) {
 									this.emit('narration', {
-										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: with ${his} dying breath, ${delayingPlayer.pronouns.he} avenges the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: with ${his} dying breath, ${delayingPlayer.pronouns.he} avenge${delayingPlayer.pronouns.verbSuffix ?? 's'} the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
 										owner: delayingPlayer,
 									});
 								} else {
 									this.emit('narration', {
-										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: ${delayingPlayer.pronouns.he} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: ${delayingPlayer.pronouns.he} immediately respond${delayingPlayer.pronouns.verbSuffix ?? 's'} to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
 										owner: delayingPlayer,
 									});
 								}

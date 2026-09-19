@@ -87,7 +87,7 @@ export class EnthrallCard extends ImmobilizeCard {
 
 		if (isInvisible(target)) {
 			this.emit('narration', {
-				narration: `${target.givenName} is gets prepared but ${target.pronouns.he} is hidden from view, making it impossible for ${target.pronouns.him} to ${this.actions.IMMOBILIZE} anyone.`,
+				narration: `${target.givenName} gets prepared but ${target.pronouns.he} ${target.pronouns.is ?? 'is'} hidden from view, making it impossible for ${target.pronouns.him} to ${this.actions.IMMOBILIZE} anyone.`,
 			});
 			return true;
 		}

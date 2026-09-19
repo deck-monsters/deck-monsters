@@ -8,6 +8,9 @@ describe('helpers/pronouns', () => {
 			he: 'they',
 			him: 'them',
 			his: 'their',
+			is: 'are',
+			was: 'were',
+			verbSuffix: '',
 		});
 	});
 });

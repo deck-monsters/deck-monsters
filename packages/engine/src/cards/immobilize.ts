@@ -313,7 +313,7 @@ ${ongoingDamageText}`;
 			player === target ? `${player.pronouns.him}self` : target.givenName;
 		let immobilizeNarrative = `\n${player.givenName} ${this.icon} ${this.actions.IMMOBILIZES} ${targetName}.\nAt the beginning of ${target.givenName}'s turn ${target.pronouns.he} will roll ${this.freedomThresholdNarrative(player, target)} to attempt to break free.`;
 		if (this.ongoingDamage > 0) {
-			immobilizeNarrative += `\n${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} is ${this.actions.IMMOBILIZED}\n`;
+			immobilizeNarrative += `\n${target.givenName} takes ${this.ongoingDamage} damage per turn ${target.pronouns.he} ${target.pronouns.is ?? 'is'} ${this.actions.IMMOBILIZED}\n`;
 		}
 		this.emit('narration', { narration: immobilizeNarrative });
 	}
@@ -336,7 +336,7 @@ ${ongoingDamageText}`;
 			if (alreadyImmobilized) {
 				narration = `\n${target.givenName} is already immobilized, ${player.givenName} _shows no mercy_!`;
 			} else {
-				narration = `\n${target.givenName} laughs haughtily as ${player.givenName} tries to ${this.actions.IMMOBILIZE} them, ${player.pronouns.he} vents ${player.pronouns.his} fury at ${target.pronouns.his} mockery!`;
+				narration = `\n${target.givenName} laughs haughtily as ${player.givenName} tries to ${this.actions.IMMOBILIZE} them, ${player.pronouns.he} vent${player.pronouns.verbSuffix ?? 's'} ${player.pronouns.his} fury at ${target.pronouns.his} mockery!`;
 			}
 			this.emit('narration', { narration });
 			return super.effect(player, target, ring, activeContestants);

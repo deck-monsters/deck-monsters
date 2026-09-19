@@ -38,6 +38,9 @@ export interface PronounSet {
 	he: string;
 	him: string;
 	his: string;
+	is?: string;
+	was?: string;
+	verbSuffix?: string;
 }
 
 export interface ChannelManager {

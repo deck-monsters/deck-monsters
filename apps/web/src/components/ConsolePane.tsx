@@ -56,11 +56,13 @@ interface MonsterAutocompleteRow {
   dead: boolean;
   inRing: boolean;
   battlesTotal: number;
+  inEncounter?: boolean;
 }
 
 interface InventoryAutocompleteRow {
   displayName: string;
   expired: boolean;
+  usableOnMonsters: string[];
 }
 
 const EMPTY_MONSTERS: MonsterAutocompleteRow[] = [];
@@ -182,7 +184,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     { roomId },
     { enabled: !!roomId },
   );
-  const { data: myInventory } = trpc.game.myInventory.useQuery(
+  const { data: myInventory, refetch: refetchMyInventory } = trpc.game.myInventory.useQuery(
     { roomId },
     { enabled: !!roomId, staleTime: 30_000 },
   );
@@ -199,14 +201,15 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     () => monsterRows.filter((m) => !m.dead && !m.inRing).map((m) => m.name),
     [monsterRows]
   );
-  const itemNames = useMemo(() => {
-    const characterItems = (myInventory?.items.character ?? []) as InventoryAutocompleteRow[];
-    const monsterItems = (myInventory?.items.monsters ?? [])
-      .flatMap(entry => entry.items) as InventoryAutocompleteRow[];
-    return [...new Set([...characterItems, ...monsterItems]
-      .filter(item => !item.expired)
-      .map(item => item.displayName))];
-  }, [myInventory]);
+  const transferableMonsterNames = useMemo(
+    () => monsterRows.filter((m) => !m.inEncounter).map((m) => m.name),
+    [monsterRows]
+  );
+  const characterItems = (myInventory?.items.character ?? []) as InventoryAutocompleteRow[];
+  const monsterItems = (myInventory?.items.monsters ?? []) as Array<{
+    monsterName: string;
+    items: InventoryAutocompleteRow[];
+  }>;
   const suggestions = useCommandAutocomplete(
     inputValue,
     !activePromptId && !inputLocked,
@@ -214,7 +217,9 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       monsterNames,
       deadMonsterNames,
       sendableMonsterNames,
-      itemNames,
+      transferableMonsterNames,
+      characterItems,
+      monsterItems,
     }
   );
   const hasMonsters = monsterRows.length > 0;
@@ -629,7 +634,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           });
         }
       } else {
-        void refetchMyMonsters();
+        void Promise.all([refetchMyMonsters(), refetchMyInventory()]);
       }
     } catch (err) {
       addConsoleEvent({
@@ -655,6 +660,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     try {
       await respondToPrompt.mutateAsync({ roomId, requestId, answer });
+      void Promise.all([refetchMyMonsters(), refetchMyInventory()]);
     } catch (err) {
       addConsoleEvent({
         id: `sys-${Date.now()}`,
@@ -667,7 +673,6 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         upsertPendingPrompt(latest.data);
       }
     } finally {
-      void refetchMyMonsters();
       inputRef.current?.focus();
     }
   }

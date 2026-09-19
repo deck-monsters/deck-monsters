@@ -1518,6 +1518,40 @@ export class Ring extends BaseClass {
 	 * runs before the deterministic/ringEventsEnabled guards so it applies even in test mode.
 	 */
 	private rollRingEvent(): void {
+		const context = buildRingEventContext(this.contestants);
+		const playersHaveAssignedTeams = this.contestants
+			.filter(contestant => !contestant.isBoss)
+			.some(contestant => Boolean(
+				contestant.team || contestant.monster.team || contestant.character.team
+			));
+
+		/*
+		 * Roster fairness is an invariant, not another random event. Evaluate it before
+		 * preserving an armed event: a second boss can join while Blood Feud or The
+		 * Reckoning is still eligible. Do not replace player-authored teams, though;
+		 * those are an explicit matchup choice and already give targeting a faction.
+		 */
+		if (
+			this.ringEventsEnabled
+			&& !this.inEncounter
+			&& context.bossCount >= 2
+			&& context.playerCount >= 2
+			&& !playersHaveAssignedTeams
+		) {
+			const commonCause = getRingEvent('common-cause');
+			if (commonCause && this.ringEvent?.id !== commonCause.id) {
+				if (this.ringEvent) {
+					this.log({
+						context: 'ring.rollRingEvent.multiBossFairnessOverride',
+						cleared: this.ringEvent.id,
+					});
+					this.ringEvent = undefined;
+				}
+				this.activateRingEvent(commonCause);
+			}
+			return;
+		}
+
 		// If an event is already armed, verify it is still eligible for the current roster.
 		// A roster change (boss joins, player leaves/rejoins) can make a previously-valid
 		// event ineligible. Clear it so a fresh roll happens below (or nothing, in
@@ -1536,21 +1570,6 @@ export class Ring extends BaseClass {
 
 		if (!this.ringEventsEnabled) return;
 		if (this.inEncounter) return;
-
-		const context = buildRingEventContext(this.contestants);
-		/*
-		 * Multiple bosses already share a team and normally refuse to target each other. Match
-		 * that advantage for a group of human-controlled monsters instead of making two new
-		 * players fight three cooperating bosses independently. Common Cause also supplies the
-		 * last-team victory condition, so the allied players win as soon as the boss faction is
-		 * gone. This fairness rule is deterministic; the event chance still governs less
-		 * lopsided rosters.
-		 */
-		if (context.bossCount >= 2 && context.playerCount >= 2) {
-			const commonCause = getRingEvent('common-cause');
-			if (commonCause) this.activateRingEvent(commonCause);
-			return;
-		}
 
 		// Same escape hatch as the contestant shuffle: ring events are a randomness source,
 		// so reproducible runs (tests, harness, balance sim) need them off.

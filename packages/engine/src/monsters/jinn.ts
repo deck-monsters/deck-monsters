@@ -38,7 +38,7 @@ class Jinn extends BaseMonster {
 
 	get description(): string {
 		const { pronouns } = this;
-		return `a ${this.color} figure ${this.descriptor} in the dusty shadows at the corner of your vision. At first you think it might be human and you wonder who or what ${pronouns.he} is. What is ${pronouns.he} thinking about? When you turn to look closer all you see is a ${this.animal} and a gently settling cloud of sand.`;
+		return `a ${this.color} figure ${this.descriptor} in the dusty shadows at the corner of your vision. At first you think it might be human and you wonder who or what ${pronouns.he} ${pronouns.is ?? 'is'}. What is ${pronouns.he} thinking about? When you turn to look closer all you see is a ${this.animal} and a gently settling cloud of sand.`;
 	}
 }
 

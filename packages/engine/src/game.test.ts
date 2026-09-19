@@ -631,33 +631,33 @@ describe('game.ts', () => {
 			expect((char2 as any).givenName).to.equal('Custom Hero'); // unchanged
 		});
 
-		it('emits stateChange when a brand-new character is created, so a save is scheduled', async () => {
+		it('schedules a save when a brand-new character is created', async () => {
 			// Regression: `game.characters[id] = character` is a direct mutation of
 			// the options-backed characters map, bypassing setOptions() — no
 			// stateChange fired from the assignment itself. The new character's own
 			// constructor does emit a global stateChange, but at that point it isn't
 			// in game.characters yet, so the room-scoped guard (added alongside this
 			// fix) would not attribute it to this game either way. Without the
-			// explicit emit added to getCharacter, a freshly created character could
+			// explicit schedule added to getCharacter, a freshly created character could
 			// be silently lost if the server restarted before anything else in the
 			// room changed.
-			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
 			const game = new Game();
-			const saveStateStub = sinon.stub();
+			const scheduleSaveStub = sinon.stub(game as any, 'scheduleSave');
 			const channel = sinon.stub().resolves('0');
 
 			try {
-				game.saveState = saveStateStub;
+				await game.getCharacter({
+					channel,
+					id: 'new-character-save-regression-user',
+					name: 'Player',
+				});
 
-				await game.getCharacter({ channel, id: 'user-3', name: 'Player' });
-
-			clock.tick(31_000);
-			expect(saveStateStub.calledOnce).to.equal(true);
-		} finally {
-			game.saveState = undefined;
-			clock.restore();
-		}
-	});
+				expect(scheduleSaveStub.called).to.equal(true);
+			} finally {
+				scheduleSaveStub.restore();
+				game.dispose();
+			}
+		});
 	});
 
 	describe('boss summon pending — serialization/restore (Findings 1 & 4)', () => {

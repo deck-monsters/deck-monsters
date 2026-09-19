@@ -39,7 +39,7 @@ class WeepingAngel extends BaseMonster {
 	get description(): string {
 		const { pronouns } = this;
 		const article = this.color[0].match(/[aeiou]/i) ? 'An' : 'A';
-		return `${article} ${this.color} weeping angel. On meeting ${pronouns.him} one might form the following three impressions: that ${pronouns.he} was ${this.nationality}, that ${pronouns.he} was intelligent, and that ${pronouns.he} was ${this.descriptor} than a treeful of monkeys on nitrous oxide.`;
+		return `${article} ${this.color} weeping angel. On meeting ${pronouns.him} one might form the following three impressions: that ${pronouns.he} ${pronouns.was ?? 'was'} ${this.nationality}, that ${pronouns.he} ${pronouns.was ?? 'was'} intelligent, and that ${pronouns.he} ${pronouns.was ?? 'was'} ${this.descriptor} than a treeful of monkeys on nitrous oxide.`;
 	}
 }
 

@@ -8,7 +8,9 @@ pacing items from the September 2026 live-play pass. The September 19 player-fee
 (feed pinning, rest healing, item autocomplete, delayed-hit narration, and multi-boss team
 balance) is resolved as #148. The follow-up that made delayed-hit payoff narration reliably
 pass room scoping and replaced dehumanizing androgynous `it/its` pronouns with singular
-`they/them/their` is resolved as #149. The
+`they/them/their` is resolved as #149. The review follow-up for inventory cache refresh,
+source-aware item suggestions, generic placeholder cleanup, multi-boss event precedence,
+singular-they agreement, and the CI fake-timer regression is resolved as #150. The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
 post-merge passes (#112–#134), the shop-menu off-by-one from the prompt-answer-contract
 audit is fixed (#143), item #4 from that same audit — the remaining pure-index prompt
@@ -54,6 +56,17 @@ room. Fixed as #112. The trigger migration then closed the storage-side gap as #
 masking on read remains a guard against restored or manually edited legacy data.
 
 ## Active Items
+
+### September 19 review follow-up — FIXED (#150)
+
+Console command and prompt success now refresh both monster and inventory state. Item
+autocomplete retains each item's source and valid targets rather than combining every item
+with every monster, and unsupported catalog placeholders are still stripped before insert.
+The automatic multi-boss Common Cause rule now runs before preserving an eligible armed
+event, while leaving player-assigned teams alone. Pronoun metadata now carries verb
+agreement for singular `they`, and affected narration uses it. Finally, new-character
+creation schedules its owning game's save directly, and the regression test verifies that
+contract without depending on fake-timer ordering in CI.
 
 ### Delayed-hit payoff visibility and androgynous pronouns — FIXED (#149)
 
