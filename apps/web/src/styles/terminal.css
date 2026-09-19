@@ -597,7 +597,9 @@
 }
 
 .roster-row {
-  padding: 0.2rem 0;
+  /* Left padding on every row, not just the acting one, so the highlight moving from
+     monster to monster each turn never shifts the text sideways. */
+  padding: 0.2rem 0 0.2rem 0.35rem;
   font-size: 0.78rem;
   min-width: 0;
 }
@@ -610,14 +612,43 @@
 }
 
 .roster-name {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  flex: 1 1 auto;
   color: var(--color-fg);
-  white-space: nowrap;
+}
+
+.roster-name-text {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roster-icon {
+  flex-shrink: 0;
 }
 
 .roster-row-mine .roster-name {
   color: var(--color-fg-bright);
+}
+
+.roster-row-acting {
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--color-accent);
+  border-radius: 2px;
+}
+
+.roster-row-acting .roster-name {
+  color: var(--color-fg-bright);
+}
+
+.roster-acting-marker {
+  color: var(--color-accent);
+  margin-right: 0.3rem;
+  font-size: 0.65rem;
+  flex-shrink: 0;
 }
 
 .roster-numbers {
@@ -644,6 +675,7 @@
 }
 
 .roster-tag {
+  flex-shrink: 0;
   margin-left: 0.4rem;
   padding: 0 0.3rem;
   border: 1px solid var(--color-border);
@@ -682,7 +714,7 @@
   opacity: 0.45;
 }
 
-.roster-row-dead .roster-name {
+.roster-row-dead .roster-name-text {
   text-decoration: line-through;
 }
 

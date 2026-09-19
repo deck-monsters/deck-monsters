@@ -161,6 +161,42 @@ describe('ring/index.ts', () => {
 			expect(snapshot!.owner).to.equal(null);
 			expect(snapshot!.userId).to.equal(null);
 		});
+
+		it('flags the contestant whose turn it is and nobody else', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const first = randomContestant({ isBoss: false });
+			const second = randomContestant({ isBoss: false });
+			ring.contestants = [first, second];
+			ring.inEncounter = true;
+			ring.activeContestant = second;
+
+			const [firstSnapshot, secondSnapshot] = ring.contestantSnapshots();
+
+			expect(firstSnapshot!.acting).to.equal(false);
+			expect(secondSnapshot!.acting).to.equal(true);
+
+			game.dispose();
+		});
+
+		it('clears the acting flag when the encounter ends', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const first = randomContestant({ isBoss: false });
+			const second = randomContestant({ isBoss: false });
+			ring.contestants = [first, second];
+			ring.inEncounter = true;
+			ring.activeContestant = second;
+
+			ring.endEncounter();
+
+			expect(ring.activeContestant).to.equal(undefined);
+			ring.contestantSnapshots().forEach(snapshot => {
+				expect(snapshot.acting).to.equal(false);
+			});
+
+			game.dispose();
+		});
 	});
 
 	describe('monsters', () => {

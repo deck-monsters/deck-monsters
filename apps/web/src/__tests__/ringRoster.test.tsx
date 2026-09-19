@@ -155,4 +155,57 @@ describe('RingRoster', () => {
     expect(meter.getAttribute('aria-valuenow')).toBe('40');
     expect(meter.getAttribute('aria-valuemax')).toBe('50');
   });
+
+  it('marks the acting contestant and only that one', () => {
+    const { container } = render(
+      <RingRoster
+        contestants={[
+          contestant({ acting: true }),
+          contestant({ name: 'Aqim', userId: 'user-2', acting: false }),
+        ]}
+        collapsed={false}
+        onToggle={noop}
+      />
+    );
+
+    const rows = container.querySelectorAll('.roster-row');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]!.classList.contains('roster-row-acting')).toBe(true);
+    expect(rows[0]!.getAttribute('aria-label')).toContain('acting now');
+    expect(rows[1]!.classList.contains('roster-row-acting')).toBe(false);
+    expect(rows[1]!.getAttribute('aria-label')).not.toContain('acting now');
+  });
+
+  it('does not mark a dead contestant as acting', () => {
+    const { container } = render(
+      <RingRoster
+        contestants={[contestant({ hp: 0, dead: true, acting: true })]}
+        collapsed={false}
+        onToggle={noop}
+      />
+    );
+
+    const row = container.querySelector('.roster-row');
+    expect(row!.classList.contains('roster-row-acting')).toBe(false);
+    expect(row!.getAttribute('aria-label')).not.toContain('acting now');
+  });
+
+  it('keeps the BOSS tag outside the clipped name text', () => {
+    const longName = 'Charri (charloat, To Listen)';
+    const { container } = render(
+      <RingRoster
+        contestants={[contestant({ name: longName, isBoss: true, owner: null, userId: null })]}
+        collapsed={false}
+        onToggle={noop}
+      />
+    );
+
+    const nameText = container.querySelector('.roster-name-text');
+    const bossTag = container.querySelector('.roster-tag-boss');
+    expect(nameText).not.toBeNull();
+    expect(bossTag).not.toBeNull();
+    expect(nameText!.textContent).toBe(longName);
+    expect(nameText!.contains(bossTag)).toBe(false);
+    expect(bossTag!.parentElement).toBe(nameText!.parentElement);
+  });
 });

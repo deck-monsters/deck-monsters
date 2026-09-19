@@ -89,6 +89,8 @@ export interface RingContestantSnapshot {
 	owner: string | null;
 	/** Owning player's user id, so a client can highlight "your" monsters. */
 	userId: string | null;
+	/** True for the single contestant currently taking their turn, so a client can highlight it. */
+	acting: boolean;
 }
 
 export interface Contestant {
@@ -167,6 +169,13 @@ export class Ring extends BaseClass {
 	private readonly roomMonsterLevelsProvider?: () => number[];
 	inEncounter: boolean = false;
 	encounter?: Record<string, any>;
+	/**
+	 * The contestant currently taking their turn, so the roster UI can highlight whose
+	 * turn it is. Ephemeral like `inEncounter`/`encounter` — never options-backed, never
+	 * serialized. Set in `fight()` right before `playerTurnBegin`, cleared at the start
+	 * and end of every encounter.
+	 */
+	activeContestant?: Contestant;
 	fightTimer?: ReturnType<typeof setTimeout>;
 	bossTimer?: ReturnType<typeof setTimeout>;
 	/** Pending per-boss despawn timers, so `dispose()` can cancel all of them. */
@@ -543,6 +552,7 @@ export class Ring extends BaseClass {
 		this.bossOnlyPacingEngaged = false;
 		this.inEncounter = true;
 		this.encounter = {};
+		this.activeContestant = undefined;
 
 		// Apply the ring event against the final roster — contestants may have joined or
 		// withdrawn since it was rolled during the countdown.
@@ -569,6 +579,7 @@ export class Ring extends BaseClass {
 		this.contestants.forEach(contestant => contestant.monster.endEncounter());
 		this.inEncounter = false;
 		delete this.encounter;
+		this.activeContestant = undefined;
 		// Post-fight HP is what players check between rounds; publish the final board.
 		this.publishState();
 	}
@@ -585,6 +596,8 @@ export class Ring extends BaseClass {
 	 * `ac` is read through the live getter so per-encounter boosts are reflected as
 	 * they change; `team` and `targetingStrategy` come off the contestant rather than
 	 * the monster because ring events set them per-encounter (see `Contestant`).
+	 * `acting` flags the single contestant currently taking their turn (from
+	 * `activeContestant`), so a client can highlight whose turn it is.
 	 */
 	contestantSnapshots(): RingContestantSnapshot[] {
 		return this.contestants.map(({ monster, character, userId, isBoss, team }) => ({
@@ -600,6 +613,7 @@ export class Ring extends BaseClass {
 			team: team ?? null,
 			owner: isBoss ? null : (character?.givenName ?? null),
 			userId: isBoss ? null : (userId ?? null),
+			acting: this.inEncounter && this.activeContestant?.monster === monster,
 		}));
 	}
 
@@ -876,7 +890,14 @@ export class Ring extends BaseClass {
 						});
 					}
 
+					// Set before the emit (not after) so any listener reacting to
+					// `playerTurnBegin` already sees the correct actor, then publish once
+					// here so the roster highlight of whose turn it is lands before the
+					// card box does. One extra publish per turn is negligible next to the
+					// per-card publish already below.
+					this.activeContestant = playerContestant;
 					this.emit('playerTurnBegin', { contestant: playerContestant, round });
+					this.publishState();
 
 					const targetResult = getTarget({
 						contestants: getAllActiveContestants(),
