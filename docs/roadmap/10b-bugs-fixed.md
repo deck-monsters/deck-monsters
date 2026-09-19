@@ -3228,3 +3228,27 @@ policy, and confirmed that `fuse3` and `fuse-overlayfs` configured successfully,
 `dpkg --audit` was clean, `/etc/fuse.conf` was unchanged, and Docker started.
 
 **Status**: Fixed.
+
+### 155. Cloud Agent setup installed Railway into an unwritable global prefix — FIXED
+
+**Symptom**: once Docker/FUSE package installation completed, the Cloud Agent
+install stopped at `npm install --global @railway/cli` with `EACCES` while
+trying to create `/usr/lib/node_modules`.
+
+**Root cause**: the script's comment promised installation into the
+NVM-managed Node prefix, but the command relied on npm's inferred global
+prefix. Cursor exposes its own `/exec-daemon/node` before NVM's Node on
+`PATH`; the NVM-managed npm executable therefore inferred the system prefix
+from that Node runtime even though npm itself lived under
+`~/.nvm/versions/node`. The unprivileged `ubuntu` user cannot write there.
+
+**Fixed**: the install script derives the prefix from the resolved npm command
+location and passes it explicitly with `--prefix`. Railway is installed beside
+the NVM-managed npm binary, which is already on the agent's `PATH`, without
+requiring root-owned global package state.
+
+**Test**: with `node` resolving to `/exec-daemon/node` and npm resolving under
+`~/.nvm`, the implicit global install reproduced `EACCES`; installing with the
+derived NVM prefix succeeded and `railway --version` reported `5.30.3`.
+
+**Status**: Fixed.
