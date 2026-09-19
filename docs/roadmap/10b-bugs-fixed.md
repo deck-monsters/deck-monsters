@@ -3267,6 +3267,19 @@ George), George's hit is recorded after George's wrapper already looked. It then
 unanswered until the next card anyone plays — a Heal — whose wrapper finds it, fires, and
 narrates it as a response to whatever that card was.
 
+```
+target arms Delayed Hit (T), then player arms Delayed Hit (P)
+target strikes player            → chain is P(T(strike))
+  T's check: no blow on target yet            → nothing
+  P's check: target's strike                  → player counters, hits target   ← T missed this
+next card anyone plays (a Heal)
+  T's check: player's counter is newer        → fires, "responds to the blow"
+```
+
+Every other effect that deals damage (Immobilize's ongoing damage, Blink, Bad Batch) does so
+*inside* the wrapped play, where the post-play check sees it; only another Delayed Hit's
+counter lands after a check has already run.
+
 **Fixed**: each armed effect exposes `settle()`; after any wrapped play, `settleDelayedHits`
 runs every armed Delayed Hit in a loop until a full pass fires nothing. A counter that is
 itself a qualifying blow is answered in the same play, immediately after it lands, which is
@@ -3322,96 +3335,45 @@ mount rows and keep asserting the banner unchanged.
 
 **Status**: Fixed.
 
-### 154. A revived monster sat at 1 hp for hours — every fight killed its healing interval — FIXED
+### 157. The Ring feed stopped following mid-fight — and #148's fix made it stop *silently* — FIXED
 
-**Symptom**: after PRs #380–#382 (which made passive healing wall-clock based), a live room
-still showed a monster at 1 hp hours after the player had revived it right after the fight.
-Reported as the revive/heal work having made things worse.
+**Symptom**: during a live battle the Ring pane, in auto-scroll mode, would sit a line or
+two above the newest narration and stay there while the fight went on. Reported after the
+#148 "less likely to get stuck" pass as having got *worse* in an active battle.
 
-**Root cause**: not in the healing code those PRs touched. `Ring.clearRing()` runs
-synchronously at the end of *every* fight (`fight()` → `fightConcludes()` → `clearRing()`),
-and since the April harness commit (`3ca267a`) it called `disposeTimers()` on every
-contestant's monster and character — which `clearInterval`s the passive-healing tick and
-`clearTimeout`s any armed respawn. That is right for bosses, which the ring creates and
-nobody else owns, but player monsters live on in their beastmaster's roster. So a monster's
-healing interval died for good the first time it fought. The sequence the player saw:
+**Root cause**, two layers:
 
-1. Fight ends → `clearRing()` → Toyota's `healingInterval` and `respawnTimeout` cleared.
-2. Player types `revive Toyota` → `respawn()` arms a fresh timer (nothing else was pending).
-3. Timer fires → `hp = 1`, `hpUpdatedAt = now` → but nothing ever calls
-   `applyPassiveHealing()` again. 1 hp, indefinitely.
+1. The pane switched following off on *every* `atBottomStateChange(false)` from Virtuoso, as
+   if the reader had scrolled up. But during a fight the bottom moves away on its own all the
+   time: the roster gains a row or the items panel appears (viewport shrinks), a card box is
+   measured after it renders (content grows), or a `smooth` follow scroll — which targets a
+   fixed pixel offset — ends short because the next narration line landed mid-animation.
+   Each of those flipped `shouldFollowOutputRef` to `false` in the busiest moments of a fight.
+2. #148 tried to paper over that by raising `atBottomThreshold` from Virtuoso's default 4px to
+   72px, so those small deviations would not count as leaving the bottom. But Virtuoso's own
+   "list grew, snap back down" correction (`notAtBottomBecause === 'SIZE_INCREASED'` →
+   `scrollToIndex('auto')`) only runs when it considers the list *not* at the bottom — and
+   `isAtBottom` is `scrollTop + viewportHeight - scrollHeight > -threshold`. At 72px a follow
+   scroll that ended up to three lines short was "at the bottom": never corrected, never a
+   `↓ Latest` button, and the next event's smooth scroll got interrupted the same way. Hence
+   worse specifically during bursts. (Virtuoso 4.18 source: `Uo` in `dist/index.mjs`.)
 
-PRs #381/#382 were not wrong, just aimed at the wrong layer: persisting `hpUpdatedAt` and
-catching up on hydration is why a **server restart** did heal the monster — which is also
-why the bug looked intermittent and "fixed" in testing. While the room stayed loaded, the
-only heal source was the interval `clearRing()` had already destroyed.
+**Fixed** (`RingPane.tsx`): a "not at bottom" report is treated as the reader leaving only
+if a scroll gesture — `wheel` upward, `touchmove`, mouse `pointerdown` (scrollbar drag), or
+ArrowUp/PageUp/Home — happened inside the feed within `USER_SCROLL_INTENT_WINDOW_MS`
+(1.5s). Otherwise the pane re-pins with an instant `scrollToIndex('auto')`. The threshold is
+back to `AT_BOTTOM_THRESHOLD_PX = 8`, enough for fractional layout pixels, well under one
+line, so Virtuoso's self-correction is live again. Jump-to-latest clears the gesture stamp so
+tapping it is not mistaken for scrolling away a moment later. The listeners sit on
+`.pane-feed-area` because Virtuoso owns the scroller element and the events bubble.
 
-**Fixed**: `clearRing()` and `removeMonster()` dispose only transient contestants via a new
-`disposeTransientContestant()` (keyed on `isBoss`, which also covers harness sim monsters,
-built as bosses). Player monsters are torn down where they are actually owned:
-`Game.dispose()` (room unload) as before, and now also `Beastmaster.dropMonster()` — a
-dismissed monster used to leak its interval, and could still fire a stale `respawn` on an
-orphan. Ownership rule recorded in `engine-concurrency-and-timing.md`.
+**Not changed**: `ConsolePane` uses the same "every false = user scrolled" rule via
+`useFeedAutoScroll`. It has not been reported and its feed is far less bursty, so it is left
+alone; if it shows the same symptom, lift the gesture gate into the hook.
 
-**Found alongside**: the server's quick-action chips still offered `Revive X` for a monster
-whose revival timer was already running, even though #380 made `reviveMonster` exclude
-exactly those — tapping the chip answered "You don't have any monsters to revive."
-`quick-actions.ts` now mirrors the engine filter.
-
-**Tests**: `ring/index.test.ts` — "keeps passive healing and pending revivals running for
-monsters the ring releases" (two owned monsters in the ring; `clearRing()`; the wounded one
-heals on the interval and the fallen one's revival fires and then heals — red before the fix
-at exactly Toyota's symptom, `expected 1 to equal 4`). `beastmaster.test.ts` — dropped
-monster's timers are disposed. `quick-actions.test.ts` — no revive chip while reviving.
-
-**Status**: Fixed.
-
-### 155. Delayed Hit answered a blow one turn late, after an unrelated card — FIXED
-
-**Symptom**: a live capture showed Ben Franklin play **Heal** (self, +3 hp), immediately
-followed by "🤛 George Washington's Delayed Hit finds its moment: he immediately responds
-to the blow Ben Franklin gave him." Ben had not struck; he had healed. Reported as delayed
-hits "playing at odd times" — and still happening after the #130/#131/#149 narration fixes,
-which were about *what the line says*, not *when it fires*.
-
-**Root cause**: `DelayedHit` arms a ring-level encounter effect that wraps every subsequent
-card play and, after the play resolves, asks "is the newest hit on me from someone else
-newer than when I was played?" — firing if so. `BaseCard.applyEffects()` applies ring effects
-in arming order, so with two Delayed Hits armed the wrappers nest and the **earlier-armed
-card's check runs before the later-armed card's counter-attack lands**:
-
-```
-target arms Delayed Hit (T), then player arms Delayed Hit (P)
-target strikes player            → chain is P(T(strike))
-  T's check: no blow on target yet            → nothing
-  P's check: target's strike                  → player counters, hits target   ← T missed this
-next card anyone plays (a Heal)
-  T's check: player's counter is newer        → fires, "responds to the blow"
-```
-
-Two monsters each carrying the card (up to four copies per deck) makes this common. Every
-other effect that deals damage (Immobilize's ongoing damage, Blink, Bad Batch) does so
-*inside* the wrapped play, where the post-play check sees it; only another Delayed Hit's
-counter lands after a check has already run.
-
-**Fixed**: each effect exposes `settle()` (the check-and-counter, unchanged in what it does),
-and after any wrapped play `settleDelayedHits(ring)` runs *every* armed Delayed Hit's
-`settle()` in a loop until a full pass fires nothing. A counter that is itself the blow
-another armed card was waiting for is now answered in the same play, right after it lands.
-Terminates because every counter removes its own effect. Nothing about *who* is answered
-changes — still the newest assailant, still the card's own roll.
-
-**Found alongside**: `creatures/health.ts#hit()` stamped `hitLog` entries with `Date.now()`
-while `DelayedHit` stamps `whenPlayed` with `hitLogTimestamp()`, which under
-`DECK_MONSTERS_SKIP_DELAYS` is a small monotonic counter. Every recorded hit therefore
-looked newer than any Delayed Hit in the entire test suite and in every harness simulation:
-the card fired on blows dealt *before* it was played. Production was unaffected (both
-clocks are `Date.now()` there), but the harness has been mis-simulating the card and the
-existing tests could not have caught the ordering bug. Both now use `hitLogTimestamp()`.
-
-**Test**: `cards/delayed-hit.test.ts` — "answers a blow dealt by another delayed hit in the
-same play, not after the next unrelated card": arms target then player, strikes through the
-real `play()` path, asserts both effects are spent and exactly one payoff narration fired,
-then plays a Heal and asserts nothing springs.
+**Tests**: `apps/web/src/__tests__/ringPane-scroll-behavior.test.tsx` — re-pins when the
+bottom moves with no gesture; wheel-up and touch-drag disable following; a gesture 5s old is
+ignored; following resumes on return to the bottom; jump-to-latest is not a scroll-away
+gesture; and the threshold is asserted ≤ 12px with a comment on why.
 
 **Status**: Fixed.
