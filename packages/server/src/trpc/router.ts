@@ -21,6 +21,7 @@ import { t } from './trpc.js';
 import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
+import { publicDisplayName } from '../public-display-name.js';
 import {
 	commandsTotal,
 	wsConnectionsActive,
@@ -560,7 +561,9 @@ export function createRouter(roomManager: RoomManager) {
 					rank: i + 1,
 					// Room rankings use the character's current in-game name. Profile names are
 					// only a fallback for players without loaded game state.
-					displayName: String(game.characters?.[r.userId]?.givenName ?? r.displayName),
+					displayName: publicDisplayName(
+						String(game.characters?.[r.userId]?.givenName ?? r.displayName),
+					),
 					xp: r.xp,
 					wins: r.wins,
 					losses: r.losses,
