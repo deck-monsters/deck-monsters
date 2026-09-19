@@ -6,6 +6,7 @@ import { getTarget } from '../helpers/targeting-strategies.js';
 import { randomContestant } from '../helpers/bosses.js';
 import {
 	buildRingEventContext,
+	getRingEvent,
 	selectRingEvent,
 	type RingEventDefinition,
 } from './ring-events.js';
@@ -1517,6 +1518,40 @@ export class Ring extends BaseClass {
 	 * runs before the deterministic/ringEventsEnabled guards so it applies even in test mode.
 	 */
 	private rollRingEvent(): void {
+		const context = buildRingEventContext(this.contestants);
+		const playersHaveAssignedTeams = this.contestants
+			.filter(contestant => !contestant.isBoss)
+			.some(contestant => Boolean(
+				contestant.team || contestant.monster.team || contestant.character.team
+			));
+
+		/*
+		 * Roster fairness is an invariant, not another random event. Evaluate it before
+		 * preserving an armed event: a second boss can join while Blood Feud or The
+		 * Reckoning is still eligible. Do not replace player-authored teams, though;
+		 * those are an explicit matchup choice and already give targeting a faction.
+		 */
+		if (
+			this.ringEventsEnabled
+			&& !this.inEncounter
+			&& context.bossCount >= 2
+			&& context.playerCount >= 2
+			&& !playersHaveAssignedTeams
+		) {
+			const commonCause = getRingEvent('common-cause');
+			if (commonCause && this.ringEvent?.id !== commonCause.id) {
+				if (this.ringEvent) {
+					this.log({
+						context: 'ring.rollRingEvent.multiBossFairnessOverride',
+						cleared: this.ringEvent.id,
+					});
+					this.ringEvent = undefined;
+				}
+				this.activateRingEvent(commonCause);
+			}
+			return;
+		}
+
 		// If an event is already armed, verify it is still eligible for the current roster.
 		// A roster change (boss joins, player leaves/rejoins) can make a previously-valid
 		// event ineligible. Clear it so a fresh roll happens below (or nothing, in
@@ -1534,13 +1569,14 @@ export class Ring extends BaseClass {
 		}
 
 		if (!this.ringEventsEnabled) return;
+		if (this.inEncounter) return;
+
 		// Same escape hatch as the contestant shuffle: ring events are a randomness source,
 		// so reproducible runs (tests, harness, balance sim) need them off.
 		if (process.env.DECK_MONSTERS_DETERMINISTIC_RING) return;
-		if (this.inEncounter) return;
 		if (random(1, 100) > RING_EVENT_CHANCE_PERCENT) return;
 
-		const ringEvent = selectRingEvent(buildRingEventContext(this.contestants));
+		const ringEvent = selectRingEvent(context);
 		if (!ringEvent) return;
 
 		this.activateRingEvent(ringEvent);

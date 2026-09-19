@@ -73,13 +73,23 @@ export class DelayedHit extends HitCard {
 								 * `cardType` rather than a literal, so a subclass narrates as
 								 * itself. See 10b-bugs-fixed.md #131.
 								 */
+								/*
+								 * Include the owner in the payload. The payoff fires from the cloned
+								 * Delayed Hit several turns after it left the normal card-play path;
+								 * relying on the clone's `original` link alone made the room-scoping
+								 * guard intermittently discard this line while still accepting the
+								 * ensuing rolls and damage. An owned creature is an unambiguous room
+								 * anchor, and announceNarration safely ignores the extra field.
+								 */
 								if (delayingTarget.dead) {
 									this.emit('narration', {
-										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: with ${his} dying breath, ${delayingPlayer.pronouns.he} avenges the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: with ${his} dying breath, ${delayingPlayer.pronouns.he} avenge${delayingPlayer.pronouns.verbSuffix ?? 's'} the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										owner: delayingPlayer,
 									});
 								} else {
 									this.emit('narration', {
-										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: ${delayingPlayer.pronouns.he} immediately responds to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: ${delayingPlayer.pronouns.he} immediately respond${delayingPlayer.pronouns.verbSuffix ?? 's'} to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
+										owner: delayingPlayer,
 									});
 								}
 

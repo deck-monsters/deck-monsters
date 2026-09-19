@@ -7,12 +7,22 @@ export interface AutocompleteSuggestion {
 }
 
 const MONSTER_COMMAND_RE = /\[monster\]/i;
+const ITEM_COMMAND_RE = /\[(?:item|item name)\]/i;
 
 type MonsterAutocompleteContext = {
   monsterNames?: string[];
   deadMonsterNames?: string[];
   sendableMonsterNames?: string[];
+  transferableMonsterNames?: string[];
+  characterItems?: AutocompleteItem[];
+  monsterItems?: Array<{ monsterName: string; items: AutocompleteItem[] }>;
 };
+
+export interface AutocompleteItem {
+  displayName: string;
+  expired: boolean;
+  usableOnMonsters: string[];
+}
 
 function normalizeCommand(input: string): string {
   return input.replace(/\s+/g, ' ').trim().toLowerCase();
@@ -20,6 +30,10 @@ function normalizeCommand(input: string): string {
 
 function expandMonsterPlaceholder(command: string, monsterName: string): string {
   return command.replace(/\[monster\]/gi, monsterName);
+}
+
+function expandItemPlaceholder(command: string, itemName: string): string {
+  return command.replace(/\[(?:item|item name)\]/gi, itemName);
 }
 
 /**
@@ -41,6 +55,9 @@ export function useCommandAutocomplete(
     const monsterNames = context.monsterNames ?? [];
     const deadMonsterNames = context.deadMonsterNames ?? [];
     const sendableMonsterNames = context.sendableMonsterNames ?? [];
+    const transferableMonsterNames = context.transferableMonsterNames ?? monsterNames;
+    const characterItems = (context.characterItems ?? []).filter(item => !item.expired);
+    const monsterItems = context.monsterItems ?? [];
 
     for (const entry of COMMAND_CATALOG) {
       const hasMonsterPlaceholder = MONSTER_COMMAND_RE.test(entry.command);
@@ -50,15 +67,49 @@ export function useCommandAutocomplete(
       } else if (/^send \[monster\] to the ring$/i.test(entry.command)) {
         namesForTemplate = sendableMonsterNames;
       }
-      const expandedCommands = hasMonsterPlaceholder && monsterNames.length > 0
+      const monsterCommands = hasMonsterPlaceholder && monsterNames.length > 0
         ? namesForTemplate.map((name) => ({
             label: expandMonsterPlaceholder(entry.command, name),
             insertValue: expandMonsterPlaceholder(entry.command, name),
           }))
         : [{
             label: entry.command,
-            insertValue: entry.command.replace(/\[.*?\]/g, '').replace(/\s+/g, ' ').trimEnd(),
+            insertValue: entry.command.replace(/\[monster\]/gi, '').replace(/\s+/g, ' ').trimEnd(),
           }];
+      let itemCandidates: Array<{ itemName: string; monsterName?: string }> = [];
+      if (/^give \[item\] to \[monster\]$/i.test(entry.command)) {
+        itemCandidates = characterItems.flatMap(item => transferableMonsterNames.map(monsterName => ({ itemName: item.displayName, monsterName })));
+      } else if (/^take \[item\] from \[monster\]$/i.test(entry.command)) {
+        itemCandidates = monsterItems.filter(source => transferableMonsterNames.includes(source.monsterName)).flatMap(source => source.items
+          .filter(item => !item.expired)
+          .map(item => ({ itemName: item.displayName, monsterName: source.monsterName })));
+      } else if (/^use \[item\] on \[monster\]$/i.test(entry.command)) {
+        itemCandidates = [
+          ...characterItems.flatMap(item => item.usableOnMonsters.map(monsterName => ({ itemName: item.displayName, monsterName }))),
+          ...monsterItems.flatMap(source => source.items
+            .filter(item => !item.expired && item.usableOnMonsters.includes(source.monsterName))
+            .map(item => ({ itemName: item.displayName, monsterName: source.monsterName }))),
+        ];
+      } else if (ITEM_COMMAND_RE.test(entry.command)) {
+        const allItems = [...characterItems, ...monsterItems.flatMap(source => source.items)].filter(item => !item.expired);
+        itemCandidates = allItems.map(item => ({ itemName: item.displayName }));
+      }
+
+      const expandedCommands = ITEM_COMMAND_RE.test(entry.command) && itemCandidates.length > 0
+        ? itemCandidates.map(({ itemName, monsterName }) => {
+            const command = monsterName ? expandMonsterPlaceholder(entry.command, monsterName) : entry.command;
+            return {
+              label: expandItemPlaceholder(command, itemName),
+              insertValue: expandItemPlaceholder(command, itemName),
+            };
+          })
+        : monsterCommands.map(candidate => ({
+            ...candidate,
+            insertValue: candidate.insertValue
+              .replace(/\[.*?\]/g, '')
+              .replace(/\s+/g, ' ')
+              .trimEnd(),
+          }));
 
       for (const candidate of expandedCommands) {
         const cmd = normalizeCommand(candidate.label);
@@ -85,5 +136,5 @@ export function useCommandAutocomplete(
     });
 
     return results.slice(0, 5);
-  }, [input, enabled, context.monsterNames, context.deadMonsterNames, context.sendableMonsterNames]);
+  }, [input, enabled, context.monsterNames, context.deadMonsterNames, context.sendableMonsterNames, context.transferableMonsterNames, context.characterItems, context.monsterItems]);
 }

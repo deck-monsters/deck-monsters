@@ -15,7 +15,7 @@ export class SirRobinScrollAccordingToCleverHans extends SirRobinScroll {
 	}
 
 	getTargetingDetails(monster: any): string {
-		return `Clever ${monster.givenName}'s mother told ${monster.pronouns.him} that whenever ${monster.pronouns.he} is in the ring ${monster.pronouns.he} should bravely look about, choose the monster with the highest current hp, and target them, unless directed otherwise by a specific card, and that's exactly what ${monster.pronouns.he}'ll do.`;
+		return `Clever ${monster.givenName}'s mother told ${monster.pronouns.him} that whenever ${monster.pronouns.he} ${monster.pronouns.is ?? 'is'} in the ring ${monster.pronouns.he} should bravely look about, choose the monster with the highest current hp, and target them, unless directed otherwise by a specific card, and that's exactly what ${monster.pronouns.he}'ll do.`;
 	}
 }
 

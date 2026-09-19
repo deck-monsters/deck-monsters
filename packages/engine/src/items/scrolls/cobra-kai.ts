@@ -12,7 +12,7 @@ export class CobraKaiScroll extends TargetingScroll {
 	}
 
 	getTargetingDetails(monster: any): string {
-		return `${monster.givenName} will target the player with the lowest current xp while ${monster.pronouns.he} is in the ring unless directed otherwise by a specific card.`;
+		return `${monster.givenName} will target the player with the lowest current xp while ${monster.pronouns.he} ${monster.pronouns.is ?? 'is'} in the ring unless directed otherwise by a specific card.`;
 	}
 }
 

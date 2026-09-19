@@ -81,6 +81,7 @@ vi.mock('../lib/trpc.js', () => ({
         useQuery: () => ({ data: null, refetch: vi.fn(async () => ({ data: null })) }),
       },
       myMonsters: { useQuery: () => ({ data: [] }) },
+      myInventory: { useQuery: () => ({ data: { items: { character: [], monsters: [] } } }) },
       command: { useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }) },
       respondToPrompt: { useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }) },
       cancelPrompt: { useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }) },

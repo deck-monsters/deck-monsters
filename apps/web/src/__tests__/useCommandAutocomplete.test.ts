@@ -66,4 +66,43 @@ describe('useCommandAutocomplete', () => {
     expect(labels).toContain('revive westley');
     expect(labels).not.toContain('revive elm');
   });
+
+  it('expands owned item names, including commands that also target a monster', () => {
+    const { result } = renderHook(() => useCommandAutocomplete('use healing', true, {
+      monsterNames: ['Elm'],
+      characterItems: [
+        { displayName: 'Healing Potion', expired: false, usableOnMonsters: ['Elm'] },
+        { displayName: 'Lottery Ticket', expired: false, usableOnMonsters: [] },
+      ],
+    }));
+
+    expect(result.current.map(s => s.insertValue.toLowerCase()))
+      .toContain('use healing potion on elm');
+  });
+
+  it('keeps item source and valid targets paired', () => {
+    const context = {
+      monsterNames: ['Elm', 'Westley'],
+      characterItems: [{ displayName: 'Tonic', expired: false, usableOnMonsters: ['Elm'] }],
+      monsterItems: [{
+        monsterName: 'Westley',
+        items: [{ displayName: 'Bandage', expired: false, usableOnMonsters: ['Westley'] }],
+      }],
+    };
+
+    expect(renderHook(() => useCommandAutocomplete('give tonic', true, context)).result.current.map(s => s.insertValue))
+      .toContain('give Tonic to Elm');
+    expect(renderHook(() => useCommandAutocomplete('take bandage', true, context)).result.current.map(s => s.insertValue))
+      .toEqual(['take Bandage from Westley']);
+    expect(renderHook(() => useCommandAutocomplete('use tonic', true, context)).result.current.map(s => s.insertValue))
+      .toEqual(['use Tonic on Elm']);
+  });
+
+  it('strips every unsupported placeholder from inserted templates', () => {
+    const { result } = renderHook(() => useCommandAutocomplete('move ', true, {
+      monsterNames: ['Elm'],
+    }));
+    const move = result.current.find(s => s.label.startsWith('move'));
+    expect(move?.insertValue).not.toMatch(/\[.*?\]/);
+  });
 });

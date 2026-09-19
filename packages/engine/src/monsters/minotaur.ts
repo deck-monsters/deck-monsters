@@ -38,7 +38,7 @@ class Minotaur extends BaseMonster {
 
 	get description(): string {
 		const { pronouns } = this;
-		return `a battle-hardened, ${this.color} minotaur with a ${this.pattern} pattern shaved into ${pronouns.his} thick fur. Make no mistake, despite ${pronouns.his} ${this.descriptor} bulk ${pronouns.he} is a first-class host who has never been put to shame at a dinner party.`;
+		return `a battle-hardened, ${this.color} minotaur with a ${this.pattern} pattern shaved into ${pronouns.his} thick fur. Make no mistake, despite ${pronouns.his} ${this.descriptor} bulk ${pronouns.he} ${pronouns.is ?? 'is'} a first-class host who has never been put to shame at a dinner party.`;
 	}
 }
 

@@ -52,7 +52,7 @@ class Gladiator extends BaseMonster {
 
 	get description(): string {
 		const { pronouns } = this;
-		return `a ${this.size.adjective} gladiator, dressed in ${this.color} and hailing from ${this.location}. Many years ago ${pronouns.he} was captured, stripped of ${pronouns.his} title and land, and forced to compete in brutal matches for the entertainment of a blood-thirsty crowd. Standing ${this.size.height} tall, when you see ${pronouns.him} you know instantly that this is a warrior who has witnessed the worst humankind has to offer and has overcome.`;
+		return `a ${this.size.adjective} gladiator, dressed in ${this.color} and hailing from ${this.location}. Many years ago ${pronouns.he} ${pronouns.was ?? 'was'} captured, stripped of ${pronouns.his} title and land, and forced to compete in brutal matches for the entertainment of a blood-thirsty crowd. Standing ${this.size.height} tall, when you see ${pronouns.him} you know instantly that this is a warrior who has witnessed the worst humankind has to offer and has overcome.`;
 	}
 }
 

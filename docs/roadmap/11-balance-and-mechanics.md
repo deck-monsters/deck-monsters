@@ -7,6 +7,18 @@
 
 These are mechanics changes that affect the core game feel. They should be done as a coordinated pass rather than piecemeal, because some of them interact. We should also write a harness which allows us to test mock battles / cards over and over to fine tune the mechanics as they interact, find bugs in their interactions, and resolve issues balance / over powered cards.
 
+## Multi-boss fairness and recovery pacing (September 19, 2026)
+
+Live play exposed two related gaps between fights. Passive recovery at one HP per two
+minutes made even beginner damage linger across several normal countdowns, so the rest tick
+is now one HP per 30 seconds. This remains gradual and out-of-encounter only; potions and
+healing cards retain their tactical value during a fight.
+
+Bosses already share the Boss team. A roster with two or more bosses and two or more human
+players now automatically activates Common Cause, allying all player monsters and using
+last-team victory. Smaller and solo rosters keep the weighted event system, while Blood
+Feud remains the explicit event that breaks alliances.
+
 ---
 
 ## Coin Economy and Participation Floor (September 18, 2026)

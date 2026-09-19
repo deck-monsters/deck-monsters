@@ -49,7 +49,7 @@ const useItems = ({ channel, character, confirmed, itemSelection, itemSource, mo
 					}
 					targetStr = monster.givenName;
 				} else {
-					targetStr = `${monster.givenName} while ${monster.pronouns.he} is in an encounter`;
+					targetStr = `${monster.givenName} while ${monster.pronouns.he} ${monster.pronouns.is ?? 'is'} in an encounter`;
 				}
 			} else {
 				items = character.items.filter((item: any) => character.canUseItem(item));

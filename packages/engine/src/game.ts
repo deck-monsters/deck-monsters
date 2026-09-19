@@ -600,7 +600,11 @@ export class Game extends BaseClass {
 					// game — without this explicit emit, a freshly created character
 					// could be silently lost if the server restarts before any other
 					// state in this room changes.
-					game.emit('stateChange');
+					// This assignment is already local to this Game, so schedule directly.
+					// Broadcasting through the process-wide stateChange semaphore is both
+					// unnecessary and fragile here: the room guard deliberately rejects an
+					// unowned Game emitter before it reaches scheduleSave().
+					game.scheduleSave();
 					game.emit('characterCreated', { character });
 
 					return character;

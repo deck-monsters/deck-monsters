@@ -56,6 +56,13 @@ interface MonsterAutocompleteRow {
   dead: boolean;
   inRing: boolean;
   battlesTotal: number;
+  inEncounter?: boolean;
+}
+
+interface InventoryAutocompleteRow {
+  displayName: string;
+  expired: boolean;
+  usableOnMonsters: string[];
 }
 
 const EMPTY_MONSTERS: MonsterAutocompleteRow[] = [];
@@ -177,6 +184,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     { roomId },
     { enabled: !!roomId },
   );
+  const { data: myInventory, refetch: refetchMyInventory } = trpc.game.myInventory.useQuery(
+    { roomId },
+    { enabled: !!roomId, staleTime: 30_000 },
+  );
   const monsterRows = (myMonsters ?? EMPTY_MONSTERS) as MonsterAutocompleteRow[];
   const monsterNames = useMemo(
     () => monsterRows.map((m) => m.name),
@@ -190,6 +201,15 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     () => monsterRows.filter((m) => !m.dead && !m.inRing).map((m) => m.name),
     [monsterRows]
   );
+  const transferableMonsterNames = useMemo(
+    () => monsterRows.filter((m) => !m.inEncounter).map((m) => m.name),
+    [monsterRows]
+  );
+  const characterItems = (myInventory?.items.character ?? []) as InventoryAutocompleteRow[];
+  const monsterItems = (myInventory?.items.monsters ?? []) as Array<{
+    monsterName: string;
+    items: InventoryAutocompleteRow[];
+  }>;
   const suggestions = useCommandAutocomplete(
     inputValue,
     !activePromptId && !inputLocked,
@@ -197,6 +217,9 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       monsterNames,
       deadMonsterNames,
       sendableMonsterNames,
+      transferableMonsterNames,
+      characterItems,
+      monsterItems,
     }
   );
   const hasMonsters = monsterRows.length > 0;
@@ -611,7 +634,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
           });
         }
       } else {
-        void refetchMyMonsters();
+        void Promise.all([refetchMyMonsters(), refetchMyInventory()]);
       }
     } catch (err) {
       addConsoleEvent({
@@ -637,6 +660,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
     try {
       await respondToPrompt.mutateAsync({ roomId, requestId, answer });
+      void Promise.all([refetchMyMonsters(), refetchMyInventory()]);
     } catch (err) {
       addConsoleEvent({
         id: `sys-${Date.now()}`,
@@ -649,7 +673,6 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         upsertPendingPrompt(latest.data);
       }
     } finally {
-      void refetchMyMonsters();
       inputRef.current?.focus();
     }
   }

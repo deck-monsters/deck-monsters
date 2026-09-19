@@ -145,11 +145,15 @@ ${customHit.stats}`);
 		 */
 		it('names the card at the moment it fires, not just when it is played', () => {
 			const narrations: string[] = [];
+			const payloads: Array<Record<string, unknown>> = [];
 			const onNarration = (
 				_klass: unknown,
 				_card: unknown,
-				{ narration }: { narration: string },
-			) => narrations.push(narration);
+				payload: { narration: string; owner?: unknown },
+			) => {
+				narrations.push(payload.narration);
+				payloads.push(payload);
+			};
 			delayedHit.on('narration', onNarration);
 
 			return delayedHit
@@ -162,6 +166,9 @@ ${customHit.stats}`);
 					expect(trigger, 'expected a trigger narration').to.not.equal(undefined);
 					expect(trigger).to.contain(delayedHit.cardType);
 					expect(trigger).to.contain(target.givenName);
+					const triggerPayload = payloads.find(payload =>
+						String(payload.narration).includes('finds its moment'));
+					expect(triggerPayload?.owner).to.equal(player);
 				})
 				.finally(() => delayedHit.off('narration', onNarration));
 		});

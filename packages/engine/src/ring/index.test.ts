@@ -777,6 +777,36 @@ describe('ring/index.ts', () => {
 			game.dispose();
 		});
 
+		it('replaces an armed eligible event with Common Cause when a second boss joins', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			ring.spawnBoss();
+			ring.ringEvent = ringEventFor('the-reckoning');
+
+			ring.spawnBoss();
+
+			expect(ring.ringEvent?.id).to.equal('common-cause');
+			game.dispose();
+		});
+
+		it('preserves an armed event when players deliberately assigned a team', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			const first = addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			first.monster.team = 'A custom team';
+			ring.spawnBoss();
+			const reckoning = ringEventFor('the-reckoning');
+			ring.ringEvent = reckoning;
+
+			ring.spawnBoss();
+
+			expect(ring.ringEvent).to.equal(reckoning);
+			game.dispose();
+		});
+
 		describe('quorum drop clears ring event (Finding 4)', () => {
 			it('clears the ring event when quorum drops below minimum', () => {
 				const game = new Game();

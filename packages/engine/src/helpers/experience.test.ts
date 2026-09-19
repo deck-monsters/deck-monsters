@@ -186,7 +186,7 @@ describe('./helpers/experience.ts', () => {
 				const { gainedXP, reasons } = calculateXP(contestant2 as any, contestants as any);
 				expect(gainedXP).to.equal(0);
 				expect(reasons).to.equal(
-					'Gained no XP for being killed by itself\nGained no XP for lasting 1 rounds in battle against 1 opponent'
+					'Gained no XP for being killed by themself\nGained no XP for lasting 1 rounds in battle against 1 opponent'
 				);
 			});
 

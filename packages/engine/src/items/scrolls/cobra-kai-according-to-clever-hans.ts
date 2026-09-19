@@ -14,7 +14,7 @@ export class CobraKaiAccordingToCleverHansScroll extends CobraKaiScroll {
 	}
 
 	getTargetingDetails(monster: any): string {
-		return `Clever ${monster.givenName}'s mother told ${monster.pronouns.him} that ${monster.pronouns.he} should target the monster with the lowest current xp while ${monster.pronouns.he} is in the ring unless directed otherwise by a specific card, and that's exactly what ${monster.pronouns.he}'ll do.`;
+		return `Clever ${monster.givenName}'s mother told ${monster.pronouns.him} that ${monster.pronouns.he} should target the monster with the lowest current xp while ${monster.pronouns.he} ${monster.pronouns.is ?? 'is'} in the ring unless directed otherwise by a specific card, and that's exactly what ${monster.pronouns.he}'ll do.`;
 	}
 }
 
