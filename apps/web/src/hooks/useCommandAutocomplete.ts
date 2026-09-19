@@ -7,11 +7,13 @@ export interface AutocompleteSuggestion {
 }
 
 const MONSTER_COMMAND_RE = /\[monster\]/i;
+const ITEM_COMMAND_RE = /\[(?:item|item name)\]/i;
 
 type MonsterAutocompleteContext = {
   monsterNames?: string[];
   deadMonsterNames?: string[];
   sendableMonsterNames?: string[];
+  itemNames?: string[];
 };
 
 function normalizeCommand(input: string): string {
@@ -20,6 +22,10 @@ function normalizeCommand(input: string): string {
 
 function expandMonsterPlaceholder(command: string, monsterName: string): string {
   return command.replace(/\[monster\]/gi, monsterName);
+}
+
+function expandItemPlaceholder(command: string, itemName: string): string {
+  return command.replace(/\[(?:item|item name)\]/gi, itemName);
 }
 
 /**
@@ -41,6 +47,7 @@ export function useCommandAutocomplete(
     const monsterNames = context.monsterNames ?? [];
     const deadMonsterNames = context.deadMonsterNames ?? [];
     const sendableMonsterNames = context.sendableMonsterNames ?? [];
+    const itemNames = context.itemNames ?? [];
 
     for (const entry of COMMAND_CATALOG) {
       const hasMonsterPlaceholder = MONSTER_COMMAND_RE.test(entry.command);
@@ -50,15 +57,27 @@ export function useCommandAutocomplete(
       } else if (/^send \[monster\] to the ring$/i.test(entry.command)) {
         namesForTemplate = sendableMonsterNames;
       }
-      const expandedCommands = hasMonsterPlaceholder && monsterNames.length > 0
+      const monsterCommands = hasMonsterPlaceholder && monsterNames.length > 0
         ? namesForTemplate.map((name) => ({
             label: expandMonsterPlaceholder(entry.command, name),
             insertValue: expandMonsterPlaceholder(entry.command, name),
           }))
         : [{
             label: entry.command,
-            insertValue: entry.command.replace(/\[.*?\]/g, '').replace(/\s+/g, ' ').trimEnd(),
+            insertValue: entry.command.replace(/\[monster\]/gi, '').replace(/\s+/g, ' ').trimEnd(),
           }];
+      const expandedCommands = ITEM_COMMAND_RE.test(entry.command) && itemNames.length > 0
+        ? monsterCommands.flatMap(candidate => itemNames.map(itemName => ({
+            label: expandItemPlaceholder(candidate.label, itemName),
+            insertValue: expandItemPlaceholder(candidate.insertValue, itemName),
+          })))
+        : monsterCommands.map(candidate => ({
+            ...candidate,
+            insertValue: candidate.insertValue
+              .replace(/\[(?:item|item name)\]/gi, '')
+              .replace(/\s+/g, ' ')
+              .trimEnd(),
+          }));
 
       for (const candidate of expandedCommands) {
         const cmd = normalizeCommand(candidate.label);
@@ -85,5 +104,5 @@ export function useCommandAutocomplete(
     });
 
     return results.slice(0, 5);
-  }, [input, enabled, context.monsterNames, context.deadMonsterNames, context.sendableMonsterNames]);
+  }, [input, enabled, context.monsterNames, context.deadMonsterNames, context.sendableMonsterNames, context.itemNames]);
 }

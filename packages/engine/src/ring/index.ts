@@ -6,6 +6,7 @@ import { getTarget } from '../helpers/targeting-strategies.js';
 import { randomContestant } from '../helpers/bosses.js';
 import {
 	buildRingEventContext,
+	getRingEvent,
 	selectRingEvent,
 	type RingEventDefinition,
 } from './ring-events.js';
@@ -1534,13 +1535,29 @@ export class Ring extends BaseClass {
 		}
 
 		if (!this.ringEventsEnabled) return;
+		if (this.inEncounter) return;
+
+		const context = buildRingEventContext(this.contestants);
+		/*
+		 * Multiple bosses already share a team and normally refuse to target each other. Match
+		 * that advantage for a group of human-controlled monsters instead of making two new
+		 * players fight three cooperating bosses independently. Common Cause also supplies the
+		 * last-team victory condition, so the allied players win as soon as the boss faction is
+		 * gone. This fairness rule is deterministic; the event chance still governs less
+		 * lopsided rosters.
+		 */
+		if (context.bossCount >= 2 && context.playerCount >= 2) {
+			const commonCause = getRingEvent('common-cause');
+			if (commonCause) this.activateRingEvent(commonCause);
+			return;
+		}
+
 		// Same escape hatch as the contestant shuffle: ring events are a randomness source,
 		// so reproducible runs (tests, harness, balance sim) need them off.
 		if (process.env.DECK_MONSTERS_DETERMINISTIC_RING) return;
-		if (this.inEncounter) return;
 		if (random(1, 100) > RING_EVENT_CHANCE_PERCENT) return;
 
-		const ringEvent = selectRingEvent(buildRingEventContext(this.contestants));
+		const ringEvent = selectRingEvent(context);
 		if (!ringEvent) return;
 
 		this.activateRingEvent(ringEvent);

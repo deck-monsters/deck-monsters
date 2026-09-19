@@ -58,6 +58,11 @@ interface MonsterAutocompleteRow {
   battlesTotal: number;
 }
 
+interface InventoryAutocompleteRow {
+  displayName: string;
+  expired: boolean;
+}
+
 const EMPTY_MONSTERS: MonsterAutocompleteRow[] = [];
 const MONSTER_REFRESH_EVENT_TYPES = new Set([
   'ring.win',
@@ -177,6 +182,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     { roomId },
     { enabled: !!roomId },
   );
+  const { data: myInventory } = trpc.game.myInventory.useQuery(
+    { roomId },
+    { enabled: !!roomId, staleTime: 30_000 },
+  );
   const monsterRows = (myMonsters ?? EMPTY_MONSTERS) as MonsterAutocompleteRow[];
   const monsterNames = useMemo(
     () => monsterRows.map((m) => m.name),
@@ -190,6 +199,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     () => monsterRows.filter((m) => !m.dead && !m.inRing).map((m) => m.name),
     [monsterRows]
   );
+  const itemNames = useMemo(() => {
+    const characterItems = (myInventory?.items.character ?? []) as InventoryAutocompleteRow[];
+    const monsterItems = (myInventory?.items.monsters ?? [])
+      .flatMap(entry => entry.items) as InventoryAutocompleteRow[];
+    return [...new Set([...characterItems, ...monsterItems]
+      .filter(item => !item.expired)
+      .map(item => item.displayName))];
+  }, [myInventory]);
   const suggestions = useCommandAutocomplete(
     inputValue,
     !activePromptId && !inputLocked,
@@ -197,6 +214,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       monsterNames,
       deadMonsterNames,
       sendableMonsterNames,
+      itemNames,
     }
   );
   const hasMonsters = monsterRows.length > 0;

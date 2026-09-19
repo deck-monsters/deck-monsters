@@ -66,4 +66,14 @@ describe('useCommandAutocomplete', () => {
     expect(labels).toContain('revive westley');
     expect(labels).not.toContain('revive elm');
   });
+
+  it('expands owned item names, including commands that also target a monster', () => {
+    const { result } = renderHook(() => useCommandAutocomplete('use healing', true, {
+      monsterNames: ['Elm'],
+      itemNames: ['Healing Potion', 'Lottery Ticket'],
+    }));
+
+    expect(result.current.map(s => s.insertValue.toLowerCase()))
+      .toContain('use healing potion on elm');
+  });
 });

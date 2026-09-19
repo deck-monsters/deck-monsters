@@ -92,6 +92,9 @@ vi.mock('../lib/trpc.js', () => ({
       myMonsters: {
         useQuery: () => ({ data: [] }),
       },
+      myInventory: {
+        useQuery: () => ({ data: { items: { character: [], monsters: [] } } }),
+      },
       command: {
         useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }),
       },

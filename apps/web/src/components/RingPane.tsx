@@ -444,6 +444,11 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
         aria-label="Ring events"
         tabIndex={0}
         data={events}
+        // Virtuoso's default bottom tolerance is deliberately tight. On mobile, fractional
+        // layout pixels and the roster resizing can leave the viewport a few pixels short
+        // of that boundary even though the reader never scrolled away. Treat one compact
+        // feed row as "still pinned" so new narration keeps following reliably.
+        atBottomThreshold={72}
         followOutput={(atBottom) =>
           shouldFollowOutputRef.current || atBottom ? 'smooth' : false
         }
