@@ -50,6 +50,7 @@ function emptyEncounterModifiersView (self: BaseCreature): EncounterModifiers {
 }
 
 export function startEncounter (self: BaseCreature, ring: unknown): void {
+	self.resetPassiveHealingClock();
 	self.inEncounter = true;
 	self.encounter = { ring };
 }
@@ -57,6 +58,8 @@ export function startEncounter (self: BaseCreature, ring: unknown): void {
 export function endEncounter (self: BaseCreature): import('./base.js').Encounter {
 	const { encounter = {} } = self;
 	self.inEncounter = false;
+	// Combat time is ineligible for passive recovery; begin a fresh rest period now.
+	self.resetPassiveHealingClock();
 	delete self.encounter;
 	// Strip the `ring` back-reference before returning: the ring object holds
 	// `ring.contestants` which would create a circular reference when the
