@@ -5,15 +5,15 @@ import ShopPanel, { type ShopSummary } from '../components/ShopPanel.js';
 const shop: ShopSummary = {
   name: 'Moon Market', adjective: 'gilded', closingTime: '2030-01-01T00:00:00.000Z', coins: 75,
   items: [{
-    stockIndex: 0, section: 'items', displayName: 'Potion of Healing', description: 'Heals 8 HP.',
+    stockIndex: 0, stockCount: 2, section: 'items', displayName: 'Potion of Healing', description: 'Heals 8 HP.',
     stats: 'Usable 1 time.', price: 80, affordable: false, ownedCount: 2,
   }],
   cards: [{
-    stockIndex: 0, section: 'cards', displayName: 'Targeting Scroll', description: 'Aim a card.',
+    stockIndex: 0, stockCount: 1, section: 'cards', displayName: 'Targeting Scroll', description: 'Aim a card.',
     stats: 'Usable 1 time.', price: 48, affordable: true, ownedCount: 1,
   }],
   backRoom: [{
-    stockIndex: 0, section: 'backRoom', displayName: 'Sorting Hat', description: 'Choose a team.',
+    stockIndex: 0, stockCount: 1, section: 'backRoom', displayName: 'Sorting Hat', description: 'Choose a team.',
     stats: 'Usable 1 time.', price: 0, affordable: true, ownedCount: 0,
   }],
 };
@@ -24,6 +24,7 @@ describe('ShopPanel', () => {
     expect(screen.getByText('Moon Market')).toBeInTheDocument();
     expect(screen.getByText('75 coins')).toBeInTheDocument();
     expect(screen.getByText('Own 2')).toBeInTheDocument();
+	expect(screen.getByText('Potion of Healing ×2')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '80 coins' })).toBeDisabled();
   });
 

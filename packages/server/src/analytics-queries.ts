@@ -75,6 +75,7 @@ export async function queryRoomPlayers(
 	limit: number
 ): Promise<
 	Array<{
+		userId: string;
 		displayName: string;
 		xp: number;
 		wins: number;
@@ -95,6 +96,7 @@ export async function queryRoomPlayers(
 
 	const rows = await db
 		.select({
+			userId: roomPlayerStats.userId,
 			displayName: profiles.displayName,
 			xp: roomPlayerStats.xp,
 			wins: roomPlayerStats.wins,
@@ -110,6 +112,7 @@ export async function queryRoomPlayers(
 		.limit(limit);
 
 	return rows.map((r) => ({
+		userId: r.userId,
 		// `profiles.display_name` is seeded from the user's email by `handle_new_user`, so a
 		// player who never set a name has their address stored there. Every leaderboard is
 		// shown to the whole room, which makes this the widest audience any name reaches.

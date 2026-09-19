@@ -64,6 +64,16 @@ describe('analytics-queries applies the mask at every name site', () => {
 	});
 });
 
+describe('room leaderboard live-name override', () => {
+	it('sanitizes the restored character name before it can replace the safe query value', () => {
+		const src = readFileSync(join(process.cwd(), 'src/trpc/router.ts'), 'utf8');
+		expect(src).to.include("import { publicDisplayName } from '../public-display-name.js'");
+		expect(src).to.match(
+			/displayName:\s*publicDisplayName\(\s*String\(game\.characters\?\.\[r\.userId\]\?\.givenName \?\? r\.displayName\)/,
+		);
+	});
+});
+
 /**
  * The engine writes `participants[].ownerDisplayName` from `character.givenName`, so a
  * player who never chose a name has their email inside every fight row — and fight rows go
