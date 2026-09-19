@@ -596,11 +596,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   }
 
   async function handleCancelFlow() {
-    for (const ev of consoleEvents) {
-      if (ev.promptData && !ev.promptData.selectedAnswer && !ev.promptData.timedOut && !ev.promptData.cancelled) {
-        resolvedPromptIdsRef.current.add(ev.promptData.requestId);
-      }
-    }
+    const optimisticallyResolvedIds = consoleEvents
+      .filter(ev => ev.promptData && !ev.promptData.selectedAnswer && !ev.promptData.timedOut && !ev.promptData.cancelled)
+      .map(ev => ev.promptData!.requestId);
+    for (const id of optimisticallyResolvedIds) resolvedPromptIdsRef.current.add(id);
     // Optimistically cancel all visible unresolved prompts so countdowns hide immediately
     setConsoleEvents(prev => prev.map(ev =>
       ev.promptData && !ev.promptData.selectedAnswer && !ev.promptData.timedOut && !ev.promptData.cancelled
@@ -616,6 +615,11 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       });
       setActivePromptId(null);
     } catch (err) {
+      // The cancel did not actually land — the flow may still be active server-side, so
+      // undo the optimistic resolution marks. A later poll must be free to re-arm it
+      // rather than being blocked by our own guard while its `cancelled: true` UI state
+      // (applied above) has already gone stale.
+      for (const id of optimisticallyResolvedIds) resolvedPromptIdsRef.current.delete(id);
       addConsoleEvent({
         id: `sys-${Date.now()}`,
         type: 'system',
@@ -690,6 +694,10 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       await respondToPrompt.mutateAsync({ roomId, requestId, answer });
       void Promise.all([refetchMyMonsters(), refetchMyInventory()]);
     } catch (err) {
+      // The answer did not actually land — this requestId is not resolved after all.
+      // Undo the optimistic mark so the recovery below (or a later poll) is free to
+      // re-arm it as still pending instead of being silently blocked by our own guard.
+      resolvedPromptIdsRef.current.delete(requestId);
       addConsoleEvent({
         id: `sys-${Date.now()}`,
         type: 'system',

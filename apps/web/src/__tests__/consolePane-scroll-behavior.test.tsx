@@ -10,17 +10,20 @@ import {
 const scrollToIndexMock = vi.fn();
 let restoreRaf: (() => void) | null = null;
 const listeners = new Set<(tracked: TrackedRingFeedEvent) => void>();
+type PendingPromptSnapshot = {
+  requestId: string;
+  question: string;
+  choices: string[];
+  timeoutSeconds?: number;
+};
+
 const trpcMocks = vi.hoisted(() => ({
   pendingPromptQuery: {
-    data: null as null | {
-      requestId: string;
-      question: string;
-      choices: string[];
-      timeoutSeconds?: number;
-    },
+    data: null as null | PendingPromptSnapshot,
     dataUpdatedAt: 0,
-    refetch: vi.fn(async () => ({ data: null })),
+    refetch: vi.fn(async (): Promise<{ data: PendingPromptSnapshot | null }> => ({ data: null })),
   },
+  respondToPromptMutateAsync: vi.fn(async () => ({ ok: true })),
 }));
 
 function pushEvent(tracked: TrackedRingFeedEvent) {
@@ -102,7 +105,7 @@ vi.mock('../lib/trpc.js', () => ({
         useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }),
       },
       respondToPrompt: {
-        useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }),
+        useMutation: () => ({ mutateAsync: trpcMocks.respondToPromptMutateAsync }),
       },
       cancelPrompt: {
         useMutation: () => ({ mutateAsync: vi.fn(async () => ({ ok: true })) }),
@@ -145,6 +148,8 @@ describe('ConsolePane scroll behavior', () => {
     listeners.clear();
     trpcMocks.pendingPromptQuery.data = null;
     trpcMocks.pendingPromptQuery.dataUpdatedAt = 0;
+    trpcMocks.respondToPromptMutateAsync.mockReset();
+    trpcMocks.respondToPromptMutateAsync.mockImplementation(async () => ({ ok: true }));
     const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
       callback(0);
       return 0;
@@ -361,5 +366,60 @@ describe('ConsolePane scroll behavior', () => {
 
     expect(screen.queryByText(/Command suggestions are paused/)).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText('Type a command…')).toBeEnabled();
+  });
+
+  /**
+   * The requestId-resolved guard above must not swallow legitimate recovery: if
+   * `respondToPrompt` actually fails server-side (the answer did not land), `handleAnswer`
+   * explicitly refetches and re-arms the still-pending prompt. Marking a requestId
+   * "resolved" optimistically, at click time, must not survive a failed submission — the
+   * prompt genuinely never got answered and the player needs to see it again.
+   */
+  it('still re-arms the prompt when the answer submission itself fails', async () => {
+    const roomId = '11111111-1111-1111-1111-111111111111';
+    trpcMocks.respondToPromptMutateAsync.mockImplementation(async () => {
+      throw new Error('network error');
+    });
+    const pendingSnapshot = {
+      requestId: 'request-shop-1',
+      question: 'Which would you like to see?',
+      choices: ['Items', 'Cards', 'Back Room'],
+    };
+    trpcMocks.pendingPromptQuery.refetch = vi.fn(async () => ({ data: pendingSnapshot }));
+
+    render(
+      <TestFeed>
+        <ConsolePane roomId={roomId} isActive />
+      </TestFeed>,
+    );
+
+    act(() => {
+      pushEvent({
+        id: 'prompt-request',
+        data: {
+          id: 'prompt-request',
+          type: 'prompt.request',
+          scope: 'private',
+          targetUserId: 'user-1',
+          text: pendingSnapshot.question,
+          payload: pendingSnapshot,
+          timestamp: Date.now(),
+          roomId,
+        },
+      });
+    });
+
+    const input = screen.getByPlaceholderText('Type your answer or click a choice above…');
+    fireEvent.change(input, { target: { value: 'Items' } });
+    await act(async () => {
+      fireEvent.keyDown(input, { key: 'Enter' });
+      // Let the rejected mutateAsync and the recovery refetch settle.
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText(/Command suggestions are paused/)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Type your answer or click a choice above…')).toBeEnabled();
   });
 });
