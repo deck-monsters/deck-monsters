@@ -20,6 +20,16 @@ stock, is fixed (#147). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the ful
 
 ## Recently resolved
 
+### September 19 health-recovery follow-up — FIXED (#151)
+
+Passive healing previously existed only as an in-memory interval. If the server slept,
+restarted, or unloaded a room after a monster revived, no healing ticks ran; loading the
+room hours later could therefore show the monster at only a few HP. Recovery now persists
+the wall-clock instant represented by HP, catches up missed ticks on hydration, and also
+credits time elapsed after an overdue revival timer. Dead monsters still receive no healing
+before their scheduled revival. Heal events now report the clamped HP and actual amount
+rather than an impossible pre-clamp value.
+
 Found during the September 2026 live-play review. None is player-blocking; each is
 recorded with a root cause so it can be picked up without re-deriving the analysis.
 

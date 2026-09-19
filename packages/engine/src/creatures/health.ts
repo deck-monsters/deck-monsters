@@ -1,6 +1,6 @@
 import { capitalize } from '../helpers/capitalize.js';
 import { MELEE } from '../constants/card-classes.js';
-import { TIME_TO_RESURRECT_MS } from '../constants/timing.js';
+import { TIME_TO_HEAL_MS, TIME_TO_RESURRECT_MS } from '../constants/timing.js';
 import { subEventDelay } from '../helpers/delay-times.js';
 import type { BaseCreature, CardInstance, HitLogEntry } from './base.js';
 
@@ -66,7 +66,7 @@ export async function heal (self: BaseCreature, amount = 0): Promise<boolean> {
 		self.hp = hp;
 	}
 
-	self.emit('heal', { amount, hp, prevHp: originalHP });
+	self.emit('heal', { amount: self.hp - originalHP, hp: self.hp, prevHp: originalHP });
 	await subEventDelay(encounterSpeed(self));
 
 	if (hp <= 0) {
@@ -99,8 +99,14 @@ export function respawn (self: BaseCreature, immediate?: boolean): number {
 		self.respawnTimeoutBegan = self.respawnTimeoutBegan || now;
 		self.respawnTimeoutLength = Math.max((self.respawnTimeoutBegan + timeoutLength) - now, 0);
 
+		const reviveAt = self.respawnTimeoutBegan + timeoutLength;
 		self.respawnTimeout = setTimeout(() => {
-			self.hp = Math.max(1, self.hp);
+			// Timers do not run while a host is sleeping or a room is unloaded. Recover the
+			// HP that would have accrued after the scheduled revival instead of restarting
+			// the healing clock at one HP when the process wakes hours later.
+			const passiveTicks = Math.floor(Math.max(0, Date.now() - reviveAt) / TIME_TO_HEAL_MS);
+			const hp = Math.min(self.maxHp, Math.max(1, self.hp) + passiveTicks);
+			self.setOptions({ hp, hpUpdatedAt: Date.now() });
 			self.respawnTimeout = undefined;
 			self.respawnTimeoutBegan = undefined as unknown as number;
 			self.emit('respawn');

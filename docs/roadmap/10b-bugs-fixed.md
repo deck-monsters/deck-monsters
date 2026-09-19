@@ -833,7 +833,9 @@ Reduced from ~2000 lines to ~977 lines during the TypeScript migration by extrac
 
 Healing rate and resurrection time were magic numbers.
 
-**Status**: Fixed. Extracted to `constants/timing.ts` as `TIME_TO_HEAL_MS` (300000) and `TIME_TO_RESURRECT_MS` (600000).
+**Status**: Fixed. Extracted to `constants/timing.ts`. `TIME_TO_HEAL_MS` was originally
+300000 and is now 30000 following the #148 rest-healing balance pass;
+`TIME_TO_RESURRECT_MS` remains 600000.
 
 ### 7. Hubot-specific AWS environment variable names — Done
 

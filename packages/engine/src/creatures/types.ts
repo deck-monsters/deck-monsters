@@ -69,6 +69,8 @@ export interface CreatureOptions {
 	icon?: string;
 	xp?: number;
 	hp?: number;
+	/** Last wall-clock instant represented by `hp`, used to catch up passive healing. */
+	hpUpdatedAt?: number;
 	ac?: number;
 	str?: number;
 	dex?: number;
