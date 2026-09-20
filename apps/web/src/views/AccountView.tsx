@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 import { useTheme, type Theme } from '../hooks/useTheme.js';
@@ -20,11 +20,15 @@ export default function AccountView() {
   const utils = trpc.useUtils();
   const { data: profile } = trpc.profile.me.useQuery();
   const [displayName, setDisplayName] = useState('');
+  const hasInitializedDisplayName = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [renamedCharacters, setRenamedCharacters] = useState<number | null>(null);
 
   useEffect(() => {
-    if (profile) setDisplayName(profile.displayName);
+    if (profile && !hasInitializedDisplayName.current) {
+      setDisplayName(profile.displayName);
+      hasInitializedDisplayName.current = true;
+    }
   }, [profile]);
 
   const updateDisplayName = trpc.profile.updateDisplayName.useMutation({

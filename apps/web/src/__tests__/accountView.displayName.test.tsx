@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const trpcMock = vi.hoisted(() => {
 	const mutation = vi.fn();
@@ -24,6 +24,7 @@ const trpcMock = vi.hoisted(() => {
 			onSuccess?: (result: { displayName: string; renamedCharacters: number }) => void;
 			onError?: (error: Error) => void;
 		} | null,
+		isPending: false,
 	};
 });
 
@@ -44,7 +45,7 @@ vi.mock('../lib/trpc.js', () => ({
 			updateDisplayName: {
 				useMutation: (options: typeof trpcMock.mutationOptions) => {
 					trpcMock.mutationOptions = options;
-					return { mutate: trpcMock.mutation, isPending: false };
+					return { mutate: trpcMock.mutation, isPending: trpcMock.isPending };
 				},
 			},
 		},
@@ -84,6 +85,16 @@ function renderView() {
 }
 
 describe('AccountView global display name', () => {
+	beforeEach(() => {
+		trpcMock.profile = { displayName: 'Ada Lovelace' };
+		trpcMock.isPending = false;
+		trpcMock.mutationOptions = null;
+		trpcMock.mutation.mockReset();
+		trpcMock.profileInvalidate.mockReset();
+		trpcMock.roomMembersInvalidate.mockReset();
+		Object.values(trpcMock.leaderboardInvalidates).forEach((invalidate) => invalidate.mockReset());
+	});
+
 	it('renders the current global display name', () => {
 		renderView();
 
@@ -125,5 +136,45 @@ describe('AccountView global display name', () => {
 		expect(trpcMock.leaderboardInvalidates.roomMonsters).toHaveBeenCalledOnce();
 		expect(trpcMock.leaderboardInvalidates.globalPlayers).toHaveBeenCalledOnce();
 		expect(trpcMock.leaderboardInvalidates.globalMonsters).toHaveBeenCalledOnce();
+	});
+
+	it('preserves a draft while profile data refetches', async () => {
+		const user = userEvent.setup();
+		const view = renderView();
+		const input = screen.getByLabelText('Display name');
+
+		await user.clear(input);
+		await user.type(input, 'Working Draft');
+		trpcMock.profile = { displayName: 'Refetched Name' };
+		view.rerender(
+			<MemoryRouter>
+				<AccountView />
+			</MemoryRouter>,
+		);
+
+		expect(input).toHaveValue('Working Draft');
+	});
+
+	it('shows the saved value and the zero-character success message', () => {
+		renderView();
+
+		act(() => {
+			trpcMock.mutationOptions?.onSuccess?.({ displayName: 'Grace Hopper', renamedCharacters: 0 });
+		});
+
+		expect(screen.getByLabelText('Display name')).toHaveValue('Grace Hopper');
+		expect(screen.getByText('Saved.')).toBeInTheDocument();
+	});
+
+	it('disables Save while the display-name update is pending', () => {
+		const view = renderView();
+		trpcMock.isPending = true;
+		view.rerender(
+			<MemoryRouter>
+				<AccountView />
+			</MemoryRouter>,
+		);
+
+		expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
 	});
 });
