@@ -3,22 +3,45 @@ import type { RingContestantSnapshot } from '../../components/RingRoster.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../../hooks/useRingFeed.js';
 import { clear, drawHpBar, drawSprite } from './renderer.js';
 import { spriteFor } from './sprites.js';
-import { EMPTY_FIGHT_SCENE, reduce, type FightScene } from './state.js';
+import {
+  EMPTY_FIGHT_SCENE,
+  nextDeadline,
+  reduce,
+  settle,
+  type FightScene,
+} from './state.js';
 
 const CANVAS_HEIGHT = 200;
+const canvasMetrics = new WeakMap<HTMLCanvasElement, { width: number; height: number; pixelRatio: number }>();
 
-function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameIndex: number, now: number): void {
+function resizeCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, width: number): void {
+  const pixelRatio = Math.max(1, window.devicePixelRatio || 1);
+  const metrics = { width, height: CANVAS_HEIGHT, pixelRatio };
+  const previous = canvasMetrics.get(canvas);
+  if (
+    previous?.width === metrics.width
+    && previous.height === metrics.height
+    && previous.pixelRatio === metrics.pixelRatio
+  ) return;
+
+  // Assigning width or height clears the backing store, so only do it when an actual
+  // CSS-size/DPR change requires a new coordinate system.
+  canvas.width = Math.round(width * pixelRatio);
+  canvas.height = Math.round(CANVAS_HEIGHT * pixelRatio);
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  canvasMetrics.set(canvas, metrics);
+}
+
+export function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameIndex: number, now: number): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
   const width = canvas.getBoundingClientRect().width || canvas.clientWidth || 640;
-  const pixelRatio = Math.max(1, Math.round(window.devicePixelRatio || 1));
+  resizeCanvas(canvas, ctx, width);
   const spriteScale = width < 480 ? 3 : 4;
-  canvas.width = Math.round(width * pixelRatio);
-  canvas.height = CANVAS_HEIGHT * pixelRatio;
   clear(ctx);
 
-  const scale = spriteScale * pixelRatio;
+  const scale = spriteScale;
   const fighterWidth = 16 * scale;
   const hpWidth = 16 * scale;
   const left = scene.fighters.filter((fighter) => fighter.side === 'left');
@@ -29,11 +52,11 @@ function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameIndex: num
       ? left.findIndex((candidate) => candidate.name === fighter.name)
       : right.findIndex((candidate) => candidate.name === fighter.name);
     const row = Math.floor(indexOnSide / 2);
-    const offset = (indexOnSide % 2) * (fighterWidth + 12 * pixelRatio);
+    const offset = (indexOnSide % 2) * (fighterWidth + 12);
     const x = fighter.side === 'left'
-      ? 20 * pixelRatio + offset
-      : canvas.width - fighterWidth - 20 * pixelRatio - offset;
-    const y = 18 * pixelRatio + row * (78 * pixelRatio);
+      ? 20 + offset
+      : width - fighterWidth - 20 - offset;
+    const y = 18 + row * 78;
     const sprite = spriteFor(fighter.creatureType);
     const animation = fighter.anim === 'flee'
       ? 'attack'
@@ -48,7 +71,7 @@ function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameIndex: num
       mirror: fighter.side === 'right',
       flash: fighter.anim === 'hit' && elapsed < 130,
     });
-    drawHpBar(ctx, x, y + fighterWidth + 4 * pixelRatio, hpWidth, fighter.hp, fighter.maxHp);
+    drawHpBar(ctx, x, y + fighterWidth + 4, hpWidth, fighter.hp, fighter.maxHp);
     // Keep the loop deterministic if a future layout makes entry positions stateful.
     void index;
   }
@@ -90,6 +113,15 @@ export default function PixelFightLayer({
   useRingFeedListener(onRingEvent);
 
   useEffect(() => {
+    const deadline = nextDeadline(scene);
+    if (deadline === undefined) return;
+    const timer = window.setTimeout(() => {
+      setScene((previous) => settle(previous, performance.now()));
+    }, Math.max(0, deadline - performance.now()));
+    return () => window.clearTimeout(timer);
+  }, [scene]);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext('2d');
@@ -127,6 +159,16 @@ export default function PixelFightLayer({
       }
     };
   }, [reducedMotion, scene]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      drawScene(canvas, scene, frameIndexRef.current, performance.now());
+    });
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, [scene]);
 
   useEffect(
     () => () => {
