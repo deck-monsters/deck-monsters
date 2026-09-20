@@ -24,6 +24,7 @@ import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
 import { publicDisplayName } from '../public-display-name.js';
+import { createProfileRouter } from './profile.js';
 import {
 	commandsTotal,
 	wsConnectionsActive,
@@ -2412,6 +2413,7 @@ export function createRouter(roomManager: RoomManager) {
 		leaderboard: leaderboardRouter,
 		admin: adminRouter,
 		auth: authRouter,
+		profile: createProfileRouter({ roomManager }),
 		health: t.procedure.query(() => ({
 			status: 'ok',
 			timestamp: new Date().toISOString(),
