@@ -12,7 +12,7 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 |---|------|------------------|--------|------------|
 | D | `AGENTS.md` becomes the single source of truth; `CLAUDE.md` a symlink; `docs/agents/*` reference files (game primer, repo operations, subagents) | Tier 3 implement, Tier 2 review | ✅ done (review: spec pass; two stale claims fixed after review) | `2ab6fc1`, `7749309`, + review fix |
 | C | Workshop: train your first monster with no character (prompt-free character creation inside `game.spawnMonster`); stop asking players to pick from one class | Tier 3 implement, Tier 2 review | ✅ done (review: spec pass, approved; 10b #160) | `67d7ad5`…`675a230` |
-| B | Workshop header metrics: current HP first, slots bar → `Deck 9/9` text, `Lvl n` badge, fallen/revives-in state | Tier 2 implement | 🔍 in review | 854f53e, d36bbe3, f8d2e4e |
+| B | Workshop header metrics: current HP first, slots bar → `Deck 9/9` text, `Lvl n` badge, fallen/revives-in state | Tier 2 implement | ✅ done (review found 4 Important: restore-drift `revivesAt`, doubled `in`, no countdown tick, `maxHp` floor — fixed) | 854f53e, d36bbe3, f8d2e4e, 2a71c9a, 29a3bbb, 7c07e45, bc85843 |
 | A | One vocabulary for the world (`train`, `call out`, `dismiss`, pronouns…) + `docs/voice-and-wording.md` | Tier 3 doc, Tier 2 apply | 📋 brief ready, runs last of the wording/workshop set | — |
 | E | Edit your **global** display name, not just the room-scoped character name | explore → Tier 2 | 🔍 in review | `4659880`, `cdb7af2`, `bc879bd` |
 | F | +3 monster slots per beastmaster (existing characters included) | orchestrator (small) | ✅ done | see git log (`feat(engine): beastmasters keep up to 10 monsters`) |
