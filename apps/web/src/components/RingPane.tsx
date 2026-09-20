@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
@@ -24,6 +24,9 @@ import {
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 import FeedList from './FeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
+import { useThemeFeature } from '../hooks/useTheme.js';
+
+const PixelFightLayer = lazy(() => import('../animations/pixel-fight/PixelFightLayer.js'));
 
 interface RingPaneProps {
   roomId: string;
@@ -128,6 +131,7 @@ function LastFightFooter({
 
 export default function RingPane({ roomId, isActive, headerActions }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
+  const pixelArtEnabled = useThemeFeature('pixel-art');
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
@@ -504,6 +508,11 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
         }}
         atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
+      {pixelArtEnabled && (
+        <Suspense fallback={null}>
+          <PixelFightLayer contestants={rosterContestants} viewerUserId={myUserId} />
+        </Suspense>
+      )}
 
       {!isAtBottom && (
         <button
