@@ -47,7 +47,7 @@ export function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameInd
   const left = scene.fighters.filter((fighter) => fighter.side === 'left');
   const right = scene.fighters.filter((fighter) => fighter.side === 'right');
 
-  for (const [index, fighter] of scene.fighters.entries()) {
+  for (const fighter of scene.fighters) {
     const indexOnSide = fighter.side === 'left'
       ? left.findIndex((candidate) => candidate.name === fighter.name)
       : right.findIndex((candidate) => candidate.name === fighter.name);
@@ -72,8 +72,6 @@ export function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameInd
       flash: fighter.anim === 'hit' && elapsed < 130,
     });
     drawHpBar(ctx, x, y + fighterWidth + 4, hpWidth, fighter.hp, fighter.maxHp);
-    // Keep the loop deterministic if a future layout makes entry positions stateful.
-    void index;
   }
 }
 

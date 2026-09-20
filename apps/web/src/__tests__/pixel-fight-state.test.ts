@@ -204,6 +204,14 @@ describe('pixel fight reducer', () => {
     expect(settle(emptied, 3_100)).toMatchObject({ active: false, fighters: [] });
   });
 
+  it('starts a fresh room with an inactive empty scene after another room was fighting', () => {
+    const fighting = startedScene();
+    const freshRoom = reduce(EMPTY_FIGHT_SCENE, stateFrame([]), 10);
+
+    expect(fighting.active).toBe(true);
+    expect(freshRoom).toMatchObject({ active: false, fighters: [] });
+  });
+
   it('fades after a conclusion and becomes inactive when the fade ends', () => {
     const fading = reduce(
       startedScene(),

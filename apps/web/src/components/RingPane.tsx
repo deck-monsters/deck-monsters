@@ -533,7 +533,7 @@ export default function RingPane({
       />
       {pixelArtEnabled && (
         <Suspense fallback={null}>
-          <PixelFightLayer contestants={rosterContestants} viewerUserId={myUserId} />
+          <PixelFightLayer key={roomId} contestants={rosterContestants} viewerUserId={myUserId} />
         </Suspense>
       )}
 

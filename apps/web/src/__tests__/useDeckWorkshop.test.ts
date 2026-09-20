@@ -119,7 +119,11 @@ describe('useDeckWorkshop', () => {
     mocks.spawnOptionsUseQuery.mockReturnValue({
       data: {
         types: [{ index: 0, label: 'Basilisk' }, { index: 2, label: 'Jinn' }],
-        genders: ['female', 'male', 'androgynous'],
+        pronouns: [
+          { key: 'male', label: 'he/him' },
+          { key: 'female', label: 'she/her' },
+          { key: 'androgynous', label: 'they/them' },
+        ],
       },
       isLoading: false,
     });
@@ -208,6 +212,19 @@ describe('useDeckWorkshop', () => {
         cardNames: ['Hit'],
       }),
     ).toThrow('Room not selected');
+  });
+
+  it('keeps character presence unknown until the inventory query resolves', () => {
+    mocks.myInventoryUseQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isFetching: false,
+      refetch: mocks.inventoryRefetch,
+    });
+
+    const { result } = renderHook(() => useDeckWorkshop('room-123'));
+
+    expect(result.current.hasCharacter).toBeUndefined();
   });
 
   it('sends unequipMany as a single mutation carrying the full card list', async () => {

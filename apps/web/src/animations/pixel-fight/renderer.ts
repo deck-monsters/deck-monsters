@@ -1,4 +1,11 @@
 import type { PixelFrame } from './sprites.js';
+import { hpBand, hpRatio } from '../../components/RingRoster.js';
+
+const HP_BAND_COLORS = {
+  healthy: '#4ade80',
+  hurt: '#facc15',
+  critical: '#fb7185',
+} as const;
 
 export function clear(ctx: CanvasRenderingContext2D): void {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -42,8 +49,8 @@ export function drawHpBar(
   hp: number,
   maxHp: number,
 ): void {
-  const ratio = maxHp > 0 ? Math.max(0, Math.min(1, hp / maxHp)) : 0;
-  const color = ratio >= 0.5 ? '#4ade80' : ratio >= 0.2 ? '#facc15' : '#fb7185';
+  const ratio = hpRatio(hp, maxHp);
+  const color = HP_BAND_COLORS[hpBand(ratio)];
   ctx.fillStyle = '#111827';
   ctx.fillRect(x, y, width, 5);
   ctx.fillStyle = color;

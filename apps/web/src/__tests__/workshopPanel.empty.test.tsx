@@ -8,7 +8,11 @@ const hookMock = vi.hoisted(() => ({
   items: { character: [], monsters: [] },
   spawnOptions: {
     types: [{ index: 0, label: 'Basilisk' }, { index: 2, label: 'Jinn' }],
-    genders: ['female', 'male', 'androgynous'],
+    pronouns: [
+      { key: 'male', label: 'he/him' },
+      { key: 'female', label: 'she/her' },
+      { key: 'androgynous', label: 'they/them' },
+    ],
   },
   loading: false,
   busy: false,

@@ -8,14 +8,22 @@ const hookMock = vi.hoisted(() => ({
   items: { character: [], monsters: [] },
   hasCharacter: false as boolean,
   characterCreation: {
-    genders: ['male', 'female', 'androgynous'],
+    pronouns: [
+      { key: 'male', label: 'he/him' },
+      { key: 'female', label: 'she/her' },
+      { key: 'androgynous', label: 'they/them' },
+    ],
     avatars: ['🦊', '🐙', '🦉'],
     suggestedName: 'Ada Lovelace',
   },
   shuffleAvatars: vi.fn(),
   spawnOptions: {
     types: [{ index: 0, label: 'Basilisk' }, { index: 2, label: 'Jinn' }],
-    genders: ['female', 'male', 'androgynous'],
+    pronouns: [
+      { key: 'male', label: 'he/him' },
+      { key: 'female', label: 'she/her' },
+      { key: 'androgynous', label: 'they/them' },
+    ],
   },
   loading: false,
   busy: false,
@@ -97,6 +105,18 @@ describe('WorkshopPanel: first run with no character', () => {
     expect(characterFields.getByRole('option', { name: 'she/her' })).toHaveValue('female');
     expect(characterFields.getByRole('option', { name: 'he/him' })).toHaveValue('male');
     expect(characterFields.getByRole('option', { name: 'they/them' })).toHaveValue('androgynous');
+  });
+
+  it('lists character and monster pronouns in the same server-provided order', () => {
+    render(<WorkshopPanel roomId="room-1" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
+
+    expect(screen.getAllByLabelText('Pronouns').map((select) =>
+      Array.from((select as HTMLSelectElement).options, (option) => option.text),
+    )).toEqual([
+      ['he/him', 'she/her', 'they/them'],
+      ['he/him', 'she/her', 'they/them'],
+    ]);
   });
 
   it('sends the character with the spawn, so onboarding is one submit', async () => {

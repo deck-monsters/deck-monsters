@@ -52,16 +52,8 @@ describe('RingPane pixel art feature gate', () => {
     })));
   });
 
-  it('defers the lazy loader until the switcher enables pixel art, then tears down the layer', async () => {
-    const requestFrame = vi.fn(() => 17);
-    const cancelFrame = vi.fn();
-    vi.stubGlobal('requestAnimationFrame', requestFrame);
-    vi.stubGlobal('cancelAnimationFrame', cancelFrame);
+  it('defers the lazy loader until the switcher enables pixel art', async () => {
     const LayerTarget: ComponentType = () => {
-      useEffect(() => {
-        const handle = requestAnimationFrame(() => undefined);
-        return () => cancelAnimationFrame(handle);
-      }, []);
       return <canvas className="pixel-fight-layer" aria-hidden="true" />;
     };
     const loader = vi.fn(async () => ({ default: LayerTarget }));
@@ -91,6 +83,39 @@ describe('RingPane pixel art feature gate', () => {
 
     await act(async () => screen.getByRole('button', { name: 'phosphor' }).click());
     await waitFor(() => expect(container.querySelector('.pixel-fight-layer')).toBeNull());
-    expect(cancelFrame).toHaveBeenCalledWith(17);
+  });
+
+  it('remounts the pixel layer with an empty scene when the room changes', async () => {
+    const mounts = vi.fn();
+    const LayerTarget: ComponentType = () => {
+      useEffect(() => {
+        mounts();
+      }, []);
+      return <canvas className="pixel-fight-layer" aria-hidden="true" />;
+    };
+    const loader = vi.fn(async () => ({ default: LayerTarget }));
+    function Switcher() {
+      const { setTheme } = useTheme();
+      return <button onClick={() => setTheme('street-fighter')}>street fighter</button>;
+    }
+
+    const { rerender } = render(
+      <TestFeed>
+        <Switcher />
+        <RingPane roomId="room-1" isActive pixelFightLayerLoader={loader} />
+      </TestFeed>,
+    );
+
+    await act(async () => screen.getByRole('button', { name: 'street fighter' }).click());
+    await waitFor(() => expect(mounts).toHaveBeenCalledTimes(1));
+
+    rerender(
+      <TestFeed>
+        <Switcher />
+        <RingPane roomId="room-2" isActive pixelFightLayerLoader={loader} />
+      </TestFeed>,
+    );
+
+    await waitFor(() => expect(mounts).toHaveBeenCalledTimes(2));
   });
 });

@@ -8,14 +8,6 @@ import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
 import { RingFeedContext, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { groupSelectionByCardName, isSameSource, toggleWorkshopSelection } from '../utils/workshop-selection.js';
 
-// The engine stores a pronoun key (`helpers/pronouns.ts`); players think in pronouns, so
-// the key is the value and the pronouns are the label.
-const PRONOUN_LABELS: Record<string, string> = {
-  male: 'he/him',
-  female: 'she/her',
-  androgynous: 'they/them',
-};
-
 export type SelectionState = {
   location: WorkshopCardLocation;
   cardName: string;
@@ -574,11 +566,11 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             <fieldset className="workshop-spawn-character">
               <legend>About you</legend>
               <label>Your name<input name="characterName" required maxLength={40} autoComplete="off" defaultValue={characterCreation.suggestedName} key={characterCreation.suggestedName} /></label>
-              <label>Pronouns<select name="characterGender" defaultValue="androgynous">{characterCreation.genders.map((gender) => <option key={gender} value={gender}>{PRONOUN_LABELS[gender] ?? gender}</option>)}</select></label>
+              <label>Pronouns<select name="characterGender" defaultValue="androgynous">{characterCreation.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
               <fieldset className="workshop-avatar-choices">
                 <legend>Avatar</legend>
                 {characterCreation.avatars.map((avatar, index) => (
-                  <label key={avatar} className="workshop-avatar-chip">
+                  <label key={`${avatar}-${index}`} className="workshop-avatar-chip">
                     <input type="radio" name="avatar" value={avatar} defaultChecked={index === 0} />
                     <span>{avatar}</span>
                   </label>
@@ -589,7 +581,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             </fieldset>
           )}
           <label>Type<select name="type" defaultValue={spawnOptions.types[0]?.index}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
-          <label>Pronouns<select name="gender" defaultValue="androgynous">{spawnOptions.genders.map((gender) => <option key={gender} value={gender}>{PRONOUN_LABELS[gender] ?? gender}</option>)}</select></label>
+          <label>Pronouns<select name="gender" defaultValue="androgynous">{spawnOptions.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
           <label>Name<input name="name" required maxLength={40} autoComplete="off" /></label>
           <label>Appearance<input name="color" required maxLength={100} placeholder="gold and black" /></label>
           <button type="submit" className="btn" disabled={busy}>Train</button>
