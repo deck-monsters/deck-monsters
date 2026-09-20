@@ -157,6 +157,19 @@ describe('characters/helpers/create', () => {
 			expect(character.icon).to.equal(iconChoices[2]);
 		});
 
+		/*
+		 * A supplied icon is the emoji itself, not an answer to the prompt. Resolving it
+		 * against the seven *random* offered choices rejected nearly every avatar a
+		 * prompt-free caller could pick, and a prompt-free caller cannot be asked again.
+		 */
+		it('keeps a supplied avatar instead of matching it against the random choices', async () => {
+			const { channel, seenQuestions } = makeSequencedChannel(['female', 'Saffron']);
+			const character = await createCharacter(channel, { icon: '🦊' });
+
+			expect(character.icon).to.equal('🦊');
+			expect(seenQuestions.join('\n')).to.not.include('choose an avatar');
+		});
+
 		it('rejects an unrecognised avatar answer instead of storing undefined', async () => {
 			const { channel } = makeSequencedChannel(['female', 'Saffron', 'Not An Icon']);
 			let error: unknown;

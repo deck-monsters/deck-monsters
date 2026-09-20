@@ -15,7 +15,7 @@ import {
 
 const USER_A = 'harness-user-a';
 const USER_B = 'harness-user-b';
-const NEW_CHARACTER_ANSWERS = ['0', '0', '0'];
+const NEW_CHARACTER_ANSWERS = ['0', '0'];
 
 export async function runConcurrentLookMonsters(game: Game): Promise<void> {
 	const roomId = game.roomId;

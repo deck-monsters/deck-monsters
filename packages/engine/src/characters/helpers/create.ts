@@ -154,15 +154,25 @@ const createCharacter = (
 				return options;
 			});
 
-	const askForAvatar = (): Promise<Record<string, unknown>> =>
-		Promise.resolve()
-			.then(() => {
-				if (icon !== undefined) return icon;
-				return channel({
+	const askForAvatar = (): Promise<Record<string, unknown>> => {
+		// A supplied icon is the emoji itself, not an answer to the prompt below. It used
+		// to be resolved against `iconChoices` like an answer, and those are seven *random*
+		// emoji — so a caller that supplied an avatar was rejected ("I don't recognize
+		// 🦊 as an avatar choice") unless its pick happened to appear in that random
+		// seven. Nothing supplied an icon before the workshop's first-run form did, which
+		// is why this went unnoticed.
+		if (icon !== undefined) {
+			options.icon = icon;
+			return Promise.resolve(options);
+		}
+
+		return Promise.resolve()
+			.then(() =>
+				channel({
 					question: `Finally, choose an avatar:`,
 					choices: iconChoices,
-				});
-			})
+				}),
+			)
 			.then((answer: unknown) => {
 				// Same label-or-index ambiguity as askForCreatureType above.
 				const index = resolveChoiceIndex(answer, iconChoices);
@@ -173,6 +183,7 @@ const createCharacter = (
 				options.icon = selectedIcon;
 				return options;
 			});
+	};
 
 	let Character: CharacterConstructor;
 
