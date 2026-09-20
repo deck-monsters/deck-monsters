@@ -126,7 +126,7 @@ constants/         # Stats, coin values, creature types, card classes, timing, r
 announcements/     # Message generation for game events
 events/            # GameEvent types, RoomEventBus, prompt lifecycle
 schemas/           # Zod schemas for state deserialization and validation
-shared/            # BaseClass (EventEmitter + options store) inherited by creatures/cards/items; mocha test-setup
+shared/            # BaseClass (EventEmitter + options store) behind Game, Ring, creatures, and items; mocha test-setup
 testing/           # createTestGame and friends — drive a Game with no HTTP/DB, used by tests and the harness
 types/             # Shared TypeScript types plus vendor.d.ts
 build/             # Generators for CARDS.md / DMG.md / the handbook (`pnpm run build:docs`)
