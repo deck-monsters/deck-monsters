@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mk = (name: string) => ({
   name, type: 'Basilisk', level: 3, inRing: false, inEncounter: false, dead: false,
   cardSlots: 4, cards: [], presets: {},
+  hp: 20, maxHp: 20, revivesAt: null as number | null, battles: { wins: 0, losses: 0, total: 0 },
 });
 
 const hookMock = vi.hoisted(() => ({

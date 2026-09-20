@@ -118,6 +118,10 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
         cardSlots: 2,
         cards: [],
         presets: {},
+        hp: 20,
+        maxHp: 20,
+        revivesAt: null,
+        battles: { wins: 0, losses: 0, total: 0 },
       },
     ];
     const { container } = render(<WorkshopPanel roomId="room-1" />);
@@ -143,6 +147,10 @@ describe('WorkshopPanel: only one monster in the ring at a time (#115)', () => {
     cardSlots: 1,
     cards: ['Hit'],
     presets: {},
+    hp: 20,
+    maxHp: 20,
+    revivesAt: null as number | null,
+    battles: { wins: 0, losses: 0, total: 0 },
   });
 
   /**

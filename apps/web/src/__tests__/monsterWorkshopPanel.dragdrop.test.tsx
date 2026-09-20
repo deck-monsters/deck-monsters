@@ -14,6 +14,10 @@ const baseMonster = {
   cardSlots: 1,
   cards: [] as string[],
   presets: {},
+  hp: 40,
+  maxHp: 50,
+  revivesAt: null as number | null,
+  battles: { wins: 0, losses: 0, total: 0 },
 };
 
 describe('MonsterWorkshopPanel drag/drop lock behavior', () => {

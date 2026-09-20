@@ -17,6 +17,12 @@ type WorkshopMonster = {
   cardSlots: number;
   cards: string[];
   presets: Record<string, string[]>;
+  // See `InventoryMonsterSummary` in the server router — the workshop header's HP meter,
+  // fallen-revive label, and fights count read straight off these.
+  hp: number;
+  maxHp: number;
+  revivesAt: number | null;
+  battles: { wins: number; losses: number; total: number };
 };
 
 type WorkshopInventory = {

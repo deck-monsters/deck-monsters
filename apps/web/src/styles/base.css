@@ -358,6 +358,48 @@ button {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  flex: 1;
+}
+
+.workshop-monster-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/*
+  One tag, one colour cue per state (10b-bugs-fixed.md — the workshop header hid current
+  HP behind a full-looking deck-slot bar; this status tag replaces the same header's
+  former reliance on the slot count to hint "why can't I send this to the ring").
+  `in-ring`/`fighting` reuse the accent/success ramp already meaningful elsewhere in the
+  workshop (equipped-card accent, xp success); `fallen` reuses the roster's own error
+  colour for dead contestants so "dead" reads the same way in both surfaces.
+*/
+.workshop-status-tag {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg-dim);
+  white-space: nowrap;
+}
+
+.workshop-status-in-ring {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.workshop-status-fighting {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.workshop-status-fallen {
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 .workshop-monster-filter-btn {
@@ -395,46 +437,41 @@ button {
 }
 
 /*
-  The label used to be absolutely positioned over the fill, in `--color-fg-bright` on an
-  `--color-accent` background: 1.02:1 in phosphor, 1.14:1 in ember, 1.65:1 in amber — all
-  of them two light pastels on each other, so the meter read as a solid coloured block
-  with no text. It failed hardest at a full deck, where the fill covers the whole label.
-  Text on a variable-width fill cannot be made readable with one colour, so the count now
-  sits beside the bar on the panel background instead. See 10b-bugs-fixed.md #120.
+  Current HP is the primary meter now (10b-bugs-fixed.md — the header used to lead with a
+  deck-slot count/bar that is nearly always full and answers no question a beastmaster is
+  actually asking; current HP answers "can this fight, should it revive, is it safe to
+  wait" all three). Reuses the ring roster's own `.roster-bar-track`/`.roster-bar-fill`
+  classes and `hpRatio`/`hpBand` helpers (see MonsterWorkshopPanel.tsx) rather than
+  inventing a third colour ramp for "healthy/hurt/critical" — the label still sits beside
+  the track rather than on it, same readability reason as the old slot/xp meters below.
 */
-.workshop-slot-meter {
+.workshop-hp-meter {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  min-width: 98px;
 }
 
-.workshop-slot-meter > span {
-  font-size: 0.62rem;
+.workshop-hp-meter > span {
+  font-size: 0.68rem;
   color: var(--color-fg-dim);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.workshop-slot-meter-track {
+.workshop-hp-meter .roster-bar-track {
   flex: 1;
   min-width: 2rem;
-  height: 6px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-}
-
-.workshop-slot-meter-track > div {
-  background: var(--color-accent);
-  height: 100%;
 }
 
 /*
   XP-to-next-level meter (docs/roadmap/11-balance-and-mechanics.md). Same shape as
-  `.workshop-slot-meter` above — label beside the track rather than on the fill, for the
-  same contrast reason as #120 — but its own class so the two meters can never be
-  confused for each other and so this one can use `--color-success` instead of
-  `--color-accent`, keeping "cards equipped" and "xp progress" visually distinct on a
-  card that already shows both.
+  `.workshop-hp-meter` above — label beside the track rather than on the fill, for the
+  same readability reason (10b-bugs-fixed.md #120: text on a variable-width fill cannot be
+  made readable with one colour) — but its own class, and `--color-success`, so "hp" and
+  "xp progress" stay visually distinct on a card that shows both. The label no longer
+  repeats the level (`Lvl {n}`); that moved to the type line once HP took over as the
+  header's primary at-a-glance number.
 */
 .workshop-xp-meter {
   display: flex;
@@ -460,6 +497,31 @@ button {
 .workshop-xp-meter-track > div {
   background: var(--color-success);
   height: 100%;
+}
+
+/*
+  Deck size as text, no bar — same rationale as the hp meter's comment above: a
+  near-always-full bar is not information. Sits directly above the action buttons rather
+  than sharing their row, so "Send to ring" / "Revive" / unequip-all don't get squeezed at
+  a 375px phone width (see the two attached header screenshots this replaced).
+*/
+.workshop-deck-status {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.68rem;
+  color: var(--color-fg-dim);
+}
+
+.workshop-deck-needs-more {
+  color: var(--color-fg-dim);
+  opacity: 0.8;
+}
+
+.workshop-fights-count {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .workshop-slot-grid {
@@ -938,6 +1000,12 @@ button {
   .workshop-panel-actions {
     flex-wrap: wrap;
   }
+  /*
+    The fights count is a "nice to have while there's room" figure, not a decision driver
+    like HP or deck size — at phone width the deck-status row is already tight against the
+    "needs N more" hint, so drop it rather than truncating or wrapping either.
+  */
+  .workshop-fights-count { display: none; }
 }
 
 @container workshop (max-width: 280px) {
