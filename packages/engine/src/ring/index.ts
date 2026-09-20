@@ -317,7 +317,7 @@ export class Ring extends BaseClass {
 		return Promise.resolve()
 			.then(() => {
 				if (this.inEncounter) {
-					this.pub('announce', 'You cannot withdraw while an encounter is in progress', {}, userId);
+					this.pub('announce', 'You cannot withdraw while a fight is in progress', {}, userId);
 					return Promise.reject(new Error('Encounter in progress'));
 				}
 
@@ -454,7 +454,7 @@ export class Ring extends BaseClass {
 		} else {
 			this.pub(
 				'announce',
-				'The ring is full! Wait until the current battle is over and try again.',
+				'The ring is full! Wait until the current fight is over and try again.',
 				{},
 				userId
 			);
@@ -529,7 +529,7 @@ export class Ring extends BaseClass {
 		}
 
 		if (!this.inEncounter) {
-			this.pub('announce', 'Wait until the encounter has started.', {}, userId);
+			this.pub('announce', 'Wait until the fight has started.', {}, userId);
 			return Promise.reject(new Error('Encounter not started.'));
 		}
 
@@ -1219,7 +1219,7 @@ export class Ring extends BaseClass {
 						type: 'ring.loss',
 						scope: 'private',
 						targetUserId: userId,
-						text: `${contestant.monster.givenName} has died in battle. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
+						text: `${contestant.monster.givenName} has fallen in the fight. You may now \`revive\` or \`dismiss\` ${contestant.monster.pronouns.him}.`,
 						payload: { contestant, xpGained: xpDelta },
 					});
 				}

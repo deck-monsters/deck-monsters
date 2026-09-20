@@ -1,4 +1,4 @@
-import PRONOUNS, { PRONOUN_CHOICES, genderFromPronounChoice } from '../../helpers/pronouns.js';
+import PRONOUNS, { PRONOUN_CHOICES, PRONOUN_KEYS, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn } from '../../creatures/base.js';
@@ -108,7 +108,7 @@ const createCharacter = (
 		Promise.resolve()
 			.then(() => {
 				if (gender !== undefined) {
-					if (!(gender in PRONOUNS)) {
+					if (!PRONOUN_KEYS.includes(gender as typeof PRONOUN_KEYS[number])) {
 						return announceAndThrow(channel, `I don't recognize "${String(gender)}" as a pronoun choice.`);
 					}
 					options.gender = gender;

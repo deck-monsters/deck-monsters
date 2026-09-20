@@ -60,7 +60,7 @@ export default function RoomLobbyView() {
                 type="text"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
-                placeholder="My Arena"
+                placeholder="The Editor's Ring"
                 required
               />
             </div>

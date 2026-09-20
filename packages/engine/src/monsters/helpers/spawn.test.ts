@@ -94,4 +94,23 @@ describe('monsters/helpers/spawn', () => {
 		expect(error).to.be.instanceOf(Error);
 		expect((error as Error).message).to.equal('Unknown monster gender: unknown');
 	});
+
+	for (const invalidGender of ['toString', '__proto__']) {
+		it(`rejects inherited key "${invalidGender}" supplied by a prompt-free caller`, async () => {
+			let error: unknown;
+			try {
+				await spawnMonster(async () => undefined, {
+					type: 2,
+					gender: invalidGender,
+					name: 'Saffron',
+					color: 'violet smoke',
+				});
+			} catch (caught) {
+				error = caught;
+			}
+
+			expect(error).to.be.instanceOf(Error);
+			expect((error as Error).message).to.equal(`Unknown monster gender: ${invalidGender}`);
+		});
+	}
 });

@@ -6,7 +6,7 @@ import { resolveUser } from './helpers.js';
 export const setAnnouncementChannel: SlashCommand = {
 	data: new SlashCommandBuilder()
 		.setName('set-announcement-channel')
-		.setDescription('Set the channel where ring battle events are broadcast (room owners only)')
+		.setDescription('Set the channel where ring fight events are broadcast (room owners only)')
 		.addChannelOption((opt) =>
 			opt
 				.setName('channel')
@@ -38,7 +38,7 @@ export const setAnnouncementChannel: SlashCommand = {
 
 		const channelMention = `<#${channelId}>`;
 		await interaction.editReply({
-			content: `✅ Ring battle announcements will now be sent to ${channelMention}.`,
+			content: `✅ Ring fight announcements will now be sent to ${channelMention}.`,
 		});
 	},
 };

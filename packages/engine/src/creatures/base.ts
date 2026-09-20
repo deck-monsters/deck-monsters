@@ -135,8 +135,7 @@ Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
 	}
 
 	get rankings (): string {
-		return `Battles fought: ${this.battles.total}
-Battles won: ${this.battles.wins}`;
+		return `Fights: ${this.battles.total} · Won: ${this.battles.wins}`;
 	}
 
 	get individualDescription (): string | undefined {

@@ -99,7 +99,7 @@ Wooden Spear
  🛡  Basic Shield  ○
 ----------------------------------
 
- Equip yourself for the battle 
+ Equip yourself for the fight 
  ahead.
 
 ==================================
@@ -146,7 +146,7 @@ Wooden Spear
 ----------------------------------
 
  A magical blast against every 
- opponent in the encounter.
+ opponent in the fight.
 
 ==================================
 ```
@@ -158,7 +158,7 @@ Wooden Spear
 ----------------------------------
 
  A strong magical blast against 
- every opponent in the encounter.
+ every opponent in the fight.
 
 ==================================
 ```
@@ -206,7 +206,7 @@ Wooden Spear
 ----------------------------------
 
  Your daily workout routine 
- limbers you up for battle.
+ limbers you up for a fight.
 
 ==================================
 ```
@@ -652,7 +652,7 @@ Wooden Spear
  🥃  Scotch  ◇
 ----------------------------------
 
- Keep the heid, this battle's far 
+ Keep the heid, this fight's far 
  from over.
 
 ==================================

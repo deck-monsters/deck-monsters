@@ -81,7 +81,7 @@ export default function LoginView() {
             letterSpacing: '0.05em',
           }}
         >
-          Turn-based monster battling arena
+          Turn-based monster fights in the ring
         </p>
 
         {error && <div className="error-msg">{error}</div>}

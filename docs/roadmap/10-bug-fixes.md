@@ -44,8 +44,9 @@ copy still described Beastmasters as owners and monsters as property. The new
 [`voice-and-wording.md`](../voice-and-wording.md) contract establishes one lexicon:
 Beastmasters train companion monsters, call them out of the ring, revive them when fallen,
 and choose pronouns through connector-safe labels. Parser and Discord `/spawn` aliases remain
-for compatibility; the display language is now consistent across engine, server, web,
-Discord, handbook, and README.
+for compatibility. The original Discord `/spawn [type] [name]` command never matched the
+engine; `/train` and the `/spawn` alias now both open the interactive training flow. The
+display language is now consistent across engine, server, web, Discord, handbook, and README.
 
 ### Workshop header, HP over deck slots — FIXED (#161)
 

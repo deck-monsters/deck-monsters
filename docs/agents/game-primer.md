@@ -30,8 +30,8 @@ refuses in three cases, in this order, and each one announces before throwing:
 - the player already has a contestant in the ring (one monster per beastmaster at a time);
 - the player has no living monsters (`dead` monsters are filtered out — they must revive or
   be dismissed first);
-- **the chosen monster's hand is not full** — `monster.cards.length < monster.cardSlots`
-  gives "Only an evil master would send their monster into battle without enough cards."
+- **the chosen monster's deck is not full** — `monster.cards.length < monster.cardSlots`
+  gives "A beastmaster does not send a companion into the ring without a full deck."
 
 The full-hand rule is the one that most often strands an agent mid-test: a freshly spawned
 monster has cards in its beastmaster's *deck*, not in its hand. Equip first, in one shot

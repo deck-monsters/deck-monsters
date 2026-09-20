@@ -119,7 +119,7 @@ function fightersFromRoster(
   let leftCount = retained.filter((fighter) => fighter.side === 'left').length;
   let rightCount = retained.filter((fighter) => fighter.side === 'right').length;
 
-  // The arena can hold twelve contestants, but this purely decorative layer shows four
+  // The ring can hold twelve contestants, but this purely decorative layer shows four
   // per side. Keeping existing sides prevents a boss spawn or flee from making sprites hop.
   return roster.flatMap((contestant) => {
     const fighter = existing.get(contestant.name);

@@ -3640,6 +3640,12 @@ language; and console/workshop prompts present `he/him`, `she/her`, and `they/th
 mapping them through one shared helper to the existing engine keys. Engine, server, web,
 Discord, README, and handbook copy now share the same terms.
 
+**Discord `/spawn` repair**: Discord's original slash command never reached the engine's
+matcher: it built `spawn`, `spawn Basilisk`, or `spawn Basilisk Fang`, while the engine only
+accepted `spawn (a) monster`. `/train` is now the primary slash command, and its `/spawn`
+alias dispatches the same `train a monster` command so either route opens the interactive
+training flow.
+
 **Tests**: command/help, prompt, quick-action, workshop, and Discord command tests cover the
 new canonical labels and aliases.
 

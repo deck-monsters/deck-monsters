@@ -5,7 +5,7 @@ import { REASONABLE } from '../helpers/costs.js';
 export class BasicShieldCard extends BoostCard {
 	static cardType = 'Basic Shield';
 	static permittedClassesAndTypes = [BARD, FIGHTER];
-	static description = 'Equip yourself for the battle ahead.';
+	static description = 'Equip yourself for the fight ahead.';
 	static level = 2;
 	static cost = REASONABLE.cost;
 	static defaults = {

@@ -474,7 +474,7 @@ class Beastmaster extends BaseCharacter {
 
 		this.monsters.forEach((monster) => {
 			lines.push(
-				`${monster.givenName} [${monster.creatureType}, L${monster.level}]  ${monster.cards.length}/${monster.cardSlots} slots`,
+				`${monster.givenName} [${monster.creatureType}, Lvl ${monster.level}]  ${monster.cards.length}/${monster.cardSlots} slots`,
 			);
 
 			if (monster.cards.length < 1) {
@@ -700,7 +700,7 @@ class Beastmaster extends BaseCharacter {
 			return announceAndThrow(channel, 'Choose two different monsters for move operations.');
 		}
 		if (fromMonster.inEncounter || toMonster.inEncounter) {
-			return announceAndThrow(channel, 'Cards cannot be moved while a monster is in battle.');
+			return announceAndThrow(channel, 'Cards cannot be moved while a monster is in a fight.');
 		}
 
 		const sourceCards = [...fromMonster.cards];

@@ -437,7 +437,7 @@ export default function RingPane({
   return (
     <section
       className={`terminal-pane${isActive ? ' active' : ''}`}
-      aria-label="The Ring — public battle feed"
+      aria-label="The Ring — public fight feed"
     >
       <header className="pane-header">
         <span>The Ring</span>
@@ -493,7 +493,7 @@ export default function RingPane({
           List: FeedList,
           EmptyPlaceholder: () => (
             <li className="event event-system event-feed-empty">
-              <p>Waiting for battle events…</p>
+              <p>Waiting for fight events…</p>
             </li>
           ),
         }}

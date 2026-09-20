@@ -22,11 +22,13 @@ export const PRONOUNS: Record<Gender, PronounSet> = {
 // Discord answers with the label. Keep the persisted keys out of player-facing menus.
 export const PRONOUN_CHOICES = ['he/him', 'she/her', 'they/them'] as const;
 
-const PRONOUN_GENDERS: Gender[] = ['male', 'female', 'androgynous'];
+// `in PRONOUNS` also accepts Object.prototype properties such as `toString`. Keep the
+// persisted keys explicit so direct API callers cannot store an invalid pronoun key.
+export const PRONOUN_KEYS = ['male', 'female', 'androgynous'] as const satisfies readonly Gender[];
 
 export const genderFromPronounChoice = (answer: unknown): Gender | undefined => {
 	const index = resolveChoiceIndex(answer, [...PRONOUN_CHOICES]);
-	return PRONOUN_GENDERS[index];
+	return PRONOUN_KEYS[index];
 };
 
 export default PRONOUNS;

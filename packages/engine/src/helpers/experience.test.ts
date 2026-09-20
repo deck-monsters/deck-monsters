@@ -60,7 +60,7 @@ describe('./helpers/experience.ts', () => {
 				const { gainedXP, reasons } = calculateXP(contestant2, contestants);
 				expect(gainedXP).to.equal(14);
 				expect(reasons).to.equal(
-					'Gained 10 XP for killing fred (same level)\nGained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in battle with fred (same level)\nGained 1 XP for lasting 1 rounds in battle against 1 opponent'
+					'Gained 10 XP for killing fred (same level)\nGained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in a fight with fred (same level)\nGained 1 XP for lasting 1 rounds in a fight against 1 opponent'
 				);
 			});
 
@@ -80,7 +80,7 @@ describe('./helpers/experience.ts', () => {
 				const { gainedXP, reasons } = calculateXP(contestant2, contestants);
 				expect(gainedXP).to.equal(24);
 				expect(reasons).to.equal(
-					'Gained 20 XP for killing fred (1 level higher)\nGained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in battle with fred (1 level higher)\nGained 1 XP for lasting 1 rounds in battle against 1 opponent'
+					'Gained 20 XP for killing fred (1 level higher)\nGained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in a fight with fred (1 level higher)\nGained 1 XP for lasting 1 rounds in a fight against 1 opponent'
 				);
 			});
 
@@ -130,7 +130,7 @@ describe('./helpers/experience.ts', () => {
 				expect(gainedXP).to.equal(0);
 				expect(reasons).to.not.include('last one standing');
 				expect(reasons).to.equal(
-					'Gained no XP for lasting 1 rounds in battle against 1 opponent'
+					'Gained no XP for lasting 1 rounds in a fight against 1 opponent'
 				);
 			});
 
@@ -169,7 +169,7 @@ describe('./helpers/experience.ts', () => {
 				const { gainedXP, reasons } = calculateXP(contestant2, contestants);
 				expect(gainedXP).to.equal(1);
 				expect(reasons).to.equal(
-					'Gained 1 XP for being killed by fred (same level)\nGained no XP for lasting 1 rounds in battle against 1 opponent'
+					'Gained 1 XP for being killed by fred (same level)\nGained no XP for lasting 1 rounds in a fight against 1 opponent'
 				);
 			});
 
@@ -186,7 +186,7 @@ describe('./helpers/experience.ts', () => {
 				const { gainedXP, reasons } = calculateXP(contestant2 as any, contestants as any);
 				expect(gainedXP).to.equal(0);
 				expect(reasons).to.equal(
-					'Gained no XP for being killed by themself\nGained no XP for lasting 1 rounds in battle against 1 opponent'
+					'Gained no XP for being killed by themself\nGained no XP for lasting 1 rounds in a fight against 1 opponent'
 				);
 			});
 
@@ -293,12 +293,12 @@ describe('./helpers/experience.ts', () => {
 				let { gainedXP, reasons } = calculateXP(contestant1, contestants);
 				expect(gainedXP).to.equal(4);
 				expect(reasons).to.equal(
-					'Gained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in battle with fred (same level)\nGained 1 XP for lasting 1 rounds in battle against 1 opponent'
+					'Gained 3 XP for being the last one standing as a level 1 monster lasting 1 rounds in a fight with fred (same level)\nGained 1 XP for lasting 1 rounds in a fight against 1 opponent'
 				);
 				({ gainedXP, reasons } = calculateXP(contestant2, contestants));
 				expect(gainedXP).to.equal(2);
 				expect(reasons).to.equal(
-					'Gained 2 XP for fleeing as a level 1 monster lasting 1 rounds in battle with tom (same level)\nGained no XP for lasting 1 rounds in battle against 1 opponent'
+					'Gained 2 XP for fleeing as a level 1 monster lasting 1 rounds in a fight with tom (same level)\nGained no XP for lasting 1 rounds in a fight against 1 opponent'
 				);
 			});
 
@@ -542,7 +542,7 @@ describe('./helpers/experience.ts', () => {
 			({ gainedXP, reasons } = calculateXP(c3 as Parameters<typeof calculateXP>[0], contestants));
 			expect(gainedXP).to.equal(13);
 			expect(reasons).to.equal(
-				'Gained 10 XP for killing fred (same level)\nGained 1 XP for being killed by sonka (same level)\nGained 2 XP for lasting 1 rounds in battle against 4 opponents'
+				'Gained 10 XP for killing fred (same level)\nGained 1 XP for being killed by sonka (same level)\nGained 2 XP for lasting 1 rounds in a fight against 4 opponents'
 			);
 			({ gainedXP } = calculateXP(c4 as Parameters<typeof calculateXP>[0], contestants));
 			expect(gainedXP).to.equal(13);

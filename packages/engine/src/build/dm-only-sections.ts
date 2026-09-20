@@ -55,7 +55,7 @@ export const FIGHT_PACING_OPERATOR = `
 
 Ring quorum: fights require at least ${MIN_MONSTERS} monsters in the ring (up to
 ${MAX_MONSTERS}). When quorum is met, a ${FIGHT_DELAY_SECONDS}-second countdown
-re-arms after each encounter.
+re-arms after each fight.
 
 During a fight:
   • Each contestant plays the next card in its deck (wraps when exhausted).
@@ -77,7 +77,7 @@ export const FIGHT_PACING_PUBLIC = `
 
 Ring quorum: fights require at least ${MIN_MONSTERS} monsters in the ring (up to
 ${MAX_MONSTERS}). When quorum is met, a ${FIGHT_DELAY_SECONDS}-second countdown
-re-arms after each encounter.
+re-arms after each fight.
 
 During a fight each contestant plays the next card in its deck (wraps when
 exhausted). Card-to-card transitions are paced for readability in live feeds;

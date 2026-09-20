@@ -42,7 +42,7 @@ A beastmaster can keep up to ${DEFAULT_MONSTER_SLOTS} monsters at a time.
 export const THE_RING = `
 ── The Ring ─────────────────────────
 
-The ring is the auto-battle arena. Once ${MIN_MONSTERS} or more monsters are present, a fight starts every ${FIGHT_DELAY_SECONDS} seconds.
+The ring is where automated fights take place. Once ${MIN_MONSTERS} or more monsters are present, a fight starts every ${FIGHT_DELAY_SECONDS} seconds.
 
 The ring holds up to ${MAX_MONSTERS} monsters at once. Monsters fight in turn order, each playing the next card in their deck. When the deck runs out it loops back to the beginning.
 
@@ -56,7 +56,7 @@ Check who's fighting:
 export const XP_AND_LEVELING = `
 ── XP and Leveling ──────────────────
 
-Monsters earn XP from every battle, win or lose. More XP unlocks higher-level cards.
+Monsters earn XP from every fight, win or lose. More XP unlocks higher-level cards.
 
 Level thresholds (XP required):
   Beginner: 0–${XP_THRESHOLDS[0] - 1} XP
@@ -77,10 +77,10 @@ Some cards roll more than once (Lucky Strike, Horn Swipe, Rehit). Critical succe
    look at cards          — see your cards
    look at [card name]    — inspect a specific card
 
-Items work similarly. You can carry up to 3 items, and give up to 3 more to each monster. Items used mid-battle must be pre-assigned to the monster before the fight.
+Items work similarly. You can carry up to 3 items, and give up to 3 more to each monster. Items used mid-fight must be pre-assigned to the monster before the fight.
 
    look at items                — see every item and who carries it
-   give [item] to [monster]     — stock a monster before battle
+   give [item] to [monster]     — stock a monster before a fight
    take [item] from [monster]   — return it to your pocket
    use [item] on [monster]      — use it (even mid-fight, if carried in)
 
@@ -90,7 +90,7 @@ On the web, the Workshop shows valid targets and remaining uses. During your mon
 export const COINS_AND_SHOP = `
 ── Coins and the Shop ───────────────
 
-Every completed battle pays coins: 5 for a win and 2 for a loss, flee, or draw. Your first completed fight of each UTC day also pays a 5-coin participation bonus (a permanent death pays 4 before that bonus). The daily bonus is automatic — there is nothing to claim. Spend coins at the shop to expand your card pool and buy items.
+Every completed fight pays coins: 5 for a win and 2 for a loss, flee, or draw. Your first completed fight of each UTC day also pays a 5-coin participation bonus (a permanent death pays 4 before that bonus). The daily bonus is automatic — there is nothing to claim. Spend coins at the shop to expand your card pool and buy items.
 
 The merchant changes every 6 hours, so prices and stock rotate. Each room has its own merchant, so what's in stock next door has nothing to do with what's in stock here. Never sell to the shop for less than a card is worth — shop prices are always lower than face value, but some merchants are fairer than others.
 

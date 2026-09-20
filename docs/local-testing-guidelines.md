@@ -54,9 +54,9 @@ agent in. To get a fight going from the console in a few commands:
   over reopen the interactive prompt (answer with **Done equipping**).
 - `equip` **rebuilds the hand from scratch** (`monster.cards = cards`), returning the old hand
   to your deck. Equipping one card onto a monster that held eight leaves it holding one.
-- A monster may only enter the ring with a **full** hand (`cards.length === cardSlots`,
-  usually 9) — "Only an evil master would send their monster into battle without enough
-  cards." A starting deck holds about 20 cards, enough for two full hands.
+- A monster may only enter the ring with a **full** deck (`cards.length === cardSlots`,
+  usually 9) — "A beastmaster does not send a companion into the ring without a full
+  deck." A starting deck holds about 20 cards, enough for two full decks.
 - `send <monster> to the ring` then `summon a boss` (3 per day) gives two contestants and a
   60s countdown without needing a second player.
 - Fights end with `clearRing()`; the roster empties and the pane header goes back to

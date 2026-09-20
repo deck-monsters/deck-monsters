@@ -1,4 +1,4 @@
-import PRONOUNS, { PRONOUN_CHOICES, genderFromPronounChoice } from '../../helpers/pronouns.js';
+import PRONOUNS, { PRONOUN_CHOICES, PRONOUN_KEYS, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
 import { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } from '../../constants/creature-types.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
@@ -166,7 +166,9 @@ const spawnMonster = (
 		Promise.resolve()
 			.then(() => {
 				if (gender !== undefined) {
-					if (!(gender in PRONOUNS)) throw new Error(`Unknown monster gender: ${String(gender)}`);
+					if (!PRONOUN_KEYS.includes(gender as typeof PRONOUN_KEYS[number])) {
+						throw new Error(`Unknown monster gender: ${String(gender)}`);
+					}
 					options.gender = gender;
 					return options;
 				}

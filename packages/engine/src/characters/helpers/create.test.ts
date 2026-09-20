@@ -125,6 +125,26 @@ describe('characters/helpers/create', () => {
 			expect(error).to.be.instanceOf(CommandRefusalError);
 			expect((error as Error).message).to.include('Not A Gender');
 		});
+
+		for (const invalidGender of ['toString', '__proto__']) {
+			it(`rejects inherited key "${invalidGender}" supplied by a prompt-free caller`, async () => {
+				const { channel } = makeSequencedChannel([]);
+				let error: unknown;
+				try {
+					await createCharacter(channel, {
+						type: 0,
+						gender: invalidGender,
+						name: 'Saffron',
+						icon: '🦊',
+					});
+				} catch (caught) {
+					error = caught;
+				}
+
+				expect(error).to.be.instanceOf(CommandRefusalError);
+				expect((error as Error).message).to.include(invalidGender);
+			});
+		}
 	});
 
 	describe('askForAvatar (via createCharacter)', () => {

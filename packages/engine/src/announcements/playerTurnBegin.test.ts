@@ -19,7 +19,7 @@ function makeContestant() {
 			givenName: 'Killer Killer',
 			individualDescription: 'A powerful, gold, desert-dwelling basilisk.',
 			stats: 'Type: Basilisk\nClass: Barbarian\n\nac: 7 | hp: 35/35\ndex: 4 | str: 7 | int: 6',
-			rankings: 'Battles fought: 0\nBattles won: 0',
+			rankings: 'Fights: 0 · Won: 0',
 			hp: 30,
 			maxHp: 35,
 			ac: 7,
@@ -44,7 +44,7 @@ describe('./announcements/playerTurnBegin.ts', () => {
 		expect(text).to.include('plays the following monster:');
 		// formatCard wraps at 32 chars, so assert on fragments that survive wrapping.
 		expect(text).to.include('powerful');
-		expect(text).to.include('Battles fought: 0');
+		expect(text).to.include('Fights: 0 · Won: 0');
 	});
 
 	it('collapses to a one-line summary on a repeat turn', () => {

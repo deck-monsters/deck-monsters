@@ -19,7 +19,7 @@ export class BlastCard extends BaseCard<BlastCardOptions> {
 	static permittedClassesAndTypes = [CLERIC];
 	static probability = ABUNDANT.probability;
 	static description =
-		'A magical blast against every opponent in the encounter.';
+		'A magical blast against every opponent in the fight.';
 	static level = 0;
 	static cost = REASONABLE.cost;
 	static defaults: { damage: number; levelDamage?: number } = {

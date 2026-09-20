@@ -1,6 +1,6 @@
 # Deck Monsters
 
-A turn-based monster-battling RPG game engine — think Pokémon meets deck-building. Players collect monsters, equip them with action card decks, and send them into a shared ring to auto-battle while everyone watches.
+A turn-based monster RPG game engine — think Pokémon meets deck-building. Players collect monsters, equip them with action card decks, and send them into a shared ring for automated fights while everyone watches.
 
 The engine is platform-agnostic: a connector adapter plugs in and brings the game to any chat platform or app. The original connector was a Slack bot called **Jane**, which ran the game inside a private Slack workspace. The ring fights appeared in a shared channel; everything else (training monsters, building decks, buying items) happened through DMs with Jane.
 
@@ -12,7 +12,7 @@ The project is being revived with new connectors (Discord, web, mobile) and mode
 
 1. **DM the bot** to build your roster — train monsters, equip them with card decks, buy items from the shop, level them up over time
 2. **Send a monster to the ring** — a shared channel where everyone's monsters fight automatically
-3. **Watch the ring** — battles play out every 60 seconds, narrated in the channel; wins earn XP and coins
+3. **Watch the ring** — fights play out every 60 seconds, narrated in the channel; wins earn XP and coins
 4. **Iterate** — swap cards, upgrade monsters, build toward stronger strategies
 
 The game has 5 monster types, 60+ action cards across 4 classes (melee, healing, control, utility), and 25+ items. Monsters level up with experience, and stronger cards unlock at higher levels.
