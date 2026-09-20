@@ -28,6 +28,8 @@ So it is written. So it is done.
 	const combat: CombatPayload = {
 		kind: 'death',
 		target: toCombatActor(monster),
+		// Every caller today supplies an assailant (the text above depends on it); the
+		// optional `actor` exists so a future cause-less death can reuse the DTO shape.
 		...(assailant === undefined ? {} : { actor: toCombatActor(assailant) }),
 		destroyed,
 	};

@@ -411,6 +411,13 @@ export class Ring extends BaseClass {
 		summonedAt?: number;
 	}): void {
 		if (this.contestants.length < MAX_MONSTERS && !this.inEncounter) {
+			// Boss identity has two readers: the roster (`Contestant.isBoss`, used by ring
+			// events and `contestantSnapshots`) and the combat DTOs on public events
+			// (`toCombatActor` reads `monster.isBoss`). Timed bosses arrive with the flag
+			// already set by `randomCharacter`, but a caller may pass it only here — copy it
+			// onto the monster so the two never disagree about who the boss is.
+			if (isBoss && !monster.isBoss) monster.setOptions({ isBoss: true });
+
 			const contestant: Contestant = {
 				monster,
 				character,

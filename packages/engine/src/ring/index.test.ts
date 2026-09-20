@@ -160,6 +160,21 @@ describe('ring/index.ts', () => {
 			expect(snapshot!.isBoss).to.equal(true);
 			expect(snapshot!.owner).to.equal(null);
 			expect(snapshot!.userId).to.equal(null);
+			// The roster flag and the monster's own flag (read by combat DTOs) must agree.
+			expect(monster.isBoss).to.equal(true);
+			game.dispose();
+		});
+
+		it('leaves a player monster\'s boss flag alone', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster();
+			const monster = new Basilisk();
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			expect(monster.isBoss).to.equal(undefined);
+			game.dispose();
 		});
 
 		it('flags the contestant whose turn it is and nobody else', () => {

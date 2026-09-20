@@ -225,5 +225,25 @@ describe('./announcements/hit.ts', () => {
 			});
 			expect(JSON.parse(JSON.stringify(combat))).to.deep.equal(combat);
 		});
+
+		it('marks an ordinary attacker-on-target hit as not self-inflicted', () => {
+			const { eb, published } = makeCaptureEb();
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const assailant = new Gladiator({ name: 'assailant', hpVariance: 0, acVariance: 0 });
+			const card = { flavors: { hits: [['hits', 100]] as [string, number][] } };
+
+			announceHit(eb, '', monster, { assailant, card, damage: 3, prevHp: 15 });
+
+			const combat = published[0]?.payload.combat;
+			expect(combat).to.deep.include({
+				kind: 'hit',
+				actor: { name: 'Assailant', creatureType: 'Gladiator', icon: '💪', isBoss: false },
+				target: { name: 'Monster', creatureType: 'Gladiator', icon: '💪', isBoss: false },
+				damage: 3,
+				prevHp: 15,
+				selfInflicted: false,
+			});
+			expect(JSON.parse(JSON.stringify(combat))).to.deep.equal(combat);
+		});
 	});
 });
