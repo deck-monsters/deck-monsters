@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_FIGHT_SCENE,
+  nextDeadline,
   type RingStateFrame,
   reduce,
+  settle,
 } from '../animations/pixel-fight/state.js';
 import type { RingContestantSnapshot } from '../components/RingRoster.js';
 import type { TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
@@ -81,7 +83,51 @@ function startedScene() {
   );
 }
 
+function settledStartedScene() {
+  return settle(startedScene(), 401);
+}
+
 describe('pixel fight reducer', () => {
+  it('reports and settles animation deadlines without needing another feed event', () => {
+    const attacking = reduce(
+      settledStartedScene(),
+      combatEvent({ kind: 'card', actor: { name: 'Aqim' }, card: { name: 'Strike' } }, 'card.played'),
+      500,
+    );
+
+    expect(nextDeadline(attacking)).toBe(900);
+    expect(settle(attacking, 899).fighters[0]).toMatchObject({ anim: 'attack' });
+    expect(settle(attacking, 900).fighters[0]).toMatchObject({ anim: 'idle' });
+  });
+
+  it('settles a hit after 250ms and removes a fleeing fighter after 400ms', () => {
+    const hit = reduce(
+      settledStartedScene(),
+      combatEvent({
+        kind: 'hit', actor: { name: 'Aqim' }, target: { name: 'Mara' }, damage: 8,
+        prevHp: 22, hp: 14, maxHp: 22, selfInflicted: false,
+      }),
+      500,
+    );
+    const fleeing = reduce(
+      settledStartedScene(),
+      combatEvent({ kind: 'flee', actor: { name: 'Mara' }, target: { name: 'Mara' }, amount: 0 }),
+      500,
+    );
+
+    expect(nextDeadline(hit)).toBe(750);
+    expect(settle(hit, 750).fighters.find((fighter) => fighter.name === 'Mara')).toMatchObject({ anim: 'idle' });
+    expect(nextDeadline(fleeing)).toBe(900);
+    expect(settle(fleeing, 900).fighters.map((fighter) => fighter.name)).not.toContain('Mara');
+  });
+
+  it('settles a concluded fight inactive at its fade deadline without another event', () => {
+    const fading = reduce(settledStartedScene(), fightEvent('fightConcludes'), 500);
+
+    expect(nextDeadline(fading)).toBe(3_000);
+    expect(settle(fading, 3_000)).toMatchObject({ active: false, fighters: [] });
+  });
+
   it('starts from the latest ring roster and places the viewer team on the left', () => {
     const scene = startedScene();
 
@@ -239,5 +285,54 @@ describe('pixel fight reducer', () => {
 
     expect(scene.fighters).toHaveLength(2);
     expect(scene.fighters.map((fighter) => fighter.name)).not.toContain('Missing');
+  });
+
+  it('places a boss added mid-fight into an actual free slot', () => {
+    const boss = { ...roster[1], name: 'The Minotaur', creatureType: 'Minotaur', userId: 'boss' };
+    const scene = reduce(startedScene(), stateFrame([...roster, boss]), 20);
+
+    expect(scene.fighters.find((fighter) => fighter.name === boss.name)).toMatchObject({ side: 'right' });
+    expect(scene.fighters).toHaveLength(3);
+  });
+
+  it('replaces a departed full-side fighter without exceeding eight sprites', () => {
+    const left = Array.from({ length: 4 }, (_, index) => ({
+      ...roster[0], name: `Left ${index}`, userId: 'viewer',
+    }));
+    const right = Array.from({ length: 4 }, (_, index) => ({
+      ...roster[1], name: `Right ${index}`, userId: 'opponent',
+    }));
+    const current = reduce(reduce(EMPTY_FIGHT_SCENE, stateFrame([...left, ...right]), 0), fightEvent('fightBegins'), 1);
+    const replacement = { ...right[3], name: 'New challenger' };
+    const updated = reduce(current, stateFrame([...left, ...right.slice(0, 3), replacement]), 20);
+
+    expect(updated.fighters).toHaveLength(8);
+    expect(updated.fighters.find((fighter) => fighter.name === replacement.name)).toMatchObject({ side: 'right' });
+  });
+
+  it('reuses a fled fighter slot for a roster newcomer', () => {
+    const fled = reduce(
+      startedScene(),
+      combatEvent({ kind: 'flee', actor: { name: 'Mara' }, target: { name: 'Mara' }, amount: 0 }),
+      10,
+    );
+    const settled = settle(fled, 410);
+    const newcomer = { ...roster[1], name: 'Jinn newcomer', creatureType: 'Jinn', userId: 'new' };
+    const updated = reduce(settled, stateFrame([roster[0], newcomer]), 420);
+
+    expect(updated.fighters.map((fighter) => fighter.name)).toEqual(['Aqim', 'Jinn newcomer']);
+    expect(updated.fighters[1]).toMatchObject({ side: 'right' });
+  });
+
+  it.each([
+    ['an unknown kind', { kind: 'future', actor: { name: 'Aqim' } }],
+    ['a missing hit target', { kind: 'hit', actor: { name: 'Aqim' }, hp: 10, maxHp: 20, damage: 1 }],
+    ['a non-numeric hit hp', { kind: 'hit', actor: { name: 'Aqim' }, target: { name: 'Mara' }, hp: '10', maxHp: 20, damage: 1 }],
+    ['a null combat payload', null],
+    ['a string combat payload', 'combat'],
+  ])('leaves the scene unchanged for %s', (_label, combat) => {
+    const scene = startedScene();
+
+    expect(reduce(scene, combatEvent(combat), 10)).toBe(scene);
   });
 });

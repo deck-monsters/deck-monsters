@@ -1,4 +1,3 @@
-import type { CombatPayload } from '@deck-monsters/engine';
 import type { RingContestantSnapshot } from '../../components/RingRoster.js';
 import type { TrackedRingFeedEvent } from '../../hooks/useRingFeed.js';
 
@@ -57,7 +56,7 @@ function animationDuration(animation: FighterAnimation): number | null {
   }
 }
 
-function settleAnimations(scene: FightScene, now: number): FightScene {
+export function settle(scene: FightScene, now: number): FightScene {
   if (scene.fadeOutAt !== undefined && now >= scene.fadeOutAt) {
     return { ...scene, active: false, fighters: [], fadeOutAt: undefined };
   }
@@ -78,6 +77,15 @@ function settleAnimations(scene: FightScene, now: number): FightScene {
     });
 
   return changed ? { ...scene, fighters } : scene;
+}
+
+export function nextDeadline(scene: FightScene): number | undefined {
+  const animationDeadlines = scene.fighters.flatMap((fighter) => {
+    const duration = animationDuration(fighter.anim);
+    return duration === null ? [] : [fighter.animStartedAt + duration];
+  });
+  if (scene.fadeOutAt !== undefined) animationDeadlines.push(scene.fadeOutAt);
+  return animationDeadlines.length === 0 ? undefined : Math.min(...animationDeadlines);
 }
 
 function sideFor(
@@ -106,8 +114,10 @@ function fightersFromRoster(
 ): FightFighter[] {
   const existing = new Map(priorFighters.map((fighter) => [fighter.name, fighter]));
   const hasViewerMonster = roster.some((contestant) => contestant.userId === viewerUserId && viewerUserId !== null);
-  let leftCount = priorFighters.filter((fighter) => fighter.side === 'left').length;
-  let rightCount = priorFighters.filter((fighter) => fighter.side === 'right').length;
+  const retainedNames = new Set(roster.map((contestant) => contestant.name));
+  const retained = priorFighters.filter((fighter) => retainedNames.has(fighter.name));
+  let leftCount = retained.filter((fighter) => fighter.side === 'left').length;
+  let rightCount = retained.filter((fighter) => fighter.side === 'right').length;
 
   // The arena can hold twelve contestants, but this purely decorative layer shows four
   // per side. Keeping existing sides prevents a boss spawn or flee from making sprites hop.
@@ -145,10 +155,52 @@ function isRingStateFrame(event: TrackedRingFeedEvent | RingStateFrame): event i
   return 'type' in event && event.type === 'ring.state' && 'contestants' in event;
 }
 
-function combatFrom(event: TrackedRingFeedEvent): CombatPayload | null {
+type Combat = {
+  kind: 'card' | 'hit' | 'miss' | 'heal' | 'death' | 'flee';
+  actor?: { name: string };
+  target?: { name: string };
+  hp?: number;
+  maxHp?: number;
+  damage?: number;
+  amount?: number;
+};
+
+function hasNamedParticipant(value: unknown): value is { name: string } {
+  return typeof value === 'object'
+    && value !== null
+    && 'name' in value
+    && typeof value.name === 'string';
+}
+
+function hasNumbers(value: Record<string, unknown>, ...keys: string[]): boolean {
+  return keys.every((key) => typeof value[key] === 'number');
+}
+
+function combatFrom(event: TrackedRingFeedEvent): Combat | null {
   const combat = (event.data.payload as { combat?: unknown }).combat;
-  if (!combat || typeof combat !== 'object' || !('kind' in combat)) return null;
-  return combat as CombatPayload;
+  if (!combat || typeof combat !== 'object' || !('kind' in combat) || typeof combat.kind !== 'string') return null;
+  const record = combat as Record<string, unknown>;
+  const actor = hasNamedParticipant(record.actor) ? record.actor : undefined;
+  const target = hasNamedParticipant(record.target) ? record.target : undefined;
+
+  switch (record.kind) {
+    case 'card':
+    case 'miss':
+    case 'flee':
+      return actor ? { kind: record.kind, actor } : null;
+    case 'hit':
+      return actor && target && hasNumbers(record, 'hp', 'maxHp', 'damage')
+        ? { kind: 'hit', actor, target, hp: record.hp as number, maxHp: record.maxHp as number, damage: record.damage as number }
+        : null;
+    case 'heal':
+      return actor && target && hasNumbers(record, 'hp', 'maxHp', 'amount')
+        ? { kind: 'heal', actor, target, hp: record.hp as number, maxHp: record.maxHp as number, amount: record.amount as number }
+        : null;
+    case 'death':
+      return target ? { kind: 'death', target } : null;
+    default:
+      return null;
+  }
 }
 
 function hasFightEvent(event: TrackedRingFeedEvent, eventName: string): boolean {
@@ -170,7 +222,7 @@ export function reduce(
   event: TrackedRingFeedEvent | RingStateFrame,
   now: number,
 ): FightScene {
-  let scene = settleAnimations(currentScene, now);
+  let scene = settle(currentScene, now);
 
   if (isRingStateFrame(event)) {
     const roster = event.contestants;
@@ -230,5 +282,7 @@ export function reduce(
       return updateFighter(scene, combat.actor.name, (fighter) => ({
         ...fighter, anim: 'flee', animStartedAt: now,
       }));
+    default:
+      return scene;
   }
 }
