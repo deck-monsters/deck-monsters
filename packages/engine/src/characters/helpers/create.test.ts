@@ -1,4 +1,6 @@
 import { expect } from 'chai';
+import emoji from 'node-emoji';
+import sinon from 'sinon';
 
 import createCharacter, { createHelperReady, randomAvatarChoices } from './create.js';
 import { CommandRefusalError } from '../../helpers/command-refusal-error.js';
@@ -95,6 +97,17 @@ describe('characters/helpers/create', () => {
 				expect(avatar.length).to.be.greaterThan(0);
 			}
 		});
+
+		it('deduplicates a repeated emoji draw before showing avatar choices', () => {
+			const random = Math.random;
+			Math.random = () => 0;
+			try {
+				const choices = randomAvatarChoices(7);
+				expect(new Set(choices).size).to.equal(choices.length);
+			} finally {
+				Math.random = random;
+			}
+		});
 	});
 
 	describe('askForGender (via createCharacter)', () => {
@@ -187,6 +200,18 @@ describe('characters/helpers/create', () => {
 
 			expect(character.icon).to.equal('🦊');
 			expect(seenQuestions.join('\n')).to.not.include('choose an avatar');
+		});
+
+		it('does not generate unused avatar choices when an icon is supplied', async () => {
+			const random = sinon.stub(emoji, 'random').throws(new Error('A supplied icon must not draw avatar choices.'));
+			try {
+				const character = await createCharacter(async () => {
+					throw new Error('A fully specified character must not prompt.');
+				}, { type: 0, gender: 'female', name: 'Saffron', icon: '🦊' });
+				expect(character.icon).to.equal('🦊');
+			} finally {
+				random.restore();
+			}
 		});
 
 		it('rejects an unrecognised avatar answer instead of storing undefined', async () => {

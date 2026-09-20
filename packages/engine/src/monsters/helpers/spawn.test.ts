@@ -78,10 +78,14 @@ describe('monsters/helpers/spawn', () => {
 		expect(messages[1]?.choices).to.deep.equal(['he/him', 'she/her', 'they/them']);
 	});
 
-	it('rejects an unknown supplied gender with a useful error', async () => {
+	it('announces an unknown supplied pronoun before refusing the spawn', async () => {
+		const announcements: string[] = [];
 		let error: unknown;
 		try {
-			await spawnMonster(async () => undefined, {
+			await spawnMonster(async ({ announce }) => {
+				if (announce) announcements.push(announce);
+				return undefined;
+			}, {
 				type: 2,
 				gender: 'unknown',
 				name: 'Saffron',
@@ -91,15 +95,20 @@ describe('monsters/helpers/spawn', () => {
 			error = caught;
 		}
 
-		expect(error).to.be.instanceOf(Error);
+		expect(error).to.be.instanceOf(CommandRefusalError);
 		expect((error as Error).message).to.equal('Unknown monster gender: unknown');
+		expect(announcements).to.deep.equal(['Unknown monster gender: unknown']);
 	});
 
 	for (const invalidGender of ['toString', '__proto__']) {
-		it(`rejects inherited key "${invalidGender}" supplied by a prompt-free caller`, async () => {
+		it(`announces inherited key "${invalidGender}" before refusing a prompt-free caller`, async () => {
+			const announcements: string[] = [];
 			let error: unknown;
 			try {
-				await spawnMonster(async () => undefined, {
+				await spawnMonster(async ({ announce }) => {
+					if (announce) announcements.push(announce);
+					return undefined;
+				}, {
 					type: 2,
 					gender: invalidGender,
 					name: 'Saffron',
@@ -109,8 +118,9 @@ describe('monsters/helpers/spawn', () => {
 				error = caught;
 			}
 
-			expect(error).to.be.instanceOf(Error);
+			expect(error).to.be.instanceOf(CommandRefusalError);
 			expect((error as Error).message).to.equal(`Unknown monster gender: ${invalidGender}`);
+			expect(announcements).to.deep.equal([`Unknown monster gender: ${invalidGender}`]);
 		});
 	}
 });

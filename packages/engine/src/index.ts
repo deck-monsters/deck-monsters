@@ -66,7 +66,7 @@ export { allMonsters } from './monsters/index.js';
  * prompt-free channel cannot ask for them (docs/engine-concurrency-and-timing.md).
  */
 export { randomAvatarChoices } from './characters/helpers/create.js';
-export { PRONOUNS } from './helpers/pronouns.js';
+export { PRONOUNS, PRONOUN_KEYS, PRONOUN_CHOICES } from './helpers/pronouns.js';
 export type { Gender } from './helpers/pronouns.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {

@@ -162,31 +162,27 @@ const spawnMonster = (
 				return options;
 			});
 
-	const askForGender = (Monster: MonsterConstructor): Promise<Record<string, unknown>> =>
-		Promise.resolve()
-			.then(() => {
-				if (gender !== undefined) {
-					if (!PRONOUN_KEYS.includes(gender as typeof PRONOUN_KEYS[number])) {
-						throw new Error(`Unknown monster gender: ${String(gender)}`);
-					}
-					options.gender = gender;
-					return options;
-				}
+	const askForGender = (_Monster: MonsterConstructor): Promise<Record<string, unknown>> => {
+		if (gender !== undefined) {
+			if (!PRONOUN_KEYS.includes(gender as typeof PRONOUN_KEYS[number])) {
+				return announceAndThrow(channel, `Unknown monster gender: ${String(gender)}`);
+			}
+			options.gender = gender;
+			return Promise.resolve(options);
+		}
 
-				return channel({
-					question: 'Which pronouns should we use for your monster?',
-					choices: [...PRONOUN_CHOICES],
-				});
-			})
-			.then((answer: unknown) => {
-				if (answer === options) return options;
-				const selectedGender = genderFromPronounChoice(answer);
-				if (!selectedGender) {
-					throw new Error(`Unknown monster pronoun choice: ${String(answer)}`);
-				}
-				options.gender = selectedGender;
-				return options;
-			});
+		return Promise.resolve().then(() => channel({
+			question: 'Which pronouns should we use for your monster?',
+			choices: [...PRONOUN_CHOICES],
+		})).then((answer: unknown) => {
+			const selectedGender = genderFromPronounChoice(answer);
+			if (!selectedGender) {
+				return announceAndThrow(channel, `Unknown monster pronoun choice: ${String(answer)}`);
+			}
+			options.gender = selectedGender;
+			return options;
+		});
+	};
 
 	let Monster: MonsterConstructor;
 

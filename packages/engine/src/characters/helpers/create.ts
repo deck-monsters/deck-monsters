@@ -20,7 +20,15 @@ let _getChoices: (arr: string[]) => string = arr =>
 	arr.map((c, i) => `${i}) ${c}`).join('\n');
 let _getCreatureTypeChoices: (creatures: CharacterConstructor[]) => string = creatures =>
 	creatures.map((c, i) => `${i}) ${(c as any).creatureType ?? c.name}`).join('\n');
-let _randomEmoji: () => string = () => '🎲';
+// The web asks for choices before the optional emoji module finishes loading; this fallback
+// must still make seven distinct radios rather than seven duplicate dice.
+const FALLBACK_AVATARS = ['🎲', '🦊', '🐙', '🦉', '🐍', '🦁', '🐲'] as const;
+let fallbackAvatarIndex = 0;
+let _randomEmoji: () => string = () => {
+	const avatar = FALLBACK_AVATARS[fallbackAvatarIndex % FALLBACK_AVATARS.length]!;
+	fallbackAvatarIndex += 1;
+	return avatar;
+};
 
 const loadHelpers = async () => {
 	const [choicesModule, emojiModule] = await Promise.all([
@@ -51,8 +59,10 @@ export const createHelperReady = loadHelpers().catch((err) => {
  */
 export const randomAvatarChoices = (count: number): string[] => {
 	const choices: string[] = [];
-	for (let i = 0; i < count; i++) {
-		choices.push(_randomEmoji());
+	const maxDraws = Math.max(count * 10, 10);
+	for (let draws = 0; choices.length < count && draws < maxDraws; draws++) {
+		const avatar = _randomEmoji();
+		if (!choices.includes(avatar)) choices.push(avatar);
 	}
 	return choices;
 };
@@ -71,8 +81,6 @@ const createCharacter = (
 	{ type, name, game, gender, icon }: CreateCharacterOptions = {},
 ): Promise<BaseCharacter> => {
 	const options: Record<string, unknown> = {};
-
-	const iconChoices = randomAvatarChoices(7);
 
 	const askForCreatureType = (): Promise<CharacterConstructor> => {
 		const creatureTypeLabels = (allCharacters as CharacterConstructor[]).map(c => (c as any).creatureType ?? c.name);
@@ -104,30 +112,27 @@ const createCharacter = (
 			});
 	};
 
-	const askForGender = (Character: CharacterConstructor): Promise<Record<string, unknown>> =>
-		Promise.resolve()
-			.then(() => {
-				if (gender !== undefined) {
-					if (!PRONOUN_KEYS.includes(gender as typeof PRONOUN_KEYS[number])) {
-						return announceAndThrow(channel, `I don't recognize "${String(gender)}" as a pronoun choice.`);
-					}
-					options.gender = gender;
-					return options;
-				}
-				return channel({
-					question: 'Which pronouns should we use for you?',
-					choices: [...PRONOUN_CHOICES],
-				});
-			})
-			.then((answer: unknown) => {
-				if (answer === options) return options;
-				const selectedGender = genderFromPronounChoice(answer);
-				if (!selectedGender) {
-					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a pronoun choice.`);
-				}
-				options.gender = selectedGender;
-				return options;
-			});
+	const askForGender = (_Character: CharacterConstructor): Promise<Record<string, unknown>> => {
+		if (gender !== undefined) {
+			if (!PRONOUN_KEYS.includes(gender as typeof PRONOUN_KEYS[number])) {
+				return announceAndThrow(channel, `I don't recognize "${String(gender)}" as a pronoun choice.`);
+			}
+			options.gender = gender;
+			return Promise.resolve(options);
+		}
+
+		return Promise.resolve().then(() => channel({
+			question: 'Which pronouns should we use for you?',
+			choices: [...PRONOUN_CHOICES],
+		})).then((answer: unknown) => {
+			const selectedGender = genderFromPronounChoice(answer);
+			if (!selectedGender) {
+				return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a pronoun choice.`);
+			}
+			options.gender = selectedGender;
+			return options;
+		});
+	};
 
 	const askForName = (
 		Character: CharacterConstructor,
@@ -168,6 +173,7 @@ const createCharacter = (
 			return Promise.resolve(options);
 		}
 
+		const iconChoices = randomAvatarChoices(7);
 		return Promise.resolve()
 			.then(() =>
 				channel({
