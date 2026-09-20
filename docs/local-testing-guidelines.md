@@ -69,15 +69,42 @@ from short Node scripts (attach with `connectOverCDP`) while the screen recorder
 Playwright's `page.screenshot` does **not** include browser chrome — dismiss Chrome's
 "Save password?" bubble (it covers the roster) before recording.
 
-## Reusable rooms from this session
+## Reusable rooms (remote test account)
 
-These rooms were created during local manual testing and can be reused in future sessions.
+These rooms are owned by the `TEST_USERNAME` account on the remote Supabase project (Path A in
+`AGENTS.md`). Reuse them instead of creating new ones, and **update this section in the same
+commit** whenever you change what is in them — the next agent plans its test from this list.
 
-- `Test Room A`
-  - `roomId`: `70cb10d2-4faa-4300-9c20-8befe121a3d1`
-  - `inviteCode`: `717305BE`
-- `Test Room B`
-  - `roomId`: `227ba78e-bca5-4bd4-a59c-9793fac508bd`
-  - `inviteCode`: `328F58D2`
+| Room | `roomId` | Invite | Purpose | State (2026-09-20) |
+|------|----------|--------|---------|--------------------|
+| `Test Room A` | `70cb10d2-4faa-4300-9c20-8befe121a3d1` | `717305BE` | Existing character with trained monsters; fights, workshop, items, feeds | Character present; `Fang` (Basilisk, Lvl 0, 9/9 cards) and `Chuvvo` (Gladiator, Lvl 0, 9/9 cards); 20 unequipped cards; ring empty |
+| `Test Room B` | `227ba78e-bca5-4bd4-a59c-9793fac508bd` | `328F58D2` | **First-run fixture** — the test account has *no character* here | Reserved. Do not create a character or monster in it; if a first-run test must actually create one, use a throwaway room instead, or delete and recreate Room B and update this row |
 
-If either room becomes noisy or drifts too far from beginner state, create a fresh room for pacing/scaling verification and add its metadata here.
+The test account is also a *member* (not owner) of `Game Night`. That is a real room: never
+spawn, fight, rename, or run anything there.
+
+### Throwaway rooms
+
+When a test will trash a room (boss floods, deletion paths, breaking state, first-run flows
+that create a character), create one named `Scratch <purpose> <YYYY-MM-DD>` so it is obvious
+whose it is, and **delete it before you finish the task** — every leftover room is a row the
+next agent has to explain. `room.delete` is owner-only and also evicts the room from server
+memory, so prefer it over SQL. With the dev server on `:3000` and the Path A env sourced:
+
+```bash
+node -e '
+(async () => {
+  const auth = await (await fetch(`${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST", headers: { apikey: process.env.SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: process.env.TEST_USERNAME, password: process.env.TEST_PASSWORD }) })).json();
+  const H = { Authorization: `Bearer ${auth.access_token}`, "Content-Type": "application/json" };
+  const rooms = (await (await fetch("http://localhost:3000/trpc/room.list", { headers: H })).json()).result.data;
+  console.table(rooms.map(r => ({ id: r.id, name: r.name })));           // 1. look
+  for (const r of rooms.filter(r => r.name.startsWith("Scratch ")))       // 2. delete only your scratch rooms
+    console.log(r.name, (await fetch("http://localhost:3000/trpc/room.delete", { method: "POST", headers: H, body: JSON.stringify({ roomId: r.id }) })).status);
+})()'
+```
+
+Run the listing step alone first; never delete `Test Room A`, `Test Room B`, or a room you do
+not own. If a task leaves scratch monsters in `Test Room A` that later tests would trip over,
+`dismiss <monster>` them from the console and update the table above.

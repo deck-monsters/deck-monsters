@@ -36,6 +36,8 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 3. Every task ends with: task review (spec + quality) → fix round if needed → **checkpoint commit that also updates this plan** → push.
 4. A subagent that returns "success" with no artifact is re-dispatched on a different model, not retried.
 5. The final whole-branch review runs on the most capable model after all tasks land.
+6. Implementers never create or switch branches in the shared worktree (Task B's implementer did; its branch is fast-forwarded into the feature branch and deleted once the task lands).
+7. Live tests reuse `Test Room A` / `Test Room B` on the remote project and delete any throwaway room before reporting done (Task C's implementer left three `First Run …` rooms; the orchestrator deleted them via `room.delete` and wrote the rule into `docs/local-testing-guidelines.md`, `docs/agents/working-in-this-repo.md`, and `AGENTS.md`).
 
 ## Clean-up (final step)
 

@@ -72,7 +72,17 @@ stack). Specifics worth knowing before you start:
   the UI: `select type, text, created_at from room_events where room_id = '<uuid>' order by
   id` (`packages/server/src/db/schema.ts`). The difference between "the engine never emitted
   it" and "the UI dropped it" is most of the diagnosis in any feed bug.
-- Reusable test rooms and their invite codes are listed at the end of the local-testing doc.
+- **Reuse the scratch rooms; do not leave new ones behind.** The remote test account owns
+  two long-lived rooms (ids, invite codes, and what lives in them are in the local-testing
+  doc's "Reusable rooms" section — keep that section current when you change them):
+  `Test Room A` for anything that needs an existing character with trained monsters, and
+  `Test Room B`, kept **without** a character for the test account so first-run flows
+  (character creation from the console or workshop) can be exercised. If you need a room
+  you are going to trash — flood it with bosses, test deletion, break its state — create a
+  throwaway named `Scratch <purpose> <date>` and **delete it before you finish** (owner-only
+  `room.delete`; the local-testing doc has a one-liner). A room the test account merely
+  belongs to (`Game Night` at the time of writing) is somebody's real room: never spawn,
+  fight, or rename anything in it.
 
 ## How the docs are organised
 

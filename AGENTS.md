@@ -271,7 +271,11 @@ pnpm --filter @deck-monsters/server dev   # port 3000
 pnpm --filter @deck-monsters/web dev      # port 5173, proxies /trpc to :3000
 ```
 
-Sign in at `http://localhost:5173` using `$TEST_USERNAME` / `$TEST_PASSWORD`.
+Sign in at `http://localhost:5173` using `$TEST_USERNAME` / `$TEST_PASSWORD`. Use the test
+account's existing scratch rooms (`Test Room A` / `Test Room B`, listed with their current
+contents in [`docs/local-testing-guidelines.md`](docs/local-testing-guidelines.md) under
+"Reusable rooms") rather than creating new ones; keep that list current, and delete any
+throwaway room you create before finishing (instructions in the same section).
 
 **Important**: The server does **not** auto-load `.env.local` — you must `source` it into the shell before starting `pnpm --filter @deck-monsters/server dev`. The web app (Vite) does auto-load `apps/web/.env.local`.
 
