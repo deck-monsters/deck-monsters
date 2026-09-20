@@ -178,8 +178,9 @@ pnpm run build:docs   # builds engine, then regenerates CARDS.md, DMG.md, MONSTE
 
 ## Environment Variables
 
-| Variable | Purpose |
-|----------|---------|
+Server, web and Discord connector variables are listed in [`AGENTS.md`](AGENTS.md#environment-variables) and [`docs/deployment.md`](docs/deployment.md). The engine itself reads only `DECK_MONSTERS_SKIP_DELAYS` (tests and the harness); the old AWS/S3 backup and its `DECK_MONSTERS_AWS_*` variables were removed in the stack modernisation.
+
+----------|---------|
 | `DECK_MONSTERS_AWS_ACCESS_KEY_ID` | S3 backup credentials (optional) |
 | `DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` | S3 backup credentials (optional) |
 
