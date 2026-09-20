@@ -32,6 +32,32 @@ describe('pixel fight sprites', () => {
     }
   });
 
+  it('actually moves: idle bobs, attack lunges, and faint lies down', () => {
+    const bounds = (frame: readonly string[]) => {
+      let minX = 16, maxX = -1, minY = 16, maxY = -1;
+      frame.forEach((row, y) => [...row].forEach((pixel, x) => {
+        if (pixel === '.') return;
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      }));
+      return { width: maxX - minX + 1, height: maxY - minY + 1, minX, minY };
+    };
+    for (const [creatureType, sprite] of Object.entries(SPRITES)) {
+      const { idle, attack, faint } = sprite.frames;
+      expect(idle[1], `${creatureType} idle bob`).not.toEqual(idle[0]);
+      expect(attack[0], `${creatureType} attack lean`).not.toEqual(idle[0]);
+      expect(attack[1], `${creatureType} attack lunge`).not.toEqual(attack[0]);
+      // The lunge carries the sprite towards the opponent (right; the renderer mirrors).
+      expect(bounds(attack[1]).minX, `${creatureType} lunge direction`).toBeGreaterThan(bounds(idle[0]).minX);
+      // Lying down = the standing pose turned on its side, so the box swaps axes.
+      const standing = bounds(idle[0]);
+      const fallen = bounds(faint[0]);
+      expect(faint[0], `${creatureType} faint differs from idle`).not.toEqual(idle[0]);
+      expect([fallen.width, fallen.height], `${creatureType} faint is the standing pose on its side`)
+        .toEqual([standing.height, standing.width]);
+    }
+  });
+
   it('uses dense outlined palettes and draws one rectangle for each opaque pixel', () => {
     for (const [creatureType, sprite] of Object.entries(SPRITES)) {
       for (const frames of Object.values(sprite.frames)) {
