@@ -8,12 +8,14 @@ const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
 import {
+	PRONOUNS,
 	PROMPT_CANCELLED,
 	PromptCancelledError,
 	allMonsters,
 	getXpCapForLevel,
 	isCommandRefusal,
 	purchaseShopItem,
+	randomAvatarChoices,
 	type ShopItemSection,
 } from '@deck-monsters/engine';
 import { buildQuickActions } from '../quick-actions.js';
@@ -91,6 +93,10 @@ type ItemSummary = {
 };
 
 type InventorySummary = {
+	// Whether this member has a character in this room at all. Without it the web could
+	// not tell "no character yet" from "character with no monsters", and so could not
+	// offer first-run character creation — see `spawnMonster`'s `character` input.
+	hasCharacter: boolean;
 	monsters: InventoryMonsterSummary[];
 	unequippedDeck: string[];
 	cardCompatibility: Record<string, string[]>;
@@ -371,6 +377,7 @@ const summarizeInventory = ({
 	}, {});
 
 	return {
+		hasCharacter: true,
 		monsters: monsterSummaries,
 		unequippedDeck: deck.map((card) => getDisplayName(card)),
 		cardCompatibility,
@@ -1026,18 +1033,83 @@ export function createRouter(roomManager: RoomManager) {
 				};
 			}),
 
+		/*
+		 * Everything the engine's character creation would otherwise *ask* for. The
+		 * workshop runs on a prompt-free channel (docs/engine-concurrency-and-timing.md),
+		 * so a first-run player has to answer these in the form, up front, instead.
+		 * The class is not offered: `helpers/all.ts` has exactly one entry, and the engine
+		 * no longer asks either.
+		 */
+		characterCreationChoices: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				return {
+					genders: Object.keys(PRONOUNS),
+					// The console prompt's own avatar generator, so the two pickers cannot drift.
+					avatars: randomAvatarChoices(7),
+					suggestedName: await roomManager.getDisplayName(ctx.userId),
+				};
+			}),
+
 		spawnMonster: protectedProcedure
-			.input(z.object({ roomId: z.string().uuid(), type: z.number().int().nonnegative(), gender: z.enum(['male', 'female', 'androgynous']), name: z.string().trim().min(1).max(40), color: z.string().trim().min(1).max(100) }))
+			.input(z.object({
+				roomId: z.string().uuid(),
+				type: z.number().int().nonnegative(),
+				gender: z.enum(['male', 'female', 'androgynous']),
+				name: z.string().trim().min(1).max(40),
+				color: z.string().trim().min(1).max(100),
+				// First run only: training a monster was a brand-new player's first action in
+				// the workshop and it dead-ended on "create your character first" with nowhere
+				// to do that. Supplying these creates the character as part of the same spawn.
+				// Ignored when the player already has a character.
+				character: z.object({
+					name: z.string().trim().min(1).max(40),
+					gender: z.enum(['male', 'female', 'androgynous']),
+					avatar: z.string().min(1).max(16),
+				}).optional(),
+			}))
 			.mutation(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				if (!allMonsters[input.type]) {
 					throw new TRPCError({ code: 'BAD_REQUEST', message: 'That monster type is not available.' });
 				}
 				const [game, eventBus] = await Promise.all([roomManager.getGame(input.roomId), roomManager.getEventBus(input.roomId)]);
-				const character = game.characters?.[ctx.userId];
-				if (!character || typeof character.spawnMonster !== 'function') throw new TRPCError({ code: 'NOT_FOUND', message: 'Create your character before training a monster.' });
+				const existingCharacter = game.characters?.[ctx.userId];
+				if (existingCharacter && typeof existingCharacter.spawnMonster !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Create your character before training a monster.' });
+				}
+				if (!existingCharacter && !input.character) {
+					throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
+				}
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId: randomUUID() });
-				const monster = await runSerializedMutation(input.roomId, ctx.userId, () => {
+				const monster = await runSerializedMutation(input.roomId, ctx.userId, async () => {
+					let character = existingCharacter;
+					if (!character && input.character) {
+						// `createCharacter` re-prompts when the chosen name clashes with another
+						// character in this game, and this channel throws on any question — so the
+						// clash has to be caught here, before the engine can ask about it.
+						if (game.findCharacterByName?.(input.character.name)) {
+							throw new TRPCError({ code: 'CONFLICT', message: 'That name is already taken in this room.' });
+						}
+						// Prompt-free because every question `createCharacter` asks has its answer
+						// supplied: class (index 0, the only one), gender, name and avatar.
+						// Creation and the spawn share this one serialized mutation, so no other
+						// request sees a half-finished onboarding. If the spawn itself fails the
+						// character does remain — better than losing the identity the player just
+						// chose, and the next Train attempt takes the existing-character path.
+						character = await game.getCharacter({
+							channel,
+							id: ctx.userId,
+							name: input.character.name,
+							type: 0,
+							gender: input.character.gender,
+							icon: input.character.avatar,
+						});
+					}
+					if (!character || typeof character.spawnMonster !== 'function') {
+						throw new TRPCError({ code: 'NOT_FOUND', message: 'Create your character before training a monster.' });
+					}
 					const takenNames = Object.keys(game.getAllMonstersLookup?.() ?? {});
 					if (takenNames.includes(input.name.toLowerCase())) throw new TRPCError({ code: 'CONFLICT', message: 'That monster name is already taken.' });
 					return character.spawnMonster(channel, { type: input.type, gender: input.gender, name: input.name, color: input.color, game });
@@ -1053,6 +1125,7 @@ export function createRouter(roomManager: RoomManager) {
 				const character = game.characters?.[ctx.userId];
 				if (!character || typeof character !== 'object') {
 					return {
+						hasCharacter: false,
 						monsters: [],
 						unequippedDeck: [],
 						cardCompatibility: {},

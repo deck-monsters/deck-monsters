@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
+import { Game } from '@deck-monsters/engine';
 
 import { createRouter, activeFlows, activePromptFreeMutations } from './router.js';
 
@@ -98,6 +99,7 @@ describe('trpc/router card management procedures', () => {
 		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
 		const result = await caller.game.myInventory({ roomId: ROOM_ID });
 
+		expect(result.hasCharacter).to.equal(true);
 		expect(result.monsters).to.have.length(2);
 		expect(result.monsters[0]).to.include({
 			name: 'Stonefang',
@@ -823,6 +825,139 @@ describe('trpc/router monster lifecycle procedures', () => {
 		const error = await caller.game.sendMonsterToRing({ roomId: ROOM_ID, monsterName: 'Stonefang' }).catch((err) => err);
 		expect(error).to.be.instanceOf(TRPCError);
 		expect(loaded).to.equal(false);
+	});
+});
+
+/**
+ * Training a monster was a brand-new player's first action in the workshop, and it
+ * dead-ended: `game.spawnMonster` refused because there was no character, and the workshop
+ * had no way to make one (the console's creation flow is a series of prompts, which a
+ * workshop mutation cannot run — docs/engine-concurrency-and-timing.md). The fix carries
+ * the character's details in the spawn itself, prompt-free.
+ */
+describe('trpc/router first-run character creation from the workshop', () => {
+	const CHARACTER_BLOCK = { name: 'Ada', gender: 'female' as const, avatar: '🦊' };
+
+	const makeRoomManager = (game: unknown, displayName = 'Ada Lovelace', spy?: { assertedRoom?: string }) =>
+		({
+			assertMember: async (_userId: string, roomId: string) => {
+				if (spy) spy.assertedRoom = roomId;
+			},
+			getGame: async () => game,
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+			getDisplayName: async () => displayName,
+		}) as unknown as Parameters<typeof createRouter>[0];
+
+	it('creates the character and spawns the monster in one mutation', async () => {
+		// A real Game so the character that comes out is a real Beastmaster, registered in
+		// this room's state — a stub would only prove the router called something.
+		const game = new Game({}, () => undefined);
+		try {
+			const caller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+			const result = await caller.game.spawnMonster({
+				roomId: ROOM_ID,
+				type: 2,
+				gender: 'female',
+				name: 'Saffron',
+				color: 'violet smoke',
+				character: CHARACTER_BLOCK,
+			});
+
+			const character = game.characters[USER_ID] as Record<string, unknown>;
+			expect(character.creatureType).to.equal('Beastmaster');
+			expect(character).to.include({ givenName: 'Ada', gender: 'female', icon: '🦊' });
+			expect(result.monsterName).to.equal('Saffron');
+			expect(result.monsterType).to.equal('Jinn');
+			expect((character.monsters as unknown[])).to.have.length(1);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('asks for the character details instead of just refusing', async () => {
+		const caller = createRouter(makeRoomManager({ characters: {} })).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const error = await caller.game.spawnMonster({ roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke' })
+			.catch((err: unknown) => err);
+
+		expect(error).to.be.instanceOf(TRPCError);
+		expect((error as TRPCError).code).to.equal('NOT_FOUND');
+		expect((error as TRPCError).message).to.equal("You don't have a character in this room yet — fill in the character details to create one.");
+	});
+
+	it('refuses a character name another player already took, before the engine can prompt about it', async () => {
+		// `createCharacter` re-prompts on a clash, and the workshop channel throws on any
+		// question — so the clash has to be a refusal here, not a prompt there.
+		let created = false;
+		const game = {
+			characters: {},
+			findCharacterByName: (name: string) => (name === 'Ada' ? { givenName: 'Ada' } : undefined),
+			getCharacter: async () => { created = true; return {}; },
+			getAllMonstersLookup: () => ({}),
+		};
+		const caller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const error = await caller.game.spawnMonster({
+			roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke', character: CHARACTER_BLOCK,
+		}).catch((err: unknown) => err);
+
+		expect(error).to.be.instanceOf(TRPCError);
+		expect((error as TRPCError).code).to.equal('CONFLICT');
+		expect((error as TRPCError).message).to.equal('That name is already taken in this room.');
+		expect(created).to.equal(false);
+		expect(game.characters).to.deep.equal({});
+	});
+
+	it('ignores the character block when the player already has a character', async () => {
+		let spawnInput: Record<string, unknown> | undefined;
+		let createdAgain = false;
+		const character = {
+			givenName: 'Grace',
+			spawnMonster: async (_channel: unknown, spawn: Record<string, unknown>) => { spawnInput = spawn; return { givenName: 'Saffron', creatureType: 'Jinn' }; },
+		};
+		const game = {
+			characters: { [USER_ID]: character },
+			getCharacter: async () => { createdAgain = true; return character; },
+			findCharacterByName: () => undefined,
+			getAllMonstersLookup: () => ({}),
+		};
+		const caller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const result = await caller.game.spawnMonster({
+			roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke', character: CHARACTER_BLOCK,
+		});
+
+		expect(createdAgain).to.equal(false);
+		expect(game.characters[USER_ID].givenName).to.equal('Grace');
+		expect(spawnInput).to.not.have.property('character');
+		expect(result.monsterName).to.equal('Saffron');
+	});
+
+	it('offers the creation choices the workshop form cannot ask for, to room members only', async () => {
+		const spy: { assertedRoom?: string } = {};
+		const caller = createRouter(makeRoomManager({ characters: {} }, 'Ada Lovelace', spy)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const choices = await caller.game.characterCreationChoices({ roomId: ROOM_ID });
+
+		expect(spy.assertedRoom).to.equal(ROOM_ID);
+		expect(choices.avatars).to.have.length(7);
+		expect(choices.genders).to.deep.equal(['male', 'female', 'androgynous']);
+		expect(choices.suggestedName).to.equal('Ada Lovelace');
+	});
+
+	it('tells the workshop there is no character yet, rather than an empty stable', async () => {
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: {}, ring: { contestants: [] } }),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.hasCharacter).to.equal(false);
+		expect(result.monsters).to.deep.equal([]);
 	});
 });
 
