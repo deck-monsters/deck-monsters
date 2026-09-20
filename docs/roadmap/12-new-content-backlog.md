@@ -9,20 +9,10 @@ This is a holding area for new cards, monsters, items, and larger features from 
 
 ---
 
-## Deck Presets — Saveable Card Loadouts
+## Pruned Shipped Work
 
-Allow players to preconfigure multiple named "hands" (decks of 7 cards) from their full card pool. Before sending a monster into the ring, the player can quickly swap to a preset loadout tuned for the matchup — a defensive hand, an aggressive hand, a control hand, etc.
-
-This is analogous to deck building in collectible card games: players earn cards over time, and the strategic depth comes from curating and switching between loadouts rather than running one static deck forever.
-
-**Key design points:**
-- Each monster stores N preset decks (3–5 feels right)
-- Presets are named by the player ("Defensive", "Anti-Basilisk", etc.)
-- Swapping to a preset is a single command / single click — the point is speed
-- Works across all connectors: web UI shows a dropdown/radio selector, chat connectors use a `/preset <name>` command or similar, Discord could use a select menu
-- Presets are persisted as part of monster state (included in `toJSON()` serialization)
-
-**Action**: Requires engine-level support (preset storage on `BaseCreature`, preset swap command). UI surfaces in the web deck builder, Discord select menus, and chat commands.
+Deck presets were removed from this backlog because preset save/load/delete and the card
+workshop shipped; their history lives in the [archived card-management plan](../archive/roadmap/16-card-management.md).
 
 ---
 
@@ -141,6 +131,24 @@ Add slotted equipment (helms, rings, capes) that provide stat bonuses/penalties.
 | Helm of Wisdom | +1 energy |
 | Bag of Holding | +1 card slot, -1 hit bonus |
 
+### Earning Monster Slots
+
+A beastmaster's roster capacity is `DEFAULT_MONSTER_SLOTS` (global, 10 as of September 2026)
+plus a persisted per-character `monsterSlotModifier`, floored at the number of monsters already
+held (`Beastmaster.monsterSlots`). The modifier exists so capacity can become something you
+earn rather than a fixed number — nothing in the game changes it yet. Candidates:
+
+- **Level reward**: `+1` at beastmaster (character) milestones, or at the first monster to reach
+  a given level, announced in the level-up narration.
+- **Scroll of Kinship** (shop, back room): a consumable that adds `+1` once per character; price
+  it against the coin economy audit in `11-balance-and-mechanics.md`.
+- **Admin grant**: `edit character` (admin `edit … as <name>`) lists `Object.keys(options)`, and every
+  beastmaster now carries `monsterSlotModifier` (seeded to 0) precisely so it appears there; the
+  getter coerces the string the edit flow stores.
+
+Whatever grants it should go through the setter so the change is persisted and announced; the
+effective capacity is derived, never stored.
+
 ---
 
 ## Creatures / NPCs
@@ -201,7 +209,6 @@ Replace the word "coins" with a symbol. Upstream suggests ㊥ or similar. Worth 
 ## Notes
 
 When picking from this backlog:
-- **Deck presets** are high-impact and cross-cutting — they deepen strategy without adding new cards, and work across all connectors
 - Card pops (#11) and equipment slots (#14) would have the highest per-feature gameplay impact
 - The **data-driven card spec** system becomes more valuable as the card count grows and more contributors author cards — evaluate post-launch
 - The **AI-assisted card authoring** workflow (agent skill + battle simulation harness) should be set up early — it accelerates everything else in this backlog

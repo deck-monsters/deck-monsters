@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mk = (name: string) => ({
   name, type: 'Basilisk', level: 3, inRing: false, inEncounter: false, dead: false,
   cardSlots: 4, cards: [], presets: {},
+  hp: 20, maxHp: 20, revivesAt: null as number | null, battles: { wins: 0, losses: 0, total: 0 },
 });
 
 const hookMock = vi.hoisted(() => ({
@@ -13,7 +14,7 @@ const hookMock = vi.hoisted(() => ({
   unequippedDeck: [] as string[],
   cardCompatibility: {},
   items: { character: [], monsters: [] },
-  spawnOptions: { types: [{ index: 0, label: 'Basilisk' }], genders: ['androgynous'] },
+  spawnOptions: { types: [{ index: 0, label: 'Basilisk' }], pronouns: [{ key: 'androgynous', label: 'they/them' }] },
   loading: false,
   busy: false,
   latestError: null as string | null,

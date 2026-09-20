@@ -30,9 +30,10 @@ const USER_B = 'user-b';
 // Scripted answers for character creation.
 // NOTE: the character's *display name* comes from the `userName` option passed
 // to runCommand (propagated as `user.name` → `game.getCharacter({ name })`).
-// createCharacter skips the name prompt when `name` is already defined, so
-// only three prompts need to be answered: class, gender, avatar.
-const NEW_CHARACTER_ANSWERS = ['0', '0', '0']; // class=Beastmaster, gender=0, avatar=0
+// createCharacter skips the name prompt when `name` is already defined, and it no
+// longer asks which class while there is only one (see characters/helpers/create.ts),
+// so only two prompts need to be answered: gender, avatar.
+const NEW_CHARACTER_ANSWERS = ['0', '0']; // gender=0, avatar=0
 
 // Scripted answers for monster spawn that follows character creation.
 // spawn.ts DOES prompt for the monster name (free text) because no `name` is
@@ -89,16 +90,34 @@ describe('integration: command flow', function () {
 			await runCommand(game, { command: 'look at monsters', userId: USER_A });
 			responder2.unsubscribe();
 
-			expect(firstCount, 'should have answered character creation prompts').to.be.at.least(3);
+			expect(firstCount, 'should have answered character creation prompts').to.be.at.least(2);
 			expect(responder2.promptsAnswered, 'no prompts on second command').to.equal(0);
 		});
 	});
 
 	describe('spawn monster', () => {
+		it('accepts train as the canonical command while keeping spawn as an alias', async () => {
+			const game = createTestGame();
+			const allAnswers = [...NEW_CHARACTER_ANSWERS, ...SPAWN_ANSWERS];
+			const responder = createAutoResponder(game.eventBus, USER_A, allAnswers);
+
+			try {
+				await runCommand(game, {
+					command: 'train a monster',
+					userId: USER_A,
+					isDM: true,
+				});
+			} finally {
+				responder.unsubscribe();
+			}
+
+			expect(game.characters[USER_A]?.monsters).to.have.length(1);
+		});
+
 		it('creates a monster when the user answers all spawn prompts', async () => {
 			const game = createTestGame();
 
-			// Combine character creation answers (3 prompts: class, gender, avatar)
+			// Combine character creation answers (2 prompts: gender, avatar)
 			// + spawn answers (4 prompts: type, gender, name, color)
 			const allAnswers = [...NEW_CHARACTER_ANSWERS, ...SPAWN_ANSWERS];
 			const responder = createAutoResponder(game.eventBus, USER_A, allAnswers);

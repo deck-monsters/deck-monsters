@@ -150,6 +150,31 @@
   flex-direction: column;
 }
 
+/* Decorative only: the narration and its controls remain fully usable underneath. */
+.pixel-fight-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  width: 100%;
+  height: 200px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s;
+  image-rendering: pixelated;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--color-bg) 72%, transparent), transparent);
+}
+
+.pixel-fight-layer.active {
+  opacity: 1;
+}
+
+@container (max-width: 360px) {
+  .pixel-fight-layer {
+    display: none;
+  }
+}
+
 /* Event feed — the scrollable list of game events.
 
    NO PADDING HERE. This class lands on react-virtuoso's *scroller*, which it styles
@@ -730,12 +755,20 @@
   .roster-bar-fill {
     transition: none;
   }
+
+  .pixel-fight-layer {
+    transition: none;
+  }
 }
 
 /* On short viewports (phone landscape, split panes) give the feed more room. */
 @media (max-height: 600px) {
   .ring-roster {
     max-height: 32%;
+  }
+
+  .pixel-fight-layer {
+    display: none;
   }
 }
 
@@ -775,7 +808,7 @@
 }
 
 /* ── Fight highlights ───────────────────────────────────────────────────────
-   The few battle moments surfaced in the console while the ring feed scrolls
+   The few fight moments surfaced in the console while the ring feed scrolls
    past. The ring shows everything; these are the ones worth looking up for.
    See 10b-bugs-fixed.md #110. */
 /* The tag sits ABOVE the text, not beside it. Inline, tags of differing widths

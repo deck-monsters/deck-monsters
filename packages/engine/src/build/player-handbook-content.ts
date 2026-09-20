@@ -1,4 +1,5 @@
 import { formatCommandList } from '../commands/catalog.js';
+import { DEFAULT_MONSTER_SLOTS } from '../characters/beastmaster.js';
 
 export const FIGHT_DELAY_SECONDS = 60;
 export const MAX_MONSTERS = 12;
@@ -11,9 +12,9 @@ export const HANDBOOK_HEADER = `
 ║     Deck Monsters                ║
 ╚══════════════════════════════════╝
 
-Welcome to Deck Monsters — the monster capturing, deck-building, turn-based RPG.
+Welcome to Deck Monsters — the monster-training, deck-building, turn-based RPG.
 
-You capture monsters to fight for you. Build their decks, send them into the ring, and watch them battle automatically. Earn coins and XP to grow stronger.
+You train monsters to fight beside you. Build their decks, send them into the ring, and watch them fight automatically. Earn coins and XP to grow stronger.
 
 Choose your cards wisely, good luck, and have fun!
 `.trim();
@@ -21,10 +22,10 @@ Choose your cards wisely, good luck, and have fun!
 export const GETTING_STARTED = `
 ── Getting Started ──────────────────
 
-1) Spawn a monster
-   spawn monster
+1) Train a monster
+   train a monster
 
-2) Equip it with cards from your deck
+2) Equip it with your cards
    equip [monster name]
 
    Or specify cards directly:
@@ -33,18 +34,20 @@ export const GETTING_STARTED = `
 3) Send it to the ring
    send [monster name] to the ring
 
-That's it — your monster will fight automatically once the battle begins.
+That's it — your monster will fight automatically once the fight begins.
+
+A beastmaster can keep up to ${DEFAULT_MONSTER_SLOTS} monsters at a time.
 `.trim();
 
 export const THE_RING = `
 ── The Ring ─────────────────────────
 
-The ring is the auto-battle arena. Once ${MIN_MONSTERS} or more monsters are present, a fight starts every ${FIGHT_DELAY_SECONDS} seconds.
+The ring is where automated fights take place. Once ${MIN_MONSTERS} or more monsters are present, a fight starts every ${FIGHT_DELAY_SECONDS} seconds.
 
-The ring holds up to ${MAX_MONSTERS} monsters at once. Monsters battle in turn order, each playing the next card in their deck. When the deck runs out it loops back to the beginning.
+The ring holds up to ${MAX_MONSTERS} monsters at once. Monsters fight in turn order, each playing the next card in their deck. When the deck runs out it loops back to the beginning.
 
 Call your monster back at any time:
-   summon [monster name] from the ring
+   call [monster name] out of the ring
 
 Check who's fighting:
    look at the ring
@@ -53,7 +56,7 @@ Check who's fighting:
 export const XP_AND_LEVELING = `
 ── XP and Leveling ──────────────────
 
-Monsters earn XP from every battle, win or lose. More XP unlocks higher-level cards.
+Monsters earn XP from every fight, win or lose. More XP unlocks higher-level cards.
 
 Level thresholds (XP required):
   Beginner: 0–${XP_THRESHOLDS[0] - 1} XP
@@ -71,13 +74,13 @@ When equipping, the order matters — your monster plays cards in the order you 
 
 Some cards roll more than once (Lucky Strike, Horn Swipe, Rehit). Critical success (natural 20) and Curse of Loki (natural 1) apply only to the roll the card keeps — a discarded roll never crits.
 
-   look at cards          — see your full deck
+   look at cards          — see your cards
    look at [card name]    — inspect a specific card
 
-Items work similarly. You can carry up to 3 items, and give up to 3 more to each monster. Items used mid-battle must be pre-assigned to the monster before the fight.
+Items work similarly. You can carry up to 3 items, and give up to 3 more to each monster. Items used mid-fight must be pre-assigned to the monster before the fight.
 
    look at items                — see every item and who carries it
-   give [item] to [monster]     — stock a monster before battle
+   give [item] to [monster]     — stock a monster before a fight
    take [item] from [monster]   — return it to your pocket
    use [item] on [monster]      — use it (even mid-fight, if carried in)
 
@@ -87,7 +90,7 @@ On the web, the Workshop shows valid targets and remaining uses. During your mon
 export const COINS_AND_SHOP = `
 ── Coins and the Shop ───────────────
 
-Every completed battle pays coins: 5 for a win and 2 for a loss, flee, or draw. Your first completed fight of each UTC day also pays a 5-coin participation bonus (a permanent death pays 4 before that bonus). The daily bonus is automatic — there is nothing to claim. Spend coins at the shop to expand your card pool and buy items.
+Every completed fight pays coins: 5 for a win and 2 for a loss, flee, or draw. Your first completed fight of each UTC day also pays a 5-coin participation bonus (a permanent death pays 4 before that bonus). The daily bonus is automatic — there is nothing to claim. Spend coins at the shop to expand your card pool and buy items.
 
 The merchant changes every 6 hours, so prices and stock rotate. Each room has its own merchant, so what's in stock next door has nothing to do with what's in stock here. Never sell to the shop for less than a card is worth — shop prices are always lower than face value, but some merchants are fairer than others.
 
@@ -104,7 +107,7 @@ Your character name and icon are separate from your account profile and belong t
 
    edit my character
 
-Choose Name or Icon/color, enter the new value, and confirm the change. This edits your person — the owner named in ring announcements — rather than one of your monsters.
+Choose Name or Icon/color, enter the new value, and confirm the change. This edits your person — the beastmaster named in ring announcements — rather than one of your monsters.
 `.trim();
 
 export const BUILD_STRATEGIES = `

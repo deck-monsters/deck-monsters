@@ -1,4 +1,14 @@
-import React, { useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+  type ComponentType,
+  type ReactNode,
+} from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
@@ -24,11 +34,21 @@ import {
 import RingRoster, { type RingContestantSnapshot } from './RingRoster.js';
 import FeedList from './FeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
+import { useThemeFeature } from '../hooks/useTheme.js';
+
+type PixelFightLayerProps = {
+  contestants: RingContestantSnapshot[];
+  viewerUserId: string | null;
+};
+type PixelFightLayerLoader = () => Promise<{ default: ComponentType<PixelFightLayerProps> }>;
+const loadPixelFightLayer: PixelFightLayerLoader = () => import('../animations/pixel-fight/PixelFightLayer.js');
 
 interface RingPaneProps {
   roomId: string;
   isActive: boolean;
   headerActions?: ReactNode;
+  /** Injectable loader keeps the theme gate testable without preloading the chunk. */
+  pixelFightLayerLoader?: PixelFightLayerLoader;
 }
 
 interface TimerState {
@@ -126,8 +146,15 @@ function LastFightFooter({
 }
 
 
-export default function RingPane({ roomId, isActive, headerActions }: RingPaneProps) {
+export default function RingPane({
+  roomId,
+  isActive,
+  headerActions,
+  pixelFightLayerLoader = loadPixelFightLayer,
+}: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
+  const pixelArtEnabled = useThemeFeature('pixel-art');
+  const PixelFightLayer = useMemo(() => lazy(pixelFightLayerLoader), [pixelFightLayerLoader]);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
@@ -410,7 +437,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
   return (
     <section
       className={`terminal-pane${isActive ? ' active' : ''}`}
-      aria-label="The Ring — public battle feed"
+      aria-label="The Ring — public fight feed"
     >
       <header className="pane-header">
         <span>The Ring</span>
@@ -466,7 +493,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
           List: FeedList,
           EmptyPlaceholder: () => (
             <li className="event event-system event-feed-empty">
-              <p>Waiting for battle events…</p>
+              <p>Waiting for fight events…</p>
             </li>
           ),
         }}
@@ -504,6 +531,11 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
         }}
         atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
+      {pixelArtEnabled && (
+        <Suspense fallback={null}>
+          <PixelFightLayer key={roomId} contestants={rosterContestants} viewerUserId={myUserId} />
+        </Suspense>
+      )}
 
       {!isAtBottom && (
         <button

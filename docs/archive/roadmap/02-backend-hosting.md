@@ -1,4 +1,5 @@
 # Backend Hosting and State Storage Strategy
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Infrastructure  
 **Priority**: High (required by all connector work)  

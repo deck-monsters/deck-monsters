@@ -1,8 +1,8 @@
 # Deck Monsters
 
-A turn-based monster-battling RPG game engine — think Pokémon meets deck-building. Players collect monsters, equip them with action card decks, and send them into a shared ring to auto-battle while everyone watches.
+A turn-based monster RPG game engine — think Pokémon meets deck-building. Players collect monsters, equip them with action card decks, and send them into a shared ring for automated fights while everyone watches.
 
-The engine is platform-agnostic: a connector adapter plugs in and brings the game to any chat platform or app. The original connector was a Slack bot called **Jane**, which ran the game inside a private Slack workspace. The ring fights appeared in a shared channel; everything else (spawning monsters, building decks, buying items) happened through DMs with Jane.
+The engine is platform-agnostic: a connector adapter plugs in and brings the game to any chat platform or app. The original connector was a Slack bot called **Jane**, which ran the game inside a private Slack workspace. The ring fights appeared in a shared channel; everything else (training monsters, building decks, buying items) happened through DMs with Jane.
 
 The project is being revived with new connectors (Discord, web, mobile) and modern infrastructure.
 
@@ -10,9 +10,9 @@ The project is being revived with new connectors (Discord, web, mobile) and mode
 
 ## How It Plays
 
-1. **DM the bot** to build your roster — spawn monsters, equip them with card decks, buy items from the shop, level them up over time
+1. **DM the bot** to build your roster — train monsters, equip them with card decks, buy items from the shop, level them up over time
 2. **Send a monster to the ring** — a shared channel where everyone's monsters fight automatically
-3. **Watch the ring** — battles play out every 60 seconds, narrated in the channel; wins earn XP and coins
+3. **Watch the ring** — fights play out every 60 seconds, narrated in the channel; wins earn XP and coins
 4. **Iterate** — swap cards, upgrade monsters, build toward stronger strategies
 
 The game has 5 monster types, 60+ action cards across 4 classes (melee, healing, control, utility), and 25+ items. Monsters level up with experience, and stronger cards unlock at higher levels.
@@ -73,7 +73,7 @@ await player.buyItems(privateChannel, game)  // interactive: shows the room's sh
 await player.lookAt('basilisk')
 ```
 
-See [CLAUDE.md](CLAUDE.md) for the full action method list and deeper architecture notes.
+See [AGENTS.md](AGENTS.md) for the full action method list and deeper architecture notes.
 
 ---
 
@@ -128,7 +128,7 @@ pnpm --filter @deck-monsters/web test:coverage # vitest run --coverage
 
 ### Web App
 
-The web app is a two-pane terminal UI — a Ring feed on the left and your private Console on the right. See [`docs/roadmap/06a-web-app.md`](docs/roadmap/06a-web-app.md) for the full design spec.
+The web app is a two-pane terminal UI — a Ring feed on the left and your private Console on the right. See [`docs/archive/roadmap/06a-web-app.md`](docs/archive/roadmap/06a-web-app.md) for the shipped design spec.
 
 ```bash
 # Start the Vite dev server (proxies /trpc to localhost:3000)
@@ -171,19 +171,15 @@ pnpm run build:docs   # builds engine, then regenerates CARDS.md, DMG.md, MONSTE
 | [MONSTERS.md](MONSTERS.md) | Monster types and stat distributions |
 | [CARDS.md](CARDS.md) | Player-facing card and item reference (name, description, rarity) |
 | [DMG.md](DMG.md) | Dungeon Master / operator reference (stats, pacing, concurrency) |
-| [CLAUDE.md](CLAUDE.md) | Codebase guide for AI-assisted development |
-| [docs/roadmap/](docs/roadmap/) | Detailed plans for each planned enhancement |
+| [AGENTS.md](AGENTS.md) | Codebase guide for AI-assisted development (`CLAUDE.md` is a symlink to it) |
+| [docs/roadmap/](docs/roadmap/) | Remaining-work index and active/backlog plans |
+| [docs/archive/roadmap/](docs/archive/roadmap/) | Shipped roadmap plans and their design reasoning |
 
 ---
 
 ## Environment Variables
 
-| Variable | Purpose |
-|----------|---------|
-| `DECK_MONSTERS_AWS_ACCESS_KEY_ID` | S3 backup credentials (optional) |
-| `DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` | S3 backup credentials (optional) |
-
-> Legacy: `HUBOT_DECK_MONSTERS_AWS_ACCESS_KEY_ID` and `HUBOT_DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` still work with a deprecation warning, but the `DECK_MONSTERS_AWS_*` names are preferred.
+Server, web and Discord connector variables are listed in [`AGENTS.md`](AGENTS.md#environment-variables) and [`docs/deployment.md`](docs/deployment.md). The engine itself reads only `DECK_MONSTERS_SKIP_DELAYS` (tests and the harness); the old AWS/S3 backup and its `DECK_MONSTERS_AWS_*` variables were removed in the stack modernisation.
 
 ---
 
@@ -198,11 +194,12 @@ The project is actively being revived. The core engine is stable.
 - CI via GitHub Actions (type-check, lint, test on every push/PR)
 
 **In progress / next up:**
-- Vitest migration (currently Mocha + tsx; Vitest migration is optional — see `docs/roadmap/01-modernize-stack.md`)
+- Vitest migration (currently Mocha + tsx; Vitest migration is optional — see `docs/archive/roadmap/01-modernize-stack.md`)
 - Infrastructure — Postgres-backed state storage, containerized hosting, tRPC API layer
 - New connectors — Discord bot, web app, iOS/Android app (React Native)
 - Auth + multi-room — user identity, invite-based friend groups
 
 The exploration system (expeditions) has been archived for now — it's a concept that could be revived later, but the core game is the ring combat.
 
-See [docs/roadmap/](docs/roadmap/) for detailed plans on each of these.
+See [docs/roadmap/](docs/roadmap/) for remaining work and
+[docs/archive/roadmap/](docs/archive/roadmap/) for shipped plans.

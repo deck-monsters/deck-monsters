@@ -16,17 +16,17 @@ const makeGame = (
 });
 
 describe('buildQuickActions', () => {
-	it('suggests spawning when the player has no character yet', () => {
+	it('suggests training when the player has no character yet', () => {
 		const actions = buildQuickActions(makeGame(undefined), USER);
 		expect(actions.map((a) => a.command)).to.deep.equal([
-			'spawn monster',
+			'train a monster',
 			'look at the ring',
 		]);
 	});
 
-	it('suggests spawning when the character owns no monsters', () => {
+	it('suggests training when the character owns no monsters', () => {
 		const actions = buildQuickActions(makeGame({ monsters: [], deck: [] }), USER);
-		expect(actions[0]?.command).to.equal('spawn monster');
+		expect(actions[0]?.command).to.equal('train a monster');
 	});
 
 	it('does not suggest send when the monster has no cards equipped', () => {
@@ -189,6 +189,6 @@ describe('buildQuickActions', () => {
 			makeGame({ monsters: [{}, { givenName: '  ' }], deck: [] }),
 			USER
 		);
-		expect(partial[0]?.command).to.equal('spawn monster');
+		expect(partial[0]?.command).to.equal('train a monster');
 	});
 });

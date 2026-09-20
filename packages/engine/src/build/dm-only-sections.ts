@@ -34,7 +34,7 @@ Web (deck-monsters.com):
   • Room Settings (gear icon) lets room owners reset game state or manage members.
 
 Discord:
-  • Each guild maps to one or more rooms. Slash commands (/spawn, /ring, /equip,
+  • Each guild maps to one or more rooms. Slash commands (/train and its /spawn alias, /ring, /equip,
     /shop, /status, /create-room, /join-room, …) and free-text DMs both dispatch
     into the same engine command parser.
   • Interactive prompts arrive as DM button menus or free-text collectors; players
@@ -44,7 +44,7 @@ Discord:
 Starting a session:
   1) Ensure the server process is running with database connectivity configured.
   2) Load or create the target room (web navigation or Discord guild default).
-  3) Players spawn monsters, equip decks, and send fighters to the ring.
+  3) Players train monsters, equip decks, and send fighters to the ring.
   4) Once ${MIN_MONSTERS}+ monsters are in the ring, the fight timer arms automatically.
 
 State saves debounce (~30 s) on engine mutations; fights and prompts do not block saves.
@@ -55,7 +55,7 @@ export const FIGHT_PACING_OPERATOR = `
 
 Ring quorum: fights require at least ${MIN_MONSTERS} monsters in the ring (up to
 ${MAX_MONSTERS}). When quorum is met, a ${FIGHT_DELAY_SECONDS}-second countdown
-re-arms after each encounter.
+re-arms after each fight.
 
 During a fight:
   • Each contestant plays the next card in its deck (wraps when exhausted).
@@ -77,7 +77,7 @@ export const FIGHT_PACING_PUBLIC = `
 
 Ring quorum: fights require at least ${MIN_MONSTERS} monsters in the ring (up to
 ${MAX_MONSTERS}). When quorum is met, a ${FIGHT_DELAY_SECONDS}-second countdown
-re-arms after each encounter.
+re-arms after each fight.
 
 During a fight each contestant plays the next card in its deck (wraps when
 exhausted). Card-to-card transitions are paced for readability in live feeds;

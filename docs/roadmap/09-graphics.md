@@ -103,11 +103,12 @@ Small icons for each card class (melee, healing, control, boost, utility) for th
 - Don't add a heavy visual theme that competes with the text
 - Don't add graphics at the expense of launch speed — ship without sprites first, add later
 
-## Theme-Gated Pixel Art (see separate doc)
+## Theme-Gated Pixel Art
 
-One exception to the "no animations" rule: a dedicated retro/SNES theme can layer pixel art fight animations on top of the text feed as progressive enhancement. The default terminal theme and all other themes remain purely text-based.
-
-See [`17-pixel-art-fight-animations.md`](17-pixel-art-fight-animations.md) for the full plan, including the Canvas sprite-sheet approach, event → animation mapping, and asset pipeline using Aseprite and PixelLab.
+The dedicated `street-fighter` theme's pixel-art fight animations have shipped as progressive
+enhancement; the default terminal theme and all other themes remain text-first. Their
+implementation reasoning, Canvas mapping, and asset pipeline live in the
+[archived animation plan](../archive/roadmap/17-pixel-art-fight-animations.md).
 
 ## The Mobile Wrapping Problem
 

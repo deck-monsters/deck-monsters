@@ -52,3 +52,6 @@ dist/
 .env.local
 .env.*.local
 *.tsbuildinfo
+
+# superpowers scratch ledger (docs/superpowers/ plans are committed; this is not)
+.superpowers/

@@ -14,9 +14,9 @@ describe('useCommandAutocomplete', () => {
   });
 
   it('matches commands by prefix', () => {
-    const { result } = renderHook(() => useCommandAutocomplete('spa'));
+    const { result } = renderHook(() => useCommandAutocomplete('tra'));
     const labels = result.current.map(s => s.label);
-    expect(labels.some(l => l.includes('spawn'))).toBe(true);
+    expect(labels.some(l => l.includes('train'))).toBe(true);
   });
 
   it('returns at most 5 suggestions', () => {

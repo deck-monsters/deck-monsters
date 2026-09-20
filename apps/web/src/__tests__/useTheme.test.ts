@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useTheme } from '../hooks/useTheme.js';
+import { renderHook, act, render, screen } from '@testing-library/react';
+import { createElement } from 'react';
+import { useTheme, useThemeFeature } from '../hooks/useTheme.js';
 
 const STORAGE_KEY = 'deck-monsters-theme';
 
@@ -8,11 +9,13 @@ describe('useTheme', () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-theme-features');
   });
 
   afterEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-theme-features');
     vi.restoreAllMocks();
   });
 
@@ -55,6 +58,7 @@ describe('useTheme', () => {
     const { result } = renderHook(() => useTheme());
     act(() => result.current.setTheme('street-fighter'));
     expect(document.documentElement.getAttribute('data-theme')).toBe('street-fighter');
+    expect(document.documentElement.getAttribute('data-theme-features')).toBe('pixel-art');
     expect(localStorage.getItem(STORAGE_KEY)).toBe('street-fighter');
   });
 
@@ -73,5 +77,29 @@ describe('useTheme', () => {
   it('includes street-fighter in validThemes', () => {
     const { result } = renderHook(() => useTheme());
     expect(result.current.validThemes).toContain('street-fighter');
+  });
+
+  it('removes theme features when switching away from street-fighter', () => {
+    const { result } = renderHook(() => useTheme());
+    act(() => result.current.setTheme('street-fighter'));
+    act(() => result.current.setTheme('phosphor'));
+
+    expect(document.documentElement.getAttribute('data-theme-features')).toBeNull();
+  });
+
+  it('shares a same-tab theme change with feature consumers', () => {
+    function Switcher() {
+      const { setTheme } = useTheme();
+      return createElement('button', { onClick: () => setTheme('street-fighter') }, 'street fighter');
+    }
+    function FeatureConsumer() {
+      return createElement('output', undefined, useThemeFeature('pixel-art') ? 'enabled' : 'disabled');
+    }
+
+    render(createElement('div', undefined, createElement(Switcher), createElement(FeatureConsumer)));
+
+    expect(screen.getByRole('status')).toHaveTextContent('disabled');
+    act(() => screen.getByRole('button', { name: 'street fighter' }).click());
+    expect(screen.getByRole('status')).toHaveTextContent('enabled');
   });
 });

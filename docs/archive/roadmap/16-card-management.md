@@ -1,4 +1,5 @@
 # Card Management System
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Engine + Web  
 **Priority**: High  
@@ -128,8 +129,11 @@ Presets are stored on `monster.options.presets: Record<string, string[]>` — ar
 │  DECK WORKSHOP                                [← Back to Ring]          │
 │                                                                         │
 │  ┌─────────────────────────────┐  ┌──────────────────────────────────┐  │
-│  │ STONEFANG [Basilisk, L4]    │  │ MIREBELL [Jinn, L2]              │  │
-│  │ ▓▓▓▓▓▓░░░ 6/9 slots        │  │ ▓▓▓░░░░░░ 3/9 slots             │  │
+│  │ STONEFANG          fighting │  │ MIREBELL                         │  │
+│  │ Basilisk · Lvl 4            │  │ Jinn · Lvl 2                     │  │
+│  │ HP 22/40 ▓▓▓▓▓░░░░░         │  │ HP 15/15 ▓▓▓▓▓▓▓▓▓▓             │  │
+│  │ XP 40/120 ▓▓▓░░░░░░░        │  │ XP 5/60 ▓░░░░░░░░░              │  │
+│  │ Deck 6/9 · needs 3 more     │  │ Deck 3/9 · needs 6 more   0W 0L │  │
 │  │                             │  │                                  │  │
 │  │ ┌────┐ ┌────┐ ┌────┐       │  │ ┌────┐ ┌────┐ ┌────┐            │  │
 │  │ │Hit │ │Hit │ │Hit+│       │  │ │Blnk│ │Heal│ │Flee│            │  │
@@ -153,7 +157,18 @@ Presets are stored on `monster.options.presets: Record<string, string[]>` — ar
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-Monster panels live at the top, one per monster, in a responsive horizontal row that wraps on narrow screens. Each panel shows the monster's name, type, level, a slot-usage bar, and a 3×3 grid of card slots (reflecting the 9-slot maximum). Below the monster panels sits the unequipped inventory tray.
+Monster panels live at the top, one per monster, in a responsive horizontal row that wraps on narrow screens. Below the monster panels sits the unequipped inventory tray.
+
+Each panel's header leads with **current HP**, not deck size. The header started life as a deck editor's — name, type/level, and a slot-usage bar — but the workshop grew into the tool that also revives, sends to the ring, and manages items and presets, and the number a beastmaster actually needs to make any of those calls is current HP, which was not shown anywhere in the workshop. A 9-slot bar that is nearly always full carries no decision-relevant information; a "9/9" count in text carries the same information in a tenth of the space. See `docs/roadmap/10b-bugs-fixed.md` for the fixed-bug writeup.
+
+Top to bottom, the header is now:
+
+1. **Title row**: the name (also the inventory-filter toggle button), plus a single status tag on the right when relevant — `in the ring`, `fighting`, or `fallen`, in that priority order (a monster is never shown more than one at once). Below the name: `{type} · Lvl {level}`.
+2. **HP meter** (primary): `HP {hp}/{maxHp}` plus a bar, reusing the ring roster's own `hpRatio`/`hpBand` helpers and `roster-bar-*` classes so the two surfaces can never band health differently. A fallen monster's meter reads `Fallen` (plus `· revives in {relative}` when a revival timer is running, e.g. `in 12 min` or `in 2 h 5 min`) and its bar sits at 0% in the critical colour.
+3. **XP meter** (secondary, unchanged shape): `XP {xpIntoLevel}/{xpNeededForLevel}` plus its own bar. The label no longer repeats the level — that moved to the type line.
+4. **Deck count as text, no bar**: `Deck {cards.length}/{cardSlots}`, with `· needs {n} more to enter the ring` in a muted style when the deck isn't full yet. A small optional `{wins}W {losses}L` sits alongside it on wide layouts and is hidden at phone widths to avoid crowding the row.
+
+Below the header sits the 3×3 grid of card slots (reflecting the 9-slot maximum), then presets.
 
 ### Card Visual Design
 
@@ -162,7 +177,7 @@ Monster panels live at the top, one per monster, in a responsive horizontal row 
 - **Color coding by class**: Melee = amber, Magic = blue/purple, Heal = green.
 - **Empty slots**: dashed-border `[+]` drop targets.
 - **Incompatible drop targets**: reddish tint + ✗ overlay while dragging an incompatible card.
-- **Monsters in battle**: gold border + "In Battle" label. Slots locked for editing.
+- **Monsters in battle**: gold border (`.in-ring`), the `fighting` status tag in the header, and a warning line below the actions row ("_{name} is currently fighting. Changes apply after they return._"). Slots locked for editing. (This bullet used to say "'In Battle' label" — no such label exists in the component; that was documentation drift, not a past behaviour that changed.)
 - **Warning banner** when monster `inRing`: *"Stonefang is currently fighting. Changes apply after they return."*
 
 ### Drag-and-Drop Operations
@@ -251,6 +266,37 @@ All workshop operations go through tRPC → `runSerializedEngineWork` → the sa
 | `game.deletePreset` | mutation | Delete a named preset |
 
 `game.myInventory` reads engine state directly (no engine lock, read-only). All mutations use `runSerializedEngineWork` and a silent channel that echoes text to the private event stream.
+
+### First run: character creation from the workshop
+
+Training a monster is a brand-new player's first workshop action, and until bug #160 it
+dead-ended: `game.spawnMonster` refused with "Create your character before training a
+monster", and the workshop had no way to create one. The console's creation flow is a chain
+of prompts (`characters/helpers/create.ts`), and workshop mutations run on a silent channel
+that throws on any `question` — so the answers have to be collected *before* the mutation
+and passed in.
+
+How the pieces fit:
+
+| Piece | Role |
+|---|---|
+| `game.myInventory` → `hasCharacter` | Lets the web tell "no character in this room" from "a character with no monsters". |
+| `game.characterCreationChoices` | Query returning `{ genders, avatars, suggestedName }` — the pronoun keys, seven random emoji from the engine's own `randomAvatarChoices` (the generator the console prompt uses), and the member's room display name. |
+| `game.spawnMonster` → optional `character` input | `{ name, gender, avatar }`. Ignored when the player already has a character. |
+| `WorkshopPanel`'s "About you" fieldset | Rendered above the monster fields only when `hasCharacter === false`; "Shuffle" refetches the avatar choices. |
+
+Inside `runSerializedMutation`, `spawnMonster` creates the character with
+`game.getCharacter({ channel, id, name, type: 0, gender, icon })`. That call is prompt-free
+*only* because every question `createCharacter` would ask has its answer supplied — class
+(index 0, and the engine no longer asks while there is one class), gender, name, avatar.
+
+**The name pre-check is load-bearing.** `createCharacter` re-prompts when the chosen name
+clashes with another character in the game, and a re-prompt on a silent channel throws a
+confusing `BAD_REQUEST` about interactive prompts. So the router checks
+`game.findCharacterByName(name)` first and refuses with `CONFLICT "That name is already
+taken in this room."` Creation and the spawn share one serialized mutation; if the spawn
+itself fails afterwards the character remains, which is deliberate — the player keeps the
+identity they chose and the next attempt takes the existing-character path.
 
 ---
 

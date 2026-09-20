@@ -177,7 +177,7 @@ export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room
                 <th style={{ padding: '0.35rem' }}>#</th>
                 <th style={{ padding: '0.35rem' }}>Name</th>
                 <th style={{ padding: '0.35rem' }}>Type</th>
-                <th style={{ padding: '0.35rem' }}>Owner</th>
+                <th style={{ padding: '0.35rem' }}>Beastmaster</th>
                 <th style={{ padding: '0.35rem' }}>XP</th>
                 <th style={{ padding: '0.35rem' }}>Lv</th>
                 <th
@@ -262,7 +262,7 @@ export default function LeaderboardPanel({ roomId, initialScope = roomId ? 'room
                 <th style={{ padding: '0.35rem' }}>#</th>
                 <th style={{ padding: '0.35rem' }}>Name</th>
                 <th style={{ padding: '0.35rem' }}>Type</th>
-                <th style={{ padding: '0.35rem' }}>Owner</th>
+                <th style={{ padding: '0.35rem' }}>Beastmaster</th>
                 <th style={{ padding: '0.35rem' }}>XP</th>
                 <th
                   style={{ padding: '0.35rem' }}

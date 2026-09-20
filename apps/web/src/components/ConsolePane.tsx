@@ -290,7 +290,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const ftuxAction = useMemo((): { label: string; command: string } | null => {
     switch (ftuxPhase) {
       case 'spawn':
-        return { label: 'spawn a monster', command: 'spawn a monster' };
+        return { label: 'train a monster', command: 'train a monster' };
       case 'equip_send':
         return ftuxSendableName
           ? { label: `equip ${ftuxSendableName}`, command: `equip ${ftuxSendableName}` }
@@ -412,7 +412,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
     if (seenRef.current.has(tracked.id)) return;
     seenRef.current.add(tracked.id);
 
-    // Only process events targeted to this user, plus the handful of public battle
+    // Only process events targeted to this user, plus the handful of public fight
     // moments worth calling out while the ring feed scrolls past. The ring pane still
     // shows everything — this is emphasis, not a second feed.
     const isPrivate = event.scope === 'private' && event.targetUserId === user?.id;
@@ -967,8 +967,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
             ✕
           </button>
           <p className="ftux-guide-copy">
-            {ftuxPhase === 'spawn' && 'Welcome, Beastmaster. Spawn your first monster to begin your journey.'}
-            {ftuxPhase === 'equip_send' && `Outfit ${ftuxSendableName} with cards, then send them into battle.`}
+            {ftuxPhase === 'spawn' && 'Welcome, Beastmaster. Train your first monster to begin your journey.'}
+            {ftuxPhase === 'equip_send' && `Outfit ${ftuxSendableName} with cards, then send them to the ring.`}
             {ftuxPhase === 'waiting' && `${ftuxInRingName} is in the ring. Fights begin once there are 2 or more monsters.`}
             {ftuxPhase === 'post_fight' && `${ftuxDeadName} has fallen. Revive them to fight again.`}
           </p>

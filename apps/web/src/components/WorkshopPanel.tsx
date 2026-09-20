@@ -36,6 +36,9 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     items,
     shop,
     spawnOptions,
+    hasCharacter,
+    characterCreation,
+    shuffleAvatars,
     loading,
     busy,
 	consoleFlowActive,
@@ -59,6 +62,15 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     buyShopItem,
     refresh,
   } = useDeckWorkshop(roomId);
+
+  /*
+   * A brand-new player's first workshop action is Train monster, and it used to dead-end
+   * on "Create your character before training a monster" with nowhere to do that. The
+   * spawn mutation creates the character too, but it runs on a prompt-free channel and so
+   * cannot ask the questions the console's creation flow asks — hence the extra fieldset.
+   * Compared against `false` explicitly: undefined means the inventory has not loaded yet.
+   */
+  const needsCharacter = hasCharacter === false;
 
   /*
    * Bug: "I still see only 0 coins in the workshop view." Coins are awarded the instant a
@@ -111,8 +123,18 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         gender: String(data.get('gender')) as 'male' | 'female' | 'androgynous',
         name: String(data.get('name') ?? '').trim(),
         color: String(data.get('color') ?? '').trim(),
+        // Only sent on a first run; the server ignores it once a character exists.
+        ...(needsCharacter
+          ? {
+              character: {
+                name: String(data.get('characterName') ?? '').trim(),
+                gender: String(data.get('characterGender')) as 'male' | 'female' | 'androgynous',
+                avatar: String(data.get('avatar') ?? ''),
+              },
+            }
+          : {}),
       });
-      setMessage(`${result.monsterName} the ${result.monsterType} joined your stable.`);
+      setMessage(`${result.monsterName} the ${result.monsterType} answers your call.`);
       setShowSpawn(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not train that monster');
@@ -540,8 +562,26 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
 	  {busy && !consoleFlowActive && <div className="workshop-banner">Applying changes…</div>}
       {showSpawn && (
         <form className="workshop-spawn-form" onSubmit={(event) => void handleSpawn(event)}>
+          {needsCharacter && (
+            <fieldset className="workshop-spawn-character">
+              <legend>About you</legend>
+              <label>Your name<input name="characterName" required maxLength={40} autoComplete="off" defaultValue={characterCreation.suggestedName} key={characterCreation.suggestedName} /></label>
+              <label>Pronouns<select name="characterGender" defaultValue="androgynous">{characterCreation.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
+              <fieldset className="workshop-avatar-choices">
+                <legend>Avatar</legend>
+                {characterCreation.avatars.map((avatar, index) => (
+                  <label key={`${avatar}-${index}`} className="workshop-avatar-chip">
+                    <input type="radio" name="avatar" value={avatar} defaultChecked={index === 0} />
+                    <span>{avatar}</span>
+                  </label>
+                ))}
+                {/* The list is generated per request, so a new one is just a refetch. */}
+                <button type="button" className="btn workshop-inline-btn" onClick={() => void shuffleAvatars()}>Shuffle</button>
+              </fieldset>
+            </fieldset>
+          )}
           <label>Type<select name="type" defaultValue={spawnOptions.types[0]?.index}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
-          <label>Gender<select name="gender" defaultValue="androgynous">{spawnOptions.genders.map((gender) => <option key={gender} value={gender}>{gender[0]?.toUpperCase()}{gender.slice(1)}</option>)}</select></label>
+          <label>Pronouns<select name="gender" defaultValue="androgynous">{spawnOptions.pronouns.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}</select></label>
           <label>Name<input name="name" required maxLength={40} autoComplete="off" /></label>
           <label>Appearance<input name="color" required maxLength={100} placeholder="gold and black" /></label>
           <button type="submit" className="btn" disabled={busy}>Train</button>
@@ -566,9 +606,13 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
           do it from here. Measured at 393px; see 10b-bugs-fixed.md #113.
         */
         <div className="workshop-empty-state workshop-no-monsters">
-          <p>No monsters yet — cards need a monster to live on.</p>
+          <p>
+            {needsCharacter
+              ? "You don't have a character in this room yet. Train your first monster and we'll create one for you."
+              : 'No monsters yet — cards need a monster to live on.'}
+          </p>
           <p className="workshop-empty-hint">
-            Train one here to start building its deck. The console command is <code>spawn a monster</code>.
+            Train one here to start building its deck. The console command is <code>train a monster</code>.
           </p>
         </div>
       ) : (

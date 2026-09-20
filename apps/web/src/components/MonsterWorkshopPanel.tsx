@@ -1,6 +1,14 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
 import PresetControl from './PresetControl.js';
+// Reusing the ring roster's own hp math/bands rather than re-deriving them here — the two
+// bars must never drift apart on what counts as "hurt" vs "critical". Only the pure
+// functions are imported; the markup below is its own copy (see the "why" note on the hp
+// meter markup) rather than a shared `<HpMeter>` component, since RingRoster's contestant
+// row bakes hp/ac/name text into the same block the bar lives in and splitting that out
+// carried more refactor risk than the (small, now duplicated) bar/track markup was worth.
+import { hpBand, hpRatio } from './RingRoster.js';
+import { formatRelativeFromNow } from '../utils/format-relative.js';
 
 type MonsterCompatibilityHint = 'none' | 'eligible' | 'ineligible';
 
@@ -17,6 +25,13 @@ type MonsterPanelProps = {
     cardSlots: number;
     cards: string[];
     presets: Record<string, string[]>;
+    hp: number;
+    maxHp: number;
+    // Epoch ms when a fallen monster's revival completes, or null when alive or when no
+    // revival timer is running. See `InventoryMonsterSummary.revivesAt` in the server
+    // router for why "dead with no timer" is a real, distinct case.
+    revivesAt: number | null;
+    battles: { wins: number; losses: number; total: number };
   };
   showSelectionHint: boolean;
   selectedCards: Array<{ location: WorkshopCardLocation; cardName: string; selectionId: string }>;
@@ -69,14 +84,59 @@ export default function MonsterWorkshopPanel({
   compatibilityHint = 'none',
   onToggleFilter,
 }: MonsterPanelProps) {
+  const [now, setNow] = useState(() => Date.now());
   const locked = monster.inEncounter;
   const slots = useMemo(() => {
     const total = Math.max(monster.cardSlots, 1);
     return Array.from({ length: total }, (_, idx) => monster.cards[idx] ?? null);
   }, [monster.cardSlots, monster.cards]);
-  const usagePct = Math.min(100, Math.round((monster.cards.length / Math.max(monster.cardSlots, 1)) * 100));
   const xpNeeded = Math.max(monster.xpNeededForLevel, 1);
   const xpPct = Math.min(100, Math.max(0, Math.round((monster.xpIntoLevel / xpNeeded) * 100)));
+
+  // One tag, in priority order — a monster can technically be flagged more than one of
+  // these at once (e.g. a boss variant mid-fight while also marked dead pending cleanup),
+  // and showing all three would crowd the title row for no added information: "in the
+  // ring" already implies "not benched", and either ring state already implies "not what
+  // you'd do next with this monster right now" the way "fallen" does.
+  const statusTag = monster.inRing
+    ? { key: 'in-ring', label: 'in the ring' }
+    : monster.inEncounter
+      ? { key: 'fighting', label: 'fighting' }
+      : monster.dead
+        ? { key: 'fallen', label: 'fallen' }
+        : null;
+
+  // Required props can still be absent in vi.mock test doubles.
+  const hp = Number.isFinite(monster.hp) ? monster.hp : 0;
+  const maxHp = Number.isFinite(monster.maxHp) ? monster.maxHp : 1;
+  const battles = monster.battles ?? { wins: 0, losses: 0, total: 0 };
+  const revivesAt =
+    typeof monster.revivesAt === 'number' && Number.isFinite(monster.revivesAt)
+      ? monster.revivesAt
+      : undefined;
+
+  useEffect(() => {
+    if (revivesAt === undefined) return;
+
+    setNow(Date.now());
+    const interval = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(interval);
+  }, [revivesAt]);
+
+  const hpRatioValue = hpRatio(hp, maxHp);
+  // Same "force critical when dead" rule as `RingRoster`'s `ContestantRow` — a dead
+  // monster's hp is already clamped to 0 server-side, so the ratio alone would already
+  // land in the critical band, but this keeps the two bars' banding logic identical on
+  // its face rather than relying on that clamp never changing.
+  const hpBandValue = monster.dead ? 'critical' : hpBand(hpRatioValue);
+  const hpLabel = monster.dead
+    ? revivesAt !== undefined
+      ? `Fallen · revives ${formatRelativeFromNow(revivesAt, now)}`
+      : 'Fallen'
+    : `HP ${hp}/${maxHp}`;
+
+  const deckNeedsMore = Math.max(0, monster.cardSlots - monster.cards.length);
+  const deckLabel = `Deck ${monster.cards.length}/${monster.cardSlots}`;
 
   return (
     <section
@@ -94,53 +154,57 @@ export default function MonsterWorkshopPanel({
     >
       <div className="workshop-monster-header">
         <div className="workshop-monster-title">
-          <button
-            type="button"
-            className={`workshop-monster-filter-btn${isFilterTarget ? ' active' : ''}`}
-            onClick={() => onToggleFilter?.()}
-            aria-pressed={isFilterTarget}
-            title={
-              isFilterTarget
-                ? `Clear inventory filter for ${monster.name}`
-                : `Filter inventory cards for ${monster.name}`
-            }
-          >
-            <span>{monster.name}</span>
-          </button>
-          <p>
-            {monster.type}, L{monster.level}
-          </p>
-        </div>
-        {/*
-          The count sits beside the bar, not on top of it. Overlaid, it was drawn in
-          `--color-fg-bright` over an `--color-accent` fill — 1.02:1 contrast in the
-          phosphor theme, i.e. invisible, and worst at a full deck where the fill reaches
-          the whole label. See 10b-bugs-fixed.md #120.
-        */}
-        <div className="workshop-slot-meter">
-          <span>{monster.cards.length}/{monster.cardSlots} slots</span>
-          <div
-            className="workshop-slot-meter-track"
-            role="progressbar"
-            aria-valuenow={monster.cards.length}
-            aria-valuemin={0}
-            aria-valuemax={monster.cardSlots}
-            aria-label={`${monster.cards.length} of ${monster.cardSlots} slots used`}
-          >
-            <div style={{ width: `${usagePct}%` }} />
+          <div className="workshop-monster-title-row">
+            <button
+              type="button"
+              className={`workshop-monster-filter-btn${isFilterTarget ? ' active' : ''}`}
+              onClick={() => onToggleFilter?.()}
+              aria-pressed={isFilterTarget}
+              title={
+                isFilterTarget
+                  ? `Clear inventory filter for ${monster.name}`
+                  : `Filter inventory cards for ${monster.name}`
+              }
+            >
+              <span>{monster.name}</span>
+            </button>
+            {statusTag && (
+              <span className={`workshop-status-tag workshop-status-${statusTag.key}`}>
+                {statusTag.label}
+              </span>
+            )}
           </div>
+          <p>
+            {monster.type} · Lvl {monster.level}
+          </p>
         </div>
       </div>
       {/*
-        Same "label beside the track, never on it" rule as the slot meter above (and the
-        same reason — 10b-bugs-fixed.md #120): a variable-width fill under white text on
-        the accent colour is unreadable at a full bar. Progress feedback was the #1 ask
-        in the Sept 2026 "levelling feels slow/invisible" feedback (see
-        docs/roadmap/11-balance-and-mechanics.md), so this is worth its own row rather
-        than folding into the slot meter — the two fill at unrelated rates.
+        HP replaces the old deck-slot bar as the primary meter: a 9/9 deck-slot count is
+        full almost all the time and tells a beastmaster nothing about whether to revive,
+        send to the ring, or wait, while current HP is the one number that answers all
+        three. See 10b-bugs-fixed.md (workshop HP-not-shown entry). Same "label beside the
+        track, never on top of it" rule as the old slot/xp meters (10b-bugs-fixed.md #120)
+        — a variable-width fill under fixed-colour text is unreadable at a full bar.
       */}
+      <div className="workshop-hp-meter">
+        <span>{hpLabel}</span>
+        <div
+          className="roster-bar-track"
+          role="meter"
+          aria-valuenow={Math.max(0, hp)}
+          aria-valuemin={0}
+          aria-valuemax={Math.max(maxHp, 0)}
+          aria-label={`${monster.name} health`}
+        >
+          <div
+            className={`roster-bar-fill roster-bar-${hpBandValue}`}
+            style={{ width: `${monster.dead ? 0 : Math.round(hpRatioValue * 100)}%` }}
+          />
+        </div>
+      </div>
       <div className="workshop-xp-meter">
-        <span>Lvl {monster.level} · {monster.xpIntoLevel}/{xpNeeded} xp</span>
+        <span>XP {monster.xpIntoLevel}/{xpNeeded}</span>
         <div
           className="workshop-xp-meter-track"
           role="progressbar"
@@ -151,6 +215,23 @@ export default function MonsterWorkshopPanel({
         >
           <div style={{ width: `${xpPct}%` }} />
         </div>
+      </div>
+      {/*
+        Deck size as text, not a bar — see the hp-meter comment above for why a
+        near-always-full bar carries no information. It sits directly above the action
+        buttons (rather than folded into that row) so it doesn't crowd "Send to ring" /
+        "Revive" against the unequip-all icon at a 375px phone width.
+      */}
+      <div className="workshop-deck-status">
+        <span className="workshop-deck-count">
+          {deckLabel}
+          {deckNeedsMore > 0 && (
+            <span className="workshop-deck-needs-more"> · needs {deckNeedsMore} more to enter the ring</span>
+          )}
+        </span>
+        <span className="workshop-fights-count">
+          {battles.wins}W {battles.losses}L
+        </span>
       </div>
       <div className="workshop-monster-actions">
         {monster.dead ? (

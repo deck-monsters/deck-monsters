@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
+import { Game } from '@deck-monsters/engine';
 
 import { createRouter, activeFlows, activePromptFreeMutations } from './router.js';
 
@@ -65,6 +66,9 @@ describe('trpc/router card management procedures', () => {
 			options: { presets: { aggro: ['Hit'] } },
 			canHoldCard: (card: { cardType?: string }) => card.cardType !== 'Blink',
 			canUseItem: (item: { itemType?: string }) => item.itemType !== 'Scroll',
+			hp: 22,
+			maxHp: 40,
+			battles: { wins: 3, losses: 1, total: 4 },
 		};
 		const supportMonster = {
 			givenName: 'Mirebell',
@@ -77,6 +81,9 @@ describe('trpc/router card management procedures', () => {
 			options: { presets: {} },
 			canHoldCard: (card: { cardType?: string }) => card.cardType === 'Blink',
 			canUseItem: (item: { itemType?: string }) => item.itemType !== 'Scroll',
+			hp: 15,
+			maxHp: 15,
+			battles: { wins: 0, losses: 0, total: 0 },
 		};
 		const game = {
 			characters: {
@@ -98,12 +105,17 @@ describe('trpc/router card management procedures', () => {
 		const caller = router.createCaller({ userId: USER_ID, serviceTokenValid: false });
 		const result = await caller.game.myInventory({ roomId: ROOM_ID });
 
+		expect(result.hasCharacter).to.equal(true);
 		expect(result.monsters).to.have.length(2);
 		expect(result.monsters[0]).to.include({
 			name: 'Stonefang',
 			type: 'Basilisk',
 			inRing: true,
+			hp: 22,
+			maxHp: 40,
+			revivesAt: null,
 		});
+		expect(result.monsters[0]!.battles).to.deep.equal({ wins: 3, losses: 1, total: 4 });
 		expect(result.unequippedDeck).to.deep.equal(['Blink']);
 		expect(result.cardCompatibility).to.deep.equal({
 			Blink: ['Mirebell'],
@@ -136,6 +148,164 @@ describe('trpc/router card management procedures', () => {
 			},
 			{ monsterName: 'Mirebell', items: [] },
 		]);
+	});
+
+	it('uses the engine revival completion epoch for a fallen monster mid-revival', async () => {
+		const fallenMonster = {
+			givenName: 'Ashfall',
+			creatureType: 'Minotaur',
+			level: 3,
+			dead: true,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: 0,
+			maxHp: 30,
+			respawnTimeoutBegan: 1_000,
+			respawnTimeoutLength: 5_000,
+			respawnAt: 6_000,
+			battles: { wins: 2, losses: 5, total: 7 },
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [fallenMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ dead: true, hp: 0, maxHp: 30, revivesAt: 6_000 });
+	});
+
+	it('preserves a restored monster’s original revival completion epoch', async () => {
+		const fallenMonster = {
+			givenName: 'Ashfall',
+			creatureType: 'Minotaur',
+			level: 3,
+			dead: true,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: 0,
+			maxHp: 30,
+			// On restore, `respawnTimeoutLength` becomes the remaining delay; adding it to
+			// this persisted starting point reports an ETA that is too early.
+			respawnTimeoutBegan: 1_000,
+			respawnTimeoutLength: 2_000,
+			respawnAt: 6_000,
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [fallenMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ revivesAt: 6_000 });
+	});
+
+	it('reports revivesAt as null for a fallen monster with no revival timer running', async () => {
+		// A monster can be dead with no active timer — e.g. a permadeath, or the process
+		// restarted and the in-memory timer/length fields were never rehydrated (they are
+		// declared instance fields, not persisted options — see docs/room-scoping.md's
+		// sibling doc on serialization, and creatures/health.ts's `respawn`). The workshop
+		// must not show a stale or fabricated countdown in that case.
+		const fallenMonster = {
+			givenName: 'Ashfall',
+			creatureType: 'Minotaur',
+			level: 3,
+			dead: true,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: 0,
+			maxHp: 30,
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [fallenMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ revivesAt: null });
+	});
+
+	it('floors zero maxHp and clamps hp to the display range', async () => {
+		const bareMonster = {
+			givenName: 'Stonefang',
+			creatureType: 'Basilisk',
+			level: 1,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: 3,
+			maxHp: 0,
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [bareMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ hp: 1, maxHp: 1 });
+		expect(result.monsters[0]!.battles).to.deep.equal({ wins: 0, losses: 0, total: 0 });
+	});
+
+	it('floors a negative maxHp and clamps negative hp for display', async () => {
+		const bareMonster = {
+			givenName: 'Stonefang',
+			creatureType: 'Basilisk',
+			level: 1,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: -12,
+			maxHp: -5,
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [bareMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ hp: 0, maxHp: 1 });
 	});
 
 	it('degrades gracefully when an item is missing canUseItem/expired (test doubles, legacy snapshots)', async () => {
@@ -743,7 +913,12 @@ describe('trpc/router monster lifecycle procedures', () => {
 		expect(options.types.map((type) => type.label)).to.deep.equal([
 			'Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel',
 		]);
-		expect(options.genders).to.deep.equal(['female', 'male', 'androgynous']);
+		expect(options.pronouns).to.deep.equal([
+			{ key: 'male', label: 'he/him' },
+			{ key: 'female', label: 'she/her' },
+			{ key: 'androgynous', label: 'they/them' },
+		]);
+		expect(options).not.to.have.property('genders');
 	});
 
 	it('spawns a fully specified monster without an interactive prompt', async () => {
@@ -823,6 +998,193 @@ describe('trpc/router monster lifecycle procedures', () => {
 		const error = await caller.game.sendMonsterToRing({ roomId: ROOM_ID, monsterName: 'Stonefang' }).catch((err) => err);
 		expect(error).to.be.instanceOf(TRPCError);
 		expect(loaded).to.equal(false);
+	});
+});
+
+/**
+ * Training a monster was a brand-new player's first action in the workshop, and it
+ * dead-ended: `game.spawnMonster` refused because there was no character, and the workshop
+ * had no way to make one (the console's creation flow is a series of prompts, which a
+ * workshop mutation cannot run — docs/engine-concurrency-and-timing.md). The fix carries
+ * the character's details in the spawn itself, prompt-free.
+ */
+describe('trpc/router first-run character creation from the workshop', () => {
+	const CHARACTER_BLOCK = { name: 'Ada', gender: 'female' as const, avatar: '🦊' };
+
+	const makeRoomManager = (game: unknown, displayName = 'Ada Lovelace', spy?: { assertedRoom?: string }) =>
+		({
+			assertMember: async (_userId: string, roomId: string) => {
+				if (spy) spy.assertedRoom = roomId;
+			},
+			getGame: async () => game,
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+			getDisplayName: async () => displayName,
+		}) as unknown as Parameters<typeof createRouter>[0];
+
+	it('creates the character and spawns the monster in one mutation', async () => {
+		// A real Game so the character that comes out is a real Beastmaster, registered in
+		// this room's state — a stub would only prove the router called something.
+		const game = new Game({}, () => undefined);
+		try {
+			const caller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+			const result = await caller.game.spawnMonster({
+				roomId: ROOM_ID,
+				type: 2,
+				gender: 'female',
+				name: 'Saffron',
+				color: 'violet smoke',
+				character: CHARACTER_BLOCK,
+			});
+
+			const character = game.characters[USER_ID] as Record<string, unknown>;
+			expect(character.creatureType).to.equal('Beastmaster');
+			expect(character).to.include({ givenName: 'Ada', gender: 'female', icon: '🦊' });
+			expect(result.monsterName).to.equal('Saffron');
+			expect(result.monsterType).to.equal('Jinn');
+			expect((character.monsters as unknown[])).to.have.length(1);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('re-reads the character inside the room lane for two first-run train requests', async () => {
+		const game = new Game({}, () => undefined);
+		let lane: Promise<unknown> = Promise.resolve();
+		let releaseFirstEventBus!: () => void;
+		let releaseSecondEventBus!: () => void;
+		const firstEventBus = new Promise<void>((resolve) => { releaseFirstEventBus = resolve; });
+		const secondEventBus = new Promise<void>((resolve) => { releaseSecondEventBus = resolve; });
+		let eventBusCalls = 0;
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getDisplayName: async () => 'Ada Lovelace',
+			getEventBus: async () => {
+				eventBusCalls += 1;
+				await (eventBusCalls === 1 ? firstEventBus : secondEventBus);
+				return { publish: () => undefined, getPendingPromptForUser: () => null };
+			},
+			runSerializedEngineWork: async (_roomId: string, work: () => Promise<unknown>) => {
+				const next = lane.then(work);
+				lane = next.catch(() => undefined);
+				return next;
+			},
+		};
+		const caller = createRouter(roomManager as unknown as Parameters<typeof createRouter>[0]).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
+
+		try {
+			const first = caller.game.spawnMonster({
+				roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke', character: CHARACTER_BLOCK,
+			});
+			const second = caller.game.spawnMonster({
+				roomId: ROOM_ID, type: 2, gender: 'female', name: 'Cinder', color: 'ember red', character: CHARACTER_BLOCK,
+			});
+			await Promise.resolve();
+			await Promise.resolve();
+			releaseFirstEventBus();
+			await first;
+			releaseSecondEventBus();
+			const [, secondResult] = await Promise.all([first, second]);
+
+			expect(secondResult.monsterName).to.equal('Cinder');
+			expect((game.characters[USER_ID] as { monsters: unknown[] }).monsters).to.have.length(2);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('asks for the character details instead of just refusing', async () => {
+		const caller = createRouter(makeRoomManager({ characters: {} })).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const error = await caller.game.spawnMonster({ roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke' })
+			.catch((err: unknown) => err);
+
+		expect(error).to.be.instanceOf(TRPCError);
+		expect((error as TRPCError).code).to.equal('NOT_FOUND');
+		expect((error as TRPCError).message).to.equal("You don't have a character in this room yet — fill in the character details to create one.");
+	});
+
+	it('refuses a character name another player already took, before the engine can prompt about it', async () => {
+		// `createCharacter` re-prompts on a clash, and the workshop channel throws on any
+		// question — so the clash has to be a refusal here, not a prompt there.
+		let created = false;
+		const game = {
+			characters: {},
+			findCharacterByName: (name: string) => (name === 'Ada' ? { givenName: 'Ada' } : undefined),
+			getCharacter: async () => { created = true; return {}; },
+			getAllMonstersLookup: () => ({}),
+		};
+		const caller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const error = await caller.game.spawnMonster({
+			roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke', character: CHARACTER_BLOCK,
+		}).catch((err: unknown) => err);
+
+		expect(error).to.be.instanceOf(TRPCError);
+		expect((error as TRPCError).code).to.equal('CONFLICT');
+		expect((error as TRPCError).message).to.equal('That name is already taken in this room.');
+		expect(created).to.equal(false);
+		expect(game.characters).to.deep.equal({});
+	});
+
+	it('ignores the character block when the player already has a character', async () => {
+		let spawnInput: Record<string, unknown> | undefined;
+		let createdAgain = false;
+		const character = {
+			givenName: 'Grace',
+			spawnMonster: async (_channel: unknown, spawn: Record<string, unknown>) => { spawnInput = spawn; return { givenName: 'Saffron', creatureType: 'Jinn' }; },
+		};
+		const game = {
+			characters: { [USER_ID]: character },
+			getCharacter: async () => { createdAgain = true; return character; },
+			findCharacterByName: () => undefined,
+			getAllMonstersLookup: () => ({}),
+		};
+		const caller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const result = await caller.game.spawnMonster({
+			roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke', character: CHARACTER_BLOCK,
+		});
+
+		expect(createdAgain).to.equal(false);
+		expect(game.characters[USER_ID].givenName).to.equal('Grace');
+		expect(spawnInput).to.not.have.property('character');
+		expect(result.monsterName).to.equal('Saffron');
+	});
+
+	it('offers the creation choices the workshop form cannot ask for, to room members only', async () => {
+		const spy: { assertedRoom?: string } = {};
+		const caller = createRouter(makeRoomManager({ characters: {} }, 'Ada Lovelace', spy)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const choices = await caller.game.characterCreationChoices({ roomId: ROOM_ID });
+
+		expect(spy.assertedRoom).to.equal(ROOM_ID);
+		expect(choices.avatars).to.have.length(7);
+		expect(choices.pronouns).to.deep.equal([
+			{ key: 'male', label: 'he/him' },
+			{ key: 'female', label: 'she/her' },
+			{ key: 'androgynous', label: 'they/them' },
+		]);
+		expect(choices).not.to.have.property('genders');
+		expect(choices.suggestedName).to.equal('Ada Lovelace');
+	});
+
+	it('tells the workshop there is no character yet, rather than an empty stable', async () => {
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: {}, ring: { contestants: [] } }),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.hasCharacter).to.equal(false);
+		expect(result.monsters).to.deep.equal([]);
 	});
 });
 

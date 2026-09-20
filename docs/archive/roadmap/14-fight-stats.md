@@ -1,4 +1,5 @@
 # Fight Stats and Catch-Up Feed
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature  
 **Priority**: Medium (post-launch)  
@@ -8,7 +9,7 @@
 
 The ring runs continuously, fighting every 60 seconds. Players join rooms, get invested in their monsters, and then go to sleep, go to work, or simply close the tab. When they come back, they have no idea what happened. Did Stonefang win? Did my monster die? How many fights happened?
 
-The engine's `ring.battles = []` array was intentionally never persisted (noted in `CLAUDE.md` as known debt). The `room_events` table now provides the raw event log, but there's no higher-level view over it — no "these 17 events constitute Fight #42" abstraction, and no dedicated UI to browse recent fights.
+The engine's `ring.battles = []` array was intentionally never persisted (noted in `AGENTS.md`, then `CLAUDE.md`, as known debt). The `room_events` table now provides the raw event log, but there's no higher-level view over it — no "these 17 events constitute Fight #42" abstraction, and no dedicated UI to browse recent fights.
 
 The web app already streams live events via the `ringFeed` WebSocket. The catch-up problem (reconnecting mid-session, last-seen event ID) is partially solved. But this feature is about a different kind of catch-up: arriving *hours later* and getting a readable summary of what you missed, not just a raw event replay.
 
@@ -209,6 +210,17 @@ For `FightSummaryWriter` to populate summaries correctly, the `ring.win`, `ring.
 
 If any of these are missing, they need to be added to the relevant announcement modules during implementation. The `text` field already has the human-readable version; this adds the machine-readable structure alongside it.
 
+### Combat payload
+
+Public combat events additionally carry `payload.combat`, a small serializable DTO for
+`card`, `hit`, `miss`, `heal`, `death`, and `flee`. It projects participants to
+`{ name, creatureType, icon, isBoss }` and carries only the figures relevant to its
+kind (for example, hit damage and HP, a miss's blocked flag, or a death's destroyed
+flag). The existing payload fields and narration remain available for compatibility.
+
+Animation layers and connectors must read `payload.combat`, never prose. Narration is
+written for people and can change independently; the DTO is the public combat contract.
+
 ## Relationship to Leaderboard (13-leaderboard.md)
 
 Fight stats and leaderboard are complementary:
@@ -260,4 +272,3 @@ Both are populated from ring outcome events. The `FightStatsSubscriber` from `13
 
 - **How long to retain fight summaries?** Fight summaries are smaller than raw events and more valuable for historical browsing. 30–90 days is a reasonable default; decide when setting up the retention job for `room_events`.
 - **Interrupted fights**: if the server restarts mid-fight, `FightSummaryWriter`'s in-memory `pendingByRoom` map is lost. Currently the summary is still written on `ring.fightResolved`, but `startedAt` falls back to `endedAt` (zero-duration fight). The fight IS recorded; only the "card-by-card breakdown" event query will be empty. An `'abandoned'` outcome variant isn't needed right now, but the zero-duration signal can be used in a future UI to flag such fights.
-- **Multi-monster fight display in web UI**: the `FightLogPage` currently shows "X vs Y" (1v1 framing). For 3+ contestant fights, the UI needs to render all participants from the `participants` array rather than just `winnerMonsterName`/`loserMonsterName`. The underlying data is there; this is a UI-only fix.

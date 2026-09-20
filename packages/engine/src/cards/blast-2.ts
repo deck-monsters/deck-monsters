@@ -5,7 +5,7 @@ import { PRICEY } from '../helpers/costs.js';
 export class Blast2Card extends BlastCard {
 	static cardType = 'Blast II';
 	static description =
-		'A strong magical blast against every opponent in the encounter.';
+		'A strong magical blast against every opponent in the fight.';
 	static probability = UNCOMMON.probability;
 	static level = 2;
 	static cost = PRICEY.cost;

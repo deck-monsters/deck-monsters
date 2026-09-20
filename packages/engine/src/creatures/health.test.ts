@@ -29,6 +29,33 @@ describe('wall-clock health recovery', () => {
 		}
 	});
 
+	it('clears respawnAt when the timers are disposed, so no ETA outlives its timer', () => {
+		const clock = sinon.useFakeTimers({ now: new Date('2030-01-01T00:00:00Z') });
+		const monster = new Jinn({ hp: 0, xp: 51, respawnTimeoutBegan: Date.now() });
+		try {
+			expect(monster.respawnAt).to.be.a('number');
+			monster.disposeTimers();
+			expect(monster.respawnAt).to.equal(undefined);
+		} finally {
+			clock.restore();
+		}
+	});
+
+	it('preserves the original revival completion time across room restore', () => {
+		const clock = sinon.useFakeTimers({ now: new Date('2030-01-01T00:00:00Z') });
+		const began = Date.now() - 5_000;
+		const monster = new Jinn({ hp: 0, xp: 51, respawnTimeoutBegan: began });
+		const reviveAt = began + TIME_TO_RESURRECT_MS;
+		try {
+			expect(monster.respawnAt).to.equal(reviveAt);
+			clock.tick(reviveAt - Date.now());
+			expect(monster.respawnAt).to.equal(undefined);
+		} finally {
+			monster.disposeTimers();
+			clock.restore();
+		}
+	});
+
 	it('does not heal a defeated monster before its revival time', () => {
 		const now = Date.now();
 		const monster = new Jinn({ hp: 0, hpUpdatedAt: now - (20 * TIME_TO_HEAL_MS) });

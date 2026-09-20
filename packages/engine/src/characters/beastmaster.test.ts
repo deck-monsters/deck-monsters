@@ -39,7 +39,51 @@ describe('characters/beastmaster', () => {
 	it('starts with the correct number of monster slots', () => {
 		const beastmaster = new Beastmaster();
 
-		expect(beastmaster.monsterSlots).to.equal(7);
+		expect(beastmaster.monsterSlots).to.equal(10);
+	});
+
+	it('derives capacity from the global default plus a per-character modifier', () => {
+		expect(new Beastmaster({ monsterSlotModifier: 2 }).monsterSlots).to.equal(12);
+		expect(new Beastmaster({ monsterSlotModifier: -3 }).monsterSlots).to.equal(7);
+		const granted = new Beastmaster();
+		granted.monsterSlotModifier = 1;
+		expect(granted.monsterSlots).to.equal(11);
+		expect(granted.toJSON().options.monsterSlotModifier).to.equal(1);
+	});
+
+	it('never reports fewer slots than monsters already in the roster', () => {
+		const beastmaster = new Beastmaster({ monsterSlotModifier: -20 });
+		for (let i = 0; i < 4; i++) beastmaster.addMonster({ givenName: `M${i}` } as any);
+		expect(beastmaster.monsterSlots).to.equal(4);
+	});
+
+	it('retires a legacy persisted monsterSlots value into the modifier', () => {
+		// Until Sept 2026 the capacity itself was saved per character, so raising the default
+		// never reached existing beastmasters. The old default (7) or less carries nothing;
+		// anything above today's default becomes a grant; the field itself is dropped.
+		const plain = new Beastmaster({ monsterSlots: 7 });
+		expect(plain.monsterSlots).to.equal(10);
+		expect(plain.monsterSlotModifier).to.equal(0);
+		expect(plain.toJSON().options).to.not.have.property('monsterSlots');
+
+		const granted = new Beastmaster({ monsterSlots: 12 });
+		expect(granted.monsterSlots).to.equal(12);
+		expect(granted.monsterSlotModifier).to.equal(2);
+		expect(granted.toJSON().options).to.not.have.property('monsterSlots');
+	});
+
+	it('keeps monsterSlotModifier as a real option so the admin edit flow can grant slots', () => {
+		// `edit character` offers Object.keys(options) and stores the answer as a string. A fresh
+		// beastmaster must therefore carry the key, and a string value must still count.
+		const fresh = new Beastmaster();
+		expect(fresh.toJSON().options).to.have.property('monsterSlotModifier', 0);
+
+		fresh.setOptions({ monsterSlotModifier: '2' });
+		expect(fresh.monsterSlotModifier).to.equal(2);
+		expect(fresh.monsterSlots).to.equal(12);
+
+		fresh.setOptions({ monsterSlotModifier: 'lots' });
+		expect(fresh.monsterSlotModifier).to.equal(0);
 	});
 
 	it('starts with an empty monster list', () => {

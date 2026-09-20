@@ -144,7 +144,7 @@ Unused `or` import in `analytics-queries.ts` (was the only lint warning in the s
 
 ### 26. Card shop is a single process-wide singleton shared by every room — FIXED
 
-`packages/engine/src/items/store/shop.ts`'s `getShop()` was a module-level `throttle()`-wrapped function with a single `currentShop` variable, regenerated once per 8 hours **for the entire process**, not per room. Every room on a multi-room server shared the exact same shop inventory, closing time, and prices — one room buying out an item mutated the shared `shop.items`/`shop.cards`/`shop.backRoom` arrays via `.splice()`/`.push()` in `buy.ts`/`sell.ts`, affecting every other room simultaneously. This directly conflicted with `CLAUDE.md`'s room-scoping rule.
+`packages/engine/src/items/store/shop.ts`'s `getShop()` was a module-level `throttle()`-wrapped function with a single `currentShop` variable, regenerated once per 8 hours **for the entire process**, not per room. Every room on a multi-room server shared the exact same shop inventory, closing time, and prices — one room buying out an item mutated the shared `shop.items`/`shop.cards`/`shop.backRoom` arrays via `.splice()`/`.push()` in `buy.ts`/`sell.ts`, affecting every other room simultaneously. This directly conflicted with the room-scoping rule in `AGENTS.md` (then `CLAUDE.md`).
 
 **Fixed** per the design decided 2026-07-31:
 
@@ -190,7 +190,7 @@ Five smaller observations from the #19/#26 investigation, all addressed on 2026-
 
 ### Doc and tooling drift fixed alongside the above
 
-- **`pnpm typecheck` did not exist.** `CLAUDE.md` documented it as a development command, but no package defined a `typecheck` script, so the command failed outright and CI's type-checking had to be reproduced by hand as per-package `tsc --noEmit` invocations. Added a `typecheck` script to all five packages plus a root `turbo run typecheck` (with `dependsOn: ["^build"]`, since the non-engine packages type-check against `engine/dist`).
+- **`pnpm typecheck` did not exist.** `AGENTS.md` (then `CLAUDE.md`) documented it as a development command, but no package defined a `typecheck` script, so the command failed outright and CI's type-checking had to be reproduced by hand as per-package `tsc --noEmit` invocations. Added a `typecheck` script to all five packages plus a root `turbo run typecheck` (with `dependsOn: ["^build"]`, since the non-engine packages type-check against `engine/dist`).
 - **`README.md`'s engine example** called `player.buyItems()` with no arguments; the per-room shop work made `channel` and the `ShopHost` required, so a JavaScript consumer copying it would dereference `host.shop` on `undefined`. Updated to `player.buyItems(privateChannel, game)`.
 - **Player handbook said the merchant rotates every 8 hours**, which was the old throttle period — it is 6 now, and per-room. Fixed in `packages/engine/src/build/player-handbook-content.ts` (shared by in-game `look at player handbook` and root `PLAYER_HANDBOOK.md`) and regenerated.
 
@@ -1981,6 +1981,8 @@ client's ability to notice the drop.
 
 ---
 
+## September 2026 follow-up passes (#109–#163)
+
 ### 109. The fight log leaked other players' private events — FIXED
 
 Found by asking why the fight log's event trace was labelled "Event trace (same window)".
@@ -3123,7 +3125,7 @@ harness / 298 web, all green).
 **Symptom**: a live-play screenshot showed the roster reading "2/3 standing" with a monster
 at 4/31 HP directly under a feed banner announcing that fight had just concluded with 2
 dead. The roster is supposed to be most trustworthy exactly at that moment — see
-`18-live-ring-roster.md` — but instead it showed neither the truly final board nor an empty
+`docs/archive/roadmap/18-live-ring-roster.md` — but instead it showed neither the truly final board nor an empty
 one; it showed an unrelated, older snapshot.
 
 **Root cause**: `Ring.clearRing()` runs after every fight, unconditionally, whether or not
@@ -3467,5 +3469,186 @@ jump-to-latest is not a scroll-away gesture; and the threshold is asserted ≤ 1
 comment on why. `consolePane-scroll-behavior.test.tsx` — the existing scroll-away cases now
 perform a wheel gesture first, plus "re-pins instead of stopping when the bottom moves
 without a reader gesture".
+
+**Status**: Fixed.
+
+### 160. Training a first monster from the workshop dead-ended without a character; players were asked to pick from one class — FIXED
+
+**Symptom**: a brand-new player opens the Deck Workshop, sees "No monsters yet — cards need a
+monster to live on", presses the one button on offer — **Train monster** — fills the form, and
+gets an error banner: "Create your character before training a monster." Nothing in the
+workshop creates a character. Separately, whoever did find their way to the console was asked,
+as the very first question of the game, "Which type of character would you like to be?" over a
+list containing exactly one entry.
+
+**Root cause**: two independent gaps, both in the first sixty seconds of play.
+
+1. `game.spawnMonster` (`packages/server/src/trpc/router.ts`) read `game.characters[userId]`
+   and threw `NOT_FOUND` when it was missing. The console never hits this because
+   `commands/index.ts` runs `game.getCharacter(...)` before every handler, which creates the
+   character by *asking* for its details. Workshop mutations run on `createSilentChannel`,
+   which throws on any `question` (docs/engine-concurrency-and-timing.md §2.3), so the
+   workshop could not reuse that flow — and nobody had given it an alternative.
+2. `createCharacter` (`packages/engine/src/characters/helpers/create.ts`) asked which class to
+   be whenever `type` was not supplied, even though `characters/helpers/all.ts` has held
+   exactly one entry (`Beastmaster`) for the whole life of the project.
+
+A third bug surfaced while wiring the fix: `askForAvatar` resolved a *supplied* `icon` against
+the seven **random** emoji it would have offered, as if it were an answer to the prompt. So any
+caller that supplied an avatar was refused ("I don't recognize 🦊 as an avatar choice") unless
+its pick happened to appear in that random seven. Nothing had ever supplied an icon before, so
+the bug was invisible until the workshop form did.
+
+**Fix**:
+
+- **Engine** — `createCharacter` takes the only class without asking when `type` is undefined
+  and `allCharacters.length === 1`; the prompt is left in place, commented, for a second class.
+  A supplied `icon` is now used as-is. `randomAvatarChoices(count)` is exported (and re-exported
+  from the package root) so the web offers the same avatars the console prompt does.
+- **Server** — `game.spawnMonster` takes an optional `character: { name, gender, avatar }` and,
+  inside the existing `runSerializedMutation`, creates the character via
+  `game.getCharacter({ channel, id, name, type: 0, gender, icon })` — prompt-free because every
+  question has its answer supplied. `game.findCharacterByName` is checked first, because the
+  engine *re-prompts* on a name clash and that prompt would throw: a clash is a
+  `CONFLICT "That name is already taken in this room."` The no-character-and-no-details error is
+  now actionable rather than a dead end. `game.characterCreationChoices` supplies the form's
+  genders/avatars/suggested name, and `myInventory.hasCharacter` lets the web tell "no
+  character" from "no monsters".
+- **Web** — with `hasCharacter === false` the empty state says the first Train will create the
+  character, and the Train form grows an "About you" fieldset above the monster fields (name,
+  pronouns labelled he/him · she/her · they/them over the engine's keys, avatar chips with a
+  Shuffle). Players who already have a character see the form exactly as before.
+
+**Tests**: `packages/engine/src/characters/helpers/create.test.ts` — the class question is never
+asked, gender still is, the result is a Beastmaster, a supplied avatar survives, and
+`randomAvatarChoices` offers seven. `packages/server/src/trpc/router.test.ts` — a real `Game`
+ends up with a registered Beastmaster *and* the monster from one mutation; no details gives the
+new actionable `NOT_FOUND`; a taken name is a `CONFLICT` with nothing created; an existing
+character ignores the block; `characterCreationChoices` and `myInventory.hasCharacter` are
+asserted. `apps/web/src/__tests__/workshopPanel.firstRun.test.tsx` — the fieldset appears only
+for a first run, the payload carries the character block, Shuffle refetches without submitting,
+and the existing-character form is unchanged.
+
+**Status**: Fixed.
+
+### 161. The workshop showed a full-deck bar and hid the one number that matters, current HP — FIXED
+
+**Symptom**: every monster panel in the Deck Workshop led its header with a deck-slot count and
+bar (e.g. "9/9 slots"). That bar is full or nearly full almost all the time — a monster only
+leaves the ring to be re-decked occasionally — so it carried no decision-relevant information.
+Meanwhile current HP, the number a beastmaster actually needs to decide whether to revive, send
+a monster to the ring, or leave it resting, was not present anywhere in the workshop view: not
+on the wire, and not in the UI.
+
+**Root cause**: the workshop's `myInventory` snapshot (`InventoryMonsterSummary` in
+`packages/server/src/trpc/router.ts`) was built before the workshop did anything besides equip
+cards, and it was never revisited as the workshop grew into a tool that also revives monsters,
+sends them to the ring, and manages items — each of which is exactly the decision current HP
+informs. `summarizeInventory` mapped `name`/`type`/`level`/xp fields/`dead`/`inRing`/
+`inEncounter`/`cardSlots`/`cards`/`presets` from the character record, but never read the
+engine's own `hp`/`maxHp` getters (`packages/engine/src/creatures/base.ts`), so the client had
+nothing to render even if it wanted to.
+
+**Fix**:
+
+- **Server** — `InventoryMonsterSummary` gained `hp`/`maxHp` (same defensive
+  `typeof … === 'number' && Number.isFinite` pattern as the existing numeric fields; the
+  engine's minimum-1 `maxHp` floor is preserved and `hp` is clamped to its display range),
+  `revivesAt` (the engine's dedicated, non-persisted `respawnAt` completion epoch, `null` when
+  the monster is alive or dead with no revival timer running — never the timer handle or its
+  delay), and `battles` (`{ wins, losses, total }`, from the engine's own lazily-created
+  getter). On restore, `respawn()` rehydrates `respawnTimeoutLength` as the *remaining* delay,
+  so adding it to the persisted start time reports revival too early; `respawnAt` preserves the
+  true completion time for the server projection.
+- **Web** — `MonsterWorkshopPanel.tsx`'s header was rebuilt around HP as the primary meter,
+  reusing `RingRoster`'s `hpRatio`/`hpBand` helpers and `roster-bar-*` classes so the two
+  surfaces can never band health differently. A dead monster's meter reads `Fallen` (plus
+  `· revives {relative}` via a new `formatRelativeFromNow` helper when a revival is running);
+  its 30-second local clock keeps that estimate current without relying on a query refetch.
+  The type line becomes `{type} · Lvl {level}`; a single status tag (`in the ring` / `fighting`
+  / `fallen`, in that priority) replaces the bar as the at-a-glance ring-state signal. The XP
+  meter's label dropped the now-redundant level. Deck size became text
+  (`Deck {n}/{cardSlots}`, with `· needs {n} more to enter the ring` when not full), with a
+  small optional `{wins}W {losses}L` hidden at phone widths. `.workshop-slot-meter` and its
+  track/fill CSS were removed — nothing else referenced them.
+
+**Tests**: `packages/engine/src/creatures/health.test.ts` — a restored fallen monster retains
+its true `respawnAt` until the callback fires. `packages/server/src/trpc/router.test.ts` —
+hp/maxHp on the summary; `revivesAt` comes from `respawnAt`, including the restore shape where
+the old start plus remaining delay would be wrong; `revivesAt` null for a fallen monster with
+no timer; zero/negative max HP floor at one and hp is clamped to that range; battles mapped
+through. `apps/web/src/utils/format-relative.test.ts`
+— minutes/hours/days formatting and the "any moment" floor for anything under a minute away
+(including the past). `apps/web/src/__tests__/monsterWorkshopPanel.header.test.tsx` — the HP
+label and accessible meter values, the hp/critical band boundary, the fallen label with and
+without a revive estimate, the type line, the renamed XP label, the deck-count text with and
+without the "needs more" hint, that no old slot-bar `progressbar` remains, and the status-tag
+priority order. `apps/web/src/__tests__/workshop-card-grid-density.test.ts` (renamed from
+`workshop-slot-meter.test.ts`, whose sole subject was removed) — the HP meter inherits the same
+label-beside-bar readability rule #120 fixed, and the old slot-meter CSS stays gone.
+
+**Status**: Fixed.
+
+### 162. The pixel-fight band stayed on screen for ~90 s after a fight ended — a timer that woke a hair early — FIXED
+
+**Symptom**: after `fightConcludes`, the sprites vanished but the `.pixel-fight-layer` canvas
+kept its `active` class (opaque backdrop, RAF loop still scheduled) until an unrelated feed event
+arrived — in Test Room A that was the next `ring.state` frame when the boss left, about 90
+seconds later. Seen twice live, including *after* the settle logic had been made time-driven.
+
+**Root cause**: `PixelFightLayer` armed one `setTimeout` for `nextDeadline(scene)` and, when it
+fired, called `settle(previous, performance.now())`. `setTimeout` is clamped to whole
+milliseconds but `performance.now()` is sub-millisecond, so the callback can run a fraction of a
+millisecond *before* the deadline. `settle` then saw `now < fadeOutAt`, returned the same scene
+object, React skipped the render because state was referentially unchanged, the `[scene]` effect
+never re-ran, and nothing was ever scheduled again. Every time-driven transition (attack → idle,
+flee removal, fade-out) had the same hole; the fade was just the one you could see.
+
+**Fix** (`apps/web/src/animations/pixel-fight/PixelFightLayer.tsx`): the timer re-arms itself
+until `performance.now() >= deadline`, and the initial delay is `Math.ceil`ed. Two adjacent
+fixes landed with it: (1) the `ring.state` frame that empties the roster as a fight concludes
+arrives inside the 2.5 s fade window and used to wipe the fighters immediately, so the fade ran on
+an empty canvas and the fallen pose was never seen — `state.ts` now holds the fighters while
+`fadeOutAt` is set; (2) the legibility redraw of the sprites had shipped six identical frames per
+monster, so nothing animated — `sprites.ts` now derives the idle bob, attack lean/lunge and the
+lying fallen pose from each single hand-drawn 16×16 map, so a silhouette change never needs six
+redraws.
+
+**Tests**: `apps/web/src/__tests__/pixel-fight-layer.test.tsx` — a fade timer that fires at
+`deadline − 0.4 ms` leaves a follow-up timer armed and the layer goes inactive on the next tick.
+`pixel-fight-state.test.ts` — an emptied roster during the fade keeps the fighters (including
+the `faint` one) until `settle` passes `fadeOutAt`. `pixel-fight-sprites.test.ts` — idle frames
+differ, the attack lunge moves toward the opponent, and the fallen pose is the standing box with
+its axes swapped.
+
+**Status**: Fixed. Live-verified in Test Room A: sprites cleared and the band went inactive
+~2 s after `Fight concluded`, with the fallen pose visible through the fade.
+
+### 163. Two words for one act — `spawn` vs `train` — and other vocabulary drift — FIXED
+
+**Symptom**: the workshop said “Train monster” while console help, quick actions, Discord,
+first-time guidance, and the handbook taught `spawn monster`. The same drift called monsters
+property (“proud owner”, “evil master”), offered a ring-exit command that said `summon` for an
+outward action, and exposed persistence keys as gender labels.
+
+**Root cause**: player-facing copy was added independently on each surface. Parser aliases
+were useful for compatibility, but no contract separated them from the word displayed to
+players, so technical implementation vocabulary leaked into the game world.
+
+**Fix**: [`docs/voice-and-wording.md`](../voice-and-wording.md) defines the voice philosophy
+and lexicon. `train` is now the canonical displayed command (while the parser and Discord
+retain `spawn` aliases); ring departures are called out; dismissal and revival use companion
+language; and console/workshop prompts present `he/him`, `she/her`, and `they/them` while
+mapping them through one shared helper to the existing engine keys. Engine, server, web,
+Discord, README, and handbook copy now share the same terms.
+
+**Discord `/spawn` repair**: Discord's original slash command never reached the engine's
+matcher: it built `spawn`, `spawn Basilisk`, or `spawn Basilisk Fang`, while the engine only
+accepted `spawn (a) monster`. `/train` is now the primary slash command, and its `/spawn`
+alias dispatches the same `train a monster` command so either route opens the interactive
+training flow.
+
+**Tests**: command/help, prompt, quick-action, workshop, and Discord command tests cover the
+new canonical labels and aliases.
 
 **Status**: Fixed.

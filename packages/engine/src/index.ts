@@ -6,14 +6,31 @@ import { gameStateSchema } from './schemas/state.js';
 import Game from './game.js';
 import type { ChannelCallback } from './channel/index.js';
 import { ConnectorAdapter } from './channel/index.js';
-import { RoomEventBus, PROMPT_CANCELLED, PromptCancelledError } from './events/index.js';
-import type { GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult } from './events/index.js';
+import { RoomEventBus, PROMPT_CANCELLED, PromptCancelledError, toCombatActor } from './events/index.js';
+import type {
+	CombatActor,
+	CombatPayload,
+	GameEvent,
+	EventType,
+	EventScope,
+	EventSubscriber,
+	EventsSinceResult,
+} from './events/index.js';
 
-export { Game, ConnectorAdapter, RoomEventBus, PROMPT_CANCELLED, PromptCancelledError };
+export { Game, ConnectorAdapter, RoomEventBus, PROMPT_CANCELLED, PromptCancelledError, toCombatActor };
 export { CommandRefusalError, isCommandRefusal } from './helpers/command-refusal-error.js';
 export { announceAndThrow } from './helpers/announce-and-throw.js';
 export type { GameAnalyticsCallbacks, LeaderboardSortKey } from './game.js';
-export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult };
+export type {
+	ChannelCallback,
+	CombatActor,
+	CombatPayload,
+	GameEvent,
+	EventType,
+	EventScope,
+	EventSubscriber,
+	EventsSinceResult,
+};
 export type { StateStore } from './types/state-store.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { getCardClassByTypeName } from './cards/index.js';
@@ -29,6 +46,8 @@ export * from './testing/index.js';
 export { randomContestant } from './helpers/bosses.js';
 export type { RandomContestantOptions } from './helpers/bosses.js';
 export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
+/** How the engine renders a stored creature name as `givenName` — needed to compare against one. */
+export { startCase } from './helpers/start-case.js';
 export { getLevel } from './helpers/levels.js';
 export type { Contestant, RingContestantSnapshot } from './ring/index.js';
 export { getXpCapForLevel } from './ring/index.js';
@@ -42,6 +61,13 @@ export type { BossSummonLedger, SummonAllowance } from './helpers/boss-summons.j
 export { RING_EVENTS, getRingEvent, selectRingEvent } from './ring/ring-events.js';
 export type { RingEventDefinition, RingEventId, VictoryMode } from './ring/ring-events.js';
 export { allMonsters } from './monsters/index.js';
+/**
+ * Character-creation choices a non-interactive caller has to collect up front, since a
+ * prompt-free channel cannot ask for them (docs/engine-concurrency-and-timing.md).
+ */
+export { randomAvatarChoices } from './characters/helpers/create.js';
+export { PRONOUNS, PRONOUN_KEYS, PRONOUN_CHOICES } from './helpers/pronouns.js';
+export type { Gender } from './helpers/pronouns.js';
 
 export const getOptions = (gameJSON: string | Record<string, unknown>): Record<string, unknown> => {
 	let gameObj: Record<string, unknown>;

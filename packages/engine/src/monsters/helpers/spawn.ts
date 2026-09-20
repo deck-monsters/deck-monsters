@@ -1,4 +1,4 @@
-import PRONOUNS from '../../helpers/pronouns.js';
+import PRONOUNS, { PRONOUN_CHOICES, PRONOUN_KEYS, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
 import { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } from '../../constants/creature-types.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
@@ -42,8 +42,6 @@ export const spawnHelpersReady = loadHelpers().catch((err) => {
 	console.error('[engine] spawnHelpersReady FAILED — spawn helpers will be stubs:', err);
 });
 
-const genders = Object.keys(PRONOUNS);
-
 interface SpawnOptions {
 	type?: number | string;
 	name?: string;
@@ -85,7 +83,7 @@ const spawnMonster = (
 				if (type !== undefined) return type;
 
 				return channel({
-					question: `Which type of monster would you like to spawn?`,
+					question: `Which type of monster would you like to train?`,
 					choices: creatureTypeLabels,
 				});
 			})
@@ -164,32 +162,27 @@ const spawnMonster = (
 				return options;
 			});
 
-	const askForGender = (Monster: MonsterConstructor): Promise<Record<string, unknown>> =>
-		Promise.resolve()
-			.then(() => {
-				if (gender !== undefined) return gender;
+	const askForGender = (_Monster: MonsterConstructor): Promise<Record<string, unknown>> => {
+		if (gender !== undefined) {
+			if (!PRONOUN_KEYS.includes(gender as typeof PRONOUN_KEYS[number])) {
+				return announceAndThrow(channel, `Unknown monster gender: ${String(gender)}`);
+			}
+			options.gender = gender;
+			return Promise.resolve(options);
+		}
 
-				return channel({
-					question: `What gender should your ${((Monster as any).creatureType as string).toLowerCase()} be?`,
-					choices: genders,
-				});
-			})
-			.then((answer: unknown) => {
-				// Interactive channels answer with the selected choice (either the 0-based
-				// index or, on Discord, the label text — see docs/prompt-answer-contract.md),
-				// while typed callers (the web Workshop) already have the enum value. Treat a
-				// known string as the value itself before falling back to resolveChoiceIndex,
-				// which now generalises what used to be this function's own hand-rolled
-				// label-or-index handling — see helpers/choices.ts.
-				const stringAnswer = typeof answer === 'string' ? answer.toLowerCase() : '';
-				const index = resolveChoiceIndex(answer, genders);
-				const selectedGender = genders.includes(stringAnswer) ? stringAnswer : genders[index];
-				if (!selectedGender) {
-					throw new Error(`Unknown monster gender: ${String(answer)}`);
-				}
-				options.gender = selectedGender;
-				return options;
-			});
+		return Promise.resolve().then(() => channel({
+			question: 'Which pronouns should we use for your monster?',
+			choices: [...PRONOUN_CHOICES],
+		})).then((answer: unknown) => {
+			const selectedGender = genderFromPronounChoice(answer);
+			if (!selectedGender) {
+				return announceAndThrow(channel, `Unknown monster pronoun choice: ${String(answer)}`);
+			}
+			options.gender = selectedGender;
+			return options;
+		});
+	};
 
 	let Monster: MonsterConstructor;
 

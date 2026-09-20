@@ -52,6 +52,7 @@ class BaseCreature extends BaseClass<CreatureOptions> {
 	declare encounter: Encounter | undefined;
 	declare respawnTimeout: ReturnType<typeof setTimeout> | undefined;
 	declare respawnTimeoutLength: number | undefined;
+	declare respawnAt: number | undefined;
 	declare healingInterval: ReturnType<typeof setInterval>;
 
 	static eventPrefix = 'creature';
@@ -134,8 +135,7 @@ Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
 	}
 
 	get rankings (): string {
-		return `Battles fought: ${this.battles.total}
-Battles won: ${this.battles.wins}`;
+		return `Fights: ${this.battles.total} · Won: ${this.battles.wins}`;
 	}
 
 	get individualDescription (): string | undefined {
@@ -438,6 +438,9 @@ Battles won: ${this.battles.wins}`;
 			clearTimeout(this.respawnTimeout);
 			this.respawnTimeout = undefined;
 		}
+		// `myInventory` projects `revivesAt` from `dead && respawnAt`; a disposed timer must not
+		// leave an ETA behind that can never arrive.
+		this.respawnAt = undefined;
 	}
 
 	edit (channel: ChannelFn): Promise<unknown> { return edit(this, channel); }

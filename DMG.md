@@ -33,7 +33,7 @@ Web (deck-monsters.com):
   • Room Settings (gear icon) lets room owners reset game state or manage members.
 
 Discord:
-  • Each guild maps to one or more rooms. Slash commands (/spawn, /ring, /equip,
+  • Each guild maps to one or more rooms. Slash commands (/train and its /spawn alias, /ring, /equip,
     /shop, /status, /create-room, /join-room, …) and free-text DMs both dispatch
     into the same engine command parser.
   • Interactive prompts arrive as DM button menus or free-text collectors; players
@@ -43,7 +43,7 @@ Discord:
 Starting a session:
   1) Ensure the server process is running with database connectivity configured.
   2) Load or create the target room (web navigation or Discord guild default).
-  3) Players spawn monsters, equip decks, and send fighters to the ring.
+  3) Players train monsters, equip decks, and send fighters to the ring.
   4) Once 2+ monsters are in the ring, the fight timer arms automatically.
 
 State saves debounce (~30 s) on engine mutations; fights and prompts do not block saves.
@@ -51,7 +51,7 @@ State saves debounce (~30 s) on engine mutations; fights and prompts do not bloc
 
 Ring quorum: fights require at least 2 monsters in the ring (up to
 12). When quorum is met, a 60-second countdown
-re-arms after each encounter.
+re-arms after each fight.
 
 During a fight:
   • Each contestant plays the next card in its deck (wraps when exhausted).
@@ -241,7 +241,7 @@ Wooden Spear
  🛡  Basic Shield  ○
 ----------------------------------
 
- Equip yourself for the battle 
+ Equip yourself for the fight 
  ahead.
 
  Boost: ac +2 (max boost of level 
@@ -335,7 +335,7 @@ Wooden Spear
 ----------------------------------
 
  A magical blast against every 
- opponent in the encounter.
+ opponent in the fight.
 
  Blast: 3 base damage +1 per 
  level of the caster
@@ -356,7 +356,7 @@ Wooden Spear
 ----------------------------------
 
  A strong magical blast against 
- every opponent in the encounter.
+ every opponent in the fight.
 
  Blast II: 3 base damage + int 
  bonus of caster
@@ -380,7 +380,7 @@ Wooden Spear
  energy
 
  1d20 vs opponent's int. They are 
- removed from the battle (and can 
+ removed from the fight (and can 
  not be targeted).
  On what would have been their 
  next turn, if you are still 
@@ -451,7 +451,7 @@ Wooden Spear
 ----------------------------------
 
  Your daily workout routine 
- limbers you up for battle.
+ limbers you up for a fight.
 
  Boost: dex +1-2 depending on how 
  deep the stretch is
@@ -1466,7 +1466,7 @@ Wooden Spear
  🥃  Scotch  ◇
 ----------------------------------
 
- Keep the heid, this battle's far 
+ Keep the heid, this fight's far 
  from over.
 
  Health: 2d6

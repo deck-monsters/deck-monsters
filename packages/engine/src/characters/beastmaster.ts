@@ -44,7 +44,11 @@ export const beastmasterReady = loadHelpers().catch((err) => {
 	console.error('[engine] beastmasterReady FAILED — beastmaster helpers will be stubs:', err);
 });
 
-const DEFAULT_MONSTER_SLOTS = 7;
+// How many monsters a beastmaster may keep. This is a *global* value: raise it here and
+// every beastmaster gets the room, because a character's capacity is derived
+// (`monsterSlots`), not stored. Per-character grants live in `monsterSlotModifier`.
+// Raised from 7 to 10 in September 2026.
+export const DEFAULT_MONSTER_SLOTS = 10;
 
 const MAX_CARD_COPIES_IN_HAND = 4;
 
@@ -56,10 +60,25 @@ const isSameCardName = (card: CardInstance, cardName: string): boolean =>
 
 class Beastmaster extends BaseCharacter {
 	constructor(options: Record<string, unknown> = {}) {
-		super({
-			monsterSlots: DEFAULT_MONSTER_SLOTS,
-			...options,
-		});
+		super(options);
+		this.upgradeLegacyMonsterSlots();
+		// The admin `edit character` flow offers exactly Object.keys(options), so the grant has
+		// to exist as a key on every beastmaster or there is no way to grant slots at all.
+		if (this.options.monsterSlotModifier === undefined) this.setOptions({ monsterSlotModifier: 0 });
+	}
+
+	/**
+	 * Until September 2026 the capacity itself was persisted as `options.monsterSlots`, so
+	 * raising the default only ever reached newly created beastmasters. Fold a saved value
+	 * into the modifier once (anything above today's default becomes a grant; the old
+	 * default or less becomes nothing) and drop the field so it cannot drift again.
+	 */
+	private upgradeLegacyMonsterSlots(): void {
+		const legacy = this.options.monsterSlots as number | undefined;
+		if (legacy === undefined) return;
+		const carried = Math.max(0, Math.floor(Number(legacy) || 0) - DEFAULT_MONSTER_SLOTS);
+		// setOptions drops keys set to undefined, which is how the legacy field is retired.
+		this.setOptions({ monsterSlots: undefined, monsterSlotModifier: this.monsterSlotModifier + carried });
 	}
 
 	get monsters(): BaseMonster[] {
@@ -70,16 +89,24 @@ class Beastmaster extends BaseCharacter {
 		this.setOptions({ monsters });
 	}
 
-	get monsterSlots(): number {
-		const stored = this.options.monsterSlots as number | undefined;
-		if (!stored || stored < DEFAULT_MONSTER_SLOTS) {
-			this.setOptions({ monsterSlots: DEFAULT_MONSTER_SLOTS });
-		}
-		return (this.options.monsterSlots as number) ?? DEFAULT_MONSTER_SLOTS;
+	/** Per-character adjustment on top of the global default (a scroll, a level reward, an admin grant). */
+	get monsterSlotModifier(): number {
+		// Admin edits arrive as strings ("2"), so coerce rather than type-check.
+		const stored = Number(this.options.monsterSlotModifier);
+		return Number.isFinite(stored) ? Math.floor(stored) : 0;
 	}
 
-	set monsterSlots(monsterSlots: number) {
-		this.setOptions({ monsterSlots });
+	set monsterSlotModifier(monsterSlotModifier: number) {
+		this.setOptions({ monsterSlotModifier });
+	}
+
+	/**
+	 * Effective capacity: the global default plus this character's modifier, but never
+	 * fewer than the monsters already in the roster — lowering the default (or a
+	 * negative modifier) must not strand anyone, it just stops further training.
+	 */
+	get monsterSlots(): number {
+		return Math.max(DEFAULT_MONSTER_SLOTS + this.monsterSlotModifier, this.monsters.length);
 	}
 
 	canHoldCard(card: CardInstance): boolean {
@@ -152,7 +179,7 @@ class Beastmaster extends BaseCharacter {
 					return Promise.resolve()
 						.then(() =>
 							channel({
-								announce: `You're now the proud owner of a ${monster.creatureType}. Before you is ${monsterCard(monster as any)}`,
+								announce: `A ${monster.creatureType} answers your call. Before you is ${monsterCard(monster as any)}`,
 							}),
 						)
 						.then(() => monster);
@@ -228,7 +255,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return announceAndThrow(channel, "You don't have any monsters to equip! You'll need to spawn one first.");
+					return announceAndThrow(channel, "You don't have any monsters to equip! You'll need to train one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'equip' });
 			})
@@ -290,7 +317,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return announceAndThrow(channel, "You don't have any monsters to give items to! You'll need to spawn one first.");
+					return announceAndThrow(channel, "You don't have any monsters to give items to! You'll need to train one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'give items to' });
 			})
@@ -315,7 +342,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return announceAndThrow(channel, "You don't have any monsters to take items from! You'll need to spawn one first.");
+					return announceAndThrow(channel, "You don't have any monsters to take items from! You'll need to train one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'take items from' });
 			})
@@ -451,7 +478,7 @@ class Beastmaster extends BaseCharacter {
 
 		this.monsters.forEach((monster) => {
 			lines.push(
-				`${monster.givenName} [${monster.creatureType}, L${monster.level}]  ${monster.cards.length}/${monster.cardSlots} slots`,
+				`${monster.givenName} [${monster.creatureType}, Lvl ${monster.level}]  ${monster.cards.length}/${monster.cardSlots} slots`,
 			);
 
 			if (monster.cards.length < 1) {
@@ -677,7 +704,7 @@ class Beastmaster extends BaseCharacter {
 			return announceAndThrow(channel, 'Choose two different monsters for move operations.');
 		}
 		if (fromMonster.inEncounter || toMonster.inEncounter) {
-			return announceAndThrow(channel, 'Cards cannot be moved while a monster is in battle.');
+			return announceAndThrow(channel, 'Cards cannot be moved while a monster is in a fight.');
 		}
 
 		const sourceCards = [...fromMonster.cards];
@@ -1143,18 +1170,18 @@ class Beastmaster extends BaseCharacter {
 			if (alreadyInRing && alreadyInRing.length > 0) {
 				return announceAndThrow(channel, 'You already have a monster in the ring!');
 			} else if (numberOfMonsters <= 0) {
-				return announceAndThrow(channel, "You don't have any living monsters to send into battle. Spawn one first, or wait for your dead monsters to revive.");
+				return announceAndThrow(channel, "You don't have any living monsters to send to the ring. Train one first, or wait for your dead monsters to revive.");
 			}
 
 			return this.chooseMonster({
 				channel,
 				monsters,
 				monsterName,
-				action: 'send into battle',
+				action: 'send to the ring',
 				reason: "you don't appear to have a monster by that name.",
 			}).then((monster: BaseMonster) => {
 				if (monster.cards.length < monster.cardSlots) {
-					return announceAndThrow(channel, 'Only an evil master would send their monster into battle without enough cards.');
+					return announceAndThrow(channel, 'A beastmaster does not send a companion into the ring without a full deck.');
 				}
 				return ring.addMonster({ monster, character, userId });
 			});
@@ -1188,15 +1215,14 @@ class Beastmaster extends BaseCharacter {
 				return monster;
 			})
 		.then((monster: BaseMonster) =>
-			// "Dismissed from your pack" was kennel language for what is always a *dead*
-			// monster (this command filters on `monster.dead`), and it carried the game's
-			// last bit of livestock framing on the player side. "Laid to rest" suits
-			// permadeath and matches the companion voice the ring narration now uses —
-			// a beastmaster calls monsters in and calls them back, rather than owning
-			// stock. See 10b-bugs-fixed.md #104.
-			(channel({ announce: `${monster.givenName} has been laid to rest.` }) as Promise<unknown>).then(
-				() => monster,
-			),
+			// "Laid to rest" is reserved for a fallen companion. Keeping the live branch
+			// here protects the farewell if dismissal ever expands beyond its current
+			// dead-only eligibility filter.
+			(channel({
+				announce: monster.dead
+					? `${monster.givenName} has been laid to rest.`
+					: `${monster.givenName} leaves your side.`,
+			}) as Promise<unknown>).then(() => monster),
 		);
 	}
 

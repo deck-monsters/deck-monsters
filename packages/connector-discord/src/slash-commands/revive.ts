@@ -6,7 +6,7 @@ import { resolveUser, dispatchCommand } from './helpers.js';
 export const revive: SlashCommand = {
 	data: new SlashCommandBuilder()
 		.setName('revive')
-		.setDescription('Revive a knocked-out monster (costs coins)')
+		.setDescription('Revive a fallen monster (costs coins)')
 		.addStringOption((opt) =>
 			opt
 				.setName('monster')
@@ -36,7 +36,7 @@ export const revive: SlashCommand = {
 			return;
 		}
 
-		await interaction.editReply({ content: `✨ ${monster} is back on their feet!`, components: [] });
+		await interaction.editReply({ content: `✨ ${monster} has been revived.`, components: [] });
 	},
 
 	async autocomplete(interaction, ctx): Promise<void> {

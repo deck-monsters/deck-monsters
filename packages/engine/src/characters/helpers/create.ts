@@ -1,4 +1,4 @@
-import PRONOUNS from '../../helpers/pronouns.js';
+import PRONOUNS, { PRONOUN_CHOICES, PRONOUN_KEYS, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn } from '../../creatures/base.js';
@@ -20,7 +20,15 @@ let _getChoices: (arr: string[]) => string = arr =>
 	arr.map((c, i) => `${i}) ${c}`).join('\n');
 let _getCreatureTypeChoices: (creatures: CharacterConstructor[]) => string = creatures =>
 	creatures.map((c, i) => `${i}) ${(c as any).creatureType ?? c.name}`).join('\n');
-let _randomEmoji: () => string = () => '🎲';
+// The web asks for choices before the optional emoji module finishes loading; this fallback
+// must still make seven distinct radios rather than seven duplicate dice.
+const FALLBACK_AVATARS = ['🎲', '🦊', '🐙', '🦉', '🐍', '🦁', '🐲'] as const;
+let fallbackAvatarIndex = 0;
+let _randomEmoji: () => string = () => {
+	const avatar = FALLBACK_AVATARS[fallbackAvatarIndex % FALLBACK_AVATARS.length]!;
+	fallbackAvatarIndex += 1;
+	return avatar;
+};
 
 const loadHelpers = async () => {
 	const [choicesModule, emojiModule] = await Promise.all([
@@ -44,7 +52,20 @@ export const createHelperReady = loadHelpers().catch((err) => {
 	console.error('[engine] createHelperReady FAILED — character creation helpers will be stubs:', err);
 });
 
-const genders = Object.keys(PRONOUNS);
+/**
+ * The avatar choices the console prompt offers. Exported so a non-interactive caller (the
+ * web workshop's first-run character form) can present the same picker instead of growing
+ * a second emoji source that drifts away from this one.
+ */
+export const randomAvatarChoices = (count: number): string[] => {
+	const choices: string[] = [];
+	const maxDraws = Math.max(count * 10, 10);
+	for (let draws = 0; choices.length < count && draws < maxDraws; draws++) {
+		const avatar = _randomEmoji();
+		if (!choices.includes(avatar)) choices.push(avatar);
+	}
+	return choices;
+};
 
 interface CreateCharacterOptions {
 	type?: number | string;
@@ -61,17 +82,18 @@ const createCharacter = (
 ): Promise<BaseCharacter> => {
 	const options: Record<string, unknown> = {};
 
-	const iconChoices: string[] = [];
-	for (let i = 0; i < 7; i++) {
-		iconChoices.push(_randomEmoji());
-	}
-
 	const askForCreatureType = (): Promise<CharacterConstructor> => {
 		const creatureTypeLabels = (allCharacters as CharacterConstructor[]).map(c => (c as any).creatureType ?? c.name);
 
 		return Promise.resolve()
 			.then(() => {
 				if (type !== undefined) return type;
+				// `allCharacters` has exactly one entry today, so this prompt was asking a
+				// brand-new player to pick "Beastmaster" out of a list of one before they
+				// could do anything at all — a question with no wrong answer, asked first.
+				// Take the only class instead. The prompt below is deliberately left intact
+				// for the day a second class lands; delete this branch then, not the question.
+				if (allCharacters.length === 1) return 0;
 				return channel({
 					question: `Which type of character would you like to be?`,
 					choices: creatureTypeLabels,
@@ -90,26 +112,27 @@ const createCharacter = (
 			});
 	};
 
-	const askForGender = (Character: CharacterConstructor): Promise<Record<string, unknown>> =>
-		Promise.resolve()
-			.then(() => {
-				if (gender !== undefined) return gender;
-				return channel({
-					question: `What gender should your ${((Character as any).creatureType as string).toLowerCase()} be?`,
-					choices: genders,
-				});
-			})
-			.then((answer: unknown) => {
-				// Same label-or-index ambiguity as askForCreatureType above — resolve it the
-				// same way instead of assuming answer is always a numeric index.
-				const index = resolveChoiceIndex(answer, genders);
-				const selectedGender = genders[index];
-				if (!selectedGender) {
-					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a gender.`);
-				}
-				options.gender = selectedGender.toLowerCase();
-				return options;
-			});
+	const askForGender = (_Character: CharacterConstructor): Promise<Record<string, unknown>> => {
+		if (gender !== undefined) {
+			if (!PRONOUN_KEYS.includes(gender as typeof PRONOUN_KEYS[number])) {
+				return announceAndThrow(channel, `I don't recognize "${String(gender)}" as a pronoun choice.`);
+			}
+			options.gender = gender;
+			return Promise.resolve(options);
+		}
+
+		return Promise.resolve().then(() => channel({
+			question: 'Which pronouns should we use for you?',
+			choices: [...PRONOUN_CHOICES],
+		})).then((answer: unknown) => {
+			const selectedGender = genderFromPronounChoice(answer);
+			if (!selectedGender) {
+				return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a pronoun choice.`);
+			}
+			options.gender = selectedGender;
+			return options;
+		});
+	};
 
 	const askForName = (
 		Character: CharacterConstructor,
@@ -138,15 +161,26 @@ const createCharacter = (
 				return options;
 			});
 
-	const askForAvatar = (): Promise<Record<string, unknown>> =>
-		Promise.resolve()
-			.then(() => {
-				if (icon !== undefined) return icon;
-				return channel({
+	const askForAvatar = (): Promise<Record<string, unknown>> => {
+		// A supplied icon is the emoji itself, not an answer to the prompt below. It used
+		// to be resolved against `iconChoices` like an answer, and those are seven *random*
+		// emoji — so a caller that supplied an avatar was rejected ("I don't recognize
+		// 🦊 as an avatar choice") unless its pick happened to appear in that random
+		// seven. Nothing supplied an icon before the workshop's first-run form did, which
+		// is why this went unnoticed.
+		if (icon !== undefined) {
+			options.icon = icon;
+			return Promise.resolve(options);
+		}
+
+		const iconChoices = randomAvatarChoices(7);
+		return Promise.resolve()
+			.then(() =>
+				channel({
 					question: `Finally, choose an avatar:`,
 					choices: iconChoices,
-				});
-			})
+				}),
+			)
 			.then((answer: unknown) => {
 				// Same label-or-index ambiguity as askForCreatureType above.
 				const index = resolveChoiceIndex(answer, iconChoices);
@@ -157,6 +191,7 @@ const createCharacter = (
 				options.icon = selectedIcon;
 				return options;
 			});
+	};
 
 	let Character: CharacterConstructor;
 

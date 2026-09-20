@@ -1,4 +1,5 @@
 # Multi-Room / Groups Support
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature  
 **Priority**: High (required for web and multi-server Discord)  

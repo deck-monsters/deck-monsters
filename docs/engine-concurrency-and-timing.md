@@ -127,6 +127,12 @@ Three coordination mechanisms exist. Know which one you are touching:
    dispatch without affecting other members. Silent channels
    (`createSilentChannel`) throw on any `question` — workshop paths must stay
    non-interactive.
+   - `Game.getCharacter` is safe to call from a silent channel **only** when
+     `name`, `type`, `gender` and `icon` are all supplied *and* the name has been
+     pre-checked with `game.findCharacterByName`: `createCharacter` re-prompts on
+     a name clash, and that prompt would throw instead of asking. `spawnMonster`'s
+     first-run `character` input does exactly this (docs/archive/roadmap/16-card-management.md
+     §"First run"). A partially specified call is a latent 400.
 
 **Cross-user policy (#62)**: per-user console lanes mean two members can mutate
 the same `Game` concurrently. That is intentional for interactive flows — each

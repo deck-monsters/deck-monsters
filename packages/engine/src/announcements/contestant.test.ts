@@ -22,7 +22,7 @@ function makeContestant({ isBoss }: { isBoss: boolean }) {
 			creatureType: 'Minotaur',
 			individualDescription: 'A battle-hardened, gray minotaur.',
 			stats: 'Type: Minotaur\nClass: Barbarian',
-			rankings: 'Battles fought: 95\nBattles won: 65',
+			rankings: 'Fights: 95 · Won: 65',
 		},
 	};
 }

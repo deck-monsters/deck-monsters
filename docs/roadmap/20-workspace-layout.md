@@ -388,7 +388,7 @@ invalidate room B. This is a release-blocking application of the room-scoping ru
 Update the command reference alongside each new web action, not in a cleanup sweep. Add
 success/error announcements with `aria-live`; prevent duplicate submission while pending;
 and exercise the full hub at all Phase 3 widths. The console remains supported, but the
-acceptance journey is command-free: spawn a monster, prepare cards/items, revive if needed,
+acceptance journey is command-free: train a monster, prepare cards/items, revive if needed,
 confirm sending it to the ring, use an eligible item, and buy from the current room's shop.
 
 **Phase 4 exit gate:** that command-free journey passes; mutation authorization and

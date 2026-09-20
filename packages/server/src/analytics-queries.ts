@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, lte, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte, lt, sql } from 'drizzle-orm';
 
 import type { Db } from './db/index.js';
 import {
@@ -34,7 +34,7 @@ export function formatRoomMonsterLeaderboard(
 		const owner = r.ownerName ? ` (${r.ownerName})` : '';
 		const streak = streakByMonsterId?.get(r.monsterId);
 		const streakStr = streak !== undefined && streak > 0 ? `   streak ${streak}` : '';
-		return `${i + 1}. ${r.displayName}${owner}   ${r.monsterType}   ${r.xp} XP L${r.level}   ${r.wins}W ${r.losses}L ${wr}%${streakStr}`;
+		return `${i + 1}. ${r.displayName}${owner}   ${r.monsterType}   ${r.xp} XP Lvl ${r.level}   ${r.wins}W ${r.losses}L ${wr}%${streakStr}`;
 	});
 	return `*${title}*\n\n\`\`\`\n${lines.join('\n') || '(no data yet)'}\n\`\`\`\n`;
 }
@@ -51,7 +51,7 @@ export function formatGlobalMonsterLeaderboard(title: string, rows: Awaited<Retu
 	const lines = rows.map((r, i) => {
 		const wr = Math.round(r.winRate * 100);
 		const owner = r.ownerName ? ` (${r.ownerName})` : '';
-		return `${i + 1}. ${r.displayName}${owner}   ${r.monsterType}   ${r.xp} XP L${r.level}   ${r.wins}W ${r.losses}L ${wr}%`;
+		return `${i + 1}. ${r.displayName}${owner}   ${r.monsterType}   ${r.xp} XP Lvl ${r.level}   ${r.wins}W ${r.losses}L ${wr}%`;
 	});
 	return `*${title}*\n\n\`\`\`\n${lines.join('\n') || '(no data yet)'}\n\`\`\`\n`;
 }

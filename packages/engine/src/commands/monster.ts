@@ -259,7 +259,7 @@ function sendMonsterToTheRingAction({
 	});
 }
 
-const SPAWN_REGEX = /spawn (?:a )?monster$/i;
+const SPAWN_REGEX = /(?:train|spawn) (?:a )?monster$/i;
 function spawnAction({ channel, character, game, isDM, ...options }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));
@@ -284,7 +284,7 @@ function spawnBossAction({ channel, game, isAdmin }: any): Promise<unknown> {
 const BOSS_REFUSAL_MESSAGES: Record<string, string> = {
 	in_encounter: 'A fight is already underway — wait for it to finish before summoning a boss.',
 	boss_cap: 'There are already as many bosses in the ring as it can hold.',
-	ring_full: 'The ring is full! Wait until the current battle is over and try again.',
+	ring_full: 'The ring is full! Wait until the current fight is over and try again.',
 };
 
 const SUMMON_BOSS_REGEX = /summon (?:a )?boss$/i;
@@ -399,7 +399,7 @@ function triggerRingEventAction({ channel, game, isAdmin, results }: any): Promi
 		if (ring.inEncounter) {
 			return announceAndThrow(
 				channel,
-				'Cannot force a ring event while an encounter is in progress — the event would have no effect.'
+				'Cannot force a ring event while a fight is in progress — the event would have no effect.'
 			);
 		}
 

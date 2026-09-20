@@ -6,7 +6,7 @@ import { REASONABLE } from '../helpers/costs.js';
 export class CalisthenicsCard extends BoostCard {
 	static cardType = 'Calisthenics';
 	static permittedClassesAndTypes = [BARBARIAN, FIGHTER];
-	static description = 'Your daily workout routine limbers you up for battle.';
+	static description = 'Your daily workout routine limbers you up for a fight.';
 	static level = 2;
 	static cost = REASONABLE.cost;
 	static defaults = {

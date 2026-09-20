@@ -1,3 +1,5 @@
+import { toCombatActor } from '../events/combat.js';
+import type { CombatPayload } from '../events/types.js';
 import type { RoomEventBus } from '../events/index.js';
 
 interface MissOpts {
@@ -16,6 +18,7 @@ export function announceMiss(
 	let action = 'is blocked by';
 	let flavor = '';
 	let icon = '🛡';
+	const blocked = !curseOfLoki && !target.dead;
 
 	if (curseOfLoki) {
 		action = 'misses';
@@ -44,6 +47,13 @@ export function announceMiss(
 		type: 'announce',
 		scope: 'public',
 		text: `${player.icon} ${icon} ${target.icon}    ${player.givenName} ${action} ${targetIdentifier} ${flavor}\n`,
-		payload: {},
+		payload: {
+			combat: {
+				kind: 'miss',
+				actor: toCombatActor(player),
+				target: toCombatActor(target),
+				blocked,
+			} satisfies CombatPayload,
+		},
 	});
 }

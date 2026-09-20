@@ -13,7 +13,7 @@ interface InlineChoicesProps {
 
 /**
  * Multi-select: the equip/item flow sends questions containing "one or more"
- * or "card(s)". Single-select: spawn type/gender/avatar flows always expect
+ * or "card(s)". Single-select: monster type/pronoun/avatar flows always expect
  * exactly one index back.
  */
 function isMultiSelect(question: string): boolean {

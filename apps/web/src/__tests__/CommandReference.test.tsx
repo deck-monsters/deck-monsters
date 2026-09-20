@@ -19,8 +19,8 @@ describe('CommandReference', () => {
 
   it('renders command entries when open', () => {
     render(<CommandReference {...defaultProps} />);
-    // At least "spawn monster" should appear
-    expect(screen.getByText('spawn monster')).toBeTruthy();
+    // The canonical training command should appear.
+    expect(screen.getByText('train a monster')).toBeTruthy();
   });
 
   it('calls onClose when the close button is clicked', () => {
@@ -33,9 +33,9 @@ describe('CommandReference', () => {
   it('calls onInsertCommand when a command entry is clicked', () => {
     const onInsertCommand = vi.fn();
     render(<CommandReference {...defaultProps} onInsertCommand={onInsertCommand} />);
-    // Click spawn monster
-    fireEvent.click(screen.getByText('spawn monster'));
-    expect(onInsertCommand).toHaveBeenCalledWith('spawn monster');
+    // Click the canonical training command.
+    fireEvent.click(screen.getByText('train a monster'));
+    expect(onInsertCommand).toHaveBeenCalledWith('train a monster');
   });
 
   it('calls onInsertCommand with correct value for quick links', () => {

@@ -13,7 +13,7 @@ const hookMock = vi.hoisted(() => ({
   unequippedDeck: [] as string[],
   cardCompatibility: {},
   items: { character: [], monsters: [] },
-  spawnOptions: { types: [{ index: 0, label: 'Basilisk' }], genders: ['androgynous'] },
+  spawnOptions: { types: [{ index: 0, label: 'Basilisk' }], pronouns: [{ key: 'androgynous', label: 'they/them' }] },
   loading: false,
   busy: false,
   latestError: null as string | null,

@@ -1,3 +1,5 @@
+import { toCombatActor } from '../events/combat.js';
+import type { CombatPayload } from '../events/types.js';
 import type { RoomEventBus } from '../events/index.js';
 
 interface LeaveOpts {
@@ -18,6 +20,12 @@ export function announceLeave(
 		type: 'ring.fled',
 		scope: 'public',
 		text: `${monster.identityWithHp} flees from ${assailants.join(' and ')}\n`,
-		payload: { monster },
+		payload: {
+			monster,
+			combat: {
+				kind: 'flee',
+				actor: toCombatActor(monster),
+			} satisfies CombatPayload,
+		},
 	});
 }

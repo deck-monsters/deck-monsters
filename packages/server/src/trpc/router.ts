@@ -8,12 +8,15 @@ const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
 import {
+	PRONOUN_CHOICES,
+	PRONOUN_KEYS,
 	PROMPT_CANCELLED,
 	PromptCancelledError,
 	allMonsters,
 	getXpCapForLevel,
 	isCommandRefusal,
 	purchaseShopItem,
+	randomAvatarChoices,
 	type ShopItemSection,
 } from '@deck-monsters/engine';
 import { buildQuickActions } from '../quick-actions.js';
@@ -22,6 +25,7 @@ import { protectedProcedure, serviceProcedure } from './middleware.js';
 import type { RoomManager } from '../room-manager.js';
 import { ensureConnectorUser } from '../auth/connector-users.js';
 import { publicDisplayName } from '../public-display-name.js';
+import { createProfileRouter } from './profile.js';
 import {
 	commandsTotal,
 	wsConnectionsActive,
@@ -66,6 +70,20 @@ type InventoryMonsterSummary = {
 	cardSlots: number;
 	cards: string[];
 	presets: Record<string, string[]>;
+	// Current/max HP for the Workshop header (10b-bugs-fixed.md — the deck-slot bar was
+	// full nearly all the time and the one number a beastmaster actually needs, current
+	// HP, was not shown anywhere). `hp` is clamped at 0 for display: the engine can drive
+	// it negative on an overkill hit before `die()` clamps it back, and a raw negative
+	// would render an inverted/overflowing bar.
+	hp: number;
+	maxHp: number;
+	// Epoch ms when a fallen monster's revival completes, or null when the monster is
+	// alive, or dead with no revival timer running (e.g. permadeath, or the process
+	// restarted and the respawn timeout must be rescheduled). A restored timer's length is
+	// only its remaining delay, so the engine exposes the dedicated `respawnAt` completion
+	// epoch instead. Never send the timer handle or timeout length itself over the wire.
+	revivesAt: number | null;
+	battles: { wins: number; losses: number; total: number };
 };
 
 // Per-item summary for the web item list (roadmap/19-player-agency-and-items.md §7).
@@ -91,6 +109,10 @@ type ItemSummary = {
 };
 
 type InventorySummary = {
+	// Whether this member has a character in this room at all. Without it the web could
+	// not tell "no character yet" from "character with no monsters", and so could not
+	// offer first-run character creation — see `spawnMonster`'s `character` input.
+	hasCharacter: boolean;
 	monsters: InventoryMonsterSummary[];
 	unequippedDeck: string[];
 	cardCompatibility: Record<string, string[]>;
@@ -315,6 +337,33 @@ const summarizeInventory = ({
 			const xpIntoLevel = Math.max(0, xp - levelFloor);
 			const xpNeededForLevel = Math.max(1, levelCap - levelFloor + 1);
 
+			const dead = Boolean(record.dead);
+			const rawHp = typeof record.hp === 'number' && Number.isFinite(record.hp) ? record.hp : 0;
+			const maxHp = Math.max(
+				1,
+				typeof record.maxHp === 'number' && Number.isFinite(record.maxHp) ? record.maxHp : 1,
+			);
+			const respawnAt =
+				typeof record.respawnAt === 'number' && Number.isFinite(record.respawnAt)
+					? record.respawnAt
+					: undefined;
+			const revivesAt =
+				dead && respawnAt !== undefined
+					? respawnAt
+					: null;
+			const battlesRaw = record.battles as Record<string, unknown> | undefined;
+			const battles = {
+				wins: typeof battlesRaw?.wins === 'number' && Number.isFinite(battlesRaw.wins) ? battlesRaw.wins : 0,
+				losses:
+					typeof battlesRaw?.losses === 'number' && Number.isFinite(battlesRaw.losses)
+						? battlesRaw.losses
+						: 0,
+				total:
+					typeof battlesRaw?.total === 'number' && Number.isFinite(battlesRaw.total)
+						? battlesRaw.total
+						: 0,
+			};
+
 			return {
 				monster,
 				summary: {
@@ -326,7 +375,7 @@ const summarizeInventory = ({
 					level,
 					xpIntoLevel,
 					xpNeededForLevel,
-					dead: Boolean(record.dead),
+					dead,
 					inRing: inRing.has(monster),
 					inEncounter: Boolean(record.inEncounter),
 					cardSlots:
@@ -335,6 +384,10 @@ const summarizeInventory = ({
 							: 0,
 					cards: cards.map((card) => getDisplayName(card)),
 					presets,
+					hp: Math.min(maxHp, Math.max(0, rawHp)),
+					maxHp,
+					revivesAt,
+					battles,
 				} satisfies InventoryMonsterSummary,
 			};
 		})
@@ -371,6 +424,7 @@ const summarizeInventory = ({
 	}, {});
 
 	return {
+		hasCharacter: true,
 		monsters: monsterSummaries,
 		unequippedDeck: deck.map((card) => getDisplayName(card)),
 		cardCompatibility,
@@ -1022,22 +1076,87 @@ export function createRouter(roomManager: RoomManager) {
 						index,
 						label: String((Monster as unknown as { creatureType?: string }).creatureType ?? Monster.name),
 					})),
-					genders: ['female', 'male', 'androgynous'] as const,
+					pronouns: PRONOUN_KEYS.map((key, i) => ({ key, label: PRONOUN_CHOICES[i] })),
+				};
+			}),
+
+		/*
+		 * Everything the engine's character creation would otherwise *ask* for. The
+		 * workshop runs on a prompt-free channel (docs/engine-concurrency-and-timing.md),
+		 * so a first-run player has to answer these in the form, up front, instead.
+		 * The class is not offered: `helpers/all.ts` has exactly one entry, and the engine
+		 * no longer asks either.
+		 */
+		characterCreationChoices: protectedProcedure
+			.input(z.object({ roomId: z.string().uuid() }))
+			.query(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				return {
+					pronouns: PRONOUN_KEYS.map((key, i) => ({ key, label: PRONOUN_CHOICES[i] })),
+					// The console prompt's own avatar generator, so the two pickers cannot drift.
+					avatars: randomAvatarChoices(7),
+					suggestedName: await roomManager.getDisplayName(ctx.userId),
 				};
 			}),
 
 		spawnMonster: protectedProcedure
-			.input(z.object({ roomId: z.string().uuid(), type: z.number().int().nonnegative(), gender: z.enum(['male', 'female', 'androgynous']), name: z.string().trim().min(1).max(40), color: z.string().trim().min(1).max(100) }))
+			.input(z.object({
+				roomId: z.string().uuid(),
+				type: z.number().int().nonnegative(),
+				gender: z.enum(['male', 'female', 'androgynous']),
+				name: z.string().trim().min(1).max(40),
+				color: z.string().trim().min(1).max(100),
+				// First run only: training a monster was a brand-new player's first action in
+				// the workshop and it dead-ended on "create your character first" with nowhere
+				// to do that. Supplying these creates the character as part of the same spawn.
+				// Ignored when the player already has a character.
+				character: z.object({
+					name: z.string().trim().min(1).max(40),
+					gender: z.enum(['male', 'female', 'androgynous']),
+					avatar: z.string().min(1).max(16),
+				}).optional(),
+			}))
 			.mutation(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				if (!allMonsters[input.type]) {
 					throw new TRPCError({ code: 'BAD_REQUEST', message: 'That monster type is not available.' });
 				}
 				const [game, eventBus] = await Promise.all([roomManager.getGame(input.roomId), roomManager.getEventBus(input.roomId)]);
-				const character = game.characters?.[ctx.userId];
-				if (!character || typeof character.spawnMonster !== 'function') throw new TRPCError({ code: 'NOT_FOUND', message: 'Create your character before training a monster.' });
+				const existingCharacter = game.characters?.[ctx.userId];
+				if (existingCharacter && typeof existingCharacter.spawnMonster !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
+				}
+				if (!existingCharacter && !input.character) {
+					throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
+				}
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId: randomUUID() });
-				const monster = await runSerializedMutation(input.roomId, ctx.userId, () => {
+				const monster = await runSerializedMutation(input.roomId, ctx.userId, async () => {
+					let character = game.characters?.[ctx.userId];
+					if (!character && input.character) {
+						// `createCharacter` re-prompts when the chosen name clashes with another
+						// character in this game, and this channel throws on any question — so the
+						// clash has to be caught here, before the engine can ask about it.
+						if (game.findCharacterByName?.(input.character.name)) {
+							throw new TRPCError({ code: 'CONFLICT', message: 'That name is already taken in this room.' });
+						}
+						// Prompt-free because every question `createCharacter` asks has its answer
+						// supplied: class (index 0, the only one), gender, name and avatar.
+						// Creation and the spawn share this one serialized mutation, so no other
+						// request sees a half-finished onboarding. If the spawn itself fails the
+						// character does remain — better than losing the identity the player just
+						// chose, and the next Train attempt takes the existing-character path.
+						character = await game.getCharacter({
+							channel,
+							id: ctx.userId,
+							name: input.character.name,
+							type: 0,
+							gender: input.character.gender,
+							icon: input.character.avatar,
+						});
+					}
+					if (!character || typeof character.spawnMonster !== 'function') {
+						throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
+					}
 					const takenNames = Object.keys(game.getAllMonstersLookup?.() ?? {});
 					if (takenNames.includes(input.name.toLowerCase())) throw new TRPCError({ code: 'CONFLICT', message: 'That monster name is already taken.' });
 					return character.spawnMonster(channel, { type: input.type, gender: input.gender, name: input.name, color: input.color, game });
@@ -1053,6 +1172,7 @@ export function createRouter(roomManager: RoomManager) {
 				const character = game.characters?.[ctx.userId];
 				if (!character || typeof character !== 'object') {
 					return {
+						hasCharacter: false,
 						monsters: [],
 						unequippedDeck: [],
 						cardCompatibility: {},
@@ -2292,6 +2412,7 @@ export function createRouter(roomManager: RoomManager) {
 		leaderboard: leaderboardRouter,
 		admin: adminRouter,
 		auth: authRouter,
+		profile: createProfileRouter({ roomManager }),
 		health: t.procedure.query(() => ({
 			status: 'ok',
 			timestamp: new Date().toISOString(),

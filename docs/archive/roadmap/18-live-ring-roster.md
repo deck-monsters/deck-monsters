@@ -1,4 +1,5 @@
 # Live Ring Roster
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Web UI
 **Status**: ✅ Done
@@ -150,7 +151,7 @@ Not built, no demand yet:
 
 The roster was the first half of making a live fight followable; the second half was the
 feed itself. Two measured changes, both documented in
-[`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md):
+[`docs/engine-concurrency-and-timing.md`](../../engine-concurrency-and-timing.md):
 
 - **Content-aware pacing.** Pauses now scale with the message just published, gaps no
   longer stack at beat boundaries, and no single gap exceeds 8s. Before: the pause after a

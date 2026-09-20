@@ -149,7 +149,7 @@ export class DelayedHit extends HitCard {
 		 * they trigger. See 10b-bugs-fixed.md #130.
 		 */
 		this.emit('narration', {
-			narration: `${this.icon} ${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the battlefield, waiting for ${his} enemy to reveal themselves.`,
+			narration: `${this.icon} ${delayingPlayer.givenName} spreads ${delayingPlayer.pronouns.his} focus across the ring, waiting for ${his} enemy to reveal themselves.`,
 		});
 
 		ring.encounterEffects = [...ring.encounterEffects, delayedHitEffect];

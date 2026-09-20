@@ -81,7 +81,7 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 	// which implicitly creates the character.
 	if (!character) {
 		return [
-			{ label: 'Spawn a monster', command: 'spawn monster' },
+			{ label: 'Train a monster', command: 'train a monster' },
 			{ label: 'Look at the ring', command: 'look at the ring' },
 		];
 	}
@@ -92,7 +92,7 @@ export function buildQuickActions(game: QuickActionsGame, userId: string): Quick
 
 	if (monsters.length === 0) {
 		return [
-			{ label: 'Spawn a monster', command: 'spawn monster' },
+			{ label: 'Train a monster', command: 'train a monster' },
 			{ label: 'Look at the ring', command: 'look at the ring' },
 		];
 	}

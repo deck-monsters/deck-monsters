@@ -1,8 +1,9 @@
 # Discord Connector Adapter
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Connector  
 **Priority**: High (first connector to ship)  
-**Status**: Complete — core infrastructure, event bus bridging, prompt handling, guild-room management, embed wiring, and the full slash command surface (including `/preset`) are implemented, with admin role support and slash command test coverage. Remaining: production hardening through real-world use.
+**Status**: Complete — core infrastructure, event bus bridging, prompt handling, guild-room management, embed wiring, and the full slash command surface (including `/preset`) are implemented, with admin role support and slash command test coverage.
 
 ## Overview
 

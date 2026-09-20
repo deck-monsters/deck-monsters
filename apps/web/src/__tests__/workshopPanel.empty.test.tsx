@@ -8,7 +8,11 @@ const hookMock = vi.hoisted(() => ({
   items: { character: [], monsters: [] },
   spawnOptions: {
     types: [{ index: 0, label: 'Basilisk' }, { index: 2, label: 'Jinn' }],
-    genders: ['female', 'male', 'androgynous'],
+    pronouns: [
+      { key: 'male', label: 'he/him' },
+      { key: 'female', label: 'she/her' },
+      { key: 'androgynous', label: 'they/them' },
+    ],
   },
   loading: false,
   busy: false,
@@ -59,7 +63,7 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
   it('names the command that gets you unstuck', () => {
     // An empty state that does not say what to do next is only half of one.
     render(<WorkshopPanel roomId="room-1" />);
-    expect(screen.getByText('spawn a monster')).toBeTruthy();
+    expect(screen.getByText('train a monster')).toBeTruthy();
   });
 
   it('trains a fully specified monster without opening a console flow', async () => {
@@ -68,7 +72,7 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
     fireEvent.change(screen.getByLabelText('Type'), { target: { value: '2' } });
-    fireEvent.change(screen.getByLabelText('Gender'), { target: { value: 'female' } });
+    fireEvent.change(screen.getByLabelText('Pronouns'), { target: { value: 'female' } });
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Saffron' } });
     fireEvent.change(screen.getByLabelText('Appearance'), { target: { value: 'violet smoke' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Train' }).closest('form')!);
@@ -79,7 +83,7 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
       name: 'Saffron',
       color: 'violet smoke',
     }));
-    expect(await screen.findByRole('status')).toHaveTextContent('Saffron the Jinn joined your stable.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Saffron the Jinn answers your call.');
     expect(screen.queryByLabelText('Name')).toBeNull();
   });
 
@@ -118,6 +122,10 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
         cardSlots: 2,
         cards: [],
         presets: {},
+        hp: 20,
+        maxHp: 20,
+        revivesAt: null,
+        battles: { wins: 0, losses: 0, total: 0 },
       },
     ];
     const { container } = render(<WorkshopPanel roomId="room-1" />);
@@ -143,6 +151,10 @@ describe('WorkshopPanel: only one monster in the ring at a time (#115)', () => {
     cardSlots: 1,
     cards: ['Hit'],
     presets: {},
+    hp: 20,
+    maxHp: 20,
+    revivesAt: null as number | null,
+    battles: { wins: 0, losses: 0, total: 0 },
   });
 
   /**

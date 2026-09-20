@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
-import { eq, and, count, gte, desc, gt, or, asc } from 'drizzle-orm';
+import { eq, and, count, gte, desc, gt, asc } from 'drizzle-orm';
 import { createLogger } from './logger.js';
 
 const log = createLogger('room-manager');

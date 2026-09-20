@@ -28,6 +28,37 @@ export type EventType =
 
 export type EventScope = 'public' | 'private';
 
+/** A stable, serializable combat participant projection for public event payloads. */
+export interface CombatActor {
+	name: string;
+	creatureType: string;
+	icon: string;
+	isBoss: boolean;
+}
+
+/**
+ * Machine-readable combat detail carried beside the existing narration.
+ *
+ * Consumers must read this public DTO rather than inferring combat outcomes
+ * from prose, which can change without a protocol change.
+ */
+export type CombatPayload =
+	| { kind: 'card'; actor: CombatActor; card: { name: string; cardClass?: string } }
+	| {
+			kind: 'hit';
+			actor: CombatActor;
+			target: CombatActor;
+			damage: number;
+			prevHp: number;
+			hp: number;
+			maxHp: number;
+			selfInflicted: boolean;
+	  }
+	| { kind: 'miss'; actor: CombatActor; target: CombatActor; blocked: boolean }
+	| { kind: 'heal'; actor: CombatActor; target: CombatActor; amount: number; hp: number; maxHp: number }
+	| { kind: 'death'; target: CombatActor; actor?: CombatActor; destroyed: boolean }
+	| { kind: 'flee'; actor: CombatActor };
+
 export interface GameEvent {
 	id: string;
 	roomId: string;

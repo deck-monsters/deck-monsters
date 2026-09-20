@@ -112,7 +112,7 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 		}
 
 		reasonList.push(
-			`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a ${monster.displayLevel} monster lasting ${rounds} rounds in battle with ${levelText}`
+			`Gained ${xp > 0 ? xp : 'no'} XP for ${forText} as a ${monster.displayLevel} monster lasting ${rounds} rounds in a fight with ${levelText}`
 		);
 
 		gainedXP += xp;
@@ -152,7 +152,7 @@ export const calculateXP = (contestant: Contestant, contestants: Contestant[]): 
 	}
 
 	reasonList.push(
-		`Gained ${xp > 0 ? xp : 'no'} XP for lasting ${rounds} rounds in battle against ${contestants.length - 1} opponent${contestants.length - 1 === 1 ? '' : 's'}`
+		`Gained ${xp > 0 ? xp : 'no'} XP for lasting ${rounds} rounds in a fight against ${contestants.length - 1} opponent${contestants.length - 1 === 1 ? '' : 's'}`
 	);
 	gainedXP += xp;
 

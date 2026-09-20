@@ -1,3 +1,5 @@
+import { toCombatActor } from '../events/combat.js';
+import type { CombatPayload } from '../events/types.js';
 import type { RoomEventBus } from '../events/index.js';
 
 interface DeathOpts {
@@ -23,5 +25,14 @@ So it is written. So it is done.
 		text = `💀  ${monster.identityWithHp} is killed by ${assailant.identityWithHp}\n`;
 	}
 
-	eb.publish({ type: 'announce', scope: 'public', text, payload: { monster, assailant, destroyed } });
+	const combat: CombatPayload = {
+		kind: 'death',
+		target: toCombatActor(monster),
+		// Every caller today supplies an assailant (the text above depends on it); the
+		// optional `actor` exists so a future cause-less death can reuse the DTO shape.
+		...(assailant === undefined ? {} : { actor: toCombatActor(assailant) }),
+		destroyed,
+	};
+
+	eb.publish({ type: 'announce', scope: 'public', text, payload: { monster, assailant, destroyed, combat } });
 }

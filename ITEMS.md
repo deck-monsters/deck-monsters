@@ -23,7 +23,7 @@ directly below the ring roster for its carried, currently compatible items.
 ```text
 look at items                 list pocket and monster-carried items
 look at [item name]           inspect an item
-give [item] to [monster]      stock a monster before battle
+give [item] to [monster]      stock a monster before a fight
 take [item] from [monster]    return it to your pocket
 use [item] on [monster]       use a named item
 use item                      choose an item to use on yourself
