@@ -830,7 +830,8 @@ describe('game.ts', () => {
 });
 
 describe('Game.getCharacter name healing', () => {
-	// Character creation prompts for type / gender / icon; answer the first choice
+	// Character creation prompts for gender / icon (the class prompt is skipped while
+	// Beastmaster is the only class); answer the first choice
 	// for each so these tests exercise only the name-healing branch.
 	const silentChannel = (async (opts: { question?: string }) =>
 		opts?.question ? '0' : undefined) as never;
