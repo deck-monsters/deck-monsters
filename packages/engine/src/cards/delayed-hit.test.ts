@@ -6,6 +6,7 @@ import { REASONABLE } from '../helpers/costs.js';
 import { DEFENSE_PHASE } from '../constants/phases.js';
 import { DelayedHit } from './delayed-hit.js';
 import { HitCard } from './hit.js';
+import { HealCard } from './heal.js';
 import Basilisk from '../monsters/basilisk.js';
 
 describe('./cards/delayed-hit.ts', () => {
@@ -171,6 +172,55 @@ ${customHit.stats}`);
 					expect(triggerPayload?.owner).to.equal(player);
 				})
 				.finally(() => delayedHit.off('narration', onNarration));
+		});
+
+		/**
+		 * Reported as delayed hits "playing at odd times": a payoff line landing right after
+		 * an unrelated card (a Heal, in the live capture) with "responds to the blow X gave
+		 * him" when X had just healed, not struck. See 10b-bugs-fixed.md #157.
+		 *
+		 * The blow was real, just earlier: it was another Delayed Hit's counter-attack. The
+		 * wrappers nest in arming order, so the earlier-armed card's check runs before the
+		 * later-armed card's counter lands. That hit then sat unanswered until the next card
+		 * anyone played.
+		 */
+		it('answers a blow dealt by another delayed hit in the same play, not after the next unrelated card', async () => {
+			const targetsDelayedHit = new DelayedHit();
+			const playersDelayedHit = new DelayedHit();
+			const strike = new HitCard();
+			const heal = new HealCard();
+			sinon.stub(strike, 'hitCheck').returns({
+				attackRoll: strike.getAttackRoll(target),
+				success: true,
+				strokeOfLuck: false,
+				curseOfLoki: false,
+			});
+			const narrations: string[] = [];
+			const onNarration = (_klass: unknown, _card: unknown, { narration }: { narration: string }) =>
+				narrations.push(narration);
+			targetsDelayedHit.on('narration', onNarration);
+
+			try {
+				// `target` arms first, `player` second — the order that leaves a blow unanswered.
+				await targetsDelayedHit.play(target, target, ring);
+				await playersDelayedHit.play(player, player, ring);
+				expect(ring.encounterEffects.length).to.equal(2);
+
+				// `target` strikes `player` through the real card-play path, so both wrappers
+				// apply. `player`'s delayed hit answers the blow; that counter is itself the
+				// blow `target`'s delayed hit has been waiting for, and must be answered now.
+				await strike.play(target, player, ring);
+				expect(ring.encounterEffects.length, 'both delayed hits should be spent').to.equal(0);
+				expect(delayedHitHitCheckStub.callCount).to.equal(2);
+				expect(narrations.filter(line => line.includes('finds its moment'))).to.have.length(1);
+
+				// A later, harmless card must not spring anything.
+				narrations.length = 0;
+				await heal.play(target, target, ring);
+				expect(narrations.filter(line => line.includes('finds its moment'))).to.have.length(0);
+			} finally {
+				targetsDelayedHit.off('narration', onNarration);
+			}
 		});
 
 		it('does not open a narration with a blank line', () => {

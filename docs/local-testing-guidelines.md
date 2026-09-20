@@ -44,6 +44,31 @@ This guide captures repeatable local-testing principles for sessions where requi
   - Observe multiple encounter cycles before concluding.
   - Capture timing/strength notes from ring feed, not memory.
 
+## Staging a fight quickly
+
+The interactive `equip <monster>` flow is a multi-prompt loop and easy to strand a browser
+agent in. To get a fight going from the console in a few commands:
+
+- `equip <monster> with "Hit", "Hit", "Heal", …` equips in one shot. Card names go in double
+  quotes, comma-separated; unavailable names are reported and skipped, and any slots left
+  over reopen the interactive prompt (answer with **Done equipping**).
+- `equip` **rebuilds the hand from scratch** (`monster.cards = cards`), returning the old hand
+  to your deck. Equipping one card onto a monster that held eight leaves it holding one.
+- A monster may only enter the ring with a **full** hand (`cards.length === cardSlots`,
+  usually 9) — "Only an evil master would send their monster into battle without enough
+  cards." A starting deck holds about 20 cards, enough for two full hands.
+- `send <monster> to the ring` then `summon a boss` (3 per day) gives two contestants and a
+  60s countdown without needing a second player.
+- Fights end with `clearRing()`; the roster empties and the pane header goes back to
+  `boss in ~Nm`. Revive and healing checks: `TIME_TO_HEAL_MS` is 30s per hp, so a monster
+  revived at 1 hp should read `6/30` or so after three minutes.
+
+If a browser-driving agent has already saturated its screenshot budget, a headed Chrome
+launched by `playwright-core` on `DISPLAY=:1` with `--remote-debugging-port` can be driven
+from short Node scripts (attach with `connectOverCDP`) while the screen recorder captures it.
+Playwright's `page.screenshot` does **not** include browser chrome — dismiss Chrome's
+"Save password?" bubble (it covers the roster) before recording.
+
 ## Reusable rooms from this session
 
 These rooms were created during local manual testing and can be reused in future sessions.

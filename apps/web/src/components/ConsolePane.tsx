@@ -17,7 +17,7 @@ import {
 } from '../utils/fight-highlights.js';
 import FeedList from './FeedList.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
-import { useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
+import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
 interface ActivePrompt {
   requestId: string;
@@ -92,6 +92,35 @@ function isPendingPromptSnapshot(value: unknown): value is PendingPromptSnapshot
   );
 }
 
+/**
+ * Reports whether the end of the active prompt (its choice buttons) is on screen.
+ * The waiting banner below the input exists for a prompt the player cannot see
+ * (#142); when the choices are visible it is redundant and covers the input on a
+ * phone. Virtuoso only mounts rows near the viewport, so unmounting is itself a
+ * "not visible" signal; IntersectionObserver refines that for a mounted-but-scrolled
+ * row. Where IntersectionObserver is unavailable, mounted counts as visible.
+ */
+function PromptVisibilitySentinel({ onVisibilityChange }: { onVisibilityChange: (visible: boolean) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      onVisibilityChange(true);
+      return () => onVisibilityChange(false);
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      onVisibilityChange(entry?.isIntersecting ?? false);
+    });
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      onVisibilityChange(false);
+    };
+  }, [onVisibilityChange]);
+  return <div ref={ref} aria-hidden="true" className="prompt-visibility-sentinel" style={{ height: 1 }} />;
+}
+
 export default function ConsolePane({ roomId, isActive, headerActions }: ConsolePaneProps) {
   const { user } = useAuth();
   const { registerInsertFn } = useCommandInsert();
@@ -101,6 +130,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // a classification decision and must never itself trigger a render.
   const damageHistoryRef = useRef(createDamageHistory());
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
+  const [activePromptInView, setActivePromptInView] = useState(false);
   const activePromptIdRef = useRef<string | null>(null);
   // requestIds resolved locally (answered, cancelled, or timed out) this session. The 3s
   // `pendingPrompt` poll can have a request already in flight when one of those happens,
@@ -131,7 +161,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
   const reconnectNoticeShownRef = useRef(false);
-  const autoScroll = useFeedAutoScroll();
+  const autoScroll = useFeedAutoScroll(virtuosoRef);
   const ftuxStorageKey = useMemo(
     () => (user?.id ? `ftuxComplete:${user.id}` : 'ftuxComplete'),
     [user?.id]
@@ -176,17 +206,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      autoScroll.snapToBottom();
       setIsAtBottom(true);
-      autoScroll.resetToBottom();
     }
   }, [isActive, autoScroll]);
 
-  const scrollToBottom = useCallback(() => {
-    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-    setIsAtBottom(true);
-    autoScroll.enable();
-  }, [autoScroll]);
+  // Virtuoso reports arrival at the bottom itself; see `jumpToBottom` for why the pane no
+  // longer claims it up front.
+  const scrollToBottom = autoScroll.jumpToBottom;
 
   const { data: myMonsters, refetch: refetchMyMonsters } = trpc.game.myMonsters.useQuery(
     { roomId },
@@ -807,15 +834,19 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         {headerActions && <span className="pane-header-actions">{headerActions}</span>}
       </header>
 
-      <div className="pane-feed-area">
+      {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
+          wheel/touch/pointer/key events bubble up from it (see useFeedAutoScroll). */}
+      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
       <Virtuoso
         ref={virtuosoRef}
+        scrollerRef={autoScroll.setScroller}
         className="event-feed"
         role="log"
         aria-live="polite"
         aria-label="Console messages"
         tabIndex={0}
         data={consoleEvents}
+        atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
         /*
          * Virtuoso's own follow-output, matching RingPane. This used to be `false` with the
          * scroll driven imperatively instead: every append ran
@@ -862,6 +893,9 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
                     timeoutSeconds={ev.promptData.timeoutSeconds}
                   />
                 )}
+                {ev.promptData.requestId === activePromptId && (
+                  <PromptVisibilitySentinel key={ev.promptData.requestId} onVisibilityChange={setActivePromptInView} />
+                )}
               </li>
             );
           }
@@ -879,10 +913,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
             </li>
           );
         }}
-        atBottomStateChange={(atBottom) => {
-          setIsAtBottom(atBottom);
-          autoScroll.onAtBottomChange(atBottom);
-        }}
+        atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
 
       {!isAtBottom && (
@@ -994,7 +1025,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         aria-label="Command input"
         style={{ position: 'relative' }}
       >
-        {activePromptId && (
+        {/*
+         * Shown only when the prompt is off-screen: the banner exists to explain a
+         * prompt the player cannot see (#142). When the prompt's own choice buttons
+         * are visible in the feed, this banner is redundant and covers the input on
+         * a phone — the pane header's "Cancel action" button already covers that
+         * case. See 10b-bugs-fixed.md #158.
+         */}
+        {activePromptId && !activePromptInView && (
           <div className="command-blocked-banner" role="status">
             <span>A command is waiting for your answer. Command suggestions are paused.</span>
             <button type="button" className="btn" onClick={() => void handleCancelFlow()}>

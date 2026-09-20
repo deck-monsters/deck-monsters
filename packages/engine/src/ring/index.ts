@@ -89,6 +89,8 @@ export interface RingContestantSnapshot {
 	owner: string | null;
 	/** Owning player's user id, so a client can highlight "your" monsters. */
 	userId: string | null;
+	/** True for the single contestant currently taking their turn, so a client can highlight it. */
+	acting: boolean;
 }
 
 export interface Contestant {
@@ -167,6 +169,13 @@ export class Ring extends BaseClass {
 	private readonly roomMonsterLevelsProvider?: () => number[];
 	inEncounter: boolean = false;
 	encounter?: Record<string, any>;
+	/**
+	 * The contestant currently taking their turn, so the roster UI can highlight whose
+	 * turn it is. Ephemeral like `inEncounter`/`encounter` — never options-backed, never
+	 * serialized. Set in `fight()` right before `playerTurnBegin`, cleared at the start
+	 * and end of every encounter.
+	 */
+	activeContestant?: Contestant;
 	fightTimer?: ReturnType<typeof setTimeout>;
 	bossTimer?: ReturnType<typeof setTimeout>;
 	/** Pending per-boss despawn timers, so `dispose()` can cancel all of them. */
@@ -340,6 +349,7 @@ export class Ring extends BaseClass {
 				const contestantIndex = updated.indexOf(contestant);
 				updated.splice(contestantIndex, 1);
 				this.contestants = updated;
+				this.disposeTransientContestant(contestant);
 
 				if (this.contestants.length < 1) {
 					this.clearRing();
@@ -542,6 +552,7 @@ export class Ring extends BaseClass {
 		this.bossOnlyPacingEngaged = false;
 		this.inEncounter = true;
 		this.encounter = {};
+		this.activeContestant = undefined;
 
 		// Apply the ring event against the final roster — contestants may have joined or
 		// withdrawn since it was rolled during the countdown.
@@ -568,6 +579,7 @@ export class Ring extends BaseClass {
 		this.contestants.forEach(contestant => contestant.monster.endEncounter());
 		this.inEncounter = false;
 		delete this.encounter;
+		this.activeContestant = undefined;
 		// Post-fight HP is what players check between rounds; publish the final board.
 		this.publishState();
 	}
@@ -584,6 +596,8 @@ export class Ring extends BaseClass {
 	 * `ac` is read through the live getter so per-encounter boosts are reflected as
 	 * they change; `team` and `targetingStrategy` come off the contestant rather than
 	 * the monster because ring events set them per-encounter (see `Contestant`).
+	 * `acting` flags the single contestant currently taking their turn (from
+	 * `activeContestant`), so a client can highlight whose turn it is.
 	 */
 	contestantSnapshots(): RingContestantSnapshot[] {
 		return this.contestants.map(({ monster, character, userId, isBoss, team }) => ({
@@ -599,6 +613,7 @@ export class Ring extends BaseClass {
 			team: team ?? null,
 			owner: isBoss ? null : (character?.givenName ?? null),
 			userId: isBoss ? null : (userId ?? null),
+			acting: this.inEncounter && this.activeContestant?.monster === monster,
 		}));
 	}
 
@@ -639,9 +654,8 @@ export class Ring extends BaseClass {
 		this.nextFightAt = null;
 		this.ringEvent = undefined;
 		this.endEncounter();
-		for (const { monster, character } of this.contestants) {
-			(monster as { disposeTimers?: () => void })?.disposeTimers?.();
-			(character as { disposeTimers?: () => void })?.disposeTimers?.();
+		for (const contestant of this.contestants) {
+			this.disposeTransientContestant(contestant);
 		}
 		for (const timer of this.bossDespawnTimers) {
 			clearTimeout(timer);
@@ -650,6 +664,23 @@ export class Ring extends BaseClass {
 		this.contestants = [];
 		this.emit('clear');
 		this.publishState();
+	}
+
+	/**
+	 * Stop the background timers of a contestant nobody else owns.
+	 *
+	 * Bosses (and harness sim monsters, which are built as bosses) are created by the
+	 * ring and belong to no beastmaster, so once the ring lets go of them the healing
+	 * interval and any respawn timer would leak forever — `Game.dispose()` never sees
+	 * them. Player monsters are the opposite: they live on in their beastmaster's
+	 * roster and MUST keep healing and reviving after the ring releases them. Disposing
+	 * them here (which every fight did via `clearRing()`) is what left revived monsters
+	 * parked at 1 hp for hours until the room was restored from state (#156).
+	 */
+	private disposeTransientContestant({ monster, character, isBoss }: Contestant): void {
+		if (!isBoss) return;
+		(monster as { disposeTimers?: () => void })?.disposeTimers?.();
+		(character as { disposeTimers?: () => void })?.disposeTimers?.();
 	}
 
 	dispose(): void {
@@ -859,7 +890,14 @@ export class Ring extends BaseClass {
 						});
 					}
 
+					// Set before the emit (not after) so any listener reacting to
+					// `playerTurnBegin` already sees the correct actor, then publish once
+					// here so the roster highlight of whose turn it is lands before the
+					// card box does. One extra publish per turn is negligible next to the
+					// per-card publish already below.
+					this.activeContestant = playerContestant;
 					this.emit('playerTurnBegin', { contestant: playerContestant, round });
+					this.publishState();
 
 					const targetResult = getTarget({
 						contestants: getAllActiveContestants(),
@@ -1136,7 +1174,7 @@ export class Ring extends BaseClass {
 		this.eventBus.publish({
 			type: 'ring.fight',
 			scope: 'public',
-			text: `Fight concluded: ${deaths} dead after ${rounds} rounds`,
+			text: `Fight concluded: ${deaths} dead after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}`,
 			payload: {
 				contestants,
 				deadContestants,

@@ -13,6 +13,8 @@ export interface RingContestantSnapshot {
   team: string | null;
   owner: string | null;
   userId: string | null;
+  /** Optional — older ring.state payloads / the polled seed may omit it. */
+  acting?: boolean;
 }
 
 interface RingRosterProps {
@@ -59,17 +61,23 @@ function ContestantRow({
 }) {
   const ratio = hpRatio(contestant.hp, contestant.maxHp);
   const band = contestant.dead ? 'critical' : hpBand(ratio);
-  const label = `${contestant.name}, ${contestant.dead ? 'defeated' : `${contestant.hp} of ${contestant.maxHp} hit points`}, armor class ${contestant.ac}`;
+  const isActing = Boolean(contestant.acting) && !contestant.dead;
+  const label = `${contestant.name}, ${contestant.dead ? 'defeated' : `${contestant.hp} of ${contestant.maxHp} hit points`}, armor class ${contestant.ac}${isActing ? ', acting now' : ''}`;
 
   return (
     <li
-      className={`roster-row${contestant.dead ? ' roster-row-dead' : ''}${isMine ? ' roster-row-mine' : ''}`}
+      className={`roster-row${contestant.dead ? ' roster-row-dead' : ''}${isMine ? ' roster-row-mine' : ''}${isActing ? ' roster-row-acting' : ''}`}
       aria-label={label}
     >
       <div className="roster-row-head">
         <span className="roster-name">
-          {contestant.icon && <span aria-hidden="true">{contestant.icon} </span>}
-          {contestant.name}
+          {isActing && (
+            <span className="roster-acting-marker" aria-hidden="true">▶</span>
+          )}
+          {contestant.icon && (
+            <span className="roster-icon" aria-hidden="true">{contestant.icon} </span>
+          )}
+          <span className="roster-name-text">{contestant.name}</span>
           {contestant.isBoss && <span className="roster-tag roster-tag-boss">BOSS</span>}
           {contestant.team && <span className="roster-tag">{contestant.team}</span>}
         </span>

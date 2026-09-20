@@ -311,3 +311,12 @@ new ownership checks reading `optionsStore` directly.
   that exists only as an anonymous closure (no handle kept anywhere) cannot
   be cancelled later no matter how thorough `dispose()` is. `Ring`'s
   `bossDespawnTimers` Set is the pattern to copy for anything similar.
+- **Creature timers belong to whoever owns the creature, not to the ring.** A monster's
+  passive-healing interval and respawn timeout must keep running after it leaves the
+  ring — that is *when* they matter. `Ring.clearRing()` / `removeMonster()` therefore
+  dispose only transient contestants (`isBoss`, which also covers harness sim monsters);
+  player monsters are torn down by `Game.dispose()` (room unload) or
+  `Beastmaster.dropMonster()` (dismissal). For months `clearRing()` disposed every
+  contestant, so a monster's healing stopped for good after its first fight and a revived
+  monster sat at 1 hp until the room was next restored from state (#156). If you add a
+  timer to a creature, wire it into `disposeTimers()` and nothing else.

@@ -5,6 +5,7 @@ import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
+import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
 import { fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
@@ -129,7 +130,6 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const shouldFollowOutputRef = useRef(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
   // No HTTP polling needed.
   const [timerState, setTimerState] = useState<TimerState>({
@@ -182,6 +182,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
     });
   }, []);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const autoScroll = useFeedAutoScroll(virtuosoRef);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
   // True once the first handshake has landed, so a later handshake is a *re*connect.
@@ -361,28 +362,25 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
       seedCursor(dedupedHistory[dedupedHistory.length - 1]!.id);
     }
 
-    if (shouldFollowOutputRef.current) {
+    if (autoScroll.shouldFollowRef.current) {
       // Jump to bottom after history loads only when auto-follow is enabled.
       requestAnimationFrame(() => {
         virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       });
     }
-  }, [history, seedCursor]);
+  }, [history, seedCursor, autoScroll]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      autoScroll.snapToBottom();
       setIsAtBottom(true);
-      shouldFollowOutputRef.current = true;
     }
-  }, [isActive]);
+  }, [isActive, autoScroll]);
 
-  const scrollToBottom = useCallback(() => {
-    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-    setIsAtBottom(true);
-    shouldFollowOutputRef.current = true;
-  }, []);
+  // Virtuoso reports arrival at the bottom itself; see `jumpToBottom` for why the pane no
+  // longer claims it up front.
+  const scrollToBottom = autoScroll.jumpToBottom;
 
   // Compute the timer badge inline — tick state re-renders every second to keep it current
   let timerBadge: string | null = null;
@@ -448,22 +446,21 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
       />
       {myFightingMonster && <RingItemsPanel roomId={roomId} monsterName={myFightingMonster.name} />}
 
-      <div className="pane-feed-area">
+      {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
+          wheel/touch/pointer/key events bubble up from it. */}
+      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
       <Virtuoso
         ref={virtuosoRef}
+        scrollerRef={autoScroll.setScroller}
         className="event-feed"
         role="log"
         aria-live="polite"
         aria-label="Ring events"
         tabIndex={0}
         data={events}
-        // Virtuoso's default bottom tolerance is deliberately tight. On mobile, fractional
-        // layout pixels and the roster resizing can leave the viewport a few pixels short
-        // of that boundary even though the reader never scrolled away. Treat one compact
-        // feed row as "still pinned" so new narration keeps following reliably.
-        atBottomThreshold={72}
+        atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
         followOutput={(atBottom) =>
-          shouldFollowOutputRef.current || atBottom ? 'smooth' : false
+          autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
         }
         components={{
           List: FeedList,
@@ -505,14 +502,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
             </li>
           );
         }}
-        atBottomStateChange={(atBottom) => {
-          setIsAtBottom(atBottom);
-          if (atBottom) {
-            shouldFollowOutputRef.current = true;
-            return;
-          }
-          shouldFollowOutputRef.current = false;
-        }}
+        atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
 
       {!isAtBottom && (

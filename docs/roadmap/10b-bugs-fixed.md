@@ -3200,7 +3200,10 @@ the waiting banner when a stale poll echoes an already-answered prompt": answers
 prompt by typing, confirms the banner clears, then replays the poll with the same requestId
 still marked pending and confirms the banner stays closed.
 
-**Status**: Fixed.
+**Status**: Fixed — but this was not the whole of what the screenshot showed. The same
+capture recurred after this fix landed, and the remaining cause is #158: the banner was
+*designed* to render for the entire unanswered life of a prompt, including while its choice
+buttons are on screen.
 
 ### 154. Cloud Agent builds stopped at an unattended `fuse.conf` prompt — FIXED
 
@@ -3253,5 +3256,216 @@ requiring root-owned global package state.
 `~/.nvm`, the implicit global install reproduced `EACCES`; installing with the
 derived NVM prefix succeeded and `railway --version` reported `5.30.3`. The
 same installation completed without `EACCES` in the successful draft build.
+
+**Status**: Fixed.
+
+### 156. A revived monster sat at 1 hp for hours — every fight killed its healing timer — FIXED
+
+**Symptom**: after a test battle a defeated monster was revived immediately, its revival
+timer ran out, and it was still at 1 hp hours later. This is what PRs #380–#382 were
+reaching for; they made healing wall-clock based (#151), which is why a server restart *did*
+heal such a monster, and then stopped.
+
+**Root cause**: `Ring.clearRing()` — which runs synchronously at the end of every fight, in
+`fight().then(...)` right after `fightConcludes()` — called `disposeTimers()` on every
+contestant's monster and character. `disposeTimers()` is `clearInterval(healingInterval)`
+plus `clearTimeout(respawnTimeout)`. That was added in the April harness commit
+(`3ca267a`) so throwaway simulation monsters would not keep the Node process alive, but
+player monsters are not throwaway: they live on in their beastmaster's roster. So from a
+monster's first fight onward its passive-healing interval was dead. Nothing called
+`applyPassiveHealing()` again until the room was next restored from state, and the
+respawn callback (`hp = 1, hpUpdatedAt = now`) had no interval behind it.
+
+Sequence in the report: fight ends → `clearRing()` disposes Toyota's timers → owner types
+`revive Toyota` → `respawn()` arms a fresh timeout (fine — `respawnTimeout` had been wiped)
+→ timeout fires → 1 hp → no interval → 1 hp forever. #381/#382 never touched this because
+their tests construct monsters directly and never run them through a ring.
+
+**Fixed**: `clearRing()` and `removeMonster()` dispose only *transient* contestants
+(`isBoss`, which also covers harness sim monsters — `buildContestant` marks them bosses).
+Player monsters are torn down by their owners: `Game.dispose()` on room unload, and now
+`Beastmaster.dropMonster()` on dismissal, which previously leaked the dropped monster's
+interval and any pending revival. `disposeTransientContestant()` on `Ring` is the single
+place that decides; see the ownership rule added to `engine-concurrency-and-timing.md`.
+
+**Found alongside it**: the server's quick-action chips still offered `Revive X` for a
+monster whose revival timer was already running. `Beastmaster.reviveMonster` has excluded
+those since #380, so the chip could only answer "You don't have any monsters to revive."
+`quick-actions.ts` now mirrors the same `respawnTimeout` exclusion.
+
+**Tests**: `ring/index.test.ts` — "keeps passive healing and pending revivals running for
+monsters the ring releases" (a wounded and a fallen player monster go through
+`clearRing()`; the wounded one heals on the interval, the fallen one revives on schedule and
+then heals). `beastmaster.test.ts` — "stops a dropped monster's background timers".
+`quick-actions.test.ts` — "does not offer to revive a monster whose revival timer is already
+running".
+
+**Live verification** (Test Room A): Fang was killed in a three-way boss fight at 01:06:34,
+`revive Fang` at 01:08:43 revived him instantly at 1 hp (beginner), and `look at monsters` at
+01:11:45 read `hp: 6/30` — five ticks of `TIME_TO_HEAL_MS` after a fight had ended with
+`clearRing()`. Chuvvo, left at 1 hp by an earlier fight in the same session, was back to
+33/33 thirty-five minutes later. Both would have sat at 1 hp before this fix.
+
+**Status**: Fixed.
+
+### 157. A Delayed Hit fired after an unrelated card, answering a blow from a turn ago — FIXED
+
+**Symptom** (live capture): Ben Franklin plays Heal and heals himself 3 hp. The next line is
+"🤛 George Washington's Delayed Hit finds its moment: he immediately responds to the blow Ben
+Franklin gave him." Ben gave no blow; he drank. Reported as delayed hits "playing at odd
+times". #130/#131/#149 improved what the payoff *says*; none of them changed *when* it runs.
+
+**Root cause**: the card arms a `ring.encounterEffects` closure that wraps every subsequent
+card's `play()` and, after the play resolves, checks whether the delayer's newest hit from
+someone else is newer than when the card was played. That check is per-wrapper and runs
+once per play. When two Delayed Hits are armed — the default deck carries two copies, so a
+two-monster fight where both decks hold one is routine — `applyEffects` nests the wrappers in
+arming order, so the *earlier*-armed card's check runs before the *later*-armed card's
+counter-attack lands. If that counter is itself the blow the earlier card was waiting for
+(George armed first, Ben armed second, George strikes Ben, Ben's card answers by hitting
+George), George's hit is recorded after George's wrapper already looked. It then sits
+unanswered until the next card anyone plays — a Heal — whose wrapper finds it, fires, and
+narrates it as a response to whatever that card was.
+
+```
+target arms Delayed Hit (T), then player arms Delayed Hit (P)
+target strikes player            → chain is P(T(strike))
+  T's check: no blow on target yet            → nothing
+  P's check: target's strike                  → player counters, hits target   ← T missed this
+next card anyone plays (a Heal)
+  T's check: player's counter is newer        → fires, "responds to the blow"
+```
+
+Every other effect that deals damage (Immobilize's ongoing damage, Blink, Bad Batch) does so
+*inside* the wrapped play, where the post-play check sees it; only another Delayed Hit's
+counter lands after a check has already run.
+
+**Fixed**: each armed effect exposes `settle()`; after any wrapped play, `settleDelayedHits`
+runs every armed Delayed Hit in a loop until a full pass fires nothing. A counter that is
+itself a qualifying blow is answered in the same play, immediately after it lands, which is
+what "immediately hit the next player who hits you" says. Terminates because every counter
+removes its own effect.
+
+**Found alongside it**: `hit()` stamped `hitLog` entries with `Date.now()` while the card's
+`whenPlayed` used `hitLogTimestamp()`. Under `DECK_MONSTERS_SKIP_DELAYS` (every test run and
+every harness simulation) the latter is a small monotonic counter, so *every* recorded hit
+looked newer than any Delayed Hit — the card fired on blows that landed before it was
+played. Production was unaffected (both are `Date.now()` there), but the harness has been
+mis-simulating this card since the counter was introduced. `hit()` now uses
+`hitLogTimestamp()`.
+
+**Residual, deliberately left**: Blink's `timeShifted` defers the check without clearing the
+blow, so a hit taken just before a Blink is answered after the Blink ends, on whatever card
+plays next. That is arguably the card working ("delayed"), and no report has named it.
+
+**Test**: `cards/delayed-hit.test.ts` — "answers a blow dealt by another delayed hit in the
+same play, not after the next unrelated card": arms target then player, strikes through the
+real `play()` path, asserts both effects are spent and exactly one payoff fired, then plays a
+Heal and asserts nothing fires.
+
+**Status**: Fixed.
+
+### 158. The "waiting for your answer" banner covered the very choices it was asking about — FIXED
+
+**Symptom**: the shop's Items/Cards/Back Room prompt with its choice buttons on screen and,
+pinned over the bottom of the feed, "A command is waiting for your answer. Command
+suggestions are paused." Reported as the banner "displaying while you're actively trying to
+answer questions for a multi-step command". The same screenshot had already been filed as
+#153, which fixed a real stale-poll race but not this.
+
+**Root cause**: the banner rendered on `activePromptId` alone — for the entire unanswered life
+of every prompt. #142 introduced it because "the prompt could be far above the mobile
+input", i.e. for a prompt the player *cannot see*; but nothing ever checked whether that was
+the case. In the common case (`followOutput` keeps a new prompt as the last row, and the
+banner is `position:absolute; bottom:100%` over the dock) the choices and the banner occupy
+the same band of the screen, so the explanation for an invisible prompt sat on top of a
+perfectly visible one. The header's own `Cancel action` button, gated the same way, made the
+banner's button redundant there too.
+
+**Fixed**: a `PromptVisibilitySentinel` is rendered at the end of the active prompt's row.
+Virtuoso only mounts rows near the viewport, so unmounting is itself a "not visible" signal;
+`IntersectionObserver` refines that for a mounted-but-scrolled row. The banner renders on
+`activePromptId && !activePromptInView`. Where `IntersectionObserver` is unavailable, a
+mounted row counts as visible.
+
+**Test**: `apps/web/src/__tests__/consolePane-prompt-banner.test.tsx` — no banner while the
+choices intersect the viewport; banner once they scroll out and gone again when they return;
+banner for a prompt row Virtuoso has not mounted. The existing scroll-behavior tests never
+mount rows and keep asserting the banner unchanged.
+
+**Live verification** (Test Room A, 570px viewport): with an equip prompt's six choice
+buttons on screen, `.command-blocked-banner` was absent; scrolling the console to the top
+brought it in; scrolling back to the choices removed it again.
+
+**Status**: Fixed.
+
+### 159. The Ring and Console feeds stopped following on their own — and #148's fix made the Ring stop *silently* — FIXED
+
+**Symptom**: during a live battle the Ring pane, in auto-scroll mode, would sit a line or
+two above the newest narration and stay there while the fight went on. Reported after the
+#148 "less likely to get stuck" pass as having got *worse* in an active battle.
+
+**Root cause**, two layers:
+
+1. The pane switched following off on *every* `atBottomStateChange(false)` from Virtuoso, as
+   if the reader had scrolled up. But during a fight the bottom moves away on its own all the
+   time: the roster gains a row or the items panel appears (viewport shrinks), a card box is
+   measured after it renders (content grows), or a `smooth` follow scroll — which targets a
+   fixed pixel offset — ends short because the next narration line landed mid-animation.
+   Each of those flipped `shouldFollowOutputRef` to `false` in the busiest moments of a fight.
+2. #148 tried to paper over that by raising `atBottomThreshold` from Virtuoso's default 4px to
+   72px, so those small deviations would not count as leaving the bottom. But Virtuoso's own
+   "list grew, snap back down" correction (`notAtBottomBecause === 'SIZE_INCREASED'` →
+   `scrollToIndex('auto')`) only runs when it considers the list *not* at the bottom — and
+   `isAtBottom` is `scrollTop + viewportHeight - scrollHeight > -threshold`. At 72px a follow
+   scroll that ended up to three lines short was "at the bottom": never corrected, never a
+   `↓ Latest` button, and the next event's smooth scroll got interrupted the same way. Hence
+   worse specifically during bursts. (Virtuoso 4.18 source: `Uo` in `dist/index.mjs`.)
+
+**Fixed** (`hooks/useFeedAutoScroll.ts`, used by both `RingPane` and `ConsolePane`): a
+"not at bottom" report is treated as the reader leaving only if a scroll gesture — `wheel`
+upward, `touchmove`, mouse `pointerdown` (scrollbar drag), or ArrowUp/PageUp/Home — happened
+inside the feed within `USER_SCROLL_INTENT_WINDOW_MS` (1.5s). Otherwise the hook re-pins with
+an instant `scrollToIndex('auto')` and reports "still at bottom", so `↓ Latest` does not
+flash for the frame before the snap. The threshold is `AT_BOTTOM_THRESHOLD_PX = 8` on both
+feeds — enough for fractional layout pixels, well under one line, so Virtuoso's
+self-correction is live again. Jump-to-latest and tab activation clear the gesture stamp so
+neither is mistaken for scrolling away a moment later. The listeners sit on
+`.pane-feed-area` (spread from `gestureHandlers`) because Virtuoso owns the scroller element
+and the events bubble.
+
+**Console side, found during live verification**: the Console had the same rule and the
+same failure through a different door — switching to the Console tab takes its viewport
+from hidden to visible, Virtuoso reports that as "not at bottom", and the console parked one
+screen above the reply to the command you had just typed, `↓ Latest` showing. The gesture
+gate was therefore lifted into the shared hook rather than fixed in the Ring alone.
+
+**Why the re-pin scrolls the DOM, not `scrollToIndex('LAST')`**: with the gate in place the
+Console still sat exactly 52px short after a `look at monsters` reply. Instrumenting the
+scroller showed both snaps (immediate, and one `REPIN_SETTLE_MS` later) targeting the same
+offset, 52px above `scrollHeight - clientHeight`: `scrollToIndex` computes its target from
+Virtuoso's size tree, which still held the 760px card row at an estimated height when the
+callback fired. And because Virtuoso's own at-bottom state never returned to true, it
+reported nothing further. The same thing left the `↓ Latest` jump 188px short — and since
+both panes set `isAtBottom` optimistically on the click, the button was hidden *and* the
+reader's next wheel-up produced no transition, so it never reappeared. The hook now takes
+Virtuoso's `scrollerRef` and scrolls the element to its own `scrollHeight` (ground truth),
+and `jumpToBottom` no longer claims "at bottom" — Virtuoso reports arrival itself, so the
+button stays visible for the ~0.5s glide and disappears when the scroll actually lands.
+
+**Live verification** (Test Room A, 570px viewport, a four-monster boss fight): 47 samples
+over 70s of narration had the Ring feed within 2px of the true bottom in 46; the one 69px lag
+(a smooth scroll in flight when a turn block landed) was gone by the next sample — the
+self-correction the 72px threshold had been suppressing. 197 samples at 200ms after the
+button fix: `↓ Latest` never rendered; five transient lags up to 160px (a card box landing)
+all recovered within a second.
+
+**Tests**: `apps/web/src/__tests__/ringPane-scroll-behavior.test.tsx` — re-pins when the
+bottom moves with no gesture (and keeps the jump button hidden); wheel-up and touch-drag
+disable following; a gesture 5s old is ignored; following resumes on return to the bottom;
+jump-to-latest is not a scroll-away gesture; and the threshold is asserted ≤ 12px with a
+comment on why. `consolePane-scroll-behavior.test.tsx` — the existing scroll-away cases now
+perform a wheel gesture first, plus "re-pins instead of stopping when the bottom moves
+without a reader gesture".
 
 **Status**: Fixed.

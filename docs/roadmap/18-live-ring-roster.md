@@ -41,13 +41,33 @@ because ring events set them per-encounter (see the `Contestant` docblock in
 
 ### Publish points
 
-`publishState()` is called from the existing ring-lifecycle sites plus three new ones:
+`publishState()` is called from the existing ring-lifecycle sites plus four new ones:
 
 | Site | Why |
 |------|-----|
+| Just before `playerTurnBegin` is emitted | Highlights whose turn it is before the card box lands |
 | After each resolved `card.play` | Keeps HP/AC in step with the narration |
 | `startEncounter()` | Shows the starting board before the first card lands |
 | `endEncounter()` | Post-fight HP is what players check between rounds |
+
+### Acting-contestant highlight (2026-09-19)
+
+Each snapshot carries `acting: boolean`, true for the single contestant whose turn it
+currently is. `Ring.activeContestant` is a plain instance field — ephemeral like
+`inEncounter`/`encounter`, never `options`-backed, never serialized — set in `fight()`
+immediately before the `playerTurnBegin` emit and cleared in both `startEncounter()` (fight
+start) and `endEncounter()` (fight end, so a stale highlight can never survive between
+fights). `contestantSnapshots()` derives `acting` as
+`this.inEncounter && this.activeContestant?.monster === monster`, so it reads false outside
+an encounter even if a stale reference lingered.
+
+`RingRoster.tsx` renders this as a subtle terminal-style treatment on the expanded
+roster row: a small inset accent bar (`box-shadow`), a `▶` marker before the name, and
+brighter name text — no animation. A dead contestant is never shown as acting even if the
+payload says so (a card that kills its own target mid-resolution could otherwise flash the
+highlight on a corpse for one publish). The field is optional on the client-side
+`RingContestantSnapshot` type so older polled-seed payloads that predate this field still
+render.
 
 One publish per resolved card matches the feed's own card-to-card pacing
 (`veryShortDelay`, 2–4s), so this adds no meaningful traffic next to the announce lines
@@ -92,13 +112,31 @@ landed with a dedicated ref (`hasLiveTimerStateRef`) and, once true, trusts
 only, never a fallback once live data exists — an empty live roster must always win over a
 non-empty stale one.
 
+### Badge clipping under long names (2026-09-19)
+
+`.roster-name` used to be a single inline span (icon + name text + BOSS/team tag spans)
+with `white-space: nowrap; overflow: hidden; text-overflow: ellipsis`. Because the tags sit
+at the *end* of that span, a long monster name (e.g. `Charri (charloat, To Listen)`) pushed
+the BOSS tag past the ellipsis cutoff — the tag that most needs to stay visible disappeared
+exactly when the name was long enough to need clipping.
+
+Fixed by splitting the name text into its own child, `.roster-name-text`, which alone
+carries the `overflow`/`ellipsis` treatment; `.roster-name` is now a flex row
+(`min-width: 0`) so the icon, the clipped name text, and the tags lay out side by side with
+the tags (`flex-shrink: 0`) always visible. The dead-row strikethrough moved with it, from
+`.roster-row-dead .roster-name` to `.roster-row-dead .roster-name-text`, so it targets only
+the name, not the tags.
+
 ## Tests
 
 - `packages/engine/src/ring/index.test.ts` — snapshot contents, damage tracking, death
-  flag, boss owner elision, and `ring.state` payload
+  flag, boss owner elision, acting-contestant flag (set and cleared), and `ring.state`
+  payload
 - `apps/web/src/__tests__/ringRoster.test.tsx` — `hpRatio` clamping (overkill damage,
   overheal, zero/NaN `maxHp`), band thresholds, standing count, defeated rendering,
-  boss/team tags, own-monster highlight, collapse, and the accessible meter
+  boss/team tags (including a long-name case asserting the BOSS tag stays outside the
+  clipped `.roster-name-text`), own-monster highlight, acting-contestant highlight (and
+  that a dead contestant is never marked acting), collapse, and the accessible meter
 
 ## Possible follow-ups
 

@@ -10,6 +10,7 @@ import { engineReady } from '../helpers/engine-ready.js';
 import { ALLIANCE_TEAM, RING_EVENTS } from './ring-events.js';
 import { getTarget, TARGET_NEXT_PLAYER } from '../helpers/targeting-strategies.js';
 import { addPendingSummon, recordSummon } from '../helpers/boss-summons.js';
+import { TIME_TO_HEAL_MS, TIME_TO_RESURRECT_MS } from '../constants/timing.js';
 
 describe('ring/index.ts', () => {
 	before(async () => {
@@ -159,6 +160,42 @@ describe('ring/index.ts', () => {
 			expect(snapshot!.isBoss).to.equal(true);
 			expect(snapshot!.owner).to.equal(null);
 			expect(snapshot!.userId).to.equal(null);
+		});
+
+		it('flags the contestant whose turn it is and nobody else', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const first = randomContestant({ isBoss: false });
+			const second = randomContestant({ isBoss: false });
+			ring.contestants = [first, second];
+			ring.inEncounter = true;
+			ring.activeContestant = second;
+
+			const [firstSnapshot, secondSnapshot] = ring.contestantSnapshots();
+
+			expect(firstSnapshot!.acting).to.equal(false);
+			expect(secondSnapshot!.acting).to.equal(true);
+
+			game.dispose();
+		});
+
+		it('clears the acting flag when the encounter ends', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const first = randomContestant({ isBoss: false });
+			const second = randomContestant({ isBoss: false });
+			ring.contestants = [first, second];
+			ring.inEncounter = true;
+			ring.activeContestant = second;
+
+			ring.endEncounter();
+
+			expect(ring.activeContestant).to.equal(undefined);
+			ring.contestantSnapshots().forEach(snapshot => {
+				expect(snapshot.acting).to.equal(false);
+			});
+
+			game.dispose();
 		});
 	});
 
@@ -346,6 +383,49 @@ describe('ring/index.ts', () => {
 
 				clock.tick(11 * 60 * 1000);
 				expect(removeBossSpy.called).to.equal(false);
+
+				game.dispose();
+			} finally {
+				clock.restore();
+			}
+		});
+
+		it('keeps passive healing and pending revivals running for monsters the ring releases', () => {
+			// Regression (#156): clearRing() ran every contestant's disposeTimers(), which
+			// killed the passive-healing interval and any armed respawn timer on monsters
+			// that live on in their beastmaster's roster. Every fight ends with clearRing(),
+			// so a monster that survived (or was revived after) a fight sat at 1 hp for
+			// hours until the room happened to be restored from state.
+			const clock = sinon.useFakeTimers({ shouldClearNativeTimers: true });
+			try {
+				const game = new Game();
+				const ring = game.getRing();
+				const character = new Beastmaster({ name: 'Ada' });
+				const wounded = new Basilisk({ name: 'Toyota', hp: 1 });
+				// xp 51 makes the monster level 1, so the revival waits TIME_TO_RESURRECT_MS
+				// instead of firing instantly (a level-0 monster revives at once).
+				const fallen = new Basilisk({ name: 'Fallen', hp: 1, xp: 51 });
+				character.addMonster(wounded);
+				character.addMonster(fallen);
+				ring.addMonster({ monster: wounded, character, userId: 'user-1' });
+				ring.addMonster({ monster: fallen, character, userId: 'user-1' });
+				fallen.hp = 0;
+				fallen.respawn();
+				expect(fallen.level).to.equal(1);
+				const reviveAt = fallen.respawnTimeoutBegan + TIME_TO_RESURRECT_MS;
+
+				ring.clearRing();
+
+				expect(ring.contestants).to.have.length(0);
+				clock.tick(3 * TIME_TO_HEAL_MS);
+				expect(wounded.hp).to.equal(4);
+				expect(fallen.dead).to.equal(true);
+
+				clock.tick(reviveAt - Date.now());
+				expect(fallen.dead).to.equal(false);
+				expect(fallen.hp).to.equal(1);
+				clock.tick(2 * TIME_TO_HEAL_MS);
+				expect(fallen.hp).to.equal(3);
 
 				game.dispose();
 			} finally {
