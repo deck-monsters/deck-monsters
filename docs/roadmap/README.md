@@ -14,6 +14,7 @@ remains here as the stable fixed-bug ledger.
 | [19 — Player Agency & Items](19-player-agency-and-items.md) | Item-driven web prompts, web selling, and the feedback loop. | Active |
 | [20 — Workspace Layout](20-workspace-layout.md) | Real WebKit/iPhone and cross-browser visual sign-off. | Active |
 | [22 — Small Leftovers](22-small-leftovers.md) | Decisions carried from shipped plans. | Backlog |
+| [23 — Pixel Fight Stage](23-pixel-fight-stage.md) | Decide the stage's shape before building more; it ships opt-in and off by default. | Parked |
 
 ## Next
 

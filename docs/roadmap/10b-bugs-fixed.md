@@ -3776,8 +3776,9 @@ snapshot re-reads storage rather than caching in a module variable, so storage c
 underneath it is picked up instead of being masked.
 
 This is deliberately a stopgap: the presentation itself (how much room the band takes, and
-whether a whole-fight band is the right shape at all) is still open, and is easier to
-revisit once it is opt-in rather than something every themed player is already living with.
+whether a whole-fight band is the right shape at all) is still open. That thinking, with a
+photo of a real tablet session and a recommendation to move the sprites into the Ring
+roster instead, is in [`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).
 
 **Tests**: `usePixelFightStage.test.tsx` covers the default-off state, persistence,
 cross-caller propagation, cross-tab `storage` events and ignoring unrelated keys.
