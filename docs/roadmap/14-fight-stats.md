@@ -209,6 +209,17 @@ For `FightSummaryWriter` to populate summaries correctly, the `ring.win`, `ring.
 
 If any of these are missing, they need to be added to the relevant announcement modules during implementation. The `text` field already has the human-readable version; this adds the machine-readable structure alongside it.
 
+### Combat payload
+
+Public combat events additionally carry `payload.combat`, a small serializable DTO for
+`card`, `hit`, `miss`, `heal`, `death`, and `flee`. It projects participants to
+`{ name, creatureType, icon, isBoss }` and carries only the figures relevant to its
+kind (for example, hit damage and HP, a miss's blocked flag, or a death's destroyed
+flag). The existing payload fields and narration remain available for compatibility.
+
+Animation layers and connectors must read `payload.combat`, never prose. Narration is
+written for people and can change independently; the DTO is the public combat contract.
+
 ## Relationship to Leaderboard (13-leaderboard.md)
 
 Fight stats and leaderboard are complementary:

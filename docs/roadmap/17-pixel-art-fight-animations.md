@@ -20,7 +20,7 @@ The default "dungeon terminal" theme has no animations. A player switching to th
 
 ### In scope
 - A `snes` theme (or similar retro label) that activates a pixel art animation layer
-- Per-event animations triggered by `GameEvent` types: `ring.fight`, `ring.card`, `ring.hit`, `ring.miss`, `ring.flee`, `ring.victory`
+- Per-event animations triggered by the public ring feed's real event types and combat payloads
 - Monster sprites: one idle animation + one attack animation per monster type (5 types: Basilisk, Gladiator, Jinn, Minotaur, Weeping Angel)
 - A `<canvas>` overlay that sits on top of the ring pane during a fight sequence, then fades out when narration resumes
 - Theme selector in Account settings (already planned in Phase 3 of `06a-web-app.md`)
@@ -77,14 +77,16 @@ ctx.drawImage(
 
 ### Event → animation mapping
 
-| GameEvent type | Animation triggered |
-|---------------|---------------------|
-| `ring.fight` starts | Both monsters enter frame from opposite sides, idle loop begins |
-| `ring.card` (attacker plays card) | Attacker plays attack animation |
-| `ring.hit` | Defender plays `hit` frame flash (2–3 frames), HP bar updates |
-| `ring.miss` | Attacker plays miss animation, defender stays idle |
-| `ring.flee` | Fleeing monster runs off screen |
-| `ring.victory` | Winner plays victory loop, loser plays faint |
+| GameEvent type | `payload.combat.kind` | Animation triggered |
+|----------------|-----------------------|---------------------|
+| `ring.fight` with `payload.eventName: 'fightBegins'` | — | Contestants enter from opposite sides; idle loop begins |
+| `card.played` | `card` | Actor plays the attack animation |
+| `announce` | `hit` | Target plays a hit flash and its HP bar updates |
+| `announce` | `miss` | Actor attacks; target stays idle |
+| `announce` | `heal` | Target HP bar updates |
+| `announce` | `death` | Target plays the faint animation |
+| `ring.fled` | `flee` | Fleeing actor runs off screen |
+| `ring.fight` with `payload.eventName: 'fightConcludes'` or `ring.fightResolved` | — | Fade the decorative layer after the fight resolves |
 
 ### Canvas overlay positioning
 
