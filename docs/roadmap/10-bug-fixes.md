@@ -24,15 +24,28 @@ choices it was explaining (#158), and the Ring feed silently falling behind the 
 narration mid-fight because #148's 72px tolerance had disabled Virtuoso's self-correction
 (#159). A September 20 first-run pass found the Deck Workshop's only offered action —
 Train monster — dead-ending for a brand-new player with no character, and character
-creation opening on a choice of one class (#160). The
+creation opening on a choice of one class (#160). A same-day header review found the
+workshop's monster panels leading with a nearly-always-full deck-slot bar while hiding
+current HP, the number that actually drives revive/send-to-ring/wait decisions (#161). The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
 post-merge passes (#112–#134), the shop-menu off-by-one from the prompt-answer-contract
 audit is fixed (#143), item #4 from that same audit — the remaining pure-index prompt
 sites, unproven over Discord — is fixed (#146), and item #5, the shop's always-empty card
 stock, is fixed (#147). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive
-(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#160).
+(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#161).
 
 ## Recently resolved
+
+### Workshop header, HP over deck slots — FIXED (#161)
+
+The Deck Workshop's monster header led with a deck-slot count/bar that is nearly always
+full and answers no question a beastmaster is actually asking, while current HP — the
+number that decides whether to revive, send to the ring, or wait — was absent from both
+the wire format and the UI. `InventoryMonsterSummary` gained `hp`/`maxHp`/`revivesAt`/
+`battles`; `MonsterWorkshopPanel.tsx`'s header now leads with an HP meter (reusing
+`RingRoster`'s hp math/classes), a single ring-state status tag, and a `{type} · Lvl {n}`
+type line, with deck size as plain text and the old slot bar removed entirely. See
+[`10b-bugs-fixed.md`](10b-bugs-fixed.md) #161 for the full root-cause writeup and test list.
 
 ### Workshop first run — FIXED (#160)
 

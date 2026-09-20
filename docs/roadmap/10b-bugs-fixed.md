@@ -3528,3 +3528,57 @@ for a first run, the payload carries the character block, Shuffle refetches with
 and the existing-character form is unchanged.
 
 **Status**: Fixed.
+
+### 161. The workshop showed a full-deck bar and hid the one number that matters, current HP — FIXED
+
+**Symptom**: every monster panel in the Deck Workshop led its header with a deck-slot count and
+bar (e.g. "9/9 slots"). That bar is full or nearly full almost all the time — a monster only
+leaves the ring to be re-decked occasionally — so it carried no decision-relevant information.
+Meanwhile current HP, the number a beastmaster actually needs to decide whether to revive, send
+a monster to the ring, or leave it resting, was not present anywhere in the workshop view: not
+on the wire, and not in the UI.
+
+**Root cause**: the workshop's `myInventory` snapshot (`InventoryMonsterSummary` in
+`packages/server/src/trpc/router.ts`) was built before the workshop did anything besides equip
+cards, and it was never revisited as the workshop grew into a tool that also revives monsters,
+sends them to the ring, and manages items — each of which is exactly the decision current HP
+informs. `summarizeInventory` mapped `name`/`type`/`level`/xp fields/`dead`/`inRing`/
+`inEncounter`/`cardSlots`/`cards`/`presets` from the character record, but never read the
+engine's own `hp`/`maxHp` getters (`packages/engine/src/creatures/base.ts`), so the client had
+nothing to render even if it wanted to.
+
+**Fix**:
+
+- **Server** — `InventoryMonsterSummary` gained `hp`/`maxHp` (same defensive
+  `typeof … === 'number' && Number.isFinite` pattern as the existing numeric fields; `hp` is
+  clamped to 0 for display, matching the fact that an overkill hit can drive the engine's own
+  `hp` getter negative before `die()` clamps it back), `revivesAt` (epoch ms, computed from the
+  `respawnTimeoutBegan`/`respawnTimeoutLength` fields when both are present, `null` when the
+  monster is alive or dead with no revival timer running — never the timer handle or the length
+  themselves), and `battles` (`{ wins, losses, total }`, from the engine's own lazily-created
+  getter).
+- **Web** — `MonsterWorkshopPanel.tsx`'s header was rebuilt around HP as the primary meter,
+  reusing `RingRoster`'s `hpRatio`/`hpBand` helpers and `roster-bar-*` classes so the two
+  surfaces can never band health differently. A dead monster's meter reads `Fallen` (plus
+  `· revives in {relative}` via a new `formatRelativeFromNow` helper when a revival is running).
+  The type line becomes `{type} · Lvl {level}`; a single status tag (`in the ring` / `fighting`
+  / `fallen`, in that priority) replaces the bar as the at-a-glance ring-state signal. The XP
+  meter's label dropped the now-redundant level. Deck size became text
+  (`Deck {n}/{cardSlots}`, with `· needs {n} more to enter the ring` when not full), with a
+  small optional `{wins}W {losses}L` hidden at phone widths. `.workshop-slot-meter` and its
+  track/fill CSS were removed — nothing else referenced them.
+
+**Tests**: `packages/server/src/trpc/router.test.ts` — hp/maxHp on the summary; `revivesAt`
+computed from `respawnTimeoutBegan + respawnTimeoutLength` for a fallen monster mid-revival;
+`revivesAt` null for a fallen monster with no timer; hp clamped to 0 and maxHp/battles defaulted
+for a bare test-double monster; battles mapped through. `apps/web/src/utils/format-relative.test.ts`
+— minutes/hours/days formatting and the "any moment" floor for anything under a minute away
+(including the past). `apps/web/src/__tests__/monsterWorkshopPanel.header.test.tsx` — the HP
+label and accessible meter values, the hp/critical band boundary, the fallen label with and
+without a revive estimate, the type line, the renamed XP label, the deck-count text with and
+without the "needs more" hint, that no old slot-bar `progressbar` remains, and the status-tag
+priority order. `apps/web/src/__tests__/workshop-card-grid-density.test.ts` (renamed from
+`workshop-slot-meter.test.ts`, whose sole subject was removed) — the HP meter inherits the same
+label-beside-bar readability rule #120 fixed, and the old slot-meter CSS stays gone.
+
+**Status**: Fixed.
