@@ -14,7 +14,7 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 | C | Workshop: train your first monster with no character (prompt-free character creation inside `game.spawnMonster`); stop asking players to pick from one class | Tier 3 implement, Tier 2 review | ✅ done (review: spec pass, approved; 10b #160) | `67d7ad5`…`675a230` |
 | B | Workshop header metrics: current HP first, slots bar → `Deck 9/9` text, `Lvl n` badge, fallen/revives-in state | Tier 2 implement | 🔍 in review | 854f53e, d36bbe3, f8d2e4e |
 | A | One vocabulary for the world (`train`, `call out`, `dismiss`, pronouns…) + `docs/voice-and-wording.md` | Tier 3 doc, Tier 2 apply | 📋 brief ready, runs last of the wording/workshop set | — |
-| E | Edit your **global** display name, not just the room-scoped character name | explore → Tier 2 | 🔧 implementing | — |
+| E | Edit your **global** display name, not just the room-scoped character name | explore → Tier 2 | ✅ done | `4659880`, `cdb7af2` |
 | F | +3 monster slots per beastmaster (existing characters included) | orchestrator (small) | ✅ done | see git log (`feat(engine): beastmasters keep up to 10 monsters`) |
 | G | Implement [17 — Pixel Art Fight Animations](17-pixel-art-fight-animations.md) | Tier 3 design, Tier 2 implement, isolated worktree | 📋 exploring | — |
 | H | Reorganise the roadmap: archive what shipped, make remaining work obvious | Tier 2 | 📋 after G | — |

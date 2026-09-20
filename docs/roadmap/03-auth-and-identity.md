@@ -142,6 +142,27 @@ user_connectors: {
 
 A Supabase database trigger creates the `profiles` row automatically when a new user signs up, keeping the auth and game-data layers in sync without application code.
 
+## Display name vs character name
+
+The original game ran in one Slack room, where a player's character name also served as
+their alias. The multi-room revival added `profiles.display_name` as the player's global
+identity, while keeping the engine character (and its `givenName`) inside each room.
+
+- **Display name** is global. It appears on leaderboards and room member lists, and a newly
+  created room character starts with it. Players edit it from the web Account page.
+- **Character name** is a room-scoped alias. `edit my character` changes only that room's
+  character, so a player can use a different alias in another room.
+
+When a player changes their display name, the server updates characters in rooms they belong
+to only when their current character name still equals the previous display name. This keeps
+the initial profile-to-character relationship useful without overwriting an intentional
+in-room alias. Historical fight snapshots, event text, and monster names remain historical.
+
+**Open question — Discord:** the Discord connector still seeds room characters from
+`interaction.user.username` and does not read `profiles.display_name`. Decide whether it
+should use the global display name before promising consistent cross-connector character
+seeding.
+
 ## Tasks
 
 ### Phase 1 — Discord + Web
