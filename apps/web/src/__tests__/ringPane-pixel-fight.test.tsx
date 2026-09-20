@@ -43,6 +43,9 @@ function TestFeed({ children }: { children: ReactNode }) {
 describe('RingPane pixel art feature gate', () => {
   beforeEach(() => {
     localStorage.clear();
+    // These cases exercise the *theme* gate, so opt in to the animations first; the
+    // separate opt-in gate is covered below.
+    localStorage.setItem('deck-monsters-pixel-fight-stage', '1');
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.removeAttribute('data-theme-features');
     vi.stubGlobal('matchMedia', vi.fn(() => ({
@@ -117,5 +120,49 @@ describe('RingPane pixel art feature gate', () => {
     );
 
     await waitFor(() => expect(mounts).toHaveBeenCalledTimes(2));
+  });
+
+  it('stays text-only on the pixel-art theme until the player opts in', async () => {
+    // Default off: the stage takes real room on a phone and the narration is the game,
+    // so it is something a player asks for rather than something that just appears.
+    localStorage.removeItem('deck-monsters-pixel-fight-stage');
+    const LayerTarget: ComponentType = () => <canvas className="pixel-fight-layer" aria-hidden="true" />;
+    const loader = vi.fn(async () => ({ default: LayerTarget }));
+    function Switcher() {
+      const { setTheme } = useTheme();
+      return <button onClick={() => setTheme('street-fighter')}>street fighter</button>;
+    }
+
+    const { container } = render(
+      <TestFeed>
+        <Switcher />
+        <RingPane roomId="room-1" isActive pixelFightLayerLoader={loader} />
+      </TestFeed>,
+    );
+
+    await act(async () => screen.getByRole('button', { name: 'street fighter' }).click());
+
+    expect(container.querySelector('.pixel-fight-layer')).toBeNull();
+    // Not merely hidden — the chunk is never fetched for a player who has not asked.
+    expect(loader).not.toHaveBeenCalled();
+  });
+
+  it('mounts the stage once an opted-in player is on the pixel-art theme', async () => {
+    const LayerTarget: ComponentType = () => <canvas className="pixel-fight-layer" aria-hidden="true" />;
+    const loader = vi.fn(async () => ({ default: LayerTarget }));
+    function Switcher() {
+      const { setTheme } = useTheme();
+      return <button onClick={() => setTheme('street-fighter')}>street fighter</button>;
+    }
+
+    const { container } = render(
+      <TestFeed>
+        <Switcher />
+        <RingPane roomId="room-1" isActive pixelFightLayerLoader={loader} />
+      </TestFeed>,
+    );
+
+    await act(async () => screen.getByRole('button', { name: 'street fighter' }).click());
+    await waitFor(() => expect(container.querySelector('.pixel-fight-layer')).not.toBeNull());
   });
 });

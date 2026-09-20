@@ -120,9 +120,12 @@ listener synchronizes other tabs.
 ```
 
 `useTheme.ts` owns a typed `THEMES` registry. The `street-fighter` entry declares
-`pixel-art`; `useThemeFeature('pixel-art')` is the only gate that loads the module.
-Theme switches update both attributes on `<html>` and unmount the layer when the feature
-is absent.
+`pixel-art`. Theme switches update both attributes on `<html>` and unmount the layer when
+the feature is absent.
+
+The theme feature is no longer the *only* gate: `usePixelFightStage` adds a player opt-in
+that defaults off (#166), so the module loads only for someone on the theme who has asked
+for it. Anything reasoning about "is the stage showing" must check both.
 
 ---
 

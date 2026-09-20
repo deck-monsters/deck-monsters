@@ -15,6 +15,7 @@ import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
+import { usePixelFightStage } from '../hooks/usePixelFightStage.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
@@ -155,7 +156,11 @@ export default function RingPane({
   pixelFightLayerLoader = loadPixelFightLayer,
 }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
-  const pixelArtEnabled = useThemeFeature('pixel-art');
+  // Two gates, both required: the theme must have the animations at all, and the player
+  // must have opted in. Off by default — see usePixelFightStage.
+  const themeHasPixelArt = useThemeFeature('pixel-art');
+  const { pixelFightStageEnabled } = usePixelFightStage();
+  const pixelArtEnabled = themeHasPixelArt && pixelFightStageEnabled;
   const PixelFightLayer = useMemo(() => lazy(pixelFightLayerLoader), [pixelFightLayerLoader]);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);

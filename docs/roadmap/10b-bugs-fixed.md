@@ -3750,3 +3750,38 @@ unknown, not restarting an in-flight fade, and the `lastActionAt`/knockout stamp
 stability of the duel pick.
 
 **Status**: Fixed.
+
+### 166. The fight stage was on by default and too heavy for everyday play — FIXED
+
+Feedback after #164/#165 shipped and deployed: "honestly it's pretty distracting and takes
+up too much of the viewport."
+
+Making the stage *reachable* (#165) worked, and that turned out to be the problem. Every
+player on the street-fighter theme got fight animations whether or not they wanted them,
+and a band that a desktop viewport absorbs comfortably is a large fraction of a phone
+screen sitting directly above the narration — which is the actual game.
+
+**Root cause**: the stage was gated only on the theme, so "I like the SNES colours" and "I
+want animated fights above my feed" were the same choice. They are not; one is a palette
+and the other spends viewport on every fight.
+
+**Fix**: `usePixelFightStage` adds a second, independent gate — Account →
+"Show pixel fight animations" — **defaulting off**. `RingPane` mounts the layer only when
+the theme declares `pixel-art` *and* the player has opted in, so the lazy chunk is not even
+fetched for someone who has not asked. The setting is stored in `localStorage` behind a
+`useSyncExternalStore` store (same approach as `useTheme`) because the toggle lives in the
+account view while the stage lives in the Ring pane and the workspace layout can show both
+at once; a per-caller `useState` would have left the pane stale until a reload. Its
+snapshot re-reads storage rather than caching in a module variable, so storage cleared
+underneath it is picked up instead of being masked.
+
+This is deliberately a stopgap: the presentation itself (how much room the band takes, and
+whether a whole-fight band is the right shape at all) is still open, and is easier to
+revisit once it is opt-in rather than something every themed player is already living with.
+
+**Tests**: `usePixelFightStage.test.tsx` covers the default-off state, persistence,
+cross-caller propagation, cross-tab `storage` events and ignoring unrelated keys.
+`ringPane-pixel-fight.test.tsx` covers the two gates together — notably that the loader is
+never called for a themed player who has not opted in.
+
+**Status**: Fixed.

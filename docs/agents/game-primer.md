@@ -174,9 +174,12 @@ without parsing narration; it is additive and must stay JSON-safe (no engine obj
 and the roster's `Contestant.isBoss` cannot disagree.
 
 The web consumes it in `apps/web/src/animations/pixel-fight/` (reducer `state.ts`, canvas
-`renderer.ts`, sprites, `PixelFightLayer.tsx`), mounted in `RingPane` only when the active
-theme declares the `pixel-art` feature (`data-theme-features`, `useThemeFeature`). Theme state
-is one `useSyncExternalStore` store so every consumer flips together. The gotchas that bit
+`renderer.ts`, sprites, `PixelFightLayer.tsx`), mounted in `RingPane` only when **both**
+gates open: the active theme declares the `pixel-art` feature (`data-theme-features`,
+`useThemeFeature`) *and* the player has opted in via `usePixelFightStage` (Account →
+"Show pixel fight animations", **off by default** — see #166). Until an opted-in player is
+on the theme the lazy chunk is never fetched. Both flags are `useSyncExternalStore` stores
+so every consumer flips together. The gotchas that bit
 live — an early-waking `setTimeout` that never re-armed (#162), the roster emptying inside
 the fade, one literal sprite map with poses as transforms — are listed in the archived plan
 [`docs/archive/roadmap/17-pixel-art-fight-animations.md`](../archive/roadmap/17-pixel-art-fight-animations.md).
