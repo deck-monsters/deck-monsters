@@ -142,6 +142,27 @@ reduction or feed wiring.
    existing shared ring-feed listener and roster frame.
 4. Added CSS positioning, small/short viewport fallbacks, and reduced-motion handling.
 
+## Gotchas learned live (keep when touching the layer)
+
+- **Time-driven transitions must re-arm.** `setTimeout` is clamped to whole ms while
+  `performance.now()` is sub-ms, so a timer can wake a fraction early; if `settle()` then
+  returns the same scene, React skips the render and the `[scene]` effect never re-runs.
+  The band sat "active" for ~90 s live until an unrelated feed event arrived (bug #162).
+  `PixelFightLayer` loops until the deadline has genuinely passed — do not simplify it back
+  to a single timeout.
+- **The roster empties inside the fade.** The `ring.state` frame that clears the ring lands
+  within the 2.5 s fade window after `fightConcludes`; the reducer holds the fighters while
+  `fadeOutAt` is set so the fallen pose is actually seen.
+- **One literal map per monster; poses are transforms.** `sprites.ts` derives the idle bob,
+  attack lean/lunge and the sideways fallen pose from a single hand-drawn 16×16 map. A
+  redraw that ships six identical frames passes the shape test but animates nothing — the
+  sprite test now asserts frames differ, the lunge moves toward the opponent, and the
+  fallen box swaps axes.
+- **Live-verify in the phone layout.** The layer hides when the pane container is under
+  360 px wide or the viewport under 600 px tall, and drops to 3× sprites under 480 px; the
+  Cursor Cloud Chrome window is narrow, so raise the right window (`xdotool windowraise`)
+  before an `x11grab` capture or the recording silently shows another Chrome window.
+
 ## Known gaps (no combat DTO yet)
 
 These follow-ups need engine-side payloads; the layer tolerates the available omissions

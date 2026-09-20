@@ -3586,3 +3586,38 @@ priority order. `apps/web/src/__tests__/workshop-card-grid-density.test.ts` (ren
 label-beside-bar readability rule #120 fixed, and the old slot-meter CSS stays gone.
 
 **Status**: Fixed.
+
+### 162. The pixel-fight band stayed on screen for ~90 s after a fight ended — a timer that woke a hair early — FIXED
+
+**Symptom**: after `fightConcludes`, the sprites vanished but the `.pixel-fight-layer` canvas
+kept its `active` class (opaque backdrop, RAF loop still scheduled) until an unrelated feed event
+arrived — in Test Room A that was the next `ring.state` frame when the boss left, about 90
+seconds later. Seen twice live, including *after* the settle logic had been made time-driven.
+
+**Root cause**: `PixelFightLayer` armed one `setTimeout` for `nextDeadline(scene)` and, when it
+fired, called `settle(previous, performance.now())`. `setTimeout` is clamped to whole
+milliseconds but `performance.now()` is sub-millisecond, so the callback can run a fraction of a
+millisecond *before* the deadline. `settle` then saw `now < fadeOutAt`, returned the same scene
+object, React skipped the render because state was referentially unchanged, the `[scene]` effect
+never re-ran, and nothing was ever scheduled again. Every time-driven transition (attack → idle,
+flee removal, fade-out) had the same hole; the fade was just the one you could see.
+
+**Fix** (`apps/web/src/animations/pixel-fight/PixelFightLayer.tsx`): the timer re-arms itself
+until `performance.now() >= deadline`, and the initial delay is `Math.ceil`ed. Two adjacent
+fixes landed with it: (1) the `ring.state` frame that empties the roster as a fight concludes
+arrives inside the 2.5 s fade window and used to wipe the fighters immediately, so the fade ran on
+an empty canvas and the fallen pose was never seen — `state.ts` now holds the fighters while
+`fadeOutAt` is set; (2) the legibility redraw of the sprites had shipped six identical frames per
+monster, so nothing animated — `sprites.ts` now derives the idle bob, attack lean/lunge and the
+lying fallen pose from each single hand-drawn 16×16 map, so a silhouette change never needs six
+redraws.
+
+**Tests**: `apps/web/src/__tests__/pixel-fight-layer.test.tsx` — a fade timer that fires at
+`deadline − 0.4 ms` leaves a follow-up timer armed and the layer goes inactive on the next tick.
+`pixel-fight-state.test.ts` — an emptied roster during the fade keeps the fighters (including
+the `faint` one) until `settle` passes `fadeOutAt`. `pixel-fight-sprites.test.ts` — idle frames
+differ, the attack lunge moves toward the opponent, and the fallen pose is the standing box with
+its axes swapped.
+
+**Status**: Fixed. Live-verified in Test Room A: sprites cleared and the band went inactive
+~2 s after `Fight concluded`, with the fallen pose visible through the fade.
