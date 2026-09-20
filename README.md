@@ -128,7 +128,7 @@ pnpm --filter @deck-monsters/web test:coverage # vitest run --coverage
 
 ### Web App
 
-The web app is a two-pane terminal UI — a Ring feed on the left and your private Console on the right. See [`docs/roadmap/06a-web-app.md`](docs/roadmap/06a-web-app.md) for the full design spec.
+The web app is a two-pane terminal UI — a Ring feed on the left and your private Console on the right. See [`docs/archive/roadmap/06a-web-app.md`](docs/archive/roadmap/06a-web-app.md) for the shipped design spec.
 
 ```bash
 # Start the Vite dev server (proxies /trpc to localhost:3000)
@@ -172,7 +172,8 @@ pnpm run build:docs   # builds engine, then regenerates CARDS.md, DMG.md, MONSTE
 | [CARDS.md](CARDS.md) | Player-facing card and item reference (name, description, rarity) |
 | [DMG.md](DMG.md) | Dungeon Master / operator reference (stats, pacing, concurrency) |
 | [AGENTS.md](AGENTS.md) | Codebase guide for AI-assisted development (`CLAUDE.md` is a symlink to it) |
-| [docs/roadmap/](docs/roadmap/) | Detailed plans for each planned enhancement |
+| [docs/roadmap/](docs/roadmap/) | Remaining-work index and active/backlog plans |
+| [docs/archive/roadmap/](docs/archive/roadmap/) | Shipped roadmap plans and their design reasoning |
 
 ---
 
@@ -193,11 +194,12 @@ The project is actively being revived. The core engine is stable.
 - CI via GitHub Actions (type-check, lint, test on every push/PR)
 
 **In progress / next up:**
-- Vitest migration (currently Mocha + tsx; Vitest migration is optional — see `docs/roadmap/01-modernize-stack.md`)
+- Vitest migration (currently Mocha + tsx; Vitest migration is optional — see `docs/archive/roadmap/01-modernize-stack.md`)
 - Infrastructure — Postgres-backed state storage, containerized hosting, tRPC API layer
 - New connectors — Discord bot, web app, iOS/Android app (React Native)
 - Auth + multi-room — user identity, invite-based friend groups
 
 The exploration system (expeditions) has been archived for now — it's a concept that could be revived later, but the core game is the ring combat.
 
-See [docs/roadmap/](docs/roadmap/) for detailed plans on each of these.
+See [docs/roadmap/](docs/roadmap/) for remaining work and
+[docs/archive/roadmap/](docs/archive/roadmap/) for shipped plans.
