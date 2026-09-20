@@ -1,4 +1,14 @@
-import { lazy, Suspense, useEffect, useRef, useState, useCallback, type ReactNode } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+  type ComponentType,
+  type ReactNode,
+} from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import type { VirtuosoHandle } from 'react-virtuoso';
 import type { GameEvent } from '@deck-monsters/server/types';
@@ -26,12 +36,19 @@ import FeedList from './FeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
 import { useThemeFeature } from '../hooks/useTheme.js';
 
-const PixelFightLayer = lazy(() => import('../animations/pixel-fight/PixelFightLayer.js'));
+type PixelFightLayerProps = {
+  contestants: RingContestantSnapshot[];
+  viewerUserId: string | null;
+};
+type PixelFightLayerLoader = () => Promise<{ default: ComponentType<PixelFightLayerProps> }>;
+const loadPixelFightLayer: PixelFightLayerLoader = () => import('../animations/pixel-fight/PixelFightLayer.js');
 
 interface RingPaneProps {
   roomId: string;
   isActive: boolean;
   headerActions?: ReactNode;
+  /** Injectable loader keeps the theme gate testable without preloading the chunk. */
+  pixelFightLayerLoader?: PixelFightLayerLoader;
 }
 
 interface TimerState {
@@ -129,9 +146,15 @@ function LastFightFooter({
 }
 
 
-export default function RingPane({ roomId, isActive, headerActions }: RingPaneProps) {
+export default function RingPane({
+  roomId,
+  isActive,
+  headerActions,
+  pixelFightLayerLoader = loadPixelFightLayer,
+}: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   const pixelArtEnabled = useThemeFeature('pixel-art');
+  const PixelFightLayer = useMemo(() => lazy(pixelFightLayerLoader), [pixelFightLayerLoader]);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.

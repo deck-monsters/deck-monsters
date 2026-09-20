@@ -1,18 +1,9 @@
-import { act, render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import type { ReactNode } from 'react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useEffect, type ComponentType, type ReactNode } from 'react';
 import RingPane from '../components/RingPane.js';
 import { RingFeedContext, type RingFeedApi } from '../hooks/useRingFeed.js';
-
-let pixelArtEnabled = false;
-
-vi.mock('../hooks/useTheme.js', () => ({
-  useThemeFeature: () => pixelArtEnabled,
-}));
-
-vi.mock('../animations/pixel-fight/PixelFightLayer.js', () => ({
-  default: () => <canvas className="pixel-fight-layer" aria-hidden="true" />,
-}));
+import { useTheme } from '../hooks/useTheme.js';
 
 vi.mock('../hooks/useRingKeyTimestamps.js', () => ({
   useRingKeyTimestamps: () => ({ ringKeyTimestampsEnabled: false }),
@@ -50,24 +41,56 @@ function TestFeed({ children }: { children: ReactNode }) {
 }
 
 describe('RingPane pixel art feature gate', () => {
-  it('does not load the decorative layer for phosphor', () => {
-    pixelArtEnabled = false;
-    const { container } = render(
-      <TestFeed><RingPane roomId="room-1" isActive /></TestFeed>,
-    );
-
-    expect(container.querySelector('.pixel-fight-layer')).toBeNull();
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute('data-theme');
+    document.documentElement.removeAttribute('data-theme-features');
+    vi.stubGlobal('matchMedia', vi.fn(() => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })));
   });
 
-  it('loads the decorative layer for street-fighter', async () => {
-    pixelArtEnabled = true;
+  it('defers the lazy loader until the switcher enables pixel art, then tears down the layer', async () => {
+    const requestFrame = vi.fn(() => 17);
+    const cancelFrame = vi.fn();
+    vi.stubGlobal('requestAnimationFrame', requestFrame);
+    vi.stubGlobal('cancelAnimationFrame', cancelFrame);
+    const LayerTarget: ComponentType = () => {
+      useEffect(() => {
+        const handle = requestAnimationFrame(() => undefined);
+        return () => cancelAnimationFrame(handle);
+      }, []);
+      return <canvas className="pixel-fight-layer" aria-hidden="true" />;
+    };
+    const loader = vi.fn(async () => ({ default: LayerTarget }));
+    function Switcher() {
+      const { setTheme } = useTheme();
+      return (
+        <>
+          <button onClick={() => setTheme('street-fighter')}>street fighter</button>
+          <button onClick={() => setTheme('phosphor')}>phosphor</button>
+        </>
+      );
+    }
+
     const { container } = render(
-      <TestFeed><RingPane roomId="room-1" isActive /></TestFeed>,
+      <TestFeed>
+        <Switcher />
+        <RingPane roomId="room-1" isActive pixelFightLayerLoader={loader} />
+      </TestFeed>,
     );
 
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(container.querySelector('.pixel-fight-layer')).not.toBeNull();
+    expect(loader).not.toHaveBeenCalled();
+    expect(container.querySelector('.pixel-fight-layer')).toBeNull();
+
+    await act(async () => screen.getByRole('button', { name: 'street fighter' }).click());
+    await waitFor(() => expect(container.querySelector('.pixel-fight-layer')).not.toBeNull());
+    expect(loader).toHaveBeenCalledTimes(1);
+
+    await act(async () => screen.getByRole('button', { name: 'phosphor' }).click());
+    await waitFor(() => expect(container.querySelector('.pixel-fight-layer')).toBeNull());
+    expect(cancelFrame).toHaveBeenCalledWith(17);
   });
 });
