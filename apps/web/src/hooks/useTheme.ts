@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
 const STORAGE_KEY = 'deck-monsters-theme';
 export const THEMES = [
@@ -45,24 +45,59 @@ function applyTheme(theme: Theme): void {
   }
 }
 
+let currentTheme: Theme | undefined;
+const listeners = new Set<() => void>();
+
+function getTheme(): Theme {
+  const storedTheme = getPreferredTheme();
+  if (currentTheme !== storedTheme) currentTheme = storedTheme;
+  return currentTheme;
+}
+
+function notify(): void {
+  listeners.forEach((listener) => listener());
+}
+
+function setStoredTheme(theme: Theme): void {
+  currentTheme = theme;
+  localStorage.setItem(STORAGE_KEY, theme);
+  applyTheme(theme);
+  notify();
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== STORAGE_KEY) return;
+    const next = isValidTheme(event.newValue) ? event.newValue : 'phosphor';
+    if (next === currentTheme) return;
+    currentTheme = next;
+    applyTheme(next);
+    notify();
+  };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(getPreferredTheme);
+  const theme = useSyncExternalStore(subscribe, getTheme, getTheme);
 
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
 
   const setTheme = useCallback((next: Theme) => {
-    localStorage.setItem(STORAGE_KEY, next);
-    setThemeState(next);
-    applyTheme(next);
+    setStoredTheme(next);
   }, []);
 
   return { theme, setTheme, validThemes: VALID_THEMES };
 }
 
 export function useThemeFeature(feature: ThemeFeature): boolean {
-  const { theme } = useTheme();
+  const theme = useSyncExternalStore(subscribe, getTheme, getTheme);
   const features = THEMES.find((candidate) => candidate.id === theme)?.features as
     | ReadonlyArray<ThemeFeature>
     | undefined;

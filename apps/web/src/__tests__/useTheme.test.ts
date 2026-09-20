@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useTheme } from '../hooks/useTheme.js';
+import { renderHook, act, render, screen } from '@testing-library/react';
+import { createElement } from 'react';
+import { useTheme, useThemeFeature } from '../hooks/useTheme.js';
 
 const STORAGE_KEY = 'deck-monsters-theme';
 
@@ -84,5 +85,21 @@ describe('useTheme', () => {
     act(() => result.current.setTheme('phosphor'));
 
     expect(document.documentElement.getAttribute('data-theme-features')).toBeNull();
+  });
+
+  it('shares a same-tab theme change with feature consumers', () => {
+    function Switcher() {
+      const { setTheme } = useTheme();
+      return createElement('button', { onClick: () => setTheme('street-fighter') }, 'street fighter');
+    }
+    function FeatureConsumer() {
+      return createElement('output', undefined, useThemeFeature('pixel-art') ? 'enabled' : 'disabled');
+    }
+
+    render(createElement('div', undefined, createElement(Switcher), createElement(FeatureConsumer)));
+
+    expect(screen.getByRole('status')).toHaveTextContent('disabled');
+    act(() => screen.getByRole('button', { name: 'street fighter' }).click());
+    expect(screen.getByRole('status')).toHaveTextContent('enabled');
   });
 });
