@@ -78,9 +78,9 @@ type InventoryMonsterSummary = {
 	maxHp: number;
 	// Epoch ms when a fallen monster's revival completes, or null when the monster is
 	// alive, or dead with no revival timer running (e.g. permadeath, or the process
-	// restarted and `respawnTimeout`/`respawnTimeoutLength` — plain instance fields, never
-	// persisted to `options` — were never rehydrated; see creatures/health.ts `respawn`).
-	// Never send the timer handle or `respawnTimeoutLength` itself over the wire.
+	// restarted and the respawn timeout must be rescheduled). A restored timer's length is
+	// only its remaining delay, so the engine exposes the dedicated `respawnAt` completion
+	// epoch instead. Never send the timer handle or timeout length itself over the wire.
 	revivesAt: number | null;
 	battles: { wins: number; losses: number; total: number };
 };
@@ -338,19 +338,17 @@ const summarizeInventory = ({
 
 			const dead = Boolean(record.dead);
 			const rawHp = typeof record.hp === 'number' && Number.isFinite(record.hp) ? record.hp : 0;
-			const maxHp =
-				typeof record.maxHp === 'number' && Number.isFinite(record.maxHp) ? record.maxHp : 1;
-			const respawnTimeoutBegan =
-				typeof record.respawnTimeoutBegan === 'number' && Number.isFinite(record.respawnTimeoutBegan)
-					? record.respawnTimeoutBegan
-					: undefined;
-			const respawnTimeoutLength =
-				typeof record.respawnTimeoutLength === 'number' && Number.isFinite(record.respawnTimeoutLength)
-					? record.respawnTimeoutLength
+			const maxHp = Math.max(
+				1,
+				typeof record.maxHp === 'number' && Number.isFinite(record.maxHp) ? record.maxHp : 1,
+			);
+			const respawnAt =
+				typeof record.respawnAt === 'number' && Number.isFinite(record.respawnAt)
+					? record.respawnAt
 					: undefined;
 			const revivesAt =
-				dead && respawnTimeoutBegan !== undefined && respawnTimeoutLength !== undefined
-					? respawnTimeoutBegan + respawnTimeoutLength
+				dead && respawnAt !== undefined
+					? respawnAt
 					: null;
 			const battlesRaw = record.battles as Record<string, unknown> | undefined;
 			const battles = {
@@ -385,7 +383,7 @@ const summarizeInventory = ({
 							: 0,
 					cards: cards.map((card) => getDisplayName(card)),
 					presets,
-					hp: Math.max(0, rawHp),
+					hp: Math.min(maxHp, Math.max(0, rawHp)),
 					maxHp,
 					revivesAt,
 					battles,

@@ -150,7 +150,7 @@ describe('trpc/router card management procedures', () => {
 		]);
 	});
 
-	it('computes revivesAt from respawnTimeoutBegan + respawnTimeoutLength for a fallen monster mid-revival', async () => {
+	it('uses the engine revival completion epoch for a fallen monster mid-revival', async () => {
 		const fallenMonster = {
 			givenName: 'Ashfall',
 			creatureType: 'Minotaur',
@@ -165,6 +165,7 @@ describe('trpc/router card management procedures', () => {
 			maxHp: 30,
 			respawnTimeoutBegan: 1_000,
 			respawnTimeoutLength: 5_000,
+			respawnAt: 6_000,
 			battles: { wins: 2, losses: 5, total: 7 },
 		};
 		const game = {
@@ -180,6 +181,40 @@ describe('trpc/router card management procedures', () => {
 		const result = await caller.game.myInventory({ roomId: ROOM_ID });
 
 		expect(result.monsters[0]).to.include({ dead: true, hp: 0, maxHp: 30, revivesAt: 6_000 });
+	});
+
+	it('preserves a restored monster’s original revival completion epoch', async () => {
+		const fallenMonster = {
+			givenName: 'Ashfall',
+			creatureType: 'Minotaur',
+			level: 3,
+			dead: true,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: 0,
+			maxHp: 30,
+			// On restore, `respawnTimeoutLength` becomes the remaining delay; adding it to
+			// this persisted starting point reports an ETA that is too early.
+			respawnTimeoutBegan: 1_000,
+			respawnTimeoutLength: 2_000,
+			respawnAt: 6_000,
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [fallenMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ revivesAt: 6_000 });
 	});
 
 	it('reports revivesAt as null for a fallen monster with no revival timer running', async () => {
@@ -216,7 +251,36 @@ describe('trpc/router card management procedures', () => {
 		expect(result.monsters[0]).to.include({ revivesAt: null });
 	});
 
-	it('clamps a negative hp to 0 for display and falls back to sane defaults when hp/maxHp/battles are missing (test doubles, legacy snapshots)', async () => {
+	it('floors zero maxHp and clamps hp to the display range', async () => {
+		const bareMonster = {
+			givenName: 'Stonefang',
+			creatureType: 'Basilisk',
+			level: 1,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: 3,
+			maxHp: 0,
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [bareMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ hp: 1, maxHp: 1 });
+		expect(result.monsters[0]!.battles).to.deep.equal({ wins: 0, losses: 0, total: 0 });
+	});
+
+	it('floors a negative maxHp and clamps negative hp for display', async () => {
 		const bareMonster = {
 			givenName: 'Stonefang',
 			creatureType: 'Basilisk',
@@ -227,6 +291,7 @@ describe('trpc/router card management procedures', () => {
 			items: [],
 			options: {},
 			hp: -12,
+			maxHp: -5,
 		};
 		const game = {
 			characters: { [USER_ID]: { monsters: [bareMonster], deck: [], items: [] } },
@@ -241,7 +306,6 @@ describe('trpc/router card management procedures', () => {
 		const result = await caller.game.myInventory({ roomId: ROOM_ID });
 
 		expect(result.monsters[0]).to.include({ hp: 0, maxHp: 1 });
-		expect(result.monsters[0]!.battles).to.deep.equal({ wins: 0, losses: 0, total: 0 });
 	});
 
 	it('degrades gracefully when an item is missing canUseItem/expired (test doubles, legacy snapshots)', async () => {
