@@ -443,18 +443,21 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
   );
 
   const onAtBottomStateChange = useCallback((atBottom: boolean) => {
-    setIsAtBottom(atBottom);
     if (atBottom) {
+      setIsAtBottom(true);
       shouldFollowOutputRef.current = true;
       return;
     }
     if (Date.now() - userScrollGestureAtRef.current <= USER_SCROLL_INTENT_WINDOW_MS) {
+      setIsAtBottom(false);
       shouldFollowOutputRef.current = false;
       return;
     }
     // The bottom moved away on its own (roster grew, late measurement, a follow scroll
     // that ended short). Not the reader's doing — re-pin instead of switching off (#157).
-    // Instant, not smooth: a smooth scroll is what ended short in the first place.
+    // Instant, not smooth: a smooth scroll is what ended short in the first place. The
+    // `↓ Latest` button stays hidden: following is still on, so flashing it for the frame
+    // before the snap lands would only be noise.
     virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
   }, []);
 

@@ -155,7 +155,7 @@ describe('RingPane scroll follow behavior', () => {
    * feed then sat a line or two above the newest narration for the rest of the burst.
    */
   it('re-pins to the bottom when the bottom moves away with no user gesture', () => {
-    const { atBottomHandler } = renderPane();
+    const { atBottomHandler, queryByRole } = renderPane();
 
     act(() => {
       atBottomHandler(false);
@@ -163,6 +163,8 @@ describe('RingPane scroll follow behavior', () => {
 
     expect(scrollToIndexMock).toHaveBeenCalledWith({ index: 'LAST', behavior: 'auto' });
     expect(followOutput?.(false)).not.toBe(false);
+    // Still following, so the jump button must not flash for the frame before the snap.
+    expect(queryByRole('button', { name: 'Jump to latest events' })).toBeNull();
   });
 
   it('treats a touch drag as the reader leaving the bottom', () => {
