@@ -17,7 +17,7 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 | E | Edit your **global** display name, not just the room-scoped character name | explore → Tier 2 | ✅ done (review: Critical masked-vs-raw name mismatch; orchestrator then found `givenName` is also start-cased — fixed with real-character tests) | `4659880`, `cdb7af2`, `bc879bd`, `e64027a`, `7763188`, `d5cc0bc`, `32a13c8` |
 | F | +3 monster slots per beastmaster (existing characters included) | orchestrator (small) | ✅ done | see git log (`feat(engine): beastmasters keep up to 10 monsters`) |
 | G | Implement [17 — Pixel Art Fight Animations](17-pixel-art-fight-animations.md) | Tier 3 design, Tier 2 implement | 🔧 G1 ✅ (`a2d8e7a`, review fix `8235137`); G2 landed (`64c3e5a`…`5368228`), live-verified in Test Room A, review-fix round landed (`2368f79`…`8eed8c3`: time-driven settle, single theme store, roster churn, payload validation, canvas sizing, sprite legibility); orchestrator follow-ups `3a29ae0` (poses derived from each literal map — the redraw had shipped six identical frames), `7688719` (settle timer re-arms on an early wake; bug #162), `6912e7d` (hold fighters through the fade). Live re-verified: band fades ~2 s after `Fight concluded`, fallen pose visible | `a2d8e7a`, `b18fc31`, `8235137`, `64c3e5a`, `265807b`, `4e40ef7` |
-| H | Reorganise the roadmap: archive what shipped, make remaining work obvious | Tier 2 | 📋 after G | — |
+| H | Reorganise the roadmap: archive what shipped, make remaining work obvious | Tier 1 survey → Tier 2 apply | 📋 survey done (`/tmp/dm-followups/roadmap-status-map.md`: 13 docs shipped, README calls 17 "post-launch" though it shipped, 10b's last section heading still says #98–#108 while holding through #162); brief ready (`task-H-brief.md`), dispatch after A lands — both edit `README.md`/`10b`/`AGENTS.md` | — |
 | I | Encode what worked in this process into `AGENTS.md` / `docs/agents/subagents.md` | orchestrator | 📋 last | — |
 
 ## Decisions so far
@@ -29,6 +29,9 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 - **Monster slots** (Task F): `DEFAULT_MONSTER_SLOTS` 7 → 10, and capacity is now *derived*: `monsterSlots = max(DEFAULT_MONSTER_SLOTS + monsterSlotModifier, monsters.length)`. The old persisted `monsterSlots` field is retired on load (anything above today's default becomes a modifier grant; the field is dropped from saved state). The floor at the roster size means lowering the default never strands anyone. Earning the modifier (level reward, scroll) is a backlog item in `12-new-content-backlog.md`. The handbook prints the number from the constant.
 - **Display name vs character name** (Task E): `profiles.display_name` is global (Supabase) and seeds a new room character's `givenName`; the character name is per-room engine state and stays editable via `edit my character`. Both must be editable; the account page is the home for the global one.
 
+- **Roadmap layout** (Task H): shipped plans move to `docs/archive/roadmap/` with filenames kept; their leftovers are carried into a new `22-small-leftovers.md` so nothing vanishes; `10b-bugs-fixed.md` stays in `docs/roadmap/` because ~45 code comments cite that path as a stable anchor; `07`/`08` stay visible as deliberate deferrals; `README.md` becomes Now / Next / Deferred / Shipped.
+- **Pixel-fight timers** (Task G): time-driven effects must re-arm until `performance.now() >= deadline` — `setTimeout` is ms-clamped and can wake early, and a settle that changes nothing never re-renders (#162).
+
 ## Process rules for this pass (candidates for `AGENTS.md`)
 
 1. One implementer per set of files at a time; docs-only work may run alongside code work. Long independent features run in their own git worktree and are merged back.
@@ -39,6 +42,8 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 6. Implementers never create or switch branches in the shared worktree (Task B's implementer did; its branch is fast-forwarded into the feature branch and deleted once the task lands).
 7. Test the real object, not a stub of it, whenever the assertion is about that object's behaviour: Task E's propagation check passed two rounds against stubs with hand-written `givenName` values and was dead against a real `Beastmaster` (masking + `startCase`).
 8. Live tests reuse `Test Room A` / `Test Room B` on the remote project and delete any throwaway room before reporting done (Task C's implementer left three `First Run …` rooms; the orchestrator deleted them via `room.delete` and wrote the rule into `docs/local-testing-guidelines.md`, `docs/agents/working-in-this-repo.md`, and `AGENTS.md`).
+9. Look at the recording before trusting it: `x11grab` captures a screen region, and two Chrome windows exist in Cursor Cloud — raise the test window (`xdotool windowraise`) first, then sample frames with ffmpeg. A video-review model also reported 1–2 px sprite motion as "static"; frame strips at 200 ms steps settled it.
+10. When a fix round reports `DONE_WITH_CONCERNS`, treat the concern as a finding: G2's "frames reuse the base map" meant nothing animated, and the live re-check that followed found the timer bug (#162) the unit tests had not.
 
 ## Clean-up (final step)
 
