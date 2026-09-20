@@ -115,9 +115,23 @@ export default function PixelFightLayer({
   useEffect(() => {
     const deadline = nextDeadline(scene);
     if (deadline === undefined) return;
-    const timer = window.setTimeout(() => {
-      setScene((previous) => settle(previous, performance.now()));
-    }, Math.max(0, deadline - performance.now()));
+    // Timers are clamped to whole milliseconds while performance.now() is not, so a
+    // timeout can wake a fraction early. Settling then changes nothing, React skips the
+    // re-render, this effect never re-runs, and the fight stayed "active" on screen until
+    // the next unrelated feed event (seen live: ~90 s). Re-arm until the deadline has
+    // genuinely passed.
+    let timer: number | undefined;
+    const arm = () => {
+      timer = window.setTimeout(() => {
+        const now = performance.now();
+        if (now < deadline) {
+          arm();
+          return;
+        }
+        setScene((previous) => settle(previous, now));
+      }, Math.max(0, Math.ceil(deadline - performance.now())));
+    };
+    arm();
     return () => window.clearTimeout(timer);
   }, [scene]);
 

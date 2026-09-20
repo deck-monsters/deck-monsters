@@ -213,6 +213,26 @@ describe('PixelFightLayer', () => {
     expect(cancelRaf).toHaveBeenCalled();
   });
 
+  it('re-arms when the fade timer fires a hair before its deadline instead of stalling', () => {
+    // Browsers clamp timers to whole ms while performance.now() is sub-ms, so a timeout
+    // can wake fractionally early. Settling then changes nothing, no re-render follows,
+    // and without a re-arm the canvas stays active until an unrelated feed event.
+    const { container } = render(<PixelFightLayer contestants={contestants} viewerUserId="viewer" />);
+    act(() => listener?.(fightStart()));
+    now = 400;
+    act(() => vi.advanceTimersByTime(400));
+
+    act(() => listener?.(fightConclusion()));
+    now = 2_899.6;
+    act(() => vi.advanceTimersByTime(2_500));
+    expect(container.querySelector('canvas.pixel-fight-layer')).toHaveClass('active');
+    expect(vi.getTimerCount(), 'a follow-up timer must be armed').toBe(1);
+
+    now = 2_901;
+    act(() => vi.advanceTimersByTime(2));
+    expect(container.querySelector('canvas.pixel-fight-layer')).not.toHaveClass('active');
+  });
+
   it('does not reset its backing store between equal-size draws and resizes when size changes', () => {
     let width = 640;
     vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockImplementation(() => (
