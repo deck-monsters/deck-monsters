@@ -3550,17 +3550,19 @@ nothing to render even if it wanted to.
 **Fix**:
 
 - **Server** — `InventoryMonsterSummary` gained `hp`/`maxHp` (same defensive
-  `typeof … === 'number' && Number.isFinite` pattern as the existing numeric fields; `hp` is
-  clamped to 0 for display, matching the fact that an overkill hit can drive the engine's own
-  `hp` getter negative before `die()` clamps it back), `revivesAt` (epoch ms, computed from the
-  `respawnTimeoutBegan`/`respawnTimeoutLength` fields when both are present, `null` when the
-  monster is alive or dead with no revival timer running — never the timer handle or the length
-  themselves), and `battles` (`{ wins, losses, total }`, from the engine's own lazily-created
-  getter).
+  `typeof … === 'number' && Number.isFinite` pattern as the existing numeric fields; the
+  engine's minimum-1 `maxHp` floor is preserved and `hp` is clamped to its display range),
+  `revivesAt` (the engine's dedicated, non-persisted `respawnAt` completion epoch, `null` when
+  the monster is alive or dead with no revival timer running — never the timer handle or its
+  delay), and `battles` (`{ wins, losses, total }`, from the engine's own lazily-created
+  getter). On restore, `respawn()` rehydrates `respawnTimeoutLength` as the *remaining* delay,
+  so adding it to the persisted start time reports revival too early; `respawnAt` preserves the
+  true completion time for the server projection.
 - **Web** — `MonsterWorkshopPanel.tsx`'s header was rebuilt around HP as the primary meter,
   reusing `RingRoster`'s `hpRatio`/`hpBand` helpers and `roster-bar-*` classes so the two
   surfaces can never band health differently. A dead monster's meter reads `Fallen` (plus
-  `· revives in {relative}` via a new `formatRelativeFromNow` helper when a revival is running).
+  `· revives {relative}` via a new `formatRelativeFromNow` helper when a revival is running);
+  its 30-second local clock keeps that estimate current without relying on a query refetch.
   The type line becomes `{type} · Lvl {level}`; a single status tag (`in the ring` / `fighting`
   / `fallen`, in that priority) replaces the bar as the at-a-glance ring-state signal. The XP
   meter's label dropped the now-redundant level. Deck size became text
@@ -3568,10 +3570,12 @@ nothing to render even if it wanted to.
   small optional `{wins}W {losses}L` hidden at phone widths. `.workshop-slot-meter` and its
   track/fill CSS were removed — nothing else referenced them.
 
-**Tests**: `packages/server/src/trpc/router.test.ts` — hp/maxHp on the summary; `revivesAt`
-computed from `respawnTimeoutBegan + respawnTimeoutLength` for a fallen monster mid-revival;
-`revivesAt` null for a fallen monster with no timer; hp clamped to 0 and maxHp/battles defaulted
-for a bare test-double monster; battles mapped through. `apps/web/src/utils/format-relative.test.ts`
+**Tests**: `packages/engine/src/creatures/health.test.ts` — a restored fallen monster retains
+its true `respawnAt` until the callback fires. `packages/server/src/trpc/router.test.ts` —
+hp/maxHp on the summary; `revivesAt` comes from `respawnAt`, including the restore shape where
+the old start plus remaining delay would be wrong; `revivesAt` null for a fallen monster with
+no timer; zero/negative max HP floor at one and hp is clamped to that range; battles mapped
+through. `apps/web/src/utils/format-relative.test.ts`
 — minutes/hours/days formatting and the "any moment" floor for anything under a minute away
 (including the past). `apps/web/src/__tests__/monsterWorkshopPanel.header.test.tsx` — the HP
 label and accessible meter values, the hp/critical band boundary, the fallen label with and
