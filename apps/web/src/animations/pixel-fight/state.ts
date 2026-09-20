@@ -226,11 +226,15 @@ export function reduce(
 
   if (isRingStateFrame(event)) {
     const roster = event.contestants;
+    // The ring empties as the fight concludes, and that frame lands inside the fade
+    // window; keep the closing poses (including the fallen one) on screen until the fade
+    // ends rather than blanking the canvas a beat before it goes.
+    const fading = scene.active && scene.fadeOutAt !== undefined;
     return {
       ...scene,
       roster,
       viewerUserId: event.viewerUserId,
-      fighters: scene.active
+      fighters: scene.active && !fading
         ? fightersFromRoster(roster, scene.fighters, event.viewerUserId, now, 'enter')
         : scene.fighters,
     };

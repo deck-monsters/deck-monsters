@@ -184,6 +184,26 @@ describe('pixel fight reducer', () => {
     expect(settled.fighters.find((fighter) => fighter.name === 'Mara')).toMatchObject({ anim: 'faint' });
   });
 
+  it('keeps the final poses on screen through the fade when the roster empties', () => {
+    // The engine clears the ring as the fight concludes, and that `ring.state` frame arrives
+    // inside the 2.5 s fade window. Wiping the fighters there would make the fade an empty
+    // canvas and hide the fallen pose the fight just ended on.
+    const fallen = reduce(
+      settledStartedScene(),
+      combatEvent({
+        kind: 'death', actor: { name: 'Aqim' }, target: { name: 'Mara' }, destroyed: false,
+      }),
+      500,
+    );
+    const fading = reduce(fallen, fightEvent('fightConcludes'), 600);
+    const emptied = reduce(fading, stateFrame([]), 700);
+
+    expect(emptied.active).toBe(true);
+    expect(emptied.fighters.map((f) => [f.name, f.anim])).toEqual(fading.fighters.map((f) => [f.name, f.anim]));
+    expect(emptied.fighters.find((f) => f.name === 'Mara')?.anim).toBe('faint');
+    expect(settle(emptied, 3_100)).toMatchObject({ active: false, fighters: [] });
+  });
+
   it('fades after a conclusion and becomes inactive when the fade ends', () => {
     const fading = reduce(
       startedScene(),
