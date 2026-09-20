@@ -110,5 +110,6 @@ with the same verbs. Keep new strings consistent with this: no invented owners f
 no possessive framing for players' monsters, singular *they* rather than *it* for creatures
 (#149).
 
-A dedicated `docs/voice-and-wording.md` is forthcoming; until it exists, the announcement
-modules and their comments are the reference.
+[`docs/voice-and-wording.md`](../voice-and-wording.md) is the complete lexicon and
+player-facing wording contract. The announcement modules and their comments remain the
+reference for the consent distinction it records.

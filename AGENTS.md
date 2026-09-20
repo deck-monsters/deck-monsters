@@ -54,6 +54,7 @@ non-obvious bit us before.
 | [`docs/agents/game-primer.md`](docs/agents/game-primer.md) | Anything, if you have never played the game — how the loop, pacing, healing, bosses, prompts, and the web feeds actually behave |
 | [`docs/agents/working-in-this-repo.md`](docs/agents/working-in-this-repo.md) | Opening a PR, numbering a bug, running the verification gate, or doing live verification |
 | [`docs/agents/subagents.md`](docs/agents/subagents.md) | Delegating any part of a task to another agent |
+| [`docs/voice-and-wording.md`](docs/voice-and-wording.md) | Any player-facing string: prompts, help text, announcements, button labels, Discord descriptions |
 | [`docs/room-scoping.md`](docs/room-scoping.md) | Any game state, DB query, tRPC procedure, or event subscription. **Hard constraint, not a guideline.** |
 | [`docs/engine-concurrency-and-timing.md`](docs/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, `events/room-event-bus.ts` prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |
 | [`docs/boss-encounters.md`](docs/boss-encounters.md) | Bosses, boss summoning, ring events, teams, or targeting strategies |
