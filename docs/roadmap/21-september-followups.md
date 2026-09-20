@@ -14,7 +14,7 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 | C | Workshop: train your first monster with no character (prompt-free character creation inside `game.spawnMonster`); stop asking players to pick from one class | Tier 3 implement, Tier 2 review | ✅ done (review: spec pass, approved; 10b #160) | `67d7ad5`…`675a230` |
 | B | Workshop header metrics: current HP first, slots bar → `Deck 9/9` text, `Lvl n` badge, fallen/revives-in state | Tier 2 implement | ✅ done (review found 4 Important: restore-drift `revivesAt`, doubled `in`, no countdown tick, `maxHp` floor — fixed) | 854f53e, d36bbe3, f8d2e4e, 2a71c9a, 29a3bbb, 7c07e45, bc85843 |
 | A | One vocabulary for the world (`train`, `call out`, `dismiss`, pronouns…) + `docs/voice-and-wording.md` | Tier 3 doc, Tier 2 apply | 📋 brief ready, runs last of the wording/workshop set | — |
-| E | Edit your **global** display name, not just the room-scoped character name | explore → Tier 2 | 🔍 in review | `4659880`, `cdb7af2`, `bc879bd` |
+| E | Edit your **global** display name, not just the room-scoped character name | explore → Tier 2 | ✅ done (review: Critical masked-vs-raw name mismatch; orchestrator then found `givenName` is also start-cased — fixed with real-character tests) | `4659880`, `cdb7af2`, `bc879bd`, `e64027a`, `7763188`, `d5cc0bc`, `32a13c8` |
 | F | +3 monster slots per beastmaster (existing characters included) | orchestrator (small) | ✅ done | see git log (`feat(engine): beastmasters keep up to 10 monsters`) |
 | G | Implement [17 — Pixel Art Fight Animations](17-pixel-art-fight-animations.md) | Tier 3 design, Tier 2 implement | 🔧 G1 (engine DTO) in review `a2d8e7a`; G2 (web layer) next | `a2d8e7a`, `b18fc31` |
 | H | Reorganise the roadmap: archive what shipped, make remaining work obvious | Tier 2 | 📋 after G | — |
@@ -37,7 +37,8 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 4. A subagent that returns "success" with no artifact is re-dispatched on a different model, not retried.
 5. The final whole-branch review runs on the most capable model after all tasks land.
 6. Implementers never create or switch branches in the shared worktree (Task B's implementer did; its branch is fast-forwarded into the feature branch and deleted once the task lands).
-7. Live tests reuse `Test Room A` / `Test Room B` on the remote project and delete any throwaway room before reporting done (Task C's implementer left three `First Run …` rooms; the orchestrator deleted them via `room.delete` and wrote the rule into `docs/local-testing-guidelines.md`, `docs/agents/working-in-this-repo.md`, and `AGENTS.md`).
+7. Test the real object, not a stub of it, whenever the assertion is about that object's behaviour: Task E's propagation check passed two rounds against stubs with hand-written `givenName` values and was dead against a real `Beastmaster` (masking + `startCase`).
+8. Live tests reuse `Test Room A` / `Test Room B` on the remote project and delete any throwaway room before reporting done (Task C's implementer left three `First Run …` rooms; the orchestrator deleted them via `room.delete` and wrote the rule into `docs/local-testing-guidelines.md`, `docs/agents/working-in-this-repo.md`, and `AGENTS.md`).
 
 ## Clean-up (final step)
 
