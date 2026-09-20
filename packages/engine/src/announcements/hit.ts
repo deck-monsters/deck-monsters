@@ -1,4 +1,6 @@
 import flavor from '../helpers/flavor.js';
+import { toCombatActor } from '../events/combat.js';
+import type { CombatPayload } from '../events/types.js';
 import type { RoomEventBus } from '../events/index.js';
 
 interface FloorIcon {
@@ -44,6 +46,16 @@ export function announceHit(
 			? `${monster.givenName} is now bloodied. `
 			: '';
 	const only = monster.bloodied && monster.hp > 0 ? 'only ' : '';
+	const combat: CombatPayload = {
+		kind: 'hit',
+		actor: toCombatActor(assailant),
+		target: toCombatActor(monster),
+		damage,
+		prevHp,
+		hp: monster.hp,
+		maxHp: monster.maxHp,
+		selfInflicted: monster === assailant,
+	};
 
 	let flavorText: string;
 	if (card && card.flavorText) {
@@ -74,6 +86,7 @@ export function announceHit(
 			bloodied: Boolean(monster.bloodied),
 			monsterName: monster.givenName,
 			assailantName: assailant?.givenName,
+			combat,
 		},
 	});
 }

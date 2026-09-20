@@ -16,6 +16,19 @@ function makeEb(onPublish: (text: string) => void): RoomEventBus {
 	} as unknown as RoomEventBus;
 }
 
+function makeCaptureEb(): { eb: RoomEventBus; published: Array<{ payload: Record<string, unknown> }> } {
+	const published: Array<{ payload: Record<string, unknown> }> = [];
+	return {
+		eb: {
+			publish: (event: { payload: Record<string, unknown> }) => {
+				published.push(event);
+				return { id: '1', roomId: 'test', timestamp: 0, type: 'announce', scope: 'public', text: '', ...event };
+			},
+		} as unknown as RoomEventBus,
+		published,
+	};
+}
+
 describe('./announcements/hit.ts', () => {
 	describe('hit announcement', () => {
 		it('can announce normal hit to public channel', () => {
@@ -190,6 +203,27 @@ describe('./announcements/hit.ts', () => {
 			};
 			(monster as any).hp = 1;
 			announceHit(eb, '', monster, { assailant, card, damage: 1, prevHp: 2 });
+		});
+
+		it('adds plain typed combat data for self-inflicted hits', () => {
+			const { eb, published } = makeCaptureEb();
+			const monster = new Gladiator({ name: 'monster', hpVariance: 0, acVariance: 0 });
+			const card = { flavors: { hits: [['hits', 100]] as [string, number][] } };
+
+			announceHit(eb, '', monster, { assailant: monster, card, damage: 2, prevHp: 15 });
+
+			const combat = published[0]?.payload.combat;
+			expect(combat).to.deep.equal({
+				kind: 'hit',
+				actor: { name: 'Monster', creatureType: 'Gladiator', icon: '💪', isBoss: false },
+				target: { name: 'Monster', creatureType: 'Gladiator', icon: '💪', isBoss: false },
+				damage: 2,
+				prevHp: 15,
+				hp: monster.hp,
+				maxHp: monster.maxHp,
+				selfInflicted: true,
+			});
+			expect(JSON.parse(JSON.stringify(combat))).to.deep.equal(combat);
 		});
 	});
 });

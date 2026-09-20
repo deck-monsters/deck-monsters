@@ -6,14 +6,31 @@ import { gameStateSchema } from './schemas/state.js';
 import Game from './game.js';
 import type { ChannelCallback } from './channel/index.js';
 import { ConnectorAdapter } from './channel/index.js';
-import { RoomEventBus, PROMPT_CANCELLED, PromptCancelledError } from './events/index.js';
-import type { GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult } from './events/index.js';
+import { RoomEventBus, PROMPT_CANCELLED, PromptCancelledError, toCombatActor } from './events/index.js';
+import type {
+	CombatActor,
+	CombatPayload,
+	GameEvent,
+	EventType,
+	EventScope,
+	EventSubscriber,
+	EventsSinceResult,
+} from './events/index.js';
 
-export { Game, ConnectorAdapter, RoomEventBus, PROMPT_CANCELLED, PromptCancelledError };
+export { Game, ConnectorAdapter, RoomEventBus, PROMPT_CANCELLED, PromptCancelledError, toCombatActor };
 export { CommandRefusalError, isCommandRefusal } from './helpers/command-refusal-error.js';
 export { announceAndThrow } from './helpers/announce-and-throw.js';
 export type { GameAnalyticsCallbacks, LeaderboardSortKey } from './game.js';
-export type { ChannelCallback, GameEvent, EventType, EventScope, EventSubscriber, EventsSinceResult };
+export type {
+	ChannelCallback,
+	CombatActor,
+	CombatPayload,
+	GameEvent,
+	EventType,
+	EventScope,
+	EventSubscriber,
+	EventsSinceResult,
+};
 export type { StateStore } from './types/state-store.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { getCardClassByTypeName } from './cards/index.js';
