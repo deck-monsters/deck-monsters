@@ -66,6 +66,9 @@ describe('trpc/router card management procedures', () => {
 			options: { presets: { aggro: ['Hit'] } },
 			canHoldCard: (card: { cardType?: string }) => card.cardType !== 'Blink',
 			canUseItem: (item: { itemType?: string }) => item.itemType !== 'Scroll',
+			hp: 22,
+			maxHp: 40,
+			battles: { wins: 3, losses: 1, total: 4 },
 		};
 		const supportMonster = {
 			givenName: 'Mirebell',
@@ -78,6 +81,9 @@ describe('trpc/router card management procedures', () => {
 			options: { presets: {} },
 			canHoldCard: (card: { cardType?: string }) => card.cardType === 'Blink',
 			canUseItem: (item: { itemType?: string }) => item.itemType !== 'Scroll',
+			hp: 15,
+			maxHp: 15,
+			battles: { wins: 0, losses: 0, total: 0 },
 		};
 		const game = {
 			characters: {
@@ -105,7 +111,11 @@ describe('trpc/router card management procedures', () => {
 			name: 'Stonefang',
 			type: 'Basilisk',
 			inRing: true,
+			hp: 22,
+			maxHp: 40,
+			revivesAt: null,
 		});
+		expect(result.monsters[0]!.battles).to.deep.equal({ wins: 3, losses: 1, total: 4 });
 		expect(result.unequippedDeck).to.deep.equal(['Blink']);
 		expect(result.cardCompatibility).to.deep.equal({
 			Blink: ['Mirebell'],
@@ -138,6 +148,100 @@ describe('trpc/router card management procedures', () => {
 			},
 			{ monsterName: 'Mirebell', items: [] },
 		]);
+	});
+
+	it('computes revivesAt from respawnTimeoutBegan + respawnTimeoutLength for a fallen monster mid-revival', async () => {
+		const fallenMonster = {
+			givenName: 'Ashfall',
+			creatureType: 'Minotaur',
+			level: 3,
+			dead: true,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: 0,
+			maxHp: 30,
+			respawnTimeoutBegan: 1_000,
+			respawnTimeoutLength: 5_000,
+			battles: { wins: 2, losses: 5, total: 7 },
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [fallenMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ dead: true, hp: 0, maxHp: 30, revivesAt: 6_000 });
+	});
+
+	it('reports revivesAt as null for a fallen monster with no revival timer running', async () => {
+		// A monster can be dead with no active timer — e.g. a permadeath, or the process
+		// restarted and the in-memory timer/length fields were never rehydrated (they are
+		// declared instance fields, not persisted options — see docs/room-scoping.md's
+		// sibling doc on serialization, and creatures/health.ts's `respawn`). The workshop
+		// must not show a stale or fabricated countdown in that case.
+		const fallenMonster = {
+			givenName: 'Ashfall',
+			creatureType: 'Minotaur',
+			level: 3,
+			dead: true,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: 0,
+			maxHp: 30,
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [fallenMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ revivesAt: null });
+	});
+
+	it('clamps a negative hp to 0 for display and falls back to sane defaults when hp/maxHp/battles are missing (test doubles, legacy snapshots)', async () => {
+		const bareMonster = {
+			givenName: 'Stonefang',
+			creatureType: 'Basilisk',
+			level: 1,
+			inEncounter: false,
+			cardSlots: 9,
+			cards: [],
+			items: [],
+			options: {},
+			hp: -12,
+		};
+		const game = {
+			characters: { [USER_ID]: { monsters: [bareMonster], deck: [], items: [] } },
+			ring: { contestants: [] },
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.myInventory({ roomId: ROOM_ID });
+
+		expect(result.monsters[0]).to.include({ hp: 0, maxHp: 1 });
+		expect(result.monsters[0]!.battles).to.deep.equal({ wins: 0, losses: 0, total: 0 });
 	});
 
 	it('degrades gracefully when an item is missing canUseItem/expired (test doubles, legacy snapshots)', async () => {

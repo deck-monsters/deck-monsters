@@ -68,6 +68,20 @@ type InventoryMonsterSummary = {
 	cardSlots: number;
 	cards: string[];
 	presets: Record<string, string[]>;
+	// Current/max HP for the Workshop header (10b-bugs-fixed.md — the deck-slot bar was
+	// full nearly all the time and the one number a beastmaster actually needs, current
+	// HP, was not shown anywhere). `hp` is clamped at 0 for display: the engine can drive
+	// it negative on an overkill hit before `die()` clamps it back, and a raw negative
+	// would render an inverted/overflowing bar.
+	hp: number;
+	maxHp: number;
+	// Epoch ms when a fallen monster's revival completes, or null when the monster is
+	// alive, or dead with no revival timer running (e.g. permadeath, or the process
+	// restarted and `respawnTimeout`/`respawnTimeoutLength` — plain instance fields, never
+	// persisted to `options` — were never rehydrated; see creatures/health.ts `respawn`).
+	// Never send the timer handle or `respawnTimeoutLength` itself over the wire.
+	revivesAt: number | null;
+	battles: { wins: number; losses: number; total: number };
 };
 
 // Per-item summary for the web item list (roadmap/19-player-agency-and-items.md §7).
@@ -321,6 +335,35 @@ const summarizeInventory = ({
 			const xpIntoLevel = Math.max(0, xp - levelFloor);
 			const xpNeededForLevel = Math.max(1, levelCap - levelFloor + 1);
 
+			const dead = Boolean(record.dead);
+			const rawHp = typeof record.hp === 'number' && Number.isFinite(record.hp) ? record.hp : 0;
+			const maxHp =
+				typeof record.maxHp === 'number' && Number.isFinite(record.maxHp) ? record.maxHp : 1;
+			const respawnTimeoutBegan =
+				typeof record.respawnTimeoutBegan === 'number' && Number.isFinite(record.respawnTimeoutBegan)
+					? record.respawnTimeoutBegan
+					: undefined;
+			const respawnTimeoutLength =
+				typeof record.respawnTimeoutLength === 'number' && Number.isFinite(record.respawnTimeoutLength)
+					? record.respawnTimeoutLength
+					: undefined;
+			const revivesAt =
+				dead && respawnTimeoutBegan !== undefined && respawnTimeoutLength !== undefined
+					? respawnTimeoutBegan + respawnTimeoutLength
+					: null;
+			const battlesRaw = record.battles as Record<string, unknown> | undefined;
+			const battles = {
+				wins: typeof battlesRaw?.wins === 'number' && Number.isFinite(battlesRaw.wins) ? battlesRaw.wins : 0,
+				losses:
+					typeof battlesRaw?.losses === 'number' && Number.isFinite(battlesRaw.losses)
+						? battlesRaw.losses
+						: 0,
+				total:
+					typeof battlesRaw?.total === 'number' && Number.isFinite(battlesRaw.total)
+						? battlesRaw.total
+						: 0,
+			};
+
 			return {
 				monster,
 				summary: {
@@ -332,7 +375,7 @@ const summarizeInventory = ({
 					level,
 					xpIntoLevel,
 					xpNeededForLevel,
-					dead: Boolean(record.dead),
+					dead,
 					inRing: inRing.has(monster),
 					inEncounter: Boolean(record.inEncounter),
 					cardSlots:
@@ -341,6 +384,10 @@ const summarizeInventory = ({
 							: 0,
 					cards: cards.map((card) => getDisplayName(card)),
 					presets,
+					hp: Math.max(0, rawHp),
+					maxHp,
+					revivesAt,
+					battles,
 				} satisfies InventoryMonsterSummary,
 			};
 		})
