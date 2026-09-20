@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import CardSlot, { type WorkshopCardLocation } from './CardSlot.js';
 import PresetControl from './PresetControl.js';
 // Reusing the ring roster's own hp math/bands rather than re-deriving them here — the two
@@ -84,6 +84,7 @@ export default function MonsterWorkshopPanel({
   compatibilityHint = 'none',
   onToggleFilter,
 }: MonsterPanelProps) {
+  const [now, setNow] = useState(() => Date.now());
   const locked = monster.inEncounter;
   const slots = useMemo(() => {
     const total = Math.max(monster.cardSlots, 1);
@@ -105,13 +106,22 @@ export default function MonsterWorkshopPanel({
         ? { key: 'fallen', label: 'fallen' }
         : null;
 
-  // Defensive fallbacks in the same spirit as the server's own `summarizeInventory`
-  // (`canMonsterHoldCard`, `canUseItemSafe`, etc.): these fields are always present on a
-  // real `myInventory` response, but a partial fixture or a not-yet-migrated test double
-  // should render a placeholder rather than crash the whole panel.
+  // Required props can still be absent in vi.mock test doubles.
   const hp = Number.isFinite(monster.hp) ? monster.hp : 0;
   const maxHp = Number.isFinite(monster.maxHp) ? monster.maxHp : 1;
   const battles = monster.battles ?? { wins: 0, losses: 0, total: 0 };
+  const revivesAt =
+    typeof monster.revivesAt === 'number' && Number.isFinite(monster.revivesAt)
+      ? monster.revivesAt
+      : undefined;
+
+  useEffect(() => {
+    if (revivesAt === undefined) return;
+
+    setNow(Date.now());
+    const interval = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(interval);
+  }, [revivesAt]);
 
   const hpRatioValue = hpRatio(hp, maxHp);
   // Same "force critical when dead" rule as `RingRoster`'s `ContestantRow` — a dead
@@ -120,8 +130,8 @@ export default function MonsterWorkshopPanel({
   // its face rather than relying on that clamp never changing.
   const hpBandValue = monster.dead ? 'critical' : hpBand(hpRatioValue);
   const hpLabel = monster.dead
-    ? monster.revivesAt
-      ? `Fallen · revives in ${formatRelativeFromNow(monster.revivesAt)}`
+    ? revivesAt !== undefined
+      ? `Fallen · revives ${formatRelativeFromNow(revivesAt, now)}`
       : 'Fallen'
     : `HP ${hp}/${maxHp}`;
 

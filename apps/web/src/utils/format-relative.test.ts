@@ -19,6 +19,11 @@ describe('formatRelativeFromNow', () => {
     expect(formatRelativeFromNow(NOW + 3 * HOUR, NOW)).toBe('in 3 h');
   });
 
+  it('keeps 59 minutes as minutes and rolls 60 minutes into one hour', () => {
+    expect(formatRelativeFromNow(NOW + 59 * MINUTE, NOW)).toBe('in 59 min');
+    expect(formatRelativeFromNow(NOW + HOUR, NOW)).toBe('in 1 h');
+  });
+
   it('rolls over into days once past 24 hours', () => {
     expect(formatRelativeFromNow(NOW + DAY + HOUR, NOW)).toBe('in 1 d 1 h');
   });
@@ -36,8 +41,7 @@ describe('formatRelativeFromNow', () => {
     expect(formatRelativeFromNow(NOW - 5 * MINUTE, NOW)).toBe('any moment');
   });
 
-  it('defaults `nowMs` to the current time when omitted', () => {
-    const soon = Date.now() + 5 * MINUTE;
-    expect(formatRelativeFromNow(soon)).toBe('in 5 min');
+  it('formats test estimates against an explicit clock', () => {
+    expect(formatRelativeFromNow(NOW + 5 * MINUTE, NOW)).toBe('in 5 min');
   });
 });

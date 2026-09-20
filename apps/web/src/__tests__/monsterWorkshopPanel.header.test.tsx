@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import MonsterWorkshopPanel from '../components/MonsterWorkshopPanel.js';
 
 const baseMonster = {
@@ -21,6 +21,8 @@ const baseMonster = {
 };
 
 const noop = () => undefined;
+const NOW = Date.UTC(2026, 0, 1, 12, 0, 0);
+const MINUTE = 60_000;
 
 function renderPanel(overrides: Partial<typeof baseMonster> = {}) {
   return render(
@@ -41,6 +43,11 @@ function renderPanel(overrides: Partial<typeof baseMonster> = {}) {
   );
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
+
 describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.md HP-not-shown)', () => {
   it('shows current HP as the primary meter, with accessible values', () => {
     renderPanel({ hp: 6, maxHp: 30 });
@@ -60,11 +67,40 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
     expect(fill?.className).toContain('roster-bar-hurt');
   });
 
-  it('reads "Fallen · revives in …" and shows an empty bar for a dead monster with a revival running', () => {
+  it('uses the full non-duplicated revive label for timed and overdue revivals', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const revivesAt = NOW + 5 * MINUTE;
+    const { unmount } = renderPanel({ dead: true, hp: 0, revivesAt });
+
+    expect(screen.getByText('Fallen · revives in 5 min')).toBeTruthy();
+    unmount();
+    renderPanel({ dead: true, hp: 0, revivesAt: NOW - MINUTE });
+
+    expect(screen.getByText('Fallen · revives any moment')).toBeTruthy();
+  });
+
+  it('updates the revive label as time passes and clears its interval on unmount', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+    const revivesAt = NOW + 2 * MINUTE;
+    const { container, unmount } = renderPanel({ dead: true, hp: 0, revivesAt });
+
+    expect(screen.getByText('Fallen · revives in 2 min')).toBeTruthy();
+    act(() => vi.advanceTimersByTime(2 * MINUTE));
+    expect(screen.getByText('Fallen · revives any moment')).toBeTruthy();
+    const fill = container.querySelector('.roster-bar-fill') as HTMLElement;
+    expect(fill.style.width).toBe('0%');
+    expect(fill.className).toContain('roster-bar-critical');
+    unmount();
+    expect(clearIntervalSpy).toHaveBeenCalled();
+  });
+
+  it('shows an empty bar for a dead monster with a revival running', () => {
     const revivesAt = Date.now() + 5 * 60_000;
     const { container } = renderPanel({ dead: true, hp: 0, revivesAt });
 
-    expect(screen.getByText(/^Fallen · revives in /)).toBeTruthy();
     expect(screen.getByText('fallen')).toBeTruthy();
     const fill = container.querySelector('.roster-bar-fill') as HTMLElement;
     expect(fill.style.width).toBe('0%');
@@ -104,9 +140,12 @@ describe('MonsterWorkshopPanel header — HP first, no slot bar (10b-bugs-fixed.
   });
 
   it('drops the "needs more" hint once the deck is full', () => {
-    const { container } = renderPanel({ cardSlots: 2, cards: ['Hit', 'Hit'] });
+    const { container } = renderPanel({
+      cardSlots: 9,
+      cards: ['Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit', 'Hit'],
+    });
     const deckCount = container.querySelector('.workshop-deck-count');
-    expect(deckCount?.textContent?.trim()).toBe('Deck 2/2');
+    expect(deckCount?.textContent?.trim()).toBe('Deck 9/9');
     expect(container.querySelector('.workshop-deck-needs-more')).toBeNull();
   });
 
