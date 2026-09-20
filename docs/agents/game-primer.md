@@ -6,7 +6,19 @@ already covers a subject in depth this links to it rather than restating it.
 
 ## The core loop
 
-1. **Spawn.** A player's `Beastmaster` gets a starting deck the first time it needs one —
+1. **Train.** (`train a monster`; the parser still accepts `spawn`, and the code keeps
+   `spawnMonster` as its identifier — see [`docs/voice-and-wording.md`](../voice-and-wording.md)
+   for the player-facing lexicon.) A beastmaster keeps up to `DEFAULT_MONSTER_SLOTS` (10)
+   monsters. Capacity is *derived*, not stored: `monsterSlots = max(DEFAULT_MONSTER_SLOTS +
+   monsterSlotModifier, monsters.length)`, so raising the global constant grants every
+   existing character the room, a per-character grant lives in `monsterSlotModifier`, and
+   nobody is stranded over capacity — they just cannot train more. A legacy stored
+   `monsterSlots` is folded into the modifier once on load
+   (`packages/engine/src/characters/beastmaster.ts`). The Workshop's Train form creates the
+   character in the same prompt-free mutation when the player has none (#160); the console
+   path prompts, and asks for **pronouns** (`he/him`, `she/her`, `they/them`), which map onto
+   the persisted `male|female|androgynous` keys via `helpers/pronouns.ts`.
+   A player's `Beastmaster` gets a starting deck the first time it needs one —
    `getInitialDeck()` = 15 fixed cards (Blink, Coil, Horn Gore, Battle Focus, Sandstorm,
    Blast, 4x Hit, **2x Delayed Hit**, 2x Heal, Flee) topped up with random draws to
    `DEFAULT_MINIMUM_CARDS` = 20 (`packages/engine/src/cards/helpers/deck.ts`).
@@ -73,6 +85,11 @@ measured reasoning behind the values.
   and cancels the pending callback so it cannot fire twice
   (`packages/engine/src/creatures/health.ts`). On revival, HP that would have accrued after
   the scheduled moment is credited too.
+- `respawnAt` (non-persisted) holds the *true* completion time of a running revival. After a
+  room restore the timer is re-armed with only the remaining delay, so
+  `respawnTimeoutBegan + respawnTimeoutLength` is wrong; the server's `myInventory`
+  projection (`revivesAt`) and the Workshop's `Fallen · revives in …` label read `respawnAt`
+  (#161).
 - **Timer ownership**: a creature's healing interval and respawn timeout belong to its
   beastmaster, not to the ring. `Ring.clearRing()` therefore disposes only *transient*
   contestants (`isBoss`, which also covers harness sim monsters); player monsters are torn
@@ -145,6 +162,24 @@ room's inventory (#26). This is a hard constraint; read
 lists; a room character's `givenName` is a separately editable per-room alias. A display-name
 change follows only characters that still have their old seeded name, never an alias chosen
 with `edit my character`. See [Display name vs character name](../archive/roadmap/03-auth-and-identity.md#display-name-vs-character-name).
+
+## Combat payloads and the pixel-fight layer
+
+Every combat announcement (`card.played`, hit, miss, heal, death, flee) carries a structured
+`payload.combat` DTO (`CombatPayload` in `packages/engine/src/events/types.ts`, built by
+`events/combat.ts`) alongside its text — actor/target as `{ name, icon, creatureType, isBoss }`
+plus the kind-specific numbers. It exists so connectors and the web can animate or render
+without parsing narration; it is additive and must stay JSON-safe (no engine objects).
+`Ring.addMonster(monster, { isBoss })` copies the flag onto the monster so `combat.isBoss`
+and the roster's `Contestant.isBoss` cannot disagree.
+
+The web consumes it in `apps/web/src/animations/pixel-fight/` (reducer `state.ts`, canvas
+`renderer.ts`, sprites, `PixelFightLayer.tsx`), mounted in `RingPane` only when the active
+theme declares the `pixel-art` feature (`data-theme-features`, `useThemeFeature`). Theme state
+is one `useSyncExternalStore` store so every consumer flips together. The gotchas that bit
+live — an early-waking `setTimeout` that never re-armed (#162), the roster emptying inside
+the fade, one literal sprite map with poses as transforms — are listed in the archived plan
+[`docs/archive/roadmap/17-pixel-art-fight-animations.md`](../archive/roadmap/17-pixel-art-fight-animations.md).
 
 ## The web feeds
 

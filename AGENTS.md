@@ -25,6 +25,12 @@ These apply to every task in this repo, not just the one you were asked to do.
    finishes an implementation task, after a review-fix round, or after a verification
    pass updates docs. Do not batch an entire roadmap into one late commit. Small, reviewable
    commits keep progress recoverable if a later step fails or the session ends early.
+6. **Plan in the roadmap, in the same commits.** A multi-task pass gets a planning doc under
+   `docs/roadmap/NN-<pass>.md` (task table with status and commit SHAs, decisions made,
+   process rules being tried). Update it in the checkpoint commit for each task, not in a
+   separate housekeeping commit, so `git log` of the plan is the history of the work. When
+   the pass is finished, fold its decisions into the owning area docs and move the plan to
+   `docs/archive/roadmap/`.
 
 ## Working with subagents
 
@@ -37,9 +43,20 @@ These apply to every task in this repo, not just the one you were asked to do.
 - Always set the model explicitly. An omitted model inherits the orchestrator's, which is
   usually the most expensive one available.
 - Never run two implementers on overlapping files; docs-only work can run beside code work.
+  Two tasks that both edit `docs/roadmap/README.md` or `10b-bugs-fixed.md` are overlapping.
+- **Implementers in a shared worktree never create or switch branches**, `git add` only the
+  files they changed, and never push — the orchestrator owns the branch. Put those three rules
+  in every implementer brief; one implementer here silently moved the whole worktree onto a
+  new branch and the orchestrator's next commit landed there.
 - **Verify the artifact before you trust the report.** A subagent can return "success" having
   written nothing — this has happened here. Check the file exists and reads correctly, and
   re-dispatch on a different model rather than retrying the same one unchanged.
+- **Every code task gets an independent, read-only review** (spec compliance, then quality)
+  with the diff handed over as a file, and a fix round is sent back to the *same* implementer
+  with the review file. `DONE_WITH_CONCERNS` is a finding, not a footnote — the concern that
+  "frames reuse the base map" meant nothing animated.
+- **Re-check live after a fix round touches timing or UI.** Unit tests with fake timers passed
+  while the real browser still misbehaved (#162).
 
 See [`docs/agents/subagents.md`](docs/agents/subagents.md) for the tier table, harness notes,
 and the full dispatch procedure.

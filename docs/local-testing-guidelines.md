@@ -69,6 +69,15 @@ from short Node scripts (attach with `connectOverCDP`) while the screen recorder
 Playwright's `page.screenshot` does **not** include browser chrome — dismiss Chrome's
 "Save password?" bubble (it covers the roster) before recording.
 
+Recording that window with `ffmpeg -f x11grab` captures a *screen region*, not a window, and
+Cursor Cloud usually has two Chrome windows open (the `computerUse` one and the CDP test
+window). Find the test window with `DISPLAY=:1 xdotool search --onlyvisible --class chrome`
++ `getwindowgeometry`, run `DISPLAY=:1 xdotool windowraise <id>` immediately before starting
+the capture, and sample frames afterwards (`ffmpeg -ss <t> -i out.mp4 -frames:v 1 f.png`) and
+look at them — the first two recordings of the pixel-fight layer silently captured the other
+window. Once the boss summons are spent (`summons 3/3` in the ring header), the timed ring
+boss (`boss in ~Nm`) is a free second contestant.
+
 ## Reusable rooms (remote test account)
 
 These rooms are owned by the `TEST_USERNAME` account on the remote Supabase project (Path A in
