@@ -114,14 +114,14 @@ browser.ts         # Browser-safe subset (pure data, no node: imports); Vite ali
 game.ts            # Main Game class (orchestrator, state serialization)
 game.test.ts       # Game-level suite: state round-trips, reward handlers, listener guards
 commands/          # Text command parser: monster, character, look-at, store, presets, history, help
-cards/             # 60+ action card types; base class in cards/base.ts
+cards/             # ~55 action card types; base class in cards/base.ts
 monsters/          # 5 monster types (Basilisk, Gladiator, Jinn, Minotaur, Weeping Angel)
 creatures/base.ts  # BaseCreature — core combat/stat logic (stats/health/encounter/items/edit/types extracted into sibling modules)
 characters/        # Beastmaster player character + hydration helpers
 items/             # 25+ items: potions, scrolls, store inventory
 ring/              # Battle arena (2–12 monsters, fight countdown 60s)
 channel/           # ChannelManager: message queue + batching for adapters
-helpers/           # XP, leveling, targeting, timing, AWS backup
+helpers/           # XP, leveling, targeting, timing, prompt choices
 constants/         # Stats, coin values, creature types, card classes, timing, ring lore
 announcements/     # Message generation for game events
 events/            # GameEvent types, RoomEventBus, prompt lifecycle
@@ -220,11 +220,9 @@ All test suites mock their external dependencies (database, Discord API, Supabas
 
 | Variable | Purpose |
 |----------|---------|
-| `DECK_MONSTERS_AWS_ACCESS_KEY_ID` | S3 backup credentials (optional) |
-| `DECK_MONSTERS_AWS_SECRET_ACCESS_KEY` | S3 backup credentials (optional) |
 | `DECK_MONSTERS_SKIP_DELAYS` | Zeroes every pacing delay (tests, harness). Also switches `hitLogTimestamp()` to a monotonic counter |
 
-> The old `HUBOT_DECK_MONSTERS_AWS_*` names are still accepted with a deprecation warning for backward compatibility.
+> The S3 backup (`helpers/aws.ts`, `DECK_MONSTERS_AWS_*` / `HUBOT_DECK_MONSTERS_AWS_*`) was removed in the stack modernisation (`docs/roadmap/01-modernize-stack.md`); Postgres is the only store.
 
 ## Cursor Cloud specific instructions
 
@@ -392,7 +390,7 @@ Admin alias feature: `"<command> as <name>"` runs a command as another character
 
 ### State Serialization
 
-Game state is gzip+base64 encoded JSON, stored in Postgres (primary) and optionally S3 (backup). `game.saveState` is a getter/setter:
+Game state is gzip+base64 encoded JSON, stored in Postgres. `game.saveState` is a getter/setter:
 
 ```ts
 // Store the save function

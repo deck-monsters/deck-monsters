@@ -10,7 +10,7 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 
 | # | Task | Owner model tier | Status | Checkpoint |
 |---|------|------------------|--------|------------|
-| D | `AGENTS.md` becomes the single source of truth; `CLAUDE.md` a symlink; `docs/agents/*` reference files (game primer, repo operations, subagents) | Tier 3 implement, Tier 2 review | ✅ implemented, review in progress | `2ab6fc1`, `7749309` |
+| D | `AGENTS.md` becomes the single source of truth; `CLAUDE.md` a symlink; `docs/agents/*` reference files (game primer, repo operations, subagents) | Tier 3 implement, Tier 2 review | ✅ done (review: spec pass; two stale claims fixed after review) | `2ab6fc1`, `7749309`, + review fix |
 | C | Workshop: train your first monster with no character (prompt-free character creation inside `game.spawnMonster`); stop asking players to pick from one class | Tier 3 implement | 🔧 implementing | — |
 | B | Workshop header metrics: current HP first, slots bar → `Deck 9/9` text, `Lvl n` badge, fallen/revives-in state | Tier 2 implement | 📋 brief ready | — |
 | A | One vocabulary for the world (`train`, `call out`, `dismiss`, pronouns…) + `docs/voice-and-wording.md` | Tier 3 doc, Tier 2 apply | 📋 brief ready, runs last of the wording/workshop set | — |
