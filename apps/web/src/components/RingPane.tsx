@@ -5,6 +5,7 @@ import type { GameEvent } from '@deck-monsters/server/types';
 import { trpc } from '../lib/trpc.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
+import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
 import { fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
@@ -46,34 +47,6 @@ const ROSTER_COLLAPSED_KEY = 'dm:ringRosterCollapsed';
  * one go, short enough that the bracket never looks abandoned.
  */
 const RECONNECT_MARKER_GRACE_MS = 2_500;
-
-/**
- * How recently the reader must have scrolled for a "not at bottom" report from Virtuoso
- * to count as *them* leaving the bottom, rather than the bottom leaving them.
- *
- * The bottom moves on its own all the time during a fight: the roster grows a row, a card
- * box is measured after it renders, a smooth follow scroll ends short because the next
- * narration line landed mid-animation. Virtuoso reports all of those as "not at bottom",
- * and for months the pane answered every one by switching following off — so the feed
- * stopped following at exactly the moments a fight produces the most output (#157). A
- * wheel/touch/scrollbar/keyboard gesture is the only evidence that the reader wanted to
- * scroll up; without one inside this window we re-pin instead. The window is generous
- * because Virtuoso throttles the report and a touch fling keeps scrolling after the
- * finger lifts.
- */
-const USER_SCROLL_INTENT_WINDOW_MS = 1_500;
-
-/**
- * Pixels from the true bottom that still count as "at the bottom".
- *
- * Absorbs fractional layout pixels on mobile without disabling Virtuoso's own
- * self-correction: when the list grows and it considers itself *not* at the bottom, it
- * snaps back down. #148 set this to 72px so a shrinking viewport would not un-pin the
- * feed, but that also meant a follow scroll ending up to 72px short — several lines —
- * was never corrected and `↓ Latest` never appeared; the newest narration sat below the
- * fold for the rest of the burst (#157). Must stay under one feed line.
- */
-const AT_BOTTOM_THRESHOLD_PX = 8;
 
 function readRosterCollapsed(): boolean {
   try {
@@ -157,11 +130,6 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const shouldFollowOutputRef = useRef(true);
-  // Wall-clock time of the reader's last scroll gesture inside the feed; see
-  // USER_SCROLL_INTENT_WINDOW_MS. 0 means "none recently" — reset by jump-to-latest so the
-  // tap on that button is not mistaken for scrolling away right afterwards.
-  const userScrollGestureAtRef = useRef(0);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
   // No HTTP polling needed.
   const [timerState, setTimerState] = useState<TimerState>({
@@ -214,6 +182,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
     });
   }, []);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const autoScroll = useFeedAutoScroll(virtuosoRef);
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
   // True once the first handshake has landed, so a later handshake is a *re*connect.
@@ -393,73 +362,28 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
       seedCursor(dedupedHistory[dedupedHistory.length - 1]!.id);
     }
 
-    if (shouldFollowOutputRef.current) {
+    if (autoScroll.shouldFollowRef.current) {
       // Jump to bottom after history loads only when auto-follow is enabled.
       requestAnimationFrame(() => {
         virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       });
     }
-  }, [history, seedCursor]);
+  }, [history, seedCursor, autoScroll]);
 
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
       virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
       setIsAtBottom(true);
-      shouldFollowOutputRef.current = true;
+      autoScroll.resetToBottom();
     }
-  }, [isActive]);
+  }, [isActive, autoScroll]);
 
   const scrollToBottom = useCallback(() => {
     virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
     setIsAtBottom(true);
-    shouldFollowOutputRef.current = true;
-    userScrollGestureAtRef.current = 0;
-  }, []);
-
-  const noteUserScrollGesture = useCallback(() => {
-    userScrollGestureAtRef.current = Date.now();
-  }, []);
-  // Scrolling *down* toward the bottom is never "leaving" it.
-  const onFeedWheel = useCallback(
-    (e: React.WheelEvent) => {
-      if (e.deltaY < 0) noteUserScrollGesture();
-    },
-    [noteUserScrollGesture]
-  );
-  // A tap is not a scroll; touchmove is. Mouse pointerdown covers scrollbar drags (the
-  // scrollbar has no element of its own, so the event targets the scroller).
-  const onFeedPointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (e.pointerType === 'mouse') noteUserScrollGesture();
-    },
-    [noteUserScrollGesture]
-  );
-  const onFeedKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'Home') noteUserScrollGesture();
-    },
-    [noteUserScrollGesture]
-  );
-
-  const onAtBottomStateChange = useCallback((atBottom: boolean) => {
-    if (atBottom) {
-      setIsAtBottom(true);
-      shouldFollowOutputRef.current = true;
-      return;
-    }
-    if (Date.now() - userScrollGestureAtRef.current <= USER_SCROLL_INTENT_WINDOW_MS) {
-      setIsAtBottom(false);
-      shouldFollowOutputRef.current = false;
-      return;
-    }
-    // The bottom moved away on its own (roster grew, late measurement, a follow scroll
-    // that ended short). Not the reader's doing — re-pin instead of switching off (#157).
-    // Instant, not smooth: a smooth scroll is what ended short in the first place. The
-    // `↓ Latest` button stays hidden: following is still on, so flashing it for the frame
-    // before the snap lands would only be noise.
-    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
-  }, []);
+    autoScroll.enable();
+  }, [autoScroll]);
 
   // Compute the timer badge inline — tick state re-renders every second to keep it current
   let timerBadge: string | null = null;
@@ -527,13 +451,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
 
       {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
           wheel/touch/pointer/key events bubble up from it. */}
-      <div
-        className="pane-feed-area"
-        onWheel={onFeedWheel}
-        onTouchMove={noteUserScrollGesture}
-        onPointerDown={onFeedPointerDown}
-        onKeyDown={onFeedKeyDown}
-      >
+      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
       <Virtuoso
         ref={virtuosoRef}
         className="event-feed"
@@ -544,7 +462,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
         data={events}
         atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
         followOutput={(atBottom) =>
-          shouldFollowOutputRef.current || atBottom ? 'smooth' : false
+          autoScroll.shouldFollowRef.current || atBottom ? 'smooth' : false
         }
         components={{
           List: FeedList,
@@ -586,7 +504,7 @@ export default function RingPane({ roomId, isActive, headerActions }: RingPanePr
             </li>
           );
         }}
-        atBottomStateChange={onAtBottomStateChange}
+        atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
 
       {!isAtBottom && (

@@ -3335,7 +3335,7 @@ mount rows and keep asserting the banner unchanged.
 
 **Status**: Fixed.
 
-### 157. The Ring feed stopped following mid-fight — and #148's fix made it stop *silently* — FIXED
+### 157. The Ring and Console feeds stopped following on their own — and #148's fix made the Ring stop *silently* — FIXED
 
 **Symptom**: during a live battle the Ring pane, in auto-scroll mode, would sit a line or
 two above the newest narration and stay there while the fight went on. Reported after the
@@ -3358,22 +3358,37 @@ two above the newest narration and stay there while the fight went on. Reported 
    `↓ Latest` button, and the next event's smooth scroll got interrupted the same way. Hence
    worse specifically during bursts. (Virtuoso 4.18 source: `Uo` in `dist/index.mjs`.)
 
-**Fixed** (`RingPane.tsx`): a "not at bottom" report is treated as the reader leaving only
-if a scroll gesture — `wheel` upward, `touchmove`, mouse `pointerdown` (scrollbar drag), or
-ArrowUp/PageUp/Home — happened inside the feed within `USER_SCROLL_INTENT_WINDOW_MS`
-(1.5s). Otherwise the pane re-pins with an instant `scrollToIndex('auto')`. The threshold is
-back to `AT_BOTTOM_THRESHOLD_PX = 8`, enough for fractional layout pixels, well under one
-line, so Virtuoso's self-correction is live again. Jump-to-latest clears the gesture stamp so
-tapping it is not mistaken for scrolling away a moment later. The listeners sit on
-`.pane-feed-area` because Virtuoso owns the scroller element and the events bubble.
+**Fixed** (`hooks/useFeedAutoScroll.ts`, used by both `RingPane` and `ConsolePane`): a
+"not at bottom" report is treated as the reader leaving only if a scroll gesture — `wheel`
+upward, `touchmove`, mouse `pointerdown` (scrollbar drag), or ArrowUp/PageUp/Home — happened
+inside the feed within `USER_SCROLL_INTENT_WINDOW_MS` (1.5s). Otherwise the hook re-pins with
+an instant `scrollToIndex('auto')` and reports "still at bottom", so `↓ Latest` does not
+flash for the frame before the snap. The threshold is `AT_BOTTOM_THRESHOLD_PX = 8` on both
+feeds — enough for fractional layout pixels, well under one line, so Virtuoso's
+self-correction is live again. Jump-to-latest and tab activation clear the gesture stamp so
+neither is mistaken for scrolling away a moment later. The listeners sit on
+`.pane-feed-area` (spread from `gestureHandlers`) because Virtuoso owns the scroller element
+and the events bubble.
 
-**Not changed**: `ConsolePane` uses the same "every false = user scrolled" rule via
-`useFeedAutoScroll`. It has not been reported and its feed is far less bursty, so it is left
-alone; if it shows the same symptom, lift the gesture gate into the hook.
+**Console side, found during live verification**: the Console had the same rule and the
+same failure through a different door — switching to the Console tab takes its viewport
+from hidden to visible, Virtuoso reports that as "not at bottom", and the console parked one
+screen above the reply to the command you had just typed, `↓ Latest` showing. The gesture
+gate was therefore lifted into the shared hook rather than fixed in the Ring alone.
+
+**Live verification** (Test Room A, 570px viewport, a four-monster boss fight): 47 samples
+over 70s of narration had the Ring feed within 2px of the true bottom in 46; the one 69px lag
+(a smooth scroll in flight when a turn block landed) was gone by the next sample — the
+self-correction the 72px threshold had been suppressing. 197 samples at 200ms after the
+button fix: `↓ Latest` never rendered; five transient lags up to 160px (a card box landing)
+all recovered within a second.
 
 **Tests**: `apps/web/src/__tests__/ringPane-scroll-behavior.test.tsx` — re-pins when the
-bottom moves with no gesture; wheel-up and touch-drag disable following; a gesture 5s old is
-ignored; following resumes on return to the bottom; jump-to-latest is not a scroll-away
-gesture; and the threshold is asserted ≤ 12px with a comment on why.
+bottom moves with no gesture (and keeps the jump button hidden); wheel-up and touch-drag
+disable following; a gesture 5s old is ignored; following resumes on return to the bottom;
+jump-to-latest is not a scroll-away gesture; and the threshold is asserted ≤ 12px with a
+comment on why. `consolePane-scroll-behavior.test.tsx` — the existing scroll-away cases now
+perform a wheel gesture first, plus "re-pins instead of stopping when the bottom moves
+without a reader gesture".
 
 **Status**: Fixed.

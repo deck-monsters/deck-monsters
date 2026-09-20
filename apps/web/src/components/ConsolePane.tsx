@@ -17,7 +17,7 @@ import {
 } from '../utils/fight-highlights.js';
 import FeedList from './FeedList.js';
 import { mapConsoleHistoryEvent } from '../utils/console-history-event-map.js';
-import { useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
+import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 
 interface ActivePrompt {
   requestId: string;
@@ -161,7 +161,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const seenRef = useRef(new Set<string>());
   const historyApplied = useRef(false);
   const reconnectNoticeShownRef = useRef(false);
-  const autoScroll = useFeedAutoScroll();
+  const autoScroll = useFeedAutoScroll(virtuosoRef);
   const ftuxStorageKey = useMemo(
     () => (user?.id ? `ftuxComplete:${user.id}` : 'ftuxComplete'),
     [user?.id]
@@ -837,7 +837,9 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         {headerActions && <span className="pane-header-actions">{headerActions}</span>}
       </header>
 
-      <div className="pane-feed-area">
+      {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
+          wheel/touch/pointer/key events bubble up from it (see useFeedAutoScroll). */}
+      <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
       <Virtuoso
         ref={virtuosoRef}
         className="event-feed"
@@ -846,6 +848,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
         aria-label="Console messages"
         tabIndex={0}
         data={consoleEvents}
+        atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
         /*
          * Virtuoso's own follow-output, matching RingPane. This used to be `false` with the
          * scroll driven imperatively instead: every append ran
@@ -912,10 +915,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
             </li>
           );
         }}
-        atBottomStateChange={(atBottom) => {
-          setIsAtBottom(atBottom);
-          autoScroll.onAtBottomChange(atBottom);
-        }}
+        atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
 
       {!isAtBottom && (

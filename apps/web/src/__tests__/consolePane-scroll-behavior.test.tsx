@@ -189,9 +189,34 @@ describe('ConsolePane scroll behavior', () => {
       </TestFeed>,
     );
 
+    // A real scroll-up: a wheel gesture inside the feed, then Virtuoso reports the bottom lost.
+    fireEvent.wheel(screen.getByRole('button', { name: 'Mark not at bottom' }), { deltaY: -120 });
     fireEvent.click(screen.getByRole('button', { name: 'Mark not at bottom' }));
 
     expect(latestFollowOutput?.(false)).toBe(false);
+    expect(screen.getByRole('button', { name: 'Jump to latest messages' })).toBeTruthy();
+  });
+
+  /*
+   * Regression (#157, console side): switching to the Console tab takes its viewport from
+   * hidden to visible, and Virtuoso reports that as "not at bottom" with no scroll by the
+   * reader. Treating it as a scroll-up left the console parked one screen above the reply
+   * to the command you had just typed, with `↓ Latest` showing. Live capture during the
+   * #157 verification.
+   */
+  it('re-pins instead of stopping when the bottom moves without a reader gesture', () => {
+    render(
+      <TestFeed>
+        <ConsolePane roomId="11111111-1111-1111-1111-111111111111" isActive={false} />
+      </TestFeed>,
+    );
+    scrollToIndexMock.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark not at bottom' }));
+
+    expect(scrollToIndexMock).toHaveBeenCalledWith({ index: 'LAST', behavior: 'auto' });
+    expect(latestFollowOutput?.(false)).toBe('smooth');
+    expect(screen.queryByRole('button', { name: 'Jump to latest messages' })).toBeNull();
   });
 
   it('does not chase the feed with an imperative scroll on every append', () => {
@@ -238,6 +263,7 @@ describe('ConsolePane scroll behavior', () => {
       </TestFeed>,
     );
 
+    fireEvent.wheel(screen.getByRole('button', { name: 'Mark not at bottom' }), { deltaY: -120 });
     fireEvent.click(screen.getByRole('button', { name: 'Mark not at bottom' }));
     scrollToIndexMock.mockClear();
 
