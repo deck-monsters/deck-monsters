@@ -141,6 +141,22 @@ Add slotted equipment (helms, rings, capes) that provide stat bonuses/penalties.
 | Helm of Wisdom | +1 energy |
 | Bag of Holding | +1 card slot, -1 hit bonus |
 
+### Earning Monster Slots
+
+A beastmaster's roster capacity is `DEFAULT_MONSTER_SLOTS` (global, 10 as of September 2026)
+plus a persisted per-character `monsterSlotModifier`, floored at the number of monsters already
+held (`Beastmaster.monsterSlots`). The modifier exists so capacity can become something you
+earn rather than a fixed number — nothing in the game changes it yet. Candidates:
+
+- **Level reward**: `+1` at beastmaster (character) milestones, or at the first monster to reach
+  a given level, announced in the level-up narration.
+- **Scroll of Kinship** (shop, back room): a consumable that adds `+1` once per character; price
+  it against the coin economy audit in `11-balance-and-mechanics.md`.
+- **Admin grant**: `edit character` can already set `monsterSlotModifier` directly.
+
+Whatever grants it should go through the setter so the change is persisted and announced; the
+effective capacity is derived, never stored.
+
 ---
 
 ## Creatures / NPCs

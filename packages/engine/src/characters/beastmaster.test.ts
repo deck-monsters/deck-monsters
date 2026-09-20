@@ -42,11 +42,34 @@ describe('characters/beastmaster', () => {
 		expect(beastmaster.monsterSlots).to.equal(10);
 	});
 
-	it('lifts a restored character with the old slot count up to the current default', () => {
-		// monsterSlots is persisted in options, so a beastmaster saved when the default was 7
-		// would otherwise keep 7 forever. Grants above the default are preserved.
-		expect(new Beastmaster({ monsterSlots: 7 }).monsterSlots).to.equal(10);
-		expect(new Beastmaster({ monsterSlots: 12 }).monsterSlots).to.equal(12);
+	it('derives capacity from the global default plus a per-character modifier', () => {
+		expect(new Beastmaster({ monsterSlotModifier: 2 }).monsterSlots).to.equal(12);
+		expect(new Beastmaster({ monsterSlotModifier: -3 }).monsterSlots).to.equal(7);
+		const granted = new Beastmaster();
+		granted.monsterSlotModifier = 1;
+		expect(granted.monsterSlots).to.equal(11);
+		expect(granted.toJSON().options.monsterSlotModifier).to.equal(1);
+	});
+
+	it('never reports fewer slots than monsters already in the roster', () => {
+		const beastmaster = new Beastmaster({ monsterSlotModifier: -20 });
+		for (let i = 0; i < 4; i++) beastmaster.addMonster({ givenName: `M${i}` } as any);
+		expect(beastmaster.monsterSlots).to.equal(4);
+	});
+
+	it('retires a legacy persisted monsterSlots value into the modifier', () => {
+		// Until Sept 2026 the capacity itself was saved per character, so raising the default
+		// never reached existing beastmasters. The old default (7) or less carries nothing;
+		// anything above today's default becomes a grant; the field itself is dropped.
+		const plain = new Beastmaster({ monsterSlots: 7 });
+		expect(plain.monsterSlots).to.equal(10);
+		expect(plain.monsterSlotModifier).to.equal(0);
+		expect(plain.toJSON().options).to.not.have.property('monsterSlots');
+
+		const granted = new Beastmaster({ monsterSlots: 12 });
+		expect(granted.monsterSlots).to.equal(12);
+		expect(granted.monsterSlotModifier).to.equal(2);
+		expect(granted.toJSON().options).to.not.have.property('monsterSlots');
 	});
 
 	it('starts with an empty monster list', () => {
