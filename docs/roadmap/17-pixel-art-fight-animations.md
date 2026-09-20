@@ -64,7 +64,8 @@ today, so in-code maps avoid an opaque generated artifact and network requests.
 pipeline can replace these maps behind that same signature. The canvas disables image
 smoothing, uses integer 4× sprites (3× below 480px), and is device-pixel-ratio aware.
 Its requestAnimationFrame loop accumulates elapsed time rather than advancing per
-browser repaint: idle frames run at 8 FPS and attack frames at 12 FPS.
+browser repaint: idle frames run at 8 FPS and attack frames at 12 FPS. A wall-clock
+deadline settles attack, hit, flee, and fade state even when no later feed event arrives.
 
 ### Event → animation mapping
 
@@ -103,7 +104,10 @@ is decorative and non-interactive, so these fallbacks have no functional impact.
 
 ## Theme System Hook
 
-The existing theme system (CSS custom properties, class on `<body>`) needs one addition: a `data-theme-features` attribute or equivalent that signals to JS which optional modules to activate.
+The existing theme system uses CSS custom properties and a `data-theme-features`
+attribute on `<html>` to signal optional modules. One external theme store backs both
+theme switchers and feature consumers, including same-tab changes; its `storage`
+listener synchronizes other tabs.
 
 ```html
 <!-- Default theme: no pixel art -->
