@@ -20,3 +20,4 @@ have been carried into the active roadmap.
 | [16 — Card Management](roadmap/16-card-management.md) | Card workshop, deck editing, and presets |
 | [17 — Pixel Art Fight Animations](roadmap/17-pixel-art-fight-animations.md) | Theme-gated fight animation layer |
 | [18 — Live Ring Roster](roadmap/18-live-ring-roster.md) | Live contestant HP/AC roster |
+| [21 — September Follow-ups](roadmap/21-september-followups.md) | Pass record: vocabulary, workshop, display name, slots, pixel fights, roadmap reorg (#160–#163) |

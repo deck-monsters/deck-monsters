@@ -13,7 +13,6 @@ remains here as the stable fixed-bug ledger.
 | [10 — Bug Fixes](10-bug-fixes.md) | Resolve item J (fight rewards) and two pacing items. | Active |
 | [19 — Player Agency & Items](19-player-agency-and-items.md) | Item-driven web prompts, web selling, and the feedback loop. | Active |
 | [20 — Workspace Layout](20-workspace-layout.md) | Real WebKit/iPhone and cross-browser visual sign-off. | Active |
-| [21 — September Follow-ups](21-september-followups.md) | Orchestrated follow-up pass. | Active |
 | [22 — Small Leftovers](22-small-leftovers.md) | Decisions carried from shipped plans. | Backlog |
 
 ## Next
@@ -48,6 +47,7 @@ remains here as the stable fixed-bug ledger.
 | [16 — Card Management](../archive/roadmap/16-card-management.md) | Card workshop, deck editing, and presets. |
 | [17 — Pixel Art Fight Animations](../archive/roadmap/17-pixel-art-fight-animations.md) | Theme-gated pixel-art fight animations. |
 | [18 — Live Ring Roster](../archive/roadmap/18-live-ring-roster.md) | Live contestant HP/AC roster. |
+| [21 — September Follow-ups](../archive/roadmap/21-september-followups.md) | One vocabulary, workshop HP header and first-run training, global display name, 10 monster slots, pixel-fight animations, roadmap reorganisation (#160–#163). |
 | [10b — Bugs Fixed](10b-bugs-fixed.md) | Fixed-bug ledger, kept here because code cites this stable path. |
 
 ### Bug ledger highlights
