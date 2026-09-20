@@ -55,15 +55,16 @@ See `docs/pixel-art-animations-in-js.md` for the full reference. Summary of choi
 
 ### In-code pixel maps via Canvas API
 
-`apps/web/src/animations/pixel-fight/sprites.ts` defines reviewable, testable 16×16
+`apps/web/src/animations/pixel-fight/sprites.ts` defines reviewable, testable 24×24
 pixel maps for Basilisk, Gladiator, Jinn, Minotaur, and Weeping Angel, plus a
-fallback silhouette. Each has idle, attack, hit, and faint frames; the renderer
+fallback silhouette. (They shipped at 16×16 and were redrawn — see the redraw note
+below.) Each has idle, attack, hit, and faint frames; the renderer
 mirrors frames for the opposing side and adds the hit flash. No asset pipeline exists
 today, so in-code maps avoid an opaque generated artifact and network requests.
 
 `drawSprite` remains the boundary between scene state and pixels. A later sprite-sheet
 pipeline can replace these maps behind that same signature. The canvas disables image
-smoothing, uses integer 4× sprites (3× below 480px), and is device-pixel-ratio aware.
+smoothing, uses integer 3× sprites (2× below 480px), and is device-pixel-ratio aware.
 Its requestAnimationFrame loop accumulates elapsed time rather than advancing per
 browser repaint: idle frames run at 8 FPS and attack frames at 12 FPS. A wall-clock
 deadline settles attack, hit, flee, and fade state even when no later feed event arrives.
@@ -155,10 +156,27 @@ reduction or feed wiring.
   within the 2.5 s fade window after `fightConcludes`; the reducer holds the fighters while
   `fadeOutAt` is set so the fallen pose is actually seen.
 - **One literal map per monster; poses are transforms.** `sprites.ts` derives the idle bob,
-  attack lean/lunge and the sideways fallen pose from a single hand-drawn 16×16 map. A
-  redraw that ships six identical frames passes the shape test but animates nothing — the
-  sprite test now asserts frames differ, the lunge moves toward the opponent, and the
-  fallen box swaps axes.
+  attack wind-up/lunge, hit recoil and the sideways fallen pose from a single hand-drawn
+  24×24 map. A redraw that ships six identical frames passes the shape test but animates
+  nothing — the sprite test asserts frames differ, the lunge moves toward the opponent, and
+  the fallen box swaps axes.
+- **The stage is a docked band, not an overlay (#165).** It began as an absolutely
+  positioned canvas across the top of the feed, so sprites sat on top of the narration —
+  the one thing this layer must never obscure, since the text *is* the game. It is now a
+  flex sibling above the feed that collapses to zero height between fights.
+- **`inEncounter` is how you join a fight already running (#165).** `fightBegins` is a
+  one-shot live event; opening a room mid-fight or returning to a backgrounded phone tab
+  never replays it, so the stage stayed dark until the *next* fight. `ring.state` already
+  carries `inEncounter` (whole-fight, set by `Ring.startEncounter`/`endEncounter`), so the
+  reducer adopts it. It is **optional on the wire** — treat `undefined` as *unknown*, never
+  as "no fight", or a payload that omits it collapses a live stage.
+- **The 16×16 redraw (#164).** The maps shipped at 16×16 and every monster came out as the
+  same rounded blob; poses were whole-sprite translations, so nothing appeared to move. The
+  art is now 24×24 on a six-key ramp, poses shear about the feet instead of translating, and
+  frames render on a padded grid so a lean cannot clip a horn or a wingtip. The sprite test
+  gained a silhouette-collision check, a no-clipping check and a shear-not-translation check
+  so none of the three can come back quietly. `docs/pixel-art-animations-in-js.md` ("Common
+  Pitfalls") records the general lessons.
 - **Live-verify in the phone layout.** The layer hides when the pane container is under
   360 px wide or the viewport under 600 px tall, and drops to 3× sprites under 480 px; the
   Cursor Cloud Chrome window is narrow, so raise the right window (`xdotool windowraise`)

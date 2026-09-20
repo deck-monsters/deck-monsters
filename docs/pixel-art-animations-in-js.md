@@ -452,6 +452,38 @@ Homepage: [pixellab.ai](https://www.pixellab.ai/)
 
 **Canvas size vs CSS size.** Set the `<canvas>` element's `width`/`height` attributes to the native sprite resolution, then use CSS to scale it up. If you set the canvas attributes to the display size, you're rendering at high resolution and lose the pixel art look.
 
+**A grid too small to hold a silhouette.** 16×16 is fine for an icon, a tile or an item, and
+too small for a *creature* that has to be told apart from five other creatures. At 16px a
+head, a limb and a horn are one or two pixels each, so every monster collapses into the same
+rounded blob — which is exactly what happened to this repo's first pass (`sprites.ts`, now
+24×24). If distinguishable species silhouettes are the requirement, start at 24×24 and
+budget the pixels: the outline and the distinguishing feature (horns, wings, a coil) are what
+the viewer actually reads at a glance, not the interior shading.
+
+**A palette ramp with no spacing.** Picking four "nice" shades of the same hue usually
+produces four colours within a few percent lightness of each other, and the sprite renders
+flat. Space the ramp deliberately — roughly 18 / 32 / 46 / 66 / 92% lightness for
+outline / shadow / body / lit body / highlight — and keep the same key names across every
+sprite so a monster can be re-tinted without being redrawn. On a near-black stage a
+near-black outline disappears into the background; lift it until it reads as an edge.
+
+**Poses that are the same drawing at a different offset.** Translating a whole sprite by a
+pixel or two is not animation: the shape never changes, and on screen it reads as a frozen
+image jittering. Shear instead — hold the bottom row still and move each row above it
+further, so the figure leans about its feet. Two frames of that read as a lunge where six
+frames of translation read as nothing.
+
+**Transforms clipping the art.** Any transform that moves pixels sideways (a shear, a lunge,
+a recoil) will push part of the drawing off a flush grid, and it fails silently — you lose a
+wingtip or a horn tip and nothing errors. Draw on the art grid but *render* poses on a wider
+one with transparent padding on each side, sized for the largest displacement. Assert it:
+every pose should keep exactly as many opaque pixels as the drawing it came from.
+
+**Trusting the pixel map instead of looking at it.** A map that reads fine as text in the
+source can render as something else entirely — this repo's first serpent, read as a coiled
+snake in ASCII and as a duck on screen. Render a contact sheet of every monster × every pose
+and actually look at it before shipping.
+
 ```html
 <!-- Correct: small canvas, CSS scales it up -->
 <canvas width="64" height="64" style="width: 256px; height: 256px;"></canvas>

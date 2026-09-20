@@ -39,6 +39,8 @@ import { useThemeFeature } from '../hooks/useTheme.js';
 type PixelFightLayerProps = {
   contestants: RingContestantSnapshot[];
   viewerUserId: string | null;
+  /** Optional on the wire, so it stays optional here — see RingStateFrame. */
+  inEncounter?: boolean;
 };
 type PixelFightLayerLoader = () => Promise<{ default: ComponentType<PixelFightLayerProps> }>;
 const loadPixelFightLayer: PixelFightLayerLoader = () => import('../animations/pixel-fight/PixelFightLayer.js');
@@ -473,6 +475,19 @@ export default function RingPane({
       />
       {myFightingMonster && <RingItemsPanel roomId={roomId} monsterName={myFightingMonster.name} />}
 
+      {/* Above the feed, not over it: the stage is a sibling that collapses to zero
+          height between fights, so the narration keeps every line it has. */}
+      {pixelArtEnabled && (
+        <Suspense fallback={null}>
+          <PixelFightLayer
+            key={roomId}
+            contestants={rosterContestants}
+            viewerUserId={myUserId}
+            inEncounter={timerState.inEncounter}
+          />
+        </Suspense>
+      )}
+
       {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
           wheel/touch/pointer/key events bubble up from it. */}
       <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
@@ -531,12 +546,6 @@ export default function RingPane({
         }}
         atBottomStateChange={(atBottom) => setIsAtBottom(autoScroll.onAtBottomChange(atBottom))}
       />
-      {pixelArtEnabled && (
-        <Suspense fallback={null}>
-          <PixelFightLayer key={roomId} contestants={rosterContestants} viewerUserId={myUserId} />
-        </Suspense>
-      )}
-
       {!isAtBottom && (
         <button
           className="jump-to-bottom"

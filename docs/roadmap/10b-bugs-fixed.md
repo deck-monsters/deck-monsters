@@ -3652,3 +3652,101 @@ training flow.
 new canonical labels and aliases.
 
 **Status**: Fixed.
+
+### 164. Every monster in the pixel-fight layer was the same blob, and the poses did not move — FIXED
+
+The pixel-art fight animations added in roadmap 17 shipped with sprites nobody could read.
+Three separate defects, all invisible to the tests that existed:
+
+1. **The grid was too small to hold a silhouette.** The maps were 16×16. At that size a
+   head, a limb and a horn are one or two pixels each, so the Basilisk, the Minotaur, the
+   Weeping Angel and the fallback beast all rendered as the same rounded blob with slightly
+   different colours. The shape test asserted only that a frame was 16×16 and used known
+   palette keys, which every blob satisfied.
+2. **The poses were the same drawing at a different offset.** `idle`, `attack` and `hit`
+   were whole-sprite translations of one map, so the figure never changed shape and the
+   fight read as a frozen image jittering. The existing test asserted frames *differed*,
+   which a translation trivially satisfies. This is the same failure a reviewer flagged as
+   `DONE_WITH_CONCERNS` during roadmap 17 ("frames reuse the base map"); it shipped anyway.
+3. **The palette ramps had no spacing.** The four shades of each hue sat within a few
+   percent lightness of each other, so the interior shading did nothing and the sprites
+   rendered flat.
+
+**Root cause**: the sprites were only ever reviewed as text in the source file, where a
+16×16 map of letters looks plausible, and as assertions about frame dimensions. Nobody
+rendered them. The gap between "the map is well-formed" and "the picture reads as a snake"
+is exactly the gap the test suite could not see — the first redrawn serpent read as a coiled
+snake in ASCII and as a *duck* on screen, and was only caught by rendering a contact sheet.
+
+**Fix**: art redrawn at 24×24 on a deliberately spaced six-key ramp
+(`O` outline, `D` shadow, `B` body, `A` lit body, `C` highlight, `E` eye), with each monster
+given a distinguishing feature that survives at a glance — the Basilisk a scaled coil and
+flicking tongue, the Gladiator a crested helm with shield and sword, the Jinn a wisp tail,
+the Minotaur horns and hooves, the Weeping Angel spread wings, the fallback a four-legged
+maw. Poses now *shear* about the feet (`lean`) rather than translating, so the attack winds
+up and lunges head-first and the hit recoils; frames render on a grid padded 6 columns per
+side so a lean cannot clip a horn or a wingtip, which it was silently doing. Sprite scale
+dropped 4×→3× (3×→2× under 480px) to keep the larger art inside the same canvas band.
+
+Also fixed while in the file: `drawScene` offset the HP bar below a fighter by the sprite's
+*width*, which only worked because sprites are square — now named and computed as a height.
+
+**Tests**: `pixel-fight-sprites.test.ts` gained the three checks that would have caught the
+originals — no two monsters may share a silhouette mask, no pose may lose a pixel off the
+grid, and a pose must displace the sprite's top more than its bottom (a shear, not a
+translation) — plus a full-ramp check so a redraw cannot quietly go flat again.
+General lessons are recorded under "Common Pitfalls" in
+[`docs/pixel-art-animations-in-js.md`](../pixel-art-animations-in-js.md).
+
+**Status**: Fixed.
+
+### 165. The fight animations were invisible in practice — wrong trigger, wrong placement — FIXED
+
+Reported from live play: "I've only seen it in demos, not in an actual battle." Three
+compounding gates meant a player on a phone or tablet would essentially never see the
+pixel-fight layer, and would not want to when they did:
+
+1. **The trigger was a one-shot live event.** `active` flipped true only on `ring.fight`
+   with `eventName: 'fightBegins'`. Opening a room mid-fight, or switching back to a tab
+   the phone had backgrounded, never replays that event — and the `ring.state` frame that
+   *does* arrive on return deliberately refused to activate the scene. So unless you were
+   watching the moment a 60-second countdown expired, the layer never appeared at all.
+2. **It covered the narration.** The canvas was absolutely positioned across the top of
+   the feed with a fade-to-transparent gradient over it, hiding the text that is the
+   actual game.
+3. **Both mobile breakpoints hid it outright.** `@container (max-width: 360px)` and
+   `@media (max-height: 600px)` each set `display: none` — which between them covers
+   phones and phone-landscape/short tablet windows, i.e. where this game is mostly played.
+
+**Root cause**: the layer was designed and verified for an uninterrupted desktop session.
+Every gate is individually defensible for that user; together they exclude the actual one.
+The mobile breakpoints in particular treated "too small for the full four-a-side board" as
+"show nothing", when the board was the only thing that needed to shrink.
+
+**Fix**:
+- **Docked band, not overlay.** `.pixel-fight-stage` is a flex sibling above the feed that
+  animates its height open and closed. The feed simply gets shorter while a fight runs, and
+  no line of narration is ever covered. Collapsing uses `height`, not `display`, so the
+  canvas keeps its context and the `ResizeObserver` sees the transition.
+- **Join a fight in progress.** The reducer adopts `ring.state`'s `inEncounter`, which is
+  already published on every frame and spans the whole fight. Returning mid-fight now shows
+  the stage; a fight that ended while you were away retires the scene instead of leaving
+  fighters posed forever. `inEncounter` is optional on the wire, so it is handled as a
+  tri-state — `undefined` means *unknown*, never "no fight", because reading a missing
+  field as false would collapse the stage during a live fight.
+- **Compact duel instead of hiding.** Under 520px wide or 150px tall the band drops to 96px
+  and shows one fighter per side, picked by a new `lastActionAt` stamp so the pair actually
+  trading blows is on screen and the choice holds until a new exchange lands (reusing
+  `animStartedAt` would churn, since settling to idle restamps it). The duel is drawn around
+  the centre line rather than pinned to the edges, which read as two unrelated sprites.
+  Only below 280px, where two sprites and their HP bars cannot read at all, is it hidden.
+- **A flash on knockouts**, the one beat worth looking up for, suppressed under
+  `prefers-reduced-motion`.
+
+**Tests**: `pixel-fight-state.test.ts` covers adopting a running fight, ignoring an
+all-downed roster, retiring on an explicit `inEncounter: false`, treating a missing field as
+unknown, not restarting an in-flight fade, and the `lastActionAt`/knockout stamps.
+`pixel-fight-stage-layout.test.ts` covers the full-board and duel breakpoints and the
+stability of the duel pick.
+
+**Status**: Fixed.
