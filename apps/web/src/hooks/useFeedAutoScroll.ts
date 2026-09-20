@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type RefObject } from 'react';
 import type { VirtuosoHandle } from 'react-virtuoso';
 
 /**
@@ -30,6 +30,17 @@ export const USER_SCROLL_INTENT_WINDOW_MS = 1_500;
 export const AT_BOTTOM_THRESHOLD_PX = 8;
 
 /**
+ * Delay before the re-pin is repeated once. The first snap runs inside Virtuoso's
+ * "not at bottom" callback, which can fire before a freshly appended row has been
+ * measured (a monster card's `<pre>` block, say). The snap then targets the row's
+ * estimated height and lands a few dozen pixels short — and because Virtuoso's at-bottom
+ * state never returned to true, it reports nothing further, so the feed would sit there
+ * silently until the next append. Seen live on the Console (#157): 52px short after a
+ * `look at monsters` reply. One more snap after layout has settled closes it.
+ */
+export const REPIN_SETTLE_MS = 250;
+
+/**
  * Follow-the-bottom policy shared by the Ring and Console feeds.
  *
  * `onAtBottomChange` is the heart of it: Virtuoso's "not at bottom" is treated as the
@@ -39,14 +50,72 @@ export const AT_BOTTOM_THRESHOLD_PX = 8;
  * following actually stopped — not for the frame between the report and the snap.
  *
  * Spread `gestureHandlers` onto the element wrapping the Virtuoso scroller (Virtuoso owns
- * the scroller itself; the events bubble).
+ * the scroller itself; the events bubble) and pass `setScroller` as Virtuoso's `scrollerRef`.
  */
 export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>) {
   const shouldFollowRef = useRef(true);
+  // Virtuoso's scroller element, via its `scrollerRef` prop. The re-pin scrolls this to its
+  // own `scrollHeight` rather than calling `scrollToIndex('LAST')`: that computes the target
+  // from Virtuoso's size tree, which can still hold a freshly appended row's estimated
+  // height when the callback fires — seen live as a 760px monster card booked 52px short,
+  // so both snaps landed 52px above the bottom and the feed sat there (#157). The DOM's
+  // scrollHeight is the ground truth.
+  const scrollerRef = useRef<HTMLElement | null>(null);
+  const setScroller = useCallback((el: HTMLElement | Window | null) => {
+    scrollerRef.current = el instanceof HTMLElement ? el : null;
+  }, []);
   // Wall-clock time of the reader's last scroll gesture inside the feed. 0 means "none
   // recently" — reset by jump-to-latest and tab activation so those are not mistaken for
   // scrolling away a moment later.
   const userScrollGestureAtRef = useRef(0);
+
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
+    },
+    []
+  );
+
+  const gestureIsRecent = () =>
+    Date.now() - userScrollGestureAtRef.current <= USER_SCROLL_INTENT_WINDOW_MS;
+
+  /** Follow new output again and forget any recent gesture. */
+  const resetToBottom = useCallback(() => {
+    shouldFollowRef.current = true;
+    userScrollGestureAtRef.current = 0;
+  }, []);
+  const enable = resetToBottom;
+
+  const scrollToEnd = useCallback(
+    (behavior: 'auto' | 'smooth') => {
+      const el = scrollerRef.current;
+      if (el) {
+        el.scrollTo({ top: el.scrollHeight, behavior });
+        return;
+      }
+      virtuosoRef?.current?.scrollToIndex({ index: 'LAST', behavior });
+    },
+    [virtuosoRef]
+  );
+
+  /** Instant scroll to the true bottom — tab activation, history load. */
+  const snapToBottom = useCallback(() => {
+    scrollToEnd('auto');
+    resetToBottom();
+  }, [scrollToEnd, resetToBottom]);
+
+  /**
+   * The `↓ Latest` button. Smooth, and it does NOT claim "at bottom" for the caller:
+   * Virtuoso reports that itself when the scroll arrives. Claiming it early (as both panes
+   * used to) hid the button while a short-landing scroll left the feed 188px up — and since
+   * Virtuoso's own state was still "not at bottom", the reader's next scroll-up produced no
+   * transition either, so the button never came back.
+   */
+  const jumpToBottom = useCallback(() => {
+    scrollToEnd('smooth');
+    resetToBottom();
+  }, [scrollToEnd, resetToBottom]);
 
   const onAtBottomChange = useCallback(
     (atBottom: boolean): boolean => {
@@ -54,7 +123,7 @@ export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>
         shouldFollowRef.current = true;
         return true;
       }
-      if (Date.now() - userScrollGestureAtRef.current <= USER_SCROLL_INTENT_WINDOW_MS) {
+      if (gestureIsRecent()) {
         shouldFollowRef.current = false;
         return false;
       }
@@ -62,18 +131,18 @@ export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>
       // switching off (#157). Instant, not smooth: a smooth scroll is what ended short in
       // the first place. Following stays on, so report "at bottom" and keep the jump
       // button hidden rather than flashing it for the frame before the snap lands.
-      virtuosoRef?.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      const snap = () => scrollToEnd('auto');
+      snap();
+      if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = setTimeout(() => {
+        settleTimerRef.current = null;
+        // The reader may have started scrolling up in the meantime; leave them alone.
+        if (shouldFollowRef.current && !gestureIsRecent()) snap();
+      }, REPIN_SETTLE_MS);
       return true;
     },
-    [virtuosoRef]
+    [scrollToEnd]
   );
-
-  const resetToBottom = useCallback(() => {
-    shouldFollowRef.current = true;
-    userScrollGestureAtRef.current = 0;
-  }, []);
-
-  const enable = resetToBottom;
 
   const noteUserScrollGesture = useCallback(() => {
     userScrollGestureAtRef.current = Date.now();
@@ -111,11 +180,14 @@ export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>
   return useMemo(
     () => ({
       shouldFollowRef,
+      setScroller,
       onAtBottomChange,
       resetToBottom,
       enable,
+      snapToBottom,
+      jumpToBottom,
       gestureHandlers,
     }),
-    [onAtBottomChange, resetToBottom, enable, gestureHandlers]
+    [setScroller, onAtBottomChange, resetToBottom, enable, snapToBottom, jumpToBottom, gestureHandlers]
   );
 }

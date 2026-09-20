@@ -206,17 +206,14 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   // Scroll to bottom when this pane becomes active (tab switch)
   useEffect(() => {
     if (isActive) {
-      virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'auto' });
+      autoScroll.snapToBottom();
       setIsAtBottom(true);
-      autoScroll.resetToBottom();
     }
   }, [isActive, autoScroll]);
 
-  const scrollToBottom = useCallback(() => {
-    virtuosoRef.current?.scrollToIndex({ index: 'LAST', behavior: 'smooth' });
-    setIsAtBottom(true);
-    autoScroll.enable();
-  }, [autoScroll]);
+  // Virtuoso reports arrival at the bottom itself; see `jumpToBottom` for why the pane no
+  // longer claims it up front.
+  const scrollToBottom = autoScroll.jumpToBottom;
 
   const { data: myMonsters, refetch: refetchMyMonsters } = trpc.game.myMonsters.useQuery(
     { roomId },
@@ -842,6 +839,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
       <div className="pane-feed-area" {...autoScroll.gestureHandlers}>
       <Virtuoso
         ref={virtuosoRef}
+        scrollerRef={autoScroll.setScroller}
         className="event-feed"
         role="log"
         aria-live="polite"

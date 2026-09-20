@@ -3376,6 +3376,19 @@ from hidden to visible, Virtuoso reports that as "not at bottom", and the consol
 screen above the reply to the command you had just typed, `↓ Latest` showing. The gesture
 gate was therefore lifted into the shared hook rather than fixed in the Ring alone.
 
+**Why the re-pin scrolls the DOM, not `scrollToIndex('LAST')`**: with the gate in place the
+Console still sat exactly 52px short after a `look at monsters` reply. Instrumenting the
+scroller showed both snaps (immediate, and one `REPIN_SETTLE_MS` later) targeting the same
+offset, 52px above `scrollHeight - clientHeight`: `scrollToIndex` computes its target from
+Virtuoso's size tree, which still held the 760px card row at an estimated height when the
+callback fired. And because Virtuoso's own at-bottom state never returned to true, it
+reported nothing further. The same thing left the `↓ Latest` jump 188px short — and since
+both panes set `isAtBottom` optimistically on the click, the button was hidden *and* the
+reader's next wheel-up produced no transition, so it never reappeared. The hook now takes
+Virtuoso's `scrollerRef` and scrolls the element to its own `scrollHeight` (ground truth),
+and `jumpToBottom` no longer claims "at bottom" — Virtuoso reports arrival itself, so the
+button stays visible for the ~0.5s glide and disappears when the scroll actually lands.
+
 **Live verification** (Test Room A, 570px viewport, a four-monster boss fight): 47 samples
 over 70s of narration had the Ring feed within 2px of the true bottom in 46; the one 69px lag
 (a smooth scroll in flight when a turn block landed) was gone by the next sample — the

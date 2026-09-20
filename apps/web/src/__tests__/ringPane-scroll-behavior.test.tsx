@@ -7,6 +7,7 @@ import {
   type TrackedRingFeedEvent,
 } from '../hooks/useRingFeed.js';
 import RingPane from '../components/RingPane.js';
+import { REPIN_SETTLE_MS } from '../hooks/useFeedAutoScroll.js';
 
 const scrollToIndexMock = vi.fn();
 const setAtBottomState: Array<(atBottom: boolean) => void> = [];
@@ -165,6 +166,49 @@ describe('RingPane scroll follow behavior', () => {
     expect(followOutput?.(false)).not.toBe(false);
     // Still following, so the jump button must not flash for the frame before the snap.
     expect(queryByRole('button', { name: 'Jump to latest events' })).toBeNull();
+  });
+
+  /*
+   * The first snap can run before a freshly appended row is measured and land short; the
+   * feed then sits there with nothing else to trigger a correction (seen live: 52px short
+   * after a monster card). A second snap after layout settles closes it — unless the
+   * reader has started scrolling up in the meantime.
+   */
+  it('snaps a second time once layout settles, unless the reader has since scrolled', () => {
+    vi.useFakeTimers();
+    try {
+      const { atBottomHandler, scroller } = renderPane();
+      // Flush the history-load rAF scroll so only the re-pin snaps are counted below.
+      act(() => {
+        vi.runOnlyPendingTimers();
+      });
+      scrollToIndexMock.mockClear();
+
+      act(() => {
+        atBottomHandler(false);
+      });
+      expect(scrollToIndexMock).toHaveBeenCalledTimes(1);
+      act(() => {
+        vi.advanceTimersByTime(REPIN_SETTLE_MS + 10);
+      });
+      expect(scrollToIndexMock).toHaveBeenCalledTimes(2);
+      expect(scrollToIndexMock).toHaveBeenLastCalledWith({ index: 'LAST', behavior: 'auto' });
+
+      // Now the reader scrolls up between the first snap and the settle snap.
+      scrollToIndexMock.mockClear();
+      act(() => {
+        atBottomHandler(true);
+        atBottomHandler(false);
+      });
+      expect(scrollToIndexMock).toHaveBeenCalledTimes(1);
+      fireEvent.wheel(scroller, { deltaY: -120 });
+      act(() => {
+        vi.advanceTimersByTime(REPIN_SETTLE_MS + 10);
+      });
+      expect(scrollToIndexMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('treats a touch drag as the reader leaving the bottom', () => {
