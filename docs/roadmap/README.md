@@ -41,7 +41,7 @@ Each document covers one area; this README is the authoritative index of status 
 Everything below shipped and is not expected to need revisiting:
 
 - **TypeScript migration** — all JS converted (303 `.ts` files), strict mode, ESM
-- **Monorepo** — pnpm workspaces + Turborepo; packages: `engine`, `server`, `connector-discord`, `harness`, `shared-ui`; apps: `web`
+- **Monorepo** — pnpm workspaces + Turborepo; packages: `engine`, `server`, `connector-discord`, `harness`; apps: `web`
 - **CI** — GitHub Actions: typecheck + lint + tests on every push and PR
 - **Production infrastructure** — Supabase project provisioned (Postgres + Auth + Realtime), Railway deployment configured, deck-monsters.com live
 - **Hosting architecture** — Drizzle ORM + tRPC API + Fastify server + Docker multi-stage build; deployment docs complete

@@ -8,7 +8,7 @@
 
 The ring runs continuously, fighting every 60 seconds. Players join rooms, get invested in their monsters, and then go to sleep, go to work, or simply close the tab. When they come back, they have no idea what happened. Did Stonefang win? Did my monster die? How many fights happened?
 
-The engine's `ring.battles = []` array was intentionally never persisted (noted in `CLAUDE.md` as known debt). The `room_events` table now provides the raw event log, but there's no higher-level view over it — no "these 17 events constitute Fight #42" abstraction, and no dedicated UI to browse recent fights.
+The engine's `ring.battles = []` array was intentionally never persisted (noted in `AGENTS.md`, then `CLAUDE.md`, as known debt). The `room_events` table now provides the raw event log, but there's no higher-level view over it — no "these 17 events constitute Fight #42" abstraction, and no dedicated UI to browse recent fights.
 
 The web app already streams live events via the `ringFeed` WebSocket. The catch-up problem (reconnecting mid-session, last-seen event ID) is partially solved. But this feature is about a different kind of catch-up: arriving *hours later* and getting a readable summary of what you missed, not just a raw event replay.
 

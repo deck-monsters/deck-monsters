@@ -73,7 +73,7 @@ await player.buyItems(privateChannel, game)  // interactive: shows the room's sh
 await player.lookAt('basilisk')
 ```
 
-See [CLAUDE.md](CLAUDE.md) for the full action method list and deeper architecture notes.
+See [AGENTS.md](AGENTS.md) for the full action method list and deeper architecture notes.
 
 ---
 
@@ -171,7 +171,7 @@ pnpm run build:docs   # builds engine, then regenerates CARDS.md, DMG.md, MONSTE
 | [MONSTERS.md](MONSTERS.md) | Monster types and stat distributions |
 | [CARDS.md](CARDS.md) | Player-facing card and item reference (name, description, rarity) |
 | [DMG.md](DMG.md) | Dungeon Master / operator reference (stats, pacing, concurrency) |
-| [CLAUDE.md](CLAUDE.md) | Codebase guide for AI-assisted development |
+| [AGENTS.md](AGENTS.md) | Codebase guide for AI-assisted development (`CLAUDE.md` is a symlink to it) |
 | [docs/roadmap/](docs/roadmap/) | Detailed plans for each planned enhancement |
 
 ---

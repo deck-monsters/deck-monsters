@@ -144,7 +144,7 @@ Unused `or` import in `analytics-queries.ts` (was the only lint warning in the s
 
 ### 26. Card shop is a single process-wide singleton shared by every room — FIXED
 
-`packages/engine/src/items/store/shop.ts`'s `getShop()` was a module-level `throttle()`-wrapped function with a single `currentShop` variable, regenerated once per 8 hours **for the entire process**, not per room. Every room on a multi-room server shared the exact same shop inventory, closing time, and prices — one room buying out an item mutated the shared `shop.items`/`shop.cards`/`shop.backRoom` arrays via `.splice()`/`.push()` in `buy.ts`/`sell.ts`, affecting every other room simultaneously. This directly conflicted with `CLAUDE.md`'s room-scoping rule.
+`packages/engine/src/items/store/shop.ts`'s `getShop()` was a module-level `throttle()`-wrapped function with a single `currentShop` variable, regenerated once per 8 hours **for the entire process**, not per room. Every room on a multi-room server shared the exact same shop inventory, closing time, and prices — one room buying out an item mutated the shared `shop.items`/`shop.cards`/`shop.backRoom` arrays via `.splice()`/`.push()` in `buy.ts`/`sell.ts`, affecting every other room simultaneously. This directly conflicted with the room-scoping rule in `AGENTS.md` (then `CLAUDE.md`).
 
 **Fixed** per the design decided 2026-07-31:
 
@@ -190,7 +190,7 @@ Five smaller observations from the #19/#26 investigation, all addressed on 2026-
 
 ### Doc and tooling drift fixed alongside the above
 
-- **`pnpm typecheck` did not exist.** `CLAUDE.md` documented it as a development command, but no package defined a `typecheck` script, so the command failed outright and CI's type-checking had to be reproduced by hand as per-package `tsc --noEmit` invocations. Added a `typecheck` script to all five packages plus a root `turbo run typecheck` (with `dependsOn: ["^build"]`, since the non-engine packages type-check against `engine/dist`).
+- **`pnpm typecheck` did not exist.** `AGENTS.md` (then `CLAUDE.md`) documented it as a development command, but no package defined a `typecheck` script, so the command failed outright and CI's type-checking had to be reproduced by hand as per-package `tsc --noEmit` invocations. Added a `typecheck` script to all five packages plus a root `turbo run typecheck` (with `dependsOn: ["^build"]`, since the non-engine packages type-check against `engine/dist`).
 - **`README.md`'s engine example** called `player.buyItems()` with no arguments; the per-room shop work made `channel` and the `ShopHost` required, so a JavaScript consumer copying it would dereference `host.shop` on `undefined`. Updated to `player.buyItems(privateChannel, game)`.
 - **Player handbook said the merchant rotates every 8 hours**, which was the old throttle period — it is 6 now, and per-room. Fixed in `packages/engine/src/build/player-handbook-content.ts` (shared by in-game `look at player handbook` and root `PLAYER_HANDBOOK.md`) and regenerated.
 
