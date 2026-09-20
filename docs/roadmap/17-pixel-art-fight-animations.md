@@ -2,7 +2,7 @@
 
 **Category**: Enhancement / UX  
 **Priority**: Low — post-launch, fun  
-**Status**: Proposed  
+**Status**: ✅ Shipped — `street-fighter` theme only  
 **Depends on**: `09-graphics.md` (theme system), `06a-web-app.md` (web app theme CSS vars)  
 **Reference**: [`docs/pixel-art-animations-in-js.md`](../pixel-art-animations-in-js.md)
 
@@ -19,7 +19,7 @@ The default "dungeon terminal" theme has no animations. A player switching to th
 ## Scope
 
 ### In scope
-- A `snes` theme (or similar retro label) that activates a pixel art animation layer
+- The existing `street-fighter` SNES theme activates a pixel art animation layer
 - Per-event animations triggered by the public ring feed's real event types and combat payloads
 - Monster sprites: one idle animation + one attack animation per monster type (5 types: Basilisk, Gladiator, Jinn, Minotaur, Weeping Angel)
 - A `<canvas>` overlay that sits on top of the ring pane during a fight sequence, then fades out when narration resumes
@@ -48,32 +48,23 @@ The animation layer is a standalone module that the web app loads only when the 
 
 ---
 
-## Technical Approach
+## Implementation
 
 See `docs/pixel-art-animations-in-js.md` for the full reference. Summary of choices for this feature:
 
-### Sprite sheets via Canvas API
+### In-code pixel maps via Canvas API
 
-Use the sprite sheet + `drawImage` approach for fight sequences. Each monster type has one sprite sheet with rows for: `idle`, `attack`, `hit`, `faint`.
+`apps/web/src/animations/pixel-fight/sprites.ts` defines reviewable, testable 16×16
+pixel maps for Basilisk, Gladiator, Jinn, Minotaur, and Weeping Angel, plus a
+fallback silhouette. Each has idle, attack, hit, and faint frames; the renderer
+mirrors frames for the opposing side and adds the hit flash. No asset pipeline exists
+today, so in-code maps avoid an opaque generated artifact and network requests.
 
-```
-16×16 or 32×32 source pixels, scaled 4× (64×64 or 128×128 displayed)
-8 FPS for idle loops, 12 FPS for attack sequences
-```
-
-```ts
-// Disable smoothing — required for pixel art to stay sharp
-ctx.imageSmoothingEnabled = false
-
-// Draw one frame
-ctx.drawImage(
-  spriteSheet,
-  frame * FRAME_W, row * FRAME_H,   // source crop
-  FRAME_W, FRAME_H,
-  destX, destY,
-  FRAME_W * SCALE, FRAME_H * SCALE  // scaled up
-)
-```
+`drawSprite` remains the boundary between scene state and pixels. A later sprite-sheet
+pipeline can replace these maps behind that same signature. The canvas disables image
+smoothing, uses integer 4× sprites (3× below 480px), and is device-pixel-ratio aware.
+Its requestAnimationFrame loop accumulates elapsed time rather than advancing per
+browser repaint: idle frames run at 8 FPS and attack frames at 12 FPS.
 
 ### Event → animation mapping
 
@@ -88,13 +79,25 @@ ctx.drawImage(
 | `ring.fled` | `flee` | Fleeing actor runs off screen |
 | `ring.fight` with `payload.eventName: 'fightConcludes'` or `ring.fightResolved` | — | Fade the decorative layer after the fight resolves |
 
+The layer reads `payload.combat`, never narration prose. It uses the shared
+`RingFeedProvider` listener rather than opening another subscription. `ring.state` is
+the authoritative roster/HP snapshot: combat DTOs animate intervening changes, while a
+later state frame corrects the display.
+
 ### Canvas overlay positioning
 
-The canvas sits absolutely positioned over the ring pane, full-width, fixed height (~200px). It fades in when a fight event arrives and fades out when the text narration is complete. The text feed beneath continues to scroll normally — the animation never obscures the text that matters.
+The canvas is a lazy-loaded sibling of Virtuoso inside `RingPane`'s
+`.pane-feed-area`, absolutely positioned over the top 200px of the feed. It is
+`aria-hidden` and `pointer-events: none`; the text feed continues to scroll and accepts
+input without waiting for any animation. It fades after the engine reports the fight
+resolved.
 
 ### CSS fallback
 
-For very small viewports (narrow mobile in SNES theme), the canvas is hidden and the fight plays out as text only. The canvas is decorative and non-interactive, so hiding it has no functional impact.
+For very small (`.terminal-slot` container ≤360px) or short (≤600px) viewports, the
+canvas is hidden and the fight plays out as text only. Reduced-motion users receive one
+static frame for each scene change, with no RAF loop or opacity transition. The canvas
+is decorative and non-interactive, so these fallbacks have no functional impact.
 
 ---
 
@@ -104,41 +107,54 @@ The existing theme system (CSS custom properties, class on `<body>`) needs one a
 
 ```html
 <!-- Default theme: no pixel art -->
-<body data-theme="terminal">
+<html>
 
 <!-- SNES theme: pixel art module loads -->
-<body data-theme="snes" data-theme-features="pixel-art">
+<html data-theme="street-fighter" data-theme-features="pixel-art">
 ```
 
-The animation module checks `document.body.dataset.themeFeatures` and self-initializes only when `pixel-art` is present. Theme switches (in Account settings) dynamically update both attributes, triggering the module to activate or teardown.
+`useTheme.ts` owns a typed `THEMES` registry. The `street-fighter` entry declares
+`pixel-art`; `useThemeFeature('pixel-art')` is the only gate that loads the module.
+Theme switches update both attributes on `<html>` and unmount the layer when the feature
+is absent.
 
 ---
 
 ## Asset Pipeline
 
-Sprites can be created via any combination of:
-
-- **Aseprite** — standard pixel art editor; exports sprite sheets with JSON frame metadata
-- **PixelLab** (pixellab.ai) — AI-assisted pixel art generation from text prompts; good for rapid prototyping of all 5 monster types
-- **Box-shadow CSS** — for completely asset-free pixel art for simple monsters (see reference doc); no images, no requests, pure CSS
-
-Start with PixelLab to rapidly generate candidate sprites for all 5 monster types. Refine in Aseprite. Use box-shadow as a fallback for any monster that doesn't have a sprite sheet yet — it degrades cleanly.
-
-Sprite sheets live in `apps/web/public/sprites/` and are lazily loaded by the animation module only when the SNES theme is active.
+The initial release deliberately has no image assets. The in-code maps are easy to
+review and their 16×16 shape/palette contract has a unit test. If art direction later
+requires Aseprite/PixelLab sheets, the renderer can adopt them without changing scene
+reduction or feed wiring.
 
 ---
 
-## Implementation Order
+## Implementation order (completed)
 
-When the time comes (post-launch), tackle in this order:
+1. Added the typed theme registry and `data-theme-features` attribute; Account radios
+   now derive from the same registry.
+2. Added the reducer, in-code sprites, renderer, canvas layer, and focused tests.
+3. Mounted the layer lazily in `RingPane` under the `pixel-art` feature flag, using the
+   existing shared ring-feed listener and roster frame.
+4. Added CSS positioning, small/short viewport fallbacks, and reduced-motion handling.
 
-1. **Theme selector UI** (prerequisite — already in Phase 3 of `06a-web-app.md`): add SNES theme stub with `data-theme-features="pixel-art"`
-2. **Animation module scaffold**: canvas overlay, event listener, theme-feature guard, teardown on theme change
-3. **One monster sprite** (Basilisk): idle + attack + hit + faint; wire to `ring.fight` / `ring.hit` events
-4. **Remaining 4 monster sprites** once the pipeline is proven
-5. **Polish**: HP bar overlay on canvas, entry/exit transitions, victory sequence
+## Known gaps (no combat DTO yet)
 
-Each step is independently shippable — the theme flag keeps it invisible until ready.
+These follow-ups need engine-side payloads; the layer tolerates the available omissions
+without delaying the feed.
+
+- Fully absorbed melee hits only narrate in `packages/engine/src/creatures/health.ts`.
+- Delayed Hit's payoff has a hit/miss DTO but no new card DTO in
+  `packages/engine/src/cards/delayed-hit.ts`.
+- Bad Batch's poison trigger has a hit DTO but no card DTO in
+  `packages/engine/src/cards/bad-batch.ts`.
+- Immobilize status ticks and freedom rolls have no combat DTO in
+  `packages/engine/src/cards/immobilize.ts`.
+- Non-HP curses/modifiers publish no structured target in
+  `packages/engine/src/cards/curse.ts` and
+  `packages/engine/src/announcements/modifier.ts`.
+- Failed flee rolls have no combat DTO in `packages/engine/src/cards/flee.ts` and
+  `packages/engine/src/announcements/stay.ts`.
 
 ---
 

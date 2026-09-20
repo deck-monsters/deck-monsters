@@ -16,7 +16,7 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 | A | One vocabulary for the world (`train`, `call out`, `dismiss`, pronouns…) + `docs/voice-and-wording.md` | Tier 3 doc, Tier 2 apply | 📋 brief ready, runs last of the wording/workshop set | — |
 | E | Edit your **global** display name, not just the room-scoped character name | explore → Tier 2 | ✅ done (review: Critical masked-vs-raw name mismatch; orchestrator then found `givenName` is also start-cased — fixed with real-character tests) | `4659880`, `cdb7af2`, `bc879bd`, `e64027a`, `7763188`, `d5cc0bc`, `32a13c8` |
 | F | +3 monster slots per beastmaster (existing characters included) | orchestrator (small) | ✅ done | see git log (`feat(engine): beastmasters keep up to 10 monsters`) |
-| G | Implement [17 — Pixel Art Fight Animations](17-pixel-art-fight-animations.md) | Tier 3 design, Tier 2 implement | 🔧 G1 (engine DTO) in review `a2d8e7a`; G2 (web layer) next | `a2d8e7a`, `b18fc31` |
+| G | Implement [17 — Pixel Art Fight Animations](17-pixel-art-fight-animations.md) | Tier 3 design, Tier 2 implement | ✅ done | `a2d8e7a`, `b18fc31`, `64c3e5a`, `265807b` |
 | H | Reorganise the roadmap: archive what shipped, make remaining work obvious | Tier 2 | 📋 after G | — |
 | I | Encode what worked in this process into `AGENTS.md` / `docs/agents/subagents.md` | orchestrator | 📋 last | — |
 
