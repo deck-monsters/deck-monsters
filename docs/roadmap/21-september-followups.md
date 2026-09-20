@@ -15,7 +15,7 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 | B | Workshop header metrics: current HP first, slots bar → `Deck 9/9` text, `Lvl n` badge, fallen/revives-in state | Tier 2 implement | 📋 brief ready | — |
 | A | One vocabulary for the world (`train`, `call out`, `dismiss`, pronouns…) + `docs/voice-and-wording.md` | Tier 3 doc, Tier 2 apply | 📋 brief ready, runs last of the wording/workshop set | — |
 | E | Edit your **global** display name, not just the room-scoped character name | explore → Tier 2 | 📋 exploring | — |
-| F | +3 monster slots per beastmaster (existing characters included) | orchestrator (small) | 📋 | — |
+| F | +3 monster slots per beastmaster (existing characters included) | orchestrator (small) | ✅ done | see git log (`feat(engine): beastmasters keep up to 10 monsters`) |
 | G | Implement [17 — Pixel Art Fight Animations](17-pixel-art-fight-animations.md) | Tier 3 design, Tier 2 implement, isolated worktree | 📋 exploring | — |
 | H | Reorganise the roadmap: archive what shipped, make remaining work obvious | Tier 2 | 📋 after G | — |
 | I | Encode what worked in this process into `AGENTS.md` / `docs/agents/subagents.md` | orchestrator | 📋 last | — |
@@ -26,7 +26,7 @@ This is a *planning* doc for a batch of follow-ups requested after the post-batt
 - **Vocabulary** (Task A, binding): *train* a monster (parser keeps `spawn` as an alias), *call [monster] out of the ring* (never "summon from"), *dismiss* (not release/drop), *revive* (not respawn/resurrect), *fallen* (not KO), *fight* (not encounter), *the ring* (not arena), *Lvl n* in compact badges, pronoun questions instead of gender questions (engine keys unchanged). Admin/debug commands and code identifiers are out-of-world and keep their names.
 - **Workshop first run** (Task C): the workshop cannot prompt, so the Train form collects name / pronouns / avatar when `myInventory.hasCharacter` is false and `game.spawnMonster` creates the character and the monster in one serialized mutation. The name is pre-checked against `game.findCharacterByName` because the engine re-prompts on a clash and the silent channel would throw.
 - **Workshop metrics** (Task B): HP is the number that drives revive / send / item decisions and was shown nowhere in the workshop; a nearly-always-full deck bar carried no information.
-- **Monster slots** (Task F): `monsterSlots` is persisted per character, so raising `DEFAULT_MONSTER_SLOTS` alone would only affect new beastmasters; the getter must floor at the new default.
+- **Monster slots** (Task F): `DEFAULT_MONSTER_SLOTS` 7 → 10. `monsterSlots` is persisted per character, and the getter already floors stored values at the default, so existing beastmasters are lifted on next load; grants above the default are kept. The handbook now prints the number from the constant instead of hard-coding it.
 - **Display name vs character name** (Task E): `profiles.display_name` is global (Supabase) and seeds a new room character's `givenName`; the character name is per-room engine state and stays editable via `edit my character`. Both must be editable; the account page is the home for the global one.
 
 ## Process rules for this pass (candidates for `AGENTS.md`)

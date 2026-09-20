@@ -44,7 +44,11 @@ export const beastmasterReady = loadHelpers().catch((err) => {
 	console.error('[engine] beastmasterReady FAILED — beastmaster helpers will be stubs:', err);
 });
 
-const DEFAULT_MONSTER_SLOTS = 7;
+// Raised from 7 to 10 in September 2026. `monsterSlots` is persisted per character, so the
+// getter below floors every stored value at this constant — that is what lifts existing
+// beastmasters too, not just newly created ones. Lower it and nobody loses monsters, but
+// nobody's stored value drops either.
+export const DEFAULT_MONSTER_SLOTS = 10;
 
 const MAX_CARD_COPIES_IN_HAND = 4;
 

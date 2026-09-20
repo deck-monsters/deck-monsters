@@ -1,4 +1,5 @@
 import { formatCommandList } from '../commands/catalog.js';
+import { DEFAULT_MONSTER_SLOTS } from '../characters/beastmaster.js';
 
 export const FIGHT_DELAY_SECONDS = 60;
 export const MAX_MONSTERS = 12;
@@ -34,6 +35,8 @@ export const GETTING_STARTED = `
    send [monster name] to the ring
 
 That's it — your monster will fight automatically once the battle begins.
+
+A beastmaster can keep up to ${DEFAULT_MONSTER_SLOTS} monsters at a time.
 `.trim();
 
 export const THE_RING = `

@@ -25,6 +25,8 @@ Choose your cards wisely, good luck, and have fun!
 
 That's it — your monster will fight automatically once the battle begins.
 
+A beastmaster can keep up to 10 monsters at a time.
+
 ── The Ring ─────────────────────────
 
 The ring is the auto-battle arena. Once 2 or more monsters are present, a fight starts every 60 seconds.
@@ -169,9 +171,9 @@ Deck Monsters — Commands
     Use one of your items on yourself
   use [item] on [monster]
     Use an item on one of your monsters
-  give item to [monster]
+  give [item] to [monster]
     Give an item to a monster to carry
-  take item from [monster]
+  take [item] from [monster]
     Retrieve an item from a monster
 
 -- The Shop --

@@ -39,7 +39,14 @@ describe('characters/beastmaster', () => {
 	it('starts with the correct number of monster slots', () => {
 		const beastmaster = new Beastmaster();
 
-		expect(beastmaster.monsterSlots).to.equal(7);
+		expect(beastmaster.monsterSlots).to.equal(10);
+	});
+
+	it('lifts a restored character with the old slot count up to the current default', () => {
+		// monsterSlots is persisted in options, so a beastmaster saved when the default was 7
+		// would otherwise keep 7 forever. Grants above the default are preserved.
+		expect(new Beastmaster({ monsterSlots: 7 }).monsterSlots).to.equal(10);
+		expect(new Beastmaster({ monsterSlots: 12 }).monsterSlots).to.equal(12);
 	});
 
 	it('starts with an empty monster list', () => {
