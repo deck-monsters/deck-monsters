@@ -54,7 +54,8 @@ describe('COMMAND_CATALOG', () => {
 		});
 
 		expect(announcements.length).to.be.greaterThan(0);
-		expect(announcements[0]).to.include('spawn monster');
+		expect(announcements[0]).to.include('train a monster');
+		expect(announcements[0]).to.include('call [monster] out of the ring');
 	});
 
 	it('states that items can still be used mid-fight', async () => {

@@ -34,7 +34,7 @@ Web (deck-monsters.com):
   • Room Settings (gear icon) lets room owners reset game state or manage members.
 
 Discord:
-  • Each guild maps to one or more rooms. Slash commands (/spawn, /ring, /equip,
+  • Each guild maps to one or more rooms. Slash commands (/train, /spawn alias, /ring, /equip,
     /shop, /status, /create-room, /join-room, …) and free-text DMs both dispatch
     into the same engine command parser.
   • Interactive prompts arrive as DM button menus or free-text collectors; players
@@ -44,7 +44,7 @@ Discord:
 Starting a session:
   1) Ensure the server process is running with database connectivity configured.
   2) Load or create the target room (web navigation or Discord guild default).
-  3) Players spawn monsters, equip decks, and send fighters to the ring.
+  3) Players train monsters, equip decks, and send fighters to the ring.
   4) Once ${MIN_MONSTERS}+ monsters are in the ring, the fight timer arms automatically.
 
 State saves debounce (~30 s) on engine mutations; fights and prompts do not block saves.

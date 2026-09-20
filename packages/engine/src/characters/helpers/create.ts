@@ -1,4 +1,4 @@
-import PRONOUNS from '../../helpers/pronouns.js';
+import PRONOUNS, { PRONOUN_CHOICES, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn } from '../../creatures/base.js';
@@ -43,8 +43,6 @@ const loadHelpers = async () => {
 export const createHelperReady = loadHelpers().catch((err) => {
 	console.error('[engine] createHelperReady FAILED — character creation helpers will be stubs:', err);
 });
-
-const genders = Object.keys(PRONOUNS);
 
 /**
  * The avatar choices the console prompt offers. Exported so a non-interactive caller (the
@@ -109,21 +107,25 @@ const createCharacter = (
 	const askForGender = (Character: CharacterConstructor): Promise<Record<string, unknown>> =>
 		Promise.resolve()
 			.then(() => {
-				if (gender !== undefined) return gender;
+				if (gender !== undefined) {
+					if (!(gender in PRONOUNS)) {
+						return announceAndThrow(channel, `I don't recognize "${String(gender)}" as a pronoun choice.`);
+					}
+					options.gender = gender;
+					return options;
+				}
 				return channel({
-					question: `What gender should your ${((Character as any).creatureType as string).toLowerCase()} be?`,
-					choices: genders,
+					question: 'Which pronouns should we use for you?',
+					choices: [...PRONOUN_CHOICES],
 				});
 			})
 			.then((answer: unknown) => {
-				// Same label-or-index ambiguity as askForCreatureType above — resolve it the
-				// same way instead of assuming answer is always a numeric index.
-				const index = resolveChoiceIndex(answer, genders);
-				const selectedGender = genders[index];
+				if (answer === options) return options;
+				const selectedGender = genderFromPronounChoice(answer);
 				if (!selectedGender) {
-					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a gender.`);
+					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a pronoun choice.`);
 				}
-				options.gender = selectedGender.toLowerCase();
+				options.gender = selectedGender;
 				return options;
 			});
 

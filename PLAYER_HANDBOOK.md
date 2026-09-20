@@ -3,18 +3,18 @@
 ║     Deck Monsters                ║
 ╚══════════════════════════════════╝
 
-Welcome to Deck Monsters — the monster capturing, deck-building, turn-based RPG.
+Welcome to Deck Monsters — the monster-training, deck-building, turn-based RPG.
 
-You capture monsters to fight for you. Build their decks, send them into the ring, and watch them battle automatically. Earn coins and XP to grow stronger.
+You train monsters to fight beside you. Build their decks, send them into the ring, and watch them fight automatically. Earn coins and XP to grow stronger.
 
 Choose your cards wisely, good luck, and have fun!
 
 ── Getting Started ──────────────────
 
-1) Spawn a monster
-   spawn monster
+1) Train a monster
+   train a monster
 
-2) Equip it with cards from your deck
+2) Equip it with your cards
    equip [monster name]
 
    Or specify cards directly:
@@ -23,7 +23,7 @@ Choose your cards wisely, good luck, and have fun!
 3) Send it to the ring
    send [monster name] to the ring
 
-That's it — your monster will fight automatically once the battle begins.
+That's it — your monster will fight automatically once the fight begins.
 
 A beastmaster can keep up to 10 monsters at a time.
 
@@ -31,10 +31,10 @@ A beastmaster can keep up to 10 monsters at a time.
 
 The ring is the auto-battle arena. Once 2 or more monsters are present, a fight starts every 60 seconds.
 
-The ring holds up to 12 monsters at once. Monsters battle in turn order, each playing the next card in their deck. When the deck runs out it loops back to the beginning.
+The ring holds up to 12 monsters at once. Monsters fight in turn order, each playing the next card in their deck. When the deck runs out it loops back to the beginning.
 
 Call your monster back at any time:
-   summon [monster name] from the ring
+   call [monster name] out of the ring
 
 Check who's fighting:
    look at the ring
@@ -63,7 +63,7 @@ When equipping, the order matters — your monster plays cards in the order you 
 
 Some cards roll more than once (Lucky Strike, Horn Swipe, Rehit). Critical success (natural 20) and Curse of Loki (natural 1) apply only to the roll the card keeps — a discarded roll never crits.
 
-   look at cards          — see your full deck
+   look at cards          — see your cards
    look at [card name]    — inspect a specific card
 
 Items work similarly. You can carry up to 3 items, and give up to 3 more to each monster. Items used mid-battle must be pre-assigned to the monster before the fight.
@@ -92,23 +92,23 @@ Your character name and icon are separate from your account profile and belong t
 
    edit my character
 
-Choose Name or Icon/color, enter the new value, and confirm the change. This edits your person — the owner named in ring announcements — rather than one of your monsters.
+Choose Name or Icon/color, enter the new value, and confirm the change. This edits your person — the beastmaster named in ring announcements — rather than one of your monsters.
 
 ── All Commands ─────────────────────
 
 Deck Monsters — Commands
 
 -- Monsters --
-  spawn monster
-    Spawn a new monster
+  train a monster
+    Train a new monster
   equip [monster]
-    Equip a monster with cards from your deck
+    Equip a monster with your cards
   equip [monster] with "Card", "Card"
     Equip a monster with specific cards. For a card name containing a quote character, use a JSON array instead: ["Card"]
   dismiss [monster]
-    Release a monster
+    Part ways with a monster for good
   revive [monster]
-    Revive a dead monster
+    Revive a fallen monster
   look at monsters
     View all your monsters
   look at monsters in detail
@@ -118,11 +118,11 @@ Deck Monsters — Commands
 
 -- The Ring --
   send [monster] to the ring
-    Send a monster into battle
+    Send a monster to the ring
   send monster to the ring
     Select a monster and send to the ring
-  summon [monster] from the ring
-    Call a monster back from battle
+  call [monster] out of the ring
+    Call a monster out of the ring
   summon a boss
     Call a boss into the ring to fight your monster (3 per day)
   look at the ring
@@ -130,7 +130,7 @@ Deck Monsters — Commands
 
 -- Cards --
   look at cards
-    View all cards in your deck
+    View your cards
   look at card inventory
     View equipped and unequipped cards together
   look at all cards
@@ -142,9 +142,9 @@ Deck Monsters — Commands
   look at card [card name]
     View details about a specific card
   look at deck
-    View your full card deck
+    View your full card inventory
   unequip [card] from [monster]
-    Remove a card from a monster back to your deck
+    Remove a card from a monster back to your cards
   unequip [count] [card] from [monster]
     Remove multiple copies of a card from a monster
   unequip all from [monster]

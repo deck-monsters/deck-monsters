@@ -259,7 +259,7 @@ function sendMonsterToTheRingAction({
 	});
 }
 
-const SPAWN_REGEX = /spawn (?:a )?monster$/i;
+const SPAWN_REGEX = /(?:train|spawn) (?:a )?monster$/i;
 function spawnAction({ channel, character, game, isDM, ...options }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));

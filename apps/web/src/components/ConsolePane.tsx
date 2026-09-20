@@ -290,7 +290,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
   const ftuxAction = useMemo((): { label: string; command: string } | null => {
     switch (ftuxPhase) {
       case 'spawn':
-        return { label: 'spawn a monster', command: 'spawn a monster' };
+        return { label: 'train a monster', command: 'train a monster' };
       case 'equip_send':
         return ftuxSendableName
           ? { label: `equip ${ftuxSendableName}`, command: `equip ${ftuxSendableName}` }
@@ -967,7 +967,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
             ✕
           </button>
           <p className="ftux-guide-copy">
-            {ftuxPhase === 'spawn' && 'Welcome, Beastmaster. Spawn your first monster to begin your journey.'}
+            {ftuxPhase === 'spawn' && 'Welcome, Beastmaster. Train your first monster to begin your journey.'}
             {ftuxPhase === 'equip_send' && `Outfit ${ftuxSendableName} with cards, then send them into battle.`}
             {ftuxPhase === 'waiting' && `${ftuxInRingName} is in the ring. Fights begin once there are 2 or more monsters.`}
             {ftuxPhase === 'post_fight' && `${ftuxDeadName} has fallen. Revive them to fight again.`}

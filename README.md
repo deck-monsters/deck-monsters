@@ -10,7 +10,7 @@ The project is being revived with new connectors (Discord, web, mobile) and mode
 
 ## How It Plays
 
-1. **DM the bot** to build your roster — spawn monsters, equip them with card decks, buy items from the shop, level them up over time
+1. **DM the bot** to build your roster — train monsters, equip them with card decks, buy items from the shop, level them up over time
 2. **Send a monster to the ring** — a shared channel where everyone's monsters fight automatically
 3. **Watch the ring** — battles play out every 60 seconds, narrated in the channel; wins earn XP and coins
 4. **Iterate** — swap cards, upgrade monsters, build toward stronger strategies

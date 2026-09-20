@@ -32,8 +32,8 @@ The throughline: **the screen is content first, ornament second**. The game engi
 
 The original Slack game had a natural two-channel structure:
 
-- **The Ring** (public channel): shared feed of all ring events — battles, knockouts, victors, commentary. Everyone in the room sees this. Spectators and players alike watch the same stream.
-- **Your Console** (DM with the bot): where you do almost everything — spawn monsters, equip decks, send a monster to the ring, buy items, respond to prompts. Private between you and the game.
+- **The Ring** (public channel): shared feed of all ring events — fights, fallen monsters, victors, commentary. Everyone in the room sees this. Spectators and players alike watch the same stream.
+- **Your Console** (DM with the bot): where you do almost everything — train monsters, equip decks, send a monster to the ring, buy items, respond to prompts. Private between you and the game.
 
 The web app should replicate this structure directly. **Two panels, side by side on desktop, toggled on mobile:**
 
@@ -88,13 +88,13 @@ The current implementation uses popovers/modals for interactive prompts (equip, 
 **Interactive prompts render inline in the Console stream**, exactly like they would in a text adventure or a chat-style interaction. The game asks a question, the question appears in the feed, and the player answers. The thread continues below.
 
 ```
-> spawn a monster
+> train a monster
 
-What type of monster would you like to spawn?
+Which type of monster would you like to train?
 
-  [1] Basilisk       [2] Gladiator
-  [3] Jinn           [4] Minotaur
-  [5] Weeping Angel
+  [0] Basilisk       [1] Gladiator
+  [2] Jinn           [3] Minotaur
+  [4] Weeping Angel
 
 >
 ```

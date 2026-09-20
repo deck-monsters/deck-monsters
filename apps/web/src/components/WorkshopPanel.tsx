@@ -142,7 +142,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             }
           : {}),
       });
-      setMessage(`${result.monsterName} the ${result.monsterType} joined your stable.`);
+      setMessage(`${result.monsterName} the ${result.monsterType} answers your call.`);
       setShowSpawn(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not train that monster');
@@ -589,7 +589,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
             </fieldset>
           )}
           <label>Type<select name="type" defaultValue={spawnOptions.types[0]?.index}>{spawnOptions.types.map((type) => <option key={type.index} value={type.index}>{type.label}</option>)}</select></label>
-          <label>Gender<select name="gender" defaultValue="androgynous">{spawnOptions.genders.map((gender) => <option key={gender} value={gender}>{gender[0]?.toUpperCase()}{gender.slice(1)}</option>)}</select></label>
+          <label>Pronouns<select name="gender" defaultValue="androgynous">{spawnOptions.genders.map((gender) => <option key={gender} value={gender}>{PRONOUN_LABELS[gender] ?? gender}</option>)}</select></label>
           <label>Name<input name="name" required maxLength={40} autoComplete="off" /></label>
           <label>Appearance<input name="color" required maxLength={100} placeholder="gold and black" /></label>
           <button type="submit" className="btn" disabled={busy}>Train</button>
@@ -620,7 +620,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
               : 'No monsters yet — cards need a monster to live on.'}
           </p>
           <p className="workshop-empty-hint">
-            Train one here to start building its deck. The console command is <code>spawn a monster</code>.
+            Train one here to start building its deck. The console command is <code>train a monster</code>.
           </p>
         </div>
       ) : (

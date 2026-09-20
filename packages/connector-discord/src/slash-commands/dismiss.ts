@@ -6,7 +6,7 @@ import { resolveUser, dispatchCommand } from './helpers.js';
 export const dismiss: SlashCommand = {
 	data: new SlashCommandBuilder()
 		.setName('dismiss')
-		.setDescription('Permanently dismiss one of your monsters')
+		.setDescription('Part ways with one of your monsters for good')
 		.addStringOption((opt) =>
 			opt
 				.setName('monster')
@@ -36,7 +36,7 @@ export const dismiss: SlashCommand = {
 			return;
 		}
 
-		await interaction.editReply({ content: `💀 ${monster} has been dismissed.`, components: [] });
+		await interaction.editReply({ content: `💀 ${monster} has been laid to rest.`, components: [] });
 	},
 
 	async autocomplete(interaction, ctx): Promise<void> {

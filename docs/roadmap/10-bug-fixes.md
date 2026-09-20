@@ -31,10 +31,21 @@ September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the Septe
 post-merge passes (#112–#134), the shop-menu off-by-one from the prompt-answer-contract
 audit is fixed (#143), item #4 from that same audit — the remaining pure-index prompt
 sites, unproven over Discord — is fixed (#146), and item #5, the shop's always-empty card
-stock, is fixed (#147). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive
-(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#161).
+stock, is fixed (#147). Vocabulary drift between the workshop, commands, Discord, and
+handbook is fixed as #163. See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive
+(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#163).
 
 ## Recently resolved
+
+### One vocabulary for the world — FIXED (#163)
+
+The player-facing surfaces had independently chosen `spawn` or `train`, while some legacy
+copy still described Beastmasters as owners and monsters as property. The new
+[`voice-and-wording.md`](../voice-and-wording.md) contract establishes one lexicon:
+Beastmasters train companion monsters, call them out of the ring, revive them when fallen,
+and choose pronouns through connector-safe labels. Parser and Discord `/spawn` aliases remain
+for compatibility; the display language is now consistent across engine, server, web,
+Discord, handbook, and README.
 
 ### Workshop header, HP over deck slots — FIXED (#161)
 

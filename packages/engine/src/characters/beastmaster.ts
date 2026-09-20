@@ -175,7 +175,7 @@ class Beastmaster extends BaseCharacter {
 					return Promise.resolve()
 						.then(() =>
 							channel({
-								announce: `You're now the proud owner of a ${monster.creatureType}. Before you is ${monsterCard(monster as any)}`,
+								announce: `A ${monster.creatureType} answers your call. Before you is ${monsterCard(monster as any)}`,
 							}),
 						)
 						.then(() => monster);
@@ -1166,18 +1166,18 @@ class Beastmaster extends BaseCharacter {
 			if (alreadyInRing && alreadyInRing.length > 0) {
 				return announceAndThrow(channel, 'You already have a monster in the ring!');
 			} else if (numberOfMonsters <= 0) {
-				return announceAndThrow(channel, "You don't have any living monsters to send into battle. Spawn one first, or wait for your dead monsters to revive.");
+				return announceAndThrow(channel, "You don't have any living monsters to send to the ring. Train one first, or wait for your dead monsters to revive.");
 			}
 
 			return this.chooseMonster({
 				channel,
 				monsters,
 				monsterName,
-				action: 'send into battle',
+				action: 'send to the ring',
 				reason: "you don't appear to have a monster by that name.",
 			}).then((monster: BaseMonster) => {
 				if (monster.cards.length < monster.cardSlots) {
-					return announceAndThrow(channel, 'Only an evil master would send their monster into battle without enough cards.');
+					return announceAndThrow(channel, 'A beastmaster does not send a companion into the ring without a full deck.');
 				}
 				return ring.addMonster({ monster, character, userId });
 			});
@@ -1211,15 +1211,14 @@ class Beastmaster extends BaseCharacter {
 				return monster;
 			})
 		.then((monster: BaseMonster) =>
-			// "Dismissed from your pack" was kennel language for what is always a *dead*
-			// monster (this command filters on `monster.dead`), and it carried the game's
-			// last bit of livestock framing on the player side. "Laid to rest" suits
-			// permadeath and matches the companion voice the ring narration now uses —
-			// a beastmaster calls monsters in and calls them back, rather than owning
-			// stock. See 10b-bugs-fixed.md #104.
-			(channel({ announce: `${monster.givenName} has been laid to rest.` }) as Promise<unknown>).then(
-				() => monster,
-			),
+			// "Laid to rest" is reserved for a fallen companion. Keeping the live branch
+			// here protects the farewell if dismissal ever expands beyond its current
+			// dead-only eligibility filter.
+			(channel({
+				announce: monster.dead
+					? `${monster.givenName} has been laid to rest.`
+					: `${monster.givenName} leaves your side.`,
+			}) as Promise<unknown>).then(() => monster),
 		);
 	}
 

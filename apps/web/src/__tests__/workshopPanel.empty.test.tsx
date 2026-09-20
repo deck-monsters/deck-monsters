@@ -59,7 +59,7 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
   it('names the command that gets you unstuck', () => {
     // An empty state that does not say what to do next is only half of one.
     render(<WorkshopPanel roomId="room-1" />);
-    expect(screen.getByText('spawn a monster')).toBeTruthy();
+    expect(screen.getByText('train a monster')).toBeTruthy();
   });
 
   it('trains a fully specified monster without opening a console flow', async () => {
@@ -68,7 +68,7 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
     fireEvent.change(screen.getByLabelText('Type'), { target: { value: '2' } });
-    fireEvent.change(screen.getByLabelText('Gender'), { target: { value: 'female' } });
+    fireEvent.change(screen.getByLabelText('Pronouns'), { target: { value: 'female' } });
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Saffron' } });
     fireEvent.change(screen.getByLabelText('Appearance'), { target: { value: 'violet smoke' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Train' }).closest('form')!);
@@ -79,7 +79,7 @@ describe('WorkshopPanel: no monsters yet (#113)', () => {
       name: 'Saffron',
       color: 'violet smoke',
     }));
-    expect(await screen.findByRole('status')).toHaveTextContent('Saffron the Jinn joined your stable.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Saffron the Jinn answers your call.');
     expect(screen.queryByLabelText('Name')).toBeNull();
   });
 

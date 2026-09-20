@@ -72,7 +72,7 @@ non-obvious bit us before.
 
 ## Project Overview
 
-Deck Monsters is a turn-based monster-battling RPG game engine (think Pokémon meets deck-building). Players spawn monsters, equip them with action card decks, and send them into an auto-battling arena. The engine is platform-agnostic and driven by external connector adapters (Discord, web, and others).
+Deck Monsters is a turn-based monster-battling RPG game engine (think Pokémon meets deck-building). Players train monsters, equip them with action card decks, and send them into an auto-battling ring. The engine is platform-agnostic and driven by external connector adapters (Discord, web, and others).
 
 Originally built to run inside a private Slack workspace (via a Hubot bot named Jane). The project has been revived with a modern TypeScript monorepo, Supabase + Railway hosting, Discord and web connectors, auth, and multi-room support.
 
@@ -373,7 +373,7 @@ if (action) await action({ channel: privateChannel, channelName, isAdmin, isDM, 
 
 `game.handleCommand({ command })` parses a natural language string and returns an action function, or `null`. Command handlers live in `packages/engine/src/commands/`:
 
-- `monster.ts` — spawn, equip, ring, dismiss, revive, look at monster(s)
+- `monster.ts` — train/spawn, equip, ring, dismiss, revive, look at monster(s)
 - `character.ts` — look at character, rankings, edit character
 - `look-at.ts` — look at card, item, handbook, ring
 - `store.ts` — buy, sell

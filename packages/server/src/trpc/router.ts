@@ -1123,7 +1123,7 @@ export function createRouter(roomManager: RoomManager) {
 				const [game, eventBus] = await Promise.all([roomManager.getGame(input.roomId), roomManager.getEventBus(input.roomId)]);
 				const existingCharacter = game.characters?.[ctx.userId];
 				if (existingCharacter && typeof existingCharacter.spawnMonster !== 'function') {
-					throw new TRPCError({ code: 'NOT_FOUND', message: 'Create your character before training a monster.' });
+					throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
 				}
 				if (!existingCharacter && !input.character) {
 					throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
@@ -1154,7 +1154,7 @@ export function createRouter(roomManager: RoomManager) {
 						});
 					}
 					if (!character || typeof character.spawnMonster !== 'function') {
-						throw new TRPCError({ code: 'NOT_FOUND', message: 'Create your character before training a monster.' });
+						throw new TRPCError({ code: 'NOT_FOUND', message: "You don't have a character in this room yet — fill in the character details to create one." });
 					}
 					const takenNames = Object.keys(game.getAllMonstersLookup?.() ?? {});
 					if (takenNames.includes(input.name.toLowerCase())) throw new TRPCError({ code: 'CONFLICT', message: 'That monster name is already taken.' });

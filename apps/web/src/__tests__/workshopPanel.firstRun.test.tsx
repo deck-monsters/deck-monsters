@@ -53,7 +53,8 @@ import WorkshopPanel from '../components/WorkshopPanel.js';
 describe('WorkshopPanel: first run with no character', () => {
   const fillSpawnFields = () => {
     fireEvent.change(screen.getByLabelText('Type'), { target: { value: '2' } });
-    fireEvent.change(screen.getByLabelText('Gender'), { target: { value: 'female' } });
+    const pronounInputs = screen.getAllByLabelText('Pronouns');
+    fireEvent.change(pronounInputs[pronounInputs.length - 1]!, { target: { value: 'female' } });
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Saffron' } });
     fireEvent.change(screen.getByLabelText('Appearance'), { target: { value: 'violet smoke' } });
   };
@@ -102,7 +103,7 @@ describe('WorkshopPanel: first run with no character', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
     fillSpawnFields();
     fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Ada' } });
-    fireEvent.change(screen.getByLabelText('Pronouns'), { target: { value: 'female' } });
+    fireEvent.change(screen.getAllByLabelText('Pronouns')[0]!, { target: { value: 'female' } });
     fireEvent.click(screen.getByRole('radio', { name: '🐙' }));
     fireEvent.submit(screen.getByRole('button', { name: 'Train' }).closest('form')!);
 
@@ -113,7 +114,7 @@ describe('WorkshopPanel: first run with no character', () => {
       color: 'violet smoke',
       character: { name: 'Ada', gender: 'female', avatar: '🐙' },
     }));
-    expect(await screen.findByRole('status')).toHaveTextContent('Saffron the Jinn joined your stable.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Saffron the Jinn answers your call.');
   });
 
   it('offers a different set of avatars without losing the rest of the form', () => {

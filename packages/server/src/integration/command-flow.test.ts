@@ -96,6 +96,24 @@ describe('integration: command flow', function () {
 	});
 
 	describe('spawn monster', () => {
+		it('accepts train as the canonical command while keeping spawn as an alias', async () => {
+			const game = createTestGame();
+			const allAnswers = [...NEW_CHARACTER_ANSWERS, ...SPAWN_ANSWERS];
+			const responder = createAutoResponder(game.eventBus, USER_A, allAnswers);
+
+			try {
+				await runCommand(game, {
+					command: 'train a monster',
+					userId: USER_A,
+					isDM: true,
+				});
+			} finally {
+				responder.unsubscribe();
+			}
+
+			expect(game.characters[USER_A]?.monsters).to.have.length(1);
+		});
+
 		it('creates a monster when the user answers all spawn prompts', async () => {
 			const game = createTestGame();
 

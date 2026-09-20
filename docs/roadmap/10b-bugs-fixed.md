@@ -3621,3 +3621,26 @@ its axes swapped.
 
 **Status**: Fixed. Live-verified in Test Room A: sprites cleared and the band went inactive
 ~2 s after `Fight concluded`, with the fallen pose visible through the fade.
+
+### 163. Two words for one act — `spawn` vs `train` — and other vocabulary drift — FIXED
+
+**Symptom**: the workshop said “Train monster” while console help, quick actions, Discord,
+first-time guidance, and the handbook taught `spawn monster`. The same drift called monsters
+property (“proud owner”, “evil master”), offered a ring-exit command that said `summon` for an
+outward action, and exposed persistence keys as gender labels.
+
+**Root cause**: player-facing copy was added independently on each surface. Parser aliases
+were useful for compatibility, but no contract separated them from the word displayed to
+players, so technical implementation vocabulary leaked into the game world.
+
+**Fix**: [`docs/voice-and-wording.md`](../voice-and-wording.md) defines the voice philosophy
+and lexicon. `train` is now the canonical displayed command (while the parser and Discord
+retain `spawn` aliases); ring departures are called out; dismissal and revival use companion
+language; and console/workshop prompts present `he/him`, `she/her`, and `they/them` while
+mapping them through one shared helper to the existing engine keys. Engine, server, web,
+Discord, README, and handbook copy now share the same terms.
+
+**Tests**: command/help, prompt, quick-action, workshop, and Discord command tests cover the
+new canonical labels and aliases.
+
+**Status**: Fixed.

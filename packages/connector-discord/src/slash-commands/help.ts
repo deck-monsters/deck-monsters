@@ -6,7 +6,7 @@ const HELP_TEXT = `
 **Deck Monsters — Commands**
 
 **Slash Commands**
-\`/spawn [type] [name]\` — Spawn a new monster
+\`/train\` — Train a new monster
 \`/equip [monster]\` — Equip cards onto one of your monsters
 \`/preset [save|load|delete|list]\` — Manage a monster's saved deck presets
 \`/ring [monster]\` — Send a monster into the ring to fight
@@ -17,8 +17,8 @@ const HELP_TEXT = `
 \`/use [item] [target]\` — Use an item on a monster or yourself
 \`/status\` — View your character and monster status
 \`/monsters\` — List all your monsters
-\`/dismiss [monster]\` — Permanently dismiss one of your monsters
-\`/revive [monster]\` — Revive a dead monster
+\`/dismiss [monster]\` — Part ways with one of your monsters for good
+\`/revive [monster]\` — Revive a fallen monster
 \`/ring-status\` — Show current ring contestants
 \`/summon-boss\` — Summon a boss into the ring
 \`/create-room [name]\` — Create a new game room
@@ -28,7 +28,7 @@ const HELP_TEXT = `
 **Text Commands**
 You can also type commands directly in DMs, or prefix them with \`dm\` in a server channel:
 
-\`dm spawn a monster\`
+\`dm train a monster\`
 \`dm equip <monster name>\`
 \`dm send <monster name> to the ring\`
 \`dm call <monster name> out of the ring\`

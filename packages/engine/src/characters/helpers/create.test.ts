@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import createCharacter, { createHelperReady, randomAvatarChoices } from './create.js';
 import { CommandRefusalError } from '../../helpers/command-refusal-error.js';
 
-// Each createCharacter() call with no options prompts, in order: gender, name, avatar.
+// Each createCharacter() call with no options prompts, in order: pronouns, name, avatar.
 // The creature-type prompt is skipped while there is exactly one class to choose from
 // (see create.ts), so a supplied `type` is what exercises that step. A sequenced channel
 // stub that returns canned answers (and records what each prompt asked and offered) lets
@@ -29,14 +29,14 @@ describe('characters/helpers/create', () => {
 		// there is only one class — the index/label resolution still has to hold for the
 		// values connectors send once the prompt comes back.
 		it('resolves a numeric index answer, the shape the web client sends', async () => {
-			const { channel } = makeSequencedChannel(['female', 'Saffron', '0']);
+			const { channel } = makeSequencedChannel(['she/her', 'Saffron', '0']);
 			const character = await createCharacter(channel, { type: '0' });
 
 			expect(character.creatureType).to.equal('Beastmaster');
 		});
 
 		it('resolves a label answer, the shape the Discord connector sends', async () => {
-			const { channel } = makeSequencedChannel(['female', 'Saffron', '0']);
+			const { channel } = makeSequencedChannel(['she/her', 'Saffron', '0']);
 			const character = await createCharacter(channel, { type: 'Beastmaster' });
 
 			expect(character.creatureType).to.equal('Beastmaster');
@@ -61,21 +61,21 @@ describe('characters/helpers/create', () => {
 		 * a decision the player cannot make wrong, asked before they have done anything.
 		 */
 		it('does not ask which class when there is only one to choose from', async () => {
-			const { channel, seenQuestions } = makeSequencedChannel(['female', 'Saffron', '0']);
+			const { channel, seenQuestions } = makeSequencedChannel(['she/her', 'Saffron', '0']);
 			await createCharacter(channel);
 
 			expect(seenQuestions.join('\n')).to.not.include('Which type of character');
 		});
 
-		it('still asks for gender when the class question is skipped', async () => {
-			const { channel, seenQuestions } = makeSequencedChannel(['female', 'Saffron', '0']);
+		it('asks for pronouns when the class question is skipped', async () => {
+			const { channel, seenQuestions } = makeSequencedChannel(['she/her', 'Saffron', '0']);
 			await createCharacter(channel);
 
-			expect(seenQuestions[0]).to.include('What gender should your beastmaster be?');
+			expect(seenQuestions[0]).to.equal('Which pronouns should we use for you?');
 		});
 
 		it('selects the only class without asking', async () => {
-			const { channel } = makeSequencedChannel(['female', 'Saffron', '0']);
+			const { channel } = makeSequencedChannel(['she/her', 'Saffron', '0']);
 			const character = await createCharacter(channel);
 
 			expect(character.creatureType).to.equal('Beastmaster');
@@ -99,19 +99,18 @@ describe('characters/helpers/create', () => {
 
 	describe('askForGender (via createCharacter)', () => {
 		it('resolves a label answer, the shape the Discord connector sends', async () => {
-			const { channel } = makeSequencedChannel(['Female', 'Saffron', '0']);
+			const { channel } = makeSequencedChannel(['she/her', 'Saffron', '0']);
 			const character = await createCharacter(channel);
 
 			expect(character.gender).to.equal('female');
 		});
 
 		it('resolves a numeric index answer, the shape the web client sends', async () => {
-			// genders = Object.keys(PRONOUNS); index 0 is whichever gender PRONOUNS lists first.
 			const { channel, seenChoices } = makeSequencedChannel(['0', 'Saffron', '0']);
 			const character = await createCharacter(channel);
 
-			const genderChoices = seenChoices[0] as string[];
-			expect(character.gender).to.equal(genderChoices[0].toLowerCase());
+			expect(seenChoices[0]).to.deep.equal(['he/him', 'she/her', 'they/them']);
+			expect(character.gender).to.equal('male');
 		});
 
 		it('rejects an unrecognised gender answer instead of storing undefined.toLowerCase()', async () => {
@@ -130,7 +129,7 @@ describe('characters/helpers/create', () => {
 
 	describe('askForAvatar (via createCharacter)', () => {
 		it('resolves a numeric index answer against the offered icon choices', async () => {
-			const { channel, seenChoices } = makeSequencedChannel(['female', 'Saffron', '0']);
+			const { channel, seenChoices } = makeSequencedChannel(['she/her', 'Saffron', '0']);
 			const character = await createCharacter(channel);
 
 			const iconChoices = seenChoices[2] as string[];
@@ -140,7 +139,7 @@ describe('characters/helpers/create', () => {
 		it('resolves a label answer against the offered icon choices', async () => {
 			// The avatar's own "label" IS the emoji itself (choices double as their own labels),
 			// so answering with the exact emoji text exercises the label branch of resolveChoiceIndex.
-			const answers = ['female', 'Saffron'];
+			const answers = ['she/her', 'Saffron'];
 			const seenChoices: (string[] | undefined)[] = [];
 			let iconChoices: string[] = [];
 
@@ -163,7 +162,7 @@ describe('characters/helpers/create', () => {
 		 * prompt-free caller could pick, and a prompt-free caller cannot be asked again.
 		 */
 		it('keeps a supplied avatar instead of matching it against the random choices', async () => {
-			const { channel, seenQuestions } = makeSequencedChannel(['female', 'Saffron']);
+			const { channel, seenQuestions } = makeSequencedChannel(['she/her', 'Saffron']);
 			const character = await createCharacter(channel, { icon: '🦊' });
 
 			expect(character.icon).to.equal('🦊');
@@ -171,7 +170,7 @@ describe('characters/helpers/create', () => {
 		});
 
 		it('rejects an unrecognised avatar answer instead of storing undefined', async () => {
-			const { channel } = makeSequencedChannel(['female', 'Saffron', 'Not An Icon']);
+			const { channel } = makeSequencedChannel(['she/her', 'Saffron', 'Not An Icon']);
 			let error: unknown;
 			try {
 				await createCharacter(channel);
