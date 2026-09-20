@@ -10,7 +10,7 @@ import type { VirtuosoHandle } from 'react-virtuoso';
  * mid-animation, a pane goes from hidden to visible on a tab switch. Virtuoso reports all
  * of those as "not at bottom", and for months both feeds answered every one by switching
  * following off — so they stopped following at exactly the moments a fight produces the
- * most output (#157). A wheel/touch/scrollbar/keyboard gesture is the only evidence that
+ * most output (#159). A wheel/touch/scrollbar/keyboard gesture is the only evidence that
  * the reader wanted to scroll up; without one inside this window we re-pin instead. The
  * window is generous because Virtuoso throttles the report and a touch fling keeps
  * scrolling after the finger lifts.
@@ -25,7 +25,7 @@ export const USER_SCROLL_INTENT_WINDOW_MS = 1_500;
  * snaps back down. #148 set the Ring's to 72px so a shrinking viewport would not un-pin
  * the feed, but that also meant a follow scroll ending up to 72px short — several lines —
  * was never corrected and `↓ Latest` never appeared; the newest narration sat below the
- * fold for the rest of the burst (#157). Must stay under one feed line.
+ * fold for the rest of the burst (#159). Must stay under one feed line.
  */
 export const AT_BOTTOM_THRESHOLD_PX = 8;
 
@@ -35,7 +35,7 @@ export const AT_BOTTOM_THRESHOLD_PX = 8;
  * measured (a monster card's `<pre>` block, say). The snap then targets the row's
  * estimated height and lands a few dozen pixels short — and because Virtuoso's at-bottom
  * state never returned to true, it reports nothing further, so the feed would sit there
- * silently until the next append. Seen live on the Console (#157): 52px short after a
+ * silently until the next append. Seen live on the Console (#159): 52px short after a
  * `look at monsters` reply. One more snap after layout has settled closes it.
  */
 export const REPIN_SETTLE_MS = 250;
@@ -58,7 +58,7 @@ export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>
   // own `scrollHeight` rather than calling `scrollToIndex('LAST')`: that computes the target
   // from Virtuoso's size tree, which can still hold a freshly appended row's estimated
   // height when the callback fires — seen live as a 760px monster card booked 52px short,
-  // so both snaps landed 52px above the bottom and the feed sat there (#157). The DOM's
+  // so both snaps landed 52px above the bottom and the feed sat there (#159). The DOM's
   // scrollHeight is the ground truth.
   const scrollerRef = useRef<HTMLElement | null>(null);
   const setScroller = useCallback((el: HTMLElement | Window | null) => {
@@ -128,7 +128,7 @@ export function useFeedAutoScroll(virtuosoRef?: RefObject<VirtuosoHandle | null>
         return false;
       }
       // The bottom moved away on its own. Not the reader's doing — re-pin instead of
-      // switching off (#157). Instant, not smooth: a smooth scroll is what ended short in
+      // switching off (#159). Instant, not smooth: a smooth scroll is what ended short in
       // the first place. Following stays on, so report "at bottom" and keep the jump
       // button hidden rather than flashing it for the frame before the snap lands.
       const snap = () => scrollToEnd('auto');

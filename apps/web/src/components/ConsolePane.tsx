@@ -1030,7 +1030,7 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
          * prompt the player cannot see (#142). When the prompt's own choice buttons
          * are visible in the feed, this banner is redundant and covers the input on
          * a phone — the pane header's "Cancel action" button already covers that
-         * case. See 10b-bugs-fixed.md #156.
+         * case. See 10b-bugs-fixed.md #158.
          */}
         {activePromptId && !activePromptInView && (
           <div className="command-blocked-banner" role="status">

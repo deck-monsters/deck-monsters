@@ -15,7 +15,7 @@ export const DELAYED_HIT_EFFECT = 'DelayedHitEffect';
  * is itself the blow the earlier card was waiting for, a self-only check leaves it
  * unanswered — and it then fires after the next card anyone plays, however unrelated
  * (a Heal, in the live capture), narrating a "blow" that happened a turn ago. See
- * 10b-bugs-fixed.md #155.
+ * 10b-bugs-fixed.md #157.
  *
  * Terminates because every counter that fires removes its own effect from the ring.
  */

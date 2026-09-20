@@ -3201,11 +3201,65 @@ prompt by typing, confirms the banner clears, then replays the poll with the sam
 still marked pending and confirms the banner stays closed.
 
 **Status**: Fixed — but this was not the whole of what the screenshot showed. The same
-capture recurred after this fix landed, and the remaining cause is #156: the banner was
+capture recurred after this fix landed, and the remaining cause is #158: the banner was
 *designed* to render for the entire unanswered life of a prompt, including while its choice
 buttons are on screen.
 
-### 154. A revived monster sat at 1 hp for hours — every fight killed its healing timer — FIXED
+### 154. Cloud Agent builds stopped at an unattended `fuse.conf` prompt — FIXED
+
+**Symptom**: every recurring Cloud Agent environment build failed during the
+Docker package installation with `INSTALL_FAILED`. The restored build had
+`fuse3` and `fuse-overlayfs` unpacked but not configured, so dependency setup
+never reached `pnpm install` or the monorepo build.
+
+**Root cause**: the Cloud Agent base image already provides a locally managed
+`/etc/fuse.conf` containing `user_allow_other`. Installing `fuse-overlayfs`
+pulls in `fuse3`, whose package also owns that path. `apt-get install -y` does
+not answer `dpkg` conffile questions; in an unattended environment build the
+prompt received EOF, causing `dpkg` to fail and `apt-get` to exit with code
+100.
+
+**Fixed**: the Cloud Agent install runs `apt-get` with
+`DEBIAN_FRONTEND=noninteractive`, `--force-confdef`, and `--force-confold`.
+Package installation now resolves conffile decisions without a terminal while
+preserving the base image's required `user_allow_other` setting. Other package
+errors remain fatal under the script's existing `set -euo pipefail`.
+
+**Test**: recovered the interrupted package state from failed build
+`bld-20260919-8e276c16-17ef-496b-b22c-76e533c9db5f`, applied the same dpkg
+policy, and confirmed that `fuse3` and `fuse-overlayfs` configured successfully,
+`dpkg --audit` was clean, `/etc/fuse.conf` was unchanged, and Docker started.
+Draft build `bld-20260919-f6f2a3ca-b8b3-41c7-8345-7b933fb6d9ce` then
+completed from a fresh checkout with all five monorepo build tasks passing.
+
+**Status**: Fixed.
+
+### 155. Cloud Agent setup installed Railway into an unwritable global prefix — FIXED
+
+**Symptom**: once Docker/FUSE package installation completed, the Cloud Agent
+install stopped at `npm install --global @railway/cli` with `EACCES` while
+trying to create `/usr/lib/node_modules`.
+
+**Root cause**: the script's comment promised installation into the
+NVM-managed Node prefix, but the command relied on npm's inferred global
+prefix. Cursor exposes its own `/exec-daemon/node` before NVM's Node on
+`PATH`; the NVM-managed npm executable therefore inferred the system prefix
+from that Node runtime even though npm itself lived under
+`~/.nvm/versions/node`. The unprivileged `ubuntu` user cannot write there.
+
+**Fixed**: the install script derives the prefix from the resolved npm command
+location and passes it explicitly with `--prefix`. Railway is installed beside
+the NVM-managed npm binary, which is already on the agent's `PATH`, without
+requiring root-owned global package state.
+
+**Test**: with `node` resolving to `/exec-daemon/node` and npm resolving under
+`~/.nvm`, the implicit global install reproduced `EACCES`; installing with the
+derived NVM prefix succeeded and `railway --version` reported `5.30.3`. The
+same installation completed without `EACCES` in the successful draft build.
+
+**Status**: Fixed.
+
+### 156. A revived monster sat at 1 hp for hours — every fight killed its healing timer — FIXED
 
 **Symptom**: after a test battle a defeated monster was revived immediately, its revival
 timer ran out, and it was still at 1 hp hours later. This is what PRs #380–#382 were
@@ -3254,7 +3308,7 @@ running".
 
 **Status**: Fixed.
 
-### 155. A Delayed Hit fired after an unrelated card, answering a blow from a turn ago — FIXED
+### 157. A Delayed Hit fired after an unrelated card, answering a blow from a turn ago — FIXED
 
 **Symptom** (live capture): Ben Franklin plays Heal and heals himself 3 hp. The next line is
 "🤛 George Washington's Delayed Hit finds its moment: he immediately responds to the blow Ben
@@ -3311,7 +3365,7 @@ Heal and asserts nothing fires.
 
 **Status**: Fixed.
 
-### 156. The "waiting for your answer" banner covered the very choices it was asking about — FIXED
+### 158. The "waiting for your answer" banner covered the very choices it was asking about — FIXED
 
 **Symptom**: the shop's Items/Cards/Back Room prompt with its choice buttons on screen and,
 pinned over the bottom of the feed, "A command is waiting for your answer. Command
@@ -3345,7 +3399,7 @@ brought it in; scrolling back to the choices removed it again.
 
 **Status**: Fixed.
 
-### 157. The Ring and Console feeds stopped following on their own — and #148's fix made the Ring stop *silently* — FIXED
+### 159. The Ring and Console feeds stopped following on their own — and #148's fix made the Ring stop *silently* — FIXED
 
 **Symptom**: during a live battle the Ring pane, in auto-scroll mode, would sit a line or
 two above the newest narration and stay there while the fight went on. Reported after the

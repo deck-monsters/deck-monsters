@@ -177,7 +177,7 @@ ${customHit.stats}`);
 		/**
 		 * Reported as delayed hits "playing at odd times": a payoff line landing right after
 		 * an unrelated card (a Heal, in the live capture) with "responds to the blow X gave
-		 * him" when X had just healed, not struck. See 10b-bugs-fixed.md #155.
+		 * him" when X had just healed, not struck. See 10b-bugs-fixed.md #157.
 		 *
 		 * The blow was real, just earlier: it was another Delayed Hit's counter-attack. The
 		 * wrappers nest in arming order, so the earlier-armed card's check runs before the

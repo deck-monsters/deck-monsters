@@ -318,5 +318,5 @@ new ownership checks reading `optionsStore` directly.
   player monsters are torn down by `Game.dispose()` (room unload) or
   `Beastmaster.dropMonster()` (dismissal). For months `clearRing()` disposed every
   contestant, so a monster's healing stopped for good after its first fight and a revived
-  monster sat at 1 hp until the room was next restored from state (#154). If you add a
+  monster sat at 1 hp until the room was next restored from state (#156). If you add a
   timer to a creature, wire it into `disposeTimers()` and nothing else.

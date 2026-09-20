@@ -198,11 +198,11 @@ describe('ConsolePane scroll behavior', () => {
   });
 
   /*
-   * Regression (#157, console side): switching to the Console tab takes its viewport from
+   * Regression (#159, console side): switching to the Console tab takes its viewport from
    * hidden to visible, and Virtuoso reports that as "not at bottom" with no scroll by the
    * reader. Treating it as a scroll-up left the console parked one screen above the reply
    * to the command you had just typed, with `↓ Latest` showing. Live capture during the
-   * #157 verification.
+   * #159 verification.
    */
   it('re-pins instead of stopping when the bottom moves without a reader gesture', () => {
     render(

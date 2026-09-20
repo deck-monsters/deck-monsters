@@ -149,7 +149,7 @@ describe('RingPane scroll follow behavior', () => {
   });
 
   /*
-   * Regression (#157): the bottom can move away from the reader without the reader doing
+   * Regression (#159): the bottom can move away from the reader without the reader doing
    * anything — the roster grows, a card box is measured after it renders, a smooth follow
    * scroll ends short because the next line landed mid-animation. Treating every
    * "not at bottom" as a scroll-up switched following off in exactly those moments, and the
@@ -281,7 +281,7 @@ describe('RingPane scroll follow behavior', () => {
    * considers the list *not* at the bottom, and "at the bottom" means within this many
    * pixels. #148 raised it to 72px to absorb fractional layout pixels, which also meant a
    * follow scroll that ended up to 72px short — several lines — was never corrected and the
-   * `↓ Latest` button never appeared. Keep it well under one feed line (#157).
+   * `↓ Latest` button never appeared. Keep it well under one feed line (#159).
    */
   it('keeps the at-bottom tolerance under one feed line so Virtuoso still self-corrects', () => {
     renderPane();

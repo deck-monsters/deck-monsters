@@ -122,7 +122,7 @@ class Beastmaster extends BaseCharacter {
 		this.monsters = this.monsters.filter(monster => monster !== monsterToBeDropped);
 		// Nothing references a dropped monster any more, so its healing interval (and
 		// any pending revival) would otherwise tick forever on an orphan. The ring no
-		// longer disposes player monsters (#154), so this is now the only owner-side stop.
+		// longer disposes player monsters (#156), so this is now the only owner-side stop.
 		(monsterToBeDropped as { disposeTimers?: () => void }).disposeTimers?.();
 		this.emit('monsterDropped', { monsterToBeDropped });
 	}
