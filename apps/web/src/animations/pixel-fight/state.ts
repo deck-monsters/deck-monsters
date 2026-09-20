@@ -255,31 +255,31 @@ export function reduce(
 
   switch (combat.kind) {
     case 'card':
-      return updateFighter(scene, combat.actor.name, (fighter) => ({
+      return updateFighter(scene, combat.actor!.name, (fighter) => ({
         ...fighter, anim: 'attack', animStartedAt: now,
       }));
     case 'hit':
-      return updateFighter(scene, combat.target.name, (fighter) => ({
+      return updateFighter(scene, combat.target!.name, (fighter) => ({
         ...fighter,
-        hp: combat.hp,
-        maxHp: combat.maxHp,
+        hp: combat.hp!,
+        maxHp: combat.maxHp!,
         anim: 'hit',
         animStartedAt: now,
       }));
     case 'miss':
-      return updateFighter(scene, combat.actor.name, (fighter) => ({
+      return updateFighter(scene, combat.actor!.name, (fighter) => ({
         ...fighter, anim: 'attack', animStartedAt: now,
       }));
     case 'heal':
-      return updateFighter(scene, combat.target.name, (fighter) => ({
-        ...fighter, hp: combat.hp, maxHp: combat.maxHp,
+      return updateFighter(scene, combat.target!.name, (fighter) => ({
+        ...fighter, hp: combat.hp!, maxHp: combat.maxHp!,
       }));
     case 'death':
-      return updateFighter(scene, combat.target.name, (fighter) => ({
+      return updateFighter(scene, combat.target!.name, (fighter) => ({
         ...fighter, anim: 'faint', animStartedAt: now,
       }));
     case 'flee':
-      return updateFighter(scene, combat.actor.name, (fighter) => ({
+      return updateFighter(scene, combat.actor!.name, (fighter) => ({
         ...fighter, anim: 'flee', animStartedAt: now,
       }));
     default:
