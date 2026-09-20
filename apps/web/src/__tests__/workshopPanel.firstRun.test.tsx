@@ -85,7 +85,7 @@ describe('WorkshopPanel: first run with no character', () => {
 
     expect(screen.getByRole('group', { name: 'About you' })).toBeTruthy();
     expect(screen.getByLabelText('Your name')).toHaveValue('Ada Lovelace');
-    expect(screen.getByLabelText('Pronouns')).toHaveValue('androgynous');
+    expect(within(screen.getByRole('group', { name: 'About you' })).getByLabelText('Pronouns')).toHaveValue('androgynous');
     expect(screen.getByRole('radio', { name: '🦊' })).toBeChecked();
   });
 
