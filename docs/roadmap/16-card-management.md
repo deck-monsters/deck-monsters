@@ -252,6 +252,37 @@ All workshop operations go through tRPC → `runSerializedEngineWork` → the sa
 
 `game.myInventory` reads engine state directly (no engine lock, read-only). All mutations use `runSerializedEngineWork` and a silent channel that echoes text to the private event stream.
 
+### First run: character creation from the workshop
+
+Training a monster is a brand-new player's first workshop action, and until bug #160 it
+dead-ended: `game.spawnMonster` refused with "Create your character before training a
+monster", and the workshop had no way to create one. The console's creation flow is a chain
+of prompts (`characters/helpers/create.ts`), and workshop mutations run on a silent channel
+that throws on any `question` — so the answers have to be collected *before* the mutation
+and passed in.
+
+How the pieces fit:
+
+| Piece | Role |
+|---|---|
+| `game.myInventory` → `hasCharacter` | Lets the web tell "no character in this room" from "a character with no monsters". |
+| `game.characterCreationChoices` | Query returning `{ genders, avatars, suggestedName }` — the pronoun keys, seven random emoji from the engine's own `randomAvatarChoices` (the generator the console prompt uses), and the member's room display name. |
+| `game.spawnMonster` → optional `character` input | `{ name, gender, avatar }`. Ignored when the player already has a character. |
+| `WorkshopPanel`'s "About you" fieldset | Rendered above the monster fields only when `hasCharacter === false`; "Shuffle" refetches the avatar choices. |
+
+Inside `runSerializedMutation`, `spawnMonster` creates the character with
+`game.getCharacter({ channel, id, name, type: 0, gender, icon })`. That call is prompt-free
+*only* because every question `createCharacter` would ask has its answer supplied — class
+(index 0, and the engine no longer asks while there is one class), gender, name, avatar.
+
+**The name pre-check is load-bearing.** `createCharacter` re-prompts when the chosen name
+clashes with another character in the game, and a re-prompt on a silent channel throws a
+confusing `BAD_REQUEST` about interactive prompts. So the router checks
+`game.findCharacterByName(name)` first and refuses with `CONFLICT "That name is already
+taken in this room."` Creation and the spawn share one serialized mutation; if the spawn
+itself fails afterwards the character remains, which is deliberate — the player keeps the
+identity they chose and the next attempt takes the existing-character path.
+
 ---
 
 ## Data Flow

@@ -22,15 +22,29 @@ not landed in practice, found the real reason a revived monster stayed at 1 hp (
 turn-old blow after an unrelated Heal (#157), the waiting banner covering the prompt
 choices it was explaining (#158), and the Ring feed silently falling behind the newest
 narration mid-fight because #148's 72px tolerance had disabled Virtuoso's self-correction
-(#159). The
+(#159). A September 20 first-run pass found the Deck Workshop's only offered action —
+Train monster — dead-ending for a brand-new player with no character, and character
+creation opening on a choice of one class (#160). The
 September 16 2026 mobile UI pass is fully resolved (#98–#111), as is the September 17
 post-merge passes (#112–#134), the shop-menu off-by-one from the prompt-answer-contract
 audit is fixed (#143), item #4 from that same audit — the remaining pure-index prompt
 sites, unproven over Discord — is fixed (#146), and item #5, the shop's always-empty card
 stock, is fixed (#147). See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the full archive
-(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#159).
+(#3, #51–#58, #59–#73, #74–#85, #86–#97, #98–#111, #112–#134, #143, #146, #147, #151–#160).
 
 ## Recently resolved
+
+### Workshop first run — FIXED (#160)
+
+A brand-new player's first workshop action is the one button the empty state offers, **Train
+monster**, and it failed with "Create your character before training a monster" — an
+instruction the workshop gave no way to follow, because the console's creation flow is a
+chain of prompts and workshop mutations run on a channel that throws on any question. The
+spawn mutation now carries the character's details and creates it prompt-free in the same
+serialized mutation, with a name pre-check standing in for the engine's re-prompt-on-clash.
+The engine also stopped asking which class to be while there is only one, and stopped
+rejecting a *supplied* avatar by matching it against the random emoji it would have offered.
+Root causes and tests in `10b-bugs-fixed.md`.
 
 ### September 19 post-battle regressions — FIXED (#156–#159)
 

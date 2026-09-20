@@ -3469,3 +3469,62 @@ perform a wheel gesture first, plus "re-pins instead of stopping when the bottom
 without a reader gesture".
 
 **Status**: Fixed.
+
+### 160. Training a first monster from the workshop dead-ended without a character; players were asked to pick from one class — FIXED
+
+**Symptom**: a brand-new player opens the Deck Workshop, sees "No monsters yet — cards need a
+monster to live on", presses the one button on offer — **Train monster** — fills the form, and
+gets an error banner: "Create your character before training a monster." Nothing in the
+workshop creates a character. Separately, whoever did find their way to the console was asked,
+as the very first question of the game, "Which type of character would you like to be?" over a
+list containing exactly one entry.
+
+**Root cause**: two independent gaps, both in the first sixty seconds of play.
+
+1. `game.spawnMonster` (`packages/server/src/trpc/router.ts`) read `game.characters[userId]`
+   and threw `NOT_FOUND` when it was missing. The console never hits this because
+   `commands/index.ts` runs `game.getCharacter(...)` before every handler, which creates the
+   character by *asking* for its details. Workshop mutations run on `createSilentChannel`,
+   which throws on any `question` (docs/engine-concurrency-and-timing.md §2.3), so the
+   workshop could not reuse that flow — and nobody had given it an alternative.
+2. `createCharacter` (`packages/engine/src/characters/helpers/create.ts`) asked which class to
+   be whenever `type` was not supplied, even though `characters/helpers/all.ts` has held
+   exactly one entry (`Beastmaster`) for the whole life of the project.
+
+A third bug surfaced while wiring the fix: `askForAvatar` resolved a *supplied* `icon` against
+the seven **random** emoji it would have offered, as if it were an answer to the prompt. So any
+caller that supplied an avatar was refused ("I don't recognize 🦊 as an avatar choice") unless
+its pick happened to appear in that random seven. Nothing had ever supplied an icon before, so
+the bug was invisible until the workshop form did.
+
+**Fix**:
+
+- **Engine** — `createCharacter` takes the only class without asking when `type` is undefined
+  and `allCharacters.length === 1`; the prompt is left in place, commented, for a second class.
+  A supplied `icon` is now used as-is. `randomAvatarChoices(count)` is exported (and re-exported
+  from the package root) so the web offers the same avatars the console prompt does.
+- **Server** — `game.spawnMonster` takes an optional `character: { name, gender, avatar }` and,
+  inside the existing `runSerializedMutation`, creates the character via
+  `game.getCharacter({ channel, id, name, type: 0, gender, icon })` — prompt-free because every
+  question has its answer supplied. `game.findCharacterByName` is checked first, because the
+  engine *re-prompts* on a name clash and that prompt would throw: a clash is a
+  `CONFLICT "That name is already taken in this room."` The no-character-and-no-details error is
+  now actionable rather than a dead end. `game.characterCreationChoices` supplies the form's
+  genders/avatars/suggested name, and `myInventory.hasCharacter` lets the web tell "no
+  character" from "no monsters".
+- **Web** — with `hasCharacter === false` the empty state says the first Train will create the
+  character, and the Train form grows an "About you" fieldset above the monster fields (name,
+  pronouns labelled he/him · she/her · they/them over the engine's keys, avatar chips with a
+  Shuffle). Players who already have a character see the form exactly as before.
+
+**Tests**: `packages/engine/src/characters/helpers/create.test.ts` — the class question is never
+asked, gender still is, the result is a Beastmaster, a supplied avatar survives, and
+`randomAvatarChoices` offers seven. `packages/server/src/trpc/router.test.ts` — a real `Game`
+ends up with a registered Beastmaster *and* the monster from one mutation; no details gives the
+new actionable `NOT_FOUND`; a taken name is a `CONFLICT` with nothing created; an existing
+character ignores the block; `characterCreationChoices` and `myInventory.hasCharacter` are
+asserted. `apps/web/src/__tests__/workshopPanel.firstRun.test.tsx` — the fieldset appears only
+for a first run, the payload carries the character block, Shuffle refetches without submitting,
+and the existing-character form is unchanged.
+
+**Status**: Fixed.
