@@ -14,7 +14,10 @@ echo "deb [arch=${docker_arch} signed-by=/etc/apt/keyrings/docker.gpg] https://d
   sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
 sudo apt-get update
-sudo apt-get install -y \
+sudo DEBIAN_FRONTEND=noninteractive apt-get \
+  -o Dpkg::Options::="--force-confdef" \
+  -o Dpkg::Options::="--force-confold" \
+  install -y \
   containerd.io \
   docker-buildx-plugin \
   docker-ce \
@@ -31,7 +34,8 @@ sudo update-alternatives --set iptables /usr/sbin/iptables-legacy 2>/dev/null ||
 sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy 2>/dev/null || true
 
 # Install Railway in the NVM-managed Node prefix so it remains on the agent PATH.
-npm install --global @railway/cli@5.30.3
+npm_prefix="$(dirname "$(dirname "$(command -v npm)")")"
+npm install --global --prefix "${npm_prefix}" @railway/cli@5.30.3
 
 pnpm install --frozen-lockfile
 pnpm build
