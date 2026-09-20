@@ -60,6 +60,7 @@ vi.mock('../lib/auth-context.js', () => ({
 }));
 
 vi.mock('../hooks/useTheme.js', () => ({
+  THEMES: [{ id: 'phosphor', label: 'Phosphor (green on black)', features: [] }],
 	useTheme: () => ({
 		theme: 'phosphor',
 		setTheme: vi.fn(),
