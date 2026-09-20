@@ -63,5 +63,8 @@ export function useTheme() {
 
 export function useThemeFeature(feature: ThemeFeature): boolean {
   const { theme } = useTheme();
-  return THEMES.find((candidate) => candidate.id === theme)?.features.includes(feature) ?? false;
+  const features = THEMES.find((candidate) => candidate.id === theme)?.features as
+    | ReadonlyArray<ThemeFeature>
+    | undefined;
+  return features?.includes(feature) ?? false;
 }

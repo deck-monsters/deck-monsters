@@ -4,8 +4,10 @@ import {
   type RingStateFrame,
   reduce,
 } from '../animations/pixel-fight/state.js';
+import type { RingContestantSnapshot } from '../components/RingRoster.js';
+import type { TrackedRingFeedEvent } from '../hooks/useRingFeed.js';
 
-const roster = [
+const roster: RingContestantSnapshot[] = [
   {
     name: 'Aqim',
     icon: '🐍',
@@ -34,13 +36,13 @@ const roster = [
     owner: 'Opponent',
     userId: 'opponent',
   },
-] as const;
+];
 
 function stateFrame(contestants = roster): RingStateFrame {
   return { type: 'ring.state', contestants: [...contestants], viewerUserId: 'viewer' };
 }
 
-function combatEvent(combat: unknown, type = 'announce') {
+function combatEvent(combat: unknown, type: TrackedRingFeedEvent['data']['type'] = 'announce'): TrackedRingFeedEvent {
   return {
     id: crypto.randomUUID(),
     data: {
@@ -55,22 +57,26 @@ function combatEvent(combat: unknown, type = 'announce') {
   };
 }
 
+function fightEvent(eventName: 'fightBegins' | 'fightConcludes'): TrackedRingFeedEvent {
+  return {
+    id: `fight-${eventName}`,
+    data: {
+      id: `fight-${eventName}`,
+      roomId: 'room-1',
+      timestamp: 0,
+      type: 'ring.fight',
+      scope: 'public',
+      text: '',
+      payload: { eventName },
+    },
+  };
+}
+
 function startedScene() {
   const withRoster = reduce(EMPTY_FIGHT_SCENE, stateFrame(), 0);
   return reduce(
     withRoster,
-    {
-      id: 'fight-start',
-      data: {
-        id: 'fight-start',
-        roomId: 'room-1',
-        timestamp: 0,
-        type: 'ring.fight',
-        scope: 'public',
-        text: '',
-        payload: { eventName: 'fightBegins' },
-      },
-    },
+    fightEvent('fightBegins'),
     1,
   );
 }
@@ -135,18 +141,7 @@ describe('pixel fight reducer', () => {
   it('fades after a conclusion and becomes inactive when the fade ends', () => {
     const fading = reduce(
       startedScene(),
-      {
-        id: 'fight-end',
-        data: {
-          id: 'fight-end',
-          roomId: 'room-1',
-          timestamp: 0,
-          type: 'ring.fight',
-          scope: 'public',
-          text: '',
-          payload: { eventName: 'fightConcludes' },
-        },
-      },
+      fightEvent('fightConcludes'),
       100,
     );
     expect(fading).toMatchObject({ active: true, fadeOutAt: 2_600 });

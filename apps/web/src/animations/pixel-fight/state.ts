@@ -142,7 +142,7 @@ function fightersFromRoster(
 }
 
 function isRingStateFrame(event: TrackedRingFeedEvent | RingStateFrame): event is RingStateFrame {
-  return event.type === 'ring.state' && 'contestants' in event;
+  return 'type' in event && event.type === 'ring.state' && 'contestants' in event;
 }
 
 function combatFrom(event: TrackedRingFeedEvent): CombatPayload | null {
