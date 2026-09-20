@@ -1,4 +1,5 @@
 # Fight Stats and Catch-Up Feed
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature  
 **Priority**: Medium (post-launch)  
@@ -271,4 +272,3 @@ Both are populated from ring outcome events. The `FightStatsSubscriber` from `13
 
 - **How long to retain fight summaries?** Fight summaries are smaller than raw events and more valuable for historical browsing. 30–90 days is a reasonable default; decide when setting up the retention job for `room_events`.
 - **Interrupted fights**: if the server restarts mid-fight, `FightSummaryWriter`'s in-memory `pendingByRoom` map is lost. Currently the summary is still written on `ring.fightResolved`, but `startedAt` falls back to `endedAt` (zero-duration fight). The fight IS recorded; only the "card-by-card breakdown" event query will be empty. An `'abandoned'` outcome variant isn't needed right now, but the zero-duration signal can be used in a future UI to flag such fights.
-- **Multi-monster fight display in web UI**: the `FightLogPage` currently shows "X vs Y" (1v1 framing). For 3+ contestant fights, the UI needs to render all participants from the `participants` array rather than just `winnerMonsterName`/`loserMonsterName`. The underlying data is there; this is a UI-only fix.

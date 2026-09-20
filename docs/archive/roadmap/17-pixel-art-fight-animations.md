@@ -1,10 +1,11 @@
 # Pixel Art Fight Animations (Theme-Gated)
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Enhancement / UX  
 **Priority**: Low — post-launch, fun  
 **Status**: ✅ Shipped — `street-fighter` theme only  
 **Depends on**: `09-graphics.md` (theme system), `06a-web-app.md` (web app theme CSS vars)  
-**Reference**: [`docs/pixel-art-animations-in-js.md`](../pixel-art-animations-in-js.md)
+**Reference**: [`docs/pixel-art-animations-in-js.md`](../../pixel-art-animations-in-js.md)
 
 ---
 

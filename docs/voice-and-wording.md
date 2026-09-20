@@ -66,7 +66,7 @@ world deliberately softens the player-companion relationship.
 
 Commands are short, concrete, and lower-case. Emoji from `node-emoji` are part of the
 world's voice, not decorative modern UI icons; see
-[`06a-web-app.md`](roadmap/06a-web-app.md).
+[the archived web-app plan](archive/roadmap/06a-web-app.md).
 
 Why: the terminal voice is a game surface, not a generic administration panel.
 

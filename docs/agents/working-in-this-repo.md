@@ -91,13 +91,18 @@ stack). Specifics worth knowing before you start:
 | `AGENTS.md` (root) | Standing instructions, architecture doc index, commands, env, cloud setup. `CLAUDE.md` is a symlink to it |
 | `docs/*.md` | Architecture docs — one per subsystem, each written after something non-obvious bit us |
 | `docs/agents/*.md` | Reference docs for coding agents: this file, the game primer, the subagent guide |
-| `docs/roadmap/` | Planned and completed work, `README.md` is the status index; `10-bug-fixes.md` open, `10b-bugs-fixed.md` archive |
+| `docs/roadmap/` | Remaining work; `README.md` is the status index, `10-bug-fixes.md` is open, and `10b-bugs-fixed.md` stays here as the fixed-bug ledger because code cites its path |
 | `docs/superpowers/plans`, `docs/superpowers/specs` | Plans and specs produced during agent-driven work — working documents, not the source of truth |
-| `docs/archive/` | Subsystems removed from the live game but worth remembering (the exploration system) |
+| `docs/archive/` | Retired subsystems and shipped plans worth remembering; `archive/roadmap/` holds completed roadmap plans |
 
 If you build a subsystem future work will need context on, add a doc under `docs/` and link
 it from the Architecture Docs table in `AGENTS.md` — undiscoverable docs get rewritten from
 scratch by the next agent.
+
+When a roadmap plan ships, update its status and the roadmap index in the same PR, carry each
+actionable leftover into `docs/roadmap/22-small-leftovers.md`, then move the plan under
+`docs/archive/roadmap/`. Fixed bugs move from `10-bug-fixes.md` to `10b-bugs-fixed.md` with
+their root cause; do not move the ledger itself.
 
 ## The house voice
 

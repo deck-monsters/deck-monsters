@@ -1,4 +1,5 @@
 # Card Management System
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Engine + Web  
 **Priority**: High  

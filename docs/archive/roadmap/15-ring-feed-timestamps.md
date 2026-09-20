@@ -1,4 +1,5 @@
 # Ring feed: timestamps and “time ago” display
+> **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Status**: Implemented (Ring pane v1)  
 **Related**: `06a-web-app.md` (web UI), `14-fight-stats.md` (fight log)

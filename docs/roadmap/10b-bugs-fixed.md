@@ -1981,6 +1981,8 @@ client's ability to notice the drop.
 
 ---
 
+## September 2026 follow-up passes (#109–#163)
+
 ### 109. The fight log leaked other players' private events — FIXED
 
 Found by asking why the fight log's event trace was labelled "Event trace (same window)".
@@ -3123,7 +3125,7 @@ harness / 298 web, all green).
 **Symptom**: a live-play screenshot showed the roster reading "2/3 standing" with a monster
 at 4/31 HP directly under a feed banner announcing that fight had just concluded with 2
 dead. The roster is supposed to be most trustworthy exactly at that moment — see
-`18-live-ring-roster.md` — but instead it showed neither the truly final board nor an empty
+`docs/archive/roadmap/18-live-ring-roster.md` — but instead it showed neither the truly final board nor an empty
 one; it showed an unrelated, older snapshot.
 
 **Root cause**: `Ring.clearRing()` runs after every fight, unconditionally, whether or not

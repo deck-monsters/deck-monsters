@@ -64,7 +64,7 @@ non-obvious bit us before.
 | [`docs/deployment.md`](docs/deployment.md) | Railway/Supabase deployment or environment configuration |
 | [`docs/devcontainer-auth.md`](docs/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container instead of on the host |
 | [`docs/pixel-art-animations-in-js.md`](docs/pixel-art-animations-in-js.md) | Sprite, canvas, or CSS pixel-art work in the web app (crisp rendering, sprite sheets, common pitfalls) |
-| [`docs/roadmap/18-live-ring-roster.md`](docs/roadmap/18-live-ring-roster.md) | The ring roster panel, `ring.state` payload, or `Ring.publishState()` call sites |
+| [`docs/archive/roadmap/18-live-ring-roster.md`](docs/archive/roadmap/18-live-ring-roster.md) | The ring roster panel, `ring.state` payload, or `Ring.publishState()` call sites |
 | [`docs/roadmap/19-player-agency-and-items.md`](docs/roadmap/19-player-agency-and-items.md) | Items, targeting scrolls, deck-building agency, or any "should the player control this?" question |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scroll and shop rules |
 | [`docs/roadmap/20-workspace-layout.md`](docs/roadmap/20-workspace-layout.md) | `Terminal.tsx` panes, the 1024px breakpoint, tabs, the pane divider, or moving a surface between a route and a pane |
@@ -94,7 +94,8 @@ supabase/          # Supabase migrations and local dev config
 scripts/           # Repo-level setup scripts (setup:local, etc.)
 docs/              # Architecture docs, roadmap, archive
   agents/          # Reference docs written for coding agents (game primer, repo operations, subagents)
-  roadmap/         # All roadmap docs + README.md index
+  roadmap/         # Remaining work + README.md index; 10b is the stable bug ledger
+  archive/roadmap/ # Shipped plans and their reasoning
   superpowers/     # Plans and specs produced during agent-driven work
   room-scoping.md  # Critical architectural rule — read this
 ```
@@ -223,7 +224,7 @@ All test suites mock their external dependencies (database, Discord API, Supabas
 |----------|---------|
 | `DECK_MONSTERS_SKIP_DELAYS` | Zeroes every pacing delay (tests, harness). Also switches `hitLogTimestamp()` to a monotonic counter |
 
-> The S3 backup (`helpers/aws.ts`, `DECK_MONSTERS_AWS_*` / `HUBOT_DECK_MONSTERS_AWS_*`) was removed in the stack modernisation (`docs/roadmap/01-modernize-stack.md`); Postgres is the only store.
+> The S3 backup (`helpers/aws.ts`, `DECK_MONSTERS_AWS_*` / `HUBOT_DECK_MONSTERS_AWS_*`) was removed in the stack modernisation (`docs/archive/roadmap/01-modernize-stack.md`); Postgres is the only store.
 
 ## Cursor Cloud specific instructions
 
@@ -466,4 +467,7 @@ items and a dead mobile CSS rule. Everything already fixed, with root causes, is
 
 ## Roadmap
 
-See [`docs/roadmap/README.md`](docs/roadmap/README.md) for the full picture — status of every area, what's done, what's active, what's next in priority order, and what's deferred indefinitely.
+See [`docs/roadmap/README.md`](docs/roadmap/README.md) for remaining work, priorities, and
+deferred product boundaries. Shipped plans are in [`docs/archive/roadmap/`](docs/archive/roadmap/);
+the stable fixed-bug ledger intentionally remains at
+[`docs/roadmap/10b-bugs-fixed.md`](docs/roadmap/10b-bugs-fixed.md) because code cites it.

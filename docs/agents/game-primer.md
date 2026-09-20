@@ -144,7 +144,7 @@ room's inventory (#26). This is a hard constraint; read
 `profiles.display_name` is a global player identity used by leaderboards and room member
 lists; a room character's `givenName` is a separately editable per-room alias. A display-name
 change follows only characters that still have their old seeded name, never an alias chosen
-with `edit my character`. See [Display name vs character name](../roadmap/03-auth-and-identity.md#display-name-vs-character-name).
+with `edit my character`. See [Display name vs character name](../archive/roadmap/03-auth-and-identity.md#display-name-vs-character-name).
 
 ## The web feeds
 

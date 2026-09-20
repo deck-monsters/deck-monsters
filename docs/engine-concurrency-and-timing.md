@@ -131,7 +131,7 @@ Three coordination mechanisms exist. Know which one you are touching:
      `name`, `type`, `gender` and `icon` are all supplied *and* the name has been
      pre-checked with `game.findCharacterByName`: `createCharacter` re-prompts on
      a name clash, and that prompt would throw instead of asking. `spawnMonster`'s
-     first-run `character` input does exactly this (docs/roadmap/16-card-management.md
+     first-run `character` input does exactly this (docs/archive/roadmap/16-card-management.md
      §"First run"). A partially specified call is a latent 400.
 
 **Cross-user policy (#62)**: per-user console lanes mean two members can mutate
