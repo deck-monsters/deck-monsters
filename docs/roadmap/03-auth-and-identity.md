@@ -163,6 +163,10 @@ in-room alias. Historical fight snapshots, event text, and monster names remain 
 should use the global display name before promising consistent cross-connector character
 seeding.
 
+**Open question — multi-instance display-name updates:** per-user serialization currently exists
+only within one server process; deploy a database-side lock or optimistic version check before
+operating multiple API instances.
+
 ## Tasks
 
 ### Phase 1 — Discord + Web
