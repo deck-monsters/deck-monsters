@@ -1,20 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
-import { useTheme, type Theme } from '../hooks/useTheme.js';
+import { THEMES, useTheme } from '../hooks/useTheme.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
 import { trpc } from '../lib/trpc.js';
 
-const THEME_LABELS: Record<Theme, string> = {
-  phosphor: 'Phosphor (green on black)',
-  amber: 'Amber (orange on black)',
-  ember: 'Ember (red on black)',
-  'street-fighter': 'Street Fighter (SNES, 1992)',
-};
-
 export default function AccountView() {
   const { user, signOut } = useAuth();
-  const { theme, setTheme, validThemes } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { ringKeyTimestampsEnabled, setRingKeyTimestampsEnabled } = useRingKeyTimestamps();
   const navigate = useNavigate();
   const utils = trpc.useUtils();
@@ -121,9 +114,9 @@ export default function AccountView() {
             Terminal theme
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            {validThemes.map((t) => (
+            {THEMES.map(({ id, label }) => (
               <label
-                key={t}
+                key={id}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -135,13 +128,13 @@ export default function AccountView() {
                 <input
                   type="radio"
                   name="theme"
-                  value={t}
-                  checked={theme === t}
-                  onChange={() => setTheme(t)}
+                  value={id}
+                  checked={theme === id}
+                  onChange={() => setTheme(id)}
                   style={{ accentColor: 'var(--color-accent)' }}
                 />
-                <span style={{ color: theme === t ? 'var(--color-fg-bright)' : 'var(--color-fg)' }}>
-                  {THEME_LABELS[t]}
+                <span style={{ color: theme === id ? 'var(--color-fg-bright)' : 'var(--color-fg)' }}>
+                  {label}
                 </span>
               </label>
             ))}
