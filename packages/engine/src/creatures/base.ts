@@ -438,6 +438,9 @@ Level: ${this.level || this.displayLevel} | XP: ${this.xp}`;
 			clearTimeout(this.respawnTimeout);
 			this.respawnTimeout = undefined;
 		}
+		// `myInventory` projects `revivesAt` from `dead && respawnAt`; a disposed timer must not
+		// leave an ETA behind that can never arrive.
+		this.respawnAt = undefined;
 	}
 
 	edit (channel: ChannelFn): Promise<unknown> { return edit(this, channel); }

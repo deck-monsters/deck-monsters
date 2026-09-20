@@ -33,7 +33,7 @@ Web (deck-monsters.com):
   • Room Settings (gear icon) lets room owners reset game state or manage members.
 
 Discord:
-  • Each guild maps to one or more rooms. Slash commands (/train, /spawn alias, /ring, /equip,
+  • Each guild maps to one or more rooms. Slash commands (/train and its /spawn alias, /ring, /equip,
     /shop, /status, /create-room, /join-room, …) and free-text DMs both dispatch
     into the same engine command parser.
   • Interactive prompts arrive as DM button menus or free-text collectors; players

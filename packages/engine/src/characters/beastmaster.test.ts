@@ -72,6 +72,20 @@ describe('characters/beastmaster', () => {
 		expect(granted.toJSON().options).to.not.have.property('monsterSlots');
 	});
 
+	it('keeps monsterSlotModifier as a real option so the admin edit flow can grant slots', () => {
+		// `edit character` offers Object.keys(options) and stores the answer as a string. A fresh
+		// beastmaster must therefore carry the key, and a string value must still count.
+		const fresh = new Beastmaster();
+		expect(fresh.toJSON().options).to.have.property('monsterSlotModifier', 0);
+
+		fresh.setOptions({ monsterSlotModifier: '2' });
+		expect(fresh.monsterSlotModifier).to.equal(2);
+		expect(fresh.monsterSlots).to.equal(12);
+
+		fresh.setOptions({ monsterSlotModifier: 'lots' });
+		expect(fresh.monsterSlotModifier).to.equal(0);
+	});
+
 	it('starts with an empty monster list', () => {
 		const beastmaster = new Beastmaster();
 

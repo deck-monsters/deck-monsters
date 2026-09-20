@@ -72,6 +72,7 @@ non-obvious bit us before.
 | [`docs/agents/working-in-this-repo.md`](docs/agents/working-in-this-repo.md) | Opening a PR, numbering a bug, running the verification gate, or doing live verification |
 | [`docs/agents/subagents.md`](docs/agents/subagents.md) | Delegating any part of a task to another agent |
 | [`docs/voice-and-wording.md`](docs/voice-and-wording.md) | Any player-facing string: prompts, help text, announcements, button labels, Discord descriptions |
+| [`docs/archive/README.md`](docs/archive/README.md) | Looking for the reasoning behind something that already shipped (archived roadmap plans, retired subsystems) |
 | [`docs/room-scoping.md`](docs/room-scoping.md) | Any game state, DB query, tRPC procedure, or event subscription. **Hard constraint, not a guideline.** |
 | [`docs/engine-concurrency-and-timing.md`](docs/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, `events/room-event-bus.ts` prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |
 | [`docs/boss-encounters.md`](docs/boss-encounters.md) | Bosses, boss summoning, ring events, teams, or targeting strategies |
@@ -474,7 +475,7 @@ status line rather than trusting a list here, which goes stale within a pass. As
 writing the one high-priority open item is J (fight rewards — coins and xp — may never be
 credited, superseding the incorrect closure recorded as #145), alongside two open pacing
 items and a dead mobile CSS rule. Everything already fixed, with root causes, is archived in
-[`docs/roadmap/10b-bugs-fixed.md`](docs/roadmap/10b-bugs-fixed.md), which currently runs to #159.
+[`docs/roadmap/10b-bugs-fixed.md`](docs/roadmap/10b-bugs-fixed.md), which currently runs to #163.
 
 ## Archived / Deferred
 

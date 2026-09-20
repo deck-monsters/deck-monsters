@@ -170,7 +170,7 @@ Every combat announcement (`card.played`, hit, miss, heal, death, flee) carries 
 `events/combat.ts`) alongside its text — actor/target as `{ name, icon, creatureType, isBoss }`
 plus the kind-specific numbers. It exists so connectors and the web can animate or render
 without parsing narration; it is additive and must stay JSON-safe (no engine objects).
-`Ring.addMonster(monster, { isBoss })` copies the flag onto the monster so `combat.isBoss`
+`Ring.addMonster({ monster, character, userId, isBoss })` copies the flag onto the monster so `combat.isBoss`
 and the roster's `Contestant.isBoss` cannot disagree.
 
 The web consumes it in `apps/web/src/animations/pixel-fight/` (reducer `state.ts`, canvas

@@ -142,7 +142,9 @@ earn rather than a fixed number — nothing in the game changes it yet. Candidat
   a given level, announced in the level-up narration.
 - **Scroll of Kinship** (shop, back room): a consumable that adds `+1` once per character; price
   it against the coin economy audit in `11-balance-and-mechanics.md`.
-- **Admin grant**: `edit character` can already set `monsterSlotModifier` directly.
+- **Admin grant**: `edit character` (admin `edit … as <name>`) lists `Object.keys(options)`, and every
+  beastmaster now carries `monsterSlotModifier` (seeded to 0) precisely so it appears there; the
+  getter coerces the string the edit flow stores.
 
 Whatever grants it should go through the setter so the change is persisted and announced; the
 effective capacity is derived, never stored.

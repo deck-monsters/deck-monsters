@@ -123,6 +123,15 @@ describe('AccountView global display name', () => {
 		expect(screen.getByRole('alert')).toHaveTextContent("Display names can't look like an email address.");
 	});
 
+	it('pluralises the renamed count in code, never as "character(s)"', () => {
+		// docs/voice-and-wording.md: plurals belong in code.
+		renderView();
+		act(() => {
+			trpcMock.mutationOptions?.onSuccess?.({ displayName: 'Grace Hopper', renamedCharacters: 1 });
+		});
+		expect(screen.getByText('Saved — 1 room character renamed to match.')).toBeInTheDocument();
+	});
+
 	it('shows how many room characters were renamed and invalidates dependent data', () => {
 		renderView();
 
@@ -130,7 +139,7 @@ describe('AccountView global display name', () => {
 			trpcMock.mutationOptions?.onSuccess?.({ displayName: 'Grace Hopper', renamedCharacters: 2 });
 		});
 
-		expect(screen.getByText('Saved — 2 room character(s) renamed to match.')).toBeInTheDocument();
+		expect(screen.getByText('Saved — 2 room characters renamed to match.')).toBeInTheDocument();
 		expect(trpcMock.profileInvalidate).toHaveBeenCalledOnce();
 		expect(trpcMock.roomMembersInvalidate).toHaveBeenCalledOnce();
 		expect(trpcMock.leaderboardInvalidates.roomPlayers).toHaveBeenCalledOnce();

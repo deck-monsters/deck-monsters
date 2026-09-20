@@ -87,7 +87,7 @@ export default function AccountView() {
           {error && <p role="alert" className="error-msg">{error}</p>}
           {renamedCharacters !== null && (
             <p style={{ color: 'var(--color-success)', marginTop: '0.4rem' }}>
-              Saved{renamedCharacters > 0 ? ` — ${renamedCharacters} room character(s) renamed to match.` : '.'}
+              Saved{renamedCharacters > 0 ? ` — ${renamedCharacters} room ${renamedCharacters === 1 ? 'character' : 'characters'} renamed to match.` : '.'}
             </p>
           )}
         </form>

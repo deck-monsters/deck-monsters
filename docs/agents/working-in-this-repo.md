@@ -49,8 +49,9 @@ Build **first**: `server`, `connector-discord`, and `web` import `@deck-monsters
 through its `dist/` output, so a fresh checkout fails with `ERR_MODULE_NOT_FOUND` otherwise.
 
 Approximate suite sizes, so you can tell a truncated run from a complete one (measured on
-this branch): engine ~832 mocha tests, server ~198, connector-discord ~85, harness 4,
-web ~321 vitest. All of them mock their external dependencies — no database, Discord, or
+this branch, September 20 2026): engine ~860 mocha tests, server ~225, connector-discord ~88,
+harness 4, web ~392 vitest. Re-measure and update these when a pass adds tests; stale
+numbers defeat the purpose. All of them mock their external dependencies — no database, Discord, or
 Supabase needs to be running.
 
 ## Live verification

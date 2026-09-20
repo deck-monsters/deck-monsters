@@ -62,6 +62,9 @@ class Beastmaster extends BaseCharacter {
 	constructor(options: Record<string, unknown> = {}) {
 		super(options);
 		this.upgradeLegacyMonsterSlots();
+		// The admin `edit character` flow offers exactly Object.keys(options), so the grant has
+		// to exist as a key on every beastmaster or there is no way to grant slots at all.
+		if (this.options.monsterSlotModifier === undefined) this.setOptions({ monsterSlotModifier: 0 });
 	}
 
 	/**
@@ -88,8 +91,9 @@ class Beastmaster extends BaseCharacter {
 
 	/** Per-character adjustment on top of the global default (a scroll, a level reward, an admin grant). */
 	get monsterSlotModifier(): number {
-		const stored = this.options.monsterSlotModifier as number | undefined;
-		return typeof stored === 'number' && Number.isFinite(stored) ? Math.floor(stored) : 0;
+		// Admin edits arrive as strings ("2"), so coerce rather than type-check.
+		const stored = Number(this.options.monsterSlotModifier);
+		return Number.isFinite(stored) ? Math.floor(stored) : 0;
 	}
 
 	set monsterSlotModifier(monsterSlotModifier: number) {
