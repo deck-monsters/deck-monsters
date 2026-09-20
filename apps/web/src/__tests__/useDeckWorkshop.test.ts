@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
   const myInventoryUseQuery = vi.fn();
   const shopUseQuery = vi.fn();
   const spawnOptionsUseQuery = vi.fn();
+  const characterCreationUseQuery = vi.fn();
 	const flowStatusUseQuery = vi.fn();
   const inventoryRefetch = vi.fn(async () => undefined);
   const shopRefetch = vi.fn(async () => undefined);
@@ -29,6 +30,7 @@ const mocks = vi.hoisted(() => {
     myInventoryUseQuery,
     shopUseQuery,
     spawnOptionsUseQuery,
+    characterCreationUseQuery,
 	flowStatusUseQuery,
     inventoryRefetch,
     shopRefetch,
@@ -71,6 +73,7 @@ vi.mock('../lib/trpc.js', () => ({
       },
       shop: { useQuery: mocks.shopUseQuery },
       spawnOptions: { useQuery: mocks.spawnOptionsUseQuery },
+      characterCreationChoices: { useQuery: mocks.characterCreationUseQuery },
 	  flowStatus: { useQuery: mocks.flowStatusUseQuery },
 	  cancelFlow: { useMutation: mocks.cancelFlowUseMutation },
       buyShopItem: { useMutation: mocks.buyShopItemUseMutation },
@@ -102,7 +105,7 @@ describe('useDeckWorkshop', () => {
       isLoading: false,
     });
     mocks.myInventoryUseQuery.mockReturnValue({
-      data: { monsters: [], unequippedDeck: [], cardCompatibility: {}, items: { character: [], monsters: [] } },
+      data: { hasCharacter: true, monsters: [], unequippedDeck: [], cardCompatibility: {}, items: { character: [], monsters: [] } },
       isLoading: false,
       isFetching: false,
       refetch: mocks.inventoryRefetch,
@@ -119,6 +122,11 @@ describe('useDeckWorkshop', () => {
         genders: ['female', 'male', 'androgynous'],
       },
       isLoading: false,
+    });
+    mocks.characterCreationUseQuery.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      refetch: vi.fn(async () => undefined),
     });
 	mocks.flowStatusUseQuery.mockReturnValue({
 	  data: { consoleActive: false, workshopActive: false, pendingPrompt: null },

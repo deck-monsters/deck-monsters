@@ -20,6 +20,9 @@ type WorkshopMonster = {
 };
 
 type WorkshopInventory = {
+  // "No character in this room yet" is not the same as "a character with no monsters",
+  // and the workshop's first-run form depends on telling them apart.
+  hasCharacter: boolean;
   monsters: WorkshopMonster[];
   unequippedDeck: string[];
   cardCompatibility: Record<string, string[]>;
@@ -30,6 +33,7 @@ type WorkshopInventory = {
 };
 
 const EMPTY_INVENTORY: WorkshopInventory = {
+  hasCharacter: false,
   monsters: [],
   unequippedDeck: [],
   cardCompatibility: {},
@@ -61,6 +65,16 @@ export function useDeckWorkshop(roomId?: string) {
   const spawnOptionsQuery = trpc.game.spawnOptions.useQuery(
     { roomId: validRoomId },
     { enabled: !!roomId, staleTime: Infinity },
+  );
+  /*
+   * Only a player without a character needs these, and they are what the engine's
+   * creation prompts would have asked for — the workshop's spawn mutation is prompt-free
+   * (docs/engine-concurrency-and-timing.md), so the answers come from the form instead.
+   * The avatar list is random per request, which is what makes "Shuffle" a refetch.
+   */
+  const characterCreationQuery = trpc.game.characterCreationChoices.useQuery(
+    { roomId: validRoomId },
+    { enabled: !!roomId && inventoryQuery.data?.hasCharacter === false, staleTime: Infinity },
   );
   const invalidateWorkshop = async () => {
     if (!roomId) return;
@@ -166,6 +180,9 @@ export function useDeckWorkshop(roomId?: string) {
   return {
     roomName: roomQuery.data?.name,
     inventory,
+    hasCharacter: inventory.hasCharacter,
+    characterCreation: characterCreationQuery.data ?? { genders: [], avatars: [], suggestedName: '' },
+    shuffleAvatars: () => characterCreationQuery.refetch(),
     monsters,
     unequippedDeck,
     cardCompatibility,
@@ -197,7 +214,14 @@ export function useDeckWorkshop(roomId?: string) {
       sendMonsterToRingMutation.error?.message ??
       buyShopItemMutation.error?.message,
     refresh: () => Promise.all([inventoryQuery.refetch(), shopQuery.refetch()]),
-    spawnMonster: (input: { type: number; gender: 'male' | 'female' | 'androgynous'; name: string; color: string }) => {
+    spawnMonster: (input: {
+      type: number;
+      gender: 'male' | 'female' | 'androgynous';
+      name: string;
+      color: string;
+      // First run only: the server creates the character in the same mutation.
+      character?: { name: string; gender: 'male' | 'female' | 'androgynous'; avatar: string };
+    }) => {
       if (!roomId) throw new Error('Room not selected');
       return spawnMonsterMutation.mutateAsync({ roomId, ...input });
     },

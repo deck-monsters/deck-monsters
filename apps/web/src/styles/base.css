@@ -698,6 +698,49 @@ button {
 .workshop-spawn-form input, .workshop-spawn-form select { min-width: 0; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-fg); padding: 0.45rem; font: inherit; }
 
 /*
+ * First-run character fields. They span the whole grid so they read as a step above the
+ * monster fields rather than as three more monster attributes mixed in among them.
+ */
+.workshop-spawn-character {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  align-items: end;
+  gap: 0.65rem;
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem 0.75rem;
+  margin: 0;
+}
+
+.workshop-spawn-character legend { color: var(--color-fg-dim); font-size: 0.75rem; padding: 0 0.25rem; }
+
+.workshop-avatar-choices {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* The emoji is the label, so it has to be big enough to tell two of them apart. */
+.workshop-avatar-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  padding: 0.25rem 0.45rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.workshop-avatar-chip:focus-within { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.workshop-avatar-chip:has(input:checked) { border-color: var(--color-accent); }
+
+/*
  * Items panel (roadmap/19-player-agency-and-items.md §7). Follows the card inventory's
  * existing visual language exactly: tier !== 1 gets the same treatment as
  * `.workshop-card-slot.incompatible` — dim + dashed border, never hidden — plus a reason
