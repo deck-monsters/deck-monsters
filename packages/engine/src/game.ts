@@ -577,7 +577,9 @@ export class Game extends BaseClass {
 		icon?: string;
 		id: string;
 		name: string;
-		type?: string;
+		// An index (what a caller that already knows the class sends) as well as a label,
+		// because `createCharacter` resolves either form.
+		type?: string | number;
 	}): Promise<any> {
 		const game = this;
 

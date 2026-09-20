@@ -46,6 +46,19 @@ export const createHelperReady = loadHelpers().catch((err) => {
 
 const genders = Object.keys(PRONOUNS);
 
+/**
+ * The avatar choices the console prompt offers. Exported so a non-interactive caller (the
+ * web workshop's first-run character form) can present the same picker instead of growing
+ * a second emoji source that drifts away from this one.
+ */
+export const randomAvatarChoices = (count: number): string[] => {
+	const choices: string[] = [];
+	for (let i = 0; i < count; i++) {
+		choices.push(_randomEmoji());
+	}
+	return choices;
+};
+
 interface CreateCharacterOptions {
 	type?: number | string;
 	name?: string;
@@ -61,10 +74,7 @@ const createCharacter = (
 ): Promise<BaseCharacter> => {
 	const options: Record<string, unknown> = {};
 
-	const iconChoices: string[] = [];
-	for (let i = 0; i < 7; i++) {
-		iconChoices.push(_randomEmoji());
-	}
+	const iconChoices = randomAvatarChoices(7);
 
 	const askForCreatureType = (): Promise<CharacterConstructor> => {
 		const creatureTypeLabels = (allCharacters as CharacterConstructor[]).map(c => (c as any).creatureType ?? c.name);
@@ -72,6 +82,12 @@ const createCharacter = (
 		return Promise.resolve()
 			.then(() => {
 				if (type !== undefined) return type;
+				// `allCharacters` has exactly one entry today, so this prompt was asking a
+				// brand-new player to pick "Beastmaster" out of a list of one before they
+				// could do anything at all — a question with no wrong answer, asked first.
+				// Take the only class instead. The prompt below is deliberately left intact
+				// for the day a second class lands; delete this branch then, not the question.
+				if (allCharacters.length === 1) return 0;
 				return channel({
 					question: `Which type of character would you like to be?`,
 					choices: creatureTypeLabels,
