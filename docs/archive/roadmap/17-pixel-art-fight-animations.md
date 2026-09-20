@@ -160,6 +160,16 @@ reduction or feed wiring.
   24×24 map. A redraw that ships six identical frames passes the shape test but animates
   nothing — the sprite test asserts frames differ, the lunge moves toward the opponent, and
   the fallen box swaps axes.
+- **The stage is a docked band, not an overlay (#165).** It began as an absolutely
+  positioned canvas across the top of the feed, so sprites sat on top of the narration —
+  the one thing this layer must never obscure, since the text *is* the game. It is now a
+  flex sibling above the feed that collapses to zero height between fights.
+- **`inEncounter` is how you join a fight already running (#165).** `fightBegins` is a
+  one-shot live event; opening a room mid-fight or returning to a backgrounded phone tab
+  never replays it, so the stage stayed dark until the *next* fight. `ring.state` already
+  carries `inEncounter` (whole-fight, set by `Ring.startEncounter`/`endEncounter`), so the
+  reducer adopts it. It is **optional on the wire** — treat `undefined` as *unknown*, never
+  as "no fight", or a payload that omits it collapses a live stage.
 - **The 16×16 redraw (#164).** The maps shipped at 16×16 and every monster came out as the
   same rounded blob; poses were whole-sprite translations, so nothing appeared to move. The
   art is now 24×24 on a six-key ramp, poses shear about the feet instead of translating, and

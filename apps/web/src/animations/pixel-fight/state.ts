@@ -11,18 +11,36 @@ export interface FightFighter {
   maxHp: number;
   anim: FighterAnimation;
   animStartedAt: number;
+  /**
+   * When this fighter last did or suffered something — set by attack/hit/faint/flee and
+   * deliberately *not* by settling back to idle. The compact layout shows one fighter per
+   * side and picks by this, so the pair in the current exchange is on screen and the
+   * choice holds until a genuinely new exchange happens. Reusing `animStartedAt` would
+   * churn, because settling to idle restamps it.
+   */
+  lastActionAt: number;
 }
 
 export interface RingStateFrame {
   type: 'ring.state';
   contestants: RingContestantSnapshot[];
   viewerUserId: string | null;
+  /**
+   * "A fight is running right now", straight off the ring.state payload — and
+   * deliberately a tri-state. The field is optional on the wire (older payloads and the
+   * polled seed omit it), so `undefined` means *unknown* and must not be read as "no
+   * fight": collapsing the stage on a missing field would kill a live fight's animation.
+   * Only an explicit `false` retires the scene.
+   */
+  inEncounter?: boolean;
 }
 
 export interface FightScene {
   active: boolean;
   fighters: FightFighter[];
   fadeOutAt?: number;
+  /** Set on a knockout; the stage flashes once and the renderer ignores it. */
+  pulseAt?: number;
   /** Latest authoritative roster frame; combat DTOs only animate deltas between frames. */
   roster: RingContestantSnapshot[];
   viewerUserId: string | null;
@@ -34,6 +52,9 @@ export const EMPTY_FIGHT_SCENE: FightScene = {
   roster: [],
   viewerUserId: null,
 };
+
+/** How long the closing poses stay up after a fight ends. */
+export const FADE_MS = 2_500;
 
 const ENTER_MS = 400;
 const ATTACK_MS = 400;
@@ -58,7 +79,7 @@ function animationDuration(animation: FighterAnimation): number | null {
 
 export function settle(scene: FightScene, now: number): FightScene {
   if (scene.fadeOutAt !== undefined && now >= scene.fadeOutAt) {
-    return { ...scene, active: false, fighters: [], fadeOutAt: undefined };
+    return { ...scene, active: false, fighters: [], fadeOutAt: undefined, pulseAt: undefined };
   }
 
   let changed = false;
@@ -125,13 +146,15 @@ function fightersFromRoster(
     const fighter = existing.get(contestant.name);
     if (fighter) {
       const anim = contestant.dead && fighter.anim !== 'faint' ? 'faint' : fighter.anim;
+      const changed = anim !== fighter.anim;
       return [{
         ...fighter,
         creatureType: contestant.creatureType,
         hp: contestant.hp,
         maxHp: contestant.maxHp,
         anim,
-        animStartedAt: anim === fighter.anim ? fighter.animStartedAt : now,
+        animStartedAt: changed ? now : fighter.animStartedAt,
+        lastActionAt: changed ? now : fighter.lastActionAt,
       }];
     }
 
@@ -147,6 +170,7 @@ function fightersFromRoster(
       maxHp: contestant.maxHp,
       anim: contestant.dead ? 'faint' : initialAnimation,
       animStartedAt: now,
+      lastActionAt: now,
     }];
   });
 }
@@ -230,10 +254,32 @@ export function reduce(
     // window; keep the closing poses (including the fallen one) on screen until the fade
     // ends rather than blanking the canvas a beat before it goes.
     const fading = scene.active && scene.fadeOutAt !== undefined;
+    const base = { ...scene, roster, viewerUserId: event.viewerUserId };
+
+    // Adopting a fight already in progress. `fightBegins` is a one-shot live event, so
+    // opening the room mid-fight — or returning to the tab after the phone backgrounded
+    // it — left the scene dark until the *next* fight started, which on a phone meant
+    // essentially never. `inEncounter` is authoritative, is already on every ring.state
+    // frame, and spans the whole fight (Ring.startEncounter/endEncounter), so joining
+    // late is just another way to arrive at an active scene.
+    if (!scene.active && event.inEncounter === true && roster.some((contestant) => !contestant.dead)) {
+      return {
+        ...base,
+        active: true,
+        fadeOutAt: undefined,
+        fighters: fightersFromRoster(roster, [], event.viewerUserId, now, 'enter'),
+      };
+    }
+
+    // The converse: the fight ended while we were away, so `fightConcludes` never
+    // reached this client. Retire the scene the way that event would have instead of
+    // leaving fighters posed on screen indefinitely.
+    if (scene.active && !fading && event.inEncounter === false) {
+      return { ...base, fadeOutAt: now + FADE_MS };
+    }
+
     return {
-      ...scene,
-      roster,
-      viewerUserId: event.viewerUserId,
+      ...base,
       fighters: scene.active && !fading
         ? fightersFromRoster(roster, scene.fighters, event.viewerUserId, now, 'enter')
         : scene.fighters,
@@ -250,7 +296,7 @@ export function reduce(
   }
 
   if (hasFightEvent(event, 'fightConcludes') || event.data.type === 'ring.fightResolved') {
-    return scene.active ? { ...scene, fadeOutAt: now + 2_500 } : scene;
+    return scene.active ? { ...scene, fadeOutAt: now + FADE_MS } : scene;
   }
 
   if (!scene.active) return scene;
@@ -260,7 +306,7 @@ export function reduce(
   switch (combat.kind) {
     case 'card':
       return updateFighter(scene, combat.actor!.name, (fighter) => ({
-        ...fighter, anim: 'attack', animStartedAt: now,
+        ...fighter, anim: 'attack', animStartedAt: now, lastActionAt: now,
       }));
     case 'hit':
       return updateFighter(scene, combat.target!.name, (fighter) => ({
@@ -269,22 +315,26 @@ export function reduce(
         maxHp: combat.maxHp!,
         anim: 'hit',
         animStartedAt: now,
+        lastActionAt: now,
       }));
     case 'miss':
       return updateFighter(scene, combat.actor!.name, (fighter) => ({
-        ...fighter, anim: 'attack', animStartedAt: now,
+        ...fighter, anim: 'attack', animStartedAt: now, lastActionAt: now,
       }));
     case 'heal':
       return updateFighter(scene, combat.target!.name, (fighter) => ({
         ...fighter, hp: combat.hp!, maxHp: combat.maxHp!,
       }));
-    case 'death':
-      return updateFighter(scene, combat.target!.name, (fighter) => ({
-        ...fighter, anim: 'faint', animStartedAt: now,
+    case 'death': {
+      // A knockout is the beat worth looking up for; the stage flashes once.
+      const downed = updateFighter(scene, combat.target!.name, (fighter) => ({
+        ...fighter, anim: 'faint', animStartedAt: now, lastActionAt: now,
       }));
+      return downed === scene ? scene : { ...downed, pulseAt: now };
+    }
     case 'flee':
       return updateFighter(scene, combat.actor!.name, (fighter) => ({
-        ...fighter, anim: 'flee', animStartedAt: now,
+        ...fighter, anim: 'flee', animStartedAt: now, lastActionAt: now,
       }));
     default:
       return scene;

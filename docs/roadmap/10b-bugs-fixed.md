@@ -3699,3 +3699,54 @@ General lessons are recorded under "Common Pitfalls" in
 [`docs/pixel-art-animations-in-js.md`](../pixel-art-animations-in-js.md).
 
 **Status**: Fixed.
+
+### 165. The fight animations were invisible in practice — wrong trigger, wrong placement — FIXED
+
+Reported from live play: "I've only seen it in demos, not in an actual battle." Three
+compounding gates meant a player on a phone or tablet would essentially never see the
+pixel-fight layer, and would not want to when they did:
+
+1. **The trigger was a one-shot live event.** `active` flipped true only on `ring.fight`
+   with `eventName: 'fightBegins'`. Opening a room mid-fight, or switching back to a tab
+   the phone had backgrounded, never replays that event — and the `ring.state` frame that
+   *does* arrive on return deliberately refused to activate the scene. So unless you were
+   watching the moment a 60-second countdown expired, the layer never appeared at all.
+2. **It covered the narration.** The canvas was absolutely positioned across the top of
+   the feed with a fade-to-transparent gradient over it, hiding the text that is the
+   actual game.
+3. **Both mobile breakpoints hid it outright.** `@container (max-width: 360px)` and
+   `@media (max-height: 600px)` each set `display: none` — which between them covers
+   phones and phone-landscape/short tablet windows, i.e. where this game is mostly played.
+
+**Root cause**: the layer was designed and verified for an uninterrupted desktop session.
+Every gate is individually defensible for that user; together they exclude the actual one.
+The mobile breakpoints in particular treated "too small for the full four-a-side board" as
+"show nothing", when the board was the only thing that needed to shrink.
+
+**Fix**:
+- **Docked band, not overlay.** `.pixel-fight-stage` is a flex sibling above the feed that
+  animates its height open and closed. The feed simply gets shorter while a fight runs, and
+  no line of narration is ever covered. Collapsing uses `height`, not `display`, so the
+  canvas keeps its context and the `ResizeObserver` sees the transition.
+- **Join a fight in progress.** The reducer adopts `ring.state`'s `inEncounter`, which is
+  already published on every frame and spans the whole fight. Returning mid-fight now shows
+  the stage; a fight that ended while you were away retires the scene instead of leaving
+  fighters posed forever. `inEncounter` is optional on the wire, so it is handled as a
+  tri-state — `undefined` means *unknown*, never "no fight", because reading a missing
+  field as false would collapse the stage during a live fight.
+- **Compact duel instead of hiding.** Under 520px wide or 150px tall the band drops to 96px
+  and shows one fighter per side, picked by a new `lastActionAt` stamp so the pair actually
+  trading blows is on screen and the choice holds until a new exchange lands (reusing
+  `animStartedAt` would churn, since settling to idle restamps it). The duel is drawn around
+  the centre line rather than pinned to the edges, which read as two unrelated sprites.
+  Only below 280px, where two sprites and their HP bars cannot read at all, is it hidden.
+- **A flash on knockouts**, the one beat worth looking up for, suppressed under
+  `prefers-reduced-motion`.
+
+**Tests**: `pixel-fight-state.test.ts` covers adopting a running fight, ignoring an
+all-downed roster, retiring on an explicit `inEncounter: false`, treating a missing field as
+unknown, not restarting an in-flight fade, and the `lastActionAt`/knockout stamps.
+`pixel-fight-stage-layout.test.ts` covers the full-board and duel breakpoints and the
+stability of the duel pick.
+
+**Status**: Fixed.

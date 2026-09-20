@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   EMPTY_FIGHT_SCENE,
+  FADE_MS,
   nextDeadline,
   type RingStateFrame,
   reduce,
@@ -40,8 +41,8 @@ const roster: RingContestantSnapshot[] = [
   },
 ];
 
-function stateFrame(contestants = roster): RingStateFrame {
-  return { type: 'ring.state', contestants: [...contestants], viewerUserId: 'viewer' };
+function stateFrame(contestants = roster, inEncounter?: boolean): RingStateFrame {
+  return { type: 'ring.state', contestants: [...contestants], viewerUserId: 'viewer', inEncounter };
 }
 
 function combatEvent(combat: unknown, type: TrackedRingFeedEvent['data']['type'] = 'announce'): TrackedRingFeedEvent {
@@ -362,5 +363,74 @@ describe('pixel fight reducer', () => {
     const scene = startedScene();
 
     expect(reduce(scene, combatEvent(combat), 10)).toBe(scene);
+  });
+
+  describe('adopting a fight already in progress', () => {
+    // The reason this exists: `fightBegins` is a one-shot live event. Opening the room
+    // mid-fight, or coming back to a backgrounded phone tab, never replays it, so the
+    // stage used to stay dark until the next fight started.
+    it('activates from a ring.state frame that reports a fight running', () => {
+      const scene = reduce(EMPTY_FIGHT_SCENE, stateFrame(roster, true), 0);
+
+      expect(scene.active).toBe(true);
+      expect(scene.fighters.map((fighter) => fighter.name).sort()).toEqual(
+        roster.map((contestant) => contestant.name).sort(),
+      );
+    });
+
+    it('does not activate when every contestant in the ring is already down', () => {
+      const downed = roster.map((contestant) => ({ ...contestant, dead: true }));
+
+      expect(reduce(EMPTY_FIGHT_SCENE, stateFrame(downed, true), 0).active).toBe(false);
+    });
+
+    it('retires a scene when a later frame reports the fight is over', () => {
+      // fightConcludes never arrives if the fight ended while the tab was backgrounded.
+      const live = reduce(EMPTY_FIGHT_SCENE, stateFrame(roster, true), 0);
+      const ended = reduce(live, stateFrame(roster, false), 100);
+
+      expect(ended.fadeOutAt).toBe(100 + FADE_MS);
+      expect(settle(ended, 100 + FADE_MS).active).toBe(false);
+    });
+
+    it('treats a missing inEncounter as unknown rather than as "no fight"', () => {
+      // The field is optional on the wire. Reading `undefined` as false would collapse
+      // the stage mid-fight the moment a payload omitted it.
+      const live = reduce(EMPTY_FIGHT_SCENE, stateFrame(roster, true), 0);
+      const unknown = reduce(live, stateFrame(roster), 100);
+
+      expect(unknown.active).toBe(true);
+      expect(unknown.fadeOutAt).toBeUndefined();
+      expect(reduce(EMPTY_FIGHT_SCENE, stateFrame(roster), 0).active).toBe(false);
+    });
+
+    it('does not restart the fade once a concluding fight is already fading', () => {
+      const live = reduce(EMPTY_FIGHT_SCENE, stateFrame(roster, true), 0);
+      const concluding = reduce(live, fightEvent('fightConcludes'), 100);
+      const afterFrame = reduce(concluding, stateFrame(roster, false), 400);
+
+      expect(afterFrame.fadeOutAt).toBe(100 + FADE_MS);
+    });
+  });
+
+  it('stamps lastActionAt on actions but not on settling back to idle', () => {
+    // The compact one-per-side layout picks by lastActionAt, so settling to idle must
+    // leave it alone or the chosen duel would churn every time an animation ended.
+    const scene = startedScene();
+    const struck = reduce(scene, combatEvent({ kind: 'card', actor: { name: 'Aqim' } }), 500);
+    const actor = struck.fighters.find((fighter) => fighter.name === 'Aqim')!;
+    expect(actor.lastActionAt).toBe(500);
+
+    const settled = settle(struck, 5_000);
+    const afterIdle = settled.fighters.find((fighter) => fighter.name === 'Aqim')!;
+    expect(afterIdle.anim).toBe('idle');
+    expect(afterIdle.lastActionAt).toBe(500);
+  });
+
+  it('marks a knockout so the stage can flash once', () => {
+    const scene = startedScene();
+    const downed = reduce(scene, combatEvent({ kind: 'death', target: { name: 'Aqim' } }), 900);
+
+    expect(downed.pulseAt).toBe(900);
   });
 });

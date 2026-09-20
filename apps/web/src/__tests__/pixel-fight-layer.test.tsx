@@ -148,7 +148,7 @@ describe('PixelFightLayer', () => {
 
     act(() => listener?.(fightStart()));
 
-    expect(container.querySelector('canvas.pixel-fight-layer')).toHaveClass('active');
+    expect(container.querySelector('.pixel-fight-stage')).toHaveClass('active');
     expect(fillRect).toHaveBeenCalled();
     expect(raf).toHaveBeenCalled();
 
@@ -182,7 +182,7 @@ describe('PixelFightLayer', () => {
     expect(vi.getTimerCount()).toBe(1);
     now = 800;
     act(() => vi.advanceTimersByTime(400));
-    expect(container.querySelector('canvas.pixel-fight-layer')).toHaveClass('active');
+    expect(container.querySelector('.pixel-fight-stage')).toHaveClass('active');
 
     act(() => listener?.(combatEvent({
       kind: 'hit', actor: { name: 'Aqim' }, target: { name: 'Mara' }, damage: 8, hp: 14, maxHp: 22,
@@ -195,7 +195,7 @@ describe('PixelFightLayer', () => {
     expect(vi.getTimerCount()).toBe(1);
     now = 1_450;
     act(() => vi.advanceTimersByTime(400));
-    expect(container.querySelector('canvas.pixel-fight-layer')).toHaveClass('active');
+    expect(container.querySelector('.pixel-fight-stage')).toHaveClass('active');
   });
 
   it('settles the fade timeout inactive and cancels RAF without another feed event', () => {
@@ -209,7 +209,7 @@ describe('PixelFightLayer', () => {
     now = 2_900;
     act(() => vi.advanceTimersByTime(2_500));
 
-    expect(container.querySelector('canvas.pixel-fight-layer')).not.toHaveClass('active');
+    expect(container.querySelector('.pixel-fight-stage')).not.toHaveClass('active');
     expect(cancelRaf).toHaveBeenCalled();
   });
 
@@ -225,12 +225,12 @@ describe('PixelFightLayer', () => {
     act(() => listener?.(fightConclusion()));
     now = 2_899.6;
     act(() => vi.advanceTimersByTime(2_500));
-    expect(container.querySelector('canvas.pixel-fight-layer')).toHaveClass('active');
+    expect(container.querySelector('.pixel-fight-stage')).toHaveClass('active');
     expect(vi.getTimerCount(), 'a follow-up timer must be armed').toBe(1);
 
     now = 2_901;
     act(() => vi.advanceTimersByTime(2));
-    expect(container.querySelector('canvas.pixel-fight-layer')).not.toHaveClass('active');
+    expect(container.querySelector('.pixel-fight-stage')).not.toHaveClass('active');
   });
 
   it('does not reset its backing store between equal-size draws and resizes when size changes', () => {
