@@ -3652,3 +3652,50 @@ training flow.
 new canonical labels and aliases.
 
 **Status**: Fixed.
+
+### 164. Every monster in the pixel-fight layer was the same blob, and the poses did not move — FIXED
+
+The pixel-art fight animations added in roadmap 17 shipped with sprites nobody could read.
+Three separate defects, all invisible to the tests that existed:
+
+1. **The grid was too small to hold a silhouette.** The maps were 16×16. At that size a
+   head, a limb and a horn are one or two pixels each, so the Basilisk, the Minotaur, the
+   Weeping Angel and the fallback beast all rendered as the same rounded blob with slightly
+   different colours. The shape test asserted only that a frame was 16×16 and used known
+   palette keys, which every blob satisfied.
+2. **The poses were the same drawing at a different offset.** `idle`, `attack` and `hit`
+   were whole-sprite translations of one map, so the figure never changed shape and the
+   fight read as a frozen image jittering. The existing test asserted frames *differed*,
+   which a translation trivially satisfies. This is the same failure a reviewer flagged as
+   `DONE_WITH_CONCERNS` during roadmap 17 ("frames reuse the base map"); it shipped anyway.
+3. **The palette ramps had no spacing.** The four shades of each hue sat within a few
+   percent lightness of each other, so the interior shading did nothing and the sprites
+   rendered flat.
+
+**Root cause**: the sprites were only ever reviewed as text in the source file, where a
+16×16 map of letters looks plausible, and as assertions about frame dimensions. Nobody
+rendered them. The gap between "the map is well-formed" and "the picture reads as a snake"
+is exactly the gap the test suite could not see — the first redrawn serpent read as a coiled
+snake in ASCII and as a *duck* on screen, and was only caught by rendering a contact sheet.
+
+**Fix**: art redrawn at 24×24 on a deliberately spaced six-key ramp
+(`O` outline, `D` shadow, `B` body, `A` lit body, `C` highlight, `E` eye), with each monster
+given a distinguishing feature that survives at a glance — the Basilisk a scaled coil and
+flicking tongue, the Gladiator a crested helm with shield and sword, the Jinn a wisp tail,
+the Minotaur horns and hooves, the Weeping Angel spread wings, the fallback a four-legged
+maw. Poses now *shear* about the feet (`lean`) rather than translating, so the attack winds
+up and lunges head-first and the hit recoils; frames render on a grid padded 6 columns per
+side so a lean cannot clip a horn or a wingtip, which it was silently doing. Sprite scale
+dropped 4×→3× (3×→2× under 480px) to keep the larger art inside the same canvas band.
+
+Also fixed while in the file: `drawScene` offset the HP bar below a fighter by the sprite's
+*width*, which only worked because sprites are square — now named and computed as a height.
+
+**Tests**: `pixel-fight-sprites.test.ts` gained the three checks that would have caught the
+originals — no two monsters may share a silhouette mask, no pose may lose a pixel off the
+grid, and a pose must displace the sprite's top more than its bottom (a shear, not a
+translation) — plus a full-ramp check so a redraw cannot quietly go flat again.
+General lessons are recorded under "Common Pitfalls" in
+[`docs/pixel-art-animations-in-js.md`](../pixel-art-animations-in-js.md).
+
+**Status**: Fixed.

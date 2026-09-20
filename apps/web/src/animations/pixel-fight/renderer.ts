@@ -1,4 +1,4 @@
-import type { PixelFrame } from './sprites.js';
+import { SPRITE_ART, SPRITE_PAD, type PixelFrame } from './sprites.js';
 import { hpBand, hpRatio } from '../../components/RingRoster.js';
 
 const HP_BAND_COLORS = {
@@ -22,8 +22,12 @@ export function drawSprite(
 ): void {
   ctx.imageSmoothingEnabled = false;
   ctx.save();
+  // `x` is the left edge of the 24px art box, not of the wider pose grid the frame is
+  // drawn on, so a lean that swings past the art does not shove the fighter sideways.
+  // Mirroring reflects about that same box, keeping left- and right-hand fighters on
+  // matching marks.
   if (mirror) {
-    ctx.translate(x + 16 * scale, y);
+    ctx.translate(x + SPRITE_ART * scale, y);
     ctx.scale(-1, 1);
     x = 0;
     y = 0;
@@ -35,7 +39,7 @@ export function drawSprite(
       const color = pixels[column]!;
       if (color === '.') continue;
       ctx.fillStyle = flash ? '#ffffff' : palette[color]!;
-      ctx.fillRect(x + column * scale, y + row * scale, scale, scale);
+      ctx.fillRect(x + (column - SPRITE_PAD) * scale, y + row * scale, scale, scale);
     }
   }
   ctx.restore();

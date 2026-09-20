@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RingContestantSnapshot } from '../../components/RingRoster.js';
 import { useRingFeedListener, type TrackedRingFeedEvent } from '../../hooks/useRingFeed.js';
 import { clear, drawHpBar, drawSprite } from './renderer.js';
-import { spriteFor } from './sprites.js';
+import { SPRITE_ART, spriteFor } from './sprites.js';
 import {
   EMPTY_FIGHT_SCENE,
   nextDeadline,
@@ -38,12 +38,17 @@ export function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameInd
 
   const width = canvas.getBoundingClientRect().width || canvas.clientWidth || 640;
   resizeCanvas(canvas, ctx, width);
-  const spriteScale = width < 480 ? 3 : 4;
+  // 24px sprites: 3x is 72px tall, so two rows plus HP bars still clear CANVAS_HEIGHT.
+  const spriteScale = width < 480 ? 2 : 3;
   clear(ctx);
 
   const scale = spriteScale;
-  const fighterWidth = 16 * scale;
-  const hpWidth = 16 * scale;
+  // Sprites are square, so these are all SPRITE_ART * scale — named apart because the HP
+  // bar sits below the art and used to be offset by the *width*, which only worked by
+  // coincidence and would have broken the moment a sprite stopped being square.
+  const fighterWidth = SPRITE_ART * scale;
+  const fighterHeight = SPRITE_ART * scale;
+  const hpWidth = fighterWidth;
   const left = scene.fighters.filter((fighter) => fighter.side === 'left');
   const right = scene.fighters.filter((fighter) => fighter.side === 'right');
 
@@ -56,7 +61,7 @@ export function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameInd
     const x = fighter.side === 'left'
       ? 20 + offset
       : width - fighterWidth - 20 - offset;
-    const y = 18 + row * 78;
+    const y = 14 + row * (fighterHeight + 16);
     const sprite = spriteFor(fighter.creatureType);
     const animation = fighter.anim === 'flee'
       ? 'attack'
@@ -71,7 +76,7 @@ export function drawScene(canvas: HTMLCanvasElement, scene: FightScene, frameInd
       mirror: fighter.side === 'right',
       flash: fighter.anim === 'hit' && elapsed < 130,
     });
-    drawHpBar(ctx, x, y + fighterWidth + 4, hpWidth, fighter.hp, fighter.maxHp);
+    drawHpBar(ctx, x, y + fighterHeight + 4, hpWidth, fighter.hp, fighter.maxHp);
   }
 }
 
