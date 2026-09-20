@@ -1051,26 +1051,31 @@ describe('trpc/router first-run character creation from the workshop', () => {
 
 	it('re-reads the character inside the room lane for two first-run train requests', async () => {
 		const game = new Game({}, () => undefined);
-		let lane = Promise.resolve();
+		let lane: Promise<unknown> = Promise.resolve();
 		let releaseFirstEventBus!: () => void;
 		let releaseSecondEventBus!: () => void;
 		const firstEventBus = new Promise<void>((resolve) => { releaseFirstEventBus = resolve; });
 		const secondEventBus = new Promise<void>((resolve) => { releaseSecondEventBus = resolve; });
 		let eventBusCalls = 0;
 		const roomManager = {
-			...makeRoomManager(game),
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getDisplayName: async () => 'Ada Lovelace',
 			getEventBus: async () => {
 				eventBusCalls += 1;
 				await (eventBusCalls === 1 ? firstEventBus : secondEventBus);
 				return { publish: () => undefined, getPendingPromptForUser: () => null };
 			},
+			runSerializedEngineWork: async (_roomId: string, work: () => Promise<unknown>) => {
+				const next = lane.then(work);
+				lane = next.catch(() => undefined);
+				return next;
+			},
 		};
-		roomManager.runSerializedEngineWork = async (_roomId: string, work: () => Promise<unknown>) => {
-			const next = lane.then(work);
-			lane = next.catch(() => undefined);
-			return next;
-		};
-		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const caller = createRouter(roomManager as unknown as Parameters<typeof createRouter>[0]).createCaller({
+			userId: USER_ID,
+			serviceTokenValid: false,
+		});
 
 		try {
 			const first = caller.game.spawnMonster({
