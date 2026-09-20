@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hookMock = vi.hoisted(() => ({
@@ -92,10 +92,11 @@ describe('WorkshopPanel: first run with no character', () => {
   it('labels the pronoun options in words while keeping the engine keys as values', () => {
     render(<WorkshopPanel roomId="room-1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Train monster' }));
+    const characterFields = within(screen.getByRole('group', { name: 'About you' }));
 
-    expect(screen.getByRole('option', { name: 'she/her' })).toHaveValue('female');
-    expect(screen.getByRole('option', { name: 'he/him' })).toHaveValue('male');
-    expect(screen.getByRole('option', { name: 'they/them' })).toHaveValue('androgynous');
+    expect(characterFields.getByRole('option', { name: 'she/her' })).toHaveValue('female');
+    expect(characterFields.getByRole('option', { name: 'he/him' })).toHaveValue('male');
+    expect(characterFields.getByRole('option', { name: 'they/them' })).toHaveValue('androgynous');
   });
 
   it('sends the character with the spawn, so onboarding is one submit', async () => {

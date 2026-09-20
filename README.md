@@ -2,7 +2,7 @@
 
 A turn-based monster-battling RPG game engine — think Pokémon meets deck-building. Players collect monsters, equip them with action card decks, and send them into a shared ring to auto-battle while everyone watches.
 
-The engine is platform-agnostic: a connector adapter plugs in and brings the game to any chat platform or app. The original connector was a Slack bot called **Jane**, which ran the game inside a private Slack workspace. The ring fights appeared in a shared channel; everything else (spawning monsters, building decks, buying items) happened through DMs with Jane.
+The engine is platform-agnostic: a connector adapter plugs in and brings the game to any chat platform or app. The original connector was a Slack bot called **Jane**, which ran the game inside a private Slack workspace. The ring fights appeared in a shared channel; everything else (training monsters, building decks, buying items) happened through DMs with Jane.
 
 The project is being revived with new connectors (Discord, web, mobile) and modern infrastructure.
 

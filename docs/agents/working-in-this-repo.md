@@ -81,7 +81,7 @@ stack). Specifics worth knowing before you start:
   you are going to trash — flood it with bosses, test deletion, break its state — create a
   throwaway named `Scratch <purpose> <date>` and **delete it before you finish** (owner-only
   `room.delete`; the local-testing doc has a one-liner). A room the test account merely
-  belongs to (`Game Night` at the time of writing) is somebody's real room: never spawn,
+  belongs to (`Game Night` at the time of writing) is somebody's real room: never train,
   fight, or rename anything in it.
 
 ## How the docs are organised

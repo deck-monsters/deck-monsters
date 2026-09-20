@@ -251,7 +251,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return announceAndThrow(channel, "You don't have any monsters to equip! You'll need to spawn one first.");
+					return announceAndThrow(channel, "You don't have any monsters to equip! You'll need to train one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'equip' });
 			})
@@ -313,7 +313,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return announceAndThrow(channel, "You don't have any monsters to give items to! You'll need to spawn one first.");
+					return announceAndThrow(channel, "You don't have any monsters to give items to! You'll need to train one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'give items to' });
 			})
@@ -338,7 +338,7 @@ class Beastmaster extends BaseCharacter {
 		return Promise.resolve(monsters.length)
 			.then((numberOfMonsters) => {
 				if (numberOfMonsters <= 0) {
-					return announceAndThrow(channel, "You don't have any monsters to take items from! You'll need to spawn one first.");
+					return announceAndThrow(channel, "You don't have any monsters to take items from! You'll need to train one first.");
 				}
 				return this.chooseMonster({ channel, monsters, monsterName, action: 'take items from' });
 			})

@@ -83,7 +83,7 @@ The number-one design rule for the game viewport: **do not steal horizontal spac
 
 ## Interaction Model: Inline, Not Popup
 
-The current implementation uses popovers/modals for interactive prompts (equip, shop, spawn). These are being dropped entirely. Instead:
+The current implementation uses popovers/modals for interactive prompts (equip, shop, training). These are being dropped entirely. Instead:
 
 **Interactive prompts render inline in the Console stream**, exactly like they would in a text adventure or a chat-style interaction. The game asks a question, the question appears in the feed, and the player answers. The thread continues below.
 
