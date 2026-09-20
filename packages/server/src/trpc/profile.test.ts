@@ -2,6 +2,8 @@ import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
 import sinon from 'sinon';
 
+import { Game } from '@deck-monsters/engine';
+
 import { createProfileRouter } from './profile.js';
 
 const USER_ID = '11111111-2222-3333-4444-555555555555';
@@ -66,10 +68,7 @@ function makeConcurrentProfileDb(initialDisplayName: string) {
 	const selectStub = sinon.stub().returns({
 		from: sinon.stub().returns({
 			where: sinon.stub().returns({
-				limit: sinon.stub().callsFake(
-					() =>
-						selectsReleased.then(() => [{ displayName }])
-				),
+				limit: sinon.stub().callsFake(() => selectsReleased.then(() => [{ displayName }])),
 			}),
 		}),
 	});
@@ -158,22 +157,78 @@ describe('trpc/profile', () => {
 		expect(renamedCharacter.setOptions).not.to.have.been.called;
 	});
 
-	it('renames a room character seeded with the masked prior display name', async () => {
-		const character = {
-			givenName: 'ada',
-			setOptions: sinon.stub(),
-		};
-		const game = { characters: { [USER_ID]: character }, emit: sinon.stub() };
-		const { caller } = createCaller(
-			makeDbStub([{ displayName: 'ada+test@example.com' }]),
-			makeRoomManager([{ roomId: 'room-one' }], new Map([['room-one', game]]))
-		);
-
-		expect(await caller.updateDisplayName({ displayName: 'Grace Hopper' })).to.deep.equal({
-			displayName: 'Grace Hopper',
-			renamedCharacters: 1,
+	// Real engine characters, not stubs: `givenName` is start-cased by the engine
+	// ("ada" → "Ada"), and the seeding path masks emails first. A stub with a
+	// hand-written `givenName` cannot catch a comparison that ignores either step.
+	async function realGameWithCharacter(name: string) {
+		const game = new Game({}, () => undefined);
+		const character = await game.getCharacter({
+			channel: () => Promise.resolve(),
+			id: USER_ID,
+			name,
+			type: 'Beastmaster',
+			gender: 'female',
+			icon: '🦊',
 		});
-		expect(character.setOptions).to.have.been.calledOnceWith({ name: 'Grace Hopper' });
+		const emit = sinon.spy(game, 'emit');
+		return { game, character, emit };
+	}
+
+	it('renames a real room character seeded from a lower-case display name', async () => {
+		const { game, character, emit } = await realGameWithCharacter('dave');
+		try {
+			expect(character.givenName).to.equal('Dave');
+			const { caller } = createCaller(
+				makeDbStub([{ displayName: 'dave' }]),
+				makeRoomManager([{ roomId: 'room-one' }], new Map([['room-one', game]])),
+			);
+
+			expect(await caller.updateDisplayName({ displayName: 'Grace Hopper' })).to.deep.equal({
+				displayName: 'Grace Hopper',
+				renamedCharacters: 1,
+			});
+			expect(character.givenName).to.equal('Grace Hopper');
+			expect(emit).to.have.been.calledWith('stateChange', { character });
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('renames a real room character seeded with the masked form of an email display name', async () => {
+		const { game, character } = await realGameWithCharacter('ada');
+		try {
+			const { caller } = createCaller(
+				makeDbStub([{ displayName: 'ada+test@example.com' }]),
+				makeRoomManager([{ roomId: 'room-one' }], new Map([['room-one', game]])),
+			);
+
+			expect(await caller.updateDisplayName({ displayName: 'Grace Hopper' })).to.deep.equal({
+				displayName: 'Grace Hopper',
+				renamedCharacters: 1,
+			});
+			expect(character.givenName).to.equal('Grace Hopper');
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('leaves a real room character alone when the player renamed it in-game', async () => {
+		const { game, character, emit } = await realGameWithCharacter('Ring Alias');
+		try {
+			const { caller } = createCaller(
+				makeDbStub([{ displayName: 'dave' }]),
+				makeRoomManager([{ roomId: 'room-one' }], new Map([['room-one', game]])),
+			);
+
+			expect(await caller.updateDisplayName({ displayName: 'Grace Hopper' })).to.deep.equal({
+				displayName: 'Grace Hopper',
+				renamedCharacters: 0,
+			});
+			expect(character.givenName).to.equal('Ring Alias');
+			expect(emit).not.to.have.been.calledWith('stateChange', sinon.match.any);
+		} finally {
+			game.dispose();
+		}
 	});
 
 	it('does not rename a character whose name differs by surrounding whitespace', async () => {
@@ -184,7 +239,7 @@ describe('trpc/profile', () => {
 		const game = { characters: { [USER_ID]: character }, emit: sinon.stub() };
 		const { caller } = createCaller(
 			makeDbStub([{ displayName: 'Ada Lovelace' }]),
-			makeRoomManager([{ roomId: 'room-one' }], new Map([['room-one', game]]))
+			makeRoomManager([{ roomId: 'room-one' }], new Map([['room-one', game]])),
 		);
 
 		expect(await caller.updateDisplayName({ displayName: 'Grace Hopper' })).to.deep.equal({
@@ -203,7 +258,7 @@ describe('trpc/profile', () => {
 		const database = makeConcurrentProfileDb('Ada Lovelace');
 		const { caller } = createCaller(
 			database.db as ReturnType<typeof makeDbStub>,
-			makeRoomManager([{ roomId: 'room-one' }], new Map([['room-one', game]]))
+			makeRoomManager([{ roomId: 'room-one' }], new Map([['room-one', game]])),
 		);
 
 		const first = caller.updateDisplayName({ displayName: 'Grace Hopper' });

@@ -46,6 +46,8 @@ export * from './testing/index.js';
 export { randomContestant } from './helpers/bosses.js';
 export type { RandomContestantOptions } from './helpers/bosses.js';
 export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
+/** How the engine renders a stored creature name as `givenName` — needed to compare against one. */
+export { startCase } from './helpers/start-case.js';
 export { getLevel } from './helpers/levels.js';
 export type { Contestant, RingContestantSnapshot } from './ring/index.js';
 export { getXpCapForLevel } from './ring/index.js';

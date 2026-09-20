@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server';
-import { createKeyedPromiseQueue } from '@deck-monsters/engine';
+import { createKeyedPromiseQueue, startCase } from '@deck-monsters/engine';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -61,13 +61,14 @@ export function createProfileRouter({ db: database = db, roomManager }: ProfileR
 				if (previousDisplayName === undefined) {
 					throw new TRPCError({ code: 'NOT_FOUND', message: 'Profile not found.' });
 				}
-				// `RoomManager.getDisplayName` masks names before character seeding (room-manager.ts:420).
-				const previousPublicName = publicDisplayName(previousDisplayName);
+				// What the character was *named* if it was seeded from this profile and never
+				// renamed: `RoomManager.getDisplayName` masks the stored name before seeding
+				// (room-manager.ts:420), and the engine renders `givenName` through `startCase`
+				// ("dave" → "Dave"). Comparing against the raw profile value matched neither
+				// step and silently skipped every lower-case or email-derived name.
+				const previousSeededName = startCase(publicDisplayName(previousDisplayName));
 
-				await database
-					.update(profiles)
-					.set({ displayName: input.displayName })
-					.where(eq(profiles.id, ctx.userId));
+				await database.update(profiles).set({ displayName: input.displayName }).where(eq(profiles.id, ctx.userId));
 
 				// Do not rewrite historical fight summaries, monster-stat names, or event text:
 				// those values describe past room-character and monster state, not this profile.
@@ -79,9 +80,9 @@ export function createProfileRouter({ db: database = db, roomManager }: ProfileR
 							const game = await roomManager.getGame(roomId);
 							const character = game.characters[ctx.userId];
 
-							// Deliberately narrow: a player who renamed themselves in-game keeps that name.
-							// Exact, case-sensitive equality preserves aliases and whitespace differences.
-							if (character?.givenName === previousPublicName) {
+							// Deliberately narrow: a player who renamed themselves in-game keeps that
+							// name. Exact equality on the rendered `givenName` preserves aliases.
+							if (character?.givenName === previousSeededName) {
 								character.setOptions({ name: input.displayName });
 								game.emit('stateChange', { character });
 								renamedCharacters += 1;
