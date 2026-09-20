@@ -1174,7 +1174,7 @@ export class Ring extends BaseClass {
 		this.eventBus.publish({
 			type: 'ring.fight',
 			scope: 'public',
-			text: `Fight concluded: ${deaths} dead after ${rounds} rounds`,
+			text: `Fight concluded: ${deaths} dead after ${rounds} ${rounds === 1 ? 'round' : 'rounds'}`,
 			payload: {
 				contestants,
 				deadContestants,

@@ -3246,6 +3246,12 @@ then heals). `beastmaster.test.ts` — "stops a dropped monster's background tim
 `quick-actions.test.ts` — "does not offer to revive a monster whose revival timer is already
 running".
 
+**Live verification** (Test Room A): Fang was killed in a three-way boss fight at 01:06:34,
+`revive Fang` at 01:08:43 revived him instantly at 1 hp (beginner), and `look at monsters` at
+01:11:45 read `hp: 6/30` — five ticks of `TIME_TO_HEAL_MS` after a fight had ended with
+`clearRing()`. Chuvvo, left at 1 hp by an earlier fight in the same session, was back to
+33/33 thirty-five minutes later. Both would have sat at 1 hp before this fix.
+
 **Status**: Fixed.
 
 ### 155. A Delayed Hit fired after an unrelated card, answering a blow from a turn ago — FIXED
@@ -3332,6 +3338,10 @@ mounted row counts as visible.
 choices intersect the viewport; banner once they scroll out and gone again when they return;
 banner for a prompt row Virtuoso has not mounted. The existing scroll-behavior tests never
 mount rows and keep asserting the banner unchanged.
+
+**Live verification** (Test Room A, 570px viewport): with an equip prompt's six choice
+buttons on screen, `.command-blocked-banner` was absent; scrolling the console to the top
+brought it in; scrolling back to the choices removed it again.
 
 **Status**: Fixed.
 
