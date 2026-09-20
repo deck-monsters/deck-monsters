@@ -8,7 +8,8 @@ const log = createLogger('router');
 
 import type { GameEvent, EventType, EventScope } from '@deck-monsters/engine';
 import {
-	PRONOUNS,
+	PRONOUN_CHOICES,
+	PRONOUN_KEYS,
 	PROMPT_CANCELLED,
 	PromptCancelledError,
 	allMonsters,
@@ -1075,7 +1076,7 @@ export function createRouter(roomManager: RoomManager) {
 						index,
 						label: String((Monster as unknown as { creatureType?: string }).creatureType ?? Monster.name),
 					})),
-					genders: ['female', 'male', 'androgynous'] as const,
+					pronouns: PRONOUN_KEYS.map((key, i) => ({ key, label: PRONOUN_CHOICES[i] })),
 				};
 			}),
 
@@ -1091,7 +1092,7 @@ export function createRouter(roomManager: RoomManager) {
 			.query(async ({ input, ctx }) => {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				return {
-					genders: Object.keys(PRONOUNS),
+					pronouns: PRONOUN_KEYS.map((key, i) => ({ key, label: PRONOUN_CHOICES[i] })),
 					// The console prompt's own avatar generator, so the two pickers cannot drift.
 					avatars: randomAvatarChoices(7),
 					suggestedName: await roomManager.getDisplayName(ctx.userId),
@@ -1130,7 +1131,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId: randomUUID() });
 				const monster = await runSerializedMutation(input.roomId, ctx.userId, async () => {
-					let character = existingCharacter;
+					let character = game.characters?.[ctx.userId];
 					if (!character && input.character) {
 						// `createCharacter` re-prompts when the chosen name clashes with another
 						// character in this game, and this channel throws on any question — so the

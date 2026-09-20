@@ -72,6 +72,9 @@ export function createProfileRouter({ db: database = db, roomManager }: ProfileR
 
 				// Do not rewrite historical fight summaries, monster-stat names, or event text:
 				// those values describe past room-character and monster state, not this profile.
+				// Do load every member room here: Game.getCharacter can only lazily heal the
+				// legacy Player/email fallbacks, not an arbitrary prior seeded display name,
+				// which is indistinguishable from a deliberate in-game alias after restore.
 				let renamedCharacters = 0;
 				const memberRooms = await roomManager.listRoomsForUser(ctx.userId);
 				for (const { roomId } of memberRooms) {
@@ -84,6 +87,7 @@ export function createProfileRouter({ db: database = db, roomManager }: ProfileR
 							// name. Exact equality on the rendered `givenName` preserves aliases.
 							if (character?.givenName === previousSeededName) {
 								character.setOptions({ name: input.displayName });
+								// Belt-and-braces save signal; mirrors Game.getCharacter's lazy heal path.
 								game.emit('stateChange', { character });
 								renamedCharacters += 1;
 							}

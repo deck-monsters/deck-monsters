@@ -913,7 +913,12 @@ describe('trpc/router monster lifecycle procedures', () => {
 		expect(options.types.map((type) => type.label)).to.deep.equal([
 			'Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel',
 		]);
-		expect(options.genders).to.deep.equal(['female', 'male', 'androgynous']);
+		expect(options.pronouns).to.deep.equal([
+			{ key: 'male', label: 'he/him' },
+			{ key: 'female', label: 'she/her' },
+			{ key: 'androgynous', label: 'they/them' },
+		]);
+		expect(options).not.to.have.property('genders');
 	});
 
 	it('spawns a fully specified monster without an interactive prompt', async () => {
@@ -1044,6 +1049,50 @@ describe('trpc/router first-run character creation from the workshop', () => {
 		}
 	});
 
+	it('re-reads the character inside the room lane for two first-run train requests', async () => {
+		const game = new Game({}, () => undefined);
+		let lane = Promise.resolve();
+		let releaseFirstEventBus!: () => void;
+		let releaseSecondEventBus!: () => void;
+		const firstEventBus = new Promise<void>((resolve) => { releaseFirstEventBus = resolve; });
+		const secondEventBus = new Promise<void>((resolve) => { releaseSecondEventBus = resolve; });
+		let eventBusCalls = 0;
+		const roomManager = {
+			...makeRoomManager(game),
+			getEventBus: async () => {
+				eventBusCalls += 1;
+				await (eventBusCalls === 1 ? firstEventBus : secondEventBus);
+				return { publish: () => undefined, getPendingPromptForUser: () => null };
+			},
+		};
+		roomManager.runSerializedEngineWork = async (_roomId: string, work: () => Promise<unknown>) => {
+			const next = lane.then(work);
+			lane = next.catch(() => undefined);
+			return next;
+		};
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		try {
+			const first = caller.game.spawnMonster({
+				roomId: ROOM_ID, type: 2, gender: 'female', name: 'Saffron', color: 'violet smoke', character: CHARACTER_BLOCK,
+			});
+			const second = caller.game.spawnMonster({
+				roomId: ROOM_ID, type: 2, gender: 'female', name: 'Cinder', color: 'ember red', character: CHARACTER_BLOCK,
+			});
+			await Promise.resolve();
+			await Promise.resolve();
+			releaseFirstEventBus();
+			await first;
+			releaseSecondEventBus();
+			const [, secondResult] = await Promise.all([first, second]);
+
+			expect(secondResult.monsterName).to.equal('Cinder');
+			expect((game.characters[USER_ID] as { monsters: unknown[] }).monsters).to.have.length(2);
+		} finally {
+			game.dispose();
+		}
+	});
+
 	it('asks for the character details instead of just refusing', async () => {
 		const caller = createRouter(makeRoomManager({ characters: {} })).createCaller({ userId: USER_ID, serviceTokenValid: false });
 
@@ -1111,7 +1160,12 @@ describe('trpc/router first-run character creation from the workshop', () => {
 
 		expect(spy.assertedRoom).to.equal(ROOM_ID);
 		expect(choices.avatars).to.have.length(7);
-		expect(choices.genders).to.deep.equal(['male', 'female', 'androgynous']);
+		expect(choices.pronouns).to.deep.equal([
+			{ key: 'male', label: 'he/him' },
+			{ key: 'female', label: 'she/her' },
+			{ key: 'androgynous', label: 'they/them' },
+		]);
+		expect(choices).not.to.have.property('genders');
 		expect(choices.suggestedName).to.equal('Ada Lovelace');
 	});
 

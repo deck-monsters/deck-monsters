@@ -284,5 +284,6 @@ describe('trpc/profile', () => {
 			renamedCharacters: 0,
 		});
 		expect(db._stubs.setStub).to.have.been.calledOnceWith({ displayName: 'Grace Hopper' });
+		expect(roomManager.getGame).to.have.been.calledOnceWith('unavailable-room');
 	});
 });
