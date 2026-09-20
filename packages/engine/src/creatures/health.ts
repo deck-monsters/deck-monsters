@@ -113,6 +113,7 @@ export function respawn (self: BaseCreature, immediate?: boolean): number {
 		self.respawnTimeoutLength = Math.max((self.respawnTimeoutBegan + timeoutLength) - now, 0);
 
 		const reviveAt = self.respawnTimeoutBegan + timeoutLength;
+		self.respawnAt = reviveAt;
 		self.respawnTimeout = setTimeout(() => {
 			// Timers do not run while a host is sleeping or a room is unloaded. Recover the
 			// HP that would have accrued after the scheduled revival instead of restarting
@@ -122,6 +123,7 @@ export function respawn (self: BaseCreature, immediate?: boolean): number {
 			self.setOptions({ hp, hpUpdatedAt: Date.now() });
 			self.respawnTimeout = undefined;
 			self.respawnTimeoutBegan = undefined as unknown as number;
+			self.respawnAt = undefined;
 			self.emit('respawn');
 		}, self.respawnTimeoutLength);
 	}

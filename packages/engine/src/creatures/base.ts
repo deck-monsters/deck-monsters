@@ -52,6 +52,7 @@ class BaseCreature extends BaseClass<CreatureOptions> {
 	declare encounter: Encounter | undefined;
 	declare respawnTimeout: ReturnType<typeof setTimeout> | undefined;
 	declare respawnTimeoutLength: number | undefined;
+	declare respawnAt: number | undefined;
 	declare healingInterval: ReturnType<typeof setInterval>;
 
 	static eventPrefix = 'creature';
