@@ -120,9 +120,19 @@ listener synchronizes other tabs.
 ```
 
 `useTheme.ts` owns a typed `THEMES` registry. The `street-fighter` entry declares
-`pixel-art`; `useThemeFeature('pixel-art')` is the only gate that loads the module.
-Theme switches update both attributes on `<html>` and unmount the layer when the feature
-is absent.
+`pixel-art`. Theme switches update both attributes on `<html>` and unmount the layer when
+the feature is absent.
+
+The theme feature is no longer the *only* gate: `usePixelFightStage` adds a player opt-in
+that defaults off (#166), so the module loads only for someone on the theme who has asked
+for it. Anything reasoning about "are the sprites showing" must check both.
+
+**The canvas band described in this plan no longer exists.** It duplicated the Ring
+roster's HP bars and cost 96–200px of viewport; the sprites now draw inside the roster rows
+(#167), and the scene model — sides, per-side caps, the `active` flag, the fade timer and
+the `inEncounter` adoption — went with it. See
+[`docs/roadmap/23-pixel-fight-stage.md`](../../roadmap/23-pixel-fight-stage.md). The
+sections below are kept as the record of how the feature was first built.
 
 ---
 

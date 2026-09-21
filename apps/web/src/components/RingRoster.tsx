@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { RosterSpriteContext } from './roster-sprite-context.js';
 
 export interface RingContestantSnapshot {
   name: string;
@@ -62,6 +63,9 @@ function ContestantRow({
   const ratio = hpRatio(contestant.hp, contestant.maxHp);
   const band = contestant.dead ? 'critical' : hpBand(ratio);
   const isActing = Boolean(contestant.acting) && !contestant.dead;
+  // Null unless the pixel-art theme feature and the player's opt-in are both on.
+  const sprites = useContext(RosterSpriteContext);
+  const sprite = sprites?.render(contestant) ?? null;
   const label = `${contestant.name}, ${contestant.dead ? 'defeated' : `${contestant.hp} of ${contestant.maxHp} hit points`}, armor class ${contestant.ac}${isActing ? ', acting now' : ''}`;
 
   return (
@@ -69,12 +73,19 @@ function ContestantRow({
       className={`roster-row${contestant.dead ? ' roster-row-dead' : ''}${isMine ? ' roster-row-mine' : ''}${isActing ? ' roster-row-acting' : ''}`}
       aria-label={label}
     >
+      {/* A sprite sits in the row's left gutter, spanning all three lines, so it uses
+          height the row already had. The icon stays in the name line when there is no
+          sprite — and is dropped when there is one, since it would say the same thing
+          twice. */}
+      {sprite && <div className="roster-sprite-cell">{sprite}</div>}
+
+      <div className="roster-row-body">
       <div className="roster-row-head">
         <span className="roster-name">
           {isActing && (
             <span className="roster-acting-marker" aria-hidden="true">▶</span>
           )}
-          {contestant.icon && (
+          {contestant.icon && !sprite && (
             <span className="roster-icon" aria-hidden="true">{contestant.icon} </span>
           )}
           <span className="roster-name-text">{contestant.name}</span>
@@ -114,6 +125,7 @@ function ContestantRow({
       <div className="roster-row-sub">
         {contestant.creatureType} · {formatLevel(contestant.level)}
         {contestant.owner ? ` · ${contestant.owner}` : ''}
+      </div>
       </div>
     </li>
   );

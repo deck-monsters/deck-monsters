@@ -30,6 +30,13 @@ vi.mock('react-virtuoso', async () => {
   };
 });
 
+type StubProps = { children?: ReactNode };
+
+/** Stands in for PixelSprites: passes the roster through, marks that it mounted. */
+const SpritesStub: ComponentType<StubProps> = ({ children }) => (
+  <>{children}<canvas className="pixel-sprites-stub" aria-hidden="true" /></>
+);
+
 function TestFeed({ children }: { children: ReactNode }) {
   const value: RingFeedApi = {
     connected: true,
@@ -43,6 +50,9 @@ function TestFeed({ children }: { children: ReactNode }) {
 describe('RingPane pixel art feature gate', () => {
   beforeEach(() => {
     localStorage.clear();
+    // These cases exercise the *theme* gate, so opt in to the animations first; the
+    // separate opt-in gate is covered below.
+    localStorage.setItem('deck-monsters-pixel-fight-stage', '1');
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.removeAttribute('data-theme-features');
     vi.stubGlobal('matchMedia', vi.fn(() => ({
@@ -53,9 +63,7 @@ describe('RingPane pixel art feature gate', () => {
   });
 
   it('defers the lazy loader until the switcher enables pixel art', async () => {
-    const LayerTarget: ComponentType = () => {
-      return <canvas className="pixel-fight-layer" aria-hidden="true" />;
-    };
+    const LayerTarget = SpritesStub;
     const loader = vi.fn(async () => ({ default: LayerTarget }));
     function Switcher() {
       const { setTheme } = useTheme();
@@ -70,28 +78,28 @@ describe('RingPane pixel art feature gate', () => {
     const { container } = render(
       <TestFeed>
         <Switcher />
-        <RingPane roomId="room-1" isActive pixelFightLayerLoader={loader} />
+        <RingPane roomId="room-1" isActive pixelSpritesLoader={loader} />
       </TestFeed>,
     );
 
     expect(loader).not.toHaveBeenCalled();
-    expect(container.querySelector('.pixel-fight-layer')).toBeNull();
+    expect(container.querySelector('.pixel-sprites-stub')).toBeNull();
 
     await act(async () => screen.getByRole('button', { name: 'street fighter' }).click());
-    await waitFor(() => expect(container.querySelector('.pixel-fight-layer')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('.pixel-sprites-stub')).not.toBeNull());
     expect(loader).toHaveBeenCalledTimes(1);
 
     await act(async () => screen.getByRole('button', { name: 'phosphor' }).click());
-    await waitFor(() => expect(container.querySelector('.pixel-fight-layer')).toBeNull());
+    await waitFor(() => expect(container.querySelector('.pixel-sprites-stub')).toBeNull());
   });
 
   it('remounts the pixel layer with an empty scene when the room changes', async () => {
     const mounts = vi.fn();
-    const LayerTarget: ComponentType = () => {
+    const LayerTarget: ComponentType<StubProps> = ({ children }) => {
       useEffect(() => {
         mounts();
       }, []);
-      return <canvas className="pixel-fight-layer" aria-hidden="true" />;
+      return <>{children}<canvas className="pixel-sprites-stub" aria-hidden="true" /></>;
     };
     const loader = vi.fn(async () => ({ default: LayerTarget }));
     function Switcher() {
@@ -102,7 +110,7 @@ describe('RingPane pixel art feature gate', () => {
     const { rerender } = render(
       <TestFeed>
         <Switcher />
-        <RingPane roomId="room-1" isActive pixelFightLayerLoader={loader} />
+        <RingPane roomId="room-1" isActive pixelSpritesLoader={loader} />
       </TestFeed>,
     );
 
@@ -112,10 +120,52 @@ describe('RingPane pixel art feature gate', () => {
     rerender(
       <TestFeed>
         <Switcher />
-        <RingPane roomId="room-2" isActive pixelFightLayerLoader={loader} />
+        <RingPane roomId="room-2" isActive pixelSpritesLoader={loader} />
       </TestFeed>,
     );
 
     await waitFor(() => expect(mounts).toHaveBeenCalledTimes(2));
+  });
+
+  it('stays text-only on the pixel-art theme until the player opts in', async () => {
+    // Default off: choosing the SNES palette is not the same as asking for animated
+    // monsters, so the sprites are something a player opts into.
+    localStorage.removeItem('deck-monsters-pixel-fight-stage');
+    const loader = vi.fn(async () => ({ default: SpritesStub }));
+    function Switcher() {
+      const { setTheme } = useTheme();
+      return <button onClick={() => setTheme('street-fighter')}>street fighter</button>;
+    }
+
+    const { container } = render(
+      <TestFeed>
+        <Switcher />
+        <RingPane roomId="room-1" isActive pixelSpritesLoader={loader} />
+      </TestFeed>,
+    );
+
+    await act(async () => screen.getByRole('button', { name: 'street fighter' }).click());
+
+    expect(container.querySelector('.pixel-sprites-stub')).toBeNull();
+    // Not merely hidden — the chunk is never fetched for a player who has not asked.
+    expect(loader).not.toHaveBeenCalled();
+  });
+
+  it('mounts the stage once an opted-in player is on the pixel-art theme', async () => {
+    const loader = vi.fn(async () => ({ default: SpritesStub }));
+    function Switcher() {
+      const { setTheme } = useTheme();
+      return <button onClick={() => setTheme('street-fighter')}>street fighter</button>;
+    }
+
+    const { container } = render(
+      <TestFeed>
+        <Switcher />
+        <RingPane roomId="room-1" isActive pixelSpritesLoader={loader} />
+      </TestFeed>,
+    );
+
+    await act(async () => screen.getByRole('button', { name: 'street fighter' }).click());
+    await waitFor(() => expect(container.querySelector('.pixel-sprites-stub')).not.toBeNull());
   });
 });

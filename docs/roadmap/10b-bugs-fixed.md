@@ -3750,3 +3750,95 @@ unknown, not restarting an in-flight fade, and the `lastActionAt`/knockout stamp
 stability of the duel pick.
 
 **Status**: Fixed.
+
+### 166. The fight stage was on by default and too heavy for everyday play — FIXED
+
+Feedback after #164/#165 shipped and deployed: "honestly it's pretty distracting and takes
+up too much of the viewport."
+
+Making the stage *reachable* (#165) worked, and that turned out to be the problem. Every
+player on the street-fighter theme got fight animations whether or not they wanted them,
+and a band that a desktop viewport absorbs comfortably is a large fraction of a phone
+screen sitting directly above the narration — which is the actual game.
+
+**Root cause**: the stage was gated only on the theme, so "I like the SNES colours" and "I
+want animated fights above my feed" were the same choice. They are not; one is a palette
+and the other spends viewport on every fight.
+
+**Fix**: `usePixelFightStage` adds a second, independent gate — Account →
+"Show pixel fight animations" — **defaulting off**. `RingPane` mounts the layer only when
+the theme declares `pixel-art` *and* the player has opted in, so the lazy chunk is not even
+fetched for someone who has not asked. The setting is stored in `localStorage` behind a
+`useSyncExternalStore` store (same approach as `useTheme`) because the toggle lives in the
+account view while the stage lives in the Ring pane and the workspace layout can show both
+at once; a per-caller `useState` would have left the pane stale until a reload. Its
+snapshot re-reads storage rather than caching in a module variable, so storage cleared
+underneath it is picked up instead of being masked.
+
+This is deliberately a stopgap: the presentation itself (how much room the band takes, and
+whether a whole-fight band is the right shape at all) is still open. That thinking, with a
+photo of a real tablet session and a recommendation to move the sprites into the Ring
+roster instead, is in [`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).
+
+**Tests**: `usePixelFightStage.test.tsx` covers the default-off state, persistence,
+cross-caller propagation, cross-tab `storage` events and ignoring unrelated keys.
+`ringPane-pixel-fight.test.tsx` covers the two gates together — notably that the loader is
+never called for a themed player who has not opted in.
+
+**Status**: Fixed.
+
+### 167. The fight animations duplicated the Ring roster and paid viewport for it — FIXED
+
+Two photos of real sessions (kept in
+[`assets/pixel-fight-2026-09/`](assets/pixel-fight-2026-09/)) showed what four rounds of
+tests had not. On a tablet, the roster listed four contestants with HP bars, levels, owners
+and boss tags, and the canvas band directly beneath drew *the same four* with *the same HP
+bars* and none of the labels — one monster alone at far left, three clustered at far right,
+the middle two-thirds empty, the narration squeezed to about six lines. On an iPhone the
+same fight put **four HP bars on screen for two monsters**.
+
+The iPhone shot also showed the band's main justification was already met: the roster row
+for the acting monster carries a red border, a tint and a `▶` marker (the `acting` flag,
+rendered since roadmap 18). "Whose turn is it" was answered eight rows above the band.
+
+**Root cause**: the band was designed as a Street Fighter bout — my monster on the left,
+yours on the right. Ring fights are 2–12 contestant melees with bosses, teams and targeting
+strategies, where a card can hit anyone; there is no left side and no right side. Forcing an
+N-way melee into a two-sided layout is what produced the dead middle, the lopsided
+clustering, and a band tall enough for two rows per side. The compact duel view added in
+#165 was the same error smaller: it invented a one-on-one that was not happening.
+
+**Fix**: the band is deleted. Each roster row draws its monster as a 48px sprite in the
+row's left gutter — a row is already about that tall (name line, HP bar, creature line), so
+the animations now cost effectively no vertical space where the band cost 96px on a phone
+and 200px on a tablet. One monster, one row, one HP bar. The sprite lunges when its owner
+plays a card, flashes and recoils when struck, and lies fallen when dead, pairing with the
+row highlight that already existed.
+
+Consequently the scene model collapsed: no sides, no per-side cap, no `active` flag, no fade
+timer, and no `inEncounter` adoption (#165's fix for joining mid-fight) — the roster is the
+authoritative list of who is in the ring, so a monster with no recorded pose simply idles
+and arriving mid-fight needs no special case. `state.ts` is now a map of transient poses.
+`faint` is deliberately not stored in it: the roster's `dead` flag is authoritative and
+outlives any animation, so a revived monster cannot keep a stale fallen pose. `drawHpBar`
+went with the band.
+
+All twelve sprites share one `requestAnimationFrame` loop and draw imperatively
+(`frame-ticker.ts`) rather than each owning a loop and re-rendering React per frame. The
+art stays in a lazily loaded chunk behind both gates: `RingRoster` reads a context that a
+lazily-loaded provider fills, so it never imports `sprites.ts` for a player who has not
+opted in.
+
+Also fixed while in the file: restoring `key={roomId}` on the provider, which the band had
+(cc949ab) so a monster's pose cannot survive a room change — dropped in the first draft of
+this refactor and caught by the existing remount test.
+
+**Tests**: `pixel-fight-state.test.ts` rewritten for the pose map (lunge + recoil on one
+hit, flash window, decay to idle, death read from the roster, pruning departed monsters).
+`rosterSprite.test.tsx` covers the icon/sprite swap, that a row keeps exactly one HP bar,
+the accessible label staying clean, integer scale, reduced motion, and one shared ticker for
+many subscribers. The band's own suites (`pixel-fight-layer`, `pixel-fight-stage-layout`)
+are deleted with it.
+
+**Status**: Fixed. Remaining questions in
+[`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).

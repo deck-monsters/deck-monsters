@@ -1,71 +1,40 @@
-import type { RingContestantSnapshot } from '../../components/RingRoster.js';
 import type { TrackedRingFeedEvent } from '../../hooks/useRingFeed.js';
+import type { RingContestantSnapshot } from '../../components/RingRoster.js';
 
-export type FighterAnimation = 'enter' | 'idle' | 'attack' | 'hit' | 'faint' | 'flee';
+export type FighterAnimation = 'idle' | 'attack' | 'hit' | 'faint' | 'flee';
 
-export interface FightFighter {
-  name: string;
-  creatureType: string;
-  side: 'left' | 'right';
-  hp: number;
-  maxHp: number;
+export interface FighterPose {
   anim: FighterAnimation;
-  animStartedAt: number;
-  /**
-   * When this fighter last did or suffered something — set by attack/hit/faint/flee and
-   * deliberately *not* by settling back to idle. The compact layout shows one fighter per
-   * side and picks by this, so the pair in the current exchange is on screen and the
-   * choice holds until a genuinely new exchange happens. Reusing `animStartedAt` would
-   * churn, because settling to idle restamps it.
-   */
-  lastActionAt: number;
+  /** `performance.now()` when the pose began — drives decay and the hit flash. */
+  startedAt: number;
 }
 
-export interface RingStateFrame {
-  type: 'ring.state';
-  contestants: RingContestantSnapshot[];
-  viewerUserId: string | null;
-  /**
-   * "A fight is running right now", straight off the ring.state payload — and
-   * deliberately a tri-state. The field is optional on the wire (older payloads and the
-   * polled seed omit it), so `undefined` means *unknown* and must not be read as "no
-   * fight": collapsing the stage on a missing field would kill a live fight's animation.
-   * Only an explicit `false` retires the scene.
-   */
-  inEncounter?: boolean;
-}
+/**
+ * Transient poses only, keyed by the monster's given name (what combat DTOs carry).
+ *
+ * Idle is the absence of an entry and `faint` is never stored: the roster already knows
+ * who is dead, so `poseFor` reads that flag instead. Storing it would mean a revived
+ * monster could keep a stale fallen pose, which is exactly the sort of bug the old
+ * side-allocating scene had.
+ *
+ * This replaced a full scene model — fighters assigned to a left or right side, capped at
+ * four each, with an `active` flag and a fade timer — that existed only to drive a
+ * separate canvas band. The roster is the authoritative list of who is in the ring, so
+ * none of that is needed to animate a sprite sitting in a roster row.
+ */
+export type FightAnimations = Readonly<Record<string, FighterPose>>;
 
-export interface FightScene {
-  active: boolean;
-  fighters: FightFighter[];
-  fadeOutAt?: number;
-  /** Set on a knockout; the stage flashes once and the renderer ignores it. */
-  pulseAt?: number;
-  /** Latest authoritative roster frame; combat DTOs only animate deltas between frames. */
-  roster: RingContestantSnapshot[];
-  viewerUserId: string | null;
-}
+export const NO_ANIMATIONS: FightAnimations = {};
 
-export const EMPTY_FIGHT_SCENE: FightScene = {
-  active: false,
-  fighters: [],
-  roster: [],
-  viewerUserId: null,
-};
-
-/** How long the closing poses stay up after a fight ends. */
-export const FADE_MS = 2_500;
-
-const ENTER_MS = 400;
 const ATTACK_MS = 400;
 const HIT_MS = 250;
 const FLEE_MS = 400;
-const MAX_FIGHTERS_PER_SIDE = 4;
 
-function animationDuration(animation: FighterAnimation): number | null {
-  switch (animation) {
-    case 'enter':
-      return ENTER_MS;
+/** How long the renderer flashes a struck monster white. */
+export const HIT_FLASH_MS = 130;
+
+function durationOf(anim: FighterAnimation): number | null {
+  switch (anim) {
     case 'attack':
       return ATTACK_MS;
     case 'hit':
@@ -77,116 +46,62 @@ function animationDuration(animation: FighterAnimation): number | null {
   }
 }
 
-export function settle(scene: FightScene, now: number): FightScene {
-  if (scene.fadeOutAt !== undefined && now >= scene.fadeOutAt) {
-    return { ...scene, active: false, fighters: [], fadeOutAt: undefined, pulseAt: undefined };
-  }
-
+/** Drop poses whose time is up; they fall back to idle by no longer being present. */
+export function settle(animations: FightAnimations, now: number): FightAnimations {
   let changed = false;
-  const fighters = scene.fighters
-    .filter((fighter) => {
-      const duration = animationDuration(fighter.anim);
-      const shouldRemove = fighter.anim === 'flee' && duration !== null && now >= fighter.animStartedAt + duration;
-      changed ||= shouldRemove;
-      return !shouldRemove;
-    })
-    .map((fighter) => {
-      const duration = animationDuration(fighter.anim);
-      if (duration === null || now < fighter.animStartedAt + duration) return fighter;
+  const next: Record<string, FighterPose> = {};
+  for (const [name, pose] of Object.entries(animations)) {
+    const duration = durationOf(pose.anim);
+    if (duration !== null && now >= pose.startedAt + duration) {
       changed = true;
-      return { ...fighter, anim: 'idle' as const, animStartedAt: now };
-    });
-
-  return changed ? { ...scene, fighters } : scene;
-}
-
-export function nextDeadline(scene: FightScene): number | undefined {
-  const animationDeadlines = scene.fighters.flatMap((fighter) => {
-    const duration = animationDuration(fighter.anim);
-    return duration === null ? [] : [fighter.animStartedAt + duration];
-  });
-  if (scene.fadeOutAt !== undefined) animationDeadlines.push(scene.fadeOutAt);
-  return animationDeadlines.length === 0 ? undefined : Math.min(...animationDeadlines);
-}
-
-function sideFor(
-  contestant: RingContestantSnapshot,
-  viewerUserId: string | null,
-  leftCount: number,
-  rightCount: number,
-  hasViewerMonster: boolean,
-): 'left' | 'right' | null {
-  if (contestant.userId === viewerUserId && viewerUserId !== null) {
-    return leftCount < MAX_FIGHTERS_PER_SIDE ? 'left' : null;
-  }
-  if (hasViewerMonster) return rightCount < MAX_FIGHTERS_PER_SIDE ? 'right' : null;
-  if (leftCount >= MAX_FIGHTERS_PER_SIDE && rightCount >= MAX_FIGHTERS_PER_SIDE) return null;
-  if (leftCount >= MAX_FIGHTERS_PER_SIDE) return 'right';
-  if (rightCount >= MAX_FIGHTERS_PER_SIDE) return 'left';
-  return leftCount <= rightCount ? 'left' : 'right';
-}
-
-function fightersFromRoster(
-  roster: RingContestantSnapshot[],
-  priorFighters: FightFighter[],
-  viewerUserId: string | null,
-  now: number,
-  initialAnimation: FighterAnimation,
-): FightFighter[] {
-  const existing = new Map(priorFighters.map((fighter) => [fighter.name, fighter]));
-  const hasViewerMonster = roster.some((contestant) => contestant.userId === viewerUserId && viewerUserId !== null);
-  const retainedNames = new Set(roster.map((contestant) => contestant.name));
-  const retained = priorFighters.filter((fighter) => retainedNames.has(fighter.name));
-  let leftCount = retained.filter((fighter) => fighter.side === 'left').length;
-  let rightCount = retained.filter((fighter) => fighter.side === 'right').length;
-
-  // The ring can hold twelve contestants, but this purely decorative layer shows four
-  // per side. Keeping existing sides prevents a boss spawn or flee from making sprites hop.
-  return roster.flatMap((contestant) => {
-    const fighter = existing.get(contestant.name);
-    if (fighter) {
-      const anim = contestant.dead && fighter.anim !== 'faint' ? 'faint' : fighter.anim;
-      const changed = anim !== fighter.anim;
-      return [{
-        ...fighter,
-        creatureType: contestant.creatureType,
-        hp: contestant.hp,
-        maxHp: contestant.maxHp,
-        anim,
-        animStartedAt: changed ? now : fighter.animStartedAt,
-        lastActionAt: changed ? now : fighter.lastActionAt,
-      }];
+      continue;
     }
-
-    const side = sideFor(contestant, viewerUserId, leftCount, rightCount, hasViewerMonster);
-    if (side === null) return [];
-    if (side === 'left') leftCount += 1;
-    else rightCount += 1;
-    return [{
-      name: contestant.name,
-      creatureType: contestant.creatureType,
-      side,
-      hp: contestant.hp,
-      maxHp: contestant.maxHp,
-      anim: contestant.dead ? 'faint' : initialAnimation,
-      animStartedAt: now,
-      lastActionAt: now,
-    }];
-  });
+    next[name] = pose;
+  }
+  return changed ? next : animations;
 }
 
-function isRingStateFrame(event: TrackedRingFeedEvent | RingStateFrame): event is RingStateFrame {
-  return 'type' in event && event.type === 'ring.state' && 'contestants' in event;
+/** When the next pose expires, so the caller can wake exactly once to settle it. */
+export function nextDeadline(animations: FightAnimations): number | undefined {
+  const deadlines = Object.values(animations).flatMap((pose) => {
+    const duration = durationOf(pose.anim);
+    return duration === null ? [] : [pose.startedAt + duration];
+  });
+  return deadlines.length === 0 ? undefined : Math.min(...deadlines);
+}
+
+/** Forget monsters that have left the ring, so the map cannot grow without bound. */
+export function pruneToRoster(
+  animations: FightAnimations,
+  contestants: RingContestantSnapshot[],
+): FightAnimations {
+  const present = new Set(contestants.map((contestant) => contestant.name));
+  const names = Object.keys(animations);
+  if (names.every((name) => present.has(name))) return animations;
+  const next: Record<string, FighterPose> = {};
+  for (const name of names) if (present.has(name)) next[name] = animations[name]!;
+  return next;
+}
+
+/**
+ * The pose to draw for one contestant. Death wins over any transient pose: the roster's
+ * `dead` flag is authoritative and outlives the animation map.
+ */
+export function poseFor(
+  animations: FightAnimations,
+  contestant: Pick<RingContestantSnapshot, 'name' | 'dead'>,
+  now: number,
+): { anim: FighterAnimation; flash: boolean } {
+  if (contestant.dead) return { anim: 'faint', flash: false };
+  const pose = animations[contestant.name];
+  if (!pose) return { anim: 'idle', flash: false };
+  return { anim: pose.anim, flash: pose.anim === 'hit' && now - pose.startedAt < HIT_FLASH_MS };
 }
 
 type Combat = {
   kind: 'card' | 'hit' | 'miss' | 'heal' | 'death' | 'flee';
   actor?: { name: string };
   target?: { name: string };
-  hp?: number;
-  maxHp?: number;
-  damage?: number;
-  amount?: number;
 };
 
 function hasNamedParticipant(value: unknown): value is { name: string } {
@@ -194,10 +109,6 @@ function hasNamedParticipant(value: unknown): value is { name: string } {
     && value !== null
     && 'name' in value
     && typeof value.name === 'string';
-}
-
-function hasNumbers(value: Record<string, unknown>, ...keys: string[]): boolean {
-  return keys.every((key) => typeof value[key] === 'number');
 }
 
 function combatFrom(event: TrackedRingFeedEvent): Combat | null {
@@ -213,130 +124,55 @@ function combatFrom(event: TrackedRingFeedEvent): Combat | null {
     case 'flee':
       return actor ? { kind: record.kind, actor } : null;
     case 'hit':
-      return actor && target && hasNumbers(record, 'hp', 'maxHp', 'damage')
-        ? { kind: 'hit', actor, target, hp: record.hp as number, maxHp: record.maxHp as number, damage: record.damage as number }
-        : null;
+      return actor && target ? { kind: 'hit', actor, target } : null;
     case 'heal':
-      return actor && target && hasNumbers(record, 'hp', 'maxHp', 'amount')
-        ? { kind: 'heal', actor, target, hp: record.hp as number, maxHp: record.maxHp as number, amount: record.amount as number }
-        : null;
     case 'death':
-      return target ? { kind: 'death', target } : null;
+      return target ? { kind: record.kind, target } : null;
     default:
       return null;
   }
 }
 
-function hasFightEvent(event: TrackedRingFeedEvent, eventName: string): boolean {
-  return event.data.type === 'ring.fight'
-    && (event.data.payload as { eventName?: unknown }).eventName === eventName;
-}
-
-function updateFighter(
-  scene: FightScene,
+function pose(
+  animations: FightAnimations,
   name: string,
-  update: (fighter: FightFighter) => FightFighter,
-): FightScene {
-  if (!scene.fighters.some((fighter) => fighter.name === name)) return scene;
-  return { ...scene, fighters: scene.fighters.map((fighter) => fighter.name === name ? update(fighter) : fighter) };
+  anim: FighterAnimation,
+  now: number,
+): FightAnimations {
+  return { ...animations, [name]: { anim, startedAt: now } };
 }
 
+/**
+ * Fold one ring-feed event into the animation map.
+ *
+ * Unlike the old scene reducer this has no notion of a fight being "active": the roster
+ * decides who is on screen and a monster with no entry simply idles, so there is nothing
+ * to switch on and nothing to miss by arriving mid-fight.
+ */
 export function reduce(
-  currentScene: FightScene,
-  event: TrackedRingFeedEvent | RingStateFrame,
+  animations: FightAnimations,
+  event: TrackedRingFeedEvent,
   now: number,
-): FightScene {
-  let scene = settle(currentScene, now);
-
-  if (isRingStateFrame(event)) {
-    const roster = event.contestants;
-    // The ring empties as the fight concludes, and that frame lands inside the fade
-    // window; keep the closing poses (including the fallen one) on screen until the fade
-    // ends rather than blanking the canvas a beat before it goes.
-    const fading = scene.active && scene.fadeOutAt !== undefined;
-    const base = { ...scene, roster, viewerUserId: event.viewerUserId };
-
-    // Adopting a fight already in progress. `fightBegins` is a one-shot live event, so
-    // opening the room mid-fight — or returning to the tab after the phone backgrounded
-    // it — left the scene dark until the *next* fight started, which on a phone meant
-    // essentially never. `inEncounter` is authoritative, is already on every ring.state
-    // frame, and spans the whole fight (Ring.startEncounter/endEncounter), so joining
-    // late is just another way to arrive at an active scene.
-    if (!scene.active && event.inEncounter === true && roster.some((contestant) => !contestant.dead)) {
-      return {
-        ...base,
-        active: true,
-        fadeOutAt: undefined,
-        fighters: fightersFromRoster(roster, [], event.viewerUserId, now, 'enter'),
-      };
-    }
-
-    // The converse: the fight ended while we were away, so `fightConcludes` never
-    // reached this client. Retire the scene the way that event would have instead of
-    // leaving fighters posed on screen indefinitely.
-    if (scene.active && !fading && event.inEncounter === false) {
-      return { ...base, fadeOutAt: now + FADE_MS };
-    }
-
-    return {
-      ...base,
-      fighters: scene.active && !fading
-        ? fightersFromRoster(roster, scene.fighters, event.viewerUserId, now, 'enter')
-        : scene.fighters,
-    };
-  }
-
-  if (hasFightEvent(event, 'fightBegins')) {
-    return {
-      ...scene,
-      active: true,
-      fadeOutAt: undefined,
-      fighters: fightersFromRoster(scene.roster, [], scene.viewerUserId, now, 'enter'),
-    };
-  }
-
-  if (hasFightEvent(event, 'fightConcludes') || event.data.type === 'ring.fightResolved') {
-    return scene.active ? { ...scene, fadeOutAt: now + FADE_MS } : scene;
-  }
-
-  if (!scene.active) return scene;
+): FightAnimations {
+  const settled = settle(animations, now);
   const combat = combatFrom(event);
-  if (!combat) return scene;
+  if (!combat) return settled;
 
   switch (combat.kind) {
     case 'card':
-      return updateFighter(scene, combat.actor!.name, (fighter) => ({
-        ...fighter, anim: 'attack', animStartedAt: now, lastActionAt: now,
-      }));
-    case 'hit':
-      return updateFighter(scene, combat.target!.name, (fighter) => ({
-        ...fighter,
-        hp: combat.hp!,
-        maxHp: combat.maxHp!,
-        anim: 'hit',
-        animStartedAt: now,
-        lastActionAt: now,
-      }));
     case 'miss':
-      return updateFighter(scene, combat.actor!.name, (fighter) => ({
-        ...fighter, anim: 'attack', animStartedAt: now, lastActionAt: now,
-      }));
-    case 'heal':
-      return updateFighter(scene, combat.target!.name, (fighter) => ({
-        ...fighter, hp: combat.hp!, maxHp: combat.maxHp!,
-      }));
-    case 'death': {
-      // A knockout is the beat worth looking up for; the stage flashes once.
-      const downed = updateFighter(scene, combat.target!.name, (fighter) => ({
-        ...fighter, anim: 'faint', animStartedAt: now, lastActionAt: now,
-      }));
-      return downed === scene ? scene : { ...downed, pulseAt: now };
-    }
+      return pose(settled, combat.actor!.name, 'attack', now);
+    case 'hit':
+      // The striker lunges and the struck monster recoils, so one exchange reads as one
+      // exchange rather than two unrelated twitches.
+      return pose(pose(settled, combat.actor!.name, 'attack', now), combat.target!.name, 'hit', now);
     case 'flee':
-      return updateFighter(scene, combat.actor!.name, (fighter) => ({
-        ...fighter, anim: 'flee', animStartedAt: now, lastActionAt: now,
-      }));
+      return pose(settled, combat.actor!.name, 'flee', now);
+    case 'heal':
+    case 'death':
+      // Both are reflected by the roster itself — the bar refills, the row goes dead.
+      return settled;
     default:
-      return scene;
+      return settled;
   }
 }
