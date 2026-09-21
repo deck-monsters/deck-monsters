@@ -36,13 +36,14 @@ function subscribe(listener: () => void): () => void {
 }
 
 /**
- * Opt-in pixel-art fight animations in the Ring feed (SNES theme only).
+ * Opt-in pixel-art sprites in the Ring roster (SNES theme only).
  *
- * Default **off**. The stage shipped on by default for every street-fighter-theme player
- * and turned out to be distracting and to eat too much of the viewport on the phones and
- * tablets this game is mostly played on. Until the presentation is reworked it is
- * something a player asks for, not something that arrives unannounced. The theme feature
- * flag still gates it too: this setting only matters on a theme that has the animations.
+ * Default **off**. The animations first shipped on by default, as a canvas band above the
+ * feed, and turned out to be distracting and to eat too much of the viewport on the phones
+ * and tablets this game is mostly played on. They now live in the roster rows and cost no
+ * extra height (#167), but they stay opt-in: a player choosing the SNES palette has not
+ * thereby asked for animated monsters. The theme feature flag still gates them too, so
+ * this setting only matters on a theme that has the sprites at all.
  */
 export function usePixelFightStage() {
 	const pixelFightStageEnabled = useSyncExternalStore(subscribe, readStored, () => false);

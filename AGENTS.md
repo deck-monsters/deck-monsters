@@ -86,7 +86,7 @@ non-obvious bit us before.
 | [`docs/roadmap/19-player-agency-and-items.md`](docs/roadmap/19-player-agency-and-items.md) | Items, targeting scrolls, deck-building agency, or any "should the player control this?" question |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scroll and shop rules |
 | [`docs/roadmap/20-workspace-layout.md`](docs/roadmap/20-workspace-layout.md) | `Terminal.tsx` panes, the 1024px breakpoint, tabs, the pane divider, or moving a surface between a route and a pane |
-| [`docs/roadmap/23-pixel-fight-stage.md`](docs/roadmap/23-pixel-fight-stage.md) | The pixel fight stage, the Ring roster's sprites, or the `pixel-art` theme feature — why it is opt-in and off by default, and what to decide before building more |
+| [`docs/roadmap/23-pixel-fight-stage.md`](docs/roadmap/23-pixel-fight-stage.md) | The Ring roster's pixel sprites or the `pixel-art` theme feature — why the animations live in roster rows rather than a band, and why they are opt-in and off by default |
 | [`docs/roadmap/README.md`](docs/roadmap/README.md) | Planning work — the authoritative status index |
 
 ## Project Overview

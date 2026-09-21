@@ -205,9 +205,10 @@ export default function AccountView() {
                   lineHeight: 1.45,
                 }}
               >
-                When on, fights play out as pixel art above the Ring feed. Off by default — the
-                stage takes real room on a phone, and the narration is the game. Needs the Street
-                Fighter theme; other themes stay text-only whatever this says.
+                When on, each monster in the Ring roster is drawn as an animated pixel sprite —
+                it lunges on its turn, flinches when hit, and topples when it falls. Off by
+                default. Needs the Street Fighter theme; other themes stay text-only whatever
+                this says.
               </span>
             </span>
           </label>

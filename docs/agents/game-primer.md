@@ -173,13 +173,16 @@ without parsing narration; it is additive and must stay JSON-safe (no engine obj
 `Ring.addMonster({ monster, character, userId, isBoss })` copies the flag onto the monster so `combat.isBoss`
 and the roster's `Contestant.isBoss` cannot disagree.
 
-The web consumes it in `apps/web/src/animations/pixel-fight/` (reducer `state.ts`, canvas
-`renderer.ts`, sprites, `PixelFightLayer.tsx`), mounted in `RingPane` only when **both**
-gates open: the active theme declares the `pixel-art` feature (`data-theme-features`,
-`useThemeFeature`) *and* the player has opted in via `usePixelFightStage` (Account →
-"Show pixel fight animations", **off by default** — see #166). Until an opted-in player is
-on the theme the lazy chunk is never fetched. Both flags are `useSyncExternalStore` stores
-so every consumer flips together. The gotchas that bit
+The web consumes it in `apps/web/src/animations/pixel-fight/` (pose map `state.ts`, canvas
+`renderer.ts`, sprites, `RosterSprite.tsx`, provider `PixelSprites.tsx`). The sprites are
+drawn **inside the Ring roster rows**, not in a band of their own — a band duplicated the
+roster's HP bars and cost 96–200px of viewport, so it was deleted (#167). They appear only
+when **both** gates open: the active theme declares the `pixel-art` feature
+(`data-theme-features`, `useThemeFeature`) *and* the player has opted in via
+`usePixelFightStage` (Account → "Show pixel fight animations", **off by default** — #166).
+Until an opted-in player is on the theme the lazy chunk is never fetched: `RingRoster` reads
+`RosterSpriteContext` rather than importing the art. Both flags are `useSyncExternalStore`
+stores so every consumer flips together. The gotchas that bit
 live — an early-waking `setTimeout` that never re-armed (#162), the roster emptying inside
 the fade, one literal sprite map with poses as transforms — are listed in the archived plan
 [`docs/archive/roadmap/17-pixel-art-fight-animations.md`](../archive/roadmap/17-pixel-art-fight-animations.md).

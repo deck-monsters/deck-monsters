@@ -37,21 +37,19 @@ import FeedList from './FeedList.js';
 import RingItemsPanel from './RingItemsPanel.js';
 import { useThemeFeature } from '../hooks/useTheme.js';
 
-type PixelFightLayerProps = {
+type PixelSpritesProps = {
   contestants: RingContestantSnapshot[];
-  viewerUserId: string | null;
-  /** Optional on the wire, so it stays optional here — see RingStateFrame. */
-  inEncounter?: boolean;
+  children: ReactNode;
 };
-type PixelFightLayerLoader = () => Promise<{ default: ComponentType<PixelFightLayerProps> }>;
-const loadPixelFightLayer: PixelFightLayerLoader = () => import('../animations/pixel-fight/PixelFightLayer.js');
+type PixelSpritesLoader = () => Promise<{ default: ComponentType<PixelSpritesProps> }>;
+const loadPixelSprites: PixelSpritesLoader = () => import('../animations/pixel-fight/PixelSprites.js');
 
 interface RingPaneProps {
   roomId: string;
   isActive: boolean;
   headerActions?: ReactNode;
   /** Injectable loader keeps the theme gate testable without preloading the chunk. */
-  pixelFightLayerLoader?: PixelFightLayerLoader;
+  pixelSpritesLoader?: PixelSpritesLoader;
 }
 
 interface TimerState {
@@ -153,7 +151,7 @@ export default function RingPane({
   roomId,
   isActive,
   headerActions,
-  pixelFightLayerLoader = loadPixelFightLayer,
+  pixelSpritesLoader = loadPixelSprites,
 }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   // Two gates, both required: the theme must have the animations at all, and the player
@@ -161,7 +159,7 @@ export default function RingPane({
   const themeHasPixelArt = useThemeFeature('pixel-art');
   const { pixelFightStageEnabled } = usePixelFightStage();
   const pixelArtEnabled = themeHasPixelArt && pixelFightStageEnabled;
-  const PixelFightLayer = useMemo(() => lazy(pixelFightLayerLoader), [pixelFightLayerLoader]);
+  const PixelSprites = useMemo(() => lazy(pixelSpritesLoader), [pixelSpritesLoader]);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [isAtBottom, setIsAtBottom] = useState(true);
   // Timer state is pushed from the server via ring.state events and the handshake payload.
@@ -441,6 +439,15 @@ export default function RingPane({
     ? rosterContestants.find((contestant) => contestant.userId === myUserId && !contestant.dead)
     : undefined;
 
+  const rosterBlock = (
+    <RingRoster
+      contestants={rosterContestants}
+      myUserId={myUserId}
+      collapsed={rosterCollapsed}
+      onToggle={toggleRoster}
+    />
+  );
+
   return (
     <section
       className={`terminal-pane${isActive ? ' active' : ''}`}
@@ -472,26 +479,22 @@ export default function RingPane({
         </div>
       )}
 
-      <RingRoster
-        contestants={rosterContestants}
-        myUserId={myUserId}
-        collapsed={rosterCollapsed}
-        onToggle={toggleRoster}
-      />
+      {/* One element, rendered either bare or inside the sprite provider, so the roster
+          markup has a single definition. The provider only supplies sprites to the rows;
+          it adds no wrapper of its own. */}
+      {pixelArtEnabled ? (
+        <Suspense fallback={rosterBlock}>
+          {/* Keyed by room: without it a monster's pose survives a room change and the
+              new room's roster animates from the old room's state (see #164-era fix
+              cc949ab, which did the same for the band's scene). */}
+          <PixelSprites key={roomId} contestants={rosterContestants}>{rosterBlock}</PixelSprites>
+        </Suspense>
+      ) : (
+        rosterBlock
+      )}
+
       {myFightingMonster && <RingItemsPanel roomId={roomId} monsterName={myFightingMonster.name} />}
 
-      {/* Above the feed, not over it: the stage is a sibling that collapses to zero
-          height between fights, so the narration keeps every line it has. */}
-      {pixelArtEnabled && (
-        <Suspense fallback={null}>
-          <PixelFightLayer
-            key={roomId}
-            contestants={rosterContestants}
-            viewerUserId={myUserId}
-            inEncounter={timerState.inEncounter}
-          />
-        </Suspense>
-      )}
 
       {/* Gesture listeners sit on the wrapper because Virtuoso owns the scroller element;
           wheel/touch/pointer/key events bubble up from it. */}

@@ -3786,3 +3786,59 @@ cross-caller propagation, cross-tab `storage` events and ignoring unrelated keys
 never called for a themed player who has not opted in.
 
 **Status**: Fixed.
+
+### 167. The fight animations duplicated the Ring roster and paid viewport for it — FIXED
+
+Two photos of real sessions (kept in
+[`assets/pixel-fight-2026-09/`](assets/pixel-fight-2026-09/)) showed what four rounds of
+tests had not. On a tablet, the roster listed four contestants with HP bars, levels, owners
+and boss tags, and the canvas band directly beneath drew *the same four* with *the same HP
+bars* and none of the labels — one monster alone at far left, three clustered at far right,
+the middle two-thirds empty, the narration squeezed to about six lines. On an iPhone the
+same fight put **four HP bars on screen for two monsters**.
+
+The iPhone shot also showed the band's main justification was already met: the roster row
+for the acting monster carries a red border, a tint and a `▶` marker (the `acting` flag,
+rendered since roadmap 18). "Whose turn is it" was answered eight rows above the band.
+
+**Root cause**: the band was designed as a Street Fighter bout — my monster on the left,
+yours on the right. Ring fights are 2–12 contestant melees with bosses, teams and targeting
+strategies, where a card can hit anyone; there is no left side and no right side. Forcing an
+N-way melee into a two-sided layout is what produced the dead middle, the lopsided
+clustering, and a band tall enough for two rows per side. The compact duel view added in
+#165 was the same error smaller: it invented a one-on-one that was not happening.
+
+**Fix**: the band is deleted. Each roster row draws its monster as a 48px sprite in the
+row's left gutter — a row is already about that tall (name line, HP bar, creature line), so
+the animations now cost effectively no vertical space where the band cost 96px on a phone
+and 200px on a tablet. One monster, one row, one HP bar. The sprite lunges when its owner
+plays a card, flashes and recoils when struck, and lies fallen when dead, pairing with the
+row highlight that already existed.
+
+Consequently the scene model collapsed: no sides, no per-side cap, no `active` flag, no fade
+timer, and no `inEncounter` adoption (#165's fix for joining mid-fight) — the roster is the
+authoritative list of who is in the ring, so a monster with no recorded pose simply idles
+and arriving mid-fight needs no special case. `state.ts` is now a map of transient poses.
+`faint` is deliberately not stored in it: the roster's `dead` flag is authoritative and
+outlives any animation, so a revived monster cannot keep a stale fallen pose. `drawHpBar`
+went with the band.
+
+All twelve sprites share one `requestAnimationFrame` loop and draw imperatively
+(`frame-ticker.ts`) rather than each owning a loop and re-rendering React per frame. The
+art stays in a lazily loaded chunk behind both gates: `RingRoster` reads a context that a
+lazily-loaded provider fills, so it never imports `sprites.ts` for a player who has not
+opted in.
+
+Also fixed while in the file: restoring `key={roomId}` on the provider, which the band had
+(cc949ab) so a monster's pose cannot survive a room change — dropped in the first draft of
+this refactor and caught by the existing remount test.
+
+**Tests**: `pixel-fight-state.test.ts` rewritten for the pose map (lunge + recoil on one
+hit, flash window, decay to idle, death read from the roster, pruning departed monsters).
+`rosterSprite.test.tsx` covers the icon/sprite swap, that a row keeps exactly one HP bar,
+the accessible label staying clean, integer scale, reduced motion, and one shared ticker for
+many subscribers. The band's own suites (`pixel-fight-layer`, `pixel-fight-stage-layout`)
+are deleted with it.
+
+**Status**: Fixed. Remaining questions in
+[`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).

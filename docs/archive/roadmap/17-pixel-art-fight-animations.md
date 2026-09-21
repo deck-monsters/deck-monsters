@@ -125,7 +125,14 @@ the feature is absent.
 
 The theme feature is no longer the *only* gate: `usePixelFightStage` adds a player opt-in
 that defaults off (#166), so the module loads only for someone on the theme who has asked
-for it. Anything reasoning about "is the stage showing" must check both.
+for it. Anything reasoning about "are the sprites showing" must check both.
+
+**The canvas band described in this plan no longer exists.** It duplicated the Ring
+roster's HP bars and cost 96–200px of viewport; the sprites now draw inside the roster rows
+(#167), and the scene model — sides, per-side caps, the `active` flag, the fade timer and
+the `inEncounter` adoption — went with it. See
+[`docs/roadmap/23-pixel-fight-stage.md`](../../roadmap/23-pixel-fight-stage.md). The
+sections below are kept as the record of how the feature was first built.
 
 ---
 

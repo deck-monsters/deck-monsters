@@ -150,86 +150,6 @@
   flex-direction: column;
 }
 
-/* The pixel fight stage.
-
-   This is a docked band, not an overlay. It used to be absolutely positioned across the
-   top of the feed with a fade-to-transparent gradient, which meant the sprites sat on top
-   of the narration — the one thing the feature must never obscure, since the text *is*
-   the game. Being a real flex child means the feed simply gets shorter while a fight is
-   running and every line stays readable.
-
-   Collapsing is done with `height`, not `display`, so the canvas keeps its context and
-   the ResizeObserver in PixelFightLayer sees the transition and re-lays-out the sprites. */
-.pixel-fight-stage {
-  --pixel-stage-height: 200px;
-  flex: 0 0 auto;
-  height: 0;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transition: height 0.35s ease, opacity 0.3s ease;
-  border-bottom: 1px solid transparent;
-}
-
-.pixel-fight-stage.active {
-  height: var(--pixel-stage-height);
-  opacity: 1;
-  border-bottom-color: var(--color-border);
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--color-bg) 72%, transparent), transparent);
-}
-
-/* One flash on a knockout — the beat worth looking up for. */
-.pixel-fight-stage.pulse {
-  animation: pixel-fight-pulse 0.7s ease-out;
-}
-
-@keyframes pixel-fight-pulse {
-  0% { background-color: color-mix(in srgb, var(--color-accent) 26%, transparent); }
-  100% { background-color: transparent; }
-}
-
-.pixel-fight-layer {
-  display: block;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-}
-
-/* Narrow or short: the band drops to a single duel per side (see `stageLayout`), so it
-   needs far less room. Previously both of these hid the stage outright, which on a phone
-   — where the ring is mostly played — meant the animations were never seen at all. */
-@container (max-width: 520px) {
-  .pixel-fight-stage {
-    --pixel-stage-height: 96px;
-  }
-}
-
-@media (max-height: 600px) {
-  .pixel-fight-stage {
-    --pixel-stage-height: 96px;
-  }
-}
-
-/* Below this there is not enough width for two sprites and their HP bars to read at all,
-   and the feed needs every line it can get. */
-@container (max-width: 280px) {
-  .pixel-fight-stage.active {
-    height: 0;
-    opacity: 0;
-    border-bottom-color: transparent;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pixel-fight-stage {
-    transition: none;
-  }
-
-  .pixel-fight-stage.pulse {
-    animation: none;
-  }
-}
-
 /* Event feed — the scrollable list of game events.
 
    NO PADDING HERE. This class lands on react-virtuoso's *scroller*, which it styles
@@ -682,6 +602,31 @@
   padding: 0.2rem 0 0.2rem 0.35rem;
   font-size: 0.78rem;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* Everything except the sprite. Must be able to shrink, or long monster names would
+   push the row wider than the pane instead of ellipsing. */
+.roster-row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The sprite gutter. A 48px sprite is about the height the row already occupies (name
+   line + HP bar + creature line), so the animations cost no vertical space — which is
+   the entire reason they moved here from a band above the feed. */
+.roster-sprite-cell {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roster-sprite {
+  display: block;
+  image-rendering: pixelated;
 }
 
 .roster-row-head {
