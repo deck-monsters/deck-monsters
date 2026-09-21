@@ -77,6 +77,18 @@ A 48px sprite in each roster row's left gutter, animating that contestant.
 `faint` is deliberately *not* stored in that map: the roster's `dead` flag is authoritative
 and outlives any animation, so a revived monster cannot keep a stale fallen pose.
 
+## After it shipped
+
+![Roster sprites on an iPhone](assets/pixel-fight-2026-09/roster-sprites-on-iphone.png)
+
+Five contestants, sprites in the gutter, full names, team tags, HP bars and the acting
+highlight — all in less vertical space than the old band alone used to take.
+
+One regression came out of it (#168): the sprite gutter was not budgeted into
+`.roster-list`'s two-up column minimum, and together with an already-rigid team tag it
+collapsed monster names to `G..` on a tablet. Fixed by giving sprite-bearing rows a wider
+column minimum and letting the team tag ellipse instead of the name.
+
 ## Remaining questions
 
 - **Is a 48px sprite enough, or too much?** It reads, and the ±4px lean is visible at 2×.
@@ -86,6 +98,11 @@ and outlives any animation, so a revived monster cannot keep a stale fallen pose
   does not follow a player from phone to tablet. Cheap, and possibly not right.
 - **Where should the setting live?** Account, next to the key-timestamps toggle. A "Ring
   display" group would be better once there are three of these.
+- **Should the team tag move to the sub-line?** The head line carries name + tag + HP + AC,
+  which is what made it so easy to starve (#168). Moving the team tag down beside
+  `Minotaur · lvl 2 · Tweettypography` would free the head line entirely and let two-up work
+  at a narrower column again. Not done here because it changes information layout, not just
+  spacing.
 - **`useRingKeyTimestamps` has a latent staleness bug** worth folding into any pass here: it
   uses a plain `useState`, so a toggle and a consumer mounted at once (the workspace layout
   allows it) disagree until a reload. `usePixelFightStage` and `useTheme` both use

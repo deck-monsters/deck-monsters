@@ -144,6 +144,10 @@ export default function RingRoster({
   collapsed,
   onToggle,
 }: RingRosterProps) {
+  // Every row gains a sprite gutter when the provider is present, so the grid needs
+  // wider columns before going two-up — see .roster-list-sprites.
+  const hasSprites = useContext(RosterSpriteContext) !== null;
+
   if (contestants.length === 0) return null;
 
   const standing = contestants.filter((c) => !c.dead).length;
@@ -161,7 +165,7 @@ export default function RingRoster({
       </button>
 
       {!collapsed && (
-        <ol className="roster-list">
+        <ol className={`roster-list${hasSprites ? ' roster-list-sprites' : ''}`}>
           {contestants.map((contestant) => (
             <ContestantRow
               key={`${contestant.name}-${contestant.userId ?? 'boss'}`}

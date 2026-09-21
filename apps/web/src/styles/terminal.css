@@ -596,6 +596,21 @@
   gap: 0.3rem 0.75rem;
 }
 
+/* A row carrying a sprite needs a wider column before two-up is worth doing.
+   Budget for one row's unshrinkable parts at 0.78rem:
+
+     row padding ~6px + sprite gutter 48px + 7px gap
+     + team tag ("THE ALLIANCE") ~95px + numbers ("28/28  ac 10") ~82px
+     = ~238px
+
+   which already exceeded a 13rem (208px) column, leaving the monster's name — the
+   only shrinkable part — at zero and rendering as "G..". At 21rem (336px) the name
+   keeps ~100px, about twelve characters, and panes too narrow for that fall back to
+   a single column, which reads better than two columns of ellipses. */
+.roster-list-sprites {
+  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+}
+
 .roster-row {
   /* Left padding on every row, not just the acting one, so the highlight moving from
      monster to monster each turn never shifts the text sideways. */
@@ -700,7 +715,14 @@
 }
 
 .roster-tag {
-  flex-shrink: 0;
+  /* Shrinkable, unlike the HP/AC numbers: when a row is tight the team name is the
+     least important thing on the line, and leaving it rigid let a long team starve the
+     monster's own name down to an ellipsis. */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   margin-left: 0.4rem;
   padding: 0 0.3rem;
   border: 1px solid var(--color-border);
@@ -712,6 +734,8 @@
 }
 
 .roster-tag-boss {
+  /* Four characters, and it changes how you read the row — never shrink this one. */
+  flex-shrink: 0;
   color: var(--color-accent);
   border-color: var(--color-accent);
 }

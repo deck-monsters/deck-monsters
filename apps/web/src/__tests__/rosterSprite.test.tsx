@@ -74,6 +74,44 @@ describe('roster sprites', () => {
     expect(container.querySelector('.roster-sprite-cell')!.textContent).toBe('');
   });
 
+  it('asks the grid for wider columns only when rows carry a sprite', () => {
+    // The sprite gutter plus an unshrinkable team tag and HP/AC exceeded a 13rem
+    // two-up column, collapsing the monster's name to "G..". Rows without a sprite
+    // keep the original, narrower columns.
+    const bare = render(
+      <RingRoster contestants={[contestant()]} collapsed={false} onToggle={noop} />,
+    );
+    expect(bare.container.querySelector('.roster-list')!.className)
+      .not.toContain('roster-list-sprites');
+    bare.unmount();
+
+    const api = { render: () => <canvas className="roster-sprite" /> };
+    const withSprites = render(
+      <RosterSpriteContext.Provider value={api}>
+        <RingRoster contestants={[contestant()]} collapsed={false} onToggle={noop} />
+      </RosterSpriteContext.Provider>,
+    );
+    expect(withSprites.container.querySelector('.roster-list')!.className)
+      .toContain('roster-list-sprites');
+  });
+
+  it('keeps a long team name from starving the monster name', () => {
+    // Both are on the same line; the tag is the one that may be cut.
+    const api = { render: () => <canvas className="roster-sprite" /> };
+    const { container } = render(
+      <RosterSpriteContext.Provider value={api}>
+        <RingRoster
+          contestants={[contestant({ name: 'Qroap Holnex', team: 'THE ALLIANCE' })]}
+          collapsed={false}
+          onToggle={noop}
+        />
+      </RosterSpriteContext.Provider>,
+    );
+
+    expect(container.querySelector('.roster-name-text')!.textContent).toBe('Qroap Holnex');
+    expect(container.querySelector('.roster-tag')!.textContent).toBe('THE ALLIANCE');
+  });
+
   it('draws at an integer scale into a square canvas', () => {
     const fillRect = vi.fn();
     const ctx = {

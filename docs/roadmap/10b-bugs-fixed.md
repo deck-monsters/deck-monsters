@@ -3842,3 +3842,43 @@ are deleted with it.
 
 **Status**: Fixed. Remaining questions in
 [`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).
+
+### 168. Roster sprites truncated monster names to one or two characters in the two-up layout — FIXED
+
+Reported from live play right after #167 shipped: on a tablet the roster read `G..`, `J`,
+`C..`, `Qroap Ho...`. The phone was fine.
+
+`.roster-list` goes two-up on wide panes via
+`repeat(auto-fit, minmax(13rem, 1fr))`. In one 13rem (208px) column, at the roster's
+0.78rem, a row's unshrinkable parts already came to roughly:
+
+| Part | Width |
+|---|---|
+| row padding | ~6px |
+| team tag (`THE ALLIANCE`, `flex-shrink: 0`) | ~95px |
+| numbers (`28/28  ac 10`, `flex-shrink: 0`) | ~82px |
+
+≈183px of 208px, leaving the monster's name — `.roster-name-text`, the only shrinkable
+element on the line — about 25px. #167's 48px sprite gutter (plus its 7px gap) pushed the
+total past the column width entirely, so the name collapsed to its ellipsis.
+
+**Root cause**: two separate things, which is why it looked sudden. The sprite gutter was
+new and unbudgeted, *and* the team tag was rigid, so a long team name had always been able
+to starve the monster's name in a narrow two-up column — visible only once a fight had
+teams in it. The 13rem minimum had been tuned against a row with neither.
+
+**Fix**: `.roster-list-sprites` (applied by `RingRoster` when the sprite provider is
+present) raises the column minimum to 21rem, which leaves the name about 100px — roughly
+twelve characters — and makes panes too narrow for that fall back to a single column, since
+one column of readable names beats two of ellipses. Rows without sprites keep the original
+13rem. Separately the team tag is now `flex: 0 1 auto` with an ellipsis, so when a row is
+tight the team name gives way rather than the monster's; the `BOSS` tag stays rigid, being
+four characters that change how the row reads.
+
+**Tests**: `rosterSprite.test.tsx` covers the wider-column class being applied only when
+rows carry a sprite, and a long team name leaving the monster name intact.
+
+**Not verified in a browser**: the fix is a CSS layout change and jsdom does no layout, so
+the column arithmetic above is reasoned, not measured. Worth a look on a real tablet.
+
+**Status**: Fixed.
