@@ -3955,3 +3955,46 @@ single-column reflow are reasoned, not measured.
 priority, the hard rule about row order, and the five layouts considered.
 
 **Status**: Fixed.
+
+### 170. The turn marker reserved a column on every roster row and left the icons visibly inset — FIXED
+
+Reported from the phone right after #169 shipped: "the left side alignment is a bit off.
+I think we can easily work in the turn marker without such an unbalanced gap?" The
+screenshot showed one contestant between fights, its sprite sitting well inboard of both
+the `▾ IN THE RING` header above it and the narration text below.
+
+**Root cause**: `.roster-turn` was `flex: 0 0 0.85rem` and the row's `gap: 0.35rem`
+applied to it like any other child, so every row spent ~19px before its icon on a mark
+that at most one row in the list ever shows — and, between fights with nobody acting, no
+row shows at all, because the idle `·` is `color: transparent`. The reserved column was
+there to stop a name shifting sideways as the turn moved down the list. That reason was
+sound; a flex column was the wrong way to buy it.
+
+**Fix**: the marker hangs in the row's left padding, absolutely positioned, like a bullet
+with `list-style-position: outside`. The row becomes the positioning context, its left
+padding goes 0.35rem → 0.8rem, and the marker never occupies flow space, so names still
+cannot move. Net: the icon leads the row, about 12px closer to the pane's text edge. In
+the dense tier, where rows are one line centred on the icon, the marker centres with it
+via an inset matching the row padding.
+
+**Why 0.8rem and not flush**: two things already live at the row's left edge — the acting
+row's 2px inset accent bar, and on a phone the screen itself. A flush variant
+(`.roster-list` left padding to 0) was rendered and rejected: the `▶` landed on top of the
+accent bar and half off the screen edge. A 0.3rem middle candidate had the same collision,
+smaller.
+
+**Verified in a browser, for once.** Chromium is installed in the agent container, so the
+three candidates were rendered as static pages at 390px with a rule drawn at
+`var(--pane-padding)`, plus the dense tier at nine contestants and the two-column tier at
+760px. Every previous entry in this run of roster bugs says "not verified in a browser";
+the how-to is now in
+[`docs/ring-roster-design.md`](../ring-roster-design.md#rendering-it-without-a-device) so
+that stops being the norm. Two traps: `.terminal-slot` is `display: none` under 1024px
+without `.active`, and it needs `container-type: inline-size` or the column tiers never
+fire.
+
+**Tests**: `roster-layout-css.test.ts` gains a case asserting the marker is out of flow
+and the row is the positioning context — jsdom cannot measure the result, but it can stop
+the flex column being reinstated.
+
+**Status**: Fixed.

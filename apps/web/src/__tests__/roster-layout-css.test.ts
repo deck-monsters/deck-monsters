@@ -67,6 +67,20 @@ describe('roster layout invariants', () => {
     expect(columnDecls.some((decl) => decl.includes('auto-fit'))).toBe(false);
   });
 
+  it('keeps the turn marker out of the row\'s flow', () => {
+    // The marker held a flex column plus the row's gap, so every row reserved ~19px for
+    // a mark at most one row ever shows — and none between fights — leaving the icons
+    // visibly inboard of the section header and the feed text. It hangs in the row's
+    // left padding now, which is also what keeps a name from shifting as the turn moves.
+    const turnRule = /\.roster-turn\s*\{[^}]*\}/s.exec(CSS)?.[0] ?? '';
+
+    expect(turnRule).toContain('position: absolute');
+    expect(turnRule).not.toMatch(/flex:/);
+    // And the row has to be the positioning context, or the marker escapes to the pane.
+    const rowRule = /\.roster-row\s*\{[^}]*\}/s.exec(CSS)?.[0] ?? '';
+    expect(rowRule).toContain('position: relative');
+  });
+
   it('keeps the roster flowing row-major, because row order is the order of play', () => {
     // `grid-auto-flow: column` would renumber the round down each column.
     const listRule = /\.roster-list\s*\{[^}]*\}/s.exec(CSS)?.[0] ?? '';

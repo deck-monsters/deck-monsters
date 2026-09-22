@@ -590,9 +590,10 @@
    This was `repeat(auto-fit, minmax(13rem, 1fr))` and every crowding bug in this panel
    traced back to it: 13rem was narrower than a row actually needed, so the name — the
    only element that could give — collapsed to "G.." (#168). The fix is not to abandon
-   multi-column but to set an honest minimum. A comfortable row spends roughly 124px on
-   the turn gutter, the icon and the HP rail, so a column under ~22rem leaves the name
-   and the meta line fighting over scraps.
+   multi-column but to set an honest minimum. A comfortable row spends roughly 118px on
+   its padding, the icon and the HP rail, so a column under ~22rem leaves the name and
+   the meta line fighting over scraps. (It was ~124px while the turn marker held a flex
+   column; it now hangs in the row's padding instead, which does not change the tiers.)
 
    Hence explicit tiers rather than auto-fit: auto-fit would keep adding columns on an
    ultrawide monitor until rows were unreadably short. Phones and tablets stay one-up;
@@ -624,9 +625,21 @@
 
 /* Turn gutter. The order of play is the row order — the engine plays contestants in
    array order and this list is that array — so this only marks whose turn it is now.
-   Fixed width so every name starts on the same x whether or not it is marked. */
+
+   It hangs in the row's left padding, like a list bullet with `list-style-position:
+   outside`, rather than taking a flex column of its own. It had `flex: 0 0 0.85rem` plus
+   the row's `gap`, so every row spent ~19px reserving space for a mark only one row in
+   the list ever shows — and between fights, no row at all. On a phone that left the
+   icons visibly inboard of the section header above and the feed text below, which is
+   what was reported. Out of flow the icon leads the row, and because the marker never
+   occupies flow space, a name still cannot shift sideways as the turn moves down the
+   list — which is what the fixed column was there for. */
 .roster-turn {
-  flex: 0 0 0.85rem;
+  position: absolute;
+  left: 0.15rem;
+  /* Matches the row's top padding, so the mark sits on the name's own line. */
+  top: 0.2rem;
+  width: 0.65rem;
   text-align: center;
   font-size: 0.62rem;
   color: transparent;
@@ -656,8 +669,10 @@
 
 .roster-row {
   /* Left padding on every row, not just the acting one, so the highlight moving from
-     monster to monster each turn never shifts the text sideways. */
-  padding: 0.2rem 0 0.2rem 0.35rem;
+     monster to monster each turn never shifts the text sideways. It is also what the
+     turn marker hangs in — see `.roster-turn` — hence `relative`. */
+  position: relative;
+  padding: 0.2rem 0 0.2rem 0.8rem;
   font-size: 0.78rem;
   min-width: 0;
   display: flex;
@@ -778,6 +793,17 @@
    two survivors well enough. */
 @container (max-width: 45.99rem) {
   .roster-list-dense .roster-row { align-items: center; }
+
+  /* A dense row is one line with everything centred on the icon, so the marker centres
+     with it instead of hanging at the top. The inset matches the row's padding, making
+     this box the content box. */
+  .roster-list-dense .roster-turn {
+    top: 0.2rem;
+    bottom: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
   .roster-list-dense .roster-row-body {
     display: flex;

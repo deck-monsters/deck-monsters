@@ -21,6 +21,7 @@ the decision, and what is left.
 | [#168](10b-bugs-fixed.md) | Sprite gutter squeezed names to `G..` in the two-up layout |
 | [#169](10b-bugs-fixed.md) | Row reorganised around field priority; multi-column dropped; sprite 48px → 24px |
 | [#169](10b-bugs-fixed.md) | Columns restored as explicit width tiers — two-up at 46rem, three-up at 70rem |
+| [#170](10b-bugs-fixed.md) | Turn marker hung in the row padding; icons lead the row — first change here verified in a browser |
 
 ## The evidence
 
