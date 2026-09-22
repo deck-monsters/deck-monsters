@@ -585,15 +585,73 @@
   outline-offset: -1px;
 }
 
+/* Columns are earned, not assumed.
+
+   This was `repeat(auto-fit, minmax(13rem, 1fr))` and every crowding bug in this panel
+   traced back to it: 13rem was narrower than a row actually needed, so the name — the
+   only element that could give — collapsed to "G.." (#168). The fix is not to abandon
+   multi-column but to set an honest minimum. A comfortable row spends roughly 124px on
+   the turn gutter, the icon and the HP rail, so a column under ~22rem leaves the name
+   and the meta line fighting over scraps.
+
+   Hence explicit tiers rather than auto-fit: auto-fit would keep adding columns on an
+   ultrawide monitor until rows were unreadably short. Phones and tablets stay one-up;
+   only a genuinely wide Ring pane earns two or three.
+
+   The container is `.terminal-slot`, so these measure the *pane*, not the window — the
+   Ring pane is one of two side by side above 1024px.
+
+   Flow stays row-major (the grid default) on purpose: row order is the order of play, so
+   it must read across-then-down, the way the eye already reads a grid. `grid-auto-flow:
+   column` would renumber the round down each column and break that. */
 .roster-list {
   list-style: none;
   margin: 0;
   padding: 0 var(--pane-padding) 0.4rem;
   overflow-y: auto;
   display: grid;
-  /* Two-up on wide panes, single column on phones. */
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 0.3rem 0.75rem;
+  grid-template-columns: 1fr;
+  gap: 0.18rem 0.75rem;
+}
+
+@container (min-width: 46rem) {
+  .roster-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container (min-width: 70rem) {
+  .roster-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Turn gutter. The order of play is the row order — the engine plays contestants in
+   array order and this list is that array — so this only marks whose turn it is now.
+   Fixed width so every name starts on the same x whether or not it is marked. */
+.roster-turn {
+  flex: 0 0 0.85rem;
+  text-align: center;
+  font-size: 0.62rem;
+  color: transparent;
+  user-select: none;
+  line-height: 1.5;
+}
+
+.roster-turn-acting { color: var(--color-accent); }
+
+/* 24px, because that is the box the emoji icon already occupied: a room with the pixel
+   sprites switched off loses the motion and nothing else. */
+.roster-icon {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roster-icon-emoji { font-size: 0.95rem; line-height: 1; }
+
+.roster-sprite {
+  display: block;
+  image-rendering: pixelated;
 }
 
 .roster-row {
@@ -603,60 +661,36 @@
   font-size: 0.78rem;
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 0.45rem;
+  align-items: flex-start;
+  gap: 0.35rem;
 }
 
-/* Everything except the sprite. Must be able to shrink, or long monster names would
-   push the row wider than the pane instead of ellipsing. */
+/* Name line plus meta line. Must shrink, or a long monster name would push the row
+   wider than the pane instead of ellipsing. */
 .roster-row-body {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-/* The sprite gutter. A 48px sprite is about the height the row already occupies (name
-   line + HP bar + creature line), so the animations cost no vertical space — which is
-   the entire reason they moved here from a band above the feed. */
-.roster-sprite-cell {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.roster-sprite {
-  display: block;
-  image-rendering: pixelated;
-}
-
+/* Nothing shares this line with the name but the boss badge. */
 .roster-row-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.roster-name {
-  display: flex;
-  align-items: baseline;
-  min-width: 0;
-  flex: 1 1 auto;
-  color: var(--color-fg);
+  gap: 0.35rem;
 }
 
 .roster-name-text {
   min-width: 0;
+  flex: 0 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--color-fg);
 }
 
-.roster-icon {
-  flex-shrink: 0;
-}
-
-.roster-row-mine .roster-name {
+.roster-row-mine .roster-name-text {
   color: var(--color-fg-bright);
+  font-weight: 700;
 }
 
 .roster-row-acting {
@@ -665,43 +699,126 @@
   border-radius: 2px;
 }
 
-.roster-row-acting .roster-name {
+.roster-row-acting .roster-name-text {
   color: var(--color-fg-bright);
 }
 
-.roster-acting-marker {
-  color: var(--color-accent);
-  margin-right: 0.3rem;
-  font-size: 0.65rem;
-  flex-shrink: 0;
-}
-
-.roster-numbers {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0;
+/* The figure and its bar, stacked at the same width. They restate one another, so the
+   bar is the quieter of the two rather than either being dropped. */
+.roster-rail {
+  flex: 0 0 4.4rem;
+  text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
 .roster-hp {
   color: var(--color-fg);
+  font-size: 0.76rem;
 }
 
-.roster-ac,
+/* Meta line: beastmaster, level, team, AC — most important first, so the last is the
+   first to ellipse. Species is deliberately absent; the icon carries it. */
 .roster-row-sub {
-  color: var(--color-fg-dim);
-}
-
-.roster-row-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.68rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--color-fg-dim);
 }
 
+.roster-sub-sep { opacity: 0.55; }
+.roster-sub-team { display: inline-flex; align-items: center; }
+
+/* Colour-codes a team without reordering the roster, which is what makes grouping
+   unnecessary — the order of play has to stay intact. Team names are a closed set, so a
+   stable colour each is safe, and it is never the only channel: the name sits beside the
+   pip and the legend spells out every colour in play. */
+.roster-team-pip {
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.28rem;
+  border-radius: 50%;
+  background: var(--color-fg-dim);
+}
+
+.roster-team-pip[data-team='the-alliance'] { background: #4fd6ec; }
+.roster-team-pip[data-team='gryffindor'] { background: #e05a3a; }
+.roster-team-pip[data-team='slytherin'] { background: #4fb872; }
+.roster-team-pip[data-team='hufflepuff'] { background: #e0b83a; }
+.roster-team-pip[data-team='ravenclaw'] { background: #7b8ae0; }
+
+.roster-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.25rem var(--pane-padding) 0.4rem;
+  font-size: 0.66rem;
+  color: var(--color-fg-dim);
+  border-top: 1px dashed var(--color-border);
+}
+
+.roster-legend li { display: inline-flex; align-items: center; }
+
+/* Dense rows: the meta line folds up beside the name, and level and AC drop.
+
+   Scoped to the single-column tier because that is the only place compression buys
+   anything: the ring holds twelve, so at two columns that is six rows a side and at
+   three it is four — comfortable either way. A big fight on a wide pane should get
+   columns, not compressed rows.
+
+   Separators are hidden rather than conditionally rendered: with level and AC gone, a
+   `·` between them would be left dangling, and the gap plus the team pip separate the
+   two survivors well enough. */
+@container (max-width: 45.99rem) {
+  .roster-list-dense .roster-row { align-items: center; }
+
+  .roster-list-dense .roster-row-body {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  /* The name outranks its own metadata. Flex distributes shrinkage by
+     `shrink × basis`, so equal `flex: 0 1 auto` on both let a long beastmaster name
+     take space from the monster's name — at 320px a 32-character beastmaster squeezed
+     "Gin" to nothing, the same failure as #168 one line down. A large shrink factor on
+     the meta line makes it give up every pixel first; the name is the last thing to
+     ellipse, and may take the whole row if it needs to. */
+  .roster-list-dense .roster-row-head { flex: 0 1 auto; min-width: 0; }
+  .roster-list-dense .roster-row-sub { flex: 0 999 auto; min-width: 0; }
+
+  .roster-list-dense .roster-sub-sep,
+  .roster-list-dense .roster-sub-level,
+  .roster-list-dense .roster-sub-ac { display: none; }
+
+  .roster-list-dense .roster-rail {
+    flex: 0 0 5.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+  }
+
+  /* DOM order is figure then bar; on one line the bar reads better leading it. */
+  .roster-list-dense .roster-rail .roster-bar-track {
+    order: -1;
+    flex: 0 0 2.2rem;
+    margin: 0;
+  }
+}
+
+/* Only the BOSS badge now. The team tag that used to sit on the name line moved to the
+   meta line, where a long team name cannot starve the monster's own name. */
 .roster-tag {
-  flex-shrink: 0;
-  margin-left: 0.4rem;
+  flex: 0 0 auto;
   padding: 0 0.3rem;
   border: 1px solid var(--color-border);
   border-radius: 2px;

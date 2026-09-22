@@ -18,6 +18,9 @@ the decision, and what is left.
 | [#165](10b-bugs-fixed.md) | Overlay → docked band; `inEncounter` adoption; compact duel on phones |
 | [#166](10b-bugs-fixed.md) | Opt-in setting, off by default — bought time to decide |
 | [#167](10b-bugs-fixed.md) | **Band deleted; sprites moved into the roster rows** |
+| [#168](10b-bugs-fixed.md) | Sprite gutter squeezed names to `G..` in the two-up layout |
+| [#169](10b-bugs-fixed.md) | Row reorganised around field priority; multi-column dropped; sprite 48px → 24px |
+| [#169](10b-bugs-fixed.md) | Columns restored as explicit width tiers — two-up at 46rem, three-up at 70rem |
 
 ## The evidence
 
@@ -77,15 +80,56 @@ A 48px sprite in each roster row's left gutter, animating that contestant.
 `faint` is deliberately *not* stored in that map: the roster's `dead` flag is authoritative
 and outlives any animation, so a revived monster cannot keep a stale fallen pose.
 
+## After it shipped
+
+![Roster sprites on an iPhone](assets/pixel-fight-2026-09/roster-sprites-on-iphone.png)
+
+Five contestants, sprites in the gutter, full names, team tags, HP bars and the acting
+highlight — all in less vertical space than the old band alone used to take.
+
+One regression came out of it (#168): the sprite gutter was not budgeted into
+`.roster-list`'s two-up column minimum, and together with an already-rigid team tag it
+collapsed monster names to `G..` on a tablet. Fixed by giving sprite-bearing rows a wider
+column minimum and letting the team tag ellipse instead of the name.
+
+## The design round (#169)
+
+Five row layouts were rendered at real widths and reviewed against real play. The winner
+is a density-switching row — comfortable up to eight contestants, one line above that —
+and the reasoning, the field priority it encodes, and the four rejected alternatives are
+in [`docs/ring-roster-design.md`](../ring-roster-design.md).
+
+Two things from that round are worth repeating here because they reverse earlier decisions
+in this very doc:
+
+- **The 48px sprite was wrong.** This plan argued a 48px icon was free because it matched
+  a roster row's height. It did fit, but the small 24px silhouette reads better and lands
+  in the box the emoji already had, making the emoji a genuine fallback. Sprites are now
+  24px.
+- **Grouping by team is forbidden, not merely unhelpful.** The roster's row order is the
+  order of play (`Ring.doAction` shifts off `this.contestants`). Any future idea that
+  sorts or groups this list destroys information nothing else on screen carries.
+- **Dropping columns entirely was an overcorrection.** #168 was blamed on multi-column
+  layout and the list was pinned to one column. The real fault was the 13rem
+  `minmax()` *minimum*: it let a column be narrower than a row's text needs, which is what
+  produced `G..`. Columns are now earned at explicit container widths — two at 46rem,
+  three at 70rem, with no `auto-fit` — so a wide desktop window fills instead of running a
+  single 100rem-wide column of 24px sprites. Phones and both tablet orientations stay
+  one-up, which is the case every screenshot in this doc shows. The columns flow row-major
+  so the rule above still holds: reading order is still the order of play.
+
 ## Remaining questions
 
-- **Is a 48px sprite enough, or too much?** It reads, and the ±4px lean is visible at 2×.
-  If it proves too busy across twelve rows, the next lever is animating *only* the acting
-  contestant and leaving the rest on a static frame.
+- **Is the 24px sprite's motion worth having?** At 1× the attack lean is a twitch. It works
+  as an ambient "whose turn" tell; if it proves too busy across twelve rows, the next lever
+  is animating *only* the acting contestant and leaving the rest on a static frame.
 - **Should the setting be per-room rather than per-device?** It is in `localStorage`, so it
   does not follow a player from phone to tablet. Cheap, and possibly not right.
 - **Where should the setting live?** Account, next to the key-timestamps toggle. A "Ring
   display" group would be better once there are three of these.
+- **Is eight the right density threshold?** It is the largest count that fits the 40% cap
+  comfortably on a phone. Keying off pane height instead would be steadier but harder to
+  predict, and the roster would change shape on rotation.
 - **`useRingKeyTimestamps` has a latent staleness bug** worth folding into any pass here: it
   uses a plain `useState`, so a toggle and a consumer mounted at once (the workspace layout
   allows it) disagree until a reload. `usePixelFightStage` and `useTheme` both use

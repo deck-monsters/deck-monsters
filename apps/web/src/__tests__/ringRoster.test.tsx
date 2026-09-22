@@ -74,9 +74,10 @@ describe('RingRoster', () => {
     );
 
     expect(screen.getByText('40/50')).toBeTruthy();
-    expect(screen.getByText('ac 15')).toBeTruthy();
+    // `AC`, not `ac` — an initialism, and the lexicon's compact spelling.
+    expect(screen.getByText('AC 15')).toBeTruthy();
     expect(screen.getByText('12/60')).toBeTruthy();
-    expect(screen.getByText('ac 13')).toBeTruthy();
+    expect(screen.getByText('AC 13')).toBeTruthy();
   });
 
   it('counts only living monsters as standing', () => {
@@ -88,10 +89,11 @@ describe('RingRoster', () => {
       />
     );
 
-    expect(screen.getByText(/1\/2 standing/)).toBeTruthy();
+    // Two counts rather than a fraction: `1/2` cannot say how a fight is going.
+    expect(screen.getByText(/1 standing · 1 fallen/)).toBeTruthy();
   });
 
-  it('marks a defeated monster instead of showing its hp numbers', () => {
+  it('marks a fallen monster instead of showing its hp numbers', () => {
     render(
       <RingRoster
         contestants={[contestant({ hp: 0, dead: true })]}
@@ -100,21 +102,72 @@ describe('RingRoster', () => {
       />
     );
 
-    expect(screen.getByText('defeated')).toBeTruthy();
+    // "fallen" is the lexicon's word; "defeated" appears nowhere in it.
+    expect(screen.getByText('fallen')).toBeTruthy();
     expect(screen.queryByText('0/50')).toBeNull();
   });
 
-  it('labels bosses and team assignments', () => {
+  it('badges a boss and credits the house that stages it', () => {
     render(
       <RingRoster
-        contestants={[contestant({ isBoss: true, owner: null, userId: null, team: 'Alliance' })]}
+        contestants={[contestant({ isBoss: true, owner: null, userId: null })]}
         collapsed={false}
         onToggle={noop}
       />
     );
 
     expect(screen.getByText('BOSS')).toBeTruthy();
-    expect(screen.getByText('Alliance')).toBeTruthy();
+    // A boss has no beastmaster, so the field would otherwise sit empty.
+    expect(screen.getByText('👑 The Editor')).toBeTruthy();
+  });
+
+  it('shows teams only once more than one of them is standing', () => {
+    const oneTeam = render(
+      <RingRoster
+        contestants={[
+          contestant({ team: 'The Alliance' }),
+          contestant({ name: 'Aqim', userId: 'user-2', team: 'The Alliance' }),
+        ]}
+        collapsed={false}
+        onToggle={noop}
+      />
+    );
+    // One team down the whole list is not information.
+    expect(oneTeam.container.querySelector('.roster-team-pip')).toBeNull();
+    expect(oneTeam.queryByText?.('The Alliance') ?? null).toBeNull();
+    oneTeam.unmount();
+
+    render(
+      <RingRoster
+        contestants={[
+          contestant({ team: 'Gryffindor' }),
+          contestant({ name: 'Aqim', userId: 'user-2', team: 'Slytherin' }),
+        ]}
+        collapsed={false}
+        onToggle={noop}
+      />
+    );
+
+    // Once in the row's meta line, once in the legend that names every colour in play.
+    expect(screen.getAllByText('Gryffindor')).toHaveLength(2);
+    expect(screen.getAllByText('Slytherin')).toHaveLength(2);
+    expect(screen.getByRole('list', { name: 'Teams in play' })).toBeTruthy();
+  });
+
+  it('drops a wiped-out team from the relevance test', () => {
+    const { container } = render(
+      <RingRoster
+        contestants={[
+          contestant({ team: 'Gryffindor' }),
+          contestant({ name: 'Aqim', userId: 'user-2', team: 'Slytherin', hp: 0, dead: true }),
+        ]}
+        collapsed={false}
+        onToggle={noop}
+      />
+    );
+
+    // Only one side is still standing, so allegiance has stopped discriminating.
+    expect(container.querySelector('.roster-team-pip')).toBeNull();
   });
 
   it('flags the viewer’s own monsters', () => {
@@ -135,8 +188,33 @@ describe('RingRoster', () => {
       <RingRoster contestants={[contestant()]} collapsed onToggle={noop} />
     );
 
-    expect(screen.getByText(/1\/1 standing/)).toBeTruthy();
+    expect(screen.getByText(/1 standing/)).toBeTruthy();
     expect(screen.queryByText('40/50')).toBeNull();
+  });
+
+  it('keeps one row shape at every density, so width can decide the layout', () => {
+    // Dense rows were briefly a second markup branch, which could not compose with the
+    // column breakpoints. Density is a class now; the DOM is identical either way.
+    const shape = (count: number) => {
+      const list = Array.from({ length: count }, (_, i) =>
+        contestant({ name: `M${i}`, userId: `u${i}` }));
+      const { container, unmount } = render(
+        <RingRoster contestants={list} collapsed={false} onToggle={noop} />
+      );
+      const row = container.querySelector('.roster-row')!;
+      const markup = row.innerHTML;
+      const dense = container.querySelector('.roster-list')!.className.includes('dense');
+      unmount();
+      return { markup, dense };
+    };
+
+    const small = shape(3);
+    const big = shape(12);
+
+    expect(small.dense).toBe(false);
+    expect(big.dense).toBe(true);
+    // Same row, whatever the count — only the list's class differs.
+    expect(big.markup).toBe(small.markup);
   });
 
   it('calls onToggle when the summary is clicked', () => {

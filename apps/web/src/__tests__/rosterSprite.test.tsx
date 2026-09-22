@@ -32,8 +32,8 @@ describe('roster sprites', () => {
       <RingRoster contestants={[contestant()]} collapsed={false} onToggle={noop} />,
     );
 
-    expect(container.querySelector('.roster-icon')).not.toBeNull();
-    expect(container.querySelector('.roster-sprite-cell')).toBeNull();
+    expect(container.querySelector('.roster-icon-emoji')!.textContent).toBe('🐍');
+    expect(container.querySelector('.roster-icon canvas')).toBeNull();
   });
 
   it('swaps the icon for the sprite rather than showing both', () => {
@@ -46,8 +46,10 @@ describe('roster sprites', () => {
       </RosterSpriteContext.Provider>,
     );
 
-    expect(container.querySelector('.roster-sprite-cell')).not.toBeNull();
-    expect(container.querySelector('.roster-icon')).toBeNull();
+    // The sprite takes over the emoji's 24px box rather than sitting beside it, which is
+    // what makes the emoji a free fallback when the animations are off.
+    expect(container.querySelector('.roster-icon canvas')).not.toBeNull();
+    expect(container.querySelector('.roster-icon-emoji')).toBeNull();
   });
 
   it('adds no second HP bar — the row keeps exactly one', () => {
@@ -70,8 +72,36 @@ describe('roster sprites', () => {
     );
 
     const row = container.querySelector('.roster-row')!;
-    expect(row.getAttribute('aria-label')).toBe('Aster, 10 of 10 hit points, armor class 7');
-    expect(container.querySelector('.roster-sprite-cell')!.textContent).toBe('');
+    // The label carries the fields the visual row drops — species among them.
+    expect(row.getAttribute('aria-label'))
+      .toBe('Aster, 10 of 10 hit points, Basilisk, Lvl 2, someone, armor class 7');
+    expect(container.querySelector('.roster-icon')!.textContent).toBe('');
+  });
+
+  it('leaves the name line to the name, whatever else the row carries', () => {
+    // The row used to put the name, a rigid team tag, HP and AC on one line inside a
+    // 13rem two-up column, and the name was the only thing that could give — so it
+    // collapsed to "G..". Nothing shares the name line now but the boss badge.
+    const api = { render: () => <canvas className="roster-sprite" /> };
+    const { container } = render(
+      <RosterSpriteContext.Provider value={api}>
+        <RingRoster
+          contestants={[
+            contestant({ name: 'Bartholomew Quillingsworth III', team: 'Gryffindor', isBoss: true }),
+            contestant({ name: 'Ox', userId: 'user-2', team: 'Slytherin' }),
+          ]}
+          collapsed={false}
+          onToggle={noop}
+        />
+      </RosterSpriteContext.Provider>,
+    );
+
+    const head = container.querySelector('.roster-row-head')!;
+    expect(head.querySelector('.roster-name-text')!.textContent)
+      .toBe('Bartholomew Quillingsworth III');
+    // Team and HP have left the name line entirely.
+    expect(head.textContent).toBe('Bartholomew Quillingsworth IIIBOSS');
+    expect(container.querySelector('.roster-list')!.className).not.toContain('sprites');
   });
 
   it('draws at an integer scale into a square canvas', () => {

@@ -147,7 +147,7 @@ describe('RingPane roster freshness at fight end', () => {
     expect(screen.queryByText('Stale Snake')).not.toBeInTheDocument();
     expect(screen.getByText('Anna')).toBeInTheDocument();
     expect(screen.getByText('Senyi')).toBeInTheDocument();
-    expect(screen.getByText(/1\/2 standing/)).toBeInTheDocument();
+    expect(screen.getByText(/1 standing · 1 fallen/)).toBeInTheDocument();
 
     // The fight concludes and the ring clears — the engine publishes an empty roster.
     // The roster must reflect that truly-empty ring rather than reverting to the

@@ -82,6 +82,7 @@ non-obvious bit us before.
 | [`docs/deployment.md`](docs/deployment.md) | Railway/Supabase deployment or environment configuration |
 | [`docs/devcontainer-auth.md`](docs/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container instead of on the host |
 | [`docs/pixel-art-animations-in-js.md`](docs/pixel-art-animations-in-js.md) | Sprite, canvas, or CSS pixel-art work in the web app (crisp rendering, sprite sheets, common pitfalls) |
+| [`docs/ring-roster-design.md`](docs/ring-roster-design.md) | The Ring roster row — field priority, why row order must stay the order of play, and the five layouts considered before this one |
 | [`docs/archive/roadmap/18-live-ring-roster.md`](docs/archive/roadmap/18-live-ring-roster.md) | The ring roster panel, `ring.state` payload, or `Ring.publishState()` call sites |
 | [`docs/roadmap/19-player-agency-and-items.md`](docs/roadmap/19-player-agency-and-items.md) | Items, targeting scrolls, deck-building agency, or any "should the player control this?" question |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scroll and shop rules |

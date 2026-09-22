@@ -1,5 +1,15 @@
 import React, { useContext } from 'react';
 import { RosterSpriteContext } from './roster-sprite-context.js';
+import {
+  describeContestant,
+  formatLevel,
+  isDense,
+  metaParts,
+  teamsAreRelevant,
+  teamsInPlay,
+  turnPositions,
+  type TurnPosition,
+} from './roster-model.js';
 
 export interface RingContestantSnapshot {
   name: string;
@@ -26,6 +36,8 @@ interface RingRosterProps {
   onToggle: () => void;
 }
 
+export { formatLevel };
+
 /**
  * Ratio clamped to 0–1. `maxHp` can read 0 on a partially hydrated entity, and a
  * monster can be driven below 0 hp by an overkill hit — both would otherwise produce
@@ -44,90 +56,137 @@ export function hpBand(ratio: number): 'healthy' | 'hurt' | 'critical' {
 }
 
 /**
- * Level 0 is not a level — it is how the engine represents a monster that has not
- * earned any XP yet. `describeLevels` renders it as "beginner" and the monster stat
- * card shows "Level: beginner", so a roster reading "lvl 0" contradicted the rest of
- * the game.
+ * Turn gutter. Order of play is the row order; this marks whose turn it is now.
+ *
+ * It does not mark who is up next. That cue was tried and removed: the engine's queue
+ * excludes fled contestants as well as fallen ones, and `ring.state` does not publish
+ * `fled`, so the prediction could point at a monster that will never act again.
  */
-export function formatLevel(level: number): string {
-  return level > 0 ? `lvl ${level}` : 'beginner';
+function TurnMarker({ position }: { position: TurnPosition }) {
+  return (
+    <span className={`roster-turn roster-turn-${position ?? 'idle'}`} aria-hidden="true">
+      {position === 'acting' ? '▶' : '·'}
+    </span>
+  );
 }
 
+function HealthMeter({ contestant }: { contestant: RingContestantSnapshot }) {
+  const ratio = hpRatio(contestant.hp, contestant.maxHp);
+  const band = contestant.dead ? 'critical' : hpBand(ratio);
+  return (
+    <div
+      className="roster-bar-track"
+      role="meter"
+      aria-valuenow={Math.max(0, contestant.hp)}
+      aria-valuemin={0}
+      aria-valuemax={Math.max(contestant.maxHp, 0)}
+      aria-label={`${contestant.name} health`}
+    >
+      <div
+        className={`roster-bar-fill roster-bar-${band}`}
+        style={{ width: `${Math.round(ratio * 100)}%` }}
+      />
+    </div>
+  );
+}
+
+function ContestantIcon({ contestant }: { contestant: RingContestantSnapshot }) {
+  // Null unless the pixel-art theme feature and the player's opt-in are both on. The
+  // sprite is drawn at the same 24px the emoji occupies, so the two are interchangeable
+  // and a room with the animations off loses nothing but the motion.
+  const sprites = useContext(RosterSpriteContext);
+  const sprite = sprites?.render(contestant) ?? null;
+  if (sprite) return <span className="roster-icon">{sprite}</span>;
+  if (contestant.icon) {
+    return (
+      <span className="roster-icon roster-icon-emoji" aria-hidden="true">
+        {contestant.icon}
+      </span>
+    );
+  }
+  return <span className="roster-icon" aria-hidden="true" />;
+}
+
+/**
+ * One row shape at every size.
+ *
+ * Dense rows were briefly a second markup branch, which could not compose with the
+ * column breakpoints: a big fight on a wide pane wants comfortable rows in three columns,
+ * not compressed ones. Density is purely presentational now — the narrow tier folds the
+ * meta line up beside the name and hides level and AC — so width decides the layout and
+ * the DOM never changes underneath it.
+ */
 function ContestantRow({
   contestant,
   isMine,
+  showTeam,
+  position,
 }: {
   contestant: RingContestantSnapshot;
   isMine: boolean;
+  showTeam: boolean;
+  position: TurnPosition;
 }) {
-  const ratio = hpRatio(contestant.hp, contestant.maxHp);
-  const band = contestant.dead ? 'critical' : hpBand(ratio);
-  const isActing = Boolean(contestant.acting) && !contestant.dead;
-  // Null unless the pixel-art theme feature and the player's opt-in are both on.
-  const sprites = useContext(RosterSpriteContext);
-  const sprite = sprites?.render(contestant) ?? null;
-  const label = `${contestant.name}, ${contestant.dead ? 'defeated' : `${contestant.hp} of ${contestant.maxHp} hit points`}, armor class ${contestant.ac}${isActing ? ', acting now' : ''}`;
+  const isActing = position === 'acting';
+  const parts = metaParts(contestant, showTeam);
+
+  const classes = [
+    'roster-row',
+    contestant.dead ? 'roster-row-dead' : '',
+    isMine ? 'roster-row-mine' : '',
+    isActing ? 'roster-row-acting' : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <li
-      className={`roster-row${contestant.dead ? ' roster-row-dead' : ''}${isMine ? ' roster-row-mine' : ''}${isActing ? ' roster-row-acting' : ''}`}
-      aria-label={label}
-    >
-      {/* A sprite sits in the row's left gutter, spanning all three lines, so it uses
-          height the row already had. The icon stays in the name line when there is no
-          sprite — and is dropped when there is one, since it would say the same thing
-          twice. */}
-      {sprite && <div className="roster-sprite-cell">{sprite}</div>}
+    <li className={classes} aria-label={describeContestant(contestant, position)}>
+      <TurnMarker position={position} />
+      <ContestantIcon contestant={contestant} />
 
       <div className="roster-row-body">
-      <div className="roster-row-head">
-        <span className="roster-name">
-          {isActing && (
-            <span className="roster-acting-marker" aria-hidden="true">▶</span>
-          )}
-          {contestant.icon && !sprite && (
-            <span className="roster-icon" aria-hidden="true">{contestant.icon} </span>
-          )}
+        {/* Nothing shares this line with the name but the boss badge, so the name gets
+            every pixel left after the rail — it is the field the narration names monsters
+            by, and the one that used to collapse to "G..". */}
+        <div className="roster-row-head">
           <span className="roster-name-text">{contestant.name}</span>
           {contestant.isBoss && <span className="roster-tag roster-tag-boss">BOSS</span>}
-          {contestant.team && <span className="roster-tag">{contestant.team}</span>}
-        </span>
-        <span className="roster-numbers">
-          {contestant.dead ? (
-            <span className="roster-dead-text">defeated</span>
-          ) : (
-            <>
-              <span className="roster-hp">
-                {contestant.hp}/{contestant.maxHp}
+        </div>
+        <div className="roster-row-sub">
+          {parts.map((part, index) => (
+            <React.Fragment key={part.kind}>
+              {index > 0 && <span className="roster-sub-sep" aria-hidden="true">·</span>}
+              <span className={`roster-sub-${part.kind}`}>
+                {part.kind === 'team' && <TeamPip team={part.text} />}
+                {part.text}
               </span>
-              <span className="roster-ac" title="Armor class">
-                ac {contestant.ac}
-              </span>
-            </>
-          )}
-        </span>
+            </React.Fragment>
+          ))}
+        </div>
       </div>
 
-      <div
-        className="roster-bar-track"
-        role="meter"
-        aria-valuenow={Math.max(0, contestant.hp)}
-        aria-valuemin={0}
-        aria-valuemax={Math.max(contestant.maxHp, 0)}
-        aria-label={`${contestant.name} health`}
-      >
-        <div
-          className={`roster-bar-fill roster-bar-${band}`}
-          style={{ width: `${Math.round(ratio * 100)}%` }}
-        />
-      </div>
-
-      <div className="roster-row-sub">
-        {contestant.creatureType} · {formatLevel(contestant.level)}
-        {contestant.owner ? ` · ${contestant.owner}` : ''}
-      </div>
+      <div className="roster-rail">
+        <span className="roster-hp">
+          {contestant.dead ? <span className="roster-dead-text">fallen</span> : `${contestant.hp}/${contestant.maxHp}`}
+        </span>
+        <HealthMeter contestant={contestant} />
       </div>
     </li>
+  );
+}
+
+/**
+ * Colour-codes a team without reordering the roster.
+ *
+ * Team names are a closed set (`The Alliance`, the four houses, `Boss`), so a stable
+ * colour per team is safe. It is never the only channel: the name sits beside the pip in
+ * a comfortable row, and the legend under the list names every colour in play.
+ */
+function TeamPip({ team }: { team: string }) {
+  return (
+    <span
+      className="roster-team-pip"
+      data-team={team.toLowerCase().replace(/[^a-z]+/g, '-')}
+      aria-hidden="true"
+    />
   );
 }
 
@@ -137,6 +196,10 @@ function ContestantRow({
  * HP and AC are reported in the narration too, but only as prose spread across the
  * feed, so on a phone you had to scroll back through several screens of rolls to work
  * out who was still standing. This keeps the whole board visible while the fight runs.
+ *
+ * Rows are rendered in the order the engine holds them, which is the order of play, and
+ * are never sorted or grouped — see `turnPositions`. Layout and field priority are
+ * recorded in `docs/roadmap/23-pixel-fight-stage.md`.
  */
 export default function RingRoster({
   contestants,
@@ -147,6 +210,10 @@ export default function RingRoster({
   if (contestants.length === 0) return null;
 
   const standing = contestants.filter((c) => !c.dead).length;
+  const fallen = contestants.length - standing;
+  const showTeam = teamsAreRelevant(contestants);
+  const dense = isDense(contestants.length);
+  const positions = turnPositions(contestants);
 
   return (
     <section className="ring-roster" aria-label="Monsters in the ring">
@@ -157,19 +224,33 @@ export default function RingRoster({
         aria-expanded={!collapsed}
       >
         <span aria-hidden="true">{collapsed ? '▸' : '▾'}</span> In the ring —{' '}
-        {standing}/{contestants.length} standing
+        {standing} standing{fallen > 0 ? ` · ${fallen} fallen` : ''}
       </button>
 
       {!collapsed && (
-        <ol className="roster-list">
-          {contestants.map((contestant) => (
-            <ContestantRow
-              key={`${contestant.name}-${contestant.userId ?? 'boss'}`}
-              contestant={contestant}
-              isMine={Boolean(myUserId && contestant.userId === myUserId)}
-            />
-          ))}
-        </ol>
+        <>
+          <ol className={`roster-list${dense ? ' roster-list-dense' : ''}`}>
+            {contestants.map((contestant) => (
+              <ContestantRow
+                key={`${contestant.name}-${contestant.userId ?? 'boss'}`}
+                contestant={contestant}
+                isMine={Boolean(myUserId && contestant.userId === myUserId)}
+                showTeam={showTeam}
+                position={positions.get(contestant) ?? null}
+              />
+            ))}
+          </ol>
+          {showTeam && (
+            <ul className="roster-legend" aria-label="Teams in play">
+              {teamsInPlay(contestants).map((team) => (
+                <li key={team}>
+                  <TeamPip team={team} />
+                  {team}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   );

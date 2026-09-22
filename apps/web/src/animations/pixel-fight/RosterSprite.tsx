@@ -6,11 +6,14 @@ import type { FighterAnimation } from './state.js';
 
 /**
  * Integer scale, because a pixel sprite drawn at a fractional scale gets uneven pixels.
- * 2× (48px) is chosen to match the natural height of a roster row — name line, HP bar and
- * the creature/level line — so the sprite occupies the row's existing height rather than
- * adding any. That is the whole point of putting it here instead of in a separate band.
+ *
+ * 1× (24px) is the box the roster's emoji icon already occupied, which is what makes the
+ * emoji a free fallback when the animations are off — and, tested side by side, the small
+ * silhouette simply read better than the 48px version this started at. The trade is that
+ * the attack lean is now a twitch rather than a lunge: at this size the sprite is an
+ * ambient tell for whose turn it is, not a cutscene.
  */
-const SCALE = 2;
+const SCALE = 1;
 export const ROSTER_SPRITE_PX = SPRITE_ART * SCALE;
 
 export default function RosterSprite({
