@@ -91,9 +91,9 @@ function HealthMeter({ contestant }: { contestant: RingContestantSnapshot }) {
 }
 
 function ContestantIcon({ contestant }: { contestant: RingContestantSnapshot }) {
-  // Null unless the pixel-art theme feature and the player's opt-in are both on. The
-  // sprite is drawn at the same 24px the emoji occupies, so the two are interchangeable
-  // and a room with the animations off loses nothing but the motion.
+  // Null when the player has opted out of pixel monsters, and for the moment before the
+  // lazy sprite chunk arrives. The sprite is drawn at the same 24px the emoji occupies, so
+  // the two are interchangeable and the fallback loses nothing but the motion.
   const sprites = useContext(RosterSpriteContext);
   const sprite = sprites?.render(contestant) ?? null;
   if (sprite) return <span className="roster-icon">{sprite}</span>;

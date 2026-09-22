@@ -1,8 +1,9 @@
 # 23 — Pixel Fight Animations: From a Band to the Roster
 
 **Category**: Product / UI
-**Status**: Shipped (#167). The animations live in the Ring roster rows, behind the
-theme feature and a player opt-in that defaults off. Remaining questions are at the end.
+**Status**: Shipped (#167). The animations live in the Ring roster rows. Superseded in
+part by [24 — Pixel Monsters Everywhere](24-pixel-monsters-everywhere.md), which made them
+the default on every theme with an opt-out. Remaining questions are at the end.
 
 The pixel-art fight animations were built as a canvas band above the Ring feed. They
 worked, were reachable, and were readable — and were still wrong, because they re-drew
@@ -127,7 +128,8 @@ in this very doc:
 - **Should the setting be per-room rather than per-device?** It is in `localStorage`, so it
   does not follow a player from phone to tablet. Cheap, and possibly not right.
 - **Where should the setting live?** Account, next to the key-timestamps toggle. A "Ring
-  display" group would be better once there are three of these.
+  display" group would be better once there are three of these. (Now an opt-out — roadmap
+  24.)
 - **Is eight the right density threshold?** It is the largest count that fits the 40% cap
   comfortably on a phone. Keying off pane height instead would be steadier but harder to
   predict, and the roster would change shape on rotation.

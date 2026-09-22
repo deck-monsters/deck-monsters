@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth-context.js';
 import { THEMES, useTheme } from '../hooks/useTheme.js';
 import { useRingKeyTimestamps } from '../hooks/useRingKeyTimestamps.js';
-import { usePixelFightStage } from '../hooks/usePixelFightStage.js';
+import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { trpc } from '../lib/trpc.js';
 
 export default function AccountView() {
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { ringKeyTimestampsEnabled, setRingKeyTimestampsEnabled } = useRingKeyTimestamps();
-  const { pixelFightStageEnabled, setPixelFightStageEnabled } = usePixelFightStage();
+  const { pixelMonstersEnabled, setPixelMonstersEnabled } = usePixelMonsters();
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const { data: profile } = trpc.profile.me.useQuery();
@@ -190,12 +190,12 @@ export default function AccountView() {
           >
             <input
               type="checkbox"
-              checked={pixelFightStageEnabled}
-              onChange={(e) => setPixelFightStageEnabled(e.target.checked)}
+              checked={pixelMonstersEnabled}
+              onChange={(e) => setPixelMonstersEnabled(e.target.checked)}
               style={{ accentColor: 'var(--color-accent)', marginTop: '0.15rem' }}
             />
             <span>
-              <span style={{ color: 'var(--color-fg-bright)' }}>Show pixel fight animations</span>
+              <span style={{ color: 'var(--color-fg-bright)' }}>Show pixel monsters</span>
               <span
                 style={{
                   display: 'block',
@@ -205,10 +205,9 @@ export default function AccountView() {
                   lineHeight: 1.45,
                 }}
               >
-                When on, each monster in the Ring roster is drawn as an animated pixel sprite —
-                it lunges on its turn, flinches when hit, and topples when it falls. Off by
-                default. Needs the Street Fighter theme; other themes stay text-only whatever
-                this says.
+                Each monster in the Ring roster is drawn as a pixel sprite — it lunges on its
+                turn, flinches when hit, and topples when it falls. Turn this off to show each
+                monster's emoji instead.
               </span>
             </span>
           </label>
