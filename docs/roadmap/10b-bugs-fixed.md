@@ -3882,3 +3882,63 @@ rows carry a sprite, and a long team name leaving the monster name intact.
 the column arithmetic above is reasoned, not measured. Worth a look on a real tablet.
 
 **Status**: Fixed.
+
+### 169. The roster row carried ten fields on three lines and lost the order of play — FIXED
+
+Follow-on from #167/#168, from a design round driven by photos of real sessions. The row
+had accumulated ten fields, five of them on the name line, and every layout fix so far had
+been a budgeting exercise against that. The reorganisation was sanctioned explicitly
+("I'm okay with a bigger information reorganization and/or even some changes to naming
+conventions or display text").
+
+**The finding that shaped it**: an option that grouped rows under team headings was
+attractive on paper — it removed the name line's worst pressure and answered "how is each
+side doing" — and it would have **destroyed the order of play**. `Ring.doAction` plays
+contestants by `activeContestants.shift()` over `this.contestants`, and
+`contestantSnapshots()` maps that same array, so row order *is* turn order and nothing
+else on screen carries it. It was invisible precisely because it had always been correct.
+
+**Fix**:
+- **One column.** `.roster-list` was `repeat(auto-fit, minmax(13rem, 1fr))`, the root of
+  every crowding bug here including #168's `G..`; #168's 21rem workaround is removed with
+  it, because the restructure removes the cause rather than the symptom.
+- **Name line holds the name and the boss badge, nothing else.** Team, HP and AC left it.
+- **Right rail**: the HP figure with its bar directly beneath at the same width. Both are
+  kept deliberately — the bar gives the shape, the numbers the scale — with the bar as the
+  quieter of the two rather than either being dropped.
+- **Meta line** in priority order: beastmaster, level, team, AC. It ellipses from the
+  right, so the least important field is always the first to go. Species is no longer
+  rendered at all; the row icon carries it, and the accessible label keeps it.
+- **Teams show only when two or more are standing** (`teamsAreRelevant`), as a colour pip
+  plus the name, with a legend under the list — never by reordering. Team names are a
+  closed set of ≤12 characters, which is what makes stable per-team colours safe.
+- **Density tiers**: above eight contestants rows go to one line (name + beastmaster + bar
+  + figure). The 40% cap already stopped the roster pushing the feed off screen; this stops
+  a twelve-way brawl burying everyone below the fold.
+- **Turn gutter**: `▶` acting, `›` up next, skipping the fallen and wrapping the round.
+  New information — row order gave the sequence but never the position in it.
+- **The sprite drops 48px → 24px**, the box the emoji already occupied, so the emoji is a
+  free fallback for the default-off case (#166) and the small silhouette reads better.
+- **Wording**: `defeated` → `fallen`, `lvl 2` → `Lvl 2`, `beginner` → `Beginner`,
+  `ac 9` → `AC 9`, `5/5 standing` → `5 standing · 1 fallen`, and a boss's empty
+  beastmaster field becomes `👑 The Editor`. The first three were **lexicon drift** —
+  `docs/voice-and-wording.md` is a contract and the roster was off it.
+
+**Root cause of the whole sequence**: the row was extended one field at a time, each
+addition defensible on its own, with no ranking to fall back on when they started
+competing. `roster-model.ts` now holds that ranking as code (`metaParts`) rather than as
+an ordering buried in JSX.
+
+**Tests**: `roster-model.test.ts` covers the turn-order contract (acting, next, wrapping,
+skipping the fallen, nobody-acting, a fallen contestant that claims to be acting), team
+relevance including the wiped-out-team case, meta ordering, the boss byline, and that
+species never appears in the visible parts. `ringRoster.test.tsx` and
+`rosterSprite.test.tsx` were updated to the new markup and wording.
+
+**Not verified in a browser**: jsdom does no layout, so the density threshold and the
+single-column reflow are reasoned, not measured.
+
+**Design record**: [`docs/ring-roster-design.md`](../ring-roster-design.md) — field
+priority, the hard rule about row order, and the five layouts considered.
+
+**Status**: Fixed.

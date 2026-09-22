@@ -175,16 +175,25 @@ and the roster's `Contestant.isBoss` cannot disagree.
 
 The web consumes it in `apps/web/src/animations/pixel-fight/` (pose map `state.ts`, canvas
 `renderer.ts`, sprites, `RosterSprite.tsx`, provider `PixelSprites.tsx`). The sprites are
-drawn **inside the Ring roster rows**, not in a band of their own — a band duplicated the
+drawn **inside the Ring roster rows** at 24px — the box the emoji icon already occupied —
+not in a band of their own — a band duplicated the
 roster's HP bars and cost 96–200px of viewport, so it was deleted (#167). They appear only
 when **both** gates open: the active theme declares the `pixel-art` feature
 (`data-theme-features`, `useThemeFeature`) *and* the player has opted in via
 `usePixelFightStage` (Account → "Show pixel fight animations", **off by default** — #166).
 Until an opted-in player is on the theme the lazy chunk is never fetched: `RingRoster` reads
 `RosterSpriteContext` rather than importing the art. Both flags are `useSyncExternalStore`
-stores so every consumer flips together. The gotchas that bit
-live — an early-waking `setTimeout` that never re-armed (#162), the roster emptying inside
-the fade, one literal sprite map with poses as transforms — are listed in the archived plan
+stores so every consumer flips together.
+
+The roster row itself is ranked by field priority and **must never be sorted or grouped**:
+its row order is the order of play, since `Ring.doAction` shifts contestants off the same
+array `contestantSnapshots()` maps. A team-grouped layout got as far as review before that
+was spotted. Field priority, the wording contract and the four rejected layouts are in
+[`docs/ring-roster-design.md`](../ring-roster-design.md).
+
+The gotchas that bit live — an early-waking `setTimeout` that never re-armed (#162), the
+roster emptying inside the fade, one literal sprite map with poses as transforms — are
+listed in the archived plan
 [`docs/archive/roadmap/17-pixel-art-fight-animations.md`](../archive/roadmap/17-pixel-art-fight-animations.md).
 
 ## The web feeds

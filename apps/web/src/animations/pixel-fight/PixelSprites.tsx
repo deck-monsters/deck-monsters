@@ -19,8 +19,8 @@ import {
  * This replaced a separate canvas band above the feed. The band re-drew state the roster
  * already showed — the same monsters with a second set of HP bars — and spent 96px of a
  * phone viewport (200px on a tablet) doing it, pushing the narration, which is the game,
- * into a strip. Sprites in the roster rows cost no extra height: a 48px sprite is about
- * the height a row already occupies. See docs/roadmap/23-pixel-fight-stage.md.
+ * into a strip. Sprites in the roster rows cost no extra height at all: they sit in the
+ * 24px box the emoji icon already had. See docs/roadmap/23-pixel-fight-stage.md.
  */
 export default function PixelSprites({
   contestants,

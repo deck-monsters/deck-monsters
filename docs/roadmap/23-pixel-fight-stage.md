@@ -18,6 +18,8 @@ the decision, and what is left.
 | [#165](10b-bugs-fixed.md) | Overlay → docked band; `inEncounter` adoption; compact duel on phones |
 | [#166](10b-bugs-fixed.md) | Opt-in setting, off by default — bought time to decide |
 | [#167](10b-bugs-fixed.md) | **Band deleted; sprites moved into the roster rows** |
+| [#168](10b-bugs-fixed.md) | Sprite gutter squeezed names to `G..` in the two-up layout |
+| [#169](10b-bugs-fixed.md) | Row reorganised around field priority; two-up dropped; sprite 48px → 24px |
 
 ## The evidence
 
@@ -89,20 +91,36 @@ One regression came out of it (#168): the sprite gutter was not budgeted into
 collapsed monster names to `G..` on a tablet. Fixed by giving sprite-bearing rows a wider
 column minimum and letting the team tag ellipse instead of the name.
 
+## The design round (#169)
+
+Five row layouts were rendered at real widths and reviewed against real play. The winner
+is a density-switching row — comfortable up to eight contestants, one line above that —
+and the reasoning, the field priority it encodes, and the four rejected alternatives are
+in [`docs/ring-roster-design.md`](../ring-roster-design.md).
+
+Two things from that round are worth repeating here because they reverse earlier decisions
+in this very doc:
+
+- **The 48px sprite was wrong.** This plan argued a 48px icon was free because it matched
+  a roster row's height. It did fit, but the small 24px silhouette reads better and lands
+  in the box the emoji already had, making the emoji a genuine fallback. Sprites are now
+  24px.
+- **Grouping by team is forbidden, not merely unhelpful.** The roster's row order is the
+  order of play (`Ring.doAction` shifts off `this.contestants`). Any future idea that
+  sorts or groups this list destroys information nothing else on screen carries.
+
 ## Remaining questions
 
-- **Is a 48px sprite enough, or too much?** It reads, and the ±4px lean is visible at 2×.
-  If it proves too busy across twelve rows, the next lever is animating *only* the acting
-  contestant and leaving the rest on a static frame.
+- **Is the 24px sprite's motion worth having?** At 1× the attack lean is a twitch. It works
+  as an ambient "whose turn" tell; if it proves too busy across twelve rows, the next lever
+  is animating *only* the acting contestant and leaving the rest on a static frame.
 - **Should the setting be per-room rather than per-device?** It is in `localStorage`, so it
   does not follow a player from phone to tablet. Cheap, and possibly not right.
 - **Where should the setting live?** Account, next to the key-timestamps toggle. A "Ring
   display" group would be better once there are three of these.
-- **Should the team tag move to the sub-line?** The head line carries name + tag + HP + AC,
-  which is what made it so easy to starve (#168). Moving the team tag down beside
-  `Minotaur · lvl 2 · Tweettypography` would free the head line entirely and let two-up work
-  at a narrower column again. Not done here because it changes information layout, not just
-  spacing.
+- **Is eight the right density threshold?** It is the largest count that fits the 40% cap
+  comfortably on a phone. Keying off pane height instead would be steadier but harder to
+  predict, and the roster would change shape on rotation.
 - **`useRingKeyTimestamps` has a latent staleness bug** worth folding into any pass here: it
   uses a plain `useState`, so a toggle and a consumer mounted at once (the workspace layout
   allows it) disagree until a reload. `usePixelFightStage` and `useTheme` both use
