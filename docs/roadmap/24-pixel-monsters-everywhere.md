@@ -16,8 +16,8 @@ using the existing emoji representations."
 
 | # | Task | Status | Commit |
 |---|---|---|---|
-| T1 | Sprites on by default, the setting becomes an opt-out; every theme, not only SNES | Done | _this commit_ |
-| T2 | Engine publishes each contestant's `appearance` in `ring.state` | Pending | — |
+| T1 | Sprites on by default, the setting becomes an opt-out; every theme, not only SNES | Done | `b1d85f0` |
+| T2 | Engine publishes each contestant's `appearance` in `ring.state` | Done | _this commit_ |
 | T3 | Sprite palette derived from the monster's appearance text | Pending | — |
 | T4 | Sprites inline in the Ring feed wherever a known monster is named | Pending | — |
 | T5 | Browser verification sheet (themes × variations × feed at 2×/3×), docs folded back | Pending | — |

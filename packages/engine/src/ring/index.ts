@@ -91,7 +91,18 @@ export interface RingContestantSnapshot {
 	userId: string | null;
 	/** True for the single contestant currently taking their turn, so a client can highlight it. */
 	acting: boolean;
+	/**
+	 * The monster's appearance as its Beastmaster described it ("gold and black", "slightly
+	 * translucent blue"), or a random colour name for a boss. The web colours each pixel
+	 * sprite from it, so two monsters of one species in a ring do not look identical — see
+	 * docs/roadmap/24-pixel-monsters-everywhere.md. Already public through `look at`; empty
+	 * when a monster has none. Capped because it is free text broadcast to the whole room.
+	 */
+	appearance: string;
 }
+
+/** Longest appearance sent on `ring.state`. The workshop form allows 100; other flows do not cap it. */
+export const SNAPSHOT_APPEARANCE_MAX = 100;
 
 export interface Contestant {
 	monster: any;
@@ -621,6 +632,7 @@ export class Ring extends BaseClass {
 			owner: isBoss ? null : (character?.givenName ?? null),
 			userId: isBoss ? null : (userId ?? null),
 			acting: this.inEncounter && this.activeContestant?.monster === monster,
+			appearance: typeof monster.color === 'string' ? monster.color.slice(0, SNAPSHOT_APPEARANCE_MAX) : '',
 		}));
 	}
 

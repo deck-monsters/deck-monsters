@@ -26,6 +26,12 @@ export interface RingContestantSnapshot {
   userId: string | null;
   /** Optional — older ring.state payloads / the polled seed may omit it. */
   acting?: boolean;
+  /**
+   * The Beastmaster's own description of the monster ("gold and black"), which colours its
+   * pixel sprite. Optional for the same reason as `acting`: a server older than this field
+   * sends none, and the sprite then keeps its species palette.
+   */
+  appearance?: string;
 }
 
 interface RingRosterProps {

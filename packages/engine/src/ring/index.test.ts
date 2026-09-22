@@ -8,6 +8,7 @@ import Game from '../game.js';
 import { RoomEventBus } from '../events/index.js';
 import { engineReady } from '../helpers/engine-ready.js';
 import { ALLIANCE_TEAM, RING_EVENTS } from './ring-events.js';
+import { SNAPSHOT_APPEARANCE_MAX } from './index.js';
 import { getTarget, TARGET_NEXT_PLAYER } from '../helpers/targeting-strategies.js';
 import { addPendingSummon, recordSummon } from '../helpers/boss-summons.js';
 import { TIME_TO_HEAL_MS, TIME_TO_RESURRECT_MS } from '../constants/timing.js';
@@ -72,6 +73,37 @@ describe('ring/index.ts', () => {
 			expect(snapshot!.owner).to.equal(character.givenName);
 		});
 
+
+		it('carries each monster\'s appearance so the web can colour its sprite', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster({ name: 'Ada' });
+			const monster = new Basilisk({ name: 'Stonefang', color: 'emerald and gold' });
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			const [snapshot] = ring.contestantSnapshots();
+
+			expect(snapshot!.appearance).to.equal('emerald and gold');
+
+			game.dispose();
+		});
+
+		it('caps a long appearance, since it is free text broadcast to the room', () => {
+			// The workshop form stops at 100 characters but the Discord and text flows do not.
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster({ name: 'Ada' });
+			const monster = new Basilisk({ name: 'Stonefang', color: 'green '.repeat(100) });
+			character.addMonster(monster);
+			ring.addMonster({ monster, character, userId: 'user-1' });
+
+			const [snapshot] = ring.contestantSnapshots();
+
+			expect(snapshot!.appearance).to.have.length(SNAPSHOT_APPEARANCE_MAX);
+
+			game.dispose();
+		});
 		it('tracks damage so the roster follows the fight', () => {
 			const game = new Game();
 			const ring = game.getRing();
