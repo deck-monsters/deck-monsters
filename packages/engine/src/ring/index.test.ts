@@ -89,6 +89,24 @@ describe('ring/index.ts', () => {
 			game.dispose();
 		});
 
+		it('carries a generated colour\'s hex, and none for a player\'s monster', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const character = new Beastmaster({ name: 'Ada' });
+			const player = new Basilisk({ name: 'Stonefang', color: 'green' });
+			const boss = new Basilisk({ name: 'Sazerac Fang', color: 'sazerac', colorHex: '#FFF4E0' });
+			character.addMonster(player);
+			ring.addMonster({ monster: player, character, userId: 'user-1' });
+			ring.addMonster({ monster: boss, character: new Beastmaster({ name: 'House' }), userId: 'boss', isBoss: true });
+
+			const [first, second] = ring.contestantSnapshots();
+
+			expect(first!.appearanceHex).to.equal(null);
+			expect(second!.appearanceHex).to.equal('#fff4e0');
+
+			game.dispose();
+		});
+
 		it('caps a long appearance, since it is free text broadcast to the room', () => {
 			// The workshop form stops at 100 characters but the Discord and text flows do not.
 			const game = new Game();

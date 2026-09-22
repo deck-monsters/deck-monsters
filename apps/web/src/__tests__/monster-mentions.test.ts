@@ -7,8 +7,8 @@ const ben: KnownMonster = { name: 'Ben Franklin', icon: '💪', creatureType: 'G
 const max: KnownMonster = { name: 'Max', icon: '💪', creatureType: 'Gladiator' };
 
 /** Which monster each replaced emoji was matched to, in order. */
-function matched(text: string, monsters: KnownMonster[]): string[] {
-  return buildMentionIndex(monsters).find(text).map(({ start, end, monster }) =>
+function matched(text: string, monsters: KnownMonster[], beastmasters: string[] = []): string[] {
+  return buildMentionIndex(monsters, beastmasters).find(text).map(({ start, end, monster }) =>
     `${text.slice(start, end)}=${monster.name}`);
 }
 
@@ -99,5 +99,30 @@ describe('monster mentions — leaving everything else alone', () => {
   it('escapes names containing regex characters', () => {
     const odd: KnownMonster = { name: 'Mr. (Bones)?', icon: '💀', creatureType: 'Minotaur' };
     expect(matched('💀 Mr. (Bones)? arrives.', [odd])).toEqual(['💀=Mr. (Bones)?']);
+  });
+
+  it('reads a skin-toned custom icon whole in a hit line', () => {
+    // The cluster regex stopped at the base pictograph, reading 💪🏽 as 💪 and bailing out.
+    const toned: KnownMonster = { name: 'Flex', icon: '💪🏽', creatureType: 'Gladiator' };
+    expect(matched('💪🏽 🔪 🐍  Flex hits Gin & Tonic for 3 damage.', [toned, gin]))
+      .toEqual(['💪🏽=Flex', '🐍=Gin & Tonic']);
+  });
+
+  it('reads a flag icon whole in a hit line', () => {
+    const maple: KnownMonster = { name: 'Maple', icon: '🇨🇦', creatureType: 'Minotaur' };
+    expect(matched('🐍 🤜 🇨🇦  Gin & Tonic hits Maple for 2 damage.', [gin, maple]))
+      .toEqual(['🐍=Gin & Tonic', '🇨🇦=Maple']);
+  });
+
+  it('refuses a name a Beastmaster shares, since their identities print alike', () => {
+    // cardDrop.ts: "<monster identity> finds a card for <character identity>". A Beastmaster
+    // named Gin with a 🐍 avatar is indistinguishable from the monster; the emoji stays.
+    expect(matched('💪 Ben Franklin finds a card for 🐍 Gin & Tonic in the dust.', [gin, ben], ['Gin & Tonic']))
+      .toEqual(['💪=Ben Franklin']);
+  });
+
+  it('still matches a shared name inside the hit cluster, which only ever holds monsters', () => {
+    expect(matched('🐍 🔪 💪  Gin & Tonic hits Ben Franklin for 4 damage.', [gin, ben], ['Gin & Tonic']))
+      .toEqual(['🐍=Gin & Tonic', '💪=Ben Franklin']);
   });
 });

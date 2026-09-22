@@ -101,6 +101,26 @@ export function tintFromAppearance(appearance: string | undefined): Tint | null 
   return null;
 }
 
+/**
+ * The tint of an exact colour — a generated boss's `appearanceHex`. Bosses are described
+ * by names from `grab-color-names` ("Sazerac", "Deep Fir", "Kilamanjaro") that the word
+ * table above mostly cannot read, so the hex that came with the name is the reliable source.
+ *
+ * Saturation is taken as *chroma*, not HSL saturation: a pale cream like `#fff4e0` has HSL
+ * saturation 1.0 but almost no colour, and read naively would paint the boss bright orange.
+ * Lightness becomes a shift, bounded like the word table's so the ramp still reads.
+ */
+export function tintFromHex(hex: string | null | undefined): Tint | null {
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return null;
+  const { h, s, l } = hexToHsl(hex);
+  const chroma = s * (1 - Math.abs((2 * l) / 100 - 1));
+  return {
+    hue: h,
+    sat: clamp(chroma * 1.1, 0.05, 0.85),
+    light: clamp((l - 50) * 0.3, -16, 12),
+  };
+}
+
 /** A small, stable number in [-1, 1] from a string — the same monster always gets the same one. */
 function jitter(seed: string, salt: number): number {
   // FNV-1a. Not for security; only needs to spread similar names apart.
@@ -152,17 +172,23 @@ const CACHE_LIMIT_PER_SPECIES = 500;
  * The palette to draw a monster with: its species palette, recoloured by its appearance and
  * nudged by its name. Pure and memoised — the roster redraws every frame.
  */
-export function paletteFor(base: Palette, appearance: string | undefined, name: string): Palette {
+export function paletteFor(
+  base: Palette,
+  appearance: string | undefined,
+  name: string,
+  /** A generated boss's exact colour; wins over the words when present. */
+  appearanceHex?: string | null,
+): Palette {
   let forSpecies = cache.get(base);
   if (!forSpecies) {
     forSpecies = new Map();
     cache.set(base, forSpecies);
   }
-  const cacheKey = JSON.stringify([appearance ?? '', name]);
+  const cacheKey = JSON.stringify([appearance ?? '', name, appearanceHex ?? '']);
   const cached = forSpecies.get(cacheKey);
   if (cached) return cached;
 
-  const tint = tintFromAppearance(appearance);
+  const tint = tintFromHex(appearanceHex) ?? tintFromAppearance(appearance);
   const baseBody = hexToHsl(base.B!);
   const targetHue = tint?.hue ?? baseBody.h;
   const hue = wrapHue(targetHue + jitter(name, 1) * hueSpreadAt(targetHue, Boolean(tint)));

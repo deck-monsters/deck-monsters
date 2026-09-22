@@ -4043,3 +4043,23 @@ character). Changing the engine template instead would also have worked, but Dis
 inside double bold.
 
 **Status**: Fixed.
+
+### 173. Every generated boss was "gray" — FIXED
+
+Found by review of roadmap 24, whose sprites made it visible for the first time: bosses are
+described by a random colour from `grab-color-names`, and every one read "gray".
+
+**Root cause**: `characters/helpers/random.ts` loads the library with `import()` and read
+`colorModule.randomColor`. The package is CommonJS, so under `import()` its functions sit on
+`default`; the named export was always `undefined`, and the `['', 'gray']` fallback won every
+time. The emoji library beside it had always been read as `default ?? module`; the colour
+library never was, and nothing checked the result.
+
+**Fix**: read `default ?? module`, as for node-emoji. The generator also keeps the hex that
+comes with the colour name (`options.colorHex`), because most of the library's names
+("Sazerac", "Kilamanjaro") are not colour words the web's sprite palette can read.
+
+**Tests**: `random.test.ts` — twelve bosses must carry a well-formed hex and more than one
+colour; it fails on the old loader.
+
+**Status**: Fixed.

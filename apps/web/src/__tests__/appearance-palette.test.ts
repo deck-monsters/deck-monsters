@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hexToHsl, paletteFor, tintFromAppearance } from '../animations/pixel-fight/appearance-palette.js';
+import { hexToHsl, paletteFor, tintFromAppearance, tintFromHex } from '../animations/pixel-fight/appearance-palette.js';
 import { SPRITES } from '../animations/pixel-fight/sprites.js';
 
 const basilisk = SPRITES.Basilisk!.palette;
@@ -111,5 +111,24 @@ describe('paletteFor', () => {
     const palette = paletteFor(basilisk, 'gold', 'Stonefang');
 
     expect(hueDistance(hueOf(palette.E!), hueOf(palette.B!))).toBeGreaterThan(90);
+  });
+
+  it('colours a boss from its hex when its colour name is not a colour word', () => {
+    // grab-color-names gives bosses names like "Cabaret"; the hex is the reliable source.
+    expect(tintFromAppearance('cabaret')).toBeNull();
+    const palette = paletteFor(basilisk, 'cabaret', 'Boss', '#d94972');
+
+    expect(hueDistance(hueOf(palette.B!), hexToHsl('#d94972').h)).toBeLessThanOrEqual(20);
+  });
+
+  it('reads a pale hex as nearly neutral, not as its HSL saturation', () => {
+    // #fff4e0 is HSL saturation 1.0 but a cream; taken naively it paints the boss orange.
+    expect(tintFromHex('#fff4e0')!.sat).toBeLessThan(0.2);
+  });
+
+  it('ignores a malformed hex', () => {
+    expect(tintFromHex('fff4e0')).toBeNull();
+    expect(tintFromHex('#12')).toBeNull();
+    expect(tintFromHex(null)).toBeNull();
   });
 });

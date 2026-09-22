@@ -32,6 +32,8 @@ export interface RingContestantSnapshot {
    * sends none, and the sprite then keeps its species palette.
    */
   appearance?: string;
+  /** A generated boss's exact colour (`#rrggbb`), which its colour *name* rarely conveys. */
+  appearanceHex?: string | null;
 }
 
 interface RingRosterProps {

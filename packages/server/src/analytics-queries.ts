@@ -380,6 +380,14 @@ export type FightParticipant = {
 	outcome: 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath';
 	xpGained: number;
 	level: number;
+	/**
+	 * What the web needs to draw the monster's sprite in the fight history (roadmap 24).
+	 * Optional: rows written before these fields existed have none, and keep their emoji.
+	 */
+	monsterIcon?: string;
+	monsterCreatureType?: string;
+	monsterAppearance?: string;
+	monsterAppearanceHex?: string | null;
 };
 
 export type FightSummaryRow = {

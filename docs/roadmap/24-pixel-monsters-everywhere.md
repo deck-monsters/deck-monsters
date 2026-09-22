@@ -24,6 +24,17 @@ using the existing emoji representations."
 
 ## Decisions
 
+### Web only: every other client still sees the emoji
+
+Everything in this pass happens in the web client. The engine's narration text is untouched,
+so Discord — and any other non-browser connector — shows exactly the emoji it always has.
+The engine changes are additive fields on payloads (`appearance` and `appearanceHex` on
+`ring.state`, sprite fields on fight participants) that other connectors ignore. This is also
+why a player's chosen emoji still matters: it remains their monster's face everywhere except
+the web, and the web's opt-out restores it there too. Anything that would change the engine's
+text to help the web (marking which emoji is which monster, say) would change Discord's text
+as well, and is ruled out on that ground.
+
 ### Full colour on every theme, no per-theme tinting
 
 The monochrome themes (Phosphor, Amber, Ember) already show full-colour emoji in the roster
@@ -45,6 +56,18 @@ recognised colour word in the text; text with no colour word in it ("deceptively
 glorious") falls back to the species' own palette. A small per-monster shift derived from
 its name separates two monsters whose owners both wrote "green", so two basilisks in one
 ring are never pixel-identical — the literal ask in (c).
+
+### Bosses: colour from the hex, and they were all gray
+
+Bosses are described by a random name from `grab-color-names`. Two problems, both found in
+review. The loader read `randomColor` off the module namespace, but the package is CommonJS
+and under `import()` its functions sit on `default` — so the fallback always won and **every
+generated boss was "gray"** (#173, in production long before this pass). And even fixed, most
+of the library's 1,500+ names ("Sazerac", "Kilamanjaro", "Deep Fir") are not colour words the
+table below can read. The generator now keeps the hex that comes with the name
+(`options.colorHex`), `ring.state` and fight participants carry it as `appearanceHex`, and the
+palette prefers it over the words. It is read as *chroma*, not HSL saturation — `#fff4e0` is
+HSL saturation 1.0 but a cream, and read naively painted the boss orange.
 
 ### How the recolour works, and what rendering it changed
 
@@ -81,9 +104,14 @@ the roster and the feed.
 
 The flag was `deck-monsters-pixel-fight-stage = '1'` for on, absent for off. Flipping the
 default means absent must now mean *on*, so off is stored explicitly as `'0'`. Players who
-opted in keep `'1'` and stay on; players who never touched it get the new default; nobody
-who had chosen off exists yet in a way that matters, because off *was* the absent default —
-there is no stored "I turned this off" to honour.
+opted in keep `'1'` and stay on; players who never touched it get the new default.
+
+**One group is switched back on.** The old toggle's "off" *removed* the key, so a player who
+turned the sprites on and later off again is stored exactly like one who never touched it —
+absent — and this release turns them on. (An earlier draft of this doc said nobody had
+explicitly chosen off; review corrected that.) There is no stored value that tells the two
+apart, so it cannot be honoured after the fact. It was accepted because the old sprites were
+opt-in for barely a day and the opt-out is one checkbox away.
 
 ### Feed sprites: matched, never guessed
 
@@ -109,6 +137,19 @@ is `🐍 *Gin has…` and a level-up is `🐍  **Gin**`. Two rules cover every t
 
 Pairing each icon with a *name* is what keeps two default-🐍 basilisks in one fight apart.
 Fenced ``` blocks are never touched: they hold ASCII card art in monospace columns.
+
+**Beastmasters sharing a monster's name.** Card drops and item use print a Beastmaster's
+identity exactly like a monster's (`🐍 Gin`), and character and monster names are unique
+only among their own kind — so a Beastmaster and a monster can share a name *and* an icon.
+Rule 1 then cannot tell which is meant, so it leaves a name that is also a known
+Beastmaster's alone (the store records Beastmaster names from each sighting's owner). The
+hit/miss cluster still matches, since only monsters appear there. Found in review.
+
+**Whole emoji, not base pictographs.** Emoji are matched as full graphemes — skin-tone
+modifiers, flag pairs, tag sequences, ZWJ joins — and a cluster slot is tried against the
+room's known icons first, since an icon can be any string a player typed. The first version
+read `💪🏽` as `💪` and `🇨🇦` as `🇨`, so the hit line failed to parse and those monsters kept
+their emoji in the lines that matter most. Found in review.
 
 Known gap: a player who gives their monster an emoji that is also a flavour emoji (🔥, 🔪)
 could have that flavour emoji drawn as their sprite in a line that names them. Rare, and
@@ -142,10 +183,12 @@ The Ring feed, the Console and the fight-history panel all render narration thro
 `formatEventText`, which takes an optional `MonsterMentions`. Only the Ring pane sees
 `ring.state`, so it *records* the room's monsters into a small store
 (`hooks/useKnownMonsters.ts`, `rememberMonsters`), and each surface *reads* its own room's
-entry through `useMonsterMentions(roomId)`. The store is keyed by room — a reader never sees
+entry through `useMonsterMentions(roomId)`. The fight history also records from its own
+participant rows — the engine now writes each participant's icon, species and appearance —
+because opened directly, after a reload, or in a pane layout without the Ring, it would
+otherwise know no monsters at all (found in review). The store is keyed by room — a reader never sees
 another room's monsters (`docs/room-scoping.md`). Fights from before this session name
-monsters the store has not seen, so the fight history shows sprites only for monsters that
-have been in the Ring since the page loaded; the rest keep their emoji.
+monsters without those fields: rows written before this change keep their emoji.
 
 ### Feed sprites load without Suspense
 

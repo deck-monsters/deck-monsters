@@ -1,7 +1,8 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { trpc } from '../lib/trpc.js';
 import { formatEventText, truncateEventText } from '../utils/format-event-text.js';
 import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
+import { rememberMonsters } from '../hooks/useKnownMonsters.js';
 import { fightSubtitle, fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
 
 interface FightLogPanelProps { roomId: string; headerActions?: ReactNode }
@@ -16,8 +17,23 @@ function relTime(d: Date): string {
 export default function FightLogPanel({ roomId, headerActions }: FightLogPanelProps) {
   const [expanded, setExpanded] = useState<number | null>(null);
   const fights = trpc.game.recentFights.useQuery({ roomId, limit: 80 });
-  // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24). Fights from
-  // before this session name monsters the store has not seen; those keep their emoji.
+  // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24). The history
+  // records its own participants rather than relying on the Ring pane having run: opened
+  // directly, after a reload, or in a layout without the Ring, it would otherwise know no
+  // monsters at all. Fights recorded before the sprite fields existed keep their emoji.
+  useEffect(() => {
+    const sightings = (fights.data ?? []).flatMap((fight) =>
+      ((fight as FightSummaryLike).participants ?? []).map((p) => ({
+        name: p.monsterName,
+        icon: p.monsterIcon ?? '',
+        creatureType: p.monsterCreatureType ?? '',
+        appearance: p.monsterAppearance,
+        appearanceHex: p.monsterAppearanceHex ?? null,
+        owner: p.ownerDisplayName ?? null,
+      })),
+    );
+    rememberMonsters(roomId, sightings);
+  }, [roomId, fights.data]);
   const mentions = useMonsterMentions(roomId);
   const detail = trpc.game.fight.useQuery(
     { roomId, fightNumber: expanded ?? 0 },

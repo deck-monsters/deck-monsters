@@ -21,7 +21,10 @@ export function useMonsterMentions(
   const known = useKnownMonsters(roomId);
   const render = useInlineSprites(pixelMonstersEnabled, loader);
   return useMemo(
-    () => (render && known.length > 0 ? { index: buildMentionIndex(known), render } : null),
+    () =>
+      render && known.monsters.length > 0
+        ? { index: buildMentionIndex(known.monsters, known.beastmasterNames), render }
+        : null,
     [render, known],
   );
 }

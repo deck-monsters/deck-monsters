@@ -478,7 +478,7 @@ status line rather than trusting a list here, which goes stale within a pass. As
 writing the one high-priority open item is J (fight rewards — coins and xp — may never be
 credited, superseding the incorrect closure recorded as #145), alongside two open pacing
 items and a dead mobile CSS rule. Everything already fixed, with root causes, is archived in
-[`docs/roadmap/10b-bugs-fixed.md`](docs/roadmap/10b-bugs-fixed.md), which currently runs to #172.
+[`docs/roadmap/10b-bugs-fixed.md`](docs/roadmap/10b-bugs-fixed.md), which currently runs to #173.
 
 ## Archived / Deferred
 

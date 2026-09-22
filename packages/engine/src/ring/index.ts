@@ -99,10 +99,22 @@ export interface RingContestantSnapshot {
 	 * when a monster has none. Capped because it is free text broadcast to the whole room.
 	 */
 	appearance: string;
+	/**
+	 * The exact colour behind a generated boss's appearance, as `#rrggbb`; null for a player's
+	 * monster, whose appearance is words. Boss appearances are names from `grab-color-names`
+	 * ("Sazerac", "Deep Fir") that a colour-word parser mostly cannot read.
+	 */
+	appearanceHex: string | null;
 }
 
 /** Longest appearance sent on `ring.state`. The workshop form allows 100; other flows do not cap it. */
 export const SNAPSHOT_APPEARANCE_MAX = 100;
+
+/** A monster's stored `colorHex`, if it is a well-formed `#rrggbb`. */
+export function appearanceHexOf(monster: { options?: Record<string, unknown> } | undefined): string | null {
+	const hex = monster?.options?.colorHex;
+	return typeof hex === 'string' && /^#[0-9a-f]{6}$/i.test(hex) ? hex.toLowerCase() : null;
+}
 
 export interface Contestant {
 	monster: any;
@@ -633,6 +645,7 @@ export class Ring extends BaseClass {
 			userId: isBoss ? null : (userId ?? null),
 			acting: this.inEncounter && this.activeContestant?.monster === monster,
 			appearance: typeof monster.color === 'string' ? monster.color.slice(0, SNAPSHOT_APPEARANCE_MAX) : '',
+			appearanceHex: appearanceHexOf(monster),
 		}));
 	}
 
@@ -1300,6 +1313,13 @@ export class Ring extends BaseClass {
 				monsterId: m.stableId as string,
 				monsterName: m.givenName as string,
 				monsterType: (m.constructor?.name ?? 'Monster') as string,
+				// For the web's sprites in the fight history (roadmap 24): a fight replayed after
+				// a reload has no roster to learn its monsters from, only this row. Additive and
+				// JSON-safe; rows written before these fields simply keep their emoji.
+				monsterIcon: (m.icon ?? '') as string,
+				monsterCreatureType: (m.creatureType ?? '') as string,
+				monsterAppearance: typeof m.color === 'string' ? m.color.slice(0, SNAPSHOT_APPEARANCE_MAX) : '',
+				monsterAppearanceHex: appearanceHexOf(m),
 				ownerUserId: c.userId as string,
 				ownerDisplayName: (ch.givenName ?? ch.name ?? '') as string,
 				outcome: participantOutcome(c, hasDecisiveWinner),

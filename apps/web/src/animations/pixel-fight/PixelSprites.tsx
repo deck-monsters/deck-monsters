@@ -83,6 +83,7 @@ export default function PixelSprites({
         <RosterSprite
           creatureType={contestant.creatureType}
           appearance={contestant.appearance}
+          appearanceHex={contestant.appearanceHex}
           name={contestant.name}
           anim={anim}
           flash={flash}

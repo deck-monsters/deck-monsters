@@ -18,7 +18,7 @@ describe('known monsters store', () => {
     act(() => rememberMonsters('room-1', [c('Gin'), c('Hissy')]));
     act(() => rememberMonsters('room-1', []));
 
-    expect(result.current.map((monster) => monster.name)).toEqual(['Gin', 'Hissy']);
+    expect(result.current.monsters.map((monster) => monster.name)).toEqual(['Gin', 'Hissy']);
   });
 
   it('keeps rooms apart — one room\'s monsters never decorate another room\'s text', () => {
@@ -27,8 +27,8 @@ describe('known monsters store', () => {
     const room1 = renderHook(() => useKnownMonsters('room-1'));
     const room2 = renderHook(() => useKnownMonsters('room-2'));
 
-    expect(room1.result.current.map((monster) => monster.name)).toEqual(['Gin']);
-    expect(room2.result.current.map((monster) => monster.name)).toEqual(['Ben']);
+    expect(room1.result.current.monsters.map((monster) => monster.name)).toEqual(['Gin']);
+    expect(room2.result.current.monsters.map((monster) => monster.name)).toEqual(['Ben']);
   });
 
   it('reaches a reader in another pane, which is the point of the store', () => {
@@ -36,7 +36,7 @@ describe('known monsters store', () => {
     const consoleReader = renderHook(() => useKnownMonsters('room-1'));
     act(() => rememberMonsters('room-1', [c('Gin')]));
 
-    expect(consoleReader.result.current.map((monster) => monster.name)).toEqual(['Gin']);
+    expect(consoleReader.result.current.monsters.map((monster) => monster.name)).toEqual(['Gin']);
   });
 
   it('keeps its identity while nothing changes, so the matcher is not rebuilt per tick', () => {
@@ -54,8 +54,26 @@ describe('known monsters store', () => {
     act(() => rememberMonsters('room-1', [c('Gin', { appearance: 'green' })]));
     act(() => rememberMonsters('room-1', [c('Gin', { appearance: 'crimson', icon: '🔥' })]));
 
-    expect(result.current).toEqual([
-      { name: 'Gin', icon: '🔥', creatureType: 'Basilisk', appearance: 'crimson' },
+    expect(result.current.monsters).toEqual([
+      { name: 'Gin', icon: '🔥', creatureType: 'Basilisk', appearance: 'crimson', appearanceHex: null },
     ]);
+  });
+
+  it('records Beastmaster names so the matcher can refuse a shared one', () => {
+    const { result } = renderHook(() => useKnownMonsters('room-1'));
+    act(() => rememberMonsters('room-1', [c('Gin', { owner: 'Ada' })]));
+
+    expect(result.current.beastmasterNames).toEqual(['Ada']);
+  });
+
+  it('learns from fight-history rows, and skips rows written before the sprite fields', () => {
+    // A history opened after a reload has no roster; its participant rows are all it has.
+    const { result } = renderHook(() => useKnownMonsters('room-1'));
+    act(() => rememberMonsters('room-1', [
+      { name: 'Gin', icon: '🐍', creatureType: 'Basilisk', appearance: 'green', owner: 'Ada' },
+      { name: 'Old Timer', icon: '', creatureType: '', owner: 'Bo' },
+    ]));
+
+    expect(result.current.monsters.map((monster) => monster.name)).toEqual(['Gin']);
   });
 });

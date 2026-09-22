@@ -25,6 +25,7 @@ export interface KnownMonster {
   icon: string;
   creatureType: string;
   appearance?: string;
+  appearanceHex?: string | null;
 }
 
 export interface MentionSpan {
@@ -48,19 +49,42 @@ function isNameChar(char: string | undefined): boolean {
   return char !== undefined && /[\p{L}\p{N}]/u.test(char);
 }
 
-/** One emoji (with variation selectors and ZWJ sequences) at the very end of `text`. */
-const TRAILING_EMOJI = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:\uFE0F|\u200D(?:\p{Extended_Pictographic}|\p{Regional_Indicator})\uFE0F?)*\uFE0F?$/u;
+/**
+ * One whole emoji grapheme: a flag (a pair of regional indicators), or a pictograph with an
+ * optional variation selector or skin-tone modifier, subdivision-flag tags, and any number of
+ * ZWJ-joined parts. The first version stopped at the base pictograph, so a custom icon like
+ * `💪🏽` read as `💪` and `🇨🇦` as `🇨` — the hit/miss cluster then failed to parse and those
+ * monsters kept their emoji in exactly the lines that matter most.
+ */
+const EMOJI_PART = '(?:\\p{Extended_Pictographic}(?:\\uFE0F|\\p{Emoji_Modifier})?[\\u{E0020}-\\u{E007F}]*)';
+const EMOJI = `(?:\\p{Regional_Indicator}{2}|${EMOJI_PART}(?:\\u200D${EMOJI_PART})*)`;
+/** One emoji at the very end of `text`. */
+const TRAILING_EMOJI = new RegExp(`${EMOJI}$`, 'u');
 /** One emoji at the very start of `text`. */
-const LEADING_EMOJI = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:\uFE0F|\u200D(?:\p{Extended_Pictographic}|\p{Regional_Indicator})\uFE0F?)*\uFE0F?/u;
+const LEADING_EMOJI = new RegExp(`^${EMOJI}`, 'u');
 const GAP = /[\s*_]*$/;
 
 /**
  * Builds a matcher for the monsters a room has seen. Rebuild when the set changes; `find` is
  * then cheap enough to run on every rendered line.
  */
-export function buildMentionIndex(monsters: readonly KnownMonster[]): MentionIndex {
+export function buildMentionIndex(
+  monsters: readonly KnownMonster[],
+  /**
+   * Names of Beastmasters seen in the same room. Card drops and item use print a
+   * Beastmaster's identity exactly like a monster's (`🐍 Gin`), and character and monster
+   * names are checked for uniqueness separately — so a Beastmaster and a monster can share a
+   * name *and* an icon. Rule 1 cannot tell them apart, so it leaves a shared name alone:
+   * Beastmasters have no sprites, and an emoji is the safe failure. Rule 2 is unaffected;
+   * the hit/miss cluster only ever holds monsters.
+   */
+  beastmasterNames: readonly string[] = [],
+): MentionIndex {
   const usable = monsters.filter((monster) => monster.name && monster.icon);
   if (usable.length === 0) return EMPTY;
+  const ambiguous = new Set(beastmasterNames);
+  // Longest first, so a slot holding `💪🏽` is not read as a `💪` monster.
+  const icons = [...new Set(usable.map((monster) => monster.icon))].sort((a, b) => b.length - a.length);
 
   const byName = new Map(usable.map((monster) => [monster.name, monster]));
   // Longest first, so "Gin & Tonic" wins over a monster called "Gin".
@@ -92,6 +116,7 @@ export function buildMentionIndex(monsters: readonly KnownMonster[]): MentionInd
 
       // Rule 1 — icon before its own name.
       for (const { index, monster } of namesIn(text)) {
+        if (ambiguous.has(monster.name)) continue;
         let cursor = index - (text.slice(0, index).match(GAP)?.[0].length ?? 0);
         if (text.slice(cursor - monster.icon.length, cursor) === monster.icon) {
           add(cursor - monster.icon.length, monster);
@@ -116,7 +141,9 @@ export function buildMentionIndex(monsters: readonly KnownMonster[]): MentionInd
       const cluster: Array<{ start: number; text: string }> = [];
       let cursor = text.match(/^\s*/)?.[0].length ?? 0;
       for (let slot = 0; slot < 3; slot += 1) {
-        const emoji = text.slice(cursor).match(LEADING_EMOJI)?.[0];
+        // A known icon first: it may be any string a player typed, not just one emoji.
+        const rest = text.slice(cursor);
+        const emoji = icons.find((icon) => rest.startsWith(icon)) ?? rest.match(LEADING_EMOJI)?.[0];
         if (!emoji) break;
         cluster.push({ start: cursor, text: emoji });
         cursor += emoji.length;

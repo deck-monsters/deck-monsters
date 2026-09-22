@@ -23,12 +23,12 @@ const urls = new Map<string, string | null>();
 const URL_CACHE_LIMIT = 500;
 
 function portraitUrl(monster: KnownMonster): string | null {
-  const key = JSON.stringify([monster.creatureType, monster.appearance ?? '', monster.name]);
+  const key = JSON.stringify([monster.creatureType, monster.appearance ?? '', monster.name, monster.appearanceHex ?? '']);
   const cached = urls.get(key);
   if (cached !== undefined) return cached;
 
   const sprite = spriteFor(monster.creatureType);
-  const palette = paletteFor(sprite.palette, monster.appearance, monster.name);
+  const palette = paletteFor(sprite.palette, monster.appearance, monster.name, monster.appearanceHex);
   let url: string | null = null;
   try {
     const canvas = document.createElement('canvas');
