@@ -121,8 +121,22 @@ this size it is an ambient tell for whose turn it is, not a cutscene.
 ### Order of play, made visible
 
 Row order alone carried it, which is exactly why it was invisible until it went missing.
-The gutter now marks `▶` acting and `·` everyone else. It costs 14px, and together with
-row order — which is turn order — nothing else on screen tells you who moves next.
+The gutter marks `▶` acting and nothing for everyone else. Together with row order —
+which is turn order — nothing else on screen tells you who moves next.
+
+**It hangs in the row's left padding rather than holding a column.** It first shipped as
+`flex: 0 0 0.85rem`, which with the row's `gap` spent about 19px on every row to reserve
+space for a mark that at most one row shows, and that between fights no row shows at all
+(the idle glyph is `transparent`). Reported from the phone as the left edge looking
+unbalanced — the icons sat visibly inboard of both the section header above them and the
+feed text below. Out of flow, like a bullet with `list-style-position: outside`, the icon
+leads the row and a name still cannot shift sideways as the turn moves down the list,
+which is the only thing the reserved column was buying.
+
+The padding is 0.8rem and not less because two things already live at the row's left
+edge: the acting row's 2px inset accent bar, and, on a phone, the screen. Rendering it
+flush (`.roster-list` padding to 0) put the `▶` on top of the accent bar and half off the
+edge. 0.8rem clears both and still reads as a list indent.
 
 **Predicting the next actor is the client's to guess and it must not.** A `›` up-next
 marker shipped in the first draft of this row and was removed in review. The engine's
@@ -185,3 +199,23 @@ The tests were not wrong. They answered "is the markup well formed" while the qu
 "does this help someone playing the game". **jsdom does no layout**, so no unit test in
 this repo can tell you whether a column breaks at the right width. Render it, open it on
 the phone and the tablet, and look.
+
+### Rendering it without a device
+
+The turn-gutter fix above was the first change here checked against real layout before it
+shipped, and it is cheap enough that the next one has no excuse. Chromium is installed in
+the agent container, so a static page that loads `terminal.css`, `theme-phosphor.css` (it
+holds `--pane-padding`) and a theme, with the roster's markup pasted in by hand, can be
+screenshotted at a phone's width:
+
+```
+chrome --headless --no-sandbox --screenshot=out.png \
+  --force-device-scale-factor=2 --window-size=390,300 file://…/harness.html
+```
+
+Two traps cost more time than the fix. `.terminal-slot` is `display: none` below 1024px
+unless it also has `.active`, so the panel renders blank without it; and the container
+queries need `container-type: inline-size` on that slot, which is where the pane's width
+comes from. A 1px absolutely-positioned rule drawn at `var(--pane-padding)` makes an
+alignment complaint like this one measurable instead of arguable. Three candidate paddings
+were rendered side by side this way, which is how the flush version was rejected.
