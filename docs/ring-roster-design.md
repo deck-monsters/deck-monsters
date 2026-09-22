@@ -66,24 +66,49 @@ Team names are a **closed set**: `The Alliance`, the four houses (`Gryffindor`,
 channel: the name sits beside the pip, and the legend under the list names every colour in
 play.
 
-### One column, not two
+### Columns are earned, not assumed
 
-`.roster-list` was `repeat(auto-fit, minmax(13rem, 1fr))`. Every crowding bug in this
-panel traced back to it. A 208px column had to hold the name, a rigid team tag, HP, AC and
-(once sprites landed) an icon gutter; the name was the only element that could give, so it
-collapsed to `G..` (#168). Widening the minimum to 21rem patched the symptom; restructuring
-the row removed the cause. A full-width row means the name can never be starved.
+`.roster-list` was `repeat(auto-fit, minmax(13rem, 1fr))`, and every crowding bug here
+traced back to it — but the problem was the *minimum*, not multi-column itself. 13rem
+(208px) was narrower than a row needed, so the name, the only element that could give,
+collapsed to `G..` (#168).
 
-### Density tiers instead of narrow columns
+A comfortable row spends roughly 124px on the turn gutter, the icon and the HP rail, so a
+column under about **22rem** leaves the name and the meta line fighting over scraps. The
+tiers are therefore explicit rather than `auto-fit`, which would keep adding columns on an
+ultrawide monitor until rows were unreadably short:
 
-Above `DENSE_ABOVE` (8) contestants the rows go to one line each — name and beastmaster
-share the slack, level and AC drop. The roster is capped at 40% of the pane height and
-scrolls inside that, so a big fight could never push the feed off screen, but it could
-bury everyone below the fold. Dense rows roughly halve row height so a twelve-contestant
-brawl stays readable.
+| Pane width | Columns |
+|---|---|
+| under 46rem | 1 |
+| 46rem and up | 2 |
+| 70rem and up | 3 |
 
-Eight is a judgement call: the largest count that still fits the cap comfortably on a
-phone. Keying off pane height instead of count would be steadier but harder to predict.
+These are **container** queries against `.terminal-slot`, so they measure the Ring *pane*,
+not the window — above 1024px the pane is one of two side by side. Phones and tablets stay
+one-up in practice; only a genuinely wide desktop pane earns the extra columns.
+
+Flow stays row-major (the grid default) deliberately. Row order is the order of play, so it
+has to read across-then-down the way the eye already reads a grid; `grid-auto-flow: column`
+would renumber the round down each column and break it.
+
+### Density is presentational, so it composes with the columns
+
+Above `DENSE_ABOVE` (8) contestants `isDense` adds a class — and nothing else. The
+stylesheet honours it **in the single-column tier only**: the meta line folds up beside the
+name and level and AC drop.
+
+That scoping is the point. The ring holds twelve, so at two columns a full ring is six rows
+a side and at three it is four — comfortable either way. A big fight on a wide pane should
+get columns, not compressed rows.
+
+Dense was briefly a *second markup branch*, which could not compose with the breakpoints at
+all: it would have forced compressed rows on a wide pane purely because the count was high.
+One DOM at every density is what lets width finish the decision. A test asserts the row
+markup is byte-identical across the threshold.
+
+Eight is a judgement call: the largest count that still fits the 40% cap comfortably on a
+phone.
 
 ### The icon is 24px, and that is deliberate
 
@@ -128,6 +153,7 @@ mock-ups were throwaway; the conclusions are here.
 |---|---|---|
 | **Quiet Line** | Tags demoted to the meta line, everything else unchanged | Closest to what shipped, and effectively what R1 became. Superseded rather than rejected |
 | **Stat Rail** | Numbers in a fixed right column | Adopted — this is the right rail. Rejected only as a *whole* answer, since it left the name line and density untouched |
+| **Single column, always** | Drop multi-column entirely | Briefly shipped. Correct for phones and tablets and wasteful on a wide desktop pane; the honest fix was a truthful column minimum, not abandoning columns |
 | **Team Muster** | Rows grouped under team headings | **Destroyed turn order.** The most attractive option on paper and the only unacceptable one |
 | **Ticker** | One line per monster, meta dropped entirely | Lost beastmaster, level and HP detail — "in practice it was nice to know things like who a monster belonged to". Survives as the dense tier, with beastmaster and HP put back |
 | **Duel Card** | Bounded card per contestant | Most visual weight of the five and tallest at twelve contestants, for no information gain |

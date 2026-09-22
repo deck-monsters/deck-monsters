@@ -28,9 +28,16 @@ describe('formatLevel', () => {
 });
 
 describe('density', () => {
-  it('stays comfortable up to the threshold and goes dense above it', () => {
+  it('only asks for compression above the threshold', () => {
+    // A request, not a layout: the stylesheet honours it in the single-column tier only,
+    // so a big fight on a wide pane gets extra columns rather than squashed rows.
     expect(isDense(DENSE_ABOVE)).toBe(false);
     expect(isDense(DENSE_ABOVE + 1)).toBe(true);
+  });
+
+  it('never asks below a full ring, since twelve is the cap', () => {
+    expect(isDense(12)).toBe(true);
+    expect(isDense(2)).toBe(false);
   });
 });
 

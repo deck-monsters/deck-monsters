@@ -192,6 +192,31 @@ describe('RingRoster', () => {
     expect(screen.queryByText('40/50')).toBeNull();
   });
 
+  it('keeps one row shape at every density, so width can decide the layout', () => {
+    // Dense rows were briefly a second markup branch, which could not compose with the
+    // column breakpoints. Density is a class now; the DOM is identical either way.
+    const shape = (count: number) => {
+      const list = Array.from({ length: count }, (_, i) =>
+        contestant({ name: `M${i}`, userId: `u${i}` }));
+      const { container, unmount } = render(
+        <RingRoster contestants={list} collapsed={false} onToggle={noop} />
+      );
+      const row = container.querySelector('.roster-row')!;
+      const markup = row.innerHTML;
+      const dense = container.querySelector('.roster-list')!.className.includes('dense');
+      unmount();
+      return { markup, dense };
+    };
+
+    const small = shape(3);
+    const big = shape(12);
+
+    expect(small.dense).toBe(false);
+    expect(big.dense).toBe(true);
+    // Same row, whatever the count — only the list's class differs.
+    expect(big.markup).toBe(small.markup);
+  });
+
   it('calls onToggle when the summary is clicked', () => {
     const onToggle = vi.fn();
     render(<RingRoster contestants={[contestant()]} collapsed={false} onToggle={onToggle} />);

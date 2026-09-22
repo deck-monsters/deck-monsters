@@ -585,23 +585,41 @@
   outline-offset: -1px;
 }
 
-/* One column, always.
+/* Columns are earned, not assumed.
 
-   This was `repeat(auto-fit, minmax(13rem, 1fr))` — two-up on wide panes — and every
-   crowding bug in this panel traced back to it. A 208px column had to hold the name, an
-   unshrinkable team tag, HP, AC and (once sprites landed) an icon gutter, and the name
-   was the only element that could give, so it collapsed to "G..". Widening the minimum
-   to 21rem patched that (#168); restructuring the row removed the need for it. A
-   full-width row means the name can never be starved, and a big fight is handled by
-   dense rows rather than narrow columns. See docs/roadmap/23-pixel-fight-stage.md. */
+   This was `repeat(auto-fit, minmax(13rem, 1fr))` and every crowding bug in this panel
+   traced back to it: 13rem was narrower than a row actually needed, so the name — the
+   only element that could give — collapsed to "G.." (#168). The fix is not to abandon
+   multi-column but to set an honest minimum. A comfortable row spends roughly 124px on
+   the turn gutter, the icon and the HP rail, so a column under ~22rem leaves the name
+   and the meta line fighting over scraps.
+
+   Hence explicit tiers rather than auto-fit: auto-fit would keep adding columns on an
+   ultrawide monitor until rows were unreadably short. Phones and tablets stay one-up;
+   only a genuinely wide Ring pane earns two or three.
+
+   The container is `.terminal-slot`, so these measure the *pane*, not the window — the
+   Ring pane is one of two side by side above 1024px.
+
+   Flow stays row-major (the grid default) on purpose: row order is the order of play, so
+   it must read across-then-down, the way the eye already reads a grid. `grid-auto-flow:
+   column` would renumber the round down each column and break that. */
 .roster-list {
   list-style: none;
   margin: 0;
   padding: 0 var(--pane-padding) 0.4rem;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.18rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.18rem 0.75rem;
+}
+
+@container (min-width: 46rem) {
+  .roster-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container (min-width: 70rem) {
+  .roster-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* Turn gutter. The order of play is the row order — the engine plays contestants in
@@ -749,21 +767,48 @@
 
 .roster-legend li { display: inline-flex; align-items: center; }
 
-/* Dense rows: one line each, for fights too big for comfortable rows to fit the 40%
-   cap. Name and beastmaster share the slack; level and AC are the fields that go. */
-.roster-row-dense { align-items: center; }
+/* Dense rows: the meta line folds up beside the name, and level and AC drop.
 
-.roster-row-dense .roster-dense-who {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+   Scoped to the single-column tier because that is the only place compression buys
+   anything: the ring holds twelve, so at two columns that is six rows a side and at
+   three it is four — comfortable either way. A big fight on a wide pane should get
+   columns, not compressed rows.
+
+   Separators are hidden rather than conditionally rendered: with level and AC gone, a
+   `·` between them would be left dangling, and the gap plus the team pip separate the
+   two survivors well enough. */
+@container (max-width: 45.99rem) {
+  .roster-list-dense .roster-row { align-items: center; }
+
+  .roster-list-dense .roster-row-body {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .roster-list-dense .roster-row-head,
+  .roster-list-dense .roster-row-sub { flex: 0 1 auto; min-width: 0; }
+
+  .roster-list-dense .roster-sub-sep,
+  .roster-list-dense .roster-sub-level,
+  .roster-list-dense .roster-sub-ac { display: none; }
+
+  .roster-list-dense .roster-rail {
+    flex: 0 0 5.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+  }
+
+  /* DOM order is figure then bar; on one line the bar reads better leading it. */
+  .roster-list-dense .roster-rail .roster-bar-track {
+    order: -1;
+    flex: 0 0 2.2rem;
+    margin: 0;
+  }
 }
-
-.roster-row-dense .roster-dense-by { color: var(--color-fg-dim); }
-.roster-row-dense .roster-bar-track { flex: 0 0 2.6rem; margin: 0; }
-.roster-row-dense .roster-hp { flex: 0 0 auto; font-size: 0.72rem; }
 
 /* Only the BOSS badge now. The team tag that used to sit on the name line moved to the
    meta line, where a long team name cannot starve the monster's own name. */

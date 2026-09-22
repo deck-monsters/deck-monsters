@@ -3899,9 +3899,14 @@ contestants by `activeContestants.shift()` over `this.contestants`, and
 else on screen carries it. It was invisible precisely because it had always been correct.
 
 **Fix**:
-- **One column.** `.roster-list` was `repeat(auto-fit, minmax(13rem, 1fr))`, the root of
-  every crowding bug here including #168's `G..`; #168's 21rem workaround is removed with
-  it, because the restructure removes the cause rather than the symptom.
+- **Columns earned by width.** `.roster-list` was `repeat(auto-fit, minmax(13rem, 1fr))`,
+  the root of every crowding bug here including #168's `G..` — but the fault was the
+  minimum, not multi-column. A comfortable row spends ~124px on gutter, icon and rail, so
+  columns now start at an honest 22rem, in explicit container-query tiers against
+  `.terminal-slot` (the pane, not the window): one column under 46rem, two above it, three
+  above 70rem. `auto-fit` is deliberately avoided — it would keep adding columns on an
+  ultrawide until rows were unreadable. Flow stays row-major so the round still reads
+  across-then-down. #168's 21rem workaround is removed with it.
 - **Name line holds the name and the boss badge, nothing else.** Team, HP and AC left it.
 - **Right rail**: the HP figure with its bar directly beneath at the same width. Both are
   kept deliberately — the bar gives the shape, the numbers the scale — with the bar as the
@@ -3912,9 +3917,12 @@ else on screen carries it. It was invisible precisely because it had always been
 - **Teams show only when two or more are standing** (`teamsAreRelevant`), as a colour pip
   plus the name, with a legend under the list — never by reordering. Team names are a
   closed set of ≤12 characters, which is what makes stable per-team colours safe.
-- **Density tiers**: above eight contestants rows go to one line (name + beastmaster + bar
-  + figure). The 40% cap already stopped the roster pushing the feed off screen; this stops
-  a twelve-way brawl burying everyone below the fold.
+- **Density is presentational**: above eight contestants `isDense` adds a class, and the
+  stylesheet honours it in the single-column tier only — a full ring is six rows a side at
+  two columns and four at three, comfortable either way, so a big fight on a wide pane gets
+  columns rather than squashed rows. Dense was briefly a second markup branch, which could
+  not compose with the breakpoints; one DOM at every density is what lets width finish the
+  decision, and a test asserts the row markup is identical across the threshold.
 - **Turn gutter**: `▶` acting, `›` up next, skipping the fallen and wrapping the round.
   New information — row order gave the sequence but never the position in it.
 - **The sprite drops 48px → 24px**, the box the emoji already occupied, so the emoji is a

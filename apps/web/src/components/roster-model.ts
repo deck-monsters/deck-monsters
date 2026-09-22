@@ -1,14 +1,18 @@
 import type { RingContestantSnapshot } from './RingRoster.js';
 
 /**
- * Above this many contestants the roster switches from comfortable rows (name, HP rail,
- * and a meta line) to dense one-line rows.
+ * Above this many contestants the roster asks to be compressed.
+ *
+ * "Asks" because the decision is finished in CSS: `isDense` only adds a class, and the
+ * stylesheet honours it in the single-column tier alone. At two columns twelve
+ * contestants is six rows a side and at three it is four, so a big fight on a wide pane
+ * gets columns rather than compressed rows. Narrow and busy is the only combination
+ * worth compressing.
  *
  * The roster is capped at 40% of the pane height and scrolls inside that, so a big fight
- * could never push the feed off screen — but it could bury everyone below the fold.
- * Dense rows roughly halve row height, so a twelve-contestant brawl stays readable
- * without the narration losing a line. Eight is a judgement call: it is the largest count
- * that still fits comfortably in the cap on a phone.
+ * could never push the feed off screen — but on one column it could bury everyone below
+ * the fold. Eight is a judgement call: the largest count that still fits the cap
+ * comfortably on a phone.
  */
 export const DENSE_ABOVE = 8;
 

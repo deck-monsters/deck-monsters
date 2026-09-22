@@ -65,13 +65,7 @@ function TurnMarker({ position }: { position: TurnPosition }) {
   );
 }
 
-function HealthMeter({
-  contestant,
-  dense,
-}: {
-  contestant: RingContestantSnapshot;
-  dense: boolean;
-}) {
+function HealthMeter({ contestant }: { contestant: RingContestantSnapshot }) {
   const ratio = hpRatio(contestant.hp, contestant.maxHp);
   const band = contestant.dead ? 'critical' : hpBand(ratio);
   return (
@@ -82,9 +76,6 @@ function HealthMeter({
       aria-valuemin={0}
       aria-valuemax={Math.max(contestant.maxHp, 0)}
       aria-label={`${contestant.name} health`}
-      // The bar and the numbers say the same thing, so the bar is the quieter of the two:
-      // thin, and directly under (comfortable) or beside (dense) the figure it restates.
-      data-dense={dense ? 'true' : undefined}
     >
       <div
         className={`roster-bar-fill roster-bar-${band}`}
@@ -111,26 +102,31 @@ function ContestantIcon({ contestant }: { contestant: RingContestantSnapshot }) 
   return <span className="roster-icon" aria-hidden="true" />;
 }
 
+/**
+ * One row shape at every size.
+ *
+ * Dense rows were briefly a second markup branch, which could not compose with the
+ * column breakpoints: a big fight on a wide pane wants comfortable rows in three columns,
+ * not compressed ones. Density is purely presentational now — the narrow tier folds the
+ * meta line up beside the name and hides level and AC — so width decides the layout and
+ * the DOM never changes underneath it.
+ */
 function ContestantRow({
   contestant,
   isMine,
   showTeam,
   position,
-  dense,
 }: {
   contestant: RingContestantSnapshot;
   isMine: boolean;
   showTeam: boolean;
   position: TurnPosition;
-  dense: boolean;
 }) {
   const isActing = position === 'acting';
   const parts = metaParts(contestant, showTeam);
-  const beastmaster = parts.find((part) => part.kind === 'beastmaster');
 
   const classes = [
     'roster-row',
-    dense ? 'roster-row-dense' : 'roster-row-full',
     contestant.dead ? 'roster-row-dead' : '',
     isMine ? 'roster-row-mine' : '',
     isActing ? 'roster-row-acting' : '',
@@ -141,53 +137,33 @@ function ContestantRow({
       <TurnMarker position={position} />
       <ContestantIcon contestant={contestant} />
 
-      {dense ? (
-        // One line: name and beastmaster share the slack, then the meter and the figure.
-        // Level and AC are the only fields that go — the two the panel is read for least.
-        <>
-          <span className="roster-dense-who">
-            <span className="roster-name-text">{contestant.name}</span>
-            {showTeam && contestant.team && <TeamPip team={contestant.team} />}
-            {beastmaster && (
-              <span className="roster-dense-by"> {beastmaster.text}</span>
-            )}
-          </span>
+      <div className="roster-row-body">
+        {/* Nothing shares this line with the name but the boss badge, so the name gets
+            every pixel left after the rail — it is the field the narration names monsters
+            by, and the one that used to collapse to "G..". */}
+        <div className="roster-row-head">
+          <span className="roster-name-text">{contestant.name}</span>
           {contestant.isBoss && <span className="roster-tag roster-tag-boss">BOSS</span>}
-          <HealthMeter contestant={contestant} dense />
-          <span className="roster-hp">
-            {contestant.dead ? <span className="roster-dead-text">fallen</span> : `${contestant.hp}/${contestant.maxHp}`}
-          </span>
-        </>
-      ) : (
-        <>
-          <div className="roster-row-body">
-            {/* Nothing shares this line with the name but the boss badge, so the name
-                gets every pixel left after the rail — it is the field the narration
-                names monsters by, and the one that used to collapse to "G..". */}
-            <div className="roster-row-head">
-              <span className="roster-name-text">{contestant.name}</span>
-              {contestant.isBoss && <span className="roster-tag roster-tag-boss">BOSS</span>}
-            </div>
-            <div className="roster-row-sub">
-              {parts.map((part, index) => (
-                <React.Fragment key={part.kind}>
-                  {index > 0 && <span className="roster-sub-sep" aria-hidden="true">·</span>}
-                  <span className={`roster-sub-${part.kind}`}>
-                    {part.kind === 'team' && <TeamPip team={part.text} />}
-                    {part.text}
-                  </span>
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-          <div className="roster-rail">
-            <span className="roster-hp">
-              {contestant.dead ? <span className="roster-dead-text">fallen</span> : `${contestant.hp}/${contestant.maxHp}`}
-            </span>
-            <HealthMeter contestant={contestant} dense={false} />
-          </div>
-        </>
-      )}
+        </div>
+        <div className="roster-row-sub">
+          {parts.map((part, index) => (
+            <React.Fragment key={part.kind}>
+              {index > 0 && <span className="roster-sub-sep" aria-hidden="true">·</span>}
+              <span className={`roster-sub-${part.kind}`}>
+                {part.kind === 'team' && <TeamPip team={part.text} />}
+                {part.text}
+              </span>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      <div className="roster-rail">
+        <span className="roster-hp">
+          {contestant.dead ? <span className="roster-dead-text">fallen</span> : `${contestant.hp}/${contestant.maxHp}`}
+        </span>
+        <HealthMeter contestant={contestant} />
+      </div>
     </li>
   );
 }
@@ -256,7 +232,6 @@ export default function RingRoster({
                 isMine={Boolean(myUserId && contestant.userId === myUserId)}
                 showTeam={showTeam}
                 position={positions.get(contestant) ?? null}
-                dense={dense}
               />
             ))}
           </ol>
