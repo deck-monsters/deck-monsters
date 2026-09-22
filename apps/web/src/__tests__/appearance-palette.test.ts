@@ -88,6 +88,14 @@ describe('paletteFor', () => {
     expect(first.B).not.toBe(second.B);
   });
 
+  it('does not let free-text names and appearances collide in the memo', () => {
+    // Both fields are typed by players; a plain "a|b" cache key would make these one entry.
+    const first = paletteFor(basilisk, 'gold|', 'Fang');
+    const second = paletteFor(basilisk, 'gold', '|Fang');
+
+    expect(first).not.toBe(second);
+  });
+
   it('is stable: the same monster always gets the same palette', () => {
     expect(paletteFor(basilisk, 'teal', 'Stonefang')).toEqual(paletteFor(basilisk, 'teal', 'Stonefang'));
   });

@@ -137,15 +137,29 @@ function hueSpreadAt(hue: number, named: boolean): number {
 /** Keys that form the body's shading ramp. `E` (the eye) is handled separately. */
 const RAMP_KEYS = ['O', 'D', 'B', 'A', 'C'] as const;
 
-const cache = new Map<string, Palette>();
+/**
+ * Memo, because the roster calls this from its per-frame draw. Keyed first by the species
+ * palette *object* — those are module constants, so identity is enough and nothing is
+ * stringified per frame — then by an escaped `[appearance, name]` pair: both are free text
+ * a player typed, so a plain `a|b` join could let two monsters collide on one entry.
+ * Capped so a very long session cannot grow it without bound; a cleared entry is simply
+ * recomputed.
+ */
+const cache = new WeakMap<Palette, Map<string, Palette>>();
+const CACHE_LIMIT_PER_SPECIES = 500;
 
 /**
  * The palette to draw a monster with: its species palette, recoloured by its appearance and
  * nudged by its name. Pure and memoised — the roster redraws every frame.
  */
 export function paletteFor(base: Palette, appearance: string | undefined, name: string): Palette {
-  const cacheKey = `${JSON.stringify(base)}|${appearance ?? ''}|${name}`;
-  const cached = cache.get(cacheKey);
+  let forSpecies = cache.get(base);
+  if (!forSpecies) {
+    forSpecies = new Map();
+    cache.set(base, forSpecies);
+  }
+  const cacheKey = JSON.stringify([appearance ?? '', name]);
+  const cached = forSpecies.get(cacheKey);
   if (cached) return cached;
 
   const tint = tintFromAppearance(appearance);
@@ -172,7 +186,8 @@ export function paletteFor(base: Palette, appearance: string | undefined, name: 
     palette.E = hslToHex(wrapHue(hue + 180), Math.max(eye.s, 0.7), eye.l);
   }
 
-  cache.set(cacheKey, palette);
+  if (forSpecies.size >= CACHE_LIMIT_PER_SPECIES) forSpecies.clear();
+  forSpecies.set(cacheKey, palette);
   return palette;
 }
 
