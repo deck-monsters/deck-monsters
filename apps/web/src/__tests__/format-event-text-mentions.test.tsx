@@ -31,6 +31,17 @@ describe('formatEventText with monster mentions', () => {
       .toBe('<span><strong><img data-monster="Gin &amp; Tonic" alt="🐍"/> Gin &amp; Tonic</strong> strikes!</span>');
   });
 
+  it('renders a level-up\'s **bold** name without stray asterisks, sprite included', () => {
+    // Pre-existing: `**Name**` rendered as <strong>*Name*</strong>.
+    expect(html('🎉 🐍  **Gin & Tonic** has reached level 2!'))
+      .toBe('<span>🎉 <img data-monster="Gin &amp; Tonic" alt="🐍"/>  <strong>Gin &amp; Tonic</strong> has reached level 2!</span>');
+  });
+
+  it('keeps an icon inside **double** bold on the right character', () => {
+    expect(html('**🐍 Gin & Tonic** strikes!'))
+      .toBe('<span><strong><img data-monster="Gin &amp; Tonic" alt="🐍"/> Gin &amp; Tonic</strong> strikes!</span>');
+  });
+
   it('leaves the damage emoji in a hit line alone', () => {
     const out = html('🐍 🔪 💪  Gin & Tonic hits Ben Franklin for 4 damage.');
     expect(out).toContain('🔪');

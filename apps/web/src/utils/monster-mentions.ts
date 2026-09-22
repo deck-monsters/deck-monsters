@@ -108,6 +108,8 @@ export function buildMentionIndex(monsters: readonly KnownMonster[]): MentionInd
       }
 
       // Rule 2 — the hit/miss cluster: three emoji, single-spaced, then two or more spaces.
+      // Anchored to the start of the segment, because hit.ts and miss.ts both open their text
+      // with it. If a template ever puts the cluster mid-line, this rule needs to search.
       // Runs after rule 1 and overwrites it on purpose: in `💪 🔪 💪  Ben hits Max`, rule 1
       // alone pins the third 💪 to Ben (it sits right before his name); only the cluster
       // knows that slot is the target's.

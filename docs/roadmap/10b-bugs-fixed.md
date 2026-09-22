@@ -4021,3 +4021,25 @@ was chosen so both flags kept their existing stored values unchanged.
 the old hook and passes on the new one.
 
 **Status**: Fixed.
+
+### 172. Every level-up announcement showed literal asterisks around the monster's name — FIXED
+
+Found by the independent review of roadmap 24's feed sprites. `level-up.ts` announces
+`🎉 🐍  **Gin & Tonic** has reached level 2!` — Markdown's double-asterisk bold. The web's
+inline markup is Slack's single-delimiter `*bold*`, and its pattern
+(`([*_])(\S(?:[^*_\n]*\S)?|\S)\1`) happily matched `**Gin & Tonic**` with the *outer*
+asterisks as delimiters and the inner ones kept as content, so the name rendered bold with a
+literal `*` on each side. Every level-up, since the web app first rendered markup.
+
+**Root cause**: one engine template used Markdown's bold syntax where every other template
+uses Slack's; the web formatter only knew Slack's.
+
+**Fix**: `formatInlineMarkup` treats a doubled delimiter as a single one (and shifts the
+content's offset by one, so a monster sprite inside `**…**` still lands on the right
+character). Changing the engine template instead would also have worked, but Discord renders
+`**` correctly as it stands, and the web should cope with either form.
+
+**Tests**: `format-event-text-mentions.test.tsx` — the level-up line end to end, and an icon
+inside double bold.
+
+**Status**: Fixed.

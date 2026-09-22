@@ -1,7 +1,7 @@
 # 24 — Pixel Monsters Everywhere
 
 **Category**: Product / UI
-**Status**: In progress
+**Status**: Done on the branch; pending review and a real-device check (see Verification)
 **Branch**: `claude/improve-pixel-art-theme-gg6869`
 
 After #170 the roster sprites were judged ready to graduate: "This actually looks great and
@@ -20,7 +20,7 @@ using the existing emoji representations."
 | T2 | Engine publishes each contestant's `appearance` in `ring.state` | Done | `92f44d4` |
 | T3 | Sprite palette derived from the monster's appearance text | Done | `7af0b0b`, review fix `25c44fe` |
 | T4 | Sprites inline wherever narration names a known monster: Ring feed, Console, fight history | Done | `d825113` |
-| T5 | Browser verification sheet (themes × variations × feed at 2×/3×), docs folded back | Done | _this commit_ |
+| T5 | Browser verification sheet (themes × variations × feed at 2×/3×), docs folded back | Done | `0d28775`; review fix #172 |
 
 ## Decisions
 

@@ -52,9 +52,19 @@ export function formatInlineMarkup(
 	INLINE_MARKUP.lastIndex = 0;
 	let match = INLINE_MARKUP.exec(text);
 	while (match !== null) {
-		const [raw, delimiter, content] = match;
+		const [raw, delimiter] = match;
+		let content = match[2]!;
 		const start = match.index;
 		const end = start + raw.length;
+		let contentOffset = start + 1;
+		// `**Name**` (the level-up announcement) is Markdown bold, not Slack's `*Name*`. The
+		// pattern above matches it with one stray delimiter kept on each side of the content,
+		// so every level-up rendered the name in bold *with* literal asterisks around it. Treat
+		// a doubled delimiter as a single one.
+		if (content.length >= 2 && content[0] === delimiter && content[content.length - 1] === delimiter) {
+			content = content.slice(1, -1);
+			contentOffset += 1;
+		}
 
 		if (isWordChar(text[start - 1]) || isWordChar(text[end])) {
 			// Not markup — leave it as literal text and keep scanning past this delimiter.
@@ -66,7 +76,7 @@ export function formatInlineMarkup(
 		if (start > lastIndex) {
 			nodes.push(...renderRun(text.slice(lastIndex, start), lastIndex, `${keyPrefix}-t${lastIndex}`));
 		}
-		const inner = renderRun(content, start + 1, `${keyPrefix}-c${start}`);
+		const inner = renderRun(content, contentOffset, `${keyPrefix}-c${start}`);
 		nodes.push(
 			delimiter === '*'
 				? <strong key={`${keyPrefix}-b${start}`}>{inner}</strong>
