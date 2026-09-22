@@ -82,6 +82,8 @@ export default function PixelSprites({
       return (
         <RosterSprite
           creatureType={contestant.creatureType}
+          appearance={contestant.appearance}
+          name={contestant.name}
           anim={anim}
           flash={flash}
           startedAt={startedAt}

@@ -17,8 +17,8 @@ using the existing emoji representations."
 | # | Task | Status | Commit |
 |---|---|---|---|
 | T1 | Sprites on by default, the setting becomes an opt-out; every theme, not only SNES | Done | `b1d85f0` |
-| T2 | Engine publishes each contestant's `appearance` in `ring.state` | Done | _this commit_ |
-| T3 | Sprite palette derived from the monster's appearance text | Pending | — |
+| T2 | Engine publishes each contestant's `appearance` in `ring.state` | Done | `92f44d4` |
+| T3 | Sprite palette derived from the monster's appearance text | Done | _this commit_ |
 | T4 | Sprites inline in the Ring feed wherever a known monster is named | Pending | — |
 | T5 | Browser verification sheet (themes × variations × feed at 2×/3×), docs folded back | Pending | — |
 
@@ -45,6 +45,37 @@ recognised colour word in the text; text with no colour word in it ("deceptively
 glorious") falls back to the species' own palette. A small per-monster shift derived from
 its name separates two monsters whose owners both wrote "green", so two basilisks in one
 ring are never pixel-identical — the literal ask in (c).
+
+### How the recolour works, and what rendering it changed
+
+`animations/pixel-fight/appearance-palette.ts`. The first colour word in the appearance
+text sets the hue and saturation; the species palette's hand-spaced **lightness** ramp
+(outline → shadow → body → lit → highlight) is kept, so a recoloured sprite still reads as
+shading (#164). A lightness word shades only the colour right after it ("dark blue", not
+"dark and stormy blue"). The eye swings to the opposite hue when the body would swallow it
+(an amber-eyed basilisk described as gold). A "black" monster keeps its body above 26%
+lightness so it survives every theme's near-black background.
+
+![Appearance-driven palettes on all four themes](assets/pixel-monsters-2026-09/appearance-palettes.png)
+
+Two things only the render caught:
+
+- **Same-colour monsters were indistinguishable.** The first per-name nudge was ±12° of
+  hue; five basilisks all described as "green" came out as one green at 24px. It is now
+  ±20° of hue and ±9 points of lightness — enough to tell five apart, still all green.
+- **Hue is not perceived evenly.** That wider spread turned a "gold and black" basilisk
+  orange: between orange and yellow a few degrees is a different colour. In that band the
+  name now moves the hue by at most 6° and leans on lightness instead. Gold and yellow
+  also needed a lightness lift — on a basilisk's mid-dark body they read brown and olive.
+
+The contact-sheet page used for this is kept as
+`assets/pixel-monsters-2026-09/contact-sheet.entry.ts.txt` (bundle it with the repo's
+esbuild and open it in headless Chromium).
+
+Collisions are still possible: two monsters of one species, both "green", whose names
+happen to hash close. A ring-aware de-duplication was rejected because a monster's colour
+would then depend on who else is in the ring — it could change mid-fight, and differ between
+the roster and the feed.
 
 ### The opt-out keeps its storage key
 

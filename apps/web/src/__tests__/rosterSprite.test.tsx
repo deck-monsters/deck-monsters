@@ -115,7 +115,7 @@ describe('roster sprites', () => {
       .mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
 
     const { container } = render(
-      <RosterSprite creatureType="Basilisk" anim="idle" flash={false} startedAt={0} reducedMotion={false} />,
+      <RosterSprite creatureType="Basilisk" name="Stonefang" anim="idle" flash={false} startedAt={0} reducedMotion={false} />,
     );
 
     const canvas = container.querySelector('canvas')!;
@@ -134,7 +134,7 @@ describe('roster sprites', () => {
     } as unknown as CanvasRenderingContext2D);
 
     render(
-      <RosterSprite creatureType="Basilisk" anim="idle" flash={false} startedAt={0} reducedMotion />,
+      <RosterSprite creatureType="Basilisk" name="Stonefang" anim="idle" flash={false} startedAt={0} reducedMotion />,
     );
 
     expect(raf).not.toHaveBeenCalled();
