@@ -36,17 +36,25 @@ export function teamsAreRelevant(contestants: RingContestantSnapshot[]): boolean
   return standing.size >= 2;
 }
 
-/** Distinct teams in roster order, for the legend. */
+/**
+ * Distinct teams still standing, in roster order, for the legend.
+ *
+ * Standing only, to match `teamsAreRelevant`: a wiped-out team is not a side you are
+ * tracking, and listing its colour in a legend that claims to show "teams in play" is
+ * simply wrong.
+ */
 export function teamsInPlay(contestants: RingContestantSnapshot[]): string[] {
   const seen: string[] = [];
-  for (const { team } of contestants) if (team && !seen.includes(team)) seen.push(team);
+  for (const { team, dead } of contestants) {
+    if (team && !dead && !seen.includes(team)) seen.push(team);
+  }
   return seen;
 }
 
-export type TurnPosition = 'acting' | 'next' | null;
+export type TurnPosition = 'acting' | null;
 
 /**
- * Who is acting and who is up after them.
+ * Who is acting.
  *
  * The roster's row order *is* the order of play: `Ring.doAction` shifts contestants off
  * `this.contestants` in array order and `contestantSnapshots()` maps that same array, so
@@ -54,23 +62,21 @@ export type TurnPosition = 'acting' | 'next' | null;
  * nothing else on screen carried, and it is why the roster must never be sorted or
  * grouped — an earlier design grouped rows by team and silently destroyed it.
  *
- * "Next" skips the fallen, the way the engine's own active-contestant filter does, and
- * wraps to the top of the round.
+ * This deliberately does **not** predict who acts next. It used to, and the prediction
+ * was wrong: the engine's queue filter is `!dead && !fled`
+ * (`isActiveContestant` in `ring/index.ts`), and it further depends on the batch's card
+ * index and on `emptyHanded`. `ring.state` publishes `dead` but not `fled`, so a monster
+ * that has fled stays in the roster looking alive and would have been marked as up next
+ * despite never acting again. Restoring the cue means publishing the real next actor from
+ * the engine — a `ring.state` payload change, not something a client can infer.
  */
 export function turnPositions(
   contestants: RingContestantSnapshot[],
 ): Map<RingContestantSnapshot, TurnPosition> {
   const positions = new Map<RingContestantSnapshot, TurnPosition>();
-  const living = contestants.filter((contestant) => !contestant.dead);
-  const actingIndex = living.findIndex((contestant) => Boolean(contestant.acting));
-
-  for (const contestant of contestants) positions.set(contestant, null);
-  if (actingIndex === -1) return positions;
-
-  positions.set(living[actingIndex]!, 'acting');
-  // With one contestant left the wrap points back at them; they are acting, not next.
-  if (living.length > 1) {
-    positions.set(living[(actingIndex + 1) % living.length]!, 'next');
+  for (const contestant of contestants) {
+    // A fallen contestant never acts, whatever a stale payload claims.
+    positions.set(contestant, contestant.acting && !contestant.dead ? 'acting' : null);
   }
   return positions;
 }
@@ -121,7 +127,7 @@ export function describeContestant(
     contestant.isBoss ? 'staged by The Editor' : contestant.owner,
     contestant.team,
     `armor class ${contestant.ac}`,
-    position === 'acting' ? 'acting now' : position === 'next' ? 'up next' : null,
+    position === 'acting' ? 'acting now' : null,
   ];
   return bits.filter(Boolean).join(', ');
 }

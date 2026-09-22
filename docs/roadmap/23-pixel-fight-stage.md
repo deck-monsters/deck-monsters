@@ -19,7 +19,8 @@ the decision, and what is left.
 | [#166](10b-bugs-fixed.md) | Opt-in setting, off by default — bought time to decide |
 | [#167](10b-bugs-fixed.md) | **Band deleted; sprites moved into the roster rows** |
 | [#168](10b-bugs-fixed.md) | Sprite gutter squeezed names to `G..` in the two-up layout |
-| [#169](10b-bugs-fixed.md) | Row reorganised around field priority; two-up dropped; sprite 48px → 24px |
+| [#169](10b-bugs-fixed.md) | Row reorganised around field priority; multi-column dropped; sprite 48px → 24px |
+| [#169](10b-bugs-fixed.md) | Columns restored as explicit width tiers — two-up at 46rem, three-up at 70rem |
 
 ## The evidence
 
@@ -108,6 +109,14 @@ in this very doc:
 - **Grouping by team is forbidden, not merely unhelpful.** The roster's row order is the
   order of play (`Ring.doAction` shifts off `this.contestants`). Any future idea that
   sorts or groups this list destroys information nothing else on screen carries.
+- **Dropping columns entirely was an overcorrection.** #168 was blamed on multi-column
+  layout and the list was pinned to one column. The real fault was the 13rem
+  `minmax()` *minimum*: it let a column be narrower than a row's text needs, which is what
+  produced `G..`. Columns are now earned at explicit container widths — two at 46rem,
+  three at 70rem, with no `auto-fit` — so a wide desktop window fills instead of running a
+  single 100rem-wide column of 24px sprites. Phones and both tablet orientations stay
+  one-up, which is the case every screenshot in this doc shows. The columns flow row-major
+  so the rule above still holds: reading order is still the order of play.
 
 ## Remaining questions
 

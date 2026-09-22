@@ -121,9 +121,17 @@ this size it is an ambient tell for whose turn it is, not a cutscene.
 ### Order of play, made visible
 
 Row order alone carried it, which is exactly why it was invisible until it went missing.
-The gutter now marks `▶` acting and `›` up next, skipping the fallen the way the engine's
-own active-contestant filter does, and wrapping to the top of the round. It costs 14px and
-nothing else on screen tells you who moves next.
+The gutter now marks `▶` acting and `·` everyone else. It costs 14px, and together with
+row order — which is turn order — nothing else on screen tells you who moves next.
+
+**Predicting the next actor is the client's to guess and it must not.** A `›` up-next
+marker shipped in the first draft of this row and was removed in review. The engine's
+queue is `activeContestants`, filtered by `!dead && !fled` (`ring/index.ts`), and a
+contestant can also be skipped for an exhausted deck; `contestantSnapshots()` publishes
+`dead` only. So the client's "next standing row" and the engine's next actor disagree
+exactly when a monster has fled — and the marker would name someone who will not move.
+If this is wanted, the fix is on the server side of the line: publish the actual next
+actor in the `ring.state` payload. Do not re-derive it in the browser.
 
 ## Wording
 

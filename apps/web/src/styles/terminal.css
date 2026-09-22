@@ -623,8 +623,8 @@
 }
 
 /* Turn gutter. The order of play is the row order — the engine plays contestants in
-   array order and this list is that array — so this only marks where in the round we
-   are. Fixed width so every name starts on the same x. */
+   array order and this list is that array — so this only marks whose turn it is now.
+   Fixed width so every name starts on the same x whether or not it is marked. */
 .roster-turn {
   flex: 0 0 0.85rem;
   text-align: center;
@@ -635,7 +635,6 @@
 }
 
 .roster-turn-acting { color: var(--color-accent); }
-.roster-turn-next { color: var(--color-fg-dim); }
 
 /* 24px, because that is the box the emoji icon already occupied: a room with the pixel
    sprites switched off loses the motion and nothing else. */
@@ -787,8 +786,14 @@
     min-width: 0;
   }
 
-  .roster-list-dense .roster-row-head,
-  .roster-list-dense .roster-row-sub { flex: 0 1 auto; min-width: 0; }
+  /* The name outranks its own metadata. Flex distributes shrinkage by
+     `shrink × basis`, so equal `flex: 0 1 auto` on both let a long beastmaster name
+     take space from the monster's name — at 320px a 32-character beastmaster squeezed
+     "Gin" to nothing, the same failure as #168 one line down. A large shrink factor on
+     the meta line makes it give up every pixel first; the name is the last thing to
+     ellipse, and may take the whole row if it needs to. */
+  .roster-list-dense .roster-row-head { flex: 0 1 auto; min-width: 0; }
+  .roster-list-dense .roster-row-sub { flex: 0 999 auto; min-width: 0; }
 
   .roster-list-dense .roster-sub-sep,
   .roster-list-dense .roster-sub-level,

@@ -3923,7 +3923,12 @@ else on screen carries it. It was invisible precisely because it had always been
   columns rather than squashed rows. Dense was briefly a second markup branch, which could
   not compose with the breakpoints; one DOM at every density is what lets width finish the
   decision, and a test asserts the row markup is identical across the threshold.
-- **Turn gutter**: `▶` acting, `›` up next, skipping the fallen and wrapping the round.
+- **Turn gutter**: `▶` marks the acting contestant, `·` everyone else. A second marker
+  predicting who acts *next* was built and then removed in review: the client cannot
+  compute it. `Ring.doAction`'s queue skips `dead || fled`, and `contestantSnapshots()`
+  publishes `dead` but not `fled` (nor whether a deck is exhausted), so the prediction
+  would have pointed at a monster that had already run. Restoring it means publishing
+  the real next actor in `ring.state`, not guessing client-side.
   New information — row order gave the sequence but never the position in it.
 - **The sprite drops 48px → 24px**, the box the emoji already occupied, so the emoji is a
   free fallback for the default-off case (#166) and the small silhouette reads better.

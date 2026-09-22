@@ -55,12 +55,17 @@ export function hpBand(ratio: number): 'healthy' | 'hurt' | 'critical' {
   return 'critical';
 }
 
-/** Turn gutter. Order of play is the row order; this says where in it we are. */
+/**
+ * Turn gutter. Order of play is the row order; this marks whose turn it is now.
+ *
+ * It does not mark who is up next. That cue was tried and removed: the engine's queue
+ * excludes fled contestants as well as fallen ones, and `ring.state` does not publish
+ * `fled`, so the prediction could point at a monster that will never act again.
+ */
 function TurnMarker({ position }: { position: TurnPosition }) {
-  const glyph = position === 'acting' ? '▶' : position === 'next' ? '›' : '·';
   return (
     <span className={`roster-turn roster-turn-${position ?? 'idle'}`} aria-hidden="true">
-      {glyph}
+      {position === 'acting' ? '▶' : '·'}
     </span>
   );
 }

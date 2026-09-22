@@ -77,10 +77,18 @@ describe('teamsAreRelevant', () => {
       c({ name: 'C', team: null }),
     ])).toEqual(['Slytherin', 'Gryffindor']);
   });
+
+  it('leaves a wiped-out team out of the legend', () => {
+    // The legend is labelled "Teams in play"; a team with nobody standing is not in play.
+    expect(teamsInPlay([
+      c({ team: 'Gryffindor' }),
+      c({ name: 'A', team: 'Slytherin', hp: 0, dead: true }),
+    ])).toEqual(['Gryffindor']);
+  });
 });
 
 describe('turnPositions', () => {
-  it('marks the acting contestant and whoever follows in roster order', () => {
+  it('marks the acting contestant and nobody else', () => {
     // Roster order IS play order: Ring.doAction shifts contestants off the same array
     // this list mirrors. Nothing else on screen carries that, which is why the roster
     // must never be sorted or grouped.
@@ -88,35 +96,19 @@ describe('turnPositions', () => {
     const at = turnPositions(list);
 
     expect(at.get(list[1]!)).toBe('acting');
-    expect(at.get(list[2]!)).toBe('next');
     expect(at.get(list[0]!)).toBeNull();
+    expect(at.get(list[2]!)).toBeNull();
   });
 
-  it('wraps to the top of the round', () => {
-    const list = [c({ name: 'A' }), c({ name: 'B' }), c({ name: 'C', acting: true })];
-    const at = turnPositions(list);
+  it('does not predict who acts next', () => {
+    // It used to, and the prediction was wrong: the engine's queue filter is
+    // `!dead && !fled`, and ring.state publishes `dead` but not `fled`, so a monster
+    // that had fled stayed in the roster looking alive and got marked up-next despite
+    // never acting again. Restoring the cue needs the engine to publish the real actor.
+    const list = [c({ name: 'A', acting: true }), c({ name: 'B' }), c({ name: 'C' })];
+    const marked = [...turnPositions(list).values()].filter(Boolean);
 
-    expect(at.get(list[0]!)).toBe('next');
-  });
-
-  it('skips the fallen when picking who is next, as the engine does', () => {
-    const list = [
-      c({ name: 'A', acting: true }),
-      c({ name: 'B', hp: 0, dead: true }),
-      c({ name: 'C' }),
-    ];
-    const at = turnPositions(list);
-
-    expect(at.get(list[1]!)).toBeNull();
-    expect(at.get(list[2]!)).toBe('next');
-  });
-
-  it('marks nobody next when only one contestant is still up', () => {
-    const list = [c({ name: 'A', acting: true }), c({ name: 'B', hp: 0, dead: true })];
-    const at = turnPositions(list);
-
-    expect(at.get(list[0]!)).toBe('acting');
-    expect([...at.values()].filter((v) => v === 'next')).toHaveLength(0);
+    expect(marked).toEqual(['acting']);
   });
 
   it('marks nothing at all between fights, when nobody is acting', () => {
@@ -171,7 +163,7 @@ describe('describeContestant', () => {
     expect(describeContestant(c({ hp: 0, dead: true }), null)).toContain('fallen');
   });
 
-  it('announces who is up next', () => {
-    expect(describeContestant(c(), 'next')).toContain('up next');
+  it('says nothing about turn order when the contestant is not acting', () => {
+    expect(describeContestant(c(), null)).not.toContain('acting');
   });
 });
