@@ -19,6 +19,9 @@ import { usePixelMonsters } from '../hooks/usePixelMonsters.js';
 import { AT_BOTTOM_THRESHOLD_PX, useFeedAutoScroll } from '../hooks/useFeedAutoScroll.js';
 import { useTimeAgo } from '../hooks/useTimeAgo.js';
 import { formatEventText } from '../utils/format-event-text.js';
+import { rememberMonsters } from '../hooks/useKnownMonsters.js';
+import { loadInlineSprites } from '../hooks/useInlineSprites.js';
+import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
 import { fightTitleOneLine, type FightSummaryLike } from '../utils/fight-display.js';
 import {
 	eventTimestampIso,
@@ -47,8 +50,10 @@ interface RingPaneProps {
   roomId: string;
   isActive: boolean;
   headerActions?: ReactNode;
-  /** Injectable loader keeps the theme gate testable without preloading the chunk. */
+  /** Injectable loader keeps the setting gate testable without preloading the chunk. */
   pixelSpritesLoader?: PixelSpritesLoader;
+  /** Same, for the feed's inline sprites. */
+  inlineSpritesLoader?: typeof loadInlineSprites;
 }
 
 interface TimerState {
@@ -151,6 +156,7 @@ export default function RingPane({
   isActive,
   headerActions,
   pixelSpritesLoader = loadPixelSprites,
+  inlineSpritesLoader = loadInlineSprites,
 }: RingPaneProps) {
   const { ringKeyTimestampsEnabled } = useRingKeyTimestamps();
   // On by default on every theme; the player can opt out — see usePixelMonsters.
@@ -428,6 +434,14 @@ export default function RingPane({
     ? (timerState.contestants ?? [])
     : ((ringState as { contestants?: RingContestantSnapshot[] } | undefined)?.contestants ?? []);
 
+  // Sprites in the feed in place of each known monster's emoji (roadmap 24). The Ring pane
+  // is the one place that sees ring.state, so it records the room's monsters for every pane
+  // that renders narration — the Console and the fight history read the same store.
+  useEffect(() => {
+    rememberMonsters(roomId, rosterContestants);
+  }, [roomId, rosterContestants]);
+  const mentions = useMonsterMentions(roomId, inlineSpritesLoader);
+
   const summonBadge = ringState
     ? `summons ${ringState.bossSummonsRemaining}/${ringState.bossSummonLimit}`
     : null;
@@ -539,11 +553,11 @@ export default function RingPane({
               </time>
               {showKeyColumn ? (
                 <div className="event-row-inner">
-                  <div className="event-text">{formatEventText(event.text ?? '')}</div>
+                  <div className="event-text">{formatEventText(event.text ?? '', mentions)}</div>
                   <KeyRingTimeBadge at={new Date(event.timestamp)} label={keyMeta.label} />
                 </div>
               ) : (
-                <div className="event-text">{formatEventText(event.text ?? '')}</div>
+                <div className="event-text">{formatEventText(event.text ?? '', mentions)}</div>
               )}
             </li>
           );

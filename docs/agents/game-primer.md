@@ -183,7 +183,9 @@ monsters"), stored as `'0'` when off because absent now means on. They were SNES
 and opt-in until roadmap 24; the theme-feature mechanism that gated them was removed. An
 opted-out player never fetches the lazy chunk: `RingRoster` reads `RosterSpriteContext`
 rather than importing the art. The flag is a `useSyncExternalStore` store so every consumer
-flips together.
+flips together. Each sprite is coloured from the monster's `appearance` (published on
+`ring.state`), and every narration surface (Ring feed, Console, fight history) draws a still 16px
+portrait in place of a known monster's emoji — see `docs/roadmap/24-pixel-monsters-everywhere.md` for the matching rules.
 
 The roster row itself is ranked by field priority and **must never be sorted or grouped**:
 its row order is the order of play, since `Ring.doAction` shifts contestants off the same

@@ -1033,3 +1033,16 @@
   .surface-panel h1 { font-size: 1.05rem; }
   .fight-log-card { padding: .6rem; }
 }
+
+/* A monster's pixel portrait in place of its emoji in the feed (roadmap 24). 16px is the
+   emoji's own footprint at 14px text; rendered in Chromium at 1x, 2x and 3x it leaves every
+   line box exactly as tall as the emoji did, so wrapping and spacing do not move. The
+   -3px drop sits the sprite's feet on the text baseline the way an emoji's do.
+   `pixelated`, never smoothing: this is 24px art, and a smoothed downscale is a smudge. */
+.inline-sprite {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  image-rendering: pixelated;
+}

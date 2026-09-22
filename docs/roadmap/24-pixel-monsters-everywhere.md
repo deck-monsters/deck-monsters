@@ -18,8 +18,8 @@ using the existing emoji representations."
 |---|---|---|---|
 | T1 | Sprites on by default, the setting becomes an opt-out; every theme, not only SNES | Done | `b1d85f0` |
 | T2 | Engine publishes each contestant's `appearance` in `ring.state` | Done | `92f44d4` |
-| T3 | Sprite palette derived from the monster's appearance text | Done | _this commit_ |
-| T4 | Sprites inline in the Ring feed wherever a known monster is named | Pending | — |
+| T3 | Sprite palette derived from the monster's appearance text | Done | `7af0b0b`, review fix `25c44fe` |
+| T4 | Sprites inline wherever narration names a known monster: Ring feed, Console, fight history | Done | _this commit_ |
 | T5 | Browser verification sheet (themes × variations × feed at 2×/3×), docs folded back | Pending | — |
 
 ## Decisions
@@ -87,11 +87,72 @@ there is no stored "I turned this off" to honour.
 
 ### Feed sprites: matched, never guessed
 
-The feed is flat engine text with `${icon} ${givenName}` baked in (see
-`creatures/base.ts` `identity`), shared with Discord, so the engine cannot emit web-only
-markup. The web recognises the exact `icon + ' ' + name` pair of monsters the room has seen
-in `ring.state` this session and swaps the icon for a static sprite. Anything it does not
-recognise keeps its emoji, so the failure mode is "looks like today", never "wrong monster".
+The feed is flat engine text shared with Discord, so the engine cannot emit web-only markup
+saying which emoji is which monster. The web matches instead
+(`utils/monster-mentions.ts`), against every monster the room's Ring has shown this
+session (`hooks/useKnownMonsters.ts` — accumulated so a finished fight's lines keep their
+sprites, and keyed by room per `docs/room-scoping.md`). Anything unmatched keeps
+its emoji: the failure mode is "looks like today", never "wrong monster".
+
+The plan's first idea — match `icon + ' ' + name` — would have missed the most common line
+in a fight. Surveying every engine template that places a monster icon found the hit line
+is `🐍 🔪 💪  Gin hits Ben` (attacker, damage, target icons *then* both names), the HP line
+is `🐍 *Gin has…` and a level-up is `🐍  **Gin**`. Two rules cover every template:
+
+1. **Icon before its own name**, allowing whitespace, `*`/`_` markup and one other emoji
+   (the heal line's 💊) in between.
+2. **The hit/miss cluster**: three single-spaced emoji then two or more spaces. The first
+   and third map to the first and second monster named after them (the first twice for a
+   monster that hit itself); the middle damage emoji is never touched. It runs after rule 1
+   and overrides it, because in `💪 🔪 💪  Ben hits Max` rule 1 alone pins the third 💪 to
+   Ben.
+
+Pairing each icon with a *name* is what keeps two default-🐍 basilisks in one fight apart.
+Fenced ``` blocks are never touched: they hold ASCII card art in monospace columns.
+
+Known gap: a player who gives their monster an emoji that is also a flavour emoji (🔥, 🔪)
+could have that flavour emoji drawn as their sprite in a line that names them. Rare, and
+harmless beyond looking odd; fixing it would need the engine to mark icons, which it cannot
+do without changing Discord's text.
+
+### Feed sprite size: 16px, chosen by rendering
+
+The feed is 14px text on a 19.6px line; the art is 24×24 and fills 22–23 rows of it, so
+there is nothing to crop. Pixel art is only perfectly crisp at a whole number of device
+pixels per art pixel. Three strategies were rendered in Chromium at 1×, 2× and 3×, with
+every line's height measured:
+
+| Strategy | 3× (iPhone) | 2× (iPad) | Layout |
+|---|---|---|---|
+| **16px always** (chosen) | crisp, 2 px per art px | 1.33 — uneven but not visibly so at this size | line heights identical to the emoji |
+| Crisp only: 16px at 3×, 12px at 2× | crisp | crisp but smaller than the emoji; hard to read | identical |
+| 24px, negative margins | crisp | crisp | changed where lines wrapped; heavier than the text |
+
+At 1× the 16px sprite is a shrink of the art and still reads as its species.
+
+![The feed with sprites on all four themes](assets/pixel-monsters-2026-09/feed-sprites-all-themes.png)
+
+Measured on every theme with and without sprites: line heights 122 / 110.8 / 91.2 / 32.4 /
+52 / 52 (124 for the first line on the SNES theme, whose card blocks have a thicker border —
+identical with emoji). Nothing wraps differently.
+
+### Every narration surface, from one room-keyed store
+
+The Ring feed, the Console and the fight-history panel all render narration through
+`formatEventText`, which takes an optional `MonsterMentions`. Only the Ring pane sees
+`ring.state`, so it *records* the room's monsters into a small store
+(`hooks/useKnownMonsters.ts`, `rememberMonsters`), and each surface *reads* its own room's
+entry through `useMonsterMentions(roomId)`. The store is keyed by room — a reader never sees
+another room's monsters (`docs/room-scoping.md`). Fights from before this session name
+monsters the store has not seen, so the fight history shows sprites only for monsters that
+have been in the Ring since the page loaded; the rest keep their emoji.
+
+### Feed sprites load without Suspense
+
+The roster uses `React.lazy` + `Suspense`. The feed must not: it is virtualised, and a
+Suspense boundary would mount it in the fallback and again when the chunk arrived, losing
+the reader's scroll position. `useInlineSprites` loads the renderer in an effect and the
+visible lines re-render in place when it lands.
 
 Icons are player-editable (`editSelf` offers "Icon/color"), so a monster's feed emoji is not
 necessarily its species'. With the feature on, the sprite replaces it everywhere — in the

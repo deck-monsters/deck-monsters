@@ -205,9 +205,10 @@ export default function AccountView() {
                   lineHeight: 1.45,
                 }}
               >
-                Each monster in the Ring roster is drawn as a pixel sprite, coloured by the
-                appearance its Beastmaster gave it — it lunges on its turn, flinches when hit, and
-                topples when it falls. Turn this off to show each monster's emoji instead.
+                Each monster is drawn as a pixel sprite, coloured by the appearance its
+                Beastmaster gave it — in the Ring roster it lunges on its turn, flinches when hit,
+                and topples when it falls, and the narration shows its portrait wherever it is
+                named. Turn this off to show each monster's emoji instead.
               </span>
             </span>
           </label>
