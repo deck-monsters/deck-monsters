@@ -19,8 +19,8 @@ using the existing emoji representations."
 | T1 | Sprites on by default, the setting becomes an opt-out; every theme, not only SNES | Done | `b1d85f0` |
 | T2 | Engine publishes each contestant's `appearance` in `ring.state` | Done | `92f44d4` |
 | T3 | Sprite palette derived from the monster's appearance text | Done | `7af0b0b`, review fix `25c44fe` |
-| T4 | Sprites inline wherever narration names a known monster: Ring feed, Console, fight history | Done | _this commit_ |
-| T5 | Browser verification sheet (themes × variations × feed at 2×/3×), docs folded back | Pending | — |
+| T4 | Sprites inline wherever narration names a known monster: Ring feed, Console, fight history | Done | `d825113` |
+| T5 | Browser verification sheet (themes × variations × feed at 2×/3×), docs folded back | Done | _this commit_ |
 
 ## Decisions
 
@@ -176,6 +176,30 @@ upgrading from a build that set it.
 Up to a few dozen visible lines each naming one or two monsters: animating them would be
 exactly the "distracting" that got the first version switched off (#166). The roster keeps
 the motion; the feed gets a still portrait.
+
+## Verification (T5)
+
+Everything visual in this pass was checked in headless Chromium against the real modules
+and stylesheets — the recipe in `docs/ring-roster-design.md`, "Rendering it without a
+device". Bundling a page with esbuild that imports the real `RingRoster`, `PixelSprites`,
+`formatEventText` and sprite code needed two stubs worth knowing about: `PixelSprites`
+throws without a `RingFeedContext` provider (pass a no-op `subscribe`), and modules that read
+`import.meta.env` need `--define:import.meta.env={}` in an IIFE bundle.
+
+| Checked | Result |
+|---|---|
+| Palettes on all four themes (contact sheet above) | Every species readable on every background; "black" stays visible |
+| Five basilisks all described "green" | Distinguishable — after widening the per-name spread |
+| "gold", "yellow" | Read gold and yellow — after narrowing the hue spread in that band |
+| Feed, 16px sprites vs emoji, all four themes, 2× | Line heights identical; no wrap moves |
+| Feed at 1× and 3× | 1×: shrunk but legible; 3×: crisp |
+| Real roster on Phosphor, the default theme | Below |
+
+![The real roster on Phosphor: three basilisks, a gladiator and a boss jinn](assets/pixel-monsters-2026-09/roster-phosphor-three-basilisks.png)
+
+**Not verified**: a real iPhone and iPad. Chromium's device-scale-factor stands in for the
+screens, but iOS Safari's emoji font metrics differ from Chromium's on Linux, so the
+"identical line height" claim is proven for Chromium only. Worth a look on the phone.
 
 ## Process
 
