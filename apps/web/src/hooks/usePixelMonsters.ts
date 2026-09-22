@@ -1,48 +1,13 @@
-import { useCallback, useSyncExternalStore } from 'react';
-
-// The key predates the rename from "pixel fight stage" and is kept so players who opted in
-// under the old default keep their choice rather than being silently reset.
-const STORAGE_KEY = 'deck-monsters-pixel-fight-stage';
+import { createStoredFlag } from './stored-flag.js';
 
 /**
- * Absent means on. Off has to be stored explicitly (`'0'`) now that on is the default.
+ * Keeps its pre-rename key so players who opted in under the old default keep their choice.
  *
- * Under the old opt-in default, absent meant off and on was `'1'`. Nobody's "off" was ever
+ * Under that old default, absent meant off and on was `'1'`. Nobody's "off" was ever
  * written down — it was simply the absence of a choice — so flipping the meaning of absent
- * does not overturn a decision anyone made. Anyone who had opted in still reads `'1'`.
+ * does not overturn a decision anyone made, and `'1'` still reads as on.
  */
-function readStored(): boolean {
-	if (typeof localStorage === 'undefined') return true;
-	return localStorage.getItem(STORAGE_KEY) !== '0';
-}
-
-// The toggle lives in the account view while the sprites it controls live in the Ring
-// pane, and the workspace layout can show both at once. A plain useState per caller
-// would leave the pane on the old value until a reload, so the stored flag is shared
-// through an external store (same approach as useTheme) and every caller re-renders.
-//
-// getSnapshot re-reads localStorage rather than caching in a module variable: the value
-// is a boolean, so useSyncExternalStore's Object.is check is satisfied either way, and
-// storage cleared underneath us (a signed-out tab, a test) is picked up instead of being
-// masked by a stale cache.
-const listeners = new Set<() => void>();
-
-function notify(): void {
-	listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void): () => void {
-	listeners.add(listener);
-	// Keep other tabs in step; a player toggling this on a second tab expects both to agree.
-	const onStorage = (event: StorageEvent) => {
-		if (event.key === STORAGE_KEY) notify();
-	};
-	window.addEventListener('storage', onStorage);
-	return () => {
-		listeners.delete(listener);
-		window.removeEventListener('storage', onStorage);
-	};
-}
+const usePixelMonstersFlag = createStoredFlag('deck-monsters-pixel-fight-stage', true);
 
 /**
  * Pixel-art monster sprites, on every theme. Default **on**; the setting is an opt-out.
@@ -56,16 +21,6 @@ function subscribe(listener: () => void): () => void {
  * opt-out remains for anyone who prefers the emoji.
  */
 export function usePixelMonsters() {
-	const pixelMonstersEnabled = useSyncExternalStore(subscribe, readStored, () => true);
-
-	const setPixelMonstersEnabled = useCallback((next: boolean) => {
-		if (next) {
-			localStorage.removeItem(STORAGE_KEY);
-		} else {
-			localStorage.setItem(STORAGE_KEY, '0');
-		}
-		notify();
-	}, []);
-
+	const [pixelMonstersEnabled, setPixelMonstersEnabled] = usePixelMonstersFlag();
 	return { pixelMonstersEnabled, setPixelMonstersEnabled };
 }

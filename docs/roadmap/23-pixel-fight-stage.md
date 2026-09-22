@@ -133,10 +133,8 @@ in this very doc:
 - **Is eight the right density threshold?** It is the largest count that fits the 40% cap
   comfortably on a phone. Keying off pane height instead would be steadier but harder to
   predict, and the roster would change shape on rotation.
-- **`useRingKeyTimestamps` has a latent staleness bug** worth folding into any pass here: it
-  uses a plain `useState`, so a toggle and a consumer mounted at once (the workspace layout
-  allows it) disagree until a reload. `usePixelFightStage` and `useTheme` both use
-  `useSyncExternalStore` and do not have this problem.
+- ~~**`useRingKeyTimestamps` has a latent staleness bug**~~ — fixed in roadmap 24 (#171): it
+  and `usePixelMonsters` now share one `createStoredFlag` store.
 
 ## Process note
 

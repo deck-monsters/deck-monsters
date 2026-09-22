@@ -3998,3 +3998,26 @@ and the row is the positioning context — jsdom cannot measure the result, but 
 the flex column being reinstated.
 
 **Status**: Fixed.
+
+### 171. The key-event-times setting did not reach a Ring pane already on screen — FIXED
+
+Carried as an open question in roadmap 23 and folded into roadmap 24's pass.
+`useRingKeyTimestamps` held its value in a per-caller `useState(readStored)`. The workspace
+layout can show the Account view beside the Ring pane, so turning "Show key event times in
+the Ring" on or off updated the checkbox and left the pane rendering the old value until a
+reload.
+
+**Root cause**: two components reading one preference each kept a private copy of it.
+`useTheme` and the pixel-sprite flag had already moved onto `useSyncExternalStore` for
+exactly this reason; this flag was written before them and never followed.
+
+**Fix**: a shared `createStoredFlag(key, defaultOn)` in `hooks/stored-flag.ts` now backs
+both `useRingKeyTimestamps` and `usePixelMonsters`, so there is one implementation of a
+live, cross-tab boolean preference rather than two drifting copies. Its storage format —
+`'1'` on, `'0'` off, absent means the default, and choosing the default removes the key —
+was chosen so both flags kept their existing stored values unchanged.
+
+**Tests**: `useRingKeyTimestamps.test.tsx` — the "reaches every caller" case fails against
+the old hook and passes on the new one.
+
+**Status**: Fixed.
