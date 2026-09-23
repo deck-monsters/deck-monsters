@@ -7,7 +7,7 @@ type WorkshopMonster = {
   type: string;
   level: number;
   // Progress toward the next level, for the Workshop's level meter — see
-  // docs/roadmap/11-balance-and-mechanics.md "Early progression front-loading" and
+  // docs/archive/roadmap/11-progression-and-economy-2026-09.md "Early progression front-loading" and
   // MonsterWorkshopPanel.tsx.
   xpIntoLevel: number;
   xpNeededForLevel: number;

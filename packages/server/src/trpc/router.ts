@@ -59,7 +59,7 @@ type InventoryMonsterSummary = {
 	type: string;
 	level: number;
 	// XP progress toward the next level, for the Workshop's level meter (see
-	// docs/roadmap/11-balance-and-mechanics.md "Early progression front-loading").
+	// docs/archive/roadmap/11-progression-and-economy-2026-09.md "Early progression front-loading").
 	// `xpIntoLevel`/`xpNeededForLevel` (rather than raw cumulative xp) so the client can
 	// draw a 0-100% bar without re-implementing the engine's level curve.
 	xpIntoLevel: number;

@@ -1020,7 +1020,7 @@
 .fight-streak { color: var(--color-accent); font-size: .8rem; }
 .fight-log-detail { margin-top: .75rem; font-size: .85rem; font-family: var(--font-mono, monospace); overflow-wrap: anywhere; }
 /* Scrolling lives on the wrapper so the list's markers are never inside a scrollport —
-   WebKit clips outside-positioned markers there, Blink does not. See 10-bug-fixes.md G. */
+   WebKit clips outside-positioned markers there, Blink does not. See 10b-bugs-fixed.md #125. */
 .fight-log-events { max-height: 15rem; overflow: auto; }
 .fight-log-detail ol { padding-left: 1.5rem; }
 .leaderboard-table-region { max-width: 100%; overflow-x: auto; outline-offset: -2px; }

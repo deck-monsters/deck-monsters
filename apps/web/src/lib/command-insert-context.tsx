@@ -30,7 +30,7 @@ export function CommandInsertProvider({ children }: { children: ReactNode }) {
    *
    * Two things are needed, because revealing is not instant: ask the host to show the
    * console, then hold the command until a console actually registers. See
-   * 10-bug-fixes.md H.
+   * 10b-bugs-fixed.md #126.
    */
   const registerInsertFn = useCallback((fn: (command: string) => void) => {
     insertFnRef.current = fn;

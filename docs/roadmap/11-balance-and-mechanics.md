@@ -11,9 +11,12 @@ tags: [balance, mechanics, roadmap]
 **Status:** Active backlog. Use evidence from the simulation harness and live telemetry
 before changing combat or economy values.
 
-The September progression and economy analysis shipped. Its current behavior and fixed
-defects are recorded in [analytics and history](../architecture/analytics-and-history.md)
-and [`10b-bugs-fixed.md`](10b-bugs-fixed.md), not repeated here.
+The September progression and economy analysis shipped. Its tuning knobs live in
+`packages/engine/src/constants/progression.ts` and `constants/coins.ts`; the before/after
+numbers they were tuned against are archived in
+[September 2026 progression and economy analysis](../archive/roadmap/11-progression-and-economy-2026-09.md).
+Reward delivery is in [analytics and history](../architecture/analytics-and-history.md),
+and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Measurement first
 

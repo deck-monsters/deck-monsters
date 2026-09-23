@@ -10,7 +10,7 @@ import type { SurfaceId } from '../components/surfaces.js';
  * command could assume someone was listening. Now it is one of five surfaces competing for
  * two slots: the handbook's "Monster Manual" quick link did nothing at all when the console
  * was not in one, because `insertCommand` optional-chained a ref only ConsolePane sets.
- * See 10-bug-fixes.md H.
+ * See 10b-bugs-fixed.md #126.
  */
 function Harness({
   onInsert,

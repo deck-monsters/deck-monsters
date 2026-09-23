@@ -29,7 +29,14 @@ Promise.resolve()
 	.then(async () => {
 		if (process.argv[2] === '--calculate-stats') {
 			console.log('Calculating card stats, this will take some time...');
-			writeToFile('card-odds', JSON.stringify(await getCardDPT(), null, 2), 'json');
+			// getCardDPT awaits each card.effect, and effects await fight pacing
+			// (subEventDelay). Without this the sampler sleeps through real pacing
+			// on every one of its hundreds of thousands of plays.
+			process.env.DECK_MONSTERS_SKIP_DELAYS ??= '1';
+			const cardOdds = JSON.stringify(await getCardDPT(), null, 2);
+			writeToFile('card-odds', cardOdds, 'json');
+			// The engine imports its own copy (helpers/card.ts, game.ts); keep both in step.
+			writeToFile('packages/engine/src/card-odds', cardOdds, 'json');
 			writeToFile('card-probabilities', JSON.stringify(getCardProbabilities(), null, 2), 'json');
 		} else {
 			console.log('Skipping stats calculation. Pass --calculate-stats to re-calculate card stats.');

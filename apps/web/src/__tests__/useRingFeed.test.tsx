@@ -491,7 +491,7 @@ describe('useRingFeed: the watchdog belongs to its room (#108)', () => {
 /**
  * The reporter saw "-- reconnecting --" on a console that was working fine, with no
  * "reconnected" line after it. Two separate defects produced that, and both are covered
- * here. See 10-bug-fixes.md D and 10b-bugs-fixed.md #127.
+ * here. See 10b-bugs-fixed.md #127.
  */
 describe('useRingFeed: recovering from a watchdog trip', () => {
   function wrapper({ children }: { children: ReactNode }) {

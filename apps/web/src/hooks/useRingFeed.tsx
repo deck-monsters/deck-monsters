@@ -62,7 +62,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
    * exactly the quiet-room case the watchdog fires in. React bails out on an unchanged
    * value, the input stays identical, tRPC never re-subscribes, no handshake ever arrives,
    * and `reconnecting` stays true forever: the banner the reporter saw with a connection
-   * that was working fine and no "reconnected" line after it. See 10-bug-fixes.md D.
+   * that was working fine and no "reconnected" line after it. See 10b-bugs-fixed.md #127.
    */
   const [resumeAttempt, setResumeAttempt] = useState(0);
   const latestTrackedEventIdRef = useRef<string | undefined>(undefined);
@@ -123,7 +123,7 @@ export function useRingFeed(roomId: string): RingFeedApi {
    *
    * So on becoming visible, give the connection a fresh full interval to prove itself
    * instead of acting on a timer that expired in the background. A genuinely dead
-   * connection still trips it one interval later. See 10-bug-fixes.md D.
+   * connection still trips it one interval later. See 10b-bugs-fixed.md #127.
    */
   useEffect(() => {
     if (typeof document === 'undefined') return;

@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — five verified open items. Fixed work and its root causes live only in
+**Status:** Active — six open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -59,6 +59,16 @@ Read [web workspace](../architecture/web-workspace.md) and
 the bottom without a callback can hide the recovery control. The trigger is not reproduced:
 capture whether roster collapse, replay, reconnect, or animation causes it before selecting
 a fix.
+
+Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
+
+### F. Odd spacing in some feed messages
+
+**Owner:** Web feeds. Players reported extra blank lines and misaligned indentation in some
+feed messages. The one confirmed instance, Delayed Hit narration that opened with a literal
+`\n`, is fixed (#130), and a sweep of `cards/` found no other. No further example has been
+captured. Get a screenshot of a specific message before changing the card-display block or
+the turn banner, the likeliest suspects given #97 and #101.
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
 

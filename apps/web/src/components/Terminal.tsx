@@ -193,7 +193,7 @@ export default function Terminal({ roomId }: TerminalProps) {
    * How a deep link into a surface actually shows it. Before the slots work the console was
    * always on screen, so the handbook's quick links could insert a command and assume it
    * would be seen; now the console competes for two slots and may not be in either. See
-   * 10-bug-fixes.md H.
+   * 10b-bugs-fixed.md #126.
    *
    * Reads layout state through refs so the registered function stays correct without
    * re-registering on every slot change.

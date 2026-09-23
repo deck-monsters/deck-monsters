@@ -15,8 +15,9 @@ execution queue.
 ## Web and display
 
 - [ ] **Owner: Web Workspace.** Complete real iPhone/WebKit checks for the workspace at
-  full-page, pane, phone, and 200% zoom widths, including the inline sprites. Record only
-  observed defects. Read [web workspace](../architecture/web-workspace.md) and
+  full-page, pane, phone, and 200% zoom widths, including the inline sprites. Include the
+  two fixes that could not be reproduced off-device: dragging the console up during a fight
+  (#129, #132) and the fight-log list markers (#125). Record only observed defects. Read [web workspace](../architecture/web-workspace.md) and
   [ring roster and pixel monsters](../architecture/ring-roster-and-pixel-monsters.md).
 - [ ] **Owner: Web/identity.** Decide whether display preferences (pixel monsters, key
   timestamps, pane slots, and similar controls) remain device-local or become
