@@ -2,12 +2,20 @@ import { writeFileSync } from 'node:fs';
 
 import { generateCardCatalogue } from './card-catalogue.js';
 import { DM_ONLY_MARKERS } from './dm-only-sections.js';
-import { collectDungeonMasterGuideMarkdown } from './dungeon-master-guide.js';
-import { buildMonsterEntry } from './monster-manual.js';
+import { collectDungeonMasterGuideMarkdown, renderDungeonMasterGuideMarkdown } from './dungeon-master-guide.js';
+import { buildMonsterEntry, buildMonsterEntryMarkdown } from './monster-manual.js';
 import allMonsters from '../monsters/helpers/all.js';
 import { generateCardCatalogueHtml } from './card-catalogue-html.js';
+import { COMMAND_CATALOG } from '../commands/catalog.js';
 import {
-	collectPlayerHandbookMarkdown as collectPlayerHandbookBody,
+	convertPlainTextToMarkdown,
+	extractLeadingBanner,
+	normalizeMarkdownSpacing,
+	renderCommandCatalogMarkdown,
+	renderTocEntry,
+} from './markdown.js';
+import {
+	collectPlayerHandbookSections,
 	PLAYER_HANDBOOK_TITLE,
 } from './player-handbook-content.js';
 
@@ -34,29 +42,41 @@ export const GENERATED_DOC_NOTICE = [
 	'Run pnpm run build:docs.',
 ].join('\n');
 
+/**
+ * Wraps a root file's body with its `#` title and ownership notice, then runs the whole
+ * thing through `normalizeMarkdownSpacing` once as a final safety net: individual
+ * sections are built (and, for prose, converted) independently, so this is what
+ * guarantees the *joins* between them — a card's closing fence butting straight up
+ * against the next card's `###` heading, say — also get the blank line GitHub needs.
+ * Never applied to the in-game DMG/handbook text (see `collectInGameDmgMarkdown` and
+ * `game.ts`'s announcers), only to what ends up in the root `.md` files.
+ */
 const generatedMarkdown = (title: string, body: string): string =>
-	normalizeLineEndings(`# ${title}\n\n${GENERATED_DOC_NOTICE}\n\n${body.replace(/^\n+/, '')}`);
+	normalizeLineEndings(
+		normalizeMarkdownSpacing(`# ${title}\n\n${GENERATED_DOC_NOTICE}\n\n${body.replace(/^\n+/, '')}`)
+	);
 
-const DMG_ASCII_HEADER = `
-\`\`\`
+// The art-only fence below used to also hold the paragraphs after it — a fence that
+// swallows prose renders that prose as code and makes the fence's balance fragile to any
+// edit inside it. Keep the fence to *only* the art; the prose is plain Markdown below it.
+const DMG_ASCII_HEADER = `\`\`\`text
 			██████╗ ███╗   ███╗ ██████╗
 			██╔══██╗████╗ ████║██╔════╝
 			██║  ██║██╔████╔██║██║  ███╗
 			██║  ██║██║╚██╔╝██║██║   ██║
 			██████╔╝██║ ╚═╝ ██║╚██████╔╝
 			╚═════╝ ╚═╝     ╚═╝ ╚═════╝
-
-*Dungeon Master Guide (Game Master Reference):*
-Full card stats, modifier math, damage-per-turn tables, and probability breakdowns.
-
-Multi-roll attacks (Lucky Strike, Horn Swipe, Rehit): when a card rolls
-more than once and keeps only one result, Stroke of Luck / Curse of Loki
-apply to the selected roll only — discarded natural 20s/1s do not crit.
 \`\`\`
-`.trim();
+
+*Dungeon Master Guide (Game Master Reference):* full card stats, modifier math,
+damage-per-turn tables, and probability breakdowns.
+
+Multi-roll attacks (Lucky Strike, Horn Swipe, Rehit): when a card rolls more than once
+and keeps only one result, Stroke of Luck / Curse of Loki apply to the selected roll
+only — discarded natural 20s/1s do not crit.`;
 
 const CARDS_ASCII_HEADER = `
-\`\`\`
+\`\`\`text
 			.------..------..------..------..------.
 			|C.--. ||A.--. ||R.--. ||D.--. ||S.--. |
 			| :/\\: || (\\/) || :(): || :/\\: || :/\\: |
@@ -67,7 +87,7 @@ const CARDS_ASCII_HEADER = `
 `.trim();
 
 const MONSTERS_ASCII_HEADER = `
-\`\`\`
+\`\`\`text
 
  ███▄ ▄███▓ ▒█████   ███▄    █   ██████ ▄▄▄█████▓▓█████  ██▀███
 ▓██▒▀█▀ ██▒▒██▒  ██▒ ██ ▀█   █ ▒██    ▒ ▓  ██▒ ▓▒▓█   ▀ ▓██ ▒ ██▒
@@ -92,7 +112,7 @@ const MONSTERS_ASCII_HEADER = `
 `.trim();
 
 export const collectDmgMarkdown = async (): Promise<string> => {
-	const body = await collectDungeonMasterGuideMarkdown({ includeOperatorSections: true });
+	const body = await renderDungeonMasterGuideMarkdown();
 
 	return generatedMarkdown('Dungeon Master Guide', `${DMG_ASCII_HEADER}\n\n${body}`);
 };
@@ -107,8 +127,10 @@ export const collectCardsMarkdown = async (): Promise<string> => {
 };
 
 export const collectMonstersMarkdown = async (): Promise<string> => {
-	const monsterList = allMonsters.map((Monster: { creatureType?: string }) => Monster.creatureType ?? '').join('\n');
-	const entries = allMonsters.map((Monster: new () => object) => buildMonsterEntry(Monster, 0)).join('\n\n');
+	const monsterNames = allMonsters.map((Monster: { creatureType?: string }) => Monster.creatureType ?? '');
+	const entries = allMonsters
+		.map((Monster: new () => object) => buildMonsterEntryMarkdown(Monster, 0))
+		.join('\n\n');
 
 	return generatedMarkdown(
 		'Monsters',
@@ -116,16 +138,42 @@ export const collectMonstersMarkdown = async (): Promise<string> => {
 
 There are ${allMonsters.length} different types of monsters:
 
-${monsterList}
+${monsterNames.map(renderTocEntry).join('\n')}
 
-Stat ranges by monster type (spawn, level 0):
+## Stat ranges by monster type (spawn, level 0)
+
 ${entries}
 `,
 	);
 };
 
-export const collectPlayerHandbookMarkdown = (): string =>
-	generatedMarkdown(PLAYER_HANDBOOK_TITLE, collectPlayerHandbookBody());
+/**
+ * The player handbook's plain-text sections (`player-handbook-content.ts`) are shared
+ * verbatim with the in-game `look at player handbook` announcer — see the module doc on
+ * `markdown.ts` for why this file converts them instead of changing that shared source.
+ * The "All Commands" section is the one exception: it is rendered fresh from
+ * `COMMAND_CATALOG` rather than converted, because its plain-text form (`-- Category --`
+ * groups, two-space commands, four-space descriptions) is exactly the shape the design
+ * note calls out as too brittle to regex reliably.
+ */
+export const collectPlayerHandbookMarkdown = (): string => {
+	const sections = collectPlayerHandbookSections();
+
+	const body = sections
+		.map(section => {
+			if (/^── All Commands/.test(section)) {
+				return `## All Commands\n\n${renderCommandCatalogMarkdown(COMMAND_CATALOG)}`;
+			}
+
+			const { banner, rest } = extractLeadingBanner(section);
+			if (banner) return [banner, convertPlainTextToMarkdown(rest)].filter(Boolean).join('\n\n');
+
+			return convertPlainTextToMarkdown(section);
+		})
+		.join('\n\n');
+
+	return generatedMarkdown(PLAYER_HANDBOOK_TITLE, body);
+};
 
 export const collectCardsHtml = async (): Promise<string> =>
 	normalizeLineEndings(await collectSections(generateCardCatalogueHtml));

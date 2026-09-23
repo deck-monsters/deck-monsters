@@ -2,7 +2,7 @@ import { actionCard, itemCard } from '../helpers/card.js';
 import allCards from '../cards/helpers/all.js';
 import allItems from '../items/helpers/all.js';
 import allMonsters from '../monsters/helpers/all.js';
-import { eachSeries } from '../helpers/promise.js';
+import { eachSeries, mapSeries } from '../helpers/promise.js';
 import {
 	FIGHT_PACING_OPERATOR,
 	FIGHT_PACING_PUBLIC,
@@ -10,11 +10,13 @@ import {
 	OPERATOR_CONCURRENCY,
 } from './dm-only-sections.js';
 import {
+	acRangeAtLevel,
 	baseSpawnAcRange,
 	baseSpawnHpRange,
 	formatNumericRange,
 	formatStatLine,
 	getMonsterTypeOffsets,
+	hpRangeAtLevel,
 	STAT_RANGE_FORMULA_NOTE,
 } from './monster-stat-ranges.js';
 import {
@@ -22,6 +24,12 @@ import {
 	BASE_INT,
 	BASE_STR,
 } from '../constants/stats.js';
+import {
+	convertPlainTextToMarkdown,
+	extractLeadingBanner,
+	renderCardSection,
+	renderTocEntry,
+} from './markdown.js';
 
 type ChannelFn = (opts: { announce: string }) => Promise<unknown>;
 export type DocOutputFn = (section: string) => Promise<void> | void;
@@ -154,6 +162,89 @@ export const generateDungeonMasterGuide = async (
 	await eachSeries(allCards, Card => output(actionCard(new Card(), true)));
 	await output(`── Item Catalog ──────────────────────\n${itemList}`);
 	await eachSeries(allItems, Item => output(itemCard(new Item(), true)));
+};
+
+/**
+ * Root-file-only (`DMG.md`) Markdown renderer. `generateDungeonMasterGuide` above stays
+ * untouched because `dungeonMasterGuide()` announces its sections verbatim in-game; this
+ * mirrors its section order but renders each one for GitHub instead of a monospace feed.
+ * The formula note and per-monster-type table are rendered from the same structured data
+ * `buildStatsReference()` uses, not by regexing that function's plain-text output — see
+ * the design note atop `markdown.ts`.
+ */
+const buildStatsReferenceMarkdown = (): string => {
+	const spawnHp = baseSpawnHpRange();
+	const spawnAc = baseSpawnAcRange();
+
+	const monsterRows = allMonsters.map((Monster: new (...args: any[]) => any) => {
+		const offsets = getMonsterTypeOffsets(Monster);
+		const hp = hpRangeAtLevel(offsets.typeHpOffset, 0);
+		const ac = acRangeAtLevel(offsets.typeAcOffset, 0);
+		const sign = (n: number): string => (n >= 0 ? `+${n}` : `${n}`);
+
+		return `| ${offsets.creatureType} | ${offsets.classLabel} | ${formatNumericRange(hp)} | ${formatNumericRange(ac)} | ${sign(offsets.strModifier)} | ${sign(offsets.dexModifier)} | ${sign(offsets.intModifier)} |`;
+	});
+
+	return `
+## Stats Reference
+
+\`\`\`text
+${STAT_RANGE_FORMULA_NOTE}
+\`\`\`
+
+Base spawn ranges (type offset 0, before per-type modifiers):
+
+| Stat | Value |
+|---|---|
+| HP | ${formatNumericRange(spawnHp)} |
+| AC | ${formatNumericRange(spawnAc)} |
+| STR | ${BASE_STR} |
+| DEX | ${BASE_DEX} |
+| INT | ${BASE_INT} |
+
+### Per-monster-type modifiers (spawn, level 0)
+
+| Monster | Class | HP | AC | STR | DEX | INT |
+|---|---|---|---|---|---|---|
+${monsterRows.join('\n')}
+`.trim();
+};
+
+export const renderDungeonMasterGuideMarkdown = async (): Promise<string> => {
+	const { banner, rest } = extractLeadingBanner(DMG_HEADER);
+	const parts: string[] = [
+		[banner, convertPlainTextToMarkdown(rest)].filter(Boolean).join('\n\n'),
+		convertPlainTextToMarkdown(HOW_TO_RUN_SESSION),
+		convertPlainTextToMarkdown(FIGHT_PACING_OPERATOR),
+		convertPlainTextToMarkdown(ADMIN_COMMANDS),
+		buildStatsReferenceMarkdown(),
+		convertPlainTextToMarkdown(COMBAT_MATH),
+		convertPlainTextToMarkdown(OPERATOR_CONCURRENCY),
+	];
+
+	const cardNames = allCards.map((Card: { cardType?: string }) => Card.cardType ?? '');
+	const itemNames = allItems.map((Item: { itemType?: string }) => Item.itemType ?? '');
+
+	parts.push(`## Card Catalog (verbose)\n\n${cardNames.map(renderTocEntry).join('\n')}`);
+	parts.push(
+		(
+			await mapSeries(allCards, async Card => {
+				const card = new Card();
+				return renderCardSection(card.cardType ?? Card.name, actionCard(card, true));
+			})
+		).join('\n\n')
+	);
+	parts.push(`## Item Catalog\n\n${itemNames.map(renderTocEntry).join('\n')}`);
+	parts.push(
+		(
+			await mapSeries(allItems, async Item => {
+				const item = new Item();
+				return renderCardSection(item.itemType ?? Item.name, itemCard(item, true));
+			})
+		).join('\n\n')
+	);
+
+	return parts.join('\n\n');
 };
 
 export const dungeonMasterGuide = async ({ channel }: { channel: ChannelFn }): Promise<void> =>

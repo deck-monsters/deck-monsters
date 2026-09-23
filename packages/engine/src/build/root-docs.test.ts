@@ -12,6 +12,29 @@ import {
 	generateRootDocs,
 	normalizeLineEndings,
 } from './root-docs.js';
+import { qualifiesAsListItem } from './markdown.js';
+
+/**
+ * Splits Markdown into `{ inside, outside }` line arrays by fence state, so the "keep
+ * them clean" guards below can assert against prose without also matching card/item
+ * ASCII art (which legitimately contains `═`, box-drawing characters, and long runs of
+ * `=`/`-`) or formula blocks (which legitimately use a 2-space indent).
+ */
+const splitByFence = (content: string): { inside: string[]; outside: string[] } => {
+	const inside: string[] = [];
+	const outside: string[] = [];
+	let inFence = false;
+
+	for (const line of content.split('\n')) {
+		if (/^\s*```/.test(line)) {
+			inFence = !inFence;
+			continue;
+		}
+		(inFence ? inside : outside).push(line);
+	}
+
+	return { inside, outside };
+};
 
 describe('root-docs generation', () => {
 	it('includes DM-only operational sections in root DMG but not in CARDS', async () => {
@@ -41,11 +64,14 @@ describe('root-docs generation', () => {
 		const monsters = await collectMonstersMarkdown();
 		const dmg = await collectDmgMarkdown();
 
-		expect(monsters).to.include('HP:  30–35');
-		expect(monsters).to.include('AC:  7–9');
-		expect(monsters).to.include('HP:  28–33');
-		expect(monsters).to.include('HP:  32–37');
-		expect(monsters).to.include('AC:  4–6');
+		// MONSTERS.md now renders each monster's stats as a Markdown table (`| HP | 30–35 … |`)
+		// instead of the in-game `HP:  30–35` rule-line block, so these check the numeric
+		// facts survived the reformat, not the old literal prefix.
+		expect(monsters).to.include('30–35');
+		expect(monsters).to.include('7–9');
+		expect(monsters).to.include('28–33');
+		expect(monsters).to.include('32–37');
+		expect(monsters).to.include('4–6');
 		expect(dmg).to.include('hpVariance = random(0, 5) + typeHpOffset');
 		expect(dmg).to.include('acVariance = random(0, 2) + typeAcOffset');
 	});
@@ -117,7 +143,8 @@ describe('root-docs generation', () => {
 	it('teaches combat stats, card roles, and a labeled deck example', () => {
 		const handbook = collectPlayerHandbookMarkdown();
 
-		expect(handbook).to.include('── Combat Stats & Card Roles');
+		// The root handbook renders rule-line headings as real `##` headings.
+		expect(handbook).to.include('## Combat Stats & Card Roles');
 		expect(handbook).to.include('Temporary boosts and curses affect both the stat and rolls derived from it.');
 		expect(handbook).to.include('Delayed Hits can remain armed together');
 		expect(handbook).to.include(
@@ -150,5 +177,99 @@ describe('root-docs generation', () => {
 
 	it('normalizes CRLF and bare CR to LF', () => {
 		expect(normalizeLineEndings('a\r\nb\rc')).to.equal('a\nb\nc');
+	});
+
+	/**
+	 * Regression guard for the GitHub-rendering bugs this generator produced (see
+	 * `docs/roadmap/10b-bugs-fixed.md`): rule-line headings that render as plain
+	 * paragraphs, ASCII banners that swallow prose into their fence, and lists that
+	 * collapse into a run-on paragraph because GFM joins adjacent non-blank lines with a
+	 * soft break. These only ever check the *root* artifacts — the in-game text these
+	 * are built from stays untouched, plain, monospace-formatted text on purpose.
+	 */
+	describe('keeps the root Markdown files clean', () => {
+		const rootArtifacts = async (): Promise<Array<[string, string]>> => [
+			['CARDS.md', await collectCardsMarkdown()],
+			['DMG.md', await collectDmgMarkdown()],
+			['MONSTERS.md', await collectMonstersMarkdown()],
+			['PLAYER_HANDBOOK.md', collectPlayerHandbookMarkdown()],
+		];
+
+		it('balances every ``` fence', async () => {
+			for (const [name, content] of await rootArtifacts()) {
+				const fenceMarkers = content.split('\n').filter(line => /^\s*```/.test(line));
+				expect(fenceMarkers.length % 2, `${name} has an unbalanced \`\`\` fence`).to.equal(0);
+			}
+		});
+
+		it('tags every opening fence (a closing ``` needs no tag)', async () => {
+			for (const [name, content] of await rootArtifacts()) {
+				let inFence = false;
+				const untaggedOpens: string[] = [];
+
+				for (const line of content.split('\n')) {
+					if (!/^\s*```/.test(line)) continue;
+					const isOpen = !inFence;
+					if (isOpen && line.trim() === '```') untaggedOpens.push(line);
+					inFence = !inFence;
+				}
+
+				expect(untaggedOpens, `${name} has an untagged opening \`\`\` fence — use \`\`\`text`).to.have.length(0);
+			}
+		});
+
+		it('has no rule-line or box-banner characters outside a fence', async () => {
+			for (const [name, content] of await rootArtifacts()) {
+				const { outside } = splitByFence(content);
+				const stray = outside.filter(line => /[─═╔║╚╗╝]/.test(line));
+				expect(stray, `${name} has rule/box-drawing characters outside a fence: ${stray[0]}`).to.have.length(0);
+			}
+		});
+
+		it('surrounds every heading with a blank line', async () => {
+			for (const [name, content] of await rootArtifacts()) {
+				const { outside } = splitByFence(content);
+				outside.forEach((line, i) => {
+					if (!/^#{1,6}\s/.test(line)) return;
+					if (i > 0) expect(outside[i - 1], `${name}: "${line}" needs a blank line before it`).to.equal('');
+					if (i < outside.length - 1) {
+						expect(outside[i + 1], `${name}: "${line}" needs a blank line after it`).to.equal('');
+					}
+				});
+			}
+		});
+
+		it('has no accidentally-indented code (4+ leading spaces) outside a fence', async () => {
+			// CommonMark treats a 4-space indent as a code block; this generator's own
+			// list continuations use a 3-space indent (matching "1. "/"- " width)
+			// specifically to stay under that threshold, so this only needs to catch a
+			// genuine 4+ space slip, not the intentional nesting.
+			for (const [name, content] of await rootArtifacts()) {
+				const { outside } = splitByFence(content);
+				const accidental = outside.filter(line => /^ {4,}\S/.test(line));
+				expect(accidental, `${name} has an accidentally-indented line: ${accidental[0]}`).to.have.length(0);
+			}
+		});
+
+		it('does not leave two consecutive un-bulleted list-shaped lines (a collapsed list)', async () => {
+			// Reproduces the exact shape of the XP-threshold-table bug: several
+			// consecutive "Label: value" or command lines that were never converted
+			// into list items collapse into one run-on paragraph on GitHub.
+			for (const [name, content] of await rootArtifacts()) {
+				const { outside } = splitByFence(content);
+				for (let i = 0; i < outside.length - 1; i++) {
+					const isPlain = (line: string): boolean =>
+						line !== '' && !/^#{1,6}\s/.test(line) && !/^[-*]\s/.test(line) &&
+						!/^\d+\.\s/.test(line) && !/^\|/.test(line);
+
+					if (isPlain(outside[i]) && isPlain(outside[i + 1]) &&
+						qualifiesAsListItem(outside[i]) && qualifiesAsListItem(outside[i + 1])) {
+						expect.fail(
+							`${name}: "${outside[i]}" / "${outside[i + 1]}" look like an un-bulleted list`
+						);
+					}
+				}
+			}
+		});
 	});
 });

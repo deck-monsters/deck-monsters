@@ -111,6 +111,14 @@ current contract.
 `packages/engine/src/build`. Edit the generator and run `pnpm run build:docs`. Do not
 hand-edit those files. `ITEMS.md` is the authored item guide.
 
+The root `.md` files are rendered by `packages/engine/src/build/markdown.ts`: a
+line-based converter for shapes shared with the in-game plain-text sections (rule
+headings, bullets, indented commands), plus structured renderers for data a converter
+would mangle (the monster catalogue, the card/item catalogue, the command reference).
+`root-docs.test.ts` has a "keeps the root Markdown files clean" guard (balanced/tagged
+fences, no rule-line characters or run-on lists outside a fence) that fails on a
+regression of the shape it was written for.
+
 ## Commands and setup
 
 Run `pnpm build` before the first `pnpm test` on a fresh checkout. `server`,

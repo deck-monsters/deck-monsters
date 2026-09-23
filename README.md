@@ -99,4 +99,6 @@ node battlefield.js   # ring combat demo, no services required
 | [docs/roadmap/](docs/roadmap/) | Open work and the status index |
 
 Generated Markdown files say so at the top. Change them by editing
-`packages/engine/src/build` and running `pnpm run build:docs`.
+`packages/engine/src/build` and running `pnpm run build:docs`. The root `.md` files are
+rendered from the same plain-text sections the game announces, via
+`packages/engine/src/build/markdown.ts` — see `AGENTS.md`'s "Generated player references".
