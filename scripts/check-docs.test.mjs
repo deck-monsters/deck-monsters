@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path'
 import test from 'node:test'
 
 import {
+  applyMigrationAllowlist,
   checkAgentsRoutes,
   checkMarkdownLinks,
   checkRoadmapLifecycle,
@@ -72,5 +73,58 @@ test('recognizes a status label whose bold span excludes the colon', () => {
   assert.deepEqual(
     checkRoadmapLifecycle('docs/roadmap/24-example.md', '**Status**: Shipped'),
     ['docs/roadmap/24-example.md: shipped plan has no actionable remainder'],
+  )
+})
+
+test('skips repository-root .superpowers scratch artifacts', async () => {
+  const root = await fixture({
+    '.superpowers/sdd/review.md': '[scratch](./missing.md)',
+    'docs/a.md': '[missing](./missing.md)',
+  })
+
+  assert.deepEqual(await checkMarkdownLinks(root), [
+    'docs/a.md: broken relative link ./missing.md',
+  ])
+})
+
+test('checks Markdown prose but ignores fenced, indented, and inline code examples', async () => {
+  const root = await fixture({
+    'docs/a.md': [
+      '```md',
+      '[fenced](./missing.md)',
+      '```',
+      '    [indented](./missing.md)',
+      'Use `[inline](./missing.md)` as an example.',
+    ].join('\n'),
+  })
+
+  assert.deepEqual(await checkMarkdownLinks(root), [])
+  assert.deepEqual(
+    checkAgentsRoutes('```md\n[plan](docs/roadmap/20-workspace-layout.md)\n```'),
+    [],
+  )
+  assert.deepEqual(
+    checkSuperpowersLifecycle('docs/superpowers/plans/example.md', '```\n**Status:** Done\n```'),
+    [],
+  )
+})
+
+test('validates GitHub-compatible punctuation and duplicate heading slugs', async () => {
+  const root = await fixture({
+    'docs/a.md': [
+      '[punctuation](./target.md#phase-2--google--apple-oauth)',
+      '[first duplicate](./target.md#repeat)',
+      '[second duplicate](./target.md#repeat-1)',
+    ].join('\n'),
+    'docs/target.md': '# Phase 2 — Google + Apple OAuth\n# Repeat\n# Repeat',
+  })
+
+  assert.deepEqual(await checkMarkdownLinks(root), [])
+})
+
+test('allows only the known number of identical migration findings', () => {
+  assert.deepEqual(
+    applyMigrationAllowlist(['known finding', 'known finding'], new Map([['known finding', 1]])),
+    ['known finding'],
   )
 })

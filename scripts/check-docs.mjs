@@ -2,7 +2,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { resolve, relative, dirname, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const SKIPPED_DIRECTORIES = new Set(['.git', 'node_modules', 'dist'])
+const SKIPPED_DIRECTORIES = new Set(['.git', '.superpowers', 'node_modules', 'dist'])
 const GENERATED_ROOT_OUTPUTS = new Set([
   'CARDS.md',
   'DMG.md',
@@ -11,26 +11,35 @@ const GENERATED_ROOT_OUTPUTS = new Set([
 ])
 
 // Task 3 removes these completed migration artifacts after their useful facts move elsewhere.
-export const MIGRATION_ALLOWLIST = new Set([
-  '.superpowers/sdd/task-1-brief.md: broken relative link ./missing.md',
-  '.superpowers/sdd/task-1-brief.md: broken relative link docs/current.md#current-contract',
-  '.superpowers/sdd/task-1-brief.md: broken relative link docs/current/',
-  '.superpowers/sdd/task-1-brief.md: broken relative link docs/roadmap/20-workspace-layout.md',
-  'AGENTS.md: required-reading routes may not target roadmap/archive/superpowers plans',
-  'docs/roadmap/10b-bugs-fixed.md: shipped plan has no actionable remainder',
-  'docs/roadmap/23-pixel-fight-stage.md: shipped plan has no actionable remainder',
-  'docs/roadmap/22-small-leftovers.md: broken relative link ../archive/roadmap/03-auth-and-identity.md#phase-2--google--apple-oauth',
-  'docs/roadmap/22-small-leftovers.md: broken relative link ../archive/roadmap/06a-web-app.md#phase-3--polish-theming-and-mobile-refinement',
-  'docs/roadmap/24-pixel-monsters-everywhere.md: shipped plan has no actionable remainder',
-  'docs/superpowers/plans/2026-09-23-documentation-lifecycle-reset.md: broken relative link ./missing.md',
-  'docs/superpowers/plans/2026-09-23-documentation-lifecycle-reset.md: broken relative link docs/current.md#current-contract',
-  'docs/superpowers/plans/2026-09-23-documentation-lifecycle-reset.md: broken relative link docs/current/',
-  'docs/superpowers/plans/2026-09-23-documentation-lifecycle-reset.md: broken relative link docs/roadmap/20-workspace-layout.md',
+export const MIGRATION_ALLOWLIST = new Map([
+  ['AGENTS.md: required-reading routes may not target roadmap/archive/superpowers plans', 1],
+  ['docs/roadmap/10b-bugs-fixed.md: shipped plan has no actionable remainder', 1],
+  ['docs/roadmap/23-pixel-fight-stage.md: shipped plan has no actionable remainder', 1],
+  ['docs/roadmap/24-pixel-monsters-everywhere.md: shipped plan has no actionable remainder', 1],
 ])
 
 export function findMarkdownLinks(markdown) {
   return [...markdown.matchAll(/!?(?:\[[^\]]*\])\(([^)\s]+)(?:\s+"[^"]*")?\)/g)]
     .map(([, target]) => target)
+}
+
+function markdownProse(markdown) {
+  let fence
+
+  return markdown
+    .split('\n')
+    .map((line) => {
+      const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})/)
+      if (fenceMatch) {
+        if (!fence) fence = fenceMatch[1][0]
+        else if (fence === fenceMatch[1][0]) fence = undefined
+        return ''
+      }
+
+      if (fence || /^(?: {4}|\t)/.test(line)) return ''
+      return line.replace(/`[^`\n]*`/g, '')
+    })
+    .join('\n')
 }
 
 function toRepositoryPath(root, path) {
@@ -67,12 +76,11 @@ function headingSlug(heading) {
     .toLowerCase()
     .replace(/<[^>]*>/g, '')
     .replace(/[^\p{L}\p{N}\s-]/gu, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replace(/\s/g, '-')
 }
 
 async function hasHeading(path, fragment) {
-  const markdown = await readFile(path, 'utf8')
+  const markdown = markdownProse(await readFile(path, 'utf8'))
   const usedSlugs = new Map()
 
   for (const [, rawHeading] of markdown.matchAll(/^#{1,6}\s+(.+?)\s*#*\s*$/gm)) {
@@ -94,7 +102,7 @@ export async function checkMarkdownLinks(root) {
   const findings = []
 
   for (const sourcePath of await markdownFiles(root)) {
-    const markdown = await readFile(sourcePath, 'utf8')
+    const markdown = markdownProse(await readFile(sourcePath, 'utf8'))
     const source = toRepositoryPath(root, sourcePath)
 
     for (const target of findMarkdownLinks(markdown)) {
@@ -121,7 +129,7 @@ export async function checkMarkdownLinks(root) {
 }
 
 export function checkAgentsRoutes(markdown) {
-  return findMarkdownLinks(markdown).some((target) =>
+  return findMarkdownLinks(markdownProse(markdown)).some((target) =>
     /(?:^|\/)(?:roadmap|archive\/roadmap|superpowers)(?:\/|$)/.test(target),
   )
     ? ['AGENTS.md: required-reading routes may not target roadmap/archive/superpowers plans']
@@ -129,7 +137,9 @@ export function checkAgentsRoutes(markdown) {
 }
 
 function hasCompletedStatus(markdown) {
-  return /^\s*(?:\*\*)?Status(?:\*\*)?:\s*(?:\*\*)?\s*(?:Done|Complete(?:d)?|Shipped)\b/im.test(markdown)
+  return /^\s*(?:\*\*)?Status(?:\*\*)?:\s*(?:\*\*)?\s*(?:Done|Complete(?:d)?|Shipped)\b/im.test(
+    markdownProse(markdown),
+  )
 }
 
 export function checkSuperpowersLifecycle(path, markdown) {
@@ -143,14 +153,22 @@ export function checkSuperpowersLifecycle(path, markdown) {
 export function checkRoadmapLifecycle(path, markdown) {
   if (!path.startsWith('docs/roadmap/') || !hasCompletedStatus(markdown)) return []
 
-  const remainder = markdown.match(/^## Actionable remainder\s*$([\s\S]*?)(?=^## |\Z)/im)
+  const remainder = markdownProse(markdown).match(/^## Actionable remainder\s*$([\s\S]*?)(?=^## |\Z)/im)
   if (remainder && /^\s*[-*]\s+\[ \]\s+/m.test(remainder[1])) return []
 
   return [`${path}: shipped plan has no actionable remainder`]
 }
 
-function isAllowed(finding) {
-  return MIGRATION_ALLOWLIST.has(finding)
+export function applyMigrationAllowlist(findings, allowlist = MIGRATION_ALLOWLIST) {
+  const remainingAllowances = new Map(allowlist)
+
+  return findings.filter((finding) => {
+    const remaining = remainingAllowances.get(finding) ?? 0
+    if (remaining === 0) return true
+
+    remainingAllowances.set(finding, remaining - 1)
+    return false
+  })
 }
 
 export async function checkDocumentation(root) {
@@ -173,7 +191,7 @@ export async function checkDocumentation(root) {
     )
   }
 
-  return findings.filter((finding) => !isAllowed(finding))
+  return applyMigrationAllowlist(findings)
 }
 
 async function main() {
