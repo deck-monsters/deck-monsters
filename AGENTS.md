@@ -45,6 +45,10 @@ These apply to every task in this repo, not just the one you were asked to do.
 - Delegate whenever a piece of work can be isolated behind a brief and a report — the
   orchestrator's context is the scarce resource, and a saturated orchestrator forgets the
   plan it is supposed to be holding.
+- **Default shape for roadmap work:** a Tier 3 orchestrator triages with a read-only
+  explorer, makes the judgment calls, briefs Tier 2 implementers (parallel code tasks each
+  in their own worktree), reviews every diff, and owns the branch and roadmap files. See
+  [the orchestrated pass](docs/agents/subagents.md#the-orchestrated-pass).
 - Pick the cheapest tier that can do the job, but treat turn count as part of the price: a
   cheap model on a multi-step prose spec often burns 2–3x the turns. Tier 2 is the floor for
   anything implemented from prose.

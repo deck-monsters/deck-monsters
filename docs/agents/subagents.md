@@ -45,9 +45,24 @@ Two rules that matter more than the table:
 `debug`, `computerUse`, `bugbot`, `security-review`) plus an explicit `model` slug. Pick the
 type for the job shape and the slug for the tier.
 
-**Claude Code.** Subagents run through the Task tool, with reusable definitions in
-`.claude/agents/`. Models are chosen by alias — `haiku`, `sonnet`, `opus` — which map onto
-tiers 1, 2, and 3 respectively.
+**Claude Code.** Dispatch with the `Agent` tool. Set `subagent_type` (`Explore` for
+read-only sweeps, `general-purpose` for implementers and reviewers, `Plan` for design) and
+always set `model` (`haiku`, `sonnet`, `opus`), which map onto tiers 1, 2, and 3. Reusable
+definitions live in `.claude/agents/`. Other parameters that matter here:
+
+- `isolation: "worktree"` gives the agent its own git worktree on its own branch. Use it for
+  code tasks that run in parallel (see [the orchestrated pass](#the-orchestrated-pass)). The
+  agent then commits in its worktree, and the orchestrator cherry-picks the reviewed commit.
+  A fresh worktree has no `node_modules` or `dist/`, so the brief must start with
+  `pnpm install --frozen-lockfile && pnpm build`.
+- `run_in_background: true` returns at once and notifies the orchestrator on completion.
+  Do not poll the transcript file; it floods the orchestrator's context.
+- `SendMessage` to the finished agent resumes it with its context intact. Use it for fix
+  rounds (step 10).
+- Claude Code subagents may be refused a write to a "report" or "findings" file. Ask for
+  the report as the agent's **final message** instead. Explorers can still write data files
+  when the brief asks for data rather than a report.
+- In a cloud session, put briefs in the session scratchpad directory rather than `/tmp`.
 
 **Codex and others.** Use whatever delegation mechanism the harness exposes. If it has no
 model parameter at all, compensate by splitting the work: make the mechanical parts small
@@ -58,9 +73,11 @@ fixed model will supply it.
 
 This is what has actually worked on this repo:
 
-1. **Brief and report as files under `/tmp`**, not pasted prose. A brief file can be long,
-   precise, and re-read by the subagent; a pasted one gets truncated and costs the
-   orchestrator context twice.
+1. **Briefs as files in scratch space** (`/tmp`, or the harness scratchpad), not pasted
+   prose. A brief file can be long, precise, and re-read by the subagent; a pasted one gets
+   truncated and costs the orchestrator context twice. Put the rules every implementer shares
+   (worktree rules, verification gate, report format) in one common file that each brief
+   references.
 2. **Explorers write findings to a file** and return a five-line summary. The orchestrator
    reads the summary and only opens the file if it needs the detail.
 3. **One implementer per set of files at a time.** Never two implementers on overlapping
@@ -125,6 +142,36 @@ This is what has actually worked on this repo:
     sprite motion as "static"; a strip of frames 200 ms apart settled it. The reusable
     rooms and the CDP-attach recipe are in
     [`docs/operations/local-testing.md`](../operations/local-testing.md).
+
+## The orchestrated pass
+
+This is the default shape for a batch of roadmap work. Pass 25 (the roadmap sweep, planned
+in `docs/roadmap/25-roadmap-sweep.md` and archived when it closes) worked this way.
+
+1. **Triage before planning.** A read-only Tier 2 explorer checks each candidate item
+   against the code. For each one it reports what is already done (with `file:line`), the
+   files the item would touch, its size, and what blocks it: a live device, telemetry, or a
+   product decision. Roadmap text goes stale. In pass 25 the "build a simulation harness"
+   item already existed as `packages/harness/`, and only its coin/XP output was missing.
+2. **Choose the tractable set.** Take items that need no device, no production data and no
+   open product call, and that do not share files, or can be ordered one after another.
+   Record deferred items and the reason for each in the plan's decisions, so the next pass
+   does not repeat the triage.
+3. **The orchestrator makes the judgment calls.** Wording, product trade-offs, and "is this
+   a bug or a contract?" are Tier 3 work. Decide in the plan, then hand the implementer the
+   exact decision, such as the replacement copy strings. Do not ask a Tier 2 implementer to
+   choose.
+4. **Parallel code tasks run in separate worktrees; shared docs stay with the orchestrator.**
+   Implementers write draft `10b-bugs-fixed.md` entries in their reports, not in the ledger
+   file. The orchestrator applies those entries and the roadmap status changes in each
+   task's checkpoint commit. Two tasks that touch the same source file are ordered one after
+   the other, never run in parallel.
+5. **Review each diff, then land it.** A read-only Tier 2 reviewer gets the diff as a file
+   (the procedure's step 11). The orchestrator reads the verdict and spot-checks the
+   artifact (step 7). Then it cherry-picks, runs the fast gate on the pass branch, and
+   commits the plan update.
+6. **Close with a Tier 3 whole-branch review** before the PR. It catches drift across tasks
+   that no task-scoped reviewer could see.
 
 ## Anti-patterns
 

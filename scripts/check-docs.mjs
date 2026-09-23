@@ -3,6 +3,10 @@ import { resolve, relative, dirname, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const SKIPPED_DIRECTORIES = new Set(['.git', '.superpowers', 'node_modules', 'dist'])
+// Agent worktrees (Claude Code `isolation: "worktree"`) are full checkouts of the repo. Scanning
+// them checks every doc twice, and their root-generated files would not match the root-only
+// generated-output exemption below.
+const SKIPPED_PATHS = new Set(['.claude/worktrees'])
 const GENERATED_ROOT_OUTPUTS = new Set([
   'CARDS.md',
   'DMG.md',
@@ -111,8 +115,9 @@ async function markdownFiles(root, directory = root) {
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      if (!SKIPPED_DIRECTORIES.has(entry.name)) {
-        files.push(...(await markdownFiles(root, resolve(directory, entry.name))))
+      const childPath = resolve(directory, entry.name)
+      if (!SKIPPED_DIRECTORIES.has(entry.name) && !SKIPPED_PATHS.has(toRepositoryPath(root, childPath))) {
+        files.push(...(await markdownFiles(root, childPath)))
       }
       continue
     }
