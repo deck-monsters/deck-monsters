@@ -1,6 +1,9 @@
 import { formatCommandList } from '../commands/catalog.js';
 import { DEFAULT_MONSTER_SLOTS } from '../characters/beastmaster.js';
 
+/** Markdown title for the generated root handbook. The ownership banner is applied in root-docs. */
+export const PLAYER_HANDBOOK_TITLE = 'Player Handbook';
+
 export const FIGHT_DELAY_SECONDS = 60;
 export const MAX_MONSTERS = 12;
 export const MIN_MONSTERS = 2;

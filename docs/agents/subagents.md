@@ -9,7 +9,7 @@ tags: [agents, subagents, review]
 # Subagents
 
 When and how to delegate work to another agent. Written harness-neutrally: the tier table is
-the contract, the model names are examples and will go stale.
+the contract. Name a model when you dispatch; do not keep a dated model list here.
 
 ## Why delegate
 
@@ -23,11 +23,11 @@ The orchestrator still owns the outcome. A subagent's report is evidence, not a 
 
 ## Tiers
 
-| Tier | Work it is for | Suggested models (September 2026) |
-|---|---|---|
-| 1 — lookup / mechanical | Codebase search, inventories, transcription from a complete spec, single-file mechanical fixes | Gemini 3.8 Flash, Grok 4.6 (fast variants), GPT-5.6 Terra (low/no reasoning), Composer 2.5 Fast, a Haiku-class model if the harness offers one |
-| 2 — implement / review | Multi-file implementation from prose, writing tests, task-scoped review | Claude Sonnet 5, GPT-5.6 Terra or Sol (medium), Gemini 3.8 Flash (high reasoning), Composer 2.5 |
-| 3 — reason / design / debug / final review | Root-cause debugging, architecture, wording and product judgment, whole-branch review | Claude Opus 5 (thinking high+), GPT-5.6 Sol (high/xhigh), Claude Fable 5.1 (thinking high+) |
+| Tier | Work it is for |
+|---|---|
+| 1 — lookup / mechanical | Codebase search, inventories, transcription from a complete spec, single-file mechanical fixes |
+| 2 — implement / review | Multi-file implementation from prose, writing tests, task-scoped review |
+| 3 — reason / design / debug / final review | Root-cause debugging, architecture, wording and product judgment, whole-branch review |
 
 Two rules that matter more than the table:
 
@@ -77,7 +77,7 @@ This is what has actually worked on this repo:
 6. **GUI-testing subagents need a one-shot command path.** Interactive prompt flows stall
    them — they sit waiting for choices they cannot see. Give them commands that complete in
    one step (see the equip one-shot form in
-   [`working-in-this-repo.md`](working-in-this-repo.md)).
+   [`local-testing.md`](../operations/local-testing.md#staging-a-fight-quickly)).
 7. **Verify the artifact exists before trusting the report.** A subagent can return
    "success" having written no file at all; it happened here with a Tier 1 model. Check the
    file, then re-dispatch on a *different* model — retrying the same one unchanged tends to
@@ -110,10 +110,9 @@ This is what has actually worked on this repo:
     unit tests passed while the real browser still held the pixel-fight band on screen for
     90 s (#162) — `setTimeout` woke a fraction of a millisecond early, the settle changed
     nothing, and nothing re-armed. Only the live probe caught it.
-14. **Provider quota is a failure mode.** Two Anthropic-hosted dispatches failed mid-task on
-    usage limits within an hour. Keep a same-tier model from another provider ready (Sol or
-    Terra for Sonnet/Opus; Gemini Flash for Haiku), and after any failed implementer check
-    `git status` for partial edits before re-dispatching.
+14. **Provider quota is a failure mode.** Two hosted dispatches failed mid-task on usage
+    limits within an hour. Keep a same-tier model from another provider ready, and after any
+    failed implementer check `git status` for partial edits before re-dispatching.
 15. **Test the real object when the assertion is about that object.** A propagation check
     passed two review rounds against stubs and was dead in production because the real
     character name is masked *and* start-cased before it is stored. Build the real `Game` and

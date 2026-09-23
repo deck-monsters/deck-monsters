@@ -137,21 +137,19 @@ in one fight is routine: the starting deck ships with two.
 
 ## Prompts
 
-Engine code asks the player questions through the channel callback:
-`channel({ question, choices })`. The server bridges that to the web client through the room
-event bus; Discord uses buttons/select menus or a filtered DM collector. Three rules:
+Engine code asks the player questions through `channel({ question, choices })`. The server
+bridges that to the web client through the room event bus; Discord uses buttons, select
+menus, or a filtered DM collector.
 
-- The answer is **not** free-form — it is the 0-based index as a string, or the exact label.
-  See
-  [`docs/reference/prompt-answer-contract.md`](../reference/prompt-answer-contract.md);
-  breaking it routes a
-  menu to a plausible wrong destination instead of erroring (#143).
-- A cancelled prompt resolves with the `PROMPT_CANCELLED` sentinel (`'__cancelled__'`,
-  `packages/engine/src/events/room-event-bus.ts`). Every consumer must translate it into
-  `PromptCancelledError` before it reaches game code.
-- **Workshop mutations must be prompt-free.** They run awaited inside a per-user lane in
-  `packages/server/src/trpc/router.ts`; a prompt inside one would hold the lane across a
-  user-input wait and make every later command for that user look ignored.
+Answer encoding, cancelled-prompt translation, and lane ownership are current contracts:
+
+- [Prompt answer contract](../reference/prompt-answer-contract.md) — what a connector may
+  send back.
+- [Engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) — the
+  per-user console lane, the per-room workshop lane, and `PROMPT_CANCELLED`.
+
+Awaited Workshop mutations stay prompt-free on the per-room workshop lane. A question
+inside one throws on the silent channel.
 
 ## Quick-action chips
 
@@ -162,22 +160,12 @@ filters out dead, destroyed, and already-reviving monsters precisely because
 `Beastmaster.reviveMonster` refuses a monster whose revival timer is running, and a chip for
 it would only ever produce a dead end.
 
-## Room scoping
+## Room scoping and identity
 
-Every query, event, and subscription carries a `roomId`, and shared engine-level state (the
-shop, the boss-summon ledger) lives on the room's game object rather than in a module-level
-variable — a module-level shop is exactly how one room's purchases leaked into every other
-room's inventory (#26). This is a hard constraint; read
-[`docs/architecture/rooms-and-identity.md`](../architecture/rooms-and-identity.md) before
-touching state, queries, or subscriptions.
-
-## Identity and rooms
-
-`profiles.display_name` is a global player identity used by leaderboards and room member
-lists; a room character's `givenName` is a separately editable per-room alias. A display-name
-change follows only characters that still have their old seeded name, never an alias chosen
-with `edit my character`. See
-[Profile identity and room characters](../architecture/rooms-and-identity.md#profile-identity-and-room-characters).
+Room scoping is a hard constraint. A module-level shop is how one room's purchases leaked
+into every other room (#26). Membership, identity, display names, and connector mappings
+are the current contract in
+[Rooms and identity](../architecture/rooms-and-identity.md).
 
 ## Combat payloads and the pixel-fight layer
 
@@ -189,32 +177,16 @@ without parsing narration; it is additive and must stay JSON-safe (no engine obj
 `Ring.addMonster({ monster, character, userId, isBoss })` copies the flag onto the monster so `combat.isBoss`
 and the roster's `Contestant.isBoss` cannot disagree.
 
-The web consumes it in `apps/web/src/animations/pixel-fight/` (pose map `state.ts`, canvas
-`renderer.ts`, sprites, `RosterSprite.tsx`, provider `PixelSprites.tsx`). The sprites are
-drawn **inside the Ring roster rows** at 24px — the box the emoji icon already occupied —
-not in a band of their own — a band duplicated the
-roster's HP bars and cost 96–200px of viewport, so it was deleted (#167). They are **on by
-default, on every theme**, with an opt-out: `usePixelMonsters` (Account → "Show pixel
-monsters"), stored as `'0'` when off because absent now means on. They were SNES-theme-only
-and opt-in until roadmap 24; the theme-feature mechanism that gated them was removed. An
-opted-out player never fetches the lazy chunk: `RingRoster` reads `RosterSpriteContext`
-rather than importing the art. The flag is a `useSyncExternalStore` store so every consumer
-flips together. Each sprite is coloured from the monster's `appearance` (published on
-`ring.state`), and every narration surface (Ring feed, Console, fight history) draws a still 16px
-portrait in place of a known monster's emoji. The current palette, room-known-monster, and
-matching rules live in
+The web consumes that payload in `apps/web/src/animations/pixel-fight/`. Sprites are drawn
+inside the Ring roster rows, in the box the emoji already occupied. A separate band
+duplicated the HP bars and was removed (#167). Sprites are on by default, on every theme.
+The opt-out is Account → "Show pixel monsters", stored as `'0'` when off because a missing
+value means on. An opted-out player never fetches the lazy chunk. Row order, field
+priority, the appearance palette, known-monster storage, and feed portraits are the current
+contract in
 [Ring roster and pixel monsters](../architecture/ring-roster-and-pixel-monsters.md).
-
-The roster row itself is ranked by field priority and **must never be sorted or grouped**:
-its row order is the order of play, since `Ring.doAction` shifts contestants off the same
-array `contestantSnapshots()` maps. A team-grouped layout got as far as review before that
-was spotted. Field priority, the wording contract and the four rejected layouts are in
-[`docs/architecture/ring-roster-and-pixel-monsters.md`](../architecture/ring-roster-and-pixel-monsters.md).
-
-The guardrails learned from live failures — timer re-arming, authoritative empty roster
-state, and genuinely distinct sprite poses — are current contracts in
-[Engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) and
-[Ring roster and pixel monsters](../architecture/ring-roster-and-pixel-monsters.md).
+Timer re-arming and an authoritative empty roster are in
+[Engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
 
 ## The web feeds
 

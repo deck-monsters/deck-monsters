@@ -25,8 +25,9 @@ A change is finished when all of these are true, in the same branch:
 3. **`docs/roadmap/10-bug-fixes.md`** summary line updated (status paragraph at the top, plus
    the item itself if it was tracked there).
 4. **`docs/roadmap/README.md`** status table current — it is the authoritative index.
-5. **The architecture doc for the area** updated if behaviour changed (see the Architecture
-   Docs table in `AGENTS.md`). A behaviour change not reflected in its doc is half-finished.
+5. **The architecture doc for the area** updated if behaviour changed (see the trigger table
+   in `AGENTS.md` and [`docs/README.md`](../README.md)). A behaviour change not reflected in
+   its doc is half-finished.
 
 ## Bug numbering is a global sequence
 
@@ -55,12 +56,8 @@ pnpm build && pnpm typecheck && pnpm lint && pnpm test
 
 Build **first**: `server`, `connector-discord`, and `web` import `@deck-monsters/engine`
 through its `dist/` output, so a fresh checkout fails with `ERR_MODULE_NOT_FOUND` otherwise.
-
-Approximate suite sizes, so you can tell a truncated run from a complete one (measured on
-this branch, September 20 2026): engine ~864 mocha tests, server ~226, connector-discord ~88,
-harness 4, web ~397 vitest. Re-measure and update these when a pass adds tests; stale
-numbers defeat the purpose. All of them mock their external dependencies — no database, Discord, or
-Supabase needs to be running.
+The suites mock their external dependencies — no database, Discord, or Supabase needs to be
+running. A complete run is the one whose runner prints its final summary.
 
 ## Live verification
 
@@ -69,11 +66,9 @@ archive were found by playing. [Local testing](../operations/local-testing.md) o
 setup and reusable-room state; [Cloud development](../operations/cloud-development.md)
 owns the two Cursor Cloud env paths. Specifics worth knowing before you start:
 
-- **Stage a fight in a few commands** — the guide's "Staging a fight quickly" section. Use
-  the one-shot equip form, `equip <monster> with "Hit", "Hit", "Heal", …` (exact card names,
-  double-quoted, comma-separated); the interactive `equip` flow is a multi-prompt loop that
-  strands browser-driving agents. Then `send <monster> to the ring` plus `summon a boss` for
-  a second contestant, and the 60s countdown starts.
+- **Stage a fight in a few commands** using the one-shot equip form in
+  [Local testing](../operations/local-testing.md#staging-a-fight-quickly). The interactive
+  `equip` flow is a multi-prompt loop that strands browser-driving agents.
 - **Scope Playwright selectors to `.terminal-pane.active`.** Hidden panes have identical DOM
   (`apps/web/src/components/ConsolePane.tsx` sets `terminal-pane active` on the live one), so
   an unscoped selector silently drives the pane nobody is looking at.
@@ -81,9 +76,10 @@ owns the two Cursor Cloud env paths. Specifics worth knowing before you start:
   the UI: `select type, text, created_at from room_events where room_id = '<uuid>' order by
   id` (`packages/server/src/db/schema.ts`). The difference between "the engine never emitted
   it" and "the UI dropped it" is most of the diagnosis in any feed bug.
-- **Reuse the scratch rooms; do not leave new ones behind.** Follow the canonical
-  [reusable-room and cleanup instructions](../operations/local-testing.md#reusable-rooms-remote-test-account).
-  Do not copy room contents, ids, or invite codes into another guide.
+- **Reuse the scratch rooms; do not leave new ones behind.** Reusable-room contents, ids,
+  and invite codes live only in
+  [Local testing](../operations/local-testing.md#reusable-rooms-remote-test-account).
+  Do not copy that state into this guide.
 
 ## How the docs are organised
 
