@@ -221,8 +221,7 @@ describe('trpc/router card management procedures', () => {
 		// A monster can be dead with no active timer — e.g. a permadeath, or the process
 		// restarted and the in-memory timer/length fields were never rehydrated (they are
 		// declared instance fields, not persisted options — see
-		// docs/architecture/rooms-and-identity.md's
-		// sibling doc on serialization, and creatures/health.ts's `respawn`). The workshop
+		// docs/architecture/rooms-and-identity.md and creatures/health.ts's `respawn`). The workshop
 		// must not show a stale or fabricated countdown in that case.
 		const fallenMonster = {
 			givenName: 'Ashfall',

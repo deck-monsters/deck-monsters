@@ -5,8 +5,7 @@
  * room-scoped for free and rides the room's `state_blob` across restarts. These functions
  * are deliberately pure: the caller reads the ledger, decides, and writes the new one back
  * through the setter. See `docs/architecture/boss-encounters.md` for why the quota is
- * enforced in the
- * engine command handler rather than in the tRPC router.
+ * enforced in the engine command handler rather than in the tRPC router.
  */
 
 export const BOSS_SUMMON_LIMIT = 3;

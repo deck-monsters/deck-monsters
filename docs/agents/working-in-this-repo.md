@@ -59,6 +59,10 @@ through its `dist/` output, so a fresh checkout fails with `ERR_MODULE_NOT_FOUND
 The suites mock their external dependencies — no database, Discord, or Supabase needs to be
 running. A complete run is the one whose runner prints its final summary.
 
+After any Markdown edit, also run `pnpm docs:check` (links, lifecycle placement, and OKF
+frontmatter). CI runs it, and runs `pnpm test:docs` for the checker's own tests; neither is
+part of the turbo `pnpm test`.
+
 ## Live verification
 
 Automated tests do not catch pacing, scroll, or narration problems; most of the bugs in the

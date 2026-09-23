@@ -47,6 +47,7 @@ repository-local documentation-maintenance skill.
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Complete | `ba6c242a` |
 | 6 | Compact routers and generated ownership | Tier 2 | Complete | `d1c4195c` |
 | 7 | Full verification and lifecycle closeout | Tier 3 | Complete | closeout commit |
+| 8 | PR review fixes | Tier 3 | Complete | `dc237cf`, `7f12a61`, review-tidy commit |
 
 ## Task 2 decisions
 
@@ -148,6 +149,25 @@ history retains them. Verification on this branch: `pnpm docs:check` clean, gene
 docs clean after `pnpm run build:docs`, card-odds copies identical, and `pnpm build`,
 `pnpm typecheck`, `pnpm lint`, and `pnpm test` exited 0. Engine tests: 878 passing.
 Web tests: 492 passing.
+
+## Review follow-up
+
+A review of the PR found work the closeout had missed:
+
+- Five code comments cited "Early progression front-loading" in
+  `11-balance-and-mechanics.md`, which task 3 deleted. The shipped progression and economy
+  analysis moved unchanged to `docs/archive/roadmap/11-progression-and-economy-2026-09.md`.
+- Comments still pointed at fixed items D, G, and H in `10-bug-fixes.md`; they now cite
+  #127, #125, and #126. Open item F (odd feed spacing) and the on-device checks for #125 and
+  #129/#132 had been dropped with the incident diary and are back on the active roadmap.
+- `docs:check` never recognized an `## Actionable remainder` at the end of a file: the
+  terminator used `\Z`, which JavaScript reads as a literal "Z". CI now also runs the
+  checker's own tests (`pnpm test:docs`).
+- `build/index.js --calculate-stats` awaited card effects without skipping pacing delays,
+  and wrote only the root `card-odds.json` while the engine imports its own copy.
+- `AGENTS.md` lost its OKF block (see the decision above), and `.claude/skills/` now
+  symlinks the documentation skill for Claude Code.
+- Pronoun agreement for they/them monsters was fixed in the same PR as #176.
 
 ## Process rules being exercised
 

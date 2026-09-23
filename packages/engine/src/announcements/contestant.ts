@@ -18,10 +18,10 @@ export function announceContestant(
 	//
 	// Bosses are handed a randomly generated owner by `randomCharacter` under
 	// userId 'boss' (docs/architecture/boss-encounters.md §1), so crediting
-	// `character.givenName` here
-	// invented a beastmaster who does not exist — and for a timer-spawned boss it told the
-	// room a player had sent it in when nobody had (10b-bugs-fixed.md #102). Naming the
-	// house keeps the sense that something sent it, without inventing a person.
+	// `character.givenName` here invented a beastmaster who does not exist — and for a
+	// timer-spawned boss it told the room a player had sent it in when nobody had
+	// (10b-bugs-fixed.md #102). Naming the house keeps the sense that something sent it,
+	// without inventing a person.
 	const arrival = isBoss
 		? `A${adjective} ${monster.creatureType} enters the ring at the behest of ${RING_PATRON}.`
 		: `A${adjective} ${monster.creatureType} answers the call of ${character.icon} ${character.givenName}.`;

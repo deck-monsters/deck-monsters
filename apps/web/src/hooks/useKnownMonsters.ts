@@ -15,8 +15,8 @@ import type { KnownMonster } from '../utils/monster-mentions.js';
  * appearance, a changed icon) replaces the old entry.
  *
  * **Keyed by room.** Room scoping (docs/architecture/rooms-and-identity.md) is a hard rule:
- * one room's monsters
- * must never decorate another room's text, and a reader only ever asks for its own room.
+ * one room's monsters must never decorate another room's text, and a reader only ever asks
+ * for its own room.
  */
 /**
  * What a sighting of a monster must carry — a `ring.state` contestant, or a participant row

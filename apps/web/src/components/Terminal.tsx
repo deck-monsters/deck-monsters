@@ -127,9 +127,8 @@ export default function Terminal({ roomId }: TerminalProps) {
 
   // A room switch must not carry over a previous room's "has this been shown" state —
   // see docs/architecture/web-workspace.md. Terminal itself is not remounted on room change
-  // (the parent
-  // route re-renders with a new `roomId` param rather than unmounting), so this has to be
-  // done explicitly rather than falling out of component lifecycle.
+  // (the parent route re-renders with a new `roomId` param rather than unmounting), so this
+  // has to be done explicitly rather than falling out of component lifecycle.
   useEffect(() => {
     if (roomIdRef.current === roomId) return;
     roomIdRef.current = roomId;

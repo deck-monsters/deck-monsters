@@ -96,8 +96,7 @@ export interface RingContestantSnapshot {
 	 * translucent blue"), or a random colour name for a boss. The web colours each pixel
 	 * sprite from it, so two monsters of one species in a ring do not look identical — see
 	 * docs/architecture/ring-roster-and-pixel-monsters.md. Already public through `look at`;
-	 * empty
-	 * when a monster has none. Capped because it is free text broadcast to the whole room.
+	 * empty when a monster has none. Capped because it is free text broadcast to the whole room.
 	 */
 	appearance: string;
 	/**
