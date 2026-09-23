@@ -30,8 +30,10 @@ repository-local documentation-maintenance skill.
 - Temporary DEX/STR/INT changes affect both raw checks and derived rolls exactly once.
 - Player strategy advice states assumptions and alternatives rather than declaring one
   universal best deck.
-- Internal and agent Markdown (`AGENTS.md` and `docs/**`) carries Open Knowledge Format v0.2
-  frontmatter. Public and generated player documents do not.
+- Internal and agent Markdown under `docs/**` carries Open Knowledge Format v0.2
+  frontmatter. Public and generated player documents do not, and neither does `AGENTS.md`:
+  review removed its block because the router loads into every agent session, and
+  `pnpm docs:check` now rejects frontmatter there.
 
 ## Tasks
 
@@ -118,8 +120,9 @@ repository-local documentation-maintenance skill.
 - Five no-skill samples of a typo PR left a contradictory current contract and a plan route
   in place because a reviewer called the rest pre-existing. The skill counters that
   rationalization. Five samples with the skill fixed both in the same change.
-- The skill is tracked under `.cursor/skills/` by a gitignore exception. Public player
-  documents stay outside OKF frontmatter.
+- The skill is tracked under `.cursor/skills/` by a gitignore exception, and
+  `.claude/skills/` symlinks to it so Claude Code loads the same file. Public player
+  documents and `AGENTS.md` stay outside OKF frontmatter.
 
 ## Task 6 decisions
 

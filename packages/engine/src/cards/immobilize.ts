@@ -6,6 +6,7 @@ import { FREE } from '../helpers/costs.js';
 import { GLADIATOR, MINOTAUR, WEEPING_ANGEL } from '../constants/creature-types.js';
 import { IMPOSSIBLE } from '../helpers/probabilities.js';
 import { signedNumber } from '../helpers/signed-number.js';
+import { agree } from '../helpers/pronouns.js';
 
 const { roll } = chance;
 
@@ -288,7 +289,7 @@ ${ongoingDamageText}`;
 						(effect: any) => effect.effectType !== 'ImmobilizeEffect'
 					);
 					this.emit('narration', {
-						narration: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}. ${capitalize(target.pronouns.he)} pushes the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stands prepared to fight`,
+						narration: `${target.givenName} is no longer ${this.actions.IMMOBILIZED}. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'pushes', 'push')} the limp dead body of ${player.givenName} off of ${target.pronouns.him}self and proudly stand${target.pronouns.verbSuffix ?? 's'} prepared to fight`,
 					});
 				}
 			}

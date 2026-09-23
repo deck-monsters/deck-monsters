@@ -38,7 +38,7 @@ class Jinn extends BaseMonster {
 
 	get description(): string {
 		const { pronouns } = this;
-		return `a ${this.color} figure ${this.descriptor} in the dusty shadows at the corner of your vision. At first you think it might be human and you wonder who or what ${pronouns.he} ${pronouns.is ?? 'is'}. What is ${pronouns.he} thinking about? When you turn to look closer all you see is a ${this.animal} and a gently settling cloud of sand.`;
+		return `a ${this.color} figure ${this.descriptor} in the dusty shadows at the corner of your vision. At first you think it might be human and you wonder who or what ${pronouns.he} ${pronouns.is ?? 'is'}. What ${pronouns.is ?? 'is'} ${pronouns.he} thinking about? When you turn to look closer all you see is a ${this.animal} and a gently settling cloud of sand.`;
 	}
 }
 
@@ -47,7 +47,7 @@ Jinn.class = BARD;
 (Jinn as any).acVariance = 2;
 (Jinn as any).hpVariance = 0;
 (Jinn as any).description = `
-Jinn are not purely spiritual, but also physical in nature, being able to interact in a tactile manner with people and objects and also subject to bodily desires like eating and sleeping. Generally jinn lack individuality and are thought to appear in mists or standstorms, but when they materialize in different forms they may gain individuality. Individual jinn are commonly depicted as monstrous and anthropomorphized creatures with body parts from different animals or human with animalic traits. Their speed, cunning, and amorphous nature makes them difficult to catch a glimpse of against their will.
+Jinn are not purely spiritual, but also physical in nature, being able to interact in a tactile manner with people and objects and also subject to bodily desires like eating and sleeping. Generally jinn lack individuality and are thought to appear in mists or sandstorms, but when they materialize in different forms they may gain individuality. Individual jinn are commonly depicted as monstrous and anthropomorphized creatures with body parts from different animals or human with animalic traits. Their speed, cunning, and amorphous nature makes them difficult to catch a glimpse of against their will.
 `;
 
 export { Jinn };

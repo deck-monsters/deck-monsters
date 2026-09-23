@@ -1,6 +1,7 @@
 import { BaseScroll } from './base.js';
 import { COMMON } from '../../helpers/probabilities.js';
 import { VERY_CHEAP } from '../../helpers/costs.js';
+import { agree } from '../../helpers/pronouns.js';
 
 export class TargetingScroll extends BaseScroll {
 	static itemType: string;
@@ -41,7 +42,7 @@ export class TargetingScroll extends BaseScroll {
 		let narration = `${monster.givenName} learns new tactics from a 📜 well-worn scroll entitled _${this.itemType}_.`;
 
 		if (expired) {
-			narration = `${narration} Just as ${monster.pronouns.he} finishes reading, the ancient paper on which it was written finally succumbs to time and decay and falls apart in ${monster.pronouns.his} hands.`;
+			narration = `${narration} Just as ${monster.pronouns.he} ${agree(monster.pronouns, 'finishes', 'finish')} reading, the ancient paper on which it was written finally succumbs to time and decay and falls apart in ${monster.pronouns.his} hands.`;
 		}
 
 		const details = this.getTargetingDetails(monster);

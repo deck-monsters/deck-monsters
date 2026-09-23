@@ -12,7 +12,7 @@ const ADJECTIVES = [
 	'says with a suspicious gleam in {his} eye',
 	'says',
 	'states matter-of-factly',
-	'whispers conspiratorially and then pours you both a shot from a small, dark bottle that {he} keeps hooked to {his} belt'
+	'whispers conspiratorially and then pours you both a shot from a small, dark bottle that {he} keep{s} hooked to {his} belt'
 ];
 
 interface ClosingTimeOptions {
@@ -22,7 +22,7 @@ interface ClosingTimeOptions {
 
 const getClosingTime = ({ closingTime, pronouns }: ClosingTimeOptions): string => {
 	const adjectives = ADJECTIVES.map(a =>
-		a.replace(/\{his\}/g, pronouns.his).replace(/\{he\}/g, pronouns.he)
+		a.replace(/\{his\}/g, pronouns.his).replace(/\{he\}/g, pronouns.he).replace(/\{s\}/g, pronouns.verbSuffix ?? 's')
 	);
 
 	const rawClosingTime = (Number(closingTime) - Number(new Date())) / 3600000;
@@ -55,7 +55,7 @@ const getClosingTime = ({ closingTime, pronouns }: ClosingTimeOptions): string =
 				: `about an hour${minutes},`;
 	}
 
-	return `"Better hurry up and make your selection, we close in ${closingTimeText}" the proprieter ${sample(adjectives)}.`;
+	return `"Better hurry up and make your selection, we close in ${closingTimeText}" the proprietor ${sample(adjectives)}.`;
 };
 
 export default getClosingTime;

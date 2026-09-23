@@ -18,4 +18,12 @@ describe('monsters/jinn', () => {
 			icon: '🕌',
 		});
 	});
+
+	it('conjugates its description for they/them monsters', () => {
+		const jinn = new Jinn({ gender: 'androgynous' });
+
+		// Regression: the second question hard-coded "is" and read "What is they thinking about?"
+		expect(jinn.description).to.include('who or what they are. What are they thinking about?');
+		expect(new Jinn({ gender: 'female' }).description).to.include('What is she thinking about?');
+	});
 });

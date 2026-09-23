@@ -4137,3 +4137,26 @@ Rush, DEX 9→10, STR 10→11, Hit attack +4→+5, Hit damage +5→+6; after Mol
 9→8, outgoing melee accuracy +4→+3, Forked Stick pin threshold 9→8.
 
 **Status**: Fixed.
+
+### 176. They/them monsters got singular verbs in descriptions and narration — FIXED
+
+A they/them Jinn's `look at` card read "you wonder who or what they are. What is they
+thinking about?" The same slip printed "they misses", "They pushes", "They has won", "They
+is a beginner monster", "they eagerly watches", "for all they's worth", and "that they keeps
+hooked to their belt" (the shopkeeper) in card, scroll, revive, and shop narration.
+
+**Root cause**: `PronounSet` carries `is`, `was`, and `verbSuffix` for agreement, but each
+call site has to use them. These strings hard-coded the third-person-singular verb after
+`pronouns.he`. Regular verbs could use `verbSuffix`; irregular forms (`misses`, `has`,
+`pushes`) had no helper, so writers fell back to the singular.
+
+**Fix**: `agree(pronouns, singular, plural)` in `helpers/pronouns.ts` picks the form for
+irregular verbs, and every sentence that follows `pronouns.he` with a verb now goes through
+`is`, `was`, `verbSuffix`, or `agree`. A legacy set without `verbSuffix` keeps the singular
+form, the same fallback as `verbSuffix ?? 's'`. Shop adjectives gained an `{s}` token for the
+same reason. The Jinn lore text also said "standstorms"; it now says "sandstorms".
+
+**Tests**: `helpers/pronouns.test.ts` (`agree` for they, she, and a legacy set);
+`monsters/jinn.test.ts` (they/them and she/her descriptions).
+
+**Status**: Fixed.

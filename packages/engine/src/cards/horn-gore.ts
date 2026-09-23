@@ -113,7 +113,7 @@ export class HornGore extends ImmobilizeCard {
 				`kick ${player.pronouns.his} jugular`,
 				`shove a fist into each of ${player.pronouns.his} nostrils and spread ${player.pronouns.his} arms as wide as ${target.pronouns.he} can`,
 				`bite off ${player.pronouns.his} ear`,
-				`grab ${player.pronouns.his} tongue and pull for all ${target.pronouns.he}'s worth`,
+				`grab ${player.pronouns.his} tongue and pull with all ${target.pronouns.his} might`,
 			];
 			commentary = `${player.givenName} rolled a 1.\n${target.givenName} manages to take the opportunity of such close proximity to ${player.givenName}'s face to ${sample(flavors)}.`;
 		}

@@ -1260,7 +1260,7 @@ class Beastmaster extends BaseCharacter {
 					: 'instantly';
 
 			return (channel({
-				announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns.he)} is a ${(monster as any).displayLevel} monster, and therefore will be revived ${reviveStatement}.`,
+				announce: `${monster.givenName} has begun to revive. ${capitalize(monster.pronouns.he)} ${monster.pronouns.is ?? 'is'} a ${(monster as any).displayLevel} monster, and therefore will be revived ${reviveStatement}.`,
 			}) as Promise<unknown>).then(() => monster);
 			});
 	}

@@ -72,6 +72,14 @@ world deliberately softens the player-companion relationship.
 - Good: “Which pronouns should we use for your monster?”
 - Bad: “What gender should your monster be?”
 
+A verb after `pronouns.he` must agree with it: use `pronouns.is`, `pronouns.was`,
+`verbSuffix`, or `agree(pronouns, 'misses', 'miss')` from `helpers/pronouns.ts`. A
+hard-coded singular verb reads "What is they thinking about?" for a they/them monster
+(bug #176).
+
+- Good: `` `${pronouns.he} ${agree(pronouns, 'has', 'have')} won` `` → “they have won”
+- Bad: `` `${pronouns.he} has won` `` → “they has won”
+
 ### Retro terminal register
 
 Commands are short, concrete, and lower-case. Emoji from `node-emoji` are part of the

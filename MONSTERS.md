@@ -63,7 +63,7 @@ STR: 5 (base +0)
 DEX: 6 (base +1)
 INT: 6 (base +1)
 
-Jinn are not purely spiritual, but also physical in nature, being able to interact in a tactile manner with people and objects and also subject to bodily desires like eating and sleeping. Generally jinn lack individuality and are thought to appear in mists or standstorms, but when they materialize i...
+Jinn are not purely spiritual, but also physical in nature, being able to interact in a tactile manner with people and objects and also subject to bodily desires like eating and sleeping. Generally jinn lack individuality and are thought to appear in mists or sandstorms, but when they materialize in...
 
 Minotaur (Barbarian)
 ────────────────────────────────────────

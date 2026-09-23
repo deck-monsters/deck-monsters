@@ -216,7 +216,9 @@ export function checkRoadmapLifecycle(path, markdown) {
   // those body lines, so this path remains exempt from the shipped-plan rule.
   if (path === 'docs/roadmap/10b-bugs-fixed.md') return []
 
-  const remainder = markdownProse(markdown).match(/^## Actionable remainder\s*$([\s\S]*?)(?=^## |\Z)/im)
+  // JavaScript has no `\Z`; it matched a literal "Z", so a remainder section at
+  // the end of the file (the usual place) was never found. `(?![\s\S])` is end-of-input.
+  const remainder = markdownProse(markdown).match(/^## Actionable remainder\s*$([\s\S]*?)(?=^## |(?![\s\S]))/im)
   if (remainder && /^\s*[-*]\s+\[ \]\s+/m.test(remainder[1])) return []
 
   return [`${path}: shipped plan has no actionable remainder`]
@@ -245,6 +247,10 @@ const PUBLIC_DOCUMENTS = new Set([
   'DMG.md',
   'cards.html',
 ])
+// AGENTS.md (and the CLAUDE.md symlink to it) is loaded verbatim into every agent
+// session. It stays a plain router: a frontmatter block there costs context in every
+// session and tells an agent nothing the first heading does not.
+const ROUTER_DOCUMENTS = new Set(['AGENTS.md'])
 // Generated root outputs are omitted from the authored Markdown walk. They are
 // still public documents, so the checker reads them only for a forbidden block.
 const UNWALKED_PUBLIC_DOCUMENTS = [
@@ -256,7 +262,7 @@ const UNWALKED_PUBLIC_DOCUMENTS = [
 ]
 
 function isGovernedDocument(path) {
-  return path === 'AGENTS.md' || (path.startsWith('docs/') && path.endsWith('.md'))
+  return path.startsWith('docs/') && path.endsWith('.md')
 }
 
 function hasOkfFrontmatter(markdown) {
@@ -268,9 +274,7 @@ function expectedOkf(path) {
   if (path.startsWith('docs/architecture/')) return { type: 'Architecture', status: 'stable' }
   if (path.startsWith('docs/operations/')) return { type: 'Runbook', status: 'stable' }
   if (path.startsWith('docs/reference/')) return { type: 'Reference', status: 'stable' }
-  if (path === 'AGENTS.md' || path.startsWith('docs/agents/')) {
-    return { type: 'Agent Guide', status: 'stable' }
-  }
+  if (path.startsWith('docs/agents/')) return { type: 'Agent Guide', status: 'stable' }
   if (path === 'docs/roadmap/README.md') return { type: 'Roadmap', status: 'stable' }
   if (path === 'docs/roadmap/10b-bugs-fixed.md') return { type: 'Bug Ledger', status: 'stable' }
   if (path.startsWith('docs/roadmap/')) return { type: 'Roadmap', status: 'draft' }
@@ -343,6 +347,9 @@ export function checkOkfFrontmatter(path, markdown) {
 
   if (publicDocument) {
     return present ? [`${path}: public document must not have OKF frontmatter`] : []
+  }
+  if (ROUTER_DOCUMENTS.has(path)) {
+    return present ? [`${path}: router must not have OKF frontmatter`] : []
   }
   if (!isGovernedDocument(path)) return []
   if (!present) return [`${path}: missing OKF frontmatter`]

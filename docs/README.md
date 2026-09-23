@@ -83,3 +83,5 @@ Generated and authored player references remain at the repository root:
 When a change adds, edits, moves, or invalidates documentation, follow
 [maintaining repository docs](../.cursor/skills/maintaining-repository-docs/SKILL.md)
 before editing. That skill is the closeout procedure; this map remains the index.
+`.claude/skills/maintaining-repository-docs` is a symlink to the same directory so Claude
+Code discovers the skill too. Edit the `.cursor/` copy only.

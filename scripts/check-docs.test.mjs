@@ -208,6 +208,23 @@ test('rejects a known OKF type or status on the wrong path', () => {
   ])
 })
 
+test('keeps the AGENTS.md router free of OKF frontmatter', () => {
+  assert.deepEqual(checkOkfFrontmatter('AGENTS.md', '# AGENTS.md\n'), [])
+  assert.deepEqual(checkOkfFrontmatter('AGENTS.md', validArchitecture), [
+    'AGENTS.md: router must not have OKF frontmatter',
+  ])
+})
+
+test('accepts a shipped plan whose actionable remainder is the last section', () => {
+  // Regression: the section terminator used `\Z`, which JavaScript reads as a literal "Z".
+  const markdown = '**Status:** Shipped\n\n## Actionable remainder\n\n- [ ] Follow up\n'
+  assert.deepEqual(checkRoadmapLifecycle('docs/roadmap/24-example.md', markdown), [])
+  assert.deepEqual(
+    checkRoadmapLifecycle('docs/roadmap/24-example.md', '**Status:** Shipped\n\n## Actionable remainder\n\nNone.\n'),
+    ['docs/roadmap/24-example.md: shipped plan has no actionable remainder'],
+  )
+})
+
 test('leaves public and package markdown without requiring OKF frontmatter', () => {
   assert.deepEqual(checkOkfFrontmatter('README.md', '# Deck Monsters\n'), [])
   assert.deepEqual(checkOkfFrontmatter('ITEMS.md', '# Items\n'), [])

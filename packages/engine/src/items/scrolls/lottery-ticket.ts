@@ -3,6 +3,7 @@ import { BaseScroll } from './base.js';
 import { ABUNDANT } from '../../helpers/probabilities.js';
 import { ALMOST_NOTHING } from '../../helpers/costs.js';
 import { capitalize } from '../../helpers/capitalize.js';
+import { agree } from '../../helpers/pronouns.js';
 
 const getTicketNumbers = (): number[] => [
 	random(11, 99),
@@ -59,11 +60,11 @@ export class LotteryTicket extends BaseScroll {
 						channel,
 						channelName,
 						narration:
-`Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
+`Clutching ${character.pronouns.his} ticket in sweaty palms, ${character.pronouns.he} eagerly ${agree(character.pronouns, 'watches', 'watch')} as the winning numbers are finally revealed...
 
 "${winningNumbers.join('" "')}"
 
-🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${capitalize(character.pronouns.he)} has won ${winnings} coins!
+🍾 ${character.givenName} can't believe ${character.pronouns.his} eyes! ${matches > 1 ? `${matches} matches` : 'A match'}! ${capitalize(character.pronouns.he)} ${agree(character.pronouns, 'has', 'have')} won ${winnings} coins!
 
 The lottery agent hands ${character.givenName} a heavy sack containing ${winnings} coins, bringing ${character.pronouns.his} current wealth up to ${character.coins} coins.`
 					});
@@ -79,7 +80,7 @@ The lottery agent hands ${character.givenName} a heavy sack containing ${winning
 					channel,
 					channelName,
 					narration:
-`With anticipation building, ${character.pronouns.he} eagerly watches as the winning numbers are finally revealed...
+`With anticipation building, ${character.pronouns.he} eagerly ${agree(character.pronouns, 'watches', 'watch')} as the winning numbers are finally revealed...
 
 "${winningNumbers.join('" "')}"
 

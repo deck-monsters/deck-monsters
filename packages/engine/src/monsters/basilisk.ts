@@ -48,7 +48,7 @@ class Basilisk extends BaseMonster {
 
 	get description(): string {
 		const { pronouns } = this;
-		return `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${pronouns.his} gaze. In the forest ${pronouns.he} ${pronouns.is ?? 'is'} king and (weighing ${this.size.weight}) in the ring ${pronouns.he} ${pronouns.is ?? 'is'} much to be feared. See how ${pronouns.he} rear${pronouns.verbSuffix ?? 's'} ${pronouns.his} head, and rolls about ${pronouns.his} dreadful eyes, to drive all virtue out, or look it dead!`;
+		return `a ${this.size.adjective}, ${this.color}, ${this.location}-dwelling basilisk with a nasty disposition and the ability to turn creatures to stone with ${pronouns.his} gaze. In the forest ${pronouns.he} ${pronouns.is ?? 'is'} king and (weighing ${this.size.weight}) in the ring ${pronouns.he} ${pronouns.is ?? 'is'} much to be feared. See how ${pronouns.he} rear${pronouns.verbSuffix ?? 's'} ${pronouns.his} head, and roll${pronouns.verbSuffix ?? 's'} about ${pronouns.his} dreadful eyes, to drive all virtue out, or look it dead!`;
 	}
 }
 

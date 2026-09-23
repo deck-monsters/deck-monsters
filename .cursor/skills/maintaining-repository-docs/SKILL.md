@@ -34,7 +34,7 @@ A wording fix that leaves every current contract and every router row true. Do n
 3. If two current documents disagree, keep the statement that matches the code and delete the other.
 4. If a required-reading row points at `docs/roadmap/`, `docs/archive/`, or `docs/superpowers/`, retarget it at the current document. Do not paste that document into `AGENTS.md`.
 5. A permanent product refusal is prose, not an open checkbox.
-6. On `AGENTS.md` and `docs/**/*.md`, keep OKF frontmatter: `type`, `title`, `description`, `status` (`stable`, `draft`, or `deprecated`), `audience: internal`, and 2–6 tags. Do not add that block to `README.md`, `ITEMS.md`, or generated player docs.
+6. On `docs/**/*.md`, keep OKF frontmatter: `type`, `title`, `description`, `status` (`stable`, `draft`, or `deprecated`), `audience: internal`, and 2–6 tags. Do not add that block to `AGENTS.md` (it loads into every agent session and stays a plain router), `README.md`, `ITEMS.md`, or generated player docs.
 7. Run `pnpm docs:check`.
 
 ## Example

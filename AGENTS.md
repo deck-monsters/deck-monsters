@@ -1,11 +1,3 @@
----
-type: Agent Guide
-title: AGENTS.md — Deck Monsters
-description: Trigger-based router for repository rules, current contracts, and agent workflow.
-status: stable
-audience: internal
-tags: [agents, workflow, routing]
----
 # AGENTS.md — Deck Monsters
 
 `CLAUDE.md` is a symlink to this file. Edit this file only.
