@@ -1,3 +1,11 @@
+---
+type: Archive
+title: "23 — Pixel Fight Animations: From a Band to the Roster"
+description: Historical record of moving pixel fight animations into roster rows.
+status: deprecated
+audience: internal
+tags: [archive, pixel-art, roster]
+---
 # 23 — Pixel Fight Animations: From a Band to the Roster
 
 > Historical record. Current code and documents linked from `docs/README.md` are

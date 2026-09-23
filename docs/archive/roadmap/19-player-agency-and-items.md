@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Player Agency, Items, and the Empirical Case
+description: Historical record of the player-agency rationale and item implementation.
+status: deprecated
+audience: internal
+tags: [archive, agency, items]
+---
 # Player Agency, Items, and the Empirical Case
 
 > Historical record. Current code and documents linked from `docs/README.md` are

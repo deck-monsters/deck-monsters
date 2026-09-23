@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Web App — Rebuilt from Scratch
+description: Historical record of the rebuilt two-pane terminal web app.
+status: deprecated
+audience: internal
+tags: [archive, web, terminal]
+---
 # Web App — Rebuilt from Scratch
 
 > Historical record. Current code and documents linked from `docs/README.md` are

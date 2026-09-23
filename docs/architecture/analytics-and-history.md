@@ -1,6 +1,13 @@
+---
+type: Architecture
+title: Analytics and history
+description: Fight summaries, leaderboards, catch-up, and history reads for one room.
+status: stable
+audience: internal
+tags: [analytics, history, leaderboards]
+---
 # Analytics and history
 
-Status: Current
 Read before: changing fight outcome payloads, event/history persistence, leaderboards,
 fight summaries, catch-up, coin/XP projections, or retention.
 

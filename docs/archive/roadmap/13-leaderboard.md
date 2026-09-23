@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Leaderboard
+description: Historical record of the room and global leaderboard implementation.
+status: deprecated
+audience: internal
+tags: [archive, leaderboard, stats]
+---
 # Leaderboard
 
 > Historical record. Current code and documents linked from `docs/README.md` are

@@ -1,3 +1,11 @@
+---
+type: Roadmap
+title: Deck Monsters Roadmap
+description: Index of active roadmap work and the stable fixed-bug ledger.
+status: stable
+audience: internal
+tags: [roadmap, planning, index]
+---
 # Deck Monsters Roadmap
 
 **Status:** Active planning only. Current behavior belongs in [`docs/README.md`](../README.md);

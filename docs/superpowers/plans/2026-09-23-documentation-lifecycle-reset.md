@@ -1,3 +1,11 @@
+---
+type: Plan
+title: Documentation Lifecycle Reset Implementation Plan
+description: Task-by-task plan for the documentation lifecycle reset.
+status: draft
+audience: internal
+tags: [documentation, plan, lifecycle]
+---
 # Documentation Lifecycle Reset Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development

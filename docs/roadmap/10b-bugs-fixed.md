@@ -1,3 +1,11 @@
+---
+type: Bug Ledger
+title: Bug Fixes and Code Quality — Fixed / Archived
+description: Root causes for bugs that are already fixed and should not be reopened.
+status: stable
+audience: internal
+tags: [bugs, ledger, archive]
+---
 # Bug Fixes and Code Quality — Fixed / Archived
 
 **Category**: Bug / Tech Debt

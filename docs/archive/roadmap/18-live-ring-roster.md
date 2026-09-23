@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Live Ring Roster
+description: Historical record of the live ring roster payload and panel.
+status: deprecated
+audience: internal
+tags: [archive, ring, roster]
+---
 # Live Ring Roster
 
 > Historical record. Current code and documents linked from `docs/README.md` are

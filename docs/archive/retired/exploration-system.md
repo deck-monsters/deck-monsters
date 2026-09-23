@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Exploration System (Archived)
+description: Historical notes for the retired expedition system that is not in the revival.
+status: deprecated
+audience: internal
+tags: [archive, exploration, retired]
+---
 # Exploration System (Archived)
 
 > Historical record. Current code and documents linked from `docs/README.md` are

@@ -1,6 +1,13 @@
+---
+type: Architecture
+title: Workshop and items
+description: Inventory, item use, shop stock, and prompt-free workshop mutations.
+status: stable
+audience: internal
+tags: [workshop, items, inventory]
+---
 # Workshop and items
 
-Status: Current
 Read before: changing Workshop inventory, cards, presets, monster lifecycle actions,
 item use, shop reads/purchases, or any awaited graphical mutation.
 

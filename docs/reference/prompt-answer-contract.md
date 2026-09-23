@@ -1,6 +1,13 @@
+---
+type: Reference
+title: "The `{ question, choices }` Prompt/Answer Contract"
+description: How a connector must encode the answer to an engine prompt.
+status: stable
+audience: internal
+tags: [prompts, connectors, contract]
+---
 # The `{ question, choices }` Prompt/Answer Contract
 
-Status: Current
 Read before: adding or changing any `channel({ question, choices })` call site, or any
 connector code that answers one.
 

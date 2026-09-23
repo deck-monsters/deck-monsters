@@ -1,3 +1,11 @@
+---
+type: Roadmap
+title: Documentation Lifecycle Reset
+description: Active pass record for separating current docs, roadmap work, and history.
+status: draft
+audience: internal
+tags: [documentation, roadmap, lifecycle]
+---
 # Documentation Lifecycle Reset
 
 **Status:** Active — in progress

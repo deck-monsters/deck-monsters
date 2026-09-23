@@ -1,3 +1,11 @@
+---
+type: Design
+title: Documentation lifecycle reset
+description: Approved design for separating current docs, active work, and history.
+status: draft
+audience: internal
+tags: [documentation, design, lifecycle]
+---
 # Documentation lifecycle reset
 
 **Status:** Approved design; implementation not started

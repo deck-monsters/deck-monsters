@@ -1,3 +1,11 @@
+---
+type: Archive
+title: 24 — Pixel Monsters Everywhere
+description: Historical record of appearance-driven pixel monsters across the web app.
+status: deprecated
+audience: internal
+tags: [archive, pixel-art, monsters]
+---
 # 24 — Pixel Monsters Everywhere
 
 > Historical record. Current code and documents linked from `docs/README.md` are

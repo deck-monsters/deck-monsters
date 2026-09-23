@@ -1,6 +1,13 @@
+---
+type: Architecture
+title: Rooms and identity
+description: Room lifecycle, membership, and identity boundaries for one game room.
+status: stable
+audience: internal
+tags: [rooms, identity, scoping]
+---
 # Rooms and identity
 
-Status: Current
 Read before: changing game state, database queries, room membership, invites, connector
 room selection, profiles, characters, or event subscriptions.
 

@@ -1,3 +1,11 @@
+---
+type: Roadmap
+title: Item Follow-ups
+description: Open item usability work for prompts, selling, and targeting feedback.
+status: draft
+audience: internal
+tags: [items, roadmap, usability]
+---
 # Item Follow-ups
 
 **Status:** Active backlog — bounded usability work, not a mandate for more combat control.

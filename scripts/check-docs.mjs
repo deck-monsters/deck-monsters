@@ -59,8 +59,24 @@ function stripInlineCodeSpans(line, preserveContents) {
   return prose
 }
 
+// OKF frontmatter is YAML, not Markdown prose. Strip it before link and
+// roadmap-status checks so a `status:` field or a link in the block cannot
+// be read as a shipped plan or a broken relative link.
+function stripOkfFrontmatter(markdown) {
+  const normalized = markdown.replace(/\r\n/g, '\n')
+  if (!normalized.startsWith('---\n')) return markdown
+
+  const lines = normalized.split('\n')
+  for (let index = 1; index < lines.length; index += 1) {
+    if (lines[index] === '---') return lines.slice(index + 1).join('\n')
+  }
+
+  return markdown
+}
+
 function markdownProse(markdown, { preserveInlineCode = false } = {}) {
   let fence
+  markdown = stripOkfFrontmatter(markdown)
 
   return markdown
     .split('\n')
@@ -195,12 +211,208 @@ export function checkSuperpowersLifecycle(path, markdown) {
 
 export function checkRoadmapLifecycle(path, markdown) {
   if (!path.startsWith('docs/roadmap/') || !hasCompletedStatus(markdown)) return []
+  // The stable ledger stays in the active roadmap and its entries include
+  // per-bug "**Status**: Shipped" lines. Frontmatter stripping does not remove
+  // those body lines, so this path remains exempt from the shipped-plan rule.
   if (path === 'docs/roadmap/10b-bugs-fixed.md') return []
 
   const remainder = markdownProse(markdown).match(/^## Actionable remainder\s*$([\s\S]*?)(?=^## |\Z)/im)
   if (remainder && /^\s*[-*]\s+\[ \]\s+/m.test(remainder[1])) return []
 
   return [`${path}: shipped plan has no actionable remainder`]
+}
+
+const OKF_KEYS = ['type', 'title', 'description', 'status', 'audience', 'tags']
+const OKF_TYPES = new Set([
+  'Documentation Map',
+  'Architecture',
+  'Runbook',
+  'Reference',
+  'Agent Guide',
+  'Roadmap',
+  'Bug Ledger',
+  'Archive',
+  'Design',
+  'Plan',
+])
+const OKF_STATUSES = new Set(['stable', 'draft', 'deprecated'])
+const PUBLIC_DOCUMENTS = new Set([
+  'README.md',
+  'ITEMS.md',
+  'PLAYER_HANDBOOK.md',
+  'MONSTERS.md',
+  'CARDS.md',
+  'DMG.md',
+  'cards.html',
+])
+// Generated root outputs are omitted from the authored Markdown walk. They are
+// still public documents, so the checker reads them only for a forbidden block.
+const UNWALKED_PUBLIC_DOCUMENTS = [
+  'PLAYER_HANDBOOK.md',
+  'MONSTERS.md',
+  'CARDS.md',
+  'DMG.md',
+  'cards.html',
+]
+
+function isGovernedDocument(path) {
+  return path === 'AGENTS.md' || (path.startsWith('docs/') && path.endsWith('.md'))
+}
+
+function hasOkfFrontmatter(markdown) {
+  return markdown.startsWith('---\n') || markdown.startsWith('---\r\n')
+}
+
+function expectedOkf(path) {
+  if (path === 'docs/README.md') return { type: 'Documentation Map', status: 'stable' }
+  if (path.startsWith('docs/architecture/')) return { type: 'Architecture', status: 'stable' }
+  if (path.startsWith('docs/operations/')) return { type: 'Runbook', status: 'stable' }
+  if (path.startsWith('docs/reference/')) return { type: 'Reference', status: 'stable' }
+  if (path === 'AGENTS.md' || path.startsWith('docs/agents/')) {
+    return { type: 'Agent Guide', status: 'stable' }
+  }
+  if (path === 'docs/roadmap/README.md') return { type: 'Roadmap', status: 'stable' }
+  if (path === 'docs/roadmap/10b-bugs-fixed.md') return { type: 'Bug Ledger', status: 'stable' }
+  if (path.startsWith('docs/roadmap/')) return { type: 'Roadmap', status: 'draft' }
+  if (path.startsWith('docs/archive/')) return { type: 'Archive', status: 'deprecated' }
+  if (path.startsWith('docs/superpowers/specs/')) return { type: 'Design', status: 'draft' }
+  if (path.startsWith('docs/superpowers/plans/')) return { type: 'Plan', status: 'draft' }
+  return null
+}
+
+function unquoteYaml(value) {
+  if (value.length >= 2 && value.startsWith('"') && value.endsWith('"')) {
+    return value.slice(1, -1).replace(/\\(.)/g, '$1')
+  }
+  if (value.length >= 2 && value.startsWith("'") && value.endsWith("'")) {
+    return value.slice(1, -1).replace(/''/g, "'")
+  }
+  return value
+}
+
+function readFrontmatter(markdown) {
+  const normalized = markdown.replace(/\r\n/g, '\n')
+  if (!normalized.startsWith('---\n')) return { error: 'missing' }
+
+  const lines = normalized.split('\n')
+  const body = []
+  for (let index = 1; index < lines.length; index += 1) {
+    if (lines[index] === '---') return { lines: body }
+    body.push(lines[index])
+  }
+
+  return { error: 'unclosed' }
+}
+
+function parseFrontmatter(lines) {
+  const fields = {}
+  const invalid = []
+
+  for (const line of lines) {
+    if (line.trim() === '') continue
+    const match = line.match(/^([A-Za-z][A-Za-z0-9_-]*):\s*(.*)$/)
+    if (!match) {
+      invalid.push(line)
+      continue
+    }
+    const [, key, raw] = match
+    if (Object.hasOwn(fields, key)) invalid.push(key)
+    fields[key] = raw.trim()
+  }
+
+  return { fields, invalid }
+}
+
+function parseTags(raw) {
+  const value = unquoteYaml(raw)
+  if (!value.startsWith('[') || !value.endsWith(']')) return null
+  const inner = value.slice(1, -1).trim()
+  if (inner === '') return []
+  return inner.split(',').map((part) => unquoteYaml(part.trim()))
+}
+
+function isPlainSentence(description) {
+  if (description !== description.trim()) return false
+  if (/[*_`[\]#<>]/.test(description) || description.includes('](')) return false
+  return /^[^.!?]+[.!?]$/.test(description)
+}
+
+export function checkOkfFrontmatter(path, markdown) {
+  const publicDocument = PUBLIC_DOCUMENTS.has(path)
+  const present = hasOkfFrontmatter(markdown)
+
+  if (publicDocument) {
+    return present ? [`${path}: public document must not have OKF frontmatter`] : []
+  }
+  if (!isGovernedDocument(path)) return []
+  if (!present) return [`${path}: missing OKF frontmatter`]
+
+  const block = readFrontmatter(markdown)
+  if (block.error) return [`${path}: unclosed OKF frontmatter`]
+
+  const { fields, invalid } = parseFrontmatter(block.lines)
+  if (invalid.length > 0) return [`${path}: invalid OKF frontmatter`]
+
+  const findings = []
+  for (const key of Object.keys(fields)) {
+    if (!OKF_KEYS.includes(key)) findings.push(`${path}: unexpected OKF key ${key}`)
+  }
+  for (const key of OKF_KEYS) {
+    if (!Object.hasOwn(fields, key) || unquoteYaml(fields[key]).trim() === '') {
+      findings.push(`${path}: missing OKF key ${key}`)
+    }
+  }
+
+  const expected = expectedOkf(path)
+  if (!expected) findings.push(`${path}: no OKF type mapping`)
+
+  if (Object.hasOwn(fields, 'type') && unquoteYaml(fields.type).trim() !== '') {
+    const type = unquoteYaml(fields.type)
+    if (!OKF_TYPES.has(type)) findings.push(`${path}: unknown OKF type ${type}`)
+    else if (expected && type !== expected.type) {
+      findings.push(`${path}: OKF type must be ${expected.type}`)
+    }
+  }
+
+  if (
+    Object.hasOwn(fields, 'description') &&
+    unquoteYaml(fields.description).trim() !== '' &&
+    !isPlainSentence(unquoteYaml(fields.description))
+  ) {
+    findings.push(`${path}: OKF description must be one sentence without Markdown`)
+  }
+
+  if (Object.hasOwn(fields, 'status') && unquoteYaml(fields.status).trim() !== '') {
+    const status = unquoteYaml(fields.status)
+    if (!OKF_STATUSES.has(status)) {
+      findings.push(`${path}: OKF status must be stable, draft, or deprecated`)
+    } else if (expected && status !== expected.status) {
+      findings.push(`${path}: OKF status must be ${expected.status}`)
+    }
+  }
+
+  if (
+    Object.hasOwn(fields, 'audience') &&
+    unquoteYaml(fields.audience).trim() !== '' &&
+    unquoteYaml(fields.audience) !== 'internal'
+  ) {
+    findings.push(`${path}: OKF audience must be internal`)
+  }
+
+  if (Object.hasOwn(fields, 'tags') && unquoteYaml(fields.tags).trim() !== '') {
+    const tags = parseTags(fields.tags)
+    const validTag = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+    if (
+      !tags ||
+      tags.length < 2 ||
+      tags.length > 6 ||
+      tags.some((tag) => !validTag.test(tag))
+    ) {
+      findings.push(`${path}: OKF tags must list 2 to 6 lowercase tags`)
+    }
+  }
+
+  return findings
 }
 
 export async function checkDocumentation(root) {
@@ -218,9 +430,19 @@ export async function checkDocumentation(root) {
     const markdown = await readFile(path, 'utf8')
     const repositoryPath = toRepositoryPath(root, path)
     findings.push(
+      ...checkOkfFrontmatter(repositoryPath, markdown),
       ...checkSuperpowersLifecycle(repositoryPath, markdown),
       ...checkRoadmapLifecycle(repositoryPath, markdown),
     )
+  }
+
+  for (const repositoryPath of UNWALKED_PUBLIC_DOCUMENTS) {
+    try {
+      const markdown = await readFile(resolve(root, repositoryPath), 'utf8')
+      findings.push(...checkOkfFrontmatter(repositoryPath, markdown))
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error
+    }
   }
 
   return findings

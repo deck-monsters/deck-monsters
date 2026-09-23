@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Discord Connector Adapter
+description: Historical record of the Discord slash-command connector implementation.
+status: deprecated
+audience: internal
+tags: [archive, discord, connectors]
+---
 # Discord Connector Adapter
 
 > Historical record. Current code and documents linked from `docs/README.md` are

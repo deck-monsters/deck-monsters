@@ -1,3 +1,11 @@
+---
+type: Roadmap
+title: Balance and Mechanics Improvements
+description: Open combat, progression, and telemetry work that still needs evidence.
+status: draft
+audience: internal
+tags: [balance, mechanics, roadmap]
+---
 # Balance and Mechanics Improvements
 
 **Status:** Active backlog. Use evidence from the simulation harness and live telemetry

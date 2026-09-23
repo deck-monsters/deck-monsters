@@ -1,3 +1,11 @@
+---
+type: Agent Guide
+title: Working in this repo
+description: Verification commands, bug numbering, and the definition of done.
+status: stable
+audience: internal
+tags: [agents, workflow, verification]
+---
 # Working in this repo
 
 House rules for agents doing work here: what "done" means, how bugs are numbered, how to

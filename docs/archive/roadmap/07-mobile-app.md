@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Native Mobile App (iOS + Android)
+description: Historical deferred design for a native mobile client.
+status: deprecated
+audience: internal
+tags: [archive, mobile, deferred]
+---
 # Native Mobile App (iOS + Android)
 
 > Historical record. Current code and documents linked from `docs/README.md` are

@@ -1,3 +1,11 @@
+---
+type: Roadmap
+title: Bug Fixes and Code Quality
+description: Open bug investigations that still need a fix or a confirmed root cause.
+status: draft
+audience: internal
+tags: [bugs, roadmap, open]
+---
 # Bug Fixes and Code Quality
 
 **Status:** Active — five verified open items. Fixed work and its root causes live only in

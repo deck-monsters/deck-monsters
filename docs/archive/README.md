@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Archived Documentation
+description: Historical plans and retired subsystems that are not current contracts.
+status: deprecated
+audience: internal
+tags: [archive, history, index]
+---
 # Archived Documentation
 
 > Historical record. Current code and documents linked from `docs/README.md` are

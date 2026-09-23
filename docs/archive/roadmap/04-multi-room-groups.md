@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Multi-Room / Groups Support
+description: Historical record of multi-room membership, invites, and connector mappings.
+status: deprecated
+audience: internal
+tags: [archive, rooms, groups]
+---
 # Multi-Room / Groups Support
 
 > Historical record. Current code and documents linked from `docs/README.md` are

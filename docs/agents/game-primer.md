@@ -1,3 +1,11 @@
+---
+type: Agent Guide
+title: Game primer for agents
+description: How the game loop, pacing, healing, bosses, and feeds behave for an agent.
+status: stable
+audience: internal
+tags: [agents, gameplay, primer]
+---
 # Game primer for agents
 
 How Deck Monsters actually behaves, for someone who has to reason about it without playing

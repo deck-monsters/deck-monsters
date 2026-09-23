@@ -1,6 +1,13 @@
+---
+type: Runbook
+title: Deployment Guide
+description: Production deployment, auth URLs, and environment variables for Railway and Supabase.
+status: stable
+audience: internal
+tags: [deployment, railway, supabase]
+---
 # Deployment Guide
 
-Status: Current
 Read before: creating or changing Supabase/Railway production services, auth redirect
 URLs, custom domains, deployment commands, or production environment variables.
 Verified: 2026-09-23 against the checked-in Railway configs, server Dockerfile, and current

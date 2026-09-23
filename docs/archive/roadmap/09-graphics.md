@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Graphics and Visual Design
+description: Historical graphics proposal superseded by later pixel and roster work.
+status: deprecated
+audience: internal
+tags: [archive, graphics, design]
+---
 # Graphics and Visual Design
 
 > Historical record. Current code and documents linked from `docs/README.md` are

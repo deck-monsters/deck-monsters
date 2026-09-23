@@ -1,3 +1,11 @@
+---
+type: Roadmap
+title: New Content Backlog
+description: Concrete card, monster, and world proposals that are not in progress.
+status: draft
+audience: internal
+tags: [content, cards, backlog]
+---
 # New Content Backlog
 
 **Status:** Backlog — concrete post-launch content proposals. Prioritize only after the

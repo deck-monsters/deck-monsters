@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Workspace Layout — a switchable second pane
+description: Historical record of the switchable second workspace pane.
+status: deprecated
+audience: internal
+tags: [archive, workspace, layout]
+---
 # Workspace Layout — a switchable second pane
 
 > Historical record. Current code and documents linked from `docs/README.md` are

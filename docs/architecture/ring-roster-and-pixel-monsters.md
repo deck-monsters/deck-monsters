@@ -1,6 +1,13 @@
+---
+type: Architecture
+title: Ring roster and pixel monsters
+description: Roster order, ring-state payload, sprites, and feed portrait rules.
+status: stable
+audience: internal
+tags: [ring, roster, sprites]
+---
 # Ring roster and pixel monsters
 
-Status: Current
 Read before: changing `ring.state`, contestant snapshots, Ring roster row order or layout,
 pixel sprites, appearance palettes, known-monster storage, or narration portraits.
 

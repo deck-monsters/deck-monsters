@@ -1,6 +1,13 @@
+---
+type: Reference
+title: Voice and wording
+description: Player-facing wording rules for prompts, help, announcements, and labels.
+status: stable
+audience: internal
+tags: [voice, wording, prompts]
+---
 # Voice and wording
 
-Status: Current
 Read before: adding any player-facing prompt, help text, announcement, button label,
 Discord description, handbook copy, or README copy.
 

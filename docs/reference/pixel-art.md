@@ -1,6 +1,13 @@
+---
+type: Reference
+title: Pixel Art Animations in JavaScript for the Browser
+description: Crisp canvas and CSS pixel-art rules for sprites in the web app.
+status: stable
+audience: internal
+tags: [pixel-art, sprites, canvas]
+---
 # Pixel Art Animations in JavaScript for the Browser
 
-Status: Current
 Read before: creating or changing web pixel art, sprite maps, Canvas animation,
 appearance palettes, or crisp-scaling behavior.
 

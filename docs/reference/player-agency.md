@@ -1,6 +1,13 @@
+---
+type: Reference
+title: Player agency
+description: Commitment-then-surrender rules and the limit on live combat control.
+status: stable
+audience: internal
+tags: [agency, items, combat]
+---
 # Player agency
 
-Status: Current
 Read before: proposing player control, mid-fight item behavior, monster attachment, or
 balance changes justified by motivation research.
 

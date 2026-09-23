@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Pixel Art Fight Animations (Theme-Gated)
+description: Historical record of theme-gated pixel fight animations.
+status: deprecated
+audience: internal
+tags: [archive, pixel-art, animation]
+---
 # Pixel Art Fight Animations (Theme-Gated)
 
 > Historical record. Current code and documents linked from `docs/README.md` are

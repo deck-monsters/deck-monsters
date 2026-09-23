@@ -1,3 +1,11 @@
+---
+type: Archive
+title: "Modernize Stack: TypeScript, Testing, and Dependencies"
+description: Historical record of the TypeScript, testing, and dependency modernization.
+status: deprecated
+audience: internal
+tags: [archive, typescript, tooling]
+---
 # Modernize Stack: TypeScript, Testing, and Dependencies
 
 > Historical record. Current code and documents linked from `docs/README.md` are

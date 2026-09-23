@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Fight Stats and Catch-Up Feed
+description: Historical record of fight summaries and the catch-up feed.
+status: deprecated
+audience: internal
+tags: [archive, fights, history]
+---
 # Fight Stats and Catch-Up Feed
 
 > Historical record. Current code and documents linked from `docs/README.md` are

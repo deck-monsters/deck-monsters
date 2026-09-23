@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Authentication and User Identity
+description: Historical record of Discord, Google, and email authentication work.
+status: deprecated
+audience: internal
+tags: [archive, auth, identity]
+---
 # Authentication and User Identity
 
 > Historical record. Current code and documents linked from `docs/README.md` are

@@ -1,3 +1,11 @@
+---
+type: Archive
+title: "Ring feed: timestamps and “time ago” display"
+description: Historical record of relative timestamps in the ring feed.
+status: deprecated
+audience: internal
+tags: [archive, ring, timestamps]
+---
 # Ring feed: timestamps and “time ago” display
 
 > Historical record. Current code and documents linked from `docs/README.md` are

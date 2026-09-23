@@ -1,6 +1,13 @@
+---
+type: Runbook
+title: Local testing guidelines (env-driven sessions)
+description: Manual end-to-end checks, service startup, and reusable local test rooms.
+status: stable
+audience: internal
+tags: [testing, local, rooms]
+---
 # Local testing guidelines (env-driven sessions)
 
-Status: Current
 Read before: manual end-to-end testing, using shared remote test rooms, staging fights, or
 capturing browser evidence.
 Verified: 2026-09-23 against current startup commands and reusable-room records.

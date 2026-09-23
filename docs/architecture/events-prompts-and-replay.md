@@ -1,6 +1,13 @@
+---
+type: Architecture
+title: Events, prompts, and replay
+description: Event flow, prompt lifecycle, persistence, and replay for one room.
+status: stable
+audience: internal
+tags: [events, prompts, replay]
+---
 # Events, prompts, and replay
 
-Status: Current
 Read before: changing `GameEvent`, `RoomEventBus`, connector delivery, prompt transport,
 event persistence, feed history, reconnect cursors, or fight replay.
 

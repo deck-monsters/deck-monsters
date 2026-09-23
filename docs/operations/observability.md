@@ -1,6 +1,13 @@
+---
+type: Runbook
+title: Observability Guide
+description: Metrics endpoint, metric names, Grafana scrape, and alert variables.
+status: stable
+audience: internal
+tags: [observability, metrics, grafana]
+---
 # Observability Guide
 
-Status: Current
 Read before: changing `/metrics`, metric names or labels, Grafana collection, dashboards,
 alerts, or observability environment variables.
 Verified: 2026-09-23 against `packages/server/src/index.ts`, the metrics modules, and

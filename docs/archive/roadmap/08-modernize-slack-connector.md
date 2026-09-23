@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Modernize Slack Connector (Jane)
+description: Historical deferred design for modernizing the Slack connector.
+status: deprecated
+audience: internal
+tags: [archive, slack, deferred]
+---
 # Modernize Slack Connector (Jane)
 
 > Historical record. Current code and documents linked from `docs/README.md` are

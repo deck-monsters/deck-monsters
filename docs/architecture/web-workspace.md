@@ -1,6 +1,13 @@
+---
+type: Architecture
+title: Web workspace
+description: Terminal panes, routes, the breakpoint, and navigation for the web client.
+status: stable
+audience: internal
+tags: [web, workspace, layout]
+---
 # Web workspace
 
-Status: Current
 Read before: changing `Terminal`, workspace surfaces, pane slots, routes, the 1024px
 breakpoint, pane persistence, the divider, or navigation into a gameplay surface.
 

@@ -1,6 +1,13 @@
+---
+type: Runbook
+title: Devcontainer and Public GitHub Auth
+description: How devcontainer GitHub credentials stay inside the container.
+status: stable
+audience: internal
+tags: [devcontainer, auth, github]
+---
 # Devcontainer and Public GitHub Auth
 
-Status: Current
 Read before: changing the devcontainer or configuring public GitHub credentials on a host
 that also uses enterprise GitHub credentials.
 Verified: 2026-09-23 against `.devcontainer/devcontainer.json`.

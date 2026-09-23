@@ -1,3 +1,11 @@
+---
+type: Agent Guide
+title: Subagents
+description: Model tiers, dispatch rules, and the review procedure for delegated work.
+status: stable
+audience: internal
+tags: [agents, subagents, review]
+---
 # Subagents
 
 When and how to delegate work to another agent. Written harness-neutrally: the tier table is

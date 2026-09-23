@@ -1,3 +1,11 @@
+---
+type: Archive
+title: September 2026 Follow-ups — pass record
+description: Historical record of the September 2026 follow-up pass and where its decisions live.
+status: deprecated
+audience: internal
+tags: [archive, passes, followups]
+---
 # September 2026 Follow-ups — pass record
 
 > Historical record. Current code and documents linked from `docs/README.md` are

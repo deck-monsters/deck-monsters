@@ -1,6 +1,13 @@
+---
+type: Architecture
+title: Engine Concurrency, Timing, and Prompt Flows
+description: Fight pacing, serialized command lanes, prompt lifecycle, and timer ownership.
+status: stable
+audience: internal
+tags: [concurrency, timing, prompts]
+---
 # Engine Concurrency, Timing, and Prompt Flows
 
-Status: Current
 Read before: touching fight pacing, the command pipeline, `game.on(...)` listeners,
 long-lived timers, or anything that awaits user input.
 

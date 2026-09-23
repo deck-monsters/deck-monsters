@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Card Management System
+description: Historical record of the card workshop and deck editing.
+status: deprecated
+audience: internal
+tags: [archive, cards, workshop]
+---
 # Card Management System
 
 > Historical record. Current code and documents linked from `docs/README.md` are

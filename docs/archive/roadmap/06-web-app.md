@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Web App Connector
+description: Historical record of the first web app that the terminal rebuild replaced.
+status: deprecated
+audience: internal
+tags: [archive, web, connectors]
+---
 # Web App Connector
 
 > Historical record. Current code and documents linked from `docs/README.md` are

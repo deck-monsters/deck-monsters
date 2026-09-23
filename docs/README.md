@@ -1,6 +1,12 @@
+---
+type: Documentation Map
+title: Documentation map
+description: Index of current contracts, procedures, references, and their authority.
+status: stable
+audience: internal
+tags: [documentation, index, authority]
+---
 # Documentation map
-
-Status: Current
 
 Repository documentation follows one rule: **one fact, one canonical home; link rather
 than restate**. When history and a current document disagree, current code and current

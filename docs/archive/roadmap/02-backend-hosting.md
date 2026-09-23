@@ -1,3 +1,11 @@
+---
+type: Archive
+title: Backend Hosting and State Storage Strategy
+description: Historical record of the Supabase and Railway hosting migration.
+status: deprecated
+audience: internal
+tags: [archive, hosting, supabase]
+---
 # Backend Hosting and State Storage Strategy
 
 > Historical record. Current code and documents linked from `docs/README.md` are

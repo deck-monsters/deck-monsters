@@ -1,3 +1,11 @@
+---
+type: Roadmap
+title: Small Leftovers
+description: Bounded leftover decisions and verification gates with named owners.
+status: draft
+audience: internal
+tags: [leftovers, roadmap, verification]
+---
 # Small Leftovers
 
 **Status:** Backlog — bounded decisions and verification gates that do not justify a

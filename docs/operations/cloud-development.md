@@ -1,6 +1,13 @@
+---
+type: Runbook
+title: Cloud development
+description: Cursor Cloud setup for the remote database path and the local Supabase path.
+status: stable
+audience: internal
+tags: [cloud, setup, supabase]
+---
 # Cloud development
 
-Status: Current
 Read before: configuring or debugging Cursor Cloud, selecting remote versus local
 Supabase, starting the full app, or changing `.cursor/environment.json`.
 Verified: 2026-09-23 against `.cursor/environment.json`, its install/start scripts, and

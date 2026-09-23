@@ -1,6 +1,13 @@
+---
+type: Architecture
+title: Boss Encounters, Summoning, and Ring Events
+description: Boss creation, summoning, teams, targeting, and ring-event rules.
+status: stable
+audience: internal
+tags: [bosses, summoning, ring]
+---
 # Boss Encounters, Summoning, and Ring Events
 
-Status: Current
 Read before: touching `packages/engine/src/ring/`, `helpers/bosses.ts`,
 `helpers/targeting-strategies.ts`, `helpers/boss-summons.ts`, boss persistence, or ring
 events.
