@@ -392,6 +392,108 @@ git commit -m "docs: reset roadmap and archive completed work"
 
 ---
 
+### Task 3b: Add OKF frontmatter to internal and agent documents
+
+**Files:**
+- Modify: `AGENTS.md`
+- Modify: every `docs/**/*.md`
+- Modify: `scripts/check-docs.mjs`
+- Modify: `scripts/check-docs.test.mjs`
+- Modify: `docs/README.md`
+- Modify: `docs/roadmap/25-documentation-lifecycle-reset.md`
+
+**Interfaces:**
+- Produces: Open Knowledge Format v0.2 frontmatter on internal and agent Markdown only.
+- Produces: `checkOkfFrontmatter(path, markdown)` and checker enforcement.
+- Does not modify public or generated player documents.
+
+Internal and agent documents are `AGENTS.md` and everything under `docs/`. Public documents
+stay plain Markdown: repository `README.md`, authored `ITEMS.md`, and generated
+`PLAYER_HANDBOOK.md`, `MONSTERS.md`, `CARDS.md`, `DMG.md`, and `cards.html`.
+
+Use this frontmatter and no other keys:
+
+```yaml
+---
+type: Architecture
+title: Rooms and identity
+description: Room lifecycle, membership, and identity boundaries for one game room.
+status: stable
+audience: internal
+tags: [rooms, identity, scoping]
+---
+```
+
+- `type` is exactly one of `Documentation Map`, `Architecture`, `Runbook`, `Reference`,
+  `Agent Guide`, `Roadmap`, `Bug Ledger`, `Archive`, `Design`, or `Plan`.
+- `title` is the human title. `description` is one sentence and contains no Markdown.
+- `status` uses the OKF lifecycle: `stable` for current docs, the roadmap index, and the
+  fixed-bug ledger; `draft` for active roadmap items and this pass's spec/plan; `deprecated`
+  for `docs/archive/**`.
+- `audience` is `internal` for every governed file. That covers agent and operator readers.
+- `tags` is a list of 2–6 short lowercase tags.
+- Do not add `generated`, `verified`, `sources`, or `resource` in this pass. Those fields
+  are optional in OKF and would invent provenance.
+- Put the block at byte offset 0. Leave the existing body, including its first heading,
+  unchanged apart from removing a now-redundant one-line status sentence when the
+  frontmatter already states that fact.
+- Strip this frontmatter before link and roadmap-status checks so YAML is not parsed as
+  Markdown prose.
+
+Map directories to `type`:
+
+| Path | type | status |
+|---|---|---|
+| `docs/README.md` | Documentation Map | stable |
+| `docs/architecture/` | Architecture | stable |
+| `docs/operations/` | Runbook | stable |
+| `docs/reference/` | Reference | stable |
+| `docs/agents/` | Agent Guide | stable |
+| `AGENTS.md` | Agent Guide | stable |
+| `docs/roadmap/README.md` | Roadmap | stable |
+| `docs/roadmap/10b-bugs-fixed.md` | Bug Ledger | stable |
+| other `docs/roadmap/` | Roadmap | draft |
+| `docs/archive/` | Archive | deprecated |
+| `docs/superpowers/specs/` | Design | draft |
+| `docs/superpowers/plans/` | Plan | draft |
+
+- [ ] **Step 1: Write failing checker tests**
+
+Cover a missing block, an unknown `type`, a public root file that incorrectly gains the
+block, a valid internal file, and archive `status: deprecated` not being treated as a
+shipped roadmap.
+
+- [ ] **Step 2: Run the tests and verify RED**
+
+Run: `node --test scripts/check-docs.test.mjs`
+
+Expected: the new frontmatter cases fail.
+
+- [ ] **Step 3: Implement frontmatter and checker enforcement**
+
+Add the block to every governed file. Export `checkOkfFrontmatter`. `pnpm docs:check` must
+fail when a governed file lacks the required keys.
+
+- [ ] **Step 4: Verify GREEN**
+
+```bash
+node --test scripts/check-docs.test.mjs
+pnpm docs:check
+git diff --check
+```
+
+Expected: tests pass, the checker exits 0, and public root documents have no frontmatter.
+
+- [ ] **Step 5: Record the decision and commit**
+
+Update the pass ledger with the OKF field rules and commit range, then:
+
+```bash
+git commit -m "docs: add OKF frontmatter to internal docs"
+```
+
+---
+
 ### Task 4: Fix temporary stat semantics and improve generated player strategy
 
 **Files:**

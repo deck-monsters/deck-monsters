@@ -19,6 +19,8 @@ repository-local documentation-maintenance skill.
 - Temporary DEX/STR/INT changes affect both raw checks and derived rolls exactly once.
 - Player strategy advice states assumptions and alternatives rather than declaring one
   universal best deck.
+- Internal and agent Markdown (`AGENTS.md` and `docs/**`) carries Open Knowledge Format v0.2
+  frontmatter. Public and generated player documents do not.
 
 ## Tasks
 
@@ -27,6 +29,7 @@ repository-local documentation-maintenance skill.
 | 1 | Mechanical documentation checker | Tier 2 | Complete | `d9857313`–`e9dfec1e` |
 | 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `26c8750c`–`f9535761` |
 | 3 | Roadmap and archive lifecycle reset | Tier 2 | Complete | `0b59ed90`–`3e1af399` |
+| 3b | OKF frontmatter for internal and agent docs | Tier 2 | Planned | — |
 | 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Planned | — |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Planned | — |
 | 6 | Compact routers and generated ownership | Tier 2 | Planned | — |
