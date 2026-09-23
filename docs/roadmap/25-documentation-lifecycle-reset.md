@@ -38,7 +38,7 @@ repository-local documentation-maintenance skill.
 | 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `26c8750c`–`f9535761` |
 | 3 | Roadmap and archive lifecycle reset | Tier 2 | Complete | `0b59ed90`–`3e1af399` |
 | 3b | OKF frontmatter for internal and agent docs | Tier 2 | Complete | `3f41d866` |
-| 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Complete | `18439f1d` |
+| 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Complete | `18439f1d`–`1623fca5` |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Planned | — |
 | 6 | Compact routers and generated ownership | Tier 2 | Planned | — |
 | 7 | Full verification, broad review, and lifecycle closeout | Tier 3 | Planned | — |
@@ -102,7 +102,10 @@ repository-local documentation-maintenance skill.
 - Generated handbook strategy teaches DEX/STR/INT/AC, deck order, card roles, stacked
   Delayed Hits, and Molasses before Forked Stick. The Level 3 Minotaur list is labeled an
   illustration, with a one-Heal alternative and a matchup swap.
-- Implementation commit: `18439f1d`.
+- Implementation commit: `18439f1d`. Review fixes: `1623fca5`. Armed Delayed Hits on one
+  monster all answer the next qualifying blow. DMG formulas include Horn Gore's half STR
+  modifier, Forked Stick's matchup term, and the raw-stat floor. Curse card stats state
+  the `level + 1` cap. Card odds were not recalculated.
 
 ## Working artifacts
 
