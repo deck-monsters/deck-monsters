@@ -37,7 +37,7 @@ repository-local documentation-maintenance skill.
 | 1 | Mechanical documentation checker | Tier 2 | Complete | `d9857313`–`e9dfec1e` |
 | 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `26c8750c`–`f9535761` |
 | 3 | Roadmap and archive lifecycle reset | Tier 2 | Complete | `0b59ed90`–`3e1af399` |
-| 3b | OKF frontmatter for internal and agent docs | Tier 2 | Planned | — |
+| 3b | OKF frontmatter for internal and agent docs | Tier 2 | Complete | `3f41d866` |
 | 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Planned | — |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Planned | — |
 | 6 | Compact routers and generated ownership | Tier 2 | Planned | — |
@@ -75,6 +75,18 @@ repository-local documentation-maintenance skill.
   owned by Cards in `12-new-content-backlog.md`. Prompt transport, web selling, and outcome
   feedback stay only in `item-followups.md`. `look at the ring` private-announce delivery is
   ledger entry #174. No reviewed item was rejected.
+
+## Task 3b decisions
+
+- Governed files are `AGENTS.md` and `docs/**/*.md` only. Each block is Open Knowledge
+  Format v0.2 at byte 0, with keys `type`, `title`, `description`, `status`, `audience`,
+  and `tags`. `audience` is `internal`. `description` is one sentence without Markdown.
+  `tags` lists 2–6 lowercase tags.
+- `status` is `stable` for current docs, the roadmap index, and the fixed-bug ledger;
+  `draft` for other active roadmap files and this pass's spec and plan; `deprecated` for
+  `docs/archive/**`. `checkOkfFrontmatter` enforces that mapping. Link and roadmap-status
+  checks strip the block first, and `docs/roadmap/10b-bugs-fixed.md` keeps its ledger
+  exception. Implementation commit: `3f41d866`.
 
 ## Working artifacts
 
