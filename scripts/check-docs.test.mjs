@@ -191,11 +191,20 @@ test('rejects an unknown OKF type', () => {
 })
 
 test('rejects OKF frontmatter on a public root document', () => {
-  assert.deepEqual(checkOkfFrontmatter('README.md', validArchitecture), [
-    'README.md: public document must not have OKF frontmatter',
-  ])
-  assert.deepEqual(checkOkfFrontmatter('cards.html', validArchitecture), [
-    'cards.html: public document must not have OKF frontmatter',
+  for (const path of ['README.md', 'ITEMS.md', 'PLAYER_HANDBOOK.md', 'MONSTERS.md', 'CARDS.md', 'DMG.md', 'cards.html']) {
+    assert.deepEqual(checkOkfFrontmatter(path, validArchitecture), [
+      `${path}: public document must not have OKF frontmatter`,
+    ])
+  }
+})
+
+test('rejects a known OKF type or status on the wrong path', () => {
+  const roadmap = validArchitecture
+    .replace('type: Architecture', 'type: Roadmap')
+    .replace('status: stable', 'status: draft')
+  assert.deepEqual(checkOkfFrontmatter('docs/architecture/rooms.md', roadmap), [
+    'docs/architecture/rooms.md: OKF type must be Architecture',
+    'docs/architecture/rooms.md: OKF status must be stable',
   ])
 })
 

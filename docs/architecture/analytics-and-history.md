@@ -1,7 +1,7 @@
 ---
 type: Architecture
 title: Analytics and history
-description: Fight summaries, leaderboards, catch-up, and history reads for one room.
+description: Fight summaries, room and global leaderboards, catch-up, and history reads.
 status: stable
 audience: internal
 tags: [analytics, history, leaderboards]
