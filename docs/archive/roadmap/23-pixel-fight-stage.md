@@ -1,9 +1,14 @@
 # 23 — Pixel Fight Animations: From a Band to the Roster
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 **Category**: Product / UI
-**Status**: Shipped (#167). The animations live in the Ring roster rows. Superseded in
-part by [24 — Pixel Monsters Everywhere](24-pixel-monsters-everywhere.md), which made them
-the default on every theme with an opt-out. Remaining questions are at the end.
+**Status**: Historical shipped record (#167). The animations live in the Ring roster rows;
+later pixel-monster work made them the default on every theme with an opt-out. Remaining
+device, motion, density, and preference decisions moved to
+[`22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 The pixel-art fight animations were built as a canvas band above the Ring feed. They
 worked, were reachable, and were readable — and were still wrong, because they re-drew
@@ -14,15 +19,15 @@ the decision, and what is left.
 
 | Ref | What changed |
 |---|---|
-| [archived plan 17](../archive/roadmap/17-pixel-art-fight-animations.md) | Original build: theme-gated canvas layer over the Ring feed |
-| [#164](10b-bugs-fixed.md) | Sprites redrawn 16×16 → 24×24; poses shear instead of translating |
-| [#165](10b-bugs-fixed.md) | Overlay → docked band; `inEncounter` adoption; compact duel on phones |
-| [#166](10b-bugs-fixed.md) | Opt-in setting, off by default — bought time to decide |
-| [#167](10b-bugs-fixed.md) | **Band deleted; sprites moved into the roster rows** |
-| [#168](10b-bugs-fixed.md) | Sprite gutter squeezed names to `G..` in the two-up layout |
-| [#169](10b-bugs-fixed.md) | Row reorganised around field priority; multi-column dropped; sprite 48px → 24px |
-| [#169](10b-bugs-fixed.md) | Columns restored as explicit width tiers — two-up at 46rem, three-up at 70rem |
-| [#170](10b-bugs-fixed.md) | Turn marker hung in the row padding; icons lead the row — first change here verified in a browser |
+| [archived plan 17](17-pixel-art-fight-animations.md) | Original build: theme-gated canvas layer over the Ring feed |
+| [#164](../../roadmap/10b-bugs-fixed.md) | Sprites redrawn 16×16 → 24×24; poses shear instead of translating |
+| [#165](../../roadmap/10b-bugs-fixed.md) | Overlay → docked band; `inEncounter` adoption; compact duel on phones |
+| [#166](../../roadmap/10b-bugs-fixed.md) | Opt-in setting, off by default — bought time to decide |
+| [#167](../../roadmap/10b-bugs-fixed.md) | **Band deleted; sprites moved into the roster rows** |
+| [#168](../../roadmap/10b-bugs-fixed.md) | Sprite gutter squeezed names to `G..` in the two-up layout |
+| [#169](../../roadmap/10b-bugs-fixed.md) | Row reorganised around field priority; multi-column dropped; sprite 48px → 24px |
+| [#169](../../roadmap/10b-bugs-fixed.md) | Columns restored as explicit width tiers — two-up at 46rem, three-up at 70rem |
+| [#170](../../roadmap/10b-bugs-fixed.md) | Turn marker hung in the row padding; icons lead the row — first change here verified in a browser |
 
 ## The evidence
 
@@ -30,7 +35,7 @@ Two photos of real sessions, which between them say more than the test suite eve
 
 ### Tablet, landscape
 
-![The band running on a tablet in landscape](assets/pixel-fight-2026-09/stage-on-tablet-landscape.jpg)
+*Historical capture unavailable in the repository: The band running on a tablet in landscape.*
 
 Four contestants, two bosses. `IN THE RING — 4/4 STANDING` lists each with an HP bar, exact
 numbers, level, owner and a `BOSS` tag. Directly beneath, the band drew the *same four* with
@@ -40,7 +45,7 @@ six lines.
 
 ### iPhone, portrait
 
-![The band running on an iPhone in portrait](assets/pixel-fight-2026-09/stage-on-iphone-portrait.png)
+*Historical capture unavailable in the repository: The band running on an iPhone in portrait.*
 
 Two contestants. This one is the clincher, for two reasons:
 
@@ -48,7 +53,7 @@ Two contestants. This one is the clincher, for two reasons:
    sprites. The duplication is not subtle; it is most of what the band contributed.
 2. **The roster already answers "whose turn is it"**. Omago's row carries a red left border,
    a tinted background and a `▶` marker — the `acting` flag, rendered since
-   [archived plan 18](../archive/roadmap/18-live-ring-roster.md). The band's main claim to
+   [archived plan 18](18-live-ring-roster.md). The band's main claim to
    usefulness was already being met, better, eight rows up.
 
 ## The decision: the left-vs-right metaphor was the root error
@@ -84,7 +89,7 @@ and outlives any animation, so a revived monster cannot keep a stale fallen pose
 
 ## After it shipped
 
-![Roster sprites on an iPhone](assets/pixel-fight-2026-09/roster-sprites-on-iphone.png)
+*Historical capture unavailable in the repository: Roster sprites on an iPhone.*
 
 Five contestants, sprites in the gutter, full names, team tags, HP bars and the acting
 highlight — all in less vertical space than the old band alone used to take.
@@ -100,7 +105,7 @@ Five row layouts were rendered at real widths and reviewed against real play. Th
 is a density-switching row — comfortable up to eight contestants, one line above that —
 and the reasoning, the field priority it encodes, and the four rejected alternatives are
 in
-[`docs/architecture/ring-roster-and-pixel-monsters.md`](../architecture/ring-roster-and-pixel-monsters.md).
+[`docs/architecture/ring-roster-and-pixel-monsters.md`](../../architecture/ring-roster-and-pixel-monsters.md).
 
 Two things from that round are worth repeating here because they reverse earlier decisions
 in this very doc:
@@ -146,4 +151,4 @@ last one only visible in a photo of a real device, after it had shipped and pass
 
 The tests were not wrong; they were answering "is the map well formed" while the question
 was "does this help someone playing the game". Keep rendering it and looking at it. See
-"Common Pitfalls" in [`docs/reference/pixel-art.md`](../reference/pixel-art.md).
+"Common Pitfalls" in [`docs/reference/pixel-art.md`](../../reference/pixel-art.md).

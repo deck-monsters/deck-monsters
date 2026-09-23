@@ -1,10 +1,13 @@
 # Player Agency, Items, and the Empirical Case
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 **Category**: Design / Mechanics
-**Priority**: Medium — the items audit (§3) is actionable now; the rest needs the balance sim harness
-**Status**: 🔧 Active — item documentation, Workshop use, the live ring affordance and the
-room shop and prompt-free spawn have shipped; the feedback loop, web selling and the one
-prompt-driven item remain
+**Status**: Historical implementation record. Actionable item work moved to
+[`item-followups.md`](../../roadmap/item-followups.md); larger evidence and identity work
+moved to [`22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 This doc exists because a research pass on what makes tabletop RPGs enjoyable was brought
 into the project, and applying it to an auto-battler turned out to need a clearer statement
@@ -421,7 +424,7 @@ change for the server half.
 
 ## 9. September 17: shop and live-item completion
 
-- Added the first dedicated player reference, [`ITEMS.md`](../../ITEMS.md), covering
+- Added the first dedicated player reference, [`ITEMS.md`](../../../ITEMS.md), covering
   inventory limits, use timing, every item family, targeting strategy and room-shop rules.
 - Added an authoritative prompt-free engine purchase operation. Its `(shop closing time,
   section, index, expected item type)` tuple is an optimistic stock token: under the room
@@ -442,7 +445,7 @@ no character reward listener even though the Ring recorded and emitted the outco
 now receive the loss/flee consolation payout, and the first completed fight per UTC day
 adds a small automatic participation bonus. The balance rationale, price comparison,
 telemetry requirements and next adjustments are maintained in
-[`11-balance-and-mechanics.md`](11-balance-and-mechanics.md#coin-economy-and-participation-floor-september-18-2026).
+[`11-balance-and-mechanics.md`](../../roadmap/11-balance-and-mechanics.md).
 
 Web selling remains the highest-confidence item-economy follow-up: it exposes an existing
 currency source rather than adding more currency. Price changes and further recurring

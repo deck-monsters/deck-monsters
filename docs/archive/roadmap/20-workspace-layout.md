@@ -1,8 +1,13 @@
 # Workspace Layout — a switchable second pane
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 **Category**: Web UX / Information architecture
-**Priority**: High — the workshop being a separate route is a live friction point during fights
-**Status**: 🔧 Active — phases 1–5 code-complete; final cross-browser/device visual validation remains
+**Status**: Historical implementation record. The remaining real-device workspace and
+inline-sprite verification gate moved to
+[`22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 ## 1. The problem
 

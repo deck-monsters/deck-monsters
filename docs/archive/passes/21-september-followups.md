@@ -1,5 +1,9 @@
 # September 2026 Follow-ups — pass record
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 > **Archived** — shipped in [PR #385](https://github.com/deck-monsters/deck-monsters/pull/385)
 > (branch `cursor/workshop-wording-agents-md-d3ec`, 2026-09-20). The decisions this pass made
 > now live in their area docs; this file keeps the task table so the commit history is

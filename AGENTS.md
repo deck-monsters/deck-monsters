@@ -73,7 +73,7 @@ non-obvious bit us before.
 | [`docs/agents/subagents.md`](docs/agents/subagents.md) | Delegating any part of a task to another agent |
 | [`docs/README.md`](docs/README.md) | Finding the canonical current document for any subsystem or procedure |
 | [`docs/reference/voice-and-wording.md`](docs/reference/voice-and-wording.md) | Any player-facing string: prompts, help text, announcements, button labels, Discord descriptions |
-| [`docs/archive/README.md`](docs/archive/README.md) | Looking for the reasoning behind something that already shipped (archived roadmap plans, retired subsystems) |
+| `docs/archive/README.md` | Looking for the reasoning behind something that already shipped (archived roadmap plans, retired subsystems) |
 | [`docs/architecture/rooms-and-identity.md`](docs/architecture/rooms-and-identity.md) | Any game state, DB query, membership, identity, connector mapping, or event subscription. **Hard constraint, not a guideline.** |
 | [`docs/architecture/events-prompts-and-replay.md`](docs/architecture/events-prompts-and-replay.md) | `GameEvent`, visibility, persistence, prompts, reconnect, cursors, or history delivery |
 | [`docs/architecture/engine-concurrency-and-timing.md`](docs/architecture/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |
@@ -89,8 +89,9 @@ non-obvious bit us before.
 | [`docs/operations/cloud-development.md`](docs/operations/cloud-development.md) | Cursor Cloud setup, Docker, or remote/local Supabase in Cloud |
 | [`docs/operations/devcontainer-auth.md`](docs/operations/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container instead of on the host |
 | [`docs/reference/pixel-art.md`](docs/reference/pixel-art.md) | Sprite, canvas, or CSS pixel-art work (crisp rendering, sprite sheets, common pitfalls) |
+| [`docs/reference/player-agency.md`](docs/reference/player-agency.md) | Player agency, bounded items, motivation evidence, or live-combat-control proposals |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scroll and shop rules |
-| [`docs/roadmap/README.md`](docs/roadmap/README.md) | Planning work — the authoritative status index |
+| `docs/roadmap/README.md` | Planning work — the authoritative status index |
 
 ## Project Overview
 
@@ -365,22 +366,22 @@ the current Discord connector reads the room bus in-process.
 
 ## Known Issues
 
-Open work is tracked in [`docs/roadmap/10-bug-fixes.md`](docs/roadmap/10-bug-fixes.md) — read its
+Open work is tracked in `docs/roadmap/10-bug-fixes.md` — read its
 status line rather than trusting a list here, which goes stale within a pass. As of this
 writing the one high-priority open item is J (fight rewards — coins and xp — may never be
 credited, superseding the incorrect closure recorded as #145), alongside two open pacing
 items and a dead mobile CSS rule. Everything already fixed, with root causes, is archived in
-[`docs/roadmap/10b-bugs-fixed.md`](docs/roadmap/10b-bugs-fixed.md), which currently runs to #173.
+`docs/roadmap/10b-bugs-fixed.md`, which currently runs to #173.
 
 ## Archived / Deferred
 
-- **Exploration system** (`exploration/`) — monster expeditions (find loot, hazards, death cards). Archived for the revival; the core game is ring combat. See `docs/archive/exploration-system.md`.
-- **Mobile app** — React Native + Expo. Deferred indefinitely. The tRPC API is mobile-compatible when the time comes. See `docs/roadmap/07-mobile-app.md`.
-- **Slack connector** — Bolt SDK modernization of Jane/Hubot. Deferred indefinitely. See `docs/roadmap/08-modernize-slack-connector.md`.
+- **Exploration system** (`exploration/`) — monster expeditions (find loot, hazards, death cards). Archived for the revival; the core game is ring combat.
+- **Mobile app** — React Native + Expo. Deferred pending player demand.
+- **Slack connector** — Bolt SDK modernization of Jane/Hubot. Deferred pending player demand.
 
 ## Roadmap
 
-See [`docs/roadmap/README.md`](docs/roadmap/README.md) for remaining work, priorities, and
-deferred product boundaries. Shipped plans are in [`docs/archive/roadmap/`](docs/archive/roadmap/);
+See `docs/roadmap/README.md` for remaining work, priorities, and
+deferred product boundaries. Shipped plans are in `docs/archive/roadmap/`;
 the stable fixed-bug ledger intentionally remains at
-[`docs/roadmap/10b-bugs-fixed.md`](docs/roadmap/10b-bugs-fixed.md) because code cites it.
+`docs/roadmap/10b-bugs-fixed.md` because code cites it.

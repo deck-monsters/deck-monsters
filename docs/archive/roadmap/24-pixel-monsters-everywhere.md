@@ -1,8 +1,12 @@
 # 24 — Pixel Monsters Everywhere
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 **Category**: Product / UI
-**Status**: Done on the branch; pending review and a real-device check (see Verification)
-**Branch**: `claude/improve-pixel-art-theme-gg6869`
+**Status**: Historical shipped record. Real-device verification and preference-scope
+decisions moved to [`22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 After #170 the roster sprites were judged ready to graduate: "This actually looks great and
 I'm thinking it's maybe time to a) make this the default with the setting becoming an
@@ -79,7 +83,7 @@ shading (#164). A lightness word shades only the colour right after it ("dark bl
 (an amber-eyed basilisk described as gold). A "black" monster keeps its body above 26%
 lightness so it survives every theme's near-black background.
 
-![Appearance-driven palettes on all four themes](assets/pixel-monsters-2026-09/appearance-palettes.png)
+*Historical capture unavailable in the repository: Appearance-driven palettes on all four themes.*
 
 Two things only the render caught:
 
@@ -91,9 +95,9 @@ Two things only the render caught:
   name now moves the hue by at most 6° and leans on lightness instead. Gold and yellow
   also needed a lightness lift — on a basilisk's mid-dark body they read brown and olive.
 
-The contact-sheet page used for this is kept as
-`assets/pixel-monsters-2026-09/contact-sheet.entry.ts.txt` (bundle it with the repo's
-esbuild and open it in headless Chromium).
+The temporary contact-sheet entry point was not a durable source artifact and has been
+removed. Its Chromium capture demonstrated palette readability across all four themes,
+including distinguishable same-colour basilisks and visible black/gold/yellow appearances.
 
 Collisions are still possible: two monsters of one species, both "green", whose names
 happen to hash close. A ring-aware de-duplication was rejected because a monster's colour
@@ -171,7 +175,7 @@ every line's height measured:
 
 At 1× the 16px sprite is a shrink of the art and still reads as its species.
 
-![The feed with sprites on all four themes](assets/pixel-monsters-2026-09/feed-sprites-all-themes.png)
+*Historical capture unavailable in the repository: The feed with sprites on all four themes.*
 
 Measured on every theme with and without sprites: line heights 122 / 110.8 / 91.2 / 32.4 /
 52 / 52 (124 for the first line on the SNES theme, whose card blocks have a thicker border —
@@ -239,7 +243,7 @@ throws without a `RingFeedContext` provider (pass a no-op `subscribe`), and modu
 | Feed at 1× and 3× | 1×: shrunk but legible; 3×: crisp |
 | Real roster on Phosphor, the default theme | Below |
 
-![The real roster on Phosphor: three basilisks, a gladiator and a boss jinn](assets/pixel-monsters-2026-09/roster-phosphor-three-basilisks.png)
+*Historical capture unavailable in the repository: The real roster on Phosphor: three basilisks, a gladiator and a boss jinn.*
 
 **Not verified**: a real iPhone and iPad. Chromium's device-scale-factor stands in for the
 screens, but iOS Safari's emoji font metrics differ from Chromium's on Linux, so the

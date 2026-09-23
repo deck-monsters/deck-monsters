@@ -1,8 +1,12 @@
 # Graphics and Visual Design
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 **Category**: Enhancement / UX  
 **Priority**: Low (nice to have — post-launch)  
-**Status**: Not started
+**Status**: Historical proposal — later pixel and roster work superseded its implementation assumptions.
 
 ## The Original Aesthetic
 
@@ -108,7 +112,7 @@ Small icons for each card class (melee, healing, control, boost, utility) for th
 The dedicated `street-fighter` theme's pixel-art fight animations have shipped as progressive
 enhancement; the default terminal theme and all other themes remain text-first. Their
 implementation reasoning, Canvas mapping, and asset pipeline live in the
-[archived animation plan](../archive/roadmap/17-pixel-art-fight-animations.md).
+[archived animation plan](17-pixel-art-fight-animations.md).
 
 ## The Mobile Wrapping Problem
 

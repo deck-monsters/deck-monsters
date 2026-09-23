@@ -1,4 +1,8 @@
 # Fight Stats and Catch-Up Feed
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature  
@@ -268,7 +272,9 @@ Both are populated from ring outcome events. The `FightStatsSubscriber` from `13
 - [x] **Streak on the Fight Log UI**: winners with an active streak ≥3 show a note under the row; recent fights query uses limit 80 for streak computation client-side.
 - [x] **Multi-monster fight display in web UI**: `FightLogView` and ring “last fight” line use `participants` via `fight-display.ts` helpers when 3+ contestants.
 
-## Open Questions
+## Historical remainder
 
-- **How long to retain fight summaries?** Fight summaries are smaller than raw events and more valuable for historical browsing. 30–90 days is a reasonable default; decide when setting up the retention job for `room_events`.
-- **Interrupted fights**: if the server restarts mid-fight, `FightSummaryWriter`'s in-memory `pendingByRoom` map is lost. Currently the summary is still written on `ring.fightResolved`, but `startedAt` falls back to `endedAt` (zero-duration fight). The fight IS recorded; only the "card-by-card breakdown" event query will be empty. An `'abandoned'` outcome variant isn't needed right now, but the zero-duration signal can be used in a future UI to flag such fights.
+Retention and interrupted-fight signaling are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). The current
+implemented behavior is in
+[`docs/architecture/analytics-and-history.md`](../../architecture/analytics-and-history.md).

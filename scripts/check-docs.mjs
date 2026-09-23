@@ -10,14 +10,6 @@ const GENERATED_ROOT_OUTPUTS = new Set([
   'PLAYER_HANDBOOK.md',
 ])
 
-// Task 3 removes these completed migration artifacts after their useful facts move elsewhere.
-export const MIGRATION_ALLOWLIST = new Map([
-  ['AGENTS.md: required-reading routes may not target roadmap/archive/superpowers plans', 1],
-  ['docs/roadmap/10b-bugs-fixed.md: shipped plan has no actionable remainder', 1],
-  ['docs/roadmap/23-pixel-fight-stage.md: shipped plan has no actionable remainder', 1],
-  ['docs/roadmap/24-pixel-monsters-everywhere.md: shipped plan has no actionable remainder', 1],
-])
-
 export function findMarkdownLinks(markdown) {
   return [...markdown.matchAll(/!?(?:\[[^\]]*\])\(([^)\s]+)(?:\s+"[^"]*")?\)/g)]
     .map(([, target]) => target)
@@ -203,23 +195,12 @@ export function checkSuperpowersLifecycle(path, markdown) {
 
 export function checkRoadmapLifecycle(path, markdown) {
   if (!path.startsWith('docs/roadmap/') || !hasCompletedStatus(markdown)) return []
+  if (path === 'docs/roadmap/10b-bugs-fixed.md') return []
 
   const remainder = markdownProse(markdown).match(/^## Actionable remainder\s*$([\s\S]*?)(?=^## |\Z)/im)
   if (remainder && /^\s*[-*]\s+\[ \]\s+/m.test(remainder[1])) return []
 
   return [`${path}: shipped plan has no actionable remainder`]
-}
-
-export function applyMigrationAllowlist(findings, allowlist = MIGRATION_ALLOWLIST) {
-  const remainingAllowances = new Map(allowlist)
-
-  return findings.filter((finding) => {
-    const remaining = remainingAllowances.get(finding) ?? 0
-    if (remaining === 0) return true
-
-    remainingAllowances.set(finding, remaining - 1)
-    return false
-  })
 }
 
 export async function checkDocumentation(root) {
@@ -242,7 +223,7 @@ export async function checkDocumentation(root) {
     )
   }
 
-  return applyMigrationAllowlist(findings)
+  return findings
 }
 
 async function main() {

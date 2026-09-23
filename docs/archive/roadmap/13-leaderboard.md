@@ -1,4 +1,8 @@
 # Leaderboard
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature  
@@ -206,7 +210,9 @@ The backfill runs as a one-off script, not as part of the regular server startup
 - [x] **Win streak in leaderboard**: room monster leaderboard shows consecutive wins from the last 80 fights (`winStreak` column + badge when ≥3); text leaderboard includes `streak N` when > 0.
 - [x] **Win rate denominator in UI**: table headers use tooltips explaining W÷(W+L), draws excluded.
 
-## Open Questions
+## Historical remainder
 
-- **Global leaderboard privacy**: should players be able to opt out of appearing in the global leaderboard? Easy to add a `profileVisibility` flag on `profiles`. Probably not needed for a private game server, but worth noting.
-- **Monster identity across resets**: monster IDs are stable within a room's lifetime, but if a room is reset, old stats for those monster IDs become orphaned. Currently cleared on reset (`resetRoomState` in `RoomManager`). Verify this is working and document it.
+Global-leaderboard visibility and reset-projection verification are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). The current
+room-reset and identity rules are in
+[`docs/architecture/analytics-and-history.md`](../../architecture/analytics-and-history.md).

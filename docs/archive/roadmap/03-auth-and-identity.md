@@ -1,4 +1,8 @@
 # Authentication and User Identity
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Security  
@@ -180,20 +184,11 @@ operating multiple API instances.
 - [x] Add auth to web app (Supabase client SDK for login/register/OAuth) _(implemented in `apps/web`)_
 - [x] Add auth to tRPC WebSocket connections (JWT on connect via `?token=` query param fallback in `packages/server/src/trpc/context.ts`)
 
-### Phase 2 — Google + Apple OAuth
-- [x] ~~Enable Google OAuth in Supabase dashboard~~ (live in production)
-- [x] ~~Configure Google OAuth app (client ID, secret, redirect URI) in Google Cloud Console~~ (live in production)
-- [x] Add Google login button to web app
-- [ ] Enable Apple OAuth in Supabase dashboard _(optional — not yet configured)_
-- [ ] Configure Apple Services ID, Key, and redirect URI in Apple Developer Portal _(optional — not yet configured)_
-- [x] Add Apple login button to web app
-- [ ] Test account linking when same email is used across providers _(good to verify explicitly)_
+### Historical remainder
 
-### Phase 3 — Slack + Identity Linking
-- [ ] Enable Slack OAuth in Supabase dashboard
-- [ ] Implement link/unlink endpoints for connecting providers to existing accounts
-- [ ] Auto-create user records for Slack users on first interaction
-- [ ] Test cross-connector identity: same character accessible from Discord, web, and Slack
+Apple OAuth and same-email account-linking decisions are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). Slack identity
+work is deferred with the Slack connector rather than remaining a task in this history.
 
 ## Security Considerations
 

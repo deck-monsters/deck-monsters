@@ -2317,7 +2317,7 @@ button itself and used `border-block: 18px solid transparent` for the 44px tap t
 vertical bars. The tap target has to be a button that draws nothing, with the marker on a
 `::before`. Invisible to jsdom; caught by screenshotting Chromium at 393px.
 
-See `docs/roadmap/20-workspace-layout.md` §5g.
+See `docs/archive/roadmap/20-workspace-layout.md` §5g.
 
 **Status**: Fixed.
 
@@ -2934,7 +2934,7 @@ the monster row and inventory a player has to scroll past first.
   arrives, instead of waiting for the next poll. It reads `RingFeedContext` directly rather
   than the throwing `useRingFeedListener`, because `WorkshopPanel` renders in two different
   contexts — inside a `Terminal` pane (which already wraps every pane in
-  `RingFeedProvider`, per `docs/roadmap/20-workspace-layout.md`) and standalone via
+  `RingFeedProvider`, per `docs/archive/roadmap/20-workspace-layout.md`) and standalone via
   `WorkshopView`'s full-page route (which did not, until this fix — it now wraps its
   content in its own `RingFeedProvider`). Missing context is treated as "no live feed
   here," not an error, so the Workshop still works — just back to polling — wherever it is
@@ -2948,7 +2948,7 @@ the monster row and inventory a player has to scroll past first.
   properties have always been a no-op — the header's buttons wrap via ordinary inline flow
   instead. Visually close enough that it was never reported, but real dead CSS. Left alone
   here (making the container an actual flex row is a layout change to a header shared by
-  every Workshop screen, and `docs/roadmap/20-workspace-layout.md` already flags this
+  every Workshop screen, and `docs/archive/roadmap/20-workspace-layout.md` already flags this
   header as one of the workshop's more mobile-regression-prone surfaces) — tracked in
   `docs/roadmap/10-bug-fixes.md`.
 - Covered by `workshopPanel.wallet.test.tsx` (header wallet: hidden before the shop query
@@ -3779,7 +3779,7 @@ underneath it is picked up instead of being masked.
 This is deliberately a stopgap: the presentation itself (how much room the band takes, and
 whether a whole-fight band is the right shape at all) is still open. That thinking, with a
 photo of a real tablet session and a recommendation to move the sprites into the Ring
-roster instead, is in [`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).
+roster instead, is in the [historical roster plan](../archive/roadmap/23-pixel-fight-stage.md).
 
 **Tests**: `usePixelFightStage.test.tsx` covers the default-off state, persistence,
 cross-caller propagation, cross-tab `storage` events and ignoring unrelated keys.
@@ -3842,7 +3842,7 @@ many subscribers. The band's own suites (`pixel-fight-layer`, `pixel-fight-stage
 are deleted with it.
 
 **Status**: Fixed. Remaining questions in
-[`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).
+[the historical roster plan](../archive/roadmap/23-pixel-fight-stage.md).
 
 ### 168. Roster sprites truncated monster names to one or two characters in the two-up layout — FIXED
 

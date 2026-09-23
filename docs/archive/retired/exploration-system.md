@@ -1,5 +1,9 @@
 # Exploration System (Archived)
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 **Status**: Archived — not being developed for the revival. The code remains in `exploration/` but is not a focus.
 
 ## What It Was

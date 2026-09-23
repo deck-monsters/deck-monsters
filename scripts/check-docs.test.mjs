@@ -5,7 +5,6 @@ import { dirname, join } from 'node:path'
 import test from 'node:test'
 
 import {
-  applyMigrationAllowlist,
   checkAgentsRoutes,
   checkMarkdownLinks,
   checkRoadmapLifecycle,
@@ -76,6 +75,13 @@ test('recognizes a status label whose bold span excludes the colon', () => {
   )
 })
 
+test('keeps the fixed-bug ledger at its stable active-roadmap path', () => {
+  assert.deepEqual(
+    checkRoadmapLifecycle('docs/roadmap/10b-bugs-fixed.md', '**Status:** Archive'),
+    [],
+  )
+})
+
 test('skips repository-root .superpowers scratch artifacts', async () => {
   const root = await fixture({
     '.superpowers/sdd/review.md': '[scratch](./missing.md)',
@@ -120,13 +126,6 @@ test('validates GitHub-compatible punctuation and duplicate heading slugs', asyn
   })
 
   assert.deepEqual(await checkMarkdownLinks(root), [])
-})
-
-test('allows only the known number of identical migration findings', () => {
-  assert.deepEqual(
-    applyMigrationAllowlist(['known finding', 'known finding'], new Map([['known finding', 1]])),
-    ['known finding'],
-  )
 })
 
 test('ignores shorter nested delimiters inside longer code examples', async () => {

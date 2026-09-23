@@ -1,4 +1,8 @@
 # Multi-Room / Groups Support
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature  
@@ -98,7 +102,8 @@ This mapping lives in the connector, not the database schema — a room is just 
 - [x] Implement lazy loading / unloading of rooms (`_getOrLoad`, `unloadRoom`, `sweepIdleRooms`)
 - [x] ~~Add room management UI to web app~~ (room lobby, room settings, invite code copy — live at deck-monsters.com)
 - [x] ~~Add room join/leave/create commands to Discord connector~~ (`/create-room` and `/join-room` slash commands implemented)
-- [ ] Add room management to Slack connector _(deferred → roadmap 08)_
+Historical remainder: Slack room management is deferred with the connector; see
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 - [x] Implement invite code generation and redemption
 - [x] Handle room cleanup (idle rooms: `sweepIdleRooms` with 10-minute sweep interval; owner leaves: FORBIDDEN guard in `leaveRoom`; owner deletes: `deleteRoom`)
 - [x] Decide and document room-scoped vs global characters — **decided: characters are room-scoped** (simpler, prevents stat inflation across groups, prevents grinding in one room to dominate another; enforced implicitly by each `Game` instance being isolated to its room)

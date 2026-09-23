@@ -1,8 +1,12 @@
 # Native Mobile App (iOS + Android)
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 **Category**: Feature / Connector  
 **Priority**: Deferred indefinitely  
-**Status**: Not started — see roadmap README for rationale
+**Status**: Historical deferred design — revisit only through the product decision in `docs/roadmap/22-small-leftovers.md`.
 
 ## Overview
 
@@ -65,19 +69,19 @@ Same approach as the web app: render `GameEvent.text` in a monospace font. React
 
 Simple monster icons / sprites go a long way on mobile (see graphics doc). A small icon next to each monster name makes scanning the feed much easier.
 
-## Tasks
+## Historical scope if reconsidered
 
-- [ ] Create `apps/mobile` — React Native + Expo project
-- [ ] Set up tRPC client with `@trpc/react-query` (shared types with web app)
-- [ ] Implement WebSocket subscription for ring feed with reconnection
-- [ ] Build ring feed screen with live updates (monospace text rendering)
-- [ ] Build my monsters screen
-- [ ] Build monster detail + deck builder screens
-- [ ] Build shop screen
-- [ ] Build spawn screen
-- [ ] Build room management screen (create, join, invite)
-- [ ] Integrate Supabase Auth (JWT storage via Expo SecureStore, OAuth via `@supabase/supabase-js`)
-- [ ] Implement push notifications (Expo Notifications + server-side event routing)
-- [ ] iOS: configure APNs, submit to App Store
-- [ ] Android: configure FCM, submit to Google Play
-- [ ] Add simple monster icons (see graphics doc)
+- Create `apps/mobile` — React Native + Expo project
+- Set up tRPC client with `@trpc/react-query` (shared types with web app)
+- Implement WebSocket subscription for ring feed with reconnection
+- Build ring feed screen with live updates (monospace text rendering)
+- Build my monsters screen
+- Build monster detail + deck builder screens
+- Build shop screen
+- Build spawn screen
+- Build room management screen (create, join, invite)
+- Integrate Supabase Auth (JWT storage via Expo SecureStore, OAuth via `@supabase/supabase-js`)
+- Implement push notifications (Expo Notifications + server-side event routing)
+- iOS: configure APNs, submit to App Store
+- Android: configure FCM, submit to Google Play
+- Add simple monster icons (see graphics doc)

@@ -1,8 +1,12 @@
 # Modernize Slack Connector (Jane)
 
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+
 **Category**: Maintenance / Connector  
 **Priority**: Deferred indefinitely  
-**Status**: Not started — see roadmap README for rationale
+**Status**: Historical deferred design — revisit only through the product decision in `docs/roadmap/22-small-leftovers.md`.
 
 ## Background: Jane
 
@@ -82,17 +86,17 @@ Preserve the admin reset command. Gate it behind a config-driven admin user list
 - `permanently delete all deck monsters game state` — reset the game for a room
 - Future: `list rooms`, `force-save state`, etc.
 
-## Tasks
+## Historical scope if reconsidered
 
-- [ ] Create `packages/connector-slack` in the monorepo
-- [ ] Initialize Bolt app (Socket Mode recommended for simplicity)
-- [ ] Implement event bus subscription for public events → channel messages
-- [ ] Implement event bus subscription for private events → DMs
-- [ ] Implement prompt handling (text reply or Block Kit interactive components)
-- [ ] Wire `dm <command>` text trigger to `game.handleCommand()`
-- [ ] Add 1200ms message pacing
-- [ ] Integrate with RoomManager (workspace+channel → room mapping)
-- [ ] Integrate with Supabase Auth (Slack OAuth provider, Slack user ID → canonical userId via `user_connectors`)
-- [ ] Implement admin commands with config-driven role checking
-- [ ] Document setup for workspace admins (bot token scopes, Socket Mode setup)
-- [ ] Test in a real Slack workspace
+- Create `packages/connector-slack` in the monorepo
+- Initialize Bolt app (Socket Mode recommended for simplicity)
+- Implement event bus subscription for public events → channel messages
+- Implement event bus subscription for private events → DMs
+- Implement prompt handling (text reply or Block Kit interactive components)
+- Wire `dm <command>` text trigger to `game.handleCommand()`
+- Add 1200ms message pacing
+- Integrate with RoomManager (workspace+channel → room mapping)
+- Integrate with Supabase Auth (Slack OAuth provider, Slack user ID → canonical userId via `user_connectors`)
+- Implement admin commands with config-driven role checking
+- Document setup for workspace admins (bot token scopes, Socket Mode setup)
+- Test in a real Slack workspace

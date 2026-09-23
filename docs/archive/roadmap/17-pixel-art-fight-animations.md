@@ -1,4 +1,8 @@
 # Pixel Art Fight Animations (Theme-Gated)
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Enhancement / UX  
@@ -131,7 +135,7 @@ for it. Anything reasoning about "are the sprites showing" must check both.
 roster's HP bars and cost 96–200px of viewport; the sprites now draw inside the roster rows
 (#167), and the scene model — sides, per-side caps, the `active` flag, the fade timer and
 the `inEncounter` adoption — went with it. See
-[`docs/roadmap/23-pixel-fight-stage.md`](../../roadmap/23-pixel-fight-stage.md). The
+[`docs/roadmap/23-pixel-fight-stage.md`](../../architecture/ring-roster-and-pixel-monsters.md). The
 sections below are kept as the record of how the feature was first built.
 
 ---

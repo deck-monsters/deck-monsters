@@ -1,4 +1,8 @@
 # Web App Connector
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Connector  
@@ -93,11 +97,13 @@ All optional — the text works fine on its own.
 - [x] Build deck builder view (drag-and-drop reordering + preset management foundation)
 - [x] Build shop view
 - [x] Build spawn view
-- [ ] Build explore view (feature intentionally deferred while exploration remains archived)
+The deferred Explore view is now a product decision in
+[`docs/roadmap/12-new-content-backlog.md`](../../roadmap/12-new-content-backlog.md).
 - [x] Build room management views (create, join, list)
 - [x] Integrate Supabase Auth (login/register pages with Discord OAuth and email/password)
 - [x] Responsive design (mobile browser baseline support)
-- [ ] Deploy to chosen hosting platform (see backend hosting doc)
+Deployment subsequently shipped; current procedure is
+[`docs/operations/deployment.md`](../../operations/deployment.md).
 
 ## UX Improvements Backlog
 
