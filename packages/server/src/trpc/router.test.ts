@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
-import { Game } from '@deck-monsters/engine';
+import { Game, allItems } from '@deck-monsters/engine';
 
 import { createRouter, activeFlows, activePromptFreeMutations } from './router.js';
 
@@ -1223,6 +1223,7 @@ describe('trpc/router useItem', () => {
 			applied: true,
 			itemName: 'Healing Potion',
 			monsterName: 'Stonefang',
+			announcements: [],
 		});
 		expect(used).to.include({ monsterName: 'Stonefang' });
 		expect(used?.itemSelection).to.deep.equal(['Healing Potion']);
@@ -1380,6 +1381,116 @@ describe('trpc/router useItem', () => {
 			.catch((err) => err);
 
 		expect((error as TRPCError).code).to.equal('NOT_FOUND');
+	});
+});
+
+/**
+ * The console/Discord path always told the player what an item did — a targeting scroll
+ * names the new strategy, a potion says how much it healed — because `TargetingScroll.
+ * action()` / `HealingPotion.action()` narrate through the `channel` they are given. The
+ * web `useItem` mutation ran on `createSilentChannel`, which turned that narration into a
+ * *private* event but returned only `{ ok, applied, itemName, monsterName }`, so a web
+ * player never learned which strategy got set or what got healed. These tests exercise the
+ * real item classes (not a stubbed `useItems`) end to end through the router, the way the
+ * console does, to prove `announcements` actually carries the engine's own words rather
+ * than a paraphrase that could drift from it. See docs/architecture/workshop-and-items.md
+ * and docs/roadmap/item-followups.md ("Outcome feedback").
+ */
+describe('trpc/router useItem narration', () => {
+	const makeRoomManager = (game: unknown) =>
+		({
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		}) as unknown as Parameters<typeof createRouter>[0];
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const findItemClass = (itemType: string): any =>
+		(allItems as unknown as Array<{ itemType?: string }>).find((Item) => Item.itemType === itemType);
+
+	const spawnCharacterWithMonster = async (game: Game): Promise<{ givenName: string; items: unknown[] }> => {
+		const spawnCaller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		await spawnCaller.game.spawnMonster({
+			roomId: ROOM_ID,
+			type: 2,
+			gender: 'female',
+			name: 'Saffron',
+			color: 'violet smoke',
+			character: { name: 'Ada', gender: 'female', avatar: '🦊' },
+		});
+		const character = game.characters[USER_ID] as unknown as { monsters: Array<{ givenName: string; items: unknown[] }> };
+		return character.monsters[0];
+	};
+
+	it('names the new targeting strategy for a real targeting scroll', async () => {
+		// A real Game/Beastmaster/Monster, not a stub, so this exercises the exact
+		// TargetingScroll.action() -> getTargetingDetails() -> channel({announce}) path the
+		// console relies on.
+		const game = new Game({}, () => undefined);
+		try {
+			const ChaosTheoryScroll = findItemClass('Chaos Theory for Beginners');
+			const monster = await spawnCharacterWithMonster(game);
+			monster.items = [new ChaosTheoryScroll()];
+
+			const useCaller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+			const result = await useCaller.game.useItem({
+				roomId: ROOM_ID,
+				itemName: 'Chaos Theory for Beginners',
+				monsterName: monster.givenName,
+			});
+
+			expect(result.applied).to.equal(true);
+			expect(result.announcements).to.have.length.greaterThan(0);
+			const narration = result.announcements.join('\n');
+			// This is the line the brief cares about: getTargetingDetails() names the specific
+			// strategy the scroll set, not just "learned new tactics."
+			expect(narration).to.contain(
+				`${monster.givenName} will look around the ring and pick a random foe to target`,
+			);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it("reports what a real healing potion healed, in the potion's own words", async () => {
+		const game = new Game({}, () => undefined);
+		try {
+			const HealingPotion = findItemClass('Potion of Healing');
+			const monster = await spawnCharacterWithMonster(game);
+			monster.items = [new HealingPotion()];
+
+			const useCaller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+			const result = await useCaller.game.useItem({
+				roomId: ROOM_ID,
+				itemName: 'Potion of Healing',
+				monsterName: monster.givenName,
+			});
+
+			expect(result.applied).to.equal(true);
+			expect(result.announcements).to.have.length.greaterThan(0);
+			expect(result.announcements.join('\n')).to.contain(`${monster.givenName} drinks`);
+			expect(result.announcements.join('\n')).to.contain('for 8 hp');
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('falls back to an empty list when the engine narrated nothing', async () => {
+		// `character.useItems` throwing before any item action runs (e.g. no matching item)
+		// must not leave `announcements` undefined — the client always gets an array.
+		const character = { useItems: async () => undefined };
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: character }, ring: { contestants: [] } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const result = await caller.game.useItem({ roomId: ROOM_ID, itemName: 'Healing Potion' });
+
+		expect(result.announcements).to.deep.equal([]);
 	});
 });
 

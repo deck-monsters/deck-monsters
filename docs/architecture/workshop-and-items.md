@@ -62,6 +62,29 @@ resolution, encounter narrowing, application, and consumption remain in the engi
 Items whose actions ask their own question declare `requiresPrompt` and stay unavailable
 to the prompt-free web mutation. The Sorting Hat currently uses the Console or Discord.
 
+### Outcome narration (`announcements`)
+
+`game.useItem` also returns `announcements: string[]` — the player-facing text the engine's
+own `action()` produced for this one call, in publish order. An item narrates by emitting
+`'narration'` with the `channel` it was given (`TargetingScroll.action()`'s
+`getTargetingDetails()` line, `HealingPotion.action()`'s heal amount, …); the announcements
+handler (`announceNarration`) calls that `channel({ announce })` directly rather than
+publishing to the bus when a channel is present. `createSilentChannel` accepts an optional
+`announcements` array and pushes each `announce` string into it in addition to publishing
+the existing private event — the private event (audit trail) is unchanged, this is an
+additional, in-memory capture of the same text for the one call that built that channel
+instance. Because the channel is constructed fresh per mutation invocation, closed over
+that call's `commandId`/`userId`, the array cannot pick up another user's or another room's
+narration.
+
+`applied: false` (the item's own runtime condition was not met) means the action returned
+early and emitted no narration, so `announcements` is `[]` in that case — the Workshop uses
+`applied` first and only reads `announcements` when the item actually acted. A caller that
+supplies no collector (every other `createSilentChannel` call site) is unaffected; the
+parameter is additive. Some items also emit a second, un-channeled narration line straight
+to the public feed (e.g. the Lottery Ticket's celebratory line) — that one bypasses this
+collector by design, since it is already visible in the room's feed.
+
 ## Prompt-free mutation rule
 
 Workshop and Ring action mutations are awaited HTTP operations, so they must be short and

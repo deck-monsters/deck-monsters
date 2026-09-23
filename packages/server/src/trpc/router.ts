@@ -531,10 +531,21 @@ function createSilentChannel({
 	eventBus,
 	userId,
 	commandId,
+	announcements,
 }: {
 	eventBus: EventBusPublisher;
 	userId: string;
 	commandId: string;
+	/**
+	 * Optional collector for this call's own announce text, in publish order. The channel
+	 * is constructed fresh per mutation invocation (closed over this call's `commandId` and
+	 * `userId`), so pushing here cannot leak another user's or another room's narration —
+	 * the array only ever sees announces from the one engine call that was handed this
+	 * channel. Used by `useItem` to surface the engine's own item narration (which strategy
+	 * a targeting scroll set, what a potion healed) to the web client instead of a generic
+	 * "Used X." — see docs/architecture/workshop-and-items.md.
+	 */
+	announcements?: string[];
 }) {
 	return async ({ announce, question }: SilentChannelMessage): Promise<unknown> => {
 		if (question) {
@@ -545,6 +556,7 @@ function createSilentChannel({
 		}
 
 		if (announce) {
+			announcements?.push(announce);
 			eventBus.publish({
 				type: 'announce',
 				scope: 'private',
@@ -1337,7 +1349,14 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				// Collects this call's own narration (e.g. TargetingScroll.action's "From now on
+				// …" via getTargetingDetails, HealingPotion's "drinks … for N hp") so the web
+				// client can show what actually happened instead of a generic "Used X." — see
+				// docs/architecture/workshop-and-items.md#item-use-and-targets. The private
+				// announce events published below are unchanged; this is an additional capture
+				// of the same text, scoped to this one invocation.
+				const announcements: string[] = [];
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, announcements });
 				const results = (await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.useItems({
 						channel,
@@ -1365,6 +1384,7 @@ export function createRouter(roomManager: RoomManager) {
 					applied,
 					itemName: input.itemName,
 					monsterName: input.monsterName,
+					announcements,
 				};
 			}),
 

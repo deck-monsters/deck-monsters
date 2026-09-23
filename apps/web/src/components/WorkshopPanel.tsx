@@ -181,13 +181,25 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
        * `applied` is false when the item's own conditions were not met — Spin Up on a
        * living monster, a healing potion on a dead one. The engine declines and does not
        * spend the item; saying "Used it" would be a lie, and the player would wonder why
-       * nothing changed.
+       * nothing changed. (A declined action also emits no narration, so `announcements`
+       * is empty in this branch anyway — the check is ordered first for clarity.)
+       *
+       * Otherwise, prefer the engine's own narration — e.g. TargetingScroll.action() names
+       * the specific strategy it just set, HealingPotion.action() says how many hp it
+       * restored — over a generic "Used X.", which told a web player an item worked without
+       * ever saying what it did. Multiple announcements (an item can narrate more than one
+       * line) are shown together, separated the same way the engine separates paragraphs
+       * within one narration. Fall back to the generic line when the engine narrated
+       * nothing on this channel (some flavor lines publish publicly instead — see
+       * `announceNarration` — and never reach here).
        */
-      setMessage(
-        result?.applied === false
-          ? `${itemName} had no effect${on} right now — it was not used up.`
-          : `Used ${itemName}${on}.`,
-      );
+      if (result?.applied === false) {
+        setMessage(`${itemName} had no effect${on} right now — it was not used up.`);
+      } else if (result?.announcements && result.announcements.length > 0) {
+        setMessage(result.announcements.join('\n\n'));
+      } else {
+        setMessage(`Used ${itemName}${on}.`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not use that item');
     }
