@@ -2909,7 +2909,9 @@ generated shops is #147.
 > 2 wins and 9 losses in the room with no shop purchases, which is at minimum 28 coins
 > (2x5 + 9x2) before any daily bonus, yet the wallet still read 0. The investigation below
 > reasoned from the reward path in isolation and never verified end-to-end that a *real*
-> ring fight credits coins at all; it does not. See the open bug in
+> ring fight credits coins at all. (Pass 25 later proved the in-process path does credit
+> them, fresh and after `restoreGame`: `packages/engine/src/reward-crediting.test.ts`.) See
+> the open bug in
 > [`10-bug-fixes.md`](10-bug-fixes.md) ("Fight rewards may never be credited") for the
 > live investigation and the leading hypothesis. The staleness and visibility fixes below
 > are still correct and still worth having — they are just not the bug that was reported.
