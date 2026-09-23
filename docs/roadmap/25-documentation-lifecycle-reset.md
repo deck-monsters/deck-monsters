@@ -38,7 +38,7 @@ repository-local documentation-maintenance skill.
 | 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `26c8750c`–`f9535761` |
 | 3 | Roadmap and archive lifecycle reset | Tier 2 | Complete | `0b59ed90`–`3e1af399` |
 | 3b | OKF frontmatter for internal and agent docs | Tier 2 | Complete | `3f41d866` |
-| 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Planned | — |
+| 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Complete | `18439f1d` |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Planned | — |
 | 6 | Compact routers and generated ownership | Tier 2 | Planned | — |
 | 7 | Full verification, broad review, and lifecycle closeout | Tier 3 | Planned | — |
@@ -87,6 +87,22 @@ repository-local documentation-maintenance skill.
   `docs/archive/**`. `checkOkfFrontmatter` enforces that mapping. Link and roadmap-status
   checks strip the block first, and `docs/roadmap/10b-bugs-fixed.md` keeps its ledger
   exception. Implementation commit: `3f41d866`.
+
+## Task 4 decisions
+
+- Temporary DEX, STR, and INT deltas change the raw stat and the rolls derived from it
+  exactly once. `getPreBattleModifier` feeds pre-battle raw stats; public `getModifier`
+  adds the encounter delta once for rolls. Pre-battle stats do not call `getModifier`, so
+  `getProp` does not count the same delta twice.
+- Horn Gore no longer writes `encounterModifiers.dexModifier`. Each successful horn stays
+  +2 through `freedomThresholdModifier`. Forked Metal Rod's copy of that dead counter is
+  removed with it. AC is unchanged. The stat-reform proposal in
+  `11-balance-and-mechanics.md` stays open; only the temporary-stat consistency note is
+  checked. Ledger entry is #175.
+- Generated handbook strategy teaches DEX/STR/INT/AC, deck order, card roles, stacked
+  Delayed Hits, and Molasses before Forked Stick. The Level 3 Minotaur list is labeled an
+  illustration, with a one-Heal alternative and a matchup swap.
+- Implementation commit: `18439f1d`.
 
 ## Working artifacts
 
