@@ -25,7 +25,7 @@ repository-local documentation-maintenance skill.
 | # | Task | Owner tier | Status | Commit |
 |---|---|---|---|---|
 | 1 | Mechanical documentation checker | Tier 2 | Complete | `d9857313`–`e9dfec1e` |
-| 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `this commit` |
+| 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `26c8750c` |
 | 3 | Roadmap and archive lifecycle reset | Tier 2 | Planned | — |
 | 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Planned | — |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Planned | — |
