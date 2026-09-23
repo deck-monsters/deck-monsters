@@ -26,7 +26,7 @@ repository-local documentation-maintenance skill.
 |---|---|---|---|---|
 | 1 | Mechanical documentation checker | Tier 2 | Complete | `d9857313`–`e9dfec1e` |
 | 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `26c8750c`–`f9535761` |
-| 3 | Roadmap and archive lifecycle reset | Tier 2 | Planned | — |
+| 3 | Roadmap and archive lifecycle reset | Tier 2 | Complete | `0b59ed90` |
 | 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Planned | — |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Planned | — |
 | 6 | Compact routers and generated ownership | Tier 2 | Planned | — |
@@ -45,6 +45,16 @@ repository-local documentation-maintenance skill.
   inline in `AGENTS.md`.
 - Source and generated comments now route to current contracts. Generated root documents
   are rebuilt from generator source rather than hand-edited.
+
+## Task 3 decisions
+
+- Active roadmap files now contain only actionable bugs, balance, content, item, and
+  bounded-leftover work. Player-agency rationale is current reference material; completed
+  plan history is archived with an explicit authority warning.
+- Every previously archived open checkbox has a current owner and roadmap home. Deferred
+  mobile, Slack, and exploration work is a product decision, not an archive task queue.
+- The fixed-bug ledger remains at its stable active-roadmap path, while the documentation
+  checker no longer masks lifecycle findings with a migration allowlist.
 
 ## Working artifacts
 
