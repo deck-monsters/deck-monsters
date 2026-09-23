@@ -9,7 +9,7 @@ import Jinn from '../monsters/jinn.js';
 import Minotaur from '../monsters/minotaur.js';
 import WeepingAngel from '../monsters/weeping-angel.js';
 
-describe('./cards/horn-gore.ts', () => {
+describe('./cards/horn-gore.ts Horn Gore', () => {
 	let hornGore: HornGore;
 	let angel: any;
 	let basilisk: any;
@@ -71,6 +71,11 @@ describe('./cards/horn-gore.ts', () => {
 
 		attackRoll = hornGore.getAttackRoll(player, basilisk);
 
+		// onFirstCall/onSecondCall survive a later returns() and leaked into the
+		// following tests: "all-miss" was actually one hit, and the +2 horn
+		// assertions never ran.
+		hitCheckStub.resetBehavior();
+		checkSuccessStub.resetBehavior();
 		hitCheckStub.returns({ attackRoll, success: true, strokeOfLuck: false, curseOfLoki: false });
 		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
 	});
@@ -140,7 +145,6 @@ describe('./cards/horn-gore.ts', () => {
 			expect(hitCheckStub.callCount).to.equal(2);
 			expect(hitStub.callCount).to.equal(2);
 			expect((hornGore as any).new.freedomThresholdModifier).to.equal(0);
-			expect((hornGore as any).new.dexModifier).to.equal(4);
 			expect(basilisk.hp).to.be.below(before);
 			expect(basilisk.encounterEffects.length).to.equal(1);
 		});
@@ -158,7 +162,6 @@ describe('./cards/horn-gore.ts', () => {
 			expect(goreSpy.callCount).to.equal(2);
 			expect(hitStub.callCount).to.equal(1);
 			expect((hornGore as any).new.freedomThresholdModifier).to.equal(-2);
-			expect((hornGore as any).new.dexModifier).to.equal(2);
 			expect(basilisk.hp).to.be.below(before);
 			expect(basilisk.encounterEffects.length).to.equal(1);
 			goreSpy.restore();
@@ -181,8 +184,36 @@ describe('./cards/horn-gore.ts', () => {
 
 		return hornGore.play(player, basilisk, ring, ring.contestants).then(() => {
 			expect(hitCheckStub.callCount).to.equal(2);
-			expect((hornGore as any).new.freedomThresholdModifier).to.equal(-2);
-			expect((hornGore as any).new.dexModifier).to.equal(2);
+			// resetImmobilizeStrength starts at -4. A miss does not add the horn bonus.
+			expect((hornGore as any).new.freedomThresholdModifier).to.equal(-4);
+			expect(player.encounterModifiers.dexModifier).to.equal(undefined);
+		});
+	});
+
+	it('adds exactly +2 per successful horn to the next attack and pin threshold, not +3', () => {
+		const attackModifiers: number[] = [];
+		const dexBefore = player.dexModifier;
+		const thresholdBefore = (hornGore as any).getFreedomThreshold(player, basilisk);
+
+		hitCheckStub.callsFake(function (this: any, playerArg: any, targetArg: any, hornNumber?: number) {
+			const attackRoll = this.getAttackRoll(playerArg, targetArg);
+			attackModifiers.push(attackRoll.modifier);
+			// The stale encounterModifiers.dexModifier write lands between horns.
+			// Honoring it together with the threshold bonus would make this horn +3.
+			expect(playerArg.dexModifier).to.equal(dexBefore);
+			expect(playerArg.encounterModifiers.dexModifier).to.equal(undefined);
+			this.emitRoll(attackRoll, true, playerArg, targetArg, hornNumber);
+			return { attackRoll, success: true, strokeOfLuck: false, curseOfLoki: false };
+		});
+
+		return hornGore.play(player, basilisk, ring, ring.contestants).then(() => {
+			expect(attackModifiers).to.have.length(2);
+			expect(attackModifiers[1] - attackModifiers[0]).to.equal(2);
+			const played = (hornGore as any).new;
+			expect(played.getAttackRoll(player, basilisk).modifier - attackModifiers[0]).to.equal(4);
+			expect(played.getFreedomThreshold(player, basilisk) - thresholdBefore).to.equal(4);
+			expect(player.dexModifier).to.equal(dexBefore);
+			expect(player.encounterModifiers.dexModifier).to.equal(undefined);
 		});
 	});
 });

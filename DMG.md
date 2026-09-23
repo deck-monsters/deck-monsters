@@ -81,6 +81,12 @@ Spawn formulas (match engine):
   HP at level L = 28 + hpVariance + min(L × 3, 61)
   AC at level L = 5 + acVariance + min(L, 12)
 
+Effective STR, DEX, and INT. A temporary boost or curse is counted once:
+  pre-battle modifier = type offset + min(level, stat cap) + min(permanent modifier, stat cap)
+  encounter delta = temporary boost or curse, capped at level + 1
+  raw stat = base + pre-battle modifier + encounter delta (minimum 1)
+  derived modifier = pre-battle modifier + encounter delta
+
 Base spawn ranges (type offset 0, before per-type modifiers):
   HP: 28–33
   AC: 5–7
@@ -104,20 +110,35 @@ Per-monster-type modifiers (spawn, level 0):
     STR -1  DEX +1  INT +2
 ── Combat Math ───────────────────────
 
-To hit:    roll 1d20 + attacker modifier vs target stat
-A roll of 20 is always a stroke of luck (extra effect).
-A roll of 1 is always a curse of loki (bad effect).
+A temporary STR, DEX, or INT change is added once. It moves the raw stat and
+the derived modifier by the same amount. It is not added a second time.
+See "Effective STR, DEX, and INT" in Stats Reference.
+
+Melee accuracy: 1d20 + DEX modifier vs the target's defense (usually AC).
+  A card that names another stat rolls against that stat instead.
+  A natural 20 is a stroke of luck. A natural 1 is a curse of loki.
+  A tie goes to the defender.
+Melee damage: damage dice + STR modifier.
+Forked Stick pin: 1d20 + STR modifier vs the target's raw DEX.
+  Escape: 1d20 + the pinned monster's STR modifier vs the immobilizer's raw
+  STR, plus the card's advantage, minus 3 for each turn already pinned.
+DEX saves and DEX defenses use DEX. A DEX curse lowers raw DEX, outgoing
+  melee accuracy, and that Forked Stick pin threshold by the same amount.
+Curse and psychic accuracy: 1d20 + INT modifier.
+Healing: heal dice + INT modifier.
+INT damage: the card's INT damage + INT modifier.
+INT defenses are the raw INT those cards roll against.
+
+AC stays defense. Cards roll against AC. An AC boost absorbs melee damage
+before HP is reduced. AC has no attack modifier.
 
 Multi-roll attacks (Lucky Strike, Horn Swipe, Rehit): when a card rolls
 more than once and keeps only one result, Stroke of Luck / Curse of Loki
 apply to the selected roll only — discarded natural 20s/1s do not crit.
 
-Damage:    varies by card (1d4, 1d6, 1d8, 2d4, 2d6...)
-Modifiers: STR/DEX/INT bonuses added based on card class
-
-AC boost cards absorb melee damage before HP is reduced.
-Stat curses (from cards like Soften, Concussion, Molasses)
-cap at -3 per level; further penalties come out of HP instead.
+Damage dice vary by card (1d4, 1d6, 1d8, 2d4, 2d6...).
+Encounter deltas on STR, DEX, INT, and AC are capped at level + 1. Curse
+overflow past that cap comes out of HP instead.
 ── Operator Concurrency Notes ────────
 
 These rules prevent "commands ignored" and workshop/console interleaving bugs.
@@ -229,6 +250,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard
+ Effect chance: 100%
  MSRP: 50
  Class: Poison
 
@@ -288,7 +310,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Gladiator
- Hit chance: 70% | DPT: 5
+ Hit chance: 69% | DPT: 5
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -320,7 +342,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian
- Hit chance: 70% | DPT: 3
+ Hit chance: 68% | DPT: 3
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -436,7 +458,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Cleric, Jinn
- Hit chance: 77% | DPT: 3
+ Hit chance: 76% | DPT: 3
  MSRP: 50
  Targets: int
  Class: Psychic
@@ -583,7 +605,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian, Fighter
- Hit chance: 85% | DPT: 3
+ Hit chance: 83% | DPT: 3
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -655,7 +677,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 76% | DPT: 3
+ Hit chance: 74% | DPT: 3
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -680,6 +702,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
+ Effect chance: 100%
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -852,7 +875,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 70% | DPT: 3
+ Hit chance: 67% | DPT: 3
  MSRP: 10
  Targets: ac
  Class: Melee
@@ -874,7 +897,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 71% | DPT: 3
+ Hit chance: 68% | DPT: 3
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -897,7 +920,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 73% | DPT: 4
+ Hit chance: 68% | DPT: 4
  MSRP: 30
  Targets: ac
  Class: Melee
@@ -965,7 +988,7 @@ Wooden Spear
  Level: 2
  Usable by: Fighter, Barbarian
  Hit chance: 96% | DPT: 7
- Effect chance: 75%
+ Effect chance: 74%
  MSRP: 80
  Targets: ac
  Class: Melee
@@ -1012,7 +1035,7 @@ Wooden Spear
  Level: Beginner
  Usable by: Bard, Barbarian, 
  Fighter
- Hit chance: 64% | DPT: 2
+ Hit chance: 62% | DPT: 2
  Effect chance: 61%
  MSRP: 50
  Targets: dex
@@ -1061,7 +1084,7 @@ Wooden Spear
 
  Level: Beginner
  Usable by: All
- Hit chance: 73% | DPT: 3
+ Hit chance: 70% | DPT: 3
  MSRP: 10
  Targets: ac
  Class: Melee
@@ -1084,7 +1107,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Barbarian, Fighter
- Hit chance: 70% | DPT: 4
+ Hit chance: 68% | DPT: 4
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1130,8 +1153,8 @@ Wooden Spear
 
  Level: Beginner
  Usable by: Minotaur
- Hit chance: 71% | DPT: 3
- Effect chance: 50%
+ Hit chance: 66% | DPT: 3
+ Effect chance: 45%
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1186,8 +1209,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard, Cleric
- Hit chance: 70% | DPT: 4
- Heal chance: 0% | HPT: 0
+ Hit chance: 66% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1211,7 +1233,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 75% | DPT: 8
+ Hit chance: 76% | DPT: 8
  MSRP: 80
  Targets: int
  Class: Acoustic, Psychic
@@ -1282,7 +1304,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Weeping Angel
- Hit chance: 14% | DPT: 1
+ Hit chance: 15% | DPT: 1
  Effect chance: 80%
  MSRP: 20
  Targets: int
@@ -1308,7 +1330,7 @@ Wooden Spear
 
  Level: 1
  Usable by: All
- Hit chance: 72% | DPT: 2
+ Hit chance: 68% | DPT: 2
  MSRP: 50
  Targets: ac
  Class: Melee
@@ -1348,7 +1370,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Bard, Barbarian
- Hit chance: 71% | DPT: 6
+ Hit chance: 69% | DPT: 6
  MSRP: 130
  Targets: ac
  Class: Melee
@@ -1377,7 +1399,7 @@ Wooden Spear
  Level: 2
  Usable by: All
  Hit chance: 2% | DPT: 0
- Heal chance: 77% | HPT: 2
+ Heal chance: 80% | HPT: 2
  MSRP: 130
  Class: Poison, AOE
 
@@ -1425,7 +1447,7 @@ Wooden Spear
 
  Level: 2
  Usable by: Cleric, Fighter
- Hit chance: 87% | DPT: 4
+ Hit chance: 84% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1479,7 +1501,7 @@ Wooden Spear
  Level: 4
  Usable by: All
  Hit chance: 1% | DPT: 0
- Heal chance: 99% | HPT: 5
+ Heal chance: 99% | HPT: 6
  MSRP: 80
  Class: Heal
 
@@ -1508,7 +1530,8 @@ Wooden Spear
 
  Level: 1
  Usable by: Fighter
- Hit chance: 72% | DPT: 4
+ Hit chance: 68% | DPT: 4
+ Heal chance: 0% | HPT: 0
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1563,8 +1586,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Barbarian
- Hit chance: 70% | DPT: 4
- Heal chance: 0% | HPT: 0
+ Hit chance: 67% | DPT: 4
  MSRP: 20
  Targets: ac
  Class: Melee
@@ -1587,7 +1609,7 @@ Wooden Spear
 
  Level: 3
  Usable by: Barbarian
- Hit chance: 72% | DPT: 9
+ Hit chance: 67% | DPT: 8
  MSRP: 80
  Targets: ac
  Class: Melee
@@ -1614,7 +1636,7 @@ Wooden Spear
  Level: 2
  Usable by: All
  Hit chance: 1% | DPT: 0
- Heal chance: 97% | HPT: 4
+ Heal chance: 96% | HPT: 5
  MSRP: 50
  Class: Heal
 
@@ -1635,7 +1657,7 @@ Wooden Spear
 
  Level: 1
  Usable by: Bard, Fighter
- Hit chance: 71% | DPT: 4
+ Hit chance: 68% | DPT: 3
  MSRP: 30
  Targets: ac
  Class: Melee

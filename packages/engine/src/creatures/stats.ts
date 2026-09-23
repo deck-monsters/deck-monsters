@@ -30,15 +30,38 @@ export function getMaxModifications (self: BaseCreature, prop: string): number {
 	}
 }
 
+/**
+ * Pre-battle modifier only: type offset, level, and permanent training.
+ *
+ * Must not call `getModifier`. That getter includes the encounter delta, and
+ * `getProp` adds the same delta on top of this value. Using `getModifier`
+ * here would count one temporary DEX/STR/INT change twice on the raw stat.
+ * Rolls read `getModifier` once; the raw stat picks the delta up only in
+ * `getProp`. See 10b-bugs-fixed.md #175.
+ */
+export function getPreBattleModifier (self: BaseCreature, targetProp: string): number {
+	const targetModifier = `${targetProp}Modifier`;
+	let modifier = (self.options[targetModifier] as number) || 0;
+	const maxBoost = (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0;
+
+	// Level scaling: +1 per level up to the stat cap
+	modifier += Math.min(self.level, maxBoost);
+
+	// Permanent modifiers set via setModifier(..., permanent=true)
+	const permanentModifiers = (self.options.modifiers as Record<string, number>) || {};
+	modifier += Math.min(permanentModifiers[targetProp] || 0, maxBoost);
+
+	return modifier;
+}
+
 export function getPreBattlePropValue (self: BaseCreature, prop: string): number | undefined {
 	switch (prop) {
 		case 'dex':
-			// dexModifier already includes level scaling (+1/level via getModifier)
-			return BASE_DEX + self.dexModifier;
+			return BASE_DEX + getPreBattleModifier(self, 'dex');
 		case 'str':
-			return BASE_STR + self.strModifier;
+			return BASE_STR + getPreBattleModifier(self, 'str');
 		case 'int':
-			return BASE_INT + self.intModifier;
+			return BASE_INT + getPreBattleModifier(self, 'int');
 		case 'ac': {
 			let raw = BASE_AC + self.acVariance;
 			raw += Math.min(self.level, (MAX_BOOSTS as Record<string, number>)['ac']); // AC level bonus not in getModifier
@@ -70,15 +93,13 @@ export function getProp (self: BaseCreature, targetProp: string): number {
 }
 
 export function getModifier (self: BaseCreature, targetProp: string): number {
-	const targetModifier = `${targetProp}Modifier`;
-	let modifier = (self.options[targetModifier] as number) || 0;
+	// Same cap getProp uses, so a boost cannot raise the roll by more than it
+	// raises the raw stat. Math.min leaves a curse (a negative delta) intact;
+	// the raw stat still floors at 1 in getProp.
+	const encounter = Math.min(
+		(self.encounterModifiers[targetProp] as number) || 0,
+		getMaxModifications(self, targetProp),
+	);
 
-	// Level scaling: +1 per level up to the stat cap
-	modifier += Math.min(self.level, (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0);
-
-	// Permanent modifiers set via setModifier(..., permanent=true)
-	const permanentModifiers = (self.options.modifiers as Record<string, number>) || {};
-	modifier += Math.min(permanentModifiers[targetProp] || 0, (MAX_BOOSTS as Record<string, number>)[targetProp] ?? 0);
-
-	return modifier;
+	return getPreBattleModifier(self, targetProp) + encounter;
 }

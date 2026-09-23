@@ -4089,3 +4089,51 @@ by `packages/server/src/integration/command-flow.test.ts` (`look at the ring`: a
 and a ring with a contestant, delivered only to the requesting user).
 
 **Status**: Fixed.
+
+### 175. Temporary DEX, STR, and INT changes did not affect the rolls those stats are for — FIXED
+
+At level 3 a Minotaur has `dexModifier` +4 and `strModifier` +5. Adrenaline Rush raised raw
+DEX from 9 to 10 and raw STR from 10 to 11, while Hit's attack modifier stayed +4 and its
+damage modifier stayed +5. Molasses lowered the target's raw DEX, and therefore Forked
+Stick's pin threshold, without lowering that target's ordinary melee accuracy.
+
+**Root cause**: `setModifier('dex' | 'str' | 'int', amount)` writes an encounter delta that
+`getProp` adds to the raw stat. `getModifier` read only the type offset, level, and
+permanent modifiers, so every roll that used `dexModifier`, `strModifier`, or `intModifier`
+ignored the temporary change. Ecdysis tests asserted the raw stat and never the derived
+roll, so the split stayed green.
+
+**Semantic contract**: a temporary DEX, STR, or INT delta changes the raw stat and the rolls
+derived from that stat exactly once. DEX feeds DEX defenses, melee accuracy, and DEX saves.
+STR feeds STR checks, melee damage, and STR pin/escape rolls. INT feeds INT defenses,
+curse and psychic accuracy, healing, and INT damage. AC stays defense and melee-damage
+absorption and has no attack modifier. The encounter delta is capped the same way `getProp`
+already capped it (`level + 1` for DEX/STR/INT); a curse stays negative, and the raw stat
+still floors at 1. `getPreBattleModifier` is what pre-battle raw stats use. They must not
+call public `getModifier`, or `getProp` would add the same delta a second time.
+
+**Horn Gore**: each successful horn already adds +2 through `freedomThresholdModifier`,
+which `getAttackModifier` folds into the next gore. The card also wrote
+`player.encounterModifiers.dexModifier` (+1 per horn) and kept a card-local `dexModifier`.
+`getModifier` reads `encounterModifiers.dex`, not `.dexModifier`, so that write was dead.
+Honoring the modifier key on top of the threshold bonus would have made each horn +3.
+The stale write, `STARTING_DEX_MODIFIER`, and the card-local counter are gone. Forked Metal
+Rod copied the same dead save/restore and lost it with the parent.
+
+**Balance**: boosts and curses now move the roll by the same amount they move the raw stat,
+once. AC is unchanged. Card odds were regenerated after the contract, and the odds harness
+now awaits `card.effect` and clears the actor's encounter modifiers between samples — the
+old catalogue sampled HP before an async effect finished and let one play's modifiers leak
+into the next. The largest sampled hit-rate moves are on Forked Stick, Coil, Constrict, and
+Kalevala, which roll accuracy from a stat a curse or boost can change mid-effect.
+
+**Tests**: `creatures/stats.test.ts` (DEX boost, STR curse, INT boost, each once on the raw
+stat and its modifier); `ecdysis.test.ts` (Hit attack and damage modifiers each +1);
+`molasses.test.ts` (raw DEX, outgoing Hit accuracy, and Forked Stick's pin threshold each
+−1); `forked-stick.test.ts` (temporary STR on immobilize and freedom rolls);
+`horn-gore.test.ts` (each successful horn is +2 to the next attack and the pin threshold,
+and `encounterModifiers.dexModifier` stays unset). Level-3 Minotaur probe: after Adrenaline
+Rush, DEX 9→10, STR 10→11, Hit attack +4→+5, Hit damage +5→+6; after Molasses, raw DEX
+9→8, outgoing melee accuracy +4→+3, Forked Stick pin threshold 9→8.
+
+**Status**: Fixed.

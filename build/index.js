@@ -29,7 +29,7 @@ Promise.resolve()
 	.then(async () => {
 		if (process.argv[2] === '--calculate-stats') {
 			console.log('Calculating card stats, this will take some time...');
-			writeToFile('card-odds', JSON.stringify(getCardDPT(), null, 2), 'json');
+			writeToFile('card-odds', JSON.stringify(await getCardDPT(), null, 2), 'json');
 			writeToFile('card-probabilities', JSON.stringify(getCardProbabilities(), null, 2), 'json');
 		} else {
 			console.log('Skipping stats calculation. Pass --calculate-stats to re-calculate card stats.');

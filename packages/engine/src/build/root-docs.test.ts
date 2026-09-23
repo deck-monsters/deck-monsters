@@ -6,6 +6,7 @@ import {
 	collectDmgMarkdown,
 	collectInGameDmgMarkdown,
 	collectMonstersMarkdown,
+	collectPlayerHandbookMarkdown,
 	DM_ONLY_MARKERS,
 	FILE_ONLY_OPERATOR_MARKERS,
 	generateRootDocs,
@@ -85,6 +86,28 @@ describe('root-docs generation', () => {
 			'PLAYER_HANDBOOK.md:' + first.PLAYER_HANDBOOK.length,
 			'cards.html:' + first.cardsHtml.length,
 		]);
+	});
+
+	it('teaches combat stats, card roles, and a labeled deck example', () => {
+		const handbook = collectPlayerHandbookMarkdown();
+
+		expect(handbook).to.include('── Combat Stats & Card Roles');
+		expect(handbook).to.include('Temporary boosts and curses affect both the stat and rolls derived from it.');
+		expect(handbook).to.include('Delayed Hits can remain armed together');
+		expect(handbook).to.include('Molasses → Forked Stick');
+		expect(handbook).to.include('Example, not a universal best deck');
+		expect(handbook).to.include('One-Heal alternative');
+		expect(handbook).to.include('Level 3 Minotaur');
+		expect(handbook).not.to.include('37-card');
+	});
+
+	it('documents the temporary-stat contract in DMG formulas', async () => {
+		const dmg = await collectDmgMarkdown();
+
+		expect(dmg).to.include('derived modifier = pre-battle modifier + encounter delta');
+		expect(dmg).to.include('added once');
+		expect(dmg).to.include('Forked Stick pin threshold');
+		expect(dmg).to.include('AC has no attack modifier');
 	});
 
 	it('normalizes CRLF and bare CR to LF', () => {

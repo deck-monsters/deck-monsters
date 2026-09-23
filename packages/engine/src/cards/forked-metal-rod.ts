@@ -11,7 +11,6 @@ import { VERY_RARE } from '../helpers/probabilities.js';
 import { PRICEY } from '../helpers/costs.js';
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = 3;
-const STARTING_DEX_MODIFIER = 3;
 
 export class ForkedMetalRodCard extends HornGore {
 	static cardType = 'Forked Metal Rod';
@@ -54,7 +53,6 @@ export class ForkedMetalRodCard extends HornGore {
 
 	override resetImmobilizeStrength(): void {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.dexModifier = STARTING_DEX_MODIFIER;
 	}
 
 	override get mechanics(): string {
@@ -67,13 +65,9 @@ export class ForkedMetalRodCard extends HornGore {
 		ring: any,
 		activeContestants: any
 	): any {
-		const originalDexModifier = player.encounterModifiers.dexModifier;
-
 		this.resetImmobilizeStrength();
 		this.gore(player, target, 1);
 		this.gore(player, target, 2);
-
-		player.encounterModifiers.dexModifier = originalDexModifier;
 
 		if (!player.dead) {
 			if (target.dead) return false;

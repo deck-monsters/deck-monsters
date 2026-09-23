@@ -97,4 +97,10 @@ Spawn formulas (match engine):
   acVariance = random(0, ${AC_VARIANCE}) + typeAcOffset
   HP at level L = ${BASE_HP} + hpVariance + min(L × 3, ${MAX_BOOSTS.hp})
   AC at level L = ${BASE_AC} + acVariance + min(L, ${MAX_BOOSTS.ac})
+
+Effective STR, DEX, and INT. A temporary boost or curse is counted once:
+  pre-battle modifier = type offset + min(level, stat cap) + min(permanent modifier, stat cap)
+  encounter delta = temporary boost or curse, capped at level + 1
+  raw stat = base + pre-battle modifier + encounter delta (minimum 1)
+  derived modifier = pre-battle modifier + encounter delta
 `.trim();

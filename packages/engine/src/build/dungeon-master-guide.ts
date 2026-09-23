@@ -74,20 +74,35 @@ ${monsterLines}
 const COMBAT_MATH = `
 ── Combat Math ───────────────────────
 
-To hit:    roll 1d20 + attacker modifier vs target stat
-A roll of 20 is always a stroke of luck (extra effect).
-A roll of 1 is always a curse of loki (bad effect).
+A temporary STR, DEX, or INT change is added once. It moves the raw stat and
+the derived modifier by the same amount. It is not added a second time.
+See "Effective STR, DEX, and INT" in Stats Reference.
+
+Melee accuracy: 1d20 + DEX modifier vs the target's defense (usually AC).
+  A card that names another stat rolls against that stat instead.
+  A natural 20 is a stroke of luck. A natural 1 is a curse of loki.
+  A tie goes to the defender.
+Melee damage: damage dice + STR modifier.
+Forked Stick pin: 1d20 + STR modifier vs the target's raw DEX.
+  Escape: 1d20 + the pinned monster's STR modifier vs the immobilizer's raw
+  STR, plus the card's advantage, minus 3 for each turn already pinned.
+DEX saves and DEX defenses use DEX. A DEX curse lowers raw DEX, outgoing
+  melee accuracy, and that Forked Stick pin threshold by the same amount.
+Curse and psychic accuracy: 1d20 + INT modifier.
+Healing: heal dice + INT modifier.
+INT damage: the card's INT damage + INT modifier.
+INT defenses are the raw INT those cards roll against.
+
+AC stays defense. Cards roll against AC. An AC boost absorbs melee damage
+before HP is reduced. AC has no attack modifier.
 
 Multi-roll attacks (Lucky Strike, Horn Swipe, Rehit): when a card rolls
 more than once and keeps only one result, Stroke of Luck / Curse of Loki
 apply to the selected roll only — discarded natural 20s/1s do not crit.
 
-Damage:    varies by card (1d4, 1d6, 1d8, 2d4, 2d6...)
-Modifiers: STR/DEX/INT bonuses added based on card class
-
-AC boost cards absorb melee damage before HP is reduced.
-Stat curses (from cards like Soften, Concussion, Molasses)
-cap at -3 per level; further penalties come out of HP instead.
+Damage dice vary by card (1d4, 1d6, 1d8, 2d4, 2d6...).
+Encounter deltas on STR, DEX, INT, and AC are capped at level + 1. Curse
+overflow past that cap comes out of HP instead.
 `.trim();
 
 export const collectDungeonMasterGuideSections = async (

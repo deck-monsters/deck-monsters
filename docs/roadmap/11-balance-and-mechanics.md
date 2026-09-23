@@ -35,6 +35,9 @@ and [`10b-bugs-fixed.md`](10b-bugs-fixed.md), not repeated here.
 - [ ] **Stat reform — owner: Engine.** Design variance, modifier thresholds, level growth,
   and encounter modifiers as one model; choose a safe migration or reroll path for existing
   characters before implementation.
+- [x] **Temporary-stat consistency — owner: Engine.** Addressed in #175. Temporary DEX, STR,
+  and INT deltas change the raw stat and the rolls derived from it exactly once. This note
+  does not close the stat-reform proposal above.
 - [ ] **Initiative — owner: Ring.** Evaluate replacing entry-order play with a per-encounter
   initiative roll and a SPEED modifier, including tie behavior and narration.
 - [ ] **Crit failures — owner: Cards.** Audit cards for natural-1 outcomes and add

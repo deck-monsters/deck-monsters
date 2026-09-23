@@ -15,7 +15,6 @@ import { MELEE } from '../constants/card-classes.js';
 const { roll } = chance;
 
 const STARTING_FREEDOM_THRESHOLD_MODIFIER = -4;
-const STARTING_DEX_MODIFIER = 0;
 
 export class HornGore extends ImmobilizeCard {
 	static cardClass = [MELEE];
@@ -54,8 +53,6 @@ export class HornGore extends ImmobilizeCard {
 		spike: 'horn',
 	};
 
-	dexModifier: number = STARTING_DEX_MODIFIER;
-
 	constructor({
 		damageDice,
 		freedomSavingThrowTargetAttr,
@@ -89,12 +86,17 @@ export class HornGore extends ImmobilizeCard {
 
 	resetImmobilizeStrength(): void {
 		this.freedomThresholdModifier = STARTING_FREEDOM_THRESHOLD_MODIFIER;
-		this.dexModifier = STARTING_DEX_MODIFIER;
 	}
 
+	/**
+	 * Each successful horn adds `amount` (2) to the freedom threshold, and
+	 * `getAttackModifier` folds that same number into the next gore's to-hit.
+	 * Do not also write `encounterModifiers.dexModifier`: once temporary DEX
+	 * feeds derived rolls, that stale +1 would stack with this +2 and make
+	 * the horn +3. See 10b-bugs-fixed.md #175.
+	 */
 	increaseImmobilizeStrength(amount: number): void {
 		this.freedomThresholdModifier += amount;
-		this.dexModifier += amount;
 	}
 
 	getCommentary(rolled: any, player: any, target: any): string | undefined {
@@ -174,8 +176,6 @@ export class HornGore extends ImmobilizeCard {
 
 		if (success) {
 			this.increaseImmobilizeStrength(2);
-			const { dexModifier } = player.encounterModifiers;
-			player.encounterModifiers.dexModifier = dexModifier > 0 ? dexModifier + 1 : 1;
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
 			await target.hit(damageRoll.result, player, this);
 		} else if (curseOfLoki) {
@@ -225,14 +225,10 @@ export class HornGore extends ImmobilizeCard {
 		ring: any,
 		activeContestants: any
 	): Promise<any> {
-		const originalDexModifier = player.encounterModifiers.dexModifier;
-
 		this.resetImmobilizeStrength();
 		const horn1 = await this.gore(player, target, 1);
 		const horn2 = await this.gore(player, target, 2);
 		const chanceToImmobilize = horn1.success || horn2.success;
-
-		player.encounterModifiers.dexModifier = originalDexModifier;
 
 		if (!player.dead && chanceToImmobilize) {
 			if (target.dead) return false;
