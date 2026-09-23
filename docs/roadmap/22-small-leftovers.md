@@ -11,3 +11,8 @@ looking like active work. Move an item into its owning area only when it is read
 - [06a — Web App: profile long-running sessions, then decide whether virtualized scrolling is warranted](../archive/roadmap/06a-web-app.md#phase-3--polish-theming-and-mobile-refinement).
 - [14 — Fight Stats: choose a retention policy for fight summaries](../archive/roadmap/14-fight-stats.md#open-questions).
 - [14 — Fight Stats: decide whether interrupted fights need an explicit outcome or UI signal](../archive/roadmap/14-fight-stats.md#open-questions).
+- [ ] Decide whether the visible history surface should remain **Fights** or become
+  **Battles**. The current contract remains **Fights** in
+  [`docs/reference/voice-and-wording.md`](../reference/voice-and-wording.md).
+- [ ] Decide when the Discord `/spawn` compatibility alias can be retired. `/train` is
+  canonical and both commands are currently registered.

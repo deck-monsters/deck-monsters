@@ -168,7 +168,8 @@ touching state, queries, or subscriptions.
 `profiles.display_name` is a global player identity used by leaderboards and room member
 lists; a room character's `givenName` is a separately editable per-room alias. A display-name
 change follows only characters that still have their old seeded name, never an alias chosen
-with `edit my character`. See [Display name vs character name](../archive/roadmap/03-auth-and-identity.md#display-name-vs-character-name).
+with `edit my character`. See
+[Profile identity and room characters](../architecture/rooms-and-identity.md#profile-identity-and-room-characters).
 
 ## Combat payloads and the pixel-fight layer
 
@@ -192,7 +193,9 @@ opted-out player never fetches the lazy chunk: `RingRoster` reads `RosterSpriteC
 rather than importing the art. The flag is a `useSyncExternalStore` store so every consumer
 flips together. Each sprite is coloured from the monster's `appearance` (published on
 `ring.state`), and every narration surface (Ring feed, Console, fight history) draws a still 16px
-portrait in place of a known monster's emoji — see `docs/roadmap/24-pixel-monsters-everywhere.md` for the matching rules.
+portrait in place of a known monster's emoji. The current palette, room-known-monster, and
+matching rules live in
+[Ring roster and pixel monsters](../architecture/ring-roster-and-pixel-monsters.md).
 
 The roster row itself is ranked by field priority and **must never be sorted or grouped**:
 its row order is the order of play, since `Ring.doAction` shifts contestants off the same
@@ -200,10 +203,10 @@ array `contestantSnapshots()` maps. A team-grouped layout got as far as review b
 was spotted. Field priority, the wording contract and the four rejected layouts are in
 [`docs/architecture/ring-roster-and-pixel-monsters.md`](../architecture/ring-roster-and-pixel-monsters.md).
 
-The gotchas that bit live — an early-waking `setTimeout` that never re-armed (#162), the
-roster emptying inside the fade, one literal sprite map with poses as transforms — are
-listed in the archived plan
-[`docs/archive/roadmap/17-pixel-art-fight-animations.md`](../archive/roadmap/17-pixel-art-fight-animations.md).
+The guardrails learned from live failures — timer re-arming, authoritative empty roster
+state, and genuinely distinct sprite poses — are current contracts in
+[Engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) and
+[Ring roster and pixel monsters](../architecture/ring-roster-and-pixel-monsters.md).
 
 ## The web feeds
 

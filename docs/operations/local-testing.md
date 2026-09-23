@@ -85,9 +85,11 @@ boss (`boss in ~Nm`) is a free second contestant.
 
 ## Reusable rooms (remote test account)
 
-These rooms are owned by the `TEST_USERNAME` account on the remote Supabase project (Path A in
-`AGENTS.md`). Reuse them instead of creating new ones, and **update this section in the same
-commit** whenever you change what is in them — the next agent plans its test from this list.
+These rooms are owned by the `TEST_USERNAME` account on the remote Supabase project
+configured by the
+[remote Supabase path](cloud-development.md#full-app-remote-supabase). Reuse them instead
+of creating new ones, and **update this section in the same commit** whenever you change
+what is in them — the next agent plans its test from this list.
 
 | Room | `roomId` | Invite | Purpose | State (2026-09-20) |
 |------|----------|--------|---------|--------------------|
@@ -103,19 +105,24 @@ When a test will trash a room (boss floods, deletion paths, breaking state, firs
 that create a character), create one named `Scratch <purpose> <YYYY-MM-DD>` so it is obvious
 whose it is, and **delete it before you finish the task** — every leftover room is a row the
 next agent has to explain. `room.delete` is owner-only and also evicts the room from server
-memory, so prefer it over SQL. With the dev server on `:3000` and the Path A env sourced:
+memory, so prefer it over SQL. With the dev server on `:3000` and the
+[remote Supabase environment](cloud-development.md#full-app-remote-supabase) sourced:
 
 ```bash
 node -e '
 (async () => {
-  const auth = await (await fetch(`${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    method: "POST", headers: { apikey: process.env.SUPABASE_PUBLISHABLE_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({ email: process.env.TEST_USERNAME, password: process.env.TEST_PASSWORD }) })).json();
+  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!key) throw new Error("VITE_SUPABASE_PUBLISHABLE_KEY is required");
+  const authResponse = await fetch(`${process.env.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST", headers: { apikey: key, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: process.env.TEST_USERNAME, password: process.env.TEST_PASSWORD }) });
+  if (!authResponse.ok) throw new Error(`Sign-in failed: ${authResponse.status}`);
+  const auth = await authResponse.json();
   const H = { Authorization: `Bearer ${auth.access_token}`, "Content-Type": "application/json" };
   const rooms = (await (await fetch("http://localhost:3000/trpc/room.list", { headers: H })).json()).result.data;
-  console.table(rooms.map(r => ({ id: r.id, name: r.name })));           // 1. look
-  for (const r of rooms.filter(r => r.name.startsWith("Scratch ")))       // 2. delete only your scratch rooms
-    console.log(r.name, (await fetch("http://localhost:3000/trpc/room.delete", { method: "POST", headers: H, body: JSON.stringify({ roomId: r.id }) })).status);
+  console.table(rooms.map(r => ({ id: r.roomId, name: r.name, role: r.role }))); // 1. look
+  for (const r of rooms.filter(r => r.role === "owner" && r.name.startsWith("Scratch "))) // 2. delete only owned scratch rooms
+    console.log(r.name, (await fetch("http://localhost:3000/trpc/room.delete", { method: "POST", headers: H, body: JSON.stringify({ roomId: r.roomId }) })).status);
 })()'
 ```
 

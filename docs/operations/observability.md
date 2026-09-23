@@ -3,7 +3,8 @@
 Status: Current
 Read before: changing `/metrics`, metric names or labels, Grafana collection, dashboards,
 alerts, or observability environment variables.
-Verified: 2026-09-23 against `packages/server/src/index.ts` and the metrics modules.
+Verified: 2026-09-23 against `packages/server/src/index.ts`, the metrics modules, and
+Grafana Cloud's Metrics Endpoint integration workflow.
 
 Deck Monsters exposes Prometheus-format metrics at `GET /metrics` via
 [prom-client](https://github.com/siimon/prom-client).
@@ -33,20 +34,13 @@ for the setup notes when that time comes.
 
 ---
 
-## Setup — Direct Grafana Cloud scrape
+## Setup — Grafana Cloud Metrics Endpoint
 
 ### 1. Create a Grafana Cloud account
 
-Sign up at [grafana.com](https://grafana.com). The free tier gives 10k active
-series, 50 GB logs, and 14-day retention — more than enough for this game.
+Sign up at [grafana.com](https://grafana.com) and create/open a Grafana Cloud stack.
 
-### 2. Get a Prometheus API token
-
-In your Grafana Cloud stack, go to **Connections → Add new connection →
-Hosted Prometheus metrics**. Click **Generate now** under *Password / API
-Token* and copy the token.
-
-### 3. Set `METRICS_TOKEN` on the Railway server service
+### 2. Protect the public endpoint
 
 Generate a secret and add it to the **server** service's environment variables
 in Railway:
@@ -63,17 +57,32 @@ When this variable is set, the server returns `401` to any request that doesn't
 include `Authorization: Bearer <token>`. When unset, the endpoint is open
 (safe for local dev).
 
-### 4. Add a Prometheus data source in Grafana Cloud
+The Phase 1 endpoint must be reachable from the public internet over HTTPS with a valid
+certificate. Confirm the unauthenticated request returns `401` and the authenticated request
+returns Prometheus exposition text:
 
-1. In your Grafana Cloud stack, go to **Connections → Add new connection → Prometheus**.
-2. Set **URL** to `https://<your-server>.up.railway.app/metrics`.
-3. Under **Custom HTTP headers**, add:
-   - **Header**: `Authorization`
-   - **Value**: `Bearer <your METRICS_TOKEN>`
-4. Set **Scrape interval** to `15s`.
-5. Click **Save & test** — you should see *"Data source is working"*.
+```bash
+curl -i https://<your-server>.up.railway.app/metrics
+curl -fsS -H "Authorization: Bearer ${METRICS_TOKEN}" \
+  https://<your-server>.up.railway.app/metrics | head
+```
 
----
+### 3. Create the managed scrape job
+
+1. In the Grafana Cloud stack, open **Connections → Add new connection** and choose
+   **Metrics Endpoint**.
+2. Create a scrape job whose URL is the full public endpoint,
+   `https://<your-server>.up.railway.app/metrics`.
+3. Select bearer-token authentication and enter only the `METRICS_TOKEN` value in the
+   token field. Do not prefix the field with `Bearer `; the integration constructs the
+   header.
+4. Save/enable the integration and wait for its managed scrape to ingest samples.
+
+Grafana Cloud controls the scrape cadence for this no-collector integration; this runbook
+does not promise or configure a 15-second interval. Query the ingested series through the
+Grafana Cloud-managed Prometheus data source already attached to the stack. Do **not** add
+the application `/metrics` URL as a Prometheus data source: it serves exposition text, not
+the Prometheus query API.
 
 ---
 
@@ -138,8 +147,8 @@ Set these env vars on the Alloy service in Railway:
 
 > `server.railway.internal` resolves to the **server** service within the same
 > Railway project. Adjust the hostname if your service has a different name.
-> The Grafana Cloud data source configured in step 4 above can be removed once
-> Alloy is pushing — or kept pointing at the public URL as a fallback.
+> Once Alloy is pushing successfully, disable the Metrics Endpoint scrape job to avoid
+> ingesting every sample twice. The stack's managed Prometheus query data source remains.
 
 ---
 

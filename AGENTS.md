@@ -236,38 +236,39 @@ sessions and reusable-room state are owned only by
 
 ## How the Game Engine Works
 
-### Adapter Pattern
+### Room-scoped connector boundary
 
-The engine has no Discord/HTTP/database code. Connectors instantiate the game and provide two callbacks:
+The engine has no Discord/HTTP/database code. A `Game` owns one `roomId` and emits
+`GameEvent`s through its `RoomEventBus`; it does not accept public/private callbacks in its
+constructor.
 
-1. `publicChannel` — broadcasts ring events to the whole room
-2. `privateChannel` — sends a DM to a specific player; also handles interactive prompts
-
-Both share the same signature: `({ announce, question?, choices?, delay? }) => Promise<string | void>`
-
-- `{ announce }` — fire-and-forget message
-- `{ question, choices }` — interactive prompt; the connector must present choices to the user and resolve with their answer
+The current Discord connector runs in-process with the server modules. One long-lived
+`RoomManager` owns room lifecycle and persistence. After `GuildRoomManager` resolves and
+validates the guild/user's `roomId`, the bot obtains that room's game and bus, then creates
+a room-specific `ConnectorAdapter`:
 
 ```ts
-import { Game, restoreGame } from '@deck-monsters/engine'
+import { ConnectorAdapter } from '@deck-monsters/engine'
+import { RoomManager } from '@deck-monsters/server/room-manager'
 
-const publicChannel = ({ announce }) => postToChannel(roomChannel, announce)
+const roomManager = new RoomManager(db, log)
+const game = await roomManager.getGame(roomId)
+const eventBus = await roomManager.getEventBus(roomId)
+const adapter = new ConnectorAdapter(eventBus, publicChannel, `discord:${guildId}:${roomId}`, log)
+adapter.registerUser(userId, privateChannel)
 
-const privateChannel = ({ announce, question, choices }) => {
-  if (announce) return sendDM(userId, announce)
-  if (question) return promptUser(userId, question, choices) // resolves with user's answer
-}
-
-const game = savedState
-  ? restoreGame(publicChannel, savedState, log)
-  : new Game(publicChannel, {}, log)
-
-game.saveState = (state) => db.save(state) // engine calls this on every stateChange
-
-// Dispatch a text command
 const action = game.handleCommand({ command: 'send a monster to the ring' })
 if (action) await action({ channel: privateChannel, channelName, isAdmin, isDM, user })
 ```
+
+`ConnectorAdapter` routes public events to the room channel, private events to the
+registered user, and prompt requests through the private channel. Dispose the adapter when
+the room/platform subscription ends.
+
+At the lower engine boundary, fresh state is `new Game({ roomId }, log)` and persisted state
+is `restoreGame(gameJSON, log)`. `RoomManager` selects the blob by `roomId`, verifies the
+room exists, attaches the room-keyed `StateStore`, and owns unload/reset/delete behavior.
+Do not recreate that with a global blob or an unscoped save callback.
 
 ### `handleCommand`
 
@@ -295,28 +296,39 @@ Admin alias feature: `"<command> as <name>"` runs a command as another character
 
 ### State Serialization
 
-Game state is gzip+base64 encoded JSON, stored in Postgres. `game.saveState` is a getter/setter:
+Game state is gzip+base64 encoded JSON and stored per room in Postgres. A direct engine
+embedding must scope both load and save:
 
 ```ts
-// Store the save function
-game.saveState = (base64GzipString) => db.save(base64GzipString)
-// Engine calls this.saveState() automatically on every 'stateChange' event
+const stateBlob = await postgresStateStore.load(roomId)
+const game = stateBlob
+  ? restoreGame(stateBlob, roomLog)
+  : new Game({ roomId }, roomLog)
 
-// Restore
-restoreGame(publicChannel, base64GzipString, logger)
-// Hydrates: characters → monsters → cards → items (recursive)
+if (game.roomId !== roomId) throw new Error('Stored game belongs to a different room')
+game.stateStore = postgresStateStore // save(roomId, state), load(roomId)
 ```
 
-### Channel Manager
+State changes schedule a debounced room-keyed save. Restore hydrates characters, monsters,
+cards, and items recursively. Application code should go through `RoomManager`, which also
+attaches event persistence and analytics subscribers.
 
-The engine batches outgoing messages (3000-char max per batch) to respect platform rate limits. Connectors should implement appropriate pacing — Discord uses interaction followups; the original Slack connector used 1200ms delays between messages.
+### Channel and prompt callbacks
+
+The callback shape used by `ConnectorAdapter` and command actions is
+`({ announce, question?, choices?, delay? }) => Promise<string | void>`. Connectors
+implement platform pacing and must obey the
+[prompt answer contract](docs/reference/prompt-answer-contract.md).
 
 ### Event Bus
 
 The server maintains a `GameEvent` stream per room. Events flow:
 
 ```
-Game (engine) → publicChannel callback → server subscriber → Supabase Realtime / tRPC subscription → web/Discord clients
+Game → room-owned RoomEventBus
+  ├─ EventPersister / analytics subscribers
+  ├─ membership-checked tRPC subscription → web
+  └─ ConnectorAdapter / structured subscriber → Discord
 ```
 
 `FightSummaryWriter` persists fight results to `fight_summaries`. `FightStatsSubscriber` updates `room_player_stats` and `room_monster_stats` for the leaderboard.
@@ -335,19 +347,21 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
 
 ## Architecture Notes for New Connectors
 
-1. Implement the channel callback: `({ announce, question?, choices?, delay? }) => Promise`
-   - `announce` — post to channel/DM; return after sending
-   - `question` + `choices` — prompt the user; resolve with their text answer (timeout ~2 min).
-     **The answer must be either the 0-based index of the chosen option (as a string) or
-     the option's label text.** See [`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md)
-     for the full contract — a connector that sends something else (a 1-based number, a
-     truncated label, etc.) will make the engine silently dispatch to the wrong option
-     rather than error, which is exactly what happened in `docs/roadmap/10b-bugs-fixed.md` #143.
-2. Initialize: `restoreGame(publicChannel, savedState, log)` or `new Game(publicChannel, {}, log)`
-3. Set the save function: `game.saveState = (state) => db.save(state)`
-4. For chat-style connectors: strip bot prefix → `game.handleCommand({ command })` → call returned action with `{ channel, channelName, isAdmin, isDM, user }`
-5. For slash command / REST connectors: call `game.getCharacter({ channel, id, name })` directly, then invoke specific action methods
-6. Connect to the server's event bus (via `CONNECTOR_SERVICE_TOKEN`) to receive and forward `GameEvent` objects to platform channels
+1. Define and validate the platform-to-`roomId` mapping before loading state or subscribing.
+2. For an in-process connector, share one `RoomManager`; use `getGame(roomId)` and
+   `getEventBus(roomId)`. For an external client, use authenticated, membership-checked
+   tRPC procedures rather than bypassing the server boundary.
+3. Create one `ConnectorAdapter` per platform/room subscription. Register each canonical
+   user id with that user's private channel and dispose subscriptions when the mapping ends.
+4. For chat input, call the room game's `handleCommand({ command })`, then invoke the action
+   with the registered private channel and canonical user. Slash commands may call room
+   game methods directly after the same room/user resolution.
+5. Prompt answers must be the zero-based choice index as a string or the full option label.
+   See [`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md).
+
+`CONNECTOR_SERVICE_TOKEN` authenticates only the server's
+`auth.registerConnectorUser` service procedure. There is no service-token event stream;
+the current Discord connector reads the room bus in-process.
 
 ## Known Issues
 

@@ -4,7 +4,8 @@ A turn-based monster RPG game engine — think Pokémon meets deck-building. Pla
 
 The engine is platform-agnostic: a connector adapter plugs in and brings the game to any chat platform or app. The original connector was a Slack bot called **Jane**, which ran the game inside a private Slack workspace. The ring fights appeared in a shared channel; everything else (training monsters, building decks, buying items) happened through DMs with Jane.
 
-The project is being revived with new connectors (Discord, web, mobile) and modern infrastructure.
+The revived game currently ships through Discord and the web app. A mobile client remains
+deferred.
 
 ---
 
@@ -25,55 +26,52 @@ See [PLAYER_HANDBOOK.md](PLAYER_HANDBOOK.md) for all commands and sample deck bu
 
 ## Architecture
 
-The engine has no platform-specific code. A connector provides two callbacks (public channel + private DM) and maps platform events to game method calls.
+The engine has no platform-specific code. Every loaded `Game` belongs to one `roomId` and
+publishes structured events through its `RoomEventBus`. The server package's `RoomManager`
+abstraction owns room-scoped create/restore/persistence; an in-process connector resolves
+a room through its own manager instance, then bridges the event bus to platform channels
+with `ConnectorAdapter`.
 
 ```
-Platform (Slack / Discord / Web / Mobile)
-     ↓  slash commands / messages / button presses
-  Connector Adapter  (Jane, discord-connector, web-connector, …)
-     ↓  character.spawnMonster(), character.sendMonsterToTheRing(), …
-  Game Engine  (this repo)
-     ↓  publicChannelFn("Fang attacks…"), privateChannelFn("You earned 10 coins")
-  Platform
+Discord: guild/user mapping → roomId → RoomManager → Game + RoomEventBus
+                                                     ↓
+                                      ConnectorAdapter → Discord channels
+
+Web: authenticated tRPC → membership check → roomId → RoomManager → Game + RoomEventBus
 ```
 
 ### Building a Connector
 
-Both channel callbacks share the same shape. The engine calls them with either an announcement or an interactive question:
+The current Discord connector is in-process: it creates one `RoomManager`, resolves a
+guild/user to a validated `roomId`, and asks the manager for that room's game and event bus.
+`ConnectorAdapter` translates public/private events and prompt requests into platform
+callbacks:
 
-```javascript
-const { Game, restoreGame } = require('deck-monsters')
+```ts
+import { ConnectorAdapter } from '@deck-monsters/engine'
+import { RoomManager } from '@deck-monsters/server/room-manager'
 
-// Both channel callbacks take { announce?, question?, choices?, delay? }
-// announce  → post the string to the channel; resolve when sent
-// question  → prompt the user and resolve with their answer (2-min timeout)
-const publicChannel = ({ announce }) => postToChannel('#ring', announce)
+const roomManager = new RoomManager(db, log)
+const game = await roomManager.getGame(roomId)
+const eventBus = await roomManager.getEventBus(roomId)
+const adapter = new ConnectorAdapter(eventBus, publicChannel, `my-connector:${roomId}`, log)
+adapter.registerUser(userId, privateChannel)
 
-const privateChannel = ({ announce, question, choices }) => {
-  if (announce) return sendDM(userId, announce)
-  if (question) return promptUser(userId, question, choices)
-}
-
-// Initialize (restore from DB or create fresh)
-const game = savedState
-  ? restoreGame(publicChannel, savedState, console.log)
-  : new Game(publicChannel, {}, console.log)
-
-// Wire up persistence — engine calls this automatically on every state change
-game.saveState = (state) => db.saveRoomState(roomId, state)
-
-// Get the action object for a player (creates character on first call)
-const player = await game.getCharacter({ channel: privateChannel, id: userId, name })
-
-// Map platform inputs to action methods
-await player.spawnMonster({ /* prompts user interactively via privateChannel */ })
-await player.sendMonsterToTheRing({ monsterName: 'Fang' })
-await player.equipMonster({ monsterName: 'Fang', cardSelection: [...] })
-await player.buyItems(privateChannel, game)  // interactive: shows the room's shop, prompts for selection
-await player.lookAt('basilisk')
+const action = game.handleCommand({ command })
+if (action) await action({ channel: privateChannel, channelName, isAdmin, isDM, user })
 ```
 
-See [AGENTS.md](AGENTS.md) for the full action method list and deeper architecture notes.
+`RoomManager` creates fresh state with `new Game({ roomId }, log)`, restores persisted state
+with `restoreGame(gameJSON, log)`, and attaches a room-keyed `StateStore`. A connector must
+not load a blob globally or persist without its `roomId`. Web clients use authenticated,
+membership-checked tRPC procedures rather than constructing a browser-side `Game`.
+
+The callback answer is a protocol boundary; read
+[`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md).
+Read [`docs/architecture/rooms-and-identity.md`](docs/architecture/rooms-and-identity.md)
+before adding any room mapping or subscription.
+
+Start at [`docs/README.md`](docs/README.md) for current subsystem contracts.
 
 ---
 
@@ -128,7 +126,11 @@ pnpm --filter @deck-monsters/web test:coverage # vitest run --coverage
 
 ### Web App
 
-The web app is a two-pane terminal UI — a Ring feed on the left and your private Console on the right. See [`docs/archive/roadmap/06a-web-app.md`](docs/archive/roadmap/06a-web-app.md) for the shipped design spec.
+The web app is a terminal workspace with five registered surfaces: Ring, Console,
+Workshop, Fights, and Leaders. It keeps two distinct selectable slots; at 1024px and wider
+both are visible, while narrower containers show one slot through tabs. Workshop, Fights,
+and Leaders also have full-page routes. See
+[`docs/architecture/web-workspace.md`](docs/architecture/web-workspace.md).
 
 ```bash
 # Start the Vite dev server (proxies /trpc to localhost:3000)
@@ -138,14 +140,11 @@ pnpm --filter @deck-monsters/web dev
 pnpm --filter @deck-monsters/web build
 ```
 
-**Web app environment variables** (copy `apps/web/.env.example` to `apps/web/.env.local`):
-
-| Variable | Purpose |
-|----------|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable API key |
-| `VITE_SERVER_URL` | API server URL (leave empty in dev to use Vite proxy) |
-| `VITE_BUILD_VERSION` | Build version for protocol handshake (set by CI, defaults to `dev`) |
+Use the canonical
+[`deployment environment table`](docs/operations/deployment.md#production-environment-variables)
+for variables. For local or Cursor Cloud startup, follow
+[`docs/operations/cloud-development.md`](docs/operations/cloud-development.md) and
+[`docs/operations/local-testing.md`](docs/operations/local-testing.md).
 
 ---
 
@@ -172,6 +171,7 @@ pnpm run build:docs   # builds engine, then regenerates CARDS.md, DMG.md, MONSTE
 | [CARDS.md](CARDS.md) | Player-facing card and item reference (name, description, rarity) |
 | [DMG.md](DMG.md) | Dungeon Master / operator reference (stats, pacing, concurrency) |
 | [AGENTS.md](AGENTS.md) | Codebase guide for AI-assisted development (`CLAUDE.md` is a symlink to it) |
+| [docs/README.md](docs/README.md) | Current architecture, operations, reference, and agent-document index |
 | [docs/roadmap/](docs/roadmap/) | Remaining-work index and active/backlog plans |
 | [docs/archive/roadmap/](docs/archive/roadmap/) | Shipped roadmap plans and their design reasoning |
 
@@ -188,21 +188,10 @@ only `DECK_MONSTERS_SKIP_DELAYS` (tests and the harness); the old AWS/S3 backup 
 
 ## Status
 
-The project is actively being revived. The core engine is stable.
+The TypeScript monorepo, Postgres/Supabase state, Railway deployment, tRPC API, auth,
+multi-room model, Discord connector, and web workspace are shipped. Current work focuses
+on gameplay, reliability, and presentation rather than rebuilding that platform.
 
-**Completed:**
-- TypeScript migration (303 `.ts` files, strict mode, ESM, Zod validation)
-- Monorepo structure (pnpm workspaces + Turborepo)
-- Dependency modernization (native async/await, `@aws-sdk` v3, `@typescript-eslint` + Prettier)
-- CI via GitHub Actions (type-check, lint, test on every push/PR)
-
-**In progress / next up:**
-- Vitest migration (currently Mocha + tsx; Vitest migration is optional — see `docs/archive/roadmap/01-modernize-stack.md`)
-- Infrastructure — Postgres-backed state storage, containerized hosting, tRPC API layer
-- New connectors — Discord bot, web app, iOS/Android app (React Native)
-- Auth + multi-room — user identity, invite-based friend groups
-
-The exploration system (expeditions) has been archived for now — it's a concept that could be revived later, but the core game is the ring combat.
-
-See [docs/roadmap/](docs/roadmap/) for remaining work and
-[docs/archive/roadmap/](docs/archive/roadmap/) for shipped plans.
+The exploration system (expeditions), mobile client, and Slack connector are deferred; the
+core game is Ring combat. See [`docs/roadmap/README.md`](docs/roadmap/README.md) for current
+work and [`docs/archive/README.md`](docs/archive/README.md) for historical reasoning.

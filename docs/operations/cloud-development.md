@@ -106,7 +106,7 @@ After the build, the engine can be verified without database or web services:
 
 ```bash
 node --input-type=module -e \
-  "import { Game } from './packages/engine/dist/index.js'; const g = new Game({}, console.log); console.log('Engine OK'); g.dispose();"
+  "import { Game } from './packages/engine/dist/index.js'; const g = new Game({ roomId: 'cloud-engine-check' }, console.error); console.log('Engine OK:', g.roomId); g.dispose(); process.exit(0);"
 ```
 
 ## Railway CLI

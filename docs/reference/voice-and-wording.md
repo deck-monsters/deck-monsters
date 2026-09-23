@@ -68,8 +68,7 @@ world deliberately softens the player-companion relationship.
 ### Retro terminal register
 
 Commands are short, concrete, and lower-case. Emoji from `node-emoji` are part of the
-world's voice, not decorative modern UI icons; see
-[the archived web-app plan](../archive/roadmap/06a-web-app.md).
+world's voice, not decorative modern UI icons.
 
 Why: the terminal voice is a game surface, not a generic administration panel.
 
@@ -94,9 +93,9 @@ Some legacy text is intentionally called out so it does not return: “proud own
 
 ## Lexicon
 
-| Concept | Canonical player-facing word | Accepted input alias (parser only) | Retired player-facing wording | Where it appears |
+| Concept | Canonical player-facing word | Accepted compatibility/input alias | Retired player-facing wording | Where it appears |
 |---|---|---|---|---|
-| Add a monster | **train** — `train a monster`, “Train monster” | `spawn (a) monster` | spawn; capture/capturing | commands, FTUX, workshop, Discord, handbook, README |
+| Add a monster | **train** — `train a monster`, “Train monster” | `spawn (a) monster`; Discord `/spawn` | spawn; capture/capturing | commands, FTUX, workshop, Discord, handbook, README |
 | Player | **beastmaster** in narration/greetings; **character** for the mechanical object | — | owner, master, trainer, “proud owner” | narration, greetings, character commands |
 | Monster | **monster**; **contestant** only in ring narration | — | creature, beast, pack, kennel | player text and ring feed |
 | Ring entry | **send [monster] to the ring** | `send … into battle` | — | commands and ring controls |
@@ -120,6 +119,9 @@ Code keys remain `male`, `female`, and `androgynous`; they are persistence and A
 not labels for players. Likewise, code identifiers, tRPC procedure names, DB columns, event
 names, CSS classes, test names, logs, and admin/debug commands may retain technical words.
 
+The current visible history label is **Fights**. Discord registers `/train` as the canonical
+monster-training command and retains `/spawn` as a compatibility alias.
+
 ## How to add a new word
 
 1. Check this lexicon first. If the concept is new, add a row in the same pull request.
@@ -129,10 +131,3 @@ names, CSS classes, test names, logs, and admin/debug commands may retain techni
    when compatibility needs them.
 4. Update the relevant tests and generated documents. If a prompt has choices, also follow
    [the prompt/answer contract](prompt-answer-contract.md): labels are a connector contract.
-
-## Open questions
-
-- Whether the visible history tab should be `Fights` or `Battles`; this lexicon currently
-  chooses `Fights`.
-- Whether Discord should keep `/spawn` indefinitely as an alias of `/train`; it remains
-  registered now so existing users are not stranded.

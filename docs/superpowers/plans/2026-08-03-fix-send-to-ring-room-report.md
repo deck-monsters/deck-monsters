@@ -43,7 +43,7 @@ Result: **136 passing** (2s)
 Engine smoke:
 
 ```bash
-node --input-type=module -e "import { Game } from './packages/engine/dist/index.js'; const g = new Game({}, console.log); console.log('Engine OK'); g.dispose();"
+node --input-type=module -e "import { Game } from './packages/engine/dist/index.js'; const g = new Game({ roomId: 'engine-check' }, console.error); console.log('Engine OK:', g.roomId); g.dispose(); process.exit(0);"
 # → Engine OK
 ```
 
