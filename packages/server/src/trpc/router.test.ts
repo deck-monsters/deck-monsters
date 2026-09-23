@@ -1405,7 +1405,6 @@ describe('trpc/router useItem narration', () => {
 			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
 		}) as unknown as Parameters<typeof createRouter>[0];
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const findItemClass = (itemType: string): any =>
 		(allItems as unknown as Array<{ itemType?: string }>).find((Item) => Item.itemType === itemType);
 

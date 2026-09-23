@@ -17,8 +17,10 @@ Read [player agency](../reference/player-agency.md) and
   Workshop mutations never issue a prompt.
 - [ ] **Web selling.** Expose room-scoped selling with confirmation and inventory/shop
   refresh behavior equivalent in safety to the established console flow.
-- [ ] **Outcome feedback.** Tell a player when an item applied and what it changed; for a
-  targeting scroll, name the new strategy and make its later effect understandable.
+
+Outcome feedback shipped in pass 25. The web Workshop now shows the engine's own narration
+for an item use, including a targeting scroll's new strategy. The contract is in
+[workshop and items](../architecture/workshop-and-items.md#outcome-narration-announcements).
 
 These improve access to the existing bounded-item exception. Per-fight budgets, item-power
 changes, and other balance changes wait for the simulation harness in
