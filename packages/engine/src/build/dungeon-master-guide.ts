@@ -75,15 +75,19 @@ const COMBAT_MATH = `
 ── Combat Math ───────────────────────
 
 A temporary STR, DEX, or INT change is added once. It moves the raw stat and
-the derived modifier by the same amount. It is not added a second time.
+the derived modifier by the same amount. The raw stat floors at 1, so a curse
+can move the modifier farther than a raw stat that is already at that floor.
+It is not added a second time.
 See "Effective STR, DEX, and INT" in Stats Reference.
 
 Melee accuracy: 1d20 + DEX modifier vs the target's defense (usually AC).
   A card that names another stat rolls against that stat instead.
   A natural 20 is a stroke of luck. A natural 1 is a curse of loki.
   A tie goes to the defender.
-Melee damage: damage dice + STR modifier.
-Forked Stick pin: 1d20 + STR modifier vs the target's raw DEX.
+Ordinary melee damage is damage dice plus the STR modifier. Some cards,
+such as Horn Gore, use half the STR modifier instead.
+Forked Stick pin: 1d20 + STR modifier + matchup vs the target's raw DEX.
+  Matchup is +2 against a Basilisk or a Gladiator and -2 against a Jinn or a Minotaur.
   Escape: 1d20 + the pinned monster's STR modifier vs the immobilizer's raw
   STR, plus the card's advantage, minus 3 for each turn already pinned.
 DEX saves and DEX defenses use DEX. A DEX curse lowers raw DEX, outgoing

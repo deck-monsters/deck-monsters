@@ -208,7 +208,7 @@ A monster plays the deck from the first card to the last, then starts again at t
 
 Damage cards spend the turn on HP. Healing cards spend the turn on recovery. Control cards, such as a pin, take the opponent's next card away. Reactive cards answer a blow instead of swinging now. Targeting and matchup cards are strong against some monsters and weak against others. Average damage per turn leaves out a pin, a stacked answer, and a card that only pays off against the monster in front of you.
 
-Delayed Hits can remain armed together. Each one answers a later blow, so two armed Delayed Hits can answer two blows.
+Delayed Hits can remain armed together. Every copy still armed on that monster answers the next qualifying blow.
 
 Molasses → Forked Stick is a setup. Molasses lowers DEX. Forked Stick then pins against that lower DEX. Play Molasses first.
 

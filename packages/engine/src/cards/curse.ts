@@ -60,8 +60,13 @@ export class CurseCard extends HitCard {
 	}
 
 	override get stats(): string {
-		const maxMod = (STATS.MAX_PROP_MODIFICATIONS as any)[this.cursedProp] ?? 1;
-		let stats = `${this.curseDescription}, with a maximum total curse of -${maxMod * 3} per level. Afterwards penalties come out of hp instead.`;
+		// Overflow uses getMaxModifications. For DEX, STR, INT, and AC that cap
+		// is level + 1 (MAX_PROP_MODIFICATIONS is 1). The old `maxMod * 3`
+		// sentence said "-3 per level", so the generated guide stated two caps.
+		const cap = ['dex', 'str', 'int', 'ac'].includes(this.cursedProp)
+			? '-(level + 1)'
+			: `-${(STATS.MAX_PROP_MODIFICATIONS as Record<string, number>)[this.cursedProp] ?? 1}`;
+		let stats = `${this.curseDescription}, with a maximum total curse of ${cap}. Afterwards penalties come out of hp instead.`;
 		if (this.hasChanceToHit) {
 			stats = `${super.stats}\n${stats}`;
 		}
@@ -103,7 +108,9 @@ export class CurseCard extends HitCard {
 			postCursedPropValue
 		);
 
-		const maxMod = (STATS.MAX_PROP_MODIFICATIONS as any)[this.cursedProp] ?? 1;
+		// Cap is getMaxModifications (level + 1 for DEX/STR/INT/AC), not
+		// MAX_PROP_MODIFICATIONS. A local copy of that constant used to feed
+		// the "-3 per level" stats sentence and was never the overflow check.
 		const hpCurseOverflow =
 			this.cursedProp !== 'hp'
 				? aggregateTotalCurseAmount - target.getMaxModifications(this.cursedProp)

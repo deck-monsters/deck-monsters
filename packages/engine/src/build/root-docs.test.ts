@@ -94,6 +94,10 @@ describe('root-docs generation', () => {
 		expect(handbook).to.include('── Combat Stats & Card Roles');
 		expect(handbook).to.include('Temporary boosts and curses affect both the stat and rolls derived from it.');
 		expect(handbook).to.include('Delayed Hits can remain armed together');
+		expect(handbook).to.include(
+			'Every copy still armed on that monster answers the next qualifying blow',
+		);
+		expect(handbook).not.to.include('two blows');
 		expect(handbook).to.include('Molasses → Forked Stick');
 		expect(handbook).to.include('Example, not a universal best deck');
 		expect(handbook).to.include('One-Heal alternative');
@@ -106,8 +110,16 @@ describe('root-docs generation', () => {
 
 		expect(dmg).to.include('derived modifier = pre-battle modifier + encounter delta');
 		expect(dmg).to.include('added once');
+		expect(dmg).to.include('The raw stat floors at 1');
+		expect(dmg).to.include('Ordinary melee damage is damage dice plus the STR modifier');
+		expect(dmg).to.include('Horn Gore, use half the STR modifier');
+		expect(dmg).to.include('1d20 + STR modifier + matchup');
+		expect(dmg).to.include('+2 against a Basilisk or a Gladiator');
+		expect(dmg).to.include('-2 against a Jinn or a Minotaur');
 		expect(dmg).to.include('Forked Stick pin threshold');
 		expect(dmg).to.include('AC has no attack modifier');
+		expect(dmg).to.include('-(level + 1)');
+		expect(dmg).not.to.include('-3 per level');
 	});
 
 	it('normalizes CRLF and bare CR to LF', () => {

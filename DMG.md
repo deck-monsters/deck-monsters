@@ -86,6 +86,7 @@ Effective STR, DEX, and INT. A temporary boost or curse is counted once:
   encounter delta = temporary boost or curse, capped at level + 1
   raw stat = base + pre-battle modifier + encounter delta (minimum 1)
   derived modifier = pre-battle modifier + encounter delta
+  The raw stat floors at 1. A curse can move the derived modifier farther than a raw stat already at that floor.
 
 Base spawn ranges (type offset 0, before per-type modifiers):
   HP: 28–33
@@ -111,15 +112,19 @@ Per-monster-type modifiers (spawn, level 0):
 ── Combat Math ───────────────────────
 
 A temporary STR, DEX, or INT change is added once. It moves the raw stat and
-the derived modifier by the same amount. It is not added a second time.
+the derived modifier by the same amount. The raw stat floors at 1, so a curse
+can move the modifier farther than a raw stat that is already at that floor.
+It is not added a second time.
 See "Effective STR, DEX, and INT" in Stats Reference.
 
 Melee accuracy: 1d20 + DEX modifier vs the target's defense (usually AC).
   A card that names another stat rolls against that stat instead.
   A natural 20 is a stroke of luck. A natural 1 is a curse of loki.
   A tie goes to the defender.
-Melee damage: damage dice + STR modifier.
-Forked Stick pin: 1d20 + STR modifier vs the target's raw DEX.
+Ordinary melee damage is damage dice plus the STR modifier. Some cards,
+such as Horn Gore, use half the STR modifier instead.
+Forked Stick pin: 1d20 + STR modifier + matchup vs the target's raw DEX.
+  Matchup is +2 against a Basilisk or a Gladiator and -2 against a Jinn or a Minotaur.
   Escape: 1d20 + the pinned monster's STR modifier vs the immobilizer's raw
   STR, plus the card's advantage, minus 3 for each turn already pinned.
 DEX saves and DEX defenses use DEX. A DEX curse lowers raw DEX, outgoing
@@ -599,7 +604,7 @@ Wooden Spear
  Hit: 1d20 vs ac / Damage: 1d4
  Curse: int -1-2 depending on how 
  hard the hit is, with a maximum 
- total curse of -3 per level. 
+ total curse of -(level + 1). 
  Afterwards penalties come out of 
  hp instead.
 
@@ -671,7 +676,7 @@ Wooden Spear
 
  Hit: 1d20 vs ac / Damage: 1d4
  Curse: ac -1, with a maximum 
- total curse of -3 per level. 
+ total curse of -(level + 1). 
  Afterwards penalties come out of 
  hp instead.
 
@@ -1324,7 +1329,7 @@ Wooden Spear
 
  Hit: 1d20 vs ac / Damage: 1d4
  Curse: dex -1, with a maximum 
- total curse of -3 per level. 
+ total curse of -(level + 1). 
  Afterwards penalties come out of 
  hp instead.
 

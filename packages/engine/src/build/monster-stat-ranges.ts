@@ -103,4 +103,5 @@ Effective STR, DEX, and INT. A temporary boost or curse is counted once:
   encounter delta = temporary boost or curse, capped at level + 1
   raw stat = base + pre-battle modifier + encounter delta (minimum 1)
   derived modifier = pre-battle modifier + encounter delta
+  The raw stat floors at 1. A curse can move the derived modifier farther than a raw stat already at that floor.
 `.trim();
