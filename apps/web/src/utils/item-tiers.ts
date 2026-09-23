@@ -55,9 +55,8 @@ export interface TieredItem {
 // Exact reason strings shown on a dimmed (tier 2) row. Kept as named constants so tests -
 // and any future ring-pane affordance - stay in sync with the copy rather than restating it.
 //
-// Each reason names what would make the item usable, not only that it isn't (voice
-// decision, docs/roadmap/10-bug-fixes.md §22) — "Not usable right now." told a player
-// nothing they could act on.
+// Each reason names what would make the item usable, not only that it isn't — "Not usable
+// right now." told a player nothing they could act on (#177).
 export const REASON_NOT_IN_RING = 'Usable once this monster is in the ring.';
 export const REASON_NOT_CARRIED_INTO_RING = 'Mid-fight, a monster can use only what it carries.';
 // This row is a specific monster's own carried item (its name is already shown as the row's

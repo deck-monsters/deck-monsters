@@ -117,10 +117,8 @@
   justify-content: space-between;
 }
 
-/* `.workshop-header-actions` used to ride along on this selector too, which is how it got
-   `display: flex` at all — see the fuller note on `.workshop-header-actions` in base.css.
-   It now declares its own flex properties there; keep this selector to `.pane-header-actions`
-   only so a future edit here can't silently break the Workshop header again. */
+/* Pane headers only. `.workshop-header-actions` declares its own flex row in base.css;
+   sharing this selector once hid that it was a flex container at all (#177). */
 .pane-header-actions {
   display: flex;
   align-items: center;

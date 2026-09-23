@@ -2950,7 +2950,7 @@ the monster row and inventory a player has to scroll past first.
 - The coin balance is now also shown in the Workshop header (`.workshop-wallet`), visible
   without opening or scrolling to the shop section at all. It renders only once the shop
   query has actually resolved, so the loading window never displays a misleading "0 coins".
-- Found in passing, not fixed: `.workshop-header-actions`'s mobile rule
+- Found in passing, not fixed (later corrected and fixed in #177): `.workshop-header-actions`'s mobile rule
   (`@container workshop (max-width: 520px)`) sets `justify-content: space-between;
   flex-wrap: wrap;`, but the class is never `display: flex` at any width, so those
   properties have always been a no-op — the header's buttons wrap via ordinary inline flow
@@ -4158,5 +4158,36 @@ same reason. The Jinn lore text also said "standstorms"; it now says "sandstorms
 
 **Tests**: `helpers/pronouns.test.ts` (`agree` for they, she, and a legacy set);
 `monsters/jinn.test.ts` (they/them and she/her descriptions).
+
+**Status**: Fixed.
+
+### 177. Workshop header row misdiagnosed as dead CSS, and tier-2 reasons gave no way forward — FIXED
+
+The phone-width rule on `.workshop-header-actions` (`justify-content: space-between;
+flex-wrap: wrap`) was recorded as dead because the class was "never a flex container". The
+space after the header wallet was also twice the gap between the header buttons. Separately,
+dimmed (tier 2) Workshop item rows said `Not in the ring.`, `Not carried into the ring.`, or
+`Not usable right now.`, which told the player what was wrong but not what would fix it.
+
+**Root cause**: The class *was* a flex row. It shared a `display: flex` selector with
+`.pane-header-actions` in `terminal.css`, while its own rule in `base.css` carried only
+`flex: 0 0 auto` and a comment asserting the opposite. The misdiagnosis came from reading one
+stylesheet. Acting on the same false premise, the wallet had been spaced with `margin-right`,
+which stacked on the row's `gap`. The reason strings were written during implementation and
+never had a voice pass; `Not usable right now.` covered two cases, one of which (a pocket item)
+named no monster at all.
+
+**Fix**: `.workshop-header-actions` declares its flex row completely in `base.css`, and
+`terminal.css` no longer names it. The wallet margin is gone. Each tier-2 reason now names
+what would make the item usable: `Usable once this monster is in the ring.`, `Mid-fight, a
+monster can use only what it carries.`, `This monster can't use it right now.` (a monster's
+own carried item), and `None of your monsters can use it right now.` (a pocket item with no
+valid target).
+
+**Tests**: `apps/web/src/__tests__/workshop-header-actions-flex.test.ts` (flex row declared in
+`base.css`, not shared from `terminal.css`, no wallet margin); `utils/item-tiers.test.ts` and
+`__tests__/itemsPanel.use.test.tsx` pin the new copy. Rendered at 390 px and 900 px in Chromium
+against the real stylesheets: the header wraps with `space-between` at phone width and has one
+0.4 rem gap after the wallet.
 
 **Status**: Fixed.

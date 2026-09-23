@@ -32,10 +32,10 @@ docs and move this file to `docs/archive/roadmap/`.
 | T2 | Real-fight coin/XP reward test, including after `restoreGame` | 10 §J | 2 | In progress | — |
 | T3 | Coin/XP distributions in the simulation harness; fix the stale harness bullet | 11 | 2 | In progress | — |
 | T4 | Sub-event gap for two-roll cards; paced fight opening | 10 §2, §3 | 2 | Planned (after T2) | — |
-| T5 | Show the engine's item-use narration in the web Workshop | item follow-ups | 2 | Planned | — |
+| T5 | Show the engine's item-use narration in the web Workshop | item follow-ups | 2 | In progress | — |
 | T6 | Room-scoped web selling | item follow-ups | 2 | Planned (after T5) | — |
-| T7 | Mobile Workshop header rule and tier-2 reason copy | 10 §6, 22 | 2 | In progress | — |
-| T8 | Encode the orchestrator/subagent pattern in the agent docs; ignore agent worktrees | user request | 3 | Done | this commit |
+| T7 | Mobile Workshop header rule and tier-2 reason copy (#177) | 10 §6, 22 | 2 | Done | 079069b |
+| T8 | Encode the orchestrator/subagent pattern in the agent docs; ignore agent worktrees | user request | 3 | Done | ef7e377, 1e44333 |
 
 ## Decisions
 

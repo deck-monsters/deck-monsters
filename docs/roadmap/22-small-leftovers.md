@@ -46,11 +46,6 @@ execution queue.
 Prompt transport, web selling, and outcome feedback are owned in
 [item follow-ups](item-followups.md).
 
-- [ ] **Owner: Workshop/voice.** Review the tier-2 reason strings in `apps/web/src/utils/item-tiers.ts`
-  (`Not in the ring.`, `Not carried into the ring.`, `Not usable right now.`). They were
-  written during implementation and still need an owner pass against
-  [voice and wording](../reference/voice-and-wording.md). Read
-  [workshop and items](../architecture/workshop-and-items.md).
 - [ ] **Owner: Analytics/content.** Define per-monster records, dead-monster memorials, and
   earned titles from durable data before exposing or inventing a new projection. Read
   [analytics and history](../architecture/analytics-and-history.md).

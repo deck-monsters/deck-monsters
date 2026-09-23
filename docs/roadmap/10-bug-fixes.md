@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — six open items. Fixed work and its root causes live only in
+**Status:** Active — five open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -43,15 +43,6 @@ one tick before normal pacing starts. Measure a real public event sequence befor
 the shared delay policy.
 
 Read [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
-
-### 6. Dead mobile `.workshop-header-actions` rule
-
-**Owner:** Web Workshop. The mobile container rule sets flex properties on a class that is
-never a flex container. Make the intended layout explicit and verify it at phone width;
-the shared Workshop renders both as a route and a pane.
-
-Read [web workspace](../architecture/web-workspace.md) and
-[workshop and items](../architecture/workshop-and-items.md).
 
 ### A. Intermittent missing `↓ Latest` jump button
 
