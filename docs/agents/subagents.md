@@ -63,6 +63,14 @@ definitions live in `.claude/agents/`. Other parameters that matter here:
   the report as the agent's **final message** instead. Explorers can still write data files
   when the brief asks for data rather than a report.
 - In a cloud session, put briefs in the session scratchpad directory rather than `/tmp`.
+- A worktree starts from the repository's default branch, not from the orchestrator's
+  unpushed commits. A brief that depends on an earlier task's commit must say so. Land that
+  commit first, or have the implementer cherry-pick it.
+- Parallel agents share one usage quota. When it runs out, every running agent stops at the
+  same moment. Their worktrees and uncommitted edits survive, so after the reset, check
+  `git worktree list` and each worktree's `git status`. Then resume each agent with
+  `SendMessage` and a note of where it stopped. Re-dispatch only the agents that left
+  nothing on disk.
 
 **Codex and others.** Use whatever delegation mechanism the harness exposes. If it has no
 model parameter at all, compensate by splitting the work: make the mechanical parts small
