@@ -264,20 +264,34 @@ button {
   gap: 0.75rem;
 }
 
+/*
+  Declared explicitly and completely here (not split across stylesheets) so the mobile
+  `justify-content`/`flex-wrap` override below has something to act on. This class used to
+  get `display: flex` only incidentally, by riding along on terminal.css's unrelated
+  `.pane-header-actions` selector — the base.css copy carried only `flex: 0 0 auto` (its own
+  sizing as a flex *item* inside `.workshop-header`) and a comment insisting it "is not a
+  flex container". Nobody noticed the terminal.css side actually made it one, so the mobile
+  wrap/space-between rule was reported as dead CSS (10-bug-fixes.md #6) even though it was
+  quietly working. Fixed here by making the container-ness a direct, single-file fact
+  instead of a cross-file accident; terminal.css no longer names this class. */
 .workshop-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
   flex: 0 0 auto;
 }
 
 /* Header-level echo of `.shop-wallet` (ShopPanel) — same look, different reach: this one
    stays visible while scrolling past the monster row and inventory, not just inside the
    shop section. See docs/architecture/workshop-and-items.md and 10b-bugs-fixed.md.
-   Margined rather than gapped: `.workshop-header-actions` lays its children out with the
-   browser's default inline flow (it is not a flex container — see `10-bug-fixes.md`
-   item 6), so a `gap` on the parent would do nothing. */
+   No margin here: `.workshop-header-actions` is a flex row with its own `gap` (see above),
+   so spacing this with `margin-right` on top of that gap doubled the visual gap after the
+   wallet (0.9rem vs the 0.4rem between the buttons that follow it) — a symptom of the same
+   "not a flex container" misunderstanding fixed above. */
 .workshop-wallet {
   color: var(--color-accent);
   white-space: nowrap;
-  margin-right: 0.5rem;
 }
 
 .workshop-header h1 {
