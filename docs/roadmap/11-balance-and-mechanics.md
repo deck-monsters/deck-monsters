@@ -18,6 +18,9 @@ and [`10b-bugs-fixed.md`](10b-bugs-fixed.md), not repeated here.
 - [ ] **Progression review — owner: Engine/economy.** Reassess early XP, coin, and drop
   boosts from telemetry; prefer targeted onboarding adjustments over permanent payout
   inflation.
+- [ ] **Healing prices — owner: Economy.** Keep the 60–90 coin shop price for a 50-coin
+  healing item until use telemetry exists. Do not cut that price without the telemetry:
+  cheaper healing makes bounded mid-fight items routine.
 
 ## Combat design
 
@@ -28,10 +31,17 @@ and [`10b-bugs-fixed.md`](10b-bugs-fixed.md), not repeated here.
   initiative roll and a SPEED modifier, including tie behavior and narration.
 - [ ] **Crit failures — owner: Cards.** Audit cards for natural-1 outcomes and add
   thematically appropriate consequences, including the time-shift failure case.
+- [ ] **Crit ticks — owner: Engine.** Track each monster's natural 20s (upstream #164).
+  On level-up, show those crit ticks and roll d100 per tick; a 100 grants one bonus
+  stat point of the player's choice.
 - [ ] **Card balance — owner: Cards.** Audit power by level tier; define intentional
   counterparts, saving throws, or class weaknesses where a card lacks counterplay.
 - [ ] **Team XP — owner: Engine.** Simulate multi-player-versus-boss outcomes and revise the
   XP formula only if the data shows the current cross-team calculation is mis-scaled.
+- [ ] **Fight threads — owner: Events/connectors.** Render each fight's narration under an
+  optional `threadId` on `GameEvent` (upstream #83): a short summary in the main channel,
+  full narration in a Discord thread or a collapsible web section. Connectors that ignore
+  the field keep today's inline feed.
 
 Read [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) for
 fight execution changes, [boss encounters](../architecture/boss-encounters.md) for teams,

@@ -1,6 +1,6 @@
 # Documentation Lifecycle Reset
 
-**Status:** Active — design approved; implementation planned
+**Status:** Active — in progress
 
 This pass separates current contracts, active work, and useful history; compacts the
 repository's documentation routers; improves generated player strategy guidance; fixes the
@@ -55,6 +55,15 @@ repository-local documentation-maintenance skill.
   mobile, Slack, and exploration work is a product decision, not an archive task queue.
 - The fixed-bug ledger remains at its stable active-roadmap path, while the documentation
   checker no longer masks lifecycle findings with a migration allowlist.
+- Review fixes: Discord display-name seeding, multi-instance display-name updates,
+  unpopulated `notableCards`, flow-step indicators, prompt-context labels, and the tier-2
+  reason-string review each have an owned checkbox in `22-small-leftovers.md`. Shipped
+  prompt timeout, cancel, and first-run behavior in plan 06 is history. Crit ticks, fight
+  threads, and the 60–90 coin healing-price constraint are owned checkboxes in
+  `11-balance-and-mechanics.md`. The data-driven card spec and card-authoring skill are
+  owned by Cards in `12-new-content-backlog.md`. Prompt transport, web selling, and outcome
+  feedback stay only in `item-followups.md`. `look at the ring` private-announce delivery is
+  ledger entry #174. No reviewed item was rejected.
 
 ## Working artifacts
 

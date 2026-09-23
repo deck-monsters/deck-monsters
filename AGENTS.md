@@ -73,7 +73,7 @@ non-obvious bit us before.
 | [`docs/agents/subagents.md`](docs/agents/subagents.md) | Delegating any part of a task to another agent |
 | [`docs/README.md`](docs/README.md) | Finding the canonical current document for any subsystem or procedure |
 | [`docs/reference/voice-and-wording.md`](docs/reference/voice-and-wording.md) | Any player-facing string: prompts, help text, announcements, button labels, Discord descriptions |
-| `docs/archive/README.md` | Looking for the reasoning behind something that already shipped (archived roadmap plans, retired subsystems) |
+| [`docs/archive/README.md`](docs/archive/README.md) | Looking for the reasoning behind something that already shipped (archived roadmap plans, retired subsystems) |
 | [`docs/architecture/rooms-and-identity.md`](docs/architecture/rooms-and-identity.md) | Any game state, DB query, membership, identity, connector mapping, or event subscription. **Hard constraint, not a guideline.** |
 | [`docs/architecture/events-prompts-and-replay.md`](docs/architecture/events-prompts-and-replay.md) | `GameEvent`, visibility, persistence, prompts, reconnect, cursors, or history delivery |
 | [`docs/architecture/engine-concurrency-and-timing.md`](docs/architecture/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |
@@ -366,16 +366,13 @@ the current Discord connector reads the room bus in-process.
 
 ## Known Issues
 
-Open work is tracked in `docs/roadmap/10-bug-fixes.md` — read its
-status line rather than trusting a list here, which goes stale within a pass. As of this
-writing the one high-priority open item is J (fight rewards — coins and xp — may never be
-credited, superseding the incorrect closure recorded as #145), alongside two open pacing
-items and a dead mobile CSS rule. Everything already fixed, with root causes, is archived in
-`docs/roadmap/10b-bugs-fixed.md`, which currently runs to #173.
+Open work is tracked in `docs/roadmap/10-bug-fixes.md`. Read that file's status line. A
+partial list here goes stale within a pass. Fixed work, with root causes, stays in
+`docs/roadmap/10b-bugs-fixed.md`.
 
 ## Archived / Deferred
 
-- **Exploration system** (`exploration/`) — monster expeditions (find loot, hazards, death cards). Archived for the revival; the core game is ring combat.
+- **Exploration system** (`packages/engine/src/exploration/`) — monster expeditions (find loot, hazards, death cards). Archived for the revival; the core game is ring combat. See [`docs/archive/retired/exploration-system.md`](docs/archive/retired/exploration-system.md).
 - **Mobile app** — React Native + Expo. Deferred pending player demand.
 - **Slack connector** — Bolt SDK modernization of Jane/Hubot. Deferred pending player demand.
 

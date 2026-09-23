@@ -401,26 +401,25 @@ change for the server half.
   with a reason pointing at the console. Supporting item-driven prompts over tRPC is real
   work and belongs with the ring-pane affordance, not before it.
 
-**Not shipped, and the next real work**
-0. **Item-driven prompts over tRPC.** The Sorting Hat is the only item that prompts today,
-   and it is currently unusable from the web by design rather than by accident. Supporting it
-   means carrying a choice into the mutation, or a two-step call. The ring-pane affordance
-   is now shipped; this remains a separate prompt-transport feature.
-1. **Web selling.** Browse and direct buying now live in the Workshop; selling still uses
-   `sell to the shop`, whose multi-select confirmation flow remains first-class in the
-   console and Discord.
-2. **No feedback loop** (§6 item 5, untouched). Nothing tells a player that an item *would
-   have* helped, or what a targeting scroll changed. This is the "teach the mechanic by
-   showing its effect" half of the story, and it is independent of the UI work above.
-3. **Per-fight budgets or any change to item power** — still wants the sim harness first,
-   as §6 item 2 says. Nothing above changes how much can be used, only how it is reached.
+**Follow-ups recorded here, owned elsewhere**
 
-**Open questions for whoever picks this up**
-- The tier-2 reason strings (`'Not in the ring.'`, `'Not carried into the ring.'`,
-  `'Not usable right now.'`) are centralised as exported constants in `item-tiers.ts` and
-  were written by implementation, not chosen by the owner. Worth a read-through.
-- §4's competence/attachment work (per-monster records, a memorial, earned titles) is
-  untouched and independent of everything above.
+0. **Item-driven prompts over tRPC.** The Sorting Hat is the only item that prompts today,
+   and it is unusable from the web by design. Supporting it means carrying a choice into
+   the mutation, or a two-step call. The ring-pane affordance shipped separately. Prompt
+   transport is tracked in [`item-followups.md`](../../roadmap/item-followups.md).
+1. **Web selling.** Browse and direct buying live in the Workshop; selling still uses
+   `sell to the shop`. Web selling is tracked in
+   [`item-followups.md`](../../roadmap/item-followups.md).
+2. **Outcome feedback.** Nothing yet tells a player that an item would have helped, or what
+   a targeting scroll changed. That feedback is tracked in
+   [`item-followups.md`](../../roadmap/item-followups.md).
+3. **Per-fight budgets or any change to item power** wait for the simulation harness in
+   [`11-balance-and-mechanics.md`](../../roadmap/11-balance-and-mechanics.md).
+
+The tier-2 reason strings (`'Not in the ring.'`, `'Not carried into the ring.'`,
+`'Not usable right now.'`) in `item-tiers.ts` were written during implementation. That
+wording review, and §4's per-monster records, memorials, and earned titles, are tracked in
+[`22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 ## 9. September 17: shop and live-item completion
 
@@ -447,9 +446,9 @@ adds a small automatic participation bonus. The balance rationale, price compari
 telemetry requirements and next adjustments are maintained in
 [`11-balance-and-mechanics.md`](../../roadmap/11-balance-and-mechanics.md).
 
-Web selling remains the highest-confidence item-economy follow-up: it exposes an existing
-currency source rather than adding more currency. Price changes and further recurring
-grants should wait for economy telemetry and the simulation harness.
+Web selling exposes an existing currency source rather than adding more currency. It is
+tracked in [`item-followups.md`](../../roadmap/item-followups.md). Price changes and further
+recurring grants should wait for economy telemetry and the simulation harness.
 
 ## 11. September 18: shop/wallet parity and liveness follow-up
 

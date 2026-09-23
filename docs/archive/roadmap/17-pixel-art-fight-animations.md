@@ -135,7 +135,7 @@ for it. Anything reasoning about "are the sprites showing" must check both.
 roster's HP bars and cost 96–200px of viewport; the sprites now draw inside the roster rows
 (#167), and the scene model — sides, per-side caps, the `active` flag, the fade timer and
 the `inEncounter` adoption — went with it. See
-[`docs/roadmap/23-pixel-fight-stage.md`](../../architecture/ring-roster-and-pixel-monsters.md). The
+[ring roster and pixel monsters](../../architecture/ring-roster-and-pixel-monsters.md). The
 sections below are kept as the record of how the feature was first built.
 
 ---

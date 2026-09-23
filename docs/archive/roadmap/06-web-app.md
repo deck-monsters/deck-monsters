@@ -105,20 +105,26 @@ The deferred Explore view is now a product decision in
 Deployment subsequently shipped; current procedure is
 [`docs/operations/deployment.md`](../../operations/deployment.md).
 
-## UX Improvements Backlog
+## UX notes from the first web app
 
-The following improvements are tracked here for later — they are non-blocking for initial launch but would meaningfully improve player experience:
+Written before the terminal rebuild. Shipped items below are history. Flow-step indicators
+and prompt-context labels are the remainder, tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
-- **Structured game state API**: Expose a read-only query endpoint that returns character + monster data (name, type, HP, level, stats) as structured JSON, so the web UI doesn't have to parse free-form announce text to render monster cards. This also enables the "look at monsters" page to be data-driven rather than triggering a side-effectful game command.
+Shipped since this note:
 
-- **Flow progress indicator**: When the user is in a multi-step interactive flow (spawn, equip, shop), show which step they are on (e.g. "Step 2 of 4 — Choose a name"). The engine knows the flow structure; this metadata could be included in the `prompt.request` payload.
+- **Structured game state.** Workshop and ring surfaces read character and monster fields
+  from tRPC queries instead of parsing announce text.
+- **Prompt timeout.** `sendPrompt` still times out after 120 seconds. The server publishes
+  `prompt.timeout`, and the console marks that prompt timed out and unlocks input.
+- **First-run training.** A player with no character gets a workshop form before training
+  a monster, instead of discovering character creation only by issuing a command.
+- **Cancel.** `game.cancelPrompt` abandons a pending prompt without waiting out the timeout.
+- **Cross-view isolation.** The terminal puts public narration in the Ring pane and private
+  replies in the Console, filtered by `targetUserId`. The old per-view ring subscriptions
+  are gone.
 
-- **Prompt context labels**: Show which flow a prompt belongs to (e.g. "Spawning your monster" vs. "Character setup") so users aren't confused when a prompt appears unexpectedly (e.g. first-time character creation triggered by any command).
+Remainder, owned in small leftovers:
 
-- **Graceful prompt timeout handling**: The server-side `sendPrompt` times out after 120 seconds. When a prompt times out, notify the user in the UI (e.g. "The game stopped waiting for your answer — start a new command to try again."). Currently the user has no feedback that their flow was abandoned.
-
-- **First-time onboarding**: Detect new users (no character yet) and surface a clear "Create your character" flow on first login, rather than requiring them to discover it by accident via a game command.
-
-- **Cross-view event isolation**: Private `announce` events from one game flow (e.g. spawn) currently leak into other views' ring feed subscriptions. Views should filter events to only those relevant to the flow they initiated.
-
-- **Cancel in-flight prompt**: Add a server-side mechanism for users to cancel a pending prompt (abandon the current flow) without waiting for the 120s timeout. This could be a `game.cancelPrompt` tRPC mutation.
+- Flow-step indicators for multi-step spawn, equip, and shop flows.
+- Prompt-context labels that name which flow a prompt belongs to.

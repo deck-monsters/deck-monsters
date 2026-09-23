@@ -11,6 +11,12 @@ balance harness can evaluate their interactions.
 - [ ] Design and test Healing Balm, Enchanted Mirror, Bear Trap, Shardblade, Kata, Gini
   Coefficient, Healing Wind, Shuffle, Delve, Wild, Trade Hands, and Swarm.
 - [ ] Strengthen repeated Immobilize rather than merely resetting its hold.
+- [ ] **Owner: Cards.** Evaluate a hybrid data-driven card spec (schema plus optional
+  hooks) and a card-authoring agent skill covering file locations, the base class, tests,
+  and balance pitfalls. Do this after the simulation harness in
+  [balance and mechanics](11-balance-and-mechanics.md) can review a proposed card. The
+  spec stays optional until more people author cards; the current class-per-card system
+  remains the implementation.
 
 ## Monsters and items
 
@@ -35,5 +41,5 @@ balance harness can evaluate their interactions.
 New combat content needs simulation coverage. Player-facing terminology follows
 [voice and wording](../reference/voice-and-wording.md); items follow
 [`ITEMS.md`](../../ITEMS.md); teams and boss content follow
-[boss encounters](../architecture/boss-encounters.md). Content-authoring tooling and
-agent skills belong to the documentation-maintenance pass, not this product backlog.
+[boss encounters](../architecture/boss-encounters.md). Card-spec and card-authoring skill
+work is the Cards item above.

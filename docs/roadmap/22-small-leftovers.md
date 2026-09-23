@@ -24,19 +24,24 @@ execution queue.
 - [ ] **Owner: Ring roster.** Use real-device evidence to decide whether only the acting
   sprite should move and whether the eight-contestant density threshold remains legible.
   Read [ring roster and pixel monsters](../architecture/ring-roster-and-pixel-monsters.md).
+- [ ] **Owner: Web prompts.** Show which step a multi-step flow is on (spawn, equip, shop),
+  for example "Step 2 of 4 — Choose a name". Prompt timeout, cancel, and first-run
+  character creation already exist. Read
+  [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
+- [ ] **Owner: Web prompts.** Label which flow a prompt belongs to, so "Spawning your
+  monster" and "Character setup" are distinguishable when a prompt appears. Read
+  [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
 
 ## Items and monster identity
 
-- [ ] **Owner: Workshop/items.** Transport item-driven prompts to the web without allowing
-  a prompt inside an awaited mutation; the Sorting Hat is the current case. Read
-  [workshop and items](../architecture/workshop-and-items.md) and
-  [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
-- [ ] **Owner: Workshop/items.** Add membership-checked, room-scoped web selling with a
-  deliberate replacement for the console's multi-select confirmation flow. Read
+Prompt transport, web selling, and outcome feedback are owned in
+[item follow-ups](item-followups.md).
+
+- [ ] **Owner: Workshop/voice.** Review the tier-2 reason strings in `apps/web/src/utils/item-tiers.ts`
+  (`Not in the ring.`, `Not carried into the ring.`, `Not usable right now.`). They were
+  written during implementation and still need an owner pass against
+  [voice and wording](../reference/voice-and-wording.md). Read
   [workshop and items](../architecture/workshop-and-items.md).
-- [ ] **Owner: Workshop/items.** Show an item's applied effect and a targeting scroll's
-  changed strategy, so item choices teach their consequences. Read
-  [workshop and items](../architecture/workshop-and-items.md) and [`ITEMS.md`](../../ITEMS.md).
 - [ ] **Owner: Analytics/content.** Define per-monster records, dead-monster memorials, and
   earned titles from durable data before exposing or inventing a new projection. Read
   [analytics and history](../architecture/analytics-and-history.md).
@@ -46,6 +51,10 @@ execution queue.
 - [ ] **Owner: Analytics.** Choose and implement raw-event and fight-summary retention; do
   not call 24-hour/7-day reads a deletion policy. Also decide whether interrupted fights
   need an explicit player signal. Read
+  [analytics and history](../architecture/analytics-and-history.md).
+- [ ] **Owner: Analytics.** Decide whether to populate `fight_summaries.notable_cards`.
+  `FightSummaryWriter` still writes null because it does not track turning-point
+  `card.played` events. Read
   [analytics and history](../architecture/analytics-and-history.md).
 - [ ] **Owner: Analytics/identity.** Decide global-leaderboard visibility and verify that a
   room reset clears the room's projections and summaries. Read
@@ -58,6 +67,15 @@ execution queue.
   [working in this repo](../agents/working-in-this-repo.md).
 - [ ] **Owner: Identity/deployment.** Decide whether to enable Apple OAuth and explicitly
   test account linking for providers sharing an email. Read
+  [rooms and identity](../architecture/rooms-and-identity.md) and
+  [deployment](../operations/deployment.md).
+- [ ] **Owner: Discord/identity.** Decide whether Discord should seed room characters from
+  `profiles.display_name` instead of `interaction.user.username`, before promising the
+  same character name on every connector. Read
+  [rooms and identity](../architecture/rooms-and-identity.md).
+- [ ] **Owner: Identity/deployment.** Before running more than one API instance, serialize
+  display-name updates with a database lock or an optimistic version check. The current
+  queue in `packages/server/src/trpc/profile.ts` is in-process only. Read
   [rooms and identity](../architecture/rooms-and-identity.md) and
   [deployment](../operations/deployment.md).
 - [ ] **Owner: Product.** Reconsider native mobile, Slack, and exploration only with clear

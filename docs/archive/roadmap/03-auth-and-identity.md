@@ -163,14 +163,8 @@ to only when their current character name still equals the previous display name
 the initial profile-to-character relationship useful without overwriting an intentional
 in-room alias. Historical fight snapshots, event text, and monster names remain historical.
 
-**Open question — Discord:** the Discord connector still seeds room characters from
-`interaction.user.username` and does not read `profiles.display_name`. Decide whether it
-should use the global display name before promising consistent cross-connector character
-seeding.
-
-**Open question — multi-instance display-name updates:** per-user serialization currently exists
-only within one server process; deploy a database-side lock or optimistic version check before
-operating multiple API instances.
+Discord display-name seeding and multi-instance display-name updates are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 ## Tasks
 
@@ -186,7 +180,8 @@ operating multiple API instances.
 
 ### Historical remainder
 
-Apple OAuth and same-email account-linking decisions are tracked in
+Apple OAuth, same-email account linking, Discord display-name seeding, and multi-instance
+display-name updates are tracked in
 [`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). Slack identity
 work is deferred with the Slack connector rather than remaining a task in this history.
 

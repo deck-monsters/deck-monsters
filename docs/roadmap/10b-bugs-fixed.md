@@ -1342,7 +1342,7 @@ Safe in practice — `sendPrompt` is the only publisher and always uses `scope: 
 1. `monster.cards.length < monster.cardSlots` → *"Only an evil master would send their monster into battle without enough cards."* Because characters are room-scoped, a player fully set up in rooms A and B still has a freshly spawned, empty-decked monster in room C — exactly where the chip was most likely to be clicked.
 2. `ring.contestants` already holds a contestant for that character → *"You already have a monster in the ring!"* The chip builder's `hasMonsterInRing` was computed over **living** monsters only, so a monster that died in the ring but had not yet been cleared left the guard false and a second send was offered.
 
-**Fixed**: `readyToSend` is gated on a new `isDeckReady()` (`cards.length >= cardSlots`, defaulting to 9 when the field is missing on a partially hydrated entity), and `hasMonsterInRing` is derived from the player's ring contestants directly rather than from their living monsters — mirroring the engine's `contestant.character === character` test. The equip chip now targets the first idle monster that still needs cards, so it points at whatever is actually blocking the send instead of at an already-equipped monster. `send` / `call out of the ring` also pass `user.id` rather than `user?.id`, so a missing id fails loudly instead of turning private countdown and full-ring announces public (same hardening as the `look at the ring` fix).
+**Fixed**: `readyToSend` is gated on a new `isDeckReady()` (`cards.length >= cardSlots`, defaulting to 9 when the field is missing on a partially hydrated entity), and `hasMonsterInRing` is derived from the player's ring contestants directly rather than from their living monsters — mirroring the engine's `contestant.character === character` test. The equip chip now targets the first idle monster that still needs cards, so it points at whatever is actually blocking the send instead of at an already-equipped monster. `send` / `call out of the ring` also pass `user.id` rather than `user?.id`, so a missing id fails loudly instead of turning private countdown and full-ring announces public (same hardening as the `look at the ring` fix, #174).
 
 Covered by `server/src/quick-actions.test.ts` — deck readiness at default and custom slot counts, equip-instead-of-send, second monster while one is in the ring, dead-contestant-still-in-ring, and equip targeting.
 
@@ -1694,8 +1694,8 @@ live hp/ac preserved, full card again on monster switch, team shown) and two
 
 Eight iPhone screenshots of a live Game Night room, triaged in two passes: first the
 layout, then what the messages actually said. Screenshots are kept in
-[`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). #101 and #104 remain open in
-`10-bug-fixes.md` — both are judgement calls about the game's voice, not defects.
+[`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). #101 and #104 are fixed later in
+this ledger: the turn-banner glyphs (#101) and the ring-exit line (#104).
 
 Verified by tests and static render only. There is no live app in the dev container
 (`pnpm setup:local` needs Docker/Supabase), so none of these was observed in a browser.
@@ -2388,8 +2388,9 @@ is never a scrollport. This removes the precondition instead of depending on how
 engine treats markers inside one, so it is the right shape of fix whichever engine was at
 fault — but it has not been seen to fix anything, and wants confirmation on a real iPhone.
 
-See the standing limitation recorded under `10-bug-fixes.md` G: all visual verification here
-is Chromium-only, so a clean render is not evidence that a reported visual bug is absent.
+Device confirmation is the WebKit check in [small leftovers](22-small-leftovers.md): all
+visual verification here is Chromium-only, so a clean render is not evidence that a reported
+visual bug is absent.
 
 **Status**: Fixed in code; unconfirmed on device.
 
@@ -2508,8 +2509,8 @@ append) rather than the behaviour, so it was rewritten to ask what the follow-ou
 decides, plus a guard that an append schedules no scroll of its own.
 
 **Unconfirmed on device**: the failure is a touch drag racing a scroll animation, which
-neither jsdom nor a headless Chromium render reproduces. See the standing limitation under
-`10-bug-fixes.md` G.
+neither jsdom nor a headless Chromium render reproduces. Device confirmation is the WebKit
+check in [small leftovers](22-small-leftovers.md).
 
 **Status**: Fixed in code; unconfirmed on device.
 
@@ -2858,12 +2859,11 @@ router.ts`) only summarized two of them, and `buyShopItem`'s `purchaseShopItem`
 `ShopItemSection` didn't even have a `'cards'` variant. Any card the room shop had in stock
 was invisible and unbuyable from the web app, full stop.
 
-(At the time of this fix, `items/store/stock.ts#getCards` itself always returns `[]` —
-cards for sale are not yet generated for *new* shops, a separate, pre-existing gap tracked
-in `docs/roadmap/10-bug-fixes.md`. This fix closes the client-parity gap regardless: a
-shop's `cards` pool can be non-empty from state persisted before that stub existed, or once
-`getCards` is fixed, and the two clients reading the same room-scoped `Game.shop` must never
-disagree about what's on sale.)
+(At the time of this fix, `items/store/stock.ts#getCards` itself always returned `[]` —
+cards for sale were not yet generated for *new* shops. That gap is #147 below. This fix
+closes the client-parity gap regardless: a shop's `cards` pool can be non-empty from state
+persisted before that stub existed, or once `getCards` is fixed, and the two clients reading
+the same room-scoped `Game.shop` must never disagree about what's on sale.)
 
 **Fixed**:
 - `summarizeShop` now also summarizes `shop.cards`, priced at `shop.priceOffset * 2` — the
@@ -2886,8 +2886,8 @@ disagree about what's on sale.)
   not the item list), and `ShopPanel.test.tsx` (renders cards, buys the exact stock token,
   shows "Sold out." when the section is empty).
 
-**Status**: Fixed (Workshop/console parity). `getCards()` itself returning `[]` for newly
-generated shops is a separate, pre-existing gap — see `docs/roadmap/10-bug-fixes.md`.
+**Status**: Fixed (Workshop/console parity). `getCards()` returning `[]` for newly
+generated shops is #147.
 
 ---
 
@@ -3776,10 +3776,9 @@ at once; a per-caller `useState` would have left the pane stale until a reload. 
 snapshot re-reads storage rather than caching in a module variable, so storage cleared
 underneath it is picked up instead of being masked.
 
-This is deliberately a stopgap: the presentation itself (how much room the band takes, and
-whether a whole-fight band is the right shape at all) is still open. That thinking, with a
-photo of a real tablet session and a recommendation to move the sprites into the Ring
-roster instead, is in the [historical roster plan](../archive/roadmap/23-pixel-fight-stage.md).
+This was a stopgap. #167 removed the band and moved the sprites into the Ring roster rows.
+The recommendation that led there, with a photo of a real tablet session, is in the
+[historical roster plan](../archive/roadmap/23-pixel-fight-stage.md).
 
 **Tests**: `usePixelFightStage.test.tsx` covers the default-off state, persistence,
 cross-caller propagation, cross-tab `storage` events and ignoring unrelated keys.
@@ -4062,5 +4061,23 @@ comes with the colour name (`options.colorHex`), because most of the library's n
 
 **Tests**: `random.test.ts` — twelve bosses must carry a well-formed hex and more than one
 colour; it fails on the old loader.
+
+**Status**: Fixed.
+
+### 174. `look at the ring` published private announces nobody received — FIXED
+
+The command echoed in the console and then went silent. The ring description never arrived.
+
+**Root cause**: `commands/look-at.ts` passed the channel function into `game.lookAtRing` and
+`lookAtRingCards`, which expect a string `userId`. `Ring.look` / `lookAtCards` publish
+private announces with that value as `targetUserId` (`Ring.pub` sets `scope: 'private'`
+whenever the argument is truthy). Subscriber delivery compares `targetUserId` to a string
+`userId`, so a function never matched and the announces were dropped. The console echo is
+published by the server on its own, which is why the command looked accepted.
+
+**Fix**: pass `user.id`. A missing id fails loudly instead of addressing a private announce
+to a non-string (the same `user?.id` hazard #85 later closed for send and call-out). Covered
+by `packages/server/src/integration/command-flow.test.ts` (`look at the ring`: an empty ring
+and a ring with a contestant, delivered only to the requesting user).
 
 **Status**: Fixed.

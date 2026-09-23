@@ -86,7 +86,7 @@ type InventoryMonsterSummary = {
 	battles: { wins: number; losses: number; total: number };
 };
 
-// Per-item summary for the web item list (roadmap/19-player-agency-and-items.md §7).
+// Per-item summary for the web item list (docs/architecture/workshop-and-items.md).
 // Usability is computed here, once, from the engine's own `canUseItem` predicate so the
 // client never has to reimplement the rule — see `canUseItemSafe` below.
 type ItemSummary = {

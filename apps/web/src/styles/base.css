@@ -803,10 +803,10 @@ button {
 .workshop-avatar-chip:has(input:checked) { border-color: var(--color-accent); }
 
 /*
- * Items panel (roadmap/19-player-agency-and-items.md §7). Follows the card inventory's
+ * Items panel (docs/architecture/workshop-and-items.md). Follows the card inventory's
  * existing visual language exactly: tier !== 1 gets the same treatment as
  * `.workshop-card-slot.incompatible` — dim + dashed border, never hidden — plus a reason
- * line, because a dimmed row with no reason reads as a bug (§7).
+ * line, because a dimmed row with no reason reads as a bug.
  */
 .workshop-items {
   border: 1px solid var(--color-border);

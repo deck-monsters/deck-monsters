@@ -52,7 +52,7 @@ fight_summaries: {
   winnerXpGained: integer not null default 0,  // 0 for multi-monster fights (see participants)
   loserXpGained: integer not null default 0,   // 0 for multi-monster fights (see participants)
   cardDropName: text,                    // null if no card dropped
-  notableCards: text[],                  // reserved; not yet populated
+  notableCards: text[],                  // reserved; population decided in small leftovers
   participants: jsonb not null default '[]',  // always populated; all N contestants with outcome+xp
 }
 // B-tree index on (roomId, endedAt) — "recent fights in room X"
@@ -76,7 +76,7 @@ The subscriber is stateful per process — `pendingByRoom` is not persisted. A s
 
 **Why not derive summaries from `room_events` at query time?** For ad-hoc queries with low volume it would work, but it requires joining and scanning many event rows per fight. Pre-computing summaries is cheaper at read time and allows efficient indexes on fight outcome and participants.
 
-**`notableCards` not yet populated**: the current `FightSummaryWriter` doesn't track `card.played` events. This field is reserved for a future pass that identifies "turning point" cards (e.g., cards dealing ≥ 50% of a creature's max HP in one hit).
+**`notableCards`**: `FightSummaryWriter` writes null and does not track `card.played` events. Whether to populate turning-point cards (for example a hit for at least half of max HP) is tracked in [`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 ### API: tRPC Procedures
 
@@ -274,7 +274,7 @@ Both are populated from ring outcome events. The `FightStatsSubscriber` from `13
 
 ## Historical remainder
 
-Retention and interrupted-fight signaling are tracked in
-[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). The current
+Retention, interrupted-fight signaling, and the unpopulated `notableCards` field are tracked
+in [`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). The current
 implemented behavior is in
 [`docs/architecture/analytics-and-history.md`](../../architecture/analytics-and-history.md).
