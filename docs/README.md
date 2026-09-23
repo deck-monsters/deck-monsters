@@ -78,3 +78,7 @@ Generated and authored player references remain at the repository root:
   Archived plans are not live contracts.
 - `superpowers/specs/` and `superpowers/plans/` hold only the active pass's temporary design
   and implementation artifacts. Extract durable facts before deleting or archiving them.
+
+When a change adds, edits, moves, or invalidates documentation, follow
+[maintaining repository docs](../.cursor/skills/maintaining-repository-docs/SKILL.md)
+before editing. That skill is the closeout procedure; this map remains the index.

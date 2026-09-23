@@ -39,6 +39,10 @@ These apply to every task in this repo, not just the one you were asked to do.
    separate housekeeping commit, so `git log` of the plan is the history of the work. When
    the pass is finished, fold its decisions into the owning area docs and move the plan to
    `docs/archive/roadmap/`.
+7. **Maintain documentation lifecycle.** For any change that adds, edits, moves, invalidates,
+   or should update documentation, use
+   `.cursor/skills/maintaining-repository-docs/SKILL.md` before editing docs. This includes
+   behavior changes, roadmap status, generated references, runbooks, and durable findings.
 
 ## Working with subagents
 
