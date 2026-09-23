@@ -91,7 +91,7 @@ describe('./items/helpers/use.ts', () => {
 	 * A chat client has no button to not press, so the confirmation is the only thing between
 	 * a typo and a spent item. A caller whose UI already confirmed has nothing left to ask —
 	 * and asking anyway is what kept item use out of the web client entirely, since a prompt
-	 * cannot be answered inside a tRPC mutation. See docs/roadmap/19-player-agency-and-items.md.
+	 * cannot be answered inside a tRPC mutation. See docs/architecture/workshop-and-items.md.
 	 */
 	describe('confirmed', () => {
 		it('asks for confirmation by default', () => {

@@ -24,7 +24,7 @@ export interface BaseItemStatic {
 	 * confirmation. Such an item can only be used where a prompt can be answered — the
 	 * console or Discord — never through a prompt-free API caller, whose channel rejects
 	 * questions. Declared here so a caller can tell *before* offering the item, rather
-	 * than finding out when the use fails. See docs/roadmap/19-player-agency-and-items.md.
+	 * than finding out when the use fails. See docs/architecture/workshop-and-items.md.
 	 */
 	requiresPrompt?: boolean;
 	notForSale?: boolean;

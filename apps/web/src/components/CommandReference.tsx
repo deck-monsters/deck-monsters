@@ -182,7 +182,7 @@ export default function CommandReference({ open, onClose, onInsertCommand }: Com
                   re-equipping, no calling it back and in again. Items are the deliberate
                   exception: `useItems` has no `inEncounter` guard, on purpose, because items
                   are meant to be the one real-time decision in the game (see
-                  docs/roadmap/19-player-agency-and-items.md §3). That's easy to never
+                  docs/architecture/workshop-and-items.md). That's easy to never
                   discover, so the items panel says so directly instead of leaving it
                   implicit in the command list.
                 */}

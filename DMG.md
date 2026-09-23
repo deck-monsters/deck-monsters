@@ -121,7 +121,7 @@ cap at -3 per level; further penalties come out of HP instead.
 ── Operator Concurrency Notes ────────
 
 These rules prevent "commands ignored" and workshop/console interleaving bugs.
-Full detail: docs/engine-concurrency-and-timing.md
+Full detail: docs/architecture/engine-concurrency-and-timing.md
 
   • Interactive console commands serialize per roomId:userId — never room-wide.
     A user's multi-prompt flow must not starve other members.

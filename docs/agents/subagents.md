@@ -117,7 +117,7 @@ This is what has actually worked on this repo:
     sample frames with `ffmpeg -ss` and view them. A video-review model reported 1–2 px
     sprite motion as "static"; a strip of frames 200 ms apart settled it. The reusable
     rooms and the CDP-attach recipe are in
-    [`docs/local-testing-guidelines.md`](../local-testing-guidelines.md).
+    [`docs/operations/local-testing.md`](../operations/local-testing.md).
 
 ## Anti-patterns
 

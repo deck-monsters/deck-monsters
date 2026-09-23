@@ -12,7 +12,7 @@ interface PaneSelectorProps {
 
 /**
  * The small, pane-local control that lets a viewer pick which surface a slot shows
- * (docs/roadmap/20-workspace-layout.md §3.3). Deliberately a plain `<select>`: the ring
+ * (docs/architecture/web-workspace.md). Deliberately a plain `<select>`: the ring
  * pane header already carries a timer badge and a summons counter, so anything heavier
  * would crowd them.
  */

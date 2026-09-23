@@ -95,7 +95,8 @@ export interface RingContestantSnapshot {
 	 * The monster's appearance as its Beastmaster described it ("gold and black", "slightly
 	 * translucent blue"), or a random colour name for a boss. The web colours each pixel
 	 * sprite from it, so two monsters of one species in a ring do not look identical — see
-	 * docs/roadmap/24-pixel-monsters-everywhere.md. Already public through `look at`; empty
+	 * docs/architecture/ring-roster-and-pixel-monsters.md. Already public through `look at`;
+	 * empty
 	 * when a monster has none. Capped because it is free text broadcast to the whole room.
 	 */
 	appearance: string;
@@ -781,7 +782,7 @@ export class Ring extends BaseClass {
 		} else if (numberOfMonstersInRing <= 0) {
 			// Quorum gone: abort any queued event so a future roster cannot inherit a stale
 			// event that was rolled for a completely different set of contestants.
-			// See docs/boss-encounters.md §4 (Finding 4 — quorum-drop guard).
+			// See docs/architecture/boss-encounters.md §4 (Finding 4 — quorum-drop guard).
 			this.ringEvent = undefined;
 			this.emit('narration', {
 				narration: 'The ring is quiet save for the faint sound of footsteps fleeing into the distance.',
@@ -1535,14 +1536,15 @@ export class Ring extends BaseClass {
 	 * withdrew, or despawn timer fired with no players in ring). The game wires this to
 	 * `_refundSingleBossSummon(userId, timestamp)` so the charge is returned from the
 	 * `bossSummons` and `bossSummonsPending` ledgers. Not set for timer/admin/Gauntlet bosses.
-	 * See docs/boss-encounters.md §3.
+	 * See docs/architecture/boss-encounters.md §3.
 	 */
 	onSummonedBossRemoved?: (userId: string, timestamp: number) => void;
 
 	/**
 	 * Whether the current ring event is a free-for-all (Blood Feud). Cards that call
 	 * `getTarget` internally pass `ring` to it; this getter provides the policy without
-	 * requiring cards to know about specific event names. See docs/boss-encounters.md §5.
+	 * requiring cards to know about specific event names. See
+	 * docs/architecture/boss-encounters.md §5.
 	 */
 	get encounterFreeForAll(): boolean {
 		return this.ringEvent?.freeForAll === true;
@@ -1556,14 +1558,15 @@ export class Ring extends BaseClass {
 	 *
 	 * This is the single activation path shared by the natural roll (inside
 	 * `startFightTimer`) and the admin `trigger ring event` command — keeping both
-	 * paths identical prevents them from drifting apart. See docs/boss-encounters.md §4.
+	 * paths identical prevents them from drifting apart. See
+	 * docs/architecture/boss-encounters.md §4.
 	 */
 	activateRingEvent(ringEvent: RingEventDefinition): void {
 		// Guard against repeat activation: overwriting an already-armed event would
 		// re-run its side effects (boss spawns, announcements, metrics) and corrupt
 		// the fight log. Natural rolls never reach here twice (rollRingEvent() bails
 		// when this.ringEvent is set), so this guard is primarily for the admin
-		// "trigger ring event" command path. See docs/boss-encounters.md §4.
+		// "trigger ring event" command path. See docs/architecture/boss-encounters.md §4.
 		if (this.ringEvent) {
 			this.log({
 				context: 'ring.activateRingEvent.alreadyArmed',

@@ -4,7 +4,8 @@
  * The ledger lives in `game.options.bossSummons` (see `Game.bossSummons`), so it is
  * room-scoped for free and rides the room's `state_blob` across restarts. These functions
  * are deliberately pure: the caller reads the ledger, decides, and writes the new one back
- * through the setter. See `docs/boss-encounters.md` for why the quota is enforced in the
+ * through the setter. See `docs/architecture/boss-encounters.md` for why the quota is
+ * enforced in the
  * engine command handler rather than in the tRPC router.
  */
 
@@ -62,7 +63,7 @@ export const summonAllowance = (
  * Returns a new ledger with `userId`'s summon recorded. Expired timestamps are pruned for
  * every player while rebuilding, which is the only place pruning happens — the `Game`
  * getter stays a pure read so it can never emit `stateChange` from inside another
- * broadcast (see `docs/engine-concurrency-and-timing.md` §7).
+ * broadcast (see `docs/architecture/engine-concurrency-and-timing.md` §7).
  */
 export const recordSummon = (
 	ledger: BossSummonLedger | undefined,
@@ -84,7 +85,7 @@ export const recordSummon = (
 /**
  * Adds a timestamp to the pending ledger without pruning. Used alongside `recordSummon`
  * so a restart can identify charges that were recorded but whose encounter never started.
- * See docs/boss-encounters.md §3 for the restart-gap problem.
+ * See docs/architecture/boss-encounters.md §3 for the restart-gap problem.
  */
 export const addPendingSummon = (
 	pending: BossSummonLedger | undefined,

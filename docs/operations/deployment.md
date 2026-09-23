@@ -1,5 +1,11 @@
 # Deployment Guide
 
+Status: Current
+Read before: creating or changing Supabase/Railway production services, auth redirect
+URLs, custom domains, deployment commands, or production environment variables.
+Verified: 2026-09-23 against the checked-in Railway configs, server Dockerfile, and current
+environment consumers.
+
 Deck Monsters runs on two hosted services:
 
 - **Supabase Cloud** — PostgreSQL database, Auth (JWT issuance), and Storage
@@ -135,7 +141,7 @@ The project deploys as three separate Railway services from the same GitHub repo
 | Service | Source | What it is |
 |---|---|---|
 | **Web** | `apps/web/` | React SPA served as a static site |
-| **Server** | repo root `Dockerfile` | Fastify API server + WebSocket ring feed |
+| **Server** | `packages/server/Dockerfile` | Fastify API server + WebSocket ring feed |
 | **Discord bot** | `packages/connector-discord/` | Discord connector (covered in section 3) |
 
 ### 2a. Create the Railway project
@@ -146,7 +152,9 @@ The project deploys as three separate Railway services from the same GitHub repo
 
 ### 2b. Service: Web (static SPA)
 
-The web service is configured via `apps/web/railway.toml` (checked into the repo), which tells Railway to use Nixpacks and the correct monorepo build command. You just need to point Railway at that config file.
+The web service is configured via `apps/web/railway.toml` (checked into the repo), which
+tells Railway to use Railpack and the correct monorepo build/start commands. Point Railway
+at that config file rather than duplicating those commands in the dashboard.
 
 Go to the service → **Settings → Config-as-code** and set:
 
@@ -154,7 +162,9 @@ Go to the service → **Settings → Config-as-code** and set:
 |---|---|
 | **Config file path** | `apps/web/railway.toml` |
 
-That's it — no Dockerfile, no manual build command entry. Railway will read the config and build the SPA with Nixpacks, then serve it via [`serve`](https://github.com/vercel/serve).
+That's it — no Dockerfile, no manual build command entry. Railway will read the config,
+build the SPA with Railpack, then serve it via
+[`serve`](https://github.com/vercel/serve).
 
 Go to **Settings → Networking** and generate a public domain so you have a URL for the web app.
 
@@ -176,7 +186,8 @@ The server service is configured via `packages/server/railway.toml`. Go to the n
 |---|---|
 | **Config file path** | `packages/server/railway.toml` |
 
-Go to **Settings → Networking** and generate a public domain. Copy that URL — you will need it for the Web service and the Discord connector.
+Go to **Settings → Networking** and generate a public domain. Copy that URL for the Web
+service's `VITE_SERVER_URL`.
 
 Then go to **Variables** and add:
 
@@ -185,10 +196,13 @@ Then go to **Variables** and add:
 | `NODE_ENV` | `production` |
 | `DATABASE_URL` | Transaction pooler URL from Supabase → **Settings → Database → Connection string** |
 | `SUPABASE_URL` | Your Supabase project URL (e.g., `https://xxxx.supabase.co`) |
-| `SUPABASE_PUBLISHABLE_KEY` | Your Supabase Publishable key (`sb_publishable_...`) |
 | `SUPABASE_SECRET_KEY` | Your Supabase Secret key (`sb_secret_...`) — bypasses RLS, keep secret |
-| `CONNECTOR_SERVICE_TOKEN` | A secret token shared with all connectors — generate with `openssl rand -hex 32` |
 | `CORS_ORIGINS` | Comma-separated allowed origins. Once custom domains are set up (see 2e): `https://deck-monsters.com,https://www.deck-monsters.com,http://localhost:5173`. Before custom domains, use your Railway web URL, e.g. `https://<web>.up.railway.app,http://localhost:5173` |
+
+`CONNECTOR_SERVICE_TOKEN` is required only for a separately deployed client that calls the
+server's service-authenticated tRPC procedures. The current Discord connector imports the
+server/RoomManager packages and connects to Postgres directly; it does not call the API
+service.
 
 Once the build completes, verify the server is running:
 
@@ -252,12 +266,6 @@ Redeploy the Web service after saving.
 
 Add `https://web.deck-monsters.com` to `CORS_ORIGINS` if you're using that alias too. The server picks up the new value on next deploy or restart — no code change needed.
 
-**Discord connector → Variables:**
-
-| Variable | New value |
-|---|---|
-| `SERVER_URL` | `https://server.deck-monsters.com` |
-
 **Supabase → Authentication → URL Configuration:**
 
 | Setting | New value |
@@ -306,10 +314,11 @@ Go to the new service → **Settings → Build** and set:
 | Setting | Value |
 |---|---|
 | **Root directory** | _(leave blank — build runs from the repo root)_ |
-| **Build command** | `pnpm install && pnpm --filter @deck-monsters/engine build && pnpm --filter @deck-monsters/connector-discord build` |
+| **Build command** | `pnpm install --frozen-lockfile && pnpm --filter @deck-monsters/connector-discord... build` |
 | **Start command** | `node packages/connector-discord/dist/index.js` |
 
-This service does not need a public domain — it connects outbound to Discord and the Server.
+This service does not need a public domain — it connects outbound to Discord, Postgres, and
+Supabase Auth.
 
 Go to **Variables** and add:
 
@@ -318,92 +327,62 @@ Go to **Variables** and add:
 | `DISCORD_TOKEN` | Your bot token from the Discord developer portal |
 | `DISCORD_CLIENT_ID` | Your application's client ID |
 | `DATABASE_URL` | Same Supabase transaction pooler URL as the server |
-| `SERVER_URL` | `https://server.deck-monsters.com` (or the Railway-generated URL before custom domains are set up) |
-| `CONNECTOR_SERVICE_TOKEN` | Same token set on the Server service |
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_SECRET_KEY` | Your Supabase Secret key; required for first-contact Discord user creation |
 
 ---
 
-## 4. Local Development (Server)
+## 4. Local development
 
-### Start the Supabase local stack
-
-```bash
-supabase start
-```
-
-This starts a local Postgres, Auth, and Studio in Docker. The output includes your local credentials:
-
-```
-API URL: http://localhost:54321
-DB URL: postgresql://postgres:postgres@localhost:54322/postgres
-JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
-anon key: eyJ...
-service_role key: eyJ...
-```
-
-> The local CLI still uses the legacy key names. Map them to the current env vars:
-> - `anon key` → `SUPABASE_PUBLISHABLE_KEY`
-> - `service_role key` → `SUPABASE_SECRET_KEY`
-> - The `JWT secret` line is not needed — local JWT verification uses the same JWKS endpoint at `http://localhost:54321/auth/v1/jwks`
-
-Create a `.env.local` file at the repo root (git-ignored):
-
-```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:54322/postgres
-SUPABASE_URL=http://localhost:54321
-SUPABASE_PUBLISHABLE_KEY=eyJ...   # "anon key" from supabase start output
-SUPABASE_SECRET_KEY=eyJ...        # "service_role key" from supabase start output
-CONNECTOR_SERVICE_TOKEN=dev-service-token
-
-# Discord connector (only needed when running the bot locally)
-DISCORD_TOKEN=your-bot-token
-DISCORD_CLIENT_ID=your-client-id
-SERVER_URL=http://localhost:3000
-```
-
-### Apply migrations to local Postgres
-
-```bash
-supabase db reset
-```
-
-### Start the server
-
-```bash
-cd packages/server
-pnpm dev
-# Server listening at http://0.0.0.0:3000
-```
-
-Or with Docker Compose (after `supabase start`):
-
-```bash
-docker-compose up
-```
-
-### Run the Supabase Studio
-
-The local Supabase Studio is at `http://localhost:54323` — use it to inspect the database, test queries, and manage auth users.
+Local service startup, reusable test rooms, and throwaway cleanup are owned by
+[local testing](local-testing.md). Cursor Cloud's remote/local Supabase paths and Docker
+setup are owned by [cloud development](cloud-development.md).
 
 ---
 
-## Environment Variables Reference
+## Production environment variables
 
-| Variable | Required | Description |
+This is the canonical production table. Do not copy it into another setup guide.
+
+### Server
+
+| Variable | Requirement | Purpose |
 |---|---|---|
-| `DATABASE_URL` | Yes | PostgreSQL connection string for Drizzle ORM (use Transaction pooler URL on Railway) |
-| `SUPABASE_URL` | Yes | Supabase project URL — used to construct the JWKS endpoint for JWT verification and for admin auth calls |
-| `SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase Publishable key (`sb_publishable_...`) — safe for client-side use with RLS enabled |
-| `SUPABASE_SECRET_KEY` | Yes | Supabase Secret key (`sb_secret_...`) — used by `ensureConnectorUser` to create auth users; bypasses RLS, never expose publicly |
-| `CONNECTOR_SERVICE_TOKEN` | Yes | Shared secret for authenticating connector-to-server service calls (set in both the server and each connector's env) |
-| `CORS_ORIGINS` | No | Comma-separated list of allowed CORS origins for the server. Defaults to `http://localhost:5173`. Production example: `https://deck-monsters.com,https://www.deck-monsters.com,http://localhost:5173` |
-| `PORT` | No | HTTP port, defaults to `3000` (server only) |
-| `HOST` | No | Bind address, defaults to `0.0.0.0` (server only) |
-| `NODE_ENV` | No | `production` or `development` |
-| `DISCORD_TOKEN` | Connector | Discord bot token (Discord connector only) |
-| `DISCORD_CLIENT_ID` | Connector | Discord application client ID (Discord connector only) |
-| `SERVER_URL` | Connector | Base URL of the API server, used by the Discord connector for service calls. Production: `https://server.deck-monsters.com` |
-| `VITE_SERVER_URL` | Web | Base URL of the API server, baked in at build time by Vite. Production: `https://server.deck-monsters.com`. Leave empty in dev (Vite proxy handles `/trpc` locally) |
+| `DATABASE_URL` | Required | Supabase Postgres transaction-pooler URL used by Drizzle |
+| `SUPABASE_URL` | Required | Supabase project URL used for JWT issuer/JWKS validation and auth admin calls |
+| `SUPABASE_SECRET_KEY` | Required for connector-user creation | Server-only Supabase secret key; bypasses RLS |
+| `CORS_ORIGINS` | Optional | Comma-separated web origins; defaults to `http://localhost:5173` |
+| `CONNECTOR_SERVICE_TOKEN` | Required only for service tRPC clients | Bearer-equivalent shared secret accepted on service procedures |
+| `PORT` | Optional | HTTP/WS port; defaults to `3000` and Railway may inject it |
+| `HOST` | Optional | Bind address; defaults to `0.0.0.0` |
+| `LOG_LEVEL` | Optional | Structured/Fastify log level; defaults to `info` |
+| `NODE_ENV` | Production | Set to `production` |
+| `METRICS_TOKEN` | Recommended | Protects `/metrics`; details belong to [observability](observability.md) |
+
+The server does not consume a Supabase publishable key.
+
+### Web build/runtime
+
+| Variable | Requirement | Purpose |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Required | Supabase project URL baked into the web build |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Required | Browser-safe publishable key baked into the web build |
+| `VITE_SERVER_URL` | Production | Public API origin; leave empty only in local Vite development so the proxy handles `/trpc` |
+| `VITE_BUILD_VERSION` | Optional | Build identifier used by handshake update notices |
+
+### Discord connector
+
+| Variable | Requirement | Purpose |
+|---|---|---|
+| `DATABASE_URL` | Required | Same Supabase transaction-pooler URL; the connector runs its own `RoomManager` |
+| `SUPABASE_URL` | Required | Supabase Auth endpoint for connector-user creation |
+| `SUPABASE_SECRET_KEY` | Required | Server-only key used to create/resolve connector users |
+| `DISCORD_TOKEN` | Required | Discord bot token |
+| `DISCORD_CLIENT_ID` | Required | Discord application id used for command registration |
+| `LOG_LEVEL` | Optional | Logging inherited from the server package |
+
+The current connector does not consume `SERVER_URL` or `CONNECTOR_SERVICE_TOKEN`; it imports
+the server room/database modules directly.
 
 ---
 

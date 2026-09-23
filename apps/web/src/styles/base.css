@@ -270,7 +270,7 @@ button {
 
 /* Header-level echo of `.shop-wallet` (ShopPanel) — same look, different reach: this one
    stays visible while scrolling past the monster row and inventory, not just inside the
-   shop section. See docs/roadmap/19-player-agency-and-items.md and 10b-bugs-fixed.md.
+   shop section. See docs/architecture/workshop-and-items.md and 10b-bugs-fixed.md.
    Margined rather than gapped: `.workshop-header-actions` lays its children out with the
    browser's default inline flow (it is not a flex container — see the `10-bug-fixes.md`
    note added alongside this comment), so a `gap` on the parent would do nothing. */

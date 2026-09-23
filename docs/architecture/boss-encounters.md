@@ -1,11 +1,15 @@
 # Boss Encounters, Summoning, and Ring Events
 
-Everything about NPC bosses: how they are built, when they appear, how players call one in,
-and how ring events reshape a fight. Read this before touching `packages/engine/src/ring/`,
-`helpers/bosses.ts`, `helpers/targeting-strategies.ts`, or `helpers/boss-summons.ts`.
+Status: Current
+Read before: touching `packages/engine/src/ring/`, `helpers/bosses.ts`,
+`helpers/targeting-strategies.ts`, `helpers/boss-summons.ts`, boss persistence, or ring
+events.
 
-Related: [`room-scoping.md`](room-scoping.md) (all of this is room-scoped) and
-[`engine-concurrency-and-timing.md`](engine-concurrency-and-timing.md) (timers, lanes, and the
+This document covers how NPC bosses are built, when they appear, how players call one in,
+and how ring events reshape a fight.
+
+Related: [rooms and identity](rooms-and-identity.md) (all of this is room-scoped) and
+[engine concurrency and timing](engine-concurrency-and-timing.md) (timers, lanes, and the
 global semaphore).
 
 ---

@@ -21,7 +21,7 @@ const DEFAULT_MAX_INVENTORY_SIZE = 20;
 // consumable), and the shop already lists cards inline in the same choice prompt as
 // items/back-room goods — a 5-20 spread there would make an already-long shop menu
 // unreadable. 4-10 keeps every visit likely to have *something* new to buy (the whole
-// point of this fix — see docs/roadmap/19-player-agency-and-items.md §3) without turning
+// point of this fix — see docs/architecture/workshop-and-items.md) without turning
 // "browse cards" into a wall of text.
 const DEFAULT_MIN_CARD_INVENTORY_SIZE = 4;
 const DEFAULT_MAX_CARD_INVENTORY_SIZE = 10;

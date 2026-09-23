@@ -220,7 +220,8 @@ describe('trpc/router card management procedures', () => {
 	it('reports revivesAt as null for a fallen monster with no revival timer running', async () => {
 		// A monster can be dead with no active timer — e.g. a permadeath, or the process
 		// restarted and the in-memory timer/length fields were never rehydrated (they are
-		// declared instance fields, not persisted options — see docs/room-scoping.md's
+		// declared instance fields, not persisted options — see
+		// docs/architecture/rooms-and-identity.md's
 		// sibling doc on serialization, and creatures/health.ts's `respawn`). The workshop
 		// must not show a stale or fabricated countdown in that case.
 		const fallenMonster = {
@@ -1005,7 +1006,7 @@ describe('trpc/router monster lifecycle procedures', () => {
  * Training a monster was a brand-new player's first action in the workshop, and it
  * dead-ended: `game.spawnMonster` refused because there was no character, and the workshop
  * had no way to make one (the console's creation flow is a series of prompts, which a
- * workshop mutation cannot run — docs/engine-concurrency-and-timing.md). The fix carries
+ * workshop mutation cannot run — docs/architecture/engine-concurrency-and-timing.md). The fix carries
  * the character's details in the spawn itself, prompt-free.
  */
 describe('trpc/router first-run character creation from the workshop', () => {
@@ -1191,7 +1192,7 @@ describe('trpc/router first-run character creation from the workshop', () => {
 /**
  * Items are the one thing a player can still do once the bell rings, and until this
  * procedure existed the web client could list them but not use one. See
- * docs/roadmap/19-player-agency-and-items.md §8.
+ * docs/architecture/workshop-and-items.md.
  */
 describe('trpc/router useItem', () => {
 	const makeRoomManager = (character: unknown, spy?: { assertedRoom?: string }) =>

@@ -30,7 +30,9 @@ export interface Shop {
 	pronouns: PronounSet;
 }
 
-/** Room-scoped owner of a shop instance — satisfied by `Game`. See docs/room-scoping.md. */
+/** Room-scoped owner of a shop instance — satisfied by `Game`.
+ * See docs/architecture/rooms-and-identity.md.
+ */
 export interface ShopHost {
 	shop: Shop;
 	commitShop(shop: Shop): void;

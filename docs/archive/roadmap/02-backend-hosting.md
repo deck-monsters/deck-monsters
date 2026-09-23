@@ -345,7 +345,7 @@ Stage 2 (builder) — compile engine + server TypeScript via Turborepo
 Stage 3 (runner)  — production image, only production deps + compiled dist/
 ```
 
-A `docker-compose.yml` at the repo root provides a local dev stack: the server container connects to the Supabase CLI local stack running on the host (default: `localhost:54322`). See `docs/deployment.md` for the full step-by-step setup guide.
+A `docker-compose.yml` at the repo root provides a local dev stack: the server container connects to the Supabase CLI local stack running on the host (default: `localhost:54322`). See `docs/operations/deployment.md` for the current setup guide.
 
 Railway handles container orchestration, health checks, and zero-downtime deploys. The container connects to Supabase Postgres over the network via the connection string in environment variables.
 
@@ -400,7 +400,7 @@ PORT                       # HTTP + WebSocket port (Railway injects this; defaul
 - [x] ~~Add Docker + docker-compose for local development~~ (`Dockerfile` multi-stage build; `docker-compose.yml` targeting Supabase CLI local stack)
 - [x] ~~Set up Supabase CLI for local development~~ (`supabase/config.toml`, `supabase/migrations/` directory created; run `supabase start` to boot local stack)
 - [x] ~~Evaluate Supabase CLI migrations alongside `drizzle-kit`~~ (decided: Supabase CLI owns DDL via `supabase/migrations/`; Drizzle is for type-safe queries only — `drizzle.config.ts` points to the same migrations folder)
-- [x] ~~Write deployment docs for Railway~~ (`docs/deployment.md` — full guide: Supabase project setup, schema push, auth providers, Railway deploy, env vars, health check)
+- [x] ~~Write deployment docs for Railway~~ (`docs/operations/deployment.md` — current guide: Supabase project setup, schema push, auth providers, Railway deploy, env vars, health check)
 - [x] ~~Configure Railway environment variables and deploy~~ (running in production at deck-monsters.com)
 
 ## Open Questions

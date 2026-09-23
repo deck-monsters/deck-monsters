@@ -1082,7 +1082,8 @@ export function createRouter(roomManager: RoomManager) {
 
 		/*
 		 * Everything the engine's character creation would otherwise *ask* for. The
-		 * workshop runs on a prompt-free channel (docs/engine-concurrency-and-timing.md),
+		 * workshop runs on a prompt-free channel
+		 * (docs/architecture/engine-concurrency-and-timing.md),
 		 * so a first-run player has to answer these in the form, up front, instead.
 		 * The class is not offered: `helpers/all.ts` has exactly one entry, and the engine
 		 * no longer asks either.
@@ -1299,7 +1300,7 @@ export function createRouter(roomManager: RoomManager) {
 
 		/**
 		 * The mid-fight lever, finally reachable from the browser. See
-		 * docs/roadmap/19-player-agency-and-items.md §8, where the absence of this procedure
+		 * docs/architecture/workshop-and-items.md, where the absence of this procedure
 		 * was the single blocker on the whole items story — the web client could list items
 		 * but not use one.
 		 *

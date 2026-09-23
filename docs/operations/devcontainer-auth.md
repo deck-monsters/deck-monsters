@@ -1,5 +1,10 @@
 # Devcontainer and Public GitHub Auth
 
+Status: Current
+Read before: changing the devcontainer or configuring public GitHub credentials on a host
+that also uses enterprise GitHub credentials.
+Verified: 2026-09-23 against `.devcontainer/devcontainer.json`.
+
 This repository supports a devcontainer setup that isolates public GitHub credentials inside the container instead of on the host machine.
 
 ## Why

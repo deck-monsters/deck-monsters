@@ -63,7 +63,8 @@ export type { RingEventDefinition, RingEventId, VictoryMode } from './ring/ring-
 export { allMonsters } from './monsters/index.js';
 /**
  * Character-creation choices a non-interactive caller has to collect up front, since a
- * prompt-free channel cannot ask for them (docs/engine-concurrency-and-timing.md).
+ * prompt-free channel cannot ask for them
+ * (docs/architecture/engine-concurrency-and-timing.md).
  */
 export { randomAvatarChoices } from './characters/helpers/create.js';
 export { PRONOUNS, PRONOUN_KEYS, PRONOUN_CHOICES } from './helpers/pronouns.js';

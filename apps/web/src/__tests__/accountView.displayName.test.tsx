@@ -124,7 +124,7 @@ describe('AccountView global display name', () => {
 	});
 
 	it('pluralises the renamed count in code, never as "character(s)"', () => {
-		// docs/voice-and-wording.md: plurals belong in code.
+		// docs/reference/voice-and-wording.md: plurals belong in code.
 		renderView();
 		act(() => {
 			trpcMock.mutationOptions?.onSuccess?.({ displayName: 'Grace Hopper', renamedCharacters: 1 });

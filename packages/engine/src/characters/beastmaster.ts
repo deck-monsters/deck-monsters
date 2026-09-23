@@ -19,7 +19,7 @@ import type BaseMonster from '../monsters/base.js';
 // The answer contract (0-based index from web, label text from Discord) lives in
 // exactly one place. This used to be a per-file copy behind the lazy loader below,
 // and three copies of a rule that must agree is how the shop menus drifted out of
-// sync in the first place (docs/prompt-answer-contract.md, bug #143). Imported
+// sync in the first place (docs/reference/prompt-answer-contract.md, bug #143). Imported
 // statically: choices.js pulls in only leaf helpers (card, upper-first,
 // probabilities, collection, items/helpers/counts) and never reaches back into
 // monsters/characters, so there is no cycle here for a lazy load to avoid.
@@ -228,7 +228,7 @@ class Beastmaster extends BaseCharacter {
 				)
 				.then((answer: unknown) => {
 					// The Discord connector answers with the button's label text, never an
-					// index (see docs/prompt-answer-contract.md) — resolve either form and
+					// index (see docs/reference/prompt-answer-contract.md) — resolve either form and
 					// fail loudly on garbage rather than let `monsters[NaN]` return
 					// `undefined` silently.
 					const index = resolveChoiceIndex(answer, monsterLabels);
@@ -372,7 +372,7 @@ class Beastmaster extends BaseCharacter {
 	 * That makes stocking a monster before it fights a commitment decision in its own
 	 * right, exactly like building its deck — which is the game's shape, not an accident.
 	 * Do not "fix" the apparent inconsistency here: it would remove the game's only
-	 * real-time decision. See `docs/roadmap/19-player-agency-and-items.md` §3.
+	 * real-time decision. See `docs/architecture/workshop-and-items.md`.
 	 */
 	useItems({
 		channel,

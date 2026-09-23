@@ -56,7 +56,7 @@ import WorkshopPanel from '../components/WorkshopPanel.js';
  * fail with "Create your character before training a monster" — an instruction the
  * workshop gave no way to follow. The character's details now ride along with the spawn,
  * which is also why they have to be collected in this form: the mutation runs on a
- * prompt-free channel and cannot ask (docs/engine-concurrency-and-timing.md).
+ * prompt-free channel and cannot ask (docs/architecture/engine-concurrency-and-timing.md).
  */
 describe('WorkshopPanel: first run with no character', () => {
   const fillSpawnFields = () => {

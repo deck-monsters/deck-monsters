@@ -6,7 +6,7 @@ const HELP_REGEX = /^(?:help|commands?)$/i;
 // it back and in again, no changing its cards. Items are the deliberate exception —
 // `useItems` skips the `inEncounter` guard every other inventory action has, because items
 // are meant to be the one real-time decision in an otherwise commit-then-watch game (see
-// docs/roadmap/19-player-agency-and-items.md §3). That rule is easy to never discover, so
+// docs/architecture/workshop-and-items.md). That rule is easy to never discover, so
 // `help` states it outright instead of leaving it to be found in the item commands alone.
 const ITEMS_NOTE = `-- One Thing Worth Knowing --
   Once a fight starts you can't touch a monster's deck — but it can still use items it is

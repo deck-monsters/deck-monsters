@@ -10,7 +10,7 @@ const getChoices = (array: string[]): string =>
  * answer matches nothing.
  *
  * This is the one place that decodes an answer for a small, fixed, hand-dispatched menu
- * (see docs/prompt-answer-contract.md for the full protocol). Accepting both forms matters
+ * (see docs/reference/prompt-answer-contract.md for the full protocol). Accepting both forms matters
  * because the two connectors disagree on what they send back: the web client's
  * `InlineChoices` component always answers with the 0-based index as a string (see
  * `apps/web/src/components/InlineChoices.tsx`), while the Discord connector's buttons use

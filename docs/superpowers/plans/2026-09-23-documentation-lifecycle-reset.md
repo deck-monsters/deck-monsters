@@ -30,8 +30,8 @@ Cursor repository skills.
   hand-edited.
 - Temporary DEX/STR/INT deltas affect both raw checks and derived rolls exactly once.
 - All game state, APIs, events, and examples remain room-scoped.
-- Player-facing wording follows `docs/voice-and-wording.md` until that file moves; all links
-  are updated in the same task that moves a file.
+- Player-facing wording follows `docs/reference/voice-and-wording.md`; all links are updated
+  in the same task that moves a file.
 - Each task receives an independent read-only specification/quality review before the next
   task begins.
 - Shared-worktree implementers never create or switch branches, stage only files they
@@ -181,18 +181,19 @@ git commit -m "test(docs): enforce documentation lifecycle invariants"
 - Create: `docs/architecture/workshop-and-items.md`
 - Create: `docs/architecture/analytics-and-history.md`
 - Create: `docs/architecture/ring-roster-and-pixel-monsters.md`
-- Move: `docs/engine-concurrency-and-timing.md` → `docs/architecture/engine-concurrency-and-timing.md`
-- Move: `docs/boss-encounters.md` → `docs/architecture/boss-encounters.md`
-- Move: `docs/room-scoping.md` content into `docs/architecture/rooms-and-identity.md`
-- Move: `docs/deployment.md` → `docs/operations/deployment.md`
-- Move: `docs/observability.md` → `docs/operations/observability.md`
-- Move: `docs/devcontainer-auth.md` → `docs/operations/devcontainer-auth.md`
-- Move: `docs/local-testing-guidelines.md` → `docs/operations/local-testing.md`
+- Current: `docs/architecture/engine-concurrency-and-timing.md` (moved from the top level)
+- Current: `docs/architecture/boss-encounters.md` (moved from the top level)
+- Fold the former top-level room-scoping content into
+  `docs/architecture/rooms-and-identity.md`
+- Current: `docs/operations/deployment.md` (moved from the top level)
+- Current: `docs/operations/observability.md` (moved from the top level)
+- Current: `docs/operations/devcontainer-auth.md` (moved from the top level)
+- Current: `docs/operations/local-testing.md` (moved from the top level)
 - Create: `docs/operations/cloud-development.md`
-- Move: `docs/voice-and-wording.md` → `docs/reference/voice-and-wording.md`
-- Move: `docs/prompt-answer-contract.md` → `docs/reference/prompt-answer-contract.md`
-- Move: `docs/pixel-art-animations-in-js.md` → `docs/reference/pixel-art.md`
-- Fold and move: `docs/ring-roster-design.md` into
+- Current: `docs/reference/voice-and-wording.md` (moved from the top level)
+- Current: `docs/reference/prompt-answer-contract.md` (moved from the top level)
+- Current: `docs/reference/pixel-art.md` (moved from the top level)
+- Fold the former top-level roster-design content into
   `docs/architecture/ring-roster-and-pixel-monsters.md`
 - Modify: all links to moved files
 - Modify: `docs/roadmap/25-documentation-lifecycle-reset.md`

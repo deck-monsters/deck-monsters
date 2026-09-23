@@ -99,7 +99,8 @@ column minimum and letting the team tag ellipse instead of the name.
 Five row layouts were rendered at real widths and reviewed against real play. The winner
 is a density-switching row — comfortable up to eight contestants, one line above that —
 and the reasoning, the field priority it encodes, and the four rejected alternatives are
-in [`docs/ring-roster-design.md`](../ring-roster-design.md).
+in
+[`docs/architecture/ring-roster-and-pixel-monsters.md`](../architecture/ring-roster-and-pixel-monsters.md).
 
 Two things from that round are worth repeating here because they reverse earlier decisions
 in this very doc:
@@ -145,4 +146,4 @@ last one only visible in a photo of a real device, after it had shipped and pass
 
 The tests were not wrong; they were answering "is the map well formed" while the question
 was "does this help someone playing the game". Keep rendering it and looking at it. See
-"Common Pitfalls" in [`docs/pixel-art-animations-in-js.md`](../pixel-art-animations-in-js.md).
+"Common Pitfalls" in [`docs/reference/pixel-art.md`](../reference/pixel-art.md).

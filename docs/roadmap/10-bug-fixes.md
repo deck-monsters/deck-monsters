@@ -41,7 +41,7 @@ handbook is fixed as #163. See [`10b-bugs-fixed.md`](10b-bugs-fixed.md) for the 
 
 The player-facing surfaces had independently chosen `spawn` or `train`, while some legacy
 copy still described Beastmasters as owners and monsters as property. The new
-[`voice-and-wording.md`](../voice-and-wording.md) contract establishes one lexicon:
+[`voice-and-wording.md`](../reference/voice-and-wording.md) contract establishes one lexicon:
 Beastmasters train companion monsters, call them out of the ring, revive them when fallen,
 and choose pronouns through connector-safe labels. Parser and Discord `/spawn` aliases remain
 for compatibility. The original Discord `/spawn [type] [name]` command never matched the
@@ -219,7 +219,8 @@ with an explicit `announceAndThrow` on `-1`, `spawn.ts#askForGender`'s hand-roll
 handling now delegates to the same helper, and a second bug found in the same pass —
 `creatures/edit.ts#editSelf` writing its rename to the wrong option key (`givenName` instead
 of `name`), so renames never actually took effect — is fixed alongside it. See
-`10b-bugs-fixed.md` (#146) for the full root-cause writeup and `docs/prompt-answer-contract.md`
+`10b-bugs-fixed.md` (#146) for the full root-cause writeup and
+`docs/reference/prompt-answer-contract.md`
 for the protocol these sites now follow.
 
 ### 5. `items/store/stock.ts#getCards` always returns an empty stock list — FIXED

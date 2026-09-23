@@ -1,7 +1,24 @@
 # Observability Guide
 
+Status: Current
+Read before: changing `/metrics`, metric names or labels, Grafana collection, dashboards,
+alerts, or observability environment variables.
+Verified: 2026-09-23 against `packages/server/src/index.ts` and the metrics modules.
+
 Deck Monsters exposes Prometheus-format metrics at `GET /metrics` via
 [prom-client](https://github.com/siimon/prom-client).
+
+## Observability environment variables
+
+This document is the canonical owner of metrics variables. The production service table
+in [deployment](deployment.md) links here rather than defining their behavior.
+
+| Variable | Service | Status | Purpose |
+|---|---|---|---|
+| `METRICS_TOKEN` | Server; future Alloy | Current, optional | When set, `/metrics` requires `Authorization: Bearer <token>`; when unset, the endpoint is open for local development |
+| `GRAFANA_CLOUD_PROM_URL` | Future Alloy | Not currently consumed | Grafana Cloud Prometheus `remote_write` endpoint |
+| `GRAFANA_CLOUD_PROM_USER` | Future Alloy | Not currently consumed | Grafana Cloud Prometheus numeric user id |
+| `GRAFANA_CLOUD_PROM_API_KEY` | Future Alloy | Not currently consumed | Grafana Cloud API token used as the `remote_write` password |
 
 **Phase 1 (current):** Direct scraping from Grafana Cloud — the server already
 has a public Railway domain, so no extra service is needed. Just point Grafana

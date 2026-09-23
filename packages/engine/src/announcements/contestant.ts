@@ -17,7 +17,8 @@ export function announceContestant(
 	// an owner. A boss is *sent in at the behest of* the house, which commands.
 	//
 	// Bosses are handed a randomly generated owner by `randomCharacter` under
-	// userId 'boss' (docs/boss-encounters.md §1), so crediting `character.givenName` here
+	// userId 'boss' (docs/architecture/boss-encounters.md §1), so crediting
+	// `character.givenName` here
 	// invented a beastmaster who does not exist — and for a timer-spawned boss it told the
 	// room a player had sent it in when nobody had (10b-bugs-fixed.md #102). Naming the
 	// house keeps the sense that something sent it, without inventing a person.

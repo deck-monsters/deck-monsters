@@ -5,7 +5,7 @@
 **Priority**: Low — post-launch, fun  
 **Status**: ✅ Shipped — `street-fighter` theme only  
 **Depends on**: `09-graphics.md` (theme system), `06a-web-app.md` (web app theme CSS vars)  
-**Reference**: [`docs/pixel-art-animations-in-js.md`](../../pixel-art-animations-in-js.md)
+**Reference**: [`docs/reference/pixel-art.md`](../../reference/pixel-art.md)
 
 ---
 
@@ -51,7 +51,7 @@ The animation layer is a standalone module that the web app loads only when the 
 
 ## Implementation
 
-See `docs/pixel-art-animations-in-js.md` for the full reference. Summary of choices for this feature:
+See `docs/reference/pixel-art.md` for the full reference. Summary of choices for this feature:
 
 ### In-code pixel maps via Canvas API
 
@@ -185,7 +185,7 @@ reduction or feed wiring.
   art is now 24×24 on a six-key ramp, poses shear about the feet instead of translating, and
   frames render on a padded grid so a lean cannot clip a horn or a wingtip. The sprite test
   gained a silhouette-collision check, a no-clipping check and a shear-not-translation check
-  so none of the three can come back quietly. `docs/pixel-art-animations-in-js.md` ("Common
+  so none of the three can come back quietly. `docs/reference/pixel-art.md` ("Common
   Pitfalls") records the general lessons.
 - **Live-verify in the phone layout.** The layer hides when the pane container is under
   360 px wide or the viewport under 600 px tall, and drops to 3× sprites under 480 px; the

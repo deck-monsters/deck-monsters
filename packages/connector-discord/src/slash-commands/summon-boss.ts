@@ -16,7 +16,8 @@ export const summonBoss: SlashCommand = {
 		const { supabaseUserId, roomId } = await resolveUser(interaction, ctx);
 
 		// The quota and every refusal message live in the engine's command handler, so this
-		// (and the web console) get identical behaviour for free. See docs/boss-encounters.md.
+		// (and the web console) get identical behaviour for free. See
+		// docs/architecture/boss-encounters.md.
 		const recognized = await dispatchCommand(
 			interaction,
 			'summon a boss',

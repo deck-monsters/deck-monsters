@@ -119,7 +119,7 @@ The feed is flat engine text shared with Discord, so the engine cannot emit web-
 saying which emoji is which monster. The web matches instead
 (`utils/monster-mentions.ts`), against every monster the room's Ring has shown this
 session (`hooks/useKnownMonsters.ts` — accumulated so a finished fight's lines keep their
-sprites, and keyed by room per `docs/room-scoping.md`). Anything unmatched keeps
+sprites, and keyed by room per `docs/architecture/rooms-and-identity.md`). Anything unmatched keeps
 its emoji: the failure mode is "looks like today", never "wrong monster".
 
 The plan's first idea — match `icon + ' ' + name` — would have missed the most common line
@@ -187,7 +187,7 @@ entry through `useMonsterMentions(roomId)`. The fight history also records from 
 participant rows — the engine now writes each participant's icon, species and appearance —
 because opened directly, after a reload, or in a pane layout without the Ring, it would
 otherwise know no monsters at all (found in review). The store is keyed by room — a reader never sees
-another room's monsters (`docs/room-scoping.md`). Fights from before this session name
+another room's monsters (`docs/architecture/rooms-and-identity.md`). Fights from before this session name
 monsters without those fields: rows written before this change keep their emoji.
 
 ### Feed sprites load without Suspense
@@ -203,7 +203,7 @@ roster it already does — so a monster has one face. The opt-out restores the e
 
 ### Only a monster's own emoji is replaced
 
-`docs/voice-and-wording.md` treats emoji as part of the world's voice. The feed swap
+`docs/reference/voice-and-wording.md` treats emoji as part of the world's voice. The feed swap
 replaces a monster's *identity* emoji — the icon before its name — and nothing else: card,
 item, effect and Beastmaster emoji stay. Beastmasters have no sprites.
 
@@ -223,8 +223,9 @@ the motion; the feed gets a still portrait.
 ## Verification (T5)
 
 Everything visual in this pass was checked in headless Chromium against the real modules
-and stylesheets — the recipe in `docs/ring-roster-design.md`, "Rendering it without a
-device". Bundling a page with esbuild that imports the real `RingRoster`, `PixelSprites`,
+and stylesheets — the rubric in
+`docs/architecture/ring-roster-and-pixel-monsters.md`, "Visual verification rubric".
+Bundling a page with esbuild that imports the real `RingRoster`, `PixelSprites`,
 `formatEventText` and sprite code needed two stubs worth knowing about: `PixelSprites`
 throws without a `RingFeedContext` provider (pass a no-op `subscribe`), and modules that read
 `import.meta.env` need `--define:import.meta.env={}` in an IIFE bundle.
@@ -248,6 +249,7 @@ screens, but iOS Safari's emoji font metrics differ from Chromium's on Linux, so
 
 - Checkpoint commit per task; this table updated in the same commit.
 - Every visual claim checked in headless Chromium before it is called done (the recipe in
-  `docs/ring-roster-design.md`, "Rendering it without a device"), at the device pixel
+  `docs/architecture/ring-roster-and-pixel-monsters.md`, "Visual verification rubric"), at
+  the device pixel
   ratios the game is actually played at: 3× (iPhone) and 2× (iPad).
 - Independent read-only review per code task, per `AGENTS.md`.

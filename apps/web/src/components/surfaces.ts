@@ -7,7 +7,7 @@ import LeaderboardPanel from './LeaderboardPanel.js';
 
 /**
  * The set of surfaces `Terminal` can place into a pane slot (or, on a narrow screen, show
- * as the single active tab). See `docs/roadmap/20-workspace-layout.md` §3.1a.
+ * as the single active tab). See `docs/architecture/web-workspace.md`.
  *
  * Adding a surface later (fights, leaderboard — see §5 Phase 5) means adding one entry
  * here; the tab bar, both `PaneSelector`s and the keyboard shortcuts all read this table

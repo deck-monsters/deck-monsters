@@ -75,7 +75,8 @@ export function useDeckWorkshop(roomId?: string) {
   /*
    * Only a player without a character needs these, and they are what the engine's
    * creation prompts would have asked for — the workshop's spawn mutation is prompt-free
-   * (docs/engine-concurrency-and-timing.md), so the answers come from the form instead.
+   * (docs/architecture/engine-concurrency-and-timing.md), so the answers come from the form
+   * instead.
    * The avatar list is random per request, which is what makes "Shuffle" a refetch.
    */
   const characterCreationQuery = trpc.game.characterCreationChoices.useQuery(

@@ -106,7 +106,7 @@
 **Files:**
 - Modify: `packages/server/src/trpc/router.ts`
 - Modify: router tests
-- Modify: `docs/engine-concurrency-and-timing.md`
+- Modify: `docs/architecture/engine-concurrency-and-timing.md`
 - Update roadmap
 
 - [x] Add a failing test where workshop work is already running and the same user's console command attempts to start.

@@ -1,7 +1,8 @@
 # The `{ question, choices }` Prompt/Answer Contract
 
-**Read before adding or changing any `channel({ question, choices })` call site, or any
-connector code that answers one.**
+Status: Current
+Read before: adding or changing any `channel({ question, choices })` call site, or any
+connector code that answers one.
 
 This document exists because `items/store/buy.ts` and `items/store/sell.ts` disagreed with
 it silently for a long time. See `docs/roadmap/10b-bugs-fixed.md` (#143) for the full

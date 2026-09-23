@@ -1,7 +1,10 @@
 # Voice and wording
 
-Read this before adding any player-facing prompt, help text, announcement, button label,
-Discord description, handbook copy, or README copy. This is a contract: parser aliases
+Status: Current
+Read before: adding any player-facing prompt, help text, announcement, button label,
+Discord description, handbook copy, or README copy.
+
+This is a contract: parser aliases
 preserve familiar input, but the player sees one coherent name for each action.
 
 ## The world in three sentences
@@ -9,8 +12,8 @@ preserve familiar input, but the player sees one coherent name for each action.
 Players are Beastmasters, travelling with monster companions who answer their call rather
 than property to be produced or handled. The house is 👑 The Editor: the Roman *editor
 muneris* who stages the games and commands the bosses it sends through the gates. This
-distinction comes from [`constants/lore.ts`](../packages/engine/src/constants/lore.ts) and
-the #101–#104 history in [`10b-bugs-fixed.md`](roadmap/10b-bugs-fixed.md); the earlier
+distinction comes from [`constants/lore.ts`](../../packages/engine/src/constants/lore.ts) and
+the #101–#104 history in [`10b-bugs-fixed.md`](../roadmap/10b-bugs-fixed.md); the earlier
 kennel/livestock framing was retired deliberately.
 
 ## Principles
@@ -66,7 +69,7 @@ world deliberately softens the player-companion relationship.
 
 Commands are short, concrete, and lower-case. Emoji from `node-emoji` are part of the
 world's voice, not decorative modern UI icons; see
-[the archived web-app plan](archive/roadmap/06a-web-app.md).
+[the archived web-app plan](../archive/roadmap/06a-web-app.md).
 
 Why: the terminal voice is a game surface, not a generic administration panel.
 
@@ -125,7 +128,7 @@ names, CSS classes, test names, logs, and admin/debug commands may retain techni
 3. Prefer the word already established by narration. Add input aliases to the parser only
    when compatibility needs them.
 4. Update the relevant tests and generated documents. If a prompt has choices, also follow
-   [`prompt-answer-contract.md`](prompt-answer-contract.md): labels are a connector contract.
+   [the prompt/answer contract](prompt-answer-contract.md): labels are a connector contract.
 
 ## Open questions
 

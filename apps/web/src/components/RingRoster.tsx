@@ -207,7 +207,7 @@ function TeamPip({ team }: { team: string }) {
  *
  * Rows are rendered in the order the engine holds them, which is the order of play, and
  * are never sorted or grouped — see `turnPositions`. Layout and field priority are
- * recorded in `docs/roadmap/23-pixel-fight-stage.md`.
+ * recorded in `docs/architecture/ring-roster-and-pixel-monsters.md`.
  */
 export default function RingRoster({
   contestants,

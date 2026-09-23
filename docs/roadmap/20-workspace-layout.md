@@ -496,7 +496,8 @@ on a Chromium-only screenshot.
   (state survives the round trip).
 - **Crossing the breakpoint** with the workshop selected leaves the workshop selected.
 - **Room switch** remounts the workshop pane (keyed by `roomId`) and does not leak the
-  previous room's monsters — the room-scoping rule (`docs/room-scoping.md`) applies to a
+  previous room's monsters — the room-scoping rule
+  (`docs/architecture/rooms-and-identity.md`) applies to a
   pane exactly as it does to a route.
 - **Phase 3**: render the workshop at 1440px, ~700px and 393px and check no horizontal
   overflow — the same failure class as `10b-bugs-fixed.md` #98.

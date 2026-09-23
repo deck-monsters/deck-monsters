@@ -1,11 +1,9 @@
 import { createStoredFlag } from './stored-flag.js';
 
 /**
- * Keeps its pre-rename key so players who opted in under the old default keep their choice.
- *
- * Under that old default, absent meant off and on was `'1'`. Nobody's "off" was ever
- * written down — it was simply the absence of a choice — so flipping the meaning of absent
- * does not overturn a decision anyone made, and `'1'` still reads as on.
+ * Keeps its pre-rename key so explicit stored choices survive. The current contract is
+ * absent=on and `'0'`=off; old absent values are indistinguishable from no choice, so the
+ * default-on migration necessarily changes behavior for viewers who had relied on absence.
  */
 const usePixelMonstersFlag = createStoredFlag('deck-monsters-pixel-fight-stage', true);
 
@@ -17,7 +15,8 @@ const usePixelMonstersFlag = createStoredFlag('deck-monsters-pixel-fight-stage',
  * viewport on the phones and tablets this game is mostly played on (#166), so they went
  * opt-in. Moved into the roster rows they cost no extra height (#167) and, once the row
  * was rebuilt around field priority (#169, #170), were judged good enough to be the
- * default on every theme — see `docs/roadmap/24-pixel-monsters-everywhere.md`. The
+ * default on every theme — see
+ * `docs/architecture/ring-roster-and-pixel-monsters.md`. The
  * opt-out remains for anyone who prefers the emoji.
  */
 export function usePixelMonsters() {

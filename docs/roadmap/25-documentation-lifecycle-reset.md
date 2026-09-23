@@ -25,12 +25,26 @@ repository-local documentation-maintenance skill.
 | # | Task | Owner tier | Status | Commit |
 |---|---|---|---|---|
 | 1 | Mechanical documentation checker | Tier 2 | Complete | `d9857313`–`e9dfec1e` |
-| 2 | Current taxonomy and live-contract extraction | Tier 3 | Planned | — |
+| 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `this commit` |
 | 3 | Roadmap and archive lifecycle reset | Tier 2 | Planned | — |
 | 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Planned | — |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Planned | — |
 | 6 | Compact routers and generated ownership | Tier 2 | Planned | — |
 | 7 | Full verification, broad review, and lifecycle closeout | Tier 3 | Planned | — |
+
+## Task 2 decisions
+
+- `docs/README.md` is the complete current-document router. Current contracts live in
+  `architecture/`, verified procedures in `operations/`, and boundary conventions in
+  `reference/`; active plans and archived history are not contract dependencies.
+- Current room/identity, event/replay, web-workspace, Workshop/item, analytics/history, and
+  Ring/pixel-monster behavior is extracted from code and the source plans. The room-scoping
+  and concurrency contracts remain explicit hard constraints in `docs/architecture/`.
+- Deployment owns the production environment-variable table, observability owns metrics
+  variables, local testing alone owns reusable-room state, and Cloud setup no longer lives
+  inline in `AGENTS.md`.
+- Source and generated comments now route to current contracts. Generated root documents
+  are rebuilt from generator source rather than hand-edited.
 
 ## Working artifacts
 

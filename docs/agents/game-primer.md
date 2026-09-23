@@ -7,7 +7,8 @@ already covers a subject in depth this links to it rather than restating it.
 ## The core loop
 
 1. **Train.** (`train a monster`; the parser still accepts `spawn`, and the code keeps
-   `spawnMonster` as its identifier — see [`docs/voice-and-wording.md`](../voice-and-wording.md)
+   `spawnMonster` as its identifier — see
+   [`docs/reference/voice-and-wording.md`](../reference/voice-and-wording.md)
    for the player-facing lexicon.) A beastmaster keeps up to `DEFAULT_MONSTER_SLOTS` (10)
    monsters. Capacity is *derived*, not stored: `monsterSlots = max(DEFAULT_MONSTER_SLOTS +
    monsterSlotModifier, monsters.length)`, so raising the global constant grants every
@@ -47,7 +48,7 @@ refuses in three cases, in this order, and each one announces before throwing:
 
 The full-hand rule is the one that most often strands an agent mid-test: a freshly spawned
 monster has cards in its beastmaster's *deck*, not in its hand. Equip first, in one shot
-(see [`docs/local-testing-guidelines.md`](../local-testing-guidelines.md)).
+(see [`docs/operations/local-testing.md`](../operations/local-testing.md)).
 
 The ring itself holds `MIN_MONSTERS` = 2 to `MAX_MONSTERS` = 12 contestants
 (`packages/engine/src/ring/index.ts`).
@@ -69,7 +70,9 @@ Anything that compares against a `hitLog` entry must use `hitLogTimestamp()` too
 card fired on blows that landed before it was played, in every test run
 (`packages/engine/src/creatures/health.ts`, 10b-bugs-fixed.md #157).
 
-See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §1 for the
+See
+[`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md)
+§1 for the
 measured reasoning behind the values.
 
 ## Healing and revival
@@ -95,7 +98,8 @@ measured reasoning behind the values.
   contestants (`isBoss`, which also covers harness sim monsters); player monsters are torn
   down by `Game.dispose()` on room unload or `Beastmaster.dropMonster()` on dismissal. For
   months `clearRing()` disposed everything, so a revived monster sat at 1 hp for hours
-  (#156) — see [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md)
+  (#156) — see
+  [`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md)
   §7, "Creature timers belong to whoever owns the creature".
 
 ## Bosses and The Editor
@@ -110,7 +114,7 @@ beastmaster, a boss "enters the ring at the behest of" The Editor
 `isBoss` doubles as "nobody owns this", which is why the harness builds its sim monsters as
 bosses and why disposal keys off it. Players may summon a boss `BOSS_SUMMON_LIMIT` = 3 times
 per rolling 24h window, per room (`packages/engine/src/helpers/boss-summons.ts`). Full rules:
-[`docs/boss-encounters.md`](../boss-encounters.md).
+[`docs/architecture/boss-encounters.md`](../architecture/boss-encounters.md).
 
 ## Card effects that wrap a play
 
@@ -130,7 +134,9 @@ Engine code asks the player questions through the channel callback:
 event bus; Discord uses buttons/select menus or a filtered DM collector. Three rules:
 
 - The answer is **not** free-form — it is the 0-based index as a string, or the exact label.
-  See [`docs/prompt-answer-contract.md`](../prompt-answer-contract.md); breaking it routes a
+  See
+  [`docs/reference/prompt-answer-contract.md`](../reference/prompt-answer-contract.md);
+  breaking it routes a
   menu to a plausible wrong destination instead of erroring (#143).
 - A cancelled prompt resolves with the `PROMPT_CANCELLED` sentinel (`'__cancelled__'`,
   `packages/engine/src/events/room-event-bus.ts`). Every consumer must translate it into
@@ -154,7 +160,8 @@ Every query, event, and subscription carries a `roomId`, and shared engine-level
 shop, the boss-summon ledger) lives on the room's game object rather than in a module-level
 variable — a module-level shop is exactly how one room's purchases leaked into every other
 room's inventory (#26). This is a hard constraint; read
-[`docs/room-scoping.md`](../room-scoping.md) before touching state, queries, or subscriptions.
+[`docs/architecture/rooms-and-identity.md`](../architecture/rooms-and-identity.md) before
+touching state, queries, or subscriptions.
 
 ## Identity and rooms
 
@@ -191,7 +198,7 @@ The roster row itself is ranked by field priority and **must never be sorted or 
 its row order is the order of play, since `Ring.doAction` shifts contestants off the same
 array `contestantSnapshots()` maps. A team-grouped layout got as far as review before that
 was spotted. Field priority, the wording contract and the four rejected layouts are in
-[`docs/ring-roster-design.md`](../ring-roster-design.md).
+[`docs/architecture/ring-roster-and-pixel-monsters.md`](../architecture/ring-roster-and-pixel-monsters.md).
 
 The gotchas that bit live — an early-waking `setTimeout` that never re-armed (#162), the
 roster emptying inside the fade, one literal sprite map with poses as transforms — are

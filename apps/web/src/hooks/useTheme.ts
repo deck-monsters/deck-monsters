@@ -34,7 +34,8 @@ function applyTheme(theme: Theme): void {
 
   // There used to be a per-theme `features` list here, mirrored onto a
   // `data-theme-features` attribute, whose only entry was the SNES theme's pixel art. The
-  // sprites now show on every theme (docs/roadmap/24-pixel-monsters-everywhere.md), so the
+  // sprites now show on every theme
+  // (docs/architecture/ring-roster-and-pixel-monsters.md), so the
   // mechanism went with them; no stylesheet ever read the attribute. Clear it for anyone
   // whose document still carries it from before the upgrade.
   document.documentElement.removeAttribute('data-theme-features');

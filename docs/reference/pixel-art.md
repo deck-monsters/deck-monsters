@@ -1,5 +1,9 @@
 # Pixel Art Animations in JavaScript for the Browser
 
+Status: Current
+Read before: creating or changing web pixel art, sprite maps, Canvas animation,
+appearance palettes, or crisp-scaling behavior.
+
 A practical reference for adding pixel art flair to web apps. Covers Canvas sprite animation, CSS-only techniques, box-shadow pixel painting, and tips for keeping things crisp at any resolution. Designed to be read by an LLM so it can generate pixel art enhancements on your behalf.
 
 ## Table of Contents

@@ -61,7 +61,7 @@ These apply to every task in this repo, not just the one you were asked to do.
 See [`docs/agents/subagents.md`](docs/agents/subagents.md) for the tier table, harness notes,
 and the full dispatch procedure.
 
-## Architecture Docs
+## Current documentation
 
 Read the relevant doc *before* changing code in its area — each one exists because something
 non-obvious bit us before.
@@ -71,24 +71,25 @@ non-obvious bit us before.
 | [`docs/agents/game-primer.md`](docs/agents/game-primer.md) | Anything, if you have never played the game — how the loop, pacing, healing, bosses, prompts, and the web feeds actually behave |
 | [`docs/agents/working-in-this-repo.md`](docs/agents/working-in-this-repo.md) | Opening a PR, numbering a bug, running the verification gate, or doing live verification |
 | [`docs/agents/subagents.md`](docs/agents/subagents.md) | Delegating any part of a task to another agent |
-| [`docs/voice-and-wording.md`](docs/voice-and-wording.md) | Any player-facing string: prompts, help text, announcements, button labels, Discord descriptions |
+| [`docs/README.md`](docs/README.md) | Finding the canonical current document for any subsystem or procedure |
+| [`docs/reference/voice-and-wording.md`](docs/reference/voice-and-wording.md) | Any player-facing string: prompts, help text, announcements, button labels, Discord descriptions |
 | [`docs/archive/README.md`](docs/archive/README.md) | Looking for the reasoning behind something that already shipped (archived roadmap plans, retired subsystems) |
-| [`docs/room-scoping.md`](docs/room-scoping.md) | Any game state, DB query, tRPC procedure, or event subscription. **Hard constraint, not a guideline.** |
-| [`docs/engine-concurrency-and-timing.md`](docs/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, `events/room-event-bus.ts` prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |
-| [`docs/boss-encounters.md`](docs/boss-encounters.md) | Bosses, boss summoning, ring events, teams, or targeting strategies |
-| [`docs/observability.md`](docs/observability.md) | Metrics, logging, or Grafana dashboards |
-| [`docs/prompt-answer-contract.md`](docs/prompt-answer-contract.md) | Any `channel({ question, choices })` call site, or connector code that answers one — **what a connector sends back is not a free-form string; get this wrong and a menu silently routes to the wrong option** |
-| [`docs/local-testing-guidelines.md`](docs/local-testing-guidelines.md) | Manual end-to-end verification (includes reusable local test rooms) |
-| [`docs/deployment.md`](docs/deployment.md) | Railway/Supabase deployment or environment configuration |
-| [`docs/devcontainer-auth.md`](docs/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container instead of on the host |
-| [`docs/pixel-art-animations-in-js.md`](docs/pixel-art-animations-in-js.md) | Sprite, canvas, or CSS pixel-art work in the web app (crisp rendering, sprite sheets, common pitfalls) |
-| [`docs/ring-roster-design.md`](docs/ring-roster-design.md) | The Ring roster row — field priority, why row order must stay the order of play, and the five layouts considered before this one |
-| [`docs/archive/roadmap/18-live-ring-roster.md`](docs/archive/roadmap/18-live-ring-roster.md) | The ring roster panel, `ring.state` payload, or `Ring.publishState()` call sites |
-| [`docs/roadmap/19-player-agency-and-items.md`](docs/roadmap/19-player-agency-and-items.md) | Items, targeting scrolls, deck-building agency, or any "should the player control this?" question |
+| [`docs/architecture/rooms-and-identity.md`](docs/architecture/rooms-and-identity.md) | Any game state, DB query, membership, identity, connector mapping, or event subscription. **Hard constraint, not a guideline.** |
+| [`docs/architecture/events-prompts-and-replay.md`](docs/architecture/events-prompts-and-replay.md) | `GameEvent`, visibility, persistence, prompts, reconnect, cursors, or history delivery |
+| [`docs/architecture/engine-concurrency-and-timing.md`](docs/architecture/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |
+| [`docs/architecture/boss-encounters.md`](docs/architecture/boss-encounters.md) | Bosses, boss summoning, ring events, teams, or targeting strategies |
+| [`docs/architecture/web-workspace.md`](docs/architecture/web-workspace.md) | `Terminal`, workspace surfaces, pane slots, routes, divider, or navigation reveal |
+| [`docs/architecture/workshop-and-items.md`](docs/architecture/workshop-and-items.md) | Workshop inventory, item use, prompt-free mutations, first-run training, or room shop |
+| [`docs/architecture/analytics-and-history.md`](docs/architecture/analytics-and-history.md) | Analytics projections, leaderboards, fight summaries, catch-up, or retention |
+| [`docs/architecture/ring-roster-and-pixel-monsters.md`](docs/architecture/ring-roster-and-pixel-monsters.md) | The Ring roster, `ring.state`, pixel sprites, appearance colours, or feed portraits |
+| [`docs/operations/observability.md`](docs/operations/observability.md) | Metrics, logging, or Grafana dashboards |
+| [`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md) | Any `channel({ question, choices })` call site or connector answer encoding |
+| [`docs/operations/local-testing.md`](docs/operations/local-testing.md) | Manual end-to-end verification (includes reusable local test rooms) |
+| [`docs/operations/deployment.md`](docs/operations/deployment.md) | Railway/Supabase deployment or production environment configuration |
+| [`docs/operations/cloud-development.md`](docs/operations/cloud-development.md) | Cursor Cloud setup, Docker, or remote/local Supabase in Cloud |
+| [`docs/operations/devcontainer-auth.md`](docs/operations/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container instead of on the host |
+| [`docs/reference/pixel-art.md`](docs/reference/pixel-art.md) | Sprite, canvas, or CSS pixel-art work (crisp rendering, sprite sheets, common pitfalls) |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scroll and shop rules |
-| [`docs/roadmap/20-workspace-layout.md`](docs/roadmap/20-workspace-layout.md) | `Terminal.tsx` panes, the 1024px breakpoint, tabs, the pane divider, or moving a surface between a route and a pane |
-| [`docs/roadmap/23-pixel-fight-stage.md`](docs/roadmap/23-pixel-fight-stage.md) | The Ring roster's pixel sprites — why the animations live in roster rows rather than a band, and the road from opt-in to default |
-| [`docs/roadmap/24-pixel-monsters-everywhere.md`](docs/roadmap/24-pixel-monsters-everywhere.md) | The pixel-monsters setting, appearance-driven sprite colours, or sprites inline in the feed |
 | [`docs/roadmap/README.md`](docs/roadmap/README.md) | Planning work — the authoritative status index |
 
 ## Project Overview
@@ -113,12 +114,14 @@ apps/
 
 supabase/          # Supabase migrations and local dev config
 scripts/           # Repo-level setup scripts (setup:local, etc.)
-docs/              # Architecture docs, roadmap, archive
+docs/              # Current docs, planning, and history; start at docs/README.md
+  architecture/    # Current subsystem contracts and invariants
+  operations/      # Verified setup, deployment, testing, and incident procedures
+  reference/       # Authoring and protocol conventions
   agents/          # Reference docs written for coding agents (game primer, repo operations, subagents)
   roadmap/         # Remaining work + README.md index; 10b is the stable bug ledger
   archive/roadmap/ # Shipped plans and their reasoning
   superpowers/     # Plans and specs produced during agent-driven work
-  room-scoping.md  # Critical architectural rule — read this
 ```
 
 | Package | Path | Test runner |
@@ -217,144 +220,19 @@ pnpm run build:docs
 All test suites mock their external dependencies (database, Discord API, Supabase), so
 `pnpm test` needs no running services.
 
-## Environment Variables
+## Environment and Cloud development
 
-### Server (`packages/server`)
+Production environment variables are owned by
+[`docs/operations/deployment.md`](docs/operations/deployment.md); metrics variables are
+owned by [`docs/operations/observability.md`](docs/operations/observability.md). The
+optional engine-only `DECK_MONSTERS_SKIP_DELAYS` variable zeroes pacing delays for tests
+and the harness and makes hit-log timestamps monotonic.
 
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | Postgres connection string |
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | Supabase publishable API key |
-| `SUPABASE_SECRET_KEY` | Supabase service role key |
-| `CONNECTOR_SERVICE_TOKEN` | Inter-service auth token (Discord connector → server) |
-| `PORT` | Server port (default: 3000) |
-| `CORS_ORIGINS` | Comma-separated allowed origins (default: `http://localhost:5173`) |
-
-### Web app (`apps/web`)
-
-| Variable | Purpose |
-|----------|---------|
-| `VITE_SUPABASE_URL` | Same as `SUPABASE_URL` but Vite-prefixed |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Same as `SUPABASE_PUBLISHABLE_KEY` but Vite-prefixed |
-| `VITE_SERVER_URL` | tRPC server URL (blank = same origin via Vite proxy) |
-
-### Engine (optional)
-
-| Variable | Purpose |
-|----------|---------|
-| `DECK_MONSTERS_SKIP_DELAYS` | Zeroes every pacing delay (tests, harness). Also switches `hitLogTimestamp()` to a monotonic counter |
-
-> The S3 backup (`helpers/aws.ts`, `DECK_MONSTERS_AWS_*` / `HUBOT_DECK_MONSTERS_AWS_*`) was removed in the stack modernisation (`docs/archive/roadmap/01-modernize-stack.md`); Postgres is the only store.
-
-## Cursor Cloud specific instructions
-
-### Two paths for running the full app
-
-#### Path A — Remote DB (preferred in Cursor Cloud when secrets are available)
-
-If the following secrets are injected as environment variables, write `.env.local` files and run the server + web app against the remote staging/production Supabase:
-
-| Secret | Used by |
-|---|---|
-| `DATABASE_URL` | Server — Postgres connection string |
-| `SUPABASE_URL` | Server — Supabase project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | Server + Web — publishable API key |
-| `SUPABASE_SECRET_KEY` | Server — service role key |
-| `CONNECTOR_SERVICE_TOKEN` | Server — inter-service auth token |
-| `VITE_SUPABASE_URL` | Web — same as SUPABASE_URL but Vite-prefixed |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Web — same as SUPABASE_PUBLISHABLE_KEY but Vite-prefixed |
-| `TEST_USERNAME` | Test account email for sign-in |
-| `TEST_PASSWORD` | Test account password for sign-in |
-
-To wire up the remote path:
-
-```bash
-# Root .env.local (server reads from here via docker-compose or source)
-cat > .env.local <<EOF
-DATABASE_URL=${DATABASE_URL}
-SUPABASE_URL=${SUPABASE_URL}
-SUPABASE_PUBLISHABLE_KEY=${SUPABASE_PUBLISHABLE_KEY}
-SUPABASE_SECRET_KEY=${SUPABASE_SECRET_KEY}
-CONNECTOR_SERVICE_TOKEN=${CONNECTOR_SERVICE_TOKEN}
-EOF
-
-# Web .env.local
-cat > apps/web/.env.local <<EOF
-VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
-VITE_SERVER_URL=
-EOF
-
-# Start server (loads env from process environment or .env.local)
-set -a && source .env.local && set +a
-pnpm --filter @deck-monsters/server dev   # port 3000
-
-# Start web
-pnpm --filter @deck-monsters/web dev      # port 5173, proxies /trpc to :3000
-```
-
-Sign in at `http://localhost:5173` using `$TEST_USERNAME` / `$TEST_PASSWORD`. Use the test
-account's existing scratch rooms (`Test Room A` / `Test Room B`, listed with their current
-contents in [`docs/local-testing-guidelines.md`](docs/local-testing-guidelines.md) under
-"Reusable rooms") rather than creating new ones; keep that list current, and delete any
-throwaway room you create before finishing (instructions in the same section).
-
-**Important**: The server does **not** auto-load `.env.local` — you must `source` it into the shell before starting `pnpm --filter @deck-monsters/server dev`. The web app (Vite) does auto-load `apps/web/.env.local`.
-
-#### Path B — Local Supabase (requires Docker)
-
-Runs a full local Supabase stack (Postgres, Auth, Studio) in Docker containers.
-
-```bash
-pnpm setup:local --skip-install   # Docker must be running; skips pnpm install
-```
-
-This starts Supabase, applies migrations, seeds a test user (`localtester@example.com` / `deck-monsters-local`), writes all `.env.local` files, and builds the engine.
-
-Then start the server and web app:
-
-```bash
-set -a && source .env.local && set +a
-pnpm --filter @deck-monsters/server dev   # port 3000
-pnpm --filter @deck-monsters/web dev      # port 5173
-```
-
-### Docker in Cursor Cloud
-
-Docker is installed in the update script. The VM runs inside a Firecracker container, requiring:
-- `fuse-overlayfs` storage driver (configured in `/etc/docker/daemon.json`)
-- `iptables-legacy` (set via `update-alternatives`)
-
-The dockerd is started by the update script. After VM boot, verify with `docker info`.
-
-### Railway CLI
-
-`railway` is installed globally. Use it to view logs and manage deployments:
-
-```bash
-railway logs                    # view recent deploy logs
-railway logs --build            # view build logs
-railway run <command>           # run command with Railway env vars
-```
-
-Note: Railway CLI requires authentication (`railway login`) which needs a token set up externally.
-
-### Supabase JWT issuer gotcha
-
-The local Supabase auth server issues JWTs with `iss: "http://127.0.0.1:54321/auth/v1"`. The API server validates the issuer against `$SUPABASE_URL + "/auth/v1"`. If the env file uses `localhost` instead of `127.0.0.1`, JWT verification fails with "unexpected iss claim value". The `setup:local` script reads the URL from `supabase status --output json` to avoid this mismatch.
-
-### Engine demo (no services needed)
-
-```bash
-node --input-type=module -e "import { Game } from './packages/engine/dist/index.js'; const g = new Game({}, console.log); console.log('Engine OK'); g.dispose(); process.exit(0);"
-```
-
-### Checkpoint commits in Cloud Agent runs
-
-Standing Instruction 5 applies verbatim here: commit and push to the feature branch after each
-completed task (implementation green, review-fix landed, docs/roadmap updated, final
-verification), not once at the end. It keeps the PR reviewable if the session is interrupted.
+Before configuring Cursor Cloud, remote or local Supabase, Docker startup, ignored env
+files, or the no-service engine check, read
+[`docs/operations/cloud-development.md`](docs/operations/cloud-development.md). Manual
+sessions and reusable-room state are owned only by
+[`docs/operations/local-testing.md`](docs/operations/local-testing.md).
 
 ## How the Game Engine Works
 
@@ -449,11 +327,11 @@ Game (engine) → publicChannel callback → server subscriber → Supabase Real
 
 Every DB query on game data needs a `where room_id = ?` clause. Every tRPC procedure must validate room membership before returning data. Every event emission carries a `roomId`; every subscriber filters by it. WebSocket/SSE subscriptions must be gated to the current room and torn down when navigating away.
 
-See [`docs/room-scoping.md`](docs/room-scoping.md) for the full rule with code examples, a code-review checklist, and a table of common failure patterns. Past bugs have been caused by missing room filters — treat this as a hard constraint, not a guideline.
+See [`docs/architecture/rooms-and-identity.md`](docs/architecture/rooms-and-identity.md) for the full rule with code examples, a code-review checklist, and a table of common failure patterns. Past bugs have been caused by missing room filters — treat this as a hard constraint, not a guideline.
 
 ## Critical Architecture Rule: Concurrency, Timing, and Prompt Flows
 
-Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive prompt lifecycle interact in non-obvious ways and have caused the most persistent production bugs (fights flying by, commands appearing ignored, multi-step flows crashing). Before touching `helpers/delay-times.ts`, `ring/index.ts` pacing, `events/room-event-bus.ts` prompts, or the server command pipeline in `trpc/router.ts`, read [`docs/engine-concurrency-and-timing.md`](docs/engine-concurrency-and-timing.md). Key invariants: interactive command actions run fire-and-forget in a per-`roomId:userId` lane (never room-wide — that starves other users); awaited workshop mutations must stay prompt-free; the `PROMPT_CANCELLED` sentinel must be translated to `PromptCancelledError` before reaching game code; creature timers belong to the creature's owner, so only transient (boss/harness) contestants are disposed when the ring clears.
+Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive prompt lifecycle interact in non-obvious ways and have caused the most persistent production bugs (fights flying by, commands appearing ignored, multi-step flows crashing). Before touching `helpers/delay-times.ts`, `ring/index.ts` pacing, `events/room-event-bus.ts` prompts, or the server command pipeline in `trpc/router.ts`, read [`docs/architecture/engine-concurrency-and-timing.md`](docs/architecture/engine-concurrency-and-timing.md). Key invariants: interactive command actions run fire-and-forget in a per-`roomId:userId` lane (never room-wide — that starves other users); awaited workshop mutations must stay prompt-free; the `PROMPT_CANCELLED` sentinel must be translated to `PromptCancelledError` before reaching game code; creature timers belong to the creature's owner, so only transient (boss/harness) contestants are disposed when the ring clears.
 
 ## Architecture Notes for New Connectors
 
@@ -461,7 +339,7 @@ Fight pacing, the serialized engine lanes, `activeFlows`, and the interactive pr
    - `announce` — post to channel/DM; return after sending
    - `question` + `choices` — prompt the user; resolve with their text answer (timeout ~2 min).
      **The answer must be either the 0-based index of the chosen option (as a string) or
-     the option's label text.** See [`docs/prompt-answer-contract.md`](docs/prompt-answer-contract.md)
+     the option's label text.** See [`docs/reference/prompt-answer-contract.md`](docs/reference/prompt-answer-contract.md)
      for the full contract — a connector that sends something else (a 1-based number, a
      truncated label, etc.) will make the engine silently dispatch to the wrong option
      rather than error, which is exactly what happened in `docs/roadmap/10b-bugs-fixed.md` #143.

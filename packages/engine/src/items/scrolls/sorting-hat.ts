@@ -46,7 +46,7 @@ export class SortingHat extends BaseScroll {
 			}))
 			.then((answer: unknown) => {
 				// The Discord connector answers with the button's label text, never an index
-				// (see docs/prompt-answer-contract.md). `teamChoices[Number(answer)]` used to
+				// (see docs/reference/prompt-answer-contract.md). `teamChoices[Number(answer)]` used to
 				// return `undefined` for a Discord answer, and the very next line's
 				// `team.toUpperCase()` threw a TypeError — resolve either form and fail loudly
 				// instead.

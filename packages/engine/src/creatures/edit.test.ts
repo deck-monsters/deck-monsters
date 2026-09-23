@@ -6,7 +6,7 @@ import { CommandRefusalError } from '../helpers/command-refusal-error.js';
 
 // Both `edit` and `editSelf` ask the connector to pick a field/attribute from a small,
 // fixed menu, then resolve the answer against that menu — the exact shape
-// docs/prompt-answer-contract.md describes. A sequenced channel stub returns canned
+// docs/reference/prompt-answer-contract.md describes. A sequenced channel stub returns canned
 // answers to each successive prompt; every call (announce or question) consumes one slot.
 const makeSequencedChannel = (answers: unknown[]) => {
 	const channel = async (_message: any = {}) => answers.shift();

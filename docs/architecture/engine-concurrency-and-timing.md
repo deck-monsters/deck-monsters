@@ -1,7 +1,10 @@
 # Engine Concurrency, Timing, and Prompt Flows
 
-Read this before touching fight pacing, the command pipeline, or anything that
-awaits user input. These systems interact in non-obvious ways and have caused
+Status: Current
+Read before: touching fight pacing, the command pipeline, `game.on(...)` listeners,
+long-lived timers, or anything that awaits user input.
+
+These systems interact in non-obvious ways and have caused
 the most persistent production bugs (fights flying by, commands appearing
 ignored, multi-step flows crashing). See `docs/roadmap/10b-bugs-fixed.md` #20 for
 the incident history.
