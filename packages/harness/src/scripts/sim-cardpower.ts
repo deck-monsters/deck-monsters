@@ -40,6 +40,11 @@ async function main(): Promise<void> {
 	for (const [name, avg] of entries.slice(-bottomN)) {
 		process.stdout.write(`  ${name.padEnd(24)} ${avg.toFixed(2)}\n`);
 	}
+
+	// See sim-winrates.ts's matching comment: loading the engine leaves something running
+	// that Node's own exit checks don't see, so a `sim:*` script hangs after printing its
+	// report unless it exits itself.
+	process.exit(0);
 }
 
 main().catch(err => {
