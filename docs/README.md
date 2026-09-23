@@ -76,8 +76,9 @@ Generated and authored player references remain at the repository root:
   contain actionable work and current status, not shipped implementation diaries.
 - Use [`archive/README.md`](archive/README.md) only to recover historical reasoning.
   Archived plans are not live contracts.
-- `superpowers/specs/` and `superpowers/plans/` hold only the active pass's temporary design
-  and implementation artifacts. Extract durable facts before deleting or archiving them.
+- `superpowers/specs/` and `superpowers/plans/` hold only an active pass's temporary design
+  and implementation artifacts. Extract durable facts before deleting them. There is no
+  active pass in those directories right now.
 
 When a change adds, edits, moves, or invalidates documentation, follow
 [maintaining repository docs](../.cursor/skills/maintaining-repository-docs/SKILL.md)

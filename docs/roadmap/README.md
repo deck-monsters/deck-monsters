@@ -18,7 +18,6 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [12 — New content](12-new-content-backlog.md) | Concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
 | [Item follow-ups](item-followups.md) | Prompt transport, web selling, and item/targeting feedback |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions and manual verification gates |
-| [25 — Documentation lifecycle reset](25-documentation-lifecycle-reset.md) | Current in-progress documentation pass |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code
 cites it. Shipped plans, retired subsystems, and pass records are historical only; they

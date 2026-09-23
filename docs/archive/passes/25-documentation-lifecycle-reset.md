@@ -1,14 +1,17 @@
 ---
-type: Roadmap
+type: Archive
 title: Documentation Lifecycle Reset
-description: Active pass record for separating current docs, roadmap work, and history.
-status: draft
+description: Completed pass that separated current docs, roadmap work, and history.
+status: deprecated
 audience: internal
 tags: [documentation, roadmap, lifecycle]
 ---
 # Documentation Lifecycle Reset
 
-**Status:** Active — in progress
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+**Status:** Complete
 
 This pass separates current contracts, active work, and useful history; compacts the
 repository's documentation routers; improves generated player strategy guidance; fixes the
@@ -41,7 +44,7 @@ repository-local documentation-maintenance skill.
 | 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Complete | `18439f1d`–`1623fca5` |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Complete | `ba6c242a` |
 | 6 | Compact routers and generated ownership | Tier 2 | Complete | `d1c4195c` |
-| 7 | Full verification, broad review, and lifecycle closeout | Tier 3 | Planned | — |
+| 7 | Full verification and lifecycle closeout | Tier 3 | Complete | closeout commit |
 
 ## Task 2 decisions
 
@@ -135,13 +138,13 @@ repository-local documentation-maintenance skill.
   `subagents.md` keeps tier criteria and drops the dated model column.
 - Implementation commit: `d1c4195c`.
 
-## Working artifacts
+## Closeout
 
-- [Approved design](../superpowers/specs/2026-09-23-documentation-lifecycle-reset-design.md)
-- [Implementation plan](../superpowers/plans/2026-09-23-documentation-lifecycle-reset.md)
-
-The working artifacts are deleted after this pass closes. This record moves to
-`docs/archive/roadmap/` with the task SHAs and verification result.
+The temporary design and implementation plan were deleted when this pass closed. Git
+history retains them. Verification on this branch: `pnpm docs:check` clean, generated
+docs clean after `pnpm run build:docs`, card-odds copies identical, and `pnpm build`,
+`pnpm typecheck`, `pnpm lint`, and `pnpm test` exited 0. Engine tests: 878 passing.
+Web tests: 492 passing.
 
 ## Process rules being exercised
 
