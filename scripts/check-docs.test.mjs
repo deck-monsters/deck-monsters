@@ -128,3 +128,38 @@ test('allows only the known number of identical migration findings', () => {
     ['known finding'],
   )
 })
+
+test('ignores shorter nested delimiters inside longer code examples', async () => {
+  const root = await fixture({
+    'docs/a.md': [
+      '````md',
+      '```',
+      '[fenced](./missing.md)',
+      '```',
+      '````',
+      'Use ``[inline](./missing.md) with `nested` delimiters`` as an example.',
+    ].join('\n'),
+  })
+
+  assert.deepEqual(await checkMarkdownLinks(root), [])
+  assert.deepEqual(
+    checkAgentsRoutes('````md\n```\n[plan](docs/roadmap/20-workspace-layout.md)\n```\n````'),
+    [],
+  )
+  assert.deepEqual(
+    checkSuperpowersLifecycle(
+      'docs/superpowers/plans/example.md',
+      '````md\n```\n**Status:** Done\n```\n````\n``**Status:** Done with `nested` delimiters``',
+    ),
+    [],
+  )
+})
+
+test('preserves inline code content in linked heading slugs', async () => {
+  const root = await fixture({
+    'docs/a.md': '[pacing](./target.md#1-fight-pacing-packagesenginesrchelpersdelay-timests)',
+    'docs/target.md': '## 1. Fight pacing (`packages/engine/src/helpers/delay-times.ts`)',
+  })
+
+  assert.deepEqual(await checkMarkdownLinks(root), [])
+})

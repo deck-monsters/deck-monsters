@@ -23,21 +23,72 @@ export function findMarkdownLinks(markdown) {
     .map(([, target]) => target)
 }
 
-function markdownProse(markdown) {
+function stripInlineCodeSpans(line, preserveContents) {
+  let prose = ''
+  let cursor = 0
+
+  while (cursor < line.length) {
+    const opener = line.slice(cursor).match(/^`+/)
+    if (!opener) {
+      prose += line[cursor]
+      cursor += 1
+      continue
+    }
+
+    const delimiterLength = opener[0].length
+    const contentStart = cursor + delimiterLength
+    let scan = contentStart
+    let closingStart = -1
+
+    while (scan < line.length) {
+      if (line[scan] !== '`') {
+        scan += 1
+        continue
+      }
+
+      const run = line.slice(scan).match(/^`+/)[0]
+      if (run.length === delimiterLength) {
+        closingStart = scan
+        break
+      }
+      scan += run.length
+    }
+
+    if (closingStart === -1) {
+      prose += opener[0]
+      cursor = contentStart
+      continue
+    }
+
+    if (preserveContents) prose += line.slice(contentStart, closingStart)
+    cursor = closingStart + delimiterLength
+  }
+
+  return prose
+}
+
+function markdownProse(markdown, { preserveInlineCode = false } = {}) {
   let fence
 
   return markdown
     .split('\n')
     .map((line) => {
       const fenceMatch = line.match(/^ {0,3}(`{3,}|~{3,})/)
+      if (fence) {
+        const closingFence = new RegExp(
+          `^ {0,3}${fence.marker}{${fence.length},}[ \\t]*$`,
+        )
+        if (closingFence.test(line)) fence = undefined
+        return ''
+      }
+
       if (fenceMatch) {
-        if (!fence) fence = fenceMatch[1][0]
-        else if (fence === fenceMatch[1][0]) fence = undefined
+        fence = { marker: fenceMatch[1][0], length: fenceMatch[1].length }
         return ''
       }
 
       if (fence || /^(?: {4}|\t)/.test(line)) return ''
-      return line.replace(/`[^`\n]*`/g, '')
+      return stripInlineCodeSpans(line, preserveInlineCode)
     })
     .join('\n')
 }
@@ -80,7 +131,7 @@ function headingSlug(heading) {
 }
 
 async function hasHeading(path, fragment) {
-  const markdown = markdownProse(await readFile(path, 'utf8'))
+  const markdown = markdownProse(await readFile(path, 'utf8'), { preserveInlineCode: true })
   const usedSlugs = new Map()
 
   for (const [, rawHeading] of markdown.matchAll(/^#{1,6}\s+(.+?)\s*#*\s*$/gm)) {
