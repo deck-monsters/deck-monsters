@@ -46,20 +46,36 @@ export const slugify = (heading: string): string =>
 		.replace(/[^\p{L}\p{N}\s-]/gu, '')
 		.replace(/\s+/g, '-');
 
-/** Command verbs that identify an indented plain-text line as a runnable command rather
- * than a wrapped continuation of the previous sentence (see `looksLikeCommand`). Kept as
- * a fixed vocabulary, not a heuristic on capitalization alone, because prose sentences in
- * this codebase are hard-wrapped with a leading indent too (see DMG's Combat Math), and a
- * lowercase-first-word rule alone false-positives on words like "such" or "the". */
+/** Command verbs that identify a plain-text line as a runnable command rather than a
+ * wrapped continuation of the previous sentence (see `looksLikeCommand`). Kept as a
+ * fixed vocabulary, not a heuristic on the word alone, because prose sentences in this
+ * codebase are hard-wrapped with a leading indent too (see DMG's Combat Math), and a
+ * verb-match rule alone false-positives on an ordinary sentence that happens to start
+ * with the same word capitalized — "Call your monster back at any time:" is prose, not
+ * the command `call [monster name] out of the ring`, even though both start with "call".
+ */
 const COMMAND_VERBS = new Set([
 	'train', 'equip', 'unequip', 'dismiss', 'revive', 'send', 'call', 'summon', 'move',
 	'save', 'load', 'delete', 'use', 'give', 'take', 'visit', 'sell', 'edit', 'look',
 	'help',
 ]);
 
+/**
+ * True only for a line that reads as something a player would type verbatim: every
+ * command in `commands/catalog.ts` is written lowercase (`train a monster`, `equip
+ * [monster]`), so a command line always starts with a lowercase letter or a `[`
+ * placeholder, and a command is never a label — it does not end with `:`. Both checks
+ * matter: capitalization alone still misclassifies a lowercase-starting *label* like
+ * "call it what you like:" (none exist today, but the colon rule is the general fix the
+ * capitalization rule doesn't cover), and the colon rule alone still misclassifies
+ * "Call your monster back at any time" if a source line were ever missing its colon.
+ */
 const looksLikeCommand = (content: string): boolean => {
+	if (/:$/.test(content.trim())) return false;
 	if (content.startsWith('[')) return true;
-	const firstWord = content.match(/^[a-zA-Z]+/)?.[0]?.toLowerCase();
+	const firstChar = content[0];
+	if (firstChar === undefined || firstChar !== firstChar.toLowerCase()) return false;
+	const firstWord = content.match(/^[a-zA-Z]+/)?.[0];
 	return firstWord !== undefined && COMMAND_VERBS.has(firstWord);
 };
 
@@ -135,9 +151,11 @@ const dedent = (line: string): string => line.match(/^\s{2,}(\S.*)$/)?.[1] ?? li
  *    gets bulleted while an isolated label-shaped clause mid-paragraph (DMG's "Escape:
  *    1d20 + …", one sub-point among plain ones) is left as prose instead of being
  *    stranded as a lone, out-of-context bullet. Anything left unbulleted is dedented and
- *    folds back into the surrounding paragraph, which is the correct outcome for a
- *    hard-wrapped sentence (DMG's Combat Math) — GFM joins adjacent non-blank lines with
- *    a soft break, so it reads as one paragraph either way.
+ *    joined onto the surrounding paragraph as one line, which is the correct outcome for
+ *    a hard-wrapped sentence (DMG's Combat Math wraps prose at ~75 columns) — rather than
+ *    relying on GFM to soft-break adjacent lines back into one paragraph, joining here
+ *    keeps a wrapped sentence from being split mid-sentence by a stray line break and
+ *    keeps the *source* Markdown readable on its own.
  *
  * Blank-line placement around headings, fences, and list boundaries is *not* this
  * function's job — see `normalizeMarkdownSpacing`, applied after this pass.
@@ -232,12 +250,30 @@ export const convertPlainTextToMarkdown = (text: string): string => {
 		}
 
 		const qualifies = run.map(qualifiesAsListItem);
+		// Consecutive non-listified lines are one hard-wrapped paragraph in the source
+		// (DMG's Combat Math wraps at ~75 columns); join them into a single line instead
+		// of leaving each physical source line on its own — GFM would still render them
+		// as one paragraph either way (adjacent non-blank lines soft-break-join), but a
+		// literal line break can still land mid-sentence, and joining here also keeps the
+		// *source* readable rather than relying on a rendering quirk to paper over it.
+		let prose: string[] = [];
+		const flushProse = (): void => {
+			if (prose.length > 0) out.push(prose.join(' '));
+			prose = [];
+		};
 		run.forEach((content, idx) => {
 			const isCommand = looksLikeCommand(splitCommandAndDescription(content).command);
 			const hasQualifyingNeighbor = qualifies[idx - 1] || qualifies[idx + 1];
 			const listify = qualifies[idx] && (isCommand || hasQualifyingNeighbor);
-			out.push(listify ? `- ${renderCommandFragment(content)}` : content);
+
+			if (listify) {
+				flushProse();
+				out.push(`- ${renderCommandFragment(content)}`);
+			} else {
+				prose.push(content);
+			}
 		});
+		flushProse();
 
 		listContext = null;
 		i = j;
@@ -312,7 +348,7 @@ export const normalizeMarkdownSpacing = (text: string): string => {
 		.join('\n')
 		.replace(/\n{3,}/g, '\n\n')
 		.replace(/^\n+/, '')
-		.replace(/\n+$/, '\n');
+		.replace(/\n*$/, '\n'); // exactly one trailing newline, even when there was none
 };
 
 /**
@@ -347,8 +383,29 @@ export const renderCardSection = (name: string, frame: string): string => {
 	return `### ${name}\n\n\`\`\`text\n${withoutOuterFence}\n\`\`\``;
 };
 
-/** A `- [Name](#slug)` table-of-contents line for one card/monster/section heading. */
-export const renderTocEntry = (name: string): string => `- [${name}](#${slugify(name)})`;
+/**
+ * GitHub appends `-1`, `-2`, … to the anchor of a heading whose slug repeats earlier in
+ * the same page (its own slugger, not this file's — `slugify` above only approximates
+ * it). A card and an item can share a display name, so a table of contents built without
+ * tracking that would link the second occurrence's card to the *first* occurrence's
+ * anchor. Call this once per document and feed it every heading in the order they will
+ * actually render (cards, then items) so the returned anchors match GitHub's.
+ */
+export const createAnchorTracker = () => {
+	const seen = new Map<string, number>();
+	return (heading: string): string => {
+		const base = slugify(heading);
+		const count = seen.get(base) ?? 0;
+		seen.set(base, count + 1);
+		return count === 0 ? base : `${base}-${count}`;
+	};
+};
+
+/** A `- [Name](#anchor)` table-of-contents line for one card/monster/section heading.
+ * Pass a `createAnchorTracker()` tracker when the same document's headings might repeat
+ * a name (see above); omit it for a document where names are already unique. */
+export const renderTocEntry = (name: string, anchorFor: (heading: string) => string = slugify): string =>
+	`- [${name}](#${anchorFor(name)})`;
 
 /**
  * Structured renderer for the command reference: reads `COMMAND_CATALOG` directly
@@ -371,7 +428,10 @@ export const renderCommandCatalogMarkdown = (catalog: CommandEntry[]): string =>
 
 		const items = entries.map(entry => {
 			const example = entry.example ? ` (e.g. \`${entry.example}\`)` : '';
-			return `- \`${entry.command}\` — ${entry.description}${example}`;
+			// A description can quote JSON syntax inline (the `["Card"]` array-literal
+			// alternative for a card name containing a quote character) — code, not prose.
+			const description = entry.description.replace(/(\[".*?"\])/g, '`$1`');
+			return `- \`${entry.command}\` — ${description}${example}`;
 		});
 
 		sections.push(`### ${label}\n\n${items.join('\n')}`);

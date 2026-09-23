@@ -26,6 +26,7 @@ import {
 } from '../constants/stats.js';
 import {
 	convertPlainTextToMarkdown,
+	createAnchorTracker,
 	extractLeadingBanner,
 	renderCardSection,
 	renderTocEntry,
@@ -88,22 +89,22 @@ can move the modifier farther than a raw stat that is already at that floor.
 It is not added a second time.
 See "Effective STR, DEX, and INT" in Stats Reference.
 
-Melee accuracy: 1d20 + DEX modifier vs the target's defense (usually AC).
+• Melee accuracy: 1d20 + DEX modifier vs the target's defense (usually AC).
   A card that names another stat rolls against that stat instead.
   A natural 20 is a stroke of luck. A natural 1 is a curse of loki.
   A tie goes to the defender.
-Ordinary melee damage is damage dice plus the STR modifier. Some cards,
-such as Horn Gore, use half the STR modifier instead.
-Forked Stick pin: 1d20 + STR modifier + matchup vs the target's raw DEX.
+• Ordinary melee damage is damage dice plus the STR modifier. Some cards,
+  such as Horn Gore, use half the STR modifier instead.
+• Forked Stick pin: 1d20 + STR modifier + matchup vs the target's raw DEX.
   Matchup is +2 against a Basilisk or a Gladiator and -2 against a Jinn or a Minotaur.
   Escape: 1d20 + the pinned monster's STR modifier vs the immobilizer's raw
   STR, plus the card's advantage, minus 3 for each turn already pinned.
-DEX saves and DEX defenses use DEX. A DEX curse lowers raw DEX, outgoing
+• DEX saves and DEX defenses use DEX. A DEX curse lowers raw DEX, outgoing
   melee accuracy, and that Forked Stick pin threshold by the same amount.
-Curse and psychic accuracy: 1d20 + INT modifier.
-Healing: heal dice + INT modifier.
-INT damage: the card's INT damage + INT modifier.
-INT defenses are the raw INT those cards roll against.
+• Curse and psychic accuracy: 1d20 + INT modifier.
+• Healing: heal dice + INT modifier.
+• INT damage: the card's INT damage + INT modifier.
+• INT defenses are the raw INT those cards roll against.
 
 AC stays defense. Cards roll against AC. An AC boost absorbs melee damage
 before HP is reduced. AC has no attack modifier.
@@ -225,7 +226,17 @@ export const renderDungeonMasterGuideMarkdown = async (): Promise<string> => {
 	const cardNames = allCards.map((Card: { cardType?: string }) => Card.cardType ?? '');
 	const itemNames = allItems.map((Item: { itemType?: string }) => Item.itemType ?? '');
 
-	parts.push(`## Card Catalog (verbose)\n\n${cardNames.map(renderTocEntry).join('\n')}`);
+	// One tracker across both lists, in the order the headings below actually render —
+	// see the comment on the equivalent tracker in card-catalogue.ts.
+	const anchorFor = createAnchorTracker();
+	const cardAnchors = cardNames.map(anchorFor);
+	const itemAnchors = itemNames.map(anchorFor);
+
+	parts.push(
+		`## Card Catalog (verbose)\n\n${
+			cardNames.map((name, i) => renderTocEntry(name, () => cardAnchors[i])).join('\n')
+		}`
+	);
 	parts.push(
 		(
 			await mapSeries(allCards, async Card => {
@@ -234,7 +245,11 @@ export const renderDungeonMasterGuideMarkdown = async (): Promise<string> => {
 			})
 		).join('\n\n')
 	);
-	parts.push(`## Item Catalog\n\n${itemNames.map(renderTocEntry).join('\n')}`);
+	parts.push(
+		`## Item Catalog\n\n${
+			itemNames.map((name, i) => renderTocEntry(name, () => itemAnchors[i])).join('\n')
+		}`
+	);
 	parts.push(
 		(
 			await mapSeries(allItems, async Item => {

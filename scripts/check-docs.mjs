@@ -478,6 +478,10 @@ function checkGeneratedRootMarkdown(repositoryPath, markdown) {
     findings.push(`${repositoryPath}: unbalanced \`\`\` fence`)
   }
 
+  if (!markdown.endsWith('\n') || markdown.endsWith('\n\n')) {
+    findings.push(`${repositoryPath}: must end with exactly one trailing newline`)
+  }
+
   return findings
 }
 

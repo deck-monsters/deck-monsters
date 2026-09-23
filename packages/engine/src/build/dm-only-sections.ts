@@ -93,6 +93,7 @@ export const OPERATOR_CONCURRENCY = `
 ── Operator Concurrency Notes ────────
 
 These rules prevent "commands ignored" and workshop/console interleaving bugs.
+
 Full detail: docs/architecture/engine-concurrency-and-timing.md
 
   • Interactive console commands serialize per roomId:userId — never room-wide.
