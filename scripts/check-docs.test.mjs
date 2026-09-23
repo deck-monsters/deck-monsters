@@ -67,3 +67,10 @@ test('rejects shipped active roadmaps without an actionable remainder', () => {
     ['docs/roadmap/24-example.md: shipped plan has no actionable remainder'],
   )
 })
+
+test('recognizes a status label whose bold span excludes the colon', () => {
+  assert.deepEqual(
+    checkRoadmapLifecycle('docs/roadmap/24-example.md', '**Status**: Shipped'),
+    ['docs/roadmap/24-example.md: shipped plan has no actionable remainder'],
+  )
+})

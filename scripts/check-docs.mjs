@@ -17,8 +17,11 @@ export const MIGRATION_ALLOWLIST = new Set([
   '.superpowers/sdd/task-1-brief.md: broken relative link docs/current/',
   '.superpowers/sdd/task-1-brief.md: broken relative link docs/roadmap/20-workspace-layout.md',
   'AGENTS.md: required-reading routes may not target roadmap/archive/superpowers plans',
+  'docs/roadmap/10b-bugs-fixed.md: shipped plan has no actionable remainder',
+  'docs/roadmap/23-pixel-fight-stage.md: shipped plan has no actionable remainder',
   'docs/roadmap/22-small-leftovers.md: broken relative link ../archive/roadmap/03-auth-and-identity.md#phase-2--google--apple-oauth',
   'docs/roadmap/22-small-leftovers.md: broken relative link ../archive/roadmap/06a-web-app.md#phase-3--polish-theming-and-mobile-refinement',
+  'docs/roadmap/24-pixel-monsters-everywhere.md: shipped plan has no actionable remainder',
   'docs/superpowers/plans/2026-09-23-documentation-lifecycle-reset.md: broken relative link ./missing.md',
   'docs/superpowers/plans/2026-09-23-documentation-lifecycle-reset.md: broken relative link docs/current.md#current-contract',
   'docs/superpowers/plans/2026-09-23-documentation-lifecycle-reset.md: broken relative link docs/current/',
@@ -126,7 +129,7 @@ export function checkAgentsRoutes(markdown) {
 }
 
 function hasCompletedStatus(markdown) {
-  return /^\s*(?:\*\*)?Status:?(?:\*\*)?\s*(?:Done|Complete(?:d)?|Shipped)\b/im.test(markdown)
+  return /^\s*(?:\*\*)?Status(?:\*\*)?:\s*(?:\*\*)?\s*(?:Done|Complete(?:d)?|Shipped)\b/im.test(markdown)
 }
 
 export function checkSuperpowersLifecycle(path, markdown) {
