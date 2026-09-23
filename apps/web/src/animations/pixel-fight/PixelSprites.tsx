@@ -20,7 +20,8 @@ import {
  * already showed — the same monsters with a second set of HP bars — and spent 96px of a
  * phone viewport (200px on a tablet) doing it, pushing the narration, which is the game,
  * into a strip. Sprites in the roster rows cost no extra height at all: they sit in the
- * 24px box the emoji icon already had. See docs/roadmap/23-pixel-fight-stage.md.
+ * 24px box the emoji icon already had. See
+ * docs/architecture/ring-roster-and-pixel-monsters.md.
  */
 export default function PixelSprites({
   contestants,

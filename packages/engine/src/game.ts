@@ -96,7 +96,7 @@ export class Game extends BaseClass {
 		// Refund the exact summon charge when a player-summoned boss is removed before a
 		// fight starts (last player withdrew, or despawn timer fired with no players).
 		// Writes directly to optionsStore + calls persistState() immediately so the refund
-		// survives a subsequent restart. See docs/boss-encounters.md §3.
+		// survives a subsequent restart. See docs/architecture/boss-encounters.md §3.
 		this.ring.onSummonedBossRemoved = (userId: string, timestamp: number) => {
 			this._refundSingleBossSummon(userId, timestamp);
 		};
@@ -106,7 +106,7 @@ export class Game extends BaseClass {
 		// in the 30–60 s window between `summon a boss` and the fight starting had its
 		// charge spent but the ephemeral boss vanished with the process. We give the charge
 		// back before any player-facing code can see the ledger.
-		// See docs/boss-encounters.md §3 (Finding 6 — restart-gap fix).
+		// See docs/architecture/boss-encounters.md §3 (Finding 6 — restart-gap fix).
 		this._refundPendingBossSummons();
 
 		this.initializeEvents();
@@ -199,7 +199,7 @@ export class Game extends BaseClass {
 		this.setOptions({ characters } as any);
 	}
 
-	/** Room-scoped shop — see docs/room-scoping.md. Regenerates itself past its closing time. */
+	/** Room-scoped shop — see docs/architecture/rooms-and-identity.md. Regenerates itself past its closing time. */
 	get shop(): Shop {
 		const stored = (this.options as any).shop as Shop | undefined;
 		const resolved = resolveShop(stored, Date.now());
@@ -220,7 +220,7 @@ export class Game extends BaseClass {
 	 *
 	 * Deliberately a pure read, unlike `shop` above: pruning here would call `setOptions()`,
 	 * which broadcasts `stateChange` synchronously. Expired entries are pruned by
-	 * `recordSummon()` instead. See `docs/engine-concurrency-and-timing.md` §7.
+	 * `recordSummon()` instead. See `docs/architecture/engine-concurrency-and-timing.md` §7.
 	 */
 	get bossSummons(): BossSummonLedger {
 		return ((this.options as any).bossSummons as BossSummonLedger | undefined) ?? {};
@@ -235,7 +235,7 @@ export class Game extends BaseClass {
 	 * has not yet started. If the process restarts before the encounter begins, the boss
 	 * vanishes (bosses are ephemeral) but the charge was already spent — this ledger
 	 * lets the constructor refund those charges on restore. Cleared when a fight starts.
-	 * See docs/boss-encounters.md §3 (Finding 6 — restart-gap fix).
+	 * See docs/architecture/boss-encounters.md §3 (Finding 6 — restart-gap fix).
 	 */
 	get bossSummonsPending(): BossSummonLedger {
 		return ((this.options as any).bossSummonsPending as BossSummonLedger | undefined) ?? {};
@@ -251,7 +251,7 @@ export class Game extends BaseClass {
 	 * `onSummonedBossRemoved` when a player-summoned boss is removed before a fight starts
 	 * (last player withdrew, or despawn timer fired). Idempotent — a timestamp already gone
 	 * is a no-op. Does NOT use setOptions() to avoid emitting stateChange mid-flight.
-	 * See docs/boss-encounters.md §3.
+	 * See docs/architecture/boss-encounters.md §3.
 	 */
 	private _refundSingleBossSummon(userId: string, timestamp: number): void {
 		const removeTs = (
@@ -371,7 +371,7 @@ export class Game extends BaseClass {
 		// Finalize pending boss summons when a fight actually starts. This completes the
 		// restart-gap fix: once the encounter begins, the boss is firmly in play and the
 		// charge is genuinely spent — pending can be cleared so a subsequent restart won't
-		// mistakenly refund it. See docs/boss-encounters.md §3.
+		// mistakenly refund it. See docs/architecture/boss-encounters.md §3.
 		//
 		// Durability requirement: the cleared pending state must be written to disk
 		// immediately (not via the 30s debounce). If the process dies between this

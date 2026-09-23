@@ -1,339 +1,63 @@
+---
+type: Roadmap
+title: Balance and Mechanics Improvements
+description: Open combat, progression, and telemetry work that still needs evidence.
+status: draft
+audience: internal
+tags: [balance, mechanics, roadmap]
+---
 # Balance and Mechanics Improvements
 
-**Category**: Game Design / Balance  
-**Priority**: Medium (do before or during launch, before new content)  
-**Status**: Active — two prerequisite stat calculation bugs were fixed during the TypeScript migration; the first economy audit and reward-floor fixes, and the early-progression front-loading pass, shipped September 18, 2026
-**Source**: Upstream issues tagged with the Balance milestone and related discussions
-
-These are mechanics changes that affect the core game feel. They should be done as a coordinated pass rather than piecemeal, because some of them interact. We should also write a harness which allows us to test mock battles / cards over and over to fine tune the mechanics as they interact, find bugs in their interactions, and resolve issues balance / over powered cards.
-
-## Multi-boss fairness and recovery pacing (September 19, 2026)
-
-Live play exposed two related gaps between fights. Passive recovery at one HP per two
-minutes made even beginner damage linger across several normal countdowns, so the rest tick
-is now one HP per 30 seconds. This remains gradual and out-of-encounter only; potions and
-healing cards retain their tactical value during a fight.
-
-Bosses already share the Boss team. A roster with two or more bosses and two or more human
-players now automatically activates Common Cause, allying all player monsters and using
-last-team victory. Smaller and solo rosters keep the weighted event system, while Blood
-Feud remains the explicit event that breaks alliances.
-
----
-
-## Coin Economy and Participation Floor (September 18, 2026)
-
-### Audit findings
-
-The reported symptom — a character that had fought many times still showing zero coins —
-had two independent causes. The outcome listeners paid **5 coins for a
-win**, **2 for a loss or flee**, and **4 for permanent death**, but the ring's fully
-implemented draw outcome had no game-level reward listener. A player whose completed
-fights resolved as draws could therefore gain battle-count credit while remaining at zero
-coins. The handbook's promise that battles earn coins was too broad for the implementation.
-
-Separately, an all-zero **leaderboard** was a projection bug, not balance: coin rewards are
-private `ring.xp` events, while the server's room-internal stats subscriber previously saw
-public events only. Character balances changed correctly, but `coins_earned` never did.
-That delivery bug is fixed in `10b-bugs-fixed.md` #139. Historical earnings cannot be
-reconstructed exactly because spent coins are absent from current balances and the missing
-private events were not persisted. Room loading now also reconciles the projection to at
-least each character's authoritative current balance, repairing existing all-zero rows
-without double-counting newer projected rewards; totals then resume from new rewards.
-
-The surrounding prices made that hole especially visible:
-
-- item/card face-value tiers are 10, 20, 30, 50, 80 and 130 coins;
-- ordinary shop purchases use twice the merchant's 0.6–0.9 offset, so the cheapest paid
-  listing costs **12–18 coins** and a 50-coin healing item costs **60–90**;
-- at the old outcome rates, the cheapest listing therefore represented 3–4 wins or 6–9
-  losses, while a draw made no progress at all;
-- wins already include a card drop, so raising only the win payout would widen the gap
-  between successful and struggling/new players.
-
-Items themselves have a sound acquisition/use loop now: the room merchant rotates every
-six hours; the Workshop exposes price, ownership, affordability and direct buying; carried
-items can be used from the live Ring; and the console can sell cards/items. The bottleneck
-was the currency inflow and its legibility, not missing things to buy or use.
-
-### Shipped adjustment
-
-1. **Draws now pay the same consolation reward as losses/flees:** 2 coins and the same
-   character XP. This closes the zero-progress outcome and makes the implementation match
-   the player-facing promise.
-2. **The first completed fight each UTC day pays 5 bonus coins automatically.** This is
-   participation-based rather than a login claim: opening the app does not mint currency,
-   there is no claim button to discover, and a player still contributes a contestant to a
-   completed room fight. The date is stored on the room-scoped character, so the bonus is
-   persistent and independent in each room.
-3. **The reward announcement includes the combined coin amount and names the daily bonus.**
-   Players can now understand why the first payout is larger.
-
-With the daily bonus, a player's first loss/draw/flee of the day pays 7 coins and first win
-pays 10. That does not immediately buy the cheapest marked-up listing, but it guarantees
-visible progress and reduces the cheapest purchase to at most one additional win or three
-additional consolation outcomes. Subsequent fights retain the existing 5/2 rates, limiting
-inflation and preserving wins as the faster path.
-
-### Follow-up plan (needs telemetry and/or the simulation harness)
-
-- [ ] Measure median coins earned, spent and held per active player-room; time from first
-  fight to first purchase; outcome mix (especially draws); and shop stock that expires
-  unaffordable. Review after at least two merchant rotations and again after two weeks.
-- [ ] Add economy scenarios to the battle simulation harness: new-player 1/5/20-fight
-  sessions, expected outcome mixes, purchase-time distributions and currency sinks.
-- [ ] If first-purchase time remains too long, prefer a small starter purse or a
-  first-purchase discount over another permanent increase to win rewards. Both target
-  onboarding without compounding long-term inflation.
-- [ ] Add prompt-free web selling from the existing item/shop roadmap. Selling is already
-  a valid currency source, but console-only discovery makes it a poor answer for web users.
-- [ ] Revisit healing-item prices only with use/outcome telemetry. Their 60–90 coin shop
-  price is much steeper than the entry tier, but lowering it blindly risks making bounded
-  mid-fight intervention routine rather than strategic.
-
----
-
-## Early Progression Front-Loading (September 18, 2026)
-
-### Player feedback
-
-"It seems to take so long to level up, gain xp, gain coins, get the interesting exciting
-cards and items, etc. Overall this may be a good thing but especially for early stage
-beginner monsters it feels slow and like we need to see it more visually plus maybe get a
-bit more of the taste of the excitement of higher levels."
-
-The feedback explicitly did not ask for the whole economy to be flattened — the slow burn
-"may be a good thing" overall. So this pass steepens only the first few levels/fights and
-converges back to the existing curve, rather than raising win/loss rates or level costs
-permanently across the board.
-
-### Before: the XP curve at low levels
-
-`helpers/levels.ts`'s `getLevel()` used a Fibonacci-style cumulative threshold — each
-level's XP requirement is the sum of the previous two — seeded at 50 for level 1:
-
-| Level reached | Cumulative XP (old) | ~wins needed (14xp/same-level win) |
-|---|---|---|
-| 1 | 50 | 4 |
-| 2 | 100 | 8 |
-| 3 | 150 | 11 |
-| 4 | 250 | 18 |
-| 5 | 400 | 29 |
-| 6 | 650 | 47 |
-
-(14xp is `calculateXP`'s payout for killing a same-level opponent as the last one
-standing in a 1-round fight — see `helpers/experience.test.ts`.)
-
-Coins: after the September 18 economy audit (above) shipped in the same day, a new
-player's first win pays 10 coins (5 win + 5 once-daily bonus) — already enough for the
-cheapest marked-up shop listing (12-18 coins, see `constants/coins.ts`) in roughly one
-more fight. But a player who is *losing* every early fight (very plausible sharing a room
-with higher-level monsters) was paying 7 coins on the first loss and 2 per loss after
-that — 3-4 losses to reach the cheapest item, "not dozens", but also not the "small
-handful" this feedback asked for in the worst case.
-
-Card drops: every win already draws a card (100% of the time — `Game.handleWinner` calls
-`drawCard` unconditionally), gated to cards at or below the monster's own level
-(`canHoldCard`). Within that legal pool, each card's own rarity (`.probability`) decided
-which one dropped, uniformly at every level — a level-0 monster had no better odds of the
-rarer common-tier options than a level-10 monster restricted to that same pool would.
-
-### After: the front-loaded curve
-
-All three knobs are centralized in one new file, `constants/progression.ts`, specifically
-so "front-load early, converge back to the existing curve" is one place to tune rather
-than scattered constants. Each is documented in-file with the reasoning; summary:
-
-- **XP**: `earlyXpDiscount(level)` multiplies the cumulative threshold for reaching each
-  level by a factor that starts at 0.55 for level 1 and climbs by 0.10/level, capped at
-  1.0 (no change) from level 6 on. New cumulative thresholds:
-
-  | Level reached | Cumulative XP (new) | ~wins needed (14xp/win) |
-  |---|---|---|
-  | 1 | 28 | 2 |
-  | 2 | 65 | 5 |
-  | 3 | 113 | 9 |
-  | 4 | 213 | 16 |
-  | 5 | 380 | 28 |
-  | 6 | 650 (unchanged) | 47 (unchanged) |
-
-  Levels 1-3 are roughly twice as fast; level 6 onward is byte-for-byte the same curve as
-  before, so nothing about mid/late pacing changed.
-
-- **Coins**: `earlyCoinBonus(battlesPlayedBeforeThisFight)` adds a tapering bonus (+3 for
-  a player's first 5 completed fights, +1 for the next 5, +0 after) on top of the existing
-  win/loss/daily payout, tracked via the same `character.battles.total` counter
-  `addWin`/`addLoss`/`addDraw` already maintain. This guarantees a first purchase within a
-  handful of fights even in an all-losses run, without permanently raising the win/loss
-  rates the September 18 audit just tuned.
-
-- **Card drops**: `earlyDropBoost(level)` multiplies each *eligible* card's rarity roll
-  (3x at level 0, decreasing to 1x — no change — at level 5) before the drop check in
-  `cards/helpers/draw.ts`. The level gate itself (`canHoldCard`) is untouched — a level-0
-  monster still cannot hold a level-3 card — this only improves its odds of the more
-  interesting card *among the ones it already qualifies for*. This is also what a new
-  character's starting deck draws from (`cards/helpers/deck.ts` calls the same `draw()`),
-  so a level-0 starting deck already leans toward the more interesting early-tier cards —
-  the "taste of higher-level excitement" the feedback asked for, without letting a
-  beginner monster hold anything above its level.
-
-### Visibility
-
-XP gain was already a private `ring.xp` event (`announcements/xpGain.ts`, `scope:
-'private'`, `targetUserId`), and level-up was already a public announcement
-(`announcements/level-up.ts`) — both existed before this change and needed no fix, just
-confirmation while reading `events/room-event-bus.ts` and the persistence path. What
-was missing was Workshop-side visibility: monsters had no on-screen XP/level progress at
-all (only a static `L{n}` label), so the server's `myInventory` summary
-(`packages/server/src/trpc/router.ts`) now also returns `xpIntoLevel`/`xpNeededForLevel`
-per monster (derived from `getXpCapForLevel`, already exported by the engine), and
-`MonsterWorkshopPanel.tsx` renders a second meter row (`.workshop-xp-meter`, styled after
-the existing card-slot meter — label beside the track, never on the fill, per
-`10b-bugs-fixed.md` #120) beneath the slot meter. The room-level coin balance
-(`.workshop-wallet` in the Workshop header) already existed by the time this landed.
-
-### Deliberately not done
-
-- **No blanket increase to win/loss coin or XP rates.** That would undo the balance the
-  September 18 audit just tuned and contradicts the feedback's own "may be a good thing
-  overall".
-- **No change to `canHoldCard`'s level gate.** Loosening it would let a beginner monster
-  hold cards its level was never meant to unlock — the drop boost only re-weights within
-  the pool the gate already allows.
-- **No separate "starter item" seeding mechanic.** The drop-boost lever already reaches
-  the starting deck (`cards/helpers/deck.ts` draws through the same boosted `draw()`), so
-  a second, bespoke seeding system would duplicate it for a smaller marginal gain — see
-  the effort/impact tradeoff called out in `19-player-agency-and-items.md` §1 ("prefer one
-  well-executed idea").
-- **No new tRPC procedure for the Workshop's coin balance** — the concurrent shop/workshop
-  data work already added `.workshop-wallet`, so this pass only added the per-monster XP
-  fields.
-
----
-
-## Crit Fail Consequences for All Cards (upstream #183)
-
-Currently some cards have no crit fail (natural 1) outcome. Every card should have one.
-
-**Design principle**: A natural 1 should always result in something bad for the attacker — backfire, fumble, self-damage, wasted turn, etc. The specific penalty should be thematically appropriate to the card.
-
-Related: **#182** — Crit fail on a time-shift card specifically should freeze the attacker for a turn and make them untargetable.
-
-**Action**: Audit all cards for missing crit fail handlers. Add appropriate outcomes. The `curseOfLoki` mechanic (computed in `helpers/chance.ts`, propagated through `checkSuccess`) already provides the flag — the issue is that not all cards act on it.
-
----
-
-## Stat Variance and Bonus Reform (upstream #188)
-
-The current stat system awards too-linear bonuses. Proposed overhaul:
-
-- **Base stat**: 8 (all monsters start here before variance)
-- **Variance**: 0–2 (rolled at spawn, per stat)
-- **Modifier**: -1 to +2 based on stat value (below 8 = penalty, 12+ = bonus)
-- **Per-level increase**: +1 to a stat per level (player choice or random)
-- **Encounter modifiers**: temporary buffs/debuffs applied during battle
-- Adjusted bonus calculation thresholds for bonus, curse, and saving throw mechanics
-
-This is a significant change. Requires careful migration for existing characters or a "reroll on the new system" mechanic for the revival launch.
-
-**Action**: Design the new stat tables, implement the new calculations, update all card modifier math to be consistent.
-
----
-
-## Initiative (upstream #189)
-
-Play order in the ring is currently based on entry order (shuffled on add). It should be based on an initiative roll:
-
-- Each monster rolls **1d20** at the start of each encounter
-- Modified by a **SPEED stat** bonus (no current monster class has a speed advantage — reserved for a future Thief/Rogue class)
-- Ties broken by re-rolling
-
-This adds meaningful variance to fights and prevents the "first mover always wins" dynamic.
-
-**Action**: Add initiative roll to `Ring.startEncounter()`. Add SPEED stat to `constants/stats.ts` (even if all current monsters start at 0 modifier).
-
----
-
-## Card Counterparts and Balance Caps (upstream #190)
-
-Some cards are disproportionately powerful relative to others at the same level. Each card should have:
-
-- A **counterpart** (a card that specifically counters or weakens it), or
-- A **saving throw** mechanism, or
-- A **class-specific weakness** (e.g., Enchanted Faceswap is ineffective against Blast)
-
-Additionally, card scaling on level-up should maintain relative difficulty ratios — a card that's strong at level 1 shouldn't become dominant at level 5.
-
-**Action**: Audit card power at each level tier. Document intended counterparts. Add saving throw hooks where missing.
-
----
-
-## Crit Ticks — Stat Improvement on Crit (upstream #164)
-
-Add a "crit tick" system to reward skilled play and create a stat progression path beyond levels:
-
-- During battles, track each monster's **critical roll count** (natural 20s)
-- On level-up, display a "highlights reel" showing the crit ticks earned
-- For each crit tick, roll **d100**: rolling 100 grants one **bonus stat point** (player's choice of stat)
-- This is rare (1% per crit tick) but creates exciting level-up moments
-
-**Action**: Track crit ticks per battle on the monster object. Add the d100 resolution step to the level-up flow. Add the highlights reel announcement.
-
----
-
-## Fights in Threads (upstream #83)
-
-Each fight in the ring should post its battle narration in a **thread** rather than flooding the main ring channel. The main channel gets a short summary post; full narration lives in the thread.
-
-This maps naturally onto the event bus architecture:
-
-- The engine emits a `ring.fightStart` event (summary, posted to the main channel)
-- Subsequent combat events (`card.played`, `damage.dealt`, etc.) are tagged with a `threadId` linking them to the fight
-- Connectors decide how to render threads:
-  - **Discord**: native thread support per message
-  - **Web app**: collapsible fight sections in the ring feed
-  - **Slack**: native thread replies
-  - **Mobile**: expandable/collapsible fight sections
-
-The `GameEvent` type could include an optional `threadId` field. Connectors that don't support threads (or haven't implemented thread rendering) just ignore it and display events inline as before.
-
-**Action**: Add optional `threadId` to `GameEvent`. Emit a `ring.fightStart` summary event. Tag all subsequent fight events with the thread ID.
-
----
-
-## Critical Bug Fixes Completed (prerequisite to balance work)
-
-Before balance work begins, two critical stat calculation bugs were fixed (PR [#286](https://github.com/deck-monsters/deck-monsters/pull/286)):
-
-- **Double-counted level bonus**: `getModifier()` was adding the level boost AND `getPreBattlePropValue()` was adding it again for STR/DEX/INT. Fixed: level scaling lives only in `getModifier()`, `getPreBattlePropValue()` uses the modifier as-is.
-- **Wrong property key**: `this.modifiers[modifier]` used the numeric modifier value as an object key (always `undefined`). Fixed to `permanentModifiers[targetProp]` (permanent/option modifiers only); encounter modifiers are handled separately in `getProp()`.
-
-These bugs meant all creatures were effectively one extra level-worth stronger than intended, and permanent stat modifiers (from `setModifier(..., permanent=true)`) were silently ignored. All 365 tests pass with the corrected behavior.
-
----
-
-## AI-Assisted Balance Validation
-
-The battle simulation harness (below) pairs well with AI-assisted validation. An agent skill documenting the combat system, stat calculations, and known balance pitfalls would allow contributors to:
-
-- Describe a proposed card or mechanic change in natural language
-- Have the agent review the proposal against existing cards and flag potential issues (overpowered scaling, missing crit fail handlers, interactions that break the game loop)
-- Run simulated battles to verify the change doesn't produce degenerate outcomes
-
-This addresses historical problems where new cards inadvertently disrupted game mechanics because the author didn't anticipate interactions with the full card pool. The simulation harness provides empirical evidence; the agent skill provides institutional knowledge about what "balanced" means in this game.
-
-**Action**: Build the battle simulation harness first, then create the Cursor skill. See also the AI-assisted card authoring section in the new content backlog.
-
----
-
-## Tasks
-
-- [ ] Audit all cards for missing crit fail handlers; add appropriate outcomes (upstream #183)
-- [ ] Implement time-shift specific crit fail (frozen + untargetable) (upstream #182)
-- [ ] Design and implement new stat variance/modifier system (upstream #188)
-- [ ] Decide migration path for existing characters on the new stat system
-- [ ] Add initiative roll to `Ring.startEncounter()`; add SPEED stat (upstream #189)
-- [ ] Audit card power by level tier; add counterparts/saving throws (upstream #190)
-- [ ] Implement crit tick tracking and level-up d100 resolution (upstream #164)
-- [ ] Add `threadId` to `GameEvent`; implement thread rendering in Discord + web (upstream #83)
-- [ ] Build a battle simulation harness for mechanics testing and balance tuning
+**Status:** Active backlog. Use evidence from the simulation harness and live telemetry
+before changing combat or economy values.
+
+The September progression and economy analysis shipped. Its tuning knobs live in
+`packages/engine/src/constants/progression.ts` and `constants/coins.ts`; the before/after
+numbers they were tuned against are archived in
+[September 2026 progression and economy analysis](../archive/roadmap/11-progression-and-economy-2026-09.md).
+Reward delivery is in [analytics and history](../architecture/analytics-and-history.md),
+and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
+
+## Measurement first
+
+- [ ] **Simulation harness — owner: Engine.** Build repeatable, seeded fight simulations
+  that expose outcome, turn count, card use, XP, and coin distributions. Make it the gate
+  for mechanics proposals below.
+- [ ] **Economy telemetry — owner: Analytics.** Measure coins earned, spent, and held per
+  active player-room; first-purchase time; outcome mix; and unaffordable expired stock.
+  Include new-player 1/5/20-fight and purchase-sink scenarios in the harness.
+- [ ] **Progression review — owner: Engine/economy.** Reassess early XP, coin, and drop
+  boosts from telemetry; prefer targeted onboarding adjustments over permanent payout
+  inflation.
+- [ ] **Healing prices — owner: Economy.** Keep the 60–90 coin shop price for a 50-coin
+  healing item until use telemetry exists. Do not cut that price without the telemetry:
+  cheaper healing makes bounded mid-fight items routine.
+
+## Combat design
+
+- [ ] **Stat reform — owner: Engine.** Design variance, modifier thresholds, level growth,
+  and encounter modifiers as one model; choose a safe migration or reroll path for existing
+  characters before implementation.
+- [x] **Temporary-stat consistency — owner: Engine.** Addressed in #175. Temporary DEX, STR,
+  and INT deltas change the raw stat and the rolls derived from it exactly once. This note
+  does not close the stat-reform proposal above.
+- [ ] **Initiative — owner: Ring.** Evaluate replacing entry-order play with a per-encounter
+  initiative roll and a SPEED modifier, including tie behavior and narration.
+- [ ] **Crit failures — owner: Cards.** Audit cards for natural-1 outcomes and add
+  thematically appropriate consequences, including the time-shift failure case.
+- [ ] **Crit ticks — owner: Engine.** Track each monster's natural 20s (upstream #164).
+  On level-up, show those crit ticks and roll d100 per tick; a 100 grants one bonus
+  stat point of the player's choice.
+- [ ] **Card balance — owner: Cards.** Audit power by level tier; define intentional
+  counterparts, saving throws, or class weaknesses where a card lacks counterplay.
+- [ ] **Team XP — owner: Engine.** Simulate multi-player-versus-boss outcomes and revise the
+  XP formula only if the data shows the current cross-team calculation is mis-scaled.
+- [ ] **Fight threads — owner: Events/connectors.** Render each fight's narration under an
+  optional `threadId` on `GameEvent` (upstream #83): a short summary in the main channel,
+  full narration in a Discord thread or a collapsible web section. Connectors that ignore
+  the field keep today's inline feed.
+
+Read [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md) for
+fight execution changes, [boss encounters](../architecture/boss-encounters.md) for teams,
+and [analytics and history](../architecture/analytics-and-history.md) for reward
+projections.

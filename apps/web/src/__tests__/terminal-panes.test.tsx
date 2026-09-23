@@ -128,7 +128,7 @@ function pressShortcut(key: '1' | '2' | '3' | '4' | '5') {
   fireEvent.keyDown(document, { key, ctrlKey: true });
 }
 
-describe('Terminal pane slots (Phase 2 — docs/roadmap/20-workspace-layout.md)', () => {
+describe('Terminal pane slots (docs/architecture/web-workspace.md)', () => {
   beforeEach(() => {
     window.localStorage.clear();
   });

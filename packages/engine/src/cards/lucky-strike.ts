@@ -3,6 +3,7 @@ import { chance } from '../helpers/chance.js';
 import { BARD, CLERIC, FIGHTER } from '../constants/creature-classes.js';
 import { RARE } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
+import { agree } from '../helpers/pronouns.js';
 
 const { roll } = chance;
 
@@ -58,7 +59,7 @@ export class LuckyStrike extends HitCard {
 			target[this.targetProp]
 		);
 		if (!roll1Success) {
-			commentary = `(${worseRoll.result}) ${player.givenName} was sure ${player.pronouns.he} was going to miss ${target.givenName}\n`;
+			commentary = `(${worseRoll.result}) ${player.givenName} was sure ${player.pronouns.he} ${player.pronouns.was ?? 'was'} going to miss ${target.givenName}\n`;
 
 			const { success: roll2Success } = this.checkSuccess(
 				betterRoll,
@@ -102,7 +103,7 @@ export class LuckyStrike extends HitCard {
 		if (strokeOfLuck) {
 			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
 		} else if (curseOfLoki) {
-			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns.he} would have otherwise hit, ${player.pronouns.he} misses.`;
+			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns.he} would have otherwise hit, ${player.pronouns.he} ${agree(player.pronouns, 'misses', 'miss')}.`;
 		} else if (tie) {
 			commentary = 'Miss... Tie goes to the defender.';
 		}

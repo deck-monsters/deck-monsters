@@ -25,7 +25,7 @@ export function editSelf(creature: BaseCreature, channel: ChannelFn): Promise<un
 		}))
 		.then((answer: unknown) => {
 			// The Discord connector answers with the button's label text, never an index
-			// (see docs/prompt-answer-contract.md) — resolve either form and fail loudly on
+			// (see docs/reference/prompt-answer-contract.md) — resolve either form and fail loudly on
 			// garbage rather than default to 'icon' for anything that isn't literally 0.
 			const index = resolveChoiceIndex(answer, fieldLabels);
 			if (index !== 0 && index !== 1) {
@@ -63,7 +63,7 @@ export function edit(creature: BaseCreature, channel: ChannelFn): Promise<unknow
 		}))
 		.then((answer: unknown) => {
 			// The Discord connector answers with the button's label text, never an index
-			// (see docs/prompt-answer-contract.md) — resolve either form and fail loudly on
+			// (see docs/reference/prompt-answer-contract.md) — resolve either form and fail loudly on
 			// garbage rather than let `optionKeys[NaN]` return `undefined` and propagate into
 			// every question below as the literal string "undefined".
 			const index = resolveChoiceIndex(answer, attributeLabels);

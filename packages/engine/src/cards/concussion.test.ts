@@ -10,7 +10,7 @@ describe('./cards/concussion.ts', () => {
 		const hit = new HitCard({ damageDice: '1d4' });
 
 		const stats = `${hit.stats}
-Curse: int -1-2 depending on how hard the hit is, with a maximum total curse of -3 per level. Afterwards penalties come out of hp instead.`;
+Curse: int -1-2 depending on how hard the hit is, with a maximum total curse of -(level + 1). Afterwards penalties come out of hp instead.`;
 
 		expect(concussion).to.be.an.instanceof(ConcussionCard);
 		expect(concussion.icon).to.equal('🥊');

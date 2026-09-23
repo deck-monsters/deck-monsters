@@ -1,6 +1,7 @@
 /**
  * Finds the emoji in a line of narration that stand for a known monster, so the feed can draw
- * that monster's pixel sprite in their place (docs/roadmap/24-pixel-monsters-everywhere.md).
+ * that monster's pixel sprite in their place
+ * (docs/architecture/ring-roster-and-pixel-monsters.md).
  *
  * The engine's text is shared with Discord, so it carries no markup saying "this emoji is
  * that monster" — only the monster's icon and name, placed by a handful of templates. Every

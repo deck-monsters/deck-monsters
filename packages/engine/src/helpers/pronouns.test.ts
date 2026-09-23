@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import PRONOUNS, { PRONOUN_CHOICES, genderFromPronounChoice } from './pronouns.js';
+import PRONOUNS, { PRONOUN_CHOICES, agree, genderFromPronounChoice } from './pronouns.js';
 
 describe('pronoun choices', () => {
 	it('maps the connector-visible pronoun labels to persisted gender keys', () => {
@@ -31,5 +31,12 @@ describe('helpers/pronouns', () => {
 			was: 'were',
 			verbSuffix: '',
 		});
+	});
+
+	it('picks the verb form that agrees with the pronoun', () => {
+		expect(agree(PRONOUNS.androgynous, 'misses', 'miss')).to.equal('miss');
+		expect(agree(PRONOUNS.female, 'misses', 'miss')).to.equal('misses');
+		// Legacy serialized sets have no verbSuffix; keep the singular form like `verbSuffix ?? 's'`.
+		expect(agree({ he: 'he', him: 'him', his: 'his' }, 'has', 'have')).to.equal('has');
 	});
 });

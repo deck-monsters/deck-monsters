@@ -1,4 +1,16 @@
+---
+type: Archive
+title: Backend Hosting and State Storage Strategy
+description: Historical record of the Supabase and Railway hosting migration.
+status: deprecated
+audience: internal
+tags: [archive, hosting, supabase]
+---
 # Backend Hosting and State Storage Strategy
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Infrastructure  
@@ -345,7 +357,7 @@ Stage 2 (builder) — compile engine + server TypeScript via Turborepo
 Stage 3 (runner)  — production image, only production deps + compiled dist/
 ```
 
-A `docker-compose.yml` at the repo root provides a local dev stack: the server container connects to the Supabase CLI local stack running on the host (default: `localhost:54322`). See `docs/deployment.md` for the full step-by-step setup guide.
+A `docker-compose.yml` at the repo root provides a local dev stack: the server container connects to the Supabase CLI local stack running on the host (default: `localhost:54322`). See `docs/operations/deployment.md` for the current setup guide.
 
 Railway handles container orchestration, health checks, and zero-downtime deploys. The container connects to Supabase Postgres over the network via the connection string in environment variables.
 
@@ -400,12 +412,12 @@ PORT                       # HTTP + WebSocket port (Railway injects this; defaul
 - [x] ~~Add Docker + docker-compose for local development~~ (`Dockerfile` multi-stage build; `docker-compose.yml` targeting Supabase CLI local stack)
 - [x] ~~Set up Supabase CLI for local development~~ (`supabase/config.toml`, `supabase/migrations/` directory created; run `supabase start` to boot local stack)
 - [x] ~~Evaluate Supabase CLI migrations alongside `drizzle-kit`~~ (decided: Supabase CLI owns DDL via `supabase/migrations/`; Drizzle is for type-safe queries only — `drizzle.config.ts` points to the same migrations folder)
-- [x] ~~Write deployment docs for Railway~~ (`docs/deployment.md` — full guide: Supabase project setup, schema push, auth providers, Railway deploy, env vars, health check)
+- [x] ~~Write deployment docs for Railway~~ (`docs/operations/deployment.md` — current guide: Supabase project setup, schema push, auth providers, Railway deploy, env vars, health check)
 - [x] ~~Configure Railway environment variables and deploy~~ (running in production at deck-monsters.com)
 
-## Open Questions
+## Historical remainder
 
-- **Event retention policy**: How long to keep `room_events` rows? A rolling window (e.g., 7 days) keeps the table small. Older history could be archived or simply discarded — battle results are reflected in character/monster stats regardless.
-- **Interactive prompts across connectors**: If a player is connected via both Discord and web, and the engine needs to ask them a question (e.g., "which monster to equip?"), which connector gets the prompt? Simplest answer: whichever connector initiated the action. But worth thinking about.
-- **Event granularity**: How fine-grained should events be? One event per `announce` call (matches current behavior) vs. one event per game-mechanical action (e.g., `card.played`, `damage.dealt`, `monster.died`). Finer granularity enables richer client rendering but is more work upfront. Start coarse, refine later.
-- **Supabase connection pooling**: Supabase offers both direct connections and a connection pooler (Supavisor). For Railway, the pooler is recommended for production to avoid exhausting Postgres connection limits under load. Evaluate during deployment.
+Retention, multi-connector prompt delivery, and event-granularity decisions are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). Deployment now
+uses the transaction pooler; see
+[`docs/operations/deployment.md`](../../operations/deployment.md).

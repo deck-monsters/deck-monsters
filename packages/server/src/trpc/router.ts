@@ -59,7 +59,7 @@ type InventoryMonsterSummary = {
 	type: string;
 	level: number;
 	// XP progress toward the next level, for the Workshop's level meter (see
-	// docs/roadmap/11-balance-and-mechanics.md "Early progression front-loading").
+	// docs/archive/roadmap/11-progression-and-economy-2026-09.md "Early progression front-loading").
 	// `xpIntoLevel`/`xpNeededForLevel` (rather than raw cumulative xp) so the client can
 	// draw a 0-100% bar without re-implementing the engine's level curve.
 	xpIntoLevel: number;
@@ -86,7 +86,7 @@ type InventoryMonsterSummary = {
 	battles: { wins: number; losses: number; total: number };
 };
 
-// Per-item summary for the web item list (roadmap/19-player-agency-and-items.md §7).
+// Per-item summary for the web item list (docs/architecture/workshop-and-items.md).
 // Usability is computed here, once, from the engine's own `canUseItem` predicate so the
 // client never has to reimplement the rule — see `canUseItemSafe` below.
 type ItemSummary = {
@@ -1082,7 +1082,8 @@ export function createRouter(roomManager: RoomManager) {
 
 		/*
 		 * Everything the engine's character creation would otherwise *ask* for. The
-		 * workshop runs on a prompt-free channel (docs/engine-concurrency-and-timing.md),
+		 * workshop runs on a prompt-free channel
+		 * (docs/architecture/engine-concurrency-and-timing.md),
 		 * so a first-run player has to answer these in the form, up front, instead.
 		 * The class is not offered: `helpers/all.ts` has exactly one entry, and the engine
 		 * no longer asks either.
@@ -1299,7 +1300,7 @@ export function createRouter(roomManager: RoomManager) {
 
 		/**
 		 * The mid-fight lever, finally reachable from the browser. See
-		 * docs/roadmap/19-player-agency-and-items.md §8, where the absence of this procedure
+		 * docs/architecture/workshop-and-items.md, where the absence of this procedure
 		 * was the single blocker on the whole items story — the web client could list items
 		 * but not use one.
 		 *

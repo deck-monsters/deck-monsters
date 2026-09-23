@@ -454,7 +454,7 @@ export class RoomManager {
 	 * prompt-free work); console commands pass `${roomId}:${userId}` (per-user,
 	 * may hold the lane across prompt waits). This method does not itself enforce
 	 * cross-user ordering — callers choose the lane key for their coordination
-	 * needs. See `docs/engine-concurrency-and-timing.md`.
+	 * needs. See `docs/architecture/engine-concurrency-and-timing.md`.
 	 */
 	runSerializedEngineWork<T>(laneKey: string, fn: () => Promise<T>): Promise<T> {
 		return this.runEngineCommand(laneKey, fn);

@@ -126,9 +126,9 @@ export default function Terminal({ roomId }: TerminalProps) {
     : new Set<SurfaceId>(slots);
 
   // A room switch must not carry over a previous room's "has this been shown" state —
-  // see docs/room-scoping.md. Terminal itself is not remounted on room change (the parent
-  // route re-renders with a new `roomId` param rather than unmounting), so this has to be
-  // done explicitly rather than falling out of component lifecycle.
+  // see docs/architecture/web-workspace.md. Terminal itself is not remounted on room change
+  // (the parent route re-renders with a new `roomId` param rather than unmounting), so this
+  // has to be done explicitly rather than falling out of component lifecycle.
   useEffect(() => {
     if (roomIdRef.current === roomId) return;
     roomIdRef.current = roomId;
@@ -192,7 +192,7 @@ export default function Terminal({ roomId }: TerminalProps) {
    * How a deep link into a surface actually shows it. Before the slots work the console was
    * always on screen, so the handbook's quick links could insert a command and assume it
    * would be seen; now the console competes for two slots and may not be in either. See
-   * 10-bug-fixes.md H.
+   * 10b-bugs-fixed.md #126.
    *
    * Reads layout state through refs so the registered function stays correct without
    * re-registering on every slot change.

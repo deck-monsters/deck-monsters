@@ -1,4 +1,16 @@
+---
+type: Archive
+title: Discord Connector Adapter
+description: Historical record of the Discord slash-command connector implementation.
+status: deprecated
+audience: internal
+tags: [archive, discord, connectors]
+---
 # Discord Connector Adapter
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Connector  
@@ -91,7 +103,7 @@ Additionally, the connector can support free-text commands via a `dm <command>` 
 - [x] Add admin support — `dispatchCommand` / `dispatchFreeTextCommand` resolve the caller's room membership via `roomManager.getMemberRole` and pass `isAdmin: role === 'owner'`, matching the web path in `trpc/router.ts`
 - [x] Add `/preset` slash command — `save` / `load` / `delete` / `list` subcommands with monster and preset-name autocomplete (`src/slash-commands/preset.ts`)
 - [x] Write tests for slash command handlers — `__tests__/preset-command.test.ts` (dispatch grammar, failure path, autocomplete), plus existing `helpers.test.ts` and `room-commands.test.ts`
-- [x] Write setup/deployment docs for server admins adding the bot to their guild _(added to `docs/deployment.md` section 3)_
+- [x] Write setup/deployment docs for server admins adding the bot to their guild _(now in `docs/operations/deployment.md` section 3)_
 
 ## Auth Integration
 

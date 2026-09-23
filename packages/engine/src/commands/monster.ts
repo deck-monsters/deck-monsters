@@ -322,7 +322,7 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 		// Check and record in one synchronous run, with no await in between. On the web path
 		// this also sits inside the per-user engine lane, but the Discord connector calls
 		// game.handleCommand() directly with no lane at all — so atomicity has to come from
-		// here. See docs/engine-concurrency-and-timing.md.
+		// here. See docs/architecture/engine-concurrency-and-timing.md.
 		const now = Date.now();
 		const allowance = summonAllowance(game.bossSummons, userId, now);
 
@@ -347,7 +347,7 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 
 		// Pass summoner identity to the contestant so a pre-fight removal (last player
 		// withdraws, despawn timer fires) can refund this exact charge via the ring's
-		// onSummonedBossRemoved callback. See docs/boss-encounters.md §3.
+		// onSummonedBossRemoved callback. See docs/architecture/boss-encounters.md §3.
 		const contestant = ring.spawnBoss({ summonedByUserId: userId, summonedAt: now });
 		if (!contestant) {
 			// Belt and braces — see the capacity check above.
@@ -361,7 +361,7 @@ function summonBossAction({ channel, character, game, isDM, user }: any): Promis
 		// Mark as pending so a process restart before the fight starts can refund this
 		// charge — the boss is ephemeral and would vanish, but the spent charge would
 		// not. Cleared when the encounter begins (Game.initializeEvents / ring.fight).
-		// See docs/boss-encounters.md §3 (Finding 6 — restart-gap fix).
+		// See docs/architecture/boss-encounters.md §3 (Finding 6 — restart-gap fix).
 		game.bossSummonsPending = addPendingSummon(game.bossSummonsPending, userId, now);
 
 		const remaining = allowance.remaining - 1;
@@ -395,7 +395,8 @@ function triggerRingEventAction({ channel, game, isAdmin, results }: any): Promi
 
 		// Refuse during an encounter — the event would never be applied (apply() fires in
 		// startEncounter() against the final roster, which already happened) and we would
-		// record an event that has no effect, confusing the fight log. See docs/boss-encounters.md §4.
+		// record an event that has no effect, confusing the fight log. See
+		// docs/architecture/boss-encounters.md §4.
 		if (ring.inEncounter) {
 			return announceAndThrow(
 				channel,

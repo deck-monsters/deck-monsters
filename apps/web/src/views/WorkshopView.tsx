@@ -8,7 +8,7 @@ export type { SelectionState } from '../components/WorkshopPanel.js';
 
 /**
  * Full-page host for the workshop surface. The surface itself is `WorkshopPanel`, which
- * also renders inside a terminal pane — see `docs/roadmap/20-workspace-layout.md` §3.1.
+ * also renders inside a terminal pane — see `docs/architecture/web-workspace.md`.
  * This host adds only the app chrome.
  */
 export default function WorkshopView() {

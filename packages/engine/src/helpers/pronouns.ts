@@ -10,6 +10,15 @@ export interface PronounSet {
 	verbSuffix?: string;
 }
 
+/**
+ * Pick the verb form that agrees with the pronoun: `agree(p, 'misses', 'miss')`.
+ * Irregular verbs (misses, has, is) can't use the `verbSuffix` pattern, and hard-coding
+ * the singular form printed "What is they thinking about?" for they/them monsters.
+ * A legacy set without `verbSuffix` keeps the singular form, matching `verbSuffix ?? 's'`.
+ */
+export const agree = (pronouns: PronounSet, singular: string, plural: string): string =>
+	pronouns.verbSuffix === '' ? plural : singular;
+
 export type Gender = 'male' | 'female' | 'androgynous';
 
 export const PRONOUNS: Record<Gender, PronounSet> = {

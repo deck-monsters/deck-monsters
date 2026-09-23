@@ -4,6 +4,7 @@ import { COMMON } from '../helpers/probabilities.js';
 import { BASILISK } from '../constants/creature-types.js';
 import { REASONABLE } from '../helpers/costs.js';
 import { EcdysisCard } from './ecdysis.js';
+import { HitCard } from './hit.js';
 import Basilisk from '../monsters/basilisk.js';
 
 describe('./cards/ecdysis.ts', () => {
@@ -88,6 +89,22 @@ describe('./cards/ecdysis.ts', () => {
 			expect(result).to.equal(true);
 			expect(basilisk.dex).to.equal(startingDex + 2);
 			expect(basilisk.str).to.equal(startingStr + 3);
+		});
+	});
+
+	it('raises Hit attack and damage modifiers by one', () => {
+		const hit = new HitCard();
+		const attackBefore = hit.getAttackRoll(basilisk).modifier;
+		const damageBefore = hit.getDamageRoll(basilisk).modifier;
+
+		const ring: any = {
+			contestants: [{ monster: basilisk }, { monster: basilisk }],
+			channelManager: { sendMessages: () => Promise.resolve() },
+		};
+
+		return ecdysisCard.play(basilisk, basilisk, ring).then(() => {
+			expect(hit.getAttackRoll(basilisk).modifier).to.equal(attackBefore + 1);
+			expect(hit.getDamageRoll(basilisk).modifier).to.equal(damageBefore + 1);
 		});
 	});
 });

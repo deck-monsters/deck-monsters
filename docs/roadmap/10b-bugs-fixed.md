@@ -1,3 +1,11 @@
+---
+type: Bug Ledger
+title: Bug Fixes and Code Quality — Fixed / Archived
+description: Root causes for bugs that are already fixed and should not be reopened.
+status: stable
+audience: internal
+tags: [bugs, ledger, archive]
+---
 # Bug Fixes and Code Quality — Fixed / Archived
 
 **Category**: Bug / Tech Debt
@@ -76,7 +84,7 @@ Three long-standing complaints traced to root causes and fixed together:
 
 3. **Complex multi-step commands crash/abort** — two compounding bugs: (a) cancelling a flow resolved pending prompts with the literal string `'__cancelled__'`, which no game code recognized, so it was parsed as a card/item selection; (b) `items/helpers/choose.ts` only accepted numeric indices — typing a card *name* produced `Number(name) → NaN` and aborted the entire flow via `Promise.reject(channel(...))` (rejecting with a Promise, so even the log was `[object Promise]`). **Fixed**: the engine exports `PROMPT_CANCELLED` + `PromptCancelledError`; the server channel wrapper translates the sentinel into a clean abort (suppressed in logs like prompt timeouts); `chooseItems` accepts indices **or** case-insensitive item names, skips invalid entries with an announce instead of aborting, and re-prompts via the existing flow when nothing valid was selected.
 
-**Status**: Fixed. The full mental model of how pacing, serialization lanes, `activeFlows`, and the prompt lifecycle interact is documented in [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) — read it before changing any of these systems.
+**Status**: Fixed. The full mental model of how pacing, serialization lanes, `activeFlows`, and the prompt lifecycle interact is documented in [`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md) — read it before changing any of these systems.
 
 ---
 
@@ -409,7 +417,7 @@ quorum drops; preserved when quorum immediately re-arms after a membership chang
 `calculateXP` in `helpers/experience.ts` counted opponents by comparing `monster.team` and
 `character.team`. Ring events like Common Cause assign teams at the `contestant.team` level
 (the override field on `Contestant`, which is intentionally ephemeral — see the hard rule in
-`docs/boss-encounters.md §4`). `monster.team` and `character.team` are never written by a
+`docs/architecture/boss-encounters.md §4`). `monster.team` and `character.team` are never written by a
 ring event. So XP math counted team-mates as opponents during Common Cause fights, inflating
 XP rewards.
 
@@ -707,7 +715,7 @@ Covered by four new tests in `ring/index.test.ts` (`player-summoned boss refund`
 
 ---
 
-### 48. `docs/boss-encounters.md` free-for-all centralization description was incomplete — FIXED
+### 48. `docs/architecture/boss-encounters.md` free-for-all centralization description was incomplete — FIXED
 
 The "Centralized free-for-all policy (Blood Feud)" section described only the card-level
 retargeting fix (the `ring.encounterFreeForAll` getter). The primary targeting path —
@@ -1143,7 +1151,7 @@ Workshop mutations used the room-wide engine lane; console commands used a per-u
 
 Covered by `router.test.ts` (deferred workshop, same-user console rejection, other-user acceptance, cleanup on resolve/reject).
 
-**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+**Status**: Fixed. See [`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md) §2.
 
 ---
 
@@ -1153,7 +1161,7 @@ Per-user console lanes mean two members of the same room can mutate one shared `
 
 **Decision**: Keep per-user lanes for interactive console flows (prevents #20 starvation). Workshop mutations that touch shared room state retain the room-wide lane. Cross-user prompt flows remain concurrent by design; fights remain outside lanes. Revisit only if a specific mutation class needs stronger ordering — add it to the room lane rather than moving console commands room-wide.
 
-Documented in [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+Documented in [`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md) §2.
 
 **Status**: Decided and documented.
 
@@ -1175,7 +1183,7 @@ Slash and free-text Discord paths `await`ed engine actions with no per-user lane
 
 **Fixed**: connector-local `command-flow.ts` (`discordActiveFlows` ownership tokens + `runDiscordCommandAction`) shared by `dispatchCommand` and `dispatchFreeTextCommand`. Actions run through `RoomManager.runSerializedEngineWork(`${roomId}:${userId}`)`; a second same-user flow fails fast with `DiscordFlowBusyError`; other users stay independent. The Discord request may await the action, but prompt collectors resolve outside the lane. Expected timeout/cancel/busy aborts are not logged as infrastructure errors. Covered by `command-flow.test.ts`, `helpers.test.ts`, and `bot.test.ts`.
 
-**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+**Status**: Fixed. See [`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md) §2.
 
 ---
 
@@ -1243,7 +1251,7 @@ Covered by `does not materialize encounter state when reading encounterModifiers
 
 **Fixed**: `createRoomCommandRunner` now keys lanes as `${roomId}:${userId}`; `createRoomWideCommandRunner` is the explicitly named room-only helper for workshop-style paths. `createTestChannel` translates `PROMPT_CANCELLED` → `PromptCancelledError` like the tRPC router. Covered by `testing/testing.test.ts`, `server/src/integration/command-flow.test.ts`, and the harness concurrent-look-monsters scenario.
 
-**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §2.
+**Status**: Fixed. See [`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md) §2.
 
 ---
 
@@ -1253,7 +1261,7 @@ Covered by `does not materialize encounter state when reading encounterModifiers
 
 **Fixed**: on channel rejection or non-string resolution, `ConnectorAdapter` calls `cancelPrompt` so the bus prompt settles promptly. Optional `onChannelError` callback surfaces connector failures without unhandled rejections. `registerUser` now subscribes with the target `userId` so private `prompt.request` / announce events are actually delivered (the adapter's prior catch-all subscriber could not see private events). Covered by `channel/connector-adapter.test.ts`.
 
-**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §3.
+**Status**: Fixed. See [`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md) §3.
 
 ### 63. Dual `ringFeed` subscriptions per web client — FIXED
 
@@ -1261,7 +1269,7 @@ Covered by `does not materialize encounter state when reading encounterModifiers
 
 **Fixed**: `useRingFeed` / `RingFeedProvider` in `Terminal` owns the single subscription, shared monotonic reconnect cursor (skips `handshake`/`heartbeat`; advances by leading epoch on live events and history seeds; `onError` resumes from the latest tracked id), room guard, and handshake. Live events fan out once to pane listeners via `useRingFeedListener` (`useLayoutEffect` registration + pending buffer so early frames are not dropped; listener identity is ref-stable so callback churn cannot restart the subscription). Each pane keeps its own DB history fetch, merge/dedup (`seenRef`), and filters. Room navigation resets the shared cursor and tears down the old subscription input. Covered by `useRingFeed.test.ts`, `ring-feed-cursor.test.ts`, and `terminal-ring-feed.test.tsx`.
 
-**Status**: Fixed. See [`docs/engine-concurrency-and-timing.md`](../engine-concurrency-and-timing.md) §5.
+**Status**: Fixed. See [`docs/architecture/engine-concurrency-and-timing.md`](../architecture/engine-concurrency-and-timing.md) §5.
 
 ---
 
@@ -1342,7 +1350,7 @@ Safe in practice — `sendPrompt` is the only publisher and always uses `scope: 
 1. `monster.cards.length < monster.cardSlots` → *"Only an evil master would send their monster into battle without enough cards."* Because characters are room-scoped, a player fully set up in rooms A and B still has a freshly spawned, empty-decked monster in room C — exactly where the chip was most likely to be clicked.
 2. `ring.contestants` already holds a contestant for that character → *"You already have a monster in the ring!"* The chip builder's `hasMonsterInRing` was computed over **living** monsters only, so a monster that died in the ring but had not yet been cleared left the guard false and a second send was offered.
 
-**Fixed**: `readyToSend` is gated on a new `isDeckReady()` (`cards.length >= cardSlots`, defaulting to 9 when the field is missing on a partially hydrated entity), and `hasMonsterInRing` is derived from the player's ring contestants directly rather than from their living monsters — mirroring the engine's `contestant.character === character` test. The equip chip now targets the first idle monster that still needs cards, so it points at whatever is actually blocking the send instead of at an already-equipped monster. `send` / `call out of the ring` also pass `user.id` rather than `user?.id`, so a missing id fails loudly instead of turning private countdown and full-ring announces public (same hardening as the `look at the ring` fix).
+**Fixed**: `readyToSend` is gated on a new `isDeckReady()` (`cards.length >= cardSlots`, defaulting to 9 when the field is missing on a partially hydrated entity), and `hasMonsterInRing` is derived from the player's ring contestants directly rather than from their living monsters — mirroring the engine's `contestant.character === character` test. The equip chip now targets the first idle monster that still needs cards, so it points at whatever is actually blocking the send instead of at an already-equipped monster. `send` / `call out of the ring` also pass `user.id` rather than `user?.id`, so a missing id fails loudly instead of turning private countdown and full-ring announces public (same hardening as the `look at the ring` fix, #174).
 
 Covered by `server/src/quick-actions.test.ts` — deck readiness at default and custom slot counts, equip-instead-of-send, second monster while one is in the ring, dead-contestant-still-in-ring, and equip targeting.
 
@@ -1360,7 +1368,7 @@ That path is **114 characters**. Fastify’s default `maxParamLength` is **100**
 
 **Why it showed up after recent PRs**: room-mount query count grew (ring history + recent fights + console history + pending prompt + myMonsters + …) until the joined batch path crossed 100 characters. Not a bad deploy of game state — the blob and memberships for Game Night were intact.
 
-**Fixed**: server bootstrap uses `createFastifyOptions` with `routerOptions.maxParamLength: 5000` (official `@trpc/server` Fastify adapter guidance). Documented in `docs/deployment.md` troubleshooting. Regression coverage in `packages/server/src/fastify-batch-path.test.ts` (default Fastify 404s the Terminal path; configured options serve it).
+**Fixed**: server bootstrap uses `createFastifyOptions` with `routerOptions.maxParamLength: 5000` (official `@trpc/server` Fastify adapter guidance). Documented in `docs/operations/deployment.md` troubleshooting. Regression coverage in `packages/server/src/fastify-batch-path.test.ts` (default Fastify 404s the Terminal path; configured options serve it).
 
 **Status**: Fixed.
 
@@ -1423,7 +1431,7 @@ Consequences in a live feed:
    one monster taking three turns in a row. `Random Play` was the worst case: it emitted no
    narration at all, so two card boxes appeared back to back with nothing connecting them.
 
-This is the same class of regression `docs/engine-concurrency-and-timing.md` §1 warns about
+This is the same class of regression `docs/architecture/engine-concurrency-and-timing.md` §1 warns about
 (a past change used `subEventDelay` between card plays and made fights scroll past in
 seconds) — except nested plays had no pacing at all, so they were worse than that regression.
 
@@ -1694,8 +1702,8 @@ live hp/ac preserved, full card again on monster switch, team shown) and two
 
 Eight iPhone screenshots of a live Game Night room, triaged in two passes: first the
 layout, then what the messages actually said. Screenshots are kept in
-[`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). #101 and #104 remain open in
-`10-bug-fixes.md` — both are judgement calls about the game's voice, not defects.
+[`assets/ui-bugs-2026-09/`](assets/ui-bugs-2026-09/). #101 and #104 are fixed later in
+this ledger: the turn-banner glyphs (#101) and the ring-exit line (#104).
 
 Verified by tests and static render only. There is no live app in the dev container
 (`pnpm setup:local` needs Docker/Supabase), so none of these was observed in a browser.
@@ -1833,7 +1841,7 @@ The feed said `A ferocious Weeping Angel has entered the ring at the behest of
 **Root cause**: `announcements/contestant.ts` is the single join announcement for *every*
 contestant and rendered `${character.icon} ${character.givenName}` — the monster's owner.
 Bosses are handed a **randomly generated owner** by `characters/helpers/random.ts`
-(`randomCharacter`) under `userId: 'boss'` (`docs/boss-encounters.md` §1). So the line
+(`randomCharacter`) under `userId: 'boss'` (`docs/architecture/boss-encounters.md` §1). So the line
 invented a plausible-looking beastmaster and attributed the boss to them.
 
 Worst for a **timer-spawned** boss, where no player was involved at all and the feed still
@@ -2009,7 +2017,7 @@ Covered by `analytics-queries.fight-events.test.ts`, which walks the drizzle pre
 asserts it references `scope` and `target_user_id` and binds the caller — no database
 required.
 
-**Status**: Fixed. A new failure pattern for `docs/room-scoping.md`: scoped to the room
+**Status**: Fixed. A new failure pattern for `docs/architecture/rooms-and-identity.md`: scoped to the room
 but not to the viewer.
 
 ---
@@ -2317,7 +2325,7 @@ button itself and used `border-block: 18px solid transparent` for the 44px tap t
 vertical bars. The tap target has to be a button that draws nothing, with the marker on a
 `::before`. Invisible to jsdom; caught by screenshotting Chromium at 393px.
 
-See `docs/roadmap/20-workspace-layout.md` §5g.
+See `docs/archive/roadmap/20-workspace-layout.md` §5g.
 
 **Status**: Fixed.
 
@@ -2388,8 +2396,9 @@ is never a scrollport. This removes the precondition instead of depending on how
 engine treats markers inside one, so it is the right shape of fix whichever engine was at
 fault — but it has not been seen to fix anything, and wants confirmation on a real iPhone.
 
-See the standing limitation recorded under `10-bug-fixes.md` G: all visual verification here
-is Chromium-only, so a clean render is not evidence that a reported visual bug is absent.
+Device confirmation is the WebKit check in [small leftovers](22-small-leftovers.md): all
+visual verification here is Chromium-only, so a clean render is not evidence that a reported
+visual bug is absent.
 
 **Status**: Fixed in code; unconfirmed on device.
 
@@ -2508,8 +2517,8 @@ append) rather than the behaviour, so it was rewritten to ask what the follow-ou
 decides, plus a guard that an append schedules no scroll of its own.
 
 **Unconfirmed on device**: the failure is a touch drag racing a scroll animation, which
-neither jsdom nor a headless Chromium render reproduces. See the standing limitation under
-`10-bug-fixes.md` G.
+neither jsdom nor a headless Chromium render reproduces. Device confirmation is the WebKit
+check in [small leftovers](22-small-leftovers.md).
 
 **Status**: Fixed in code; unconfirmed on device.
 
@@ -2829,7 +2838,7 @@ or with what a connector actually sends back.
   `=== 1`, `=== 2`) and end with an explicit `announceAndThrow` for anything that doesn't
   match, instead of letting an unrecognised answer fall through to the last branch. A
   malformed or stale answer is now a visible refusal, never a silent wrong destination.
-- See `docs/prompt-answer-contract.md` for the protocol this documents (what a connector is
+- See `docs/reference/prompt-answer-contract.md` for the protocol this documents (what a connector is
   expected to send back for a `{ question, choices }` prompt), and the "Prompt/Choices
   Answer Contract" note in `channel/index.ts` and `events/room-event-bus.ts`.
 - Regression tests in `items/store/buy.test.ts` and `items/store/sell.test.ts` cover: the
@@ -2858,12 +2867,11 @@ router.ts`) only summarized two of them, and `buyShopItem`'s `purchaseShopItem`
 `ShopItemSection` didn't even have a `'cards'` variant. Any card the room shop had in stock
 was invisible and unbuyable from the web app, full stop.
 
-(At the time of this fix, `items/store/stock.ts#getCards` itself always returns `[]` —
-cards for sale are not yet generated for *new* shops, a separate, pre-existing gap tracked
-in `docs/roadmap/10-bug-fixes.md`. This fix closes the client-parity gap regardless: a
-shop's `cards` pool can be non-empty from state persisted before that stub existed, or once
-`getCards` is fixed, and the two clients reading the same room-scoped `Game.shop` must never
-disagree about what's on sale.)
+(At the time of this fix, `items/store/stock.ts#getCards` itself always returned `[]` —
+cards for sale were not yet generated for *new* shops. That gap is #147 below. This fix
+closes the client-parity gap regardless: a shop's `cards` pool can be non-empty from state
+persisted before that stub existed, or once `getCards` is fixed, and the two clients reading
+the same room-scoped `Game.shop` must never disagree about what's on sale.)
 
 **Fixed**:
 - `summarizeShop` now also summarizes `shop.cards`, priced at `shop.priceOffset * 2` — the
@@ -2886,8 +2894,8 @@ disagree about what's on sale.)
   not the item list), and `ShopPanel.test.tsx` (renders cards, buys the exact stock token,
   shows "Sold out." when the section is empty).
 
-**Status**: Fixed (Workshop/console parity). `getCards()` itself returning `[]` for newly
-generated shops is a separate, pre-existing gap — see `docs/roadmap/10-bug-fixes.md`.
+**Status**: Fixed (Workshop/console parity). `getCards()` returning `[]` for newly
+generated shops is #147.
 
 ---
 
@@ -2934,7 +2942,7 @@ the monster row and inventory a player has to scroll past first.
   arrives, instead of waiting for the next poll. It reads `RingFeedContext` directly rather
   than the throwing `useRingFeedListener`, because `WorkshopPanel` renders in two different
   contexts — inside a `Terminal` pane (which already wraps every pane in
-  `RingFeedProvider`, per `docs/roadmap/20-workspace-layout.md`) and standalone via
+  `RingFeedProvider`, per `docs/archive/roadmap/20-workspace-layout.md`) and standalone via
   `WorkshopView`'s full-page route (which did not, until this fix — it now wraps its
   content in its own `RingFeedProvider`). Missing context is treated as "no live feed
   here," not an error, so the Workshop still works — just back to polling — wherever it is
@@ -2948,7 +2956,7 @@ the monster row and inventory a player has to scroll past first.
   properties have always been a no-op — the header's buttons wrap via ordinary inline flow
   instead. Visually close enough that it was never reported, but real dead CSS. Left alone
   here (making the container an actual flex row is a layout change to a header shared by
-  every Workshop screen, and `docs/roadmap/20-workspace-layout.md` already flags this
+  every Workshop screen, and `docs/archive/roadmap/20-workspace-layout.md` already flags this
   header as one of the workshop's more mobile-regression-prone surfaces) — tracked in
   `docs/roadmap/10-bug-fixes.md`.
 - Covered by `workshopPanel.wallet.test.tsx` (header wallet: hidden before the shop query
@@ -2972,7 +2980,7 @@ connector's buttons answer with the choice's label text, never an index
 is `NaN` and `array[NaN]` is `undefined`.
 
 **Root cause**: two connectors send different answer shapes for the same `{ question,
-choices }` prompt, and until `docs/prompt-answer-contract.md` was written (as part of #143)
+choices }` prompt, and until `docs/reference/prompt-answer-contract.md` was written (as part of #143)
 nothing said so — each call site was written against whichever connector its author had in
 front of them at the time. `spawn.ts#askForGender` already carried an ad hoc label-or-index
 workaround with a comment explaining why; every other site simply assumed an index.
@@ -3015,7 +3023,7 @@ keeping the "Name" label unchanged.
 (new), and `items/scrolls/sorting-hat.test.ts` each cover, per site: a label answer (Discord
 shape) reaching the right option, an index answer (web shape) reaching the right option, and
 an unrecognised answer producing the explicit refusal rather than a crash or a silently wrong
-pick. `docs/prompt-answer-contract.md` is updated to record these sites as compliant.
+pick. `docs/reference/prompt-answer-contract.md` is updated to record these sites as compliant.
 
 **Status**: Fixed.
 
@@ -3288,7 +3296,8 @@ their tests construct monsters directly and never run them through a ring.
 Player monsters are torn down by their owners: `Game.dispose()` on room unload, and now
 `Beastmaster.dropMonster()` on dismissal, which previously leaked the dropped monster's
 interval and any pending revival. `disposeTransientContestant()` on `Ring` is the single
-place that decides; see the ownership rule added to `engine-concurrency-and-timing.md`.
+place that decides; see the ownership rule in
+`docs/architecture/engine-concurrency-and-timing.md`.
 
 **Found alongside it**: the server's quick-action chips still offered `Revive X` for a
 monster whose revival timer was already running. `Beastmaster.reviveMonster` has excluded
@@ -3487,7 +3496,7 @@ list containing exactly one entry.
    and threw `NOT_FOUND` when it was missing. The console never hits this because
    `commands/index.ts` runs `game.getCharacter(...)` before every handler, which creates the
    character by *asking* for its details. Workshop mutations run on `createSilentChannel`,
-   which throws on any `question` (docs/engine-concurrency-and-timing.md §2.3), so the
+   which throws on any `question` (docs/architecture/engine-concurrency-and-timing.md §2.3), so the
    workshop could not reuse that flow — and nobody had given it an alternative.
 2. `createCharacter` (`packages/engine/src/characters/helpers/create.ts`) asked which class to
    be whenever `type` was not supplied, even though `characters/helpers/all.ts` has held
@@ -3635,7 +3644,7 @@ outward action, and exposed persistence keys as gender labels.
 were useful for compatibility, but no contract separated them from the word displayed to
 players, so technical implementation vocabulary leaked into the game world.
 
-**Fix**: [`docs/voice-and-wording.md`](../voice-and-wording.md) defines the voice philosophy
+**Fix**: [`docs/reference/voice-and-wording.md`](../reference/voice-and-wording.md) defines the voice philosophy
 and lexicon. `train` is now the canonical displayed command (while the parser and Discord
 retain `spawn` aliases); ring departures are called out; dismissal and revival use companion
 language; and console/workshop prompts present `he/him`, `she/her`, and `they/them` while
@@ -3696,7 +3705,7 @@ originals — no two monsters may share a silhouette mask, no pose may lose a pi
 grid, and a pose must displace the sprite's top more than its bottom (a shear, not a
 translation) — plus a full-ramp check so a redraw cannot quietly go flat again.
 General lessons are recorded under "Common Pitfalls" in
-[`docs/pixel-art-animations-in-js.md`](../pixel-art-animations-in-js.md).
+[`docs/reference/pixel-art.md`](../reference/pixel-art.md).
 
 **Status**: Fixed.
 
@@ -3775,10 +3784,9 @@ at once; a per-caller `useState` would have left the pane stale until a reload. 
 snapshot re-reads storage rather than caching in a module variable, so storage cleared
 underneath it is picked up instead of being masked.
 
-This is deliberately a stopgap: the presentation itself (how much room the band takes, and
-whether a whole-fight band is the right shape at all) is still open. That thinking, with a
-photo of a real tablet session and a recommendation to move the sprites into the Ring
-roster instead, is in [`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).
+This was a stopgap. #167 removed the band and moved the sprites into the Ring roster rows.
+The recommendation that led there, with a photo of a real tablet session, is in the
+[historical roster plan](../archive/roadmap/23-pixel-fight-stage.md).
 
 **Tests**: `usePixelFightStage.test.tsx` covers the default-off state, persistence,
 cross-caller propagation, cross-tab `storage` events and ignoring unrelated keys.
@@ -3841,7 +3849,7 @@ many subscribers. The band's own suites (`pixel-fight-layer`, `pixel-fight-stage
 are deleted with it.
 
 **Status**: Fixed. Remaining questions in
-[`23-pixel-fight-stage.md`](23-pixel-fight-stage.md).
+[the historical roster plan](../archive/roadmap/23-pixel-fight-stage.md).
 
 ### 168. Roster sprites truncated monster names to one or two characters in the two-up layout — FIXED
 
@@ -3935,7 +3943,7 @@ else on screen carries it. It was invisible precisely because it had always been
 - **Wording**: `defeated` → `fallen`, `lvl 2` → `Lvl 2`, `beginner` → `Beginner`,
   `ac 9` → `AC 9`, `5/5 standing` → `5 standing · 1 fallen`, and a boss's empty
   beastmaster field becomes `👑 The Editor`. The first three were **lexicon drift** —
-  `docs/voice-and-wording.md` is a contract and the roster was off it.
+  `docs/reference/voice-and-wording.md` is a contract and the roster was off it.
 
 **Root cause of the whole sequence**: the row was extended one field at a time, each
 addition defensible on its own, with no ranking to fall back on when they started
@@ -3951,7 +3959,7 @@ species never appears in the visible parts. `ringRoster.test.tsx` and
 **Not verified in a browser**: jsdom does no layout, so the density threshold and the
 single-column reflow are reasoned, not measured.
 
-**Design record**: [`docs/ring-roster-design.md`](../ring-roster-design.md) — field
+**Current contract**: [`docs/architecture/ring-roster-and-pixel-monsters.md`](../architecture/ring-roster-and-pixel-monsters.md) — field
 priority, the hard rule about row order, and the five layouts considered.
 
 **Status**: Fixed.
@@ -3988,7 +3996,7 @@ three candidates were rendered as static pages at 390px with a rule drawn at
 `var(--pane-padding)`, plus the dense tier at nine contestants and the two-column tier at
 760px. Every previous entry in this run of roster bugs says "not verified in a browser";
 the how-to is now in
-[`docs/ring-roster-design.md`](../ring-roster-design.md#rendering-it-without-a-device) so
+[`docs/architecture/ring-roster-and-pixel-monsters.md`](../architecture/ring-roster-and-pixel-monsters.md#visual-verification-rubric) so
 that stops being the norm. Two traps: `.terminal-slot` is `display: none` under 1024px
 without `.active`, and it needs `container-type: inline-size` or the column tiers never
 fire.
@@ -4061,5 +4069,94 @@ comes with the colour name (`options.colorHex`), because most of the library's n
 
 **Tests**: `random.test.ts` — twelve bosses must carry a well-formed hex and more than one
 colour; it fails on the old loader.
+
+**Status**: Fixed.
+
+### 174. `look at the ring` published private announces nobody received — FIXED
+
+The command echoed in the console and then went silent. The ring description never arrived.
+
+**Root cause**: `commands/look-at.ts` passed the channel function into `game.lookAtRing` and
+`lookAtRingCards`, which expect a string `userId`. `Ring.look` / `lookAtCards` publish
+private announces with that value as `targetUserId` (`Ring.pub` sets `scope: 'private'`
+whenever the argument is truthy). Subscriber delivery compares `targetUserId` to a string
+`userId`, so a function never matched and the announces were dropped. The console echo is
+published by the server on its own, which is why the command looked accepted.
+
+**Fix**: pass `user.id`. A missing id fails loudly instead of addressing a private announce
+to a non-string (the same `user?.id` hazard #85 later closed for send and call-out). Covered
+by `packages/server/src/integration/command-flow.test.ts` (`look at the ring`: an empty ring
+and a ring with a contestant, delivered only to the requesting user).
+
+**Status**: Fixed.
+
+### 175. Temporary DEX, STR, and INT changes did not affect the rolls those stats are for — FIXED
+
+At level 3 a Minotaur has `dexModifier` +4 and `strModifier` +5. Adrenaline Rush raised raw
+DEX from 9 to 10 and raw STR from 10 to 11, while Hit's attack modifier stayed +4 and its
+damage modifier stayed +5. Molasses lowered the target's raw DEX, and therefore Forked
+Stick's pin threshold, without lowering that target's ordinary melee accuracy.
+
+**Root cause**: `setModifier('dex' | 'str' | 'int', amount)` writes an encounter delta that
+`getProp` adds to the raw stat. `getModifier` read only the type offset, level, and
+permanent modifiers, so every roll that used `dexModifier`, `strModifier`, or `intModifier`
+ignored the temporary change. Ecdysis tests asserted the raw stat and never the derived
+roll, so the split stayed green.
+
+**Semantic contract**: a temporary DEX, STR, or INT delta changes the raw stat and the rolls
+derived from that stat exactly once. DEX feeds DEX defenses, melee accuracy, and DEX saves.
+STR feeds STR checks, melee damage, and STR pin/escape rolls. INT feeds INT defenses,
+curse and psychic accuracy, healing, and INT damage. AC stays defense and melee-damage
+absorption and has no attack modifier. The encounter delta is capped the same way `getProp`
+already capped it (`level + 1` for DEX/STR/INT); a curse stays negative, and the raw stat
+still floors at 1. `getPreBattleModifier` is what pre-battle raw stats use. They must not
+call public `getModifier`, or `getProp` would add the same delta a second time.
+
+**Horn Gore**: each successful horn already adds +2 through `freedomThresholdModifier`,
+which `getAttackModifier` folds into the next gore. The card also wrote
+`player.encounterModifiers.dexModifier` (+1 per horn) and kept a card-local `dexModifier`.
+`getModifier` reads `encounterModifiers.dex`, not `.dexModifier`, so that write was dead.
+Honoring the modifier key on top of the threshold bonus would have made each horn +3.
+The stale write, `STARTING_DEX_MODIFIER`, and the card-local counter are gone. Forked Metal
+Rod copied the same dead save/restore and lost it with the parent.
+
+**Balance**: boosts and curses now move the roll by the same amount they move the raw stat,
+once. AC is unchanged. Card odds were regenerated after the contract, and the odds harness
+now awaits `card.effect` and clears the actor's encounter modifiers between samples — the
+old catalogue sampled HP before an async effect finished and let one play's modifiers leak
+into the next. The largest sampled hit-rate moves are on Forked Stick, Coil, Constrict, and
+Kalevala, which roll accuracy from a stat a curse or boost can change mid-effect.
+
+**Tests**: `creatures/stats.test.ts` (DEX boost, STR curse, INT boost, each once on the raw
+stat and its modifier); `ecdysis.test.ts` (Hit attack and damage modifiers each +1);
+`molasses.test.ts` (raw DEX, outgoing Hit accuracy, and Forked Stick's pin threshold each
+−1); `forked-stick.test.ts` (temporary STR on immobilize and freedom rolls);
+`horn-gore.test.ts` (each successful horn is +2 to the next attack and the pin threshold,
+and `encounterModifiers.dexModifier` stays unset). Level-3 Minotaur probe: after Adrenaline
+Rush, DEX 9→10, STR 10→11, Hit attack +4→+5, Hit damage +5→+6; after Molasses, raw DEX
+9→8, outgoing melee accuracy +4→+3, Forked Stick pin threshold 9→8.
+
+**Status**: Fixed.
+
+### 176. They/them monsters got singular verbs in descriptions and narration — FIXED
+
+A they/them Jinn's `look at` card read "you wonder who or what they are. What is they
+thinking about?" The same slip printed "they misses", "They pushes", "They has won", "They
+is a beginner monster", "they eagerly watches", "for all they's worth", and "that they keeps
+hooked to their belt" (the shopkeeper) in card, scroll, revive, and shop narration.
+
+**Root cause**: `PronounSet` carries `is`, `was`, and `verbSuffix` for agreement, but each
+call site has to use them. These strings hard-coded the third-person-singular verb after
+`pronouns.he`. Regular verbs could use `verbSuffix`; irregular forms (`misses`, `has`,
+`pushes`) had no helper, so writers fell back to the singular.
+
+**Fix**: `agree(pronouns, singular, plural)` in `helpers/pronouns.ts` picks the form for
+irregular verbs, and every sentence that follows `pronouns.he` with a verb now goes through
+`is`, `was`, `verbSuffix`, or `agree`. A legacy set without `verbSuffix` keeps the singular
+form, the same fallback as `verbSuffix ?? 's'`. Shop adjectives gained an `{s}` token for the
+same reason. The Jinn lore text also said "standstorms"; it now says "sandstorms".
+
+**Tests**: `helpers/pronouns.test.ts` (`agree` for they, she, and a legacy set);
+`monsters/jinn.test.ts` (they/them and she/her descriptions).
 
 **Status**: Fixed.

@@ -7,8 +7,8 @@ describe('./helpers/levels.ts', () => {
 	describe('rawLevelThreshold (the original, undiscounted curve)', () => {
 		it('matches the historical Fibonacci-style thresholds', () => {
 			// These are the exact numbers the old recursive getLevel() produced before
-			// the early-game discount was introduced (docs/roadmap/11-balance-and-
-			// mechanics.md "Early progression front-loading"). Kept as a regression check
+			// the early-game discount was introduced (docs/archive/roadmap/
+			// 11-progression-and-economy-2026-09.md "Early progression front-loading"). Kept as a regression check
 			// that mid/late-game pacing — the part of the curve the player feedback said
 			// was fine — is untouched.
 			expect(rawLevelThreshold(1)).to.equal(50);

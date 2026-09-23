@@ -3,6 +3,7 @@ import { chance } from '../helpers/chance.js';
 import { CLERIC, FIGHTER } from '../constants/creature-classes.js';
 import { UNCOMMON } from '../helpers/probabilities.js';
 import { VERY_CHEAP } from '../helpers/costs.js';
+import { agree } from '../helpers/pronouns.js';
 
 const { roll } = chance;
 
@@ -52,7 +53,7 @@ export class Rehit extends HitCard {
 		if (strokeOfLuck) {
 			commentary += ` ${player.givenName} rolled a natural 20. Automatic double max damage.`;
 		} else if (curseOfLoki) {
-			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns.he} would have otherwise hit, ${player.pronouns.he} misses.`;
+			commentary += ` ${player.givenName} rolled a 1. Even if ${player.pronouns.he} would have otherwise hit, ${player.pronouns.he} ${agree(player.pronouns, 'misses', 'miss')}.`;
 		} else if (tie) {
 			commentary = 'Miss... Tie goes to the defender.';
 		}

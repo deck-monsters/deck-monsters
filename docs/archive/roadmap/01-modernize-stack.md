@@ -1,4 +1,16 @@
+---
+type: Archive
+title: "Modernize Stack: TypeScript, Testing, and Dependencies"
+description: Historical record of the TypeScript, testing, and dependency modernization.
+status: deprecated
+audience: internal
+tags: [archive, typescript, tooling]
+---
 # Modernize Stack: TypeScript, Testing, and Dependencies
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Tech Debt / Modernization  
@@ -106,10 +118,8 @@ Runs on push to `main` and all PRs. Uses pnpm 10, Node.js 22 (from `.nvmrc`), `u
 - `packages/server/` created: Fastify + tRPC + Drizzle + `RoomManager` + `PostgresStateStore`
 - `StateStore` interface added to `packages/engine/src/types/` and exported from the engine; `Game.persistState()` calls `stateStore.save()` when injected
 
-## Remaining Tasks
+## Historical remainder
 
-- [ ] Evaluate Mocha → Vitest migration (decision: migrate or stay with Mocha)
-- [ ] If migrating to Vitest: replace Mocha + c8 with Vitest + `@vitest/coverage-v8`, update test scripts
-- [x] ~~Fix 2 flaky tests in `cards/blast.test.ts`~~ — tests used `randomCharacter()` whose lazy dynamic imports race with test execution; replaced with direct `new Basilisk()` calls, same as other tests in the file
-- [x] ~~Fix `MaxListenersExceededWarning` spam in tests~~ — `globalSemaphore` is a singleton bus that legitimately accumulates listeners from all active Game instances; added `setMaxListeners(0)` in `helpers/semaphore.ts`
-- [ ] Create remaining monorepo packages as other roadmap items are implemented (`connector-discord`, `apps/web`; `connector-slack` and `apps/mobile` deferred)
+The test-runner decision and deferred product boundaries are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). Discord and web
+packages subsequently shipped.

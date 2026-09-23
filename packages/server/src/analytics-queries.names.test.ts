@@ -8,7 +8,7 @@ import { publicDisplayName } from './public-display-name.js';
 
 /**
  * `profiles.display_name` is seeded from the user's email by the `handle_new_user` trigger
- * (see docs/roadmap/10-bug-fixes.md), so any player who never set a name has their address
+ * (see docs/roadmap/10b-bugs-fixed.md #95), so any player who never set a name has their address
  * sitting in that column. `getDisplayName` in RoomManager masks it on the way into the
  * game, but the leaderboard queries read `profiles.display_name` straight out of the
  * database — and a leaderboard is shown to every member of the room, which makes it the

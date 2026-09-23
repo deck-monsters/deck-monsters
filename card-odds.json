@@ -1,1 +1,1370 @@
-{"0":{"BasicShieldCard":{"heals":500,"health":500,"healChance":20,"hpt":0},"BattleFocusCard":{"hits":1741,"damage":13131,"hitChance":70,"dpt":5},"BerserkCard":{"hits":1757,"damage":8481,"hitChance":70,"dpt":3},"BlastCard":{"hits":2500,"damage":7500,"hitChance":100,"dpt":3},"Blast2Card":{"hits":2500,"damage":9000,"hitChance":100,"dpt":4},"BlinkCard":{"effects":1863,"effectChance":75},"BrainDrainCard":{"hits":1935,"damage":6615,"hitChance":77,"dpt":3},"CamouflageVestCard":{"effects":2500,"effectChance":100},"CloakOfInvisibilityCard":{"effects":2500,"effectChance":100},"CoilCard":{"effects":2500,"hits":1923,"damage":8840,"hitChance":77,"dpt":4,"effectChance":100},"ConcussionCard":{"hits":2126,"damage":7230,"hitChance":85,"dpt":3},"ConstrictCard":{"effects":2500,"hits":1933,"damage":8776,"hitChance":77,"dpt":4,"effectChance":100},"CurseCard":{"hits":1901,"damage":6466,"hitChance":76,"dpt":3},"EnchantedFaceswapCard":{"effects":2500,"effectChance":100},"FelineCompanionCard":{"heals":500,"health":500,"healChance":20,"hpt":0},"FightOrFlightCard":{"hits":1754,"damage":7888,"hitChance":70,"dpt":3},"FistsOfVillainyCard":{"hits":1777,"damage":7896,"hitChance":71,"dpt":3},"FistsOfVirtueCard":{"hits":1821,"damage":10126,"hitChance":73,"dpt":4},"ForkedMetalRodCard":{"effects":1875,"hits":2412,"damage":17372,"hitChance":96,"dpt":7,"effectChance":75},"ForkedStickCard":{"effects":1514,"hits":1591,"damage":5596,"hitChance":64,"dpt":2,"effectChance":61},"HealCard":{"heals":2365,"health":7640,"hits":18,"damage":51,"hitChance":1,"dpt":0,"healChance":95,"hpt":3},"HitCard":{"hits":1823,"damage":8220,"hitChance":73,"dpt":3},"HitHarder":{"hits":1746,"damage":9287,"hitChance":70,"dpt":4},"HornGore":{"effects":1246,"hits":1767,"damage":7432,"hitChance":71,"dpt":3,"effectChance":50},"HornSwipeCard":{"hits":2333,"damage":10765,"hitChance":93,"dpt":4},"IocaneCard":{"hits":1745,"damage":10431,"heals":2,"health":8,"hitChance":70,"dpt":4,"healChance":0,"hpt":0},"KalevalaCard":{"hits":1863,"damage":18940,"hitChance":75,"dpt":8},"LuckyStrike":{"hits":2239,"damage":10184,"hitChance":90,"dpt":4},"MesmerizeCard":{"effects":2000,"hits":362,"damage":1545,"hitChance":14,"dpt":1,"effectChance":80},"MolassesCard":{"hits":1805,"damage":6011,"hitChance":72,"dpt":2},"PoundCard":{"hits":1786,"damage":14640,"hitChance":71,"dpt":6},"PrionDiseaseCard":{"heals":1921,"health":4076,"hits":41,"damage":1085,"hitChance":2,"dpt":0,"healChance":77,"hpt":2},"Rehit":{"hits":2169,"damage":9625,"hitChance":87,"dpt":4},"SandstormCard":{"effects":2500,"hits":2500,"damage":2500,"hitChance":100,"dpt":1,"effectChance":100},"ScotchCard":{"heals":2477,"health":12955,"hits":23,"damage":182,"hitChance":1,"dpt":0,"healChance":99,"hpt":5},"SurvivalKnifeCard":{"hits":1792,"damage":10791,"hitChance":72,"dpt":4},"ThickSkinCard":{"heals":500,"health":500,"healChance":20,"hpt":0},"TurkeyThighCard":{"hits":1749,"damage":10354,"heals":2,"health":12,"hitChance":70,"dpt":4,"healChance":0,"hpt":0},"VenegefulRampageCard":{"hits":1791,"damage":21326,"hitChance":72,"dpt":9},"WhiskeyShotCard":{"heals":2426,"health":10621,"hits":26,"damage":162,"hitChance":1,"dpt":0,"healChance":97,"hpt":4},"WoodenSpearCard":{"hits":1779,"damage":9246,"hitChance":71,"dpt":4},"CalisthenicsCard":{"heals":243,"health":243,"healChance":10,"hpt":0}},"1":{"BattleFocusCard":{"hits":1740,"damage":12333,"hitChance":70,"dpt":5},"BerserkCard":{"hits":1722,"damage":7525,"hitChance":69,"dpt":3},"BlastCard":{"hits":2500,"damage":10000,"hitChance":100,"dpt":4},"Blast2Card":{"hits":2500,"damage":11500,"hitChance":100,"dpt":5},"BlinkCard":{"effects":1749,"effectChance":70},"BrainDrainCard":{"hits":1982,"damage":7544,"hitChance":79,"dpt":3},"CamouflageVestCard":{"effects":2500,"effectChance":100},"CloakOfInvisibilityCard":{"effects":2500,"effectChance":100},"CoilCard":{"effects":2500,"hits":1797,"damage":10021,"hitChance":72,"dpt":4,"effectChance":100},"ConcussionCard":{"hits":1736,"damage":7397,"hitChance":69,"dpt":3},"ConstrictCard":{"effects":2500,"hits":1813,"damage":10256,"hitChance":73,"dpt":4,"effectChance":100},"CurseCard":{"hits":1898,"damage":8221,"hitChance":76,"dpt":3},"EnchantedFaceswapCard":{"effects":2500,"effectChance":100},"FightOrFlightCard":{"hits":1723,"damage":9438,"hitChance":69,"dpt":4},"FistsOfVillainyCard":{"hits":1723,"damage":9324,"hitChance":69,"dpt":4},"FistsOfVirtueCard":{"hits":1709,"damage":11197,"hitChance":68,"dpt":4},"ForkedMetalRodCard":{"effects":1840,"hits":2431,"damage":19391,"hitChance":97,"dpt":8,"effectChance":74},"ForkedStickCard":{"effects":1432,"hits":1363,"damage":6061,"hitChance":55,"dpt":2,"effectChance":57},"HealCard":{"heals":2476,"health":9914,"hits":24,"damage":85,"hitChance":1,"dpt":0,"healChance":99,"hpt":4},"HitCard":{"hits":1749,"damage":9448,"hitChance":70,"dpt":4},"HitHarder":{"hits":1770,"damage":11282,"hitChance":71,"dpt":5},"HornGore":{"effects":1088,"hits":1778,"damage":8092,"hitChance":71,"dpt":3,"effectChance":44},"HornSwipeCard":{"hits":2279,"damage":12815,"hitChance":91,"dpt":5},"IocaneCard":{"hits":1742,"damage":11965,"heals":2,"health":12,"hitChance":70,"dpt":5,"healChance":0,"hpt":0},"KalevalaCard":{"hits":1742,"damage":19137,"hitChance":70,"dpt":8},"LuckyStrike":{"hits":2249,"damage":12509,"hitChance":90,"dpt":5},"MesmerizeCard":{"effects":2000,"hits":350,"damage":1909,"hitChance":14,"dpt":1,"effectChance":80},"MolassesCard":{"hits":1765,"damage":7619,"hitChance":71,"dpt":3},"PoundCard":{"hits":1787,"damage":16359,"hitChance":71,"dpt":7},"PrionDiseaseCard":{"heals":1967,"health":4192,"hits":37,"damage":1039,"hitChance":1,"dpt":0,"healChance":79,"hpt":2},"Rehit":{"hits":2166,"damage":12014,"hitChance":87,"dpt":5},"SandstormCard":{"effects":2500,"hits":2500,"damage":5000,"hitChance":100,"dpt":2,"effectChance":100},"ScotchCard":{"heals":2476,"health":16008,"hits":24,"damage":198,"hitChance":1,"dpt":0,"healChance":99,"hpt":6},"SurvivalKnifeCard":{"hits":1752,"damage":12276,"hitChance":70,"dpt":5},"TurkeyThighCard":{"hits":1747,"damage":12071,"heals":4,"health":22,"hitChance":70,"dpt":5,"healChance":0,"hpt":0},"VenegefulRampageCard":{"hits":1732,"damage":21907,"hitChance":69,"dpt":9},"WhiskeyShotCard":{"heals":2462,"health":13087,"hits":38,"damage":254,"hitChance":2,"dpt":0,"healChance":98,"hpt":5},"WoodenSpearCard":{"hits":1780,"damage":10740,"hitChance":71,"dpt":4}},"2":{"BattleFocusCard":{"hits":1852,"damage":15575,"hitChance":74,"dpt":6},"BerserkCard":{"hits":1804,"damage":10481,"hitChance":72,"dpt":4},"BlastCard":{"hits":2500,"damage":12500,"hitChance":100,"dpt":5},"Blast2Card":{"hits":2500,"damage":14000,"hitChance":100,"dpt":6},"BlinkCard":{"effects":1680,"effectChance":67},"BrainDrainCard":{"hits":1801,"damage":8488,"hitChance":72,"dpt":3},"CamouflageVestCard":{"effects":2500,"effectChance":100},"CloakOfInvisibilityCard":{"effects":2500,"effectChance":100},"CoilCard":{"effects":2500,"hits":1676,"damage":11186,"hitChance":67,"dpt":4,"effectChance":100},"ConcussionCard":{"hits":1835,"damage":9773,"hitChance":73,"dpt":4},"ConstrictCard":{"effects":2500,"hits":1702,"damage":11190,"hitChance":68,"dpt":4,"effectChance":100},"CurseCard":{"hits":1965,"damage":10445,"hitChance":79,"dpt":4},"EnchantedFaceswapCard":{"effects":2500,"effectChance":100},"FightOrFlightCard":{"hits":1838,"damage":11802,"hitChance":74,"dpt":5},"FistsOfVillainyCard":{"hits":1865,"damage":11953,"hitChance":75,"dpt":5},"FistsOfVirtueCard":{"hits":1885,"damage":14205,"hitChance":75,"dpt":6},"ForkedMetalRodCard":{"effects":1830,"hits":2444,"damage":22570,"hitChance":98,"dpt":9,"effectChance":73},"ForkedStickCard":{"effects":1349,"hits":1256,"damage":6885,"hitChance":50,"dpt":3,"effectChance":54},"HealCard":{"heals":2474,"health":12726,"hits":26,"damage":137,"hitChance":1,"dpt":0,"healChance":99,"hpt":5},"HitCard":{"hits":1825,"damage":11663,"hitChance":73,"dpt":5},"HitHarder":{"hits":1840,"damage":13474,"hitChance":74,"dpt":5},"HornGore":{"effects":1058,"hits":1854,"damage":10172,"hitChance":74,"dpt":4,"effectChance":42},"HornSwipeCard":{"hits":2170,"damage":14356,"hitChance":87,"dpt":6},"IocaneCard":{"hits":1836,"damage":14555,"heals":7,"health":48,"hitChance":73,"dpt":6,"healChance":0,"hpt":0},"KalevalaCard":{"hits":1647,"damage":19699,"hitChance":66,"dpt":8},"LuckyStrike":{"hits":2283,"damage":14889,"hitChance":91,"dpt":6},"MesmerizeCard":{"effects":2000,"hits":326,"damage":2122,"hitChance":13,"dpt":1,"effectChance":80},"MolassesCard":{"hits":1845,"damage":9932,"hitChance":74,"dpt":4},"PoundCard":{"hits":1849,"damage":18778,"hitChance":74,"dpt":8},"PrionDiseaseCard":{"heals":1973,"health":4214,"hits":46,"damage":1328,"hitChance":2,"dpt":1,"healChance":79,"hpt":2},"Rehit":{"hits":2200,"damage":14203,"hitChance":88,"dpt":6},"SandstormCard":{"effects":2500,"hits":2500,"damage":7500,"hitChance":100,"dpt":3,"effectChance":100},"ScotchCard":{"heals":2469,"health":19100,"hits":31,"damage":314,"hitChance":1,"dpt":0,"healChance":99,"hpt":8},"SurvivalKnifeCard":{"hits":1851,"damage":14750,"heals":1,"health":8,"hitChance":74,"dpt":6,"healChance":0,"hpt":0},"TurkeyThighCard":{"hits":1778,"damage":14226,"heals":8,"health":64,"hitChance":71,"dpt":6,"healChance":0,"hpt":0},"VenegefulRampageCard":{"hits":1810,"damage":23538,"hitChance":72,"dpt":9},"WhiskeyShotCard":{"heals":2477,"health":15992,"hits":23,"damage":162,"hitChance":1,"dpt":0,"healChance":99,"hpt":6},"WoodenSpearCard":{"hits":1802,"damage":12785,"hitChance":72,"dpt":5}},"3":{"BattleFocusCard":{"hits":1750,"damage":15756,"hitChance":70,"dpt":6},"BerserkCard":{"hits":1775,"damage":11433,"hitChance":71,"dpt":5},"BlastCard":{"hits":2500,"damage":15000,"hitChance":100,"dpt":6},"Blast2Card":{"hits":2500,"damage":16500,"hitChance":100,"dpt":7},"BlinkCard":{"effects":1485,"effectChance":59},"BrainDrainCard":{"hits":1721,"damage":9967,"hitChance":69,"dpt":4},"CamouflageVestCard":{"effects":2500,"effectChance":100},"CloakOfInvisibilityCard":{"effects":2500,"effectChance":100},"CoilCard":{"effects":2500,"hits":1518,"damage":11501,"hitChance":61,"dpt":5,"effectChance":100},"ConcussionCard":{"hits":1766,"damage":11207,"hitChance":71,"dpt":4},"ConstrictCard":{"effects":2500,"hits":1547,"damage":11835,"hitChance":62,"dpt":5,"effectChance":100},"CurseCard":{"hits":1944,"damage":12366,"hitChance":78,"dpt":5},"EnchantedFaceswapCard":{"effects":2500,"effectChance":100},"FightOrFlightCard":{"hits":1770,"damage":13169,"hitChance":71,"dpt":5},"FistsOfVillainyCard":{"hits":1801,"damage":13395,"hitChance":72,"dpt":5},"FistsOfVirtueCard":{"hits":1755,"damage":14937,"hitChance":70,"dpt":6},"ForkedMetalRodCard":{"effects":1735,"hits":2441,"damage":24247,"hitChance":98,"dpt":10,"effectChance":69},"ForkedStickCard":{"effects":1202,"hits":1084,"damage":6902,"hitChance":43,"dpt":3,"effectChance":48},"HealCard":{"heals":2474,"health":15176,"hits":26,"damage":168,"hitChance":1,"dpt":0,"healChance":99,"hpt":6},"HitCard":{"hits":1789,"damage":13305,"hitChance":72,"dpt":5},"HitHarder":{"hits":1767,"damage":14739,"hitChance":71,"dpt":6},"HornGore":{"hits":1754,"damage":10756,"effects":958,"hitChance":70,"dpt":4,"effectChance":38},"HornSwipeCard":{"hits":2117,"damage":16081,"hitChance":85,"dpt":6},"IocaneCard":{"hits":1754,"damage":15707,"heals":19,"health":161,"hitChance":70,"dpt":6,"healChance":1,"hpt":0},"KalevalaCard":{"hits":1545,"damage":20170,"hitChance":62,"dpt":8},"LuckyStrike":{"hits":2261,"damage":17064,"hitChance":90,"dpt":7},"MesmerizeCard":{"effects":2000,"hits":289,"damage":2136,"hitChance":12,"dpt":1,"effectChance":80},"MolassesCard":{"hits":1777,"damage":11226,"hitChance":71,"dpt":4},"PoundCard":{"hits":1762,"damage":19588,"hitChance":70,"dpt":8},"PrionDiseaseCard":{"heals":1956,"health":4175,"hits":47,"damage":1466,"hitChance":2,"dpt":1,"healChance":78,"hpt":2},"Rehit":{"hits":2181,"damage":16301,"hitChance":87,"dpt":7},"SandstormCard":{"effects":2500,"hits":2500,"damage":10000,"hitChance":100,"dpt":4,"effectChance":100},"ScotchCard":{"heals":2476,"health":22640,"hits":24,"damage":253,"hitChance":1,"dpt":0,"healChance":99,"hpt":9},"SurvivalKnifeCard":{"hits":1807,"damage":16187,"heals":8,"health":74,"hitChance":72,"dpt":6,"healChance":0,"hpt":0},"TurkeyThighCard":{"hits":1784,"damage":16112,"heals":5,"health":43,"hitChance":71,"dpt":6,"healChance":0,"hpt":0},"VenegefulRampageCard":{"hits":1783,"damage":24277,"hitChance":71,"dpt":10},"WhiskeyShotCard":{"heals":2483,"health":19245,"hits":17,"damage":143,"hitChance":1,"dpt":0,"healChance":99,"hpt":8},"WoodenSpearCard":{"hits":1769,"damage":14587,"hitChance":71,"dpt":6}},"4":{"BerserkCard":{"hits":1726,"damage":11467,"hitChance":69,"dpt":5},"BlastCard":{"hits":2500,"damage":17500,"hitChance":100,"dpt":7},"Blast2Card":{"hits":2500,"damage":19000,"hitChance":100,"dpt":8},"BlinkCard":{"effects":1416,"effectChance":57},"BrainDrainCard":{"hits":1593,"damage":10763,"hitChance":64,"dpt":4},"CamouflageVestCard":{"effects":2500,"effectChance":100},"CloakOfInvisibilityCard":{"effects":2500,"effectChance":100},"CoilCard":{"effects":2500,"hits":1383,"damage":11882,"hitChance":55,"dpt":5,"effectChance":100},"ConcussionCard":{"hits":1767,"damage":12984,"hitChance":71,"dpt":5},"ConstrictCard":{"effects":2500,"hits":1459,"damage":12742,"hitChance":58,"dpt":5,"effectChance":100},"CurseCard":{"hits":1875,"damage":13689,"hitChance":75,"dpt":5},"EnchantedFaceswapCard":{"effects":2500,"effectChance":100},"FightOrFlightCard":{"hits":1731,"damage":14586,"hitChance":69,"dpt":6},"FistsOfVillainyCard":{"hits":1700,"damage":14452,"hitChance":68,"dpt":6},"FistsOfVirtueCard":{"hits":1712,"damage":16154,"hitChance":68,"dpt":6},"ForkedMetalRodCard":{"effects":1654,"hits":2414,"damage":26377,"hitChance":97,"dpt":11,"effectChance":66},"ForkedStickCard":{"effects":1128,"hits":923,"damage":6859,"hitChance":37,"dpt":3,"effectChance":45},"HealCard":{"heals":2475,"health":17733,"hits":25,"damage":166,"hitChance":1,"dpt":0,"healChance":99,"hpt":7},"HitCard":{"hits":1743,"damage":14813,"hitChance":70,"dpt":6},"HitHarder":{"hits":1772,"damage":16558,"hitChance":71,"dpt":7},"HornGore":{"hits":1794,"damage":12442,"effects":858,"hitChance":72,"dpt":5,"effectChance":34},"HornSwipeCard":{"hits":1987,"damage":17258,"hitChance":79,"dpt":7},"IocaneCard":{"hits":1731,"damage":17303,"heals":13,"health":127,"hitChance":69,"dpt":7,"healChance":1,"hpt":0},"KalevalaCard":{"hits":1386,"damage":19754,"hitChance":55,"dpt":8},"LuckyStrike":{"hits":2237,"damage":19131,"hitChance":89,"dpt":8},"MesmerizeCard":{"effects":2000,"hits":277,"damage":2344,"hitChance":11,"dpt":1,"effectChance":80},"MolassesCard":{"hits":1760,"damage":12937,"hitChance":70,"dpt":5},"PoundCard":{"hits":1795,"damage":21670,"hitChance":72,"dpt":9},"PrionDiseaseCard":{"heals":1958,"health":4178,"hits":54,"damage":1747,"hitChance":2,"dpt":1,"healChance":78,"hpt":2},"Rehit":{"hits":2166,"damage":18337,"hitChance":87,"dpt":7},"SandstormCard":{"effects":2500,"hits":2500,"damage":12500,"hitChance":100,"dpt":5,"effectChance":100},"ScotchCard":{"heals":2474,"health":25768,"hits":26,"damage":325,"hitChance":1,"dpt":0,"healChance":99,"hpt":10},"SurvivalKnifeCard":{"hits":1713,"damage":17117,"heals":13,"health":120,"hitChance":69,"dpt":7,"healChance":1,"hpt":0},"TurkeyThighCard":{"hits":1781,"damage":17741,"heals":5,"health":46,"hitChance":71,"dpt":7,"healChance":0,"hpt":0},"VenegefulRampageCard":{"hits":1757,"damage":25447,"hitChance":70,"dpt":10},"WhiskeyShotCard":{"heals":2478,"health":22001,"hits":22,"damage":195,"hitChance":1,"dpt":0,"healChance":99,"hpt":9},"WoodenSpearCard":{"hits":1759,"damage":15980,"hitChance":70,"dpt":6},"BattleFocusCard":{"hits":1759,"damage":16864,"hitChance":70,"dpt":7}}}
+{
+  "0": {
+    "BadBatchCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "BasicShieldCard": {
+      "heals": 500,
+      "health": 500,
+      "healChance": 20,
+      "hpt": 0
+    },
+    "BattleFocusCard": {
+      "hits": 1723,
+      "damage": 12113,
+      "hitChance": 69,
+      "dpt": 5
+    },
+    "BerserkCard": {
+      "hits": 1689,
+      "damage": 7472,
+      "hitChance": 68,
+      "dpt": 3
+    },
+    "BlastCard": {
+      "hits": 2500,
+      "damage": 7500,
+      "hitChance": 100,
+      "dpt": 3
+    },
+    "Blast2Card": {
+      "hits": 2500,
+      "damage": 9000,
+      "hitChance": 100,
+      "dpt": 4
+    },
+    "BlinkCard": {
+      "effects": 1880,
+      "effectChance": 75
+    },
+    "BrainDrainCard": {
+      "hits": 1908,
+      "damage": 6548,
+      "hitChance": 76,
+      "dpt": 3
+    },
+    "CamouflageVestCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CloakOfInvisibilityCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CoilCard": {
+      "effects": 2500,
+      "hits": 1933,
+      "damage": 8822,
+      "hitChance": 77,
+      "dpt": 4,
+      "effectChance": 100
+    },
+    "ConcussionCard": {
+      "hits": 2071,
+      "damage": 6952,
+      "hitChance": 83,
+      "dpt": 3
+    },
+    "ConstrictCard": {
+      "effects": 2500,
+      "hits": 1922,
+      "damage": 8882,
+      "hitChance": 77,
+      "dpt": 4,
+      "effectChance": 100
+    },
+    "CurseCard": {
+      "hits": 1851,
+      "damage": 6318,
+      "hitChance": 74,
+      "dpt": 3
+    },
+    "DelayedHit": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "EnchantedFaceswapCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "FelineCompanionCard": {
+      "heals": 500,
+      "health": 500,
+      "healChance": 20,
+      "hpt": 0
+    },
+    "FightOrFlightCard": {
+      "hits": 1678,
+      "damage": 7313,
+      "hitChance": 67,
+      "dpt": 3
+    },
+    "FistsOfVillainyCard": {
+      "hits": 1694,
+      "damage": 7636,
+      "hitChance": 68,
+      "dpt": 3
+    },
+    "FistsOfVirtueCard": {
+      "hits": 1694,
+      "damage": 9414,
+      "hitChance": 68,
+      "dpt": 4
+    },
+    "ForkedMetalRodCard": {
+      "effects": 1854,
+      "hits": 2411,
+      "damage": 17240,
+      "hitChance": 96,
+      "dpt": 7,
+      "effectChance": 74
+    },
+    "ForkedStickCard": {
+      "effects": 1537,
+      "hits": 1550,
+      "damage": 5423,
+      "hitChance": 62,
+      "dpt": 2,
+      "effectChance": 61
+    },
+    "HealCard": {
+      "heals": 2366,
+      "health": 7797,
+      "hits": 25,
+      "damage": 83,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 95,
+      "hpt": 3
+    },
+    "HitCard": {
+      "hits": 1750,
+      "damage": 7904,
+      "hitChance": 70,
+      "dpt": 3
+    },
+    "HitHarder": {
+      "hits": 1702,
+      "damage": 8971,
+      "hitChance": 68,
+      "dpt": 4
+    },
+    "HornGore": {
+      "hits": 1660,
+      "damage": 6760,
+      "effects": 1129,
+      "hitChance": 66,
+      "dpt": 3,
+      "effectChance": 45
+    },
+    "HornSwipeCard": {
+      "hits": 2313,
+      "damage": 10653,
+      "hitChance": 93,
+      "dpt": 4
+    },
+    "IocaneCard": {
+      "hits": 1661,
+      "damage": 10027,
+      "hitChance": 66,
+      "dpt": 4
+    },
+    "KalevalaCard": {
+      "hits": 1896,
+      "damage": 19060,
+      "hitChance": 76,
+      "dpt": 8
+    },
+    "LuckyStrike": {
+      "hits": 2240,
+      "damage": 10440,
+      "hitChance": 90,
+      "dpt": 4
+    },
+    "MesmerizeCard": {
+      "effects": 2000,
+      "hits": 372,
+      "damage": 1704,
+      "hitChance": 15,
+      "dpt": 1,
+      "effectChance": 80
+    },
+    "MolassesCard": {
+      "hits": 1689,
+      "damage": 5735,
+      "hitChance": 68,
+      "dpt": 2
+    },
+    "PoundCard": {
+      "hits": 1733,
+      "damage": 14133,
+      "hitChance": 69,
+      "dpt": 6
+    },
+    "PrionDiseaseCard": {
+      "heals": 2000,
+      "health": 4235,
+      "hits": 43,
+      "damage": 1154,
+      "hitChance": 2,
+      "dpt": 0,
+      "healChance": 80,
+      "hpt": 2
+    },
+    "Rehit": {
+      "hits": 2109,
+      "damage": 9559,
+      "hitChance": 84,
+      "dpt": 4
+    },
+    "SandstormCard": {
+      "effects": 2500,
+      "hits": 2500,
+      "damage": 2500,
+      "hitChance": 100,
+      "dpt": 1,
+      "effectChance": 100
+    },
+    "ScotchCard": {
+      "heals": 2478,
+      "health": 14928,
+      "hits": 22,
+      "damage": 180,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 6
+    },
+    "SurvivalKnifeCard": {
+      "hits": 1693,
+      "damage": 10169,
+      "heals": 2,
+      "health": 14,
+      "hitChance": 68,
+      "dpt": 4,
+      "healChance": 0,
+      "hpt": 0
+    },
+    "ThickSkinCard": {
+      "heals": 500,
+      "health": 500,
+      "healChance": 20,
+      "hpt": 0
+    },
+    "TurkeyThighCard": {
+      "hits": 1686,
+      "damage": 10101,
+      "hitChance": 67,
+      "dpt": 4
+    },
+    "VenegefulRampageCard": {
+      "hits": 1678,
+      "damage": 20625,
+      "hitChance": 67,
+      "dpt": 8
+    },
+    "WhiskeyShotCard": {
+      "heals": 2401,
+      "health": 11601,
+      "hits": 22,
+      "damage": 122,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 96,
+      "hpt": 5
+    },
+    "WoodenSpearCard": {
+      "hits": 1691,
+      "damage": 7587,
+      "hitChance": 68,
+      "dpt": 3
+    },
+    "CalisthenicsCard": {
+      "heals": 242,
+      "health": 242,
+      "healChance": 10,
+      "hpt": 0
+    }
+  },
+  "1": {
+    "BadBatchCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "BattleFocusCard": {
+      "hits": 1795,
+      "damage": 13046,
+      "hitChance": 72,
+      "dpt": 5
+    },
+    "BerserkCard": {
+      "hits": 1818,
+      "damage": 8564,
+      "hitChance": 73,
+      "dpt": 3
+    },
+    "BlastCard": {
+      "hits": 2500,
+      "damage": 10000,
+      "hitChance": 100,
+      "dpt": 4
+    },
+    "Blast2Card": {
+      "hits": 2500,
+      "damage": 11500,
+      "hitChance": 100,
+      "dpt": 5
+    },
+    "BlinkCard": {
+      "effects": 1888,
+      "effectChance": 76
+    },
+    "BrainDrainCard": {
+      "hits": 1869,
+      "damage": 8119,
+      "hitChance": 75,
+      "dpt": 3
+    },
+    "CamouflageVestCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CloakOfInvisibilityCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CoilCard": {
+      "effects": 2500,
+      "hits": 1935,
+      "damage": 10930,
+      "hitChance": 77,
+      "dpt": 4,
+      "effectChance": 100
+    },
+    "ConcussionCard": {
+      "hits": 1753,
+      "damage": 7604,
+      "hitChance": 70,
+      "dpt": 3
+    },
+    "ConstrictCard": {
+      "effects": 2500,
+      "hits": 1937,
+      "damage": 10675,
+      "hitChance": 77,
+      "dpt": 4,
+      "effectChance": 100
+    },
+    "CurseCard": {
+      "hits": 1913,
+      "damage": 8312,
+      "hitChance": 77,
+      "dpt": 3
+    },
+    "DelayedHit": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "EnchantedFaceswapCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "FightOrFlightCard": {
+      "hits": 1825,
+      "damage": 10008,
+      "hitChance": 73,
+      "dpt": 4
+    },
+    "FistsOfVillainyCard": {
+      "hits": 1774,
+      "damage": 9621,
+      "hitChance": 71,
+      "dpt": 4
+    },
+    "FistsOfVirtueCard": {
+      "hits": 1823,
+      "damage": 12014,
+      "hitChance": 73,
+      "dpt": 5
+    },
+    "ForkedMetalRodCard": {
+      "effects": 1852,
+      "hits": 2436,
+      "damage": 19358,
+      "hitChance": 97,
+      "dpt": 8,
+      "effectChance": 74
+    },
+    "ForkedStickCard": {
+      "effects": 1536,
+      "hits": 1527,
+      "damage": 6783,
+      "hitChance": 61,
+      "dpt": 3,
+      "effectChance": 61
+    },
+    "HealCard": {
+      "heals": 2483,
+      "health": 10253,
+      "hits": 17,
+      "damage": 74,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 4
+    },
+    "HitCard": {
+      "hits": 1811,
+      "damage": 9952,
+      "hitChance": 72,
+      "dpt": 4
+    },
+    "HitHarder": {
+      "hits": 1827,
+      "damage": 11549,
+      "hitChance": 73,
+      "dpt": 5
+    },
+    "HornGore": {
+      "effects": 1223,
+      "hits": 1808,
+      "damage": 8292,
+      "hitChance": 72,
+      "dpt": 3,
+      "effectChance": 49
+    },
+    "HornSwipeCard": {
+      "hits": 2332,
+      "damage": 13036,
+      "hitChance": 93,
+      "dpt": 5
+    },
+    "IocaneCard": {
+      "hits": 1800,
+      "damage": 12424,
+      "hitChance": 72,
+      "dpt": 5
+    },
+    "KalevalaCard": {
+      "hits": 1920,
+      "damage": 21058,
+      "hitChance": 77,
+      "dpt": 8
+    },
+    "LuckyStrike": {
+      "hits": 2279,
+      "damage": 12653,
+      "hitChance": 91,
+      "dpt": 5
+    },
+    "MesmerizeCard": {
+      "effects": 2000,
+      "hits": 374,
+      "damage": 1992,
+      "hitChance": 15,
+      "dpt": 1,
+      "effectChance": 80
+    },
+    "MolassesCard": {
+      "hits": 1754,
+      "damage": 7668,
+      "hitChance": 70,
+      "dpt": 3
+    },
+    "PoundCard": {
+      "hits": 1765,
+      "damage": 16250,
+      "hitChance": 71,
+      "dpt": 7
+    },
+    "PrionDiseaseCard": {
+      "heals": 1999,
+      "health": 4333,
+      "hits": 48,
+      "damage": 1368,
+      "hitChance": 2,
+      "dpt": 1,
+      "healChance": 80,
+      "hpt": 2
+    },
+    "Rehit": {
+      "hits": 2188,
+      "damage": 12279,
+      "hitChance": 88,
+      "dpt": 5
+    },
+    "SandstormCard": {
+      "effects": 2500,
+      "hits": 2500,
+      "damage": 5000,
+      "hitChance": 100,
+      "dpt": 2,
+      "effectChance": 100
+    },
+    "ScotchCard": {
+      "heals": 2482,
+      "health": 17190,
+      "hits": 18,
+      "damage": 166,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 7
+    },
+    "SurvivalKnifeCard": {
+      "hits": 1836,
+      "damage": 12721,
+      "hitChance": 73,
+      "dpt": 5
+    },
+    "TurkeyThighCard": {
+      "hits": 1785,
+      "damage": 12430,
+      "heals": 2,
+      "health": 11,
+      "hitChance": 71,
+      "dpt": 5,
+      "healChance": 0,
+      "hpt": 0
+    },
+    "VenegefulRampageCard": {
+      "hits": 1822,
+      "damage": 23159,
+      "hitChance": 73,
+      "dpt": 9
+    },
+    "WhiskeyShotCard": {
+      "heals": 2478,
+      "health": 13724,
+      "hits": 22,
+      "damage": 121,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 5
+    },
+    "WoodenSpearCard": {
+      "hits": 1805,
+      "damage": 9760,
+      "hitChance": 72,
+      "dpt": 4
+    }
+  },
+  "2": {
+    "BadBatchCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "BattleFocusCard": {
+      "hits": 1835,
+      "damage": 16058,
+      "hitChance": 73,
+      "dpt": 6
+    },
+    "BerserkCard": {
+      "hits": 1831,
+      "damage": 11348,
+      "hitChance": 73,
+      "dpt": 5
+    },
+    "BlastCard": {
+      "hits": 2500,
+      "damage": 12500,
+      "hitChance": 100,
+      "dpt": 5
+    },
+    "Blast2Card": {
+      "hits": 2500,
+      "damage": 14000,
+      "hitChance": 100,
+      "dpt": 6
+    },
+    "BlinkCard": {
+      "effects": 1869,
+      "effectChance": 75
+    },
+    "BrainDrainCard": {
+      "hits": 1888,
+      "damage": 10131,
+      "hitChance": 76,
+      "dpt": 4
+    },
+    "CamouflageVestCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CloakOfInvisibilityCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CoilCard": {
+      "effects": 2500,
+      "hits": 1931,
+      "damage": 12581,
+      "hitChance": 77,
+      "dpt": 5,
+      "effectChance": 100
+    },
+    "ConcussionCard": {
+      "hits": 1808,
+      "damage": 9666,
+      "hitChance": 72,
+      "dpt": 4
+    },
+    "ConstrictCard": {
+      "effects": 2500,
+      "hits": 1891,
+      "damage": 12447,
+      "hitChance": 76,
+      "dpt": 5,
+      "effectChance": 100
+    },
+    "CurseCard": {
+      "hits": 1980,
+      "damage": 10617,
+      "hitChance": 79,
+      "dpt": 4
+    },
+    "DelayedHit": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "EnchantedFaceswapCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "FightOrFlightCard": {
+      "hits": 1829,
+      "damage": 11741,
+      "hitChance": 73,
+      "dpt": 5
+    },
+    "FistsOfVillainyCard": {
+      "hits": 1796,
+      "damage": 11621,
+      "hitChance": 72,
+      "dpt": 5
+    },
+    "FistsOfVirtueCard": {
+      "hits": 1785,
+      "damage": 13286,
+      "hitChance": 71,
+      "dpt": 5
+    },
+    "ForkedMetalRodCard": {
+      "effects": 1872,
+      "hits": 2432,
+      "damage": 22473,
+      "hitChance": 97,
+      "dpt": 9,
+      "effectChance": 75
+    },
+    "ForkedStickCard": {
+      "effects": 1536,
+      "hits": 1563,
+      "damage": 8412,
+      "hitChance": 63,
+      "dpt": 3,
+      "effectChance": 61
+    },
+    "HealCard": {
+      "heals": 2482,
+      "health": 12852,
+      "hits": 18,
+      "damage": 81,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 5
+    },
+    "HitCard": {
+      "hits": 1840,
+      "damage": 11834,
+      "hitChance": 74,
+      "dpt": 5
+    },
+    "HitHarder": {
+      "hits": 1834,
+      "damage": 13465,
+      "hitChance": 73,
+      "dpt": 5
+    },
+    "HornGore": {
+      "effects": 1257,
+      "hits": 1815,
+      "damage": 10246,
+      "hitChance": 73,
+      "dpt": 4,
+      "effectChance": 50
+    },
+    "HornSwipeCard": {
+      "hits": 2318,
+      "damage": 15319,
+      "hitChance": 93,
+      "dpt": 6
+    },
+    "IocaneCard": {
+      "hits": 1782,
+      "damage": 14278,
+      "heals": 5,
+      "health": 37,
+      "hitChance": 71,
+      "dpt": 6,
+      "healChance": 0,
+      "hpt": 0
+    },
+    "KalevalaCard": {
+      "hits": 1912,
+      "damage": 23393,
+      "hitChance": 76,
+      "dpt": 9
+    },
+    "LuckyStrike": {
+      "hits": 2282,
+      "damage": 14993,
+      "hitChance": 91,
+      "dpt": 6
+    },
+    "MesmerizeCard": {
+      "effects": 2000,
+      "hits": 373,
+      "damage": 2388,
+      "hitChance": 15,
+      "dpt": 1,
+      "effectChance": 80
+    },
+    "MolassesCard": {
+      "hits": 1833,
+      "damage": 9720,
+      "hitChance": 73,
+      "dpt": 4
+    },
+    "PoundCard": {
+      "hits": 1818,
+      "damage": 18379,
+      "hitChance": 73,
+      "dpt": 7
+    },
+    "PrionDiseaseCard": {
+      "heals": 2007,
+      "health": 4238,
+      "hits": 47,
+      "damage": 1402,
+      "hitChance": 2,
+      "dpt": 1,
+      "healChance": 80,
+      "hpt": 2
+    },
+    "Rehit": {
+      "hits": 2176,
+      "damage": 13975,
+      "hitChance": 87,
+      "dpt": 6
+    },
+    "SandstormCard": {
+      "effects": 2500,
+      "hits": 2500,
+      "damage": 7500,
+      "hitChance": 100,
+      "dpt": 3,
+      "effectChance": 100
+    },
+    "ScotchCard": {
+      "heals": 2483,
+      "health": 20589,
+      "hits": 17,
+      "damage": 162,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 8
+    },
+    "SurvivalKnifeCard": {
+      "hits": 1829,
+      "damage": 14512,
+      "heals": 1,
+      "health": 9,
+      "hitChance": 73,
+      "dpt": 6,
+      "healChance": 0,
+      "hpt": 0
+    },
+    "TurkeyThighCard": {
+      "hits": 1844,
+      "damage": 14695,
+      "heals": 2,
+      "health": 18,
+      "hitChance": 74,
+      "dpt": 6,
+      "healChance": 0,
+      "hpt": 0
+    },
+    "VenegefulRampageCard": {
+      "hits": 1846,
+      "damage": 24764,
+      "hitChance": 74,
+      "dpt": 10
+    },
+    "WhiskeyShotCard": {
+      "heals": 2477,
+      "health": 16704,
+      "hits": 23,
+      "damage": 160,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 7
+    },
+    "WoodenSpearCard": {
+      "hits": 1827,
+      "damage": 11716,
+      "hitChance": 73,
+      "dpt": 5
+    }
+  },
+  "3": {
+    "BadBatchCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "BattleFocusCard": {
+      "hits": 1731,
+      "damage": 14589,
+      "hitChance": 69,
+      "dpt": 6
+    },
+    "BerserkCard": {
+      "hits": 1680,
+      "damage": 9822,
+      "hitChance": 67,
+      "dpt": 4
+    },
+    "BlastCard": {
+      "hits": 2500,
+      "damage": 15000,
+      "hitChance": 100,
+      "dpt": 6
+    },
+    "Blast2Card": {
+      "hits": 2500,
+      "damage": 16500,
+      "hitChance": 100,
+      "dpt": 7
+    },
+    "BlinkCard": {
+      "effects": 1917,
+      "effectChance": 77
+    },
+    "BrainDrainCard": {
+      "hits": 1961,
+      "damage": 12448,
+      "hitChance": 78,
+      "dpt": 5
+    },
+    "CamouflageVestCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CloakOfInvisibilityCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CoilCard": {
+      "effects": 2500,
+      "hits": 1917,
+      "damage": 14495,
+      "hitChance": 77,
+      "dpt": 6,
+      "effectChance": 100
+    },
+    "ConcussionCard": {
+      "hits": 1658,
+      "damage": 10534,
+      "hitChance": 66,
+      "dpt": 4
+    },
+    "ConstrictCard": {
+      "effects": 2500,
+      "hits": 1920,
+      "damage": 14604,
+      "hitChance": 77,
+      "dpt": 6,
+      "effectChance": 100
+    },
+    "CurseCard": {
+      "hits": 1853,
+      "damage": 11791,
+      "hitChance": 74,
+      "dpt": 5
+    },
+    "DelayedHit": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "EnchantedFaceswapCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "FightOrFlightCard": {
+      "hits": 1739,
+      "damage": 12891,
+      "hitChance": 70,
+      "dpt": 5
+    },
+    "FistsOfVillainyCard": {
+      "hits": 1736,
+      "damage": 12911,
+      "hitChance": 69,
+      "dpt": 5
+    },
+    "FistsOfVirtueCard": {
+      "hits": 1744,
+      "damage": 14844,
+      "hitChance": 70,
+      "dpt": 6
+    },
+    "ForkedMetalRodCard": {
+      "effects": 1846,
+      "hits": 2371,
+      "damage": 23096,
+      "hitChance": 95,
+      "dpt": 9,
+      "effectChance": 74
+    },
+    "ForkedStickCard": {
+      "effects": 1496,
+      "hits": 1510,
+      "damage": 9733,
+      "hitChance": 60,
+      "dpt": 4,
+      "effectChance": 60
+    },
+    "HealCard": {
+      "heals": 2480,
+      "health": 15328,
+      "hits": 20,
+      "damage": 117,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 6
+    },
+    "HitCard": {
+      "hits": 1720,
+      "damage": 12778,
+      "hitChance": 69,
+      "dpt": 5
+    },
+    "HitHarder": {
+      "hits": 1747,
+      "damage": 14698,
+      "hitChance": 70,
+      "dpt": 6
+    },
+    "HornGore": {
+      "effects": 1158,
+      "hits": 1709,
+      "damage": 10363,
+      "hitChance": 68,
+      "dpt": 4,
+      "effectChance": 46
+    },
+    "HornSwipeCard": {
+      "hits": 2325,
+      "damage": 17732,
+      "hitChance": 93,
+      "dpt": 7
+    },
+    "IocaneCard": {
+      "hits": 1737,
+      "damage": 15705,
+      "heals": 11,
+      "health": 88,
+      "hitChance": 69,
+      "dpt": 6,
+      "healChance": 0,
+      "hpt": 0
+    },
+    "KalevalaCard": {
+      "hits": 1915,
+      "damage": 25276,
+      "hitChance": 77,
+      "dpt": 10
+    },
+    "LuckyStrike": {
+      "hits": 2256,
+      "damage": 17066,
+      "hitChance": 90,
+      "dpt": 7
+    },
+    "MesmerizeCard": {
+      "effects": 2000,
+      "hits": 371,
+      "damage": 2780,
+      "hitChance": 15,
+      "dpt": 1,
+      "effectChance": 80
+    },
+    "MolassesCard": {
+      "hits": 1708,
+      "damage": 10830,
+      "hitChance": 68,
+      "dpt": 4
+    },
+    "PoundCard": {
+      "hits": 1684,
+      "damage": 18712,
+      "hitChance": 67,
+      "dpt": 7
+    },
+    "PrionDiseaseCard": {
+      "heals": 1977,
+      "health": 4143,
+      "hits": 47,
+      "damage": 1474,
+      "hitChance": 2,
+      "dpt": 1,
+      "healChance": 79,
+      "hpt": 2
+    },
+    "Rehit": {
+      "hits": 2159,
+      "damage": 16121,
+      "hitChance": 86,
+      "dpt": 6
+    },
+    "SandstormCard": {
+      "effects": 2500,
+      "hits": 2500,
+      "damage": 10000,
+      "hitChance": 100,
+      "dpt": 4,
+      "effectChance": 100
+    },
+    "ScotchCard": {
+      "heals": 2484,
+      "health": 23073,
+      "hits": 16,
+      "damage": 157,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 9
+    },
+    "SurvivalKnifeCard": {
+      "hits": 1706,
+      "damage": 15256,
+      "heals": 22,
+      "health": 183,
+      "hitChance": 68,
+      "dpt": 6,
+      "healChance": 1,
+      "hpt": 0
+    },
+    "TurkeyThighCard": {
+      "hits": 1693,
+      "damage": 15218,
+      "heals": 2,
+      "health": 19,
+      "hitChance": 68,
+      "dpt": 6,
+      "healChance": 0,
+      "hpt": 0
+    },
+    "VenegefulRampageCard": {
+      "hits": 1690,
+      "damage": 23161,
+      "hitChance": 68,
+      "dpt": 9
+    },
+    "WhiskeyShotCard": {
+      "heals": 2478,
+      "health": 19413,
+      "hits": 22,
+      "damage": 176,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 8
+    },
+    "WoodenSpearCard": {
+      "hits": 1726,
+      "damage": 12824,
+      "hitChance": 69,
+      "dpt": 5
+    }
+  },
+  "4": {
+    "BadBatchCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "BattleFocusCard": {
+      "hits": 1766,
+      "damage": 18039,
+      "hitChance": 71,
+      "dpt": 7
+    },
+    "BerserkCard": {
+      "hits": 1754,
+      "damage": 13448,
+      "hitChance": 70,
+      "dpt": 5
+    },
+    "BlastCard": {
+      "hits": 2500,
+      "damage": 17500,
+      "hitChance": 100,
+      "dpt": 7
+    },
+    "Blast2Card": {
+      "hits": 2500,
+      "damage": 19000,
+      "hitChance": 100,
+      "dpt": 8
+    },
+    "BlinkCard": {
+      "effects": 1923,
+      "effectChance": 77
+    },
+    "BrainDrainCard": {
+      "hits": 1930,
+      "damage": 14179,
+      "hitChance": 77,
+      "dpt": 6
+    },
+    "CamouflageVestCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CloakOfInvisibilityCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "CoilCard": {
+      "effects": 2500,
+      "hits": 1901,
+      "damage": 16240,
+      "hitChance": 76,
+      "dpt": 6,
+      "effectChance": 100
+    },
+    "ConcussionCard": {
+      "hits": 1763,
+      "damage": 12872,
+      "hitChance": 71,
+      "dpt": 5
+    },
+    "ConstrictCard": {
+      "effects": 2500,
+      "hits": 1949,
+      "damage": 16696,
+      "hitChance": 78,
+      "dpt": 7,
+      "effectChance": 100
+    },
+    "CurseCard": {
+      "hits": 1926,
+      "damage": 14126,
+      "hitChance": 77,
+      "dpt": 6
+    },
+    "DelayedHit": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "EnchantedFaceswapCard": {
+      "effects": 2500,
+      "effectChance": 100
+    },
+    "FightOrFlightCard": {
+      "hits": 1755,
+      "damage": 14758,
+      "hitChance": 70,
+      "dpt": 6
+    },
+    "FistsOfVillainyCard": {
+      "hits": 1750,
+      "damage": 14734,
+      "hitChance": 70,
+      "dpt": 6
+    },
+    "FistsOfVirtueCard": {
+      "hits": 1782,
+      "damage": 17149,
+      "hitChance": 71,
+      "dpt": 7
+    },
+    "ForkedMetalRodCard": {
+      "effects": 1863,
+      "hits": 2409,
+      "damage": 25913,
+      "hitChance": 96,
+      "dpt": 10,
+      "effectChance": 75
+    },
+    "ForkedStickCard": {
+      "effects": 1533,
+      "hits": 1595,
+      "damage": 11799,
+      "hitChance": 64,
+      "dpt": 5,
+      "effectChance": 61
+    },
+    "HealCard": {
+      "heals": 2479,
+      "health": 17827,
+      "hits": 21,
+      "damage": 144,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 7
+    },
+    "HitCard": {
+      "hits": 1781,
+      "damage": 15079,
+      "hitChance": 71,
+      "dpt": 6
+    },
+    "HitHarder": {
+      "hits": 1778,
+      "damage": 16715,
+      "hitChance": 71,
+      "dpt": 7
+    },
+    "HornGore": {
+      "effects": 1180,
+      "hits": 1762,
+      "damage": 12373,
+      "hitChance": 70,
+      "dpt": 5,
+      "effectChance": 47
+    },
+    "HornSwipeCard": {
+      "hits": 2334,
+      "damage": 19980,
+      "hitChance": 93,
+      "dpt": 8
+    },
+    "IocaneCard": {
+      "hits": 1811,
+      "damage": 18026,
+      "heals": 15,
+      "health": 142,
+      "hitChance": 72,
+      "dpt": 7,
+      "healChance": 1,
+      "hpt": 0
+    },
+    "KalevalaCard": {
+      "hits": 1916,
+      "damage": 26803,
+      "hitChance": 77,
+      "dpt": 11
+    },
+    "LuckyStrike": {
+      "hits": 2256,
+      "damage": 19268,
+      "hitChance": 90,
+      "dpt": 8
+    },
+    "MesmerizeCard": {
+      "effects": 2000,
+      "hits": 365,
+      "damage": 3070,
+      "hitChance": 15,
+      "dpt": 1,
+      "effectChance": 80
+    },
+    "MolassesCard": {
+      "hits": 1786,
+      "damage": 13080,
+      "hitChance": 71,
+      "dpt": 5
+    },
+    "PoundCard": {
+      "hits": 1752,
+      "damage": 21451,
+      "hitChance": 70,
+      "dpt": 9
+    },
+    "PrionDiseaseCard": {
+      "heals": 1968,
+      "health": 4185,
+      "hits": 39,
+      "damage": 1257,
+      "hitChance": 2,
+      "dpt": 1,
+      "healChance": 79,
+      "hpt": 2
+    },
+    "Rehit": {
+      "hits": 2165,
+      "damage": 18513,
+      "hitChance": 87,
+      "dpt": 7
+    },
+    "SandstormCard": {
+      "effects": 2500,
+      "hits": 2500,
+      "damage": 12500,
+      "hitChance": 100,
+      "dpt": 5,
+      "effectChance": 100
+    },
+    "ScotchCard": {
+      "heals": 2473,
+      "health": 26191,
+      "hits": 27,
+      "damage": 311,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 10
+    },
+    "SurvivalKnifeCard": {
+      "hits": 1732,
+      "damage": 17232,
+      "heals": 11,
+      "health": 117,
+      "hitChance": 69,
+      "dpt": 7,
+      "healChance": 0,
+      "hpt": 0
+    },
+    "TurkeyThighCard": {
+      "hits": 1748,
+      "damage": 17351,
+      "heals": 16,
+      "health": 148,
+      "hitChance": 70,
+      "dpt": 7,
+      "healChance": 1,
+      "hpt": 0
+    },
+    "VenegefulRampageCard": {
+      "hits": 1786,
+      "damage": 25609,
+      "hitChance": 71,
+      "dpt": 10
+    },
+    "WhiskeyShotCard": {
+      "heals": 2475,
+      "health": 21974,
+      "hits": 25,
+      "damage": 197,
+      "hitChance": 1,
+      "dpt": 0,
+      "healChance": 99,
+      "hpt": 9
+    },
+    "WoodenSpearCard": {
+      "hits": 1774,
+      "damage": 15013,
+      "hitChance": 71,
+      "dpt": 6
+    }
+  }
+}

@@ -89,7 +89,7 @@ export default function FightLogPanel({ roomId, headerActions }: FightLogPanelPr
             them when that same element is a scroll container — reported from iOS as
             numbers sliced in half (`l.`, `?.`). Blink does not, which is why a Chromium
             render could not reproduce it. Separating the two removes the precondition
-            instead of relying on either engine's behaviour. See 10-bug-fixes.md G.
+            instead of relying on either engine's behaviour. See 10b-bugs-fixed.md #125.
           */}
           <div className="fight-log-events">
           <ol>{detail.data.events.map((event) => <li key={event.id}>

@@ -23,7 +23,7 @@ const noItems = { character: [] as ItemSummary[], monsters: [] as Array<{ monste
 /**
  * Until `game.useItem` existed this panel was display-only, which made the game's one
  * mid-fight lever unreachable from the browser. See
- * docs/roadmap/19-player-agency-and-items.md §8.
+ * docs/architecture/workshop-and-items.md.
  */
 describe('ItemsPanel use affordance', () => {
   beforeEach(() => {

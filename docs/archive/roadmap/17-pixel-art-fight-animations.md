@@ -1,11 +1,23 @@
+---
+type: Archive
+title: Pixel Art Fight Animations (Theme-Gated)
+description: Historical record of theme-gated pixel fight animations.
+status: deprecated
+audience: internal
+tags: [archive, pixel-art, animation]
+---
 # Pixel Art Fight Animations (Theme-Gated)
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Enhancement / UX  
 **Priority**: Low — post-launch, fun  
 **Status**: ✅ Shipped — `street-fighter` theme only  
 **Depends on**: `09-graphics.md` (theme system), `06a-web-app.md` (web app theme CSS vars)  
-**Reference**: [`docs/pixel-art-animations-in-js.md`](../../pixel-art-animations-in-js.md)
+**Reference**: [`docs/reference/pixel-art.md`](../../reference/pixel-art.md)
 
 ---
 
@@ -51,7 +63,7 @@ The animation layer is a standalone module that the web app loads only when the 
 
 ## Implementation
 
-See `docs/pixel-art-animations-in-js.md` for the full reference. Summary of choices for this feature:
+See `docs/reference/pixel-art.md` for the full reference. Summary of choices for this feature:
 
 ### In-code pixel maps via Canvas API
 
@@ -131,7 +143,7 @@ for it. Anything reasoning about "are the sprites showing" must check both.
 roster's HP bars and cost 96–200px of viewport; the sprites now draw inside the roster rows
 (#167), and the scene model — sides, per-side caps, the `active` flag, the fade timer and
 the `inEncounter` adoption — went with it. See
-[`docs/roadmap/23-pixel-fight-stage.md`](../../roadmap/23-pixel-fight-stage.md). The
+[ring roster and pixel monsters](../../architecture/ring-roster-and-pixel-monsters.md). The
 sections below are kept as the record of how the feature was first built.
 
 ---
@@ -185,7 +197,7 @@ reduction or feed wiring.
   art is now 24×24 on a six-key ramp, poses shear about the feet instead of translating, and
   frames render on a padded grid so a lean cannot clip a horn or a wingtip. The sprite test
   gained a silhouette-collision check, a no-clipping check and a shear-not-translation check
-  so none of the three can come back quietly. `docs/pixel-art-animations-in-js.md` ("Common
+  so none of the three can come back quietly. `docs/reference/pixel-art.md` ("Common
   Pitfalls") records the general lessons.
 - **Live-verify in the phone layout.** The layer hides when the pane container is under
   360 px wide or the viewport under 600 px tall, and drops to 3× sprites under 480 px; the

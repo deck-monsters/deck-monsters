@@ -26,10 +26,12 @@
     "build:docs": "pnpm --filter @deck-monsters/engine build && node ./build/index.js",
     "build": "turbo run build",
     "dev": "turbo run build --watch",
+    "docs:check": "node scripts/check-docs.mjs",
     "lint:fix": "turbo run lint:fix",
     "lint": "turbo run lint",
     "test:watch": "cd packages/engine && npm run test:watch",
     "test:coverage": "cd packages/engine && npm run test:coverage",
+    "test:docs": "node --test scripts/check-docs.test.mjs",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "setup:local": "bash scripts/setup-local.sh"

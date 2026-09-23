@@ -3,7 +3,7 @@ import { pauseHelpers } from '../helpers/pause.js';
 import { delay, mapSeries } from '../helpers/promise.js';
 
 /**
- * Prompt/answer contract (see docs/prompt-answer-contract.md for the full write-up):
+ * Prompt/answer contract (see docs/reference/prompt-answer-contract.md for the full write-up):
  * when `question` is set together with `choices`, the connector must present each choice
  * (in order — the engine renders them 0-based, "0) Foo", via `helpers/choices.ts#getChoices`)
  * and resolve the returned promise with the user's answer.

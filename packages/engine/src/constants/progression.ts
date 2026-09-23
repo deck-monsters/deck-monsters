@@ -3,7 +3,7 @@
  *
  * Player feedback (Sept 2026): levelling, coin income and interesting card drops all
  * feel slow, "especially for early stage beginner monsters". The mid/late curve is
- * intentionally a slow burn (see docs/roadmap/11-balance-and-mechanics.md) and stays
+ * intentionally a slow burn (see docs/archive/roadmap/11-progression-and-economy-2026-09.md) and stays
  * that way — this file only steepens the FIRST few levels/fights and converges back to
  * the existing curve by around level 5-6, so the overall economy is not blanket-buffed.
  *
@@ -11,8 +11,8 @@
  * converge" shape is tunable in one place instead of scattered magic numbers across
  * levels.ts, coins.ts and the card-draw helpers.
  *
- * See docs/roadmap/11-balance-and-mechanics.md ("Early progression front-loading",
- * added alongside this file) for the before/after numbers this was tuned against.
+ * See docs/archive/roadmap/11-progression-and-economy-2026-09.md ("Early progression
+ * front-loading") for the before/after numbers this was tuned against.
  */
 
 /**
@@ -41,8 +41,8 @@ export const earlyXpDiscount = (level: number): number =>
  * few completed fights (tracked via `character.battles.total`, the same counter that
  * already drives win/loss stats — see creatures/base.ts `addWin`/`addLoss`/`addDraw`).
  *
- * Why this exists: the Sept 18 2026 economy audit (docs/roadmap/11-balance-and-
- * mechanics.md) fixed the zero-progress draw bug and added a once-daily 5-coin bonus,
+ * Why this exists: the Sept 18 2026 economy audit (docs/archive/roadmap/
+ * 11-progression-and-economy-2026-09.md) fixed the zero-progress draw bug and added a once-daily 5-coin bonus,
  * which gets a new player to the cheapest marked-up shop listing (12-18 coins, see
  * constants/coins.ts) in "at most one additional win or three additional consolation
  * outcomes" per that audit. That is fine for a player who wins early, but a player who

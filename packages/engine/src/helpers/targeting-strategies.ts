@@ -103,7 +103,7 @@ interface GetTargetOptions {
 	 * Optional ring reference for centralized encounter-level targeting policy.
 	 * When `ring.encounterFreeForAll` is true (Blood Feud), team filtering is
 	 * bypassed at the entry point so all cards honour the policy without each
-	 * card needing to know about Blood Feud. See docs/boss-encounters.md §5.
+	 * card needing to know about Blood Feud. See docs/architecture/boss-encounters.md §5.
 	 */
 	ring?: EncounterTargetingRing;
 }

@@ -132,7 +132,7 @@ Would you like to buy them? (yes/no)`
 					// Re-read the shop at commit time. This flow has been awaiting user
 					// prompts (potentially for minutes), and other members of the room
 					// buy and sell in their own concurrency lanes meanwhile — see
-					// docs/engine-concurrency-and-timing.md. Committing a mutation built
+					// docs/architecture/engine-concurrency-and-timing.md. Committing a mutation built
 					// on the snapshot captured before those prompts would clobber their
 					// purchases, resurrect already-sold stock, or overwrite a shop that
 					// has since rotated past its closing time.

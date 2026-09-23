@@ -9,7 +9,7 @@ type Palette = PixelSprite['palette'];
  * question in the Discord and text flows, and a random colour name for bosses. Reading it
  * means a basilisk its owner called "emerald and gold" renders green, so the variation
  * carries meaning a player chose — rather than a random tint that says nothing. See
- * docs/roadmap/24-pixel-monsters-everywhere.md.
+ * docs/architecture/ring-roster-and-pixel-monsters.md.
  *
  * Only the **hue and saturation** change. Each species palette's lightness ramp — outline,
  * shadow, body, lit body, highlight — was spaced by hand so a 24px map reads as shading

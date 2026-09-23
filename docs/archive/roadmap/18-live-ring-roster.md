@@ -1,4 +1,16 @@
+---
+type: Archive
+title: Live Ring Roster
+description: Historical record of the live ring roster payload and panel.
+status: deprecated
+audience: internal
+tags: [archive, ring, roster]
+---
 # Live Ring Roster
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Web UI
@@ -139,19 +151,16 @@ the name, not the tags.
   clipped `.roster-name-text`), own-monster highlight, acting-contestant highlight (and
   that a dead contestant is never marked acting), collapse, and the accessible meter
 
-## Possible follow-ups
+## Historical remainder
 
-Not built, no demand yet:
-
-- Per-contestant status effects (conditions like "braced", stat boosts) as inline chips
-- Damage-taken flash on the bar when HP drops
-- Sparkline of HP across the fight, in the fight log detail view
+Potential roster readability enhancements are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 ## Feed readability (September 2026)
 
 The roster was the first half of making a live fight followable; the second half was the
 feed itself. Two measured changes, both documented in
-[`docs/engine-concurrency-and-timing.md`](../../engine-concurrency-and-timing.md):
+[`docs/architecture/engine-concurrency-and-timing.md`](../../architecture/engine-concurrency-and-timing.md):
 
 - **Content-aware pacing.** Pauses now scale with the message just published, gaps no
   longer stack at beat boundaries, and no single gap exceeds 8s. Before: the pause after a

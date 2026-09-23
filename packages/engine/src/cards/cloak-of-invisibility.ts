@@ -109,11 +109,11 @@ export class CloakOfInvisibilityCard extends BaseCard {
 									(encounterEffect: any) =>
 										encounterEffect.effectType !== INVISIBILITY_EFFECT
 								);
-							outcome = `${player.givenName} rolled a natural 20. ${capitalize(player.pronouns.he)} immediately realizes exactly where ${invisibilityTarget.givenName} is and strips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`;
+							outcome = `${player.givenName} rolled a natural 20. ${capitalize(player.pronouns.he)} immediately realize${player.pronouns.verbSuffix ?? 's'} exactly where ${invisibilityTarget.givenName} is and strips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`;
 						} else if (curseOfLoki) {
-							outcome = `${player.givenName} rolled a 1. While stumbling about looking for ${invisibilityTarget.givenName} ${player.pronouns.he} trips and hits ${player.pronouns.him}self instead.`;
+							outcome = `${player.givenName} rolled a 1. While stumbling about looking for ${invisibilityTarget.givenName} ${player.pronouns.he} trip${player.pronouns.verbSuffix ?? 's'} and hit${player.pronouns.verbSuffix ?? 's'} ${player.pronouns.him}self instead.`;
 						} else if (tie) {
-							outcome = `${player.givenName} almost catches a glimpse of ${invisibilityTarget.givenName} but when ${player.pronouns.he} blinks ${invisibilityTarget.givenName} is gone.`;
+							outcome = `${player.givenName} almost catches a glimpse of ${invisibilityTarget.givenName} but when ${player.pronouns.he} blink${player.pronouns.verbSuffix ?? 's'} ${invisibilityTarget.givenName} is gone.`;
 						} else if (success) {
 							outcome = `Success. ${player.givenName} catches a glimpse of ${invisibilityTarget.givenName} and attacks.`;
 						} else {

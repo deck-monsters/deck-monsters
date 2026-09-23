@@ -1,4 +1,4 @@
-// Tier derivation for the workshop items list. Spec: docs/roadmap/19-player-agency-and-items.md §7.
+// Tier derivation for the workshop items list. See docs/architecture/workshop-and-items.md.
 //
 // Sort, do not filter, and never add a mode. One list, three tiers:
 //   1 — usable right now, on a target the engine will actually accept

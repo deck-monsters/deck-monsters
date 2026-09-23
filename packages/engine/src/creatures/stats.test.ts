@@ -54,4 +54,35 @@ describe('creatures/stats', () => {
 		expect(monster.ac).to.equal(1);
 		expect(monster.str).to.equal(1);
 	});
+
+	// xp 113 is the discounted level-3 threshold (helpers/levels.ts). The encounter
+	// delta must move the raw stat and the modifier cards add to rolls by the same
+	// amount, once. Counting it in both getPreBattlePropValue and getProp made the
+	// raw stat jump by two.
+	it('applies an encounter DEX boost once to both raw DEX and its modifier', () => {
+		const monster = makeBasilisk({ xp: 113 });
+		const raw = monster.dex;
+		const modifier = monster.dexModifier;
+		monster.setModifier('dex', 1);
+		expect(monster.dex).to.equal(raw + 1);
+		expect(monster.dexModifier).to.equal(modifier + 1);
+	});
+
+	it('applies an encounter STR curse once to both raw STR and its modifier', () => {
+		const monster = makeBasilisk({ xp: 113 });
+		const raw = monster.str;
+		const modifier = monster.strModifier;
+		monster.setModifier('str', -1);
+		expect(monster.str).to.equal(raw - 1);
+		expect(monster.strModifier).to.equal(modifier - 1);
+	});
+
+	it('applies an encounter INT boost once to both raw INT and its modifier', () => {
+		const monster = makeBasilisk({ xp: 113 });
+		const raw = monster.int;
+		const modifier = monster.intModifier;
+		monster.setModifier('int', 1);
+		expect(monster.int).to.equal(raw + 1);
+		expect(monster.intModifier).to.equal(modifier + 1);
+	});
 });

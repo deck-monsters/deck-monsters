@@ -1,0 +1,180 @@
+---
+type: Archive
+title: Documentation Lifecycle Reset
+description: Completed pass that separated current docs, roadmap work, and history.
+status: deprecated
+audience: internal
+tags: [documentation, roadmap, lifecycle]
+---
+# Documentation Lifecycle Reset
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
+**Status:** Complete
+
+This pass separates current contracts, active work, and useful history; compacts the
+repository's documentation routers; improves generated player strategy guidance; fixes the
+temporary-stat semantics defect found while validating that guidance; and adds a tested
+repository-local documentation-maintenance skill.
+
+## Binding decisions
+
+- Existing folders, filenames, numbering, and code citations may change.
+- Transform useful completed material into current architecture, operations, reference, or
+  player documentation before deleting redundant artifacts.
+- Git preserves implementation chronology; completed one-off plans and reports do not need
+  a permanent documentation copy.
+- `AGENTS.md` remains a compact trigger-based router.
+- The active roadmap contains actionable work only.
+- Temporary DEX/STR/INT changes affect both raw checks and derived rolls exactly once.
+- Player strategy advice states assumptions and alternatives rather than declaring one
+  universal best deck.
+- Internal and agent Markdown under `docs/**` carries Open Knowledge Format v0.2
+  frontmatter. Public and generated player documents do not, and neither does `AGENTS.md`:
+  review removed its block because the router loads into every agent session, and
+  `pnpm docs:check` now rejects frontmatter there.
+
+## Tasks
+
+| # | Task | Owner tier | Status | Commit |
+|---|---|---|---|---|
+| 1 | Mechanical documentation checker | Tier 2 | Complete | `d9857313`–`e9dfec1e` |
+| 2 | Current taxonomy and live-contract extraction | Tier 3 | Complete | `26c8750c`–`f9535761` |
+| 3 | Roadmap and archive lifecycle reset | Tier 2 | Complete | `0b59ed90`–`3e1af399` |
+| 3b | OKF frontmatter for internal and agent docs | Tier 2 | Complete | `3f41d866` |
+| 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Complete | `18439f1d`–`1623fca5` |
+| 5 | TDD-tested documentation-maintenance skill | Tier 3 | Complete | `ba6c242a` |
+| 6 | Compact routers and generated ownership | Tier 2 | Complete | `d1c4195c` |
+| 7 | Full verification and lifecycle closeout | Tier 3 | Complete | closeout commit |
+| 8 | PR review fixes | Tier 3 | Complete | `dc237cf`, `7f12a61`, review-tidy commit |
+
+## Task 2 decisions
+
+- `docs/README.md` is the complete current-document router. Current contracts live in
+  `architecture/`, verified procedures in `operations/`, and boundary conventions in
+  `reference/`; active plans and archived history are not contract dependencies.
+- Current room/identity, event/replay, web-workspace, Workshop/item, analytics/history, and
+  Ring/pixel-monster behavior is extracted from code and the source plans. The room-scoping
+  and concurrency contracts remain explicit hard constraints in `docs/architecture/`.
+- Deployment owns the production environment-variable table, observability owns metrics
+  variables, local testing alone owns reusable-room state, and Cloud setup no longer lives
+  inline in `AGENTS.md`.
+- Source and generated comments now route to current contracts. Generated root documents
+  are rebuilt from generator source rather than hand-edited.
+
+## Task 3 decisions
+
+- Active roadmap files now contain only actionable bugs, balance, content, item, and
+  bounded-leftover work. Player-agency rationale is current reference material; completed
+  plan history is archived with an explicit authority warning.
+- Every previously archived open checkbox has a current owner and roadmap home. Deferred
+  mobile, Slack, and exploration work is a product decision, not an archive task queue.
+- The fixed-bug ledger remains at its stable active-roadmap path, while the documentation
+  checker no longer masks lifecycle findings with a migration allowlist.
+- Review fixes: Discord display-name seeding, multi-instance display-name updates,
+  unpopulated `notableCards`, flow-step indicators, prompt-context labels, and the tier-2
+  reason-string review each have an owned checkbox in `22-small-leftovers.md`. Shipped
+  prompt timeout, cancel, and first-run behavior in plan 06 is history. Crit ticks, fight
+  threads, and the 60–90 coin healing-price constraint are owned checkboxes in
+  `11-balance-and-mechanics.md`. The data-driven card spec and card-authoring skill are
+  owned by Cards in `12-new-content-backlog.md`. Prompt transport, web selling, and outcome
+  feedback stay only in `item-followups.md`. `look at the ring` private-announce delivery is
+  ledger entry #174. No reviewed item was rejected.
+
+## Task 3b decisions
+
+- Governed files are `AGENTS.md` and `docs/**/*.md` only. Each block is Open Knowledge
+  Format v0.2 at byte 0, with keys `type`, `title`, `description`, `status`, `audience`,
+  and `tags`. `audience` is `internal`. `description` is one sentence without Markdown.
+  `tags` lists 2–6 lowercase tags.
+- `status` is `stable` for current docs, the roadmap index, and the fixed-bug ledger;
+  `draft` for other active roadmap files and this pass's spec and plan; `deprecated` for
+  `docs/archive/**`. `checkOkfFrontmatter` enforces that mapping. Link and roadmap-status
+  checks strip the block first, and `docs/roadmap/10b-bugs-fixed.md` keeps its ledger
+  exception. Implementation commit: `3f41d866`.
+
+## Task 4 decisions
+
+- Temporary DEX, STR, and INT deltas change the raw stat and the rolls derived from it
+  exactly once. `getPreBattleModifier` feeds pre-battle raw stats; public `getModifier`
+  adds the encounter delta once for rolls. Pre-battle stats do not call `getModifier`, so
+  `getProp` does not count the same delta twice.
+- Horn Gore no longer writes `encounterModifiers.dexModifier`. Each successful horn stays
+  +2 through `freedomThresholdModifier`. Forked Metal Rod's copy of that dead counter is
+  removed with it. AC is unchanged. The stat-reform proposal in
+  `11-balance-and-mechanics.md` stays open; only the temporary-stat consistency note is
+  checked. Ledger entry is #175.
+- Generated handbook strategy teaches DEX/STR/INT/AC, deck order, card roles, stacked
+  Delayed Hits, and Molasses before Forked Stick. The Level 3 Minotaur list is labeled an
+  illustration, with a one-Heal alternative and a matchup swap.
+- Implementation commit: `18439f1d`. Review fixes: `1623fca5`. Armed Delayed Hits on one
+  monster all answer the next qualifying blow. DMG formulas include Horn Gore's half STR
+  modifier, Forked Stick's matchup term, and the raw-stat floor. Curse card stats state
+  the `level + 1` cap. Card odds were not recalculated.
+
+## Task 5 decisions
+
+- Five no-skill samples of a shipped-plan closeout already chose the current lifecycle, and
+  the bugfix sample already used the fixed-bug ledger and generator. Those paths did not
+  get a new rule.
+- Five no-skill samples of a typo PR left a contradictory current contract and a plan route
+  in place because a reviewer called the rest pre-existing. The skill counters that
+  rationalization. Five samples with the skill fixed both in the same change.
+- The skill is tracked under `.cursor/skills/` by a gitignore exception, and
+  `.claude/skills/` symlinks to it so Claude Code loads the same file. Public player
+  documents and `AGENTS.md` stay outside OKF frontmatter.
+
+## Task 6 decisions
+
+- Generated `PLAYER_HANDBOOK.md`, `MONSTERS.md`, `CARDS.md`, and `DMG.md` now open with a
+  Markdown title and `GENERATED_DOC_NOTICE` from `packages/engine/src/build/root-docs.ts`.
+  Existing ASCII headers stay below that notice. In-game handbook and DMG announcements
+  do not carry the file banner. Card odds were not recalculated. `cards.html` is unchanged.
+- `AGENTS.md` stays a trigger router at 150 lines. Standing instruction 7, shared-worktree
+  rules, independent review, checkpoint commits, room scoping, and the concurrency
+  invariants remain in the file. Project, setup, and connector tutorials point at
+  `README.md` and the current docs. Required-reading links do not target roadmap or
+  archive plans.
+- The game primer states that awaited Workshop mutations stay prompt-free on the per-room
+  workshop lane and links the prompt and concurrency contracts. `working-in-this-repo.md`
+  keeps the verification commands and leaves reusable-room state in local testing.
+  `subagents.md` keeps tier criteria and drops the dated model column.
+- Implementation commit: `d1c4195c`.
+
+## Closeout
+
+The temporary design and implementation plan were deleted when this pass closed. Git
+history retains them. Verification on this branch: `pnpm docs:check` clean, generated
+docs clean after `pnpm run build:docs`, card-odds copies identical, and `pnpm build`,
+`pnpm typecheck`, `pnpm lint`, and `pnpm test` exited 0. Engine tests: 878 passing.
+Web tests: 492 passing.
+
+## Review follow-up
+
+A review of the PR found work the closeout had missed:
+
+- Five code comments cited "Early progression front-loading" in
+  `11-balance-and-mechanics.md`, which task 3 deleted. The shipped progression and economy
+  analysis moved unchanged to `docs/archive/roadmap/11-progression-and-economy-2026-09.md`.
+- Comments still pointed at fixed items D, G, and H in `10-bug-fixes.md`; they now cite
+  #127, #125, and #126. Open item F (odd feed spacing) and the on-device checks for #125 and
+  #129/#132 had been dropped with the incident diary and are back on the active roadmap.
+- `docs:check` never recognized an `## Actionable remainder` at the end of a file: the
+  terminator used `\Z`, which JavaScript reads as a literal "Z". CI now also runs the
+  checker's own tests (`pnpm test:docs`).
+- `build/index.js --calculate-stats` awaited card effects without skipping pacing delays,
+  and wrote only the root `card-odds.json` while the engine imports its own copy.
+- `AGENTS.md` lost its OKF block (see the decision above), and `.claude/skills/` now
+  symlinks the documentation skill for Claude Code.
+- Pronoun agreement for they/them monsters was fixed in the same PR as #176.
+
+## Process rules being exercised
+
+- Checkpoint, push, and update this table after each reviewed task.
+- Use lower-cost agents for mechanical moves and Tier 3 judgment for extraction and final
+  review.
+- Every code task starts with a failing test.
+- Every task gets independent specification and quality review.
+- Do not preserve prose merely because it already exists; preserve facts that future readers
+  need in the place they will look for them.

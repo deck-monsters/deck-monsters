@@ -87,7 +87,7 @@ Turns immobilized resets on curse of loki.
 			expect(hitCheckStub.callCount).to.equal(2);
 			expect(hitStub.callCount).to.equal(2);
 			expect((forkedMetalRod as any).new.freedomThresholdModifier).to.equal(7);
-			expect((forkedMetalRod as any).new.dexModifier).to.equal(7);
+			expect((player as any).encounterModifiers.dexModifier).to.equal(undefined);
 			expect((target as any).hp).to.be.below(before);
 			expect((target as any).encounterEffects.length).to.equal(1);
 		});

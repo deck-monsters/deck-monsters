@@ -1,4 +1,16 @@
+---
+type: Archive
+title: Web App — Rebuilt from Scratch
+description: Historical record of the rebuilt two-pane terminal web app.
+status: deprecated
+audience: internal
+tags: [archive, web, terminal]
+---
 # Web App — Rebuilt from Scratch
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Connector  
@@ -659,5 +671,6 @@ Suggested approach:
 - [x] Theme selection UI (radio buttons in AccountView) + `localStorage` persistence (`useTheme.ts`)
 - [x] Honor `prefers-reduced-motion` and `prefers-contrast` in `base.css`
 - [x] Accessibility: `role="log"`, `aria-live="polite"`, `role="listbox"` on choices, ARIA labels on all interactive elements, keyboard navigation for choice buttons and pane divider
-- [ ] Performance: virtualized scroll for long-running sessions (deferred — profile first)
+Performance profiling before any virtual-scroll decision is tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 - [x] Cleanup: remove `apps/web-legacy` once the rebuild is confirmed at parity in production

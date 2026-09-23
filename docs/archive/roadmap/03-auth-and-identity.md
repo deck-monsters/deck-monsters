@@ -1,4 +1,16 @@
+---
+type: Archive
+title: Authentication and User Identity
+description: Historical record of Discord, Google, and email authentication work.
+status: deprecated
+audience: internal
+tags: [archive, auth, identity]
+---
 # Authentication and User Identity
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Security  
@@ -159,14 +171,8 @@ to only when their current character name still equals the previous display name
 the initial profile-to-character relationship useful without overwriting an intentional
 in-room alias. Historical fight snapshots, event text, and monster names remain historical.
 
-**Open question — Discord:** the Discord connector still seeds room characters from
-`interaction.user.username` and does not read `profiles.display_name`. Decide whether it
-should use the global display name before promising consistent cross-connector character
-seeding.
-
-**Open question — multi-instance display-name updates:** per-user serialization currently exists
-only within one server process; deploy a database-side lock or optimistic version check before
-operating multiple API instances.
+Discord display-name seeding and multi-instance display-name updates are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md).
 
 ## Tasks
 
@@ -180,20 +186,12 @@ operating multiple API instances.
 - [x] Add auth to web app (Supabase client SDK for login/register/OAuth) _(implemented in `apps/web`)_
 - [x] Add auth to tRPC WebSocket connections (JWT on connect via `?token=` query param fallback in `packages/server/src/trpc/context.ts`)
 
-### Phase 2 — Google + Apple OAuth
-- [x] ~~Enable Google OAuth in Supabase dashboard~~ (live in production)
-- [x] ~~Configure Google OAuth app (client ID, secret, redirect URI) in Google Cloud Console~~ (live in production)
-- [x] Add Google login button to web app
-- [ ] Enable Apple OAuth in Supabase dashboard _(optional — not yet configured)_
-- [ ] Configure Apple Services ID, Key, and redirect URI in Apple Developer Portal _(optional — not yet configured)_
-- [x] Add Apple login button to web app
-- [ ] Test account linking when same email is used across providers _(good to verify explicitly)_
+### Historical remainder
 
-### Phase 3 — Slack + Identity Linking
-- [ ] Enable Slack OAuth in Supabase dashboard
-- [ ] Implement link/unlink endpoints for connecting providers to existing accounts
-- [ ] Auto-create user records for Slack users on first interaction
-- [ ] Test cross-connector identity: same character accessible from Discord, web, and Slack
+Apple OAuth, same-email account linking, Discord display-name seeding, and multi-instance
+display-name updates are tracked in
+[`docs/roadmap/22-small-leftovers.md`](../../roadmap/22-small-leftovers.md). Slack identity
+work is deferred with the Slack connector rather than remaining a task in this history.
 
 ## Security Considerations
 

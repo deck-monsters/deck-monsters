@@ -1,3 +1,11 @@
+---
+type: Agent Guide
+title: Working in this repo
+description: Verification commands, bug numbering, and the definition of done.
+status: stable
+audience: internal
+tags: [agents, workflow, verification]
+---
 # Working in this repo
 
 House rules for agents doing work here: what "done" means, how bugs are numbered, how to
@@ -17,8 +25,9 @@ A change is finished when all of these are true, in the same branch:
 3. **`docs/roadmap/10-bug-fixes.md`** summary line updated (status paragraph at the top, plus
    the item itself if it was tracked there).
 4. **`docs/roadmap/README.md`** status table current — it is the authoritative index.
-5. **The architecture doc for the area** updated if behaviour changed (see the Architecture
-   Docs table in `AGENTS.md`). A behaviour change not reflected in its doc is half-finished.
+5. **The architecture doc for the area** updated if behaviour changed (see the trigger table
+   in `AGENTS.md` and [`docs/README.md`](../README.md)). A behaviour change not reflected in
+   its doc is half-finished.
 
 ## Bug numbering is a global sequence
 
@@ -47,25 +56,23 @@ pnpm build && pnpm typecheck && pnpm lint && pnpm test
 
 Build **first**: `server`, `connector-discord`, and `web` import `@deck-monsters/engine`
 through its `dist/` output, so a fresh checkout fails with `ERR_MODULE_NOT_FOUND` otherwise.
+The suites mock their external dependencies — no database, Discord, or Supabase needs to be
+running. A complete run is the one whose runner prints its final summary.
 
-Approximate suite sizes, so you can tell a truncated run from a complete one (measured on
-this branch, September 20 2026): engine ~864 mocha tests, server ~226, connector-discord ~88,
-harness 4, web ~397 vitest. Re-measure and update these when a pass adds tests; stale
-numbers defeat the purpose. All of them mock their external dependencies — no database, Discord, or
-Supabase needs to be running.
+After any Markdown edit, also run `pnpm docs:check` (links, lifecycle placement, and OKF
+frontmatter). CI runs it, and runs `pnpm test:docs` for the checker's own tests; neither is
+part of the turbo `pnpm test`.
 
 ## Live verification
 
 Automated tests do not catch pacing, scroll, or narration problems; most of the bugs in the
-archive were found by playing. [`docs/local-testing-guidelines.md`](../local-testing-guidelines.md)
-has the setup, and `AGENTS.md` has the two env paths (remote Supabase vs. local Docker
-stack). Specifics worth knowing before you start:
+archive were found by playing. [Local testing](../operations/local-testing.md) owns the
+setup and reusable-room state; [Cloud development](../operations/cloud-development.md)
+owns the two Cursor Cloud env paths. Specifics worth knowing before you start:
 
-- **Stage a fight in a few commands** — the guide's "Staging a fight quickly" section. Use
-  the one-shot equip form, `equip <monster> with "Hit", "Hit", "Heal", …` (exact card names,
-  double-quoted, comma-separated); the interactive `equip` flow is a multi-prompt loop that
-  strands browser-driving agents. Then `send <monster> to the ring` plus `summon a boss` for
-  a second contestant, and the 60s countdown starts.
+- **Stage a fight in a few commands** using the one-shot equip form in
+  [Local testing](../operations/local-testing.md#staging-a-fight-quickly). The interactive
+  `equip` flow is a multi-prompt loop that strands browser-driving agents.
 - **Scope Playwright selectors to `.terminal-pane.active`.** Hidden panes have identical DOM
   (`apps/web/src/components/ConsolePane.tsx` sets `terminal-pane active` on the live one), so
   an unscoped selector silently drives the pane nobody is looking at.
@@ -73,32 +80,28 @@ stack). Specifics worth knowing before you start:
   the UI: `select type, text, created_at from room_events where room_id = '<uuid>' order by
   id` (`packages/server/src/db/schema.ts`). The difference between "the engine never emitted
   it" and "the UI dropped it" is most of the diagnosis in any feed bug.
-- **Reuse the scratch rooms; do not leave new ones behind.** The remote test account owns
-  two long-lived rooms (ids, invite codes, and what lives in them are in the local-testing
-  doc's "Reusable rooms" section — keep that section current when you change them):
-  `Test Room A` for anything that needs an existing character with trained monsters, and
-  `Test Room B`, kept **without** a character for the test account so first-run flows
-  (character creation from the console or workshop) can be exercised. If you need a room
-  you are going to trash — flood it with bosses, test deletion, break its state — create a
-  throwaway named `Scratch <purpose> <date>` and **delete it before you finish** (owner-only
-  `room.delete`; the local-testing doc has a one-liner). A room the test account merely
-  belongs to (`Game Night` at the time of writing) is somebody's real room: never train,
-  fight, or rename anything in it.
+- **Reuse the scratch rooms; do not leave new ones behind.** Reusable-room contents, ids,
+  and invite codes live only in
+  [Local testing](../operations/local-testing.md#reusable-rooms-remote-test-account).
+  Do not copy that state into this guide.
 
 ## How the docs are organised
 
 | Location | What lives there |
 |---|---|
-| `AGENTS.md` (root) | Standing instructions, architecture doc index, commands, env, cloud setup. `CLAUDE.md` is a symlink to it |
-| `docs/*.md` | Architecture docs — one per subsystem, each written after something non-obvious bit us |
+| `AGENTS.md` (root) | Standing instructions and trigger-based documentation router. `CLAUDE.md` is a symlink to it |
+| `docs/README.md` | Complete current-document index and authority map |
+| `docs/architecture/` | Current subsystem behavior, boundaries, invariants, and rationale |
+| `docs/operations/` | Verified setup, deployment, testing, and incident procedures |
+| `docs/reference/` | Current authoring and protocol conventions |
 | `docs/agents/*.md` | Reference docs for coding agents: this file, the game primer, the subagent guide |
 | `docs/roadmap/` | Remaining work; `README.md` is the status index, `10-bug-fixes.md` is open, and `10b-bugs-fixed.md` stays here as the fixed-bug ledger because code cites its path |
 | `docs/superpowers/plans`, `docs/superpowers/specs` | Plans and specs produced during agent-driven work — working documents, not the source of truth |
 | `docs/archive/` | Retired subsystems and shipped plans worth remembering; `archive/roadmap/` holds completed roadmap plans |
 
-If you build a subsystem future work will need context on, add a doc under `docs/` and link
-it from the Architecture Docs table in `AGENTS.md` — undiscoverable docs get rewritten from
-scratch by the next agent.
+If you build a subsystem future work will need context on, add a current doc in the right
+category and link it from `docs/README.md` and the router in `AGENTS.md` — undiscoverable
+docs get rewritten from scratch by the next agent.
 
 When a roadmap plan ships, update its status and the roadmap index in the same PR, carry each
 actionable leftover into `docs/roadmap/22-small-leftovers.md`, then move the plan under
@@ -116,6 +119,6 @@ with the same verbs. Keep new strings consistent with this: no invented owners f
 no possessive framing for players' monsters, singular *they* rather than *it* for creatures
 (#149).
 
-[`docs/voice-and-wording.md`](../voice-and-wording.md) is the complete lexicon and
+[`docs/reference/voice-and-wording.md`](../reference/voice-and-wording.md) is the complete lexicon and
 player-facing wording contract. The announcement modules and their comments remain the
 reference for the consent distinction it records.

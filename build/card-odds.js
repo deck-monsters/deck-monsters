@@ -2,10 +2,11 @@ import { randomCharacter } from '../packages/engine/dist/characters/index.js';
 import { all as Monsters } from '../packages/engine/dist/monsters/index.js';
 import { all as Cards } from '../packages/engine/dist/cards/index.js';
 
-function getCardDPT () {
+async function getCardDPT () {
 	const levels = [1, 5, 10, 15, 25];
+	const probabilities = {};
 
-	return levels.reduce((probabilities, wins) => {
+	for (const wins of levels) {
 		const character = randomCharacter({
 			battles: {
 				total: wins,
@@ -33,23 +34,29 @@ function getCardDPT () {
 		};
 
 		for (let i = 0; i < 100; i++) {
-			character.monsters.forEach((player) => {
-				cards.forEach((card) => {
-					character.monsters.forEach((target) => {
+			for (const player of character.monsters) {
+				for (const card of cards) {
+					for (const target of character.monsters) {
 						target.hp = Math.ceil(target.maxHp / 2) + 10;
 						target.encounterEffects = [];
 						player.encounterEffects = [];
 						ring.encounterEffects = [];
 						target.encounterModifiers = {};
+						// Clear the actor too. Card effects are async (they await pacing),
+						// and temporary STR/DEX/INT now change derived rolls. A curse left
+						// on the actor would score every later card under the wrong stats
+						// (#175). The HP read below has to wait for effect() for the same
+						// reason: damage is applied after the first sub-event delay.
+						player.encounterModifiers = {};
 						const beforeHP = target.hp;
 
 						try {
-							card.effect(player, target, ring);
+							await card.effect(player, target, ring);
 						} catch (e) {
 							// ignore card errors during DPT calculation
 						}
 
-						if (target.encounterEffects.length > 0 || ring.encounterEffects > 0) {
+						if (target.encounterEffects.length > 0 || ring.encounterEffects.length > 0) {
 							plays[card.name] = plays[card.name] || {};
 							plays[card.name].effects = plays[card.name].effects + 1 || 1;
 						}
@@ -70,9 +77,9 @@ function getCardDPT () {
 							plays[card.name].heals = plays[card.name].heals + 1 || 1;
 							plays[card.name].health = plays[card.name].health + heal || heal;
 						}
-					});
-				});
-			});
+					}
+				}
+			}
 		}
 
 		Object.keys(plays).map((cardName) => {
@@ -100,9 +107,9 @@ function getCardDPT () {
 		});
 
 		probabilities[character.level] = plays;
+	}
 
-		return probabilities;
-	}, {});
+	return probabilities;
 }
 
 export default getCardDPT;

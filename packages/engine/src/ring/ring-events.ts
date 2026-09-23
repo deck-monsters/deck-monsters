@@ -7,7 +7,7 @@
  * fight the Sorting Hat scroll). Contestants are wiped by `Ring.clearRing()` after every
  * fight, which makes these overrides inherently per-encounter.
  *
- * See `docs/boss-encounters.md`.
+ * See `docs/architecture/boss-encounters.md`.
  */
 import { sample, shuffle } from '../helpers/random.js';
 import * as TEAMS from '../constants/teams.js';

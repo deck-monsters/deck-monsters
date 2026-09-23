@@ -488,7 +488,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     than one monster sees one panel and a ~44px sliver of the next. The sliver was the only
     hint that anything else existed, and cut mid-word it read as a rendering fault rather
     than an affordance. The dots say how many monsters there are and which one you are on.
-    See docs/roadmap/20-workspace-layout.md §5g.
+    See docs/architecture/web-workspace.md.
   */
   const handleMonsterRowScroll = useCallback(() => {
     const row = monsterRowRef.current;

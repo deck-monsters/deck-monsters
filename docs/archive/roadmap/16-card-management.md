@@ -1,4 +1,16 @@
+---
+type: Archive
+title: Card Management System
+description: Historical record of the card workshop and deck editing.
+status: deprecated
+audience: internal
+tags: [archive, cards, workshop]
+---
 # Card Management System
+
+> Historical record. Current code and documents linked from `docs/README.md` are
+> authoritative. Any remaining work has been copied to the active roadmap.
+
 > **Archived** — shipped; kept for the reasoning and constraints. Leftovers, if any, are tracked in [22 — Small Leftovers](../../roadmap/22-small-leftovers.md).
 
 **Category**: Feature / Engine + Web  

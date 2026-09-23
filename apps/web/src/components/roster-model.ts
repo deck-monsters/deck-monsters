@@ -105,7 +105,8 @@ export function metaParts(
  * Compact level display. `Lvl 3`, never `L3`, and level zero is `Beginner` rather than
  * `Lvl 0` — level zero is not a level, it is how the engine represents a monster that has
  * not earned XP yet. Both spellings are fixed by the lexicon in
- * `docs/voice-and-wording.md`; the roster previously rendered them lower-cased, off spec.
+ * `docs/reference/voice-and-wording.md`; the roster previously rendered them lower-cased,
+ * off spec.
  */
 export function formatLevel(level: number): string {
   return level > 0 ? `Lvl ${level}` : 'Beginner';

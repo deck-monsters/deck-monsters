@@ -4,7 +4,8 @@
 process.env['DATABASE_URL'] ??= 'postgresql://localhost/test-placeholder';
 
 // Keep the ring deterministic — no contestant shuffle and no random ring-event rolls.
-// Mirrors packages/engine/src/shared/test-setup.ts; see docs/boss-encounters.md.
+// Mirrors packages/engine/src/shared/test-setup.ts; see
+// docs/architecture/boss-encounters.md.
 process.env.DECK_MONSTERS_DETERMINISTIC_RING = '1';
 
 import { use as chaiUse } from 'chai';

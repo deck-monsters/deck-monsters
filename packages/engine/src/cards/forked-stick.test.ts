@@ -11,7 +11,7 @@ import { BARD, FIGHTER, BARBARIAN } from '../constants/creature-classes.js';
 import { GLADIATOR, JINN, MINOTAUR, BASILISK } from '../constants/creature-types.js';
 import { ATTACK_PHASE } from '../constants/phases.js';
 
-describe('./cards/forked-stick.ts', () => {
+describe('./cards/forked-stick.ts Forked Stick', () => {
 	it('can be instantiated with defaults', () => {
 		const forkedStick = new ForkedStickCard();
 		const hit = new HitCard({ targetProp: (forkedStick as any).targetProp, damageDice: (forkedStick as any).damageDice });
@@ -318,5 +318,23 @@ Turns immobilized resets on curse of loki.
 					expect((target as any).encounterEffects.length).to.equal(0);
 				});
 			});
+	});
+
+	it('applies a temporary STR change once to immobilize and freedom rolls', () => {
+		const forkedStick = new ForkedStickCard();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+		const immobilizeBefore = (forkedStick as any).getImmobilizeRoll(player, target).modifier;
+		const freedomBefore = (forkedStick as any).getFreedomRoll(player, target).modifier;
+
+		(player as any).setModifier('str', 1);
+		(target as any).setModifier('str', -1);
+
+		expect((forkedStick as any).getImmobilizeRoll(player, target).modifier).to.equal(
+			immobilizeBefore + 1
+		);
+		expect((forkedStick as any).getFreedomRoll(player, target).modifier).to.equal(
+			freedomBefore - 1
+		);
 	});
 });

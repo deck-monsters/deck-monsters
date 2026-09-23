@@ -43,7 +43,7 @@ function rowKey(entry: TieredItem, index: number): string {
 }
 
 /**
- * The workshop's item list (roadmap/19-player-agency-and-items.md §7). One sorted list,
+ * The workshop's item list (docs/architecture/workshop-and-items.md). One sorted list,
  * never a filter: everything a player owns stays visible, and what can actually be used
  * right now is unmistakable at a glance — the same visual language the card inventory
  * already uses for `.workshop-card-slot.incompatible` (dim + dashed border), plus a reason
@@ -54,9 +54,6 @@ function rowKey(entry: TieredItem, index: number): string {
  * tier, so the button cannot offer a target the engine will refuse. The confirm is what
  * lets the server pass `confirmed: true` and skip the engine's own prompt — see
  * `items/helpers/use.ts`.
- *
- * Still to come (§7): the one-tap affordance on the *ring pane* during a live fight. This
- * panel is the pre-fight stocking decision; that one is the mid-fight lever.
  */
 export default function ItemsPanel({ items, monsters, busy, onUseItem }: ItemsPanelProps) {
   const tiered = buildTieredItemList(items, monsters);

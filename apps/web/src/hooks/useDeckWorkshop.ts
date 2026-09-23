@@ -7,7 +7,7 @@ type WorkshopMonster = {
   type: string;
   level: number;
   // Progress toward the next level, for the Workshop's level meter — see
-  // docs/roadmap/11-balance-and-mechanics.md "Early progression front-loading" and
+  // docs/archive/roadmap/11-progression-and-economy-2026-09.md "Early progression front-loading" and
   // MonsterWorkshopPanel.tsx.
   xpIntoLevel: number;
   xpNeededForLevel: number;
@@ -75,7 +75,8 @@ export function useDeckWorkshop(roomId?: string) {
   /*
    * Only a player without a character needs these, and they are what the engine's
    * creation prompts would have asked for — the workshop's spawn mutation is prompt-free
-   * (docs/engine-concurrency-and-timing.md), so the answers come from the form instead.
+   * (docs/architecture/engine-concurrency-and-timing.md), so the answers come from the form
+   * instead.
    * The avatar list is random per request, which is what makes "Shuffle" a refetch.
    */
   const characterCreationQuery = trpc.game.characterCreationChoices.useQuery(
