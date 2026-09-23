@@ -14,7 +14,8 @@ remains here as the stable fixed-bug ledger.
 | [19 — Player Agency & Items](19-player-agency-and-items.md) | Item-driven web prompts, web selling, and the feedback loop. | Active |
 | [20 — Workspace Layout](20-workspace-layout.md) | Real WebKit/iPhone and cross-browser visual sign-off. | Active |
 | [22 — Small Leftovers](22-small-leftovers.md) | Decisions carried from shipped plans. | Backlog |
-| [23 — Pixel Fight Animations](23-pixel-fight-stage.md) | Sprites in the roster rows, opt-in and off by default; row reorganised around field priority (#169). Open: per-room setting. | Shipped / follow-ups |
+| [23 — Pixel Fight Animations](23-pixel-fight-stage.md) | Sprites in the roster rows; row reorganised around field priority (#169). Open: per-room setting. | Shipped / follow-ups |
+| [24 — Pixel Monsters Everywhere](24-pixel-monsters-everywhere.md) | Sprites on by default on every theme, coloured by each monster's appearance, and drawn in place of monster emoji in all narration (#171–#173 fixed along the way). Open: real iPhone/iPad check. | Built / review |
 
 ## Next
 

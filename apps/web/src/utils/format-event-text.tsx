@@ -1,4 +1,23 @@
 import React from 'react';
+import type { KnownMonster, MentionIndex } from './monster-mentions.js';
+
+/**
+ * Draws known monsters' sprites in place of their emoji (roadmap 24). Optional: without it,
+ * or with the player's pixel monsters turned off, text renders exactly as it always has.
+ */
+export interface MonsterMentions {
+	index: MentionIndex;
+	render: (monster: KnownMonster, key: string) => React.ReactNode;
+}
+
+/**
+ * Renders one run of plain text. `offset` is where the run starts in the segment the
+ * mention spans were found in, so a sprite can still be placed after markup has split the
+ * segment into bold, italic and plain runs.
+ */
+type RenderRun = (text: string, offset: number, key: string) => React.ReactNode[];
+
+const plainRun: RenderRun = (text) => [text];
 
 /**
  * The engine writes for Slack: ``` fences for monospace blocks, *asterisks* for bold and
@@ -22,16 +41,30 @@ function isWordChar(char: string | undefined): boolean {
 }
 
 /** Renders `*bold*` / `_italic_` within a single non-fenced segment. */
-export function formatInlineMarkup(text: string, keyPrefix: string): React.ReactNode[] {
+export function formatInlineMarkup(
+	text: string,
+	keyPrefix: string,
+	renderRun: RenderRun = plainRun,
+): React.ReactNode[] {
 	const nodes: React.ReactNode[] = [];
 	let lastIndex = 0;
 
 	INLINE_MARKUP.lastIndex = 0;
 	let match = INLINE_MARKUP.exec(text);
 	while (match !== null) {
-		const [raw, delimiter, content] = match;
+		const [raw, delimiter] = match;
+		let content = match[2]!;
 		const start = match.index;
 		const end = start + raw.length;
+		let contentOffset = start + 1;
+		// `**Name**` (the level-up announcement) is Markdown bold, not Slack's `*Name*`. The
+		// pattern above matches it with one stray delimiter kept on each side of the content,
+		// so every level-up rendered the name in bold *with* literal asterisks around it. Treat
+		// a doubled delimiter as a single one.
+		if (content.length >= 2 && content[0] === delimiter && content[content.length - 1] === delimiter) {
+			content = content.slice(1, -1);
+			contentOffset += 1;
+		}
 
 		if (isWordChar(text[start - 1]) || isWordChar(text[end])) {
 			// Not markup — leave it as literal text and keep scanning past this delimiter.
@@ -40,25 +73,52 @@ export function formatInlineMarkup(text: string, keyPrefix: string): React.React
 			continue;
 		}
 
-		if (start > lastIndex) nodes.push(text.slice(lastIndex, start));
+		if (start > lastIndex) {
+			nodes.push(...renderRun(text.slice(lastIndex, start), lastIndex, `${keyPrefix}-t${lastIndex}`));
+		}
+		const inner = renderRun(content, contentOffset, `${keyPrefix}-c${start}`);
 		nodes.push(
 			delimiter === '*'
-				? <strong key={`${keyPrefix}-b${start}`}>{content}</strong>
-				: <em key={`${keyPrefix}-i${start}`}>{content}</em>,
+				? <strong key={`${keyPrefix}-b${start}`}>{inner}</strong>
+				: <em key={`${keyPrefix}-i${start}`}>{inner}</em>,
 		);
 		lastIndex = end;
 		match = INLINE_MARKUP.exec(text);
 	}
 
-	if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+	if (lastIndex < text.length) {
+		nodes.push(...renderRun(text.slice(lastIndex), lastIndex, `${keyPrefix}-t${lastIndex}`));
+	}
 	return nodes;
+}
+
+/** A `RenderRun` that swaps each matched monster icon for its sprite. */
+function mentionRun(segment: string, mentions: MonsterMentions): RenderRun {
+	const spans = mentions.index.find(segment);
+	if (spans.length === 0) return plainRun;
+	return (text, offset, key) => {
+		const nodes: React.ReactNode[] = [];
+		let cursor = 0;
+		for (const span of spans) {
+			const start = span.start - offset;
+			const end = span.end - offset;
+			// Spans are found on the whole segment; skip any outside this run. An icon never
+			// straddles a run boundary, because markup delimiters are not emoji.
+			if (start < cursor || end > text.length) continue;
+			if (start > cursor) nodes.push(text.slice(cursor, start));
+			nodes.push(mentions.render(span.monster, `${key}-m${span.start}`));
+			cursor = end;
+		}
+		if (cursor < text.length) nodes.push(text.slice(cursor));
+		return nodes;
+	};
 }
 
 /**
  * Splits event text on triple-backtick boundaries and renders backtick-enclosed
  * segments as styled card panels. Plain segments get inline emphasis applied.
  */
-export function formatEventText(text: string): React.ReactNode {
+export function formatEventText(text: string, mentions?: MonsterMentions | null): React.ReactNode {
 	const parts = text.split('```');
 
 	return parts.map((part, i) => {
@@ -73,7 +133,10 @@ export function formatEventText(text: string): React.ReactNode {
 			);
 		}
 
-		return <span key={i}>{formatInlineMarkup(part, String(i))}</span>;
+		// Fenced blocks above are left alone on purpose: they are ASCII card art laid out in
+		// monospace columns, and a sprite in place of an emoji would shift the columns.
+		const renderRun = mentions ? mentionRun(part, mentions) : plainRun;
+		return <span key={i}>{formatInlineMarkup(part, String(i), renderRun)}</span>;
 	});
 }
 

@@ -3998,3 +3998,68 @@ and the row is the positioning context — jsdom cannot measure the result, but 
 the flex column being reinstated.
 
 **Status**: Fixed.
+
+### 171. The key-event-times setting did not reach a Ring pane already on screen — FIXED
+
+Carried as an open question in roadmap 23 and folded into roadmap 24's pass.
+`useRingKeyTimestamps` held its value in a per-caller `useState(readStored)`. The workspace
+layout can show the Account view beside the Ring pane, so turning "Show key event times in
+the Ring" on or off updated the checkbox and left the pane rendering the old value until a
+reload.
+
+**Root cause**: two components reading one preference each kept a private copy of it.
+`useTheme` and the pixel-sprite flag had already moved onto `useSyncExternalStore` for
+exactly this reason; this flag was written before them and never followed.
+
+**Fix**: a shared `createStoredFlag(key, defaultOn)` in `hooks/stored-flag.ts` now backs
+both `useRingKeyTimestamps` and `usePixelMonsters`, so there is one implementation of a
+live, cross-tab boolean preference rather than two drifting copies. Its storage format —
+`'1'` on, `'0'` off, absent means the default, and choosing the default removes the key —
+was chosen so both flags kept their existing stored values unchanged.
+
+**Tests**: `useRingKeyTimestamps.test.tsx` — the "reaches every caller" case fails against
+the old hook and passes on the new one.
+
+**Status**: Fixed.
+
+### 172. Every level-up announcement showed literal asterisks around the monster's name — FIXED
+
+Found by the independent review of roadmap 24's feed sprites. `level-up.ts` announces
+`🎉 🐍  **Gin & Tonic** has reached level 2!` — Markdown's double-asterisk bold. The web's
+inline markup is Slack's single-delimiter `*bold*`, and its pattern
+(`([*_])(\S(?:[^*_\n]*\S)?|\S)\1`) happily matched `**Gin & Tonic**` with the *outer*
+asterisks as delimiters and the inner ones kept as content, so the name rendered bold with a
+literal `*` on each side. Every level-up, since the web app first rendered markup.
+
+**Root cause**: one engine template used Markdown's bold syntax where every other template
+uses Slack's; the web formatter only knew Slack's.
+
+**Fix**: `formatInlineMarkup` treats a doubled delimiter as a single one (and shifts the
+content's offset by one, so a monster sprite inside `**…**` still lands on the right
+character). Changing the engine template instead would also have worked, but Discord renders
+`**` correctly as it stands, and the web should cope with either form.
+
+**Tests**: `format-event-text-mentions.test.tsx` — the level-up line end to end, and an icon
+inside double bold.
+
+**Status**: Fixed.
+
+### 173. Every generated boss was "gray" — FIXED
+
+Found by review of roadmap 24, whose sprites made it visible for the first time: bosses are
+described by a random colour from `grab-color-names`, and every one read "gray".
+
+**Root cause**: `characters/helpers/random.ts` loads the library with `import()` and read
+`colorModule.randomColor`. The package is CommonJS, so under `import()` its functions sit on
+`default`; the named export was always `undefined`, and the `['', 'gray']` fallback won every
+time. The emoji library beside it had always been read as `default ?? module`; the colour
+library never was, and nothing checked the result.
+
+**Fix**: read `default ?? module`, as for node-emoji. The generator also keeps the hex that
+comes with the colour name (`options.colorHex`), because most of the library's names
+("Sazerac", "Kilamanjaro") are not colour words the web's sprite palette can read.
+
+**Tests**: `random.test.ts` — twelve bosses must carry a well-formed hex and more than one
+colour; it fails on the old loader.
+
+**Status**: Fixed.

@@ -497,6 +497,10 @@ and actually look at it before shipping.
 
 **Sprite sheet padding.** Some sprite sheet tools add 1px padding between frames to prevent bleeding during filtering. Account for this in your source coordinates or disable it in the export settings.
 
+**Inline sprites in running text: size to the text, not to the pixel grid.** When the feed swapped monster emoji for 24px sprites (roadmap 24), the integer-scale rule above pulled one way and "don't disrupt the text layout" pulled the other. At 14px text only 3× screens get a crisp 16px sprite; a crisp 12px at 2× was smaller than the emoji it replaced, and 24px changed where lines wrapped. 16px with `image-rendering: pixelated` everywhere won: 1.33 device px per art px at 2× is not visibly uneven at that size, and every line box stayed exactly the emoji's height. Measure `getBoundingClientRect().height` of each line with and without the sprites in a real browser — that settles it; eyeballing does not.
+
+**Recolouring by hue: perception is not uniform.** Nudging a palette's hue by ±20° to tell look-alikes apart is invisible among greens and blues and turns gold into orange and yellow into olive. Keep the nudge small between roughly 18° and 70° and vary lightness instead. And keep each colour ramp's *lightness* from the hand-tuned original when recolouring — the shading is what makes a 24px map read as a form rather than noise.
+
 ---
 
 ## References

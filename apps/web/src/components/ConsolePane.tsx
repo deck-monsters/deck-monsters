@@ -10,6 +10,7 @@ import { useCommandAutocomplete } from '../hooks/useCommandAutocomplete.js';
 import CommandSuggestions from './CommandSuggestions.js';
 import InlineChoices from './InlineChoices.js';
 import { formatEventText } from '../utils/format-event-text.js';
+import { useMonsterMentions } from '../hooks/useMonsterMentions.js';
 import {
   classifyHighlight,
   createDamageHistory,
@@ -194,6 +195,8 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
 
   // Fetch persistent console history from DB on mount
   const { data: history } = trpc.game.consoleHistory.useQuery({ roomId });
+  // Monster sprites in place of their emoji, as in the Ring feed (roadmap 24).
+  const mentions = useMonsterMentions(roomId);
   const {
     data: pendingPrompt,
     dataUpdatedAt: pendingPromptUpdatedAt,
@@ -903,13 +906,13 @@ export default function ConsolePane({ roomId, isActive, headerActions }: Console
             return (
               <li className={`event event-highlight event-highlight-${ev.highlight.kind}`}>
                 <span className="highlight-tag">{ev.highlight.label}</span>
-                <div className="event-text">{formatEventText(ev.text ?? '')}</div>
+                <div className="event-text">{formatEventText(ev.text ?? '', mentions)}</div>
               </li>
             );
           }
           return (
             <li className={`event event-${ev.type}`}>
-              <div className="event-text">{formatEventText(ev.text ?? '')}</div>
+              <div className="event-text">{formatEventText(ev.text ?? '', mentions)}</div>
             </li>
           );
         }}

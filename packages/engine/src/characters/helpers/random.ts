@@ -22,7 +22,12 @@ const loadHelpers = async () => {
 	]);
 
 	if (colorModule) {
-		_randomColor = (colorModule as any).randomColor ?? _randomColor;
+		// grab-color-names is CommonJS: under ESM `import()` its functions sit on `default`,
+		// and the named export this used to read was always undefined. The fallback won every
+		// time, so every generated boss was "gray" — invisible until roadmap 24 started
+		// colouring sprites from it. Same default-or-namespace shape as node-emoji below.
+		const colors = (colorModule as any).default ?? colorModule;
+		_randomColor = colors?.randomColor ?? _randomColor;
 	}
 	if (emojiModule) {
 		const emoji = (emojiModule as any).default ?? emojiModule;
@@ -82,9 +87,14 @@ const randomCharacter = ({
 	const MonsterClasses = Monsters ?? (_allMonsters.length ? [sample(_allMonsters as any[])] : []);
 
 	const monsters = MonsterClasses.map((Monster: any) => {
+		// [hex, name]. The name reads well in prose ("a cabaret basilisk") but most of the
+		// library's 1,500+ names ("Sazerac", "Kilamanjaro") are not colour words the web can
+		// read, so the hex travels with it for the sprite palette.
+		const [colorHex, colorName] = _randomColor();
 		const monster = new Monster({
 			battles: resolvedBattles,
-			color: _randomColor()[1].toLowerCase(),
+			color: colorName.toLowerCase(),
+			...(/^[0-9a-f]{6}$/i.test(colorHex) ? { colorHex: `#${colorHex.toLowerCase()}` } : {}),
 			isBoss,
 			xp,
 			...options,

@@ -4,6 +4,12 @@ export type FightParticipantLike = {
   monsterId: string;
   monsterName: string;
   outcome: 'win' | 'loss' | 'draw' | 'fled' | 'permaDeath' | 'cancelled';
+  /** Sprite fields (roadmap 24); absent on fights recorded before they existed. */
+  monsterIcon?: string;
+  monsterCreatureType?: string;
+  monsterAppearance?: string;
+  monsterAppearanceHex?: string | null;
+  ownerDisplayName?: string;
 };
 
 export type FightSummaryLike = {

@@ -177,13 +177,15 @@ The web consumes it in `apps/web/src/animations/pixel-fight/` (pose map `state.t
 `renderer.ts`, sprites, `RosterSprite.tsx`, provider `PixelSprites.tsx`). The sprites are
 drawn **inside the Ring roster rows** at 24px — the box the emoji icon already occupied —
 not in a band of their own — a band duplicated the
-roster's HP bars and cost 96–200px of viewport, so it was deleted (#167). They appear only
-when **both** gates open: the active theme declares the `pixel-art` feature
-(`data-theme-features`, `useThemeFeature`) *and* the player has opted in via
-`usePixelFightStage` (Account → "Show pixel fight animations", **off by default** — #166).
-Until an opted-in player is on the theme the lazy chunk is never fetched: `RingRoster` reads
-`RosterSpriteContext` rather than importing the art. Both flags are `useSyncExternalStore`
-stores so every consumer flips together.
+roster's HP bars and cost 96–200px of viewport, so it was deleted (#167). They are **on by
+default, on every theme**, with an opt-out: `usePixelMonsters` (Account → "Show pixel
+monsters"), stored as `'0'` when off because absent now means on. They were SNES-theme-only
+and opt-in until roadmap 24; the theme-feature mechanism that gated them was removed. An
+opted-out player never fetches the lazy chunk: `RingRoster` reads `RosterSpriteContext`
+rather than importing the art. The flag is a `useSyncExternalStore` store so every consumer
+flips together. Each sprite is coloured from the monster's `appearance` (published on
+`ring.state`), and every narration surface (Ring feed, Console, fight history) draws a still 16px
+portrait in place of a known monster's emoji — see `docs/roadmap/24-pixel-monsters-everywhere.md` for the matching rules.
 
 The roster row itself is ranked by field priority and **must never be sorted or grouped**:
 its row order is the order of play, since `Ring.doAction` shifts contestants off the same

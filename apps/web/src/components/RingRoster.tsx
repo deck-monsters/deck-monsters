@@ -26,6 +26,14 @@ export interface RingContestantSnapshot {
   userId: string | null;
   /** Optional — older ring.state payloads / the polled seed may omit it. */
   acting?: boolean;
+  /**
+   * The Beastmaster's own description of the monster ("gold and black"), which colours its
+   * pixel sprite. Optional for the same reason as `acting`: a server older than this field
+   * sends none, and the sprite then keeps its species palette.
+   */
+  appearance?: string;
+  /** A generated boss's exact colour (`#rrggbb`), which its colour *name* rarely conveys. */
+  appearanceHex?: string | null;
 }
 
 interface RingRosterProps {
@@ -91,9 +99,9 @@ function HealthMeter({ contestant }: { contestant: RingContestantSnapshot }) {
 }
 
 function ContestantIcon({ contestant }: { contestant: RingContestantSnapshot }) {
-  // Null unless the pixel-art theme feature and the player's opt-in are both on. The
-  // sprite is drawn at the same 24px the emoji occupies, so the two are interchangeable
-  // and a room with the animations off loses nothing but the motion.
+  // Null when the player has opted out of pixel monsters, and for the moment before the
+  // lazy sprite chunk arrives. The sprite is drawn at the same 24px the emoji occupies, so
+  // the two are interchangeable and the fallback loses nothing but the motion.
   const sprites = useContext(RosterSpriteContext);
   const sprite = sprites?.render(contestant) ?? null;
   if (sprite) return <span className="roster-icon">{sprite}</span>;

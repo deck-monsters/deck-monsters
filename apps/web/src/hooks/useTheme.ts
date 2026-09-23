@@ -2,19 +2,14 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
 const STORAGE_KEY = 'deck-monsters-theme';
 export const THEMES = [
-  { id: 'phosphor', label: 'Phosphor (green on black)', features: [] },
-  { id: 'amber', label: 'Amber (orange on black)', features: [] },
-  { id: 'ember', label: 'Ember (red on black)', features: [] },
-  { id: 'street-fighter', label: 'Street Fighter (SNES, 1992)', features: ['pixel-art'] },
-] as const satisfies ReadonlyArray<{
-  id: string;
-  label: string;
-  features: ReadonlyArray<'pixel-art'>;
-}>;
+  { id: 'phosphor', label: 'Phosphor (green on black)' },
+  { id: 'amber', label: 'Amber (orange on black)' },
+  { id: 'ember', label: 'Ember (red on black)' },
+  { id: 'street-fighter', label: 'Street Fighter (SNES, 1992)' },
+] as const satisfies ReadonlyArray<{ id: string; label: string }>;
 
 export type ThemeId = typeof THEMES[number]['id'];
 export type Theme = ThemeId;
-export type ThemeFeature = 'pixel-art';
 
 const VALID_THEMES = THEMES.map(({ id }) => id) as readonly ThemeId[];
 
@@ -37,12 +32,12 @@ function applyTheme(theme: Theme): void {
     document.documentElement.setAttribute('data-theme', theme);
   }
 
-  const features = THEMES.find((candidate) => candidate.id === theme)?.features ?? [];
-  if (features.length === 0) {
-    document.documentElement.removeAttribute('data-theme-features');
-  } else {
-    document.documentElement.setAttribute('data-theme-features', features.join(' '));
-  }
+  // There used to be a per-theme `features` list here, mirrored onto a
+  // `data-theme-features` attribute, whose only entry was the SNES theme's pixel art. The
+  // sprites now show on every theme (docs/roadmap/24-pixel-monsters-everywhere.md), so the
+  // mechanism went with them; no stylesheet ever read the attribute. Clear it for anyone
+  // whose document still carries it from before the upgrade.
+  document.documentElement.removeAttribute('data-theme-features');
 }
 
 let currentTheme: Theme | undefined;
@@ -94,12 +89,4 @@ export function useTheme() {
   }, []);
 
   return { theme, setTheme, validThemes: VALID_THEMES };
-}
-
-export function useThemeFeature(feature: ThemeFeature): boolean {
-  const theme = useSyncExternalStore(subscribe, getTheme, getTheme);
-  const features = THEMES.find((candidate) => candidate.id === theme)?.features as
-    | ReadonlyArray<ThemeFeature>
-    | undefined;
-  return features?.includes(feature) ?? false;
 }

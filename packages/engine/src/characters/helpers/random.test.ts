@@ -16,6 +16,20 @@ describe('characters/helpers/random', () => {
 		expect(character.givenName).to.be.a('string');
 	});
 
+	it('gives generated monsters a real colour and its hex, not the "gray" fallback', async () => {
+		// grab-color-names is CommonJS; its randomColor lives on `default` under import(). The
+		// loader read the named export, got undefined, and every boss came out "gray".
+		await helpersReady;
+		const colours = new Set<string>();
+		for (let i = 0; i < 12; i += 1) {
+			const [monster] = (randomCharacter({ isBoss: true }) as any).monsters;
+			expect(monster.options.colorHex).to.match(/^#[0-9a-f]{6}$/);
+			colours.add(monster.options.color);
+		}
+		expect([...colours]).to.not.deep.equal(['gray']);
+		expect(colours.size).to.be.greaterThan(1);
+	});
+
 	it('returns a boss when isBoss is set', () => {
 		const character = randomCharacter({ isBoss: true });
 
