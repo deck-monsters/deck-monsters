@@ -40,7 +40,7 @@ repository-local documentation-maintenance skill.
 | 3b | OKF frontmatter for internal and agent docs | Tier 2 | Complete | `3f41d866` |
 | 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Complete | `18439f1d`–`1623fca5` |
 | 5 | TDD-tested documentation-maintenance skill | Tier 3 | Complete | `ba6c242a` |
-| 6 | Compact routers and generated ownership | Tier 2 | Planned | — |
+| 6 | Compact routers and generated ownership | Tier 2 | Complete | `d1c4195c` |
 | 7 | Full verification, broad review, and lifecycle closeout | Tier 3 | Planned | — |
 
 ## Task 2 decisions
@@ -117,6 +117,23 @@ repository-local documentation-maintenance skill.
   rationalization. Five samples with the skill fixed both in the same change.
 - The skill is tracked under `.cursor/skills/` by a gitignore exception. Public player
   documents stay outside OKF frontmatter.
+
+## Task 6 decisions
+
+- Generated `PLAYER_HANDBOOK.md`, `MONSTERS.md`, `CARDS.md`, and `DMG.md` now open with a
+  Markdown title and `GENERATED_DOC_NOTICE` from `packages/engine/src/build/root-docs.ts`.
+  Existing ASCII headers stay below that notice. In-game handbook and DMG announcements
+  do not carry the file banner. Card odds were not recalculated. `cards.html` is unchanged.
+- `AGENTS.md` stays a trigger router at 150 lines. Standing instruction 7, shared-worktree
+  rules, independent review, checkpoint commits, room scoping, and the concurrency
+  invariants remain in the file. Project, setup, and connector tutorials point at
+  `README.md` and the current docs. Required-reading links do not target roadmap or
+  archive plans.
+- The game primer states that awaited Workshop mutations stay prompt-free on the per-room
+  workshop lane and links the prompt and concurrency contracts. `working-in-this-repo.md`
+  keeps the verification commands and leaves reusable-room state in local testing.
+  `subagents.md` keeps tier criteria and drops the dated model column.
+- Implementation commit: `d1c4195c`.
 
 ## Working artifacts
 
