@@ -39,7 +39,7 @@ repository-local documentation-maintenance skill.
 | 3 | Roadmap and archive lifecycle reset | Tier 2 | Complete | `0b59ed90`–`3e1af399` |
 | 3b | OKF frontmatter for internal and agent docs | Tier 2 | Complete | `3f41d866` |
 | 4 | Temporary-stat semantics and generated player strategy | Tier 2 | Complete | `18439f1d`–`1623fca5` |
-| 5 | TDD-tested documentation-maintenance skill | Tier 3 | Planned | — |
+| 5 | TDD-tested documentation-maintenance skill | Tier 3 | Complete | `ba6c242a` |
 | 6 | Compact routers and generated ownership | Tier 2 | Planned | — |
 | 7 | Full verification, broad review, and lifecycle closeout | Tier 3 | Planned | — |
 
@@ -106,6 +106,17 @@ repository-local documentation-maintenance skill.
   monster all answer the next qualifying blow. DMG formulas include Horn Gore's half STR
   modifier, Forked Stick's matchup term, and the raw-stat floor. Curse card stats state
   the `level + 1` cap. Card odds were not recalculated.
+
+## Task 5 decisions
+
+- Five no-skill samples of a shipped-plan closeout already chose the current lifecycle, and
+  the bugfix sample already used the fixed-bug ledger and generator. Those paths did not
+  get a new rule.
+- Five no-skill samples of a typo PR left a contradictory current contract and a plan route
+  in place because a reviewer called the rest pre-existing. The skill counters that
+  rationalization. Five samples with the skill fixed both in the same change.
+- The skill is tracked under `.cursor/skills/` by a gitignore exception. Public player
+  documents stay outside OKF frontmatter.
 
 ## Working artifacts
 
