@@ -2199,5 +2199,71 @@ describe('ring/index.ts', () => {
 				ring.fightConcludes = originalFightConcludes;
 			}
 		});
+
+		// Regression coverage: `fight()`'s opening beat used to chain
+		// `openingBeat().then(beginTurn)` with no `.catch`, detached from the
+		// `doAction()` executor's synchronous body. A throw from a `playerTurnBegin`
+		// listener on the fight's very first turn (the only turn this opening-beat path
+		// runs for — see `isFightOpening`) ran inside that later microtask, which the
+		// Promise constructor's auto-catch cannot see: the throw became an unhandled
+		// rejection AND left `doAction()`'s promise forever unsettled, so `fight()`'s own
+		// `.catch` (the cancelled/error path below) never ran and the fight simply hung.
+		// See docs/architecture/engine-concurrency-and-timing.md §1.
+		it('routes a throwing playerTurnBegin listener on the first turn through the cancelled/error path with no unhandled rejection', async function () {
+			this.timeout(10_000);
+
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.addMonster(randomContestant({ isBoss: false }));
+			ring.addMonster(randomContestant({ isBoss: false }));
+
+			// Only the fight's first turn goes through the opening-beat chain this test
+			// targets; throwing on every turn would just as well hit a fully-covered path.
+			let calls = 0;
+			ring.on('playerTurnBegin', () => {
+				calls += 1;
+				if (calls === 1) {
+					throw new Error('simulated first-turn playerTurnBegin failure');
+				}
+			});
+
+			const publishedEvents: any[] = [];
+			ring.eventBus.subscribe('test-first-turn-listener-throw', {
+				deliver: (event: any) => publishedEvents.push(event),
+			});
+
+			const unhandledRejections: unknown[] = [];
+			const onUnhandledRejection = (reason: unknown): void => {
+				unhandledRejections.push(reason);
+			};
+			process.on('unhandledRejection', onUnhandledRejection);
+
+			try {
+				let caughtError: unknown;
+				try {
+					await ring.fight();
+				} catch (err) {
+					caughtError = err;
+				}
+				expect(caughtError, 'fight() should swallow the error, not throw').to.be.undefined;
+
+				const cancelled = publishedEvents.find(
+					(e) => e.type === 'ring.fightResolved' && e.payload?.outcome === 'cancelled'
+				);
+				expect(cancelled, 'a cancelled ring.fightResolved event should have been published').to.exist;
+				expect(ring.contestants.length, 'ring should be cleared after the error').to.equal(0);
+
+				// Let any dangling microtask from the old detached chain surface before
+				// asserting none did.
+				await new Promise(r => setTimeout(r, 0));
+				expect(
+					unhandledRejections,
+					'the detached opening-beat chain must not produce an unhandled rejection'
+				).to.have.length(0);
+			} finally {
+				process.off('unhandledRejection', onUnhandledRejection);
+			}
+		});
 	});
 });

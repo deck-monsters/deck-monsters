@@ -1078,8 +1078,19 @@ export class Ring extends BaseClass {
 					// same tick; reuse the same content-aware beat so the whole opening reads
 					// at one consistent pace. Every later startTurn is already paced by the
 					// previous card's card-to-card/round gap (see `isFightOpening` above).
+					//
+					// This chain is detached from the executor's synchronous body — unlike
+					// `beginTurn()` called directly in the `else` branch below, whose throw
+					// the Promise constructor auto-catches, a throw inside this `.then()`
+					// callback (e.g. a `playerTurnBegin` listener throwing on the fight's
+					// very first turn) runs in a later microtask the constructor can no
+					// longer see. Without `.catch(reject)` that became an unhandled
+					// rejection AND left this `doAction()` promise forever unsettled —
+					// `fight()`'s own `.catch` (the cancelled/error path) never ran. Routing
+					// it through `reject` instead settles this promise like any other
+					// mid-fight throw. See docs/architecture/engine-concurrency-and-timing.md §1.
 					if (isFightOpening) {
-						openingBeat().then(beginTurn);
+						openingBeat().then(beginTurn).catch(reject);
 					} else {
 						beginTurn();
 					}
