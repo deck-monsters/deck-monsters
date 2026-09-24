@@ -27,11 +27,11 @@
 
 There are 5 different types of monsters:
 
-- [Basilisk](#basilisk)
-- [Gladiator](#gladiator)
-- [Jinn](#jinn)
-- [Minotaur](#minotaur)
-- [Weeping Angel](#weeping-angel)
+- [Basilisk (Barbarian)](#basilisk-barbarian)
+- [Gladiator (Fighter)](#gladiator-fighter)
+- [Jinn (Bard)](#jinn-bard)
+- [Minotaur (Barbarian)](#minotaur-barbarian)
+- [Weeping Angel (Cleric)](#weeping-angel-cleric)
 
 ## Stat ranges by monster type (spawn, level 0)
 

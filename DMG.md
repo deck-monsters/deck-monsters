@@ -184,7 +184,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Horn Gore](#horn-gore)
 - [Horn Swipe](#horn-swipe)
 - [Iocane](#iocane)
-- [The Kalevala](#the-kalevala)
+- [The Kalevala (1d4)](#the-kalevala-1d4)
 - [Lucky Strike](#lucky-strike)
 - [Mesmerize](#mesmerize)
 - [Molasses](#molasses)

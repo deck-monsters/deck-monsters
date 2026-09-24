@@ -12,7 +12,7 @@ import {
 	generateRootDocs,
 	normalizeLineEndings,
 } from './root-docs.js';
-import { qualifiesAsListItem } from './markdown.js';
+import { createAnchorTracker, qualifiesAsListItem } from './markdown.js';
 import allCards from '../cards/helpers/all.js';
 import allItems from '../items/helpers/all.js';
 
@@ -316,6 +316,41 @@ describe('root-docs generation', () => {
 						}
 					}
 				}
+			}
+		});
+
+		// Regression guard for a TOC (or any other `](#anchor)`
+		// reference) built from a different name than the heading it points at silently
+		// produces a link that never lands anywhere on GitHub. Two real examples:
+		// CARDS.md's Card List built the anchor from the static `Card.cardType` while the
+		// `###` heading used the *instance*'s `cardType` getter (`KalevalaCard` appends its
+		// damage dice: "The Kalevala" vs "The Kalevala (1d4)"), and MONSTERS.md's TOC used
+		// the bare `creatureType` ("Basilisk") while the heading also includes the class
+		// label ("Basilisk (Barbarian)"). Reproduces GitHub's own slugging
+		// (`createAnchorTracker`/`slugify`, including its `-1`/`-2` dedup for a name that
+		// repeats) and walks every heading in document order so it catches the same class
+		// of bug anywhere in a generated root doc, not just these two spots.
+		it('every ](#anchor) link resolves to a heading slug', async () => {
+			for (const [name, content] of await rootArtifacts()) {
+				const { outside } = splitByFence(content);
+
+				const anchorFor = createAnchorTracker();
+				const headingAnchors = new Set<string>();
+				for (const line of outside) {
+					const heading = line.match(/^#{1,6}\s+(.+?)\s*$/);
+					if (heading) headingAnchors.add(anchorFor(heading[1]!));
+				}
+
+				const brokenLinks: string[] = [];
+				for (const line of outside) {
+					for (const match of line.matchAll(/\]\(#([^)]+)\)/g)) {
+						const anchor = match[1]!;
+						if (!headingAnchors.has(anchor)) brokenLinks.push(anchor);
+					}
+				}
+
+				expect(brokenLinks, `${name} has ](#anchor) links with no matching heading: ${brokenLinks.join(', ')}`)
+					.to.have.length(0);
 			}
 		});
 	});

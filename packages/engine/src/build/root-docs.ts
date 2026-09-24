@@ -4,11 +4,13 @@ import { generateCardCatalogue } from './card-catalogue.js';
 import { DM_ONLY_MARKERS } from './dm-only-sections.js';
 import { collectDungeonMasterGuideMarkdown, renderDungeonMasterGuideMarkdown } from './dungeon-master-guide.js';
 import { buildMonsterEntry, buildMonsterEntryMarkdown } from './monster-manual.js';
+import { getMonsterTypeOffsets } from './monster-stat-ranges.js';
 import allMonsters from '../monsters/helpers/all.js';
 import { generateCardCatalogueHtml } from './card-catalogue-html.js';
 import { COMMAND_CATALOG } from '../commands/catalog.js';
 import {
 	convertPlainTextToMarkdown,
+	createAnchorTracker,
 	extractLeadingBanner,
 	normalizeMarkdownSpacing,
 	renderCommandCatalogMarkdown,
@@ -141,7 +143,18 @@ export const collectCardsMarkdown = async (): Promise<string> => {
 };
 
 export const collectMonstersMarkdown = async (): Promise<string> => {
-	const monsterNames = allMonsters.map((Monster: { creatureType?: string }) => Monster.creatureType ?? '');
+	// The TOC name must match the heading `buildMonsterEntryMarkdown` actually renders
+	// (`### ${creatureType} (${classLabel})`, e.g. "Basilisk (Barbarian)") — building it
+	// from the bare `creatureType` alone ("Basilisk") produced a `](#basilisk)` link one
+	// word short of the real `#basilisk-barbarian` anchor. `getMonsterTypeOffsets` is the
+	// single source both the heading and this TOC entry read from. See
+	// docs/roadmap/10b-bugs-fixed.md.
+	const anchorFor = createAnchorTracker();
+	const monsterNames = allMonsters.map((Monster: new () => object) => {
+		const offsets = getMonsterTypeOffsets(Monster);
+		return `${offsets.creatureType} (${offsets.classLabel})`;
+	});
+	const monsterAnchors = monsterNames.map(anchorFor);
 	const entries = allMonsters
 		.map((Monster: new () => object) => buildMonsterEntryMarkdown(Monster, 0))
 		.join('\n\n');
@@ -152,7 +165,7 @@ export const collectMonstersMarkdown = async (): Promise<string> => {
 
 There are ${allMonsters.length} different types of monsters:
 
-${monsterNames.map(name => renderTocEntry(name)).join('\n')}
+${monsterNames.map((name, i) => renderTocEntry(name, () => monsterAnchors[i])).join('\n')}
 
 ## Stat ranges by monster type (spawn, level 0)
 

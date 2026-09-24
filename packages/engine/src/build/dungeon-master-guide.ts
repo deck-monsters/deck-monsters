@@ -223,39 +223,48 @@ export const renderDungeonMasterGuideMarkdown = async (): Promise<string> => {
 		convertPlainTextToMarkdown(OPERATOR_CONCURRENCY),
 	];
 
-	const cardNames = allCards.map((Card: { cardType?: string }) => Card.cardType ?? '');
-	const itemNames = allItems.map((Item: { itemType?: string }) => Item.itemType ?? '');
+	// Instantiate once and derive every name — TOC entry *and* section heading — from
+	// that same instance, not the static class property: `cardType`/`itemType` is
+	// sometimes an *instance* getter that overrides it (`KalevalaCard#itemType` appends
+	// the card's current damage dice: "The Kalevala (1d4)"), so a TOC built from the
+	// static `Card.cardType` ("The Kalevala") never matched the instance name the
+	// heading below actually rendered — a permanently broken `](#the-kalevala)` link.
+	// See card-catalogue.ts's identical fix and docs/roadmap/10b-bugs-fixed.md.
+	const cards = allCards.map((Card) => {
+		const card = new Card();
+		const name = (card as { cardType?: string }).cardType ?? Card.name;
+		return { card, name };
+	});
+	const items = allItems.map((Item) => {
+		const item = new Item();
+		const name = (item as { itemType?: string }).itemType ?? Item.name;
+		return { item, name };
+	});
 
 	// One tracker across both lists, in the order the headings below actually render —
 	// see the comment on the equivalent tracker in card-catalogue.ts.
 	const anchorFor = createAnchorTracker();
-	const cardAnchors = cardNames.map(anchorFor);
-	const itemAnchors = itemNames.map(anchorFor);
+	const cardAnchors = cards.map(({ name }) => anchorFor(name));
+	const itemAnchors = items.map(({ name }) => anchorFor(name));
 
 	parts.push(
 		`## Card Catalog (verbose)\n\n${
-			cardNames.map((name, i) => renderTocEntry(name, () => cardAnchors[i])).join('\n')
+			cards.map(({ name }, i) => renderTocEntry(name, () => cardAnchors[i])).join('\n')
 		}`
 	);
 	parts.push(
 		(
-			await mapSeries(allCards, async Card => {
-				const card = new Card();
-				return renderCardSection(card.cardType ?? Card.name, actionCard(card, true));
-			})
+			await mapSeries(cards, async ({ card, name }) => renderCardSection(name, actionCard(card, true)))
 		).join('\n\n')
 	);
 	parts.push(
 		`## Item Catalog\n\n${
-			itemNames.map((name, i) => renderTocEntry(name, () => itemAnchors[i])).join('\n')
+			items.map(({ name }, i) => renderTocEntry(name, () => itemAnchors[i])).join('\n')
 		}`
 	);
 	parts.push(
 		(
-			await mapSeries(allItems, async Item => {
-				const item = new Item();
-				return renderCardSection(item.itemType ?? Item.name, itemCard(item, true));
-			})
+			await mapSeries(items, async ({ item, name }) => renderCardSection(name, itemCard(item, true)))
 		).join('\n\n')
 	);
 

@@ -55,7 +55,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Horn Gore](#horn-gore)
 - [Horn Swipe](#horn-swipe)
 - [Iocane](#iocane)
-- [The Kalevala](#the-kalevala)
+- [The Kalevala (1d4)](#the-kalevala-1d4)
 - [Lucky Strike](#lucky-strike)
 - [Mesmerize](#mesmerize)
 - [Molasses](#molasses)

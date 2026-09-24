@@ -30,34 +30,43 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  * at `##` level marks where the index ends and the actual cards begin.
  */
 export const generateCardCatalogue = async (output: DocOutputFn): Promise<void> => {
-	const cardNames = allCards.map((Card: { cardType?: string }) => Card.cardType ?? '');
-	const itemNames = allItems.map((Item: { itemType?: string }) => Item.itemType ?? '');
+	// Instantiate once and derive every name — TOC entry *and* section heading — from
+	// that same instance. `cardType`/`itemType` is sometimes an *instance* getter that
+	// overrides the static class property: `KalevalaCard#itemType` appends the card's
+	// current damage dice ("The Kalevala (1d4)"), so the static `Card.cardType` used to
+	// build the TOC ("The Kalevala") never matched the instance name the heading below
+	// actually rendered — a permanently broken `](#the-kalevala)` link. See
+	// docs/roadmap/10b-bugs-fixed.md.
+	const cards = allCards.map((Card) => {
+		const card = new Card();
+		const name = (card as { cardType?: string }).cardType ?? Card.name;
+		return { card, name };
+	});
+	const items = allItems.map((Item) => {
+		const item = new Item();
+		const name = (item as { itemType?: string }).itemType ?? Item.name;
+		return { item, name };
+	});
 
 	// One tracker, fed in the exact order headings will render below (cards, then
 	// items): a card and an item can share a display name, and GitHub's own slugger
 	// appends `-1`/`-2` to whichever repeats. Anything built from a name has to walk the
 	// same order to link to the anchor GitHub actually assigns.
 	const anchorFor = createAnchorTracker();
-	const cardAnchors = cardNames.map(anchorFor);
-	const itemAnchors = itemNames.map(anchorFor);
+	const cardAnchors = cards.map(({ name }) => anchorFor(name));
+	const itemAnchors = items.map(({ name }) => anchorFor(name));
 
 	await output(`${CARD_CATALOGUE_HEADER}\n\n## Contents\n\n### Card List\n\n${
-		cardNames.map((name, i) => renderTocEntry(name, () => cardAnchors[i])).join('\n')
+		cards.map(({ name }, i) => renderTocEntry(name, () => cardAnchors[i])).join('\n')
 	}`);
 	await output(`### Item List\n\n${
-		itemNames.map((name, i) => renderTocEntry(name, () => itemAnchors[i])).join('\n')
+		items.map(({ name }, i) => renderTocEntry(name, () => itemAnchors[i])).join('\n')
 	}`);
 
 	await output('## Cards');
-	await eachSeries(allCards, Card => {
-		const card = new Card();
-		return output(renderCardSection(card.cardType ?? Card.name, actionCard(card, false)));
-	});
+	await eachSeries(cards, ({ card, name }) => output(renderCardSection(name, actionCard(card, false))));
 	await output('## Items');
-	await eachSeries(allItems, Item => {
-		const item = new Item();
-		return output(renderCardSection(item.itemType ?? Item.name, itemCard(item, false)));
-	});
+	await eachSeries(items, ({ item, name }) => output(renderCardSection(name, itemCard(item, false))));
 };
 
 export default generateCardCatalogue;
