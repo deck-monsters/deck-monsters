@@ -38,7 +38,7 @@ docs and move this file to `docs/archive/roadmap/`.
 | T3 | Coin/XP distributions in the simulation harness; fix the stale harness bullet (#181) | 11 | 2 | Done | c46568e, 6f6f81c |
 | T4 | Sub-event gap for two-roll cards; paced fight opening (#178, #179); lucky-strike test fix (#180) | 10 §2, §3 | 2 | Done | 3a4dfa4, 316b5ee |
 | T5 | Show the engine's item-use narration in the web Workshop | item follow-ups | 2 | Done | 0251484 |
-| T6 | Room-scoped web selling | item follow-ups | 2 | In progress | — |
+| T6 | Room-scoped web selling | item follow-ups | 2 | Done | a94d230 |
 | T7 | Mobile Workshop header rule and tier-2 reason copy (#177) | 10 §6, 22 | 2 | Done | 079069b |
 | T8 | Encode the orchestrator/subagent pattern in the agent docs; ignore agent worktrees | user request | 3 | Done | ef7e377, 1e44333 |
 

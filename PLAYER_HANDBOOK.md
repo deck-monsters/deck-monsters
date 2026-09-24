@@ -96,7 +96,7 @@ The merchant changes every 6 hours, so prices and stock rotate. Each room has it
 - `visit the shop` — browse and buy
 - `sell to the shop` — sell cards or items
 
-The web Workshop shows live room stock, your balance, affordability, owned counts, rare back-room goods and direct purchase buttons. Selling still uses the guided console flow.
+The web Workshop shows live room stock, your balance, affordability, owned counts, rare back-room goods, and direct buy and sell buttons. Each sale asks you to confirm the item, quantity, and coins first.
 
 ## Your Character
 
