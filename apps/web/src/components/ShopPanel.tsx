@@ -33,6 +33,12 @@ export type SellableGroup = { displayName: string; count: number; cost: number }
 
 export type SellSelection = { section: 'items' | 'cards'; type: string; count: number };
 
+// Mirrors the server's `sellShopItems` input schema exactly
+// (`z.number().int().min(1).max(99)` in `trpc/router.ts`) — a quantity this component lets
+// through but the server rejects fails the mutation with a validation error that never
+// explains itself to the player, instead of a disabled button that does.
+const MAX_SELL_QUANTITY = 99;
+
 interface ShopPanelProps {
   shop?: ShopSummary;
   busy?: boolean;
@@ -80,16 +86,30 @@ function SellList({
   busy?: boolean;
   onSell?: (selection: SellSelection) => void;
 }) {
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  // The field's raw text, kept separate from the clamped/normalized quantity below so a
+  // player can freely type (or briefly clear the field) without every keystroke being
+  // fought back to a "corrected" value.
+  const [rawQuantities, setRawQuantities] = useState<Record<string, string>>({});
 
   if (groups.length === 0) {
     return <p className="workshop-empty-state">Nothing to sell.</p>;
   }
 
   return <ul className="shop-stock-list">{groups.map((group) => {
-    const quantity = Math.min(Math.max(quantities[group.displayName] ?? 1, 1), group.count);
+    const maxQuantity = Math.min(group.count, MAX_SELL_QUANTITY);
+    const raw = rawQuantities[group.displayName];
+    const displayValue = raw ?? '1';
+    const parsed = raw === undefined ? 1 : Number(raw);
+    // Must be a whole number in [1, min(owned, 99)] — anything else (a decimal, an empty
+    // field mid-edit, 0, or more than the player owns / the server accepts) is invalid:
+    // the Sell button disables rather than silently sending a clamped/rounded count the
+    // player never actually asked for.
+    const isValid = raw !== '' && Number.isInteger(parsed) && parsed >= 1 && parsed <= maxQuantity;
+    // Only used for the live total-price preview while the field is in an invalid state;
+    // never sent to `onSell`, which only fires when `isValid`.
+    const previewQuantity = isValid ? parsed : Math.min(Math.max(Math.round(parsed) || 1, 1), maxQuantity);
     const unitPrice = Math.round(group.cost * sellOffset);
-    const total = unitPrice * quantity;
+    const total = unitPrice * previewQuantity;
 
     return (
       <li key={`${section}:${group.displayName}`} className="shop-stock-row">
@@ -104,14 +124,15 @@ function SellList({
               className="shop-sell-qty"
               aria-label={`How many ${group.displayName} to sell`}
               min={1}
-              max={group.count}
-              value={quantity}
+              max={maxQuantity}
+              step={1}
+              value={displayValue}
               disabled={busy}
               onChange={(event) => {
-                const next = Number(event.target.value);
-                setQuantities((current) => ({
+                const { value } = event.target;
+                setRawQuantities((current) => ({
                   ...current,
-                  [group.displayName]: Number.isFinite(next) ? next : 1,
+                  [group.displayName]: value,
                 }));
               }}
             />
@@ -119,9 +140,11 @@ function SellList({
           <button
             type="button"
             className="btn workshop-inline-btn shop-buy-button"
-            disabled={busy || !onSell}
-            title={`Sell ${quantity > 1 ? `${quantity} ${group.displayName}` : group.displayName}`}
-            onClick={() => onSell?.({ section, type: group.displayName, count: quantity })}
+            disabled={busy || !onSell || !isValid}
+            title={isValid
+              ? `Sell ${previewQuantity > 1 ? `${previewQuantity} ${group.displayName}` : group.displayName}`
+              : `Enter a whole number between 1 and ${maxQuantity}`}
+            onClick={() => isValid && onSell?.({ section, type: group.displayName, count: parsed })}
           >
             Sell for {total} {total === 1 ? 'coin' : 'coins'}
           </button>
