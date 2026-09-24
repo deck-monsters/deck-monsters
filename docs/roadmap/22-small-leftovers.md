@@ -60,8 +60,10 @@ Prompt transport, web selling, and outcome feedback are owned in
   `FightSummaryWriter` still writes null because it does not track turning-point
   `card.played` events. Read
   [analytics and history](../architecture/analytics-and-history.md).
-- [ ] **Owner: Analytics/identity.** Decide global-leaderboard visibility and verify that a
-  room reset clears the room's projections and summaries. Read
+- [ ] **Owner: Analytics/identity.** Decide global-leaderboard visibility, and whether a room
+  reset should also clear `room_events`. Pass 25 verified that `RoomManager.resetRoomState()`
+  clears player and monster stats and fight summaries, zeroes the fight counter, and keeps the
+  raw event log, so pre-reset narration stays in history. Read
   [analytics and history](../architecture/analytics-and-history.md).
 - [ ] **Owner: Events/connectors.** Decide prompt delivery when one player is active on
   multiple connectors, and whether future client rendering needs finer event granularity.

@@ -56,7 +56,9 @@ These apply to every task in this repo, not just the one you were asked to do.
   cheap model on a multi-step prose spec often burns 2–3x the turns. Tier 2 is the floor for
   anything implemented from prose.
 - Always set the model explicitly. An omitted model inherits the orchestrator's, which is
-  usually the most expensive one available.
+  usually the most expensive one available. The top models and effort levels (the
+  owner-initiated tier in the [tier table](docs/agents/subagents.md#tiers)) are started by
+  the owner, never by an agent.
 - Never run two implementers on overlapping files; docs-only work can run beside code work.
   Two tasks that both edit `docs/roadmap/README.md` or `10b-bugs-fixed.md` are overlapping.
 - **Implementers in a shared worktree never create or switch branches**, `git add` only the

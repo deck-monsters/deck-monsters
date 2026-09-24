@@ -1,16 +1,16 @@
 ---
-type: Roadmap
+type: Archive
 title: Roadmap Sweep Pass
 description: Active pass plan for a batch of roadmap fixes, delegated to subagents under orchestrator review.
-status: draft
+status: deprecated
 audience: internal
 tags: [roadmap, pass, subagents]
 ---
 # 25 — Roadmap Sweep Pass
 
-**Status:** Active. This plan is the resumable record of the pass. Update the task table in
-the same commit that lands each task. When the pass closes, fold its decisions into the area
-docs and move this file to `docs/archive/roadmap/`.
+**Status:** Closed. Historical record of the pass. The process rules now live in
+[subagents](../../agents/subagents.md#the-orchestrated-pass), and deferred items have homes
+in the active roadmap files.
 
 ## Process being tried
 
@@ -45,10 +45,10 @@ docs and move this file to `docs/archive/roadmap/`.
 ## Decisions
 
 - **Room reset keeps `room_events`.** The reset contract in
-  [rooms and identity](../architecture/rooms-and-identity.md) clears projections and
+  [rooms and identity](../../architecture/rooms-and-identity.md) clears projections and
   summaries, not the raw log. Triage confirmed the code matches that contract. Whether
   pre-reset narration should stay visible is a retention decision, which stays open in
-  [small leftovers](22-small-leftovers.md).
+  [small leftovers](../../roadmap/22-small-leftovers.md).
 - **Deferred:** prompt step and flow labels (they need per-flow design across about 30
   prompt call sites), crit ticks (they need a deferred-choice design that respects the prompt
   concurrency rules), `notable_cards` (needs a product definition, and nothing reads the

@@ -9,7 +9,8 @@ tags: [agents, subagents, review]
 # Subagents
 
 When and how to delegate work to another agent. Written harness-neutrally: the tier table is
-the contract. Name a model when you dispatch; do not keep a dated model list here.
+the contract. Name a model when you dispatch. The example models in the tier table are dated
+guidance, not a whitelist.
 
 ## Why delegate
 
@@ -23,11 +24,16 @@ The orchestrator still owns the outcome. A subagent's report is evidence, not a 
 
 ## Tiers
 
-| Tier | Work it is for |
-|---|---|
-| 1 — lookup / mechanical | Codebase search, inventories, transcription from a complete spec, single-file mechanical fixes |
-| 2 — implement / review | Multi-file implementation from prose, writing tests, task-scoped review |
-| 3 — reason / design / debug / final review | Root-cause debugging, architecture, wording and product judgment, whole-branch review |
+| Tier | Work it is for | Example models and effort (September 2026) |
+|---|---|---|
+| Owner-initiated | The most complex or design-heavy problems, **started only by the owner** | Fable; Opus above medium effort; Sol above high effort; Astra |
+| 3 — reason / design / debug / final review | Orchestration, root-cause debugging, architecture, wording and product judgment, whole-branch review | Opus medium, Sol high, or equivalent |
+| 2 — implement / review | Multi-file implementation from prose, writing tests, task-scoped review | Sonnet medium, Sol medium, Terra high. Escalate to Sonnet high only when a task needs it |
+| 1 — lookup / mechanical | Codebase search, inventories, transcription from a complete spec, single-file mechanical fixes | Luna, Haiku, Grok, and similar cheap models |
+
+The example column goes stale as models change; the ranking rule is the contract. An agent
+never escalates itself or a subagent into the owner-initiated tier. Tier 1 models do no
+design, planning, or implementation from prose. They find, copy, and mechanically apply.
 
 Two rules that matter more than the table:
 
@@ -47,7 +53,8 @@ type for the job shape and the slug for the tier.
 
 **Claude Code.** Dispatch with the `Agent` tool. Set `subagent_type` (`Explore` for
 read-only sweeps, `general-purpose` for implementers and reviewers, `Plan` for design) and
-always set `model` (`haiku`, `sonnet`, `opus`), which map onto tiers 1, 2, and 3. Reusable
+always set `model` (`haiku`, `sonnet`, `opus`), which map onto tiers 1, 2, and 3 at the
+effort levels in the tier table. Reusable
 definitions live in `.claude/agents/`. Other parameters that matter here:
 
 - `isolation: "worktree"` gives the agent its own git worktree on its own branch. Use it for
@@ -154,7 +161,7 @@ This is what has actually worked on this repo:
 ## The orchestrated pass
 
 This is the default shape for a batch of roadmap work. Pass 25 (the roadmap sweep, planned
-in `docs/roadmap/25-roadmap-sweep.md` and archived when it closes) worked this way.
+in [`25-roadmap-sweep.md`](../archive/roadmap/25-roadmap-sweep.md), now archived) worked this way.
 
 1. **Triage before planning.** A read-only Tier 2 explorer checks each candidate item
    against the code. For each one it reports what is already done (with `file:line`), the
