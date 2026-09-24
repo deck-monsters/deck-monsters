@@ -84,6 +84,35 @@ text scrolling past, so total fight length was allowed to grow.
 constant and multiply the measured gaps back up — ordering and relative sizing are
 unaffected, and a whole fight completes in seconds.
 
+**Every roll block in a multi-roll card is separated by `subEventDelay`, including miss
+paths.** `HitCard.effect()` was always careful about this (a beat after the attack roll,
+another after the damage roll), but `HornGore.gore()` — the double-attack helper shared by
+Horn Gore and Forked Metal Rod — awaited nothing on a miss, so a miss on both horns
+published two `'rolled'` announcements in the same tick. `gore()` now awaits
+`subEventDelay(ring?.pacingMultiplier)` right after the attack-roll announcement (every
+path, not just a hit) and again after the damage-roll announcement, mirroring `HitCard`
+exactly. Separately, `ForkedMetalRodCard.effect()` fired both `gore()` calls unawaited
+(`this.gore(...); this.gore(...);`) and `SandstormCard`'s already-lost branch fired two
+`Blast` resolutions unawaited with `promiseA && promiseB` — a `Promise` is always truthy,
+so that operator never actually short-circuited. Both now `await` each hit in turn before
+starting the next, which both fixes the pacing and stops the two hits from racing each
+other. **The rule for any card that resolves more than one roll or hit per `effect()`
+call: await each one fully (do not fire a second async call before the first settles),
+and make sure a beat separates their announcements on every outcome path, not just the
+successful one** — a stub that replaces the outcome-check but skips the delay call
+reintroduces this exact bug. See `docs/roadmap/10b-bugs-fixed.md` (two-roll-blocks-in-one-tick).
+
+**The fight's opening banners are paced the same way.** `Ring.fight()` used to publish four
+banners back to back with no pacing at all: the `ring.fight` bookkeeping line, the "Let the
+games begin!" banner (`fight` emit), and — inside the very first `doAction()` call — the
+`startTurn` and `playerTurnBegin` banners, all landing before the pre-existing `turnBeat()`
+that only separates `playerTurnBegin` from the card box. `fight()` now inserts the same
+content-aware `turnBeat()` beat between each of those four, gated so only the fight's very
+first turn pays the extra `startTurn` → `playerTurnBegin` beat (every later `startTurn` — a
+new round of turns — is already paced by the previous card's card-to-card/round gap, so
+beating it again would stack delays). Event order is unchanged; only timing was added. See
+`docs/roadmap/10b-bugs-fixed.md` (fight-opening-burst).
+
 **The same invariant applies to cards that play other cards.** `Random Play`
 (draws a card) and `Pick Pocket` (clones an opponent's) put a second card into
 play within one turn. They must route it through `playNestedCard`

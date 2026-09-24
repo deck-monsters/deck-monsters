@@ -58,7 +58,7 @@ export class SandstormCard extends BlastCard {
 		return `${this.damage} storm damage +${this.levelDamage} per level of the jinni to everyone in the ring. Temporarily confuses opponents and causes them to mistake their targets.`;
 	}
 
-	override effect(sandstormPlayer: any, sandstormTarget: any): any {
+	override async effect(sandstormPlayer: any, sandstormTarget: any): Promise<any> {
 		const alreadyLost = !!sandstormTarget.encounterEffects.find(
 			(effect: any) => effect.effectType === SANDSTORM_EFFECT
 		);
@@ -67,10 +67,18 @@ export class SandstormCard extends BlastCard {
 			this.emit('narration', {
 				narration: `${sandstormTarget.givenName} is already lost and confused, so ${sandstormPlayer.givenName} takes advantage of ${sandstormTarget.pronouns.his} weakened state.`,
 			});
-			return (
-				super.effect(sandstormPlayer, sandstormTarget) &&
-				super.effect(sandstormPlayer, sandstormTarget)
-			);
+			// Two full Blast resolutions used to fire unawaited with `promiseA &&
+			// promiseB`: a Promise is always truthy, so that operator never actually
+			// short-circuited, and neither `target.hit()` call was sequenced against the
+			// other — their damage/death handling could interleave, and the second blast
+			// landed even if the first one killed the target. Sequencing them also gives
+			// the second blast the pacing gap `target.hit()` already takes after its own
+			// 'hit' emission (see docs/architecture/engine-concurrency-and-timing.md §1),
+			// instead of both landing in the same tick. See
+			// docs/roadmap/10b-bugs-fixed.md (two-roll-blocks-in-one-tick).
+			const firstBlastSurvived = await super.effect(sandstormPlayer, sandstormTarget);
+			if (!firstBlastSurvived || sandstormTarget.dead) return firstBlastSurvived;
+			return super.effect(sandstormPlayer, sandstormTarget);
 		}
 
 		const sandstormEffect = ({

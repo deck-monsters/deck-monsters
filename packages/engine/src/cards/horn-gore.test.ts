@@ -216,4 +216,81 @@ describe('./cards/horn-gore.ts Horn Gore', () => {
 			expect(player.encounterModifiers.dexModifier).to.equal(undefined);
 		});
 	});
+
+	// Regression coverage for 10b-bugs-fixed.md (two-roll-blocks-in-one-tick): gore()
+	// used to await nothing after a miss, so the whole test suite (which runs with
+	// DECK_MONSTERS_SKIP_DELAYS=1) could never have caught two 'rolled' announcements
+	// landing in the same tick. These run with the real, non-skipped subEventDelay
+	// timer (a shrunk midpoint keeps them fast) and measure actual publish timestamps,
+	// per docs/architecture/engine-concurrency-and-timing.md's "measure, not assume".
+	describe('real (non-skipped) sub-event pacing', () => {
+		const MIN_GAP_MS = 10; // well under the ~20-40ms sampled range, far above same-tick (<1ms)
+
+		let prevSkip: string | undefined;
+		let prevMidpoint: string | undefined;
+
+		beforeEach(() => {
+			prevSkip = process.env.DECK_MONSTERS_SKIP_DELAYS;
+			prevMidpoint = process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS;
+			delete process.env.DECK_MONSTERS_SKIP_DELAYS;
+			process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS = '30';
+		});
+
+		afterEach(() => {
+			if (prevSkip === undefined) delete process.env.DECK_MONSTERS_SKIP_DELAYS;
+			else process.env.DECK_MONSTERS_SKIP_DELAYS = prevSkip;
+			if (prevMidpoint === undefined) delete process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS;
+			else process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS = prevMidpoint;
+		});
+
+		it('separates both horns\' roll announcements with a real gap when both horns miss', async function () {
+			this.timeout(5000);
+
+			// callsFake still runs the real emitRoll (unlike a plain .returns stub), so
+			// the actual 'rolled' announcements this test measures are the same ones
+			// gore() emits in production.
+			hitCheckStub.callsFake(function (this: any, playerArg: any, targetArg: any, hornNumber?: number) {
+				const attackRoll = this.getAttackRoll(playerArg, targetArg);
+				this.emitRoll(attackRoll, false, playerArg, targetArg, hornNumber);
+				return { attackRoll, success: false, strokeOfLuck: false, curseOfLoki: false };
+			});
+
+			const timestamps: number[] = [];
+			hornGore.on('rolled', () => timestamps.push(Date.now()));
+
+			await hornGore.play(player, basilisk, ring, ring.contestants);
+
+			// An all-miss horn gore only ever emits the two attack-roll announcements.
+			expect(timestamps).to.have.length(2);
+			expect(timestamps[1] - timestamps[0]).to.be.at.least(MIN_GAP_MS);
+		});
+
+		it('separates both horns\' roll announcements with a real gap when the first horn hits', async function () {
+			this.timeout(5000);
+
+			hitCheckStub.onFirstCall().callsFake(function (this: any, playerArg: any, targetArg: any, hornNumber?: number) {
+				const attackRoll = this.getAttackRoll(playerArg, targetArg);
+				this.emitRoll(attackRoll, true, playerArg, targetArg, hornNumber);
+				return { attackRoll, success: true, strokeOfLuck: false, curseOfLoki: false };
+			});
+			hitCheckStub.onSecondCall().callsFake(function (this: any, playerArg: any, targetArg: any, hornNumber?: number) {
+				const attackRoll = this.getAttackRoll(playerArg, targetArg);
+				this.emitRoll(attackRoll, false, playerArg, targetArg, hornNumber);
+				return { attackRoll, success: false, strokeOfLuck: false, curseOfLoki: false };
+			});
+			// Used by immobilizeCheck's own roll once horn 1's hit gives it a chance to fire.
+			checkSuccessStub.returns({ success: false, strokeOfLuck: false, curseOfLoki: false });
+
+			const timestamps: number[] = [];
+			hornGore.on('rolled', () => timestamps.push(Date.now()));
+
+			await hornGore.play(player, basilisk, ring, ring.contestants);
+
+			// horn1 attack (hit) -> horn1 damage roll -> horn2 attack (miss) -> immobilize roll.
+			expect(timestamps.length).to.be.at.least(3);
+			for (let i = 1; i < timestamps.length; i += 1) {
+				expect(timestamps[i] - timestamps[i - 1]).to.be.at.least(MIN_GAP_MS);
+			}
+		});
+	});
 });

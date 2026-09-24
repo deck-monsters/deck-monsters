@@ -857,7 +857,16 @@ export class Ring extends BaseClass {
 		const fightContinues = (active: Contestant[]): boolean =>
 			active.length > 1 && !isLastTeamVictory(active);
 
-		this.emit('fight', { contestants });
+		// The fight's opening used to stack four banners with zero pacing between them:
+		// the `ring.fight` bookkeeping line published above, the "Let the games begin!"
+		// banner from `fight` (emitted synchronously below), and — inside the first
+		// `doAction()` call — the startTurn and playerTurnBegin banners, all landing
+		// before the first `turnBeat()` await (which only separates playerTurnBegin from
+		// the card box). `turnBeat` is already content-aware (sized by whatever was just
+		// published via `pacing-context.ts`), so reusing it here paces the opening at the
+		// same tier as the turn-banner-to-card-box gap it already covers, without
+		// reordering any narration. See docs/architecture/engine-concurrency-and-timing.md §1.
+		const openingBeat = (): Promise<void> => turnBeat(this.pacingMultiplier);
 
 		let round = 1;
 		let turn: number | undefined;
@@ -912,6 +921,13 @@ export class Ring extends BaseClass {
 				const card = player.cards[cardIndex];
 
 				if (card) {
+					// Only the fight's very first turn needs an extra beat before
+					// playerTurnBegin: every later startTurn (a new round of turns) already
+					// follows a card-to-card/round gap from the previous card's resolution
+					// (see `next()` continuations below), so gating on `turn === undefined`
+					// avoids double-pacing those.
+					const isFightOpening = turn === undefined;
+
 					if (turn !== cardIndex) {
 						turn = cardIndex;
 
@@ -922,140 +938,152 @@ export class Ring extends BaseClass {
 						});
 					}
 
-					// Set before the emit (not after) so any listener reacting to
-					// `playerTurnBegin` already sees the correct actor, then publish once
-					// here so the roster highlight of whose turn it is lands before the
-					// card box does. One extra publish per turn is negligible next to the
-					// per-card publish already below.
-					this.activeContestant = playerContestant;
-					this.emit('playerTurnBegin', { contestant: playerContestant, round });
-					this.publishState();
-
-					const targetResult = getTarget({
-						contestants: getAllActiveContestants(),
-						playerContestant,
-						// A ring event's override beats the monster's own scroll-assigned strategy.
-						strategy:
-							playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
-						// Blood Feud drops team alignment for everyone.
-						...(this.ringEvent?.freeForAll ? { team: false as const } : {}),
-					});
-					// TARGET_ALL_CONTESTANTS resolves to an array rather than a single contestant.
-					// No monster should carry it as a strategy, but now that ring events assign
-					// strategies programmatically, fall back rather than dereference undefined.
-					const targetContestant = (
-						Array.isArray(targetResult) ? targetResult[0] : targetResult
-					) as Contestant | undefined;
-
-				if (!targetContestant) {
-					this.log({
-						context: 'ring.fight.noTarget',
-						monsterName: player.givenName,
-						strategy:
-							playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
-					});
-					if (fightContinues(getAllActiveContestants())) {
-						if (delaysAreSkipped()) {
-							queueMicrotask(() => next());
-						} else {
-							setTimeout(() => next(), this.paced(veryShortDelay(round)));
-						}
-					} else {
-						resolve(playerContestant);
-					}
-					return;
-				}
-
-					const { monster: proposedTarget } = targetContestant;
-
-					playerContestant.round = round;
-
-					fightLog.push(
-						`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`
-					);
-
-				// Guard: if card is a plain object (hydration failure), skip it gracefully.
-				if (typeof card.play !== 'function') {
-					this.log({
-						context: 'ring.fight.invalidCard',
-						monsterName: player.givenName,
-						monsterConstructor: player?.constructor?.name,
-						cardIndex,
-						cardConstructor: card?.constructor?.name ?? 'unknown',
-						cardKeys: Object.keys(card),
-						cardName: card?.name,
-						typeof_play: typeof card?.play,
-						cardJSON: JSON.stringify(card)?.slice(0, 300),
-					});
-					if (fightContinues(getAllActiveContestants())) {
-						if (delaysAreSkipped()) {
-							queueMicrotask(() => next());
-						} else {
-							setTimeout(() => next(), this.paced(veryShortDelay(round)));
-						}
-					} else {
-						resolve(playerContestant);
-					}
-					return;
-				}
-
-				// Let the turn banner land before the card box does. `playerTurnBegin`
-				// publishes the player's monster stat card — measured at 19–34 rendered
-				// lines — and `card.play` immediately publishes another ten-line card box,
-				// so the two arrived together with a 0.0s gap: forty-odd lines at once,
-				// followed by the whole pause. Sized by `subEventDelayMs`, which scales
-				// with the banner just emitted, so a long stat card buys more reading time.
-				turnBeat(this.pacingMultiplier)
-					.then(() => card.play(player, proposedTarget, ring, getAllActiveContestants()))
-					.then(() => {
-						// Push the board after every resolved card so the roster's HP/AC
-						// track the narration. One publish per card matches the feed's own
-						// card-to-card pacing (veryShortDelay below), so this adds no
-						// meaningful traffic next to the announce lines already going out.
+					const beginTurn = (): void => {
+						// Set before the emit (not after) so any listener reacting to
+						// `playerTurnBegin` already sees the correct actor, then publish once
+						// here so the roster highlight of whose turn it is lands before the
+						// card box does. One extra publish per turn is negligible next to the
+						// per-card publish already below.
+						this.activeContestant = playerContestant;
+						this.emit('playerTurnBegin', { contestant: playerContestant, round });
 						this.publishState();
 
-						if (fightContinues(getAllActiveContestants())) {
-							if (delaysAreSkipped()) {
-								return subEventDelay(this.pacingMultiplier).then(() => next());
-							}
-							// Pace card-to-card transitions with the configured very-short
-							// delay so live feeds can be followed; sub-events within a card
-							// already pace themselves via subEventDelay(). `remainingGapMs`
-							// subtracts the pause the card's final sub-event just took, so
-							// the boundary is that delay rather than the sum of both — the
-							// stacked version measured 6.8s at p90 and up to 10.3s, landing
-							// straight after the damage result.
-							return new Promise<void>(r =>
-								setTimeout(r, remainingGapMs(this.paced(veryShortDelay(round))))
-							).then(() => next());
-						}
-
-						return Promise.resolve().then(() => resolve(playerContestant));
-					})
-					.catch((ex: unknown) => {
-						// Cards can mutate HP/AC before throwing. Publish the resulting board
-						// just as the success path does so a partial failure cannot freeze the
-						// live roster while narration continues with newer values.
-						this.publishState();
-						this.log({
-							err: ex,
-							context: 'card.play',
-							card: card.name,
-							player: player.givenName,
-							target: proposedTarget.givenName,
+						const targetResult = getTarget({
+							contestants: getAllActiveContestants(),
+							playerContestant,
+							// A ring event's override beats the monster's own scroll-assigned strategy.
+							strategy:
+								playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
+							// Blood Feud drops team alignment for everyone.
+							...(this.ringEvent?.freeForAll ? { team: false as const } : {}),
 						});
-						// Skip the failed card and continue the fight rather than crashing
-						if (fightContinues(getAllActiveContestants())) {
-							if (delaysAreSkipped()) {
-								return subEventDelay(this.pacingMultiplier).then(() => next());
+						// TARGET_ALL_CONTESTANTS resolves to an array rather than a single contestant.
+						// No monster should carry it as a strategy, but now that ring events assign
+						// strategies programmatically, fall back rather than dereference undefined.
+						const targetContestant = (
+							Array.isArray(targetResult) ? targetResult[0] : targetResult
+						) as Contestant | undefined;
+
+						if (!targetContestant) {
+							this.log({
+								context: 'ring.fight.noTarget',
+								monsterName: player.givenName,
+								strategy:
+									playerContestant.targetingStrategy ?? playerContestant.monster.targetingStrategy,
+							});
+							if (fightContinues(getAllActiveContestants())) {
+								if (delaysAreSkipped()) {
+									queueMicrotask(() => next());
+								} else {
+									setTimeout(() => next(), this.paced(veryShortDelay(round)));
+								}
+							} else {
+								resolve(playerContestant);
 							}
-							return new Promise<void>(r =>
-								setTimeout(r, remainingGapMs(this.paced(veryShortDelay(round))))
-							).then(() => next());
+							return;
 						}
-						return Promise.resolve().then(() => resolve(playerContestant));
-					});
-			} else {
+
+						const { monster: proposedTarget } = targetContestant;
+
+						playerContestant.round = round;
+
+						fightLog.push(
+							`${player.givenName}: ${card.name} target ${proposedTarget.givenName}`
+						);
+
+						// Guard: if card is a plain object (hydration failure), skip it gracefully.
+						if (typeof card.play !== 'function') {
+							this.log({
+								context: 'ring.fight.invalidCard',
+								monsterName: player.givenName,
+								monsterConstructor: player?.constructor?.name,
+								cardIndex,
+								cardConstructor: card?.constructor?.name ?? 'unknown',
+								cardKeys: Object.keys(card),
+								cardName: card?.name,
+								typeof_play: typeof card?.play,
+								cardJSON: JSON.stringify(card)?.slice(0, 300),
+							});
+							if (fightContinues(getAllActiveContestants())) {
+								if (delaysAreSkipped()) {
+									queueMicrotask(() => next());
+								} else {
+									setTimeout(() => next(), this.paced(veryShortDelay(round)));
+								}
+							} else {
+								resolve(playerContestant);
+							}
+							return;
+						}
+
+						// Let the turn banner land before the card box does. `playerTurnBegin`
+						// publishes the player's monster stat card — measured at 19–34 rendered
+						// lines — and `card.play` immediately publishes another ten-line card box,
+						// so the two arrived together with a 0.0s gap: forty-odd lines at once,
+						// followed by the whole pause. Sized by `subEventDelayMs`, which scales
+						// with the banner just emitted, so a long stat card buys more reading time.
+						turnBeat(this.pacingMultiplier)
+							.then(() => card.play(player, proposedTarget, ring, getAllActiveContestants()))
+							.then(() => {
+								// Push the board after every resolved card so the roster's HP/AC
+								// track the narration. One publish per card matches the feed's own
+								// card-to-card pacing (veryShortDelay below), so this adds no
+								// meaningful traffic next to the announce lines already going out.
+								this.publishState();
+
+								if (fightContinues(getAllActiveContestants())) {
+									if (delaysAreSkipped()) {
+										return subEventDelay(this.pacingMultiplier).then(() => next());
+									}
+									// Pace card-to-card transitions with the configured very-short
+									// delay so live feeds can be followed; sub-events within a card
+									// already pace themselves via subEventDelay(). `remainingGapMs`
+									// subtracts the pause the card's final sub-event just took, so
+									// the boundary is that delay rather than the sum of both — the
+									// stacked version measured 6.8s at p90 and up to 10.3s, landing
+									// straight after the damage result.
+									return new Promise<void>(r =>
+										setTimeout(r, remainingGapMs(this.paced(veryShortDelay(round))))
+									).then(() => next());
+								}
+
+								return Promise.resolve().then(() => resolve(playerContestant));
+							})
+							.catch((ex: unknown) => {
+								// Cards can mutate HP/AC before throwing. Publish the resulting board
+								// just as the success path does so a partial failure cannot freeze the
+								// live roster while narration continues with newer values.
+								this.publishState();
+								this.log({
+									err: ex,
+									context: 'card.play',
+									card: card.name,
+									player: player.givenName,
+									target: proposedTarget.givenName,
+								});
+								// Skip the failed card and continue the fight rather than crashing
+								if (fightContinues(getAllActiveContestants())) {
+									if (delaysAreSkipped()) {
+										return subEventDelay(this.pacingMultiplier).then(() => next());
+									}
+									return new Promise<void>(r =>
+										setTimeout(r, remainingGapMs(this.paced(veryShortDelay(round))))
+									).then(() => next());
+								}
+								return Promise.resolve().then(() => resolve(playerContestant));
+							});
+					};
+
+					// The fight's opening also stacks startTurn and playerTurnBegin into the
+					// same tick; reuse the same content-aware beat so the whole opening reads
+					// at one consistent pace. Every later startTurn is already paced by the
+					// previous card's card-to-card/round gap (see `isFightOpening` above).
+					if (isFightOpening) {
+						openingBeat().then(beginTurn);
+					} else {
+						beginTurn();
+					}
+				} else {
 					this.emit('endOfDeck', { contestant: playerContestant, round });
 
 					player.emptyHanded = true;
@@ -1109,7 +1137,12 @@ export class Ring extends BaseClass {
 				}
 			});
 
-		return doAction()
+		return openingBeat()
+			.then(() => {
+				this.emit('fight', { contestants });
+				return openingBeat();
+			})
+			.then(() => doAction())
 			.then(lastContestant => {
 				this.fightConcludes({ fightLog, lastContestant, rounds: round });
 				this.clearRing();

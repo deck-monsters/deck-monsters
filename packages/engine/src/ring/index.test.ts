@@ -1940,6 +1940,94 @@ describe('ring/index.ts', () => {
 			}
 		});
 
+		it('paces the fight-opening banners apart without reordering them (real, non-skipped pacing)', async function () {
+			// Regression coverage for the fight-opening burst: `ring.fight`, the "Let the
+			// games begin!" banner, the first startTurn, and the first playerTurnBegin used
+			// to land in the same tick, all before the pre-existing `turnBeat()` that only
+			// paces playerTurnBegin -> card.play. See
+			// docs/architecture/engine-concurrency-and-timing.md §1 and
+			// docs/roadmap/10b-bugs-fixed.md (fight-opening-burst).
+			this.timeout(10_000);
+
+			const prevSkip = process.env.DECK_MONSTERS_SKIP_DELAYS;
+			delete process.env.DECK_MONSTERS_SKIP_DELAYS;
+			process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS = '20';
+			process.env.DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS = '3';
+			process.env.DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS = '3';
+
+			const game = new Game();
+			try {
+				const ring = game.getRing();
+
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+				const opening: Array<{ label: string; timestamp: number }> = [];
+				const seen = new Set<string>();
+				const record = (label: string, timestamp: number): void => {
+					if (seen.has(label)) return;
+					seen.add(label);
+					opening.push({ label, timestamp });
+				};
+
+				ring.eventBus.subscribe('opening-beat-spy', {
+					deliver: event => {
+						const text = event.text ?? '';
+						if (event.type === 'ring.fight' && text.includes('Fight begins with')) {
+							record('ring.fight', event.timestamp);
+						} else if (event.type === 'ring.fight' && text.includes('Let the games begin')) {
+							record('fight-banner', event.timestamp);
+						} else if (event.type === 'announce' && /round \d+, turn \d+/.test(text)) {
+							record('startTurn', event.timestamp);
+						} else if (event.type === 'announce' && /'s turn\.\*/.test(text)) {
+							record('playerTurnBegin', event.timestamp);
+						}
+					},
+				});
+
+				await ring.fight();
+
+				// Same four banners, same order, as before the fix — only pacing changed.
+				expect(opening.map(o => o.label)).to.deep.equal([
+					'ring.fight',
+					'fight-banner',
+					'startTurn',
+					'playerTurnBegin',
+				]);
+
+				for (let i = 1; i < opening.length; i += 1) {
+					expect(
+						opening[i].timestamp - opening[i - 1].timestamp,
+						`${opening[i - 1].label} -> ${opening[i].label} gap`
+					).to.be.at.least(5);
+				}
+			} finally {
+				process.env.DECK_MONSTERS_SKIP_DELAYS = prevSkip;
+				delete process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS;
+				delete process.env.DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS;
+				delete process.env.DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS;
+				game.dispose();
+			}
+		});
+
+		it('still completes near-instantly under DECK_MONSTERS_SKIP_DELAYS (opening beats add no un-skippable timer)', async () => {
+			const game = new Game();
+			try {
+				const ring = game.getRing();
+
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+				const start = Date.now();
+				await ring.fight();
+				const elapsed = Date.now() - start;
+
+				expect(elapsed).to.be.below(500);
+			} finally {
+				game.dispose();
+			}
+		});
+
 		it('last-team fight: fled opponents with zero deaths → surviving faction wins, encounter ends cleanly', async function () {
 			// Regression companion to the fightConcludes unit test above: exercise the full
 			// ring.fight() path so fightConcludes receives lastContestant=undefined (as doAction
