@@ -3,7 +3,9 @@
  * Coin and XP distributions from `simulate()` (roadmap 11 "Economy telemetry"), plus the
  * "new player" 1/5/20-fight progression scenario. Prints observed engine payouts — see
  * `SimResult.coinsByOutcome` / `xpPerMonster` docblocks in `simulate.ts` for why these are
- * read as before/after diffs rather than recomputed from `constants/coins.ts`.
+ * read as before/after diffs rather than recomputed from `constants/coins.ts`. The
+ * `simulate()` numbers are steady-state (daily/early-battle bonuses pinned off); the new
+ * player scenario is the bonus-inclusive counterpart — see `docs/reference/simulation-harness.md`.
  */
 
 import '../sim-env.js';
@@ -40,16 +42,21 @@ async function main(): Promise<void> {
 		roomId: 'sim-economy',
 	});
 
-	process.stdout.write('Coins per fight by outcome (contestant.character.coins delta):\n');
+	process.stdout.write(
+		'Steady-state coins per fight by outcome (contestant.character.coins delta; daily/early-battle bonuses pinned off — see simulateNewPlayerProgression() below for the bonus-inclusive numbers):\n',
+	);
 	for (const outcome of ['win', 'loss', 'draw', 'fled', 'permaDeath'] as const) {
 		const stats = res.coinsByOutcome[outcome];
 		process.stdout.write(`  ${outcome.padEnd(11)} ${stats ? formatStats(stats) : '(none observed)'}\n`);
+	}
+	if (res.cancelledFights > 0) {
+		process.stdout.write(`  (${res.cancelledFights} fight(s) cancelled by the engine and excluded from the above)\n`);
 	}
 
 	process.stdout.write('\nMonster combat XP per fight (monster.xp delta, all outcomes pooled):\n');
 	process.stdout.write(`  ${formatStats(res.xpPerMonster)}\n`);
 
-	process.stdout.write('\n--- New player scenario ---\n');
+	process.stdout.write('\n--- New player scenario (bonuses included) ---\n');
 	process.stdout.write('One fresh character vs a fixed level-1 opponent, checkpoints at fights 1, 5, 20:\n\n');
 
 	const checkpoints = await simulateNewPlayerProgression({

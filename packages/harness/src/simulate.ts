@@ -8,13 +8,25 @@ import type { Game, GameEvent } from '@deck-monsters/engine';
 import {
 	allMonsters,
 	createTestGame,
+	EARLY_COIN_BONUS_TIERS,
 	engineReady,
 	getCardClassByTypeName,
+	getUtcDay,
 	getXpCapForLevel,
 	randomContestant,
 	type Contestant,
 } from '@deck-monsters/engine';
 import { mulberry32 } from './rng.js';
+
+/**
+ * Past this many completed battles, `constants/progression.ts`'s `earlyCoinBonus` is
+ * always 0 — see its `EARLY_COIN_BONUS_TIERS` docblock. `simulate()` pins every fresh
+ * contestant's `character.battles.total` here (see the loop below) so `coinsByOutcome`
+ * reads the steady-state payout `awardFightCoins` converges to, not the early-game bonus a
+ * `randomCharacter()`-rolled `battles.total` (0-180, uniformly random when no `statSeed` is
+ * given) would trip on some unpredictable fraction of fights.
+ */
+const STEADY_STATE_BATTLES_TOTAL = Math.max(...EARLY_COIN_BONUS_TIERS.map(t => t.untilFightsPlayed));
 
 /** Monotonic id so concurrent `simulate()` calls never share eventBus subscriber keys. */
 let harnessSimRunSeq = 0;
@@ -62,13 +74,19 @@ export interface SimResult {
 	avgDamagePerCard: Record<string, number>;
 	cardDropRate: number;
 	/**
-	 * Coins credited to `contestant.character.coins` per fight, bucketed by that
-	 * contestant's own outcome and read as a before/after diff around `ring.fight()` —
+	 * **Steady-state** coins credited to `contestant.character.coins` per fight, bucketed by
+	 * that contestant's own outcome and read as a before/after diff around `ring.fight()` —
 	 * not recomputed from `constants/coins.ts` — so a payout bug (wrong bonus, double
 	 * award, missing daily cap) shows up as a distribution anomaly here instead of only
 	 * being caught by unit tests that assert the constants were read correctly.
 	 * A bucket is absent (rather than a zero-filled stat) when no contestant produced
 	 * that outcome in the run.
+	 *
+	 * "Steady-state" means every fresh per-fight contestant here is pinned past the
+	 * once-daily and early-battle-count coin bonuses (`STEADY_STATE_BATTLES_TOTAL`) before it
+	 * fights, so this is the payout `awardFightCoins` converges to for an established
+	 * character, not what a brand-new player sees on their first handful of fights — for
+	 * that, bonuses and all, use `simulateNewPlayerProgression()` instead.
 	 */
 	coinsByOutcome: Partial<Record<FightOutcomeLabel, EconomyStats>>;
 	/**
@@ -78,6 +96,15 @@ export interface SimResult {
 	 * player-character XP in `handleWinner`/`handleLoser` et al.
 	 */
 	xpPerMonster: EconomyStats;
+	/**
+	 * Count of fights `ring.fight()` cancelled internally (an unexpected error mid-fight —
+	 * see `ring/index.ts`'s `.catch` on `doAction()`) rather than resolving normally. These
+	 * fights contribute no sample to `coinsByOutcome`/`xpPerMonster` (there is no
+	 * per-contestant reward data to diff) but are still counted here rather than silently
+	 * dropped, so a run with a nonzero count is visibly incomplete instead of quietly
+	 * under-sampled.
+	 */
+	cancelledFights: number;
 }
 
 /** Mean/median/p90/min/max over a sample set. Empty input reads as all-zero with count 0
@@ -267,6 +294,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	const damageSums = new Map<string, { total: number; count: number }>();
 	const coinSamplesByOutcome: Partial<Record<FightOutcomeLabel, number[]>> = {};
 	const xpSamples: number[] = [];
+	let cancelledFights = 0;
 
 	const game: Game = createTestGame(`${roomId}-batch`, { characters: {} });
 	const ring = game.getRing();
@@ -318,6 +346,14 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 					name: label,
 					stableId: `harness-sim-${roomId}-${f}-m${i}`,
 				});
+				// Pin past the once-daily and early-battle-count coin bonuses (see
+				// `STEADY_STATE_BATTLES_TOTAL`'s docblock) so `coinsByOutcome` reads the payout
+				// `awardFightCoins` converges to, not a bonus a freshly-`randomCharacter()`-built
+				// contestant would trip unpredictably. `character.battles` here is a distinct
+				// object from `monster.battles` (only shared at construction when `statSeed` seeds
+				// both) — resetting it doesn't touch the monster's own combat-stat-diversity record.
+				c.character.lastDailyFightCoinDay = getUtcDay();
+				c.character.battles = { total: STEADY_STATE_BATTLES_TOTAL, wins: 0, losses: 0 };
 				stableIdToLabel.set(c.monster.stableId as string, label);
 				return c;
 			});
@@ -350,18 +386,35 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 			try {
 				await ring.fight();
 
-				for (let i = 0; i < contestants.length; i++) {
-					const c = contestants[i]!;
-					const coinsGained = (c.character.coins as number) - (coinsBefore[i] ?? 0);
-					const xpGained = (c.monster.xp as number) - (monsterXpBefore[i] ?? 0);
-					const participant = lastParticipants.find(pp => pp.monsterId === c.monster.stableId);
-					if (!participant) {
-						throw new Error(
-							`simulate: no ring.fightResolved participant for stableId=${c.monster.stableId} — cannot bucket coins/XP by outcome`,
-						);
+				// `ring.fight()` swallows an unexpected internal error rather than rejecting: its
+				// own catch (ring/index.ts) publishes `ring.fightResolved` with
+				// `outcome: 'cancelled', participants: []` and clears the ring, so `await` above
+				// resolves normally with no per-contestant reward data for this fight. A normal
+				// fight (win/loss/draw/fled/permaDeath) always lists every contestant in
+				// `participants`, so an empty array unambiguously means "cancelled" here — treat
+				// it as a fight this run couldn't measure, not a bug in the bucketing below, and
+				// don't let one cancelled fight crash the whole batch the way the pre-existing
+				// win/round/card-drop counters (which silently no-op on an empty `participants`)
+				// already tolerate it.
+				if (lastParticipants.length === 0) {
+					cancelledFights += 1;
+					console.warn(
+						`simulate: fight ${f} was cancelled by the engine (see the 'ring.fight' error log) — skipping its economy sample`,
+					);
+				} else {
+					for (let i = 0; i < contestants.length; i++) {
+						const c = contestants[i]!;
+						const coinsGained = (c.character.coins as number) - (coinsBefore[i] ?? 0);
+						const xpGained = (c.monster.xp as number) - (monsterXpBefore[i] ?? 0);
+						const participant = lastParticipants.find(pp => pp.monsterId === c.monster.stableId);
+						if (!participant) {
+							throw new Error(
+								`simulate: no ring.fightResolved participant for stableId=${c.monster.stableId} — cannot bucket coins/XP by outcome`,
+							);
+						}
+						(coinSamplesByOutcome[participant.outcome] ??= []).push(coinsGained);
+						xpSamples.push(xpGained);
 					}
-					(coinSamplesByOutcome[participant.outcome] ??= []).push(coinsGained);
-					xpSamples.push(xpGained);
 				}
 			} finally {
 				removeHitListeners();
@@ -420,6 +473,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		cardDropRate: fights > 0 ? cardDrops / fights : 0,
 		coinsByOutcome,
 		xpPerMonster: summarizeSamples(xpSamples),
+		cancelledFights,
 	};
 }
 
@@ -595,14 +649,20 @@ export async function simulateNewPlayerProgression(
 				await ring.fight();
 
 				monsterXpGained += (player.monster.xp as number) - monsterXpBefore;
-				const playerParticipant = lastParticipants.find(pp => pp.monsterId === player.monster.stableId);
-				if (!playerParticipant) {
-					throw new Error(
-						`simulateNewPlayerProgression: no ring.fightResolved participant for stableId=${player.monster.stableId}`,
-					);
+				// See `simulate()`'s matching comment: an empty `participants` array means
+				// `ring.fight()` cancelled this fight internally rather than resolving it — there
+				// is no win/loss to attribute, so leave the running counts as they were rather
+				// than crashing the whole progression run over one cancelled fight.
+				if (lastParticipants.length > 0) {
+					const playerParticipant = lastParticipants.find(pp => pp.monsterId === player.monster.stableId);
+					if (!playerParticipant) {
+						throw new Error(
+							`simulateNewPlayerProgression: no ring.fightResolved participant for stableId=${player.monster.stableId}`,
+						);
+					}
+					if (playerParticipant.outcome === 'win') wins += 1;
+					else if (playerParticipant.outcome === 'loss' || playerParticipant.outcome === 'permaDeath') losses += 1;
 				}
-				if (playerParticipant.outcome === 'win') wins += 1;
-				else if (playerParticipant.outcome === 'loss' || playerParticipant.outcome === 'permaDeath') losses += 1;
 
 				coins = player.character.coins as number;
 				characterXp = player.character.xp as number;

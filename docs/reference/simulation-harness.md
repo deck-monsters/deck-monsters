@@ -10,7 +10,7 @@ tags: [harness, simulation, balance, economy, testing]
 
 Read before: adding a `sim:*` balance/economy script, changing `SimResult`, instrumenting
 `simulate()`/`ring.fight()` from outside the engine, or touching `packages/harness/src`.
-Verified: 2026-09-23 against `packages/harness/src/simulate.ts`.
+Verified: 2026-09-24 against `packages/harness/src/simulate.ts`.
 
 `packages/harness` runs the real engine (`@deck-monsters/engine`'s `Game`/`Ring`, not a
 model of it) without Discord, HTTP, or a database, for repeatable balance and economy
@@ -39,11 +39,50 @@ fight gets brand-new `Contestant`s — see `buildContestant()`) and returns a `S
 | Field | Meaning |
 |---|---|
 | `winRates`, `drawRate`, `avgRounds`, `avgDamagePerCard`, `cardDropRate` | Combat-shape metrics from before this doc — see the `sim:winrates`/`sim:cardpower` scripts below. |
-| `coinsByOutcome` | `Partial<Record<'win'\|'loss'\|'draw'\|'fled'\|'permaDeath', EconomyStats>>`. Coins credited to `contestant.character.coins` per fight, bucketed by that *contestant's own* outcome (not the fight's overall outcome — a mutual-kill fight is an overall `draw` but a `loss` for both contestants; only a true round-cap survive-and-survive ends with `draw` rows). A bucket is missing, not zero-filled, when a run produced none of that outcome. |
+| `coinsByOutcome` | `Partial<Record<'win'\|'loss'\|'draw'\|'fled'\|'permaDeath', EconomyStats>>`. **Steady-state** coins credited to `contestant.character.coins` per fight, bucketed by that *contestant's own* outcome (not the fight's overall outcome — a mutual-kill fight is an overall `draw` but a `loss` for both contestants; only a true round-cap survive-and-survive ends with `draw` rows). A bucket is missing, not zero-filled, when a run produced none of that outcome. "Steady-state" — see the subsection below — means this is `COINS_PER_VICTORY`/`COINS_PER_DEFEAT` exactly, not what an actual new player sees; use `simulateNewPlayerProgression()` for the bonus-inclusive numbers. |
 | `xpPerMonster` | `EconomyStats` over `monster.xp` gained per contestant per fight (the ring's own combat XP — `Ring.awardMonsterXP`/`calculateXP` — not the player-progression XP below), pooled across all outcomes. |
+| `cancelledFights` | Count of fights `ring.fight()` cancelled internally (see "A second trap" below) and therefore excluded from `coinsByOutcome`/`xpPerMonster`. Non-zero means the run is under-sampled by that many fights, not a bug in the bucketing. |
 
 `EconomyStats` is `{ count, mean, p50, p90, min, max }`; `summarizeSamples()` returns the
 all-zero/`count: 0` shape for an empty sample set rather than throwing.
+
+### Steady-state vs. bonus-inclusive: two different questions
+
+`game.ts`'s `awardFightCoins` pays every fight's base outcome amount (`COINS_PER_VICTORY`/
+`COINS_PER_DEFEAT`) plus two bonuses that fade with play: a once-daily +5 (gated on
+`character.lastDailyFightCoinDay`) and a tapering early-battle bonus (`earlyCoinBonus`,
+keyed on `character.battles.total`, zero once `battles.total` has passed
+`EARLY_COIN_BONUS_TIERS`'s highest `untilFightsPlayed`). `simulate()` builds a brand-new
+`Contestant` (and so a brand-new `Beastmaster`, via `randomCharacter()`) for every fight, and
+`randomCharacter()` rolls `battles.total` uniformly in `[0, 180]` when no `statSeed` is given
+— so left alone, `coinsByOutcome` would silently mix in the once-daily bonus on effectively
+every fight and the early bonus on some random fraction of them, overstating the true
+steady-state win/loss payout (observed: win read ~10 instead of `COINS_PER_VICTORY`'s 5, loss
+~7 instead of `COINS_PER_DEFEAT`'s 2 — a 1.43:1 ratio instead of the real 2.5:1, which would
+misread as a balance problem).
+
+`simulate()` therefore pins every fresh contestant's `character.lastDailyFightCoinDay` to
+today (via the exported `getUtcDay()`) and `character.battles` to
+`STEADY_STATE_BATTLES_TOTAL` (`Math.max` over `EARLY_COIN_BONUS_TIERS`' `untilFightsPlayed`)
+before each fight, so `coinsByOutcome` reads the payout the economy converges to for an
+established player. `simulateNewPlayerProgression()` deliberately does the opposite — it
+threads a persistent character's real `battles.total`/`lastDailyFightCoinDay` across fights
+precisely so those bonuses show up and taper the way they would for a real new player (see
+below). Use `coinsByOutcome` to ask "is the steady-state win/loss ratio balanced?" and
+`simulateNewPlayerProgression()` to ask "what does a new player's wallet look like after N
+fights?" — they answer different questions and should not be compared to each other directly.
+
+### A second trap: a cancelled fight returns normally, with an empty `participants[]`
+
+`ring.fight()` does not reject when something goes wrong mid-fight: its own internal
+`.catch()` (`ring/index.ts`) logs the error, announces the cancellation, publishes a
+`ring.fightResolved` event with `outcome: 'cancelled'` and `participants: []`, clears the
+ring, and resolves normally. A caller `await`ing `ring.fight()` sees no error at all. The
+pre-existing win-rate/round/card-drop counters already tolerate this silently (looping over
+an empty array is a no-op); the per-contestant coin/XP bucketing does not have that luxury —
+it needs to look each contestant up in `participants[]` — so it checks for the empty-array
+case explicitly and counts it in `cancelledFights` instead of throwing the "no participant
+found" error that's meant to catch a real bug in the lookup.
 
 Both new fields are read as a **before/after diff around `await ring.fight()`** on the real
 `character.coins` / `monster.xp` fields — never recomputed from `constants/coins.ts` or
@@ -119,12 +158,12 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 
 ## CLI scripts (`packages/harness/package.json`)
 
-| Script | What it prints |
-|---|---|
-| `sim:winrates` | All 5×5 monster-type matchups at a fixed level; flags win rates outside 35–65%. |
-| `sim:cardpower` | Average damage dealt per card type; top/bottom 10%. |
-| `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. |
-| `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. |
+| Script | What it prints | Typical runtime |
+|---|---|---|
+| `sim:winrates` | All 5×5 monster-type matchups at a fixed level (200 fights each, 25 pairs); flags win rates outside 35–65%. | ~90s — this is real work, not a hang; don't re-flag it as one if it takes a while to return. |
+| `sim:cardpower` | Average damage dealt per card type; top/bottom 10%. | ~20s |
+| `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. | ~20s |
+| `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. | ~10s |
 
 Each of these is `node dist/scripts/<name>.js` — run `pnpm --filter @deck-monsters/harness
 build` first. **Every one of them calls `process.exit(...)` at the end of `main()`.** Loading

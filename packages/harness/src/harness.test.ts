@@ -10,7 +10,7 @@ import { capturePublicFeed, formatPublicFeedLines } from './public-feed.js';
 import { runRingTwoBosses } from './scenarios/ring-two-bosses.js';
 import { runConcurrentLookMonsters } from './scenarios/concurrent-look-monsters.js';
 import { parseMonstersArg, simulate, simulateNewPlayerProgression } from './simulate.js';
-import { engineReady } from '@deck-monsters/engine';
+import { COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady } from '@deck-monsters/engine';
 
 describe('@deck-monsters/harness', () => {
 	before(async function () {
@@ -129,6 +129,24 @@ describe('@deck-monsters/harness', () => {
 		expect(win, 'expected at least one win in this fixed-seed run').to.exist;
 		expect(loss, 'expected at least one loss in this fixed-seed run').to.exist;
 		expect(win!.mean).to.be.greaterThan(loss!.mean);
+	});
+
+	it('simulate() coinsByOutcome is steady-state: a win pays exactly COINS_PER_VICTORY, a loss exactly COINS_PER_DEFEAT', async function () {
+		this.timeout(30_000);
+
+		const res = await simulate({ ...economyConfig, roomId: 'harness-economy-steady-state' });
+
+		const win = res.coinsByOutcome.win;
+		const loss = res.coinsByOutcome.loss;
+		expect(win, 'expected at least one win in this fixed-seed run').to.exist;
+		expect(loss, 'expected at least one loss in this fixed-seed run').to.exist;
+		// min === max === mean confirms every sample got exactly the outcome payout — no
+		// once-daily or early-battle-count bonus variance leaking through (see
+		// `STEADY_STATE_BATTLES_TOTAL`'s docblock in simulate.ts).
+		expect(win!.min).to.equal(COINS_PER_VICTORY);
+		expect(win!.max).to.equal(COINS_PER_VICTORY);
+		expect(loss!.min).to.equal(COINS_PER_DEFEAT);
+		expect(loss!.max).to.equal(COINS_PER_DEFEAT);
 	});
 
 	it('simulate() economy fields are reproducible for the same seed', async function () {
