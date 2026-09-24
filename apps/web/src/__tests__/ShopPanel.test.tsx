@@ -93,6 +93,25 @@ describe('ShopPanel', () => {
       expect(screen.queryByLabelText('How many Whiskey Shot to sell')).not.toBeInTheDocument();
     });
 
+    // Regression: the typed quantity was stored by name only, so after selling 2 of 3 the
+    // group of one kept "2", hid its input, and left Sell disabled.
+    it('drops a stale quantity when the owned count changes after a sale', () => {
+      const onSell = vi.fn();
+      const three: SellableGroup[] = [{ displayName: 'Bandage', count: 3, cost: 10 }];
+      const { rerender } = render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={three} sellableCards={[]} onSell={onSell} />,
+      );
+      fireEvent.change(screen.getByLabelText('How many Bandage to sell'), { target: { value: '2' } });
+
+      const one: SellableGroup[] = [{ displayName: 'Bandage', count: 1, cost: 10 }];
+      rerender(<ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={one} sellableCards={[]} onSell={onSell} />);
+
+      const sell = screen.getByRole('button', { name: /Sell for 8 coins/ });
+      expect(sell).toBeEnabled();
+      fireEvent.click(sell);
+      expect(onSell).toHaveBeenCalledWith({ section: 'items', type: 'Bandage', count: 1 });
+    });
+
     it('shows "Nothing to sell." when the character owns none of that kind', () => {
       render(<ShopPanel shop={shop} onBuy={vi.fn()} sellableCards={[]} onSell={vi.fn()} />);
       expect(screen.getAllByText('Nothing to sell.')).toHaveLength(2);

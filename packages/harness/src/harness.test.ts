@@ -184,6 +184,7 @@ describe('@deck-monsters/harness', () => {
 			expect(cp.wins).to.be.at.least(prev.wins);
 			expect(cp.losses).to.be.at.least(prev.losses);
 			expect(cp.wins + cp.losses).to.be.at.most(cp.afterFights);
+			expect(cp.cancelledFights).to.equal(0);
 			prev = cp;
 		}
 	});
@@ -236,5 +237,16 @@ describe('@deck-monsters/harness', () => {
 			process.env.DECK_MONSTERS_DETERMINISTIC_DRAW,
 			'DECK_MONSTERS_DETERMINISTIC_DRAW must be restored after the rejection',
 		).to.equal(prevDraw);
+	});
+
+	it('simulateNewPlayerProgression() rejects checkpoints that are not positive integers', async function () {
+		// Infinity would never terminate the fight loop, so validation must run before it.
+		for (const bad of [1.5, Number.NaN, Number.POSITIVE_INFINITY, 0]) {
+			await simulateNewPlayerProgression({ checkpoints: [1, bad], roomId: `harness-newplayer-bad-${bad}` })
+				.then(() => expect.fail(`expected checkpoint ${bad} to be rejected`))
+				.catch((err: Error) => {
+					expect(err.message).to.contain('positive integers');
+				});
+		}
 	});
 });

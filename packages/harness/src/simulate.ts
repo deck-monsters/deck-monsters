@@ -523,6 +523,9 @@ export interface NewPlayerCheckpoint {
 	monsterXpGained: number;
 	wins: number;
 	losses: number;
+	/** Fights so far that `ring.fight()` cancelled internally (no participants, no rewards).
+	 * `afterFights` counts attempts, so a non-zero value means fewer rewarded fights. */
+	cancelledFights: number;
 }
 
 /**
@@ -556,6 +559,14 @@ export async function simulateNewPlayerProgression(
 
 	if (checkpoints.length === 0) {
 		throw new Error('simulateNewPlayerProgression() requires at least one checkpoint');
+	}
+	// `maxFights` bounds the fight loop, so a non-integer checkpoint would never be recorded,
+	// NaN would return nothing, and Infinity would never terminate.
+	const badCheckpoint = checkpoints.find(c => !Number.isInteger(c) || c < 1);
+	if (badCheckpoint !== undefined) {
+		throw new Error(
+			`simulateNewPlayerProgression() checkpoints must be positive integers; got ${badCheckpoint}`,
+		);
 	}
 	const maxFights = Math.max(...checkpoints);
 	const checkpointSet = new Set(checkpoints);
@@ -617,6 +628,7 @@ export async function simulateNewPlayerProgression(
 		let monsterXpGained = 0;
 		let wins = 0;
 		let losses = 0;
+		let cancelledFights = 0;
 
 		for (let f = 0; f < maxFights; f++) {
 			ring.clearRing();
@@ -672,6 +684,8 @@ export async function simulateNewPlayerProgression(
 					}
 					if (playerParticipant.outcome === 'win') wins += 1;
 					else if (playerParticipant.outcome === 'loss' || playerParticipant.outcome === 'permaDeath') losses += 1;
+				} else {
+					cancelledFights += 1;
 				}
 
 				coins = player.character.coins as number;
@@ -692,6 +706,7 @@ export async function simulateNewPlayerProgression(
 					monsterXpGained,
 					wins,
 					losses,
+					cancelledFights,
 				});
 			}
 		}

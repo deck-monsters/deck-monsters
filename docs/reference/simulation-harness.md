@@ -126,7 +126,10 @@ Roadmap 11's Economy telemetry item asks for "new-player 1/5/20-fight … scenar
 harness." `simulateNewPlayerProgression(config)` runs one player against a fixed-level
 disposable opponent for `max(checkpoints)` fights (default checkpoints `[1, 5, 20]`) and
 returns a `NewPlayerCheckpoint[]` with cumulative `coins`, `characterXp`, `monsterXpGained`,
-`wins`, and `losses` at each checkpoint.
+`wins`, `losses`, and `cancelledFights` at each checkpoint. `afterFights` counts attempts,
+so a non-zero `cancelledFights` means fewer rewarded fights than the row's label.
+Checkpoints must be positive integers; anything else is rejected before a fight runs, because
+the largest checkpoint bounds the fight loop.
 
 The player's **character** (wallet, XP, battle record, `lastDailyFightCoinDay`) is threaded
 by value onto a fresh disposable `Contestant` each fight, rather than reused as one object —

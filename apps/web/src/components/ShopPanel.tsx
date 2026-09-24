@@ -88,8 +88,12 @@ function SellList({
 }) {
   // The field's raw text, kept separate from the clamped/normalized quantity below so a
   // player can freely type (or briefly clear the field) without every keystroke being
-  // fought back to a "corrected" value.
+  // fought back to a "corrected" value. Keyed by name AND owned count: after a sale (or any
+  // inventory refresh) the count changes and the stale entry stops applying. Keyed by name
+  // alone, selling 2 of 3 Bandages left "2" stored against a group of one, whose input is
+  // hidden, so Sell stayed disabled until the panel remounted.
   const [rawQuantities, setRawQuantities] = useState<Record<string, string>>({});
+  const quantityKey = (group: SellableGroup) => `${group.displayName}:${group.count}`;
 
   if (groups.length === 0) {
     return <p className="workshop-empty-state">Nothing to sell.</p>;
@@ -97,7 +101,8 @@ function SellList({
 
   return <ul className="shop-stock-list">{groups.map((group) => {
     const maxQuantity = Math.min(group.count, MAX_SELL_QUANTITY);
-    const raw = rawQuantities[group.displayName];
+    // A single copy has no quantity input, so it always sells exactly one.
+    const raw = group.count > 1 ? rawQuantities[quantityKey(group)] : undefined;
     const displayValue = raw ?? '1';
     const parsed = raw === undefined ? 1 : Number(raw);
     // Must be a whole number in [1, min(owned, 99)] — anything else (a decimal, an empty
@@ -132,7 +137,7 @@ function SellList({
                 const { value } = event.target;
                 setRawQuantities((current) => ({
                   ...current,
-                  [group.displayName]: value,
+                  [quantityKey(group)]: value,
                 }));
               }}
             />
