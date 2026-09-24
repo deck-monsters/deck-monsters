@@ -4277,3 +4277,42 @@ reproducible under a fixed seed; a steady-state win pays exactly `COINS_PER_VICT
 loss `COINS_PER_DEFEAT`). All four scripts exit cleanly when run by hand.
 
 **Status**: Fixed.
+
+### 182. Selling one unequipped card could wipe an equipped Beastmaster monster's whole hand — FIXED
+
+Selling a single unequipped `Hit` (or any other common card) to the shop, from either the
+console or the web Workshop, could silently empty an owned monster's entire equipped deck if
+that monster happened to be holding a card with the same `cardType`/properties — even though
+the sold card and the equipped card were different instances the monster never touched.
+
+**Root cause**: Both sell paths (`items/store/sell.ts` and `items/store/sell-to-shop.ts`)
+removed a sold card via `character.removeCard(card)`. For a real `Beastmaster`,
+`removeCard` is overridden to also call `monster.resetCards({ matchCard })` on every owned
+monster, and `resetCards` clears a monster's **entire** hand (`this.cards = []`) if it holds
+any card that is JSON-identical to the one being removed (`isMatchingItem`, a value
+comparison, not object identity). That check makes sense for finding the matching entry
+*within a single pool* — it's the same helper `characters/base.ts#removeCard` uses to find
+which unequipped-pool card to filter out — but reaching into a *different* creature's deck
+with it is wrong: by the time a card is equipped, `Beastmaster#reconcileDeckAfterEquip` has
+already spliced it out of `character.cards` by object identity specifically so equipped and
+unequipped cards never share instances (see `docs/architecture/workshop-and-items.md`
+inventory read model). Both shop sell paths only ever remove from `character.cards`/
+`character.items` — there is never a monster's card to reconcile — so calling the
+Beastmaster-overridden `removeCard` from there was always the wrong entry point. Neither
+existing sell test caught this because both used a stubbed `character.removeCard`, never a
+real `Beastmaster`/`BaseMonster`.
+
+**Fix**: Added `items/helpers/remove-card-from-pool.ts`, which splices the sold card out of
+`character.cards` by object identity and mirrors `removeCard`'s two signals (the `cards`
+setter, so `Game` persistence still fires, and the `cardRemoved` event) without touching any
+monster. Both sell paths call it instead of `character.removeCard`. `removeItem` was
+checked for the same hazard and does not have it: it only searches `self.items`, the
+creature's own array, and is not overridden by `Beastmaster`.
+
+**Tests**: `items/store/sell-to-shop.test.ts` ("a real Beastmaster with an equipped
+monster" — a real `Beastmaster` + `Basilisk` with two equipped `Hit`s and one unequipped
+`Hit`; selling the unequipped one leaves the equipped deck at 2 cards and the pool at 0,
+where it previously wiped the equipped deck to 0). `items/store/sell.ts`'s existing tests
+continue to pass with the same fix applied to the console path.
+
+**Status**: Fixed.

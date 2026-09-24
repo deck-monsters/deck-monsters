@@ -154,6 +154,18 @@ either, for the same reason. Ownership is re-validated inside the mutation (not 
 whatever the client last rendered), and an under-count selection refuses the whole call rather
 than selling a partial quantity.
 
+Both `sellToShop` and the console's `sellItems` remove the sold card via
+`items/helpers/remove-card-from-pool.ts` (splice `character.cards` by identity, then mirror
+`removeCard`'s persistence signal and `cardRemoved` event), never via `character.removeCard`
+directly. `Beastmaster.removeCard` also calls `monster.resetCards({ matchCard })` on every
+owned monster, which clears a monster's *entire* hand if it holds any card that is
+JSON-identical to the one being removed — a value check, not an identity check, so a plain
+`Hit` on a monster's equipped deck matched a completely different `Hit` instance being sold
+from the unequipped pool. That override exists for `removeCard` callers that actually need it;
+selling never does, since an equipped card was already spliced out of `character.cards` by
+identity when it was equipped (see the inventory read model above) — there is never a
+monster's card to reconcile from here. See `docs/roadmap/10b-bugs-fixed.md` #182.
+
 Like `purchaseShopItem`, the shop is re-read inside the serialized mutation and the closing-time
 token is revalidated before crediting coins: the price paid is `shop.priceOffset` *now*, not
 whatever a stale confirmation dialog displayed, and a rotated shop asks for a refresh instead

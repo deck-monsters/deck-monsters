@@ -1,4 +1,5 @@
 import { getItemKey } from '../helpers/counts.js';
+import { removeCardFromPool } from '../helpers/remove-card-from-pool.js';
 import { getSalePrice, getSaleTotal } from './sell-pricing.js';
 import type { ShopHost } from './shop.js';
 
@@ -136,7 +137,10 @@ export const sellToShop = ({
 		newItems.push(item);
 	});
 	toRemove.cards.forEach((card) => {
-		character.removeCard(card);
+		// Not `character.removeCard` — see remove-card-from-pool.ts (bug #182): a real
+		// Beastmaster's `removeCard` also wipes any monster's whole hand that happens to
+		// hold a JSON-identical card.
+		removeCardFromPool(character, card);
 		newCards.push(card);
 	});
 

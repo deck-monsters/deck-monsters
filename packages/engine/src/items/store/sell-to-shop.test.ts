@@ -3,6 +3,12 @@ import sinon from 'sinon';
 import sellItems from './sell.js';
 import { sellToShop } from './sell-to-shop.js';
 import type { Shop, ShopHost } from './shop.js';
+import Beastmaster from '../../characters/beastmaster.js';
+import Basilisk from '../../monsters/basilisk.js';
+import HitCard from '../../cards/hit.js';
+import { equipHelpersReady } from '../../monsters/helpers/equip.js';
+
+const silentChannel = (async () => undefined) as never;
 
 const item = (itemType: string, cost: number) => ({ itemType, cost });
 // Real card instances alias `itemType` to `cardType` (see `cards/base.ts`); this fixture
@@ -30,6 +36,11 @@ const makeCharacter = (opts: { items?: any[]; cards?: any[]; coins?: number } = 
 		coins: opts.coins ?? 0,
 		items,
 		cards,
+		// `sellToShop` removes sold cards via `removeCardFromPool` (splice-by-identity +
+		// `emit`), not `character.removeCard` (bug #182) — see remove-card-from-pool.ts.
+		// `emit` is exercised for real by the Beastmaster test below; stubbed here so the
+		// plain-object doubles above don't need to be full BaseClass instances.
+		emit: sinon.stub(),
 		removeItem: sinon.stub().callsFake((toRemove: any) => {
 			const index = items.indexOf(toRemove);
 			if (index >= 0) return items.splice(index, 1)[0];
@@ -79,7 +90,10 @@ describe('./items/store/sell-to-shop.ts', () => {
 		});
 
 		expect(result.totalValue).to.equal(24); // round(30 * 0.8)
-		expect(character.removeCard.calledOnceWithExactly(whiskeyShot)).to.equal(true);
+		// Removed via `removeCardFromPool` (identity splice), not `character.removeCard`
+		// — see the Beastmaster test below for why that distinction matters (bug #182).
+		expect(character.removeCard.called).to.equal(false);
+		expect(character.cards).to.deep.equal([]);
 		expect((host.commitShop as sinon.SinonStub).firstCall.args[0].cards).to.deep.equal([whiskeyShot]);
 	});
 
@@ -245,5 +259,57 @@ describe('./items/store/sell-to-shop.ts', () => {
 				expectedClosingTime: shop.closingTime.toISOString(),
 			}),
 		).to.throw('at least one');
+	});
+
+	// Regression test for #182: `Beastmaster.removeCard` also calls
+	// `monster.resetCards({ matchCard })` on every owned monster, which clears a
+	// monster's ENTIRE hand if it holds any card that is JSON-identical (same
+	// `cardType`) to the one being removed — even though equipped and unequipped
+	// cards are always disjoint *instances* (`reconcileDeckAfterEquip`). Selling one
+	// unequipped `Hit` used to wipe an equipped Beastmaster monster's whole deck.
+	// Uses real classes, not the plain-object doubles above, because the bug lives
+	// entirely in the real `Beastmaster`/`BaseMonster` override chain that a stub
+	// `removeCard` never exercises.
+	describe('a real Beastmaster with an equipped monster', () => {
+		before(async () => {
+			await equipHelpersReady;
+		});
+
+		it('sells an unequipped card without touching a monster holding an identical one', async () => {
+			const beastmaster = new Beastmaster({ name: 'Ada' }) as never as { deck: any[]; coins: number };
+			const monster = new Basilisk({ name: 'Stonefang' });
+			(beastmaster as unknown as { addMonster: (m: unknown) => void }).addMonster(monster);
+			// Three JSON-identical `Hit` instances: two equipped on the monster, one left
+			// unequipped in the character's pool.
+			beastmaster.deck = [new HitCard(), new HitCard(), new HitCard()];
+
+			await (beastmaster as unknown as {
+				equipMonster: (opts: unknown) => Promise<unknown>;
+			}).equipMonster({
+				channel: silentChannel,
+				monsterName: 'Stonefang',
+				cardSelection: ['Hit', 'Hit'],
+			});
+
+			expect(monster.cards).to.have.lengthOf(2);
+			expect(beastmaster.deck).to.have.lengthOf(1);
+
+			const shop = makeShop();
+			const host: ShopHost = { shop, commitShop: sinon.stub() };
+
+			const result = sellToShop({
+				character: beastmaster,
+				host,
+				selections: [{ section: 'cards', type: 'Hit', count: 1 }],
+				expectedClosingTime: shop.closingTime.toISOString(),
+			});
+
+			expect(result.sold).to.have.lengthOf(1);
+			// The equipped deck must be untouched — this is the bug: it used to be wiped
+			// to [] by `resetCards({ matchCard })`.
+			expect(monster.cards, "equipped deck must survive selling an identical unequipped card").to.have.lengthOf(2);
+			// The unequipped pool shrank by exactly the sold count.
+			expect(beastmaster.deck, 'pool shrank by exactly the sold count').to.have.lengthOf(0);
+		});
 	});
 });
