@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — five open items. Fixed work and its root causes live only in
+**Status:** Active — three open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -41,22 +41,6 @@ restores a game must import consistently (see the comment in `reward-crediting.t
 Read [rooms and identity](../architecture/rooms-and-identity.md) and
 [analytics and history](../architecture/analytics-and-history.md) before changing the
 listeners or reward projections.
-
-### 2. Some cards emit two roll blocks in the same tick
-
-**Owner:** Engine pacing. A card-level sequence can publish related roll blocks with no
-sub-event gap. Capture representative cards, then decide whether a central minimum gap is
-needed without making event publication unsafe or reordering narration.
-
-Read [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
-
-### 3. The fight feed opens with a burst
-
-**Owner:** Engine pacing. The fight banner, separator, and first-turn banner can publish in
-one tick before normal pacing starts. Measure a real public event sequence before changing
-the shared delay policy.
-
-Read [engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
 
 ### A. Intermittent missing `↓ Latest` jump button
 

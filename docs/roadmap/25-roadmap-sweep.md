@@ -36,7 +36,7 @@ docs and move this file to `docs/archive/roadmap/`.
 | T1 | Clean Markdown for generated player docs, plus a structural test | user report | 2 | Done | 8681a50, f043395 |
 | T2 | Real-fight coin/XP reward test, including after `restoreGame` (in-process path proven; production cause still open) | 10 §J | 2 | Done | 11c0cc9 |
 | T3 | Coin/XP distributions in the simulation harness; fix the stale harness bullet | 11 | 2 | In review | — |
-| T4 | Sub-event gap for two-roll cards; paced fight opening | 10 §2, §3 | 2 | In progress | — |
+| T4 | Sub-event gap for two-roll cards; paced fight opening (#178, #179); lucky-strike test fix (#180) | 10 §2, §3 | 2 | Done | 3a4dfa4, this commit |
 | T5 | Show the engine's item-use narration in the web Workshop | item follow-ups | 2 | Done | 0251484 |
 | T6 | Room-scoped web selling | item follow-ups | 2 | In progress | — |
 | T7 | Mobile Workshop header rule and tier-2 reason copy (#177) | 10 §6, 22 | 2 | Done | 079069b |

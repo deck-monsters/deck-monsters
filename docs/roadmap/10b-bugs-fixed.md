@@ -4193,3 +4193,61 @@ against the real stylesheets: the header wraps with `space-between` at phone wid
 0.4 rem gap after the wallet.
 
 **Status**: Fixed.
+
+### 178. Two-horn cards published both rolls in one tick, and two cards raced their own hits — FIXED
+
+Horn Gore could publish both horns' roll blocks with no gap between them, so a double miss
+flashed past in the feed. Forked Metal Rod also started its second horn before the first had
+landed. Sandstorm's "already lost" branch fired a second Blast even when the first one had
+killed the target.
+
+**Root cause**: `HornGore.gore()` awaited nothing after a missed attack roll. Only a hit
+waited, inside `target.hit()`. `ForkedMetalRodCard.effect()` called `gore()` twice without
+awaiting either, so the card resolved before its hits. Sandstorm wrote
+`super.effect(...) && super.effect(...)`, and a Promise is always truthy, so the second call
+always ran.
+
+**Fix**: `gore()` awaits `subEventDelay` after the attack-roll block on every outcome, and
+after the damage block, the same shape as `HitCard.effect()`. Forked Metal Rod awaits each
+horn in turn. Sandstorm awaits the first Blast and fires the second only if the target is still
+standing. The rule is in
+[engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
+
+**Tests**: `cards/horn-gore.test.ts` (miss-miss and hit paths with real sub-event delays:
+consecutive roll blocks at least 10 ms apart at a 30 ms midpoint);
+`cards/forked-metal-rod.test.ts` (hits sequenced, not raced); `cards/sandstorm.test.ts`
+(sequenced, and no second Blast after a kill).
+
+**Status**: Fixed.
+
+### 179. Every fight opened with four banners in one tick — FIXED
+
+The fight-begins line, "Let the games begin!", the first turn banner, and the first monster's
+turn line all landed at once, before normal pacing started.
+
+**Root cause**: `Ring.fight()` had one pacing point, `turnBeat()`, between `playerTurnBegin`
+and the card box. Everything before it ran synchronously.
+
+**Fix**: The same content-aware `turnBeat()` (as `openingBeat`) runs between each opening
+banner. It applies only to the fight's first turn, because later turn banners already follow
+the previous card's gap. Event order is unchanged, and `DECK_MONSTERS_SKIP_DELAYS` still skips
+every beat.
+
+**Tests**: `ring/index.test.ts` (opening banners keep their order and are paced apart with
+real delays; a skipped-delay fight still completes almost at once).
+
+**Status**: Fixed.
+
+### 180. `lucky-strike` "narrates correctly" failed at random — FIXED
+
+The test failed on some runs, which three agents in pass 25 reported as a flake.
+
+**Root cause**: The test's Gladiator gets random pronouns. #176 made the narration say "they
+were going to miss", and the test still expected the hard-coded "was".
+
+**Fix**: The expectation uses the monster's own `pronouns.was`. The card code was already
+correct.
+
+**Tests**: `cards/lucky-strike.test.ts`, passing on six consecutive full-suite runs.
+
+**Status**: Fixed.

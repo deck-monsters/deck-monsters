@@ -181,6 +181,31 @@ in `docs/roadmap/25-roadmap-sweep.md` and archived when it closes) worked this w
 6. **Close with a Tier 3 whole-branch review** before the PR. It catches drift across tasks
    that no task-scoped reviewer could see.
 
+## Budget
+
+Usage limits apply per time window, and every agent in a burst draws on the same limit.
+Pass 25 ran eight tasks with up to five Tier 2 agents at a time. Each agent reported 200k to
+400k tokens, and reviewers 120k to 150k. The pass hit the usage limit twice and had to be cut
+short. Usage grew with these multipliers, so cut them first:
+
+- **Keep a pass small.** Four or five tasks per PR, and at most **two or three agents
+  running at once**. More parallel agents do not finish sooner once the limit stops all of
+  them.
+- **Use a fresh worktree only when builds must run concurrently.** Each new worktree pays for
+  `pnpm install`, a full build, and often the full test gate. Run docs-only and web-only
+  tasks in the shared checkout, one after another.
+- **Implementers run only the tests of the package they changed.** The orchestrator runs the
+  full gate once, on the pass branch, before the PR.
+- **Scale review to risk.** Engine concurrency, room scoping, persistence, and anything that
+  touches money deserve an independent reviewer. A copy change, a CSS rule, or a test-only
+  change gets an orchestrator read instead. Ask reviewers for probes and mutation tests only
+  when the claim they check is load-bearing. PR review (a human, or another harness such as
+  Codex) is the backstop for the rest.
+- **Bound triage.** Give the explorer a short candidate list and a tool-call budget. The
+  pass 25 triage of twelve items took 139 tool calls.
+- **Keep briefs lean.** Point the agent at the one or two docs its area needs, not the whole
+  trigger table, and ask for a short report.
+
 ## Anti-patterns
 
 - Pasting session history into a dispatch. Write the brief as if for someone who has never

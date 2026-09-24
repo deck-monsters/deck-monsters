@@ -49,6 +49,9 @@ These apply to every task in this repo, not just the one you were asked to do.
   explorer, makes the judgment calls, briefs Tier 2 implementers (parallel code tasks each
   in their own worktree), reviews every diff, and owns the branch and roadmap files. See
   [the orchestrated pass](docs/agents/subagents.md#the-orchestrated-pass).
+- **Budget the pass.** Usage limits apply per time window, so keep a PR to four or five
+  tasks, run no more than two or three agents at once, and scale review to risk. See
+  [budget](docs/agents/subagents.md#budget).
 - Pick the cheapest tier that can do the job, but treat turn count as part of the price: a
   cheap model on a multi-step prose spec often burns 2–3x the turns. Tier 2 is the floor for
   anything implemented from prose.

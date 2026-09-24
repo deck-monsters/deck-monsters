@@ -52,6 +52,9 @@ describe('./cards/lucky-strike.ts', () => {
 	});
 
 	it('narrates correctly', () => {
+		// The Gladiator's pronouns are random. Since #176 a they/them monster "were going to
+		// miss", so this expectation follows the pronoun set instead of hard-coding "was"
+		// (which failed whenever the random set was they/them).
 		const luckyStrike = new LuckyStrike();
 
 		const player = new Gladiator({ name: 'player' });
@@ -74,10 +77,10 @@ describe('./cards/lucky-strike.ts', () => {
 		const hitNarrative = (luckyStrike as any).getAttackCommentary(player, target, successRoll, successRoll);
 
 		expect(missNarrative).to.equal(
-			`(${(failRoll as any).result}) ${(player as any).givenName} was sure ${(player as any).pronouns.he} was going to miss ${(target as any).givenName}\n(${(failRoll as any).result}) and ${(player as any).pronouns.he} did.`
+			`(${(failRoll as any).result}) ${(player as any).givenName} was sure ${(player as any).pronouns.he} ${(player as any).pronouns.was ?? 'was'} going to miss ${(target as any).givenName}\n(${(failRoll as any).result}) and ${(player as any).pronouns.he} did.`
 		);
 		expect(luckNarrative).to.equal(
-			`(${(failRoll as any).result}) ${(player as any).givenName} was sure ${(player as any).pronouns.he} was going to miss ${(target as any).givenName}\n(${(successRoll as any).naturalRoll.result}) but ${(target as any).givenName} fails to block ${(player as any).pronouns.his} blow.`
+			`(${(failRoll as any).result}) ${(player as any).givenName} was sure ${(player as any).pronouns.he} ${(player as any).pronouns.was ?? 'was'} going to miss ${(target as any).givenName}\n(${(successRoll as any).naturalRoll.result}) but ${(target as any).givenName} fails to block ${(player as any).pronouns.his} blow.`
 		);
 		expect(hitNarrative).to.equal(
 			`(${(successRoll as any).naturalRoll.result}) ${(target as any).givenName} fails to block ${(player as any).pronouns.his} blow.`
