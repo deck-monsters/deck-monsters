@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
-import ShopPanel, { type ShopStockItem } from './ShopPanel.js';
+import ShopPanel, { type SellableGroup, type SellSelection, type ShopStockItem } from './ShopPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
@@ -32,6 +32,9 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const {
     monsters,
     unequippedDeck,
+    // Defaults to {} — older test doubles and any stale cached payload predating this field
+    // must not crash the sell-price preview, only show it as free (0 cost).
+    cardCosts = {},
     cardCompatibility,
     items,
     shop,
@@ -60,6 +63,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     sendMonsterToRing,
     useItem,
     buyShopItem,
+    sellShopItems,
     refresh,
   } = useDeckWorkshop(roomId);
 
@@ -222,6 +226,58 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       setMessage(`Bought ${result.itemName} for ${result.price} coins. ${result.remainingCoins} coins remain.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not complete that purchase');
+    }
+  }
+
+  // Grouped by display name (same shape the shop's own stock groups into, `stockCount`)
+  // so selling three Bandages is one row with a quantity, not three identical rows —
+  // `items.character` and `unequippedDeck` are otherwise one entry per copy.
+  const sellableItems = useMemo<SellableGroup[]>(() => {
+    const groups = new Map<string, SellableGroup>();
+    for (const item of items.character) {
+      const existing = groups.get(item.displayName);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        groups.set(item.displayName, { displayName: item.displayName, count: 1, cost: item.cost ?? 0 });
+      }
+    }
+    return [...groups.values()];
+  }, [items.character]);
+
+  const sellableCards = useMemo<SellableGroup[]>(() => {
+    const groups = new Map<string, SellableGroup>();
+    for (const cardName of unequippedDeck) {
+      const existing = groups.get(cardName);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        groups.set(cardName, { displayName: cardName, count: 1, cost: cardCosts[cardName] ?? 0 });
+      }
+    }
+    return [...groups.values()];
+  }, [unequippedDeck, cardCosts]);
+
+  async function handleSellShopItems(selection: SellSelection) {
+    if (!shop) {
+      setError('The shop is still loading. Try again in a moment.');
+      return;
+    }
+    const group = (selection.section === 'items' ? sellableItems : sellableCards)
+      .find((entry) => entry.displayName === selection.type);
+    const unitPrice = Math.round((group?.cost ?? 0) * (shop.sellOffset ?? 0));
+    const total = unitPrice * selection.count;
+    const label = selection.count > 1 ? `${selection.count} ${selection.type}` : selection.type;
+    if (!window.confirm(`Sell ${label} for ${total} coins?`)) return;
+    try {
+      setError(null);
+      const result = await sellShopItems({
+        expectedClosingTime: shop.closingTime,
+        selections: [selection],
+      });
+      setMessage(`Sold ${label} for ${result.totalValue} coins. ${result.remainingCoins} coins remain.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not complete that sale');
     }
   }
 
@@ -725,7 +781,14 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         busy={busy}
         onUseItem={(input) => void handleUseItem(input)}
       />
-      <ShopPanel shop={shop} busy={busy} onBuy={(item) => void handleBuyShopItem(item)} />
+      <ShopPanel
+        shop={shop}
+        busy={busy}
+        onBuy={(item) => void handleBuyShopItem(item)}
+        sellableItems={sellableItems}
+        sellableCards={sellableCards}
+        onSell={(selection) => void handleSellShopItems(selection)}
+      />
     </div>
   );
 }

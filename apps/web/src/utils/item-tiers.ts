@@ -31,6 +31,13 @@ export interface ItemSummary {
    * hiding a usable item.
    */
   requiresPrompt?: boolean;
+  /**
+   * Raw shop cost, used only to preview what selling this item would pay (see
+   * `ShopSummary.sellOffset` in ShopPanel.tsx) — the classifier above never reads it.
+   * Optional for the same reason as `requiresPrompt`: an older cached payload without the
+   * field must not crash the tier classifier, which never needed it either.
+   */
+  cost?: number;
 }
 
 /** The minimal per-monster state the tier classifier needs. */

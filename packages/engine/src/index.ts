@@ -38,6 +38,9 @@ export { COMMAND_CATALOG } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 export { purchaseShopItem } from './items/store/purchase.js';
 export type { ShopItemSection, ShopPurchaseResult } from './items/store/purchase.js';
+export { sellToShop } from './items/store/sell-to-shop.js';
+export type { SellSection, SellSelection, ShopSaleLine, ShopSaleResult } from './items/store/sell-to-shop.js';
+export { getSalePrice, getSaleTotal } from './items/store/sell-pricing.js';
 
 /** Test harness and integration helpers (no Slack/HTTP/DB). */
 export * from './testing/index.js';

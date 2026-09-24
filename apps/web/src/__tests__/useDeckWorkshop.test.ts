@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => {
     inventoryRefetch,
     shopRefetch,
     buyShopItemUseMutation: vi.fn(defaultMutation),
+    sellShopItemsUseMutation: vi.fn(defaultMutation),
     unequipCardUseMutation: vi.fn(defaultMutation),
     unequipManyUseMutation: vi.fn(defaultMutation),
     unequipAllUseMutation: vi.fn(defaultMutation),
@@ -77,6 +78,7 @@ vi.mock('../lib/trpc.js', () => ({
 	  flowStatus: { useQuery: mocks.flowStatusUseQuery },
 	  cancelFlow: { useMutation: mocks.cancelFlowUseMutation },
       buyShopItem: { useMutation: mocks.buyShopItemUseMutation },
+      sellShopItems: { useMutation: mocks.sellShopItemsUseMutation },
       unequipCard: { useMutation: mocks.unequipCardUseMutation },
       unequipMany: { useMutation: mocks.unequipManyUseMutation },
       unequipAll: { useMutation: mocks.unequipAllUseMutation },
@@ -190,6 +192,25 @@ describe('useDeckWorkshop', () => {
       roomId: 'room-123', section: 'items', stockIndex: 0,
       expectedItemType: 'Healing Potion', expectedClosingTime: '2026-09-18T00:00:00.000Z',
     });
+  });
+
+  it('sends sellShopItems and refreshes inventory plus the shop, like buying does', async () => {
+    const { result } = renderHook(() => useDeckWorkshop('room-123'));
+
+    await act(async () => {
+      await result.current.sellShopItems({
+        expectedClosingTime: '2026-09-18T00:00:00.000Z',
+        selections: [{ section: 'items', type: 'Bandage', count: 2 }],
+      });
+    });
+
+    expect(mocks.sellShopItemsUseMutation.mock.results[0]?.value.mutateAsync).toHaveBeenCalledWith({
+      roomId: 'room-123',
+      expectedClosingTime: '2026-09-18T00:00:00.000Z',
+      selections: [{ section: 'items', type: 'Bandage', count: 2 }],
+    });
+    expect(mocks.inventoryInvalidate).toHaveBeenCalledWith({ roomId: 'room-123' });
+    expect(mocks.shopRefetch).toHaveBeenCalledOnce();
   });
 
   it('refreshes inventory and the rotating shop together', async () => {

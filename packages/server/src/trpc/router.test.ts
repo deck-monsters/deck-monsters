@@ -130,6 +130,7 @@ describe('trpc/router card management procedures', () => {
 				usableOnMonsters: [],
 				usableOnCharacter: false,
 				requiresPrompt: false,
+				cost: 0,
 			},
 		]);
 		expect(result.items.monsters).to.deep.equal([
@@ -143,6 +144,7 @@ describe('trpc/router card management procedures', () => {
 						usableOnMonsters: ['Stonefang', 'Mirebell'],
 						usableOnCharacter: false,
 						requiresPrompt: false,
+						cost: 0,
 					},
 				],
 			},
@@ -351,6 +353,7 @@ describe('trpc/router card management procedures', () => {
 				usableOnMonsters: [],
 				usableOnCharacter: false,
 				requiresPrompt: false,
+				cost: 0,
 			},
 		]);
 	});
@@ -399,6 +402,7 @@ describe('trpc/router card management procedures', () => {
 				usableOnMonsters: [],
 				usableOnCharacter: false,
 				requiresPrompt: false,
+				cost: 0,
 			},
 		]);
 	});
@@ -516,6 +520,120 @@ describe('trpc/router card management procedures', () => {
 		expect(games[ROOM_ID].shop.items).to.have.lengthOf(0);
 		expect(games[otherRoomId].shop.items).to.have.lengthOf(1);
 		expect(games[otherRoomId].characters[USER_ID].coins).to.equal(100);
+	});
+
+	it('sells owned items and cards to the current room shop through the serialized mutation lane', async () => {
+		const bandage = { itemType: 'Bandage', cost: 10 };
+		const whiskeyShot = { cardType: 'Whiskey Shot', cost: 30 };
+		const ownedItems = [bandage];
+		const ownedCards = [whiskeyShot];
+		const game = {
+			characters: {
+				[USER_ID]: {
+					coins: 0,
+					items: ownedItems,
+					cards: ownedCards,
+					removeItem: (toRemove: unknown) => {
+						const index = ownedItems.indexOf(toRemove as never);
+						if (index >= 0) return ownedItems.splice(index, 1)[0];
+						return undefined;
+					},
+					removeCard: (toRemove: unknown) => {
+						const index = ownedCards.indexOf(toRemove as never);
+						if (index >= 0) return ownedCards.splice(index, 1)[0];
+						return undefined;
+					},
+				},
+			},
+			shop: {
+				name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date(Date.now() + 60_000),
+				priceOffset: 0.8, backRoomOffset: 5, items: [], backRoom: [], cards: [], pronouns: {},
+			},
+			commitShop(next: any) { game.shop = next; },
+		};
+		const lanes: string[] = [];
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getEventBus: async () => ({ getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (lane: string, fn: () => Promise<unknown>) => {
+				lanes.push(lane);
+				return fn();
+			},
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.sellShopItems({
+			roomId: ROOM_ID,
+			expectedClosingTime: game.shop.closingTime.toISOString(),
+			selections: [
+				{ section: 'items', type: 'Bandage', count: 1 },
+				{ section: 'cards', type: 'Whiskey Shot', count: 1 },
+			],
+		});
+
+		// round(10*0.8) + round(30*0.8) = 8 + 24 = 32
+		expect(result.totalValue).to.equal(32);
+		expect(result.remainingCoins).to.equal(32);
+		expect(game.characters[USER_ID].items).to.deep.equal([]);
+		expect(game.characters[USER_ID].cards).to.deep.equal([]);
+		expect(game.shop.items).to.deep.equal([bandage]);
+		expect(game.shop.cards).to.deep.equal([whiskeyShot]);
+		expect(lanes).to.deep.equal([ROOM_ID]);
+	});
+
+	it('refuses to sell an item the character does not own, without mutating the shop', async () => {
+		const commitShop = () => { throw new Error('must not commit'); };
+		const game = {
+			characters: {
+				[USER_ID]: {
+					coins: 0,
+					items: [],
+					cards: [],
+					removeItem: () => undefined,
+					removeCard: () => undefined,
+				},
+			},
+			shop: {
+				name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date(Date.now() + 60_000),
+				priceOffset: 0.8, backRoomOffset: 5, items: [], backRoom: [], cards: [], pronouns: {},
+			},
+			commitShop,
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getEventBus: async () => ({ getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_lane: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const error = await caller.game.sellShopItems({
+			roomId: ROOM_ID,
+			expectedClosingTime: game.shop.closingTime.toISOString(),
+			selections: [{ section: 'items', type: 'Bandage', count: 1 }],
+		}).catch((err) => err);
+
+		expect(error).to.be.instanceOf(Error);
+		expect(String((error as Error).message)).to.include("don't have a Bandage to sell");
+	});
+
+	it('checks room membership before selling', async () => {
+		let loaded = false;
+		const roomManager = {
+			assertMember: async () => { throw new TRPCError({ code: 'FORBIDDEN' }); },
+			getGame: async () => { loaded = true; return {}; },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const error = await caller.game.sellShopItems({
+			roomId: ROOM_ID,
+			expectedClosingTime: new Date().toISOString(),
+			selections: [{ section: 'items', type: 'Bandage', count: 1 }],
+		}).catch((err) => err);
+
+		expect(error).to.be.instanceOf(TRPCError);
+		expect(loaded).to.equal(false);
 	});
 
 	// Regression: the Workshop shop query only summarized `items` and `backRoom`, so cards

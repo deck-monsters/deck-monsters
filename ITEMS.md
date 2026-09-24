@@ -31,8 +31,9 @@ visit the shop                browse and buy through the guided console flow
 sell to the shop              sell pocket items or cards
 ```
 
-The Workshop provides direct use and purchase buttons. The console and Discord retain the
-guided flows, including item selling and items that need an extra answer.
+The Workshop provides direct use, purchase, and sell buttons. The console and Discord retain
+the guided flows too, plus items that need an extra answer (currently only the Sorting Hat),
+which are not yet offered as a prompt-free web button.
 
 ## Potions and utility items
 
@@ -75,10 +76,18 @@ alike, matching what the console's `visit the shop` flow offers. A purchase is c
 atomically when you confirm: the shop generation, stock position and item name are checked
 again. If somebody else bought that stock or the shop rotated, you are asked to refresh
 rather than receiving an item from a different listing or merchant. Buying a card adds it to
-your deck, the same as buying an item adds it to your pocket inventory. Selling remains
-available through `sell to the shop`; sale prices are lower than face value and vary by
-merchant. Your balance is also shown in the Workshop's header, and updates as soon as a
-fight you were in pays out — not only when the shop section itself refreshes.
+your deck, the same as buying an item adds it to your pocket inventory.
+
+Selling is also on the Workshop shop, in its own "Sell to the shop" section, listing your own
+unequipped cards and pocket items (never a card equipped onto a monster, and never a
+monster's own carried items — those never left your character's inventory in the console
+flow either). Pick a quantity for a type you own more than one of, and confirm — the dialog
+names the item, quantity, and coins you will receive before anything leaves your hands, the
+same safety the console's yes/no step gives. The price is the shop's current buy-back rate
+for that card or item: `sell to the shop` in the console and Discord still works too, and both
+surfaces pay the same rate for the same shop. Sale prices are always lower than face value and
+vary by merchant. Your balance is also shown in the Workshop's header, and updates as soon as
+a fight you were in pays out — not only when the shop section itself refreshes.
 
 ## Practical preparation
 
