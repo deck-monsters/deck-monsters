@@ -22,13 +22,18 @@ docs and move this file to `docs/archive/roadmap/`.
   orchestrator cherry-picks each reviewed commit onto the pass branch.
 - Every code task gets an independent, read-only Tier 2 review before it lands. A fix round
   goes back to the same implementer.
+- **Amended mid-pass:** after two usage-limit stops, the owner asked to wrap up. Tasks still
+  in flight at that point (T3's fix round, T4, T6) land on the implementer's verification plus
+  an orchestrator read, and their independent review moves to PR review. T1's reviewer
+  confirmed that `pnpm run build:docs` reproduces the committed files byte for byte before
+  it stopped.
 
 ## Tasks
 
 | # | Task | Source | Tier | Status | Commit |
 |---|---|---|---|---|---|
 | T0 | Triage candidate roadmap items against the code | all roadmap files | 2 (read-only) | Done | — |
-| T1 | Clean Markdown for generated player docs, plus a structural test | user report | 2 | Fix round | 8681a50 |
+| T1 | Clean Markdown for generated player docs, plus a structural test | user report | 2 | Done | 8681a50, f043395 |
 | T2 | Real-fight coin/XP reward test, including after `restoreGame` (in-process path proven; production cause still open) | 10 §J | 2 | Done | 11c0cc9 |
 | T3 | Coin/XP distributions in the simulation harness; fix the stale harness bullet | 11 | 2 | In review | — |
 | T4 | Sub-event gap for two-roll cards; paced fight opening | 10 §2, §3 | 2 | In progress | — |
