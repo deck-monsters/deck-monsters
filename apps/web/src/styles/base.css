@@ -208,6 +208,13 @@ button {
   padding: 0.5rem 0.75rem;
   margin-bottom: 1rem;
   font-size: 0.875rem;
+  /* The Workshop now shows the engine's own item narration here (a targeting scroll's
+     new-strategy line, a potion's heal amount), which can carry `\n\n` paragraph breaks —
+     see WorkshopPanel.handleUseItem. Without this the breaks were invisible in a plain
+     text node and multi-line narration read as one run-on sentence. Every other user of
+     this class (this success line, LoginView) is a single short sentence, so pre-line is
+     a no-op for them. */
+  white-space: pre-line;
 }
 
 .tag {
@@ -264,20 +271,28 @@ button {
   gap: 0.75rem;
 }
 
+/*
+  Declared completely here so the phone-width `justify-content`/`flex-wrap` override below
+  has a flex row to act on. The class used to get `display: flex` only by sharing a selector
+  with `.pane-header-actions` in terminal.css, while this rule carried a comment saying it was
+  not a flex container — so the mobile rule was misreported as dead CSS (#177). Keep the
+  container properties here; terminal.css no longer names this class. */
 .workshop-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
   flex: 0 0 auto;
 }
 
 /* Header-level echo of `.shop-wallet` (ShopPanel) — same look, different reach: this one
    stays visible while scrolling past the monster row and inventory, not just inside the
    shop section. See docs/architecture/workshop-and-items.md and 10b-bugs-fixed.md.
-   Margined rather than gapped: `.workshop-header-actions` lays its children out with the
-   browser's default inline flow (it is not a flex container — see `10-bug-fixes.md`
-   item 6), so a `gap` on the parent would do nothing. */
+   No margin: `.workshop-header-actions` is a flex row with its own `gap`, and a
+   `margin-right` on top of it doubled the space after the wallet (#177). */
 .workshop-wallet {
   color: var(--color-accent);
   white-space: nowrap;
-  margin-right: 0.5rem;
 }
 
 .workshop-header h1 {
@@ -922,7 +937,10 @@ button {
 .shop-buy-button { flex: 0 0 auto; }
 .shop-back-room { margin-top: 0.75rem; }
 .shop-back-room summary { cursor: pointer; color: var(--color-accent); font-weight: 700; }
-.shop-console-note { color: var(--color-fg-dim); font-size: 0.72rem; margin-bottom: 0; }
+.shop-sell-section { margin-top: 0.75rem; }
+.shop-sell-section summary { cursor: pointer; color: var(--color-accent); font-weight: 700; }
+.shop-sell-controls { display: flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
+.shop-sell-qty { width: 3.2rem; background: var(--color-bg); color: var(--color-fg-bright); border: 1px solid var(--color-border); padding: 0.2rem 0.3rem; font: inherit; }
 
 .monster-workshop-panel.in-ring,
 .workshop-monster-panel.in-ring {

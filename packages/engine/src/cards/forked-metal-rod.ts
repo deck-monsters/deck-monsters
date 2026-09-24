@@ -59,15 +59,21 @@ export class ForkedMetalRodCard extends HornGore {
 		return `Attack twice (once with each ${this.flavors.spike}). +2 to hit and immobilize for each successful ${this.flavors.spike} hit.\n\nChance to immobilize: 1d20 vs ${this.freedomSavingThrowTargetAttr}.`;
 	}
 
-	override effect(
+	override async effect(
 		player: any,
 		target: any,
 		ring: any,
 		activeContestants: any
-	): any {
+	): Promise<any> {
 		this.resetImmobilizeStrength();
-		this.gore(player, target, 1);
-		this.gore(player, target, 2);
+		// These two `gore()` calls used to fire unawaited: not only did that skip the
+		// pacing fixed in HornGore.gore() (both rolls could land in the same tick), the
+		// promises raced each other and `effect()` returned before either had actually
+		// resolved damage/death — a card whose stat box was already "done" while its
+		// hits were still landing in the background. See docs/roadmap/10b-bugs-fixed.md
+		// (two-roll-blocks-in-one-tick).
+		await this.gore(player, target, ring, 1);
+		await this.gore(player, target, ring, 2);
 
 		if (!player.dead) {
 			if (target.dead) return false;

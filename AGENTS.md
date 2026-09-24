@@ -45,11 +45,20 @@ These apply to every task in this repo, not just the one you were asked to do.
 - Delegate whenever a piece of work can be isolated behind a brief and a report — the
   orchestrator's context is the scarce resource, and a saturated orchestrator forgets the
   plan it is supposed to be holding.
+- **Default shape for roadmap work:** a Tier 3 orchestrator triages with a read-only
+  explorer, makes the judgment calls, briefs Tier 2 implementers (parallel code tasks each
+  in their own worktree), reviews every diff, and owns the branch and roadmap files. See
+  [the orchestrated pass](docs/agents/subagents.md#the-orchestrated-pass).
+- **Budget the pass.** Usage limits apply per time window, so keep a PR to four or five
+  tasks, run no more than two or three agents at once, and scale review to risk. See
+  [budget](docs/agents/subagents.md#budget).
 - Pick the cheapest tier that can do the job, but treat turn count as part of the price: a
   cheap model on a multi-step prose spec often burns 2–3x the turns. Tier 2 is the floor for
   anything implemented from prose.
 - Always set the model explicitly. An omitted model inherits the orchestrator's, which is
-  usually the most expensive one available.
+  usually the most expensive one available. The top models and effort levels (the
+  owner-initiated tier in the [tier table](docs/agents/subagents.md#tiers)) are started by
+  the owner, never by an agent.
 - Never run two implementers on overlapping files; docs-only work can run beside code work.
   Two tasks that both edit `docs/roadmap/README.md` or `10b-bugs-fixed.md` are overlapping.
 - **Implementers in a shared worktree never create or switch branches**, `git add` only the
@@ -99,6 +108,7 @@ current contract.
 | [`docs/operations/devcontainer-auth.md`](docs/operations/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container |
 | [`docs/reference/pixel-art.md`](docs/reference/pixel-art.md) | Sprite, canvas, or CSS pixel-art work |
 | [`docs/reference/player-agency.md`](docs/reference/player-agency.md) | Player agency, bounded items, or live-combat-control proposals |
+| [`docs/reference/simulation-harness.md`](docs/reference/simulation-harness.md) | A `sim:*` script, a `SimResult` field, or any balance claim that needs simulation evidence |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scrolls, and shop rules |
 
 ## Generated player references
@@ -106,6 +116,10 @@ current contract.
 `PLAYER_HANDBOOK.md`, `MONSTERS.md`, `CARDS.md`, and `DMG.md` are generated from
 `packages/engine/src/build`. Edit the generator and run `pnpm run build:docs`. Do not
 hand-edit those files. `ITEMS.md` is the authored item guide.
+
+The root `.md` files are rendered by `packages/engine/src/build/markdown.ts` (its header
+comment has the two-renderer design); `root-docs.test.ts` guards their Markdown stays
+clean.
 
 ## Commands and setup
 

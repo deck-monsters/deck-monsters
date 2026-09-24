@@ -1940,6 +1940,94 @@ describe('ring/index.ts', () => {
 			}
 		});
 
+		it('paces the fight-opening banners apart without reordering them (real, non-skipped pacing)', async function () {
+			// Regression coverage for the fight-opening burst: `ring.fight`, the "Let the
+			// games begin!" banner, the first startTurn, and the first playerTurnBegin used
+			// to land in the same tick, all before the pre-existing `turnBeat()` that only
+			// paces playerTurnBegin -> card.play. See
+			// docs/architecture/engine-concurrency-and-timing.md §1 and
+			// docs/roadmap/10b-bugs-fixed.md (fight-opening-burst).
+			this.timeout(10_000);
+
+			const prevSkip = process.env.DECK_MONSTERS_SKIP_DELAYS;
+			delete process.env.DECK_MONSTERS_SKIP_DELAYS;
+			process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS = '20';
+			process.env.DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS = '3';
+			process.env.DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS = '3';
+
+			const game = new Game();
+			try {
+				const ring = game.getRing();
+
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+				const opening: Array<{ label: string; timestamp: number }> = [];
+				const seen = new Set<string>();
+				const record = (label: string, timestamp: number): void => {
+					if (seen.has(label)) return;
+					seen.add(label);
+					opening.push({ label, timestamp });
+				};
+
+				ring.eventBus.subscribe('opening-beat-spy', {
+					deliver: event => {
+						const text = event.text ?? '';
+						if (event.type === 'ring.fight' && text.includes('Fight begins with')) {
+							record('ring.fight', event.timestamp);
+						} else if (event.type === 'ring.fight' && text.includes('Let the games begin')) {
+							record('fight-banner', event.timestamp);
+						} else if (event.type === 'announce' && /round \d+, turn \d+/.test(text)) {
+							record('startTurn', event.timestamp);
+						} else if (event.type === 'announce' && /'s turn\.\*/.test(text)) {
+							record('playerTurnBegin', event.timestamp);
+						}
+					},
+				});
+
+				await ring.fight();
+
+				// Same four banners, same order, as before the fix — only pacing changed.
+				expect(opening.map(o => o.label)).to.deep.equal([
+					'ring.fight',
+					'fight-banner',
+					'startTurn',
+					'playerTurnBegin',
+				]);
+
+				for (let i = 1; i < opening.length; i += 1) {
+					expect(
+						opening[i].timestamp - opening[i - 1].timestamp,
+						`${opening[i - 1].label} -> ${opening[i].label} gap`
+					).to.be.at.least(5);
+				}
+			} finally {
+				process.env.DECK_MONSTERS_SKIP_DELAYS = prevSkip;
+				delete process.env.DECK_MONSTERS_SUB_EVENT_DELAY_MIDPOINT_MS;
+				delete process.env.DECK_MONSTERS_VERY_SHORT_DELAY_MIDPOINT_MS;
+				delete process.env.DECK_MONSTERS_SHORT_DELAY_MIDPOINT_MS;
+				game.dispose();
+			}
+		});
+
+		it('still completes near-instantly under DECK_MONSTERS_SKIP_DELAYS (opening beats add no un-skippable timer)', async () => {
+			const game = new Game();
+			try {
+				const ring = game.getRing();
+
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+				ring.addMonster(randomContestant({ isBoss: false, battles: { total: 5, wins: 3, losses: 2 } }));
+
+				const start = Date.now();
+				await ring.fight();
+				const elapsed = Date.now() - start;
+
+				expect(elapsed).to.be.below(500);
+			} finally {
+				game.dispose();
+			}
+		});
+
 		it('last-team fight: fled opponents with zero deaths → surviving faction wins, encounter ends cleanly', async function () {
 			// Regression companion to the fightConcludes unit test above: exercise the full
 			// ring.fight() path so fightConcludes receives lastContestant=undefined (as doAction
@@ -2109,6 +2197,72 @@ describe('ring/index.ts', () => {
 				expect(ring.contestants.length, 'ring should be cleared after the error').to.equal(0);
 			} finally {
 				ring.fightConcludes = originalFightConcludes;
+			}
+		});
+
+		// Regression coverage: `fight()`'s opening beat used to chain
+		// `openingBeat().then(beginTurn)` with no `.catch`, detached from the
+		// `doAction()` executor's synchronous body. A throw from a `playerTurnBegin`
+		// listener on the fight's very first turn (the only turn this opening-beat path
+		// runs for — see `isFightOpening`) ran inside that later microtask, which the
+		// Promise constructor's auto-catch cannot see: the throw became an unhandled
+		// rejection AND left `doAction()`'s promise forever unsettled, so `fight()`'s own
+		// `.catch` (the cancelled/error path below) never ran and the fight simply hung.
+		// See docs/architecture/engine-concurrency-and-timing.md §1.
+		it('routes a throwing playerTurnBegin listener on the first turn through the cancelled/error path with no unhandled rejection', async function () {
+			this.timeout(10_000);
+
+			const game = new Game();
+			const ring = game.getRing();
+
+			ring.addMonster(randomContestant({ isBoss: false }));
+			ring.addMonster(randomContestant({ isBoss: false }));
+
+			// Only the fight's first turn goes through the opening-beat chain this test
+			// targets; throwing on every turn would just as well hit a fully-covered path.
+			let calls = 0;
+			ring.on('playerTurnBegin', () => {
+				calls += 1;
+				if (calls === 1) {
+					throw new Error('simulated first-turn playerTurnBegin failure');
+				}
+			});
+
+			const publishedEvents: any[] = [];
+			ring.eventBus.subscribe('test-first-turn-listener-throw', {
+				deliver: (event: any) => publishedEvents.push(event),
+			});
+
+			const unhandledRejections: unknown[] = [];
+			const onUnhandledRejection = (reason: unknown): void => {
+				unhandledRejections.push(reason);
+			};
+			process.on('unhandledRejection', onUnhandledRejection);
+
+			try {
+				let caughtError: unknown;
+				try {
+					await ring.fight();
+				} catch (err) {
+					caughtError = err;
+				}
+				expect(caughtError, 'fight() should swallow the error, not throw').to.be.undefined;
+
+				const cancelled = publishedEvents.find(
+					(e) => e.type === 'ring.fightResolved' && e.payload?.outcome === 'cancelled'
+				);
+				expect(cancelled, 'a cancelled ring.fightResolved event should have been published').to.exist;
+				expect(ring.contestants.length, 'ring should be cleared after the error').to.equal(0);
+
+				// Let any dangling microtask from the old detached chain surface before
+				// asserting none did.
+				await new Promise(r => setTimeout(r, 0));
+				expect(
+					unhandledRejections,
+					'the detached opening-beat chain must not produce an unhandled rejection'
+				).to.have.length(0);
+			} finally {
+				process.off('unhandledRejection', onUnhandledRejection);
 			}
 		});
 	});

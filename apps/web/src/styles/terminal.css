@@ -117,15 +117,13 @@
   justify-content: space-between;
 }
 
-.pane-header-actions,
-.workshop-header-actions {
+/* Pane headers only. `.workshop-header-actions` declares its own flex row in base.css;
+   sharing this selector once hid that it was a flex container at all (#177). */
+.pane-header-actions {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   min-width: 0;
-}
-
-.pane-header-actions {
   margin-left: auto;
 }
 

@@ -15,10 +15,11 @@ Read [player agency](../reference/player-agency.md) and
 - [ ] **Prompt transport.** Let an item that needs a choice, currently the Sorting Hat,
   complete on the web through an explicit interactive flow. Preserve the rule that awaited
   Workshop mutations never issue a prompt.
-- [ ] **Web selling.** Expose room-scoped selling with confirmation and inventory/shop
-  refresh behavior equivalent in safety to the established console flow.
-- [ ] **Outcome feedback.** Tell a player when an item applied and what it changed; for a
-  targeting scroll, name the new strategy and make its later effect understandable.
+
+Outcome feedback and web selling shipped in pass 25. The web Workshop now shows the engine's own narration
+for an item use, including a targeting scroll's new strategy, and sells pocket items and
+unequipped cards with a confirmation. Both contracts are in
+[workshop and items](../architecture/workshop-and-items.md).
 
 These improve access to the existing bounded-item exception. Per-fight budgets, item-power
 changes, and other balance changes wait for the simulation harness in

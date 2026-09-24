@@ -18,6 +18,9 @@ node_modules/
 !.cursor/skills/
 !.cursor/skills/**
 
+# AGENT WORKTREES
+.claude/worktrees/
+
 # FILESYSTEM
 .DS_Store
 

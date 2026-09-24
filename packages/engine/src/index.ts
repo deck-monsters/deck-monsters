@@ -38,6 +38,9 @@ export { COMMAND_CATALOG } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 export { purchaseShopItem } from './items/store/purchase.js';
 export type { ShopItemSection, ShopPurchaseResult } from './items/store/purchase.js';
+export { sellToShop } from './items/store/sell-to-shop.js';
+export type { SellSection, SellSelection, ShopSaleLine, ShopSaleResult } from './items/store/sell-to-shop.js';
+export { getSalePrice, getSaleTotal } from './items/store/sell-pricing.js';
 
 /** Test harness and integration helpers (no Slack/HTTP/DB). */
 export * from './testing/index.js';
@@ -45,6 +48,14 @@ export * from './testing/index.js';
 /** Seeded ring contestants for simulations (used by @deck-monsters/harness). */
 export { randomContestant } from './helpers/bosses.js';
 export type { RandomContestantOptions } from './helpers/bosses.js';
+/**
+ * Coin-payout constants and the once-daily-bonus day key, so a caller measuring steady-state
+ * payouts (used by @deck-monsters/harness's `simulate()`) can pin a character's
+ * `lastDailyFightCoinDay`/`battles.total` past the once-daily and early-battle bonuses in
+ * `game.ts`'s `awardFightCoins` instead of asserting against the raw numbers.
+ */
+export { COINS_PER_VICTORY, COINS_PER_DEFEAT, getUtcDay } from './constants/coins.js';
+export { EARLY_COIN_BONUS_TIERS } from './constants/progression.js';
 export { createKeyedPromiseQueue } from './helpers/room-engine-queue.js';
 /** How the engine renders a stored creature name as `givenName` — needed to compare against one. */
 export { startCase } from './helpers/start-case.js';
@@ -61,6 +72,8 @@ export type { BossSummonLedger, SummonAllowance } from './helpers/boss-summons.j
 export { RING_EVENTS, getRingEvent, selectRingEvent } from './ring/ring-events.js';
 export type { RingEventDefinition, RingEventId, VictoryMode } from './ring/ring-events.js';
 export { allMonsters } from './monsters/index.js';
+/** Every item class the engine knows about, for lookup by `itemType` — mirrors `allMonsters`. */
+export { default as allItems } from './items/helpers/all.js';
 /**
  * Character-creation choices a non-interactive caller has to collect up front, since a
  * prompt-free channel cannot ask for them

@@ -31,6 +31,13 @@ export interface ItemSummary {
    * hiding a usable item.
    */
   requiresPrompt?: boolean;
+  /**
+   * Raw shop cost, used only to preview what selling this item would pay (see
+   * `ShopSummary.sellOffset` in ShopPanel.tsx) — the classifier above never reads it.
+   * Optional for the same reason as `requiresPrompt`: an older cached payload without the
+   * field must not crash the tier classifier, which never needed it either.
+   */
+  cost?: number;
 }
 
 /** The minimal per-monster state the tier classifier needs. */
@@ -54,9 +61,20 @@ export interface TieredItem {
 
 // Exact reason strings shown on a dimmed (tier 2) row. Kept as named constants so tests -
 // and any future ring-pane affordance - stay in sync with the copy rather than restating it.
-export const REASON_NOT_IN_RING = 'Not in the ring.';
-export const REASON_NOT_CARRIED_INTO_RING = 'Not carried into the ring.';
-export const REASON_NOT_USABLE_RIGHT_NOW = 'Not usable right now.';
+//
+// Each reason names what would make the item usable, not only that it isn't — "Not usable
+// right now." told a player nothing they could act on (#177).
+export const REASON_NOT_IN_RING = 'Usable once this monster is in the ring.';
+export const REASON_NOT_CARRIED_INTO_RING = 'Mid-fight, a monster can use only what it carries.';
+// This row is a specific monster's own carried item (its name is already shown as the row's
+// source label) and the engine's `canUseItem` rejects it for that monster specifically.
+export const REASON_NOT_USABLE_RIGHT_NOW = "This monster can't use it right now.";
+// This row is a character-pocket item (source label reads "Your pocket" — no monster is
+// named on the row), and either it has no compatible monster at all right now or every
+// named target has left the roster. "This monster can't..." would be false here since no
+// monster is being referred to, so this gets its own, more general copy instead of reusing
+// the reason above.
+export const REASON_NO_MONSTER_CAN_USE_IT = 'None of your monsters can use it right now.';
 export const REASON_NEEDS_A_CHOICE = 'Asks a question — use it from the console.';
 
 /**
@@ -126,7 +144,10 @@ export function classifyItem(
     return { item, source, tier: 2, reason: REASON_NOT_CARRIED_INTO_RING };
   }
 
-  return { item, source, tier: 2, reason: REASON_NOT_USABLE_RIGHT_NOW };
+  // No compatible monster exists at all right now (or every named one has left the
+  // roster) and the item isn't usable on the character either (checked above) — this row
+  // is the character's pocket, so it has no single monster to name in the reason.
+  return { item, source, tier: 2, reason: REASON_NO_MONSTER_CAN_USE_IT };
 }
 
 /** Where a use would land. `character` carries no monster name — see the `useItem` procedure. */

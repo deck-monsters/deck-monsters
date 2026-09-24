@@ -123,7 +123,7 @@ describe('ItemsPanel use affordance', () => {
     );
 
     expect(screen.queryByRole('button', { name: /^Use/i })).toBeNull();
-    expect(screen.getByText(/Not carried into the ring/i)).toBeTruthy();
+    expect(screen.getByText(/a monster can use only what it carries/i)).toBeTruthy();
   });
 
   it('stays display-only when no handler is supplied', () => {

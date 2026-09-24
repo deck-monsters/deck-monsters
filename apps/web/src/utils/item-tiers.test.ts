@@ -8,6 +8,7 @@ import {
   REASON_NOT_CARRIED_INTO_RING,
   REASON_NOT_IN_RING,
   REASON_NOT_USABLE_RIGHT_NOW,
+  REASON_NO_MONSTER_CAN_USE_IT,
   sortTieredItems,
   type ItemSummary,
   type TierMonsterState,
@@ -124,7 +125,7 @@ describe('classifyItem', () => {
     const result = classifyItem(item({ usableOnMonsters: [] }), { kind: 'character' }, []);
 
     expect(result.tier).toBe(2);
-    expect(result.reason).toBe(REASON_NOT_USABLE_RIGHT_NOW);
+    expect(result.reason).toBe(REASON_NO_MONSTER_CAN_USE_IT);
   });
 
   it('is always tier 3 when expired, even when it would otherwise be tier 1', () => {
@@ -147,7 +148,7 @@ describe('classifyItem', () => {
     );
 
     expect(result.tier).toBe(2);
-    expect(result.reason).toBe(REASON_NOT_USABLE_RIGHT_NOW);
+    expect(result.reason).toBe(REASON_NO_MONSTER_CAN_USE_IT);
   });
 });
 

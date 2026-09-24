@@ -2909,7 +2909,9 @@ generated shops is #147.
 > 2 wins and 9 losses in the room with no shop purchases, which is at minimum 28 coins
 > (2x5 + 9x2) before any daily bonus, yet the wallet still read 0. The investigation below
 > reasoned from the reward path in isolation and never verified end-to-end that a *real*
-> ring fight credits coins at all; it does not. See the open bug in
+> ring fight credits coins at all. (Pass 25 later proved the in-process path does credit
+> them, fresh and after `restoreGame`: `packages/engine/src/reward-crediting.test.ts`.) See
+> the open bug in
 > [`10-bug-fixes.md`](10-bug-fixes.md) ("Fight rewards may never be credited") for the
 > live investigation and the leading hypothesis. The staleness and visibility fixes below
 > are still correct and still worth having — they are just not the bug that was reported.
@@ -2950,7 +2952,7 @@ the monster row and inventory a player has to scroll past first.
 - The coin balance is now also shown in the Workshop header (`.workshop-wallet`), visible
   without opening or scrolling to the shop section at all. It renders only once the shop
   query has actually resolved, so the loading window never displays a misleading "0 coins".
-- Found in passing, not fixed: `.workshop-header-actions`'s mobile rule
+- Found in passing, not fixed (later corrected and fixed in #177): `.workshop-header-actions`'s mobile rule
   (`@container workshop (max-width: 520px)`) sets `justify-content: space-between;
   flex-wrap: wrap;`, but the class is never `display: flex` at any width, so those
   properties have always been a no-op — the header's buttons wrap via ordinary inline flow
@@ -4158,5 +4160,159 @@ same reason. The Jinn lore text also said "standstorms"; it now says "sandstorms
 
 **Tests**: `helpers/pronouns.test.ts` (`agree` for they, she, and a legacy set);
 `monsters/jinn.test.ts` (they/them and she/her descriptions).
+
+**Status**: Fixed.
+
+### 177. Workshop header row misdiagnosed as dead CSS, and tier-2 reasons gave no way forward — FIXED
+
+The phone-width rule on `.workshop-header-actions` (`justify-content: space-between;
+flex-wrap: wrap`) was recorded as dead because the class was "never a flex container". The
+space after the header wallet was also twice the gap between the header buttons. Separately,
+dimmed (tier 2) Workshop item rows said `Not in the ring.`, `Not carried into the ring.`, or
+`Not usable right now.`, which told the player what was wrong but not what would fix it.
+
+**Root cause**: The class *was* a flex row. It shared a `display: flex` selector with
+`.pane-header-actions` in `terminal.css`, while its own rule in `base.css` carried only
+`flex: 0 0 auto` and a comment asserting the opposite. The misdiagnosis came from reading one
+stylesheet. Acting on the same false premise, the wallet had been spaced with `margin-right`,
+which stacked on the row's `gap`. The reason strings were written during implementation and
+never had a voice pass; `Not usable right now.` covered two cases, one of which (a pocket item)
+named no monster at all.
+
+**Fix**: `.workshop-header-actions` declares its flex row completely in `base.css`, and
+`terminal.css` no longer names it. The wallet margin is gone. Each tier-2 reason now names
+what would make the item usable: `Usable once this monster is in the ring.`, `Mid-fight, a
+monster can use only what it carries.`, `This monster can't use it right now.` (a monster's
+own carried item), and `None of your monsters can use it right now.` (a pocket item with no
+valid target).
+
+**Tests**: `apps/web/src/__tests__/workshop-header-actions-flex.test.ts` (flex row declared in
+`base.css`, not shared from `terminal.css`, no wallet margin); `utils/item-tiers.test.ts` and
+`__tests__/itemsPanel.use.test.tsx` pin the new copy. Rendered at 390 px and 900 px in Chromium
+against the real stylesheets: the header wraps with `space-between` at phone width and has one
+0.4 rem gap after the wallet.
+
+**Status**: Fixed.
+
+### 178. Two-horn cards published both rolls in one tick, and two cards raced their own hits — FIXED
+
+Horn Gore could publish both horns' roll blocks with no gap between them, so a double miss
+flashed past in the feed. Forked Metal Rod also started its second horn before the first had
+landed. Sandstorm's "already lost" branch fired a second Blast even when the first one had
+killed the target.
+
+**Root cause**: `HornGore.gore()` awaited nothing after a missed attack roll. Only a hit
+waited, inside `target.hit()`. `ForkedMetalRodCard.effect()` called `gore()` twice without
+awaiting either, so the card resolved before its hits. Sandstorm wrote
+`super.effect(...) && super.effect(...)`, and a Promise is always truthy, so the second call
+always ran.
+
+**Fix**: `gore()` awaits `subEventDelay` after the attack-roll block on every outcome, and
+after the damage block, the same shape as `HitCard.effect()`. Forked Metal Rod awaits each
+horn in turn. Sandstorm awaits the first Blast and fires the second only if the target is still
+standing. The rule is in
+[engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
+
+**Tests**: `cards/horn-gore.test.ts` (miss-miss and hit paths with real sub-event delays:
+consecutive roll blocks at least 10 ms apart at a 30 ms midpoint);
+`cards/forked-metal-rod.test.ts` (hits sequenced, not raced); `cards/sandstorm.test.ts`
+(sequenced, and no second Blast after a kill).
+
+**Status**: Fixed.
+
+### 179. Every fight opened with four banners in one tick — FIXED
+
+The fight-begins line, "Let the games begin!", the first turn banner, and the first monster's
+turn line all landed at once, before normal pacing started.
+
+**Root cause**: `Ring.fight()` had one pacing point, `turnBeat()`, between `playerTurnBegin`
+and the card box. Everything before it ran synchronously.
+
+**Fix**: The same content-aware `turnBeat()` (as `openingBeat`) runs between each opening
+banner. It applies only to the fight's first turn, because later turn banners already follow
+the previous card's gap. Event order is unchanged, and `DECK_MONSTERS_SKIP_DELAYS` still skips
+every beat.
+
+**Tests**: `ring/index.test.ts` (opening banners keep their order and are paced apart with
+real delays; a skipped-delay fight still completes almost at once).
+
+**Status**: Fixed.
+
+### 180. `lucky-strike` "narrates correctly" failed at random — FIXED
+
+The test failed on some runs, which three agents in pass 25 reported as a flake.
+
+**Root cause**: The test's Gladiator gets random pronouns. #176 made the narration say "they
+were going to miss", and the test still expected the hard-coded "was".
+
+**Fix**: The expectation uses the monster's own `pronouns.was`. The card code was already
+correct.
+
+**Tests**: `cards/lucky-strike.test.ts`, passing on six consecutive full-suite runs.
+
+**Status**: Fixed.
+
+### 181. Harness `sim:*` scripts hung after printing, and outcome buckets read the wrong object — FIXED
+
+`sim:winrates`, `sim:cardpower`, and `sim:levelscaling` printed their report and then never
+exited. While adding coin/XP measurement, the first outcome buckets also recorded no wins
+and no flees at all.
+
+**Root cause**: Loading `@deck-monsters/engine` leaves the Node process alive even with no
+active handles reported, and `simulate()` never disposed the last fight's transient
+contestants, because `ring.clearRing()` ran only at the start of each loop.
+`cli-main.ts` and `mocha --exit` already worked around the first cause; the three scripts did
+not. Separately, `Ring.addMonster()` copies the caller's contestant into its own object, and
+`fightConcludes()` sets `won`/`lost`/`fled` on that copy, so flags read back from the
+caller's object are always unset. No engine or server code reads flags that way; the harness
+was the only caller that did.
+
+**Fix**: Every `sim:*` script ends with an explicit `process.exit` that preserves any exit
+code it set, and both simulation loops clear the ring once more after the last fight.
+Outcomes come from `ring.fightResolved` participants, matched by `stableId`. A cancelled
+fight (`participants: []`) is counted in `cancelledFights` rather than crashing the batch.
+
+**Tests**: `packages/harness/src/harness.test.ts` (economy fields populated and
+reproducible under a fixed seed; a steady-state win pays exactly `COINS_PER_VICTORY` and a
+loss `COINS_PER_DEFEAT`). All four scripts exit cleanly when run by hand.
+
+**Status**: Fixed.
+
+### 182. Selling one unequipped card could wipe an equipped Beastmaster monster's whole hand — FIXED
+
+Selling a single unequipped `Hit` (or any other common card) to the shop, from either the
+console or the web Workshop, could silently empty an owned monster's entire equipped deck if
+that monster happened to be holding a card with the same `cardType`/properties — even though
+the sold card and the equipped card were different instances the monster never touched.
+
+**Root cause**: Both sell paths (`items/store/sell.ts` and `items/store/sell-to-shop.ts`)
+removed a sold card via `character.removeCard(card)`. For a real `Beastmaster`,
+`removeCard` is overridden to also call `monster.resetCards({ matchCard })` on every owned
+monster, and `resetCards` clears a monster's **entire** hand (`this.cards = []`) if it holds
+any card that is JSON-identical to the one being removed (`isMatchingItem`, a value
+comparison, not object identity). That check makes sense for finding the matching entry
+*within a single pool* — it's the same helper `characters/base.ts#removeCard` uses to find
+which unequipped-pool card to filter out — but reaching into a *different* creature's deck
+with it is wrong: by the time a card is equipped, `Beastmaster#reconcileDeckAfterEquip` has
+already spliced it out of `character.cards` by object identity specifically so equipped and
+unequipped cards never share instances (see `docs/architecture/workshop-and-items.md`
+inventory read model). Both shop sell paths only ever remove from `character.cards`/
+`character.items` — there is never a monster's card to reconcile — so calling the
+Beastmaster-overridden `removeCard` from there was always the wrong entry point. Neither
+existing sell test caught this because both used a stubbed `character.removeCard`, never a
+real `Beastmaster`/`BaseMonster`.
+
+**Fix**: Added `items/helpers/remove-card-from-pool.ts`, which splices the sold card out of
+`character.cards` by object identity and mirrors `removeCard`'s two signals (the `cards`
+setter, so `Game` persistence still fires, and the `cardRemoved` event) without touching any
+monster. Both sell paths call it instead of `character.removeCard`. `removeItem` was
+checked for the same hazard and does not have it: it only searches `self.items`, the
+creature's own array, and is not overridden by `Beastmaster`.
+
+**Tests**: `items/store/sell-to-shop.test.ts` ("a real Beastmaster with an equipped
+monster" — a real `Beastmaster` + `Basilisk` with two equipped `Hit`s and one unequipped
+`Hit`; selling the unequipped one leaves the equipped deck at 2 cards and the pool at 0,
+where it previously wiped the equipped deck to 0). `items/store/sell.ts`'s existing tests
+continue to pass with the same fix applied to the console path.
 
 **Status**: Fixed.

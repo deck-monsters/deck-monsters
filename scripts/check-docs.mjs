@@ -3,6 +3,10 @@ import { resolve, relative, dirname, extname, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const SKIPPED_DIRECTORIES = new Set(['.git', '.superpowers', 'node_modules', 'dist'])
+// Agent worktrees (Claude Code `isolation: "worktree"`) are full checkouts of the repo. Scanning
+// them checks every doc twice, and their root-generated files would not match the root-only
+// generated-output exemption below.
+const SKIPPED_PATHS = new Set(['.claude/worktrees'])
 const GENERATED_ROOT_OUTPUTS = new Set([
   'CARDS.md',
   'DMG.md',
@@ -111,8 +115,9 @@ async function markdownFiles(root, directory = root) {
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      if (!SKIPPED_DIRECTORIES.has(entry.name)) {
-        files.push(...(await markdownFiles(root, resolve(directory, entry.name))))
+      const childPath = resolve(directory, entry.name)
+      if (!SKIPPED_DIRECTORIES.has(entry.name) && !SKIPPED_PATHS.has(toRepositoryPath(root, childPath))) {
+        files.push(...(await markdownFiles(root, childPath)))
       }
       continue
     }
@@ -260,6 +265,12 @@ const UNWALKED_PUBLIC_DOCUMENTS = [
   'DMG.md',
   'cards.html',
 ]
+// Structural checks apply only to the four Markdown ones (cards.html is not Markdown).
+// This is a cheap, mechanical safety net — the real "keeps them clean" contract, with
+// the semantic run-on-list check this can't do without engine imports, lives in
+// packages/engine/src/build/root-docs.test.ts, which `pnpm run build:docs` regenerates
+// these files from.
+const GENERATED_ROOT_MARKDOWN = ['PLAYER_HANDBOOK.md', 'MONSTERS.md', 'CARDS.md', 'DMG.md']
 
 function isGovernedDocument(path) {
   return path.startsWith('docs/') && path.endsWith('.md')
@@ -422,6 +433,58 @@ export function checkOkfFrontmatter(path, markdown) {
   return findings
 }
 
+/**
+ * Mechanical structural check for a generated root doc (`PLAYER_HANDBOOK.md`,
+ * `MONSTERS.md`, `CARDS.md`, `DMG.md`): balanced and tagged fences, no rule-line or
+ * box-drawing characters outside a fence, and a blank line around every heading. These
+ * are the shapes of the GitHub-rendering bugs this generator has produced before (see
+ * `docs/roadmap/10b-bugs-fixed.md`) — a regression here means someone bypassed the
+ * `packages/engine/src/build/markdown.ts` renderers, most likely by hand-editing the
+ * file (which `AGENTS.md` already says not to do) or by adding a new section to the
+ * generator that skips them.
+ */
+function checkGeneratedRootMarkdown(repositoryPath, markdown) {
+  const findings = []
+  const lines = markdown.split('\n')
+  let inFence = false
+  let fenceCount = 0
+
+  lines.forEach((line, index) => {
+    if (/^\s*```/.test(line)) {
+      if (!inFence && line.trim() === '```') {
+        findings.push(`${repositoryPath}:${index + 1}: untagged opening fence (use \`\`\`text)`)
+      }
+      inFence = !inFence
+      fenceCount++
+      return
+    }
+
+    if (inFence) return
+
+    if (/[─═╔║╚╗╝]/.test(line)) {
+      findings.push(`${repositoryPath}:${index + 1}: rule-line/box-drawing character outside a fence`)
+    }
+
+    if (/^#{1,6}\s/.test(line)) {
+      const blankBefore = index === 0 || lines[index - 1] === ''
+      const blankAfter = index === lines.length - 1 || lines[index + 1] === ''
+      if (!blankBefore || !blankAfter) {
+        findings.push(`${repositoryPath}:${index + 1}: heading needs a blank line before and after`)
+      }
+    }
+  })
+
+  if (fenceCount % 2 !== 0) {
+    findings.push(`${repositoryPath}: unbalanced \`\`\` fence`)
+  }
+
+  if (!markdown.endsWith('\n') || markdown.endsWith('\n\n')) {
+    findings.push(`${repositoryPath}: must end with exactly one trailing newline`)
+  }
+
+  return findings
+}
+
 export async function checkDocumentation(root) {
   const files = await markdownFiles(root)
   const findings = await checkMarkdownLinks(root)
@@ -447,6 +510,9 @@ export async function checkDocumentation(root) {
     try {
       const markdown = await readFile(resolve(root, repositoryPath), 'utf8')
       findings.push(...checkOkfFrontmatter(repositoryPath, markdown))
+      if (GENERATED_ROOT_MARKDOWN.includes(repositoryPath)) {
+        findings.push(...checkGeneratedRootMarkdown(repositoryPath, markdown))
+      }
     } catch (error) {
       if (error.code !== 'ENOENT') throw error
     }

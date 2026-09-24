@@ -30,6 +30,40 @@ ${desc ? desc.slice(0, 300) + (desc.length > 300 ? '...' : '') : ''}
 `.trim();
 }
 
+/**
+ * Root-file-only counterpart to `buildMonsterEntry`: same numbers, rendered as a
+ * Markdown table under a `###` heading instead of a `Label:` rule-line block, and with
+ * the *full* description rather than the 300-char truncation used in-game. The
+ * truncation exists so a monster's stat card doesn't scroll a live feed off-screen mid-
+ * fight; a reference file has no such limit, and cutting the description there was a
+ * separate bug from the formatting one (see `docs/roadmap/10b-bugs-fixed.md`).
+ */
+export function buildMonsterEntryMarkdown(Monster: new (...args: any[]) => any, level = 0): string {
+	const offsets = getMonsterTypeOffsets(Monster);
+	const m = Monster as any;
+	const hp = hpRangeAtLevel(offsets.typeHpOffset, level);
+	const ac = acRangeAtLevel(offsets.typeAcOffset, level);
+	const sign = (n: number): string => (n >= 0 ? `+${n}` : `${n}`);
+	const desc: string = m.description ? m.description.trim() : '';
+
+	const rows = [
+		`| HP | ${formatNumericRange(hp)} (spawn + level ${level}) |`,
+		`| AC | ${formatNumericRange(ac)} (spawn + level ${level}) |`,
+		`| STR | ${BASE_STR + offsets.strModifier} (base ${sign(offsets.strModifier)}) |`,
+		`| DEX | ${BASE_DEX + offsets.dexModifier} (base ${sign(offsets.dexModifier)}) |`,
+		`| INT | ${BASE_INT + offsets.intModifier} (base ${sign(offsets.intModifier)}) |`,
+	];
+
+	return [
+		`### ${offsets.creatureType} (${offsets.classLabel})`,
+		'',
+		'| Stat | Value |',
+		'|---|---|',
+		...rows,
+		...(desc ? ['', desc] : []),
+	].join('\n');
+}
+
 export const monsterManual = ({ channel }: { channel: ChannelFn }): Promise<unknown> => {
 	const entries = allMonsters.map(Monster => buildMonsterEntry(Monster, 0));
 

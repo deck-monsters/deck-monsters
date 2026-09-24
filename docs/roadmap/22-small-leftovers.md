@@ -46,11 +46,6 @@ execution queue.
 Prompt transport, web selling, and outcome feedback are owned in
 [item follow-ups](item-followups.md).
 
-- [ ] **Owner: Workshop/voice.** Review the tier-2 reason strings in `apps/web/src/utils/item-tiers.ts`
-  (`Not in the ring.`, `Not carried into the ring.`, `Not usable right now.`). They were
-  written during implementation and still need an owner pass against
-  [voice and wording](../reference/voice-and-wording.md). Read
-  [workshop and items](../architecture/workshop-and-items.md).
 - [ ] **Owner: Analytics/content.** Define per-monster records, dead-monster memorials, and
   earned titles from durable data before exposing or inventing a new projection. Read
   [analytics and history](../architecture/analytics-and-history.md).
@@ -65,8 +60,10 @@ Prompt transport, web selling, and outcome feedback are owned in
   `FightSummaryWriter` still writes null because it does not track turning-point
   `card.played` events. Read
   [analytics and history](../architecture/analytics-and-history.md).
-- [ ] **Owner: Analytics/identity.** Decide global-leaderboard visibility and verify that a
-  room reset clears the room's projections and summaries. Read
+- [ ] **Owner: Analytics/identity.** Decide global-leaderboard visibility, and whether a room
+  reset should also clear `room_events`. Pass 25 verified that `RoomManager.resetRoomState()`
+  clears player and monster stats and fight summaries, zeroes the fight counter, and keeps the
+  raw event log, so pre-reset narration stays in history. Read
   [analytics and history](../architecture/analytics-and-history.md).
 - [ ] **Owner: Events/connectors.** Decide prompt delivery when one player is active on
   multiple connectors, and whether future client rendering needs finer event granularity.

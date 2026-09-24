@@ -32,6 +32,11 @@ async function main(): Promise<void> {
 			`Level ${String(level).padStart(2)}  Sim1 ${w1.toFixed(1).padStart(5)}%  Sim2 ${w2.toFixed(1).padStart(5)}%  draw ${res.drawRate.toFixed(1).padStart(5)}%  rounds ${res.avgRounds.toFixed(1)}\n`,
 		);
 	}
+
+	// See sim-winrates.ts's matching comment: loading the engine leaves something running
+	// that Node's own exit checks don't see, so a `sim:*` script hangs after printing its
+	// report unless it exits itself.
+	process.exit(0);
 }
 
 main().catch(err => {

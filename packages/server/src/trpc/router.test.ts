@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { TRPCError } from '@trpc/server';
-import { Game } from '@deck-monsters/engine';
+import { Game, allItems } from '@deck-monsters/engine';
 
 import { createRouter, activeFlows, activePromptFreeMutations } from './router.js';
 
@@ -130,6 +130,7 @@ describe('trpc/router card management procedures', () => {
 				usableOnMonsters: [],
 				usableOnCharacter: false,
 				requiresPrompt: false,
+				cost: 0,
 			},
 		]);
 		expect(result.items.monsters).to.deep.equal([
@@ -143,6 +144,7 @@ describe('trpc/router card management procedures', () => {
 						usableOnMonsters: ['Stonefang', 'Mirebell'],
 						usableOnCharacter: false,
 						requiresPrompt: false,
+						cost: 0,
 					},
 				],
 			},
@@ -351,6 +353,7 @@ describe('trpc/router card management procedures', () => {
 				usableOnMonsters: [],
 				usableOnCharacter: false,
 				requiresPrompt: false,
+				cost: 0,
 			},
 		]);
 	});
@@ -399,6 +402,7 @@ describe('trpc/router card management procedures', () => {
 				usableOnMonsters: [],
 				usableOnCharacter: false,
 				requiresPrompt: false,
+				cost: 0,
 			},
 		]);
 	});
@@ -516,6 +520,119 @@ describe('trpc/router card management procedures', () => {
 		expect(games[ROOM_ID].shop.items).to.have.lengthOf(0);
 		expect(games[otherRoomId].shop.items).to.have.lengthOf(1);
 		expect(games[otherRoomId].characters[USER_ID].coins).to.equal(100);
+	});
+
+	it('sells owned items and cards to the current room shop through the serialized mutation lane', async () => {
+		const bandage = { itemType: 'Bandage', cost: 10 };
+		const whiskeyShot = { cardType: 'Whiskey Shot', cost: 30 };
+		const ownedItems = [bandage];
+		const ownedCards = [whiskeyShot];
+		const game = {
+			characters: {
+				[USER_ID]: {
+					coins: 0,
+					items: ownedItems,
+					cards: ownedCards,
+					removeItem: (toRemove: unknown) => {
+						const index = ownedItems.indexOf(toRemove as never);
+						if (index >= 0) return ownedItems.splice(index, 1)[0];
+						return undefined;
+					},
+					// Cards leave by identity through `removeCardFromPool`, which reassigns
+					// `cards` and emits `cardRemoved`; `removeCard` must not be called (#182).
+					removeCard: () => { throw new Error('sell must not call removeCard'); },
+					emit: () => undefined,
+				},
+			},
+			shop: {
+				name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date(Date.now() + 60_000),
+				priceOffset: 0.8, backRoomOffset: 5, items: [], backRoom: [], cards: [], pronouns: {},
+			},
+			commitShop(next: any) { game.shop = next; },
+		};
+		const lanes: string[] = [];
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getEventBus: async () => ({ getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (lane: string, fn: () => Promise<unknown>) => {
+				lanes.push(lane);
+				return fn();
+			},
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const result = await caller.game.sellShopItems({
+			roomId: ROOM_ID,
+			expectedClosingTime: game.shop.closingTime.toISOString(),
+			selections: [
+				{ section: 'items', type: 'Bandage', count: 1 },
+				{ section: 'cards', type: 'Whiskey Shot', count: 1 },
+			],
+		});
+
+		// round(10*0.8) + round(30*0.8) = 8 + 24 = 32
+		expect(result.totalValue).to.equal(32);
+		expect(result.remainingCoins).to.equal(32);
+		expect(game.characters[USER_ID].items).to.deep.equal([]);
+		expect(game.characters[USER_ID].cards).to.deep.equal([]);
+		expect(game.shop.items).to.deep.equal([bandage]);
+		expect(game.shop.cards).to.deep.equal([whiskeyShot]);
+		expect(lanes).to.deep.equal([ROOM_ID]);
+	});
+
+	it('refuses to sell an item the character does not own, without mutating the shop', async () => {
+		const commitShop = () => { throw new Error('must not commit'); };
+		const game = {
+			characters: {
+				[USER_ID]: {
+					coins: 0,
+					items: [],
+					cards: [],
+					removeItem: () => undefined,
+					removeCard: () => undefined,
+				},
+			},
+			shop: {
+				name: 'Moon Market', adjective: 'moss-covered', closingTime: new Date(Date.now() + 60_000),
+				priceOffset: 0.8, backRoomOffset: 5, items: [], backRoom: [], cards: [], pronouns: {},
+			},
+			commitShop,
+		};
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getEventBus: async () => ({ getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_lane: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		const error = await caller.game.sellShopItems({
+			roomId: ROOM_ID,
+			expectedClosingTime: game.shop.closingTime.toISOString(),
+			selections: [{ section: 'items', type: 'Bandage', count: 1 }],
+		}).catch((err) => err);
+
+		expect(error).to.be.instanceOf(Error);
+		expect(String((error as Error).message)).to.include("don't have a Bandage to sell");
+	});
+
+	it('checks room membership before selling', async () => {
+		let loaded = false;
+		const roomManager = {
+			assertMember: async () => { throw new TRPCError({ code: 'FORBIDDEN' }); },
+			getGame: async () => { loaded = true; return {}; },
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const error = await caller.game.sellShopItems({
+			roomId: ROOM_ID,
+			expectedClosingTime: new Date().toISOString(),
+			selections: [{ section: 'items', type: 'Bandage', count: 1 }],
+		}).catch((err) => err);
+
+		expect(error).to.be.instanceOf(TRPCError);
+		expect(loaded).to.equal(false);
 	});
 
 	// Regression: the Workshop shop query only summarized `items` and `backRoom`, so cards
@@ -1223,6 +1340,7 @@ describe('trpc/router useItem', () => {
 			applied: true,
 			itemName: 'Healing Potion',
 			monsterName: 'Stonefang',
+			announcements: [],
 		});
 		expect(used).to.include({ monsterName: 'Stonefang' });
 		expect(used?.itemSelection).to.deep.equal(['Healing Potion']);
@@ -1380,6 +1498,115 @@ describe('trpc/router useItem', () => {
 			.catch((err) => err);
 
 		expect((error as TRPCError).code).to.equal('NOT_FOUND');
+	});
+});
+
+/**
+ * The console/Discord path always told the player what an item did — a targeting scroll
+ * names the new strategy, a potion says how much it healed — because `TargetingScroll.
+ * action()` / `HealingPotion.action()` narrate through the `channel` they are given. The
+ * web `useItem` mutation ran on `createSilentChannel`, which turned that narration into a
+ * *private* event but returned only `{ ok, applied, itemName, monsterName }`, so a web
+ * player never learned which strategy got set or what got healed. These tests exercise the
+ * real item classes (not a stubbed `useItems`) end to end through the router, the way the
+ * console does, to prove `announcements` actually carries the engine's own words rather
+ * than a paraphrase that could drift from it. See docs/architecture/workshop-and-items.md
+ * and docs/roadmap/item-followups.md ("Outcome feedback").
+ */
+describe('trpc/router useItem narration', () => {
+	const makeRoomManager = (game: unknown) =>
+		({
+			assertMember: async () => undefined,
+			getGame: async () => game,
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		}) as unknown as Parameters<typeof createRouter>[0];
+
+	const findItemClass = (itemType: string): any =>
+		(allItems as unknown as Array<{ itemType?: string }>).find((Item) => Item.itemType === itemType);
+
+	const spawnCharacterWithMonster = async (game: Game): Promise<{ givenName: string; items: unknown[] }> => {
+		const spawnCaller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+		await spawnCaller.game.spawnMonster({
+			roomId: ROOM_ID,
+			type: 2,
+			gender: 'female',
+			name: 'Saffron',
+			color: 'violet smoke',
+			character: { name: 'Ada', gender: 'female', avatar: '🦊' },
+		});
+		const character = game.characters[USER_ID] as unknown as { monsters: Array<{ givenName: string; items: unknown[] }> };
+		return character.monsters[0];
+	};
+
+	it('names the new targeting strategy for a real targeting scroll', async () => {
+		// A real Game/Beastmaster/Monster, not a stub, so this exercises the exact
+		// TargetingScroll.action() -> getTargetingDetails() -> channel({announce}) path the
+		// console relies on.
+		const game = new Game({}, () => undefined);
+		try {
+			const ChaosTheoryScroll = findItemClass('Chaos Theory for Beginners');
+			const monster = await spawnCharacterWithMonster(game);
+			monster.items = [new ChaosTheoryScroll()];
+
+			const useCaller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+			const result = await useCaller.game.useItem({
+				roomId: ROOM_ID,
+				itemName: 'Chaos Theory for Beginners',
+				monsterName: monster.givenName,
+			});
+
+			expect(result.applied).to.equal(true);
+			expect(result.announcements).to.have.length.greaterThan(0);
+			const narration = result.announcements.join('\n');
+			// This is the line the brief cares about: getTargetingDetails() names the specific
+			// strategy the scroll set, not just "learned new tactics."
+			expect(narration).to.contain(
+				`${monster.givenName} will look around the ring and pick a random foe to target`,
+			);
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it("reports what a real healing potion healed, in the potion's own words", async () => {
+		const game = new Game({}, () => undefined);
+		try {
+			const HealingPotion = findItemClass('Potion of Healing');
+			const monster = await spawnCharacterWithMonster(game);
+			monster.items = [new HealingPotion()];
+
+			const useCaller = createRouter(makeRoomManager(game)).createCaller({ userId: USER_ID, serviceTokenValid: false });
+			const result = await useCaller.game.useItem({
+				roomId: ROOM_ID,
+				itemName: 'Potion of Healing',
+				monsterName: monster.givenName,
+			});
+
+			expect(result.applied).to.equal(true);
+			expect(result.announcements).to.have.length.greaterThan(0);
+			expect(result.announcements.join('\n')).to.contain(`${monster.givenName} drinks`);
+			expect(result.announcements.join('\n')).to.contain('for 8 hp');
+		} finally {
+			game.dispose();
+		}
+	});
+
+	it('falls back to an empty list when the engine narrated nothing', async () => {
+		// `character.useItems` throwing before any item action runs (e.g. no matching item)
+		// must not leave `announcements` undefined — the client always gets an array.
+		const character = { useItems: async () => undefined };
+		const roomManager = {
+			assertMember: async () => undefined,
+			getGame: async () => ({ characters: { [USER_ID]: character }, ring: { contestants: [] } }),
+			getEventBus: async () => ({ publish: () => undefined, getPendingPromptForUser: () => null }),
+			runSerializedEngineWork: async (_roomId: string, fn: () => Promise<unknown>) => fn(),
+		} as unknown as Parameters<typeof createRouter>[0];
+		const caller = createRouter(roomManager).createCaller({ userId: USER_ID, serviceTokenValid: false });
+
+		const result = await caller.game.useItem({ roomId: ROOM_ID, itemName: 'Healing Potion' });
+
+		expect(result.announcements).to.deep.equal([]);
 	});
 });
 

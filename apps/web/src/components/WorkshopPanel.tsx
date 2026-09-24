@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import InventoryPanel from './InventoryPanel.js';
 import ItemsPanel from './ItemsPanel.js';
-import ShopPanel, { type ShopStockItem } from './ShopPanel.js';
+import ShopPanel, { type SellableGroup, type SellSelection, type ShopStockItem } from './ShopPanel.js';
 import MonsterWorkshopPanel from './MonsterWorkshopPanel.js';
 import type { WorkshopCardLocation } from './CardSlot.js';
 import { useDeckWorkshop } from '../hooks/useDeckWorkshop.js';
@@ -32,6 +32,9 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
   const {
     monsters,
     unequippedDeck,
+    // Defaults to {} — older test doubles and any stale cached payload predating this field
+    // must not crash the sell-price preview, only show it as free (0 cost).
+    cardCosts = {},
     cardCompatibility,
     items,
     shop,
@@ -60,6 +63,7 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
     sendMonsterToRing,
     useItem,
     buyShopItem,
+    sellShopItems,
     refresh,
   } = useDeckWorkshop(roomId);
 
@@ -181,13 +185,25 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
        * `applied` is false when the item's own conditions were not met — Spin Up on a
        * living monster, a healing potion on a dead one. The engine declines and does not
        * spend the item; saying "Used it" would be a lie, and the player would wonder why
-       * nothing changed.
+       * nothing changed. (A declined action also emits no narration, so `announcements`
+       * is empty in this branch anyway — the check is ordered first for clarity.)
+       *
+       * Otherwise, prefer the engine's own narration — e.g. TargetingScroll.action() names
+       * the specific strategy it just set, HealingPotion.action() says how many hp it
+       * restored — over a generic "Used X.", which told a web player an item worked without
+       * ever saying what it did. Multiple announcements (an item can narrate more than one
+       * line) are shown together, separated the same way the engine separates paragraphs
+       * within one narration. Fall back to the generic line when the engine narrated
+       * nothing on this channel (some flavor lines publish publicly instead — see
+       * `announceNarration` — and never reach here).
        */
-      setMessage(
-        result?.applied === false
-          ? `${itemName} had no effect${on} right now — it was not used up.`
-          : `Used ${itemName}${on}.`,
-      );
+      if (result?.applied === false) {
+        setMessage(`${itemName} had no effect${on} right now — it was not used up.`);
+      } else if (result?.announcements && result.announcements.length > 0) {
+        setMessage(result.announcements.join('\n\n'));
+      } else {
+        setMessage(`Used ${itemName}${on}.`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not use that item');
     }
@@ -210,6 +226,58 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
       setMessage(`Bought ${result.itemName} for ${result.price} coins. ${result.remainingCoins} coins remain.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not complete that purchase');
+    }
+  }
+
+  // Grouped by display name (same shape the shop's own stock groups into, `stockCount`)
+  // so selling three Bandages is one row with a quantity, not three identical rows —
+  // `items.character` and `unequippedDeck` are otherwise one entry per copy.
+  const sellableItems = useMemo<SellableGroup[]>(() => {
+    const groups = new Map<string, SellableGroup>();
+    for (const item of items.character) {
+      const existing = groups.get(item.displayName);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        groups.set(item.displayName, { displayName: item.displayName, count: 1, cost: item.cost ?? 0 });
+      }
+    }
+    return [...groups.values()];
+  }, [items.character]);
+
+  const sellableCards = useMemo<SellableGroup[]>(() => {
+    const groups = new Map<string, SellableGroup>();
+    for (const cardName of unequippedDeck) {
+      const existing = groups.get(cardName);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        groups.set(cardName, { displayName: cardName, count: 1, cost: cardCosts[cardName] ?? 0 });
+      }
+    }
+    return [...groups.values()];
+  }, [unequippedDeck, cardCosts]);
+
+  async function handleSellShopItems(selection: SellSelection) {
+    if (!shop) {
+      setError('The shop is still loading. Try again in a moment.');
+      return;
+    }
+    const group = (selection.section === 'items' ? sellableItems : sellableCards)
+      .find((entry) => entry.displayName === selection.type);
+    const unitPrice = Math.round((group?.cost ?? 0) * (shop.sellOffset ?? 0));
+    const total = unitPrice * selection.count;
+    const label = selection.count > 1 ? `${selection.count} ${selection.type}` : selection.type;
+    if (!window.confirm(`Sell ${label} for ${total} coins?`)) return;
+    try {
+      setError(null);
+      const result = await sellShopItems({
+        expectedClosingTime: shop.closingTime,
+        selections: [selection],
+      });
+      setMessage(`Sold ${label} for ${result.totalValue} coins. ${result.remainingCoins} coins remain.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not complete that sale');
     }
   }
 
@@ -713,7 +781,14 @@ export default function WorkshopPanel({ roomId, headerActions }: WorkshopPanelPr
         busy={busy}
         onUseItem={(input) => void handleUseItem(input)}
       />
-      <ShopPanel shop={shop} busy={busy} onBuy={(item) => void handleBuyShopItem(item)} />
+      <ShopPanel
+        shop={shop}
+        busy={busy}
+        onBuy={(item) => void handleBuyShopItem(item)}
+        sellableItems={sellableItems}
+        sellableCards={sellableCards}
+        onSell={(selection) => void handleSellShopItems(selection)}
+      />
     </div>
   );
 }

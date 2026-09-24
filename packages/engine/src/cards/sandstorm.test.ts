@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { ATTACK_PHASE } from '../constants/phases.js';
+import { SANDSTORM_EFFECT } from '../constants/effect-types.js';
 import { randomCardHelpers } from './random.js';
 import Jinn from '../monsters/jinn.js';
 import { RandomCard } from './random.js';
@@ -144,5 +145,67 @@ describe('./cards/sandstorm.ts', () => {
 		const sandstorm = new SandstormCard();
 
 		expect((sandstorm as any).flavors.hits).to.be.an('array');
+	});
+
+	// Regression for 10b-bugs-fixed.md (two-roll-blocks-in-one-tick): the "already
+	// lost" branch fired `super.effect(...) && super.effect(...)` unawaited. A Promise
+	// is always truthy, so `&&` never actually short-circuited, and neither `hit()` was
+	// sequenced against the other.
+	describe('already-lost branch (a second Sandstorm on an already-confused target)', () => {
+		it('awaits each blast in sequence rather than firing them unawaited', async () => {
+			const sandstorm = new SandstormCard();
+			const player = new Jinn({ name: 'player' });
+			const target = new Jinn({ name: 'target' });
+			(target as any).encounterEffects = [{ effectType: SANDSTORM_EFFECT }];
+			(target as any).hp = 1000;
+
+			const targetProto = Object.getPrototypeOf(target);
+			const creatureProto = Object.getPrototypeOf(targetProto);
+			const realHit = creatureProto.hit;
+
+			const order: string[] = [];
+			const hitStub = sinon.stub(creatureProto, 'hit').callsFake(function (this: any, ...args: any[]) {
+				order.push('hit-start');
+				return new Promise(resolve => {
+					setTimeout(() => {
+						order.push('hit-end');
+						resolve(realHit.apply(this, args));
+					}, 20);
+				});
+			});
+
+			try {
+				const result = await sandstorm.effect(player, target);
+				expect(result).to.equal(true);
+			} finally {
+				hitStub.restore();
+			}
+
+			// Unawaited, racing calls would have produced
+			// ['hit-start', 'hit-start', 'hit-end', 'hit-end'].
+			expect(order).to.deep.equal(['hit-start', 'hit-end', 'hit-start', 'hit-end']);
+		});
+
+		it('does not apply the second blast once the target has died from the first', async () => {
+			const sandstorm = new SandstormCard();
+			const player = new Jinn({ name: 'player' });
+			const target = new Jinn({ name: 'target' });
+			(target as any).encounterEffects = [{ effectType: SANDSTORM_EFFECT }];
+			(target as any).hp = 1;
+
+			const targetProto = Object.getPrototypeOf(target);
+			const creatureProto = Object.getPrototypeOf(targetProto);
+			const hitSpy = sinon.spy(creatureProto, 'hit');
+
+			try {
+				const result = await sandstorm.effect(player, target);
+				expect(result).to.equal(false);
+			} finally {
+				hitSpy.restore();
+			}
+
+			expect((target as any).dead).to.equal(true);
+			expect(hitSpy.callCount).to.equal(1);
+		});
 	});
 });

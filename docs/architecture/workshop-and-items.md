@@ -62,6 +62,29 @@ resolution, encounter narrowing, application, and consumption remain in the engi
 Items whose actions ask their own question declare `requiresPrompt` and stay unavailable
 to the prompt-free web mutation. The Sorting Hat currently uses the Console or Discord.
 
+### Outcome narration (`announcements`)
+
+`game.useItem` also returns `announcements: string[]` — the player-facing text the engine's
+own `action()` produced for this one call, in publish order. An item narrates by emitting
+`'narration'` with the `channel` it was given (`TargetingScroll.action()`'s
+`getTargetingDetails()` line, `HealingPotion.action()`'s heal amount, …); the announcements
+handler (`announceNarration`) calls that `channel({ announce })` directly rather than
+publishing to the bus when a channel is present. `createSilentChannel` accepts an optional
+`announcements` array and pushes each `announce` string into it in addition to publishing
+the existing private event — the private event (audit trail) is unchanged, this is an
+additional, in-memory capture of the same text for the one call that built that channel
+instance. Because the channel is constructed fresh per mutation invocation, closed over
+that call's `commandId`/`userId`, the array cannot pick up another user's or another room's
+narration.
+
+`applied: false` (the item's own runtime condition was not met) means the action returned
+early and emitted no narration, so `announcements` is `[]` in that case — the Workshop uses
+`applied` first and only reads `announcements` when the item actually acted. A caller that
+supplies no collector (every other `createSilentChannel` call site) is unaffected; the
+parameter is additive. Some items also emit a second, un-channeled narration line straight
+to the public feed (e.g. the Lottery Ticket's celebratory line) — that one bypasses this
+collector by design, since it is already visible in the room's feed.
+
 ## Prompt-free mutation rule
 
 Workshop and Ring action mutations are awaited HTTP operations, so they must be short and
@@ -112,6 +135,53 @@ the mutation refuses and asks for a refresh instead of silently buying a differe
 Cards enter the character deck; items enter the character inventory; `commitShop()` stores
 the remaining room stock.
 
+### Selling
+
+`sellShopItems` (server) runs `sellToShop` (`packages/engine/src/items/store/sell-to-shop.ts`)
+on the same prompt-free, room-wide mutation lane as `buyShopItem` — the counterpart the item
+follow-ups roadmap called "Web selling". It mirrors the console's guided `sellItems`
+(`items/store/sell.ts`) exactly, and both now share pricing through `sell-pricing.ts`
+(`getSalePrice`/`getSaleTotal`, `round(cost * shop.priceOffset)`) so a console sale and a web
+sale of the same items in the same shop can never disagree.
+
+A selection names a `section` (`items` or `cards`), a `type` (display name, matched the way
+the console's named-answer path matches — case-insensitively, via `getItemKey`), and a
+`count`. `sellToShop` only ever reads `character.items` and `character.cards` — the
+character's own pocket and unequipped deck. A card currently equipped onto a monster's deck,
+or an item a monster is carrying, has already left those two arrays (see the inventory read
+model above), so there is nothing left to explicitly refuse: the console flow can't sell them
+either, for the same reason. Ownership is re-validated inside the mutation (not trusted from
+whatever the client last rendered), and an under-count selection refuses the whole call rather
+than selling a partial quantity.
+
+Both `sellToShop` and the console's `sellItems` remove the sold card via
+`items/helpers/remove-card-from-pool.ts` (splice `character.cards` by identity, then mirror
+`removeCard`'s persistence signal and `cardRemoved` event), never via `character.removeCard`
+directly. `Beastmaster.removeCard` also calls `monster.resetCards({ matchCard })` on every
+owned monster, which clears a monster's *entire* hand if it holds any card that is
+JSON-identical to the one being removed — a value check, not an identity check, so a plain
+`Hit` on a monster's equipped deck matched a completely different `Hit` instance being sold
+from the unequipped pool. That override exists for `removeCard` callers that actually need it;
+selling never does, since an equipped card was already spliced out of `character.cards` by
+identity when it was equipped (see the inventory read model above) — there is never a
+monster's card to reconcile from here. See `docs/roadmap/10b-bugs-fixed.md` #182.
+
+Like `purchaseShopItem`, the shop is re-read inside the serialized mutation and the closing-time
+token is revalidated before crediting coins: the price paid is `shop.priceOffset` *now*, not
+whatever a stale confirmation dialog displayed, and a rotated shop asks for a refresh instead
+of silently selling at a rate the player never confirmed. Sold cards/items are appended to the
+current room shop's stock (so another player can buy them back) via the same `commitShop()`
+call purchases use.
+
+The Workshop's Sell section groups the character's own items/cards by display name (mirroring
+how the shop's own stock groups identical listings) so selling several of one type is one
+row with a quantity, not one row per copy. `myInventory` exposes each item's raw `cost` and
+each unequipped card's cost (`cardCosts`, keyed by display name); the `shop` query exposes
+`sellOffset` (`shop.priceOffset`, read inside its existing serialized lane — selling price
+preview never gives `myInventory` its own reason to read `game.shop`). The Workshop combines
+`cost * sellOffset` to preview a price and show the confirmation dialog; `sellToShop` computes
+the authoritative price the same way, from the shop it re-reads at commit time.
+
 ## Client invalidation
 
 Every Workshop query and invalidation includes the active `roomId`. Successful mutations
@@ -131,5 +201,7 @@ state changes between render and mutation.
 - [ ] Shared ring/shop work stays in the room-wide lane.
 - [ ] First-run creation supplies every answer and pre-checks name collision.
 - [ ] Purchases revalidate the complete optimistic stock token in the mutation lane.
+- [ ] Sales revalidate ownership and the closing-time token in the mutation lane, and price
+      through the shared `sell-pricing.ts` helper, not a re-derived formula.
 - [ ] Cache invalidation carries the same `roomId` as the mutation.
 - [ ] Player rule changes update [`ITEMS.md`](../../ITEMS.md).

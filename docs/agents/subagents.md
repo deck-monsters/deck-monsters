@@ -9,7 +9,8 @@ tags: [agents, subagents, review]
 # Subagents
 
 When and how to delegate work to another agent. Written harness-neutrally: the tier table is
-the contract. Name a model when you dispatch; do not keep a dated model list here.
+the contract. Name a model when you dispatch. The example models in the tier table are dated
+guidance, not a whitelist.
 
 ## Why delegate
 
@@ -23,11 +24,16 @@ The orchestrator still owns the outcome. A subagent's report is evidence, not a 
 
 ## Tiers
 
-| Tier | Work it is for |
-|---|---|
-| 1 — lookup / mechanical | Codebase search, inventories, transcription from a complete spec, single-file mechanical fixes |
-| 2 — implement / review | Multi-file implementation from prose, writing tests, task-scoped review |
-| 3 — reason / design / debug / final review | Root-cause debugging, architecture, wording and product judgment, whole-branch review |
+| Tier | Work it is for | Example models and effort (September 2026) |
+|---|---|---|
+| Owner-initiated | The most complex or design-heavy problems, **started only by the owner** | Fable; Opus above medium effort; Sol above high effort; Astra |
+| 3 — reason / design / debug / final review | Orchestration, root-cause debugging, architecture, wording and product judgment, whole-branch review | Opus medium, Sol high, or equivalent |
+| 2 — implement / review | Multi-file implementation from prose, writing tests, task-scoped review | Sonnet medium, Sol medium, Terra high. Escalate to Sonnet high only when a task needs it |
+| 1 — lookup / mechanical | Codebase search, inventories, transcription from a complete spec, single-file mechanical fixes | Luna, Haiku, Grok, and similar cheap models |
+
+The example column goes stale as models change; the ranking rule is the contract. An agent
+never escalates itself or a subagent into the owner-initiated tier. Tier 1 models do no
+design, planning, or implementation from prose. They find, copy, and mechanically apply.
 
 Two rules that matter more than the table:
 
@@ -45,9 +51,33 @@ Two rules that matter more than the table:
 `debug`, `computerUse`, `bugbot`, `security-review`) plus an explicit `model` slug. Pick the
 type for the job shape and the slug for the tier.
 
-**Claude Code.** Subagents run through the Task tool, with reusable definitions in
-`.claude/agents/`. Models are chosen by alias — `haiku`, `sonnet`, `opus` — which map onto
-tiers 1, 2, and 3 respectively.
+**Claude Code.** Dispatch with the `Agent` tool. Set `subagent_type` (`Explore` for
+read-only sweeps, `general-purpose` for implementers and reviewers, `Plan` for design) and
+always set `model` (`haiku`, `sonnet`, `opus`), which map onto tiers 1, 2, and 3 at the
+effort levels in the tier table. Reusable
+definitions live in `.claude/agents/`. Other parameters that matter here:
+
+- `isolation: "worktree"` gives the agent its own git worktree on its own branch. Use it for
+  code tasks that run in parallel (see [the orchestrated pass](#the-orchestrated-pass)). The
+  agent then commits in its worktree, and the orchestrator cherry-picks the reviewed commit.
+  A fresh worktree has no `node_modules` or `dist/`, so the brief must start with
+  `pnpm install --frozen-lockfile && pnpm build`.
+- `run_in_background: true` returns at once and notifies the orchestrator on completion.
+  Do not poll the transcript file; it floods the orchestrator's context.
+- `SendMessage` to the finished agent resumes it with its context intact. Use it for fix
+  rounds (step 10).
+- Claude Code subagents may be refused a write to a "report" or "findings" file. Ask for
+  the report as the agent's **final message** instead. Explorers can still write data files
+  when the brief asks for data rather than a report.
+- In a cloud session, put briefs in the session scratchpad directory rather than `/tmp`.
+- A worktree starts from the repository's default branch, not from the orchestrator's
+  unpushed commits. A brief that depends on an earlier task's commit must say so. Land that
+  commit first, or have the implementer cherry-pick it.
+- Parallel agents share one usage quota. When it runs out, every running agent stops at the
+  same moment. Their worktrees and uncommitted edits survive, so after the reset, check
+  `git worktree list` and each worktree's `git status`. Then resume each agent with
+  `SendMessage` and a note of where it stopped. Re-dispatch only the agents that left
+  nothing on disk.
 
 **Codex and others.** Use whatever delegation mechanism the harness exposes. If it has no
 model parameter at all, compensate by splitting the work: make the mechanical parts small
@@ -58,9 +88,11 @@ fixed model will supply it.
 
 This is what has actually worked on this repo:
 
-1. **Brief and report as files under `/tmp`**, not pasted prose. A brief file can be long,
-   precise, and re-read by the subagent; a pasted one gets truncated and costs the
-   orchestrator context twice.
+1. **Briefs as files in scratch space** (`/tmp`, or the harness scratchpad), not pasted
+   prose. A brief file can be long, precise, and re-read by the subagent; a pasted one gets
+   truncated and costs the orchestrator context twice. Put the rules every implementer shares
+   (worktree rules, verification gate, report format) in one common file that each brief
+   references.
 2. **Explorers write findings to a file** and return a five-line summary. The orchestrator
    reads the summary and only opens the file if it needs the detail.
 3. **One implementer per set of files at a time.** Never two implementers on overlapping
@@ -125,6 +157,63 @@ This is what has actually worked on this repo:
     sprite motion as "static"; a strip of frames 200 ms apart settled it. The reusable
     rooms and the CDP-attach recipe are in
     [`docs/operations/local-testing.md`](../operations/local-testing.md).
+
+## The orchestrated pass
+
+This is the default shape for a batch of roadmap work. Pass 25 (the roadmap sweep, planned
+in [`25-roadmap-sweep.md`](../archive/roadmap/25-roadmap-sweep.md), now archived) worked this way.
+
+1. **Triage before planning.** A read-only Tier 2 explorer checks each candidate item
+   against the code. For each one it reports what is already done (with `file:line`), the
+   files the item would touch, its size, and what blocks it: a live device, telemetry, or a
+   product decision. Roadmap text goes stale. In pass 25 the "build a simulation harness"
+   item already existed as `packages/harness/`, and only its coin/XP output was missing.
+2. **Choose the tractable set.** Take items that need no device, no production data and no
+   open product call, and that do not share files, or can be ordered one after another.
+   Record deferred items and the reason for each in the plan's decisions, so the next pass
+   does not repeat the triage.
+3. **The orchestrator makes the judgment calls.** Wording, product trade-offs, and "is this
+   a bug or a contract?" are Tier 3 work. Decide in the plan, then hand the implementer the
+   exact decision, such as the replacement copy strings. Do not ask a Tier 2 implementer to
+   choose.
+4. **Parallel code tasks run in separate worktrees; shared docs stay with the orchestrator.**
+   Implementers write draft `10b-bugs-fixed.md` entries in their reports, not in the ledger
+   file. The orchestrator applies those entries and the roadmap status changes in each
+   task's checkpoint commit. Two tasks that touch the same source file are ordered one after
+   the other, never run in parallel.
+5. **Review each diff, then land it.** A read-only Tier 2 reviewer gets the diff as a file
+   (the procedure's step 11). The orchestrator reads the verdict and spot-checks the
+   artifact (step 7). Then it cherry-picks, runs the fast gate on the pass branch, and
+   commits the plan update.
+6. **Close with a Tier 3 whole-branch review** before the PR. It catches drift across tasks
+   that no task-scoped reviewer could see.
+
+## Budget
+
+Usage limits apply per time window, and every agent in a burst draws on the same limit.
+Pass 25 ran eight tasks with up to five Tier 2 agents at a time. Each agent reported 200k to
+400k tokens, and reviewers 120k to 150k. The pass hit the usage limit twice and had to be cut
+short. Usage grew with these multipliers, so cut them first:
+
+- **Keep a pass small.** Four or five tasks per PR, and at most **two or three agents
+  running at once**. More parallel agents do not finish sooner once the limit stops all of
+  them.
+- **Use a fresh worktree only when builds must run concurrently.** Each new worktree pays for
+  `pnpm install`, a full build, and often the full test gate. Run docs-only and web-only
+  tasks in the shared checkout, one after another.
+- **Implementers run the tests of the packages they changed and of the packages that
+  import them.** An engine change reaches `server`, `web`, and `harness` through `dist/`.
+  One Codex fix touched only engine code, ran only the engine suite, and pushed a red server
+  test. The orchestrator runs the full gate once, on the pass branch, before every push to the PR.
+- **Scale review to risk.** Engine concurrency, room scoping, persistence, and anything that
+  touches money deserve an independent reviewer. A copy change, a CSS rule, or a test-only
+  change gets an orchestrator read instead. Ask reviewers for probes and mutation tests only
+  when the claim they check is load-bearing. PR review (a human, or another harness such as
+  Codex) is the backstop for the rest.
+- **Bound triage.** Give the explorer a short candidate list and a tool-call budget. The
+  pass 25 triage of twelve items took 139 tool calls.
+- **Keep briefs lean.** Point the agent at the one or two docs its area needs, not the whole
+  trigger table, and ask for a short report.
 
 ## Anti-patterns
 

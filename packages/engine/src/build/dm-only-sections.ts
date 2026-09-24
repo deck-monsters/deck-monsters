@@ -1,10 +1,15 @@
 import { FIGHT_DELAY_SECONDS, MAX_MONSTERS, MIN_MONSTERS } from './player-handbook-content.js';
 
 /** Section titles present in root DMG.md but never in CARDS.md. */
+/**
+ * 'Admin Commands' (not '── Admin Commands'): the root DMG renders this as a `##`
+ * heading, not the in-game rule-line form, so the marker has to match the text alone —
+ * see the heading conversion in `build/markdown.ts`.
+ */
 export const DM_ONLY_MARKERS = [
 	'How to Run a Session',
 	'Operator Concurrency Notes',
-	'── Admin Commands',
+	'Admin Commands',
 	'Per-monster-type modifiers',
 	'Card-to-card pacing',
 ] as const;
@@ -88,6 +93,7 @@ export const OPERATOR_CONCURRENCY = `
 ── Operator Concurrency Notes ────────
 
 These rules prevent "commands ignored" and workshop/console interleaving bugs.
+
 Full detail: docs/architecture/engine-concurrency-and-timing.md
 
   • Interactive console commands serialize per roomId:userId — never room-wide.

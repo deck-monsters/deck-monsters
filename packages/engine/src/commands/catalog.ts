@@ -66,6 +66,17 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 	{ command: 'look at dm guide', description: 'Read the dungeon master guide', category: 'info' },
 ];
 
+/** Shared with `build/markdown.ts`'s command-reference renderer so the two never drift. */
+export const CATEGORY_LABELS: Record<CommandCategory, string> = {
+	monsters: 'Monsters',
+	ring: 'The Ring',
+	cards: 'Cards',
+	items: 'Items',
+	shop: 'The Shop',
+	character: 'Your Character',
+	info: 'Reference',
+};
+
 export function formatCommandList(): string {
 	const byCategory: Record<CommandCategory, CommandEntry[]> = {
 		monsters: [],
@@ -83,19 +94,9 @@ export function formatCommandList(): string {
 
 	const lines: string[] = ['Deck Monsters — Commands', ''];
 
-	const categoryLabels: Record<CommandCategory, string> = {
-		monsters: 'Monsters',
-		ring: 'The Ring',
-		cards: 'Cards',
-		items: 'Items',
-		shop: 'The Shop',
-		character: 'Your Character',
-		info: 'Reference',
-	};
-
 	for (const [cat, entries] of Object.entries(byCategory) as [CommandCategory, CommandEntry[]][]) {
 		if (entries.length === 0) continue;
-		lines.push(`-- ${categoryLabels[cat]} --`);
+		lines.push(`-- ${CATEGORY_LABELS[cat]} --`);
 		for (const e of entries) {
 			lines.push(`  ${e.command}`);
 			lines.push(`    ${e.description}`);

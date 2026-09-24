@@ -92,4 +92,58 @@ Turns immobilized resets on curse of loki.
 			expect((target as any).encounterEffects.length).to.equal(1);
 		});
 	});
+
+	// Regression for 10b-bugs-fixed.md (two-roll-blocks-in-one-tick): effect() used to
+	// fire both `gore()` calls unawaited (`this.gore(...); this.gore(...);`), so the
+	// second horn's hit could start racing the first's before it had resolved, and the
+	// card's own promise resolved without waiting for either.
+	it('awaits each gore in sequence rather than firing them unawaited', async () => {
+		const forkedMetalRod = new ForkedMetalRodCard();
+		const player = new Minotaur({ name: 'player' });
+		const target = new Basilisk({ name: 'target' });
+
+		const forkedMetalRodProto = Object.getPrototypeOf(forkedMetalRod);
+		const hornGoreProto = Object.getPrototypeOf(forkedMetalRodProto);
+		const immobilizeProto = Object.getPrototypeOf(hornGoreProto);
+		const hitProto = Object.getPrototypeOf(immobilizeProto);
+		const baseProto = Object.getPrototypeOf(hitProto);
+		const basiliskProto = Object.getPrototypeOf(target);
+		const creatureProto = Object.getPrototypeOf(basiliskProto);
+
+		const checkSuccessStub = sinon.stub(baseProto, 'checkSuccess');
+		const hitCheckStub = sinon.stub(forkedMetalRodProto, 'hitCheck');
+		const attackRoll = (forkedMetalRod as any).getAttackRoll(player, target);
+		checkSuccessStub.returns({ success: true, strokeOfLuck: false, curseOfLoki: false });
+		hitCheckStub.returns({ attackRoll, success: true, strokeOfLuck: false, curseOfLoki: false });
+
+		const order: string[] = [];
+		const realHit = creatureProto.hit;
+		const hitStub = sinon.stub(creatureProto, 'hit').callsFake(function (this: any, ...args: any[]) {
+			order.push('hit-start');
+			return new Promise(resolve => {
+				setTimeout(() => {
+					order.push('hit-end');
+					resolve(realHit.apply(this, args));
+				}, 20);
+			});
+		});
+
+		const ring: any = {
+			contestants: [{ monster: player }, { monster: target }],
+			channelManager: { sendMessages: () => Promise.resolve() },
+		};
+
+		try {
+			await forkedMetalRod.play(player, target, ring, ring.contestants);
+		} finally {
+			checkSuccessStub.restore();
+			hitCheckStub.restore();
+			hitStub.restore();
+		}
+
+		// Unawaited gore() calls would have raced, producing
+		// ['hit-start', 'hit-start', 'hit-end', 'hit-end']. Awaiting each in turn means
+		// the second hit cannot start until the first has fully resolved.
+		expect(order).to.deep.equal(['hit-start', 'hit-end', 'hit-start', 'hit-end']);
+	});
 });

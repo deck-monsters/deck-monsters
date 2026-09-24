@@ -31,6 +31,9 @@ type WorkshopInventory = {
   hasCharacter: boolean;
   monsters: WorkshopMonster[];
   unequippedDeck: string[];
+  // Raw shop cost per unequipped card, keyed by display name — see `ItemSummary.cost` and
+  // `ShopSummary.sellOffset` (ShopPanel.tsx combines the two to preview a sell price).
+  cardCosts: Record<string, number>;
   cardCompatibility: Record<string, string[]>;
   items: {
     character: ItemSummary[];
@@ -42,6 +45,7 @@ const EMPTY_INVENTORY: WorkshopInventory = {
   hasCharacter: false,
   monsters: [],
   unequippedDeck: [],
+  cardCosts: {},
   cardCompatibility: {},
   items: {
     character: [],
@@ -107,6 +111,13 @@ export function useDeckWorkshop(roomId?: string) {
       if (roomId) await shopQuery.refetch();
     },
   });
+  // Same refresh as buying: the character's inventory and the room shop both changed.
+  const sellShopItemsMutation = trpc.game.sellShopItems.useMutation({
+    onSuccess: async () => {
+      await invalidateWorkshop();
+      if (roomId) await shopQuery.refetch();
+    },
+  });
   const unequipCardMutation = trpc.game.unequipCard.useMutation(mutationOptions);
   const unequipManyMutation = trpc.game.unequipMany.useMutation(mutationOptions);
   const unequipAllMutation = trpc.game.unequipAll.useMutation(mutationOptions);
@@ -137,6 +148,7 @@ export function useDeckWorkshop(roomId?: string) {
   const inventory = (inventoryQuery.data ?? EMPTY_INVENTORY) as WorkshopInventory;
   const monsters = inventory.monsters ?? [];
   const unequippedDeck = inventory.unequippedDeck ?? [];
+  const cardCosts = inventory.cardCosts ?? {};
   const cardCompatibility = inventory.cardCompatibility ?? {};
   const items = inventory.items ?? EMPTY_INVENTORY.items;
 
@@ -148,6 +160,7 @@ export function useDeckWorkshop(roomId?: string) {
       inventoryQuery.isFetching ||
       shopQuery.isFetching ||
       buyShopItemMutation.isPending ||
+      sellShopItemsMutation.isPending ||
       unequipCardMutation.isPending ||
       unequipManyMutation.isPending ||
       unequipAllMutation.isPending ||
@@ -173,6 +186,7 @@ export function useDeckWorkshop(roomId?: string) {
       inventoryQuery.isFetching,
       shopQuery.isFetching,
       buyShopItemMutation.isPending,
+      sellShopItemsMutation.isPending,
       loadPresetMutation.isPending,
       moveCardMutation.isPending,
       moveManyMutation.isPending,
@@ -192,6 +206,7 @@ export function useDeckWorkshop(roomId?: string) {
     shuffleAvatars: () => characterCreationQuery.refetch(),
     monsters,
     unequippedDeck,
+    cardCosts,
     cardCompatibility,
     items,
     shop: shopQuery.data,
@@ -219,7 +234,8 @@ export function useDeckWorkshop(roomId?: string) {
       spawnMonsterMutation.error?.message ??
       useItemMutation.error?.message ??
       sendMonsterToRingMutation.error?.message ??
-      buyShopItemMutation.error?.message,
+      buyShopItemMutation.error?.message ??
+      sellShopItemsMutation.error?.message,
     refresh: () => Promise.all([inventoryQuery.refetch(), shopQuery.refetch()]),
     spawnMonster: (input: {
       type: number;
@@ -256,6 +272,13 @@ export function useDeckWorkshop(roomId?: string) {
     }) => {
       if (!roomId) throw new Error('Room not selected');
       return buyShopItemMutation.mutateAsync({ roomId, ...input });
+    },
+    sellShopItems: (input: {
+      expectedClosingTime: string;
+      selections: Array<{ section: 'items' | 'cards'; type: string; count: number }>;
+    }) => {
+      if (!roomId) throw new Error('Room not selected');
+      return sellShopItemsMutation.mutateAsync({ roomId, ...input });
     },
     equipCards: (input: { monsterName: string; cardNames: string[]; replaceAll?: boolean }) => {
       if (!roomId) throw new Error('Room not selected');

@@ -17,6 +17,8 @@ import {
 	isCommandRefusal,
 	purchaseShopItem,
 	randomAvatarChoices,
+	sellToShop,
+	type SellSection,
 	type ShopItemSection,
 } from '@deck-monsters/engine';
 import { buildQuickActions } from '../quick-actions.js';
@@ -106,6 +108,17 @@ type ItemSummary = {
 	// that rejects questions, so the client must not offer these as usable from the web —
 	// it would confirm and then fail every time.
 	requiresPrompt: boolean;
+	// Raw shop cost, intrinsic to the item and independent of the room's shop (unlike a
+	// buy/sell price, which needs the shop's current offset). The Workshop combines this
+	// with `shop.sellOffset` (`round(cost * sellOffset)`, the same math `sellToShop`
+	// commits with — see sell-pricing.ts) to preview what selling would pay, without this
+	// query having to read `game.shop` itself. `game.shop` may rotate and persist a fresh
+	// shop on read, so only the already-serialized `shop` procedure touches it — see
+	// docs/architecture/workshop-and-items.md#room-shop-and-optimistic-stock-token. Only
+	// items in `items.character` are actually sellable from the web; this is still
+	// computed for monster-carried items for shape uniformity, but the Workshop must not
+	// offer a Sell control for those.
+	cost: number;
 };
 
 type InventorySummary = {
@@ -115,6 +128,10 @@ type InventorySummary = {
 	hasCharacter: boolean;
 	monsters: InventoryMonsterSummary[];
 	unequippedDeck: string[];
+	// Raw shop cost for each unequipped card, keyed by display name (see `ItemSummary.cost`
+	// — same "combine with shop.sellOffset" contract applies). Cards of the same display
+	// name price identically (same `cost`), so one entry per name is sufficient.
+	cardCosts: Record<string, number>;
 	cardCompatibility: Record<string, string[]>;
 	items: {
 		character: ItemSummary[];
@@ -231,6 +248,11 @@ const summarizeShop = (
 		items: summarizeStock('items', shop.items, itemsAndCardsOffset, ownedItems),
 		cards: summarizeStock('cards', Array.isArray(shop.cards) ? shop.cards : [], itemsAndCardsOffset, ownedCards),
 		backRoom: summarizeStock('backRoom', shop.backRoom, shop.backRoomOffset, ownedItems),
+		// The rate `sellToShop` pays for a character's own card/item, at the shop's current
+		// offset — see `ItemSummary.cost` / `InventorySummary.cardCosts`. Unlike the buy
+		// prices above (`priceOffset * 2`), selling uses the bare offset — no markup — the
+		// same rate `sell.ts`'s console flow and `sell-to-shop.ts` both use.
+		sellOffset: shop.priceOffset,
 	};
 };
 
@@ -282,6 +304,7 @@ const summarizeItem = (
 			: expired
 				? 'All used up!'
 				: 'Usable an unlimited number of times.';
+	const cost = typeof record.cost === 'number' && Number.isFinite(record.cost) ? record.cost : 0;
 
 	return {
 		displayName: getDisplayName(item),
@@ -292,6 +315,7 @@ const summarizeItem = (
 			.map((entry) => entry.summary.name),
 		usableOnCharacter: canUseItemSafe(character, item),
 		requiresPrompt: typeof record.requiresPrompt === 'boolean' ? record.requiresPrompt : false,
+		cost,
 	};
 };
 
@@ -423,10 +447,20 @@ const summarizeInventory = ({
 		return all;
 	}, {});
 
+	const cardCosts = deck.reduce<Record<string, number>>((all, card) => {
+		const cardName = getDisplayName(card);
+		if (all[cardName] === undefined) {
+			const record = (card ?? {}) as Record<string, unknown>;
+			all[cardName] = typeof record.cost === 'number' && Number.isFinite(record.cost) ? record.cost : 0;
+		}
+		return all;
+	}, {});
+
 	return {
 		hasCharacter: true,
 		monsters: monsterSummaries,
 		unequippedDeck: deck.map((card) => getDisplayName(card)),
+		cardCosts,
 		cardCompatibility,
 		items: {
 			character: items.map((item) => summarizeItem(item, monsterEntries, character)),
@@ -531,10 +565,21 @@ function createSilentChannel({
 	eventBus,
 	userId,
 	commandId,
+	announcements,
 }: {
 	eventBus: EventBusPublisher;
 	userId: string;
 	commandId: string;
+	/**
+	 * Optional collector for this call's own announce text, in publish order. The channel
+	 * is constructed fresh per mutation invocation (closed over this call's `commandId` and
+	 * `userId`), so pushing here cannot leak another user's or another room's narration —
+	 * the array only ever sees announces from the one engine call that was handed this
+	 * channel. Used by `useItem` to surface the engine's own item narration (which strategy
+	 * a targeting scroll set, what a potion healed) to the web client instead of a generic
+	 * "Used X." — see docs/architecture/workshop-and-items.md.
+	 */
+	announcements?: string[];
 }) {
 	return async ({ announce, question }: SilentChannelMessage): Promise<unknown> => {
 		if (question) {
@@ -545,6 +590,7 @@ function createSilentChannel({
 		}
 
 		if (announce) {
+			announcements?.push(announce);
 			eventBus.publish({
 				type: 'announce',
 				scope: 'private',
@@ -1176,6 +1222,7 @@ export function createRouter(roomManager: RoomManager) {
 						hasCharacter: false,
 						monsters: [],
 						unequippedDeck: [],
+						cardCosts: {},
 						cardCompatibility: {},
 						items: { character: [], monsters: [] },
 					} satisfies InventorySummary;
@@ -1246,6 +1293,67 @@ export function createRouter(roomManager: RoomManager) {
 					ok: true as const,
 					itemName: getDisplayName(result.item),
 					price: result.price,
+					remainingCoins: result.remainingCoins,
+				};
+			}),
+
+		/**
+		 * The web counterpart of the console's guided sell flow — see
+		 * docs/architecture/workshop-and-items.md#room-shop-and-optimistic-stock-token and
+		 * item-followups.md "Web selling". Only the CHARACTER's own unequipped deck and
+		 * pocket items are sellable (never a monster's carried items, and never a card
+		 * currently equipped onto a monster's deck — both are simply absent from the two
+		 * arrays `sellToShop` reads, the same way the console flow can't reach them either).
+		 *
+		 * `expectedClosingTime` is the same optimistic token `buyShopItem` uses: the price
+		 * paid is `shop.priceOffset` re-read inside the serialized mutation, not whatever
+		 * was on screen when the player opened the confirmation — if the shop has rotated
+		 * since, the mutation refuses instead of silently selling at a rate the player never
+		 * confirmed.
+		 */
+		sellShopItems: protectedProcedure
+			.input(z.object({
+				roomId: z.string().uuid(),
+				expectedClosingTime: z.string().datetime(),
+				selections: z.array(z.object({
+					section: z.enum(['items', 'cards']),
+					type: z.string().min(1),
+					count: z.number().int().min(1).max(99),
+				})).min(1).max(20),
+			}))
+			.mutation(async ({ input, ctx }) => {
+				await roomManager.assertMember(ctx.userId, input.roomId);
+				const game = await roomManager.getGame(input.roomId);
+				const character = game.characters?.[ctx.userId];
+				// `sellToShop` removes items with `removeItem` and cards by identity from
+				// `character.cards` (never `removeCard`, which resets matching monster hands, #182).
+				if (!character || typeof character.removeItem !== 'function') {
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
+				}
+
+				const result = await runSerializedMutation(input.roomId, ctx.userId, async () =>
+					sellToShop({
+						character,
+						host: game,
+						selections: input.selections.map((selection) => ({
+							section: selection.section as SellSection,
+							type: selection.type,
+							count: selection.count,
+						})),
+						expectedClosingTime: input.expectedClosingTime,
+					}),
+				);
+
+				return {
+					ok: true as const,
+					sold: result.sold.map((line) => ({
+						section: line.section,
+						type: line.type,
+						count: line.count,
+						unitPrice: line.unitPrice,
+						total: line.total,
+					})),
+					totalValue: result.totalValue,
 					remainingCoins: result.remainingCoins,
 				};
 			}),
@@ -1337,7 +1445,14 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				// Collects this call's own narration (e.g. TargetingScroll.action's "From now on
+				// …" via getTargetingDetails, HealingPotion's "drinks … for N hp") so the web
+				// client can show what actually happened instead of a generic "Used X." — see
+				// docs/architecture/workshop-and-items.md#item-use-and-targets. The private
+				// announce events published below are unchanged; this is an additional capture
+				// of the same text, scoped to this one invocation.
+				const announcements: string[] = [];
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, announcements });
 				const results = (await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.useItems({
 						channel,
@@ -1365,6 +1480,7 @@ export function createRouter(roomManager: RoomManager) {
 					applied,
 					itemName: input.itemName,
 					monsterName: input.monsterName,
+					announcements,
 				};
 			}),
 

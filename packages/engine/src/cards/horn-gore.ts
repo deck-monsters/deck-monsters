@@ -1,6 +1,7 @@
 import { ImmobilizeCard } from './immobilize.js';
 import { sample } from '../helpers/random.js';
 import { chance } from '../helpers/chance.js';
+import { subEventDelay } from '../helpers/delay-times.js';
 import {
 	BASILISK,
 	GLADIATOR,
@@ -167,19 +168,30 @@ export class HornGore extends ImmobilizeCard {
 		});
 	}
 
-	async gore(player: any, target: any, hornNumber: number): Promise<any> {
+	async gore(player: any, target: any, ring: any, hornNumber: number): Promise<any> {
 		const { attackRoll, success, strokeOfLuck, curseOfLoki } = this.hitCheck(
 			player,
 			target,
 			hornNumber
 		);
+		// Mirrors HitCard.effect's pacing: a beat after every roll announcement — hit,
+		// miss, or curse — not just the hit path. Two horns share one effect() call, and
+		// without this the second horn's 'rolled' announcement landed in the same tick as
+		// the first whenever both missed (gore() previously awaited nothing on a miss).
+		// See docs/roadmap/10b-bugs-fixed.md (two-roll-blocks-in-one-tick).
+		await subEventDelay(ring?.pacingMultiplier);
 
 		if (success) {
 			this.increaseImmobilizeStrength(2);
 			const damageRoll = this.rollForDamage(player, target, strokeOfLuck);
+			// Same gap HitCard takes between the damage roll announcement and applying it —
+			// gore() used to skip straight from `rollForDamage`'s 'rolled' emit into
+			// `target.hit()`'s own 'hit' emit with nothing between them.
+			await subEventDelay(ring?.pacingMultiplier);
 			await target.hit(damageRoll.result, player, this);
 		} else if (curseOfLoki) {
 			const damageRoll = this.rollForDamage(target, player);
+			await subEventDelay(ring?.pacingMultiplier);
 			await player.hit(damageRoll.result, target, this);
 		}
 
@@ -226,8 +238,8 @@ export class HornGore extends ImmobilizeCard {
 		activeContestants: any
 	): Promise<any> {
 		this.resetImmobilizeStrength();
-		const horn1 = await this.gore(player, target, 1);
-		const horn2 = await this.gore(player, target, 2);
+		const horn1 = await this.gore(player, target, ring, 1);
+		const horn2 = await this.gore(player, target, ring, 2);
 		const chanceToImmobilize = horn1.success || horn2.success;
 
 		if (!player.dead && chanceToImmobilize) {

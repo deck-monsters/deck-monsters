@@ -49,6 +49,17 @@ async function main(): Promise<void> {
 		for (const w of warnings) process.stdout.write(`${w}\n`);
 		process.exitCode = 1;
 	}
+
+	// Loading `@deck-monsters/engine` leaves the process with 0 entries in
+	// `process._getActiveHandles()`/`_getActiveRequests()` yet it still won't exit on its
+	// own (reproduces even with zero simulated fights) — some dependency's dynamic
+	// `import()` (colors/emoji/monster/deck helpers in `characters/helpers/random.ts`)
+	// leaves the loader holding a reference Node's own handle/request accounting doesn't
+	// see. `cli-main.ts` already works around this with an explicit `process.exit(0)`;
+	// `harness`'s own `mocha --exit` is the same workaround for the test run. This script
+	// had neither, so a plain `node dist/scripts/sim-winrates.js` printed its full report
+	// and then hung indefinitely.
+	process.exit(process.exitCode ?? 0);
 }
 
 main().catch(err => {

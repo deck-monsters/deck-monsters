@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import ShopPanel, { type ShopSummary } from '../components/ShopPanel.js';
+import ShopPanel, { type SellableGroup, type ShopSummary } from '../components/ShopPanel.js';
 
 const shop: ShopSummary = {
   name: 'Moon Market', adjective: 'gilded', closingTime: '2030-01-01T00:00:00.000Z', coins: 75,
@@ -16,7 +16,11 @@ const shop: ShopSummary = {
     stockIndex: 0, stockCount: 1, section: 'backRoom', displayName: 'Sorting Hat', description: 'Choose a team.',
     stats: 'Usable 1 time.', price: 0, affordable: true, ownedCount: 0,
   }],
+  sellOffset: 0.8,
 };
+
+const sellableItems: SellableGroup[] = [{ displayName: 'Bandage', count: 2, cost: 10 }];
+const sellableCards: SellableGroup[] = [{ displayName: 'Whiskey Shot', count: 1, cost: 30 }];
 
 describe('ShopPanel', () => {
   it('shows room stock, ownership and affordability', () => {
@@ -52,5 +56,122 @@ describe('ShopPanel', () => {
     render(<ShopPanel shop={{ ...shop, cards: [] }} onBuy={vi.fn()} />);
     expect(screen.getByText('Cards for sale')).toBeInTheDocument();
     expect(screen.getAllByText('Sold out.')).toHaveLength(1);
+  });
+
+  describe('selling', () => {
+    it('shows a per-unit sell price for an owned item and card', () => {
+      render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={sellableItems} sellableCards={sellableCards} onSell={vi.fn()} />,
+      );
+      // round(10 * 0.8) = 8 coins each, 2 owned — default quantity 1.
+      expect(screen.getByText('8 coins each')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Sell for 8 coins' })).toBeInTheDocument();
+      // round(30 * 0.8) = 24 coins each.
+      expect(screen.getByText('24 coins each')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Sell for 24 coins' })).toBeInTheDocument();
+    });
+
+    // The confirmation step itself lives in the caller (WorkshopPanel — see
+    // workshopPanel.sellShopItems.test.tsx), matching where the buy flow's confirm lives;
+    // ShopPanel only reports the chosen quantity when its Sell button is pressed.
+    it('reports the chosen quantity for a multi-copy item', () => {
+      const onSell = vi.fn();
+      render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={sellableItems} sellableCards={sellableCards} onSell={onSell} />,
+      );
+
+      fireEvent.change(screen.getByLabelText('How many Bandage to sell'), { target: { value: '2' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Sell for 16 coins' }));
+
+      expect(onSell).toHaveBeenCalledWith({ section: 'items', type: 'Bandage', count: 2 });
+    });
+
+    it('does not offer a quantity picker for a single owned copy', () => {
+      render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={sellableItems} sellableCards={sellableCards} onSell={vi.fn()} />,
+      );
+      expect(screen.queryByLabelText('How many Whiskey Shot to sell')).not.toBeInTheDocument();
+    });
+
+    // Regression: the typed quantity was stored by name only, so after selling 2 of 3 the
+    // group of one kept "2", hid its input, and left Sell disabled.
+    it('drops a stale quantity when the owned count changes after a sale', () => {
+      const onSell = vi.fn();
+      const three: SellableGroup[] = [{ displayName: 'Bandage', count: 3, cost: 10 }];
+      const { rerender } = render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={three} sellableCards={[]} onSell={onSell} />,
+      );
+      fireEvent.change(screen.getByLabelText('How many Bandage to sell'), { target: { value: '2' } });
+
+      const one: SellableGroup[] = [{ displayName: 'Bandage', count: 1, cost: 10 }];
+      rerender(<ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={one} sellableCards={[]} onSell={onSell} />);
+
+      const sell = screen.getByRole('button', { name: /Sell for 8 coins/ });
+      expect(sell).toBeEnabled();
+      fireEvent.click(sell);
+      expect(onSell).toHaveBeenCalledWith({ section: 'items', type: 'Bandage', count: 1 });
+    });
+
+    it('shows "Nothing to sell." when the character owns none of that kind', () => {
+      render(<ShopPanel shop={shop} onBuy={vi.fn()} sellableCards={[]} onSell={vi.fn()} />);
+      expect(screen.getAllByText('Nothing to sell.')).toHaveLength(2);
+    });
+
+    // Regression: the sell quantity picker forwarded whatever the input held straight to
+    // `onSell`, but the server's `sellShopItems` schema requires an integer 1..99
+    // (`z.number().int().min(1).max(99)`). A decimal, an out-of-range value, or a count
+    // above 99 used to reach the mutation and fail there with an unexplained validation
+    // error instead of being caught by the UI.
+    it('disables the Sell button for a non-integer quantity', () => {
+      const onSell = vi.fn();
+      render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={sellableItems} sellableCards={sellableCards} onSell={onSell} />,
+      );
+
+      fireEvent.change(screen.getByLabelText('How many Bandage to sell'), { target: { value: '1.5' } });
+
+      // Bandage's Sell button is the first of the two rendered ("Your items" before
+      // "Your cards"); the Whiskey Shot button (a fixed quantity of 1, always valid)
+      // must stay unaffected.
+      const [bandageSellButton] = screen.getAllByRole('button', { name: /Sell for/ });
+      expect(bandageSellButton).toBeDisabled();
+      fireEvent.click(bandageSellButton);
+      expect(onSell).not.toHaveBeenCalled();
+    });
+
+    it('disables the Sell button for a quantity above what the character owns', () => {
+      const onSell = vi.fn();
+      render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={sellableItems} sellableCards={sellableCards} onSell={onSell} />,
+      );
+
+      fireEvent.change(screen.getByLabelText('How many Bandage to sell'), { target: { value: '3' } });
+
+      const [bandageSellButton] = screen.getAllByRole('button', { name: /Sell for/ });
+      expect(bandageSellButton).toBeDisabled();
+      fireEvent.click(bandageSellButton);
+      expect(onSell).not.toHaveBeenCalled();
+    });
+
+    it('caps the sellable quantity input at 99 even when the character owns more', () => {
+      const manyBandages: SellableGroup[] = [{ displayName: 'Bandage', count: 150, cost: 10 }];
+      render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={manyBandages} sellableCards={[]} onSell={vi.fn()} />,
+      );
+
+      expect(screen.getByLabelText('How many Bandage to sell')).toHaveAttribute('max', '99');
+    });
+
+    it('disables the Sell button once the field is cleared', () => {
+      const onSell = vi.fn();
+      render(
+        <ShopPanel shop={shop} onBuy={vi.fn()} sellableItems={sellableItems} sellableCards={sellableCards} onSell={onSell} />,
+      );
+
+      fireEvent.change(screen.getByLabelText('How many Bandage to sell'), { target: { value: '' } });
+
+      const [bandageSellButton] = screen.getAllByRole('button', { name: /Sell for/ });
+      expect(bandageSellButton).toBeDisabled();
+    });
   });
 });

@@ -2,6 +2,8 @@ import chooseItems from '../helpers/choose.js';
 import getClosingTime from './closing-time.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import { getChoices, resolveChoiceIndex } from '../../helpers/choices.js';
+import { removeCardFromPool } from '../helpers/remove-card-from-pool.js';
+import { getSaleTotal } from './sell-pricing.js';
 import type { ShopHost } from './shop.js';
 
 type ChooseCards = (opts: { cards: any[]; channel: any; showPrice?: boolean; priceOffset?: number }) => Promise<any[]>;
@@ -69,10 +71,7 @@ ${getChoices(SELL_MENU_LABELS)}`,
 			return announceAndThrow(channel, `Sorry, I didn't understand that. Please choose one of: ${SELL_MENU_LABELS.join(', ')}.`);
 		})
 		.then((choices: any[]) => {
-			const value = choices.reduce(
-				(total: number, choice: any) => total + Math.round(choice.cost * shop.priceOffset),
-				0
-			);
+			const value = getSaleTotal(choices, shop.priceOffset);
 
 			return channel({
 				question:
@@ -93,7 +92,10 @@ Would you like to sell? (yes/no)`
 						choices.forEach((choice: any) => {
 							if (choice.cardType) {
 								newCards.push(choice);
-								character.removeCard(choice);
+								// Not `character.removeCard` — see remove-card-from-pool.ts
+								// (bug #182): a real Beastmaster's `removeCard` also wipes any
+								// monster's whole hand that happens to hold a JSON-identical card.
+								removeCardFromPool(character, choice);
 							} else {
 								newItems.push(choice);
 								character.removeItem(choice);
