@@ -35,7 +35,7 @@ docs and move this file to `docs/archive/roadmap/`.
 | T0 | Triage candidate roadmap items against the code | all roadmap files | 2 (read-only) | Done | — |
 | T1 | Clean Markdown for generated player docs, plus a structural test | user report | 2 | Done | 8681a50, f043395 |
 | T2 | Real-fight coin/XP reward test, including after `restoreGame` (in-process path proven; production cause still open) | 10 §J | 2 | Done | 11c0cc9 |
-| T3 | Coin/XP distributions in the simulation harness; fix the stale harness bullet | 11 | 2 | In review | — |
+| T3 | Coin/XP distributions in the simulation harness; fix the stale harness bullet (#181) | 11 | 2 | Done | c46568e, 6f6f81c |
 | T4 | Sub-event gap for two-roll cards; paced fight opening (#178, #179); lucky-strike test fix (#180) | 10 §2, §3 | 2 | Done | 3a4dfa4, 316b5ee |
 | T5 | Show the engine's item-use narration in the web Workshop | item follow-ups | 2 | Done | 0251484 |
 | T6 | Room-scoped web selling | item follow-ups | 2 | In progress | — |

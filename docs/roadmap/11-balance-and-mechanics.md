@@ -20,12 +20,14 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Measurement first
 
-- [ ] **Simulation harness — owner: Engine.** Build repeatable, seeded fight simulations
-  that expose outcome, turn count, card use, XP, and coin distributions. Make it the gate
-  for mechanics proposals below.
+- [x] **Simulation harness — owner: Engine.** Seeded fight simulations exist in
+  `packages/harness`. Pass 25 added steady-state coin and XP distributions by outcome and a
+  1/5/20-fight new-player scenario (`sim:economy`). See the
+  [simulation harness](../reference/simulation-harness.md). Still missing: team and boss
+  scenarios for the Team XP item below.
 - [ ] **Economy telemetry — owner: Analytics.** Measure coins earned, spent, and held per
   active player-room; first-purchase time; outcome mix; and unaffordable expired stock.
-  Include new-player 1/5/20-fight and purchase-sink scenarios in the harness.
+  The harness has the new-player scenario; a purchase-sink scenario is still open.
 - [ ] **Progression review — owner: Engine/economy.** Reassess early XP, coin, and drop
   boosts from telemetry; prefer targeted onboarding adjustments over permanent payout
   inflation.

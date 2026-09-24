@@ -4251,3 +4251,29 @@ correct.
 **Tests**: `cards/lucky-strike.test.ts`, passing on six consecutive full-suite runs.
 
 **Status**: Fixed.
+
+### 181. Harness `sim:*` scripts hung after printing, and outcome buckets read the wrong object — FIXED
+
+`sim:winrates`, `sim:cardpower`, and `sim:levelscaling` printed their report and then never
+exited. While adding coin/XP measurement, the first outcome buckets also recorded no wins
+and no flees at all.
+
+**Root cause**: Loading `@deck-monsters/engine` leaves the Node process alive even with no
+active handles reported, and `simulate()` never disposed the last fight's transient
+contestants, because `ring.clearRing()` ran only at the start of each loop.
+`cli-main.ts` and `mocha --exit` already worked around the first cause; the three scripts did
+not. Separately, `Ring.addMonster()` copies the caller's contestant into its own object, and
+`fightConcludes()` sets `won`/`lost`/`fled` on that copy, so flags read back from the
+caller's object are always unset. No engine or server code reads flags that way; the harness
+was the only caller that did.
+
+**Fix**: Every `sim:*` script ends with an explicit `process.exit` that preserves any exit
+code it set, and both simulation loops clear the ring once more after the last fight.
+Outcomes come from `ring.fightResolved` participants, matched by `stableId`. A cancelled
+fight (`participants: []`) is counted in `cancelledFights` rather than crashing the batch.
+
+**Tests**: `packages/harness/src/harness.test.ts` (economy fields populated and
+reproducible under a fixed seed; a steady-state win pays exactly `COINS_PER_VICTORY` and a
+loss `COINS_PER_DEFEAT`). All four scripts exit cleanly when run by hand.
+
+**Status**: Fixed.

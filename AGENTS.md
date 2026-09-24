@@ -106,6 +106,7 @@ current contract.
 | [`docs/operations/devcontainer-auth.md`](docs/operations/devcontainer-auth.md) | Devcontainer setup, or GitHub credentials that must stay inside the container |
 | [`docs/reference/pixel-art.md`](docs/reference/pixel-art.md) | Sprite, canvas, or CSS pixel-art work |
 | [`docs/reference/player-agency.md`](docs/reference/player-agency.md) | Player agency, bounded items, or live-combat-control proposals |
+| [`docs/reference/simulation-harness.md`](docs/reference/simulation-harness.md) | A `sim:*` script, a `SimResult` field, or any balance claim that needs simulation evidence |
 | [`ITEMS.md`](ITEMS.md) | Player-facing item use, inventory, targeting scrolls, and shop rules |
 
 ## Generated player references
