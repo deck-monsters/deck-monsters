@@ -203,4 +203,38 @@ describe('@deck-monsters/harness', () => {
 
 		expect(second).to.deep.equal(first);
 	});
+
+	// Regression: `parseMonsterType` used to run after `Math.random` was swapped for the
+	// seeded PRNG and the deterministic-ring/draw env vars were set, but before this
+	// function's own try/finally — so an invalid `playerType`/`opponentType` threw straight
+	// past the restoration path. Every simulation run for the rest of the process then used
+	// the leftover seeded `Math.random` and the leftover env vars instead of its own.
+	it('simulateNewPlayerProgression() restores Math.random and env vars when playerType is invalid', async function () {
+		this.timeout(10_000);
+
+		const prevRandom = Math.random;
+		const prevRing = process.env.DECK_MONSTERS_DETERMINISTIC_RING;
+		const prevDraw = process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
+
+		await simulateNewPlayerProgression({
+			playerType: 'NotARealMonster',
+			checkpoints: [1],
+			seed: 4242,
+			roomId: 'harness-newplayer-invalid-type',
+		})
+			.then(() => expect.fail('expected a rejection'))
+			.catch((err: Error) => {
+				expect(err.message).to.contain('Unknown monster type');
+			});
+
+		expect(Math.random, 'Math.random must be restored after the rejection').to.equal(prevRandom);
+		expect(
+			process.env.DECK_MONSTERS_DETERMINISTIC_RING,
+			'DECK_MONSTERS_DETERMINISTIC_RING must be restored after the rejection',
+		).to.equal(prevRing);
+		expect(
+			process.env.DECK_MONSTERS_DETERMINISTIC_DRAW,
+			'DECK_MONSTERS_DETERMINISTIC_DRAW must be restored after the rejection',
+		).to.equal(prevDraw);
+	});
 });

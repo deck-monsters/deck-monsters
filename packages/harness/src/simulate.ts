@@ -563,51 +563,61 @@ export async function simulateNewPlayerProgression(
 
 	const prevRing = process.env.DECK_MONSTERS_DETERMINISTIC_RING;
 	const prevDraw = process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
+	const prevRandom = Math.random;
 	process.env.DECK_MONSTERS_DETERMINISTIC_RING = '1';
 	process.env.DECK_MONSTERS_DETERMINISTIC_DRAW = '1';
 
-	await engineReady;
-
-	const prevRandom = Math.random;
-	if (seed !== undefined) {
-		Math.random = mulberry32(seed);
-	}
-
-	const playerTypeParsed = typeof playerType === 'string' ? parseMonsterType(playerType) : playerType;
-	const opponentTypeParsed =
-		typeof opponentType === 'string' ? parseMonsterType(opponentType) : opponentType;
-
-	const game: Game = createTestGame(`${roomId}-batch`, { characters: {} });
-	const ring = game.getRing();
-	const charMap = game as unknown as { characters: Record<string, unknown> };
-
-	// Read the player's outcome from the engine's own `ring.fightResolved` computation
-	// rather than the `player` Contestant object's `won`/`lost`/`fled` flags: `Ring.addMonster()`
-	// copies the fields it's given into its own internal Contestant, so those flags — set on
-	// the ring's copy by `Ring.fightConcludes()` — never reach the object this function holds.
-	// See the matching comment in `simulate()`, where the same bug was caught by a real result
-	// mismatch (`res.winRates` disagreeing with a coins-by-outcome breakdown keyed on `c.won`).
-	let lastParticipants: NonNullable<FightResolvedPayload['participants']> = [];
-	const unsubFight = game.eventBus.subscribe(`sim-newplayer-fight:${subscriberRunId}:${roomId}`, {
-		deliver(ev: GameEvent) {
-			if (ev.type !== 'ring.fightResolved') return;
-			lastParticipants = (ev.payload as FightResolvedPayload).participants ?? [];
-		},
-	});
-
-	// Persistent economy state, threaded onto a fresh disposable character object each
-	// fight (see docblock above for why the character can't simply be reused as-is).
-	let coins = 0;
-	let characterXp = 0;
-	let battles = { total: 0, wins: 0, losses: 0 };
-	let lastDailyFightCoinDay: string | undefined;
-	let monsterXpGained = 0;
-	let wins = 0;
-	let losses = 0;
-
+	// `game`/`unsubFight` are populated inside the `try` below and guarded with `?.` in
+	// `finally` — everything fallible (including `parseMonsterType`, which used to run
+	// *after* the globals above were installed but before this `try`) must stay inside the
+	// restoration path. An invalid `playerType`/`opponentType` used to throw past the
+	// `try`/`finally` entirely, leaving `Math.random` and the deterministic-ring/draw env
+	// vars permanently overridden for the rest of the process — every simulation run after
+	// it silently used the wrong PRNG. See `simulate()` above, which never had this bug
+	// because its own `parseMonsterType` call already lived inside its `try`.
+	let game: Game | undefined;
+	let unsubFight: (() => void) | undefined;
 	const checkpointResults: NewPlayerCheckpoint[] = [];
 
 	try {
+		await engineReady;
+
+		if (seed !== undefined) {
+			Math.random = mulberry32(seed);
+		}
+
+		const playerTypeParsed = typeof playerType === 'string' ? parseMonsterType(playerType) : playerType;
+		const opponentTypeParsed =
+			typeof opponentType === 'string' ? parseMonsterType(opponentType) : opponentType;
+
+		game = createTestGame(`${roomId}-batch`, { characters: {} });
+		const ring = game.getRing();
+		const charMap = game as unknown as { characters: Record<string, unknown> };
+
+		// Read the player's outcome from the engine's own `ring.fightResolved` computation
+		// rather than the `player` Contestant object's `won`/`lost`/`fled` flags: `Ring.addMonster()`
+		// copies the fields it's given into its own internal Contestant, so those flags — set on
+		// the ring's copy by `Ring.fightConcludes()` — never reach the object this function holds.
+		// See the matching comment in `simulate()`, where the same bug was caught by a real result
+		// mismatch (`res.winRates` disagreeing with a coins-by-outcome breakdown keyed on `c.won`).
+		let lastParticipants: NonNullable<FightResolvedPayload['participants']> = [];
+		unsubFight = game.eventBus.subscribe(`sim-newplayer-fight:${subscriberRunId}:${roomId}`, {
+			deliver(ev: GameEvent) {
+				if (ev.type !== 'ring.fightResolved') return;
+				lastParticipants = (ev.payload as FightResolvedPayload).participants ?? [];
+			},
+		});
+
+		// Persistent economy state, threaded onto a fresh disposable character object each
+		// fight (see docblock above for why the character can't simply be reused as-is).
+		let coins = 0;
+		let characterXp = 0;
+		let battles = { total: 0, wins: 0, losses: 0 };
+		let lastDailyFightCoinDay: string | undefined;
+		let monsterXpGained = 0;
+		let wins = 0;
+		let losses = 0;
+
 		for (let f = 0; f < maxFights; f++) {
 			ring.clearRing();
 
@@ -688,9 +698,11 @@ export async function simulateNewPlayerProgression(
 	} finally {
 		// See the matching comment in `simulate()`'s finally block: the last fight's
 		// transient contestants otherwise keep live timers past the end of the run.
-		ring.clearRing();
-		unsubFight();
-		game.dispose();
+		// `game`/`unsubFight` may still be unset if setup itself threw (e.g. an invalid
+		// `playerType`/`opponentType`) before either was created — guard both.
+		game?.getRing().clearRing();
+		unsubFight?.();
+		game?.dispose();
 		Math.random = prevRandom;
 		if (prevRing === undefined) {
 			delete process.env.DECK_MONSTERS_DETERMINISTIC_RING;
