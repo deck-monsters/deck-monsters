@@ -1325,11 +1325,9 @@ export function createRouter(roomManager: RoomManager) {
 				await roomManager.assertMember(ctx.userId, input.roomId);
 				const game = await roomManager.getGame(input.roomId);
 				const character = game.characters?.[ctx.userId];
-				if (
-					!character ||
-					typeof character.removeItem !== 'function' ||
-					typeof character.removeCard !== 'function'
-				) {
+				// `sellToShop` removes items with `removeItem` and cards by identity from
+				// `character.cards` (never `removeCard`, which resets matching monster hands, #182).
+				if (!character || typeof character.removeItem !== 'function') {
 					throw new TRPCError({ code: 'NOT_FOUND', message: 'Character not found' });
 				}
 

@@ -538,11 +538,10 @@ describe('trpc/router card management procedures', () => {
 						if (index >= 0) return ownedItems.splice(index, 1)[0];
 						return undefined;
 					},
-					removeCard: (toRemove: unknown) => {
-						const index = ownedCards.indexOf(toRemove as never);
-						if (index >= 0) return ownedCards.splice(index, 1)[0];
-						return undefined;
-					},
+					// Cards leave by identity through `removeCardFromPool`, which reassigns
+					// `cards` and emits `cardRemoved`; `removeCard` must not be called (#182).
+					removeCard: () => { throw new Error('sell must not call removeCard'); },
+					emit: () => undefined,
 				},
 			},
 			shop: {

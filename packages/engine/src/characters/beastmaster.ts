@@ -134,6 +134,10 @@ class Beastmaster extends BaseCharacter {
 		return (item as any).usableWithoutMonster && super.canUseItem(item);
 	}
 
+	// Also resets every monster whose hand holds a value-equal card, which clears that whole
+	// hand. Do not use this to take a card out of the unequipped pool (selling, trading):
+	// equipped copies are separate instances, and selling one unequipped Hit this way wiped
+	// equipped decks (#182). Use `items/helpers/remove-card-from-pool.ts` instead.
 	removeCard(cardToRemove: CardInstance): CardInstance | undefined {
 		const card = super.removeCard(cardToRemove);
 		this.monsters.forEach(monster => monster.resetCards({ matchCard: card }));

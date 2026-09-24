@@ -201,8 +201,10 @@ short. Usage grew with these multipliers, so cut them first:
 - **Use a fresh worktree only when builds must run concurrently.** Each new worktree pays for
   `pnpm install`, a full build, and often the full test gate. Run docs-only and web-only
   tasks in the shared checkout, one after another.
-- **Implementers run only the tests of the package they changed.** The orchestrator runs the
-  full gate once, on the pass branch, before the PR.
+- **Implementers run the tests of the packages they changed and of the packages that
+  import them.** An engine change reaches `server`, `web`, and `harness` through `dist/`.
+  One Codex fix touched only engine code, ran only the engine suite, and pushed a red server
+  test. The orchestrator runs the full gate once, on the pass branch, before every push to the PR.
 - **Scale review to risk.** Engine concurrency, room scoping, persistence, and anything that
   touches money deserve an independent reviewer. A copy change, a CSS rule, or a test-only
   change gets an orchestrator read instead. Ask reviewers for probes and mutation tests only
