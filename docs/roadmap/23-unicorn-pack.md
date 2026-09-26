@@ -22,7 +22,7 @@ file to `docs/archive/roadmap/` when the pass closes.
 | 3 | `Sticketh` vertical slice with self-stick via the immobilize machinery | Done | ce3b048 |
 | 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Done | 862762b |
 | 5 | Distribution and generated references (`pnpm run build:docs`) | Done | 16ae4c2 |
-| 6 | Balance pass (`sim:winrates` plus the new `sim:unicorn`) | Done; exceptions need owner approval | 71c3d9d, c72b2e0 |
+| 6 | Balance pass (`sim:winrates` plus the new `sim:unicorn`) | Done (rerun after harness fix #183) | 71c3d9d, c72b2e0, 9d31af0 |
 | 7 | Live copy and pacing check (feed level; browser check open) | Done | 6e0d53f |
 
 ## Decisions from the spike
@@ -92,50 +92,43 @@ file to `docs/archive/roadmap/` when the pass closes.
 
 ## Balance evidence (slice 6)
 
-`sim:winrates` (level 5, 200 fights per pair) and `sim:unicorn` (100 fights per row, levels
-1/5/10/15/20, random legal decks and the thematic fixture, plus a mirror and a 2v2 team
-fight). Numbers below are the Unicorn's share of **decisive** fights; the fixture carries
-Flee and three heals, so 20–60% of its fights end without a winner.
+The first run of this section measured a harness bug: alphabetical card draws stacked
+Cleric decks with Blast (fixed-bug #183). These numbers are from the rerun with shuffled
+draws: `sim:winrates` at level 5 (200 fights per pair) and `sim:unicorn` (100 fights per
+row). Values are the Unicorn's share of **decisive** fights.
 
-| Opponent | Fixture L1 | L5 | L10 | L15 | L20 | Random deck L5 |
-|---|---|---|---|---|---|---|
-| Basilisk | 75 | 52 | 41 | 31 | 25 | 99 |
-| Gladiator | 85 | 64 | 75 | 57 | 49 | 97 |
-| Jinn | 100 | 85 | 78 | 79 | 64 | 96 |
-| Minotaur | 76 | 63 | 52 | 48 | 31 | 92 |
-| Weeping Angel | 27 | 9 | 0 | 0 | 0 | 64 |
+| Opponent | Random deck L1 | L5 | L10 | L15 | L20 | Test deck L1 | L5 | L10 | L15 | L20 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Basilisk | 59 | 62 | 80 | 71 | 87 | 50 | 27 | 39 | 27 | 28 |
+| Gladiator | 68 | 70 | 78 | 94 | 89 | 41 | 40 | 36 | 30 | 41 |
+| Jinn | 81 | 62 | 67 | 67 | 70 | 59 | 51 | 43 | 41 | 30 |
+| Minotaur | 58 | 52 | 76 | 85 | 77 | 43 | 33 | 36 | 24 | 33 |
+| Weeping Angel | 65 | 72 | 66 | 60 | 58 | 49 | 44 | 37 | 18 | 17 |
 
-Card rates (fixture, all rows): Sticketh hits 68% and sticks the Unicorn on 15% of plays
-(47% of misses); the Unconquerable Horn ward triggers in 23% of fights where it is armed
-(55% in the team fight); Horn of Proof finds something to cleanse 38% of the time;
-Dissonant Voice rattles 19% of saves; Gloaming Rest completes 77% of the time for an
-average 7.5 hp and is interrupted 20% of the time. Mirror (fixture vs fixture): 84% draws,
-because both decks run in step, so each rest resolves before the other side attacks and
-both play Flee on the same turn. Team fight (Unicorn + Gladiator vs Minotaur + Basilisk):
-member win rates 31 / 26 / 30 / 33%, 4% draws.
+In the level 5 `sim:winrates` matrix every pair lands in 39–65.5%; the Unicorn wins
+51.5–64% as the first contestant and its opponents 39.5–47.5% against it.
 
-### Exceptions for owner approval
+Card rates (test deck, all rows): Sticketh hits 73% and sticks the Unicorn on 11% of plays;
+the Unconquerable Horn ward triggers in 41% of fights where it is armed (55% in the team
+fight); Horn of Proof finds something to cleanse 35% of the time; Dissonant Voice rattles
+19% of saves; Gloaming Rest completes 65% of the time for an average 7.5 hp and is
+interrupted 32% of the time. Mirror match: 87% draws, because the two test decks run in
+step, so each rest resolves before the other side attacks and both play Flee on the same
+turn. Team fight (Unicorn + Gladiator vs Minotaur + Basilisk): member win rates 27 / 38 /
+15 / 44%, 4% draws.
 
-The brief's gate is 35–65% against every monster with the fixture deck. The owner has since
-said the target is a class power curve across levels, not 50/50 everywhere (see
-[11 — Balance](11-balance-and-mechanics.md#combat-design)); read these rows against that.
-They miss the band, and none is caused by the Unicorn cards themselves:
+### Findings
 
-1. **Weeping Angel (0–27%) and every random-deck row (89–100% against non-Clerics).**
-   Pre-existing: Blast is Cleric-only, `ABUNDANT`, never misses, and hits every opponent for
-   3 + caster level. On `main` the Weeping Angel already wins 94–98.5% against the other
-   four at levels 1 and 5. The Unicorn's random decks inherit the same pool, so they look
-   like the Angel's (and edge it, 56–68%). Tracked in
-   [11 — Balance](11-balance-and-mechanics.md#combat-design). Fixing Blast fixes both; the
-   alternative is moving the Unicorn off Cleric.
-2. **Jinn (64–100%).** Pre-existing: the Jinn wins only 27–46% against the rest of the
-   roster in `sim:winrates` on `main`.
-3. **Level drift (Basilisk and Minotaur fall to 25–31% at levels 15–20; 75–85% at level 1).**
-   The fixture is assigned directly, so at level 1 it skips the level gate (Horn of Proof is
-   level 2, Gloaming Rest level 3). At high levels it has three damage cards and nothing
-   that scales with level, while the opponents' random decks do. For a Cleric, being strong
-   early and fading late is the wrong curve. Revisit it after the Blast fix, since the
-   random-deck Unicorn gets its high-level strength from Blast.
+The balance target is a class power curve across levels, not 50/50 everywhere (see
+[11 — Balance](11-balance-and-mechanics.md#combat-design)), so none of these blocks merge:
+
+1. **The random-deck Unicorn is on the strong side, and its curve rises with level** (about
+   52–81% at levels 1–5, 58–94% at 15–20). The rising curve is right for a Cleric; the early
+   strength is a little high. Watch it in real play. If it proves too strong early, the first
+   levers are Sticketh's +1 to hit or `hpVariance` 1 → 0.
+2. **The 9-card test deck is weak (17–59%) and draws often.** Six of its nine cards are
+   utility and it carries Flee. It is a design demonstration, not a starter deck, so no
+   change.
 
 ## Live copy and pacing check (slice 7)
 
@@ -161,5 +154,5 @@ the other one-line self-buffs (Boost, Thick Skin, Battle Focus, Basic Shield), w
 the ring's card-to-card gap. They were left as they are.
 
 Still open before this pass is archived: a browser check of the workshop and ring with a
-real Unicorn (sprite, roster portrait, card text wrapping), and owner approval of the
-matchup exceptions above.
+real Unicorn (sprite, roster portrait, card text wrapping), and the anthology's compiler,
+year, and edition from its copyright page.

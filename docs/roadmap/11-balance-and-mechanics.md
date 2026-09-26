@@ -42,7 +42,8 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 class should have a power curve across levels: casters (Cleric, Bard) start fragile and grow
 very strong as they level; brutes (Barbarian, Fighter) are strongest early and stay useful
 but fall behind later. Judge a matchup against that curve, not against a flat band. The
-35–65% flag in `sim:winrates` and `sim:unicorn` marks rows to look at, not a pass/fail gate.
+35–65% flag in `sim:winrates` and `sim:unicorn` marks rows to look at, not a pass/fail gate,
+and matchup outcomes depend heavily on the ring (see the Blast notes below).
 A problem is a class that is dominant across the whole level range, or one whose curve runs
 the wrong way.
 
@@ -61,16 +62,27 @@ the wrong way.
   stat point of the player's choice.
 - [ ] **Card balance — owner: Cards.** Audit power by level tier; define intentional
   counterparts, saving throws, or class weaknesses where a card lacks counterplay.
-- [ ] **Blast makes Clerics dominate — owner: Cards.** Blast is Cleric-only, `ABUNDANT`,
-  never misses, and hits every opponent for 3 + caster level. Seeded harness runs on `main`
-  (100–200 fights) show the Weeping Angel winning 94–98.5% against the Basilisk, Gladiator,
-  and Minotaur at levels 1 and 5, and the Unicorn (also a Cleric) doing the same; Blast is
-  the top damage card in those fights from level 10 up. Strength at high level fits the
-  caster curve above. Winning 95% at level 1 does not: an early Cleric should be the fragile
-  one. So the fix should mostly take power away at low levels, for example a to-hit roll or
-  save, or a lower rarity, rather than flattening Blast's level scaling. Rerun
-  `sim:winrates` and `sim:unicorn` across levels 1–20 afterwards. See
-  [the Unicorn pass evidence](23-unicorn-pack.md#balance-evidence-slice-6).
+- [ ] **Blast and Cleric power — notes, no decision yet — owner: Cards.** An earlier report
+  that Clerics win ~95% with Blast came from a harness bug (fixed-bug #183), not from the
+  game. With realistic draws the level 5 matrix is 39–65.5% for every pair, and a spot check
+  (200 fights) had the Weeping Angel at 30% against a Basilisk and 43% against a Minotaur at
+  level 1. That fits the caster curve above and the owner's experience at levels 0–1.
+  Nothing needs changing now. Things to weigh if Blast is revisited:
+  - Blast's value depends on the ring. 1v1 it is 3 + level to one target. With four
+    opponents it deals four times that, but it also draws their attention: several Delayed
+    Hits that land on the caster can each hit harder than 3. Sandstorm (redirected
+    targets), Blink, invisibility, and braced AC change the trade again. Balance behaves
+    more like poker or chess than a damage table.
+  - The harness underrepresents that context. It runs mostly 1v1; cards play in deck order
+    with no player choices; boss decks drop Hit, Heal, Flee, Harden, and Whiskey Shot; and
+    targeting follows each monster's strategy scroll. Treat `sim:*` numbers as a smoke
+    alarm for outliers, not a verdict on a card.
+  - Before changing Blast, measure by level (`sim:levelscaling`, `sim:unicorn`) and in
+    three- and four-monster rings (`SimMonsterSpec.team` or a free-for-all). Check whether
+    the Cleric curve runs the right way: modest early, strong late.
+  - If it does need a change, the choices are a to-hit roll or save, a lower rarity, or less
+    level scaling. The first two soften it everywhere. The last one flattens the late-game
+    caster payoff the balance target wants to keep.
 - [ ] **Team XP — owner: Engine.** Simulate multi-player-versus-boss outcomes and revise the
   XP formula only if the data shows the current cross-team calculation is mis-scaled.
 - [ ] **Fight threads — owner: Events/connectors.** Render each fight's narration under an

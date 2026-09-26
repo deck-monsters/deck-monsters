@@ -291,7 +291,8 @@ Acceptance gates:
   gate enters the design;
 - the Unicorn's fixed-deck seeded matchup win rates follow a Cleric's power curve across
   levels (see the balance target in [11](11-balance-and-mechanics.md#combat-design)); rows
-  outside the harness review band (35–65%) are documented and approved by the owner;
+  outside the harness review band (35–65%) are documented with a reason, not treated as a
+  gate;
 - source-derived copy is original, short quotations are attributed in source comments, and
   the generated monster/card references pass the documentation checks; and
 - `pnpm build && pnpm typecheck && pnpm lint && pnpm test`, `pnpm docs:check`, and the relevant
