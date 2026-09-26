@@ -18,8 +18,8 @@ file to `docs/archive/roadmap/` when the pass closes.
 | # | Slice | Status | Commit |
 |---|---|---|---|
 | 1 | Source and mechanic spike (decision note below) | Done | this file |
-| 2 | Monster shell: `Unicorn` type, Cleric class, appearance variants, registry, spawn prompt, names, web sprite, harness roster | Done | _pending_ |
-| 3 | `Sticketh` vertical slice with self-stick via the immobilize machinery | Planned | |
+| 2 | Monster shell: `Unicorn` type, Cleric class, appearance variants, registry, spawn prompt, names, web sprite, harness roster | Done | 73e04d1 |
+| 3 | `Sticketh` vertical slice with self-stick via the immobilize machinery | Done | _pending_ |
 | 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Planned | |
 | 5 | Distribution and generated references (`pnpm run build:docs`) | Planned | |
 | 6 | Balance pass (`sim:winrates` plus the thematic fixture) | Planned | |
@@ -49,6 +49,16 @@ file to `docs/archive/roadmap/` when the pass closes.
 - **State.** Every new state lives on `creature.encounter` (modifiers or effects), which
   `endEncounter()` deletes, so nothing survives fight end, flee, death, or cancellation,
   and nothing is serialized. No new `game.on(...)` listener or timer is added.
+- **Sticketh.** Extends `ImmobilizeCard` only to reuse `ImmobilizeEffect`, freedom rolls,
+  fatigue, and cleanup. Charge: 1d20 + DEX + 1 vs AC for 1d10 + STR. A natural 1 on the
+  charge is a miss (no fling-back self-damage). After any miss the Unicorn makes a
+  1d20 + STR save against the target's DEX (a nimbler foe sells the feint better); on a
+  failure they hold themself with freedom 1d20 + STR vs their own STR − 3 per turn stuck.
+  The self-hold bypasses `immobilize()`, so Unconquerable Horn never cancels it. Two
+  `ImmobilizeCard` hooks, `emitHeldEffect` and `getFreedomCommentary`, let it narrate
+  "horn stuck in the timber" instead of "X is stuck by X"; the default text is unchanged.
+  It is seeded in the starting deck beside the other monster signatures, rare in drops,
+  and back-room only in the shop.
 - **Citation gap.** The supplied anthology's title, editor, edition, and pages were not
   available in this environment. Card and monster source comments cite the primary texts
   (Ctesias, Pliny, Aelian, Topsell, Spenser), which are public domain. Recording the

@@ -44,6 +44,7 @@ import { RandomCard } from '../random.js';
 import { Rehit } from '../rehit.js';
 import { SandstormCard } from '../sandstorm.js';
 import { ScotchCard } from '../scotch.js';
+import { StickethCard } from '../sticketh.js';
 import { SurvivalKnifeCard } from '../survival-knife.js';
 import { ThickSkinCard } from '../thick-skin.js';
 import { TurkeyThighCard } from '../turkey-thigh.js';
@@ -98,6 +99,7 @@ const all = [
 	Rehit,
 	SandstormCard,
 	ScotchCard,
+	StickethCard,
 	SurvivalKnifeCard,
 	ThickSkinCard,
 	TurkeyThighCard,

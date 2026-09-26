@@ -62,7 +62,7 @@ describe('monsters/unicorn', () => {
 	it('keeps generated appearance through a hydration round trip', async () => {
 		await monsterHydrateReady;
 		const original = new Unicorn({ name: 'Nola' });
-		const restored = hydrateMonster(JSON.parse(JSON.stringify(original)));
+		const restored = hydrateMonster(JSON.parse(JSON.stringify(original))) as Unicorn;
 
 		expect(restored).to.be.instanceOf(Unicorn);
 		expect(restored.description).to.equal(original.description);

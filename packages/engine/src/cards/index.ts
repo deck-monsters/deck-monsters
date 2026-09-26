@@ -49,6 +49,7 @@ export { Rehit } from './rehit.js';
 export { ReviveCard } from './revive.js';
 export { SandstormCard } from './sandstorm.js';
 export { ScotchCard } from './scotch.js';
+export { StickethCard } from './sticketh.js';
 export { SurvivalKnifeCard } from './survival-knife.js';
 export { TestCard } from './test.js';
 export { ThickSkinCard } from './thick-skin.js';

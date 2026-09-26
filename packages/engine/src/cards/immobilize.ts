@@ -227,32 +227,56 @@ ${ongoingDamageText}`;
 		return true;
 	}
 
+	/**
+	 * Announces, at the start of the held creature's turn, who is holding them. A hook so
+	 * a self-inflicted hold (Sticketh's horn stuck in the timber) can say so instead of
+	 * rendering "X is currently stuck by X".
+	 */
+	emitHeldEffect(player: any, target: any, ring: any): void {
+		this.emit('effect', {
+			effectResult: `${this.icon} ${this.actions.IMMOBILIZED} by`,
+			player,
+			target,
+			ring,
+		});
+	}
+
+	/** Commentary on a freedom roll's natural 20, natural 1, or tie. Hook for the same reason. */
+	getFreedomCommentary(
+		{ strokeOfLuck, curseOfLoki, tie }: { strokeOfLuck: boolean; curseOfLoki: boolean; tie: boolean },
+		player: any,
+		target: any
+	): string | undefined {
+		if (strokeOfLuck) {
+			return `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
+		} else if (curseOfLoki) {
+			return `${target.givenName} rolled a natural 1. ${player.givenName} improves ${player.pronouns.his} cruel hold on ${target.pronouns.him}`;
+		} else if (tie) {
+			return 'Miss... Tie goes to the defender.';
+		}
+		return undefined;
+	}
+
 	getImmobilizeEffect(player: any, target: any, ring: any, _activeContestants?: any): any {
 		const immobilize = this;
 		const ImmobilizeEffect = async ({ card, phase }: any) => {
 			if (phase === ATTACK_PHASE) {
 				if (!player.dead) {
-					this.emit('effect', {
-						effectResult: `${this.icon} ${this.actions.IMMOBILIZED} by`,
-						player,
-						target,
-						ring,
-					});
+					this.emitHeldEffect(player, target, ring);
 
 					const freedomRoll = immobilize.getFreedomRoll(player, target);
 					const freedomThreshold = this.getFreedomThreshold(player, target);
 					const { success, strokeOfLuck, curseOfLoki, tie } =
 						this.checkSuccess(freedomRoll, freedomThreshold);
-					let commentary: string | undefined;
 
-					if (strokeOfLuck) {
-						commentary = `${target.givenName} rolled a natural 20 and violently breaks free from ${player.givenName}.`;
-					} else if (curseOfLoki) {
+					if (curseOfLoki) {
 						target.encounterModifiers.immobilizedTurns = 0;
-						commentary = `${target.givenName} rolled a natural 1. ${player.givenName} improves ${player.pronouns.his} cruel hold on ${target.pronouns.him}`;
-					} else if (tie) {
-						commentary = 'Miss... Tie goes to the defender.';
 					}
+					const commentary = this.getFreedomCommentary(
+						{ strokeOfLuck, curseOfLoki, tie },
+						player,
+						target
+					);
 
 					this.emit('rolled', {
 						reason: `and needs ${freedomThreshold + 1} or higher to break free.`,
