@@ -67,7 +67,8 @@ file to `docs/archive/roadmap/` when the pass closes.
   and a free-for-all ring event makes everyone an opponent. It does not re-arm in the same
   fight and does not stack.
 - **Horn of Proof.** Unicorn or Cleric, rare, level 2. Removes the first of: a hold, the
-  harshest negative encounter stat, or one queued ring Bad Batch (others stay queued); then heals a fixed 3 (below Heal's
+  harshest negative encounter stat (not counting a Gloaming Rest's own temporary −2 AC,
+  which the rest gives back itself), or one queued ring Bad Batch (others stay queued); then heals a fixed 3 (below Heal's
   1d4 + INT, which also scales with level). Self-targeted like Heal; ally targeting waits
   for a team-heal targeting rule, which no card has today. A held monster's own card never
   plays, so the hold case only applies when confusion turns the card on someone else; the

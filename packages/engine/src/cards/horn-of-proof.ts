@@ -3,7 +3,8 @@ import { subEventDelay } from '../helpers/delay-times.js';
 import { UNICORN } from '../constants/creature-types.js';
 import { CLERIC } from '../constants/creature-classes.js';
 import { HEAL } from '../constants/card-classes.js';
-import { BAD_BATCH_EFFECT } from '../constants/effect-types.js';
+import { BAD_BATCH_EFFECT, GLOAMING_REST_EFFECT } from '../constants/effect-types.js';
+import { REST_AC_PENALTY } from './gloaming-rest.js';
 import { RARE } from '../helpers/probabilities.js';
 import { CHEAP } from '../helpers/costs.js';
 
@@ -67,10 +68,17 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 	}
 
 	cleanseCurse(target: any): boolean {
+		// A Gloaming Rest in progress holds its own temporary -2 on ac and gives it back when
+		// the rest resolves. That is not a curse: lifting it here would leave the rest to add
+		// its 2 back on top, a free +2 for the rest of the fight. Count only what lies beyond it.
+		const resting = target.encounterEffects.some(
+			(effect: any) => effect.effectType === GLOAMING_REST_EFFECT
+		);
 		let worstStat: string | undefined;
 		let worstAmount = 0;
 		for (const stat of CURSABLE_STATS) {
-			const amount = (target.encounterModifiers[stat] as number) || 0;
+			let amount = (target.encounterModifiers[stat] as number) || 0;
+			if (stat === 'ac' && resting) amount = Math.min(0, amount + REST_AC_PENALTY);
 			if (amount < worstAmount) {
 				worstStat = stat;
 				worstAmount = amount;

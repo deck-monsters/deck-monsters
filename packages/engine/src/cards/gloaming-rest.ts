@@ -13,7 +13,7 @@ import { REASONABLE } from '../helpers/costs.js';
 
 const { roll } = chance;
 
-const REST_AC_PENALTY = 2;
+export const REST_AC_PENALTY = 2;
 const REST_HEALTH_DICE = '3d4';
 
 /*

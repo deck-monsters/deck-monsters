@@ -7,7 +7,7 @@ import Unicorn from '../monsters/unicorn.js';
 import Gladiator from '../monsters/gladiator.js';
 import WeepingAngel from '../monsters/weeping-angel.js';
 import Jinn from '../monsters/jinn.js';
-import { BAD_BATCH_EFFECT } from '../constants/effect-types.js';
+import { BAD_BATCH_EFFECT, GLOAMING_REST_EFFECT } from '../constants/effect-types.js';
 import { CLERIC } from '../constants/creature-classes.js';
 import { UNICORN } from '../constants/creature-types.js';
 
@@ -74,6 +74,19 @@ describe('./cards/horn-of-proof.ts Horn of Proof', () => {
 		expect(unicorn.encounterModifiers.str).to.equal(0);
 		expect(unicorn.encounterModifiers.dex).to.equal(-1);
 		expect(unicorn.encounterModifiers.ac).to.equal(2);
+	});
+
+	it('does not mistake a Gloaming Rest penalty for a curse', async () => {
+		const rest = Object.assign(() => undefined, { effectType: GLOAMING_REST_EFFECT });
+		unicorn.encounterEffects = [rest];
+		unicorn.encounterModifiers.ac = -2; // the rest's own penalty, nothing more
+
+		await new HornOfProofCard().effect(unicorn, unicorn, ring);
+		expect(unicorn.encounterModifiers.ac).to.equal(-2);
+
+		unicorn.encounterModifiers.ac = -3; // the rest's -2 plus a -1 Soften
+		await new HornOfProofCard().effect(unicorn, unicorn, ring);
+		expect(unicorn.encounterModifiers.ac).to.equal(-2);
 	});
 
 	it('otherwise pours away one Bad Batch waiting in the ring, and only one', async () => {

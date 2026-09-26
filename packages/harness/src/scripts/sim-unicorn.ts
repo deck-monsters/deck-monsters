@@ -102,7 +102,7 @@ const isUnicorn = (creature: unknown): boolean =>
  * Weeping Angels (Cleric) can also play Horn of Proof and Gloaming Rest, and Jinn (Bard)
  * Dissonant Voice, so every counter only counts a play made by a Unicorn. Methods that do
  * not receive the acting monster are credited through the per-play card clone the Unicorn
- * played, recorded in `unicornPlays` when its `effect()` (or `rest()`) starts.
+ * played, recorded in `unicornPlays` when its `effect()` starts.
  */
 const unicornPlays = new WeakSet<object>();
 
@@ -177,11 +177,14 @@ function instrument(): void {
 	});
 
 	const rest = proto('Gloaming Rest');
+	// `rest()` receives whoever the rest lands on, which Sandstorm can redirect; the acting
+	// monster is `effect()`'s player.
+	wrap(rest, 'effect', (original, self, args) => {
+		if (isUnicorn(args[0])) unicornPlays.add(self as object);
+		return original.apply(self, args);
+	});
 	wrap(rest, 'rest', (original, self, args) => {
-		if (isUnicorn(args[0])) {
-			unicornPlays.add(self as object);
-			counters.restsBegun += 1;
-		}
+		if (unicornPlays.has(self as object)) counters.restsBegun += 1;
 		return original.apply(self, args);
 	});
 	wrap(rest, 'emit', (original, self, args) => {
