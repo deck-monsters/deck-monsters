@@ -119,6 +119,51 @@ describe('@deck-monsters/harness', () => {
 		expect(res.xpPerMonster.min).to.be.at.least(0);
 	});
 
+	it('simulate() with teams never credits both sides of a fight', async function () {
+		this.timeout(60_000);
+
+		const res = await simulate({
+			monsters: [
+				{ type: 'Unicorn', level: 5, team: 'Laurel' },
+				{ type: 'Gladiator', level: 5, team: 'Laurel' },
+				{ type: 'Minotaur', level: 5, team: 'Gorge' },
+				{ type: 'Basilisk', level: 5, team: 'Gorge' },
+			],
+			fights: 10,
+			seed: 11,
+			roomId: 'harness-teams',
+		});
+		const w = (label: string) => res.winRates[label] ?? 0;
+
+		// Every contestant used to start on the boss team, so each fight ended at once with
+		// all four credited a win. Opposing members can never both win the same fight.
+		for (const [ally, foe] of [['Sim 1', 'Sim 3'], ['Sim 1', 'Sim 4'], ['Sim 2', 'Sim 3'], ['Sim 2', 'Sim 4']]) {
+			expect(w(ally!) + w(foe!), `${ally} + ${foe}`).to.be.at.most(100);
+		}
+		expect(res.avgRounds).to.be.greaterThan(1);
+	});
+
+	it('simulate() runs the Unicorn thematic fixture deck without cancelled fights', async function () {
+		this.timeout(60_000);
+
+		const res = await simulate({
+			monsters: [
+				{
+					type: 'Unicorn',
+					level: 5,
+					deck: ['Sticketh', 'Sticketh', 'Horn of Proof', 'Unconquerable Horn', 'Dissonant Voice', 'Gloaming Rest', 'Heal', 'Fists of Virtue', 'Flee'],
+				},
+				{ type: 'WeepingAngel', level: 5 },
+			],
+			fights: 10,
+			seed: 12,
+			roomId: 'harness-unicorn-fixture',
+		});
+
+		expect(res.cancelledFights).to.equal(0);
+		expect(res.avgDamagePerCard).to.have.property('Sticketh');
+	});
+
 	it('simulate() pays a win more coins than a loss (same fixed-seed run)', async function () {
 		this.timeout(30_000);
 

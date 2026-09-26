@@ -23,8 +23,9 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 - [x] **Simulation harness — owner: Engine.** Seeded fight simulations exist in
   `packages/harness`. Pass 25 added steady-state coin and XP distributions by outcome and a
   1/5/20-fight new-player scenario (`sim:economy`). See the
-  [simulation harness](../reference/simulation-harness.md). Still missing: team and boss
-  scenarios for the Team XP item below.
+  [simulation harness](../reference/simulation-harness.md). `SimMonsterSpec.team` now runs
+  team fights under last-team victory; a boss scenario for the Team XP item below is still
+  missing.
 - [ ] **Economy telemetry — owner: Analytics.** Measure coins earned, spent, and held per
   active player-room; first-purchase time; outcome mix; and unaffordable expired stock.
   The harness has the new-player scenario; a purchase-sink scenario is still open.
@@ -52,6 +53,13 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   stat point of the player's choice.
 - [ ] **Card balance — owner: Cards.** Audit power by level tier; define intentional
   counterparts, saving throws, or class weaknesses where a card lacks counterplay.
+- [ ] **Blast makes Clerics dominate — owner: Cards.** Blast is Cleric-only, `ABUNDANT`,
+  never misses, and hits every opponent for 3 + caster level. Seeded harness runs on `main`
+  (100–200 fights) show the Weeping Angel winning 94–98.5% against the Basilisk, Gladiator,
+  and Minotaur at levels 1 and 5, and the Unicorn (also a Cleric) doing the same; Blast is
+  the top damage card in those fights from level 10 up. Decide between a to-hit roll or save,
+  a lower rarity, or less level scaling, then rerun `sim:winrates` and `sim:unicorn`. See
+  [the Unicorn pass evidence](23-unicorn-pack.md#balance-evidence-slice-6).
 - [ ] **Team XP — owner: Engine.** Simulate multi-player-versus-boss outcomes and revise the
   XP formula only if the data shows the current cross-team calculation is mis-scaled.
 - [ ] **Fight threads — owner: Events/connectors.** Render each fight's narration under an

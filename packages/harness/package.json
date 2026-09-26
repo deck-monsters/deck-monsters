@@ -14,7 +14,8 @@
     "sim:winrates": "node dist/scripts/sim-winrates.js",
     "sim:cardpower": "node dist/scripts/sim-cardpower.js",
     "sim:levelscaling": "node dist/scripts/sim-levelscaling.js",
-    "sim:economy": "node dist/scripts/sim-economy.js"
+    "sim:economy": "node dist/scripts/sim-economy.js",
+    "sim:unicorn": "node dist/scripts/sim-unicorn.js"
   },
   "dependencies": {
     "@deck-monsters/engine": "workspace:*"

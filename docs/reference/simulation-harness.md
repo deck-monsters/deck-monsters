@@ -167,6 +167,7 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 | `sim:cardpower` | Average damage dealt per card type; top/bottom 10%. | ~20s |
 | `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. | ~20s |
 | `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. | ~10s |
+| `sim:unicorn` | The Unicorn against every monster at levels 1/5/10/15/20 with random decks and the thematic fixture deck, plus a mirror and a 2v2 team fight. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and card-level rates (Sticketh stick rate, ward triggers, cleanses, rattles, rest completion). Flags fixture rows outside 35–65% of decisive fights. `SIM_UNICORN_FIGHTS` sets fights per row (default 100). | ~2 min |
 
 Each of these is `node dist/scripts/<name>.js` — run `pnpm --filter @deck-monsters/harness
 build` first. **Every one of them calls `process.exit(...)` at the end of `main()`.** Loading
@@ -181,6 +182,23 @@ this doc's change and hung indefinitely after printing their reports when run as
 `node dist/scripts/…` (rather than under a harness that kills the process after it sees the
 expected output) — they now call `process.exit(0)` (or `process.exitCode ?? 0` for
 `sim:winrates`, which sets a non-zero `exitCode` on a balance warning) too.
+
+## Team fights
+
+`SimMonsterSpec.team` puts a contestant on a faction. When any spec sets one, `simulate()`
+runs every fight under a harness-only ring event whose only effect is `victoryMode:
+'last-team'`, the mode Common Cause and House War use. The team is written to both the
+character and the monster: `randomContestant` puts every harness contestant on the boss
+team, and `factionOf` reads the monster's team before the character's, so writing only the
+character left all four contestants on one faction and every fight ended at once with every
+contestant credited a win. `winRates` stays per contestant, and a team win credits every
+surviving member.
+
+## Card-level counters
+
+`sim:unicorn` counts card events by wrapping the card classes' prototype methods (via
+`getCardClassByTypeName`) inside its own process. Nothing in the engine is instrumented for
+this. Prefer that pattern over adding counters to engine code.
 
 ## Adding a new economy/balance measurement
 
