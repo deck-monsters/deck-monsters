@@ -101,7 +101,7 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 		// One cleanse removes one batch; any others stay queued.
 		ring.encounterEffects = [...effects.slice(0, index), ...effects.slice(index + 1)];
 		this.emit('narration', {
-			narration: `${this.icon} ${target.givenName} dips the horn in every cup in the ring. The bad batch is found out and poured away.`,
+			narration: `${this.icon} ${target.givenName} dips the horn in the cups in the ring. One bad batch is found out and poured away.`,
 		});
 		return true;
 	}

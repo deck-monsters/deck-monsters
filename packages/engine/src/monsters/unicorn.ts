@@ -1,5 +1,6 @@
 import { sample } from '../helpers/random.js';
 import { agree } from '../helpers/pronouns.js';
+import { capitalize } from '../helpers/capitalize.js';
 import { CLERIC } from '../constants/creature-classes.js';
 import { UNICORN } from '../constants/creature-types.js';
 import BaseMonster from './base.js';
@@ -124,7 +125,10 @@ class Unicorn extends BaseMonster {
 	}
 
 	get description(): string {
-		return `${article(this.build)} ${this.build} unicorn with a coat of ${this.color} and ${article(this.horn)} ${this.horn} horn. One witness swears that ${this.witnessDetail}; the next account will disagree.`;
+		// The coat gets a sentence of its own: player-chosen colours often carry their own
+		// "with" (the spawn prompt's own example is "ivory white with a dark-red head"), and
+		// "with a coat of … with a … and a … horn" read badly in a live check.
+		return `${article(this.build)} ${this.build} unicorn bearing ${article(this.horn)} ${this.horn} horn. ${capitalize(this.pronouns.his)} coat is ${this.color}. One witness swears that ${this.witnessDetail}; the next account will disagree.`;
 	}
 }
 

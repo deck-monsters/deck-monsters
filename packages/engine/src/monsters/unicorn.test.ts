@@ -56,7 +56,15 @@ describe('monsters/unicorn', () => {
 	it('uses the correct article for vowel-initial builds and horns', () => {
 		const unicorn = new Unicorn({ build: 'elephant-footed', horn: 'ringed black' });
 		expect(unicorn.description).to.match(/^an elephant-footed unicorn/);
-		expect(unicorn.description).to.include('and a ringed black horn');
+		expect(unicorn.description).to.include('bearing a ringed black horn');
+	});
+
+	it('never doubles "with" when the coat carries its own', () => {
+		// The spawn prompt suggests this colour; the old sentence read "a coat of ivory white
+		// with a dark-red head and a bright ivory horn".
+		const unicorn = new Unicorn({ gender: 'androgynous', color: 'ivory white with a dark-red head', horn: 'bright ivory' });
+		expect(unicorn.description).to.include('bearing a bright ivory horn. Their coat is ivory white with a dark-red head.');
+		expect(unicorn.description).not.to.match(/with[^.]*with/);
 	});
 
 	it('keeps generated appearance through a hydration round trip', async () => {

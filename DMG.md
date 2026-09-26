@@ -739,9 +739,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  while it rings.
 
  Each opponent rolls 1d20 + int 
- vs your int. On a failure, 2 is 
- taken off their next attack 
- roll.
+ vs your int. On a failure, their 
+ next card takes 2 off its attack 
+ roll. A card that does not roll 
+ to hit (Blast, Heal) uses up the 
+ penalty with no effect.
  No damage. Does not stack.
 
  Level: 1

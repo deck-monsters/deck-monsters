@@ -23,7 +23,7 @@ file to `docs/archive/roadmap/` when the pass closes.
 | 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Done | 862762b |
 | 5 | Distribution and generated references (`pnpm run build:docs`) | Done | 16ae4c2 |
 | 6 | Balance pass (`sim:winrates` plus the new `sim:unicorn`) | Done (rerun after harness fix #183) | 71c3d9d, c72b2e0, 9d31af0 |
-| 7 | Live copy and pacing check (feed level; browser check open) | Done | 6e0d53f |
+| 7 | Live copy and pacing check (feed level, then browser) | Done | 6e0d53f, _pending_ |
 
 ## Decisions from the spike
 
@@ -165,5 +165,14 @@ single-line branches of Unconquerable Horn and Gloaming Rest take no sub-event b
 the other one-line self-buffs (Boost, Thick Skin, Battle Focus, Basic Shield), which rely on
 the ring's card-to-card gap. They were left as they are.
 
-Still open before this pass is archived: a browser check of the workshop and ring with a
-real Unicorn (sprite, roster portrait, card text wrapping).
+A browser check on PR #394 (a Cursor agent, in a throwaway room) trained a they/them
+Unicorn, equipped Sticketh from the starting inventory, and fought a Gladiator boss. The
+sprite and roster read as a unicorn, the card box wrapped inside its frame, pronouns agreed,
+and nothing threw. It found four fixes, all made: the description read "a coat of ivory
+white with a dark-red head and a … horn" (the coat is now its own sentence); the web
+workshop badged Sticketh as Utility (the name-keyword list now covers the pack); Dissonant
+Voice's stats implied the penalty survives a non-attack card (it does not, and now says
+so); and Horn of Proof still said it checked "every cup". The card-box border drifting on
+emoji rows affects every card and is filed as item K in [10 — Bug fixes](10-bug-fixes.md).
+
+Nothing in this pass is still open. Archive it once PR #394 merges.

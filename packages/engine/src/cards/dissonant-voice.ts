@@ -33,7 +33,7 @@ export class DissonantVoiceCard extends BaseCard {
 	}
 
 	get stats(): string {
-		return `Each opponent rolls 1d20 + int vs your int. On a failure, ${DISSONANCE_PENALTY} is taken off their next attack roll.
+		return `Each opponent rolls 1d20 + int vs your int. On a failure, their next card takes ${DISSONANCE_PENALTY} off its attack roll. A card that does not roll to hit (Blast, Heal) uses up the penalty with no effect.
 No damage. Does not stack.`;
 	}
 
