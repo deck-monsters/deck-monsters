@@ -286,9 +286,9 @@ Acceptance gates:
   engine concurrency/timing contract;
 - no unconditional immunity, unavoidable burst, permanent stat change, or gender/morality
   gate enters the design;
-- the Unicorn's fixed-deck seeded matchup win rates land in the existing harness review band
-  (35–65%) against every current monster, or the implementation PR documents and approves a
-  specific matchup exception before merge;
+- the Unicorn's fixed-deck seeded matchup win rates follow a Cleric's power curve across
+  levels (see the balance target in [11](11-balance-and-mechanics.md#combat-design)); rows
+  outside the harness review band (35–65%) are documented and approved by the owner;
 - source-derived copy is original, short quotations are attributed in source comments, and
   the generated monster/card references pass the documentation checks; and
 - `pnpm build && pnpm typecheck && pnpm lint && pnpm test`, `pnpm docs:check`, and the relevant

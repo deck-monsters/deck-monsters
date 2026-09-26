@@ -1253,9 +1253,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🏺  Horn of Proof  ◇
 ----------------------------------
 
- Dip the horn in the cup. 
- Whatever was wrong with it, is 
- not.
+ Dip the horn in the cup, and 
+ whatever was poisoned is made 
+ clean.
 
  Remove one of these, in order: 
  your worst stat penalty this 

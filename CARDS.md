@@ -594,9 +594,9 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  🏺  Horn of Proof  ◇
 ----------------------------------
 
- Dip the horn in the cup. 
- Whatever was wrong with it, is 
- not.
+ Dip the horn in the cup, and 
+ whatever was poisoned is made 
+ clean.
 
 ==================================
 ```

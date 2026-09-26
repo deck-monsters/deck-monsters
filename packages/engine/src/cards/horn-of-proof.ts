@@ -33,7 +33,7 @@ export class HornOfProofCard extends BaseCard {
 	static cardType = 'Horn of Proof';
 	static permittedClassesAndTypes = [UNICORN, CLERIC];
 	static probability = RARE.probability;
-	static description = 'Dip the horn in the cup. Whatever was wrong with it, is not.';
+	static description = 'Dip the horn in the cup, and whatever was poisoned is made clean.';
 	static level = 2;
 	static cost = CHEAP.cost;
 

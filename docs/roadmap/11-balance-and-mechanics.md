@@ -38,6 +38,14 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Combat design
 
+**Balance target (owner decision).** Do not aim for 50/50 at every level. As in D&D, each
+class should have a power curve across levels: casters (Cleric, Bard) start fragile and grow
+very strong as they level; brutes (Barbarian, Fighter) are strongest early and stay useful
+but fall behind later. Judge a matchup against that curve, not against a flat band. The
+35–65% flag in `sim:winrates` and `sim:unicorn` marks rows to look at, not a pass/fail gate.
+A problem is a class that is dominant across the whole level range, or one whose curve runs
+the wrong way.
+
 - [ ] **Stat reform — owner: Engine.** Design variance, modifier thresholds, level growth,
   and encounter modifiers as one model; choose a safe migration or reroll path for existing
   characters before implementation.
@@ -57,8 +65,11 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   never misses, and hits every opponent for 3 + caster level. Seeded harness runs on `main`
   (100–200 fights) show the Weeping Angel winning 94–98.5% against the Basilisk, Gladiator,
   and Minotaur at levels 1 and 5, and the Unicorn (also a Cleric) doing the same; Blast is
-  the top damage card in those fights from level 10 up. Decide between a to-hit roll or save,
-  a lower rarity, or less level scaling, then rerun `sim:winrates` and `sim:unicorn`. See
+  the top damage card in those fights from level 10 up. Strength at high level fits the
+  caster curve above. Winning 95% at level 1 does not: an early Cleric should be the fragile
+  one. So the fix should mostly take power away at low levels, for example a to-hit roll or
+  save, or a lower rarity, rather than flattening Blast's level scaling. Rerun
+  `sim:winrates` and `sim:unicorn` across levels 1–20 afterwards. See
   [the Unicorn pass evidence](23-unicorn-pack.md#balance-evidence-slice-6).
 - [ ] **Team XP — owner: Engine.** Simulate multi-player-versus-boss outcomes and revise the
   XP formula only if the data shows the current cross-team calculation is mis-scaled.

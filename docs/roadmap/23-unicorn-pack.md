@@ -114,8 +114,10 @@ member win rates 31 / 26 / 30 / 33%, 4% draws.
 
 ### Exceptions for owner approval
 
-The brief's gate is 35–65% against every monster with the fixture deck. These rows miss it,
-and none is caused by the Unicorn cards themselves:
+The brief's gate is 35–65% against every monster with the fixture deck. The owner has since
+said the target is a class power curve across levels, not 50/50 everywhere (see
+[11 — Balance](11-balance-and-mechanics.md#combat-design)); read these rows against that.
+They miss the band, and none is caused by the Unicorn cards themselves:
 
 1. **Weeping Angel (0–27%) and every random-deck row (89–100% against non-Clerics).**
    Pre-existing: Blast is Cleric-only, `ABUNDANT`, never misses, and hits every opponent for
@@ -129,7 +131,9 @@ and none is caused by the Unicorn cards themselves:
 3. **Level drift (Basilisk and Minotaur fall to 25–31% at levels 15–20; 75–85% at level 1).**
    The fixture is assigned directly, so at level 1 it skips the level gate (Horn of Proof is
    level 2, Gloaming Rest level 3). At high levels it has three damage cards and nothing
-   that scales with level, while the opponents' random decks do.
+   that scales with level, while the opponents' random decks do. For a Cleric, being strong
+   early and fading late is the wrong curve. Revisit it after the Blast fix, since the
+   random-deck Unicorn gets its high-level strength from Blast.
 
 ## Live copy and pacing check (slice 7)
 
