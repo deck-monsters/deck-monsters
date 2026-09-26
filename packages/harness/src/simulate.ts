@@ -294,7 +294,12 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	const prevRing = process.env.DECK_MONSTERS_DETERMINISTIC_RING;
 	const prevDraw = process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
 	process.env.DECK_MONSTERS_DETERMINISTIC_RING = '1';
-	process.env.DECK_MONSTERS_DETERMINISTIC_DRAW = '1';
+	// Draws stay shuffled. The engine's deterministic-draw mode sorts the card pool
+	// alphabetically and keeps the first card that passes its rarity roll, so early-alphabet
+	// cards crowd out the rest: harness Weeping Angels carried about 6 Blast/Blast II in 9
+	// slots instead of about 1.2, and "Clerics win 95%" was that bias, not Blast. The seeded
+	// `Math.random` below already makes a shuffled draw reproducible.
+	delete process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
 
 	await engineReady;
 
@@ -607,7 +612,12 @@ export async function simulateNewPlayerProgression(
 	const prevDraw = process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
 	const prevRandom = Math.random;
 	process.env.DECK_MONSTERS_DETERMINISTIC_RING = '1';
-	process.env.DECK_MONSTERS_DETERMINISTIC_DRAW = '1';
+	// Draws stay shuffled. The engine's deterministic-draw mode sorts the card pool
+	// alphabetically and keeps the first card that passes its rarity roll, so early-alphabet
+	// cards crowd out the rest: harness Weeping Angels carried about 6 Blast/Blast II in 9
+	// slots instead of about 1.2, and "Clerics win 95%" was that bias, not Blast. The seeded
+	// `Math.random` below already makes a shuffled draw reproducible.
+	delete process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
 
 	// `game`/`unsubFight` are populated inside the `try` below and guarded with `?.` in
 	// `finally` — everything fallible (including `parseMonsterType`, which used to run

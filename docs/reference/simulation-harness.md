@@ -26,9 +26,14 @@ for why this exists and what it gates.
   their own `mulberry32(seed)` for the fight(s) themselves, restoring the previous
   `Math.random` afterwards — so two calls with the same `seed` in the same process are
   reproducible, and calls without a `seed` don't perturb a caller's own RNG state.
-- Both functions force `DECK_MONSTERS_DETERMINISTIC_RING` and `DECK_MONSTERS_DETERMINISTIC_DRAW`
-  for the duration of the run (restored in a `finally`), so contestant order and ambiguous
-  round-cap endings don't add extra randomness on top of the seeded RNG.
+- Both functions force `DECK_MONSTERS_DETERMINISTIC_RING` for the duration of the run
+  (restored in a `finally`), so contestant order and ambiguous round-cap endings don't add
+  extra randomness on top of the seeded RNG. They **clear** `DECK_MONSTERS_DETERMINISTIC_DRAW`
+  for the run: that mode sorts the card pool alphabetically and keeps the first card that
+  passes its rarity roll, which crowds decks with early-alphabet cards. Until September 2026
+  the harness forced it on, and harness Weeping Angels carried about 6 Blast/Blast II cards
+  in 9 slots instead of about 1.2. Every pre-fix report that showed Clerics winning ~95%
+  measured that bias. A shuffled draw under the seeded `Math.random` is still reproducible.
 - `set-env.ts` also forces `DECK_MONSTERS_SKIP_DELAYS`, so fights run at full speed.
 
 ## `simulate()` — `packages/harness/src/simulate.ts`

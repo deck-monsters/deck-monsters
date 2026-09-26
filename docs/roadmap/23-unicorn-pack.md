@@ -83,10 +83,12 @@ file to `docs/archive/roadmap/` when the pass closes.
   Gloaming Rest (rare) are ordinary drops and sold in the front shop. The four support
   cards sit alphabetically in `cards/helpers/all.ts`, which is also the order of the
   generated card lists.
-- **Citation gap.** The supplied anthology's title, editor, edition, and pages were not
-  available in this environment. Card and monster source comments cite the primary texts
-  (Ctesias, Pliny, Aelian, Topsell, Spenser), which are public domain. Recording the
-  anthology citation from the physical book remains open for the owner.
+- **Citation.** The anthology is *A Book of Unicorns* (Star & Elephant Book, The Green
+  Tiger Press, La Jolla, California), from the owner's cover photographs. Still open: the
+  compiler, year, and edition from the copyright page. Card and monster source comments cite
+  the primary texts (Ctesias, Pliny, Aelian, Solinus, Topsell, Spenser), which are public
+  domain; the only anthology-only source used is Edwin Julian's poem behind Gloaming Rest,
+  whose card copy is original.
 
 ## Balance evidence (slice 6)
 

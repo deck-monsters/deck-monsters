@@ -77,9 +77,12 @@ The supplied anthology pages are the primary creative prompt. They reproduce or 
 passages to Ctesias, Pliny the Elder, Aelian, Julius Solinus, Edward Topsell, Edmund Spenser,
 the Brothers Grimm, Edwin Julian, and Welleran Poltarnees. Preserve only short, attributed
 fragments in cards or lore; paraphrase the rest.
-Before generated player copy ships, record the anthology's title, editor, edition, page
-numbers, and permissions status from the physical book—the photographs do not show enough
-bibliographic information to cite the edition responsibly.
+The anthology is *A Book of Unicorns*, a Star & Elephant Book from The Green Tiger Press,
+La Jolla, California (confirmed from the owner's photographs of the front and back covers).
+The covers do not show the compiler, year, or edition. Welleran Poltarnees, whose
+introduction the pages quote, is a likely compiler but is unconfirmed. Take the compiler,
+year, and edition from the copyright page, and record page numbers against the fragments
+used.
 
 | Motif to carry forward | Short source fragment or visual cue | Game use |
 |---|---|---|
