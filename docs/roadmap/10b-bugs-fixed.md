@@ -4316,3 +4316,47 @@ where it previously wiped the equipped deck to 0). `items/store/sell.ts`'s exist
 continue to pass with the same fix applied to the console path.
 
 **Status**: Fixed.
+
+### 183. Harness decks were stacked with early-alphabet cards, so Clerics looked unbeatable — FIXED
+
+`sim:winrates` reported the Weeping Angel winning 94–98.5% against the Basilisk, Gladiator,
+and Minotaur at levels 1 and 5, with Blast as the top damage card. In real play the Angel
+does not win that often at low levels.
+
+**Root cause**: `simulate()` and `simulateNewPlayerProgression()` forced
+`DECK_MONSTERS_DETERMINISTIC_DRAW` on for reproducibility. In that mode
+`cards/helpers/draw.ts` sorts the card pool alphabetically instead of shuffling it, then
+keeps the first card that passes its rarity roll. Every draw therefore offered the same
+early-alphabet cards first, and a common one near the front almost always won. Blast
+(`ABUNDANT`, Cleric-only) and Blast II sit near the front, so a harness Weeping Angel
+carried about 6 of them in 9 slots, against about 1.2 with a shuffled draw (200 sampled
+decks each). The flag was never needed for reproducibility: `simulate()` already swaps in a
+seeded `Math.random`, and a shuffle driven by it is reproducible.
+
+**Fix**: both harness entry points now clear the flag for the run (and still restore the
+caller's value afterwards). With shuffled draws, the level 5 `sim:winrates` matrix lands at
+39–65.5% for every pair, and the Angel scores 42–57%. `docs/reference/simulation-harness.md`
+records the trap. Every balance claim made from harness runs before this fix, including the
+first Unicorn pass report, measured the bias and was replaced.
+
+**Tests**: the existing harness suite, including the same-seed reproducibility test, passes
+with shuffled draws.
+
+**Status**: Fixed.
+
+### 184. `look at monsters in detail` looked for a ring called "detail" — FIXED
+
+The command catalogue lists `look at monsters in detail` ("View your monsters with full
+stats"), but it answered "The ring is empty." Found by a browser check on PR #394.
+
+**Root cause**: `LOOK_AT_REGEX` in `commands/look-at.ts` lists the `monsters in` alternative
+before `monsters`, so the regex takes `monsters in` and leaves `detail` as the ring name.
+The `monsters` branch that handles `in detail` was never reached for this phrasing.
+
+**Fix**: the `monsters in` branch routes a remainder of exactly `detail` to
+`character.lookAtMonsters(channel, true)`. `look at monsters in the ring` is unchanged.
+
+**Tests**: `commands/look-at.test.ts` covers the detail view, the ring view, and the plain
+monster list. The detail test fails without the fix.
+
+**Status**: Fixed.

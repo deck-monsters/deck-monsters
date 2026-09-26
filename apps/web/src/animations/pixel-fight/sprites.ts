@@ -154,6 +154,33 @@ const angel: PixelFrame = [
   '....OOOOOOOOOOOOOOOO....',
 ];
 
+const unicorn: PixelFrame = [
+  '........................',
+  '.....................OO.',
+  '....................OCO.',
+  '...................OCO..',
+  '.............OO...OCO...',
+  '............ODDO.OCO....',
+  '...........ODDBBOOCO....',
+  '..........ODDBAAAAABO...',
+  '..........ODBAAAEOAABO..',
+  '.........ODDBAAAAAAAABO.',
+  '.........ODBBAAAOOOAAAO.',
+  '........ODDBBAAO...OOOO.',
+  '.......ODDBBAAO.........',
+  '..OOO.ODDBBAAAO.........',
+  '.OCDDOODBBAAAABOOOOO....',
+  '.OCDOODBBAAAAAAAAAABO...',
+  '..OOODBBAAAAAAAAAAAABO..',
+  '....OBBAAAAAAAAAAAAABO..',
+  '....ODBBAAAAAAAAAAABBO..',
+  '.....ODBBBOOOOOODBBBDO..',
+  '.....OBBO.......OBBO....',
+  '.....OBBO.......OBBO....',
+  '....OOCCOO.....OOCCOO...',
+  '....OOOOOO.....OOOOOO...',
+];
+
 const beast: PixelFrame = [
   '........................',
   '..............OOOO......',
@@ -276,6 +303,12 @@ export const SPRITES: Readonly<Record<string, PixelSprite>> = {
   'Weeping Angel': {
     palette: { O: '#261550', D: '#5836a8', B: '#7c5cd6', A: '#b6a4f5', C: '#f4f0ff', E: '#67e8f9' },
     frames: poses(angel),
+  },
+  // Pale coat with a lavender shadow, an ivory horn and hooves, and the dark-blue eyes
+  // Ctesias gives the animal; the neck arches up-right so the horn clears the lean.
+  Unicorn: {
+    palette: { O: '#2a2340', D: '#8f84bd', B: '#cfc8ec', A: '#f7f5ff', C: '#fde9a8', E: '#1e3a8a' },
+    frames: poses(unicorn),
   },
   fallback: {
     palette: { O: '#131c29', D: '#3a4a63', B: '#5b7091', A: '#93a6c2', C: '#e6edf7', E: '#f87171' },

@@ -8,6 +8,7 @@ import type { Game, GameEvent } from '@deck-monsters/engine';
 import {
 	allMonsters,
 	createTestGame,
+	drawCard,
 	EARLY_COIN_BONUS_TIERS,
 	engineReady,
 	getCardClassByTypeName,
@@ -28,10 +29,21 @@ import { mulberry32 } from './rng.js';
  */
 const STEADY_STATE_BATTLES_TOTAL = Math.max(...EARLY_COIN_BONUS_TIERS.map(t => t.untilFightsPlayed));
 
+/** A ring event that only switches the fight to last-team victory; see `SimMonsterSpec.team`. */
+const HARNESS_TEAM_EVENT = {
+	id: 'harness-teams',
+	name: 'Harness teams',
+	banner: '',
+	weight: 0,
+	victoryMode: 'last-team',
+	eligible: () => true,
+	apply: () => undefined,
+};
+
 /** Monotonic id so concurrent `simulate()` calls never share eventBus subscriber keys. */
 let harnessSimRunSeq = 0;
 
-export type SimMonsterType = 'Basilisk' | 'Gladiator' | 'Jinn' | 'Minotaur' | 'WeepingAngel';
+export type SimMonsterType = 'Basilisk' | 'Gladiator' | 'Jinn' | 'Minotaur' | 'WeepingAngel' | 'Unicorn';
 
 export interface SimMonsterSpec {
 	type: SimMonsterType | string;
@@ -40,6 +52,12 @@ export interface SimMonsterSpec {
 	deck?: string[];
 	/** Varies boss `randomCharacter` battle record for stat diversity. */
 	statSeed?: number;
+	/**
+	 * Optional faction. When any spec sets one, the fight runs under a harness-only
+	 * `last-team` victory mode (the same mode Common Cause and House War use), so allies
+	 * stop when only one team is standing instead of turning on each other.
+	 */
+	team?: string;
 }
 
 export interface SimConfig {
@@ -143,6 +161,7 @@ const MONSTER_TYPES: Record<string, SimMonsterType> = {
 	gladiator: 'Gladiator',
 	jinn: 'Jinn',
 	minotaur: 'Minotaur',
+	unicorn: 'Unicorn',
 	weepingangel: 'WeepingAngel',
 	'weeping angel': 'WeepingAngel',
 };
@@ -155,7 +174,7 @@ export function parseMonsterType(raw: string): SimMonsterType {
 		.trim()
 		.replace(/(?:^|\s|-)(\w)/g, (_, c: string) => c.toUpperCase())
 		.replace(/\s|-/g, '');
-	const allowed: SimMonsterType[] = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'WeepingAngel'];
+	const allowed: SimMonsterType[] = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'WeepingAngel', 'Unicorn'];
 	if ((allowed as string[]).includes(pascal)) return pascal as SimMonsterType;
 	throw new Error(`Unknown monster type: "${raw}" (expected one of: ${allowed.join(', ')})`);
 }
@@ -192,9 +211,37 @@ function buildContestant(
 	if (deckNames?.length) {
 		type CardCtor = new () => { cardType?: string; name?: string; play?: (...args: unknown[]) => unknown };
 		contestant.monster.cards = deckNames.map(n => new (getCardClassByTypeName(n) as CardCtor)());
+	} else {
+		contestant.monster.cards = withoutHarnessExcludedCards(contestant.monster);
 	}
 
 	return contestant;
+}
+
+/**
+ * Card types a random harness deck never keeps. Flee is a special-purpose escape: a player
+ * holds it for a bad matchup, not as a routine deck slot. In a simulation it only turns
+ * fights into draws, which hides the matchup the run is trying to measure. An explicit
+ * `SimMonsterSpec.deck` is left exactly as given.
+ */
+export const HARNESS_EXCLUDED_CARD_TYPES: readonly string[] = ['Flee'];
+
+type HarnessMonster = {
+	level: number;
+	cards: Array<{ cardType?: string }>;
+	canHoldCard(card: unknown): boolean;
+};
+
+/** The monster's random deck with each excluded card swapped for a fresh legal draw. */
+export function withoutHarnessExcludedCards(monster: HarnessMonster): HarnessMonster['cards'] {
+	const eligible = {
+		level: monster.level,
+		canHoldCard: (Card: { cardType?: string }) =>
+			!HARNESS_EXCLUDED_CARD_TYPES.includes(Card.cardType ?? '') && monster.canHoldCard(Card),
+	};
+	return monster.cards.map(card =>
+		HARNESS_EXCLUDED_CARD_TYPES.includes(card.cardType ?? '') ? drawCard({}, eligible) : card,
+	);
 }
 
 function installHitDamageCapture(
@@ -276,7 +323,12 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	const prevRing = process.env.DECK_MONSTERS_DETERMINISTIC_RING;
 	const prevDraw = process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
 	process.env.DECK_MONSTERS_DETERMINISTIC_RING = '1';
-	process.env.DECK_MONSTERS_DETERMINISTIC_DRAW = '1';
+	// Draws stay shuffled. The engine's deterministic-draw mode sorts the card pool
+	// alphabetically and keeps the first card that passes its rarity roll, so early-alphabet
+	// cards crowd out the rest: harness Weeping Angels carried about 6 Blast/Blast II in 9
+	// slots instead of about 1.2, and "Clerics win 95%" was that bias, not Blast. The seeded
+	// `Math.random` below already makes a shuffled draw reproducible.
+	delete process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
 
 	await engineReady;
 
@@ -285,6 +337,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 		Math.random = mulberry32(seed);
 	}
 
+	const hasTeams = monsters.some(m => m.team);
 	const names = monsters.map((_, i) => `Sim ${i + 1}`);
 	const winCounts = new Map<string, number>();
 	for (const n of names) winCounts.set(n, 0);
@@ -352,6 +405,21 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				// contestant would trip unpredictably. `character.battles` here is a distinct
 				// object from `monster.battles` (only shared at construction when `statSeed` seeds
 				// both) — resetting it doesn't touch the monster's own combat-stat-diversity record.
+				// Harness contestants are bosses, and `randomContestant` puts every boss on the
+				// shared boss team, which the ring treats as one faction. Give each contestant
+				// its spec's team, or a faction of its own, on both the character and the monster
+				// (the monster's team wins in `factionOf`). Otherwise teamless contestants in a
+				// team fight never fight each other and all get credited a win, and ally checks
+				// such as Unconquerable Horn's treat every harness contestant as a teammate.
+				const faction = m.team ?? `solo:${names[i]!}`;
+				c.character.team = faction;
+				c.monster.team = faction;
+				// `randomContestant` also gives every boss TARGET_HUMAN_PLAYER_WEAK. With no human
+				// in a harness ring, that strategy falls back to a target chosen with teams
+				// ignored, so team fights measured friendly fire. The default (next player) is
+				// team-aware, and with one faction per teamless contestant it behaves the same in
+				// a free-for-all.
+				c.monster.targetingStrategy = undefined;
 				c.character.lastDailyFightCoinDay = getUtcDay();
 				c.character.battles = { total: STEADY_STATE_BATTLES_TOTAL, wins: 0, losses: 0 };
 				stableIdToLabel.set(c.monster.stableId as string, label);
@@ -382,6 +450,12 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 			// rather than a recomputation from the coins/XP constants.
 			const coinsBefore = contestants.map(c => c.character.coins as number);
 			const monsterXpBefore = contestants.map(c => c.monster.xp as number);
+
+			if (hasTeams) {
+				// Set after `addMonster`, which can re-roll a ring event, and before the fight
+				// starts. `clearRing()` at the top of the next iteration removes it again.
+				(ring as unknown as { ringEvent: unknown }).ringEvent = HARNESS_TEAM_EVENT;
+			}
 
 			try {
 				await ring.fight();
@@ -576,7 +650,12 @@ export async function simulateNewPlayerProgression(
 	const prevDraw = process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
 	const prevRandom = Math.random;
 	process.env.DECK_MONSTERS_DETERMINISTIC_RING = '1';
-	process.env.DECK_MONSTERS_DETERMINISTIC_DRAW = '1';
+	// Draws stay shuffled. The engine's deterministic-draw mode sorts the card pool
+	// alphabetically and keeps the first card that passes its rarity roll, so early-alphabet
+	// cards crowd out the rest: harness Weeping Angels carried about 6 Blast/Blast II in 9
+	// slots instead of about 1.2, and "Clerics win 95%" was that bias, not Blast. The seeded
+	// `Math.random` below already makes a shuffled draw reproducible.
+	delete process.env.DECK_MONSTERS_DETERMINISTIC_DRAW;
 
 	// `game`/`unsubFight` are populated inside the `try` below and guarded with `?.` in
 	// `finally` — everything fallible (including `parseMonsterType`, which used to run

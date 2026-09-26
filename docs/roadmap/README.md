@@ -18,6 +18,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [12 — New content](12-new-content-backlog.md) | Researched Unicorn content pack; concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions and manual verification gates |
+| [23 — Unicorn pack pass](23-unicorn-pack.md) | Implementation pass for the Unicorn monster and five cards briefed in 12 |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code
 cites it. Shipped plans, retired subsystems, and pass records are historical only; they

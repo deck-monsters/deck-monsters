@@ -23,6 +23,12 @@ function lookAtAction({ channel, character, game, results, user }: any): Promise
 					return game.lookAtRing(user.id, undefined, true, summary);
 				}
 				case 'monsters in': {
+					// `monsters in` is listed before `monsters` in the pattern, so it also swallows
+					// the catalogued `look at monsters in detail`, which then looked for a ring
+					// called "detail" and announced "The ring is empty." Route it to the detail view.
+					if (thing === 'detail') {
+						return character.lookAtMonsters(channel, true);
+					}
 					thing = thing.replace(/the /i, '');
 					const ringName = thing === 'ring' ? undefined : thing;
 					return game.lookAtRing(user.id, ringName, false);

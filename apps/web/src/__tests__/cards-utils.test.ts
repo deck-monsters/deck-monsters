@@ -21,6 +21,15 @@ describe('getCardClass', () => {
 		expect(getCardClass('Blink')).toBe('magic');
 	});
 
+	it('badges the Unicorn cards by what they do', () => {
+		expect(getCardClass('Sticketh')).toBe('melee');
+		expect(getCardClass('Horn of Proof')).toBe('heal');
+		expect(getCardClass('Gloaming Rest')).toBe('heal');
+		expect(getCardClass('Dissonant Voice')).toBe('magic');
+		// A ward against holds, like the other boosts.
+		expect(getCardClass('Unconquerable Horn')).toBe('utility');
+	});
+
 	it('falls back to utility for unmatched names', () => {
 		expect(getCardClass('Mystery Card')).toBe('utility');
 	});

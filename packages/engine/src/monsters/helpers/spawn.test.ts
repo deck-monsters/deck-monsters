@@ -9,7 +9,7 @@ describe('monsters/helpers/spawn', () => {
 	});
 
 	describe('askForCreatureType (via spawnMonster)', () => {
-		// allMonsters order is [Basilisk, Gladiator, Jinn, Minotaur, WeepingAngel] — index 2 is Jinn.
+		// allMonsters order is [Basilisk, Gladiator, Jinn, Minotaur, WeepingAngel, Unicorn] — index 2 is Jinn.
 		it('resolves a numeric index answer, the shape the web client sends', async () => {
 			const answers = ['2', 'she/her', 'Saffron', 'violet smoke'];
 			const monster = await spawnMonster(async () => answers.shift());

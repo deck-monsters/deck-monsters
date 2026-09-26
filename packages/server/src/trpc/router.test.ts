@@ -1028,7 +1028,7 @@ describe('trpc/router monster lifecycle procedures', () => {
 
 		expect(assertedRoom).to.equal(ROOM_ID);
 		expect(options.types.map((type) => type.label)).to.deep.equal([
-			'Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel',
+			'Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel', 'Unicorn',
 		]);
 		expect(options.pronouns).to.deep.equal([
 			{ key: 'male', label: 'he/him' },

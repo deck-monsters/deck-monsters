@@ -24,6 +24,9 @@ const chooseName = (type: string, gender: string, alreadyTaken: string[] = []): 
 		case TYPES.MINOTAUR:
 			args = ['dungeon_and_dragons', 'minotaurs', 1];
 			break;
+		case TYPES.UNICORN:
+			args = ['fantasy', 'unicorns', 1];
+			break;
 		case TYPES.WEEPING_ANGEL:
 			args = ['fantasy', 'angels', 1];
 			break;

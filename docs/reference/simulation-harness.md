@@ -26,10 +26,19 @@ for why this exists and what it gates.
   their own `mulberry32(seed)` for the fight(s) themselves, restoring the previous
   `Math.random` afterwards — so two calls with the same `seed` in the same process are
   reproducible, and calls without a `seed` don't perturb a caller's own RNG state.
-- Both functions force `DECK_MONSTERS_DETERMINISTIC_RING` and `DECK_MONSTERS_DETERMINISTIC_DRAW`
-  for the duration of the run (restored in a `finally`), so contestant order and ambiguous
-  round-cap endings don't add extra randomness on top of the seeded RNG.
+- Both functions force `DECK_MONSTERS_DETERMINISTIC_RING` for the duration of the run
+  (restored in a `finally`), so contestant order and ambiguous round-cap endings don't add
+  extra randomness on top of the seeded RNG. They **clear** `DECK_MONSTERS_DETERMINISTIC_DRAW`
+  for the run: that mode sorts the card pool alphabetically and keeps the first card that
+  passes its rarity roll, which crowds decks with early-alphabet cards. Until September 2026
+  the harness forced it on, and harness Weeping Angels carried about 6 Blast/Blast II cards
+  in 9 slots instead of about 1.2. Every pre-fix report that showed Clerics winning ~95%
+  measured that bias. A shuffled draw under the seeded `Math.random` is still reproducible.
 - `set-env.ts` also forces `DECK_MONSTERS_SKIP_DELAYS`, so fights run at full speed.
+- Random decks never keep a card listed in `HARNESS_EXCLUDED_CARD_TYPES` (currently Flee).
+  Each one is swapped for a fresh legal draw, so the hand stays full. Flee is a
+  special-purpose card; in a simulation it only turns fights into draws and hides the
+  matchup being measured. An explicit `SimMonsterSpec.deck` is used exactly as given.
 
 ## `simulate()` — `packages/harness/src/simulate.ts`
 
@@ -163,10 +172,11 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 
 | Script | What it prints | Typical runtime |
 |---|---|---|
-| `sim:winrates` | All 5×5 monster-type matchups at a fixed level (200 fights each, 25 pairs); flags win rates outside 35–65%. | ~90s — this is real work, not a hang; don't re-flag it as one if it takes a while to return. |
+| `sim:winrates` | All 6×6 monster-type matchups at a fixed level (200 fights each, 36 pairs); flags win rates outside 35–65%. | ~130s — this is real work, not a hang; don't re-flag it as one if it takes a while to return. |
 | `sim:cardpower` | Average damage dealt per card type; top/bottom 10%. | ~20s |
 | `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. | ~20s |
 | `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. | ~10s |
+| `sim:unicorn` | The Unicorn against every monster at levels 1/5/10/15/20 with random decks and the thematic fixture deck, plus a mirror and a 2v2 team fight. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and card-level rates (Sticketh stick rate, ward triggers, cleanses, rattles, rest completion). Flags fixture rows outside 35–65% of decisive fights. `SIM_UNICORN_FIGHTS` sets fights per row (default 100). | ~2 min |
 
 Each of these is `node dist/scripts/<name>.js` — run `pnpm --filter @deck-monsters/harness
 build` first. **Every one of them calls `process.exit(...)` at the end of `main()`.** Loading
@@ -181,6 +191,27 @@ this doc's change and hung indefinitely after printing their reports when run as
 `node dist/scripts/…` (rather than under a harness that kills the process after it sees the
 expected output) — they now call `process.exit(0)` (or `process.exitCode ?? 0` for
 `sim:winrates`, which sets a non-zero `exitCode` on a balance warning) too.
+
+## Team fights
+
+`SimMonsterSpec.team` puts a contestant on a faction; a spec without one gets a faction of
+its own (`solo:Sim N`), never the shared boss team. The harness also clears the
+`TARGET_HUMAN_PLAYER_WEAK` strategy `randomContestant` gives every boss: with no human in the
+ring it falls back to a team-blind target, and in a 2v2 run 44% of hits landed on allies.
+The default next-player strategy respects teams. When any spec sets one, `simulate()`
+runs every fight under a harness-only ring event whose only effect is `victoryMode:
+'last-team'`, the mode Common Cause and House War use. The team is written to both the
+character and the monster: `randomContestant` puts every harness contestant on the boss
+team, and `factionOf` reads the monster's team before the character's, so writing only the
+character left all four contestants on one faction and every fight ended at once with every
+contestant credited a win. `winRates` stays per contestant, and a team win credits every
+surviving member.
+
+## Card-level counters
+
+`sim:unicorn` counts card events by wrapping the card classes' prototype methods (via
+`getCardClassByTypeName`) inside its own process. Nothing in the engine is instrumented for
+this. Prefer that pattern over adding counters to engine code.
 
 ## Adding a new economy/balance measurement
 

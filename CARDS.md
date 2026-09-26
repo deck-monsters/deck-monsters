@@ -38,6 +38,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Constrict](#constrict)
 - [Soften](#soften)
 - [Delayed Hit](#delayed-hit)
+- [Dissonant Voice](#dissonant-voice)
 - [Enchanted Faceswap](#enchanted-faceswap)
 - [Enthrall](#enthrall)
 - [Entrance](#entrance)
@@ -49,10 +50,12 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Flee](#flee)
 - [Forked Metal Rod](#forked-metal-rod)
 - [Forked Stick](#forked-stick)
+- [Gloaming Rest](#gloaming-rest)
 - [Heal](#heal)
 - [Hit](#hit)
 - [Hit Harder](#hit-harder)
 - [Horn Gore](#horn-gore)
+- [Horn of Proof](#horn-of-proof)
 - [Horn Swipe](#horn-swipe)
 - [Iocane](#iocane)
 - [The Kalevala (1d4)](#the-kalevala-1d4)
@@ -66,9 +69,11 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Rehit](#rehit)
 - [Sandstorm](#sandstorm)
 - [Scotch](#scotch)
+- [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
 - [Thick Skin](#thick-skin)
 - [Turkey Thigh](#turkey-thigh)
+- [Unconquerable Horn](#unconquerable-horn)
 - [Vengeful Rampage](#vengeful-rampage)
 - [Whiskey Shot](#whiskey-shot)
 - [Wooden Spear](#wooden-spear)
@@ -351,6 +356,20 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ==================================
 ```
 
+### Dissonant Voice
+
+```text
+==================================
+ 🔔  Dissonant Voice  ◆
+----------------------------------
+
+ A cry that no throat that shape 
+ should make. It is hard to aim 
+ while it rings.
+
+==================================
+```
+
 ### Enchanted Faceswap
 
 ```text
@@ -500,6 +519,20 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ==================================
 ```
 
+### Gloaming Rest
+
+```text
+==================================
+ 🌙  Gloaming Rest  ◇
+----------------------------------
+
+ Kneel among the laurel as the 
+ light goes. Trust that nobody 
+ strikes before you rise.
+
+==================================
+```
+
 ### Heal
 
 ```text
@@ -550,6 +583,20 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  You think those horns are just 
  there to look pretty? Think 
  again...
+
+==================================
+```
+
+### Horn of Proof
+
+```text
+==================================
+ 🏺  Horn of Proof  ◇
+----------------------------------
+
+ Dip the horn in the cup, and 
+ whatever was poisoned is made 
+ clean.
 
 ==================================
 ```
@@ -740,6 +787,21 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ==================================
 ```
 
+### Sticketh
+
+```text
+==================================
+ 🦄  Sticketh  ◇
+----------------------------------
+
+ Charge horn-first. Old accounts 
+ warn that a clever foe steps 
+ aside, and the "sharp horn 
+ sticketh fast."
+
+==================================
+```
+
 ### Survival Knife
 
 ```text
@@ -780,6 +842,19 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  turkey thigh. If times get 
  tough, take a bite for a quick 
  hp boost.
+
+==================================
+```
+
+### Unconquerable Horn
+
+```text
+==================================
+ 💎  Unconquerable Horn  ◆
+----------------------------------
+
+ They may be beaten, but they 
+ will not be taken and held.
 
 ==================================
 ```

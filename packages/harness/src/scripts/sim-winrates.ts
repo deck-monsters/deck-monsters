@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * All 5×5 monster type matchups at a fixed level; flags win rates outside 35–65%.
+ * All 6×6 monster type matchups at a fixed level; flags win rates outside 35–65%.
  * Run manually before balance merges (not in CI).
  */
 
@@ -9,7 +9,7 @@ import '../set-env.js';
 import { engineReady } from '@deck-monsters/engine';
 import { parseMonsterType, simulate, type SimMonsterSpec } from '../simulate.js';
 
-const TYPES = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'WeepingAngel'] as const;
+const TYPES = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'WeepingAngel', 'Unicorn'] as const;
 const FIGHTS_PER_PAIR = 200;
 const LEVEL = 5;
 const WARN_LOW = 35;

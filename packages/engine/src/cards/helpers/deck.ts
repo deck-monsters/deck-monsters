@@ -8,6 +8,7 @@ import { HealCard } from '../heal.js';
 import { HitCard } from '../hit.js';
 import { HornGore } from '../horn-gore.js';
 import { SandstormCard } from '../sandstorm.js';
+import { StickethCard } from '../sticketh.js';
 import { DEFAULT_MINIMUM_CARDS } from './constants.js';
 import { draw } from './draw.js';
 
@@ -17,6 +18,7 @@ export const getMinimumDeck = (): any[] => [
 	new HornGore(),
 	new BattleFocusCard(),
 	new SandstormCard(),
+	new StickethCard(),
 	new BlastCard(),
 	new HitCard(),
 	new HitCard(),

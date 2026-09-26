@@ -4,3 +4,4 @@ export const GLADIATOR = 'Gladiator';
 export const JINN = 'Jinn';
 export const MINOTAUR = 'Minotaur';
 export const WEEPING_ANGEL = 'Weeping Angel';
+export const UNICORN = 'Unicorn';

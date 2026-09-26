@@ -77,9 +77,17 @@ The supplied anthology pages are the primary creative prompt. They reproduce or 
 passages to Ctesias, Pliny the Elder, Aelian, Julius Solinus, Edward Topsell, Edmund Spenser,
 the Brothers Grimm, Edwin Julian, and Welleran Poltarnees. Preserve only short, attributed
 fragments in cards or lore; paraphrase the rest.
-Before generated player copy ships, record the anthology's title, editor, edition, page
-numbers, and permissions status from the physical book—the photographs do not show enough
-bibliographic information to cite the edition responsibly.
+The anthology is *A Book of Unicorns*, a Star & Elephant Book from The Green Tiger Press,
+La Jolla, California, with an introduction by Welleran Poltarnees (from the owner's
+photographs of the covers and interior pages). The owner's copy has no copyright page, so
+the year and edition stay unrecorded. Its newest dated artwork, *The Unicorn in Winter* by
+S.W.D., is from 1976, so the book is no earlier. The pages photographed quote Ctesias
+(*Indica* fragment 25), Pliny (*Historia Naturalis*), Aelian (*De Animalium Natura*),
+Julius Solinus (*Polyhistoria*, in early-modern English), Olfert Dapper (*Die Unbekante Neue
+Welt*, 1673), Edward Topsell (*History of Four Footed Beasts*, 1607), Spenser (*The Faerie
+Queene*), the Brothers Grimm ("The Brave Little Tailor"), and Edwin Julian ("The Capture of
+the Unicorn", illustrated by Reginald Birch).
+Source comments cite these texts directly.
 
 | Motif to carry forward | Short source fragment or visual cue | Game use |
 |---|---|---|
@@ -286,9 +294,10 @@ Acceptance gates:
   engine concurrency/timing contract;
 - no unconditional immunity, unavoidable burst, permanent stat change, or gender/morality
   gate enters the design;
-- the Unicorn's fixed-deck seeded matchup win rates land in the existing harness review band
-  (35–65%) against every current monster, or the implementation PR documents and approves a
-  specific matchup exception before merge;
+- the Unicorn's fixed-deck seeded matchup win rates follow a Cleric's power curve across
+  levels (see the balance target in [11](11-balance-and-mechanics.md#combat-design)); rows
+  outside the harness review band (35–65%) are documented with a reason, not treated as a
+  gate;
 - source-derived copy is original, short quotations are attributed in source comments, and
   the generated monster/card references pass the documentation checks; and
 - `pnpm build && pnpm typecheck && pnpm lint && pnpm test`, `pnpm docs:check`, and the relevant

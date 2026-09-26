@@ -19,7 +19,8 @@ export async function hit (self: BaseCreature, damage = 0, assailant?: BaseCreat
 	// a monotonic counter, so stamping `Date.now()` here made every hit ever recorded look
 	// newer than any Delayed Hit — the card fired on blows that landed before it was played
 	// in every test and harness simulation.
-	hitLog.unshift({ assailant, damage, card, when: hitLogTimestamp() });
+	const entry: HitLogEntry = { assailant, damage, card, when: hitLogTimestamp() };
+	hitLog.unshift(entry);
 	self.encounterModifiers.hitLog = hitLog;
 
 	const isMelee = card && typeof card.isCardClass === 'function' && card.isCardClass(MELEE);
@@ -27,6 +28,7 @@ export async function hit (self: BaseCreature, damage = 0, assailant?: BaseCreat
 	if (isMelee && (self.encounterModifiers.ac as number) >= damage) {
 		(self.encounterModifiers as Record<string, unknown>).ac = (self.encounterModifiers.ac as number) - damage;
 
+		entry.dealt = 0;
 		self.emit('narration', {
 			narration: `${self.givenName} was braced for a hit, and was able to absorb ${damage} damage. ${capitalize(self.pronouns.his)} ac boost is now ${self.encounterModifiers.ac}.`
 		});
@@ -43,6 +45,8 @@ export async function hit (self: BaseCreature, damage = 0, assailant?: BaseCreat
 			(self.encounterModifiers as Record<string, unknown>).ac = 0;
 		}
 
+		// Gloaming Rest reads this: a blow the brace soaked up entirely does not break a rest.
+		entry.dealt = adjustedDamage;
 		const newHP = self.hp - adjustedDamage;
 		const originalHP = self.hp;
 		self.hp = newHP;

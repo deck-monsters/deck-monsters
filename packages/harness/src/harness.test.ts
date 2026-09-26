@@ -9,8 +9,8 @@ import { createTestGame } from '@deck-monsters/engine';
 import { capturePublicFeed, formatPublicFeedLines } from './public-feed.js';
 import { runRingTwoBosses } from './scenarios/ring-two-bosses.js';
 import { runConcurrentLookMonsters } from './scenarios/concurrent-look-monsters.js';
-import { parseMonstersArg, simulate, simulateNewPlayerProgression } from './simulate.js';
-import { COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady } from '@deck-monsters/engine';
+import { parseMonstersArg, simulate, simulateNewPlayerProgression, withoutHarnessExcludedCards } from './simulate.js';
+import { COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName, RoomEventBus } from '@deck-monsters/engine';
 
 describe('@deck-monsters/harness', () => {
 	before(async function () {
@@ -117,6 +117,126 @@ describe('@deck-monsters/harness', () => {
 		expect(res.xpPerMonster.count).to.equal(ECONOMY_FIGHTS * 2);
 		expect(res.xpPerMonster.mean).to.be.at.least(0);
 		expect(res.xpPerMonster.min).to.be.at.least(0);
+	});
+
+	it('simulate() with teams never credits both sides of a fight', async function () {
+		this.timeout(60_000);
+
+		const res = await simulate({
+			monsters: [
+				{ type: 'Unicorn', level: 5, team: 'Laurel' },
+				{ type: 'Gladiator', level: 5, team: 'Laurel' },
+				{ type: 'Minotaur', level: 5, team: 'Gorge' },
+				{ type: 'Basilisk', level: 5, team: 'Gorge' },
+			],
+			fights: 10,
+			seed: 11,
+			roomId: 'harness-teams',
+		});
+		const w = (label: string) => res.winRates[label] ?? 0;
+
+		// Every contestant used to start on the boss team, so each fight ended at once with
+		// all four credited a win. Opposing members can never both win the same fight.
+		for (const [ally, foe] of [['Sim 1', 'Sim 3'], ['Sim 1', 'Sim 4'], ['Sim 2', 'Sim 3'], ['Sim 2', 'Sim 4']]) {
+			expect(w(ally!) + w(foe!), `${ally} + ${foe}`).to.be.at.most(100);
+		}
+		expect(res.avgRounds).to.be.greaterThan(1);
+	});
+
+	it('simulate() team fights aim at the other team, not at allies', async function () {
+		this.timeout(60_000);
+		const team: Record<string, string> = { 'Sim 1': 'A', 'Sim 2': 'A', 'Sim 3': 'B', 'Sim 4': 'B' };
+		let hits = 0;
+		let allyHits = 0;
+		const publish = RoomEventBus.prototype.publish;
+		RoomEventBus.prototype.publish = function (this: RoomEventBus, ...args: Parameters<typeof publish>) {
+			const payload = args[0].payload as { monsterName?: string; assailantName?: string } | undefined;
+			const { monsterName, assailantName } = payload ?? {};
+			if (monsterName && assailantName && monsterName !== assailantName && team[monsterName] && team[assailantName]) {
+				hits += 1;
+				if (team[monsterName] === team[assailantName]) allyHits += 1;
+			}
+			return publish.apply(this, args);
+		};
+		try {
+			await simulate({
+				monsters: [
+					{ type: 'Gladiator', level: 5, team: 'A' },
+					{ type: 'Minotaur', level: 5, team: 'A' },
+					{ type: 'Basilisk', level: 5, team: 'B' },
+					{ type: 'Gladiator', level: 5, team: 'B' },
+				],
+				fights: 20,
+				seed: 15,
+				roomId: 'harness-team-targeting',
+			});
+		} finally {
+			RoomEventBus.prototype.publish = publish;
+		}
+
+		// Boss targeting used to fall back to a team-blind target, so each side's first monster
+		// hit its own ally. Area cards can still catch an ally now and then.
+		expect(hits).to.be.greaterThan(0);
+		expect(allyHits / hits).to.be.below(0.05);
+	});
+
+	it('simulate() gives teamless contestants their own faction in a team fight', async function () {
+		this.timeout(60_000);
+
+		const res = await simulate({
+			monsters: [
+				{ type: 'Jinn', level: 1, team: 'Solo' },
+				{ type: 'WeepingAngel', level: 10 },
+				{ type: 'WeepingAngel', level: 10 },
+			],
+			fights: 10,
+			seed: 13,
+			roomId: 'harness-teamless',
+		});
+
+		// The two teamless Angels used to share the boss team, never fight each other, and
+		// both be credited every win. Only one contestant can win each fight.
+		const total = ['Sim 1', 'Sim 2', 'Sim 3'].reduce((sum, label) => sum + (res.winRates[label] ?? 0), 0);
+		expect(total).to.be.at.most(100);
+	});
+
+	it('withoutHarnessExcludedCards() swaps Flee for a legal non-Flee draw', async () => {
+		await engineReady;
+		const Flee = getCardClassByTypeName('Flee') as unknown as new () => { cardType: string };
+		const Hit = getCardClassByTypeName('Hit') as unknown as new () => { cardType: string };
+		const hit = new Hit();
+		const monster = {
+			level: 5,
+			cards: [new Flee(), hit, new Flee()],
+			canHoldCard: (Card: { cardType?: string; level?: number }) => (Card.level ?? 0) <= 5,
+		};
+
+		const cards = withoutHarnessExcludedCards(monster);
+
+		expect(cards).to.have.length(3);
+		expect(cards[1]).to.equal(hit);
+		expect(cards.map(card => card.cardType)).not.to.include('Flee');
+	});
+
+	it('simulate() runs the Unicorn thematic fixture deck without cancelled fights', async function () {
+		this.timeout(60_000);
+
+		const res = await simulate({
+			monsters: [
+				{
+					type: 'Unicorn',
+					level: 5,
+					deck: ['Sticketh', 'Sticketh', 'Horn of Proof', 'Unconquerable Horn', 'Dissonant Voice', 'Gloaming Rest', 'Heal', 'Fists of Virtue', 'Hit'],
+				},
+				{ type: 'WeepingAngel', level: 5 },
+			],
+			fights: 10,
+			seed: 12,
+			roomId: 'harness-unicorn-fixture',
+		});
+
+		expect(res.cancelledFights).to.equal(0);
+		expect(res.avgDamagePerCard).to.have.property('Sticketh');
 	});
 
 	it('simulate() pays a win more coins than a loss (same fixed-seed run)', async function () {

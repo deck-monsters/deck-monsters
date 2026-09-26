@@ -1,6 +1,6 @@
-const HEAL_KEYWORDS = ['heal', 'scotch', 'whiskey', 'potion', 'pokecen', 'spin up'];
-const MELEE_KEYWORDS = ['hit', 'berserk', 'gore', 'spear', 'knife', 'swipe', 'battle', 'rampage'];
-const MAGIC_KEYWORDS = ['blink', 'blast', 'mesmer', 'sandstorm', 'curse', 'coil', 'focus', 'drain', 'cloak', 'entrance'];
+const HEAL_KEYWORDS = ['heal', 'scotch', 'whiskey', 'potion', 'pokecen', 'spin up', 'horn of proof', 'gloaming'];
+const MELEE_KEYWORDS = ['hit', 'berserk', 'gore', 'spear', 'knife', 'swipe', 'battle', 'rampage', 'sticketh'];
+const MAGIC_KEYWORDS = ['blink', 'blast', 'mesmer', 'sandstorm', 'curse', 'coil', 'focus', 'drain', 'cloak', 'entrance', 'dissonant'];
 
 export type CardClass = 'melee' | 'magic' | 'heal' | 'utility';
 

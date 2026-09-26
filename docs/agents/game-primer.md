@@ -28,8 +28,8 @@ already covers a subject in depth this links to it rather than restating it.
    path prompts, and asks for **pronouns** (`he/him`, `she/her`, `they/them`), which map onto
    the persisted `male|female|androgynous` keys via `helpers/pronouns.ts`.
    A player's `Beastmaster` gets a starting deck the first time it needs one —
-   `getInitialDeck()` = 15 fixed cards (Blink, Coil, Horn Gore, Battle Focus, Sandstorm,
-   Blast, 4x Hit, **2x Delayed Hit**, 2x Heal, Flee) topped up with random draws to
+   `getInitialDeck()` = 16 fixed cards (Blink, Coil, Horn Gore, Battle Focus, Sandstorm,
+   Sticketh, Blast, 4x Hit, **2x Delayed Hit**, 2x Heal, Flee) topped up with random draws to
    `DEFAULT_MINIMUM_CARDS` = 20 (`packages/engine/src/cards/helpers/deck.ts`).
 2. **Equip.** A monster holds `cardSlots` cards — 9 by default
    (`packages/engine/src/monsters/base.ts`), maximum 4 copies of any one card
