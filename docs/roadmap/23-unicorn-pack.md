@@ -62,7 +62,9 @@ file to `docs/archive/roadmap/` when the pass closes.
 - **Unconquerable Horn.** Unicorn-only, uncommon, level 1. Arms
   `encounterModifiers.unconquerableWard` (`cards/helpers/control-ward.ts`). The next
   successful hold an opponent lands through `immobilize()` is cancelled and the ward is
-  spent; attached damage (Coil, Forked Stick) still lands. It does not re-arm in the same
+  spent; attached damage (Coil, Forked Stick) still lands. A teammate's area hold
+  (Mesmerize catches allies) does not spend it; allegiance uses the ring's team precedence,
+  and a free-for-all ring event makes everyone an opponent. It does not re-arm in the same
   fight and does not stack.
 - **Horn of Proof.** Unicorn or Cleric, rare, level 2. Removes the first of: a hold, the
   harshest negative encounter stat, or a ring Bad Batch; then heals a fixed 3 (below Heal's

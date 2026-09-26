@@ -143,6 +143,26 @@ describe('@deck-monsters/harness', () => {
 		expect(res.avgRounds).to.be.greaterThan(1);
 	});
 
+	it('simulate() gives teamless contestants their own faction in a team fight', async function () {
+		this.timeout(60_000);
+
+		const res = await simulate({
+			monsters: [
+				{ type: 'Jinn', level: 1, team: 'Solo' },
+				{ type: 'WeepingAngel', level: 10 },
+				{ type: 'WeepingAngel', level: 10 },
+			],
+			fights: 10,
+			seed: 13,
+			roomId: 'harness-teamless',
+		});
+
+		// The two teamless Angels used to share the boss team, never fight each other, and
+		// both be credited every win. Only one contestant can win each fight.
+		const total = ['Sim 1', 'Sim 2', 'Sim 3'].reduce((sum, label) => sum + (res.winRates[label] ?? 0), 0);
+		expect(total).to.be.at.most(100);
+	});
+
 	it('simulate() runs the Unicorn thematic fixture deck without cancelled fights', async function () {
 		this.timeout(60_000);
 

@@ -25,6 +25,25 @@ export const armControlWard = (creature: any): 'armed' | 'already-armed' | 'spen
 	return 'armed';
 };
 
+// Same precedence the ring's `factionOf` and `getTarget`'s `teamOf` use: a ring event's
+// contestant-level team, then the monster's, then the character's.
+const teamOf = (contestant: any): string | undefined =>
+	contestant?.team || contestant?.monster?.team || contestant?.character?.team;
+
+/**
+ * Whether `holder` is an opponent of `held` for ward purposes. Area holds such as Mesmerize
+ * deliberately catch allies too, and the ward only promises to refuse an opponent's hold,
+ * so a teammate's hold must not spend it. Without contestant data (direct card calls in
+ * tests), or under a free-for-all ring event such as Blood Feud, everyone is an opponent.
+ */
+export const isOpponentHold = (holder: any, held: any, activeContestants?: any[], ring?: any): boolean => {
+	if (holder === held) return false;
+	if (!activeContestants || ring?.encounterFreeForAll) return true;
+	const holderTeam = teamOf(activeContestants.find(({ monster }: any) => monster === holder));
+	const heldTeam = teamOf(activeContestants.find(({ monster }: any) => monster === held));
+	return !holderTeam || holderTeam !== heldTeam;
+};
+
 /** Spends an armed ward. Returns true when a control effect should be cancelled. */
 export const consumeControlWard = (creature: any): boolean => {
 	if (getControlWard(creature) !== 'armed') return false;

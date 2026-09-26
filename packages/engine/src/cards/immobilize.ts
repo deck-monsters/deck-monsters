@@ -7,7 +7,7 @@ import { GLADIATOR, MINOTAUR, WEEPING_ANGEL } from '../constants/creature-types.
 import { IMPOSSIBLE } from '../helpers/probabilities.js';
 import { signedNumber } from '../helpers/signed-number.js';
 import { agree } from '../helpers/pronouns.js';
-import { consumeControlWard } from './helpers/control-ward.js';
+import { consumeControlWard, isOpponentHold } from './helpers/control-ward.js';
 
 const { roll } = chance;
 
@@ -374,9 +374,14 @@ ${ongoingDamageText}`;
 			ring,
 			activeContestants
 		);
-		// Unconquerable Horn: an armed ward cancels the hold, not the damage. A hold a
-		// confused creature puts on itself is not an opponent's control and is not warded.
-		if (immobilizeSuccess && target !== player && consumeControlWard(target)) {
+		// Unconquerable Horn: an armed ward cancels the hold, not the damage. Only an
+		// opponent's hold spends it: not a confused creature's hold on itself, and not a
+		// teammate's area hold such as Mesmerize.
+		if (
+			immobilizeSuccess &&
+			isOpponentHold(player, target, activeContestants, ring) &&
+			consumeControlWard(target)
+		) {
 			this.emit('narration', {
 				narration: `\n${target.givenName} cannot be taken and held. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'refuses', 'refuse')} to be ${this.actions.IMMOBILIZED}, and the Unconquerable Horn's ward is spent.`,
 			});

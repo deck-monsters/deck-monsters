@@ -377,11 +377,14 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				// object from `monster.battles` (only shared at construction when `statSeed` seeds
 				// both) — resetting it doesn't touch the monster's own combat-stat-diversity record.
 				// Harness contestants are bosses, and `randomContestant` puts every boss on the
-				// boss team; the monster's own team wins in `factionOf`, so set both.
-				if (m.team) {
-					c.character.team = m.team;
-					c.monster.team = m.team;
-				}
+				// shared boss team, which the ring treats as one faction. Give each contestant
+				// its spec's team, or a faction of its own, on both the character and the monster
+				// (the monster's team wins in `factionOf`). Otherwise teamless contestants in a
+				// team fight never fight each other and all get credited a win, and ally checks
+				// such as Unconquerable Horn's treat every harness contestant as a teammate.
+				const faction = m.team ?? `solo:${names[i]!}`;
+				c.character.team = faction;
+				c.monster.team = faction;
 				c.character.lastDailyFightCoinDay = getUtcDay();
 				c.character.battles = { total: STEADY_STATE_BATTLES_TOTAL, wins: 0, losses: 0 };
 				stableIdToLabel.set(c.monster.stableId as string, label);

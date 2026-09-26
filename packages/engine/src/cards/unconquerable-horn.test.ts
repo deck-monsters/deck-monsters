@@ -5,6 +5,7 @@ import { UnconquerableHornCard } from './unconquerable-horn.js';
 import { ImmobilizeCard } from './immobilize.js';
 import { CoilCard } from './coil.js';
 import { EnthrallCard } from './enthrall.js';
+import { MesmerizeCard } from './mesmerize.js';
 import { StickethCard } from './sticketh.js';
 import { hydrateCard } from './helpers/hydrate.js';
 import { CONTROL_WARD } from './helpers/control-ward.js';
@@ -101,6 +102,30 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 
 		expect(isHeld(unicorn)).to.equal(false);
 		expect(isHeld(foe)).to.equal(true);
+	});
+
+	it('is not spent by a teammate\'s area hold, only by an opponent\'s', async () => {
+		const angel = new WeepingAngel({ name: 'Ada' });
+		angel.startEncounter(ring);
+		const teamed = [
+			{ monster: unicorn, character: { team: 'Laurel' } },
+			{ monster: angel, character: { team: 'Laurel' } },
+			{ monster: foe, character: { team: 'Gorge' } },
+		];
+		await new UnconquerableHornCard().play(unicorn, foe, ring, teamed);
+		const mesmerize = new MesmerizeCard();
+		sinon.stub(mesmerize, 'immobilizeCheck').returns(true);
+
+		// Mesmerize holds everyone, allies included; the ally's hold lands and the ward stays.
+		await mesmerize.effect(angel, unicorn, ring, teamed);
+		expect(isHeld(unicorn)).to.equal(true);
+		expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('armed');
+
+		// Under a free-for-all ring event, the same hold counts as an opponent's.
+		unicorn.encounterEffects = [];
+		await mesmerize.effect(angel, unicorn, { ...ring, encounterFreeForAll: true }, teamed);
+		expect(isHeld(unicorn)).to.equal(false);
+		expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('spent');
 	});
 
 	it('does not stack and does not re-arm once spent', async () => {
