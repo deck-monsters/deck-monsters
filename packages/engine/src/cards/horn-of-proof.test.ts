@@ -76,13 +76,15 @@ describe('./cards/horn-of-proof.ts Horn of Proof', () => {
 		expect(unicorn.encounterModifiers.ac).to.equal(2);
 	});
 
-	it('otherwise pours away a Bad Batch waiting in the ring', async () => {
+	it('otherwise pours away one Bad Batch waiting in the ring, and only one', async () => {
 		const other = () => undefined;
-		ring.encounterEffects = [Object.assign(() => undefined, { effectType: BAD_BATCH_EFFECT }), other];
+		const first = Object.assign(() => undefined, { effectType: BAD_BATCH_EFFECT });
+		const second = Object.assign(() => undefined, { effectType: BAD_BATCH_EFFECT });
+		ring.encounterEffects = [first, other, second];
 
 		await new HornOfProofCard().effect(unicorn, unicorn, ring);
 
-		expect(ring.encounterEffects).to.deep.equal([other]);
+		expect(ring.encounterEffects).to.deep.equal([other, second]);
 	});
 
 	it('still heals when there is nothing to purify', async () => {

@@ -46,15 +46,14 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 	}
 
 	/**
-	 * Give back the AC the rest took, but only what is still missing. The penalty shares
-	 * `encounterModifiers.ac` with a brace, which melee hits spend; adding a flat +2 back
-	 * after a brace was spent would hand out free AC. The cost is that a brace raised
-	 * during the rest can come out up to the penalty short.
+	 * Give the full penalty back. The penalty shares `encounterModifiers.ac` with a brace,
+	 * which melee hits spend, but a flat +2 is still right in every case: a brace raised
+	 * during the rest was only ever reduced by the penalty, so whatever part of it the hits
+	 * did not spend comes back whole. An earlier clamp here ("only give back what is still
+	 * missing") lost the 2 AC for the rest of the fight whenever a brace was already up.
 	 */
 	restoreAc(target: any): void {
-		const current = (target.encounterModifiers.ac as number) || 0;
-		const giveBack = Math.min(REST_AC_PENALTY, Math.max(0, -current));
-		if (giveBack > 0) target.setModifier('ac', giveBack);
+		target.setModifier('ac', REST_AC_PENALTY);
 	}
 
 	rest(target: any, ring: any): void {
@@ -71,7 +70,11 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 			);
 
 			const hitLog: any[] = (target.encounterModifiers.hitLog as any[]) || [];
-			const interrupted = hitLog.some(({ when, damage }) => when > since && damage > 0);
+			// `dealt` is the HP a blow actually took; a hit the brace absorbed in full does not
+			// disturb the rest. Entries without it predate the field and count at face value.
+			const interrupted = hitLog.some(
+				({ when, damage, dealt }) => when > since && (dealt ?? damage) > 0
+			);
 
 			if (interrupted) {
 				this.emit('narration', {

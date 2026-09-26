@@ -67,7 +67,7 @@ file to `docs/archive/roadmap/` when the pass closes.
   and a free-for-all ring event makes everyone an opponent. It does not re-arm in the same
   fight and does not stack.
 - **Horn of Proof.** Unicorn or Cleric, rare, level 2. Removes the first of: a hold, the
-  harshest negative encounter stat, or a ring Bad Batch; then heals a fixed 3 (below Heal's
+  harshest negative encounter stat, or one queued ring Bad Batch (others stay queued); then heals a fixed 3 (below Heal's
   1d4 + INT, which also scales with level). Self-targeted like Heal; ally targeting waits
   for a team-heal targeting rule, which no card has today. A held monster's own card never
   plays, so the hold case only applies when confusion turns the card on someone else; the
@@ -77,9 +77,12 @@ file to `docs/archive/roadmap/` when the pass closes.
   next attack roll. The penalty is spent on the next card either way, never stacks, and
   deals no damage. Saves resolve serially with a sub-event beat each.
 - **Gloaming Rest.** Unicorn or Cleric, rare, level 3. −2 AC until the Unicorn's next card;
-  if no hit with damage is logged after the rest began (same `hitLogTimestamp` clock as
-  Delayed Hit), heal 3d4 as that card begins. The AC give-back is clamped to what is still
-  missing so a spent brace never turns into free AC.
+  if no hit that took HP is logged after the rest began (same `hitLogTimestamp` clock as
+  Delayed Hit; hit-log entries now record `dealt`, so a blow the brace absorbs in full does
+  not break the rest), heal 3d4 as that card begins. The full −2 is given back: a brace
+  raised during the rest was only reduced by the penalty, so whatever the hits did not
+  spend returns whole. (A first version clamped the give-back and lost the 2 AC for the
+  rest of the fight whenever a brace was already up.)
 - **Distribution.** Sticketh: rare drop, seeded in the starting deck, back-room only.
   Unconquerable Horn (uncommon), Dissonant Voice (uncommon), Horn of Proof (rare), and
   Gloaming Rest (rare) are ordinary drops and sold in the front shop. The four support

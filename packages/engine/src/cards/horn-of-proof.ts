@@ -87,11 +87,11 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 
 	cleanseRing(target: any, ring: any): boolean {
 		const effects: any[] = ring?.encounterEffects ?? [];
-		if (!effects.some((effect: any) => effect.effectType === BAD_BATCH_EFFECT)) return false;
+		const index = effects.findIndex((effect: any) => effect.effectType === BAD_BATCH_EFFECT);
+		if (index < 0) return false;
 
-		ring.encounterEffects = effects.filter(
-			(effect: any) => effect.effectType !== BAD_BATCH_EFFECT
-		);
+		// One cleanse removes one batch; any others stay queued.
+		ring.encounterEffects = [...effects.slice(0, index), ...effects.slice(index + 1)];
 		this.emit('narration', {
 			narration: `${this.icon} ${target.givenName} dips the horn in every cup in the ring. The bad batch is found out and poured away.`,
 		});

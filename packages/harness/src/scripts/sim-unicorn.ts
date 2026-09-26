@@ -95,20 +95,33 @@ const wrap = (target: Proto, method: string, around: (original: Method, self: un
 	};
 };
 
+const isUnicorn = (creature: unknown): boolean =>
+	(creature as { creatureType?: string } | undefined)?.creatureType === 'Unicorn';
+
+/*
+ * Weeping Angels (Cleric) can also play Horn of Proof and Gloaming Rest, and Jinn (Bard)
+ * Dissonant Voice, so every counter only counts a play made by a Unicorn. Methods that do
+ * not receive the acting monster are credited through the per-play card clone the Unicorn
+ * played, recorded in `unicornPlays` when its `effect()` (or `rest()`) starts.
+ */
+const unicornPlays = new WeakSet<object>();
+
 function instrument(): void {
 	const sticketh = proto('Sticketh');
 	wrap(sticketh, 'hitCheck', (original, self, args) => {
 		const result = original.apply(self, args) as { success: boolean };
-		counters.stickethPlays += 1;
-		if (result.success) counters.stickethHits += 1;
-		else counters.stickethMisses += 1;
+		if (isUnicorn(args[0])) {
+			counters.stickethPlays += 1;
+			if (result.success) counters.stickethHits += 1;
+			else counters.stickethMisses += 1;
+		}
 		return result;
 	});
 	wrap(sticketh, 'stickFast', (original, self, args) => {
 		const [player] = args as [Creature];
 		const before = player.encounterEffects.length;
 		const result = original.apply(self, args);
-		if (player.encounterEffects.length > before) counters.stickethStuck += 1;
+		if (isUnicorn(player) && player.encounterEffects.length > before) counters.stickethStuck += 1;
 		return result;
 	});
 
@@ -116,7 +129,9 @@ function instrument(): void {
 		const [, target] = args as [unknown, Creature];
 		const before = target.encounterModifiers.unconquerableWard;
 		const result = original.apply(self, args);
-		if (!before && target.encounterModifiers.unconquerableWard === 'armed') counters.wardsArmed += 1;
+		if (isUnicorn(target) && !before && target.encounterModifiers.unconquerableWard === 'armed') {
+			counters.wardsArmed += 1;
+		}
 		return result;
 	});
 	// Every hold an opponent lands goes through `immobilize()`, which is where the ward is
@@ -125,7 +140,7 @@ function instrument(): void {
 		const [, target] = args as [unknown, Creature];
 		const before = target.encounterModifiers.unconquerableWard;
 		const result = original.apply(self, args);
-		if (before === 'armed' && target.encounterModifiers.unconquerableWard === 'spent') {
+		if (isUnicorn(target) && before === 'armed' && target.encounterModifiers.unconquerableWard === 'spent') {
 			counters.wardTriggers += 1;
 		}
 		return result;
@@ -133,39 +148,51 @@ function instrument(): void {
 
 	const horn = proto('Horn of Proof');
 	wrap(horn, 'effect', (original, self, args) => {
-		counters.hornOfProofPlays += 1;
+		if (isUnicorn(args[0])) {
+			unicornPlays.add(self as object);
+			counters.hornOfProofPlays += 1;
+		}
 		return original.apply(self, args);
 	});
 	for (const method of ['cleanseHold', 'cleanseCurse', 'cleanseRing']) {
 		wrap(horn, method, (original, self, args) => {
 			const cleansed = original.apply(self, args);
-			if (cleansed) counters.hornOfProofCleansed += 1;
+			if (cleansed && unicornPlays.has(self as object)) counters.hornOfProofCleansed += 1;
 			return cleansed;
 		});
 	}
 
 	const voice = proto('Dissonant Voice');
+	wrap(voice, 'effect', (original, self, args) => {
+		if (isUnicorn(args[0])) unicornPlays.add(self as object);
+		return original.apply(self, args);
+	});
 	wrap(voice, 'getSaveRoll', (original, self, args) => {
-		counters.voiceSaves += 1;
+		if (unicornPlays.has(self as object)) counters.voiceSaves += 1;
 		return original.apply(self, args);
 	});
 	wrap(voice, 'rattle', (original, self, args) => {
-		counters.voiceRattled += 1;
+		if (unicornPlays.has(self as object)) counters.voiceRattled += 1;
 		return original.apply(self, args);
 	});
 
 	const rest = proto('Gloaming Rest');
 	wrap(rest, 'rest', (original, self, args) => {
-		counters.restsBegun += 1;
+		if (isUnicorn(args[0])) {
+			unicornPlays.add(self as object);
+			counters.restsBegun += 1;
+		}
 		return original.apply(self, args);
 	});
 	wrap(rest, 'emit', (original, self, args) => {
 		const [event, payload] = args as [string, EmitPayload | undefined];
-		if (event === 'rolled' && payload?.reason === 'for a quiet rest.') {
-			counters.restsCompleted += 1;
-			counters.restHealTotal += payload.roll?.result ?? 0;
-		} else if (event === 'narration' && String(payload?.narration).includes('rest was broken')) {
-			counters.restsInterrupted += 1;
+		if (unicornPlays.has(self as object)) {
+			if (event === 'rolled' && payload?.reason === 'for a quiet rest.') {
+				counters.restsCompleted += 1;
+				counters.restHealTotal += payload.roll?.result ?? 0;
+			} else if (event === 'narration' && String(payload?.narration).includes('rest was broken')) {
+				counters.restsInterrupted += 1;
+			}
 		}
 		return original.apply(self, args);
 	});

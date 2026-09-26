@@ -10,7 +10,7 @@ import { capturePublicFeed, formatPublicFeedLines } from './public-feed.js';
 import { runRingTwoBosses } from './scenarios/ring-two-bosses.js';
 import { runConcurrentLookMonsters } from './scenarios/concurrent-look-monsters.js';
 import { parseMonstersArg, simulate, simulateNewPlayerProgression, withoutHarnessExcludedCards } from './simulate.js';
-import { COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName } from '@deck-monsters/engine';
+import { COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName, RoomEventBus } from '@deck-monsters/engine';
 
 describe('@deck-monsters/harness', () => {
 	before(async function () {
@@ -141,6 +141,43 @@ describe('@deck-monsters/harness', () => {
 			expect(w(ally!) + w(foe!), `${ally} + ${foe}`).to.be.at.most(100);
 		}
 		expect(res.avgRounds).to.be.greaterThan(1);
+	});
+
+	it('simulate() team fights aim at the other team, not at allies', async function () {
+		this.timeout(60_000);
+		const team: Record<string, string> = { 'Sim 1': 'A', 'Sim 2': 'A', 'Sim 3': 'B', 'Sim 4': 'B' };
+		let hits = 0;
+		let allyHits = 0;
+		const publish = RoomEventBus.prototype.publish;
+		RoomEventBus.prototype.publish = function (this: RoomEventBus, ...args: Parameters<typeof publish>) {
+			const payload = args[0].payload as { monsterName?: string; assailantName?: string } | undefined;
+			const { monsterName, assailantName } = payload ?? {};
+			if (monsterName && assailantName && monsterName !== assailantName && team[monsterName] && team[assailantName]) {
+				hits += 1;
+				if (team[monsterName] === team[assailantName]) allyHits += 1;
+			}
+			return publish.apply(this, args);
+		};
+		try {
+			await simulate({
+				monsters: [
+					{ type: 'Gladiator', level: 5, team: 'A' },
+					{ type: 'Minotaur', level: 5, team: 'A' },
+					{ type: 'Basilisk', level: 5, team: 'B' },
+					{ type: 'Gladiator', level: 5, team: 'B' },
+				],
+				fights: 20,
+				seed: 15,
+				roomId: 'harness-team-targeting',
+			});
+		} finally {
+			RoomEventBus.prototype.publish = publish;
+		}
+
+		// Boss targeting used to fall back to a team-blind target, so each side's first monster
+		// hit its own ally. Area cards can still catch an ally now and then.
+		expect(hits).to.be.greaterThan(0);
+		expect(allyHits / hits).to.be.below(0.05);
 	});
 
 	it('simulate() gives teamless contestants their own faction in a team fight', async function () {

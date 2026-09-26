@@ -414,6 +414,12 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				const faction = m.team ?? `solo:${names[i]!}`;
 				c.character.team = faction;
 				c.monster.team = faction;
+				// `randomContestant` also gives every boss TARGET_HUMAN_PLAYER_WEAK. With no human
+				// in a harness ring, that strategy falls back to a target chosen with teams
+				// ignored, so team fights measured friendly fire. The default (next player) is
+				// team-aware, and with one faction per teamless contestant it behaves the same in
+				// a free-for-all.
+				c.monster.targetingStrategy = undefined;
 				c.character.lastDailyFightCoinDay = getUtcDay();
 				c.character.battles = { total: STEADY_STATE_BATTLES_TOTAL, wins: 0, losses: 0 };
 				stableIdToLabel.set(c.monster.stableId as string, label);

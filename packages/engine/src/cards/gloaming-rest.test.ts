@@ -111,14 +111,37 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 		expect(unicorn.encounterEffects.filter((e: any) => e.effectType === GLOAMING_REST_EFFECT)).to.have.length(1);
 	});
 
-	it('never hands back more AC than it took, even after a brace was spent', async () => {
+	it('gives the full penalty back, keeping a brace that was up before the rest', async () => {
+		// Harden-style brace of +3; the rest takes it to +1, and the next card restores +3.
+		unicorn.encounterModifiers.ac = 3;
 		await new GloamingRestCard().play(unicorn, foe, ring, contestants);
-		// A brace arrives and a melee hit spends it all: encounter ac is now 0, not -2.
+		expect(unicorn.encounterModifiers.ac).to.equal(1);
+
+		await nextTurn();
+
+		expect(unicorn.encounterModifiers.ac).to.equal(3);
+	});
+
+	it('gives back what a spent brace had left under the penalty', async () => {
+		await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+		// A +5 brace arrives (net +3) and a melee hit spends that +3: the brace absorbed 3 of
+		// its 5, so 2 remain once the penalty lifts.
 		unicorn.encounterModifiers.ac = 0;
 
 		await nextTurn();
 
-		expect(unicorn.encounterModifiers.ac).to.equal(0);
+		expect(unicorn.encounterModifiers.ac).to.equal(2);
+	});
+
+	it('is not broken by a hit the brace absorbed completely', async () => {
+		await new GloamingRestCard().play(unicorn, foe, ring, contestants);
+		unicorn.encounterModifiers.ac = 4;
+		await unicorn.hit(3, foe, new HitCard());
+		expect(unicorn.hp).to.equal(5);
+
+		await nextTurn();
+
+		expect(unicorn.hp).to.be.greaterThan(5);
 	});
 
 	it('keeps a curse that was there before the rest', async () => {

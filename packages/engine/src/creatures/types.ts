@@ -13,7 +13,10 @@ export interface BattleRecord {
 
 export interface HitLogEntry {
 	assailant: BaseCreature | undefined;
+	/** Damage the blow carried, before any braced AC absorbed it. */
 	damage: number;
+	/** HP the blow actually took: 0 when braced AC absorbed it all. Set once `hit()` resolves. */
+	dealt?: number;
 	card: CardInstance | undefined;
 	when: number;
 }
