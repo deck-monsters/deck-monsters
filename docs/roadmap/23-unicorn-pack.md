@@ -23,7 +23,7 @@ file to `docs/archive/roadmap/` when the pass closes.
 | 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Done | 862762b |
 | 5 | Distribution and generated references (`pnpm run build:docs`) | Done | 16ae4c2 |
 | 6 | Balance pass (`sim:winrates` plus the new `sim:unicorn`) | Done; exceptions need owner approval | 71c3d9d, c72b2e0 |
-| 7 | Live copy and pacing check (feed level; browser check open) | Done | _pending_ |
+| 7 | Live copy and pacing check (feed level; browser check open) | Done | 6e0d53f |
 
 ## Decisions from the spike
 
@@ -148,6 +148,11 @@ single-width emoji in the card boxes. Two fixes came out of it:
 Also observed, working as designed: a Unicorn stuck by Sticketh counts as already held, so
 an opponent's Coil or Constrict turns into a plain hit ("shows no mercy") and does not spend
 the Unconquerable Horn ward. That free hit is the "opening" the card narrates.
+
+An independent read-only review of the whole diff found no blockers. Its two nits, that the
+single-line branches of Unconquerable Horn and Gloaming Rest take no sub-event beat, match
+the other one-line self-buffs (Boost, Thick Skin, Battle Focus, Basic Shield), which rely on
+the ring's card-to-card gap. They were left as they are.
 
 Still open before this pass is archived: a browser check of the workshop and ring with a
 real Unicorn (sprite, roster portrait, card text wrapping), and owner approval of the
