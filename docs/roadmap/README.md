@@ -15,7 +15,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 |---|---|
 | [10 — Bug fixes](10-bug-fixes.md) | Reward investigation, feed recovery control, and feed spacing |
 | [11 — Balance and mechanics](11-balance-and-mechanics.md) | Simulation, telemetry, healing prices, crit ticks, fight threads, and combat decisions |
-| [12 — New content](12-new-content-backlog.md) | Concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
+| [12 — New content](12-new-content-backlog.md) | Researched Unicorn content pack; concrete cards, monsters, card authoring, equipment, world, and endgame proposals |
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions and manual verification gates |
 
