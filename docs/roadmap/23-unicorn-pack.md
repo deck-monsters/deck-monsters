@@ -97,30 +97,31 @@ file to `docs/archive/roadmap/` when the pass closes.
 
 ## Balance evidence (slice 6)
 
-The first run of this section measured a harness bug: alphabetical card draws stacked
-Cleric decks with Blast (fixed-bug #183). These numbers are from the rerun with shuffled
-draws: `sim:winrates` at level 5 (200 fights per pair) and `sim:unicorn` (100 fights per
-row). Values are the Unicorn's share of **decisive** fights.
+The first run of this section measured harness bugs: alphabetical card draws stacked
+Cleric decks with Blast (fixed-bug #183), team fights used a team-blind boss strategy, and
+the card counters included other monsters' plays. These numbers are from the rerun after
+those fixes, with Flee kept out of harness decks: `sim:winrates` at level 5 (200 fights per
+pair) and `sim:unicorn` (100 fights per row). Values are the Unicorn's share of decisive
+fights; draws are now 0–10%.
 
 | Opponent | Random deck L1 | L5 | L10 | L15 | L20 | Test deck L1 | L5 | L10 | L15 | L20 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Basilisk | 59 | 62 | 80 | 71 | 87 | 50 | 27 | 39 | 27 | 28 |
-| Gladiator | 68 | 70 | 78 | 94 | 89 | 41 | 40 | 36 | 30 | 41 |
-| Jinn | 81 | 62 | 67 | 67 | 70 | 59 | 51 | 43 | 41 | 30 |
-| Minotaur | 58 | 52 | 76 | 85 | 77 | 43 | 33 | 36 | 24 | 33 |
-| Weeping Angel | 65 | 72 | 66 | 60 | 58 | 49 | 44 | 37 | 18 | 17 |
+| Basilisk | 59 | 62 | 80 | 71 | 87 | 42 | 44 | 40 | 38 | 33 |
+| Gladiator | 68 | 70 | 78 | 94 | 89 | 53 | 53 | 44 | 45 | 30 |
+| Jinn | 81 | 62 | 67 | 67 | 70 | 63 | 43 | 35 | 29 | 28 |
+| Minotaur | 58 | 52 | 76 | 85 | 77 | 45 | 54 | 40 | 42 | 39 |
+| Weeping Angel | 65 | 72 | 70 | 60 | 58 | 59 | 42 | 38 | 20 | 9 |
 
-In the level 5 `sim:winrates` matrix every pair lands in 39–65.5%; the Unicorn wins
+In the level 5 `sim:winrates` matrix every pair lands in 39.5–65.5%; the Unicorn wins
 51.5–64% as the first contestant and its opponents 39.5–47.5% against it.
 
-Card rates (test deck, all rows): Sticketh hits 73% and sticks the Unicorn on 11% of plays;
-the Unconquerable Horn ward triggers in 41% of fights where it is armed (55% in the team
-fight); Horn of Proof finds something to cleanse 35% of the time; Dissonant Voice rattles
-19% of saves; Gloaming Rest completes 65% of the time for an average 7.5 hp and is
-interrupted 32% of the time. Mirror match: 87% draws, because the two test decks run in
-step, so each rest resolves before the other side attacks and both play Flee on the same
-turn. Team fight (Unicorn + Gladiator vs Minotaur + Basilisk): member win rates 27 / 38 /
-15 / 44%, 4% draws.
+Card rates (test deck, Unicorn plays only): Sticketh hits 74% and sticks the Unicorn on 11%
+of plays; the Unconquerable Horn ward triggers in 44% of fights where it is armed (65% in
+the team fight); Horn of Proof finds something to cleanse 39% of the time; Dissonant Voice
+rattles 16% of saves; Gloaming Rest completes 61% of the time for an average 7.5 hp and is
+interrupted 36% of the time. Mirror match: 55 / 45%, no draws; both test decks run in
+step, so each rest resolves before the other side attacks. Team fight (Unicorn + Gladiator
+vs Minotaur + Basilisk, team-aware targeting): member win rates 36 / 54 / 12 / 42%, 3% draws.
 
 ### Findings
 
@@ -131,9 +132,9 @@ The balance target is a class power curve across levels, not 50/50 everywhere (s
    52–81% at levels 1–5, 58–94% at 15–20). The rising curve is right for a Cleric; the early
    strength is a little high. Watch it in real play. If it proves too strong early, the first
    levers are Sticketh's +1 to hit or `hpVariance` 1 → 0.
-2. **The 9-card test deck is weak (17–59%) and draws often.** Six of its nine cards are
-   utility and it carries Flee. It is a design demonstration, not a starter deck, so no
-   change.
+2. **The 9-card test deck is even early and fades late** (42–63% at levels 1–5, 9–45% at
+   15–20). Six of its nine cards are utility with no level scaling, so this is the deck, not
+   the monster. It is a design demonstration, not a starter deck, so no change.
 
 ## Live copy and pacing check (slice 7)
 
