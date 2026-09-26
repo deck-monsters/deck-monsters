@@ -97,8 +97,9 @@ file to `docs/archive/roadmap/` when the pass closes.
   bestiaries"; the cloven hooves, black eyes, long straight horn, and lonely wilderness are
   Dapper's (1673), not Marco Polo's; Ctesias says a horn cup makes the drinker immune to
   poison, not that it betrays poison; and Edwin Julian's poem is comic verse illustrated by
-  Reginald Birch, which the first comment called "modern". Card and monster copy remains
-  original prose.
+  Reginald Birch, which the first comment called "modern". The Topsell, Spenser, and Brothers
+  Grimm page confirms Sticketh's sources word for word; the Grimm tailor's tree feint is now
+  cited too. Card and monster copy remains original prose.
 
 ## Balance evidence (slice 6)
 

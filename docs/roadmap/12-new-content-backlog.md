@@ -84,7 +84,9 @@ the year and edition stay unrecorded. Its newest dated artwork, *The Unicorn in 
 S.W.D., is from 1976, so the book is no earlier. The pages photographed quote Ctesias
 (*Indica* fragment 25), Pliny (*Historia Naturalis*), Aelian (*De Animalium Natura*),
 Julius Solinus (*Polyhistoria*, in early-modern English), Olfert Dapper (*Die Unbekante Neue
-Welt*, 1673), and Edwin Julian ("The Capture of the Unicorn", illustrated by Reginald Birch).
+Welt*, 1673), Edward Topsell (*History of Four Footed Beasts*, 1607), Spenser (*The Faerie
+Queene*), the Brothers Grimm ("The Brave Little Tailor"), and Edwin Julian ("The Capture of
+the Unicorn", illustrated by Reginald Birch).
 Source comments cite these texts directly.
 
 | Motif to carry forward | Short source fragment or visual cue | Game use |

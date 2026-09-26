@@ -20,8 +20,11 @@ const STICKETH_TO_HIT_BONUS = 1;
  *   - Edward Topsell, The History of Four-footed Beasts (1607): a lion steps behind a tree
  *     as the unicorn charges, and the "sharp horn sticketh fast" in the trunk.
  *   - Edmund Spenser, The Faerie Queene II.v.10 (1590): the same feint, the horn striking
- *     "in the stocke".
- * The card keeps both halves: a hard charge, and the risk of being left stuck fast.
+ *     "in the stocke, ne thence can be releast".
+ *   - The Brothers Grimm, "The Brave Little Tailor" (folk tale): the tailor springs behind a
+ *     tree and the unicorn gores it "so firmly with his horn that he could not get it out".
+ * All four appear in the anthology A Book of Unicorns (Green Tiger Press). The card keeps
+ * both halves: a hard charge, and the risk of being left stuck fast.
  */
 export class StickethCard extends ImmobilizeCard {
 	static cardClass = [MELEE];
