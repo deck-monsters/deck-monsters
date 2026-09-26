@@ -21,7 +21,10 @@ const CURSABLE_STATS = ['ac', 'dex', 'str', 'int'];
  *
  * What it can remove is an explicit list, because the engine has no shared "harmful
  * effect" flag. In priority order, it removes the first one it finds:
- *   1. a hold on the target (any ImmobilizeEffect, including Coil's ongoing damage);
+ *   1. a hold on the target (any ImmobilizeEffect, including Coil's ongoing damage). A held
+ *      monster's own card never plays, so this only happens when the card lands on someone
+ *      else: confusion today, ally targeting if a team-heal rule is ever added. The stats
+ *      text says so rather than promising a self-cleanse that cannot happen;
  *   2. the target's harshest negative encounter stat penalty (Soften and similar curses);
  *   3. a Bad Batch waiting in the ring to turn the next drink to poison.
  */
@@ -39,7 +42,7 @@ export class HornOfProofCard extends BaseCard {
 	}
 
 	get stats(): string {
-		return `Remove one of these, in order: a hold on you (immobilize, pin, coil, and the like), your worst stat penalty this fight, or a Bad Batch waiting in the ring.
+		return `Remove one of these, in order: your worst stat penalty this fight, or a Bad Batch waiting in the ring. If the horn is turned on someone who is held, it frees them first.
 Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 	}
 

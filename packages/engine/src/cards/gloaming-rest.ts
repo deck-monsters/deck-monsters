@@ -115,7 +115,9 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 		this.emit('narration', {
 			narration:
 				player === target
-					? `${this.icon} As the light fails, ${player.givenName} ${agree(player.pronouns, 'kneels', 'kneel')} among the laurel and ${agree(player.pronouns, 'closes', 'close')} ${player.pronouns.his} eyes.`
+					// The subject is the monster's name, which is always singular; `agree` is only
+					// for sentences whose subject is the pronoun ("they rise").
+					? `${this.icon} As the light fails, ${player.givenName} kneels among the laurel and closes ${player.pronouns.his} eyes.`
 					: `${this.icon} In confusion, ${player.givenName} coaxes ${target.givenName} to kneel and rest.`,
 		});
 		target.setModifier('ac', -REST_AC_PENALTY);

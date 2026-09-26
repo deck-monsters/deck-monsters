@@ -22,8 +22,8 @@ file to `docs/archive/roadmap/` when the pass closes.
 | 3 | `Sticketh` vertical slice with self-stick via the immobilize machinery | Done | ce3b048 |
 | 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Done | 862762b |
 | 5 | Distribution and generated references (`pnpm run build:docs`) | Done | 16ae4c2 |
-| 6 | Balance pass (`sim:winrates` plus the new `sim:unicorn`) | Done; exceptions need owner approval | _pending_ |
-| 7 | Live copy and pacing check | Planned | |
+| 6 | Balance pass (`sim:winrates` plus the new `sim:unicorn`) | Done; exceptions need owner approval | 71c3d9d, c72b2e0 |
+| 7 | Live copy and pacing check (feed level; browser check open) | Done | _pending_ |
 
 ## Decisions from the spike
 
@@ -67,7 +67,9 @@ file to `docs/archive/roadmap/` when the pass closes.
 - **Horn of Proof.** Unicorn or Cleric, rare, level 2. Removes the first of: a hold, the
   harshest negative encounter stat, or a ring Bad Batch; then heals a fixed 3 (below Heal's
   1d4 + INT, which also scales with level). Self-targeted like Heal; ally targeting waits
-  for a team-heal targeting rule, which no card has today.
+  for a team-heal targeting rule, which no card has today. A held monster's own card never
+  plays, so the hold case only applies when confusion turns the card on someone else; the
+  stats text says that instead of promising a self-cleanse.
 - **Dissonant Voice.** Unicorn or Bard, uncommon, level 1. Each opponent (team-aware via
   `getTarget`) rolls 1d20 + INT vs the singer's INT; a failure takes 2 off that monster's
   next attack roll. The penalty is spent on the next card either way, never stacks, and
@@ -128,3 +130,25 @@ and none is caused by the Unicorn cards themselves:
    The fixture is assigned directly, so at level 1 it skips the level gate (Horn of Proof is
    level 2, Gloaming Rest level 3). At high levels it has three damage cards and nothing
    that scales with level, while the opponents' random decks do.
+
+## Live copy and pacing check (slice 7)
+
+Seeded single fights through `simulate()` with the public feed captured (ordinary, mirror,
+control-heavy Basilisk with Coil and Constrict, poison-heavy Jinn with Bad Batch, and a
+four-monster crowd). Checked the order of turn banner, card box, rolls, narration, and
+state lines; pronoun agreement for he, she, and they; and that 🦄 🏺 💎 🔔 🌙 render as
+single-width emoji in the card boxes. Two fixes came out of it:
+
+- "Sim 1 kneel among the laurel and close their eyes": Gloaming Rest ran `agree()` on a
+  sentence whose subject is the monster's name, which is always singular. Fixed, with a
+  regression test.
+- Horn of Proof's stats promised to free a hold on the player, which cannot happen on their
+  own turn. The text now says what it does.
+
+Also observed, working as designed: a Unicorn stuck by Sticketh counts as already held, so
+an opponent's Coil or Constrict turns into a plain hit ("shows no mercy") and does not spend
+the Unconquerable Horn ward. That free hit is the "opening" the card narrates.
+
+Still open before this pass is archived: a browser check of the workshop and ring with a
+real Unicorn (sprite, roster portrait, card text wrapping), and owner approval of the
+matchup exceptions above.

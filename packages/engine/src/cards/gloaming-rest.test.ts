@@ -81,6 +81,17 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 		expect(narrations.join('\n')).to.include('They rise without its comfort');
 	});
 
+	it('agrees the kneel line with the name, not the pronoun', async () => {
+		// "Nola kneel among the laurel" shipped once: `agree()` was run on a name subject.
+		const card = new GloamingRestCard();
+		const narrations: string[] = [];
+		card.on('narration', (_c: string, _card: any, { narration }: any) => narrations.push(narration));
+
+		await card.play(unicorn, foe, ring, contestants);
+
+		expect(narrations[0]).to.include('Nola kneels among the laurel and closes their eyes.');
+	});
+
 	it('ignores hits that landed before the rest began', async () => {
 		await unicorn.hit(1, foe, new HitCard());
 		await new GloamingRestCard().play(unicorn, foe, ring, contestants);

@@ -1257,11 +1257,12 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Whatever was wrong with it, is 
  not.
 
- Remove one of these, in order: a 
- hold on you (immobilize, pin, 
- coil, and the like), your worst 
- stat penalty this fight, or a 
- Bad Batch waiting in the ring.
+ Remove one of these, in order: 
+ your worst stat penalty this 
+ fight, or a Bad Batch waiting in 
+ the ring. If the horn is turned 
+ on someone who is held, it frees 
+ them first.
  Then heal 3 hp.
 
  Level: 2
