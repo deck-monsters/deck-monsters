@@ -25,13 +25,14 @@
           ░         ░  ░         ░    ░           ░  ░    ░  ░
 ```
 
-There are 5 different types of monsters:
+There are 6 different types of monsters:
 
 - [Basilisk (Barbarian)](#basilisk-barbarian)
 - [Gladiator (Fighter)](#gladiator-fighter)
 - [Jinn (Bard)](#jinn-bard)
 - [Minotaur (Barbarian)](#minotaur-barbarian)
 - [Weeping Angel (Cleric)](#weeping-angel-cleric)
+- [Unicorn (Cleric)](#unicorn-cleric)
 
 ## Stat ranges by monster type (spawn, level 0)
 
@@ -104,3 +105,19 @@ Minotaurs are omnivores and consume large quantities of both meat and vegetation
 | INT | 7 (base +2) |
 
 The Weeping Angels are an extremely powerful species of quantum-locked humanoids (sufficient observation changes the thing being observed), so called because their unique nature necessitates that they often cover their faces with their hands to prevent trapping each other in petrified form for eternity by looking at one another. This gives the Weeping Angels their distinct "weeping" appearance. They are known for being "kind" murderous psychopaths, eradicating their victims "mercifully" by dropping them into the past and letting them live out their full lives, just in a different time period. This, in turn, allows them to live off the remaining time energy of the victim's life. However, when this potential energy pales in comparison to an alternative power source to feed on, the Angels are sometimes known to kill by other means, such as snapping their victims' necks.
+
+### Unicorn (Cleric)
+
+| Stat | Value |
+|---|---|
+| HP | 29–34 (spawn + level 0) |
+| AC | 7–9 (spawn + level 0) |
+| STR | 6 (base +1) |
+| DEX | 7 (base +2) |
+| INT | 4 (base -1) |
+
+No two accounts of the unicorn agree. Ancient travellers described a wild creature of distant lands, white in body and dark red about the head, swifter than any horse, with a single horn banded white, crimson, and black. Later bestiaries gave them a stag's head, a goat's beard, cloven hooves, a boar's tail, even an elephant's feet. What survives every retelling is the silhouette: a pale, horse-shaped animal with one horn, glimpsed at a distance and gone before anyone gets closer.
+
+The horn is at the heart of every story. Some tellers say a cup carved from it will betray any poison poured inside; others describe a weapon long and sharp enough to run a foe straight through. In the ring both stories hold. A unicorn's charge is terrible, but a patient opponent who steps aside at the last instant can leave that horn stuck fast in the timber.
+
+Unicorns keep to deserted places. They are gentle with most creatures, yet they are said to fight their own kind, and they cannot be taken and held against their will. A unicorn who fights beside a Beastmaster has chosen to, and one who trusts a companion may kneel to rest in the evening light, which is the closest anyone ever gets.

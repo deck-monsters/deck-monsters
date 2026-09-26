@@ -112,6 +112,7 @@ Base spawn ranges (type offset 0, before per-type modifiers):
 | Jinn | Bard | 28–33 | 7–9 | +0 | +1 | +1 |
 | Minotaur | Barbarian | 32–37 | 4–6 | +2 | +1 | -1 |
 | Weeping Angel | Cleric | 29–34 | 6–8 | -1 | +1 | +2 |
+| Unicorn | Cleric | 29–34 | 7–9 | +1 | +2 | -1 |
 
 ## Combat Math
 
@@ -167,6 +168,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Constrict](#constrict)
 - [Soften](#soften)
 - [Delayed Hit](#delayed-hit)
+- [Dissonant Voice](#dissonant-voice)
 - [Enchanted Faceswap](#enchanted-faceswap)
 - [Enthrall](#enthrall)
 - [Entrance](#entrance)
@@ -178,10 +180,12 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Flee](#flee)
 - [Forked Metal Rod](#forked-metal-rod)
 - [Forked Stick](#forked-stick)
+- [Gloaming Rest](#gloaming-rest)
 - [Heal](#heal)
 - [Hit](#hit)
 - [Hit Harder](#hit-harder)
 - [Horn Gore](#horn-gore)
+- [Horn of Proof](#horn-of-proof)
 - [Horn Swipe](#horn-swipe)
 - [Iocane](#iocane)
 - [The Kalevala (1d4)](#the-kalevala-1d4)
@@ -195,9 +199,11 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Rehit](#rehit)
 - [Sandstorm](#sandstorm)
 - [Scotch](#scotch)
+- [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
 - [Thick Skin](#thick-skin)
 - [Turkey Thigh](#turkey-thigh)
+- [Unconquerable Horn](#unconquerable-horn)
 - [Vengeful Rampage](#vengeful-rampage)
 - [Whiskey Shot](#whiskey-shot)
 - [Wooden Spear](#wooden-spear)
@@ -721,6 +727,31 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Dissonant Voice
+
+```text
+==================================
+ 🔔  Dissonant Voice  ◆
+----------------------------------
+
+ A cry that no throat that shape 
+ should make. It is hard to aim 
+ while it rings.
+
+ Each opponent rolls 1d20 + int 
+ vs your int. On a failure, 2 is 
+ taken off their next attack 
+ roll.
+ No damage. Does not stack.
+
+ Level: 1
+ Usable by: Unicorn, Bard
+ MSRP: 20
+ Class: Acoustic
+
+==================================
+```
+
 ### Enchanted Faceswap
 
 ```text
@@ -1066,6 +1097,33 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Gloaming Rest
+
+```text
+==================================
+ 🌙  Gloaming Rest  ◇
+----------------------------------
+
+ Kneel among the laurel as the 
+ light goes. Trust that nobody 
+ strikes before you rise.
+
+ Kneel to rest: -2 ac until your 
+ next card.
+ If nothing damages you before 
+ then, heal 3d4 as that card 
+ begins. Any damage interrupts 
+ the rest and the healing is 
+ lost.
+
+ Level: 3
+ Usable by: Unicorn, Cleric
+ MSRP: 50
+ Class: Heal
+
+==================================
+```
+
 ### Heal
 
 ```text
@@ -1184,6 +1242,32 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  MSRP: 130
  Targets: ac
  Class: Melee
+
+==================================
+```
+
+### Horn of Proof
+
+```text
+==================================
+ 🏺  Horn of Proof  ◇
+----------------------------------
+
+ Dip the horn in the cup. 
+ Whatever was wrong with it, is 
+ not.
+
+ Remove one of these, in order: a 
+ hold on you (immobilize, pin, 
+ coil, and the like), your worst 
+ stat penalty this fight, or a 
+ Bad Batch waiting in the ring.
+ Then heal 3 hp.
+
+ Level: 2
+ Usable by: Unicorn, Cleric
+ MSRP: 30
+ Class: Heal
 
 ==================================
 ```
@@ -1547,6 +1631,42 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Sticketh
+
+```text
+==================================
+ 🦄  Sticketh  ◇
+----------------------------------
+
+ Charge horn-first. Old accounts 
+ warn that a clever foe steps 
+ aside, and the "sharp horn 
+ sticketh fast."
+
+ Charge: 1d20 +1 vs ac / Damage: 
+ 1d10
+ On a miss, roll 1d20 + str vs 
+ the target's dex to pull up in 
+ time.
+ Fail, and your horn is stuck 
+ fast: at the start of each of 
+ your turns, roll 1d20 + str vs 
+ your own str - (turns stuck x 3) 
+ to pull it free. A stuck monster 
+ misses that turn.
+ Natural 1 on either roll fails. 
+ Natural 20 on the charge deals 
+ max damage.
+
+ Level: Beginner
+ Usable by: Unicorn
+ MSRP: 80
+ Targets: ac
+ Class: Melee
+
+==================================
+```
+
 ### Survival Knife
 
 ```text
@@ -1632,6 +1752,33 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  MSRP: 20
  Targets: ac
  Class: Melee
+
+==================================
+```
+
+### Unconquerable Horn
+
+```text
+==================================
+ 💎  Unconquerable Horn  ◆
+----------------------------------
+
+ They may be beaten, but they 
+ will not be taken and held.
+
+ Ward yourself against the next 
+ hold an opponent lands on you 
+ (immobilize, pin, coil, 
+ enthrall, and the like). The 
+ hold is cancelled and the ward 
+ is spent; any damage that comes 
+ with it still lands.
+ Once per fight. Does not stack.
+
+ Level: 1
+ Usable by: Unicorn
+ MSRP: 50
+ Class: Boost
 
 ==================================
 ```

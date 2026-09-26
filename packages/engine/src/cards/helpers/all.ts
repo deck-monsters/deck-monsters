@@ -16,6 +16,7 @@ import { ConcussionCard } from '../concussion.js';
 import { ConstrictCard } from '../constrict.js';
 import { CurseCard } from '../curse.js';
 import { DelayedHit } from '../delayed-hit.js';
+import { DissonantVoiceCard } from '../dissonant-voice.js';
 import { EcdysisCard } from '../ecdysis.js';
 import { EnchantedFaceswapCard } from '../enchanted-faceswap.js';
 import { EnthrallCard } from '../enthrall.js';
@@ -27,10 +28,12 @@ import { FistsOfVirtueCard } from '../fists-of-virtue.js';
 import { FleeCard } from '../flee.js';
 import { ForkedMetalRodCard } from '../forked-metal-rod.js';
 import { ForkedStickCard } from '../forked-stick.js';
+import { GloamingRestCard } from '../gloaming-rest.js';
 import { HealCard } from '../heal.js';
 import { HitCard } from '../hit.js';
 import { HitHarder } from '../hit-harder.js';
 import { HornGore } from '../horn-gore.js';
+import { HornOfProofCard } from '../horn-of-proof.js';
 import { HornSwipeCard } from '../horn-swipe.js';
 import { IocaneCard } from '../iocane.js';
 import { KalevalaCard } from '../kalevala.js';
@@ -48,13 +51,10 @@ import { StickethCard } from '../sticketh.js';
 import { SurvivalKnifeCard } from '../survival-knife.js';
 import { ThickSkinCard } from '../thick-skin.js';
 import { TurkeyThighCard } from '../turkey-thigh.js';
+import { UnconquerableHornCard } from '../unconquerable-horn.js';
 import { VenegefulRampageCard } from '../vengeful-rampage.js';
 import { WhiskeyShotCard } from '../whiskey-shot.js';
 import { WoodenSpearCard } from '../wooden-spear.js';
-import { DissonantVoiceCard } from '../dissonant-voice.js';
-import { GloamingRestCard } from '../gloaming-rest.js';
-import { HornOfProofCard } from '../horn-of-proof.js';
-import { UnconquerableHornCard } from '../unconquerable-horn.js';
 
 const all = [
 	AdrenalineRushCard,
@@ -75,6 +75,7 @@ const all = [
 	ConstrictCard,
 	CurseCard,
 	DelayedHit,
+	DissonantVoiceCard,
 	EnchantedFaceswapCard,
 	EnthrallCard,
 	EntranceCard,
@@ -86,10 +87,12 @@ const all = [
 	FleeCard,
 	ForkedMetalRodCard,
 	ForkedStickCard,
+	GloamingRestCard,
 	HealCard,
 	HitCard,
 	HitHarder,
 	HornGore,
+	HornOfProofCard,
 	HornSwipeCard,
 	IocaneCard,
 	KalevalaCard,
@@ -107,13 +110,10 @@ const all = [
 	SurvivalKnifeCard,
 	ThickSkinCard,
 	TurkeyThighCard,
+	UnconquerableHornCard,
 	VenegefulRampageCard,
 	WhiskeyShotCard,
 	WoodenSpearCard,
-	DissonantVoiceCard,
-	GloamingRestCard,
-	HornOfProofCard,
-	UnconquerableHornCard,
 ];
 
 export default all;

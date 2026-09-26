@@ -20,8 +20,8 @@ file to `docs/archive/roadmap/` when the pass closes.
 | 1 | Source and mechanic spike (decision note below) | Done | this file |
 | 2 | Monster shell: `Unicorn` type, Cleric class, appearance variants, registry, spawn prompt, names, web sprite, harness roster | Done | 73e04d1 |
 | 3 | `Sticketh` vertical slice with self-stick via the immobilize machinery | Done | ce3b048 |
-| 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Done | _pending_ |
-| 5 | Distribution and generated references (`pnpm run build:docs`) | Planned | |
+| 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Done | 862762b |
+| 5 | Distribution and generated references (`pnpm run build:docs`) | Done | _pending_ |
 | 6 | Balance pass (`sim:winrates` plus the thematic fixture) | Planned | |
 | 7 | Live copy and pacing check | Planned | |
 
@@ -76,6 +76,11 @@ file to `docs/archive/roadmap/` when the pass closes.
   if no hit with damage is logged after the rest began (same `hitLogTimestamp` clock as
   Delayed Hit), heal 3d4 as that card begins. The AC give-back is clamped to what is still
   missing so a spent brace never turns into free AC.
+- **Distribution.** Sticketh: rare drop, seeded in the starting deck, back-room only.
+  Unconquerable Horn (uncommon), Dissonant Voice (uncommon), Horn of Proof (rare), and
+  Gloaming Rest (rare) are ordinary drops and sold in the front shop. The four support
+  cards sit alphabetically in `cards/helpers/all.ts`, which is also the order of the
+  generated card lists.
 - **Citation gap.** The supplied anthology's title, editor, edition, and pages were not
   available in this environment. Card and monster source comments cite the primary texts
   (Ctesias, Pliny, Aelian, Topsell, Spenser), which are public domain. Recording the
