@@ -51,6 +51,10 @@ import { TurkeyThighCard } from '../turkey-thigh.js';
 import { VenegefulRampageCard } from '../vengeful-rampage.js';
 import { WhiskeyShotCard } from '../whiskey-shot.js';
 import { WoodenSpearCard } from '../wooden-spear.js';
+import { DissonantVoiceCard } from '../dissonant-voice.js';
+import { GloamingRestCard } from '../gloaming-rest.js';
+import { HornOfProofCard } from '../horn-of-proof.js';
+import { UnconquerableHornCard } from '../unconquerable-horn.js';
 
 const all = [
 	AdrenalineRushCard,
@@ -106,6 +110,10 @@ const all = [
 	VenegefulRampageCard,
 	WhiskeyShotCard,
 	WoodenSpearCard,
+	DissonantVoiceCard,
+	GloamingRestCard,
+	HornOfProofCard,
+	UnconquerableHornCard,
 ];
 
 export default all;

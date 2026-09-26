@@ -19,8 +19,8 @@ file to `docs/archive/roadmap/` when the pass closes.
 |---|---|---|---|
 | 1 | Source and mechanic spike (decision note below) | Done | this file |
 | 2 | Monster shell: `Unicorn` type, Cleric class, appearance variants, registry, spawn prompt, names, web sprite, harness roster | Done | 73e04d1 |
-| 3 | `Sticketh` vertical slice with self-stick via the immobilize machinery | Done | _pending_ |
-| 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Planned | |
+| 3 | `Sticketh` vertical slice with self-stick via the immobilize machinery | Done | ce3b048 |
+| 4 | Support cards: Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest | Done | _pending_ |
 | 5 | Distribution and generated references (`pnpm run build:docs`) | Planned | |
 | 6 | Balance pass (`sim:winrates` plus the thematic fixture) | Planned | |
 | 7 | Live copy and pacing check | Planned | |
@@ -59,6 +59,23 @@ file to `docs/archive/roadmap/` when the pass closes.
   "horn stuck in the timber" instead of "X is stuck by X"; the default text is unchanged.
   It is seeded in the starting deck beside the other monster signatures, rare in drops,
   and back-room only in the shop.
+- **Unconquerable Horn.** Unicorn-only, uncommon, level 1. Arms
+  `encounterModifiers.unconquerableWard` (`cards/helpers/control-ward.ts`). The next
+  successful hold an opponent lands through `immobilize()` is cancelled and the ward is
+  spent; attached damage (Coil, Forked Stick) still lands. It does not re-arm in the same
+  fight and does not stack.
+- **Horn of Proof.** Unicorn or Cleric, rare, level 2. Removes the first of: a hold, the
+  harshest negative encounter stat, or a ring Bad Batch; then heals a fixed 3 (below Heal's
+  1d4 + INT, which also scales with level). Self-targeted like Heal; ally targeting waits
+  for a team-heal targeting rule, which no card has today.
+- **Dissonant Voice.** Unicorn or Bard, uncommon, level 1. Each opponent (team-aware via
+  `getTarget`) rolls 1d20 + INT vs the singer's INT; a failure takes 2 off that monster's
+  next attack roll. The penalty is spent on the next card either way, never stacks, and
+  deals no damage. Saves resolve serially with a sub-event beat each.
+- **Gloaming Rest.** Unicorn or Cleric, rare, level 3. −2 AC until the Unicorn's next card;
+  if no hit with damage is logged after the rest began (same `hitLogTimestamp` clock as
+  Delayed Hit), heal 3d4 as that card begins. The AC give-back is clamped to what is still
+  missing so a spent brace never turns into free AC.
 - **Citation gap.** The supplied anthology's title, editor, edition, and pages were not
   available in this environment. Card and monster source comments cite the primary texts
   (Ctesias, Pliny, Aelian, Topsell, Spenser), which are public domain. Recording the

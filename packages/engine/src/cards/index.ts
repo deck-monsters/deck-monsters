@@ -57,6 +57,10 @@ export { TurkeyThighCard } from './turkey-thigh.js';
 export { VenegefulRampageCard } from './vengeful-rampage.js';
 export { WhiskeyShotCard } from './whiskey-shot.js';
 export { WoodenSpearCard } from './wooden-spear.js';
+export { DissonantVoiceCard } from './dissonant-voice.js';
+export { GloamingRestCard } from './gloaming-rest.js';
+export { HornOfProofCard } from './horn-of-proof.js';
+export { UnconquerableHornCard } from './unconquerable-horn.js';
 
 export { draw } from './helpers/draw.js';
 export { hydrateCard, hydrateDeck } from './helpers/hydrate.js';
