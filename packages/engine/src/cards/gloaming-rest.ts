@@ -17,11 +17,12 @@ export const REST_AC_PENALTY = 2;
 const REST_HEALTH_DICE = '3d4';
 
 /*
- * Edwin Julian's poem (modern, via the anthology A Book of Unicorns, Green Tiger Press)
- * has a unicorn kneel and sleep in the gloaming beside someone offering flowers. The old
- * capture stories turn that on a virginity test; this card keeps only the freely chosen
- * trust and the risk of resting in the open. No target, no gender or "purity" check, and
- * no sleep effect on anyone else.
+ * Edwin Julian's comic verse "The Capture of the Unicorn" (illustrated by Reginald Birch;
+ * via the anthology A Book of Unicorns, Green Tiger Press) has a unicorn roaming "in the
+ * gloaming" through rocky gorges, kneeling before someone carrying flowers from beneath a
+ * laurel, and falling asleep. The poem and the old capture stories turn that on virtue and
+ * a virginity test; this card keeps only the freely chosen trust and the risk of resting in
+ * the open. No target, no gender or "purity" check, and no sleep effect on anyone else.
  */
 export class GloamingRestCard extends BaseCard {
 	static cardClass = [HEAL];

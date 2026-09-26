@@ -6,8 +6,9 @@ import { UNCOMMON } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
 
 /*
- * Aelian (On Animals XVI.20, ancient report) calls the cartazon's horn unconquerable, and
- * Pliny (Natural History VIII.31) says the monoceros "cannot be taken alive". In the ring
+ * Aelian (De Animalium Natura, ancient report) calls the cartazon's horn unconquerable;
+ * Pliny says the monoceros "cannot be taken alive", and Solinus that "kylled he may be,
+ * but taken he cannot bee". In the ring
  * that becomes one refusal to be held, not immunity to losing: the ward cancels the next
  * hold and nothing else. See cards/helpers/control-ward.ts for what counts as a hold.
  */

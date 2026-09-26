@@ -15,7 +15,8 @@ const { roll } = chance;
 const DISSONANCE_PENALTY = 2;
 
 /*
- * Aelian (On Animals XVI.20, ancient report) gives the cartazon a harsh, dissonant voice.
+ * Aelian (De Animalium Natura, ancient report): of all animals the cartazon has "the most
+ * dissonant voice".
  * The card is a rattle, not a silence: one small penalty on one attack, no damage.
  */
 export class DissonantVoiceCard extends BaseCard {

@@ -78,11 +78,14 @@ passages to Ctesias, Pliny the Elder, Aelian, Julius Solinus, Edward Topsell, Ed
 the Brothers Grimm, Edwin Julian, and Welleran Poltarnees. Preserve only short, attributed
 fragments in cards or lore; paraphrase the rest.
 The anthology is *A Book of Unicorns*, a Star & Elephant Book from The Green Tiger Press,
-La Jolla, California (confirmed from the owner's photographs of the front and back covers).
-The covers do not show the compiler, year, or edition. Welleran Poltarnees, whose
-introduction the pages quote, is a likely compiler but is unconfirmed. Take the compiler,
-year, and edition from the copyright page, and record page numbers against the fragments
-used.
+La Jolla, California, with an introduction by Welleran Poltarnees (from the owner's
+photographs of the covers and interior pages). The owner's copy has no copyright page, so
+the year and edition stay unrecorded. Its newest dated artwork, *The Unicorn in Winter* by
+S.W.D., is from 1976, so the book is no earlier. The pages photographed quote Ctesias
+(*Indica* fragment 25), Pliny (*Historia Naturalis*), Aelian (*De Animalium Natura*),
+Julius Solinus (*Polyhistoria*, in early-modern English), Olfert Dapper (*Die Unbekante Neue
+Welt*, 1673), and Edwin Julian ("The Capture of the Unicorn", illustrated by Reginald Birch).
+Source comments cite these texts directly.
 
 | Motif to carry forward | Short source fragment or visual cue | Game use |
 |---|---|---|

@@ -90,11 +90,15 @@ file to `docs/archive/roadmap/` when the pass closes.
   cards sit alphabetically in `cards/helpers/all.ts`, which is also the order of the
   generated card lists.
 - **Citation.** The anthology is *A Book of Unicorns* (Star & Elephant Book, The Green
-  Tiger Press, La Jolla, California), from the owner's cover photographs. Still open: the
-  compiler, year, and edition from the copyright page. Card and monster source comments cite
-  the primary texts (Ctesias, Pliny, Aelian, Solinus, Topsell, Spenser), which are public
-  domain; the only anthology-only source used is Edwin Julian's poem behind Gloaming Rest,
-  whose card copy is original.
+  Tiger Press, La Jolla, California; introduction by Welleran Poltarnees). The owner's copy
+  has no copyright page; its newest dated artwork is from 1976. A final content pass checked
+  every source comment and the lore against the photographed pages and corrected four
+  things: stag's head, elephant's feet, and boar's tail are Pliny's (ancient), not "later
+  bestiaries"; the cloven hooves, black eyes, long straight horn, and lonely wilderness are
+  Dapper's (1673), not Marco Polo's; Ctesias says a horn cup makes the drinker immune to
+  poison, not that it betrays poison; and Edwin Julian's poem is comic verse illustrated by
+  Reginald Birch, which the first comment called "modern". Card and monster copy remains
+  original prose.
 
 ## Balance evidence (slice 6)
 
@@ -161,5 +165,4 @@ the other one-line self-buffs (Boost, Thick Skin, Battle Focus, Basic Shield), w
 the ring's card-to-card gap. They were left as they are.
 
 Still open before this pass is archived: a browser check of the workshop and ring with a
-real Unicorn (sprite, roster portrait, card text wrapping), and the anthology's compiler,
-year, and edition from its copyright page.
+real Unicorn (sprite, roster portrait, card text wrapping).

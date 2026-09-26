@@ -6,16 +6,24 @@ import BaseMonster from './base.js';
 
 /*
  * The Unicorn is assembled from contradictory reports on purpose, so each spawn reads as
- * one witness's account rather than a canonical anatomy. Sources behind the variants
- * (paraphrased here; see docs/roadmap/12-new-content-backlog.md for the research brief):
- *   - Ctesias, Indica (ancient report, c. 400 BCE): white body, dark-red head, dark-blue
- *     eyes, a horn banded white, crimson, and black; "exceedingly swift and powerful".
- *   - Aelian, On Animals XVI (ancient report): the cartazon seeks deserted places, has a
- *     dissonant voice, is gentle with other kinds but fights its own.
- *   - Pliny, Natural History VIII (ancient report): the monoceros has a stag's head,
- *     elephant's feet, and a boar's tail, and "cannot be taken alive".
- *   - Later bestiaries and natural histories (medieval / early modern): goat's beard and
- *     cloven hooves; Marco Polo's heavy, muddy "unicorn" (almost certainly a rhinoceros —
+ * one witness's account rather than a canonical anatomy. Sources behind the variants, all
+ * checked against the anthology A Book of Unicorns (Green Tiger Press); paraphrased here,
+ * and see docs/roadmap/12-new-content-backlog.md for the research brief:
+ *   - Ctesias, Indica fragment 25 (ancient report, 4th century BCE): wild asses of India
+ *     with white bodies, dark-red heads, dark-blue eyes, and a horn white at the base,
+ *     black in the middle, and crimson at the tip; "exceedingly swift and powerful".
+ *   - Pliny, Natural History (ancient report, 1st century): the monoceros has a stag's
+ *     head, elephant's feet, a boar's tail, a deep lowing voice, and one black horn two
+ *     cubits long, and "cannot be taken alive".
+ *   - Aelian, De Animalium Natura (ancient report, 2nd century): the cartazon of India's
+ *     inaccessible mountains has tawny hair, a ringed black horn, the most dissonant voice
+ *     of any animal, seeks deserted places, and is gentle with other kinds but fights its own.
+ *   - Julius Solinus, Polyhistoria (3rd century, early-modern English): a horn "of a
+ *     wonderful brightness", and a monster that "belloweth horriblie".
+ *   - Olfert Dapper, Die Unbekante Neue Welt (1673): cloven hooves, black eyes, a long
+ *     straight horn, and "the loneliest wildernesses".
+ *   - Welleran Poltarnees' introduction to the anthology lists a goat's beard among the
+ *     bizarre traits; Marco Polo's heavy, muddy "unicorn" (almost certainly a rhinoceros:
  *     reception history, not an observation of the mythic animal) informs the stocky build.
  * Player-facing copy below is original prose; no source is quoted beyond these comments.
  */
@@ -131,9 +139,9 @@ Unicorn.class = CLERIC;
 (Unicorn as any).acVariance = 2;
 (Unicorn as any).hpVariance = 1;
 (Unicorn as any).description = `
-No two accounts of the unicorn agree. Ancient travellers described a wild creature of distant lands, white in body and dark red about the head, swifter than any horse, with a single horn banded white, crimson, and black. Later bestiaries gave them a stag's head, a goat's beard, cloven hooves, a boar's tail, even an elephant's feet. What survives every retelling is the silhouette: a pale, horse-shaped animal with one horn, glimpsed at a distance and gone before anyone gets closer.
+No two accounts of the unicorn agree. Ancient travellers described a wild creature of distant lands, white in body and dark red about the head, swifter than any horse, with a single horn banded white, crimson, and black. Other ancient writers gave them a stag's head, a boar's tail, even an elephant's feet, and later ones a goat's beard and cloven hooves. What survives every retelling is the silhouette: a pale, horse-shaped animal with one horn, glimpsed at a distance and gone before anyone gets closer.
 
-The horn is at the heart of every story. Some tellers say a cup carved from it will betray any poison poured inside; others describe a weapon long and sharp enough to run a foe straight through. In the ring both stories hold. A unicorn's charge is terrible, but a patient opponent who steps aside at the last instant can leave that horn stuck fast in the timber.
+The horn is at the heart of every story. Some tellers say that whoever drinks from a cup carved from it is safe from poison; others describe a weapon long and sharp enough to run a foe straight through. In the ring both stories hold. A unicorn's charge is terrible, but a patient opponent who steps aside at the last instant can leave that horn stuck fast in the timber.
 
 Unicorns keep to deserted places. They are gentle with most creatures, yet they are said to fight their own kind, and they cannot be taken and held against their will. A unicorn who fights beside a Beastmaster has chosen to, and one who trusts a companion may kneel to rest in the evening light, which is the closest anyone ever gets.
 `;
