@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { drawSprite } from '../animations/pixel-fight/renderer.js';
 import { SPRITES, SPRITE_ART, SPRITE_COLS, SPRITE_PAD, spriteFor } from '../animations/pixel-fight/sprites.js';
 
-const CREATURE_TYPES = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel', 'fallback'];
+const CREATURE_TYPES = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'Weeping Angel', 'Unicorn', 'fallback'];
 
 function bounds(frame: readonly string[]) {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;

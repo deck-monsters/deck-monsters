@@ -163,7 +163,7 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 
 | Script | What it prints | Typical runtime |
 |---|---|---|
-| `sim:winrates` | All 5×5 monster-type matchups at a fixed level (200 fights each, 25 pairs); flags win rates outside 35–65%. | ~90s — this is real work, not a hang; don't re-flag it as one if it takes a while to return. |
+| `sim:winrates` | All 6×6 monster-type matchups at a fixed level (200 fights each, 36 pairs); flags win rates outside 35–65%. | ~130s — this is real work, not a hang; don't re-flag it as one if it takes a while to return. |
 | `sim:cardpower` | Average damage dealt per card type; top/bottom 10%. | ~20s |
 | `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. | ~20s |
 | `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. | ~10s |

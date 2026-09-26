@@ -9,6 +9,7 @@ export { default as Gladiator } from './gladiator.js';
 export { default as Jinn } from './jinn.js';
 export { default as Minotaur } from './minotaur.js';
 export { default as WeepingAngel } from './weeping-angel.js';
+export { default as Unicorn } from './unicorn.js';
 export { default as Environment } from './environment.js';
 
 export {

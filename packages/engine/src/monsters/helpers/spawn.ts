@@ -1,6 +1,6 @@
 import PRONOUNS, { PRONOUN_CHOICES, PRONOUN_KEYS, genderFromPronounChoice } from '../../helpers/pronouns.js';
 import names from '../../helpers/names.js';
-import { BASILISK, GLADIATOR, JINN, MINOTAUR, WEEPING_ANGEL } from '../../constants/creature-types.js';
+import { BASILISK, GLADIATOR, JINN, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../../constants/creature-types.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import type BaseMonster from '../base.js';
@@ -150,6 +150,9 @@ const spawnMonster = (
 				} else if (ct === JINN) {
 					example = 'slightly translucent blue';
 					descriptor = 'nascent form be';
+				} else if (ct === UNICORN) {
+					example = 'ivory white with a dark-red head';
+					descriptor = 'coat look like';
 				}
 
 				const pronounSet = (PRONOUNS as any)[(options.gender as string) ?? 'male'];

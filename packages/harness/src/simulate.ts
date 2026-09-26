@@ -31,7 +31,7 @@ const STEADY_STATE_BATTLES_TOTAL = Math.max(...EARLY_COIN_BONUS_TIERS.map(t => t
 /** Monotonic id so concurrent `simulate()` calls never share eventBus subscriber keys. */
 let harnessSimRunSeq = 0;
 
-export type SimMonsterType = 'Basilisk' | 'Gladiator' | 'Jinn' | 'Minotaur' | 'WeepingAngel';
+export type SimMonsterType = 'Basilisk' | 'Gladiator' | 'Jinn' | 'Minotaur' | 'WeepingAngel' | 'Unicorn';
 
 export interface SimMonsterSpec {
 	type: SimMonsterType | string;
@@ -143,6 +143,7 @@ const MONSTER_TYPES: Record<string, SimMonsterType> = {
 	gladiator: 'Gladiator',
 	jinn: 'Jinn',
 	minotaur: 'Minotaur',
+	unicorn: 'Unicorn',
 	weepingangel: 'WeepingAngel',
 	'weeping angel': 'WeepingAngel',
 };
@@ -155,7 +156,7 @@ export function parseMonsterType(raw: string): SimMonsterType {
 		.trim()
 		.replace(/(?:^|\s|-)(\w)/g, (_, c: string) => c.toUpperCase())
 		.replace(/\s|-/g, '');
-	const allowed: SimMonsterType[] = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'WeepingAngel'];
+	const allowed: SimMonsterType[] = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'WeepingAngel', 'Unicorn'];
 	if ((allowed as string[]).includes(pascal)) return pascal as SimMonsterType;
 	throw new Error(`Unknown monster type: "${raw}" (expected one of: ${allowed.join(', ')})`);
 }
