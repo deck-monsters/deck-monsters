@@ -34,6 +34,8 @@ export type {
 export type { StateStore } from './types/state-store.js';
 export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { getCardClassByTypeName } from './cards/index.js';
+/** One weighted card draw, filtered by a creature-shaped `{ level, canHoldCard }` (used by @deck-monsters/harness). */
+export { draw as drawCard } from './cards/index.js';
 export { COMMAND_CATALOG } from './commands/catalog.js';
 export type { CommandEntry, CommandCategory } from './commands/catalog.js';
 export { purchaseShopItem } from './items/store/purchase.js';

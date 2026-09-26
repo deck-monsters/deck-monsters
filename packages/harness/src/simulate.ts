@@ -8,6 +8,7 @@ import type { Game, GameEvent } from '@deck-monsters/engine';
 import {
 	allMonsters,
 	createTestGame,
+	drawCard,
 	EARLY_COIN_BONUS_TIERS,
 	engineReady,
 	getCardClassByTypeName,
@@ -210,9 +211,37 @@ function buildContestant(
 	if (deckNames?.length) {
 		type CardCtor = new () => { cardType?: string; name?: string; play?: (...args: unknown[]) => unknown };
 		contestant.monster.cards = deckNames.map(n => new (getCardClassByTypeName(n) as CardCtor)());
+	} else {
+		contestant.monster.cards = withoutHarnessExcludedCards(contestant.monster);
 	}
 
 	return contestant;
+}
+
+/**
+ * Card types a random harness deck never keeps. Flee is a special-purpose escape: a player
+ * holds it for a bad matchup, not as a routine deck slot. In a simulation it only turns
+ * fights into draws, which hides the matchup the run is trying to measure. An explicit
+ * `SimMonsterSpec.deck` is left exactly as given.
+ */
+export const HARNESS_EXCLUDED_CARD_TYPES: readonly string[] = ['Flee'];
+
+type HarnessMonster = {
+	level: number;
+	cards: Array<{ cardType?: string }>;
+	canHoldCard(card: unknown): boolean;
+};
+
+/** The monster's random deck with each excluded card swapped for a fresh legal draw. */
+export function withoutHarnessExcludedCards(monster: HarnessMonster): HarnessMonster['cards'] {
+	const eligible = {
+		level: monster.level,
+		canHoldCard: (Card: { cardType?: string }) =>
+			!HARNESS_EXCLUDED_CARD_TYPES.includes(Card.cardType ?? '') && monster.canHoldCard(Card),
+	};
+	return monster.cards.map(card =>
+		HARNESS_EXCLUDED_CARD_TYPES.includes(card.cardType ?? '') ? drawCard({}, eligible) : card,
+	);
 }
 
 function installHitDamageCapture(

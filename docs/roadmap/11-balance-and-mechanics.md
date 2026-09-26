@@ -26,6 +26,28 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   [simulation harness](../reference/simulation-harness.md). `SimMonsterSpec.team` now runs
   team fights under last-team victory; a boss scenario for the Team XP item below is still
   missing.
+- [ ] **Realistic harness rings — owner: Engine.** The owner's view (September 2026): balance
+  is "not terrible", and the harness is close to useful but still unrealistic. It now uses
+  shuffled draws (#183) and keeps Flee out of random decks, because Flee is a
+  special-purpose card and in a simulation it only turns fights into draws. Still to do, in
+  rough order of value:
+  - **Likely decks, not uniform draws.** Real decks are built, not drawn. Weight harness
+    decks toward what players actually equip: seed them from equipped-deck telemetry when it
+    exists, and until then from a few hand-written archetypes per class (for example, a
+    Cleric healer and a Cleric Blast deck). Keep a uniform-draw mode as the control.
+  - **Mixed ring sizes.** Real rings hold 2–6 monsters. Sample the count per fight rather than
+    running only 1v1, because AOE cards (Blast, Sandstorm, Mesmerize) and retaliation cards
+    (Delayed Hit) change value sharply with the number of opponents.
+  - **Mixed team composition.** Sample free-for-all, one team against solos, and two teams,
+    including uneven teams. `SimMonsterSpec.team` supports this; nothing samples it yet.
+  - **Mixed levels in one ring.** Players of different levels share rooms. Sample level
+    spreads within a ring, not only mirrored levels, to see whether a low-level monster can
+    still contribute.
+  - **Bosses and ring events.** The harness turns ring events off. Add runs that keep them on,
+    so Gauntlet, Blood Feud, Common Cause, and The Reckoning are measured the way players
+    meet them.
+  - **Report per class curve.** Summarize results as a win-rate curve per class across levels
+    (see the balance target below) rather than a single pairwise matrix.
 - [ ] **Economy telemetry — owner: Analytics.** Measure coins earned, spent, and held per
   active player-room; first-purchase time; outcome mix; and unaffordable expired stock.
   The harness has the new-player scenario; a purchase-sink scenario is still open.

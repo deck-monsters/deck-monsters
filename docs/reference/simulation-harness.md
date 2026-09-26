@@ -35,6 +35,10 @@ for why this exists and what it gates.
   in 9 slots instead of about 1.2. Every pre-fix report that showed Clerics winning ~95%
   measured that bias. A shuffled draw under the seeded `Math.random` is still reproducible.
 - `set-env.ts` also forces `DECK_MONSTERS_SKIP_DELAYS`, so fights run at full speed.
+- Random decks never keep a card listed in `HARNESS_EXCLUDED_CARD_TYPES` (currently Flee).
+  Each one is swapped for a fresh legal draw, so the hand stays full. Flee is a
+  special-purpose card; in a simulation it only turns fights into draws and hides the
+  matchup being measured. An explicit `SimMonsterSpec.deck` is used exactly as given.
 
 ## `simulate()` — `packages/harness/src/simulate.ts`
 

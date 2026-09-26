@@ -9,7 +9,9 @@
  * engine is instrumented for this. Run manually before balance merges (not in CI).
  *
  * The fixture is a design demonstration, not a starting deck: it is assigned directly, so
- * it skips the level gate (Gloaming Rest is level 3) even in the level 1 rows.
+ * it skips the level gate (Gloaming Rest is level 3) even in the level 1 rows. The brief's
+ * ninth card was Flee; the harness keeps Flee out of every deck (see
+ * `HARNESS_EXCLUDED_CARD_TYPES` in simulate.ts), so a plain Hit takes its slot.
  */
 
 import '../sim-env.js';
@@ -32,7 +34,7 @@ const FIXTURE_DECK = [
 	'Gloaming Rest',
 	'Heal',
 	'Fists of Virtue',
-	'Flee',
+	'Hit',
 ];
 
 interface Counters {
@@ -219,7 +221,7 @@ async function main(): Promise<void> {
 				for (const key of Object.keys(c) as (keyof Counters)[]) totals[mode][key] += c[key];
 				const w = res.winRates['Sim 1'] ?? 0;
 				const share = decisiveShare(res);
-				// The fixture carries Flee and three heals, so many fights end without a
+				// The fixture carries three heals and long rests, so some fights end without a
 				// winner; judge the review band on decisive fights, and print both.
 				if (mode === 'fixture' && share !== undefined && (share < WARN_LOW || share > WARN_HIGH)) {
 					warnings.push(`fixture L${level} vs ${opponent}: Unicorn wins ${share.toFixed(1)}% of decisive fights`);

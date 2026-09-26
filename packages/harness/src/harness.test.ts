@@ -9,8 +9,8 @@ import { createTestGame } from '@deck-monsters/engine';
 import { capturePublicFeed, formatPublicFeedLines } from './public-feed.js';
 import { runRingTwoBosses } from './scenarios/ring-two-bosses.js';
 import { runConcurrentLookMonsters } from './scenarios/concurrent-look-monsters.js';
-import { parseMonstersArg, simulate, simulateNewPlayerProgression } from './simulate.js';
-import { COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady } from '@deck-monsters/engine';
+import { parseMonstersArg, simulate, simulateNewPlayerProgression, withoutHarnessExcludedCards } from './simulate.js';
+import { COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName } from '@deck-monsters/engine';
 
 describe('@deck-monsters/harness', () => {
 	before(async function () {
@@ -163,6 +163,24 @@ describe('@deck-monsters/harness', () => {
 		expect(total).to.be.at.most(100);
 	});
 
+	it('withoutHarnessExcludedCards() swaps Flee for a legal non-Flee draw', async () => {
+		await engineReady;
+		const Flee = getCardClassByTypeName('Flee') as unknown as new () => { cardType: string };
+		const Hit = getCardClassByTypeName('Hit') as unknown as new () => { cardType: string };
+		const hit = new Hit();
+		const monster = {
+			level: 5,
+			cards: [new Flee(), hit, new Flee()],
+			canHoldCard: (Card: { cardType?: string; level?: number }) => (Card.level ?? 0) <= 5,
+		};
+
+		const cards = withoutHarnessExcludedCards(monster);
+
+		expect(cards).to.have.length(3);
+		expect(cards[1]).to.equal(hit);
+		expect(cards.map(card => card.cardType)).not.to.include('Flee');
+	});
+
 	it('simulate() runs the Unicorn thematic fixture deck without cancelled fights', async function () {
 		this.timeout(60_000);
 
@@ -171,7 +189,7 @@ describe('@deck-monsters/harness', () => {
 				{
 					type: 'Unicorn',
 					level: 5,
-					deck: ['Sticketh', 'Sticketh', 'Horn of Proof', 'Unconquerable Horn', 'Dissonant Voice', 'Gloaming Rest', 'Heal', 'Fists of Virtue', 'Flee'],
+					deck: ['Sticketh', 'Sticketh', 'Horn of Proof', 'Unconquerable Horn', 'Dissonant Voice', 'Gloaming Rest', 'Heal', 'Fists of Virtue', 'Hit'],
 				},
 				{ type: 'WeepingAngel', level: 5 },
 			],
