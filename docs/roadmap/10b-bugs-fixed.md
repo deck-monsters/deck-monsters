@@ -4343,3 +4343,20 @@ first Unicorn pass report, measured the bias and was replaced.
 with shuffled draws.
 
 **Status**: Fixed.
+
+### 184. `look at monsters in detail` looked for a ring called "detail" — FIXED
+
+The command catalogue lists `look at monsters in detail` ("View your monsters with full
+stats"), but it answered "The ring is empty." Found by a browser check on PR #394.
+
+**Root cause**: `LOOK_AT_REGEX` in `commands/look-at.ts` lists the `monsters in` alternative
+before `monsters`, so the regex takes `monsters in` and leaves `detail` as the ring name.
+The `monsters` branch that handles `in detail` was never reached for this phrasing.
+
+**Fix**: the `monsters in` branch routes a remainder of exactly `detail` to
+`character.lookAtMonsters(channel, true)`. `look at monsters in the ring` is unchanged.
+
+**Tests**: `commands/look-at.test.ts` covers the detail view, the ring view, and the plain
+monster list. The detail test fails without the fix.
+
+**Status**: Fixed.
