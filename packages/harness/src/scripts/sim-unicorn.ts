@@ -71,13 +71,24 @@ const fresh = (): Counters => ({
 
 let counters = fresh();
 
-type AnyProto = Record<string, (...args: any[]) => any>;
-const proto = (cardType: string): AnyProto =>
-	(getCardClassByTypeName(cardType) as unknown as { prototype: AnyProto }).prototype;
+type Method = (this: unknown, ...args: unknown[]) => unknown;
+type Proto = Record<string, Method>;
+interface Creature {
+	encounterEffects: unknown[];
+	encounterModifiers: Record<string, unknown>;
+}
+interface EmitPayload {
+	reason?: string;
+	narration?: string;
+	roll?: { result?: number };
+}
 
-const wrap = (target: AnyProto, method: string, around: (original: (...args: any[]) => any, self: any, args: any[]) => any): void => {
+const proto = (cardType: string): Proto =>
+	(getCardClassByTypeName(cardType) as unknown as { prototype: Proto }).prototype;
+
+const wrap = (target: Proto, method: string, around: (original: Method, self: unknown, args: unknown[]) => unknown): void => {
 	const original = target[method]!;
-	target[method] = function wrapped(this: any, ...args: any[]) {
+	target[method] = function wrapped(this: unknown, ...args: unknown[]) {
 		return around(original, this, args);
 	};
 };
@@ -85,14 +96,14 @@ const wrap = (target: AnyProto, method: string, around: (original: (...args: any
 function instrument(): void {
 	const sticketh = proto('Sticketh');
 	wrap(sticketh, 'hitCheck', (original, self, args) => {
-		const result = original.apply(self, args);
+		const result = original.apply(self, args) as { success: boolean };
 		counters.stickethPlays += 1;
 		if (result.success) counters.stickethHits += 1;
 		else counters.stickethMisses += 1;
 		return result;
 	});
 	wrap(sticketh, 'stickFast', (original, self, args) => {
-		const [player] = args;
+		const [player] = args as [Creature];
 		const before = player.encounterEffects.length;
 		const result = original.apply(self, args);
 		if (player.encounterEffects.length > before) counters.stickethStuck += 1;
@@ -100,7 +111,7 @@ function instrument(): void {
 	});
 
 	wrap(proto('Unconquerable Horn'), 'effect', (original, self, args) => {
-		const [, target] = args;
+		const [, target] = args as [unknown, Creature];
 		const before = target.encounterModifiers.unconquerableWard;
 		const result = original.apply(self, args);
 		if (!before && target.encounterModifiers.unconquerableWard === 'armed') counters.wardsArmed += 1;
@@ -108,8 +119,8 @@ function instrument(): void {
 	});
 	// Every hold an opponent lands goes through `immobilize()`, which is where the ward is
 	// spent. ImmobilizeCard itself is never drawn, so reach it through Sticketh's prototype.
-	wrap(Object.getPrototypeOf(sticketh) as AnyProto, 'immobilize', (original, self, args) => {
-		const [, target] = args;
+	wrap(Object.getPrototypeOf(sticketh) as Proto, 'immobilize', (original, self, args) => {
+		const [, target] = args as [unknown, Creature];
 		const before = target.encounterModifiers.unconquerableWard;
 		const result = original.apply(self, args);
 		if (before === 'armed' && target.encounterModifiers.unconquerableWard === 'spent') {
@@ -147,7 +158,7 @@ function instrument(): void {
 		return original.apply(self, args);
 	});
 	wrap(rest, 'emit', (original, self, args) => {
-		const [event, payload] = args;
+		const [event, payload] = args as [string, EmitPayload | undefined];
 		if (event === 'rolled' && payload?.reason === 'for a quiet rest.') {
 			counters.restsCompleted += 1;
 			counters.restHealTotal += payload.roll?.result ?? 0;
