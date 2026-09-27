@@ -74,8 +74,8 @@ Candidate tasks, in order of value:
    because every later task and the Dragon pass run on it.
 1. Weighted "likely" decks: a few hand-written archetypes per class, kept beside today's
    uniform draw as a control.
-2. Mixed ring sizes (2–6 contestants) with free-for-all, one team against solos, and uneven
-   teams, all through `SimMonsterSpec.team`.
+2. Mixed ring sizes (2–12 contestants, the ring's `MAX_MONSTERS`) with free-for-all, one
+   team against solos, and uneven teams, all through `SimMonsterSpec.team`.
 3. Mixed levels inside one ring.
 4. Runs with ring events and bosses left on.
 5. A report that prints each class's win-rate curve across levels 1–20.

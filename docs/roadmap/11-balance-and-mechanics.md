@@ -45,8 +45,10 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
     decks toward what players actually equip: seed them from equipped-deck telemetry when it
     exists, and until then from a few hand-written archetypes per class (for example, a
     Cleric healer and a Cleric Blast deck). Keep a uniform-draw mode as the control.
-  - **Mixed ring sizes.** Real rings hold 2–6 monsters. Sample the count per fight rather than
-    running only 1v1, because AOE cards (Blast, Sandstorm, Mesmerize) and retaliation cards
+  - **Mixed ring sizes.** A ring holds 2 to 12 monsters (`MAX_MONSTERS` in `ring/index.ts`).
+    Sample the whole range per fight rather than running only 1v1, weighted toward small
+    rings until telemetry shows the real distribution, and report large rings separately,
+    because AOE cards (Blast, Sandstorm, Mesmerize) and retaliation cards
     (Delayed Hit) change value sharply with the number of opponents.
   - **Mixed team composition.** Sample free-for-all, one team against solos, and two teams,
     including uneven teams. `SimMonsterSpec.team` supports this; nothing samples it yet.

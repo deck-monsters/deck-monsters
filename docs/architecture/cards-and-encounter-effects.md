@@ -130,6 +130,8 @@ new card or monster must reach. Check each one.
   the Unicorn report without saying so; deriving these from `allMonsters` is planned in
   [11 — Balance](../roadmap/11-balance-and-mechanics.md#measurement-first)), and the
   server's spawn-catalog test.
+- Regenerate `MONSTERS.md` and `DMG.md` with `pnpm run build:docs`; adding to
+  `allMonsters` changes both, and `docs:check` does not catch them going stale.
 - A description must read well with a player-chosen colour, including one that carries
   its own "with"; give the colour its own sentence. Verbs after a pronoun use `agree()`;
   verbs after a name never do ([voice and wording](../reference/voice-and-wording.md)).
