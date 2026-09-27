@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, lte, lt, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lte, lt, or, sql } from 'drizzle-orm';
 
 import type { Db } from './db/index.js';
 import {
@@ -675,6 +675,29 @@ export function formatCatchUpStreakLines(
  * player's private fight narration — their XP and coin awards, their prompts — to any
  * room member who expanded that fight in the fight log.
  */
+// Only an index bound for the scan; membership is decided by the event id below. A row is
+// inserted after its engine timestamp, sometimes well after under skipped delays.
+const FIGHT_EVENT_INSERT_LAG_MS = 10 * 60 * 1000;
+
+/**
+ * The event-id range for a fight. Engine ids are `${Date.now()}-${uuid8}` and the summary's
+ * bounds are the same clock (`GameEvent.timestamp`), so a fight owns exactly the ids from
+ * `start` (inclusive) to `end` (exclusive). Millisecond timestamps are 13 digits until the
+ * year 2286, so string order is numeric order.
+ */
+export function fightEventIdBounds(startedAt: Date, endedAt: Date): { start: string; end: string } {
+	return { start: String(startedAt.getTime()), end: String(endedAt.getTime() + 1) };
+}
+
+/**
+ * A fight's events, selected by the engine time in their id rather than by `created_at`.
+ *
+ * What broke (10b #187): the query kept rows whose insert time fell inside the summary's
+ * engine-time window. Under `DECK_MONSTERS_SKIP_DELAYS` a whole fight takes ~50ms and every
+ * row lands after it resolves, so the fight log expanded to nothing. Padding the window
+ * instead would attach the next fight's rows, because `room_events` has no fight id.
+ * Rows without an event id predate ids and keep the old insert-time rule.
+ */
 export async function loadFightEventsForSummary(
 	db: Db,
 	roomId: string,
@@ -682,6 +705,7 @@ export async function loadFightEventsForSummary(
 	startedAt: Date,
 	endedAt: Date
 ): Promise<GameEvent[]> {
+	const { start, end } = fightEventIdBounds(startedAt, endedAt);
 	const rows = await db
 		.select()
 		.from(roomEvents)
@@ -689,7 +713,11 @@ export async function loadFightEventsForSummary(
 			and(
 				eq(roomEvents.roomId, roomId),
 				gte(roomEvents.createdAt, startedAt),
-				lte(roomEvents.createdAt, endedAt),
+				lte(roomEvents.createdAt, new Date(endedAt.getTime() + FIGHT_EVENT_INSERT_LAG_MS)),
+				or(
+					and(gte(roomEvents.eventId, start), lt(roomEvents.eventId, end)),
+					and(isNull(roomEvents.eventId), lte(roomEvents.createdAt, endedAt))
+				),
 				eventVisibilityFor(viewerUserId)
 			)
 		)

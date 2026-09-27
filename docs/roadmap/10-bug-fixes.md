@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — seven open items. Fixed work and its root causes live only in
+**Status:** Active — six open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -120,32 +120,6 @@ succeed.
   query fetches.
 
 Read [workshop and items](../architecture/workshop-and-items.md).
-
-### O. A skipped-delay fight log expands to no events
-
-**Owner:** Fight history. A scratch Minotaur beat a summoned boss; the ring feed has
-the full narration and the summary row is Brass win / boss loss. Expanding the fight
-shows the "Events during this fight" heading and an empty list. `game.fight` returned
-`events: []`.
-
-**Root cause:** `loadFightEventsForSummary` keeps `room_events` whose `created_at` is
-inside the summary's `started_at`–`ended_at`
-(`packages/server/src/analytics-queries.ts`). Those summary bounds are the engine
-event timestamps (`fight-summary-writer.ts`). `created_at` is the insert time
-(`event-persister.ts` does not write the engine timestamp). This bout's window was
-50ms (`14:22:47.237`–`.287`) because `DECK_MONSTERS_SKIP_DELAYS` zeroes card pacing.
-Every combat row was inserted at `.299` or later, so the window contained nothing.
-Test Room A's older fights (75s, 6 min, 113s) still return 29, 293, and 49 events, so
-this is the fast-fight case, not an empty history table.
-
-- [ ] Select rows by the engine timestamp, not by padding `created_at` past
-  `ended_at`. `loadFightEventsForSummary` filters only on room, time, and
-  visibility, and `room_events` has no fight id, so a grace period would attach
-  the next fight's rows to this one. The timestamp is the prefix of `event_id`
-  (`Date.now()` in `room-event-bus.ts`); query that, or store a fight id.
-  Cover a row whose insert time is later than the resolve timestamp.
-
-Read [analytics and history](../architecture/analytics-and-history.md).
 
 ## Historical detail
 

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { loadFightEventsForSummary } from './analytics-queries.js';
+import { fightEventIdBounds, loadFightEventsForSummary } from './analytics-queries.js';
 
 /**
  * Walks a drizzle SQL predicate and collects the column names it references and the
@@ -97,5 +97,41 @@ describe('loadFightEventsForSummary', () => {
 		const found = inspectPredicate(captured.where, { columns: [], values: [] });
 		expect(found.columns).to.include('room_id');
 		expect(found.values).to.include('room-1');
+	});
+
+	/**
+	 * A skipped-delay fight lasts ~50ms and every row is inserted after it resolves, so a
+	 * created_at window returned nothing (10b #187). Selection is by the engine time in the
+	 * event id instead; created_at is only a loose index bound.
+	 */
+	it('selects by event id, so rows inserted after the fight resolves still count', async () => {
+		const { db, captured } = captureDb();
+		const startedAt = new Date(1_727_000_000_000);
+		const endedAt = new Date(1_727_000_000_050);
+
+		await loadFightEventsForSummary(db as never, 'room-1', 'viewer-1', startedAt, endedAt);
+
+		const found = inspectPredicate(captured.where, { columns: [], values: [] });
+		expect(found.columns).to.include('event_id');
+		expect(found.values).to.include('1727000000000');
+		expect(found.values).to.include('1727000000051');
+		// The insert-time upper bound for id'd rows is well past the resolve timestamp.
+		const dates = found.values.filter((value): value is Date => value instanceof Date);
+		expect(Math.max(...dates.map((date) => date.getTime()))).to.be.greaterThan(endedAt.getTime() + 60_000);
+	});
+});
+
+describe('fightEventIdBounds', () => {
+	const { start, end } = fightEventIdBounds(new Date(1_727_000_000_000), new Date(1_727_000_000_050));
+	const inFight = (id: string) => id >= start && id < end;
+
+	it('owns every id from the first to the last millisecond of the fight', () => {
+		expect(inFight('1727000000000-abcd1234')).to.equal(true);
+		expect(inFight('1727000000050-abcd1234')).to.equal(true);
+	});
+
+	it('excludes the millisecond before and after, so neighbouring fights stay separate', () => {
+		expect(inFight('1726999999999-abcd1234')).to.equal(false);
+		expect(inFight('1727000000051-abcd1234')).to.equal(false);
 	});
 });

@@ -4404,3 +4404,30 @@ lines at 70, 72, and 85px without clipping.
 other three-word name in the catalogue, the long-word rule, and the compact flag.
 
 **Status**: Fixed.
+
+### 187. A skipped-delay fight's log expanded to no events — FIXED
+
+A scratch Minotaur beat a summoned boss. The ring feed had the full narration and the
+summary row was right, but expanding the fight showed "Events during this fight" over an
+empty list; `game.fight` returned `events: []`. Found in the browser sweep on 2026-09-26.
+Older, slower fights still returned their events.
+
+**Root cause**: `loadFightEventsForSummary` (`packages/server/src/analytics-queries.ts`)
+kept `room_events` whose `created_at` fell inside the summary's `started_at`–`ended_at`.
+Those bounds are engine event timestamps, but `created_at` is the insert time, which is
+always later. With `DECK_MONSTERS_SKIP_DELAYS` the bout lasted 50ms and every row was
+inserted after it resolved, so the window held nothing. A second, smaller mismatch:
+`RoomEventBus.publish` read the clock twice, once for the id and once for `timestamp`.
+
+**Fix**: rows are selected by the engine time in `event_id` (its `Date.now()` prefix),
+from the fight's first millisecond to its last. `created_at` stays only as a loose index
+bound (resolve time plus ten minutes); rows without an id keep the old rule. The window
+is not padded, because `room_events` has no fight id and padding would attach the next
+fight's rows. `publish` now reads the clock once for both fields.
+
+**Tests**: `analytics-queries.fight-events.test.ts` checks that the predicate binds the
+event-id range and that its insert-time bound reaches well past the resolve timestamp
+(a row inserted after the fight still counts). `fightEventIdBounds` tests include both
+edge milliseconds and exclude the neighbours.
+
+**Status**: Fixed.

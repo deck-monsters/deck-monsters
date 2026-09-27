@@ -36,8 +36,8 @@ investigations.
 | A1 | A short equip swallows the next command and calls a partial deck "good to go"; "equiped" typo | 10 §L | Engine: `monsters/helpers/equip.ts`, `cards/helpers/choose.ts`, `characters/beastmaster.ts` | A3, A4, A5 | Planned | — |
 | A2 | `unequip all from [monster]` matches the single-card pattern first | 10 §M | Engine: `commands/monster.ts` dispatch order, plus a dispatch test | A3, A4, A5 (not A1: both change command handling) | Done (#185) | 4a32c72 |
 | A3 | First-run workshop shows "Applying changes…" and polls `game.shop`, which 404s without a character | 10 §N | Web: `hooks/useDeckWorkshop.ts`; server `game.shop` if returning an empty shop is chosen | A1, A4 | Planned | — |
-| A4 | A fast fight's log is empty because events are filtered by insert time, not engine time | 10 §O | Server: `analytics-queries.ts` (select by the `event_id` timestamp prefix, or store a fight id) | A1, A2, A3 | Planned | — |
-| A5 | Three-word card names abbreviate unreadably ("Fig or Fli") | 10 §P | Web: `utils/cards.ts` `abbreviateCardName`, `cards-utils.test.ts` | A1, A2, A4 | Done (#186) | this commit |
+| A4 | A fast fight's log is empty because events are filtered by insert time, not engine time | 10 §O | Server: `analytics-queries.ts` (select by the `event_id` timestamp prefix, or store a fight id) | A1, A2, A3 | Done (#187) | this commit |
+| A5 | Three-word card names abbreviate unreadably ("Fig or Fli") | 10 §P | Web: `utils/cards.ts` `abbreviateCardName`, `cards-utils.test.ts` | A1, A2, A4 | Done (#186) | 5ccd8ff |
 
 Notes for the briefs:
 

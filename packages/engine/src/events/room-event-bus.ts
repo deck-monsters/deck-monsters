@@ -45,11 +45,14 @@ export class RoomEventBus {
 	constructor(public readonly roomId: string) {}
 
 	publish(event: PublishInput): GameEvent {
+		// One clock read for both: the server selects a fight's events by the id's millisecond
+		// prefix against summary bounds taken from `timestamp`, so the two must agree (10b #187).
+		const now = Date.now();
 		const fullEvent: GameEvent = {
 			...event,
-			id: `${Date.now()}-${randomUUID().slice(0, 8)}`,
+			id: `${now}-${randomUUID().slice(0, 8)}`,
 			roomId: this.roomId,
-			timestamp: Date.now(),
+			timestamp: now,
 		};
 
 		this.eventLog.push(fullEvent);
