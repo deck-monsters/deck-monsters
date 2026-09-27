@@ -4551,3 +4551,16 @@ without the fix). The monster and card hydrate tests now assert fresh instances.
 on the compiled engine under plain Node: 29 cards before and after.
 
 **Status**: Fixed.
+
+### 192. A dive or fury bonus doubled when Hit Harder's two damage rolls tied — FIXED
+
+**Root cause**: `empowerMelee` (`cards/helpers/empower-melee.ts`), shipped with the Dragon in
+PR #402, adds the dive's and fury's damage die to every roll inside Hit Harder's
+`{ betterRoll, worseRoll }` pair. When the two natural rolls tie, `HitHarder.getDamageRoll`
+returns the *same* roll object as both, so the loop added the bonus to it twice. It surfaced
+as a flaky unit test (a 1d6 bonus reading 12), not in review.
+
+**Fix**: the loop walks a `Set` of the pair's values, so a shared object is counted once. A
+test pins the tied case with one shared object.
+
+**Status**: Fixed.

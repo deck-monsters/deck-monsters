@@ -17,6 +17,7 @@
     "sim:economy": "node dist/scripts/sim-economy.js",
     "sim:monster": "node dist/scripts/sim-monster.js",
     "sim:bosses": "node dist/scripts/sim-bosses.js",
+    "sim:rings": "node dist/scripts/sim-rings.js",
     "sim:unicorn": "node dist/scripts/sim-monster.js Unicorn"
   },
   "dependencies": {
