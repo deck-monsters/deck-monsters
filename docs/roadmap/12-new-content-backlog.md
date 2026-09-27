@@ -61,8 +61,8 @@ our own creature, built on the same public-domain roots the books draw on.
   kinds of dragon, from small, scrappy, disobedient ones to vast sea dragons; dragons that
   are clever, vain, funny, and frightening at once; and the idea that understanding a
   dragon, even talking with it, beats shouting at it. The books also bring Romans in, which
-  gives the Dragon a natural link to the Gladiator and the Roman-flavoured cards, and the
-  owner recalls a large arena battle in at least one book, which is our ring.
+  gives the Dragon a natural link to the Gladiator and the Roman-flavoured cards, and book 3
+  has an arena fight (below), which is our ring.
 - **What we may not borrow.** No quotes, names (characters, places, dragon species, the
   books' dragon language), plot events, or distinctive designs, and nothing that implies
   the game is connected to the books or films. The same rule the Unicorn followed with its
