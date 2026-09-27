@@ -17,7 +17,7 @@ interface MonsterObj {
 
 // Lazy-load cards/items hydration to break circular dependency
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _hydrateCard: (cardObj: any, monster: any, deck: any) => CardInstance = obj => obj;
+let _hydrateCard: (cardObj: any, monster: any) => CardInstance = obj => obj;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _hydrateItem: (itemObj: any, monster: any) => ItemInstance = obj => obj;
 
@@ -52,7 +52,9 @@ export const monsterHydrateReady: Promise<void> = loadHydrators().catch((err) =>
 	console.error('[engine] monsterHydrateReady FAILED — card/item hydration will be broken:', err);
 });
 
-const hydrateMonster = (monsterObj: MonsterObj, deck?: CardInstance[]): BaseMonster => {
+// Every card gets its own instance: a hand must never share objects with the deck
+// (see hydrateCard and 10b #191).
+const hydrateMonster = (monsterObj: MonsterObj): BaseMonster => {
 	const MonsterClass = allMonsters.find(({ name }) => name === monsterObj.name);
 
 	if (!MonsterClass) {
@@ -68,7 +70,7 @@ const hydrateMonster = (monsterObj: MonsterObj, deck?: CardInstance[]): BaseMons
 
 	if (monsterObj.options.cards) {
 		monster.cards = monsterObj.options.cards
-			.map((cardObj: CardInstance) => _hydrateCard(cardObj, monster, deck))
+			.map((cardObj: CardInstance) => _hydrateCard(cardObj, monster))
 			.filter(Boolean);
 	}
 

@@ -8,8 +8,8 @@ tags: [roadmap, planning, passes]
 ---
 # 27 — Next Passes
 
-**Status:** Pass A done on branch `claude/pass-a-command-workshop-bugs`, with its live
-browser check still open; Pass B is next. Written on 2026-09-27 after the Unicorn pass
+**Status:** Pass A done and live-checked on branch `claude/pass-a-command-workshop-bugs`;
+Pass B is next. Written on 2026-09-27 after the Unicorn pass
 closed ([26](../archive/roadmap/26-unicorn-pack.md)) and a docs sweep. This file orders
 the open roadmap into passes; later passes are sketched and get their own task tables when
 they start. Update this file in each pass's checkpoint commits, filling in each task's
@@ -33,7 +33,7 @@ investigations.
 
 | # | Task | Source | Area / files | Can run beside | Status | Commit |
 |---|---|---|---|---|---|---|
-| A1 | A short equip swallows the next command and calls a partial deck "good to go"; "equiped" typo | 10 §L | Engine: `monsters/helpers/equip.ts`, `cards/helpers/choose.ts`, `characters/beastmaster.ts` | A3, A4, A5 | Done (#189) | this commit |
+| A1 | A short equip swallows the next command and calls a partial deck "good to go"; "equiped" typo | 10 §L | Engine: `monsters/helpers/equip.ts`, `cards/helpers/choose.ts`, `characters/beastmaster.ts` | A3, A4, A5 | Done (#189) | 9edca1f |
 | A2 | `unequip all from [monster]` matches the single-card pattern first | 10 §M | Engine: `commands/monster.ts` dispatch order, plus a dispatch test | A3, A4, A5 (not A1: both change command handling) | Done (#185) | 4a32c72 |
 | A3 | First-run workshop shows "Applying changes…" and polls `game.shop`, which 404s without a character | 10 §N | Web: `hooks/useDeckWorkshop.ts`; server `game.shop` if returning an empty shop is chosen | A1, A4 | Done (#188) | e634b35 |
 | A4 | A fast fight's log is empty because events are filtered by insert time, not engine time | 10 §O | Server: `analytics-queries.ts` (select by the `event_id` timestamp prefix, or store a fight id) | A1, A2, A3 | Done (#187) | 45837a6 |
@@ -63,11 +63,11 @@ and A5 checked in a browser at desktop and phone widths.
 **Pass A result (2026-09-27):** all five fixed (10b #185–#189) and the full gate passes.
 A1 took the owner's choice: an answer that names no card re-asks with the hand kept open.
 A5's label budget was measured in Chromium against the real label CSS at 70, 72, and 85px.
-**Still open:** the live-app browser check of A3 and A5. The session that ran the pass had
-no Supabase or test-account credentials, so it could not start the app; run it from
-[local testing](../operations/local-testing.md) on Test Room B (A3) and Test Room A (A5)
-before or after merge. Item K (emoji card-box border) stays open; it is in the feed, not
-the Workshop label A5 touched.
+**Live check (2026-09-27, Cursor):** A2–A5 pass in the running app, and A1's prompt text
+passes. It also found that a partial equip on restored room data lost the monster's
+previous hand: hydration aliased hand cards to unequipped deck cards. That was older than
+Pass A and hit every restored room; fixed in this pass as 10b #191. Item K (emoji
+card-box border) stays open; it is in the feed, not the Workshop label A5 touched.
 
 ## Pass B — realistic harness rings
 

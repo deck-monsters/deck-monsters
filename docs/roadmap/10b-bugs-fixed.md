@@ -4524,3 +4524,30 @@ the ring and checks the published feed: the boss's steal names its victim (fails
 the fix), and a player's steal still names the boss.
 
 **Status**: Fixed.
+
+### 191. A partial equip after a restart lost the monster's whole previous hand — FIXED
+
+Found by the live check of Pass A: on restored room data, equipping Fang with two cards
+left the old nine cards nowhere. Fang plus the pool fell from 29 cards to 20.
+
+**Root cause**: hydration. `hydrateCharacter` passed the restored deck to
+`hydrateMonster`, and `hydrateCard` returned a card from that deck whenever one matched
+by name and options, instead of building a new one. That made sense before #91, when a
+monster's hand was a subset of the deck. Since #91 the deck is the *unequipped* pool,
+disjoint from every hand, so a restored hand's cards were the same objects as unequipped
+cards (and duplicate hand cards were one object). Equip's bookkeeping is identity-based:
+`reconcileDeckAfterEquip` returns the old hand to the pool only for cards the pool does
+not already `includes`, so every aliased card was skipped and lost. Sell, unequip, and
+move use the same identity checks. It hit every room restored from the database, which is
+every room after a deploy; tests passed because they build characters in memory.
+
+**Fix**: `hydrateCard` always builds a fresh instance, and the deck argument is gone from
+`hydrateCard` and `hydrateMonster`. The comment on `hydrateCard` records why, so nobody
+restores the reuse.
+
+**Tests**: `characters/helpers/hydrate.test.ts` restores a character and checks that no
+hand card is also a deck card, and that a partial equip keeps every card (both fail
+without the fix). The monster and card hydrate tests now assert fresh instances. Confirmed
+on the compiled engine under plain Node: 29 cards before and after.
+
+**Status**: Fixed.

@@ -37,16 +37,13 @@ describe('cards/helpers/hydrate.ts', () => {
 			expect(card.play).to.be.a('function');
 		});
 
-		it('prefers an existing card from the deck when names and serialisation match', () => {
+		// Reusing a matching deck card aliased restored hands to unequipped cards (10b #191).
+		it('always builds a new instance, never one from elsewhere', () => {
 			const existingCard = new HitCard();
-			const deck = [existingCard];
+			const result = hydrateCard(existingCard.toJSON());
 
-			// Use the actual serialized form so isMatchingCard (name + JSON.stringify) matches
-			const cardObj = existingCard.toJSON();
-			const result = hydrateCard(cardObj, undefined, deck);
-
-			// Should return the exact same object, not a newly created one
-			expect(result).to.equal(existingCard);
+			expect(result).to.be.instanceOf(HitCard);
+			expect(result).not.to.equal(existingCard);
 		});
 	});
 

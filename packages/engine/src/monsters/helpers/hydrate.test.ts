@@ -71,22 +71,18 @@ describe('monsters/helpers/hydrate.ts', () => {
 			expect(() => hydrateMonster(monsterObj)).to.throw(/Unknown monster type/);
 		});
 
-		it('uses matching card from the provided deck instead of creating a new instance', () => {
-			const existingCard = new HitCard();
-			const deck = [existingCard];
-
-			const monsterObj = {
+		// A restored hand once reused matching cards from the character's deck. The deck is
+		// the unequipped pool, so that aliased hands to unequipped cards and lost whole hands
+		// on the next equip (10b #191).
+		it('gives every card its own instance, even when the JSON repeats', () => {
+			const hit = new HitCard().toJSON();
+			const monster = hydrateMonster({
 				name: 'Basilisk',
-				options: {
-					// Use the actual serialized form so isMatchingCard (name + JSON.stringify) matches
-					cards: [existingCard.toJSON()],
-				},
-			};
+				options: { cards: [hit, hit, hit] },
+			} as any);
 
-			const monster = hydrateMonster(monsterObj, deck);
-
-			// The card on the monster should be the exact same object from the deck
-			expect(monster.cards[0]).to.equal(existingCard);
+			expect(monster.cards).to.have.length(3);
+			expect(new Set(monster.cards).size).to.equal(3);
 		});
 
 		it('produces a monster whose cards array is not empty when cards are provided', () => {
