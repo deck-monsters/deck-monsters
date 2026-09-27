@@ -981,6 +981,45 @@ describe('ring/index.ts', () => {
 			game.dispose();
 		});
 
+		it('keeps one full-strength boss per human when a human leaves, and only a real minion beyond that', () => {
+			// Two humans each face a full-strength boss. When one withdraws, the other must not be
+			// left against both: the ambush slot is for a minion, not a second full boss (a Codex
+			// review of PR #403).
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			const first = ring.spawnBoss()!;
+			const second = ring.spawnBoss()!;
+			expect(ring.bossCount).to.equal(2);
+
+			ring.contestants = ring.contestants.filter(c => c.isBoss || c.userId !== 'user-2');
+			ring.dismissExtraBosses();
+			expect(ring.bossCount).to.equal(1);
+			expect(ring.contestants.some(c => c.monster === first.monster)).to.equal(true);
+			expect(ring.contestants.some(c => c.monster === second.monster)).to.equal(false);
+			game.dispose();
+		});
+
+		it('keeps the ambush minion, not a second full boss, when a human leaves', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			const first = ring.spawnBoss()!;
+			ring.spawnBoss();
+			const minion = ring.spawnBoss({ ambush: true })!;
+			expect(ring.bossCount).to.equal(3);
+
+			ring.contestants = ring.contestants.filter(c => c.isBoss || c.userId !== 'user-2');
+			ring.dismissExtraBosses();
+			const kept = ring.contestants.filter(c => c.isBoss).map(c => c.monster);
+			expect(kept).to.have.length(2);
+			expect(kept).to.include(first.monster);
+			expect(kept).to.include(minion.monster);
+			game.dispose();
+		});
+
 		it('sends the newest extra bosses away, refunding a summon, when a human leaves', () => {
 			const game = new Game({}, () => {});
 			const ring = game.getRing();
@@ -994,15 +1033,17 @@ describe('ring/index.ts', () => {
 			ring.spawnBoss({ summonedByUserId: 'user-3', summonedAt: 222 });
 			expect(ring.bossCount).to.equal(3);
 
-			// Two humans left: two bosses plus an ambush's one is still within the allowance.
+			// Two humans left: one full-strength boss each, so the newest (user-3's) goes, refunded.
+			// None of them is a minion, so the ambush slot does not keep a third.
 			return ring.removeMonster({ ...first, userId: 'user-1' }).then(() => {
-				expect(ring.bossCount).to.equal(3);
+				expect(ring.bossCount).to.equal(2);
+				expect(refunds).to.deep.equal([['user-3', 222]]);
 				const second = ring.contestants.find(c => c.userId === 'user-2')!;
 				return ring.removeMonster(second);
 			}).then(() => {
-				// One human: one boss, plus one for an ambush. The newest (user-3's) goes, refunded.
-				expect(ring.bossCount).to.equal(2);
-				expect(refunds).to.deep.equal([['user-3', 222]]);
+				// One human: one boss. The next newest (user-2's) goes, refunded.
+				expect(ring.bossCount).to.equal(1);
+				expect(refunds).to.deep.equal([['user-3', 222], ['user-2', 111]]);
 				game.dispose();
 			});
 		});
@@ -1031,12 +1072,12 @@ describe('ring/index.ts', () => {
 					const timers = (ring as any).bossDespawnTimers as Map<object, unknown>;
 					if (timers.has(newest.monster)) timersSeen += 1;
 
-					// One human left: one boss plus an ambush's one, so the newest goes.
+					// One human left: one full-strength boss, so the two newest go, newest first.
 					ring.contestants = ring.contestants.filter(c => c.isBoss || c.userId !== 'user-2').reverse();
 					ring.dismissExtraBosses();
 
-					expect(ring.bossCount).to.equal(2);
-					expect(refunds).to.deep.equal([['user-2', 333]]);
+					expect(ring.bossCount).to.equal(1);
+					expect(refunds).to.deep.equal([['user-2', 333], ['user-2', 222]]);
 					expect(timers.has(newest.monster)).to.equal(false);
 					game.dispose();
 				}

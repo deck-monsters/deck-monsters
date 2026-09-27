@@ -292,6 +292,10 @@ describe('@deck-monsters/harness', () => {
 		// both be credited every win. Only one contestant can win each fight.
 		const total = ['Sim 1', 'Sim 2', 'Sim 3'].reduce((sum, label) => sum + (res.winRates[label] ?? 0), 0);
 		expect(total).to.be.at.most(100);
+		// One winnersByFight entry per resolved fight, draws included as [], so entries line
+		// up with fight order (a Codex review of #403 found draws skipped).
+		const drawn = res.winnersByFight.filter(winners => winners.length === 0).length;
+		expect(drawn).to.equal(Math.round((res.drawRate / 100) * res.fights));
 	});
 
 	it('withoutHarnessExcludedCards() swaps Flee for a legal non-Flee draw', async () => {

@@ -1874,12 +1874,22 @@ export class Ring extends BaseClass {
 	 */
 	dismissExtraBosses(): void {
 		if (this.inEncounter) return;
-		const allowance = this.bossAllowance(true) + (this.ringEvent?.extraBosses ?? 0);
 		const arrival = (contestant: Contestant) => this.arrivalOrder.get(contestant) ?? 0;
 		const bosses = this.contestants
 			.filter(contestant => contestant.isBoss)
 			.sort((a, b) => arrival(a) - arrival(b));
-		const extras = bosses.slice(allowance).reverse();
+		// Full-strength bosses and minions are counted apart: one boss per human (plus an armed
+		// Gauntlet's extras) and one ambush minion. A single count with the ambush slot always
+		// included let one human keep facing two full-strength bosses after the other human
+		// withdrew, the matchup the quota exists to prevent (a Codex review of PR #403).
+		const humans = this.contestants.filter(contestant => !contestant.isBoss).length;
+		const fullAllowance = this.bossAllowance(false) + (this.ringEvent?.extraBosses ?? 0);
+		const minionAllowance = humans > 0 ? 1 : 0;
+		const kept = [
+			...bosses.filter(boss => !boss.minion).slice(0, fullAllowance),
+			...bosses.filter(boss => boss.minion).slice(0, minionAllowance),
+		];
+		const extras = bosses.filter(boss => !kept.includes(boss)).reverse();
 		if (extras.length === 0) return;
 
 		this.contestants = this.contestants.filter(contestant => !extras.includes(contestant));

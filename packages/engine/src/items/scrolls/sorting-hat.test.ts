@@ -88,6 +88,22 @@ describe('./items/scrolls/sorting-hat.ts', () => {
 		});
 	});
 
+	it("treats a monster's inherited team as its house, and does not offer a clear that would not stick", () => {
+		// A monster with no team of its own fights on its Beastmaster's. Clearing its own team
+		// would leave it on that team anyway, so the hat neither re-offers the inherited house
+		// nor offers "No team" (a Codex review of #403); `leave team` clears both.
+		const sortingHat = new SortingHat();
+		const character = makeCharacter({ name: 'Character', team: 'Hufflepuff' });
+		const monster = makeMonster({ givenName: 'Monster' });
+		channelStub.resolves('0');
+
+		return sortingHat.use({ channel: channelStub, channelName, character, monster }).then(() => {
+			const { choices } = channelStub.firstCall.args[0];
+			expect(choices).not.to.include('Hufflepuff');
+			expect(choices).not.to.include(NO_TEAM);
+		});
+	});
+
 	it('resolves a label answer, the shape the Discord connector sends, instead of throwing', () => {
 		const sortingHat = new SortingHat();
 		const character = makeCharacter({ name: 'Character' });

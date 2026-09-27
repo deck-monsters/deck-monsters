@@ -31,12 +31,20 @@ export class SortingHat extends BaseScroll {
 	}): Promise<string> {
 		const wearer = monster ?? character;
 		const givenName = wearer['givenName'] as string;
-		const currentTeam = wearer['team'] as string | undefined;
+		const ownTeam = wearer['team'] as string | undefined;
+		// A monster with no team of its own fights on its Beastmaster's (teamOf falls back to
+		// the character), so that is the house it is in.
+		const inheritedTeam = monster ? (character['team'] as string | undefined) : undefined;
+		const currentTeam = ownTeam ?? inheritedTeam;
 		// The hat used to offer only the other houses, so nobody could ever leave a team. It
-		// now offers "No team" to anyone on one (and `leave team` does the same for free).
+		// now offers "No team" where choosing it leaves the wearer teamless. Clearing a
+		// monster's own team while its Beastmaster has one only drops it back to that team, so
+		// the hat does not offer it there; `leave team` clears both, for free. A Codex review
+		// of #403 found the hat offering an inherited house again with no way out.
+		const canLeave = !!ownTeam && !inheritedTeam;
 		const teamChoices = [
 			...(Object.values(teams) as string[]).filter(team => team !== currentTeam),
-			...(currentTeam ? [NO_TEAM] : []),
+			...(canLeave ? [NO_TEAM] : []),
 		];
 
 		return Promise

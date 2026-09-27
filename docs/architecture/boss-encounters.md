@@ -153,8 +153,11 @@ two level 1 bosses still only 12%. So (owner, September 2026):
 - **The Gauntlet** is the designed exception: its extra bosses ignore the quota, but still
   come out of the level budget, so the more of them there are, the weaker each is.
 - **A human leaving** is the only way bosses come to outnumber humans, so `removeMonster`
-  calls `dismissExtraBosses()`: the newest bosses beyond the allowance slip away, and a
-  summoned one refunds its charge.
+  calls `dismissExtraBosses()`. It keeps the oldest full-strength bosses up to one per human
+  (plus an armed Gauntlet's extras) and at most one ambush minion (`Contestant.minion`);
+  the newest of the rest slip away, and a summoned one refunds its charge. The two are
+  counted apart: counting the ambush slot for any boss left one human against two
+  full-strength bosses after the other human withdrew.
 
 ---
 

@@ -458,6 +458,8 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 			lastParticipants = p.participants ?? [];
 			if (p.outcome === 'draw') {
 				draws += 1;
+				// One entry per fight, so entries line up with fight order (a Codex review of #403).
+				winnersByFight.push([]);
 				return;
 			}
 			winnersByFight.push(pushWinCounts(winCounts, stableIdToLabel, p));
