@@ -134,7 +134,10 @@ earlier-armed card's check runs before the later-armed card's counter-attack lan
 — `settleDelayedHits()` loops over all of them until a full pass fires nothing
 (`packages/engine/src/cards/delayed-hit.ts`). A self-only check left a counter unanswered
 until the next card anyone played, narrating a blow from a turn ago (#157). Two Delayed Hits
-in one fight is routine: the starting deck ships with two. The full play pipeline, where
+in one fight is routine: the starting deck ships with two. The loop still prints each later
+copy's "finds its moment" line only after the previous copy's counter has finished, so two
+copies answering one blow read as the second answering the first's punch. That order is
+open item M in [bug fixes](../roadmap/10-bug-fixes.md). The full play pipeline, where
 fight-scoped card state lives, and the hold boundary are in
 [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
 
@@ -211,3 +214,9 @@ Three rules from #159 that are easy to undo by accident:
 `USER_SCROLL_INTENT_WINDOW_MS` (1.5s); otherwise the bottom moved on its own and the feed
 re-pins. The hook's return value is memoised because consumers put it in effect dependency
 arrays (#132).
+
+Scrolling up into earlier fights still jumps. Card boxes are far taller than the height
+Virtuoso estimates for an unmeasured row, so `scrollHeight` grows as those rows mount and
+Virtuoso's size-tree correction can move `scrollTop` against the gesture. That is open
+item L in [bug fixes](../roadmap/10-bug-fixes.md). It is a different failure from the
+re-pin above: the pauses in the capture left `scrollTop` where the upward burst ended.
