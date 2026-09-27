@@ -21,6 +21,9 @@ export const DRAGON_FIXTURE_DECK = [
 
 type Counters = {
 	breaths: number;
+	breathTargets: number;
+	breathDodged: number;
+	burnsLit: number;
 	takeOffs: number;
 	dodges: number;
 	dives: number;
@@ -34,6 +37,9 @@ type Counters = {
 
 const fresh = (): Counters => ({
 	breaths: 0,
+	breathTargets: 0,
+	breathDodged: 0,
+	burnsLit: 0,
 	takeOffs: 0,
 	dodges: 0,
 	dives: 0,
@@ -62,8 +68,21 @@ const countNarrations = (cardType: string, lines: Array<[string, keyof Counters]
 };
 
 function instrument(isDragon: (creature: unknown) => boolean): void {
-	wrap(proto('Fire Breath'), 'wind', (original, self, args) => {
+	const breath = proto('Fire Breath');
+	wrap(breath, 'wind', (original, self, args) => {
 		if (isDragon(args[0])) counters.breaths += 1;
+		return original.apply(self, args);
+	});
+	wrap(breath, 'dodge', (original, self, args) => {
+		const dodged = original.apply(self, args) as boolean;
+		if (isDragon(args[0])) {
+			counters.breathTargets += 1;
+			if (dodged) counters.breathDodged += 1;
+		}
+		return dodged;
+	});
+	wrap(breath, 'ignite', (original, self, args) => {
+		if (isDragon(args[0])) counters.burnsLit += 1;
 		return original.apply(self, args);
 	});
 
@@ -102,7 +121,7 @@ function instrument(isDragon: (creature: unknown) => boolean): void {
 
 function describeCounters(c: Counters): string {
 	return [
-		`Fire Breath ${c.breaths} breaths (each winds the dragon)`,
+		`Fire Breath ${c.breaths} breaths, ${c.breaths ? (c.breathTargets / c.breaths).toFixed(1) : '—'} targets each, dodged ${pct(c.breathDodged, c.breathTargets)}, burns lit ${c.burnsLit}`,
 		`Take Wing ${c.takeOffs} take-offs: dodged ${pct(c.dodges, c.takeOffs)}, dived ${pct(c.dives, c.takeOffs)}, knocked down ${pct(c.knockedDown, c.takeOffs)}`,
 		`Mood Scales ${c.calmHides} calm hides, ${c.furies} furies (spent ${pct(c.furySpent, c.furies)})`,
 		`Tsunami ${c.tsunamis} waves, avg self-damage ${c.tsunamis ? (c.tsunamiSelfDamage / c.tsunamis).toFixed(1) : '—'}`,

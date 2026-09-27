@@ -7,3 +7,4 @@ export const GLOAMING_REST_EFFECT = 'Gloaming Rest Effect';
 export const WINDED_EFFECT = 'Winded Effect';
 export const TAKE_WING_EFFECT = 'Take Wing Effect';
 export const FURY_EFFECT = 'Fury Effect';
+export const BURNING_EFFECT = 'Burning Effect';
