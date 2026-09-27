@@ -4621,3 +4621,25 @@ checks both lines, and answers a Blast and checks the payoff names it. Both fail
 fix.
 
 **Status**: Fixed.
+
+### 195. A Workshop action printed its Console line twice, or once per card type — FIXED
+
+The owner saw a burst of "Moved 1 Pick Pocket from Toothless to Aquina.", "Moved 2 Fight or
+Flight cards…", and so on right after reviving a monster, and read it as the revive moving
+cards. The room log showed a separate Workshop batch move 12 seconds later; nothing was
+wrong with the move, but its echo was loud: six per-card-type lines and then "Moved 9 cards
+from Toothless to Aquina." A Workshop equip printed "Equipped Balthazar: 9/9." twice.
+
+**Root cause**: Workshop mutations hand the engine a `createSilentChannel`, which publishes
+every `announce` as a private event, and then the router publishes its own summary with
+`publishPrivateAnnouncement`. Both reached the Console.
+
+**Fix**: `createSilentChannel` takes `publish: false`, and the seven mutations that publish a
+summary (equip, unequip, unequip all, unequip many, move, move many, reorder) pass it. The
+summary names skipped and failed cards, so nothing is lost. Revive, send to ring, spawn,
+presets, and item use publish no summary of their own and keep the engine's lines.
+
+**Tests**: `trpc/router.test.ts` checks a Workshop equip publishes exactly one announce,
+the summary. It fails without the fix.
+
+**Status**: Fixed.

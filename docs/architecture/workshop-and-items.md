@@ -100,7 +100,11 @@ must never call `channel({ question })`.
 
 The room-wide lane serializes shared room resources such as ring membership and shop stock.
 `createSilentChannel` publishes private announcements for the audit trail and throws if an
-engine path attempts a question. Never add a prompt to an awaited Workshop path. Collect
+engine path attempts a question. A mutation that publishes its own summary line (equip,
+unequip, unequip all, unequip many, move, move many, reorder) passes `publish: false`, so the
+Console gets **one line per Workshop action**: the summary, which names any skipped or failed
+cards. Publishing both printed an equip twice and a batch move as a line per card type plus
+the summary, which a player read as the game moving cards on its own (10b #195). Never add a prompt to an awaited Workshop path. Collect
 all answers in the form first, or use the interactive per-user command flow described in
 [engine concurrency and timing](engine-concurrency-and-timing.md).
 

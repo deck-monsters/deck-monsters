@@ -566,6 +566,7 @@ function createSilentChannel({
 	userId,
 	commandId,
 	announcements,
+	publish,
 }: {
 	eventBus: EventBusPublisher;
 	userId: string;
@@ -580,7 +581,16 @@ function createSilentChannel({
 	 * "Used X." — see docs/architecture/workshop-and-items.md.
 	 */
 	announcements?: string[];
+	/**
+	 * False for a Workshop mutation that publishes its own one-line summary afterwards. The
+	 * engine's lines ("Moved 1 Hit from A to B." per card type, "Equipped A: 9/9.") and the
+	 * summary both reached the Console, so one drag printed up to seven lines and an equip
+	 * printed the same line twice; a player read the burst as the game moving cards by
+	 * itself. The summary carries the skipped and failed cards, so it is the one line kept.
+	 */
+	publish?: boolean;
 }) {
+	const shouldPublish = publish ?? true;
 	return async ({ announce, question }: SilentChannelMessage): Promise<unknown> => {
 		if (question) {
 			throw new TRPCError({
@@ -591,6 +601,7 @@ function createSilentChannel({
 
 		if (announce) {
 			announcements?.push(announce);
+			if (!shouldPublish) return undefined;
 			eventBus.publish({
 				type: 'announce',
 				scope: 'private',
@@ -1505,7 +1516,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.unequipCard({
 						channel,
@@ -1566,7 +1577,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.unequipAll({
 						channel,
@@ -1627,7 +1638,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.equipCards({
 						channel,
@@ -1702,7 +1713,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				const result = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.moveCard({
 						channel,
@@ -1786,7 +1797,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				// A batch is not atomic — the engine has no transaction to roll back to,
 				// so a card failing partway through leaves the earlier ones already
 				// unequipped. Collect per-card failures and keep going rather than
@@ -1884,7 +1895,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				// Not atomic — see the matching comment in unequipMany.
 				const { movedCount, fromMonsterName, toMonsterName, failures } = await runSerializedMutation(
 					input.roomId,
@@ -1989,7 +2000,7 @@ export function createRouter(roomManager: RoomManager) {
 				}
 
 				const commandId = randomUUID();
-				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId });
+				const channel = createSilentChannel({ eventBus, userId: ctx.userId, commandId, publish: false });
 				const rawResult = await runSerializedMutation(input.roomId, ctx.userId, () =>
 					character.reorderCards({
 						channel,
