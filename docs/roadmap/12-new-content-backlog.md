@@ -33,8 +33,8 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
   Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest). The pass record and the
   original brief are archived as [26 — Unicorn content pack](../archive/roadmap/26-unicorn-pack.md).
 - [ ] **Unicorn voice punch-up.** The owner finds the Unicorn's flavour text bland (September
-  2026) and wants more edge from the old sources. Researched proposals for every Unicorn
-  string, with tagged quotations, a house style, and research requests, are in
+  2026) and wants more edge from the old sources. Proposals for every Unicorn string, with
+  the archive checks recorded, are in
   [28 — Unicorn voice punch-up](28-unicorn-voice-punch-up.md), awaiting the owner's picks.
 - [ ] **Dragon.** A second requested monster, researched and built the way the Unicorn was.
   Research comes first; see the [Dragon research brief](#dragon-research-brief) below.
