@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — four open items. Fixed work and its root causes live only in
+**Status:** Active — six open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -73,6 +73,89 @@ the frame, or render the frame's border in CSS rather than as characters. Captur
 screenshot in both themes and at phone width before choosing.
 
 Read [pixel art](../reference/pixel-art.md) and [web workspace](../architecture/web-workspace.md).
+
+### L. The ring feed jumps while scrolling up into earlier fights
+
+**Owner:** Web feeds. Seen 2026-09-27 on Test Room A's Ring tab, with history already
+loaded. The scroller is the ring `Virtuoso` (`.event-feed`), the list that holds earlier
+fights. A script drove it upward in eight bursts — each burst six `scrollTop -= 400` steps
+plus a wheel `deltaY` of -400 — and paused 1.8s after each burst.
+
+| Sample | scrollTop | scrollHeight | Mounted rows |
+|---|---:|---:|---:|
+| Start | 15386 | 16145 | 7 |
+| After burst 2 | 12950 | 21475 | 2 |
+| After burst 3 | 13391 | 24317 | 7 |
+| End | 10096 | 30625 | 8 |
+
+`clientHeight` stayed 758. Between burst 2 and burst 3 the only input was upward, and
+`scrollTop` still moved 441px back toward newer events while `scrollHeight` grew by 2842px.
+Mounted rows had just collapsed to 2 and then returned. Every pause left `scrollTop` where
+the burst ended. #159's re-pin scrolls the element to `scrollHeight` when Virtuoso reports
+"not at bottom" without a recent upward gesture; that path did not run during the pauses.
+
+**Cause:** `RingPane` gives Virtuoso no default item height. Narration rows are one or two
+lines and card boxes are tall `<pre>` frames, so unmeasured rows are estimated short. As
+the reader scrolls into history those rows mount, the estimate is replaced, and
+`scrollHeight` nearly doubled across the probe (16145 → 30625). Virtuoso then corrects
+`scrollTop` from its size tree. That correction can move the viewport against the gesture.
+The same size-tree estimate is why #159 re-pins from the DOM `scrollHeight` instead of
+`scrollToIndex('LAST')`; this bug is that correction firing while the reader is scrolling
+up, away from the bottom.
+
+The 15rem fight-log box (`.fight-log-events`) is a different scroller. It truncates lines
+and does not load ring history.
+
+- [ ] Reproduce with a human wheel and a touch drag, and confirm the correction is
+  Virtuoso's size-tree anchor.
+- [ ] Keep the viewport on the row the reader is looking at once a card box is measured.
+  Leave the #159 follow rule as it is: a gesture inside
+  `USER_SCROLL_INTENT_WINDOW_MS` must still suppress the re-pin.
+
+Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
+[web workspace](../architecture/web-workspace.md).
+
+### M. Delayed Hit payoffs still read out of turn
+
+**Owner:** Engine cards. Seen in Test Room A fight 8 on 2026-09-27, on the build that
+already includes #157. Chuvvo armed Delayed Hit twice (the "spreads his focus" line, at
+events 38 and 51). Noobur Swiftwalker's Horn Gore then hit for 5 and pinned. The feed
+printed, in order:
+
+1. "Chuvvo's Delayed Hit finds its moment… responds to the blow Noobur Swiftwalker gave him."
+2. Chuvvo's counter, a punch for 2.
+3. The same "finds its moment" sentence again, still naming Noobur Swiftwalker's blow.
+4. Chuvvo's second swing, for 5.
+5. "Noobur Swiftwalker's Delayed Hit finds its moment… responds to the blow Chuvvo gave him,"
+   which does match the swing just above it.
+
+The second Chuvvo line sits under Chuvvo's own punch, so it reads as an answer to that
+punch. It is a second armed copy answering the gore. One effect did not fire twice:
+`settle()` removes itself and sets that copy's `whenPlayed` to the blow it answered.
+
+An earlier fight the same afternoon shows the area-damage form. Hasdiel's Blast damaged
+Onox and then Bhokho, and Onox's payoff was the next line, under Bhokho's damage. That
+fight's log does not contain the #130 arming sentence, so fight 8 is the capture on the
+current narration.
+
+**Cause:** `settleDelayedHits` runs only after the wrapped `play()` returns, and each
+`settle()` emits "finds its moment" and then `await super.effect()` before the loop reaches
+the next armed copy (`packages/engine/src/cards/delayed-hit.ts`). An area card therefore
+prints every target's damage before any payoff, and each later copy's announcement is
+printed after the previous copy's counter. `hitLog.find` is the newest blow from someone
+else, and `whenPlayed` is per copy, so the second copy still sees the gore. Stacking is
+intended — the handbook says every copy still armed answers the next qualifying blow.
+#157 stopped a copy from waiting until the next unrelated card; the interleaved order is
+what that loop prints. The payoff comment already notes that a hit resolving in the middle
+of someone else's attack is hard to read. Naming the card did not put the line next to the
+blow.
+
+- [ ] Print each payoff beside the blow it answers, ahead of that copy's own counter, so a
+  second armed copy does not read as an answer to the first copy's punch.
+- [ ] Extend `cards/delayed-hit.test.ts` with two copies on one monster answering one blow,
+  and with an area card whose damage lines precede the payoff.
+
+Read [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
 
 ## Historical detail
 
