@@ -77,10 +77,8 @@ random decks. What it still lacks decides whether its numbers can guide balance 
 
 Candidate tasks, in order of value:
 
-0. (Moved to the Dragon pack, [30](30-dragon-pack.md) task 0.) One harness monster roster derived from `allMonsters`, a test that fails when a monster
-   is missing from it, and `sim:unicorn` generalized into `sim:monster <type>` (owner
-   request; see "One monster roster for the harness" in 11). Small, and it goes first
-   because every later task and the Dragon pass run on it.
+0. Done in the Dragon pack ([30](30-dragon-pack.md) task 0): the harness roster now comes
+   from `allMonsters`, and `sim:monster <type>` replaces `sim:unicorn`.
 1. Weighted "likely" decks: a few hand-written archetypes per class, kept beside today's
    uniform draw as a control.
 2. Mixed ring sizes (2–12 contestants, the ring's `MAX_MONSTERS`) with free-for-all, one

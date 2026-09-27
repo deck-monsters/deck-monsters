@@ -43,10 +43,21 @@ const HARNESS_TEAM_EVENT = {
 /** Monotonic id so concurrent `simulate()` calls never share eventBus subscriber keys. */
 let harnessSimRunSeq = 0;
 
-export type SimMonsterType = 'Basilisk' | 'Gladiator' | 'Jinn' | 'Minotaur' | 'WeepingAngel' | 'Unicorn';
+/**
+ * Every monster the harness can field, by engine class name ("WeepingAngel"), derived from
+ * the engine's `allMonsters`. The harness used to list the monsters by hand in five places,
+ * and a new monster that missed one was silently left out of that report (a PR #397 review
+ * caught `sim-unicorn` skipping one). `harness.test.ts` checks this still matches.
+ */
+export const SIM_MONSTER_TYPES: readonly string[] = allMonsters.map(
+	M => (M as unknown as { name: string }).name,
+);
+
+/** A name from `SIM_MONSTER_TYPES`. */
+export type SimMonsterType = string;
 
 export interface SimMonsterSpec {
-	type: SimMonsterType | string;
+	type: SimMonsterType;
 	level: number;
 	/** Card type names matching engine static `cardType` (e.g. "Hit", "Heal"). */
 	deck?: string[];
@@ -156,27 +167,17 @@ interface FightResolvedPayload {
 	}>;
 }
 
-const MONSTER_TYPES: Record<string, SimMonsterType> = {
-	basilisk: 'Basilisk',
-	gladiator: 'Gladiator',
-	jinn: 'Jinn',
-	minotaur: 'Minotaur',
-	unicorn: 'Unicorn',
-	weepingangel: 'WeepingAngel',
-	'weeping angel': 'WeepingAngel',
-};
+const normalizeMonsterName = (raw: string): string => raw.trim().toLowerCase().replace(/[\s_-]+/g, '');
 
+/**
+ * Accepts a class name or a creature type in any case, with or without spaces or dashes
+ * ("weeping angel", "Weeping-Angel", "WeepingAngel").
+ */
 export function parseMonsterType(raw: string): SimMonsterType {
-	const key = raw.trim().toLowerCase().replace(/\s+/g, '');
-	const mapped = MONSTER_TYPES[key];
-	if (mapped) return mapped;
-	const pascal = raw
-		.trim()
-		.replace(/(?:^|\s|-)(\w)/g, (_, c: string) => c.toUpperCase())
-		.replace(/\s|-/g, '');
-	const allowed: SimMonsterType[] = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'WeepingAngel', 'Unicorn'];
-	if ((allowed as string[]).includes(pascal)) return pascal as SimMonsterType;
-	throw new Error(`Unknown monster type: "${raw}" (expected one of: ${allowed.join(', ')})`);
+	const key = normalizeMonsterName(raw);
+	const found = SIM_MONSTER_TYPES.find(type => normalizeMonsterName(type) === key);
+	if (found) return found;
+	throw new Error(`Unknown monster type: "${raw}" (expected one of: ${SIM_MONSTER_TYPES.join(', ')})`);
 }
 
 function monsterClassFor(spec: SimMonsterType): new (options?: Record<string, unknown>) => unknown {
@@ -392,7 +393,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 			ring.clearRing();
 
 			const contestants = monsters.map((m, i) => {
-				const type = typeof m.type === 'string' ? parseMonsterType(m.type) : (m.type as SimMonsterType);
+				const type = parseMonsterType(m.type);
 				const c = buildContestant(type, m.level, m.deck, m.statSeed, f);
 				const label = names[i]!;
 				c.monster.setOptions({
@@ -552,7 +553,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 }
 
 export function simMonsterLineup(monsters: SimMonsterSpec[]): string {
-	return monsters.map(m => `${parseMonsterType(String(m.type))}:${m.level}`).join(',');
+	return monsters.map(m => `${parseMonsterType(m.type)}:${m.level}`).join(',');
 }
 
 export function parseMonstersArg(arg: string): SimMonsterSpec[] {
@@ -572,8 +573,8 @@ export function parseMonstersArg(arg: string): SimMonsterSpec[] {
 // ---------------------------------------------------------------------------
 
 export interface NewPlayerScenarioConfig {
-	playerType?: SimMonsterType | string;
-	opponentType?: SimMonsterType | string;
+	playerType?: SimMonsterType;
+	opponentType?: SimMonsterType;
 	/** Fixed level for the disposable opponent each fight (default 1: a fresh player's
 	 * likely early matchup). The opponent never persists or levels between fights. */
 	opponentLevel?: number;

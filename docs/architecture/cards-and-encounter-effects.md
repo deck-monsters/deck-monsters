@@ -126,12 +126,10 @@ new card or monster must reach. Check each one.
 - **Append** it to `allMonsters` (`monsters/helpers/all.ts`). The spawn prompt answers with
   an index, so inserting mid-list shifts every later monster.
 - The spawn colour example (`monsters/helpers/spawn.ts`), a name generator
-  (`helpers/names.ts`), a sprite in `apps/web/src/animations/pixel-fight/sprites.ts`, the
-  harness type lists (`packages/harness/src/simulate.ts`, `sim-winrates.ts`, and
-  `OPPONENTS` in `scripts/sim-unicorn.ts`, which otherwise leaves the new monster out of
-  the Unicorn report without saying so; deriving these from `allMonsters` is planned in
-  [11 — Balance](../roadmap/11-balance-and-mechanics.md#measurement-first)), and the
-  server's spawn-catalog test.
+  (`helpers/names.ts`), a sprite in `apps/web/src/animations/pixel-fight/sprites.ts`, and
+  the server's spawn-catalog test. The harness reads `allMonsters` itself; add a report in
+  `packages/harness/src/scripts/monster-reports/` if the monster's cards need their own
+  counters in `sim:monster` ([simulation harness](../reference/simulation-harness.md#one-roster)).
 - Regenerate `MONSTERS.md` and `DMG.md` with `pnpm run build:docs`; adding to
   `allMonsters` changes both, and `docs:check` does not catch them going stale.
 - A description must read well with a player-chosen colour, including one that carries
@@ -144,7 +142,7 @@ new card or monster must reach. Check each one.
   across levels, not 50/50 at every level. As in D&D, casters (Cleric, Bard) start fragile
   and grow strong; brutes (Barbarian, Fighter) are strongest early and stay useful as they
   fall behind. A problem is a class that dominates across the whole range, or a curve that
-  runs the wrong way. The 35–65% flag in `sim:winrates` and `sim:unicorn` marks rows to look
+  runs the wrong way. The 35–65% flag in `sim:winrates` and `sim:monster` marks rows to look
   at, not a pass/fail gate, and ring context (size, teams, the cards in play) shifts
   matchups a great deal.
 - **Evidence comes from the harness.** Run the [simulation harness](../reference/simulation-harness.md)

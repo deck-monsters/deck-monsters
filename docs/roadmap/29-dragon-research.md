@@ -26,8 +26,8 @@ not have to rediscover sources or mistake an attractive inference for an old tra
 | 3 | Bestiary and early-modern sweep | Initial sweep saved; exact scan records open | Source ledger below | 02e26a2 (#401) |
 | 4 | Roster fit and initial card directions | Drafted | Design synthesis below | 02e26a2 (#401) |
 | 5 | Engine fit: class and card pool, stat ranges, reusable mechanics, build checklist | Drafted | [Fitting the Dragon into the engine](#fitting-the-dragon-into-the-engine) | 29d9240 |
-| 6 | Requester interview and owner decisions | Done 2026-09-27 | [30](30-dragon-pack.md#what-the-requester-asked-for) | this commit |
-| 7 | Approved monster/card specification and implementation slices | Moved to [30](30-dragon-pack.md), which also takes Pass B task 0 | [30](30-dragon-pack.md#specification) | this commit |
+| 6 | Requester interview and owner decisions | Done 2026-09-27 | [30](30-dragon-pack.md#what-the-requester-asked-for) | 03501c0 |
+| 7 | Approved monster/card specification and implementation slices | Moved to [30](30-dragon-pack.md), which also takes Pass B task 0 | [30](30-dragon-pack.md#specification) | 03501c0 |
 
 ## Research method and quotation key
 
