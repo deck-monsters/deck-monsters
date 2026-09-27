@@ -97,8 +97,8 @@ The requester is the owner's eight-year-old son, whose dragons are the ones in C
 Cowell's *How to Train Your Dragon* books. The brief records what that means: borrow the
 Viking-age setting and feel, and the Roman overlap with the Gladiator; borrow no names,
 quotes, or designs; cite the Norse and Roman sources the books share. Research can start
-beside Pass A or B, since it touches only docs; start by asking the owner the brief's
-"details to confirm" questions.
+beside Pass A or B, since it touches only docs; start with the brief's "Still to ask the
+requester" questions.
 
 ## Later
 

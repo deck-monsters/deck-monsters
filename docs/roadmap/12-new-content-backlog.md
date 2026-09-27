@@ -69,12 +69,28 @@ our own creature, built on the same public-domain roots the books draw on.
   modern tonal references applies, more strictly, because this series is in copyright and
   well known. Where the books and the old sources share something (Vikings, sagas, sea
   serpents, Romans), cite the old source.
-- **Details to confirm against the books.** Which book has the Romans and which has the
-  arena battle, and whether the books' own dragon "statistics" pages (as the research
-  remembers them: ratings for things like fear, attack, speed, size, and disobedience)
-  exist as recalled. If they do, a trading-card feel is already part of what a young
-  reader expects from a dragon, and our card-box stat lines can echo that shape without
-  copying its categories. Ask the owner, who has the books, rather than guessing.
+- **What the books contain (checked September 2026).** The owner confirmed, and publisher
+  and reader summaries agree, on these points. Fan wikis were the only detailed sources
+  found, so treat anything below as secondary until it is checked against the books.
+  - **Dragon statistics.** Throughout the series, dragons get small stat panels rated out
+    of ten: Fear Factor, Attack, Speed, Size, and Disobedience. A young reader already
+    expects a dragon to come with a stat card, which suits a card game. Echo the *shape*
+    (a short, rated profile in the Dragon's look-at text or card box) with our own stats,
+    not those five names.
+  - **Kinds of dragon by habitat.** The books sort their many species mostly by where they
+    live: cave, tree, bog, sky, mountain, sea, and tiny dragons. Cowell's companion *Book
+    of Dragons* (2014; *Incomplete* in the UK, *Complete* in the US) collects them. Habitat
+    is a natural axis for the Dragon's appearance options; plain words like "cave" or
+    "sea" are fine, the books' species names are not.
+  - **Romans and the arena: book 3, *How to Speak Dragonese*.** Romans at a fort try to
+    set two tribes against each other. The young heroes are made to fight in the fort's
+    amphitheatre, which is flooded so they face untrainable sea dragons from a ship. They
+    get out with the help of a tiny, arrogant dragon and its king's plan. That fits the
+    owner's memory of tiny, almost insect-like dragons saving the day. It is our ring, with
+    Romans, which is the Gladiator's world.
+  - **Still to ask the requester:** his favourite dragons and why; whether he wants to
+    raise a small dragon that grows or command a big one from the start; and which moments
+    he would want as cards.
 - **Audience and tone.** Narration should be exciting and funny rather than gory, readable
   aloud to an eight-year-old, and follow [voice and wording](../reference/voice-and-wording.md).
   The owner's son is a natural playtester for the strings inventory and the finished monster.
@@ -140,15 +156,21 @@ our own creature, built on the same public-domain roots the books draw on.
   player, so weigh it against [player agency](../reference/player-agency.md).
 - Roman links: a *draco* standard card usable by the Gladiator's side, or a Roman
   siege-engine answer to a dragon (from the Bagradas story) as a counter card.
-- Many kinds of dragon: appearance options (size, colour, horns, wings, temper) wide enough
-  that a child can make "their" dragon, the way the Unicorn's options vary its telling.
+- Many kinds of dragon: appearance options (habitat, size, colour, horns, wings, temper)
+  wide enough that a child can make "their" dragon, the way the Unicorn's options vary its
+  telling.
+- A swarm of tiny dragons: the backlog's unbuilt Swarm card (Cards, above) could become
+  many small dragons that each do little but add up, which echoes the book 3 rescue without
+  borrowing it. Scale it with the number of opponents, and measure it in mixed ring sizes.
+- A rated profile: a short stat panel in the Dragon's look-at text (see "What the books
+  contain" above).
 
 ### Definition of done for the research step
 
 A design brief in this file with the same sections the Unicorn brief had (creative thesis,
 sources and quotation policy, monster specification, three to five related cards with their
 risks and counterplay, implementation slices, acceptance gates), reviewed by the owner before
-any code is written. The brief also answers the "details to confirm" above with the owner, and
+any code is written. The brief also records the requester's answers to "Still to ask", and
 its strings inventory is read aloud to the requester before the content pass starts.
 
 ## World and long-term goals
