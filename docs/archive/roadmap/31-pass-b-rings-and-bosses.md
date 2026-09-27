@@ -52,6 +52,10 @@ back up during the countdown (its HP is now set again as the fight starts); the 
 Hat was guaranteed only when a shop was drawn, so the first buyer took the room's only one
 (both purchase paths now restock it); and two harness counting faults, recorded below.
 
+Found during the PR (the owner's report of a Unicorn boss's hit landing out of nowhere): a
+boss's card boxes, dice, and Delayed Hit lines were being dropped from the feed by the room
+guard's walk, depending on key order. Fixed in this PR as 10b #193.
+
 The independent review (task 5) found two faults in `dismissExtraBosses()`, fixed before
 merge: outside tests the ring shuffles `contestants` on every add, so "the newest boss" it
 sent away was really a random one (the ring now records arrival order); and a dismissed

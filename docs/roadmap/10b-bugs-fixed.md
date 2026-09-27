@@ -4564,3 +4564,32 @@ as a flaky unit test (a 1d6 bonus reading 12), not in review.
 test pins the tied case with one shared object.
 
 **Status**: Fixed.
+
+### 193. A boss's card plays, dice, and Delayed Hit lines vanished from the feed — FIXED
+
+The owner saw a Unicorn boss's hit for 6 land out of nowhere: no card, no dice, no Delayed
+Hit line, then the boss's next Delayed Hit narrated in full. The room's event log showed the
+boss had played three Delayed Hits over the fight, none of them visible, and that every one
+of its card boxes and dice rolls was missing; only the damage and miss lines (which name the
+player's monster) got through.
+
+**Root cause**: the room guard (`createRoomScopedEventGuard`, `announcements/index.ts`)
+finds a boss's card events through `card.playedBy` -> the boss -> its encounter -> the ring,
+at most three levels deep (#190). Its walk kept a plain seen-set, so the first path to reach
+an object decided for all the rest. The card's other keys (`original` and the like) are
+walked before `playedBy`; when one of them reached the boss a level deeper, the boss was
+marked seen at a depth too deep to find its ring, and the direct path was skipped. Whether
+an event survived depended on key order, which is why one Delayed Hit in a pair showed and
+the other did not. #190's test played a single card straight at a target, outside a real
+fight, and did not exercise that ordering.
+
+**Fix**: the walk records the shallowest depth it reached each object from and re-walks an
+object only from a shallower path. The walk stays bounded and the guard is no wider: a boss
+in another room's ring is still rejected, and a boss's own `creature.win` still is (its
+encounter has ended by then).
+
+**Tests**: `cards/boss-feed.test.ts` pins the key-order case against the guard directly and
+runs a real player-versus-boss fight, checking the feed shows the boss's card box, its
+Delayed Hit line, and its dice rolls. Both fail without the fix.
+
+**Status**: Fixed.
