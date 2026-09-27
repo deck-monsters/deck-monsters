@@ -80,9 +80,13 @@ Open work:
   (his first was positive). Keep the pack's rule: the *How to Train Your Dragon* books
   supply setting and feel only (Vikings, Romans, the arena), never names, quotes, species,
   or designs; old public-domain texts may be quoted for atmosphere.
-- [ ] **Live check in the browser**: the Dragon's sprite in the ring roster, and each card's
-  feed lines in a real fight (breath burns and dodges, a take-off and dive, a calm hide and
-  a fury, a Tsunami self-hit). Unit tests and the harness cover the rules, not the display.
+- [ ] **Finish the live check in the browser.** Cursor's check on PR #402 (2026-09-27)
+  passed training a Dragon, the `look at monster` profile, Fire Breath in the starting deck,
+  all four card boxes, the ring sprite, and a Fire Breath dodge with winded and its
+  give-back in a real fight. Still to see in a real fight: a breath that burns (and a heal
+  putting it out), a take-off and dive, a calm hide and a fury, a Tsunami self-hit, and an
+  ancient dragon being outwitted; and Mood Scales and Tsunami in the shop's back room. Unit
+  tests and the harness cover the rules, not the display.
 - [ ] **Ideas the pack deferred** (details in 29's candidate table):
   - *The hoard* (One Cup Missing): a bounded next-attack bonus when a card is stolen from
     the Dragon's hand. Needs a generic "a card was taken from you" hook on the victim.
