@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — six open items. Fixed work and its root causes live only in
+**Status:** Active — five open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -114,48 +114,6 @@ and does not load ring history.
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
 [web workspace](../architecture/web-workspace.md).
-
-### M. Delayed Hit payoffs still read out of turn
-
-**Owner:** Engine cards. Seen in Test Room A fight 8 on 2026-09-27, on the build that
-already includes #157. Chuvvo armed Delayed Hit twice (the "spreads his focus" line, at
-events 38 and 51). Noobur Swiftwalker's Horn Gore then hit for 5 and pinned. The feed
-printed, in order:
-
-1. "Chuvvo's Delayed Hit finds its moment… responds to the blow Noobur Swiftwalker gave him."
-2. Chuvvo's counter, a punch for 2.
-3. The same "finds its moment" sentence again, still naming Noobur Swiftwalker's blow.
-4. Chuvvo's second swing, for 5.
-5. "Noobur Swiftwalker's Delayed Hit finds its moment… responds to the blow Chuvvo gave him,"
-   which does match the swing just above it.
-
-The second Chuvvo line sits under Chuvvo's own punch, so it reads as an answer to that
-punch. It is a second armed copy answering the gore. One effect did not fire twice:
-`settle()` removes itself and sets that copy's `whenPlayed` to the blow it answered.
-
-An earlier fight the same afternoon shows the area-damage form. Hasdiel's Blast damaged
-Onox and then Bhokho, and Onox's payoff was the next line, under Bhokho's damage. That
-fight's log does not contain the #130 arming sentence, so fight 8 is the capture on the
-current narration.
-
-**Cause:** `settleDelayedHits` runs only after the wrapped `play()` returns, and each
-`settle()` emits "finds its moment" and then `await super.effect()` before the loop reaches
-the next armed copy (`packages/engine/src/cards/delayed-hit.ts`). An area card therefore
-prints every target's damage before any payoff, and each later copy's announcement is
-printed after the previous copy's counter. `hitLog.find` is the newest blow from someone
-else, and `whenPlayed` is per copy, so the second copy still sees the gore. Stacking is
-intended — the handbook says every copy still armed answers the next qualifying blow.
-#157 stopped a copy from waiting until the next unrelated card; the interleaved order is
-what that loop prints. The payoff comment already notes that a hit resolving in the middle
-of someone else's attack is hard to read. Naming the card did not put the line next to the
-blow.
-
-- [ ] Print each payoff beside the blow it answers, ahead of that copy's own counter, so a
-  second armed copy does not read as an answer to the first copy's punch.
-- [ ] Extend `cards/delayed-hit.test.ts` with two copies on one monster answering one blow,
-  and with an area card whose damage lines precede the payoff.
-
-Read [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
 
 ## Historical detail
 

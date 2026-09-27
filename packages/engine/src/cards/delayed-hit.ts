@@ -5,6 +5,20 @@ import { REASONABLE } from '../helpers/costs.js';
 
 export const DELAYED_HIT_EFFECT = 'DelayedHitEffect';
 
+const ORDINALS = ['second', 'third', 'fourth', 'fifth'];
+
+/**
+ * The blow a payoff answers, named by its card when it has one ("Noobur's Horn Gore"). The
+ * payoff prints after the whole attacking card has resolved, so after an area card it sits
+ * under the last target's damage line, and a second armed copy prints under the first
+ * copy's counter. "The blow X gave him" then read as an answer to whatever was just above
+ * it (10b #194); the card's name ties it back to the attack it really answers.
+ */
+const describeBlow = (entry: { assailant: any; card?: any }): string | undefined => {
+	const cardType = entry.card?.cardType;
+	return typeof cardType === 'string' && cardType ? `${entry.assailant.givenName}'s ${cardType}` : undefined;
+};
+
 /**
  * Give every armed Delayed Hit in the ring a chance to answer, and keep going until a
  * full pass fires nothing.
@@ -110,17 +124,25 @@ export class DelayedHit extends HitCard {
 			 * owned creature is an unambiguous room anchor, and announceNarration safely
 			 * ignores the extra field.
 			 */
-			if (delayingTarget.dead) {
-				this.emit('narration', {
-					narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: with ${his} dying breath, ${delayingPlayer.pronouns.he} avenge${delayingPlayer.pronouns.verbSuffix ?? 's'} the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
-					owner: delayingPlayer,
-				});
+			// Several armed copies can answer one blow, each after the previous copy's counter.
+			// The later ones say so, or they read as answers to the counter printed above them.
+			const answers = (lastHitByOther.delayedHitAnswers ?? 0) + 1;
+			lastHitByOther.delayedHitAnswers = answers;
+			const blow = describeBlow(lastHitByOther);
+			const verb = (singular: string) => `${singular}${delayingPlayer.pronouns.verbSuffix ?? 's'}`;
+			let narration: string;
+			if (answers > 1) {
+				const ordinal = ORDINALS[answers - 2] ?? 'next';
+				const same = blow
+					? `the same ${lastHitByOther.card.cardType} from ${lastHitByOther.assailant.givenName}`
+					: `the same blow from ${lastHitByOther.assailant.givenName}`;
+				narration = `${this.icon} ${delayingPlayer.givenName}'s ${ordinal} ${this.cardType} finds its moment too: ${delayingPlayer.pronouns.he} ${verb('answer')} ${same}.`;
+			} else if (delayingTarget.dead) {
+				narration = `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: with ${his} dying breath, ${delayingPlayer.pronouns.he} ${verb('avenge')} ${blow ?? `the blow ${lastHitByOther.assailant.givenName} gave ${him}`}.`;
 			} else {
-				this.emit('narration', {
-					narration: `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: ${delayingPlayer.pronouns.he} immediately respond${delayingPlayer.pronouns.verbSuffix ?? 's'} to the blow ${lastHitByOther.assailant.givenName} gave ${him}.`,
-					owner: delayingPlayer,
-				});
+				narration = `${this.icon} ${delayingPlayer.givenName}'s ${this.cardType} finds its moment: ${delayingPlayer.pronouns.he} immediately ${verb('respond')} to ${blow ?? `the blow ${lastHitByOther.assailant.givenName} gave ${him}`}.`;
 			}
+			this.emit('narration', { narration, owner: delayingPlayer });
 
 			await super.effect(delayingPlayer, lastHitByOther.assailant, ring);
 			return true;

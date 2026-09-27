@@ -4593,3 +4593,31 @@ runs a real player-versus-boss fight, checking the feed shows the boss's card bo
 Delayed Hit line, and its dice rolls. Both fail without the fix.
 
 **Status**: Fixed.
+
+### 194. Delayed Hit payoffs read as answers to the wrong blow — FIXED
+
+Recorded as open item M from Test Room A fight 8 (PR #404), and in the owner's report on
+PR #403: Chuvvo armed Delayed Hit twice, and after Noobur Swiftwalker's Horn Gore the feed
+printed the first payoff, Chuvvo's punch, then a second "finds its moment… responds to the
+blow Noobur Swiftwalker gave him" under that punch, which read as an answer to it. After an
+area card the payoff printed under the last target's damage line, not the target it
+answered.
+
+**Root cause**: every armed copy answers the newest blow from someone else (stacking is
+intended; the handbook says so). `settleDelayedHits` runs after the whole attacking card
+resolves, and each `settle()` narrates and then awaits its own counter before the loop
+reaches the next copy. So the lines are in the only order the mechanics allow, but "the
+blow X gave him" named only the attacker, and the line above it was often a different blow.
+
+**Fix**: the payoff names the attack by its card ("responds to Noobur Swiftwalker's Horn
+Gore"), and a later copy answering the same blow says so ("Chuvvo's second Delayed Hit
+finds its moment too: he answers the same Horn Gore from Noobur Swiftwalker"). Each hit
+log entry counts the copies that answered it. The timing is unchanged: moving a payoff
+between an area card's targets would let a counter kill the attacker halfway through its
+own card.
+
+**Tests**: `cards/delayed-hit.test.ts` arms two copies on one monster against one Hit and
+checks both lines, and answers a Blast and checks the payoff names it. Both fail without the
+fix.
+
+**Status**: Fixed.

@@ -134,10 +134,12 @@ earlier-armed card's check runs before the later-armed card's counter-attack lan
 — `settleDelayedHits()` loops over all of them until a full pass fires nothing
 (`packages/engine/src/cards/delayed-hit.ts`). A self-only check left a counter unanswered
 until the next card anyone played, narrating a blow from a turn ago (#157). Two Delayed Hits
-in one fight is routine: the starting deck ships with two. The loop still prints each later
-copy's "finds its moment" line only after the previous copy's counter has finished, so two
-copies answering one blow read as the second answering the first's punch. That order is
-open item M in [bug fixes](../roadmap/10-bug-fixes.md). The full play pipeline, where
+in one fight is routine: the starting deck ships with two. The loop prints each later
+copy's "finds its moment" line after the previous copy's counter, and every payoff after the
+whole attacking card (so after all of an area card's damage lines). So the line names the
+attack it answers ("responds to Noobur's Horn Gore"), and a later copy says it answers the
+same one ("second Delayed Hit finds its moment too"), or it reads as an answer to whatever
+printed just above it (10b #194). The full play pipeline, where
 fight-scoped card state lives, and the hold boundary are in
 [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
 

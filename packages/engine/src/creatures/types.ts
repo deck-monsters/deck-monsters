@@ -19,6 +19,11 @@ export interface HitLogEntry {
 	dealt?: number;
 	card: CardInstance | undefined;
 	when: number;
+	/**
+	 * How many of the struck monster's Delayed Hits have answered this blow, so a second copy
+	 * can say it answers the same blow (10b #194). Fight-scoped, like the log itself.
+	 */
+	delayedHitAnswers?: number;
 }
 
 export interface EncounterModifiers {
