@@ -26,10 +26,9 @@ old texts" in
 Each line is tagged by where it comes from:
 
 - **[Q]** a quotation whose wording was confirmed against at least one reliable
-  transcription during research (see [Sources](#sources)). Check the spelling against a
-  scan of the named edition before shipping.
-- **[Q?]** a real quotation found only second-hand. Check the wording against the edition
-  before shipping, or rewrite it as [A].
+  transcription during research (see [Sources](#sources)).
+- **[Q?]** a real quotation found only second-hand. Use it when the sense is clearly that
+  author's, or rewrite it as [A].
 - **[T]** a real quotation with a deliberate twist. Credit the original in a source
   comment.
 - **[A]** an original line written in the same old style. It needs no citation, but a
@@ -37,6 +36,17 @@ Each line is tagged by where it comes from:
 
 The owner's own example sets the tone for [A] lines: *"Beware, books of yore warn that in
 this way be ye confounded."*
+
+## Atmosphere
+
+Owner note, 27 September 2026. These quotations, this phrasing, and this old language are
+here to make atmosphere. Matching one sentence to one printing, letter for letter, matters
+very little. Getting a spelling slightly off is fine: keep "enimies" if it reads more
+clearly than "enimye", mix Holland's phrase with Topsell's spelling, or smooth a letter
+two transcriptions disagree on. Credit whose words they are in a source comment. The same
+rule is [Quoting old texts](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
+The spelling differences under [Spelling differences on record](#spelling-differences-on-record)
+are notes for anyone who is curious.
 
 ## House style for old-fashioned lines
 
@@ -256,9 +266,8 @@ her feet." A comment should cite Bosworth-Toller, án-horn
 ## Sources
 
 Public domain unless noted. The passages copied in [Research findings](#research-findings)
-were read from the editions named there on 2026-09-27. A [Q] line still wants a look at a
-page image before it ships if the finding below says the witness is a transcription or an
-OCR, because long s and u/v are the letters those witnesses mishandle.
+were read from the editions named there on 2026-09-27. They are a stock of phrases to
+borrow. A small difference from the printing is fine; see [Atmosphere](#atmosphere).
 
 - Pliny, *Natural History* book 8, trans. Philemon Holland (1601). Whole Licorne sentence
   in the findings. [Penelope, University of Chicago](https://penelope.uchicago.edu/holland/pliny8.html).
@@ -318,8 +327,8 @@ the 1596 word.
 > But to the mighty victor yields a bounteous feast.
 
 Smith's 1596 copy-text prints "defies", "applies", "running", "spies", "enimies", and
-"victour", and does not note "ronning" or "defyes". A quarto page image would still
-settle those. Gutenberg's Smith text is not a diplomatic 1590 reprint.
+"victour", and does not note "ronning" or "defyes". Either spelling can be used. See
+[Atmosphere](#atmosphere).
 
 ### 2. Holland's Pliny, book 8
 
@@ -418,11 +427,16 @@ quoted under [Old English](#old-english). The easter egg's *ānhorn* is the righ
 The dictionary's lemma is the hyphenated án-horn; the psalm quotations write Ánhornes
 and ánhorna.
 
-### Still worth a page image
+### Spelling differences on record
 
-Before a chosen line ships, a scan would still settle: the 1590 quarto where it differs
-from Smith's 1596 spellings ("ronning", "defyes", "victor"); Holland 1601 where Penelope
-may have regularised a letter; and the 1607 Topsell page where Worth's quotation and the
-1658 reprint disagree ("poisons" / "poyson", "above all creatures" / "above all other
-creatures"). Johnson's 1634 "Of the Unicornes Horne" is the English witness for Paré's
-bubbling test, and it was not opened.
+These are the places two witnesses still disagree. Any of the spellings can ship. See
+[Atmosphere](#atmosphere).
+
+- Spenser II.v.10: the 1590 transcription has "ronning", "defyes", "enimye", and "victor";
+  Smith's 1596 text has "running", "defies", "enimies", and "victour".
+- Holland 1601: the sentence above is Penelope's transcription, which may have smoothed a
+  letter.
+- Topsell: Worth's quotation of 1607 and the 1658 reprint disagree on "poisons" /
+  "poyson" and "above all creatures" / "above all other creatures".
+- Paré's bubbling test is in French here. Johnson's 1634 English chapter, "Of the
+  Unicornes Horne", was located and not opened. An English line can still credit Paré.

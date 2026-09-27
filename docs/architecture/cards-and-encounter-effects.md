@@ -152,8 +152,11 @@ new card or monster must reach. Check each one.
 - **Quoting old texts (owner decision, September 2026).** Public-domain texts may be quoted
   directly, or quoted with a playful twist, in flavour text and narration. Their archaic
   spelling and grammar ("sticketh", "belloweth") are welcome when a line stays readable
-  aloud. Quote a specific public-domain *edition* (for example Holland's 1601 Pliny,
-  Golding's 1587 Solinus, Topsell's 1607 bestiary, the 1611 King James Bible, Spenser,
-  Shakespeare, or Morris and Magnússon's 1888 *Völsunga saga*) and check the wording
-  against a scan. Modern translations, modern anthologies (including *A Book of Unicorns*),
-  and in-copyright works stay paraphrase and tonal reference only.
+  aloud. Name a public-domain edition in a source comment (for example Holland's 1601
+  Pliny, Golding's 1587 Solinus, Topsell's 1607 bestiary, the 1611 King James Bible,
+  Spenser, Shakespeare, or Morris and Magnússon's 1888 *Völsunga saga*). The aim is
+  atmosphere: the phrase, the old grammar, and the sound of the books. A small difference
+  from one printing is fine, including a spelling that reads more clearly aloud, or two
+  public-domain tellings of the same passage blended together. The sense should stay the
+  author's. Modern translations, modern anthologies (including *A Book of Unicorns*), and
+  in-copyright works stay paraphrase and tonal reference only.
