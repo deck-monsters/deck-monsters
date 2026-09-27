@@ -12,6 +12,7 @@ import {
 	EARLY_COIN_BONUS_TIERS,
 	engineReady,
 	getCardClassByTypeName,
+	getInitialDeck,
 	getUtcDay,
 	getXpCapForLevel,
 	randomContestant,
@@ -69,6 +70,15 @@ export interface SimMonsterSpec {
 	 * stop when only one team is standing instead of turning on each other.
 	 */
 	team?: string;
+	/**
+	 * What kind of contestant this is. Omitted: the harness's classic sim contestant (built
+	 * like a boss for its deck, but with its own faction and default targeting). `human`: a
+	 * player, with a starting deck (`getInitialDeck`) and a few fills per level, equipped at
+	 * random, its own faction, and default targeting. `boss`: a real boss, exactly as the ring
+	 * spawns one: the Boss team, a boss deck, and boss targeting (TARGET_HUMAN_PLAYER_WEAK).
+	 * Bosses are only realistic beside at least one human.
+	 */
+	role?: 'human' | 'boss';
 }
 
 export interface SimConfig {
@@ -77,6 +87,8 @@ export interface SimConfig {
 	seed?: number;
 	/** Passed to createTestGame as roomId prefix. */
 	roomId?: string;
+	/** Called with each fight's contestants once they are built, before the fight (tests). */
+	onContestants?: (contestants: Contestant[]) => void;
 }
 
 /** Per-contestant fight outcome, matching `ring/index.ts`'s private `participantOutcome()`
@@ -216,6 +228,54 @@ function buildContestant(
 		contestant.monster.cards = withoutHarnessExcludedCards(contestant.monster);
 	}
 
+	return contestant;
+}
+
+/** Fisher-Yates on `Math.random`, which `simulate()` seeds. */
+function shuffled<T>(items: T[]): T[] {
+	const out = [...items];
+	for (let i = out.length - 1; i > 0; i -= 1) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[out[i], out[j]] = [out[j]!, out[i]!];
+	}
+	return out;
+}
+
+/** Random cards a human has picked up beyond the starting deck, per level. */
+const HUMAN_EXTRA_CARDS_PER_LEVEL = 2;
+
+/**
+ * A player's contestant: the starting deck every new character gets, plus a couple of cards
+ * per level (drops and shop buys), with nine legal cards equipped at random. Players build
+ * their hands, so this is still a floor for how well a human plays, not a model of it; Flee
+ * stays out, as it does for every harness deck.
+ */
+function buildHuman(spec: SimMonsterType, level: number, deckNames: string[] | undefined): Contestant {
+	const MonsterClass = monsterClassFor(spec);
+	const contestant = randomContestant({ isBoss: false, Monsters: [MonsterClass], xp: getXpCapForLevel(level) });
+	const { monster, character } = contestant as unknown as {
+		monster: HarnessMonster & { cardSlots: number };
+		character: unknown;
+	};
+	type CardCtor = new () => { cardType?: string };
+
+	if (deckNames?.length) {
+		monster.cards = deckNames.map(n => new (getCardClassByTypeName(n) as CardCtor)());
+		return contestant;
+	}
+
+	const eligible = {
+		level: monster.level,
+		canHoldCard: (Card: { cardType?: string }) =>
+			!HARNESS_EXCLUDED_CARD_TYPES.includes(Card.cardType ?? '') && monster.canHoldCard(Card),
+	};
+	const pool = [
+		...(getInitialDeck({}, character) as Array<{ cardType?: string }>),
+		...Array.from({ length: level * HUMAN_EXTRA_CARDS_PER_LEVEL }, () => drawCard({}, eligible)),
+	].filter(card => !HARNESS_EXCLUDED_CARD_TYPES.includes(card.cardType ?? '') && monster.canHoldCard(card));
+	const hand = shuffled(pool).slice(0, monster.cardSlots);
+	while (hand.length < monster.cardSlots) hand.push(drawCard({}, eligible));
+	monster.cards = hand;
 	return contestant;
 }
 
@@ -394,7 +454,10 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 
 			const contestants = monsters.map((m, i) => {
 				const type = parseMonsterType(m.type);
-				const c = buildContestant(type, m.level, m.deck, m.statSeed, f);
+				const c =
+					m.role === 'human'
+						? buildHuman(type, m.level, m.deck)
+						: buildContestant(type, m.level, m.deck, m.statSeed, f);
 				const label = names[i]!;
 				c.monster.setOptions({
 					name: label,
@@ -406,26 +469,31 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				// contestant would trip unpredictably. `character.battles` here is a distinct
 				// object from `monster.battles` (only shared at construction when `statSeed` seeds
 				// both) — resetting it doesn't touch the monster's own combat-stat-diversity record.
-				// Harness contestants are bosses, and `randomContestant` puts every boss on the
+				// Classic harness contestants are built as bosses, and `randomContestant` puts every boss on the
 				// shared boss team, which the ring treats as one faction. Give each contestant
 				// its spec's team, or a faction of its own, on both the character and the monster
 				// (the monster's team wins in `factionOf`). Otherwise teamless contestants in a
 				// team fight never fight each other and all get credited a win, and ally checks
 				// such as Unconquerable Horn's treat every harness contestant as a teammate.
-				const faction = m.team ?? `solo:${names[i]!}`;
-				c.character.team = faction;
-				c.monster.team = faction;
-				// `randomContestant` also gives every boss TARGET_HUMAN_PLAYER_WEAK. With no human
-				// in a harness ring, that strategy falls back to a target chosen with teams
-				// ignored, so team fights measured friendly fire. The default (next player) is
-				// team-aware, and with one faction per teamless contestant it behaves the same in
-				// a free-for-all.
-				c.monster.targetingStrategy = undefined;
+				// A real boss keeps what the ring gives it: the Boss team and boss targeting.
+				if (m.role !== 'boss') {
+					const faction = m.team ?? `solo:${names[i]!}`;
+					c.character.team = faction;
+					c.monster.team = faction;
+					// `randomContestant` gives every boss TARGET_HUMAN_PLAYER_WEAK. With no human
+					// in a harness ring, that strategy falls back to a target chosen with teams
+					// ignored, so team fights measured friendly fire. The default (next player)
+					// is team-aware, and with one faction per teamless contestant it behaves the
+					// same in a free-for-all.
+					c.monster.targetingStrategy = undefined;
+				}
 				c.character.lastDailyFightCoinDay = getUtcDay();
 				c.character.battles = { total: STEADY_STATE_BATTLES_TOTAL, wins: 0, losses: 0 };
 				stableIdToLabel.set(c.monster.stableId as string, label);
 				return c;
 			});
+
+			config.onContestants?.(contestants);
 
 			const simUserIds: string[] = [];
 			for (let i = 0; i < contestants.length; i++) {

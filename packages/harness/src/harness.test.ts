@@ -77,6 +77,40 @@ describe('@deck-monsters/harness', () => {
 		}
 	});
 
+	it('simulate() fields humans with player decks and bosses exactly as the ring spawns them', async function () {
+		this.timeout(60_000);
+		const seen: Array<{ isBoss: boolean; team?: string; strategy?: string; cards: string[] }> = [];
+		const res = await simulate({
+			monsters: [
+				{ type: 'Gladiator', level: 2, role: 'human' },
+				{ type: 'Minotaur', level: 1, role: 'boss' },
+			],
+			fights: 3,
+			seed: 3,
+			roomId: 'harness-roles',
+			onContestants: contestants => {
+				for (const c of contestants as any[]) {
+					seen.push({
+						isBoss: !!c.isBoss,
+						team: c.monster.team,
+						strategy: c.monster.targetingStrategy,
+						cards: c.monster.cards.map((card: any) => card.cardType),
+					});
+				}
+			},
+		});
+		expect(res.cancelledFights).to.equal(0);
+		const human = seen[0]!;
+		const boss = seen[1]!;
+		expect(human.isBoss).to.equal(false);
+		expect(human.strategy).to.equal(undefined);
+		expect(human.cards).to.have.length(9);
+		expect(human.cards).not.to.include('Flee');
+		expect(boss.isBoss).to.equal(true);
+		expect(boss.team).to.equal('Boss');
+		expect(boss.strategy).to.equal('TARGET_HUMAN_PLAYER_WEAK');
+	});
+
 	it('simulate is reproducible for the same seed (fresh Node process)', function () {
 		this.timeout(120_000);
 

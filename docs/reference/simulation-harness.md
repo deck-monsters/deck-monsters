@@ -189,6 +189,7 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 | `sim:cardpower` | Average damage dealt per card type; top/bottom 10%. | ~20s |
 | `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. | ~20s |
 | `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. | ~10s |
+| `sim:bosses` | Humans against real bosses in the owner's scenarios (a level 1 against one boss, two bosses, a beginner + L1 + L5 pack; two humans with and without a team). Humans carry a player's starting deck; bosses are built and target exactly as the ring spawns them. Monster types are random per batch. Prints how often a human wins. `SIM_BOSSES_FIGHTS` sets fights per batch (8 batches per row, default 25). | ~1.5 min |
 | `sim:monster <type>` | One monster (`pnpm --filter @deck-monsters/harness sim:monster Dragon`; any class name or creature type) against every other monster at levels 1/5/10/15/20 with random decks, and with its thematic fixture deck when its report has one. Then a mirror, a 2v2 team fight, and a crowded free-for-all with every other monster once, where area damage shows. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and the monster's card counters. Flags rows outside 35–65% of decisive fights (fixture rows only, when there is a fixture). `SIM_MONSTER_FIGHTS` sets fights per row (default 100). `sim:unicorn` is `sim:monster Unicorn`. | ~2 min per monster |
 
 Each of these is `node dist/scripts/<name>.js` — run `pnpm --filter @deck-monsters/harness
@@ -204,6 +205,22 @@ this doc's change and hung indefinitely after printing their reports when run as
 `node dist/scripts/…` (rather than under a harness that kills the process after it sees the
 expected output) — they now call `process.exit(0)` (or `process.exitCode ?? 0` for
 `sim:winrates`, which sets a non-zero `exitCode` on a balance warning) too.
+
+## Humans and bosses (`SimMonsterSpec.role`)
+
+Until September 2026 every harness contestant was built by `randomContestant({ isBoss: true })`
+and then given its own faction and default targeting. So every "random legal deck" was a
+**boss** deck, which drops Flee, Harden, Heal, Hit, and Whiskey Shot, and no run measured a
+player's deck or a real boss. A spec's `role` now says what it is:
+
+- **omitted**: the classic sim contestant above, kept so earlier reports stay comparable;
+- **`human`**: a player: the starting deck (`getInitialDeck`) plus two random cards per
+  level, nine legal cards equipped at random (Flee excluded), its own faction, default
+  targeting. A floor for how well a human plays, since players build their hands;
+- **`boss`**: a real boss, untouched: the Boss team, a boss deck, `TARGET_HUMAN_PLAYER_WEAK`.
+  Bosses only behave realistically beside at least one human.
+
+`SimConfig.onContestants` lets a test inspect each fight's contestants before it starts.
 
 ## Team fights
 
