@@ -19,7 +19,7 @@ completed reasoning belongs in the [archive](../archive/README.md).
 | [Item follow-ups](item-followups.md) | Prompt transport for items that ask a question |
 | [22 — Small leftovers](22-small-leftovers.md) | Cross-cutting decisions and manual verification gates |
 | [27 — Next passes](27-next-passes.md) | The order of the next passes: command and workshop bugs, realistic harness rings, then Dragon research |
-| [28 — Unicorn voice punch-up](28-unicorn-voice-punch-up.md) | Proposals awaiting the owner's picks: sourced quotations and old-style lines for every Unicorn string |
+| [28 — Unicorn voice punch-up](28-unicorn-voice-punch-up.md) | Proposals awaiting the owner's picks. The archive checks of the quotations are recorded in that file |
 
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md) remains the stable fixed-bug ledger because code
 cites it. Shipped plans, retired subsystems, and pass records are historical only; they
