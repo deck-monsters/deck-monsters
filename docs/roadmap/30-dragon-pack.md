@@ -16,8 +16,8 @@ the owner approved from it and the record of the build.
 
 | # | Slice | Status | Commit |
 |---|---|---|---|
-| 0 | Harness roster from `allMonsters`, a test that fails when a monster is missing, and `sim:unicorn` generalized into `sim:monster <type>` (Pass B task 0 in [27](27-next-passes.md)) | Not started | — |
-| 1 | Monster shell: `Dragon` type, Wizard class, stats, appearance, `look at` profile, lore, names, spawn, web sprite, spawn-catalog test | Not started | — |
+| 0 | Harness roster from `allMonsters`, a test that fails when a monster is missing, and `sim:unicorn` generalized into `sim:monster <type>` (Pass B task 0 in [27](27-next-passes.md)) | Done | 208885b |
+| 1 | Monster shell: `Dragon` type, Wizard class, stats, appearance, `look at` profile, lore, names, spawn, web sprite, spawn-catalog test | Done | this commit |
 | 2 | The two cards the requester asked for: Fire Breath and Take Wing; Fire Breath joins the starting deck | Not started | — |
 | 3 | Mood Scales and Tsunami | Not started | — |
 | 4 | Generated references and strings inventory, `sim:monster Dragon` balance evidence, independent review, read-aloud script for the requester | Not started | — |

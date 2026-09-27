@@ -181,6 +181,33 @@ const unicorn: PixelFrame = [
   '....OOOOOO.....OOOOOO...',
 ];
 
+const dragon: PixelFrame = [
+  '........................',
+  '..OO....................',
+  '..OCOO..................',
+  '...OCAOO................',
+  '...OBCAAOO..............',
+  '..OBBACAAAOO............',
+  '..OBBAACAAAAO...OOOOOO..',
+  '.OBDBAAACAAAAO.OBBBAEOO.',
+  '.ODODBAAACAAAAOBAAAAAACO',
+  '.OO.ODBBAACAAABBAOOOOOO.',
+  '.....OODBBBCAABAAO......',
+  '.......OODBBBBAAO.......',
+  '.....OOODBBAAAAAABO.....',
+  '...OODBBAAAAAAAAAABO....',
+  '..ODBBAAAAAAAAAAAABDO...',
+  '.ODBAAAAAAAAAAAAAABDO...',
+  '.OBDBBBBBBBBBBBBBBDO....',
+  'OBDOOODBOOOOOODBOOO.....',
+  'OBO...OCO....OCO........',
+  'OBO...OOO....OOO........',
+  'ODBO....................',
+  '.OCBO...................',
+  '..OOO...................',
+  '........................',
+];
+
 const beast: PixelFrame = [
   '........................',
   '..............OOOO......',
@@ -309,6 +336,13 @@ export const SPRITES: Readonly<Record<string, PixelSprite>> = {
   Unicorn: {
     palette: { O: '#2a2340', D: '#8f84bd', B: '#cfc8ec', A: '#f7f5ff', C: '#fde9a8', E: '#1e3a8a' },
     frames: poses(unicorn),
+  },
+  // The first flier: a flat wedge of a head, a long low body, and one swept-back wing with
+  // its bone drawn in the highlight. Deep-sea blue, for the sea dragons the requester
+  // likes, with a gold bone and an ember eye for the fire (docs/roadmap/30-dragon-pack.md).
+  Dragon: {
+    palette: { O: '#0a1633', D: '#1e3a8a', B: '#2563eb', A: '#60a5fa', C: '#fde68a', E: '#f97316' },
+    frames: poses(dragon),
   },
   fallback: {
     palette: { O: '#131c29', D: '#3a4a63', B: '#5b7091', A: '#93a6c2', C: '#e6edf7', E: '#f87171' },

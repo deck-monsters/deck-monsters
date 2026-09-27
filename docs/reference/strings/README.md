@@ -21,6 +21,7 @@ the code.
 | Monster | Inventory |
 |---|---|
 | Basilisk | [Basilisk strings](basilisk.md) |
+| Dragon | [Dragon strings](dragon.md) |
 | Gladiator | [Gladiator strings](gladiator.md) |
 | Jinn | [Jinn strings](jinn.md) |
 | Minotaur | [Minotaur strings](minotaur.md) |

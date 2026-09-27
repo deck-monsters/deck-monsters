@@ -139,7 +139,7 @@ new card or monster must reach. Check each one.
 ## Content and balance rules
 
 - **Balance target (owner decision, September 2026).** Aim for a power curve per class
-  across levels, not 50/50 at every level. As in D&D, casters (Cleric, Bard) start fragile
+  across levels, not 50/50 at every level. As in D&D, casters (Cleric, Bard, Wizard) start fragile
   and grow strong; brutes (Barbarian, Fighter) are strongest early and stay useful as they
   fall behind. A problem is a class that dominates across the whole range, or a curve that
   runs the wrong way. The 35–65% flag in `sim:winrates` and `sim:monster` marks rows to look

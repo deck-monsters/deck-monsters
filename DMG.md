@@ -113,6 +113,7 @@ Base spawn ranges (type offset 0, before per-type modifiers):
 | Minotaur | Barbarian | 32–37 | 4–6 | +2 | +1 | -1 |
 | Weeping Angel | Cleric | 29–34 | 6–8 | -1 | +1 | +2 |
 | Unicorn | Cleric | 29–34 | 7–9 | +1 | +2 | -1 |
+| Dragon | Wizard | 30–35 | 6–8 | -1 | +2 | +1 |
 
 ## Combat Math
 
