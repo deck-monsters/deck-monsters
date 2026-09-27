@@ -15,6 +15,9 @@ const chooseName = (type: string, gender: string, alreadyTaken: string[] = []): 
 		case TYPES.BEASTMASTER:
 			args = ['fantasy', 'heros', 1];
 			break;
+		case TYPES.DRAGON:
+			args = ['fantasy', 'dragons', 1];
+			break;
 		case TYPES.GLADIATOR:
 			args = ['game_of_thrones', 'dothrakis', 1];
 			break;

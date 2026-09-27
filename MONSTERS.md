@@ -25,7 +25,7 @@
           ░         ░  ░         ░    ░           ░  ░    ░  ░
 ```
 
-There are 6 different types of monsters:
+There are 7 different types of monsters:
 
 - [Basilisk (Barbarian)](#basilisk-barbarian)
 - [Gladiator (Fighter)](#gladiator-fighter)
@@ -33,6 +33,7 @@ There are 6 different types of monsters:
 - [Minotaur (Barbarian)](#minotaur-barbarian)
 - [Weeping Angel (Cleric)](#weeping-angel-cleric)
 - [Unicorn (Cleric)](#unicorn-cleric)
+- [Dragon (Wizard)](#dragon-wizard)
 
 ## Stat ranges by monster type (spawn, level 0)
 
@@ -121,3 +122,19 @@ Of all beasts, the most fell and furious. So says Pliny, and Pliny had never met
 The horn is the heart of every tale. Topsell swore that the horn "doth wonderfully help against poisons"; the King James Bible says that with such horns "he shall push the people together to the ends of the earth." In the ring both tales hold. But heed Spenser: the wise foe "slips aside," and the furious beast's horn "strikes in the stocke, ne thence can be releast."
 
 "Will the unicorn be willing to serve thee, or abide by thy crib?" Not by any art of man. A unicorn who fights beside a Beastmaster has chosen to. And if thou seest one kneel to rest in the gloaming, beware: the books of yore say that is how the hunters take it.
+
+### Dragon (Wizard)
+
+| Stat | Value |
+|---|---|
+| HP | 30–35 (spawn + level 0) |
+| AC | 6–8 (spawn + level 0) |
+| STR | 5 (base +0) |
+| DEX | 6 (base +1) |
+| INT | 6 (base +1) |
+
+"Out of his mouth go burning lamps, and sparks of fire leap out. Out of his nostrils goeth smoke, as out of a seething pot." So the Book of Job describes Leviathan, and Leviathan is a sea dragon: "he maketh the deep to boil like a pot." Isaiah knew "the dragon that is in the sea," and, over the dry south, "the fiery flying serpent." The dragon of the ring is all of these at once. It hatches in the cold deep, small enough to carry in two hands, and grows, if it lives, into a flame with wings.
+
+Dragons are clever, vain, and fast. They talk, and they will tell you so. Their scales keep their mood, as Pliny says the chameleon takes the colour of whatever it is near: calm, and a dragon fades into rock and sea; angry, and it burns red and cannot hide. Topsell, writing of serpents in 1608, puts a dragon's strength in its tail. Topsell never stood in front of its mouth.
+
+Vikings carved dragons on their prows. Romans marched behind a dragon of cloth that howled when the wind filled it. Neither ever tamed a real one. A dragon who fights beside a Beastmaster has decided to, and it counts its hoard every night: in Beowulf, a thief took one cup from a sleeping dragon's hoard, and the old king died of it.

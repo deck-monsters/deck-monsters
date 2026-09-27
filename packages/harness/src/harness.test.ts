@@ -9,8 +9,9 @@ import { createTestGame } from '@deck-monsters/engine';
 import { capturePublicFeed, formatPublicFeedLines } from './public-feed.js';
 import { runRingTwoBosses } from './scenarios/ring-two-bosses.js';
 import { runConcurrentLookMonsters } from './scenarios/concurrent-look-monsters.js';
-import { parseMonstersArg, simulate, simulateNewPlayerProgression, withoutHarnessExcludedCards } from './simulate.js';
-import { COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName, RoomEventBus } from '@deck-monsters/engine';
+import { parseMonstersArg, parseMonsterType, SIM_MONSTER_TYPES, simulate, simulateNewPlayerProgression, withoutHarnessExcludedCards } from './simulate.js';
+import { UNICORN_FIXTURE_DECK } from './scripts/monster-reports/unicorn.js';
+import { allMonsters, COINS_PER_DEFEAT, COINS_PER_VICTORY, engineReady, getCardClassByTypeName, RoomEventBus } from '@deck-monsters/engine';
 
 describe('@deck-monsters/harness', () => {
 	before(async function () {
@@ -48,6 +49,32 @@ describe('@deck-monsters/harness', () => {
 			{ type: 'Basilisk', level: 5 },
 			{ type: 'Gladiator', level: 10 },
 		]);
+	});
+
+	// The harness used to name the monsters by hand in five places, and a new monster that
+	// missed one was silently left out of that report (roadmap 11, "One monster roster").
+	it('fields every monster in the engine roster, by class name and by creature type', () => {
+		const monsters = allMonsters as unknown as Array<{ name: string; creatureType: string }>;
+		expect(SIM_MONSTER_TYPES).to.deep.equal(monsters.map(M => M.name));
+		for (const M of monsters) {
+			expect(parseMonsterType(M.name)).to.equal(M.name);
+			expect(parseMonsterType(M.creatureType.toLowerCase())).to.equal(M.name);
+		}
+		expect(() => parseMonsterType('Hydra')).to.throw(/Unknown monster type/);
+	});
+
+	it('simulate() runs a fight for every monster in the roster', async function () {
+		this.timeout(120_000);
+
+		for (const type of SIM_MONSTER_TYPES) {
+			const res = await simulate({
+				monsters: [{ type, level: 3 }, { type: 'Gladiator', level: 3 }],
+				fights: 2,
+				seed: 7,
+				roomId: `harness-roster-${type}`,
+			});
+			expect(res.cancelledFights, type).to.equal(0);
+		}
 	});
 
 	it('simulate is reproducible for the same seed (fresh Node process)', function () {
@@ -226,7 +253,7 @@ describe('@deck-monsters/harness', () => {
 				{
 					type: 'Unicorn',
 					level: 5,
-					deck: ['Sticketh', 'Sticketh', 'Horn of Proof', 'Unconquerable Horn', 'Dissonant Voice', 'Gloaming Rest', 'Heal', 'Fists of Virtue', 'Hit'],
+					deck: UNICORN_FIXTURE_DECK,
 				},
 				{ type: 'WeepingAngel', level: 5 },
 			],

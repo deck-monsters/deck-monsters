@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 /**
- * All 6×6 monster type matchups at a fixed level; flags win rates outside 35–65%.
+ * Every monster type against every other (the roster comes from the engine's `allMonsters`)
+ * at a fixed level; flags win rates outside 35–65%.
  * Run manually before balance merges (not in CI).
  */
 
 import '../sim-env.js';
 import '../set-env.js';
 import { engineReady } from '@deck-monsters/engine';
-import { parseMonsterType, simulate, type SimMonsterSpec } from '../simulate.js';
+import { SIM_MONSTER_TYPES, simulate, type SimMonsterSpec } from '../simulate.js';
 
-const TYPES = ['Basilisk', 'Gladiator', 'Jinn', 'Minotaur', 'WeepingAngel', 'Unicorn'] as const;
+const TYPES = SIM_MONSTER_TYPES;
 const FIGHTS_PER_PAIR = 200;
 const LEVEL = 5;
 const WARN_LOW = 35;
@@ -23,8 +24,8 @@ async function main(): Promise<void> {
 	for (const a of TYPES) {
 		for (const b of TYPES) {
 			const monsters: SimMonsterSpec[] = [
-				{ type: parseMonsterType(a), level: LEVEL },
-				{ type: parseMonsterType(b), level: LEVEL },
+				{ type: a, level: LEVEL },
+				{ type: b, level: LEVEL },
 			];
 			const key = `${a} vs ${b}`;
 			const res = await simulate({

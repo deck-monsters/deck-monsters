@@ -40,6 +40,19 @@ for why this exists and what it gates.
   special-purpose card; in a simulation it only turns fights into draws and hides the
   matchup being measured. An explicit `SimMonsterSpec.deck` is used exactly as given.
 
+### Reading a report
+
+- **Sim 1 always acts first.** The deterministic ring fixes turn order. In a mirror match
+  with a fixed fixture deck both monsters play the same cards in lockstep, so any tempo
+  effect is magnified: a Dragon mirror of nine Fire Breaths gives the first mover 90%, and
+  the Dragon's fixture mirror gave Sim 2 over 80%, while the Unicorn's is 50/50. Read a
+  lopsided fixture mirror as turn-order tempo, not as a card problem.
+- **A fixture deck against random decks** measures a built deck against unbuilt ones, so its
+  rows run higher than a real ring would; judge the curve's shape, and compare random-deck
+  rows with other monsters' random-deck rows.
+- **"1993-09-7202 18:58" in the damage columns is not a bug.** It is the `cardType` of
+  Prion Disease, a joke card (the questionable milkshakes), and it hits hard.
+
 ## `simulate()` — `packages/harness/src/simulate.ts`
 
 Runs `config.fights` independent 1-shot ring encounters with a fixed monster lineup (each
@@ -172,11 +185,11 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 
 | Script | What it prints | Typical runtime |
 |---|---|---|
-| `sim:winrates` | All 6×6 monster-type matchups at a fixed level (200 fights each, 36 pairs); flags win rates outside 35–65%. | ~130s — this is real work, not a hang; don't re-flag it as one if it takes a while to return. |
+| `sim:winrates` | Every monster type against every other at a fixed level (200 fights each; six monsters make 36 pairs); flags win rates outside 35–65%. | ~130s — this is real work, not a hang; don't re-flag it as one if it takes a while to return. |
 | `sim:cardpower` | Average damage dealt per card type; top/bottom 10%. | ~20s |
 | `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. | ~20s |
 | `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. | ~10s |
-| `sim:unicorn` | The Unicorn against every monster at levels 1/5/10/15/20 with random decks and the thematic fixture deck, plus a mirror and a 2v2 team fight. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and card-level rates (Sticketh stick rate, ward triggers, cleanses, rattles, rest completion). Flags fixture rows outside 35–65% of decisive fights. `SIM_UNICORN_FIGHTS` sets fights per row (default 100). | ~2 min |
+| `sim:monster <type>` | One monster (`pnpm --filter @deck-monsters/harness sim:monster Dragon`; any class name or creature type) against every other monster at levels 1/5/10/15/20 with random decks, and with its thematic fixture deck when its report has one. Then a mirror, a 2v2 team fight, and a crowded free-for-all with every other monster once, where area damage shows. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and the monster's card counters. Flags rows outside 35–65% of decisive fights (fixture rows only, when there is a fixture). `SIM_MONSTER_FIGHTS` sets fights per row (default 100). `sim:unicorn` is `sim:monster Unicorn`. | ~2 min per monster |
 
 Each of these is `node dist/scripts/<name>.js` — run `pnpm --filter @deck-monsters/harness
 build` first. **Every one of them calls `process.exit(...)` at the end of `main()`.** Loading
@@ -209,9 +222,24 @@ surviving member.
 
 ## Card-level counters
 
-`sim:unicorn` counts card events by wrapping the card classes' prototype methods (via
-`getCardClassByTypeName`) inside its own process. Nothing in the engine is instrumented for
-this. Prefer that pattern over adding counters to engine code.
+`sim:monster` counts card events by wrapping the card classes' prototype methods inside its
+own process. Nothing in the engine is instrumented for this. Prefer that pattern over adding
+counters to engine code.
+
+Each monster's counters live in `packages/harness/src/scripts/monster-reports/`. A monster
+with its own report (the Unicorn's counts Sticketh stick rate, ward triggers, cleanses,
+rattles, and rest completion) registers it in `monster-reports/index.ts`, with an optional
+thematic fixture deck. Any other monster gets `signatureCardReport`: how often it played each
+card whose permitted types name it.
+
+## One roster
+
+The harness takes its monsters from the engine's `allMonsters` (`SIM_MONSTER_TYPES` in
+`simulate.ts`); `sim:winrates` and `sim:monster` read that list, and `parseMonsterType`
+accepts any of its class names or creature types. A new monster needs no harness change to
+appear in every report. It used to be listed by hand in five places, and a monster missing
+from one was silently left out of that report. `harness.test.ts` checks the list matches
+`allMonsters` and that every monster can fight.
 
 ## Adding a new economy/balance measurement
 

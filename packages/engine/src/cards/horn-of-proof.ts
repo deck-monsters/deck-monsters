@@ -3,8 +3,23 @@ import { subEventDelay } from '../helpers/delay-times.js';
 import { UNICORN } from '../constants/creature-types.js';
 import { CLERIC } from '../constants/creature-classes.js';
 import { HEAL } from '../constants/card-classes.js';
-import { BAD_BATCH_EFFECT, GLOAMING_REST_EFFECT } from '../constants/effect-types.js';
+import { BAD_BATCH_EFFECT, EXPOSED_EFFECT, GLOAMING_REST_EFFECT, WINDED_EFFECT } from '../constants/effect-types.js';
 import { REST_AC_PENALTY } from './gloaming-rest.js';
+import { WINDED_AC_PENALTY } from './fire-breath.js';
+import { EXPOSED_AC_PENALTY } from './helpers/ancient-dragon.js';
+
+/**
+ * Temporary AC penalties that give themselves back on the monster's next card. They are not
+ * curses: lifting one here would leave its effect to add the points back on top, a free
+ * bonus for the rest of the fight. Gloaming Rest shipped with this guard; Fire Breath's
+ * winded and an ancient dragon's exposed were missed until a review of PR #402 (a Sandstorm-
+ * redirected Horn of Proof on a winded Dragon left it +2 AC for the fight).
+ */
+const TEMPORARY_AC_PENALTIES: Record<string, number> = {
+	[GLOAMING_REST_EFFECT]: REST_AC_PENALTY,
+	[WINDED_EFFECT]: WINDED_AC_PENALTY,
+	[EXPOSED_EFFECT]: EXPOSED_AC_PENALTY,
+};
 import { RARE } from '../helpers/probabilities.js';
 import { CHEAP } from '../helpers/costs.js';
 
@@ -74,17 +89,17 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 	}
 
 	cleanseCurse(target: any): boolean {
-		// A Gloaming Rest in progress holds its own temporary -2 on ac and gives it back when
-		// the rest resolves. That is not a curse: lifting it here would leave the rest to add
-		// its 2 back on top, a free +2 for the rest of the fight. Count only what lies beyond it.
-		const resting = target.encounterEffects.some(
-			(effect: any) => effect.effectType === GLOAMING_REST_EFFECT
+		// Temporary penalties in progress (a rest, winded, exposed) are not curses; count only
+		// what lies beyond them. See TEMPORARY_AC_PENALTIES.
+		const temporaryAc = target.encounterEffects.reduce(
+			(sum: number, effect: any) => sum + (TEMPORARY_AC_PENALTIES[effect.effectType] ?? 0),
+			0
 		);
 		let worstStat: string | undefined;
 		let worstAmount = 0;
 		for (const stat of CURSABLE_STATS) {
 			let amount = (target.encounterModifiers[stat] as number) || 0;
-			if (stat === 'ac' && resting) amount = Math.min(0, amount + REST_AC_PENALTY);
+			if (stat === 'ac') amount = Math.min(0, amount + temporaryAc);
 			if (amount < worstAmount) {
 				worstStat = stat;
 				worstAmount = amount;

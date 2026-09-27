@@ -8,8 +8,9 @@ tags: [roadmap, planning, passes]
 ---
 # 27 — Next Passes
 
-**Status:** Pass A done and live-checked on branch `claude/pass-a-command-workshop-bugs`;
-Pass B is next. Written on 2026-09-27 after the Unicorn pass
+**Status:** Pass A merged (PR #400). The owner moved the Dragon build ahead of Pass B; it
+shipped in PR #402 ([30](../archive/roadmap/30-dragon-pack.md)) and took Pass B's task 0
+with it. Pass B is next. Written on 2026-09-27 after the Unicorn pass
 closed ([26](../archive/roadmap/26-unicorn-pack.md)) and a docs sweep. This file orders
 the open roadmap into passes; later passes are sketched and get their own task tables when
 they start. Update this file in each pass's checkpoint commits, filling in each task's
@@ -77,10 +78,8 @@ random decks. What it still lacks decides whether its numbers can guide balance 
 
 Candidate tasks, in order of value:
 
-0. One harness monster roster derived from `allMonsters`, a test that fails when a monster
-   is missing from it, and `sim:unicorn` generalized into `sim:monster <type>` (owner
-   request; see "One monster roster for the harness" in 11). Small, and it goes first
-   because every later task and the Dragon pass run on it.
+0. Done in the Dragon pack ([30](../archive/roadmap/30-dragon-pack.md) task 0): the harness roster now comes
+   from `allMonsters`, and `sim:monster <type>` replaces `sim:unicorn`.
 1. Weighted "likely" decks: a few hand-written archetypes per class, kept beside today's
    uniform draw as a control.
 2. Mixed ring sizes (2–12 contestants, the ring's `MAX_MONSTERS`) with free-for-all, one
@@ -93,27 +92,18 @@ Then revisit the open "Blast and Cleric power" notes in 11 with the new evidence
 guidance: balance does not need to be 50/50; judge classes against the curve in
 [cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
 
-## Pass C — Dragon research
+## Pass C — Dragon
 
-**In progress:** the first Norse, Roman, bestiary, roster-fit, and card-direction sweep is
-saved in [29 — Dragon Research Round](29-dragon-research.md). Requester answers, scan-level
-quotation checks, owner decisions, and the approved specification remain open.
-
-Source: the [Dragon research brief](12-new-content-backlog.md#dragon-research-brief). This
-pass writes a design brief, not code: choose the tradition, gather public-domain sources
-with exact citations, fit the Dragon against the roster (especially the Basilisk) and the
-power curve, and propose three to five cards with their risks and counterplay. The owner
-reviews the brief before a Dragon content pass is planned. Pass B should land first, so the
-content pass can use the realistic harness and `sim:monster Dragon`.
-
-The requester is the owner's eight-year-old son, whose dragons are the ones in Cressida
-Cowell's *How to Train Your Dragon* books. The brief records what that means: borrow the
-Viking-age setting and feel, and the Roman overlap with the Gladiator; borrow no names,
-quotes, or designs; cite the Norse and Roman sources the books share. Research can start
-beside Pass A or B, since it touches only docs; start with the brief's "Still to ask the
-requester" questions.
+**Done.** Researched in [29](../archive/roadmap/29-dragon-research.md) and built in
+[30](../archive/roadmap/30-dragon-pack.md) (PR #402): the Dragon (Wizard), Fire Breath,
+Take Wing, Mood Scales, Tsunami, and ancient dragons. Its follow-ups are in
+[12](12-new-content-backlog.md#dragon-follow-ups).
 
 ## Later
+
+- **Dragon follow-ups** ([12](12-new-content-backlog.md#dragon-follow-ups)): the counter
+  cards the owner chose for the next content PR (Lullaby and Mirror Shield), a flavour
+  pass after play, and a live browser check.
 
 - **Prompt transport for items that ask a question** ([item follow-ups](item-followups.md)),
   paired with the prompt step and flow labels in [22](22-small-leftovers.md): both need the

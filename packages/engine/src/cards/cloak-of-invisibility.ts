@@ -42,6 +42,20 @@ export class CloakOfInvisibilityCard extends BaseCard {
 		});
 	}
 
+	// The three lines a hiding card speaks. Mood Scales hides the same way and says it in
+	// its own words.
+	hideNarration(target: any): string {
+		return `${target.identity} dons ${target.pronouns.his} ${this.cardType.toLowerCase()}.`;
+	}
+
+	concealNarration(target: any): string {
+		return `${target.identity} takes a moment to improve ${target.pronouns.his} concealment.`;
+	}
+
+	revealNarration(target: any): string {
+		return `${target.identity} slips off ${target.pronouns.his} ${this.cardType.toLowerCase()}.`;
+	}
+
 	effect(invisibilityPlayer: any, invisibilityTarget: any): any {
 		invisibilityTarget.encounterModifiers.invisibilityTurns = 0;
 
@@ -150,7 +164,7 @@ export class CloakOfInvisibilityCard extends BaseCard {
 
 							if (!card.invisibilityNarrationEmitted) {
 								this.emit('narration', {
-									narration: `${invisibilityTarget.identity} slips off ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`,
+									narration: this.revealNarration(invisibilityTarget),
 								});
 								card.invisibilityNarrationEmitted = true;
 							}
@@ -174,11 +188,11 @@ export class CloakOfInvisibilityCard extends BaseCard {
 				invisibilityEffect,
 			];
 			this.emit('narration', {
-				narration: `${invisibilityTarget.identity} dons ${invisibilityTarget.pronouns.his} ${this.cardType.toLowerCase()}.`,
+				narration: this.hideNarration(invisibilityTarget),
 			});
 		} else {
 			this.emit('narration', {
-				narration: `${invisibilityTarget.identity} takes a moment to improve ${invisibilityTarget.pronouns.his} concealment.`,
+				narration: this.concealNarration(invisibilityTarget),
 			});
 		}
 

@@ -103,7 +103,7 @@ describe('monsters/unicorn', () => {
 	});
 
 	it('is registered after the existing five so prompt indexes do not shift', () => {
-		expect(allMonsters.map(M => (M as any).name)).to.deep.equal([
+		expect(allMonsters.map(M => (M as any).name).slice(0, 6)).to.deep.equal([
 			'Basilisk',
 			'Gladiator',
 			'Jinn',

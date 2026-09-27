@@ -26,16 +26,6 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   [simulation harness](../reference/simulation-harness.md). `SimMonsterSpec.team` now runs
   team fights under last-team victory; a boss scenario for the Team XP item below is still
   missing.
-- [ ] **One monster roster for the harness, and a per-monster report — owner: Engine.** The
-  harness names the monsters by hand in five places: `SimMonsterType`, the
-  `MONSTER_TYPES` map and the `allowed` list in `parseMonsterType` (`simulate.ts`),
-  `TYPES` in `sim-winrates.ts`, and `OPPONENTS` in `sim-unicorn.ts`. A new monster that
-  misses one is silently left out of that report, which a review of PR #397 caught for
-  `sim-unicorn`. Derive every list from the engine's `allMonsters` (one exported helper),
-  add a test that fails when a monster in `allMonsters` is missing from the harness, and
-  generalize `sim:unicorn` into a `sim:monster <type>` script that runs any monster
-  against the whole roster, with that monster's own card counters, so the Dragon pass can
-  use it unchanged. Owner request (September 2026).
 - [ ] **Realistic harness rings — owner: Engine.** The owner's view (September 2026): balance
   is "not terrible", and the harness is close to useful but still unrealistic. It now uses
   shuffled draws (#183) and keeps Flee out of random decks, because Flee is a
@@ -106,7 +96,7 @@ Judge each item below against it.
     with no player choices; boss decks drop Hit, Heal, Flee, Harden, and Whiskey Shot; and
     targeting follows each monster's strategy scroll. Treat `sim:*` numbers as a smoke
     alarm for outliers, not a verdict on a card.
-  - Before changing Blast, measure by level (`sim:levelscaling`, `sim:unicorn`) and in
+  - Before changing Blast, measure by level (`sim:levelscaling`, `sim:monster`) and in
     three- and four-monster rings (`SimMonsterSpec.team` or a free-for-all). Check whether
     the Cleric curve runs the right way: modest early, strong late.
   - If it does need a change, the choices are a to-hit roll or save, a lower rarity, or less

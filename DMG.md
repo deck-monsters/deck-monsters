@@ -113,6 +113,7 @@ Base spawn ranges (type offset 0, before per-type modifiers):
 | Minotaur | Barbarian | 32–37 | 4–6 | +2 | +1 | -1 |
 | Weeping Angel | Cleric | 29–34 | 6–8 | -1 | +1 | +2 |
 | Unicorn | Cleric | 29–34 | 7–9 | +1 | +2 | -1 |
+| Dragon | Wizard | 30–35 | 6–8 | +0 | +1 | +1 |
 
 ## Combat Math
 
@@ -175,6 +176,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Ecdysis](#ecdysis)
 - [Feline Companion](#feline-companion)
 - [Fight or Flight](#fight-or-flight)
+- [Fire Breath](#fire-breath)
 - [Fists of Villainy](#fists-of-villainy)
 - [Fists of Virtue](#fists-of-virtue)
 - [Flee](#flee)
@@ -192,6 +194,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Lucky Strike](#lucky-strike)
 - [Mesmerize](#mesmerize)
 - [Molasses](#molasses)
+- [Mood Scales](#mood-scales)
 - [Pick Pocket](#pick-pocket)
 - [Pound](#pound)
 - [1993-09-7202 18:58](#1993-09-7202-1858)
@@ -201,7 +204,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Scotch](#scotch)
 - [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
+- [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
+- [Tsunami](#tsunami)
 - [Turkey Thigh](#turkey-thigh)
 - [Unconquerable Horn](#unconquerable-horn)
 - [Vengeful Rampage](#vengeful-rampage)
@@ -934,6 +939,43 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Fire Breath
+
+```text
+==================================
+ 🔥  Fire Breath  ○
+----------------------------------
+
+ "His breath kindleth coals, and 
+ a flame goeth out of his mouth." 
+ Whatever the flame touches keeps 
+ burning.
+
+ A cone of fire: your target and 
+ the opponents beside it, 2 at 
+ first and 1 more every 2 levels.
+ 2 fire damage +1 per level. Each 
+ target rolls 1d20 + dex vs 15 + 
+ your int to dodge for half 
+ damage.
+ Anyone who does not dodge burns: 
+ 1 damage +1 per 3 levels at the 
+ start of their next 2 turns (a 
+ heal puts it out).
+ Winded afterwards: -2 ac until 
+ your next card.
+ An ancient dragon (level 10+) 
+ breathes fire that cannot be 
+ dodged and burns for 3 turns.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 50
+ Class: AOE
+
+==================================
+```
+
 ### Fists of Villainy
 
 ```text
@@ -1460,6 +1502,38 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Mood Scales
+
+```text
+==================================
+ 🦎  Mood Scales  ◇
+----------------------------------
+
+ Pliny's chameleon taketh the 
+ colour of whatsoever it is next 
+ unto. A dragon's scales take the 
+ colour of its temper.
+
+ Calm (above half your hp): your 
+ scales match the rocks and sea, 
+ and you are hidden until you 
+ play a card that targets another 
+ player, or for the next 2 cards 
+ you play (1d20 vs your int for 
+ an opponent to find you).
+ Furious (half your hp or less): 
+ your scales blaze red and you 
+ cannot hide, but your next melee 
+ hit does +1d6 damage.
+
+ Level: 1
+ Usable by: Dragon
+ MSRP: 80
+ Class: Hide
+
+==================================
+```
+
 ### Pick Pocket
 
 ```text
@@ -1705,6 +1779,34 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Take Wing
+
+```text
+==================================
+ 🌬️  Take Wing  ◆
+----------------------------------
+
+ "The fiery flying serpent." Up, 
+ out of reach, and then down 
+ again, all teeth.
+
+ Take off until your next card. 
+ The first melee attack against 
+ you misses.
+ If your next card is a melee 
+ attack, dive: +2 to hit and +1d6 
+ damage.
+ Any damage that lands while you 
+ are in the air knocks you down, 
+ and the dive is lost.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 30
+
+==================================
+```
+
 ### Thick Skin
 
 ```text
@@ -1727,6 +1829,30 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Heal chance: 20% | HPT: 0
  MSRP: 50
  Class: Boost
+
+==================================
+```
+
+### Tsunami
+
+```text
+==================================
+ 🌊  Tsunami  ☆
+----------------------------------
+
+ "He maketh the deep to boil like 
+ a pot... he maketh a path to 
+ shine after him." Then the sea 
+ stands up and falls on everyone.
+
+ 5 damage to everyone in the 
+ ring: every opponent, every 
+ ally, and you.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 130
+ Class: AOE
 
 ==================================
 ```

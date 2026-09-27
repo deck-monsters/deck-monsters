@@ -57,9 +57,36 @@ fight state on `card.options` (it is persisted with the deck), and do not add a
 
 `encounterModifiers.ac` is a single number with two meanings. A positive value is a
 **brace**: `creature.hit()` spends it to absorb melee damage. A negative value is a
-**curse** (Soften) or a temporary penalty (Gloaming Rest). A card that lowers AC for a
-while must give back exactly what it took, as Gloaming Rest does; a cleanse that lifts
+**curse** (Soften) or a temporary penalty (Gloaming Rest, Fire Breath's winded). A card
+that lowers AC for a while must give back exactly what it took, as those two do; a cleanse that lifts
 negative AC must not lift another card's temporary penalty, as Horn of Proof checks.
+
+### "Until your next card" and one-play bonuses
+
+An effect that lasts until its monster's next card is an encounter effect that answers the
+`ATTACK_PHASE` call for that monster and removes itself: Gloaming Rest, Fire Breath's
+winded, and Take Wing's flight all work this way, so a second copy played as that next card
+is resolved after the first has already been given back and never stacks.
+
+- **A bonus on the next attack** goes on the per-play clone the effect is handed, never on
+  the card in the hand. `cards/helpers/empower-melee.ts` does it for the Dragon's dive and
+  fury: it wraps the clone's `getAttackRoll` and `getDamageRoll`, adds to `modifier` (a
+  natural 20 recomputes damage from the dice maximum plus `modifier`, so `bonusResult` would
+  be dropped), and skips the roll Hit makes for the *target* on a natural 1. The damage die
+  is added once per play (Horn Gore rolls damage per horn) and reaches Hit Harder's
+  `{ betterRoll, worseRoll }` pair; its `onDamageBonus` hook fires only when it lands, which
+  is how Mood Scales' fury waits for a hit rather than an attempt.
+- **Reacting to someone else's card** (a dodge) means wrapping that clone's `effect` in the
+  `DEFENSE_PHASE` call and checking `target === self` inside the wrapper, because the
+  effect sees every card played in the ring, not only those aimed at its monster. Take Wing
+  checks HP before and after the wrapped effect to see whether anything landed. When two
+  such effects sit on one monster (Take Wing and a Cloak-style hide), the one armed later
+  wraps outside the other and answers first: a flight taken after hiding spends its dodge
+  before the hide's search roll. Neither order double-counts damage; it is a play-order
+  choice, not a rule.
+- **A self-hit that is not a mistake.** The hit line says "…himself by mistake" when the
+  assailant is the target. A card that hurts its own player on purpose (Tsunami) sets
+  `flavorText` on its clone for that one hit and clears it after.
 
 ### The hit log records what a blow carried and what it took
 
@@ -94,6 +121,27 @@ held its card does nothing.
 - **A held monster's card never plays.** A card that frees its own player from a hold cannot
   work on that player's turn; it only helps when it lands on someone else.
 
+## Ancient dragons
+
+A Dragon at level 10 or more is **ancient** (`cards/helpers/ancient-dragon.ts`). The owner
+asked for very old dragons to be "immensely powerful but occasionally able to be tricked"
+(September 2026), so an ancient dragon has one strength and two weaknesses:
+
+- **Fire Breath cannot be dodged** and burns for three turns instead of two. Fire Breath
+  checks `isAncientDragon(player)`.
+- **Outwitted by talk.** Once per fight, each *opponent* an ancient dragon attacks (with an
+  attack card: melee, area, poison, psychic, or acoustic, so a confused heal is not one) rolls
+  1d20 + INT against 20 + the dragon's INT (a tie goes to the dragon). On a success that
+  attack goes wide and the dragon is exposed, −4 AC until its next card. Opponents only,
+  by `isOpponentHold`: an ally caught in the dragon's Tsunami must not talk its way out of
+  the wave (a review finding before merge).
+- **The soft underbelly.** A natural 20 with a Hit-family attack (anything with
+  `rollForDamage`) against it does triple damage.
+
+`Dragon.startEncounter` arms all of it as one encounter effect, so fight cleanup ends it,
+and the "once per fight" record lives in that effect's closure. `look at` says the dragon is
+ancient. A new card that should respect ancient dragons reads `isAncientDragon`.
+
 ## Adding a card or a monster
 
 The Unicorn pass (archived as
@@ -126,12 +174,10 @@ new card or monster must reach. Check each one.
 - **Append** it to `allMonsters` (`monsters/helpers/all.ts`). The spawn prompt answers with
   an index, so inserting mid-list shifts every later monster.
 - The spawn colour example (`monsters/helpers/spawn.ts`), a name generator
-  (`helpers/names.ts`), a sprite in `apps/web/src/animations/pixel-fight/sprites.ts`, the
-  harness type lists (`packages/harness/src/simulate.ts`, `sim-winrates.ts`, and
-  `OPPONENTS` in `scripts/sim-unicorn.ts`, which otherwise leaves the new monster out of
-  the Unicorn report without saying so; deriving these from `allMonsters` is planned in
-  [11 — Balance](../roadmap/11-balance-and-mechanics.md#measurement-first)), and the
-  server's spawn-catalog test.
+  (`helpers/names.ts`), a sprite in `apps/web/src/animations/pixel-fight/sprites.ts`, and
+  the server's spawn-catalog test. The harness reads `allMonsters` itself; add a report in
+  `packages/harness/src/scripts/monster-reports/` if the monster's cards need their own
+  counters in `sim:monster` ([simulation harness](../reference/simulation-harness.md#one-roster)).
 - Regenerate `MONSTERS.md` and `DMG.md` with `pnpm run build:docs`; adding to
   `allMonsters` changes both, and `docs:check` does not catch them going stale.
 - A description must read well with a player-chosen colour, including one that carries
@@ -141,16 +187,17 @@ new card or monster must reach. Check each one.
 ## Content and balance rules
 
 - **Balance target (owner decision, September 2026).** Aim for a power curve per class
-  across levels, not 50/50 at every level. As in D&D, casters (Cleric, Bard) start fragile
+  across levels, not 50/50 at every level. As in D&D, casters (Cleric, Bard, Wizard) start fragile
   and grow strong; brutes (Barbarian, Fighter) are strongest early and stay useful as they
   fall behind. A problem is a class that dominates across the whole range, or a curve that
-  runs the wrong way. The 35–65% flag in `sim:winrates` and `sim:unicorn` marks rows to look
+  runs the wrong way. The 35–65% flag in `sim:winrates` and `sim:monster` marks rows to look
   at, not a pass/fail gate, and ring context (size, teams, the cards in play) shifts
   matchups a great deal.
 - **Evidence comes from the harness.** Run the [simulation harness](../reference/simulation-harness.md)
   before a balance claim, and read its known limits there.
 - **Sources.** Credit every source in a comment beside the text it shaped. The Unicorn's
-  sources are listed in `monsters/unicorn.ts` and each card file.
+  sources are listed in `monsters/unicorn.ts` and each card file; the
+  Dragon's in `monsters/dragon.ts` and its card files.
 - **Quoting old texts (owner decision, September 2026).** Public-domain texts may be quoted
   directly, or quoted with a playful twist, in flavour text and narration. Their archaic
   spelling and grammar ("sticketh", "belloweth") are welcome when a line stays readable
