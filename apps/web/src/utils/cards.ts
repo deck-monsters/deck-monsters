@@ -4,18 +4,27 @@ const MAGIC_KEYWORDS = ['blink', 'blast', 'mesmer', 'sandstorm', 'curse', 'coil'
 
 export type CardClass = 'melee' | 'magic' | 'heal' | 'utility';
 
+// A deck slot is ~70px wide at its narrowest, and its label wraps to two lines. At the
+// compact size (`.workshop-card-name.compact`) a line holds about ten characters, measured
+// in Chromium. The old rule kept three letters of the first three words, so "Fight or
+// Flight" read "Fig or Fli" and a phone, which has no hover title, showed nothing better
+// (10b #186). Now whole words are kept and only a word too long for one line is shortened.
+const LONG_NAME = 12;
+const MAX_WORD = 10;
+
+/** True when a card name needs the compact label size to fit two lines. */
+export function isLongCardName(name: string): boolean {
+  return name.trim().replace(/\s+/g, ' ').length > LONG_NAME;
+}
+
 export function abbreviateCardName(name: string): string {
   const normalized = name.trim().replace(/\s+/g, ' ');
   if (!normalized) return '';
-  if (normalized.length <= 12) return normalized;
+  if (normalized.length <= LONG_NAME) return normalized;
 
-  const parts = normalized.split(' ').filter(Boolean);
-  if (parts.length === 1) return `${parts[0].slice(0, 11)}…`;
-  if (parts.length === 2) return `${parts[0].slice(0, 4)} ${parts[1].slice(0, 4)}…`;
-
-  return parts
-    .slice(0, 3)
-    .map((part) => part.slice(0, 3))
+  return normalized
+    .split(' ')
+    .map((word) => (word.length > MAX_WORD ? `${word.slice(0, 6)}.` : word))
     .join(' ');
 }
 

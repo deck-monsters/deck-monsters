@@ -665,6 +665,12 @@ button {
   word-break: break-word;
 }
 
+/* Long names (over 12 characters) keep whole words at a smaller size; see
+   abbreviateCardName in utils/cards.ts for the measured budget. */
+.workshop-card-name.compact {
+  font-size: 0.64rem;
+}
+
 .workshop-card-class {
   text-align: center;
   font-size: 0.62rem;

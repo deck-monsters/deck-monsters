@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — eight open items. Fixed work and its root causes live only in
+**Status:** Active — seven open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -146,21 +146,6 @@ this is the fast-fight case, not an empty history table.
   Cover a row whose insert time is later than the resolve timestamp.
 
 Read [analytics and history](../architecture/analytics-and-history.md).
-
-### P. Three-word card names abbreviate to an unreadable label
-
-**Owner:** Web workshop. Test Room A's deck shows Fight or Flight as "Fig or Fli"
-under a utility diamond. The slot's title attribute is the full name; the visible
-label is not.
-
-**Root cause:** `abbreviateCardName` keeps three letters of each of the first three
-words (`apps/web/src/utils/cards.ts`). "Fight or Flight" becomes "Fig or Fli". Hover
-works on a desktop; a phone has the label only.
-
-- [ ] Abbreviate so the card is still recognizable, and cover Fight or Flight (and any
-  other three-word name in the catalogue) in `cards-utils.test.ts`.
-
-Read [web workspace](../architecture/web-workspace.md).
 
 ## Historical detail
 

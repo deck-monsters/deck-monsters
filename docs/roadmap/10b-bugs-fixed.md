@@ -4382,3 +4382,25 @@ regex alone (a regex test passed while the command was broken). It covers
 fails without the fix.
 
 **Status**: Fixed.
+
+### 186. Three-word card names abbreviated to unreadable labels ("Fig or Fli") — FIXED
+
+Test Room A's deck showed Fight or Flight as "Fig or Fli" under a utility diamond. The
+slot's title attribute had the full name, but a phone has no hover, so the label was all a
+player could read. Found in the browser sweep on 2026-09-26.
+
+**Root cause**: `abbreviateCardName` (`apps/web/src/utils/cards.ts`) cut every name over
+twelve characters to three letters of each of its first three words, or four letters of
+each of two. It ignored that `.workshop-card-name` already wraps to two lines, so it threw
+away space the label had.
+
+**Fix**: names over twelve characters keep their whole words and render at a compact size
+(`.workshop-card-name.compact`, 0.64rem), and only a single word longer than ten
+characters is shortened ("Unconquerable" → "Unconq."). The budget was measured in
+Chromium: at the narrowest deck slot (70px) every long name in the catalogue now fits two
+lines at 70, 72, and 85px without clipping.
+
+**Tests**: `apps/web/src/__tests__/cards-utils.test.ts` covers Fight or Flight and every
+other three-word name in the catalogue, the long-word rule, and the compact flag.
+
+**Status**: Fixed.
