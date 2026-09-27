@@ -139,9 +139,17 @@ export const getItems = (): any[] => {
 		}
 	}
 
-	// Every shop keeps a Sorting Hat, so a player can always join or leave a team (owner,
-	// docs/archive/roadmap/31-pass-b-rings-and-bosses.md). It is free, so it cannot crowd out stock.
-	if (!items.some(item => item.itemType === SortingHat.itemType)) items.push(new SortingHat());
-
-	return sortItemsAlphabetically(items);
+	return withSortingHat(items);
 };
+
+export const isSortingHat = (item: any): boolean => item?.itemType === SortingHat.itemType;
+
+/**
+ * Every shop keeps a Sorting Hat, so a player can always join or leave a team (owner,
+ * docs/archive/roadmap/31-pass-b-rings-and-bosses.md). It is free, so it cannot crowd out
+ * stock. Both purchase paths call this on the items they commit: stocking one only when the
+ * shop was drawn let the first buyer take the room's only hat until the next rotation (a
+ * Codex review of PR #403).
+ */
+export const withSortingHat = (items: any[]): any[] =>
+	sortItemsAlphabetically(items.some(isSortingHat) ? items : [...items, new SortingHat()]);

@@ -112,8 +112,9 @@ describe('./items/store/buy.ts', () => {
 
 		expect(host.commitShop.calledOnce).to.equal(true);
 		const committed = host.commitShop.firstCall.args[0] as Shop;
-		// Only my purchase is removed; the other player's is not resurrected.
-		expect(committed.items).to.deep.equal([]);
+		// Only my purchase is removed; the other player's is not resurrected. The Sorting Hat
+		// every shop keeps is all that is left.
+		expect(committed.items.map((i: any) => i.itemType)).to.deep.equal(['Sorting Hat']);
 	});
 
 	it('does not charge for stock that sold out while the player was deciding', async () => {
@@ -153,6 +154,46 @@ describe('./items/store/buy.ts', () => {
 		expect(channelStub.calledWith(sinon.match({ announce: sinon.match(/sold while you were deciding/) }))).to.equal(true);
 	});
 
+	it('sells the restocked Sorting Hat when another player bought the one on show', async () => {
+		const shownHat = { name: 'Sorting Hat', itemType: 'Sorting Hat', cost: 0 };
+		const restockedHat = { name: 'Sorting Hat', itemType: 'Sorting Hat', cost: 0 };
+		const staleShop: Shop = { ...defaultShop, items: [shownHat] };
+		const shopAfterPurchase: Shop = { ...defaultShop, items: [restockedHat] };
+
+		let shopReads = 0;
+		const host: ShopHost & { commitShop: sinon.SinonStub } = {
+			get shop() {
+				shopReads += 1;
+				return shopReads === 1 ? staleShop : shopAfterPurchase;
+			},
+			commitShop: sinon.stub()
+		};
+
+		const character = {
+			givenName: 'Character',
+			pronouns: { he: 'she', him: 'her', his: 'her' },
+			coins: 500,
+			cards: [] as any[],
+			items: [] as any[],
+			addCard: sinon.stub(),
+			addItem: sinon.stub()
+		};
+
+		channelStub.resolves();
+		channelStub.onCall(0).resolves('0');
+		channelStub.onCall(1).resolves('Sorting Hat');
+		channelStub.onCall(3).resolves('yes');
+
+		await buyItems({ character, channel: channelStub, host });
+
+		expect(character.addItem.calledOnceWithExactly(restockedHat)).to.equal(true);
+		expect(channelStub.calledWith(sinon.match({ announce: sinon.match(/sold while you were deciding/) }))).to.equal(false);
+		const committed = host.commitShop.firstCall.args[0] as Shop;
+		const hats = committed.items.filter((i: any) => i.itemType === 'Sorting Hat');
+		expect(hats).to.have.length(1);
+		expect(hats[0]).to.not.equal(restockedHat);
+	});
+
 	it('removes a purchased item from the shop and commits the updated shop', async () => {
 		const purchasedItem = { name: 'Bandage', itemType: 'Bandage', cost: 10 };
 		const remainingItem = { name: 'Potion', itemType: 'Potion', cost: 5 };
@@ -179,7 +220,9 @@ describe('./items/store/buy.ts', () => {
 		expect(character.addItem.calledWith(purchasedItem)).to.equal(true);
 		expect(host.commitShop.calledOnce).to.equal(true);
 		const committed = host.commitShop.firstCall.args[0] as Shop;
-		expect(committed.items).to.deep.equal([remainingItem]);
+		// The rest remain, beside the Sorting Hat every shop keeps.
+		expect(committed.items.map((i: any) => i.itemType)).to.deep.equal(['Potion', 'Sorting Hat']);
+		expect(committed.items).to.include(remainingItem);
 		// Original shop object must not have been mutated in place.
 		expect(shop.items).to.deep.equal([purchasedItem, remainingItem]);
 	});

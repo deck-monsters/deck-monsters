@@ -3,6 +3,7 @@ import getClosingTime from './closing-time.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import { getChoices, getFinalItemChoices, resolveChoiceIndex } from '../../helpers/choices.js';
 import type { ShopHost } from './shop.js';
+import { isSortingHat, withSortingHat } from './stock.js';
 
 // The menu labels are the single source of truth for both the rendered question text and
 // the dispatch logic below — see resolveChoiceIndex's doc comment for why a hand-numbered
@@ -144,9 +145,13 @@ Would you like to buy them? (yes/no)`
 					const purchased: any[] = [];
 					const soldOut: any[] = [];
 
-					choices.forEach((choice: any) => {
-						const pool = choice.cardType ? remainingCards : remainingItems;
-						const poolIndex = pool.indexOf(choice);
+					choices.forEach((chosen: any) => {
+						const pool = chosen.cardType ? remainingCards : remainingItems;
+						let poolIndex = pool.indexOf(chosen);
+						// The hat is always restocked, so a hat bought while this player was deciding
+						// has a replacement: take that one instead of calling it sold out.
+						if (poolIndex < 0 && isSortingHat(chosen)) poolIndex = pool.findIndex(isSortingHat);
+						const choice = poolIndex > -1 ? pool[poolIndex] : chosen;
 
 						if (poolIndex > -1) {
 							pool.splice(poolIndex, 1);
@@ -201,7 +206,7 @@ Would you like to buy them? (yes/no)`
 					host.commitShop({
 						...currentShop,
 						cards: remainingCards,
-						items: remainingItems,
+						items: withSortingHat(remainingItems),
 						backRoom: remainingBackRoom
 					});
 

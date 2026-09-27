@@ -146,7 +146,9 @@ two level 1 bosses still only 12%. So (owner, September 2026):
   the ring, then summon another").
 - **An ambush.** A timer spawn has a 10% chance (`BOSS_AMBUSH_CHANCE_PERCENT`), rolled once
   when the warning is due so the warning and the spawn agree, of one boss beyond that. It
-  arrives as a lesser minion at a third of its HP and says so. Still harsh for a lone human
+  arrives as a lesser minion at a third of its HP and says so; the ring sets that HP again
+  as the fight starts, since passive healing ticks through the countdown
+  (`Contestant.minion`). Still harsh for a lone human
   (about 6%); it is a rare scare.
 - **The Gauntlet** is the designed exception: its extra bosses ignore the quota, but still
   come out of the level budget, so the more of them there are, the weaker each is.
@@ -496,7 +498,8 @@ with a boss in it, `Ring.fight()` puts each human with no team of its own on
 `CHALLENGERS_TEAM` (a contestant-level override, like a ring event's). They never target each
 other while any boss is still fighting; the moment the last boss is down the override comes
 off, a line says the alliance is over, and the humans left finish a normal free-for-all. The
-same two level 1s now win 23%, close to a pre-arranged team's 29%.
+same two level 1s now win 29% (with boss temperaments), level with a pre-arranged team's
+28%.
 
 - A team a player or ring event set is never replaced; Blood Feud keeps its free-for-all.
 - This replaced a forced Common Cause (shared win) whenever two or more bosses met two or

@@ -20,7 +20,7 @@
 import '../sim-env.js';
 import '../set-env.js';
 import { allMonsters, engineReady, getLevel, getXpCapForLevel } from '@deck-monsters/engine';
-import { simulate, SIM_MONSTER_TYPES, type SimMonsterSpec } from '../simulate.js';
+import { sideWinRate, simulate, SIM_MONSTER_TYPES, type SimMonsterSpec } from '../simulate.js';
 import { mulberry32 } from '../rng.js';
 
 const FIGHTS = Number(process.env.SIM_RINGS_FIGHTS ?? 20);
@@ -98,7 +98,8 @@ async function sampledRings(): Promise<void> {
 	for (let r = 0; r < SAMPLED_RINGS; r += 1) {
 		const size = weighted(pick, RING_SIZES);
 		const withBosses = pick() < 0.4;
-		// With bosses, one per human (the ring's quota), so humans are half the ring, rounded up.
+		// With bosses, at most one per human (the ring's quota): humans are half the ring,
+		// rounded up, and bosses fill the rest, so an odd ring has one more human than bosses.
 		const humanCount = withBosses ? Math.max(1, Math.ceil(size / 2)) : size;
 		const humans: SimMonsterSpec[] = Array.from({ length: humanCount }, () => ({
 			type: SIM_MONSTER_TYPES[Math.floor(pick() * SIM_MONSTER_TYPES.length)]!,
@@ -119,7 +120,9 @@ async function sampledRings(): Promise<void> {
 			const ceiling = Math.max(...levels) + 1;
 			const average = Math.floor(levels.reduce((a, b) => a + b, 0) / levels.length);
 			let budget = levels.reduce((a, b) => a + b, 0) + 1;
-			for (let b = 0; b < humans.length; b += 1) {
+			// The rest of the ring, not one per human: a first version added a boss per human, so
+			// odd rings grew by one and humans never outnumbered bosses (a Codex review of #403).
+			for (let b = 0; b < size - humanCount; b += 1) {
 				const banded = pick() < 0.35 ? ceiling : average;
 				const cap = Math.max(0, Math.min(banded, ceiling, budget));
 				// As the ring does: XP drawn evenly up to the cap's XP, then read back as a level.
@@ -135,25 +138,21 @@ async function sampledRings(): Promise<void> {
 		const res = await simulate({ monsters, fights: FIGHTS, seed: 9000 + r * 7919, roomId: `sim-rings-${r}` });
 
 		const sizeTally = bySize.get(monsters.length) ?? { humanWins: 0, rings: 0 };
-		let humanWins = 0;
 		humans.forEach((human, i) => {
 			const win = res.winRates[`Sim ${i + 1}`] ?? 0;
-			humanWins += win;
 			const tally = byType.get(human.type)!;
 			tally.wins += win;
 			tally.fair += 100 / monsters.length;
 			tally.rings += 1;
 		});
-		// A team win credits both members; count the ring's human side once for the totals.
-		if (humans[0]?.team && humans[1]?.team) {
-			humanWins -= Math.min(res.winRates['Sim 1'] ?? 0, res.winRates['Sim 2'] ?? 0);
-		}
-		sizeTally.humanWins += Math.min(100, humanWins);
+		// Fights any human won, each counted once (a team win names every surviving member).
+		const humanWins = sideWinRate(res, humans.map((_, i) => `Sim ${i + 1}`));
+		sizeTally.humanWins += humanWins;
 		sizeTally.rings += 1;
 		bySize.set(monsters.length, sizeTally);
 		if (withBosses) {
 			bossRings += 1;
-			bossRingHumanWins += Math.min(100, humanWins);
+			bossRingHumanWins += humanWins;
 		}
 	}
 

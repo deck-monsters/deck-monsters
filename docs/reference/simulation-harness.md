@@ -239,7 +239,9 @@ character and the monster: `randomContestant` puts every harness contestant on t
 team, and `factionOf` reads the monster's team before the character's, so writing only the
 character left all four contestants on one faction and every fight ended at once with every
 contestant credited a win. `winRates` stays per contestant, and a team win credits every
-surviving member.
+surviving member, so a side's win rate cannot be rebuilt from `winRates` (summing
+overcounts, the best member undercounts). Use `winnersByFight`, each fight's winning labels,
+through `sideWinRate(res, labels)`; `sim:bosses` and `sim:rings` do.
 
 ## Card-level counters
 

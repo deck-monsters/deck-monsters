@@ -167,7 +167,16 @@ export interface Contestant {
 	 */
 	summonedByUserId?: string;
 	summonedAt?: number;
+	/**
+	 * An ambush's lesser minion: fights at `AMBUSH_MINION_HP_SHARE` of its max HP. Set again
+	 * when the fight starts, because passive healing ticks through the countdown and a small
+	 * minion could walk in at full health (a Codex review of PR #403).
+	 */
+	minion?: boolean;
 }
+
+/** HP an ambush minion fights at. */
+const minionHp = (monster: any): number => Math.max(1, Math.floor(monster.maxHp * AMBUSH_MINION_HP_SHARE));
 
 /**
  * Returns the faction label for a contestant: contestant-level team override first
@@ -455,11 +464,14 @@ export class Ring extends BaseClass {
 		deferFightTimer,
 		summonedByUserId,
 		summonedAt,
+		minion,
 	}: {
 		monster: any;
 		character: any;
 		userId: string;
 		isBoss?: boolean;
+		/** An ambush's lesser minion (see `Contestant.minion`). */
+		minion?: boolean;
 		/**
 		 * Skip the `startFightTimer()` call. Only used when the caller is already inside
 		 * `startFightTimer()` (the Gauntlet ring event) — re-entering it there would arm a
@@ -485,6 +497,7 @@ export class Ring extends BaseClass {
 				isBoss,
 				...(summonedByUserId !== undefined ? { summonedByUserId } : {}),
 				...(summonedAt !== undefined ? { summonedAt } : {}),
+				...(minion ? { minion } : {}),
 			};
 
 			this.arrivals += 1;
@@ -627,7 +640,8 @@ export class Ring extends BaseClass {
 		// withdrawn since it was rolled during the countdown.
 		this.ringEvent?.apply(this.contestants);
 
-		this.contestants.forEach(({ userId, monster }) => {
+		this.contestants.forEach(({ userId, monster, minion }) => {
+			if (minion) monster.hp = Math.min(monster.hp, minionHp(monster));
 			monster.startEncounter(this);
 
 			this.pub(
@@ -1827,12 +1841,10 @@ export class Ring extends BaseClass {
 		// A boss beyond one per human is an ambush's lesser minion.
 		const humans = this.contestants.filter(c => !c.isBoss).length;
 		const minion = ambush && humans > 0 && this.bossCount >= humans;
-		if (minion) {
-			const { monster } = contestant;
-			monster.hp = Math.max(1, Math.floor(monster.maxHp * AMBUSH_MINION_HP_SHARE));
-		}
+		// Weakened on arrival, so the roster shows it, and again as the fight starts.
+		if (minion) contestant.monster.hp = minionHp(contestant.monster);
 
-		this.addMonster({ ...contestant, deferFightTimer, summonedByUserId, summonedAt });
+		this.addMonster({ ...contestant, deferFightTimer, summonedByUserId, summonedAt, minion });
 
 		if (minion) {
 			this.emit('narration', {

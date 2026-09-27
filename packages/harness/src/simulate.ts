@@ -111,6 +111,13 @@ export interface EconomyStats {
 export interface SimResult {
 	fights: number;
 	winRates: Record<string, number>;
+	/**
+	 * The labels that won each fight, in fight order (empty for a draw). A team win names
+	 * every surviving member, so a side's win rate is the share of fights naming any of its
+	 * members; summing or taking the best of `winRates` cannot give that (a Codex review of
+	 * PR #403).
+	 */
+	winnersByFight: string[][];
 	drawRate: number;
 	avgRounds: number;
 	avgDamagePerCard: Record<string, number>;
@@ -351,7 +358,8 @@ function pushWinCounts(
 	winCounts: Map<string, number>,
 	stableIdToLabel: Map<string, string>,
 	p: FightResolvedPayload,
-): void {
+): string[] {
+	const winners: string[] = [];
 	const parts = p.participants ?? [];
 	for (const part of parts) {
 		if (part.outcome !== 'win') continue;
@@ -364,7 +372,19 @@ function pushWinCounts(
 			);
 		}
 		winCounts.set(label, (winCounts.get(label) ?? 0) + 1);
+		winners.push(label);
 	}
+	return winners;
+}
+
+/** Share of fights (0-100) that any of `labels` won: a side's win rate. */
+export function sideWinRate(res: Pick<SimResult, 'winnersByFight' | 'fights'>, labels: string[]): number {
+	// Over `fights`, as `winRates` are, so the two stay comparable.
+	const { fights } = res;
+	if (fights === 0) return 0;
+	const side = new Set(labels);
+	const won = res.winnersByFight.filter(winners => winners.some(label => side.has(label))).length;
+	return (won / fights) * 100;
 }
 
 /**
@@ -402,6 +422,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	const hasTeams = monsters.some(m => m.team);
 	const names = monsters.map((_, i) => `Sim ${i + 1}`);
 	const winCounts = new Map<string, number>();
+	const winnersByFight: string[][] = [];
 	for (const n of names) winCounts.set(n, 0);
 	let draws = 0;
 	let roundSum = 0;
@@ -439,7 +460,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				draws += 1;
 				return;
 			}
-			pushWinCounts(winCounts, stableIdToLabel, p);
+			winnersByFight.push(pushWinCounts(winCounts, stableIdToLabel, p));
 		},
 	});
 
@@ -614,6 +635,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	return {
 		fights,
 		winRates,
+		winnersByFight,
 		drawRate: fights > 0 ? (draws / fights) * 100 : 0,
 		avgRounds: fights > 0 ? roundSum / fights : 0,
 		avgDamagePerCard: aggregateDamagePerCard(damageSums),

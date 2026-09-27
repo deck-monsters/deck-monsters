@@ -47,6 +47,11 @@ Found while scoping:
 | 4 | Boss personalities, and teams made easy: the Sorting Hat in every shop (with a "No team" choice) and a free `leave team` command (owner request, 2026-09-27) | Done | c1b5d24 |
 | 5 | Docs close-out, generated references, independent review and its fixes | Done | 0404583, 8f1e5a3 |
 
+The Codex review of PR #403 found four more, all fixed in the PR: the ambush minion healed
+back up during the countdown (its HP is now set again as the fight starts); the free Sorting
+Hat was guaranteed only when a shop was drawn, so the first buyer took the room's only one
+(both purchase paths now restock it); and two harness counting faults, recorded below.
+
 The independent review (task 5) found two faults in `dismissExtraBosses()`, fixed before
 merge: outside tests the ring shuffles `contestants` on every add, so "the newest boss" it
 sent away was really a random one (the ring now records arrival order); and a dismissed
@@ -98,7 +103,11 @@ which keeps arrival order; the new test reverses the array.
 With boss temperaments (task 4) several humans do a little better, since bosses spread
 their attacks: two L2s against L3 + L2 bosses went from 27% to 35%, two teamless L1s against
 L1 + L2 from 23% to 29%. (The `sim:bosses` ambush rows use a full-HP boss, not the ring's
-⅓-HP minion, so they understate an ambush.)
+⅓-HP minion, so they understate an ambush.) The "one team" rows here took the better
+member's win rate, which undercounts a team whose members win different fights; the
+Codex review of PR #403 caught it, and `simulate()` now records each fight's winners
+(`sideWinRate`). Re-measured: a pre-arranged pair against L1 + L2 bosses wins 28%, the
+same as the alliance's 29%.
 
 ## Realistic rings (`sim:rings`)
 
@@ -109,10 +118,14 @@ L1 + L2 from 23% to 29%. (The `sim:bosses` ambush rows use a full-HP boss, not t
   the Barbarians the brute curve; the Unicorn strong everywhere and the Gladiator weak early
   are logged in [11](../../roadmap/11-balance-and-mechanics.md). Cells are 120 fights, so noisy.
 - **Sampled rings** (120 rings of mixed sizes, levels, and pairs; 40% with bosses spawned by
-  the ring's new rules): humans won **59%** of the rings with bosses, so bosses are
-  beatable but still a threat. A first version drew boss levels evenly and bosses came out
-  weak (71%); the ring draws XP evenly up to the cap's XP, which lands near the cap far more
-  often, and the sampler now does the same.
+  the ring's new rules): humans won **65%** of the rings with bosses, so bosses are
+  beatable but still a threat. Two sampler faults were fixed on the way. It first drew boss
+  levels evenly, and bosses came out weak (71%); the ring draws XP evenly up to the cap's
+  XP, which lands near the cap far more often, and the sampler now does the same (59%).
+  Then the Codex review of PR #403 found it gave odd rings a boss per human, one monster
+  more than sampled and never fewer bosses than humans; bosses now fill the rest of the
+  ring (65%). Per-type fair shares moved a lot between runs (the Unicorn 119% then 161%),
+  so read them as noisy.
 
 ## Decisions (owner, 2026-09-27)
 

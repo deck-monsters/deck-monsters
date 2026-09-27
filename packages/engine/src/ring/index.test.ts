@@ -962,6 +962,25 @@ describe('ring/index.ts', () => {
 			game.dispose();
 		});
 
+		it('fights an ambush minion at a third of its HP even if it healed during the countdown', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			addPlayer(ring, 'user-1');
+			ring.spawnBoss();
+			const minion = ring.spawnBoss({ ambush: true })!;
+			const third = Math.max(1, Math.floor(minion.monster.maxHp / 3));
+			const regular = ring.contestants.find(c => c.isBoss && c.monster !== minion.monster)!;
+			const regularHp = regular.monster.hp;
+
+			// Passive healing ticks while the ring counts down.
+			minion.monster.hp = minion.monster.maxHp;
+			ring.startEncounter();
+
+			expect(minion.monster.hp).to.equal(third);
+			expect(regular.monster.hp).to.equal(regularHp);
+			game.dispose();
+		});
+
 		it('sends the newest extra bosses away, refunding a summon, when a human leaves', () => {
 			const game = new Game({}, () => {});
 			const ring = game.getRing();

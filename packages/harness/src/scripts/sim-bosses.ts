@@ -14,7 +14,7 @@
 import '../sim-env.js';
 import '../set-env.js';
 import { engineReady } from '@deck-monsters/engine';
-import { simulate, SIM_MONSTER_TYPES, type SimMonsterSpec } from '../simulate.js';
+import { sideWinRate, simulate, SIM_MONSTER_TYPES, type SimMonsterSpec } from '../simulate.js';
 import { mulberry32 } from '../rng.js';
 
 const FIGHTS = Number(process.env.SIM_BOSSES_FIGHTS ?? 25);
@@ -76,11 +76,10 @@ export async function runScenario(scenario: Scenario, seed: number, fights = FIG
 			...scenario.bosses.map(level => ({ type: type(), level, role: 'boss' as const })),
 		];
 		const res = await simulate({ monsters, fights, seed: seed + batch * 7919, roomId: `sim-bosses-${seed}-${batch}` });
-		const humanLabels = scenario.humans.map((_, i) => `Sim ${i + 1}`);
-		const rates = humanLabels.map(label => res.winRates[label] ?? 0);
-		// On one team, a team win credits every surviving member, so take the best member;
-		// apart, only one monster can win a fight, so the rates add.
-		humanWin += scenario.humanTeam ? Math.max(...rates) : rates.reduce((a, b) => a + b, 0);
+		// A fight counts once if any human won it: a team win names every surviving member, so
+		// neither summing nor taking the best member's rate gives the side's rate (a Codex
+		// review of PR #403 found the best-member shortcut undercounting team wins).
+		humanWin += sideWinRate(res, scenario.humans.map((_, i) => `Sim ${i + 1}`));
 		draw += res.drawRate;
 		rounds += res.avgRounds;
 	}
