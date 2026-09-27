@@ -145,6 +145,13 @@ new card or monster must reach. Check each one.
   matchups a great deal.
 - **Evidence comes from the harness.** Run the [simulation harness](../reference/simulation-harness.md)
   before a balance claim, and read its known limits there.
-- **Sources.** Lore and cards drawn from real texts quote at most a short attributed phrase,
-  credit it in a source comment, and write original prose around it. The Unicorn's sources
-  are listed in `monsters/unicorn.ts` and each card file.
+- **Sources.** Credit every source in a comment beside the text it shaped. The Unicorn's
+  sources are listed in `monsters/unicorn.ts` and each card file.
+- **Quoting old texts (owner decision, September 2026).** Public-domain texts may be quoted
+  directly, or quoted with a playful twist, in flavour text and narration. Their archaic
+  spelling and grammar ("sticketh", "belloweth") are welcome when a line stays readable
+  aloud. Quote a specific public-domain *edition* (for example Holland's 1601 Pliny,
+  Golding's 1587 Solinus, Topsell's 1607 bestiary, the 1611 King James Bible, Spenser,
+  Shakespeare, or Morris and Magnússon's 1888 *Völsunga saga*) and check the wording
+  against a scan. Modern translations, modern anthologies (including *A Book of Unicorns*),
+  and in-copyright works stay paraphrase and tonal reference only.
