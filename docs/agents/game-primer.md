@@ -125,6 +125,12 @@ bosses and why disposal keys off it. Players may summon a boss `BOSS_SUMMON_LIMI
 per rolling 24h window, per room (`packages/engine/src/helpers/boss-summons.ts`). Full rules:
 [`docs/architecture/boss-encounters.md`](../architecture/boss-encounters.md).
 
+Teams are a targeting rule, not a shared win: teammates go after everyone else first and
+turn on each other only when nobody else is left. With a boss in the ring every teamless human
+fights as The Challengers until the last boss falls. How players join, leave, and inherit a
+team is in [boss encounters §5](../architecture/boss-encounters.md#5-teams-and-targeting);
+the player-facing version is the handbook's Teams and Bosses section.
+
 ## Card effects that wrap a play
 
 Some cards arm an effect on `ring.encounterEffects` that wraps subsequent card plays

@@ -8,7 +8,8 @@ tags: [archive, harness, balance, bosses]
 ---
 # 31 — Pass B: Realistic Rings and Boss Balance
 
-**Status:** Closed (September 2026), on branch `claude/pass-b-harness-and-bosses`. Pass B
+**Status:** Closed (September 2026). Shipped in PR #403, from branch
+`claude/pass-b-harness-and-bosses`, which also carries #404 (docs recording two feed bugs). Pass B
 from [27](../../roadmap/27-next-passes.md), widened by the owner to include the computer
 bosses. Its lasting rules are in [boss encounters](../../architecture/boss-encounters.md) and
 the [simulation harness](../../reference/simulation-harness.md). Open work moved to active
@@ -46,6 +47,9 @@ Found while scoping:
 | 3 | Boss balance: humans unite then settle, one boss per human (a rare ambush minion), a level budget, no fully random levels | Done | d98566f |
 | 4 | Boss personalities, and teams made easy: the Sorting Hat in every shop (with a "No team" choice) and a free `leave team` command (owner request, 2026-09-27) | Done | c1b5d24 |
 | 5 | Docs close-out, generated references, independent review and its fixes | Done | 0404583, 8f1e5a3 |
+| 6 | PR review rounds: Codex (minion HP, hat restock, harness counting, odd rings; then minion-only extra slot, inherited teams, draws), the CI shelf-size failure | Done | a309eaf, 4fcabe3, aa30c55 |
+| 7 | Owner-reported feed bugs: a boss's card plays, dice, and Delayed Hit lines dropped (10b #193); Delayed Hit payoffs naming the wrong blow (10b #194, item M from #404). Item L, the ring-feed scroll jump, stays open in [10](../../roadmap/10-bug-fixes.md) | Done | 578f408, 0733aa2 |
+| 8 | Team mechanics explained to players (owner request): a Teams and Bosses handbook section, the Sorting Hat's description, and the player-side rules in [boss encounters §5](../../architecture/boss-encounters.md#5-teams-and-targeting) | Done | this commit |
 
 The Codex review of PR #403 found four more, all fixed in the PR: the ambush minion healed
 back up during the countdown (its HP is now set again as the fight starts); the free Sorting

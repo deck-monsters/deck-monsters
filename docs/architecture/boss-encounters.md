@@ -489,8 +489,28 @@ knowing:
 - Wraparound in `TARGET_NEXT_PLAYER` / `TARGET_PREVIOUS_PLAYER` must use the **filtered**
   list's length. Using the raw input length overruns the array in any team fight and returns
   `undefined` — a fixed bug worth not reintroducing.
-- Outside ring events, the only things that set a team are the Sorting Hat scroll and boss
-  creation; the only things that set a strategy are the targeting scrolls in `items/scrolls/`.
+- Outside ring events, a team is set by the Sorting Hat scroll, cleared by the Hat's "No
+  team" choice or the free `leave team` command, set on bosses at creation, and lent to
+  teamless humans by the Challengers alliance below. The only things that set a strategy are
+  the targeting scrolls in `items/scrolls/` and a boss's temperament.
+
+### How a player joins, leaves, and inherits a team
+
+A contestant's team is its contestant override (ring events, the alliance), else
+`monster.team`, else `character.team` (`teamOf`). So a Sorting Hat worn by the character
+covers every monster without a team of its own, and a hat worn by one monster covers only
+that monster. The hat offers the houses other than the wearer's effective team, and "No
+team" only where clearing leaves the wearer teamless: clearing a monster's own team while its
+beastmaster has one would only drop it back to that team. `leave team`
+(`commands/character.ts`) clears the character and every monster, and is refused while any
+of them is in a fight. Every shop keeps one hat, free, restocked on purchase
+(`withSortingHat`).
+
+In a normal fight a team changes only **targeting**: teammates, area cards included, go
+after everyone else first and fall back to each other when nobody else is left; the last
+monster standing still wins alone. Only Common Cause and House War make a team win together
+(the table below). Players read this in the handbook's Teams and Bosses section
+(`build/player-handbook-content.ts`), which must stay in step with this section.
 
 ### Humans unite against bosses, then settle it
 
@@ -519,7 +539,7 @@ concepts interact but are independent:
 
 | Event | Team targeting | Victory mode |
 |---|---|---|
-| Common Cause | Players share `ALLIANCE_TEAM`; ignore bosses as targets | `last-team` — fight ends when one faction survives |
+| Common Cause | Players share `ALLIANCE_TEAM` and never target each other | `last-team` — fight ends when one faction survives |
 | House War | Players split across two named houses (bosses excluded — see §4) | `last-team` — fight ends when one house survives |
 | Blood Feud | `freeForAll: true` — teams ignored for targeting | `last-contestant` — last monster standing wins |
 | The Gauntlet / The Reckoning / none | Normal team rules | `last-contestant` — last monster standing wins |

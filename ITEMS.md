@@ -45,7 +45,7 @@ which are not yet offered as a prompt-free web button.
 | Pokecen | Heals a monster; usable once. |
 | Spin Up | Revives a dead monster in a new sleeve; usable once. It has no effect on a living monster and is not consumed then. |
 | Lottery Ticket | Used on your character for a chance to win coins; usable once. |
-| Sorting Hat | Chooses a team, or **No team** if you are already on one. Every shop keeps one in stock, free. It asks a follow-up question, so use it through the console or Discord rather than the prompt-free web button. To leave a team without a hat, type `leave team`: it takes you and all your monsters off any team. |
+| Sorting Hat | Chooses a team, or **No team** if you are on one of your own. Teammates go after everyone else first and only turn on each other when nobody else is left. A monster with no team of its own fights for its beastmaster's. Every shop keeps one in stock, free. It asks a follow-up question, so use it through the console or Discord rather than the prompt-free web button. To leave a team without a hat, type `leave team`: it takes you and all your monsters off any team. |
 
 ## Targeting scrolls
 

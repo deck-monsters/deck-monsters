@@ -6,6 +6,7 @@ import { getTarget } from '../helpers/targeting-strategies.js';
 import { randomContestant } from '../helpers/bosses.js';
 import {
 	buildRingEventContext,
+	CHALLENGERS_TEAM,
 	getRingEvent,
 	selectRingEvent,
 	type RingEventDefinition,
@@ -55,11 +56,8 @@ const BOSS_AMBUSH_CHANCE_PERCENT = 10;
  */
 const AMBUSH_MINION_HP_SHARE = 1 / 3;
 const BOSS_LEVEL_BUDGET_SLACK = 1;
-/**
- * The side teamless humans fight on while any boss is still fighting. Cleared the moment the
- * last boss is down, so the humans settle it among themselves (owner: "unite, then settle").
- */
-export const CHALLENGERS_TEAM = 'The Challengers';
+// Defined beside ALLIANCE_TEAM so the player handbook can name it without loading the ring.
+export { CHALLENGERS_TEAM };
 /** Chance that arming a fight countdown also rolls a ring event. */
 const RING_EVENT_CHANCE_PERCENT = 25;
 
