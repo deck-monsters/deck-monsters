@@ -92,6 +92,7 @@ current contract.
 | [`docs/agents/working-in-this-repo.md`](docs/agents/working-in-this-repo.md) | Opening a PR, numbering a bug, running the verification gate, or doing live verification |
 | [`docs/agents/subagents.md`](docs/agents/subagents.md) | Delegating any part of a task to another agent |
 | [`docs/reference/voice-and-wording.md`](docs/reference/voice-and-wording.md) | Any player-facing string: prompts, help text, announcements, button labels, Discord descriptions |
+| [`docs/reference/strings/README.md`](docs/reference/strings/README.md) | Reviewing monster flavour copy or Unicorn card narration; links the per-monster string inventories |
 | [`docs/architecture/rooms-and-identity.md`](docs/architecture/rooms-and-identity.md) | Any game state, DB query, membership, identity, connector mapping, or event subscription. **Hard constraint, not a guideline.** |
 | [`docs/architecture/events-prompts-and-replay.md`](docs/architecture/events-prompts-and-replay.md) | `GameEvent`, visibility, persistence, prompts, reconnect, cursors, or history delivery |
 | [`docs/architecture/engine-concurrency-and-timing.md`](docs/architecture/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |

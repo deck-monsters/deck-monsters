@@ -58,6 +58,7 @@ Generated and authored player references remain at the repository root:
 | Trigger | Canonical document |
 |---|---|
 | Player-facing prompt, help, announcement, label, description, or game term | [Voice and wording](reference/voice-and-wording.md) |
+| Reviewing monster flavour strings or Unicorn card narration | [Monster and card strings](reference/strings/README.md) |
 | `channel({ question, choices })` call site or connector answer encoding | [Prompt/answer contract](reference/prompt-answer-contract.md) |
 | Sprite maps, Canvas/CSS pixel art, scaling, palettes, animation construction | [Pixel art](reference/pixel-art.md) |
 | Player agency, bounded live items, motivation evidence, or combat-control proposals | [Player agency](reference/player-agency.md) |
