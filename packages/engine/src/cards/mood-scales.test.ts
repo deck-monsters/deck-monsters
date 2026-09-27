@@ -106,6 +106,18 @@ describe('./cards/mood-scales.ts Mood Scales', () => {
 		expect(isFurious(dragon), 'a miss does not spend it').to.equal(true);
 	});
 
+	it('calms down properly: a calm play puts out a waiting fury and hides', async () => {
+		dragon.hp = 1;
+		await play();
+		expect(isFurious(dragon)).to.equal(true);
+
+		dragon.hp = dragon.maxHp;
+		await play();
+
+		expect(isFurious(dragon)).to.equal(false);
+		expect(isInvisible(dragon)).to.equal(true);
+	});
+
 	it('does not stack a second fury', async () => {
 		dragon.hp = 1;
 		await play();

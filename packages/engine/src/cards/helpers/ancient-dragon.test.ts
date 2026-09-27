@@ -10,6 +10,7 @@ import {
 } from './ancient-dragon.js';
 import { FireBreathCard, isBurning } from '../fire-breath.js';
 import { HitCard } from '../hit.js';
+import { HealCard } from '../heal.js';
 import { discountedLevelThreshold } from '../../helpers/levels.js';
 import Dragon from '../../monsters/dragon.js';
 import Minotaur from '../../monsters/minotaur.js';
@@ -124,6 +125,20 @@ describe('./cards/helpers/ancient-dragon.ts', () => {
 		hit.on('rolled', (_c: string, _card: any, { reason }: any) => reasons.push(reason));
 
 		await hit.play(dragon, ally, ring, contestants);
+
+		expect(reasons.some(reason => reason.includes('to outwit'))).to.equal(false);
+		expect(isExposed(dragon)).to.equal(false);
+	});
+
+	it('cannot be outwitted out of a heal that confusion turned onto an opponent', async () => {
+		setUp(ancientXp);
+		sinon.stub(Math, 'random').returns(0.999); // any roll would be a 20
+		const reasons: string[] = [];
+		const heal = new HealCard();
+		heal.on('rolled', (_c: string, _card: any, { reason }: any) => reasons.push(reason));
+		sinon.stub(heal, 'getTargets').returns([foe]);
+
+		await heal.play(dragon, foe, ring, contestants);
 
 		expect(reasons.some(reason => reason.includes('to outwit'))).to.equal(false);
 		expect(isExposed(dragon)).to.equal(false);

@@ -85,7 +85,12 @@ Furious (half your hp or less): your scales blaze red and you cannot hide, but y
 	}
 
 	override async effect(player: any, target: any, ring?: any): Promise<boolean> {
-		if (!target.bloodied) return super.effect(player, target);
+		// The two moods are alternatives: calming down puts out a fury still waiting for its hit,
+		// as turning furious strips a hide (a Codex review of PR #402).
+		if (!target.bloodied) {
+			target.encounterEffects = target.encounterEffects.filter((effect: any) => effect.effectType !== FURY_EFFECT);
+			return super.effect(player, target);
+		}
 
 		if (isFurious(target)) {
 			this.emit('narration', {

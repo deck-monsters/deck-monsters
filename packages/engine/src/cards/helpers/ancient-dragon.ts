@@ -3,6 +3,17 @@ import { ATTACK_PHASE, DEFENSE_PHASE } from '../../constants/phases.js';
 import { DRAGON } from '../../constants/creature-types.js';
 import { ANCIENT_DRAGON_EFFECT, EXPOSED_EFFECT } from '../../constants/effect-types.js';
 import { isOpponentHold } from './control-ward.js';
+import { ACOUSTIC, AOE, MELEE, POISON, PSYCHIC } from '../../constants/card-classes.js';
+
+/**
+ * Only an attack can be talked past. Every attack card is (or inherits) one of these
+ * classes; heals, boosts, and hides are not. Without this, Sandstorm redirecting an ancient
+ * dragon's Heal onto an opponent let that opponent "outwit" the heal, expose the dragon, and
+ * spend its one try (a Codex review of PR #402).
+ */
+const ATTACK_CLASSES = [MELEE, AOE, POISON, PSYCHIC, ACOUSTIC];
+export const isAttackCard = (card: any): boolean =>
+	ATTACK_CLASSES.some(cardClass => card?.isCardClass?.(cardClass));
 
 const { roll } = chance;
 
@@ -80,7 +91,7 @@ export function armAncientDragon(dragon: any): void {
 		// The dragon's own attack: each opponent gets one try per fight to outwit it. Only an
 		// opponent: an ally caught in the dragon's Tsunami must not talk its way out of the
 		// wave. `isOpponentHold` is the team rule the hold ward already uses.
-		if (phase === ATTACK_PHASE && player === dragon && typeof card.effect === 'function') {
+		if (phase === ATTACK_PHASE && player === dragon && typeof card.effect === 'function' && isAttackCard(card)) {
 			const { effect } = card;
 			card.effect = async (attacker: any, target: any, ...rest: any[]) => {
 				if (

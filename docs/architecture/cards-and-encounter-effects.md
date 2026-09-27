@@ -72,7 +72,10 @@ is resolved after the first has already been given back and never stacks.
   the card in the hand. `cards/helpers/empower-melee.ts` does it for the Dragon's dive and
   fury: it wraps the clone's `getAttackRoll` and `getDamageRoll`, adds to `modifier` (a
   natural 20 recomputes damage from the dice maximum plus `modifier`, so `bonusResult` would
-  be dropped), and skips the roll Hit makes for the *target* on a natural 1.
+  be dropped), and skips the roll Hit makes for the *target* on a natural 1. The damage die
+  is added once per play (Horn Gore rolls damage per horn) and reaches Hit Harder's
+  `{ betterRoll, worseRoll }` pair; its `onDamageBonus` hook fires only when it lands, which
+  is how Mood Scales' fury waits for a hit rather than an attempt.
 - **Reacting to someone else's card** (a dodge) means wrapping that clone's `effect` in the
   `DEFENSE_PHASE` call and checking `target === self` inside the wrapper, because the
   effect sees every card played in the ring, not only those aimed at its monster. Take Wing
@@ -126,7 +129,8 @@ asked for very old dragons to be "immensely powerful but occasionally able to be
 
 - **Fire Breath cannot be dodged** and burns for three turns instead of two. Fire Breath
   checks `isAncientDragon(player)`.
-- **Outwitted by talk.** Once per fight, each *opponent* an ancient dragon attacks rolls
+- **Outwitted by talk.** Once per fight, each *opponent* an ancient dragon attacks (with an
+  attack card: melee, area, poison, psychic, or acoustic, so a confused heal is not one) rolls
   1d20 + INT against 20 + the dragon's INT (a tie goes to the dragon). On a success that
   attack goes wide and the dragon is exposed, −4 AC until its next card. Opponents only,
   by `isOpponentHold`: an ally caught in the dragon's Tsunami must not talk its way out of
