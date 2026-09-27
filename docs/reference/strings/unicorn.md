@@ -170,6 +170,10 @@ Once per fight. Does not stack.
 | Ward armed on a confused target | `💎 In confusion, {player} lends {his} ward to {target}. The next hold on {him} will not take.` |
 | Ward already armed | `{target} is already braced against being held.` |
 | Ward already spent | `{target} has already refused one hold this fight. The ward will not rise again.` |
+| Armed ward rejects an opponent's hold | `{target} cannot be taken and held. {He} {refuses/refuse} to be {immobilized action}, and the Unconquerable Horn's ward is spent.` |
+
+`{immobilized action}` comes from the rejected card's action vocabulary, such as `immobilized`,
+`pinned`, `coiled`, or `enthralled`. `{refuses/refuse}` agrees with the target's pronouns.
 
 Examples:
 
@@ -178,6 +182,8 @@ Examples:
 - `💎 In confusion, Nola lends her ward to Bramble. The next hold on him will not take.`
 - `Bramble is already braced against being held.`
 - `Nola has already refused one hold this fight. The ward will not rise again.`
+- `Nola cannot be taken and held. She refuses to be pinned, and the Unconquerable Horn's ward is spent.`
+- `Rowan cannot be taken and held. They refuse to be enthralled, and the Unconquerable Horn's ward is spent.`
 
 ## Sticketh
 
@@ -194,7 +200,9 @@ Fail, and your horn is stuck fast: at the start of each of your turns, roll 1d20
 Natural 1 on either roll fails. Natural 20 on the charge deals max damage.
 ```
 
-Both dice placeholders default to `1d10`, producing `Charge: 1d10 +1 vs ac / Damage: 1d10`.
+The attack-dice placeholder inherits the shared hit-card default of `1d20`; the damage-dice
+placeholder defaults to `1d10`. Together they produce
+`Charge: 1d20 +1 vs ac / Damage: 1d10`.
 
 The card also supplies the action labels `stick fast`, `sticks fast`, and `stuck fast` to
 the shared immobilize flow.
