@@ -39,6 +39,13 @@ describe('build/strings-inventory', () => {
 		expect(unicorn).not.to.include('${');
 	});
 
+	it('renders ternaries as their branches, never as source', () => {
+		for (const [path, content] of Object.entries(inventories)) {
+			expect(content, path).not.to.match(/ \? ['"`]/);
+		}
+		expect(inventories['docs/reference/strings/weeping-angel']).to.include('Time shift {succeeded! / failed.}');
+	});
+
 	it('finds lines in other files that name a card', () => {
 		expect(inventories['docs/reference/strings/unicorn']).to.include(
 			'`packages/engine/src/cards/immobilize.ts` immobilize → narration'

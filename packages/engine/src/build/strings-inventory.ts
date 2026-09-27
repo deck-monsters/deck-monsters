@@ -121,6 +121,13 @@ const renderExpression = (expr: ts.Expression, ctx: RenderContext): string => {
 	if (ts.isStringLiteral(expr) || ts.isNoSubstitutionTemplateLiteral(expr) || ts.isNumericLiteral(expr)) {
 		return expr.text;
 	}
+	if (ts.isTemplateExpression(expr)) return renderLiteral(expr, ctx) ?? `{${expr.getText()}}`;
+	// A ternary shows both branches, `{if true / if false}`, with an empty branch as `—`, so a
+	// reviewer reads the words each branch can produce rather than the condition's source.
+	if (ts.isConditionalExpression(expr)) {
+		const branch = (node: ts.Expression): string => renderExpression(node, ctx) || '—';
+		return `{${branch(expr.whenTrue)} / ${branch(expr.whenFalse)}}`;
+	}
 	if (ts.isIdentifier(expr) && ctx.constants.has(expr.text)) return ctx.constants.get(expr.text) as string;
 	if (ts.isCallExpression(expr)) {
 		const callee = lastName(expr.expression);

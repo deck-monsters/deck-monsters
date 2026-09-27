@@ -66,9 +66,9 @@ On what would have been their next turn, if you are still alive you drain 1d4 hp
 | getCurseOverflowNarrative → returns | `{target}'s xp penalties have been maxed out. ⏎ {player}'s drain takes from hp instead.` |
 | effect → timeShiftReason | `vs {his} own int ({int}) in confusion.` |
 | effect → timeShiftReason | `vs {blinkTarget}'s int ({int}) in an attempt to time-shift {him}.` |
-| effect → outcome | `Time shift {attackSuccess.success ? 'succeeded!' : 'failed.'} {blinkTarget} {attackSuccess.success ? 'blinked!' : 'did not blink. The Doctor would be proud.'}` |
+| effect → outcome | `Time shift {succeeded! / failed.} {blinkTarget} {blinked! / did not blink. The Doctor would be proud.}` |
 | effect → effectResult | `not target-able because they are ⏳ time-shifted by` |
-| effect → effectResult | `⏳ time-shifted for {turnsLeftToBlink} more turn{turnsLeftToBlink > 1 ? 's' : ''} by` |
+| effect → effectResult | `⏳ time-shifted for {turnsLeftToBlink} more turn{s / —} by` |
 | effect → primaryDice | `{primaryDice} (hp) & {primaryDice} (xp)` |
 | effect → result | `{result} (hp) & {result} (xp)` |
 | effect → result | `{result} & {result}` |

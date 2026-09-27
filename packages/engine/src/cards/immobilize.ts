@@ -3,7 +3,7 @@ import { chance } from '../helpers/chance.js';
 import { ATTACK_PHASE } from '../constants/phases.js';
 import { capitalize } from '../helpers/capitalize.js';
 import { FREE } from '../helpers/costs.js';
-import { GLADIATOR, MINOTAUR, WEEPING_ANGEL } from '../constants/creature-types.js';
+import { GLADIATOR, MINOTAUR, UNICORN, WEEPING_ANGEL } from '../constants/creature-types.js';
 import { IMPOSSIBLE } from '../helpers/probabilities.js';
 import { signedNumber } from '../helpers/signed-number.js';
 import { agree } from '../helpers/pronouns.js';
@@ -384,7 +384,8 @@ ${ongoingDamageText}`;
 		) {
 			this.emit('narration', {
 				// Job 39:9 (King James): the Unconquerable Horn's voice; see unconquerable-horn.ts.
-				narration: `\n"Will the unicorn be willing to serve thee?" ${target.givenName} will not be taken and held. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'refuses', 'refuse')} to be ${this.actions.IMMOBILIZED}, and the Unconquerable Horn's ward is spent.`,
+				// Confusion can lend the ward to any creature, so only a Unicorn gets the quote.
+				narration: `\n${target.creatureType === UNICORN ? '"Will the unicorn be willing to serve thee?" ' : ''}${target.givenName} will not be taken and held. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'refuses', 'refuse')} to be ${this.actions.IMMOBILIZED}, and the Unconquerable Horn's ward is spent.`,
 			});
 			if (this.doDamageOnImmobilize) {
 				return super.effect(player, target, ring, activeContestants);

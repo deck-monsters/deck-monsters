@@ -89,8 +89,8 @@ Turns immobilized resets on curse of loki.
 | getCommentary → flavors | `bite off {his} ear` |
 | getCommentary → flavors | `grab {his} tongue and pull with all {his} might` |
 | getCommentary → commentary | `{player} rolled a 1. ⏎ {target} manages to take the opportunity of such close proximity to {player}'s face to {sample}.` |
-| emitRoll → reason | ``vs {his} own ac ({ac}){hornNumber ? ` for ${this.flavors.spike} ${hornNumber}` : ''} in confusion.`` |
-| emitRoll → reason | ``vs {target}'s ac ({ac}){hornNumber ? ` for ${this.flavors.spike} ${hornNumber}` : ''} to determine if gore was successful.`` |
+| emitRoll → reason | `vs {his} own ac ({ac}){ for {spike} {hornNumber} / —} in confusion.` |
+| emitRoll → reason | `vs {target}'s ac ({ac}){ for {spike} {hornNumber} / —} to determine if gore was successful.` |
 | immobilizeCheck → failMessage | `pin failed.` |
 | immobilizeCheck → outcome | `pin succeeded!` |
 | immobilizeCheck → reason | `to see if {he} pins {target}.` |
@@ -119,4 +119,4 @@ Roll twice for hit. Use the best roll. Stroke of Luck and Curse of Loki apply on
 | flavors → hits | `bellows in rage and charges, swinging horns back and forth in a blind rage. The crowds winces as a sickening wet sucking plunging sound reverberates throughout the ring and a horn stabs all the way into` |
 | getAttackCommentary → commentary | `({result}) {target} manages to block your first horn...` |
 | getAttackCommentary | `({result}) and your second horn as well.` |
-| getAttackCommentary | `({result}) {!horn1Success ? 'but' : target.givenName} fails to block your{!horn1Success ? ' second' : ''} horn.` |
+| getAttackCommentary | `({result}) {but / {target}} fails to block your{ second / —} horn.` |

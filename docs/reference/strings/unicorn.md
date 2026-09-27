@@ -201,4 +201,4 @@ Once per fight. Does not stack.
 
 | Where | Template |
 |---|---|
-| `packages/engine/src/cards/immobilize.ts` immobilize → narration | `"Will the unicorn be willing to serve thee?" {target} will not be taken and held. {He} {refuses/refuse} to be {IMMOBILIZED}, and the Unconquerable Horn's ward is spent.` |
+| `packages/engine/src/cards/immobilize.ts` immobilize → narration | `{"Will the unicorn be willing to serve thee?"  / —}{target} will not be taken and held. {He} {refuses/refuse} to be {IMMOBILIZED}, and the Unconquerable Horn's ward is spent.` |

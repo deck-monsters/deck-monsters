@@ -46,6 +46,8 @@ the code.
 - `{keeps/keep}`: a verb that agrees with the pronoun (`agree()`): the first form for
   he or she, the second for they.
 - `{is}` or `{s}`: a pronoun-dependent verb or suffix.
+- `{succeeded! / failed.}`: a ternary, showing what each branch prints; `—` is an empty
+  branch.
 - Any other `{name}` is a value filled at runtime, named after the variable or method that
   supplies it (`{freedomThresholdNarrative}` is the shared "will roll 11 or higher"
   sentence).
