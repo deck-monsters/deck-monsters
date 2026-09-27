@@ -383,7 +383,8 @@ ${ongoingDamageText}`;
 			consumeControlWard(target)
 		) {
 			this.emit('narration', {
-				narration: `\n${target.givenName} cannot be taken and held. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'refuses', 'refuse')} to be ${this.actions.IMMOBILIZED}, and the Unconquerable Horn's ward is spent.`,
+				// Job 39:9 (King James): the Unconquerable Horn's voice; see unconquerable-horn.ts.
+				narration: `\n"Will the unicorn be willing to serve thee?" ${target.givenName} will not be taken and held. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'refuses', 'refuse')} to be ${this.actions.IMMOBILIZED}, and the Unconquerable Horn's ward is spent.`,
 			});
 			if (this.doDamageOnImmobilize) {
 				return super.effect(player, target, ring, activeContestants);

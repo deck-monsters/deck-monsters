@@ -363,9 +363,10 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  🔔  Dissonant Voice  ◆
 ----------------------------------
 
- A cry that no throat that shape 
- should make. It is hard to aim 
- while it rings.
+ "There was nothing more horrible 
+ then the voice or braying of it, 
+ for the voyce is strained above 
+ measure." Stop thine ears.
 
 ==================================
 ```
@@ -526,9 +527,10 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  🌙  Gloaming Rest  ◇
 ----------------------------------
 
- Kneel among the laurel as the 
- light goes. Trust that nobody 
- strikes before you rise.
+ "At the sight of them they growe 
+ tame, and come and sleepe beside 
+ them." And then the hunters 
+ come. Rest, and beware.
 
 ==================================
 ```
@@ -594,9 +596,10 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  🏺  Horn of Proof  ◇
 ----------------------------------
 
- Dip the horn in the cup, and 
- whatever was poisoned is made 
- clean.
+ Kings drank from such horns and 
+ feared no cup, for the horn 
+ "doth wonderfully help against 
+ poisons."
 
 ==================================
 ```
@@ -794,10 +797,10 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  🦄  Sticketh  ◇
 ----------------------------------
 
- Charge horn-first. Old accounts 
- warn that a clever foe steps 
- aside, and the "sharp horn 
- sticketh fast."
+ "The Unicorn in the swiftness of 
+ his course runneth against the 
+ tree, wherein his sharp horn 
+ sticketh fast." Charge anyway.
 
 ==================================
 ```
@@ -853,8 +856,9 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  💎  Unconquerable Horn  ◆
 ----------------------------------
 
- They may be beaten, but they 
- will not be taken and held.
+ Canst thou bind the unicorn with 
+ his band in the furrow? Thou 
+ canst not. Many have tried.
 
 ==================================
 ```

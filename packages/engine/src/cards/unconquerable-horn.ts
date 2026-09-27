@@ -11,13 +11,19 @@ import { REASONABLE } from '../helpers/costs.js';
  * but taken he cannot bee". In the ring
  * that becomes one refusal to be held, not immunity to losing: the ward cancels the next
  * hold and nothing else. See cards/helpers/control-ward.ts for what counts as a hold.
+ *
+ * Player-facing lines quote Job 39:9-10 (King James, 1611): "Will the unicorn be willing to
+ * serve thee" and "Canst thou bind the unicorn with his band in the furrow?" See
+ * docs/roadmap/28-unicorn-voice-punch-up.md. The refusal line itself lives in
+ * cards/immobilize.ts, where the ward is spent.
  */
 export class UnconquerableHornCard extends BaseCard {
 	static cardClass = [BOOST];
 	static cardType = 'Unconquerable Horn';
 	static permittedClassesAndTypes = [UNICORN];
 	static probability = UNCOMMON.probability;
-	static description = 'They may be beaten, but they will not be taken and held.';
+	static description =
+		'Canst thou bind the unicorn with his band in the furrow? Thou canst not. Many have tried.';
 	static level = 1;
 	static cost = REASONABLE.cost;
 
@@ -41,12 +47,12 @@ Once per fight. Does not stack.`;
 		if (result === 'armed') {
 			narration =
 				player === target
-					? `${this.icon} ${player.givenName} lowers ${player.pronouns.his} horn and plants ${player.pronouns.his} hooves. The next hold will not take.`
+					? `${this.icon} ${player.givenName} lowers ${player.pronouns.his} horn and plants ${player.pronouns.his} hooves. Canst thou bind the unicorn? The next hold will not take.`
 					: `${this.icon} In confusion, ${player.givenName} lends ${player.pronouns.his} ward to ${target.givenName}. The next hold on ${target.pronouns.him} will not take.`;
 		} else if (result === 'already-armed') {
-			narration = `${target.givenName} is already braced against being held.`;
+			narration = `${target.givenName} already standeth braced. No band shall hold ${target.pronouns.him}.`;
 		} else {
-			narration = `${target.givenName} has already refused one hold this fight. The ward will not rise again.`;
+			narration = `${target.givenName} has already refused one hold this fight. The ward riseth not twice.`;
 		}
 
 		this.emit('narration', { narration });

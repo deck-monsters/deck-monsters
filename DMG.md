@@ -734,9 +734,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🔔  Dissonant Voice  ◆
 ----------------------------------
 
- A cry that no throat that shape 
- should make. It is hard to aim 
- while it rings.
+ "There was nothing more horrible 
+ then the voice or braying of it, 
+ for the voyce is strained above 
+ measure." Stop thine ears.
 
  Each opponent rolls 1d20 + int 
  vs your int. On a failure, their 
@@ -1106,9 +1107,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🌙  Gloaming Rest  ◇
 ----------------------------------
 
- Kneel among the laurel as the 
- light goes. Trust that nobody 
- strikes before you rise.
+ "At the sight of them they growe 
+ tame, and come and sleepe beside 
+ them." And then the hunters 
+ come. Rest, and beware.
 
  Kneel to rest: -2 ac until your 
  next card.
@@ -1255,9 +1257,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🏺  Horn of Proof  ◇
 ----------------------------------
 
- Dip the horn in the cup, and 
- whatever was poisoned is made 
- clean.
+ Kings drank from such horns and 
+ feared no cup, for the horn 
+ "doth wonderfully help against 
+ poisons."
 
  Remove one of these, in order: 
  your worst stat penalty this 
@@ -1641,10 +1644,10 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  🦄  Sticketh  ◇
 ----------------------------------
 
- Charge horn-first. Old accounts 
- warn that a clever foe steps 
- aside, and the "sharp horn 
- sticketh fast."
+ "The Unicorn in the swiftness of 
+ his course runneth against the 
+ tree, wherein his sharp horn 
+ sticketh fast." Charge anyway.
 
  Charge: 1d20 +1 vs ac / Damage: 
  1d10
@@ -1766,8 +1769,9 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  💎  Unconquerable Horn  ◆
 ----------------------------------
 
- They may be beaten, but they 
- will not be taken and held.
+ Canst thou bind the unicorn with 
+ his band in the furrow? Thou 
+ canst not. Many have tried.
 
  Ward yourself against the next 
  hold an opponent lands on you 

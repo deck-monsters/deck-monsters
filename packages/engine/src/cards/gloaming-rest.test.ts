@@ -78,7 +78,7 @@ describe('./cards/gloaming-rest.ts Gloaming Rest', () => {
 
 		expect(unicorn.hp).to.equal(4);
 		expect(unicorn.ac).to.equal(baseAc);
-		expect(narrations.join('\n')).to.include('They rise without its comfort');
+		expect(narrations.join('\n')).to.include('The hunters were waiting! Nola\'s rest is broken, and they rise without its comfort');
 	});
 
 	it('agrees the kneel line with the name, not the pronoun', async () => {

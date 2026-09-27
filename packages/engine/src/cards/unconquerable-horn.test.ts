@@ -61,7 +61,7 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 
 		expect(isHeld(unicorn)).to.equal(false);
 		expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('spent');
-		expect(narrations.join('\n')).to.include('Nola cannot be taken and held. She refuses to be immobilized');
+		expect(narrations.join('\n')).to.include('"Will the unicorn be willing to serve thee?" Nola will not be taken and held. She refuses to be immobilized');
 
 		// The second hold lands.
 		await hold.effect(foe, unicorn, ring, contestants);
@@ -135,7 +135,7 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 
 		await card.play(unicorn, foe, ring, contestants);
 		await card.play(unicorn, foe, ring, contestants);
-		expect(narrations[1]).to.include('already braced');
+		expect(narrations[1]).to.include('already standeth braced. No band shall hold her.');
 
 		unicorn.encounterModifiers[CONTROL_WARD] = 'spent';
 		await card.play(unicorn, foe, ring, contestants);
