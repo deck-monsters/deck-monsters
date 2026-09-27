@@ -33,42 +33,9 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
   Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest). The pass record and the
   original brief are archived as [26 — Unicorn content pack](../archive/roadmap/26-unicorn-pack.md).
 - [ ] **Unicorn voice punch-up.** The owner finds the Unicorn's flavour text bland (September
-  2026) and would like more edge, using real or lightly twisted quotes from the old sources
-  (now allowed; see "Quoting old texts" in
-  [cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules)).
-  The owner reviews every line before it ships. Verify each quotation against a scan of
-  the edition named, and update the [Unicorn strings inventory](../reference/strings/unicorn.md)
-  and its tests in the same change. Proposals:
-  - **Monster lore.** Open on Holland's Pliny (1601), which calls the monoceros "the most
-    fell and furious beast of all other", then the stag's head, elephant's feet, and boar's
-    tail, and "cannot possibly be caught alive". That is sharper than the current "No two
-    accounts agree". Close on Job 39:9–10 (King James, 1611): "Will the unicorn be willing
-    to serve thee… Canst thou bind the unicorn with his band in the furrow?"
-  - **The witness line.** Name the old authorities instead of "one witness": "Pliny swears
-    his voice is low as a lowing ox; Aelian calls Pliny a liar." Old names for the beast
-    (monoceros, licorne, cartazon) can vary with the witness.
-  - **Sticketh.** Spenser, *The Faerie Queene* II.v.10 (1590), is the tree trick in verse:
-    the foe "slips aside; the whiles that furious beast / His precious horne… / Strikes in
-    the stocke, ne thence can be releast". Shakespeare, *Julius Caesar* II.i: "unicorns may
-    be betray'd with trees". Either fits the card text or the miss narration ("The horn
-    sticketh fast!").
-  - **Unconquerable Horn.** Job 39:10, as above. Refusal narration could answer it: "Canst
-    thou bind the unicorn? Not today."
-  - **Dissonant Voice.** Golding's Solinus: it "belloweth horriblie". Holland's Pliny: it
-    "loweth after an hideous manner".
-  - **Gloaming Rest.** The bestiary story (from the *Physiologus* on) is that a unicorn
-    lays its head in a maiden's lap and sleeps, and that is how the hunters take it. The
-    card's risk already is that story: rest, and trust nobody strikes. Say so: "In the old
-    books, this is how they catch you." A broken rest: "The hunters were waiting."
-  - **Horn of Proof.** Find a public-domain line on unicorn horn as proof against poison
-    (Topsell is the likeliest source) before rewriting it.
-  - **Shakespeare for edge.** *Timon of Athens* IV.iii: "wert thou the unicorn, pride and
-    wrath would confound thee and make thine own self the conquest of thy fury". Good for a
-    natural-1 line or a boss taunt.
-  - **Old English.** Use early modern English (Shakespeare and King James) as the house
-    archaic register, since players can read it. True Old English is unreadable to most
-    players; if used at all, keep it to a rare easter egg, such as an Old English word for
-    "unicorn" in a name or title, checked in Bosworth-Toller first.
+  2026) and wants more edge from the old sources. Researched proposals for every Unicorn
+  string, with tagged quotations, a house style, and research requests, are in
+  [28 — Unicorn voice punch-up](28-unicorn-voice-punch-up.md), awaiting the owner's picks.
 - [ ] **Dragon.** A second requested monster, researched and built the way the Unicorn was.
   Research comes first; see the [Dragon research brief](#dragon-research-brief) below.
 - [ ] A qilin/kirin creature deserves its own sourced design rather than a cosmetic Unicorn
@@ -204,28 +171,59 @@ our own creature, built on the same public-domain roots the books draw on.
 
 ### Voice: give it edge from the start
 
-The Unicorn launched with careful, bland prose and needed a punch-up (see "Unicorn voice
-punch-up" above). Write the Dragon's voice with edge in the first draft, still readable
-aloud to an eight-year-old: exciting, funny, a little scary, never gory.
+The Unicorn launched with careful, mild prose and needed a punch-up
+([28](28-unicorn-voice-punch-up.md)). Write the Dragon's voice with edge in the first draft,
+still readable aloud to an eight-year-old: exciting, funny, a little scary, never gory.
+Use the house style and the [Q]/[Q?]/[T]/[A] tags from 28, so the owner can see at a glance
+which lines are real quotations.
 
-- **A dragon that talks back.** In the *Völsunga saga*, Fáfnir argues with Sigurd as he
-  dies; old dragons speak. A vain, sarcastic, boastful Dragon, in narration or its own
-  lines, has its source there and matches the feel of the books without borrowing from
-  them. Quote Morris and Magnússon's 1888 translation where it helps.
-- **Kennings as epithets.** *Beowulf*'s poet calls its dragon an "old dawn-ravager", a
-  "naked hate-dragon" that flies by night, an "air-flier", and a "fire-drake". Give each
-  spawned Dragon a random kenning title (the Dawn-Ravager, the Sky-Flier, the Hoard-Warden)
-  and invent more in the same pattern. Check each translation of the Old English against a
-  public-domain edition before quoting it. This is also where Old English can appear
-  readably: "wyrm" and "drake" are words most readers can guess.
-- **Taunts, boasts, and stat-panel humour.** The books' stat panels are funny because a
-  "Disobedience" score is a joke. Our own rated profile can carry jokes of its own (a
-  "Temper" or "Hoard Envy" score, say), invented rather than copied.
-- **Old sources with bite.** The King James Revelation's "great dragon… that old serpent"
-  and Pliny's dragon that coils around an elephant and dies crushed beneath it (Holland,
-  1601) are dramatic, public-domain, and quotable.
-- **Roman and Viking voices.** Roman soldiers who scorn barbarian dragons and Viking
-  bragging suit the arena and the Gladiator crossover, written as original lines.
+**Method.** The Unicorn's voice pass taught the order:
+
+1. List every string the Dragon will need before writing any: lore, look-at template,
+   each card's text, and each narration moment (hit, miss, natural 1 and 20, the card's
+   special outcome, cleanup).
+2. Mine the sources for lines with bite, not facts: insults, boasts, warnings, threats.
+   Record each with edition, passage, and a link, tagged [Q] or [Q?].
+3. For each string, draft two or three options: one quotation, one twist, one original
+   line in the old style. Put the most dramatic moment's line in the card text.
+4. Read every option aloud to the requester and keep what makes him laugh or lean in.
+   Record his picks in the brief.
+5. List what could not be checked as research requests for the owner, as 28 does, rather
+   than guessing.
+
+**Suggestions to start from.**
+
+- **A dragon that talks back.** In the *Völsunga saga* the dying Fáfnir argues with
+  Sigurd, who hides his name in a riddle: "I am called a noble beast: neither father have
+  I nor mother, and all alone have I fared hither" (trans. Morris and Magnússon, 1888, [Q]).
+  Old dragons speak, so a vain, sarcastic, boastful Dragon has its source there, not in the
+  books. Its taunts and boasts can be [A] lines in the saga's manner.
+- **Kennings as titles.** *Beowulf* calls its dragon *niðdraca*, "hate-dragon" (line
+  2273), *lyftfloga*, "air-flier" (2315), *ligdraca*, "fire-dragon" (2333, 3040), and
+  *uhtsceaða*, "dawn-ravager" (about 2271; confirm the line). Give each spawned Dragon a
+  random kenning title (the Dawn-Ravager, the Air-Flier, the Hoard-Warden) and invent more
+  in the same pattern. "Wyrm" and "drake" let Old English show up in a readable way.
+- **Wake it and regret it.** *Beowulf*'s dragon wakes because a thief takes one cup from
+  its hoard, and burns the country for it. A narration pattern: a small slight, then a
+  vast overreaction. That is funny and scary at once.
+- **Jokes in the stat profile.** The books' "Disobedience" score is a joke. Our own
+  profile can carry invented jokes ("Hoard Envy: 10", "Table Manners: 1").
+- **Old sources with bite.** The King James Revelation's "the great dragon was cast out,
+  that old serpent" (12:9) and Pliny's dragon that coils round an elephant and is crushed
+  when it falls (Holland, 1601; find the passage) are dramatic and quotable.
+- **Roman and Viking voices.** Roman soldiers who sneer at barbarian dragons, and Viking
+  boasting, suit the arena and the Gladiator crossover, written as [A] lines.
+
+**Research requests for the owner** (or an agent with archive access):
+
+1. The Fáfnir dialogue in Morris and Magnússon (Gutenberg, "The Story of the Volsungs",
+   chapter 18): copy the best exchanges, especially Fáfnir's warnings about the gold.
+2. *Beowulf* lines 2200–2400 in a public-domain translation (Gummere 1910, or Hall 1901)
+   for the dragon's waking and its kennings, with line numbers.
+3. Holland's Pliny, book 8: the dragon and elephant passage.
+4. The *Prose Edda*, trans. Brodeur (1916): Níðhöggr and Jörmungandr passages.
+5. From the requester: favourite dragon moments and jokes from the books, so our
+   originals can aim at the same feeling without borrowing them.
 
 ### Definition of done for the research step
 

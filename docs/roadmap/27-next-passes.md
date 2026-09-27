@@ -109,8 +109,8 @@ requester" questions.
   odd spacing (10 §F), and the emoji card-box border (10 §K, unless A5 absorbs it).
 - **Fight rewards never credited** (10 §J) needs production evidence; the in-process path
   is already proven.
-- **Unicorn voice punch-up** (12): a strings-only pass once the owner has picked lines
-  from the proposals. It is small, and it can run beside any pass because it touches only
+- **Unicorn voice punch-up** ([28](28-unicorn-voice-punch-up.md)): a strings-only pass
+  once the owner has picked lines from the proposals and the research requests are done. It is small, and it can run beside any pass because it touches only
   the Unicorn's strings, their tests, and the strings inventory.
 - **Content backlog** (12): Card Pops, Re-quip, the listed card ideas, the Time Lord and
   Bureaucrat monsters, and the optional data-driven card spec. Take them one per content
