@@ -222,8 +222,20 @@ export class Ring extends BaseClass {
 	activeContestant?: Contestant;
 	fightTimer?: ReturnType<typeof setTimeout>;
 	bossTimer?: ReturnType<typeof setTimeout>;
-	/** Pending per-boss despawn timers, so `dispose()` can cancel all of them. */
-	private readonly bossDespawnTimers = new Set<ReturnType<typeof setTimeout>>();
+	/**
+	 * Pending per-boss despawn timers, keyed by the boss's monster (spawnBoss's contestant is
+	 * copied by addMonster, so only the monster is shared), so `dispose()` can cancel all of them and
+	 * `dismissExtraBosses()` the one belonging to a boss it sends away (a review of Pass B found
+	 * dismissed bosses leaving their timers to fire into an empty slot minutes later).
+	 */
+	private readonly bossDespawnTimers = new Map<object, ReturnType<typeof setTimeout>>();
+	/**
+	 * Order of arrival. `contestants` is shuffled on every add outside tests, so its order says
+	 * nothing about who came in last; `dismissExtraBosses()` reads this instead (a review of
+	 * Pass B found "the newest" boss was really a random one in production).
+	 */
+	private readonly arrivalOrder = new WeakMap<Contestant, number>();
+	private arrivals = 0;
 	/** Epoch ms when the next boss will enter the ring (including the 2-min announcement window), or null if no timer is running. */
 	nextBossSpawnAt: number | null = null;
 	/** Epoch ms when the next fight will start, or null if no fight timer is active. */
@@ -475,6 +487,8 @@ export class Ring extends BaseClass {
 				...(summonedAt !== undefined ? { summonedAt } : {}),
 			};
 
+			this.arrivals += 1;
+			this.arrivalOrder.set(contestant, this.arrivals);
 			this.contestants = process.env.DECK_MONSTERS_DETERMINISTIC_RING
 				? [...this.contestants, contestant]
 				: shuffle([...this.contestants, contestant]);
@@ -714,7 +728,7 @@ export class Ring extends BaseClass {
 		for (const contestant of this.contestants) {
 			this.disposeTransientContestant(contestant);
 		}
-		for (const timer of this.bossDespawnTimers) {
+		for (const timer of this.bossDespawnTimers.values()) {
 			clearTimeout(timer);
 		}
 		this.bossDespawnTimers.clear();
@@ -743,7 +757,7 @@ export class Ring extends BaseClass {
 	dispose(): void {
 		clearTimeout(this.fightTimer);
 		clearTimeout(this.bossTimer);
-		for (const timer of this.bossDespawnTimers) {
+		for (const timer of this.bossDespawnTimers.values()) {
 			clearTimeout(timer);
 		}
 		this.bossDespawnTimers.clear();
@@ -886,7 +900,7 @@ export class Ring extends BaseClass {
 			challengers = [];
 			if (survivors.length > 1) {
 				this.emit('narration', {
-					narration: 'The last boss is down. The Challengers’ alliance is over: every monster for themselves!',
+					narration: "The last boss is down. The Challengers' alliance is over: every monster for themselves!",
 				});
 			}
 		};
@@ -1829,13 +1843,13 @@ export class Ring extends BaseClass {
 		if (random(1)) {
 			const ring = this;
 			const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
-				ring.bossDespawnTimers.delete(timer);
+				ring.bossDespawnTimers.delete(contestant.monster);
 				// removeMonster() (called via removeBoss) rejects if the boss is no
 				// longer in the ring — defensive catch for races where the timer
 				// fires in the same tick as clearRing()/dispose() draining the set.
 				ring.removeBoss(contestant).catch(() => {});
 			}, BOSS_DESPAWN_DELAY_MS);
-			this.bossDespawnTimers.add(timer);
+			this.bossDespawnTimers.set(contestant.monster, timer);
 		}
 
 		return contestant;
@@ -1849,7 +1863,10 @@ export class Ring extends BaseClass {
 	dismissExtraBosses(): void {
 		if (this.inEncounter) return;
 		const allowance = this.bossAllowance(true) + (this.ringEvent?.extraBosses ?? 0);
-		const bosses = this.contestants.filter(contestant => contestant.isBoss);
+		const arrival = (contestant: Contestant) => this.arrivalOrder.get(contestant) ?? 0;
+		const bosses = this.contestants
+			.filter(contestant => contestant.isBoss)
+			.sort((a, b) => arrival(a) - arrival(b));
 		const extras = bosses.slice(allowance).reverse();
 		if (extras.length === 0) return;
 
@@ -1858,6 +1875,8 @@ export class Ring extends BaseClass {
 			if (boss.summonedByUserId !== undefined && boss.summonedAt !== undefined) {
 				this.onSummonedBossRemoved?.(boss.summonedByUserId, boss.summonedAt);
 			}
+			clearTimeout(this.bossDespawnTimers.get(boss.monster));
+			this.bossDespawnTimers.delete(boss.monster);
 			this.disposeTransientContestant(boss);
 			this.emit('narration', {
 				narration: `With fewer challengers left in the ring, ${boss.monster.givenName} slips back into the shadows.`,

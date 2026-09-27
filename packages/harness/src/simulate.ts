@@ -75,7 +75,8 @@ export interface SimMonsterSpec {
 	 * like a boss for its deck, but with its own faction and default targeting). `human`: a
 	 * player, with a starting deck (`getInitialDeck`) and a few fills per level, equipped at
 	 * random, its own faction, and default targeting. `boss`: a real boss, exactly as the ring
-	 * spawns one: the Boss team, a boss deck, and boss targeting (TARGET_HUMAN_PLAYER_WEAK).
+	 * spawns one: the Boss team, a boss deck, and a boss temperament (a targeting strategy from
+	 * the engine's boss personalities).
 	 * Bosses are only realistic beside at least one human.
 	 */
 	role?: 'human' | 'boss';
@@ -483,7 +484,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 					const faction = m.team ?? (m.role === 'human' ? undefined : `solo:${names[i]!}`);
 					c.character.team = faction;
 					c.monster.team = faction;
-					// `randomContestant` gives every boss TARGET_HUMAN_PLAYER_WEAK. With no human
+					// `randomContestant` gives every boss a boss targeting strategy. With no human
 					// in a harness ring, that strategy falls back to a target chosen with teams
 					// ignored, so team fights measured friendly fire. The default (next player)
 					// is team-aware, and with one faction per teamless contestant it behaves the

@@ -988,6 +988,45 @@ describe('ring/index.ts', () => {
 			});
 		});
 
+		it('dismisses the newest boss by arrival, not array order, and cancels its despawn timer', () => {
+			// Outside tests the ring shuffles contestants on every add, so array order says nothing
+			// about arrival. The determinism switch stays on here (off, ring events arm themselves
+			// and a Gauntlet adds bosses); the test reverses the array instead, which puts the
+			// newest boss first. Math.random is not pinned (see the despawn-timer test above), so
+			// forty attempts all but guarantee the newest boss's 50/50 despawn timer is set at least once.
+			const clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+			let timersSeen = 0;
+			try {
+				for (let attempt = 0; attempt < 40; attempt += 1) {
+					const game = new Game({}, () => {});
+					const ring = game.getRing();
+					const refunds: Array<[string, number]> = [];
+					ring.onSummonedBossRemoved = (userId, at) => refunds.push([userId, at]);
+					addPlayer(ring, 'user-1');
+					addPlayer(ring, 'user-2');
+					ring.spawnBoss({ summonedByUserId: 'user-1', summonedAt: 111 });
+					ring.spawnBoss({ summonedByUserId: 'user-2', summonedAt: 222 });
+					ring.spawnBoss({ ignoreQuota: true, summonedByUserId: 'user-2', summonedAt: 333 });
+					expect(ring.bossCount).to.equal(3);
+					const newest = ring.contestants.find(c => c.summonedAt === 333)!;
+					const timers = (ring as any).bossDespawnTimers as Map<object, unknown>;
+					if (timers.has(newest.monster)) timersSeen += 1;
+
+					// One human left: one boss plus an ambush's one, so the newest goes.
+					ring.contestants = ring.contestants.filter(c => c.isBoss || c.userId !== 'user-2').reverse();
+					ring.dismissExtraBosses();
+
+					expect(ring.bossCount).to.equal(2);
+					expect(refunds).to.deep.equal([['user-2', 333]]);
+					expect(timers.has(newest.monster)).to.equal(false);
+					game.dispose();
+				}
+			} finally {
+				clock.restore();
+			}
+			expect(timersSeen).to.be.greaterThan(0);
+		});
+
 		it('no longer forces Common Cause when a second boss joins: humans unite in the fight itself', () => {
 			const game = new Game({}, () => {});
 			const ring = game.getRing();

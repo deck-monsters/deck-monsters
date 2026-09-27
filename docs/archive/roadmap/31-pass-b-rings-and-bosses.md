@@ -47,6 +47,13 @@ Found while scoping:
 | 4 | Boss personalities, and teams made easy: the Sorting Hat in every shop (with a "No team" choice) and a free `leave team` command (owner request, 2026-09-27) | Done | c1b5d24 |
 | 5 | Docs close-out, generated references, independent review | Done | this commit |
 
+The independent review (task 5) found two faults in `dismissExtraBosses()`, fixed before
+merge: outside tests the ring shuffles `contestants` on every add, so "the newest boss" it
+sent away was really a random one (the ring now records arrival order); and a dismissed
+boss's despawn timer stayed armed (timers are now keyed by the boss's monster and cancelled
+with it). The unit test that missed the first ran with the test-only determinism switch,
+which keeps arrival order; the new test reverses the array.
+
 ## Evidence before any change (`sim:bosses`, 200 fights per row)
 
 | Scenario | Human wins |
