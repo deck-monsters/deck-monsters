@@ -63,6 +63,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Lucky Strike](#lucky-strike)
 - [Mesmerize](#mesmerize)
 - [Molasses](#molasses)
+- [Mood Scales](#mood-scales)
 - [Pick Pocket](#pick-pocket)
 - [Pound](#pound)
 - [1993-09-7202 18:58](#1993-09-7202-1858)
@@ -74,6 +75,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Survival Knife](#survival-knife)
 - [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
+- [Tsunami](#tsunami)
 - [Turkey Thigh](#turkey-thigh)
 - [Unconquerable Horn](#unconquerable-horn)
 - [Vengeful Rampage](#vengeful-rampage)
@@ -707,6 +709,21 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ==================================
 ```
 
+### Mood Scales
+
+```text
+==================================
+ 🦎  Mood Scales  ◇
+----------------------------------
+
+ Pliny's chameleon taketh the 
+ colour of whatsoever it is next 
+ unto. A dragon's scales take the 
+ colour of its temper.
+
+==================================
+```
+
 ### Pick Pocket
 
 ```text
@@ -861,6 +878,21 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  Grow a heavy layer of scales to 
  deflect the blows of thine 
  enemies.
+
+==================================
+```
+
+### Tsunami
+
+```text
+==================================
+ 🌊  Tsunami  ☆
+----------------------------------
+
+ "He maketh the deep to boil like 
+ a pot... he maketh a path to 
+ shine after him." Then the sea 
+ stands up and falls on everyone.
 
 ==================================
 ```

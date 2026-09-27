@@ -41,6 +41,7 @@ import { KalevalaCard } from '../kalevala.js';
 import { LuckyStrike } from '../lucky-strike.js';
 import { MesmerizeCard } from '../mesmerize.js';
 import { MolassesCard } from '../molasses.js';
+import { MoodScalesCard } from '../mood-scales.js';
 import { PickPocketCard } from '../pick-pocket.js';
 import { PoundCard } from '../pound.js';
 import { PrionDiseaseCard } from '../prion-disease.js';
@@ -52,6 +53,7 @@ import { StickethCard } from '../sticketh.js';
 import { SurvivalKnifeCard } from '../survival-knife.js';
 import { TakeWingCard } from '../take-wing.js';
 import { ThickSkinCard } from '../thick-skin.js';
+import { TsunamiCard } from '../tsunami.js';
 import { TurkeyThighCard } from '../turkey-thigh.js';
 import { UnconquerableHornCard } from '../unconquerable-horn.js';
 import { VenegefulRampageCard } from '../vengeful-rampage.js';
@@ -102,6 +104,7 @@ const all = [
 	LuckyStrike,
 	MesmerizeCard,
 	MolassesCard,
+	MoodScalesCard,
 	PickPocketCard,
 	PoundCard,
 	PrionDiseaseCard,
@@ -113,6 +116,7 @@ const all = [
 	SurvivalKnifeCard,
 	TakeWingCard,
 	ThickSkinCard,
+	TsunamiCard,
 	TurkeyThighCard,
 	UnconquerableHornCard,
 	VenegefulRampageCard,

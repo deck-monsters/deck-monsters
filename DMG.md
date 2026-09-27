@@ -194,6 +194,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Lucky Strike](#lucky-strike)
 - [Mesmerize](#mesmerize)
 - [Molasses](#molasses)
+- [Mood Scales](#mood-scales)
 - [Pick Pocket](#pick-pocket)
 - [Pound](#pound)
 - [1993-09-7202 18:58](#1993-09-7202-1858)
@@ -205,6 +206,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Survival Knife](#survival-knife)
 - [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
+- [Tsunami](#tsunami)
 - [Turkey Thigh](#turkey-thigh)
 - [Unconquerable Horn](#unconquerable-horn)
 - [Vengeful Rampage](#vengeful-rampage)
@@ -1489,6 +1491,38 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 ==================================
 ```
 
+### Mood Scales
+
+```text
+==================================
+ 🦎  Mood Scales  ◇
+----------------------------------
+
+ Pliny's chameleon taketh the 
+ colour of whatsoever it is next 
+ unto. A dragon's scales take the 
+ colour of its temper.
+
+ Calm (above half your hp): your 
+ scales match the rocks and sea, 
+ and you are hidden until you 
+ play a card that targets another 
+ player, or for the next 2 cards 
+ you play (1d20 vs your int for 
+ an opponent to find you).
+ Furious (half your hp or less): 
+ your scales blaze red and you 
+ cannot hide, but your next melee 
+ hit does +1d6 damage.
+
+ Level: 1
+ Usable by: Dragon
+ MSRP: 80
+ Class: Hide
+
+==================================
+```
+
 ### Pick Pocket
 
 ```text
@@ -1784,6 +1818,30 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  Heal chance: 20% | HPT: 0
  MSRP: 50
  Class: Boost
+
+==================================
+```
+
+### Tsunami
+
+```text
+==================================
+ 🌊  Tsunami  ☆
+----------------------------------
+
+ "He maketh the deep to boil like 
+ a pot... he maketh a path to 
+ shine after him." Then the sea 
+ stands up and falls on everyone.
+
+ 5 damage to everyone in the 
+ ring: every opponent, every 
+ ally, and you.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 130
+ Class: AOE
 
 ==================================
 ```

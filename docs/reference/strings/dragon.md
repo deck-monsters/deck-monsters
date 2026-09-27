@@ -80,6 +80,30 @@ Winded afterwards: -2 ac until your next card.
 | wind → narration | `{player} has {his} breath back.` |
 | wind → narration | `🔥 {player} is winded, and smoke trails from {his} nostrils. (-2 ac until {his} next card.)` |
 
+## Mood Scales
+
+Source: `packages/engine/src/cards/mood-scales.ts`.
+
+**Card description:** `Pliny's chameleon taketh the colour of whatsoever it is next unto. A dragon's scales take the colour of its temper.`
+
+**Rules text:**
+
+```text
+Calm (above half your hp): your scales match the rocks and sea, and you are hidden until you play a card that targets another player, or for the next 2 cards you play (1d20 vs your int for an opponent to find you).
+Furious (half your hp or less): your scales blaze red and you cannot hide, but your next melee hit does +1d6 damage.
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| hideNarration → returns | `🦎 {target} is calm. {His} scales turn the colour of the rocks and the sea, and {he} {fades/fade} from sight.` |
+| concealNarration → returns | `{target} holds very still, and the colours deepen.` |
+| revealNarration → returns | `{target}'s scales flush with colour again.` |
+| enrage → narration | `{target} strikes in a fury!` |
+| effect → narration | `{target} is already furious, and glows a little redder.` |
+| effect → narration | `🦎 {target} is furious! {His} scales blaze red, and there is no hiding now. (Next melee hit: +1d6 damage.)` |
+
 ## Take Wing
 
 Source: `packages/engine/src/cards/take-wing.ts`.
@@ -105,3 +129,24 @@ Any damage that lands while you are in the air knocks you down, and the dive is 
 | effect → narration | `{target} is already in the air, and climbs a little higher.` |
 | effect → narration | `🌬️ {player} spreads {his} wings and takes to the sky.` |
 | effect → narration | `🌬️ In confusion, {player} flings {target} into the air.` |
+
+## Tsunami
+
+Source: `packages/engine/src/cards/tsunami.ts`.
+
+**Card description:** `"He maketh the deep to boil like a pot... he maketh a path to shine after him." Then the sea stands up and falls on everyone.`
+
+**Rules text:**
+
+```text
+5 damage to everyone in the ring: every opponent, every ally, and you.
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| flavors → hits | `brings the sea down on` |
+| flavors → hits | `sweeps away` |
+| flavors → hits | `gives a very thorough bath to` |
+| effect → flavorText | `{icon} 🌊  The wave comes back for {player} too: 5 damage.` |

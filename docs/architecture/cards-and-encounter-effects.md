@@ -57,9 +57,29 @@ fight state on `card.options` (it is persisted with the deck), and do not add a
 
 `encounterModifiers.ac` is a single number with two meanings. A positive value is a
 **brace**: `creature.hit()` spends it to absorb melee damage. A negative value is a
-**curse** (Soften) or a temporary penalty (Gloaming Rest). A card that lowers AC for a
-while must give back exactly what it took, as Gloaming Rest does; a cleanse that lifts
+**curse** (Soften) or a temporary penalty (Gloaming Rest, Fire Breath's winded). A card
+that lowers AC for a while must give back exactly what it took, as those two do; a cleanse that lifts
 negative AC must not lift another card's temporary penalty, as Horn of Proof checks.
+
+### "Until your next card" and one-play bonuses
+
+An effect that lasts until its monster's next card is an encounter effect that answers the
+`ATTACK_PHASE` call for that monster and removes itself: Gloaming Rest, Fire Breath's
+winded, and Take Wing's flight all work this way, so a second copy played as that next card
+is resolved after the first has already been given back and never stacks.
+
+- **A bonus on the next attack** goes on the per-play clone the effect is handed, never on
+  the card in the hand. `cards/helpers/empower-melee.ts` does it for the Dragon's dive and
+  fury: it wraps the clone's `getAttackRoll` and `getDamageRoll`, adds to `modifier` (a
+  natural 20 recomputes damage from the dice maximum plus `modifier`, so `bonusResult` would
+  be dropped), and skips the roll Hit makes for the *target* on a natural 1.
+- **Reacting to someone else's card** (a dodge) means wrapping that clone's `effect` in the
+  `DEFENSE_PHASE` call and checking `target === self` inside the wrapper, because the
+  effect sees every card played in the ring, not only those aimed at its monster. Take Wing
+  checks HP before and after the wrapped effect to see whether anything landed.
+- **A self-hit that is not a mistake.** The hit line says "…himself by mistake" when the
+  assailant is the target. A card that hurts its own player on purpose (Tsunami) sets
+  `flavorText` on its clone for that one hit and clears it after.
 
 ### The hit log records what a blow carried and what it took
 
