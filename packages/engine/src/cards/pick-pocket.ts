@@ -27,6 +27,8 @@ export class PickPocketCard extends BaseCard {
 		ring: any,
 		activeContestants: any
 	): Promise<any> {
+		// Lets a boss's steal narration reach the room feed; see BaseCard.playedBy.
+		this.playedBy = player;
 		this.emit('played', { player });
 
 		const mostExperienced = (getTarget({

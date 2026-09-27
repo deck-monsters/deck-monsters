@@ -268,7 +268,13 @@ class Beastmaster extends BaseCharacter {
 
 				return equip({ deck: this.deck, monster, cardSelection, channel })
 					.then(() => this.reconcileDeckAfterEquip(monster, previousCards))
-					.then(() => channel({ announce: `${monster.givenName} is good to go!` }))
+					// "Good to go" is the full-hand line; a partial hand cannot enter the ring
+					// (sendMonsterToTheRing refuses it), so say so instead (10b #189).
+					.then(() => channel({
+						announce: monster.cards.length >= monster.cardSlots
+							? `${monster.givenName} is good to go!`
+							: `${monster.givenName} holds ${monster.cards.length} of ${monster.cardSlots} cards. Fill the rest before the ring.`,
+					}))
 					.then(() => monster);
 			});
 	}

@@ -30,6 +30,8 @@ export class RandomCard extends BaseCard {
 		ring?: any,
 		activeContestants?: any
 	): Promise<any> {
+		// Lets a boss's narration reach the room feed; see BaseCard.playedBy.
+		this.playedBy = player;
 		this.emit('played', { player });
 
 		// Narrated and paced via playNestedCard: without it the drawn card's own

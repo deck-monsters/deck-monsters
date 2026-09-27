@@ -94,7 +94,9 @@ const hydrateCharacter = (characterObj: CharacterObj, log?: (msg: string) => voi
 	(options as any).monsters = (options.monsters as unknown[])
 		.map((monsterObj: unknown) => {
 			try {
-				return _hydrateMonster(monsterObj, options.deck);
+				// No deck argument: a hand must not share card objects with the unequipped
+				// deck (10b #191).
+				return _hydrateMonster(monsterObj);
 			} catch (err) {
 				log?.(`Failed to hydrate monster, skipping: ${err}`);
 				return null;

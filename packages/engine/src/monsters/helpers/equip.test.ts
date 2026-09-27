@@ -346,5 +346,101 @@ describe('equip helpers', () => {
 			expect(monster.cards).to.equal(originalCards);
 			expect(monster.cards.map((card: { cardType: string }) => card.cardType)).to.deep.equal(['Flee']);
 		});
+		// A console line is the open prompt's answer. "send Brass to the ring" matched no card,
+		// read as an empty pick, and finished the hand with slots empty (10b #189).
+		it('re-asks, hand kept open, when an answer names no card', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal'), makeCard('Blast')];
+			const monster = makeMonster(3) as any;
+			const announcements: string[] = [];
+			const answers = ['0', 'send brass to the ring', '1', 'done'];
+			let promptRound = 0;
+
+			const channel = async ({ announce, question }: { announce?: string; question?: string }) => {
+				if (announce) {
+					announcements.push(announce);
+					return undefined;
+				}
+				if (!question) return undefined;
+				promptRound += 1;
+				if (promptRound > answers.length) throw new Error('equip loop did not finish');
+				return answers[promptRound - 1];
+			};
+
+			const result = await equipMonster({ deck: deck as any, monster, channel: channel as any });
+
+			expect(promptRound).to.equal(4);
+			// Catalogued alphabetically: Blast, Heal, Hit; after Blast, the list is Heal, Hit.
+			expect(result.map((c: { cardType: string }) => c.cardType)).to.deep.equal(['Blast', 'Hit']);
+			expect(announcements).to.include(
+				'"send brass to the ring" isn\'t one of the cards. Pick cards by name or number, or reply "done" to finish.'
+			);
+			expect(announcements.join('\n')).not.to.match(/Skipped an invalid selection/);
+		});
+
+		it('leaves out the "done" hint while nothing is chosen yet', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal')];
+			const monster = makeMonster(1) as any;
+			const announcements: string[] = [];
+			const answers = ['look at brass', 'hit'];
+			let promptRound = 0;
+
+			const channel = async ({ announce, question }: { announce?: string; question?: string }) => {
+				if (announce) {
+					announcements.push(announce);
+					return undefined;
+				}
+				if (!question) return undefined;
+				promptRound += 1;
+				return answers[promptRound - 1];
+			};
+
+			const result = await equipMonster({ deck: deck as any, monster, channel: channel as any });
+
+			expect(result.map((c: { cardType: string }) => c.cardType)).to.deep.equal(['Hit']);
+			expect(announcements).to.include('"look at brass" isn\'t one of the cards. Pick cards by name or number.');
+		});
+
+		it('still honours a cancel while re-asking', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal')];
+			const monster = makeMonster(2) as any;
+			monster.cards = [makeCard('Flee')];
+			const answers: unknown[] = ['0', 'clear deck brass', PROMPT_CANCELLED];
+			let promptRound = 0;
+
+			const channel = async ({ question }: { announce?: string; question?: string }) => {
+				if (!question) return undefined;
+				promptRound += 1;
+				return answers[promptRound - 1];
+			};
+
+			const err = await equipMonster({ deck: deck as any, monster, channel: channel as any }).catch(
+				(error: unknown) => error
+			);
+
+			expect((err as Error).name).to.equal('PromptCancelledError');
+			expect(monster.cards.map((card: { cardType: string }) => card.cardType)).to.deep.equal(['Flee']);
+		});
+
+		it('says "equipped" when finishing a partial hand', async () => {
+			const deck = [makeCard('Hit'), makeCard('Heal'), makeCard('Blast')];
+			const monster = makeMonster(3) as any;
+			const announcements: string[] = [];
+			let promptRound = 0;
+
+			const channel = async ({ announce, question }: { announce?: string; question?: string }) => {
+				if (announce) {
+					announcements.push(announce);
+					return undefined;
+				}
+				if (!question) return undefined;
+				promptRound += 1;
+				return promptRound === 1 ? '0' : 'done';
+			};
+
+			await equipMonster({ deck: deck as any, monster, channel: channel as any });
+
+			expect(announcements.join('\n')).to.include("You've equipped the following cards");
+			expect(announcements.join('\n')).not.to.include('equiped');
+		});
 	});
 });

@@ -75,8 +75,18 @@ fight id. That interval can include private XP/coin narration and prompts from m
 players. `loadFightEventsForSummary` therefore combines:
 
 - `room_id = requested room`;
-- the summary time window;
+- the summary time window, matched against the **engine** time in `event_id`
+  (`${Date.now()}-${uuid8}`, the same clock as the summary's `started_at` and `ended_at`),
+  not against `created_at`. Rows are inserted after their engine time, and under skipped
+  delays a whole fight finishes before its first row is written, so an insert-time window
+  returned nothing (10b #187). Do not pad the window instead: it would attach the next
+  fight's rows. `created_at` is only a loose index bound. Rows whose `event_id` is null
+  or not an engine id (`ENGINE_EVENT_ID_PATTERN`, a 13-digit millisecond prefix) keep the
+  insert-time rule;
 - `eventVisibilityFor(viewerUserId)`.
+
+`RoomEventBus.publish` takes one clock reading for both the id and `timestamp`, so the two
+cannot disagree by a millisecond at a fight's edge.
 
 Never replace that predicate with room membership. A trusted stats projection may observe
 all private reward events with `includePrivate`; a player-facing history query may not.

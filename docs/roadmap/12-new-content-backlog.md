@@ -59,7 +59,9 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
 
 ## Dragon research brief
 
-**Status:** Requested by the owner (September 2026); research and design not started. The
+**Status:** Requested by the owner (September 2026); the first source and design research is
+saved in [29 — Dragon Research Round](29-dragon-research.md). Owner/requester review and
+scan-level quotation verification remain open. The
 Unicorn pack is the model: a sourced creative thesis, a monster specification with ranges
 rather than final numbers, a handful of related cards, then a pass plan with slices,
 simulation evidence, and a live check. Nothing below is decided; the leanings recorded here
@@ -103,9 +105,11 @@ our own creature, built on the same public-domain roots the books draw on.
     get out with the help of a tiny, arrogant dragon and its king's plan. That fits the
     owner's memory of tiny, almost insect-like dragons saving the day. It is our ring, with
     Romans, which is the Gladiator's world.
-  - **Still to ask the requester:** his favourite dragons and why; whether he wants to
-    raise a small dragon that grows or command a big one from the start; and which moments
-    he would want as cards.
+  - **Asked for by the requester:** a **flight** card and a **fire-breath** card. The names
+    are open; the two ideas are requirements of the pack.
+  - **Still to ask the requester:** the list lives in
+    [29 — Dragon research](29-dragon-research.md#ask-the-requester-first), so it has one
+    home. The small-or-big answer also steers the class choice there.
 - **Audience and tone.** Narration should be exciting and funny rather than gory, readable
   aloud to an eight-year-old, and follow [voice and wording](../reference/voice-and-wording.md).
   The owner's son is a natural playtester for the strings inventory and the finished monster.
@@ -240,10 +244,12 @@ which lines are real quotations.
 
 ### Definition of done for the research step
 
-A design brief in this file with the same sections the Unicorn brief had (creative thesis,
+A design brief with the same sections the Unicorn brief had (creative thesis,
 sources and quotation policy, monster specification, three to five related cards with their
 risks and counterplay, implementation slices, acceptance gates), reviewed by the owner before
-any code is written. The brief also records the requester's answers to "Still to ask", and
+any code is written. The research and the draft specification live in
+[29](29-dragon-research.md); this section stays the requirements. The brief also records the
+requester's answers, and
 its strings inventory is read aloud to the requester before the content pass starts.
 
 ## World and long-term goals

@@ -4360,3 +4360,194 @@ The `monsters` branch that handles `in detail` was never reached for this phrasi
 monster list. The detail test fails without the fix.
 
 **Status**: Fixed.
+
+### 185. `unequip all from [monster]` looked for a card named "all" — FIXED
+
+The command catalogue lists `unequip all from [monster]` ("Clear a monster's full deck").
+Typed for Brass, the console answered "Brass is not holding all." `clear deck Brass`
+worked. Found in the browser sweep on 2026-09-26.
+
+**Root cause**: `UNEQUIP_CARD_REGEX` (`unequip (?:(\d+) )?(.+?) from …`) was registered
+before `UNEQUIP_ALL_REGEX` in `commands/monster.ts`, and dispatch keeps the first match
+(`commands/index.ts`). The card pattern's `.+?` took "all" as the card name, so the
+all-command handler never ran.
+
+**Fix**: the unequip-all handler is registered first, and the card pattern refuses
+`all from` with a negative lookahead, so the result no longer depends on registration
+order.
+
+**Tests**: `commands/unequip-dispatch.test.ts` goes through `listen()` dispatch, not the
+regex alone (a regex test passed while the command was broken). It covers
+`unequip all from`, `clear deck`, and a single card with a count. The all-command test
+fails without the fix.
+
+**Status**: Fixed.
+
+### 186. Three-word card names abbreviated to unreadable labels ("Fig or Fli") — FIXED
+
+Test Room A's deck showed Fight or Flight as "Fig or Fli" under a utility diamond. The
+slot's title attribute had the full name, but a phone has no hover, so the label was all a
+player could read. Found in the browser sweep on 2026-09-26.
+
+**Root cause**: `abbreviateCardName` (`apps/web/src/utils/cards.ts`) cut every name over
+twelve characters to three letters of each of its first three words, or four letters of
+each of two. It ignored that `.workshop-card-name` already wraps to two lines, so it threw
+away space the label had.
+
+**Fix**: names over twelve characters keep their whole words and render at a compact size
+(`.workshop-card-name.compact`, 0.64rem), and only a single word longer than ten
+characters is shortened ("Unconquerable" → "Unconq."). The budget was measured in
+Chromium: at the narrowest deck slot (70px) every long name in the catalogue now fits two
+lines at 70, 72, and 85px without clipping.
+
+**Tests**: `apps/web/src/__tests__/cards-utils.test.ts` covers Fight or Flight and every
+other three-word name in the catalogue, the long-word rule, and the compact flag.
+
+**Status**: Fixed.
+
+### 187. A skipped-delay fight's log expanded to no events — FIXED
+
+A scratch Minotaur beat a summoned boss. The ring feed had the full narration and the
+summary row was right, but expanding the fight showed "Events during this fight" over an
+empty list; `game.fight` returned `events: []`. Found in the browser sweep on 2026-09-26.
+Older, slower fights still returned their events.
+
+**Root cause**: `loadFightEventsForSummary` (`packages/server/src/analytics-queries.ts`)
+kept `room_events` whose `created_at` fell inside the summary's `started_at`–`ended_at`.
+Those bounds are engine event timestamps, but `created_at` is the insert time, which is
+always later. With `DECK_MONSTERS_SKIP_DELAYS` the bout lasted 50ms and every row was
+inserted after it resolved, so the window held nothing. A second, smaller mismatch:
+`RoomEventBus.publish` read the clock twice, once for the id and once for `timestamp`.
+
+**Fix**: rows are selected by the engine time in `event_id` (its `Date.now()` prefix),
+from the fight's first millisecond to its last. `created_at` stays only as a loose index
+bound (resolve time plus ten minutes); rows whose id is null or not an engine id
+(`ENGINE_EVENT_ID_PATTERN`) keep the old rule. A review caught that the first version
+fell back only for null ids, so a non-null legacy id (the kind `game-event-map.ts`
+already tolerates) matched neither rule and dropped out of the log. The window
+is not padded, because `room_events` has no fight id and padding would attach the next
+fight's rows. `publish` now reads the clock once for both fields.
+
+**Tests**: `analytics-queries.fight-events.test.ts` checks that the predicate binds the
+event-id range and that its insert-time bound reaches well past the resolve timestamp
+(a row inserted after the fight still counts). `fightEventIdBounds` tests include both
+edge milliseconds and exclude the neighbours, and the pattern tests cover legacy ids and
+the fallback's presence in the query.
+
+**Status**: Fixed.
+
+### 188. The first-run Workshop said "Applying changes…" and polled a shop that 404s — FIXED
+
+On Test Room B, where the member had no character yet, the Workshop banner read
+"Applying changes…" while nothing was changing, and the network log showed `game.shop`
+returning 404 every 30 seconds. Found in the browser sweep on 2026-09-26.
+
+**Root cause**: two problems in `apps/web/src/hooks/useDeckWorkshop.ts`. `game.shop` throws
+`NOT_FOUND` ("Character not found") without a character (`packages/server/src/trpc/router.ts`),
+but the hook enabled it for every room with a 30-second refetch. And `busy` included
+`inventoryQuery.isFetching` and `shopQuery.isFetching`, so every background poll showed the
+banner (`busy && !consoleFlowActive`) and disabled Train, presenting a fetch as a mutation.
+
+**Fix**: the shop query is enabled only when `myInventory` reports `hasCharacter`; spawning
+invalidates the inventory, which turns it on. The Sync button's manual `refresh()` also
+skips the shop until then, because a manual refetch runs even while a query is disabled
+(caught by review). `busy` now follows in-flight mutations and
+console flows only. Each mutation's `onSuccess` awaits its own invalidate-and-refetch, so
+`isPending` still covers the refresh after a change. The server keeps its `NOT_FOUND`,
+since no other caller needs an empty shop.
+
+**Tests**: `useDeckWorkshop.test.ts` covers the shop query off without a character and on
+with one, Sync skipping the shop without a character, not busy during background
+refetches, and busy during a mutation.
+
+**Status**: Fixed.
+
+### 189. A short equip ate the next command, then called a partial hand "good to go" — FIXED
+
+A Minotaur was equipped in one line with a deck that included Blast, which only a Cleric
+can hold. The console said the monster could not hold Blast and left the "which card
+next" prompt open. The next commands (`send Brass to the ring`, then `clear deck Brass`)
+were read as card picks ("Skipped an invalid selection: …"), the flow finished the
+partial hand ("You've equiped the following cards"), and announced "Brass is good to go!"
+with slots still empty. `summon a boss` then refused, because the send had never run.
+Found in the browser sweep on 2026-09-26.
+
+**Root cause**: three layers. `equipMonster` keeps prompting while slots and legal cards
+remain (`monsters/helpers/equip.ts`), and a console line is that prompt's answer.
+`chooseItems` skips tokens that name no card and returns an empty pick, and the equip
+continuation treats an empty pick after a partial batch as "finish with what you have".
+`Beastmaster.equipMonster` then always announced "is good to go!" without checking the
+hand against `cardSlots`. The finish lines also spelled it "equiped".
+
+**Fix** (owner's choice: re-ask with the hand kept open): an answer that names no card on
+offer, by number or name, is refused with `"<line>" isn't one of the cards. Pick cards by
+name or number, or reply "done" to finish.` and the same prompt is asked again, so a stray
+command is never read as finish. Only `done`, `finished`, `enough`, `stop`, or an empty
+answer ends the flow, as before, and a cancel still aborts it. A partial hand is announced
+as `Brass holds 2 of 4 cards. Fill the rest before the ring.`; "good to go" is kept for a
+full hand, the only kind the ring accepts. The finish lines say "equipped". The rule is now
+rule 4 of the [prompt/answer contract](../reference/prompt-answer-contract.md).
+
+**Tests**: `monsters/helpers/equip.test.ts` covers the re-ask with the hand kept open (and
+no "Skipped an invalid selection" chatter), the hint without "done" before anything is
+chosen, a cancel during a re-ask rolling the hand back, and the "equipped" spelling; all
+four fail without the fix. `characters/equip-deck-accounting.test.ts` covers the partial
+and full-hand announcements.
+
+**Status**: Fixed.
+
+### 190. A boss's Pick Pocket never said whose card it took — FIXED
+
+The owner noticed Pick Pocket sometimes showed who the card was taken from and sometimes
+did not. The card box and the stolen card's play appeared either way.
+
+**Root cause**: card events reach a room on the process-wide semaphore, and
+`createRoomScopedEventGuard` (`announcements/index.ts`) keeps only events it can trace to
+this room's characters, monsters, cards, or ring, following the arguments up to three
+levels deep. Pick Pocket's steal line is a narration whose payload is just `{ narration }`,
+so the only trace is the card itself. A player's Pick Pocket sits in that player's
+monster's hand and passes; a **boss's** hand belongs to no room character, so the steal
+line was dropped while its card box (whose payload carries `player`) still showed. The
+same drop hit every narration from a boss's cards, and from fresh clones such as a stolen
+or randomly drawn card. Reproduced in a real room on the compiled engine under plain Node.
+
+**Fix**: `BaseCard.play`, and the `play` overrides in Pick Pocket and Random, record
+`card.playedBy = player`. The guard follows it to the monster and its ring, so a card's
+narration is traced the same way its card box already was. The guard itself is not
+widened, because `Game.initializeEvents()` shares it for rewards and must keep rejecting a
+boss's own `creature.win`/`loss`. `playedBy` is never serialized (clones and saves read
+`options`). The rule is written up in
+[engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
+
+**Tests**: `cards/pick-pocket-feed.test.ts` builds a real room with a player and a boss in
+the ring and checks the published feed: the boss's steal names its victim (fails without
+the fix), and a player's steal still names the boss.
+
+**Status**: Fixed.
+
+### 191. A partial equip after a restart lost the monster's whole previous hand — FIXED
+
+Found by the live check of Pass A: on restored room data, equipping Fang with two cards
+left the old nine cards nowhere. Fang plus the pool fell from 29 cards to 20.
+
+**Root cause**: hydration. `hydrateCharacter` passed the restored deck to
+`hydrateMonster`, and `hydrateCard` returned a card from that deck whenever one matched
+by name and options, instead of building a new one. That made sense before #91, when a
+monster's hand was a subset of the deck. Since #91 the deck is the *unequipped* pool,
+disjoint from every hand, so a restored hand's cards were the same objects as unequipped
+cards (and duplicate hand cards were one object). Equip's bookkeeping is identity-based:
+`reconcileDeckAfterEquip` returns the old hand to the pool only for cards the pool does
+not already `includes`, so every aliased card was skipped and lost. Sell, unequip, and
+move use the same identity checks. It hit every room restored from the database, which is
+every room after a deploy; tests passed because they build characters in memory.
+
+**Fix**: `hydrateCard` always builds a fresh instance, and the deck argument is gone from
+`hydrateCard` and `hydrateMonster`. The comment on `hydrateCard` records why, so nobody
+restores the reuse.
+
+**Tests**: `characters/helpers/hydrate.test.ts` restores a character and checks that no
+hand card is also a deck card, and that a partial equip keeps every card (both fail
+without the fix). The monster and card hydrate tests now assert fresh instances. Confirmed
+on the compiled engine under plain Node: 29 cards before and after.
+
+**Status**: Fixed.

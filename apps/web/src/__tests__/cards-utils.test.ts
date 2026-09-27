@@ -1,16 +1,33 @@
 import { describe, expect, it } from 'vitest';
 
-import { abbreviateCardName, getCardClass } from '../utils/cards.js';
+import { abbreviateCardName, getCardClass, isLongCardName } from '../utils/cards.js';
 
 describe('abbreviateCardName', () => {
 	it('returns short names unchanged', () => {
 		expect(abbreviateCardName('Hit')).toBe('Hit');
 	});
 
-	it('shortens multi-word card names', () => {
-		expect(abbreviateCardName('Adrenaline Rush')).toBe('Adre Rush…');
+	// "Fight or Flight" once read "Fig or Fli" (10b #186).
+	it('keeps whole words in long names, for the compact two-line label', () => {
+		expect(abbreviateCardName('Fight or Flight')).toBe('Fight or Flight');
+		expect(abbreviateCardName('Curse of Loki')).toBe('Curse of Loki');
+		expect(abbreviateCardName('Adrenaline Rush')).toBe('Adrenaline Rush');
+		expect(abbreviateCardName('Enchanted Faceswap')).toBe('Enchanted Faceswap');
 		expect(abbreviateCardName('Battle Focus')).toBe('Battle Focus');
-		expect(abbreviateCardName('Curse of Loki')).toBe('Cur of Lok');
+		// The catalogue's other three-word names.
+		expect(abbreviateCardName('Fists of Villainy')).toBe('Fists of Villainy');
+		expect(abbreviateCardName('Fists of Virtue')).toBe('Fists of Virtue');
+		expect(abbreviateCardName('Forked Metal Rod')).toBe('Forked Metal Rod');
+	});
+
+	it('shortens only a word too long for one line', () => {
+		expect(abbreviateCardName('Cloak of Invisibility')).toBe('Cloak of Invisi.');
+		expect(abbreviateCardName('Unconquerable Horn')).toBe('Unconq. Horn');
+	});
+
+	it('marks names over twelve characters for the compact size', () => {
+		expect(isLongCardName('Battle Focus')).toBe(false);
+		expect(isLongCardName('Fight or Flight')).toBe(true);
 	});
 });
 

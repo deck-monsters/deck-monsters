@@ -60,6 +60,16 @@ channel({ question: '...', choices: ['Items', 'Cards', 'Back Room'] })
    do something the user didn't ask for," which is precisely what made #143 hard to notice:
    the wrong branch still looked like a normal, working menu.
 
+4. **An answer that names nothing is not an empty selection.** A console line is the open
+   prompt's answer, so a player who types a command mid-flow ("send Brass to the ring")
+   answers the prompt with it. A multi-select prompt that stays open across turns must
+   refuse such an answer and ask again, with the flow kept open, rather than read it as
+   "finish" or "no cards". Only an explicit finish (`done`, or an empty answer where the
+   flow offers one) ends it. The equip flow (`monsters/helpers/equip.ts`) does this; it
+   once finished a partial hand and announced "good to go" instead (10b #189). The re-ask
+   has no attempt cap because it cannot strand a player: a cancel still aborts it
+   (`PROMPT_CANCELLED` passes straight through), and every prompt times out on the bus.
+
 ## Where this is enforced today
 
 - `packages/engine/src/helpers/choices.ts` — `getChoices` (and its `getItemChoices` /

@@ -47,4 +47,59 @@ describe('hydrateCharacter resilience', () => {
 			(arr: unknown[]) => arr.every(m => m !== null && m !== undefined)
 		);
 	});
+
+	/**
+	 * After a restore, each monster's hand was hydrated against the character's deck and
+	 * reused matching deck cards. The deck is the unequipped pool (#91), so the hand
+	 * aliased unequipped cards, and a partial equip on a restored room returned none of the
+	 * old hand: 29 cards became 20 in a live check of PR #400 (10b #191).
+	 */
+	it('never shares card objects between a monster\'s hand and the deck', async () => {
+		const { default: HitCard } = await import('../../cards/hit.js');
+		const { default: HealCard } = await import('../../cards/heal.js');
+		const hit = new HitCard().toJSON();
+		const heal = new HealCard().toJSON();
+		const character = hydrateCharacter({
+			name: 'Beastmaster',
+			options: {
+				deck: [hit, heal, heal],
+				items: [],
+				monsters: [{ name: 'Basilisk', options: { name: 'Fang', cards: [hit, hit, heal] } }],
+			},
+		}) as any;
+
+		const hand = character.monsters[0].cards;
+		expect(hand).to.have.length(3);
+		expect(hand.filter((card: unknown) => character.deck.includes(card))).to.deep.equal([]);
+		expect(new Set(hand).size).to.equal(3);
+	});
+
+	it('keeps every card through a partial equip on a restored character', async () => {
+		const { default: HitCard } = await import('../../cards/hit.js');
+		const { default: HealCard } = await import('../../cards/heal.js');
+		const { equipHelpersReady } = await import('../../monsters/helpers/equip.js');
+		await equipHelpersReady;
+		const hit = new HitCard().toJSON();
+		const heal = new HealCard().toJSON();
+		const character = hydrateCharacter({
+			name: 'Beastmaster',
+			options: {
+				deck: [hit, heal, heal, heal],
+				items: [],
+				monsters: [{ name: 'Basilisk', options: { name: 'Fang', cards: [hit, hit, heal, heal] } }],
+			},
+		}) as any;
+		const fang = character.monsters[0];
+		const total = () => fang.cards.length + character.deck.length;
+		const before = total();
+
+		const answers = ['1', 'done'];
+		let round = 0;
+		const channel = (async ({ question }: { question?: string }) =>
+			question ? answers[round++] : undefined) as never;
+		await character.equipMonster({ channel, monsterName: 'Fang', cardSelection: ['Hit'] });
+
+		expect(fang.cards.length).to.be.lessThan(fang.cardSlots);
+		expect(total()).to.equal(before);
+	});
 });

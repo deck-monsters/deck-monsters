@@ -1,4 +1,4 @@
-import { abbreviateCardName, getCardClass, getCardEmoji } from '../utils/cards.js';
+import { abbreviateCardName, getCardClass, getCardEmoji, isLongCardName } from '../utils/cards.js';
 
 export type WorkshopCardLocation =
   | { kind: 'inventory' }
@@ -107,7 +107,7 @@ export default function CardSlot({
       {cardName ? (
         <>
           <span className="workshop-card-icon">{getCardEmoji(cardName)}</span>
-          <span className="workshop-card-name">{abbreviateCardName(cardName)}</span>
+          <span className={`workshop-card-name${isLongCardName(cardName) ? ' compact' : ''}`}>{abbreviateCardName(cardName)}</span>
           <span className="workshop-card-class">{cardClass}</span>
         </>
       ) : (
