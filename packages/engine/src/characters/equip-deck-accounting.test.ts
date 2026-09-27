@@ -27,6 +27,29 @@ describe('./characters/beastmaster.ts equip deck accounting', () => {
 		await equipHelpersReady;
 	});
 
+	// "Brass is good to go!" was announced with slots still empty (10b #189).
+	it('announces a partial hand as partial, and a full one as good to go', async () => {
+		const { beastmaster, monster } = setup(8);
+		// Three slots, so a full hand stays under the four-copies-of-a-card limit. The
+		// cardSlots getter is a constant, so override it on this instance.
+		Object.defineProperty(monster, 'cardSlots', { get: () => 3 });
+		const announcements: string[] = [];
+		const channel = (async ({ announce }: { announce?: string }) => {
+			if (announce) announcements.push(announce);
+			return undefined;
+		}) as never;
+
+		await beastmaster.equipMonster({ channel, monsterName: 'Stonefang', cardSelection: ['Hit'] });
+		expect(monster.cards.length).to.be.lessThan(monster.cardSlots);
+		expect(announcements).to.include(`Stonefang holds 1 of ${monster.cardSlots} cards. Fill the rest before the ring.`);
+		expect(announcements.join('\n')).not.to.include('good to go');
+
+		announcements.length = 0;
+		const fullHand = Array.from({ length: monster.cardSlots }, () => 'Hit');
+		await beastmaster.equipMonster({ channel, monsterName: 'Stonefang', cardSelection: fullHand });
+		expect(announcements).to.include('Stonefang is good to go!');
+	});
+
 	it('removes equipped cards from the character deck', async () => {
 		const { beastmaster, monster } = setup(3);
 

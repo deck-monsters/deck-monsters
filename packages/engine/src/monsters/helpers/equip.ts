@@ -3,6 +3,8 @@ import type { ChannelFn, CardInstance } from '../../creatures/base.js';
 import { getItemKey } from '../../items/helpers/counts.js';
 import { matchesCardLookupName } from '../../cards/helpers/matches-lookup-name.js';
 import { announceAndThrow } from '../../helpers/announce-and-throw.js';
+import { getArray } from '../../helpers/get-array.js';
+import { PROMPT_CANCELLED } from '../../events/index.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => any;
@@ -48,6 +50,20 @@ const isFinishAnswer = (answer: unknown): boolean =>
 	/^(done|finished|enough|stop)$/i.test(String(answer ?? '').trim());
 const isEquipControlAnswer = (answer: unknown): boolean =>
 	String(answer ?? '').trim().length === 0 || isFinishAnswer(answer);
+
+/**
+ * Whether an answer names at least one card on offer, by catalogue number or by name, the
+ * same way `chooseItems` reads it. A console line is the open prompt's answer, so a command
+ * typed mid-equip ("send Brass to the ring") used to arrive here, match nothing, and be read
+ * as an empty pick, which finished the hand with slots still empty (10b #189).
+ */
+const namesAnyChoice = (answer: unknown, choices: string[]): boolean =>
+	(getArray(answer) ?? []).some((token) => {
+		const trimmed = String(token).trim();
+		if (!trimmed) return false;
+		if (/^\d+$/.test(trimmed)) return Number(trimmed) < choices.length;
+		return choices.some((choice) => choice.toLowerCase() === trimmed.toLowerCase());
+	});
 
 interface EquipOptions {
 	deck: CardInstance[];
@@ -112,14 +128,30 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 
 				// Empty and finish answers control this multi-prompt equip flow rather than
 				// selecting cards. Bypass chooseCards so it does not announce chooser feedback.
+				// An answer that names no card at all is refused and the same prompt asked
+				// again, with the hand kept open, so a stray command is never read as "finish".
 				const channelForChoose: ChannelFn = (opts) => {
 					if (!opts.question) return channel(opts);
-					return Promise.resolve(channel(opts)).then((answer) => {
-						if (isEquipControlAnswer(answer)) {
-							throw EQUIP_CONTROL_ANSWER;
-						}
-						return answer as string;
-					});
+					const ask = (): Promise<unknown> =>
+						Promise.resolve(channel(opts)).then((answer) => {
+							// chooseItems turns the sentinel into PromptCancelledError.
+							if (answer === PROMPT_CANCELLED) return answer;
+							if (isEquipControlAnswer(answer)) {
+								throw EQUIP_CONTROL_ANSWER;
+							}
+							const { choices } = opts;
+							const choiceKeys = Array.isArray(choices) ? choices : Object.keys(choices ?? {});
+							if (!namesAnyChoice(answer, choiceKeys)) {
+								const finish = cards.length > 0 ? ', or reply "done" to finish' : '';
+								return Promise.resolve(
+									channel({
+										announce: `"${String(answer).trim()}" isn't one of the cards. Pick cards by name or number${finish}.`,
+									}),
+								).then(ask);
+							}
+							return answer as string;
+						});
+					return ask();
 				};
 
 				return _chooseCards({
@@ -140,7 +172,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 
 				if (trimmedCards.length < result.length) {
 					return (channel({
-						announce: `You've run out of slots, but you've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
+						announce: `You've run out of slots, but you've equipped the following cards:\n\n${_getFinalCardChoices(cards)}`,
 					}) as Promise<unknown>).then(() => cards);
 				}
 
@@ -152,7 +184,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 
 				if (nowRemainingCards.length <= 0) {
 					return (channel({
-						announce: `You're out of cards to equip, but you've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
+						announce: `You're out of cards to equip, but you've equipped the following cards:\n\n${_getFinalCardChoices(cards)}`,
 					}) as Promise<unknown>).then(() => cards);
 				}
 
@@ -160,7 +192,7 @@ const equipMonster = ({ deck, monster, cardSelection, channel }: EquipOptions): 
 				// cancellation rejects earlier and therefore leaves monster.cards unchanged.
 				if (trimmedCards.length === 0 && cards.length > 0) {
 					return (channel({
-						announce: `You've equiped the following cards:\n\n${_getFinalCardChoices(cards)}`,
+						announce: `You've equipped the following cards:\n\n${_getFinalCardChoices(cards)}`,
 					}) as Promise<unknown>).then(() => cards);
 				}
 

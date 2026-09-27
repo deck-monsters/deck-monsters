@@ -4455,3 +4455,37 @@ with one, not busy during background refetches, and busy during a mutation. The 
 fail without the fix.
 
 **Status**: Fixed.
+
+### 189. A short equip ate the next command, then called a partial hand "good to go" — FIXED
+
+A Minotaur was equipped in one line with a deck that included Blast, which only a Cleric
+can hold. The console said the monster could not hold Blast and left the "which card
+next" prompt open. The next commands (`send Brass to the ring`, then `clear deck Brass`)
+were read as card picks ("Skipped an invalid selection: …"), the flow finished the
+partial hand ("You've equiped the following cards"), and announced "Brass is good to go!"
+with slots still empty. `summon a boss` then refused, because the send had never run.
+Found in the browser sweep on 2026-09-26.
+
+**Root cause**: three layers. `equipMonster` keeps prompting while slots and legal cards
+remain (`monsters/helpers/equip.ts`), and a console line is that prompt's answer.
+`chooseItems` skips tokens that name no card and returns an empty pick, and the equip
+continuation treats an empty pick after a partial batch as "finish with what you have".
+`Beastmaster.equipMonster` then always announced "is good to go!" without checking the
+hand against `cardSlots`. The finish lines also spelled it "equiped".
+
+**Fix** (owner's choice: re-ask with the hand kept open): an answer that names no card on
+offer, by number or name, is refused with `"<line>" isn't one of the cards. Pick cards by
+name or number, or reply "done" to finish.` and the same prompt is asked again, so a stray
+command is never read as finish. Only `done`, `finished`, `enough`, `stop`, or an empty
+answer ends the flow, as before, and a cancel still aborts it. A partial hand is announced
+as `Brass holds 2 of 4 cards. Fill the rest before the ring.`; "good to go" is kept for a
+full hand, the only kind the ring accepts. The finish lines say "equipped". The rule is now
+rule 4 of the [prompt/answer contract](../reference/prompt-answer-contract.md).
+
+**Tests**: `monsters/helpers/equip.test.ts` covers the re-ask with the hand kept open (and
+no "Skipped an invalid selection" chatter), the hint without "done" before anything is
+chosen, a cancel during a re-ask rolling the hand back, and the "equipped" spelling; all
+four fail without the fix. `characters/equip-deck-accounting.test.ts` covers the partial
+and full-hand announcements.
+
+**Status**: Fixed.

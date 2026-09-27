@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — five open items. Fixed work and its root causes live only in
+**Status:** Active — four open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -73,32 +73,6 @@ the frame, or render the frame's border in CSS rather than as characters. Captur
 screenshot in both themes and at phone width before choosing.
 
 Read [pixel art](../reference/pixel-art.md) and [web workspace](../architecture/web-workspace.md).
-
-### L. A short equip eats the next command, then says the monster is ready
-
-**Owner:** Engine equip prompts. Found in a browser sweep on 2026-09-26. A Minotaur was
-equipped in one shot with a deck that included Blast, which only a Cleric can hold. The
-console announced that the monster could not hold Blast and left the "which card next"
-prompt open. The following commands (`send Brass to the ring`, later `clear deck Brass`)
-were answered as card picks: "Skipped an invalid selection: …". The flow then finished
-the partial hand ("You've equiped the following cards") and announced "Brass is good to
-go!" with slots still empty. `summon a boss` correctly refused, because the send had
-never run.
-
-**Root cause:** `equip` keeps prompting while slots and legal cards remain
-(`packages/engine/src/monsters/helpers/equip.ts`). A console line is that prompt's
-answer. `choose.ts` skips tokens that are not card names and, with nothing selected,
-the continuation treats an empty pick as "finish with what you have".
-`Beastmaster.equipMonster` then always announces "is good to go!", with no check that
-the hand fills `cardSlots`. The same finish lines spell it "equiped".
-
-- [ ] Do not treat an ordinary command as an equip answer, or reject it without closing
-  the hand.
-- [ ] Announce a partial deck as partial. "Good to go" is the full-hand line.
-- [ ] Spell the finish lines "equipped".
-
-Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
-[workshop and items](../architecture/workshop-and-items.md).
 
 ## Historical detail
 
