@@ -97,6 +97,7 @@ current contract.
 | [`docs/architecture/events-prompts-and-replay.md`](docs/architecture/events-prompts-and-replay.md) | `GameEvent`, visibility, persistence, prompts, reconnect, cursors, or history delivery |
 | [`docs/architecture/engine-concurrency-and-timing.md`](docs/architecture/engine-concurrency-and-timing.md) | `helpers/delay-times.ts`, `ring/index.ts` pacing, prompts, the server command pipeline, or **any** `game.on(...)` listener or new timer |
 | [`docs/architecture/boss-encounters.md`](docs/architecture/boss-encounters.md) | Bosses, boss summoning, ring events, teams, or targeting strategies |
+| [`docs/architecture/cards-and-encounter-effects.md`](docs/architecture/cards-and-encounter-effects.md) | Adding or changing a card or monster, or any card state that lasts past one play (holds, wards, rests, curses) |
 | [`docs/architecture/web-workspace.md`](docs/architecture/web-workspace.md) | `Terminal`, workspace surfaces, pane slots, routes, divider, or navigation reveal |
 | [`docs/architecture/workshop-and-items.md`](docs/architecture/workshop-and-items.md) | Workshop inventory, item use, prompt-free mutations, first-run training, or room shop |
 | [`docs/architecture/analytics-and-history.md`](docs/architecture/analytics-and-history.md) | Analytics projections, leaderboards, fight summaries, catch-up, or retention |

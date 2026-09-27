@@ -37,6 +37,7 @@ Generated and authored player references remain at the repository root:
 | Game state, room DB queries, membership, identity, invites, connector room mappings, subscriptions | [Rooms and identity](architecture/rooms-and-identity.md) |
 | Events, visibility, prompts, persistence, reconnect, cursors, feed/history delivery | [Events, prompts, and replay](architecture/events-prompts-and-replay.md) |
 | Fight pacing, server lanes, global semaphore listeners, timers, prompt concurrency | [Engine concurrency and timing](architecture/engine-concurrency-and-timing.md) |
+| Writing or changing a card or monster, card play resolution, fight-scoped card state, holds | [Cards and encounter effects](architecture/cards-and-encounter-effects.md) |
 | Boss creation/summoning, ring events, teams, targeting, boss timers | [Boss encounters](architecture/boss-encounters.md) |
 | `Terminal`, surfaces, pane slots, routes, 1024px breakpoint, divider, navigation reveal | [Web workspace](architecture/web-workspace.md) |
 | Workshop inventory, item use, lifecycle actions, prompt-free mutations, room shop | [Workshop and items](architecture/workshop-and-items.md) |

@@ -60,14 +60,9 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Combat design
 
-**Balance target (owner decision).** Do not aim for 50/50 at every level. As in D&D, each
-class should have a power curve across levels: casters (Cleric, Bard) start fragile and grow
-very strong as they level; brutes (Barbarian, Fighter) are strongest early and stay useful
-but fall behind later. Judge a matchup against that curve, not against a flat band. The
-35–65% flag in `sim:winrates` and `sim:unicorn` marks rows to look at, not a pass/fail gate,
-and matchup outcomes depend heavily on the ring (see the Blast notes below).
-A problem is a class that is dominant across the whole level range, or one whose curve runs
-the wrong way.
+The balance target (a power curve per class across levels, not 50/50 everywhere) is a
+current rule in [cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
+Judge each item below against it.
 
 - [ ] **Stat reform — owner: Engine.** Design variance, modifier thresholds, level growth,
   and encounter modifiers as one model; choose a safe migration or reroll path for existing
