@@ -4,6 +4,7 @@ import { capitalize } from '../helpers/capitalize.js';
 import { WIZARD } from '../constants/creature-classes.js';
 import { DRAGON } from '../constants/creature-types.js';
 import BaseMonster from './base.js';
+import { armAncientDragon, isAncientDragon } from '../cards/helpers/ancient-dragon.js';
 
 /*
  * The Dragon was asked for by the owner's eight-year-old son, whose favourite dragons are
@@ -100,7 +101,16 @@ class Dragon extends BaseMonster {
 		const { pronouns } = this;
 		// The scales get a sentence of their own, as the Unicorn's coat does: a player-chosen
 		// colour can carry its own "with".
-		return `${article(this.head)} ${this.head} dragon, ${this.body}, with ${this.wings} wings. ${capitalize(pronouns.his)} scales are ${this.color}, and ${pronouns.he} ${agree(pronouns, 'keeps', 'keep')} to ${this.home}. ${this.profile}`;
+		const ancient = isAncientDragon(this)
+			? ` ${capitalize(pronouns.he)} ${agree(pronouns, 'is', 'are')} ancient: ${pronouns.his} fire cannot be dodged, but ${pronouns.he} can still be tricked.`
+			: '';
+		return `${article(this.head)} ${this.head} dragon, ${this.body}, with ${this.wings} wings. ${capitalize(pronouns.his)} scales are ${this.color}, and ${pronouns.he} ${agree(pronouns, 'keeps', 'keep')} to ${this.home}. ${this.profile}${ancient}`;
+	}
+
+	/** An ancient dragon (level 10+) carries its power and its weaknesses into every fight. */
+	override startEncounter(ring: unknown): void {
+		super.startEncounter(ring);
+		if (isAncientDragon(this)) armAncientDragon(this);
 	}
 }
 

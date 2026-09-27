@@ -8,6 +8,7 @@ import { DRAGON } from '../constants/creature-types.js';
 import { BURNING_EFFECT, WINDED_EFFECT } from '../constants/effect-types.js';
 import { COMMON } from '../helpers/probabilities.js';
 import { REASONABLE } from '../helpers/costs.js';
+import { ANCIENT_DRAGON_LEVEL, isAncientDragon } from './helpers/ancient-dragon.js';
 
 const { roll } = chance;
 
@@ -15,6 +16,7 @@ export const WINDED_AC_PENALTY = 2;
 export const BREATH_BASE_DAMAGE = 2;
 export const DODGE_DIFFICULTY = 15;
 export const BURN_TURNS = 2;
+export const ANCIENT_BURN_TURNS = 3;
 
 /** Opponents the breath reaches: two, and one more for every two levels. */
 export const breathReach = (level: number): number => 2 + Math.floor(Math.max(0, level) / 2);
@@ -38,6 +40,8 @@ export const isBurning = (monster: any): boolean =>
  *     (Blast, being magic, cannot be dodged). A dodge takes half damage and does not burn;
  *   - it burns: anyone it catches takes fire damage at the start of their next two turns.
  *     A new breath rekindles the burn rather than stacking it, and a heal puts it out;
+ *   - an ancient dragon (level 10+, cards/helpers/ancient-dragon.ts) breathes fire that
+ *     cannot be dodged and burns a turn longer;
  *   - and the dragon is winded afterwards: 2 AC down until its next card, the same penalty
  *     and give-back as Gloaming Rest. The owner kept this as the visible price.
  */
@@ -68,7 +72,8 @@ export class FireBreathCard extends BaseCard {
 		return `A cone of fire: your target and the opponents beside it, ${breathReach(0)} at first and 1 more every 2 levels.
 ${BREATH_BASE_DAMAGE} fire damage +1 per level. Each target rolls 1d20 + dex vs ${DODGE_DIFFICULTY} + your int to dodge for half damage.
 Anyone who does not dodge burns: 1 damage +1 per 3 levels at the start of their next ${BURN_TURNS} turns (a heal puts it out).
-Winded afterwards: -${WINDED_AC_PENALTY} ac until your next card.`;
+Winded afterwards: -${WINDED_AC_PENALTY} ac until your next card.
+An ancient dragon (level ${ANCIENT_DRAGON_LEVEL}+) breathes fire that cannot be dodged and burns for ${ANCIENT_BURN_TURNS} turns.`;
 	}
 
 	/**
@@ -109,7 +114,7 @@ Winded afterwards: -${WINDED_AC_PENALTY} ac until your next card.`;
 
 	/** Set (or rekindle) the burn on `target`, fed by `player`'s level. */
 	ignite(player: any, target: any): void {
-		let turnsLeft = BURN_TURNS;
+		let turnsLeft = isAncientDragon(player) ? ANCIENT_BURN_TURNS : BURN_TURNS;
 		const damage = burnDamage(player.level);
 
 		const burning = async ({ card, phase, player: effectPlayer, ring }: any) => {
@@ -156,8 +161,9 @@ Winded afterwards: -${WINDED_AC_PENALTY} ac until your next card.`;
 
 	async effect(player: any, target: any, ring?: any): Promise<boolean> {
 		const full = BREATH_BASE_DAMAGE + player.level;
-		// Breathing on yourself in confusion leaves nowhere to dodge to.
-		const dodged = target !== player && this.dodge(player, target);
+		// Breathing on yourself in confusion leaves nowhere to dodge to, and an ancient
+		// dragon's fire cannot be dodged at all.
+		const dodged = target !== player && !isAncientDragon(player) && this.dodge(player, target);
 		await subEventDelay(ring?.pacingMultiplier);
 
 		const alive = await target.hit(dodged ? Math.max(1, Math.floor(full / 2)) : full, player, this);

@@ -948,14 +948,25 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 
  "His breath kindleth coals, and 
  a flame goeth out of his mouth." 
- Everyone in front of it burns. 
- Then the dragon must breathe in.
+ Whatever the flame touches keeps 
+ burning.
 
- Fire Breath: 3 fire damage +1 
- per level of the dragon to every 
- opponent.
+ A cone of fire: your target and 
+ the opponents beside it, 2 at 
+ first and 1 more every 2 levels.
+ 2 fire damage +1 per level. Each 
+ target rolls 1d20 + dex vs 15 + 
+ your int to dodge for half 
+ damage.
+ Anyone who does not dodge burns: 
+ 1 damage +1 per 3 levels at the 
+ start of their next 2 turns (a 
+ heal puts it out).
  Winded afterwards: -2 ac until 
  your next card.
+ An ancient dragon (level 10+) 
+ breathes fire that cannot be 
+ dodged and burns for 3 turns.
 
  Level: Beginner
  Usable by: Dragon

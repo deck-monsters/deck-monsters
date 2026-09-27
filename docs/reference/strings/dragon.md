@@ -45,7 +45,8 @@ Seeded, cycling he, she, and they.
 | Where | Template |
 |---|---|
 | profile → returns | `Hoard patience: {hoardPatience}. Smoke control: {smokeControl}. Opinion of Romans: {romanOpinion}. Table manners: {tableManners}.` |
-| description → returns | `{article} {head} dragon, {body}, with {wings} wings. {His} scales are {color}, and {he} {keeps/keep} to {home}. {profile}` |
+| description → ancient | ` {He} {is/are} ancient: {his} fire cannot be dodged, but {he} can still be tricked.` |
+| description → returns | `{article} {head} dragon, {body}, with {wings} wings. {His} scales are {color}, and {he} {keeps/keep} to {home}. {profile}{ancient}` |
 
 ### Long description
 
@@ -61,13 +62,16 @@ Vikings carved dragons on their prows. Romans marched behind a dragon of cloth t
 
 Source: `packages/engine/src/cards/fire-breath.ts`.
 
-**Card description:** `"His breath kindleth coals, and a flame goeth out of his mouth." Everyone in front of it burns. Then the dragon must breathe in.`
+**Card description:** `"His breath kindleth coals, and a flame goeth out of his mouth." Whatever the flame touches keeps burning.`
 
 **Rules text:**
 
 ```text
-Fire Breath: 3 fire damage +1 per level of the dragon to every opponent.
+A cone of fire: your target and the opponents beside it, 2 at first and 1 more every 2 levels.
+2 fire damage +1 per level. Each target rolls 1d20 + dex vs 15 + your int to dodge for half damage.
+Anyone who does not dodge burns: 1 damage +1 per 3 levels at the start of their next 2 turns (a heal puts it out).
 Winded afterwards: -2 ac until your next card.
+An ancient dragon (level 10+) breathes fire that cannot be dodged and burns for 3 turns.
 ```
 
 **Narration and outcomes:**
@@ -77,6 +81,11 @@ Winded afterwards: -2 ac until your next card.
 | flavors → hits | `breathes fire on` |
 | flavors → hits | `kindles coals around` |
 | flavors → hits | `very gently toasts` |
+| dodge → reason | `vs {difficulty} to dodge the flames.` |
+| dodge → outcome | `{target} twists aside and is only singed. Half damage.` |
+| dodge → outcome | `{target} is caught in the flames.` |
+| ignite → narration | `{target} beats out the flames.` |
+| ignite → flavorText | `🔥 {icon}  {target} is still burning: {damage} fire damage.{ The last of the flames go out. / —}` |
 | wind → narration | `{player} has {his} breath back.` |
 | wind → narration | `🔥 {player} is winded, and smoke trails from {his} nostrils. (-2 ac until {his} next card.)` |
 

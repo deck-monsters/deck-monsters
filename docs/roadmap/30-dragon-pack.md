@@ -49,6 +49,7 @@ As with the Unicorn, old quotations are for flavour and style, not scholarship
 | Tsunami | **5 damage to everyone in the ring, the Dragon included.** The self-hit is the price. Epic rarity (Sandstorm's), Dragon-only, back room only. |
 | Mood card | **Mood follows HP.** Calm (above half HP): the Dragon blends in, as Cloak of Invisibility. Furious (at or below half HP, the engine's `bloodied`): it cannot hide, but its next melee hit does extra damage. Stated on the card; never random. |
 | Fire Breath (second round) | The first build was Blast plus a cost, and the owner asked for something that plays differently: **a cone that grows with level** (fast enough to matter by levels 2–6, since level 5 takes about 38 wins and level 10 about 445), **a hard dodge for half damage**, **burning for two turns**, and **winded kept** as the price. |
+| Ancient dragons | Owner: very old dragons should be "immensely powerful but occasionally able to be tricked, because that's the way someone usually defeats them." **Ancient at level 10** (about 445 wins). **Power:** its breath cannot be dodged and burns for 3 turns. **Weaknesses, both:** once per fight each opponent it attacks may outwit it with a riddle or flattery (1d20 + INT vs 20 + the dragon's INT; the attack goes wide and the dragon is exposed, −4 AC until its next card), and a natural 20 with a Hit-family attack finds its soft underbelly for triple damage. |
 | Flight card | **Take off, then dive.** Dodge the next melee blow; the next melee hit dives for bonus damage; any other damage while airborne knocks the Dragon down and loses the dive. |
 
 Deferred from 29's candidate table: the hoard card (One Cup Missing), Soft Underbelly as a
@@ -74,6 +75,13 @@ shared mechanic, and the Roman cards. They stay in 29 as later ideas.
   before the pass closes.
 - **Voice:** vain, clever, a little frightening, never gory. Old lines from Job 41 and
   Isaiah (1611 King James Bible) and the bestiaries, quoted for atmosphere.
+
+### Ancient dragons
+
+`cards/helpers/ancient-dragon.ts`. A Dragon at level 10 or more arms one encounter effect
+when a fight starts (`Dragon.startEncounter`), so fight cleanup ends it. The sources are
+Fafnir, drawn into talk by a hero who hides his name (*Völsunga saga*), and Sigurd striking
+from a pit at the underbelly. Its `look at` says it is ancient.
 
 ### The cards
 

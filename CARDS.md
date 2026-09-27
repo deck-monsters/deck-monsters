@@ -468,8 +468,8 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 
  "His breath kindleth coals, and 
  a flame goeth out of his mouth." 
- Everyone in front of it burns. 
- Then the dragon must breathe in.
+ Whatever the flame touches keeps 
+ burning.
 
 ==================================
 ```

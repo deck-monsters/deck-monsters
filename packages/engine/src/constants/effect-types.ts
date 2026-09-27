@@ -8,3 +8,5 @@ export const WINDED_EFFECT = 'Winded Effect';
 export const TAKE_WING_EFFECT = 'Take Wing Effect';
 export const FURY_EFFECT = 'Fury Effect';
 export const BURNING_EFFECT = 'Burning Effect';
+export const ANCIENT_DRAGON_EFFECT = 'Ancient Dragon Effect';
+export const EXPOSED_EFFECT = 'Exposed Effect';
