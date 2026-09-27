@@ -20,14 +20,15 @@ not have to rediscover sources or mistake an attractive inference for an old tra
 
 ## Tasks
 
-| # | Slice | Status | Evidence |
-|---|---|---|---|
-| 1 | Norse and Germanic primary-source sweep | Initial sweep saved; transcription and object-record checks open | Source ledger below |
-| 2 | Roman primary-source sweep | Initial sweep saved; transcription checks open | Source ledger below |
-| 3 | Bestiary and early-modern sweep | Initial sweep saved; exact scan records open | Source ledger below |
-| 4 | Roster fit and initial card directions | Drafted | Design synthesis below |
-| 5 | Requester interview and owner source review | Not started | Gates below |
-| 6 | Approved monster/card specification and implementation slices | Blocked on #5 | Not yet written |
+| # | Slice | Status | Evidence | Commit |
+|---|---|---|---|---|
+| 1 | Norse and Germanic primary-source sweep | Initial sweep saved; locating passages in the named editions open | Source ledger below | 02e26a2 (#401) |
+| 2 | Roman primary-source sweep | Initial sweep saved; locating passages open | Source ledger below | 02e26a2 (#401) |
+| 3 | Bestiary and early-modern sweep | Initial sweep saved; exact scan records open | Source ledger below | 02e26a2 (#401) |
+| 4 | Roster fit and initial card directions | Drafted | Design synthesis below | 02e26a2 (#401) |
+| 5 | Engine fit: class and card pool, stat ranges, reusable mechanics, build checklist | Drafted | [Fitting the Dragon into the engine](#fitting-the-dragon-into-the-engine) | this commit |
+| 6 | Requester interview and owner source review | Not started | Gates below | — |
+| 7 | Approved monster/card specification and implementation slices | Blocked on #6 and on Pass B task 0 (one harness roster, `sim:monster`) | Not yet written | — |
 
 ## Research method and quotation key
 
@@ -39,16 +40,27 @@ where a direct record is known.
 - **`[Q]`** means transcribed from the named edition and checked against the linked text or
   page image. There are deliberately no `[Q]` entries yet: outbound archive access was
   unavailable during this round.
-- **`[Q?]`** is an exact-quotation candidate with the best locus and edition currently
-  known, retained so the next researcher can compare it character-for-character with the
-  scan. A broad page range or search record is only a lead, not a precise citation. No
-  `[Q?]` may be shipped, silently modernised, or attributed to another translation.
+- **`[Q?]`** is a quotation candidate with the best locus and edition currently known. A
+  broad page range or search record is only a lead, not a precise citation. A `[Q?]` must
+  not be attributed to a different translation than the one it came from.
 - **`[P]`** is a paraphrase. It can inform original copy but must not be placed in quotation
   marks.
 - **`[A]`** is an original Deck Monsters line or idea. It may echo a sourced motif, never a
   modern copyrighted dragon's phrasing, names, species, or design.
 
-This caution is substantive, not clerical. Chapter numbering differs between editions;
+**What "checked" means here.** The owner's standing decision for old quotations is
+atmosphere, not a diplomatic text ("Quoting old texts" in
+[cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules),
+and the Unicorn precedent in
+[28](../archive/roadmap/28-unicorn-voice-punch-up.md#atmosphere)). So promoting a `[Q?]` to
+`[Q]` needs the passage found in the named public-domain edition with its sense intact; a
+spelling or punctuation difference between printings is fine, and letter-for-letter
+collation is not required. What this round's caution *does* rightly guard is **rights**:
+a modern translation or a modern website's English (Aberdeen's, Rolfe's 1935 Ammianus)
+stays paraphrase or research-only whatever its age of source, and a line is only quoted
+from an edition that is itself public domain.
+
+The rest of this caution is substantive, not clerical. Chapter numbering differs between editions;
 OCR mangles long *s* and ligatures; `draco`, *ormr*, and *wyrm* do not automatically mean a
 modern winged dragon; and modern web translations can remain copyrighted even when the
 underlying work and manuscript are public domain.
@@ -296,16 +308,21 @@ be checked against the page image.
 
 ## Roster fit and candidate cards
 
+**Requester requirement (September 2026):** the owner's son asked specifically for a
+**flight** card and a **fire-breath** card. The names are open, but the ideas are fixed: the
+pack ships one card built on each, so Banked Breath and Scale-Wing below are required
+directions, and the remaining one to three cards are the choice.
+
 These are directions for owner review, not names or final mechanics. Each keeps state on
 the encounter, where fight cleanup already owns it, and must handle confusion turning its
 effect onto self or ally.
 
 | Direction | Source and game role | Risk | Counterplay / bound |
 |---|---|---|---|
-| **Banked Breath / Ashen Breath** | Germanic flame-dragon; modest area burst | A plain area hit is a better-looking Blast; a dead recovery draw may feel bad | Successful breath arms `winded`; its next appearance recovers or becomes a weak single-target puff. Opponents exploit the telegraphed window. Compare against Blast's unconditional level-scaled area damage. |
-| **Scale-Wing** | Flight and armour; bounded defence | Can copy Basic Shield or the Unicorn's ward, or become immunity | Brace only the next appropriate melee blow, spend on attempt, and expose the belly or impose `winded`; non-melee damage or an opening card bypasses it. It never blocks holds by fiat. |
+| **Banked Breath / Ashen Breath** (required: fire breath) | Germanic flame-dragon; modest area burst | A plain area hit is a better-looking Blast; a dead recovery draw may feel bad; area damage scales with ring size, and rings hold 2 to 12 | Successful breath arms `winded`; its next appearance recovers or becomes a weak single-target puff. Opponents exploit the telegraphed window. Compare against Blast (Cleric-only, 3 base +1 per caster level to every opponent) and measure across ring sizes, not only 1v1. |
+| **Scale-Wing** (required: flight) | Flight and armour; bounded defence. Flight could also be evasion or a repositioning turn rather than armour; the requester's ask is flight, not scales | Can copy Basic Shield or the Unicorn's ward, or become immunity | Brace only the next appropriate melee blow, spend on attempt, and expose the belly or impose `winded`; non-melee damage or an opening card bypasses it. It never blocks holds by fiat. |
 | **Soft Underbelly** | Sigurd's pit as a broad counter | A Dragon-only counter is dead elsewhere | Reward striking any opponent during a visible post-defence/cooldown opening; grant extra Dragon flavour, not species-only function. |
-| **One Cup Missing / Hoard-Wrath** | *Beowulf*'s stolen cup | Economy coupling, card-name coupling, runaway retaliation | Defer until a generic theft effect exists. Then arm one bounded next-attack bonus after theft; no direct coin/item mutation without economy review. |
+| **One Cup Missing / Hoard-Wrath** | *Beowulf*'s stolen cup | Card-name coupling, runaway retaliation; coin/item theft would need the economy owner | A theft effect already exists in the fight: **Pick Pocket** (`cards/pick-pocket.ts`) takes a card from the highest-XP opponent's hand and plays it. The hoard can be the Dragon's *hand*, not its coins: when a card is taken from it, arm one bounded next-attack bonus as encounter state. That needs a small, generic "a card was taken from you" hook on the victim rather than a Pick Pocket special case, and no economy change. |
 | **Raise the Draco / Ballista Crew** | Arrian's moving standard or Bagradas army | Too much Roman content can displace the requested monster; raw bonus is dull | Gladiator/team setup creates initiative or breaks a visible armour stance. Require movement, crew, or a setup turn and keep the two historical motifs as separate candidate cards. |
 
 The bestiary “Elephant's Fall” is better treated as generic recoil/counterplay than a Dragon
@@ -321,6 +338,7 @@ cleanly for every holder and target.
   reason to remove the Beastmaster's pre-fight decision. Keep the joke in narration or a
   deterministic, disclosed risk.
 - **Direct hoard coins/items:** requires economy-owner review and expands the content pass.
+  The card-theft version above needs neither.
 - **Every tradition as an appearance:** East Asian dragons, Níðhöggr, Jörmungandr, bestiary
   serpents, and the Roman cloth *draco* are not skins for one Germanic fire-drake.
 
@@ -341,9 +359,83 @@ cleanly for every holder and target.
 - The Dragon can be vain, sarcastic, articulate, funny, and a little frightening. Keep
   injury non-gory and make the most dramatic line easy to read aloud.
 
+## Fitting the Dragon into the engine
+
+How a monster is built here is set by the checklist in
+[cards and encounter effects](../architecture/cards-and-encounter-effects.md#adding-a-card-or-a-monster)
+and the Unicorn precedent ([26](../archive/roadmap/26-unicorn-pack.md)). The research above
+has to land inside those constraints. This section records them so the owner decisions are
+made with the costs in view. Nothing here is decided.
+
+### Class is the card pool, not only a label
+
+A monster's class decides which class-gated cards it may hold, on top of cards that name
+its creature type. That makes class the biggest single design choice.
+
+| Class | Roster today | What the Dragon would draw on | Fit and cost |
+|---|---|---|---|
+| **Wizard** | none | Very little: Cloak of Invisibility and Revive are the only Wizard-legal class cards today | The natural late-bloomer caster, and an unused class. But the Dragon pack would have to supply most of its own deck (or the pass adds Wizard cards), or it plays generic cards only. Largest content cost, cleanest identity. |
+| **Barbarian** | Basilisk, Minotaur | Berserk, Vengeful Rampage, Hit Harder, Pound, Adrenaline Rush, and the rest of the brute pool | An early brute. Crowded, and two of three Barbarians would be big scaled beasts; hardest to keep distinct from the Basilisk. |
+| **Fighter** | Gladiator | The Fighter pool, Basic Shield included | Early and steady; shares the Roman arena with the Gladiator, which the research wants as an opponent's world, not the Dragon's. |
+| **Bard** | Jinn | Bard pool (Bad Batch, Iocane, Basic Shield, Pound…) | A talker, which suits the speaking wyrm; balance-wise a middle curve. |
+| **Cleric** | Weeping Angel, Unicorn | Blast, Heal, Horn of Proof… | Would give it Blast for free, which the breath card is meant *not* to be. Two Clerics already. |
+
+The requester's answer to "small dragon that grows, or a big one now?" maps almost directly
+onto Wizard/Bard (late) versus Barbarian/Fighter (early), per the
+[balance target](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
+
+### Stats: the shared budget and the roster's ranges
+
+- Modifiers total **+2** across dex, str, and int, like every monster (a test enforces it).
+  The flavour pulls toward str (the hoard-warden) and int (the talker), with dex lowest,
+  which also leaves the Unicorn as the agile one. For example `str +1, int +2, dex −1`
+  (caster lean) or `str +2, int +1, dex −1` (brute lean).
+- The roster's spawn offsets run **AC 0–2** and **HP 0–4**. A test keeps a new monster within
+  one AC of the best existing offset. Scales argue for AC 2; a caster lean argues for HP
+  1–2; a brute lean for HP 3–4.
+- Growth "from wyrmling to terror" should come from level scaling that already exists, the
+  way Blast adds damage per caster level, before any new growth system.
+
+### What already exists to build on
+
+- **Braces.** A positive `encounterModifiers.ac` already absorbs melee blows in
+  `creature.hit()`; Scale-Wing can be a brace plus an exposure, not a new defence system.
+- **Encounter state.** Anything that lasts past one play (`winded`, exposure, hoard
+  anger) lives on `creature.encounterModifiers` or `encounterEffects` and is cleared with
+  the fight; no timers or `game.on` listeners.
+- **Holds and the ward.** Anything that binds goes through `ImmobilizeCard.immobilize()`
+  and is subject to the Unconquerable Horn ward; the dossier already rejects a Dragon Coil.
+- **Card theft.** Pick Pocket, above.
+- **Confusion.** Every Dragon card must read sensibly when Sandstorm turns it onto its own
+  player or an ally (`target === player`).
+
+### What would be new
+
+- **An "exposed"/opening state that other cards read.** Soft Underbelly as written needs
+  attackers to check the target's exposure; today no card reads another's opening
+  (Sticketh's "has an opening" is narration only). That is a shared mechanic touching
+  every attack roll, so it needs its own design and review, or the underbelly becomes a
+  Dragon-owned penalty (e.g. lower AC while winded), which needs nothing new.
+- **A "card was taken from you" hook** for the hoard, if chosen.
+- **The profile panel** in the `look at` text, which is string work only.
+
+### Build checklist (from the Unicorn pass)
+
+When the specification is approved, the content pass touches: a creature-type constant; the
+class; `monsters/helpers/all.ts` (append, never insert); the spawn colour example and a name
+generator; a pixel sprite (wings make it the first flying silhouette, see
+[ring roster and pixel monsters](../architecture/ring-roster-and-pixel-monsters.md)); the
+cards with badge keywords in `apps/web/src/utils/cards.ts`; the server spawn-catalog test;
+`pnpm run build:docs` for `MONSTERS.md`, `CARDS.md`, `DMG.md`, and the generated strings
+inventory (which becomes the read-aloud script for the requester); and balance evidence
+from `sim:monster Dragon` across ring sizes, which is why Pass B task 0 comes first.
+
 ## Gates and open questions
 
 ### Ask the requester first
+
+Already answered: he wants a **flight** card and a **fire-breath** card (see
+[Roster fit](#roster-fit-and-candidate-cards)). Still to ask:
 
 1. Which dragons in the books are your favourites, and what makes each one funny, scary,
    clever, or lovable?
@@ -355,11 +447,14 @@ cleanly for every holder and target.
 
 ### Owner decisions before a specification
 
-1. Confirm the Germanic fire-drake thesis and whether Dragon is a late-blooming class or an
-   early brute. Class and final stat ranges remain intentionally unset.
-2. Choose three to five directions from the candidate table; decide whether either Roman
-   card belongs in the Dragon pack or a later Gladiator pack.
-3. Decide whether to omit hoard mechanics until generic theft/economy work exists.
+1. Confirm the Germanic fire-drake thesis, and choose the class with its card pool in view
+   (see [Class is the card pool](#class-is-the-card-pool-not-only-a-label)); Wizard means the
+   pack also supplies most of the deck. Final stat numbers stay unset until then.
+2. Breath and flight are required by the requester. Choose one to three more directions
+   from the candidate table, and decide whether either Roman card belongs in the Dragon
+   pack or a later Gladiator pack.
+3. Decide whether the hoard enters now as card theft (Pick Pocket already takes cards
+   mid-fight; no economy change) or waits for coin/item work.
 4. Supply or nominate the dragon anthology counterpart requested in the original brief.
 5. Approve this source palette after `[Q?]` entries have scan URLs/page images and are
    promoted to `[Q]` or downgraded to `[P]`.
