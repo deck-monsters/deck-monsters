@@ -45,7 +45,7 @@ Found while scoping:
 | 2 | Realistic rings: `sim:rings` (per-class curves with player decks; sampled rings of mixed sizes, levels, teams, and bosses). Likely-deck archetypes and ring events stay open in [11](../../roadmap/11-balance-and-mechanics.md) | Done | 963e437, e8c348f |
 | 3 | Boss balance: humans unite then settle, one boss per human (a rare ambush minion), a level budget, no fully random levels | Done | d98566f |
 | 4 | Boss personalities, and teams made easy: the Sorting Hat in every shop (with a "No team" choice) and a free `leave team` command (owner request, 2026-09-27) | Done | c1b5d24 |
-| 5 | Docs close-out, generated references, independent review | Done | this commit |
+| 5 | Docs close-out, generated references, independent review and its fixes | Done | 0404583, 8f1e5a3 |
 
 The independent review (task 5) found two faults in `dismissExtraBosses()`, fixed before
 merge: outside tests the ring shuffles `contestants` on every add, so "the newest boss" it
