@@ -59,7 +59,9 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
 
 ## Dragon research brief
 
-**Status:** Requested by the owner (September 2026); research and design not started. The
+**Status:** Requested by the owner (September 2026); the first source and design research is
+saved in [29 — Dragon Research Round](29-dragon-research.md). Owner/requester review and
+scan-level quotation verification remain open. The
 Unicorn pack is the model: a sourced creative thesis, a monster specification with ranges
 rather than final numbers, a handful of related cards, then a pass plan with slices,
 simulation evidence, and a live check. Nothing below is decided; the leanings recorded here

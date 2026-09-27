@@ -86,6 +86,10 @@ guidance: balance does not need to be 50/50; judge classes against the curve in
 
 ## Pass C — Dragon research
 
+**In progress:** the first Norse, Roman, bestiary, roster-fit, and card-direction sweep is
+saved in [29 — Dragon Research Round](29-dragon-research.md). Requester answers, scan-level
+quotation checks, owner decisions, and the approved specification remain open.
+
 Source: the [Dragon research brief](12-new-content-backlog.md#dragon-research-brief). This
 pass writes a design brief, not code: choose the tradition, gather public-domain sources
 with exact citations, fit the Dragon against the roster (especially the Basilisk) and the
