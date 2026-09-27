@@ -10,7 +10,8 @@ tags: [roadmap, planning, passes]
 
 **Status:** Pass A merged (PR #400). The owner moved the Dragon build ahead of Pass B; it
 shipped in PR #402 ([30](../archive/roadmap/30-dragon-pack.md)) and took Pass B's task 0
-with it. Pass B is next. Written on 2026-09-27 after the Unicorn pass
+with it. Pass B shipped next ([31](../archive/roadmap/31-pass-b-rings-and-bosses.md)),
+widened to the computer bosses. Written on 2026-09-27 after the Unicorn pass
 closed ([26](../archive/roadmap/26-unicorn-pack.md)) and a docs sweep. This file orders
 the open roadmap into passes; later passes are sketched and get their own task tables when
 they start. Update this file in each pass's checkpoint commits, filling in each task's
@@ -72,6 +73,11 @@ card-box border) stays open; it is in the feed, not the Workshop label A5 touche
 
 ## Pass B — realistic harness rings
 
+**Done** in [31](../archive/roadmap/31-pass-b-rings-and-bosses.md): harness humans and real
+bosses (`sim:bosses`), `sim:rings` (tasks 2, 3, and 5 below; bosses on), and the boss
+balance the owner asked for alongside. Tasks 1 and 4's ring events are open in
+[11](11-balance-and-mechanics.md). The original sketch:
+
 Source: "Realistic harness rings" in [11 — Balance](11-balance-and-mechanics.md). The
 harness now has shuffled draws, team fights, Unicorn-only card counters, and no Flee in
 random decks. What it still lacks decides whether its numbers can guide balance at all.
@@ -100,6 +106,9 @@ Take Wing, Mood Scales, Tsunami, and ancient dragons. Its follow-ups are in
 [12](12-new-content-backlog.md#dragon-follow-ups).
 
 ## Later
+
+- **Mega boss event** ([12](12-new-content-backlog.md#mega-boss-event)): the owner's
+  announced, fitted, rare boss; its own pass.
 
 - **Dragon follow-ups** ([12](12-new-content-backlog.md#dragon-follow-ups)): the counter
   cards the owner chose for the next content PR (Lullaby and Mirror Shield), a flavour

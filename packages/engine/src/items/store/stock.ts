@@ -140,7 +140,7 @@ export const getItems = (): any[] => {
 	}
 
 	// Every shop keeps a Sorting Hat, so a player can always join or leave a team (owner,
-	// docs/roadmap/31-pass-b-rings-and-bosses.md). It is free, so it cannot crowd out stock.
+	// docs/archive/roadmap/31-pass-b-rings-and-bosses.md). It is free, so it cannot crowd out stock.
 	if (!items.some(item => item.itemType === SortingHat.itemType)) items.push(new SortingHat());
 
 	return sortItemsAlphabetically(items);

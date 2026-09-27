@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Realistic rings: `node dist/scripts/sim-rings.js` (Pass B, docs/roadmap/31-pass-b-rings-and-bosses.md).
+ * Realistic rings: `node dist/scripts/sim-rings.js` (Pass B, docs/archive/roadmap/31-pass-b-rings-and-bosses.md).
  *
  * Two reports, both with human contestants (a player's starting deck plus fills per level,
  * not the boss decks every earlier report used):

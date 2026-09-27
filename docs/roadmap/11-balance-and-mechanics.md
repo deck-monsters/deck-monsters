@@ -27,7 +27,7 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   team fights under last-team victory; a boss scenario for the Team XP item below is still
   missing.
 - [ ] **Realistic harness rings, what is left — owner: Engine.** Pass B
-  ([31](31-pass-b-rings-and-bosses.md)) added human contestants with player decks, real
+  ([31](../archive/roadmap/31-pass-b-rings-and-bosses.md)) added human contestants with player decks, real
   bosses, `sim:bosses`, and `sim:rings` (per-class curves, and sampled rings of mixed sizes,
   levels, teams, and bosses). Still to do:
   - **Likely decks, not random hands.** Humans equip nine legal cards at random from a

@@ -54,7 +54,7 @@ function useItemsAction({ channel, channelName, character, game, results }: any)
 /*
  * Teams used to be joinable (a Sorting Hat) but never leavable: the hat only offered the
  * other houses. The owner asked for switching and clearing to be easy and obvious
- * (docs/roadmap/31-pass-b-rings-and-bosses.md), so leaving is a free command.
+ * (docs/archive/roadmap/31-pass-b-rings-and-bosses.md), so leaving is a free command.
  */
 const LEAVE_TEAM_REGEX = /(?:leave|clear|quit) (?:my |our )?teams?$/i;
 function leaveTeamAction({ channel, character }: any): Promise<unknown> {

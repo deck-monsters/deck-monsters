@@ -2,7 +2,7 @@
 /**
  * Humans against bosses: `node dist/scripts/sim-bosses.js`.
  *
- * The owner's report (2026-09-27, docs/roadmap/31-pass-b-rings-and-bosses.md): several
+ * The owner's report (2026-09-27, docs/archive/roadmap/31-pass-b-rings-and-bosses.md): several
  * bosses with one human are close to hopeless, because bosses share a team and humans do
  * not. Each scenario is a ring of humans (player starting decks, default targeting, no team
  * unless the scenario gives one) and real bosses (the Boss team, boss decks, boss
@@ -32,7 +32,7 @@ interface Scenario {
  * The owner's examples first (the hopeless ones can no longer spawn, and stay as the
  * baseline), then fights the new rules produce: one boss per human at up to the strongest
  * human + 1, an occasional ambush of one more, and bosses within the humans' combined
- * levels + 1 (docs/roadmap/31-pass-b-rings-and-bosses.md).
+ * levels + 1 (docs/archive/roadmap/31-pass-b-rings-and-bosses.md).
  */
 export const SCENARIOS: Scenario[] = [
 	{ label: 'L1 vs one L1 boss', humans: [1], bosses: [1] },

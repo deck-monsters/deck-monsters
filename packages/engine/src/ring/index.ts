@@ -39,7 +39,7 @@ const BOSS_SPAWN_BEGINNER_MAX_DELAY_MS = 1_320_000; // 22 min
 const BEGINNER_LEVEL_THRESHOLD = 2;
 const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 35;
 /**
- * Boss balance (owner decisions, 2026-09-27; docs/roadmap/31-pass-b-rings-and-bosses.md).
+ * Boss balance (owner decisions, 2026-09-27; docs/archive/roadmap/31-pass-b-rings-and-bosses.md).
  * `sim:bosses` showed outnumbering decides boss fights: one human against one boss of its
  * level wins about half the time, against two bosses 0-3%. So a fight normally has one boss
  * per human, and a timer spawn has this chance of one extra (an ambush). There used to be a

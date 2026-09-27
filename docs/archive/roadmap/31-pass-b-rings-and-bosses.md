@@ -1,15 +1,20 @@
 ---
-type: Roadmap
+type: Archive
 title: Pass B — Realistic Rings and Boss Balance
-description: Active pass plan for realistic harness rings, boss-versus-human balance, and the boss targeting behaviour.
-status: draft
+description: Closed pass record for realistic harness rings, boss-versus-human balance, boss temperaments, and easier teams.
+status: deprecated
 audience: internal
-tags: [roadmap, harness, balance, bosses]
+tags: [archive, harness, balance, bosses]
 ---
 # 31 — Pass B: Realistic Rings and Boss Balance
 
-**Status:** In progress on branch `claude/pass-b-harness-and-bosses`, started 2026-09-27.
-Pass B from [27](27-next-passes.md), widened by the owner to include the computer bosses.
+**Status:** Closed (September 2026), on branch `claude/pass-b-harness-and-bosses`. Pass B
+from [27](../../roadmap/27-next-passes.md), widened by the owner to include the computer
+bosses. Its lasting rules are in [boss encounters](../../architecture/boss-encounters.md) and
+the [simulation harness](../../reference/simulation-harness.md). Open work moved to active
+homes: the rest of the harness work and the class-curve findings to
+[11](../../roadmap/11-balance-and-mechanics.md), the mega boss to
+[12](../../roadmap/12-new-content-backlog.md#mega-boss-event).
 
 ## Why
 
@@ -37,10 +42,10 @@ Found while scoping:
 | # | Slice | Status | Commit |
 |---|---|---|---|
 | 1 | Harness roles: a spec can be a **human** (player-like starting deck, default targeting, own faction) or a real **boss** (Boss team, boss deck, boss targeting). `sim:bosses` runs the owner's scenarios and reports the human side's win rate | Done | c80f77e |
-| 2 | Realistic rings: `sim:rings` (per-class curves with player decks; sampled rings of mixed sizes, levels, teams, and bosses). Likely-deck archetypes and ring events stay open in [11](11-balance-and-mechanics.md) | Done | 963e437, this commit |
+| 2 | Realistic rings: `sim:rings` (per-class curves with player decks; sampled rings of mixed sizes, levels, teams, and bosses). Likely-deck archetypes and ring events stay open in [11](../../roadmap/11-balance-and-mechanics.md) | Done | 963e437, e8c348f |
 | 3 | Boss balance: humans unite then settle, one boss per human (a rare ambush minion), a level budget, no fully random levels | Done | d98566f |
 | 4 | Boss personalities, and teams made easy: the Sorting Hat in every shop (with a "No team" choice) and a free `leave team` command (owner request, 2026-09-27) | Done | c1b5d24 |
-| 5 | Docs, generated references, independent review | Not started | — |
+| 5 | Docs close-out, generated references, independent review | Done | this commit |
 
 ## Evidence before any change (`sim:bosses`, 200 fights per row)
 
@@ -95,7 +100,7 @@ L1 + L2 from 23% to 29%. (The `sim:bosses` ambush rows use a full-HP boss, not t
   / 52; Jinn 49 / 52 / 54 / 49; Minotaur 61 / 63 / 57 / 47; Weeping Angel 37 / 49 / 58 / 67;
   Unicorn 71 / 58 / 64 / 66; Dragon 38 / 61 / 39 / 55. The Angel shows the caster curve and
   the Barbarians the brute curve; the Unicorn strong everywhere and the Gladiator weak early
-  are logged in [11](11-balance-and-mechanics.md). Cells are 120 fights, so noisy.
+  are logged in [11](../../roadmap/11-balance-and-mechanics.md). Cells are 120 fights, so noisy.
 - **Sampled rings** (120 rings of mixed sizes, levels, and pairs; 40% with bosses spawned by
   the ring's new rules): humans won **59%** of the rings with bosses, so bosses are
   beatable but still a threat. A first version drew boss levels evenly and bosses came out
@@ -115,7 +120,8 @@ L1 + L2 from 23% to 29%. (The `sim:bosses` ambush rows use a full-HP boss, not t
 
 ## Next: the mega boss (its own pass)
 
-The owner's idea (2026-09-27), to design once this pass's balance is merged and measured:
+Tracked in [12](../../roadmap/12-new-content-backlog.md#mega-boss-event). The owner's idea
+(2026-09-27), to design once this pass's balance is merged and measured:
 
 - **Announced in advance** (a countdown players can see and plan around), rare.
 - **Unseen until the fight starts**, so its stats are computed then from the humans actually

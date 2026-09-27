@@ -8,7 +8,7 @@ import {
 } from './targeting-strategies.js';
 
 /*
- * Boss temperaments (owner, 2026-09-27; docs/roadmap/31-pass-b-rings-and-bosses.md). Every
+ * Boss temperaments (owner, 2026-09-27; docs/archive/roadmap/31-pass-b-rings-and-bosses.md). Every
  * boss used to share TARGET_HUMAN_PLAYER_WEAK, so a pack of bosses all acted alike. Now each
  * draws a temperament when it is made. Bosses are still on the Boss team, and these
  * strategies all respect teams, so a boss still only goes for challengers; what changes is
