@@ -8,8 +8,8 @@ tags: [roadmap, planning, passes]
 ---
 # 27 — Next Passes
 
-**Status:** Pass A done and live-checked on branch `claude/pass-a-command-workshop-bugs`;
-Pass B is next. Written on 2026-09-27 after the Unicorn pass
+**Status:** Pass A done and merged (PR #400). The owner moved the Dragon build
+([30](30-dragon-pack.md)) ahead of Pass B; it takes Pass B's task 0 with it. Written on 2026-09-27 after the Unicorn pass
 closed ([26](../archive/roadmap/26-unicorn-pack.md)) and a docs sweep. This file orders
 the open roadmap into passes; later passes are sketched and get their own task tables when
 they start. Update this file in each pass's checkpoint commits, filling in each task's
@@ -77,7 +77,7 @@ random decks. What it still lacks decides whether its numbers can guide balance 
 
 Candidate tasks, in order of value:
 
-0. One harness monster roster derived from `allMonsters`, a test that fails when a monster
+0. (Moved to the Dragon pack, [30](30-dragon-pack.md) task 0.) One harness monster roster derived from `allMonsters`, a test that fails when a monster
    is missing from it, and `sim:unicorn` generalized into `sim:monster <type>` (owner
    request; see "One monster roster for the harness" in 11). Small, and it goes first
    because every later task and the Dragon pass run on it.
@@ -95,9 +95,11 @@ guidance: balance does not need to be 50/50; judge classes against the curve in
 
 ## Pass C — Dragon research
 
-**In progress:** the first Norse, Roman, bestiary, roster-fit, and card-direction sweep is
-saved in [29 — Dragon Research Round](29-dragon-research.md). Requester answers, scan-level
-quotation checks, owner decisions, and the approved specification remain open.
+**Research done; the build is next.** The source sweep is in
+[29 — Dragon Research Round](29-dragon-research.md). The requester was interviewed and the
+owner approved a specification on 2026-09-27; the build runs as
+[30 — Dragon pack](30-dragon-pack.md), ahead of Pass B, and takes Pass B's task 0 (the
+harness roster and `sim:monster`) as its own first task.
 
 Source: the [Dragon research brief](12-new-content-backlog.md#dragon-research-brief). This
 pass writes a design brief, not code: choose the tradition, gather public-domain sources

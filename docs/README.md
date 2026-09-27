@@ -77,8 +77,8 @@ Generated and authored player references remain at the repository root:
 
 - Start planning work at [`roadmap/README.md`](roadmap/README.md). Active roadmap files
   contain actionable work and current status, not shipped implementation diaries.
-- The active Dragon source dossier and design round is
-  [`roadmap/29-dragon-research.md`](roadmap/29-dragon-research.md).
+- The Dragon pack in progress is [`roadmap/30-dragon-pack.md`](roadmap/30-dragon-pack.md);
+  its source dossier is [`roadmap/29-dragon-research.md`](roadmap/29-dragon-research.md).
 - Use [`archive/README.md`](archive/README.md) only to recover historical reasoning.
   Archived plans are not live contracts.
 - `superpowers/specs/` and `superpowers/plans/` hold only an active pass's temporary design

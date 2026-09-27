@@ -8,11 +8,10 @@ tags: [roadmap, dragon, research, content]
 ---
 # 29 — Dragon Research Round
 
-**Status:** Research started September 2026. This is a source dossier and design proposal,
-not an approved content specification. The owner and requester still need to answer the
-questions under [Gates and open questions](#gates-and-open-questions), and every `[Q?]`
-transcription needs checking against the linked scan before it can become player-facing
-`[Q]` copy.
+**Status:** Research started September 2026. The requester was interviewed and the owner
+approved a specification on 2026-09-27; it lives in [30 — Dragon pack](30-dragon-pack.md),
+which is now the source of truth for what is built. This file stays as the source dossier
+and the home of the ideas the pack deferred (the hoard, Soft Underbelly, the Roman cards).
 
 The [original brief](12-new-content-backlog.md#dragon-research-brief) remains the requirements
 document. This pass saves the evidence gathered against it so the eventual content pass does
@@ -26,9 +25,9 @@ not have to rediscover sources or mistake an attractive inference for an old tra
 | 2 | Roman primary-source sweep | Initial sweep saved; locating passages open | Source ledger below | 02e26a2 (#401) |
 | 3 | Bestiary and early-modern sweep | Initial sweep saved; exact scan records open | Source ledger below | 02e26a2 (#401) |
 | 4 | Roster fit and initial card directions | Drafted | Design synthesis below | 02e26a2 (#401) |
-| 5 | Engine fit: class and card pool, stat ranges, reusable mechanics, build checklist | Drafted | [Fitting the Dragon into the engine](#fitting-the-dragon-into-the-engine) | this commit |
-| 6 | Requester interview and owner source review | Not started | Gates below | — |
-| 7 | Approved monster/card specification and implementation slices | Blocked on #6 and on Pass B task 0 (one harness roster, `sim:monster`) | Not yet written | — |
+| 5 | Engine fit: class and card pool, stat ranges, reusable mechanics, build checklist | Drafted | [Fitting the Dragon into the engine](#fitting-the-dragon-into-the-engine) | 29d9240 |
+| 6 | Requester interview and owner decisions | Done 2026-09-27 | [30](30-dragon-pack.md#what-the-requester-asked-for) | this commit |
+| 7 | Approved monster/card specification and implementation slices | Moved to [30](30-dragon-pack.md), which also takes Pass B task 0 | [30](30-dragon-pack.md#specification) | this commit |
 
 ## Research method and quotation key
 
