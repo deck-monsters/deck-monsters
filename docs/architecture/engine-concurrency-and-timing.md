@@ -328,6 +328,18 @@ overflows. This is exactly the failure mode a fresh character's first card
 draw hits if the guard is ever changed back to reading live getters — keep
 new ownership checks reading `optionsStore` directly.
 
+**A card event must be traceable to its room.** The guard follows the emitted
+arguments up to three levels deep. A card in a room character's hand passes
+directly; a boss's cards, and fresh clones (a stolen or randomly drawn card),
+belong to no character. Their card boxes pass because the payload carries
+`player`, but a narration payload is just `{ narration }`, so those
+narrations were dropped: a boss's Pick Pocket never said whose card it took
+(10b #190). `BaseCard.play` (and the `play` overrides in Pick Pocket and
+Random) now set `card.playedBy = player`, which the guard follows to the
+monster and its ring. Do not widen the guard itself to accept every ring
+contestant instead: `Game.initializeEvents()` shares it, and it deliberately
+rejects a boss's own `creature.win`/`loss`, which must never pay rewards.
+
 - **Fight timer**: `startFightTimer()` clears and restarts the 60s countdown
   on every ring add/remove — the fight fires 60s after the *last* membership
   change (legacy behavior, intentional). `nextFightAt` / `nextBossSpawnAt` are

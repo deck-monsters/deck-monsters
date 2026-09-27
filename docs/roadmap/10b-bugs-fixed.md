@@ -4495,3 +4495,32 @@ four fail without the fix. `characters/equip-deck-accounting.test.ts` covers the
 and full-hand announcements.
 
 **Status**: Fixed.
+
+### 190. A boss's Pick Pocket never said whose card it took — FIXED
+
+The owner noticed Pick Pocket sometimes showed who the card was taken from and sometimes
+did not. The card box and the stolen card's play appeared either way.
+
+**Root cause**: card events reach a room on the process-wide semaphore, and
+`createRoomScopedEventGuard` (`announcements/index.ts`) keeps only events it can trace to
+this room's characters, monsters, cards, or ring, following the arguments up to three
+levels deep. Pick Pocket's steal line is a narration whose payload is just `{ narration }`,
+so the only trace is the card itself. A player's Pick Pocket sits in that player's
+monster's hand and passes; a **boss's** hand belongs to no room character, so the steal
+line was dropped while its card box (whose payload carries `player`) still showed. The
+same drop hit every narration from a boss's cards, and from fresh clones such as a stolen
+or randomly drawn card. Reproduced in a real room on the compiled engine under plain Node.
+
+**Fix**: `BaseCard.play`, and the `play` overrides in Pick Pocket and Random, record
+`card.playedBy = player`. The guard follows it to the monster and its ring, so a card's
+narration is traced the same way its card box already was. The guard itself is not
+widened, because `Game.initializeEvents()` shares it for rewards and must keep rejecting a
+boss's own `creature.win`/`loss`. `playedBy` is never serialized (clones and saves read
+`options`). The rule is written up in
+[engine concurrency and timing](../architecture/engine-concurrency-and-timing.md).
+
+**Tests**: `cards/pick-pocket-feed.test.ts` builds a real room with a player and a boss in
+the ring and checks the published feed: the boss's steal names its victim (fails without
+the fix), and a player's steal still names the boss.
+
+**Status**: Fixed.

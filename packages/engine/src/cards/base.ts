@@ -41,6 +41,18 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 
 	private _new: any = undefined;
 
+	/**
+	 * The monster playing this card right now. Card events reach a room through the
+	 * process-wide semaphore, and the room's guard (`createRoomScopedEventGuard`) keeps only
+	 * events it can trace to this room. A narration payload is just `{ narration }`, so a card
+	 * outside every room character's hand (a boss's hand, a stolen or randomly drawn clone)
+	 * had no trace and its narration was dropped: a boss's Pick Pocket never said whose card
+	 * it took (10b #190). This property lets the guard reach the player, and through it the
+	 * ring. It is set on every play, never serialized (clones and saves use `options`), and
+	 * only card events read it, so boss rewards stay unaffected.
+	 */
+	playedBy?: unknown;
+
 	constructor(options?: Partial<TOptions>) {
 		super(options);
 
@@ -155,6 +167,7 @@ export class BaseCard<TOptions extends CardOptions = CardOptions> extends BaseIt
 		activeContestants?: any,
 		shouldApplyEffects = true
 	): Promise<any> {
+		this.playedBy = player;
 		if (shouldApplyEffects) {
 			return this.applyEffects(
 				player,
