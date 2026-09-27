@@ -154,9 +154,12 @@ Every combat row was inserted at `.299` or later, so the window contained nothin
 Test Room A's older fights (75s, 6 min, 113s) still return 29, 293, and 49 events, so
 this is the fast-fight case, not an empty history table.
 
-- [ ] Select events by the engine timestamp, or widen the window to cover rows inserted
-  after `ended_at`. Add a test where the insert time is later than the resolve
-  timestamp.
+- [ ] Select rows by the engine timestamp, not by padding `created_at` past
+  `ended_at`. `loadFightEventsForSummary` filters only on room, time, and
+  visibility, and `room_events` has no fight id, so a grace period would attach
+  the next fight's rows to this one. The timestamp is the prefix of `event_id`
+  (`Date.now()` in `room-event-bus.ts`); query that, or store a fight id.
+  Cover a row whose insert time is later than the resolve timestamp.
 
 Read [analytics and history](../architecture/analytics-and-history.md).
 
