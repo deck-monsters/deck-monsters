@@ -115,6 +115,9 @@ requester" questions.
 
 ## Later
 
+- **Dragon counter cards** ([30](30-dragon-pack.md#next-counter-cards-follow-up-pass)):
+  Lullaby and Mirror Shield, chosen by the owner for the PR after the Dragon's.
+
 - **Prompt transport for items that ask a question** ([item follow-ups](item-followups.md)),
   paired with the prompt step and flow labels in [22](22-small-leftovers.md): both need the
   same per-flow design across the prompt call sites.

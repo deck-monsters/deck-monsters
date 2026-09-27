@@ -73,12 +73,14 @@ function instrument(isDragon: (creature: unknown) => boolean): void {
 		if (isDragon(args[0])) counters.breaths += 1;
 		return original.apply(self, args);
 	});
+	// Count targets in `effect`: an ancient dragon's breath never calls `dodge`.
+	wrap(breath, 'effect', (original, self, args) => {
+		if (isDragon(args[0]) && args[1] !== args[0]) counters.breathTargets += 1;
+		return original.apply(self, args);
+	});
 	wrap(breath, 'dodge', (original, self, args) => {
 		const dodged = original.apply(self, args) as boolean;
-		if (isDragon(args[0])) {
-			counters.breathTargets += 1;
-			if (dodged) counters.breathDodged += 1;
-		}
+		if (isDragon(args[0]) && dodged) counters.breathDodged += 1;
 		return dodged;
 	});
 	wrap(breath, 'ignite', (original, self, args) => {
