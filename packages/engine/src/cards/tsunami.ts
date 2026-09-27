@@ -9,7 +9,7 @@ export const TSUNAMI_DAMAGE = 5;
 /*
  * The requester's own card idea: "a very powerful wave to do five damage to everybody in the
  * ring". The owner kept it exactly: everybody, the Dragon and its allies too; that self-hit
- * is the price (docs/roadmap/30-dragon-pack.md). Epic and back-room only, like the Jinn's
+ * is the price (docs/archive/roadmap/30-dragon-pack.md). Epic and back-room only, like the Jinn's
  * Sandstorm. The description quotes Job 41:31-32 (1611 King James Bible), on Leviathan.
  *
  * An area card, so it finds hidden monsters and knocks a flying one down. The Dragon is

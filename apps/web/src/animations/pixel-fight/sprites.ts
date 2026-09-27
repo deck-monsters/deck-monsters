@@ -339,7 +339,7 @@ export const SPRITES: Readonly<Record<string, PixelSprite>> = {
   },
   // The first flier: a flat wedge of a head, a long low body, and one swept-back wing with
   // its bone drawn in the highlight. Deep-sea blue, for the sea dragons the requester
-  // likes, with a gold bone and an ember eye for the fire (docs/roadmap/30-dragon-pack.md).
+  // likes, with a gold bone and an ember eye for the fire (docs/archive/roadmap/30-dragon-pack.md).
   Dragon: {
     palette: { O: '#0a1633', D: '#1e3a8a', B: '#2563eb', A: '#60a5fa', C: '#fde68a', E: '#f97316' },
     frames: poses(dragon),

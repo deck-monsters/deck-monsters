@@ -2,7 +2,7 @@ import { getCardClassByTypeName } from '@deck-monsters/engine';
 import { wrap, pct, type MonsterReport, type Proto } from './types.js';
 
 /*
- * The Dragon's counters (docs/roadmap/30-dragon-pack.md): how often each of its four cards
+ * The Dragon's counters (docs/archive/roadmap/30-dragon-pack.md): how often each of its four cards
  * does the thing that makes it interesting, and how often its price is paid. Only the
  * Dragon can hold these cards, but Pick Pocket can play a stolen one for anyone, so every
  * count checks the acting or affected monster.

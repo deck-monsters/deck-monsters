@@ -1,26 +1,31 @@
 ---
-type: Roadmap
+type: Archive
 title: Dragon Content Pack Pass
-description: Active pass plan and approved specification for the Dragon monster and its four cards.
-status: draft
+description: Closed pass record and approved specification for the Dragon monster, its four cards, and ancient dragons.
+status: deprecated
 audience: internal
-tags: [roadmap, dragon, content, cards, monsters]
+tags: [archive, dragon, content, cards, monsters]
 ---
 # 30 — Dragon Content Pack Pass
 
-**Status:** In progress on branch `claude/dragon-pack`, started 2026-09-27. The research
-behind it is [29 — Dragon research](29-dragon-research.md); this file is the specification
-the owner approved from it and the record of the build.
+**Status:** Closed. Shipped in PR #402 (September 2026). Historical record of the pass; the
+research behind it is [29 — Dragon research](29-dragon-research.md). Its lasting rules now
+live in [cards and encounter effects](../../architecture/cards-and-encounter-effects.md#ancient-dragons),
+the [simulation harness](../../reference/simulation-harness.md), and the
+[Dragon strings inventory](../../reference/strings/dragon.md). Its follow-ups (the counter
+cards, a flavour-text pass after play, a live browser check, and the ideas this pass
+deferred) are tracked in
+[12 — New content](../../roadmap/12-new-content-backlog.md#dragon-follow-ups).
 
 ## Tasks
 
 | # | Slice | Status | Commit |
 |---|---|---|---|
-| 0 | Harness roster from `allMonsters`, a test that fails when a monster is missing, and `sim:unicorn` generalized into `sim:monster <type>` (Pass B task 0 in [27](27-next-passes.md)) | Done | 208885b |
+| 0 | Harness roster from `allMonsters`, a test that fails when a monster is missing, and `sim:unicorn` generalized into `sim:monster <type>` (Pass B task 0 in [27](../../roadmap/27-next-passes.md)) | Done | 208885b |
 | 1 | Monster shell: `Dragon` type, Wizard class, stats, appearance, `look at` profile, lore, names, spawn, web sprite, spawn-catalog test | Done | f27094a |
 | 2 | The two cards the requester asked for: Fire Breath and Take Wing; Fire Breath joins the starting deck | Done | d58caa4 |
 | 3 | Mood Scales and Tsunami | Done | 27c4e14 |
-| 4 | Generated references and strings inventory, `sim:monster Dragon` balance evidence, independent review, read-aloud script for the requester | Review done (one should-fix: the ancient trick let allies try; fixed with a test). Read-aloud script sent to the owner; requester notes pending | 43276e0, 7102f14, db7a060, 0980553, 8f7bf97, this commit |
+| 4 | Generated references and strings inventory, `sim:monster Dragon` balance evidence, independent review, read-aloud script for the requester | Done: evidence below; independent review (one should-fix, the ancient trick let allies try, fixed with a test); read-aloud script sent, requester's first reaction positive | 43276e0, 7102f14, db7a060, 0980553, 8f7bf97, df4edcd |
 
 Each task gets its own checkpoint commit, and every code task gets an independent
 read-only review before the pass closes.
@@ -39,7 +44,7 @@ The requester is the owner's eight-year-old son (September 2026 interview):
 
 As with the Unicorn, old quotations are for flavour and style, not scholarship
 ("Quoting old texts" in
-[cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules)).
+[cards and encounter effects](../../architecture/cards-and-encounter-effects.md#content-and-balance-rules)).
 
 ## Owner decisions (2026-09-27)
 
@@ -144,12 +149,14 @@ Dragon's average win rate with random legal decks, then with the thematic fixtur
   wins 13–15% at levels 3 and 5 (fair share 14.3%). A single 100-fight crowd row reads 6%;
   that row is noise.
 - **Read the fixture rows as a built deck against unbuilt ones**, and a fixture mirror as
-  turn-order tempo ([simulation harness](../reference/simulation-harness.md#reading-a-report)).
+  turn-order tempo ([simulation harness](../../reference/simulation-harness.md#reading-a-report)).
 
-## Next: counter cards (follow-up pass)
+## Counter cards (moved to the backlog)
 
 The owner asked for cards that give the rest of the roster answers to a Dragon (2026-09-27),
-and chose two for a follow-up PR once this one merges. Each works against any monster and
+and chose two for a follow-up PR once this one merges. They are tracked in
+[12](../../roadmap/12-new-content-backlog.md#dragon-follow-ups); the design notes below were
+the starting point. Each works against any monster and
 shines against the Dragon, so neither is dead in a deck that never meets one:
 
 - **Lullaby** (Bard and Unicorn, beside Dissonant Voice): 1d20 + INT vs the target's INT;

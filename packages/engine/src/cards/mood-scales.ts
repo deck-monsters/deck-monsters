@@ -16,7 +16,7 @@ export const isFurious = (monster: any): boolean =>
 
 /*
  * The requester likes dragons whose colour follows their mood; the owner chose "mood
- * follows HP" (docs/roadmap/30-dragon-pack.md). The mood is read from HP when the card is
+ * follows HP" (docs/archive/roadmap/30-dragon-pack.md). The mood is read from HP when the card is
  * played, and said out loud, so it is never a hidden roll:
  *   - calm (above half HP, i.e. not `bloodied`): hide exactly as Cloak of Invisibility does,
  *     with Cloak's answers (area cards, and the 1d20 search against INT);

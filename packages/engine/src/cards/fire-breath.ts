@@ -28,7 +28,7 @@ export const isBurning = (monster: any): boolean =>
 	!!monster?.encounterEffects?.some((effect: any) => effect.effectType === BURNING_EFFECT);
 
 /*
- * The fire breath the requester asked for (docs/roadmap/30-dragon-pack.md). The
+ * The fire breath the requester asked for (docs/archive/roadmap/30-dragon-pack.md). The
  * description quotes Job 41:21 (1611 King James Bible), on Leviathan.
  *
  * It started as Blast with a cost, and the owner asked for something that plays

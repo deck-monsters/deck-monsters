@@ -18,7 +18,7 @@ const { roll } = chance;
  *     Hit-family attack against an ancient dragon does triple damage instead of the usual
  *     maximum.
  * Its power is in Fire Breath: an ancient dragon's flames cannot be dodged and burn a turn
- * longer. See docs/roadmap/30-dragon-pack.md.
+ * longer. See docs/archive/roadmap/30-dragon-pack.md.
  *
  * Everything lives in one encounter effect armed when the fight starts (Dragon.startEncounter),
  * so fight cleanup ends it; the "once per fight" record lives in its closure.

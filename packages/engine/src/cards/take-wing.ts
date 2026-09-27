@@ -15,7 +15,7 @@ export const isAirborne = (monster: any): boolean =>
 	!!monster?.encounterEffects?.some((effect: any) => effect.effectType === TAKE_WING_EFFECT);
 
 /*
- * The flight card the requester asked for (docs/roadmap/30-dragon-pack.md; owner's choice
+ * The flight card the requester asked for (docs/archive/roadmap/30-dragon-pack.md; owner's choice
  * "take off, then dive"). The description quotes Isaiah 30:6 (1611 King James Bible).
  *
  * Every part is spent or visible, as 29 requires of any defence: one dodge per take-off,

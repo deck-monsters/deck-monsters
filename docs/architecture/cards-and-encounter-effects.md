@@ -118,6 +118,26 @@ held its card does nothing.
 - **A held monster's card never plays.** A card that frees its own player from a hold cannot
   work on that player's turn; it only helps when it lands on someone else.
 
+## Ancient dragons
+
+A Dragon at level 10 or more is **ancient** (`cards/helpers/ancient-dragon.ts`). The owner
+asked for very old dragons to be "immensely powerful but occasionally able to be tricked"
+(September 2026), so an ancient dragon has one strength and two weaknesses:
+
+- **Fire Breath cannot be dodged** and burns for three turns instead of two. Fire Breath
+  checks `isAncientDragon(player)`.
+- **Outwitted by talk.** Once per fight, each *opponent* an ancient dragon attacks rolls
+  1d20 + INT against 20 + the dragon's INT (a tie goes to the dragon). On a success that
+  attack goes wide and the dragon is exposed, −4 AC until its next card. Opponents only,
+  by `isOpponentHold`: an ally caught in the dragon's Tsunami must not talk its way out of
+  the wave (a review finding before merge).
+- **The soft underbelly.** A natural 20 with a Hit-family attack (anything with
+  `rollForDamage`) against it does triple damage.
+
+`Dragon.startEncounter` arms all of it as one encounter effect, so fight cleanup ends it,
+and the "once per fight" record lives in that effect's closure. `look at` says the dragon is
+ancient. A new card that should respect ancient dragons reads `isAncientDragon`.
+
 ## Adding a card or a monster
 
 The Unicorn pass (archived as
@@ -172,7 +192,8 @@ new card or monster must reach. Check each one.
 - **Evidence comes from the harness.** Run the [simulation harness](../reference/simulation-harness.md)
   before a balance claim, and read its known limits there.
 - **Sources.** Credit every source in a comment beside the text it shaped. The Unicorn's
-  sources are listed in `monsters/unicorn.ts` and each card file.
+  sources are listed in `monsters/unicorn.ts` and each card file; the
+  Dragon's in `monsters/dragon.ts` and its card files.
 - **Quoting old texts (owner decision, September 2026).** Public-domain texts may be quoted
   directly, or quoted with a playful twist, in flavour text and narration. Their archaic
   spelling and grammar ("sticketh", "belloweth") are welcome when a line stays readable

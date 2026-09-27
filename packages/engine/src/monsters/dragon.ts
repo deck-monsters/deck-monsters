@@ -10,7 +10,7 @@ import { armAncientDragon, isAncientDragon } from '../cards/helpers/ancient-drag
  * The Dragon was asked for by the owner's eight-year-old son, whose favourite dragons are
  * sleek ones (a flat head, a long body, aerodynamic wings), sea dragons, and dragons whose
  * colour follows their mood. The research and decisions are in
- * docs/roadmap/29-dragon-research.md and docs/roadmap/30-dragon-pack.md. The shape is our
+ * docs/archive/roadmap/29-dragon-research.md and docs/archive/roadmap/30-dragon-pack.md. The shape is our
  * own: no book or film dragon's name, species, design, or words.
  *
  * Sources, quoted for atmosphere (the owner's rule: see "Quoting old texts" in
@@ -119,14 +119,14 @@ class Dragon extends BaseMonster {
 
 Dragon.creatureType = DRAGON;
 // The first Wizard: a caster that starts fragile and grows strong, the small dragon that
-// becomes a terror. Owner decision, 2026-09-27 (docs/roadmap/30-dragon-pack.md).
+// becomes a terror. Owner decision, 2026-09-27 (docs/archive/roadmap/30-dragon-pack.md).
 Dragon.class = WIZARD;
 // DEX +1, STR 0, INT +1: the same +2 budget as every monster. The spec started at DEX +2,
 // STR -1, and `sim:monster Dragon` showed why that fails for a Wizard: its class pool is
 // only its own four cards plus Cloak and Revive, so most of a random deck is generic cards
 // like Hit, and at STR -1 those did too little. It won 19% of level-1 fights against the
 // roster (the Weeping Angel wins about 40%). STR 0 brought level 1 to about 39% and level
-// 20 to 65%, a caster's curve (docs/roadmap/30-dragon-pack.md, task 4). Scales give one
+// 20 to 65%, a caster's curve (docs/archive/roadmap/30-dragon-pack.md, task 4). Scales give one
 // point of AC, and the body sits at the roster midpoint for HP.
 (Dragon as any).acVariance = 1;
 (Dragon as any).hpVariance = 2;
