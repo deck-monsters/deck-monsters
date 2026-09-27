@@ -66,7 +66,7 @@ Source: `packages/engine/src/cards/fire-breath.ts`.
 **Rules text:**
 
 ```text
-Fire Breath: 2 fire damage +1 per level of the dragon to every opponent.
+Fire Breath: 3 fire damage +1 per level of the dragon to every opponent.
 Winded afterwards: -2 ac until your next card.
 ```
 

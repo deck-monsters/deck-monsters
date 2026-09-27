@@ -40,6 +40,19 @@ for why this exists and what it gates.
   special-purpose card; in a simulation it only turns fights into draws and hides the
   matchup being measured. An explicit `SimMonsterSpec.deck` is used exactly as given.
 
+### Reading a report
+
+- **Sim 1 always acts first.** The deterministic ring fixes turn order. In a mirror match
+  with a fixed fixture deck both monsters play the same cards in lockstep, so any tempo
+  effect is magnified: a Dragon mirror of nine Fire Breaths gives the first mover 90%, and
+  the Dragon's fixture mirror gave Sim 2 over 80%, while the Unicorn's is 50/50. Read a
+  lopsided fixture mirror as turn-order tempo, not as a card problem.
+- **A fixture deck against random decks** measures a built deck against unbuilt ones, so its
+  rows run higher than a real ring would; judge the curve's shape, and compare random-deck
+  rows with other monsters' random-deck rows.
+- **"1993-09-7202 18:58" in the damage columns is not a bug.** It is the `cardType` of
+  Prion Disease, a joke card (the questionable milkshakes), and it hits hard.
+
 ## `simulate()` — `packages/harness/src/simulate.ts`
 
 Runs `config.fights` independent 1-shot ring encounters with a fixed monster lineup (each

@@ -10,8 +10,9 @@ export const WINDED_AC_PENALTY = 2;
 
 /*
  * The fire breath the requester asked for (docs/roadmap/30-dragon-pack.md). The
- * description quotes Job 41:21 (1611 King James Bible), on Leviathan. Blast is the model
- * (fire to every opponent), a point lower at every level, and it leaves the Dragon
+ * description quotes Job 41:21 (1611 King James Bible), on Leviathan. Blast is the model:
+ * the same damage to every opponent (3 +1 per level; the spec started a point lower and
+ * `sim:monster Dragon` left the Dragon too weak early), rarer, and it leaves the Dragon
  * "winded": 2 AC down until its next card, the same penalty and give-back as the Unicorn's
  * Gloaming Rest. That is the opening 29 asked for: a burst the whole ring can see coming
  * back at it, instead of a better-looking Blast.
@@ -25,7 +26,7 @@ export class FireBreathCard extends BlastCard {
 	static level = 0;
 	static cost = REASONABLE.cost;
 	static defaults = {
-		damage: 2,
+		damage: 3,
 		levelDamage: 1,
 	};
 	static flavors = {

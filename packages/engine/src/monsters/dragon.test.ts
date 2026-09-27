@@ -14,7 +14,7 @@ describe('monsters/dragon', () => {
 		expect(dragon.creatureType).to.equal(DRAGON);
 		expect(dragon.class).to.equal(WIZARD);
 		expect(dragon.givenName).to.be.a('string');
-		expect(dragon.options).to.include({ dexModifier: 2, strModifier: -1, intModifier: 1, icon: '🐉' });
+		expect(dragon.options).to.include({ dexModifier: 1, strModifier: 0, intModifier: 1, icon: '🐉' });
 	});
 
 	it('does not out-armour the best existing spawn AC by more than one', () => {

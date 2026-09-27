@@ -52,8 +52,8 @@ const article = (word: string): string => (/^[aeiou]/i.test(word) ? 'an' : 'a');
 class Dragon extends BaseMonster {
 	constructor(options: Record<string, unknown> = {}) {
 		const defaultOptions = {
-			dexModifier: 2,
-			strModifier: -1,
+			dexModifier: 1,
+			strModifier: 0,
 			intModifier: 1,
 			color: sample(SCALES),
 			head: sample(HEADS),
@@ -108,9 +108,13 @@ Dragon.creatureType = DRAGON;
 // The first Wizard: a caster that starts fragile and grows strong, the small dragon that
 // becomes a terror. Owner decision, 2026-09-27 (docs/roadmap/30-dragon-pack.md).
 Dragon.class = WIZARD;
-// The quick, clever flier (DEX +2, INT +1) with the Basilisk keeping strength; the same +2
-// budget as every monster. Scales give one point of AC, and a caster's body sits at the
-// roster midpoint for HP.
+// DEX +1, STR 0, INT +1: the same +2 budget as every monster. The spec started at DEX +2,
+// STR -1, and `sim:monster Dragon` showed why that fails for a Wizard: its class pool is
+// only its own four cards plus Cloak and Revive, so most of a random deck is generic cards
+// like Hit, and at STR -1 those did too little. It won 19% of level-1 fights against the
+// roster (the Weeping Angel wins about 40%). STR 0 brought level 1 to about 39% and level
+// 20 to 65%, a caster's curve (docs/roadmap/30-dragon-pack.md, task 4). Scales give one
+// point of AC, and the body sits at the roster midpoint for HP.
 (Dragon as any).acVariance = 1;
 (Dragon as any).hpVariance = 2;
 (Dragon as any).description = `

@@ -49,9 +49,9 @@ describe('./cards/fire-breath.ts Fire Breath', () => {
 		expect(getMinimumDeck().some((c: any) => c instanceof FireBreathCard)).to.equal(true);
 	});
 
-	it('burns every opponent for 2 +1 per dragon level, and not the dragon', async () => {
+	it('burns every opponent for 3 +1 per dragon level, and not the dragon', async () => {
 		const hp = { dragon: dragon.hp, a: foeA.hp, b: foeB.hp };
-		const damage = 2 + dragon.level;
+		const damage = 3 + dragon.level;
 
 		await new FireBreathCard().play(dragon, foeA, ring, contestants);
 

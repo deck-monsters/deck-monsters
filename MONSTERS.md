@@ -129,8 +129,8 @@ The horn is the heart of every tale. Topsell swore that the horn "doth wonderful
 |---|---|
 | HP | 30–35 (spawn + level 0) |
 | AC | 6–8 (spawn + level 0) |
-| STR | 4 (base -1) |
-| DEX | 7 (base +2) |
+| STR | 5 (base +0) |
+| DEX | 6 (base +1) |
 | INT | 6 (base +1) |
 
 "Out of his mouth go burning lamps, and sparks of fire leap out. Out of his nostrils goeth smoke, as out of a seething pot." So the Book of Job describes Leviathan, and Leviathan is a sea dragon: "he maketh the deep to boil like a pot." Isaiah knew "the dragon that is in the sea," and, over the dry south, "the fiery flying serpent." The dragon of the ring is all of these at once. It hatches in the cold deep, small enough to carry in two hands, and grows, if it lives, into a flame with wings.
