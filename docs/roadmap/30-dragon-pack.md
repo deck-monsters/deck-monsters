@@ -17,8 +17,8 @@ the owner approved from it and the record of the build.
 | # | Slice | Status | Commit |
 |---|---|---|---|
 | 0 | Harness roster from `allMonsters`, a test that fails when a monster is missing, and `sim:unicorn` generalized into `sim:monster <type>` (Pass B task 0 in [27](27-next-passes.md)) | Done | 208885b |
-| 1 | Monster shell: `Dragon` type, Wizard class, stats, appearance, `look at` profile, lore, names, spawn, web sprite, spawn-catalog test | Done | this commit |
-| 2 | The two cards the requester asked for: Fire Breath and Take Wing; Fire Breath joins the starting deck | Not started | — |
+| 1 | Monster shell: `Dragon` type, Wizard class, stats, appearance, `look at` profile, lore, names, spawn, web sprite, spawn-catalog test | Done | f27094a |
+| 2 | The two cards the requester asked for: Fire Breath and Take Wing; Fire Breath joins the starting deck | Done | this commit |
 | 3 | Mood Scales and Tsunami | Not started | — |
 | 4 | Generated references and strings inventory, `sim:monster Dragon` balance evidence, independent review, read-aloud script for the requester | Not started | — |
 
@@ -83,7 +83,7 @@ Sandstorm's confusion turns them onto the Dragon itself.
 | Card | Level / rarity / sale | Effect | Bound and counterplay |
 |---|---|---|---|
 | **Fire Breath** (required) | 0 / common / front shop; one in the starting deck | Fire to every opponent: 2 damage +1 per Dragon level (Blast is 3 +1 per level, Cleric-only). | The Dragon is **winded**: −2 AC until its next card, the same penalty and give-back as Gloaming Rest. Opponents get a visible opening. |
-| **Take Wing** (required) | 0 / uncommon / front shop | The Dragon takes off until its next card. The first melee blow aimed at it that turn misses ("strikes empty air"). If it is still airborne when its next card is a melee attack, that attack **dives**: +2 to hit and +1d6 damage. | Any damage from a non-melee card (Blast, Breath, Tsunami, Delayed Hit, a curse) while airborne knocks it down: the dive is lost. Only one dodge per take-off. A non-melee next card lands it with no dive. |
+| **Take Wing** (required) | 0 / uncommon / front shop | The Dragon takes off until its next card. The first melee blow aimed at it that turn misses ("strikes empty air"). If it is still airborne when its next card is a melee attack, that attack **dives**: +2 to hit and +1d6 damage. | Anything that lands while it is airborne (a second melee blow, or area damage it cannot dodge) knocks it down: the dive is lost. Only one dodge per take-off. A non-melee next card lands it with no dive. The dive and Mood Scales' fury share `cards/helpers/empower-melee.ts`. |
 | **Mood Scales** | 1 / rare / back room | **Calm** (above half HP): blends in exactly as Cloak of Invisibility does. **Furious** (at or below half HP): turns red and cannot hide; its next melee hit gets +1d6 damage. | The mood is read when the card is played and shown in its narration. Calm's concealment has Cloak's own answers (area cards, a 1d20 search vs INT). |
 | **Tsunami** | 0 / epic / back room | A great wave does 5 damage to **everyone** in the ring, the Dragon and its allies included. | The self-hit and the ally hit are the price. It is an area card, so it reaches hidden monsters, and it knocks an airborne Dragon down like any other non-melee damage. |
 

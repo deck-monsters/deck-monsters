@@ -23,6 +23,7 @@ import { EnthrallCard } from '../enthrall.js';
 import { EntranceCard } from '../entrance.js';
 import { FelineCompanionCard } from '../feline-companion.js';
 import { FightOrFlightCard } from '../fight-or-flight.js';
+import { FireBreathCard } from '../fire-breath.js';
 import { FistsOfVillainyCard } from '../fists-of-villainy.js';
 import { FistsOfVirtueCard } from '../fists-of-virtue.js';
 import { FleeCard } from '../flee.js';
@@ -49,6 +50,7 @@ import { SandstormCard } from '../sandstorm.js';
 import { ScotchCard } from '../scotch.js';
 import { StickethCard } from '../sticketh.js';
 import { SurvivalKnifeCard } from '../survival-knife.js';
+import { TakeWingCard } from '../take-wing.js';
 import { ThickSkinCard } from '../thick-skin.js';
 import { TurkeyThighCard } from '../turkey-thigh.js';
 import { UnconquerableHornCard } from '../unconquerable-horn.js';
@@ -82,6 +84,7 @@ const all = [
 	EcdysisCard,
 	FelineCompanionCard,
 	FightOrFlightCard,
+	FireBreathCard,
 	FistsOfVillainyCard,
 	FistsOfVirtueCard,
 	FleeCard,
@@ -108,6 +111,7 @@ const all = [
 	ScotchCard,
 	StickethCard,
 	SurvivalKnifeCard,
+	TakeWingCard,
 	ThickSkinCard,
 	TurkeyThighCard,
 	UnconquerableHornCard,

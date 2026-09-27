@@ -176,6 +176,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Ecdysis](#ecdysis)
 - [Feline Companion](#feline-companion)
 - [Fight or Flight](#fight-or-flight)
+- [Fire Breath](#fire-breath)
 - [Fists of Villainy](#fists-of-villainy)
 - [Fists of Virtue](#fists-of-virtue)
 - [Flee](#flee)
@@ -202,6 +203,7 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
 - [Scotch](#scotch)
 - [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
+- [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
 - [Turkey Thigh](#turkey-thigh)
 - [Unconquerable Horn](#unconquerable-horn)
@@ -931,6 +933,32 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  MSRP: 10
  Targets: ac
  Class: Melee
+
+==================================
+```
+
+### Fire Breath
+
+```text
+==================================
+ 🔥  Fire Breath  ○
+----------------------------------
+
+ "His breath kindleth coals, and 
+ a flame goeth out of his mouth." 
+ Everyone in front of it burns. 
+ Then the dragon must breathe in.
+
+ Fire Breath: 2 fire damage +1 
+ per level of the dragon to every 
+ opponent.
+ Winded afterwards: -2 ac until 
+ your next card.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 50
+ Class: AOE
 
 ==================================
 ```
@@ -1702,6 +1730,34 @@ Discord mirrors web lane keys via connector-local flow locks; prompt collectors 
  MSRP: 20
  Targets: ac
  Class: Melee
+
+==================================
+```
+
+### Take Wing
+
+```text
+==================================
+ 🌬️  Take Wing  ◆
+----------------------------------
+
+ "The fiery flying serpent." Up, 
+ out of reach, and then down 
+ again, all teeth.
+
+ Take off until your next card. 
+ The first melee attack against 
+ you misses.
+ If your next card is a melee 
+ attack, dive: +2 to hit and +1d6 
+ damage.
+ Any damage that lands while you 
+ are in the air knocks you down, 
+ and the dive is lost.
+
+ Level: Beginner
+ Usable by: Dragon
+ MSRP: 30
 
 ==================================
 ```

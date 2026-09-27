@@ -45,6 +45,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Ecdysis](#ecdysis)
 - [Feline Companion](#feline-companion)
 - [Fight or Flight](#fight-or-flight)
+- [Fire Breath](#fire-breath)
 - [Fists of Villainy](#fists-of-villainy)
 - [Fists of Virtue](#fists-of-virtue)
 - [Flee](#flee)
@@ -71,6 +72,7 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 - [Scotch](#scotch)
 - [Sticketh](#sticketh)
 - [Survival Knife](#survival-knife)
+- [Take Wing](#take-wing)
 - [Thick Skin](#thick-skin)
 - [Turkey Thigh](#turkey-thigh)
 - [Unconquerable Horn](#unconquerable-horn)
@@ -455,6 +457,21 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
 ==================================
 ```
 
+### Fire Breath
+
+```text
+==================================
+ 🔥  Fire Breath  ○
+----------------------------------
+
+ "His breath kindleth coals, and 
+ a flame goeth out of his mouth." 
+ Everyone in front of it burns. 
+ Then the dragon must breathe in.
+
+==================================
+```
+
 ### Fists of Villainy
 
 ```text
@@ -816,6 +833,20 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  yourself in the thigh and press 
  the pommel for a Stimpak 
  injection.
+
+==================================
+```
+
+### Take Wing
+
+```text
+==================================
+ 🌬️  Take Wing  ◆
+----------------------------------
+
+ "The fiery flying serpent." Up, 
+ out of reach, and then down 
+ again, all teeth.
 
 ==================================
 ```

@@ -4,3 +4,6 @@ export const FACESWAP_EFFECT = 'Faceswap Effect';
 export const SANDSTORM_EFFECT = 'Sandstorm Effect';
 export const DISSONANT_VOICE_EFFECT = 'Dissonant Voice Effect';
 export const GLOAMING_REST_EFFECT = 'Gloaming Rest Effect';
+export const WINDED_EFFECT = 'Winded Effect';
+export const TAKE_WING_EFFECT = 'Take Wing Effect';
+export const FURY_EFFECT = 'Fury Effect';

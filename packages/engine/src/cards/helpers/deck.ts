@@ -3,6 +3,7 @@ import { BlastCard } from '../blast.js';
 import { BlinkCard } from '../blink.js';
 import { CoilCard } from '../coil.js';
 import { DelayedHit } from '../delayed-hit.js';
+import { FireBreathCard } from '../fire-breath.js';
 import { FleeCard } from '../flee.js';
 import { HealCard } from '../heal.js';
 import { HitCard } from '../hit.js';
@@ -20,6 +21,7 @@ export const getMinimumDeck = (): any[] => [
 	new SandstormCard(),
 	new StickethCard(),
 	new BlastCard(),
+	new FireBreathCard(),
 	new HitCard(),
 	new HitCard(),
 	new HitCard(),

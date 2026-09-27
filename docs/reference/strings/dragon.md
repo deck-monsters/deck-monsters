@@ -1,7 +1,7 @@
 ---
 type: Reference
 title: Dragon strings
-description: Generated review inventory of the Dragon's flavour copy.
+description: Generated review inventory of the Dragon's flavour copy and its signature cards.
 status: stable
 audience: internal
 tags: [voice, strings, monsters, dragon]
@@ -56,3 +56,52 @@ Dragons are clever, vain, and fast. They talk, and they will tell you so. Their 
 
 Vikings carved dragons on their prows. Romans marched behind a dragon of cloth that howled when the wind filled it. Neither ever tamed a real one. A dragon who fights beside a Beastmaster has decided to, and it counts its hoard every night: in Beowulf, a thief took one cup from a sleeping dragon's hoard, and the old king died of it.
 ```
+
+## Fire Breath
+
+Source: `packages/engine/src/cards/fire-breath.ts`.
+
+**Card description:** `"His breath kindleth coals, and a flame goeth out of his mouth." Everyone in front of it burns. Then the dragon must breathe in.`
+
+**Rules text:**
+
+```text
+Fire Breath: 2 fire damage +1 per level of the dragon to every opponent.
+Winded afterwards: -2 ac until your next card.
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| flavors → hits | `breathes fire on` |
+| flavors → hits | `kindles coals around` |
+| flavors → hits | `very gently toasts` |
+| wind → narration | `{player} has {his} breath back.` |
+| wind → narration | `🔥 {player} is winded, and smoke trails from {his} nostrils. (-2 ac until {his} next card.)` |
+
+## Take Wing
+
+Source: `packages/engine/src/cards/take-wing.ts`.
+
+**Card description:** `"The fiery flying serpent." Up, out of reach, and then down again, all teeth.`
+
+**Rules text:**
+
+```text
+Take off until your next card. The first melee attack against you misses.
+If your next card is a melee attack, dive: +2 to hit and +1d6 damage.
+Any damage that lands while you are in the air knocks you down, and the dive is lost.
+```
+
+**Narration and outcomes:**
+
+| Where | Template |
+|---|---|
+| takeOff → narration | `🌬️ {flier} folds {his} wings and dives!` |
+| takeOff → narration | `{flier} glides back down to the sand.` |
+| takeOff → narration | `{flier} is high in the air, and {attacker}'s blow strikes empty air.` |
+| takeOff → narration | `{flier} is knocked out of the sky! No dive this time.` |
+| effect → narration | `{target} is already in the air, and climbs a little higher.` |
+| effect → narration | `🌬️ {player} spreads {his} wings and takes to the sky.` |
+| effect → narration | `🌬️ In confusion, {player} flings {target} into the air.` |

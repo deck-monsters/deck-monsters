@@ -47,6 +47,14 @@ describe('getCardClass', () => {
 		expect(getCardClass('Unconquerable Horn')).toBe('utility');
 	});
 
+	it('badges the Dragon cards by what they do', () => {
+		expect(getCardClass('Fire Breath')).toBe('magic');
+		expect(getCardClass('Tsunami')).toBe('magic');
+		// A dodge and a dive, and a hide or a fury: moves, not attacks of their own.
+		expect(getCardClass('Take Wing')).toBe('utility');
+		expect(getCardClass('Mood Scales')).toBe('utility');
+	});
+
 	it('falls back to utility for unmatched names', () => {
 		expect(getCardClass('Mystery Card')).toBe('utility');
 	});
