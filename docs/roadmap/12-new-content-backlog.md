@@ -26,16 +26,27 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
   [balance and mechanics](11-balance-and-mechanics.md) can review a proposed card. The
   spec stays optional until more people author cards; the current class-per-card system
   remains the implementation.
+- [ ] **Strings inventory follow-ups.** The per-monster inventories are generated
+  (`packages/engine/src/build/strings-inventory.ts`, September 2026). Still open:
+  - Inventories for text no monster owns: the shared card framework (base hit and miss,
+    the default immobilize lines), items, bosses and ring events, and command help. The
+    same extractor can render them; they need a sensible page per area.
+  - Non-signature cards that several classes share (Blast, Heal, Soften) have no
+    inventory yet; a per-class page is the natural home.
+  - A lint check for an "-eth" verb right after a pronoun placeholder (`{he} riseth`),
+    which reads "they riseth" for a they/them monster. The inventories make it a regex
+    over generated text.
 
 ## Monsters and items
 
 - [x] **Unicorn content pack.** Shipped in PR #394: the Unicorn and five cards (Sticketh,
   Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest). The pass record and the
   original brief are archived as [26 — Unicorn content pack](../archive/roadmap/26-unicorn-pack.md).
-- [ ] **Unicorn voice punch-up.** The owner finds the Unicorn's flavour text bland (September
+- [x] **Unicorn voice punch-up.** The owner finds the Unicorn's flavour text bland (September
   2026) and wants more edge from the old sources. Proposals for every Unicorn string, with
   the archive checks recorded, are in
-  [28 — Unicorn voice punch-up](28-unicorn-voice-punch-up.md), awaiting the owner's picks.
+  [28 — Unicorn voice punch-up](../archive/roadmap/28-unicorn-voice-punch-up.md). Shipped
+  with the owner's picks (September 2026).
 - [ ] **Dragon.** A second requested monster, researched and built the way the Unicorn was.
   Research comes first; see the [Dragon research brief](#dragon-research-brief) below.
 - [ ] A qilin/kirin creature deserves its own sourced design rather than a cosmetic Unicorn
@@ -172,7 +183,7 @@ our own creature, built on the same public-domain roots the books draw on.
 ### Voice: give it edge from the start
 
 The Unicorn launched with careful, mild prose and needed a punch-up
-([28](28-unicorn-voice-punch-up.md)). Write the Dragon's voice with edge in the first draft,
+([28](../archive/roadmap/28-unicorn-voice-punch-up.md)). Write the Dragon's voice with edge in the first draft,
 still readable aloud to an eight-year-old: exciting, funny, a little scary, never gory.
 Use the house style and the [Q]/[Q?]/[T]/[A] tags from 28, so the owner can see at a glance
 which lines are real quotations.
@@ -181,7 +192,9 @@ which lines are real quotations.
 
 1. List every string the Dragon will need before writing any: lore, look-at template,
    each card's text, and each narration moment (hit, miss, natural 1 and 20, the card's
-   special outcome, cleanup).
+   special outcome, cleanup). Once a first draft is in code, `pnpm run build:docs`
+   writes the Dragon's [strings inventory](../reference/strings/README.md) with every
+   template and he/she/they examples; review and read aloud from that file.
 2. Mine the sources for lines with bite, not facts: insults, boasts, warnings, threats.
    Record each with edition, passage, and a link, tagged [Q] or [Q?].
 3. For each string, draft two or three options: one quotation, one twist, one original

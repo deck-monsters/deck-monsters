@@ -28,13 +28,19 @@ const CURSABLE_STATS = ['ac', 'dex', 'str', 'int'];
  *      text says so rather than promising a self-cleanse that cannot happen;
  *   2. the target's harshest negative encounter stat penalty (Soften and similar curses);
  *   3. a Bad Batch waiting in the ring to turn the next drink to poison.
+ *
+ * Player-facing lines (docs/archive/roadmap/28-unicorn-voice-punch-up.md): the description quotes
+ * Topsell (1607, p. 721), the horn "doth wonderfully help against poisons", beside his
+ * retelling of kings who drank from horn cups. The frothing cup is Pare's water test
+ * (Discours de la licorne, 1582), which Pare records in order to deny it.
  */
 export class HornOfProofCard extends BaseCard {
 	static cardClass = [HEAL];
 	static cardType = 'Horn of Proof';
 	static permittedClassesAndTypes = [UNICORN, CLERIC];
 	static probability = RARE.probability;
-	static description = 'Dip the horn in the cup, and whatever was poisoned is made clean.';
+	static description =
+		'Kings drank from such horns and feared no cup, for the horn "doth wonderfully help against poisons."';
 	static level = 2;
 	static cost = CHEAP.cost;
 
@@ -62,7 +68,7 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 		);
 		target.encounterModifiers.immobilizedTurns = 0;
 		this.emit('narration', {
-			narration: `${this.icon} The horn's touch loosens the hold. ${target.givenName} is free.`,
+			narration: `${this.icon} The horn toucheth the bonds, and they fall away. ${target.givenName} is free.`,
 		});
 		return true;
 	}
@@ -87,7 +93,7 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 		if (!worstStat) return false;
 
 		this.emit('narration', {
-			narration: `${this.icon} The horn draws out the curse on ${target.givenName}'s ${worstStat}.`,
+			narration: `${this.icon} The horn draweth out the curse on ${target.givenName}'s ${worstStat}, as it draweth poison from the cup.`,
 		});
 		target.setModifier(worstStat, -worstAmount);
 		return true;
@@ -101,7 +107,7 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 		// One cleanse removes one batch; any others stay queued.
 		ring.encounterEffects = [...effects.slice(0, index), ...effects.slice(index + 1)];
 		this.emit('narration', {
-			narration: `${this.icon} ${target.givenName} dips the horn in the cups in the ring. One bad batch is found out and poured away.`,
+			narration: `${this.icon} ${target.givenName} dips the horn in the cups in the ring. One cup froths and hisses; that bad batch is poured away.`,
 		});
 		return true;
 	}
@@ -112,7 +118,7 @@ Then heal ${HORN_OF_PROOF_HEAL} hp.`;
 
 		if (!cleansed) {
 			this.emit('narration', {
-				narration: `${this.icon} The horn finds nothing to purify.`,
+				narration: `${this.icon} The horn findeth nothing here to purify.`,
 			});
 		}
 		await subEventDelay(ring?.pacingMultiplier);

@@ -138,9 +138,16 @@ describe('./cards/sticketh.ts Sticketh', () => {
 		sinon.stub(card, 'getAttackRoll').returns(fakeRoll(2, 0));
 		sinon.stub(card, 'getStickSaveRoll').returns(fakeRoll(1, 99));
 
+		const rolled: any[] = [];
+		card.on('rolled', (_className: string, _card: any, event: any) => rolled.push(event));
+
 		await card.play(unicorn, foe, ring, contestants);
 
 		expect(isStuck(unicorn)).to.equal(true);
+		// Timon of Athens, with the verb agreeing with "they".
+		expect(rolled[1].outcome).to.equal(
+			'Nola rolled a natural 1. Pride and wrath confound them, and they are made the conquest of their own fury.'
+		);
 	});
 
 	it('treats a natural 1 on the charge as a miss, not a self-inflicted hit', async () => {
@@ -205,8 +212,8 @@ describe('./cards/sticketh.ts Sticketh', () => {
 		expect(effects).to.have.length(0);
 		expect(narrations.join('\n')).to.include('Nola\'s horn 🦄 sticks fast in the timber');
 		expect(narrations.join('\n')).to.include('their own str');
-		expect(narrations.join('\n')).to.include('Bram has an opening.');
-		expect(narrations.join('\n')).to.include('Nola\'s horn is still 🦄 stuck fast in the timber.');
+		expect(narrations.join('\n')).to.include('Bram has an opening. Unicorns may be betray\'d with trees.');
+		expect(narrations.join('\n')).to.include('Nola\'s horn is still 🦄 stuck fast in the stocke, ne thence releast.');
 	});
 
 	it('charges against their own AC and can stick when confused into targeting themself', async () => {

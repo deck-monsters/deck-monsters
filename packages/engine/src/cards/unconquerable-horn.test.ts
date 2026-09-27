@@ -38,6 +38,21 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 
 	afterEach(() => sinon.restore());
 
+	it('quotes Job only for a Unicorn: a ward lent in confusion protects anyone', async () => {
+		// The Basilisk carries a ward lent to it; the Unicorn tries to hold it.
+		new UnconquerableHornCard().effect(unicorn, foe);
+		const hold = new ImmobilizeCard();
+		sinon.stub(hold, 'immobilizeCheck').returns(true);
+		const narrations: string[] = [];
+		hold.on('narration', (_c: string, _card: any, { narration }: any) => narrations.push(narration));
+
+		await hold.effect(unicorn, foe, ring, contestants);
+
+		expect(isHeld(foe)).to.equal(false);
+		expect(narrations.join('\n')).to.include('Sszar will not be taken and held.');
+		expect(narrations.join('\n')).not.to.include('Will the unicorn');
+	});
+
 	it('is a Unicorn-only level 1 card that targets its player', () => {
 		const card = new UnconquerableHornCard();
 
@@ -61,7 +76,7 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 
 		expect(isHeld(unicorn)).to.equal(false);
 		expect(unicorn.encounterModifiers[CONTROL_WARD]).to.equal('spent');
-		expect(narrations.join('\n')).to.include('Nola cannot be taken and held. She refuses to be immobilized');
+		expect(narrations.join('\n')).to.include('"Will the unicorn be willing to serve thee?" Nola will not be taken and held. She refuses to be immobilized');
 
 		// The second hold lands.
 		await hold.effect(foe, unicorn, ring, contestants);
@@ -135,7 +150,7 @@ describe('./cards/unconquerable-horn.ts Unconquerable Horn', () => {
 
 		await card.play(unicorn, foe, ring, contestants);
 		await card.play(unicorn, foe, ring, contestants);
-		expect(narrations[1]).to.include('already braced');
+		expect(narrations[1]).to.include('already standeth braced. No band shall hold her.');
 
 		unicorn.encounterModifiers[CONTROL_WARD] = 'spent';
 		await card.play(unicorn, foe, ring, contestants);

@@ -5,6 +5,7 @@ import { UNICORN } from '../constants/creature-types.js';
 import { MELEE } from '../constants/card-classes.js';
 import { RARE } from '../helpers/probabilities.js';
 import { PRICEY } from '../helpers/costs.js';
+import { agree } from '../helpers/pronouns.js';
 
 const { roll } = chance;
 
@@ -25,6 +26,19 @@ const STICKETH_TO_HIT_BONUS = 1;
  *     tree and the unicorn gores it "so firmly with his horn that he could not get it out".
  * All four appear in the anthology A Book of Unicorns (Green Tiger Press). The card keeps
  * both halves: a hard charge, and the risk of being left stuck fast.
+ *
+ * Player-facing lines quote the public-domain sources directly (owner decision, September
+ * 2026; see "Quoting old texts" in docs/architecture/cards-and-encounter-effects.md and
+ * docs/archive/roadmap/28-unicorn-voice-punch-up.md):
+ *   - description: Topsell (1658 reprint of the 1607 chapter), "the Unicorn in the
+ *     swiftness of his course runneth against the tree, wherein his sharp horn sticketh fast".
+ *   - natural 20: Deuteronomy 33:17 (King James, 1611), "with them he shall push the people
+ *     together to the ends of the earth".
+ *   - natural 1 on the charge: Spenser's lion "slips aside".
+ *   - natural 1 on the stick save: Shakespeare, Timon of Athens IV.iii, "pride and wrath
+ *     would confound thee and make thine own self the conquest of thy fury".
+ *   - still stuck: Spenser, the horn "Strikes in the stocke, ne thence can be releast".
+ *   - the opening: Shakespeare, Julius Caesar II.i, "unicorns may be betray'd with trees".
  */
 export class StickethCard extends ImmobilizeCard {
 	static cardClass = [MELEE];
@@ -41,7 +55,7 @@ export class StickethCard extends ImmobilizeCard {
 	static uselessAgainstCreatureTypes: string[] = [];
 	static probability = RARE.probability;
 	static description =
-		'Charge horn-first. Old accounts warn that a clever foe steps aside, and the "sharp horn sticketh fast."';
+		'"The Unicorn in the swiftness of his course runneth against the tree, wherein his sharp horn sticketh fast." Charge anyway.';
 	static level = 0;
 	static cost = PRICEY.cost;
 	// Seeded through the starting deck (cards/helpers/deck.ts) and drops rather than the
@@ -100,9 +114,9 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 		let commentary: string | undefined;
 
 		if (strokeOfLuck) {
-			commentary = `${player.givenName} rolled a natural 20. Automatic max damage.`;
+			commentary = `${player.givenName} rolled a natural 20. Automatic max damage. With that horn ${player.pronouns.he} shall push the people together to the ends of the earth.`;
 		} else if (curseOfLoki) {
-			commentary = `${player.givenName} rolled a 1. ${target.givenName} sidesteps at the last instant.`;
+			commentary = `${player.givenName} rolled a 1. ${target.givenName} slips aside at the last instant.`;
 		} else if (tie) {
 			commentary = 'Miss... Tie goes to the defender.';
 		}
@@ -145,11 +159,11 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 		if (success) {
 			outcome = `${player.givenName} pulls up in time.`;
 		} else if (curseOfLoki) {
-			outcome = `${player.givenName} rolled a natural 1. The horn buries itself in the timber.`;
+			outcome = `${player.givenName} rolled a natural 1. Pride and wrath confound ${player.pronouns.him}, and ${player.pronouns.he} ${agree(player.pronouns, 'is', 'are')} made the conquest of ${player.pronouns.his} own fury.`;
 		} else if (tie) {
-			outcome = 'Tie... the horn sticks.';
+			outcome = 'Tie... the horn sticketh.';
 		} else {
-			outcome = 'The horn sticks fast!';
+			outcome = 'The horn sticketh fast!';
 		}
 
 		const feint =
@@ -172,7 +186,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 	override emitHeldEffect(player: any, target: any, _ring: any): void {
 		// Only ever self-inflicted, so player === target.
 		this.emit('narration', {
-			narration: `${target.givenName}'s horn is still ${this.icon} ${this.actions.IMMOBILIZED} in the timber.`,
+			narration: `${target.givenName}'s horn is still ${this.icon} ${this.actions.IMMOBILIZED} in the stocke, ne thence releast.`,
 		});
 	}
 
@@ -250,7 +264,7 @@ Natural 1 on either roll fails. Natural 20 on the charge deals max damage.`;
 			this.stickFast(player, ring);
 			if (player !== target) {
 				this.emit('narration', {
-					narration: `${target.givenName} has an opening.`,
+					narration: `${target.givenName} has an opening. Unicorns may be betray'd with trees.`,
 				});
 			}
 			await subEventDelay(ring?.pacingMultiplier);

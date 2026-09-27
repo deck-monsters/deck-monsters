@@ -18,13 +18,19 @@ const DISSONANCE_PENALTY = 2;
  * Aelian (De Animalium Natura, ancient report): of all animals the cartazon has "the most
  * dissonant voice".
  * The card is a rattle, not a silence: one small penalty on one attack, no damage.
+ *
+ * Player-facing lines quote the old sources (docs/archive/roadmap/28-unicorn-voice-punch-up.md):
+ * the description is Topsell (1658 reprint), "There was nothing more horrible then the
+ * voice or braying of it, for the voyce is strained above measure"; the ringing ears echo
+ * Holland's Pliny (1601), whose monoceros "loweth after an hideous manner".
  */
 export class DissonantVoiceCard extends BaseCard {
 	static cardClass = [ACOUSTIC];
 	static cardType = 'Dissonant Voice';
 	static permittedClassesAndTypes = [UNICORN, BARD];
 	static probability = UNCOMMON.probability;
-	static description = 'A cry that no throat that shape should make. It is hard to aim while it rings.';
+	static description =
+		'"There was nothing more horrible then the voice or braying of it, for the voyce is strained above measure." Stop thine ears.';
 	static level = 1;
 	static cost = VERY_CHEAP.cost;
 
@@ -70,7 +76,7 @@ No damage. Does not stack.`;
 			const { getAttackRoll } = card;
 			if (typeof getAttackRoll === 'function') {
 				this.emit('narration', {
-					narration: `${target.givenName}'s ears still ring ${this.icon} (-${DISSONANCE_PENALTY} to attack).`,
+					narration: `${target.givenName}'s ears yet ring with that hideous lowing ${this.icon} (-${DISSONANCE_PENALTY} to attack).`,
 				});
 				// `card` is the per-play clone from applyEffects, so wrapping it never leaks
 				// into the deck.

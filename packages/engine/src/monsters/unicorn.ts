@@ -26,7 +26,19 @@ import BaseMonster from './base.js';
  *   - Welleran Poltarnees' introduction to the anthology lists a goat's beard among the
  *     bizarre traits; Marco Polo's heavy, muddy "unicorn" (almost certainly a rhinoceros:
  *     reception history, not an observation of the mythic animal) informs the stocky build.
- * Player-facing copy below is original prose; no source is quoted beyond these comments.
+ *
+ * Player-facing copy quotes the public-domain English editions directly (owner decision,
+ * September 2026; see "Quoting old texts" in docs/architecture/cards-and-encounter-effects.md
+ * and docs/archive/roadmap/28-unicorn-voice-punch-up.md for the checked passages):
+ *   - Pliny, trans. Philemon Holland (1601): "the most fell and furious beast of all other",
+ *     "the Licorne or Monoceros", "loweth after an hideous manner".
+ *   - Marco Polo, trans. Henry Yule (rev. Cordier): "a passing ugly beast to look upon".
+ *   - Topsell (1607): the horn "doth wonderfully help against poisons".
+ *   - Deuteronomy 33:17 and Job 39:9 (King James, 1611).
+ *   - Spenser, The Faerie Queene II.v.10 (1590): "slips aside", "strikes in the stocke, ne
+ *     thence can be releast".
+ *   - Bosworth-Toller, án-horn: Old English "ānhorn", a unicorn (the rare witness line).
+ * The look-at line lets the old authorities quarrel; the pools below are who may swear.
  */
 
 const COATS = ['ivory white', 'winter white', 'tawny', 'white with a dark-red head'];
@@ -63,6 +75,19 @@ const VOICES = ['low as a lowing ox', 'clear as a bell', 'startlingly dissonant'
 // generated and kept in options for later flavour.
 const WITNESS_DETAILS = ['eyes', 'retreat', 'voice'];
 
+// Who swears to the witness detail, and in what shape. The shape, both authorities, and the
+// commoner are all drawn at spawn and kept in options, so `look at` reads the same after a
+// restore. Commoners get their own shape: they are never believed, and never wrong.
+const AUTHORITIES = ['Pliny', 'Aelian', 'Ctesias', 'Solinus', 'Topsell', 'Marco Polo'];
+const COMMONERS = [
+	{ who: 'a drunken sailor', pronoun: 'he' },
+	{ who: 'a very old woman in the market', pronoun: 'she' },
+];
+const WITNESS_SHAPES = ['liar', 'liar', 'saith', 'commoner'];
+
+// About one look-at in twenty ends with the Old English word for the beast.
+const ANHORN_CHANCE = [true, ...Array(19).fill(false)];
+
 const article = (word: string): string => (/^[aeiou]/i.test(word) ? 'an' : 'a');
 
 class Unicorn extends BaseMonster {
@@ -78,6 +103,11 @@ class Unicorn extends BaseMonster {
 			retreat: sample(RETREATS),
 			voice: sample(VOICES),
 			witness: sample(WITNESS_DETAILS),
+			witnessShape: sample(WITNESS_SHAPES),
+			swearer: sample(AUTHORITIES),
+			doubter: sample(AUTHORITIES),
+			commoner: sample(COMMONERS.map(({ who }) => who)),
+			anhorn: sample(ANHORN_CHANCE),
 			icon: '🦄',
 		};
 
@@ -112,6 +142,40 @@ class Unicorn extends BaseMonster {
 		return this.options.witness as string;
 	}
 
+	get witnessShape(): string {
+		return (this.options.witnessShape as string) ?? 'liar';
+	}
+
+	get swearer(): string {
+		return (this.options.swearer as string) ?? AUTHORITIES[0];
+	}
+
+	// Never the swearer: an authority does not call themself a liar. A clash drawn at spawn
+	// falls through to the next name in the pool, so the result is stable across restores.
+	get doubter(): string {
+		const drawn = (this.options.doubter as string) ?? AUTHORITIES[1];
+		if (drawn !== this.swearer) return drawn;
+		return AUTHORITIES[(AUTHORITIES.indexOf(drawn) + 1) % AUTHORITIES.length];
+	}
+
+	get commoner(): { who: string; pronoun: string } {
+		return COMMONERS.find(({ who }) => who === this.options.commoner) ?? COMMONERS[0];
+	}
+
+	get witnessLine(): string {
+		const detail = this.witnessDetail;
+		switch (this.witnessShape) {
+			case 'saith':
+				return `So saith ${this.swearer}: ${detail}. ${this.doubter} saith otherwise, and loudly.`;
+			case 'commoner': {
+				const { who, pronoun } = this.commoner;
+				return `${capitalize(who)} swears that ${detail}. ${capitalize(pronoun)} is not believed, but ${pronoun} is not wrong.`;
+			}
+			default:
+				return `${this.swearer} swears that ${detail}; ${this.doubter} calls ${this.swearer} a liar.`;
+		}
+	}
+
 	get witnessDetail(): string {
 		const { pronouns } = this;
 		switch (this.witness) {
@@ -128,7 +192,10 @@ class Unicorn extends BaseMonster {
 		// The coat gets a sentence of its own: player-chosen colours often carry their own
 		// "with" (the spawn prompt's own example is "ivory white with a dark-red head"), and
 		// "with a coat of … with a … and a … horn" read badly in a live check.
-		return `${article(this.build)} ${this.build} unicorn bearing ${article(this.horn)} ${this.horn} horn. ${capitalize(this.pronouns.his)} coat is ${this.color}. One witness swears that ${this.witnessDetail}; the next account will disagree.`;
+		const anhorn = this.options.anhorn
+			? ` The oldest English called ${this.pronouns.him} ānhorn, and did not argue about ${this.pronouns.his} feet.`
+			: '';
+		return `${article(this.build)} ${this.build} unicorn bearing ${article(this.horn)} ${this.horn} horn. ${capitalize(this.pronouns.his)} coat is ${this.color}. ${this.witnessLine}${anhorn}`;
 	}
 }
 
@@ -143,11 +210,11 @@ Unicorn.class = CLERIC;
 (Unicorn as any).acVariance = 2;
 (Unicorn as any).hpVariance = 1;
 (Unicorn as any).description = `
-No two accounts of the unicorn agree. Ancient travellers described a wild creature of distant lands, white in body and dark red about the head, swifter than any horse, with a single horn banded white, crimson, and black. Other ancient writers gave them a stag's head, a boar's tail, even an elephant's feet, and later ones a goat's beard and cloven hooves. What survives every retelling is the silhouette: a pale, horse-shaped animal with one horn, glimpsed at a distance and gone before anyone gets closer.
+Of all beasts, the most fell and furious. So says Pliny, and Pliny had never met this one. Philemon Holland, Englishing him in 1601, gives "the Licorne or Monoceros" a horse's body, a stag's head, an elephant's feet, a boar's tail, one black horn two cubits long, and a voice that "loweth after an hideous manner." Ctesias saw a white body, a dark-red head, and a horn banded white, black, and crimson. Marco Polo met one wallowing in mud and called it "a passing ugly beast to look upon," nothing like the one the stories catch in a maiden's lap. No two witnesses agree, and each calls the last a liar.
 
-The horn is at the heart of every story. Some tellers say that whoever drinks from a cup carved from it is safe from poison; others describe a weapon long and sharp enough to run a foe straight through. In the ring both stories hold. A unicorn's charge is terrible, but a patient opponent who steps aside at the last instant can leave that horn stuck fast in the timber.
+The horn is the heart of every tale. Topsell swore that the horn "doth wonderfully help against poisons"; the King James Bible says that with such horns "he shall push the people together to the ends of the earth." In the ring both tales hold. But heed Spenser: the wise foe "slips aside," and the furious beast's horn "strikes in the stocke, ne thence can be releast."
 
-Unicorns keep to deserted places. They are gentle with most creatures, yet they are said to fight their own kind, and they cannot be taken and held against their will. A unicorn who fights beside a Beastmaster has chosen to, and one who trusts a companion may kneel to rest in the evening light, which is the closest anyone ever gets.
+"Will the unicorn be willing to serve thee, or abide by thy crib?" Not by any art of man. A unicorn who fights beside a Beastmaster has chosen to. And if thou seest one kneel to rest in the gloaming, beware: the books of yore say that is how the hunters take it.
 `;
 
 export { Unicorn };

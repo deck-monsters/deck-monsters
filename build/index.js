@@ -9,6 +9,8 @@ const ENGINE_DIST = '../packages/engine/dist/build/root-docs.js';
 const writeToFile = (name, string, suffix = 'md') =>
 	writeFileSync(`${name}.${suffix}`, string);
 
+const STRINGS_DIST = '../packages/engine/dist/build/strings-inventory.js';
+
 const loadGenerateRootDocs = async () => {
 	try {
 		const mod = await import(ENGINE_DIST);
@@ -44,6 +46,10 @@ Promise.resolve()
 
 		const generateRootDocs = await loadGenerateRootDocs();
 		await generateRootDocs(writeToFile);
+
+		// The per-monster strings inventories under docs/reference/strings/.
+		const { generateStringsInventories } = await import(STRINGS_DIST);
+		generateStringsInventories(writeToFile);
 	})
 	.then(() => {
 		console.log('Done!');

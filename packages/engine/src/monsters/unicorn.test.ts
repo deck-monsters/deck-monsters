@@ -67,6 +67,32 @@ describe('monsters/unicorn', () => {
 		expect(unicorn.description).not.to.match(/with[^.]*with/);
 	});
 
+	it('lets the old authorities quarrel, and never has one call themself a liar', () => {
+		const liar = new Unicorn({ gender: 'female', witness: 'voice', voice: 'low as a lowing ox', witnessShape: 'liar', swearer: 'Pliny', doubter: 'Aelian', anhorn: false });
+		expect(liar.description).to.match(/Pliny swears that her voice is low as a lowing ox; Aelian calls Pliny a liar\.$/);
+
+		const saith = new Unicorn({ gender: 'female', witness: 'eyes', eyes: 'dark blue', witnessShape: 'saith', swearer: 'Ctesias', doubter: 'Topsell', anhorn: false });
+		expect(saith.description).to.include('So saith Ctesias: her eyes are dark blue. Topsell saith otherwise, and loudly.');
+
+		const sailor = new Unicorn({ gender: 'androgynous', witness: 'retreat', retreat: 'a rocky gorge', witnessShape: 'commoner', commoner: 'a drunken sailor', anhorn: false });
+		expect(sailor.description).to.include('A drunken sailor swears that they keep to a rocky gorge. He is not believed, but he is not wrong.');
+
+		const same = new Unicorn({ witnessShape: 'liar', swearer: 'Pliny', doubter: 'Pliny' });
+		expect(same.doubter).to.equal('Aelian');
+	});
+
+	it('ends with the Old English name only when the rare flag is drawn', () => {
+		const rare = new Unicorn({ gender: 'male', anhorn: true });
+		expect(rare.description).to.match(/The oldest English called him ānhorn, and did not argue about his feet\.$/);
+		expect(new Unicorn({ anhorn: false }).description).not.to.include('ānhorn');
+	});
+
+	it('reads the same for a unicorn saved before the witness options existed', () => {
+		const legacy = new Unicorn({ witnessShape: undefined, swearer: undefined, doubter: undefined, commoner: undefined });
+		expect(legacy.description).to.include('Pliny swears that');
+		expect(legacy.description).to.include('Aelian calls Pliny a liar.');
+	});
+
 	it('keeps generated appearance through a hydration round trip', async () => {
 		await monsterHydrateReady;
 		const original = new Unicorn({ name: 'Nola' });

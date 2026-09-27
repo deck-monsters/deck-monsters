@@ -99,6 +99,26 @@ Why: a sentence should read naturally for the quantity the player actually has.
 - Good: `${count} ${count === 1 ? 'monster' : 'monsters'}`
 - Bad: `monster(s)`
 
+### Old-fashioned lines
+
+Monster lore and card flavour may speak in early modern English (King James Bible and
+Shakespeare: thou, thee, ye, -eth, "beware", "of yore") and may quote public-domain old
+sources directly; see "Quoting old texts" in
+[cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
+Keep numbers, dice, and rules in plain modern English, and put the archaic line where the
+moment is biggest rather than on every line. Save real Old English for a rare easter egg.
+
+"-eth" belongs to a singular subject. After a name, write the -eth form directly; after a
+pronoun, pass both forms to `agree()` so a they/them monster reads naturally.
+
+Why: the Unicorn's first voice read as careful and bland; the old sources supply the edge
+(owner decision, September 2026). Plain mechanics keep the fight readable for new players.
+
+- Good: `` `No hunter came. ${name} riseth from the laurel, restored.` ``
+- Good: `` `${pronouns.he} ${agree(pronouns, 'is', 'are')} made the conquest of ${pronouns.his} own fury` ``
+- Bad: `` `${pronouns.he} riseth` `` → “they riseth”
+- Bad: “Thou rollest 1d20 + str against thine foe's dex.”
+
 ### Existing bad examples are migration targets
 
 Some legacy text is intentionally called out so it does not return: “proud owner” becomes

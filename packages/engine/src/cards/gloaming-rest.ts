@@ -23,13 +23,20 @@ const REST_HEALTH_DICE = '3d4';
  * laurel, and falling asleep. The poem and the old capture stories turn that on virtue and
  * a virginity test; this card keeps only the freely chosen trust and the risk of resting in
  * the open. No target, no gender or "purity" check, and no sleep effect on anyone else.
+ *
+ * The description quotes Topsell (1607, p. 719, as quoted by the Edward Worth Library),
+ * where unicorns "growe tame, and come and sleepe beside them", and the hunters come.
+ * The line is cut before Topsell names who "them" are, so the card keeps trust and rest
+ * and never the purity test. Narration plays on the same story: the hunters listen, wait,
+ * or do not come. See docs/archive/roadmap/28-unicorn-voice-punch-up.md.
  */
 export class GloamingRestCard extends BaseCard {
 	static cardClass = [HEAL];
 	static cardType = 'Gloaming Rest';
 	static permittedClassesAndTypes = [UNICORN, CLERIC];
 	static probability = RARE.probability;
-	static description = 'Kneel among the laurel as the light goes. Trust that nobody strikes before you rise.';
+	static description =
+		'"At the sight of them they growe tame, and come and sleepe beside them." And then the hunters come. Rest, and beware.';
 	static level = 3;
 	static cost = REASONABLE.cost;
 
@@ -79,7 +86,7 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 
 			if (interrupted) {
 				this.emit('narration', {
-					narration: `${this.icon} ${target.givenName}'s rest was broken. ${capitalize(target.pronouns.he)} ${agree(target.pronouns, 'rises', 'rise')} without its comfort.`,
+					narration: `${this.icon} The hunters were waiting! ${target.givenName}'s rest is broken, and ${target.pronouns.he} ${agree(target.pronouns, 'rises', 'rise')} without its comfort.`,
 				});
 				this.restoreAc(target);
 				await subEventDelay(pacing);
@@ -92,7 +99,7 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 				card: this,
 				roll: healRoll,
 				who: target,
-				outcome: `${target.givenName} rises from the laurel, restored.`,
+				outcome: `No hunter came. ${target.givenName} riseth from the laurel, restored.`,
 			});
 			await subEventDelay(pacing);
 			await target.heal(healRoll.result);
@@ -122,7 +129,7 @@ If nothing damages you before then, heal ${REST_HEALTH_DICE} as that card begins
 				player === target
 					// The subject is the monster's name, which is always singular; `agree` is only
 					// for sentences whose subject is the pronoun ("they rise").
-					? `${this.icon} As the light fails, ${player.givenName} kneels among the laurel and closes ${player.pronouns.his} eyes.`
+					? `${this.icon} As the light fails, ${player.givenName} kneels among the laurel and closes ${player.pronouns.his} eyes. Somewhere in the dusk, the hunters are listening.`
 					: `${this.icon} In confusion, ${player.givenName} coaxes ${target.givenName} to kneel and rest.`,
 		});
 		target.setModifier('ac', -REST_AC_PENALTY);

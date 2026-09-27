@@ -108,7 +108,7 @@ describe('./cards/horn-of-proof.ts Horn of Proof', () => {
 
 		await card.effect(unicorn, unicorn, ring);
 
-		expect(narrations[0]).to.include('nothing to purify');
+		expect(narrations[0]).to.include('findeth nothing here to purify');
 		expect(unicorn.hp).to.equal(before + 3);
 	});
 
