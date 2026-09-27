@@ -114,8 +114,10 @@ new card or monster must reach. Check each one.
   name, and an unmatched card shows as Utility.
 - Tests: permissions, stats text, hit and miss, natural 1 and 20, confusion
   (`target === player`), encounter cleanup, and a JSON hydration round trip.
-- Regenerate `CARDS.md`, `DMG.md`, and `cards.html` with `pnpm run build:docs`, and add the
-  card's strings to the [strings inventory](../reference/strings/README.md).
+- Regenerate `CARDS.md`, `DMG.md`, `cards.html`, and the
+  [strings inventories](../reference/strings/README.md) with `pnpm run build:docs`. A card
+  whose permitted types name a monster appears in that monster's inventory by itself, and
+  a test fails when an inventory is stale.
 
 **A monster**
 

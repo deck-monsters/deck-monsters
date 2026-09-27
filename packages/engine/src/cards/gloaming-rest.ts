@@ -28,7 +28,7 @@ const REST_HEALTH_DICE = '3d4';
  * where unicorns "growe tame, and come and sleepe beside them", and the hunters come.
  * The line is cut before Topsell names who "them" are, so the card keeps trust and rest
  * and never the purity test. Narration plays on the same story: the hunters listen, wait,
- * or do not come. See docs/roadmap/28-unicorn-voice-punch-up.md.
+ * or do not come. See docs/archive/roadmap/28-unicorn-voice-punch-up.md.
  */
 export class GloamingRestCard extends BaseCard {
 	static cardClass = [HEAL];

@@ -1,25 +1,48 @@
 ---
-type: Roadmap
+type: Archive
 title: Unicorn Voice Punch-Up
-description: Proposals for a sharper Unicorn voice, with the September 2026 archive checks of the quotations copied out for the owner to pick from.
-status: draft
+description: Closed record of the Unicorn voice punch-up, with the owner's picks, the proposals, and the September 2026 checks of the quotations.
+status: deprecated
 audience: internal
 tags: [content, strings, unicorn, voice]
 ---
 # 28 — Unicorn Voice Punch-Up
 
-**Status:** Proposals, awaiting the owner's review (September 2026). Nothing here has
-shipped. The owner found the Unicorn's flavour text bland and asked for more edge: real
-quotations from the old sources, lightly twisted quotations, and new lines written in
-their old-fashioned English. The archive checks requested at the end of this file were
-made on 2026-09-27; the copied passages are in [Research findings](#research-findings).
-The owner picks lines here; a small strings-only pass then implements them (see
-[27 — Next passes](27-next-passes.md#later)).
+**Status:** Shipped on branch `claude/unicorn-voice-punch-up` (September 2026). Historical
+record of the proposals, the owner's picks, and the archive checks behind the quotations.
+The lasting rules now live in "Old-fashioned lines" in
+[voice and wording](../../reference/voice-and-wording.md#old-fashioned-lines) and "Quoting
+old texts" in
+[cards and encounter effects](../../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
+The shipped wording is in the generated
+[Unicorn strings inventory](../../reference/strings/unicorn.md).
+
+## What the owner picked
+
+| String | Pick |
+|---|---|
+| Sticketh card text | Topsell's tree: "The Unicorn in the swiftness of his course runneth against the tree, wherein his sharp horn sticketh fast." Charge anyway. |
+| Unconquerable Horn card text | Job 39:10 with a retort: "Thou canst not. Many have tried." |
+| Dissonant Voice card text | Topsell's voice: "There was nothing more horrible then the voice or braying of it…" Stop thine ears. |
+| Gloaming Rest card text | Topsell's own words: "At the sight of them they growe tame, and come and sleepe beside them." And then the hunters come. |
+| Horn of Proof card text | Kings and Topsell: "Kings drank from such horns and feared no cup, for the horn 'doth wonderfully help against poisons.'" |
+| Lore | The full proposal, opening on the joke: "So says Pliny, and Pliny had never met this one." |
+| `look at` witnesses | Mixed sentence shapes: authorities who call each other liars, "So saith…", and commoners who are never believed and never wrong. |
+| Old English | *ānhorn* as a rare witness line, about one look-at in twenty. |
+
+Narration took the single proposal in each table below, with two small changes: the
+empty Horn of Proof reads "The horn findeth nothing here to purify" (it cleanses holds and
+curses too, not only poison), and the refused hold keeps its rules clause ("{He} refuses to
+be {immobilized}") after Job's question.
+
+Owner guidance recorded during the pick: *"In the old books, this is how they catch you"*
+was flat; the tone to aim for is *"Beware, books of yore warn that in this way be ye
+confounded."*
 
 Current wording lives in the source files and the
-[Unicorn strings inventory](../reference/strings/unicorn.md). The quoting rule is "Quoting
+[Unicorn strings inventory](../../reference/strings/unicorn.md). The quoting rule is "Quoting
 old texts" in
-[cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
+[cards and encounter effects](../../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
 
 ## How to read the proposals
 
@@ -44,7 +67,7 @@ here to make atmosphere. Matching one sentence to one printing, letter for lette
 very little. Getting a spelling slightly off is fine: keep "enimies" if it reads more
 clearly than "enimye", mix Holland's phrase with Topsell's spelling, or smooth a letter
 two transcriptions disagree on. Credit whose words they are in a source comment. The same
-rule is [Quoting old texts](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
+rule is [Quoting old texts](../../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
 The spelling differences under [Spelling differences on record](#spelling-differences-on-record)
 are notes for anyone who is curious.
 
@@ -62,9 +85,9 @@ are notes for anyone who is curious.
 - **Grammar with pronoun subjects.** "-eth" belongs to a singular subject. After a name,
   write "Nola riseth". After a pronoun, use `agree()` with both forms, for example
   `agree(pronouns, 'riseth', 'rise')`, so a "they" monster reads "they rise"
-  ([voice and wording](../reference/voice-and-wording.md)).
+  ([voice and wording](../../reference/voice-and-wording.md)).
 - **Tests and inventory.** Every changed string updates its test and the
-  [strings inventory](../reference/strings/unicorn.md) in the same change.
+  [strings inventory](../../reference/strings/unicorn.md) in the same change.
 
 ## Monster lore (`Unicorn.description`, shown by `look at` and in MONSTERS.md)
 
@@ -215,7 +238,7 @@ strikes before you rise."
   spelling. The hunters then come. That is the Gloaming Rest story in Topsell's own
   words, so it can replace an [A] line. He also records the decoy of a young man dressed
   as a woman; leave that out of player-facing copy. The card stays trust and rest, as
-  [26](../archive/roadmap/26-unicorn-pack.md) decided.
+  [26](26-unicorn-pack.md) decided.
 
 **Narration.**
 

@@ -19,7 +19,7 @@ const DISSONANCE_PENALTY = 2;
  * dissonant voice".
  * The card is a rattle, not a silence: one small penalty on one attack, no damage.
  *
- * Player-facing lines quote the old sources (docs/roadmap/28-unicorn-voice-punch-up.md):
+ * Player-facing lines quote the old sources (docs/archive/roadmap/28-unicorn-voice-punch-up.md):
  * the description is Topsell (1658 reprint), "There was nothing more horrible then the
  * voice or braying of it, for the voyce is strained above measure"; the ringing ears echo
  * Holland's Pliny (1601), whose monoceros "loweth after an hideous manner".

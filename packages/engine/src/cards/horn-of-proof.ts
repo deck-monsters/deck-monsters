@@ -29,7 +29,7 @@ const CURSABLE_STATS = ['ac', 'dex', 'str', 'int'];
  *   2. the target's harshest negative encounter stat penalty (Soften and similar curses);
  *   3. a Bad Batch waiting in the ring to turn the next drink to poison.
  *
- * Player-facing lines (docs/roadmap/28-unicorn-voice-punch-up.md): the description quotes
+ * Player-facing lines (docs/archive/roadmap/28-unicorn-voice-punch-up.md): the description quotes
  * Topsell (1607, p. 721), the horn "doth wonderfully help against poisons", beside his
  * retelling of kings who drank from horn cups. The frothing cup is Pare's water test
  * (Discours de la licorne, 1582), which Pare records in order to deny it.

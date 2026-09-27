@@ -29,7 +29,7 @@ const STICKETH_TO_HIT_BONUS = 1;
  *
  * Player-facing lines quote the public-domain sources directly (owner decision, September
  * 2026; see "Quoting old texts" in docs/architecture/cards-and-encounter-effects.md and
- * docs/roadmap/28-unicorn-voice-punch-up.md):
+ * docs/archive/roadmap/28-unicorn-voice-punch-up.md):
  *   - description: Topsell (1658 reprint of the 1607 chapter), "the Unicorn in the
  *     swiftness of his course runneth against the tree, wherein his sharp horn sticketh fast".
  *   - natural 20: Deuteronomy 33:17 (King James, 1611), "with them he shall push the people

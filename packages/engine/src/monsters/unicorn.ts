@@ -29,7 +29,7 @@ import BaseMonster from './base.js';
  *
  * Player-facing copy quotes the public-domain English editions directly (owner decision,
  * September 2026; see "Quoting old texts" in docs/architecture/cards-and-encounter-effects.md
- * and docs/roadmap/28-unicorn-voice-punch-up.md for the checked passages):
+ * and docs/archive/roadmap/28-unicorn-voice-punch-up.md for the checked passages):
  *   - Pliny, trans. Philemon Holland (1601): "the most fell and furious beast of all other",
  *     "the Licorne or Monoceros", "loweth after an hideous manner".
  *   - Marco Polo, trans. Henry Yule (rev. Cordier): "a passing ugly beast to look upon".

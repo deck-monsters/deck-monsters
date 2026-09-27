@@ -14,7 +14,7 @@ import { REASONABLE } from '../helpers/costs.js';
  *
  * Player-facing lines quote Job 39:9-10 (King James, 1611): "Will the unicorn be willing to
  * serve thee" and "Canst thou bind the unicorn with his band in the furrow?" See
- * docs/roadmap/28-unicorn-voice-punch-up.md. The refusal line itself lives in
+ * docs/archive/roadmap/28-unicorn-voice-punch-up.md. The refusal line itself lives in
  * cards/immobilize.ts, where the ward is spent.
  */
 export class UnconquerableHornCard extends BaseCard {
