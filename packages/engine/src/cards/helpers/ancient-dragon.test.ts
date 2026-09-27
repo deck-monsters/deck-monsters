@@ -106,6 +106,38 @@ describe('./cards/helpers/ancient-dragon.ts', () => {
 		expect(reasons.filter(reason => reason.includes('to outwit an ancient dragon'))).to.have.length(1);
 	});
 
+	it('lets only opponents try, so an ally caught in its Tsunami cannot talk its way out', async () => {
+		dragon = new Dragon({ name: 'Skarn', gender: 'male', xp: ancientXp });
+		const ally: any = new Minotaur({ name: 'Bram', gender: 'male' });
+		contestants = [
+			{ monster: dragon, character: {}, team: 'Laurel' },
+			{ monster: ally, character: {}, team: 'Laurel' },
+		];
+		dragon.team = 'Laurel';
+		ally.team = 'Laurel';
+		ring = { contestants, encounterEffects: [], channelManager: { sendMessages: () => Promise.resolve() } };
+		dragon.startEncounter(ring);
+		ally.startEncounter(ring);
+		sinon.stub(Math, 'random').returns(0.999); // any roll would be a 20
+		const reasons: string[] = [];
+		const hit = landingHit();
+		hit.on('rolled', (_c: string, _card: any, { reason }: any) => reasons.push(reason));
+
+		await hit.play(dragon, ally, ring, contestants);
+
+		expect(reasons.some(reason => reason.includes('to outwit'))).to.equal(false);
+		expect(isExposed(dragon)).to.equal(false);
+	});
+
+	it('gives a tie to the dragon', () => {
+		setUp(ancientXp);
+		const difficulty = 20 + dragon.intModifier;
+		// Pin the d20 so the total ties the difficulty exactly.
+		const face = difficulty - foe.intModifier;
+		sinon.stub(Math, 'random').returns((face - 1) / 20 + 0.001);
+		expect(outwit(dragon, foe, new HitCard())).to.equal(false);
+	});
+
 	it('rolls 1d20 + the target\'s int against 20 + the dragon\'s int', () => {
 		setUp(ancientXp);
 		const card = new HitCard();

@@ -20,7 +20,7 @@ the owner approved from it and the record of the build.
 | 1 | Monster shell: `Dragon` type, Wizard class, stats, appearance, `look at` profile, lore, names, spawn, web sprite, spawn-catalog test | Done | f27094a |
 | 2 | The two cards the requester asked for: Fire Breath and Take Wing; Fire Breath joins the starting deck | Done | d58caa4 |
 | 3 | Mood Scales and Tsunami | Done | 27c4e14 |
-| 4 | Generated references and strings inventory, `sim:monster Dragon` balance evidence, independent review, read-aloud script for the requester | In progress: evidence below; review and read-aloud next | 43276e0, 7102f14, db7a060, this commit |
+| 4 | Generated references and strings inventory, `sim:monster Dragon` balance evidence, independent review, read-aloud script for the requester | Review done (one should-fix: the ancient trick let allies try; fixed with a test). Read-aloud script sent to the owner; requester notes pending | 43276e0, 7102f14, db7a060, 0980553, 8f7bf97, this commit |
 
 Each task gets its own checkpoint commit, and every code task gets an independent
 read-only review before the pass closes.

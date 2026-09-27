@@ -76,6 +76,14 @@ describe('./cards/fire-breath.ts Fire Breath', () => {
 		expect(card.getTargets(dragon, foes[3], ring, contestants)).to.deep.equal([foes[3], foes[0]]);
 	});
 
+	it('never reaches an ally, however wide the cone', () => {
+		contestants[1].team = 'Laurel';
+		contestants[0].team = 'Laurel';
+		const targets = new FireBreathCard().getTargets(dragon, foes[0], ring, contestants);
+		expect(targets).not.to.include(foes[0]);
+		expect(targets).to.deep.equal([foes[1], foes[2]]);
+	});
+
 	it('burns the targets that fail to dodge for 2 +1 per level, and sets them burning', async () => {
 		dodging(false);
 		const before = foes.map(f => f.hp);

@@ -76,7 +76,11 @@ is resolved after the first has already been given back and never stacks.
 - **Reacting to someone else's card** (a dodge) means wrapping that clone's `effect` in the
   `DEFENSE_PHASE` call and checking `target === self` inside the wrapper, because the
   effect sees every card played in the ring, not only those aimed at its monster. Take Wing
-  checks HP before and after the wrapped effect to see whether anything landed.
+  checks HP before and after the wrapped effect to see whether anything landed. When two
+  such effects sit on one monster (Take Wing and a Cloak-style hide), the one armed later
+  wraps outside the other and answers first: a flight taken after hiding spends its dodge
+  before the hide's search roll. Neither order double-counts damage; it is a play-order
+  choice, not a rule.
 - **A self-hit that is not a mistake.** The hit line says "…himself by mistake" when the
   assailant is the target. A card that hurts its own player on purpose (Tsunami) sets
   `flavorText` on its clone for that one hit and clears it after.

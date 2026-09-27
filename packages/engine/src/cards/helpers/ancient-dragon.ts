@@ -2,6 +2,7 @@ import { chance } from '../../helpers/chance.js';
 import { ATTACK_PHASE, DEFENSE_PHASE } from '../../constants/phases.js';
 import { DRAGON } from '../../constants/creature-types.js';
 import { ANCIENT_DRAGON_EFFECT, EXPOSED_EFFECT } from '../../constants/effect-types.js';
+import { isOpponentHold } from './control-ward.js';
 
 const { roll } = chance;
 
@@ -54,7 +55,9 @@ export function expose(dragon: any): void {
 export function outwit(dragon: any, target: any, card: any): boolean {
 	const difficulty = TRICK_DIFFICULTY + dragon.intModifier;
 	const trickRoll = roll({ primaryDice: '1d20', modifier: target.intModifier });
-	const tricked = trickRoll.result >= difficulty;
+	// A tie goes to the dragon, as a tie goes to the defender on a Hit and on a Fire Breath
+	// dodge. No crits: a natural 20 is no cleverer than any other 20.
+	const tricked = trickRoll.result > difficulty;
 
 	card.emit?.('rolled', {
 		reason: `vs ${difficulty} to outwit an ancient dragon.`,
@@ -73,12 +76,19 @@ export function outwit(dragon: any, target: any, card: any): boolean {
 export function armAncientDragon(dragon: any): void {
 	const tried = new Set<unknown>();
 
-	const ancient = ({ card, phase, player }: any) => {
-		// The dragon's own attack: each opponent gets one try per fight to outwit it.
+	const ancient = ({ card, phase, player, ring, activeContestants }: any) => {
+		// The dragon's own attack: each opponent gets one try per fight to outwit it. Only an
+		// opponent: an ally caught in the dragon's Tsunami must not talk its way out of the
+		// wave. `isOpponentHold` is the team rule the hold ward already uses.
 		if (phase === ATTACK_PHASE && player === dragon && typeof card.effect === 'function') {
 			const { effect } = card;
 			card.effect = async (attacker: any, target: any, ...rest: any[]) => {
-				if (attacker !== dragon || target === dragon || target.dead || tried.has(target)) {
+				if (
+					attacker !== dragon ||
+					target.dead ||
+					tried.has(target) ||
+					!isOpponentHold(dragon, target, activeContestants, ring)
+				) {
 					return effect.call(card, attacker, target, ...rest);
 				}
 				tried.add(target);
