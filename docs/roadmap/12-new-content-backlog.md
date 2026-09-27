@@ -47,7 +47,37 @@ and follow the checklist in [cards and encounter effects](../architecture/cards-
 **Status:** Requested by the owner (September 2026); research and design not started. The
 Unicorn pack is the model: a sourced creative thesis, a monster specification with ranges
 rather than final numbers, a handful of related cards, then a pass plan with slices,
-simulation evidence, and a live check. Nothing below is decided.
+simulation evidence, and a live check. Nothing below is decided; the leanings recorded here
+are starting points for the research, not a design.
+
+### Who asked, and the world it should feel like
+
+The Dragon was requested by the owner's eight-year-old son. His favourite dragons are the
+ones in Cressida Cowell's *How to Train Your Dragon* **books** (not the films, which change
+much of the world). The Dragon should feel familiar to a reader of that series while being
+our own creature, built on the same public-domain roots the books draw on.
+
+- **What we may borrow: setting and feel.** A Viking-age Norse world of island tribes; many
+  kinds of dragon, from small, scrappy, disobedient ones to vast sea dragons; dragons that
+  are clever, vain, funny, and frightening at once; and the idea that understanding a
+  dragon, even talking with it, beats shouting at it. The books also bring Romans in, which
+  gives the Dragon a natural link to the Gladiator and the Roman-flavoured cards, and the
+  owner recalls a large arena battle in at least one book, which is our ring.
+- **What we may not borrow.** No quotes, names (characters, places, dragon species, the
+  books' dragon language), plot events, or distinctive designs, and nothing that implies
+  the game is connected to the books or films. The same rule the Unicorn followed with its
+  modern tonal references applies, more strictly, because this series is in copyright and
+  well known. Where the books and the old sources share something (Vikings, sagas, sea
+  serpents, Romans), cite the old source.
+- **Details to confirm against the books.** Which book has the Romans and which has the
+  arena battle, and whether the books' own dragon "statistics" pages (as the research
+  remembers them: ratings for things like fear, attack, speed, size, and disobedience)
+  exist as recalled. If they do, a trading-card feel is already part of what a young
+  reader expects from a dragon, and our card-box stat lines can echo that shape without
+  copying its categories. Ask the owner, who has the books, rather than guessing.
+- **Audience and tone.** Narration should be exciting and funny rather than gory, readable
+  aloud to an eight-year-old, and follow [voice and wording](../reference/voice-and-wording.md).
+  The owner's son is a natural playtester for the strings inventory and the finished monster.
 
 ### Research to do
 
@@ -60,12 +90,33 @@ simulation evidence, and a live check. Nothing below is decided.
   associated with water, rain, and good fortune). Choose one for the monster, as the Unicorn
   chose the horse-shaped Western unicorn, and do not flatten the others into cosmetic
   variants; the East Asian dragon, like the qilin, deserves its own design if it is ever made.
+  **Leaning, given who asked:** the Norse and Germanic dragon, with Roman encounters as the
+  second strand. That is the world of the books above, and both strands have public-domain
+  sources to cite.
+- **Primary sources to gather**, beyond the ones above, with exact editions and passages
+  (translations must be public domain, or paraphrased with a citation):
+  - Norse: the *Völsunga saga* (Fáfnir, his hoard, and Sigurd's pit); the *Prose Edda*
+    (Níðhöggr gnawing the root of the world tree; Jörmungandr, the sea serpent Thor fishes
+    for); *Beowulf*'s last fight, woken by a stolen cup; saga and runestone dragon imagery,
+    and dragon-headed ship prows.
+  - Roman: Pliny's *Natural History* book 8 (dragons and elephants); the serpent at the
+    Bagradas River that a Roman army under Regulus fought with siege engines (told by
+    Valerius Maximus and others; find the best public-domain telling); the *draco*
+    standard, a dragon-headed windsock carried by Roman cavalry, described in Arrian's
+    *Ars Tactica* and Ammianus Marcellinus. The standard and the Bagradas serpent are the
+    strongest links to the Gladiator's world.
+  - Bestiary and early modern: Topsell's *History of Serpents* (1608), Aldrovandi's
+    *Serpentum et Draconum Historiae* (1640), and the medieval bestiaries on the dragon and
+    the elephant.
+  - Ask the owner for a dragon counterpart to *A Book of Unicorns*, the anthology whose
+    pages shaped the Unicorn's final content review.
 - **Sources.** Find public-domain primary texts for the chosen tradition and record exact
   citations. Treat modern works (Tolkien's Smaug, film and game dragons) as tonal references
   only: no names, dialogue, or distinctive designs.
 - **Fit with the roster.** The Basilisk is already a serpent with a signature coil and a
   petrifying gaze. A Dragon must play differently, not as a bigger Basilisk.
-- **Place on the power curve.** Dragons in story grow from wyrmling to ancient terror. Decide
+- **Place on the power curve.** Dragons in story grow from wyrmling to ancient terror, and a
+  young reader's favourite dragon is often a small one that grows into something great. Decide
   whether the Dragon is a caster-like late bloomer (fragile young, strong old) or a brute, and
   whether its growth can be expressed through the existing level scaling rather than new
   systems. Check against the balance target in
@@ -80,13 +131,25 @@ simulation evidence, and a live check. Nothing below is decided.
 - The hoard: stolen treasure wakes Beowulf's dragon. Any card touching coins or items needs
   the economy owner's review first; see [balance and mechanics](11-balance-and-mechanics.md).
 - Scales and flight as defence, bounded like the Unicorn's ward: no unconditional immunity.
+- Understanding over force: a card that calms or turns a hostile creature by talking to it
+  rather than hurting it, echoing the feel of the books without their dragon language. It
+  would need the same bounds as other control cards and the hold rules in
+  [cards and encounter effects](../architecture/cards-and-encounter-effects.md#holds-and-the-unconquerable-horn-ward).
+- A disobedient streak: a small chance the Dragon ignores the planned card and does what it
+  likes, for good or ill. Funny and in keeping with the world, but it takes control from the
+  player, so weigh it against [player agency](../reference/player-agency.md).
+- Roman links: a *draco* standard card usable by the Gladiator's side, or a Roman
+  siege-engine answer to a dragon (from the Bagradas story) as a counter card.
+- Many kinds of dragon: appearance options (size, colour, horns, wings, temper) wide enough
+  that a child can make "their" dragon, the way the Unicorn's options vary its telling.
 
 ### Definition of done for the research step
 
 A design brief in this file with the same sections the Unicorn brief had (creative thesis,
 sources and quotation policy, monster specification, three to five related cards with their
 risks and counterplay, implementation slices, acceptance gates), reviewed by the owner before
-any code is written.
+any code is written. The brief also answers the "details to confirm" above with the owner, and
+its strings inventory is read aloud to the requester before the content pass starts.
 
 ## World and long-term goals
 

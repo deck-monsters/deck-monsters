@@ -68,6 +68,10 @@ random decks. What it still lacks decides whether its numbers can guide balance 
 
 Candidate tasks, in order of value:
 
+0. One harness monster roster derived from `allMonsters`, a test that fails when a monster
+   is missing from it, and `sim:unicorn` generalized into `sim:monster <type>` (owner
+   request; see "One monster roster for the harness" in 11). Small, and it goes first
+   because every later task and the Dragon pass run on it.
 1. Weighted "likely" decks: a few hand-written archetypes per class, kept beside today's
    uniform draw as a control.
 2. Mixed ring sizes (2–6 contestants) with free-for-all, one team against solos, and uneven
@@ -87,7 +91,14 @@ pass writes a design brief, not code: choose the tradition, gather public-domain
 with exact citations, fit the Dragon against the roster (especially the Basilisk) and the
 power curve, and propose three to five cards with their risks and counterplay. The owner
 reviews the brief before a Dragon content pass is planned. Pass B should land first, so the
-content pass can use the realistic harness.
+content pass can use the realistic harness and `sim:monster Dragon`.
+
+The requester is the owner's eight-year-old son, whose dragons are the ones in Cressida
+Cowell's *How to Train Your Dragon* books. The brief records what that means: borrow the
+Viking-age setting and feel, and the Roman overlap with the Gladiator; borrow no names,
+quotes, or designs; cite the Norse and Roman sources the books share. Research can start
+beside Pass A or B, since it touches only docs; start by asking the owner the brief's
+"details to confirm" questions.
 
 ## Later
 
