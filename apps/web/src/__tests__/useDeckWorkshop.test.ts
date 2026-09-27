@@ -259,6 +259,23 @@ describe('useDeckWorkshop', () => {
     expect(mocks.shopRefetch).toHaveBeenCalledOnce();
 	});
 
+  it('skips the shop on refresh until a character exists', async () => {
+    mocks.myInventoryUseQuery.mockReturnValue({
+      data: { hasCharacter: false, monsters: [], unequippedDeck: [], cardCompatibility: {}, items: { character: [], monsters: [] } },
+      isLoading: false,
+      isFetching: false,
+      refetch: mocks.inventoryRefetch,
+    });
+    const { result } = renderHook(() => useDeckWorkshop('room-123'));
+
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    expect(mocks.inventoryRefetch).toHaveBeenCalledOnce();
+    expect(mocks.shopRefetch).not.toHaveBeenCalled();
+  });
+
   it('throws when room is missing for mutation calls', async () => {
     const { result } = renderHook(() => useDeckWorkshop(undefined));
 

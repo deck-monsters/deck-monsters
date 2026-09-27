@@ -4449,14 +4449,16 @@ but the hook enabled it for every room with a 30-second refetch. And `busy` incl
 banner (`busy && !consoleFlowActive`) and disabled Train, presenting a fetch as a mutation.
 
 **Fix**: the shop query is enabled only when `myInventory` reports `hasCharacter`; spawning
-invalidates the inventory, which turns it on. `busy` now follows in-flight mutations and
+invalidates the inventory, which turns it on. The Sync button's manual `refresh()` also
+skips the shop until then, because a manual refetch runs even while a query is disabled
+(caught by review). `busy` now follows in-flight mutations and
 console flows only. Each mutation's `onSuccess` awaits its own invalidate-and-refetch, so
 `isPending` still covers the refresh after a change. The server keeps its `NOT_FOUND`,
 since no other caller needs an empty shop.
 
 **Tests**: `useDeckWorkshop.test.ts` covers the shop query off without a character and on
-with one, not busy during background refetches, and busy during a mutation. The first two
-fail without the fix.
+with one, Sync skipping the shop without a character, not busy during background
+refetches, and busy during a mutation.
 
 **Status**: Fixed.
 

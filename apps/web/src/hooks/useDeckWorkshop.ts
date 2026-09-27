@@ -241,7 +241,13 @@ export function useDeckWorkshop(roomId?: string) {
       sendMonsterToRingMutation.error?.message ??
       buyShopItemMutation.error?.message ??
       sellShopItemsMutation.error?.message,
-    refresh: () => Promise.all([inventoryQuery.refetch(), shopQuery.refetch()]),
+    // A manual refetch runs even while the query is disabled, so Sync must skip the shop
+    // until a character exists, or it re-creates the first-run 404 (10b #188).
+    refresh: () =>
+      Promise.all([
+        inventoryQuery.refetch(),
+        inventoryQuery.data?.hasCharacter === true ? shopQuery.refetch() : undefined,
+      ]),
     spawnMonster: (input: {
       type: number;
       gender: 'male' | 'female' | 'androgynous';
