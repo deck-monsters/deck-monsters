@@ -4431,3 +4431,27 @@ event-id range and that its insert-time bound reaches well past the resolve time
 edge milliseconds and exclude the neighbours.
 
 **Status**: Fixed.
+
+### 188. The first-run Workshop said "Applying changes…" and polled a shop that 404s — FIXED
+
+On Test Room B, where the member had no character yet, the Workshop banner read
+"Applying changes…" while nothing was changing, and the network log showed `game.shop`
+returning 404 every 30 seconds. Found in the browser sweep on 2026-09-26.
+
+**Root cause**: two problems in `apps/web/src/hooks/useDeckWorkshop.ts`. `game.shop` throws
+`NOT_FOUND` ("Character not found") without a character (`packages/server/src/trpc/router.ts`),
+but the hook enabled it for every room with a 30-second refetch. And `busy` included
+`inventoryQuery.isFetching` and `shopQuery.isFetching`, so every background poll showed the
+banner (`busy && !consoleFlowActive`) and disabled Train, presenting a fetch as a mutation.
+
+**Fix**: the shop query is enabled only when `myInventory` reports `hasCharacter`; spawning
+invalidates the inventory, which turns it on. `busy` now follows in-flight mutations and
+console flows only. Each mutation's `onSuccess` awaits its own invalidate-and-refetch, so
+`isPending` still covers the refresh after a change. The server keeps its `NOT_FOUND`,
+since no other caller needs an empty shop.
+
+**Tests**: `useDeckWorkshop.test.ts` covers the shop query off without a character and on
+with one, not busy during background refetches, and busy during a mutation. The first two
+fail without the fix.
+
+**Status**: Fixed.

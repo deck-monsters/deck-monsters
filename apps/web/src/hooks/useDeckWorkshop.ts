@@ -68,9 +68,12 @@ export function useDeckWorkshop(roomId?: string) {
       refetchInterval: 30_000,
     },
   );
+  // `game.shop` answers NOT_FOUND until the member has a character, so a first-run room
+  // polled a query that could not succeed every 30s (10b #188). It turns on once the
+  // inventory says a character exists; spawning invalidates the inventory, which flips it.
   const shopQuery = trpc.game.shop.useQuery(
     { roomId: validRoomId },
-    { enabled: !!roomId, refetchInterval: 30_000 },
+    { enabled: !!roomId && inventoryQuery.data?.hasCharacter === true, refetchInterval: 30_000 },
   );
   const spawnOptionsQuery = trpc.game.spawnOptions.useQuery(
     { roomId: validRoomId },
@@ -154,11 +157,15 @@ export function useDeckWorkshop(roomId?: string) {
 
   const loading = roomQuery.isLoading || inventoryQuery.isLoading || shopQuery.isLoading || spawnOptionsQuery.isLoading;
   const consoleFlowActive = flowStatusQuery.data?.consoleActive ?? false;
+  /*
+   * In-flight mutations and console flows only. Background query fetches used to count, so
+   * the 30s inventory and shop polls lit "Applying changes…" and disabled Train while
+   * nothing was being changed (10b #188). Each mutation's onSuccess awaits its own
+   * invalidate-and-refetch, so `isPending` already covers the refresh after a change.
+   */
   const busy = useMemo(
     () =>
       consoleFlowActive ||
-      inventoryQuery.isFetching ||
-      shopQuery.isFetching ||
       buyShopItemMutation.isPending ||
       sellShopItemsMutation.isPending ||
       unequipCardMutation.isPending ||
@@ -183,8 +190,6 @@ export function useDeckWorkshop(roomId?: string) {
       useItemMutation.isPending,
       sendMonsterToRingMutation.isPending,
       equipCardsMutation.isPending,
-      inventoryQuery.isFetching,
-      shopQuery.isFetching,
       buyShopItemMutation.isPending,
       sellShopItemsMutation.isPending,
       loadPresetMutation.isPending,

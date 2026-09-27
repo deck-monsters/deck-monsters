@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — six open items. Fixed work and its root causes live only in
+**Status:** Active — five open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -99,27 +99,6 @@ the hand fills `cardSlots`. The same finish lines spell it "equiped".
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
 [workshop and items](../architecture/workshop-and-items.md).
-
-### N. First-run workshop shows "Applying changes…" and `game.shop` 404s
-
-**Owner:** Web workshop. On Test Room B (no character) the workshop banner read
-"Applying changes…" while nothing was being changed. The network log for that room,
-and for a scratch room before its character existed, was `game.shop` 404.
-
-**Root cause:** `game.shop` throws `NOT_FOUND` / "Character not found" when the member
-has no character (`packages/server/src/trpc/router.ts`). The workshop enables that
-query for every room (`useDeckWorkshop`). `busy` includes `shopQuery.isFetching` and
-`inventoryQuery.isFetching`, and both refetch on a 30s interval. The Train button is
-`disabled` while `busy`, and the banner is `busy && !consoleFlowActive`. A background
-fetch is presented as a mutation, and a first-run room refetches a query that cannot
-succeed.
-
-- [ ] Leave `game.shop` disabled until `hasCharacter`, or return an empty shop instead
-  of 404.
-- [ ] Drive the banner and the disabled buttons from in-flight mutations, not from
-  query fetches.
-
-Read [workshop and items](../architecture/workshop-and-items.md).
 
 ## Historical detail
 

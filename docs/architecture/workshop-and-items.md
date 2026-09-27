@@ -116,6 +116,12 @@ otherwise re-prompt on the silent channel. It supplies every answer the engine c
 name, class index, persisted pronoun key, and avatar. If training later fails, the created
 character remains intentionally.
 
+Before a character exists, the Workshop leaves `game.shop` off: it answers `NOT_FOUND`
+without a character, and polling it made a first-run room look broken (10b #188). The
+query turns on when `myInventory` reports `hasCharacter`. The "Applying changes…" banner
+and the disabled buttons follow in-flight mutations and console flows only, never a
+background refetch.
+
 ## Room shop and optimistic stock token
 
 Every room owns `Game.shop`; reads and purchases never use a module singleton.

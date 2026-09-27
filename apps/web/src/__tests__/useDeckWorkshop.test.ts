@@ -140,6 +140,41 @@ describe('useDeckWorkshop', () => {
 	});
   });
 
+  // A first-run room showed "Applying changes…" and polled a 404ing shop (10b #188).
+  it('leaves the shop query off until the member has a character', () => {
+    mocks.myInventoryUseQuery.mockReturnValue({
+      data: { hasCharacter: false, monsters: [], unequippedDeck: [], cardCompatibility: {}, items: { character: [], monsters: [] } },
+      isLoading: false,
+      isFetching: false,
+      refetch: mocks.inventoryRefetch,
+    });
+    renderHook(() => useDeckWorkshop('room-123'));
+    expect(mocks.shopUseQuery.mock.calls.at(-1)?.[1]).toMatchObject({ enabled: false });
+  });
+
+  it('turns the shop query on once a character exists', () => {
+    renderHook(() => useDeckWorkshop('room-123'));
+    expect(mocks.shopUseQuery.mock.calls.at(-1)?.[1]).toMatchObject({ enabled: true });
+  });
+
+  it('is not busy while queries only refetch in the background', () => {
+    mocks.myInventoryUseQuery.mockReturnValue({
+      data: { hasCharacter: true, monsters: [], unequippedDeck: [], cardCompatibility: {}, items: { character: [], monsters: [] } },
+      isLoading: false,
+      isFetching: true,
+      refetch: mocks.inventoryRefetch,
+    });
+    mocks.shopUseQuery.mockReturnValue({ data: undefined, isLoading: false, isFetching: true, refetch: mocks.shopRefetch });
+    const { result } = renderHook(() => useDeckWorkshop('room-123'));
+    expect(result.current.busy).toBe(false);
+  });
+
+  it('is busy while a mutation is in flight', () => {
+    mocks.equipCardsUseMutation.mockReturnValueOnce({ isPending: true, error: null, mutateAsync: vi.fn() });
+    const { result } = renderHook(() => useDeckWorkshop('room-123'));
+    expect(result.current.busy).toBe(true);
+  });
+
   it('invalidates inventory and monster queries after successful mutation', async () => {
     const { result } = renderHook(() => useDeckWorkshop('room-123'));
 
