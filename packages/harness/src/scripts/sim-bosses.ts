@@ -28,18 +28,26 @@ interface Scenario {
 	humanTeam?: boolean;
 }
 
-/** The owner's examples first, then the shapes around them. */
+/**
+ * The owner's examples first (the hopeless ones can no longer spawn, and stay as the
+ * baseline), then fights the new rules produce: one boss per human at up to the strongest
+ * human + 1, an occasional ambush of one more, and bosses within the humans' combined
+ * levels + 1 (docs/roadmap/31-pass-b-rings-and-bosses.md).
+ */
 export const SCENARIOS: Scenario[] = [
 	{ label: 'L1 vs one L1 boss', humans: [1], bosses: [1] },
 	{ label: 'L1 vs one L2 boss', humans: [1], bosses: [2] },
 	{ label: 'L2 vs two beginner bosses', humans: [2], bosses: [0, 0] },
-	{ label: 'L1 vs two L1 bosses', humans: [1], bosses: [1, 1] },
-	{ label: 'L1 vs beginner + L1 + L5 bosses', humans: [1], bosses: [0, 1, 5] },
-	{ label: 'L5 vs two L5 bosses', humans: [5], bosses: [5, 5] },
-	{ label: 'L5 vs three L3 bosses', humans: [5], bosses: [3, 3, 3] },
-	{ label: 'two L1s, no team, vs L1 + L2 bosses', humans: [1, 1], bosses: [1, 2] },
+	{ label: 'L1 vs two L1 bosses (old rules)', humans: [1], bosses: [1, 1] },
+	{ label: 'L1 vs beginner + L1 + L5 (old rules)', humans: [1], bosses: [0, 1, 5] },
+	{ label: 'two L1s vs L1 + L2 bosses', humans: [1, 1], bosses: [1, 2] },
 	{ label: 'two L1s, one team, vs L1 + L2 bosses', humans: [1, 1], bosses: [1, 2], humanTeam: true },
-	{ label: 'two L1s, no team, vs beginner + L1 + L5', humans: [1, 1], bosses: [0, 1, 5] },
+	{ label: 'L3 vs L4 boss (ceiling)', humans: [3], bosses: [4] },
+	{ label: 'L1 ambush: L1 + beginner bosses', humans: [1], bosses: [1, 0] },
+	{ label: 'L3 ambush: L3 + L1 bosses', humans: [3], bosses: [3, 1] },
+	{ label: 'two L2s vs L3 + L2 bosses', humans: [2, 2], bosses: [3, 2] },
+	{ label: 'two L2s ambush: L3 + L1 + L1', humans: [2, 2], bosses: [3, 1, 1] },
+	{ label: 'three L3s vs L4 + L3 + L2 bosses', humans: [3, 3, 3], bosses: [4, 3, 2] },
 ];
 
 export interface ScenarioResult {

@@ -91,15 +91,23 @@ room is unloaded.
 
 ### Level scaling
 
-`determineBossLevelCap(playerLevels, roll)` with `roll = random(1, 100)`:
+`determineBossLevelCap(playerLevels, roll, bossLevels)` with `roll = random(1, 100)`. The
+boss's XP is then drawn from 0 up to that level's cap, so it is often lower.
 
 | Roll | Cap |
 |---|---|
-| 1–20 | uncapped — a fully random boss |
-| 21–50 | highest player level + 1 |
-| 51–100 | floor(average player level) |
+| 1–35 | highest human level + 1 |
+| 36–100 | floor(average human level) |
 
-Levels come from the ring's player monsters, falling back to the room's living monsters via
+Both bands are then held to a **level budget**: the bosses' combined levels may not exceed
+the humans' combined levels + 1 (`BOSS_LEVEL_BUDGET_SLACK`), less what bosses already in the
+ring use. The owner's rule of thumb (September 2026): three level 3 humans (9) against bosses
+of 4, 3, and 2 is a fair fight; `sim:bosses` measured it at 44%.
+
+There used to be a third band: 20% of spawns ignored the players entirely, which is how a
+level 5 boss met a level 1 player. It was removed with the budget (roadmap 31).
+
+Levels come from the ring's human monsters, falling back to the room's living monsters via
 the `getRoomMonsterLevels` provider injected by `Game`. Timing stays ring-focused, so an
 empty ring keeps beginner pacing.
 
@@ -119,6 +127,26 @@ numberOfMonstersInRing = playerContestants.length + (hasBoss ? 1 : 0)
 ```
 
 So 1 player + 4 bosses starts a fight; 3 bosses and no players never does.
+
+### Boss count: one per human
+
+`sim:bosses` showed that outnumbering decides these fights, not levels: one human against one
+boss of its level wins about half the time, against two bosses 0–3%, and a level 3 against
+two level 1 bosses still only 12%. So (owner, September 2026):
+
+- **One boss per human.** `canAcceptBoss()` refuses with `boss_quota` once `bossCount`
+  reaches `bossAllowance()`: the humans in the ring, or 1 for an empty ring (a boss may wait
+  for a challenger). Summons are refused before the charge is spent ("Bring a friend into
+  the ring, then summon another").
+- **An ambush.** A timer spawn has a 10% chance (`BOSS_AMBUSH_CHANCE_PERCENT`), rolled once
+  when the warning is due so the warning and the spawn agree, of one boss beyond that. It
+  arrives as a lesser minion at a third of its HP and says so. Still harsh for a lone human
+  (about 6%); it is a rare scare.
+- **The Gauntlet** is the designed exception: its extra bosses ignore the quota, but still
+  come out of the level budget, so the more of them there are, the weaker each is.
+- **A human leaving** is the only way bosses come to outnumber humans, so `removeMonster`
+  calls `dismissExtraBosses()`: the newest bosses beyond the allowance slip away, and a
+  summoned one refunds its charge.
 
 ---
 
@@ -253,7 +281,7 @@ Defined declaratively in `packages/engine/src/ring/ring-events.ts`.
 
 | Event | Effect | Victory mode | Eligible when |
 |---|---|---|---|
-| **The Gauntlet** | Pulls up to 2 extra bosses into the ring | `last-contestant` (default) | ≥1 player |
+| **The Gauntlet** | Pulls up to 2 extra bosses into the ring, past the one-per-human quota (still within the level budget) | `last-contestant` (default) | ≥1 player |
 | **Blood Feud** | Free-for-all — teams ignored, and bosses turn on each other | `last-contestant` (default) | ≥3 contestants |
 | **Common Cause** | Every player joins `ALLIANCE_TEAM`; players only hit bosses | `last-team` | ≥2 players and ≥1 boss |
 | **House War** | Players split round-robin across two Sorting Hat houses | `last-team` | ≥3 players **and 0 bosses** |
@@ -452,6 +480,24 @@ knowing:
   `undefined` — a fixed bug worth not reintroducing.
 - Outside ring events, the only things that set a team are the Sorting Hat scroll and boss
   creation; the only things that set a strategy are the targeting scrolls in `items/scrolls/`.
+
+### Humans unite against bosses, then settle it
+
+Bosses share the Boss team; humans without a team used to treat each other as fair game, so
+two humans who had not arranged a team hit each other while the bosses worked together
+(`sim:bosses`: two level 1s against L1 + L2 bosses won 1%). Now, at the start of every fight
+with a boss in it, `Ring.fight()` puts each human with no team of its own on
+`CHALLENGERS_TEAM` (a contestant-level override, like a ring event's). They never target each
+other while any boss is still fighting; the moment the last boss is down the override comes
+off, a line says the alliance is over, and the humans left finish a normal free-for-all. The
+same two level 1s now win 23%, close to a pre-arranged team's 29%.
+
+- A team a player or ring event set is never replaced; Blood Feud keeps its free-for-all.
+- This replaced a forced Common Cause (shared win) whenever two or more bosses met two or
+  more teamless humans; the owner chose "unite, then settle" over a shared win. Common Cause
+  remains an ordinary ring event.
+- The override is removed before `fightConcludes`, so XP counts the humans as each other's
+  opponents, as it did before.
 
 ### Team allegiance vs. victory mode (these are orthogonal)
 

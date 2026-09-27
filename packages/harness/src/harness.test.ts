@@ -111,6 +111,38 @@ describe('@deck-monsters/harness', () => {
 		expect(boss.strategy).to.equal('TARGET_HUMAN_PLAYER_WEAK');
 	});
 
+	// Owner decision (docs/roadmap/31): teamless humans unite while a boss is fighting, then
+	// settle it among themselves once the bosses are down.
+	it('humans without a team never hit each other while a boss stands, and do after', async function () {
+		this.timeout(60_000);
+		const hits = { whileBoss: 0, afterBoss: 0 };
+		const hand = Array(9).fill('Hit');
+		await simulate({
+			monsters: [
+				{ type: 'Gladiator', level: 3, role: 'human', deck: hand },
+				{ type: 'Minotaur', level: 3, role: 'human', deck: hand },
+				{ type: 'Basilisk', level: 1, role: 'boss', deck: hand },
+			],
+			fights: 8,
+			seed: 21,
+			roomId: 'harness-challengers',
+			onContestants: contestants => {
+				const all = contestants as any[];
+				const humans = all.filter(c => !c.isBoss).map(c => c.monster);
+				const bosses = all.filter(c => c.isBoss).map(c => c.monster);
+				for (const human of humans) {
+					human.on('hit', (_c: string, _m: unknown, { assailant }: any) => {
+						if (!humans.includes(assailant) || assailant === human) return;
+						if (bosses.some(boss => !boss.dead)) hits.whileBoss += 1;
+						else hits.afterBoss += 1;
+					});
+				}
+			},
+		});
+		expect(hits.whileBoss).to.equal(0);
+		expect(hits.afterBoss).to.be.greaterThan(0);
+	});
+
 	it('simulate is reproducible for the same seed (fresh Node process)', function () {
 		this.timeout(120_000);
 

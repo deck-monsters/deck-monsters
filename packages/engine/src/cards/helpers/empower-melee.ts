@@ -43,7 +43,9 @@ const addToRoll = (rolled: any, amount: number): boolean => {
 		return true;
 	}
 	let added = false;
-	for (const inner of Object.values(rolled ?? {})) {
+	// A set: when Hit Harder's two rolls tie, `betterRoll` and `worseRoll` are one object, and
+	// adding to it twice doubled the bonus (caught by a flaky test run, not a review).
+	for (const inner of new Set(Object.values(rolled ?? {}))) {
 		if (inner && typeof (inner as any).result === 'number') {
 			(inner as any).modifier += amount;
 			(inner as any).result += amount;

@@ -46,6 +46,17 @@ describe('./cards/helpers/empower-melee.ts', () => {
 		expect(spent).to.equal(1);
 	});
 
+	it('adds the bonus once when Hit Harder\'s two rolls tie and share one object', () => {
+		const dragon: any = new Dragon();
+		const card: any = new HitHarder();
+		const shared = { modifier: 0, result: 3, naturalRoll: { result: 3 } };
+		card.getDamageRoll = () => ({ betterRoll: shared, worseRoll: shared });
+		empowerMelee(card, dragon, { damageDice: '1d6' });
+
+		const { betterRoll } = card.getDamageRoll(dragon);
+		expect(betterRoll.modifier).to.be.within(1, 6);
+	});
+
 	it('adds the damage die once per play, even for a card that rolls damage twice', () => {
 		const dragon: any = new Dragon();
 		const hit: any = new HitCard();

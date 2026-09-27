@@ -477,7 +477,10 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				// such as Unconquerable Horn's treat every harness contestant as a teammate.
 				// A real boss keeps what the ring gives it: the Boss team and boss targeting.
 				if (m.role !== 'boss') {
-					const faction = m.team ?? `solo:${names[i]!}`;
+					// A human with no team stays teamless, as a player's monster is, so the ring's
+					// own rules (humans unite against bosses) apply to it. Classic sim contestants
+					// were built as bosses and need a faction of their own.
+					const faction = m.team ?? (m.role === 'human' ? undefined : `solo:${names[i]!}`);
 					c.character.team = faction;
 					c.monster.team = faction;
 					// `randomContestant` gives every boss TARGET_HUMAN_PLAYER_WEAK. With no human
