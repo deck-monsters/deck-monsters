@@ -122,6 +122,9 @@ requester" questions.
   odd spacing (10 §F), and the emoji card-box border (10 §K, unless A5 absorbs it).
 - **Fight rewards never credited** (10 §J) needs production evidence; the in-process path
   is already proven.
+- **Preset loading can take cards from your other monsters**
+  ([22](22-small-leftovers.md#workshop)): an owner-requested Workshop feature, one task in size,
+  that could ride along with any pass touching the Workshop.
 - **Content backlog** (12): Card Pops, Re-quip, the listed card ideas, the Time Lord and
   Bureaucrat monsters, and the optional data-driven card spec. Take them one per content
   pass, each with harness evidence.
