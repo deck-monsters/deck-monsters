@@ -38,8 +38,8 @@ Found while scoping:
 |---|---|---|---|
 | 1 | Harness roles: a spec can be a **human** (player-like starting deck, default targeting, own faction) or a real **boss** (Boss team, boss deck, boss targeting). `sim:bosses` runs the owner's scenarios and reports the human side's win rate | Done | c80f77e |
 | 2 | Realistic rings: player-like decks by default, mixed ring sizes (2–12), team shapes, and level spreads, and a per-class win-rate curve across levels (Pass B tasks 1–3 and 5) | Not started | — |
-| 3 | Boss balance: humans unite then settle, one boss per human (a rare ambush minion), a level budget, no fully random levels | Done | this commit |
-| 4 | Boss personalities, the no-op boss level-ups, and teams made easy: the Sorting Hat in every shop and an obvious way to leave a team (owner request, 2026-09-27) | Not started | — |
+| 3 | Boss balance: humans unite then settle, one boss per human (a rare ambush minion), a level budget, no fully random levels | Done | d98566f |
+| 4 | Boss personalities, and teams made easy: the Sorting Hat in every shop (with a "No team" choice) and a free `leave team` command (owner request, 2026-09-27) | Done | this commit |
 | 5 | Docs, generated references, independent review | Not started | — |
 
 ## Evidence before any change (`sim:bosses`, 200 fights per row)

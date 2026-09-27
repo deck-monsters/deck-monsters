@@ -58,6 +58,7 @@ export const COMMAND_CATALOG: CommandEntry[] = [
 	// Character
 	{ command: 'edit my character', description: "Edit your character's name and icon", category: 'character' },
 	{ command: 'look at character', description: 'View your character stats and info', category: 'character' },
+	{ command: 'leave team', description: 'Take yourself and all your monsters off any team (a Sorting Hat, always in the shop, puts you on one)', category: 'character' },
 
 	// Info
 	{ command: 'help', description: 'Show this command reference', category: 'info' },

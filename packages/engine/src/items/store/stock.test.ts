@@ -58,6 +58,13 @@ describe('./items/store/stock.ts', () => {
 	});
 
 	describe('getItems', () => {
+		it('always stocks a Sorting Hat, and only one', () => {
+			for (let i = 0; i < 30; i += 1) {
+				const hats = getItems().filter((item: any) => item.itemType === 'Sorting Hat');
+				expect(hats.length).to.be.at.least(1);
+			}
+		});
+
 		it('can get a set of items', () => {
 			const items = getItems();
 

@@ -1,6 +1,7 @@
 import { random } from '../../helpers/random.js';
 import { sortItemsAlphabetically, drawItem } from '../index.js';
 import { all as allCards, draw as drawCard, sortCardsAlphabetically } from '../../cards/index.js';
+import { SortingHat } from '../scrolls/sorting-hat.js';
 
 // Cards used to be reached through an async `getCardsModule()` dynamic `import()`, on the
 // asserted-but-never-checked claim that a static import from `cards/index.js` would create
@@ -137,6 +138,10 @@ export const getItems = (): any[] => {
 			break;
 		}
 	}
+
+	// Every shop keeps a Sorting Hat, so a player can always join or leave a team (owner,
+	// docs/roadmap/31-pass-b-rings-and-bosses.md). It is free, so it cannot crowd out stock.
+	if (!items.some(item => item.itemType === SortingHat.itemType)) items.push(new SortingHat());
 
 	return sortItemsAlphabetically(items);
 };

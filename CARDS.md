@@ -1368,12 +1368,17 @@ timing, inventory limits, targeting strategies and the shop — see [ITEMS.md](I
  This enchanted hat that once 
  belonged to Godric Gryffindor. 
  Put it on and find out where you 
- truly belong.
+ truly belong, or choose no team 
+ at all.
 
  If your character has joined a 
  team but your monster hasn't, 
  that monster will be on your 
- character's team by default.
+ character's team by default. 
+ Every shop keeps one in stock, 
+ and `leave team` takes you and 
+ your monsters off a team for 
+ free.
 
 ==================================
 ```

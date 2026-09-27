@@ -42,7 +42,13 @@ const BOSS_TEAM = 'Boss';
 
 Boss-specific behaviour is applied in `characters/helpers/random.ts` (`randomCharacter`):
 
-- `monster.targetingStrategy = TARGET_HUMAN_PLAYER_WEAK` — bosses attack players, not bosses.
+- `monster.targetingStrategy` is a **temperament** drawn from `BOSS_PERSONALITIES`
+  (`helpers/boss-personalities.ts`): a bully (the weakest challenger), a glory-seeker (the
+  strongest), a grudge-holder (whoever hit it last), or a wild card (random). The arrival
+  line says which, so players can plan around it. Every boss used to share
+  `TARGET_HUMAN_PLAYER_WEAK` and act alike (owner, September 2026). All four strategies
+  respect teams, and bosses share the Boss team, so a boss still only goes for challengers
+  while any are standing.
 - `monster.canHold` is wrapped to reject cards with `static noBosses = true`
   (`fight-or-flight`, `flee`, `kalevala`).
 - The deck drops weak card types (`Flee`, `Harden`, `Heal`, `Hit`, `Whiskey Shot`) and every

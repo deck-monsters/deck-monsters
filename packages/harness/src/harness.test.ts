@@ -108,7 +108,8 @@ describe('@deck-monsters/harness', () => {
 		expect(human.cards).not.to.include('Flee');
 		expect(boss.isBoss).to.equal(true);
 		expect(boss.team).to.equal('Boss');
-		expect(boss.strategy).to.equal('TARGET_HUMAN_PLAYER_WEAK');
+		// Each boss draws a temperament (engine helpers/boss-personalities.ts).
+		expect(boss.strategy).to.be.a('string');
 	});
 
 	// Owner decision (docs/roadmap/31): teamless humans unite while a boss is fighting, then

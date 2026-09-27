@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { SortingHat } from './sorting-hat.js';
+import { SortingHat, NO_TEAM } from './sorting-hat.js';
 
 const makeCharacter = (overrides: Record<string, unknown> = {}) => ({
 	givenName: 'Character',
@@ -46,6 +46,29 @@ describe('./items/scrolls/sorting-hat.ts', () => {
 
 		return sortingHat.use({ channel: channelStub, channelName, character }).then(() => {
 			expect(character.team).to.be.a('string');
+		});
+	});
+
+	it('offers "No team" only to someone on a team, and choosing it clears the team', () => {
+		const sortingHat = new SortingHat();
+		const character = makeCharacter({ name: 'Character', team: 'Hufflepuff' });
+		channelStub.callsFake(({ choices }: { choices: string[] }) => Promise.resolve(choices.indexOf(NO_TEAM)));
+
+		return sortingHat.use({ channel: channelStub, channelName, character }).then(() => {
+			const { choices } = channelStub.firstCall.args[0];
+			expect(choices).to.include(NO_TEAM);
+			expect(choices).not.to.include('Hufflepuff');
+			expect(character.team).to.equal(undefined);
+		});
+	});
+
+	it('does not offer "No team" to someone without one', () => {
+		const sortingHat = new SortingHat();
+		const character = makeCharacter({ name: 'Character' });
+		channelStub.resolves(0);
+
+		return sortingHat.use({ channel: channelStub, channelName, character }).then(() => {
+			expect(channelStub.firstCall.args[0].choices).not.to.include(NO_TEAM);
 		});
 	});
 

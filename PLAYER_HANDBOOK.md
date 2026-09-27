@@ -164,6 +164,7 @@ Choose Name or Icon/color, enter the new value, and confirm the change. This edi
 
 - `edit my character` — Edit your character's name and icon
 - `look at character` — View your character stats and info
+- `leave team` — Take yourself and all your monsters off any team (a Sorting Hat, always in the shop, puts you on one)
 
 ### Reference
 

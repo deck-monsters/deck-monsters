@@ -217,18 +217,21 @@ player's deck or a real boss. A spec's `role` now says what it is:
 - **`human`**: a player: the starting deck (`getInitialDeck`) plus two random cards per
   level, nine legal cards equipped at random (Flee excluded), its own faction, default
   targeting. A floor for how well a human plays, since players build their hands;
-- **`boss`**: a real boss, untouched: the Boss team, a boss deck, `TARGET_HUMAN_PLAYER_WEAK`.
+- **`boss`**: a real boss, untouched: the Boss team, a boss deck, and a boss temperament
+  (its targeting strategy; see [boss encounters](../architecture/boss-encounters.md#1-what-a-boss-is)).
   Bosses only behave realistically beside at least one human.
 
 `SimConfig.onContestants` lets a test inspect each fight's contestants before it starts.
 
 ## Team fights
 
-`SimMonsterSpec.team` puts a contestant on a faction; a spec without one gets a faction of
-its own (`solo:Sim N`), never the shared boss team. The harness also clears the
-`TARGET_HUMAN_PLAYER_WEAK` strategy `randomContestant` gives every boss: with no human in the
-ring it falls back to a team-blind target, and in a 2v2 run 44% of hits landed on allies.
-The default next-player strategy respects teams. When any spec sets one, `simulate()`
+`SimMonsterSpec.team` puts a contestant on a faction; a classic sim contestant without one
+gets a faction of its own (`solo:Sim N`), never the shared boss team, and a `human` without
+one stays teamless, as a player is (so the ring's humans-unite rule applies). For classic
+contestants the harness also clears the boss targeting strategy `randomContestant` gives
+them: the old shared strategy (`TARGET_HUMAN_PLAYER_WEAK`) fell back to a team-blind target
+with no human in the ring, and in a 2v2 run 44% of hits landed on allies. The default
+next-player strategy respects teams. When any spec sets one, `simulate()`
 runs every fight under a harness-only ring event whose only effect is `victoryMode:
 'last-team'`, the mode Common Cause and House War use. The team is written to both the
 character and the monster: `randomContestant` puts every harness contestant on the boss
