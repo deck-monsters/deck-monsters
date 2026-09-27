@@ -26,6 +26,16 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   [simulation harness](../reference/simulation-harness.md). `SimMonsterSpec.team` now runs
   team fights under last-team victory; a boss scenario for the Team XP item below is still
   missing.
+- [ ] **One monster roster for the harness, and a per-monster report — owner: Engine.** The
+  harness names the monsters by hand in five places: `SimMonsterType`, the
+  `MONSTER_TYPES` map and the `allowed` list in `parseMonsterType` (`simulate.ts`),
+  `TYPES` in `sim-winrates.ts`, and `OPPONENTS` in `sim-unicorn.ts`. A new monster that
+  misses one is silently left out of that report, which a review of PR #397 caught for
+  `sim-unicorn`. Derive every list from the engine's `allMonsters` (one exported helper),
+  add a test that fails when a monster in `allMonsters` is missing from the harness, and
+  generalize `sim:unicorn` into a `sim:monster <type>` script that runs any monster
+  against the whole roster, with that monster's own card counters, so the Dragon pass can
+  use it unchanged. Owner request (September 2026).
 - [ ] **Realistic harness rings — owner: Engine.** The owner's view (September 2026): balance
   is "not terrible", and the harness is close to useful but still unrealistic. It now uses
   shuffled draws (#183) and keeps Flee out of random decks, because Flee is a
@@ -35,8 +45,10 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
     decks toward what players actually equip: seed them from equipped-deck telemetry when it
     exists, and until then from a few hand-written archetypes per class (for example, a
     Cleric healer and a Cleric Blast deck). Keep a uniform-draw mode as the control.
-  - **Mixed ring sizes.** Real rings hold 2–6 monsters. Sample the count per fight rather than
-    running only 1v1, because AOE cards (Blast, Sandstorm, Mesmerize) and retaliation cards
+  - **Mixed ring sizes.** A ring holds 2 to 12 monsters (`MAX_MONSTERS` in `ring/index.ts`).
+    Sample the whole range per fight rather than running only 1v1, weighted toward small
+    rings until telemetry shows the real distribution, and report large rings separately,
+    because AOE cards (Blast, Sandstorm, Mesmerize) and retaliation cards
     (Delayed Hit) change value sharply with the number of opponents.
   - **Mixed team composition.** Sample free-for-all, one team against solos, and two teams,
     including uneven teams. `SimMonsterSpec.team` supports this; nothing samples it yet.
@@ -60,14 +72,9 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Combat design
 
-**Balance target (owner decision).** Do not aim for 50/50 at every level. As in D&D, each
-class should have a power curve across levels: casters (Cleric, Bard) start fragile and grow
-very strong as they level; brutes (Barbarian, Fighter) are strongest early and stay useful
-but fall behind later. Judge a matchup against that curve, not against a flat band. The
-35–65% flag in `sim:winrates` and `sim:unicorn` marks rows to look at, not a pass/fail gate,
-and matchup outcomes depend heavily on the ring (see the Blast notes below).
-A problem is a class that is dominant across the whole level range, or one whose curve runs
-the wrong way.
+The balance target (a power curve per class across levels, not 50/50 everywhere) is a
+current rule in [cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
+Judge each item below against it.
 
 - [ ] **Stat reform — owner: Engine.** Design variance, modifier thresholds, level growth,
   and encounter modifiers as one model; choose a safe migration or reroll path for existing

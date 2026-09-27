@@ -22,5 +22,6 @@ unequipped cards with a confirmation. Both contracts are in
 [workshop and items](../architecture/workshop-and-items.md).
 
 These improve access to the existing bounded-item exception. Per-fight budgets, item-power
-changes, and other balance changes wait for the simulation harness in
-[balance and mechanics](11-balance-and-mechanics.md).
+changes, and other balance changes need simulation evidence first: the
+[simulation harness](../reference/simulation-harness.md) exists, and the plan to make its
+rings realistic is in [balance and mechanics](11-balance-and-mechanics.md).

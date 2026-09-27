@@ -9,7 +9,7 @@ import BaseMonster from './base.js';
  * The Unicorn is assembled from contradictory reports on purpose, so each spawn reads as
  * one witness's account rather than a canonical anatomy. Sources behind the variants, all
  * checked against the anthology A Book of Unicorns (Green Tiger Press); paraphrased here,
- * and see docs/roadmap/12-new-content-backlog.md for the research brief:
+ * and see docs/archive/roadmap/26-unicorn-pack.md for the research brief:
  *   - Ctesias, Indica fragment 25 (ancient report, 4th century BCE): wild asses of India
  *     with white bodies, dark-red heads, dark-blue eyes, and a horn white at the base,
  *     black in the middle, and crimson at the tip; "exceedingly swift and powerful".
@@ -135,7 +135,7 @@ class Unicorn extends BaseMonster {
 Unicorn.creatureType = UNICORN;
 // Cleric because the existing class vocabulary already grants healing and antidotal cards.
 // Deliberately not a new one-off class; see the Unicorn decision note in
-// docs/roadmap/12-new-content-backlog.md.
+// docs/archive/roadmap/26-unicorn-pack.md.
 Unicorn.class = CLERIC;
 // Swift and hard to pin down, but not tougher than the roster: AC ties the best existing
 // spawn offset (Basilisk, Jinn) rather than exceeding it, and HP sits one below the roster

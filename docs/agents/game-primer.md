@@ -133,7 +133,9 @@ earlier-armed card's check runs before the later-armed card's counter-attack lan
 — `settleDelayedHits()` loops over all of them until a full pass fires nothing
 (`packages/engine/src/cards/delayed-hit.ts`). A self-only check left a counter unanswered
 until the next card anyone played, narrating a blow from a turn ago (#157). Two Delayed Hits
-in one fight is routine: the starting deck ships with two.
+in one fight is routine: the starting deck ships with two. The full play pipeline, where
+fight-scoped card state lives, and the hold boundary are in
+[cards and encounter effects](../architecture/cards-and-encounter-effects.md).
 
 ## Prompts
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Balance report for the Unicorn content pack (docs/roadmap/23-unicorn-pack.md).
+ * Balance report for the Unicorn content pack (docs/archive/roadmap/26-unicorn-pack.md).
  *
  * Runs the Unicorn against every monster at levels 1/5/10/15/20, once with random legal
  * decks and once with the thematic fixture deck below, plus a mirror match and a team fight,

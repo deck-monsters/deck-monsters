@@ -1,15 +1,16 @@
 ---
 type: Roadmap
 title: New Content Backlog
-description: Concrete card, monster, and world proposals, including the researched Unicorn content pack.
+description: Concrete card, monster, and world proposals, including the Dragon research brief.
 status: draft
 audience: internal
 tags: [content, cards, backlog]
 ---
 # New Content Backlog
 
-**Status:** Backlog — concrete post-launch content proposals. Prioritize only after the
-balance harness can evaluate their interactions.
+**Status:** Backlog — concrete post-launch content proposals. Measure any new combat
+content with the [simulation harness](../reference/simulation-harness.md) before it ships,
+and follow the checklist in [cards and encounter effects](../architecture/cards-and-encounter-effects.md#adding-a-card-or-a-monster).
 
 ## Cards
 
@@ -28,280 +29,209 @@ balance harness can evaluate their interactions.
 
 ## Monsters and items
 
-- [ ] Deliver the **Unicorn content pack** specified below: one trainable monster, five
-  related cards, generated-reference copy, tests, and balance evidence. `Sticketh` is the
-  required signature card and spelling; do not normalize it to *Stickith*, *Sticks*, or
-  *Striketh*.
+- [x] **Unicorn content pack.** Shipped in PR #394: the Unicorn and five cards (Sticketh,
+  Horn of Proof, Unconquerable Horn, Dissonant Voice, Gloaming Rest). The pass record and the
+  original brief are archived as [26 — Unicorn content pack](../archive/roadmap/26-unicorn-pack.md).
+- [ ] **Unicorn voice punch-up.** The owner finds the Unicorn's flavour text bland (September
+  2026) and wants more edge from the old sources. Researched proposals for every Unicorn
+  string, with tagged quotations, a house style, and research requests, are in
+  [28 — Unicorn voice punch-up](28-unicorn-voice-punch-up.md), awaiting the owner's picks.
+- [ ] **Dragon.** A second requested monster, researched and built the way the Unicorn was.
+  Research comes first; see the [Dragon research brief](#dragon-research-brief) below.
+- [ ] A qilin/kirin creature deserves its own sourced design rather than a cosmetic Unicorn
+  variant (a rule carried over from the Unicorn brief).
 - [ ] Add the Time Lord monster and its time-manipulation deck.
 - [ ] Add the Bureaucrat monster and its tax, redistribution, and arrest mechanics.
 - [ ] Design equipment slots and their stat trade-offs.
 - [ ] Decide how monster-slot capacity is earned; the existing modifier is deliberately
   dormant until a reward is chosen.
 
-## Unicorn content pack
+## Dragon research brief
 
-**Status:** Planned, not in development. This section is the implementation brief and the
-single roadmap home for the proposal. It deliberately specifies ranges and questions rather
-than pretending untested combat values are final.
+**Status:** Requested by the owner (September 2026); research and design not started. The
+Unicorn pack is the model: a sourced creative thesis, a monster specification with ranges
+rather than final numbers, a handful of related cards, then a pass plan with slices,
+simulation evidence, and a live check. Nothing below is decided; the leanings recorded here
+are starting points for the research, not a design.
 
-### Creative thesis
+### Who asked, and the world it should feel like
 
-Make this the old, dangerous unicorn rather than a pastel horse with a cosmetic horn. The
-recognisable silhouette remains horse-like, white, and single-horned, but close inspection
-reveals the contradictory creature assembled by centuries of reports: a stag's head, goat's
-beard and tail, cloven or elephantine feet, and a boar-like tail among different variants.
-The contradiction is a feature. Each trained Unicorn should feel like one imperfect witness's
-account of a creature too rare and distant to become ordinary.
+The Dragon was requested by the owner's eight-year-old son. His favourite dragons are the
+ones in Cressida Cowell's *How to Train Your Dragon* **books** (not the films, which change
+much of the world). The Dragon should feel familiar to a reader of that series while being
+our own creature, built on the same public-domain roots the books draw on.
 
-The playable identity has three tensions:
+- **What we may borrow: setting and feel.** A Viking-age Norse world of island tribes; many
+  kinds of dragon, from small, scrappy, disobedient ones to vast sea dragons; dragons that
+  are clever, vain, funny, and frightening at once; and the idea that understanding a
+  dragon, even talking with it, beats shouting at it. The books also bring Romans in, which
+  gives the Dragon a natural link to the Gladiator and the Roman-flavoured cards, and book 3
+  has an arena fight (below), which is our ring.
+- **What we may not borrow.** No quotes, names (characters, places, dragon species, the
+  books' dragon language), plot events, or distinctive designs, and nothing that implies
+  the game is connected to the books or films. The same rule the Unicorn followed with its
+  modern tonal references applies, more strictly, because this series is in copyright and
+  well known. Where the books and the old sources share something (Vikings, sagas, sea
+  serpents, Romans), cite the old source.
+- **What the books contain (checked September 2026).** The owner confirmed, and publisher
+  and reader summaries agree, on these points. Fan wikis were the only detailed sources
+  found, so treat anything below as secondary until it is checked against the books.
+  - **Dragon statistics.** Throughout the series, dragons get small stat panels rated out
+    of ten: Fear Factor, Attack, Speed, Size, and Disobedience. A young reader already
+    expects a dragon to come with a stat card, which suits a card game. Echo the *shape*
+    (a short, rated profile in the Dragon's look-at text or card box) with our own stats,
+    not those five names.
+  - **Kinds of dragon by habitat.** The books sort their many species mostly by where they
+    live: cave, tree, bog, sky, mountain, sea, and tiny dragons. Cowell's companion *Book
+    of Dragons* (2014; *Incomplete* in the UK, *Complete* in the US) collects them. Habitat
+    is a natural axis for the Dragon's appearance options; plain words like "cave" or
+    "sea" are fine, the books' species names are not.
+  - **Romans and the arena: book 3, *How to Speak Dragonese*.** Romans at a fort try to
+    set two tribes against each other. The young heroes are made to fight in the fort's
+    amphitheatre, which is flooded so they face untrainable sea dragons from a ship. They
+    get out with the help of a tiny, arrogant dragon and its king's plan. That fits the
+    owner's memory of tiny, almost insect-like dragons saving the day. It is our ring, with
+    Romans, which is the Gladiator's world.
+  - **Still to ask the requester:** his favourite dragons and why; whether he wants to
+    raise a small dragon that grows or command a big one from the start; and which moments
+    he would want as cards.
+- **Audience and tone.** Narration should be exciting and funny rather than gory, readable
+  aloud to an eight-year-old, and follow [voice and wording](../reference/voice-and-wording.md).
+  The owner's son is a natural playtester for the strings inventory and the finished monster.
 
-1. **Untouchable / vulnerable.** The Unicorn is swift and hard to catch, but choosing trust
-   or stillness exposes it. This supports DEX-led defence and one deliberate rest card rather
-   than permanent evasion.
-2. **Healer / weapon.** The horn purifies poison and restores health in one tradition, while
-   Solinus calls it four feet long and sharp enough to pierce whatever it charges. Its deck
-   should force a choice between preserving and spending that power.
-3. **Gentle / unconquerable.** Aelian's animal is gentle toward other species yet fights its
-   own kind; medieval capture stories oppose ferocity with trust. In Deck Monsters, translate
-   this into target selection and counterplay, **not** a gender, virginity, sexuality, or
-   moral-worth check on a player or monster.
+### Research to do
 
-This is a companion who answers a Beastmaster's call, not quarry that the player captures.
-“Cannot be taken alive” becomes refusal to be controlled in combat; the flower-bearing
-maiden scene becomes freely offered trust and rest. Use singular *they* correctly and do not
-call the Unicorn *it* in new player-facing copy.
+- **Which dragon.** "Dragon" covers traditions that disagree more than the unicorn's did:
+  the hoarding, fire-breathing wyrm of Germanic and later European story (Beowulf's dragon,
+  Fáfnir in the Völsunga saga, the dragon of the Saint George legend), the serpent-dragon of
+  Greek and Roman natural history (Pliny's dragon that fights the elephant), the bestiary and
+  early-modern tradition (Topsell's *History of Serpents*, 1608, the companion to his
+  *Four-footed Beasts* that fed Sticketh), and East Asian traditions (the Chinese *lóng*,
+  associated with water, rain, and good fortune). Choose one for the monster, as the Unicorn
+  chose the horse-shaped Western unicorn, and do not flatten the others into cosmetic
+  variants; the East Asian dragon, like the qilin, deserves its own design if it is ever made.
+  **Leaning, given who asked:** the Norse and Germanic dragon, with Roman encounters as the
+  second strand. That is the world of the books above, and both strands have public-domain
+  sources to cite.
+- **Primary sources to gather**, beyond the ones above, with exact editions and passages
+  (translations must be public domain, or paraphrased with a citation):
+  - Norse: the *Völsunga saga* (Fáfnir, his hoard, and Sigurd's pit); the *Prose Edda*
+    (Níðhöggr gnawing the root of the world tree; Jörmungandr, the sea serpent Thor fishes
+    for); *Beowulf*'s last fight, woken by a stolen cup; saga and runestone dragon imagery,
+    and dragon-headed ship prows.
+  - Roman: Pliny's *Natural History* book 8 (dragons and elephants); the serpent at the
+    Bagradas River that a Roman army under Regulus fought with siege engines (told by
+    Valerius Maximus and others; find the best public-domain telling); the *draco*
+    standard, a dragon-headed windsock carried by Roman cavalry, described in Arrian's
+    *Ars Tactica* and Ammianus Marcellinus. The standard and the Bagradas serpent are the
+    strongest links to the Gladiator's world.
+  - Bestiary and early modern: Topsell's *History of Serpents* (1608), Aldrovandi's
+    *Serpentum et Draconum Historiae* (1640), and the medieval bestiaries on the dragon and
+    the elephant.
+  - Ask the owner for a dragon counterpart to *A Book of Unicorns*, the anthology whose
+    pages shaped the Unicorn's final content review.
+- **Sources.** Find public-domain primary texts for the chosen tradition and record exact
+  citations. Treat modern works (Tolkien's Smaug, film and game dragons) as tonal references
+  only: no names, dialogue, or distinctive designs.
+- **Fit with the roster.** The Basilisk is already a serpent with a signature coil and a
+  petrifying gaze. A Dragon must play differently, not as a bigger Basilisk.
+- **Place on the power curve.** Dragons in story grow from wyrmling to ancient terror, and a
+  young reader's favourite dragon is often a small one that grows into something great. Decide
+  whether the Dragon is a caster-like late bloomer (fragile young, strong old) or a brute, and
+  whether its growth can be expressed through the existing level scaling rather than new
+  systems. Check against the balance target in
+  [cards and encounter effects](../architecture/cards-and-encounter-effects.md#content-and-balance-rules).
 
-### Source palette and quotation policy
+### Candidate ideas to evaluate (not decisions)
 
-The supplied anthology pages are the primary creative prompt. They reproduce or attribute
-passages to Ctesias, Pliny the Elder, Aelian, Julius Solinus, Edward Topsell, Edmund Spenser,
-the Brothers Grimm, Edwin Julian, and Welleran Poltarnees. Preserve only short, attributed
-fragments in cards or lore; paraphrase the rest.
-The anthology is *A Book of Unicorns*, a Star & Elephant Book from The Green Tiger Press,
-La Jolla, California, with an introduction by Welleran Poltarnees (from the owner's
-photographs of the covers and interior pages). The owner's copy has no copyright page, so
-the year and edition stay unrecorded. Its newest dated artwork, *The Unicorn in Winter* by
-S.W.D., is from 1976, so the book is no earlier. The pages photographed quote Ctesias
-(*Indica* fragment 25), Pliny (*Historia Naturalis*), Aelian (*De Animalium Natura*),
-Julius Solinus (*Polyhistoria*, in early-modern English), Olfert Dapper (*Die Unbekante Neue
-Welt*, 1673), Edward Topsell (*History of Four Footed Beasts*, 1607), Spenser (*The Faerie
-Queene*), the Brothers Grimm ("The Brave Little Tailor"), and Edwin Julian ("The Capture of
-the Unicorn", illustrated by Reginald Birch).
-Source comments cite these texts directly.
+- A breath attack that hits several opponents but must recover before it can be used again,
+  so it is not a better Blast.
+- The weak spot: Sigurd kills Fáfnir from a pit beneath its unarmoured belly. That could be a
+  counterplay hook, the way the tree feint became Sticketh's risk.
+- The hoard: stolen treasure wakes Beowulf's dragon. Any card touching coins or items needs
+  the economy owner's review first; see [balance and mechanics](11-balance-and-mechanics.md).
+- Scales and flight as defence, bounded like the Unicorn's ward: no unconditional immunity.
+- Understanding over force: a card that calms or turns a hostile creature by talking to it
+  rather than hurting it, echoing the feel of the books without their dragon language. It
+  would need the same bounds as other control cards and the hold rules in
+  [cards and encounter effects](../architecture/cards-and-encounter-effects.md#holds-and-the-unconquerable-horn-ward).
+- A disobedient streak: a small chance the Dragon ignores the planned card and does what it
+  likes, for good or ill. Funny and in keeping with the world, but it takes control from the
+  player, so weigh it against [player agency](../reference/player-agency.md).
+- Roman links: a *draco* standard card usable by the Gladiator's side, or a Roman
+  siege-engine answer to a dragon (from the Bagradas story) as a counter card.
+- Many kinds of dragon: appearance options (habitat, size, colour, horns, wings, temper)
+  wide enough that a child can make "their" dragon, the way the Unicorn's options vary its
+  telling.
+- A swarm of tiny dragons: the backlog's unbuilt Swarm card (Cards, above) could become
+  many small dragons that each do little but add up, which echoes the book 3 rescue without
+  borrowing it. Scale it with the number of opponents, and measure it in mixed ring sizes.
+- A rated profile: a short stat panel in the Dragon's look-at text (see "What the books
+  contain" above).
 
-| Motif to carry forward | Short source fragment or visual cue | Game use |
-|---|---|---|
-| A form people continually imagine | Poltarnees calls the horse-and-horn silhouette its “Platonic form” | Keep the readable silhouette while variant traits supply generated descriptions. |
-| Rarity as distance, not weakness | The introduction describes the Unicorn as “rare, distant, untouched” | High DEX, solitary locations, and a defensive identity—not a low spawn probability until rarity is measured against onboarding. |
-| Speed and force | Ctesias: “exceedingly swift and powerful” | DEX-forward baseline and a charge whose reward needs setup. |
-| White, red, black, and blue | Ctesias gives a white body, dark-red head, dark-blue eyes, and a white/crimson/black horn | Historically rooted palette variants beyond plain white or rainbow styling. |
-| Antidotal horn | Ctesias describes horn dust and horn vessels as protection from drugs, convulsions, and poison | A bounded cleanse/heal card; never claim this as real medicine. |
-| Solitude and discord | Aelian's *cartazon* seeks deserted places, has a dissonant voice, and bears an “unconquerable horn” | Location variants, a disruptive sound card, and anti-control resistance. |
-| Gentleness across species | Aelian says it is gentle with other kinds but fights its own | Prefer a protective card over indiscriminate area damage; explore a mirror-match wrinkle only if it remains legible and fair. |
-| Refusal of captivity | Pliny says the *monocerōs* “cannot be taken alive”; Solinus similarly says it may be killed but not taken | A once-per-fight answer to immobilize/enthrall, not immunity to losing or dying. |
-| Trust in the gloaming | Edwin Julian's Unicorn kneels and sleeps before the flower-bearing maiden | A voluntary, interruptible recovery card. Avoid reproducing the old virginity test. |
-| The piercing horn | Solinus: “His horne sticketh out”; what it charges, “he striketh it through easily” | The force and reach behind the signature charge. |
-| The tree feint | Topsell's lion dodges behind a tree, where the charging Unicorn's “sharp horn sticketh fast”; Spenser likewise has the horn strike “in the stocke” | The risk at the heart of **Sticketh**: a powerful charge can leave its user stuck and exposed. |
-| Melancholy, captivity, and choosing one's own form | The animated film *The Last Unicorn* (1982), adapted from Peter S. Beagle's novel, contrasts an immortal creature's distance with captivity, apparent extinction, transformation, and the painful knowledge gained by entering mortal life | Give the pack a wistful undertone beneath its ferocity; frame freedom and self-possession as more important than being admired or preserved. |
+### Voice: give it edge from the start
 
-Corroborate and contextualise the anthology during implementation with public or museum
-sources, prioritising primary texts and clearly labelling later interpretation:
+The Unicorn launched with careful, mild prose and needed a punch-up
+([28](28-unicorn-voice-punch-up.md)). Write the Dragon's voice with edge in the first draft,
+still readable aloud to an eight-year-old: exciting, funny, a little scary, never gory.
+Use the house style and the [Q]/[Q?]/[T]/[A] tags from 28, so the owner can see at a glance
+which lines are real quotations.
 
-- Ctesias, *Indica* fragment 25: compare the supplied translation with the surviving
-  epitome and the source notes in [Livius' Ctesias overview](https://www.livius.org/sources/content/ctesias/ctesias-indika/).
-- Pliny, *Natural History* VIII: use a public-domain translation such as
-  [Perseus' Pliny text](https://www.perseus.tufts.edu/hopper/text?doc=Plin.+Nat.+8.31),
-  and retain *monocerōs* where discussing Pliny rather than silently treating every ancient
-  one-horned animal as the same medieval Unicorn.
-- The medieval *Physiologus* tradition: consult the
-  [Fordham Medieval Sourcebook translation](https://sourcebooks.fordham.edu/basis/physiologus.asp)
-  for the small fierce animal and capture allegory. Treat its theology and sexual symbolism
-  as historical context, not as a rule imposed on players.
-- The visual capture/death cycle: use the Metropolitan Museum's object record for
-  [*The Unicorn Rests in a Garden*](https://www.metmuseum.org/art/collection/search/467642)
-  and its related Unicorn Tapestries records for costume, flora, chain, wound, and enclosure
-  references. Do not lift museum photography into the game without a separate rights check.
-- Use *The Last Unicorn* as a **modern tonal reference**, not a source to reproduce. Review
-  the 1982 film and Peter S. Beagle's novel for their melancholy treatment of rarity,
-  captivity, identity, transformation, and memory. Do not copy dialogue, songs, character
-  names, the Red Bull, the film's character designs, or its distinctive visual staging into
-  cards, lore, sprites, or marketing; Deck Monsters' Unicorn must remain an original design
-  grounded primarily in the historical source palette above.
-- Marco Polo's encounter with an animal identified as a unicorn—heavy, muddy, and unlike
-  the imagined captive of a maiden—in
-  [Book III, chapter 15](https://en.wikisource.org/wiki/The_Travels_of_Marco_Polo/Book_3/Chapter_15)
-  is useful corrective texture for stocky or dark variants. Present the likely rhinoceros
-  identification as reception history, not as proof that the mythic creature was observed.
+**Method.** The Unicorn's voice pass taught the order:
 
-Research rules for the eventual implementation PR:
+1. List every string the Dragon will need before writing any: lore, look-at template,
+   each card's text, and each narration moment (hit, miss, natural 1 and 20, the card's
+   special outcome, cleanup).
+2. Mine the sources for lines with bite, not facts: insults, boasts, warnings, threats.
+   Record each with edition, passage, and a link, tagged [Q] or [Q?].
+3. For each string, draft two or three options: one quotation, one twist, one original
+   line in the old style. Put the most dramatic moment's line in the card text.
+4. Read every option aloud to the requester and keep what makes him laugh or lean in.
+   Record his picks in the brief.
+5. List what could not be checked as research requests for the owner, as 28 does, rather
+   than guessing.
 
-- distinguish ancient report, medieval allegory, early-modern natural history, later poem,
-  and modern interpretation in comments and docs;
-- quote no more than a short phrase on a card, credit it in source comments, and write
-  original player-facing prose around it;
-- do not flatten Indian, Persian, Chinese, or Japanese one-horned traditions into a generic
-  “Oriental unicorn.” A future qilin/kirin creature deserves its own sourced design rather
-  than becoming a cosmetic Unicorn variant;
-- avoid claims that horn powder cures disease or poison outside the explicitly fictional
-  card mechanic; and
-- have final lore copy reviewed for the companion vocabulary and for the gendered capture
-  tradition before generating `MONSTERS.md` or `CARDS.md`.
+**Suggestions to start from.**
 
-### Monster specification
+- **A dragon that talks back.** In the *Völsunga saga* the dying Fáfnir argues with
+  Sigurd, who hides his name in a riddle: "I am called a noble beast: neither father have
+  I nor mother, and all alone have I fared hither" (trans. Morris and Magnússon, 1888, [Q]).
+  Old dragons speak, so a vain, sarcastic, boastful Dragon has its source there, not in the
+  books. Its taunts and boasts can be [A] lines in the saga's manner.
+- **Kennings as titles.** *Beowulf* calls its dragon *niðdraca*, "hate-dragon" (line
+  2273), *lyftfloga*, "air-flier" (2315), *ligdraca*, "fire-dragon" (2333, 3040), and
+  *uhtsceaða*, "dawn-ravager" (about 2271; confirm the line). Give each spawned Dragon a
+  random kenning title (the Dawn-Ravager, the Air-Flier, the Hoard-Warden) and invent more
+  in the same pattern. "Wyrm" and "drake" let Old English show up in a readable way.
+- **Wake it and regret it.** *Beowulf*'s dragon wakes because a thief takes one cup from
+  its hoard, and burns the country for it. A narration pattern: a small slight, then a
+  vast overreaction. That is funny and scary at once.
+- **Jokes in the stat profile.** The books' "Disobedience" score is a joke. Our own
+  profile can carry invented jokes ("Hoard Envy: 10", "Table Manners: 1").
+- **Old sources with bite.** The King James Revelation's "the great dragon was cast out,
+  that old serpent" (12:9) and Pliny's dragon that coils round an elephant and is crushed
+  when it falls (Holland, 1601; find the passage) are dramatic and quotable.
+- **Roman and Viking voices.** Roman soldiers who sneer at barbarian dragons, and Viking
+  boasting, suit the arena and the Gladiator crossover, written as [A] lines.
 
-**Name/type:** `Unicorn` / Unicorn. **Provisional class:** Cleric, because the current class
-vocabulary already supports healing and antidotal cards. Do not add a one-off `Paladin`
-class solely for this monster; revisit the class only if the full card-permission audit
-shows Cleric grants combinations that erase the intended risk.
+**Research requests for the owner** (or an agent with archive access):
 
-**Provisional level-0 shape:** `STR +1`, `DEX +2`, `INT -1`; HP one or two below the current
-roster midpoint; AC variance high enough to express swiftness without exceeding the best
-existing spawn AC by more than one. These are simulation inputs, not approved final values.
-The total modifier budget should match existing monsters. The Unicorn should win through
-tempo, cleansing, and one risky charge—not by combining top-tier AC, healing, and burst.
+1. The Fáfnir dialogue in Morris and Magnússon (Gutenberg, "The Story of the Volsungs",
+   chapter 18): copy the best exchanges, especially Fáfnir's warnings about the gold.
+2. *Beowulf* lines 2200–2400 in a public-domain translation (Gummere 1910, or Hall 1901)
+   for the dragon's waking and its kennings, with line numbers.
+3. Holland's Pliny, book 8: the dragon and elephant passage.
+4. The *Prose Edda*, trans. Brodeur (1916): Níðhöggr and Jörmungandr passages.
+5. From the requester: favourite dragon moments and jokes from the books, so our
+   originals can aim at the same feeling without borrowing them.
 
-**Generated appearance fields:**
+### Definition of done for the research step
 
-- coat: ivory white, winter white, tawny, or white with a dark-red head;
-- eyes: dark blue, black, or woodland brown;
-- horn: ringed black; white/crimson/black; bright ivory; or long straight black;
-- build: horse-like, goat-bearded, stag-headed, stocky/cloven-hoofed, or the rare
-  elephant-footed witness account;
-- retreat: rocky gorge, laurel grove, inaccessible mountain, lonely wilderness, or enclosed
-  garden; and
-- voice: lowing, bell-like, or startlingly dissonant.
-
-Keep the icon readable in the terminal (`🦄` unless rendering tests expose a width problem).
-Descriptions should combine at most three variant clauses so `look at` remains skimmable.
-The durable lore paragraph should say that accounts conflict rather than declaring one
-anatomy canonical.
-
-### Related cards
-
-Values below are starting hypotheses. Every new card needs explicit class/type permissions,
-rarity, shop/drop treatment, level, cost, target strategy, confusion behaviour, natural-1
-and natural-20 outcomes where applicable, multi-team behaviour, and JSON hydration coverage.
-
-#### 1. Sticketh — signature attack, required
-
-The title is exactly **Sticketh**. It preserves the accidental mid-read that made the word
-sound like a card name. The direct source is the tree-feint episode on the newly supplied
-anthology page, attributed there to Edward Topsell's *History of Four Footed Beasts* (1607):
-the lion sidesteps a Unicorn's charge and the “sharp horn sticketh fast.” The adjacent stanza
-from Spenser's *The Faerie Queene* supplies the same reversal. The joke lives in the title;
-rules and narration should be immediately clear.
-
-- Unicorn-only melee card; candidate uncommon/rare, level 0, and initially not for sale so
-  its availability can be deliberately seeded rather than flooding the generic drop pool.
-- One target. Make a forceful charge against AC with a small to-hit bonus and strong but
-  bounded damage (`1d10` candidate). It must not bypass armour or become an unavoidable
-  opening kill.
-- **Stick fast:** after a failed attack, make a STR save. On a failed save the Unicorn is
-  immobilized until they pass the ordinary freedom check, representing the opponent's feint
-  and the horn caught in the ring's timber. A natural 1 fails this save automatically; a
-  natural 20 uses the engine's standard maximum-damage rule and never adds another multiplier.
-- Being stuck creates counterplay rather than self-damage: the opponent gains an opening,
-  but the Unicorn does not gore themself and narration should not turn the reversal into
-  slapstick. In a team fight the state belongs only to the Unicorn who played the card.
-- Do not inherit `Horn Gore`: that card assumes two horns, stacking immobilization, and
-  Minotaur-specific matchups. Reuse small attack helpers, not its fiction or state model.
-- Reuse the existing immobilization/freedom machinery rather than inventing a bespoke stuck
-  status. The implementation spike must confirm that self-applied immobilization cleans up
-  correctly on freedom, fight end, flee, death, cancellation, and hydration.
-
-#### 2. Horn of Proof — cleanse with a cost
-
-- Unicorn or Cleric; candidate rare, level 2.
-- Target self or an ally under the existing team-target rules. Remove one supported poison
-  or ongoing harmful effect, then heal a small fixed amount. If the current status model
-  cannot enumerate effects safely, v1 must name exactly which effects it cleanses rather
-  than promising a universal dispel.
-- The horn is **not** consumed or filed away. The cost is tempo: this card deals no damage,
-  and its heal must be weaker than a dedicated Heal of the same tier.
-- Card copy may evoke a drinking vessel or clear water, but must state that this is a
-  fantasy effect and avoid medical claims in generated explanatory prose.
-
-#### 3. Unconquerable Horn — bounded anti-control
-
-- Unicorn-only defensive card; candidate uncommon, level 1.
-- Arm a once-per-fight ward. The next successful immobilize, enthrall, or equivalent
-  control effect against the Unicorn is cancelled and the ward is consumed. It does not
-  cancel damage, does not reflect the effect, and cannot stack.
-- Decide from a card/effect audit whether “control” has a shared engine predicate. Do not
-  identify it from narration strings or card names. If no safe shared boundary exists,
-  support an explicit, tested list for v1.
-
-#### 4. Dissonant Voice — disruptive utility
-
-- Unicorn or Bard; candidate uncommon, level 1.
-- Affect opponents, not allies. Each target makes an INT-based save; failure applies one
-  small, one-play attack penalty. No damage and no multi-round silence.
-- Use serial resolution and normal sub-event pacing so a large ring does not emit every
-  save in one feed tick. Confirm confusion redirects both source and affected team correctly.
-
-#### 5. Gloaming Rest — voluntary vulnerability
-
-- Unicorn or Cleric; candidate rare, level 3.
-- The Unicorn kneels and arms a delayed heal. Until their next card would play, their AC is
-  reduced by a bounded amount. If they take damage, the rest is interrupted and the heal is
-  lost; otherwise restore a meaningful but capped amount, then clear the penalty.
-- This is trust, not magical obedience. No maiden target, gender gate, “purity” score, or
-  sleep-control interaction. Narration can include flowers, laurel, evening, and kneeling.
-- Implement as encounter-scoped state with cleanup on fight end, flee, death, hydration,
-  and cancellation. Review the delayed-effect ordering rules before choosing hooks.
-
-**Existing-card fit:** test Unicorn access to `Heal`, `Iocane`, `Fists of Virtue`, `Flee`,
-and ordinary attacks. Do not automatically permit `Horn Gore` merely because Unicorn has a
-horn. A proposed nine-card thematic test deck is `Sticketh` ×2, `Horn of Proof`,
-`Unconquerable Horn`, `Dissonant Voice`, `Gloaming Rest`, `Heal`, `Fists of Virtue`, and
-`Flee`; this is a simulation fixture and design demonstration, **not** a special starting
-deck or a replacement for player deck-building.
-
-### Implementation slices and definition of done
-
-Implement in small commits only after this roadmap item is prioritised:
-
-1. **Source and mechanic spike.** Complete the book citation; audit poison/control/damage
-   events, encounter cleanup, team targeting, hydration, and card availability. Resolve the
-   fallbacks above in a short decision note within this section before writing card code.
-2. **Monster shell.** Add the creature type, class choice, Unicorn model and appearance
-   variants, registry/export/hydration paths, spawn tests, and generated lore source. Confirm
-   old saves still hydrate and seeded spawn tests remain deterministic.
-3. **Sticketh vertical slice.** Implement the signature card and self-immobilization path,
-   including hit, miss, both rolls, crits, confusion, freedom, cleanup, and serialization
-   tests. Independently review this slice before building other delayed/ward effects on it.
-4. **Support cards.** Add the other four cards one at a time with focused tests. Reuse shared
-   effect primitives only when at least two cards genuinely share semantics; do not create a
-   broad status framework just to make the proposal look uniform.
-5. **Distribution and references.** Register cards for lookup, draw, sort, hydration, and
-   permissions; make an explicit sale/drop decision for each; update generator sources and
-   run `pnpm run build:docs` rather than editing `MONSTERS.md` or `CARDS.md` by hand.
-6. **Balance pass.** Extend the harness roster and run seeded all-pairs trials at levels
-   1/5/10/15/20 with both random legal decks and the thematic fixture. Report win rate,
-   average rounds, damage per card, heal/cleanse value, ward trigger rate, Sticketh miss and
-   self-immobilization rates, Gloaming Rest completion rate, mirror matches, and at least one
-   team fight.
-7. **Live copy and pacing check.** Stage ordinary, mirror, control-heavy, poison-heavy, and
-   multi-contestant fights. Verify narration order, pronoun agreement, card readability,
-   emoji width, and cleanup after flee/death/cancel. Capture a screenshot only when a visible
-   UI or sprite implementation is part of the eventual change.
-
-Acceptance gates:
-
-- all new state is encounter-scoped, survives or intentionally resets through hydration,
-  and cannot leak across rooms or fights;
-- no card adds an unscoped `game.on(...)` listener or timer; delayed effects follow the
-  engine concurrency/timing contract;
-- no unconditional immunity, unavoidable burst, permanent stat change, or gender/morality
-  gate enters the design;
-- the Unicorn's fixed-deck seeded matchup win rates follow a Cleric's power curve across
-  levels (see the balance target in [11](11-balance-and-mechanics.md#combat-design)); rows
-  outside the harness review band (35–65%) are documented with a reason, not treated as a
-  gate;
-- source-derived copy is original, short quotations are attributed in source comments, and
-  the generated monster/card references pass the documentation checks; and
-- `pnpm build && pnpm typecheck && pnpm lint && pnpm test`, `pnpm docs:check`, and the relevant
-  `sim:*` reports complete, followed by the required independent code review and live check.
+A design brief in this file with the same sections the Unicorn brief had (creative thesis,
+sources and quotation policy, monster specification, three to five related cards with their
+risks and counterplay, implementation slices, acceptance gates), reviewed by the owner before
+any code is written. The brief also records the requester's answers to "Still to ask", and
+its strings inventory is read aloud to the requester before the content pass starts.
 
 ## World and long-term goals
 
