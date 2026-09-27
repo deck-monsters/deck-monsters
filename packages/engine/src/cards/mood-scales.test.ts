@@ -95,6 +95,17 @@ describe('./cards/mood-scales.ts Mood Scales', () => {
 		expect(damageRolls[0].modifier).to.be.within(dragon.strModifier + 1, dragon.strModifier + 6);
 	});
 
+	it('keeps the fury through a miss: it is for the next melee hit', async () => {
+		dragon.hp = 1;
+		await play();
+
+		const miss = new HitCard();
+		sinon.stub(miss, 'hitCheck').returns({ attackRoll: { result: 1 }, success: false, strokeOfLuck: false, curseOfLoki: false } as any);
+		await miss.play(dragon, foe, ring, contestants);
+
+		expect(isFurious(dragon), 'a miss does not spend it').to.equal(true);
+	});
+
 	it('does not stack a second fury', async () => {
 		dragon.hp = 1;
 		await play();

@@ -56,11 +56,18 @@ let counters = fresh();
 const proto = (cardType: string): Proto =>
 	(getCardClassByTypeName(cardType) as unknown as { prototype: Proto }).prototype;
 
+/*
+ * Per-play card clones acting for the Dragon (its flight, its fury). Narration counters only
+ * count these: an opponent can play a stolen Take Wing or Mood Scales through Pick Pocket,
+ * and its lines must not be credited to the Dragon (a PR #402 review).
+ */
+const dragonPlays = new WeakSet<object>();
+
 /** Count a card's narrations by what they say, for the ones no method marks on its own. */
 const countNarrations = (cardType: string, lines: Array<[string, keyof Counters]>): void => {
 	wrap(proto(cardType), 'emit', (original, self, args) => {
 		const [event, payload] = args as [string, { narration?: string } | undefined];
-		if (event === 'narration') {
+		if (event === 'narration' && dragonPlays.has(self as object)) {
 			for (const [text, key] of lines) if (String(payload?.narration).includes(text)) counters[key] += 1;
 		}
 		return original.apply(self, args);
@@ -89,7 +96,10 @@ function instrument(isDragon: (creature: unknown) => boolean): void {
 	});
 
 	wrap(proto('Take Wing'), 'takeOff', (original, self, args) => {
-		if (isDragon(args[0])) counters.takeOffs += 1;
+		if (isDragon(args[0])) {
+			counters.takeOffs += 1;
+			dragonPlays.add(self as object);
+		}
 		return original.apply(self, args);
 	});
 	countNarrations('Take Wing', [
@@ -104,7 +114,10 @@ function instrument(isDragon: (creature: unknown) => boolean): void {
 		return original.apply(self, args);
 	});
 	wrap(mood, 'enrage', (original, self, args) => {
-		if (isDragon(args[0])) counters.furies += 1;
+		if (isDragon(args[0])) {
+			counters.furies += 1;
+			dragonPlays.add(self as object);
+		}
 		return original.apply(self, args);
 	});
 	countNarrations('Mood Scales', [['strikes in a fury!', 'furySpent']]);

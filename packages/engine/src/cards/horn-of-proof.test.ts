@@ -7,7 +7,7 @@ import Unicorn from '../monsters/unicorn.js';
 import Gladiator from '../monsters/gladiator.js';
 import WeepingAngel from '../monsters/weeping-angel.js';
 import Jinn from '../monsters/jinn.js';
-import { BAD_BATCH_EFFECT, GLOAMING_REST_EFFECT } from '../constants/effect-types.js';
+import { BAD_BATCH_EFFECT, EXPOSED_EFFECT, GLOAMING_REST_EFFECT, WINDED_EFFECT } from '../constants/effect-types.js';
 import { CLERIC } from '../constants/creature-classes.js';
 import { UNICORN } from '../constants/creature-types.js';
 
@@ -87,6 +87,18 @@ describe('./cards/horn-of-proof.ts Horn of Proof', () => {
 		unicorn.encounterModifiers.ac = -3; // the rest's -2 plus a -1 Soften
 		await new HornOfProofCard().effect(unicorn, unicorn, ring);
 		expect(unicorn.encounterModifiers.ac).to.equal(-2);
+	});
+
+	// Review of PR #402: a Sandstorm-redirected horn on a winded Dragon lifted the -2, and the
+	// winded effect then gave 2 back on top, leaving +2 AC for the rest of the fight.
+	it('does not mistake winded or exposed for a curse either', async () => {
+		for (const [effectType, penalty] of [[WINDED_EFFECT, 2], [EXPOSED_EFFECT, 4]] as const) {
+			unicorn.encounterEffects = [Object.assign(() => undefined, { effectType })];
+			unicorn.encounterModifiers.ac = -penalty;
+
+			await new HornOfProofCard().effect(unicorn, unicorn, ring);
+			expect(unicorn.encounterModifiers.ac, effectType).to.equal(-penalty);
+		}
 	});
 
 	it('otherwise pours away one Bad Batch waiting in the ring, and only one', async () => {

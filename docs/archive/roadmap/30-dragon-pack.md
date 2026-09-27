@@ -65,9 +65,11 @@ shared mechanic, and the Roman cards. They stay in 29 as later ideas.
 ### The monster
 
 - **Type and class:** creature type `Dragon` (`constants/creature-types.ts`), class Wizard.
-- **Stats:** DEX +2, STR −1, INT +1 (the +2 budget). The quick, clever flier; the
-  Basilisk keeps strength. No other monster has this spread (the Unicorn is +2/+1/−1, the
-  Weeping Angel +1/−1/+2). `acVariance` 1, `hpVariance` 2: scales, but a caster's body.
+- **Stats (as shipped):** DEX +1, STR 0, INT +1 (the +2 budget), `acVariance` 1,
+  `hpVariance` 2: scales, but a caster's body. The spec began at DEX +2, STR −1, and
+  `sim:monster` showed that too weak early for a Wizard, whose random decks are mostly
+  generic cards; see [Balance evidence](#balance-evidence). The spread matches the Jinn's;
+  the Dragon's AC and HP offsets and its class differ.
 - **Appearance** (drawn at spawn, stored in options like the Unicorn's): the player's
   colour for the scales, plus a head (flat, wedge-shaped, crested), a body (long and
   sleek, whip-thin, sea-serpent long), wings (swept-back, bat-webbed, fin-edged), and a

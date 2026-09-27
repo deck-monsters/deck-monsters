@@ -56,15 +56,23 @@ Furious (half your hp or less): your scales blaze red and you cannot hide, but y
 		return `${target.givenName}'s scales flush with colour again.`;
 	}
 
-	/** Arm the fury: the next melee hit the monster makes, however many cards away. */
+	/**
+	 * Arm the fury: the next melee *hit* the monster makes, however many cards away. Each melee
+	 * card is empowered, and the fury is spent only when the bonus damage lands; a miss keeps
+	 * it armed (a review of PR #402 found it spent on a miss).
+	 */
 	enrage(target: any): void {
 		const fury = ({ card, phase, player }: any) => {
 			if (phase !== ATTACK_PHASE || player !== target) return card;
-			if (!empowerMelee(card, target, { damageDice: FURY_DAMAGE_DICE })) return card;
 
-			target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== fury);
-			this.emit('narration', {
-				narration: `${target.givenName} strikes in a fury!`,
+			empowerMelee(card, target, {
+				damageDice: FURY_DAMAGE_DICE,
+				onDamageBonus: () => {
+					target.encounterEffects = target.encounterEffects.filter((effect: any) => effect !== fury);
+					this.emit('narration', {
+						narration: `${target.givenName} strikes in a fury!`,
+					});
+				},
 			});
 			return card;
 		};

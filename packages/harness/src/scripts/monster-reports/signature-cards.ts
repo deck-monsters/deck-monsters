@@ -14,6 +14,9 @@ export function signatureCardReport(creatureType: string): MonsterReport {
 	return {
 		instrument(isSubject) {
 			const names = new Set(cards.map(Card => Card.cardType));
+			// `play()` calls `effect()` once per target, on one per-play clone: count the clone
+			// once, or an area card counts once per monster it reaches (a PR #402 review).
+			const counted = new WeakSet<object>();
 			// Wrap the prototype that actually owns `effect`, once: a card that inherits its
 			// effect (Camouflage Vest from Cloak of Invisibility) would otherwise be counted
 			// twice, or under its parent's name. The play is credited to the instance's type.
@@ -25,7 +28,10 @@ export function signatureCardReport(creatureType: string): MonsterReport {
 				wrapped.add(owner);
 				wrap(owner, 'effect', (original, self, args) => {
 					const type = (self as { cardType?: string }).cardType;
-					if (type && names.has(type) && isSubject(args[0])) counts[type] = (counts[type] ?? 0) + 1;
+					if (type && names.has(type) && isSubject(args[0]) && !counted.has(self as object)) {
+						counted.add(self as object);
+						counts[type] = (counts[type] ?? 0) + 1;
+					}
 					return original.apply(self, args);
 				});
 			}
