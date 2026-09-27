@@ -8,7 +8,7 @@ tags: [bugs, roadmap, open]
 ---
 # Bug Fixes and Code Quality
 
-**Status:** Active — nine open items. Fixed work and its root causes live only in
+**Status:** Active — eight open items. Fixed work and its root causes live only in
 [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
 
 ## Open items
@@ -99,22 +99,6 @@ the hand fills `cardSlots`. The same finish lines spell it "equiped".
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md) and
 [workshop and items](../architecture/workshop-and-items.md).
-
-### M. `unequip all from [monster]` looks for a card named "all"
-
-**Owner:** Engine command dispatch. The catalogue lists `unequip all from [monster]`
-("Clear a monster's full deck"). Typed for Brass, the console answered "Brass is not
-holding all." `clear deck Brass` did clear the hand and is the working alternative.
-
-**Root cause:** `UNEQUIP_CARD_REGEX` (`unequip (?:(\d+) )?(.+?) from …`) is registered
-before `UNEQUIP_ALL_REGEX` in `packages/engine/src/commands/monster.ts`, and dispatch
-keeps the first match (`commands/index.ts`). The card pattern's `.+?` takes "all", so
-the all-command handler never runs.
-
-- [ ] Match `unequip all from` before the single-card pattern, and cover it with a
-  dispatch test (a test of the all-regex alone will not catch this).
-
-Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
 
 ### N. First-run workshop shows "Applying changes…" and `game.shop` 404s
 

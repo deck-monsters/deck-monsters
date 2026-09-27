@@ -115,7 +115,10 @@ function equipMonsterAction({ channel, character, game, isDM, results }: any): P
 	});
 }
 
-const UNEQUIP_CARD_REGEX = /unequip (?:(\d+) )?(.+?) from (?:a )?(.+?)$/i;
+// `(?!all from )` keeps "unequip all from Brass" out of this pattern. Dispatch keeps the
+// first match, and this pattern once swallowed the all-command and answered "Brass is not
+// holding all" (10b #185). The handlers are also registered all-first below.
+const UNEQUIP_CARD_REGEX = /unequip (?:(\d+) )?(?!all from )(.+?) from (?:a )?(.+?)$/i;
 function unequipCardAction({ channel, character, game, isDM, results }: any): Promise<unknown> {
 	if (!isDM) {
 		return Promise.reject(new Error('Please talk to me in a direct message'));
@@ -480,8 +483,8 @@ export default function monsterHandlers(
 	registerHandlerFn(DISMISS_REGEX, dismissMonsterAction);
 	registerHandlerFn(EDIT_REGEX, editMonsterAction);
 	registerHandlerFn(EQUIP_REGEX, equipMonsterAction);
-	registerHandlerFn(UNEQUIP_CARD_REGEX, unequipCardAction);
 	registerHandlerFn(UNEQUIP_ALL_REGEX, unequipAllAction);
+	registerHandlerFn(UNEQUIP_CARD_REGEX, unequipCardAction);
 	registerHandlerFn(MOVE_CARD_REGEX, moveCardAction);
 	registerHandlerFn(GIVE_ITEMS_TO_MONSTER_REGEX, giveItemsToMonsterAction);
 	registerHandlerFn(REVIVE_REGEX, reviveMonsterAction);

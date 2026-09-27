@@ -4360,3 +4360,25 @@ The `monsters` branch that handles `in detail` was never reached for this phrasi
 monster list. The detail test fails without the fix.
 
 **Status**: Fixed.
+
+### 185. `unequip all from [monster]` looked for a card named "all" — FIXED
+
+The command catalogue lists `unequip all from [monster]` ("Clear a monster's full deck").
+Typed for Brass, the console answered "Brass is not holding all." `clear deck Brass`
+worked. Found in the browser sweep on 2026-09-26.
+
+**Root cause**: `UNEQUIP_CARD_REGEX` (`unequip (?:(\d+) )?(.+?) from …`) was registered
+before `UNEQUIP_ALL_REGEX` in `commands/monster.ts`, and dispatch keeps the first match
+(`commands/index.ts`). The card pattern's `.+?` took "all" as the card name, so the
+all-command handler never ran.
+
+**Fix**: the unequip-all handler is registered first, and the card pattern refuses
+`all from` with a negative lookahead, so the result no longer depends on registration
+order.
+
+**Tests**: `commands/unequip-dispatch.test.ts` goes through `listen()` dispatch, not the
+regex alone (a regex test passed while the command was broken). It covers
+`unequip all from`, `clear deck`, and a single card with a count. The all-command test
+fails without the fix.
+
+**Status**: Fixed.
