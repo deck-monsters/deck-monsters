@@ -19,7 +19,7 @@
 
 import '../sim-env.js';
 import '../set-env.js';
-import { allMonsters, engineReady } from '@deck-monsters/engine';
+import { allMonsters, engineReady, getLevel, getXpCapForLevel } from '@deck-monsters/engine';
 import { simulate, SIM_MONSTER_TYPES, type SimMonsterSpec } from '../simulate.js';
 import { mulberry32 } from '../rng.js';
 
@@ -122,7 +122,10 @@ async function sampledRings(): Promise<void> {
 			for (let b = 0; b < humans.length; b += 1) {
 				const banded = pick() < 0.35 ? ceiling : average;
 				const cap = Math.max(0, Math.min(banded, ceiling, budget));
-				const level = Math.floor(pick() * (cap + 1));
+				// As the ring does: XP drawn evenly up to the cap's XP, then read back as a level.
+				// Levels need ever more XP, so this lands near the cap far more often than an
+				// even pick of levels would (a first draft did that, and bosses came out weak).
+				const level = getLevel(Math.floor(pick() * (getXpCapForLevel(cap) + 1)));
 				budget -= level;
 				bosses.push({ type: SIM_MONSTER_TYPES[Math.floor(pick() * SIM_MONSTER_TYPES.length)]!, level, role: 'boss' });
 			}

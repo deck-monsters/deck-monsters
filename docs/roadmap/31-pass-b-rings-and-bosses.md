@@ -37,9 +37,9 @@ Found while scoping:
 | # | Slice | Status | Commit |
 |---|---|---|---|
 | 1 | Harness roles: a spec can be a **human** (player-like starting deck, default targeting, own faction) or a real **boss** (Boss team, boss deck, boss targeting). `sim:bosses` runs the owner's scenarios and reports the human side's win rate | Done | c80f77e |
-| 2 | Realistic rings: player-like decks by default, mixed ring sizes (2–12), team shapes, and level spreads, and a per-class win-rate curve across levels (Pass B tasks 1–3 and 5) | Not started | — |
+| 2 | Realistic rings: `sim:rings` (per-class curves with player decks; sampled rings of mixed sizes, levels, teams, and bosses). Likely-deck archetypes and ring events stay open in [11](11-balance-and-mechanics.md) | Done | 963e437, this commit |
 | 3 | Boss balance: humans unite then settle, one boss per human (a rare ambush minion), a level budget, no fully random levels | Done | d98566f |
-| 4 | Boss personalities, and teams made easy: the Sorting Hat in every shop (with a "No team" choice) and a free `leave team` command (owner request, 2026-09-27) | Done | this commit |
+| 4 | Boss personalities, and teams made easy: the Sorting Hat in every shop (with a "No team" choice) and a free `leave team` command (owner request, 2026-09-27) | Done | c1b5d24 |
 | 5 | Docs, generated references, independent review | Not started | — |
 
 ## Evidence before any change (`sim:bosses`, 200 fights per row)
@@ -82,6 +82,25 @@ Found while scoping:
 - **Ambush tuning** (the owner allowed tuning from the ring): even a minion at a fifth of its
   HP only lifts a lone level 1 to about 10%, because a lone human must outlast two attackers.
   The ambush is a minion at a third of its HP, on 10% of timer spawns: a rare scare.
+
+With boss temperaments (task 4) several humans do a little better, since bosses spread
+their attacks: two L2s against L3 + L2 bosses went from 27% to 35%, two teamless L1s against
+L1 + L2 from 23% to 29%. (The `sim:bosses` ambush rows use a full-HP boss, not the ring's
+⅓-HP minion, so they understate an ambush.)
+
+## Realistic rings (`sim:rings`)
+
+- **Class curves** (each monster as a human against a random other at its level, share of
+  decisive fights, L1 / L5 / L10 / L20): Basilisk 70 / 59 / 55 / 52; Gladiator 40 / 46 / 47
+  / 52; Jinn 49 / 52 / 54 / 49; Minotaur 61 / 63 / 57 / 47; Weeping Angel 37 / 49 / 58 / 67;
+  Unicorn 71 / 58 / 64 / 66; Dragon 38 / 61 / 39 / 55. The Angel shows the caster curve and
+  the Barbarians the brute curve; the Unicorn strong everywhere and the Gladiator weak early
+  are logged in [11](11-balance-and-mechanics.md). Cells are 120 fights, so noisy.
+- **Sampled rings** (120 rings of mixed sizes, levels, and pairs; 40% with bosses spawned by
+  the ring's new rules): humans won **59%** of the rings with bosses, so bosses are
+  beatable but still a threat. A first version drew boss levels evenly and bosses came out
+  weak (71%); the ring draws XP evenly up to the cap's XP, which lands near the cap far more
+  often, and the sampler now does the same.
 
 ## Decisions (owner, 2026-09-27)
 

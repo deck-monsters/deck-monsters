@@ -26,30 +26,24 @@ and fixed defects are in [`10b-bugs-fixed.md`](10b-bugs-fixed.md).
   [simulation harness](../reference/simulation-harness.md). `SimMonsterSpec.team` now runs
   team fights under last-team victory; a boss scenario for the Team XP item below is still
   missing.
-- [ ] **Realistic harness rings — owner: Engine.** The owner's view (September 2026): balance
-  is "not terrible", and the harness is close to useful but still unrealistic. It now uses
-  shuffled draws (#183) and keeps Flee out of random decks, because Flee is a
-  special-purpose card and in a simulation it only turns fights into draws. Still to do, in
-  rough order of value:
-  - **Likely decks, not uniform draws.** Real decks are built, not drawn. Weight harness
-    decks toward what players actually equip: seed them from equipped-deck telemetry when it
-    exists, and until then from a few hand-written archetypes per class (for example, a
-    Cleric healer and a Cleric Blast deck). Keep a uniform-draw mode as the control.
-  - **Mixed ring sizes.** A ring holds 2 to 12 monsters (`MAX_MONSTERS` in `ring/index.ts`).
-    Sample the whole range per fight rather than running only 1v1, weighted toward small
-    rings until telemetry shows the real distribution, and report large rings separately,
-    because AOE cards (Blast, Sandstorm, Mesmerize) and retaliation cards
-    (Delayed Hit) change value sharply with the number of opponents.
-  - **Mixed team composition.** Sample free-for-all, one team against solos, and two teams,
-    including uneven teams. `SimMonsterSpec.team` supports this; nothing samples it yet.
-  - **Mixed levels in one ring.** Players of different levels share rooms. Sample level
-    spreads within a ring, not only mirrored levels, to see whether a low-level monster can
-    still contribute.
-  - **Bosses and ring events.** The harness turns ring events off. Add runs that keep them on,
-    so Gauntlet, Blood Feud, Common Cause, and The Reckoning are measured the way players
-    meet them.
-  - **Report per class curve.** Summarize results as a win-rate curve per class across levels
-    (see the balance target below) rather than a single pairwise matrix.
+- [ ] **Realistic harness rings, what is left — owner: Engine.** Pass B
+  ([31](31-pass-b-rings-and-bosses.md)) added human contestants with player decks, real
+  bosses, `sim:bosses`, and `sim:rings` (per-class curves, and sampled rings of mixed sizes,
+  levels, teams, and bosses). Still to do:
+  - **Likely decks, not random hands.** Humans equip nine legal cards at random from a
+    starting deck plus fills; real players build decks. Seed from equipped-deck telemetry
+    when it exists, and until then from a few hand-written archetypes per class (a Cleric
+    healer, a Cleric Blast deck). Keep the random hand as the control.
+  - **Ring events on.** The harness still turns them off, so Gauntlet, Blood Feud, Common
+    Cause, and The Reckoning are not measured the way players meet them.
+  - **Telemetry-weighted sampling.** `sim:rings`' ring sizes and levels are guesses (mostly
+    two or three monsters, levels 0-6); replace them with the real distribution.
+- [ ] **Class curves from `sim:rings` (September 2026) — owner: Engine.** With player decks,
+  each monster against a random other at the same level (share of decisive fights):
+  the Weeping Angel climbs 37% → 67% from level 1 to 20 (the caster curve the target asks
+  for) and the Barbarians start strong and fade, but the **Unicorn is strong at every level**
+  (56–71%) and the **Gladiator is weak early** (40% at level 1). Look at both against the
+  balance target before changing cards; each cell is 120 fights, so re-run before acting.
 - [ ] **Economy telemetry — owner: Analytics.** Measure coins earned, spent, and held per
   active player-room; first-purchase time; outcome mix; and unaffordable expired stock.
   The harness has the new-player scenario; a purchase-sink scenario is still open.
