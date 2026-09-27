@@ -21,12 +21,12 @@ Source: `packages/engine/src/monsters/dragon.ts`.
 
 Seeded, cycling he, she, and they.
 
-- `a wedge-headed dragon, as long as a sea serpent, with fin-edged wings. His scales are storm grey, and he keeps to a sea cave. Hoard patience: sleeps on the hoard, lightly. Smoke control: excellent. Opinion of Romans: politely suspicious. Table manners: cooks everything first.`
-- `a wedge-headed dragon, whip-thin, with fin-edged wings. Her scales are deep-sea blue, and she keeps to the cold deep. Hoard patience: none whatsoever. Smoke control: do not stand downwind. Opinion of Romans: low. Table manners: cooks everything first.`
-- `a wedge-headed dragon, long and sleek, with fin-edged wings. Their scales are storm grey, and they keep to a sea cave. Hoard patience: sleeps on the hoard, lightly. Smoke control: mostly. Opinion of Romans: very low. Table manners: chews with mouth open, and on fire.`
-- `a flat-headed dragon, long and sleek, with bat-webbed wings. His scales are kelp green, and he keeps to a sea cave. Hoard patience: counts the hoard twice a day. Smoke control: do not stand downwind. Opinion of Romans: has eaten a standard. Table manners: chews with mouth open, and on fire.`
-- `a crested dragon, long and sleek, with bat-webbed wings. Her scales are ember red, and she keeps to the storm cliffs. Hoard patience: sleeps on the hoard, lightly. Smoke control: mostly. Opinion of Romans: has eaten a standard. Table manners: surprisingly good.`
-- `a flat-headed dragon, long and sleek, with fin-edged wings. Their scales are deep-sea blue, and they keep to the storm cliffs. Hoard patience: counts the hoard twice a day. Smoke control: mostly. Opinion of Romans: very low. Table manners: chews with mouth open, and on fire.`
+- `a wedge-headed dragon, as long as a sea serpent, with fin-edged wings. His scales are storm grey, and he keeps to a sea cave. Hoard patience? Sleeps on the hoard, lightly. Smoke control? Excellent. Opinion of Romans? Tastes like chicken. Table manners? Cooks everything first.`
+- `a wedge-headed dragon, whip-thin, with fin-edged wings. Her scales are deep-sea blue, and she keeps to the cold deep. Hoard patience? None whatsoever. Smoke control? Do not stand downwind. Opinion of Romans? Low. Table manners? Cooks everything first.`
+- `a wedge-headed dragon, long and sleek, with fin-edged wings. Their scales are storm grey, and they keep to a sea cave. Hoard patience? Sleeps on the hoard, lightly. Smoke control? Mostly. Opinion of Romans? A nuisance. Table manners? Chews with mouth open, and on fire.`
+- `a flat-headed dragon, long and sleek, with bat-webbed wings. His scales are kelp green, and he keeps to a sea cave. Hoard patience? Counts the hoard twice a day. Smoke control? Do not stand downwind. Opinion of Romans? Terrifying. Table manners? Chews with mouth open, and on fire.`
+- `a crested dragon, long and sleek, with bat-webbed wings. Her scales are ember red, and she keeps to the storm cliffs. Hoard patience? Sleeps on the hoard, lightly. Smoke control? Mostly. Opinion of Romans? Terrifying. Table manners? Surprisingly good.`
+- `a flat-headed dragon, long and sleek, with fin-edged wings. Their scales are deep-sea blue, and they keep to the storm cliffs. Hoard patience? Counts the hoard twice a day. Smoke control? Mostly. Opinion of Romans? A nuisance. Table manners? Chews with mouth open, and on fire.`
 
 ### Fill lists
 
@@ -37,15 +37,15 @@ Seeded, cycling he, she, and they.
 - `SCALES`: `deep-sea blue`, `storm grey`, `ember red`, `kelp green`
 - `HOARD_PATIENCE`: `counts the hoard twice a day`, `will notice one cup missing`, `none whatsoever`, `sleeps on the hoard, lightly`
 - `SMOKE_CONTROL`: `excellent`, `mostly`, `sneezes sparks`, `do not stand downwind`
-- `ROMAN_OPINION`: `low`, `very low`, `has eaten a standard`, `politely suspicious`
+- `ROMAN_OPINION`: `low`, `a nuisance`, `terrifying`, `tastes like chicken`
 - `TABLE_MANNERS`: `eats the plate too`, `cooks everything first`, `surprisingly good`, `chews with mouth open, and on fire`
 
 ### Templates
 
 | Where | Template |
 |---|---|
-| profile → returns | `Hoard patience: {hoardPatience}. Smoke control: {smokeControl}. Opinion of Romans: {romanOpinion}. Table manners: {tableManners}.` |
-| description → ancient | ` {He} {is/are} ancient: {his} fire cannot be dodged, but {he} can still be tricked.` |
+| profile → returns | `Hoard patience? {HoardPatience}. Smoke control? {SmokeControl}. Opinion of Romans? {RomanOpinion}. Table manners? {TableManners}.` |
+| description → ancient | ` {He} {is/are} ancient. {His} fire cannot be dodged, but {he} can still be tricked.` |
 | description → returns | `{article} {head} dragon, {body}, with {wings} wings. {His} scales are {color}, and {he} {keeps/keep} to {home}. {profile}{ancient}` |
 
 ### Long description

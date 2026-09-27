@@ -28,10 +28,16 @@ describe('monsters/dragon', () => {
 			const desc = dragon.description;
 			expect(desc).to.include(' dragon, ');
 			expect(desc).to.include(dragon.wings);
-			expect(desc).to.include('Hoard patience: ');
-			expect(desc).to.include('Table manners: ');
+			expect(desc).to.include('Hoard patience? ');
+			expect(desc).to.include('Table manners? ');
 			expect(desc).not.to.match(/\bits?\b/i);
 		}
+	});
+
+	it('reads the profile as questions and answers, without colons', () => {
+		const desc = new Dragon({ romanOpinion: 'tastes like chicken' }).description;
+		expect(desc).to.include('Opinion of Romans? Tastes like chicken.');
+		expect(desc).not.to.include(':');
 	});
 
 	it('agrees verbs with they/them pronouns', () => {
@@ -53,7 +59,7 @@ describe('monsters/dragon', () => {
 			tableManners: 'eats the plate too',
 		});
 		expect(dragon.description).to.equal(
-			'a flat-headed dragon, long and sleek, with swept-back wings. His scales are deep-sea blue with an ember-red belly, and he keeps to the cold deep. Hoard patience: counts the hoard twice a day. Smoke control: mostly. Opinion of Romans: low. Table manners: eats the plate too.',
+			'a flat-headed dragon, long and sleek, with swept-back wings. His scales are deep-sea blue with an ember-red belly, and he keeps to the cold deep. Hoard patience? Counts the hoard twice a day. Smoke control? Mostly. Opinion of Romans? Low. Table manners? Eats the plate too.',
 		);
 	});
 

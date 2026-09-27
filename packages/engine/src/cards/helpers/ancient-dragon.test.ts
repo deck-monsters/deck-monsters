@@ -49,7 +49,7 @@ describe('./cards/helpers/ancient-dragon.ts', () => {
 
 	it('says so when you look at it', () => {
 		expect(new Dragon({ gender: 'androgynous', xp: ancientXp }).description).to.include(
-			'They are ancient: their fire cannot be dodged, but they can still be tricked.',
+			'They are ancient. Their fire cannot be dodged, but they can still be tricked.',
 		);
 		expect(new Dragon({ xp: 0 }).description).not.to.include('ancient');
 	});

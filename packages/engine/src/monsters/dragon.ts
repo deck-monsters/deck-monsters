@@ -45,7 +45,7 @@ const SCALES = ['deep-sea blue', 'storm grey', 'ember red', 'kelp green'];
 // One rating per line of the `look at` profile, drawn at spawn and kept in options.
 const HOARD_PATIENCE = ['counts the hoard twice a day', 'will notice one cup missing', 'none whatsoever', 'sleeps on the hoard, lightly'];
 const SMOKE_CONTROL = ['excellent', 'mostly', 'sneezes sparks', 'do not stand downwind'];
-const ROMAN_OPINION = ['low', 'very low', 'has eaten a standard', 'politely suspicious'];
+const ROMAN_OPINION = ['low', 'a nuisance', 'terrifying', 'tastes like chicken'];
 const TABLE_MANNERS = ['eats the plate too', 'cooks everything first', 'surprisingly good', 'chews with mouth open, and on fire'];
 
 const article = (word: string): string => (/^[aeiou]/i.test(word) ? 'an' : 'a');
@@ -91,10 +91,13 @@ class Dragon extends BaseMonster {
 		return this.options.home as string;
 	}
 
-	/** The rated profile, read aloud as one line. */
+	/**
+	 * The rated profile, read aloud as questions and answers. The owner found a line of
+	 * "Label: value." pairs hard to read aloud, with too many colons (2026-09-27).
+	 */
 	get profile(): string {
 		const { hoardPatience, smokeControl, romanOpinion, tableManners } = this.options as Record<string, string>;
-		return `Hoard patience: ${hoardPatience}. Smoke control: ${smokeControl}. Opinion of Romans: ${romanOpinion}. Table manners: ${tableManners}.`;
+		return `Hoard patience? ${capitalize(hoardPatience)}. Smoke control? ${capitalize(smokeControl)}. Opinion of Romans? ${capitalize(romanOpinion)}. Table manners? ${capitalize(tableManners)}.`;
 	}
 
 	get description(): string {
@@ -102,7 +105,7 @@ class Dragon extends BaseMonster {
 		// The scales get a sentence of their own, as the Unicorn's coat does: a player-chosen
 		// colour can carry its own "with".
 		const ancient = isAncientDragon(this)
-			? ` ${capitalize(pronouns.he)} ${agree(pronouns, 'is', 'are')} ancient: ${pronouns.his} fire cannot be dodged, but ${pronouns.he} can still be tricked.`
+			? ` ${capitalize(pronouns.he)} ${agree(pronouns, 'is', 'are')} ancient. ${capitalize(pronouns.his)} fire cannot be dodged, but ${pronouns.he} can still be tricked.`
 			: '';
 		return `${article(this.head)} ${this.head} dragon, ${this.body}, with ${this.wings} wings. ${capitalize(pronouns.his)} scales are ${this.color}, and ${pronouns.he} ${agree(pronouns, 'keeps', 'keep')} to ${this.home}. ${this.profile}${ancient}`;
 	}
