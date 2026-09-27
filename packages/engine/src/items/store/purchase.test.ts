@@ -38,7 +38,31 @@ describe('./items/store/purchase.ts', () => {
 		expect(result.price).to.equal(80);
 		expect(result.remainingCoins).to.equal(20);
 		expect(character.addItem.calledOnceWithExactly(shop.items[0])).to.equal(true);
-		expect((host.commitShop as sinon.SinonStub).firstCall.args[0].items).to.deep.equal([shop.items[1]]);
+		const committedItems = (host.commitShop as sinon.SinonStub).firstCall.args[0].items;
+		// The bought item is gone; the rest remain, beside the Sorting Hat every shop keeps.
+		expect(committedItems.map((i: any) => i.itemType)).to.deep.equal(['Sorting Hat', 'Swiss Chocolate']);
+		expect(committedItems).to.include(shop.items[1]);
+	});
+
+	it('restocks the Sorting Hat when a player buys it, so the next player finds one', () => {
+		const shop = { ...makeShop(), items: [item('Potion of Healing', 50), item('Sorting Hat', 0)] };
+		const host: ShopHost = { shop, commitShop: sinon.stub() };
+		const character = { coins: 100, addItem: sinon.stub() };
+
+		purchaseShopItem({
+			character,
+			host,
+			section: 'items',
+			stockIndex: 1,
+			expectedItemType: 'Sorting Hat',
+			expectedClosingTime: shop.closingTime.toISOString(),
+		});
+
+		const committed = (host.commitShop as sinon.SinonStub).firstCall.args[0] as Shop;
+		expect(character.addItem.calledOnceWithExactly(shop.items[1])).to.equal(true);
+		const hats = committed.items.filter((i: any) => i.itemType === 'Sorting Hat');
+		expect(hats).to.have.length(1);
+		expect(hats[0]).to.not.equal(shop.items[1]);
 	});
 
 	it('uses the back-room price without changing standard stock', () => {

@@ -1,6 +1,6 @@
 import { random, sample, shuffle } from '../../helpers/random.js';
 import { XP_PER_VICTORY } from '../../helpers/experience.js';
-import { TARGET_HUMAN_PLAYER_WEAK } from '../../helpers/targeting-strategies.js';
+import { BOSS_PERSONALITIES } from '../../helpers/boss-personalities.js';
 import Beastmaster from '../beastmaster.js';
 import { RING_PATRON_ICON, RING_PATRON_NAME } from '../../constants/lore.js';
 
@@ -104,7 +104,9 @@ const randomCharacter = ({
 			const { canHold } = monster;
 			monster.canHold = (object: any) =>
 				canHold.call(monster, object) && !object.noBosses;
-			monster.targetingStrategy = TARGET_HUMAN_PLAYER_WEAK;
+			// Each boss draws a temperament (helpers/boss-personalities.ts); they used to share
+			// TARGET_HUMAN_PLAYER_WEAK and all act alike.
+			monster.targetingStrategy = sample([...BOSS_PERSONALITIES])!.strategy;
 		}
 
 		return monster;

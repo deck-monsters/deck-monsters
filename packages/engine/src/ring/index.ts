@@ -6,6 +6,7 @@ import { getTarget } from '../helpers/targeting-strategies.js';
 import { randomContestant } from '../helpers/bosses.js';
 import {
 	buildRingEventContext,
+	CHALLENGERS_TEAM,
 	getRingEvent,
 	selectRingEvent,
 	type RingEventDefinition,
@@ -37,13 +38,31 @@ const BOSS_SPAWN_MAX_DELAY_MS = 2_100_000; // 35 min
 const BOSS_SPAWN_BEGINNER_MIN_DELAY_MS = 720_000; // 12 min
 const BOSS_SPAWN_BEGINNER_MAX_DELAY_MS = 1_320_000; // 22 min
 const BEGINNER_LEVEL_THRESHOLD = 2;
-const BOSS_FULL_RANDOM_WEIGHT_PERCENT = 20;
-const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 30;
+const BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT = 35;
+/**
+ * Boss balance (owner decisions, 2026-09-27; docs/archive/roadmap/31-pass-b-rings-and-bosses.md).
+ * `sim:bosses` showed outnumbering decides boss fights: one human against one boss of its
+ * level wins about half the time, against two bosses 0-3%. So a fight normally has one boss
+ * per human, and a timer spawn has this chance of one extra (an ambush). There used to be a
+ * 20% roll for a boss of any level at all, which is how a level 5 boss met a level 1 player;
+ * it is gone. Each boss is at most one level above the strongest human, and the bosses'
+ * combined levels stay within the humans' combined levels plus BOSS_LEVEL_BUDGET_SLACK.
+ */
+const BOSS_AMBUSH_CHANCE_PERCENT = 10;
+/**
+ * An ambush boss is a lesser minion at this share of its HP. Even so, a lone human against
+ * two attackers is harsh (`sim:bosses`: a level 1 against a level 1 boss and a beginner
+ * minion wins about 6%, against 3% at full HP); the ambush is meant as a rare scare.
+ */
+const AMBUSH_MINION_HP_SHARE = 1 / 3;
+const BOSS_LEVEL_BUDGET_SLACK = 1;
+// Defined beside ALLIANCE_TEAM so the player handbook can name it without loading the ring.
+export { CHALLENGERS_TEAM };
 /** Chance that arming a fight countdown also rolls a ring event. */
 const RING_EVENT_CHANCE_PERCENT = 25;
 
 /** Why the ring is refusing another boss right now. */
-export type BossRefusalReason = 'in_encounter' | 'boss_cap' | 'ring_full';
+export type BossRefusalReason = 'in_encounter' | 'boss_cap' | 'ring_full' | 'boss_quota';
 
 /**
  * Calculates the max XP that still maps to `targetLevel` via `getLevel()`.
@@ -146,7 +165,16 @@ export interface Contestant {
 	 */
 	summonedByUserId?: string;
 	summonedAt?: number;
+	/**
+	 * An ambush's lesser minion: fights at `AMBUSH_MINION_HP_SHARE` of its max HP. Set again
+	 * when the fight starts, because passive healing ticks through the countdown and a small
+	 * minion could walk in at full health (a Codex review of PR #403).
+	 */
+	minion?: boolean;
 }
+
+/** HP an ambush minion fights at. */
+const minionHp = (monster: any): number => Math.max(1, Math.floor(monster.maxHp * AMBUSH_MINION_HP_SHARE));
 
 /**
  * Returns the faction label for a contestant: contestant-level team override first
@@ -201,8 +229,20 @@ export class Ring extends BaseClass {
 	activeContestant?: Contestant;
 	fightTimer?: ReturnType<typeof setTimeout>;
 	bossTimer?: ReturnType<typeof setTimeout>;
-	/** Pending per-boss despawn timers, so `dispose()` can cancel all of them. */
-	private readonly bossDespawnTimers = new Set<ReturnType<typeof setTimeout>>();
+	/**
+	 * Pending per-boss despawn timers, keyed by the boss's monster (spawnBoss's contestant is
+	 * copied by addMonster, so only the monster is shared), so `dispose()` can cancel all of them and
+	 * `dismissExtraBosses()` the one belonging to a boss it sends away (a review of Pass B found
+	 * dismissed bosses leaving their timers to fire into an empty slot minutes later).
+	 */
+	private readonly bossDespawnTimers = new Map<object, ReturnType<typeof setTimeout>>();
+	/**
+	 * Order of arrival. `contestants` is shuffled on every add outside tests, so its order says
+	 * nothing about who came in last; `dismissExtraBosses()` reads this instead (a review of
+	 * Pass B found "the newest" boss was really a random one in production).
+	 */
+	private readonly arrivalOrder = new WeakMap<Contestant, number>();
+	private arrivals = 0;
 	/** Epoch ms when the next boss will enter the ring (including the 2-min announcement window), or null if no timer is running. */
 	nextBossSpawnAt: number | null = null;
 	/** Epoch ms when the next fight will start, or null if no fight timer is active. */
@@ -387,6 +427,10 @@ export class Ring extends BaseClass {
 					userId
 				);
 
+				// A human leaving is the only way bosses come to outnumber the humans they are
+				// for (every spawn and summon checks the allowance), so settle it here.
+				if (!contestant.isBoss) this.dismissExtraBosses();
+
 				this.startFightTimer();
 
 				// When the last player leaves, proactively remove player-summoned bosses
@@ -418,11 +462,14 @@ export class Ring extends BaseClass {
 		deferFightTimer,
 		summonedByUserId,
 		summonedAt,
+		minion,
 	}: {
 		monster: any;
 		character: any;
 		userId: string;
 		isBoss?: boolean;
+		/** An ambush's lesser minion (see `Contestant.minion`). */
+		minion?: boolean;
 		/**
 		 * Skip the `startFightTimer()` call. Only used when the caller is already inside
 		 * `startFightTimer()` (the Gauntlet ring event) — re-entering it there would arm a
@@ -448,8 +495,11 @@ export class Ring extends BaseClass {
 				isBoss,
 				...(summonedByUserId !== undefined ? { summonedByUserId } : {}),
 				...(summonedAt !== undefined ? { summonedAt } : {}),
+				...(minion ? { minion } : {}),
 			};
 
+			this.arrivals += 1;
+			this.arrivalOrder.set(contestant, this.arrivals);
 			this.contestants = process.env.DECK_MONSTERS_DETERMINISTIC_RING
 				? [...this.contestants, contestant]
 				: shuffle([...this.contestants, contestant]);
@@ -588,7 +638,8 @@ export class Ring extends BaseClass {
 		// withdrawn since it was rolled during the countdown.
 		this.ringEvent?.apply(this.contestants);
 
-		this.contestants.forEach(({ userId, monster }) => {
+		this.contestants.forEach(({ userId, monster, minion }) => {
+			if (minion) monster.hp = Math.min(monster.hp, minionHp(monster));
 			monster.startEncounter(this);
 
 			this.pub(
@@ -689,7 +740,7 @@ export class Ring extends BaseClass {
 		for (const contestant of this.contestants) {
 			this.disposeTransientContestant(contestant);
 		}
-		for (const timer of this.bossDespawnTimers) {
+		for (const timer of this.bossDespawnTimers.values()) {
 			clearTimeout(timer);
 		}
 		this.bossDespawnTimers.clear();
@@ -718,7 +769,7 @@ export class Ring extends BaseClass {
 	dispose(): void {
 		clearTimeout(this.fightTimer);
 		clearTimeout(this.bossTimer);
-		for (const timer of this.bossDespawnTimers) {
+		for (const timer of this.bossDespawnTimers.values()) {
 			clearTimeout(timer);
 		}
 		this.bossDespawnTimers.clear();
@@ -830,6 +881,41 @@ export class Ring extends BaseClass {
 		const getActiveContestants = (currentContestants: Contestant[]): Contestant[] =>
 			currentContestants.filter(isActiveContestant);
 		const getAllActiveContestants = (): Contestant[] => getActiveContestants(contestants);
+
+		/*
+		 * Humans unite against bosses, then settle it (owner, 2026-09-27). While any boss is
+		 * still fighting, every human with no team of its own fights for CHALLENGERS_TEAM, so
+		 * two humans who never arranged a team still stop hitting each other while the bosses
+		 * work together. `sim:bosses` measured the difference: two level 1s against two bosses
+		 * won 1% apart and 29% together. The team goes on the contestant (a ring-event-style
+		 * override, never the monster), and comes off the moment the last boss is down, so the
+		 * humans left finish a normal free-for-all. Blood Feud keeps its every-monster-for-
+		 * itself rule, and a team a player or ring event already set is never replaced.
+		 */
+		let challengers: Contestant[] =
+			!this.ringEvent?.freeForAll && contestants.some(contestant => contestant.isBoss)
+				? contestants.filter(
+						contestant =>
+							!contestant.isBoss &&
+							!(contestant.team || contestant.monster.team || contestant.character.team),
+					)
+				: [];
+		for (const contestant of challengers) contestant.team = CHALLENGERS_TEAM;
+
+		const endAlliance = (): void => {
+			if (challengers.length === 0) return;
+			if (getAllActiveContestants().some(contestant => contestant.isBoss)) return;
+			for (const contestant of challengers) {
+				if (contestant.team === CHALLENGERS_TEAM) delete contestant.team;
+			}
+			const survivors = challengers.filter(isActiveContestant);
+			challengers = [];
+			if (survivors.length > 1) {
+				this.emit('narration', {
+					narration: "The last boss is down. The Challengers' alliance is over: every monster for themselves!",
+				});
+			}
+		};
 		const getContestantsWithCardsLeft = (currentContestants: Contestant[]): Contestant[] =>
 			currentContestants.filter(contestant => contestant && !contestant.monster.emptyHanded);
 		const anyContestantsHaveCardsLeft = (currentContestants: Contestant[]): boolean =>
@@ -878,6 +964,7 @@ export class Ring extends BaseClass {
 			Contestant | undefined
 		> =>
 			new Promise((resolve, reject) => {
+				endAlliance();
 				let activeContestants = getActiveContestants(currentContestants);
 				let nextCardIndex = cardIndex;
 
@@ -1155,6 +1242,10 @@ export class Ring extends BaseClass {
 			})
 			.then(() => doAction())
 			.then(lastContestant => {
+				// A fight can end with bosses still standing; the alliance must not outlive it.
+				for (const contestant of challengers) {
+					if (contestant.team === CHALLENGERS_TEAM) delete contestant.team;
+				}
 				this.fightConcludes({ fightLog, lastContestant, rounds: round });
 				this.clearRing();
 			})
@@ -1522,37 +1613,46 @@ export class Ring extends BaseClass {
 		return random(BOSS_SPAWN_MIN_DELAY_MS, BOSS_SPAWN_MAX_DELAY_MS);
 	}
 
-	private determineBossLevelCap(playerLevels: number[], roll: number): number | undefined {
-		if (roll <= BOSS_FULL_RANDOM_WEIGHT_PERCENT) {
-			return undefined;
-		}
-
-		if (playerLevels.length <= 0) {
-			// When no ring/room monsters are known, capped branches collapse to beginner cap.
-			return 0;
-		}
+	/**
+	 * The highest level the next boss may be. `playerLevels` are the humans it is for (the
+	 * ring's, or the room's when the ring is empty); `bossLevels` are the bosses already
+	 * waiting. Never above the strongest human + 1, never past the level budget (the humans'
+	 * total + BOSS_LEVEL_BUDGET_SLACK, less what the bosses already use), and otherwise either
+	 * that ceiling or the humans' average level.
+	 */
+	private determineBossLevelCap(playerLevels: number[], roll: number, bossLevels: number[] = []): number {
+		if (playerLevels.length <= 0) return 0;
 
 		const highestLevel = Math.max(...playerLevels);
-		if (roll <= BOSS_FULL_RANDOM_WEIGHT_PERCENT + BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT) {
-			return Math.max(0, highestLevel + 1);
-		}
+		const ceiling = highestLevel + 1;
+		const averageLevel = Math.floor(playerLevels.reduce((sum, level) => sum + level, 0) / playerLevels.length);
+		const banded = roll <= BOSS_HIGHEST_PLUS_ONE_WEIGHT_PERCENT ? ceiling : averageLevel;
 
-		const averageLevel = playerLevels.reduce((sum, level) => sum + level, 0) / playerLevels.length;
-		return Math.max(0, Math.floor(averageLevel));
+		const budget = playerLevels.reduce((sum, level) => sum + level, 0) + BOSS_LEVEL_BUDGET_SLACK;
+		const spent = bossLevels.reduce((sum, level) => sum + level, 0);
+
+		return Math.max(0, Math.min(banded, ceiling, budget - spent));
 	}
 
-	private getBossLevelCap(): number | undefined {
-		return this.determineBossLevelCap(this.getPreferredBossScalingLevels(), random(1, 100));
+	private getBossLevelCap(): number {
+		const bossLevels = this.contestants
+			.filter(contestant => contestant.isBoss)
+			.map(contestant => Number(contestant.monster?.level ?? 0));
+		return this.determineBossLevelCap(this.getPreferredBossScalingLevels(), random(1, 100), bossLevels);
 	}
 
 	private getSpawnedBossContestant(): Contestant {
-		const levelCap = this.getBossLevelCap();
-		if (levelCap === undefined) {
-			return randomContestant();
-		}
-
-		const maxXp = getXpCapForLevel(levelCap);
+		const maxXp = getXpCapForLevel(this.getBossLevelCap());
 		return randomContestant({ xp: random(0, maxXp) });
+	}
+
+	/**
+	 * How many bosses the humans in the ring may face: one each, plus one on an ambush. An
+	 * empty ring still takes one boss, to wait for a challenger.
+	 */
+	bossAllowance(ambush = false): number {
+		const humans = this.contestants.filter(contestant => !contestant.isBoss).length;
+		return Math.max(1, humans) + (ambush && humans > 0 ? 1 : 0);
 	}
 
 	/** Bosses currently in the ring. */
@@ -1567,10 +1667,13 @@ export class Ring extends BaseClass {
 	 * Whether another boss can enter the ring right now, and why not if it can't. Callers
 	 * that charge the player for a summon should check this *before* spending the charge.
 	 */
-	canAcceptBoss(): { ok: true } | { ok: false; reason: BossRefusalReason } {
+	canAcceptBoss({ ambush = false, ignoreQuota = false }: { ambush?: boolean; ignoreQuota?: boolean } = {}):
+		| { ok: true }
+		| { ok: false; reason: BossRefusalReason } {
 		if (this.inEncounter) return { ok: false, reason: 'in_encounter' };
 		if (this.bossCount >= MAX_BOSSES) return { ok: false, reason: 'boss_cap' };
 		if (this.contestants.length >= MAX_MONSTERS) return { ok: false, reason: 'ring_full' };
+		if (!ignoreQuota && this.bossCount >= this.bossAllowance(ambush)) return { ok: false, reason: 'boss_quota' };
 		return { ok: true };
 	}
 
@@ -1622,9 +1725,11 @@ export class Ring extends BaseClass {
 		this.ringEvent = ringEvent;
 		this.emit('ringEvent', { ringEvent });
 
+		// The Gauntlet is the one designed exception to one boss per human; its bosses still
+		// come out of the level budget, so they are weaker the more of them there are.
 		for (let i = 0; i < (ringEvent.extraBosses ?? 0); i++) {
-			if (!this.canAcceptBoss().ok) break;
-			this.spawnBoss({ deferFightTimer: true });
+			if (!this.canAcceptBoss({ ignoreQuota: true }).ok) break;
+			this.spawnBoss({ deferFightTimer: true, ignoreQuota: true });
 		}
 	}
 
@@ -1642,38 +1747,12 @@ export class Ring extends BaseClass {
 	 */
 	private rollRingEvent(): void {
 		const context = buildRingEventContext(this.contestants);
-		const playersHaveAssignedTeams = this.contestants
-			.filter(contestant => !contestant.isBoss)
-			.some(contestant => Boolean(
-				contestant.team || contestant.monster.team || contestant.character.team
-			));
 
-		/*
-		 * Roster fairness is an invariant, not another random event. Evaluate it before
-		 * preserving an armed event: a second boss can join while Blood Feud or The
-		 * Reckoning is still eligible. Do not replace player-authored teams, though;
-		 * those are an explicit matchup choice and already give targeting a faction.
-		 */
-		if (
-			this.ringEventsEnabled
-			&& !this.inEncounter
-			&& context.bossCount >= 2
-			&& context.playerCount >= 2
-			&& !playersHaveAssignedTeams
-		) {
-			const commonCause = getRingEvent('common-cause');
-			if (commonCause && this.ringEvent?.id !== commonCause.id) {
-				if (this.ringEvent) {
-					this.log({
-						context: 'ring.rollRingEvent.multiBossFairnessOverride',
-						cleared: this.ringEvent.id,
-					});
-					this.ringEvent = undefined;
-				}
-				this.activateRingEvent(commonCause);
-			}
-			return;
-		}
+		// There used to be a forced Common Cause here whenever two or more bosses met two or
+		// more teamless humans. Teamless humans now unite against bosses in every fight
+		// (CHALLENGERS_TEAM in `fight()`), and settle it among themselves once the bosses are
+		// down, which the owner chose over Common Cause's shared win (2026-09-27). Common Cause
+		// remains an ordinary ring event.
 
 		// If an event is already armed, verify it is still eligible for the current roster.
 		// A roster change (boss joins, player leaves/rejoins) can make a previously-valid
@@ -1718,7 +1797,9 @@ export class Ring extends BaseClass {
 				// Whether the ring could take a boss when the warning was due. If it couldn't,
 				// no warning goes out — so the spawn two minutes later must be suppressed too,
 				// or a fight ending inside the warning window produces an unannounced boss.
-				const wasWarned = ring.canAcceptBoss().ok;
+				// Rolled once, here, so the warning and the spawn agree on it.
+				const ambush = random(1, 100) <= BOSS_AMBUSH_CHANCE_PERCENT;
+				const wasWarned = ring.canAcceptBoss({ ambush }).ok;
 				if (wasWarned) {
 					ring.emit('bossWillSpawn', { delay: BOSS_WARNING_DELAY_MS });
 				}
@@ -1728,7 +1809,7 @@ export class Ring extends BaseClass {
 					ring.nextBossSpawnAt = null;
 					ring.publishState();
 					if (wasWarned) {
-						ring.spawnBoss();
+						ring.spawnBoss({ ambush });
 					}
 					ring.startBossTimer();
 				}, BOSS_WARNING_DELAY_MS);
@@ -1740,31 +1821,88 @@ export class Ring extends BaseClass {
 		deferFightTimer,
 		summonedByUserId,
 		summonedAt,
+		ambush,
+		ignoreQuota,
 	}: {
 		deferFightTimer?: boolean;
+		/** A timer spawn that may bring one boss beyond one per human. */
+		ambush?: boolean;
+		/** The Gauntlet's extra bosses. */
+		ignoreQuota?: boolean;
 		/** Set by `summon a boss` so a pre-fight removal can refund the charge. */
 		summonedByUserId?: string;
 		summonedAt?: number;
 	} = {}): Contestant | undefined {
-		if (!this.canAcceptBoss().ok) return undefined;
+		if (!this.canAcceptBoss({ ambush, ignoreQuota }).ok) return undefined;
 
 		const contestant = this.getSpawnedBossContestant();
+		// A boss beyond one per human is an ambush's lesser minion.
+		const humans = this.contestants.filter(c => !c.isBoss).length;
+		const minion = ambush && humans > 0 && this.bossCount >= humans;
+		// Weakened on arrival, so the roster shows it, and again as the fight starts.
+		if (minion) contestant.monster.hp = minionHp(contestant.monster);
 
-		this.addMonster({ ...contestant, deferFightTimer, summonedByUserId, summonedAt });
+		this.addMonster({ ...contestant, deferFightTimer, summonedByUserId, summonedAt, minion });
+
+		if (minion) {
+			this.emit('narration', {
+				narration: `An ambush! ${contestant.monster.givenName} slinks in behind the others: a lesser minion, weaker, but one more set of claws.`,
+			});
+		}
 
 		if (random(1)) {
 			const ring = this;
 			const timer: ReturnType<typeof setTimeout> = setTimeout(() => {
-				ring.bossDespawnTimers.delete(timer);
+				ring.bossDespawnTimers.delete(contestant.monster);
 				// removeMonster() (called via removeBoss) rejects if the boss is no
 				// longer in the ring — defensive catch for races where the timer
 				// fires in the same tick as clearRing()/dispose() draining the set.
 				ring.removeBoss(contestant).catch(() => {});
 			}, BOSS_DESPAWN_DELAY_MS);
-			this.bossDespawnTimers.add(timer);
+			this.bossDespawnTimers.set(contestant.monster, timer);
 		}
 
 		return contestant;
+	}
+
+	/**
+	 * Sends away the newest bosses beyond the allowance (one per human, one ambush, and any
+	 * armed Gauntlet's extras). A summoned boss refunds its charge, as a pre-fight removal
+	 * always has. Synchronous, and only outside an encounter.
+	 */
+	dismissExtraBosses(): void {
+		if (this.inEncounter) return;
+		const arrival = (contestant: Contestant) => this.arrivalOrder.get(contestant) ?? 0;
+		const bosses = this.contestants
+			.filter(contestant => contestant.isBoss)
+			.sort((a, b) => arrival(a) - arrival(b));
+		// Full-strength bosses and minions are counted apart: one boss per human (plus an armed
+		// Gauntlet's extras) and one ambush minion. A single count with the ambush slot always
+		// included let one human keep facing two full-strength bosses after the other human
+		// withdrew, the matchup the quota exists to prevent (a Codex review of PR #403).
+		const humans = this.contestants.filter(contestant => !contestant.isBoss).length;
+		const fullAllowance = this.bossAllowance(false) + (this.ringEvent?.extraBosses ?? 0);
+		const minionAllowance = humans > 0 ? 1 : 0;
+		const kept = [
+			...bosses.filter(boss => !boss.minion).slice(0, fullAllowance),
+			...bosses.filter(boss => boss.minion).slice(0, minionAllowance),
+		];
+		const extras = bosses.filter(boss => !kept.includes(boss)).reverse();
+		if (extras.length === 0) return;
+
+		this.contestants = this.contestants.filter(contestant => !extras.includes(contestant));
+		for (const boss of extras) {
+			if (boss.summonedByUserId !== undefined && boss.summonedAt !== undefined) {
+				this.onSummonedBossRemoved?.(boss.summonedByUserId, boss.summonedAt);
+			}
+			clearTimeout(this.bossDespawnTimers.get(boss.monster));
+			this.bossDespawnTimers.delete(boss.monster);
+			this.disposeTransientContestant(boss);
+			this.emit('narration', {
+				narration: `With fewer challengers left in the ring, ${boss.monster.givenName} slips back into the shadows.`,
+			});
+		}
+		this.publishState();
 	}
 
 	removeBoss(contestant: Contestant): Promise<void> {

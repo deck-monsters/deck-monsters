@@ -189,6 +189,8 @@ more in their outer `finally`, after the loop, to dispose the last fight's conte
 | `sim:cardpower` | Average damage dealt per card type; top/bottom 10%. | ~20s |
 | `sim:levelscaling` | Same matchup at levels 1/5/10/15/20, to spot scaling drift. | ~20s |
 | `sim:economy` | `coinsByOutcome`/`xpPerMonster` distributions, plus the new-player 1/5/20-fight checkpoint table. | ~10s |
+| `sim:bosses` | Humans against real bosses in the owner's scenarios (a level 1 against one boss, two bosses, a beginner + L1 + L5 pack; two humans with and without a team). Humans carry a player's starting deck; bosses are built and target exactly as the ring spawns them. Monster types are random per batch. Prints how often a human wins. `SIM_BOSSES_FIGHTS` sets fights per batch (8 batches per row, default 25). | ~1.5 min |
+| `sim:rings` | Realistic rings with player decks. `curves`: each monster as a human against a random other at the same level, levels 1-20 (a per-class curve). `rings`: 120 rings sampled the way rooms fill (mostly 2-3 monsters, levels mostly 0-6, some pre-arranged pairs, 40% with bosses spawned by the ring's rules), each monster's wins against its fair share, and how often humans beat bosses. Pass `curves` or `rings` to run one. `SIM_RINGS_FIGHTS` sets fights per batch (default 20). | ~5 min each |
 | `sim:monster <type>` | One monster (`pnpm --filter @deck-monsters/harness sim:monster Dragon`; any class name or creature type) against every other monster at levels 1/5/10/15/20 with random decks, and with its thematic fixture deck when its report has one. Then a mirror, a 2v2 team fight, and a crowded free-for-all with every other monster once, where area damage shows. Prints win rate, share of decisive fights, draws, rounds, top damage per card, and the monster's card counters. Flags rows outside 35–65% of decisive fights (fixture rows only, when there is a fixture). `SIM_MONSTER_FIGHTS` sets fights per row (default 100). `sim:unicorn` is `sim:monster Unicorn`. | ~2 min per monster |
 
 Each of these is `node dist/scripts/<name>.js` — run `pnpm --filter @deck-monsters/harness
@@ -205,20 +207,41 @@ this doc's change and hung indefinitely after printing their reports when run as
 expected output) — they now call `process.exit(0)` (or `process.exitCode ?? 0` for
 `sim:winrates`, which sets a non-zero `exitCode` on a balance warning) too.
 
+## Humans and bosses (`SimMonsterSpec.role`)
+
+Until September 2026 every harness contestant was built by `randomContestant({ isBoss: true })`
+and then given its own faction and default targeting. So every "random legal deck" was a
+**boss** deck, which drops Flee, Harden, Heal, Hit, and Whiskey Shot, and no run measured a
+player's deck or a real boss. A spec's `role` now says what it is:
+
+- **omitted**: the classic sim contestant above, kept so earlier reports stay comparable;
+- **`human`**: a player: the starting deck (`getInitialDeck`) plus two random cards per
+  level, nine legal cards equipped at random (Flee excluded), its own faction, default
+  targeting. A floor for how well a human plays, since players build their hands;
+- **`boss`**: a real boss, untouched: the Boss team, a boss deck, and a boss temperament
+  (its targeting strategy; see [boss encounters](../architecture/boss-encounters.md#1-what-a-boss-is)).
+  Bosses only behave realistically beside at least one human.
+
+`SimConfig.onContestants` lets a test inspect each fight's contestants before it starts.
+
 ## Team fights
 
-`SimMonsterSpec.team` puts a contestant on a faction; a spec without one gets a faction of
-its own (`solo:Sim N`), never the shared boss team. The harness also clears the
-`TARGET_HUMAN_PLAYER_WEAK` strategy `randomContestant` gives every boss: with no human in the
-ring it falls back to a team-blind target, and in a 2v2 run 44% of hits landed on allies.
-The default next-player strategy respects teams. When any spec sets one, `simulate()`
+`SimMonsterSpec.team` puts a contestant on a faction; a classic sim contestant without one
+gets a faction of its own (`solo:Sim N`), never the shared boss team, and a `human` without
+one stays teamless, as a player is (so the ring's humans-unite rule applies). For classic
+contestants the harness also clears the boss targeting strategy `randomContestant` gives
+them: the old shared strategy (`TARGET_HUMAN_PLAYER_WEAK`) fell back to a team-blind target
+with no human in the ring, and in a 2v2 run 44% of hits landed on allies. The default
+next-player strategy respects teams. When any spec sets one, `simulate()`
 runs every fight under a harness-only ring event whose only effect is `victoryMode:
 'last-team'`, the mode Common Cause and House War use. The team is written to both the
 character and the monster: `randomContestant` puts every harness contestant on the boss
 team, and `factionOf` reads the monster's team before the character's, so writing only the
 character left all four contestants on one faction and every fight ended at once with every
 contestant credited a win. `winRates` stays per contestant, and a team win credits every
-surviving member.
+surviving member, so a side's win rate cannot be rebuilt from `winRates` (summing
+overcounts, the best member undercounts). Use `winnersByFight`, each fight's winning labels,
+through `sideWinRate(res, labels)`; `sim:bosses` and `sim:rings` do.
 
 ## Card-level counters
 

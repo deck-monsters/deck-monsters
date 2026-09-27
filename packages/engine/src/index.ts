@@ -36,6 +36,8 @@ export { engineReady, getHydratorStatus } from './helpers/engine-ready.js';
 export { getCardClassByTypeName } from './cards/index.js';
 /** Every card class, in the alphabetical order the generated card lists use. */
 export { all as allCards } from './cards/index.js';
+/** A new player's deck: the fixed starting cards plus random fills (`cards/helpers/deck.ts`). */
+export { getInitialDeck } from './cards/index.js';
 /** One weighted card draw, filtered by a creature-shaped `{ level, canHoldCard }` (used by @deck-monsters/harness). */
 export { draw as drawCard } from './cards/index.js';
 export { COMMAND_CATALOG } from './commands/catalog.js';

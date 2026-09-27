@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { SortingHat } from './sorting-hat.js';
+import { SortingHat, NO_TEAM } from './sorting-hat.js';
 
 const makeCharacter = (overrides: Record<string, unknown> = {}) => ({
 	givenName: 'Character',
@@ -49,6 +49,29 @@ describe('./items/scrolls/sorting-hat.ts', () => {
 		});
 	});
 
+	it('offers "No team" only to someone on a team, and choosing it clears the team', () => {
+		const sortingHat = new SortingHat();
+		const character = makeCharacter({ name: 'Character', team: 'Hufflepuff' });
+		channelStub.callsFake(({ choices }: { choices: string[] }) => Promise.resolve(choices.indexOf(NO_TEAM)));
+
+		return sortingHat.use({ channel: channelStub, channelName, character }).then(() => {
+			const { choices } = channelStub.firstCall.args[0];
+			expect(choices).to.include(NO_TEAM);
+			expect(choices).not.to.include('Hufflepuff');
+			expect(character.team).to.equal(undefined);
+		});
+	});
+
+	it('does not offer "No team" to someone without one', () => {
+		const sortingHat = new SortingHat();
+		const character = makeCharacter({ name: 'Character' });
+		channelStub.resolves(0);
+
+		return sortingHat.use({ channel: channelStub, channelName, character }).then(() => {
+			expect(channelStub.firstCall.args[0].choices).not.to.include(NO_TEAM);
+		});
+	});
+
 	it('can assign a team to a monster', () => {
 		const sortingHat = new SortingHat();
 		const character = makeCharacter({ name: 'Character' });
@@ -62,6 +85,22 @@ describe('./items/scrolls/sorting-hat.ts', () => {
 		return sortingHat.use({ channel: channelStub, channelName, character, monster }).then(() => {
 			expect(character.team).to.equal(undefined);
 			return expect(monster.team).to.be.a('string');
+		});
+	});
+
+	it("treats a monster's inherited team as its house, and does not offer a clear that would not stick", () => {
+		// A monster with no team of its own fights on its Beastmaster's. Clearing its own team
+		// would leave it on that team anyway, so the hat neither re-offers the inherited house
+		// nor offers "No team" (a Codex review of #403); `leave team` clears both.
+		const sortingHat = new SortingHat();
+		const character = makeCharacter({ name: 'Character', team: 'Hufflepuff' });
+		const monster = makeMonster({ givenName: 'Monster' });
+		channelStub.resolves('0');
+
+		return sortingHat.use({ channel: channelStub, channelName, character, monster }).then(() => {
+			const { choices } = channelStub.firstCall.args[0];
+			expect(choices).not.to.include('Hufflepuff');
+			expect(choices).not.to.include(NO_TEAM);
 		});
 	});
 

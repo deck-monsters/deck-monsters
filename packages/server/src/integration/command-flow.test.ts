@@ -522,6 +522,10 @@ describe('integration: command flow', function () {
 			return character;
 		};
 
+		const clearBosses = (game: ReturnType<typeof createTestGame>): void => {
+			game.ring.contestants = game.ring.contestants.filter((c) => !c.isBoss);
+		};
+
 		it('refuses when the player has no monster in the ring', async () => {
 			const game = createTestGame();
 			const responder = createAutoResponder(game.eventBus, USER_A, NEW_CHARACTER_ANSWERS);
@@ -543,6 +547,9 @@ describe('integration: command flow', function () {
 				expect(await runSummon(game, USER_A), `summon ${i + 1} should succeed`).to.include(
 					'You summoned',
 				);
+				// One boss per human (docs/architecture/boss-encounters.md): clear the waiting
+				// boss, as the fight it came for would, so the next summon tests the daily limit.
+				clearBosses(game);
 			}
 
 			const output = await runSummon(game, USER_A);
@@ -567,12 +574,26 @@ describe('integration: command flow', function () {
 			game.dispose();
 		});
 
+		it('refuses a second boss for one human without spending a charge', async () => {
+			const game = createTestGame();
+			await seedRing(game);
+
+			expect(await runSummon(game, USER_A)).to.include('You summoned');
+			const output = await runSummon(game, USER_A);
+
+			expect(output).to.include('Every challenger in the ring already has a boss to face');
+			expect(summonAllowance(game.bossSummons, USER_A).remaining).to.equal(BOSS_SUMMON_LIMIT - 1);
+			expect(game.ring.contestants.filter((c) => c.isBoss).length).to.equal(1);
+			game.dispose();
+		});
+
 		it('keeps quotas independent between players', async () => {
 			const game = createTestGame();
 			await seedRing(game);
 
 			for (let i = 0; i < BOSS_SUMMON_LIMIT; i++) {
 				await runSummon(game, USER_A);
+				clearBosses(game);
 			}
 
 			expect(summonAllowance(game.bossSummons, USER_A).remaining).to.equal(0);

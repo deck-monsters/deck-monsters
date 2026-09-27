@@ -518,20 +518,35 @@ describe('ring/index.ts', () => {
 			expect(contestant).to.be.undefined;
 		});
 
-		it('uses weighted cap bands from selected level source', () => {
+		it('caps a boss at the strongest human + 1 or the average, never fully random', () => {
 			const game = new Game();
 			const ring = game.getRing();
 			const determineBossLevelCap = (ring as any).determineBossLevelCap.bind(ring);
 
-			// 20%: keep full random distribution (no cap).
-			expect(determineBossLevelCap([0, 1, 2], 1)).to.equal(undefined);
-			expect(determineBossLevelCap([0, 1, 2], 20)).to.equal(undefined);
-			// 30%: cap at highest level + 1.
-			expect(determineBossLevelCap([0, 1, 2], 21)).to.equal(3);
-			expect(determineBossLevelCap([0, 1, 2], 50)).to.equal(3);
-			// 50%: cap at floor(average level).
-			expect(determineBossLevelCap([0, 1, 2], 51)).to.equal(1);
+			// 35%: the strongest human's level + 1. The old 20% "any level at all" band is gone:
+			// it is how a level 5 boss met a level 1 player (docs/roadmap/31).
+			expect(determineBossLevelCap([0, 1, 2], 1)).to.equal(3);
+			expect(determineBossLevelCap([0, 1, 2], 35)).to.equal(3);
+			// 65%: floor(average level).
+			expect(determineBossLevelCap([0, 1, 2], 36)).to.equal(1);
 			expect(determineBossLevelCap([0, 1, 2], 100)).to.equal(1);
+		});
+
+		it('keeps the bosses within the humans\' combined levels + 1', () => {
+			const game = new Game();
+			const ring = game.getRing();
+			const determineBossLevelCap = (ring as any).determineBossLevelCap.bind(ring);
+
+			// One level 1 human: budget 2. A first boss may be level 2; a second (an ambush) only
+			// what is left.
+			expect(determineBossLevelCap([1], 1, [])).to.equal(2);
+			expect(determineBossLevelCap([1], 1, [2])).to.equal(0);
+			expect(determineBossLevelCap([1], 1, [1])).to.equal(1);
+			// The owner's example: three level 3 humans (9) may face bosses of 5, 3, and 1.
+			expect(determineBossLevelCap([3, 3, 3], 1, [3, 1])).to.equal(4);
+			expect(determineBossLevelCap([5, 1], 1, [2])).to.equal(5);
+			// Never negative, even when humans have left and the bosses are over budget.
+			expect(determineBossLevelCap([1], 1, [5])).to.equal(0);
 		});
 
 		it('falls back to room monster levels when no player monsters are in the ring', () => {
@@ -671,8 +686,7 @@ describe('ring/index.ts', () => {
 			const ring = game.getRing();
 			const determineBossLevelCap = (ring as any).determineBossLevelCap.bind(ring);
 
-			expect(determineBossLevelCap([], 20)).to.equal(undefined);
-			expect(determineBossLevelCap([], 21)).to.equal(0);
+			expect(determineBossLevelCap([], 1)).to.equal(0);
 			expect(determineBossLevelCap([], 100)).to.equal(0);
 		});
 
@@ -704,7 +718,8 @@ describe('ring/index.ts', () => {
 			const ring = game.getRing();
 
 			const first = ring.spawnBoss()!;
-			ring.spawnBoss();
+			// An empty ring takes one waiting boss; the Gauntlet's quota exemption gets a second.
+			ring.spawnBoss({ ignoreQuota: true });
 			expect(ring.contestants.length).to.equal(2);
 
 			return ring.removeBoss(first).then(() => {
@@ -922,17 +937,168 @@ describe('ring/index.ts', () => {
 			game.dispose();
 		});
 
-		it('replaces an armed eligible event with Common Cause when a second boss joins', () => {
+		it('lets one boss face each human, one more on an ambush, and one wait in an empty ring', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+
+			expect(ring.spawnBoss()).to.not.equal(undefined);
+			expect(ring.canAcceptBoss()).to.deep.equal({ ok: false, reason: 'boss_quota' });
+			// No ambush in an empty ring: an ambush is one more than the humans present.
+			expect(ring.canAcceptBoss({ ambush: true }).ok).to.equal(false);
+
+			addPlayer(ring, 'user-1');
+			expect(ring.canAcceptBoss().ok).to.equal(false);
+			expect(ring.canAcceptBoss({ ambush: true }).ok).to.equal(true);
+			const minion = ring.spawnBoss({ ambush: true })!;
+			expect(minion).to.not.equal(undefined);
+			// An ambush boss is a lesser minion at a third of its HP.
+			expect(minion.monster.hp).to.equal(Math.max(1, Math.floor(minion.monster.maxHp / 3)));
+			expect(ring.canAcceptBoss({ ambush: true })).to.deep.equal({ ok: false, reason: 'boss_quota' });
+
+			addPlayer(ring, 'user-2');
+			expect(ring.canAcceptBoss().ok).to.equal(false); // 2 humans, 2 bosses
+			addPlayer(ring, 'user-3');
+			expect(ring.canAcceptBoss().ok).to.equal(true);
+			game.dispose();
+		});
+
+		it('fights an ambush minion at a third of its HP even if it healed during the countdown', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			addPlayer(ring, 'user-1');
+			ring.spawnBoss();
+			const minion = ring.spawnBoss({ ambush: true })!;
+			const third = Math.max(1, Math.floor(minion.monster.maxHp / 3));
+			const regular = ring.contestants.find(c => c.isBoss && c.monster !== minion.monster)!;
+			const regularHp = regular.monster.hp;
+
+			// Passive healing ticks while the ring counts down.
+			minion.monster.hp = minion.monster.maxHp;
+			ring.startEncounter();
+
+			expect(minion.monster.hp).to.equal(third);
+			expect(regular.monster.hp).to.equal(regularHp);
+			game.dispose();
+		});
+
+		it('keeps one full-strength boss per human when a human leaves, and only a real minion beyond that', () => {
+			// Two humans each face a full-strength boss. When one withdraws, the other must not be
+			// left against both: the ambush slot is for a minion, not a second full boss (a Codex
+			// review of PR #403).
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			const first = ring.spawnBoss()!;
+			const second = ring.spawnBoss()!;
+			expect(ring.bossCount).to.equal(2);
+
+			ring.contestants = ring.contestants.filter(c => c.isBoss || c.userId !== 'user-2');
+			ring.dismissExtraBosses();
+			expect(ring.bossCount).to.equal(1);
+			expect(ring.contestants.some(c => c.monster === first.monster)).to.equal(true);
+			expect(ring.contestants.some(c => c.monster === second.monster)).to.equal(false);
+			game.dispose();
+		});
+
+		it('keeps the ambush minion, not a second full boss, when a human leaves', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			const first = ring.spawnBoss()!;
+			ring.spawnBoss();
+			const minion = ring.spawnBoss({ ambush: true })!;
+			expect(ring.bossCount).to.equal(3);
+
+			ring.contestants = ring.contestants.filter(c => c.isBoss || c.userId !== 'user-2');
+			ring.dismissExtraBosses();
+			const kept = ring.contestants.filter(c => c.isBoss).map(c => c.monster);
+			expect(kept).to.have.length(2);
+			expect(kept).to.include(first.monster);
+			expect(kept).to.include(minion.monster);
+			game.dispose();
+		});
+
+		it('sends the newest extra bosses away, refunding a summon, when a human leaves', () => {
+			const game = new Game({}, () => {});
+			const ring = game.getRing();
+			const refunds: Array<[string, number]> = [];
+			ring.onSummonedBossRemoved = (userId, at) => refunds.push([userId, at]);
+			const first = addPlayer(ring, 'user-1');
+			addPlayer(ring, 'user-2');
+			addPlayer(ring, 'user-3');
+			ring.spawnBoss();
+			ring.spawnBoss({ summonedByUserId: 'user-2', summonedAt: 111 });
+			ring.spawnBoss({ summonedByUserId: 'user-3', summonedAt: 222 });
+			expect(ring.bossCount).to.equal(3);
+
+			// Two humans left: one full-strength boss each, so the newest (user-3's) goes, refunded.
+			// None of them is a minion, so the ambush slot does not keep a third.
+			return ring.removeMonster({ ...first, userId: 'user-1' }).then(() => {
+				expect(ring.bossCount).to.equal(2);
+				expect(refunds).to.deep.equal([['user-3', 222]]);
+				const second = ring.contestants.find(c => c.userId === 'user-2')!;
+				return ring.removeMonster(second);
+			}).then(() => {
+				// One human: one boss. The next newest (user-2's) goes, refunded.
+				expect(ring.bossCount).to.equal(1);
+				expect(refunds).to.deep.equal([['user-3', 222], ['user-2', 111]]);
+				game.dispose();
+			});
+		});
+
+		it('dismisses the newest boss by arrival, not array order, and cancels its despawn timer', () => {
+			// Outside tests the ring shuffles contestants on every add, so array order says nothing
+			// about arrival. The determinism switch stays on here (off, ring events arm themselves
+			// and a Gauntlet adds bosses); the test reverses the array instead, which puts the
+			// newest boss first. Math.random is not pinned (see the despawn-timer test above), so
+			// forty attempts all but guarantee the newest boss's 50/50 despawn timer is set at least once.
+			const clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+			let timersSeen = 0;
+			try {
+				for (let attempt = 0; attempt < 40; attempt += 1) {
+					const game = new Game({}, () => {});
+					const ring = game.getRing();
+					const refunds: Array<[string, number]> = [];
+					ring.onSummonedBossRemoved = (userId, at) => refunds.push([userId, at]);
+					addPlayer(ring, 'user-1');
+					addPlayer(ring, 'user-2');
+					ring.spawnBoss({ summonedByUserId: 'user-1', summonedAt: 111 });
+					ring.spawnBoss({ summonedByUserId: 'user-2', summonedAt: 222 });
+					ring.spawnBoss({ ignoreQuota: true, summonedByUserId: 'user-2', summonedAt: 333 });
+					expect(ring.bossCount).to.equal(3);
+					const newest = ring.contestants.find(c => c.summonedAt === 333)!;
+					const timers = (ring as any).bossDespawnTimers as Map<object, unknown>;
+					if (timers.has(newest.monster)) timersSeen += 1;
+
+					// One human left: one full-strength boss, so the two newest go, newest first.
+					ring.contestants = ring.contestants.filter(c => c.isBoss || c.userId !== 'user-2').reverse();
+					ring.dismissExtraBosses();
+
+					expect(ring.bossCount).to.equal(1);
+					expect(refunds).to.deep.equal([['user-2', 333], ['user-2', 222]]);
+					expect(timers.has(newest.monster)).to.equal(false);
+					game.dispose();
+				}
+			} finally {
+				clock.restore();
+			}
+			expect(timersSeen).to.be.greaterThan(0);
+		});
+
+		it('no longer forces Common Cause when a second boss joins: humans unite in the fight itself', () => {
 			const game = new Game({}, () => {});
 			const ring = game.getRing();
 			addPlayer(ring, 'user-1');
 			addPlayer(ring, 'user-2');
 			ring.spawnBoss();
-			ring.ringEvent = ringEventFor('the-reckoning');
+			const reckoning = ringEventFor('the-reckoning');
+			ring.ringEvent = reckoning;
 
 			ring.spawnBoss();
 
-			expect(ring.ringEvent?.id).to.equal('common-cause');
+			expect(ring.ringEvent).to.equal(reckoning);
 			game.dispose();
 		});
 

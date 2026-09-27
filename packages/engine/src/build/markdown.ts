@@ -57,7 +57,7 @@ export const slugify = (heading: string): string =>
 const COMMAND_VERBS = new Set([
 	'train', 'equip', 'unequip', 'dismiss', 'revive', 'send', 'call', 'summon', 'move',
 	'save', 'load', 'delete', 'use', 'give', 'take', 'visit', 'sell', 'edit', 'look',
-	'help',
+	'help', 'leave',
 ]);
 
 /**

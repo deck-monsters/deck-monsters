@@ -288,6 +288,7 @@ const BOSS_REFUSAL_MESSAGES: Record<string, string> = {
 	in_encounter: 'A fight is already underway — wait for it to finish before summoning a boss.',
 	boss_cap: 'There are already as many bosses in the ring as it can hold.',
 	ring_full: 'The ring is full! Wait until the current fight is over and try again.',
+	boss_quota: 'Every challenger in the ring already has a boss to face. Bring a friend into the ring, then summon another.',
 };
 
 const SUMMON_BOSS_REGEX = /summon (?:a )?boss$/i;

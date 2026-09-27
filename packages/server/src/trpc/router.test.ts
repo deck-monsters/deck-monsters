@@ -480,7 +480,8 @@ describe('trpc/router card management procedures', () => {
 		});
 
 		expect(result).to.deep.equal({ ok: true, itemName: 'Potion', price: 80, remainingCoins: 20 });
-		expect(game.shop.items).to.deep.equal([]);
+		// Only the Sorting Hat every shop keeps is left on the shelf.
+		expect(game.shop.items.map((item: any) => item.itemType)).to.deep.equal(['Sorting Hat']);
 		expect(game.characters[USER_ID].items).to.deep.equal([potion]);
 		expect(lanes).to.deep.equal([ROOM_ID]);
 	});
@@ -517,8 +518,9 @@ describe('trpc/router card management procedures', () => {
 			expectedClosingTime: games[ROOM_ID].shop.closingTime.toISOString(),
 		});
 
-		expect(games[ROOM_ID].shop.items).to.have.lengthOf(0);
-		expect(games[otherRoomId].shop.items).to.have.lengthOf(1);
+		// The potion is gone (the restocked Sorting Hat is left); the other room is untouched.
+		expect(games[ROOM_ID].shop.items.map((item: any) => item.itemType)).to.deep.equal(['Sorting Hat']);
+		expect(games[otherRoomId].shop.items.map((item: any) => item.itemType)).to.deep.equal(['Potion']);
 		expect(games[otherRoomId].characters[USER_ID].coins).to.equal(100);
 	});
 

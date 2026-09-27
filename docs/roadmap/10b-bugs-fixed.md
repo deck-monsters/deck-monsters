@@ -4551,3 +4551,73 @@ without the fix). The monster and card hydrate tests now assert fresh instances.
 on the compiled engine under plain Node: 29 cards before and after.
 
 **Status**: Fixed.
+
+### 192. A dive or fury bonus doubled when Hit Harder's two damage rolls tied — FIXED
+
+**Root cause**: `empowerMelee` (`cards/helpers/empower-melee.ts`), shipped with the Dragon in
+PR #402, adds the dive's and fury's damage die to every roll inside Hit Harder's
+`{ betterRoll, worseRoll }` pair. When the two natural rolls tie, `HitHarder.getDamageRoll`
+returns the *same* roll object as both, so the loop added the bonus to it twice. It surfaced
+as a flaky unit test (a 1d6 bonus reading 12), not in review.
+
+**Fix**: the loop walks a `Set` of the pair's values, so a shared object is counted once. A
+test pins the tied case with one shared object.
+
+**Status**: Fixed.
+
+### 193. A boss's card plays, dice, and Delayed Hit lines vanished from the feed — FIXED
+
+The owner saw a Unicorn boss's hit for 6 land out of nowhere: no card, no dice, no Delayed
+Hit line, then the boss's next Delayed Hit narrated in full. The room's event log showed the
+boss had played three Delayed Hits over the fight, none of them visible, and that every one
+of its card boxes and dice rolls was missing; only the damage and miss lines (which name the
+player's monster) got through.
+
+**Root cause**: the room guard (`createRoomScopedEventGuard`, `announcements/index.ts`)
+finds a boss's card events through `card.playedBy` -> the boss -> its encounter -> the ring,
+at most three levels deep (#190). Its walk kept a plain seen-set, so the first path to reach
+an object decided for all the rest. The card's other keys (`original` and the like) are
+walked before `playedBy`; when one of them reached the boss a level deeper, the boss was
+marked seen at a depth too deep to find its ring, and the direct path was skipped. Whether
+an event survived depended on key order, which is why one Delayed Hit in a pair showed and
+the other did not. #190's test played a single card straight at a target, outside a real
+fight, and did not exercise that ordering.
+
+**Fix**: the walk records the shallowest depth it reached each object from and re-walks an
+object only from a shallower path. The walk stays bounded and the guard is no wider: a boss
+in another room's ring is still rejected, and a boss's own `creature.win` still is (its
+encounter has ended by then).
+
+**Tests**: `cards/boss-feed.test.ts` pins the key-order case against the guard directly and
+runs a real player-versus-boss fight, checking the feed shows the boss's card box, its
+Delayed Hit line, and its dice rolls. Both fail without the fix.
+
+**Status**: Fixed.
+
+### 194. Delayed Hit payoffs read as answers to the wrong blow — FIXED
+
+Recorded as open item M from Test Room A fight 8 (PR #404), and in the owner's report on
+PR #403: Chuvvo armed Delayed Hit twice, and after Noobur Swiftwalker's Horn Gore the feed
+printed the first payoff, Chuvvo's punch, then a second "finds its moment… responds to the
+blow Noobur Swiftwalker gave him" under that punch, which read as an answer to it. After an
+area card the payoff printed under the last target's damage line, not the target it
+answered.
+
+**Root cause**: every armed copy answers the newest blow from someone else (stacking is
+intended; the handbook says so). `settleDelayedHits` runs after the whole attacking card
+resolves, and each `settle()` narrates and then awaits its own counter before the loop
+reaches the next copy. So the lines are in the only order the mechanics allow, but "the
+blow X gave him" named only the attacker, and the line above it was often a different blow.
+
+**Fix**: the payoff names the attack by its card ("responds to Noobur Swiftwalker's Horn
+Gore"), and a later copy answering the same blow says so ("Chuvvo's second Delayed Hit
+finds its moment too: he answers the same Horn Gore from Noobur Swiftwalker"). Each hit
+log entry counts the copies that answered it. The timing is unchanged: moving a payoff
+between an area card's targets would let a counter kill the attacker halfway through its
+own card.
+
+**Tests**: `cards/delayed-hit.test.ts` arms two copies on one monster against one Hit and
+checks both lines, and answers a Blast and checks the payoff names it. Both fail without the
+fix.
+
+**Status**: Fixed.

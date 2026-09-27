@@ -106,6 +106,31 @@ Your character name and icon are separate from your account profile and belong t
 
 Choose Name or Icon/color, enter the new value, and confirm the change. This edits your person — the beastmaster named in ring announcements — rather than one of your monsters.
 
+## Teams and Bosses
+
+Every fight is a free-for-all unless you are on a team. Teammates go after everyone else first, area cards included, and only turn on each other when nobody else is left: the last monster standing still wins.
+
+Join a team with a Sorting Hat. It is free, and every shop keeps one.
+
+- `use Sorting Hat` — put yourself, and every monster without a team of its own, in a house
+- `use Sorting Hat on [monster]` — put just that monster in a house
+
+The houses are Gryffindor, Hufflepuff, Ravenclaw, and Slytherin. A monster with no team of its own fights for its beastmaster's house.
+
+Leave a team for free, any time you are not fighting. A Sorting Hat also offers "No team" to anyone who is on one.
+
+- `leave team` — take yourself and all your monsters off any team
+
+The Editor sends a boss into the ring now and then (the ring warns you two minutes ahead), and you can call one yourself:
+
+- `summon a boss` — 3 per day
+
+There is one boss for each challenger in the ring, never more than one level above the strongest challenger. Now and then an ambush brings one more, a lesser minion at a third of its health. Each boss says, as it enters, whom it likes to go after.
+
+While any boss is still fighting, every challenger without a team stands together as The Challengers and never attacks another challenger. When the last boss falls the alliance ends, and it is every monster for itself.
+
+Some fights bring a ring event that changes the teams for that fight only: Common Cause (every challenger against the bosses, and the survivors win together), House War (two houses, and the last house standing wins together), and Blood Feud (no teams at all).
+
 ## All Commands
 
 ### Monsters
@@ -164,6 +189,7 @@ Choose Name or Icon/color, enter the new value, and confirm the change. This edi
 
 - `edit my character` — Edit your character's name and icon
 - `look at character` — View your character stats and info
+- `leave team` — Take yourself and all your monsters off any team (a Sorting Hat, always in the shop, puts you on one)
 
 ### Reference
 

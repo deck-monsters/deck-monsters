@@ -6,6 +6,9 @@ import { announceAndThrow } from '../../helpers/announce-and-throw.js';
 import type { ChannelFn } from '../../creatures/base.js';
 import * as teams from '../../constants/teams.js';
 
+/** The hat's choice for leaving a team. */
+export const NO_TEAM = 'No team';
+
 export class SortingHat extends BaseScroll {
 	static itemType: string;
 	static probability: number;
@@ -26,16 +29,23 @@ export class SortingHat extends BaseScroll {
 		character: Record<string, unknown>;
 		monster?: Record<string, unknown>;
 	}): Promise<string> {
-		let givenName: string;
-		let teamChoices: string[];
-
-		if (monster) {
-			givenName = monster['givenName'] as string;
-			teamChoices = (Object.values(teams) as string[]).filter(team => team !== (monster['team'] as string));
-		} else {
-			givenName = character['givenName'] as string;
-			teamChoices = (Object.values(teams) as string[]).filter(team => team !== (character['team'] as string));
-		}
+		const wearer = monster ?? character;
+		const givenName = wearer['givenName'] as string;
+		const ownTeam = wearer['team'] as string | undefined;
+		// A monster with no team of its own fights on its Beastmaster's (teamOf falls back to
+		// the character), so that is the house it is in.
+		const inheritedTeam = monster ? (character['team'] as string | undefined) : undefined;
+		const currentTeam = ownTeam ?? inheritedTeam;
+		// The hat used to offer only the other houses, so nobody could ever leave a team. It
+		// now offers "No team" where choosing it leaves the wearer teamless. Clearing a
+		// monster's own team while its Beastmaster has one only drops it back to that team, so
+		// the hat does not offer it there; `leave team` clears both, for free. A Codex review
+		// of #403 found the hat offering an inherited house again with no way out.
+		const canLeave = !!ownTeam && !inheritedTeam;
+		const teamChoices = [
+			...(Object.values(teams) as string[]).filter(team => team !== currentTeam),
+			...(canLeave ? [NO_TEAM] : []),
+		];
 
 		return Promise
 			.resolve()
@@ -56,16 +66,19 @@ export class SortingHat extends BaseScroll {
 					return announceAndThrow(channel, `I don't recognize "${String(answer)}" as a team.`);
 				}
 
-				const publicNarration = `${givenName} joins the ${team} team.`;
-				const privateNarration = `"Is that so? Well if you're sure... better be ${team.toUpperCase()}!"
+				const leaving = team === NO_TEAM;
+				const publicNarration = leaving
+					? `${givenName} leaves the ${currentTeam} team.`
+					: `${givenName} joins the ${team} team.`;
+				const privateNarration = leaving
+					? `"No house at all? How very independent of you."
+
+And just like that the ${this.itemType} is gone and ${publicNarration}`
+					: `"Is that so? Well if you're sure... better be ${team.toUpperCase()}!"
 
 And just like that the ${this.itemType} is gone and ${publicNarration}`;
 
-				if (monster) {
-					monster.team = team;
-				} else {
-					character.team = team;
-				}
+				wearer.team = leaving ? undefined : team;
 
 				this.emit('narration', {
 					channel,
@@ -87,7 +100,7 @@ SortingHat.requiresPrompt = true;
 SortingHat.itemType = 'Sorting Hat';
 SortingHat.probability = ABUNDANT.probability;
 SortingHat.numberOfUses = 1;
-SortingHat.description = `This enchanted hat that once belonged to Godric Gryffindor. Put it on and find out where you truly belong.\n\nIf your character has joined a team but your monster hasn't, that monster will be on your character's team by default.`;
+SortingHat.description = `An enchanted hat that once belonged to Godric Gryffindor. Put it on and find out where you truly belong, or choose no team at all.\n\nTeammates go after everyone else in the ring first, and only turn on each other when nobody else is left. If your character has joined a team but your monster hasn't, that monster is on your character's team. Every shop keeps one in stock, and \`leave team\` takes you and your monsters off a team for free.`;
 SortingHat.level = 0;
 SortingHat.cost = FREE.cost;
 SortingHat.usableWithoutMonster = true;

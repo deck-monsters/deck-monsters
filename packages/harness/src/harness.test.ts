@@ -77,6 +77,73 @@ describe('@deck-monsters/harness', () => {
 		}
 	});
 
+	it('simulate() fields humans with player decks and bosses exactly as the ring spawns them', async function () {
+		this.timeout(60_000);
+		const seen: Array<{ isBoss: boolean; team?: string; strategy?: string; cards: string[] }> = [];
+		const res = await simulate({
+			monsters: [
+				{ type: 'Gladiator', level: 2, role: 'human' },
+				{ type: 'Minotaur', level: 1, role: 'boss' },
+			],
+			fights: 3,
+			seed: 3,
+			roomId: 'harness-roles',
+			onContestants: contestants => {
+				for (const c of contestants as any[]) {
+					seen.push({
+						isBoss: !!c.isBoss,
+						team: c.monster.team,
+						strategy: c.monster.targetingStrategy,
+						cards: c.monster.cards.map((card: any) => card.cardType),
+					});
+				}
+			},
+		});
+		expect(res.cancelledFights).to.equal(0);
+		const human = seen[0]!;
+		const boss = seen[1]!;
+		expect(human.isBoss).to.equal(false);
+		expect(human.strategy).to.equal(undefined);
+		expect(human.cards).to.have.length(9);
+		expect(human.cards).not.to.include('Flee');
+		expect(boss.isBoss).to.equal(true);
+		expect(boss.team).to.equal('Boss');
+		// Each boss draws a temperament (engine helpers/boss-personalities.ts).
+		expect(boss.strategy).to.be.a('string');
+	});
+
+	// Owner decision (docs/roadmap/31): teamless humans unite while a boss is fighting, then
+	// settle it among themselves once the bosses are down.
+	it('humans without a team never hit each other while a boss stands, and do after', async function () {
+		this.timeout(60_000);
+		const hits = { whileBoss: 0, afterBoss: 0 };
+		const hand = Array(9).fill('Hit');
+		await simulate({
+			monsters: [
+				{ type: 'Gladiator', level: 3, role: 'human', deck: hand },
+				{ type: 'Minotaur', level: 3, role: 'human', deck: hand },
+				{ type: 'Basilisk', level: 1, role: 'boss', deck: hand },
+			],
+			fights: 8,
+			seed: 21,
+			roomId: 'harness-challengers',
+			onContestants: contestants => {
+				const all = contestants as any[];
+				const humans = all.filter(c => !c.isBoss).map(c => c.monster);
+				const bosses = all.filter(c => c.isBoss).map(c => c.monster);
+				for (const human of humans) {
+					human.on('hit', (_c: string, _m: unknown, { assailant }: any) => {
+						if (!humans.includes(assailant) || assailant === human) return;
+						if (bosses.some(boss => !boss.dead)) hits.whileBoss += 1;
+						else hits.afterBoss += 1;
+					});
+				}
+			},
+		});
+		expect(hits.whileBoss).to.equal(0);
+		expect(hits.afterBoss).to.be.greaterThan(0);
+	});
+
 	it('simulate is reproducible for the same seed (fresh Node process)', function () {
 		this.timeout(120_000);
 
@@ -225,6 +292,10 @@ describe('@deck-monsters/harness', () => {
 		// both be credited every win. Only one contestant can win each fight.
 		const total = ['Sim 1', 'Sim 2', 'Sim 3'].reduce((sum, label) => sum + (res.winRates[label] ?? 0), 0);
 		expect(total).to.be.at.most(100);
+		// One winnersByFight entry per resolved fight, draws included as [], so entries line
+		// up with fight order (a Codex review of #403 found draws skipped).
+		const drawn = res.winnersByFight.filter(winners => winners.length === 0).length;
+		expect(drawn).to.equal(Math.round((res.drawRate / 100) * res.fights));
 	});
 
 	it('withoutHarnessExcludedCards() swaps Flee for a legal non-Flee draw', async () => {

@@ -72,6 +72,13 @@ export interface RingEventDefinition {
 /** Team name used by Common Cause, deliberately distinct from the Sorting Hat houses. */
 export const ALLIANCE_TEAM = 'The Alliance';
 
+/**
+ * The side teamless humans fight on while any boss is still fighting. Cleared the moment the
+ * last boss is down, so the humans settle it among themselves (owner: "unite, then settle").
+ * Also distinct from the Sorting Hat houses.
+ */
+export const CHALLENGERS_TEAM = 'The Challengers';
+
 const bosses = (contestants: RingEventContestant[]): RingEventContestant[] =>
 	contestants.filter(contestant => contestant.isBoss);
 

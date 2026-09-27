@@ -135,14 +135,22 @@ export function createRoomScopedEventGuard(game: RoomScopedGame): (...args: any[
 		// Hot path: the emitting instance is almost always a top-level argument.
 		if (args.some((arg) => ownsDirectly(arg))) return true;
 
-		const visited = new WeakSet<object>();
+		// The shallowest depth each object has been walked from. A plain "visited" set let the
+		// first path to reach an object decide for every later one. A boss's card walks its
+		// other keys (`original` and the like) before `playedBy`; when one of them reached the
+		// boss monster a level deeper, the boss was marked seen too deep to find its ring, and
+		// the direct path (card -> boss -> encounter -> ring) was then skipped. Every boss card box, dice roll, and Delayed Hit line was dropped from the
+		// feed, some and not others depending on key order (10b #193). Re-walk an object only
+		// when a path reaches it shallower than before, which still bounds the walk.
+		const shallowest = new WeakMap<object, number>();
 
 		const walk = (value: unknown, depth: number): boolean => {
 			if (ownsDirectly(value)) return true;
 			if (depth >= MAX_OWNERSHIP_WALK_DEPTH || !value || typeof value !== 'object') return false;
 
-			if (visited.has(value)) return false;
-			visited.add(value);
+			const seenAt = shallowest.get(value);
+			if (seenAt !== undefined && seenAt <= depth) return false;
+			shallowest.set(value, depth);
 
 			if (Array.isArray(value)) {
 				return value.some((entry) => walk(entry, depth + 1));

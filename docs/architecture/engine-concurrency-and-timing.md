@@ -340,6 +340,15 @@ monster and its ring. Do not widen the guard itself to accept every ring
 contestant instead: `Game.initializeEvents()` shares it, and it deliberately
 rejects a boss's own `creature.win`/`loss`, which must never pay rewards.
 
+**The walk remembers depth, not just "seen".** It records the shallowest depth
+it reached each object from, and re-walks an object only from a shallower path.
+It used to keep a plain seen-set: when another key of a boss's card reached the
+boss a level deeper first, the boss was marked seen too deep to find its ring,
+and the direct `playedBy` path was skipped. A boss's card boxes, dice rolls,
+and Delayed Hit lines vanished while the damage they did still showed, some
+and not others depending on key order (10b #193). Keep the depth check if the
+walk is ever reworked; `cards/boss-feed.test.ts` pins it with a real fight.
+
 - **Fight timer**: `startFightTimer()` clears and restarts the 60s countdown
   on every ring add/remove — the fight fires 60s after the *last* membership
   change (legacy behavior, intentional). `nextFightAt` / `nextBossSpawnAt` are

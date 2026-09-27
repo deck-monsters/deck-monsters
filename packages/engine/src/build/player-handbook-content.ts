@@ -1,5 +1,7 @@
 import { formatCommandList } from '../commands/catalog.js';
 import { DEFAULT_MONSTER_SLOTS } from '../characters/beastmaster.js';
+import { BOSS_SUMMON_LIMIT } from '../helpers/boss-summons.js';
+import { CHALLENGERS_TEAM } from '../ring/ring-events.js';
 
 /** Markdown title for the generated root handbook. The ownership banner is applied in root-docs. */
 export const PLAYER_HANDBOOK_TITLE = 'Player Handbook';
@@ -113,6 +115,38 @@ Your character name and icon are separate from your account profile and belong t
 Choose Name or Icon/color, enter the new value, and confirm the change. This edits your person — the beastmaster named in ring announcements — rather than one of your monsters.
 `.trim();
 
+/*
+ * Teams were opaque to new players (owner, PR #403): nothing in the handbook said what a team
+ * does, how to join or leave one, or why teamless challengers stop hitting each other when a
+ * boss is in the ring. Keep this in step with docs/architecture/boss-encounters.md §5.
+ */
+export const TEAMS_AND_BOSSES = `
+── Teams and Bosses ─────────────────
+
+Every fight is a free-for-all unless you are on a team. Teammates go after everyone else first, area cards included, and only turn on each other when nobody else is left: the last monster standing still wins.
+
+Join a team with a Sorting Hat. It is free, and every shop keeps one.
+
+   use Sorting Hat                — put yourself, and every monster without a team of its own, in a house
+   use Sorting Hat on [monster]   — put just that monster in a house
+
+The houses are Gryffindor, Hufflepuff, Ravenclaw, and Slytherin. A monster with no team of its own fights for its beastmaster's house.
+
+Leave a team for free, any time you are not fighting. A Sorting Hat also offers "No team" to anyone who is on one.
+
+   leave team                     — take yourself and all your monsters off any team
+
+The Editor sends a boss into the ring now and then (the ring warns you two minutes ahead), and you can call one yourself:
+
+   summon a boss                  — ${BOSS_SUMMON_LIMIT} per day
+
+There is one boss for each challenger in the ring, never more than one level above the strongest challenger. Now and then an ambush brings one more, a lesser minion at a third of its health. Each boss says, as it enters, whom it likes to go after.
+
+While any boss is still fighting, every challenger without a team stands together as ${CHALLENGERS_TEAM} and never attacks another challenger. When the last boss falls the alliance ends, and it is every monster for itself.
+
+Some fights bring a ring event that changes the teams for that fight only: Common Cause (every challenger against the bosses, and the survivors win together), House War (two houses, and the last house standing wins together), and Blood Feud (no teams at all).
+`.trim();
+
 export const COMBAT_STATS_AND_ROLES = `
 ── Combat Stats & Card Roles ─────────
 
@@ -172,6 +206,7 @@ export const collectPlayerHandbookSections = (): string[] => [
 	YOUR_DECK,
 	COINS_AND_SHOP,
 	YOUR_CHARACTER,
+	TEAMS_AND_BOSSES,
 	`── All Commands ─────────────────────\n\n${formatCommandList()}`,
 	COMBAT_STATS_AND_ROLES,
 	BUILD_STRATEGIES,

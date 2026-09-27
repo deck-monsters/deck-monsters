@@ -1,4 +1,5 @@
 import type { ShopHost } from './shop.js';
+import { withSortingHat } from './stock.js';
 
 export type ShopItemSection = 'items' | 'backRoom' | 'cards';
 
@@ -56,8 +57,9 @@ export const purchaseShopItem = ({
 		throw new Error(`You need ${price} coins to buy ${identity}.`);
 	}
 
-	const remaining = stock.slice();
+	let remaining = stock.slice();
 	remaining.splice(stockIndex, 1);
+	if (section === 'items') remaining = withSortingHat(remaining);
 	character.coins -= price;
 	// Cards go to the character's deck (`addCard`), never `character.items` — the two
 	// inventories are tracked separately and equipping/using each goes through different

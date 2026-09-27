@@ -58,6 +58,13 @@ describe('./items/store/stock.ts', () => {
 	});
 
 	describe('getItems', () => {
+		it('always stocks a Sorting Hat', () => {
+			for (let i = 0; i < 30; i += 1) {
+				const hats = getItems().filter((item: any) => item.itemType === 'Sorting Hat');
+				expect(hats.length).to.be.at.least(1);
+			}
+		});
+
 		it('can get a set of items', () => {
 			const items = getItems();
 
@@ -68,6 +75,14 @@ describe('./items/store/stock.ts', () => {
 				expect((item.constructor as any).notForSale).to.not.equal(true);
 				expect((item.constructor as any).neverForSale).to.not.equal(true);
 			});
+		});
+
+		it('never goes past the largest shelf, even when it adds the Sorting Hat', () => {
+			// Before the hat took the last slot, a full shelf with no hat drawn came out at 21,
+			// about one draw in a hundred; a thousand draws catch it almost every run.
+			for (let i = 0; i < 1000; i += 1) {
+				expect(getItems().length).to.be.at.most(20);
+			}
 		});
 	});
 });

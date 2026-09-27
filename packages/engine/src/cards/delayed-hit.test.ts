@@ -7,6 +7,7 @@ import { DEFENSE_PHASE } from '../constants/phases.js';
 import { DelayedHit } from './delayed-hit.js';
 import { HitCard } from './hit.js';
 import { HealCard } from './heal.js';
+import BlastCard from './blast.js';
 import Basilisk from '../monsters/basilisk.js';
 
 describe('./cards/delayed-hit.ts', () => {
@@ -184,6 +185,74 @@ ${customHit.stats}`);
 		 * later-armed card's counter lands. That hit then sat unanswered until the next card
 		 * anyone played.
 		 */
+		/**
+		 * Two armed copies answering one blow print one after the other, the second under the
+		 * first copy's counter-attack. "Responds to the blow X gave him" then read as an answer
+		 * to that counter (Test Room A fight 8; 10b #194). The later copy says it answers the
+		 * same blow, and every payoff names the attacking card.
+		 */
+		it('has a second armed copy say it answers the same blow, not the first copy\'s counter', async () => {
+			const first = new DelayedHit();
+			const second = new DelayedHit();
+			const strike = new HitCard();
+			sinon.stub(strike, 'hitCheck').returns({
+				attackRoll: strike.getAttackRoll(target),
+				success: true,
+				strokeOfLuck: false,
+				curseOfLoki: false,
+			});
+			const narrations: string[] = [];
+			const onNarration = (_klass: unknown, _card: unknown, { narration }: { narration: string }) =>
+				narrations.push(narration);
+			first.on('narration', onNarration);
+			second.on('narration', onNarration);
+			player.hp = 200;
+			target.hp = 200;
+
+			try {
+				await first.play(player, player, ring);
+				await second.play(player, player, ring);
+				await strike.play(target, player, ring);
+
+				const payoffs = narrations.filter(line => line.includes('finds its moment'));
+				expect(payoffs).to.have.length(2);
+				// Pronouns are random, so the verb may be "respond" (they) or "responds".
+				expect(payoffs[0]).to.match(new RegExp(`respond\\w* to ${target.givenName}'s Hit\\.`));
+				expect(payoffs[1]).to.contain(`${player.givenName}'s second Delayed Hit finds its moment too`);
+				expect(payoffs[1]).to.contain(`the same Hit from ${target.givenName}`);
+			} finally {
+				first.off('narration', onNarration);
+				second.off('narration', onNarration);
+			}
+		});
+
+		it('names an area card it answers, since the payoff prints after every target\'s damage', async () => {
+			const armed = new DelayedHit();
+			const narrations: string[] = [];
+			const onNarration = (_klass: unknown, _card: unknown, { narration }: { narration: string }) =>
+				narrations.push(narration);
+			armed.on('narration', onNarration);
+			player.hp = 200;
+
+			try {
+				// Blast picks its targets by team, which reads each contestant's character.
+				const blastRing = {
+					...ring,
+					contestants: [
+						{ monster: player, character: {}, userId: 'player' },
+						{ monster: target, character: {}, userId: 'target' },
+					],
+				};
+				await armed.play(player, player, blastRing);
+				await new BlastCard().play(target, player, blastRing, blastRing.contestants);
+
+				const payoff = narrations.find(line => line.includes('finds its moment'));
+				expect(payoff).to.match(new RegExp(`respond\\w* to ${target.givenName}'s Blast\\.`));
+			} finally {
+				armed.off('narration', onNarration);
+			}
+		});
+
 		it('answers a blow dealt by another delayed hit in the same play, not after the next unrelated card', async () => {
 			const targetsDelayedHit = new DelayedHit();
 			const playersDelayedHit = new DelayedHit();

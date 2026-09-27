@@ -125,6 +125,12 @@ bosses and why disposal keys off it. Players may summon a boss `BOSS_SUMMON_LIMI
 per rolling 24h window, per room (`packages/engine/src/helpers/boss-summons.ts`). Full rules:
 [`docs/architecture/boss-encounters.md`](../architecture/boss-encounters.md).
 
+Teams are a targeting rule, not a shared win: teammates go after everyone else first and
+turn on each other only when nobody else is left. With a boss in the ring every teamless human
+fights as The Challengers until the last boss falls. How players join, leave, and inherit a
+team is in [boss encounters §5](../architecture/boss-encounters.md#5-teams-and-targeting);
+the player-facing version is the handbook's Teams and Bosses section.
+
 ## Card effects that wrap a play
 
 Some cards arm an effect on `ring.encounterEffects` that wraps subsequent card plays
@@ -134,7 +140,12 @@ earlier-armed card's check runs before the later-armed card's counter-attack lan
 — `settleDelayedHits()` loops over all of them until a full pass fires nothing
 (`packages/engine/src/cards/delayed-hit.ts`). A self-only check left a counter unanswered
 until the next card anyone played, narrating a blow from a turn ago (#157). Two Delayed Hits
-in one fight is routine: the starting deck ships with two. The full play pipeline, where
+in one fight is routine: the starting deck ships with two. The loop prints each later
+copy's "finds its moment" line after the previous copy's counter, and every payoff after the
+whole attacking card (so after all of an area card's damage lines). So the line names the
+attack it answers ("responds to Noobur's Horn Gore"), and a later copy says it answers the
+same one ("second Delayed Hit finds its moment too"), or it reads as an answer to whatever
+printed just above it (10b #194). The full play pipeline, where
 fight-scoped card state lives, and the hold boundary are in
 [cards and encounter effects](../architecture/cards-and-encounter-effects.md).
 
@@ -211,3 +222,9 @@ Three rules from #159 that are easy to undo by accident:
 `USER_SCROLL_INTENT_WINDOW_MS` (1.5s); otherwise the bottom moved on its own and the feed
 re-pins. The hook's return value is memoised because consumers put it in effect dependency
 arrays (#132).
+
+Scrolling up into earlier fights still jumps. Card boxes are far taller than the height
+Virtuoso estimates for an unmeasured row, so `scrollHeight` grows as those rows mount and
+Virtuoso's size-tree correction can move `scrollTop` against the gesture. That is open
+item L in [bug fixes](../roadmap/10-bug-fixes.md). It is a different failure from the
+re-pin above: the pauses in the capture left `scrollTop` where the upward burst ended.

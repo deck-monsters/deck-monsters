@@ -12,6 +12,7 @@ import {
 	EARLY_COIN_BONUS_TIERS,
 	engineReady,
 	getCardClassByTypeName,
+	getInitialDeck,
 	getUtcDay,
 	getXpCapForLevel,
 	randomContestant,
@@ -69,6 +70,16 @@ export interface SimMonsterSpec {
 	 * stop when only one team is standing instead of turning on each other.
 	 */
 	team?: string;
+	/**
+	 * What kind of contestant this is. Omitted: the harness's classic sim contestant (built
+	 * like a boss for its deck, but with its own faction and default targeting). `human`: a
+	 * player, with a starting deck (`getInitialDeck`) and a few fills per level, equipped at
+	 * random, its own faction, and default targeting. `boss`: a real boss, exactly as the ring
+	 * spawns one: the Boss team, a boss deck, and a boss temperament (a targeting strategy from
+	 * the engine's boss personalities).
+	 * Bosses are only realistic beside at least one human.
+	 */
+	role?: 'human' | 'boss';
 }
 
 export interface SimConfig {
@@ -77,6 +88,8 @@ export interface SimConfig {
 	seed?: number;
 	/** Passed to createTestGame as roomId prefix. */
 	roomId?: string;
+	/** Called with each fight's contestants once they are built, before the fight (tests). */
+	onContestants?: (contestants: Contestant[]) => void;
 }
 
 /** Per-contestant fight outcome, matching `ring/index.ts`'s private `participantOutcome()`
@@ -98,6 +111,13 @@ export interface EconomyStats {
 export interface SimResult {
 	fights: number;
 	winRates: Record<string, number>;
+	/**
+	 * The labels that won each fight, in fight order (empty for a draw). A team win names
+	 * every surviving member, so a side's win rate is the share of fights naming any of its
+	 * members; summing or taking the best of `winRates` cannot give that (a Codex review of
+	 * PR #403).
+	 */
+	winnersByFight: string[][];
 	drawRate: number;
 	avgRounds: number;
 	avgDamagePerCard: Record<string, number>;
@@ -219,6 +239,54 @@ function buildContestant(
 	return contestant;
 }
 
+/** Fisher-Yates on `Math.random`, which `simulate()` seeds. */
+function shuffled<T>(items: T[]): T[] {
+	const out = [...items];
+	for (let i = out.length - 1; i > 0; i -= 1) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[out[i], out[j]] = [out[j]!, out[i]!];
+	}
+	return out;
+}
+
+/** Random cards a human has picked up beyond the starting deck, per level. */
+const HUMAN_EXTRA_CARDS_PER_LEVEL = 2;
+
+/**
+ * A player's contestant: the starting deck every new character gets, plus a couple of cards
+ * per level (drops and shop buys), with nine legal cards equipped at random. Players build
+ * their hands, so this is still a floor for how well a human plays, not a model of it; Flee
+ * stays out, as it does for every harness deck.
+ */
+function buildHuman(spec: SimMonsterType, level: number, deckNames: string[] | undefined): Contestant {
+	const MonsterClass = monsterClassFor(spec);
+	const contestant = randomContestant({ isBoss: false, Monsters: [MonsterClass], xp: getXpCapForLevel(level) });
+	const { monster, character } = contestant as unknown as {
+		monster: HarnessMonster & { cardSlots: number };
+		character: unknown;
+	};
+	type CardCtor = new () => { cardType?: string };
+
+	if (deckNames?.length) {
+		monster.cards = deckNames.map(n => new (getCardClassByTypeName(n) as CardCtor)());
+		return contestant;
+	}
+
+	const eligible = {
+		level: monster.level,
+		canHoldCard: (Card: { cardType?: string }) =>
+			!HARNESS_EXCLUDED_CARD_TYPES.includes(Card.cardType ?? '') && monster.canHoldCard(Card),
+	};
+	const pool = [
+		...(getInitialDeck({}, character) as Array<{ cardType?: string }>),
+		...Array.from({ length: level * HUMAN_EXTRA_CARDS_PER_LEVEL }, () => drawCard({}, eligible)),
+	].filter(card => !HARNESS_EXCLUDED_CARD_TYPES.includes(card.cardType ?? '') && monster.canHoldCard(card));
+	const hand = shuffled(pool).slice(0, monster.cardSlots);
+	while (hand.length < monster.cardSlots) hand.push(drawCard({}, eligible));
+	monster.cards = hand;
+	return contestant;
+}
+
 /**
  * Card types a random harness deck never keeps. Flee is a special-purpose escape: a player
  * holds it for a bad matchup, not as a routine deck slot. In a simulation it only turns
@@ -290,7 +358,8 @@ function pushWinCounts(
 	winCounts: Map<string, number>,
 	stableIdToLabel: Map<string, string>,
 	p: FightResolvedPayload,
-): void {
+): string[] {
+	const winners: string[] = [];
 	const parts = p.participants ?? [];
 	for (const part of parts) {
 		if (part.outcome !== 'win') continue;
@@ -303,7 +372,19 @@ function pushWinCounts(
 			);
 		}
 		winCounts.set(label, (winCounts.get(label) ?? 0) + 1);
+		winners.push(label);
 	}
+	return winners;
+}
+
+/** Share of fights (0-100) that any of `labels` won: a side's win rate. */
+export function sideWinRate(res: Pick<SimResult, 'winnersByFight' | 'fights'>, labels: string[]): number {
+	// Over `fights`, as `winRates` are, so the two stay comparable.
+	const { fights } = res;
+	if (fights === 0) return 0;
+	const side = new Set(labels);
+	const won = res.winnersByFight.filter(winners => winners.some(label => side.has(label))).length;
+	return (won / fights) * 100;
 }
 
 /**
@@ -341,6 +422,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	const hasTeams = monsters.some(m => m.team);
 	const names = monsters.map((_, i) => `Sim ${i + 1}`);
 	const winCounts = new Map<string, number>();
+	const winnersByFight: string[][] = [];
 	for (const n of names) winCounts.set(n, 0);
 	let draws = 0;
 	let roundSum = 0;
@@ -376,9 +458,11 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 			lastParticipants = p.participants ?? [];
 			if (p.outcome === 'draw') {
 				draws += 1;
+				// One entry per fight, so entries line up with fight order (a Codex review of #403).
+				winnersByFight.push([]);
 				return;
 			}
-			pushWinCounts(winCounts, stableIdToLabel, p);
+			winnersByFight.push(pushWinCounts(winCounts, stableIdToLabel, p));
 		},
 	});
 
@@ -394,7 +478,10 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 
 			const contestants = monsters.map((m, i) => {
 				const type = parseMonsterType(m.type);
-				const c = buildContestant(type, m.level, m.deck, m.statSeed, f);
+				const c =
+					m.role === 'human'
+						? buildHuman(type, m.level, m.deck)
+						: buildContestant(type, m.level, m.deck, m.statSeed, f);
 				const label = names[i]!;
 				c.monster.setOptions({
 					name: label,
@@ -406,26 +493,34 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 				// contestant would trip unpredictably. `character.battles` here is a distinct
 				// object from `monster.battles` (only shared at construction when `statSeed` seeds
 				// both) — resetting it doesn't touch the monster's own combat-stat-diversity record.
-				// Harness contestants are bosses, and `randomContestant` puts every boss on the
+				// Classic harness contestants are built as bosses, and `randomContestant` puts every boss on the
 				// shared boss team, which the ring treats as one faction. Give each contestant
 				// its spec's team, or a faction of its own, on both the character and the monster
 				// (the monster's team wins in `factionOf`). Otherwise teamless contestants in a
 				// team fight never fight each other and all get credited a win, and ally checks
 				// such as Unconquerable Horn's treat every harness contestant as a teammate.
-				const faction = m.team ?? `solo:${names[i]!}`;
-				c.character.team = faction;
-				c.monster.team = faction;
-				// `randomContestant` also gives every boss TARGET_HUMAN_PLAYER_WEAK. With no human
-				// in a harness ring, that strategy falls back to a target chosen with teams
-				// ignored, so team fights measured friendly fire. The default (next player) is
-				// team-aware, and with one faction per teamless contestant it behaves the same in
-				// a free-for-all.
-				c.monster.targetingStrategy = undefined;
+				// A real boss keeps what the ring gives it: the Boss team and boss targeting.
+				if (m.role !== 'boss') {
+					// A human with no team stays teamless, as a player's monster is, so the ring's
+					// own rules (humans unite against bosses) apply to it. Classic sim contestants
+					// were built as bosses and need a faction of their own.
+					const faction = m.team ?? (m.role === 'human' ? undefined : `solo:${names[i]!}`);
+					c.character.team = faction;
+					c.monster.team = faction;
+					// `randomContestant` gives every boss a boss targeting strategy. With no human
+					// in a harness ring, that strategy falls back to a target chosen with teams
+					// ignored, so team fights measured friendly fire. The default (next player)
+					// is team-aware, and with one faction per teamless contestant it behaves the
+					// same in a free-for-all.
+					c.monster.targetingStrategy = undefined;
+				}
 				c.character.lastDailyFightCoinDay = getUtcDay();
 				c.character.battles = { total: STEADY_STATE_BATTLES_TOTAL, wins: 0, losses: 0 };
 				stableIdToLabel.set(c.monster.stableId as string, label);
 				return c;
 			});
+
+			config.onContestants?.(contestants);
 
 			const simUserIds: string[] = [];
 			for (let i = 0; i < contestants.length; i++) {
@@ -542,6 +637,7 @@ export async function simulate(config: SimConfig): Promise<SimResult> {
 	return {
 		fights,
 		winRates,
+		winnersByFight,
 		drawRate: fights > 0 ? (draws / fights) * 100 : 0,
 		avgRounds: fights > 0 ? roundSum / fights : 0,
 		avgDamagePerCard: aggregateDamagePerCard(damageSums),

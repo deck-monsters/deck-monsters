@@ -42,7 +42,13 @@ const BOSS_TEAM = 'Boss';
 
 Boss-specific behaviour is applied in `characters/helpers/random.ts` (`randomCharacter`):
 
-- `monster.targetingStrategy = TARGET_HUMAN_PLAYER_WEAK` — bosses attack players, not bosses.
+- `monster.targetingStrategy` is a **temperament** drawn from `BOSS_PERSONALITIES`
+  (`helpers/boss-personalities.ts`): a bully (the weakest challenger), a glory-seeker (the
+  strongest), a grudge-holder (whoever hit it last), or a wild card (random). The arrival
+  line says which, so players can plan around it. Every boss used to share
+  `TARGET_HUMAN_PLAYER_WEAK` and act alike (owner, September 2026). All four strategies
+  respect teams, and bosses share the Boss team, so a boss still only goes for challengers
+  while any are standing.
 - `monster.canHold` is wrapped to reject cards with `static noBosses = true`
   (`fight-or-flight`, `flee`, `kalevala`).
 - The deck drops weak card types (`Flee`, `Harden`, `Heal`, `Hit`, `Whiskey Shot`) and every
@@ -91,15 +97,23 @@ room is unloaded.
 
 ### Level scaling
 
-`determineBossLevelCap(playerLevels, roll)` with `roll = random(1, 100)`:
+`determineBossLevelCap(playerLevels, roll, bossLevels)` with `roll = random(1, 100)`. The
+boss's XP is then drawn from 0 up to that level's cap, so it is often lower.
 
 | Roll | Cap |
 |---|---|
-| 1–20 | uncapped — a fully random boss |
-| 21–50 | highest player level + 1 |
-| 51–100 | floor(average player level) |
+| 1–35 | highest human level + 1 |
+| 36–100 | floor(average human level) |
 
-Levels come from the ring's player monsters, falling back to the room's living monsters via
+Both bands are then held to a **level budget**: the bosses' combined levels may not exceed
+the humans' combined levels + 1 (`BOSS_LEVEL_BUDGET_SLACK`), less what bosses already in the
+ring use. The owner's rule of thumb (September 2026): three level 3 humans (9) against bosses
+of 4, 3, and 2 is a fair fight; `sim:bosses` measured it at 44%.
+
+There used to be a third band: 20% of spawns ignored the players entirely, which is how a
+level 5 boss met a level 1 player. It was removed with the budget (roadmap 31).
+
+Levels come from the ring's human monsters, falling back to the room's living monsters via
 the `getRoomMonsterLevels` provider injected by `Game`. Timing stays ring-focused, so an
 empty ring keeps beginner pacing.
 
@@ -119,6 +133,31 @@ numberOfMonstersInRing = playerContestants.length + (hasBoss ? 1 : 0)
 ```
 
 So 1 player + 4 bosses starts a fight; 3 bosses and no players never does.
+
+### Boss count: one per human
+
+`sim:bosses` showed that outnumbering decides these fights, not levels: one human against one
+boss of its level wins about half the time, against two bosses 0–3%, and a level 3 against
+two level 1 bosses still only 12%. So (owner, September 2026):
+
+- **One boss per human.** `canAcceptBoss()` refuses with `boss_quota` once `bossCount`
+  reaches `bossAllowance()`: the humans in the ring, or 1 for an empty ring (a boss may wait
+  for a challenger). Summons are refused before the charge is spent ("Bring a friend into
+  the ring, then summon another").
+- **An ambush.** A timer spawn has a 10% chance (`BOSS_AMBUSH_CHANCE_PERCENT`), rolled once
+  when the warning is due so the warning and the spawn agree, of one boss beyond that. It
+  arrives as a lesser minion at a third of its HP and says so; the ring sets that HP again
+  as the fight starts, since passive healing ticks through the countdown
+  (`Contestant.minion`). Still harsh for a lone human
+  (about 6%); it is a rare scare.
+- **The Gauntlet** is the designed exception: its extra bosses ignore the quota, but still
+  come out of the level budget, so the more of them there are, the weaker each is.
+- **A human leaving** is the only way bosses come to outnumber humans, so `removeMonster`
+  calls `dismissExtraBosses()`. It keeps the oldest full-strength bosses up to one per human
+  (plus an armed Gauntlet's extras) and at most one ambush minion (`Contestant.minion`);
+  the newest of the rest slip away, and a summoned one refunds its charge. The two are
+  counted apart: counting the ambush slot for any boss left one human against two
+  full-strength bosses after the other human withdrew.
 
 ---
 
@@ -253,7 +292,7 @@ Defined declaratively in `packages/engine/src/ring/ring-events.ts`.
 
 | Event | Effect | Victory mode | Eligible when |
 |---|---|---|---|
-| **The Gauntlet** | Pulls up to 2 extra bosses into the ring | `last-contestant` (default) | ≥1 player |
+| **The Gauntlet** | Pulls up to 2 extra bosses into the ring, past the one-per-human quota (still within the level budget) | `last-contestant` (default) | ≥1 player |
 | **Blood Feud** | Free-for-all — teams ignored, and bosses turn on each other | `last-contestant` (default) | ≥3 contestants |
 | **Common Cause** | Every player joins `ALLIANCE_TEAM`; players only hit bosses | `last-team` | ≥2 players and ≥1 boss |
 | **House War** | Players split round-robin across two Sorting Hat houses | `last-team` | ≥3 players **and 0 bosses** |
@@ -450,8 +489,47 @@ knowing:
 - Wraparound in `TARGET_NEXT_PLAYER` / `TARGET_PREVIOUS_PLAYER` must use the **filtered**
   list's length. Using the raw input length overruns the array in any team fight and returns
   `undefined` — a fixed bug worth not reintroducing.
-- Outside ring events, the only things that set a team are the Sorting Hat scroll and boss
-  creation; the only things that set a strategy are the targeting scrolls in `items/scrolls/`.
+- Outside ring events, a team is set by the Sorting Hat scroll, cleared by the Hat's "No
+  team" choice or the free `leave team` command, set on bosses at creation, and lent to
+  teamless humans by the Challengers alliance below. The only things that set a strategy are
+  the targeting scrolls in `items/scrolls/` and a boss's temperament.
+
+### How a player joins, leaves, and inherits a team
+
+A contestant's team is its contestant override (ring events, the alliance), else
+`monster.team`, else `character.team` (`teamOf`). So a Sorting Hat worn by the character
+covers every monster without a team of its own, and a hat worn by one monster covers only
+that monster. The hat offers the houses other than the wearer's effective team, and "No
+team" only where clearing leaves the wearer teamless: clearing a monster's own team while its
+beastmaster has one would only drop it back to that team. `leave team`
+(`commands/character.ts`) clears the character and every monster, and is refused while any
+of them is in a fight. Every shop keeps one hat, free, restocked on purchase
+(`withSortingHat`).
+
+In a normal fight a team changes only **targeting**: teammates, area cards included, go
+after everyone else first and fall back to each other when nobody else is left; the last
+monster standing still wins alone. Only Common Cause and House War make a team win together
+(the table below). Players read this in the handbook's Teams and Bosses section
+(`build/player-handbook-content.ts`), which must stay in step with this section.
+
+### Humans unite against bosses, then settle it
+
+Bosses share the Boss team; humans without a team used to treat each other as fair game, so
+two humans who had not arranged a team hit each other while the bosses worked together
+(`sim:bosses`: two level 1s against L1 + L2 bosses won 1%). Now, at the start of every fight
+with a boss in it, `Ring.fight()` puts each human with no team of its own on
+`CHALLENGERS_TEAM` (a contestant-level override, like a ring event's). They never target each
+other while any boss is still fighting; the moment the last boss is down the override comes
+off, a line says the alliance is over, and the humans left finish a normal free-for-all. The
+same two level 1s now win 29% (with boss temperaments), level with a pre-arranged team's
+28%.
+
+- A team a player or ring event set is never replaced; Blood Feud keeps its free-for-all.
+- This replaced a forced Common Cause (shared win) whenever two or more bosses met two or
+  more teamless humans; the owner chose "unite, then settle" over a shared win. Common Cause
+  remains an ordinary ring event.
+- The override is removed before `fightConcludes`, so XP counts the humans as each other's
+  opponents, as it did before.
 
 ### Team allegiance vs. victory mode (these are orthogonal)
 
@@ -461,7 +539,7 @@ concepts interact but are independent:
 
 | Event | Team targeting | Victory mode |
 |---|---|---|
-| Common Cause | Players share `ALLIANCE_TEAM`; ignore bosses as targets | `last-team` — fight ends when one faction survives |
+| Common Cause | Players share `ALLIANCE_TEAM` and never target each other | `last-team` — fight ends when one faction survives |
 | House War | Players split across two named houses (bosses excluded — see §4) | `last-team` — fight ends when one house survives |
 | Blood Feud | `freeForAll: true` — teams ignored for targeting | `last-contestant` — last monster standing wins |
 | The Gauntlet / The Reckoning / none | Normal team rules | `last-contestant` — last monster standing wins |
