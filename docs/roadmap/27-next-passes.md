@@ -11,8 +11,9 @@ tags: [roadmap, planning, passes]
 **Status:** Planned, not started. Written on 2026-09-27 after the Unicorn pass closed
 ([26](../archive/roadmap/26-unicorn-pack.md)) and a docs sweep. This file orders the open
 roadmap into passes. Pass A below is ready to run; later passes are sketched and get their
-own task tables when they start. Update this file in each pass's checkpoint commits, and
-archive it once its passes are done or re-planned.
+own task tables when they start. Update this file in each pass's checkpoint commits,
+filling in each task's status and commit SHA, and archive it once its passes are done or
+re-planned.
 
 ## How each pass runs
 
@@ -30,13 +31,13 @@ All five items come from the browser sweep on 2026-09-26 and were confirmed stil
 on `main` on 2026-09-27. Each has a known root cause, so these are fixes, not
 investigations.
 
-| # | Task | Source | Area / files | Can run beside | Status |
-|---|---|---|---|---|---|
-| A1 | A short equip swallows the next command and calls a partial deck "good to go"; "equiped" typo | 10 §L | Engine: `monsters/helpers/equip.ts`, `cards/helpers/choose.ts`, `characters/beastmaster.ts` | A3, A4, A5 | Planned |
-| A2 | `unequip all from [monster]` matches the single-card pattern first | 10 §M | Engine: `commands/monster.ts` dispatch order, plus a dispatch test | A3, A4, A5 (not A1: both change command handling) | Planned |
-| A3 | First-run workshop shows "Applying changes…" and polls `game.shop`, which 404s without a character | 10 §N | Web: `hooks/useDeckWorkshop.ts`; server `game.shop` if returning an empty shop is chosen | A1, A4 | Planned |
-| A4 | A fast fight's log is empty because events are filtered by insert time, not engine time | 10 §O | Server: `analytics-queries.ts` (select by the `event_id` timestamp prefix, or store a fight id) | A1, A2, A3 | Planned |
-| A5 | Three-word card names abbreviate unreadably ("Fig or Fli") | 10 §P | Web: `utils/cards.ts` `abbreviateCardName`, `cards-utils.test.ts` | A1, A2, A4 | Planned |
+| # | Task | Source | Area / files | Can run beside | Status | Commit |
+|---|---|---|---|---|---|---|
+| A1 | A short equip swallows the next command and calls a partial deck "good to go"; "equiped" typo | 10 §L | Engine: `monsters/helpers/equip.ts`, `cards/helpers/choose.ts`, `characters/beastmaster.ts` | A3, A4, A5 | Planned | — |
+| A2 | `unequip all from [monster]` matches the single-card pattern first | 10 §M | Engine: `commands/monster.ts` dispatch order, plus a dispatch test | A3, A4, A5 (not A1: both change command handling) | Planned | — |
+| A3 | First-run workshop shows "Applying changes…" and polls `game.shop`, which 404s without a character | 10 §N | Web: `hooks/useDeckWorkshop.ts`; server `game.shop` if returning an empty shop is chosen | A1, A4 | Planned | — |
+| A4 | A fast fight's log is empty because events are filtered by insert time, not engine time | 10 §O | Server: `analytics-queries.ts` (select by the `event_id` timestamp prefix, or store a fight id) | A1, A2, A3 | Planned | — |
+| A5 | Three-word card names abbreviate unreadably ("Fig or Fli") | 10 §P | Web: `utils/cards.ts` `abbreviateCardName`, `cards-utils.test.ts` | A1, A2, A4 | Planned | — |
 
 Notes for the briefs:
 

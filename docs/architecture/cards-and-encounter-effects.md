@@ -125,8 +125,9 @@ new card or monster must reach. Check each one.
   an index, so inserting mid-list shifts every later monster.
 - The spawn colour example (`monsters/helpers/spawn.ts`), a name generator
   (`helpers/names.ts`), a sprite in `apps/web/src/animations/pixel-fight/sprites.ts`, the
-  harness type list (`packages/harness/src/simulate.ts` and `sim-winrates.ts`), and the
-  server's spawn-catalog test.
+  harness type lists (`packages/harness/src/simulate.ts`, `sim-winrates.ts`, and
+  `OPPONENTS` in `scripts/sim-unicorn.ts`, which otherwise leaves the new monster out of
+  the Unicorn report without saying so), and the server's spawn-catalog test.
 - A description must read well with a player-chosen colour, including one that carries
   its own "with"; give the colour its own sentence. Verbs after a pronoun use `agree()`;
   verbs after a name never do ([voice and wording](../reference/voice-and-wording.md)).
