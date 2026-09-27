@@ -80,8 +80,9 @@ players. `loadFightEventsForSummary` therefore combines:
   not against `created_at`. Rows are inserted after their engine time, and under skipped
   delays a whole fight finishes before its first row is written, so an insert-time window
   returned nothing (10b #187). Do not pad the window instead: it would attach the next
-  fight's rows. `created_at` is only a loose index bound, and rows with no `event_id`
-  keep the insert-time rule;
+  fight's rows. `created_at` is only a loose index bound. Rows whose `event_id` is null
+  or not an engine id (`ENGINE_EVENT_ID_PATTERN`, a 13-digit millisecond prefix) keep the
+  insert-time rule;
 - `eventVisibilityFor(viewerUserId)`.
 
 `RoomEventBus.publish` takes one clock reading for both the id and `timestamp`, so the two

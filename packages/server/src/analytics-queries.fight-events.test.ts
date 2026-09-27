@@ -1,6 +1,10 @@
 import { expect } from 'chai';
 
-import { fightEventIdBounds, loadFightEventsForSummary } from './analytics-queries.js';
+import {
+	ENGINE_EVENT_ID_PATTERN,
+	fightEventIdBounds,
+	loadFightEventsForSummary,
+} from './analytics-queries.js';
 
 /**
  * Walks a drizzle SQL predicate and collects the column names it references and the
@@ -23,7 +27,14 @@ function inspectPredicate(
 	if ('value' in record && !('queryChunks' in record)) found.values.push(record.value);
 
 	for (const value of Object.values(record)) {
-		if (Array.isArray(value)) value.forEach((entry) => inspectPredicate(entry, found, seen));
+		if (Array.isArray(value)) {
+			value.forEach((entry) => {
+				// A value interpolated into a sql`` template sits in queryChunks as a bare
+				// primitive rather than a Param object.
+				if (typeof entry === 'string') found.values.push(entry);
+				else inspectPredicate(entry, found, seen);
+			});
+		}
 		else if (value && typeof value === 'object') inspectPredicate(value, found, seen);
 	}
 	return found;
@@ -118,6 +129,25 @@ describe('loadFightEventsForSummary', () => {
 		// The insert-time upper bound for id'd rows is well past the resolve timestamp.
 		const dates = found.values.filter((value): value is Date => value instanceof Date);
 		expect(Math.max(...dates.map((date) => date.getTime()))).to.be.greaterThan(endedAt.getTime() + 60_000);
+	});
+});
+
+describe('ENGINE_EVENT_ID_PATTERN', () => {
+	// Rows it does not match fall back to the created_at window; a legacy id like
+	// 'legacy-id' once matched neither rule and vanished from the fight log.
+	const pattern = new RegExp(ENGINE_EVENT_ID_PATTERN);
+
+	it('matches engine ids only', () => {
+		expect(pattern.test('1727000000000-abcd1234')).to.equal(true);
+		expect(pattern.test('legacy-id')).to.equal(false);
+		expect(pattern.test('hist:42')).to.equal(false);
+	});
+
+	it('is bound into the fight-events query as the fallback test', async () => {
+		const { db, captured } = captureDb();
+		await loadFightEventsForSummary(db as never, 'room-1', 'viewer-1', new Date(1_000), new Date(2_000));
+		const found = inspectPredicate(captured.where, { columns: [], values: [] });
+		expect(found.values).to.include(ENGINE_EVENT_ID_PATTERN);
 	});
 });
 

@@ -685,6 +685,15 @@ const FIGHT_EVENT_INSERT_LAG_MS = 10 * 60 * 1000;
  * `start` (inclusive) to `end` (exclusive). Millisecond timestamps are 13 digits until the
  * year 2286, so string order is numeric order.
  */
+/**
+ * Engine event ids: a 13-digit millisecond prefix, then `-`. Rows whose id does not match
+ * (null, or a legacy/foreign id such as `legacy-id`, which `game-event-map.ts` already
+ * tolerates) cannot be placed by id, so they keep the insert-time rule. Without this
+ * fallback a non-null legacy id compared as text against the numeric bounds and dropped
+ * out of the fight log altogether.
+ */
+export const ENGINE_EVENT_ID_PATTERN = '^[0-9]{13}-';
+
 export function fightEventIdBounds(startedAt: Date, endedAt: Date): { start: string; end: string } {
 	return { start: String(startedAt.getTime()), end: String(endedAt.getTime() + 1) };
 }
@@ -696,7 +705,7 @@ export function fightEventIdBounds(startedAt: Date, endedAt: Date): { start: str
  * engine-time window. Under `DECK_MONSTERS_SKIP_DELAYS` a whole fight takes ~50ms and every
  * row lands after it resolves, so the fight log expanded to nothing. Padding the window
  * instead would attach the next fight's rows, because `room_events` has no fight id.
- * Rows without an event id predate ids and keep the old insert-time rule.
+ * Rows whose id is not an engine id keep the old insert-time rule.
  */
 export async function loadFightEventsForSummary(
 	db: Db,
@@ -716,7 +725,13 @@ export async function loadFightEventsForSummary(
 				lte(roomEvents.createdAt, new Date(endedAt.getTime() + FIGHT_EVENT_INSERT_LAG_MS)),
 				or(
 					and(gte(roomEvents.eventId, start), lt(roomEvents.eventId, end)),
-					and(isNull(roomEvents.eventId), lte(roomEvents.createdAt, endedAt))
+					and(
+						or(
+							isNull(roomEvents.eventId),
+							sql`${roomEvents.eventId} !~ ${ENGINE_EVENT_ID_PATTERN}`
+						),
+						lte(roomEvents.createdAt, endedAt)
+					)
 				),
 				eventVisibilityFor(viewerUserId)
 			)

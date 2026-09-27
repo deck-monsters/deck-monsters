@@ -4421,14 +4421,18 @@ inserted after it resolved, so the window held nothing. A second, smaller mismat
 
 **Fix**: rows are selected by the engine time in `event_id` (its `Date.now()` prefix),
 from the fight's first millisecond to its last. `created_at` stays only as a loose index
-bound (resolve time plus ten minutes); rows without an id keep the old rule. The window
+bound (resolve time plus ten minutes); rows whose id is null or not an engine id
+(`ENGINE_EVENT_ID_PATTERN`) keep the old rule. A review caught that the first version
+fell back only for null ids, so a non-null legacy id (the kind `game-event-map.ts`
+already tolerates) matched neither rule and dropped out of the log. The window
 is not padded, because `room_events` has no fight id and padding would attach the next
 fight's rows. `publish` now reads the clock once for both fields.
 
 **Tests**: `analytics-queries.fight-events.test.ts` checks that the predicate binds the
 event-id range and that its insert-time bound reaches well past the resolve timestamp
 (a row inserted after the fight still counts). `fightEventIdBounds` tests include both
-edge milliseconds and exclude the neighbours.
+edge milliseconds and exclude the neighbours, and the pattern tests cover legacy ids and
+the fallback's presence in the query.
 
 **Status**: Fixed.
 
