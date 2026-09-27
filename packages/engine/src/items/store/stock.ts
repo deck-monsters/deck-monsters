@@ -139,6 +139,10 @@ export const getItems = (): any[] => {
 		}
 	}
 
+	// A full shelf gives its last slot to the hat, so a shop never holds more than
+	// DEFAULT_MAX_INVENTORY_SIZE items. Adding the hat on top broke that bound about one draw
+	// in a hundred (a full shelf with no hat drawn), which CI caught on PR #403.
+	if (items.length >= DEFAULT_MAX_INVENTORY_SIZE && !items.some(isSortingHat)) items.pop();
 	return withSortingHat(items);
 };
 
@@ -146,8 +150,8 @@ export const isSortingHat = (item: any): boolean => item?.itemType === SortingHa
 
 /**
  * Every shop keeps a Sorting Hat, so a player can always join or leave a team (owner,
- * docs/archive/roadmap/31-pass-b-rings-and-bosses.md). It is free, so it cannot crowd out
- * stock. Both purchase paths call this on the items they commit: stocking one only when the
+ * docs/archive/roadmap/31-pass-b-rings-and-bosses.md). It is free; on a full shelf it takes
+ * the last slot (see getItems). Both purchase paths call this on the items they commit: stocking one only when the
  * shop was drawn let the first buyer take the room's only hat until the next rotation (a
  * Codex review of PR #403).
  */
