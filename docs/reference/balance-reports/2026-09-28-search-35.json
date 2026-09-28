@@ -1,0 +1,2129 @@
+{
+ "levels": [
+  1,
+  3,
+  5,
+  7
+ ],
+ "monsters": {
+  "1": [
+   {
+    "type": "Basilisk",
+    "fieldAverage": 0.5241666666666667,
+    "interval": {
+     "estimate": 0.5241666666666667,
+     "low": 0.5041635615525759,
+     "high": 0.5440925326977537,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.36,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.6775,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Gladiator",
+    "fieldAverage": 0.4764583333333333,
+    "interval": {
+     "estimate": 0.4764583333333333,
+     "low": 0.45653027708980803,
+     "high": 0.4964616310973709,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.2775,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.7,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Jinn",
+    "fieldAverage": 0.43020833333333336,
+    "interval": {
+     "estimate": 0.43020833333333336,
+     "low": 0.4105274150216901,
+     "high": 0.4501123127898582,
+     "n": 2400
+    },
+    "worst": [
+     "Unicorn",
+     {
+      "s": 0.2975,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.61625,
+      "n": 400
+     }
+    ],
+    "skill": 0.545,
+    "flags": []
+   },
+   {
+    "type": "Minotaur",
+    "fieldAverage": 0.4875,
+    "interval": {
+     "estimate": 0.4875,
+     "low": 0.4675384040648603,
+     "high": 0.5075015471849692,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.37375,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.665,
+      "n": 400
+     }
+    ],
+    "skill": 0.62625,
+    "flags": []
+   },
+   {
+    "type": "WeepingAngel",
+    "fieldAverage": 0.6877083333333334,
+    "interval": {
+     "estimate": 0.6877083333333334,
+     "low": 0.6688801141832956,
+     "high": 0.7059366178817641,
+     "n": 2400
+    },
+    "worst": [
+     "Unicorn",
+     {
+      "s": 0.54,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.95125,
+      "n": 400
+     }
+    ],
+    "skill": 0.5175,
+    "flags": [
+     "matchup over 85% (Dragon)"
+    ]
+   },
+   {
+    "type": "Unicorn",
+    "fieldAverage": 0.6175,
+    "interval": {
+     "estimate": 0.6175,
+     "low": 0.5978832641899572,
+     "high": 0.6367411940616452,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.46,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.73125,
+      "n": 400
+     }
+    ],
+    "skill": 0.6625,
+    "flags": []
+   },
+   {
+    "type": "Dragon",
+    "fieldAverage": 0.2764583333333333,
+    "interval": {
+     "estimate": 0.2764583333333333,
+     "low": 0.2589330544002644,
+     "high": 0.2946980737841872,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.04875,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Jinn",
+     {
+      "s": 0.38375,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": [
+     "below band",
+     "matchup under 20% (WeepingAngel)"
+    ]
+   }
+  ],
+  "3": [
+   {
+    "type": "Basilisk",
+    "fieldAverage": 0.5102083333333334,
+    "interval": {
+     "estimate": 0.5102083333333334,
+     "low": 0.49020837080205054,
+     "high": 0.5301756690105889,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.3675,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Gladiator",
+     {
+      "s": 0.58125,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Gladiator",
+    "fieldAverage": 0.4666666666666667,
+    "interval": {
+     "estimate": 0.4666666666666667,
+     "low": 0.4467765219341212,
+     "high": 0.4866633480654242,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.30125,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Minotaur",
+     {
+      "s": 0.6075,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Jinn",
+    "fieldAverage": 0.49,
+    "interval": {
+     "estimate": 0.49,
+     "low": 0.4700321633302197,
+     "high": 0.509999797669644,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.33625,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.63125,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Minotaur",
+    "fieldAverage": 0.436875,
+    "interval": {
+     "estimate": 0.436875,
+     "low": 0.4171477448766625,
+     "high": 0.45680400893497675,
+     "n": 2400
+    },
+    "worst": [
+     "Gladiator",
+     {
+      "s": 0.3925,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.5,
+      "n": 400
+     }
+    ],
+    "skill": 0.54125,
+    "flags": []
+   },
+   {
+    "type": "WeepingAngel",
+    "fieldAverage": 0.6458333333333334,
+    "interval": {
+     "estimate": 0.6458333333333334,
+     "low": 0.6264801247575881,
+     "high": 0.6647204439944007,
+     "n": 2400
+    },
+    "worst": [
+     "Minotaur",
+     {
+      "s": 0.6075,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Gladiator",
+     {
+      "s": 0.69875,
+      "n": 400
+     }
+    ],
+    "skill": 0.51125,
+    "flags": []
+   },
+   {
+    "type": "Unicorn",
+    "fieldAverage": 0.5010416666666667,
+    "interval": {
+     "estimate": 0.5010416666666667,
+     "low": 0.4810522365965916,
+     "high": 0.5210277674659228,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.36125,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Minotaur",
+     {
+      "s": 0.58,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Dragon",
+    "fieldAverage": 0.449375,
+    "interval": {
+     "estimate": 0.449375,
+     "low": 0.42957064503496056,
+     "high": 0.46934115752684913,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.36625,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Unicorn",
+     {
+      "s": 0.52375,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   }
+  ],
+  "5": [
+   {
+    "type": "Basilisk",
+    "fieldAverage": 0.5254166666666666,
+    "interval": {
+     "estimate": 0.5254166666666666,
+     "low": 0.5054140407296075,
+     "high": 0.545338058395739,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.40375,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Minotaur",
+     {
+      "s": 0.6225,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Gladiator",
+    "fieldAverage": 0.40208333333333335,
+    "interval": {
+     "estimate": 0.40208333333333335,
+     "low": 0.3826383958168603,
+     "high": 0.42184122230680443,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.31625,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Minotaur",
+     {
+      "s": 0.53375,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Jinn",
+    "fieldAverage": 0.57375,
+    "interval": {
+     "estimate": 0.57375,
+     "low": 0.5538626093069707,
+     "high": 0.593401678319035,
+     "n": 2400
+    },
+    "worst": [
+     "Basilisk",
+     {
+      "s": 0.53125,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Unicorn",
+     {
+      "s": 0.60375,
+      "n": 400
+     }
+    ],
+    "skill": 0.49,
+    "flags": []
+   },
+   {
+    "type": "Minotaur",
+    "fieldAverage": 0.38166666666666665,
+    "interval": {
+     "estimate": 0.38166666666666665,
+     "low": 0.3624348753678643,
+     "high": 0.40127666313052207,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.25,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Gladiator",
+     {
+      "s": 0.46625,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "WeepingAngel",
+    "fieldAverage": 0.6125,
+    "interval": {
+     "estimate": 0.6125,
+     "low": 0.5928440929862083,
+     "high": 0.6317963457653258,
+     "n": 2400
+    },
+    "worst": [
+     "Jinn",
+     {
+      "s": 0.4225,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Minotaur",
+     {
+      "s": 0.75,
+      "n": 400
+     }
+    ],
+    "skill": 0.7175,
+    "flags": []
+   },
+   {
+    "type": "Unicorn",
+    "fieldAverage": 0.47833333333333333,
+    "interval": {
+     "estimate": 0.47833333333333333,
+     "low": 0.4583988941399982,
+     "high": 0.4983370213597063,
+     "n": 2400
+    },
+    "worst": [
+     "WeepingAngel",
+     {
+      "s": 0.32875,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Gladiator",
+     {
+      "s": 0.67125,
+      "n": 400
+     }
+    ],
+    "skill": 0.62375,
+    "flags": []
+   },
+   {
+    "type": "Dragon",
+    "fieldAverage": 0.52625,
+    "interval": {
+     "estimate": 0.52625,
+     "low": 0.506247763071651,
+     "high": 0.546168339303707,
+     "n": 2400
+    },
+    "worst": [
+     "Jinn",
+     {
+      "s": 0.43,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Unicorn",
+     {
+      "s": 0.64125,
+      "n": 400
+     }
+    ],
+    "skill": 0.61,
+    "flags": []
+   }
+  ],
+  "7": [
+   {
+    "type": "Basilisk",
+    "fieldAverage": 0.37375,
+    "interval": {
+     "estimate": 0.37375,
+     "low": 0.35461055984186357,
+     "high": 0.3932929477814148,
+     "n": 2400
+    },
+    "worst": [
+     "Jinn",
+     {
+      "s": 0.21875,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Minotaur",
+     {
+      "s": 0.45625,
+      "n": 400
+     }
+    ],
+    "skill": 0.49625,
+    "flags": []
+   },
+   {
+    "type": "Gladiator",
+    "fieldAverage": 0.49083333333333334,
+    "interval": {
+     "estimate": 0.49083333333333334,
+     "low": 0.47086352735897474,
+     "high": 0.5108324368909003,
+     "n": 2400
+    },
+    "worst": [
+     "Minotaur",
+     {
+      "s": 0.45375,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Basilisk",
+     {
+      "s": 0.5525,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Jinn",
+    "fieldAverage": 0.6729166666666667,
+    "interval": {
+     "estimate": 0.6729166666666667,
+     "low": 0.6538838214130755,
+     "high": 0.6913968529642824,
+     "n": 2400
+    },
+    "worst": [
+     "Gladiator",
+     {
+      "s": 0.4975,
+      "n": 400
+     }
+    ],
+    "best": [
+     "WeepingAngel",
+     {
+      "s": 0.79375,
+      "n": 400
+     }
+    ],
+    "skill": 0.58125,
+    "flags": []
+   },
+   {
+    "type": "Minotaur",
+    "fieldAverage": 0.45708333333333334,
+    "interval": {
+     "estimate": 0.45708333333333334,
+     "low": 0.43723775428923817,
+     "high": 0.47706607833517656,
+     "n": 2400
+    },
+    "worst": [
+     "Jinn",
+     {
+      "s": 0.33375,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Gladiator",
+     {
+      "s": 0.54625,
+      "n": 400
+     }
+    ],
+    "skill": 0.585,
+    "flags": []
+   },
+   {
+    "type": "WeepingAngel",
+    "fieldAverage": 0.514375,
+    "interval": {
+     "estimate": 0.514375,
+     "low": 0.4943724683776071,
+     "high": 0.534331587685089,
+     "n": 2400
+    },
+    "worst": [
+     "Jinn",
+     {
+      "s": 0.20625,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.635,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": []
+   },
+   {
+    "type": "Unicorn",
+    "fieldAverage": 0.5739583333333333,
+    "interval": {
+     "estimate": 0.5739583333333333,
+     "low": 0.5540718514991766,
+     "high": 0.5936084369393321,
+     "n": 2400
+    },
+    "worst": [
+     "Jinn",
+     {
+      "s": 0.25125,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Dragon",
+     {
+      "s": 0.96375,
+      "n": 400
+     }
+    ],
+    "skill": 0.5,
+    "flags": [
+     "matchup over 85% (Dragon)"
+    ]
+   },
+   {
+    "type": "Dragon",
+    "fieldAverage": 0.4170833333333333,
+    "interval": {
+     "estimate": 0.4170833333333333,
+     "low": 0.3975043395175147,
+     "high": 0.4369273371063545,
+     "n": 2400
+    },
+    "worst": [
+     "Unicorn",
+     {
+      "s": 0.03625,
+      "n": 400
+     }
+    ],
+    "best": [
+     "Basilisk",
+     {
+      "s": 0.65375,
+      "n": 400
+     }
+    ],
+    "skill": 0.49,
+    "flags": [
+     "matchup under 20% (Unicorn)"
+    ]
+   }
+  ]
+ },
+ "searches": {
+  "Basilisk@L1": {
+   "type": "Basilisk",
+   "level": 1,
+   "hand": [
+    "Heal",
+    "Heal",
+    "Coil",
+    "Pick Pocket",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Random Play"
+   ],
+   "start": [
+    "Heal",
+    "Heal",
+    "Coil",
+    "Pick Pocket",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Random Play"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Coil": 1,
+    "Delayed Hit": 2,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Random Play": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Basilisk@L3": {
+   "type": "Basilisk",
+   "level": 3,
+   "hand": [
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Coil",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "start": [
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Coil",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Coil": 1,
+    "Delayed Hit": 3,
+    "Fight or Flight": 1,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Random Play": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Basilisk@L5": {
+   "type": "Basilisk",
+   "level": 5,
+   "hand": [
+    "Ecdysis",
+    "Heal",
+    "Heal",
+    "Coil",
+    "Forked Stick",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Ecdysis",
+    "Heal",
+    "Heal",
+    "Coil",
+    "Forked Stick",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Adrenaline Rush": 1,
+    "Berserk": 1,
+    "Harden": 1,
+    "Calisthenics": 1,
+    "Coil": 1,
+    "Delayed Hit": 3,
+    "Ecdysis": 1,
+    "Fight or Flight": 2,
+    "Fists of Virtue": 1,
+    "Forked Stick": 1,
+    "Heal": 4,
+    "Hit Harder": 1,
+    "Pick Pocket": 2,
+    "Random Play": 2,
+    "Thick Skin": 1,
+    "Whiskey Shot": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Basilisk@L7": {
+   "type": "Basilisk",
+   "level": 7,
+   "hand": [
+    "Soften",
+    "Coil",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Whiskey Shot",
+    "Ecdysis",
+    "Ecdysis"
+   ],
+   "start": [
+    "Scotch",
+    "Coil",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Whiskey Shot",
+    "Ecdysis",
+    "Ecdysis"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Adrenaline Rush": 2,
+    "Berserk": 2,
+    "Harden": 3,
+    "Calisthenics": 2,
+    "Camouflage Vest": 1,
+    "Coil": 1,
+    "Concussion": 2,
+    "Constrict": 1,
+    "Soften": 1,
+    "Delayed Hit": 4,
+    "Ecdysis": 2,
+    "Fight or Flight": 4,
+    "Fists of Villainy": 1,
+    "Fists of Virtue": 3,
+    "Forked Stick": 2,
+    "Heal": 4,
+    "Hit Harder": 2,
+    "Molasses": 2,
+    "Pick Pocket": 3,
+    "Random Play": 3,
+    "Scotch": 1,
+    "Thick Skin": 2,
+    "Turkey Thigh": 2,
+    "Vengeful Rampage": 1,
+    "Whiskey Shot": 2
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 2,
+     "step": 1,
+     "move": "slot 1: Scotch -> Soften",
+     "gain": 0.07395833333333329,
+     "confirmed": 0.06666666666666671
+    }
+   ]
+  },
+  "Gladiator@L1": {
+   "type": "Gladiator",
+   "level": 1,
+   "hand": [
+    "Battle Focus",
+    "Heal",
+    "Heal",
+    "Pick Pocket",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Random Play"
+   ],
+   "start": [
+    "Battle Focus",
+    "Heal",
+    "Heal",
+    "Pick Pocket",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Random Play"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Battle Focus": 1,
+    "Delayed Hit": 2,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Random Play": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Gladiator@L3": {
+   "type": "Gladiator",
+   "level": 3,
+   "hand": [
+    "Battle Focus",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "start": [
+    "Battle Focus",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Battle Focus": 1,
+    "Delayed Hit": 3,
+    "Fight or Flight": 1,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Random Play": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Gladiator@L5": {
+   "type": "Gladiator",
+   "level": 5,
+   "hand": [
+    "Heal",
+    "Heal",
+    "Battle Focus",
+    "Forked Stick",
+    "Pick Pocket",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fists of Virtue",
+    "Wooden Spear"
+   ],
+   "start": [
+    "Heal",
+    "Heal",
+    "Battle Focus",
+    "Forked Stick",
+    "Pick Pocket",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fists of Virtue",
+    "Wooden Spear"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Adrenaline Rush": 1,
+    "Basic Shield": 1,
+    "Battle Focus": 1,
+    "Harden": 1,
+    "Calisthenics": 1,
+    "Delayed Hit": 3,
+    "Fight or Flight": 2,
+    "Fists of Virtue": 1,
+    "Forked Stick": 1,
+    "Heal": 4,
+    "Hit Harder": 1,
+    "Pick Pocket": 1,
+    "Random Play": 2,
+    "Whiskey Shot": 1,
+    "Wooden Spear": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Gladiator@L7": {
+   "type": "Gladiator",
+   "level": 7,
+   "hand": [
+    "Scotch",
+    "Rehit",
+    "Rehit",
+    "Survival Knife",
+    "Survival Knife",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Scotch",
+    "Rehit",
+    "Rehit",
+    "Survival Knife",
+    "Survival Knife",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Adrenaline Rush": 3,
+    "Basic Shield": 2,
+    "Battle Focus": 1,
+    "Harden": 3,
+    "Calisthenics": 2,
+    "Camouflage Vest": 1,
+    "Concussion": 2,
+    "Soften": 2,
+    "Delayed Hit": 4,
+    "Fight or Flight": 4,
+    "Fists of Villainy": 2,
+    "Fists of Virtue": 3,
+    "Forked Stick": 2,
+    "Heal": 4,
+    "Hit Harder": 3,
+    "Lucky Strike": 1,
+    "Molasses": 2,
+    "Pick Pocket": 3,
+    "Random Play": 3,
+    "Rehit": 2,
+    "Scotch": 1,
+    "Survival Knife": 2,
+    "Whiskey Shot": 2,
+    "Wooden Spear": 3
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Jinn@L1": {
+   "type": "Jinn",
+   "level": 1,
+   "hand": [
+    "Pick Pocket",
+    "Heal",
+    "Heal",
+    "Fight or Flight",
+    "Sandstorm",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "start": [
+    "Sandstorm",
+    "Heal",
+    "Heal",
+    "Fight or Flight",
+    "Pick Pocket",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Delayed Hit": 2,
+    "Fight or Flight": 1,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Sandstorm": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 2,
+     "step": 1,
+     "move": "swap slots 1 and 5",
+     "gain": 0.08020833333333333,
+     "confirmed": 0.06458333333333333
+    }
+   ]
+  },
+  "Jinn@L3": {
+   "type": "Jinn",
+   "level": 3,
+   "hand": [
+    "Sandstorm",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Forked Stick",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "start": [
+    "Sandstorm",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Forked Stick",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Delayed Hit": 3,
+    "Fight or Flight": 1,
+    "Forked Stick": 1,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Random Play": 1,
+    "Sandstorm": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Jinn@L5": {
+   "type": "Jinn",
+   "level": 5,
+   "hand": [
+    "Sandstorm",
+    "Molasses",
+    "Heal",
+    "Forked Stick",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Feline Companion",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Sandstorm",
+    "Heal",
+    "Heal",
+    "Forked Stick",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Feline Companion",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Basic Shield": 1,
+    "Harden": 1,
+    "Soften": 1,
+    "Delayed Hit": 3,
+    "Feline Companion": 1,
+    "Fight or Flight": 2,
+    "Fists of Virtue": 1,
+    "Forked Stick": 1,
+    "Heal": 4,
+    "Molasses": 1,
+    "Pick Pocket": 2,
+    "Random Play": 2,
+    "Sandstorm": 1,
+    "Whiskey Shot": 1,
+    "Wooden Spear": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 2,
+     "move": "slot 2: Heal -> Molasses",
+     "gain": 0.08333333333333337,
+     "confirmed": 0.10833333333333328
+    }
+   ]
+  },
+  "Jinn@L7": {
+   "type": "Jinn",
+   "level": 7,
+   "hand": [
+    "Sandstorm",
+    "Bad Batch",
+    "Bad Batch",
+    "Brain Drain",
+    "Enchanted Faceswap",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Sandstorm",
+    "Bad Batch",
+    "Bad Batch",
+    "Scotch",
+    "Enchanted Faceswap",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Bad Batch": 2,
+    "Basic Shield": 3,
+    "Harden": 3,
+    "Brain Drain": 2,
+    "Cloak of Invisibility": 1,
+    "Soften": 2,
+    "Delayed Hit": 4,
+    "Dissonant Voice": 2,
+    "Enchanted Faceswap": 1,
+    "Feline Companion": 3,
+    "Fight or Flight": 4,
+    "Fists of Villainy": 2,
+    "Fists of Virtue": 3,
+    "Forked Stick": 2,
+    "Heal": 4,
+    "Iocane": 2,
+    "Lucky Strike": 1,
+    "Molasses": 2,
+    "Pick Pocket": 3,
+    "Random Play": 3,
+    "Sandstorm": 1,
+    "Scotch": 1,
+    "Whiskey Shot": 3,
+    "Wooden Spear": 3
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 1,
+     "move": "slot 4: Scotch -> Brain Drain",
+     "gain": 0.29375000000000007,
+     "confirmed": 0.2895833333333333
+    }
+   ]
+  },
+  "Minotaur@L1": {
+   "type": "Minotaur",
+   "level": 1,
+   "hand": [
+    "Horn Gore",
+    "Delayed Hit",
+    "Heal",
+    "Pick Pocket",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "start": [
+    "Horn Gore",
+    "Heal",
+    "Heal",
+    "Pick Pocket",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Delayed Hit": 2,
+    "Heal": 3,
+    "Horn Gore": 1,
+    "Pick Pocket": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 1,
+     "move": "slot 2: Heal -> Delayed Hit",
+     "gain": 0.08958333333333335,
+     "confirmed": 0.08229166666666665
+    }
+   ]
+  },
+  "Minotaur@L3": {
+   "type": "Minotaur",
+   "level": 3,
+   "hand": [
+    "Horn Gore",
+    "Fight or Flight",
+    "Pick Pocket",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "start": [
+    "Horn Gore",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Delayed Hit": 3,
+    "Fight or Flight": 1,
+    "Heal": 3,
+    "Horn Gore": 1,
+    "Pick Pocket": 1,
+    "Random Play": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 2,
+     "step": 2,
+     "move": "slot 3: Heal -> Pick Pocket",
+     "gain": 0.09999999999999998,
+     "confirmed": 0.057291666666666685
+    }
+   ]
+  },
+  "Minotaur@L5": {
+   "type": "Minotaur",
+   "level": 5,
+   "hand": [
+    "Horn Gore",
+    "Heal",
+    "Heal",
+    "Forked Stick",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Molasses"
+   ],
+   "start": [
+    "Horn Gore",
+    "Heal",
+    "Heal",
+    "Forked Stick",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Molasses"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Adrenaline Rush": 1,
+    "Berserk": 1,
+    "Harden": 1,
+    "Calisthenics": 1,
+    "Soften": 1,
+    "Delayed Hit": 3,
+    "Fight or Flight": 2,
+    "Fists of Virtue": 1,
+    "Forked Stick": 1,
+    "Heal": 4,
+    "Hit Harder": 1,
+    "Horn Gore": 1,
+    "Molasses": 1,
+    "Pick Pocket": 2,
+    "Random Play": 2,
+    "Whiskey Shot": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Minotaur@L7": {
+   "type": "Minotaur",
+   "level": 7,
+   "hand": [
+    "Forked Stick",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Vengeful Rampage",
+    "Soften",
+    "Whiskey Shot",
+    "Fists of Virtue"
+   ],
+   "start": [
+    "Scotch",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Fight or Flight",
+    "Whiskey Shot",
+    "Soften",
+    "Soften",
+    "Fists of Virtue"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Adrenaline Rush": 3,
+    "Berserk": 2,
+    "Harden": 3,
+    "Calisthenics": 3,
+    "Camouflage Vest": 1,
+    "Concussion": 2,
+    "Soften": 2,
+    "Delayed Hit": 4,
+    "Fight or Flight": 4,
+    "Fists of Villainy": 2,
+    "Fists of Virtue": 3,
+    "Forked Stick": 2,
+    "Heal": 4,
+    "Hit Harder": 3,
+    "Horn Gore": 2,
+    "Horn Swipe": 1,
+    "Molasses": 2,
+    "Pick Pocket": 4,
+    "Random Play": 3,
+    "Scotch": 1,
+    "Turkey Thigh": 2,
+    "Vengeful Rampage": 1,
+    "Whiskey Shot": 3
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 1,
+     "move": "slot 1: Scotch -> Forked Stick",
+     "gain": 0.07708333333333334,
+     "confirmed": 0.08437499999999998
+    },
+    {
+     "round": 2,
+     "step": 1,
+     "move": "slot 8: Soften -> Vengeful Rampage",
+     "gain": 0.09375,
+     "confirmed": 0.05625000000000002
+    },
+    {
+     "round": 2,
+     "step": 2,
+     "move": "swap slots 6 and 8",
+     "gain": 0.08749999999999997,
+     "confirmed": 0.06354166666666666
+    }
+   ]
+  },
+  "WeepingAngel@L1": {
+   "type": "WeepingAngel",
+   "level": 1,
+   "hand": [
+    "Blink",
+    "Heal",
+    "Heal",
+    "Blast",
+    "Blast",
+    "Hit",
+    "Heal",
+    "Hit",
+    "Hit"
+   ],
+   "start": [
+    "Blink",
+    "Heal",
+    "Heal",
+    "Blast",
+    "Blast",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Blast": 2,
+    "Blink": 1,
+    "Delayed Hit": 2,
+    "Heal": 3
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 1,
+     "move": "slot 7: Hit -> Heal",
+     "gain": 0.10833333333333339,
+     "confirmed": 0.07708333333333328
+    }
+   ]
+  },
+  "WeepingAngel@L3": {
+   "type": "WeepingAngel",
+   "level": 3,
+   "hand": [
+    "Blink",
+    "Heal",
+    "Blast",
+    "Fight or Flight",
+    "Blast",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "start": [
+    "Blink",
+    "Blast",
+    "Blast",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Blast": 2,
+    "Blink": 1,
+    "Delayed Hit": 3,
+    "Fight or Flight": 1,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Random Play": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 2,
+     "step": 1,
+     "move": "swap slots 2 and 5",
+     "gain": 0.10729166666666667,
+     "confirmed": 0.16562500000000002
+    }
+   ]
+  },
+  "WeepingAngel@L5": {
+   "type": "WeepingAngel",
+   "level": 5,
+   "hand": [
+    "Blast",
+    "Blast",
+    "Blast",
+    "Feline Companion",
+    "Heal",
+    "Blink",
+    "Heal",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Blast",
+    "Blast",
+    "Blast",
+    "Heal",
+    "Heal",
+    "Pick Pocket",
+    "Feline Companion",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Blast": 3,
+    "Blink": 1,
+    "Harden": 1,
+    "Delayed Hit": 3,
+    "Feline Companion": 1,
+    "Fight or Flight": 2,
+    "Fists of Virtue": 1,
+    "Heal": 4,
+    "Mesmerize": 1,
+    "Molasses": 1,
+    "Pick Pocket": 1,
+    "Random Play": 2,
+    "Whiskey Shot": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 1,
+     "move": "slot 6: Pick Pocket -> Blink",
+     "gain": 0.15520833333333328,
+     "confirmed": 0.17500000000000004
+    },
+    {
+     "round": 1,
+     "step": 2,
+     "move": "swap slots 7 and 4",
+     "gain": 0.07291666666666663,
+     "confirmed": 0.07604166666666667
+    }
+   ]
+  },
+  "WeepingAngel@L7": {
+   "type": "WeepingAngel",
+   "level": 7,
+   "hand": [
+    "Blast",
+    "Blast",
+    "Blast",
+    "Blast",
+    "Scotch",
+    "Rehit",
+    "Enchanted Faceswap",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Blast",
+    "Blast",
+    "Blast",
+    "Blast",
+    "Scotch",
+    "Rehit",
+    "Enchanted Faceswap",
+    "Fight or Flight",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Blast": 4,
+    "Blast II": 2,
+    "Blink": 1,
+    "Harden": 3,
+    "Brain Drain": 2,
+    "Cloak of Invisibility": 1,
+    "Soften": 2,
+    "Delayed Hit": 4,
+    "Enchanted Faceswap": 1,
+    "Enthrall": 1,
+    "Entrance": 1,
+    "Feline Companion": 2,
+    "Fight or Flight": 4,
+    "Fists of Villainy": 2,
+    "Fists of Virtue": 3,
+    "Gloaming Rest": 1,
+    "Heal": 4,
+    "Horn of Proof": 1,
+    "Iocane": 2,
+    "Lucky Strike": 1,
+    "Mesmerize": 3,
+    "Molasses": 2,
+    "Pick Pocket": 3,
+    "Random Play": 3,
+    "Rehit": 1,
+    "Scotch": 1,
+    "Whiskey Shot": 3
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Unicorn@L1": {
+   "type": "Unicorn",
+   "level": 1,
+   "hand": [
+    "Delayed Hit",
+    "Heal",
+    "Sticketh",
+    "Blast",
+    "Blast",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "start": [
+    "Heal",
+    "Heal",
+    "Sticketh",
+    "Blast",
+    "Blast",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Blast": 2,
+    "Delayed Hit": 2,
+    "Heal": 3,
+    "Sticketh": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 2,
+     "move": "slot 1: Heal -> Delayed Hit",
+     "gain": 0.1020833333333333,
+     "confirmed": 0.054166666666666696
+    }
+   ]
+  },
+  "Unicorn@L3": {
+   "type": "Unicorn",
+   "level": 3,
+   "hand": [
+    "Blast",
+    "Blast",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Sticketh",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "start": [
+    "Blast",
+    "Blast",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Sticketh",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Blast": 2,
+    "Delayed Hit": 3,
+    "Fight or Flight": 1,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Random Play": 1,
+    "Sticketh": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Unicorn@L5": {
+   "type": "Unicorn",
+   "level": 5,
+   "hand": [
+    "Blast",
+    "Blast",
+    "Blast",
+    "Heal",
+    "Heal",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Sticketh",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Blast",
+    "Blast",
+    "Blast",
+    "Heal",
+    "Heal",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Feline Companion",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Blast": 3,
+    "Harden": 1,
+    "Delayed Hit": 3,
+    "Feline Companion": 1,
+    "Fight or Flight": 2,
+    "Fists of Virtue": 1,
+    "Heal": 4,
+    "Pick Pocket": 2,
+    "Random Play": 2,
+    "Sticketh": 2,
+    "Whiskey Shot": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 1,
+     "move": "slot 8: Feline Companion -> Sticketh",
+     "gain": 0.11770833333333336,
+     "confirmed": 0.11458333333333331
+    }
+   ]
+  },
+  "Unicorn@L7": {
+   "type": "Unicorn",
+   "level": 7,
+   "hand": [
+    "Blast",
+    "Blast",
+    "Blast",
+    "Blast",
+    "Scotch",
+    "Rehit",
+    "Rehit",
+    "Sticketh",
+    "Sticketh"
+   ],
+   "start": [
+    "Blast",
+    "Blast",
+    "Blast",
+    "Blast",
+    "Scotch",
+    "Rehit",
+    "Rehit",
+    "Sticketh",
+    "Sticketh"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Blast": 4,
+    "Blast II": 2,
+    "Harden": 3,
+    "Brain Drain": 2,
+    "Cloak of Invisibility": 1,
+    "Soften": 2,
+    "Delayed Hit": 4,
+    "Dissonant Voice": 2,
+    "Enchanted Faceswap": 1,
+    "Feline Companion": 3,
+    "Fight or Flight": 4,
+    "Fists of Villainy": 2,
+    "Fists of Virtue": 3,
+    "Gloaming Rest": 1,
+    "Heal": 4,
+    "Horn of Proof": 1,
+    "Iocane": 2,
+    "Lucky Strike": 1,
+    "Molasses": 2,
+    "Pick Pocket": 3,
+    "Random Play": 3,
+    "Rehit": 2,
+    "Scotch": 1,
+    "Sticketh": 2,
+    "Unconquerable Horn": 2,
+    "Whiskey Shot": 2
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Dragon@L1": {
+   "type": "Dragon",
+   "level": 1,
+   "hand": [
+    "Fire Breath",
+    "Fire Breath",
+    "Heal",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "start": [
+    "Fire Breath",
+    "Fire Breath",
+    "Heal",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Delayed Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Delayed Hit": 2,
+    "Fire Breath": 2,
+    "Heal": 3
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Dragon@L3": {
+   "type": "Dragon",
+   "level": 3,
+   "hand": [
+    "Fire Breath",
+    "Fire Breath",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "start": [
+    "Fire Breath",
+    "Fire Breath",
+    "Fight or Flight",
+    "Heal",
+    "Heal",
+    "Hit",
+    "Hit",
+    "Hit",
+    "Hit"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Delayed Hit": 3,
+    "Fight or Flight": 1,
+    "Fire Breath": 2,
+    "Heal": 3,
+    "Pick Pocket": 1,
+    "Random Play": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": []
+  },
+  "Dragon@L5": {
+   "type": "Dragon",
+   "level": 5,
+   "hand": [
+    "Fire Breath",
+    "Fire Breath",
+    "Fire Breath",
+    "Heal",
+    "Heal",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Take Wing",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Fire Breath",
+    "Fire Breath",
+    "Fire Breath",
+    "Heal",
+    "Heal",
+    "Take Wing",
+    "Pick Pocket",
+    "Pick Pocket",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Harden": 1,
+    "Soften": 1,
+    "Delayed Hit": 3,
+    "Fight or Flight": 3,
+    "Fire Breath": 3,
+    "Fists of Villainy": 1,
+    "Fists of Virtue": 1,
+    "Heal": 4,
+    "Molasses": 1,
+    "Pick Pocket": 2,
+    "Random Play": 2,
+    "Take Wing": 1,
+    "Whiskey Shot": 1
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 2,
+     "step": 2,
+     "move": "swap slots 8 and 6",
+     "gain": 0.078125,
+     "confirmed": 0.10833333333333328
+    }
+   ]
+  },
+  "Dragon@L7": {
+   "type": "Dragon",
+   "level": 7,
+   "hand": [
+    "Scotch",
+    "Take Wing",
+    "Take Wing",
+    "Take Wing",
+    "Delayed Hit",
+    "Fire Breath",
+    "Fire Breath",
+    "Fire Breath",
+    "Fight or Flight"
+   ],
+   "start": [
+    "Scotch",
+    "Take Wing",
+    "Take Wing",
+    "Take Wing",
+    "Fire Breath",
+    "Fire Breath",
+    "Fire Breath",
+    "Fire Breath",
+    "Fight or Flight"
+   ],
+   "pool": {
+    "Hit": 4,
+    "Harden": 4,
+    "Cloak of Invisibility": 1,
+    "Soften": 2,
+    "Delayed Hit": 4,
+    "Fight or Flight": 4,
+    "Fire Breath": 4,
+    "Fists of Villainy": 2,
+    "Fists of Virtue": 4,
+    "Heal": 4,
+    "Molasses": 2,
+    "Mood Scales": 1,
+    "Pick Pocket": 4,
+    "Random Play": 4,
+    "Scotch": 1,
+    "Take Wing": 3,
+    "Whiskey Shot": 3
+   },
+   "idle": 2,
+   "done": true,
+   "history": [
+    {
+     "round": 1,
+     "step": 2,
+     "move": "slot 5: Fire Breath -> Delayed Hit",
+     "gain": 0.09791666666666665,
+     "confirmed": 0.07187500000000002
+    }
+   ]
+  }
+ },
+ "changedInRound": {
+  "1": 9,
+  "2": 6
+ }
+}
