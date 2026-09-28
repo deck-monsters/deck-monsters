@@ -45,9 +45,20 @@ listeners or reward projections.
 ### A. Intermittent missing `↓ Latest` jump button
 
 **Owner:** Web feeds. `isAtBottom` is edge-driven, so a path that moves the reader away from
-the bottom without a callback can hide the recovery control. The trigger is not reproduced:
-capture whether roster collapse, replay, reconnect, or animation causes it before selecting
-a fix.
+the bottom without a callback can hide the recovery control. Not reproduced on 2026-09-28
+against Test Room A, after the ring list started keeping its row heights (#196):
+
+- Wheel up into history. The button stayed visible with the scroller about 2100px and
+  3200px above the bottom.
+- Collapse and expand the roster while parked there. The button stayed visible. The
+  viewport height changed (686px to 732px and back) and `scrollTop` did not.
+- Narrow the window under the 1024px breakpoint, which hides the ring pane, then select
+  the Ring tab. The list came back pinned to the bottom (`gap` 0), so the button was
+  correctly absent. Widening the window left it at the bottom.
+
+No case showed the button hidden while the reader was actually away from the bottom.
+The #159 re-pin still scrolls to the DOM `scrollHeight` when a resize shows the pane
+without a fresh gesture.
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
 
@@ -55,9 +66,12 @@ Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md)
 
 **Owner:** Web feeds. Players reported extra blank lines and misaligned indentation in some
 feed messages. The one confirmed instance, Delayed Hit narration that opened with a literal
-`\n`, is fixed (#130), and a sweep of `cards/` found no other. No further example has been
-captured. Get a screenshot of a specific message before changing the card-display block or
-the turn banner, the likeliest suspects given #97 and #101.
+`\n`, is fixed (#130), and a sweep of `cards/` found no other. Checked again on 2026-09-28
+while scrolling Test Room A's ring history (239 events). A text scan flagged leading or
+repeated newlines. The ones opened were the blank line `formatCard` puts before a frame,
+and the turn banner, which is authored as `\n🎲  round N, turn N\n\n…` in
+`announcements/nextTurn.ts` (#97, #101). No other mis-indented message turned up, so there
+is still no new example to change the card block or the banner for.
 
 Read [events, prompts, and replay](../architecture/events-prompts-and-replay.md).
 
