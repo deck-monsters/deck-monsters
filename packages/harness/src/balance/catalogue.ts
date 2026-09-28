@@ -65,6 +65,8 @@ export function actionClassOf(Card: CardStatic): ActionClass {
 
 export interface CardInfo {
 	cardType: string;
+	/** A readable name for reports: the class name for a card whose type is a joke (Prion Disease's is a date). */
+	label: string;
 	actionClass: ActionClass;
 	level: number;
 	probability: number;
@@ -76,6 +78,7 @@ export function catalogueCards(): CardInfo[] {
 		.filter(C => C.cardType !== 'Flee')
 		.map(C => ({
 			cardType: C.cardType,
+			label: /^[A-Za-z]/.test(C.cardType) ? C.cardType : `${C.name.replace(/Card$/, '').replace(/([a-z])([A-Z])/g, '$1 $2')} ("${C.cardType}")`,
 			actionClass: actionClassOf(C),
 			level: C.level ?? 0,
 			probability: C.probability ?? 0,

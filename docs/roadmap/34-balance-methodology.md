@@ -471,7 +471,7 @@ a few), with this table updated in the same commit.
 | 3 | A | Reference chassis, null card, synthetic cards, calibration ladder | Ladder monotone and repeatable across two seed sets; synthetic cards provably absent from the game | Done: reference chassis, `Ideal:Null` and `Ideal:Strike` (the other synthetic classes come with task 5, where they are used); the ladder (96,000 fights) is monotone at every level in both seed sets, mean difference between sets 2.3 points. 6 of 96 interior rungs differ by more than chance, because each unit shuffles where its nulls sit and position matters (task 4), so the full ladder averages more shuffles per rung | 7e40df3, this commit |
 | 4 | A | Validate HE: stacking linearity on synthetic cards; 30 held-out hands predicted within 5 points | A pass/fail statement, and what HE can and cannot be used for | Done: **at the mark, not under it** (80 held-out synthetic hands, mean absolute error 5.1 against a mark of 5, noise floor 2.1; first reported as 4.9 until a Codex review found the slot weighting applied twice) after two fixes from a first failing run (13.5): a two-sided ladder, and fitted slot weights. Stacking is linear. Slot position is first-order at levels 4-7 (slot 1 worth up to about 4 times slot 9). HE ranks and explains; decisions stay on whole-hand simulation; repeat on real cards in task 6. [Report](../reference/balance-reports/2026-09-28-ladder-and-he.md) | 1fc3cb1, 522e493, this commit |
 | 5 | B | Layer 1 experiments: exchange rates, scaling, crowd factor, profiles, order | The idealized price list, and what order can and cannot do | Planned | |
-| 6 | B | Layer 2: `sim:catalogue` over all 61 cards | Catalogue JSON and tables; outliers flagged | Planned | |
+| 6 | B | Layer 2: `sim:catalogue` over all 61 cards | Catalogue JSON and tables; outliers flagged | Done (quick profile): 60 cards (Flee excluded) at levels 1, 3, 5, 7, 12, 259,200 fights, 0 failures. Area spells scale with level; Sandstorm and Enchanted Faceswap are about 2 Hits from level 1. The Dragon, Unicorn, and Weeping Angel each hold several cards below 0.5 Hit-equivalents (Tsunami, Mesmerize, Enthrall, and four Unicorn cards), matching their curves. Boost and hide cards rarely pay back in 2-3 round fights. [Report](../reference/balance-reports/2026-09-28-catalogue.md). Still to do: HE validation on real cards, and levels 0-7 at full precision (overnight) | e325797, this commit |
 | 7 | B | Layer 3: chassis values, collection model, inventories | Per-monster strength decomposed | Planned | |
 | 8a | B | Layer 6 tooling: excitement metrics, the win-probability model with its state features, held-out calibration, and the counterfactual fallback, exercised on provisional hands (the likely decks) | Calibration report per action class; tooling tested | Planned | |
 | 9 | C | Layer 4: search with best-response rounds, matrices, skill expression; catalogue rerun against the searched field | The band check per level (realistic and unconstrained) | Planned | |
@@ -482,6 +482,14 @@ a few), with this table updated in the same commit.
 Order: 1 → 2 and 3 (in parallel) → 4 → 5, 6, 7, 8a (in parallel, separate scripts) → 9 →
 8b and 10 (in parallel) → 11. Every task gets an independent read-only review of its diff; the statistics module and
 the synthetic-card isolation get the closest look.
+
+## Production snapshot (2026-09-28, read-only)
+
+48 monsters in production, all at levels 0-3 (32 at level 0), with 196 recorded fights, which
+average 1.9 rounds; about 8% are draws. So nearly every real player is in the first four
+levels, earlier even than the owner's 0-7 target. Room state stores hands only inside the
+compressed game blob, so there is no per-hand telemetry yet; the "typical hand" for Layers 3-4
+comes from the collection model until there is.
 
 ## Starting evidence (from 33, to be re-measured in task 1)
 

@@ -86,7 +86,7 @@ async function main(): Promise<void> {
 	const header = `| Card | Class | Rarity | Holders | ${levels.map(l => `sHE L${l}`).join(' | ')} | ${levels.map(l => `field L${l}`).join(' | ')} | Flags |`;
 	const sep = `|${Array(4 + 2 * levels.length + 1).fill('---').join('|')}|`;
 	const byClass = [...rows].sort((a, b) => a.actionClass.localeCompare(b.actionClass) || (b.she[levels[0]!] ?? -9) - (a.she[levels[0]!] ?? -9));
-	const lines = byClass.map(r => `| ${r.cardType} | ${r.actionClass} | ${rarityName(r.probability)} | ${r.holders} | ${levels.map(l => fmt(r.she[l])).join(' | ')} | ${levels.map(l => fmt(r.fieldHe[l])).join(' | ')} | ${[...r.flags, r.errors ? `${r.errors} unit errors` : ''].filter(Boolean).join('; ')} |`);
+	const lines = byClass.map(r => `| ${r.label} | ${r.actionClass} | ${rarityName(r.probability)} | ${r.holders} | ${levels.map(l => fmt(r.she[l])).join(' | ')} | ${levels.map(l => fmt(r.fieldHe[l])).join(' | ')} | ${[...r.flags, r.errors ? `${r.errors} unit errors` : ''].filter(Boolean).join('; ')} |`);
 	const medians = classes.map(cls => `| ${cls} | ${levels.map(l => fmt(median(rows.filter(r => r.actionClass === cls).map(r => r.she[l]!)))).join(' | ')} |`);
 	const md = [
 		`Units: ${ok.length} ok, ${errors.length} errors. Field baseline per level (9 Hits' score / one Hit's worth): ${levels.map(l => `L${l} ${(100 * fieldBase.get(l)!.hits).toFixed(0)}% / ${(100 * fieldBase.get(l)!.slope).toFixed(1)}`).join(', ')}.`,
